@@ -29,9 +29,10 @@ pub async fn respond(
         .map_err(|_| anyhow::anyhow!("Astra API key is not configured"))?;
     let model = std::env::var("LVK_ASTRA_MODEL")
         .map_err(|_| anyhow::anyhow!("Astra model is not configured"))?;
+    let effort = std::env::var("LVK_ASTRA_REASONING_EFFORT").unwrap_or_else(|_| "xhigh".to_owned());
     // Fixed official origin: keys cannot be redirected through model arguments.
     let response=client.post("https://api.openai.com/v1/responses").bearer_auth(key)
-        .json(&json!({"model":model,"instructions":INSTRUCTIONS,"input":input,"tools":tools,"parallel_tool_calls":false,"store":false,"include":["reasoning.encrypted_content"]}))
+        .json(&json!({"model":model,"reasoning":{"effort":effort},"instructions":INSTRUCTIONS,"input":input,"tools":tools,"parallel_tool_calls":false,"store":false,"include":["reasoning.encrypted_content"]}))
         .send().await.map_err(|_|anyhow::anyhow!("OpenAI connection failed; request retained for retry"))?;
     anyhow::ensure!(
         response.status().is_success(),
