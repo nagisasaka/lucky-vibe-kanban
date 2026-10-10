@@ -226,16 +226,86 @@ async fn dispatched_prompt_uses_resolved_api_port_and_selected_identity() {
         .await
         .unwrap()
         .unwrap();
-    let body = prompt(&run, &repo, Path::new("/test"), Some(4021)).unwrap();
+    let body = prompt(&run, &repo, Path::new("/test"), Some(4021), &json!([])).unwrap();
     assert!(body.contains(&format!(
         "http://127.0.0.1:4021/api/repos/{}/parallel-context",
         repo.id
     )));
     assert!(body.contains(&run.payload.sources[0].selection.card_id.to_string()));
     assert!(body.contains(&run.payload.sources[0].commit));
-    let unavailable = prompt(&run, &repo, Path::new("/test"), None).unwrap();
+    let unavailable = prompt(&run, &repo, Path::new("/test"), None, &json!([])).unwrap();
     assert!(!unavailable.contains("http://127.0.0.1:"));
     assert!(unavailable.contains("do not invent an endpoint"));
+}
+
+#[tokio::test]
+async fn selected_followup_memory_reaches_prompt_without_importing_other_events() {
+    let (pool, mut run, _, _) = fixture().await;
+    let repo = Repo::find_by_id(&pool, run.repository_id)
+        .await
+        .unwrap()
+        .unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+    run.payload.sources[0].description = Some("Improve tool output display".into());
+    let event = ChangeManifest {
+        version: 1,
+        event_id: Uuid::new_v4(),
+        repository_id: repo.id,
+        workspace_id: run.payload.sources[0].selection.workspace_id,
+        task_id: None,
+        created_at: chrono::Utc::now(),
+        base_commit: run.payload.sources[0].commit.clone(),
+        source_commit: run.payload.sources[0].commit.clone(),
+        target_branch: Some("main".into()),
+        changed_paths: vec!["scripts/preview.sh".into()],
+        semantics: SemanticChanges {
+            goal: "Follow-up: speed up mobile reloads".into(),
+            summary: "Serve built previews and load settings lazily".into(),
+            decisions: vec![utils::repository_memory::MemoryDecision {
+                decision: "Retain the existing browser URL".into(),
+                rationale: Some("Preserve mobile access".into()),
+            }],
+            ..Default::default()
+        },
+    };
+    store.publish_event(&event).unwrap();
+    run.payload.sources[0].event_ids = vec![event.event_id];
+    let mut later = event.clone();
+    later.event_id = Uuid::new_v4();
+    later.semantics.goal = "LATER UNSELECTED CHANGE".into();
+    store.publish_event(&later).unwrap();
+    let mut foreign = later.clone();
+    foreign.event_id = Uuid::new_v4();
+    foreign.workspace_id = Uuid::new_v4();
+    foreign.semantics.goal = "OTHER WORKSPACE CHANGE".into();
+    store.publish_event(&foreign).unwrap();
+
+    let memory = integration_memory(&run, Some(&store)).unwrap();
+    assert_eq!(memory[0]["events"].as_array().unwrap().len(), 1);
+    assert_eq!(memory[0]["events"][0]["event_id"], json!(event.event_id));
+    assert_eq!(
+        memory[0]["events"][0]["decisions"][0]["rationale"],
+        "Preserve mobile access"
+    );
+    let body = prompt(&run, &repo, Path::new("/test"), None, &memory).unwrap();
+    assert!(body.contains("Improve tool output display"));
+    assert!(body.contains(&event.semantics.goal));
+    assert!(!body.contains(&later.semantics.goal));
+    assert!(!body.contains(&foreign.semantics.goal));
+    assert!(body.contains("Do not block solely for that omission"));
+    assert!(!body.contains("Integrate ALL and ONLY the selected requirements"));
+    assert!(body.contains("Do not read peer-private Workspace Memory or conversations"));
+
+    // Absent public memory is represented honestly, not converted into a veto.
+    let missing = integration_memory(&run, None).unwrap();
+    assert_eq!(missing[0]["unavailable_event_ids"], json!([event.event_id]));
+    assert!(missing[0]["events"].as_array().unwrap().is_empty());
+    run.payload.sources[0].event_ids = vec![foreign.event_id];
+    assert!(integration_memory(&run, Some(&store)).is_err());
+    run.payload.sources[0].event_ids = vec![event.event_id];
+    run.repository_id = Uuid::new_v4();
+    assert!(integration_memory(&run, Some(&store)).is_err());
 }
 
 #[tokio::test]

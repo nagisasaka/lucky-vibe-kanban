@@ -89,7 +89,11 @@ Astra can read canonical final responses, branch status, tracked reference
 files, Workspace memory, manifests and the existing OpenWiki snapshot.
 
 Merging uses existing Board Integration admission, reservations, source checks,
-validation and publication. Its receipt is only admission. Integration status,
+validation and publication. Integration considers the complete selected commits and
+their frozen public Change Manifests, including follow-up work absent from the
+original Card description. Such omissions alone do not block merging. Private
+Workspace memory and raw conversations remain outside this shared context.
+Its receipt is only admission. Integration status,
 test evidence, publication and OpenWiki receipt remain separate observations.
 The retired generated LLMWiki pipeline is not restarted by this feature.
 
