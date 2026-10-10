@@ -29,6 +29,7 @@ pub mod organizations;
 pub mod parallel_context;
 pub mod pipelines;
 pub mod preview;
+pub mod project_chat;
 pub mod relay_auth;
 pub mod releases;
 pub mod remote;
@@ -62,6 +63,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(filesystem::router())
         .merge(repo::router())
         .merge(integrations::router())
+        .merge(project_chat::router())
         .merge(resource_coordination::router())
         .merge(execution_bridge::router())
         .merge(events::router(&deployment))

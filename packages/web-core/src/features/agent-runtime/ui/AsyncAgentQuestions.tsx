@@ -114,6 +114,12 @@ export function AsyncAgentQuestions({
               <label className="block" htmlFor={`async-answer-${question.id}`}>
                 {question.title}
               </label>
+              {question.delivery_status && (
+                <p role="status">
+                  Answer delivery unconfirmed. Inspect the Session before
+                  retrying.
+                </p>
+              )}
               <div className="flex flex-wrap gap-half">
                 {question.options.map((option, index) => (
                   <button
@@ -121,7 +127,9 @@ export function AsyncAgentQuestions({
                     key={index}
                     className="rounded-sm border border-border px-base py-half text-sm hover:bg-secondary"
                     aria-pressed={saved.drafts[question.id] === option}
-                    disabled={submitting === question.id}
+                    disabled={
+                      submitting === question.id || !!question.delivery_status
+                    }
                     onClick={() =>
                       save({
                         ...savedRef.current,
@@ -141,7 +149,9 @@ export function AsyncAgentQuestions({
                 className="w-full rounded-sm border border-border bg-primary p-half"
                 placeholder={t('asyncQuestions.placeholder')}
                 value={saved.drafts[question.id] ?? ''}
-                disabled={submitting === question.id}
+                disabled={
+                  submitting === question.id || !!question.delivery_status
+                }
                 onChange={(event) =>
                   save({
                     ...savedRef.current,
@@ -158,7 +168,8 @@ export function AsyncAgentQuestions({
                 disabled={
                   disabled ||
                   submitting !== null ||
-                  !saved.drafts[question.id]?.trim()
+                  !saved.drafts[question.id]?.trim() ||
+                  !!question.delivery_status
                 }
                 onClick={() => void submit(question)}
               >

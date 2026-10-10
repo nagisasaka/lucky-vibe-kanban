@@ -4,6 +4,7 @@ export interface AsyncAgentQuestion {
   id: string;
   title: string;
   options: string[];
+  delivery_status?: string | null;
 }
 
 function object(value: JsonValue | undefined) {

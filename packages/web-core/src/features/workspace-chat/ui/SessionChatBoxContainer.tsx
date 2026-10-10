@@ -1,13 +1,10 @@
 import { FollowUpQueue } from './FollowUpQueue';
 import { useTranslation } from 'react-i18next';
 import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuestions';
-import {
-  collectAsyncAgentQuestions,
-  deliverAsyncQuestionAnswer,
-  type AsyncAgentQuestion,
-} from '@/features/agent-runtime/model/asyncAgentQuestions';
+import { type AsyncAgentQuestion } from '@/features/agent-runtime/model/asyncAgentQuestions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { agentRunsApi } from '@/shared/lib/agentRunApi';
 import { useDropzone } from 'react-dropzone';
 import {
   BaseAgentCapability,
@@ -288,14 +285,12 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   const { entries } = useEntries();
   const tokenUsageInfo = useTokenUsage();
   const { timeline: canonicalTimeline } = useCanonicalAgentSession();
-  const asyncQuestions = useMemo(
-    () =>
-      collectAsyncAgentQuestions(
-        canonicalTimeline?.runs.flatMap((run) => run.timeline?.events ?? []) ??
-          []
-      ),
-    [canonicalTimeline]
-  );
+  const { data: asyncQuestions = [] } = useQuery({
+    queryKey: ['agent-questions', sessionId],
+    queryFn: () => agentRunsApi.pendingQuestions(sessionId!),
+    enabled: !!sessionId,
+    refetchInterval: 3000,
+  });
   const activeAgentRun = canonicalTimeline?.activeRun ?? null;
   const latestAgentRun = canonicalTimeline?.latestRun ?? null;
   const activeAgentRunState = activeAgentRun
@@ -710,14 +705,12 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       if (!sessionId || !isSessionConfigReady || !executorConfig) {
         throw new Error(t('common:asyncQuestions.sendFailed'));
       }
-      const accepted = await deliverAsyncQuestionAnswer(question, answer, {
-        activeRunId: activeAgentRun?.summary.agent_run_id ?? null,
-        steer: canonicalAgentControls.steer,
-        followUp: (content) => send(content),
+      await agentRunsApi.answerQuestion(sessionId, question.id, answer);
+      await queryClient.invalidateQueries({
+        queryKey: ['agent-questions', sessionId],
       });
-      if (!accepted) throw new Error(t('common:asyncQuestions.sendFailed'));
     },
-    [sessionId, isSessionConfigReady, executorConfig, activeAgentRun, send, t]
+    [sessionId, isSessionConfigReady, executorConfig, queryClient, t]
   );
 
   const currentDraft = useRef<SessionDraftSubmission>({

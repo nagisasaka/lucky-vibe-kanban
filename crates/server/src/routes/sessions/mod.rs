@@ -1,6 +1,7 @@
 mod agent_run;
-mod executor_config;
+pub(crate) mod executor_config;
 mod native_history;
+pub mod questions;
 pub mod queue;
 pub mod review;
 pub mod setup_gate;
@@ -544,6 +545,8 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
             get(executor_config::get_executor_config),
         )
         .route("/follow-up", post(follow_up))
+        .route("/questions", get(questions::list))
+        .route("/questions/answer", post(questions::submit))
         .route("/setup", post(run_setup_script))
         .route("/review", post(review::start_review))
         .layer(from_fn_with_state(

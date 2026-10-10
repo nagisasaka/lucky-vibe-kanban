@@ -345,7 +345,7 @@ async fn retry_agent_run(
     .await
 }
 
-async fn dispatch_control(
+pub(crate) async fn dispatch_control(
     deployment: &DeploymentImpl,
     agent_run_id: Uuid,
     identity: AgentRunControlIdentity,
