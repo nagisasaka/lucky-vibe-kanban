@@ -1,5 +1,7 @@
 //! Repository-memory lifecycle attached to LVK's existing Git and shared-folder
 //! services. No model client: semantic drafts come from the active coding host.
+//! Missing or invalid drafts produce an explicitly incomplete source checkpoint so that
+//! the next coding host can still run; intent and validation are never inferred.
 use std::{collections::HashSet, path::Path};
 
 use anyhow::{Context, bail};
@@ -7,7 +9,7 @@ use db::models::{repo::Repo, workspace::Workspace};
 use git::GitService;
 use utils::repository_memory::{
     ChangeManifest, MemoryIntegration, ReconciliationResult, RepositoryMemoryRun,
-    RepositoryMemoryStore, SourcePublication,
+    RepositoryMemoryStore, SemanticChanges, SourcePublication,
 };
 use uuid::Uuid;
 
@@ -149,7 +151,7 @@ pub async fn complete_previous_coding_runs(
                     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                 }
                 Err(error) => return Err(error).with_context(|| format!(
-                    "Previous successful run {} has unfinished source/Manifest publication. Resolve its semantic draft at {} before starting another coding task; source files were preserved",
+                    "Previous successful run {} has unfinished source/Manifest publication. Inspect the publication error before starting another coding task (semantic draft: {}); source files were preserved",
                     run.run_id, run.draft_path.display()
                 )),
             }
@@ -209,7 +211,31 @@ fn complete_coding_run_inner(
         store.mark_no_source_change(run.run_id)?;
         return Ok(None);
     }
-    let semantics = store.read_draft(run.run_id)?.context("Source changed but the coding host did not supply a valid Change Manifest draft. Finish the semantic summary before integration.")?;
+    // Preserve unusable drafts for inspection, but do not require the coding
+    // host to repair an artifact before that host is allowed to run again.
+    // Frozen publications, Git guards and immutable events remain strict.
+    let (draft, problem) = match store.read_draft(run.run_id) {
+        Ok(Some(draft)) => (Some(draft), None),
+        Ok(None) => (None, Some("missing")),
+        Err(error) if error.kind() == std::io::ErrorKind::InvalidData => {
+            tracing::warn!(run_id = %run.run_id, %error, "Invalid semantic draft preserved");
+            (None, Some("invalid"))
+        }
+        Err(error) => return Err(error.into()),
+    };
+    let semantics = draft.unwrap_or_else(|| {
+        let problem = problem.expect("absent draft has a diagnostic");
+        tracing::warn!(run_id = %run.run_id, problem, "Source checkpoint lacks valid semantic evidence");
+        SemanticChanges {
+            goal: "Task intent was not recorded by the coding host.".into(),
+            summary: format!("Checkpoint source changes (semantic draft {problem})"),
+            unresolved_questions: vec![format!(
+                "Coding run {} has a {problem} semantic draft at {}. This host-generated checkpoint records Git changes only; task intent, change rationale and test results are unknown. The original draft was preserved. Review the source before relying on this event as semantic evidence.",
+                run.run_id, run.draft_path.display()
+            )],
+            ..Default::default()
+        }
+    });
     let event = ChangeManifest {
         version: 1,
         event_id: run.run_id,
@@ -882,7 +908,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_draft_is_visible_retryable_and_direct_folder_source_is_integrated_first() {
+    fn missing_draft_checkpoints_direct_folder_source_without_inventing_semantics() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("repo");
         repository(&root);
@@ -891,23 +917,23 @@ mod tests {
         let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
         let context = run(&store, &root);
         std::fs::write(root.join("source.txt"), "updated direct-folder source").unwrap();
-        assert!(complete_coding_run(&store, &context).is_err());
-        assert_eq!(store.coding_errors().unwrap().len(), 1);
-        assert_eq!(
-            git_command(&root, &["rev-parse", "HEAD"]),
-            context.base_commit
-        );
-        std::fs::write(
-            &context.draft_path,
-            serde_json::to_vec(&SemanticChanges {
-                summary: "fix source".into(),
-                goal: "test retry".into(),
-                ..Default::default()
-            })
-            .unwrap(),
-        )
-        .unwrap();
+        // A stale diagnostic from an older server must not keep blocking retries.
+        store
+            .record_coding_result(&context, Some("Missing semantic draft".into()))
+            .unwrap();
         let event = complete_coding_run(&store, &context).unwrap().unwrap();
+        assert!(!context.draft_path.exists());
+        assert_eq!(event.changed_paths, vec!["source.txt"]);
+        assert!(event.semantics.summary.contains("semantic draft missing"));
+        assert!(event.semantics.unresolved_questions[0].contains(&context.run_id.to_string()));
+        assert!(event.semantics.tests.is_empty());
+        assert!(event.semantics.behavioral_changes.is_empty());
+        assert!(event.semantics.decisions.is_empty());
+        // Replayed completion returns the same immutable evidence.
+        assert_eq!(
+            complete_coding_run(&store, &context).unwrap(),
+            Some(event.clone())
+        );
         assert!(store.coding_errors().unwrap().is_empty());
         assert_eq!(
             pending_events(&store, "main").unwrap()[0].event_id,
@@ -921,6 +947,31 @@ mod tests {
             git_command(&root, &["log", "-1", "--format=%s"]),
             event.semantics.commit_message()
         );
+    }
+
+    #[test]
+    fn invalid_draft_is_preserved_and_checkpoints_without_inventing_semantics() {
+        for draft in [
+            "not JSON",
+            r#"{"goal":"test","summary":""}"#,
+            r#"{"summary":42}"#,
+        ] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join("repo");
+            repository(&root);
+            let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+            let context = run(&store, &root);
+            std::fs::write(root.join("source.txt"), "updated source").unwrap();
+            std::fs::write(&context.draft_path, draft).unwrap();
+            let event = complete_coding_run(&store, &context).unwrap().unwrap();
+            assert_eq!(std::fs::read_to_string(&context.draft_path).unwrap(), draft);
+            assert_eq!(event.changed_paths, vec!["source.txt"]);
+            assert!(event.semantics.summary.contains("semantic draft invalid"));
+            assert!(event.semantics.tests.is_empty());
+            assert!(event.semantics.decisions.is_empty());
+            assert_eq!(complete_coding_run(&store, &context).unwrap(), Some(event));
+            assert!(store.coding_errors().unwrap().is_empty());
+        }
     }
 
     #[test]
@@ -1169,25 +1220,9 @@ mod tests {
         }
         std::fs::write(root.join("first.txt"), "first result").unwrap();
         let next = Uuid::new_v4();
-        // Missing semantic output is explicit and fail-closed, not silently
-        // filled using a new coding turn's source or another workspace draft.
-        let error = complete_previous_coding_runs(&pool, &store, first.workspace_id, next)
-            .await
-            .unwrap_err();
-        assert!(format!("{error:#}").contains(&first.run_id.to_string()));
-        assert_eq!(
-            git_command(&root, &["rev-parse", "HEAD"]),
-            first.base_commit
-        );
-        std::fs::write(
-            &first.draft_path,
-            serde_json::to_vec(&SemanticChanges {
-                summary: "feat: first".into(),
-                ..Default::default()
-            })
-            .unwrap(),
-        )
-        .unwrap();
+        std::fs::write(&first.draft_path, "invalid JSON").unwrap();
+        // The previous source is checkpointed before a new host can edit it,
+        // even when that previous host supplied an invalid semantic draft.
         complete_previous_coding_runs(&pool, &store, first.workspace_id, next)
             .await
             .unwrap();

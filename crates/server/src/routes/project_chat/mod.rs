@@ -1,4 +1,5 @@
 mod model;
+pub mod settings;
 pub mod store;
 #[cfg(test)]
 mod tests;
@@ -113,7 +114,9 @@ async fn send(
 }
 
 pub fn router() -> Router<DeploymentImpl> {
-    Router::new().route("/projects/{project_id}/chat", get(load).post(send))
+    Router::new()
+        .route("/projects/{project_id}/chat", get(load).post(send))
+        .route("/astra/settings", get(settings::get).put(settings::put))
 }
 
 /// One process owns the local SQLite deployment, as with the existing monitors.

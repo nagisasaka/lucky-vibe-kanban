@@ -15,9 +15,7 @@ Use Markdown links to existing screens: /projects/{project_id}/issues/{issue_id}
 "#;
 
 pub fn configured() -> bool {
-    ["OPENAI_API_KEY", "LVK_ASTRA_MODEL"]
-        .iter()
-        .all(|key| std::env::var(key).is_ok_and(|v| !v.trim().is_empty()))
+    super::settings::resolved().is_ok_and(|s| !s.api_key.is_empty() && !s.model.is_empty())
 }
 
 pub async fn respond(
@@ -25,11 +23,14 @@ pub async fn respond(
     input: &[Value],
     tools: Vec<Value>,
 ) -> anyhow::Result<Vec<Value>> {
-    let key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| anyhow::anyhow!("Astra API key is not configured"))?;
-    let model = std::env::var("LVK_ASTRA_MODEL")
-        .map_err(|_| anyhow::anyhow!("Astra model is not configured"))?;
-    let effort = std::env::var("LVK_ASTRA_REASONING_EFFORT").unwrap_or_else(|_| "xhigh".to_owned());
+    let settings = super::settings::resolved()?;
+    let key = settings.api_key;
+    let model = settings.model;
+    let effort = settings.reasoning_effort;
+    anyhow::ensure!(
+        !key.is_empty() && !model.is_empty(),
+        "Astra is not configured"
+    );
     // Fixed official origin: keys cannot be redirected through model arguments.
     let response=client.post("https://api.openai.com/v1/responses").bearer_auth(key)
         .json(&json!({"model":model,"reasoning":{"effort":effort},"instructions":INSTRUCTIONS,"input":input,"tools":tools,"parallel_tool_calls":false,"store":false,"include":["reasoning.encrypted_content"]}))
