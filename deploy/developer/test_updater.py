@@ -77,6 +77,21 @@ class ValidationTests(unittest.TestCase):
         for command in ("codex", "node test.js", "bash", "rustc --crate-name foo", "node /opt/lvk-server/server.mjs --evil"):
             self.assertFalse(known_service_process(command, True))
 
+    def test_development_preview_process_admission(self):
+        commands = [
+            'node /usr/local/bin/pnpm --dir packages/local-web run preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
+            'sh -c vite preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
+            'node /repos/lucky-vibe-kanban/packages/local-web/node_modules/.bin/../vite/bin/vite.js preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
+            '/bin/sh -c pnpm --dir packages/local-web run preview --outDir dist-preview --host "$HOST" --port "$FRONTEND_PORT" --strictPort',
+            'node /usr/local/bin/pnpm exec concurrently --kill-others --names backend,frontend --prefix-colors cyan,magenta pnpm run backend:dev:watch pnpm --dir packages/local-web run preview --outDir dist-preview --host "$HOST" --port "$FRONTEND_PORT" --strictPort',
+        ]
+        for command in commands:
+            self.assertTrue(known_service_process(command, True), command)
+            self.assertFalse(known_service_process(command, False), command)
+            self.assertFalse(known_service_process(command + ' --unexpected', True))
+        self.assertFalse(known_service_process(commands[0].replace('4020', '4030'), True))
+        self.assertFalse(known_service_process(commands[0].replace('dist-preview', '/tmp/other'), True))
+
 
 class DatabaseTests(unittest.TestCase):
     def setUp(self):

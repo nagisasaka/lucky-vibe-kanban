@@ -18,6 +18,7 @@ usage() {
         '  FRONTEND_PORT       Vite port; overrides PORT' \
         '  BACKEND_PORT        API port (default: FRONTEND_PORT + 1)' \
         '  PREVIEW_PROXY_PORT  Preview proxy port (default: FRONTEND_PORT + 2)' \
+        '  FRONTEND_MODE       dev (hot reload) or preview (built assets); default: dev' \
         '  HOST                Bind address (default: 0.0.0.0)' \
         '  VK_ALLOWED_ORIGINS  Comma-separated browser origins' \
         '' \
@@ -37,6 +38,12 @@ fi
 if (( $# > 0 )); then
     printf 'Unknown argument: %s\n\n' "$1" >&2
     usage >&2
+    exit 2
+fi
+
+frontend_mode="${FRONTEND_MODE:-dev}"
+if [[ "$frontend_mode" != dev && "$frontend_mode" != preview ]]; then
+    printf '%s\n' 'FRONTEND_MODE must be dev or preview.' >&2
     exit 2
 fi
 
@@ -90,7 +97,7 @@ export VITE_VK_SHARED_API_BASE="${VK_SHARED_API_BASE:-}"
 
 printf '%s\n' \
     'Starting lucky-vibe-kanban for Docker access:' \
-    "  Frontend:       http://localhost:${FRONTEND_PORT}" \
+    "  Frontend:       http://localhost:${FRONTEND_PORT} (${frontend_mode})" \
     "  Backend API:    ${HOST}:${BACKEND_PORT} (proxied through the frontend)" \
     "  Preview proxy:  ${HOST}:${PREVIEW_PROXY_PORT}" \
     "  Allowed origin: ${VK_ALLOWED_ORIGINS}" \
@@ -100,9 +107,16 @@ printf '%s\n' \
 
 cd -- "$REPO_ROOT"
 
+frontend_command='pnpm --dir packages/local-web run dev --host "$HOST" --port "$FRONTEND_PORT" --strictPort'
+if [[ "$frontend_mode" == preview ]]; then
+    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}" \
+        pnpm --dir packages/local-web run build --outDir dist-preview
+    frontend_command='pnpm --dir packages/local-web run preview --outDir dist-preview --host "$HOST" --port "$FRONTEND_PORT" --strictPort'
+fi
+
 exec pnpm exec concurrently \
     --kill-others \
     --names backend,frontend \
     --prefix-colors cyan,magenta \
     'pnpm run backend:dev:watch' \
-    'pnpm --dir packages/local-web run dev --host "$HOST" --port "$FRONTEND_PORT" --strictPort'
+    "$frontend_command"

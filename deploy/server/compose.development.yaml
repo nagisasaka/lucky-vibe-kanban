@@ -13,6 +13,7 @@ services:
       LVK_HOST: ${LVK_HOST:?Set LVK_HOST to a public IP or DNS hostname}
       LVK_DEV_REPO: ${LVK_DEV_REPO:-/repos/lucky-vibe-kanban}
       LVK_DEV_HTTPS_PORT: ${LVK_DEV_HTTPS_PORT:-8443}
+      FRONTEND_MODE: ${LVK_DEV_FRONTEND_MODE:-dev}
       CARGO_BUILD_JOBS: ${LVK_DEV_BUILD_JOBS:-2}
     volumes:
       - development-home:/home/appuser
