@@ -11,6 +11,7 @@ interface MarkdownPreviewProps {
   content: string;
   theme: 'light' | 'dark';
   className?: string;
+  disableImages?: boolean;
 }
 
 const remarkPlugins = [remarkGfm];
@@ -25,6 +26,7 @@ export function MarkdownPreview({
   content,
   theme,
   className,
+  disableImages = false,
 }: MarkdownPreviewProps) {
   const components = useMemo(
     () => ({
@@ -139,10 +141,11 @@ export function MarkdownPreview({
       hr: (props: ComponentPropsWithoutRef<'hr'>) => (
         <hr className="border-border my-4" {...props} />
       ),
-      img: (props: ComponentPropsWithoutRef<'img'>) => (
-        // eslint-disable-next-line jsx-a11y/alt-text
-        <img className="max-w-full rounded-sm" {...props} />
-      ),
+      img: (props: ComponentPropsWithoutRef<'img'>) =>
+        disableImages ? null : (
+          // eslint-disable-next-line jsx-a11y/alt-text
+          <img className="max-w-full rounded-sm" {...props} />
+        ),
       pre: ({ children, ...props }: ComponentPropsWithoutRef<'pre'>) => {
         // When a mermaid code block is rendered, the code component returns
         // <MermaidDiagram> but react-markdown still wraps it in <pre>.
@@ -207,7 +210,7 @@ export function MarkdownPreview({
         return <input type={type} checked={checked} {...props} />;
       },
     }),
-    [theme]
+    [theme, disableImages]
   );
 
   return (

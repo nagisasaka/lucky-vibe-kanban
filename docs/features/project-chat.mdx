@@ -1,0 +1,141 @@
+---
+title: "Astra project conversations"
+description: "Discuss a project and delegate normal LVK work from a persistent server-side conversation."
+---
+
+Open a local project and select **Astra**. Select **Board** to return to the
+existing kanban. Issue details, Workspace sessions, approvals and diff review
+remain available through the work links below the conversation.
+
+## Configure the server
+
+Set `OPENAI_API_KEY` and `LVK_ASTRA_MODEL` in the **server process environment**,
+using your deployment's existing environment/secret injection. Neither value
+is accepted from chat tools; the key is never returned by the chat API. For
+Docker Compose, explicitly pass these variables to the LVK service: a value in
+the host's `.env` alone is not automatically a container environment variable.
+Restart the server after changing them. Use a general dialogue model available
+to your OpenAI API account that supports Responses API function calling.
+There is deliberately no model ID inferred from the display name “Astra”.
+
+This uses the official `https://api.openai.com/v1/responses` endpoint,
+`store: false`, serial function calls and local conversation persistence.
+The adapter uses LVK's existing Rust `reqwest` dependency. OpenAI lists Rust
+clients as community libraries, so LVK does not add a separate language runtime
+or service just to host an official SDK. The protocol references are
+[Responses function calling](https://developers.openai.com/api/docs/guides/function-calling)
+and [OpenAI libraries](https://developers.openai.com/api/docs/libraries).
+
+Codex authentication remains separate. Configure it through the existing
+agent settings. Astra's API key does not authenticate the coding agent.
+Implementation needs a repository associated with the project through the
+existing Git working-location default, repository binding or a linked Workspace. Astra cannot choose an
+unrelated host repository or create repository permissions.
+
+The normal database migration adds conversations, messages/checkpoints,
+tool receipts, a small event outbox and shared asynchronous-question answer
+receipts to the existing SQLite database. Back up the normal LVK data volume
+before upgrading. No extra database or message broker is needed. Run one LVK
+server process per database, as for the existing local runtime monitors.
+
+## Send requests
+
+Choose the request type in the composer, then send the instruction:
+
+| Request      | Permitted action                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| Discuss      | Consult current state and discuss options; no writes                                                |
+| Create Issue | Write a normal, self-contained Issue; no execution                                                  |
+| Implement    | Create an Issue if needed, then start a normal Codex Workspace                                      |
+| Change       | Steer the selected active Session, continue its finished run, or explicitly edit Issue requirements |
+| Answer       | Answer an identified, still-pending specification question                                          |
+| Merge        | Submit adopted Workspace commits through existing Board Integration                                 |
+
+The selected type limits authority; it does not itself instruct Astra to act.
+An explicit request within that scope needs no additional confirmation. The
+first release requires this selection rather than inferring write authority
+from arbitrary text or reference documents. Execution tool approvals always
+remain in the existing Workspace approval UI.
+
+An implementation receipt names the accepted Issue/Workspace/run. It does not
+mean implementation, tests or merging have completed. You can immediately send
+another message while the existing server-side agent runtime continues.
+Multiple attempts remain separate Workspaces; the chat adds no agent scheduler.
+
+## Questions, direct intervention and results
+
+Important runtime events are stored with their original IDs in the same
+transaction as the underlying event. They are batched into read-only conversation
+turns. Token updates and individual command-output lines do not trigger inference.
+Direct Workspace instructions and answers are included, not just Astra's work.
+
+Blocking input questions retain their run and input IDs. Codex nonblocking
+questions retain attempt/message/question IDs and original options. The
+Workspace question UI and Astra share server-side answer receipts. A direct
+answer prevents another answer from being sent through Astra. Older clients'
+canonical `Question: … / Answer: …` inputs are also checked. A pending command
+is an accepted submission, not evidence that the agent has incorporated it.
+
+Before a change or answer, Astra reads the current Workspace revision. A
+revision conflict requires reconciling intervening instructions. It does not
+silently overwrite the user's direct input. To inspect implementation evidence,
+Astra can read canonical final responses, branch status, tracked reference
+files, Workspace memory, manifests and the existing OpenWiki snapshot.
+
+Merging uses existing Board Integration admission, reservations, source checks,
+validation and publication. Its receipt is only admission. Integration status,
+test evidence, publication and OpenWiki receipt remain separate observations.
+The retired generated LLMWiki pipeline is not restarted by this feature.
+
+## Reconnection and recovery
+
+The browser polls persisted results while visible. Closing it does not stop
+either the conversation worker or delegated agents. Another device using the
+same local LVK identity loads the same conversation. Responses are displayed
+when a model round completes; this version does not stream individual tokens.
+
+Without model configuration, messages and events stay saved. Transient model
+failures retry with bounded backoff. Coding agents continue independently. A
+conversation has one active model turn, while different conversations and
+ordinary Workspaces can progress independently.
+
+Model tool calls are checkpointed before execution and results before replay.
+On restart, existing Issue, command, run and Integration identities are checked.
+If a side effect cannot be confirmed, Astra reports an uncertain result and
+does not blindly replay it. Inspect the named Workspace/Session/Integration
+before issuing a new instruction. A server restart preserves records; it is
+not by itself proof that an operating-system process survived.
+
+## Initial scope and limits
+
+This is the local single-user server feature, with one named conversation per
+project and local owner. Conversation identity is separate from project state;
+multi-user/remote-cloud conversation authorisation is not implemented. The
+existing single-user server access boundary still applies.
+
+Model input uses recent conversation messages and current shared state; full
+history remains in SQLite. A model can page through older conversation messages or request more Workspace detail instead
+of receiving every execution log. Older conversation messages remain reference context; only the current request
+grants authority to operate. The UI provides polling rather than a
+new streaming transport. External model quality and actual Codex execution
+require separate live validation; deterministic tests use substituted clients.
+
+## Development checks
+
+Run `cargo test -p server --lib project_chat` for the conversation tests. They
+use the real SQLite migrations and canonical runtime records with a substituted
+model/execution boundary. Assertions cover capability limits, project isolation,
+question identity, direct answers, persisted event cursors and interrupted tool
+receipts. Run `cargo test -p server --lib` to include existing Integration tests
+with temporary Git repositories. The full server suite also tests static file
+serving and requires the local Web build in `packages/local-web/dist`.
+Use the existing Dockerfile's `NODE_OPTIONS=--max-old-space-size=4096` when
+building the local Web bundle outside Docker as well.
+
+The browser regression is `tests/server/specs/project-chat.spec.ts`. It mounts
+the real chat component on a disposable Vite development server and intercepts
+its APIs. Set `LVK_E2E_BASE_URL` to that server and `LVK_E2E_SOURCE_ROOT` to the
+absolute repository path, then run
+`pnpm exec playwright test -c tests/server/playwright.config.ts project-chat.spec.ts`.
+It checks saved history, continued conversation during execution, exact question
+answers and navigation to existing work. It does not invoke OpenAI or Codex.

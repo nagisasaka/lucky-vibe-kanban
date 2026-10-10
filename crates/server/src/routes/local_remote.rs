@@ -401,7 +401,10 @@ async fn list_local_projects(pool: &SqlitePool) -> Result<Vec<Project>, ApiError
         .map_err(ApiError::from)
 }
 
-async fn get_local_project(pool: &SqlitePool, project_id: Uuid) -> Result<Project, ApiError> {
+pub(crate) async fn get_local_project(
+    pool: &SqlitePool,
+    project_id: Uuid,
+) -> Result<Project, ApiError> {
     ensure_project_metadata(pool).await?;
 
     let row = sqlx::query(
@@ -510,7 +513,7 @@ fn status_from_row(row: &SqliteRow) -> Result<ProjectStatus, sqlx::Error> {
     })
 }
 
-async fn list_project_statuses(
+pub(crate) async fn list_project_statuses(
     pool: &SqlitePool,
     project_id: Uuid,
 ) -> Result<Vec<ProjectStatus>, ApiError> {
@@ -548,7 +551,7 @@ async fn get_project_status(pool: &SqlitePool, status_id: Uuid) -> Result<Projec
     status_from_row(&row).map_err(ApiError::from)
 }
 
-async fn ensure_default_statuses(
+pub(crate) async fn ensure_default_statuses(
     pool: &SqlitePool,
     project_id: Uuid,
 ) -> Result<Vec<ProjectStatus>, ApiError> {
@@ -663,7 +666,10 @@ fn issue_from_row(row: &SqliteRow) -> Result<Issue, sqlx::Error> {
     })
 }
 
-async fn list_project_issues(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<Issue>, ApiError> {
+pub(crate) async fn list_project_issues(
+    pool: &SqlitePool,
+    project_id: Uuid,
+) -> Result<Vec<Issue>, ApiError> {
     let rows = sqlx::query(
         r#"
         SELECT
@@ -700,7 +706,7 @@ async fn list_project_issues(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<
         .map_err(ApiError::from)
 }
 
-async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result<Issue, ApiError> {
+pub(crate) async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result<Issue, ApiError> {
     let row = sqlx::query(
         r#"
         SELECT
@@ -734,7 +740,7 @@ async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result<Issue, Api
     issue_from_row(&row).map_err(ApiError::from)
 }
 
-async fn create_local_issue(
+pub(crate) async fn create_local_issue(
     pool: &SqlitePool,
     request: CreateIssueRequest,
 ) -> Result<Issue, ApiError> {
@@ -794,10 +800,19 @@ async fn create_local_issue(
     get_local_issue(pool, id).await
 }
 
-async fn update_local_issue(
+pub(crate) async fn update_local_issue(
     pool: &SqlitePool,
     issue_id: Uuid,
     changes: UpdateIssueRequest,
+) -> Result<Issue, ApiError> {
+    update_local_issue_checked(pool, issue_id, changes, None).await
+}
+
+pub(crate) async fn update_local_issue_checked(
+    pool: &SqlitePool,
+    issue_id: Uuid,
+    changes: UpdateIssueRequest,
+    expected_updated_at: Option<DateTime<Utc>>,
 ) -> Result<Issue, ApiError> {
     let existing = get_local_issue(pool, issue_id).await?;
     let extension_metadata = changes
@@ -806,7 +821,7 @@ async fn update_local_issue(
     let extension_metadata =
         serde_json::to_string(&extension_metadata).unwrap_or_else(|_| "null".to_string());
 
-    sqlx::query(
+    let updated = sqlx::query(
         r#"
         UPDATE local_issues
         SET
@@ -822,7 +837,7 @@ async fn update_local_issue(
             parent_issue_sort_order = ?,
             extension_metadata = ?,
             updated_at = datetime('now', 'subsec')
-        WHERE id = ?
+        WHERE id = ? AND (? IS NULL OR julianday(updated_at) = julianday(?))
         "#,
     )
     .bind(changes.status_id.unwrap_or(existing.status_id))
@@ -846,9 +861,16 @@ async fn update_local_issue(
     )
     .bind(extension_metadata)
     .bind(issue_id)
+    .bind(expected_updated_at)
+    .bind(expected_updated_at)
     .execute(pool)
     .await?;
 
+    if updated.rows_affected() == 0 {
+        return Err(ApiError::Conflict(
+            "Issue changed while the update was being submitted".into(),
+        ));
+    }
     get_local_issue(pool, issue_id).await
 }
 
@@ -1139,7 +1161,7 @@ async fn get_issue_comment_reaction(
     issue_comment_reaction_from_row(&row).map_err(ApiError::from)
 }
 
-async fn list_project_workspaces(
+pub(crate) async fn list_project_workspaces(
     pool: &SqlitePool,
     project_id: Uuid,
 ) -> Result<Vec<Workspace>, ApiError> {
@@ -1161,7 +1183,7 @@ async fn list_project_workspaces(
         FROM workspaces w
         JOIN local_workspace_links l ON l.workspace_id = w.id
         JOIN local_issues i ON i.id = l.issue_id
-        WHERE l.project_id = ?
+        WHERE l.project_id = ? AND i.project_id = l.project_id
         ORDER BY w.updated_at DESC
         "#,
     )

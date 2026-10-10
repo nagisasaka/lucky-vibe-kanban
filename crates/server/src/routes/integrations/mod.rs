@@ -58,7 +58,7 @@ fn error(error: impl std::fmt::Display) -> ApiError {
     ApiError::BadRequest(error.to_string())
 }
 
-async fn create(
+pub(crate) async fn create(
     State(deployment): State<DeploymentImpl>,
     Json(request): Json<CreateIntegrationRequest>,
 ) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
@@ -93,7 +93,7 @@ async fn repositories(
     Ok(Json(ApiResponse::success(repos)))
 }
 
-async fn project_repository_ids(
+pub(crate) async fn project_repository_ids(
     pool: &sqlx::SqlitePool,
     project_id: Uuid,
 ) -> Result<Vec<Uuid>, sqlx::Error> {
@@ -128,7 +128,7 @@ async fn status(
 /// Read-only projection of the existing outbox/receipt lifecycle. Do not keep
 /// displaying the admission-time word "pending" after a successful Wiki run,
 /// or equate a source Integration success with Wiki acknowledgement.
-async fn observe_wiki(deployment: &DeploymentImpl, run: &mut IntegrationRun) {
+pub(crate) async fn observe_wiki(deployment: &DeploymentImpl, run: &mut IntegrationRun) {
     if !run.payload.published {
         return;
     }

@@ -21,7 +21,7 @@ pub(super) async fn get_executor_config(
 }
 
 /// Read the immutable launch request, not script processes or mutable presets.
-async fn read_executor_config(
+pub(crate) async fn read_executor_config(
     pool: &SqlitePool,
     session_id: Uuid,
 ) -> Result<Option<ExecutorConfig>, ApiError> {

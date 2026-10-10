@@ -12,6 +12,7 @@ import { integrationApi } from '@/shared/lib/integrationApi';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { IntegrationPanel } from './IntegrationPanel';
+import { ProjectChat } from './ProjectChat';
 import { useOrgContext } from '@/shared/hooks/useOrgContext';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useActions } from '@/shared/hooks/useActions';
@@ -203,6 +204,12 @@ export function KanbanContainer() {
   // Get project name by finding the project matching current projectId
   const projectName = projects.find((p) => p.id === projectId)?.name ?? '';
 
+  const [projectView, setProjectView] = useState<'chat' | 'board'>('chat');
+  const showChat =
+    isLocalRemoteApiEnabled() &&
+    !routeState.hostId &&
+    !routeState.issueId &&
+    projectView === 'chat';
   const selectedKanbanIssueId = routeState.issueId;
   const issueComposerKey = useMemo(
     () => buildKanbanIssueComposerKey(routeState.hostId, projectId),
@@ -973,343 +980,393 @@ export function KanbanContainer() {
 
   return (
     <div className="flex flex-col h-full space-y-base">
-      <div
-        className={cn(
-          'px-double pt-double space-y-base',
-          isMobile && 'px-base pt-base'
-        )}
-      >
-        <div
-          className={cn(
-            'min-w-0 items-center gap-half',
-            isMobile ? 'grid grid-cols-[minmax(0,1fr)_auto]' : 'flex flex-wrap'
-          )}
+      {isLocalRemoteApiEnabled() && !routeState.hostId && (
+        <nav
+          aria-label="Project view"
+          className="flex gap-base px-double pt-base"
         >
-          <h2
-            className={cn(
-              'text-2xl font-medium',
-              isMobile && 'min-w-0 truncate text-lg'
-            )}
-            title={projectName}
+          <button
+            type="button"
+            aria-pressed={showChat}
+            onClick={() => {
+              setProjectView('chat');
+              appNavigation.goToProject(projectId);
+            }}
           >
-            {projectName}
-          </h2>
-
-          <ProjectWorkspaceDefaultContext
-            projectId={projectId}
-            organizationId={organizationId}
-            hostId={routeState.hostId}
-            variant="inline"
-            className={cn(
-              isMobile
-                ? 'col-span-2 row-start-2 w-full min-w-0 max-w-full'
-                : 'min-w-[12rem] max-w-full flex-1 basis-[20rem] sm:max-w-[min(560px,60vw)]'
-            )}
-          />
-
-          {isLocalRemoteApiEnabled() && !routeState.hostId && (
-            <IntegrationPanel
-              key={projectId}
-              focusedRunId={focusedIntegration}
-              onClearFocus={() => setFocusedIntegration(null)}
-            />
-          )}
-          <DropdownMenu>
-            {/* Remote Board's existing merge/PR routes remain unchanged. */}
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  'p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors',
-                  isMobile && 'col-start-2 row-start-1'
-                )}
-                aria-label="Project menu"
-              >
-                <DotsThreeIcon className="size-icon-sm" weight="bold" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => appNavigation.goToProjectWorkflows(projectId)}
-              >
-                {t('workflow.templates.title')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={openProjectsGuide}>
-                {t('kanban.openProjectsGuide', 'Projects guide')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => executeAction(Actions.ProjectSettings)}
-              >
-                {t('kanban.editProjectSettings', 'Edit project settings')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div
-          className={cn(
-            'flex gap-base',
-            isMobile
-              ? 'flex-col items-start'
-              : 'min-w-0 flex-nowrap items-start overflow-hidden'
-          )}
-        >
-          <ViewNavTabs
-            activeView={kanbanViewMode}
-            onViewChange={setKanbanViewMode}
-            hiddenStatuses={hiddenStatuses}
-            selectedStatusId={listViewStatusFilter}
-            onStatusSelect={setListViewStatusFilter}
-            className={isMobile ? undefined : 'shrink-0'}
-          />
-          <KanbanFilterBar
-            className={isMobile ? undefined : 'min-w-0 flex-1'}
-            isFiltersDialogOpen={isFiltersDialogOpen}
-            onFiltersDialogOpenChange={setIsFiltersDialogOpen}
-            tags={tags}
-            users={membersWithProfiles}
-            activeViewId={activeViewId}
-            onViewChange={handleKanbanProjectViewChange}
-            viewIds={KANBAN_PROJECT_VIEW_IDS}
-            projectId={projectId}
-            currentUserId={userId}
-            filters={kanbanFilters}
-            showSubIssues={showSubIssues}
-            showWorkspaces={showWorkspaces}
-            hasActiveFilters={hasActiveFilters}
-            onSearchQueryChange={setKanbanSearchQuery}
-            onPrioritiesChange={setKanbanPriorities}
-            onAssigneesChange={setKanbanAssignees}
-            onTagsChange={setKanbanTags}
-            onSortChange={setKanbanSort}
-            onShowSubIssuesChange={setShowSubIssues}
-            onShowWorkspacesChange={setShowWorkspaces}
-            hideBlocked={hideBlocked}
-            onHideBlockedChange={setHideBlocked}
-            onClearFilters={clearKanbanFilters}
-            onCreateIssue={handleAddTask}
-            shouldAnimateCreateButton={shouldAnimateCreateButton}
-            renderFiltersDialog={(props) => <KanbanFiltersDialog {...props} />}
-            isMobile={isMobile}
-          />
-        </div>
-      </div>
-
-      {kanbanViewMode === 'kanban' ? (
-        visibleStatuses.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-low">{t('kanban.noVisibleStatuses')}</p>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-x-auto px-double">
-            <KanbanProvider
-              onDragEnd={handleDragEnd}
-              className="min-w-full"
-              columnClassName="auto-cols-[minmax(260px,1fr)]"
-            >
-              {visibleStatuses.map((status) => {
-                const issueIds = items[status.id] ?? [];
-
-                return (
-                  <KanbanBoard key={status.id}>
-                    <KanbanHeader>
-                      <div className="border-t sticky border-b top-0 z-20 flex shrink-0 items-center justify-between gap-2 p-base bg-secondary">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2 w-2 rounded-full shrink-0"
-                            style={{ backgroundColor: `hsl(${status.color})` }}
-                          />
-                          <p className="m-0 text-sm">{status.name}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddTask(status.id)}
-                          className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
-                          aria-label="Add task"
-                        >
-                          <PlusIcon className="size-icon-xs" weight="bold" />
-                        </button>
-                      </div>
-                    </KanbanHeader>
-                    <KanbanCards id={status.id}>
-                      {issueIds.map((issueId, index) => {
-                        const issue = issueMap[issueId];
-                        if (!issue) return null;
-                        const issueWorkflowAttempts =
-                          workflowAttemptsByIssueId.get(issue.id) ?? [];
-                        const issueWorkspaces =
-                          workspacesByIssueId.get(issue.id) ?? [];
-                        const workspaceIdsShownOnCard = new Set(
-                          issueWorkspaces.map((workspace) => workspace.id)
-                        );
-                        const issueCardPullRequests = getPullRequestsForIssue(
-                          issue.id
-                        ).filter((pr) => {
-                          if (!pr.workspace_id) {
-                            return true;
-                          }
-
-                          // If this PR is already visible under a workspace card,
-                          // do not render it again at the issue level.
-                          return !workspaceIdsShownOnCard.has(pr.workspace_id);
-                        });
-
-                        return (
-                          <KanbanCard
-                            key={issue.id}
-                            id={issue.id}
-                            name={issue.title}
-                            index={index}
-                            className="group"
-                            onClick={(e) => handleCardClick(issue.id, e)}
-                            isOpen={selectedKanbanIssueId === issue.id}
-                            isMobile={isMobile}
-                            isSelected={selectedIssueIds.has(issue.id)}
-                            dragDisabled={isMultiSelectActive}
-                          >
-                            <KanbanCardContent
-                              displayId={issue.simple_id}
-                              title={issue.title}
-                              description={issue.description}
-                              priority={issue.priority}
-                              tags={getTagObjectsForIssue(issue.id)}
-                              assignees={issueAssigneesMap[issue.id] ?? []}
-                              pullRequests={issueCardPullRequests}
-                              relationships={resolveRelationshipsForIssue(
-                                issue.id,
-                                getRelationshipsForIssue(issue.id),
-                                issuesById
-                              )}
-                              isSubIssue={!!issue.parent_issue_id}
-                              isMobile={isMobile}
-                              onPriorityClick={(e) => {
-                                e.stopPropagation();
-                                handleCardPriorityClick(issue.id);
-                              }}
-                              onAssigneeClick={(e) => {
-                                e.stopPropagation();
-                                handleCardAssigneeClick(issue.id);
-                              }}
-                              onMoreActionsClick={() =>
-                                handleCardMoreActionsClick(issue.id)
-                              }
-                              tagEditProps={{
-                                allTags: tags,
-                                selectedTagIds: getTagsForIssue(issue.id).map(
-                                  (it) => it.tag_id
-                                ),
-                                onTagToggle: (tagId) =>
-                                  handleCardTagToggle(issue.id, tagId),
-                                onCreateTag: handleCreateTag,
-                                renderTagEditor: ({
-                                  allTags,
-                                  selectedTagIds,
-                                  onTagToggle,
-                                  onCreateTag,
-                                  trigger,
-                                }) => (
-                                  <SearchableTagDropdownContainer
-                                    tags={allTags}
-                                    selectedTagIds={selectedTagIds}
-                                    onTagToggle={onTagToggle}
-                                    onCreateTag={onCreateTag}
-                                    disabled={false}
-                                    contentClassName=""
-                                    trigger={trigger}
-                                  />
-                                ),
-                              }}
-                            />
-                            {integrations.data
-                              ?.filter((run) =>
-                                run.payload.sources.some(
-                                  (source) =>
-                                    source.selection.card_id === issue.id
-                                )
-                              )
-                              .map((run) => (
-                                <button
-                                  key={run.id}
-                                  type="button"
-                                  className="block text-brand text-sm mt-half"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setFocusedIntegration(run.id);
-                                  }}
-                                >
-                                  Integration: {run.status} ·{' '}
-                                  {run.target_ref.replace('refs/heads/', '')}
-                                </button>
-                              ))}
-                            {(issueWorkflowAttempts.length > 0 ||
-                              issueWorkspaces.length > 0) && (
-                              <div className="mt-base flex flex-col gap-half">
-                                {issueWorkflowAttempts.map((attempt) => (
-                                  <IssueWorkflowAttemptCard
-                                    key={attempt.id}
-                                    attempt={workflowAttemptToKanbanCard(
-                                      attempt
-                                    )}
-                                    onClick={() =>
-                                      openIssueWorkflowAttempt(
-                                        attempt.workflow_id
-                                      )
-                                    }
-                                  />
-                                ))}
-                                {issueWorkspaces.map((workspace) => (
-                                  <IssueWorkspaceCard
-                                    key={workspace.id}
-                                    workspace={workspace}
-                                    onClick={
-                                      workspace.localWorkspaceId
-                                        ? () =>
-                                            openIssueWorkspace(
-                                              issue.id,
-                                              workspace.localWorkspaceId!
-                                            )
-                                        : undefined
-                                    }
-                                    showOwner={false}
-                                    showStatusBadge={false}
-                                    showNoPrText={false}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </KanbanCard>
-                        );
-                      })}
-                    </KanbanCards>
-                  </KanbanBoard>
-                );
-              })}
-            </KanbanProvider>
-          </div>
-        )
-      ) : (
-        <div className="flex-1 overflow-y-auto px-double">
-          <KanbanProvider onDragEnd={handleDragEnd} className="!block !w-full">
-            <IssueListView
-              statuses={listViewStatuses}
-              items={items}
-              issueMap={issueMap}
-              issueAssigneesMap={issueAssigneesMap}
-              getTagObjectsForIssue={getTagObjectsForIssue}
-              getResolvedRelationshipsForIssue={
-                getResolvedRelationshipsForIssue
-              }
-              onIssueClick={handleCardClick}
-              selectedIssueId={selectedKanbanIssueId}
-              selectedIssueIds={selectedIssueIds}
-              isMultiSelectActive={isMultiSelectActive}
-              onIssueCheckboxChange={handleCheckboxChange}
-            />
-          </KanbanProvider>
-        </div>
+            Astra
+          </button>
+          <button
+            type="button"
+            aria-pressed={!showChat}
+            onClick={() => setProjectView('board')}
+          >
+            カンバン / Board
+          </button>
+        </nav>
       )}
+      {showChat ? (
+        <ProjectChat key={projectId} projectId={projectId} />
+      ) : (
+        <>
+          <div
+            className={cn(
+              'px-double pt-double space-y-base',
+              isMobile && 'px-base pt-base'
+            )}
+          >
+            <div
+              className={cn(
+                'min-w-0 items-center gap-half',
+                isMobile
+                  ? 'grid grid-cols-[minmax(0,1fr)_auto]'
+                  : 'flex flex-wrap'
+              )}
+            >
+              <h2
+                className={cn(
+                  'text-2xl font-medium',
+                  isMobile && 'min-w-0 truncate text-lg'
+                )}
+                title={projectName}
+              >
+                {projectName}
+              </h2>
 
-      {isMultiSelectActive && <BulkActionBarContainer projectId={projectId} />}
+              <ProjectWorkspaceDefaultContext
+                projectId={projectId}
+                organizationId={organizationId}
+                hostId={routeState.hostId}
+                variant="inline"
+                className={cn(
+                  isMobile
+                    ? 'col-span-2 row-start-2 w-full min-w-0 max-w-full'
+                    : 'min-w-[12rem] max-w-full flex-1 basis-[20rem] sm:max-w-[min(560px,60vw)]'
+                )}
+              />
+
+              {isLocalRemoteApiEnabled() && !routeState.hostId && (
+                <IntegrationPanel
+                  key={projectId}
+                  focusedRunId={focusedIntegration}
+                  onClearFocus={() => setFocusedIntegration(null)}
+                />
+              )}
+              <DropdownMenu>
+                {/* Remote Board's existing merge/PR routes remain unchanged. */}
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors',
+                      isMobile && 'col-start-2 row-start-1'
+                    )}
+                    aria-label="Project menu"
+                  >
+                    <DotsThreeIcon className="size-icon-sm" weight="bold" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() =>
+                      appNavigation.goToProjectWorkflows(projectId)
+                    }
+                  >
+                    {t('workflow.templates.title')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={openProjectsGuide}>
+                    {t('kanban.openProjectsGuide', 'Projects guide')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => executeAction(Actions.ProjectSettings)}
+                  >
+                    {t('kanban.editProjectSettings', 'Edit project settings')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div
+              className={cn(
+                'flex gap-base',
+                isMobile
+                  ? 'flex-col items-start'
+                  : 'min-w-0 flex-nowrap items-start overflow-hidden'
+              )}
+            >
+              <ViewNavTabs
+                activeView={kanbanViewMode}
+                onViewChange={setKanbanViewMode}
+                hiddenStatuses={hiddenStatuses}
+                selectedStatusId={listViewStatusFilter}
+                onStatusSelect={setListViewStatusFilter}
+                className={isMobile ? undefined : 'shrink-0'}
+              />
+              <KanbanFilterBar
+                className={isMobile ? undefined : 'min-w-0 flex-1'}
+                isFiltersDialogOpen={isFiltersDialogOpen}
+                onFiltersDialogOpenChange={setIsFiltersDialogOpen}
+                tags={tags}
+                users={membersWithProfiles}
+                activeViewId={activeViewId}
+                onViewChange={handleKanbanProjectViewChange}
+                viewIds={KANBAN_PROJECT_VIEW_IDS}
+                projectId={projectId}
+                currentUserId={userId}
+                filters={kanbanFilters}
+                showSubIssues={showSubIssues}
+                showWorkspaces={showWorkspaces}
+                hasActiveFilters={hasActiveFilters}
+                onSearchQueryChange={setKanbanSearchQuery}
+                onPrioritiesChange={setKanbanPriorities}
+                onAssigneesChange={setKanbanAssignees}
+                onTagsChange={setKanbanTags}
+                onSortChange={setKanbanSort}
+                onShowSubIssuesChange={setShowSubIssues}
+                onShowWorkspacesChange={setShowWorkspaces}
+                hideBlocked={hideBlocked}
+                onHideBlockedChange={setHideBlocked}
+                onClearFilters={clearKanbanFilters}
+                onCreateIssue={handleAddTask}
+                shouldAnimateCreateButton={shouldAnimateCreateButton}
+                renderFiltersDialog={(props) => (
+                  <KanbanFiltersDialog {...props} />
+                )}
+                isMobile={isMobile}
+              />
+            </div>
+          </div>
+
+          {kanbanViewMode === 'kanban' ? (
+            visibleStatuses.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-low">{t('kanban.noVisibleStatuses')}</p>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-x-auto px-double">
+                <KanbanProvider
+                  onDragEnd={handleDragEnd}
+                  className="min-w-full"
+                  columnClassName="auto-cols-[minmax(260px,1fr)]"
+                >
+                  {visibleStatuses.map((status) => {
+                    const issueIds = items[status.id] ?? [];
+
+                    return (
+                      <KanbanBoard key={status.id}>
+                        <KanbanHeader>
+                          <div className="border-t sticky border-b top-0 z-20 flex shrink-0 items-center justify-between gap-2 p-base bg-secondary">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: `hsl(${status.color})`,
+                                }}
+                              />
+                              <p className="m-0 text-sm">{status.name}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAddTask(status.id)}
+                              className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
+                              aria-label="Add task"
+                            >
+                              <PlusIcon
+                                className="size-icon-xs"
+                                weight="bold"
+                              />
+                            </button>
+                          </div>
+                        </KanbanHeader>
+                        <KanbanCards id={status.id}>
+                          {issueIds.map((issueId, index) => {
+                            const issue = issueMap[issueId];
+                            if (!issue) return null;
+                            const issueWorkflowAttempts =
+                              workflowAttemptsByIssueId.get(issue.id) ?? [];
+                            const issueWorkspaces =
+                              workspacesByIssueId.get(issue.id) ?? [];
+                            const workspaceIdsShownOnCard = new Set(
+                              issueWorkspaces.map((workspace) => workspace.id)
+                            );
+                            const issueCardPullRequests =
+                              getPullRequestsForIssue(issue.id).filter((pr) => {
+                                if (!pr.workspace_id) {
+                                  return true;
+                                }
+
+                                // If this PR is already visible under a workspace card,
+                                // do not render it again at the issue level.
+                                return !workspaceIdsShownOnCard.has(
+                                  pr.workspace_id
+                                );
+                              });
+
+                            return (
+                              <KanbanCard
+                                key={issue.id}
+                                id={issue.id}
+                                name={issue.title}
+                                index={index}
+                                className="group"
+                                onClick={(e) => handleCardClick(issue.id, e)}
+                                isOpen={selectedKanbanIssueId === issue.id}
+                                isMobile={isMobile}
+                                isSelected={selectedIssueIds.has(issue.id)}
+                                dragDisabled={isMultiSelectActive}
+                              >
+                                <KanbanCardContent
+                                  displayId={issue.simple_id}
+                                  title={issue.title}
+                                  description={issue.description}
+                                  priority={issue.priority}
+                                  tags={getTagObjectsForIssue(issue.id)}
+                                  assignees={issueAssigneesMap[issue.id] ?? []}
+                                  pullRequests={issueCardPullRequests}
+                                  relationships={resolveRelationshipsForIssue(
+                                    issue.id,
+                                    getRelationshipsForIssue(issue.id),
+                                    issuesById
+                                  )}
+                                  isSubIssue={!!issue.parent_issue_id}
+                                  isMobile={isMobile}
+                                  onPriorityClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCardPriorityClick(issue.id);
+                                  }}
+                                  onAssigneeClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCardAssigneeClick(issue.id);
+                                  }}
+                                  onMoreActionsClick={() =>
+                                    handleCardMoreActionsClick(issue.id)
+                                  }
+                                  tagEditProps={{
+                                    allTags: tags,
+                                    selectedTagIds: getTagsForIssue(
+                                      issue.id
+                                    ).map((it) => it.tag_id),
+                                    onTagToggle: (tagId) =>
+                                      handleCardTagToggle(issue.id, tagId),
+                                    onCreateTag: handleCreateTag,
+                                    renderTagEditor: ({
+                                      allTags,
+                                      selectedTagIds,
+                                      onTagToggle,
+                                      onCreateTag,
+                                      trigger,
+                                    }) => (
+                                      <SearchableTagDropdownContainer
+                                        tags={allTags}
+                                        selectedTagIds={selectedTagIds}
+                                        onTagToggle={onTagToggle}
+                                        onCreateTag={onCreateTag}
+                                        disabled={false}
+                                        contentClassName=""
+                                        trigger={trigger}
+                                      />
+                                    ),
+                                  }}
+                                />
+                                {integrations.data
+                                  ?.filter((run) =>
+                                    run.payload.sources.some(
+                                      (source) =>
+                                        source.selection.card_id === issue.id
+                                    )
+                                  )
+                                  .map((run) => (
+                                    <button
+                                      key={run.id}
+                                      type="button"
+                                      className="block text-brand text-sm mt-half"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        setFocusedIntegration(run.id);
+                                      }}
+                                    >
+                                      Integration: {run.status} ·{' '}
+                                      {run.target_ref.replace(
+                                        'refs/heads/',
+                                        ''
+                                      )}
+                                    </button>
+                                  ))}
+                                {(issueWorkflowAttempts.length > 0 ||
+                                  issueWorkspaces.length > 0) && (
+                                  <div className="mt-base flex flex-col gap-half">
+                                    {issueWorkflowAttempts.map((attempt) => (
+                                      <IssueWorkflowAttemptCard
+                                        key={attempt.id}
+                                        attempt={workflowAttemptToKanbanCard(
+                                          attempt
+                                        )}
+                                        onClick={() =>
+                                          openIssueWorkflowAttempt(
+                                            attempt.workflow_id
+                                          )
+                                        }
+                                      />
+                                    ))}
+                                    {issueWorkspaces.map((workspace) => (
+                                      <IssueWorkspaceCard
+                                        key={workspace.id}
+                                        workspace={workspace}
+                                        onClick={
+                                          workspace.localWorkspaceId
+                                            ? () =>
+                                                openIssueWorkspace(
+                                                  issue.id,
+                                                  workspace.localWorkspaceId!
+                                                )
+                                            : undefined
+                                        }
+                                        showOwner={false}
+                                        showStatusBadge={false}
+                                        showNoPrText={false}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </KanbanCard>
+                            );
+                          })}
+                        </KanbanCards>
+                      </KanbanBoard>
+                    );
+                  })}
+                </KanbanProvider>
+              </div>
+            )
+          ) : (
+            <div className="flex-1 overflow-y-auto px-double">
+              <KanbanProvider
+                onDragEnd={handleDragEnd}
+                className="!block !w-full"
+              >
+                <IssueListView
+                  statuses={listViewStatuses}
+                  items={items}
+                  issueMap={issueMap}
+                  issueAssigneesMap={issueAssigneesMap}
+                  getTagObjectsForIssue={getTagObjectsForIssue}
+                  getResolvedRelationshipsForIssue={
+                    getResolvedRelationshipsForIssue
+                  }
+                  onIssueClick={handleCardClick}
+                  selectedIssueId={selectedKanbanIssueId}
+                  selectedIssueIds={selectedIssueIds}
+                  isMultiSelectActive={isMultiSelectActive}
+                  onIssueCheckboxChange={handleCheckboxChange}
+                />
+              </KanbanProvider>
+            </div>
+          )}
+
+          {isMultiSelectActive && (
+            <BulkActionBarContainer projectId={projectId} />
+          )}
+        </>
+      )}
     </div>
   );
 }

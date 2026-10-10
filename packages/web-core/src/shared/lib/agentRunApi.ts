@@ -77,6 +77,24 @@ async function postControl<TBody>(
 }
 
 export const agentRunsApi = {
+  async pendingQuestions(sessionId: string) {
+    return handleApiResponse<import('shared/types').PendingAgentQuestion[]>(
+      await makeLocalApiRequest(`/api/sessions/${sessionId}/questions`)
+    );
+  },
+  async answerQuestion(sessionId: string, questionId: string, answer: string) {
+    return handleApiResponse<unknown>(
+      await makeLocalApiRequest(`/api/sessions/${sessionId}/questions/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          request_id: crypto.randomUUID(),
+          question_id: questionId,
+          answer,
+        }),
+      })
+    );
+  },
   async listForSession(sessionId: string): Promise<AgentRunSummary[]> {
     return handleApiResponse<AgentRunSummary[]>(
       await makeLocalApiRequest(`/api/agent-runs/session/${sessionId}`)

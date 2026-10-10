@@ -198,6 +198,7 @@ async fn main() -> Result<(), VibeKanbanError> {
         .set_preview_proxy_port(actual_proxy_port)
         .expect("client preview proxy port already set");
 
+    routes::project_chat::spawn(deployment.clone());
     let app_router = routes::router(deployment.clone());
 
     // Production only: open browser
