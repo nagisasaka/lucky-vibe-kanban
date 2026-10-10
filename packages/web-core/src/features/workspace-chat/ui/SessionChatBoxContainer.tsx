@@ -528,7 +528,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     localMessage,
     setLocalMessage,
     scratchData,
-    isScratchLoading,
     hasInitialValue,
     saveToScratch,
     clearDraft,
@@ -1342,13 +1341,9 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     isAgentRunActive: isAgentRunActive || isStandaloneScriptActive,
   });
 
-  // During loading, render with empty editor to preserve container UI
-  // In approval mode, don't show queued message - it's for follow-up, not approval response
-  const editorValue = useMemo(() => {
-    if (isScratchLoading || !hasInitialValue) return '';
-    if (pendingApproval) return localMessage;
-    return localMessage;
-  }, [isScratchLoading, hasInitialValue, pendingApproval, localMessage]);
+  // Local edits mark the draft initialized even before its server snapshot arrives.
+  // Do not hide those edits behind the outstanding loading request.
+  const editorValue = hasInitialValue ? localMessage : '';
 
   const renderEditor = useCallback(
     ({

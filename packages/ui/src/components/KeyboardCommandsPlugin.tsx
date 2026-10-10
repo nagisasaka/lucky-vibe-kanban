@@ -87,6 +87,14 @@ export function KeyboardCommandsPlugin({
     const unregisterTab = editor.registerCommand(
       KEY_TAB_COMMAND,
       (event: KeyboardEvent) => {
+        if (
+          editor.isComposing() ||
+          event.isComposing ||
+          event.keyCode === 229
+        ) {
+          return false;
+        }
+
         // Let typeahead use Tab for option selection.
         if (isTypeaheadOpen) {
           return false;
@@ -152,6 +160,14 @@ export function KeyboardCommandsPlugin({
     const unregisterModifier = editor.registerCommand(
       KEY_MODIFIER_COMMAND,
       (event: KeyboardEvent) => {
+        if (
+          editor.isComposing() ||
+          event.isComposing ||
+          event.keyCode === 229
+        ) {
+          return false;
+        }
+
         if (!(event.metaKey || event.ctrlKey) || event.key !== 'Enter') {
           return false;
         }
@@ -177,7 +193,13 @@ export function KeyboardCommandsPlugin({
     const unregisterEnter = editor.registerCommand(
       KEY_ENTER_COMMAND,
       (event: KeyboardEvent | null) => {
-        if (!event) return false;
+        if (
+          !event ||
+          editor.isComposing() ||
+          event.isComposing ||
+          event.keyCode === 229
+        )
+          return false;
 
         // If typeahead is open, let it handle Enter
         if (isTypeaheadOpen) {

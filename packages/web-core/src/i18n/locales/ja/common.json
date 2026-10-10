@@ -51,6 +51,7 @@
     "plan": "計画",
     "tool": "ツール",
     "thinking": "思考中",
+    "processed": "思考内容",
     "toolSummary": {
       "read": "{{path}} を読み込み",
       "searched": "「{{query}}」を検索",

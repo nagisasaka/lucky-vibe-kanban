@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import {
   GearIcon,
   GitBranchIcon,
@@ -9,15 +10,52 @@ import {
   WrenchIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
-import { GeneralSettingsSection } from './GeneralSettingsSection';
-import { ReposSettingsSection } from './ReposSettingsSection';
-import { OrganizationsSettingsSection } from './OrganizationsSettingsSection';
-import { RemoteProjectsSettingsSection } from './RemoteProjectsSettingsSection';
-import { AgentsSettingsSection } from './AgentsSettingsSection';
-import { McpSettingsSection } from './McpSettingsSection';
-import { RelaySettingsSectionContent } from './RelaySettingsSection';
-import { AgentToolsSettingsSection } from './AgentToolsSettingsSection';
-import { ResourceSettingsSection } from './ResourceSettingsSection';
+
+const GeneralSettingsSection = lazy(() =>
+  import('./GeneralSettingsSection').then((module) => ({
+    default: module.GeneralSettingsSection,
+  }))
+);
+const ReposSettingsSection = lazy(() =>
+  import('./ReposSettingsSection').then((module) => ({
+    default: module.ReposSettingsSection,
+  }))
+);
+const OrganizationsSettingsSection = lazy(() =>
+  import('./OrganizationsSettingsSection').then((module) => ({
+    default: module.OrganizationsSettingsSection,
+  }))
+);
+const RemoteProjectsSettingsSection = lazy(() =>
+  import('./RemoteProjectsSettingsSection').then((module) => ({
+    default: module.RemoteProjectsSettingsSection,
+  }))
+);
+const AgentsSettingsSection = lazy(() =>
+  import('./AgentsSettingsSection').then((module) => ({
+    default: module.AgentsSettingsSection,
+  }))
+);
+const McpSettingsSection = lazy(() =>
+  import('./McpSettingsSection').then((module) => ({
+    default: module.McpSettingsSection,
+  }))
+);
+const RelaySettingsSectionContent = lazy(() =>
+  import('./RelaySettingsSection').then((module) => ({
+    default: module.RelaySettingsSectionContent,
+  }))
+);
+const AgentToolsSettingsSection = lazy(() =>
+  import('./AgentToolsSettingsSection').then((module) => ({
+    default: module.AgentToolsSettingsSection,
+  }))
+);
+const ResourceSettingsSection = lazy(() =>
+  import('./ResourceSettingsSection').then((module) => ({
+    default: module.ResourceSettingsSection,
+  }))
+);
 
 export type SettingsSectionType =
   | 'general'

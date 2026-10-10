@@ -124,3 +124,6 @@ docs/daily-radar/*
 testing/
 docs/research/oss-products-wrapping-claude-code-codex.md
 docs/research/agent-mesh-design.md
+
+# Built mobile development preview
+/packages/local-web/dist-preview/

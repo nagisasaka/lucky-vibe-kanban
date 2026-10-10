@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { XIcon } from '@phosphor-icons/react';
 import {
@@ -41,7 +42,12 @@ export function SettingsSection({
       </div>
 
       <div className="space-y-6 px-6 pt-4 overflow-y-auto">
-        {renderSettingsSection(type, initialState, onClose)}
+        <Suspense
+          key={type}
+          fallback={<div role="status">{t('settings.general.loading')}</div>}
+        >
+          {renderSettingsSection(type, initialState, onClose)}
+        </Suspense>
       </div>
     </div>
   );

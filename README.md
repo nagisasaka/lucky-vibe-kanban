@@ -67,16 +67,17 @@ source edits do **not** require an image rebuild. The development app has its ow
 HTTPS port, database, home and work volumes. The stable app continues to manage
 agent work while the development app restarts.
 
-| Command                   | Purpose                                                |
-| ------------------------- | ------------------------------------------------------ |
-| `pnpm run dev`            | Local frontend and backend development                 |
-| `pnpm run dev:container`  | Fixed development ports for container access           |
-| `pnpm run check`          | Web TypeScript checks and the root Rust workspace      |
-| `pnpm run lint`           | Web lint, root Rust Clippy and unused translation keys |
-| `pnpm run format`         | Rust and web formatting                                |
-| `pnpm run server:check`   | Server configuration and ingress tests                 |
-| `cargo test --workspace`  | Root Rust workspace tests                              |
-| `pnpm run generate-types` | Generate shared TypeScript types from Rust             |
+| Command                      | Purpose                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `pnpm run dev`               | Local frontend and backend development                               |
+| `pnpm run dev:container`     | Fixed development ports for container access                         |
+| `pnpm run local-web:preview` | Build and serve a mobile preview on port 4030 (existing API on 4021) |
+| `pnpm run check`             | Web TypeScript checks and the root Rust workspace                    |
+| `pnpm run lint`              | Web lint, root Rust Clippy and unused translation keys               |
+| `pnpm run format`            | Rust and web formatting                                              |
+| `pnpm run server:check`      | Server configuration and ingress tests                               |
+| `cargo test --workspace`     | Root Rust workspace tests                                            |
+| `pnpm run generate-types`    | Generate shared TypeScript types from Rust                           |
 
 The separate `crates/remote` Rust workspace has an upstream private dependency.
 It is not required for local LVK development. See [AGENTS.md](AGENTS.md) for the
@@ -86,6 +87,28 @@ Release builds and publication run in GitHub Actions through
 [`publish-server.yml`](.github/workflows/publish-server.yml). The workflow tests
 the server image before publishing a versioned image to GHCR. Routine source
 checks and hot reload do not require a release build.
+
+### Mobile development preview
+
+With the development backend already running, run `pnpm run local-web:preview`
+and open `http://<server-address>:4030` on your phone. Publish port 4030 if using
+Docker. This serves bundled assets instead of Vite's development modules and
+proxies HTTP and WebSocket API requests to the existing backend on port 4021.
+Set `FRONTEND_PORT` and `BACKEND_PORT` to override these ports. The proxy preserves
+the browser Host header for same-origin checks.
+
+To use the existing container frontend port instead, start the development stack
+with `FRONTEND_MODE=preview pnpm run dev:container` (default frontend port 4020).
+Use this in place of the normal stack start command, not alongside it. Omit
+`FRONTEND_MODE` to return to hot reload. For the managed Docker development
+profile, set `LVK_DEV_FRONTEND_MODE=preview` in the Compose environment and
+recreate the development service; its existing HTTPS URL stays the same.
+
+Restart the command after source changes to rebuild; this mode has no hot reload.
+Its `dist-preview` output is separate from Cargo's embedded frontend assets.
+Builds default to a 4 GiB Node heap, matching the Docker build; an existing
+`NODE_OPTIONS` value overrides this default. This is a development preview;
+use the server image for production deployment.
 
 ## Workspaces and repository memory
 
