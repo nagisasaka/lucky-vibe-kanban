@@ -9,6 +9,11 @@ const run = "50000000-0000-0000-0000-000000000005";
 test("Astra restores history, accepts another request while running, answers exact questions and opens existing work", async ({
   page,
 }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+    console.error(error.message);
+  });
   test.skip(
     !process.env.LVK_E2E_SOURCE_ROOT,
     "Requires a disposable development Vite server",
@@ -112,16 +117,39 @@ test("Astra restores history, accepts another request while running, answers exa
       body: `<!doctype html><html><body><div id="fixture"></div><script type="module">
     import RefreshRuntime from '/@react-refresh';
     RefreshRuntime.injectIntoGlobalHook(window); window.$RefreshReg$=()=>{}; window.$RefreshSig$=()=>type=>type; window.__vite_plugin_react_preamble_installed__=true;
-    const fixture=await import('/@fs${process.env.LVK_E2E_SOURCE_ROOT}/tests/server/fixtures/project-chat.tsx'); fixture.mount();
+    const fixture=await import('/@fs${process.env.LVK_E2E_SOURCE_ROOT}/tests/server/fixtures/project-chat.tsx'); fixture.mount(); document.body.dataset.fixtureReady='true';
   </script></body></html>`,
     }),
   );
   await page.goto("/__astra-chat-fixture");
+  // Cold Vite dependency transforms are setup, separate from UI response time.
+  await page.waitForFunction(
+    () => document.body.dataset.fixtureReady === "true",
+    undefined,
+    { timeout: 90_000 },
+  );
   await expect(
     page.getByText(
       "Implementation was accepted; tests and merge are unverified.",
     ),
   ).toBeVisible();
+  // The project conversation must preserve Japanese input while its state polls,
+  // just as the Workspace composer does while execution output arrives.
+  const composer = page.getByLabel("Message to Astra");
+  await composer.fill("相談中の入力");
+  await page.waitForResponse(
+    (response) =>
+      response.url().includes(`/api/projects/${project}/chat`) &&
+      response.request().method() === "GET",
+  );
+  await composer.dispatchEvent("keydown", {
+    key: "Enter",
+    code: "Enter",
+    isComposing: true,
+  });
+  await expect(composer).toHaveValue("相談中の入力");
+  await expect(composer).toBeFocused();
+  expect(requests).toHaveLength(0);
   await page
     .getByLabel("Message to Astra")
     .fill("Discuss another idea while the agent runs");
@@ -155,4 +183,5 @@ test("Astra restores history, accepts another request while running, answers exa
   await expect(page.getByLabel("Navigation")).toHaveText(
     `goToProjectIssueWorkspace:${project}:${issue}:${workspace}`,
   );
+  expect(pageErrors).toEqual([]);
 });

@@ -28,6 +28,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
+    cwd: repoRoot,
     command: `pnpm exec vite --host 127.0.0.1 --port ${port} --strictPort --config tests/workflow/vite.config.ts`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
