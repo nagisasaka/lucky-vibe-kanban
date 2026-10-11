@@ -100,6 +100,8 @@ function Harness() {
   const [value, setValue] = useState("");
   const [log, setLog] = useState("");
   const [draft, setDraft] = useState("");
+  const [toolsExpanded, setToolsExpanded] = useState(false);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const [shortcut, setShortcut] = useState("Enter");
   api.setLog = setLog;
   api.setDraft = setDraft;
@@ -117,6 +119,11 @@ function Harness() {
       <Editor id="log" value={log} editable={false} />
       <Editor id="other-draft" value={draft} onChange={setDraft} />
       <ChatAggregatedToolEntries
+        summary="ツール呼び出し完了"
+        expanded={toolsExpanded}
+        onToggle={() => setToolsExpanded((value) => !value)}
+        isHovered={false}
+        onHoverChange={() => {}}
         entries={[
           {
             expansionKey: "a",
@@ -134,6 +141,10 @@ function Harness() {
         ]}
       />
       <ChatAggregatedToolEntries
+        expanded={false}
+        onToggle={() => {}}
+        isHovered={false}
+        onHoverChange={() => {}}
         summary="単独コマンド"
         entries={[
           {
@@ -145,6 +156,10 @@ function Harness() {
         ]}
       />
       <ChatCollapsedThinking
+        expanded={thinkingExpanded}
+        onToggle={() => setThinkingExpanded((value) => !value)}
+        isHovered={false}
+        onHoverChange={() => {}}
         entries={[{ expansionKey: "t", content: "確認した内容" }]}
         renderMarkdown={({ content }) => <p>{content}</p>}
       />

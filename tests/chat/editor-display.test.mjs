@@ -4,7 +4,7 @@ import { build } from "esbuild";
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 
-test("inline activity, editor focus during updates, and IME submission", async () => {
+test("collapsed activity, editor focus during updates, and IME submission", async () => {
   const result = await build({
     entryPoints: [
       fileURLToPath(new URL("./editor-display.fixture.tsx", import.meta.url)),
@@ -113,25 +113,32 @@ test("inline activity, editor focus during updates, and IME submission", async (
     await page.waitForFunction(
       () => document.querySelector("#composer").textContent === "",
     );
-    for (const text of [
-      "rg needle",
-      "検索結果",
-      "ファイルの内容",
-      "確認した内容",
-      "思考内容",
-      "単独の出力",
-    ]) {
-      assert.equal(
-        await page.getByText(text, { exact: true }).isVisible(),
-        true,
-      );
+    for (const text of ["検索結果", "ファイルの内容", "確認した内容", "単独の出力"]) {
+      assert.equal(await page.getByText(text, { exact: true }).count(), 0);
     }
-    assert.equal(
-      await page.getByText("単独コマンド", { exact: true }).count(),
-      1,
-    );
-    assert.equal(await page.getByText("Processed", { exact: true }).count(), 0);
-    assert.equal(await page.locator("[aria-expanded]").count(), 0);
+    const tools = page.getByRole("button", { name: "ツール呼び出し完了" });
+    assert.equal(await tools.getAttribute("aria-expanded"), "false");
+    await tools.click();
+    const search = page.getByRole("button", { name: "検索", exact: true });
+    await search.click();
+    assert.equal(await page.getByText("rg needle", { exact: true }).isVisible(), true);
+    assert.equal(await page.getByText("検索結果", { exact: true }).isVisible(), true);
+    await search.click();
+    assert.equal(await page.getByText("検索結果", { exact: true }).count(), 0);
+    await page.getByRole("button", { name: "読み込み", exact: true }).click();
+    assert.equal(await page.getByText("ファイルの内容", { exact: true }).isVisible(), true);
+    await tools.click();
+    assert.equal(await page.getByText("ファイルの内容", { exact: true }).count(), 0);
+    const thinking = page.getByRole("button", { name: "思考内容" });
+    await thinking.click();
+    assert.equal(await page.getByText("確認した内容", { exact: true }).isVisible(), true);
+    await thinking.click();
+    assert.equal(await page.getByText("確認した内容", { exact: true }).count(), 0);
+    const single = page.getByRole("button", { name: "単独コマンド" });
+    await single.click();
+    assert.equal(await page.getByText("単独の出力", { exact: true }).isVisible(), true);
+    await single.click();
+    assert.equal(await page.getByText("単独の出力", { exact: true }).count(), 0);
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

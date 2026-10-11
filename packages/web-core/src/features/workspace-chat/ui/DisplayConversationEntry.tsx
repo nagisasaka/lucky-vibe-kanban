@@ -1289,6 +1289,11 @@ function AggregatedGroupEntry({
   executionProcess: ExecutionProcess | null;
 }) {
   const { t } = useTranslation('tasks');
+  const [expanded, toggle] = usePersistedExpanded(
+    `tool:${group.patchKey}`,
+    false
+  );
+  const [isHovered, setIsHovered] = useState(false);
 
   // Extract summary and status from each entry in the group
   const aggregatedEntries = useMemo(() => {
@@ -1366,6 +1371,14 @@ function AggregatedGroupEntry({
       };
     });
   }, [executionProcess, group.entries]);
+
+  const handleToggle = useCallback(() => {
+    toggle();
+  }, [toggle]);
+
+  const handleHoverChange = useCallback((hovered: boolean) => {
+    setIsHovered(hovered);
+  }, []);
 
   const getCommandDetail = () => {
     const categoryCounts: Record<string, number> = {
@@ -1485,9 +1498,14 @@ function AggregatedGroupEntry({
   return (
     <ChatAggregatedToolEntries
       entries={aggregatedEntries}
+      expanded={expanded}
+      isHovered={isHovered}
+      onToggle={handleToggle}
+      onHoverChange={handleHoverChange}
       summary={summary}
       detail={detail}
       icon={icon}
+      forceCollapsible={group.aggregationType === 'tool_calls'}
       startedAt={timing.startedAt}
       endedAt={timing.endedAt}
     />
@@ -1508,6 +1526,12 @@ function AggregatedThinkingGroupEntry({
   workspaceId: string | undefined;
   sessionId: string | undefined;
 }) {
+  const [expanded, toggle] = usePersistedExpanded(
+    `entry:${group.patchKey}`,
+    false
+  );
+  const [isHovered, setIsHovered] = useState(false);
+
   // Extract thinking entries from the group
   const thinkingEntries = useMemo(() => {
     return group.entries
@@ -1523,6 +1547,13 @@ function AggregatedThinkingGroupEntry({
       }));
   }, [executionProcess, group.entries]);
 
+  const handleToggle = useCallback(() => {
+    toggle();
+  }, [toggle]);
+
+  const handleHoverChange = useCallback((hovered: boolean) => {
+    setIsHovered(hovered);
+  }, []);
   const timing = getPatchGroupTiming({
     entries: group.entries,
     isRunning: false,
@@ -1532,6 +1563,10 @@ function AggregatedThinkingGroupEntry({
   return (
     <ChatCollapsedThinking
       entries={thinkingEntries}
+      expanded={expanded}
+      isHovered={isHovered}
+      onToggle={handleToggle}
+      onHoverChange={handleHoverChange}
       workspaceId={workspaceId}
       startedAt={timing.startedAt}
       endedAt={timing.endedAt}

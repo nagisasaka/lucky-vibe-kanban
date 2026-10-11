@@ -70,6 +70,10 @@ export function ToolSummaryEntry({
         startedAt={startedAt}
         endedAt={endedAt}
         icon={TerminalWindowIcon}
+        expanded={expanded}
+        onToggle={toggle}
+        isHovered={false}
+        onHoverChange={() => {}}
       />
     );
   }
