@@ -9,31 +9,38 @@ remain available through the work links below the conversation.
 
 ## Configure the server
 
-Set `OPENAI_API_KEY` and `LVK_ASTRA_MODEL` in the **server process environment**,
-using your deployment's existing environment/secret injection. Neither value
-is accepted from chat tools; the key is never returned by the chat API. For
-Docker Compose, explicitly pass these variables to the LVK service: a value in
-the host's `.env` alone is not automatically a container environment variable.
-Restart the server after changing them. Use a general dialogue model available
-to your OpenAI API account that supports Responses API function calling.
-There is deliberately no model ID inferred from the display name “Astra”.
+Astra uses the **ChatGPT login managed by Codex on the LVK server**. Run
+`codex login` as the same operating-system user, in the same container and with
+the same `CODEX_HOME` as the LVK process, and choose ChatGPT sign-in. An existing
+ChatGPT login can be reused. You do not need an Astra API key or a separate
+Astra sign-in. Codex manages credentials and token refresh; LVK never copies
+those tokens into its settings or chat history.
 
-For GPT-6 Astra, set `LVK_ASTRA_MODEL=gpt-6-astra`. Reasoning effort defaults to
-`xhigh`; override it with `LVK_ASTRA_REASONING_EFFORT` using a value supported by
-your selected model. The adapter sends this as Responses API `reasoning.effort`.
-[GPT-6 Astra model documentation](https://developers.openai.com/api/docs/models/gpt-6-astra)
-lists the supported effort levels. Changing model or effort requires a server restart.
+Set `LVK_ASTRA_MODEL` in the server process environment to the model you want
+to use, for example `gpt-6-astra`. The model must be available to the signed-in
+ChatGPT account. Reasoning effort defaults to `xhigh`; override it with
+`LVK_ASTRA_REASONING_EFFORT`, or save model preferences through
+`/api/astra/settings`. Environment changes require a server restart.
 
-This uses the official `https://api.openai.com/v1/responses` endpoint,
-`store: false`, serial function calls and local conversation persistence.
-The adapter uses LVK's existing Rust `reqwest` dependency. OpenAI lists Rust
-clients as community libraries, so LVK does not add a separate language runtime
-or service just to host an official SDK. The protocol references are
-[Responses function calling](https://developers.openai.com/api/docs/guides/function-calling)
-and [OpenAI libraries](https://developers.openai.com/api/docs/libraries).
+Astra requires Codex 0.154.0 or newer, with App Server ephemeral threads,
+environment selection and structured turn output. It checks for a
+ChatGPT account and does not fall back to API-key authentication. Without a
+ChatGPT login, conversations remain saved and the chat shows sign-in guidance.
+Login availability is cached for up to 15 seconds. A successful account check
+does not verify model access or remaining usage; failed turns remain queued
+with the existing retry policy.
 
-Codex authentication remains separate. Configure it through the existing
-agent settings. Astra's API key does not authenticate the coding agent.
+Each inference runs in an ephemeral Codex thread with no execution environment,
+with inherited MCP servers, plugins, shell tools and skill instructions disabled.
+Codex returns a structured reply or a proposed LVK operation. LVK saves that
+proposal before executing it through the existing project-scoped permission
+checks and durable receipts. Astra's conversation history stays in LVK.
+Legacy saved Astra keys are preserved until explicitly cleared, but are not
+used. New API-key values are rejected.
+
+See the official [Codex App Server authentication documentation](https://learn.chatgpt.com/docs/app-server)
+for managed ChatGPT login and token refresh.
+
 Implementation needs a repository associated with the project through the
 existing Git working-location default, repository binding or a linked Workspace. Astra cannot choose an
 unrelated host repository or create repository permissions.
