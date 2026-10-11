@@ -3,7 +3,7 @@
 use axum::{Extension, Json, extract::State};
 use db::models::session::Session;
 use deployment::Deployment;
-use executors::runtime::{AgentRunPortCommand, AgentRunStatus};
+use executors::runtime::AgentRunPortCommand;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -35,7 +35,27 @@ pub(crate) async fn pending(
     session: Uuid,
 ) -> Result<Vec<PendingAgentQuestion>, ApiError> {
     reconcile_answers(pool, session).await?;
-    let events:Vec<(Uuid,Uuid,Uuid,String,String)>=sqlx::query_as("SELECT e.run_attempt_id,e.agent_run_id,r.workspace_id,e.event_envelope,e.created_at FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id WHERE e.session_id=? AND json_extract(e.event_envelope,'$.payload.type')='provider_extension' AND json_extract(e.event_envelope,'$.payload.data.provider_namespace')='codex' AND json_extract(e.event_envelope,'$.payload.data.provider_event')='async_questions' ORDER BY e.created_at").bind(session).fetch_all(pool).await?;
+    // Questions belong to the attempt that emitted them, not to the whole
+    // conversation. Keep the audit event, but expire its answer UI when that
+    // attempt ends; a later run/retry must not revive it.
+    let events: Vec<(Uuid, Uuid, Uuid, String, String)> = sqlx::query_as(
+        "SELECT e.run_attempt_id, e.agent_run_id, r.workspace_id, e.event_envelope, e.created_at
+         FROM agent_events e
+         JOIN agent_runs r ON r.id=e.agent_run_id
+         JOIN agent_run_attempts a ON a.id=e.run_attempt_id AND a.agent_run_id=r.id
+         WHERE e.session_id=?
+           AND r.status IN ('pending','starting','running','awaiting_input','awaiting_approval')
+           AND a.status IN ('pending','starting','running','awaiting_input','awaiting_approval')
+           AND NOT EXISTS(SELECT 1 FROM agent_run_attempts newer
+                          WHERE newer.agent_run_id=r.id AND newer.attempt_number>a.attempt_number)
+           AND json_extract(e.event_envelope,'$.payload.type')='provider_extension'
+           AND json_extract(e.event_envelope,'$.payload.data.provider_namespace')='codex'
+           AND json_extract(e.event_envelope,'$.payload.data.provider_event')='async_questions'
+         ORDER BY e.created_at",
+    )
+    .bind(session)
+    .fetch_all(pool)
+    .await?;
     let mut result = Vec::new();
     for (attempt, run, workspace, envelope, created_at) in events {
         let envelope: Value = serde_json::from_str(&envelope)
@@ -159,12 +179,12 @@ pub(crate) async fn answer(
         .find(|q| q.id == request.question_id)
         .ok_or_else(|| {
             ApiError::Conflict(
-                "Question has already been answered or does not belong to this Session".into(),
+                "Question has expired, has already been answered, or does not belong to this Session".into(),
             )
         })?;
-    // Routing only needs identity and lifecycle. Do not deserialize historical
-    // provider request envelopes just to answer a question.
-    let (run_id, status) = latest_run(pool, session_id).await?;
+    // Always steer the run which asked. Never start a follow-up or redirect a
+    // late answer to a different run; dispatch revalidates lifecycle as well.
+    let run_id = question.agent_run_id;
     sqlx::query("INSERT INTO agent_question_answers(question_id,session_id,request_id,actor,answer) VALUES(?,?,?,?,?)").bind(&request.question_id).bind(session_id).bind(request.request_id).bind(actor).bind(&request.answer).execute(pool).await?;
     let content = format!(
         "Question: {}\nAnswer: {}\n\nLVK question: {}\nAstra operation: {}",
@@ -174,33 +194,19 @@ pub(crate) async fn answer(
         request.request_id
     );
     let delivery: Result<Value, ApiError> = async {
-        let result = if status.is_terminal() {
-            let executor = super::executor_config::read_executor_config(pool, session_id)
-                .await?
-                .ok_or_else(|| {
-                    ApiError::Conflict("Session executor configuration unavailable".into())
-                })?;
-            let snapshot = super::start_coding_agent_execution_for_session(
-                deployment, session, content, None, executor, None, None,
-            )
-            .await?;
-            json!({"accepted":true,"agent_run_id":snapshot.agent_run_id,"state":snapshot.state})
-        } else {
-            let response = agent_runs::dispatch_control(
-                deployment,
-                run_id,
-                agent_runs::AgentRunControlIdentity {
-                    command_id: request.request_id,
-                    idempotency_key: format!("question:{}", request.question_id),
-                    correlation_id: request.request_id,
-                    created_at: chrono::Utc::now(),
-                },
-                AgentRunPortCommand::Steer { content },
-            )
-            .await?;
-            json!({"accepted":true,"agent_run_id":run_id,"state":response.0.into_data()})
-        };
-        Ok(result)
+        let response = agent_runs::dispatch_control(
+            deployment,
+            run_id,
+            agent_runs::AgentRunControlIdentity {
+                command_id: request.request_id,
+                idempotency_key: format!("question:{}", request.question_id),
+                correlation_id: request.request_id,
+                created_at: chrono::Utc::now(),
+            },
+            AgentRunPortCommand::Steer { content },
+        )
+        .await?;
+        Ok(json!({"accepted":true,"agent_run_id":run_id,"state":response.0.into_data()}))
     }
     .await;
     let result = match delivery {
@@ -219,15 +225,6 @@ pub(crate) async fn answer(
         .execute(pool)
         .await?;
     Ok(result)
-}
-
-async fn latest_run(pool: &SqlitePool, session: Uuid) -> Result<(Uuid, AgentRunStatus), ApiError> {
-    Ok(sqlx::query_as(
-        "SELECT id,status FROM agent_runs WHERE session_id=? ORDER BY julianday(created_at) DESC,rowid DESC LIMIT 1",
-    )
-    .bind(session)
-    .fetch_one(pool)
-    .await?)
 }
 
 // A reservation alone must not disable the UI forever after a pre-dispatch
@@ -307,7 +304,9 @@ mod tests {
     async fn database() -> SqlitePool {
         let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
         sqlx::raw_sql(
-            "CREATE TABLE agent_runs (id BLOB, session_id BLOB, status TEXT, request_envelope TEXT, created_at TEXT);
+            "CREATE TABLE agent_runs (id BLOB, session_id BLOB, status TEXT, request_envelope TEXT, created_at TEXT, workspace_id BLOB);
+             CREATE TABLE agent_run_attempts (id BLOB, agent_run_id BLOB, attempt_number INTEGER, status TEXT);
+             CREATE TABLE agent_events (run_attempt_id BLOB, agent_run_id BLOB, session_id BLOB, event_envelope TEXT, created_at TEXT);
              CREATE TABLE agent_run_commands (command_id BLOB, delivery_status TEXT);
              CREATE TABLE agent_question_answers (question_id TEXT PRIMARY KEY, session_id BLOB, request_id BLOB, result TEXT);",
         ).execute(&pool).await.unwrap();
@@ -315,27 +314,130 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn routes_using_latest_lifecycle_without_decoding_historical_request() {
+    async fn questions_expire_with_their_originating_attempt_without_erasing_history() {
         let pool = database().await;
         let session = Uuid::new_v4();
-        let newest = Uuid::new_v4();
-        for (id, time, status) in [
-            (Uuid::new_v4(), "2026-10-10T01:00:00Z", "succeeded"),
-            (newest, "2026-10-10 02:00:00", "running"),
+        let run = Uuid::new_v4();
+        let attempt = Uuid::new_v4();
+        sqlx::query("INSERT INTO agent_runs VALUES(?,?,'running','{}','2026-10-10',?)")
+            .bind(run)
+            .bind(session)
+            .bind(Uuid::new_v4())
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO agent_run_attempts VALUES(?,?,1,'running')")
+            .bind(attempt)
+            .bind(run)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let envelope = json!({"payload":{"type":"provider_extension","data":{
+            "provider_namespace":"codex","provider_event":"async_questions",
+            "payload":{"schema_version":1,"message_id":"question-message",
+                "questions":[{"title":"Which color?","options":["Blue"]}]}
+        }}});
+        sqlx::query("INSERT INTO agent_events VALUES(?,?,?,?, '2026-10-10')")
+            .bind(attempt)
+            .bind(run)
+            .bind(session)
+            .bind(envelope.to_string())
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(pending(&pool, session).await.unwrap().len(), 1);
+        assert!(pending(&pool, Uuid::new_v4()).await.unwrap().is_empty());
+        for status in [
+            "pending",
+            "starting",
+            "running",
+            "awaiting_input",
+            "awaiting_approval",
+            "cancelling",
+            "succeeded",
+            "failed",
+            "cancelled",
+            "crashed",
+            "audit_failed",
         ] {
-            sqlx::query("INSERT INTO agent_runs VALUES(?,?,?,'{}',?)")
-                .bind(id)
-                .bind(session)
+            let active = matches!(
+                status,
+                "pending" | "starting" | "running" | "awaiting_input" | "awaiting_approval"
+            );
+            sqlx::query("UPDATE agent_runs SET status=?")
                 .bind(status)
-                .bind(time)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert_eq!(
+                pending(&pool, session).await.unwrap().len(),
+                usize::from(active),
+                "run {status}"
+            );
+            sqlx::query("UPDATE agent_runs SET status='running'")
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("UPDATE agent_run_attempts SET status=?")
+                .bind(status)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert_eq!(
+                pending(&pool, session).await.unwrap().len(),
+                usize::from(active),
+                "attempt {status}"
+            );
+            sqlx::query("UPDATE agent_run_attempts SET status='running'")
                 .execute(&pool)
                 .await
                 .unwrap();
         }
-        assert_eq!(
-            latest_run(&pool, session).await.unwrap(),
-            (newest, AgentRunStatus::Running)
-        );
+        // Even an incompletely updated old attempt cannot resurface on retry.
+        sqlx::query("INSERT INTO agent_run_attempts VALUES(?,?,2,'running')")
+            .bind(Uuid::new_v4())
+            .bind(run)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(pending(&pool, session).await.unwrap().is_empty());
+        let count: i64 = sqlx::query_scalar("SELECT count(*) FROM agent_events")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
+
+        // A new conversation turn exposes only its own questions.
+        sqlx::query("UPDATE agent_runs SET status='succeeded'")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let next_run = Uuid::new_v4();
+        let next_attempt = Uuid::new_v4();
+        sqlx::query("INSERT INTO agent_runs VALUES(?,?,'running','{}','2026-10-11',?)")
+            .bind(next_run)
+            .bind(session)
+            .bind(Uuid::new_v4())
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO agent_run_attempts VALUES(?,?,1,'running')")
+            .bind(next_attempt)
+            .bind(next_run)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO agent_events VALUES(?,?,?,?, '2026-10-11')")
+            .bind(next_attempt)
+            .bind(next_run)
+            .bind(session)
+            .bind(envelope.to_string())
+            .execute(&pool)
+            .await
+            .unwrap();
+        let questions = pending(&pool, session).await.unwrap();
+        assert_eq!(questions.len(), 1);
+        assert_eq!(questions[0].agent_run_id, next_run);
     }
 
     #[tokio::test]
@@ -373,7 +475,7 @@ mod tests {
                     .unwrap();
             }
             if evidence == "run" {
-                sqlx::query("INSERT INTO agent_runs VALUES(?,?,'succeeded',?,'2026-10-10')")
+                sqlx::query("INSERT INTO agent_runs(id,session_id,status,request_envelope,created_at) VALUES(?,?,'succeeded',?,'2026-10-10')")
                     .bind(Uuid::new_v4())
                     .bind(session)
                     .bind(
