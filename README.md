@@ -72,12 +72,16 @@ agent work while the development app restarts.
 | `pnpm run dev`               | Local frontend and backend development                               |
 | `pnpm run dev:container`     | Fixed development ports for container access                         |
 | `pnpm run local-web:preview` | Build and serve a mobile preview on port 4030 (existing API on 4021) |
-| `pnpm run check`             | Web TypeScript checks and the root Rust workspace                    |
-| `pnpm run lint`              | Web lint, root Rust Clippy and unused translation keys               |
+| `pnpm run check`             | Web TypeScript checks and server Rust packages                       |
+| `pnpm run lint`              | Web lint, server Rust Clippy and unused translation keys             |
 | `pnpm run format`            | Rust and web formatting                                              |
 | `pnpm run server:check`      | Server configuration and ingress tests                               |
-| `cargo test --workspace`     | Root Rust workspace tests                                            |
+| `pnpm run backend:test`      | Server Rust workspace tests (excluding Tauri)                        |
 | `pnpm run generate-types`    | Generate shared TypeScript types from Rust                           |
+
+Server checks exclude the Tauri desktop app. For desktop changes, also run
+`pnpm run tauri:check`, `pnpm run tauri:lint`, and `pnpm run tauri:test` with
+the platform development libraries installed (GTK/WebKit on Linux).
 
 The separate `crates/remote` Rust workspace has an upstream private dependency.
 It is not required for local LVK development. See [AGENTS.md](AGENTS.md) for the

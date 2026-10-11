@@ -30,14 +30,22 @@ Do not manually edit shared/remote-types.ts, instead edit crates/remote/src/bin/
 - Run dev (web app + backend with ports auto-assigned): `pnpm run dev`
 - Backend (watch): `pnpm run backend:dev:watch`
 - Web app (dev): `pnpm run local-web:dev`
-- Type checks: `pnpm run check` (local-web, remote-web, web-core, UI, and the root Rust workspace) and `pnpm run backend:check` (root Rust workspace only; excludes the separate `crates/remote` workspace)
-- Rust tests: `cargo test --workspace` (root Rust workspace only)
+- Type checks: `pnpm run check` (local-web, remote-web, web-core, UI, and the root Rust workspace) and `pnpm run backend:check` (server Rust workspace packages; excludes Tauri and the separate `crates/remote` workspace)
+- Rust tests: `pnpm run backend:test` (root workspace excluding Tauri)
 - Generate TS types from Rust: `pnpm run generate-types` (or `generate-types:check` in CI)
 - Prepare SQLx (offline): `pnpm run prepare-db`
 - Prepare SQLx (remote package, postgres): `pnpm run remote:prepare-db`
 - Release validation: use the GitHub Actions server image workflow, then verify and run the versioned image from GHCR. LVK does not publish npm packages.
 - Format code: `pnpm run format` (runs `cargo fmt` for all backend Rust workspaces + web-core/web Prettier)
 - Lint: `pnpm run lint` (runs web/ui ESLint, `cargo clippy` for the root Rust workspace, and the unused-i18n-key check)
+
+### Server and desktop validation scope
+
+- Normal server/container development and Integration validation use `pnpm run check`, `pnpm run lint`, and `pnpm run backend:test`. Their Rust gates exclude only `vibe-kanban-tauri`, matching the backend CI scope. Shared desktop-bridge code remains included.
+- Desktop changes additionally require `pnpm run tauri:check`, `pnpm run tauri:lint`, and `pnpm run tauri:test` in a desktop-capable environment. Linux needs the GTK/WebKit development packages installed by the Tauri CI job. Do not count unavailable desktop validation as passed.
+- Do not use unqualified `cargo check/clippy/test --workspace` as a server-container gate: it includes Tauri and requires desktop system libraries absent from the server image. Do not install desktop packages into the production image just to run server validation.
+- Before Rust server tests in a fresh checkout, build the real frontend with `pnpm --dir packages/local-web run build`; `production_fallback_keeps_api_misses_out_of_spa` reads `packages/local-web/dist/index.html`. Run heavyweight Rust gates sequentially in a checkout.
+- Formal Integration must validate the frozen candidate using these scoped commands. Missing prerequisites are failures, not successful checks; fix the plan/environment and create a new Integration instead of bypassing validation.
 
 ### Public-fork validation scope
 
@@ -63,7 +71,7 @@ Do not manually edit shared/remote-types.ts, instead edit crates/remote/src/bin/
 - Keep functions small, add `Debug`/`Serialize`/`Deserialize` where useful.
 
 ## Testing Guidelines
-- Rust: prefer unit tests alongside code (`#[cfg(test)]`), run `cargo test --workspace`. Add tests for new logic and edge cases.
+- Rust: prefer unit tests alongside code (`#[cfg(test)]`), run `pnpm run backend:test`. Add tests for new logic and edge cases.
 - Web app: ensure `pnpm run check` and `pnpm run lint` pass. If adding runtime logic, include lightweight tests (e.g., Vitest) in the same directory.
 
 ## Security & Config Tips
