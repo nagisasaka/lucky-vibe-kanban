@@ -1,3 +1,4 @@
+pub mod instance;
 use std::{env, sync::OnceLock};
 
 use directories::ProjectDirs;

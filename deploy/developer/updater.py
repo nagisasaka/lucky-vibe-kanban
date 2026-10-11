@@ -156,6 +156,8 @@ def known_service_process(command, development=False):
 def database_paths(container):
     mounts = container["info"]["Mounts"]
     env = dict(value.split("=", 1) for value in container["info"]["Config"]["Env"] if "=" in value)
+    if env.get("LVK_INSTANCE_DIR"):
+        raise Busy("Container-wide LVK_INSTANCE_DIR requires a reviewed host updater configuration")
     if env.get("XDG_DATA_HOME", "/home/appuser/.local/share") != "/home/appuser/.local/share":
         raise Busy("Custom XDG_DATA_HOME requires a reviewed host updater configuration")
     if container["service"] == "development":
@@ -177,8 +179,9 @@ class Updater:
         self.compose = ["docker", "compose", "--project-directory", config["deployment_directory"]]
         for file in config["compose_files"]:
             self.compose += ["-f", str(Path(config["deployment_directory"]) / file)]
-        self.compose += ["--profile", "development"]
-        self.services = config.get("services", ["lvk", "development"])
+        self.services = config.get("services", ["lvk"])
+        if "development" in self.services:
+            self.compose += ["--profile", "development"]
         if not self.services or set(self.services) - {"lvk", "development"}:
             raise ValueError("Only LVK and its optional development service can be updated")
 

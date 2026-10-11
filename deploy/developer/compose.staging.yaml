@@ -1,0 +1,9 @@
+# Optional contributor-only overlay. Standard installations do not expose staging.
+# Use after installing an image containing the opt-in nginx staging listener.
+services:
+  lvk:
+    ports:
+      - "${LVK_STAGING_HTTPS_PORT:-8443}:8444"
+    environment:
+      LVK_ENABLE_STAGING: "1"
+      LVK_STAGING_ORIGIN: "https://${LVK_HOST:?Set LVK_HOST}:${LVK_STAGING_HTTPS_PORT:-8443}"

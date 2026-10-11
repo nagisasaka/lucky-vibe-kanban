@@ -36,7 +36,11 @@ export function serverSettings(env) {
   if (preview && (app === preview || app.endsWith(`.${preview}`))) {
     throw new Error("LVK_HOST must be outside the preview wildcard domain");
   }
-  return { app, preview };
+  return {
+    app,
+    preview,
+    ...(env.LVK_ENABLE_STAGING === "1" ? { staging: true } : {}),
+  };
 }
 
 export const authority = (host) => (isIP(host) === 6 ? `[${host}]` : host);
@@ -48,13 +52,32 @@ export function renderNginx(template, settings) {
         listen 8443 ssl;
         server_name "~^(?<preview_target>102[4-9]|10[3-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[.]${preview.replaceAll(".", "[.]")}$";
         # Only unprivileged development ports, excluding LVK and nginx ports.
-        if ($preview_target ~ "^(3000|3001|8443)$") { return 403; }
+        if ($preview_target ~ "^(3000|3001|8443${settings.staging ? "|8444" : ""})$") { return 403; }
         location / { proxy_pass http://127.0.0.1:3001; }
     }`
     : "";
   return template
     .replace("@@APP_DOMAIN@@", authority(settings.app))
-    .replace("@@PREVIEW_SERVER@@", previewServer);
+    .replace("@@PREVIEW_SERVER@@", previewServer)
+    .replace(
+      "@@STAGING_SERVER@@",
+      settings.staging
+        ? `server {
+        listen 8444 ssl default_server;
+        server_name _;
+        return 444;
+    }
+    server {
+        listen 8444 ssl;
+        server_name ${authority(settings.app)};
+        if (-f /run/lvk-maintenance/active) { return 503; }
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        location ~ ^/api/(?:host/[^/]+/)?preview(?:/|$) { return 403; }
+        location / { proxy_pass http://127.0.0.1:4020; }
+    }`
+        : "",
+    );
 }
 
 export function validateSecrets(

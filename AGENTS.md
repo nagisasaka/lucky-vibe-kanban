@@ -69,3 +69,13 @@ Do not manually edit shared/remote-types.ts, instead edit crates/remote/src/bin/
 ## Security & Config Tips
 - Use `.env` for local overrides; never commit secrets. Key envs: `FRONTEND_PORT`, `BACKEND_PORT`, `HOST` 
 - Dev ports and assets are managed by `scripts/setup-dev-environment.js`.
+
+## LVK contributor environments
+
+For LVK itself, use `deploy/developer/STAGING.md`: card worktree/internal-port
+verification → staging update and verification (8443) → CI image publication →
+reserved stable update (443). Instance state must be separate from stable state
+via `LVK_INSTANCE_DIR`; debug/release is not an isolation boundary. Staging is
+opt-in contributor tooling, not an ordinary user feature. Claim registered shared
+staging resources through resource coordination, and stop test processes before
+releasing their claims. Publishing an image does not itself deploy it.

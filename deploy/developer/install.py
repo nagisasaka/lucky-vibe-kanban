@@ -15,6 +15,7 @@ def main():
     parser.add_argument("--repository", required=True, help="GitHub owner/repository")
     parser.add_argument("--compose-file", action="append", required=True)
     parser.add_argument("--state-directory", default="/var/lib/lvk-updater")
+    parser.add_argument("--legacy-development", action="store_true", help="Also update the old separate development service")
     args = parser.parse_args()
     if os.geteuid() != 0:
         parser.error("Run the installer with sudo on the Docker host")
@@ -42,17 +43,21 @@ def main():
             os.chown(path, 10001, 10001)
     kit = Path("/opt/lvk-developer")
     kit.mkdir(mode=0o755, exist_ok=True)
-    for name in ("updater.py", "client.py", "verify-image.sh", "README.md"):
+    for name in ("updater.py", "client.py", "verify-image.sh", "README.md", "STAGING.md"):
         shutil.copy2(Path(__file__).with_name(name), kit / name)
         (kit / name).chmod(0o755 if name.endswith((".py", ".sh")) else 0o644)
     shutil.copy2(Path(__file__).with_name("compose.updater.yaml"), deployment / "compose.updater.yaml")
     compose_files = args.compose_file + ["compose.updater.yaml"]
+    if args.legacy_development:
+        legacy = "compose.updater-legacy-development.yaml"
+        shutil.copy2(Path(__file__).with_name(legacy), deployment / legacy)
+        compose_files.append(legacy)
     config = {
         "repository": args.repository,
         "deployment_directory": str(deployment),
         "state_directory": str(root),
         "compose_files": compose_files,
-        "services": ["lvk", "development"],
+        "services": ["lvk", "development"] if args.legacy_development else ["lvk"],
         "health_timeout_seconds": 2700,
     }
     config_path.write_text(json.dumps(config, indent=2) + "\n")

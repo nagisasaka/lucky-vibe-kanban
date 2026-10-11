@@ -1,3 +1,8 @@
+> For LVK self-development, use the [development → staging → release → stable workflow](STAGING.md).
+> The default updater now manages only `lvk`. The separate `development` service
+> described below is a legacy compatibility option (`install.py --legacy-development`).
+> Ordinary LVK users do not need either contributor setup.
+
 # Develop LVK using your own LVK server
 
 This optional Linux/systemd host kit updates a developer's LVK installation
@@ -64,7 +69,8 @@ sudo python3 install.py \
   --repository YOUR_ACCOUNT/lucky-vibe-kanban \
   --compose-file compose.yaml \
   --compose-file compose.acme.yaml \
-  --compose-file compose.development.yaml
+  --compose-file compose.development.yaml \
+  --legacy-development
 ```
 
 Include `-f compose.updater.yaml` in subsequent Compose operations. Recreate

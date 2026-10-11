@@ -19,12 +19,24 @@ REQUEST = {"image": "ghcr.io/example/lvk@sha256:" + "a" * 64,
 
 
 class ValidationTests(unittest.TestCase):
+    def test_default_updates_only_stable_and_waits_for_instance_processes(self):
+        updater = Updater({"state_directory": "/tmp/updater", "deployment_directory": "/tmp/deploy", "compose_files": ["compose.yaml"]})
+        self.assertEqual(updater.services, ["lvk"])
+        self.assertNotIn("--profile", updater.compose)
+        self.assertFalse(known_service_process("node deploy/developer/instance.mjs _run staging build-id"))
+        self.assertFalse(known_service_process("/var/tmp/lvk-instances/staging/builds/one/server"))
+
     def test_debug_database_is_in_the_checkout_not_the_stable_home(self):
         container = {"service": "development", "info": {
             "Config": {"Env": ["LVK_DEV_REPO=/repos/fork"]},
             "Mounts": [{"Destination": "/repos", "Source": "/volumes/repos"}]}}
         self.assertEqual(database_paths(container), (Path("/volumes/repos/fork/dev_assets/db.v2.sqlite"), Path("/repos/fork/dev_assets/db.v2.sqlite")))
         container["info"]["Config"]["Env"] = ["LVK_DEV_REPO=/repos/../outside"]
+        with self.assertRaises(Busy):
+            database_paths(container)
+
+    def test_custom_container_instance_directory_fails_closed(self):
+        container = {"service": "lvk", "info": {"Config": {"Env": ["LVK_INSTANCE_DIR=/custom"]}, "Mounts": []}}
         with self.assertRaises(Busy):
             database_paths(container)
 

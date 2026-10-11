@@ -14,7 +14,9 @@ pub async fn write_port_file_with_proxy(
     main_port: u16,
     preview_proxy_port: Option<u16>,
 ) -> std::io::Result<PathBuf> {
-    let dir = env::temp_dir().join("vibe-kanban");
+    let dir = crate::instance::instance_dir()
+        .map(|root| root.join("ports"))
+        .unwrap_or_else(|| env::temp_dir().join("vibe-kanban"));
     let path = dir.join("vibe-kanban.port");
     let port_info = PortInfo {
         main_port,
@@ -33,7 +35,9 @@ pub async fn read_port_file(app_name: &str) -> std::io::Result<u16> {
 }
 
 pub async fn read_port_info(app_name: &str) -> std::io::Result<PortInfo> {
-    let dir = env::temp_dir().join(app_name);
+    let dir = crate::instance::instance_dir()
+        .map(|root| root.join("ports"))
+        .unwrap_or_else(|| env::temp_dir().join(app_name));
     let path = dir.join(format!("{app_name}.port"));
     tracing::debug!("Reading port from {:?}", path);
 

@@ -110,6 +110,9 @@ pub fn normalize_macos_private_alias<P: AsRef<Path>>(p: P) -> PathBuf {
 }
 
 pub fn get_vibe_kanban_temp_dir() -> std::path::PathBuf {
+    if let Some(root) = crate::instance::instance_dir() {
+        return root.join("runtime");
+    }
     let dir_name = if cfg!(debug_assertions) {
         "vibe-kanban-dev"
     } else {
