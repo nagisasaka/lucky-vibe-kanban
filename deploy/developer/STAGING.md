@@ -41,9 +41,9 @@ A failed build never becomes a runnable candidate or replaces a running server.
 From the card's worktree, after installing dependencies:
 
 ```bash
-pnpm run instance:build -- card-example
+pnpm run instance:build card-example
 # Use the build_id printed by the command. Keep this process in the foreground:
-pnpm run instance:run -- card-example BUILD_UUID 4200
+pnpm run instance:run card-example BUILD_UUID 4200
 ```
 
 The build includes uncommitted work and marks its metadata dirty. Run browser
@@ -54,8 +54,8 @@ port is needed. An optional REF after NAME builds a detached source snapshot.
 ## Staging
 
 ```bash
-pnpm run staging:build -- main
-pnpm run staging:run -- BUILD_UUID
+pnpm run staging:build main
+pnpm run staging:run BUILD_UUID
 ```
 
 The build resolves main to a commit, creates a retained detached worktree,
