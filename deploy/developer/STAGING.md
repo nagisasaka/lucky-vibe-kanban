@@ -89,6 +89,11 @@ This changes Docker publication and root-owned updater configuration. The
 in-container update queue only changes image versions; it cannot perform this
 migration. The host operator must do it once, during an idle maintenance window.
 
+Before any image update, ensure free host disk space exceeds the backup size of
+all persistent volumes plus 1 GiB. The updated host kit checks this before stopping
+containers; older installations check only after stopping and must be checked
+manually.
+
 1. Publish/install an image from this revision using the existing release/update
    flow first. Keep the existing host updater configuration during this step.
 2. Finish agents/workflows/queued follow-ups in both environments. Resolve pending

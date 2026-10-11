@@ -151,6 +151,7 @@ async function main() {
     await access(join(source, "crates/utils/src/instance.rs"));
     const env = {
       ...process.env,
+      NODE_OPTIONS: process.env.NODE_OPTIONS || "--max-old-space-size=4096",
       CARGO_TARGET_DIR: join(config.root, "target"),
       CARGO_PROFILE_DEV_DEBUG: "0",
       CARGO_INCREMENTAL: "0",

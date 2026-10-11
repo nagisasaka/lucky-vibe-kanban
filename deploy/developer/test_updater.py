@@ -26,6 +26,16 @@ class ValidationTests(unittest.TestCase):
         self.assertFalse(known_service_process("node deploy/developer/instance.mjs _run staging build-id"))
         self.assertFalse(known_service_process("/var/tmp/lvk-instances/staging/builds/one/server"))
 
+    def test_backup_capacity_includes_all_volumes_and_headroom(self):
+        updater = Updater({"state_directory": "/tmp/updater", "deployment_directory": "/tmp/deploy", "compose_files": ["compose.yaml"]})
+        volumes = {"home": "/volumes/home", "repos": "/volumes/repos"}
+        with patch.object(updater, "command", side_effect=["100 home", "200 repos", "100 home", "200 repos"]), patch("updater.shutil.disk_usage") as usage:
+            usage.return_value.free = 1024**3 + 299
+            with self.assertRaises(Busy):
+                updater.check_backup_space(volumes)
+            usage.return_value.free = 1024**3 + 300
+            updater.check_backup_space(volumes)
+
     def test_debug_database_is_in_the_checkout_not_the_stable_home(self):
         container = {"service": "development", "info": {
             "Config": {"Env": ["LVK_DEV_REPO=/repos/fork"]},
@@ -202,6 +212,9 @@ class FakeUpdater(Updater):
     def resume(self, containers):
         self.events.append("resumed")
 
+    def check_backup_space(self, volumes):
+        self.events.append("capacity checked")
+
     def backup(self, job):
         self.events.append("backup")
         job["backup_complete"] = True
@@ -231,6 +244,14 @@ class LifecycleTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_low_disk_waits_without_stopping_containers(self):
+        with patch.object(self.updater, "check_backup_space", side_effect=Busy("Insufficient backup space")):
+            self.updater.process(self.job)
+        self.assertEqual(self.job["status"], "waiting")
+        self.assertFalse(self.updater.gate.exists())
+        self.assertFalse(any("docker kill" in event or "docker pause" in event for event in self.updater.events))
+        self.assertNotIn("backup", self.updater.events)
 
     def test_success_backs_up_before_mutation_and_closes_admission_race(self):
         self.updater.process(self.job)

@@ -280,6 +280,11 @@ for (sid,) in db.execute('SELECT id FROM sessions'):
                 raise Busy("Persistent volumes are also used by another running container")
         return volumes
 
+    def check_backup_space(self, volumes):
+        needed = sum(int(self.command(["du", "-sb", source]).split()[0]) for source in volumes.values())
+        if shutil.disk_usage(self.root).free < needed + 1024**3:
+            raise Busy("Insufficient backup space; containers remain running. Free host storage before retrying")
+
     def backup(self, job):
         destination = self.root / "backups" / job["id"]
         destination.mkdir(mode=0o700)
@@ -391,6 +396,7 @@ for (sid,) in db.execute('SELECT id FROM sessions'):
             containers = self.containers()
             self.assert_idle(containers)
             volumes = self.volumes(containers)
+            self.check_backup_space(volumes)
             self.save(job, "freezing", containers=containers, volumes=volumes)
             atomic_json(self.gate, {"job_id": job["id"]}, 0o644)
             self.check_queues(containers)
