@@ -149,6 +149,12 @@ intent: ChatIntent, };
 
 export type ProjectChatView = { conversation_id: string, configured: boolean, messages: Array<ChatMessage>, project_state: JsonValue, };
 
+export type AstraSettingsView = { revision: string, configured: boolean, authentication: AstraAuthentication, model: string, reasoning_effort: string, };
+
+export type AstraAuthentication = "codex_chatgpt";
+
+export type UpdateAstraSettings = { expected_revision: string, api_key: SensitiveWrite<string>, model: string, reasoning_effort: string, };
+
 export type WikiReconciliationReceipt = { event_id: string, reconciled_at: string, target_commit: string, wiki_commit: string | null, result: ReconciliationResult, error: string | null, };
 
 export type ReconciliationResult = "updated" | "no_op" | "failed";

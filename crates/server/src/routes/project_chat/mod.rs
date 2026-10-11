@@ -75,7 +75,7 @@ async fn load(
         .map_err(api_error)?;
     let view = ProjectChatView {
         conversation_id: conversation.id,
-        configured: model::configured(),
+        configured: model::configured().await,
         messages: store::messages(&deployment.db().pool, conversation.id, page.after)
             .await
             .map_err(api_error)?,
@@ -132,10 +132,6 @@ pub fn spawn(deployment: DeploymentImpl) {
             tracing::error!("Astra recovery failed");
             return;
         }
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(120))
-            .build()
-            .expect("Astra HTTP client");
         let mut active = HashSet::new();
         let mut tasks = tokio::task::JoinSet::new();
         let mut interval = tokio::time::interval(Duration::from_secs(2));
@@ -162,14 +158,13 @@ pub fn spawn(deployment: DeploymentImpl) {
                 if let Err(_error) = observe_integrations(&deployment, &conversation).await {
                     tracing::debug!("Astra integration observation unavailable");
                 }
-                if !model::configured() || !active.insert(conversation.id) {
+                if !active.insert(conversation.id) {
                     continue;
                 }
                 let deployment = deployment.clone();
-                let client = client.clone();
                 tasks.spawn(async move {
                     let id = conversation.id;
-                    if let Err(_error) = process_next(&deployment, &conversation, &client).await {
+                    if let Err(_error) = process_next(&deployment, &conversation).await {
                         tracing::warn!(conversation_id=%id,"Astra turn retained for retry");
                     }
                     id
@@ -226,20 +221,23 @@ async fn save(pool: &SqlitePool, message: Uuid, checkpoint: &Checkpoint) -> anyh
 async fn process_next(
     deployment: &DeploymentImpl,
     conversation: &Conversation,
-    client: &reqwest::Client,
 ) -> anyhow::Result<()> {
     let pool = &deployment.db().pool;
     let message: Option<ChatMessage>=sqlx::query_as("SELECT * FROM project_chat_messages WHERE conversation_id=? AND status!='done' ORDER BY sequence LIMIT 1").bind(conversation.id).fetch_optional(pool).await?;
     let Some(message) = message else {
         return Ok(());
     };
+    // Do not launch authentication probes for idle conversations.
+    if !model::configured().await {
+        return Ok(());
+    }
     let claimed=sqlx::query("UPDATE project_chat_messages SET status='running' WHERE id=? AND status='pending' AND retry_at<=unixepoch()").bind(message.id).execute(pool).await?.rows_affected();
     if claimed == 0 {
         return Ok(());
     }
     let result = run_turn(
         pool,
-        &LocalChatServices { deployment, client },
+        &LocalChatServices { deployment },
         conversation,
         &message,
     )
@@ -275,7 +273,6 @@ trait ChatServices: Send + Sync {
 
 struct LocalChatServices<'a> {
     deployment: &'a DeploymentImpl,
-    client: &'a reqwest::Client,
 }
 
 #[async_trait::async_trait]
@@ -288,7 +285,7 @@ impl ChatServices for LocalChatServices<'_> {
         input: &[Value],
         definitions: Vec<Value>,
     ) -> anyhow::Result<Vec<Value>> {
-        model::respond(self.client, input, definitions).await
+        model::respond(input, definitions).await
     }
     async fn execute(
         &self,

@@ -1,5 +1,4 @@
-//! Server-local credentials. Never include secrets in the public config, chat,
-//! tool context or errors. Keep environment configuration as a fallback.
+//! Model preferences. Legacy saved keys are preserved but never used for inference.
 use std::{io::Write, path::Path};
 
 use axum::{Json, extract::rejection::JsonRejection};
@@ -18,9 +17,7 @@ struct StoredSettings {
     reasoning_effort: Option<String>,
 }
 
-// Deliberately no Debug/Serialize: credentials must not be logged or echoed.
 pub(super) struct ModelSettings {
-    pub api_key: String,
     pub model: String,
     pub reasoning_effort: String,
 }
@@ -29,26 +26,29 @@ pub(super) struct ModelSettings {
 pub struct AstraSettingsView {
     pub revision: String,
     pub configured: bool,
-    pub api_key_source: AstraKeySource,
+    pub authentication: AstraAuthentication,
     pub model: String,
     pub reasoning_effort: String,
 }
 
 #[derive(Debug, Serialize, TS)]
 #[serde(rename_all = "snake_case")]
-pub enum AstraKeySource {
-    Saved,
-    Environment,
-    Missing,
+pub enum AstraAuthentication {
+    CodexChatgpt,
 }
 
 #[derive(Deserialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct UpdateAstraSettings {
     pub expected_revision: String,
+    #[serde(default = "preserve_key")]
     pub api_key: SensitiveWrite<String>,
     pub model: String,
     pub reasoning_effort: String,
+}
+
+fn preserve_key() -> SensitiveWrite<String> {
+    SensitiveWrite::Preserve
 }
 
 fn path() -> std::path::PathBuf {
@@ -63,7 +63,7 @@ fn environment() -> StoredSettings {
             .filter(|v| !v.is_empty())
     };
     StoredSettings {
-        api_key: value("OPENAI_API_KEY"),
+        api_key: None,
         model: value("LVK_ASTRA_MODEL"),
         reasoning_effort: value("LVK_ASTRA_REASONING_EFFORT"),
     }
@@ -88,11 +88,6 @@ fn read(path: &Path) -> Result<(StoredSettings, String), ApiError> {
 
 fn resolve(saved: &StoredSettings, env: &StoredSettings) -> ModelSettings {
     ModelSettings {
-        api_key: saved
-            .api_key
-            .clone()
-            .or_else(|| env.api_key.clone())
-            .unwrap_or_default(),
         model: saved
             .model
             .clone()
@@ -110,14 +105,9 @@ fn view(saved: &StoredSettings, env: &StoredSettings, revision: String) -> Astra
     let effective = resolve(saved, env);
     AstraSettingsView {
         revision,
-        configured: !effective.api_key.is_empty() && !effective.model.is_empty(),
-        api_key_source: if saved.api_key.is_some() {
-            AstraKeySource::Saved
-        } else if env.api_key.is_some() {
-            AstraKeySource::Environment
-        } else {
-            AstraKeySource::Missing
-        },
+        // The async HTTP handlers fill in the current Codex login state.
+        configured: false,
+        authentication: AstraAuthentication::CodexChatgpt,
         model: effective.model,
         reasoning_effort: effective.reasoning_effort,
     }
@@ -130,11 +120,9 @@ pub(super) fn resolved() -> Result<ModelSettings, ApiError> {
 
 pub(super) async fn get() -> Result<Json<ApiResponse<AstraSettingsView>>, ApiError> {
     let (saved, revision) = read(&path())?;
-    Ok(Json(ApiResponse::success(view(
-        &saved,
-        &environment(),
-        revision,
-    ))))
+    let mut view = view(&saved, &environment(), revision);
+    view.configured = super::model::configured().await;
+    Ok(Json(ApiResponse::success(view)))
 }
 
 fn update(
@@ -166,19 +154,10 @@ fn update(
     match request.api_key {
         SensitiveWrite::Preserve => {}
         SensitiveWrite::Clear => saved.api_key = None,
-        SensitiveWrite::Replace { value } => {
-            let key = value.trim();
-            if key.is_empty()
-                || key.len() > 4096
-                || !key.is_ascii()
-                || key.chars().any(char::is_whitespace)
-                || key.chars().any(char::is_control)
-            {
-                return Err(ApiError::BadRequest(
-                    "Enter a non-empty API key without whitespace.".into(),
-                ));
-            }
-            saved.api_key = Some(key.to_owned());
+        SensitiveWrite::Replace { .. } => {
+            return Err(ApiError::BadRequest(
+                "Astra uses the server's Codex ChatGPT login, not an API key.".into(),
+            ));
         }
     }
     saved.model = Some(model.to_owned());
@@ -203,70 +182,44 @@ pub(super) async fn put(
     // JSON deserialization errors may contain the supplied secret.
     let Json(request) =
         request.map_err(|_| ApiError::BadRequest("Invalid Astra settings request.".into()))?;
-    Ok(Json(ApiResponse::success(update(
-        &path(),
-        &environment(),
-        request,
-    )?)))
+    let mut view = update(&path(), &environment(), request)?;
+    view.configured = super::model::configured().await;
+    Ok(Json(ApiResponse::success(view)))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn request(revision: &str, api_key: SensitiveWrite<String>) -> UpdateAstraSettings {
+    fn request(revision: &str) -> UpdateAstraSettings {
         UpdateAstraSettings {
             expected_revision: revision.into(),
-            api_key,
+            api_key: SensitiveWrite::Preserve,
             model: "test-model".into(),
-            reasoning_effort: "high".into(),
+            reasoning_effort: "xhigh".into(),
         }
     }
 
     #[test]
-    fn credentials_survive_reload_stay_private_and_require_current_revision() {
+    fn migration_preserves_legacy_keys_but_does_not_treat_them_as_authentication() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
+        std::fs::write(&path, br#"{"api_key":"legacy-secret","model":"old-model"}"#).unwrap();
         let env = StoredSettings::default();
-        let first = update(
-            &path,
-            &env,
-            request(
-                "missing",
-                SensitiveWrite::Replace {
-                    value: "test-secret".into(),
-                },
-            ),
-        )
-        .unwrap();
-        let public = serde_json::to_string(&first).unwrap();
-        assert!(!public.contains("test-secret"));
-        assert!(first.configured);
-        assert!(matches!(first.api_key_source, AstraKeySource::Saved));
-        let before = std::fs::read(&path).unwrap();
+        let (_, revision) = read(&path).unwrap();
+        let result = update(&path, &env, request(&revision)).unwrap();
+        assert!(!result.configured);
         assert!(matches!(
-            update(&path, &env, request("missing", SensitiveWrite::Clear)),
-            Err(ApiError::Conflict(_))
+            result.authentication,
+            AstraAuthentication::CodexChatgpt
         ));
-        assert_eq!(before, std::fs::read(&path).unwrap());
-        let mut next = request(&first.revision, SensitiveWrite::Preserve);
-        next.model = "second-model".into();
-        let second = update(&path, &env, next).unwrap();
-        let (saved, _) = read(&path).unwrap();
-        assert_eq!(resolve(&saved, &env).api_key, "test-secret");
-        assert_eq!(resolve(&saved, &env).model, "second-model");
-        let cleared = update(
-            &path,
-            &env,
-            request(&second.revision, SensitiveWrite::Clear),
-        )
-        .unwrap();
-        assert!(!cleared.configured);
         assert!(
-            !std::fs::read_to_string(&path)
+            !serde_json::to_string(&result)
                 .unwrap()
-                .contains("test-secret")
+                .contains("legacy-secret")
         );
+        let (saved, _) = read(&path).unwrap();
+        assert_eq!(saved.api_key.as_deref(), Some("legacy-secret"));
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -275,69 +228,49 @@ mod tests {
                 0o600
             );
         }
+        assert_eq!(resolve(&saved, &env).model, "test-model");
+        assert!(matches!(
+            update(&path, &env, request(&revision)),
+            Err(ApiError::Conflict(_))
+        ));
+        let mut clear = request(&result.revision);
+        clear.api_key = SensitiveWrite::Clear;
+        update(&path, &env, clear).unwrap();
+        assert!(read(&path).unwrap().0.api_key.is_none());
     }
 
     #[test]
-    fn environment_fallback_is_not_copied_to_disk_and_clear_restores_it() {
+    fn model_preferences_work_without_keys_and_new_keys_are_rejected() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
         let env = StoredSettings {
-            api_key: Some("env-secret".into()),
             model: Some("env-model".into()),
-            reasoning_effort: None,
+            ..Default::default()
         };
-        let (saved, revision) = read(&path).unwrap();
-        assert_eq!(resolve(&saved, &env).model, "env-model");
-        assert_eq!(resolve(&saved, &env).reasoning_effort, "xhigh");
-        let first = update(&path, &env, request(&revision, SensitiveWrite::Preserve)).unwrap();
-        assert!(matches!(first.api_key_source, AstraKeySource::Environment));
-        assert!(
-            !std::fs::read_to_string(&path)
-                .unwrap()
-                .contains("env-secret")
+        assert_eq!(resolve(&StoredSettings::default(), &env).model, "env-model");
+        assert_eq!(
+            resolve(&StoredSettings::default(), &env).reasoning_effort,
+            "xhigh"
         );
-        let second = update(
-            &path,
-            &env,
-            request(
-                &first.revision,
-                SensitiveWrite::Replace {
-                    value: "ui-secret".into(),
-                },
-            ),
-        )
-        .unwrap();
-        let third = update(
-            &path,
-            &env,
-            request(&second.revision, SensitiveWrite::Clear),
-        )
-        .unwrap();
-        assert!(third.configured);
-        assert!(matches!(third.api_key_source, AstraKeySource::Environment));
+        let mut replacement = request("missing");
+        replacement.api_key = SensitiveWrite::Replace {
+            value: "new-secret".into(),
+        };
+        let error = update(&path, &env, replacement).unwrap_err();
+        assert!(!error.to_string().contains("new-secret"));
+        assert!(!path.exists());
+        let from_json: UpdateAstraSettings = serde_json::from_value(serde_json::json!({"expected_revision":"missing","model":"test-model","reasoning_effort":"high"})).unwrap();
+        update(&path, &env, from_json).unwrap();
+        assert!(read(&path).unwrap().0.api_key.is_none());
     }
 
     #[test]
-    fn invalid_or_corrupt_settings_never_overwrite_or_echo_secrets() {
+    fn corrupt_settings_are_not_overwritten_or_echoed() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
-        let env = StoredSettings::default();
-        let error = update(
-            &path,
-            &env,
-            request(
-                "missing",
-                SensitiveWrite::Replace {
-                    value: "secret\ninvalid".into(),
-                },
-            ),
-        )
-        .unwrap_err();
-        assert!(!error.to_string().contains("secret"));
-        assert!(!path.exists());
-        std::fs::write(&path, b"secret: malformed").unwrap();
-        let error = update(&path, &env, request("missing", SensitiveWrite::Clear)).unwrap_err();
-        assert!(!error.to_string().contains("secret"));
-        assert_eq!(std::fs::read(&path).unwrap(), b"secret: malformed");
+        std::fs::write(&path, b"private malformed settings").unwrap();
+        let error = update(&path, &StoredSettings::default(), request("missing")).unwrap_err();
+        assert!(!error.to_string().contains("private"));
+        assert_eq!(std::fs::read(&path).unwrap(), b"private malformed settings");
     }
 }

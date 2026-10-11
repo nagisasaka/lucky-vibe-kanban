@@ -60,7 +60,7 @@ fn generate_types_content() -> String {
         server::routes::project_chat::SendChatMessage::decl(),
         server::routes::project_chat::ProjectChatView::decl(),
         server::routes::project_chat::settings::AstraSettingsView::decl(),
-        server::routes::project_chat::settings::AstraKeySource::decl(),
+        server::routes::project_chat::settings::AstraAuthentication::decl(),
         server::routes::project_chat::settings::UpdateAstraSettings::decl(),
         utils::repository_memory::WikiReconciliationReceipt::decl(),
         utils::repository_memory::ReconciliationResult::decl(),

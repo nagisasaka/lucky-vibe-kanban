@@ -1,6 +1,7 @@
-//! Responses API adapter. LVK is a Rust host; use its existing reqwest client
-//! rather than introduce a Node/Python service solely to host an official SDK.
-use serde_json::{Value, json};
+//! ChatGPT inference through the server’s installed Codex and managed login.
+use serde_json::Value;
+
+mod codex;
 
 pub const INSTRUCTIONS: &str = r#"You are Astra, the user's persistent project consultation partner inside LVK.
 Discuss problem framing, alternatives, tradeoffs and whether implementation is necessary. Match the user's language.
@@ -14,42 +15,15 @@ Report actual outcomes: accepted command != implemented; turn success != Goal do
 Use Markdown links to existing screens: /projects/{project_id}/issues/{issue_id} and /workspaces/{workspace_id}. Keep reports concise. Never claim a tool succeeded without its successful receipt.
 "#;
 
-pub fn configured() -> bool {
-    super::settings::resolved().is_ok_and(|s| !s.api_key.is_empty() && !s.model.is_empty())
+pub async fn configured() -> bool {
+    super::settings::resolved().is_ok_and(|s| !s.model.is_empty()) && codex::available().await
 }
 
-pub async fn respond(
-    client: &reqwest::Client,
-    input: &[Value],
-    tools: Vec<Value>,
-) -> anyhow::Result<Vec<Value>> {
+pub async fn respond(input: &[Value], tools: Vec<Value>) -> anyhow::Result<Vec<Value>> {
     let settings = super::settings::resolved()?;
-    let key = settings.api_key;
-    let model = settings.model;
-    let effort = settings.reasoning_effort;
     anyhow::ensure!(
-        !key.is_empty() && !model.is_empty(),
-        "Astra is not configured"
+        !settings.model.is_empty(),
+        "Set LVK_ASTRA_MODEL on the server"
     );
-    // Fixed official origin: keys cannot be redirected through model arguments.
-    let response=client.post("https://api.openai.com/v1/responses").bearer_auth(key)
-        .json(&json!({"model":model,"reasoning":{"effort":effort},"instructions":INSTRUCTIONS,"input":input,"tools":tools,"parallel_tool_calls":false,"store":false,"include":["reasoning.encrypted_content"]}))
-        .send().await.map_err(|_|anyhow::anyhow!("OpenAI connection failed; request retained for retry"))?;
-    anyhow::ensure!(
-        response.status().is_success(),
-        "OpenAI returned HTTP {}; request retained for retry",
-        response.status().as_u16()
-    );
-    let body: Value = response
-        .json()
-        .await
-        .map_err(|_| anyhow::anyhow!("OpenAI returned an unreadable response"))?;
-    anyhow::ensure!(
-        body["status"] == "completed",
-        "OpenAI response did not complete"
-    );
-    body["output"]
-        .as_array()
-        .cloned()
-        .ok_or_else(|| anyhow::anyhow!("OpenAI response has no output"))
+    codex::respond(&settings.model, &settings.reasoning_effort, input, &tools).await
 }

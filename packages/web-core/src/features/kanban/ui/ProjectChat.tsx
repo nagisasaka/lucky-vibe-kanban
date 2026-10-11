@@ -132,8 +132,8 @@ export function ProjectChat({ projectId }: { projectId: string }) {
       </p>
       {chat.data && !chat.data.configured && (
         <p role="status" className="text-sm text-low">
-          サーバーで OPENAI_API_KEY と LVK_ASTRA_MODEL
-          を設定してください。会話は保存され、設定後に処理されます。
+          サーバーのCodexでChatGPTにログインし、LVK_ASTRA_MODEL
+          を設定してください。APIキーは不要です。会話は保存され、認証後に処理されます。
         </p>
       )}
       {chat.isError && (

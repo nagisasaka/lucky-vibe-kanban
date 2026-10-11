@@ -396,12 +396,12 @@ async fn codex_nonblocking_questions_keep_options_and_share_answer_receipts() {
         &attempt,
         2,
         AgentEventPayload::LifecycleChanged {
-            status: AgentRunStatus::Succeeded,
+            status: AgentRunStatus::Running,
         },
     )
     .await;
     let pending = questions::pending(&pool, request.session_id).await.unwrap();
-    assert_eq!(pending.len(), 2); // nonblocking questions survive a finished turn
+    assert_eq!(pending.len(), 2); // nonblocking questions are answerable while the run is live
     assert_eq!(pending[0].options, vec!["Preserve", "Replace"]);
     assert_eq!(
         pending[0].id,
@@ -422,6 +422,22 @@ async fn codex_nonblocking_questions_keep_options_and_share_answer_receipts() {
     assert!(inbox[0].content.contains("async_questions"));
     assert!(inbox[0].content.contains("question_answer_submitted"));
     assert!(inbox[0].content.contains("local-user"));
+    event(
+        &pool,
+        &request,
+        &attempt,
+        3,
+        AgentEventPayload::LifecycleChanged {
+            status: AgentRunStatus::Succeeded,
+        },
+    )
+    .await;
+    assert!(
+        questions::pending(&pool, request.session_id)
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]
