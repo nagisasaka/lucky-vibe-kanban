@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ChatIntent,
@@ -58,17 +58,7 @@ type ProjectState = {
 
 export function ProjectChat({ projectId }: { projectId: string }) {
   const navigation = useAppNavigation();
-  const { theme } = useTheme();
   const queryClient = useQueryClient();
-  const [content, setContent] = useState('');
-  const [intent, setIntent] = useState<ChatIntent>('discuss');
-  const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const pending = useRef<{
-    id: string;
-    content: string;
-    intent: ChatIntent;
-  } | null>(null);
   const queryKey = ['project-chat', projectId];
   const chat = useQuery({
     queryKey,
@@ -77,50 +67,37 @@ export function ProjectChat({ projectId }: { projectId: string }) {
     refetchInterval: 3000,
     refetchIntervalInBackground: false,
   });
-  useEffect(() => {
-    setContent('');
-    setIntent('discuss');
-    setSendError(null);
-    pending.current = null;
-  }, [projectId]);
   const project = chat.data?.project_state as ProjectState | undefined;
-  const busy = chat.data?.messages.some((m) => m.status !== 'done');
-
-  async function send() {
-    if (!content.trim() || sending) return;
-    if (
-      !pending.current ||
-      pending.current.content !== content ||
-      pending.current.intent !== intent
-    ) {
-      pending.current = { id: crypto.randomUUID(), content, intent };
-    }
-    const request = pending.current;
-    setSending(true);
-    setSendError(null);
-    try {
-      await handleApiResponse<string>(
-        await makeLocalApiRequest(`/api/projects/${projectId}/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            request_id: request.id,
-            content: request.content,
-            intent: request.intent,
-          }),
-        })
-      );
-      setContent('');
-      pending.current = null;
-      await queryClient.invalidateQueries({ queryKey });
-    } catch {
-      setSendError(
-        '送信結果を確認できません。同じ内容で再送すると重複を防いで確認します。 / Delivery unconfirmed; retry preserves the request ID.'
-      );
-    } finally {
-      setSending(false);
-    }
-  }
+  const history = useRef<HTMLDivElement>(null);
+  const historyContent = useRef<HTMLDivElement>(null);
+  const follow = useRef(true);
+  const [away, setAway] = useState(false);
+  const toLatest = useCallback(() => {
+    follow.current = true;
+    setAway(false);
+    if (history.current)
+      history.current.scrollTop = history.current.scrollHeight;
+  }, []);
+  const onSent = useCallback(() => {
+    toLatest();
+    void queryClient.invalidateQueries({
+      queryKey: ['project-chat', projectId],
+    });
+  }, [toLatest, queryClient, projectId]);
+  useEffect(() => {
+    const element = history.current;
+    const contents = historyContent.current;
+    if (!element || !contents) return;
+    const observer = new ResizeObserver(() => {
+      if (follow.current) element.scrollTop = element.scrollHeight;
+    });
+    observer.observe(contents);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (follow.current) toLatest();
+  }, [chat.data?.messages, toLatest]);
 
   return (
     <section
@@ -144,98 +121,29 @@ export function ProjectChat({ projectId }: { projectId: string }) {
       <div
         className="min-h-0 flex-1 overflow-y-auto space-y-double"
         aria-label="Conversation history"
+        ref={history}
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          follow.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight <
+            64;
+          setAway(!follow.current);
+        }}
       >
         {chat.isLoading && <p>読み込み中… / Loading…</p>}
-        {chat.data?.messages.map((message) => (
-          <article
-            key={message.id}
-            className="rounded border border-border p-base"
-          >
-            <div className="mb-half text-xs text-low">
-              {message.role === 'assistant'
-                ? 'Astra'
-                : message.role === 'user'
-                  ? 'You'
-                  : 'LVK'}{' '}
-              · {message.created_at}{' '}
-              {message.status !== 'done' && `· ${message.status}`}
-            </div>
-            {message.role === 'tool' || message.role === 'event' ? (
-              <details>
-                <summary className="cursor-pointer text-sm">
-                  {message.role === 'tool'
-                    ? '操作結果 / Operation receipt'
-                    : '作業の更新 / Workspace events'}
-                </summary>
-                <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs">
-                  {message.content}
-                </pre>
-              </details>
-            ) : (
-              <MarkdownPreview
-                content={message.content}
-                theme={getResolvedTheme(theme)}
-                disableImages
-              />
-            )}
-            {(message.role === 'tool' || message.role === 'event') && (
-              <div className="flex flex-wrap gap-base text-xs">
-                {project?.issues
-                  ?.filter((issue) =>
-                    message.content
-                      .replaceAll('-', '')
-                      .includes(issue.id.replaceAll('-', ''))
-                  )
-                  .map((issue) => (
-                    <button
-                      key={issue.id}
-                      type="button"
-                      className="underline"
-                      onClick={() =>
-                        navigation.goToProjectIssue(projectId, issue.id)
-                      }
-                    >
-                      {issue.simple_id}
-                    </button>
-                  ))}
-                {project?.workspaces
-                  ?.filter(
-                    (workspace) =>
-                      message.content
-                        .replaceAll('-', '')
-                        .includes(workspace.id.replaceAll('-', '')) ||
-                      project.runs?.some(
-                        (run) =>
-                          run.workspace_id === workspace.id &&
-                          message.content.includes(run.agent_run_id)
-                      )
-                  )
-                  .map((workspace) => (
-                    <button
-                      key={workspace.id}
-                      type="button"
-                      className="underline"
-                      onClick={() =>
-                        navigation.goToProjectIssueWorkspace(
-                          projectId,
-                          workspace.issue_id,
-                          workspace.id
-                        )
-                      }
-                    >
-                      {workspace.name ?? workspace.id}
-                    </button>
-                  ))}
-              </div>
-            )}
-            {message.error && (
-              <p role="status" className="text-sm text-low">
-                {message.error}
-              </p>
-            )}
-          </article>
-        ))}
+        <div ref={historyContent} className="space-y-double">
+          <ChatHistory
+            messages={chat.data?.messages}
+            project={project}
+            projectId={projectId}
+          />
+        </div>
       </div>
+      {away && (
+        <button type="button" onClick={toLatest} className="text-sm underline">
+          最新へ ↓
+        </button>
+      )}
       <AsyncAgentQuestions
         key={projectId}
         scope={`project:${projectId}`}
@@ -290,55 +198,274 @@ export function ProjectChat({ projectId }: { projectId: string }) {
           ))}
         </div>
       </details>
-      {busy && (
-        <p role="status" className="text-xs text-low">
-          処理中です。続けて相談を送信できます。 / Processing; you can send
-          another message.
+      <ChatActivity
+        messages={chat.data?.messages}
+        configured={chat.data?.configured}
+        disconnected={chat.isError}
+      />
+      <ChatComposer key={projectId} projectId={projectId} onSent={onSent} />
+    </section>
+  );
+}
+
+const ChatHistory = memo(function ChatHistory({
+  messages,
+  project,
+  projectId,
+}: {
+  messages: ProjectChatView['messages'] | undefined;
+  project: ProjectState | undefined;
+  projectId: string;
+}) {
+  const navigation = useAppNavigation();
+  const { theme } = useTheme();
+  return (
+    <>
+      {' '}
+      {messages?.map((message) => (
+        <article
+          key={message.id}
+          className="rounded border border-border p-base"
+        >
+          <div className="mb-half text-xs text-low">
+            {message.role === 'assistant'
+              ? 'Astra'
+              : message.role === 'user'
+                ? 'You'
+                : 'LVK'}{' '}
+            · {message.created_at}{' '}
+            {message.status !== 'done' && `· ${message.status}`}
+          </div>
+          {message.role === 'tool' || message.role === 'event' ? (
+            <details>
+              <summary className="cursor-pointer text-sm">
+                {message.role === 'tool'
+                  ? '操作結果 / Operation receipt'
+                  : '作業の更新 / Workspace events'}
+              </summary>
+              <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs">
+                {message.content}
+              </pre>
+            </details>
+          ) : (
+            <MarkdownPreview
+              content={message.content}
+              theme={getResolvedTheme(theme)}
+              disableImages
+            />
+          )}
+          {(message.role === 'tool' || message.role === 'event') && (
+            <div className="flex flex-wrap gap-base text-xs">
+              {project?.issues
+                ?.filter((issue) =>
+                  message.content
+                    .replaceAll('-', '')
+                    .includes(issue.id.replaceAll('-', ''))
+                )
+                .map((issue) => (
+                  <button
+                    key={issue.id}
+                    type="button"
+                    className="underline"
+                    onClick={() =>
+                      navigation.goToProjectIssue(projectId, issue.id)
+                    }
+                  >
+                    {issue.simple_id}
+                  </button>
+                ))}
+              {project?.workspaces
+                ?.filter(
+                  (workspace) =>
+                    message.content
+                      .replaceAll('-', '')
+                      .includes(workspace.id.replaceAll('-', '')) ||
+                    project.runs?.some(
+                      (run) =>
+                        run.workspace_id === workspace.id &&
+                        message.content.includes(run.agent_run_id)
+                    )
+                )
+                .map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    type="button"
+                    className="underline"
+                    onClick={() =>
+                      navigation.goToProjectIssueWorkspace(
+                        projectId,
+                        workspace.issue_id,
+                        workspace.id
+                      )
+                    }
+                  >
+                    {workspace.name ?? workspace.id}
+                  </button>
+                ))}
+            </div>
+          )}
+          {message.error && (
+            <p role="status" className="text-sm text-low">
+              {message.error}
+            </p>
+          )}
+        </article>
+      ))}
+    </>
+  );
+});
+
+function ChatComposer({
+  projectId,
+  onSent,
+}: {
+  projectId: string;
+  onSent: () => void;
+}) {
+  const [content, setContent] = useState('');
+  const [intent, setIntent] = useState<ChatIntent>('discuss');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const pending = useRef<{
+    id: string;
+    content: string;
+    intent: ChatIntent;
+  } | null>(null);
+  async function send() {
+    if (!content.trim() || sending) return;
+    if (
+      !pending.current ||
+      pending.current.content !== content ||
+      pending.current.intent !== intent
+    ) {
+      pending.current = { id: crypto.randomUUID(), content, intent };
+    }
+    const request = pending.current;
+    setSending(true);
+    setSendError(null);
+    try {
+      await handleApiResponse<string>(
+        await makeLocalApiRequest(`/api/projects/${projectId}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            request_id: request.id,
+            content: request.content,
+            intent: request.intent,
+          }),
+        })
+      );
+      setContent((current) => (current === request.content ? '' : current));
+      pending.current = null;
+      onSent();
+    } catch {
+      setSendError(
+        '送信結果を確認できません。同じ内容で再送すると重複を防いで確認します。 / Delivery unconfirmed; retry preserves the request ID.'
+      );
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <form
+      className="space-y-half"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void send();
+      }}
+    >
+      <label className="flex items-center gap-base text-sm">
+        依頼の種類 / Request
+        <select
+          value={intent}
+          onChange={(event) => setIntent(event.target.value as ChatIntent)}
+          className="rounded border border-border bg-primary p-half"
+        >
+          {intents.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <textarea
+        aria-label="Message to Astra"
+        value={content}
+        onChange={(event) => setContent(event.target.value)}
+        maxLength={32000}
+        rows={3}
+        className="w-full resize-y rounded border border-border bg-primary p-base text-sm"
+        placeholder="相談を続ける、実装を依頼する、作業の状況を確認する…"
+      />
+      <button
+        type="submit"
+        disabled={sending || !content.trim()}
+        className="rounded border border-border px-base py-half text-sm disabled:opacity-50"
+      >
+        {sending ? '送信中…' : '送信 / Send'}
+      </button>
+      {sendError && (
+        <p role="alert" className="text-sm">
+          {sendError}
         </p>
       )}
-      <form
-        className="space-y-half"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void send();
-        }}
-      >
-        <label className="flex items-center gap-base text-sm">
-          依頼の種類 / Request
-          <select
-            value={intent}
-            onChange={(event) => setIntent(event.target.value as ChatIntent)}
-            className="rounded border border-border bg-primary p-half"
-          >
-            {intents.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <textarea
-          aria-label="Message to Astra"
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          maxLength={32000}
-          rows={3}
-          className="w-full resize-y rounded border border-border bg-primary p-base text-sm"
-          placeholder="相談を続ける、実装を依頼する、作業の状況を確認する…"
-        />
-        <button
-          type="submit"
-          disabled={sending || !content.trim()}
-          className="rounded border border-border px-base py-half text-sm disabled:opacity-50"
-        >
-          {sending ? '送信中…' : '送信 / Send'}
-        </button>
-        {sendError && (
-          <p role="alert" className="text-sm">
-            {sendError}
-          </p>
+    </form>
+  );
+}
+
+function ChatActivity({
+  messages,
+  configured,
+  disconnected,
+}: {
+  messages: ProjectChatView['messages'] | undefined;
+  configured: boolean | undefined;
+  disconnected: boolean;
+}) {
+  const active = messages?.find((message) => message.status !== 'done');
+  const [now, setNow] = useState(Date.now);
+  const activeId = active?.id;
+  useEffect(() => {
+    if (!activeId) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [activeId]);
+  if (!active) return null;
+  const raw = active.created_at;
+  const since = Date.parse(
+    /[zZ]|[+-]\d{2}:\d{2}$/.test(raw) ? raw : `${raw.replace(' ', 'T')}Z`
+  );
+  const seconds = Number.isFinite(since)
+    ? Math.max(0, Math.floor((now - since) / 1000))
+    : null;
+  const label = disconnected
+    ? '接続を確認中（最新の実行状態は未確認）'
+    : !configured
+      ? 'モデル設定・認証待ち'
+      : active.status === 'running'
+        ? 'Astra が処理中…'
+        : active.error
+          ? '接続エラー・再試行待ち'
+          : '順番待ち…';
+  return (
+    <div className="text-sm text-low">
+      <p role="status" className="flex items-center gap-half">
+        {!disconnected && configured && active.status === 'running' && (
+          <span
+            aria-hidden="true"
+            className="inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
+          />
         )}
-      </form>
-    </section>
+        {label}
+      </p>
+      {seconds !== null && (
+        <p>
+          受付から {Math.floor(seconds / 60)}分{seconds % 60}秒
+        </p>
+      )}
+      <p>続けて相談を送信できます。</p>
+    </div>
   );
 }
