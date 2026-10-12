@@ -44,6 +44,8 @@ struct MockServices {
     executions: Mutex<Vec<(Uuid, Uuid, String, Value)>>,
     inputs: Mutex<Vec<Vec<Value>>>,
     reconciled: Mutex<usize>,
+    definitions: Mutex<Vec<Vec<Value>>>,
+    fail_start: bool,
 }
 impl MockServices {
     fn replies(replies: Vec<Vec<Value>>) -> Self {
@@ -59,13 +61,37 @@ impl ChatServices for MockServices {
     async fn context(&self, project: Uuid) -> anyhow::Result<Value> {
         Ok(json!({"project_id":project,"source":"current shared LVK state"}))
     }
-    async fn respond(&self, input: &[Value], _: Vec<Value>) -> anyhow::Result<Vec<Value>> {
+    async fn respond(
+        &self,
+        input: &[Value],
+        definitions: Vec<Value>,
+    ) -> anyhow::Result<Vec<Value>> {
         self.inputs.lock().unwrap().push(input.to_vec());
-        self.replies
+        self.definitions.lock().unwrap().push(definitions);
+        let mut output = self
+            .replies
             .lock()
             .unwrap()
             .pop_front()
-            .expect("unexpected model call")
+            .expect("unexpected model call")?;
+        for item in &mut output {
+            if item["name"] == "start_workspace" {
+                let mut args: Value =
+                    serde_json::from_str(item["arguments"].as_str().unwrap()).unwrap();
+                if args["issue_id"] == "$created_issue" {
+                    let receipt = input
+                        .iter()
+                        .rev()
+                        .find(|v| v["type"] == "function_call_output")
+                        .unwrap();
+                    let receipt: Value =
+                        serde_json::from_str(receipt["output"].as_str().unwrap()).unwrap();
+                    args["issue_id"] = receipt["result"]["id"].clone();
+                    item["arguments"] = json!(args.to_string());
+                }
+            }
+        }
+        Ok(output)
     }
     async fn execute(
         &self,
@@ -81,6 +107,9 @@ impl ChatServices for MockServices {
             name.into(),
             args.clone(),
         ));
+        if self.fail_start && name == "start_workspace" {
+            anyhow::bail!("Workspace admission interrupted");
+        }
         // Simulates accepted background work, deliberately never waits for completion.
         Ok(
             json!({"id":operation,"status":"running","issue_id":args["issue_id"],"workspace_id":args["workspace_id"]}),
@@ -513,13 +542,38 @@ async fn discussion_and_events_cannot_mutate_even_if_model_requests_it() {
         let mut m = message(&pool, &conversation, "discuss").await;
         m.role = role.into();
         if role == "event" {
-            m.intent = "implement".into();
+            m.intent = "operate".into();
         } // forged event capability cannot grant writes
-        let fake =
-            MockServices::replies(vec![vec![call("create_issue", "bad", json!({}))], reply()]);
+        let fake = MockServices::replies(vec![
+            vec![
+                call("create_issue", "bad", json!({})),
+                call("start_workspace", "start", json!({})),
+                call("update_issue", "edit", json!({})),
+                call("change_workspace", "change", json!({})),
+                call("answer_question", "answer", json!({})),
+                call("merge", "merge", json!({})),
+            ],
+            reply(),
+        ]);
         run_turn(&pool, &fake, &conversation, &m).await.unwrap();
         assert!(fake.executions.lock().unwrap().is_empty());
+        assert!(
+            fake.definitions
+                .lock()
+                .unwrap()
+                .iter()
+                .flatten()
+                .all(|tool| tools::allowed("discuss", tool["name"].as_str().unwrap()))
+        );
     }
+    let operations: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM project_chat_operations")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        operations, 0,
+        "denied model proposals must never enter side-effect execution"
+    );
 }
 
 #[test]
@@ -546,7 +600,6 @@ fn capability_ceiling_distinguishes_creation_start_change_answer_and_merge() {
 async fn accepted_implementations_do_not_block_next_conversation_and_keep_targets() {
     let pool = database().await;
     let conversation = project(&pool).await;
-    let one = Uuid::new_v4();
     let two = Uuid::new_v4();
     let fake = MockServices::replies(vec![
         vec![call(
@@ -554,20 +607,24 @@ async fn accepted_implementations_do_not_block_next_conversation_and_keep_target
             "issue",
             json!({"title":"feature","description":"standalone requirements"}),
         )],
-        vec![call("start_workspace", "start", json!({"issue_id":one}))],
+        vec![call(
+            "start_workspace",
+            "start",
+            json!({"issue_id":"$created_issue"}),
+        )],
         reply(),
         vec![call("start_workspace", "second", json!({"issue_id":two}))],
         reply(),
         reply(),
     ]);
-    for intent in ["implement", "implement", "discuss"] {
+    for intent in ["operate", "operate", "operate"] {
         let m = message(&pool, &conversation, intent).await;
         run_turn(&pool, &fake, &conversation, &m).await.unwrap();
     }
     {
         let calls = fake.executions.lock().unwrap();
         assert_eq!(calls.len(), 3);
-        assert_eq!(calls[1].3["issue_id"], json!(one));
+        assert_eq!(calls[1].3["issue_id"], json!(calls[0].1));
         assert_eq!(calls[2].3["issue_id"], json!(two));
     }
     let history = store::messages(&pool, conversation.id, 0).await.unwrap();
@@ -884,4 +941,201 @@ fn steering_revision_ignores_stream_progress_but_detects_direct_intervention() {
     assert_ne!(tools::workspace_revision(&question).unwrap(), revision);
     streaming["runs"][0]["state"]["status"] = json!("succeeded");
     assert_ne!(tools::workspace_revision(&streaming).unwrap(), revision);
+}
+
+#[test]
+fn omitted_mode_defaults_to_ro_and_legacy_requests_keep_their_ceiling() {
+    let request = json!({"request_id":Uuid::new_v4(),"content":"Implement this"});
+    let parsed: SendChatMessage = serde_json::from_value(request.clone()).unwrap();
+    assert!(matches!(parsed.intent, ChatIntent::Discuss));
+    for intent in [
+        "discuss",
+        "operate",
+        "issue",
+        "implement",
+        "change",
+        "answer",
+        "merge",
+    ] {
+        let mut request = request.clone();
+        request["intent"] = json!(intent);
+        let parsed: SendChatMessage = serde_json::from_value(request).unwrap();
+        assert_eq!(serde_json::to_value(parsed.intent).unwrap(), json!(intent));
+    }
+    for name in [
+        "create_issue",
+        "start_workspace",
+        "update_issue",
+        "change_workspace",
+        "answer_question",
+        "merge",
+    ] {
+        assert!(tools::allowed("operate", name));
+        for intent in ["discuss", "", "unknown"] {
+            assert!(!tools::allowed(intent, name));
+        }
+    }
+    for name in [
+        "resolve_approval",
+        "shell",
+        "update_configuration",
+        "sync_wiki",
+    ] {
+        assert!(!tools::allowed("operate", name));
+    }
+}
+
+#[tokio::test]
+async fn operate_mock_model_routes_requests_without_operation_mode_changes() {
+    let pool = database().await;
+    let conversation = project(&pool).await;
+    let workspace = Uuid::new_v4();
+    let session = Uuid::new_v4();
+    let run = Uuid::new_v4();
+    // Scripted model selections exercise the server dispatch contract, not language matching.
+    let scenarios = vec![
+        ("こんにちは。実装するとしたらどんな案がある？", None),
+        (
+            "Issueに残して",
+            Some((
+                "create_issue",
+                json!({"title":"Agreed feature", "description":"Standalone specification"}),
+            )),
+        ),
+        (
+            "さっきの実装をこう変えて",
+            Some((
+                "change_workspace",
+                json!({"workspace_id":workspace,"session_id":session,"revision":"fresh","prompt":"Preserve compatibility"}),
+            )),
+        ),
+        (
+            "この質問にはPreserveと回答して",
+            Some((
+                "answer_question",
+                json!({"workspace_id":workspace,"agent_run_id":run,"input_id":"original-question","revision":"fresh","answer":"Preserve"}),
+            )),
+        ),
+        (
+            "これをマージして",
+            Some((
+                "merge",
+                json!({"selections":[{"workspace_id":workspace,"expected_commit":"accepted"}]}),
+            )),
+        ),
+        ("対象はまだ決めていない", None),
+    ];
+    for (content, selected) in scenarios {
+        let id = Uuid::new_v4();
+        store::enqueue(&pool, conversation.id, id, content, "operate")
+            .await
+            .unwrap();
+        let m = sqlx::query_as("SELECT * FROM project_chat_messages WHERE id=?")
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let mut responses = Vec::new();
+        if let Some((name, args)) = &selected {
+            responses.push(vec![call(name, "selected", args.clone())]);
+        }
+        responses.push(reply());
+        let fake = MockServices::replies(responses);
+        run_turn(&pool, &fake, &conversation, &m).await.unwrap();
+        let executions = fake.executions.lock().unwrap();
+        assert_eq!(executions.len(), usize::from(selected.is_some()));
+        if let Some((name, args)) = selected {
+            assert_eq!(executions[0].0, conversation.project_id);
+            assert_eq!(executions[0].2, name);
+            assert_eq!(executions[0].3, args);
+        }
+        for definitions in fake.definitions.lock().unwrap().iter() {
+            for name in [
+                "create_issue",
+                "start_workspace",
+                "change_workspace",
+                "answer_question",
+                "merge",
+            ] {
+                assert!(definitions.iter().any(|tool| tool["name"] == name));
+            }
+            assert!(
+                !definitions
+                    .iter()
+                    .any(|tool| tool["name"] == "resolve_approval")
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn later_operate_message_cannot_expand_saved_ro_or_legacy_checkpoint() {
+    let pool = database().await;
+    let conversation = project(&pool).await;
+    for intent in ["discuss", "issue", "implement", "change", "answer"] {
+        let old = message(&pool, &conversation, intent).await;
+        save(
+            &pool,
+            old.id,
+            &Checkpoint {
+                pending: vec![call("merge", "saved-proposal", json!({}))],
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+        let _new = message(&pool, &conversation, "operate").await;
+        assert!(
+            store::enqueue(&pool, conversation.id, old.id, &old.content, "operate")
+                .await
+                .is_err()
+        );
+        let fake = MockServices::replies(vec![reply()]);
+        run_turn(&pool, &fake, &conversation, &old).await.unwrap();
+        assert!(fake.executions.lock().unwrap().is_empty());
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM project_chat_operations WHERE message_id=?")
+                .bind(old.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(count, 0);
+    }
+}
+
+#[tokio::test]
+async fn operate_partial_success_retains_issue_and_blocks_duplicate_start() {
+    let pool = database().await;
+    let conversation = project(&pool).await;
+    let m = message(&pool, &conversation, "operate").await;
+    let mut fake = MockServices::replies(vec![
+        vec![call("create_issue", "created", json!({}))],
+        vec![call(
+            "start_workspace",
+            "failed",
+            json!({"issue_id":"$created_issue"}),
+        )],
+        vec![call("start_workspace", "duplicate", json!({}))],
+        reply(),
+    ]);
+    fake.fail_start = true;
+    run_turn(&pool, &fake, &conversation, &m).await.unwrap();
+    {
+        let calls = fake.executions.lock().unwrap();
+        assert_eq!(calls.len(), 2);
+        assert_eq!(calls[1].3["issue_id"], json!(calls[0].1));
+    }
+    let receipts: Vec<String> = sqlx::query_scalar(
+        "SELECT result FROM project_chat_operations WHERE message_id=? ORDER BY rowid",
+    )
+    .bind(m.id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(receipts.len(), 2);
+    let created: Value = serde_json::from_str(&receipts[0]).unwrap();
+    let failed: Value = serde_json::from_str(&receipts[1]).unwrap();
+    assert_eq!(created["ok"], true);
+    assert_eq!(failed["ok"], false);
+    assert_eq!(failed["uncertain"], true);
 }

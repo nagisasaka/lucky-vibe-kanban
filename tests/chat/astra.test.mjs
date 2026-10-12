@@ -16,7 +16,11 @@ test("Astra isolates typing, follows latest, preserves reading position and show
     agentRunApi: "export const agentRunsApi = {};",
     api: "export const handleApiResponse = async r => r;",
     localApiTransport: `export const makeLocalApiRequest = async (url, options) => {
-   if (options?.method === 'POST') return 'accepted';
+   if (options?.method === 'POST') {
+     (window.astraRequests ||= []).push(JSON.parse(options.body));
+     if (window.astraFailSend) throw new Error('Disconnected after acceptance');
+     return 'accepted';
+   }
    const after = Number(new URL(url, 'http://test').searchParams.get('after'));
    return {...window.astraView, messages:window.astraView.messages.filter(m => m.sequence > after)};
   };`,
@@ -154,6 +158,60 @@ test("Astra isolates typing, follows latest, preserves reading position and show
       () => document.querySelector("textarea").value === "",
     );
     assert.ok(await bottom(), "sending returns to latest");
+    const mode = page.getByRole("combobox");
+    assert.deepEqual(
+      await mode
+        .locator("option")
+        .evaluateAll((options) => options.map((o) => o.value)),
+      ["discuss", "operate"],
+    );
+    assert.equal(await mode.inputValue(), "discuss");
+    assert.equal(
+      await page.evaluate(() => window.astraRequests[0].intent),
+      "discuss",
+    );
+    await mode.selectOption("operate");
+    await page.evaluate(() => window.astraRefresh());
+    assert.equal(
+      await mode.inputValue(),
+      "operate",
+      "poll reconnect preserves explicit selection",
+    );
+    await page.getByLabel("Message to Astra").fill("Issueに残して");
+    await page.evaluate(() => {
+      window.astraFailSend = true;
+    });
+    await page
+      .getByRole("button", { name: "送信 / Send", exact: true })
+      .click();
+    await page.getByRole("alert").waitFor();
+    assert.equal(await mode.isDisabled(), true);
+    assert.equal(await page.getByLabel("Message to Astra").isDisabled(), true);
+    await page.evaluate(() => {
+      window.astraFailSend = false;
+    });
+    await page
+      .getByRole("button", { name: "送信 / Send", exact: true })
+      .click();
+    await page.waitForFunction(
+      () => document.querySelector("textarea").value === "",
+    );
+    const requests = await page.evaluate(() => window.astraRequests);
+    assert.deepEqual(
+      requests[1],
+      requests[2],
+      "unknown delivery retries original ID, content and mode",
+    );
+    assert.equal(requests[2].intent, "operate");
+    await page.evaluate(() => window.astraMount("other-project"));
+    await page.waitForFunction(
+      () => document.querySelector("select").value === "discuss",
+    );
+    await mode.selectOption("operate");
+    await page.evaluate(() => window.astraMount("test"));
+    await page.waitForFunction(
+      () => document.querySelector("select").value === "discuss",
+    );
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

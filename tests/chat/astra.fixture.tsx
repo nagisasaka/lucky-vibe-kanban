@@ -20,8 +20,12 @@ window.astraView = {
 };
 window.astraRefresh = () =>
   client.invalidateQueries({ queryKey: ["project-chat", "test"] });
-createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={client}>
-    <ProjectChat projectId="test" />
-  </QueryClientProvider>,
-);
+const root = createRoot(document.getElementById("root")!);
+window.astraMount = (projectId = "test") =>
+  root.render(
+    <QueryClientProvider client={client}>
+      <ProjectChat projectId={projectId} />
+    </QueryClientProvider>,
+  );
+
+window.astraMount();
