@@ -1206,5 +1206,19 @@
       "noPrompt": "No prompt has been captured yet.",
       "rawRouterOutput": "Raw router output"
     }
+  },
+  "integrationGate": {
+    "check": "필수 검증",
+    "notRun": "실행되지 않음",
+    "excepted": "예외 승인됨 (검증 성공 아님)",
+    "acknowledge": "이 후보와 검증에 한정된 위험을 이해했습니다.",
+    "retry": "환경 수정 후 재시도",
+    "continue": "이 예외를 승인하고 계속",
+    "cancel": "Integration 취소",
+    "instructionBoundary": "추가 지시는 검증 예외나 도구 실행을 승인하지 않습니다. 재개 시 같은 Integration과 Session을 유지하고 후보를 다시 검증합니다.",
+    "instruction": "Integration 추가 지시",
+    "send": "추가 지시 보내기",
+    "resume": "복구 후 재개 / 추가 지시",
+    "history": "복구 기록"
   }
 }

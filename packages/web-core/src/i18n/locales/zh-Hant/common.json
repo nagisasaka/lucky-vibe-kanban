@@ -1212,5 +1212,19 @@
     "submitting": "正在提交回答...",
     "answeredCount": "已回答{{count}}個問題",
     "answeredCount_other": "已回答{{count}}個問題"
+  },
+  "integrationGate": {
+    "check": "必要檢查",
+    "notRun": "未執行",
+    "excepted": "例外已核准（檢查未通過）",
+    "acknowledge": "我理解此候選提交與檢查的風險。",
+    "retry": "修復環境後重試",
+    "continue": "允許此次例外並繼續",
+    "cancel": "取消 Integration",
+    "instructionBoundary": "附加指示不會核准驗證例外或工具執行。恢復將保留同一 Integration 與 Session，並重新驗證候選提交。",
+    "instruction": "Integration 附加指示",
+    "send": "傳送指示",
+    "resume": "修復後恢復／傳送指示",
+    "history": "恢復歷程"
   }
 }

@@ -1352,5 +1352,19 @@
     "send": "Send answer",
     "sending": "Sending…",
     "sendFailed": "The answer could not be sent. Your draft has been kept; please try again."
+  },
+  "integrationGate": {
+    "check": "Required check",
+    "notRun": "Not executed",
+    "excepted": "Exception approved (check did not pass)",
+    "acknowledge": "I understand the risk for this candidate and this check.",
+    "retry": "Fix environment and retry",
+    "continue": "Continue with this exception",
+    "cancel": "Cancel Integration",
+    "instructionBoundary": "Instructions do not approve validation exceptions or tool execution. Resuming retains this Integration and Session and validates the candidate again.",
+    "instruction": "Integration instruction",
+    "send": "Send instruction",
+    "resume": "Resume after repair / send instruction",
+    "history": "Recovery history"
   }
 }

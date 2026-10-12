@@ -2843,13 +2843,58 @@ impl AgentRunPort for LocalAgentRunPort {
                 .await
                 .map_err(port_database)?
                 .ok_or(AgentRunPortError::NotFound(request.workspace.workspace_id))?;
+            let current_product_intervention =
+                if command.orchestration_run_id.is_some() && workspace.is_execution_only() {
+                    let product: Option<db::models::integration::IntegrationRun> =
+                        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+                            .bind(workspace.id)
+                            .fetch_optional(&self.db.pool)
+                            .await
+                            .map_err(port_database)?;
+                    product.as_ref().is_some_and(|run| {
+                        run.payload.intervention.as_ref().is_some_and(|action| {
+                            action.pending
+                                && serde_json::to_value(&command).ok().is_some_and(|value| {
+                                    action.retry_command.as_ref() == Some(&value)
+                                        || action.instruction_command.as_ref() == Some(&value)
+                                })
+                        })
+                    })
+                } else {
+                    false
+                };
+            let integration_instruction = (command.orchestration_run_id.is_none()
+                || current_product_intervention)
+                && matches!(&command.command, AgentRunPortCommand::Steer { .. })
+                && db::models::integration::IntegrationRun::allows_instruction(
+                    &self.db.pool,
+                    workspace.id,
+                    request.session_id,
+                    command.agent_run_id,
+                )
+                .await
+                .map_err(port_database)?;
             if workspace.is_execution_only() {
-                if !matches!(
-                    &command.command,
-                    AgentRunPortCommand::Create { .. }
-                        | AgentRunPortCommand::SubmitInput { .. }
-                        | AgentRunPortCommand::ResolveApproval { .. }
-                ) {
+                let integration_retry = current_product_intervention
+                    && matches!(&command.command, AgentRunPortCommand::Retry { .. })
+                    && command.orchestration_run_id == Some(request.correlation_id)
+                    && db::models::integration::IntegrationRun::allows_instruction(
+                        &self.db.pool,
+                        workspace.id,
+                        request.session_id,
+                        command.agent_run_id,
+                    )
+                    .await
+                    .map_err(port_database)?;
+                if !integration_instruction
+                    && !integration_retry
+                    && !matches!(
+                        &command.command,
+                        AgentRunPortCommand::Create { .. }
+                            | AgentRunPortCommand::SubmitInput { .. }
+                            | AgentRunPortCommand::ResolveApproval { .. }
+                    )
+                {
                     return Err(AgentRunPortError::Rejected("Execution-only workspace does not accept free-form controls or retries; use its owner".into()));
                 }
                 services::services::workspace_usage::validate_agent_owner(
@@ -2867,6 +2912,7 @@ impl AgentRunPort for LocalAgentRunPort {
             )
             .await
             .map_err(port_database)?
+                && !integration_instruction
                 && !(command.orchestration_run_id == Some(owner)
                     || (request.correlation_id == owner
                         && matches!(
@@ -3158,6 +3204,35 @@ impl AgentRunPort for LocalAgentRunPort {
                 }
                 let (request, previous) = self.load_request(agent_run_id).await?;
                 let state = self.query(agent_run_id).await?;
+                // A retry may have been accepted before its command receipt
+                // was saved. Reconcile that exact attempt before allocating an
+                // attempt number or considering the current terminal status.
+                let accepted: Option<(Json<RunAttemptRequest>, String)> = sqlx::query_as(
+                    "SELECT a.request_envelope,p.registry_status FROM agent_run_attempts a JOIN agent_process_registry p ON p.run_attempt_id=a.id WHERE a.id=?"
+                ).bind(run_attempt_id).fetch_optional(&self.db.pool).await.map_err(port_database)?;
+                if let Some((accepted, registry_status)) = accepted {
+                    if accepted.agent_run_id != agent_run_id
+                        || accepted.request_id != command.command_id
+                        || accepted.idempotency_key != command.idempotency_key
+                        || accepted.mode != *mode
+                    {
+                        return Err(AgentRunPortError::Rejected(
+                            "Retry identity conflicts with the accepted attempt".into(),
+                        ));
+                    }
+                    accepted
+                        .validate_for_run(&request)
+                        .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?;
+                    if registry_status == "reserved"
+                        && state.state.last_run_attempt_number < accepted.attempt_number
+                    {
+                        let workspace = self.validate_workspace(&request).await?;
+                        // start_attempt reuses a reserved host endpoint; it
+                        // never replaces an unreachable or accepted process.
+                        self.start_attempt(request, accepted.0, workspace).await;
+                    }
+                    return Ok(());
+                }
                 if !state.state.status.is_terminal() {
                     return Err(AgentRunPortError::Rejected(
                         "cannot retry an active AgentRun".to_string(),
@@ -3506,6 +3581,95 @@ mod tests {
         );
         env.insert("VK_AGENT_RUN_ID", "frozen-run");
         env
+    }
+
+    #[tokio::test]
+    async fn accepted_retry_is_reconciled_after_lost_command_ack_without_another_launch() {
+        let template = setup_runtime_db().await;
+        let (request, initial) = persisted_codex_run(&template).await;
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        db::models::workspace::Workspace::create(
+            &pool,
+            &db::models::workspace::CreateWorkspace {
+                branch: "test".into(),
+                name: None,
+            },
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        db::models::session::Session::create(
+            &pool,
+            &db::models::session::CreateSession {
+                executor: None,
+                name: None,
+            },
+            request.session_id,
+            request.workspace.workspace_id,
+        )
+        .await
+        .unwrap();
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &initial)
+            .await
+            .unwrap();
+        let command_id = Uuid::new_v4();
+        let retry = RunAttemptRequest {
+            request_id: command_id,
+            idempotency_key: "retry-with-lost-receipt".into(),
+            run_attempt_id: Uuid::new_v4(),
+            attempt_number: 2,
+            mode: RunAttemptMode::Restart,
+            ..initial.clone()
+        };
+        AgentRunRecord::persist_retry_attempt_before_launch(&pool, &request, &retry)
+            .await
+            .unwrap();
+        sqlx::query(
+            "UPDATE agent_process_registry SET registry_status='exited',pid=9999999,process_started_at=datetime('now'),observed_exited_at=datetime('now'),exit_code=0 WHERE run_attempt_id=?",
+        )
+        .bind(retry.run_attempt_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let command = AgentRunPortCommandEnvelope {
+            schema_version: executors::runtime::ORCHESTRATION_COMMAND_SCHEMA_VERSION,
+            command_id,
+            idempotency_key: retry.idempotency_key.clone(),
+            agent_run_id: request.agent_run_id,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: request.correlation_id,
+            created_at: retry.created_at,
+            command: AgentRunPortCommand::Retry {
+                mode: RunAttemptMode::Restart,
+                run_attempt_id: retry.run_attempt_id,
+            },
+        };
+        db::models::agent_runtime::AgentRunCommandRecord::enqueue(&pool, &command)
+            .await
+            .unwrap();
+        let port = LocalAgentRunPort::new(DBService { pool: pool.clone() });
+        port.control(command.clone()).await.unwrap();
+        port.control(command.clone()).await.unwrap();
+        assert!(port.children.read().await.is_empty());
+        let attempts: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_run_attempts")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(attempts, 2);
+        let mut conflicting = command;
+        conflicting.command_id = Uuid::new_v4();
+        conflicting.idempotency_key = "another-action".into();
+        db::models::agent_runtime::AgentRunCommandRecord::enqueue(&pool, &conflicting)
+            .await
+            .unwrap();
+        assert!(port.control(conflicting).await.is_err());
+        assert!(port.children.read().await.is_empty());
     }
 
     async fn replay_fixture(

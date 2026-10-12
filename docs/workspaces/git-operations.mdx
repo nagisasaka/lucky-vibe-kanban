@@ -369,6 +369,44 @@ For complex conflicts, you can ask the agent to help resolve them. Start a new m
 </Accordion>
 </AccordionGroup>
 
+## Resume a stopped formal Integration
+
+On the local Board, open **Integration runs**, review the selected Issues, base
+commit B, candidate R and host validation evidence, then choose **Open integration
+Workspace**. The saved error and stop stage explain what needs attention.
+
+When a required check fails or cannot complete, choose one of these actions:
+
+- **Fix environment and retry** reruns that check on the frozen candidate.
+- **Continue with this exception** requires acknowledgement of the displayed
+  risk and applies only to that check and candidate. Its result remains failed
+  or unavailable, with a separate exception record. Further checks still run.
+- **Cancel Integration** stops the unpublished Integration.
+
+Unanswered confirmations prevent publication. New candidate commits, changed
+requirements or validation plans invalidate old exceptions. If the target branch
+advances, explicitly reselect against its new state. Database, permission, Git
+and unresolved ownership failures cannot be waived with a confirmation.
+
+In the Integration Workspace, use **Send instruction** while the agent is
+running. After a blocked run, repair the environment and use **Resume after repair
+/ send instruction**; leave the instruction empty to retry without additional
+text. LVK retains the Integration and Session, reconciles saved execution
+identities and validates the resulting candidate again. Provider support for
+steering/resume is required; delivery errors remain visible. Other system
+Workspace kinds keep their existing input restrictions.
+
+<Note>
+Normal instructions do not approve validation exceptions or tool execution.
+Use the separate confirmation or existing tool-approval control for those
+choices. Reconnecting restores saved decisions and recovery history.
+</Note>
+
+If publication may already have occurred, use **Reconcile publication (no
+remerge)**. Verify **Git: published**, each Issue's Done result and the Wiki
+result separately. A successful Integration does not prove a subsequent Wiki
+update succeeded.
+
 ## Related Documentation
 
 - [Multi-Repo & Sessions](/workspaces/multi-repo-sessions) - Working with multiple repositories

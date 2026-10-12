@@ -358,6 +358,24 @@ pub(crate) async fn dispatch_control(
         db::models::workspace::Workspace::find_by_id(&deployment.db().pool, run.workspace_id)
             .await?
             .ok_or_else(|| ApiError::BadRequest("Workspace not found".into()))?;
+    // Serialise free-form intervention against candidate freezing/publication.
+    // The port independently checks the durable Integration identity and phase.
+    let _integration_guard = if workspace.is_execution_only()
+        && matches!(&command, AgentRunPortCommand::Steer { .. })
+    {
+        if let Some(owner) =
+            db::models::integration::workspace_owner(&deployment.db().pool, workspace.id).await?
+        {
+            Some(
+                super::integrations::reserve_intervention(owner)
+                    .map_err(|e| ApiError::Conflict(e.to_string()))?,
+            )
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     if workspace.is_execution_only() {
         match &command {
             AgentRunPortCommand::Cancel { .. } => {
@@ -367,6 +385,24 @@ pub(crate) async fn dispatch_control(
                     .await
                     .map_err(read_api_error)?;
                 return Ok(ResponseJson(ApiResponse::success(state)));
+            }
+            AgentRunPortCommand::Steer { .. }
+                if db::models::integration::IntegrationRun::allows_instruction(
+                    &deployment.db().pool,
+                    workspace.id,
+                    run.session_id,
+                    agent_run_id,
+                )
+                .await? =>
+            {
+                services::services::workspace_usage::validate_agent_owner(
+                    &deployment.db().pool,
+                    &workspace,
+                    &run.request_envelope,
+                    true,
+                )
+                .await
+                .map_err(|error| ApiError::Conflict(error.to_string()))?;
             }
             AgentRunPortCommand::SubmitInput { .. }
             | AgentRunPortCommand::ResolveApproval { .. } => {

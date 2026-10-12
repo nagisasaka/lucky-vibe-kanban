@@ -404,6 +404,23 @@ async fn append_and_project_in_transaction(
         event.orchestration_run_id,
     ))?;
     let mut state = state_json.0;
+    if let OrchestrationEventPayload::IntegrationResumed { node_execution_id } = event.payload {
+        let permitted: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs i JOIN orchestration_node_executions n ON n.orchestration_run_id=i.id WHERE i.id=? AND n.id=? AND i.status='integrating' AND i.cancel_requested=0 AND json_extract(i.payload,'$.publication_intent')=0 AND json_extract(i.payload,'$.intervention.pending')=1)")
+            .bind(event.orchestration_run_id).bind(node_execution_id).fetch_one(&mut *connection).await?;
+        if !permitted {
+            return Err(OrchestrationPersistenceError::IdempotencyConflict {
+                entity: "Integration resume authorization",
+                key: event.orchestration_run_id.to_string(),
+            });
+        }
+        sqlx::query(
+            "UPDATE orchestration_node_executions SET status='running',updated_at=? WHERE id=?",
+        )
+        .bind(event.timestamp)
+        .bind(node_execution_id)
+        .execute(&mut *connection)
+        .await?;
+    }
     let applied = reduce_orchestration_event(&mut state, event)?;
     sqlx::query(
         r#"

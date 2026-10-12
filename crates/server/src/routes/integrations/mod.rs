@@ -12,6 +12,7 @@ use axum::{
 use db::models::integration::{IntegrationRun, IntegrationSelection};
 use deployment::Deployment;
 use executors::profile::ExecutorConfig;
+pub(crate) use runtime::reserve_intervention;
 pub use runtime::spawn_monitor;
 use serde::Deserialize;
 use ts_rs::TS;
@@ -210,6 +211,45 @@ async fn recover(
     status(State(deployment), Path(id)).await
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct InterventionRequest {
+    project_id: Uuid,
+    request_id: Uuid,
+    prompt: String,
+}
+
+async fn intervene(
+    State(deployment): State<DeploymentImpl>,
+    Path(id): Path<Uuid>,
+    Json(request): Json<InterventionRequest>,
+) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
+    runtime::intervene(&deployment, id, request)
+        .await
+        .map_err(error)?;
+    status(State(deployment), Path(id)).await
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct GateDecisionRequest {
+    project_id: Uuid,
+    gate_id: Uuid,
+    request_id: Uuid,
+    decision: String,
+}
+
+async fn decide_gate(
+    State(deployment): State<DeploymentImpl>,
+    Path(id): Path<Uuid>,
+    Json(request): Json<GateDecisionRequest>,
+) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
+    runtime::decide_gate(&deployment, id, request)
+        .await
+        .map_err(error)?;
+    status(State(deployment), Path(id)).await
+}
+
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/integrations", get(list).post(create))
@@ -217,6 +257,8 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/integrations/{id}", get(status))
         .route("/integrations/{id}/cancel", post(cancel))
         .route("/integrations/{id}/recover", post(recover))
+        .route("/integrations/{id}/decision", post(decide_gate))
+        .route("/integrations/{id}/intervene", post(intervene))
 }
 
 #[cfg(test)]

@@ -798,3 +798,10 @@ not additional live fault-injection trials. Agent decisions are identified as
 sampled, and deterministic boundaries are tested separately rather than
 presented as a universal AI guarantee. The mandatory real-model UI sequence is
 the separately identified LIVE evidence, not replaced by these static checks.
+
+## Intervention and recovery update
+
+See [Recovering a stopped formal Integration](integration-intervention.md) for
+candidate-bound validation exceptions, dedicated Workspace instructions and
+recovery of the existing dispatch identity. Historical acceptance results above
+remain historical; they do not validate this later change.

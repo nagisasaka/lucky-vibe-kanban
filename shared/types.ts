@@ -127,7 +127,13 @@ export type IntegrationSource = { selection: IntegrationSelection, branch: strin
 
 export type IntegrationValidation = { command: string, cwd: string, required: boolean, evidence: string, environment_requirements: string, execution_process_id: string | null, exit_code: bigint | null, result: string | null, };
 
-export type IntegrationPayload = { sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
+export type IntegrationPayload = { gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
+
+export type IntegrationGate = { id: string, validation_index: number, scope: string, risk: string, evidence: IntegrationValidation, decision: string | null, actor: string | null, decided_at: string | null, request_id: string | null, };
+
+export type IntegrationIntervention = { request_id: string, prompt: string, created_at: string, pending: boolean, retry_command: JsonValue | null, instruction_command: JsonValue | null, };
+
+export type IntegrationStop = { stage: string, category: string, next_action: string, };
 
 export type IntegrationRun = { id: string, request_key: string, project_id: string, repository_id: string, storage_identity: string, target_ref: string, status: string, workspace_id: string | null, session_id: string | null, agent_run_id: string | null, payload: IntegrationPayload, cancel_requested: boolean, error: string | null, created_at: string, updated_at: string, };
 
@@ -1482,7 +1488,7 @@ export enum OrchestrationRunStatus { pending = "pending", running = "running", w
 
 export enum OrchestrationNodeStatus { pending = "pending", ready = "ready", running = "running", awaiting_input = "awaiting_input", awaiting_approval = "awaiting_approval", cancelling = "cancelling", succeeded = "succeeded", failed = "failed", cancelled = "cancelled" }
 
-export type OrchestrationEventPayload = { "type": "lifecycle_changed", "data": { status: OrchestrationRunStatus, } } | { "type": "node_status_changed", "data": { node_execution_id: string, status: OrchestrationNodeStatus, } } | { "type": "agent_run_linked", "data": { node_execution_id: string, agent_run_id: string, } } | { "type": "join_decided", "data": { node_execution_id: string, policy: OrchestrationJoinPolicy, consumed_source_execution_ids: Array<string>, } } | { "type": "command_queued", "data": { command_id: string, idempotency_key: string, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
+export type OrchestrationEventPayload = { "type": "integration_resumed", "data": { node_execution_id: string, } } | { "type": "lifecycle_changed", "data": { status: OrchestrationRunStatus, } } | { "type": "node_status_changed", "data": { node_execution_id: string, status: OrchestrationNodeStatus, } } | { "type": "agent_run_linked", "data": { node_execution_id: string, agent_run_id: string, } } | { "type": "join_decided", "data": { node_execution_id: string, policy: OrchestrationJoinPolicy, consumed_source_execution_ids: Array<string>, } } | { "type": "command_queued", "data": { command_id: string, idempotency_key: string, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
 
 export type OrchestrationEventEnvelope = { schema_version: number, payload_version: number, event_id: string, orchestration_run_id: string, sequence: bigint, correlation_id: string, timestamp: string, payload: OrchestrationEventPayload, };
 

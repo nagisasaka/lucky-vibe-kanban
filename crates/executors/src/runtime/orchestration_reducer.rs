@@ -1,6 +1,7 @@
 use super::{
     ContractVersionError, ORCHESTRATION_REDUCER_VERSION, ORCHESTRATION_STATE_SCHEMA_VERSION,
-    OrchestrationEventEnvelope, OrchestrationEventPayload, OrchestrationState, ProjectionStatus,
+    OrchestrationEventEnvelope, OrchestrationEventPayload, OrchestrationRunStatus,
+    OrchestrationState, ProjectionStatus,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -65,6 +66,10 @@ pub fn reduce_orchestration_event(
     }
 
     let apply = match &event.payload {
+        OrchestrationEventPayload::IntegrationResumed { .. } => {
+            state.status = OrchestrationRunStatus::Running;
+            OrchestrationReducerApply::Applied
+        }
         OrchestrationEventPayload::LifecycleChanged { status } => {
             if state.status.is_terminal() && !status.is_terminal() {
                 OrchestrationReducerApply::IgnoredTerminalRegression

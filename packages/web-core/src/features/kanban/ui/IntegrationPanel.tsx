@@ -1,3 +1,4 @@
+import { IntegrationGateControls } from './IntegrationGateControls';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@vibe/ui/components/Button';
@@ -407,6 +408,12 @@ export function IntegrationPanel({
                       {run.error}
                     </p>
                   )}
+                  {run.payload.stop && (
+                    <p>
+                      {run.payload.stop.stage} · {run.payload.stop.category}:{' '}
+                      {run.payload.stop.next_action}
+                    </p>
+                  )}
                   {run.payload.semantic_summary && (
                     <div>
                       <p className="text-low">
@@ -457,6 +464,7 @@ export function IntegrationPanel({
                       </ul>
                     </details>
                   )}
+                  <IntegrationGateControls run={run} />
                   <div className="flex gap-base">
                     {run.workspace_id && (
                       <Button
@@ -470,7 +478,10 @@ export function IntegrationPanel({
                         Open integration Workspace
                       </Button>
                     )}
-                    {integrationCanCancel(run.status) && (
+                    {integrationCanCancel(
+                      run.status,
+                      run.payload.publication_intent
+                    ) && (
                       <Button
                         size="sm"
                         variant="outline"

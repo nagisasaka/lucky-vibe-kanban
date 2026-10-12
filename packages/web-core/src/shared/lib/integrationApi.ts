@@ -1,5 +1,7 @@
 import type {
   CreateIntegrationRequest,
+  SteerAgentRunRequest,
+  RunState,
   IntegrationRun,
   IntegrationSelection,
   ParallelContextPage,
@@ -19,6 +21,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const integrationApi = {
+  steer: (agent: string, body: SteerAgentRunRequest) =>
+    request<RunState>(`/api/agent-runs/${agent}/steer`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  get: (id: string) => request<IntegrationRun>(`/api/integrations/${id}`),
+  intervene: (
+    id: string,
+    body: { project_id: string; request_id: string; prompt: string }
+  ) =>
+    request<IntegrationRun>(`/api/integrations/${id}/intervene`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  decide: (
+    id: string,
+    body: {
+      project_id: string;
+      gate_id: string;
+      request_id: string;
+      decision: 'continue' | 'retry' | 'cancel';
+    }
+  ) =>
+    request<IntegrationRun>(`/api/integrations/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   repositories: (projectId: string) =>
     request<Repo[]>(
       `/api/integrations/repositories?project_id=${encodeURIComponent(projectId)}`
@@ -54,8 +83,16 @@ export const integrationApi = {
   },
 };
 
-export function integrationCanCancel(status: string): boolean {
-  return ['queued', 'preparing', 'integrating', 'validating'].includes(status);
+export function integrationCanCancel(
+  status: string,
+  publicationIntent = false
+): boolean {
+  return (
+    !publicationIntent &&
+    ['queued', 'preparing', 'integrating', 'validating', 'blocked'].includes(
+      status
+    )
+  );
 }
 
 export function integrationDoneLabel(

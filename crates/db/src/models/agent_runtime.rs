@@ -937,7 +937,10 @@ impl AgentRunRecord {
             return Err(AgentRuntimePersistenceError::InvalidFirstAttempt);
         }
 
-        let mut transaction = pool.begin().await?;
+        // Take the writer reservation before reading idempotency state. A deferred
+        // read transaction cannot upgrade after another WAL writer commits
+        // (SQLITE_BUSY_SNAPSHOT bypasses busy_timeout).
+        let mut transaction = pool.begin_with("BEGIN IMMEDIATE").await?;
         if let Some(existing) = sqlx::query_as::<_, ExistingAgentRunIdentity>(
             r#"
             SELECT ar.id AS agent_run_id,
@@ -1101,7 +1104,10 @@ impl AgentRunRecord {
             return Err(AgentRuntimePersistenceError::InvalidFirstAttempt);
         }
 
-        let mut transaction = pool.begin().await?;
+        // Take the writer reservation before reading idempotency state. A deferred
+        // read transaction cannot upgrade after another WAL writer commits
+        // (SQLITE_BUSY_SNAPSHOT bypasses busy_timeout).
+        let mut transaction = pool.begin_with("BEGIN IMMEDIATE").await?;
         if let Some(existing) = sqlx::query_as::<_, ExistingAgentRunIdentity>(
             r#"
             SELECT ar.id AS agent_run_id,
@@ -2519,6 +2525,62 @@ mod tests {
             stored_reference.0.metadata, None,
             "provider session update must roll back with a failed batch"
         );
+    }
+
+    #[tokio::test]
+    async fn admission_waits_for_wal_writer_and_reuses_identity_after_timeout() {
+        let directory = TempDir::new().unwrap();
+        let options = SqliteConnectOptions::new()
+            .filename(directory.path().join("admission.sqlite"))
+            .create_if_missing(true)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .busy_timeout(Duration::from_millis(300));
+        let pool = SqlitePoolOptions::new()
+            .max_connections(4)
+            .connect_with(options.clone())
+            .await
+            .unwrap();
+        setup_schema(&pool).await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        let (request, attempt) = requests(session, workspace, "contended-admission");
+        let mut writer = sqlx::SqliteConnection::connect_with(&options)
+            .await
+            .unwrap();
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut writer)
+            .await
+            .unwrap();
+        let waiting = {
+            let pool = pool.clone();
+            let request = request.clone();
+            let attempt = attempt.clone();
+            tokio::spawn(async move {
+                AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt).await
+            })
+        };
+        tokio::time::sleep(Duration::from_millis(60)).await;
+        assert!(
+            !waiting.is_finished(),
+            "admission must wait before reading, not fail a deferred upgrade"
+        );
+        sqlx::query("COMMIT").execute(&mut writer).await.unwrap();
+        waiting.await.unwrap().unwrap();
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut writer)
+            .await
+            .unwrap();
+        let blocked =
+            AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt).await;
+        assert!(blocked.is_err(), "persistent contention is not success");
+        sqlx::query("ROLLBACK").execute(&mut writer).await.unwrap();
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_runs")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 1, "recovery must retain the same accepted identity");
     }
 
     #[tokio::test]
