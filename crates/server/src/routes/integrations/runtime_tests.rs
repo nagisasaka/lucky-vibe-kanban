@@ -795,3 +795,242 @@ async fn completion_accepts_only_its_confirmed_target_publication() {
         frozen.expected_commit
     );
 }
+
+#[tokio::test]
+async fn exception_preserves_failure_and_never_waives_identity_or_settlement() {
+    let (pool, mut run, process, _) = fixture().await;
+    ExecutionProcess::update_completion(
+        &pool,
+        process.id,
+        ExecutionProcessStatus::Completed,
+        Some(127),
+    )
+    .await
+    .unwrap();
+    ExecutionProcessRepoState::update_after_head_commit(
+        &pool,
+        process.id,
+        run.repository_id,
+        run.payload.result_commit.as_deref().unwrap(),
+    )
+    .await
+    .unwrap();
+    run.payload.validation[0].exit_code = Some(127);
+    run.payload.validation[0].result = Some("unavailable".into());
+    let gate = db::models::integration::IntegrationGate {
+        id: Uuid::new_v4(),
+        validation_index: 0,
+        scope: run.validation_scope(),
+        risk: "unverified behaviour".into(),
+        evidence: run.payload.validation[0].clone(),
+        decision: None,
+        actor: None,
+        decided_at: None,
+        request_id: None,
+    };
+    run.payload.gates.push(gate);
+    assert!(
+        verify_validation(&pool, &run).await.is_err(),
+        "unanswered is not approval"
+    );
+    run.payload.gates[0].decision = Some("cancel".into());
+    assert!(
+        verify_validation(&pool, &run).await.is_err(),
+        "denial is not approval"
+    );
+    run.payload.gates[0].decision = Some("continue".into());
+    run.payload.gates[0].actor = Some(Uuid::from_u128(1));
+    run.payload.gates[0].decided_at = Some(chrono::Utc::now().to_rfc3339());
+    run.payload.gates[0].request_id = Some(Uuid::new_v4());
+    verify_validation(&pool, &run).await.unwrap();
+    assert_eq!(
+        run.payload.validation[0].result.as_deref(),
+        Some("unavailable")
+    );
+    assert_eq!(run.payload.validation[0].exit_code, Some(127));
+    let saved: IntegrationRun =
+        serde_json::from_value(serde_json::to_value(&run).unwrap()).unwrap();
+    verify_validation(&pool, &saved).await.unwrap();
+    for changed in [
+        "candidate",
+        "base",
+        "project",
+        "plan",
+        "requirements",
+        "check-result",
+    ] {
+        let mut stale = saved.clone();
+        match changed {
+            "candidate" => stale.payload.result_commit = Some("b".repeat(40)),
+            "base" => stale.payload.base_commit = Some("b".repeat(40)),
+            "project" => stale.project_id = Uuid::new_v4(),
+            "plan" => stale.payload.validation[0].command = "other test".into(),
+            "requirements" => stale.payload.sources[0].requirements_revision += 1,
+            _ => stale.payload.validation[0].result = Some("passed".into()),
+        }
+        assert!(
+            !stale.validation_excepted(0),
+            "{changed} must invalidate the exception"
+        );
+        assert!(verify_validation(&pool, &stale).await.is_err());
+    }
+    ExecutionProcessRepoState::update_after_head_commit(
+        &pool,
+        process.id,
+        run.repository_id,
+        &"c".repeat(40),
+    )
+    .await
+    .unwrap();
+    assert!(
+        verify_validation(&pool, &run).await.is_err(),
+        "an exception cannot waive a changed checkout"
+    );
+    ExecutionProcess::update_completion(&pool, process.id, ExecutionProcessStatus::Running, None)
+        .await
+        .unwrap();
+    assert!(
+        verify_validation(&pool, &run).await.is_err(),
+        "a live writer cannot be waived"
+    );
+}
+
+#[tokio::test]
+async fn approved_failed_check_uses_exact_git_publication_and_rejects_target_races() {
+    for target_moves in [false, true] {
+        let (pool, mut run, process, _) = fixture().await;
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        let git_cmd = |args: &[&str]| {
+            let output = std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            String::from_utf8(output.stdout).unwrap().trim().to_owned()
+        };
+        git_cmd(&["init", "-b", "main"]);
+        let commit = |message: &str| {
+            git_cmd(&[
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-m",
+                message,
+            ]);
+            git_cmd(&["rev-parse", "HEAD"])
+        };
+        let base = commit("base");
+        git_cmd(&["checkout", "-b", "candidate"]);
+        let candidate = commit("candidate");
+        git_cmd(&["checkout", "main"]);
+        sqlx::query("UPDATE repos SET path=? WHERE id=?")
+            .bind(root.to_str().unwrap())
+            .bind(run.repository_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE execution_process_repo_states SET before_head_commit=?,after_head_commit=? WHERE execution_process_id=?")
+            .bind(&candidate).bind(&candidate).bind(process.id).execute(&pool).await.unwrap();
+        ExecutionProcess::update_completion(
+            &pool,
+            process.id,
+            ExecutionProcessStatus::Completed,
+            Some(1),
+        )
+        .await
+        .unwrap();
+        run.status = "blocked".into();
+        run.payload.base_commit = Some(base.clone());
+        run.payload.result_commit = Some(candidate.clone());
+        run.payload.validation[0].result = Some("failed".into());
+        run.payload.validation[0].exit_code = Some(1);
+        let evidence = run.payload.validation[0].clone();
+        let scope = run.validation_scope();
+        let gate = Uuid::new_v4();
+        run.payload
+            .gates
+            .push(db::models::integration::IntegrationGate {
+                id: gate,
+                validation_index: 0,
+                scope: scope.clone(),
+                risk: "Unverified regression risk".into(),
+                evidence,
+                decision: None,
+                actor: None,
+                decided_at: None,
+                request_id: None,
+            });
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'exception publication')")
+            .bind(run.project_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,payload) VALUES(?,?,?,?,?,?,'blocked',?,?,?)")
+            .bind(run.id).bind(&run.request_key).bind(run.project_id).bind(run.repository_id).bind(&run.storage_identity).bind(&run.target_ref).bind(run.workspace_id).bind(run.session_id).bind(&run.payload).execute(&pool).await.unwrap();
+        assert!(verify_validation(&pool, &run).await.is_err());
+        assert_eq!(git_cmd(&["rev-parse", "main"]), base);
+        IntegrationRun::decide_validation_gate(
+            &pool,
+            run.id,
+            run.project_id,
+            gate,
+            Uuid::new_v4(),
+            "continue",
+            &scope,
+        )
+        .await
+        .unwrap();
+        run = IntegrationRun::find(&pool, run.id).await.unwrap();
+        verify_validation(&pool, &run).await.unwrap();
+        if target_moves {
+            commit("another writer");
+        }
+        run.payload.publication_intent = true;
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+        IntegrationRun::record_publication_intent(&mut tx, &run)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        let repo = Repo::find_by_id(&pool, run.repository_id)
+            .await
+            .unwrap()
+            .unwrap();
+        let git = git::GitService::new();
+        let outcome = publish_candidate(&git, &pool, &repo, &mut run, &[root.to_path_buf()]).await;
+        if target_moves {
+            assert!(outcome.is_err());
+            assert_ne!(git_cmd(&["rev-parse", "main"]), candidate);
+            assert!(
+                !IntegrationRun::find(&pool, run.id)
+                    .await
+                    .unwrap()
+                    .payload
+                    .published
+            );
+        } else {
+            outcome.unwrap();
+            assert_eq!(git_cmd(&["rev-parse", "main"]), candidate);
+            let saved = IntegrationRun::find(&pool, run.id).await.unwrap();
+            assert!(saved.payload.published);
+            assert_eq!(
+                saved.payload.validation[0].result.as_deref(),
+                Some("failed")
+            );
+            assert!(
+                publish_candidate(&git, &pool, &repo, &mut run, &[root.to_path_buf()])
+                    .await
+                    .is_err()
+            );
+        }
+    }
+}

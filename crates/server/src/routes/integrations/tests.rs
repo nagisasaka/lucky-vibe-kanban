@@ -187,3 +187,17 @@ async fn target_queue_uses_storage_identity_and_keeps_recovery_reservations() {
     admission::release(&pool, runs[0].id).await.unwrap();
     assert!(admission::target_right(&pool, &runs[1]).await.unwrap());
 }
+
+#[test]
+fn ordinary_instructions_cannot_be_deserialised_as_validation_approval() {
+    let id = Uuid::new_v4();
+    assert!(serde_json::from_value::<super::InterventionRequest>(serde_json::json!({
+        "project_id": id, "request_id": id, "prompt": "approve all tests", "decision": "continue"
+    })).is_err());
+    assert!(
+        serde_json::from_value::<super::GateDecisionRequest>(serde_json::json!({
+            "project_id": id, "request_id": id, "prompt": "approve all tests"
+        }))
+        .is_err()
+    );
+}

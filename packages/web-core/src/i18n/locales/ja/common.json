@@ -1245,5 +1245,19 @@
     "send": "回答を送信",
     "sending": "送信中…",
     "sendFailed": "回答を送信できませんでした。下書きは保持されています。もう一度お試しください。"
+  },
+  "integrationGate": {
+    "check": "必須検証",
+    "notRun": "未実行",
+    "excepted": "例外承認済み（検証成功ではありません）",
+    "acknowledge": "この候補と検証に限定されたリスクを理解しました。",
+    "retry": "環境修正後に再試行",
+    "continue": "この阻害要因を例外として続行",
+    "cancel": "Integrationを中止",
+    "instructionBoundary": "追加指示は検証の例外承認やツール承認にはなりません。停止後の再開は同じIntegrationとSessionを使用し、候補を再検証します。",
+    "instruction": "Integrationへの追加指示",
+    "send": "途中指示を送信",
+    "resume": "修復後に再開／追加指示",
+    "history": "復旧履歴"
   }
 }

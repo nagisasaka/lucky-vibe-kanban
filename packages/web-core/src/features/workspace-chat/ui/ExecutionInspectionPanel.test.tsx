@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session, Workspace, WorkspaceExecutionView } from 'shared/types';
 import { ExecutionInspectionPanel } from './ExecutionInspectionPanel';
 
+vi.mock('./IntegrationInterventionPanel', () => ({
+  IntegrationInterventionPanel: () =>
+    createElement('div', null, 'Integration intervention'),
+}));
+
 const fixture = vi.hoisted(() => ({
   data: undefined as WorkspaceExecutionView | undefined,
   pending: null as unknown,
@@ -114,4 +119,17 @@ describe('execution inspection (no composer lifecycle)', () => {
     expect(render()).toContain('Choose a destination');
     expect(render()).not.toContain('New session');
   });
+});
+
+it('permits the dedicated intervention UI only for an identified Integration owner', () => {
+  fixture.data = {
+    status: 'blocked',
+    owner: { kind: 'integration', run_id: 'integration' },
+  } as WorkspaceExecutionView;
+  expect(render()).toContain('Integration intervention');
+  fixture.data = {
+    status: 'blocked',
+    owner: { kind: 'openwiki_sync', run_id: 'wiki' },
+  } as WorkspaceExecutionView;
+  expect(render()).not.toContain('Integration intervention');
 });

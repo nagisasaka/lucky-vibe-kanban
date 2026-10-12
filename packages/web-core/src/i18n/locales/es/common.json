@@ -1206,5 +1206,19 @@
       "noPrompt": "No prompt has been captured yet.",
       "rawRouterOutput": "Raw router output"
     }
+  },
+  "integrationGate": {
+    "check": "Comprobación obligatoria",
+    "notRun": "No ejecutada",
+    "excepted": "Excepción aprobada (la comprobación no pasó)",
+    "acknowledge": "Entiendo el riesgo de este candidato y esta comprobación.",
+    "retry": "Corregir el entorno y reintentar",
+    "continue": "Continuar con esta excepción",
+    "cancel": "Cancelar Integration",
+    "instructionBoundary": "Las instrucciones no aprueban excepciones de validación ni herramientas. La reanudación conserva esta Integration y Session y vuelve a validar el candidato.",
+    "instruction": "Instrucción para Integration",
+    "send": "Enviar instrucción",
+    "resume": "Reanudar tras reparar / enviar instrucción",
+    "history": "Historial de recuperación"
   }
 }

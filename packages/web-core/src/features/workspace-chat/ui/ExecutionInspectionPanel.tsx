@@ -1,3 +1,4 @@
+import { IntegrationInterventionPanel } from './IntegrationInterventionPanel';
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { Session, Workspace } from 'shared/types';
@@ -6,8 +7,8 @@ import { useWorkspaceOwnerView } from '@/shared/hooks/useWorkspaceOwner';
 import { useWorkspacePendingApproval } from '@/features/workspace-chat/model/hooks/useWorkspacePendingApproval';
 import { canonicalAgentControls } from '@/features/workspace-chat/model/canonicalAgentControls';
 
-/** No composer, draft/queue side effects, executor selector or session creation.
- * Existing pending controls remain responses to the owner's current request. */
+/** Owner inspection preserves existing question/tool controls. Only Integration
+ * exposes dedicated instructions; no general composer or session creation. */
 export function ExecutionInspectionPanel({
   workspace,
   sessions,
@@ -69,8 +70,9 @@ export function ExecutionInspectionPanel({
         </PrimaryButton>
       </div>
       <p className="text-low">
-        The owner controls this environment. Chat, new sessions and development
-        actions are disabled. Files are shown from this execution workspace.
+        The owner controls this environment. Files are shown from this execution
+        workspace. Session creation and development actions remain
+        owner-controlled.
       </p>
       <p className="text-normal">
         {run?.status ?? 'Loading execution…'} ·{' '}
@@ -124,6 +126,9 @@ export function ExecutionInspectionPanel({
           ))}
         </select>
       </label>
+      {run?.owner?.kind === 'integration' && run.owner.run_id && (
+        <IntegrationInterventionPanel integrationId={run.owner.run_id} />
+      )}
       {pending && (
         <div className="border border-border p-base flex flex-col gap-half">
           <p>

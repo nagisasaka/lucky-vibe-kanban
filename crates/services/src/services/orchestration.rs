@@ -1415,6 +1415,24 @@ where
         Ok(self.port.subscribe(agent_run_id).await?)
     }
 
+    /// Explicit Integration intervention; persistence validates the product's
+    /// durable request. Ordinary lifecycle observations cannot reopen a run.
+    pub async fn resume_integration(
+        &self,
+        id: Uuid,
+        node: Uuid,
+    ) -> Result<(), OrchestrationServiceError> {
+        self.append_event(
+            id,
+            id,
+            OrchestrationEventPayload::IntegrationResumed {
+                node_execution_id: node,
+            },
+        )
+        .await?;
+        Ok(())
+    }
+
     async fn append_event(
         &self,
         run_id: Uuid,
