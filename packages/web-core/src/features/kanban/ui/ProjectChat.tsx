@@ -13,13 +13,10 @@ import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuest
 import { getResolvedTheme, useTheme } from '@/shared/hooks/useTheme';
 import { MarkdownPreview } from '@/shared/components/MarkdownPreview';
 
-const intents: [ChatIntent, string][] = [
-  ['discuss', '相談 / Discuss'],
-  ['issue', 'Issue作成 / Create Issue'],
-  ['implement', '実装依頼 / Implement'],
-  ['change', '追加指示 / Change'],
-  ['answer', '質問への回答 / Answer'],
-  ['merge', 'マージ依頼 / Merge'],
+type ChatMode = Extract<ChatIntent, 'discuss' | 'operate'>;
+const intents: [ChatMode, string][] = [
+  ['discuss', '相談／RO'],
+  ['operate', '操作可 / Operations allowed'],
 ];
 
 async function load(
@@ -57,6 +54,11 @@ type ProjectState = {
 };
 
 export function ProjectChat({ projectId }: { projectId: string }) {
+  return <ProjectChatContent key={projectId} projectId={projectId} />;
+}
+
+function ProjectChatContent({ projectId }: { projectId: string }) {
+  const [intent, setIntent] = useState<ChatMode>('discuss');
   const navigation = useAppNavigation();
   const queryClient = useQueryClient();
   const queryKey = ['project-chat', projectId];
@@ -148,7 +150,7 @@ export function ProjectChat({ projectId }: { projectId: string }) {
         key={projectId}
         scope={`project:${projectId}`}
         questions={project?.questions ?? []}
-        disabled={false}
+        disabled={intent !== 'operate'}
         onAnswer={async (question, answer) => {
           const target = project?.questions?.find((q) => q.id === question.id);
           if (!target) throw new Error('Question is no longer pending');
@@ -203,7 +205,12 @@ export function ProjectChat({ projectId }: { projectId: string }) {
         configured={chat.data?.configured}
         disconnected={chat.isError}
       />
-      <ChatComposer key={projectId} projectId={projectId} onSent={onSent} />
+      <ChatComposer
+        projectId={projectId}
+        onSent={onSent}
+        intent={intent}
+        setIntent={setIntent}
+      />
     </section>
   );
 }
@@ -235,6 +242,8 @@ const ChatHistory = memo(function ChatHistory({
                 : 'LVK'}{' '}
             · {message.created_at}{' '}
             {message.status !== 'done' && `· ${message.status}`}
+            {message.role === 'user' &&
+              ` · ${message.intent === 'operate' ? '操作可' : message.intent === 'discuss' ? '相談／RO' : `旧権限 / Legacy: ${message.intent}`}`}
           </div>
           {message.role === 'tool' || message.role === 'event' ? (
             <details>
@@ -318,12 +327,15 @@ const ChatHistory = memo(function ChatHistory({
 function ChatComposer({
   projectId,
   onSent,
+  intent,
+  setIntent,
 }: {
   projectId: string;
   onSent: () => void;
+  intent: ChatMode;
+  setIntent: (mode: ChatMode) => void;
 }) {
   const [content, setContent] = useState('');
-  const [intent, setIntent] = useState<ChatIntent>('discuss');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const pending = useRef<{
@@ -331,8 +343,9 @@ function ChatComposer({
     content: string;
     intent: ChatIntent;
   } | null>(null);
+  const tooLong = new TextEncoder().encode(content).length > 32000;
   async function send() {
-    if (!content.trim() || sending) return;
+    if (!content.trim() || sending || tooLong) return;
     if (
       !pending.current ||
       pending.current.content !== content ||
@@ -360,7 +373,7 @@ function ChatComposer({
       onSent();
     } catch {
       setSendError(
-        '送信結果を確認できません。同じ内容で再送すると重複を防いで確認します。 / Delivery unconfirmed; retry preserves the request ID.'
+        '送信結果を確認できません。再送で元の内容・モード・IDの受付を確認してください。 / Delivery unconfirmed; retry preserves the request ID.'
       );
     } finally {
       setSending(false);
@@ -376,10 +389,12 @@ function ChatComposer({
       }}
     >
       <label className="flex items-center gap-base text-sm">
-        依頼の種類 / Request
+        モード / Mode
         <select
           value={intent}
-          onChange={(event) => setIntent(event.target.value as ChatIntent)}
+          onChange={(event) => setIntent(event.target.value as ChatMode)}
+          disabled={sending || sendError !== null}
+          aria-describedby="astra-mode-description"
           className="rounded border border-border bg-primary p-half"
         >
           {intents.map(([value, label]) => (
@@ -389,7 +404,13 @@ function ChatComposer({
           ))}
         </select>
       </label>
+      <p id="astra-mode-description" className="text-sm text-low">
+        {intent === 'discuss'
+          ? '読み取りと相談のみ。変更は実行しません。操作を依頼するには「操作可」に切り替えて送信してください。 / Read-only.'
+          : '今回の明示的な依頼に応じて操作します。相談だけでは変更しません。 / Acts only on your direct request.'}
+      </p>
       <textarea
+        disabled={sending || sendError !== null}
         aria-label="Message to Astra"
         value={content}
         onChange={(event) => setContent(event.target.value)}
@@ -400,11 +421,16 @@ function ChatComposer({
       />
       <button
         type="submit"
-        disabled={sending || !content.trim()}
+        disabled={sending || !content.trim() || tooLong}
         className="rounded border border-border px-base py-half text-sm disabled:opacity-50"
       >
         {sending ? '送信中…' : '送信 / Send'}
       </button>
+      {tooLong && (
+        <p role="alert">
+          メッセージは32,000バイト以内にしてください。 / Maximum 32,000 bytes.
+        </p>
+      )}
       {sendError && (
         <p role="alert" className="text-sm">
           {sendError}

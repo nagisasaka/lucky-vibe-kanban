@@ -160,9 +160,16 @@ test("Astra restores history, accepts another request while running, answers exa
   await page.getByRole("button", { name: "送信 / Send", exact: true }).click();
   await expect.poll(() => requests.length).toBe(2);
   expect(requests[0].request_id).not.toBe(requests[1].request_id);
+  const mode = page.getByRole("combobox");
+  await expect(mode.locator("option")).toHaveCount(2);
+  await expect(mode).toHaveValue("discuss");
   await page.getByRole("button", { name: /unanswered|未回答/ }).click();
   await page.getByRole("button", { name: "Preserve", exact: true }).click();
   expect(answers).toHaveLength(0);
+  await expect(
+    page.getByRole("button", { name: /Send answer|回答を送信/ }),
+  ).toBeDisabled();
+  await mode.selectOption("operate");
   await page.getByRole("button", { name: /Send answer|回答を送信/ }).click();
   await expect.poll(() => answers.length).toBe(1);
   expect(answers[0]).toMatchObject({
@@ -170,6 +177,7 @@ test("Astra restores history, accepts another request while running, answers exa
     answer: "Preserve",
   });
   await page.reload();
+  await expect(page.getByRole("combobox")).toHaveValue("discuss");
   await expect(
     page.getByText("Discuss another idea while the agent runs"),
   ).toBeVisible();

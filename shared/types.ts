@@ -135,7 +135,7 @@ export type CreateIntegrationRequest = { request_id: string, project_id: string,
 
 export type ChatMessage = { sequence: bigint, id: string, conversation_id: string, role: string, content: string, intent: string, status: string, error: string | null, created_at: string, };
 
-export type ChatIntent = "discuss" | "issue" | "implement" | "change" | "answer" | "merge";
+export type ChatIntent = "discuss" | "operate" | "issue" | "implement" | "change" | "answer" | "merge";
 
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 

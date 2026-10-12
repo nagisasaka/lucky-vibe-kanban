@@ -39,11 +39,11 @@ pub fn allowed(intent: &str, name: &str) -> bool {
     match name {
         "get_project" | "get_workspace" | "read_file" | "read_memory" | "get_diff_status"
         | "read_wiki" | "get_issue" | "get_execution" | "read_diff" | "read_conversation" => true,
-        "create_issue" => matches!(intent, "issue" | "implement"),
-        "start_workspace" => intent == "implement",
-        "change_workspace" | "update_issue" => intent == "change",
-        "answer_question" => intent == "answer",
-        "merge" => intent == "merge",
+        "create_issue" => matches!(intent, "issue" | "implement" | "operate"),
+        "start_workspace" => matches!(intent, "implement" | "operate"),
+        "change_workspace" | "update_issue" => matches!(intent, "change" | "operate"),
+        "answer_question" => matches!(intent, "answer" | "operate"),
+        "merge" => matches!(intent, "merge" | "operate"),
         _ => false,
     }
 }

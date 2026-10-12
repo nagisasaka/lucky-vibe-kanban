@@ -53,22 +53,35 @@ server process per database, as for the existing local runtime monitors.
 
 ## Send requests
 
-Choose the request type in the composer, then send the instruction:
+Choose one of two modes in the composer:
 
-| Request      | Permitted action                                                                                    |
-| ------------ | --------------------------------------------------------------------------------------------------- |
-| Discuss      | Consult current state and discuss options; no writes                                                |
-| Create Issue | Write a normal, self-contained Issue; no execution                                                  |
-| Implement    | Create an Issue if needed, then start a normal Codex Workspace                                      |
-| Change       | Steer the selected active Session, continue its finished run, or explicitly edit Issue requirements |
-| Answer       | Answer an identified, still-pending specification question                                          |
-| Merge        | Submit adopted Workspace commits through existing Board Integration                                 |
+| Mode | Authority |
+| --- | --- |
+| 相談／RO (read-only) | Read state, code, Memory and Wiki and discuss options. Changes are rejected by the server. |
+| 操作可 (operations allowed) | Carry out your current direct request through existing LVK operations. Consultation alone causes no changes. |
 
-The selected type limits authority; it does not itself instruct Astra to act.
-An explicit request within that scope needs no additional confirmation. The
-first release requires this selection rather than inferring write authority
-from arbitrary text or reference documents. Execution tool approvals always
-remain in the existing Workspace approval UI.
+The default is RO, including requests that omit the mode. Select 操作可 explicitly
+and send a new request when you want changes. Natural language cannot switch
+modes. The selection lasts while this project's chat stays mounted; reopening,
+reloading or switching projects resets it to RO. A polling reconnect preserves
+the current selection. Each submitted message keeps its original mode and local
+conversation owner; later changes never expand an earlier message's authority.
+
+In 操作可, ask naturally: “Leave this as an Issue” creates only an Issue;
+“Implement this” creates a self-contained Issue if needed and starts its Workspace.
+“Change that implementation” steers or continues the identified Session without
+editing Issue requirements unless you request that edit. Answer a pending
+specification question or request a merge through formal Integration in the same
+mode. Astra checks current targets and asks for clarification only when necessary.
+The chat question panel also requires 操作可 before sending an answer.
+Execution tool approvals remain in the existing Workspace approval UI. These
+chat modes do not change Workspace Codex modes or approval policies.
+
+Saved legacy request types and in-flight checkpoints retain their original narrow
+permissions; they are never converted to 操作可. Internal tool names and receipts
+continue to identify the individual operation. No history migration is required.
+If message delivery is unconfirmed, retry the frozen message, mode and request ID
+before editing the composer; this avoids submitting the same request under a new ID.
 
 An implementation receipt names the accepted Issue/Workspace/run. It does not
 mean implementation, tests or merging have completed. You can immediately send
@@ -143,7 +156,11 @@ Run `cargo test -p server --lib project_chat` for the conversation tests. They
 use the real SQLite migrations and canonical runtime records with a substituted
 model/execution boundary. Assertions cover capability limits, project isolation,
 question identity, direct answers, persisted event cursors and interrupted tool
-receipts. Run `cargo test -p server --lib` to include existing Integration tests
+receipts. Two-mode tests cover all existing write tools under 操作可, RO/event rejection,
+legacy checkpoint ceilings, Issue-to-Workspace identity and partial success.
+Scripted mock model responses test dispatch and side effects, not live natural-language accuracy.
+Run `pnpm run chat:test` for the isolated browser regressions, including mode
+reset, polling and immutable retry identity. Run `cargo test -p server --lib` to include existing Integration tests
 with temporary Git repositories. The full server suite also tests static file
 serving and requires the local Web build in `packages/local-web/dist`.
 Use the existing Dockerfile's `NODE_OPTIONS=--max-old-space-size=4096` when
