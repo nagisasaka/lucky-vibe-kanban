@@ -23,6 +23,24 @@
     ]
   },
   {
+    "tool": "list_project_statuses",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_project_sessions",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
     "tool": "list_issues",
     "arguments": {
       "project_id": "00000000-0000-0000-0000-000000000001"

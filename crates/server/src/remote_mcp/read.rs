@@ -146,17 +146,20 @@ impl Remote {
     async fn project(&self, args: ProjectArgs) -> anyhow::Result<Value> {
         self.require_project(args.project_id).await?;
         let project = sqlx::query("SELECT substr(name,1,500) AS name,length(name)>500 AS name_truncated,updated_at FROM projects WHERE id=?").bind(args.project_id).fetch_one(&self.pool).await?;
-        let counts = sqlx::query("SELECT s.id,substr(s.name,1,100) AS name,s.hidden,count(i.id) AS issue_count FROM local_project_statuses s LEFT JOIN local_issues i ON i.status_id=s.id AND i.project_id=s.project_id WHERE s.project_id=? GROUP BY s.id ORDER BY s.sort_order,s.id LIMIT 51")
-            .bind(args.project_id).fetch_all(&self.pool).await?;
-        let statuses = counts.iter().take(50).map(|row| -> anyhow::Result<Value> {
-            Ok(json!({"id":row.try_get::<Uuid,_>("id")?,"name":row.try_get::<String,_>("name")?,"hidden":row.try_get::<bool,_>("hidden")?,"issue_count":row.try_get::<i64,_>("issue_count")?}))
-        }).collect::<anyhow::Result<Vec<_>>>()?;
+        let statuses = self
+            .project_statuses(super::project_read::ListArgs {
+                project_id: args.project_id,
+                limit: 50,
+                cursor: None,
+            })
+            .await?;
+        let activity = self.project_activity(args.project_id).await?;
         let total: i64 = sqlx::query_scalar("SELECT count(*) FROM local_issues WHERE project_id=?")
             .bind(args.project_id)
             .fetch_one(&self.pool)
             .await?;
         Ok(
-            json!({"id":args.project_id,"name":project.try_get::<String,_>("name")?,"name_truncated":project.try_get::<bool,_>("name_truncated")?,"revision":project.try_get::<String,_>("updated_at")?,"issue_count":total,"statuses":statuses,"statuses_incomplete":counts.len()>50,"url":self.config.project_url(args.project_id),"observed_at":chrono::Utc::now()}),
+            json!({"id":args.project_id,"name":project.try_get::<String,_>("name")?,"name_truncated":project.try_get::<bool,_>("name_truncated")?,"revision":project.try_get::<String,_>("updated_at")?,"issue_count":total,"statuses":statuses["items"],"statuses_incomplete":statuses["has_more"],"statuses_next_cursor":statuses["next_cursor"],"statuses_tool":"list_project_statuses","activity":activity,"url":self.config.project_url(args.project_id),"observed_at":chrono::Utc::now()}),
         )
     }
 

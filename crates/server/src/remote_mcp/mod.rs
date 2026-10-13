@@ -9,6 +9,7 @@ mod integration_read;
 mod issue_write;
 mod launch;
 mod operations;
+mod project_read;
 mod questions;
 mod read;
 mod runtime_read;
@@ -153,6 +154,7 @@ fn tools() -> Vec<Tool> {
         serde_json::from_value(value).expect("static MCP schema")
     }).collect();
     tools.extend(read::tools());
+    tools.extend(project_read::tools());
     tools.extend(evidence_read::tools());
     tools.extend(code_read::tools());
     tools.extend(issue_write::tools());
@@ -232,6 +234,9 @@ impl ServerHandler for Remote {
             }
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
+            }
+            name if project_read::tools().iter().any(|tool| tool.name == name) => {
+                project_read::call(self, name, args).await
             }
             name if runtime_read::tools().iter().any(|tool| tool.name == name) => {
                 runtime_read::call(self, name, args).await

@@ -246,7 +246,7 @@ async fn settle(remote: &Remote, principal: &Principal, target: &Target, args: &
     )
     .await
 }
-async fn emit_questions(pool: &SqlitePool, target: &Target) -> String {
+pub(super) async fn emit_questions(pool: &SqlitePool, target: &Target) -> String {
     let turn = Uuid::new_v4();
     let attempt = Uuid::new_v4();
     sqlx::query("INSERT INTO agent_turns(id,agent_run_id,request_id,intent,input_message) VALUES(?,?,?,'initial','{}')").bind(turn).bind(target.agent_run_id).bind(Uuid::new_v4()).execute(pool).await.unwrap();

@@ -562,3 +562,49 @@ ChatGPT account behaviour. No runtime server binary was built or deployed.
 
 `pnpm run format` and `git diff --check` pass; formatting output is retained in
 `/tmp/lvk-mcp-current-runs-format.log`. Temporary dependency links were removed.
+
+## Project activity navigation
+
+`get_project` now returns Workspace/Session totals, counts of current Session run
+states, non-terminal Session counts and canonical unresolved specification
+question/approval counts. It includes up to 20 active Session summaries with
+Issue, Workspace, Session and current run IDs. Follow the returned cursor with
+`list_project_sessions(active_only=true)` for the rest. The same tool can list
+all Sessions, including completed work. Archived Workspaces remain visible and
+are labelled; their existence is not permission to resume them.
+
+Counts use existing local Board membership and the existing question service,
+including direct-answer reconciliation and attempt expiry. This performs no
+model inference or new execution. Reads can reconcile an existing answer receipt
+when the canonical service already has delivery evidence; they do not answer or
+remove a pending question merely because it was viewed. Live aggregation is not
+an atomic snapshot, so concurrent changes require a refresh.
+
+`list_project_statuses` exposes all status IDs and Issue counts in pages of 20
+(default), at most 50. The initial status summary retains its 50-item bound and
+now provides a continuation cursor. Both new lists reject foreign or deleted
+cursors. The Skill and executable schema examples include both real tool names.
+
+This closes Project activity and question navigation gaps. Current-head merge
+classification and structured semantic verification evidence remain separate
+unfinished acceptance work; Issue status or a terminal run is not treated as
+proof of publication.
+
+Validation for Project navigation:
+
+- `CARGO_TARGET_DIR=/var/tmp/lvk-target LVK_MCP_TOOL_CATALOG=… cargo test
+  -p server --lib remote_mcp:: -- --nocapture`: 24 passed in 12.52s, build
+  1m 07s (`/tmp/lvk-mcp-project-read.log`).
+- After adding the moved-Issue/expired-active-cursor case, the focused
+  `remote_mcp::project_read::tests` filter passes both tests in 2.33s, build
+  31.64s (`/tmp/lvk-mcp-project-read-final.log`). Fixtures contain 105 Sessions
+  and 105 statuses; they verify bounds, continuation, exact question/approval
+  counts, direct-answer observation, expiry and no additional model/job records.
+- Package/schema validation passes for 36 actual tool inputs and bundled Skill
+  references (`/tmp/lvk-mcp-project-package.log`).
+- `pnpm run format` and `git diff --check` pass
+  (`/tmp/lvk-mcp-project-format.log`). Temporary dependency links were removed.
+
+These tests use isolated databases and the existing provider-delivery fixture.
+They do not establish a live ChatGPT connection or native provider execution.
+No deployment, main-branch merge or user authentication change was performed.

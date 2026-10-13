@@ -10,6 +10,8 @@ within the permissions enforced by LVK and the conversation host.
 - Use `get_connection` when connection permissions are unclear.
 - Identify the Project with `list_projects` and `get_project`. Resolve only
   genuinely ambiguous targets. Use returned IDs and links; never invent them.
+  Use `list_project_statuses` for status IDs and `list_project_sessions` to locate
+  active work and unanswered questions across the Project.
 - For discussion or status, read only the needed summaries. Use `list_issues`,
   `list_issue_workspaces`, `get_workspace` and `list_workspace_runs` to select an
   exact attempt. Fetch details only when needed and honour pagination/revisions.
