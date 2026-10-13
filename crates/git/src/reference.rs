@@ -59,7 +59,88 @@ pub fn allowed_path(path: &str) -> bool {
         )
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MergeObservation {
+    pub source_head: String,
+    pub target_head: String,
+    pub source_in_target_history: bool,
+    pub tracked_changes: usize,
+    pub untracked_changes: usize,
+    pub conflicts: usize,
+    pub operation_in_progress: bool,
+}
+
 impl GitService {
+    /// Local refs and status only: never fetch, refresh the index, or execute
+    /// repository-configured commands. Counts include private files, not bodies.
+    pub fn reference_merge_observation(
+        &self,
+        root: &Path,
+        source_branch: &str,
+        target_branch: &str,
+    ) -> Result<MergeObservation, GitServiceError> {
+        let repo = Repository::open(root)?;
+        if repo
+            .config()?
+            .get_bool("core.sparseCheckout")
+            .unwrap_or(false)
+        {
+            return Err(invalid(
+                "Sparse checkout status is not supported by this reader",
+            ));
+        }
+        let head = self.get_head_info(root)?;
+        if head.branch != source_branch {
+            return Err(invalid("Workspace branch changed"));
+        }
+        let target_head = self.get_branch_oid(root, target_branch)?;
+        let mut options = git2::StatusOptions::new();
+        options
+            .include_untracked(true)
+            .recurse_untracked_dirs(true)
+            .include_ignored(false)
+            .update_index(false);
+        let statuses = repo.statuses(Some(&mut options))?;
+        if statuses.len() > 100_000 {
+            return Err(invalid("Worktree status exceeds reference limit"));
+        }
+        let mut result = MergeObservation {
+            source_in_target_history: self.is_ancestor(root, &head.oid, &target_head)?,
+            source_head: head.oid,
+            target_head,
+            tracked_changes: 0,
+            untracked_changes: 0,
+            conflicts: 0,
+            operation_in_progress: repo.state() != git2::RepositoryState::Clean,
+        };
+        for entry in statuses.iter() {
+            let path = entry
+                .path()
+                .ok_or_else(|| invalid("Non-UTF-8 status path"))?;
+            if path
+                .split('/')
+                .any(|part| utils::path::ALWAYS_SKIP_DIRS.contains(&part))
+            {
+                continue;
+            }
+            let status = entry.status();
+            result.conflicts += usize::from(status.is_conflicted());
+            if status.is_wt_new() {
+                result.untracked_changes += 1;
+            } else if status != git2::Status::CURRENT {
+                result.tracked_changes += 1;
+            }
+        }
+        let after = self.get_head_info(root)?;
+        if after.oid != result.source_head
+            || after.branch != source_branch
+            || self.get_branch_oid(root, target_branch)? != result.target_head
+        {
+            return Err(invalid("Repository heads changed during inspection"));
+        }
+        Ok(result)
+    }
+
     /// Inspect worktree/index changes without staging files into a temporary
     /// index: git add can execute clean filters and write objects even on reads.
     pub fn reference_diff_paths(

@@ -154,12 +154,13 @@ impl Remote {
             })
             .await?;
         let activity = self.project_activity(args.project_id).await?;
+        let merges = self.project_merges(args.project_id).await?;
         let total: i64 = sqlx::query_scalar("SELECT count(*) FROM local_issues WHERE project_id=?")
             .bind(args.project_id)
             .fetch_one(&self.pool)
             .await?;
         Ok(
-            json!({"id":args.project_id,"name":project.try_get::<String,_>("name")?,"name_truncated":project.try_get::<bool,_>("name_truncated")?,"revision":project.try_get::<String,_>("updated_at")?,"issue_count":total,"statuses":statuses["items"],"statuses_incomplete":statuses["has_more"],"statuses_next_cursor":statuses["next_cursor"],"statuses_tool":"list_project_statuses","activity":activity,"url":self.config.project_url(args.project_id),"observed_at":chrono::Utc::now()}),
+            json!({"id":args.project_id,"name":project.try_get::<String,_>("name")?,"name_truncated":project.try_get::<bool,_>("name_truncated")?,"revision":project.try_get::<String,_>("updated_at")?,"issue_count":total,"statuses":statuses["items"],"statuses_incomplete":statuses["has_more"],"statuses_next_cursor":statuses["next_cursor"],"statuses_tool":"list_project_statuses","activity":activity,"merges":merges,"url":self.config.project_url(args.project_id),"observed_at":chrono::Utc::now()}),
         )
     }
 

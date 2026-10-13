@@ -18,6 +18,12 @@ Use `get_workspace_verification` for the selected run's recorded test counts and
 These are Change Manifest claims for the returned source commit. Missing records,
 head mismatches and unverified working-tree changes do not establish a pass.
 
+Use `list_project_merge_status` to locate outstanding or unknown Workspace/repository
+changes and `get_workspace_merge_status` for a selected pair. Counts refer to
+local target refs without fetching. `included` records target-history evidence
+for the observed source with no observed worktree changes; it is not proof of
+tests, remote publication or Wiki completion. Unknown is not a clean result.
+
 Use `list_integrations` and `get_integration` for formal results. Read the
 `summary`, `sources` or `validation` section as needed. Separate execution
 status, verification outcomes/exceptions, target publication and current Wiki

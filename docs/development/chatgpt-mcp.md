@@ -653,3 +653,63 @@ Verification-read validation:
 
 No runtime server binary was built or deployed. Real ChatGPT account behaviour,
 provider execution and public ingress remain outside these fixture results.
+
+## Current merge observations
+
+`get_workspace_merge_status` observes a selected Workspace/repository pair.
+`list_project_merge_status` provides the same bounded summaries across a Project,
+using stable WorkspaceRepo IDs as cursors. `get_project` includes counts by
+Workspace/repository pair, up to 20 summaries and a continuation cursor. Workspaces
+with no repository association are counted separately, not presented as clean.
+
+The read uses existing GitService identity/ancestry operations and a read-only
+libgit2 status projection. It does not fetch, refresh the index, execute configured
+filesystem monitors/filters, or run merge commands. Counts include tracked and
+untracked changes, including private files without returning their names/bodies.
+The existing default `.git`, `node_modules` and `.lvk-shared` exclusions apply.
+Sparse checkouts return unknown because this reader does not claim CLI-equivalent
+sparse status semantics. Missing checkouts, branch changes and conflicts also
+remain explicit unknown states.
+
+An `included` result requires no observed worktree changes or Git operation plus
+either source ancestry in the observed target or a published formal Integration
+record pinned to this exact Project, Issue, Workspace, repository, source commit
+and target ref. For a squash publication, its result commit must still occur in
+the observed target history. A previous publication of a different source head
+does not establish publication of new commits. Legacy direct/PR history without
+a source identity leaves ambiguous ancestry cases unknown. Only when all legacy records fit the inspection bound and each published
+commit is an ancestor of both observed heads, with the source since advanced,
+can they establish post-publication work outside the target history. A later
+unreadable or unrelated record keeps that case unknown. Inspection is capped
+at 50 matching publication records; incomplete or unreadable evidence cannot
+establish a clean result.
+
+`included` is local target-history evidence, not proof of test success, unchanged
+semantics after later target commits, remote server publication or Wiki receipt.
+Remote-tracking refs are explicitly local observations without fetching. `unmerged`
+means observed worktree changes or a source outside that history without matching
+publication evidence. Refresh before selecting candidates; the existing formal
+Integration admission still performs its own source/target validation and locks.
+
+Merge-read validation:
+
+- Scoped MCP suite: 29 passed in 16.21s, build 3m 39s
+  (`/tmp/lvk-mcp-merge-read.log`).
+- Focused merge tests after adding legacy post-publication detection: 2 passed in
+  2.32s, build 1m 10s (`/tmp/lvk-mcp-merge-final.log`). The final ambiguity check
+  also passes both tests in 2.28s, build 31.63s
+  (`/tmp/lvk-mcp-merge-final-recheck.log`).
+- Fixtures cover real Git ancestry and squash publication, new commits after
+  publication, tracked/private untracked changes, ambiguous old/later records,
+  sparse or switched checkouts, unchanged index bytes and no configured
+  filesystem-monitor execution. A 105-pair Project verifies exact unknown counts,
+  bounded traversal, stale cursors and Issue membership changes. Reads create no
+  Astra/model, command or remote-operation records.
+- Package validation passes 40 actual tool input examples and Skill references
+  (`/tmp/lvk-mcp-merge-package.log`). `pnpm run format`, final Rust formatting and
+  `git diff --check` pass (`/tmp/lvk-mcp-merge-format.log`).
+
+These results establish the read projection over isolated fixtures. Native
+execution/formal-admission boundary tests, admission uncertainty/error review,
+public ingress/browser links, stdio compatibility and the full T01–T18/M4 audit
+remain. No server deployment, target merge or authentication change was made.

@@ -439,5 +439,25 @@
     "scopes": [
       "lvk:read"
     ]
+  },
+  {
+    "tool": "list_project_merge_status",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_merge_status",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000004"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
   }
 ]

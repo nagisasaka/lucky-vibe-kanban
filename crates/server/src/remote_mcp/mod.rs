@@ -8,6 +8,7 @@ mod evidence_read;
 mod integration_read;
 mod issue_write;
 mod launch;
+mod merge_read;
 mod operations;
 mod project_read;
 mod questions;
@@ -156,6 +157,7 @@ fn tools() -> Vec<Tool> {
     }).collect();
     tools.extend(read::tools());
     tools.extend(project_read::tools());
+    tools.extend(merge_read::tools());
     tools.extend(evidence_read::tools());
     tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
@@ -242,6 +244,9 @@ impl ServerHandler for Remote {
             }
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
+            }
+            name if merge_read::tools().iter().any(|tool| tool.name == name) => {
+                merge_read::call(self, name, args).await
             }
             name if project_read::tools().iter().any(|tool| tool.name == name) => {
                 project_read::call(self, name, args).await
