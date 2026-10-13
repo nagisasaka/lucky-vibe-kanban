@@ -23,6 +23,8 @@ test("MCP ingress is opt-in and validates its public path before changing authen
     "https://lvk.example.test?key=private",
     "https://lvk.example.test#private",
     "https://lvk.example.test//team",
+    "https://lvk.example.test/api",
+    "https://lvk.example.test/assets/team",
   ]) {
     await assert.rejects(
       withMcpIngress(settings, { LVK_MCP_CONFIG: "test" }, async () =>

@@ -355,7 +355,7 @@ export function createLocalAppNavigation(): AppNavigation {
     const currentHostId =
       typeof window === 'undefined'
         ? null
-        : parseLocalHostIdFromPathname(window.location.pathname);
+        : parseLocalHostIdFromPathname(router.state.location.pathname);
 
     void router.navigate({
       ...destinationToLocalTarget(destination, { currentHostId }),

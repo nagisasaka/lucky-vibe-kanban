@@ -73,6 +73,12 @@ for (const { host, prefix, mcpBackend = 3000 } of [
               }),
             );
           }
+        } else if (req.url.startsWith("/projects/")) {
+          assert.equal(req.headers["accept-encoding"], undefined);
+          res.setHeader("Content-Type", "text/html");
+          res.end(
+            "<!DOCTYPE html><html><head><title>Route fixture</title></head><body>Target</body></html>",
+          );
         } else if (req.url === "/stream") {
           res.writeHead(200, { "Content-Type": "text/event-stream" });
           res.write("data: first\n\n");
@@ -335,6 +341,35 @@ for (const { host, prefix, mcpBackend = 3000 } of [
           ).status,
           401,
         );
+        if (prefix) {
+          const path = `${prefix}/projects/fixture/issues/issue/workspaces/workspace`;
+          const locked = await request(path);
+          assert.equal(locked.status, 401);
+          assert.match(locked.headers["www-authenticate"], /^Basic /);
+          const opened = await request(path, settings.app, {
+            Authorization: authorization,
+            "Accept-Encoding": "gzip",
+          });
+          assert.equal(opened.status, 200);
+          assert(
+            opened.body.includes(
+              `<meta name="lvk-basepath" content="${prefix}">`,
+            ),
+          );
+          assert.equal(opened.headers["x-frame-options"], "DENY");
+          for (const blocked of [
+            `${prefix}/api/preview/5173`,
+            `${prefix}/api/host/fixture/preview/5173`,
+          ])
+            assert.equal(
+              (
+                await request(blocked, settings.app, {
+                  Authorization: authorization,
+                })
+              ).status,
+              403,
+            );
+        }
         const logs = await readFile(join(dir, "access.log"), "utf8");
         assert(!logs.includes("fixture-token"));
         assert(!logs.includes("fixture-cookie"));

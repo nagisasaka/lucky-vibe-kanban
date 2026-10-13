@@ -802,3 +802,48 @@ Ingress validation:
 
 No shared server, database, authentication file or active job was modified.
 The Compose override was parsed in tests; a Docker rollout was not performed.
+
+
+## Public-prefix link routing
+
+The local router now accepts a trusted `lvk-basepath` meta tag injected by the
+supplied HTTPS launcher into prefixed app documents. TanStack Router handles
+incoming and outgoing paths; application destinations continue to use the same
+Project/Issue/Workspace route definitions. Host selection reads the router's
+internal pathname, so a public prefix is not mistaken for a relay-host segment.
+The ordinary unprefixed app is unchanged. APIs and static assets remain at their
+existing authenticated root paths on the same origin. This is an alias for one
+LVK instance, not support for isolating multiple applications by prefix.
+
+The proxy requests uncompressed HTML for injection, preserves the existing Basic
+boundary and blocks prefixed preview paths. Reserved API/asset/source/MCP prefixes
+are rejected before generating configuration. No HTML or base path is obtained
+from tool input or Issue content.
+
+Validation:
+
+- Native nginx/config tests: 6 passed in 10.18s
+  (`/tmp/lvk-mcp-subpath-ingress.log`), including HTML injection after Basic auth,
+  preserved frame protection and preview denial.
+- `pnpm --dir packages/local-web run check` passed
+  (`/tmp/lvk-mcp-subpath-types-final.log`). The first invocation lacked temporary
+  dependency links and failed before type checking; it was rerun with dependencies.
+- `node --test tests/server/mcp-links.test.mjs`: 1 browser test passed in 113.31s
+  (`/tmp/lvk-mcp-links-browser-final.log`). Chromium loads the real local router,
+  generated route tree and navigation resolver over a temporary HTTPS Basic-auth
+  fixture. Root and prefixed Workspace links resolve exact target IDs; generated
+  Issue links retain the prefix, and reload retains the destination. Each fresh
+  browser context authenticates, and route checks make no backend API calls.
+- The first browser run failed on the fixture's missing Vite HMR WebSocket route
+  (`/tmp/lvk-mcp-links-browser.log`). Attaching HMR to the fixture HTTPS server
+  fixed the failure; the final run reports no browser exceptions.
+
+The browser fixture deliberately does not mount application data providers or
+access a live LVK database. It proves route/auth-return behaviour, not rendered
+business data, account permissions or a real ChatGPT workflow. Native execution
+and final acceptance/regression checks remain outstanding. No runtime deployment
+or authentication change was made.
+
+Changed-file ESLint, `pnpm run format` and `git diff --check` also passed
+(`/tmp/lvk-mcp-subpath-lint.log`, `/tmp/lvk-mcp-subpath-format.log`). Temporary
+dependency links were removed and all fixture servers/browsers were closed.

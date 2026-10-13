@@ -63,7 +63,8 @@ export async function withMcpIngress(settings, env, read = readFile) {
       config.public_base_url.endsWith("/") ||
       base.href !==
         config.public_base_url + (base.pathname === "/" ? "/" : "") ||
-      !/^(?:\/[A-Za-z0-9_-]+)*\/?$/.test(base.pathname)
+      !/^(?:\/[A-Za-z0-9_-]+)*\/?$/.test(base.pathname) ||
+      /^\/(?:api|assets|src|mcp)(?:\/|$)/.test(base.pathname)
     )
       throw new Error();
   } catch {
@@ -106,6 +107,35 @@ function mcpLocations(settings, backend) {
     .join("\n");
 }
 
+// An app alias on the same LVK origin. Root APIs/assets stay on their existing
+// authenticated routes; this is not an isolation boundary for another app.
+function prefixedAppLocation(settings) {
+  const prefix = settings.mcp?.prefix;
+  if (!prefix) return "";
+  return `
+        location ${prefix}/ {
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Host $http_host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Authorization "";
+            proxy_set_header Proxy-Authorization "";
+            proxy_set_header X-VK-Relayed "";
+            proxy_set_header X-VK-Sig-Session "";
+            proxy_set_header X-VK-Sig-Ts "";
+            proxy_set_header X-VK-Sig-Nonce "";
+            proxy_set_header X-VK-Sig-Signature "";
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Accept-Encoding "";
+            sub_filter '<head>' '<head><meta name="lvk-basepath" content="${prefix}">';
+            sub_filter_once on;
+            proxy_pass http://127.0.0.1:3000/;
+        }
+        location ~ ^${prefix}/api/(?:host/[^/]+/)?preview(?:/|$) { return 403; }
+    `;
+}
+
 export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
   if (![3000, 4021].includes(mcpBackend))
     throw new Error("Invalid MCP backend");
@@ -128,6 +158,7 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
         : "",
     )
     .replace("@@MCP_LOCATIONS@@", mcpLocations(settings, mcpBackend))
+    .replace("@@PREFIXED_APP@@", prefixedAppLocation(settings))
     .replace("@@PREVIEW_SERVER@@", previewServer)
     .replace(
       "@@STAGING_SERVER@@",

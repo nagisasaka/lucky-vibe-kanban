@@ -83,13 +83,20 @@ configuration, no Basic exception is generated. Source-development uses its
 Rust backend directly for these locations, bypassing Vite. The launcher accepts
 only a canonical HTTPS URL on `LVK_HOST` with plain alphanumeric, underscore or
 hyphen path segments. A public path prefix maps these two endpoints to the
-backend's root paths; this alone does not configure the frontend's router.
-Use a root public URL until frontend subpath routing has been verified for your
-installation.
+backend's root paths. The launcher also serves the existing application beneath
+that prefix, injecting an `lvk-basepath` meta tag into HTML for the local router.
+Basic authentication still protects those documents, and preview HTML remains
+blocked under both paths. Root API and asset routes remain required on the same
+LVK origin; this is an alias for one LVK instance, not prefix isolation for hosting
+unrelated applications. Reserved `api`, `assets`, `src` and `mcp` prefixes are
+rejected. The unprefixed application remains available.
 
 For a separately managed reverse proxy, route public `<base>/mcp` and
 `<base>/.well-known/oauth-protected-resource/mcp` to the corresponding LVK paths.
-If a reverse proxy strips a public subpath, preserve that mapping consistently.
+If you manage a separate proxy and use a public subpath, preserve this mapping
+and supply the same trusted `lvk-basepath` HTML meta tag; rewriting the endpoint
+alone does not configure the browser router. Keep the existing authenticated
+root API/assets available and apply the preview denial to prefixed paths too.
 Keep the public Host/Origin and Bearer header intact. Exempt **only these exact
 MCP paths** from a proxy's Basic-auth challenge: MCP supplies its own Bearer
 validation, while resource metadata is intentionally public. Preserve the

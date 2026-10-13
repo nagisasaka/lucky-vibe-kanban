@@ -64,6 +64,7 @@ http {
         add_header Referrer-Policy no-referrer always;
         # Never serve project-controlled HTML in the LVK application's origin.
         location ~ ^/api/(?:host/[^/]+/)?preview(?:/|$) { return 403; }
+        @@PREFIXED_APP@@
         @@MCP_LOCATIONS@@
         location / { proxy_pass http://127.0.0.1:3000; }
     }
