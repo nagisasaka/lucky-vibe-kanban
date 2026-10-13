@@ -523,8 +523,42 @@ removed rather than weakening schema validation. The `list_questions` example
 was corrected to include its required Session ID. No account permission, live
 OAuth grant, global plugin installation or server deployment changed.
 
-Remaining acceptance work includes complete Project summaries/current-run
-identity, semantic verification evidence, native execution/formal-admission
+Remaining acceptance work includes complete Project summaries, semantic
+verification evidence, native execution/formal-admission
 boundary checks, rejected-versus-uncertain reconciliation, actual public ingress
 and browser/subpath behaviour, and the final T01–T18/M4 audit. Package validation
 alone does not complete those requirements.
+
+## Current execution identity and validation completeness
+
+`list_workspace_runs` now resolves equal creation timestamps by SQLite admission
+order, matching the existing steering/continuation validator. Its cursor uses
+the same order. Both run lists and `get_execution` expose `is_current_run` per
+Session, so a Workspace with multiple Sessions can have multiple current runs.
+This is selection evidence, not permission to steer: the existing write boundary
+still rechecks identity, lifecycle and Workspace membership immediately before
+admission.
+
+Execution pages bind their revision to the run and selected section as well as
+the stored update time and event sequence. A revision from another run or section
+is rejected even when their timestamps match. Detail responses include the
+native Goal token budget, tokens used and elapsed seconds; absent projection
+fields remain null rather than becoming fabricated zeroes.
+
+Integration summaries count skipped checks explicitly and include unrecognised
+result strings in `unknown_or_unrun`. Every check belongs to one result category;
+exceptions remain a separate dimension. Truncated source `done_result` text now
+has an explicit flag. Publication and current Wiki evidence remain separate.
+
+Validation at this checkpoint: `CARGO_TARGET_DIR=/var/tmp/lvk-target cargo test
+-p server --lib remote_mcp:: -- --nocapture` passes 23 tests in 11.34s after a
+1m 04s build (`/tmp/lvk-mcp-current-runs.log`). The new test traverses 107 runs
+across two Sessions with identical timestamps and reversed UUID order, compares
+current-run selection with the actual write validator, rejects foreign section
+and run revisions, and rejects a deleted cursor. Existing projection and
+Integration tests cover Goal usage and complete result-category counts. These
+are isolated SQLite fixtures; they do not prove live provider execution or
+ChatGPT account behaviour. No runtime server binary was built or deployed.
+
+`pnpm run format` and `git diff --check` pass; formatting output is retained in
+`/tmp/lvk-mcp-current-runs-format.log`. Temporary dependency links were removed.

@@ -138,7 +138,7 @@ impl Remote {
             result["result_commit"] = json!(run.payload.result_commit);
             result["error_present"] = json!(run.error.is_some());
             result["wiki"] = wiki_state(run.payload.wiki_result.as_deref(), observed);
-            result["validation"] = json!({"total":checks.len(),"passed":checks.iter().filter(|v|v.result.as_deref()==Some("passed")).count(),"failed":checks.iter().filter(|v|v.result.as_deref()==Some("failed")).count(),"unavailable":checks.iter().filter(|v|v.result.as_deref()==Some("unavailable")).count(),"not_completed":checks.iter().filter(|v|v.result.as_deref()==Some("not_completed")).count(),"unknown_or_unrun":checks.iter().filter(|v|v.result.is_none()).count(),"exceptions":(0..checks.len()).filter(|i|run.validation_excepted(*i)).count(),"details_tool":"get_integration(section=validation)"});
+            result["validation"] = json!({"total":checks.len(),"passed":checks.iter().filter(|v|v.result.as_deref()==Some("passed")).count(),"failed":checks.iter().filter(|v|v.result.as_deref()==Some("failed")).count(),"unavailable":checks.iter().filter(|v|v.result.as_deref()==Some("unavailable")).count(),"not_completed":checks.iter().filter(|v|v.result.as_deref()==Some("not_completed")).count(),"skipped":checks.iter().filter(|v|v.result.as_deref()==Some("skipped")).count(),"unknown_or_unrun":checks.iter().filter(|v|!matches!(v.result.as_deref(),Some("passed"|"failed"|"unavailable"|"not_completed"|"skipped"))).count(),"exceptions":(0..checks.len()).filter(|i|run.validation_excepted(*i)).count(),"details_tool":"get_integration(section=validation)"});
             return Ok(result);
         }
         let total = match args.section {
@@ -154,7 +154,7 @@ impl Remote {
         let items=(args.offset as usize..end).map(|index|match args.section {
             Section::Sources=>{
                 let source=&run.payload.sources[index];
-                json!({"index":index,"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"expected_commit":source.selection.expected_commit,"frozen_commit":source.commit,"requirements_revision":source.requirements_revision,"done_result":source.done_result.as_deref().map(|s|s.chars().take(500).collect::<String>())})
+                json!({"index":index,"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"expected_commit":source.selection.expected_commit,"frozen_commit":source.commit,"requirements_revision":source.requirements_revision,"done_result_truncated":source.done_result.as_ref().is_some_and(|s|s.chars().count()>500),"done_result":source.done_result.as_deref().map(|s|s.chars().take(500).collect::<String>())})
             }
             Section::Validation=>{
                 let check=&run.payload.validation[index];

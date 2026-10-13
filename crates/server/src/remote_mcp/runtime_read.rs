@@ -28,7 +28,7 @@ struct RunListArgs {
     cursor: Option<Uuid>,
 }
 
-#[derive(Deserialize, JsonSchema)]
+#[derive(Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 enum ExecutionSection {
     FinalResponse,
@@ -59,7 +59,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<RunListArgs>(
             "list_workspace_runs",
-            "Read canonical runs newest first, including session IDs, lifecycle, projection and Goal status. Page older runs with next_cursor; refresh first page to observe direct Codex changes.",
+            "Read canonical runs newest first, including session IDs, is_current_run within each Session, lifecycle, projection and Goal status. Page older runs with next_cursor; refresh first page to observe direct Codex changes.",
         ),
         definition::<ExecutionArgs>(
             "get_execution",
@@ -97,10 +97,10 @@ impl Remote {
             (1..=50).contains(&args.limit),
             "limit must be between 1 and 50"
         );
-        let before: Option<String> = match args.cursor {
+        let before: Option<(String, i64)> = match args.cursor {
             Some(cursor) => Some(
-                sqlx::query_scalar(
-                    "SELECT created_at FROM agent_runs WHERE id=? AND workspace_id=?",
+                sqlx::query_as(
+                    "SELECT created_at,rowid FROM agent_runs WHERE id=? AND workspace_id=?",
                 )
                 .bind(cursor)
                 .bind(args.workspace_id)
@@ -110,10 +110,10 @@ impl Remote {
             ),
             None => None,
         };
-        let rows = sqlx::query("SELECT r.id,r.session_id,r.status,r.projection_status,r.created_at,r.updated_at,s.last_event_sequence,json_extract(s.state_json,'$.goal.status') AS goal_status FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.workspace_id=? AND (? IS NULL OR r.created_at<? OR (r.created_at=? AND r.id<?)) ORDER BY r.created_at DESC,r.id DESC LIMIT ?")
-            .bind(args.workspace_id).bind(&before).bind(&before).bind(&before).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
+        let rows = sqlx::query("SELECT r.id,r.session_id,r.status,r.projection_status,r.created_at,r.updated_at,s.last_event_sequence,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.workspace_id=? AND (? IS NULL OR r.created_at<? OR (r.created_at=? AND r.rowid<?)) ORDER BY r.created_at DESC,r.rowid DESC LIMIT ?")
+            .bind(args.workspace_id).bind(before.as_ref().map(|v| &v.0)).bind(before.as_ref().map(|v| &v.0)).bind(before.as_ref().map(|v| &v.0)).bind(before.as_ref().map(|v| v.1)).bind(args.limit+1).fetch_all(&self.pool).await?;
         let items = rows.into_iter().map(|row| -> anyhow::Result<Value> {
-            Ok(json!({"id":row.try_get::<Uuid,_>("id")?,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"last_event_sequence":row.try_get::<Option<i64>,_>("last_event_sequence")?,"updated_at":row.try_get::<String,_>("updated_at")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}))
+            Ok(json!({"id":row.try_get::<Uuid,_>("id")?,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"last_event_sequence":row.try_get::<Option<i64>,_>("last_event_sequence")?,"updated_at":row.try_get::<String,_>("updated_at")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}))
         }).collect::<anyhow::Result<Vec<_>>>()?;
         Ok(page(items, args.limit))
     }
@@ -139,7 +139,7 @@ impl Remote {
         };
         // Only the closed enum selects a SQL expression; caller text is bound.
         let sql = format!(
-            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
+            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
         );
         let row = sqlx::query(&sql)
             .bind(i64::from(args.offset) + 1)
@@ -151,7 +151,9 @@ impl Remote {
             .ok_or_else(|| anyhow::anyhow!("Run does not exist in this Workspace"))?;
         let sequence = row.try_get::<Option<i64>, _>("last_event_sequence")?;
         let revision = format!(
-            "{}:{}",
+            "{}:{:?}:{}:{}",
+            args.agent_run_id,
+            args.section,
             row.try_get::<String, _>("updated_at")?,
             sequence
                 .map(|s| s.to_string())
@@ -170,7 +172,103 @@ impl Remote {
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
-            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"projection_available":sequence.is_some(),"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
+            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"projection_available":sequence.is_some(),"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"goal_usage":{"token_budget":row.try_get::<Option<i64>,_>("goal_token_budget")?,"tokens_used":row.try_get::<Option<i64>,_>("goal_tokens_used")?,"time_used_seconds":row.try_get::<Option<i64>,_>("goal_time_used_seconds")?},"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::remote_mcp::{
+        runtime_write,
+        runtime_write_tests::{fixture, insert_run},
+    };
+
+    #[tokio::test]
+    async fn current_runs_follow_session_admission_order_across_equal_timestamp_pages() {
+        let (remote, _, _, mut target, _) = fixture().await;
+        let original = target.agent_run_id;
+        let mut expected = vec![original];
+        // Reverse UUID order deliberately disagrees with admission order.
+        for n in (1..=105).rev() {
+            let run = Uuid::from_u128(n);
+            insert_run(&remote.pool, target.session_id, target.workspace_id, run).await;
+            expected.push(run);
+        }
+        let other_session = Uuid::new_v4();
+        db::models::session::Session::create(
+            &remote.pool,
+            &db::models::session::CreateSession {
+                executor: Some("CODEX".into()),
+                name: None,
+            },
+            other_session,
+            target.workspace_id,
+        )
+        .await
+        .unwrap();
+        let other_run = Uuid::new_v4();
+        insert_run(&remote.pool, other_session, target.workspace_id, other_run).await;
+        expected.push(other_run);
+        sqlx::query("UPDATE agent_runs SET created_at='2026-01-01T00:00:00Z',updated_at='2026-01-01T00:00:00Z'")
+            .execute(&remote.pool).await.unwrap();
+        expected.reverse();
+        let mut args =
+            json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"limit":20});
+        let mut actual = Vec::new();
+        loop {
+            let result = call(&remote, "list_workspace_runs", args.clone())
+                .await
+                .unwrap();
+            let items = result["items"].as_array().unwrap();
+            assert!(items.len() <= 20);
+            for item in items {
+                let run: Uuid = serde_json::from_value(item["id"].clone()).unwrap();
+                assert_eq!(
+                    item["is_current_run"],
+                    run == other_run || run == Uuid::from_u128(1)
+                );
+                actual.push(run);
+            }
+            if result["has_more"] == false {
+                break;
+            }
+            args["cursor"] = result["next_cursor"].clone();
+        }
+        assert_eq!(actual, expected);
+        assert!(
+            runtime_write::validate_run(&remote.pool, &target, false)
+                .await
+                .is_err()
+        );
+        target.agent_run_id = Uuid::from_u128(1);
+        runtime_write::validate_run(&remote.pool, &target, false)
+            .await
+            .unwrap();
+        let detail_args = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"agent_run_id":original,"section":"input"});
+        let detail = call(&remote, "get_execution", detail_args.clone())
+            .await
+            .unwrap();
+        assert_eq!(detail["is_current_run"], false);
+        assert_eq!(detail["goal_usage"]["tokens_used"], Value::Null);
+        let mut foreign_revision = detail_args.clone();
+        foreign_revision["agent_run_id"] = json!(target.agent_run_id);
+        foreign_revision["expected_revision"] = detail["revision"].clone();
+        assert!(
+            call(&remote, "get_execution", foreign_revision)
+                .await
+                .is_err()
+        );
+        let mut wrong_section = detail_args;
+        wrong_section["section"] = json!("goal");
+        wrong_section["expected_revision"] = detail["revision"].clone();
+        assert!(call(&remote, "get_execution", wrong_section).await.is_err());
+        sqlx::query("DELETE FROM agent_runs WHERE id=?")
+            .bind(args["cursor"].as_str().unwrap().parse::<Uuid>().unwrap())
+            .execute(&remote.pool)
+            .await
+            .unwrap();
+        assert!(call(&remote, "list_workspace_runs", args).await.is_err());
     }
 }

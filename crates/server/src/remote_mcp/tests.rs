@@ -501,7 +501,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
     let request = json!({"input":{"content":"Direct instruction from LVK"},"workspace":{"path":"/private/never-return"}});
     sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX:default','codex','shared_workspace','/private/never-return','running',?)")
         .bind(run).bind(session).bind(workspaces[0]).bind(Uuid::new_v4()).bind(run.to_string()).bind(Uuid::new_v4()).bind(request.to_string()).execute(&pool).await.unwrap();
-    let state = json!({"terminal_output":{"content":"reported result ".repeat(2000)},"goal":{"status":"blocked","objective":"Agreed goal"},"provider_session":{"private":"never-return"}});
+    let state = json!({"terminal_output":{"content":"reported result ".repeat(2000)},"goal":{"status":"blocked","objective":"Agreed goal","token_budget":12000,"tokens_used":321,"time_used_seconds":42},"provider_session":{"private":"never-return"}});
     sqlx::query("INSERT INTO agent_run_state(agent_run_id,state_schema_version,reducer_version,state_json) VALUES(?,1,1,?)").bind(run).bind(state.to_string()).execute(&pool).await.unwrap();
     let runs = runtime_read::call(
         &remote,
@@ -517,6 +517,11 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         .await
         .unwrap();
     assert_eq!(input["content"], "Direct instruction from LVK");
+    assert_eq!(input["is_current_run"], true);
+    assert_eq!(
+        input["goal_usage"],
+        json!({"token_budget":12000,"tokens_used":321,"time_used_seconds":42})
+    );
     assert!(!input.to_string().contains("never-return"));
     let output_args = json!({"project_id":project,"workspace_id":workspaces[0],"agent_run_id":run,"section":"final_response","limit":100});
     let output = runtime_read::call(&remote, "get_execution", output_args.clone())
@@ -804,6 +809,9 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
                 0 => Some("passed".into()),
                 1 => Some("failed".into()),
                 2 => Some("unavailable".into()),
+                3 => Some("skipped".into()),
+                4 => Some("future_result".into()),
+                5 => Some("not_completed".into()),
                 _ => None,
             },
         });
@@ -846,7 +854,9 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
     assert_eq!(summary["validation"]["passed"], 1);
     assert_eq!(summary["validation"]["failed"], 1);
     assert_eq!(summary["validation"]["unavailable"], 1);
-    assert_eq!(summary["validation"]["unknown_or_unrun"], 102);
+    assert_eq!(summary["validation"]["skipped"], 1);
+    assert_eq!(summary["validation"]["not_completed"], 1);
+    assert_eq!(summary["validation"]["unknown_or_unrun"], 100);
     assert_eq!(summary["wiki"]["state"], "unknown");
     assert_eq!(summary["wiki"]["recorded_state"], "succeeded");
     let mut detail_args = json!({"project_id":project,"integration_id":id,"section":"validation","limit":50,"expected_revision":summary["revision"]});
