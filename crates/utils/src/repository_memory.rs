@@ -494,6 +494,24 @@ impl RepositoryMemoryStore {
         Self::at_persistent(&persistent).map(Some)
     }
 
+    /// Open existing records without provisioning directories or writing state.
+    pub fn read_only_for_repository(repo_name: &str, repo_id: Uuid) -> io::Result<Option<Self>> {
+        Self::read_only_at_persistent(
+            &crate::path::shared_resources_dir(repo_name, repo_id).join("persistent"),
+        )
+    }
+
+    pub fn read_only_at_persistent(persistent: &Path) -> io::Result<Option<Self>> {
+        let root = persistent.join("knowledge");
+        reject_symlinks(&root)?;
+        match fs::metadata(&root) {
+            Ok(metadata) if metadata.is_dir() => Ok(Some(Self { root })),
+            Ok(_) => Err(invalid("Repository memory root is not a directory")),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(error),
+        }
+    }
+
     pub fn for_repository(repo_name: &str, repo_id: Uuid) -> io::Result<Self> {
         Self::at_persistent(
             &crate::path::shared_resources_dir(repo_name, repo_id).join("persistent"),

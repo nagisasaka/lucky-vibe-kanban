@@ -368,3 +368,51 @@ supply the real Plugin/Skill package and tested installation/configuration guide
 Domain admission failures currently remain conservative uncertain receipts;
 refining rejected-versus-accepted reconciliation and meaningful source/target
 conflict codes is part of the remaining acceptance audit.
+
+## Workspace memory and Wiki evidence
+
+`list_workspace_wiki`, `get_workspace_wiki_page` and `get_workspace_memory`
+require explicit Project, Workspace and repository IDs. Both the local Issue
+membership and the Workspace–repository association are checked. The response
+contains the existing Workspace link, including the configured public subpath.
+These tools read reference data only; they never initialise memory, maintain
+OpenWiki, create a conversation or request model inference.
+
+Wiki reads reuse the shared OpenWiki Viewer loader, including its private-file,
+symlink, UTF-8 and size checks. Lists contain paths and bounded titles, with a
+20-item default and a 50-item maximum. Selected page bodies and Workspace memory
+use character offsets (8,000 default, 16,000 maximum). Later pages require a
+revision bound to the Project, Workspace, repository and content. A changed or
+foreign revision requires restarting the read. Wiki list revisions also detect
+body edits during traversal. The source is explicitly the selected checkout;
+these reads do not claim that Wiki publication has succeeded.
+
+The existing memory-store constructor can create missing directories, so the
+MCP adapter uses a separate read-only constructor. It opens existing records
+without requiring or creating repository state. Missing memory is returned as
+unavailable, whereas unsafe, invalid, unreadable or oversized records fail
+explicitly. The existing 128 KiB memory-record limit and Viewer limits (512 KiB
+per page, 2,000 pages, 16 MiB total) remain enforced. Error messages omit host
+paths. No private memory from another Workspace is included.
+
+Code, diff and semantic-manifest readers remain required, as do the outstanding
+Project summaries, native execution/admission acceptance evidence and M3 package.
+
+Validation for this increment:
+
+- `cargo test -p server --lib remote_mcp::evidence_read:: -- --nocapture`:
+  3 passed in 4.79s (initial dependency rebuild 3m05s),
+  `/tmp/lvk-chatgpt-mcp-evidence.log`.
+- Final `cargo test -p server --lib remote_mcp:: -- --nocapture`:
+  19 passed in 10.23s (build 34.30s),
+  `/tmp/lvk-chatgpt-mcp-evidence-final.log`. This includes transport/authentication,
+  receipts, Issue operations, execution/question adapters and Integration reads.
+- `pnpm run format` and `git diff --check` passed;
+  `/tmp/lvk-chatgpt-mcp-evidence-format.log`.
+
+The new fixtures cover 105 Wiki pages, multibyte text, bounded continuation,
+changed and foreign revisions, missing/deleted targets, unknown parameters,
+Project/Workspace/repository membership, unsafe links, oversized memory and
+absence of provisioning/inference. They use temporary directories and an
+isolated migrated SQLite database. No real ChatGPT account, live repository
+memory, native provider execution or deployment is exercised by these fixtures.
