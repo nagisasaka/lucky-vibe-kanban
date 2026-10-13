@@ -77,4 +77,13 @@ impl Config {
     pub fn project_url(&self, id: Uuid) -> String {
         format!("{}/projects/{id}", self.public_base_url)
     }
+    pub fn issue_url(&self, project: Uuid, issue: Uuid) -> String {
+        format!("{}/projects/{project}/issues/{issue}", self.public_base_url)
+    }
+    pub fn workspace_url(&self, project: Uuid, issue: Uuid, workspace: Uuid) -> String {
+        format!(
+            "{}/projects/{project}/issues/{issue}/workspaces/{workspace}",
+            self.public_base_url
+        )
+    }
 }

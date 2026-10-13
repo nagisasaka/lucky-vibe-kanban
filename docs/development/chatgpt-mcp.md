@@ -124,3 +124,64 @@ yet wired to public write tools.
   initial compilation. Existing built frontend assets were then copied from the
   live checkout into this isolated checkout; these tests do not exercise frontend
   rendering. Full browser/link verification remains pending.
+
+## Board and execution read increment
+
+The remote tool subset now includes `get_project`, `list_issues`, `get_issue`,
+`list_issue_workspaces`, `get_workspace`, `list_workspace_runs`, and
+`get_execution`. Project/Issue/Workspace membership is validated at the service
+boundary. Requirement and execution text pages require the previous revision
+when continuing; direct UI changes invalidate stale pages. List cursors identify
+real records within the requested parent and reject mixed targets.
+
+Runtime responses use canonical lifecycle/projection/Goal fields and selected
+text sections. They do not serialize native session references, host paths or
+request envelopes. Agent text is explicitly not independent verification proof.
+Integration/Wiki and verification readers are still required before M1 is complete.
+
+The new tests use the complete current SQLite migration chain in memory, with
+105 Issues and two Workspaces for one Issue, Unicode requirement pages, explicit
+external UI changes, scoped runtime records and sensitive fields omitted from
+responses. The first Board/runtime read run passed 6 tests (200 unrelated server tests
+filtered); build 1m 11s, execution 0.76s. Log:
+`/tmp/lvk-chatgpt-mcp-read-tests.log`. Question-reader and shared-service
+regression checks are a separate subsequent increment.
+
+For the upcoming execution adapter, the real Goal entry is
+`ExecutorConfig.execution_mode = ExecutionMode::Goal` (or `PlanWithGoal`), not a
+`/goal` prefix. In-flight updates use the existing `AgentRunPortCommand::GoalUpdate`
+via `routes/agent_runs.rs`. Preserve stored executor/model/permission settings.
+
+## Question projection reuse
+
+`list_questions` and `get_question` validate Project, Issue, Workspace, Session,
+run and question identity. They reuse `sessions::questions::pending` for Codex
+nonblocking questions, including direct-answer reconciliation and attempt expiry.
+The existing canonical pending-question query was moved unchanged from Astra's
+private tool helper into `sessions::questions::pending_blocking`; Astra retains a
+wrapper calling that helper. No model code, prompt, setting or monitoring logic
+was changed. This small shared extraction keeps blocking-question/approval rules
+consistent without routing MCP through the Astra model service.
+
+Question lists are previews with identifiers. Full titles/options and canonical
+question data are available as revision-checked JSON pages. Execution approvals
+are explicitly distinguished and require the existing LVK UI. Answers are not
+yet exposed by this read increment.
+
+## Validation record (Board/runtime/questions read increment)
+
+Final candidate after limiting approval disclosure:
+
+- `cargo test -p server --lib remote_mcp:: -- --nocapture`: 7 passed,
+  200 unrelated tests filtered, build 27.17s, tests 0.79s.
+  Log: `/tmp/lvk-chatgpt-mcp-read-final.log`.
+- `cargo test -p server --lib routes::project_chat::tests::`: 20 passed,
+  tests 12.57s. Log: `/tmp/lvk-chatgpt-mcp-astra-regression.log`.
+- `cargo test -p server --lib routes::sessions::questions::tests::`: 2 passed,
+  tests 0.04s. Log: `/tmp/lvk-chatgpt-mcp-question-regression.log`.
+- Rust formatting and whitespace checks passed. No full backend suite ran.
+
+This verifies the read increment, not M0–M3 completion. Still required: scoped
+activity/audit, repository/memory/diff/Wiki and Integration/result readers; write
+adapters and their execution/retry tests; the actual Plugin/Skill and operational
+configuration; remaining T01–T18 evidence and the optional UI decision.

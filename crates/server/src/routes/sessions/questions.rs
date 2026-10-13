@@ -297,6 +297,18 @@ async fn reconcile_answers(pool: &SqlitePool, session: Uuid) -> Result<(), ApiEr
     Ok(())
 }
 
+/// Shared projection of unresolved canonical questions and approvals. No inference.
+pub(crate) async fn pending_blocking(
+    pool: &sqlx::SqlitePool,
+    workspace_id: Uuid,
+) -> anyhow::Result<Vec<Value>> {
+    let questions:Vec<String> = sqlx::query_scalar("SELECT e.event_envelope FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.workspace_id=? AND e.run_attempt_number=s.last_run_attempt_number AND r.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed') AND json_extract(e.event_envelope,'$.payload.type') IN ('input_requested','approval_requested') AND NOT EXISTS(SELECT 1 FROM agent_events x WHERE x.agent_run_id=e.agent_run_id AND x.run_attempt_number=e.run_attempt_number AND x.sequence>e.sequence AND json_extract(x.event_envelope,'$.payload.type') IN ('input_resolved','approval_resolved') AND (json_extract(x.event_envelope,'$.payload.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id') OR json_extract(x.event_envelope,'$.payload.data.approval_id')=json_extract(e.event_envelope,'$.payload.data.approval_id'))) AND NOT EXISTS(SELECT 1 FROM agent_run_commands c WHERE c.agent_run_id=e.agent_run_id AND c.created_at>=e.created_at AND json_extract(c.command_envelope,'$.command.type')='submit_input' AND json_extract(c.command_envelope,'$.command.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id')) ORDER BY e.created_at").bind(workspace_id).fetch_all(pool).await?;
+    Ok(questions
+        .into_iter()
+        .map(|s| serde_json::from_str(&s))
+        .collect::<Result<Vec<_>, _>>()?)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

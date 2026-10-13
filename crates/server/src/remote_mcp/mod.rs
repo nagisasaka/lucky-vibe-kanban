@@ -3,6 +3,9 @@
 mod auth;
 mod config;
 mod operations;
+mod questions;
+mod read;
+mod runtime_read;
 
 use std::sync::Arc;
 
@@ -128,14 +131,18 @@ impl Remote {
 }
 
 fn tools() -> Vec<Tool> {
-    [
+    let mut tools: Vec<Tool> = [
         json!({"name":"get_connection", "description":"Read LVK connection capabilities and granted permissions.", "inputSchema":{"type":"object","properties":{},"additionalProperties":false}}),
         json!({"name":"list_projects", "description":"List permitted local projects with canonical links. Follow next_cursor when has_more is true.", "inputSchema":{"type":"object","properties":{"limit":{"type":"integer","minimum":1,"maximum":50,"default":20},"cursor":{"type":"string","format":"uuid"}},"additionalProperties":false}}),
     ].into_iter().map(|mut value| {
         value["annotations"] = json!({"readOnlyHint": true, "destructiveHint": false, "openWorldHint": false});
         value["_meta"] = json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read"]}]});
         serde_json::from_value(value).expect("static MCP schema")
-    }).collect()
+    }).collect();
+    tools.extend(read::tools());
+    tools.extend(questions::tools());
+    tools.extend(runtime_read::tools());
+    tools
 }
 
 impl ServerHandler for Remote {
@@ -175,6 +182,15 @@ impl ServerHandler for Remote {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(anyhow::anyhow!("Invalid project listing parameters")),
             },
+            name if read::tools().iter().any(|tool| tool.name == name) => {
+                read::call(self, name, args).await
+            }
+            name if runtime_read::tools().iter().any(|tool| tool.name == name) => {
+                runtime_read::call(self, name, args).await
+            }
+            name if questions::tools().iter().any(|tool| tool.name == name) => {
+                questions::call(self, name, args).await
+            }
             _ => {
                 return Err(ErrorData::invalid_params(
                     "Unknown tool or invalid arguments",

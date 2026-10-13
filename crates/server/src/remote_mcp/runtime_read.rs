@@ -1,0 +1,176 @@
+use anyhow::ensure;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::{Value, json};
+use sqlx::Row;
+use uuid::Uuid;
+
+use super::{
+    Remote,
+    read::{arguments, definition, page},
+};
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct WorkspaceArgs {
+    project_id: Uuid,
+    workspace_id: Uuid,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct RunListArgs {
+    project_id: Uuid,
+    workspace_id: Uuid,
+    #[serde(default = "super::default_limit")]
+    #[schemars(range(min = 1, max = 50))]
+    limit: u32,
+    cursor: Option<Uuid>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+enum ExecutionSection {
+    FinalResponse,
+    Input,
+    Goal,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct ExecutionArgs {
+    project_id: Uuid,
+    workspace_id: Uuid,
+    agent_run_id: Uuid,
+    section: ExecutionSection,
+    #[serde(default)]
+    offset: u32,
+    #[serde(default = "super::read::text_limit")]
+    #[schemars(range(min = 1, max = 16000))]
+    limit: u32,
+    expected_revision: Option<String>,
+}
+
+pub(super) fn tools() -> Vec<rmcp::model::Tool> {
+    vec![
+        definition::<WorkspaceArgs>(
+            "get_workspace",
+            "Read Workspace identity, session/run counts and review link. Use list_workspace_runs for current execution IDs. An agent turn ending does not prove tests, merge or Wiki completion.",
+        ),
+        definition::<RunListArgs>(
+            "list_workspace_runs",
+            "Read canonical runs newest first, including session IDs, lifecycle, projection and Goal status. Page older runs with next_cursor; refresh first page to observe direct Codex changes.",
+        ),
+        definition::<ExecutionArgs>(
+            "get_execution",
+            "Read one run's final response, initial instruction or Goal objective in bounded character pages. Returns canonical lifecycle separately from the text. An agent claim is not independent test evidence.",
+        ),
+    ]
+}
+
+pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {
+    match name {
+        "get_workspace" => remote.workspace(arguments(args)?).await,
+        "list_workspace_runs" => remote.runs(arguments(args)?).await,
+        "get_execution" => remote.execution(arguments(args)?).await,
+        _ => anyhow::bail!("Unknown runtime read tool"),
+    }
+}
+
+impl Remote {
+    async fn workspace(&self, args: WorkspaceArgs) -> anyhow::Result<Value> {
+        let issue = self
+            .require_workspace(args.project_id, args.workspace_id)
+            .await?;
+        let row = sqlx::query("SELECT substr(name,1,500) AS name,length(coalesce(name,''))>500 AS name_truncated,archived,pinned,updated_at,(SELECT count(*) FROM sessions WHERE workspace_id=workspaces.id) AS session_count,(SELECT count(*) FROM agent_runs WHERE workspace_id=workspaces.id) AS run_count FROM workspaces WHERE id=?")
+            .bind(args.workspace_id).fetch_one(&self.pool).await?;
+        Ok(
+            json!({"workspace_id":args.workspace_id,"project_id":args.project_id,"issue_id":issue,"name":row.try_get::<Option<String>,_>("name")?,"name_truncated":row.try_get::<bool,_>("name_truncated")?,"archived":row.try_get::<bool,_>("archived")?,"pinned":row.try_get::<bool,_>("pinned")?,"updated_at":row.try_get::<String,_>("updated_at")?,"session_count":row.try_get::<i64,_>("session_count")?,"run_count":row.try_get::<i64,_>("run_count")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Inspect recorded verification and Integration results; run completion alone is not proof"}}),
+        )
+    }
+
+    async fn runs(&self, args: RunListArgs) -> anyhow::Result<Value> {
+        let issue = self
+            .require_workspace(args.project_id, args.workspace_id)
+            .await?;
+        ensure!(
+            (1..=50).contains(&args.limit),
+            "limit must be between 1 and 50"
+        );
+        let before: Option<String> = match args.cursor {
+            Some(cursor) => Some(
+                sqlx::query_scalar(
+                    "SELECT created_at FROM agent_runs WHERE id=? AND workspace_id=?",
+                )
+                .bind(cursor)
+                .bind(args.workspace_id)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| anyhow::anyhow!("Stale or foreign run cursor; restart listing"))?,
+            ),
+            None => None,
+        };
+        let rows = sqlx::query("SELECT r.id,r.session_id,r.status,r.projection_status,r.created_at,r.updated_at,s.last_event_sequence,json_extract(s.state_json,'$.goal.status') AS goal_status FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.workspace_id=? AND (? IS NULL OR r.created_at<? OR (r.created_at=? AND r.id<?)) ORDER BY r.created_at DESC,r.id DESC LIMIT ?")
+            .bind(args.workspace_id).bind(&before).bind(&before).bind(&before).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
+        let items = rows.into_iter().map(|row| -> anyhow::Result<Value> {
+            Ok(json!({"id":row.try_get::<Uuid,_>("id")?,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"last_event_sequence":row.try_get::<Option<i64>,_>("last_event_sequence")?,"updated_at":row.try_get::<String,_>("updated_at")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}))
+        }).collect::<anyhow::Result<Vec<_>>>()?;
+        Ok(page(items, args.limit))
+    }
+
+    async fn execution(&self, args: ExecutionArgs) -> anyhow::Result<Value> {
+        let issue = self
+            .require_workspace(args.project_id, args.workspace_id)
+            .await?;
+        ensure!(
+            (1..=16000).contains(&args.limit),
+            "limit must be between 1 and 16000 characters"
+        );
+        ensure!(
+            args.offset == 0 || args.expected_revision.is_some(),
+            "Supply expected_revision for subsequent execution pages"
+        );
+        let expression = match args.section {
+            ExecutionSection::FinalResponse => {
+                "json_extract(s.state_json,'$.terminal_output.content')"
+            }
+            ExecutionSection::Input => "json_extract(r.request_envelope,'$.input.content')",
+            ExecutionSection::Goal => "json_extract(s.state_json,'$.goal.objective')",
+        };
+        // Only the closed enum selects a SQL expression; caller text is bound.
+        let sql = format!(
+            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
+        );
+        let row = sqlx::query(&sql)
+            .bind(i64::from(args.offset) + 1)
+            .bind(args.limit)
+            .bind(args.agent_run_id)
+            .bind(args.workspace_id)
+            .fetch_optional(&self.pool)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("Run does not exist in this Workspace"))?;
+        let sequence = row.try_get::<Option<i64>, _>("last_event_sequence")?;
+        let revision = format!(
+            "{}:{}",
+            row.try_get::<String, _>("updated_at")?,
+            sequence
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "missing".into())
+        );
+        ensure!(
+            args.expected_revision
+                .as_ref()
+                .is_none_or(|expected| expected == &revision),
+            "Run changed; restart reading this section"
+        );
+        let total: i64 = row.try_get("total")?;
+        ensure!(
+            i64::from(args.offset) <= total,
+            "Page offset is outside this section"
+        );
+        let next = i64::from(args.offset) + i64::from(args.limit);
+        Ok(
+            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"projection_available":sequence.is_some(),"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
+        )
+    }
+}
