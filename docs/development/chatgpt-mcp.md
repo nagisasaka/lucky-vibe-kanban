@@ -608,3 +608,48 @@ Validation for Project navigation:
 These tests use isolated databases and the existing provider-delivery fixture.
 They do not establish a live ChatGPT connection or native provider execution.
 No deployment, main-branch merge or user authentication change was performed.
+
+## Recorded Workspace verification
+
+`get_workspace_verification` reads the existing immutable Change Manifest whose
+identity is the selected AgentRun. Project/Workspace/repository membership and
+run ownership are checked before storage access. The manifest must match all
+three stored identities. This exposes no arbitrary file path and does not scan
+other Workspaces' memory or create missing storage.
+
+The response separates recorded passed/failed/not-run counts from current Git
+state. It returns the manifest's source/base commits, record time, current head
+when observable and whether that head matches the recorded source. These are
+agent-recorded test claims, not independent validation. Even an equal head does
+not establish verification of uncommitted changes. Missing records are explicitly
+unavailable; an unreadable, oversized or invalid record is an error. Publication
+and Wiki status remain unobserved here; use formal Integration evidence for them.
+
+Test previews use 20 items by default, at most 50, with explicit truncation and
+continuation. `get_workspace_verification_test` provides complete command/result/
+summary JSON in character pages up to 16,000. Revisions bind target, run, selected
+test and observed head; a changed head requires refreshing the evidence. Nothing
+executes the recorded command or starts a model. Both tools are included in the
+Skill reference and schema examples.
+
+Verification-read validation:
+
+- Initial MCP run: 26 passed, 1 failed in 13.98s after a 2m 23s build
+  (`/tmp/lvk-mcp-verification.log`). The nested flattened target DTO rejected
+  valid input before the ownership check. Flattening only the scalar run identity
+  fixes the input boundary while retaining rejection of unknown fields.
+- Corrected focused tests: 2 passed in 0.57s, build 2m 17s
+  (`/tmp/lvk-mcp-verification-focused.log`).
+- Final `CARGO_TARGET_DIR=/var/tmp/lvk-target LVK_MCP_TOOL_CATALOG=… cargo test
+  -p server --lib remote_mcp:: -- --nocapture`: 27 passed in 14.49s, build 33.51s
+  (`/tmp/lvk-mcp-verification-final.log`). The added coverage includes 105
+  recorded tests, Unicode preview/detail bounds, mismatched identities, corrupt
+  records, stale revisions, real temporary Git head/branch changes and missing
+  storage. Reads create no model, command or operation records in the fixtures.
+- Official package/schema and Skill reference validation: 38 real tool inputs
+  passed (`/tmp/lvk-mcp-verification-package.log`).
+- `pnpm run format` and `git diff --check` passed
+  (`/tmp/lvk-mcp-verification-format.log`); temporary dependency links removed.
+
+No runtime server binary was built or deployed. Real ChatGPT account behaviour,
+provider execution and public ingress remain outside these fixture results.

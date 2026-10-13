@@ -414,5 +414,30 @@
       "lvk:read",
       "lvk:merge"
     ]
+  },
+  {
+    "tool": "get_workspace_verification",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_verification_test",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000003",
+      "test_index": 0
+    },
+    "scopes": [
+      "lvk:read"
+    ]
   }
 ]

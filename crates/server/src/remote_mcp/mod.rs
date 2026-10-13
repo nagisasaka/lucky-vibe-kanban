@@ -14,6 +14,7 @@ mod questions;
 mod read;
 mod runtime_read;
 mod runtime_write;
+mod verification_read;
 
 use std::sync::Arc;
 
@@ -156,6 +157,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(read::tools());
     tools.extend(project_read::tools());
     tools.extend(evidence_read::tools());
+    tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
     tools.extend(issue_write::tools());
     tools.extend(launch::tools());
@@ -228,6 +230,12 @@ impl ServerHandler for Remote {
             }
             name if code_read::tools().iter().any(|tool| tool.name == name) => {
                 code_read::call(self, name, args).await
+            }
+            name if verification_read::tools()
+                .iter()
+                .any(|tool| tool.name == name) =>
+            {
+                verification_read::call(self, name, args).await
             }
             name if evidence_read::tools().iter().any(|tool| tool.name == name) => {
                 evidence_read::call(self, name, args).await

@@ -13,6 +13,11 @@ as separate source/destination paths. `list_workspace_wiki` and
 `get_workspace_wiki_page` read the selected checkout; they do not prove that the
 canonical Wiki has been published. Fetch only the relevant paths/pages.
 
+Use `get_workspace_verification` for the selected run's recorded test counts and
+`get_workspace_verification_test` for a complete test command/result/summary.
+These are Change Manifest claims for the returned source commit. Missing records,
+head mismatches and unverified working-tree changes do not establish a pass.
+
 Use `list_integrations` and `get_integration` for formal results. Read the
 `summary`, `sources` or `validation` section as needed. Separate execution
 status, verification outcomes/exceptions, target publication and current Wiki
