@@ -190,9 +190,33 @@ async fn inspect_source(
     })
 }
 
+/// Capture the local target used by the formal frozen candidate. The caller
+/// holds the existing admission mutation lock; publication rechecks it later.
+pub(super) fn observe_target(
+    git: &git::GitService,
+    repository: &std::path::Path,
+    branch: &str,
+    expected: Option<&str>,
+) -> anyhow::Result<String> {
+    let observed = git.get_branch_oid(repository, branch)?;
+    ensure!(
+        expected.is_none_or(|expected| expected == observed),
+        "TARGET_CHANGED: target HEAD changed since selection; inspect and explicitly reselect it"
+    );
+    Ok(observed)
+}
+
 pub(super) async fn submit(
     deployment: &DeploymentImpl,
     request: CreateIntegrationRequest,
+) -> anyhow::Result<IntegrationRun> {
+    submit_with_expected_target(deployment, request, None).await
+}
+
+pub(super) async fn submit_with_expected_target(
+    deployment: &DeploymentImpl,
+    request: CreateIntegrationRequest,
+    expected_target: Option<&str>,
 ) -> anyhow::Result<IntegrationRun> {
     let _admission = services::services::integration_admission::MUTATIONS
         .lock()
@@ -235,6 +259,7 @@ pub(super) async fn submit(
             run.project_id == request.project_id
                 && run.repository_id == request.repository_id
                 && run.target_ref == target_ref
+                && expected_target.is_none_or(|expected| expected == run.payload.observed_target)
                 && run.payload.executor_config
                     == Some(serde_json::to_value(
                         request
@@ -262,7 +287,7 @@ pub(super) async fn submit(
         .await?
         .contains(&repo.id);
     ensure!(registered, "Repository must belong to this local project");
-    let observed_target = deployment.git().get_branch_oid(&repo.path, target)?;
+    let observed_target = observe_target(deployment.git(), &repo.path, target, expected_target)?;
     let storage = deployment
         .git()
         .storage_identity(&repo.path)?

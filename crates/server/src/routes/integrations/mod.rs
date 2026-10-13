@@ -69,6 +69,16 @@ pub(crate) async fn create(
     Ok(Json(ApiResponse::success(run)))
 }
 
+pub(crate) async fn create_with_expected_target(
+    deployment: &DeploymentImpl,
+    request: CreateIntegrationRequest,
+    expected_target: &str,
+) -> Result<IntegrationRun, ApiError> {
+    admission::submit_with_expected_target(deployment, request, Some(expected_target))
+        .await
+        .map_err(error)
+}
+
 async fn list(
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<ListQuery>,

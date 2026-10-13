@@ -127,8 +127,8 @@ Insufficient write scope returns a standard MCP OAuth challenge. Inspect
 `get_operation` with the original request key after a lost response; do not
 create a new key merely because the original request timed out. Receipts return
 operation state and canonical links without exposing input text or credentials.
-New Workspace execution-start and Integration-start adapters are still required;
-these Issue tools do not imply that M2 is complete.
+New Workspace and formal Integration adapters are described below. The full
+acceptance audit and native execution evidence are still required before M2 is complete.
 
 ## Validation record (foundation)
 
@@ -200,10 +200,11 @@ Final candidate after limiting approval disclosure:
   tests 0.04s. Log: `/tmp/lvk-chatgpt-mcp-question-regression.log`.
 - Rust formatting and whitespace checks passed. No full backend suite ran.
 
-This verifies the read increment, not M0–M3 completion. Still required: scoped
-activity/audit, repository/memory/diff/Wiki and Integration/result readers; write
-adapters and their execution/retry tests; the actual Plugin/Skill and operational
-configuration; remaining T01–T18 evidence and the optional UI decision.
+This records the read checkpoint, not M0–M3 completion. Later increments below
+add activity, Integration evidence and write adapters. Remaining work includes
+repository/memory/diff/Wiki details, Project summary completeness, full native
+execution acceptance, Plugin/Skill and operational configuration, the remaining
+T01–T18 audit and the optional UI decision.
 
 
 ## Activity, Integration evidence and Issue operations increment
@@ -236,8 +237,8 @@ Local validation for this increment:
   a test-only compilation failure, not a runtime or domain failure.
 
 Remaining required work includes repository/memory/diff/Wiki detail readers,
-Project summary completeness, new Workspace execution-start and Integration-start
-write adapters, the actual Plugin/Skill package and installation guide, and the
+Project summary completeness, full native execution acceptance evidence,
+the actual Plugin/Skill package and installation guide, and the
 full T01–T18 audit. ChatGPT real-account validation has not been performed.
 
 
@@ -274,8 +275,8 @@ Runtime adapter tests use the real migrated database and parent/lifecycle
 checks. Steering and continuation replace the runtime-action boundary in
 fixtures. Question tests use the real Session queue and answer reservation
 service, replacing only final delivery. They do not claim a real Codex launch,
-saved-profile provider execution or ChatGPT session was exercised. New-workspace start and
-formal Integration start still need their remote adapters and acceptance tests.
+saved-profile provider execution or ChatGPT session was exercised. New-workspace and formal Integration admission adapters are described below;
+full native execution acceptance evidence remains pending.
 
 
 Validation for this increment (scoped suites only):
@@ -292,3 +293,78 @@ Validation for this increment (scoped suites only):
 violated the existing state projection constraint (positive attempt number with
 zero event sequence). The fixture was corrected to represent a valid projection;
 the final suites above all passed. No migration constraint was weakened.
+
+
+## New Workspace and formal Integration admission
+
+`start_workspace` reads the exact Issue revision and agreed description, checks
+explicit repository memberships and branches, then calls the existing
+Workspace creation/start pipeline. The normal creation UI uses the global
+`executor_profile` as its default; this adapter uses the same identity, with no
+hardcoded model or authentication override. Optional `execution_mode` and a
+positive Goal budget use the native executor fields, never a `/goal` string.
+
+The existing Worktree creation service accepts an internal, stable Workspace ID
+from the MCP receipt. The external UI request schema and DirectFolder flow stay
+unchanged. If admission fails partway through, the uncertain receipt links that
+Workspace ID so it can be inspected without starting another attempt.
+
+`start_integration` requires `lvk:merge` in addition to read access. It validates
+explicit Issue/Workspace/repository associations and passes one frozen selection
+per Issue to existing formal admission (up to its existing 100-Issue limit).
+It also pins the selected target commit. Formal admission observes and checks
+that target under its existing mutation lock; its later validation/publication
+checks remain intact. Existing Integration executor defaults are preserved.
+No direct Git merge, target write, Done update or Wiki invocation was added to
+the MCP adapter.
+
+These two tools wait for domain **admission**, which returns Workspace/Session/
+run IDs or an Integration ID; they do not wait for coding or publication to
+finish. Admission is owned by a task started before the first DB await. Losing
+the waiting MCP request cannot cancel it. A concurrent retry may return the
+still-running operation receipt; inspect `get_operation` using the same key.
+Do not interpret a running receipt without a result as accepted coding.
+
+`list_project_repositories`, `list_repository_branches`,
+`get_integration_candidate` and `get_execution_defaults` provide the IDs, local
+branches, commit evidence and default executor identity needed to construct
+these requests. Creation repository discovery shares the existing configured
+Project defaults reader with Astra. No read invokes Astra or mutates defaults.
+Candidate commit evidence explicitly says eligibility is not yet validated;
+formal admission still checks every related Workspace, settled writers,
+cleanliness, semantic finalisation and head identity.
+
+Adapter fixtures use migrated temporary databases and actual temporary Git
+repositories (including 105 local branches for pagination). They replace the
+Workspace/Integration launch boundary; their success is not evidence of an
+actual Codex provider launch or a full remote formal Integration. Existing
+formal Integration regression tests run separately against the shared rules.
+The production adapters compile against the real services, while complete
+native execution acceptance and ChatGPT real-account verification remain pending.
+
+
+Validation for the admission increment:
+
+- `cargo test -p server --lib remote_mcp:: -- --nocapture`: 16 passed in
+  7.00s (build 36.18s); `/tmp/lvk-chatgpt-mcp-launch-final.log`.
+- Final adapter subset `remote_mcp::launch_tests::`: 3 passed in 2.66s
+  (build 0.85s); `/tmp/lvk-chatgpt-mcp-launch-adapters-final.log`.
+- `routes::workspaces::create::`: 6 passed in 0.00s (build 1m06s);
+  `/tmp/lvk-chatgpt-mcp-launch-workspaces.log`.
+- Final `routes::integrations::`: 15 passed in 11.38s (build 38.12s),
+  including a real temporary target-branch update before formal admission;
+  `/tmp/lvk-chatgpt-mcp-launch-integrations-final.log`.
+- `routes::project_chat::tests::`: 20 passed in 13.01s (build 0.99s);
+  `/tmp/lvk-chatgpt-mcp-launch-astra.log`.
+- `pnpm run format`, subsequent Rust formatting and `git diff --check` passed.
+
+An initial compilation found that the accepted Session ID lives in
+`AgentRunPortSnapshot.state.session_id`; the adapter was corrected before the
+successful suites above. No production configuration or running server changed.
+
+The complete acceptance audit must still prove native execution/profile binding,
+finish repository/memory/diff/Wiki detail readers and Project summaries, and
+supply the real Plugin/Skill package and tested installation/configuration guide.
+Domain admission failures currently remain conservative uncertain receipts;
+refining rejected-versus-accepted reconciliation and meaningful source/target
+conflict codes is part of the remaining acceptance audit.

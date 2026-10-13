@@ -653,23 +653,7 @@ pub(super) async fn pending_questions(
 }
 
 async fn project_repositories(pool: &sqlx::SqlitePool, project: Uuid) -> anyhow::Result<Vec<Uuid>> {
-    use db::models::scratch::{Scratch, ScratchPayload, ScratchType};
-    let mut ids = integrations::project_repository_ids(pool, project).await?;
-    if let Some(scratch) =
-        Scratch::find_by_id(pool, project, &ScratchType::ProjectRepoDefaults).await?
-        && let ScratchPayload::ProjectRepoDefaults(defaults) = scratch.payload
-        && defaults
-            .directory_path
-            .as_deref()
-            .is_none_or(|p| p.trim().is_empty())
-    {
-        for repo in defaults.repos {
-            if !ids.contains(&repo.repo_id) {
-                ids.push(repo.repo_id);
-            }
-        }
-    }
-    Ok(ids)
+    local_remote::project_creation_repository_ids(pool, project).await
 }
 
 fn summarise_state(mut state: Value) -> Value {

@@ -3323,6 +3323,29 @@ async fn list_issue_workspaces(
     Ok(ResponseJson(workspaces))
 }
 
+pub(crate) async fn project_creation_repository_ids(
+    pool: &sqlx::SqlitePool,
+    project: Uuid,
+) -> anyhow::Result<Vec<Uuid>> {
+    use db::models::scratch::{Scratch, ScratchPayload, ScratchType};
+    let mut ids = crate::routes::integrations::project_repository_ids(pool, project).await?;
+    if let Some(scratch) =
+        Scratch::find_by_id(pool, project, &ScratchType::ProjectRepoDefaults).await?
+        && let ScratchPayload::ProjectRepoDefaults(defaults) = scratch.payload
+        && defaults
+            .directory_path
+            .as_deref()
+            .is_none_or(|p| p.trim().is_empty())
+    {
+        for repo in defaults.repos {
+            if !ids.contains(&repo.repo_id) {
+                ids.push(repo.repo_id);
+            }
+        }
+    }
+    Ok(ids)
+}
+
 #[cfg(test)]
 mod tests {
     use api_types::{CreateIssueRequest, CreateProjectRequest, IssuePriority};

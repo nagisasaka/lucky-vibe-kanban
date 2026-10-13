@@ -43,7 +43,15 @@ pub(crate) async fn create_workspace_record_with_owner(
     name: Option<String>,
     owner: Option<&WorkspaceExecutionOwner>,
 ) -> Result<Workspace, ApiError> {
-    let workspace_id = Uuid::new_v4();
+    create_workspace_record_with_identity(deployment, name, owner, Uuid::new_v4()).await
+}
+
+async fn create_workspace_record_with_identity(
+    deployment: &DeploymentImpl,
+    name: Option<String>,
+    owner: Option<&WorkspaceExecutionOwner>,
+    workspace_id: Uuid,
+) -> Result<Workspace, ApiError> {
     let branch_label = name
         .as_deref()
         .filter(|branch_label| !branch_label.is_empty())
@@ -318,6 +326,21 @@ pub async fn create_and_start_workspace(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<CreateAndStartWorkspaceRequest>,
 ) -> Result<ResponseJson<ApiResponse<CreateAndStartWorkspaceResponse>>, ApiError> {
+    create_and_start_workspace_admitted(deployment, payload, None).await
+}
+
+/// An internal admission receipt may supply a stable Workspace identity. The
+/// ordinary UI request schema and creation flow are unchanged.
+pub(crate) async fn create_and_start_workspace_admitted(
+    deployment: DeploymentImpl,
+    payload: CreateAndStartWorkspaceRequest,
+    workspace_id: Option<Uuid>,
+) -> Result<ResponseJson<ApiResponse<CreateAndStartWorkspaceResponse>>, ApiError> {
+    if workspace_id.is_some() && !matches!(payload.mode, CreateWorkspaceMode::Worktree) {
+        return Err(ApiError::BadRequest(
+            "Admitted Workspace identity requires Worktree mode".into(),
+        ));
+    }
     let CreateAndStartWorkspaceRequest {
         mode,
         name,
@@ -358,7 +381,15 @@ pub async fn create_and_start_workspace(
 
             let mut managed_workspace = deployment
                 .workspace_manager()
-                .load_managed_workspace(create_workspace_record(&deployment, name).await?)
+                .load_managed_workspace(
+                    create_workspace_record_with_identity(
+                        &deployment,
+                        name,
+                        None,
+                        workspace_id.unwrap_or_else(Uuid::new_v4),
+                    )
+                    .await?,
+                )
                 .await?;
 
             for repo in &repos {

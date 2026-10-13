@@ -5,6 +5,7 @@ mod auth;
 mod config;
 mod integration_read;
 mod issue_write;
+mod launch;
 mod operations;
 mod questions;
 mod read;
@@ -46,6 +47,7 @@ pub fn configured_router(deployment: DeploymentImpl) -> anyhow::Result<Router> {
         Remote {
             pool: deployment.db().pool.clone(),
             runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
+            launch: Some(Arc::new(launch::ExistingLaunch(deployment.clone()))),
             process_instance: Uuid::new_v4(),
             config,
         },
@@ -75,6 +77,7 @@ fn router(remote: Remote, auth: Auth) -> Router {
 
 #[derive(Clone)]
 struct Remote {
+    launch: Option<Arc<dyn launch::LaunchActions>>,
     runtime: Option<Arc<dyn runtime_write::RuntimeActions>>,
     process_instance: Uuid,
     pool: SqlitePool,
@@ -149,6 +152,7 @@ fn tools() -> Vec<Tool> {
     }).collect();
     tools.extend(read::tools());
     tools.extend(issue_write::tools());
+    tools.extend(launch::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
     tools.extend(questions::tools());
@@ -185,19 +189,17 @@ impl ServerHandler for Remote {
         if !principal.allows("lvk:read") {
             return Err(ErrorData::invalid_request("Read permission required", None));
         }
-        if matches!(
-            request.name.as_ref(),
-            "create_issue"
-                | "update_issue"
-                | "steer_execution"
-                | "continue_execution"
-                | "answer_question"
-        ) && !principal.allows("lvk:write")
-        {
+        let required_scope = match request.name.as_ref() {
+            "start_integration" => Some("lvk:merge"),
+            "create_issue" | "update_issue" | "steer_execution" | "continue_execution"
+            | "answer_question" | "start_workspace" => Some("lvk:write"),
+            _ => None,
+        };
+        if let Some(scope) = required_scope.filter(|scope| !principal.allows(scope)) {
             return Ok(serde_json::from_value(json!({
-                "content":[{"type":"text","text":"Write permission required; reconnect with lvk:write before submitting this operation."}],
+                "content":[{"type":"text","text":format!("Operation permission required; reconnect with {scope} before submitting this operation.")}],
                 "isError":true,
-                "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"lvk:read lvk:write\"", self.config.metadata_url())]}
+                "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"lvk:read {scope}\"", self.config.metadata_url())]}
             })).expect("OAuth challenge result"));
         }
         let args = Value::Object(request.arguments.unwrap_or_default());
@@ -211,6 +213,9 @@ impl ServerHandler for Remote {
             },
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await
+            }
+            name if launch::tools().iter().any(|tool| tool.name == name) => {
+                launch::call(self, principal, name, args).await
             }
             name if runtime_write::tools().iter().any(|tool| tool.name == name) => {
                 runtime_write::call(self, principal, name, args).await
@@ -261,3 +266,6 @@ mod tests;
 
 #[cfg(test)]
 mod runtime_write_tests;
+
+#[cfg(test)]
+mod launch_tests;

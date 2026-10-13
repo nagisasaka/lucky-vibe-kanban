@@ -23,7 +23,7 @@ use crate::{
     routes::{agent_runs, sessions::questions as service},
 };
 
-struct FixtureRuntime {
+pub(super) struct FixtureRuntime {
     pool: SqlitePool,
     queue: QueuedMessageService,
     calls: tokio::sync::Mutex<Vec<Value>>,
@@ -147,7 +147,7 @@ impl RuntimeActions for FixtureRuntime {
     }
 }
 
-async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
+pub(super) async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(1)
         .connect("sqlite::memory:")
@@ -205,6 +205,7 @@ async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
         fail_after_delivery: Default::default(),
     });
     let remote = Remote {
+        launch: None,
         pool,
         config: Arc::new(config()),
         process_instance: Uuid::new_v4(),
@@ -229,7 +230,7 @@ async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
         issue,
     )
 }
-async fn insert_run(pool: &SqlitePool, session: Uuid, workspace: Uuid, run: Uuid) {
+pub(super) async fn insert_run(pool: &SqlitePool, session: Uuid, workspace: Uuid, run: Uuid) {
     sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX:default','codex','shared_workspace','/fixture','running','{}')")
         .bind(run).bind(session).bind(workspace).bind(Uuid::new_v4()).bind(run.to_string()).bind(Uuid::new_v4()).execute(pool).await.unwrap();
 }

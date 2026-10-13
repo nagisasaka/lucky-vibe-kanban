@@ -201,3 +201,37 @@ fn ordinary_instructions_cannot_be_deserialised_as_validation_approval() {
         .is_err()
     );
 }
+
+#[test]
+fn remote_target_selection_rejects_a_branch_changed_before_formal_admission() {
+    let directory = tempfile::tempdir().unwrap();
+    let command = |args: &[&str]| {
+        let output = std::process::Command::new("git")
+            .current_dir(directory.path())
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    };
+    command(&["init", "-b", "main"]);
+    command(&["config", "user.name", "Integration fixture"]);
+    command(&["config", "user.email", "fixture@example.invalid"]);
+    command(&["commit", "--allow-empty", "-m", "first"]);
+    let git = git::GitService::new();
+    let selected = admission::observe_target(&git, directory.path(), "main", None).unwrap();
+    command(&["commit", "--allow-empty", "-m", "direct target update"]);
+    let error =
+        admission::observe_target(&git, directory.path(), "main", Some(&selected)).unwrap_err();
+    assert!(error.to_string().contains("TARGET_CHANGED"));
+    let current = admission::observe_target(&git, directory.path(), "main", None).unwrap();
+    assert_ne!(selected, current);
+    assert_eq!(
+        admission::observe_target(&git, directory.path(), "main", Some(&current)).unwrap(),
+        current
+    );
+    assert!(admission::observe_target(&git, directory.path(), "missing", None).is_err());
+}

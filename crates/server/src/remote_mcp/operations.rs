@@ -60,6 +60,63 @@ impl Operations {
         F: FnOnce(Uuid) -> Fut + Send + 'static,
         Fut: std::future::Future<Output = (&'static str, Value)> + Send + 'static,
     {
+        self.submit_timed(
+            principal,
+            request_id,
+            project_id,
+            operation,
+            input,
+            safe_targets,
+            execute,
+            false,
+        )
+        .await
+    }
+
+    /// Wait for domain admission (never for coding/Integration completion).
+    /// The owned task still survives cancellation of this waiting caller.
+    pub async fn submit_and_wait<F, Fut>(
+        &self,
+        principal: String,
+        request_id: Uuid,
+        project_id: Uuid,
+        operation: String,
+        input: Value,
+        safe_targets: Value,
+        execute: F,
+    ) -> anyhow::Result<Receipt>
+    where
+        F: FnOnce(Uuid) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = (&'static str, Value)> + Send + 'static,
+    {
+        self.submit_timed(
+            principal,
+            request_id,
+            project_id,
+            operation,
+            input,
+            safe_targets,
+            execute,
+            true,
+        )
+        .await
+    }
+
+    async fn submit_timed<F, Fut>(
+        &self,
+        principal: String,
+        request_id: Uuid,
+        project_id: Uuid,
+        operation: String,
+        input: Value,
+        safe_targets: Value,
+        execute: F,
+        wait_for_domain: bool,
+    ) -> anyhow::Result<Receipt>
+    where
+        F: FnOnce(Uuid) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = (&'static str, Value)> + Send + 'static,
+    {
         let store = self.clone();
         let (sender, receiver) = tokio::sync::oneshot::channel();
         tokio::spawn(async move {
@@ -95,12 +152,26 @@ impl Operations {
                 }
             }
             receipt.status = "running".into();
-            let _ = sender.send(Ok(receipt));
+            let sender = if wait_for_domain {
+                Some(sender)
+            } else {
+                let _ = sender.send(Ok(receipt));
+                None
+            };
             // A panic is an unknown domain outcome, never permission to replay.
             let result = tokio::spawn(async move { execute(id).await }).await;
             let (status, result) = result.unwrap_or_else(|_| ("uncertain", serde_json::json!({"message":"Operation outcome unavailable; inspect its targets before any new request"})));
             if store.finish(id, status, &result).await.is_err() {
                 tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");
+                if let Some(sender) = sender {
+                    let _ = sender.send(Err(anyhow::anyhow!(
+                        "Domain acceptance receipt is uncertain; inspect the original request ID"
+                    )));
+                }
+                return;
+            }
+            if let Some(sender) = sender {
+                let _ = sender.send(store.by_request(&principal, request_id).await);
             }
         });
         receiver.await.map_err(|_| {
