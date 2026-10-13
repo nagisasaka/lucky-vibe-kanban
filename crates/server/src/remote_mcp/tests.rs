@@ -7,7 +7,7 @@ use axum::{
 
 use super::*;
 
-fn config() -> Config {
+pub(super) fn config() -> Config {
     Config {
         public_base_url: "https://lvk.example/team".into(),
         issuer: "https://identity.example/realms/lvk".into(),
@@ -152,6 +152,7 @@ async fn fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
     }
     (
         Remote {
+            runtime: None,
             process_instance: Uuid::new_v4(),
             pool,
             config: config.clone(),
@@ -360,6 +361,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         workspaces.push(id);
     }
     let remote = Remote {
+        runtime: None,
         process_instance: Uuid::new_v4(),
         pool: pool.clone(),
         config: Arc::new(config()),
@@ -633,6 +635,7 @@ async fn question_reads_preserve_options_distinguish_approvals_and_observe_direc
             .unwrap();
     }
     let remote = Remote {
+        runtime: None,
         process_instance: Uuid::new_v4(),
         pool: pool.clone(),
         config: Arc::new(config()),
@@ -682,6 +685,18 @@ async fn question_reads_preserve_options_distinguish_approvals_and_observe_direc
         .await
         .unwrap();
     assert_eq!(fresh["items"].as_array().unwrap().len(), 2);
+    // A retry invalidates old blocking questions even while the read projection
+    // still reports the previous attempt number.
+    sqlx::query("INSERT INTO agent_run_attempts VALUES(?,?,2,'starting')")
+        .bind(Uuid::new_v4())
+        .bind(run)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let retried = questions::call(&remote, "list_questions", args.clone())
+        .await
+        .unwrap();
+    assert_eq!(retried["items"].as_array().unwrap().len(), 0);
     let mut foreign = args;
     foreign["session_id"] = json!(Uuid::new_v4());
     assert!(
@@ -796,6 +811,7 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
             .bind(id).bind(id.to_string()).bind(project).bind(repo).bind(serde_json::to_string(&payload).unwrap()).execute(&pool).await.unwrap();
     }
     let remote = Remote {
+        runtime: None,
         process_instance: Uuid::new_v4(),
         pool: pool.clone(),
         config: Arc::new(config()),
@@ -860,7 +876,7 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
     );
 }
 
-async fn settled_operation(
+pub(super) async fn settled_operation(
     remote: &Remote,
     principal: &auth::Principal,
     project: Uuid,
@@ -907,6 +923,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(id).execute(&pool).await.unwrap();
     }
     let remote = Remote {
+        runtime: None,
         pool: pool.clone(),
         config: Arc::new(config()),
         process_instance: Uuid::new_v4(),
@@ -1041,6 +1058,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     let mut rotated = (*remote.config).clone();
     rotated.issuer = "https://other.example".into();
     let rotated = Remote {
+        runtime: None,
         config: Arc::new(rotated),
         ..remote.clone()
     };

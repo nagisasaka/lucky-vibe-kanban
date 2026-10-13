@@ -127,8 +127,8 @@ Insufficient write scope returns a standard MCP OAuth challenge. Inspect
 `get_operation` with the original request key after a lost response; do not
 create a new key merely because the original request timed out. Receipts return
 operation state and canonical links without exposing input text or credentials.
-Execution, steering, question-answer and Integration-start adapters are still
-required; these Issue tools do not imply that M2 is complete.
+New Workspace execution-start and Integration-start adapters are still required;
+these Issue tools do not imply that M2 is complete.
 
 ## Validation record (foundation)
 
@@ -236,6 +236,59 @@ Local validation for this increment:
   a test-only compilation failure, not a runtime or domain failure.
 
 Remaining required work includes repository/memory/diff/Wiki detail readers,
-Project summary completeness, execution/continue/steering/question/Integration
+Project summary completeness, new Workspace execution-start and Integration-start
 write adapters, the actual Plugin/Skill package and installation guide, and the
 full T01–T18 audit. ChatGPT real-account validation has not been performed.
+
+
+## Steering, continuation and answers increment
+
+`steer_execution` selects the current active run by explicit Project, Workspace,
+Session and run IDs. `continue_execution` selects the latest terminal run and
+reuses the existing Session executor configuration and follow-up admission.
+It does not replace the saved model, permissions or native Goal mode. A new run
+created directly in LVK invalidates the previous continuation selection.
+
+`answer_question` requires the exact kind, ID, run and revision returned by
+`get_question`. Async answers use the existing durable `agent_question_answers`
+reservation and Session lock. The shared function now accepts an injectable
+final dispatcher for tests; production calls the same AgentRun control service
+as before. An identical direct UI answer that wins a race is reused and its
+actual command ID is reported. Different answers conflict.
+
+Blocking input delivery now rechecks canonical pending state under the Session
+lock for both UI and MCP. Remote answers also pin the originating question event
+so a repeated provider input ID in a later attempt cannot receive an old answer.
+Question revisions include event/attempt identity, and pending blocking reads
+expire old attempts even if the state projection has not caught up. Execution
+approvals remain available only through the LVK link.
+
+All three tools require `lvk:read` and `lvk:write` and use the existing durable MCP
+receipt admission. Domain errors after dispatch are uncertain because an error
+can follow an accepted command; they are never automatic retry permission.
+Receipts describe instruction/answer acceptance separately from implementation
+completion. The generic receipt no longer asserts that implementation has not
+started; that assertion belongs specifically to Issue-only results.
+
+Runtime adapter tests use the real migrated database and parent/lifecycle
+checks. Steering and continuation replace the runtime-action boundary in
+fixtures. Question tests use the real Session queue and answer reservation
+service, replacing only final delivery. They do not claim a real Codex launch,
+saved-profile provider execution or ChatGPT session was exercised. New-workspace start and
+formal Integration start still need their remote adapters and acceptance tests.
+
+
+Validation for this increment (scoped suites only):
+
+| Command filter (`cargo test -p server --lib … -- --nocapture`) | Passed | Test time | Build time | Log under `/tmp/` |
+| --- | ---: | ---: | ---: | --- |
+| `remote_mcp::` | 13 | 4.76s | 39.54s | `lvk-chatgpt-mcp-runtime-final.log` |
+| `routes::sessions::` | 40 | 0.89s | 0.97s | `lvk-chatgpt-mcp-runtime-sessions.log` |
+| `routes::agent_runs::` | 3 | 0.07s | 1.40s | `lvk-chatgpt-mcp-runtime-controls.log` |
+| `routes::project_chat::tests::` | 20 | 14.45s | 1.31s | `lvk-chatgpt-mcp-runtime-astra.log` |
+| `routes::integrations::` | 14 | 16.06s | 2.37s | `lvk-chatgpt-mcp-runtime-integration.log` |
+
+`pnpm run format` and `git diff --check` passed. An initial new question fixture
+violated the existing state projection constraint (positive attempt number with
+zero event sequence). The fixture was corrected to represent a valid projection;
+the final suites above all passed. No migration constraint was weakened.

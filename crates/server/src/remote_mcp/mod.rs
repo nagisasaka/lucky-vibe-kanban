@@ -9,6 +9,7 @@ mod operations;
 mod questions;
 mod read;
 mod runtime_read;
+mod runtime_write;
 
 use std::sync::Arc;
 
@@ -44,6 +45,7 @@ pub fn configured_router(deployment: DeploymentImpl) -> anyhow::Result<Router> {
     Ok(router(
         Remote {
             pool: deployment.db().pool.clone(),
+            runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
             process_instance: Uuid::new_v4(),
             config,
         },
@@ -73,6 +75,7 @@ fn router(remote: Remote, auth: Auth) -> Router {
 
 #[derive(Clone)]
 struct Remote {
+    runtime: Option<Arc<dyn runtime_write::RuntimeActions>>,
     process_instance: Uuid,
     pool: SqlitePool,
     config: Arc<Config>,
@@ -150,6 +153,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(integration_read::tools());
     tools.extend(questions::tools());
     tools.extend(runtime_read::tools());
+    tools.extend(runtime_write::tools());
     tools
 }
 
@@ -181,8 +185,14 @@ impl ServerHandler for Remote {
         if !principal.allows("lvk:read") {
             return Err(ErrorData::invalid_request("Read permission required", None));
         }
-        if matches!(request.name.as_ref(), "create_issue" | "update_issue")
-            && !principal.allows("lvk:write")
+        if matches!(
+            request.name.as_ref(),
+            "create_issue"
+                | "update_issue"
+                | "steer_execution"
+                | "continue_execution"
+                | "answer_question"
+        ) && !principal.allows("lvk:write")
         {
             return Ok(serde_json::from_value(json!({
                 "content":[{"type":"text","text":"Write permission required; reconnect with lvk:write before submitting this operation."}],
@@ -201,6 +211,9 @@ impl ServerHandler for Remote {
             },
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await
+            }
+            name if runtime_write::tools().iter().any(|tool| tool.name == name) => {
+                runtime_write::call(self, principal, name, args).await
             }
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
@@ -245,3 +258,6 @@ impl ServerHandler for Remote {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod runtime_write_tests;

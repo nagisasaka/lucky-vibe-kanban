@@ -351,9 +351,41 @@ pub(crate) async fn dispatch_control(
     identity: AgentRunControlIdentity,
     command: AgentRunPortCommand,
 ) -> Result<ResponseJson<ApiResponse<RunState>>, ApiError> {
+    dispatch_control_for_input(deployment, agent_run_id, identity, command, None).await
+}
+
+/// Remote answers pin the exact question event, including its run attempt.
+/// Direct UI callers retain the existing current-input semantics.
+pub(crate) async fn dispatch_control_for_input(
+    deployment: &DeploymentImpl,
+    agent_run_id: Uuid,
+    identity: AgentRunControlIdentity,
+    command: AgentRunPortCommand,
+    expected_input_event: Option<Uuid>,
+) -> Result<ResponseJson<ApiResponse<RunState>>, ApiError> {
     let run = db::models::agent_runtime::AgentRunRecord::find(&deployment.db().pool, agent_run_id)
         .await?
         .ok_or_else(|| ApiError::BadRequest("AgentRun not found".into()))?;
+    // UI and remote answers share the Session admission lock. Recheck the
+    // canonical input immediately before reserving its durable command.
+    let _input_guard = if let AgentRunPortCommand::SubmitInput { input_id, .. } = &command {
+        let guard = deployment
+            .queued_message_service()
+            .lock_session(run.session_id)
+            .await;
+        validate_pending_input(
+            &deployment.db().pool,
+            run.workspace_id,
+            agent_run_id,
+            identity.command_id,
+            input_id,
+            expected_input_event,
+        )
+        .await?;
+        Some(guard)
+    } else {
+        None
+    };
     let workspace =
         db::models::workspace::Workspace::find_by_id(&deployment.db().pool, run.workspace_id)
             .await?
@@ -438,6 +470,43 @@ pub(crate) async fn dispatch_control(
         .await
         .map_err(read_api_error)?;
     Ok(ResponseJson(ApiResponse::success(state)))
+}
+
+/// Caller holds the Session lock until dispatch has reserved the command.
+/// A retry with the same command ID still goes through canonical envelope
+/// equality checks; a second ID cannot answer an already reserved question.
+pub(crate) async fn validate_pending_input(
+    pool: &sqlx::SqlitePool,
+    workspace: Uuid,
+    run: Uuid,
+    command_id: Uuid,
+    input: &str,
+    expected_event: Option<Uuid>,
+) -> Result<(), ApiError> {
+    let retry: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM agent_run_commands WHERE command_id=? AND agent_run_id=?)",
+    )
+    .bind(command_id)
+    .bind(run)
+    .fetch_one(pool)
+    .await?;
+    if retry {
+        return Ok(());
+    }
+    let pending = super::sessions::questions::pending_blocking(pool, workspace)
+        .await
+        .map_err(|_| ApiError::Conflict("Input state unavailable".into()))?;
+    if !pending.iter().any(|event| {
+        event["agent_run_id"] == serde_json::json!(run)
+            && event["payload"]["type"] == "input_requested"
+            && event["payload"]["data"]["input_id"] == input
+            && expected_event.is_none_or(|id| event["event_id"] == serde_json::json!(id))
+    }) {
+        return Err(ApiError::Conflict(
+            "Input has been answered, reserved or expired; refresh the Session".into(),
+        ));
+    }
+    Ok(())
 }
 
 async fn stream_agent_run_events_ws(

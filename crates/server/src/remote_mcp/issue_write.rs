@@ -94,8 +94,8 @@ impl Remote {
         ensure!(exists, "Status is not in this Project");
         Ok(())
     }
-    fn receipt_value(&self, receipt: Receipt) -> Value {
-        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"status":receipt.status,"result":receipt.result.and_then(|s| serde_json::from_str::<Value>(&s).ok()),"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id),"implementation_started":false})
+    pub(super) fn receipt_value(&self, receipt: Receipt) -> Value {
+        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"status":receipt.status,"result":receipt.result.and_then(|s| serde_json::from_str::<Value>(&s).ok()),"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
     }
 }
 

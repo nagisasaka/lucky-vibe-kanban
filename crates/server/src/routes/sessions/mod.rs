@@ -257,6 +257,17 @@ pub async fn follow_up(
     State(deployment): State<DeploymentImpl>,
     Json(payload): Json<CreateFollowUpAttempt>,
 ) -> Result<ResponseJson<ApiResponse<AgentRunPortSnapshot>>, ApiError> {
+    follow_up_checked(deployment, session, payload, None).await
+}
+
+/// The remote caller pins the terminal run it intends to continue. Verify that
+/// selection under the existing lock shared with direct UI follow-ups.
+pub(crate) async fn follow_up_checked(
+    deployment: DeploymentImpl,
+    session: Session,
+    payload: CreateFollowUpAttempt,
+    expected_run: Option<(Uuid, Uuid)>,
+) -> Result<ResponseJson<ApiResponse<AgentRunPortSnapshot>>, ApiError> {
     let _queue_lock = deployment
         .queued_message_service()
         .lock_session(session.id)
@@ -265,6 +276,27 @@ pub async fn follow_up(
         return Err(ApiError::Conflict(
             "Resume or clear the follow-up queue first.".into(),
         ));
+    }
+    if let Some((expected, project)) = expected_run {
+        let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.project_id=?)").bind(session.workspace_id).bind(project).fetch_one(&deployment.db().pool).await?;
+        if !belongs {
+            return Err(ApiError::Conflict(
+                "Workspace is no longer in this Project".into(),
+            ));
+        }
+        let latest: Option<(Uuid, String)> = sqlx::query_as("SELECT id,status FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1")
+            .bind(session.id).fetch_optional(&deployment.db().pool).await?;
+        if !latest.is_some_and(|(id, status)| {
+            id == expected
+                && matches!(
+                    status.as_str(),
+                    "succeeded" | "failed" | "cancelled" | "crashed" | "audit_failed"
+                )
+        }) {
+            return Err(ApiError::Conflict(
+                "Session changed; select its latest finished run before continuing".into(),
+            ));
+        }
     }
     let agent_run = start_coding_agent_execution_for_session(
         &deployment,

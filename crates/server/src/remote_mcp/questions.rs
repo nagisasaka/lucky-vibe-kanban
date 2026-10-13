@@ -53,6 +53,8 @@ pub(super) struct Question {
     pub run: Uuid,
     pub kind: Kind,
     pub content: Value,
+    source_identity: Value,
+    pub event_id: Option<Uuid>,
     pub delivery_status: Option<String>,
 }
 
@@ -68,7 +70,15 @@ impl Question {
     pub fn revision(&self) -> String {
         format!(
             "{:x}",
-            Sha256::digest(json!([self.cursor(), self.content, self.delivery_status]).to_string())
+            Sha256::digest(
+                json!([
+                    self.cursor(),
+                    self.content,
+                    self.delivery_status,
+                    self.source_identity
+                ])
+                .to_string()
+            )
         )
     }
 }
@@ -116,7 +126,7 @@ impl Remote {
         for question in service::pending(&self.pool, session).await.map_err(|_| {
             anyhow::anyhow!("Question state unavailable; inspect this Session in LVK")
         })? {
-            questions.push(Question { id:question.id,run:question.agent_run_id,kind:Kind::AsyncSpecification,content:json!({"title":question.title,"options":question.options,"free_text_allowed":true}),delivery_status:question.delivery_status });
+            questions.push(Question { event_id: None, source_identity: Value::Null, id:question.id,run:question.agent_run_id,kind:Kind::AsyncSpecification,content:json!({"title":question.title,"options":question.options,"free_text_allowed":true}),delivery_status:question.delivery_status });
         }
         for event in service::pending_blocking(&self.pool, workspace).await? {
             if event["session_id"] != json!(session) {
@@ -132,6 +142,8 @@ impl Remote {
             };
             let id = id.ok_or_else(|| anyhow::anyhow!("Question audit lacks a stable ID"))?;
             questions.push(Question {
+                event_id: event["event_id"].as_str().and_then(|id| id.parse().ok()),
+                source_identity: json!([event["run_attempt_id"], event["event_id"]]),
                 id: id.into(),
                 run,
                 kind,

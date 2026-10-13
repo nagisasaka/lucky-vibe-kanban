@@ -141,17 +141,42 @@ pub(crate) async fn answer(
     request: AnswerAgentQuestion,
     actor: &str,
 ) -> Result<Value, ApiError> {
+    answer_with_dispatch(
+        &deployment.db().pool,
+        deployment.queued_message_service(),
+        session,
+        request,
+        actor,
+        |run, identity, command| async move {
+            let response = agent_runs::dispatch_control(deployment, run, identity, command).await?;
+            Ok(json!({"accepted":true,"agent_run_id":run,"state":response.0.into_data()}))
+        },
+    )
+    .await
+}
+
+/// The same durable answer admission is used by UI, Astra and remote MCP.
+/// Dispatch is the only injectable boundary; reservation and lifecycle checks
+/// always use the canonical database and Session lock.
+pub(crate) async fn answer_with_dispatch<F, Fut>(
+    pool: &SqlitePool,
+    queue: &services::services::queued_message::QueuedMessageService,
+    session: Session,
+    request: AnswerAgentQuestion,
+    actor: &str,
+    dispatch: F,
+) -> Result<Value, ApiError>
+where
+    F: FnOnce(Uuid, agent_runs::AgentRunControlIdentity, AgentRunPortCommand) -> Fut,
+    Fut: std::future::Future<Output = Result<Value, ApiError>>,
+{
     if request.answer.trim().is_empty() || request.answer.len() > 32_000 {
         return Err(ApiError::BadRequest(
             "Answer must contain 1–32000 bytes".into(),
         ));
     }
     let session_id = session.id;
-    let pool = &deployment.db().pool;
-    let _lock = deployment
-        .queued_message_service()
-        .lock_session(session_id)
-        .await;
+    let _lock = queue.lock_session(session_id).await;
     // Reconcile under the same lock as delivery. GET/list must never release a
     // reservation while its sender is still between reservation and dispatch.
     reconcile_answers(pool, session_id).await?;
@@ -168,7 +193,7 @@ pub(crate) async fn answer(
         }
         return result.map(|s|serde_json::from_str(&s).map_err(|_|ApiError::Conflict("Unreadable answer receipt".into()))).unwrap_or_else(||Err(ApiError::Conflict("Answer delivery is unconfirmed. Inspect the Session; do not submit another answer.".into())));
     }
-    if deployment.queued_message_service().has_queued(session_id) {
+    if queue.has_queued(session_id) {
         return Err(ApiError::Conflict(
             "Resume or clear the queued follow-up first".into(),
         ));
@@ -194,8 +219,7 @@ pub(crate) async fn answer(
         request.request_id
     );
     let delivery: Result<Value, ApiError> = async {
-        let response = agent_runs::dispatch_control(
-            deployment,
+        dispatch(
             run_id,
             agent_runs::AgentRunControlIdentity {
                 command_id: request.request_id,
@@ -205,8 +229,7 @@ pub(crate) async fn answer(
             },
             AgentRunPortCommand::Steer { content },
         )
-        .await?;
-        Ok(json!({"accepted":true,"agent_run_id":run_id,"state":response.0.into_data()}))
+        .await
     }
     .await;
     let result = match delivery {
@@ -302,7 +325,7 @@ pub(crate) async fn pending_blocking(
     pool: &sqlx::SqlitePool,
     workspace_id: Uuid,
 ) -> anyhow::Result<Vec<Value>> {
-    let questions:Vec<String> = sqlx::query_scalar("SELECT e.event_envelope FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.workspace_id=? AND e.run_attempt_number=s.last_run_attempt_number AND r.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed') AND json_extract(e.event_envelope,'$.payload.type') IN ('input_requested','approval_requested') AND NOT EXISTS(SELECT 1 FROM agent_events x WHERE x.agent_run_id=e.agent_run_id AND x.run_attempt_number=e.run_attempt_number AND x.sequence>e.sequence AND json_extract(x.event_envelope,'$.payload.type') IN ('input_resolved','approval_resolved') AND (json_extract(x.event_envelope,'$.payload.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id') OR json_extract(x.event_envelope,'$.payload.data.approval_id')=json_extract(e.event_envelope,'$.payload.data.approval_id'))) AND NOT EXISTS(SELECT 1 FROM agent_run_commands c WHERE c.agent_run_id=e.agent_run_id AND c.created_at>=e.created_at AND json_extract(c.command_envelope,'$.command.type')='submit_input' AND json_extract(c.command_envelope,'$.command.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id')) ORDER BY e.created_at").bind(workspace_id).fetch_all(pool).await?;
+    let questions:Vec<String> = sqlx::query_scalar("SELECT e.event_envelope FROM agent_events e JOIN agent_runs r ON r.id=e.agent_run_id JOIN agent_run_state s ON s.agent_run_id=r.id JOIN agent_run_attempts a ON a.id=e.run_attempt_id AND a.agent_run_id=r.id WHERE r.workspace_id=? AND a.status IN ('pending','starting','running','awaiting_input','awaiting_approval') AND NOT EXISTS(SELECT 1 FROM agent_run_attempts newer WHERE newer.agent_run_id=r.id AND newer.attempt_number>a.attempt_number) AND e.run_attempt_number=s.last_run_attempt_number AND r.status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed') AND json_extract(e.event_envelope,'$.payload.type') IN ('input_requested','approval_requested') AND NOT EXISTS(SELECT 1 FROM agent_events x WHERE x.agent_run_id=e.agent_run_id AND x.run_attempt_number=e.run_attempt_number AND x.sequence>e.sequence AND json_extract(x.event_envelope,'$.payload.type') IN ('input_resolved','approval_resolved') AND (json_extract(x.event_envelope,'$.payload.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id') OR json_extract(x.event_envelope,'$.payload.data.approval_id')=json_extract(e.event_envelope,'$.payload.data.approval_id'))) AND NOT EXISTS(SELECT 1 FROM agent_run_commands c WHERE c.agent_run_id=e.agent_run_id AND c.created_at>=e.created_at AND json_extract(c.command_envelope,'$.command.type')='submit_input' AND json_extract(c.command_envelope,'$.command.data.input_id')=json_extract(e.event_envelope,'$.payload.data.input_id')) ORDER BY e.created_at").bind(workspace_id).fetch_all(pool).await?;
     Ok(questions
         .into_iter()
         .map(|s| serde_json::from_str(&s))
