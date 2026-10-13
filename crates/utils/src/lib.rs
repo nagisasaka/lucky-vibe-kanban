@@ -17,6 +17,7 @@ pub mod native_audit;
 pub mod path;
 pub mod port_file;
 pub mod process;
+pub mod reference_file;
 pub mod response;
 pub mod sentry;
 pub mod shell;

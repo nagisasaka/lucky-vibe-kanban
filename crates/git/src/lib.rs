@@ -12,6 +12,7 @@ use utils::diff::{Diff, DiffChangeKind};
 
 mod cli;
 pub mod publication;
+pub mod reference;
 pub mod snapshot;
 mod validation;
 

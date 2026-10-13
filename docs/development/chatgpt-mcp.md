@@ -416,3 +416,57 @@ Project/Workspace/repository membership, unsafe links, oversized memory and
 absence of provisioning/inference. They use temporary directories and an
 isolated migrated SQLite database. No real ChatGPT account, live repository
 memory, native provider execution or deployment is exercised by these fixtures.
+
+## Code and per-path diff evidence
+
+`list_workspace_files`, `get_workspace_file`, `list_workspace_diff` and
+`get_workspace_diff` reuse the same Project/Workspace/repository membership,
+revision pagination and Workspace links as the Wiki readers. Code paths come
+from Git's index. Diff paths include untracked changes against the existing
+Workspace target merge base. Lists default to 20 and allow at most 50 paths;
+text pages default to 8,000 and allow at most 16,000 characters. A checkout on a
+different branch is rejected rather than attributed to the stored Workspace.
+
+The normal Git CLI diff reader populates a temporary index with `git add`, which
+can run clean filters and write Git objects. The MCP read path instead uses
+libgit2 through GitService to enumerate changes without staging. It reuses
+GitService's merge-base and head identities, and the shared unified-diff
+formatter. It does not run external diff, textconv, clean filters or hooks.
+There is no alternate merge or publication path.
+
+The reference reader rejects private dot paths, credential/secret directories,
+key-file extensions and non-relative paths. It limits each source side to
+512 KiB. Binary, oversized, unsupported and missing content remain explicit;
+failed reads are not empty successful diffs. Renames are represented per path
+(source deletion and destination addition). Text equality does not prove the
+absence of permission or other non-text changes. Source head and base commit
+are returned separately from publication status.
+
+On Unix servers, file reads descend from an open directory with `openat`,
+`O_NOFOLLOW` and `O_NONBLOCK`. This rejects symlinks in every relative component
+and avoids blocking on a FIFO. The existing `nix` dependency gains its `fs`
+feature; no runtime or package is added. Non-Unix hosts return an explicit
+unsupported read error rather than use an unsafe fallback. This implementation
+is intended for LVK's Linux server image; Windows file reads are not advertised.
+
+Validation for code/diff reads:
+
+- Initial `cargo test -p server --lib remote_mcp::code_read:: -- --nocapture`:
+  2 passed in 1.74s (dependency rebuild 4m31s),
+  `/tmp/lvk-chatgpt-mcp-code-tests.log`.
+- Final `cargo test -p server --lib remote_mcp:: -- --nocapture`:
+  21 passed in 10.39s (build 1m18s), `/tmp/lvk-chatgpt-mcp-code-final.log`.
+- `cargo test -p utils --lib reference_file:: -- --nocapture`:
+  1 passed in 0.00s (build 1m06s), `/tmp/lvk-chatgpt-mcp-code-files.log`.
+- `pnpm run format`, subsequent Rust formatting and `git diff --check` passed;
+  `/tmp/lvk-chatgpt-mcp-code-format.log`.
+
+Fixtures use real temporary Git repositories and an isolated migrated database.
+They verify 105 changed files, bounded traversal, current direct edits, stale
+body revisions, untracked additions, deletion, binary/oversized content,
+private/foreign paths, leaf and ancestor symlinks, changed checkout branches,
+an unchanged index and no invocation of configured clean/external-diff commands.
+The low-level test also checks FIFO rejection and bounded reads. No live
+Workspace, credential or deployment is modified. Full T01–T18 acceptance and
+ChatGPT connection remain unverified; the package/Skill and connection guide,
+Project summaries, semantic-manifest evidence and admission audits remain open.

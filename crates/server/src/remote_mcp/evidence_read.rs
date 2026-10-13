@@ -18,34 +18,34 @@ use super::{
 };
 
 #[derive(Clone, Deserialize, JsonSchema)]
-struct Target {
-    project_id: Uuid,
-    workspace_id: Uuid,
-    repository_id: Uuid,
+pub(super) struct Target {
+    pub(super) project_id: Uuid,
+    pub(super) workspace_id: Uuid,
+    pub(super) repository_id: Uuid,
 }
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct ListArgs {
+pub(super) struct ListArgs {
     #[serde(flatten)]
-    target: Target,
+    pub(super) target: Target,
     #[serde(default)]
-    offset: u32,
+    pub(super) offset: u32,
     #[serde(default = "super::default_limit")]
     #[schemars(range(min = 1, max = 50))]
-    limit: u32,
+    pub(super) limit: u32,
     /// Required after the first page. Includes target identity and page contents.
-    expected_revision: Option<String>,
+    pub(super) expected_revision: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema)]
-struct TextArgs {
+pub(super) struct TextArgs {
     #[serde(default)]
-    offset: u32,
+    pub(super) offset: u32,
     #[serde(default = "super::read::text_limit")]
     #[schemars(range(min = 1, max = 16000))]
-    limit: u32,
-    expected_revision: Option<String>,
+    pub(super) limit: u32,
+    pub(super) expected_revision: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -130,15 +130,16 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
     }
 }
 
-struct Source {
-    repo: Repo,
-    workspace: Workspace,
+pub(super) struct Source {
+    pub(super) repo: Repo,
+    pub(super) workspace: Workspace,
+    pub(super) target_branch: String,
 }
 impl Source {
-    fn root(&self) -> anyhow::Result<PathBuf> {
+    pub(super) fn root(&self) -> anyhow::Result<PathBuf> {
         ensure!(
             !self.workspace.worktree_deleted,
-            "Workspace checkout was deleted; Wiki unavailable"
+            "Workspace checkout was deleted; repository evidence unavailable"
         );
         let root = if self.workspace.is_direct_folder() {
             self.repo.path.clone()
@@ -160,28 +161,33 @@ impl Source {
     }
 }
 impl Remote {
-    async fn evidence_source(&self, target: &Target) -> anyhow::Result<Source> {
+    pub(super) async fn evidence_source(&self, target: &Target) -> anyhow::Result<Source> {
         self.require_workspace(target.project_id, target.workspace_id)
             .await?;
-        ensure!(
-            WorkspaceRepo::find_by_workspace_and_repo_id(
-                &self.pool,
-                target.workspace_id,
-                target.repository_id
-            )
-            .await?
-            .is_some(),
-            "Repository does not belong to this Workspace"
-        );
+        let membership = WorkspaceRepo::find_by_workspace_and_repo_id(
+            &self.pool,
+            target.workspace_id,
+            target.repository_id,
+        )
+        .await?
+        .ok_or_else(|| anyhow::anyhow!("Repository does not belong to this Workspace"))?;
         let repo = Repo::find_by_id(&self.pool, target.repository_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Repository no longer exists"))?;
         let workspace = Workspace::find_by_id(&self.pool, target.workspace_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Workspace no longer exists"))?;
-        Ok(Source { repo, workspace })
+        Ok(Source {
+            repo,
+            workspace,
+            target_branch: membership.target_branch,
+        })
     }
-    async fn evidence_link(&self, target: &Target, result: &mut Value) -> anyhow::Result<()> {
+    pub(super) async fn evidence_link(
+        &self,
+        target: &Target,
+        result: &mut Value,
+    ) -> anyhow::Result<()> {
         // Recheck membership after I/O instead of returning a deleted/relinked target.
         let issue = self
             .require_workspace(target.project_id, target.workspace_id)
@@ -209,7 +215,7 @@ impl Remote {
     }
 }
 
-fn revision(target: &Target, kind: &str, bytes: &[u8]) -> String {
+pub(super) fn revision(target: &Target, kind: &str, bytes: &[u8]) -> String {
     let mut hash = Sha256::new();
     hash.update(target.project_id.as_bytes());
     hash.update(target.workspace_id.as_bytes());
@@ -219,7 +225,7 @@ fn revision(target: &Target, kind: &str, bytes: &[u8]) -> String {
     hash.update(bytes);
     format!("{:x}", hash.finalize())
 }
-fn check_page(
+pub(super) fn check_page(
     offset: u32,
     limit: u32,
     max: u32,
@@ -245,7 +251,7 @@ fn check_page(
     );
     Ok(())
 }
-fn text_page(
+pub(super) fn text_page(
     target: &Target,
     kind: &str,
     text: Option<&str>,
