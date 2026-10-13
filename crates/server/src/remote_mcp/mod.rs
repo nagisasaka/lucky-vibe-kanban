@@ -1,7 +1,10 @@
 //! Opt-in, authenticated MCP transport. This module never enters project_chat
 //! or creates a model session. Existing stdio MCP stays independent.
+mod activity;
 mod auth;
 mod config;
+mod integration_read;
+mod issue_write;
 mod operations;
 mod questions;
 mod read;
@@ -41,6 +44,7 @@ pub fn configured_router(deployment: DeploymentImpl) -> anyhow::Result<Router> {
     Ok(router(
         Remote {
             pool: deployment.db().pool.clone(),
+            process_instance: Uuid::new_v4(),
             config,
         },
         auth,
@@ -69,6 +73,7 @@ fn router(remote: Remote, auth: Auth) -> Router {
 
 #[derive(Clone)]
 struct Remote {
+    process_instance: Uuid,
     pool: SqlitePool,
     config: Arc<Config>,
 }
@@ -140,6 +145,9 @@ fn tools() -> Vec<Tool> {
         serde_json::from_value(value).expect("static MCP schema")
     }).collect();
     tools.extend(read::tools());
+    tools.extend(issue_write::tools());
+    tools.extend(activity::tools());
+    tools.extend(integration_read::tools());
     tools.extend(questions::tools());
     tools.extend(runtime_read::tools());
     tools
@@ -173,6 +181,15 @@ impl ServerHandler for Remote {
         if !principal.allows("lvk:read") {
             return Err(ErrorData::invalid_request("Read permission required", None));
         }
+        if matches!(request.name.as_ref(), "create_issue" | "update_issue")
+            && !principal.allows("lvk:write")
+        {
+            return Ok(serde_json::from_value(json!({
+                "content":[{"type":"text","text":"Write permission required; reconnect with lvk:write before submitting this operation."}],
+                "isError":true,
+                "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"lvk:read lvk:write\"", self.config.metadata_url())]}
+            })).expect("OAuth challenge result"));
+        }
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
@@ -182,6 +199,9 @@ impl ServerHandler for Remote {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(anyhow::anyhow!("Invalid project listing parameters")),
             },
+            name if issue_write::tools().iter().any(|tool| tool.name == name) => {
+                issue_write::call(self, principal, name, args).await
+            }
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
             }
@@ -190,6 +210,15 @@ impl ServerHandler for Remote {
             }
             name if questions::tools().iter().any(|tool| tool.name == name) => {
                 questions::call(self, name, args).await
+            }
+            name if activity::tools().iter().any(|tool| tool.name == name) => {
+                activity::call(self, name, args).await
+            }
+            name if integration_read::tools()
+                .iter()
+                .any(|tool| tool.name == name) =>
+            {
+                integration_read::call(self, name, args).await
             }
             _ => {
                 return Err(ErrorData::invalid_params(

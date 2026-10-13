@@ -108,8 +108,27 @@ worker queue or inference loop is added. Domain adapters must still reconcile
 existing IDs; a success receipt means the requested operation was accepted or
 performed, not that coding, merging or Wiki publication has completed.
 
-The admission helper currently has isolated concurrency/restart tests but is not
-yet wired to public write tools.
+The helper now backs `create_issue`, `update_issue` and `get_operation`. The
+verified issuer and subject form the receipt principal. Scope checks happen
+before admission; target membership and current revisions are checked inside
+the owned operation. The task is spawned before the first database await, so
+an MCP disconnect cannot strand a newly admitted request before execution.
+Uncertain outcomes are retained and never automatically replayed.
+
+Issue creation uses the receipt ID as the existing Board service's supplied
+Issue ID. It requires self-contained requirements and starts no Workspace or
+model. Updates reuse the Board's revision-checked service, preserve omitted
+fields, and return conflicts rather than overwrite newer requirements. That
+service now advances its timestamp by at least one millisecond, even during
+same-millisecond updates or a backward clock adjustment. No custom Issue table
+or execution scheduler was added.
+
+Insufficient write scope returns a standard MCP OAuth challenge. Inspect
+`get_operation` with the original request key after a lost response; do not
+create a new key merely because the original request timed out. Receipts return
+operation state and canonical links without exposing input text or credentials.
+Execution, steering, question-answer and Integration-start adapters are still
+required; these Issue tools do not imply that M2 is complete.
 
 ## Validation record (foundation)
 
@@ -185,3 +204,38 @@ This verifies the read increment, not M0–M3 completion. Still required: scoped
 activity/audit, repository/memory/diff/Wiki and Integration/result readers; write
 adapters and their execution/retry tests; the actual Plugin/Skill and operational
 configuration; remaining T01–T18 evidence and the optional UI decision.
+
+
+## Activity, Integration evidence and Issue operations increment
+
+`list_run_commands` and `get_run_command` read commands sent through other LVK
+entry points, including delivery changes. Only selected instruction text is
+exposed; raw envelopes and execution approval commands stay private. Lists and
+text pages are bounded. `list_integrations` and `get_integration` keep validation,
+exceptions, publication and Wiki evidence separate. The existing Wiki observer
+is shared through a pool-based helper without changing the builtin caller.
+Stored Wiki status is not presented as currently verified success when current
+repository receipts cannot be observed.
+
+Local validation for this increment:
+
+- `cargo test -p server --lib remote_mcp:: -- --nocapture`: 10 passed;
+  compilation 41.12s, tests 2.36s. Log `/tmp/lvk-chatgpt-mcp-write-final.log`.
+  Includes 105-command and 105-Integration fixtures, live direct-command status,
+  stale Integration pages, Issue scope/revision/retry checks, no model/Workspace
+  creation from Issue writes, and disconnect during admission before DB access.
+- `cargo test -p server --lib routes::local_remote::tests:: -- --nocapture`:
+  6 passed in 0.02s (build 0.86s); `/tmp/lvk-chatgpt-mcp-board-regression.log`.
+- `cargo test -p server --lib routes::integrations:: -- --nocapture`:
+  14 passed in 12.82s (build 1.43s), covering existing candidate validation,
+  publication races, exception limits and semantic outbox behaviour;
+  `/tmp/lvk-chatgpt-mcp-integration-regression.log`.
+- `pnpm run format` and `git diff --check`: passed. No frontend source changes.
+- An initial test build used an unavailable `futures` test macro. It failed to
+  compile; the test now uses the standard library's future poll helper. This was
+  a test-only compilation failure, not a runtime or domain failure.
+
+Remaining required work includes repository/memory/diff/Wiki detail readers,
+Project summary completeness, execution/continue/steering/question/Integration
+write adapters, the actual Plugin/Skill package and installation guide, and the
+full T01–T18 audit. ChatGPT real-account validation has not been performed.

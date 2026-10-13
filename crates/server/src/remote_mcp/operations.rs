@@ -44,6 +44,72 @@ fn fingerprint(value: &Value) -> String {
 }
 
 impl Operations {
+    /// The owned task starts before the first database await. Dropping the MCP
+    /// request (even during admission) cannot cancel an admitted operation.
+    pub async fn submit<F, Fut>(
+        &self,
+        principal: String,
+        request_id: Uuid,
+        project_id: Uuid,
+        operation: String,
+        input: Value,
+        safe_targets: Value,
+        execute: F,
+    ) -> anyhow::Result<Receipt>
+    where
+        F: FnOnce(Uuid) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = (&'static str, Value)> + Send + 'static,
+    {
+        let store = self.clone();
+        let (sender, receiver) = tokio::sync::oneshot::channel();
+        tokio::spawn(async move {
+            let admitted = store
+                .admit(
+                    &principal,
+                    request_id,
+                    project_id,
+                    &operation,
+                    &input,
+                    &safe_targets,
+                )
+                .await;
+            let (mut receipt, owned) = match admitted {
+                Ok(value) => value,
+                Err(error) => {
+                    let _ = sender.send(Err(error));
+                    return;
+                }
+            };
+            if !owned {
+                let _ = sender.send(Ok(receipt));
+                return;
+            }
+            let id = receipt.id;
+            match store.start(id).await {
+                Ok(true) => {}
+                _ => {
+                    let _ = sender.send(Err(anyhow::anyhow!(
+                        "Operation admission is uncertain; inspect this request ID before retrying"
+                    )));
+                    return;
+                }
+            }
+            receipt.status = "running".into();
+            let _ = sender.send(Ok(receipt));
+            // A panic is an unknown domain outcome, never permission to replay.
+            let result = tokio::spawn(async move { execute(id).await }).await;
+            let (status, result) = result.unwrap_or_else(|_| ("uncertain", serde_json::json!({"message":"Operation outcome unavailable; inspect its targets before any new request"})));
+            if store.finish(id, status, &result).await.is_err() {
+                tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");
+            }
+        });
+        receiver.await.map_err(|_| {
+            anyhow::anyhow!(
+                "Operation admission unavailable; inspect the request ID before retrying"
+            )
+        })?
+    }
+
     pub async fn admit(
         &self,
         principal: &str,
@@ -108,6 +174,86 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+
+    #[tokio::test]
+    async fn disconnected_request_during_admission_still_finishes_once() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE projects(id BLOB PRIMARY KEY)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261013000000_remote_mcp_operations.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let project = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects VALUES(?)")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let store = Operations {
+            pool: pool.clone(),
+            process_instance: Uuid::new_v4(),
+        };
+        let key = Uuid::new_v4();
+        let held = pool.acquire().await.unwrap();
+        let (done, received) = tokio::sync::oneshot::channel();
+        let mut request = Box::pin(store.submit(
+            "owner".into(),
+            key,
+            project,
+            "test".into(),
+            json!({}),
+            json!({}),
+            move |_| async move {
+                let _ = done.send(());
+                ("succeeded", json!({"done":true}))
+            },
+        ));
+        std::future::poll_fn(|cx| {
+            assert!(std::future::Future::poll(request.as_mut(), cx).is_pending());
+            std::task::Poll::Ready(())
+        })
+        .await;
+        // The caller disappears while the spawned admission is waiting for DB.
+        drop(request);
+        drop(held);
+        tokio::time::timeout(std::time::Duration::from_secs(5), received)
+            .await
+            .unwrap()
+            .unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                let receipt = store.by_request("owner", key).await.unwrap();
+                if receipt.status == "succeeded" {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let receipt = store
+            .submit(
+                "owner".into(),
+                key,
+                project,
+                "test".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("duplicate execution") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(receipt.status, "succeeded");
+    }
 
     #[tokio::test]
     async fn concurrent_retries_have_one_owner_and_restart_never_replays_uncertainty() {

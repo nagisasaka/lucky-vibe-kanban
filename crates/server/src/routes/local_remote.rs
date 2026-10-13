@@ -836,7 +836,7 @@ pub(crate) async fn update_local_issue_checked(
             parent_issue_id = ?,
             parent_issue_sort_order = ?,
             extension_metadata = ?,
-            updated_at = datetime('now', 'subsec')
+            updated_at = strftime('%Y-%m-%d %H:%M:%f', MAX(julianday('now'), julianday(updated_at) + 0.001 / 86400.0))
         WHERE id = ? AND (? IS NULL OR julianday(updated_at) = julianday(?))
         "#,
     )

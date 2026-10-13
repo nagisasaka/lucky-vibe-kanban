@@ -81,7 +81,7 @@ pub(super) fn tools() -> Vec<Tool> {
 
 pub(super) fn arguments<T: serde::de::DeserializeOwned>(args: Value) -> anyhow::Result<T> {
     serde_json::from_value(args)
-        .map_err(|_| anyhow::anyhow!("Invalid read parameters; check the tool schema"))
+        .map_err(|_| anyhow::anyhow!("Invalid tool parameters; check the tool schema"))
 }
 
 pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {

@@ -103,6 +103,7 @@ async fn fake_introspection(
     let mut result = claims();
     match form["token"].as_str() {
         "valid" => {}
+        "read-only" => result["scope"] = json!("lvk:read"),
         "expired" => result["exp"] = json!(1),
         "foreign" => result["sub"] = json!("other"),
         "no-scope" => result["scope"] = json!("unrelated"),
@@ -151,6 +152,7 @@ async fn fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
     }
     (
         Remote {
+            process_instance: Uuid::new_v4(),
             pool,
             config: config.clone(),
         },
@@ -289,6 +291,19 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
             );
         }
     }
+    let response: Value = client.post(format!("{base}/mcp"))
+        .header("host", "lvk.example")
+        .header("accept", "application/json, text/event-stream")
+        .bearer_auth("read-only")
+        .json(&json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_issue","arguments":{}}}))
+        .send().await.unwrap().json().await.unwrap();
+    assert_eq!(response["result"]["isError"], true, "{response}");
+    assert!(
+        response["result"]["_meta"]["mcp/www_authenticate"][0]
+            .as_str()
+            .unwrap()
+            .contains("lvk:write")
+    );
     server.abort();
     server.await.unwrap_err();
     provider.abort();
@@ -345,6 +360,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         workspaces.push(id);
     }
     let remote = Remote {
+        process_instance: Uuid::new_v4(),
         pool: pool.clone(),
         config: Arc::new(config()),
     };
@@ -533,6 +549,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         .unwrap();
     assert_eq!(latest["status"], "failed");
     assert_eq!(latest["verification"]["status"], "unknown");
+    assert_activity_reads(&remote, project, workspaces[0], run).await;
 }
 
 #[tokio::test]
@@ -616,6 +633,7 @@ async fn question_reads_preserve_options_distinguish_approvals_and_observe_direc
             .unwrap();
     }
     let remote = Remote {
+        process_instance: Uuid::new_v4(),
         pool: pool.clone(),
         config: Arc::new(config()),
     };
@@ -670,5 +688,370 @@ async fn question_reads_preserve_options_distinguish_approvals_and_observe_direc
         questions::call(&remote, "list_questions", foreign)
             .await
             .is_err()
+    );
+}
+
+async fn assert_activity_reads(remote: &Remote, project: Uuid, workspace: Uuid, run: Uuid) {
+    let pool = &remote.pool;
+    for number in 1..=105u128 {
+        let command = Uuid::from_u128(3000 + number);
+        let envelope = json!({"command":{"type":"steer","data":{"content":format!("Direct instruction {number}: {}","文😀".repeat(5000))}},"native_secret":"never-export"});
+        sqlx::query("INSERT INTO agent_run_commands(command_id,agent_run_id,idempotency_key,command_schema_version,command_envelope,delivery_status,created_at) VALUES(?,?,?,1,?,'delivered','2026-10-13T00:00:00Z')")
+            .bind(command).bind(run).bind(command.to_string()).bind(envelope.to_string()).execute(pool).await.unwrap();
+    }
+    let mut args =
+        json!({"project_id":project,"workspace_id":workspace,"agent_run_id":run,"limit":20});
+    let mut count = 0;
+    loop {
+        let result = activity::call(remote, "list_run_commands", args.clone())
+            .await
+            .unwrap();
+        let items = result["items"].as_array().unwrap();
+        assert!(items.len() <= 20);
+        count += items.len();
+        assert!(
+            items
+                .iter()
+                .all(|i| i.get("command_envelope").is_none()
+                    && i["implementation_unverified"] == true)
+        );
+        if result["has_more"] == false {
+            break;
+        }
+        args["cursor"] = result["next_cursor"].clone();
+    }
+    assert_eq!(count, 105);
+    let command = Uuid::from_u128(3105);
+    let detail=activity::call(remote,"get_run_command",json!({"project_id":project,"workspace_id":workspace,"agent_run_id":run,"command_id":command,"limit":50})).await.unwrap();
+    assert!(
+        detail["content"]
+            .as_str()
+            .unwrap()
+            .starts_with("Direct instruction 105:")
+    );
+    assert_eq!(detail["content"].as_str().unwrap().chars().count(), 50);
+    assert_eq!(detail["has_more"], true);
+    assert!(!detail.to_string().contains("never-export"));
+    // A direct control update is visible at the next read, without MCP-local state.
+    sqlx::query("UPDATE agent_run_commands SET delivery_status='failed' WHERE command_id=?")
+        .bind(command)
+        .execute(pool)
+        .await
+        .unwrap();
+    let current = activity::call(
+        remote,
+        "list_run_commands",
+        json!({"project_id":project,"workspace_id":workspace,"agent_run_id":run}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(current["items"][0]["delivery_status"], "failed");
+    args["cursor"] = json!(Uuid::new_v4());
+    assert!(
+        activity::call(remote, "list_run_commands", args)
+            .await
+            .is_err()
+    );
+}
+
+#[tokio::test]
+async fn integration_reads_separate_validation_publication_and_current_wiki_evidence() {
+    use db::models::integration::{IntegrationPayload, IntegrationValidation};
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    let repo = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Test')")
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO repos(id,path,name,display_name) VALUES(?,'/fixture/no-checkout','remote-mcp-test','Test repo')").bind(repo).execute(&pool).await.unwrap();
+    let mut payload = IntegrationPayload::default();
+    payload.wiki_result = Some("all selected semantic events acknowledged by OpenWiki".into());
+    for index in 0..105 {
+        payload.validation.push(IntegrationValidation {
+            command: format!("test command {index}"),
+            cwd: ".".into(),
+            required: true,
+            evidence: "candidate test".into(),
+            environment_requirements: String::new(),
+            execution_process_id: None,
+            exit_code: if index == 0 { Some(0) } else { None },
+            result: match index {
+                0 => Some("passed".into()),
+                1 => Some("failed".into()),
+                2 => Some("unavailable".into()),
+                _ => None,
+            },
+        });
+    }
+    for index in 1..=105u128 {
+        let id = Uuid::from_u128(5000 + index);
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?, '/private/storage','refs/heads/main','blocked',?)")
+            .bind(id).bind(id.to_string()).bind(project).bind(repo).bind(serde_json::to_string(&payload).unwrap()).execute(&pool).await.unwrap();
+    }
+    let remote = Remote {
+        process_instance: Uuid::new_v4(),
+        pool: pool.clone(),
+        config: Arc::new(config()),
+    };
+    let mut args = json!({"project_id":project,"limit":20});
+    let mut count = 0;
+    loop {
+        let result = integration_read::call(&remote, "list_integrations", args.clone())
+            .await
+            .unwrap();
+        let items = result["items"].as_array().unwrap();
+        assert!(items.len() <= 20);
+        count += items.len();
+        assert!(!result.to_string().contains("/private/storage"));
+        if result["has_more"] == false {
+            break;
+        }
+        args["cursor"] = result["next_cursor"].clone();
+    }
+    assert_eq!(count, 105);
+    let id = Uuid::from_u128(5001);
+    let summary_args = json!({"project_id":project,"integration_id":id,"section":"summary"});
+    let summary = integration_read::call(&remote, "get_integration", summary_args.clone())
+        .await
+        .unwrap();
+    assert_eq!(summary["status"], "blocked");
+    assert_eq!(summary["published"], false);
+    assert_eq!(summary["validation"]["passed"], 1);
+    assert_eq!(summary["validation"]["failed"], 1);
+    assert_eq!(summary["validation"]["unavailable"], 1);
+    assert_eq!(summary["validation"]["unknown_or_unrun"], 102);
+    assert_eq!(summary["wiki"]["state"], "unknown");
+    assert_eq!(summary["wiki"]["recorded_state"], "succeeded");
+    let mut detail_args = json!({"project_id":project,"integration_id":id,"section":"validation","limit":50,"expected_revision":summary["revision"]});
+    let detail = integration_read::call(&remote, "get_integration", detail_args.clone())
+        .await
+        .unwrap();
+    assert_eq!(detail["items"].as_array().unwrap().len(), 50);
+    assert_eq!(detail["next_offset"], 50);
+    assert_eq!(detail["items"][0]["command"], "test command 0");
+    sqlx::query("UPDATE integration_runs SET status='succeeded',payload=json_set(payload,'$.published',json('true')),updated_at='2099-01-01T00:00:00Z' WHERE id=?").bind(id).execute(&pool).await.unwrap();
+    detail_args["offset"] = json!(50);
+    assert!(
+        integration_read::call(&remote, "get_integration", detail_args)
+            .await
+            .is_err()
+    );
+    let published = integration_read::call(&remote, "get_integration", summary_args)
+        .await
+        .unwrap();
+    assert_eq!(published["published"], true);
+    assert_eq!(published["wiki"]["state"], "unknown");
+    assert_eq!(published["wiki"]["current_receipts_observed"], false);
+    assert!(
+        integration_read::call(
+            &remote,
+            "get_integration",
+            json!({"project_id":Uuid::new_v4(),"integration_id":id,"section":"summary"})
+        )
+        .await
+        .is_err()
+    );
+}
+
+async fn settled_operation(
+    remote: &Remote,
+    principal: &auth::Principal,
+    project: Uuid,
+    request: Uuid,
+) -> Value {
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            let value = issue_write::call(
+                remote,
+                principal,
+                "get_operation",
+                json!({"project_id":project,"request_id":request}),
+            )
+            .await
+            .unwrap();
+            if !matches!(value["status"].as_str(), Some("accepted" | "running")) {
+                return value;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("operation settled")
+}
+
+#[tokio::test]
+async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revision() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    let foreign = Uuid::from_u128(2);
+    let status = Uuid::new_v4();
+    let foreign_status = Uuid::new_v4();
+    for (id, status) in [(project, status), (foreign, foreign_status)] {
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'test')")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(id).execute(&pool).await.unwrap();
+    }
+    let remote = Remote {
+        pool: pool.clone(),
+        config: Arc::new(config()),
+        process_instance: Uuid::new_v4(),
+    };
+    let principal = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    let read_only = auth::Principal {
+        subject: principal.subject.clone(),
+        scopes: BTreeSet::from(["lvk:read".into()]),
+    };
+    let request = Uuid::new_v4();
+    let input = json!({"project_id":project,"request_id":request,"status_id":status,"title":"Agreed task","description":"Implement the agreed behavior. Verify the acceptance criteria."});
+    assert!(
+        issue_write::call(&remote, &read_only, "create_issue", input.clone())
+            .await
+            .is_err()
+    );
+    let (a, b) = tokio::join!(
+        issue_write::call(&remote, &principal, "create_issue", input.clone()),
+        issue_write::call(&remote, &principal, "create_issue", input.clone())
+    );
+    let a = a.unwrap();
+    let b = b.unwrap();
+    assert_eq!(a["operation_id"], b["operation_id"]);
+    let created = settled_operation(&remote, &principal, project, request).await;
+    assert_eq!(created["status"], "succeeded", "{created}");
+    let issue: Uuid = serde_json::from_value(created["result"]["issue_id"].clone()).unwrap();
+    assert_eq!(created["operation_id"], created["result"]["issue_id"]);
+    let mut changed = input.clone();
+    changed["title"] = json!("different");
+    assert!(
+        issue_write::call(&remote, &principal, "create_issue", changed)
+            .await
+            .is_err()
+    );
+    let mut invalid = input;
+    invalid["request_id"] = json!(Uuid::new_v4());
+    invalid["status_id"] = json!(foreign_status);
+    let key: Uuid = serde_json::from_value(invalid["request_id"].clone()).unwrap();
+    issue_write::call(&remote, &principal, "create_issue", invalid)
+        .await
+        .unwrap();
+    assert_eq!(
+        settled_operation(&remote, &principal, project, key).await["status"],
+        "failed"
+    );
+    // A future revision makes timestamp monotonicity deterministic, including
+    // same-millisecond and clock-backward writes through the existing service.
+    sqlx::query("UPDATE local_issues SET updated_at='2099-01-01 00:00:00.000' WHERE id=?")
+        .bind(issue)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let detail = read::call(
+        &remote,
+        "get_issue",
+        json!({"project_id":project,"issue_id":issue}),
+    )
+    .await
+    .unwrap();
+    let revision = detail["revision"].clone();
+    let key = Uuid::new_v4();
+    let update = json!({"project_id":project,"issue_id":issue,"request_id":key,"expected_revision":revision,"title":"Revised task"});
+    issue_write::call(&remote, &principal, "update_issue", update.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settled_operation(&remote, &principal, project, key).await["status"],
+        "succeeded"
+    );
+    let mut stale = update;
+    let key2 = Uuid::new_v4();
+    stale["request_id"] = json!(key2);
+    stale["title"] = json!("Stale overwrite");
+    issue_write::call(&remote, &principal, "update_issue", stale)
+        .await
+        .unwrap();
+    let rejected = settled_operation(&remote, &principal, project, key2).await;
+    assert_eq!(rejected["status"], "failed");
+    assert_eq!(rejected["result"]["code"], "revision_conflict");
+    let current = crate::routes::local_remote::get_local_issue(&pool, issue)
+        .await
+        .unwrap();
+    assert_eq!(current.title, "Revised task");
+    assert_eq!(
+        current.description.as_deref(),
+        Some("Implement the agreed behavior. Verify the acceptance criteria.")
+    );
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM local_issues")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 1);
+    for table in [
+        "workspaces",
+        "sessions",
+        "agent_runs",
+        "project_chat_messages",
+    ] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 0, "{table}");
+    }
+    let other = auth::Principal {
+        subject: "someone-else".into(),
+        scopes: principal.scopes.clone(),
+    };
+    assert!(
+        issue_write::call(
+            &remote,
+            &other,
+            "get_operation",
+            json!({"project_id":project,"request_id":request})
+        )
+        .await
+        .is_err()
+    );
+    assert!(
+        issue_write::call(
+            &remote,
+            &principal,
+            "get_operation",
+            json!({"project_id":foreign,"request_id":request})
+        )
+        .await
+        .is_err()
+    );
+    let mut rotated = (*remote.config).clone();
+    rotated.issuer = "https://other.example".into();
+    let rotated = Remote {
+        config: Arc::new(rotated),
+        ..remote.clone()
+    };
+    assert!(
+        issue_write::call(
+            &rotated,
+            &principal,
+            "get_operation",
+            json!({"project_id":project,"request_id":request})
+        )
+        .await
+        .is_err()
     );
 }

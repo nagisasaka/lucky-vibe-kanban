@@ -130,11 +130,19 @@ async fn status(
 /// displaying the admission-time word "pending" after a successful Wiki run,
 /// or equate a source Integration success with Wiki acknowledgement.
 pub(crate) async fn observe_wiki(deployment: &DeploymentImpl, run: &mut IntegrationRun) {
+    observe_wiki_from_pool(&deployment.db().pool, run).await;
+}
+
+/// Shared read-only observer; true means current repository receipts were found.
+pub(crate) async fn observe_wiki_from_pool(
+    pool: &sqlx::SqlitePool,
+    run: &mut IntegrationRun,
+) -> bool {
     if !run.payload.published {
-        return;
+        return false;
     }
     let result: anyhow::Result<Option<String>> = async {
-        let repo = db::models::repo::Repo::find_by_id(&deployment.db().pool, run.repository_id)
+        let repo = db::models::repo::Repo::find_by_id(pool, run.repository_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
         let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
@@ -178,9 +186,15 @@ pub(crate) async fn observe_wiki(deployment: &DeploymentImpl, run: &mut Integrat
     }
     .await;
     match result {
-        Ok(Some(status)) => run.payload.wiki_result = Some(status),
-        Ok(None) => {}
-        Err(error) => run.payload.wiki_result = Some(format!("Wiki status unavailable: {error:#}")),
+        Ok(Some(status)) => {
+            run.payload.wiki_result = Some(status);
+            true
+        }
+        Ok(None) => false,
+        Err(error) => {
+            run.payload.wiki_result = Some(format!("Wiki status unavailable: {error:#}"));
+            false
+        }
     }
 }
 
