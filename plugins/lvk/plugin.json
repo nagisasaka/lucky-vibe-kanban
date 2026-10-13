@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "lvk",
+  "version": "0.1.0",
+  "description": "Turn agreed work into LVK Issues and existing agent executions, and inspect questions, changes and formal Integration results.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "LVK",
+        "shortDescription": "Plan and follow work on your LVK server",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "defaultPrompt": ["Show the current work and unanswered questions in my LVK Project."]
+      }
+    }
+  }
+}

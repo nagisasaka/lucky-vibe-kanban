@@ -470,3 +470,61 @@ The low-level test also checks FIFO rejection and bounded reads. No live
 Workspace, credential or deployment is modified. Full T01–T18 acceptance and
 ChatGPT connection remain unverified; the package/Skill and connection guide,
 Project summaries, semantic-manifest evidence and admission audits remain open.
+
+## Skill and Plugin distribution
+
+The portable package now lives under `plugins/lvk`, with one `lvk-work` Skill,
+an Issue template, result-check guidance and an MCP dependency. The Skill keeps
+Issue creation, execution admission, command delivery, completed agent turns,
+formal publication and Wiki evidence distinct. It uses current IDs/revisions,
+existing execution settings, scoped reads and durable request IDs. It promises
+neither automatic notification nor personal-memory synchronisation.
+
+The [connection and operation guide](chatgpt-mcp-setup.md) covers the opt-in LVK
+configuration, external OAuth provider requirements, HTTPS/subpath routing,
+ChatGPT Web's custom MCP and Plugin Creator steps, controlled workspace import,
+metadata/Skill refresh, revocation, and an account verification checklist.
+`scripts/chatgpt-mcp/configure.py` builds a new distribution with a consistent
+public URL and a relative marketplace; it never installs or publishes it.
+
+On 2026-10-13 the linked Agent Plugins 1.0 MCP schema rejected the per-server
+`extensions.com.openai.auth` field shown in the OpenAI packaging example.
+The package therefore uses the valid portable `type`/`url` declaration and the
+host's explicit OAuth setup, backed by LVK discovery and mandatory token checks.
+There is no anonymous fallback and no embedded credential. The provider recipe,
+ChatGPT login/install, callback, subpath browser return and real-account workflow
+have not been executed here; they remain distinct from package validation.
+
+The package validator loads the actual Rust-advertised tool catalog, validates
+34 example inputs and their scope requirements, and resolves every bundled Skill
+reference. It also checks the official manifest schemas and the Skill's tool
+names. The examples are schema fixtures, not simulated proof that ChatGPT follows
+the Skill. Representative account-level behavioural checks remain in the guide.
+
+Package validation evidence:
+
+- Final `LVK_MCP_TOOL_CATALOG=… cargo test -p server --lib
+  remote_mcp::tests::plugin_tool_catalog -- --nocapture`: 1 passed in 0.01s
+  (build 35.88s), `/tmp/lvk-chatgpt-mcp-package-catalog-final.log`. The same test
+  deserialises and validates the operator configuration example.
+- `scripts/chatgpt-mcp/validate.py`: source and configured packages pass both
+  published schemas; 34 real tool input schemas/scopes and all Skill references
+  pass, `/tmp/lvk-chatgpt-mcp-package-validation.log`.
+- Python `test_package.py`: 2 passed in 0.009s, including unsafe URL rejection,
+  subpath consistency and refusing to overwrite an existing distribution;
+  `/tmp/lvk-chatgpt-mcp-package-config-tests.log`.
+- Skill Creator `quick_validate.py`: passed,
+  `/tmp/lvk-chatgpt-mcp-skill-validation.log`.
+- `pnpm run format` and `git diff --check`: passed,
+  `/tmp/lvk-chatgpt-mcp-package-format.log`.
+
+An initial manifest check rejected the OAuth extension described above; it was
+removed rather than weakening schema validation. The `list_questions` example
+was corrected to include its required Session ID. No account permission, live
+OAuth grant, global plugin installation or server deployment changed.
+
+Remaining acceptance work includes complete Project summaries/current-run
+identity, semantic verification evidence, native execution/formal-admission
+boundary checks, rejected-versus-uncertain reconciliation, actual public ingress
+and browser/subpath behaviour, and the final T01–T18/M4 audit. Package validation
+alone does not complete those requirements.

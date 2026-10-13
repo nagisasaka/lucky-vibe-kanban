@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "lvk": {
+      "type": "streamable-http",
+      "url": "https://lvk.example.invalid/mcp"
+    }
+  }
+}

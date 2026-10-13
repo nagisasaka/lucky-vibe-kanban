@@ -1079,3 +1079,21 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         .is_err()
     );
 }
+
+/// Export the actual advertised schemas for the package validator. No server,
+/// database or provider is started. The output path is explicit and test-only.
+#[test]
+fn plugin_tool_catalog() {
+    let configuration: Config = serde_json::from_str(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../deploy/examples/chatgpt-mcp.json"
+    )))
+    .unwrap();
+    configuration.validate().unwrap();
+    let tools = super::tools();
+    let names: BTreeSet<_> = tools.iter().map(|tool| &tool.name).collect();
+    assert_eq!(names.len(), tools.len(), "Tool names must be unique");
+    if let Some(path) = std::env::var_os("LVK_MCP_TOOL_CATALOG") {
+        std::fs::write(path, serde_json::to_vec_pretty(&tools).unwrap()).unwrap();
+    }
+}

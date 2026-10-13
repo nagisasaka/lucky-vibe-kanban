@@ -1,0 +1,11 @@
+interface:
+  display_name: "LVK work"
+  short_description: "Plan, start and inspect work on your LVK server"
+  default_prompt: "Use $lvk-work to show my Project's current work and unanswered questions."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "lvk"
+      description: "Authenticated LVK project and execution tools"
+      transport: "streamable_http"
+      url: "https://lvk.example.invalid/mcp"

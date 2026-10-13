@@ -1,0 +1,9 @@
+{
+  "public_base_url": "https://lvk.example.invalid",
+  "issuer": "https://identity.example.invalid/realms/lvk",
+  "introspection_endpoint": "https://identity.example.invalid/realms/lvk/protocol/openid-connect/token/introspect",
+  "introspection_client_id": "lvk-resource",
+  "introspection_secret_env": "LVK_MCP_INTROSPECTION_SECRET",
+  "owner_subject": "replace-with-the-verified-owner-subject",
+  "project_ids": ["00000000-0000-0000-0000-000000000001"]
+}

@@ -1,0 +1,400 @@
+[
+  {
+    "tool": "get_connection",
+    "arguments": {},
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_projects",
+    "arguments": {},
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_project",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_issues",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_issue",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000005"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_issue_workspaces",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "issue_id": "00000000-0000-0000-0000-000000000005"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_workspace_runs",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_execution",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "section": "final_response"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_run_commands",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_run_command",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "command_id": "00000000-0000-0000-0000-000000000007"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_questions",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000004"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_question",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "question_id": "question-fixture",
+      "kind": "async_specification"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_execution_defaults",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_project_repositories",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_repository_branches",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "repository_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_integration_candidate",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "target_branch": "main"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_integrations",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_integration",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "integration_id": "00000000-0000-0000-0000-000000000007",
+      "section": "summary"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_operation",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000007"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_memory",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_workspace_wiki",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_workspace_files",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "list_workspace_diff",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_wiki_page",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "path": "index.md"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_file",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "path": "index.md"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "get_workspace_diff",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "path": "index.md"
+    },
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
+    "tool": "create_issue",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "status_id": "00000000-0000-0000-0000-000000000004",
+      "title": "Fixture requirements",
+      "description": "Implement the agreed fixture; accept only when its scoped check passes."
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "update_issue",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "issue_id": "00000000-0000-0000-0000-000000000005",
+      "expected_revision": "fixture-revision",
+      "title": "Revised fixture"
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "start_workspace",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "issue_id": "00000000-0000-0000-0000-000000000005",
+      "expected_revision": "fixture-revision",
+      "repositories": [
+        {
+          "repository_id": "00000000-0000-0000-0000-000000000003",
+          "target_branch": "main"
+        }
+      ]
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "steer_execution",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "prompt": "Apply the agreed fixture change."
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "continue_execution",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "prompt": "Apply the agreed fixture change."
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "answer_question",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000004",
+      "agent_run_id": "00000000-0000-0000-0000-000000000006",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "question_id": "question-fixture",
+      "kind": "async_specification",
+      "expected_revision": "fixture-revision",
+      "answer": "Use option A."
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "start_integration",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000007",
+      "repository_id": "00000000-0000-0000-0000-000000000003",
+      "target_branch": "main",
+      "expected_target_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "selections": [
+        {
+          "issue_id": "00000000-0000-0000-0000-000000000005",
+          "workspace_id": "00000000-0000-0000-0000-000000000002",
+          "expected_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ]
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:merge"
+    ]
+  }
+]
