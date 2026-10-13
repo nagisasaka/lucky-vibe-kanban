@@ -1,6 +1,7 @@
 pub mod error;
 pub mod middleware;
 pub mod relay_pairing;
+pub mod remote_mcp;
 pub mod routes;
 pub mod runtime;
 pub mod startup;

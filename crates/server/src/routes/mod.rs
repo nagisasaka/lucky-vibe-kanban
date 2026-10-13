@@ -47,6 +47,8 @@ pub mod workflows;
 pub mod workspaces;
 
 pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
+    let remote_mcp = crate::remote_mcp::configured_router(deployment.clone())
+        .expect("Invalid remote MCP configuration; refusing to start");
     let relay_signed_routes = Router::new()
         .route("/health", get(health::health_check))
         .merge(config::router())
@@ -99,7 +101,7 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .layer(axum::middleware::from_fn(middleware::log_server_errors))
         .with_state(deployment);
 
-    middleware::maintenance::with_maintenance(frontend::router(api_routes))
+    middleware::maintenance::with_maintenance(frontend::router(api_routes).merge(remote_mcp))
         .layer(CompressionLayer::new())
         .into_make_service()
 }

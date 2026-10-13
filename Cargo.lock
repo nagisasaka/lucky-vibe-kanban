@@ -1168,6 +1168,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "chacha20"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65c35e4b699c7e15ccbe7ee35c005e4fc0a278d22238a2857e6ce2dadeda1b06"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.3.0",
+ "rand_core 0.10.0",
+]
+
+[[package]]
 name = "chardetng"
 version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7492,6 +7503,7 @@ version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7f5fa3a058cd35567ef9bfa5e75732bee0f9e4c55fa90477bef2dfcdbc4be80"
 dependencies = [
+ "chacha20 0.10.2",
  "getrandom 0.4.2",
  "rand_core 0.10.0",
 ]
@@ -8056,18 +8068,27 @@ checksum = "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
+ "bytes",
  "chrono",
  "futures",
+ "http",
+ "http-body",
+ "http-body-util",
  "pastey",
  "pin-project-lite",
+ "rand 0.10.2",
  "rmcp-macros",
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "sse-stream",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-stream",
  "tokio-util",
+ "tower-service",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -8143,7 +8164,7 @@ dependencies = [
  "byteorder",
  "bytes",
  "cbc",
- "chacha20",
+ "chacha20 0.9.1",
  "ctr",
  "curve25519-dalek 4.1.3",
  "delegate",
@@ -9128,6 +9149,7 @@ dependencies = [
  "relay-ws",
  "reqwest 0.13.2",
  "rfd",
+ "rmcp",
  "rust-embed",
  "rustls",
  "schemars 1.2.1",
@@ -9739,6 +9761,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-stream"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c25ac7aff0abd1dbc474536e40416e1102c7dd9bfba0b9861c6d357f835dcfb4"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "http-body",
+ "http-body-util",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "ssh-cipher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9747,7 +9782,7 @@ dependencies = [
  "aes",
  "aes-gcm",
  "cbc",
- "chacha20",
+ "chacha20 0.9.1",
  "cipher",
  "ctr",
  "poly1305",
