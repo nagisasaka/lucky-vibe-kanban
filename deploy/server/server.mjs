@@ -45,7 +45,70 @@ export function serverSettings(env) {
 
 export const authority = (host) => (isIP(host) === 6 ? `[${host}]` : host);
 
-export function renderNginx(template, settings) {
+// Read the same opt-in file as Rust. OAuth validation remains in the backend;
+// this only validates the public route before removing its Basic challenge.
+export async function withMcpIngress(settings, env, read = readFile) {
+  if (!env.LVK_MCP_CONFIG) return settings;
+  let base;
+  try {
+    const config = JSON.parse(await read(env.LVK_MCP_CONFIG, "utf8"));
+    base = new URL(config.public_base_url);
+    if (
+      base.protocol !== "https:" ||
+      base.hostname !== authority(settings.app) ||
+      base.username ||
+      base.password ||
+      base.search ||
+      base.hash ||
+      config.public_base_url.endsWith("/") ||
+      base.href !==
+        config.public_base_url + (base.pathname === "/" ? "/" : "") ||
+      !/^(?:\/[A-Za-z0-9_-]+)*\/?$/.test(base.pathname)
+    )
+      throw new Error();
+  } catch {
+    throw new Error(
+      "MCP ingress requires a readable config with a canonical HTTPS public_base_url on LVK_HOST and a plain path prefix",
+    );
+  }
+  return {
+    ...settings,
+    mcp: { prefix: base.pathname === "/" ? "" : base.pathname },
+  };
+}
+
+function mcpLocations(settings, backend) {
+  if (!settings.mcp) return "";
+  // A location-level proxy_set_header overrides nginx's inherited header list.
+  // Repeat the complete boundary here, including relay/Basic credential removal.
+  return ["/mcp", "/.well-known/oauth-protected-resource/mcp"]
+    .map(
+      (path) => `
+        location = ${settings.mcp.prefix}${path} {
+            auth_basic off;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Host $http_host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Authorization ${path === "/mcp" ? "$lvk_mcp_bearer" : '""'};
+            proxy_set_header Cookie "";
+            proxy_set_header Proxy-Authorization "";
+            proxy_set_header X-VK-Relayed "";
+            proxy_set_header X-VK-Sig-Session "";
+            proxy_set_header X-VK-Sig-Ts "";
+            proxy_set_header X-VK-Sig-Nonce "";
+            proxy_set_header X-VK-Sig-Signature "";
+            proxy_set_header Upgrade "";
+            proxy_set_header Connection "";
+            proxy_pass http://127.0.0.1:${backend}${path};
+        }`,
+    )
+    .join("\n");
+}
+
+export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
+  if (![3000, 4021].includes(mcpBackend))
+    throw new Error("Invalid MCP backend");
   const preview = settings.preview;
   const previewServer = preview
     ? `server {
@@ -58,6 +121,13 @@ export function renderNginx(template, settings) {
     : "";
   return template
     .replace("@@APP_DOMAIN@@", authority(settings.app))
+    .replace(
+      "@@MCP_MAP@@",
+      settings.mcp
+        ? 'map $http_authorization $lvk_mcp_bearer { default ""; "~*^Bearer [^ ]+$" $http_authorization; }'
+        : "",
+    )
+    .replace("@@MCP_LOCATIONS@@", mcpLocations(settings, mcpBackend))
     .replace("@@PREVIEW_SERVER@@", previewServer)
     .replace(
       "@@STAGING_SERVER@@",
@@ -238,7 +308,10 @@ export function supervise(
 }
 
 async function main() {
-  const settings = serverSettings(process.env);
+  const settings = await withMcpIngress(
+    serverSettings(process.env),
+    process.env,
+  );
   const secrets = "/run/lvk-secrets";
   const readSecrets = async () => {
     const [certificate, key, passwords] = await Promise.all([

@@ -1,0 +1,7 @@
+# Optional ChatGPT MCP ingress for the stable lvk service only.
+# Keep this override out of your Compose command until OAuth is configured.
+services:
+  lvk:
+    environment:
+      LVK_MCP_CONFIG: /run/lvk-secrets/chatgpt-mcp.json
+      LVK_MCP_INTROSPECTION_SECRET: ${LVK_MCP_INTROSPECTION_SECRET:?Supply the resource-server introspection secret securely}

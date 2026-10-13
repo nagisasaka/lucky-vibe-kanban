@@ -427,3 +427,23 @@ test("default MCP uses the bundled binary without an npm download", async () => 
     args: [],
   });
 });
+
+test("MCP Compose override requires explicit configuration and leaves default services unchanged", async () => {
+  const base = parse(
+    await readFile(new URL("./compose.yaml", import.meta.url), "utf8"),
+  );
+  assert.equal(base.services.lvk.environment.LVK_MCP_CONFIG, undefined);
+  const override = parse(
+    await readFile(new URL("./compose.mcp.yaml", import.meta.url), "utf8"),
+  );
+  assert.deepEqual(Object.keys(override.services), ["lvk"]);
+  assert.equal(
+    override.services.lvk.environment.LVK_MCP_CONFIG,
+    "/run/lvk-secrets/chatgpt-mcp.json",
+  );
+  assert.match(
+    override.services.lvk.environment.LVK_MCP_INTROSPECTION_SECRET,
+    /^\$\{LVK_MCP_INTROSPECTION_SECRET:\?/,
+  );
+  assert.equal(override.services.lvk.ports, undefined);
+});

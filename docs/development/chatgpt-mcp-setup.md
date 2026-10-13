@@ -65,7 +65,29 @@ to the JSON or plugin package. Enabling the configuration requires your normal
 reviewed server rollout; these instructions do not authorise restarting running
 jobs. With `LVK_MCP_CONFIG` absent, the new endpoint is not registered.
 
-Route public `<base>/mcp` and
+For the supplied server image, place the configured JSON at
+`deploy/server/secrets/chatgpt-mcp.json` alongside the existing TLS/Basic files.
+The optional `deploy/server/compose.mcp.yaml` adds `LVK_MCP_CONFIG` and requires
+`LVK_MCP_INTROSPECTION_SECRET` from your secure Compose environment. Include that
+file with the existing Compose files during your authorised rollout. Keep
+`introspection_secret_env` set to `LVK_MCP_INTROSPECTION_SECRET` when using this
+override. Do not print rendered Compose configuration containing the secret.
+This override applies only to the `lvk` service, not the optional staging or
+source-development instances.
+
+The supplied launcher reads the same `LVK_MCP_CONFIG` file and adds two exact
+nginx locations on `LVK_HOST`. Only `/mcp` receives Bearer credentials. Both
+locations remove cookies, Basic/proxy credentials and relay-signature headers;
+all UI/API and preview routes retain their existing authentication. Without the
+configuration, no Basic exception is generated. Source-development uses its
+Rust backend directly for these locations, bypassing Vite. The launcher accepts
+only a canonical HTTPS URL on `LVK_HOST` with plain alphanumeric, underscore or
+hyphen path segments. A public path prefix maps these two endpoints to the
+backend's root paths; this alone does not configure the frontend's router.
+Use a root public URL until frontend subpath routing has been verified for your
+installation.
+
+For a separately managed reverse proxy, route public `<base>/mcp` and
 `<base>/.well-known/oauth-protected-resource/mcp` to the corresponding LVK paths.
 If a reverse proxy strips a public subpath, preserve that mapping consistently.
 Keep the public Host/Origin and Bearer header intact. Exempt **only these exact

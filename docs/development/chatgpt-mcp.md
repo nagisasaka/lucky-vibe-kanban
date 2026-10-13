@@ -747,3 +747,58 @@ replace provider execution; reconciliation tests do not establish a complete
 MCP-to-native-execution workflow. Public ingress/browser checks, stdio regression,
 the final T01–T18 audit and the conditional UI decision remain outstanding.
 No runtime binary was built or deployed and no user authentication was changed.
+
+## HTTPS ingress and conditional UI decision
+
+The distributed server and source-development launchers now read
+`LVK_MCP_CONFIG` to generate two exact nginx exceptions for the configured public
+MCP prefix. The application, API, preview and separate staging listener retain
+Basic authentication. Only the MCP endpoint forwards Bearer credentials; both
+exceptions remove cookies, proxy credentials and relay signatures. Source
+development sends MCP directly to port 4021, while the distributed server uses
+its existing port 3000. These are loopback upstreams, not new public listeners.
+A separate optional Compose override configures only the `lvk` service.
+
+Native nginx tests use temporary certificates, ephemeral loopback ports and an
+HTTP backend fixture. They verify TLS, the Basic/Bearer boundary, exact routing,
+root/subpath forwarding, removed headers, POST forwarding and absence of fixture
+credentials from access logs. They do not perform real OAuth login or claim
+frontend subpath support. The existing frontend router does not yet consume a
+public base path; browser link verification remains required.
+
+The conditional M4 card is deferred. Inspection found no existing MCP Apps UI
+resource or SDK dependency in the package manifests/lockfile. The actual
+`KanbanContainer` depends on app Project/Workspace/auth/action contexts;
+`KanbanCardContent` requires translation, theme and badge components, while
+`IssueTaskAttemptCard` carries run/unlink/delete actions. Reusing these would
+still require a separate iframe entrypoint and bundle, a read-only projection,
+theme/translation setup, an MCP Apps bridge, resource registration/metadata and
+CSP plus new browser tests for refresh, replay, fallback and XSS. Estimated change
+surfaces are a new UI package/build target, Rust resource handling, image asset
+packaging and a dedicated UI test suite; this is more than adapting an existing
+standalone status card. No dependency or full-app iframe is added for M4.
+
+The official [MCP UI guide](https://developers.openai.com/plugins/build/chatgpt-ui)
+was rechecked on 2026-10-13: it describes a separately bundled iframe resource,
+`text/html;profile=mcp-app`, `_meta.ui.resourceUri`, the standard MCP Apps bridge
+and explicit CSP domains. A later UI can use `@modelcontextprotocol/ext-apps`
+with existing bounded read tools. The current path remains structured results,
+text and LVK links. No UI or automatic notification is advertised as implemented;
+T19 is not applicable while the conditional UI is deferred.
+
+Ingress validation:
+
+- `LVK_TEST_NGINX=/usr/sbin/nginx LVK_REQUIRE_NGINX_TEST=1 node --test
+  deploy/server/mcp.test.mjs deploy/server/nginx.test.mjs`: 6 passed, 9.66s
+  (`/tmp/lvk-mcp-ingress.log`). nginx was present; no skips.
+- `node --test deploy/server/server.test.mjs`: 13 passed, 1.95s
+  (`/tmp/lvk-mcp-ingress-server.log`), including the opt-in Compose document.
+- `node --test deploy/server/development.test.mjs deploy/server/instance.test.mjs`:
+  4 passed, 0.78s (`/tmp/lvk-mcp-ingress-regression.log`).
+- Formatting the deployment files initially failed because the root package does
+  not install Prettier. Using the existing local-web formatter succeeded, followed
+  by `pnpm run format` (`/tmp/lvk-mcp-ingress-format-final.log`). Temporary
+  dependency links were removed. `git diff --check` passed.
+
+No shared server, database, authentication file or active job was modified.
+The Compose override was parsed in tests; a Docker rollout was not performed.

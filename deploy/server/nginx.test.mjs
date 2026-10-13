@@ -12,7 +12,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { test } from "node:test";
-import { authority, renderNginx, serverSettings } from "./server.mjs";
+import {
+  authority,
+  renderNginx,
+  serverSettings,
+  withMcpIngress,
+} from "./server.mjs";
 
 const nginx = process.env.LVK_TEST_NGINX || "nginx";
 const available = spawnSync(nginx, ["-v"]).status === 0;
@@ -31,9 +36,15 @@ function verifyIdentity(host, certificate) {
   return checkServerIdentity(host, certificate);
 }
 
-for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
+for (const { host, prefix, mcpBackend = 3000 } of [
+  { host: "lvk.example.test" },
+  { host: "127.0.0.1" },
+  { host: "2001:db8::1" },
+  { host: "lvk.example.test", prefix: "" },
+  { host: "lvk.example.test", prefix: "/team/lvk", mcpBackend: 4021 },
+])
   test(
-    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host})`,
+    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host}, MCP ${prefix ?? "disabled"})`,
     {
       skip:
         !available && "nginx not installed (set LVK_TEST_NGINX to a binary)",
@@ -45,7 +56,24 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
       const sockets = new Set();
       let streamEnded = false;
       const backend = createServer((req, res) => {
-        if (req.url === "/stream") {
+        if (req.url === "/mcp") {
+          res.setHeader("Content-Type", "application/json");
+          if (req.headers.authorization !== "Bearer fixture-token") {
+            res.writeHead(401, {
+              "WWW-Authenticate":
+                'Bearer resource_metadata="https://lvk.example.test/.well-known/oauth-protected-resource/mcp"',
+            });
+            res.end("{}");
+          } else {
+            res.end(
+              JSON.stringify({
+                path: req.url,
+                headers: req.headers,
+                method: req.method,
+              }),
+            );
+          }
+        } else if (req.url === "/stream") {
           res.writeHead(200, { "Content-Type": "text/event-stream" });
           res.write("data: first\n\n");
           const timer = setTimeout(() => {
@@ -112,15 +140,23 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
         "test:$2b$12$1ea3Q20isUydEeMVrwel0ecS0vCXLuctohZs1RomnFmxiGGxyCAOC\n",
       );
       await writeFile(join(dir, "mime.types"), "types { text/html html; }\n");
-      const settings = serverSettings({
+      let settings = serverSettings({
         LVK_HOST: host,
         LVK_PREVIEW_DOMAIN: "preview.example.test",
       });
+      if (prefix !== undefined) {
+        settings = await withMcpIngress(
+          settings,
+          { LVK_MCP_CONFIG: "fixture.json" },
+          async () =>
+            JSON.stringify({ public_base_url: `https://${host}${prefix}` }),
+        );
+      }
       const template = await readFile(
         new URL("./nginx.conf.template", import.meta.url),
         "utf8",
       );
-      const config = renderNginx(template, settings)
+      const config = renderNginx(template, settings, { mcpBackend })
         // Node child pipes are Unix sockets, unlike Docker's stdout pipe; nginx
         // cannot reopen them as /dev/stdout. Keep this test's access log in its tempdir.
         .replace("/dev/stdout", join(dir, "access.log"))
@@ -132,7 +168,8 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
         .replace("/run/lvk-maintenance/active", join(dir, "maintenance"))
         .replaceAll("listen 8443", `listen ${port}`)
         .replaceAll("127.0.0.1:3000", `127.0.0.1:${backendPort}`)
-        .replaceAll("127.0.0.1:3001", `127.0.0.1:${backendPort}`);
+        .replaceAll("127.0.0.1:3001", `127.0.0.1:${backendPort}`)
+        .replaceAll("127.0.0.1:4021", `127.0.0.1:${backendPort}`);
       const configPath = join(dir, "nginx.conf");
       await writeFile(configPath, config);
       const checked = spawnSync(
@@ -162,10 +199,16 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
       });
       const ca = await readFile(certPath);
       const authorization = `Basic ${Buffer.from("test:lvk-test-only").toString("base64")}`;
-      function request(path = "/", host = settings.app, headers = {}) {
+      function request(
+        path = "/",
+        host = settings.app,
+        headers = {},
+        method = "GET",
+      ) {
         return new Promise((resolve, reject) => {
-          const req = https.get(
+          const req = https.request(
             {
+              method,
               hostname: "127.0.0.1",
               port,
               path,
@@ -192,6 +235,7 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
           });
           req.on("error", reject);
           req.setTimeout(3000, () => req.destroy(new Error("request timeout")));
+          req.end();
         });
       }
       let ready = false;
@@ -217,6 +261,95 @@ for (const host of ["lvk.example.test", "127.0.0.1", "2001:db8::1"])
         ).status,
         401,
       );
+      if (prefix !== undefined) {
+        const endpoint = `${prefix}/mcp`;
+        const anonymous = await request(endpoint);
+        assert.equal(anonymous.status, 401);
+        assert.match(anonymous.headers["www-authenticate"], /^Bearer /);
+        assert.equal(
+          (
+            await request(endpoint, settings.app, {
+              Authorization: authorization,
+            })
+          ).status,
+          401,
+        );
+        const reply = await request(
+          endpoint,
+          settings.app,
+          {
+            Authorization: "Bearer fixture-token",
+            Cookie: "private=fixture-cookie",
+            "X-VK-Relayed": "1",
+            "X-VK-Sig-Session": "forged",
+            "Proxy-Authorization": "private",
+            Origin: `https://${host}`,
+          },
+          "POST",
+        );
+        assert.equal(reply.status, 200);
+        const received = JSON.parse(reply.body);
+        assert.equal(received.path, "/mcp");
+        assert.equal(received.method, "POST");
+        assert.equal(received.headers.authorization, "Bearer fixture-token");
+        assert.equal(received.headers.host, host);
+        assert.equal(received.headers.origin, `https://${host}`);
+        assert.equal(received.headers["x-forwarded-proto"], "https");
+        for (const key of [
+          "cookie",
+          "proxy-authorization",
+          "x-vk-relayed",
+          "x-vk-sig-session",
+        ])
+          assert.equal(received.headers[key], undefined);
+        const metadata = await request(
+          `${prefix}/.well-known/oauth-protected-resource/mcp`,
+          settings.app,
+          { Authorization: "Bearer fixture-token", Cookie: "private=cookie" },
+        );
+        assert.equal(metadata.status, 200);
+        const metadataRequest = JSON.parse(metadata.body);
+        assert.equal(
+          metadataRequest.path,
+          "/.well-known/oauth-protected-resource/mcp",
+        );
+        assert.equal(metadataRequest.headers.authorization, undefined);
+        assert.equal(metadataRequest.headers.cookie, undefined);
+        for (const path of [
+          `${endpoint}/`,
+          `${endpoint}/other`,
+          `${prefix}/api/info`,
+          `${prefix}/.well-known/oauth-protected-resource/other`,
+        ]) {
+          const rejected = await request(path, settings.app, {
+            Authorization: "Bearer fixture-token",
+          });
+          assert.equal(rejected.status, 401, path);
+          assert.match(rejected.headers["www-authenticate"], /^Basic /);
+        }
+        assert.equal(
+          (
+            await request(endpoint, "5173.preview.example.test", {
+              Authorization: "Bearer fixture-token",
+            })
+          ).status,
+          401,
+        );
+        const logs = await readFile(join(dir, "access.log"), "utf8");
+        assert(!logs.includes("fixture-token"));
+        assert(!logs.includes("fixture-cookie"));
+      } else {
+        for (const path of [
+          "/mcp",
+          "/.well-known/oauth-protected-resource/mcp",
+        ]) {
+          const rejected = await request(path, settings.app, {
+            Authorization: "Bearer fixture-token",
+          });
+          assert.equal(rejected.status, 401);
+          assert.match(rejected.headers["www-authenticate"], /^Basic /);
+        }
+      }
       const authorised = await request("/api/info?q=kept", settings.app, {
         Authorization: authorization,
         "X-VK-Relayed": "1",

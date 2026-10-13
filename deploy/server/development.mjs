@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, realpath } from "node:fs/promises";
 import {
   authority,
   serverSettings,
+  withMcpIngress,
   renderNginx,
   validateSecrets,
   certificateReloader,
@@ -42,7 +43,10 @@ const run = (command, args, env) =>
   });
 
 async function main() {
-  const settings = { ...serverSettings(process.env), preview: null };
+  const settings = await withMcpIngress(
+    { ...serverSettings(process.env), preview: null },
+    process.env,
+  );
   const env = developmentEnvironment(process.env, settings);
   const repo = await realpath(
     process.env.LVK_DEV_REPO || "/repos/lucky-vibe-kanban",
@@ -75,7 +79,7 @@ async function main() {
   const config = "/tmp/lvk-server/nginx.conf";
   await writeFile(
     config,
-    renderNginx(template, settings)
+    renderNginx(template, settings, { mcpBackend: 4021 })
       .replaceAll("http://127.0.0.1:3000", "http://127.0.0.1:4020")
       .replace("private development server", "source development server"),
     { mode: 0o600 },
