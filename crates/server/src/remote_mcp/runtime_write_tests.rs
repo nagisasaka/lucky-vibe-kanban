@@ -157,6 +157,12 @@ pub(super) async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target
         .connect("sqlite::memory:")
         .await
         .unwrap();
+    fixture_with_pool(pool).await
+}
+
+async fn fixture_with_pool(
+    pool: SqlitePool,
+) -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
     let project = Uuid::from_u128(1);
     let issue = Uuid::new_v4();
@@ -491,4 +497,102 @@ async fn delivered_command_with_lost_domain_response_is_uncertain_and_never_repl
     assert_eq!(dispatch.calls.lock().await.len(), 1);
     let commands=super::activity::call(&remote,"list_run_commands",json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"agent_run_id":target.agent_run_id})).await.unwrap();
     assert_eq!(commands["items"][0]["delivery_status"], "delivered");
+}
+
+#[tokio::test]
+async fn reopened_database_preserves_work_questions_and_uncertain_operation_identity() {
+    let directory = tempfile::tempdir().unwrap();
+    let options = sqlx::sqlite::SqliteConnectOptions::new()
+        .filename(directory.path().join("restart.sqlite"))
+        .create_if_missing(true);
+    let pool = SqlitePool::connect_with(options.clone()).await.unwrap();
+    let (remote, dispatch, principal, target, issue) = fixture_with_pool(pool).await;
+    let question = emit_questions(&remote.pool, &target).await;
+    let request = Uuid::new_v4();
+    let store = remote.operations();
+    let (receipt, acquired) = store
+        .admit(
+            &remote.principal_key(&principal),
+            request,
+            target.project_id,
+            "steer_execution",
+            &json!({"prompt":"accepted before interruption"}),
+            &json!({"workspace_id":target.workspace_id,"agent_run_id":target.agent_run_id}),
+        )
+        .await
+        .unwrap();
+    assert!(acquired);
+    assert!(store.start(receipt.id).await.unwrap());
+    let config = remote.config.clone();
+    let old_process = remote.process_instance;
+    drop(store);
+    drop(dispatch);
+    remote.pool.close().await;
+    drop(remote);
+
+    // New adapter generation and a newly opened file-backed DB, with no runtime
+    // dispatcher installed: these reads cannot resume or create model work.
+    let restarted = Remote {
+        pool: SqlitePool::connect_with(options).await.unwrap(),
+        process_instance: Uuid::new_v4(),
+        config,
+        runtime: None,
+        launch: None,
+    };
+    assert_ne!(restarted.process_instance, old_process);
+    let work = super::read::call(
+        &restarted,
+        "list_issue_workspaces",
+        json!({"project_id":target.project_id,"issue_id":issue}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(work["items"].as_array().unwrap().len(), 1);
+    assert_eq!(work["items"][0]["id"], json!(target.workspace_id));
+    let runs = super::runtime_read::call(
+        &restarted,
+        "list_workspace_runs",
+        json!({"project_id":target.project_id,"workspace_id":target.workspace_id}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(runs["items"][0]["id"], json!(target.agent_run_id));
+    assert_eq!(runs["items"][0]["status"], "running");
+    let questions = questions::call(&restarted, "list_questions",
+        json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"session_id":target.session_id})).await.unwrap();
+    assert!(
+        questions["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["question_id"] == question
+                && item["agent_run_id"] == json!(target.agent_run_id))
+    );
+    let operation = super::issue_write::call(
+        &restarted,
+        &principal,
+        "get_operation",
+        json!({"project_id":target.project_id,"request_id":request}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(operation["status"], "uncertain");
+    assert_eq!(operation["operation_id"], json!(receipt.id));
+    assert_eq!(
+        operation["targets"]["workspace_id"],
+        json!(target.workspace_id)
+    );
+    for (table, expected) in [
+        ("agent_runs", 1),
+        ("remote_mcp_operations", 1),
+        ("project_chat_messages", 0),
+        ("agent_run_commands", 0),
+    ] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+            .fetch_one(&restarted.pool)
+            .await
+            .unwrap();
+        assert_eq!(count, expected, "{table}");
+    }
+    restarted.pool.close().await;
 }
