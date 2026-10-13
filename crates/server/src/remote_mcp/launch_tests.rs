@@ -30,6 +30,7 @@ struct FixtureLaunch {
     starts: tokio::sync::Mutex<Vec<Value>>,
     integrations: tokio::sync::Mutex<Vec<Value>>,
     pause: bool,
+    admission_failure: tokio::sync::Mutex<Option<crate::routes::integrations::AdmissionFailure>>,
     entered: tokio::sync::Notify,
     release: tokio::sync::Notify,
 }
@@ -92,8 +93,11 @@ impl LaunchActions for FixtureLaunch {
         &self,
         request: CreateIntegrationRequest,
         expected_target: String,
-    ) -> Result<Value, ApiError> {
+    ) -> Result<Value, crate::routes::integrations::AdmissionFailure> {
         self.integrations.lock().await.push(json!({"request_id":request.request_id,"project_id":request.project_id,"repository_id":request.repository_id,"target_branch":request.target_branch,"expected_target":expected_target,"selections":request.selections,"executor_config":request.executor_config}));
+        if let Some(failure) = self.admission_failure.lock().await.take() {
+            return Err(failure);
+        }
         Ok(
             json!({"integration_id":Uuid::new_v4(),"status":"queued","integration_accepted":true,"published":false}),
         )
@@ -162,6 +166,7 @@ async fn fixture(
         starts: Default::default(),
         integrations: Default::default(),
         pause,
+        admission_failure: Default::default(),
         entered: Default::default(),
         release: Default::default(),
     });
@@ -359,4 +364,37 @@ async fn repository_discovery_and_merge_admission_use_scoped_exact_heads() {
         "failed"
     );
     assert_eq!(dispatch.integrations.lock().await.len(), 1);
+}
+
+#[tokio::test]
+async fn integration_failure_receipts_preserve_rejection_or_uncertainty_on_retry() {
+    use crate::routes::integrations::AdmissionFailure;
+    let (directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let head = git(directory.path(), &["rev-parse", "main"]);
+    for (failure, status) in [
+        (
+            AdmissionFailure::Rejected {
+                code: "target_changed",
+                message: "Target changed",
+            },
+            "failed",
+        ),
+        (AdmissionFailure::Uncertain, "uncertain"),
+    ] {
+        *dispatch.admission_failure.lock().await = Some(failure);
+        let input = json!({"project_id":target.project_id,"request_id":Uuid::new_v4(),"repository_id":repo,"target_branch":"main","expected_target_commit":head,"selections":[{"issue_id":issue,"workspace_id":target.workspace_id,"expected_commit":head}]});
+        let first = launch::call(&remote, &principal, "start_integration", input.clone())
+            .await
+            .unwrap();
+        assert_eq!(first["status"], status);
+        if status == "failed" {
+            assert_eq!(first["result"]["integration_accepted"], false);
+            assert_eq!(first["result"]["code"], "target_changed");
+        }
+        let repeated = launch::call(&remote, &principal, "start_integration", input)
+            .await
+            .unwrap();
+        assert_eq!(first, repeated);
+    }
+    assert_eq!(dispatch.integrations.lock().await.len(), 2);
 }

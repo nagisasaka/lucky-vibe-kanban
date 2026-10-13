@@ -235,3 +235,107 @@ fn remote_target_selection_rejects_a_branch_changed_before_formal_admission() {
     );
     assert!(admission::observe_target(&git, directory.path(), "missing", None).is_err());
 }
+
+#[tokio::test]
+async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaking_diagnostics() {
+    use db::models::integration::{IntegrationSelection, IntegrationSource};
+    use executors::{executors::BaseCodingAgent, profile::ExecutorConfig};
+
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let (project_id, card_id) = project(&pool).await;
+    let repo = Repo::find_or_create(&pool, Path::new("/reconciliation-fixture"), "repo")
+        .await
+        .unwrap();
+    let selection = IntegrationSelection {
+        card_id,
+        workspace_id: Uuid::new_v4(),
+        expected_commit: "source-head".into(),
+    };
+    let mut request = super::CreateIntegrationRequest {
+        request_id: Uuid::new_v4(),
+        project_id,
+        repository_id: repo.id,
+        target_branch: "main".into(),
+        selections: vec![selection.clone()],
+        executor_config: None,
+    };
+    for (error, expected_code) in [
+        (
+            anyhow::Error::from(admission::SelectionChanged::Target),
+            "target_changed",
+        ),
+        (
+            anyhow::Error::from(admission::SelectionChanged::Source),
+            "source_changed",
+        ),
+        (
+            anyhow::anyhow!("private diagnostic /secrets/token-123"),
+            "integration_not_admitted",
+        ),
+    ] {
+        let failure = admission::reconcile_failed_admission(&pool, &request, "target-head", &error)
+            .await
+            .unwrap_err();
+        match failure {
+            admission::AdmissionFailure::Rejected { code, message } => {
+                assert_eq!(code, expected_code);
+                assert!(!message.contains("token-123"));
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+    }
+    let id = Uuid::new_v4();
+    let payload = IntegrationPayload {
+        observed_target: "target-head".into(),
+        executor_config: Some(
+            serde_json::to_value(ExecutorConfig::new(BaseCodingAgent::Codex)).unwrap(),
+        ),
+        sources: vec![IntegrationSource {
+            selection,
+            branch: "feature".into(),
+            commit: "source-head".into(),
+            title: "request".into(),
+            description: None,
+            status_id: Uuid::new_v4(),
+            requirements_revision: 1,
+            event_ids: vec![],
+            related_workspaces: vec![],
+            done_result: None,
+        }],
+        ..Default::default()
+    };
+    sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?,?,'refs/heads/main','blocked',?)")
+        .bind(id).bind(request.request_id.to_string()).bind(project_id).bind(repo.id)
+        .bind("/reconciliation-fixture").bind(sqlx::types::Json(payload)).execute(&pool).await.unwrap();
+    let lost_ack = anyhow::Error::from(std::io::Error::other("lost acknowledgement"));
+    let recovered =
+        admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack)
+            .await
+            .unwrap();
+    assert_eq!(recovered.id, id);
+    assert_eq!(recovered.status, "blocked"); // Admission does not imply successful Integration.
+    assert!(matches!(
+        admission::reconcile_failed_admission(&pool, &request, "changed-target", &lost_ack).await,
+        Err(admission::AdmissionFailure::Uncertain)
+    ));
+    request.selections[0].expected_commit = "different-source".into();
+    assert!(matches!(
+        admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack).await,
+        Err(admission::AdmissionFailure::Uncertain)
+    ));
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM integration_runs")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 1);
+    pool.close().await;
+    assert!(matches!(
+        admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack).await,
+        Err(admission::AdmissionFailure::Uncertain)
+    ));
+}

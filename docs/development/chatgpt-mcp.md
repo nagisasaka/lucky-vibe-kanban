@@ -713,3 +713,37 @@ These results establish the read projection over isolated fixtures. Native
 execution/formal-admission boundary tests, admission uncertainty/error review,
 public ingress/browser links, stdio compatibility and the full T01–T18/M4 audit
 remain. No server deployment, target merge or authentication change was made.
+
+## Formal admission reconciliation and public diagnostics
+
+The remote formal Integration adapter now reconciles an admission error against
+its existing durable request key after canonical admission has returned. It uses
+the same mutation lock and exact Project/repository/target/source/executor
+comparison as canonical idempotency. An existing matching record returns its ID
+and actual status, including `blocked`; this proves admission, not publication.
+Confirmed absence returns `failed` with `integration_accepted: false`. Changed
+source/target selections have explicit codes. A failed lookup or mismatching
+record remains `uncertain`, requiring inspection before any new request. The
+adapter does not repeat admission or launch another job during reconciliation.
+
+Public error conversion preserves static validation messages and replaces
+formatted domain, IO and SQL diagnostics with a safe instruction to refresh and
+inspect. Private paths and diagnostic context do not become MCP error text.
+Operation receipts also expose the already stored safe target IDs, without the
+internal principal key or input fingerprint.
+
+Validation for this change:
+
+- `cargo test -p server --lib remote_mcp:: -- --nocapture`: 31 passed in
+  16.06s, build 38.62s (`/tmp/lvk-mcp-admission-suite.log`).
+- `cargo test -p server --lib routes::integrations:: -- --nocapture`: 16 passed
+  in 11.89s (`/tmp/lvk-mcp-admission-domain.log`). This includes existing formal
+  Integration checks and the new durable reconciliation test.
+- `pnpm run format` and `git diff --check` passed
+  (`/tmp/lvk-mcp-admission-format.log`). Temporary dependency links were removed.
+
+Tests use isolated databases and Git fixtures. Adapter launch fixtures still
+replace provider execution; reconciliation tests do not establish a complete
+MCP-to-native-execution workflow. Public ingress/browser checks, stdio regression,
+the final T01–T18 audit and the conditional UI decision remain outstanding.
+No runtime binary was built or deployed and no user authentication was changed.

@@ -3,7 +3,7 @@
 //! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
 mod admission;
 mod runtime;
-
+pub(crate) use admission::AdmissionFailure;
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -73,10 +73,21 @@ pub(crate) async fn create_with_expected_target(
     deployment: &DeploymentImpl,
     request: CreateIntegrationRequest,
     expected_target: &str,
-) -> Result<IntegrationRun, ApiError> {
-    admission::submit_with_expected_target(deployment, request, Some(expected_target))
+) -> Result<IntegrationRun, AdmissionFailure> {
+    match admission::submit_with_expected_target(deployment, request.clone(), Some(expected_target))
         .await
-        .map_err(error)
+    {
+        Ok(run) => Ok(run),
+        Err(error) => {
+            admission::reconcile_failed_admission(
+                &deployment.db().pool,
+                &request,
+                expected_target,
+                &error,
+            )
+            .await
+        }
+    }
 }
 
 async fn list(

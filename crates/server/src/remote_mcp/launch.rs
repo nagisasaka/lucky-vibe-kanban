@@ -115,7 +115,7 @@ pub(super) trait LaunchActions: Send + Sync {
         &self,
         request: integrations::CreateIntegrationRequest,
         expected_target: String,
-    ) -> Result<Value, ApiError>;
+    ) -> Result<Value, integrations::AdmissionFailure>;
 }
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
@@ -146,7 +146,7 @@ impl LaunchActions for ExistingLaunch {
         &self,
         request: integrations::CreateIntegrationRequest,
         expected_target: String,
-    ) -> Result<Value, ApiError> {
+    ) -> Result<Value, integrations::AdmissionFailure> {
         let run =
             integrations::create_with_expected_target(&self.0, request, &expected_target).await?;
         Ok(
@@ -404,11 +404,7 @@ impl Remote {
     }
 }
 fn validation_error(error: anyhow::Error) -> (&'static str, Value) {
-    let message = if error.downcast_ref::<sqlx::Error>().is_some() {
-        "Admission data unavailable".into()
-    } else {
-        error.to_string()
-    };
+    let message = super::errors::message(&error);
     (
         "failed",
         json!({"code":"admission_validation_failed","message":message}),
@@ -496,7 +492,8 @@ pub(super) async fn call(
                 let url=owned.config.project_url(args.project_id);
                 match launch.integration(request,args.expected_target_commit).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
-                    Err(_)=>("uncertain",json!({"integration_request_id":operation,"url":url,"message":"Inspect Integration records before any new request; admission may have completed"})),
+                    Err(integrations::AdmissionFailure::Rejected {code,message})=>("failed",json!({"code":code,"message":message,"integration_request_id":operation,"integration_accepted":false,"url":url})),
+                    Err(integrations::AdmissionFailure::Uncertain)=>("uncertain",json!({"integration_request_id":operation,"url":url,"message":"Inspect Integration records before any new request; admission may have completed"})),
                 }
             }).await?
         }

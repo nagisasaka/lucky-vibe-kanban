@@ -4,6 +4,7 @@ mod activity;
 mod auth;
 mod code_read;
 mod config;
+mod errors;
 mod evidence_read;
 mod integration_read;
 mod issue_write;
@@ -278,11 +279,7 @@ impl ServerHandler for Remote {
             Err(error) => {
                 // SQL/IO errors can contain private paths or queries. Only expose
                 // our explicit validation messages, never their diagnostic chain.
-                let message = if error.downcast_ref::<sqlx::Error>().is_some() {
-                    "LVK data unavailable; retry this read later".to_owned()
-                } else {
-                    error.to_string()
-                };
+                let message = errors::message(&error);
                 Ok(CallToolResult::error(vec![Content::text(message)]))
             }
         }

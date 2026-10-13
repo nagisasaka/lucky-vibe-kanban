@@ -95,7 +95,7 @@ impl Remote {
         Ok(())
     }
     pub(super) fn receipt_value(&self, receipt: Receipt) -> Value {
-        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"status":receipt.status,"result":receipt.result.and_then(|s| serde_json::from_str::<Value>(&s).ok()),"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
+        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":serde_json::from_str::<Value>(&receipt.targets).ok(),"status":receipt.status,"result":receipt.result.and_then(|s| serde_json::from_str::<Value>(&s).ok()),"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
     }
 }
 
@@ -122,11 +122,7 @@ fn domain_failure(error: ApiError) -> (&'static str, Value) {
     }
 }
 fn validation_failure(error: anyhow::Error) -> (&'static str, Value) {
-    let message = if error.downcast_ref::<sqlx::Error>().is_some() {
-        "Target validation unavailable".into()
-    } else {
-        error.to_string()
-    };
+    let message = super::errors::message(&error);
     (
         "failed",
         json!({"code":"target_validation_failed","message":message}),

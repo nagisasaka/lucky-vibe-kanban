@@ -20,6 +20,8 @@ pub(super) struct Receipt {
     pub operation: String,
     pub status: String,
     pub result: Option<String>,
+    #[serde(skip)]
+    pub targets: String,
     pub created_at: String,
     pub updated_at: String,
     #[serde(skip)]

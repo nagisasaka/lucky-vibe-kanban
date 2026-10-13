@@ -23,6 +23,29 @@ use uuid::Uuid;
 use super::CreateIntegrationRequest;
 use crate::DeploymentImpl;
 
+#[derive(Debug, thiserror::Error)]
+pub(super) enum SelectionChanged {
+    #[error(
+        "TARGET_CHANGED: target HEAD changed since selection; inspect and explicitly reselect it"
+    )]
+    Target,
+    #[error(
+        "SOURCE_CHANGED: adopted Workspace HEAD changed since selection; explicitly reselect the observed commit"
+    )]
+    Source,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum AdmissionFailure {
+    #[error("{message}")]
+    Rejected {
+        code: &'static str,
+        message: &'static str,
+    },
+    #[error("Admission outcome unavailable; inspect the request before retrying")]
+    Uncertain,
+}
+
 pub(super) async fn idle(deployment: &DeploymentImpl, workspace: Uuid) -> anyhow::Result<()> {
     let pool = &deployment.db().pool;
     services::services::resource_coordination::guard_workspace_idle(pool, workspace).await?;
@@ -155,10 +178,9 @@ async fn inspect_source(
         }
     }
     let commit = commit.context("Selected Workspace does not contain the chosen repository")?;
-    ensure!(
-        commit == selected.expected_commit,
-        "SOURCE_CHANGED: adopted Workspace HEAD changed since selection; explicitly reselect the observed commit"
-    );
+    if commit != selected.expected_commit {
+        return Err(SelectionChanged::Source.into());
+    }
     let mut event_ids = Vec::new();
     if inspect_memory
         && let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
@@ -199,10 +221,9 @@ pub(super) fn observe_target(
     expected: Option<&str>,
 ) -> anyhow::Result<String> {
     let observed = git.get_branch_oid(repository, branch)?;
-    ensure!(
-        expected.is_none_or(|expected| expected == observed),
-        "TARGET_CHANGED: target HEAD changed since selection; inspect and explicitly reselect it"
-    );
+    if expected.is_some_and(|expected| expected != observed) {
+        return Err(SelectionChanged::Target.into());
+    }
     Ok(observed)
 }
 
@@ -255,29 +276,7 @@ pub(super) async fn submit_with_expected_target(
             .fetch_optional(pool)
             .await?
     {
-        ensure!(
-            run.project_id == request.project_id
-                && run.repository_id == request.repository_id
-                && run.target_ref == target_ref
-                && expected_target.is_none_or(|expected| expected == run.payload.observed_target)
-                && run.payload.executor_config
-                    == Some(serde_json::to_value(
-                        request
-                            .executor_config
-                            .clone()
-                            .unwrap_or_else(|| ExecutorConfig::new(BaseCodingAgent::Codex))
-                    )?)
-                && run.payload.sources.len() == request.selections.len()
-                && run
-                    .payload
-                    .sources
-                    .iter()
-                    .zip(&request.selections)
-                    .all(|(s, r)| s.selection.card_id == r.card_id
-                        && s.selection.workspace_id == r.workspace_id
-                        && s.selection.expected_commit == r.expected_commit),
-            "Idempotency conflict: explicit selection changed"
-        );
+        matches_request(&run, &request, &target_ref, expected_target)?;
         return Ok(run);
     }
     let repo = Repo::find_by_id(pool, request.repository_id)
@@ -403,4 +402,95 @@ pub(super) async fn target_right(pool: &SqlitePool, run: &IntegrationRun) -> any
         .bind(&run.storage_identity).bind(run.id).execute(pool).await?;
     let owner:Uuid=sqlx::query_scalar("SELECT run_id FROM integration_reservations WHERE resource_kind='target' AND resource_key=?").bind(&run.storage_identity).fetch_one(pool).await?;
     Ok(owner == run.id)
+}
+
+fn matches_request(
+    run: &IntegrationRun,
+    request: &CreateIntegrationRequest,
+    target_ref: &str,
+    expected_target: Option<&str>,
+) -> anyhow::Result<()> {
+    ensure!(
+        run.project_id == request.project_id
+            && run.repository_id == request.repository_id
+            && run.target_ref == target_ref
+            && expected_target.is_none_or(|expected| expected == run.payload.observed_target)
+            && run.payload.executor_config
+                == Some(serde_json::to_value(
+                    request
+                        .executor_config
+                        .clone()
+                        .unwrap_or_else(|| ExecutorConfig::new(BaseCodingAgent::Codex))
+                )?)
+            && run.payload.sources.len() == request.selections.len()
+            && run
+                .payload
+                .sources
+                .iter()
+                .zip(&request.selections)
+                .all(|(s, r)| s.selection.card_id == r.card_id
+                    && s.selection.workspace_id == r.workspace_id
+                    && s.selection.expected_commit == r.expected_commit),
+        "Idempotency conflict: explicit selection changed"
+    );
+    Ok(())
+}
+
+/// Called only after synchronous admission has returned an error. No admission
+/// task remains running behind that return. Recheck its durable reservation under
+/// the same mutation lock before distinguishing rejection from lost acknowledgement.
+pub(super) async fn reconcile_failed_admission(
+    pool: &SqlitePool,
+    request: &CreateIntegrationRequest,
+    expected_target: &str,
+    error: &anyhow::Error,
+) -> Result<IntegrationRun, AdmissionFailure> {
+    let _admission = services::services::integration_admission::MUTATIONS
+        .lock()
+        .await;
+    let record =
+        sqlx::query_as::<_, IntegrationRun>("SELECT * FROM integration_runs WHERE request_key=?")
+            .bind(request.request_id.to_string())
+            .fetch_optional(pool)
+            .await
+            .map_err(|_| AdmissionFailure::Uncertain)?;
+    if let Some(run) = record {
+        let target = request
+            .target_branch
+            .strip_prefix("refs/heads/")
+            .unwrap_or(&request.target_branch);
+        matches_request(
+            &run,
+            request,
+            &format!("refs/heads/{target}"),
+            Some(expected_target),
+        )
+        .map_err(|_| AdmissionFailure::Uncertain)?;
+        return Ok(run);
+    }
+    let (code, message) = match error.downcast_ref::<SelectionChanged>() {
+        Some(SelectionChanged::Target) => (
+            "target_changed",
+            "Target HEAD changed; refresh candidates and explicitly reselect the target",
+        ),
+        Some(SelectionChanged::Source) => (
+            "source_changed",
+            "Source HEAD changed; refresh and explicitly reselect the adopted Workspace",
+        ),
+        None if matches!(
+            error.downcast_ref::<git::GitServiceError>(),
+            Some(git::GitServiceError::WorktreeDirty(..))
+        ) =>
+        {
+            (
+                "source_dirty",
+                "Source has uncommitted changes; finish the work before Integration",
+            )
+        }
+        None => (
+            "integration_not_admitted",
+            "Formal Integration was not admitted; inspect source readiness, writer state and the selected target before a new request",
+        ),
+    };
+    Err(AdmissionFailure::Rejected { code, message })
 }
