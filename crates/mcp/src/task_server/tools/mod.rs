@@ -389,7 +389,7 @@ mod tests {
 
     static RUSTLS_PROVIDER: Once = Once::new();
 
-    fn install_rustls_provider() {
+    pub(super) fn install_rustls_provider() {
         RUSTLS_PROVIDER.call_once(|| {
             rustls::crypto::aws_lc_rs::default_provider()
                 .install_default()
@@ -498,3 +498,6 @@ mod tests {
         assert!(serialized.get("orchestrator_session_id").is_none());
     }
 }
+
+#[cfg(test)]
+mod stdio_tests;

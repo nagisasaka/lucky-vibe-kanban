@@ -71,6 +71,10 @@ pub(super) trait RuntimeActions: Send + Sync {
         prompt: String,
         kind: Change,
     ) -> Result<Value, ApiError>;
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Question delivery binds target, operation identity, actor and exact event evidence"
+    )]
     async fn answer(
         &self,
         target: Target,

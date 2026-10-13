@@ -48,6 +48,10 @@ fn fingerprint(value: &Value) -> String {
 impl Operations {
     /// The owned task starts before the first database await. Dropping the MCP
     /// request (even during admission) cannot cancel an admitted operation.
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Keep receipt identity, idempotency input and safe audit targets explicit at this boundary"
+    )]
     pub async fn submit<F, Fut>(
         &self,
         principal: String,
@@ -77,6 +81,10 @@ impl Operations {
 
     /// Wait for domain admission (never for coding/Integration completion).
     /// The owned task still survives cancellation of this waiting caller.
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Keep receipt identity, idempotency input and safe audit targets explicit at this boundary"
+    )]
     pub async fn submit_and_wait<F, Fut>(
         &self,
         principal: String,
@@ -104,6 +112,10 @@ impl Operations {
         .await
     }
 
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Keep receipt identity, idempotency input and safe audit targets explicit at this boundary"
+    )]
     async fn submit_timed<F, Fut>(
         &self,
         principal: String,

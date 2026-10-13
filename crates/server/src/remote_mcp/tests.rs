@@ -794,8 +794,10 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
         .await
         .unwrap();
     sqlx::query("INSERT INTO repos(id,path,name,display_name) VALUES(?,'/fixture/no-checkout','remote-mcp-test','Test repo')").bind(repo).execute(&pool).await.unwrap();
-    let mut payload = IntegrationPayload::default();
-    payload.wiki_result = Some("all selected semantic events acknowledged by OpenWiki".into());
+    let mut payload = IntegrationPayload {
+        wiki_result: Some("all selected semantic events acknowledged by OpenWiki".into()),
+        ..Default::default()
+    };
     for index in 0..105 {
         payload.validation.push(IntegrationValidation {
             command: format!("test command {index}"),

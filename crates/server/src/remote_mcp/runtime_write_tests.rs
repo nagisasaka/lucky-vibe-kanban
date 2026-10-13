@@ -39,6 +39,10 @@ impl FixtureRuntime {
             .push(json!({"run":run,"command":command}));
         Ok(())
     }
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Fixture preserves the same explicit question-delivery boundary as RuntimeActions"
+    )]
     async fn answer_impl(
         &self,
         target: Target,

@@ -95,7 +95,29 @@ impl Remote {
         Ok(())
     }
     pub(super) fn receipt_value(&self, receipt: Receipt) -> Value {
-        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":serde_json::from_str::<Value>(&receipt.targets).ok(),"status":receipt.status,"result":receipt.result.and_then(|s| serde_json::from_str::<Value>(&s).ok()),"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
+        let object = |raw: &str| {
+            serde_json::from_str::<Value>(raw)
+                .ok()
+                .filter(Value::is_object)
+        };
+        let targets = object(&receipt.targets);
+        let result = receipt.result.as_deref().and_then(object);
+        let unreadable = targets.is_none()
+            || (receipt.result.is_some() && result.is_none())
+            || (matches!(receipt.status.as_str(), "succeeded" | "failed") && result.is_none());
+        let status = if unreadable {
+            "uncertain"
+        } else {
+            &receipt.status
+        };
+        let result = if unreadable {
+            Some(
+                json!({"code":"receipt_unreadable","message":"Stored operation evidence is incomplete or unreadable. Inspect these targets and the original request ID before any new request."}),
+            )
+        } else {
+            result
+        };
+        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":targets,"status":status,"result":result,"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
     }
 }
 
@@ -197,9 +219,8 @@ pub(super) async fn call(
             remote.require_project(args.project_id).await?;
             remote.operations().submit(key, args.request_id, args.project_id, name.into(), input, json!({"project_id":args.project_id,"issue_id":args.issue_id}), move |_| async move {
                 if let Err(error) = owned.require_issue(args.project_id, args.issue_id).await { return validation_failure(error); }
-                if let Some(status) = args.status_id {
-                    if let Err(error) = owned.require_status(args.project_id, status).await { return validation_failure(error); }
-                }
+                if let Some(status) = args.status_id
+                    && let Err(error) = owned.require_status(args.project_id, status).await { return validation_failure(error); }
                 let mut changes = json!({});
                 if let Some(title) = args.title { changes["title"] = json!(title); }
                 if let Some(description) = args.description { changes["description"] = json!(description); }
@@ -214,4 +235,88 @@ pub(super) async fn call(
         _ => anyhow::bail!("Unknown Issue operation"),
     };
     Ok(remote.receipt_value(receipt))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn unreadable_receipts_never_report_success_or_leak_the_damaged_payload() {
+        let (remote, _, principal, target, _) = super::super::runtime_write_tests::fixture().await;
+        let request = Uuid::new_v4();
+        let targets = json!({"workspace_id":target.workspace_id});
+        let receipt = remote
+            .operations()
+            .submit_and_wait(
+                remote.principal_key(&principal),
+                request,
+                target.project_id,
+                "fixture".into(),
+                json!({}),
+                targets.clone(),
+                |_| async { ("succeeded", json!({"accepted":true})) },
+            )
+            .await
+            .unwrap();
+        let operation = receipt.id;
+        let valid = remote.receipt_value(receipt);
+        assert_eq!(valid["status"], "succeeded");
+        assert_eq!(valid["targets"], targets);
+        for (stored_targets, stored_result, status) in [
+            (
+                targets.to_string(),
+                Some("{private-token-not-json"),
+                "succeeded",
+            ),
+            (targets.to_string(), None, "succeeded"),
+            (targets.to_string(), Some("null"), "failed"),
+            ("private-token-not-json".into(), Some("{}"), "succeeded"),
+        ] {
+            sqlx::query("UPDATE remote_mcp_operations SET targets=?,result=?,status=? WHERE id=?")
+                .bind(stored_targets)
+                .bind(stored_result)
+                .bind(status)
+                .bind(operation)
+                .execute(&remote.pool)
+                .await
+                .unwrap();
+            let value = call(
+                &remote,
+                &principal,
+                "get_operation",
+                json!({"project_id":target.project_id,"request_id":request}),
+            )
+            .await
+            .unwrap();
+            assert_eq!(value["status"], "uncertain");
+            assert_eq!(value["result"]["code"], "receipt_unreadable");
+            assert_eq!(value["operation_id"], operation.to_string());
+            assert!(!value.to_string().contains("private-token"));
+        }
+        // A pending receipt has no final result yet; that absence is normal.
+        sqlx::query(
+            "UPDATE remote_mcp_operations SET targets=?,result=NULL,status='running' WHERE id=?",
+        )
+        .bind(targets.to_string())
+        .bind(operation)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+        let value = call(
+            &remote,
+            &principal,
+            "get_operation",
+            json!({"project_id":target.project_id,"request_id":request}),
+        )
+        .await
+        .unwrap();
+        assert_eq!(value["status"], "running");
+        assert!(value["result"].is_null());
+        let count: i64 = sqlx::query_scalar("SELECT count(*) FROM remote_mcp_operations")
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
+    }
 }

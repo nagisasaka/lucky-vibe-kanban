@@ -8,8 +8,11 @@ description: "Connection boundary, reuse map and validation record for the opt-i
 Implementation in progress on `feature/chatgpt-mcp`. The development checkout is
 `.worktrees/chatgpt-mcp` inside the current workspace. The live checkout remains
 at `a5c779b7`; this feature has not been deployed or merged. M0 has a first
-transport/authentication/read implementation; M1–M3 and the acceptance audit are
-not complete. The authoritative requirements are [the supplied specification](../specs/lvk-chatgpt-mcp-spec.md)
+transport/authentication/read implementation. M1–M3 now have implementations and
+scoped local test evidence; the final requirement-by-requirement acceptance audit
+is still in progress. M4 is deferred for the reasons recorded below. Increment
+sections preserve historical results; their outstanding-work notes describe the
+time of that increment, not the current status. The authoritative requirements are [the supplied specification](../specs/lvk-chatgpt-mcp-spec.md)
 (version 1.0, 2026-10-13).
 
 ## Connection decision
@@ -847,3 +850,58 @@ or authentication change was made.
 Changed-file ESLint, `pnpm run format` and `git diff --check` also passed
 (`/tmp/lvk-mcp-subpath-lint.log`, `/tmp/lvk-mcp-subpath-format.log`). Temporary
 dependency links were removed and all fixture servers/browsers were closed.
+
+
+## Stdio compatibility, receipt integrity and final scoped regressions
+
+The existing stdio MCP now has a byte-stream compatibility test using the same
+`serve((read, write))` adapter as `stdio()`. Isolated pipes exercise initialise,
+tool discovery and an existing `list_projects` call against a disposable HTTP
+fixture. It verifies that global tools remain present and the remote-only
+connection tool is absent. This is a codec/service integration test, not a
+separately launched CLI process or a live-server test; the CLI argument tests
+also pass.
+
+Unreadable durable operation evidence now returns `uncertain` with
+`receipt_unreadable`, preserving the original request identity and any readable
+target IDs. A missing result is normal for pending/running operations but cannot
+support a terminal success/failure claim. Reads neither repair the database nor
+replay the action. A fixture corrupts JSON, removes a terminal result and checks
+that neither success nor damaged private content is returned.
+
+The native dispatch audit confirms that `ExistingLaunch` reads the configured
+executor profile and forwards native execution mode/Goal budget through
+`create_and_start_workspace_admitted`. Its immediate and setup-gated paths use
+the existing Session/AgentRun services. Continuation retains the saved executor
+configuration. Adapter fixtures verify exact inputs and accepted identities;
+canonical Session tests verify provider/resume guards. No paid provider run or
+real ChatGPT session was started. This follows the specification's preference
+for fixtures/mocks at external execution boundaries.
+
+Validation of the source changes based on `1cba1e55`:
+
+| Command / scope | Result | Test time | Log |
+| --- | --- | --- | --- |
+| `cargo test -p mcp --lib --bin vibe-kanban-mcp` | 10 library + 2 CLI tests passed | 0.14 s + <0.01 s; build 4 min 08 s | `/tmp/lvk-mcp-stdio.log` |
+| `cargo test -p server --lib remote_mcp:: -- --nocapture` | 32 passed | 16.77 s; build 49.92 s | `/tmp/lvk-mcp-receipt-integrity.log` |
+| `cargo test -p server --lib routes::sessions::agent_run:: -- --nocapture` | 10 passed | 0.54 s | `/tmp/lvk-mcp-regression-native.log` |
+| `cargo test -p server --lib routes::project_chat:: -- --nocapture` | 29 passed | 12.84 s | `/tmp/lvk-mcp-regression-astra.log` |
+| `cargo test -p server --lib routes::integrations:: -- --nocapture` | 16 passed | 12.16 s | `/tmp/lvk-mcp-regression-formal.log` |
+| `cargo clippy -p server -p mcp -p git -p utils --all-targets --features qa-mode -- -D warnings` | Passed after local style corrections | 2 min 55 s recheck | `/tmp/lvk-mcp-final-clippy-recheck.log` |
+| `pnpm run format` | Passed | See log | `/tmp/lvk-mcp-receipt-format.log` |
+
+All Cargo commands use `CARGO_TARGET_DIR=/var/tmp/lvk-target`. These are scoped
+checks (99 tests, plus one targeted recheck), not the full backend suite. The
+final Issue-write conditional correction was rechecked independently: one test
+passed in 0.59 s (`/tmp/lvk-mcp-final-issue-recheck.log`). Final formatting also
+passed (`/tmp/lvk-mcp-final-receipts-format.log`). Clippy initially reported
+seven findings in the new remote modules: conditional/initialisation style was
+fixed, and explicit service-boundary argument lists have narrowly scoped,
+reasoned argument-count allowances. No test was disabled. Clippy/check and test
+harnesses do not build or deploy a feature runtime server binary.
+
+The existing formal Integration validation pipeline remains in place. These
+regressions do not constitute publication of a formal Integration or permission
+to merge the feature into the target. The remaining deliverable is the final
+T01–T18 evidence audit and consolidated handoff. Real ChatGPT/OAuth browser
+verification remains an operator step; T19 is not applicable to the deferred UI.
