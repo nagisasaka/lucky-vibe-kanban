@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sqlx::{FromRow, SqlitePool};
 use ts_rs::TS;
 use uuid::Uuid;
@@ -21,7 +20,6 @@ pub struct ChatMessage {
 pub struct Conversation {
     pub id: Uuid,
     pub project_id: Uuid,
-    pub event_cursor: i64,
 }
 
 pub async fn conversation(pool: &SqlitePool, project: Uuid) -> anyhow::Result<Conversation> {
@@ -62,24 +60,27 @@ pub async fn enqueue(
     Ok(())
 }
 
-/// Cursor and inbox commit together. A model outage cannot discard events.
-pub async fn ingest(pool: &SqlitePool, conversation: &Conversation) -> anyhow::Result<()> {
+/// Retire legacy automatic turns without deleting their history or checkpoints.
+/// Only direct user requests are resumed after a restart.
+pub async fn recover_user_queue(pool: &SqlitePool) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
-    let events: Vec<(i64,String,String)> = sqlx::query_as("SELECT sequence,source_key,payload FROM project_chat_events WHERE project_id=? AND sequence>? ORDER BY sequence LIMIT 100")
-        .bind(conversation.project_id).bind(conversation.event_cursor).fetch_all(&mut *tx).await?;
-    // Batch into one read-only model turn, while retaining the original IDs/payloads.
-    if let Some((last, _, _)) = events.last() {
-        let content = serde_json::to_string(&events.iter().map(|(_,key,payload)| serde_json::json!({"source":key,"data":serde_json::from_str::<Value>(payload).unwrap_or(Value::Null)})).collect::<Vec<_>>())?;
-        sqlx::query("INSERT OR IGNORE INTO project_chat_messages(id,conversation_id,role,content,source_key) VALUES(?,?,'event',?,?)")
-            .bind(Uuid::new_v4()).bind(conversation.id).bind(content).bind(format!("events:{last}")).execute(&mut *tx).await?;
-        sqlx::query("UPDATE project_conversations SET event_cursor=MAX(event_cursor,?) WHERE id=?")
-            .bind(last)
-            .bind(conversation.id)
-            .execute(&mut *tx)
-            .await?;
-    }
+    sqlx::query("UPDATE project_chat_messages SET status='done',error=NULL WHERE role='event' AND status!='done'")
+        .execute(&mut *tx).await?;
+    sqlx::query(
+        "UPDATE project_chat_messages SET status='pending' WHERE role='user' AND status='running'",
+    )
+    .execute(&mut *tx)
+    .await?;
     tx.commit().await?;
     Ok(())
+}
+
+pub async fn next_user_message(
+    pool: &SqlitePool,
+    conversation: Uuid,
+) -> anyhow::Result<Option<ChatMessage>> {
+    Ok(sqlx::query_as("SELECT * FROM project_chat_messages WHERE conversation_id=? AND role='user' AND status!='done' ORDER BY sequence LIMIT 1")
+        .bind(conversation).fetch_optional(pool).await?)
 }
 
 pub async fn finish(pool: &SqlitePool, message: &ChatMessage, content: &str) -> anyhow::Result<()> {

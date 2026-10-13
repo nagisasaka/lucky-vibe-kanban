@@ -266,17 +266,15 @@ async fn real_runtime_events_preserve_questions_and_exclude_token_noise() {
         "exact-question-id"
     );
     assert_eq!(pending[0]["session_id"], json!(request.session_id));
-    store::ingest(&pool, &conversation).await.unwrap();
-    store::ingest(&pool, &other).await.unwrap();
-    let messages = store::messages(&pool, conversation.id, 0).await.unwrap();
-    assert_eq!(messages.len(), 1);
-    assert!(!messages[0].content.contains("token_usage"));
-    assert!(messages[0].content.contains("Choose A or B"));
+    let events = recorded_events(&pool, conversation.project_id).await;
+    assert!(!events.contains("token_usage"));
+    assert!(events.contains("Choose A or B"));
+    assert_eq!(recorded_events(&pool, other.project_id).await, "[]");
     assert!(
-        store::messages(&pool, other.id, 0)
+        store::next_user_message(&pool, conversation.id)
             .await
             .unwrap()
-            .is_empty()
+            .is_none()
     );
     event(
         &pool,
@@ -359,10 +357,9 @@ async fn direct_answer_and_astra_answer_cannot_both_enter_common_command_queue()
     other.command_id = Uuid::new_v4();
     other.idempotency_key = Uuid::new_v4().to_string();
     assert!(AgentRunCommandRecord::enqueue(&pool, &other).await.is_err());
-    store::ingest(&pool, &conversation).await.unwrap();
     assert!(
-        store::messages(&pool, conversation.id, 0).await.unwrap()[0]
-            .content
+        recorded_events(&pool, conversation.project_id)
+            .await
             .contains("direct user answer")
     );
 }
@@ -446,11 +443,10 @@ async fn codex_nonblocking_questions_keep_options_and_share_answer_receipts() {
     let remaining = questions::pending(&pool, request.session_id).await.unwrap();
     assert_eq!(remaining.len(), 1);
     assert_eq!(remaining[0].title, "Any constraints?");
-    store::ingest(&pool, &conversation).await.unwrap();
-    let inbox = store::messages(&pool, conversation.id, 0).await.unwrap();
-    assert!(inbox[0].content.contains("async_questions"));
-    assert!(inbox[0].content.contains("question_answer_submitted"));
-    assert!(inbox[0].content.contains("local-user"));
+    let events = recorded_events(&pool, conversation.project_id).await;
+    assert!(events.contains("async_questions"));
+    assert!(events.contains("question_answer_submitted"));
+    assert!(events.contains("local-user"));
     event(
         &pool,
         &request,
@@ -720,29 +716,87 @@ async fn interrupted_tool_is_reconciled_and_new_call_id_cannot_repeat_uncertain_
     assert_eq!(*fake.reconciled.lock().unwrap(), 1);
 }
 
+async fn recorded_events(pool: &SqlitePool, project: Uuid) -> String {
+    let events: Vec<String> = sqlx::query_scalar(
+        "SELECT payload FROM project_chat_events WHERE project_id=? ORDER BY sequence",
+    )
+    .bind(project)
+    .fetch_all(pool)
+    .await
+    .unwrap();
+    serde_json::to_string(&events).unwrap()
+}
+
 #[tokio::test]
-async fn cursor_and_event_inbox_are_durable_deduplicated_and_project_scoped() {
+async fn legacy_events_never_run_or_block_user_requests_after_restart() {
     let pool = database().await;
-    let a = project(&pool).await;
-    let b = project(&pool).await;
-    for (project, key) in [(a.project_id, "a"), (b.project_id, "b")] {
-        sqlx::query("INSERT INTO project_chat_events(project_id,source_key,payload) VALUES(?,?,?)")
-            .bind(project)
-            .bind(key)
-            .bind(json!({"kind":"input_requested","input_id":key}).to_string())
-            .execute(&pool)
+    let conversation = project(&pool).await;
+    let other = project(&pool).await;
+    for status in ["pending", "running", "done"] {
+        let id = Uuid::new_v4();
+        sqlx::query("INSERT INTO project_chat_messages(id,conversation_id,role,content,status,checkpoint,error) VALUES(?,?,'event','legacy workspace event',?,'{}','old error')")
+            .bind(id).bind(conversation.id).bind(status).execute(&pool).await.unwrap();
+        let event: ChatMessage = sqlx::query_as("SELECT * FROM project_chat_messages WHERE id=?")
+            .bind(id)
+            .fetch_one(&pool)
             .await
             .unwrap();
+        // A resumed event must not even load context or call the model.
+        let fake = MockServices::default();
+        run_turn(&pool, &fake, &conversation, &event).await.unwrap();
+        assert!(fake.inputs.lock().unwrap().is_empty());
+        assert!(fake.executions.lock().unwrap().is_empty());
     }
-    store::ingest(&pool, &a).await.unwrap();
-    store::ingest(&pool, &a).await.unwrap(); // stale observer retries same cursor
-    let restored = store::conversation(&pool, a.project_id).await.unwrap();
-    assert!(restored.event_cursor > 0);
-    let inbox = store::messages(&pool, a.id, 0).await.unwrap();
-    assert_eq!(inbox.len(), 1);
-    assert!(inbox[0].content.contains("\"input_id\":\"a\""));
-    assert!(!inbox[0].content.contains("\"input_id\":\"b\""));
-    assert!(store::messages(&pool, b.id, 0).await.unwrap().is_empty());
+    assert!(
+        store::next_user_message(&pool, conversation.id)
+            .await
+            .unwrap()
+            .is_none()
+    );
+    let user = message(&pool, &conversation, "discuss").await;
+    sqlx::query("UPDATE project_chat_messages SET status='running' WHERE id=?")
+        .bind(user.id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    // Filtering protects user requests even before startup recovery.
+    assert_eq!(
+        store::next_user_message(&pool, conversation.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .id,
+        user.id
+    );
+    store::recover_user_queue(&pool).await.unwrap();
+    store::recover_user_queue(&pool).await.unwrap();
+    let next = store::next_user_message(&pool, conversation.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(next.id, user.id);
+    assert_eq!(next.status, "pending");
+    assert!(
+        store::next_user_message(&pool, other.id)
+            .await
+            .unwrap()
+            .is_none()
+    );
+    let events: Vec<(String, String)> =
+        sqlx::query_as("SELECT status,checkpoint FROM project_chat_messages WHERE role='event'")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+    assert_eq!(events, vec![("done".into(), "{}".into()); 3]);
+    let fake = MockServices::replies(vec![reply()]);
+    run_turn(&pool, &fake, &conversation, &next).await.unwrap();
+    assert_eq!(fake.inputs.lock().unwrap().len(), 1);
+    assert!(
+        store::next_user_message(&pool, conversation.id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[tokio::test]
