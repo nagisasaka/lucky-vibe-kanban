@@ -148,8 +148,10 @@ async fn inspect_source(
                 );
             }
             if inspect_memory
-                && let Some(store) =
-                    RepositoryMemoryStore::existing_for_repository(&member.name, member.id)?
+                && let Some(store) = RepositoryMemoryStore::read_only_configured_for_repository(
+                    &member.name,
+                    member.id,
+                )?
             {
                 for run in store
                     .runs()?
@@ -183,7 +185,8 @@ async fn inspect_source(
     }
     let mut event_ids = Vec::new();
     if inspect_memory
-        && let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+        && let Some(store) =
+            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
     {
         // Strict durable evidence, separate from the tolerant discovery reader.
         for event in store.events()? {

@@ -48,7 +48,9 @@ pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
             .await?
             .context("Workspace disappeared during usage backfill")?;
         for repo in WorkspaceRepo::find_repos_for_workspace(pool, id).await? {
-            let store = match RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id) {
+            let store = match RepositoryMemoryStore::read_only_configured_for_repository(
+                &repo.name, repo.id,
+            ) {
                 Ok(Some(store)) => store,
                 Ok(None) => continue,
                 Err(error) => {
@@ -189,8 +191,9 @@ pub async fn validate_agent_owner(
             let repo = Repo::find_by_id(pool, repo_id)
                 .await?
                 .context("Execution repository missing")?;
-            let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
-                .context("Maintenance owner missing")?;
+            let store =
+                RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
+                    .context("Maintenance owner missing")?;
             let state = store.state()?;
             ensure!(
                 state.maintenance_workspace_id == Some(workspace.id)
@@ -377,7 +380,7 @@ pub async fn cleanup_allowed(pool: &SqlitePool, workspace_id: Uuid) -> anyhow::R
                 return Ok(false);
             };
             if let Some(store) =
-                RepositoryMemoryStore::existing_for_repository(&repo.name, repo_id)?
+                RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo_id)?
             {
                 let state = store.state()?;
                 if state.maintenance_workspace_id == Some(workspace_id)

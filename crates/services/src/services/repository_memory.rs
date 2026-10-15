@@ -112,32 +112,36 @@ pub fn complete_coding_run(
     result
 }
 
-/// Terminal notifications are asynchronous. Reconcile a previous successful
-/// turn before a new coding host can modify the same worktree. This also covers
-/// a dropped notification or server restart without reading a later task's
-/// changes into the older run's manifest. Distinct workspace IDs never wait on
-/// each other's completion lock.
-pub async fn complete_previous_coding_runs(
+/// Reconcile successful turns before follow-up dispatch or source integration.
+/// Exclude the incoming run before a new host can modify the worktree; replay
+/// dropped notifications in order without attributing later edits to old runs.
+/// Return the latest source summary for merge/push/PR callers.
+pub async fn complete_successful_coding_runs(
     pool: &sqlx::SqlitePool,
     store: &RepositoryMemoryStore,
     workspace_id: Uuid,
-    next_run_id: Uuid,
-) -> anyhow::Result<()> {
-    let mut previous: Vec<_> = store
+    next_run_id: Option<Uuid>,
+) -> anyhow::Result<Option<String>> {
+    let succeeded: HashSet<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM agent_runs WHERE workspace_id = ? AND status = 'succeeded'",
+    )
+    .bind(workspace_id)
+    .fetch_all(pool)
+    .await?
+    .into_iter()
+    .collect();
+    let mut runs: Vec<_> = store
         .runs()?
         .into_iter()
-        .filter(|run| run.workspace_id == workspace_id && run.run_id != next_run_id)
+        .filter(|run| {
+            run.workspace_id == workspace_id
+                && Some(run.run_id) != next_run_id
+                && succeeded.contains(&run.run_id)
+        })
         .collect();
-    previous.sort_by_key(|run| (run.created_at, run.run_id));
-    for run in previous {
-        let status: Option<executors::runtime::AgentRunStatus> =
-            sqlx::query_scalar("SELECT status FROM agent_runs WHERE id = ?")
-                .bind(run.run_id)
-                .fetch_optional(pool)
-                .await?;
-        if status != Some(executors::runtime::AgentRunStatus::Succeeded) {
-            continue;
-        }
+    runs.sort_by_key(|run| (run.created_at, run.run_id));
+    let mut summary = None;
+    for run in runs {
         // A terminal subscriber may already be completing this run. A brief,
         // bounded wait avoids making normal immediate follow-ups fail on it.
         for attempt in 0..3 {
@@ -145,19 +149,24 @@ pub async fn complete_previous_coding_runs(
             let result =
                 tokio::task::spawn_blocking(move || complete_coding_run(&store, &context)).await?;
             match result {
-                Ok(_) => break,
+                Ok(event) => {
+                    if let Some(event) = event {
+                        summary = Some(event.semantics.commit_message());
+                    }
+                    break;
+                }
                 Err(error) if attempt < 2 && error.downcast_ref::<std::io::Error>()
                     .is_some_and(|error| error.kind() == std::io::ErrorKind::WouldBlock) => {
                     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                 }
                 Err(error) => return Err(error).with_context(|| format!(
-                    "Previous successful run {} has unfinished source/Manifest publication. Inspect the publication error before starting another coding task (semantic draft: {}); source files were preserved",
+                    "Successful run {} has unfinished source/Manifest publication. Inspect the publication error before continuing or integrating source (semantic draft: {}); source files were preserved",
                     run.run_id, run.draft_path.display()
                 )),
             }
         }
     }
-    Ok(())
+    Ok(summary)
 }
 
 fn complete_coding_run_inner(
@@ -476,23 +485,7 @@ pub async fn prepare_workspace_source(
     if active > 0 {
         bail!("Finish the active coding run before integrating source and its semantic manifest");
     }
-    let mut runs: Vec<_> = store
-        .runs()?
-        .into_iter()
-        .filter(|run| run.workspace_id == workspace.id)
-        .collect();
-    runs.sort_by_key(|run| (run.created_at, run.run_id));
-    let mut summary = None;
-    for run in runs {
-        if let Some(record) =
-            db::models::agent_runtime::AgentRunRecord::find(pool, run.run_id).await?
-            && record.status == executors::runtime::AgentRunStatus::Succeeded
-            && let Some(event) = complete_coding_run(&store, &run)?
-        {
-            summary = Some(event.semantics.commit_message());
-        }
-    }
-    Ok(summary)
+    complete_successful_coding_runs(pool, &store, workspace.id, None).await
 }
 
 /// Recover the Git/filesystem crash window through an explicit commit trailer,
@@ -1204,16 +1197,24 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::query("CREATE TABLE agent_runs (id BLOB PRIMARY KEY, status TEXT NOT NULL)")
+        sqlx::query("CREATE TABLE agent_runs (id BLOB PRIMARY KEY, workspace_id BLOB NOT NULL, status TEXT NOT NULL)")
             .execute(&pool)
             .await
             .unwrap();
         let first = run(&store, &root);
         let unrelated_workspace = run(&store, &root);
-        for run in [&first, &unrelated_workspace] {
+        let mut failed = run(&store, &root);
+        failed.workspace_id = first.workspace_id;
+        for (run, status) in [
+            (&first, "succeeded"),
+            (&unrelated_workspace, "succeeded"),
+            (&failed, "failed"),
+        ] {
             store.save_run(run).unwrap();
-            sqlx::query("INSERT INTO agent_runs VALUES (?, 'succeeded')")
+            sqlx::query("INSERT INTO agent_runs VALUES (?, ?, ?)")
                 .bind(run.run_id)
+                .bind(run.workspace_id)
+                .bind(status)
                 .execute(&pool)
                 .await
                 .unwrap();
@@ -1223,12 +1224,14 @@ mod tests {
         std::fs::write(&first.draft_path, "invalid JSON").unwrap();
         // The previous source is checkpointed before a new host can edit it,
         // even when that previous host supplied an invalid semantic draft.
-        complete_previous_coding_runs(&pool, &store, first.workspace_id, next)
+        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next))
             .await
             .unwrap();
         let first_event = store.event(first.run_id).unwrap().unwrap();
         assert_eq!(first_event.changed_paths, vec!["first.txt"]);
         assert!(store.event(unrelated_workspace.run_id).unwrap().is_none());
+        assert!(store.event(failed.run_id).unwrap().is_none());
+        assert!(!store.completed_without_change(failed.run_id).unwrap());
         assert!(store.coding_errors().unwrap().is_empty());
 
         let mut second = run(&store, &root);
@@ -1236,12 +1239,20 @@ mod tests {
         second.workspace_id = first.workspace_id;
         second.draft_path = store.draft_path(next);
         store.save_run(&second).unwrap();
-        sqlx::query("INSERT INTO agent_runs VALUES (?, 'succeeded')")
+        sqlx::query("INSERT INTO agent_runs VALUES (?, ?, 'succeeded')")
             .bind(next)
+            .bind(second.workspace_id)
             .execute(&pool)
             .await
             .unwrap();
         std::fs::write(root.join("second.txt"), "second result").unwrap();
+        complete_successful_coding_runs(&pool, &store, first.workspace_id, Some(next))
+            .await
+            .unwrap();
+        assert!(
+            store.event(next).unwrap().is_none(),
+            "incoming run must be excluded"
+        );
         std::fs::write(
             &second.draft_path,
             serde_json::to_vec(&SemanticChanges {
@@ -1251,15 +1262,34 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        complete_previous_coding_runs(&pool, &store, first.workspace_id, Uuid::new_v4())
-            .await
-            .unwrap();
+        assert_eq!(
+            complete_successful_coding_runs(&pool, &store, first.workspace_id, None)
+                .await
+                .unwrap(),
+            Some("feat: second".into())
+        );
         assert_eq!(store.event(first.run_id).unwrap(), Some(first_event));
         assert_eq!(
             store.event(next).unwrap().unwrap().changed_paths,
             vec!["second.txt"]
         );
         assert_eq!(store.events().unwrap().len(), 2);
+        let mut unchanged = run(&store, &root);
+        unchanged.workspace_id = first.workspace_id;
+        store.save_run(&unchanged).unwrap();
+        sqlx::query("INSERT INTO agent_runs VALUES (?, ?, 'succeeded')")
+            .bind(unchanged.run_id)
+            .bind(unchanged.workspace_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
+            complete_successful_coding_runs(&pool, &store, first.workspace_id, None)
+                .await
+                .unwrap(),
+            Some("feat: second".into())
+        );
+        assert!(store.completed_without_change(unchanged.run_id).unwrap());
     }
 
     #[test]

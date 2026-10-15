@@ -114,7 +114,9 @@ pub async fn discover(
     // Failure is an unavailable source, not evidence that no work exists. A bad
     // manifest does not hide healthy observations; strict publication is separate.
     let memory = (|| -> anyhow::Result<()> {
-        if let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)? {
+        if let Some(store) =
+            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
+        {
             let state = store.state()?;
             page.memory_available = state.enabled;
             page.wiki_target = state.target_branch;

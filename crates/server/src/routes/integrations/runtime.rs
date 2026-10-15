@@ -801,7 +801,8 @@ async fn prepare(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
         )
         .await?;
     let node:Uuid=sqlx::query_scalar("SELECT id FROM orchestration_node_executions WHERE orchestration_run_id=? AND node_key='integrate'").bind(run.id).fetch_one(pool).await?;
-    let memory_store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?;
+    let memory_store =
+        RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?;
     let memory = integration_memory(&run, memory_store.as_ref())?;
     let execution = DeploymentWorkflowAgentExecutor::new(deployment.clone())
         .run_agent(AgentNodeRequest {

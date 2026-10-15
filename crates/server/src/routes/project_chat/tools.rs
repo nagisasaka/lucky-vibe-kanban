@@ -368,7 +368,7 @@ pub async fn execute(
                     .await?
                     .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
                 let memory =
-                    utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
+                    utils::repository_memory::RepositoryMemoryStore::read_only_configured_for_repository(
                         &repo.name, repo.id,
                     )?;
                 let memory_text = memory
