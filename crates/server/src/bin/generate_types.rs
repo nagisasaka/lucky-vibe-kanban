@@ -52,6 +52,8 @@ fn generate_types_content() -> String {
         db::models::integration::IntegrationValidation::decl(),
         db::models::integration::IntegrationPayload::decl(),
         db::models::integration::IntegrationGate::decl(),
+        db::models::integration::IntegrationReview::decl(),
+        db::models::integration::IntegrationStep::decl(),
         db::models::integration::IntegrationIntervention::decl(),
         db::models::integration::IntegrationStop::decl(),
         db::models::integration::IntegrationRun::decl(),

@@ -127,9 +127,13 @@ export type IntegrationSource = { selection: IntegrationSelection, branch: strin
 
 export type IntegrationValidation = { command: string, cwd: string, required: boolean, evidence: string, environment_requirements: string, execution_process_id: string | null, exit_code: bigint | null, result: string | null, };
 
-export type IntegrationPayload = { gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
+export type IntegrationPayload = { card_id: string | null, card_done_result: string | null, sequential: boolean, step_index: number, step_base: string | null, merge_tree: string | null, merge_conflicted: boolean, next_step: boolean, reviews: Array<IntegrationReview>, steps: Array<IntegrationStep>, gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
 
 export type IntegrationGate = { id: string, validation_index: number, scope: string, risk: string, evidence: IntegrationValidation, decision: string | null, actor: string | null, decided_at: string | null, request_id: string | null, };
+
+export type IntegrationReview = { id: string, scope: string, step_index: number, candidate: string, diff: string, explanation: string, decision: string | null, request_id: string | null, actor: string | null, decided_at: string | null, };
+
+export type IntegrationStep = { source_commit: string, result_commit: string, validation: Array<IntegrationValidation>, gates: Array<IntegrationGate>, summary: string, };
 
 export type IntegrationIntervention = { request_id: string, prompt: string, created_at: string, pending: boolean, retry_command: JsonValue | null, instruction_command: JsonValue | null, };
 

@@ -1,4 +1,3 @@
-import { IntegrationGateControls } from './IntegrationGateControls';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@vibe/ui/components/Button';
@@ -164,12 +163,11 @@ export function IntegrationPanel({
       >
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-primary text-normal">
           <DialogHeader>
-            <DialogTitle>Formal Integration</DialogTitle>
+            <DialogTitle>Auto Merge</DialogTitle>
             <DialogDescription>
-              Select Cards and one adopted Workspace each. LVK creates one
-              integration Workspace, verifies its final commit, then updates the
-              local target and conditionally marks the Cards Done. No push or
-              automatic PR.
+              Select Cards and one Workspace each. LVK creates an auto-merge
+              Card with its own Workspace, merges and tests each selection in
+              order, then moves the selected Cards and auto-merge Card to Done.
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto space-y-base min-h-0">
@@ -179,10 +177,9 @@ export function IntegrationPanel({
               </p>
             )}
             <p className="text-low">
-              Sources are frozen on submission. The target base is captured when
-              this queued run starts. Cooperative local execution is not
-              OS-level isolation. Wiki reconciliation is separate from code
-              publication.
+              The selected commits are fixed when you start. Review conflict
+              resolutions, respond to failed tests, and send additional
+              instructions in the auto-merge Workspace.
             </p>
             <div className="flex gap-base">
               <label className="flex-1">
@@ -345,11 +342,7 @@ export function IntegrationPanel({
                         <option
                           key={ws.workspace_id}
                           value={ws.workspace_id}
-                          disabled={
-                            !ws.observed_head_oid ||
-                            Number(ws.active_agent_runs) > 0 ||
-                            Number(ws.active_scripts) > 0
-                          }
+                          disabled={!ws.observed_head_oid}
                         >
                           {ws.name ?? ws.branch} ·{' '}
                           {ws.observed_head_oid?.slice(0, 10) ?? 'unknown HEAD'}
@@ -366,13 +359,58 @@ export function IntegrationPanel({
                         candidates
                       ) && (
                         <span className="text-error">
-                          Selection changed or busy; reselect the Workspace.
+                          Selected commit changed; reselect the Workspace.
                         </span>
                       )}
                   </div>
                 );
               })}
             </fieldset>
+            <ol className="space-y-half" aria-label="Merge order">
+              {Object.values(selected).map((selection, index, ordered) => (
+                <li
+                  key={selection.card_id}
+                  className="flex items-center gap-half"
+                >
+                  <span>
+                    {index + 1}.{' '}
+                    {
+                      issues.find((issue) => issue.id === selection.card_id)
+                        ?.title
+                    }
+                  </span>
+                  {[
+                    [-1, '↑'],
+                    [1, '↓'],
+                  ].map(([offset, label]) => (
+                    <Button
+                      key={label}
+                      size="sm"
+                      variant="outline"
+                      aria-label={`Move ${selection.card_id} ${Number(offset) < 0 ? 'up' : 'down'}`}
+                      disabled={
+                        create.isPending ||
+                        index + Number(offset) < 0 ||
+                        index + Number(offset) >= ordered.length
+                      }
+                      onClick={() => {
+                        const next = [...ordered];
+                        const to = index + Number(offset);
+                        [next[index], next[to]] = [next[to], next[index]];
+                        setSelected(
+                          Object.fromEntries(
+                            next.map((item) => [item.card_id, item])
+                          )
+                        );
+                        resetRequest();
+                      }}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </li>
+              ))}
+            </ol>
             <Button
               onClick={start}
               disabled={
@@ -464,7 +502,6 @@ export function IntegrationPanel({
                       </ul>
                     </details>
                   )}
-                  <IntegrationGateControls run={run} />
                   <div className="flex gap-base">
                     {run.workspace_id && (
                       <Button
@@ -495,9 +532,13 @@ export function IntegrationPanel({
                           : 'Cancel Integration'}
                       </Button>
                     )}
-                    {['recovery_required', 'post_processing'].includes(
+                    {(['recovery_required', 'post_processing'].includes(
                       run.status
-                    ) && (
+                    ) ||
+                      (run.payload.published &&
+                        run.payload.wiki_result?.startsWith(
+                          'semantic outbox pending:'
+                        ))) && (
                       <Button
                         size="sm"
                         variant="outline"

@@ -54,8 +54,6 @@ describe('formal Integration selection and controls', () => {
       { observed_head_oid: 'b'.repeat(40) },
       { current_issue_id: 'card-b' },
       { workspace_id: 'workspace-b' },
-      { active_agent_runs: 1 },
-      { active_scripts: 1 },
     ]) {
       expect(
         integrationSelectionIsCurrent(
@@ -64,6 +62,12 @@ describe('formal Integration selection and controls', () => {
         )
       ).toBe(false);
     }
+    expect(
+      integrationSelectionIsCurrent(
+        [selection],
+        [{ ...activity, active_agent_runs: 1, active_scripts: 1 }]
+      )
+    ).toBe(true);
     expect(selection.expected_commit).toBe('a'.repeat(40));
     expect(integrationSelectionIsCurrent([], [activity])).toBe(false);
     expect(

@@ -1,3 +1,4 @@
+import { IntegrationResolutionReview } from './IntegrationResolutionReview';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,7 @@ export function IntegrationInterventionPanel({
     refetchInterval: 3000,
   });
   const run = query.data;
+  const reviewing = run?.payload.stop?.category === 'merge_review';
   const send = useMutation({
     mutationFn: async () => {
       if (!run) return;
@@ -63,6 +65,14 @@ export function IntegrationInterventionPanel({
   });
   return (
     <div className="space-y-half">
+      <p>
+        {t('integrationReview.progress', {
+          current: (run?.payload.step_index ?? 0) + 1,
+          total: run?.payload.sources?.length ?? 0,
+        })}{' '}
+        · {run?.status}
+      </p>
+      {run && <IntegrationResolutionReview run={run} />}
       <p>{t('integrationGate.instructionBoundary')}</p>
       {run?.error && <p role="alert">{run.error}</p>}
       {run?.payload.stop && (
@@ -71,6 +81,23 @@ export function IntegrationInterventionPanel({
         </p>
       )}
       {run && <IntegrationGateControls run={run} />}
+      {!!run?.payload.steps?.length && (
+        <details>
+          <summary>{t('integrationReview.tests')}</summary>
+          {run.payload.steps.map((step, index) => (
+            <div key={`${index}:${step.result_commit}`}>
+              <p>
+                {index + 1}. {step.summary}
+              </p>
+              {step.validation.map((check, i) => (
+                <p key={i}>
+                  {check.command} — {check.result}
+                </p>
+              ))}
+            </div>
+          ))}
+        </details>
+      )}
       {!!run?.payload.history?.length && (
         <details>
           <summary>{t('integrationGate.history')}</summary>
@@ -90,24 +117,28 @@ export function IntegrationInterventionPanel({
           send.isPending ||
           !run ||
           !['blocked', 'integrating'].includes(run.status) ||
-          (run.status === 'integrating' && !prompt.trim()) ||
+          ((run.status === 'integrating' || reviewing) && !prompt.trim()) ||
           run.payload.publication_intent
         }
         onClick={() => send.mutate()}
       >
-        {run?.status === 'integrating'
-          ? t('integrationGate.send')
-          : t('integrationGate.resume')}
+        {reviewing
+          ? t('integrationReview.revise')
+          : run?.status === 'integrating'
+            ? t('integrationGate.send')
+            : t('integrationGate.resume')}
       </PrimaryButton>
-      {run?.status === 'blocked' && !run.payload.publication_intent && (
-        <PrimaryButton
-          variant="secondary"
-          disabled={cancel.isPending || send.isPending}
-          onClick={() => cancel.mutate()}
-        >
-          {t('integrationGate.cancel')}
-        </PrimaryButton>
-      )}
+      {run &&
+        !['succeeded', 'cancelled', 'failed'].includes(run.status) &&
+        !run.payload.publication_intent && (
+          <PrimaryButton
+            variant="secondary"
+            disabled={cancel.isPending || send.isPending}
+            onClick={() => cancel.mutate()}
+          >
+            {t('integrationGate.cancel')}
+          </PrimaryButton>
+        )}
       {(send.error || query.error || cancel.error) && (
         <p role="alert">
           {send.error?.message ?? query.error?.message ?? cancel.error?.message}

@@ -205,6 +205,9 @@ async fn proposal_rejects_changed_selection_empty_plan_and_placeholder_success()
     let mut value = json!({"outcome":"ready","selected_card_ids":[run.payload.sources[0].selection.card_id],
         "summary":"all selected requirements integrated; host tests pending", "validation":[{"command":"node --test","cwd":".","required":true,"evidence":"package.json","environment_requirements":"no external services"}],"exclusions":[],"semantics":{"goal":"combined request","summary":"compatibility resolution"}});
     proposal(&value.to_string(), &run).unwrap();
+    value.as_object_mut().unwrap().remove("semantics");
+    let without_memory = proposal(&value.to_string(), &run).unwrap();
+    assert!(!without_memory.semantics.unresolved_questions.is_empty());
     value["selected_card_ids"] = json!([]);
     assert!(proposal(&value.to_string(), &run).is_err());
     value["selected_card_ids"] = json!([run.payload.sources[0].selection.card_id]);
@@ -588,10 +591,7 @@ async fn git_publication_survives_receipt_failure_without_a_second_merge() {
         .unwrap();
     // An unconfirmed publication must still use the frozen source, even when
     // Git has moved. Only the recovered publication receipt enables completion.
-    assert_eq!(
-        completion_selection(&recovered, &recovered.payload.sources[0]).expected_commit,
-        base
-    );
+    assert_eq!(recovered.payload.sources[0].selection.expected_commit, base);
     recovered.payload.published = true;
     recovered.status = "post_processing".into();
     recovered.save(&pool).await.unwrap();
@@ -604,21 +604,16 @@ async fn git_publication_survives_receipt_failure_without_a_second_merge() {
     );
     assert_eq!(cmd(&["rev-parse", "result"]), result);
     let persisted = IntegrationRun::find(&pool, run.id).await.unwrap();
-    let selection = completion_selection(&persisted, &persisted.payload.sources[0]);
-    assert_eq!(selection.expected_commit, result);
+    let candidate = persisted.payload.result_commit.as_deref().unwrap();
+    assert_eq!(candidate, result);
     assert_eq!(persisted.payload.sources[0].selection.expected_commit, base);
     assert_eq!(persisted.payload.sources[0].commit, base);
     assert!(git.require_clean_source(root, &base).is_err());
-    git.require_clean_source(root, &selection.expected_commit)
-        .unwrap();
+    git.require_clean_source(root, candidate).unwrap();
 
-    // Completion remains stricter than ancestry: dirty files and a later,
-    // unrelated descendant are not this run's own publication.
+    // Later source edits do not change the immutable candidate or selection.
     std::fs::write(root.join("source.txt"), "later work").unwrap();
-    assert!(
-        git.require_clean_source(root, &selection.expected_commit)
-            .is_err()
-    );
+    assert!(git.require_clean_source(root, candidate).is_err());
     cmd(&["add", "source.txt"]);
     cmd(&[
         "-c",
@@ -629,14 +624,8 @@ async fn git_publication_survives_receipt_failure_without_a_second_merge() {
         "-m",
         "later work",
     ]);
-    assert!(
-        git.require_clean_source(root, &selection.expected_commit)
-            .is_err()
-    );
-    assert_eq!(
-        completion_selection(&persisted, &persisted.payload.sources[0]).expected_commit,
-        result
-    );
+    assert!(git.require_clean_source(root, candidate).is_err());
+    assert_eq!(persisted.payload.sources[0].selection.expected_commit, base);
 }
 
 #[tokio::test]
@@ -750,50 +739,6 @@ async fn direct_folder_parent_uses_member_checkout_and_remains_a_target_writer()
     let (targets, writers) = managed_targets(&pool, &repo, &run).await.unwrap();
     assert!(targets.contains(&peer_root));
     assert_eq!(writers, vec![peer.id]);
-}
-
-#[tokio::test]
-async fn completion_accepts_only_its_confirmed_target_publication() {
-    let (_, mut run, _, _) = fixture().await;
-    let frozen = run.payload.sources[0].selection.clone();
-    let result = "b".repeat(40);
-    run.payload.base_commit = Some(frozen.expected_commit.clone());
-    run.payload.result_commit = Some(result.clone());
-    run.payload.publication_intent = true;
-    run.payload.published = true;
-    for target in ["main", "refs/heads/main"] {
-        run.target_ref = target.into();
-        for branch in ["main", "refs/heads/main"] {
-            run.payload.sources[0].branch = branch.into();
-            let selection = completion_selection(&run, &run.payload.sources[0]);
-            assert_eq!(selection.expected_commit, result);
-            assert_eq!(selection.card_id, frozen.card_id);
-            assert_eq!(selection.workspace_id, frozen.workspace_id);
-        }
-    }
-    for case in 0..7 {
-        let mut other = run.clone();
-        match case {
-            0 => other.payload.published = false,
-            1 => other.payload.publication_intent = false,
-            2 => other.payload.sources[0].branch = "feature".into(),
-            3 => other.payload.base_commit = Some("c".repeat(40)),
-            4 => other.payload.result_commit = None,
-            5 => other.payload.sources[0].commit = "c".repeat(40),
-            6 => other.payload.sources[0].branch = "refs/remotes/origin/main".into(),
-            _ => unreachable!(),
-        }
-        assert_eq!(
-            completion_selection(&other, &other.payload.sources[0]).expected_commit,
-            frozen.expected_commit,
-            "case {case}"
-        );
-    }
-    run.payload.result_commit = run.payload.base_commit.clone();
-    assert_eq!(
-        completion_selection(&run, &run.payload.sources[0]).expected_commit,
-        frozen.expected_commit
-    );
 }
 
 #[tokio::test]
@@ -1033,4 +978,104 @@ async fn approved_failed_check_uses_exact_git_publication_and_rejects_target_rac
             );
         }
     }
+}
+
+#[tokio::test]
+async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests() {
+    use crate::routes::integrations::steps;
+    let (_, mut run, _, _) = fixture().await;
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path();
+    let command = |args: &[&str]| {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap().trim().to_string()
+    };
+    command(&["init", "-b", "main"]);
+    command(&["config", "user.name", "Test"]);
+    command(&["config", "user.email", "test@example.invalid"]);
+    std::fs::write(root.join("feature.txt"), "base\n").unwrap();
+    command(&["add", "."]);
+    command(&["commit", "-m", "base"]);
+    let base = command(&["rev-parse", "HEAD"]);
+    command(&["checkout", "-b", "a"]);
+    std::fs::write(root.join("feature.txt"), "A\n").unwrap();
+    command(&["commit", "-am", "A"]);
+    let a = command(&["rev-parse", "HEAD"]);
+    command(&["checkout", "-b", "b", &base]);
+    std::fs::write(root.join("feature.txt"), "B\n").unwrap();
+    command(&["commit", "-am", "B"]);
+    let b = command(&["rev-parse", "HEAD"]);
+    command(&["checkout", "-b", "integration", &base]);
+    run.payload.sequential = true;
+    run.payload.step_base = Some(base.clone());
+    run.payload.base_commit = Some(base);
+    run.payload.sources[0].commit = a.clone();
+    let mut second = run.payload.sources[0].clone();
+    second.commit = b.clone();
+    run.payload.sources.push(second);
+    steps::prepare(root, &mut run).unwrap();
+    assert!(!run.payload.merge_conflicted);
+    command(&["merge", "--no-ff", "--no-edit", &a]);
+    run.payload.result_commit = Some(command(&["rev-parse", "HEAD"]));
+    steps::record_review(root, &mut run).unwrap();
+    assert!(run.payload.reviews.is_empty());
+    // Even without textual conflicts, extra AI compatibility changes need review.
+    command(&["checkout", "-b", "extra-edits"]);
+    std::fs::write(root.join("compatibility.txt"), "additional fix\n").unwrap();
+    command(&["add", "."]);
+    command(&["commit", "-m", "compatibility fix"]);
+    let mut extra = run.clone();
+    extra.payload.result_commit = Some(command(&["rev-parse", "HEAD"]));
+    steps::record_review(root, &mut extra).unwrap();
+    assert_eq!(extra.payload.reviews.len(), 1);
+    assert!(extra.payload.reviews[0].diff.contains("+additional fix"));
+    assert!(!steps::review_approved(&extra));
+    command(&["checkout", "integration"]);
+    steps::complete(&mut run).unwrap();
+    steps::complete(&mut run).unwrap(); // receipt replay is harmless
+    assert_eq!(run.payload.steps.len(), 1);
+    run.payload.step_index = 1;
+    run.payload.step_base = run.payload.result_commit.clone();
+    steps::prepare(root, &mut run).unwrap();
+    assert!(run.payload.merge_conflicted);
+    assert!(!steps::review_approved(&run));
+    let merge = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["merge", "--no-ff", "--no-edit", &b])
+        .output()
+        .unwrap();
+    assert_eq!(merge.status.code(), Some(1));
+    std::fs::write(root.join("feature.txt"), "A and B\n").unwrap();
+    command(&["add", "."]);
+    command(&["commit", "-m", "preserve A and B"]);
+    run.payload.result_commit = Some(command(&["rev-parse", "HEAD"]));
+    run.payload.validation.clear();
+    steps::retain_previous_validation(&mut run);
+    assert_eq!(run.payload.validation.len(), 1);
+    assert!(run.payload.validation[0].execution_process_id.is_none());
+    assert!(run.payload.validation[0].result.is_none());
+    steps::record_review(root, &mut run).unwrap();
+    let review = run.payload.reviews.last().unwrap();
+    assert!(review.diff.contains("+A and B"));
+    assert!(review.diff.contains("<<<<<<<"));
+    assert!(!steps::review_approved(&run));
+    let review = run.payload.reviews.last_mut().unwrap();
+    review.decision = Some("continue".into());
+    review.request_id = Some(Uuid::new_v4());
+    review.actor = Some(Uuid::from_u128(1));
+    review.decided_at = Some("now".into());
+    assert!(steps::review_approved(&run));
+    run.payload.result_commit = Some("c".repeat(40));
+    assert!(!steps::review_approved(&run));
 }

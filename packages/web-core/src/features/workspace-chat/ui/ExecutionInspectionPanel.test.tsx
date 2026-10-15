@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session, Workspace, WorkspaceExecutionView } from 'shared/types';
 import { ExecutionInspectionPanel } from './ExecutionInspectionPanel';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock('./IntegrationInterventionPanel', () => ({
   IntegrationInterventionPanel: () =>
     createElement('div', null, 'Integration intervention'),

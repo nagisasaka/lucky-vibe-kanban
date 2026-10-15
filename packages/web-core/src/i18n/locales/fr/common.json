@@ -1220,5 +1220,18 @@
     "send": "Envoyer une instruction",
     "resume": "Reprendre après réparation / envoyer une instruction",
     "history": "Historique de reprise"
+  },
+  "integrationReview": {
+    "title": "Review merge resolution",
+    "diff": "Resolution diff",
+    "diffHelp": "Changes from Git’s automatic merge result, including conflict markers and additional AI edits.",
+    "emptyDiff": "No textual difference. Review the explanation and the complete Workspace diff.",
+    "approved": "Approved",
+    "rejected": "Revised or cancelled",
+    "approve": "Approve and continue",
+    "rejectHelp": "To request a different resolution, enter instructions below and select “Request revision”.",
+    "revise": "Request revision",
+    "tests": "Completed merge steps and tests",
+    "progress": "Merge step {{current}} / {{total}}"
   }
 }

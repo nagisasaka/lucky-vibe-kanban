@@ -72,6 +72,21 @@ describe('workspace sidebar runtime state', () => {
     );
   });
 
+  it('shows an Integration in the ordinary list without exposing Wiki maintenance there', () => {
+    fixture.workspace.usage = 'execution_only';
+    fixture.workspace.execution_owner = {
+      kind: 'integration',
+      run_id: 'run',
+      repository_id: 'repo',
+      result: null,
+    };
+    const result = readWorkspaces();
+    expect(result.workspaces.map((workspace) => workspace.id)).toEqual([
+      'workspace',
+    ]);
+    expect(result.executionWorkspaces).toEqual([]);
+  });
+
   it('converges after a terminal AgentRun even when the legacy workspace stream stays running', () => {
     expect(readWorkspaces().workspaces[0].isRunning).toBe(true);
     fixture.summaries = new Map([

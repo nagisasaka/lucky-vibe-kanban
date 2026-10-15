@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { IntegrationInterventionPanel } from './IntegrationInterventionPanel';
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -20,6 +21,8 @@ export function ExecutionInspectionPanel({
   selectedSessionId?: string;
   onSelectSession: (id: string) => void;
 }) {
+  const { t } = useTranslation('common');
+  const integration = workspace.execution_owner?.kind === 'integration';
   const execution = useWorkspaceOwnerView(workspace.id);
   const pending = useWorkspacePendingApproval();
   const [answer, setAnswer] = useState('');
@@ -54,11 +57,15 @@ export function ExecutionInspectionPanel({
   const run = execution.data;
   return (
     <section
-      className="border-t border-border bg-secondary p-base flex flex-col gap-half text-sm"
+      className={`border-t border-border bg-secondary p-base flex flex-col gap-half text-sm${integration ? ' max-h-[65vh] overflow-y-auto' : ''}`}
       aria-label="Execution inspection"
     >
       <div className="flex items-center justify-between gap-base">
-        <strong className="text-high">Execution-only · Inspection</strong>
+        <strong className="text-high">
+          {integration
+            ? t('integrationReview.title')
+            : 'Execution-only · Inspection'}
+        </strong>
         <PrimaryButton
           variant="secondary"
           disabled={!run?.can_stop || execution.stop.isPending}
@@ -69,11 +76,13 @@ export function ExecutionInspectionPanel({
             : 'Stop execution'}
         </PrimaryButton>
       </div>
-      <p className="text-low">
-        The owner controls this environment. Files are shown from this execution
-        workspace. Session creation and development actions remain
-        owner-controlled.
-      </p>
+      {!integration && (
+        <p className="text-low">
+          The owner controls this environment. Files are shown from this
+          execution workspace. Session creation and development actions remain
+          owner-controlled.
+        </p>
+      )}
       <p className="text-normal">
         {run?.status ?? 'Loading execution…'} ·{' '}
         {run?.owner?.kind ?? workspace.execution_owner?.kind ?? 'Unknown owner'}

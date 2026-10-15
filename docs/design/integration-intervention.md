@@ -1,146 +1,106 @@
 ---
-title: "Recovering a stopped formal Integration"
-description: "Review validation risks, send Integration instructions and resume an existing execution without bypassing publication checks."
+title: "Automatic merge and human review"
+description: "Merge selected commits in order, test each cumulative result, and review AI resolutions in a visible Integration Workspace."
 ---
 
-## Review the stop before continuing
+## Start from the Board
 
-Open the local Board's Integration panel, then **Open integration Workspace**.
-Review the selected Issues and source commits, target branch, base commit B,
-candidate R, host command results and saved error. Git publication, Issue Done
-and subsequent Wiki processing remain separate results.
+Select one Workspace per Card, the observed source commits, their merge order,
+and the local target branch. Starting creates one ordinary Board Card named
+`Auto merge: … → target`, with a linked Integration Workspace. The Card,
+Workspace, link and request are saved together. Repeated delivery of that request
+returns the same execution. Queued work is visible before the agent starts.
 
-For a completed required check that fails, cannot run (for example, command exit
-126/127), or is stopped after the validation deadline, the host saves a
-confirmation. Reconnecting does not dismiss it. The Integration retains its
-reservations while you decide:
+The Integration Workspace appears in the normal Workspace list and beneath its
+Card on the Board. Open it there or use **Open integration Workspace** in the
+start dialog. Conversation, file differences, test results, resolution review,
+additional instructions and cancellation are available in that Workspace.
+Existing provider questions and tool approvals remain available too.
 
-- **Fix environment and retry** reruns the affected check on the same clean R.
-  Previous failed evidence remains in the confirmation history.
-- **Continue with this exception** requires you to acknowledge the displayed
-  risk. It accepts only that check for the displayed candidate and selection.
-  Further checks still run. Failed/unavailable evidence stays failed/unavailable;
-  the UI separately records the exception, local operator and decision time.
-- **Cancel Integration** stops the product without publishing the candidate.
+Selection adopts committed Git objects. Later work on the source branch, dirty
+files, active Goals, other Workspaces attached to the Card, and work in other
+repositories do not prevent merging those objects. Uncommitted changes are not
+included. The start dialog rejects a changed observed HEAD until explicitly
+reselected; after admission the selected commit stays fixed.
 
-An unanswered confirmation does not publish. A changed candidate, base, selection,
-Issue requirement revision or validation plan invalidates the corresponding
-exception. The publication path still checks source identity, checkout cleanliness,
-completed process cleanup, validation command identity and before/after commit
-identity. Git publishes R only if the target still equals B.
+## Merge and test each source
 
-Storage failures, unknown execution ownership, unconfirmed processes, dirty or
-conflicted checkouts, permission failures and target advancement are technical
-stops, not validation exceptions. Repair the cause first. Target/source changes
-require a new explicit selection; do not force-push or edit saved approval data.
+The target HEAD at preparation is base B. The Integration merges the first source
+on its own branch and submits a committed candidate. LVK runs the applicable
+validation commands on that candidate. After validation and any required human
+review, it moves to the next source in the same Workspace and Session.
 
-## Give the Integration agent instructions
+Each step preserves the previously tested prefix. The host carries earlier
+validation commands into subsequent plans, including their required status;
+it does not reuse their earlier passing results or exception approvals on a new
+candidate. The agent adds applicable tests for the newly merged source and its
+interaction with earlier changes. Completed steps retain their commands,
+results and exceptions. Repository instructions and tests determine the plan;
+passing checks do not prove complete test coverage.
 
-The Integration Workspace has a dedicated instruction field. Other execution-only
-Workspace kinds retain their existing restrictions. Ordinary Workspace input is
-unchanged. Session creation and direct publication remain owner-controlled.
+Validation plans use Workspace-specific compiler/test output directories. Inherited
+shared output paths such as `CARGO_TARGET_DIR` must not substitute artifacts from
+another checkout; dependency download caches can still be shared.
 
-During integration, **Send instruction** uses the existing canonical Steer command
-and audit. It checks the exact Integration, Workspace, Session and current AgentRun,
-and serialises against freezing the validation candidate. Providers must support
-steering; an unsupported or undelivered instruction is an error, not acceptance.
+Git computes an automatic merge tree before each step. If there are conflicts,
+or the agent changes that tree beyond Git's automatic result, LVK records the
+resulting difference for human review. Ordinary clean merges with no additional
+edits advance automatically after tests pass.
 
-After a blocked execution, **Resume after repair / send instruction** retains the
-Integration and Session. You may leave the instruction blank to retry after an
-external repair. The host reacquires reservations and rechecks sources and B.
-When Create acceptance is uncertain, it reconciles the saved immutable request
-and uses that same execution identity. A confirmed terminal AgentRun uses the
-existing Resume mechanism when a provider session exists, otherwise Restart.
-Additional text is delivered using the existing instruction command. The host
-validates the resulting candidate again and does not reuse an old exception for a
-changed candidate.
+## Review an AI resolution
 
-Instructions do not answer a validation confirmation and do not grant tool
-execution approval. Existing question and tool-approval controls remain separate.
-The product's saved recovery history retains the prior error, candidate/check
-results and instruction. Canonical commands/events retain dispatch and delivery
-outcomes. If an agent finishes before the instruction reaches it, inspect the
-saved instruction and resume explicitly; do not assume it was processed.
+The Workspace shows the agent's explanation, the candidate commit, test results,
+and the diff from Git's automatic merge tree. Conflict marker removal is visible
+in that diff, along with additional compatibility edits. The normal Workspace
+diff is also available for the full change.
 
-## Recover the reported database lock
+- **Approve and continue** accepts only the displayed candidate and plan.
+- Enter instructions and choose **Request revision** to reject the current
+  proposal and ask for another resolution. Earlier proposals remain in history;
+  the new candidate is tested and reviewed again.
+- **Cancel Integration** stops the operation before publication.
 
-The reported historical Integration is
-`66198606-4010-448b-a3be-f8c7e2f27494`, with Workspace
-`60a671bf-3ef1-4294-aa67-8b8869d328f1`. This implementation task does not authorise
-resuming it, approving its checks, merging it or changing deployment settings.
-These steps are for an operator after installing and validating the change:
+Approval is an explicit UI decision, not text in a prompt. The agent cannot
+approve its own result. Changing the candidate or validation plan invalidates
+an old approval. Reconnecting retains pending reviews.
 
-1. Open the existing Integration and inspect its saved error, dispatch receipt,
-   Workspace and Session. Do not assume the absence of `agent_run_id` proves that
-   the execution was never accepted.
-2. Resolve the competing SQLite writer or underlying storage problem. Do not
-   delete database journal files or blindly terminate a process holding the DB.
-3. Use **Resume after repair / send instruction** on that existing Workspace.
-   The host reconciles the original Create envelope before retrying. A still-live
-   or unconfirmed writer prevents a second launch.
-4. If the selected source, requirements or target changed while the Integration
-   was blocked, cancel/reselect explicitly. An old candidate is not published
-   against a new target.
-5. Review any host validation confirmation independently. Resuming an execution
-   does not approve failed checks. Verify Git publication separately from Done
-   and Wiki results.
+## Handle failed tests
 
-Preparation failures before a durable Create envelope exists still require
-inspection and explicit reselection. Publication-intent failures use the existing
-**Reconcile publication (no remerge)** operation. They never replay a Git write
-just because the database receipt is absent.
+For a required command that fails, is unavailable, or does not finish, the
+Workspace offers **Fix environment and retry**, **Continue with this exception**,
+and cancellation. An exception covers only that check and candidate. The failed
+result remains visible; it is never rewritten as a pass. Additional instructions
+can ask the agent to repair code and submit a freshly tested candidate.
 
-## SQLite boundary and external comparisons
+Storage errors, an unconfirmed writer, a dirty candidate checkout and target
+advancement are execution problems. Repair the environment and resume the same
+Integration where possible. Preparation retries reuse the existing Card and
+Workspace. If the target advanced, make a new explicit selection against it.
+Cancellation never rolls back an already published target.
 
-Agent identity and retry admission previously began a deferred transaction,
-read idempotency state, then wrote. Concurrent SQLite writers can make that upgrade
-fail immediately; WAL's stale snapshot cannot be rescued by a longer busy timeout.
-Both admission paths now use `BEGIN IMMEDIATE` before reading. The existing
-five-second database busy timeout bounds waiting. Persistent failure is retained
-as failure; retries reuse the durable request. The historical incident has not
-been re-executed against its live database, so this is not a claim that its exact
-lock holder was identified.
+## Publish and move Cards
 
-Official references retrieved on 12 October 2026:
+LVK advances the local target to the exact final tested and approved commit,
+provided the target still equals B. It does not create another merge commit at
+publication. No push, PR or deployment is implied.
 
-| Reference | Adopted | Not adopted |
-| --- | --- | --- |
-| [GitHub protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) | Re-evaluate approval after candidate/base changes; retain publication gates | Permanent administrator bypass lists and disabled status checks |
-| [GitLab merge request approvals API](https://docs.gitlab.com/api/merge_request_approvals/) | Bind an explicit approval to an expected revision; reject stale answers | GitLab roles, merge engine and approval-policy framework |
-| [GitLab job control](https://docs.gitlab.com/ci/jobs/job_control/) | Separate manual intervention/confirmation from execution outcomes | Treating optional/skipped jobs as evidence that LVK's required tests passed |
+Successful publication moves the originally selected Cards and the auto-merge
+Card to Done. There is no separate requirements-completion assessment: Card
+text, source links and other work in progress do not disqualify a selected Card.
+The column update and its receipt commit together, so a retry does not move a
+Card back to Done after a person has reopened it. A missing Card/column is
+reported separately from Git success. Older executions may still hold legacy
+reservations; those remain respected until released.
 
-LVK reuses Integration payloads/reservations, Orchestration events/outbox,
-AgentRun commands and ExecutionProcesses. There is no second merge engine or
-independent execution ledger. Explicit product resumption has an audited event;
-ordinary late lifecycle observations still cannot reopen terminal orchestration.
+OpenWiki and semantic bookkeeping are separate follow-up results. Missing intent
+records are reported as evidence limitations, and memory bookkeeping failures do
+not reverse Git publication. The existing publication reconciliation action can
+retry pending semantic bookkeeping without merging again.
 
-## Authority and validation limits
+## Compatibility and scope
 
-Formal Integration is a local Board capability. Decisions use the existing local
-operator identity (UUID 1) and existing Origin/relay-signature boundary; this
-change does not introduce per-person RBAC or an OS sandbox. A local process with
-full access to the server API/database is within that existing trust boundary.
-Reference text and normal prompts never populate a confirmation decision.
-Do not expose the local operator API to untrusted clients.
-
-Provider execution and notification delivery depend on the configured host.
-Notifications use the existing notification preferences. Browser confirmation and
-saved API state remain available when a notification cannot be delivered. The
-source test record and completion report distinguish isolated automated checks
-from live provider, browser and deployment verification.
-
-## Automated regression coverage
-
-The new tests cover durable decision races and replay, cross-project and stale
-confirmation rejection, ordinary prompt/approval schema separation, exact owned
-Workspace/Session/Agent instruction permission, explicit resumption versus late
-terminal events, and a real WAL writer that both releases within and exceeds the
-bounded wait. The publication regression uses an isolated real Git repository and
-SQLite execution evidence with a mock failed check; it verifies exact-R publication,
-target advancement rejection and no second publication.
-
-UI regressions exercise acknowledgement-required controls, retained failed
-results, restored decisions, Integration-only intervention, running versus blocked
-instruction routes (including no AgentRun), stable resend identities and disabled
-publication-phase controls. These component tests do not claim a live provider or
-browser end-to-end run.
+Existing non-sequential Integration runs retain their saved validation flow.
+The sequential contract applies to newly admitted runs. The underlying ownership
+record still routes agent commands, cancellation and publication; visibility does
+not grant a second concurrent writer access to a candidate under validation.
+OpenWiki maintenance Workspaces keep their existing separate execution scope.

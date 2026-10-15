@@ -84,7 +84,7 @@ pub async fn get_workspace_summaries(
     // The legacy workspace patch stream does not observe AgentRun transitions.
     // Reuse this already-fetched aggregate in the polling summary so a terminal
     // maintenance/coding run cannot leave the sidebar permanently "running".
-    let running_workspaces: std::collections::HashSet<_> = workspace_statuses
+    let mut running_workspaces: std::collections::HashSet<_> = workspace_statuses
         .iter()
         .filter(|ws| ws.is_running)
         .map(|ws| ws.workspace.id)
@@ -113,11 +113,21 @@ pub async fn get_workspace_summaries(
         ExecutionProcess::find_workspaces_with_running_dev_servers(pool, archived).await?;
 
     // 4. Check canonical waiting states rather than the legacy approval bridge
-    let pending_approval_workspaces: std::collections::HashSet<_> =
+    let mut pending_approval_workspaces: std::collections::HashSet<_> =
         AgentRunRecord::find_workspaces_awaiting_approval(pool, archived)
             .await?
             .into_iter()
             .collect();
+
+    let integrations: Vec<(Uuid, String)> = sqlx::query_as("SELECT workspace_id,status FROM integration_runs WHERE workspace_id IS NOT NULL AND status NOT IN ('succeeded','failed','cancelled')")
+        .fetch_all(pool).await?;
+    for (workspace, status) in integrations {
+        if matches!(status.as_str(), "blocked" | "recovery_required") {
+            pending_approval_workspaces.insert(workspace);
+        } else {
+            running_workspaces.insert(workspace);
+        }
+    }
 
     // 5. Check which workspaces have AgentRuns not acknowledged by the local UI
     let unseen_workspaces: std::collections::HashSet<_> =

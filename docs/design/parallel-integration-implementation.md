@@ -3,6 +3,16 @@ title: "Parallel context and formal Integration implementation"
 description: "Implementation checkpoints, safety decisions and acceptance evidence for parallel development and local Integration."
 ---
 
+## Current automatic merge contract
+
+New automatic merges use the [sequential merge and review contract](integration-intervention.md):
+admission creates a visible Card and linked Workspace, adopts immutable source
+commits without reserving source Cards/Workspaces, validates each cumulative
+merge step, and obtains explicit human approval for conflict resolutions and
+additional AI edits. Successful publication moves selected Cards to Done without
+requirements eligibility checks. The older admission and conditional-Done
+checkpoints below describe the previous implementation and legacy runs.
+
 ## Baseline and authorised scope
 
 Implementation started on 17 September 2026 on `feat/parallel-context-bootstrap`.

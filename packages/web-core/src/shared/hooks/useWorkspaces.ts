@@ -16,6 +16,7 @@ import type {
 // UI-specific workspace type for sidebar display
 export interface SidebarWorkspace {
   usage?: WorkspaceUsage;
+  isIntegration?: boolean;
   id: string;
   name: string;
   branch: string;
@@ -62,6 +63,7 @@ function toSidebarWorkspace(
 ): SidebarWorkspace {
   return {
     usage: ws.usage,
+    isIntegration: ws.execution_owner?.kind === 'integration',
     id: ws.id,
     name: ws.name ?? ws.branch, // Use name if available, fallback to branch
     branch: ws.branch,
@@ -236,12 +238,14 @@ export function useWorkspaces(): UseWorkspacesResult {
 
   const scopes = useMemo(
     () => ({
-      workspaces: workspaces.filter((ws) => ws.usage !== 'execution_only'),
+      workspaces: workspaces.filter(
+        (ws) => ws.usage !== 'execution_only' || ws.isIntegration
+      ),
       archivedWorkspaces: archivedWorkspaces.filter(
-        (ws) => ws.usage !== 'execution_only'
+        (ws) => ws.usage !== 'execution_only' || ws.isIntegration
       ),
       executionWorkspaces: [...workspaces, ...archivedWorkspaces].filter(
-        (ws) => ws.usage === 'execution_only'
+        (ws) => ws.usage === 'execution_only' && !ws.isIntegration
       ),
     }),
     [workspaces, archivedWorkspaces]

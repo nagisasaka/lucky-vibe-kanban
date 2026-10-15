@@ -3,6 +3,7 @@
 //! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
 mod admission;
 mod runtime;
+mod steps;
 pub(crate) use admission::AdmissionFailure;
 use axum::{
     Json, Router,
@@ -213,7 +214,14 @@ pub(crate) async fn observe_wiki_from_pool(
         }
         Ok(None) => false,
         Err(error) => {
-            run.payload.wiki_result = Some(format!("Wiki status unavailable: {error:#}"));
+            if !run
+                .payload
+                .wiki_result
+                .as_deref()
+                .is_some_and(|status| status.starts_with("semantic outbox pending:"))
+            {
+                run.payload.wiki_result = Some(format!("Wiki status unavailable: {error:#}"));
+            }
             false
         }
     }
@@ -235,7 +243,15 @@ async fn recover(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
     let run = IntegrationRun::find(&deployment.db().pool, id).await?;
-    if !matches!(run.status.as_str(), "post_processing" | "recovery_required") {
+    let can_recover = matches!(run.status.as_str(), "post_processing" | "recovery_required")
+        || (run.status == "succeeded"
+            && run.payload.published
+            && run
+                .payload
+                .wiki_result
+                .as_deref()
+                .is_some_and(|s| s.starts_with("semantic outbox pending:")));
+    if !can_recover {
         return Err(error(
             "Only publication reconciliation may be retried on this run; create a new explicit selection for another integration",
         ));

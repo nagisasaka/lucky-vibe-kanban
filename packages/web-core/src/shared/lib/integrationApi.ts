@@ -120,9 +120,7 @@ export function integrationSelectionIsCurrent(
           (a) =>
             a.current_issue_id === s.card_id &&
             a.workspace_id === s.workspace_id &&
-            a.observed_head_oid === s.expected_commit &&
-            Number(a.active_agent_runs) === 0 &&
-            Number(a.active_scripts) === 0
+            a.observed_head_oid === s.expected_commit
         )
     )
   );
