@@ -263,7 +263,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
 }
 
 fn local_user_id() -> Uuid {
-    Uuid::from_u128(1)
+    server_access::actor_id()
 }
 
 fn local_org_id() -> Uuid {
@@ -1187,7 +1187,7 @@ pub(crate) async fn list_project_workspaces(
         ORDER BY w.updated_at DESC
         "#,
     )
-    .bind(local_user_id())
+    .bind(Uuid::from_u128(1))
     .bind(project_id)
     .fetch_all(pool)
     .await?;
@@ -1217,7 +1217,7 @@ async fn list_user_workspaces(pool: &SqlitePool) -> Result<Vec<Workspace>, ApiEr
         ORDER BY w.updated_at DESC
         "#,
     )
-    .bind(local_user_id())
+    .bind(Uuid::from_u128(1))
     .fetch_all(pool)
     .await?;
 
@@ -1235,60 +1235,114 @@ async fn list_organizations() -> ResponseJson<ListOrganizationsResponse> {
             issue_prefix: "LOCAL".to_string(),
             created_at: now,
             updated_at: now,
-            user_role: MemberRole::Admin,
+            user_role: if server_access::actor_is_admin() {
+                MemberRole::Admin
+            } else {
+                MemberRole::Member
+            },
         }],
     })
 }
 
-async fn list_members(Path(_org_id): Path<Uuid>) -> ResponseJson<ListMembersResponse> {
-    ResponseJson(ListMembersResponse {
-        members: vec![OrganizationMemberWithProfile {
-            user_id: local_user_id(),
+async fn visible_members(
+    pool: &SqlitePool,
+) -> Result<Vec<OrganizationMemberWithProfile>, ApiError> {
+    if server_access::actor_issuer() == "urn:lvk:local" {
+        return Ok(vec![OrganizationMemberWithProfile {
+            user_id: Uuid::from_u128(1),
             role: MemberRole::Admin,
             joined_at: Utc::now(),
-            first_name: Some("Local".to_string()),
-            last_name: Some("User".to_string()),
-            username: Some("local".to_string()),
-            email: Some("local@vibe-kanban.local".to_string()),
+            first_name: Some("Local".into()),
+            last_name: None,
+            username: Some("local".into()),
+            email: None,
             avatar_url: None,
-        }],
-    })
-}
-
-async fn fallback_organization_members(
-    Query(query): Query<OrganizationQuery>,
-) -> ResponseJson<Value> {
-    if query.organization_id != Some(local_org_id()) {
-        return empty_rows("organization_member_metadata");
+        }]);
     }
-
-    ResponseJson(json!({
-        "organization_member_metadata": [OrganizationMember {
-            organization_id: local_org_id(),
-            user_id: local_user_id(),
-            role: MemberRole::Admin,
-            joined_at: Utc::now(),
-            last_seen_at: None,
-        }]
+    let rows = sqlx::query("SELECT id,display_name,role FROM access_members WHERE issuer=? AND state='active' ORDER BY created_at")
+        .bind(server_access::actor_issuer()).fetch_all(pool).await?;
+    rows.iter()
+        .map(|row| {
+            Ok(OrganizationMemberWithProfile {
+                user_id: Uuid::parse_str(row.try_get::<&str, _>("id")?)
+                    .map_err(|_| ApiError::BadRequest("Invalid member identity".into()))?,
+                role: if row.try_get::<&str, _>("role")? == "admin" {
+                    MemberRole::Admin
+                } else {
+                    MemberRole::Member
+                },
+                joined_at: Utc::now(),
+                first_name: Some(row.try_get("display_name")?),
+                last_name: None,
+                username: None,
+                email: None,
+                avatar_url: None,
+            })
+        })
+        .collect()
+}
+async fn list_members(
+    State(deployment): State<DeploymentImpl>,
+    Path(_org_id): Path<Uuid>,
+) -> Result<ResponseJson<ListMembersResponse>, ApiError> {
+    Ok(ResponseJson(ListMembersResponse {
+        members: visible_members(&deployment.db().pool).await?,
     }))
 }
-
-async fn fallback_users(Query(query): Query<OrganizationQuery>) -> ResponseJson<Value> {
+async fn fallback_organization_members(
+    State(deployment): State<DeploymentImpl>,
+    Query(query): Query<OrganizationQuery>,
+) -> Result<ResponseJson<Value>, ApiError> {
     if query.organization_id != Some(local_org_id()) {
-        return empty_rows("users");
+        return Ok(empty_rows("organization_member_metadata"));
     }
-
-    ResponseJson(json!({
-        "users": [User {
-            id: local_user_id(),
-            email: "local@vibe-kanban.local".to_string(),
-            first_name: Some("Local".to_string()),
-            last_name: Some("User".to_string()),
-            username: Some("local".to_string()),
+    let members = visible_members(&deployment.db().pool)
+        .await?
+        .into_iter()
+        .map(|m| OrganizationMember {
+            organization_id: local_org_id(),
+            user_id: m.user_id,
+            role: m.role,
+            joined_at: m.joined_at,
+            last_seen_at: None,
+        })
+        .collect::<Vec<_>>();
+    Ok(ResponseJson(
+        json!({"organization_member_metadata":members}),
+    ))
+}
+async fn fallback_users(
+    State(deployment): State<DeploymentImpl>,
+    Query(query): Query<OrganizationQuery>,
+) -> Result<ResponseJson<Value>, ApiError> {
+    if query.organization_id != Some(local_org_id()) {
+        return Ok(empty_rows("users"));
+    }
+    let mut users = visible_members(&deployment.db().pool)
+        .await?
+        .into_iter()
+        .map(|m| User {
+            id: m.user_id,
+            email: String::new(),
+            first_name: m.first_name,
+            last_name: None,
+            username: m.username,
             created_at: Utc::now(),
             updated_at: Utc::now(),
-        }]
-    }))
+        })
+        .collect::<Vec<_>>();
+    if !users.iter().any(|u| u.id == Uuid::from_u128(1)) {
+        users.push(User {
+            id: Uuid::from_u128(1),
+            email: String::new(),
+            first_name: Some("Legacy local user (unattributed)".into()),
+            last_name: None,
+            username: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
+    }
+    Ok(ResponseJson(json!({"users":users})))
 }
 
 async fn fallback_projects(

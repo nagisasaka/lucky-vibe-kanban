@@ -14,6 +14,8 @@ from runner import safe_path, validate_files
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='http://127.0.0.1:3000')
+    parser.add_argument('--internal-token-file', type=Path,
+                        help='Owner-only access-internal.token for same-host loopback requests')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('resources')
     sub.add_parser('runners')
@@ -41,13 +43,20 @@ def main():
         if name == 'download':
             cmd.add_argument('directory', type=Path)
     args = parser.parse_args()
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json', 'X-LVK-CSRF': 'local'}
     if os.environ.get('LVK_HTTP_AUTH'):
         headers['Authorization'] = 'Basic ' + base64.b64encode(os.environ['LVK_HTTP_AUTH'].encode()).decode()
+        headers['X-LVK-CSRF'] = 'basic'
     from urllib.parse import urlparse
     parsed = urlparse(args.url)
     if parsed.scheme != 'https' and not (parsed.scheme == 'http' and parsed.hostname in ('localhost', '127.0.0.1', '::1')):
         parser.error('Use HTTPS or an SSH tunnel to localhost')
+    if args.internal_token_file:
+        if parsed.scheme != 'http' or parsed.hostname not in ('localhost', '127.0.0.1', '::1') or parsed.username or parsed.password:
+            parser.error('The internal file capability can only target same-host loopback HTTP')
+        if args.internal_token_file.is_symlink() or (os.name != 'nt' and args.internal_token_file.stat().st_mode & 0o077):
+            parser.error('The internal token must be a regular owner-only file')
+        headers['X-LVK-Internal-Token'] = args.internal_token_file.read_text().strip()
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *args, **kwargs):
             return None

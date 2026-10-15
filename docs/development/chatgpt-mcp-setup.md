@@ -5,6 +5,12 @@ description: Configure the opt-in OAuth MCP endpoint and install the LVK workflo
 
 # Connect ChatGPT to LVK
 
+> **Historical setup for releases before Auth0 server access.** The current implementation
+> rejects `LVK_MCP_CONFIG` and uses Auth0 JWT verification with LVK membership.
+> Use [the current authentication guide](../self-hosting/authentication.mdx) for
+> setup, the separate preregistered ChatGPT client, and migration. The introspection,
+> public-client and allowlist recipe below is retained only for old releases.
+
 This feature adds an optional authenticated MCP endpoint to the existing Linux
 LVK server. It uses Streamable HTTP and an external OAuth authorisation server
 with RFC 7662 introspection. It does not need an upper-model API key, migrate

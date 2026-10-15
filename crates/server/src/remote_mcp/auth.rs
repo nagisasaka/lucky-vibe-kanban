@@ -1,14 +1,20 @@
-use std::{collections::BTreeSet, sync::Arc, time::Duration};
+use std::collections::BTreeSet;
+#[cfg(test)]
+use std::{sync::Arc, time::Duration};
 
+#[cfg(test)]
 use axum::{
     extract::{Request, State},
     http::{HeaderValue, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
 };
+#[cfg(test)]
 use serde::Deserialize;
+#[cfg(test)]
 use serde_json::Value;
 
+#[cfg(test)]
 use super::config::Config;
 
 #[derive(Clone)]
@@ -25,6 +31,7 @@ impl Principal {
 
 /// The trusted authorization server verifies cryptography and revocation. LVK
 /// validates the resource, owner and permissions in its RFC 7662 response.
+#[cfg(test)]
 #[derive(Deserialize)]
 pub(super) struct Introspection {
     pub active: bool,
@@ -37,6 +44,7 @@ pub(super) struct Introspection {
     pub scope: Option<String>,
 }
 
+#[cfg(test)]
 impl Introspection {
     pub(super) fn principal(self, config: &Config, now: i64) -> Option<Principal> {
         let audience = self.aud.as_ref().is_some_and(|aud| {
@@ -72,6 +80,7 @@ impl Introspection {
     }
 }
 
+#[cfg(test)]
 #[derive(Clone)]
 pub struct Auth {
     pub config: Arc<Config>,
@@ -79,6 +88,7 @@ pub struct Auth {
     secret: Arc<String>,
 }
 
+#[cfg(test)]
 impl Auth {
     pub fn new(config: Arc<Config>, secret: String) -> anyhow::Result<Self> {
         anyhow::ensure!(
@@ -131,6 +141,7 @@ impl Auth {
     }
 }
 
+#[cfg(test)]
 pub async fn require(State(auth): State<Auth>, mut request: Request, next: Next) -> Response {
     let token = request
         .headers()

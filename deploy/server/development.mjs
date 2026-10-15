@@ -14,8 +14,20 @@ export function developmentEnvironment(env, settings) {
   const port = env.LVK_DEV_HTTPS_PORT || "8443";
   if (!/^\d+$/.test(port) || Number(port) < 1024 || Number(port) > 65535)
     throw new Error("LVK_DEV_HTTPS_PORT must be between 1024 and 65535");
+  // Vite dev exposes source/filesystem and editor endpoints outside Rust's
+  // access boundary. Only serve built assets once the proxy guard is removed.
+  const backendOnly = settings.managedAccess && !settings.legacyBasic;
+  const frontendMode = env.FRONTEND_MODE || (backendOnly ? "preview" : "dev");
+  if (backendOnly && frontendMode !== "preview")
+    throw new Error(
+      "Backend authentication requires FRONTEND_MODE=preview; Vite dev needs the legacy proxy guard",
+    );
   return {
     ...env,
+    FRONTEND_MODE: frontendMode,
+    LVK_ACCESS_DEPLOYMENT: "public",
+    LVK_PUBLIC_URL:
+      env.LVK_PUBLIC_URL || `https://${authority(settings.app)}:${port}`,
     HOST: "127.0.0.1",
     PORT: "",
     FRONTEND_PORT: "4020",
@@ -44,10 +56,12 @@ const run = (command, args, env) =>
 
 async function main() {
   const settings = await withMcpIngress(
-    { ...serverSettings(process.env), preview: null },
+    {
+      ...serverSettings({ ...process.env, LVK_ACCESS_DEPLOYMENT: "public" }),
+      preview: null,
+    },
     process.env,
   );
-  const env = developmentEnvironment(process.env, settings);
   const repo = await realpath(
     process.env.LVK_DEV_REPO || "/repos/lucky-vibe-kanban",
   );
@@ -59,11 +73,18 @@ async function main() {
     const [certificate, key, passwords] = await Promise.all([
       readFile("/run/lvk-secrets/tls/fullchain.pem"),
       readFile("/run/lvk-secrets/tls/privkey.pem"),
-      readFile("/run/lvk-secrets/htpasswd", "utf8"),
+      readFile("/run/lvk-secrets/htpasswd", "utf8").catch((error) => {
+        if (error.code === "ENOENT" && process.env.LVK_PROXY_AUTH !== "legacy")
+          return null;
+        throw error;
+      }),
     ]);
     return { certificate, key, passwords };
   };
   const initial = await read();
+  settings.legacyBasic =
+    process.env.LVK_PROXY_AUTH !== "backend" && initial.passwords !== null;
+  const env = developmentEnvironment(process.env, settings);
   validateSecrets(
     initial.certificate,
     initial.key,

@@ -4,6 +4,7 @@ members = [
     "crates/api-types",
     "crates/relay-client",
     "crates/server",
+    "crates/server-access",
     "crates/relay-types",
     "crates/trusted-key-auth",
     "crates/mcp",

@@ -85,8 +85,11 @@ pub async fn guard_workspace_idle(pool: &SqlitePool, workspace: Uuid) -> anyhow:
 }
 
 pub fn instructions(port: u16, session: Uuid) -> String {
+    let internal_token_file = utils::assets::asset_dir().join("access-internal.token");
+    let internal_token_file = internal_token_file.display();
     format!(
         r#"Shared resource coordination (one LVK authority): http://127.0.0.1:{port}/api/resource-coordination
+Local stdio MCP authenticates automatically. For raw loopback HTTP only, read {internal_token_file} and send it as X-LVK-Internal-Token in memory; never print it, put it in a URL/command argument, send it to another host, or follow redirects. This file capability is for trusted local agents and cannot manage server authentication.
 Before using shared devices, databases or deployments, GET /snapshot (or MCP list_shared_resources). Resource descriptions are usage contracts. Use one canonical registered physical identity; do not invent aliases to bypass an owner.
 Submit POST /operations (MCP run_resource_operation) with request_id (stable UUID for retries), session_id "{session}", purpose, claims [{{resource_id,expected_revision,resulting_state:null or verified new state}}], script, verification_script, working_dir (relative to workspace root) and timeout_seconds (1–3600). For local execution, put the entire critical section and cleanup in one foreground script; verification_script must independently confirm resources are idle in the declared resulting state. For an interactive Runner use the managed command/finish flow below. Do not detach work outside the operation's managed process containment; wait for remote operations to settle. Never put credentials in purpose/state fields.
 LVK queues and executes the bundle atomically; do not acquire incrementally, hold a resource while waiting on another, or use raw tools to bypass it. GET /operations/{{id}}?wait_seconds=25 (MCP wait_resource_operation) waits without model polling. Queued is NOT failure or task completion. Do independent work or wait; do not repeatedly ask the mediator. Completion, logs and changed resource revisions persist across agent turns. Inspect /events after waiting and re-check actual schema/API/APK compatibility; a version mismatch needs a NEW deliberate request, never blind substitution of a revision.

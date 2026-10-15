@@ -293,19 +293,25 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
             );
         }
     }
-    let response: Value = client.post(format!("{base}/mcp"))
-        .header("host", "lvk.example")
-        .header("accept", "application/json, text/event-stream")
-        .bearer_auth("read-only")
-        .json(&json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_issue","arguments":{}}}))
-        .send().await.unwrap().json().await.unwrap();
-    assert_eq!(response["result"]["isError"], true, "{response}");
-    assert!(
-        response["result"]["_meta"]["mcp/www_authenticate"][0]
-            .as_str()
-            .unwrap()
-            .contains("lvk:write")
-    );
+    for (tool, scope) in [
+        ("create_issue", "lvk:write"),
+        ("start_integration", "lvk:merge"),
+    ] {
+        let response = client.post(format!("{base}/mcp"))
+            .header("host", "lvk.example")
+            .header("accept", "application/json, text/event-stream")
+            .bearer_auth("read-only")
+            .json(&json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":tool,"arguments":{}}}))
+            .send().await.unwrap();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        let challenge = response.headers()["www-authenticate"].to_str().unwrap();
+        assert!(challenge.contains("error=\"insufficient_scope\""));
+        assert!(challenge.contains(scope));
+        assert_eq!(
+            response.json::<Value>().await.unwrap()["error"],
+            "insufficient_scope"
+        );
+    }
     server.abort();
     server.await.unwrap_err();
     provider.abort();

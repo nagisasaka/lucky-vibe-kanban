@@ -33,6 +33,7 @@ enum SigningMode {
 pub struct SignedWsUpgrade {
     ws: WebSocketUpgrade,
     signing_mode: SigningMode,
+    access_lease: Option<server_access::Lease>,
 }
 
 impl<S> FromRequestParts<S> for SignedWsUpgrade
@@ -67,7 +68,12 @@ where
             SigningMode::LocalPlain
         };
 
-        Ok(Self { ws, signing_mode })
+        let access_lease = parts.extensions.get::<server_access::Lease>().cloned();
+        Ok(Self {
+            ws,
+            signing_mode,
+            access_lease,
+        })
     }
 }
 
@@ -120,7 +126,13 @@ impl SignedWsUpgrade {
                 }
                 None => WebSocketInner::Plain(Box::new(socket)),
             };
-            callback(MaybeSignedWebSocket { inner }).await;
+            let task = callback(MaybeSignedWebSocket { inner });
+            if let Some(lease) = self.access_lease {
+                lease.run(task).await;
+            } else {
+                // Only isolated local/test routers may omit the outer access layer.
+                task.await;
+            }
         })
     }
 }

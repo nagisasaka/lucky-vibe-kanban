@@ -11,7 +11,7 @@ import uuid
 def api(path, body=None, method=None):
     request = urllib.request.Request("http://127.0.0.1:3000/api" + path,
         data=json.dumps(body).encode() if body is not None else None,
-        headers={"Content-Type": "application/json"}, method=method)
+        headers={"Content-Type": "application/json", "X-LVK-Internal-Token": Path("/home/appuser/.local/share/vibe-kanban/access-internal.token").read_text()}, method=method)
     with urllib.request.urlopen(request, timeout=20) as response:
         value = json.load(response)
         assert value["success"], value

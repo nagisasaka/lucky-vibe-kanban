@@ -36,7 +36,8 @@ function verifyIdentity(host, certificate) {
   return checkServerIdentity(host, certificate);
 }
 
-for (const { host, prefix, mcpBackend = 3000 } of [
+for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
+  { host: "127.0.0.1", managed: true, mcpBackend: 4021 },
   { host: "lvk.example.test" },
   { host: "127.0.0.1" },
   { host: "2001:db8::1" },
@@ -44,11 +45,11 @@ for (const { host, prefix, mcpBackend = 3000 } of [
   { host: "lvk.example.test", prefix: "/team/lvk", mcpBackend: 4021 },
 ])
   test(
-    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host}, MCP ${prefix ?? "disabled"})`,
+    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host}, ${managed ? "backend access" : `MCP ${prefix ?? "disabled"}`})`,
     {
       skip:
         !available && "nginx not installed (set LVK_TEST_NGINX to a binary)",
-      timeout: 20000,
+      timeout: 60000,
     },
     async (t) => {
       const dir = await mkdtemp(join(tmpdir(), "lvk-nginx-integration-"));
@@ -149,6 +150,9 @@ for (const { host, prefix, mcpBackend = 3000 } of [
       let settings = serverSettings({
         LVK_HOST: host,
         LVK_PREVIEW_DOMAIN: "preview.example.test",
+        ...(managed
+          ? { LVK_ACCESS_DEPLOYMENT: "public", LVK_PROXY_AUTH: "backend" }
+          : {}),
       });
       if (prefix !== undefined) {
         settings = await withMcpIngress(
@@ -240,7 +244,15 @@ for (const { host, prefix, mcpBackend = 3000 } of [
             resolve({ status: res.statusCode, headers: res.headers });
           });
           req.on("error", reject);
-          req.setTimeout(3000, () => req.destroy(new Error("request timeout")));
+          // TLS and password hashing can exceed three seconds on a shared CI
+          // host. This is a functional ingress test, not a latency benchmark.
+          req.setTimeout(10000, () =>
+            req.destroy(
+              new Error(
+                `fixture HTTPS timeout: ${method} ${path.split("?")[0]}`,
+              ),
+            ),
+          );
           req.end();
         });
       }
@@ -257,6 +269,45 @@ for (const { host, prefix, mcpBackend = 3000 } of [
         }
       }
       assert(ready, `${errors}\n${connectionError?.message ?? ""}`);
+      if (managed) {
+        // The backend owns authorization; nginx must forward the credentials
+        // and cookies needed by it, while stripping local/relay capabilities.
+        for (const path of [
+          "/api/info",
+          "/api/access/callback?code=fixture-only",
+          "/.well-known/oauth-protected-resource/mcp",
+        ]) {
+          const response = await request(path, host, {
+            Authorization: authorization,
+            Cookie: "lvk_session=fixture-session",
+            "X-LVK-Internal-Token": "forged-capability",
+            "X-VK-Relayed": "1",
+          });
+          assert.equal(response.status, 200);
+          const received = JSON.parse(response.body);
+          assert.equal(received.headers.authorization, authorization);
+          assert.equal(received.headers.cookie, "lvk_session=fixture-session");
+          assert.equal(received.headers["x-lvk-internal-token"], undefined);
+          assert.equal(received.headers["x-vk-relayed"], undefined);
+        }
+        assert.equal((await request("/mcp")).status, 401);
+        assert.equal(
+          (
+            await request(
+              "/mcp",
+              host,
+              { Authorization: "Bearer fixture-token" },
+              "POST",
+            )
+          ).status,
+          200,
+        );
+        assert.equal(
+          (await request("/", "5173.preview.example.test")).status,
+          403,
+        );
+        return;
+      }
       for (const path of ["/", "/api/info", "/api/events", "/stream"])
         assert.equal((await request(path)).status, 401, path);
       assert.equal(

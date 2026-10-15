@@ -2,7 +2,11 @@ import http from "node:http";
 import https from "node:https";
 import { isIP } from "node:net";
 import { existsSync } from "node:fs";
-import { authority, serverSettings } from "./server.mjs";
+import {
+  authority,
+  serverSettings,
+  verifyCertificateIdentity,
+} from "./server.mjs";
 
 function check(client, options, expected) {
   return new Promise((resolve, reject) => {
@@ -29,20 +33,39 @@ function check(client, options, expected) {
 
 try {
   const { app } = serverSettings(process.env);
+  const publicHost = new URL(
+    process.env.LVK_PUBLIC_URL || `https://${authority(app)}`,
+  ).host;
   await Promise.all([
-    check(http, { hostname: "127.0.0.1", port: 3000, path: "/health" }, 200),
-    // This is an internal liveness probe, not external certificate verification.
+    check(
+      http,
+      {
+        hostname: "127.0.0.1",
+        port: 3000,
+        path: "/api/health",
+        headers: { Host: publicHost },
+      },
+      200,
+    ),
+    // Connect locally while verifying the real public-IP/hostname certificate.
     check(
       https,
       {
         hostname: "127.0.0.1",
+        checkServerIdentity: (_hostname, certificate) =>
+          verifyCertificateIdentity(app, certificate),
         port: 8443,
         path: "/",
         servername: isIP(app) ? "" : app,
-        headers: { Host: authority(app) },
-        rejectUnauthorized: false,
+        headers: { Host: publicHost },
+        rejectUnauthorized: true,
       },
-      existsSync("/run/lvk-maintenance/active") ? 503 : 401,
+      existsSync("/run/lvk-maintenance/active")
+        ? 503
+        : process.env.LVK_PROXY_AUTH !== "backend" &&
+            existsSync("/run/lvk-secrets/htpasswd")
+          ? 401
+          : 200,
     ),
   ]);
 } catch (error) {

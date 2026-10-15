@@ -51,6 +51,20 @@ async fn main() -> Result<(), VibeKanbanError> {
         .install_default()
         .expect("Failed to install rustls crypto provider");
 
+    // Operator commands do not start agents, listeners or ordinary application logs.
+    if let Some(command) = std::env::args().nth(1)
+        && matches!(command.as_str(), "setup-token" | "recovery-token")
+    {
+        let database = db::DBService::new().await?;
+        let token = server_access::issue_key(
+            &database.pool,
+            &asset_dir().join("access.key"),
+            command == "recovery-token",
+        )
+        .await?;
+        println!("{token}");
+        return Ok(());
+    }
     sentry_utils::init_once(SentrySource::Backend);
 
     let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
@@ -199,7 +213,8 @@ async fn main() -> Result<(), VibeKanbanError> {
         .expect("client preview proxy port already set");
 
     routes::project_chat::spawn(deployment.clone());
-    let app_router = routes::router(deployment.clone());
+    let access = server_access::Access::from_env(deployment.db().pool.clone(), asset_dir())?;
+    let app_router = routes::router(deployment.clone(), access.clone());
 
     // Production only: open browser
     if !cfg!(debug_assertions) {
@@ -218,8 +233,10 @@ async fn main() -> Result<(), VibeKanbanError> {
         });
     }
 
-    let proxy_router: Router = routes::preview::subdomain_router(deployment.clone())
-        .layer(ValidateRequestHeaderLayer::custom(validate_origin));
+    let proxy_router: Router = access.preview_layer(
+        routes::preview::subdomain_router(deployment.clone())
+            .layer(ValidateRequestHeaderLayer::custom(validate_origin)),
+    );
 
     let main_shutdown = shutdown_token.clone();
     let proxy_shutdown = shutdown_token.clone();

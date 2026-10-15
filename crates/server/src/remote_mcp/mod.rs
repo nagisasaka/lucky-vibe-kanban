@@ -20,8 +20,12 @@ mod verification_read;
 
 use std::sync::Arc;
 
-use auth::{Auth, Principal};
-use axum::{Json, Router, routing::get};
+#[cfg(test)]
+use auth::Auth;
+use auth::Principal;
+#[cfg(test)]
+use axum::{Json, routing::get};
+use axum::{Router, response::IntoResponse};
 use config::Config;
 use deployment::Deployment;
 use rmcp::{
@@ -39,32 +43,71 @@ use uuid::Uuid;
 
 use crate::DeploymentImpl;
 
-pub fn configured_router(deployment: DeploymentImpl) -> anyhow::Result<Router> {
-    let Some(path) = std::env::var_os("LVK_MCP_CONFIG") else {
-        return Ok(Router::new());
+pub fn configured_router(
+    deployment: DeploymentImpl,
+    access: server_access::Access,
+) -> anyhow::Result<Router> {
+    use axum::{
+        extract::{Extension, Request},
+        routing::any,
     };
-    let config: Config = serde_json::from_slice(&std::fs::read(path)?)?;
-    config.validate()?;
-    let secret = std::env::var(&config.introspection_secret_env)
-        .map_err(|_| anyhow::anyhow!("Missing MCP introspection secret"))?;
-    let config = Arc::new(config);
-    let auth = Auth::new(config.clone(), secret)?;
-    Ok(router(
-        Remote {
-            pool: deployment.db().pool.clone(),
-            runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
-            launch: Some(Arc::new(launch::ExistingLaunch(deployment.clone()))),
-            process_instance: Uuid::new_v4(),
-            config,
-        },
-        auth,
+    use tower::ServiceExt;
+    Ok(Router::new().route(
+        "/mcp",
+        any(
+            move |Extension(principal): Extension<server_access::Principal>,
+                  mut request: Request| {
+                let deployment = deployment.clone();
+                let access = access.clone();
+                async move {
+                    let ids = match sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects")
+                        .fetch_all(&deployment.db().pool)
+                        .await
+                    {
+                        Ok(ids) => ids.into_iter().collect(),
+                        Err(_) => {
+                            return axum::http::StatusCode::SERVICE_UNAVAILABLE.into_response();
+                        }
+                    };
+                    let config = Arc::new(Config {
+                        public_base_url: access.public_url().unwrap_or_default().to_owned(),
+                        issuer: principal.issuer.clone(),
+                        #[cfg(test)]
+                        introspection_endpoint: String::new(),
+                        #[cfg(test)]
+                        introspection_client_id: String::new(),
+                        #[cfg(test)]
+                        introspection_secret_env: String::new(),
+                        #[cfg(test)]
+                        owner_subject: principal.subject.clone(),
+                        project_ids: ids,
+                    });
+                    request.extensions_mut().insert(Principal {
+                        subject: principal.subject,
+                        scopes: principal.scopes,
+                    });
+                    let remote = Remote {
+                        pool: deployment.db().pool.clone(),
+                        runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
+                        launch: Some(Arc::new(launch::ExistingLaunch(deployment.clone()))),
+                        process_instance: *PROCESS_INSTANCE.get_or_init(Uuid::new_v4),
+                        config,
+                    };
+                    match transport_router(remote).oneshot(request).await {
+                        Ok(response) => response,
+                        Err(never) => match never {},
+                    }
+                }
+            },
+        ),
     ))
 }
+static PROCESS_INSTANCE: std::sync::OnceLock<Uuid> = std::sync::OnceLock::new();
 
-fn router(remote: Remote, auth: Auth) -> Router {
+fn transport_router(remote: Remote) -> Router {
     let resource = remote.config.resource();
+    let metadata_url = remote.config.metadata_url();
     let url = url::Url::parse(&resource).expect("validated MCP URL");
-    let metadata = json!({"resource": resource, "authorization_servers": [remote.config.issuer], "scopes_supported": ["lvk:read", "lvk:write", "lvk:merge"], "bearer_methods_supported": ["header"]});
     let transport = StreamableHttpServerConfig::default()
         .with_stateful_mode(false)
         .with_json_response(true)
@@ -74,6 +117,72 @@ fn router(remote: Remote, auth: Auth) -> Router {
         StreamableHttpService::new(move || Ok(remote.clone()), Default::default(), transport);
     Router::new()
         .nest_service("/mcp", service)
+        .layer(axum::middleware::from_fn_with_state(
+            metadata_url,
+            require_operation_scope,
+        ))
+}
+
+fn operation_scope(name: &str) -> Option<&'static str> {
+    match name {
+        "start_integration" => Some("lvk:merge"),
+        "create_issue" | "update_issue" | "steer_execution" | "continue_execution"
+        | "answer_question" | "start_workspace" => Some("lvk:write"),
+        _ => None,
+    }
+}
+
+/// Reject insufficient delegation at the HTTP boundary before dispatching any
+/// tool. rmcp still owns protocol validation; the tool handler checks again.
+async fn require_operation_scope(
+    axum::extract::State(metadata_url): axum::extract::State<String>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::{
+        body::{Body, to_bytes},
+        http::{HeaderValue, Method, StatusCode, header},
+    };
+    let Some(principal) = request.extensions().get::<Principal>().cloned() else {
+        return StatusCode::UNAUTHORIZED.into_response();
+    };
+    if request.method() != Method::POST {
+        return next.run(request).await;
+    }
+    let (parts, body) = request.into_parts();
+    let bytes = match to_bytes(body, 2 * 1024 * 1024).await {
+        Ok(bytes) => bytes,
+        Err(_) => return StatusCode::PAYLOAD_TOO_LARGE.into_response(),
+    };
+    if let Ok(value) = serde_json::from_slice::<Value>(&bytes)
+        && value["method"] == "tools/call"
+        && let Some(scope) = value["params"]["name"]
+            .as_str()
+            .and_then(operation_scope)
+            .filter(|scope| !principal.allows(scope))
+    {
+        let challenge = format!(
+            "Bearer resource_metadata=\"{metadata_url}\", error=\"insufficient_scope\", scope=\"lvk:read {scope}\""
+        );
+        let Ok(challenge) = HeaderValue::from_str(&challenge) else {
+            return StatusCode::SERVICE_UNAVAILABLE.into_response();
+        };
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::WWW_AUTHENTICATE, challenge)],
+            axum::Json(json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
+    next.run(axum::extract::Request::from_parts(parts, Body::from(bytes)))
+        .await
+}
+
+#[cfg(test)]
+fn router(remote: Remote, auth: Auth) -> Router {
+    let resource = remote.config.resource();
+    let metadata = json!({"resource": resource, "authorization_servers": [remote.config.issuer], "scopes_supported": ["lvk:read", "lvk:write", "lvk:merge"], "bearer_methods_supported": ["header"]});
+    transport_router(remote)
         .layer(axum::middleware::from_fn_with_state(auth, auth::require))
         .route(
             "/.well-known/oauth-protected-resource/mcp",
@@ -192,6 +301,37 @@ impl ServerHandler for Remote {
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
+        let actor = context
+            .extensions
+            .get::<http::request::Parts>()
+            .and_then(|parts| parts.extensions.get::<server_access::Principal>())
+            .cloned();
+        if let Some(actor) = actor {
+            server_access::ACTOR
+                .scope(actor, self.call_tool_authenticated(request, context))
+                .await
+        } else {
+            #[cfg(test)]
+            {
+                self.call_tool_authenticated(request, context).await
+            }
+            #[cfg(not(test))]
+            {
+                Err(ErrorData::invalid_request(
+                    "Authenticated LVK member context required",
+                    None,
+                ))
+            }
+        }
+    }
+}
+
+impl Remote {
+    async fn call_tool_authenticated(
+        &self,
+        request: CallToolRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResult, ErrorData> {
         let principal = context
             .extensions
             .get::<http::request::Parts>()
@@ -200,12 +340,7 @@ impl ServerHandler for Remote {
         if !principal.allows("lvk:read") {
             return Err(ErrorData::invalid_request("Read permission required", None));
         }
-        let required_scope = match request.name.as_ref() {
-            "start_integration" => Some("lvk:merge"),
-            "create_issue" | "update_issue" | "steer_execution" | "continue_execution"
-            | "answer_question" | "start_workspace" => Some("lvk:write"),
-            _ => None,
-        };
+        let required_scope = operation_scope(request.name.as_ref());
         if let Some(scope) = required_scope.filter(|scope| !principal.allows(scope)) {
             return Ok(serde_json::from_value(json!({
                 "content":[{"type":"text","text":format!("Operation permission required; reconnect with {scope} before submitting this operation.")}],
@@ -213,6 +348,24 @@ impl ServerHandler for Remote {
                 "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"lvk:read {scope}\"", self.config.metadata_url())]}
             })).expect("OAuth challenge result"));
         }
+        let audit_actor = context
+            .extensions
+            .get::<http::request::Parts>()
+            .and_then(|parts| parts.extensions.get::<server_access::Principal>())
+            .map(|p| p.user_id.to_string());
+        let audit_id = if let Some(actor) = audit_actor {
+            let name = tools()
+                .into_iter()
+                .find(|t| t.name == request.name)
+                .map(|t| t.name.into_owned())
+                .unwrap_or_else(|| "unknown-tool".into());
+            let row = sqlx::query("INSERT INTO access_audit(at,actor,channel,action,outcome) VALUES(?,?,'mcp',?,'started')")
+                .bind(chrono::Utc::now().timestamp()).bind(actor).bind(name).execute(&self.pool).await
+                .map_err(|_|ErrorData::internal_error("Audit unavailable",None))?;
+            Some(row.last_insert_rowid())
+        } else {
+            None
+        };
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
@@ -274,6 +427,17 @@ impl ServerHandler for Remote {
                 ));
             }
         };
+        if let Some(id) = audit_id {
+            let _ = sqlx::query("UPDATE access_audit SET outcome=? WHERE id=?")
+                .bind(if result.is_ok() {
+                    "success"
+                } else {
+                    "rejected"
+                })
+                .bind(id)
+                .execute(&self.pool)
+                .await;
+        }
         match result {
             Ok(value) => Ok(CallToolResult::structured(value)),
             Err(error) => {

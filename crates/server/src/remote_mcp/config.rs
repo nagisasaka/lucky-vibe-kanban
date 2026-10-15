@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
 
+#[cfg(test)]
 use anyhow::{Context, ensure};
 use serde::Deserialize;
+#[cfg(test)]
 use url::Url;
 use uuid::Uuid;
 
@@ -11,14 +13,19 @@ use uuid::Uuid;
 pub struct Config {
     pub public_base_url: String,
     pub issuer: String,
+    #[cfg(test)]
     pub introspection_endpoint: String,
+    #[cfg(test)]
     pub introspection_client_id: String,
+    #[cfg(test)]
     pub introspection_secret_env: String,
+    #[cfg(test)]
     pub owner_subject: String,
     pub project_ids: BTreeSet<Uuid>,
 }
 
 impl Config {
+    #[cfg(test)]
     pub fn validate(&self) -> anyhow::Result<()> {
         for value in [
             &self.public_base_url,

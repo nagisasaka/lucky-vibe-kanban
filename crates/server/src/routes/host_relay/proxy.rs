@@ -94,10 +94,18 @@ async fn forward_ws(
     if let Some(protocol) = &selected_protocol {
         ws = ws.protocols([protocol.clone()]);
     }
+    let access_lease = request.extensions().get::<server_access::Lease>().cloned();
     Ok(ws
         .on_upgrade(|socket| async move {
-            if let Err(error) = connection.bridge(socket).await {
-                tracing::debug!(?error, "WS bridge closed with error");
+            let task = async move {
+                if let Err(error) = connection.bridge(socket).await {
+                    tracing::debug!(?error, "WS bridge closed with error");
+                }
+            };
+            if let Some(lease) = access_lease {
+                lease.run(task).await;
+            } else {
+                task.await;
             }
         })
         .into_response())

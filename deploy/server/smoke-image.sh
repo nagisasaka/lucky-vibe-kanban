@@ -41,7 +41,7 @@ for suffix in home repos work; do docker volume create "$name-$suffix" >/dev/nul
 start() {
   docker run -d --name "$name" \
     --shm-size=256m \
-    -e LVK_HOST="${1:-lvk.example.test}" \
+    -e NODE_EXTRA_CA_CERTS=/run/lvk-secrets/tls/fullchain.pem -e LVK_HOST="${1:-lvk.example.test}" \
     --mount "type=bind,src=$fixture,dst=/run/lvk-secrets,readonly" \
     -v "$name-home:/home/appuser" -v "$name-repos:/repos" -v "$name-work:/var/tmp" \
     "$image" >/dev/null
@@ -53,19 +53,21 @@ start() {
   echo 'Image did not become healthy' >&2; return 1
 }
 start
-docker exec -e LVK_E2E_BASE_URL=http://127.0.0.1:3000 "$name" node /opt/lvk-browser/smoke.mjs
+docker cp deploy/server/smoke-access.mjs "$name:/tmp/smoke-access.mjs"
+docker exec "$name" node /tmp/smoke-access.mjs lvk-smoke-only
+docker exec -e LVK_TEST_INTERNAL_TOKEN_FILE=/home/appuser/.local/share/vibe-kanban/access-internal.token -e LVK_E2E_BASE_URL=http://127.0.0.1:3000 "$name" node /opt/lvk-browser/smoke.mjs
 docker cp deploy/developer/test-queue-fence.py "$name:/tmp/test-queue-fence.py"
 docker exec --user root "$name" python3 /tmp/test-queue-fence.py
 docker exec "$name" sh -ec '
-  test "$(curl -ks -o /dev/null -w "%{http_code}" --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info)" = 401
-  curl -kfsS --user test:lvk-smoke-only --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info >/dev/null
+  test "$(curl --cacert /run/lvk-secrets/tls/fullchain.pem -s -o /dev/null -w "%{http_code}" --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info -H "Host: lvk.example.test")" = 401
+  curl --cacert /run/lvk-secrets/tls/fullchain.pem -fsS --user test:lvk-smoke-only --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info -H "Host: lvk.example.test" >/dev/null
   touch /home/appuser/smoke-persistence /repos/smoke-persistence /var/tmp/smoke-persistence
   test -f /home/appuser/.local/share/vibe-kanban/db.v2.sqlite
 '
 # Exercise the resource protocol against this disposable database. Codex auth
 # is intentionally absent; deterministic ownership must work without a model.
 docker cp scripts/test-resource-coordination.py "$name:/tmp/test-resource-coordination.py"
-docker exec "$name" python3 /tmp/test-resource-coordination.py http://127.0.0.1:3000
+docker exec -e LVK_TEST_INTERNAL_TOKEN_FILE=/home/appuser/.local/share/vibe-kanban/access-internal.token "$name" python3 /tmp/test-resource-coordination.py http://127.0.0.1:3000
 docker stop -t 150 "$name" >/dev/null
 docker rm "$name" >/dev/null
 start 127.0.0.1
@@ -73,7 +75,7 @@ docker exec "$name" sh -ec 'test -f /home/appuser/smoke-persistence && test -f /
 # Verify IP SANs with normal TLS verification, then replace the pair just as an
 # issuer would. The running supervisor must reload nginx without recreating LVK.
 docker exec "$name" curl -fsS --cacert /run/lvk-secrets/tls/fullchain.pem \
-  --user test:lvk-smoke-only https://127.0.0.1:8443/api/info >/dev/null
+  --user test:lvk-smoke-only https://127.0.0.1:8443/api/info -H "Host: 127.0.0.1" >/dev/null
 started=$(docker inspect -f '{{.State.StartedAt}}' "$name")
 openssl req -x509 -newkey rsa:2048 -nodes -days 1 -set_serial 42 \
   -subj /CN=ip-renewal -addext 'subjectAltName=IP:127.0.0.1' \
@@ -84,7 +86,7 @@ mv "$fixture/tls/new-cert.pem" "$fixture/tls/fullchain.pem"
 renewed=false
 for _ in $(seq 1 30); do
   if docker exec "$name" curl -fsS --cacert /run/lvk-secrets/tls/fullchain.pem \
-    --user test:lvk-smoke-only https://127.0.0.1:8443/api/info >/dev/null 2>&1; then
+    --user test:lvk-smoke-only https://127.0.0.1:8443/api/info -H "Host: 127.0.0.1" >/dev/null 2>&1; then
     renewed=true
     break
   fi

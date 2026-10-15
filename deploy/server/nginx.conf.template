@@ -33,9 +33,10 @@ http {
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-Host $http_host;
     proxy_set_header X-Forwarded-For $remote_addr;
-    # Basic credentials must never reach LVK or a project's dev server.
+    # Renderer forwards credentials only to the LVK access middleware.
     proxy_set_header Authorization "";
     proxy_set_header Proxy-Authorization "";
+    proxy_set_header X-LVK-Internal-Token "";
     # Remote relay authentication is not an ingress path in this distribution.
     proxy_set_header X-VK-Relayed "";
     proxy_set_header X-VK-Sig-Session "";

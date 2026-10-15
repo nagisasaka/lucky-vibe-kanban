@@ -7,6 +7,10 @@ services:
     ports:
       - "443:8443"
     environment:
+      LVK_ACCESS_DEPLOYMENT: public
+      LVK_AUTH_MODE: ${LVK_AUTH_MODE:-}
+      LVK_PUBLIC_URL: ${LVK_PUBLIC_URL:-}
+      LVK_PROXY_AUTH: ${LVK_PROXY_AUTH:-auto}
       LVK_HOST: ${LVK_HOST:?Set LVK_HOST to a public IP or DNS hostname}
       LVK_PREVIEW_DOMAIN: ${LVK_PREVIEW_DOMAIN:-}
     volumes:

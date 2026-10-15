@@ -1,0 +1,217 @@
+---
+title: "LVKの認証・Auth0導入"
+description: "公開IPのHTTPSを維持した初期設定、Webログイン、ChatGPTへのMCP委任と復旧。"
+---
+
+## 配置と初回起動
+
+この手順はAuth0対応版のイメージへ更新した後の手順です。この開発作業では
+イメージの公開・サーバー更新は行っていません。既存の証明書、ACME自動更新、
+nginx、home/repos/workボリュームを引き続き使用します。
+[公開IPの証明書と配置](/self-hosting/server-container)の手順を先に確認してください。
+
+| 配置 | Compose | 初期状態 |
+| --- | --- | --- |
+| 個人のPC/WSL | `deploy/server/compose.local.yaml` | Local。ホストの127.0.0.1:3000だけへ公開 |
+| 公開IP＋HTTPS | `deploy/server/compose.yaml` | セットアップ未完了。業務APIはロック |
+
+公開用はnginxのHTTPSポートだけをホストへ公開します。Rust本体のポートを
+追加で公開しないでください。`LVK_ACCESS_DEPLOYMENT=public` と正規の
+`LVK_PUBLIC_URL` を指定します。標準ランチャーは `LVK_HOST` からHTTPS URLを
+設定し、開発ランチャーは8443を含めます。別の公開ポートを使う場合は、正確な
+HTTPS originを配置設定で指定します。末尾の `/`、パス、クエリは付けません。
+例として `https://203.0.113.7:8443` のようなIPアドレスを利用できます。
+
+公開配置でLocalへ切り替えることはできません。`LVK_AUTH_MODE=basic` または
+`auth0` を配置側で指定した場合、GUIの方式選択も固定されます。Client Secretは
+環境変数へ入れず、HTTPSの設定画面へ入力します。
+
+公開用Composeのディレクトリで、管理者が次の順に実行します。
+
+```bash
+# LVK_IMAGE、LVK_HOST、既存の証明書とボリュームを設定してから実行
+docker compose up -d
+docker compose exec lvk server setup-token
+```
+
+ソース開発用の`compose.development.yaml`では、稼働中のdebugバイナリと同じ
+データ配置を使う必要があります。標準開発ランチャーの例は次のとおりです。
+
+```bash
+docker compose -f compose.development.yaml exec development /var/tmp/lvk-target/debug/server setup-token
+```
+
+独立instanceでは、稼働プロセスと同じ`LVK_INSTANCE_DIR`を指定してください。
+release/debugの既定データディレクトリを混同しないでください。
+
+CLIは15分間だけ有効なランダムキーを一度表示します。通常ログには表示しません。
+公開HTTPS URLをブラウザで開き、キーを入力してください。URLやチャットへキーを
+貼らないでください。再発行すると前のキーと未完了の設定セッションは無効になります。
+設定画面を開けるのは、正しいキーを入力したブラウザだけです。
+
+## Basic
+
+GUIでBasic、ユーザー名、12バイト以上のパスワードを指定します。共通の初期値は
+ありません。保存後にログインし直します。パスワードはArgon2idで保持し、画面から
+読み戻せません。変更も同じ管理画面で行えます。Basicは単一所有者向けで、MFAや
+リモートHTTP MCPを提供するモードではありません。
+
+### 既存nginx Basicからの移行
+
+既存の`secrets/htpasswd`がある場合、標準ランチャーは保護を自動で外しません。
+`LVK_PROXY_AUTH=auto`（既定）は既存のプロキシ認証を維持します。先にその認証で
+入り、セットアップキーでLVK側の認証を設定してください。Basicを選ぶ場合は移行中、
+現在のプロキシと同じ資格情報をLVKに設定すると二重認証の競合を避けられます。
+
+LVKへのログインを確認したら、運用者がComposeで `LVK_PROXY_AUTH=backend`（developmentサービスは`LVK_DEV_PROXY_AUTH=backend`）を
+明示して再起動します。nginxのBasic制限を外しても、LVK側で認証されます。
+`htpasswd`がない新規設置もLVKのロック状態から始まります。TLS設定は変えません。
+GUIからnginxを書き換えたりDockerソケットを操作したりはしません。
+
+公開するソース開発サーバーでは、プロキシのBasic制限を外すと、フロントエンドは
+既存の`preview`（ビルド済み資産）モードへ切り替わります。`LVK_DEV_FRONTEND_MODE`は
+空欄または`preview`にしてください。Viteの`dev`にはRustの認証外でファイルを配信する
+開発用経路があるため、バックエンド認証だけの配置で明示的に`dev`を指定すると起動を
+拒否します。従来のプロキシBasicを維持する配置ではホットリロードを引き続き使えます。
+
+旧 `LVK_MCP_CONFIG` / `compose.mcp.yaml` の外部introspection設定は廃止対象です。
+新設定と併用すると起動時に拒否します。旧設定を退避し、Auth0設定画面で移行して
+ください。自動的に旧所有者へ読み替える処理はありません。
+
+## Auth0を用意する
+
+2026-10-15に[公式料金表](https://auth0.com/pricing)と公式手順を確認しました。
+Free枠にはソーシャル接続が含まれますが、本作業で実テナントの契約状態や上限消費を
+確認したわけではありません。最初から実運用テナントを用意し、試用期間終了後も
+Freeで使う設定だけにしてください。Organizations、Auth0 Role Management、
+企業SSO、独自ドメイン、常駐Management APIをLVKの必須機能にはしていません。
+有料機能の案内が表示されたら契約を変更せず、設定とFree条件を確認してください。
+
+### 混同しない3つの接続
+
+| 接続 | アプリ／資格情報 | コールバックの登録先 |
+| --- | --- | --- |
+| Google/GitHub → Auth0 | 管理者が作るGoogle OAuth Client / GitHub OAuth App | Auth0のソーシャル接続画面に表示されるCallback URL |
+| LVK Web → Auth0 | LVK専用Regular Web ApplicationのIDとSecret | LVK設定画面に表示される `/api/access/callback` |
+| ChatGPT → Auth0 → LVK MCP | Web用とは別の事前登録クライアント | **現在のChatGPT管理画面で表示される正確なURL** |
+
+[Google接続](https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google)と
+[GitHub接続](https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/github)
+に従って本番用OAuthアプリを作り、その資格情報をAuth0へ入力します。Auth0の開発用
+共有キーに依存しないでください。利用者にはGoogle/GitHubでログインしてもらい、LVKで
+新しいパスワードや追加MFAを登録させる仕組みはありません。上流アカウント自身の
+認証ポリシーは上流が管理します。
+
+Auth0提供のテナントドメインを使います。カスタムドメインは不要です。
+[Application Settings](https://auth0.com/docs/get-started/applications/application-settings)
+でWebアプリをRegular Web Applicationとして登録し、Authorization Code、RS256、
+`client_secret_basic`を利用します。LVKがPKCE S256を追加します。
+Allowed Callback URLsとAllowed Logout URLsはLVK画面からコピーします。
+Web用Client ID・SecretはLVKへ入力し、Google/GitHub接続をWebアプリで有効にします。
+利用しない標準データベース接続は当該アプリで無効にし、Auth0専用パスワードの
+新規登録を利用者へ要求しない構成にします。ChatGPT用アプリの接続も同様に設定します。
+Webログインにはoffline accessや更新トークンは不要です。
+
+Auth0テナントのAdvanced設定で、Resource Parameter Compatibility Profileと
+Include Issuer in Authorization Responsesを有効にします。LVKの設定チェックは
+Discovery/JWKSとPKCE S256の公開状態を調べ、実ログイン時には`iss`も照合します。
+公式の[MCP設定手順](https://auth0.com/ai/docs/mcp/get-started/authorization-for-your-mcp-server)
+を参照してください。同手順のRole/RBACサンプルはLVKに必要ありません。
+
+LVK画面で「設定をチェックしてログイン試験」を押し、管理者にする本人でAuth0に
+ログインします。戻った画面でissuer＋subjectと表示名を確認し、有効化します。
+試験失敗時は現在の認証方式が維持されます。最初にログインしただけの第三者が
+管理者になることはありません。
+
+## MCPとChatGPT
+
+Auth0にLVK MCP用APIを作り、GUIに表示されるMCP URLをIdentifierに設定します。
+この文字列がresourceとaudienceにもなります。末尾スラッシュを追加しないでください。
+RS256を選び、`lvk:read`、`lvk:write`、`lvk:merge`をAPI Permissionsに登録します。
+読み取りだけならreadのみ、Issueや実行の変更にはwrite、統合にはmergeも要求します。
+RBACは必須ではありません。LVK側の承認済みメンバーだけに操作を許可します。
+
+今回の導入方式は**事前登録クライアント**です。CIMDやDCRの独自実装はありません。
+ChatGPT専用のRegular Web ApplicationをAuth0に別途作り、Authorization Code＋PKCE S256、
+token endpoint認証方式`client_secret_basic`を設定します。Web用とは異なるClient IDと
+Client Secretを、ChatGPTの事前登録クライアント設定へ入力します。このChatGPT専用Secretを
+LVKへ保存する必要はありません。Discoveryの`token_endpoint_auth_methods_supported`にも
+`client_secret_basic`が公開されていることを確認します。使用中のChatGPT UIで事前登録の
+方式・資格情報を設定できない場合は、画面と公式仕様を照合し、実接続は未確認として扱います。
+WebのSecretを流用する回避はしません。[OpenAIの認証手順](https://developers.openai.com/plugins/build/auth)
+も参照してください。
+
+ChatGPT用の正確なcallback URLをChatGPT画面からコピーしてAuth0へ登録します。
+このドキュメントは古い固定callback URLを決め打ちしません。サーバーURLにはLVKの
+MCP URLを使います。LVKにはChatGPTのSecretや更新トークンを入力する欄はありません。
+
+第三者アプリとして登録した場合、Google/GitHub接続をAuth0のdomain-level connectionに
+する必要があります。これはAuth0提供テナント内の接続設定であり、独自ドメイン購入では
+ありません。上記Auth0 MCP手順の`is_domain_connection`設定を管理者が一度行います。
+必要時の管理CLI操作は管理者の端末で行い、LVKへManagement API資格情報を渡しません。
+事前登録したfirst-partyアプリの場合は、そのアプリでソーシャル接続を明示的に有効にします。
+
+APIのユーザー同意省略を無効にして、利用者が委任先と要求スコープを確認できるように
+します。[Auth0の同意](https://auth0.com/docs/get-started/applications/third-party-applications/user-consent-and-third-party-applications)
+に従ってください。更新が必要な場合だけAPIのAllow Offline Accessとクライアントの
+Refresh Token grant/rotation、有効期限を設定し、ChatGPTからoffline_accessを要求します。
+更新はChatGPTとAuth0間で行います。
+
+## メンバー・失効・復旧
+
+外部ログインまたは正しく検証されたMCPトークンの本人識別を承認待ちとして記録します。
+管理者が「認証・メンバー」で承認してください。メールの取得は必須ではなく、同じメールの
+Google/GitHubユーザーをLVKが自動統合することもありません。全有効メンバーが全プロジェクトを
+使います。最後の有効な管理者は無効化・降格できません。
+
+| 操作 | 効果 |
+| --- | --- |
+| LVKログアウト | そのWebセッションを削除。ChatGPT委任は別 |
+| ChatGPTの接続解除 | ChatGPT側の接続を解除。発行済みJWTの署名は変わらない |
+| Auth0で委任／更新トークン取消 | 更新を止める。既発行JWTは期限まで検証可能な場合がある |
+| LVKメンバー無効化 | 次のWeb/MCP操作を拒否し、Webセッションを削除。継続接続は2秒以内に再判定 |
+| アクセストークン期限切れ | MCPで401。必要に応じChatGPTがAuth0で更新 |
+
+[Auth0の更新トークン取消手順](https://auth0.com/docs/secure/tokens/refresh-tokens/revoke-refresh-tokens)
+で対象の委任を取り消せます。LVKに接続単位の即時JWT失効機能はありません。
+
+Auth0停止や設定ミス時もBasic/Localへ自動フォールバックしません。サーバー管理者は
+次のコマンドを実行し、`/?access=recovery`でキーを入力してください。
+
+```bash
+docker compose exec lvk server recovery-token
+```
+
+復旧セッションは認証設定の修正だけに使えます。Kanban、ファイル、メンバー一覧、MCPは
+開放されません。認証方式の変更成功時には既存セッションを無効化します。
+
+DBと`access.key`、`access.configured`、既存設定・証明書・home/repos/workを一緒にバックアップしてください。
+キーが破損してCLIも拒否する場合は、サーバー管理者が現在のファイルを保全したうえで
+`access.key`を退避し、復旧キーを発行して新しい認証設定を入力します。旧暗号化設定は
+元のキーなしでは復元できません。業務データを消す操作は不要です。
+
+内部stdio MCPは同じデータディレクトリのowner-only `access-internal.token`を使います。
+ローカル管理用`control.py`は`--internal-token-file`にこのパスを指定できます。
+ループバックHTTP専用で、公開プロキシはこのヘッダーを除去します。トークンの内容を
+ログ・チャットへ表示せず、外部クライアントへ配布しないでください。
+認証情報を付けるローカル管理通信はリダイレクトを追跡しません。
+鍵ファイルは所有者だけが読める権限600、バックアップも同等に保護します。
+
+## 実サービス確認のチェックリスト
+
+この作業で実施済みなのはローカル自動テストです。次の実サービス項目は未実施です。
+資格情報やログイン操作がそろった後、管理者が確認して記録してください。
+
+1. 公開IP＋既存の正常なTLS検証で、Google/GitHub→Auth0→LVKへ戻れること。
+2. 管理者と一般メンバーが別の内部IDに対応し、未承認ユーザーには業務データが出ないこと。
+3. ChatGPTから同意してMCPへ接続でき、resourceとJWT audienceが完全一致すること。
+4. 読み取り、専用のテストIssueへの書き込み、必要ならテストWorkspaceの実行を確認すること。
+5. アクセストークン期限後の更新、ChatGPT接続解除、Auth0の更新取消を別々に確認すること。
+6. LVK無効化後は既存Web Cookie/JWTでも拒否され、ストリームが停止すること。
+7. 試用期間終了後のFree契約でも同じ設定が利用できること。
+
+IP URLでAuth0またはChatGPT側が拒否する場合は、そのエラーを記録してください。
+独自ドメイン必須への変更、TLS無効化、HTTPへのSecret送信、トークン検証緩和は行いません。
+公開用の別オリジンproject previewは、独立した認証方式が整うまで拒否します。
+IPだけの既存公開構成の同一オリジンpreview禁止は維持し、ローカルpreviewは維持します。
+詳しい検証範囲は`docs/development/server-access.md`に記録しています。

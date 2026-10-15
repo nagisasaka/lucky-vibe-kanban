@@ -38,6 +38,8 @@ export function environment(config, build, env = process.env) {
   return {
     ...env,
     LVK_INSTANCE_DIR: config.root,
+    LVK_ACCESS_DEPLOYMENT: config.staging ? "public" : "local",
+    LVK_PUBLIC_URL: config.staging ? origin : "",
     HOST: "127.0.0.1",
     PORT: "",
     BACKEND_PORT: String(config.port),

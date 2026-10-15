@@ -9,6 +9,7 @@ Never aim this fixture at an instance containing real shared resources.
 """
 import argparse
 import json
+import os
 import pathlib
 import shlex
 import subprocess
@@ -16,6 +17,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 import uuid
 
 
@@ -25,10 +27,17 @@ def main():
     parser.add_argument("--require-mediation", action="store_true")
     args = parser.parse_args()
 
+    token_file = os.environ.get("LVK_TEST_INTERNAL_TOKEN_FILE")
+    headers = {"Content-Type": "application/json", "X-LVK-CSRF": "local"}
+    if token_file:
+        parsed = urllib.parse.urlparse(args.url)
+        assert parsed.scheme == "http" and parsed.hostname in ("127.0.0.1", "localhost", "::1"), "Internal test token is loopback-only"
+        headers["X-LVK-Internal-Token"] = pathlib.Path(token_file).read_text()
+
     def api(path, body=None):
         request = urllib.request.Request(args.url.rstrip("/") + "/api" + path,
             data=None if body is None else json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"})
+            headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=35) as response:
                 value = json.load(response)

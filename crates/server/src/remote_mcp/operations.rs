@@ -133,6 +133,9 @@ impl Operations {
     {
         let store = self.clone();
         let (sender, receiver) = tokio::sync::oneshot::channel();
+        // Owned admission deliberately survives the HTTP request. Preserve the
+        // verified actor across both spawned tasks for domain write attribution.
+        let access_actor = server_access::ACTOR.try_with(Clone::clone).ok();
         tokio::spawn(async move {
             let admitted = store
                 .admit(
@@ -173,7 +176,14 @@ impl Operations {
                 None
             };
             // A panic is an unknown domain outcome, never permission to replay.
-            let result = tokio::spawn(async move { execute(id).await }).await;
+            let result = tokio::spawn(async move {
+                if let Some(actor) = access_actor {
+                    server_access::ACTOR.scope(actor, execute(id)).await
+                } else {
+                    execute(id).await
+                }
+            })
+            .await;
             let (status, result) = result.unwrap_or_else(|_| ("uncertain", serde_json::json!({"message":"Operation outcome unavailable; inspect its targets before any new request"})));
             if store.finish(id, status, &result).await.is_err() {
                 tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");

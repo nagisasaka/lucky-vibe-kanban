@@ -1,3 +1,4 @@
+import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { useMemo, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -101,6 +102,8 @@ export function IssueWorkspacesSectionContainer({
         owner,
         updatedAt: workspace.updated_at,
         isOwnedByCurrentUser: workspace.owner_user_id === userId,
+        canManageWorkspace:
+          isLocalRemoteApiEnabled() || workspace.owner_user_id === userId,
         isRunning: localWorkspace?.isRunning,
         hasPendingApproval: localWorkspace?.hasPendingApproval,
         hasRunningDevServer: localWorkspace?.hasRunningDevServer,

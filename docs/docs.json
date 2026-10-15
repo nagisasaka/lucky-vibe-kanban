@@ -102,6 +102,7 @@
         "pages": [
           "self-hosting/local-development",
           "self-hosting/server-container",
+          "self-hosting/authentication",
           "self-hosting/deploy-docker"
         ]
       },

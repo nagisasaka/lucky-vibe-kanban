@@ -13,7 +13,11 @@ import { oauthApi } from '@/shared/lib/api';
 import { tokenManager } from '@/shared/lib/auth/tokenManager';
 import { configureAuthRuntime } from '@/shared/lib/auth/runtime';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
-import { LOCAL_USER_ID } from '@/shared/lib/localIdentity';
+import { ServerAccessGate } from '@web/app/auth/ServerAccessGate';
+import {
+  currentServerUser,
+  installAccessFetch,
+} from '@web/app/auth/serverAccess';
 import '@/shared/types/modals';
 import { queryClient } from '@/shared/lib/queryClient';
 import { isTauriApp } from '@/shared/lib/platform';
@@ -79,14 +83,14 @@ if (isTauriApp()) {
   document.addEventListener('gesturechange', (e) => e.preventDefault());
 }
 
+installAccessFetch();
+
 configureAuthRuntime({
   getToken: () => tokenManager.getToken(),
   triggerRefresh: () => tokenManager.triggerRefresh(),
   registerShape: (shape) => tokenManager.registerShape(shape),
   getCurrentUser: () =>
-    isLocalRemoteApiEnabled()
-      ? Promise.resolve({ user_id: LOCAL_USER_ID })
-      : oauthApi.getCurrentUser(),
+    isLocalRemoteApiEnabled() ? currentServerUser() : oauthApi.getCurrentUser(),
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -103,7 +107,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           showDialog
         >
           <ClickToComponent />
-          <App />
+          <ServerAccessGate>
+            <App />
+          </ServerAccessGate>
         </Sentry.ErrorBoundary>
       </PostHogProvider>
     </QueryClientProvider>

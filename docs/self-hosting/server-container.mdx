@@ -1,6 +1,6 @@
 ---
-title: "LVK single-user server"
-description: "Run LVK on a public IP with automatic HTTPS, Basic authentication and persistent Docker volumes. No domain required."
+title: "LVK self-hosted server"
+description: "Run LVK on a public IP with automatic HTTPS, locked setup, Basic or Auth0 authentication and persistent Docker volumes. No domain required."
 ---
 
 Run LVK and its agents on an always-on server, then use LVK in your laptop's browser. Closing the browser or putting the laptop to sleep does not stop a server-side run. Stopping the container, rebooting the server or losing power does stop its processes; persistent volumes preserve data, not executing processes.
@@ -8,9 +8,9 @@ Run LVK and its agents on an always-on server, then use LVK in your laptop's bro
 This distribution runs the **local LVK application** remotely. It is separate from [Vibe Kanban Cloud deployment](/self-hosting/deploy-docker), and does not require PostgreSQL, ElectricSQL, upstream billing access or a relay service.
 
 <Warning>
-  This is a single trusted user's development environment, not a multi-tenant
-  service. Anyone with the Basic-auth password can operate agents and access
-  repositories and credentials. Agents share the same Linux user as LVK and
+  This is one trusted team's development environment, not an isolated multi-tenant
+  service. The Basic owner or approved Auth0 members can operate agents and access
+  all repositories. Agents share the same Linux user as LVK and
   nginx. Read-only secret mounts prevent overwriting, not reading. Use a
   dedicated server, restrict ingress to your IP/VPN where possible, and do not
   mount the Docker socket, your host home or cloud administrator credentials.
@@ -19,7 +19,7 @@ This distribution runs the **local LVK application** remotely. It is separate fr
 ## What the image contains
 
 - Prebuilt LVK frontend, Rust server, sibling `agent-process-host` executable and `vibe-kanban-mcp` CLI.
-- nginx with HTTPS and Basic authentication on host port **443**. The optional certificate companion uses port **80** only for certificate validation.
+- nginx with HTTPS on host port **443**, backed by LVK authentication. The optional certificate companion uses port **80** only for certificate validation.
 - Codex CLI, OpenWiki, Node.js, pnpm, Git, Git LFS, GitHub CLI and Python.
 - The repository's pinned Rust toolchain, rustfmt, Clippy, cargo-watch, C/C++ compiler, CMake and native build dependencies for developing LVK itself.
 - A non-root runtime user, `appuser` (**UID/GID 10001**).
@@ -50,32 +50,34 @@ LVK_PREVIEW_DOMAIN=
 
 Read the [Let's Encrypt subscriber agreement](https://letsencrypt.org/repository/) before setting `LVK_ACME_AGREE_TOS=yes`. The contact email is optional. Keep the Compose project name (`lvk-server`) stable: changing it selects different named volumes. For IPv6, set `LVK_HOST` without brackets and use brackets in the browser URL, for example `https://[2001:db8::10]`.
 
-## Create your sign-in credentials
+## Prepare authentication
 
-Run these commands in your deployment directory. They pull the published image and prompt for a password without starting the application or issuing certificates:
+New public deployments start locked and expose no business data before setup.
+Follow [LVK authentication and Auth0 setup](/self-hosting/authentication) to issue a
+one-use setup key and configure Basic or Auth0 in the browser. There are no default
+credentials. Existing `secrets/htpasswd` files retain their nginx protection until
+you explicitly migrate; the authentication guide gives the transition steps.
+
+Prepare the certificate directory before starting Compose:
 
 ```bash
 mkdir -p secrets/tls
 docker compose pull
-docker compose run --rm --no-deps --user "$(id -u):$(id -g)" \
-  --entrypoint htpasswd -v "$PWD/secrets:/password-setup" \
-  lvk -Bc /password-setup/htpasswd owner
 sudo chown -R 10001:10001 secrets
 sudo chmod 750 secrets secrets/tls
-sudo chmod 640 secrets/htpasswd
 ```
-
-`-B` selects bcrypt. Use `-c` only when creating the file: it replaces an existing password file. For rotation, use the same interactive command **without `-c`**, and run it as UID/GID 10001 after the ownership change. Do not put passwords in `.env`, image layers, shell command arguments, Git or build logs.
 
 The certificate companion obtains a trusted certificate before Compose starts LVK. IP certificates last approximately six days; the companion checks hourly and lets Certbot decide when renewal is due. Failed attempts are retried after 15 minutes. The ACME account and renewal configuration stay in a separate `acme` volume, inaccessible to agents.
 
-The companion exports matching certificate/key pairs through an atomic directory link inside `secrets/tls`. LVK reads this directory as read-only, validates each changed pair and reloads nginx within 30 seconds. The backend and its agents keep running. Certificate files use UID/GID 10001 and mode 640. LVK refuses to start with an expired certificate, a certificate for another address, a mismatched key or a missing/non-bcrypt password file.
+The companion exports matching certificate/key pairs through an atomic directory link inside `secrets/tls`. LVK reads this directory as read-only, validates each changed pair and reloads nginx within 30 seconds. The backend and its agents keep running. Certificate files use UID/GID 10001 and mode 640. LVK refuses to start with an expired certificate, a certificate for another address, or a mismatched key. Explicit legacy-proxy mode also requires a valid bcrypt password file.
 
 ## Use a domain or your own certificate issuer
 
 For an optional domain, set `LVK_HOST=lvk.example.com` and point its DNS at the server. The automatic companion supports a single app hostname as well as an IP address.
 
-If you already manage TLS or need wildcard project previews, set `COMPOSE_FILE=compose.yaml` to omit the certificate companion. Provide these files yourself; symlinks must resolve within the mounted `secrets` directory:
+Public project preview origins are currently denied by the Auth0 access boundary; local preview is retained. See the authentication guide for this limitation.
+
+If you already manage TLS, set `COMPOSE_FILE=compose.yaml` to omit the certificate companion. Provide these files yourself; symlinks must resolve within the mounted `secrets` directory:
 
 ```text
 secrets/
@@ -96,7 +98,7 @@ docker compose ps
 docker compose logs --tail=100 lvk
 ```
 
-Open `https://YOUR_PUBLIC_IP` (or your optional hostname). Your browser first asks for the Basic-auth user and password. Without credentials, `/`, `/api/info` and WebSocket connections return 401. Health checks probe the internal backend and the unauthenticated HTTPS challenge. A failed service causes the supervisor to stop its sibling; `restart: unless-stopped` restarts the container. An `unhealthy` status alone does not cause Docker to restart it.
+Open `https://YOUR_PUBLIC_IP` (or your optional hostname), obtain the setup key with `docker compose exec lvk server setup-token`, and complete [authentication setup](/self-hosting/authentication). Before setup, the login assets are public and business APIs/streams are locked. Existing nginx Basic credentials remain required during migration. Health checks verify the internal health route and the public TLS certificate. A failed service causes the supervisor to stop its sibling; `restart: unless-stopped` restarts the container. An `unhealthy` status alone does not cause Docker to restart it.
 
 Authenticate Codex once, from a terminal on the host:
 

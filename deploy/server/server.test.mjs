@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { X509Certificate } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -10,6 +11,7 @@ import {
   backendEnvironment,
   authority,
   certificateReloader,
+  verifyCertificateIdentity,
   renderNginx,
   serverSettings,
   supervise,
@@ -151,6 +153,9 @@ test("IP hosts use IP SANs and correctly formatted origins", async (t) => {
     const certificate = await readFile(certPath),
       key = await readFile(keyPath);
     validateSecrets(certificate, key, hash, config);
+    const peer = { raw: new X509Certificate(certificate).raw };
+    assert.equal(verifyCertificateIdentity(host, peer), undefined);
+    assert(verifyCertificateIdentity("192.0.2.11", peer) instanceof Error);
     assert.throws(
       () => validateSecrets(certificate, key, hash, { app: "192.0.2.11" }),
       /does not cover/,

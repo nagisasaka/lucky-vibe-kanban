@@ -127,3 +127,6 @@ docs/research/agent-mesh-design.md
 
 # Built mobile development preview
 /packages/local-web/dist-preview/
+
+# Isolated source-validation outputs
+.build/

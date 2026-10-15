@@ -227,13 +227,19 @@ class Updater:
         # The queue GET takes the same admission mutex as queue POST. After the
         # host gate closes, every older writer finishes before this read, and
         # newer queue POSTs are rejected. This includes non-durable follow-ups.
-        code = """import json,sqlite3,sys,urllib.request,uuid
+        code = """import json,pathlib,sqlite3,sys,urllib.request,uuid
 db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
-with urllib.request.urlopen('http://127.0.0.1:'+sys.argv[2]+'/api/maintenance/ready',timeout=30) as response:
+key=pathlib.Path(sys.argv[1]).parent/'access-internal.token'
+headers={'X-LVK-Internal-Token':key.read_text()} if key.exists() else {}
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+ def redirect_request(self,*args,**kwargs): return None
+opener=urllib.request.build_opener(NoRedirect())
+def request(url): return urllib.request.Request(url,headers=headers)
+with opener.open(request('http://127.0.0.1:'+sys.argv[2]+'/api/maintenance/ready'),timeout=30) as response:
  if response.status!=200 or response.headers.get('x-lvk-maintenance-barrier')!='1': raise RuntimeError('Application does not support draining HTTP handlers')
 for (sid,) in db.execute('SELECT id FROM sessions'):
  url='http://127.0.0.1:'+sys.argv[2]+'/api/sessions/'+str(uuid.UUID(bytes=sid))+'/queue'
- with urllib.request.urlopen(url,timeout=15) as response:
+ with opener.open(request(url),timeout=15) as response:
   if response.headers.get('x-lvk-maintenance-fence')!='1': raise RuntimeError('Application lacks maintenance queue fence; bootstrap the current release first')
   data=json.load(response)
   if not data.get('success') or data['data']['status']!='empty': raise RuntimeError('A follow-up is queued; finish or cancel it before updating')
