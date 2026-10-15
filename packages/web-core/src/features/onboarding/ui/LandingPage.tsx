@@ -198,16 +198,13 @@ export function LandingPage() {
   }, [config, initialized, trackRemoteOnboardingEvent]);
 
   useEffect(() => {
-    if (
-      !config?.remote_onboarding_acknowledged ||
-      hasRedirectedToRootRef.current
-    ) {
+    if (!config?.onboarding_acknowledged || hasRedirectedToRootRef.current) {
       return;
     }
 
     hasRedirectedToRootRef.current = true;
     appNavigation.goToRoot({ replace: true });
-  }, [appNavigation, config?.remote_onboarding_acknowledged]);
+  }, [appNavigation, config?.onboarding_acknowledged]);
 
   const executorOptions = useMemo(() => {
     const compareAgents = (a: BaseCodingAgent, b: BaseCodingAgent) => {
@@ -308,9 +305,9 @@ export function LandingPage() {
     if (success) {
       trackRemoteOnboardingEvent(REMOTE_ONBOARDING_EVENTS.STAGE_COMPLETED, {
         stage: 'landing',
-        destination: '/onboarding/sign-in',
+        destination: '/',
       });
-      appNavigation.goToOnboardingSignIn({
+      appNavigation.goToRoot({
         replace: true,
       });
       return;
@@ -330,7 +327,7 @@ export function LandingPage() {
     );
   }
 
-  if (config.remote_onboarding_acknowledged) {
+  if (config.onboarding_acknowledged) {
     return null;
   }
 

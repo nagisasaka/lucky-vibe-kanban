@@ -5,7 +5,7 @@ description: "Run LVK on a public IP with automatic HTTPS, Basic authentication 
 
 Run LVK and its agents on an always-on server, then use LVK in your laptop's browser. Closing the browser or putting the laptop to sleep does not stop a server-side run. Stopping the container, rebooting the server or losing power does stop its processes; persistent volumes preserve data, not executing processes.
 
-This distribution runs the **local LVK application** remotely. It is separate from [Vibe Kanban Cloud deployment](/self-hosting/deploy-docker), and does not require PostgreSQL, ElectricSQL, upstream billing access or a relay service.
+This distribution runs the **local LVK application** remotely. It does not require PostgreSQL, ElectricSQL, upstream billing access or a relay service.
 
 <Warning>
   This is a single trusted user's development environment, not a multi-tenant
@@ -115,7 +115,7 @@ docker compose exec lvk git config --global user.email "you@example.com"
 docker compose exec lvk git clone https://github.com/nagisasaka/lucky-vibe-kanban.git /repos/lucky-vibe-kanban
 ```
 
-For private repositories, authenticate the bundled GitHub CLI or configure a repository-scoped deploy key inside the persistent home. Do not bake credentials into a derived image. A server-side folder picker cannot open your laptop's native file dialog; use the server path input instead. Local desktop editor launching and upstream cloud/relay integration are not configured by this kit.
+For private repositories, authenticate the bundled GitHub CLI or configure a repository-scoped deploy key inside the persistent home. Do not bake credentials into a derived image. A server-side folder picker cannot open your laptop's native file dialog; use the server path input instead. Configure SSH editor integration when opening server workspaces from your desktop.
 
 For LVK's MCP integration inside the container, you can configure the bundled `vibe-kanban-mcp --mode global` command instead of an npm download. It connects to the local backend. The image does not overwrite your agent's MCP configuration.
 

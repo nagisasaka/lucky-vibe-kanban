@@ -2,22 +2,8 @@ import { execSync, spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import { cac } from "cac";
-import {
-  ensureBinary,
-  ensureDesktopBundle,
-  BINARY_TAG,
-  CACHE_DIR,
-  DESKTOP_CACHE_DIR,
-  LOCAL_DEV_MODE,
-  LOCAL_DIST_DIR,
-  R2_BASE_URL,
-  getLatestVersion,
-} from "./download";
-import {
-  getTauriPlatform,
-  installAndLaunch,
-  cleanOldDesktopVersions,
-} from "./desktop";
+import { ensureBinary, ensureDesktopBundle, BINARY_TAG, CACHE_DIR, DESKTOP_CACHE_DIR, LOCAL_DEV_MODE, LOCAL_DIST_DIR, R2_BASE_URL, getLatestVersion } from "./download";
+import { getTauriPlatform, installAndLaunch, cleanOldDesktopVersions } from "./desktop";
 
 const CLI_VERSION: string = require("../package.json").version;
 
@@ -230,16 +216,6 @@ async function runMcp(args: string[]): Promise<void> {
   });
 }
 
-async function runReview(args: string[]): Promise<void> {
-  await extractAndRun("vibe-kanban-review", (bin) => {
-    const proc = spawn(bin, args, { stdio: "inherit" });
-    proc.on("exit", (c) => process.exit(c || 0));
-    proc.on("error", (e) => {
-      console.error("Review CLI error:", e.message);
-      process.exit(1);
-    });
-  });
-}
 
 async function runMain(desktopMode: boolean): Promise<void> {
   checkForUpdates();
@@ -317,12 +293,6 @@ async function main(): Promise<void> {
       runOrExit(runMain(Boolean(options.desktop)));
     });
 
-  cli
-    .command("review [...args]", "Run the review CLI")
-    .allowUnknownOptions()
-    .action((args: string[]) => {
-      runOrExit(runReview(args));
-    });
 
   cli
     .command("mcp [...args]", "Run the MCP server")

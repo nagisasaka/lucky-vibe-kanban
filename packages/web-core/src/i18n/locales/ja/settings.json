@@ -25,16 +25,8 @@
         "mcpDesc": "モデルコンテキストプロトコルサーバー",
         "agent-tools": "エージェントツール",
         "agent-toolsDesc": "ネイティブ MCP サーバーとスキル",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "プロジェクト",
         "remote-projectsDesc": "プロジェクトを管理",
-        "relay": "Remote Access",
-        "relayDesc": "Relay tunnel and enrollment",
-        "machineSettings": "Machine Settings",
-        "accountSettings": "Account Settings",
-        "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host",
         "resources": "共有リソース"
       }
     },
@@ -544,33 +536,8 @@
         "confirmSwitch": "未保存の変更があります。本当にリポジトリを切り替えますか？変更は失われます。"
       }
     },
-    "relay": {
-      "title": "Remote Access",
-      "description": "Allow access to this instance from the web via relay tunnel.",
-      "enabled": {
-        "label": "Enable remote access",
-        "helper": "When enabled, this instance can be accessed remotely through a relay tunnel."
-      },
-      "enrollmentCode": {
-        "label": "Pairing Code",
-        "helper": "Enter this code in the browser to pair with this instance.",
-        "loginRequired": "Log in to generate a pairing code.",
-        "fetchError": "Failed to fetch pairing code.",
-        "show": "Show pairing code"
-      },
-      "host": {
-        "label": "ホスト"
-      },
-      "client": {
-        "label": "クライアント"
-      },
-      "overview": {
-        "available": "Available",
-        "unavailable": "Unavailable"
-      }
-    },
     "remoteProjects": {
-      "title": "Remote Projects",
+      "title": "プロジェクト",
       "description": "Manage cloud-synced projects across organizations.",
       "loading": "Loading remote projects...",
       "loadError": "Failed to load organizations",

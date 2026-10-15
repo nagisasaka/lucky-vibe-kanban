@@ -16,13 +16,12 @@ it('denies mutations from unavailable or stale settings clients without making a
   let available = true;
   const client = createMachineClient(
     'local',
-    { id: 'remote-a', apiHostId: 'remote-a', kind: 'remote', label: 'A' },
+    { id: 'local', apiHostId: null, kind: 'local', label: 'LVK server' },
     () => available
   );
   await client.listRepos();
   expect(request.mock.calls[0][1]).toMatchObject({
-    hostScope: 'explicit',
-    hostId: 'remote-a',
+    hostScope: 'none',
   });
   request.mockClear();
   available = false;
@@ -58,9 +57,7 @@ it('keeps explicit local and remote routing separate from the ambient route', as
     label: 'B',
   });
   request.mockResolvedValue(new Response('{}'));
-  await remote.listRepos();
-  expect(request.mock.calls[1][1]).toMatchObject({
-    hostScope: 'none',
-    relayHostId: 'remote-b',
-  });
+  request.mockClear();
+  await expect(remote.listRepos()).rejects.toThrow('Remote Access');
+  expect(request).not.toHaveBeenCalled();
 });

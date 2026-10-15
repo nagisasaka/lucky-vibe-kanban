@@ -24,7 +24,7 @@ use uuid::Uuid;
 use crate::{
     DeploymentImpl,
     error::ApiError,
-    middleware::signed_ws::{MaybeSignedWebSocket, SignedWsUpgrade},
+    middleware::websocket::{LocalWebSocket, LocalWsUpgrade},
 };
 
 const LIVE_POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -510,7 +510,7 @@ pub(crate) async fn validate_pending_input(
 }
 
 async fn stream_agent_run_events_ws(
-    ws: SignedWsUpgrade,
+    ws: LocalWsUpgrade,
     State(deployment): State<DeploymentImpl>,
     Path(agent_run_id): Path<Uuid>,
     Query(query): Query<AgentEventQuery>,
@@ -525,7 +525,7 @@ async fn stream_agent_run_events_ws(
 }
 
 async fn handle_agent_run_events_ws(
-    mut socket: MaybeSignedWebSocket,
+    mut socket: LocalWebSocket,
     deployment: DeploymentImpl,
     agent_run_id: Uuid,
     query: AgentEventQuery,
@@ -692,7 +692,7 @@ fn should_send_stream_state(had_events: bool, has_more: bool, state_changed: boo
 }
 
 async fn send_stream_message(
-    socket: &mut MaybeSignedWebSocket,
+    socket: &mut LocalWebSocket,
     message: &AgentRunStreamMessage,
 ) -> anyhow::Result<()> {
     tokio::time::timeout(

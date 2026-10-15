@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
-import { Outlet, useNavigate, useParams } from '@tanstack/react-router';
+import { Outlet, useNavigate } from '@tanstack/react-router';
 import { siDiscord, siGithub } from 'simple-icons';
-import {
-  XIcon,
-  PlusIcon,
-  LayoutIcon,
-  KanbanIcon,
-  DownloadSimpleIcon,
-} from '@phosphor-icons/react';
+import { XIcon, PlusIcon, LayoutIcon } from '@phosphor-icons/react';
 import { SyncErrorProvider } from '@/shared/providers/SyncErrorProvider';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
 import { useVisualViewportHeightVar } from '@/shared/hooks/useVisualViewportHeightVar';
@@ -17,7 +11,7 @@ import { cn } from '@/shared/lib/utils';
 import { isTauriMac } from '@/shared/lib/platform';
 
 import { NavbarContainer } from './NavbarContainer';
-import { AppBar, type AppBarHostStatus } from '@vibe/ui/components/AppBar';
+import { AppBar } from '@vibe/ui/components/AppBar';
 import { MobileDrawer } from '@vibe/ui/components/MobileDrawer';
 import { AppBarUserPopoverContainer } from './AppBarUserPopoverContainer';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
@@ -30,7 +24,6 @@ import { useAppUpdateStore } from '@/shared/stores/useAppUpdateStore';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
 import {
-  getDestinationHostId,
   getProjectDestination,
   isLocalWorkspacesDestination,
 } from '@/shared/lib/routes/appNavigation';
@@ -38,8 +31,7 @@ import {
   CreateRemoteProjectDialog,
   type CreateRemoteProjectResult,
 } from '@/shared/dialogs/org/CreateRemoteProjectDialog';
-import { OAuthDialog } from '@/shared/dialogs/global/OAuthDialog';
-import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
+
 import { CommandBarDialog } from '@/shared/dialogs/command-bar/CommandBarDialog';
 import { useCommandBarShortcut } from '@/shared/hooks/useCommandBarShortcut';
 import { useWorkspaceSidebarPreviewController } from '@/shared/hooks/useWorkspaceSidebarPreviewController';
@@ -53,7 +45,6 @@ import {
 import { AppBarNotificationBellContainer } from '@/pages/workspaces/AppBarNotificationBellContainer';
 import { WorkspacesSidebarContainer } from '@/pages/workspaces/WorkspacesSidebarContainer';
 import { WorkspacesSidebarReopenTag } from '@vibe/ui/components/WorkspacesSidebar';
-import { useRemoteCloudHostsAppBarModel } from '@/shared/hooks/useRemoteCloudHosts';
 
 export function SharedAppLayout() {
   const appNavigation = useAppNavigation();
@@ -74,8 +65,6 @@ export function SharedAppLayout() {
   const { data: starCount } = useGitHubStars();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAppBarHovered, setIsAppBarHovered] = useState(false);
-  const { hosts: remoteCloudHosts } = useRemoteCloudHostsAppBarModel();
-  const { hostId: routeHostId } = useParams({ strict: false });
   const navigate = useNavigate();
 
   // Register CMD+K shortcut globally for all routes under SharedAppLayout
@@ -174,12 +163,11 @@ export function SharedAppLayout() {
     [currentDestination]
   );
   const isWorkspacesActive = isLocalWorkspacesDestination(currentDestination);
-  const isExportActive = currentDestination?.kind === 'export';
+
   const isWorkspaceSidebarPreviewEnabled =
     !isMobile && isWorkspacesActive && !isLeftSidebarVisible;
   const activeProjectId = projectDestination?.projectId ?? null;
-  const activeHostId =
-    getDestinationHostId(currentDestination) ?? routeHostId ?? null;
+
   const sidebarPreview = useWorkspaceSidebarPreviewController({
     enabled: isWorkspaceSidebarPreviewEnabled,
     isAppBarHovered,
@@ -198,10 +186,6 @@ export function SharedAppLayout() {
   const handleWorkspacesClick = useCallback(() => {
     void navigate({ to: '/workspaces' });
   }, [navigate]);
-
-  const handleExportClick = useCallback(() => {
-    appNavigation.goToExport();
-  }, [appNavigation]);
 
   const handleProjectClick = useCallback(
     (projectId: string) => {
@@ -263,39 +247,6 @@ export function SharedAppLayout() {
     }
   }, [selectedOrgId, appNavigation]);
 
-  const handleSignIn = useCallback(async () => {
-    try {
-      await OAuthDialog.show({});
-    } catch {
-      // Dialog cancelled
-    }
-  }, []);
-
-  const openRelaySettings = useCallback((hostId?: string) => {
-    void SettingsDialog.show({
-      initialSection: 'relay',
-      ...(hostId ? { initialState: { hostId } } : {}),
-    });
-  }, []);
-
-  const handleHostClick = useCallback(
-    (hostId: string, status: AppBarHostStatus) => {
-      if (status === 'offline') {
-        return;
-      }
-
-      void navigate({
-        to: '/hosts/$hostId/workspaces',
-        params: { hostId },
-      });
-    },
-    [navigate]
-  );
-
-  const handlePairHostClick = useCallback(() => {
-    openRelaySettings();
-  }, [openRelaySettings]);
-
   return (
     <SyncErrorProvider>
       <div
@@ -316,41 +267,22 @@ export function SharedAppLayout() {
               style={isTauriMac() ? { minWidth: 56 } : undefined}
             />
             {/* Desktop navbar. */}
-            <NavbarContainer
-              onOrgSelect={setSelectedOrgId}
-              onOpenDrawer={() => setIsDrawerOpen(true)}
-            />
+            <NavbarContainer onOpenDrawer={() => setIsDrawerOpen(true)} />
             {/* Desktop AppBar sidebar. */}
             <AppBar
               projects={orderedProjects}
-              hosts={remoteCloudHosts}
-              activeHostId={activeHostId}
               onCreateProject={handleCreateProject}
-              onExportClick={handleExportClick}
               onWorkspacesClick={handleWorkspacesClick}
-              onHostClick={handleHostClick}
-              onPairHostClick={handlePairHostClick}
               onProjectClick={handleProjectClick}
               onProjectsDragEnd={handleProjectsDragEnd}
               isSavingProjectOrder={isSavingProjectOrder}
               isWorkspacesActive={isWorkspacesActive}
-              isExportActive={isExportActive}
               activeProjectId={activeProjectId}
-              isSignedIn={isSignedIn}
               isLoadingProjects={isLoading}
-              onSignIn={handleSignIn}
               onHoverStart={() => setIsAppBarHovered(true)}
               onHoverEnd={() => setIsAppBarHovered(false)}
-              notificationBell={
-                isSignedIn ? <AppBarNotificationBellContainer /> : undefined
-              }
-              userPopover={
-                <AppBarUserPopoverContainer
-                  organizations={organizations}
-                  selectedOrgId={selectedOrgId ?? ''}
-                  onOrgSelect={setSelectedOrgId}
-                />
-              }
+              notificationBell={<AppBarNotificationBellContainer />}
+              userPopover={<AppBarUserPopoverContainer />}
               starCount={starCount}
               onlineCount={onlineCount}
               appVersion={appVersion}
@@ -398,7 +330,6 @@ export function SharedAppLayout() {
           <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
             <NavbarContainer
               mobileMode={isMobile}
-              onOrgSelect={setSelectedOrgId}
               onOpenDrawer={() => setIsDrawerOpen(true)}
             />
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -444,79 +375,31 @@ export function SharedAppLayout() {
             {/* Divider */}
             <div className="border-t border-border mx-4" />
 
-            {/* Export link */}
-            {isSignedIn && (
-              <div className="px-4 py-3">
-                <p className="mb-2 text-xs font-medium text-low">Export</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleExportClick();
-                    setIsDrawerOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm text-normal hover:bg-secondary cursor-pointer"
-                >
-                  <DownloadSimpleIcon className="h-4 w-4" />
-                  Export data
-                </button>
-              </div>
-            )}
-
-            {/* Divider */}
-            {isSignedIn && <div className="border-t border-border mx-4" />}
-
             {/* Project list */}
             <div className="flex-1 overflow-y-auto p-2">
-              {isSignedIn ? (
-                orderedProjects.map((project) => (
-                  <button
-                    type="button"
-                    key={project.id}
-                    onClick={() => {
-                      handleProjectClick(project.id);
-                      setIsDrawerOpen(false);
-                    }}
-                    className={cn(
-                      'flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm text-left cursor-pointer',
-                      'transition-colors',
-                      project.id === activeProjectId
-                        ? 'bg-brand/10 text-high'
-                        : 'text-normal hover:bg-secondary'
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: `hsl(${project.color})` }}
-                    />
-                    <span className="truncate">{project.name}</span>
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-6 text-center">
-                  <KanbanIcon
-                    className="h-8 w-8 mx-auto text-low"
-                    weight="bold"
+              {orderedProjects.map((project) => (
+                <button
+                  type="button"
+                  key={project.id}
+                  onClick={() => {
+                    handleProjectClick(project.id);
+                    setIsDrawerOpen(false);
+                  }}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm text-left cursor-pointer',
+                    'transition-colors',
+                    project.id === activeProjectId
+                      ? 'bg-brand/10 text-high'
+                      : 'text-normal hover:bg-secondary'
+                  )}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: `hsl(${project.color})` }}
                   />
-                  <p className="mt-3 text-sm font-medium text-high">
-                    Kanban Boards
-                  </p>
-                  <p className="mt-1 text-xs text-low">
-                    Sign in to organise your coding agents with kanban boards.
-                  </p>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleSignIn();
-                        setIsDrawerOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-md text-sm font-medium bg-brand text-on-brand hover:bg-brand-hover cursor-pointer"
-                    >
-                      Sign in
-                    </button>
-                  </div>
-                </div>
-              )}
+                  <span className="truncate">{project.name}</span>
+                </button>
+              ))}
             </div>
 
             {/* Create Project button */}

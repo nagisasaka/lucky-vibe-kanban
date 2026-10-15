@@ -81,11 +81,9 @@ FROM dependencies AS builder
 ARG POSTHOG_API_KEY=""
 ARG POSTHOG_API_ENDPOINT=""
 ARG SENTRY_DSN=""
-ARG VK_SHARED_API_BASE=""
 ENV POSTHOG_API_KEY=${POSTHOG_API_KEY}
 ENV POSTHOG_API_ENDPOINT=${POSTHOG_API_ENDPOINT}
 ENV SENTRY_DSN=${SENTRY_DSN}
-ENV VK_SHARED_API_BASE=${VK_SHARED_API_BASE}
 
 COPY Cargo.toml Cargo.lock ./
 # Restore the real workspace sources and offline SQLx metadata after cooking.

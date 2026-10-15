@@ -19,7 +19,6 @@ fi
 export FRONTEND_PORT="${FRONTEND_PORT:-4030}"
 export BACKEND_PORT="${BACKEND_PORT:-4021}"
 export HOST="${HOST:-0.0.0.0}"
-export VITE_VK_SHARED_API_BASE="${VK_SHARED_API_BASE:-}"
 for name in FRONTEND_PORT BACKEND_PORT; do
     value="${!name}"
     if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then

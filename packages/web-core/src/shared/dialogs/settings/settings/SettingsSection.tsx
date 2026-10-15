@@ -46,7 +46,7 @@ export function SettingsSection({
           key={type}
           fallback={<div role="status">{t('settings.general.loading')}</div>}
         >
-          {renderSettingsSection(type, initialState, onClose)}
+          {renderSettingsSection(type, initialState)}
         </Suspense>
       </div>
     </div>

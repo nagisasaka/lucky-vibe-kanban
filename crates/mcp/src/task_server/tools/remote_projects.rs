@@ -51,7 +51,7 @@ impl McpServer {
         Parameters(McpListProjectsRequest { organization_id }): Parameters<McpListProjectsRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let url = self.url(&format!(
-            "/api/remote/projects?organization_id={}",
+            "/api/board/projects?organization_id={}",
             organization_id
         ));
         let response: ListProjectsResponse = match self.send_json(self.client.get(&url)).await {

@@ -69,11 +69,11 @@ LVK自体を開発する場合は、任意の[ホスト側更新サービス](de
 | `pnpm run lint`           | Web の lint、ルート Rust の Clippy、未使用の翻訳キーの確認         |
 | `pnpm run format`         | Rust と Web コードのフォーマット                                   |
 | `pnpm run server:check`   | サーバー設定とアクセス制御のテスト                                 |
-| `cargo test --workspace`  | ルート Rust ワークスペースのテスト                                 |
+| `pnpm run backend:test`  | ルート Rust ワークスペースのテスト                                 |
 | `pnpm run generate-types` | Rust から共有 TypeScript 型を生成                                  |
 
-独立した `crates/remote` Rust ワークスペースには、上流の非公開依存関係があります。
-ローカル版 LVK の開発には不要です。検証範囲は [AGENTS.md](AGENTS.md) を参照してください。
+上流由来の Cloud / relay Remote Access は廃止されています。LVK サーバーの URL へ直接アクセスしてください。
+外部 Runner / Execution Bridge は引き続き利用できます。検証範囲は [AGENTS.md](AGENTS.md) を参照してください。
 `shared/` 内の生成ファイルは直接編集しないでください。
 
 リリース用のビルドと公開は、GitHub Actions の [`publish-server.yml`](.github/workflows/publish-server.yml) で行います。

@@ -10,7 +10,6 @@ pub mod command_ext;
 pub mod diff;
 pub mod execution_logs;
 pub mod http_headers;
-pub mod jwt;
 pub mod log_msg;
 pub mod msg_store;
 pub mod native_audit;

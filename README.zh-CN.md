@@ -32,8 +32,8 @@ pnpm install --frozen-lockfile
 pnpm run dev
 ```
 
-开发和验证范围见 [AGENTS.md](AGENTS.md)。独立的 `crates/remote` Rust 工作区包含上游私有依赖，
-本地 LVK 开发不需要运行该工作区。
+开发和验证范围见 [AGENTS.md](AGENTS.md)。上游 Cloud 和 relay Remote Access 已移除，
+请直接访问 LVK 服务器 URL。外部 Runner / Execution Bridge 仍然保留。
 
 ## 名称与来源
 

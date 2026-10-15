@@ -1,6 +1,5 @@
 /**
- * Error type for Electric sync operations.
- * Wraps errors from Electric's onError callback (HTTP errors, network failures, etc.)
+ * Error type for local Board snapshot synchronization.
  */
 export interface SyncError {
   /** HTTP status code if available */
@@ -10,7 +9,7 @@ export interface SyncError {
 }
 
 /**
- * Configuration options for creating Electric collections.
+ * Configuration options for creating local Board collections.
  */
 export interface CollectionConfig {
   /** Callback for sync errors */

@@ -3,13 +3,11 @@ import { previewProxyUrl } from './previewProxyUrl';
 
 describe('previewProxyUrl', () => {
   const source = new URL('http://localhost:5173/path?q=1#section');
-  it('preserves local and relay previews', () => {
+  it('preserves local previews and rejects retired relay hosts', () => {
     expect(previewProxyUrl(source, '5173', 3009)?.href).toBe(
       'http://5173.localhost:3009/path?q=1#section'
     );
-    expect(
-      previewProxyUrl(source, '5173', 3009, null, 'host-id')?.hostname
-    ).toBe('5173--host-id.localhost');
+    expect(previewProxyUrl(source, '5173', 3009, null, 'host-id')).toBeNull();
   });
   it('uses HTTPS with no internal port exposed', () => {
     expect(

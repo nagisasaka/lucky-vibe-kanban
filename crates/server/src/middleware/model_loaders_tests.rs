@@ -74,8 +74,7 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
         "/execution/start",
         "/execution/setup",
         "/execution/cleanup",
-        "/integration/open-editor",
-        "/integration/editor/path",
+        "/integration/editor/open",
         "/attachments",
         "/links",
         "/wiki/language",
@@ -126,23 +125,6 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
         effects.load(Ordering::SeqCst),
         0,
         "Rejection must precede every downstream effect"
-    );
-    assert_eq!(
-        client
-            .get(format!(
-                "http://{address}/workspaces/{}/integration/editor/path",
-                internal.id
-            ))
-            .send()
-            .await
-            .unwrap()
-            .status(),
-        StatusCode::CONFLICT
-    );
-    assert_eq!(
-        effects.load(Ordering::SeqCst),
-        0,
-        "Relay editor admission is not passive file inspection"
     );
     assert!(
         db::models::workspace_usage::require_interactive(&pool, internal.id)

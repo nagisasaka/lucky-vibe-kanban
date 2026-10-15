@@ -7,6 +7,7 @@ export function previewProxyUrl(
   publicDomain?: string | null,
   relayHostId?: string | null
 ): URL | null {
+  if (relayHostId) return null;
   const port = Number(targetPort);
   if (!/^\d+$/.test(targetPort) || port < 1 || port > 65535) return null;
   if (publicDomain) {
@@ -20,7 +21,7 @@ export function previewProxyUrl(
     )
       return null;
   }
-  const token = relayHostId ? `${port}--${relayHostId}` : String(port);
+  const token = String(port);
   const url = new URL(
     publicDomain
       ? `https://${token}.${publicDomain}`

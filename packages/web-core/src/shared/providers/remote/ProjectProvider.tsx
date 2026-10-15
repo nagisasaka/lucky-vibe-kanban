@@ -18,7 +18,6 @@ import {
   ISSUE_FOLLOWER_MUTATION,
   ISSUE_TAG_MUTATION,
   ISSUE_RELATIONSHIP_MUTATION,
-  PULL_REQUEST_ISSUE_MUTATION,
   type Issue,
   type ProjectStatus,
   type Tag,
@@ -73,7 +72,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const pullRequestIssuesResult = useShape(
     PROJECT_PULL_REQUEST_ISSUES_SHAPE,
     params,
-    { enabled, mutation: PULL_REQUEST_ISSUE_MUTATION }
+    { enabled }
   );
   const workspacesResult = useShape(PROJECT_WORKSPACES_SHAPE, params, {
     enabled,
@@ -277,8 +276,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       removeIssueRelationship: issueRelationshipsResult.remove,
 
       // PullRequestIssue mutations
-      insertPullRequestIssue: pullRequestIssuesResult.insert,
-      removePullRequestIssue: pullRequestIssuesResult.remove,
 
       // Lookup helpers
       getIssue,

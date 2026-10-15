@@ -218,30 +218,10 @@
   "states": {
     "loading": "読み込み中..."
   },
-  "orgSwitcher": {
-    "organizations": "組織",
-    "orgSettings": "組織の設定"
-  },
+  "orgSwitcher": {},
   "ok": "OK",
   "error": "エラー",
-  "signIn": "サインイン",
-  "signOut": "サインアウト",
-  "oauth": {
-    "title": "Lucky Vibe Kanbanにサインイン",
-    "description": "サインインして組織に参加し、チームとタスクを共有します",
-    "continueWithGitHub": "GitHubで続行",
-    "continueWithGoogle": "Googleで続行",
-    "waitingTitle": "認証を完了",
-    "waitingDescription": "認証用のポップアップウィンドウが開きました",
-    "waitingForAuth": "認証を待っています...",
-    "popupInstructions": "ポップアップウィンドウが開かない場合は、ポップアップブロックの設定を確認してください。",
-    "back": "戻る",
-    "successTitle": "認証成功！",
-    "welcomeBack": "おかえりなさい、{{name}}",
-    "errorTitle": "認証失敗",
-    "errorDescription": "アカウントの認証中に問題が発生しました",
-    "tryAgain": "再試行"
-  },
+  "oauth": {},
   "toolbar": {
     "sortBy": "並べ替え",
     "groupBy": "グループ化"
@@ -565,10 +545,6 @@
     "previewFileWithName": "[ファイル: {{name}}]",
     "imageAttachmentNameFallback": "添付ファイル",
     "removeImage": "画像を削除",
-    "maxFilesAtOnce": "一度に最大 {{count}} 個までアップロードできます",
-    "fileExceedsLimit": "{{filename}} は20MBの上限を超えています",
-    "unknownError": "不明なエラー",
-    "failedToUploadFile": "{{filename}} のアップロードに失敗しました: {{message}}",
     "downloadAttachment": "添付ファイルをダウンロード",
     "subIssues": "サブ課題",
     "noSubIssues": "サブ課題なし",
@@ -579,11 +555,7 @@
       "active": "アクティブ",
       "all": "すべて"
     },
-    "loginRequired": {
-      "title": "サインインが必要です",
-      "description": "このプロジェクトを表示するにはサインインしてください。",
-      "action": "サインイン"
-    },
+    "loginRequired": {},
     "team": "Team",
     "personal": "Personal",
     "searchPlaceholder": "Search issues...",
@@ -714,25 +686,11 @@
     "streamsAffected": "{{count}}件のストリームが影響を受けています",
     "streamsAffected_other": "{{count}}件のストリームが影響を受けています",
     "status": "(ステータス {{status}})",
-    "refreshPage": "ページを更新",
-    "remoteAuthUnavailable": "リモート認証は一時的に利用できません。復旧するまで、一部のリモート機能は利用できない可能性があります。"
+    "refreshPage": "ページを更新"
   },
-  "onboardingSignIn": {
-    "subtitle": "Sign in to continue",
-    "signedInAs": "Signed in as {{name}}.",
-    "moreOptions": "More options",
-    "featureHeader": "Feature",
-    "signedInHeader": "Signed in",
-    "skipSignInHeader": "Don't sign in",
-    "yes": "Yes",
-    "no": "No"
-  },
+  "onboardingSignIn": {},
   "appBar": {
-    "kanban": {
-      "tooltip": "サインインしてプロジェクトを表示",
-      "title": "カンバンボード",
-      "description": "サインインしてカンバンボードでコーディングエージェントを整理しましょう。"
-    }
+    "kanban": {}
   },
   "errors": {
     "generic": "An unexpected error occurred"

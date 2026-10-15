@@ -25,16 +25,8 @@
         "mcpDesc": "Servidores de Protocolo de Contexto de Modelo (MCP)",
         "agent-tools": "Agent Tools",
         "agent-toolsDesc": "Native MCP servers and Skills",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "Proyectos",
-        "remote-projectsDesc": "Gestionar proyectos",
-        "relay": "Remote Access",
-        "relayDesc": "Relay tunnel and enrollment",
-        "machineSettings": "Machine Settings",
-        "accountSettings": "Account Settings",
-        "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host"
+        "remote-projectsDesc": "Gestionar proyectos"
       }
     },
     "general": {
@@ -532,33 +524,8 @@
         "confirmSwitch": "Tienes cambios sin guardar. ¿Estás seguro de que quieres cambiar de repositorio? Tus cambios se perderán."
       }
     },
-    "relay": {
-      "title": "Remote Access",
-      "description": "Allow access to this instance from the web via relay tunnel.",
-      "enabled": {
-        "label": "Enable remote access",
-        "helper": "When enabled, this instance can be accessed remotely through a relay tunnel."
-      },
-      "enrollmentCode": {
-        "label": "Pairing Code",
-        "helper": "Enter this code in the browser to pair with this instance.",
-        "loginRequired": "Log in to generate a pairing code.",
-        "fetchError": "Failed to fetch pairing code.",
-        "show": "Show pairing code"
-      },
-      "host": {
-        "label": "Host"
-      },
-      "client": {
-        "label": "Cliente"
-      },
-      "overview": {
-        "available": "Available",
-        "unavailable": "Unavailable"
-      }
-    },
     "remoteProjects": {
-      "title": "Remote Projects",
+      "title": "Proyectos",
       "description": "Manage cloud-synced projects across organizations.",
       "loading": "Loading remote projects...",
       "loadError": "Failed to load organizations",

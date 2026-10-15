@@ -3,7 +3,6 @@ import type { DraftWorkspaceData } from 'shared/types';
 import { ScratchType } from 'shared/types';
 import type { AppRuntime } from '@/shared/hooks/useAppRuntime';
 import { scratchApi } from '@/shared/lib/api';
-import { localStorageScratchUpdate } from '@/shared/hooks/useLocalStorageScratch';
 
 interface WorkspaceDefaultsLike {
   preferredRepos?: CreateModeInitialState['preferredRepos'];
@@ -112,22 +111,9 @@ export async function persistWorkspaceCreateDraft(
   };
 
   try {
-    if (runtime === 'remote') {
-      const didPersist = localStorageScratchUpdate(
-        ScratchType.DRAFT_WORKSPACE,
-        draftId,
-        {
-          payload,
-        }
-      );
-      if (!didPersist) {
-        throw new Error('Failed to persist create-workspace draft in storage');
-      }
-    } else {
-      await scratchApi.update(ScratchType.DRAFT_WORKSPACE, draftId, {
-        payload,
-      });
-    }
+    if (runtime === 'remote')
+      throw new Error('Cloud runtime is no longer supported');
+    await scratchApi.update(ScratchType.DRAFT_WORKSPACE, draftId, { payload });
     return draftId;
   } catch (error) {
     console.error('Failed to persist create-workspace draft:', error);

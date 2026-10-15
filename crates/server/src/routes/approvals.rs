@@ -15,7 +15,7 @@ use utils::{
 
 use crate::{
     DeploymentImpl,
-    middleware::signed_ws::{MaybeSignedWebSocket, SignedWsUpgrade},
+    middleware::websocket::{LocalWebSocket, LocalWsUpgrade},
 };
 
 async fn respond_to_approval(
@@ -49,7 +49,7 @@ async fn respond_to_approval(
 }
 
 async fn stream_approvals_ws(
-    ws: SignedWsUpgrade,
+    ws: LocalWsUpgrade,
     State(deployment): State<DeploymentImpl>,
 ) -> impl IntoResponse {
     ws.on_upgrade(move |socket| async move {
@@ -60,7 +60,7 @@ async fn stream_approvals_ws(
 }
 
 async fn handle_approvals_ws(
-    mut socket: MaybeSignedWebSocket,
+    mut socket: LocalWebSocket,
     deployment: DeploymentImpl,
 ) -> anyhow::Result<()> {
     let mut stream = deployment.approvals().patch_stream();

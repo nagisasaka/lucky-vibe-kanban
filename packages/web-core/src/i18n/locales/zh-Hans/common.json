@@ -209,30 +209,10 @@
     },
     "currentDisabled": "无法选择当前分支"
   },
-  "orgSwitcher": {
-    "organizations": "组织",
-    "orgSettings": "组织设置"
-  },
+  "orgSwitcher": {},
   "ok": "确定",
   "error": "错误",
-  "signIn": "登录",
-  "signOut": "退出登录",
-  "oauth": {
-    "title": "登录 Lucky Vibe Kanban",
-    "description": "登录以加入组织并与团队共享任务",
-    "continueWithGitHub": "使用 GitHub 继续",
-    "continueWithGoogle": "使用 Google 继续",
-    "waitingTitle": "完成身份验证",
-    "waitingDescription": "已打开弹出窗口进行身份验证",
-    "waitingForAuth": "等待身份验证...",
-    "popupInstructions": "如果弹出窗口未打开，请检查您的弹窗拦截器设置。",
-    "back": "返回",
-    "successTitle": "身份验证成功！",
-    "welcomeBack": "欢迎回来，{{name}}",
-    "errorTitle": "身份验证失败",
-    "errorDescription": "验证您的账户时出现问题",
-    "tryAgain": "重试"
-  },
+  "oauth": {},
   "toolbar": {
     "sortBy": "排序方式",
     "groupBy": "分组方式"
@@ -1122,10 +1102,6 @@
     "previewFileWithName": "[文件: {{name}}]",
     "imageAttachmentNameFallback": "附件",
     "removeImage": "移除图片",
-    "maxFilesAtOnce": "一次最多上传 {{count}} 个文件",
-    "fileExceedsLimit": "文件 {{filename}} 超过 20MB 限制",
-    "unknownError": "未知错误",
-    "failedToUploadFile": "上传 {{filename}} 失败：{{message}}",
     "downloadAttachment": "下载附件",
     "subIssues": "子任务",
     "noSubIssues": "无子任务",
@@ -1136,11 +1112,7 @@
       "active": "活动",
       "all": "全部"
     },
-    "loginRequired": {
-      "title": "需要登录",
-      "description": "请登录以查看此项目。",
-      "action": "登录"
-    },
+    "loginRequired": {},
     "team": "团队",
     "personal": "个人",
     "searchPlaceholder": "搜索问题...",
@@ -1271,25 +1243,11 @@
     "streamsAffected": "{{count}} 个数据流受影响",
     "streamsAffected_other": "{{count}} 个数据流受影响",
     "status": "(状态 {{status}})",
-    "refreshPage": "刷新页面",
-    "remoteAuthUnavailable": "远程身份验证暂时不可用。在恢复之前，部分远程功能可能无法使用。"
+    "refreshPage": "刷新页面"
   },
-  "onboardingSignIn": {
-    "subtitle": "登录后继续",
-    "signedInAs": "已登录为 {{name}}。",
-    "moreOptions": "更多选项",
-    "featureHeader": "功能",
-    "signedInHeader": "已登录",
-    "skipSignInHeader": "不登录",
-    "yes": "是",
-    "no": "否"
-  },
+  "onboardingSignIn": {},
   "appBar": {
-    "kanban": {
-      "tooltip": "登录以查看项目",
-      "title": "看板",
-      "description": "登录以使用看板管理您的编码代理。"
-    }
+    "kanban": {}
   },
   "errors": {
     "generic": "发生了意外错误"

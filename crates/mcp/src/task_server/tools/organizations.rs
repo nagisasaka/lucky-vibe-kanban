@@ -65,7 +65,7 @@ struct McpListOrgMembersResponse {
 impl McpServer {
     #[tool(description = "List all the available organizations")]
     async fn list_organizations(&self) -> Result<CallToolResult, ErrorData> {
-        let url = self.url("/api/organizations");
+        let url = self.url("/api/board/organizations");
         let response: ListOrganizationsResponse = match self.send_json(self.client.get(&url)).await
         {
             Ok(r) => r,
@@ -103,7 +103,10 @@ impl McpServer {
             Err(e) => return Ok(Self::tool_error(e)),
         };
 
-        let url = self.url(&format!("/api/organizations/{}/members", organization_id));
+        let url = self.url(&format!(
+            "/api/board/organizations/{}/members",
+            organization_id
+        ));
         let response: ListMembersResponse = match self.send_json(self.client.get(&url)).await {
             Ok(r) => r,
             Err(e) => return Ok(Self::tool_error(e)),

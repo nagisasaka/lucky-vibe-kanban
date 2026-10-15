@@ -44,8 +44,6 @@ export function environment(config, build, env = process.env) {
     PREVIEW_PROXY_PORT: "0",
     VK_ALLOWED_ORIGINS: origin,
     VK_PREVIEW_DOMAIN: "",
-    VK_SHARED_API_BASE: "",
-    VITE_VK_SHARED_API_BASE: "",
     VIBE_KANBAN_AGENT_PROCESS_HOST: join(build, "agent-process-host"),
     TMPDIR: join(config.root, "tmp"),
     DISABLE_WORKTREE_CLEANUP: "1",
@@ -156,8 +154,6 @@ async function main() {
       CARGO_PROFILE_DEV_DEBUG: "0",
       CARGO_INCREMENTAL: "0",
       CARGO_BUILD_JOBS: process.env.CARGO_BUILD_JOBS || "2",
-      VITE_VK_SHARED_API_BASE: "",
-      VK_SHARED_API_BASE: "",
     };
     // Build UI first: RustEmbed serves it in both debug and release profiles.
     await run("pnpm", ["--dir", "packages/local-web", "run", "build"], {

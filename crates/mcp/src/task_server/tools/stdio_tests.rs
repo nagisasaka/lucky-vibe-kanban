@@ -36,7 +36,7 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
                 let (status, body) = if line.starts_with("GET /api/containers/attempt-context?") {
                     ("404 Not Found", "{}".to_owned())
                 } else {
-                    assert_eq!(line, format!("GET /api/remote/projects?organization_id={organization} HTTP/1.1"));
+                    assert_eq!(line, format!("GET /api/board/projects?organization_id={organization} HTTP/1.1"));
                     ("200 OK", json!({"success":true,"data":{"projects":[{
                         "id":project,"organization_id":organization,"name":"Stdio fixture",
                         "color":"blue","sort_order":0,"created_at":"2026-10-13T00:00:00Z",

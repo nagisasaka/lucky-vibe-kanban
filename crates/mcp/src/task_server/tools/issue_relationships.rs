@@ -59,7 +59,7 @@ impl McpServer {
             relationship_type,
         };
 
-        let url = self.url("/api/remote/issue-relationships");
+        let url = self.url("/api/board/issue-relationships");
         let response: MutationResponse<IssueRelationship> =
             match self.send_json(self.client.post(&url).json(&payload)).await {
                 Ok(r) => r,
@@ -79,7 +79,7 @@ impl McpServer {
         >,
     ) -> Result<CallToolResult, ErrorData> {
         let url = self.url(&format!(
-            "/api/remote/issue-relationships/{}",
+            "/api/board/issue-relationships/{}",
             relationship_id
         ));
         if let Err(e) = self.send_empty_json(self.client.delete(&url)).await {

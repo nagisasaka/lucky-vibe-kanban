@@ -17,7 +17,7 @@ export function RootRedirectPage() {
 
     let isActive = true;
     void (async () => {
-      if (!config.remote_onboarding_acknowledged) {
+      if (!config.onboarding_acknowledged) {
         appNavigation.goToOnboarding({ replace: true });
         return;
       }

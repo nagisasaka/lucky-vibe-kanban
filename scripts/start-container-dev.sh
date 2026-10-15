@@ -93,7 +93,6 @@ export BACKEND_PORT="$backend_port"
 export PREVIEW_PROXY_PORT="$preview_proxy_port"
 export HOST="${HOST:-0.0.0.0}"
 export VK_ALLOWED_ORIGINS="${VK_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT}}"
-export VITE_VK_SHARED_API_BASE="${VK_SHARED_API_BASE:-}"
 
 printf '%s\n' \
     'Starting lucky-vibe-kanban for Docker access:' \

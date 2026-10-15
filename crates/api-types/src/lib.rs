@@ -1,4 +1,4 @@
-//! API types shared between local and remote backends.
+//! API types for the LVK server.
 //!
 //! This crate contains:
 //! - Row types (e.g., `Issue`, `Project`) - the API representation of database entities
@@ -7,10 +7,7 @@
 
 use serde::{Deserialize, Deserializer};
 
-pub mod attachment;
-pub mod auth;
-pub mod blob;
-pub mod export;
+pub mod identity;
 pub mod issue;
 pub mod issue_assignee;
 pub mod issue_comment;
@@ -19,7 +16,6 @@ pub mod issue_follower;
 pub mod issue_relationship;
 pub mod issue_tag;
 pub mod notification;
-pub mod oauth;
 pub mod organization_member;
 pub mod organizations;
 pub mod project;
@@ -33,10 +29,7 @@ pub mod user;
 pub mod workspace;
 pub mod workspaces;
 
-pub use attachment::*;
-pub use auth::*;
-pub use blob::*;
-pub use export::*;
+pub use identity::*;
 pub use issue::*;
 pub use issue_assignee::*;
 pub use issue_comment::*;
@@ -45,7 +38,6 @@ pub use issue_follower::*;
 pub use issue_relationship::*;
 pub use issue_tag::*;
 pub use notification::*;
-pub use oauth::*;
 pub use organization_member::*;
 pub use organizations::*;
 pub use project::*;

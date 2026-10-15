@@ -1,10 +1,6 @@
 // Arena (race mode) API client.
 //
-// Backed by `crates/server/src/routes/local_remote.rs` — these endpoints
-// are local-only (no remote/cloud equivalent), so we always go through
-// `makeLocalApiRequest` directly rather than through the
-// `remoteApi.ts::makeRequest` abstraction (which would forward to the
-// cloud backend when one is configured).
+// Backed by the LVK server local API.
 //
 // The TS type definitions below mirror the structs declared in
 // `crates/db/src/models/arena_group.rs` and

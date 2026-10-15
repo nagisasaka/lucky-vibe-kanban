@@ -31,9 +31,6 @@ importers:
       esbuild:
         specifier: ^0.27.2
         version: 0.27.2
-      jwt-decode:
-        specifier: ^4.0.0
-        version: 4.0.0
       typescript:
         specifier: ^5.7.0
         version: 5.9.2
@@ -148,9 +145,6 @@ importers:
       '@sentry/vite-plugin':
         specifier: ^3.5.0
         version: 3.5.0
-      '@tanstack/electric-db-collection':
-        specifier: ^0.2.6
-        version: 0.2.6(typescript@5.9.2)
       '@tanstack/react-db':
         specifier: ^0.1.50
         version: 0.1.50(react@18.3.1)(typescript@5.9.2)
@@ -220,9 +214,6 @@ importers:
       immer:
         specifier: ^11.1.3
         version: 11.1.3
-      jwt-decode:
-        specifier: ^4.0.0
-        version: 4.0.0
       lexical:
         specifier: ^0.36.2
         version: 0.36.2
@@ -365,103 +356,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.0
         version: 3.4.17
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.2
-      vite:
-        specifier: ^7.3.1
-        version: 7.3.1(@types/node@24.10.1)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.2)
-
-  packages/remote-web:
-    dependencies:
-      '@ebay/nice-modal-react':
-        specifier: ^1.2.13
-        version: 1.2.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@phosphor-icons/react':
-        specifier: ^2.1.10
-        version: 2.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tanstack/react-query':
-        specifier: ^5.85.5
-        version: 5.85.5(react@18.3.1)
-      '@tanstack/react-router':
-        specifier: ^1.161.1
-        version: 1.161.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tanstack/zod-adapter':
-        specifier: ^1.161.1
-        version: 1.161.1(@tanstack/react-router@1.161.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.25.76)
-      '@vibe/ui':
-        specifier: workspace:*
-        version: link:../ui
-      '@vibe/web-core':
-        specifier: workspace:*
-        version: link:../web-core
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      posthog-js:
-        specifier: ^1.283.0
-        version: 1.283.0
-      prettier:
-        specifier: ^3.6.1
-        version: 3.6.1
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-compiler-runtime:
-        specifier: ^1.0.0
-        version: 1.0.0(react@18.3.1)
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      react-hotkeys-hook:
-        specifier: ^5.1.0
-        version: 5.2.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      simple-icons:
-        specifier: ^15.16.0
-        version: 15.18.0
-      tailwind-merge:
-        specifier: ^2.6.0
-        version: 2.6.0
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-      zustand:
-        specifier: ^4.5.7
-        version: 4.5.7(@types/react@18.3.23)(immer@11.1.3)(react@18.3.1)
-    devDependencies:
-      '@tailwindcss/container-queries':
-        specifier: ^0.1.1
-        version: 0.1.1(tailwindcss@3.4.17)
-      '@tanstack/router-plugin':
-        specifier: ^1.161.1
-        version: 1.161.1(@tanstack/react-router@1.161.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(vite@7.3.1(@types/node@24.10.1)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.2))
-      '@types/react':
-        specifier: ^18.2.43
-        version: 18.3.23
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.23)
-      '@vitejs/plugin-react':
-        specifier: ^4.2.1
-        version: 4.5.2(vite@7.3.1(@types/node@24.10.1)(jiti@1.21.7)(tsx@4.21.0)(yaml@2.8.2))
-      autoprefixer:
-        specifier: ^10.4.16
-        version: 10.4.21(postcss@8.5.6)
-      babel-plugin-react-compiler:
-        specifier: ^1.0.0
-        version: 1.0.0
-      postcss:
-        specifier: ^8.4.32
-        version: 8.5.6
-      tailwind-scrollbar:
-        specifier: ^3.1.0
-        version: 3.1.0(tailwindcss@3.4.17)
-      tailwindcss:
-        specifier: ^3.4.0
-        version: 3.4.17
-      tailwindcss-animate:
-        specifier: ^1.0.7
-        version: 1.0.7(tailwindcss@3.4.17)
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -658,9 +552,6 @@ importers:
       '@lexical/table':
         specifier: ^0.36.2
         version: 0.36.2
-      '@noble/curves':
-        specifier: ^1.9.7
-        version: 1.9.7
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -709,9 +600,6 @@ importers:
       '@sentry/vite-plugin':
         specifier: ^3.5.0
         version: 3.5.0
-      '@tanstack/electric-db-collection':
-        specifier: ^0.2.6
-        version: 0.2.6(typescript@5.9.2)
       '@tanstack/react-db':
         specifier: ^0.1.50
         version: 0.1.50(react@18.3.1)(typescript@5.9.2)
@@ -781,9 +669,6 @@ importers:
       immer:
         specifier: ^11.1.3
         version: 11.1.3
-      jwt-decode:
-        specifier: ^4.0.0
-        version: 4.0.0
       lexical:
         specifier: ^0.36.2
         version: 0.36.2
@@ -1198,9 +1083,6 @@ packages:
       react: '>16.8.0'
       react-dom: '>16.8.0'
 
-  '@electric-sql/client@1.2.0':
-    resolution: {integrity: sha512-K/MEjti3UF4aPKJJqO6Tp4f5noqc2/3icU1NPdpKfQaHwbzGtEX2aJmL2vxTEUJbfyrISkPKbOPnrz/lAvw1Vg==}
-
   '@esbuild/aix-ppc64@0.27.2':
     resolution: {integrity: sha512-GZMB+a0mOMZs4MpDbj8RJp4cw+w1WV5NYD6xzgvzUJ5Ek2jerwfO2eADyI6ExDSUED+1X8aMbegahsJi+8mgpw==}
     engines: {node: '>=18'}
@@ -1577,17 +1459,6 @@ packages:
 
   '@mermaid-js/parser@1.0.1':
     resolution: {integrity: sha512-opmV19kN1JsK0T6HhhokHpcVkqKpF+x2pPDKKM2ThHtZAB5F4PROopk0amuVYK5qMrIA4erzpNm8gmPNJgMDxQ==}
-
-  '@microsoft/fetch-event-source@2.0.1':
-    resolution: {integrity: sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA==}
-
-  '@noble/curves@1.9.7':
-    resolution: {integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==}
-    engines: {node: ^14.21.3 || >=16}
-
-  '@noble/hashes@1.8.0':
-    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
-    engines: {node: ^14.21.3 || >=16}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2469,9 +2340,6 @@ packages:
   '@tanstack/devtools-event-client@0.3.4':
     resolution: {integrity: sha512-eq+PpuutUyubXu+ycC1GIiVwBs86NF/8yYJJAKSpPcJLWl6R/761F1H4F/9ziX6zKezltFUH1ah3Cz8Ah+KJrw==}
     engines: {node: '>=18'}
-
-  '@tanstack/electric-db-collection@0.2.6':
-    resolution: {integrity: sha512-3J5mLxQ+PWwAxwsJy3Paygfd8dwUcs/oy1RxWjkIowRkYc1JA9x2/KSzX7ovzmYWbD87juHeLb73leuaWmqhow==}
 
   '@tanstack/form-core@1.24.4':
     resolution: {integrity: sha512-+eIR7DiDamit1zvTVgaHxuIRA02YFgJaXMUGxsLRJoBpUjGl/g/nhUocQoNkRyfXqOlh8OCMTanjwDprWSRq6w==}
@@ -4017,10 +3885,6 @@ packages:
   jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
-
-  jwt-decode@4.0.0:
-    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
-    engines: {node: '>=18'}
 
   katex@0.16.38:
     resolution: {integrity: sha512-cjHooZUmIAUmDsHBN+1n8LaZdpmbj03LtYeYPyuYB7OuloiaeaV6N4LcfjcnHVzGWjVQmKrxxTrpDcmSzEZQwQ==}
@@ -5702,12 +5566,6 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@electric-sql/client@1.2.0':
-    dependencies:
-      '@microsoft/fetch-event-source': 2.0.1
-    optionalDependencies:
-      '@rollup/rollup-darwin-arm64': 4.44.0
-
   '@esbuild/aix-ppc64@0.27.2':
     optional: true
 
@@ -6150,14 +6008,6 @@ snapshots:
   '@mermaid-js/parser@1.0.1':
     dependencies:
       langium: 4.2.1
-
-  '@microsoft/fetch-event-source@2.0.1': {}
-
-  '@noble/curves@1.9.7':
-    dependencies:
-      '@noble/hashes': 1.8.0
-
-  '@noble/hashes@1.8.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -7065,17 +6915,6 @@ snapshots:
       typescript: 5.9.2
 
   '@tanstack/devtools-event-client@0.3.4': {}
-
-  '@tanstack/electric-db-collection@0.2.6(typescript@5.9.2)':
-    dependencies:
-      '@electric-sql/client': 1.2.0
-      '@standard-schema/spec': 1.0.0
-      '@tanstack/db': 0.5.6(typescript@5.9.2)
-      '@tanstack/store': 0.8.1
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   '@tanstack/form-core@1.24.4':
     dependencies:
@@ -8828,8 +8667,6 @@ snapshots:
   json5@2.2.3: {}
 
   jsonpointer@5.0.1: {}
-
-  jwt-decode@4.0.0: {}
 
   katex@0.16.38:
     dependencies:

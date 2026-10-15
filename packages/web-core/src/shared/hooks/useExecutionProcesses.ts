@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useJsonPatchWsStream } from '@/shared/hooks/useJsonPatchWsStream';
-import { useHostId } from '@/shared/providers/HostIdProvider';
 import { isExecutionProcessActive } from '@/shared/lib/executionProcessRuntime';
 import type { ExecutionProcess } from 'shared/types';
 
@@ -26,17 +25,15 @@ export const useExecutionProcesses = (
   sessionId: string | undefined,
   opts?: { showSoftDeleted?: boolean }
 ): UseExecutionProcessesResult => {
-  const hostId = useHostId();
   const showSoftDeleted = opts?.showSoftDeleted;
   let endpoint: string | undefined;
 
   if (sessionId) {
-    const apiBasePath = hostId ? `/api/host/${hostId}` : '/api';
     const params = new URLSearchParams({ session_id: sessionId });
     if (typeof showSoftDeleted === 'boolean') {
       params.set('show_soft_deleted', String(showSoftDeleted));
     }
-    endpoint = `${apiBasePath}/execution-processes/stream/session/ws?${params.toString()}`;
+    endpoint = `/api/execution-processes/stream/session/ws?${params.toString()}`;
   }
 
   const initialData = useCallback(

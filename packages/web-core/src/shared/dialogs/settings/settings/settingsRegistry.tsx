@@ -3,10 +3,9 @@ import {
   GearIcon,
   GitBranchIcon,
   BuildingsIcon,
-  CloudIcon,
+  KanbanIcon,
   CpuIcon,
   PlugIcon,
-  BroadcastIcon,
   WrenchIcon,
 } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react';
@@ -19,11 +18,6 @@ const GeneralSettingsSection = lazy(() =>
 const ReposSettingsSection = lazy(() =>
   import('./ReposSettingsSection').then((module) => ({
     default: module.ReposSettingsSection,
-  }))
-);
-const OrganizationsSettingsSection = lazy(() =>
-  import('./OrganizationsSettingsSection').then((module) => ({
-    default: module.OrganizationsSettingsSection,
   }))
 );
 const RemoteProjectsSettingsSection = lazy(() =>
@@ -41,11 +35,6 @@ const McpSettingsSection = lazy(() =>
     default: module.McpSettingsSection,
   }))
 );
-const RelaySettingsSectionContent = lazy(() =>
-  import('./RelaySettingsSection').then((module) => ({
-    default: module.RelaySettingsSectionContent,
-  }))
-);
 const AgentToolsSettingsSection = lazy(() =>
   import('./AgentToolsSettingsSection').then((module) => ({
     default: module.AgentToolsSettingsSection,
@@ -60,20 +49,17 @@ const ResourceSettingsSection = lazy(() =>
 export type SettingsSectionType =
   | 'general'
   | 'repos'
-  | 'organizations'
   | 'remote-projects'
   | 'agents'
   | 'mcp'
   | 'agent-tools'
-  | 'resources'
-  | 'relay';
+  | 'resources';
 
 export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
   general: undefined;
   repos: { repoId?: string } | undefined;
-  organizations: { organizationId?: string } | undefined;
   'remote-projects':
     | { organizationId?: string; projectId?: string }
     | undefined;
@@ -81,7 +67,6 @@ export type SettingsSectionInitialState = {
   mcp: undefined;
   'agent-tools': undefined;
   resources: undefined;
-  relay: { hostId?: string } | undefined;
 };
 
 export interface SettingsSectionDefinition {
@@ -108,9 +93,7 @@ export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
   },
   { id: 'agent-tools', icon: WrenchIcon, group: 'host' },
   { id: 'resources', icon: BuildingsIcon, group: 'host' },
-  { id: 'organizations', icon: BuildingsIcon, group: 'universal' },
-  { id: 'remote-projects', icon: CloudIcon, group: 'universal' },
-  { id: 'relay', icon: BroadcastIcon, group: 'universal' },
+  { id: 'remote-projects', icon: KanbanIcon, group: 'universal' },
 ];
 
 export function isHostSpecificSettingsSection(
@@ -124,8 +107,7 @@ export function isHostSpecificSettingsSection(
 
 export function renderSettingsSection(
   type: SettingsSectionType,
-  initialState?: SettingsSectionInitialState[SettingsSectionType],
-  onClose?: () => void
+  initialState?: SettingsSectionInitialState[SettingsSectionType]
 ) {
   switch (type) {
     case 'general':
@@ -136,8 +118,6 @@ export function renderSettingsSection(
           initialState={initialState as SettingsSectionInitialState['repos']}
         />
       );
-    case 'organizations':
-      return <OrganizationsSettingsSection />;
     case 'remote-projects':
       return (
         <RemoteProjectsSettingsSection
@@ -154,13 +134,6 @@ export function renderSettingsSection(
       return <AgentToolsSettingsSection />;
     case 'resources':
       return <ResourceSettingsSection key="resources" />;
-    case 'relay':
-      return (
-        <RelaySettingsSectionContent
-          initialState={initialState as SettingsSectionInitialState['relay']}
-          onClose={onClose}
-        />
-      );
     default:
       return <GeneralSettingsSection />;
   }
