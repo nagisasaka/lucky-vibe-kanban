@@ -216,3 +216,40 @@ shared access works while the existing cloud ownership restriction remains.
 `PLAYWRIGHT_BROWSERS_PATH=$PWD/.build/playwright node tests/server-access/workspace-actions.mjs`
 passed: actual Workspace UI component opens shared workspaces without assigning
 historical ownership; an unowned cloud workspace retains its click restriction.
+
+
+## Requirement re-audit after the interruption (2026-10-15)
+
+The successful scoped tests establish component behaviour, not complete acceptance
+of every item in the original request. The following distinctions supersede any
+reading of the test counts as a claim of full end-to-end completion.
+
+| Original requirement | Implementation and evidence | Remaining acceptance work |
+| --- | --- | --- |
+| Three modes, locked public setup, no remote MCP in Local/Basic | Common access middleware, explicit Compose presets, key and mode tests | Actual image/Compose startup was not executed |
+| One-use setup/recovery and browser-bound initial administrator | Transactional key exchange, hashed grants, PKCE/state/nonce, confirmation; mock HTTP tests | Verify the real CLI and browser flow against the packaged process |
+| Web authentication and safe Basic to Auth0 switch | OIDC library, sessions, CSRF, staged revision-checked activation; mock transition success/failure and old Basic rejection | Process restart during/after transition is not covered |
+| Persistent settings and sessions | File-backed SQLite fixture, keys and re-created Access object | The restart test reuses the same pool; it does not close/reopen the database or restart the executable |
+| Auth0 JWT and MCP permission enforcement | JWT/member tests and separate existing MCP transport/tool tests | The access fixture substitutes `/mcp` with a test handler; existing transport tests use the legacy test-only auth adapter. Add a combined production-router test through JWT admission into actual tools |
+| Revocation of continuous connections | Actual SSE body termination and Lease tests; WebSocket upgrade code uses Lease | No actual WebSocket client/server revocation test; add one, including user disable and expiry |
+| Stable user identities, membership approval, admin-only management | Issuer/subject mapping, shared membership, last-admin transaction tests and UI | Real Google/GitHub identities and multi-browser workflows remain unverified |
+| Existing feature preservation | Scoped route regressions, shared workspace UI test, unchanged historical data | Public separate-origin project preview is intentionally denied. Restoring it requires a separate secure preview admission design; this is a functional restriction, not complete preservation |
+| IP HTTPS, Auth0 Free, ChatGPT OAuth | Existing nginx/ACME retained, native TLS fixtures and administrator instructions | Real IP callback, Free tenant settings, consent, resource/audience, token renewal and cancellation need actual accounts; no compatibility claim |
+| Setup/admin GUI | Real built frontend tested against mock API responses | Browser fixture does not exercise the Rust backend or a real identity provider |
+
+The local integration gaps above are not caused by missing Auth0 credentials and
+must not be grouped with account-dependent E2E. They remain acceptance work before
+claiming the whole original request is complete. No newly demonstrated authentication
+bypass was found in this source review, but that is not a substitute for these tests.
+Previously admitted agent work continues after membership disable; subsequent
+requests and connections are denied. This documented execution boundary remains.
+
+### Disk cleanup
+
+Only the inactive, task-owned `.build/debug/incremental` directory was removed,
+after checking process working directories, executable paths and open file paths.
+It contained about 6 GiB of reproducible Rust incremental state. Source, Git history,
+compiled test executables, test logs, browser fixtures, live server data and other
+workspaces were retained. Root filesystem availability increased from approximately
+261 MiB to 6.2 GiB. No shared resource was held (coordination snapshot was empty),
+and no build, deployment or service restart was performed for this review.
