@@ -44,7 +44,7 @@ push, deployment, Auth0 account operation or certificate change is part of this 
 | Protected Resource Metadata | Public only when Auth0 MCP enabled; no business data |
 | Runner poll/report/settled | Exact existing token/installation-authenticated callback routes |
 | Local stdio MCP | Explicit owner-only file capability, sent only to loopback HTTP; nginx strips it |
-| Separate project preview origin | Denied in public modes pending dedicated preview-origin authentication; local previews retained |
+| Separate project preview origin | Browser-bound one-use handoff, origin-scoped preview cookie tied to a live LVK Web session; local previews retained |
 
 The server is one trusted development team. Members can execute code under the
 same OS account, so server files, credentials and projects are not isolated from
@@ -218,7 +218,7 @@ passed: actual Workspace UI component opens shared workspaces without assigning
 historical ownership; an unowned cloud workspace retains its click restriction.
 
 
-## Requirement re-audit after the interruption (2026-10-15)
+## Requirement acceptance after follow-up (2026-10-15)
 
 The successful scoped tests establish component behaviour, not complete acceptance
 of every item in the original request. The following distinctions supersede any
@@ -228,19 +228,18 @@ reading of the test counts as a claim of full end-to-end completion.
 | --- | --- | --- |
 | Three modes, locked public setup, no remote MCP in Local/Basic | Common access middleware, explicit Compose presets, key and mode tests | Actual image/Compose startup was not executed |
 | One-use setup/recovery and browser-bound initial administrator | Transactional key exchange, hashed grants, PKCE/state/nonce, confirmation; mock HTTP tests | Verify the real CLI and browser flow against the packaged process |
-| Web authentication and safe Basic to Auth0 switch | OIDC library, sessions, CSRF, staged revision-checked activation; mock transition success/failure and old Basic rejection | Process restart during/after transition is not covered |
-| Persistent settings and sessions | File-backed SQLite fixture, keys and re-created Access object | The restart test reuses the same pool; it does not close/reopen the database or restart the executable |
-| Auth0 JWT and MCP permission enforcement | JWT/member tests and separate existing MCP transport/tool tests | The access fixture substitutes `/mcp` with a test handler; existing transport tests use the legacy test-only auth adapter. Add a combined production-router test through JWT admission into actual tools |
-| Revocation of continuous connections | Actual SSE body termination and Lease tests; WebSocket upgrade code uses Lease | No actual WebSocket client/server revocation test; add one, including user disable and expiry |
+| Web authentication and safe Basic to Auth0 switch | Mock transition success/failure and old Basic rejection; separate OS processes verify persisted active settings before, during and after activation | Real Auth0 and packaged server startup remain unverified |
+| Persistent settings and sessions | A child test executable opens a new SQLite pool and key file; final activation is checked after the parent pool closes | This tests the production authentication library in fresh processes, not the full packaged server lifecycle |
+| Auth0 JWT and MCP permission enforcement | Common production HTTP entry plus actual access middleware, JWT verification and rmcp project tool; scope denial and disabled member checks | JWKS are trusted fixtures; real Auth0 discovery and ChatGPT interoperability still need account verification |
+| Revocation of continuous connections | Actual SSE body termination; real TCP WebSockets through SignedWsUpgrade for disable/expiry; actual preview WebSocket proxy cancellation | Real browser/provider session lifecycle remains part of E2E |
 | Stable user identities, membership approval, admin-only management | Issuer/subject mapping, shared membership, last-admin transaction tests and UI | Real Google/GitHub identities and multi-browser workflows remain unverified |
-| Existing feature preservation | Scoped route regressions, shared workspace UI test, unchanged historical data | Public separate-origin project preview is intentionally denied. Restoring it requires a separate secure preview admission design; this is a functional restriction, not complete preservation |
+| Existing feature preservation | 82 route regressions re-run; public separate-origin preview restored with dedicated admission; existing preview proxy tests retained | Preview requires explicit authorisation; browsers blocking third-party cookies use a separate tab. IP-only same-origin preview remains prohibited as before |
 | IP HTTPS, Auth0 Free, ChatGPT OAuth | Existing nginx/ACME retained, native TLS fixtures and administrator instructions | Real IP callback, Free tenant settings, consent, resource/audience, token renewal and cancellation need actual accounts; no compatibility claim |
 | Setup/admin GUI | Real built frontend tested against mock API responses | Browser fixture does not exercise the Rust backend or a real identity provider |
 
-The local integration gaps above are not caused by missing Auth0 credentials and
-must not be grouped with account-dependent E2E. They remain acceptance work before
-claiming the whole original request is complete. No newly demonstrated authentication
-bypass was found in this source review, but that is not a substitute for these tests.
+The previously identified JWT/tool, WebSocket and persistence component-integration
+gaps now have executed regression tests. Real accounts and packaged deployment E2E
+are explicitly separate from these local results; they are not claimed complete.
 Previously admitted agent work continues after membership disable; subsequent
 requests and connections are denied. This documented execution boundary remains.
 
@@ -253,3 +252,73 @@ compiled test executables, test logs, browser fixtures, live server data and oth
 workspaces were retained. Root filesystem availability increased from approximately
 261 MiB to 6.2 GiB. No shared resource was held (coordination snapshot was empty),
 and no build, deployment or service restart was performed for this review.
+
+
+## Follow-up implementation and evidence
+
+Optional public preview origins now have their own admission flow. The existing
+`VK_PREVIEW_DOMAIN` allowlist and canonical public URL determine permissible HTTPS
+origins; reserved ports, the application origin and arbitrary redirect targets are
+rejected. An authenticated Web user explicitly confirms a handoff. A 60-second
+one-use grant is bound to the initiating preview browser, exact origin and parent
+Web session. It travels in a POST body, never in a URL. Preview cookies cannot
+access LVK APIs and are stripped before forwarding to project code. They expire
+with the parent session, configuration revision or member disable. Preview SSE
+and WebSockets have a revocation lease. No domain is required for the existing
+public-IP installation; same-origin untrusted project HTML remains forbidden.
+Browsers blocking third-party cookies can use a separate preview tab.
+
+Added acceptance coverage uses actual WebSocket TCP connections for membership
+and expiry revocation; a fresh child test process reopens the SQLite database and
+key before/during/after Basic to Auth0 activation. A downstream integration test
+joins the real access middleware and JWT verifier to real rmcp tool dispatch,
+including project reads, insufficient-scope responses and member disable. Its
+explicit dev-only `test-support` feature seeds trusted fixture JWKS; normal server
+builds have no network or authentication bypass switch. The standard Auth0 issuer
+restriction is unchanged. These fixtures do not prove real Auth0/ChatGPT or packaged
+container interoperability.
+
+- Combined `cargo test -p server -p mcp -p server-access -p preview-proxy --lib --bin vibe-kanban-mcp --no-run`
+  with `.build`, one Cargo job and debug info disabled: passed in 8m27s.
+- The resulting test executables were run sequentially with one test thread:
+  server `remote_mcp` 34 passed (50.45s); production SignedWsUpgrade revocation
+  1 passed (4.07s, disable and expiry cases); server-access 17 passed (58.63s,
+  including its child-process helper); preview-proxy 34 passed; internal MCP
+  library 10 and CLI 2 passed.
+- The new preview handoff case covers wrong-browser exchange, replay, cross-origin
+  cookie reuse, inability to use preview credentials for business APIs, stripping
+  main/preview credentials before project forwarding and logout revocation.
+- Existing local_remote 6, Session 40, project_chat 29, Origin 6 and frontend 1
+  regressions passed again with the final server test executable (82 total).
+- Targeted launcher/access tests: 17 passed. The native nginx TLS suite passed
+  all 6 cases after replacing the former blanket preview-denial expectation with
+  backend admission checks. An earlier broad run had that outdated expectation
+  fail; its other 34 cases passed and Docker Compose was skipped. No assertion
+  for authentication, credential stripping or TLS verification was removed.
+- Full `pnpm run format` and subsequent scoped Rust/Node formatting passed.
+  Root `pnpm exec prettier` was unavailable; the installed local-web Prettier
+  successfully formatted the deployment files instead.
+
+Builds ran under a foreground monitor with one Cargo job. Large compilation
+waited for peer compilers; smaller checks only started with sufficient available
+memory. The monitor would terminate only its own process group below 1600 MiB
+available memory or 2000 MiB free disk. No such stop was necessary. Other workspace
+processes, caches and live server state were not modified.
+
+
+Final follow-up lint and capacity checks:
+
+- `cargo clippy -p server -p mcp -p server-access -p preview-proxy --all-targets -- -D warnings`
+  with the same isolated target, one job and disabled debug info: passed in 10m14s.
+  This includes normal server code and test targets. The normal dependency graph
+  (`cargo tree -p server -e normal,build,features --offline`) contains no
+  `test-support` feature.
+- After all owned builds settled, process working directories, compiler arguments
+  and open files were checked before removing only the owned incremental cache.
+  This recovered 1.87 GiB; available disk was 8.57 GiB immediately afterwards.
+  Test executables and evidence logs were retained. No live deployment or other
+  workspace cache was changed.
+- The first small type check found one missing fixture initializer field after
+  adding preview configuration; it was corrected before all successful runs.
+  No assertion, production authentication rule or resource stop threshold was
+  weakened to obtain the final results.

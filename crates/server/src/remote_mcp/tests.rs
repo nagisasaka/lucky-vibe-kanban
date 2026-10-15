@@ -1115,3 +1115,81 @@ fn plugin_tool_catalog() {
         std::fs::write(path, serde_json::to_vec_pretty(&tools).unwrap()).unwrap();
     }
 }
+
+#[tokio::test]
+async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
+    use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+    use rsa::{
+        RsaPrivateKey,
+        pkcs8::{EncodePrivateKey, LineEnding},
+        traits::PublicKeyParts,
+    };
+    let (mut remote, _, legacy_provider) = fixture().await;
+    legacy_provider.abort();
+    let _ = legacy_provider.await;
+    let key = RsaPrivateKey::new(&mut rand::rngs::OsRng, 2048).unwrap();
+    let jwks = json!({"keys":[{"kty":"RSA","kid":"test","use":"sig","alg":"RS256","n":URL_SAFE_NO_PAD.encode(key.n().to_bytes_be()),"e":URL_SAFE_NO_PAD.encode(key.e().to_bytes_be())}]});
+    let directory = tempfile::tempdir().unwrap();
+    let access =
+        server_access::test_support::access(remote.pool.clone(), directory.path().into(), jwks)
+            .await;
+    Arc::make_mut(&mut remote.config).public_base_url = "https://203.0.113.7:8443".into();
+    Arc::make_mut(&mut remote.config).issuer = "https://fixture.auth0.com/".into();
+    let pool = remote.pool.clone();
+    let app = access.layer(
+        access_router(remote.pool, remote.runtime, remote.launch, access.clone())
+            .merge(server_access::router(access.clone())),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let pem = key.to_pkcs8_pem(LineEnding::LF).unwrap();
+    let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256);
+    header.kid = Some("test".into());
+    let token=jsonwebtoken::encode(&header,&json!({"iss":"https://fixture.auth0.com/","sub":"member","aud":access.resource(),"exp":server_access::now()+300,"scope":"lvk:read"}),&jsonwebtoken::EncodingKey::from_rsa_pem(pem.as_bytes()).unwrap()).unwrap();
+    let client = reqwest::Client::new();
+    let request = |token: &str, tool: &str| {
+        client.post(format!("{base}/mcp")).header("host","203.0.113.7:8443").header("accept","application/json, text/event-stream").header("MCP-Protocol-Version","2025-03-26").bearer_auth(token).json(&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":tool,"arguments":{"limit":2}}}))
+    };
+    assert_eq!(
+        request("invalid", "list_projects")
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::UNAUTHORIZED
+    );
+    let response = request(&token, "list_projects").send().await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let result: Value = response.json().await.unwrap();
+    assert_eq!(
+        result["result"]["structuredContent"]["items"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2,
+        "{result}"
+    );
+    let denied = request(&token, "create_issue").send().await.unwrap();
+    assert_eq!(denied.status(), StatusCode::FORBIDDEN);
+    assert!(
+        denied.headers()["www-authenticate"]
+            .to_str()
+            .unwrap()
+            .contains("insufficient_scope")
+    );
+    sqlx::query("UPDATE access_members SET state='disabled'")
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        request(&token, "list_projects")
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::FORBIDDEN
+    );
+    server.abort();
+    let _ = server.await;
+}

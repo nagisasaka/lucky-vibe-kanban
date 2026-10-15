@@ -182,7 +182,8 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
         # Only unprivileged development ports, excluding LVK and nginx ports.
         if ($preview_target ~ "^(3000|3001|8443${settings.staging ? "|8444" : ""})$") { return 403; }
         # Project content cannot use LVK authentication cookies or credentials.
-        location / { ${settings.managedAccess ? "return 403;" : "proxy_pass http://127.0.0.1:3001;"} }
+        ${settings.managedAccess ? "auth_basic off;" : ""}
+        location / { proxy_pass http://127.0.0.1:3001; }
     }`
     : "";
   return template

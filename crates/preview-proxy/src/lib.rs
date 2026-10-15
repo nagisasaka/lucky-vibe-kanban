@@ -24,6 +24,12 @@ use crate::proxy_common::{
     should_forward_request_header,
 };
 
+/// Optional admission lease supplied by the embedding server. Project WebSockets
+/// must end when the authenticated browser loses access.
+pub type RevocationFuture = std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>;
+#[derive(Clone)]
+pub struct ConnectionLease(pub std::sync::Arc<dyn Fn() -> RevocationFuture + Send + Sync>);
+
 pub mod api;
 mod proxy_common;
 
@@ -492,20 +498,13 @@ async fn proxy_impl(
             ws
         };
 
+        let lease = parts.extensions.get::<ConnectionLease>().cloned();
         return ws
             .on_upgrade(move |client_socket| async move {
-                if let Err(e) = handle_ws_proxy(
-                    backend_addr,
-                    client_socket,
-                    target,
-                    path_str,
-                    query_string,
-                    ws_protocols,
-                )
-                .await
-                {
-                    tracing::debug!("WebSocket proxy closed: {}", e);
-                }
+                let proxy = handle_ws_proxy(backend_addr,client_socket,target,path_str,query_string,ws_protocols);
+                if let Some(lease)=lease {
+                    tokio::select! { _ = (lease.0)() => {}, result = proxy => {if let Err(e)=result {tracing::debug!("WebSocket proxy closed: {}",e);}} }
+                } else if let Err(e)=proxy.await {tracing::debug!("WebSocket proxy closed: {}",e);}
             })
             .into_response();
     }
@@ -1415,5 +1414,82 @@ mod tests {
         let body = b"0:\"$Sreact.suspense\"\n1:I[\"456\",[]]\"]\n2:{\"name\":\"MyComponent\"}";
         let result = detect_rsc_redirect_in_body(body);
         assert_eq!(result, None);
+    }
+}
+
+#[cfg(test)]
+mod admission_tests {
+    use futures_util::StreamExt;
+    use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn preview_websocket_closes_when_admission_is_revoked() {
+        let upstream = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let target = upstream.local_addr().unwrap().port();
+        let upstream_task = tokio::spawn(async move {
+            axum::serve(
+                upstream,
+                axum::Router::new().fallback(|ws: WebSocketUpgrade| async move {
+                    ws.on_upgrade(|mut socket| async move {
+                        socket
+                            .send(axum::extract::ws::Message::Text("ready".into()))
+                            .await
+                            .unwrap();
+                        while socket.recv().await.is_some() {}
+                    })
+                }),
+            )
+            .await
+            .unwrap();
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let revoked = std::sync::Arc::new(tokio::sync::Notify::new());
+        let lease_notify = revoked.clone();
+        let lease = ConnectionLease(std::sync::Arc::new(move || {
+            let notify = lease_notify.clone();
+            Box::pin(async move { notify.notified().await })
+        }));
+        let app = axum::Router::new().fallback(move |mut request: Request| {
+            let lease = lease.clone();
+            async move {
+                request.extensions_mut().insert(lease);
+                proxy_subdomain_request(
+                    &PreviewProxyService::new(),
+                    address,
+                    address.port(),
+                    request,
+                )
+                .await
+            }
+        });
+        let proxy_task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let mut request = format!("ws://{address}/").into_client_request().unwrap();
+        request.headers_mut().insert(
+            header::HOST,
+            format!("{target}.localhost:{}", address.port())
+                .parse()
+                .unwrap(),
+        );
+        let (mut socket, _) = tokio_tungstenite::connect_async(request).await.unwrap();
+        assert_eq!(
+            socket.next().await.unwrap().unwrap().into_text().unwrap(),
+            "ready"
+        );
+        revoked.notify_one();
+        let closed = tokio::time::timeout(std::time::Duration::from_secs(3), socket.next())
+            .await
+            .expect("preview proxy must close revoked sockets");
+        assert!(!matches!(
+            closed,
+            Some(Ok(tokio_tungstenite::tungstenite::Message::Text(_)))
+        ));
+        let _ = socket.close(None).await;
+        proxy_task.abort();
+        upstream_task.abort();
+        let _ = proxy_task.await;
+        let _ = upstream_task.await;
     }
 }

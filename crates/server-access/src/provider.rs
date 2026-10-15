@@ -380,3 +380,25 @@ pub(crate) struct AccessClaims {
     #[serde(default)]
     pub scope: String,
 }
+
+#[cfg(feature = "test-support")]
+pub(crate) fn fixture_cache(issuer: &str, jwks: serde_json::Value) -> Cache {
+    let metadata: Metadata = serde_json::from_value(serde_json::json!({
+        "issuer":issuer,"authorization_endpoint":format!("{issuer}authorize"),
+        "token_endpoint":format!("{issuer}oauth/token"),"jwks_uri":format!("{issuer}jwks"),
+        "response_types_supported":["code"],"subject_types_supported":["public"],
+        "id_token_signing_alg_values_supported":["RS256"],"jwks":jwks
+    }))
+    .unwrap();
+    // ProviderMetadata deserialization does not populate the separately fetched JWKS.
+    let metadata = metadata.set_jwks(serde_json::from_value(jwks).unwrap());
+    Cache {
+        entries: VecDeque::from([Entry {
+            issuer: issuer.into(),
+            metadata,
+            at: now(),
+            last_refresh: now(),
+        }]),
+        attempts: VecDeque::new(),
+    }
+}

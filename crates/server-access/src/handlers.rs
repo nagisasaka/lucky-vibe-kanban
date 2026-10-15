@@ -28,6 +28,10 @@ pub fn router(access: Access) -> Router {
         .route("/api/access/activate", post(activate))
         .route("/api/access/members", get(members).post(update_member))
         .route("/api/access/audit", get(audit))
+        .route(
+            "/api/access/preview/authorize",
+            get(super::preview::authorize).post(super::preview::grant),
+        )
         .route("/.well-known/oauth-protected-resource/mcp", get(metadata))
         .layer(DefaultBodyLimit::max(16384))
         .with_state(access)

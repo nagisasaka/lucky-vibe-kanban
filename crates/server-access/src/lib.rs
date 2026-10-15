@@ -1,6 +1,7 @@
 //! Authentication for one trusted-team LVK server. Auth0 issues OAuth tokens;
 //! this crate owns membership, browser sessions and setup, never OAuth grants.
 mod handlers;
+mod preview;
 mod provider;
 mod store;
 
@@ -78,6 +79,7 @@ struct Inner {
     pool: SqlitePool,
     public_url: Option<String>,
     public: bool,
+    preview_domain: Option<String>,
     forced_mode: Option<String>,
     key_path: PathBuf,
     internal_token: String,
@@ -284,6 +286,9 @@ impl Access {
             pool,
             public_url,
             public,
+            preview_domain: std::env::var("VK_PREVIEW_DOMAIN")
+                .ok()
+                .filter(|s| !s.is_empty()),
             forced_mode,
             internal_token,
             key_path: data_dir.join("access.key"),
@@ -306,25 +311,6 @@ impl Access {
     }
     pub fn layer(&self, router: Router) -> Router {
         router.layer(axum::middleware::from_fn_with_state(self.clone(), gate))
-    }
-    pub fn preview_layer(&self, router: Router) -> Router {
-        let access = self.clone();
-        router.layer(axum::middleware::from_fn(
-            move |request: Request, next: Next| {
-                let access = access.clone();
-                async move {
-                    // Host-only login cookies cannot safely authenticate untrusted
-                    // project HTML on another origin. No Basic/Auth0 bypass here.
-                    if !matches!(access.load().await, Ok((Some(Config::Local), _))) {
-                        return Error::forbidden(
-                            "Remote preview requires a separate authenticated preview deployment",
-                        )
-                        .into_response();
-                    }
-                    next.run(request).await
-                }
-            },
-        ))
     }
     fn internal_request(&self, headers: &HeaderMap) -> bool {
         use subtle::ConstantTimeEq;
@@ -710,3 +696,7 @@ fn secure_response(mut response: Response) -> Response {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "test-support")]
+#[doc(hidden)]
+pub mod test_support;

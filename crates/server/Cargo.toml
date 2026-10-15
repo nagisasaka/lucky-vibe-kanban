@@ -83,3 +83,8 @@ dotenv = "0.15"
 [features]
 default = []
 qa-mode = ["services/qa-mode", "executors/qa-mode"]
+
+[dev-dependencies]
+server-access = { path = "../server-access", features = ["test-support"] }
+jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
+rsa = "0.9"

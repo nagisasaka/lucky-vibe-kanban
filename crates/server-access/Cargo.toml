@@ -31,3 +31,8 @@ tower = { version = "0.5", features = ["util"] }
 tempfile = "3"
 http-body-util = "0.1"
 rsa = "0.9"
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+
+[features]
+# Explicit fixture construction for downstream integration tests, never enabled by server builds.
+test-support = []

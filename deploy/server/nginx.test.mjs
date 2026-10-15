@@ -57,7 +57,15 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
       const sockets = new Set();
       let streamEnded = false;
       const backend = createServer((req, res) => {
-        if (req.url === "/mcp") {
+        if (
+          managed &&
+          req.headers.host?.startsWith("5173.preview.example.test") &&
+          req.headers.cookie !== "__Host-lvk_preview=fixture"
+        ) {
+          // This fixture represents preview admission, not project content.
+          res.writeHead(401);
+          res.end("preview admission required");
+        } else if (req.url === "/mcp") {
           res.setHeader("Content-Type", "application/json");
           if (req.headers.authorization !== "Bearer fixture-token") {
             res.writeHead(401, {
@@ -304,7 +312,23 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
         );
         assert.equal(
           (await request("/", "5173.preview.example.test")).status,
-          403,
+          401,
+        );
+        assert.equal(
+          (
+            await request("/", "5173.preview.example.test", {
+              Cookie: "lvk_session=main-cookie",
+            })
+          ).status,
+          401,
+        );
+        assert.equal(
+          (
+            await request("/", "5173.preview.example.test", {
+              Cookie: "__Host-lvk_preview=fixture",
+            })
+          ).status,
+          200,
         );
         return;
       }

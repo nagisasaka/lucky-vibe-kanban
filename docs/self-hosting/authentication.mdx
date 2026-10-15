@@ -212,6 +212,13 @@ DBと`access.key`、`access.configured`、既存設定・証明書・home/repos/
 
 IP URLでAuth0またはChatGPT側が拒否する場合は、そのエラーを記録してください。
 独自ドメイン必須への変更、TLS無効化、HTTPへのSecret送信、トークン検証緩和は行いません。
-公開用の別オリジンproject previewは、独立した認証方式が整うまで拒否します。
+公開用の別オリジンproject previewは、既存の任意設定 `LVK_PREVIEW_DOMAIN` がある場合に
+専用のブラウザ認可を使用します。ドメイン追加は必須ではなく、公開IPだけの構成はそのままです。
+プレビューの案内からLVKへ移動し、ログイン済みの本人が許可してプレビューへ戻ります。
+受け渡しは60秒・一度限り・開始ブラウザと対象origin限定で、URLに秘密を入れません。
+専用のSecure/HttpOnly/host-only Cookieだけをプレビュー側に置き、LVKのCookieや
+Authorizationをプロジェクトのサーバーへ渡しません。LVKログアウト、無効化、セッション
+期限切れ、認証設定変更で利用権限も失効します。第三者Cookieを拒否するブラウザでは、
+プレビューを独立タブで開いて認可・表示してください。
 IPだけの既存公開構成の同一オリジンpreview禁止は維持し、ローカルpreviewは維持します。
 詳しい検証範囲は`docs/development/server-access.md`に記録しています。

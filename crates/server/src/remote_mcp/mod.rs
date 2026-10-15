@@ -47,21 +47,38 @@ pub fn configured_router(
     deployment: DeploymentImpl,
     access: server_access::Access,
 ) -> anyhow::Result<Router> {
+    Ok(access_router(
+        deployment.db().pool.clone(),
+        Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
+        Some(Arc::new(launch::ExistingLaunch(deployment))),
+        access,
+    ))
+}
+
+// Production HTTP entry, shared with the JWT-to-tool integration fixture.
+fn access_router(
+    pool: SqlitePool,
+    runtime: Option<Arc<dyn runtime_write::RuntimeActions>>,
+    launch: Option<Arc<dyn launch::LaunchActions>>,
+    access: server_access::Access,
+) -> Router {
     use axum::{
         extract::{Extension, Request},
         routing::any,
     };
     use tower::ServiceExt;
-    Ok(Router::new().route(
+    Router::new().route(
         "/mcp",
         any(
             move |Extension(principal): Extension<server_access::Principal>,
                   mut request: Request| {
-                let deployment = deployment.clone();
+                let pool = pool.clone();
+                let runtime = runtime.clone();
+                let launch = launch.clone();
                 let access = access.clone();
                 async move {
                     let ids = match sqlx::query_scalar::<_, Uuid>("SELECT id FROM projects")
-                        .fetch_all(&deployment.db().pool)
+                        .fetch_all(&pool)
                         .await
                     {
                         Ok(ids) => ids.into_iter().collect(),
@@ -82,14 +99,11 @@ pub fn configured_router(
                         owner_subject: principal.subject.clone(),
                         project_ids: ids,
                     });
-                    request.extensions_mut().insert(Principal {
-                        subject: principal.subject,
-                        scopes: principal.scopes,
-                    });
+                    bind_access_principal(&mut request);
                     let remote = Remote {
-                        pool: deployment.db().pool.clone(),
-                        runtime: Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
-                        launch: Some(Arc::new(launch::ExistingLaunch(deployment.clone()))),
+                        pool,
+                        runtime,
+                        launch,
                         process_instance: *PROCESS_INSTANCE.get_or_init(Uuid::new_v4),
                         config,
                     };
@@ -100,9 +114,19 @@ pub fn configured_router(
                 }
             },
         ),
-    ))
+    )
 }
 static PROCESS_INSTANCE: std::sync::OnceLock<Uuid> = std::sync::OnceLock::new();
+
+fn bind_access_principal(request: &mut axum::extract::Request) {
+    if let Some(principal) = request.extensions().get::<server_access::Principal>() {
+        let principal = Principal {
+            subject: principal.subject.clone(),
+            scopes: principal.scopes.clone(),
+        };
+        request.extensions_mut().insert(principal);
+    }
+}
 
 fn transport_router(remote: Remote) -> Router {
     let resource = remote.config.resource();
