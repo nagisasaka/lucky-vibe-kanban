@@ -52,7 +52,6 @@ import {
   SortDescendingIcon,
   XIcon,
 } from '@phosphor-icons/react';
-import { useWorkspaceExecutions } from '@/shared/hooks/useWorkspaceOwner';
 
 export type WorkspaceLayoutMode = 'flat' | 'accordion';
 
@@ -256,46 +255,13 @@ export function WorkspacesSidebarContainer({
 }: WorkspacesSidebarContainerProps) {
   const {
     workspaceId: selectedWorkspaceId,
-    activeWorkspaces: interactiveWorkspaces,
+    activeWorkspaces,
     archivedWorkspaces,
-    executionWorkspaces = [],
     isWorkspacesListLoading,
     isCreateMode,
     selectWorkspace,
     navigateToCreate,
   } = useWorkspaceContext();
-  const [executionScope, setExecutionScope] = useState(false);
-  const executions = useWorkspaceExecutions();
-  const executionMap = useMemo(
-    () => new Map(executions.data?.map((run) => [run.workspace_id, run]) ?? []),
-    [executions.data]
-  );
-  const activeWorkspaces = useMemo(
-    () =>
-      executionScope
-        ? executionWorkspaces.map((workspace) => {
-            const run = executionMap.get(workspace.id);
-            const attention =
-              !run ||
-              run.status === 'unknown' ||
-              !!run.error ||
-              workspace.hasPendingApproval;
-            return {
-              ...workspace,
-              name: `${workspace.name} · ${run?.status ?? 'unknown'}`,
-              isPinned: false,
-              isRunning: !!run && !run.terminal && run.status !== 'unknown',
-              hasPendingApproval: attention,
-              hasUnseenActivity: false,
-              latestProcessStatus: undefined,
-            };
-          })
-        : interactiveWorkspaces,
-    [executionScope, executionWorkspaces, executionMap, interactiveWorkspaces]
-  );
-  const attentionCount =
-    executions.data?.filter((run) => !run.terminal || !!run.error).length ?? 0;
-
   const isMobile = useIsMobile();
   const setMobileActiveTab = useUiPreferencesStore((s) => s.setMobileActiveTab);
   const [searchQuery, setSearchQuery] = useState('');
@@ -696,7 +662,7 @@ export function WorkspacesSidebarContainer({
     <WorkspacesSidebar
       workspaces={paginatedActiveWorkspaces}
       totalWorkspacesCount={activeWorkspaces.length}
-      archivedWorkspaces={executionScope ? [] : paginatedArchivedWorkspaces}
+      archivedWorkspaces={paginatedArchivedWorkspaces}
       isLoading={isWorkspacesListLoading}
       selectedWorkspaceId={selectedWorkspaceId ?? null}
       onSelectWorkspace={handleSelectWorkspace}
@@ -706,41 +672,14 @@ export function WorkspacesSidebarContainer({
       isCreateMode={isCreateMode}
       draftTitle={persistedDraftTitle}
       onSelectCreate={navigateToCreate}
-      showArchive={!executionScope && showArchive}
-      onShowArchiveChange={executionScope ? undefined : setShowArchive}
+      showArchive={showArchive}
+      onShowArchiveChange={setShowArchive}
       layoutMode={layoutMode}
       onToggleLayoutMode={toggleLayoutMode}
       onLoadMore={handleLoadMore}
       hasMoreWorkspaces={hasMoreWorkspaces && !isSearching}
       searchControls={searchControls}
-      onOpenWorkspaceActions={
-        executionScope ? undefined : handleOpenWorkspaceActions
-      }
-      executionScope={executionScope}
-      scopeControls={
-        <div className="px-base flex flex-col gap-half">
-          <ButtonGroup>
-            <ButtonGroupItem
-              active={!executionScope}
-              onClick={() => setExecutionScope(false)}
-            >
-              Work
-            </ButtonGroupItem>
-            <ButtonGroupItem
-              active={executionScope}
-              onClick={() => {
-                setExecutionScope(true);
-                setShowArchive(false);
-              }}
-            >
-              Executions / History ({attentionCount})
-            </ButtonGroupItem>
-          </ButtonGroup>
-          {executionScope && executions.error && (
-            <p className="text-xs text-error">{executions.error.message}</p>
-          )}
-        </div>
-      }
+      onOpenWorkspaceActions={handleOpenWorkspaceActions}
       persistKeys={sidebarPersistKeys}
     />
   );

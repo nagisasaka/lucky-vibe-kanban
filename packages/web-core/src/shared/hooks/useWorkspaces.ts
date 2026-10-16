@@ -16,7 +16,6 @@ import type {
 // UI-specific workspace type for sidebar display
 export interface SidebarWorkspace {
   usage?: WorkspaceUsage;
-  isIntegration?: boolean;
   id: string;
   name: string;
   branch: string;
@@ -45,7 +44,6 @@ export type Workspace = SidebarWorkspace;
 export interface UseWorkspacesResult {
   workspaces: SidebarWorkspace[];
   archivedWorkspaces: SidebarWorkspace[];
-  executionWorkspaces: SidebarWorkspace[];
   isLoading: boolean;
   isConnected: boolean;
   error: string | null;
@@ -63,7 +61,6 @@ function toSidebarWorkspace(
 ): SidebarWorkspace {
   return {
     usage: ws.usage,
-    isIntegration: ws.execution_owner?.kind === 'integration',
     id: ws.id,
     name: ws.name ?? ws.branch, // Use name if available, fallback to branch
     branch: ws.branch,
@@ -233,22 +230,9 @@ export function useWorkspaces(): UseWorkspacesResult {
   // Combined error (show first error if any)
   const error = activeError || archivedError;
 
-  const scopes = useMemo(
-    () => ({
-      workspaces: workspaces.filter(
-        (ws) => ws.usage !== 'execution_only' || ws.isIntegration
-      ),
-      archivedWorkspaces: archivedWorkspaces.filter(
-        (ws) => ws.usage !== 'execution_only' || ws.isIntegration
-      ),
-      executionWorkspaces: [...workspaces, ...archivedWorkspaces].filter(
-        (ws) => ws.usage === 'execution_only' && !ws.isIntegration
-      ),
-    }),
-    [workspaces, archivedWorkspaces]
-  );
   return {
-    ...scopes,
+    workspaces,
+    archivedWorkspaces,
     isLoading,
     isConnected,
     error,

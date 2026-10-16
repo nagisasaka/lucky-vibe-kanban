@@ -58,7 +58,7 @@ use crate::{
     profile::ExecutionMode,
 };
 
-mod openwiki;
+pub(super) mod openwiki;
 
 struct PendingPlan {
     item_id: String,
@@ -1193,9 +1193,23 @@ impl AppServerClient {
         R: DeserializeOwned + std::fmt::Debug,
     {
         let request_id = request_id(&request);
+        let startup_config = match &request {
+            ClientRequest::ThreadStart { params, .. } => params.config.as_ref(),
+            ClientRequest::ThreadResume { params, .. } => params.config.as_ref(),
+            _ => None,
+        };
+        let timeout = if startup_config.is_some_and(|config| {
+            config.get("mcp_servers.openwiki.required") == Some(&Value::Bool(true))
+                && config.get("mcp_servers.openwiki.enabled") == Some(&Value::Bool(true))
+        }) {
+            openwiki::STARTUP_RPC_TIMEOUT
+        } else {
+            Duration::from_secs(30)
+        };
         self.rpc()
-            .request(request_id, &request, label, self.cancel.clone())
+            .request_with_raw_timeout(request_id, &request, label, self.cancel.clone(), timeout)
             .await
+            .map(|(response, _)| response)
     }
 
     fn next_request_id(&self) -> RequestId {

@@ -799,12 +799,7 @@ impl LocalAgentRunPort {
                 request.session_id,
             ));
         }
-        let integration_workspace =
-            db::models::integration::is_integration_workspace(&self.db.pool, workspace.id)
-                .await
-                .map_err(port_database)?;
         let source_completion_allowed = !workspace.is_execution_only()
-            && !integration_workspace
             && executors::executors::provider_adapter::memory_source_completion_allowed(
                 provider,
                 direct_intent(request.intent, attempt.mode),
@@ -824,7 +819,9 @@ impl LocalAgentRunPort {
                 let state = store
                     .state()
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
-                if state.maintenance_workspace_id == Some(workspace.id) {
+                if workspace.is_execution_only()
+                    && state.maintenance_workspace_id == Some(workspace.id)
+                {
                     if let Some(owner) = &state.bootstrap {
                         let child = owner.child.as_ref().ok_or_else(|| {
                             AgentRunPortError::Rejected(
@@ -2886,7 +2883,17 @@ impl AgentRunPort for LocalAgentRunPort {
                     )
                     .await
                     .map_err(port_database)?;
+                let wiki_instruction =
+                    matches!(&command.command, AgentRunPortCommand::Steer { .. })
+                        && services::services::workspace_usage::allows_wiki_instruction(
+                            &self.db.pool,
+                            &workspace,
+                            &request,
+                        )
+                        .await
+                        .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
                 if !integration_instruction
+                    && !wiki_instruction
                     && !integration_retry
                     && !matches!(
                         &command.command,
@@ -2895,7 +2902,7 @@ impl AgentRunPort for LocalAgentRunPort {
                             | AgentRunPortCommand::ResolveApproval { .. }
                     )
                 {
-                    return Err(AgentRunPortError::Rejected("Execution-only workspace does not accept free-form controls or retries; use its owner".into()));
+                    return Err(AgentRunPortError::Rejected("Workspace is reserved for an execution; use its supported instructions, responses or Stop controls".into()));
                 }
                 services::services::workspace_usage::validate_agent_owner(
                     &self.db.pool,

@@ -78,8 +78,6 @@ export interface WorkspacesSidebarProps {
   hasMoreWorkspaces?: boolean;
   /** Controls rendered beside the search input */
   searchControls?: ReactNode;
-  scopeControls?: ReactNode;
-  executionScope?: boolean;
   /** Callback for opening workspace actions */
   onOpenWorkspaceActions?: (workspaceId: string) => void;
   /** Persist keys for collapsible sections */
@@ -184,16 +182,12 @@ export function WorkspacesSidebar({
   onLoadMore,
   hasMoreWorkspaces = false,
   searchControls,
-  scopeControls,
-  executionScope = false,
   onOpenWorkspaceActions,
   persistKeys = DEFAULT_PERSIST_KEYS,
 }: WorkspacesSidebarProps) {
   const { t } = useTranslation(["tasks", "common"]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const handleOpenWorkspaceActions = executionScope
-    ? undefined
-    : onOpenWorkspaceActions;
+  const handleOpenWorkspaceActions = onOpenWorkspaceActions;
 
   // Handle scroll to load more
   const handleScroll = () => {
@@ -249,7 +243,6 @@ export function WorkspacesSidebar({
           actions={headerActions}
           className="border-b"
         />
-        {scopeControls}
         {!isLoading && (
           <div className="px-base flex items-stretch gap-half">
             <div className="flex-1 min-w-0">
@@ -369,7 +362,7 @@ export function WorkspacesSidebar({
 
             {/* Idle section */}
             <CollapsibleSectionHeader
-              title={executionScope ? "History" : t("common:workspaces.idle")}
+              title={t("common:workspaces.idle")}
               persistKey={persistKeys.notRunning}
               defaultExpanded={true}
             >
@@ -432,29 +425,27 @@ export function WorkspacesSidebar({
       </div>
 
       {/* Fixed footer toggle - only show if there are archived workspaces */}
-      {!executionScope && (
-        <div className="border-t border-primary p-base">
-          <button
-            onClick={() => onShowArchiveChange?.(!showArchive)}
-            className="w-full flex items-center gap-base text-sm text-low hover:text-normal transition-colors duration-100"
-          >
-            {showArchive ? (
-              <>
-                <ArrowLeftIcon className="size-icon-xs" />
-                <span>{t("common:workspaces.backToActive")}</span>
-              </>
-            ) : (
-              <>
-                <ArchiveIcon className="size-icon-xs" />
-                <span>{t("common:workspaces.viewArchive")}</span>
-                <span className="ml-auto text-xs bg-tertiary px-1.5 py-0.5 rounded">
-                  {archivedWorkspaces.length}
-                </span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
+      <div className="border-t border-primary p-base">
+        <button
+          onClick={() => onShowArchiveChange?.(!showArchive)}
+          className="w-full flex items-center gap-base text-sm text-low hover:text-normal transition-colors duration-100"
+        >
+          {showArchive ? (
+            <>
+              <ArrowLeftIcon className="size-icon-xs" />
+              <span>{t("common:workspaces.backToActive")}</span>
+            </>
+          ) : (
+            <>
+              <ArchiveIcon className="size-icon-xs" />
+              <span>{t("common:workspaces.viewArchive")}</span>
+              <span className="ml-auto text-xs bg-tertiary px-1.5 py-0.5 rounded">
+                {archivedWorkspaces.length}
+              </span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

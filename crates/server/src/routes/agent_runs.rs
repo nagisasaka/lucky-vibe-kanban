@@ -425,7 +425,14 @@ pub(crate) async fn dispatch_control_for_input(
                     run.session_id,
                     agent_run_id,
                 )
-                .await? =>
+                .await?
+                    || services::services::workspace_usage::allows_wiki_instruction(
+                        &deployment.db().pool,
+                        &workspace,
+                        &run.request_envelope,
+                    )
+                    .await
+                    .map_err(|error| ApiError::Conflict(error.to_string()))? =>
             {
                 services::services::workspace_usage::validate_agent_owner(
                     &deployment.db().pool,

@@ -6,7 +6,7 @@ use std::{collections::HashSet, io, time::Duration};
 use super::AppServerClient;
 use crate::executors::ExecutorError;
 
-pub(super) const REQUIRED_TOOLS: [&str; 6] = [
+pub(crate) const REQUIRED_TOOLS: [&str; 6] = [
     "openwiki_begin",
     "openwiki_submit_plan",
     "openwiki_next_page",
@@ -15,8 +15,11 @@ pub(super) const REQUIRED_TOOLS: [&str; 6] = [
     "openwiki_finish",
 ];
 
-// Separate from model/tool execution timeouts. Allow the 10-second MCP startup
-// plus a small RPC margin, but never hang startup on an unresponsive catalog.
+// Cold Node startup can exceed ten seconds on a busy development host.
+pub(crate) const STARTUP_TIMEOUT: Duration = Duration::from_secs(60);
+pub(super) const STARTUP_RPC_TIMEOUT: Duration =
+    Duration::from_secs(STARTUP_TIMEOUT.as_secs() + 15);
+// Catalog discovery runs after thread startup has completed.
 const PREFLIGHT_TIMEOUT: Duration = Duration::from_secs(15);
 
 #[cfg(test)]

@@ -278,6 +278,28 @@ impl JsonRpcPeer {
         R: DeserializeOwned + Debug,
         T: Serialize + Sync,
     {
+        self.request_with_raw_timeout(
+            request_id,
+            message,
+            label,
+            cancel,
+            std::time::Duration::from_secs(30),
+        )
+        .await
+    }
+
+    pub(super) async fn request_with_raw_timeout<R, T>(
+        &self,
+        request_id: RequestId,
+        message: &T,
+        label: &str,
+        cancel: CancellationToken,
+        timeout: std::time::Duration,
+    ) -> Result<(R, Vec<u8>), ExecutorError>
+    where
+        R: DeserializeOwned + Debug,
+        T: Serialize + Sync,
+    {
         let mut raw = serde_json::to_vec(message)
             .map_err(|err| ExecutorError::Io(io::Error::other(err.to_string())))?;
         raw.push(b'\n');
@@ -288,21 +310,17 @@ impl JsonRpcPeer {
             return Err(error);
         }
         // This bounds RPC acknowledgements, never model execution or approval waits.
-        let response = match tokio::time::timeout(
-            std::time::Duration::from_secs(30),
-            await_response(receiver, label, cancel),
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(_) => {
-                self.request_exit(ExecutorExitResult::Failure);
-                Err(ExecutorError::Io(io::Error::new(
-                    io::ErrorKind::TimedOut,
-                    format!("{label} acknowledgement timed out"),
-                )))
-            }
-        };
+        let response =
+            match tokio::time::timeout(timeout, await_response(receiver, label, cancel)).await {
+                Ok(result) => result,
+                Err(_) => {
+                    self.request_exit(ExecutorExitResult::Failure);
+                    Err(ExecutorError::Io(io::Error::new(
+                        io::ErrorKind::TimedOut,
+                        format!("{label} acknowledgement timed out"),
+                    )))
+                }
+            };
         self.pending.lock().await.remove(&request_id);
         let response = response?;
         Ok((response, raw))

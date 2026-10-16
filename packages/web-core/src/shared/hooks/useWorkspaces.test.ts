@@ -58,34 +58,31 @@ describe('workspace sidebar runtime state', () => {
     expect(result.workspaces.map((workspace) => workspace.id)).toEqual([
       'workspace',
     ]);
-    expect(result.executionWorkspaces).toEqual([]);
   });
 
-  it('separates persistent execution usage even after a successful agent run', () => {
-    fixture.workspace.usage = 'execution_only';
-    fixture.workspace.is_running = false;
-    const result = readWorkspaces();
-    expect(result.workspaces).toEqual([]);
-    expect(result.archivedWorkspaces).toEqual([]);
-    expect(result.executionWorkspaces.map((workspace) => workspace.id)).toEqual(
-      ['workspace']
-    );
-  });
-
-  it('shows an Integration in the ordinary list without exposing Wiki maintenance there', () => {
-    fixture.workspace.usage = 'execution_only';
-    fixture.workspace.execution_owner = {
-      kind: 'integration',
-      run_id: 'run',
-      repository_id: 'repo',
-      result: null,
-    };
-    const result = readWorkspaces();
-    expect(result.workspaces.map((workspace) => workspace.id)).toEqual([
-      'workspace',
-    ]);
-    expect(result.executionWorkspaces).toEqual([]);
-  });
+  it.each([
+    'integration',
+    'openwiki_sync',
+    'openwiki_bootstrap',
+    'resource_mediation',
+  ])(
+    'shows %s in the normal workspace list even after its agent exits',
+    (kind) => {
+      fixture.workspace.usage = 'execution_only';
+      fixture.workspace.is_running = false;
+      fixture.workspace.execution_owner = {
+        kind,
+        run_id: 'run',
+        repository_id: 'repo',
+        result: null,
+      };
+      const result = readWorkspaces();
+      expect(result.workspaces.map((workspace) => workspace.id)).toEqual([
+        'workspace',
+      ]);
+      expect(result.archivedWorkspaces).toEqual([]);
+    }
+  );
 
   it('converges after a terminal AgentRun even when the legacy workspace stream stays running', () => {
     expect(readWorkspaces().workspaces[0].isRunning).toBe(true);

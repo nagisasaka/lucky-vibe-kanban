@@ -92,9 +92,6 @@ pub(crate) async fn should_disable_default_commit_for_workspace(
 ) -> Result<bool, sqlx::Error> {
     use db::models::arena_group::{ArenaLifecycleStatus, ArenaMode};
 
-    if db::models::integration::is_integration_workspace(pool, workspace_id).await? {
-        return Ok(true);
-    }
     if sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS(SELECT 1 FROM workspaces WHERE id=? AND usage='execution_only')",
     )
@@ -2224,7 +2221,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn integration_owner_disables_normal_commit_without_changing_ordinary_policy() {
+    async fn execution_reservation_disables_commits_until_released() {
         let pool = setup_container_policy_pool().await;
         let workspace_id = insert_workspace_in_arena(
             &pool,
@@ -2242,10 +2239,26 @@ mod tests {
             .execute(&pool)
             .await
             .unwrap();
+        sqlx::query("UPDATE workspaces SET usage='execution_only' WHERE id=?")
+            .bind(workspace_id)
+            .execute(&pool)
+            .await
+            .unwrap();
         // Even after the Agent terminates, only Integration may choose R and
         // validate it. The ordinary finalizer must not append an untested R'.
         assert!(
             should_disable_default_commit_for_workspace(&pool, workspace_id)
+                .await
+                .unwrap()
+        );
+        sqlx::query("UPDATE workspaces SET usage='interactive' WHERE id=?")
+            .bind(workspace_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        // Historical Integration attribution does not disable later development.
+        assert!(
+            !should_disable_default_commit_for_workspace(&pool, workspace_id)
                 .await
                 .unwrap()
         );

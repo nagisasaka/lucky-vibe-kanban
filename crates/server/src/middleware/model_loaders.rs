@@ -72,7 +72,7 @@ async fn load_workspace_from_pool(
         if workspace.is_execution_only() && !owner_stop {
             use axum::response::IntoResponse;
             return Ok(crate::error::ApiError::Conflict(format!(
-                "Workspace {} is execution-only; inspect /api/workspaces/{}/usage and use its owner controls", workspace.id, workspace.id
+                "Workspace {} is reserved for an execution; inspect /api/workspaces/{}/usage and use its execution controls", workspace.id, workspace.id
             )).into_response());
         }
         if !(workspace.is_execution_only() && owner_stop) {

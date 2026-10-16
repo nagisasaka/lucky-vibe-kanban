@@ -329,6 +329,7 @@ async fn prepare_run(
     )
     .await?;
     let preparation = async {
+    services::services::workspace_usage::ensure_wiki_board_link(&deployment.db().pool, &workspace).await?;
     WorkspaceRepo::create_many(
         &deployment.db().pool,
         workspace.id,
@@ -824,6 +825,11 @@ pub fn spawn_recovery_monitor(deployment: DeploymentImpl) {
                 if let Err(error) = recover_repository(&deployment, &repo).await {
                     tracing::warn!(repository_id = %repo.id, %error, "OpenWiki recovery deferred");
                 }
+            }
+            if let Err(error) =
+                services::services::workspace_usage::release_completed(&deployment.db().pool).await
+            {
+                tracing::warn!(%error, "Completed workspace release deferred");
             }
         }
     });

@@ -20,6 +20,8 @@ pub const RESOURCE_MEDIATION: &str = "resource_mediation";
 pub enum WorkspaceUsage {
     #[default]
     Interactive,
+    // Temporarily reserved for an execution. Released to Interactive after
+    // the owner and its processes finish; never hides the workspace from the UI.
     ExecutionOnly,
 }
 
@@ -72,7 +74,7 @@ impl Workspace {
     pub fn require_interactive(&self) -> Result<(), WorkspaceError> {
         if self.is_execution_only() {
             return Err(WorkspaceError::ValidationError(format!(
-                "Workspace {} is execution-only. Inspect its execution history and use the owning execution's controls; arbitrary development is not allowed.",
+                "Workspace {} is reserved for an execution. Use its execution controls until the operation and cleanup finish.",
                 self.id
             )));
         }

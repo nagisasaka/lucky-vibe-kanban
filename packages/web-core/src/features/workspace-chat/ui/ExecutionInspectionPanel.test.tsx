@@ -29,6 +29,11 @@ vi.mock(
   '@/features/workspace-chat/model/hooks/useWorkspacePendingApproval',
   () => ({ useWorkspacePendingApproval: () => fixture.pending })
 );
+vi.mock('../model/contexts/EntriesContext', () => ({
+  useCanonicalAgentSession: () => ({
+    timeline: { activeRun: { summary: { agent_run_id: 'run' } } },
+  }),
+}));
 vi.mock('@/features/workspace-chat/model/canonicalAgentControls', () => ({
   canonicalAgentControls: {},
 }));
@@ -61,7 +66,7 @@ function render() {
   );
 }
 
-describe('execution inspection (no composer lifecycle)', () => {
+describe('active execution controls', () => {
   beforeEach(() => {
     fixture.data = undefined;
     fixture.pending = null;
@@ -106,6 +111,22 @@ describe('execution inspection (no composer lifecycle)', () => {
     fixture.data = { ...fixture.data, can_stop: false, stop_requested: true };
     expect(render()).toContain('Stopping');
     expect(render()).not.toContain('<textarea');
+  });
+  it('offers Wiki instructions only while its owner can accept controls', () => {
+    workspace.execution_owner = {
+      kind: 'openwiki_sync',
+    } as Workspace['execution_owner'];
+    fixture.data = {
+      status: 'running',
+      can_stop: true,
+      terminal: false,
+    } as WorkspaceExecutionView;
+    expect(render()).toContain('OpenWiki instructions');
+    fixture.data = { ...fixture.data, can_stop: false, status: 'finalizing' };
+    expect(render()).not.toContain('OpenWiki instructions');
+    workspace.execution_owner = {
+      kind: 'future_owner',
+    } as Workspace['execution_owner'];
   });
   it('offers a response only for an outstanding owner request', () => {
     fixture.data = {

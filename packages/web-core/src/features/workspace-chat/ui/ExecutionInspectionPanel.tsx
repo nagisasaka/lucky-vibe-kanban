@@ -5,11 +5,11 @@ import { useMutation } from '@tanstack/react-query';
 import type { Session, Workspace } from 'shared/types';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
 import { useWorkspaceOwnerView } from '@/shared/hooks/useWorkspaceOwner';
-import { useWorkspacePendingApproval } from '@/features/workspace-chat/model/hooks/useWorkspacePendingApproval';
-import { canonicalAgentControls } from '@/features/workspace-chat/model/canonicalAgentControls';
+import { useWorkspacePendingApproval } from '../model/hooks/useWorkspacePendingApproval';
+import { useCanonicalAgentSession } from '../model/contexts/EntriesContext';
+import { canonicalAgentControls } from '../model/canonicalAgentControls';
 
-/** Owner inspection preserves existing question/tool controls. Only Integration
- * exposes dedicated instructions; no general composer or session creation. */
+/** Active execution controls. Completed reservations return to the normal composer. */
 export function ExecutionInspectionPanel({
   workspace,
   sessions,
@@ -23,6 +23,22 @@ export function ExecutionInspectionPanel({
 }) {
   const { t } = useTranslation('common');
   const integration = workspace.execution_owner?.kind === 'integration';
+  const wiki = ['openwiki_sync', 'openwiki_bootstrap'].includes(
+    workspace.execution_owner?.kind ?? ''
+  );
+  const { timeline } = useCanonicalAgentSession();
+  const activeRun = timeline?.activeRun;
+  const [instruction, setInstruction] = useState('');
+  const steer = useMutation({
+    mutationFn: async () => {
+      if (!activeRun || !instruction.trim()) return;
+      await canonicalAgentControls.steer(
+        activeRun.summary.agent_run_id,
+        instruction.trim()
+      );
+      setInstruction('');
+    },
+  });
   const execution = useWorkspaceOwnerView(workspace.id);
   const pending = useWorkspacePendingApproval();
   const [answer, setAnswer] = useState('');
@@ -64,7 +80,9 @@ export function ExecutionInspectionPanel({
         <strong className="text-high">
           {integration
             ? t('integrationReview.title')
-            : 'Execution-only · Inspection'}
+            : wiki
+              ? 'OpenWiki'
+              : 'Execution'}
         </strong>
         <PrimaryButton
           variant="secondary"
@@ -78,9 +96,8 @@ export function ExecutionInspectionPanel({
       </div>
       {!integration && (
         <p className="text-low">
-          The owner controls this environment. Files are shown from this
-          execution workspace. Session creation and development actions remain
-          owner-controlled.
+          While this execution is active, use its controls below. Normal
+          development becomes available after execution and cleanup finish.
         </p>
       )}
       <p className="text-normal">
@@ -112,6 +129,7 @@ export function ExecutionInspectionPanel({
         execution.error?.message,
         execution.stop.error?.message,
         response.error?.message,
+        steer.error?.message,
       ]
         .filter(Boolean)
         .map((error) => (
@@ -137,6 +155,23 @@ export function ExecutionInspectionPanel({
       </label>
       {run?.owner?.kind === 'integration' && run.owner.run_id && (
         <IntegrationInterventionPanel integrationId={run.owner.run_id} />
+      )}
+      {wiki && activeRun && run?.can_stop && !run.stop_requested && (
+        <div className="flex flex-col gap-half">
+          <textarea
+            aria-label="OpenWiki instructions"
+            className="bg-primary border border-border rounded-sm p-half"
+            value={instruction}
+            onChange={(event) => setInstruction(event.target.value)}
+            placeholder="Additional instructions for this Wiki update"
+          />
+          <PrimaryButton
+            disabled={steer.isPending || !instruction.trim()}
+            onClick={() => steer.mutate()}
+          >
+            Send instructions
+          </PrimaryButton>
+        </div>
       )}
       {pending && (
         <div className="border border-border p-base flex flex-col gap-half">

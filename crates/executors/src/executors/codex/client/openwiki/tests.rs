@@ -53,12 +53,38 @@ fn mcp_stdio_fixture() {
                 } else {
                     assert_eq!(config["mcp_servers.openwiki.enabled"], true);
                     assert_eq!(config["mcp_servers.openwiki.required"], true);
-                    assert_eq!(config["mcp_servers.openwiki.startup_timeout_sec"], 10);
+                    assert_eq!(config["mcp_servers.openwiki.startup_timeout_sec"], 60);
                     assert_eq!(
                         config["mcp_servers.openwiki.args"],
                         json!(["mcp", "--host", "codex"])
                     );
                     assert!(config.get("mcp_optional_startup_grace_ms").is_none());
+                }
+                let approvals: Vec<_> = config
+                    .as_object()
+                    .unwrap()
+                    .keys()
+                    .filter(|key| key.ends_with(".approval_mode"))
+                    .collect();
+                if matches!(case.as_str(), "reviewer" | "ordinary") {
+                    assert!(approvals.is_empty());
+                } else {
+                    assert_eq!(approvals.len(), REQUIRED_TOOLS.len());
+                    for tool in REQUIRED_TOOLS {
+                        assert_eq!(
+                            config[format!("mcp_servers.openwiki.tools.{tool}.approval_mode")],
+                            "approve"
+                        );
+                    }
+                    assert!(
+                        config
+                            .get("mcp_servers.openwiki.default_tools_approval_mode")
+                            .is_none()
+                    );
+                }
+                if case == "slow_startup" {
+                    // Exceeds the general 30-second RPC deadline, for both start/resume.
+                    std::thread::sleep(Duration::from_secs(31));
                 }
                 if case == "startup_error" {
                     emit(
@@ -128,7 +154,10 @@ fn mcp_stdio_fixture() {
                             "name": if case == "wrong_tool_name" { "different_tool" } else { name },
                             "inputSchema":{"type":"object"}
                         }))).collect();
-                    verified = matches!(case.as_str(), "ready" | "slow" | "paginated");
+                    verified = matches!(
+                        case.as_str(),
+                        "ready" | "slow" | "paginated" | "slow_startup"
+                    );
                     json!({"data":[{
                         "name":if case == "other_server" {"unrelated"} else {"openwiki"},
                         "tools":tools,"resources":[],"resourceTemplates":[],"authStatus":"unsupported"
@@ -223,7 +252,7 @@ impl Harness {
         let params =
             codex.build_thread_start_params_with_resources(std::path::Path::new("/tmp"), &env);
         tokio::time::timeout(
-            Duration::from_secs(5),
+            Duration::from_secs(if case == "slow_startup" { 40 } else { 5 }),
             Codex::launch_codex_agent(
                 params,
                 resume.then(|| "writer-thread".into()),
@@ -285,6 +314,16 @@ async fn writer_tools_are_verified_before_initial_followup_and_goal_launches() {
             assert!(check < start);
             harness.close().await;
         }
+    }
+}
+
+#[tokio::test]
+async fn required_mcp_startup_can_outlast_the_default_rpc_deadline() {
+    for resume in [false, true] {
+        let harness = Harness::new("slow_startup", ExecutionMode::Code).await;
+        harness.launch("slow_startup", resume).await.unwrap();
+        assert_eq!(harness.state().await["verified"], true);
+        harness.close().await;
     }
 }
 
@@ -406,11 +445,14 @@ async fn installed_openwiki_mcp_preflight() {
         .with_discovery_app_server(temp.path(), move |client| async move {
             // No turn/start, goal activation, or MCP tool call: only handshake and
             // inventory. The existing discovery helper cleans up the process group.
-            tokio::time::timeout(Duration::from_secs(30), async {
-                let response = client.thread_start(params).await?;
-                client.register_session(&response.thread.id).await?;
-                client.ensure_openwiki_tools().await
-            })
+            tokio::time::timeout(
+                super::STARTUP_RPC_TIMEOUT + Duration::from_secs(15),
+                async {
+                    let response = client.thread_start(params).await?;
+                    client.register_session(&response.thread.id).await?;
+                    client.ensure_openwiki_tools().await
+                },
+            )
             .await
             .map_err(|_| {
                 ExecutorError::Io(std::io::Error::other("installed MCP discovery timed out"))

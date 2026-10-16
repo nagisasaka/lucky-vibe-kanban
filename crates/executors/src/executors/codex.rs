@@ -948,8 +948,19 @@ impl Codex {
             config.insert("mcp_servers.openwiki.required".into(), Value::Bool(true));
             config.insert(
                 "mcp_servers.openwiki.startup_timeout_sec".into(),
-                Value::from(10),
+                Value::from(client::openwiki::STARTUP_TIMEOUT.as_secs()),
             );
+            // Starting maintenance authorizes its six lifecycle operations. Codex
+            // otherwise requests MCP approval even for this host-owned writer,
+            // and our unsupported elicitation handler cancels that request.
+            // Keep authorization per-tool and thread-local, not a global MCP
+            // default. Reviewers and ordinary coding threads never enter here.
+            for tool in client::openwiki::REQUIRED_TOOLS {
+                config.insert(
+                    format!("mcp_servers.openwiki.tools.{tool}.approval_mode"),
+                    Value::String("approve".into()),
+                );
+            }
             config.insert(
                 "mcp_servers.openwiki.command".into(),
                 Value::String("openwiki".into()),

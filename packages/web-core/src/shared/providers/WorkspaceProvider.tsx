@@ -11,7 +11,10 @@ import { useParams } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWorkspaces } from '@/shared/hooks/useWorkspaces';
 import { workspaceSummaryKeys } from '@/shared/hooks/workspaceSummaryKeys';
-import { useWorkspaceRecord } from '@/shared/hooks/useWorkspaceRecord';
+import {
+  useWorkspaceRecord,
+  workspaceRecordKeys,
+} from '@/shared/hooks/useWorkspaceRecord';
 import { useWorkspaceRepo } from '@/shared/hooks/useWorkspaceRepo';
 import { useWorkspaceSessions } from '@/shared/hooks/useWorkspaceSessions';
 import { useGitHubComments } from '@/shared/hooks/useGitHubComments';
@@ -40,7 +43,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const {
     workspaces: activeWorkspaces,
     archivedWorkspaces,
-    executionWorkspaces,
     isLoading: isLoadingList,
   } = useWorkspaces();
 
@@ -70,6 +72,30 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const currentWorkspaceSummary = activeWorkspaces.find(
     (w) => w.id === workspaceId
   );
+  const observedUsage =
+    currentWorkspaceSummary?.usage ??
+    archivedWorkspaces.find((item) => item.id === workspaceId)?.usage;
+  // Reservation release arrives on the list stream. Refresh detail caches too,
+  // so the composer and file/Git controls unlock without a page reload.
+  useEffect(() => {
+    if (
+      !workspaceId ||
+      !workspace?.usage ||
+      !observedUsage ||
+      workspace.usage === observedUsage
+    )
+      return;
+    void queryClient.invalidateQueries({
+      queryKey: workspaceRecordKeys.byId(workspaceId, hostId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['workspace', workspaceId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['workspaceWithSession', workspaceId],
+    });
+  }, [workspaceId, hostId, observedUsage, workspace?.usage, queryClient]);
+
   const hasPrAttached = !!currentWorkspaceSummary?.prStatus;
 
   const {
@@ -225,7 +251,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       workspace,
       activeWorkspaces,
       archivedWorkspaces,
-      executionWorkspaces,
       isWorkspacesListLoading: isLoadingList,
       isLoading,
       isCreateMode,
@@ -247,7 +272,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       workspace,
       activeWorkspaces,
       archivedWorkspaces,
-      executionWorkspaces,
       isLoadingList,
       isLoading,
       isCreateMode,

@@ -18,6 +18,9 @@ use sqlx::{SqlitePool, types::Json};
 use utils::repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus};
 use uuid::Uuid;
 
+mod lifecycle;
+pub use lifecycle::{allows_wiki_instruction, ensure_wiki_board_link, release_completed};
+
 /// Only existing, host-owned records establish historical usage. Ordinary
 /// workflows, unlinked workspaces and names are deliberately not evidence.
 pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
@@ -128,6 +131,17 @@ pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
         without_internal_evidence = unproven,
         "Workspace usage backfill (unproven workspaces remain interactive; not inferred from names)"
     );
+    // Backfill links once at startup. The release monitor must not recreate a
+    // card that the operator intentionally unlinks or deletes later.
+    let ids: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM workspaces WHERE usage='execution_only' AND json_extract(execution_owner,'$.kind') IN ('openwiki_sync','openwiki_bootstrap')")
+        .fetch_all(pool).await?;
+    for id in ids {
+        if let Some(workspace) = Workspace::find_by_id(pool, id).await?
+            && let Err(error) = ensure_wiki_board_link(pool, &workspace).await
+        {
+            tracing::warn!(workspace_id=%id, %error, "Historical Wiki Board link unavailable");
+        }
+    }
     Ok(())
 }
 
@@ -945,5 +959,293 @@ mod tests {
                 .unwrap(),
             0
         );
+    }
+    #[tokio::test]
+    async fn completed_wiki_becomes_interactive_only_after_owner_cleanup() {
+        use db::models::workspace_usage::{
+            WorkspaceExecutionResult, WorkspaceExecutionTerminalStatus,
+        };
+        use utils::repository_memory::RepositoryMemoryState;
+        let (pool, repo, _temp, store) = memory_fixture().await;
+        let run_id = Uuid::new_v4();
+        let ws = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(
+                OPENWIKI_SYNC,
+                repo.id,
+                Some(run_id),
+            )),
+        )
+        .await;
+        Workspace::save_execution_result(
+            &pool,
+            ws.id,
+            OPENWIKI_SYNC,
+            Some(run_id),
+            &WorkspaceExecutionResult {
+                status: WorkspaceExecutionTerminalStatus::Failed,
+                completed_at: chrono::Utc::now(),
+                error: Some("failed handshake".into()),
+                wiki_commit: None,
+                no_op: false,
+            },
+        )
+        .await
+        .unwrap();
+        let root = _temp.path().join("reused-source");
+        git::GitService::new()
+            .initialize_repo_with_main_branch(&root)
+            .unwrap();
+        let mut state = RepositoryMemoryState {
+            enabled: true,
+            maintenance_workspace_id: Some(ws.id),
+            active_run_id: Some(run_id),
+            status: RepositoryWikiStatus::Error,
+            ..Default::default()
+        };
+        store.save_state(&state).unwrap();
+        assert!(
+            crate::services::repository_memory::begin_coding_run(
+                &repo,
+                &ws,
+                Uuid::new_v4(),
+                &root,
+                "main",
+                true
+            )
+            .unwrap()
+            .is_none()
+        );
+        release_completed(&pool).await.unwrap();
+        assert!(
+            Workspace::find_by_id(&pool, ws.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .is_execution_only()
+        );
+        state.active_run_id = None;
+        store.save_state(&state).unwrap();
+        release_completed(&pool).await.unwrap();
+        backfill(&pool).await.unwrap();
+        let released = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+        assert!(released.require_interactive().is_ok());
+        let context = crate::services::repository_memory::begin_coding_run(
+            &repo,
+            &released,
+            Uuid::new_v4(),
+            &root,
+            "main",
+            true,
+        )
+        .unwrap()
+        .unwrap();
+        assert!(context.finalize_source);
+        assert_eq!(
+            released
+                .execution_owner
+                .unwrap()
+                .0
+                .result
+                .unwrap()
+                .error
+                .as_deref(),
+            Some("failed handshake")
+        );
+    }
+
+    #[tokio::test]
+    async fn blocked_integration_stays_reserved_but_completed_one_is_released() {
+        let (pool, repo, project) = fixture().await;
+        for (status, reserved) in [("blocked", true), ("succeeded", false), ("failed", false)] {
+            let id = Uuid::new_v4();
+            let ws = workspace(
+                &pool,
+                &repo,
+                Some(&WorkspaceExecutionOwner::new(
+                    INTEGRATION,
+                    repo.id,
+                    Some(id),
+                )),
+            )
+            .await;
+            integration(&pool, &repo, project, ws.id, id, None, status).await;
+            // Historical metadata has no result field and a different JSON key order.
+            sqlx::query("UPDATE workspaces SET execution_owner=json_object('repository_id',json_extract(execution_owner,'$.repository_id'),'run_id',json_extract(execution_owner,'$.run_id'),'kind','integration') WHERE id=?")
+                .bind(ws.id).execute(&pool).await.unwrap();
+            release_completed(&pool).await.unwrap();
+            assert_eq!(
+                Workspace::find_by_id(&pool, ws.id)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .is_execution_only(),
+                reserved
+            );
+        }
+        let unknown = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new("future", repo.id, None)),
+        )
+        .await;
+        release_completed(&pool).await.unwrap();
+        assert!(
+            Workspace::find_by_id(&pool, unknown.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .is_execution_only()
+        );
+    }
+
+    #[tokio::test]
+    async fn wiki_board_link_is_idempotent_and_never_guesses_between_boards() {
+        let (pool, repo, project) = fixture().await;
+        sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(project)
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)")
+            .bind(Uuid::new_v4()).bind(project).execute(&pool).await.unwrap();
+        let ws = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(OPENWIKI_SYNC, repo.id, None)),
+        )
+        .await;
+        ensure_wiki_board_link(&pool, &ws).await.unwrap();
+        ensure_wiki_board_link(&pool, &ws).await.unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            1
+        );
+        sqlx::query("DELETE FROM project_repos WHERE repo_id=?")
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let linked_only = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(OPENWIKI_SYNC, repo.id, None)),
+        )
+        .await;
+        ensure_wiki_board_link(&pool, &linked_only).await.unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            2
+        );
+        let second = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Second')")
+            .bind(second)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(second)
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let ambiguous = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(
+                OPENWIKI_BOOTSTRAP,
+                repo.id,
+                None,
+            )),
+        )
+        .await;
+        ensure_wiki_board_link(&pool, &ambiguous).await.unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_workspace_links")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            2
+        );
+        ensure_wiki_board_link(&pool, &ws).await.unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, Uuid>(
+                "SELECT project_id FROM local_workspace_links WHERE workspace_id=?"
+            )
+            .bind(ws.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+            project
+        );
+    }
+
+    #[tokio::test]
+    async fn wiki_instructions_require_the_current_live_owner() {
+        use utils::repository_memory::RepositoryMemoryState;
+        let (pool, repo, _temp, store) = memory_fixture().await;
+        let ws = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(OPENWIKI_SYNC, repo.id, None)),
+        )
+        .await;
+        let session = Session::create(
+            &pool,
+            &CreateSession {
+                executor: Some("CODEX".into()),
+                name: None,
+            },
+            Uuid::new_v4(),
+            ws.id,
+        )
+        .await
+        .unwrap();
+        let req = request(&ws, session.id, Uuid::new_v4());
+        Workspace::bind_execution_owner(&pool, ws.id, OPENWIKI_SYNC, req.agent_run_id)
+            .await
+            .unwrap();
+        let ws = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+        let state = RepositoryMemoryState {
+            status: RepositoryWikiStatus::Reconciling,
+            maintenance_workspace_id: Some(ws.id),
+            maintenance_session_id: Some(session.id),
+            active_run_id: Some(req.agent_run_id),
+            ..Default::default()
+        };
+        store.save_state(&state).unwrap();
+        sqlx::query("INSERT INTO agent_runs(id,session_id,workspace_id,request_id,idempotency_key,correlation_id,schema_version,payload_version,runtime_profile_id,provider_id,workspace_mode,workspace_path,status,request_envelope) VALUES(?,?,?,?,?,?,1,1,'CODEX','codex','isolated_worktree','/tmp','running',?)")
+            .bind(req.agent_run_id).bind(session.id).bind(ws.id).bind(req.request_id).bind(&req.idempotency_key).bind(req.correlation_id).bind(Json(&req)).execute(&pool).await.unwrap();
+        assert!(allows_wiki_instruction(&pool, &ws, &req).await.unwrap());
+        let mut stale = req.clone();
+        stale.agent_run_id = Uuid::new_v4();
+        assert!(!allows_wiki_instruction(&pool, &ws, &stale).await.unwrap());
+        release_completed(&pool).await.unwrap();
+        assert!(
+            Workspace::find_by_id(&pool, ws.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .is_execution_only()
+        );
+        for status in ["cancelling", "failed", "succeeded"] {
+            sqlx::query("UPDATE agent_runs SET status=? WHERE id=?")
+                .bind(status)
+                .bind(req.agent_run_id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert!(!allows_wiki_instruction(&pool, &ws, &req).await.unwrap());
+        }
     }
 }

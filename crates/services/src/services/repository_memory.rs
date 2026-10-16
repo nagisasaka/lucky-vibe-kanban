@@ -25,7 +25,9 @@ pub fn begin_coding_run(
         return Ok(None);
     };
     let state = store.state()?;
-    if !state.enabled || state.maintenance_workspace_id == Some(workspace.id) {
+    if !state.enabled
+        || (workspace.is_execution_only() && state.maintenance_workspace_id == Some(workspace.id))
+    {
         return Ok(None);
     }
     if let Some(existing) = store.run(run_id)? {

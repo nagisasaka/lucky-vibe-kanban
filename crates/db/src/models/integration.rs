@@ -215,13 +215,6 @@ pub async fn guard_workspace(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Er
     Ok(())
 }
 
-pub async fn is_integration_workspace(pool: &SqlitePool, id: Uuid) -> Result<bool, sqlx::Error> {
-    sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE workspace_id=?)")
-        .bind(id)
-        .fetch_one(pool)
-        .await
-}
-
 pub async fn guard_agent_dispatch(
     pool: &SqlitePool,
     workspace: Uuid,

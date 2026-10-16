@@ -24,16 +24,6 @@ export async function executionRequest<T>(
   return result.data as T;
 }
 
-export function useWorkspaceExecutions() {
-  const host = useHostId();
-  return useQuery({
-    queryKey: ['workspace-executions', host],
-    queryFn: () =>
-      executionRequest<WorkspaceExecutionView[]>(host, '/executions'),
-    refetchInterval: 5000,
-  });
-}
-
 export function useWorkspaceOwnerView(workspaceId: string) {
   const host = useHostId();
   const client = useQueryClient();
@@ -49,9 +39,6 @@ export function useWorkspaceOwnerView(workspaceId: string) {
     onSettled: () => {
       void client.invalidateQueries({
         queryKey: ['workspace-execution', host, workspaceId],
-      });
-      void client.invalidateQueries({
-        queryKey: ['workspace-executions', host],
       });
     },
   });

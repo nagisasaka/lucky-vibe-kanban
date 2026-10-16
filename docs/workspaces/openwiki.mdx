@@ -21,7 +21,8 @@ history are preserved, not migrated or deleted; see [legacy data handling](/work
    run uses the saved branch and language, not the draft shown in the form.
 3. If the saved branch has no tracked `openwiki/` directory, select **Initialize
    Wiki**. LVK creates an OpenWiki maintenance workspace and a repository-scoped
-   system Workflow, without creating an Issue. Select
+   Bootstrap Workflow. When one Board is associated with the repository, the
+   workspace also gets a linked card. Select
    **View Workflow** in these settings or above the maintenance workspace's logs
    to open the existing Workflow **Canvas** and **Dashboard**.
 4. Wait for **Current**. A successful model exit alone is not sufficient: LVK
@@ -91,14 +92,20 @@ Repository settings show the current phase, including time between agent session
 On the local machine, **View Workflow** remains available after completion or
 failure. Select an agent node in the Canvas to inspect that phase's conversation;
 use the Dashboard for step status, errors and whole-workflow cancellation.
-System-managed executions do not offer template editing or individual step retry.
+The Bootstrap workflow does not offer template editing or individual step retry.
 After resolving a failure, start a new bootstrap from repository settings.
 The chat's session selection remains independent of the Workflow view.
-Maintenance workspaces appear under **Executions / History**, not the normal
-**Work** list. Their details are inspection-only: use saved sessions to read logs
-and **Stop execution** to cancel the owner before publication. You cannot send
-new chat requests or resume a completed maintenance session as ordinary work.
-Missing worktree files are reported without recreating the execution environment.
+Maintenance workspaces appear in the ordinary workspace list. When the repository
+belongs to exactly one Board, LVK also creates a linked card, including for retained
+maintenance workspaces from earlier versions. If multiple Boards are associated,
+LVK leaves the choice to you instead of choosing a destination automatically.
+While maintenance runs, select its active session to send additional instructions,
+answer approval/input requests, or use **Stop execution** before publication.
+File changes, new sessions and unrelated development wait until the owner finishes
+publication and cleanup and all its processes have exited. Then the same workspace
+accepts normal development requests; its maintenance history is retained.
+A failed agent alone does not release an execution whose cleanup is still pending.
+To retry Wiki maintenance itself, use repository settings to start a new managed run.
 See [workspace usage and history](/workspaces/managing-workspaces#work-and-execution-history).
 Remote-machine Workflow viewing is not yet supported; use that machine's local
 LVK UI. Normal Sync workspaces have no bootstrap Workflow link.
