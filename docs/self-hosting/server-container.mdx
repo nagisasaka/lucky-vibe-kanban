@@ -21,7 +21,7 @@ This distribution runs the **local LVK application** remotely. It does not requi
 - Prebuilt LVK frontend, Rust server, sibling `agent-process-host` executable and `vibe-kanban-mcp` CLI.
 - nginx with HTTPS on host port **443**, backed by LVK authentication. The optional certificate companion uses port **80** only for certificate validation.
 - Codex CLI, OpenWiki, Node.js, pnpm, Git, Git LFS, GitHub CLI and Python.
-- The repository's pinned Rust toolchain, rustfmt, Clippy, cargo-watch, C/C++ compiler, CMake and native build dependencies for developing LVK itself.
+- The repository's pinned Rust toolchain, rustfmt, Clippy, cargo-watch, sccache (local disk caching), C/C++ compiler, CMake and native build dependencies for developing LVK itself.
 - A non-root runtime user, `appuser` (**UID/GID 10001**).
 
 The serving binaries live in `/usr/local/bin`, not in a project's checkout. Editing or building LVK in `/repos` does not replace the application that is managing that work. Additional agent CLIs and project-specific SDKs can be added with a derived image.

@@ -66,6 +66,45 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - If sccache is unavailable, use normal Cargo compilation and report
   that compiler caching was unavailable.
 
+### Disk usage and temporary artifacts
+
+- Reuse the workspace's normal build output directory across commands. Avoid
+  creating a new target directory, checkout copy or dependency installation for
+  every retry. When isolation is needed, track the temporary paths you create.
+- Put disposable downloads, extracted archives, test databases, scratch builds
+  and logs in a task-owned temporary directory. Arrange cleanup with a shell
+  trap or language-level `finally`/temporary-directory helper, including on
+  failure. Stop and wait for your test processes before removing their files.
+- Before completing a task, remove your disposable intermediates that are no
+  longer needed. Keep requested deliverables and enough evidence to explain
+  failures; avoid retaining duplicate binaries, full build trees or repeated
+  logs solely as evidence. Report any substantial task-created artifacts left
+  behind, with their paths and the reason they must remain.
+- Preserve the normal workspace `target/` and installed dependencies while they
+  remain useful for ongoing work. Do not routinely run `cargo clean` or delete
+  them after every check; remove obsolete task-owned scratch outputs instead.
+- Before a large build, or when space is low, check free space with `df -h .`
+  and measure specific known output paths with `du -sh -- <path>`. Scope
+  inspection to your workspace and task-owned temporary paths; do not scan
+  other workspaces or the shared cache as a whole.
+- Before deleting an output directory, confirm its ownership, resolved path
+  and that no process or retained result needs it. Git-ignored, old or under
+  `/tmp` does not by itself mean disposable. Do not use blanket `/tmp` cleanup,
+  `git clean -fdx` or `docker system prune` as routine task cleanup.
+- `.lvk-shared/cache` is shared across workspaces and survives workspace
+  deletion; `.lvk-shared/persistent` holds retained data. Do not clear either
+  for local disk relief or put disposable scratch outputs in persistent
+  storage. Shared-cache retention and capacity changes require coordinated
+  maintenance, separate from ordinary task cleanup.
+- Preserve LVK-managed worktrees, Integration/preview snapshots, instance
+  builds, databases, backups and audit logs according to their lifecycle.
+  In particular, retained staging source trees can supply frontend assets to
+  running binaries. Leave managed cleanup to the owning workflow/operator;
+  task completion or Card Done is not proof that these files are unused.
+- If space remains insufficient after safe local cleanup, stop the expensive
+  operation and report the measured usage and remaining candidates for owner
+  review. Do not delete unrelated data to make a build pass.
+
 ## Validation and Completion
 
 ### Normal development

@@ -28,10 +28,11 @@ docker run --rm --entrypoint sh "$image" -ec '
   vibe-kanban-mcp --help
   node --version; pnpm --version; git --version; git lfs version
   rustc --version; cargo --version; cargo watch --version
+  sccache --version
   cargo clippy --version; cargo fmt --version
   codex --version; openwiki --help >/dev/null
   cc --version; cmake --version; python3 --version
-  bash -lc "cargo --version && rustc --version && pnpm --version && codex --version"
+  bash -lc "cargo --version && rustc --version && sccache --version && pnpm --version && codex --version"
 '
 docker run --rm --entrypoint node \
   -e LVK_REQUIRE_NGINX_TEST=1 \

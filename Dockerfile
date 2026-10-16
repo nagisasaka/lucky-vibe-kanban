@@ -171,6 +171,14 @@ RUN rustup default "$(sed -n 's/^channel = "\(.*\)"/\1/p' /usr/local/share/lvk/r
  && chown -R appuser:appuser /opt/rustup \
  && chmod 1777 /var/tmp
 
+# Local compiler caching for LVK development; each repository configures usage.
+# Leave cloud/distributed backends and global Cargo wrapper settings disabled.
+ARG SCCACHE_VERSION=0.18.0
+RUN CARGO_BUILD_JOBS=2 cargo install sccache --version "${SCCACHE_VERSION}" --locked --no-default-features --root /opt/sccache-tools \
+ && cp /opt/sccache-tools/bin/sccache /usr/local/bin/sccache \
+ && sccache --version \
+ && rm -rf /root/.cargo/registry /root/.cargo/git /opt/sccache-tools
+
 # Browser binaries live outside the mounted home. Project tests use the same
 # pinned Playwright version; other projects may install into their own cache.
 FROM server-tools AS server-browser
