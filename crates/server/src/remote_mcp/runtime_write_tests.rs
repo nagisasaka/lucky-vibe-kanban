@@ -350,7 +350,10 @@ async fn runtime_changes_pin_parent_ids_current_run_and_lifecycle() {
             .await
             .is_err()
     );
-    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM project_chat_messages")
+    let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM sqlite_master WHERE name IN
+             ('project_conversations', 'project_chat_messages', 'project_chat_operations', 'project_chat_events')",
+        )
         .fetch_one(&remote.pool)
         .await
         .unwrap();
@@ -585,7 +588,6 @@ async fn reopened_database_preserves_work_questions_and_uncertain_operation_iden
     for (table, expected) in [
         ("agent_runs", 1),
         ("remote_mcp_operations", 1),
-        ("project_chat_messages", 0),
         ("agent_run_commands", 0),
     ] {
         let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))

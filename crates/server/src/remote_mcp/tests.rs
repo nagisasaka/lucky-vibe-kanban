@@ -471,11 +471,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         .await
         .is_err()
     );
-    for table in [
-        "agent_runs",
-        "project_chat_messages",
-        "remote_mcp_operations",
-    ] {
+    for table in ["agent_runs", "remote_mcp_operations"] {
         assert_eq!(
             sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
                 .fetch_one(&pool)
@@ -1042,12 +1038,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         .await
         .unwrap();
     assert_eq!(count, 1);
-    for table in [
-        "workspaces",
-        "sessions",
-        "agent_runs",
-        "project_chat_messages",
-    ] {
+    for table in ["workspaces", "sessions", "agent_runs"] {
         let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
             .fetch_one(&pool)
             .await

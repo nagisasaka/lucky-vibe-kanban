@@ -1,5 +1,5 @@
-//! Opt-in, authenticated MCP transport. This module never enters project_chat
-//! or creates a model session. Existing stdio MCP stays independent.
+//! Opt-in, authenticated MCP transport. This module never invokes an internal
+//! conversational model or creates a model session. Existing stdio MCP stays independent.
 mod activity;
 mod auth;
 mod code_read;

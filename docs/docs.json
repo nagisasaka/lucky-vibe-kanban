@@ -27,7 +27,6 @@
           "getting-started",
           "browser-testing",
           "issue-management",
-          "features/project-chat",
           "reviewing-code",
           {
             "group": "Supported Coding Agents",

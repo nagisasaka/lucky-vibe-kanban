@@ -1,5 +1,5 @@
 //! Durable answers to Codex's nonblocking questions. Both the Workspace UI and
-//! project conversation use this client of existing steering/follow-up paths.
+//! external MCP use this client of existing steering/follow-up paths.
 use axum::{Extension, Json, extract::State};
 use db::models::session::Session;
 use deployment::Deployment;
@@ -155,7 +155,7 @@ pub(crate) async fn answer(
     .await
 }
 
-/// The same durable answer admission is used by UI, Astra and remote MCP.
+/// The same durable answer admission is used by UI and remote MCP.
 /// Dispatch is the only injectable boundary; reservation and lifecycle checks
 /// always use the canonical database and Session lock.
 pub(crate) async fn answer_with_dispatch<F, Fut>(
@@ -212,7 +212,7 @@ where
     let run_id = question.agent_run_id;
     sqlx::query("INSERT INTO agent_question_answers(question_id,session_id,request_id,actor,answer) VALUES(?,?,?,?,?)").bind(&request.question_id).bind(session_id).bind(request.request_id).bind(actor).bind(&request.answer).execute(pool).await?;
     let content = format!(
-        "Question: {}\nAnswer: {}\n\nLVK question: {}\nAstra operation: {}",
+        "Question: {}\nAnswer: {}\n\nLVK question: {}\nLVK question answer: {}",
         question.title,
         request.answer.trim(),
         question.id,
@@ -250,6 +250,9 @@ where
     Ok(result)
 }
 
+// The historical "Astra operation" marker is a persisted question-answer receipt
+// identity shared by UI and MCP. Recognise it alongside the new marker so upgrades
+// cannot redeliver answers.
 // A reservation alone must not disable the UI forever after a pre-dispatch
 // failure. Reading this status never releases an in-flight reservation: submit
 // still serializes with its sender and rechecks dispatch evidence under the lock.
@@ -260,10 +263,11 @@ async fn pending_delivery_status(
 ) -> Result<Option<String>, ApiError> {
     let started: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM agent_run_commands WHERE command_id=?)
-         OR EXISTS(SELECT 1 FROM agent_runs WHERE session_id=? AND instr(request_envelope,?)>0)",
+         OR EXISTS(SELECT 1 FROM agent_runs WHERE session_id=? AND (instr(request_envelope,?)>0 OR instr(request_envelope,?)>0))",
     )
     .bind(request)
     .bind(session)
+    .bind(format!("LVK question answer: {request}"))
     .bind(format!("Astra operation: {request}"))
     .fetch_one(pool)
     .await?;
@@ -283,8 +287,9 @@ async fn release_unstarted_answer(
         sqlx::query(
             "DELETE FROM agent_question_answers WHERE session_id=? AND question_id=? AND result IS NULL
              AND NOT EXISTS(SELECT 1 FROM agent_run_commands WHERE command_id=?)
-             AND NOT EXISTS(SELECT 1 FROM agent_runs WHERE session_id=? AND instr(request_envelope,?)>0)",
+             AND NOT EXISTS(SELECT 1 FROM agent_runs WHERE session_id=? AND (instr(request_envelope,?)>0 OR instr(request_envelope,?)>0))",
         ).bind(session).bind(question).bind(request).bind(session)
+            .bind(format!("LVK question answer: {request}"))
             .bind(format!("Astra operation: {request}"))
             .execute(pool).await?;
     }
@@ -300,9 +305,10 @@ async fn reconcile_answers(pool: &SqlitePool, session: Uuid) -> Result<(), ApiEr
                 .fetch_optional(pool)
                 .await?;
         let run: Option<Uuid> = sqlx::query_scalar(
-            "SELECT id FROM agent_runs WHERE session_id=? AND instr(request_envelope,?)>0 LIMIT 1",
+            "SELECT id FROM agent_runs WHERE session_id=? AND (instr(request_envelope,?)>0 OR instr(request_envelope,?)>0) LIMIT 1",
         )
         .bind(session)
+        .bind(format!("LVK question answer: {request}"))
         .bind(format!("Astra operation: {request}"))
         .fetch_optional(pool)
         .await?;
@@ -486,6 +492,7 @@ mod tests {
             "failed",
             "delivered",
             "run",
+            "legacy_run",
             "receipt",
         ] {
             let request = Uuid::new_v4();
@@ -509,12 +516,16 @@ mod tests {
                     .await
                     .unwrap();
             }
-            if evidence == "run" {
+            if matches!(evidence, "run" | "legacy_run") {
                 sqlx::query("INSERT INTO agent_runs(id,session_id,status,request_envelope,created_at) VALUES(?,?,'succeeded',?,'2026-10-10')")
                     .bind(Uuid::new_v4())
                     .bind(session)
                     .bind(
-                        json!({"input":{"content":format!("Astra operation: {request}")}})
+                        json!({"input":{"content": if evidence == "legacy_run" {
+                            format!("Astra operation: {request}")
+                        } else {
+                            format!("LVK question answer: {request}")
+                        }}})
                             .to_string(),
                     )
                     .execute(&pool)
@@ -530,7 +541,7 @@ mod tests {
                     .is_some(),
                 matches!(
                     evidence,
-                    "pending" | "delivering" | "failed" | "delivered" | "run"
+                    "pending" | "delivering" | "failed" | "delivered" | "run" | "legacy_run"
                 ),
                 "{evidence}",
             );
@@ -559,14 +570,24 @@ mod tests {
             assert_eq!(after, i64::from(evidence != "none"), "{evidence}");
         }
         reconcile_answers(&pool, session).await.unwrap();
-        for evidence in ["pending", "delivering", "failed", "delivered", "run"] {
+        for evidence in [
+            "pending",
+            "delivering",
+            "failed",
+            "delivered",
+            "run",
+            "legacy_run",
+        ] {
             let result: Option<String> =
                 sqlx::query_scalar("SELECT result FROM agent_question_answers WHERE question_id=?")
                     .bind(evidence)
                     .fetch_one(&pool)
                     .await
                     .unwrap();
-            assert_eq!(result.is_some(), matches!(evidence, "delivered" | "run"));
+            assert_eq!(
+                result.is_some(),
+                matches!(evidence, "delivered" | "run" | "legacy_run")
+            );
         }
     }
 }

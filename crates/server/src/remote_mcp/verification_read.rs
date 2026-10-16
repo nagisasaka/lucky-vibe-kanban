@@ -469,11 +469,7 @@ mod tests {
                 .await
                 .is_err()
         );
-        for table in [
-            "remote_mcp_operations",
-            "project_chat_messages",
-            "agent_run_commands",
-        ] {
+        for table in ["remote_mcp_operations", "agent_run_commands"] {
             assert_eq!(
                 sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
                     .fetch_one(&remote.pool)

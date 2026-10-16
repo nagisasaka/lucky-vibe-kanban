@@ -26,7 +26,6 @@ pub mod openwiki;
 pub mod parallel_context;
 pub mod pipelines;
 pub mod preview;
-pub mod project_chat;
 pub mod releases;
 pub mod repo;
 pub mod resource_coordination;
@@ -59,7 +58,6 @@ pub fn router(
         .merge(filesystem::router())
         .merge(repo::router())
         .merge(integrations::router())
-        .merge(project_chat::router())
         .merge(resource_coordination::router())
         .merge(execution_bridge::router())
         .merge(events::router(&deployment))

@@ -3,6 +3,10 @@ title: "ChatGPT MCP implementation and acceptance record"
 description: "Implemented scope, service reuse, T01–T18 evidence and local validation limits for LVK's optional ChatGPT connection."
 ---
 
+> The internal Astra assistant has since been retired. Astra references and test
+> counts below describe the original implementation only. External MCP and
+> Workspace question answering remain supported.
+
 ## Delivery status
 
 M0–M3 and local M5 acceptance are implemented on `feature/chatgpt-mcp` in

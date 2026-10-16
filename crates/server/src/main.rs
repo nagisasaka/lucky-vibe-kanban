@@ -211,7 +211,6 @@ async fn main() -> Result<(), VibeKanbanError> {
         .set_preview_proxy_port(actual_proxy_port)
         .expect("client preview proxy port already set");
 
-    routes::project_chat::spawn(deployment.clone());
     let access = server_access::Access::from_env(deployment.db().pool.clone(), asset_dir())?;
     let app_router = routes::router(deployment.clone(), access.clone());
 

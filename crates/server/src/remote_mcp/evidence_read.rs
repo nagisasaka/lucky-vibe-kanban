@@ -559,7 +559,10 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(count, 1);
-        let count: i64 = sqlx::query_scalar("SELECT count(*) FROM project_chat_messages")
+        let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM sqlite_master WHERE name IN
+             ('project_conversations', 'project_chat_messages', 'project_chat_operations', 'project_chat_events')",
+        )
             .fetch_one(&remote.pool)
             .await
             .unwrap();

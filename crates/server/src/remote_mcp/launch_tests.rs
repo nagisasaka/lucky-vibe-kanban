@@ -233,7 +233,10 @@ async fn launch_uses_agreed_revision_native_goal_and_stable_admission_identity()
         "failed"
     );
     assert_eq!(dispatch.starts.lock().await.len(), 1);
-    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM project_chat_messages")
+    let count: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM sqlite_master WHERE name IN
+             ('project_conversations', 'project_chat_messages', 'project_chat_operations', 'project_chat_events')",
+        )
         .fetch_one(&remote.pool)
         .await
         .unwrap();

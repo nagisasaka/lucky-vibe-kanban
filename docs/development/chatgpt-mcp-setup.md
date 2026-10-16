@@ -10,6 +10,7 @@ description: Configure the opt-in OAuth MCP endpoint and install the LVK workflo
 > Use [the current authentication guide](../self-hosting/authentication.mdx) for
 > setup, the separate preregistered ChatGPT client, and migration. The introspection,
 > public-client and allowlist recipe below is retained only for old releases.
+> The internal Astra assistant has also been retired; it is no longer a UI option.
 
 This feature adds an optional authenticated MCP endpoint to the existing Linux
 LVK server. It uses Streamable HTTP and an external OAuth authorisation server

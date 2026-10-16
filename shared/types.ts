@@ -143,27 +143,9 @@ export type IntegrationRun = { id: string, request_key: string, project_id: stri
 
 export type CreateIntegrationRequest = { request_id: string, project_id: string, repository_id: string, target_branch: string, selections: Array<IntegrationSelection>, executor_config: ExecutorConfig | null, };
 
-export type ChatMessage = { sequence: bigint, id: string, conversation_id: string, role: string, content: string, intent: string, status: string, error: string | null, created_at: string, };
-
-export type ChatIntent = "discuss" | "operate" | "issue" | "implement" | "change" | "answer" | "merge";
-
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 
 export type AnswerAgentQuestion = { request_id: string, question_id: string, answer: string, };
-
-export type SendChatMessage = { request_id: string, content: string,
-/**
- * Human-selected capability ceiling; cannot be broadened by tool output.
- */
-intent: ChatIntent, };
-
-export type ProjectChatView = { conversation_id: string, configured: boolean, messages: Array<ChatMessage>, project_state: JsonValue, };
-
-export type AstraSettingsView = { revision: string, configured: boolean, authentication: AstraAuthentication, model: string, reasoning_effort: string, };
-
-export type AstraAuthentication = "codex_chatgpt";
-
-export type UpdateAstraSettings = { expected_revision: string, api_key: SensitiveWrite<string>, model: string, reasoning_effort: string, };
 
 export type WikiReconciliationReceipt = { event_id: string, reconciled_at: string, target_commit: string, wiki_commit: string | null, result: ReconciliationResult, error: string | null, };
 

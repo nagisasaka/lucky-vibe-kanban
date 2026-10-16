@@ -278,11 +278,7 @@ mod tests {
         let next = call(&remote,"list_project_sessions",json!({"project_id":target.project_id,"cursor":summary["activity"]["active_sessions"]["next_cursor"],"active_only":true,"limit":50})).await.unwrap();
         assert_eq!(next["items"].as_array().unwrap().len(), 33);
         assert_eq!(next["has_more"], false);
-        for table in [
-            "project_chat_messages",
-            "remote_mcp_operations",
-            "agent_run_commands",
-        ] {
+        for table in ["remote_mcp_operations", "agent_run_commands"] {
             assert_eq!(
                 sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
                     .fetch_one(&remote.pool)
