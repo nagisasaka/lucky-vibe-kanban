@@ -16,7 +16,7 @@ agent sessions can continue while your laptop is disconnected.
 - Compose agent steps into visual workflows, including parallel branches and conditions.
 - Integrate completed local-board work through a dedicated validation workspace.
 - Maintain repository memory with OpenWiki, with reconciliation after source integration.
-- Run the application and agents on an always-on server through HTTPS and Basic authentication.
+- Run the application and agents on an always-on server through HTTPS and Basic or Auth0 authentication.
 
 Agent accounts and provider subscriptions are configured separately. LVK does not
 provide included model usage or a public, unrestricted agent service.
@@ -35,7 +35,7 @@ LVK, nginx, Codex CLI, Git, Node.js, pnpm and a Rust development toolchain.
 
 - A stable public IP is sufficient: **no purchased domain is required**.
 - Let's Encrypt certificates are obtained and renewed automatically.
-- HTTPS and Basic authentication protect the application.
+- HTTPS and Basic or Auth0 authentication protect the application. Public installations start locked; run `docker compose exec lvk server setup-token`, then complete the [HTTPS setup screen](docs/self-hosting/authentication.mdx).
 - Docker volumes retain repositories, application data and agent credentials.
 - A server or container restart stops running processes; persistence does not
   promise automatic resumption of interrupted agent work.

@@ -62,9 +62,13 @@ impl ServerHandle {
             .set_preview_proxy_port(self.proxy_port)
             .expect("client preview proxy port already set");
 
-        let app_router = routes::router(self.deployment.clone());
-        let proxy_router: axum::Router = routes::preview::subdomain_router(self.deployment.clone())
-            .layer(ValidateRequestHeaderLayer::custom(validate_origin));
+        let access =
+            server_access::Access::from_env(self.deployment.db().pool.clone(), asset_dir())?;
+        let app_router = routes::router(self.deployment.clone(), access.clone());
+        let proxy_router: axum::Router = access.preview_layer(
+            routes::preview::subdomain_router(self.deployment.clone())
+                .layer(ValidateRequestHeaderLayer::custom(validate_origin)),
+        );
 
         let main_shutdown = self.shutdown_token.clone();
         let proxy_shutdown = self.shutdown_token.clone();

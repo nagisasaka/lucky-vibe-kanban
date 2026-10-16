@@ -101,6 +101,10 @@ jobs:
             exit 1
           fi
           cat /tmp/lvk-image-smoke.log
+      - name: Check fresh backend-authenticated installation
+        env:
+          LVK_SMOKE_IMAGE: ${{ steps.image.outputs.reference }}
+        run: bash deploy/developer/verify-image.sh "$LVK_SMOKE_IMAGE"
       - name: Check repository formatting with the bundled toolchain
         env:
           LVK_FORMAT_IMAGE: ${{ steps.image.outputs.reference }}

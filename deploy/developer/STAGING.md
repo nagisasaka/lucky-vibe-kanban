@@ -64,6 +64,11 @@ records the commit. It never changes main or a card's checkout. Only revisions
 containing the instance-directory support can be built with this runner.
 
 The server binds `127.0.0.1:4020`; optional nginx ingress exposes it on host 8443.
+Staging has independent authentication state. On its first public start, run the
+built `server setup-token` with the same `LVK_INSTANCE_DIR` and enter the key at
+the staging URL. A stable setup key does not configure staging. When stable
+and staging share a hostname/IP, use separate browser profiles: cookies are
+host-scoped, so a staging login in the same profile replaces the stable cookie.
 The instance lock prevents two staging servers sharing a DB. A separate build
 lock permits building the next candidate while the current server remains up.
 Stop the previous foreground instance with Ctrl-C **after its agent sessions

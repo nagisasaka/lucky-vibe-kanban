@@ -1,6 +1,6 @@
 ---
-title: "LVK single-user server"
-description: "Run LVK on a public IP with automatic HTTPS, Basic authentication and persistent Docker volumes. No domain required."
+title: "LVK self-hosted server"
+description: "Run LVK on a public IP with automatic HTTPS, locked setup, Basic or Auth0 authentication and persistent Docker volumes. No domain required."
 ---
 
 Run LVK and its agents on an always-on server, then use LVK in your laptop's browser. Closing the browser or putting the laptop to sleep does not stop a server-side run. Stopping the container, rebooting the server or losing power does stop its processes; persistent volumes preserve data, not executing processes.
@@ -8,9 +8,9 @@ Run LVK and its agents on an always-on server, then use LVK in your laptop's bro
 This distribution runs the **local LVK application** remotely. It does not require PostgreSQL, ElectricSQL, upstream billing access or a relay service.
 
 <Warning>
-  This is a single trusted user's development environment, not a multi-tenant
-  service. Anyone with the Basic-auth password can operate agents and access
-  repositories and credentials. Agents share the same Linux user as LVK and
+  This is one trusted team's development environment, not an isolated multi-tenant
+  service. The Basic owner or approved Auth0 members can operate agents and access
+  all repositories. Agents share the same Linux user as LVK and
   nginx. Read-only secret mounts prevent overwriting, not reading. Use a
   dedicated server, restrict ingress to your IP/VPN where possible, and do not
   mount the Docker socket, your host home or cloud administrator credentials.
@@ -19,7 +19,7 @@ This distribution runs the **local LVK application** remotely. It does not requi
 ## What the image contains
 
 - Prebuilt LVK frontend, Rust server, sibling `agent-process-host` executable and `vibe-kanban-mcp` CLI.
-- nginx with HTTPS and Basic authentication on host port **443**. The optional certificate companion uses port **80** only for certificate validation.
+- nginx with HTTPS on host port **443**, backed by LVK authentication. The optional certificate companion uses port **80** only for certificate validation.
 - Codex CLI, OpenWiki, Node.js, pnpm, Git, Git LFS, GitHub CLI and Python.
 - The repository's pinned Rust toolchain, rustfmt, Clippy, cargo-watch, C/C++ compiler, CMake and native build dependencies for developing LVK itself.
 - A non-root runtime user, `appuser` (**UID/GID 10001**).
@@ -50,32 +50,34 @@ LVK_PREVIEW_DOMAIN=
 
 Read the [Let's Encrypt subscriber agreement](https://letsencrypt.org/repository/) before setting `LVK_ACME_AGREE_TOS=yes`. The contact email is optional. Keep the Compose project name (`lvk-server`) stable: changing it selects different named volumes. For IPv6, set `LVK_HOST` without brackets and use brackets in the browser URL, for example `https://[2001:db8::10]`.
 
-## Create your sign-in credentials
+## Prepare authentication
 
-Run these commands in your deployment directory. They pull the published image and prompt for a password without starting the application or issuing certificates:
+New public deployments start locked and expose no business data before setup.
+Follow [LVK authentication and Auth0 setup](/self-hosting/authentication) to issue a
+one-use setup key and configure Basic or Auth0 in the browser. There are no default
+credentials. Existing `secrets/htpasswd` files retain their nginx protection until
+you explicitly migrate; the authentication guide gives the transition steps.
+
+Prepare the certificate directory before starting Compose:
 
 ```bash
 mkdir -p secrets/tls
 docker compose pull
-docker compose run --rm --no-deps --user "$(id -u):$(id -g)" \
-  --entrypoint htpasswd -v "$PWD/secrets:/password-setup" \
-  lvk -Bc /password-setup/htpasswd owner
 sudo chown -R 10001:10001 secrets
 sudo chmod 750 secrets secrets/tls
-sudo chmod 640 secrets/htpasswd
 ```
-
-`-B` selects bcrypt. Use `-c` only when creating the file: it replaces an existing password file. For rotation, use the same interactive command **without `-c`**, and run it as UID/GID 10001 after the ownership change. Do not put passwords in `.env`, image layers, shell command arguments, Git or build logs.
 
 The certificate companion obtains a trusted certificate before Compose starts LVK. IP certificates last approximately six days; the companion checks hourly and lets Certbot decide when renewal is due. Failed attempts are retried after 15 minutes. The ACME account and renewal configuration stay in a separate `acme` volume, inaccessible to agents.
 
-The companion exports matching certificate/key pairs through an atomic directory link inside `secrets/tls`. LVK reads this directory as read-only, validates each changed pair and reloads nginx within 30 seconds. The backend and its agents keep running. Certificate files use UID/GID 10001 and mode 640. LVK refuses to start with an expired certificate, a certificate for another address, a mismatched key or a missing/non-bcrypt password file.
+The companion exports matching certificate/key pairs through an atomic directory link inside `secrets/tls`. LVK reads this directory as read-only, validates each changed pair and reloads nginx within 30 seconds. The backend and its agents keep running. Certificate files use UID/GID 10001 and mode 640. LVK refuses to start with an expired certificate, a certificate for another address, or a mismatched key. Explicit legacy-proxy mode also requires a valid bcrypt password file.
 
 ## Use a domain or your own certificate issuer
 
 For an optional domain, set `LVK_HOST=lvk.example.com` and point its DNS at the server. The automatic companion supports a single app hostname as well as an IP address.
 
-If you already manage TLS or need wildcard project previews, set `COMPOSE_FILE=compose.yaml` to omit the certificate companion. Provide these files yourself; symlinks must resolve within the mounted `secrets` directory:
+Public project preview origins are currently denied by the Auth0 access boundary; local preview is retained. See the authentication guide for this limitation.
+
+If you already manage TLS, set `COMPOSE_FILE=compose.yaml` to omit the certificate companion. Provide these files yourself; symlinks must resolve within the mounted `secrets` directory:
 
 ```text
 secrets/
@@ -96,7 +98,7 @@ docker compose ps
 docker compose logs --tail=100 lvk
 ```
 
-Open `https://YOUR_PUBLIC_IP` (or your optional hostname). Your browser first asks for the Basic-auth user and password. Without credentials, `/`, `/api/info` and WebSocket connections return 401. Health checks probe the internal backend and the unauthenticated HTTPS challenge. A failed service causes the supervisor to stop its sibling; `restart: unless-stopped` restarts the container. An `unhealthy` status alone does not cause Docker to restart it.
+Open `https://YOUR_PUBLIC_IP` (or your optional hostname), obtain the setup key with `docker compose exec lvk server setup-token`, and complete [authentication setup](/self-hosting/authentication). Before setup, the login assets are public and business APIs/streams are locked. Existing nginx Basic credentials remain required during migration. Health checks verify the internal health route and the public TLS certificate. A failed service causes the supervisor to stop its sibling; `restart: unless-stopped` restarts the container. An `unhealthy` status alone does not cause Docker to restart it.
 
 Authenticate Codex once, from a terminal on the host:
 
@@ -123,64 +125,28 @@ Agent approval and sandbox settings remain under LVK/Codex control. Container ho
 
 ## Develop LVK on the server
 
-Use the optional `development` service to edit LVK and see changes without building a new image. It uses the published image's toolchain, a separate database and home directory, and a persistent Cargo target directory. The stable service stays available on port 443 while development runs on port 8443.
+Use the contributor workflow in `deploy/developer/STAGING.md`. Keep the stable
+image running on HTTPS 443. Build and run a separate instance from each card's
+worktree, with its own `LVK_INSTANCE_DIR` and internal port, then run headless E2E
+against that instance. No additional development container or source watcher is
+required.
 
-<Steps>
-<Step title="Prepare the checkout and launcher">
-From your LVK source checkout, copy the development files into the same deployment directory as `compose.yaml`:
+For human verification, add `deploy/developer/compose.staging.yaml` to the host's
+Compose files. It exposes HTTPS 8443 through the same container to an explicitly
+started staging process on internal port 4020. Build the integrated main revision
+with `pnpm run staging:build main`, then start the printed build ID with
+`pnpm run staging:run BUILD_UUID`.
 
-```bash
-mkdir -p /opt/lvk-server/development
-cp deploy/server/compose.development.yaml /opt/lvk-server/
-cp deploy/server/{development.mjs,development-healthcheck.mjs,server.mjs,nginx.conf.template} /opt/lvk-server/development/
-cd /opt/lvk-server
-docker compose exec lvk git clone https://github.com/nagisasaka/lucky-vibe-kanban.git /repos/lucky-vibe-kanban
-```
+Staging has its own database and authentication setup. Run the staging build's
+`server setup-token` with the same `LVK_INSTANCE_DIR` as that process, and enter
+the key at the staging HTTPS URL. A stable setup key does not configure staging.
+Stop staging and other instance/build processes before requesting a stable image
+update. Publishing an image does not deploy it.
 
-Skip the clone if that checkout already exists. Repositories in `/repos` are shared with the stable service, so its agents can edit the development checkout too. In the stable LVK UI, choose `/repos/lucky-vibe-kanban` and work **in place** to edit the watched checkout. Changes in a different worktree are not automatically shown by this development service.
-
-</Step>
-<Step title="Enable authenticated development HTTPS">
-Append `:compose.development.yaml` to the existing `COMPOSE_FILE` value in `.env`. For the default ACME setup, the result is:
-
-```dotenv
-COMPOSE_FILE=compose.yaml:compose.acme.yaml:compose.development.yaml
-LVK_DEV_HTTPS_PORT=8443
-LVK_DEV_REPO=/repos/lucky-vibe-kanban
-LVK_DEV_BUILD_JOBS=2
-```
-
-Allow TCP 8443 in the host and cloud firewalls. The service reuses the existing certificate and Basic authentication credentials; the raw Vite and Rust listeners remain inside the container.
-
-```bash
-docker compose --profile development up -d development
-docker compose logs --follow development
-```
-
-Open `https://YOUR_PUBLIC_IP:8443` and sign in. A custom domain must also be allowed by Vite's host allowlist; the default IP setup needs no extra Vite configuration.
-
-</Step>
-<Step title="Edit and verify">
-Vite updates frontend changes through HMR. Cargo Watch rebuilds and restarts the backend when Rust sources change. The first Rust build compiles dependencies and can take much longer than later changes; backend changes still require compilation. No container image build is needed for this loop.
-
-```bash
-docker compose exec development bash
-cd /repos/lucky-vibe-kanban
-# Edit here, or use an agent in the stable service on this checkout.
-```
-
-The development database is under the checkout's ignored `dev_assets/` directory. Agent home files use `development-home`; worktrees and the Cargo target cache use `development-work`. Authenticate coding agents separately in each service that needs them. Do not run another backend against the same development database.
-
-To develop a worktree instead, set `LVK_DEV_REPO` to its absolute path under `/repos`, then recreate only the development service. Toolchain or launcher changes may require recreating this service; ordinary source changes do not.
-
-```bash
-docker compose --profile development up -d --force-recreate development
-# Stop development without stopping the stable service:
-docker compose stop development
-```
-
-</Step>
-</Steps>
+The old `compose.development.yaml` and `--legacy-development` updater option are
+retained for existing installations only. Do not use them for a new contributor
+installation. Agent credentials stay in the persistent home; application data
+and execution state are isolated by the instance directory.
 
 ## Project previews
 
@@ -190,8 +156,8 @@ With previews enabled, a development server on port 5173 is reached as `https://
 
 - Start development servers inside the LVK container; loopback listeners are sufficient.
 - Use unprivileged ports 1024–65535 except **3000, 3001 and 8443**, which are reserved for LVK/nginx.
-- Basic authentication also protects preview hosts. Browsers may suppress authentication prompts inside an iframe: open the preview URL in a new tab, authenticate there, then reload the preview pane. This may be needed for each development port.
-- Basic credentials are removed before forwarding to LVK or a development server. An application requiring its own HTTP `Authorization` header needs a separate deployment/authentication arrangement; the same header cannot carry both credentials.
+- With backend authentication, authorise each preview origin from an authenticated LVK session. Preview cookies are separate from the LVK session and cannot access its APIs. Open previews in a separate tab when third-party cookies are blocked. Legacy proxy Basic can remain as an additional restriction.
+- LVK session cookies and credentials are removed before forwarding to a project server. The managed application ingress forwards Web credentials to LVK, which performs authentication.
 - Project-controlled HTML is never served through `/api/preview` on the main LVK origin. The public proxy is single-host; remote relay previews are not supported by this distribution.
 - External assets or absolute `localhost` URLs hard-coded in a project's HTML/JavaScript are not automatically rewritten. Configure that application's public URL/HMR options where needed.
 
@@ -226,7 +192,7 @@ Restart the certificate service even if the dry run fails. Do not use `--force-r
 
 With externally managed TLS, your issuer's deployment hook must replace the matching full chain and private key inside `secrets/tls` with UID/GID 10001 and mode 640. LVK detects the change, validates it and reloads nginx automatically. It logs and retries invalid or incomplete replacements while the previous nginx workers continue serving.
 
-Updating `htpasswd` takes effect on subsequent authentication checks without restarting agents. Basic authentication has no application logout/MFA; rotate the password to revoke access, and close active connections/restart during an appropriate maintenance window when immediate revocation is required.
+Manage backend Basic/Auth0 credentials, members and recovery through [authentication setup](/self-hosting/authentication). LVK Web sessions support logout and revocation. If you retain legacy nginx Basic as an additional restriction, updating `htpasswd` affects subsequent proxy checks; it does not replace LVK session management.
 
 ## Back up, update and roll back
 

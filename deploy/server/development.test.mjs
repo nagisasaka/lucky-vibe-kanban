@@ -24,3 +24,26 @@ test("source development overrides inherited production listeners and origin", (
     ),
   );
 });
+
+test("backend authentication never publishes Vite development endpoints", () => {
+  const settings = {
+    app: "203.0.113.7",
+    managedAccess: true,
+    legacyBasic: false,
+  };
+  assert.equal(developmentEnvironment({}, settings).FRONTEND_MODE, "preview");
+  assert.equal(
+    developmentEnvironment({ FRONTEND_MODE: "preview" }, settings)
+      .FRONTEND_MODE,
+    "preview",
+  );
+  assert.throws(
+    () => developmentEnvironment({ FRONTEND_MODE: "dev" }, settings),
+    /requires FRONTEND_MODE=preview/,
+  );
+  assert.equal(
+    developmentEnvironment({}, { ...settings, legacyBasic: true })
+      .FRONTEND_MODE,
+    "dev",
+  );
+});

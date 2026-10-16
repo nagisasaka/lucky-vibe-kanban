@@ -111,8 +111,18 @@ async fn forward_preview_ws(
 
 async fn subdomain_proxy_request(
     State(deployment): State<DeploymentImpl>,
-    request: Request,
+    mut request: Request,
 ) -> Response {
+    if let Some(lease) = request.extensions().get::<server_access::Lease>().cloned() {
+        request
+            .extensions_mut()
+            .insert(preview_proxy::ConnectionLease(std::sync::Arc::new(
+                move || {
+                    let lease = lease.clone();
+                    Box::pin(async move { lease.until_revoked().await })
+                },
+            )));
+    }
     let Some(server_addr) = deployment.client_info().get_server_addr() else {
         return (
             StatusCode::BAD_REQUEST,

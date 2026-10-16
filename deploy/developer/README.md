@@ -55,11 +55,14 @@ installation is independent of the writable checkout: application agents
 cannot replace root-executed updater code. Update this kit separately via SSH
 when its host code changes.
 
-Create `secrets/e2e.json` in the deployment directory with the existing HTTPS
-Basic authentication username/password (JSON keys `username` and `password`).
-Do not put it in Git or paste it into an agent conversation. The installer
-restricts it to root and the container's group 10001. The application agent is
-a trusted user and can read these credentials for its browser tests.
+The default stable-only updater does not require Basic credentials. It verifies
+local backend readiness with the container's existing owner-only internal
+capability, which is not exposed through nginx. This is a trusted local smoke
+check, not proof of real Auth0 Web login or ChatGPT interoperability.
+
+Only the legacy development overlay requires `secrets/e2e.json` with the existing
+HTTPS Basic username/password (JSON keys `username` and `password`). Keep it out
+of Git and chats. The installer restricts it to root and group 10001.
 
 Run from this directory on the host, substituting your deployment and fork:
 

@@ -286,6 +286,21 @@ class LifecycleTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "unexpected image"):
                 Updater.start_and_verify(self.updater, REQUEST["image"])
 
+    def test_verification_uses_container_capability_without_stale_basic_credentials(self):
+        container = {"id": "stable", "service": "lvk", "info": {
+            "Image": "expected", "State": {"Health": {"Status": "healthy"}},
+            "Config": {"Env": []},
+            "Mounts": [{"Destination": "/home/appuser", "Source": "/volumes/home"}],
+        }}
+        with patch.object(self.updater, "inspect", return_value={"Id": "expected"}), patch.object(
+            self.updater, "containers", return_value=[container]
+        ), patch.object(self.updater, "command", return_value="") as command:
+            Updater.start_and_verify(self.updater, REQUEST["image"])
+        args = command.call_args.args[0]
+        self.assertIn("LVK_E2E_BASE_URL=http://127.0.0.1:3000", args)
+        self.assertIn("LVK_TEST_INTERNAL_TOKEN_FILE=/home/appuser/.local/share/vibe-kanban/access-internal.token", args)
+        self.assertIn("LVK_E2E_CREDENTIALS_FILE=", args)
+
     def test_interrupted_transaction_blocks_subsequent_updates(self):
         self.job["status"] = "applying"
         atomic_json(self.root / "jobs" / f"{self.job['id']}.json", self.job)

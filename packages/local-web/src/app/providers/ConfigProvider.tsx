@@ -4,7 +4,7 @@ import { configApi } from '@/shared/lib/api';
 import { updateLanguageFromConfig } from '@/i18n/config';
 import { useUserSystemController } from '@/shared/hooks/useUserSystemController';
 import { UserSystemContext } from '@/shared/hooks/useUserSystem';
-import { LOCAL_USER_ID } from '@/shared/lib/localIdentity';
+import { currentLocalUserId } from '@/shared/lib/localIdentity';
 
 interface UserSystemProviderProps {
   children: ReactNode;
@@ -30,7 +30,7 @@ export function UserSystemProvider({ children }: UserSystemProviderProps) {
     () => ({
       status: 'loggedin',
       profile: {
-        user_id: LOCAL_USER_ID,
+        user_id: currentLocalUserId(),
         username: 'local',
         email: 'local@vibe-kanban.local',
         providers: [

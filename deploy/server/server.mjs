@@ -1,9 +1,21 @@
 import { spawn } from "node:child_process";
 import { X509Certificate, createPrivateKey, createHash } from "node:crypto";
 import { isIP } from "node:net";
+import { checkServerIdentity } from "node:tls";
 import { constants } from "node:fs";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+
+// CA/chain validation remains enabled by HTTPS. Check the configured public
+// identity even when a health probe connects through the loopback address.
+export function verifyCertificateIdentity(host, certificate) {
+  if (isIP(host)) {
+    return new X509Certificate(certificate.raw).checkIP(host)
+      ? undefined
+      : new Error("TLS certificate does not cover the public IP");
+  }
+  return checkServerIdentity(host, certificate);
+}
 
 export function domain(value, name) {
   if (
@@ -39,6 +51,9 @@ export function serverSettings(env) {
   return {
     app,
     preview,
+    ...(env.LVK_ACCESS_DEPLOYMENT === "public"
+      ? { managedAccess: true, legacyBasic: env.LVK_PROXY_AUTH !== "backend" }
+      : {}),
     ...(env.LVK_ENABLE_STAGING === "1" ? { staging: true } : {}),
   };
 }
@@ -48,6 +63,10 @@ export const authority = (host) => (isIP(host) === 6 ? `[${host}]` : host);
 // Read the same opt-in file as Rust. OAuth validation remains in the backend;
 // this only validates the public route before removing its Basic challenge.
 export async function withMcpIngress(settings, env, read = readFile) {
+  if (settings.managedAccess && env.LVK_MCP_CONFIG)
+    throw new Error(
+      "Remove LVK_MCP_CONFIG and migrate through LVK access settings",
+    );
   if (!env.LVK_MCP_CONFIG) return settings;
   let base;
   try {
@@ -79,6 +98,22 @@ export async function withMcpIngress(settings, env, read = readFile) {
 }
 
 function mcpLocations(settings, backend) {
+  if (settings.managedAccess)
+    return `
+        location = /mcp {
+            auth_basic off;
+            proxy_pass http://127.0.0.1:${backend};
+        }
+        location = /.well-known/oauth-protected-resource/mcp {
+            auth_basic off;
+            proxy_pass http://127.0.0.1:${backend};
+        }
+        location /api/access/ {
+            # Upstream errors must not print an OAuth callback query/code.
+            error_log /dev/null;
+            proxy_pass http://127.0.0.1:${backend};
+        }
+    `;
   if (!settings.mcp) return "";
   // A location-level proxy_set_header overrides nginx's inherited header list.
   // Repeat the complete boundary here, including relay/Basic credential removal.
@@ -146,10 +181,24 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
         server_name "~^(?<preview_target>102[4-9]|10[3-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[.]${preview.replaceAll(".", "[.]")}$";
         # Only unprivileged development ports, excluding LVK and nginx ports.
         if ($preview_target ~ "^(3000|3001|8443${settings.staging ? "|8444" : ""})$") { return 403; }
+        # Project content cannot use LVK authentication cookies or credentials.
+        ${settings.managedAccess ? "auth_basic off;" : ""}
         location / { proxy_pass http://127.0.0.1:3001; }
     }`
     : "";
   return template
+    .replace(
+      'auth_basic "LVK private development server";',
+      settings.managedAccess && !settings.legacyBasic
+        ? "auth_basic off;"
+        : 'auth_basic "LVK private development server";',
+    )
+    .replace(
+      'proxy_set_header Authorization "";',
+      settings.managedAccess
+        ? "proxy_set_header Authorization $http_authorization;"
+        : 'proxy_set_header Authorization "";',
+    )
     .replace("@@APP_DOMAIN@@", authority(settings.app))
     .replace(
       "@@MCP_MAP@@",
@@ -203,6 +252,7 @@ export function validateSecrets(
   }
   if (!cert.checkPrivateKey(createPrivateKey(key)))
     throw new Error("TLS certificate/key mismatch");
+  if (settings.managedAccess && !settings.legacyBasic) return;
   const entries = passwords
     .split(/\r?\n/)
     .filter((line) => line.trim() && !line.startsWith("#"));
@@ -223,6 +273,8 @@ export function validateSecrets(
 export function backendEnvironment(env, settings) {
   return {
     ...env,
+    LVK_ACCESS_DEPLOYMENT: "public",
+    LVK_PUBLIC_URL: env.LVK_PUBLIC_URL || `https://${authority(settings.app)}`,
     HOST: "127.0.0.1",
     PORT: "",
     BACKEND_PORT: "3000",
@@ -340,7 +392,7 @@ export function supervise(
 
 async function main() {
   const settings = await withMcpIngress(
-    serverSettings(process.env),
+    serverSettings({ ...process.env, LVK_ACCESS_DEPLOYMENT: "public" }),
     process.env,
   );
   const secrets = "/run/lvk-secrets";
@@ -348,11 +400,17 @@ async function main() {
     const [certificate, key, passwords] = await Promise.all([
       readFile(`${secrets}/tls/fullchain.pem`),
       readFile(`${secrets}/tls/privkey.pem`),
-      readFile(`${secrets}/htpasswd`, "utf8"),
+      readFile(`${secrets}/htpasswd`, "utf8").catch((error) => {
+        if (error.code === "ENOENT" && process.env.LVK_PROXY_AUTH !== "legacy")
+          return null;
+        throw error;
+      }),
     ]);
     return { certificate, key, passwords };
   };
   const initial = await readSecrets();
+  settings.legacyBasic =
+    process.env.LVK_PROXY_AUTH !== "backend" && initial.passwords !== null;
   validateSecrets(
     initial.certificate,
     initial.key,

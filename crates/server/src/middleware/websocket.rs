@@ -16,6 +16,7 @@ use futures_util::{Sink, SinkExt, Stream, StreamExt};
 
 pub struct LocalWsUpgrade {
     ws: WebSocketUpgrade,
+    access_lease: Option<server_access::Lease>,
 }
 
 impl<S> FromRequestParts<S> for LocalWsUpgrade
@@ -26,7 +27,8 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let ws = WebSocketUpgrade::from_request_parts(parts, state).await?;
-        Ok(Self { ws })
+        let access_lease = parts.extensions.get::<server_access::Lease>().cloned();
+        Ok(Self { ws, access_lease })
     }
 }
 
@@ -45,8 +47,15 @@ impl LocalWsUpgrade {
         F: FnOnce(LocalWebSocket) -> Fut + Send + 'static,
         Fut: std::future::Future<Output = ()> + Send + 'static,
     {
-        self.ws
-            .on_upgrade(move |socket| callback(LocalWebSocket { inner: socket }))
+        self.ws.on_upgrade(move |socket| async move {
+            let task = callback(LocalWebSocket { inner: socket });
+            if let Some(lease) = self.access_lease {
+                lease.run(task).await;
+            } else {
+                // Only isolated local/test routers omit the outer access layer.
+                task.await;
+            }
+        })
     }
 }
 
@@ -141,5 +150,77 @@ mod tests {
         server.abort();
         let _ = server.await;
         result.expect("local WebSocket roundtrip timed out");
+    }
+}
+
+#[cfg(test)]
+mod access_tests {
+    use axum::{Router, http::header, routing::get};
+    use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn local_upgrade_stops_real_socket_on_membership_disable_and_expiry() {
+        for expiry in [false, true] {
+            let pool = sqlx::sqlite::SqlitePoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .unwrap();
+            let directory = tempfile::tempdir().unwrap();
+            let access = server_access::test_support::access(
+                pool.clone(),
+                directory.path().into(),
+                serde_json::json!({"keys":[]}),
+            )
+            .await;
+            let cookie = server_access::test_support::web_session(&access).await;
+            let app = access.layer(Router::new().route(
+                "/api/socket",
+                get(|ws: LocalWsUpgrade| async move {
+                    ws.on_upgrade(|mut socket| async move {
+                        socket.send(Message::Text("ready".into())).await.unwrap();
+                        while matches!(socket.recv().await, Ok(Some(_))) {}
+                    })
+                }),
+            ));
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let mut request = format!("ws://{}/api/socket", listener.local_addr().unwrap())
+                .into_client_request()
+                .unwrap();
+            request
+                .headers_mut()
+                .insert(header::HOST, "203.0.113.7:8443".parse().unwrap());
+            request
+                .headers_mut()
+                .insert(header::COOKIE, cookie.parse().unwrap());
+            let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+            let (mut socket, _) = tokio_tungstenite::connect_async(request).await.unwrap();
+            assert_eq!(
+                socket.next().await.unwrap().unwrap().into_text().unwrap(),
+                "ready"
+            );
+            if expiry {
+                sqlx::query("UPDATE access_sessions SET expires=0")
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+            } else {
+                sqlx::query("UPDATE access_members SET state='disabled'")
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+            }
+            let closed = tokio::time::timeout(std::time::Duration::from_secs(4), socket.next())
+                .await
+                .expect("production upgrade must stop on revocation");
+            assert!(!matches!(
+                closed,
+                Some(Ok(tokio_tungstenite::tungstenite::Message::Text(_)))
+            ));
+            server.abort();
+            let _ = server.await;
+        }
     }
 }

@@ -8,6 +8,8 @@ default-run = "server"
 uninlined-format-args = "allow"
 
 [dependencies]
+server-access = { path = "../server-access" }
+tower = { version = "0.5", features = ["util"] }
 api-types = { path = "../api-types" }
 deployment = { path = "../deployment" }
 executors = { path = "../executors" }
@@ -68,3 +70,8 @@ dotenv = "0.15"
 [features]
 default = []
 qa-mode = ["services/qa-mode", "executors/qa-mode"]
+
+[dev-dependencies]
+server-access = { path = "../server-access", features = ["test-support"] }
+jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
+rsa = "0.9"

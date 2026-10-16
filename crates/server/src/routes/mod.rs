@@ -39,8 +39,11 @@ pub mod terminal;
 pub mod workflows;
 pub mod workspaces;
 
-pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
-    let remote_mcp = crate::remote_mcp::configured_router(deployment.clone())
+pub fn router(
+    deployment: DeploymentImpl,
+    access: server_access::Access,
+) -> IntoMakeService<Router> {
+    let remote_mcp = crate::remote_mcp::configured_router(deployment.clone(), access.clone())
         .expect("Invalid remote MCP configuration; refusing to start");
     let local_routes = Router::new()
         .route("/health", get(health::health_check))
@@ -80,7 +83,12 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .layer(axum::middleware::from_fn(middleware::log_server_errors))
         .with_state(deployment);
 
-    middleware::maintenance::with_maintenance(frontend::router(api_routes).merge(remote_mcp))
+    access
+        .layer(middleware::maintenance::with_maintenance(
+            frontend::router(api_routes)
+                .merge(remote_mcp)
+                .merge(server_access::router(access.clone())),
+        ))
         .layer(CompressionLayer::new())
         .into_make_service()
 }

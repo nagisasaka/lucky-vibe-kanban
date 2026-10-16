@@ -1,0 +1,29 @@
+# Local use is an explicit placement, never inferred from a container peer IP.
+name: lvk-local
+services:
+  lvk:
+    image: ${LVK_IMAGE:?Set LVK_IMAGE to a versioned GHCR image}
+    entrypoint: ["/usr/bin/tini", "--", "/usr/local/bin/server"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      LVK_ACCESS_DEPLOYMENT: local
+      HOST: 0.0.0.0
+      BACKEND_PORT: "3000"
+      BROWSER: "true"
+    volumes:
+      - home:/home/appuser
+      - repos:/repos
+      - work:/var/tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health',{signal:AbortSignal.timeout(5000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    stop_grace_period: 150s
+volumes:
+  home:
+  repos:
+  work:

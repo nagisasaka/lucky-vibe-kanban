@@ -3,19 +3,19 @@ import {
   Draggable,
   Droppable,
   type DropResult,
-} from "@hello-pangea/dnd";
-import type { ReactNode } from "react";
+} from '@hello-pangea/dnd';
+import type { ReactNode } from 'react';
 import {
   LayoutIcon,
   PlusIcon,
   SpinnerIcon,
   StarIcon,
   type Icon,
-} from "@phosphor-icons/react";
-import { cn } from "../lib/cn";
-import { AppBarSocialLink } from "./AppBarSocialLink";
+} from '@phosphor-icons/react';
+import { cn } from '../lib/cn';
+import { AppBarSocialLink } from './AppBarSocialLink';
 
-import { Tooltip } from "./Tooltip";
+import { Tooltip } from './Tooltip';
 
 function formatStarCount(count: number): string {
   if (count < 1000) return String(count);
@@ -25,7 +25,7 @@ function formatStarCount(count: number): string {
 
 function getProjectInitials(name: string): string {
   const trimmed = name.trim();
-  if (!trimmed) return "??";
+  if (!trimmed) return '??';
 
   const words = trimmed.split(/\s+/);
   if (words.length >= 2) {
@@ -73,10 +73,10 @@ function AppBarSectionLabel({ children }: { children: ReactNode }) {
 }
 
 const appBarItemBaseClassName =
-  "flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+  'flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand';
 
 type AppBarSection = {
-  key: "local" | "projects";
+  key: 'local' | 'projects';
   label: string;
   items: AppBarSectionItem[];
 };
@@ -84,7 +84,7 @@ type AppBarSection = {
 type AppBarSectionItem =
   | {
       key: string;
-      kind: "icon-button";
+      kind: 'icon-button';
       label: string;
       icon: Icon;
       isActive?: boolean;
@@ -94,11 +94,11 @@ type AppBarSectionItem =
     }
   | {
       key: string;
-      kind: "loading";
+      kind: 'loading';
     }
   | {
       key: string;
-      kind: "project-list";
+      kind: 'project-list';
       projects: AppBarProject[];
       activeProjectId: string | null;
       isSavingProjectOrder?: boolean;
@@ -115,11 +115,11 @@ function getStandardAppBarButtonClassName({
 }) {
   return cn(
     appBarItemBaseClassName,
-    "cursor-pointer",
+    'cursor-pointer',
     isActive
-      ? "bg-brand/20 text-brand hover:bg-brand/20"
-      : "bg-primary text-normal hover:bg-brand/10",
-    className,
+      ? 'bg-brand/20 text-brand hover:bg-brand/20'
+      : 'bg-primary text-normal hover:bg-brand/10',
+    className
   );
 }
 
@@ -150,13 +150,13 @@ export function AppBar({
 
   if (showWorkspacesButton) {
     sections.push({
-      key: "local",
-      label: "Local",
+      key: 'local',
+      label: 'Local',
       items: [
         {
-          key: "local-workspaces",
-          kind: "icon-button",
-          label: "Local workspaces",
+          key: 'local-workspaces',
+          kind: 'icon-button',
+          label: 'Local workspaces',
           icon: LayoutIcon,
           isActive: isWorkspacesActive,
           onClick: onWorkspacesClick,
@@ -168,13 +168,13 @@ export function AppBar({
   const projectSectionItems: AppBarSectionItem[] = [];
 
   if (isLoadingProjects) {
-    projectSectionItems.push({ key: "projects-loading", kind: "loading" });
+    projectSectionItems.push({ key: 'projects-loading', kind: 'loading' });
   }
 
   if (projects.length > 0) {
     projectSectionItems.push({
-      key: "project-list",
-      kind: "project-list",
+      key: 'project-list',
+      kind: 'project-list',
       projects,
       activeProjectId,
       isSavingProjectOrder,
@@ -185,27 +185,27 @@ export function AppBar({
 
   {
     projectSectionItems.push({
-      key: "create-project",
-      kind: "icon-button",
-      label: "Create project",
+      key: 'create-project',
+      kind: 'icon-button',
+      label: 'Create project',
       icon: PlusIcon,
       onClick: onCreateProject,
-      className: "bg-primary text-muted hover:text-normal hover:bg-tertiary",
-      wrapperClassName: "pt-base",
+      className: 'bg-primary text-muted hover:text-normal hover:bg-tertiary',
+      wrapperClassName: 'pt-base',
     });
   }
 
   if (projectSectionItems.length > 0) {
     sections.push({
-      key: "projects",
-      label: "Projects",
+      key: 'projects',
+      label: 'Projects',
       items: projectSectionItems,
     });
   }
 
   function renderSectionItem(item: AppBarSectionItem): ReactNode {
     switch (item.kind) {
-      case "icon-button":
+      case 'icon-button':
         return (
           <Tooltip content={item.label} side="right">
             <button
@@ -221,13 +221,13 @@ export function AppBar({
             </button>
           </Tooltip>
         );
-      case "loading":
+      case 'loading':
         return (
           <div className="flex items-center justify-center w-10 h-10">
             <SpinnerIcon className="size-5 animate-spin text-muted" />
           </div>
         );
-      case "project-list":
+      case 'project-list':
         return (
           <DragDropContext onDragEnd={item.onProjectsDragEnd}>
             <Droppable
@@ -263,11 +263,11 @@ export function AppBar({
                               onClick={() => item.onProjectClick(project.id)}
                               className={cn(
                                 appBarItemBaseClassName,
-                                "cursor-grab",
-                                snapshot.isDragging && "shadow-lg",
+                                'cursor-grab',
+                                snapshot.isDragging && 'shadow-lg',
                                 item.activeProjectId === project.id
-                                  ? ""
-                                  : "bg-primary text-normal hover:opacity-80",
+                                  ? ''
+                                  : 'bg-primary text-normal hover:opacity-80'
                               )}
                               style={
                                 item.activeProjectId === project.id
@@ -300,8 +300,8 @@ export function AppBar({
       onMouseEnter={onHoverStart}
       onMouseLeave={onHoverEnd}
       className={cn(
-        "flex flex-col items-center h-full min-h-0 overflow-y-auto p-base gap-base",
-        "bg-secondary border-r border-border",
+        'flex flex-col items-center h-full min-h-0 overflow-y-auto p-base gap-base',
+        'bg-secondary border-r border-border'
       )}
     >
       {sections.map((section) => (
@@ -311,7 +311,7 @@ export function AppBar({
             <div
               key={item.key}
               className={
-                "wrapperClassName" in item ? item.wrapperClassName : undefined
+                'wrapperClassName' in item ? item.wrapperClassName : undefined
               }
             >
               {renderSectionItem(item)}
@@ -342,7 +342,7 @@ export function AppBar({
           label="Join our Discord"
           iconPath={discordIconPath}
           badge={
-            onlineCount != null && (onlineCount > 999 ? "999+" : onlineCount)
+            onlineCount != null && (onlineCount > 999 ? '999+' : onlineCount)
           }
         />
         {updateVersion ? (
@@ -351,10 +351,10 @@ export function AppBar({
               type="button"
               onClick={onUpdateClick}
               className={cn(
-                "flex items-center justify-center py-1 rounded-md w-10",
-                "text-[9px] font-ibm-plex-mono font-medium leading-none",
-                "bg-brand text-on-brand hover:bg-brand-hover",
-                "transition-colors cursor-pointer",
+                'flex items-center justify-center py-1 rounded-md w-10',
+                'text-[9px] font-ibm-plex-mono font-medium leading-none',
+                'bg-brand text-on-brand hover:bg-brand-hover',
+                'transition-colors cursor-pointer'
               )}
             >
               Update

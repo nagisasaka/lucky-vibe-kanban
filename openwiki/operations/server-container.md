@@ -31,16 +31,13 @@ sources:
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
 generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
-verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
 ---
 
 # 単一サーバーコンテナーの運用境界
 
 server 配布は local LVK と coding agent を常時稼働サーバーへ置き、利用者のブラウザーから操作するための構成である。SQLite の local DB・Workspace・AgentRun を使う。[外部 MCP](../integrations/remote-access.md) は、この同じ local アプリに対する opt-in の入口である。ブラウザーを閉じてもサーバーの実行は続くが、コンテナー停止やホスト再起動はプロセスを止める。[製品の用途](../../docs/self-hosting/server-container.mdx)
 
-単一の信頼された利用者の開発環境であり、Basic 認証が tenant ごとの隔離を作るわけではない。LVK・nginx・agent は同じ非 root user `appuser`（UID/GID 10001）で動く。read-only secret mount は上書きを防ぐだけで、同じユーザーの agent からの読取を防がない。[信頼境界](../../docs/self-hosting/server-container.mdx)、[runtime user](../../Dockerfile)
+信頼された利用者が共有する開発環境であり、Basic/Auth0認証がtenantごとのOS隔離を作るわけではない。LVK・nginx・agent は同じ非 root user `appuser`（UID/GID 10001）で動く。read-only secret mount は上書きを防ぐだけで、同じユーザーの agent からの読取を防がない。[信頼境界](../../docs/self-hosting/server-container.mdx)、[runtime user](../../Dockerfile)
 
 ## 配布 binary と開発 checkout
 
@@ -52,11 +49,11 @@ Node 22、固定版 Codex/pnpm、repository の Rust toolchain などを image �
 
 Compose は host の `443` だけを nginx の `8443` へ公開する。Rust backend は `127.0.0.1:3000`、preview proxy は `3001` を使い、supervisor は継承された HOST/PORT を上書きする。許可 origin は設定したアプリの HTTPS origin である。[port と mount](../../deploy/server/compose.yaml)、[backend 環境](../../deploy/server/server.mjs)
 
-`LVK_HOST` は IP アドレスまたは scheme/port/path を含まない小文字 DNS 名を受け付ける。任意の `LVK_PREVIEW_DOMAIN` を使う場合、アプリ名を preview wildcard と同じかその配下に置けない。起動前に TLS 証明書の期間、アプリ名と preview の代表 host 名への対応、秘密鍵との一致、非空 bcrypt htpasswd を検証する。volume 書込権と `nginx -t` も通ってからサービスを開始する。[設定](../../deploy/server/server.mjs)、[起動順](../../deploy/server/server.mjs)
+`LVK_HOST` は IP アドレスまたは scheme/port/path を含まない小文字 DNS 名を受け付ける。任意の `LVK_PREVIEW_DOMAIN` を使う場合、アプリ名を preview wildcard と同じかその配下に置けない。起動前に TLS 証明書の期間、アプリ名と preview の代表 host 名への対応、秘密鍵との一致を検証する。既存のnginx Basicを維持する配置ではbcrypt htpasswdも検証する。新規公開配置はhtpasswdなしで起動し、LVKの初期設定を完了するまで業務APIをロックする。volume 書込権と `nginx -t` も通ってからサービスを開始する。[設定](../../deploy/server/server.mjs)、[起動順](../../deploy/server/server.mjs)
 
 基本 Compose は既存証明書を使う。任意の compose.acme.yaml は専用 Certbot companion と acme volume を追加し、TCP 80 を証明書検証専用に公開する。公開 IP または DNS 名のアプリ証明書を扱い、wildcard preview は別管理となる。[ACME 構成](../../deploy/server/compose.acme.yaml)・[発行と更新](../../deploy/server/acme.py)。起動検査はブラウザーによる trust chain 検証の代わりではない。証明書・鍵・htpasswd は `/run/lvk-secrets` へ read-only mount し、欠けた host path を Compose が自動作成しない。更新・認証情報変更の具体手順は [運用文書](../../docs/self-hosting/server-container.mdx#renew-certificates-and-rotate-credentials)に置く。[mount](../../deploy/server/compose.yaml)、[証明書の責任](../../docs/self-hosting/server-container.mdx)
 
-通常のアプリ、API、WebSocket、stream、preview は nginx の Basic 認証を通る。LVK_MCP_CONFIG を指定した場合だけ、検証済み public_base_url の /mcp と保護リソース metadata の完全一致 route は Basic を外す。/mcp に Bearer だけを転送し Cookie は削除、metadata に認証ヘッダーを送らない。backend が検証する [OAuth と scope の契約](../integrations/remote-access.md) がこの例外の認可を担う。[生成される ingress](../../deploy/server/server.mjs)。転送時は Authorization / Proxy-Authorization と relay 署名ヘッダーを消すため、開発アプリが独自の同じ認証ヘッダーを要求する場合はこの入口と両立しない。WebSocket upgrade を通し、proxy buffering/cache は無効にする。access log は query string・認証情報・agent 本文を含めず method/URI/status を記録する。[ingress 契約](../../deploy/server/nginx.conf.template)
+公開配置の認証はLVKのserver-accessが担う。管理者が `docker compose exec lvk server setup-token` で15分間有効な一度限りのキーを発行し、HTTPS画面でBasic/Auth0を設定する。Auth0は実ログイン試験と本人確認後に有効化する。既存htpasswdがある場合はnginx Basicも維持し、LVK側の設定後に運用者が `LVK_PROXY_AUTH=backend` へ切り替える。新規配置では事前のhtpasswd作成は不要。旧 `LVK_MCP_CONFIG` は拒否される。[認証手順](../../docs/self-hosting/authentication.mdx)、[MCPのscope](../integrations/remote-access.md)、[生成されるingress](../../deploy/server/server.mjs)。管理認証のingressはWeb資格情報をbackendへ転送する一方、内部agent用のヘッダーを外部から受け渡さない。WebSocket upgrade を通し、proxy buffering/cache は無効にする。access log は query string・認証情報・agent 本文を含めず method/URI/status を記録する。[ingress 契約](../../deploy/server/nginx.conf.template)
 
 ## Preview は別 origin
 
@@ -78,7 +75,7 @@ Compose project 名の変更は別 volume の選択になる。同じ named volu
 
 supervisor は server と nginx を process group として起動する。一方の終了・spawn 失敗ではもう一方へ SIGTERM を送り、既定 120 秒後に残存 group へ SIGKILL を送る。外部 SIGTERM/SIGINT も同じ停止手順を使い、Compose の停止猶予は150秒である。これは個々の AgentRun の [監査付き取消](../architecture/agent-runtime.md#取消と実プロセスの終了)とは別のコンテナー停止境界である。[supervision](../../deploy/server/server.mjs)、[猶予](../../deploy/server/compose.yaml#L21)
 
-healthcheck は backend `/health` の200と、認証なし HTTPS の401を内部で確認する。後者の TLS trust 検証は無効であり、外部 DNS・証明書信頼・agent 認証の検査ではない。運用文書は unhealthy のみでは再起動しないことを明示する。サービス終了時の restart policy と health status を分けて診断する。[probe](../../deploy/server/healthcheck.mjs)、[再起動契約](../../docs/self-hosting/server-container.mdx)
+healthcheckは内部healthと公開TLSの認証状態を確認する。新規公開配置のロック状態も正常な初期状態であり、healthyだけでは初回認証やagent認証の完了を示さない。運用文書は unhealthy のみでは再起動しないことを明示する。サービス終了時の restart policy と health status を分けて診断する。[probe](../../deploy/server/healthcheck.mjs)、[再起動契約](../../docs/self-hosting/server-container.mdx)
 
 ## 更新・回復と検証限界
 

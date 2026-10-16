@@ -1,24 +1,24 @@
-import { $getNodeByKey } from "lexical";
-import { useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useTranslation } from "react-i18next";
-import { NodeKey, SerializedLexicalNode, Spread } from "lexical";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { Download, File, HelpCircle, X } from "lucide-react";
+import { $getNodeByKey } from 'lexical';
+import { useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { NodeKey, SerializedLexicalNode, Spread } from 'lexical';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { Download, File, HelpCircle, X } from 'lucide-react';
 import {
   useWorkspaceId,
   useSessionId,
   useLocalAttachments,
   type LocalAttachmentMetadata,
-} from "./WorkspaceContext";
+} from './WorkspaceContext';
 import {
   createDecoratorNode,
   type DecoratorNodeConfig,
-} from "./create-decorator-node";
+} from './create-decorator-node';
 
 const ATTACHMENT_URL_STALE_TIME = 4 * 60 * 1000;
 
-type AttachmentType = "file" | "thumbnail";
+type AttachmentType = 'file' | 'thumbnail';
 
 interface AttachmentUrlResult {
   url: string | null;
@@ -35,7 +35,7 @@ interface AttachmentMetadataLike {
 export interface CreateAttachmentNodeOptions {
   fetchAttachmentUrl?: (
     attachmentId: string,
-    type: AttachmentType,
+    type: AttachmentType
   ) => Promise<string>;
 }
 
@@ -53,13 +53,13 @@ export type SerializedAttachmentNode = Spread<
 >;
 
 function truncatePath(path: string, maxLength = 24): string {
-  const filename = path.split("/").pop() || path;
+  const filename = path.split('/').pop() || path;
   if (filename.length <= maxLength) return filename;
-  return filename.slice(0, maxLength - 3) + "...";
+  return filename.slice(0, maxLength - 3) + '...';
 }
 
 function formatFileSize(bytes: bigint | number | null | undefined): string {
-  if (!bytes) return "";
+  if (!bytes) return '';
   const num = Number(bytes);
   if (num < 1024) return `${num} B`;
   if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
@@ -68,13 +68,13 @@ function formatFileSize(bytes: bigint | number | null | undefined): string {
 
 function inferFormat(
   label: string,
-  explicitFormat?: string | null,
+  explicitFormat?: string | null
 ): string | null {
   if (explicitFormat) {
     return explicitFormat.toUpperCase();
   }
 
-  const extension = label.split(".").pop()?.trim();
+  const extension = label.split('.').pop()?.trim();
   if (!extension || extension === label) {
     return null;
   }
@@ -83,7 +83,7 @@ function inferFormat(
 }
 
 function toMetadataFromLocalAttachment(
-  localAttachment: LocalAttachmentMetadata | undefined,
+  localAttachment: LocalAttachmentMetadata | undefined
 ): AttachmentMetadataLike | null {
   if (!localAttachment) return null;
 
@@ -100,30 +100,30 @@ function useAttachmentMetadata(
   workspaceId: string | undefined,
   sessionId: string | undefined,
   src: string,
-  localAttachments: LocalAttachmentMetadata[],
+  localAttachments: LocalAttachmentMetadata[]
 ) {
-  const isWorkspaceAttachment = src.startsWith(".vibe-attachments/");
+  const isWorkspaceAttachment = src.startsWith('.vibe-attachments/');
 
   const localAttachment = useMemo(
     () => localAttachments.find((attachment) => attachment.path === src),
-    [localAttachments, src],
+    [localAttachments, src]
   );
 
   const localAttachmentMetadata = useMemo(
     () => toMetadataFromLocalAttachment(localAttachment),
-    [localAttachment],
+    [localAttachment]
   );
 
   const shouldFetch =
     isWorkspaceAttachment && !!workspaceId && !localAttachment;
 
   const query = useQuery({
-    queryKey: ["attachment-metadata", workspaceId, sessionId, src],
+    queryKey: ['attachment-metadata', workspaceId, sessionId, src],
     queryFn: async (): Promise<AttachmentMetadataLike | null> => {
       if (!workspaceId || !sessionId) return null;
 
       const response = await fetch(
-        `/api/workspaces/${workspaceId}/attachments/metadata?path=${encodeURIComponent(src)}&session_id=${sessionId}`,
+        `/api/workspaces/${workspaceId}/attachments/metadata?path=${encodeURIComponent(src)}&session_id=${sessionId}`
       );
       const payload = await response.json();
       return payload.data as AttachmentMetadataLike | null;
@@ -139,14 +139,14 @@ function useAttachmentMetadata(
 
 function useAttachmentFileUrl(
   attachmentId: string | null,
-  fetchAttachmentUrl: CreateAttachmentNodeOptions["fetchAttachmentUrl"],
+  fetchAttachmentUrl: CreateAttachmentNodeOptions['fetchAttachmentUrl']
 ): AttachmentUrlResult {
   const query = useQuery({
-    queryKey: ["attachment-url", attachmentId, "file"],
+    queryKey: ['attachment-url', attachmentId, 'file'],
     queryFn: () =>
       fetchAttachmentUrl
-        ? fetchAttachmentUrl(attachmentId as string, "file")
-        : Promise.reject(new Error("Cloud attachment is unavailable")),
+        ? fetchAttachmentUrl(attachmentId as string, 'file')
+        : Promise.reject(new Error('Cloud attachment is unavailable')),
     enabled: !!attachmentId,
     staleTime: ATTACHMENT_URL_STALE_TIME,
   });
@@ -166,48 +166,48 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
     nodeKey: NodeKey;
     onDoubleClickEdit: (event: React.MouseEvent) => void;
   }): JSX.Element {
-    const { t } = useTranslation("common");
+    const { t } = useTranslation('common');
     const { src, label } = data;
     const workspaceId = useWorkspaceId();
     const sessionId = useSessionId();
     const localAttachments = useLocalAttachments();
     const [editor] = useLexicalComposerContext();
 
-    const isWorkspaceAttachment = src.startsWith(".vibe-attachments/");
-    const isPendingAttachment = src.startsWith("pending-attachment://");
-    const isAttachment = isPendingAttachment || src.startsWith("attachment://");
+    const isWorkspaceAttachment = src.startsWith('.vibe-attachments/');
+    const isPendingAttachment = src.startsWith('pending-attachment://');
+    const isAttachment = isPendingAttachment || src.startsWith('attachment://');
     const attachmentId =
       !isPendingAttachment && isAttachment
-        ? src.replace("attachment://", "")
+        ? src.replace('attachment://', '')
         : null;
 
     const { url: attachmentUrl } = useAttachmentFileUrl(
       isAttachment && !isPendingAttachment ? attachmentId : null,
-      options.fetchAttachmentUrl,
+      options.fetchAttachmentUrl
     );
 
     const { data: metadata } = useAttachmentMetadata(
       workspaceId,
       sessionId,
       src,
-      localAttachments,
+      localAttachments
     );
 
     const resolvedUrl =
       metadata?.proxy_url ?? (isAttachment ? attachmentUrl : null);
     const displayName = truncatePath(
-      metadata?.file_name || label || src || t("kanban.previewFile"),
+      metadata?.file_name || label || src || t('kanban.previewFile')
     );
     const format = inferFormat(
       label || metadata?.file_name || src,
-      metadata?.format,
+      metadata?.format
     );
     const sizeText = formatFileSize(metadata?.size_bytes);
     const localAttachment = localAttachments.find(
-      (attachment) => attachment.path === src,
+      (attachment) => attachment.path === src
     );
     const metadataLine = localAttachment?.is_pending
-      ? ["Uploading", sizeText].filter(Boolean).join(" · ")
+      ? ['Uploading', sizeText].filter(Boolean).join(' · ')
       : metadata?.exists
         ? format && sizeText
           ? `${format} · ${sizeText}`
@@ -221,14 +221,14 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
 
         let nextUrl = resolvedUrl;
         if (!nextUrl && attachmentId) {
-          nextUrl = await (options.fetchAttachmentUrl?.(attachmentId, "file") ??
-            Promise.reject(new Error("Cloud attachment is unavailable")));
+          nextUrl = await (options.fetchAttachmentUrl?.(attachmentId, 'file') ??
+            Promise.reject(new Error('Cloud attachment is unavailable')));
         }
 
         if (!nextUrl) return;
-        window.open(nextUrl, "_blank", "noopener,noreferrer");
+        window.open(nextUrl, '_blank', 'noopener,noreferrer');
       },
-      [attachmentId, resolvedUrl],
+      [attachmentId, resolvedUrl]
     );
 
     const handleDelete = useCallback(
@@ -245,16 +245,16 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
           }
         });
       },
-      [editor, nodeKey],
+      [editor, nodeKey]
     );
 
     const handleDownload = useCallback(
       (event: React.MouseEvent) => {
         openUrl(event).catch((error) => {
-          console.error("Failed to open attachment:", error);
+          console.error('Failed to open attachment:', error);
         });
       },
-      [openUrl],
+      [openUrl]
     );
 
     const icon =
@@ -269,7 +269,7 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
         className="group relative inline-flex items-center gap-1.5 pl-1.5 pr-5 py-1 ml-0.5 mr-0.5 bg-muted rounded border cursor-pointer border-border hover:border-muted-foreground transition-colors align-bottom"
         onClick={(event) => {
           openUrl(event).catch((error) => {
-            console.error("Failed to open attachment:", error);
+            console.error('Failed to open attachment:', error);
           });
         }}
         onDoubleClick={onDoubleClickEdit}
@@ -293,7 +293,7 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
           <button
             onClick={handleDelete}
             className="absolute top-1 right-1 w-4 h-4 rounded-full bg-foreground/70 hover:bg-destructive flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label={t("kanban.removeImage")}
+            aria-label={t('kanban.removeImage')}
             type="button"
           >
             <X className="w-2.5 h-2.5 text-background" />
@@ -304,10 +304,10 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
             onClick={handleDownload}
             className={
               editor.isEditable()
-                ? "absolute top-1 right-6 w-4 h-4 rounded-full bg-foreground/70 hover:bg-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                : "absolute top-1 right-1 w-4 h-4 rounded-full bg-foreground/70 hover:bg-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                ? 'absolute top-1 right-6 w-4 h-4 rounded-full bg-foreground/70 hover:bg-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                : 'absolute top-1 right-1 w-4 h-4 rounded-full bg-foreground/70 hover:bg-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
             }
-            aria-label={t("kanban.downloadAttachment")}
+            aria-label={t('kanban.downloadAttachment')}
             type="button"
           >
             <Download className="w-2.5 h-2.5 text-background" />
@@ -318,26 +318,26 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
   }
 
   const config: DecoratorNodeConfig<AttachmentData> = {
-    type: "attachment",
+    type: 'attachment',
     serialization: {
-      format: "inline",
+      format: 'inline',
       pattern:
         /(?<!!)\[([^\]]+)\]\((attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+|\.vibe-attachments\/[^)]+)\)/,
-      trigger: ")",
+      trigger: ')',
       serialize: (data) => `[${data.label}](${data.src})`,
       deserialize: (match) => ({ src: match[2], label: match[1] }),
     },
     component: AttachmentComponent,
     domStyle: {
-      display: "inline-block",
-      paddingLeft: "2px",
-      paddingRight: "2px",
-      verticalAlign: "bottom",
+      display: 'inline-block',
+      paddingLeft: '2px',
+      paddingRight: '2px',
+      verticalAlign: 'bottom',
     },
     keyboardSelectable: false,
     exportDOM: (data) => {
-      const link = document.createElement("a");
-      link.setAttribute("href", data.src);
+      const link = document.createElement('a');
+      link.setAttribute('href', data.src);
       link.textContent = data.label;
       return link;
     },

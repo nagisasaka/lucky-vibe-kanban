@@ -8,6 +8,7 @@ test("instance environment isolates state and overrides stable server settings",
   const inherited = {
     LVK_INSTANCES_ROOT: "/tmp/instances",
     LVK_HOST: "test.example",
+    LVK_AUTH_MODE: "auth0",
     LVK_INSTANCE_DIR: "/stable",
     BACKEND_PORT: "3000",
     HOST: "0.0.0.0",
@@ -18,6 +19,8 @@ test("instance environment isolates state and overrides stable server settings",
   const env = environment(staging, "/builds/one", inherited);
   assert.equal(env.LVK_INSTANCE_DIR, "/tmp/instances/staging");
   assert.equal(env.BACKEND_PORT, "4020");
+  assert.equal(env.LVK_ACCESS_DEPLOYMENT, "public");
+  assert.equal(env.LVK_AUTH_MODE, "auth0");
   assert.equal(env.HOST, "127.0.0.1");
   assert.equal(env.VK_ALLOWED_ORIGINS, "https://test.example:8443");
   assert.equal(env.PREVIEW_PROXY_PORT, "0");
@@ -31,6 +34,8 @@ test("instance environment isolates state and overrides stable server settings",
     inherited,
   );
   assert.notEqual(card.LVK_INSTANCE_DIR, env.LVK_INSTANCE_DIR);
+  assert.equal(card.LVK_ACCESS_DEPLOYMENT, "local");
+  assert.equal(card.LVK_AUTH_MODE, "");
   assert.notEqual(card.TMPDIR, env.TMPDIR);
   assert.equal(card.VK_ALLOWED_ORIGINS, "http://127.0.0.1:4200");
   for (const port of [0, 443, 3000, 3001, 4020, 8443, 8444, 65536, "bad"]) {

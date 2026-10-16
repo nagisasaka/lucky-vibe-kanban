@@ -703,6 +703,8 @@ export function KanbanContainer() {
             owner: membersWithProfilesById.get(workspace.owner_user_id) ?? null,
             updatedAt: workspace.updated_at,
             isOwnedByCurrentUser: workspace.owner_user_id === userId,
+            canManageWorkspace:
+              isLocalRemoteApiEnabled() || workspace.owner_user_id === userId,
             isRunning: localWorkspace?.isRunning,
             hasPendingApproval: localWorkspace?.hasPendingApproval,
             hasRunningDevServer: localWorkspace?.hasRunningDevServer,

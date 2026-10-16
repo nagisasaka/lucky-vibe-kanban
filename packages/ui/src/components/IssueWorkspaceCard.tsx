@@ -38,6 +38,8 @@ export interface WorkspaceWithStats {
   owner: UserAvatarUser | null;
   updatedAt: string;
   isOwnedByCurrentUser: boolean;
+  // Shared self-hosted access is independent from historical ownership.
+  canManageWorkspace?: boolean;
   isRunning?: boolean;
   hasPendingApproval?: boolean;
   hasRunningDevServer?: boolean;

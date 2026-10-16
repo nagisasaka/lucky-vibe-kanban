@@ -21,7 +21,7 @@ pub async fn log_server_errors(request: Request, next: Next) -> Response {
     if response.status().is_server_error() {
         tracing::error!(
             method = %method,
-            uri = %uri,
+            path = %uri.path(),
             matched_path = matched_path.as_deref().unwrap_or("<unmatched>"),
             status = %response.status(),
             "API request returned server error"

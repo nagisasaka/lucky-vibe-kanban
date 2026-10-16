@@ -321,10 +321,13 @@ async fn organizations() -> Json<utils::response::ApiResponse<ListOrganizationsR
         super::list_organizations().await.0,
     ))
 }
-async fn members(id: Path<Uuid>) -> Json<utils::response::ApiResponse<ListMembersResponse>> {
-    Json(utils::response::ApiResponse::success(
-        super::list_members(id).await.0,
-    ))
+async fn members(
+    deployment: State<DeploymentImpl>,
+    id: Path<Uuid>,
+) -> Result<Json<utils::response::ApiResponse<ListMembersResponse>>, ApiError> {
+    Ok(Json(utils::response::ApiResponse::success(
+        super::list_members(deployment, id).await?.0,
+    )))
 }
 
 #[cfg(test)]

@@ -27,11 +27,14 @@ def main():
     if config_path.exists():
         parser.error("Already installed. Review /etc/lvk-updater.json and update the host kit explicitly")
     credentials = deployment / "secrets/e2e.json"
-    value = json.loads(credentials.read_text())
-    if set(value) != {"username", "password"} or not all(isinstance(v, str) and v for v in value.values()):
-        parser.error("secrets/e2e.json must contain username and password")
-    os.chown(credentials, 0, 10001)
-    credentials.chmod(0o640)
+    if args.legacy_development and not credentials.is_file():
+        parser.error("Legacy development requires secrets/e2e.json")
+    if credentials.exists():
+        value = json.loads(credentials.read_text())
+        if set(value) != {"username", "password"} or not all(isinstance(v, str) and v for v in value.values()):
+            parser.error("secrets/e2e.json must contain username and password")
+        os.chown(credentials, 0, 10001)
+        credentials.chmod(0o640)
     for file in args.compose_file:
         if not (deployment / file).is_file():
             parser.error(f"Missing compose file: {file}")
@@ -43,7 +46,7 @@ def main():
             os.chown(path, 10001, 10001)
     kit = Path("/opt/lvk-developer")
     kit.mkdir(mode=0o755, exist_ok=True)
-    for name in ("updater.py", "client.py", "verify-image.sh", "README.md", "STAGING.md"):
+    for name in ("updater.py", "client.py", "verify-image.sh", "verify-access.mjs", "README.md", "STAGING.md"):
         shutil.copy2(Path(__file__).with_name(name), kit / name)
         (kit / name).chmod(0o755 if name.endswith((".py", ".sh")) else 0o644)
     shutil.copy2(Path(__file__).with_name("compose.updater.yaml"), deployment / "compose.updater.yaml")

@@ -58,7 +58,7 @@ pub struct McpServer {
 impl McpServer {
     pub fn new_global(base_url: &str) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: internal_client(base_url),
             base_url: base_url.to_string(),
             tool_router: Self::global_mode_router(),
             context: None,
@@ -68,7 +68,7 @@ impl McpServer {
 
     pub fn new_orchestrator(base_url: &str) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: internal_client(base_url),
             base_url: base_url.to_string(),
             tool_router: Self::orchestrator_mode_router(),
             context: None,
@@ -242,4 +242,33 @@ impl McpServer {
         let project = api_response.data?;
         Some(project.organization_id)
     }
+}
+
+// Authenticate local stdio calls explicitly. Never send the local capability to
+// a configurable external backend, a redirect target, or browser-origin traffic.
+fn internal_client(base_url: &str) -> reqwest::Client {
+    let mut headers = reqwest::header::HeaderMap::new();
+    if reqwest::Url::parse(base_url).is_ok_and(|u| {
+        u.scheme() == "http"
+            && matches!(u.host_str(), Some("127.0.0.1" | "localhost" | "[::1]"))
+            && u.username().is_empty()
+            && u.password().is_none()
+    }) {
+        if let Ok(token) =
+            std::fs::read_to_string(utils::assets::asset_dir().join("access-internal.token"))
+            && let Ok(mut value) = reqwest::header::HeaderValue::from_str(&token)
+        {
+            value.set_sensitive(true);
+            headers.insert("x-lvk-internal-token", value);
+        }
+        headers.insert(
+            "x-lvk-csrf",
+            reqwest::header::HeaderValue::from_static("local"),
+        );
+    }
+    reqwest::Client::builder()
+        .default_headers(headers)
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .expect("MCP HTTP client")
 }

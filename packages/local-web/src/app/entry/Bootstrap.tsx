@@ -9,6 +9,8 @@ import App from '@web/app/entry/App';
 import { CrashScreen } from '@vibe/ui/components/CrashScreen';
 import '@/i18n';
 import { router } from '@web/app/router';
+import { ServerAccessGate } from '@web/app/auth/ServerAccessGate';
+import { installAccessFetch } from '@web/app/auth/serverAccess';
 import '@/shared/types/modals';
 import { queryClient } from '@/shared/lib/queryClient';
 import { isTauriApp } from '@/shared/lib/platform';
@@ -74,6 +76,8 @@ if (isTauriApp()) {
   document.addEventListener('gesturechange', (e) => e.preventDefault());
 }
 
+installAccessFetch();
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -88,7 +92,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           showDialog
         >
           <ClickToComponent />
-          <App />
+          <ServerAccessGate>
+            <App />
+          </ServerAccessGate>
         </Sentry.ErrorBoundary>
       </PostHogProvider>
     </QueryClientProvider>
