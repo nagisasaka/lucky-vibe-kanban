@@ -93,4 +93,40 @@ describe('Integration instructions', () => {
     expect(fixture.steer).not.toHaveBeenCalled();
     expect(fixture.intervene).not.toHaveBeenCalled();
   });
+  it('shows the unexecuted plan, its development evidence and grouped environment findings', () => {
+    fixture.run = {
+      ...fixture.run!,
+      status: 'blocked',
+      error: 'Missing tool\nInsufficient build space',
+      payload: {
+        ...fixture.run!.payload,
+        stop: {
+          stage: 'planning',
+          category: 'validation_environment',
+          next_action: 'Repair prerequisites together, then resume',
+        },
+        validation: [
+          {
+            command: 'make test',
+            cwd: '.',
+            required: true,
+            evidence: 'Branch A final development verification',
+            environment_requirements: 'make available; compiler missing',
+            execution_process_id: null,
+            exit_code: null,
+            result: null,
+          },
+        ],
+        exclusions: ['Replaced the retired development command'],
+      },
+    };
+    const html = render();
+    expect(html).toContain('make test');
+    expect(html).toContain('Branch A final development verification');
+    expect(html).toContain('compiler missing');
+    expect(html).toContain('integrationGate.notRun');
+    expect(html).toContain('Missing tool\nInsufficient build space');
+    expect(html).toContain('Replaced the retired development command');
+    expect(html).toContain('<details open=""');
+  });
 });

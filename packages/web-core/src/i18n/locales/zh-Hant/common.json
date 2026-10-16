@@ -1238,6 +1238,10 @@
     "rejectHelp": "To request a different resolution, enter instructions below and select “Request revision”.",
     "revise": "Request revision",
     "tests": "Completed merge steps and tests",
-    "progress": "Merge step {{current}} / {{total}}"
+    "progress": "Merge step {{current}} / {{total}}",
+    "validationPlan": "重新執行開發時的驗證",
+    "evidence": "開發記錄 / 依據",
+    "prerequisites": "前提條件與環境檢查",
+    "exclusions": "替換與排除原因"
   }
 }

@@ -46,40 +46,6 @@ pub(super) fn prepare(root: &Path, run: &mut IntegrationRun) -> anyhow::Result<(
     Ok(())
 }
 
-pub(super) fn retain_previous_validation(run: &mut IntegrationRun) {
-    if !run.payload.sequential {
-        return;
-    }
-    let previous = run
-        .payload
-        .steps
-        .last()
-        .map(|s| s.validation.clone())
-        .unwrap_or_default();
-    retain_validation(run, previous);
-}
-
-pub(super) fn retain_validation(
-    run: &mut IntegrationRun,
-    previous: Vec<db::models::integration::IntegrationValidation>,
-) {
-    for mut item in previous {
-        if let Some(current) = run
-            .payload
-            .validation
-            .iter_mut()
-            .find(|v| v.command == item.command && v.cwd == item.cwd)
-        {
-            current.required |= item.required;
-        } else {
-            item.execution_process_id = None;
-            item.exit_code = None;
-            item.result = None;
-            run.payload.validation.push(item);
-        }
-    }
-}
-
 pub(super) fn record_review(root: &Path, run: &mut IntegrationRun) -> anyhow::Result<()> {
     if !run.payload.sequential {
         return Ok(());

@@ -222,13 +222,156 @@ async fn proposal_rejects_changed_selection_empty_plan_and_placeholder_success()
     assert!(proposal(&value.to_string(), &run).is_err());
 }
 
+fn development_proposal(run: &IntegrationRun) -> serde_json::Value {
+    json!({
+        "outcome": "ready",
+        "selected_card_ids": run.payload.sources.iter().map(|source| source.selection.card_id).collect::<Vec<_>>(),
+        "summary": "Replay the recorded development checks on this candidate",
+        "validation": [{"command": "node --test", "cwd": ".", "required": true,
+            "evidence": "A final development verification", "environment_requirements": "node --version checked"}],
+        "environment_blockers": [], "exclusions": []
+    })
+}
+
+#[tokio::test]
+async fn cumulative_plan_keeps_distinct_branch_checks_and_deduplicates_without_reusing_results() {
+    let (pool, mut run, _, _) = fixture().await;
+    let mut value = development_proposal(&run);
+    let mut duplicate = value["validation"][0].clone();
+    duplicate["required"] = json!(false);
+    duplicate["evidence"] = json!("B uses the same suite, including its new regression");
+    let mut other = value["validation"][0].clone();
+    other["command"] = json!("make test");
+    other["cwd"] = json!("native");
+    other["evidence"] = json!("B final native checks");
+    let mut different_directory = value["validation"][0].clone();
+    different_directory["cwd"] = json!("browser");
+    value["validation"]
+        .as_array_mut()
+        .unwrap()
+        .extend([duplicate, other, different_directory]);
+    let plan = proposal(&value.to_string(), &run).unwrap();
+    assert!(!hold_validation_plan(&mut run, &plan));
+    replace_validation_plan(&mut run, &plan);
+    assert_eq!(run.payload.validation.len(), 3);
+    let common = &run.payload.validation[0];
+    assert!(common.required);
+    assert!(common.evidence.contains("A final"));
+    assert!(common.evidence.contains("B uses"));
+    assert_eq!(run.payload.validation[1].command, "make test");
+    assert_eq!(run.payload.validation[2].cwd, "browser");
+    assert!(
+        run.payload
+            .validation
+            .iter()
+            .all(|v| v.execution_process_id.is_none()
+                && v.exit_code.is_none()
+                && v.result.is_none())
+    );
+    assert!(verify_validation(&pool, &run).await.is_err());
+}
+
+#[tokio::test]
+async fn revised_plan_does_not_resurrect_ci_only_or_retired_commands_from_completed_steps() {
+    for (old, reason) in [
+        (
+            "pnpm run prepare-db:check",
+            "Earlier planning added this solely from CI; neither branch required it during development",
+        ),
+        (
+            "make test-old",
+            "A replaced test-old with node --test while preserving the same regression tests",
+        ),
+    ] {
+        let (_, mut run, _, _) = fixture().await;
+        run.payload.validation[0].command = old.into();
+        super::super::steps::complete(&mut run).unwrap();
+        let mut value = development_proposal(&run);
+        assert!(
+            proposal(&value.to_string(), &run).is_err(),
+            "silent omission must need clarification"
+        );
+        value["exclusions"] = json!([reason]);
+        let plan = proposal(&value.to_string(), &run).unwrap();
+        replace_validation_plan(&mut run, &plan);
+        assert_eq!(run.payload.validation.len(), 1);
+        assert_eq!(run.payload.validation[0].command, "node --test");
+        assert_eq!(run.payload.exclusions, [reason]);
+        assert_eq!(run.payload.steps[0].validation[0].command, old);
+        assert_eq!(
+            run.payload.history.last().unwrap()["validation"][0]["command"],
+            old
+        );
+    }
+}
+
+#[tokio::test]
+async fn known_environment_blockers_hold_the_whole_plan_even_when_agent_claims_ready() {
+    let (pool, mut run, _, _) = fixture().await;
+    let mut value = development_proposal(&run);
+    value["environment_blockers"] = json!([
+        "node executable missing",
+        "Build volume lacks the recorded required space"
+    ]);
+    let plan = proposal(&value.to_string(), &run).unwrap();
+    assert!(hold_validation_plan(&mut run, &plan));
+    assert_eq!(run.status, "blocked");
+    assert_eq!(
+        run.payload.stop.as_ref().unwrap().category,
+        "validation_environment"
+    );
+    assert!(
+        run.error
+            .as_ref()
+            .unwrap()
+            .contains("node executable missing")
+    );
+    assert!(run.error.as_ref().unwrap().contains("Build volume"));
+    assert!(run.payload.result_commit.is_none());
+    assert!(run.payload.validation[0].execution_process_id.is_none());
+    assert!(run.payload.validation[0].result.is_none());
+    assert!(
+        run.payload.gates.is_empty(),
+        "do not ask for one failure exception per missing prerequisite"
+    );
+    assert!(verify_validation(&pool, &run).await.is_err());
+    value["environment_blockers"] = json!([]);
+    let repaired = proposal(&value.to_string(), &run).unwrap();
+    assert!(!hold_validation_plan(&mut run, &repaired));
+    // Removing a known blocker does not turn an unexecuted plan into proof.
+    assert!(verify_validation(&pool, &run).await.is_err());
+}
+
+#[tokio::test]
+async fn ambiguous_development_records_can_be_held_without_inventing_a_validation_plan() {
+    let (pool, mut run, _, _) = fixture().await;
+    let mut value = development_proposal(&run);
+    value["outcome"] = json!("blocked");
+    value["validation"] = json!([]);
+    value["summary"] =
+        json!("Does the recorded manual browser check have a repeatable development procedure?");
+    let plan = proposal(&value.to_string(), &run).unwrap();
+    assert!(hold_validation_plan(&mut run, &plan));
+    assert_eq!(
+        run.payload.stop.as_ref().unwrap().category,
+        "validation_plan"
+    );
+    assert!(run.error.as_ref().unwrap().contains("manual browser check"));
+    assert!(run.payload.validation.is_empty());
+    assert!(verify_validation(&pool, &run).await.is_err());
+}
+
 #[tokio::test]
 async fn dispatched_prompt_uses_resolved_api_port_and_selected_identity() {
-    let (pool, run, _, _) = fixture().await;
+    let (pool, mut run, _, _) = fixture().await;
     let repo = Repo::find_by_id(&pool, run.repository_id)
         .await
         .unwrap()
         .unwrap();
+    super::super::steps::complete(&mut run).unwrap();
+    run.payload.validation.clear();
+    run.payload.exclusions = vec!["Superseded CI-only check".into()];
+    run.error = Some("Missing compiler; reassess before replay".into());
     let body = prompt(&run, &repo, Path::new("/test"), Some(4021), &json!([])).unwrap();
     assert!(body.contains(&format!(
         "http://127.0.0.1:4021/api/repos/{}/parallel-context",
@@ -236,6 +379,12 @@ async fn dispatched_prompt_uses_resolved_api_port_and_selected_identity() {
     )));
     assert!(body.contains(&run.payload.sources[0].selection.card_id.to_string()));
     assert!(body.contains(&run.payload.sources[0].commit));
+    // A resumed/next-step prompt still includes the completed prefix and the
+    // previous diagnosis even when the current proposal has no runnable plan.
+    assert!(body.contains("package.json test + selected acceptance"));
+    assert!(body.contains("node --test"));
+    assert!(body.contains("Superseded CI-only check"));
+    assert!(body.contains("Missing compiler; reassess before replay"));
     let unavailable = prompt(&run, &repo, Path::new("/test"), None, &json!([])).unwrap();
     assert!(!unavailable.contains("http://127.0.0.1:"));
     assert!(unavailable.contains("do not invent an endpoint"));
@@ -269,6 +418,23 @@ async fn selected_followup_memory_reaches_prompt_without_importing_other_events(
                 decision: "Retain the existing browser URL".into(),
                 rationale: Some("Preserve mobile access".into()),
             }],
+            tests: vec![
+                utils::repository_memory::MemoryTest {
+                    command: Some("make test-preview".into()),
+                    result: utils::repository_memory::MemoryTestResult::Failed,
+                    summary: Some("Initial regression before the fix".into()),
+                },
+                utils::repository_memory::MemoryTest {
+                    command: Some("make test-preview".into()),
+                    result: utils::repository_memory::MemoryTestResult::Passed,
+                    summary: Some("Final retry after fixing reload".into()),
+                },
+                utils::repository_memory::MemoryTest {
+                    command: None,
+                    result: utils::repository_memory::MemoryTestResult::NotRun,
+                    summary: Some("Manual browser verification still needed".into()),
+                },
+            ],
             ..Default::default()
         },
     };
@@ -294,6 +460,12 @@ async fn selected_followup_memory_reaches_prompt_without_importing_other_events(
     let body = prompt(&run, &repo, Path::new("/test"), None, &memory).unwrap();
     assert!(body.contains("Improve tool output display"));
     assert!(body.contains(&event.semantics.goal));
+    for test in &event.semantics.tests {
+        assert!(body.contains(test.summary.as_ref().unwrap()));
+    }
+    assert!(body.contains("make test-preview"));
+    assert!(body.contains("TA union TB"));
+    assert!(body.contains("do not explore them to expand the plan"));
     assert!(!body.contains(&later.semantics.goal));
     assert!(!body.contains(&foreign.semantics.goal));
     assert!(body.contains("Do not block solely for that omission"));
@@ -1021,6 +1193,7 @@ async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests()
     run.payload.base_commit = Some(base);
     run.payload.sources[0].commit = a.clone();
     let mut second = run.payload.sources[0].clone();
+    second.selection.card_id = Uuid::new_v4();
     second.commit = b.clone();
     run.payload.sources.push(second);
     steps::prepare(root, &mut run).unwrap();
@@ -1060,9 +1233,16 @@ async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests()
     command(&["add", "."]);
     command(&["commit", "-m", "preserve A and B"]);
     run.payload.result_commit = Some(command(&["rev-parse", "HEAD"]));
-    run.payload.validation.clear();
-    steps::retain_previous_validation(&mut run);
-    assert_eq!(run.payload.validation.len(), 1);
+    // The host receives the full organised plan; it must execute both branches'
+    // checks again on the new cumulative candidate.
+    let mut value = development_proposal(&run);
+    let mut b_check = value["validation"][0].clone();
+    b_check["command"] = json!("make test-b");
+    b_check["evidence"] = json!("B development verification");
+    value["validation"].as_array_mut().unwrap().push(b_check);
+    let plan = proposal(&value.to_string(), &run).unwrap();
+    replace_validation_plan(&mut run, &plan);
+    assert_eq!(run.payload.validation.len(), 2);
     assert!(run.payload.validation[0].execution_process_id.is_none());
     assert!(run.payload.validation[0].result.is_none());
     steps::record_review(root, &mut run).unwrap();

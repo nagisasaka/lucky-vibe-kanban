@@ -30,13 +30,32 @@ on its own branch and submits a committed candidate. LVK runs the applicable
 validation commands on that candidate. After validation and any required human
 review, it moves to the next source in the same Workspace and Session.
 
-Each step preserves the previously tested prefix. The host carries earlier
-validation commands into subsequent plans, including their required status;
-it does not reuse their earlier passing results or exception approvals on a new
-candidate. The agent adds applicable tests for the newly merged source and its
-interaction with earlier changes. Completed steps retain their commands,
-results and exceptions. Repository instructions and tests determine the plan;
-passing checks do not prove complete test coverage.
+Each step replays the development checks for the previously adopted changes and
+the newly merged source (TA union TB). The agent organises the selected Change
+Manifest test records and explicit development instructions into runnable
+commands. It uses an existing common suite when that covers both branches, or
+keeps their separate commands. You do not need an LVK test configuration, a new
+suite or an `acceptance_tests` field. CI or release settings alone do not make a
+check mandatory. Suggestions for additional tests stay outside the execution
+plan until you explicitly request them; the agent does not review all code to
+look for unknown interactions.
+
+The agent receives previous plans and completed step results as context. It
+returns the full cumulative plan, removes duplicates, and explains equivalent
+replacements, retired commands and mistaken additions in the exclusions. The
+host replaces the plan rather than automatically appending historical command
+strings. Earlier passing results and exception approvals do not apply to a new
+candidate. Completed steps retain their original results.
+
+Failed and unexecuted development checks remain part of the evidence. The agent
+must distinguish a documented successful retry from an unresolved obligation;
+it cannot discard a check just because it failed or is unavailable. If records
+do not establish an equivalent command or justify its removal, the Integration
+pauses with a concrete question. Use additional instructions in the Workspace
+to clarify it. The Workspace shows the proposed commands, development evidence,
+prerequisites and exclusions. The host requires an explanation when a previous
+command is removed or made optional, but cannot mechanically prove that the
+agent interpreted the records correctly or that test coverage is complete.
 
 Validation plans use Workspace-specific compiler/test output directories. Inherited
 shared output paths such as `CARGO_TARGET_DIR` must not substitute artifacts from
@@ -66,7 +85,17 @@ an old approval. Reconnecting retains pending reviews.
 
 ## Handle failed tests
 
-For a required command that fails, is unavailable, or does not finish, the
+Before heavy validation, the agent checks the whole plan's prerequisites using
+lightweight checks for tools and subcommands, working directories, services and
+available build space. Known environment problems are reported together. The
+host holds the entire plan before running any command, even if the agent also
+reports that the candidate is ready. These checks remain **Not executed**.
+Repair the listed prerequisites and resume in the same Workspace; use additional
+instructions if the recorded development procedure needs clarification. A resume
+refreshes the validation instructions and reassesses the environment.
+
+For a required command that fails during execution, unexpectedly proves
+unavailable, or does not finish, the
 Workspace offers **Fix environment and retry**, **Continue with this exception**,
 and cancellation. An exception covers only that check and candidate. The failed
 result remains visible; it is never rewritten as a pass. Additional instructions

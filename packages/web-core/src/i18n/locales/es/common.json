@@ -1232,6 +1232,10 @@
     "rejectHelp": "To request a different resolution, enter instructions below and select “Request revision”.",
     "revise": "Request revision",
     "tests": "Completed merge steps and tests",
-    "progress": "Merge step {{current}} / {{total}}"
+    "progress": "Merge step {{current}} / {{total}}",
+    "validationPlan": "Verificaciones de desarrollo que se repetirán",
+    "evidence": "Registro de desarrollo / motivo",
+    "prerequisites": "Requisitos previos y comprobaciones del entorno",
+    "exclusions": "Sustituciones y exclusiones"
   }
 }

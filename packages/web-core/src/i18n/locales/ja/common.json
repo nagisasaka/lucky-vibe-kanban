@@ -1271,6 +1271,10 @@
     "rejectHelp": "別の解消方法を希望する場合は、下の入力欄に追加指示を書いて「修正を依頼」を選んでください。",
     "revise": "修正を依頼",
     "tests": "取り込み済みの段階とテスト結果",
-    "progress": "取り込み {{current}} / {{total}}"
+    "progress": "取り込み {{current}} / {{total}}",
+    "validationPlan": "再実行する開発時の検証",
+    "evidence": "開発時の記録・根拠",
+    "prerequisites": "前提条件と環境の確認",
+    "exclusions": "置換・除外の理由"
   }
 }

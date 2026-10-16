@@ -74,13 +74,50 @@ export function IntegrationInterventionPanel({
       </p>
       {run && <IntegrationResolutionReview run={run} />}
       <p>{t('integrationGate.instructionBoundary')}</p>
-      {run?.error && <p role="alert">{run.error}</p>}
+      {run?.error && (
+        <p role="alert" className="whitespace-pre-wrap">
+          {run.error}
+        </p>
+      )}
       {run?.payload.stop && (
         <p>
           {run.payload.stop.stage}: {run.payload.stop.next_action}
         </p>
       )}
       {run && <IntegrationGateControls run={run} />}
+      {(!!run?.payload.validation?.length ||
+        !!run?.payload.exclusions?.length) && (
+        <details open={run?.status === 'blocked'}>
+          <summary>{t('integrationReview.validationPlan')}</summary>
+          {run?.payload.validation?.map((check, index) => (
+            <div key={index} className="border p-half space-y-half">
+              <pre className="whitespace-pre-wrap break-words text-xs">
+                {check.command}
+              </pre>
+              <p>
+                {check.cwd} · {check.result ?? t('integrationGate.notRun')}
+              </p>
+              <p className="whitespace-pre-wrap">
+                {t('integrationReview.evidence')}: {check.evidence}
+              </p>
+              <p className="whitespace-pre-wrap">
+                {t('integrationReview.prerequisites')}:{' '}
+                {check.environment_requirements}
+              </p>
+            </div>
+          ))}
+          {!!run?.payload.exclusions?.length && (
+            <div>
+              <p>{t('integrationReview.exclusions')}</p>
+              <ul>
+                {run.payload.exclusions.map((reason, index) => (
+                  <li key={index}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </details>
+      )}
       {!!run?.payload.steps?.length && (
         <details>
           <summary>{t('integrationReview.tests')}</summary>
