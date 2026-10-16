@@ -39,6 +39,33 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - Broad checks: `pnpm run check` runs the legacy path guard, frontend type checks and backend check. `pnpm run lint` runs local-web/UI ESLint, backend Clippy and the unused-i18n-key check.
 - Broad formatting: `pnpm run format` runs `cargo fmt --all` and web-core/local-web Prettier. It does not include the UI package; use scoped formatting for normal changes.
 
+### Rust build cache
+
+- Use sccache for Cargo compilation when it is installed. Set
+  `RUSTC_WRAPPER` to its absolute executable path, preserving any
+  explicitly configured alternative wrapper.
+- When `.lvk-shared/cache` exists, set `SCCACHE_DIR` to the canonical
+  absolute path of `.lvk-shared/cache/sccache` before invoking sccache.
+  If the shared directory is unavailable, keep the existing cache setup.
+- Reuse the default sccache server (`127.0.0.1:4226`) and its automatic
+  startup. Do not create workspace-specific server ports or sockets.
+  Preserve an explicitly configured shared endpoint.
+- An existing server retains its cache configuration. Check the actual
+  cache location with `sccache --show-stats`; report a mismatch rather
+  than stopping or reconfiguring a shared server.
+- Keep Cargo target directories isolated per workspace. Do not place
+  a common target directory in the shared cache.
+- Preserve `CARGO_INCREMENTAL` and profile settings. Incrementally
+  compiled crates are not cached by sccache; other eligible
+  compilations can still benefit.
+- Observe cache hits, misses and non-cacheable compilations with
+  `sccache --show-stats` around relevant builds. Statistics are shared
+  across clients; do not reset them or clear the shared cache.
+- Do not set `SCCACHE_BASEDIRS` or change compiler flags routinely.
+  Investigate path-related misses only when measurements justify it.
+- If sccache is unavailable, use normal Cargo compilation and report
+  that compiler caching was unavailable.
+
 ## Validation and Completion
 
 ### Normal development
