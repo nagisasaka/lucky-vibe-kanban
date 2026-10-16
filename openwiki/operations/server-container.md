@@ -89,6 +89,13 @@ Basic認証は `LVK_E2E_CREDENTIALS_FILE` のJSONから読み、TLS検証は無�
 既存 `workflow:e2e` は4175のUI fixtureであり、8443の実アプリE2Eとは区別する。
 [ブラウザー構成](../../deploy/browser/package.json)、[実アプリE2E](../../tests/server/playwright.config.ts)
 
+CIとホスト更新時の内部readiness検査は、loopback限定の内部capabilityでAPIへ接続する。
+Chromiumはmodule/CORSリクエストで`Origin`を再付与するため、検査用通信は
+Playwrightの`route.fetch`で取得し、ブラウザーへ返す。リダイレクト追跡を無効にし、
+capabilityを別originへ転送しない。公開側のHost/Origin検証は変更しない。
+これは実利用者のBasic/Auth0ログインの証明ではなく、実ブラウザーの起動・画面描画と
+内部APIのreadiness検査である。[検査用通信](../../deploy/browser/smoke.mjs)
+
 任意導入の `deploy/developer` は Linux/systemd ホスト向けで、標準imageには含めない。
 ホストへ設置したroot所有のコードがDockerを操作する。agentには要求ディレクトリーへの
 書込みと状態の読取りだけを提供し、Docker socket・rootコード・ホスト用GitHub tokenを

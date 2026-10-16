@@ -48,23 +48,36 @@ try {
         "x-lvk-internal-token": internalToken,
       };
       delete headers.origin;
-      await route.continue({ headers });
+      // Chromium can restore Origin on module/CORS requests after continue().
+      // Fetch this loopback-only fixture request outside the browser instead;
+      // never follow a redirect with the internal capability attached.
+      const response = await route.fetch({ headers, maxRedirects: 0 });
+      await route.fulfill({ response });
     });
   }
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
   const response = await page.goto(url, {
     waitUntil: "commit",
     timeout: 30_000,
   });
   assert.equal(response?.status(), 200);
   assert.match(await page.title(), /Lucky Vibe Kanban/i);
-  await page.waitForFunction(
-    () => document.querySelector("#root")?.textContent?.trim(),
-    undefined,
-    { timeout: 120_000 },
-  );
+  try {
+    await page.waitForFunction(
+      () => document.querySelector("#root")?.textContent?.trim(),
+      undefined,
+      { timeout: 120_000 },
+    );
+  } catch (error) {
+    throw new Error(`Application did not render: ${JSON.stringify(errors)}`, {
+      cause: error,
+    });
+  }
   await page
     .getByRole("button")
     .first()
