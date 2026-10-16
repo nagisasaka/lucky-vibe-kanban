@@ -6,12 +6,12 @@ tags: [remote, authentication, relay, mobile, self-hosting]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-7d94e7454f63f16057833046
+    resource: repo://crates/server-access/src/lib.rs
+  - id: openwiki-source-d9fe6f50a365b8b34a14b1e4
+    resource: repo://crates/server-access/src/provider.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
     resource: repo://crates/server/src/middleware/origin.rs
-  - id: openwiki-source-0efe022da63bfbe33cd95498
-    resource: repo://crates/server/src/remote_mcp/auth.rs
-  - id: openwiki-source-e8ffcc68baa749ea9aa59c4d
-    resource: repo://crates/server/src/remote_mcp/config.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
@@ -22,7 +22,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -37,17 +40,21 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 ## 認証付き外部 MCP
 
-公開配置は初回にロックされ、管理者が `server setup-token` で15分間有効な一度限りのキーを発行する。HTTPS画面でBasicまたはAuth0を設定し、Auth0は実ログイン試験と同じブラウザーでの管理者本人確認後に有効化する。Local配置は明示的なローカル用途で、公開配置から選べない。[初期設定](../../docs/self-hosting/authentication.mdx)、[共通認証](../../crates/server-access/src/lib.rs)。
+公開配置は初回にロックされる。初回setup、Basic/Auth0切替、Web sessionと復旧は [サーバー認証](../concepts/server-access.md)を正本とし、ここでは外部MCPの委任範囲を扱う。
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これはstdio MCPやAstraのモデル認証とは独立している。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[provider](../../crates/server-access/src/provider.rs)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+
+transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L58-L147)、[session ID拒否](../../crates/server-access/src/lib.rs#L437-L477)
 
 ## 参照結果と操作 receipt
 
 返すコード・diff・Wiki・Memoryは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[Integration read](../../crates/server/src/remote_mcp/integration_read.rs)、[verification read](../../crates/server/src/remote_mcp/verification_read.rs)。
 
 mutation は principal + request ID と入力hashを固定した永続 receipt を作る。同じkeyで異なる入力は拒否し、再送は保存済み結果を参照する。MCP client切断は受理済み操作を取り消さず、domain受付を待つ経路もcoding完了を待たない。server再起動後の旧accepted/runningはuncertainとして見せ、自動replayしない。結果不明時に新request IDで同じ副作用を重ねず、既存receiptと対象状態を照合する。[操作寿命](../../crates/server/src/remote_mcp/operations.rs)、[lost responseのテスト](../../crates/server/src/remote_mcp/runtime_write_tests.rs#L479-L502)。
+
+受付を所有する非同期taskには検証済みactorを明示継承し、HTTP要求の終了後も業務書込の帰属を保つ。受理済み作業の寿命と新規要求の認証失効は別である。[actorの継承](../../crates/server/src/remote_mcp/operations.rs#L134-L190)
 
 Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続は別途受入確認が必要である。fixtureやローカルテストをその成功として扱わない。[検証範囲](../../docs/development/server-access.md)。
 

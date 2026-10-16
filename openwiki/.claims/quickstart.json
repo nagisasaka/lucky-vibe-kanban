@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a62b3a814c82ab155ec40b1633532c7804523213ae07059ef80b9d6179783076",
+  "pageVersion": "sha256:a0646c808753bd7d743f055bfeface675ce1f9759a52174caec953089852be3b",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:291074718b15235c4ecf774bbb89ef5df017dc121fc8b0f864ba2daffaba052a"
+          "version": "repo-file-v1:sha256:ff308a21daa1f9d4565adf8d744f753fb7a8a5219af08644f2ed3aecc5e93178"
         }
       ]
     },
@@ -18,29 +18,29 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:291074718b15235c4ecf774bbb89ef5df017dc121fc8b0f864ba2daffaba052a"
+          "version": "repo-file-v1:sha256:ff308a21daa1f9d4565adf8d744f753fb7a8a5219af08644f2ed3aecc5e93178"
         }
       ]
     },
     {
       "id": "claim_cf946203bb9f435fa5db7a52e4d567ab",
-      "statement": "現行 local Board は local API と固定 owner identity を使い Cloud sign-in や remote API base を要求しない。",
+      "statement": "現行Boardはlocal APIを使い、公開配置はBasic/Auth0の認証actorをUIへ渡す。旧Cloud sign-inやremote API baseを要求せず、固定userはLocalモードと履歴identityである。",
       "evidence": [
         {
-          "resource": "repo://docs/getting-started.mdx",
-          "version": "repo-file-v1:sha256:8504bf04175ce2e5ff6b204bfd43915c7dd47f4186ce65ce82a763095e82507f"
+          "resource": "repo://packages/local-web/src/app/auth/serverAccess.ts#L17-L35",
+          "version": "repo-lines-v1:sha256:0afe6cc2edd6dea5b39fbd7c06c15be95dc343bb89981e5df39f430fe08f4626:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNDM1N2NiNDRkNTI0NTA4YzQ0OWJjZmVjMDg3NDZhNjg1NzY0Y2VlZmIzYTI5MmIxNzRhYjQ5NTA3ODI1ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OTdiZmY3ZmMwZjNlNWNmYmRmNWRkNDdlNTVjYzdkY2ZhMTE5OGMzYWZhNmJlOWZmMzNkNGIxMzUyNWQ1NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0NWZkNjk2NWViODdhY2UwOTI4Yjk5MWFiNjk3NDI0ZDVmYjhhYzZmOWRlZWJjNDM3YjJiZmFlYTIwZDcxYWMifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx",
-          "version": "repo-file-v1:sha256:8f892d6b0c4cc81f3c086441c895dceca65188882a3d9dbdb3b431538dd29cf3"
+          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99",
+          "version": "repo-lines-v1:sha256:cb79b3fcd6376dc4c53d9f8ae15e4ec1b5c9b1dc22269cc9c737dac7ee017b09:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMjk0Y2JmOGJiNDU4ZjlmN2EyMTY2OGY4ZWVmZjQ4YzU1NmQxZjI0MjJjZjBlYzA4ZDY3YmQyZjg3ODFjYzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiMTRjMWFkOTQyNjkxNmM4ZTkyYjEzYzFkYTI3NjY4MTA4NDYxYTI5NTdjZTExNjBiZjY0NGU4MGJhNjM0ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiM2E2NWFmNjIyYjcxMjQyMzliYTkyZWU1NzExZWEwMmVmYjMzMDIzODZkYTI1NjA2ZWYzOThlYTAzNmFhMzYifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/providers/ConfigProvider.tsx",
-          "version": "repo-file-v1:sha256:d24af4fb0411cedcb8a8052ba79f453f5f229005a96cfe7b3aca3bf280426e0e"
+          "resource": "repo://packages/web-core/src/shared/lib/localIdentity.ts",
+          "version": "repo-file-v1:sha256:b56a4d4303c2eec99dbb28978a8e589f2ed2f22497365f039615885c4d115a35"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/remoteApi.ts",
-          "version": "repo-file-v1:sha256:a3cd8cacd93b7f969db412245455f865a41a088aed26d56abc8b3a47e00ea439"
+          "resource": "repo://packages/web-core/src/shared/lib/remoteApi.ts#L8-L24",
+          "version": "repo-lines-v1:sha256:fe925c44f347a1c8cc43d1280d4982cac38d2259fc8f08d2739bcd906670e720:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMmQzNDk5ZDczNTI1NmZlNDc1OTJhODJkNDc1NGY2YmM2OWEzZjBiM2FkZDg1NDM2Y2NlNDE0ZmZlMjBhYzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ODM5OGY4MmYzNzgzMDQwMmRlM2VkMWJlNGRkY2U2ZjFhZDdlZmY2ZWUwM2FkYzYyMTU2NDIyNDc1MDI2YzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwMGZkZmE1NzZhYmYzNTNjY2RlYWFkYWRlNzRhOTJjY2NhMDI1ZTI0OTFmNjRmYmFlOGFiNDg0OGY5Y2EzNjUifQ"
         }
       ]
     },
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://docs/docs.json",
-          "version": "repo-file-v1:sha256:8188f5212ded5c3218b7954868175377f11935e8735a0eb1ea3d195652ab2e69"
+          "version": "repo-file-v1:sha256:675ec6b5da44625a3a5726d8a3bbcfa4fa450ecbd8cccf6b025c3827c3754f14"
         }
       ]
     },
@@ -90,7 +90,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:25d976823b31fc50a7ea7f8af92e0c3f680ef607ce39e47e621e07691a3c7c68"
+          "version": "repo-file-v1:sha256:be8fa5cc9c4abd71a49c9f9d253ea52f2116073c6b46f7358aaf14033e76c482"
         }
       ]
     },
@@ -118,17 +118,17 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/compose.yaml",
-          "version": "repo-file-v1:sha256:08408328295aa1a52fc1205b40095b7b354ef41e282587cacc5ac2bd91b90597"
+          "version": "repo-file-v1:sha256:e1e69887a5ae19eae822b3e29c827d565bf4fb99c754f5fa09b63f510fc8e471"
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:c0b35aa686560230e043293dd9ca4290a252743368e577470c23a617df24ea99"
+          "version": "repo-file-v1:sha256:ab0cc7065f1108cfe6d84397a675fb5b31008579472adad5e68ade2892b72bed"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:21:28.631Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

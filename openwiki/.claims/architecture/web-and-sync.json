@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:586bcc79fe51fb8d2ff2c64c8436473d1d4263529c2b2009478c117533167006",
+  "pageVersion": "sha256:c23dc54bb38d839624f7d7c029741a2b58ad16e48ef263d9c2c30a48bf9e99d4",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -215,10 +215,28 @@
           "version": "repo-file-v1:sha256:dba9de06060581c764448045bf9cb4c614807d7a456eca5b9330963c7b6f0288"
         }
       ]
+    },
+    {
+      "id": "claim_3aae50d063214f4ab899641c3d6a5bd0",
+      "statement": "BootstrapはAccessFetchを登録しAccessGate内にAppをmountする。gateのstatus読取で本人IDを設定し、fetch wrapperは同一origin APIの変更だけにCSRFを補い業務APIの401/423で認証状態を再取得する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148",
+          "version": "repo-lines-v1:sha256:594b42d048835087f11d282fa68f2cd1f68beb358f0c84fe2af820b6e48a5cbc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyY2Y1NjVkM2RkYzE5MDI1NzNjMTEwMmVjMjI2ZGY5NTU3ZWFjNTk4NmFhYTYxNzk3YjAzZmE2N2EwNmVhNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYjc2MWE2ZmYzNmY4MDQzZTI2MGZiYTA2NmNmYTFjNjc2MzE3MzZkYzhhNjNhNjY1NmFjMTMwYzk2NzhhOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZjQzNGUwOTA3MGQ4NjMxYWRlNjllNjRlZjg4NjI3N2Q5MWM0MDNkNDAwYTIxMjE2MGJlODE2NDczNTRkOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmODFlYmIyMTFkYzgxNGQ2ZmNjNjk4ZjEzY2U5ZmMwNTM0MDg1OTA0MzgyNzI3NzQzOGZjMmQ2M2M2ZGNjZGEifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/app/auth/serverAccess.ts#L17-L74",
+          "version": "repo-lines-v1:sha256:cb0613a02d3edfc5b7b225bda9fd3bfa3a07427edc484f508cf9ca2d0844900a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNDM1N2NiNDRkNTI0NTA4YzQ0OWJjZmVjMDg3NDZhNjg1NzY0Y2VlZmIzYTI5MmIxNzRhYjQ5NTA3ODI1ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OTdiZmY3ZmMwZjNlNWNmYmRmNWRkNDdlNTVjYzdkY2ZhMTE5OGMzYWZhNmJlOWZmMzNkNGIxMzUyNWQ1NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkZmQ5ZTZmZWE4YTNlMjEwNDQ3NWRhMDFhMjQ1MGRiZDVlNGUzMTAzYjE5MjBjMjg1NzY5OWRmYjMzYTJmNjEifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99",
+          "version": "repo-lines-v1:sha256:cb79b3fcd6376dc4c53d9f8ae15e4ec1b5c9b1dc22269cc9c737dac7ee017b09:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMjk0Y2JmOGJiNDU4ZjlmN2EyMTY2OGY4ZWVmZjQ4YzU1NmQxZjI0MjJjZjBlYzA4ZDY3YmQyZjg3ODFjYzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiMTRjMWFkOTQyNjkxNmM4ZTkyYjEzYzFkYTI3NjY4MTA4NDYxYTI5NTdjZTExNjBiZjY0NGU4MGJhNjM0ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiM2E2NWFmNjIyYjcxMjQyMzliYTkyZWU1NzExZWEwMmVmYjMzMDIzODZkYTI1NjA2ZWYzOThlYTAzNmFhMzYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:21:28.631Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

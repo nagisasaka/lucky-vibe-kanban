@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:149f9950528e935ad0ac81f00782bfe25b84dc41b671c6be6bee16ac86ec629c",
+  "pageVersion": "sha256:4970c4caf1b47a3ab9271c0133a1607178a2afcb8a7d91f9c2121685ed3f2796",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -32,7 +32,7 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:068212306476bf999ddfe46292c79571e10e0c6de0addff8e5aeeaeaf7f6673a"
+          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
         },
         {
           "resource": "repo://package.json",
@@ -128,7 +128,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/nginx.test.mjs",
-          "version": "repo-file-v1:sha256:66c85e4f302514a1e86293a19e46d58c6020f61c8a72922186cc8b5bc7816ad7"
+          "version": "repo-file-v1:sha256:3931a3bcd1dab7cfc825885e318317d11d18bea2a946bb66583c14d5ad3fc776"
         },
         {
           "resource": "repo://package.json",
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/instance.mjs",
-          "version": "repo-file-v1:sha256:3f6e68c9b0c612eb8926b70f9d9cd10b7133f76330ef29a673b91c6d44c92077"
+          "version": "repo-file-v1:sha256:e4e6782985e091ea07940c3e3bf5f9fedbd630d4c61c879b1a2c1cad82f0ba9b"
         }
       ]
     },
@@ -180,13 +180,27 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:f990a2e21ab89623d5be285c4e33cbc53990e58c17f3113b7e7cb0a5b6f4aeb0"
+          "version": "repo-file-v1:sha256:94a542a73b396b9c7da140b5cbc998477c85406fad5879d12f75cf4d34a5052a"
+        }
+      ]
+    },
+    {
+      "id": "claim_cf99614b785d4e7b974cace7167aabac",
+      "statement": "stagingは独立instanceの認証stateと8443の公開URLを使い、同hostname/IPのstableとはcookieが競合するため別ブラウザープロファイルを使う運用契約である。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/STAGING.md#L65-L72",
+          "version": "repo-lines-v1:sha256:35ccdff3f6d30b6d21f53b2a0be6eeb7958f3fa4d75bf4250f076cd36f5f73d3:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVjMDVjMzY4MWE3Mjg1OWNhOTUzYjc1MGUwYWZlMzk3NzFmZmNiNzIzMTFlMDMzMWFkMTk2YTQ1NDU4MmVmOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDU1Yjc0ZTZlNTg0YTc5YzlmZjJhZDU3YWJmNjQzN2E1MzYzMWU4MDNmNTg5ZTM2ZGFjYWY0YmQ3YzY0YzQyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTU5ODE5MGU4M2Q1MDEwNTRlN2YyMzRiNWY5N2IxNjQyNDYxNjY4ZDI2MjAyMWU4MDI2NzgyNGFhY2FlZWM0ZCJ9"
+        },
+        {
+          "resource": "repo://deploy/developer/instance.mjs#L44-L64",
+          "version": "repo-lines-v1:sha256:7b7533abaa318dfa6fa9fd9778c9b601a7d0baab0f3804be157b8ac5d79814ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDZiZTU5ZDZiZjJjOTZlZTFjMmQ3ZjVlY2ExZTdmNjQwNWM1YTg3YTcwZDg5NGIzYWM1ODE0MmE4YmM5ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjhiOGEwNGM3MGQwM2U3ZWM5ODZkOWE0OWU3YzFhMWM3YmFlMjU0YWY3NmMzZjc3ODQyYmQ5NzAyZWRmZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzMWE1MDczZGY3OGQ3Zjc0MmQ3MjEzODVjNzRiZDQzMzhjOGJkMmI4ODI0MjgwZDViNzk2ZmJhYzBmNjA1ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYWZjN2FiOTAwNGY1NmQxYmQwNTU2MTliYmFkYzc1ZjI1ZjgwYmNmNjM0ZTA5Njg3MzY4MGNmMDg1MDQxMGUifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:23:35.935Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

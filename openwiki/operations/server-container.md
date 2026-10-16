@@ -4,6 +4,8 @@ title: 単一サーバーコンテナーの運用境界
 description: local LVK をサーバー上で動かす配布構成。HTTPS、認証、preview origin、永続化、停止と回復の契約。
 tags: [server, docker, deployment, preview, persistence]
 sources:
+  - id: openwiki-source-c16d91d3eae6ee7bafc2593e
+    resource: repo://crates/server-access/src/preview.rs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-353b77936aed6c3d486f5cb9
@@ -12,25 +14,26 @@ sources:
     resource: repo://deploy/server/acme.py
   - id: openwiki-source-394060232279d0ae0be019c2
     resource: repo://deploy/server/compose.acme.yaml
+  - id: openwiki-source-ffb1a00d9048c7ef4369674b
+    resource: repo://deploy/server/compose.local.yaml
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
   - id: openwiki-source-eb00c8fb4075578ba5a7c691
     resource: repo://deploy/server/healthcheck.mjs
   - id: openwiki-source-078e9842bd26cfd05bb35acc
     resource: repo://deploy/server/nginx.conf.template
-  - id: openwiki-source-8b0f6773cd6f7a2a989ad880
-    resource: repo://deploy/server/nginx.test.mjs
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
     resource: repo://deploy/server/server.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
-  - id: openwiki-source-bb1ebe868e35e9e500714501
-    resource: repo://Dockerfile
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -57,9 +60,13 @@ Compose は host の `443` だけを nginx の `8443` へ公開する。Rust bac
 
 ## Preview は別 origin
 
-開発サーバー `5173` の公開 URL は `https://5173.<preview-domain>` になる。許す port は 1024–65535 から LVK/nginx の 3000・3001・8443 を除いたもの。main origin の `/api/preview` と `/api/host/<id>/preview` は 403 にし、project-controlled HTML を LVK の origin へ持ち込まない。[nginx の分離](../../deploy/server/nginx.conf.template)、[preview host の生成](../../deploy/server/server.mjs)
+開発サーバー `5173` の公開 URL は `https://5173.<preview-domain>` になる。公開認証層が許すportは1024–65535から3000・3001・4020・4021・8443・8444を除いたもの。UIやnginxの古い除外集合だけで許可を判断しない。main origin の `/api/preview` と `/api/host/<id>/preview` は 403 にし、project-controlled HTML を LVK の origin へ持ち込まない。[nginx の分離](../../deploy/server/nginx.conf.template)、[preview host の生成](../../deploy/server/server.mjs)
 
-UI も公開 preview domain がある場合は HTTPS wildcard URL を使い、relay host を組み合わせない。preview 無効なら wildcard server は作らない。iframe 内で認証 prompt が出ない場合は新しいタブで当該 preview に認証してから戻る運用となる。HTML/JavaScript に埋め込まれた絶対 localhost URL を全て書き換える保証はない。[URL 構築](../../packages/web-core/src/shared/lib/previewProxyUrl.ts)、[preview の運用制限](../../docs/self-hosting/server-container.mdx)。ローカル表示との関係は [Workspace preview](workspace-inspection.md#preview-と開発サーバー)を参照する。
+UI も公開 preview domain がある場合は HTTPS wildcard URL を使い、relay host を組み合わせない。preview 無効なら wildcard server は作らない。backend認証ではログイン済みLVKからoriginごとに認可を委譲する。第三者cookieを拒否するブラウザーでは独立タブで認可・表示する。親sessionの失効、cookieの分離、資格情報除去は [preview handoff](workspace-inspection.md#公開-preview-への認可委譲)に集約する。HTML/JavaScript に埋め込まれた絶対 localhost URL を全て書き換える保証はない。[URL 構築](../../packages/web-core/src/shared/lib/previewProxyUrl.ts)、[preview の運用制限](../../docs/self-hosting/server-container.mdx)。ローカル表示との関係は [Workspace preview](workspace-inspection.md#preview-と開発サーバー)を参照する。
+
+`compose.local.yaml`は公開presetとは別で、nginxを経ずserverを直接起動しhost loopbackに3000を公開する。コンテナー内部のbindは0.0.0.0でも、配置を明示LocalにしてHostのloopback検査を残す。[Local preset](../../deploy/server/compose.local.yaml)、[配置の制約](../concepts/server-access.md#配置と認証方式は別の設定)
+
+運用文書の初期段落に残る「Auth0ではpublic previewを拒否」という記述は、現在のhandoff実装および同文書のProject previews節と一致しない。実装は任意のpreview domainに対する限定認可を提供する。[handoff](../../crates/server-access/src/preview.rs)、[現在の運用節](../../docs/self-hosting/server-container.mdx#project-previews)
 
 ## 永続化と実行の寿命
 
@@ -75,7 +82,7 @@ Compose project 名の変更は別 volume の選択になる。同じ named volu
 
 supervisor は server と nginx を process group として起動する。一方の終了・spawn 失敗ではもう一方へ SIGTERM を送り、既定 120 秒後に残存 group へ SIGKILL を送る。外部 SIGTERM/SIGINT も同じ停止手順を使い、Compose の停止猶予は150秒である。これは個々の AgentRun の [監査付き取消](../architecture/agent-runtime.md#取消と実プロセスの終了)とは別のコンテナー停止境界である。[supervision](../../deploy/server/server.mjs)、[猶予](../../deploy/server/compose.yaml#L21)
 
-healthcheckは内部healthと公開TLSの認証状態を確認する。新規公開配置のロック状態も正常な初期状態であり、healthyだけでは初回認証やagent認証の完了を示さない。運用文書は unhealthy のみでは再起動しないことを明示する。サービス終了時の restart policy と health status を分けて診断する。[probe](../../deploy/server/healthcheck.mjs)、[再起動契約](../../docs/self-hosting/server-container.mdx)
+healthcheckは内部`/api/health`の200と、公開identity・CA/chain・残存6時間超を含むTLS検査を行う。公開rootの期待値はmaintenance時503、既存proxy Basicありなら401、backend認証なら200である。新規公開配置のロック状態も正常な初期状態であり、healthyだけでは初回認証やagent認証の完了を示さない。運用文書は unhealthy のみでは再起動しないことを明示する。サービス終了時の restart policy と health status を分けて診断する。[probe](../../deploy/server/healthcheck.mjs)、[再起動契約](../../docs/self-hosting/server-container.mdx)
 
 ## 更新・回復と検証限界
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2a2354e8789b3fb70de1df2f8d97049a1435c4362e7c564611f6c75987498472",
+  "pageVersion": "sha256:bfea5fe4662654746496522591961185689c7729684ef31b2a356b9b1e92a482",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -112,7 +112,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:7691359c38dc2982ebfbda53f867bc290b79bee7a0f96088b92fbeac606e5779"
+          "version": "repo-file-v1:sha256:a8e9eeb55626f4af506d121c8521be47b3837de7473118eb101d6d6063ddd9d9"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L214-L227",
@@ -144,7 +144,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:7691359c38dc2982ebfbda53f867bc290b79bee7a0f96088b92fbeac606e5779"
+          "version": "repo-file-v1:sha256:a8e9eeb55626f4af506d121c8521be47b3837de7473118eb101d6d6063ddd9d9"
         },
         {
           "resource": "repo://crates/server/src/startup.rs#L219-L227",
@@ -219,6 +219,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

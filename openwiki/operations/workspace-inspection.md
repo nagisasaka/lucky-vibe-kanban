@@ -8,6 +8,10 @@ sources:
     resource: repo://crates/preview-proxy/src/api.rs
   - id: openwiki-source-0099d841c439c1dde012669e
     resource: repo://crates/preview-proxy/src/lib.rs
+  - id: openwiki-source-c16d91d3eae6ee7bafc2593e
+    resource: repo://crates/server-access/src/preview.rs
+  - id: openwiki-source-a6cad3d930b299ebbbd793a3
+    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -60,12 +64,14 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
   - id: openwiki-source-7156bd32d206a84b272e44b5
     resource: repo://packages/web-core/src/shared/stores/useWorkspaceDiffStore.ts
+  - id: openwiki-source-be2dcdcefb33abee0a49e75a
+    resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-16T14:44:43.872Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-16T14:44:43.872Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -136,13 +142,25 @@ Dev server の開始は Workspace 内で既存 dev server の停止を試み、s
 
 Preview proxy は main app とは別 port で iframe content を提供し、{port}.localhost から localhost の指定 port へ転送する。旧 remote host UUID 入り label は拒否する。[host 解決と回帰テスト](../../crates/preview-proxy/src/lib.rs)
 
-サーバー配布では `VK_PREVIEW_DOMAIN` を backend の system info から UI へ渡し、HTTPS の `<port>.<domain>` を使う。proxy の loopback redirect も同じ公開 origin へ読み替える。公開 port・Basic 認証・main origin 禁止の詳細は [サーバーコンテナーの preview](server-container.md#preview-は別-origin)に置く。[domain の取得](../../crates/preview-proxy/src/lib.rs)、[公開 redirect の test](../../crates/preview-proxy/src/lib.rs)
+サーバー配布では `VK_PREVIEW_DOMAIN` を backend の system info から UI へ渡し、HTTPS の `<port>.<domain>` を使う。proxy の loopback redirect も同じ公開 origin へ読み替える。公開port・HTTPS ingress・main origin禁止の詳細は [サーバーコンテナーの preview](server-container.md#preview-は別-origin)に置く。[domain の取得](../../crates/preview-proxy/src/lib.rs)、[公開 redirect の test](../../crates/preview-proxy/src/lib.rs)
 
 この target は port と host の routing 情報である。Repo membership を検証する file API とは異なり、preview route は target_port を受け取る。アクセス制御を追加するときは、見えている Workspace の識別子だけで proxy の許可が決まると仮定しない。[preview route](../../crates/server/src/routes/preview.rs)
 
 subdomain proxy は HTML を読み替え、head に React 検査用 bundle、body に DevTools / click-to-component 等を挿入する。CSP、X-Frame-Options などの header も除外する。Eruda の読み込みには CDN 依存がある。これは開発 preview の加工経路であり、file raw の MIME policy と同じ規則ではない。[header policy](../../crates/preview-proxy/src/lib.rs)・[HTML 加工](../../crates/preview-proxy/src/lib.rs)
 
 一方 /api/preview/{port} の HTTP 転送は localhost upstream を呼び、失敗時は BadGateway、応答は streaming で返す。subdomain 側の injection と同じ責務を重ねない。loopback redirect の公開 URL への変換には focused test がある。[API 転送](../../crates/preview-proxy/src/api.rs)・[応答](../../crates/preview-proxy/src/api.rs)・[redirect test](../../crates/preview-proxy/src/lib.rs)
+
+### 公開 preview への認可委譲
+
+公開Basic/Auth0配置ではpreview listenerの専用認証層を通す。未認証GETはprojectへ転送せず認可案内を返す。利用者はmain LVKでログインし、対象preview originと開始ブラウザーに結び付いたgrantを承認する。grantは60秒・一度限りで、URLではなくform POSTで`/.lvk-preview/exchange`へ送る。交換はbrowser cookie・送信Origin・対象origin・親Web sessionを照合する。[認可と交換](../../crates/server-access/src/preview.rs#L97-L186)、[一度だけの消費](../../crates/server-access/src/preview.rs#L326-L361)
+
+preview側にはSecure / HttpOnly / SameSite=None、Domainなしの`__Host-lvk_preview`を発行する。このcookieはLVK業務APIの認証には使えず、別のport subdomainにも流用できない。親Web session・active member・設定revisionに依存し、logoutや無効化、期限、設定変更で効力を失う。projectへ送る前にAuthorization、内部token、LVK/preview認証cookieを除去する。[cookie](../../crates/server-access/src/preview.rs#L87-L96)、[親の照合](../../crates/server-access/src/preview.rs#L187-L215)、[転送前の除去](../../crates/server-access/src/preview.rs#L279-L305)
+
+対象は設定preview domainの正規化された数値port subdomainに限定する。1024未満と3000・3001・4020・4021・8443・8444を拒否し、main originと同じURL portを要求する。main hostをpreview domain内へ置けない。これはWorkspace/Repo所属の認可ではなく、信頼チーム内の開発portへの委譲である。UIのURL生成やnginxの除外集合はこのbackend検査の代わりにならない。[対象検査](../../crates/server-access/src/preview.rs#L28-L58)
+
+SSEは親sessionのleaseで止まり、WebSocketはserverからproxyへ`ConnectionLease`を渡して失効時に転送taskを終了する。Localモードではこの公開handoffを要求しない。第三者cookieが拒否される場合は独立タブで認可・表示する。[専用gate](../../crates/server-access/src/preview.rs#L216-L324)、[WS配線](../../crates/server/src/routes/preview.rs#L112-L128)、[proxyの終了](../../crates/preview-proxy/src/lib.rs#L431-L440)
+
+[handoff回帰テスト](../../crates/server-access/src/tests.rs#L1554-L1737)は別ブラウザー・再利用・別origin・業務APIへの流用を拒否し、logout後の拒否を確認する。実socketのlease終了は [proxy test](../../crates/preview-proxy/src/lib.rs#L1304-L1379)を参照する。別の [静的配信fixture](../../tests/server-access/preview-static.mjs)は、ビルド済みVite previewの`/@fs`・`/@vite/client`から非公開ファイルや開発用endpointが露出しないことをHTTP fetchで検査する。このfixtureはブラウザーでのhandoffや実Auth0接続を検証しない。
 
 ## Terminal と editor
 

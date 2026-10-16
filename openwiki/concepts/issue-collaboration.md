@@ -12,10 +12,10 @@ sources:
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-4251300987fd63068dbcfd5d
     resource: repo://crates/services/src/services/notification.rs
-generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:21:28.631Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # Issue の添付・購読・通知
@@ -26,7 +26,7 @@ verified:
 
 Assignee は担当の関連、Follower は追跡対象との関連で、どちらも Issue と user ID を結ぶ別テーブルに保存する。追加は `INSERT OR IGNORE`、解除は関連 ID の削除である。Follower を保存することと、通知を生成・配送することは別契約である。[関連操作](../../crates/server/src/routes/local_remote.rs#L1694-L1760)。
 
-Comment は Issue・local user・任意の parent・message を保存し、reaction は Comment と local user に結び付く。作成・編集・削除後にローカル snapshot を再取得する。現在の local 通知一覧は空を返し、担当・購読者への Cloud 受信箱配送を実装しているとは解釈しない。[Comment / reaction](../../crates/server/src/routes/local_remote.rs#L1801-L1893)、[通知一覧](../../crates/server/src/routes/local_remote.rs#L1429-L1431)。
+Comment は Issue・現在の認証actor・任意の parent・message を保存し、reaction も現在のactorに結び付く。Localモード以外で固定userを新しい本人と扱わない。[actorの由来と履歴](organization-and-membership.md)、[保存時のactor](../../crates/server/src/routes/local_remote.rs#L1852-L1937)。作成・編集・削除後にローカル snapshot を再取得する。現在の local 通知一覧は空を返し、担当・購読者への Cloud 受信箱配送を実装しているとは解釈しない。[Comment / reaction](../../crates/server/src/routes/local_remote.rs#L1801-L1893)、[通知一覧](../../crates/server/src/routes/local_remote.rs#L1429-L1431)。
 
 ## 添付の現在の境界
 

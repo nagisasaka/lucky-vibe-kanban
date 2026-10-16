@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:76bcb1b8eecb0c1f002a5b464fa2af39ac51c195039f27a2e0171269979a6f7f",
+  "pageVersion": "sha256:22a166d9b0ed768d6f8b2c7ba8b91ab8d017555796fb4dc4336b2fb0f041b8c5",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -26,17 +26,31 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:068212306476bf999ddfe46292c79571e10e0c6de0addff8e5aeeaeaf7f6673a"
+          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:97d4e09fcb3fee32ebdcb0b1aa7dd6573356d2ca607984082e12f373cdf20852"
+          "version": "repo-file-v1:sha256:47f4025a88265ca8f283ff319f3101efa015b889cdf9704b6a54907d76bd31be"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ed7702d159841238d2e77cfd37422af",
+      "statement": "新規Commentとreactionの帰属にはserver_access::actor_idが使われ、公開配置では現在の認証actorを記録する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1852-L1937",
+          "version": "repo-lines-v1:sha256:e561bd5c4238c2b1f8c4dd70ad3adbf6aabc30052e11b614d4ce6e86850f89f7:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNmY4MmIxYWJmN2VmZTlhM2Y1NzVlYmVjZjQ1OTgzMGRiYWJlZjNhOGM1NDA4NmVhMTA4Y2M1NjU1MDE3ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmY3ZjIwMmQzMTc1NGRkYjY4ZjY5NDBhYzllODUxOThjN2U2Mjk0MjBkMGZlYmUxM2VjNTlkMGIwYzViZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzMDc3ODcyNmYwN2U2YmFiNmNhYzkyN2Y2NGNkOTA1MzFjZDMwOWZkMmViYmQwOTUwZGM3MzUxOGY4ODA4YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4OTcwNzY1MWU4Y2I4ODE4YTFjMjE5MzgwYzY5ZWM3Mzk4MjM2YmJiYzk3MTZjOGQ4NDYxM2M2MWY1ZTJiODQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L265-L271",
+          "version": "repo-lines-v1:sha256:016237df6d79a7f21c342ca9789c8438f9cc97f3a2ee4f45b7c04bc6337f5ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U3OGUxYTg2OTk5MmM4M2YwODUwYWYxNjk5MzJjOTBkN2E0NDI4MTM4MTEwZjdkN2MxOTAzNzFiOTdjNDllZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2U2MmU0MzNkY2IwNTU4OTNjZmNjZjFlNmZiNDI4ODdjZWZjOTdiNWY5ZmFmNjQ0YzU0MDMyMjQ2YmJiYjVjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGViYmVjNTBmNmNkZjExYmU3OWUxYzVhOGU5NzRmZGQ5NWU3Yzk4N2JkNzg2Y2U1YTZiZmNjMmFlZmVkNmIxYSJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:21:28.631Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

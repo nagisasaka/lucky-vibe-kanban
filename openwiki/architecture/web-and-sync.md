@@ -8,8 +8,14 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
     resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-a4deecf361e70bd3b2703d13
+    resource: repo://packages/local-web/src/app/auth/serverAccess.ts
+  - id: openwiki-source-5d3aad6c180293a86853f6ec
+    resource: repo://packages/local-web/src/app/auth/ServerAccessGate.tsx
   - id: openwiki-source-a623a548ee805a854d7d5e18
     resource: repo://packages/local-web/src/app/entry/App.tsx
+  - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
+    resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
@@ -48,10 +54,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
-generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:21:28.631Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # Web の実行環境と同期
@@ -61,6 +67,12 @@ verified:
 Local App は TanStack Router と Hotkeys、設定、ローカル identity、Tauri listener を組み立てる。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
 
 UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と [抽出前の監査](../../docs/frontend-ui-library-refactor-audit.md)は現行配置の全体図ではない。監査は責任分割の経緯を知る資料として読み、古い `local-web/src/components` の位置を変更先にしない。
+
+## 認証が製品画面より先に確定する
+
+Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
+
+fetch wrapper は同じ origin の `/api/` への変更要求だけに CSRF を補う。業務APIの401/423では状態再取得イベントを送り、外部URLへCSRFを転送しない。これはWebの接続補助で、backendが最終認証を行う。セッション・失効・配置の詳細は [共通認証](../concepts/server-access.md)、歴史的ownerと現在actorの区別は [メンバー](../concepts/organization-and-membership.md)を参照する。[wrapper](../../packages/local-web/src/app/auth/serverAccess.ts#L17-L74)
 
 ## 同じ API 呼び出しでも対象ホストが変わる
 

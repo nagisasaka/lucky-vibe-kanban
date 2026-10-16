@@ -13,7 +13,7 @@ sources:
 generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:21:28.631Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # GitHub PR とレビューの境界

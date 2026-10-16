@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
+  - id: openwiki-source-7d94e7454f63f16057833046
+    resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-5b20a61dbf36c0c143a466eb
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
@@ -22,10 +24,10 @@ sources:
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:21:28.631Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # システム境界と起動順序
@@ -50,6 +52,7 @@ flowchart LR
 | 境界 | 所有する責任 |
 | --- | --- |
 | `server` | HTTP/WS の入力検証、製品操作、Workflow と Repository Memory の接続 |
+| `server-access` | 配置別の認証、設定切替、メンバーとWebセッション、継続接続の失効 |
 | `deployment` / `local-deployment` | 共通サービスの要求面と、ローカルの DB・実行・Git・preview の組み立て |
 | `executors` / process host | provider 固有通信と、実行・監査の仕組み |
 | `workflow` / server runtime | グラフの純粋な検証・計画と、永続状態・外部効果を伴う実行 |
@@ -66,7 +69,9 @@ Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じ�
 
 Git の作業木、Native Audit、Repository Memory は SQLite と別の永続状態を持つ。復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
 
-新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。nginx の認証・preview origin、実行環境と永続 volume の境界は同ページに置く。[配布の適用範囲](../../docs/self-hosting/server-container.mdx#what-the-image-contains)
+新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・preview origin、実行環境と永続 volume の境界は同ページに置く。[配布の適用範囲](../../docs/self-hosting/server-container.mdx#what-the-image-contains)
+
+standalone と embedded は共通の `Access` を組み立て、main router 全体と独立 preview listener に認証層を適用する。Origin guard だけを認証境界とは扱わない。配置・設定・失効の契約は [サーバー認証](../concepts/server-access.md)、preview の別 origin への委譲は [検査経路](../operations/workspace-inspection.md#preview-と開発サーバー)に置く。[main の配線](../../crates/server/src/main.rs#L215-L239)、[embedded](../../crates/server/src/startup.rs#L65-L72)
 
 ## 起動時は内側の所有者から回復する
 

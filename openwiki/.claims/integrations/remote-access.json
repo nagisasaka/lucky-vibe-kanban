@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3869c4c5f9c0181d4e26bd5a5057746798e719837a07a1faa5cffce8449e58a5",
+  "pageVersion": "sha256:ddf6d180c8cb447a2e46f101b3174687173bb9123654ac7511c933cf938e163e",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:068212306476bf999ddfe46292c79571e10e0c6de0addff8e5aeeaeaf7f6673a"
+          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
         },
         {
           "resource": "repo://crates/server/src/middleware/origin.rs",
@@ -30,25 +30,25 @@
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:6a2afdd437ada9acb161db6d1018918a5b2e7e0907a52b8664e019076b67a0b4"
+          "version": "repo-file-v1:sha256:ef8643269867a9f792078aa57a53cd53a8b1c382b68cdcb845a228d31b026038"
         }
       ]
     },
     {
       "id": "claim_1e117248305448bdab99c81eff53f5d0",
-      "statement": "外部MCPはopt-inのstateless HTTPでintrospection active/bearer/owner/issuer/audience/exp/nbfを検証しread/write/merge scopeとProject allowlistを適用する。",
+      "statement": "外部MCPはAuth0設定で有効化したstateless HTTPで、共通層が署名JWTとactive membershipを検証する。全要求read、変更write、正式Integration開始mergeのscopeを要求し、Project集合は現在DBから取得する。Local/Basicや旧introspection設定では公開しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/auth.rs",
-          "version": "repo-file-v1:sha256:b3b5138c831fb507106af47bfbf898f6a25b3704c7b81dd9526791a801146778"
+          "resource": "repo://crates/server-access/src/lib.rs#L437-L477",
+          "version": "repo-lines-v1:sha256:406b8224a4ff6dc2b03ae8bad773a021c934b33223335e5197257824352ce349:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwNWU1MGEwZjVmMjZjNDYzZGU1ZTdlOGYxNDMxMWM0OTA0Nzc3ODdkZWNkODgxNWRjOTE5YzI5N2MzNWM0MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNTNkNjkwNTVhYWYxMGY3ODU4ODI3M2QwOThiMWJiMmY4MTgwZTc3ZjNmYWQ3ZGY3NGVkYTJhMGI0NDhkNTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjYjI1N2IyNTRkNmUyN2ViMjkxOWE0OGZmNzc0NjM3NzUwNTA0NWI3ODAyMzI0NTdmZDFiNmVkM2RjYzJiZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2NDFlNWNmODMwM2I3ZTZiYjI3ZmEyZGYxM2RjYzQ0MWM4ZGViNjVkNTdlYmFhNjdlYzcxMjhkMGIxZTNiZTMifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/config.rs",
-          "version": "repo-file-v1:sha256:0de02ef2e8984c2f689fb7ab62300809b8d1c5dd90baf9da589f2dd92c96a73f"
+          "resource": "repo://crates/server-access/src/provider.rs#L328-L374",
+          "version": "repo-lines-v1:sha256:d18e0c812aab3e20874c4a7474033c5bcd3d7afa8082683a7ec2f324f35662cd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOWYxYjJmY2JjMDQ2MzQwODZmZTI0YjQwYzZjZTM3ZGJhNzBhOTNmZjc4YmQyYTg4YjA5MzkyM2M2OWE2NDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTI0OWI0ZGQ0YjI1Y2QzOGFmMTczMDM0MTRiZGFiYzA3YTgzMDlmZTI4NDQ4ZmJkNjMwNjRmODZkM2M5NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MGZmZjQzOTdlNmZmMjU2MDI0ZjE4ZGU5ZjZmYzMwNGJkYzdmYTcxN2U2Y2U0NGQ5MWYzMjBiZjlhNGMxOTEifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:4def15e185f97823a73e22cf236705eca2108d2dc67fa022955215522a86b816"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L58-L205",
+          "version": "repo-lines-v1:sha256:b67df637e4bed61a0bf06d9fa704b091dfb65bf6ab2501e9c949bb12076f17ec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZjBiMzNiYzU0Y2U2OWFiNTA0NDY3MjRkNzU2ZGNmN2ZiYTRmYjRkNjM3ZTJiOWM0M2Y3YTYwOTdlMzRmZTY0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4M2U5ZGFlNTQwOGM2YWFmYzNiMzBhYzc1MDBhY2NkMzkyMWE1YWZjODIzMmViNzliNmQ2NDFjYzkwZTg0ZjkzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzMzZmODdlYjY5OTI2M2IzMWM5N2JmMTgxZDkxNGRlYzFjZWE5M2E1MzBmZTU5YWQwZGViNDE0M2M3OGNmZWMwIn0"
         }
       ]
     },
@@ -58,13 +58,23 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/operations.rs",
-          "version": "repo-file-v1:sha256:856980926607226cdfe4b0041ed89dd574d3b09b3ba5f1ff78c0b9d4342ce1f8"
+          "version": "repo-file-v1:sha256:9a3e3582b5b3110ce4d29b5b774429534694d98e96e55b040a9bf8f099bb9483"
+        }
+      ]
+    },
+    {
+      "id": "claim_9152e6e138904439be41c957d147d104",
+      "statement": "MCP receiptの非同期受付とdomain実行は検証済みactorを明示継承し、HTTP要求終了後の書込帰属を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/operations.rs#L134-L190",
+          "version": "repo-lines-v1:sha256:e3ea7808e4202c88538a1e15b6d537db85099e03d911a13d935cf09033f3d68c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkMjczZGFhYTMxNDE1MTVmYWIwM2JjMTU5NTFlZGYzZTEyZGEzNWFhYjZlNzA0NGEzNzI0ZGEyZWMyNThkMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNzI1NDg1NzlkMjhlODdmYmU4MThkNmY4ZTE4NGM2Yjk5MDBkYjAwNzQwYmVkYjgyYmU0ZWJhZjRkZWJlZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNWUyMjMxOWYyYjk3MTA5YTYxYzllZjY3MTc1YWFhZDJjYWMwNTA1MzExZmFkZjFhYjA5ODkyOWMyZTNhNTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlZTRiODgxZGE4YjFiZjdhMGJjMDljMmQ2NjQ0MzFjZmNjODZkYmE2YzU2ZTQyOGEwNTU5N2JjOTExNDBiYjAifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:21:28.631Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

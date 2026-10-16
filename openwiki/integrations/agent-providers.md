@@ -42,10 +42,10 @@ sources:
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
     resource: repo://docs/future/agent-runtime/delegated-agent-display.md
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -136,6 +136,8 @@ LVK のローカル MCP server は stdio で動き、HTTP backend に要求を�
 
 backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の環境変数と port file を用いる。したがって「stdio client で接続する」ことと「backend が必ず localhost に固定される」ことは別である。導入例は [Vibe Kanban MCP Server](../../docs/integrations/vibe-kanban-mcp-server.mdx) を参照する。[backend URL の解決](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L100-L133)
 
+loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`access-internal.token`を内部ヘッダーへ読み込む。外部backendへは送らず、HTTP redirectは追わない。任意backendを指定できることは、内部認証を外部へ委譲することではない。[client](../../crates/mcp/src/task_server/mod.rs#L247-L274)、[共通認証](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)
+
 失敗は MCP の error result と success:false / error / details で返す。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
 
-認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。owner・scope・Project allowlist と公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。Astra の推論は coding provider launch と別の環境を持つ。[Astra の認証と提案実行](../concepts/project-chat.md#推論と認証の境界)。
+認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。Astra の推論は coding provider launch と別の環境を持つ。[Astra の認証と提案実行](../concepts/project-chat.md#推論と認証の境界)。

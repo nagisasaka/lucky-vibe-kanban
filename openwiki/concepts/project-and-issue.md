@@ -28,17 +28,17 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # Project・Issue と実施の関係
 
 **Project** は関連する仕事を集める単位で、Issue、ボードの Status、分類用 Tag を持つ。**Issue** は「何を達成するか」を表す仕事である。AI が作業する場所は [Workspace](workspace.md)、会話と実行は [Session・AgentRun](session-and-agent-run.md) が受け持つ。この分離により、一件の仕事に複数の実施や比較候補を関連付けられる。[Issue 契約](../../crates/api-types/src/issue.rs#L20-L40)、[関連表](../../crates/db/migrations/20260427000000_local_kanban.sql#L208-L223)
 
-local Project は固定 [Organization / user](organization-and-membership.md)の表示モデルに結び付く。Issue の担当者・Follower は認証権限とは別である。
+local Project は固定Organizationと現在actorの [表示モデル](organization-and-membership.md)に結び付く。Issue の担当者・Follower は認証権限とは別である。
 
 ## 仕事の識別と分類
 
@@ -105,7 +105,7 @@ local Board の [正式 Integration](formal-integration.md)は採用 commit を�
 
 共通 API の Project は organization ID と表示メタデータを含む。一方、ローカル DB の `projects` は作業ディレクトリ既定値と remote project ID を持ち、`local_project_metadata` を join してボード向けの形にする。同じ名前の Rust 型だけから同じ保存モデルだと判断しない。[共通型](../../crates/api-types/src/project.rs#L8-L17)、[ローカル型](../../crates/db/src/models/project.rs#L7-L17)、[組み立て](../../crates/server/src/routes/local_remote.rs)
 
-ローカル API は固定 Local organization と Local User/Admin を返す。これは多人数認可ではない。[固定表示](organization-and-membership.md)。Web は REST snapshot で同期する。[取得と mutation の収束](../architecture/web-and-sync.md)。
+ローカル API は固定 Local organization を返すが、公開配置の利用者とroleは認証actorに基づく。承認済みメンバーは全Projectを使い、Projectはtenant隔離を作らない。[メンバーと履歴identity](organization-and-membership.md)。Web は REST snapshot で同期する。[取得と mutation の収束](../architecture/web-and-sync.md)。
 
 Workspace link は現在ローカル表への upsert、unlink はその削除だけであり、Cloud 呼出しとの部分失敗モデルは撤去された。unlink は既に削除済みの Workspace ID も受け付ける。[実装とテスト](../../crates/server/src/routes/workspaces/links.rs)。
 

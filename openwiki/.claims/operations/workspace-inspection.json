@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bd0c7980c6bae085e2a271b6a0e8defc7057b650347df01f4da036feb69a1310",
+  "pageVersion": "sha256:88ea70bff401fd1a3554b3448f9da94f8471241c9823ce356cf0b3df3f3861ec",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -126,11 +126,11 @@
       "evidence": [
         {
           "resource": "repo://crates/preview-proxy/src/lib.rs",
-          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
+          "version": "repo-file-v1:sha256:8ebd02384de92602cd35835751a4b6954fdc5fd12cf41fb0bc13af918b9be6c7"
         },
         {
           "resource": "repo://crates/server/src/routes/preview.rs",
-          "version": "repo-file-v1:sha256:c4861b9b3e54f4538a7c8195883ff233b3bf24261d1958c431d9e92d9df2f79a"
+          "version": "repo-file-v1:sha256:45a5c183cce2589ef6cd756a64bb1c200fc4aade43acb947b9bdfd4068f257c0"
         }
       ]
     },
@@ -158,7 +158,7 @@
         },
         {
           "resource": "repo://crates/preview-proxy/src/lib.rs",
-          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
+          "version": "repo-file-v1:sha256:8ebd02384de92602cd35835751a4b6954fdc5fd12cf41fb0bc13af918b9be6c7"
         }
       ]
     },
@@ -188,7 +188,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:6a2afdd437ada9acb161db6d1018918a5b2e7e0907a52b8664e019076b67a0b4"
+          "version": "repo-file-v1:sha256:ef8643269867a9f792078aa57a53cd53a8b1c382b68cdcb845a228d31b026038"
         }
       ]
     },
@@ -322,7 +322,7 @@
       "evidence": [
         {
           "resource": "repo://crates/preview-proxy/src/lib.rs",
-          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
+          "version": "repo-file-v1:sha256:8ebd02384de92602cd35835751a4b6954fdc5fd12cf41fb0bc13af918b9be6c7"
         },
         {
           "resource": "repo://crates/server/src/routes/config.rs",
@@ -361,10 +361,70 @@
           "version": "repo-lines-v1:sha256:30c62725e2b1a62052077724730713dc93097246b4dd812d743f84d1de3e6060:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllMjRmZDk5OGQ4OTI4OTk5MzQzM2FlMWUwMDM5NmM0MTRhZTc1OTMwYzBmYjNmMWM4NDRkYmM1MzYwMTFkNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViNzQxZDJjMDhlNmY1MTBiN2U5YTI2NGYzNzhmOWNlMDA0OWE1MDRlMGU3ZWY1ZDY3Y2QzZWE4MTNmODU0NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4ZmIyYmI2MTQzMTkxMTdkNDhmYjZjNWIzMGU0ZTRkNWVlNjkzMGQzM2I0OGQyY2Q0ZWQ2M2M0ZjY3YTU4ZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkNjNkNjU5OGRlN2M2YmY1YjYzMWY1MTAxZGQ2Y2IxODFjYjI4MTZhMzFiYzU2NjYyYzhmZDI3ZWFhNjBhYTYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0d85a0d733d6472c9562331154aaa034",
+      "statement": "公開previewは60秒・一度限り・browser/origin/親Web sessionに束縛したgrantをform POSTで交換し、LVK APIでは使えないhost-only preview cookieを発行する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/preview.rs#L326-L361",
+          "version": "repo-lines-v1:sha256:3a6c157ebc1e8d69332b5acf6a4b7c788cd7292143b17aab9d01368e0fa8aa38:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4MzFkNzg5ZDkzMmMyN2EyOGJmNDA0YzczZGZiNTNjMmJmYmYwZWZkM2U0YzJlMjA4Y2JlNzljYWUyNmUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlNmU3YmJmZDk3NjYxYWFhZjUzNDNjZjM4YzI4MzQyM2UwZDFkODBhYmIwOGE2MzVkYWJkMmFlMWY2MDAyNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/preview.rs#L97-L215",
+          "version": "repo-lines-v1:sha256:88803ab955173d5eea3720d41ef092df554cfea1f8dfd164b4fbf83f413eb4ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MGMyMDE3ZGUyYmJmZjIxYzFjOWY5ZWM5MmRjZmU2M2I2NTc3MDk3MTRjNTYwYTcwNGQyYWZlYjIwZjI0OGU0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNjY5NzM4ZWQ1OTY5YTIyMzNiMmJhZTgwMzcyY2FjNmE5M2NhYzBlNTZmNGJiOWRmZjFhMmY2MDlkNjRkNTFkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlOGEzNjkzZTkwM2JlMmY5MDNkNTU4NmI0NGJmMDNkNWZmMjFjZGU3ZWQ1ZjNlN2YwYWQ0ZmEyZTU5N2U2MGY1In0"
+        },
+        {
+          "resource": "repo://crates/server-access/src/tests.rs#L1554-L1737",
+          "version": "repo-lines-v1:sha256:8ff2668d702e0d747da5ec74f834bdb86b791423428b33546b98e1ed6e390a5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyMjdiYWVlYjE1YjY2NGZmNDZlMGNmZDRlMzIxZjhiNWVhZWM1OGI5MmE2OTBjNTJlOTc3NTA0NmU0MmY5ZTUyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NzcyZTkyNzVjYjZhMjRmZmE4OTUyY2NhNzdlNmE0YTVhMmFkZTYzY2VkNDM1MWM2YmM1ODYwYWFmZTUyMmQxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_807ed50593d64fc4914e05d75bb64451",
+      "statement": "公開previewは親session失効に従い、upstreamへAuthorization・内部token・認証cookieを転送しない。SSEとWebSocketもlease失効で終了する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/preview-proxy/src/lib.rs#L431-L440",
+          "version": "repo-lines-v1:sha256:f62959f68b85e65195f5f3799b6c5108db39d3ebee68259f61b96bae257263f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyZWY2NjViMjkyM2U3ZDI5MmRiODhkYTYxNjQwN2Q1ODA1Yzg2MWQ2YjBlZWZhZDZkZGNiOGY0M2Q1ZTZjZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5NmNmMzlhYjdlYTVjMGI5NzQxNGUzNzlmNGM2ZjFjZjAxMjBiMTY5YzlmMzZmZmE2YTM2ODU0MzZmMDI0MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZmM2NTdiOTlmNDcxMTU4MjA4YTA0NjY4YzczYWM1ZGQwZDFjNjY1Mjk2YTU1OGViM2E2ZDYzN2E5OGNlMmEifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/preview.rs#L279-L324",
+          "version": "repo-lines-v1:sha256:31d75798c98bce8813e7ba7739402df6016498d153a7add07989910e022242d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3ZjIzMmVmZWEyNDMzMTAzZDZlYzlkZjgxNzllZTIzNDZlNjBkMzMwYzhhZTU3ZThlMTJlYTI0ZGEyYWYzYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3YWUzNzQ0NWRkNjE2Nzc5MzgzYWNhZmVhZjNhZTQ3YTEzOGQwMWQ3NmUxNGYzYzRkN2IzZWE4YjFiYTc0MTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhNjkzNTRkOTczM2YzZjE5YWQ1MDdkYWM1NjA3ZWUyNjEwZjQzNDcwZGM4MDVlZDM5ZGY3MmY1YjU5YTdjZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2NmVlODdkYzFlNThkYzAwOTY1YmNkODc5NDAyNDhkZWVkOTVkZjRiMzU0N2ViZWZiYjBkNmEzZDQ1NmM0YzAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/preview.rs#L112-L128",
+          "version": "repo-lines-v1:sha256:b18ffef8b0fee4e361e24ece3640aaa27889323471c1aa267d16cd3c967bcc1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzYzMxNmJiNzdiNWZkNzllMGRiMmIzYjllOWIzMzM4YjlhYmE0NjU3NDkyNGM1OGNlZTUzNWUxZDcxNjBlYTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNzJlMGY1MzY4YTc2YjkxMDYxMzNkZjdhNWI1YzQwMWZjNTUxMThhNGUyYWZlOThlMjRiYzkzNGY0MTQ2YzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyODkwM2QyZDVlYmYyMTc4Yjg4MDQ4YTlhZmZkNGU0NWI4NGEzYzNlZjQzOTU5Y2ZiMDQ3ZmYyMDBiZjIwZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyOTZlNGI4NmZmY2Q3NzgyYjhkYTE0MmY4MWQzZmIzMzMzN2I5ZjQ1YjZhMGFmMWM2ZDExMDZhMjY5ZWIxMWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_74c61b9f27614e408bec6b4923456455",
+      "statement": "preview認証は設定domainの数値port subdomain、mainと同じURL port、origin分離を要求し、1024未満と3000/3001/4020/4021/8443/8444を拒否する。Localモードは公開handoffを要求しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/preview.rs#L216-L232",
+          "version": "repo-lines-v1:sha256:bff37dc1b3f618f88d9151611b7b3273ec0c562aaff7431fe17c70d44502ec7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NDVhNjUxMmI3NGI1OWY0NjYzMDkzOTI0Yjk1OTFmMTViYjM4MjNkNjI3ODllNjgzYzk2ZWVkYzE1Zjk1NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMmZjNTVlZDI1ZWFhNTM3OWE4OWE1ZWJhNjg2YjhmZWQyMWE4ZTQzNjM4NzI1NmQzZDY5ZmU2NWI0YjFiM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0YTMyOWRjODE0YzQyYTdmNDdjMWY0OTIwNzE1YjAzZGNlZTNmNDQ5NWNhY2I4MDI1NTZjYTlhOGQyNDNlYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjM2UxMzRlNzc4NDc2MzVhODNmMjBiYmZkMmFiZTA0NjBlZjdiNzVlOWJmZWNjZjlhYTc3YzA1ZTQ2MmIxNGQifQ"
+        },
+        {
+          "resource": "repo://crates/server-access/src/preview.rs#L28-L58",
+          "version": "repo-lines-v1:sha256:92c894dd751d8c7601c7ac7af6c61c76956eab7352beca188f01b2dd54273dcd:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxMmE5OGEzMWRjMjVjYjdkMDQ0ZDQwYzlkN2NhZmVjMDM0MjVjYTA3NGViZjUyMGI3NWExYjQxNTFmOGU2MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxYjQ3Y2I1YmI2ZmRkMWM4NzkyMzgxZDkyODRjYWJiMDgzNmE2Yzc0MjZjZTg1YzZlMDZmOTBhZDE3ZTQwODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4MmRmMDU0M2M1YjkwYmIzM2YwNmFlNjI0ZjNhMmMxMjZlNjI5NGUxYmFkOTE0YzY0OTFmOGVhYmZhYzNlMGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwYjE3ZDJmZjY4NDk4MGQ3NTk2MTgyMzQxODg3YzFlMTYyOWU5ODUwNDk2YzE0ZmQwYTcwMGY0MzhkMmYzMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_175a25c9aa1342cba18daf38fab3aaf3",
+      "statement": "preview-static.mjs はビルド済み Vite preview を起動し、HTTP fetch により /@fs と /@vite/client で非公開ファイルや開発用 endpoint が露出しないことを検査する。ブラウザー handoff や実 Auth0 接続の検証ではない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/server-access/preview-static.mjs#L1-L88",
+          "version": "repo-lines-v1:sha256:379deb711b30e64f756c28a5abe169d22fe8088473339d135967492158a18f40:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3MDFmNTdhNDFiMThjNjg5ZjY3NTQ4MDNkOTkyYmFkMGU4OWQ4N2I5Y2VjMmNlZDgwNjM1ZDhjNDQ3OTI0NTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-16T14:44:43.872Z"
   }
 }

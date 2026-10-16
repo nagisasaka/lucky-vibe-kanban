@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2d8536412bc36e97b4ecc673c5b044fd92822c1fcda160bb388260404f715d31",
+  "pageVersion": "sha256:059b2bf11b73a658b030d2cb73064597e2cd28abbefc3cb705e01423cf392b2f",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -218,7 +218,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:7691359c38dc2982ebfbda53f867bc290b79bee7a0f96088b92fbeac606e5779"
+          "version": "repo-file-v1:sha256:a8e9eeb55626f4af506d121c8521be47b3837de7473118eb101d6d6063ddd9d9"
         },
         {
           "resource": "repo://crates/server/src/routes/workflows.rs",
@@ -226,7 +226,7 @@
         },
         {
           "resource": "repo://crates/server/src/startup.rs",
-          "version": "repo-file-v1:sha256:f620398a98eb9e714a86660fe5e54e29a2942812e02a0da7a029af0f8bf75afc"
+          "version": "repo-file-v1:sha256:64a3b956b4afb61af52798cf95ff7531c5f3515905ac3c2a5eee32ef95db936c"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts",
@@ -299,6 +299,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:98e7134af8cefbaea94a9df1980b03311c98ec990e8fea79a976112017038fdd",
+  "pageVersion": "sha256:9709baa4b56ca35a35d0785cb7bd154f966eb3ae0022e10346b391c301ab2577",
   "claims": [
     {
       "id": "claim_b19b76396a064309bf7402c5c74e707d",
@@ -16,13 +16,31 @@
         },
         {
           "resource": "repo://crates/services/src/services/resource_coordination.rs",
-          "version": "repo-file-v1:sha256:3684715667617fd58b7927742c93f536366d2248feb4f28b606feedf79fb406e"
+          "version": "repo-file-v1:sha256:8f1c393b6f1f44c531dbf4f7bd5bddf8aa9c908c969707ed112ed0a4b98bca0d"
+        }
+      ]
+    },
+    {
+      "id": "claim_97ffbae8ff854c92b436d0b24f87be8f",
+      "statement": "調停contextはstdio MCPの自動認証とraw loopback専用内部tokenを案内し、control.pyも内部tokenの送信先をloopback HTTPに限定してredirectを追わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/resource_coordination.rs#L87-L99",
+          "version": "repo-lines-v1:sha256:f5771f5bbbf630c8d64dae714dfb3aed9826993882b53c6e8c3a63d617114f65:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YjgxNjQ1OTRkM2UyMzc3Mjg3ZmI0YWI0ZTFlZWFhNTJjNGI2ODk1MWFkZGQ3Mzc1ZDIwNmI5MmZhMzAyZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://scripts/local-runner/control.py#L43-L67",
+          "version": "repo-lines-v1:sha256:66f15c54f296d3e71900a8beb6642164cb17f5666d8a0e3c518f724bd804a27c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjNjg0OTExZDk4YjQ1MzlmODExNzVhODI4YWY5MzlmMTBjZmQyNmRiNGVlYWExNjI1YTM2NDY2NWNkNWNhZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0OTZhOTEyY2JlMTFkMzBiMmQ2YmE5Y2I0ZWZjNzY3NWMxOWM0Y2VhNjk1MmQ2M2NkZWE1YzZkNmVlZmM2YzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyOWExYjI4NDc4OWU5Y2I5ODA3M2MwYjA3OTk5M2VmMzMyNWE1MGNiMmI5YWI1NzY3ODAxYTVkNzRkMWZmOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NmFiNmQ3MzhlMjdkNzBhOWQ4MmNiNjgxZGU4NDZiN2Y1ZGEzNjQ4NTFlYzY3Y2IyNmJkMTQxZjAzZjcwNjEifQ"
+        },
+        {
+          "resource": "repo://scripts/local-runner/test_control.py",
+          "version": "repo-file-v1:sha256:3310e8e6c7480720349c2e03f739f0723817b45f56815da76fed36d59403637f"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

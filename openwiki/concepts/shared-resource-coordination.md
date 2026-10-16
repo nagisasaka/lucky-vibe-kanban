@@ -13,10 +13,14 @@ sources:
     resource: repo://crates/server/src/routes/execution_bridge/mod.rs
   - id: openwiki-source-516767fac5b6f9159d5b8c8f
     resource: repo://crates/server/src/routes/execution_bridge/source.rs
+  - id: openwiki-source-e87354b216cb8b45c9c5fb2f
+    resource: repo://scripts/local-runner/control.py
+  - id: openwiki-source-0e63365a39605f8b71f6bd5c
+    resource: repo://scripts/local-runner/test_control.py
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -89,6 +93,10 @@ DB の履歴が実行時の正本であり、Wiki は live owner ledger とし�
 
 操作方法と API の入口は [実装仕様](../../docs/design/shared-resource-coordination.md) を参照する。
 実装・テストが正本であり、このページは設計意図と危険な変更点の案内である。
+
+## 調停への接続認証
+
+local stdio MCPは内部capabilityを自動で使う。raw loopback HTTPは同じdata directoryの`access-internal.token`をメモリー内のヘッダーに載せ、外部送信・URLやログへの記載・redirect追跡をしない。`control.py --internal-token-file`もloopback限定である。この認証は資源claimを代行せず、認証設定の管理権限でもない。[生成context](../../crates/services/src/services/resource_coordination.rs#L87-L99)、[operator client](../../scripts/local-runner/control.py#L43-L67)、[共通認証](server-access.md#webmcp内部agentを同じ資格情報にしない)
 
 ## 外部 Runner と interactive operation
 

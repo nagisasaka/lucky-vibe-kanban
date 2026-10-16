@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:12c0c3bbc79c5956ffd15e4d8f4b2cc83cd20c7143b535a5af21eada6474c32e",
+  "pageVersion": "sha256:b9c92d12cb9be46b778374727d1c20e0774448d690b7626c142cd0de64344e66",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -130,7 +130,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/task_server/mod.rs",
-          "version": "repo-file-v1:sha256:e2166cc1e0708b3a047d42ce46a12fdc2fc470311071caa44ec5e90e04464324"
+          "version": "repo-file-v1:sha256:513d8ab3be6ca6a31f63a2728de10b06bbaf4640c1b0428f057fdc531ea9895d"
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
@@ -303,10 +303,20 @@
           "version": "repo-file-v1:sha256:2c680ded06b3894cbd47fbbcc67fcd37cc89214c734125748a0e4fbac6b2851f"
         }
       ]
+    },
+    {
+      "id": "claim_f06420c326264b089c673239dbf1870d",
+      "statement": "stdio MCP clientはloopback HTTPの場合だけ内部file capabilityを送り、外部backendへ転送せずredirectを追わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/mod.rs#L247-L274",
+          "version": "repo-lines-v1:sha256:9468cdad2f797907e39fbf186ced07c7922387df87c01bbf7791ef066215af7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2MzNmMjE3MTQ5NGMwZDNjOWZiNmMyMDhlMGI0YjdiMDllMWEzZDgyYTczNjE0ZTZkNGE0NjRiYmRjYzBlMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }

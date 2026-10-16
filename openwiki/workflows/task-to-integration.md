@@ -53,7 +53,7 @@ sources:
 generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # Issue から実行・レビュー・統合まで

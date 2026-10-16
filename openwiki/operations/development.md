@@ -40,10 +40,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-16T12:23:35.935Z" }
+generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:23:35.935Z
+    at: 2026-10-16T14:34:12.007Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -100,6 +100,8 @@ LVK 自体の変更は card ごとに別 instance 名・port を使って検証�
 `instance:build NAME [REF]` は frontend と server / process-host を一組で build し、完了時に build identity と source revision を記録する。通常 card の未 commit 作業は dirty として記録できる。`staging:build` は main 等の固定 commit を detached snapshot にし、失敗 build を runnable candidate にしない。debug assets の参照元なので、その snapshot を実行中に削除しない。[build と記録](../../deploy/developer/instance.mjs#L115-L193)
 
 `instance:run NAME BUILD_UUID PORT` は foreground supervisor と instance ごとの run lock を持ち、build lock は別なので次候補の build と現在の実行を両立できる。staging は loopback 4020、任意の nginx ingress は HTTPS 8443 を使う。稼働中の agent / Workflow が終わってから旧候補を停止し、新候補へ切り替える。schema が進んだ DB に旧 binary だけを戻さず、対応する idle data snapshot が必要となる。共有 staging は [共有資源調停](../concepts/shared-resource-coordination.md)の対象であり、stable 更新時は instance/build process も busy と扱う。[run](../../deploy/developer/instance.mjs#L193-L217)、[更新・回復手順](../../deploy/developer/STAGING.md)
+
+stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`でsetupキーを発行する。stagingの公開URLは8443を含む。cookieはportで隔離されないため、同じhostname/IPのstableとstagingには別ブラウザープロファイルを使う。[配置とcookieの運用契約](../../deploy/developer/STAGING.md#staging)、[instance環境](../../deploy/developer/instance.mjs#L44-L64)。方式変更と失効は [共通認証](../concepts/server-access.md)に従う。
 
 ## Docker 配布と同梱 binary
 
@@ -161,3 +163,5 @@ prepare-db は一時 SQLite を作り、migration を適用してから cargo sq
 - [OpenWiki maintenance](openwiki-maintenance.md) は、通常開発の tests や release と別の生成・レビュー・公開 checkpoint を説明する。
 
 この Wiki は実装理解のための派生知識であり、試験成績そのものではない。初期生成時の静的調査と、その後の選別移植で行った自動検証・MCP受入を区別する。再検証するときは上記の実装記録と現行コマンドを参照し、未実行や既存 skip を合格に数えない。
+
+認証の回帰検証は `crates/server-access/src/tests.rs`、公開MCPのJWT-to-tool検証、nginx ingress fixture、`tests/server-access/`のブラウザー経路を分けて読む。実Auth0/ChatGPTの受入はこれらと別である。[検証境界の記録](../../docs/development/server-access.md)、[配布の認証境界test](../../deploy/server/access.test.mjs)。

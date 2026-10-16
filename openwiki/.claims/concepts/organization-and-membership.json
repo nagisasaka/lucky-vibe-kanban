@@ -1,42 +1,60 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e9f31a02301e2a2839e925be1aeda591cbb0e6aaa71392d7e1fdbd72fb7d92dc",
+  "pageVersion": "sha256:1fcf3ea9e7417b7d8549f47ecd26c5921a04355a07dd8836507e0fd4b33e1926",
   "claims": [
     {
-      "id": "claim_10d9029230d14d0fbeba032ab816f8dc",
-      "statement": "local互換APIの固定Local user/organizationとAdmin応答は、Cloud membershipと招待処理とは別のモデルである。",
+      "id": "claim_47f88605cb734f0e8f28726920324a17",
+      "statement": "固定Organization IDは2、Local userは1だが、公開配置の新規操作とBoard roleは認証actorを使う。activeメンバーはactorのissuerで表示し、旧user IDはunattributedとして残す。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1204-L1234",
-          "version": "repo-lines-v1:sha256:929fb884aebfd58f9acaef4edb857063066b3d25db8c4c4f8f185224543564a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmNmU1NTkzYTJkMTFkYWQxZDdhYzc0MjIwZTg0N2UxNjk1MWYwNTQ0NjlmMWRlMzA5NDE3MzY4MDcwYzAyMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyMTQzYTZhZTMyZTMxMTI0YzA2NDk3OThmYmYyYzllMzViYThjMzYzNjlkMGM0YjcwYzdiYWNhZWU0ZWNiZDMifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1228-L1358",
+          "version": "repo-lines-v1:sha256:2a2ce9c8a0c2a3701cfc28345e0f1a6d836c8b0778f61cf58d04eb07041448f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwOWJhYzkxMDMwMDk5MDVlOTVlNTYyMWU4ZWM5Y2QyMWIzNDdjMWQwNzhiNjE4YTc4MWVhM2YxY2FjODhlMTdjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhYjNhMjU0YjZlZGY3NzA5OTQ4ZWIzMzJiZmUwYWZlMDNmYjI5ZWM0ZTE1ZGRhM2UyZmMwMjVkMjJjZTkyYzlkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMjNkNTgwOTg1MTA0ZTliNmYyNzdjOWNmNWI1MjRiMjQ2MGIyOTIxNGEyNjliYWJiNWE3NzgzNzZjNzYyOGJkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMjFkYmU4NGUxZmVkMTM4ODE2MGExYjg5MzAwOTc0MDAwNDNkNzExZDAxMDI5YjEzMjYxNWU3MTllMDlhOGU4In0"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs#L265-L271",
-          "version": "repo-lines-v1:sha256:b4481d7b62f762731d1c6c002d515027074aa99221743059b554e292080ed7cb:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmEzYmRmYjBmODhmNjk5OTQwZmVmM2IwNDNiYTRiMDAyOWJiNjdlZWMwZGI0OGEyOGJkMjM4MTdlOGM3ZTNmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDQ0OTMwZTliNGQzMzE3MGFjMzZjMmU5ZGQ3ZjJiNTg2MjlmNmY3NWM2ZDFjYmQxMDE2M2FmZDNhNmM0ZWVjOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDk5YjViZGJlN2E3OWEzNjgxMWFkOWNmZmE4ZjM5ODEzZDg3OWJjOWQxNTM4NTMxNWM5NTAwZjE4MmU5NzE0YyJ9"
+          "version": "repo-lines-v1:sha256:016237df6d79a7f21c342ca9789c8438f9cc97f3a2ee4f45b7c04bc6337f5ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U3OGUxYTg2OTk5MmM4M2YwODUwYWYxNjk5MzJjOTBkN2E0NDI4MTM4MTEwZjdkN2MxOTAzNzFiOTdjNDllZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2U2MmU0MzNkY2IwNTU4OTNjZmNjZjFlNmZiNDI4ODdjZWZjOTdiNWY5ZmFmNjQ0YzU0MDMyMjQ2YmJiYjVjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGViYmVjNTBmNmNkZjExYmU3OWUxYzVhOGU5NzRmZGQ5NWU3Yzk4N2JkNzg2Y2U1YTZiZmNjMmFlZmVkNmIxYSJ9"
         }
       ]
     },
     {
-      "id": "claim_8a1bca010d1a45929379b0285b328487",
-      "statement": "現行local OrganizationとMemberは固定IDとAdminの互換表現であり、Cloud招待・多人数membership認可ではない。外部MCP認可は別入口。",
+      "id": "claim_74fe59c8e986458aadb749fbe59ae57d",
+      "statement": "Auth0メンバーはissuerとsubjectで識別し初回pendingとなる。管理者は承認・無効化できるが、transaction内で最後のactive adminの無効化・降格を拒否し対象Web sessionを失効させる。",
       "evidence": [
         {
-          "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:068212306476bf999ddfe46292c79571e10e0c6de0addff8e5aeeaeaf7f6673a"
+          "resource": "repo://crates/server-access/src/handlers.rs#L562-L619",
+          "version": "repo-lines-v1:sha256:e20b4b1b06aaad56fb61eb50b2f0858f2ab878e6769c96c89a9af52d5631d133:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YmVhMGUwMmYxMjI3NDUyNjhkYzRlYjI2YmNkMzJmZGY1YWE3NGE4MjhkNGI1MDgxYTM5MGZkNDk4N2E3YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MWMwZGI0NzBlNmUwNGM1NTViOTU2ODk2NGU4MDFmMDQ4ZTMwYzBkYmM0N2M2YzdkNTU5MDc5NTI1NTAzYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkODIwODE3YmYwZDVlYTY1NjczOTQyMGNjZWRiN2QwODU3ZWQxM2ZjMDk4YzQ0NGY0NzYzYWI1NGUxZDc2ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0NTZhMWVlNWIxNGVhNTY5NDUyZThkY2Q5ZTc1NmY4Y2I0ODdmNGY2MDg0ZWE4MTFjYTI5ZWI3ZjBmYTQ4N2IifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/auth.rs",
-          "version": "repo-file-v1:sha256:b3b5138c831fb507106af47bfbf898f6a25b3704c7b81dd9526791a801146778"
+          "resource": "repo://crates/server-access/src/store.rs#L150-L170",
+          "version": "repo-lines-v1:sha256:1abd28e375cb22e007cd07ac2e02580a51968cdc7006afce2f64b87bad15ba9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllZmY1YTg1MmJiMGUwNWRmMzU3YTE5ZjNhNjVhY2E2Mzg5N2IwNTcwOWFjMmNiNzUyODVjODUyNjlhNzIzZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmY2QwNTZiMzYxYmQ3OGMzZTViNDcxODg5ZjFmNzM4YjM0OTVjYzIwMWJlYjRiMTBlMDc3ZGU5ZmQ2MWNmOTIifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:97d4e09fcb3fee32ebdcb0b1aa7dd6573356d2ca607984082e12f373cdf20852"
+          "resource": "repo://crates/server-access/src/tests.rs#L1257-L1320",
+          "version": "repo-lines-v1:sha256:18871f889f1efa98ae9a73e4a7ee5d203e556bcff6463b1d095a09a45b26d0c2:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2MWY3ZTJhODRhNjExZjkyMzliMTNkM2U3MTYwODI3MzBjZGE3OTAzZWYyY2ZjYWM5ZWU1N2MwNmViNjA4MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4ZTM1ZDI5MTI0ZGJiMGJlYzNhNjQ5MWY3NTZlZTM5MzExNmNjYzRkZDBjZGJhYzk1MmRlMTRjZjY2ZjBlNDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_603d78e0bbb14e57a28d0333ec7e0b9b",
+      "statement": "公開配置の本人IDをUIへ渡しても既存Workspaceの歴史的固定所有者を更新せず、共有環境の操作可否を表示上の所有者一致から分離する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1150-L1225",
+          "version": "repo-lines-v1:sha256:4683a803b2e9ea1287430affd72ddd81bf506e81ff67d14d7350d12f481d378b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0Y2EwYjQwOGM0NGM1MTc2NDNmN2U2NTQwZjkyY2JkNzI3ODZmYzA5MWVmMzg2ODIxY2E2YzMzNzU5NWUyYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMjk4YzhlYTdhOGM5ODNhMGIxODk1ZjY1N2Q3OTUxOTRjMTNiYzM1MWM5NzhjYjY3OWU4ZWFlNmMzODJjYmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NWYxNTE4N2UwNjFlMTUyZjNlODg2MGQ4Y2M4MDM4ZjZjYjY5Y2Q5ODVhNDU5MzBjNjU1ZTA5MjQ3YzdmNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4MTJkNjQ3OTFkNzc3NTE1NzQwYTYxZDdkMmI5NzM2ZGE0N2YxMmNlZGU4MjBmMDQ2MmJjZGQ0ODFlNGM4ODEifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/IssueWorkspacesSection.tsx#L55-L84",
+          "version": "repo-lines-v1:sha256:54fc8068f9f5fe72af60811b8838a6bb4c3e2326df7a3bfc2af74ecc1ca58d0e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlZDYzZTg2Y2ZhYzc5Y2QxYTAzNGMzZDI5ZTZlN2Q2ZDQyMDUzMjBhNzg5MjY3YWNmNzJmM2ZlY2FkOTRmOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxMDU2MDRlN2EyNWUyYWRmZDQ1MTZiY2UyODg1NzFlMTlkNjQzYTMxMTJjYjlkNzI5NGFhNzJkNjk4YjE5NWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyMDBiZjBlZDAxMjNmNDAwZDMyY2U2N2I5NDdlZjZlZDM4ZjIzMzAxZWMyNmYyYTIwMDNlMzRmMTViZWRlYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNjJjZTdmNzVhODlkMmE3MDY2ZDU3ZTVmZDhhNmQwYWEyYTUyMGFlOGJjNWE1YmY2NDYzY2I2Nzc2MzQ0ZmQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/localIdentity.ts",
+          "version": "repo-file-v1:sha256:b56a4d4303c2eec99dbb28978a8e589f2ed2f22497365f039615885c4d115a35"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T12:21:28.631Z"
+    "at": "2026-10-16T14:34:12.007Z"
   }
 }
