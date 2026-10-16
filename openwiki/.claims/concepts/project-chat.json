@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:321eca2826e98dacf65fed4bf80ba898b82a5cdaad56ce4f6dfef47b51915dd7",
+  "claims": [
+    {
+      "id": "claim_f705ee07a30249d9a15dfff3ae378250",
+      "statement": "AstraはProjectの永続会話で送信ごとのdiscuss/operate上限を保存し、現在user依頼だけを操作の根拠とする。旧modeは狭い権限を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/mod.rs",
+          "version": "repo-file-v1:sha256:43fec094ed96ce8c505ad2b2f3dbf0a3344996768292a0e0f88d6fde6efe0b99"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/model.rs",
+          "version": "repo-file-v1:sha256:6b254bc2166818b0c625856b0ecb136d3c9ee076e9b74f292a278c193acf066f"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/tools.rs",
+          "version": "repo-file-v1:sha256:ea908c9b8962d7b62199742c029b38936ebbcf2239cec47a981ad6eed4427292"
+        }
+      ]
+    },
+    {
+      "id": "claim_ab512e765a184cd68262dd4e0648ffd1",
+      "statement": "推論は明示user messageのみ。旧event queueはrestartでdoneとなり、checkpointとoperation receiptを再利用し、不確実mutationを新identityで繰り返さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/mod.rs",
+          "version": "repo-file-v1:sha256:43fec094ed96ce8c505ad2b2f3dbf0a3344996768292a0e0f88d6fde6efe0b99"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/store.rs",
+          "version": "repo-file-v1:sha256:e41af75e1588f6052ed38a5112e75c40e7af86fa2d4f56f78d5aa51af4130eb1"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/tests.rs",
+          "version": "repo-file-v1:sha256:46768ba9354330b71c985f587442c8fb061545e07adaf632d692804299b307b9"
+        }
+      ]
+    },
+    {
+      "id": "claim_fb9d0ed787884e6f83f95dfcbae6eddf",
+      "statement": "AstraはCodex 0.154以上のChatGPT loginを使う。API keyは推論に使わず、ephemeral・環境無し・native tool無効のstructured提案をLVKがcheckpoint後実行する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/model/codex.rs",
+          "version": "repo-file-v1:sha256:41f878fe55452306e0271b260258a578842a41308982aa9772ce0ab1f97d9be1"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/project_chat/settings.rs",
+          "version": "repo-file-v1:sha256:f55e431e8b6d5b3a7ffe0d992becd6f9ae1aaeb32d8a542f77265115545aeab7"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-10-16T11:50:57.361Z"
+  }
+}

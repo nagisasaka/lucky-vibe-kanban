@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d7266179bc9c7c099f2bf9904a6862914fbaef266327417e68753c9d23000e71",
+  "pageVersion": "sha256:bd0c7980c6bae085e2a271b6a0e8defc7057b650347df01f4da036feb69a1310",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -60,11 +60,11 @@
     },
     {
       "id": "claim_051f0ac9ff1a40e481ee1f3d6f4f8f63",
-      "statement": "remote raw URLはhost scopeを付け、既存scopeや外部URLを保持するtestsがある。",
+      "statement": "raw URL は local を維持し、退役 remote host ID / scoped URL を拒否する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts#L4-L36",
-          "version": "repo-lines-v1:sha256:e1c9045f7aaf29e5d3ae56a24d92c416fc760467accf7f4d33f56c28c6752c52:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjYmQ3MGQ2NzI1YjU4NDFjYTc5NTNjMTA4MDQ5NjAxNWM5MmU3MTEwMjBlYjM1MDJlZGRiOWY1NzM5YTY2YzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiOTBmZGJlY2QxNzg0ZWNlYmE2NGY2YWZkNjNhMDlmYjRhZGI0ODU3NThiMTA0MTdlNTkzZGI3NDllMGUxNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIifQ"
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts",
+          "version": "repo-file-v1:sha256:3b4e69794017a7c3fd62d5cc100c0bd15a8672c50f9ae3d49f4d6b1dca426eac"
         }
       ]
     },
@@ -88,19 +88,15 @@
     },
     {
       "id": "claim_59d8be49182f49028193a18456785ea4",
-      "statement": "diffはsigned WSでbase/worktreeからRepo IDとprefix付きpatchを作りtarget branch変更でbaseとstreamをresetする。",
+      "statement": "diffはlocal WSでbase/worktreeからRepo IDとprefix付きpatchを作りtarget branch変更でbaseとstreamをresetする。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/git.rs#L137-L175",
-          "version": "repo-lines-v1:sha256:2c974127f2e96e057f958868a4967919f2270f53da37dab9367bcc2b9a5937dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExMjNhNGIxNDc2MWRiNjcyY2E4YmQyNTEwNjU3YzI1NTNjZDY5NzM5NjBhYWQ4NjY4Y2Q2YTA5ZTE3MmQ0ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhZDAyMmY2Yzc0NGYyY2QxOWMzNjk1NzBmYTk0M2I1NTI2NGYxZTJlNjY4MTY1OWM1ZTliNjBjM2RjMzgzNWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlMjU1ZDMyY2Q4NzlmNTM3MmE3NjNiOThiYzczZWM5N2VjMGIxNWI5OTdhMmY4ZjcxOTZhNTRiNWMyMGQzZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwYmU0ZmNlMzJmN2E1ZGYwYzY0MzJlNTdlN2JmZDRiNjczYWMxNWZmMGIxYjAzMTNhNjYxN2VlMzVlODRlMzgifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/git.rs",
+          "version": "repo-file-v1:sha256:a9667b9b1336d8aa43c2634fb4b963189d0e9357c091882c91a9bd92cf45eb03"
         },
         {
-          "resource": "repo://crates/services/src/services/diff_stream.rs#L318-L375",
-          "version": "repo-lines-v1:sha256:97b8f4ed7c5d63d103f214f37a83517b2767ec50a8b2cba5e8201b847e338a7e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NzU1OTc4NzNjZDJiOWUyMWFiZTJlYjNlN2U5Yjc3NGI4YjAwZWUzOWI1ZTBmOTQ5NzYxNGU3YWQ5OTUxMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExODA2MTcxY2RmMGMzYWRiM2E5ZTQyYjU3NTA4NzhjZTAyYjQ2YTI5NGIyY2I2Yjk3Yjk0MjZhMzBhYjQ0OTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4YjlmMTFhNmNmYzU2Mzg0ZGU1OTY5ODRjMmE1ZTNiMWFlOThiOTk0NmUwOWExYzBlMGI5YTY3OThlZGIzNzcifQ"
-        },
-        {
-          "resource": "repo://crates/services/src/services/diff_stream.rs#L443-L459",
-          "version": "repo-lines-v1:sha256:45f7cf0a55911b11fcafe938c9702f46075be0aae184ffd6280801575116babd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZjBiNGIxZGUxZDQ4ZGY4ODAxMDhjMDNkYzYzYmM3YmUyODhjNmNkNjRhZTY3ZjRmNWIyOGVjMjU2ZmI3MWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhYjFhNmQyOWM2MTIxODQ1NjRjNTNjOWU1OTEwZmUzMDNhMzhmYTc5ODEwNGY4OTM4NTE0MTk5MThjNTdhMjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0Y2QwNTQ2MjYzMWFkMTY2NjMyNzU1ODcwZDk3NjYxMGZiZTY4NGIyOTNhODVkYTE5M2QwZDE3ZDI3YTQyNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzNmViOTk5Mjc4M2EyYjYwNTEwYWQ1ODUyYmEyYWExYzM4YWVmZTc5YmU0OTAzMGNkMGQzY2UwNGQyY2FjOWMifQ"
+          "resource": "repo://crates/services/src/services/diff_stream.rs",
+          "version": "repo-file-v1:sha256:7c193f0be6c6ae625b793bb8d0b2f27186dd0acb1956735224ab1ee3d9ba7a47"
         }
       ]
     },
@@ -126,23 +122,15 @@
     },
     {
       "id": "claim_a532cc46974b441180145904da5de925",
-      "statement": "preview subdomainは別port分離を意図し、portと任意host UUIDでlocalhostまたはremote preview APIへroutingする。",
+      "statement": "preview は localhost の指定 port へ転送し、退役 remote host UUID label を拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/preview-proxy/src/lib.rs#L1-L8",
-          "version": "repo-lines-v1:sha256:9d824f6e8b99386137d35bb3c05d685b94b0df30d4471fd72380986e8fa6cf97:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjUzZDI2MjJjZDY3YmI1ZjBhOTIwY2ViMWM4M2E2MWZjMWEzMTEyM2JhNmUyZTRjODQyMmMzMmU1NjgzMDcyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzQwOTRiNzY5NzUxYTdiMDgxZTc0ZTg3YTY5OTRmYjQ2ODNkNGE5NmQ3YzU2NWJjOTEwN2MwNDFhZmU5NmJhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTYzNDAwYWRiYjA1MjhhZTQ1MDViYzM4NjQwZmYzOWE3NWNmN2ViZGU4ZjZhYTdjYTQyOWI5NmI5MjFhMjMzNyJ9"
+          "resource": "repo://crates/preview-proxy/src/lib.rs",
+          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
         },
         {
-          "resource": "repo://crates/preview-proxy/src/lib.rs#L366-L399",
-          "version": "repo-lines-v1:sha256:20dfc09714a6cac7c7dc64dc87231a511c78a99a56dc44eb179d8a344d7714c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4YTVhNzViOTI4NjFkZTVjZWRmNjlhZTc5YTg4NGE4NWVmMzc5MmMyODYyMGRlYzhlMGU3OTkyNDJiNTk3YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MGUwYTNlNTBiM2RlN2NhODM1YzM5N2EzNjhkNTEwYWEzNWE1NDAzMzdiN2JjNmNkNDJkZThmODExMGRlY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyM2EyMjMyZGQ0ZmMxZDkyMGQzZWVjNTQ4ZWY5MWIwN2ZmNjI5MzRjOGMyZWQyMzQ5MzE4YmZkODdkMzA3OGUifQ"
-        },
-        {
-          "resource": "repo://crates/preview-proxy/src/lib.rs#L481-L491",
-          "version": "repo-lines-v1:sha256:bb1d1b967c4f992bc658e5307b8ea6c6ec02b6543a2dc23961b98dd686adbe1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0NDg0NWFjMTRmNTBmNzlkMTU2ZjZlYjI0YzUxNjBmZWQyMTljYTk3YmYzNmUyYmRmMzI0MmEyODJkMjc2N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkNTgyNWI4ZThmYzcwNTdiNThlYzc2NDRjMGMwODZhN2ZkOTM2ZTI3MTdiNWEzZDM3NGFjNmExY2IyMDJhOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxMzUxMzE2YjVjNjE0M2MwNzkyYzcwM2M0NTQwNTI3NjdlYTg0N2E5NmY1OTkyMmEzNGYzMDA0Y2M3ZDc0YWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjMzhmYWUzYjY1Mjc5NGJlYmEzZTU3MGYwZmMyNGU4ZWYzYzUwNDc4YzkxNmQ0ZDRkYTI5YTcxYWJkMzYwOTMifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/preview.rs#L13-L65",
-          "version": "repo-lines-v1:sha256:423c0b0b8f882158bb62af820bd5bc222b8761d486299cf9c26e99a72e632c32:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyMTMwMjYwZWU0YmExOGRkYjcyMzA3NWU0NDA2OGQ5NzA5NTE2MGJlNzBiOWZjMmQwNDNhOTNmMDcyOWJkYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0MzJkYjRiMjAzMWViM2IxZTEzZGJiODhiZDllMjMyNWYwODgyMjM3ODAwYzY3MjI2MjlhY2FlNDg4MjA4YmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRmNmIwYWM5YTNjYmVjYjBkMmJhNGZiNjY2MWE3NWUxMDNlMzZlNmUyZGY4OGE1MjA0ZWMxOGQ0MDAxNjk1NTMifQ"
+          "resource": "repo://crates/server/src/routes/preview.rs",
+          "version": "repo-file-v1:sha256:c4861b9b3e54f4538a7c8195883ff233b3bf24261d1958c431d9e92d9df2f79a"
         }
       ]
     },
@@ -162,19 +150,15 @@
     },
     {
       "id": "claim_d7053fae71e0439d8d8a5d1b19d4f646",
-      "statement": "preview API HTTPはlocalhost upstreamへ転送し失敗BadGateway、応答をstreamし、remote redirect scope維持のtestがある。",
+      "statement": "preview API HTTPはlocalhost upstreamへ転送し失敗BadGateway、応答をstreamし、loopback redirect は公開 URL へ変換する。",
       "evidence": [
         {
-          "resource": "repo://crates/preview-proxy/src/api.rs#L116-L134",
-          "version": "repo-lines-v1:sha256:3aa8400846a2a513b0a99dd494466a41dfe76aafdb6e4902d83de2accb89f230:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwMTk4OGMxZmM4YWFjM2Y4MTAwZWQyYTUwY2FkNGM1MTA0MjYyZWMyZDA0MDVhNGUxMzcxNDk1NWFlMzRlYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyODkwM2QyZDVlYmYyMTc4Yjg4MDQ4YTlhZmZkNGU0NWI4NGEzYzNlZjQzOTU5Y2ZiMDQ3ZmYyMDBiZjIwZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://crates/preview-proxy/src/api.rs",
+          "version": "repo-file-v1:sha256:bee635ae5a162a1b3d49f6a8fd58a828013c1762ed877f080c603cbebcb750cf"
         },
         {
-          "resource": "repo://crates/preview-proxy/src/api.rs#L33-L81",
-          "version": "repo-lines-v1:sha256:3cf43af97fcd47695743a8c2d2cb3885a27bce502960a30de6e79d9b071dc483:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZTRiZjg4ZTA1YjJlZDk4ZjEzZGRjYjUyNWZkOTc2ZTVkYTU1Y2VkZTFiMmIxNTNhZWUwODE5N2E4Y2U3YzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiMzA2ZGJkN2JhYjllYzZiZWY2NTVmZmU4YTkyZDVmODZjMzA1OWFlNDM3N2IwNGUyZTA4ZjU4ZTQ5NTQ1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwZTk0ODUxZDI4ODUwZDgxNWY1MGMyYmEyYTg1NDI2Y2Q1Zjc1ODU1NmZjYThhZDQ5N2JmMTRkOGU3NGI3YTcifQ"
-        },
-        {
-          "resource": "repo://crates/preview-proxy/src/lib.rs#L1114-L1128",
-          "version": "repo-lines-v1:sha256:fae6d2ba14da19952336921b320849c82f123c72a32f756a5ceb1e682b3200af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0MDEyMjdjZmI1MTc3ODkyOWNkZmVmM2Y0YThmZjc0MDdhZWNjOGQ4MzZlMDI3OTJhMWIxYjAxOTMxODFhOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NDFkODdjMTU2ZjRmNzc2OWViYTFiNjFmOGE4NDg5MjQyZjQ2MWQwZjZlMmRkZTE5MGZjZDA4MGY0MTEyMTcifQ"
+          "resource": "repo://crates/preview-proxy/src/lib.rs",
+          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
         }
       ]
     },
@@ -183,8 +167,8 @@
       "statement": "Terminal は interactive 用途を要求し、Workspace または単一 Repo を cwd として接続ごと PTY を作り、base64 入出力/resize を扱い切断で閉じる。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/terminal.rs#L52-L166",
-          "version": "repo-lines-v1:sha256:420a5c844c992d9ac5b5f727e5a7e248896d20db41b5f66d4d5b916c090a1910:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNjg4N2Y3NWFkYzdkNTRlZGI1ZjRhNTY3MDU1MmY2OTgyYmFmYTAyYjEyNzg5YjIyYjhiMjQyN2E2ZTM2YTFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5Y2UxYzNjNTM2ZGI3NTUwZDA4NzNhMmNlMWZmZTdjYTAwYjQ5NDY2Njc2YWU3NDU5ZDM3MmVjMDBkNmIyN2NiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMTIzNDA4ZjNlMTJjYjI4NGZkNjQ5M2JmM2M5ZjEwMWNkY2E2YTc2OWJhZmVhMDU4ZjU0ZWVhODljZGE5ZjBhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4YjhkYjY0NmQ0NGY1NjliZDBiZTZhMWZiNTNmOGU0ZmY3MmZiNzkxMTdlMTEyMTNmZDdhM2U1N2Q5NjA5ZWQ5In0"
+          "resource": "repo://crates/server/src/routes/terminal.rs",
+          "version": "repo-file-v1:sha256:9873506eb077e63d49043e609e57b392ee7f2cd43c02809144b42958353b8e26"
         }
       ]
     },
@@ -200,33 +184,25 @@
     },
     {
       "id": "claim_195df4c5c4984f639b7656944bc89f9d",
-      "statement": "Remote editorはhostからpathを取得しSSH tunnelとdesktop bridgeを使う。",
+      "statement": "旧 host relay / remote editor は現行 router に存在しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/host_relay/open_remote_editor.rs#L35-L89",
-          "version": "repo-lines-v1:sha256:caa7e954b0445e1f4dcc6cc45893faf2fa9edfd4a0aa766a5de57a030f210898:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5NDViYjkyZGMyMTI3OWU3NWMyNDU3MGNiNzU1Mzg4N2U2MjkzZmQ0N2VhZDg2MTc4YTM0YmQ3Yzk1YzQ5ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmYzMzNzhiMTA2YTg0ZGI1MmY5YzhiYWY0YmMxNmRiMmY2NmFkNmQ2ZmY4ODlmNTYxZWE2YmIwN2ZhZGI1MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViMGI0MjFkZWE0NTA0MTg1YmFiZjVkN2Y5Mzk5ZjE5OTk2ZmI1ZmM2YzE1M2I2MDU5NDFiYjY5YzgzZTU3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4NTNmOWJhODg2ZTlkYjU3MjZkMjNjNjNjNjgyNTkxZDBjOThhNzRmZjlhODlmZWZiMzE0MWM1ZDRhNDEzNWYifQ"
+          "resource": "repo://crates/server/src/routes/mod.rs",
+          "version": "repo-file-v1:sha256:6a2afdd437ada9acb161db6d1018918a5b2e7e0907a52b8664e019076b67a0b4"
         }
       ]
     },
     {
       "id": "claim_8967501480ba47a0b36da78c3c7548ce",
-      "statement": "Session添付はlocal File、Cloud Issue/Comment Attachmentは別の所有・保存モデルで、関連Issue作成経路は添付を取り込みpromptを書き換えるが失敗はwarningで続行する。",
+      "statement": "Session 添付は local File で、Workspace 作成は明示 attachment_ids と local linked_issue を関連づける。",
       "evidence": [
         {
-          "resource": "repo://crates/api-types/src/attachment.rs#L6-L35",
-          "version": "repo-lines-v1:sha256:ee14b9f5e33e507a19436e0e447fd82a1af6ba59f7bd3471e17828e84434cb16:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzYjFkMjMyYWE3N2VhODFmMjBiNjQxODRjYjI0YWJkMDFmZmZhNThiYzlmYmIyM2ZiMWQ0YjQ1NzdmNjVkMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1NzMxODRkZjhiOGM0NTYwNGRjNDQyYzM3OTBlYzc1NzBiMGZjYWIwYzM4NzUxZjg4YjhjZGE4NTRlNmU0MjYifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs",
+          "version": "repo-file-v1:sha256:fc5a644e42c568e7ecd5e7f2f31849a6413b89a96a1a2f798425927e7124fda4"
         },
         {
-          "resource": "repo://crates/server/src/routes/workspaces/attachments.rs#L82-L97",
-          "version": "repo-lines-v1:sha256:82dc6a20e9e187398f2bc1d04646574cbee8cada57871f0fc2c8f7636e1a511b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViZGI0NmEwZGQyNGE5M2MzMTc0NWQ0ODc0NjAxNmI4ZDUwZTI1ZWI1MWJhZTZlOGY3NzIyZDc2N2Y1NmU1ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiNGNkNDMzMjcwZWQzZTU2ZjQ1N2RjOGRiMmE5ZTlmZjk5NWUxN2FiMmNjMWQzNzMzOTdkOTYwYTI2ZGQ2MWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwZGQzYmM1MGNmNjAwZjhiMmE2Njg0NDQwNjI5ZmRhMzVlZWFkYmMxMDUwYWQwMDA1ZjQ4YTNmYTQwMTA2OWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMzc3OTg3MTU4NDI5ZWNiYzIxMjcxZDVlNTkwODczZjRjNmEzYWY2NWYxZDk2NzRkMzI4MmU4NGNiNDc0N2MifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/create.rs#L182-L199",
-          "version": "repo-lines-v1:sha256:bfe26cf6ea8ac3c4a87de9420120e35eb0febfbb9524f1aebc57b0356a8595fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMjczMWU1NWE3ODM5YzljNjQ0Nzc1ZGY3Yjg0MWRiODg3ZjBlNzVjNGFhYjAxYWRiNjVlNjcyNjUyMjIxN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZTMzZWY1MGNhZjkwYTY4MzcxY2ViYWQ0NzViNTAwYmY4NzNkNDFjMWM2Nzg1NWIyYTRiMTIzZTMyMzEzZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxZDM2ZjM5YTBhMjY4OWY3YmUyOGMxM2U2M2FhZDc1NjU4OGQ2OTE0YjZkOWU4YjQ1ZGE1YzMzNzExYWIzZGQifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/create.rs#L377-L416",
-          "version": "repo-lines-v1:sha256:b48f64cc48106f58acd2877725c39ad10910fbf048d9e1cbfeb2e19b7de5a6c2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZTAwNmUyNTUwYWZlM2U5ZjRhMmI1NzZlODU3ZjU3NTM2ZWQ1YzZlZjZmZjJjY2FjMTJiMGJjNmY3NjQ3NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MDBjZDM0MDMzMDEwZWY4YjQ2NWUwOTMzNjhhOTBjNzVlNWQwMmUwZWJmMWMyOGQzYjI1ODRkNTA0NDRkNWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5NmU2YmZkM2IxYzQ4ZjhhZDI5NDQ0NWU1OWU1ZDYyMDRlMTE1MWU3YWIxMDgzMTE0ZjRlNDVlNDdjZGQwNTcifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/create.rs",
+          "version": "repo-file-v1:sha256:e3e79630df4c54a073a5a94fa79a4b5684269316e423f5d882249669f5a68fbb"
         }
       ]
     },
@@ -288,19 +264,15 @@
     },
     {
       "id": "claim_9c9e086c7fc1482f88c3826b8d41c472",
-      "statement": "execution_only の画面は chat composer を inspection に置換し、owner 状態と保存 Session を表示して既存要求への応答と owner Stop を残す。",
+      "statement": "実行中 execution_only は owner inspection と既存要求への応答、Wiki steer / Integration 専用介入を表示し、実行と cleanup 完了後は通常開発へ戻る。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L225-L290",
-          "version": "repo-lines-v1:sha256:8f8fa3cbf3d379a689f98c3b173da05c3229cef893a475b7ff30557ef5c0ae11:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExODY3N2M2NDA4MTY0YjBlNzMzYmYyNzU4MmNmZmJjZTFhNWYyODQ5ZmU4YzA4MzgyNzU2MzNiMmI2ODk4NjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0YzM1NjNhZWQwODY5ZjczYzFhNWU1OGZjZjkyYmUzZTNjMDM4MzhjYzBmMTcxMGVhNTQ0N2Y3M2E2MjE4ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZGUyZmY2M2Q5NWI1MGFhOTc4ZDNiZjQzZTNjYzAxZTgxYzFjZmFlN2ZjOTk1ZjVjMDA3N2ExNWFhYzYxY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiYmRkZjJjZGU1Zjg1YTVjYTc4Nzg5ZWYyNWJiN2M1ZDUyMTU0ZWFmY2EwOWU2OGZlMWZjNTczNjA3NDliODcifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L42-L171",
-          "version": "repo-lines-v1:sha256:e26bc238e35d5fd1d42e6578dc851eb156c3d0df6b7e39dfb600fb96a7777ca3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2NDFhYTcyOWNhM2I0NGVhYzdlYWM0ZDZkNWM1OWQ3ZTUyZTAzMzcyNzM1YWYxZGRlMDE1ODdjODkyZjJkMTNjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2NmU1ZTVkYjBlZGNhZmRmOTgxMWJmNzcyMTg0NDljMmEwOTYzN2U0NDczN2I5MDg1NTI0ZDE3OWNjNDM0OGVhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMjZlOGUwOTgwODBhNTE3MjY1N2U0MGFhNTg1NTk5Zjc1MzEzY2JmNDkxZDVjMzA5MzdiYmZmZTBlMjBlYmJlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxYWM3Yzc3NTE4OGE1ZDZkNjRmZjkwNTM3MzAxZmYwOGE0MjQzZmNhYWIzYzU3M2RiMWUyMGM1YWVmNGEzZjBjIn0"
+          "resource": "repo://crates/server/src/routes/workspaces/usage.rs",
+          "version": "repo-file-v1:sha256:e2ffe06b73b43e778eb9209bc60add58c8c20aed5651fd2ee60922dcc32b87ce"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
-          "version": "repo-file-v1:sha256:aaa54a3240593e1f4d61ea872607ed12061ec5115eebb572055d621b1e215b1d"
+          "version": "repo-file-v1:sha256:49fefbc688c69d937881371dee49e6844e00e5207231cb2510c6f207cf74be33"
         }
       ]
     },
@@ -349,16 +321,16 @@
       "statement": "公開 preview domain は system info で UI と共有し、HTTPS wildcard URL と loopback redirect に使う。",
       "evidence": [
         {
-          "resource": "repo://crates/preview-proxy/src/lib.rs#L931-L953",
-          "version": "repo-lines-v1:sha256:261e6802c140650aa18a16053c720ac4eee511f6caeb1945de7b67ebdefc0a75:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzNDZiOWQyNzU3YzE3MTI5ZTgwYzk2MDJjMWZmOGEzZGU0OWFhNTc0NmE4ZTY4OTg4ZDE3MGQ2NWExYTYzYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiMTg1NDBiMWM2ZDQxNWQyNzdlMjk5N2YyMGFjYWIzNDc3MGY0ZWQ3Zjk4Y2E4ZjQ5MjYwM2IyMGYxZDFjMzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MmE2MDE0ZGVhMGIwOTBiYmJiMWYwOTY1NGM5YjU0MjM5MDE1N2ZiZjlhMGEyNDMwMjJlYWNjOTY4YmIzMjkifQ"
+          "resource": "repo://crates/preview-proxy/src/lib.rs",
+          "version": "repo-file-v1:sha256:141f70c0bc635cb141eadd526efba2f16f00c4aa4b27646d360802b0fcf19057"
         },
         {
-          "resource": "repo://crates/server/src/routes/config.rs#L182-L192",
-          "version": "repo-lines-v1:sha256:431f914c9fd164082c3ad55e3123c7de26733e69f1999826517690ddf1722563:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MTU3OTBjMWQ4NmNlMjhiMDhjYzY5NWFkYmQwZTllMDBkNzk5NmIzMTJiMzMwYWQwZDJmZGU0ZGUxNmE2MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkMmJhOTc5MTQ4NTNiMDM0YzgxMWI2OTdiNjMzNGZhMjc0ZTY0ZmZjZjQxNThhNDQ3ODk4ZDhhYTJmNDQ0YzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxODFjMjZiOTQ4NGFlZDIxOGI1Y2E1MDc0NDQxZDgwZTIxMDczNjYwZjU5NmY4YWVmMGE5MTQzYzVlOGMxNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxNmVlMTA0YzdhNzFmNzkyNTc0YjBhOTM1ZjI4YTZjMGU4YWMzMTU1Y2JhODE4NzVhYjYzZjFiMDkyMTY2NjYifQ"
+          "resource": "repo://crates/server/src/routes/config.rs",
+          "version": "repo-file-v1:sha256:1f14e3e6ecd8055e00e9c39854757ae074c409dcc01510cc19cf2d7399e0e14e"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/previewProxyUrl.ts",
-          "version": "repo-file-v1:sha256:611bd0cce1e2888ccc2003460d09c388900aa424ea45836c4d243060f61d5ad2"
+          "version": "repo-file-v1:sha256:4e3d95b17031b9a1d57ee8588d1d1910357131098896d49d68f2e23134f5b665"
         }
       ]
     },
@@ -393,6 +365,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-09-22T02:14:43.589Z"
+    "at": "2026-10-16T11:50:57.361Z"
   }
 }

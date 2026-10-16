@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:681f5a00dc2ccb5ff05c0afd0af3a30ed9cb8e43d6232dafb1f2ca6a49e50a43",
+  "pageVersion": "sha256:2764bab585a49175ec92a3515f67ed9d96c831664337f28658586c7e3bcbcaf6",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -49,8 +49,8 @@
       "statement": "Retry は終端 AgentRun の同じ turn の試行番号を増やし、ResumeかRestartだけを許可して前回設定を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L2639-L2704",
-          "version": "repo-lines-v1:sha256:1d72451b6f3b06cf0693d66f4681b87e6f98e1068b609d148de40ae133d764f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlNTgyM2ZkNmZkNTk1NmFiNjk3NDBjNGQwNjAyYjAyMzFhY2RlMWYyNWY3ZmYwNjE1ZGQzZmFjMGY5NTFkMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MTVkZWRjYjlmNWE4ZTI3YTFiODhiNmE3Yzk1NjA5OWZjMmI1NTk2ZGVjNTRkOTI2NTgzZTkyZGU2NmFmNWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0OTZmYzc2NmU2YjcwZDczNjMxOGIzMGUwNmFjZDczNTIwZGMyNmIwZTYzMmY4Yjk3ODAzZTVlNmM0Nzg2ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkMTg2YTAwZDE3NTdiZDVkMTQ0NDJjYjQzN2U4MWE2MjhlM2I0NzYzYzJiOTkyNmQxZGI2ZjMxMGVjZjEyYTkifQ"
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
+          "version": "repo-file-v1:sha256:0b37e2696d775ab637f04d5f1eac0a23d206876b73f107801bb7601d7da5d7b6"
         }
       ]
     },
@@ -90,15 +90,15 @@
     },
     {
       "id": "claim_9638dc4c23f94092bc461fe2f34cea6c",
-      "statement": "通常 interactive Workspace の Follow-up queue は Session ごとに一件のメモリ内保存で置換され、成功後の memory 完了失敗時は保持し、非成功 run の終端では破棄する。",
+      "statement": "follow-upはSession内メモリFIFOで項目編集・削除・並べ替え可能。最新run成功とmemory完了後に消費し、非成功・完了失敗でpause、起動失敗で先頭へ戻しpauseする。restart耐久性はない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L375-L418",
-          "version": "repo-lines-v1:sha256:4d6c1fca392dd460c448b088ed9292c7bc675ac74232c02a16896b8cedd0e53b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwODhhOWQxZjg3YjIwYjAzYjQxMGU0Mjk4Zjg5M2I4NjRjZmU5ZWJiYjM1YzZiNThkZThlN2RjYjNiMDg1MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyY2MwZDQ0ZGRlMzkxMDE4YTQ1OWMwNmIwOTBlZWVjOGRmNTA0MTg4Mjk3MzIwMmQwYTc2NWZjOTM1NjRjYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzOGU5ZWQ3ZTQ1MDQwZmQwMzQzMGNiNmY4MTZlYzMyNzkxMjRlY2FhYzE2OTNjNGQxNDgzOWZkOGQ3YzBlNDIifQ"
+          "resource": "repo://crates/local-deployment/src/container.rs",
+          "version": "repo-file-v1:sha256:f31c6ad2a431bb7822916940c8ebdf28eeb54e8dd6333d579b985e31049ba741"
         },
         {
-          "resource": "repo://crates/services/src/services/queued_message.rs#L31-L69",
-          "version": "repo-lines-v1:sha256:b882e2298acc7649a91f13a0e1967d1b18f876859480cc2f89b575f48194f557:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3MmRlYjAzOWNiNGQ3OGU4M2Q1YTk0ODJkMDAwZmM0MWNmMjg3YjNhZGQ4ZDFkNDUzMWI1YzRiOGM3MzY4ZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhZTE0MjhiZTJlODRmNjcyMTRkZjg5OTZmODBmMjA4ODg3MDBlMDhlM2VjMTU5NjUyNDkwNjBiZmNmYTJkODMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkMjZiOTcwNmNmOTBkMWRlYjQ0ZTA3NTYxMDI4NTkxOGEyNTEzNWZkMmJkYjYyNDc5YjJkZTYxOTVjYjNlY2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxNTQ1Y2ZhNjJiMjRmNWEwMjJlMjNkMjk2NDc5NWI1MWI2NmM1N2IyODdmYjE5MWIxNDVjZWIzYTVlZWYwMDIifQ"
+          "resource": "repo://crates/services/src/services/queued_message.rs",
+          "version": "repo-file-v1:sha256:340b11c348c3cc33714e6affe92b434dd13bd5f8cda7d74eec41efb2a9bda7e4"
         }
       ]
     },
@@ -216,15 +216,15 @@
     },
     {
       "id": "claim_c98e86adcff646e0a97e2540f99be124",
-      "statement": "ドラフト Scratch は message と executor 設定を debounce 保存し、Workspace/Session/control IDで編集欄を分ける。local は SQLite/WS、remote は localStorage である。",
+      "statement": "Scratchは本文と設定をdebounce保存し、Workspace/Session/control IDで分ける。現行はserver SQLite/WSとtab-local pending backupで、remote localStorage経路は削除された。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L54-L179",
-          "version": "repo-lines-v1:sha256:8bfc50baa5eed14a25d2e876fc3c5b2eb8a385a4fd30c17a92f3925373097aa6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZmFhYzQ2M2Y5NWFmOWEyODIxOWVjOTA3NzdlM2MzYzljMjNkMjQ5OTE5NWFhZDZmYWIwMTdjOTRjODkxNWRhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmMzBkZTA2ZTdkMmI4Y2EwMGQyZWM3ZTEwYjBhMDI1MWViMGNiNmNkOTY2ZDQ0N2Y4ZDliNDE5ZTJmNTJmOGJkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMjU1YTA1YWY0YTUxNzVlM2JiOWUwZGRmY2QwNjU4OWM5M2Y0MDc3YmExMzRlNGMxYTRhZTc0ODgxMjk0ZGNkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YmEyMWIzOGJkZGUwZjJkOWJiNGU0MmE5NjU4MDYwYTY3MTMyZDYzZTNhYjY3ZTdhYmUyNTE5YjA0OWU4MGViIn0"
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts",
+          "version": "repo-file-v1:sha256:a9706c6bbea72d20d497936c34ffa76423e253532694998952e9846d7f0e11ec"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/hooks/useScratch.ts#L28-L99",
-          "version": "repo-lines-v1:sha256:241e3963773d8fe9a9da18cf97f54d872893e51848b2bdb26f2b4cbcdb7cc8b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMWQxYTYzMzkwMjI5Yzc5ODM0N2U4M2EwNDA1NDQxYzk0MDAwMzUyODRhZDE2OGMxYmY2Y2RmMWQ3MGEzNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlNmRmYzg2YThlOWJjNmRlZjE4M2RlMTdhNWY1MjliOGRkYzExOGQ5NTAwNDc3YzViODQyOGEzM2UwM2FiMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/web-core/src/shared/hooks/useScratch.ts",
+          "version": "repo-file-v1:sha256:141cc59457f59ffd1ffb5da7f451e2106444b33a98424b3a66dc67ca264c0f4d"
         }
       ]
     },
@@ -244,33 +244,29 @@
     },
     {
       "id": "claim_88dd782e7144451d806ad9ef82760a71",
-      "statement": "送信成功後の Scratch 削除は送信 snapshot との一致を条件とし、backend follow-up は無条件削除しない。",
+      "statement": "送信ACKはsnapshot一致のScratchだけ削除し、新しいdraftを保持する。backend follow-upやqueue消費は無条件削除しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/scratch.rs#L102-L129",
-          "version": "repo-lines-v1:sha256:ddc64dc1a70c3bd8661824457c50194f21443a6a89f2efd427b875fa40bc1384:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzcxZWFhZWU1MGMyNmQwYjNkYzlhMmMzODlkMWRkMzgxYTkwNDU4ZTk3Y2ExMzU5ZTkxNjBkYTRlZjFiMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyZThiZDk5MWFmYWFkMmE0MjM1ZmM4ODEwMzczNTZkMzBiZmVkOTY2YTIxMjlhYjgxNGYxM2Q5MWUwOGQ3NGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzMGYyZjg3MWVkMzM3YzE2MTRlOWUxMWRjZmYwMTZlOWU3NTAzZDBjZWQ1MDk0M2YxYTFjN2MzODNiOTQzZGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NTA0ZmVlYjhjZjI1NGJiMjExMDIzODk0ZGQ3YTUxMGNjNmUyZTU0OWNiMGI0ZmM5MGVkMmZkMTZmMGZiZDcifQ"
+          "resource": "repo://crates/server/src/routes/scratch.rs",
+          "version": "repo-file-v1:sha256:2bb6a3a601f7eeadf0a11844389a270207ef78868825b3111ccf85bc05722f8b"
         },
         {
-          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L438-L449",
-          "version": "repo-lines-v1:sha256:f5ba90b44e78716e09bd545917a6ccf97596c382c280fe1a37cbb1ff7cf6ef02:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3MTNlMGZmOTg1NDdkZWNjYTk0NDUwZTVkZmEyYTY4YWY5ZjA3MjE0YzUwZDRlYTEzMGM1ZjkxMWYyMzZjNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYzhhNTg2YzM1ZGFhZDE3MmM5ZjcxOTM2MGNjZDJiYTlhMDZiZTVmMTU2ZjczNjFjZDhmM2Q4NGExMzcxNjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzNGRjNTk2MGMxMTJlZDY4MDFhY2E5NDUzMmYyZTkzZmQwZTk3NzUxYjU5N2RiZmRlMzQ1MWM3MmJlMDVjODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxZjUzZDJmNzNjMDZiYTFiMWI0MDgxZTk0MWJlMzUwZGU4YTMzY2Q4MjMwYjE1YjI5MWE1MzE4OWEzMTNiYTIifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/hooks/useLocalStorageScratch.ts#L148-L161",
-          "version": "repo-lines-v1:sha256:e1c16ffc14a48e9ad6a967c505d82cb97e47c3deaadd8e1114eccc6b48f96efc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMDYxMmVlZDFmYmMyZmYyNjdiZGE5MTA2NzYzOGY5YjdjNjcyMDM4OWY3NjIyMTQzYTdiODE4NjAwMDY3MWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5NWZhMGYxMTE3YjVlYTQwNDM0MTQwZGRlMWEzNDBjNzIwZGRiZjMyNjIxMmUxOTE4MzhkNGIxNTZkMzE2YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzA2ODY3NmQzZjU0ZjJmMmRiOWQyMjYyZDkwOWMxN2ZlN2U4YWQwNTJlODU1MzAzMTJiYTgxMjQ4ZWI3NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4NDFhYjNlNDVjMDNiMTBlNDhmYTBmNGI3YzgwMTY1Njc1MWEyODEwZGUzOGNkMWNkZjljYTY1MzdjOTE5YmUifQ"
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs",
+          "version": "repo-file-v1:sha256:e65197e9c7253dd4349045c625142196b2435be6a4b79cc3858a48ceedc0aade"
         }
       ]
     },
     {
       "id": "claim_6f2dd3d9e55b4869a674bea3dd598a3e",
-      "statement": "local Scratch は queue 済み ID の作成更新を拒否し、queue 消費は新しい composer draft を削除しない。",
+      "statement": "Scratch作成更新はqueueとは独立で、旧queue-ID guardはない。queue消費は新しいcomposer draftを削除しない。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L407-L425",
-          "version": "repo-lines-v1:sha256:3c2fe84b07bdfc4a87aae3dba63152b18ba0c4d36bb42afe27616ba119fcc7f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMDc4MWVhNDYzNGU3YjA1ZjM3YzUzOGRlNjFmZTZlZmQxNzNjMzcwYzVhOTZmZTE4NmQwOTk5MjJlZGVhOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZjEwMzBmMzEzNTExMTliMWE0MzZhNTE1NTZkMjNiODVjYmVkZGMyZWNmMzEyMTZjMTJlYzQ4YmZkMzQ5ZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhOGFmZDBiMzBjM2Y2MzMyZTIyMTMwZGFmMjkyZDVjNGI3ZmNkMzM0MjViYzIzNTk5MzBjMmRhMWIxYWRjYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhMTRjODI2YzdjYmVhOWJhZmY1ODY0NDliYjU2YjVjZTI3MGJjN2Q5ZTNhYTI5MzY4MTI0ODEyZjUxZDBjNGUifQ"
+          "resource": "repo://crates/local-deployment/src/container.rs",
+          "version": "repo-file-v1:sha256:f31c6ad2a431bb7822916940c8ebdf28eeb54e8dd6333d579b985e31049ba741"
         },
         {
-          "resource": "repo://crates/server/src/routes/scratch.rs#L45-L99",
-          "version": "repo-lines-v1:sha256:eabe86e863e3c5e88813dd15d59af7b673ac8a7c526f708a931abbe57b6d760b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4M2UwYzlkMjI2NmI2ZTQxZmU4OTU0OGVjMGFjYjFhMDllMTEzZjNlZDdkMTUyMWZjYjU4MGVhMjc2NTQ5ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1NjBiNmMxNDhiOTc3Y2ViNzcyNmRmMDcxNWM3ZGRhZmJlNjFkYWYwYWYxNjIyZmYxZDMxZWIxOTgwZmIzYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyOTYyZGRjMWY3OWIxZTA4NjY5MTdkMjYzMDQxMGNhZGZhODhhODk5MjU1ODhhMzU5YTNhZGMxZjZjYmQwNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhYWE4MzE2NDVlODEyMmVlNzI3ZWRkNjJmYjJhYWEzNjQxNzNiNjU5ODk2YzQ2MzI4YjBhYmZlOWY4MDUxMmIifQ"
+          "resource": "repo://crates/server/src/routes/scratch.rs",
+          "version": "repo-file-v1:sha256:2bb6a3a601f7eeadf0a11844389a270207ef78868825b3111ccf85bc05722f8b"
         }
       ]
     },
@@ -293,12 +289,8 @@
       "statement": "Codex resume は同一 thread を継続し、非空の現在 host context を developer message として次の実行前に注入する。注入失敗では継続しない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2237-L2327",
-          "version": "repo-lines-v1:sha256:fed77daa57f6bc47a6fbf5dcc968c58463db7c5170bbeb0c1c31a85d78002f58:eyJzZWxlY3RlZExpbmVDb3VudCI6OTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2ZmFkNjMwYmE1M2U0MDg1Y2VlNGM4MTViMzk5OGEyNjk0YWRhYWRmMWJmNGI5OTRmMGZkODFkNWU4YTc0MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiZWI5NWUwMTUzMDliNjNhYjIzNmJhNzNlNjg0MDQ4MjVkMmE3MmJmMDk5ZTY3YjQ3NmNhMDY2ZTE3NjZhM2QifQ"
-        },
-        {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L270-L306",
-          "version": "repo-lines-v1:sha256:03537058c626679100ff9cb518f1c1ef0df1c283ef41485a7dba23bd38d7af8c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMmQ4NzFlYWRlMzJmODE0MTdkZDQ2NGM0NjYzYzhmMGY0MDkzZTY5Y2YxNGM0ZWI4M2U2MzBkNTQyZGRlYTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2M2RmYTkzMTMyMDgxZmIxNTg3YTM1OGNkMzAwYzM5ZDUyMzkzNzRjMGM4NjQ4MjE4NzZlNGZkNjA0ODc0MzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjZTBjMDQwMTMxOTVlMzc2MjE2YTA2MzMxNDE5YjYyYzY1OWU0ZmJlYjM5NDU5MmRhNTU5MDFmNjk4YWIwZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2YmYwMjkwZDdmNmEyYmM0ZDJjZmI3MTBhZmRjNjkwNThiODhhYjFjZDk2OGY4ZjFhMjY2YmU3OTE3OTA5NDAifQ"
+          "resource": "repo://crates/executors/src/executors/codex/client.rs",
+          "version": "repo-file-v1:sha256:8f0b5fa6ad241b831924f57d63cc0e577e20145d37a2ee4b9571833449c8c2a5"
         }
       ]
     },
@@ -317,12 +309,8 @@
       "statement": "Session の設定は最新 immutable RunAttempt から復元し、最新保存値の破損を古い設定への fallback で隠さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/sessions/executor_config.rs#L203-L214",
-          "version": "repo-lines-v1:sha256:742729d6ed7d209ca83f0508754848cece21c7bf182bc38733fdfea4f8cd8ddc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3OTEzZjJkOWM5MzQ2NWI2MTQxZWU3ZTgxMDFjMWRmNzAzOGQ5N2UyMjk5MDE2YjU1N2Q4ZjQxZDZhMTQzODQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhYmM4MWMzMjljOWZiNDQ3N2Y1NWY0Mjc4MzY2MWVmNTZjNWVjY2RlYzU3ODY4ODIzOGJkMjNmYzllNTdiODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/sessions/executor_config.rs#L23-L79",
-          "version": "repo-lines-v1:sha256:c3dc19567a8daf21b07e67a4e59029f149aa049418d3c42600ad92e7df29ca52:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmMjllNWJjMTViODdiYmNjNTcwM2ZmZDkwODk0MzA2NDY0OGUzYTA4ZDI0ZmMxZGIxNmNmOTJhOTlkNTQwYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1Y2Y1ZmMyM2YyYTZkMjNjM2VhNTFlNzJmNWU4OTZjNzU1NWZiYWEwNWNkNWIxZWExODJiZjk2MThhOGU4MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNlYTVhODk1ZDhjNGY0YjY4MTE5YWNkMWQ3ZDQ3NTUxNjBlZjhmMDQyYWU4YWMyYjNlNmZiOTA0NzgwNDNjNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzODRkMDI0YTUyMjRkMDhjOTI5ODI2NjE3YmYyMGEwMjQ4NjRkZWQyYzAzMjJjYzM4Y2IyODlkODBmNDAxODkifQ"
+          "resource": "repo://crates/server/src/routes/sessions/executor_config.rs",
+          "version": "repo-file-v1:sha256:053cbea8eb33b8152944d5cc943e2f8d186282f80039adfb138d17bdf237d327"
         }
       ]
     },
@@ -353,6 +341,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-09-22T01:26:32.834Z"
+    "at": "2026-10-16T11:50:57.361Z"
   }
 }

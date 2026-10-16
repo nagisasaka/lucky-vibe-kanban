@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:02a4789a40adcae3242f1292d86eba81528fbd97776894f1d34f751d04264add",
+  "pageVersion": "sha256:6e5224e6a6e04a39461af38b14f17f666db96bf11eab86eca929ee580b4610e7",
   "claims": [
     {
       "id": "claim_6831267bb1984baabffe65be3d6b8400",
@@ -148,23 +148,19 @@
     },
     {
       "id": "claim_8c5c4b06b2c3497cbe3c0195b3c67486",
-      "statement": "READMEの循環例と製品設計のprompt非伝搬記述は、現在の循環拒否とupstream展開にそのまま適用できない。",
+      "statement": "製品設計のprompt非伝搬記述より現行実装は広く、upstream templateを展開する。現行validationは循環を拒否する。",
       "evidence": [
         {
-          "resource": "repo://README.md#L47-L53",
-          "version": "repo-lines-v1:sha256:28395e055dda00195065dfad7960df73cdcc34aee6a2c4e24eb11a22f1f9a523:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmFmNjE5NzA5ZTQwMTNmOGIxYjZjODUyM2RkZTAwNmJlY2NmYjEyMmMzMzRhZGY1MDQ0ODk1ODkwYTI2MTUxYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmE4ZmViMGZiYzc3Mzk1ZmMzYWM1YzNiY2JlNGI5YmMzZTNmYWY3ZjdiM2YxYTVkNGY1ZGM1OTQ2NTQyOTAyMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTU5ZDI3MDg3ODlmYzVjNTAxYTdkMzUwNWEyYTViMDRhYTc0MDRmMTE0YTU3OGMyYTQ5MmIzMjc5YjcwOTdlZCJ9"
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs",
+          "version": "repo-file-v1:sha256:370097d9302789b976bfcd4ce13a0c3426aefbf5af8426823c9bdbbf729a4988"
         },
         {
-          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L2846-L2852",
-          "version": "repo-lines-v1:sha256:eccfe4bb99dceacdfee590d183613f7317ef0bd706e13c7c929836252445420e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTljMDNjOWNiMzBhNWQ3ZDhmN2JhOWRkMjI1OTBiMWY5ODhkYTJkOWNlNmNlODhkOTdhYzg4MjdkYjBlMDk4YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2NiMjE5NzAwNmNmNTk4Mjg2ZGZmMmUxZjY2NDFhZTdmODNjMmQ4YTMxMWRlOWVlYmY4NWI0NWMwYmE3NzhhZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmI0ZmIzZjcxOTdiMTYyMDZjODU2MjIzN2UzYmIyOTZmNTM1NWNkZjI2MTQwZTdlYWZkMmE4ZDNiZTEyNmMxOSJ9"
+          "resource": "repo://crates/workflow/src/validation.rs",
+          "version": "repo-file-v1:sha256:62243145f106ac2b66d857113044aa7a0e50f3839ec931de6f9be2a6185b2620"
         },
         {
-          "resource": "repo://crates/workflow/src/validation.rs#L100-L102",
-          "version": "repo-lines-v1:sha256:ec0e7fc43f054268aa324ef371495e6dfe4a44e27de77c46455da42b9293fcce:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzg1OTY1MDQxYmE1MTQ3OGU4NjQ3NmM4YjgyMDI5YjQxOWUyZjJlYjk5ZWFjYzc1NDFiNDcwMGIzMDk1OWFjMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZmYmU2YmY1MTY0NmVmMTUzZTA5ZTAzNjk2Y2U0M2EyNjkzZmIxYjU2ODliMmQyOWYzNDgyODk4NDdhNzBkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk5YmRlZmVlYWNhNjM0MGUwMjkwZGM4NmU4ODljODlkNWUxODlhYTViYTQ0YjU4NWIzYjcwNzM0ZjRhNjJkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmI0OTc3M2MxZDg2NTVjOTUyYWQyMjJlODdjOTUzYTg0M2JlYjM3YzFjY2NkZTU3YTNlZGFjY2JiMWQyZTVlMiJ9"
-        },
-        {
-          "resource": "repo://docs/future/ai-workflow/spec-product.md#L16-L24",
-          "version": "repo-lines-v1:sha256:60b61e00b664ec97c9ad31581570665944a795a018befc1a5d5f19f73e21308e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYzNjVjNmM2NTJhYTE5ZjRkMzM0MjkwMDQ5OTcwYTJiYmM1YzI2ZjdhMjAyZjNlZTE0MzA2NWI1ODAxMDA5YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTNmODcyN2M1OTkyY2UzOGE1YThiNDM2M2NiYzY3NDNiMGE5ZDFlNTExZmYzZWQ0MDYzMjc2YTMwYTc4MGJmZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmFjN2JmMmRmOTdmOGVmMTliMzE5NjAzZGYxYjM5NzU5YmFiNTNmMGE2ZmRkZmRkZjg0MmQ3MjhkYzYwNDI0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTUyYmU0OGFlMWUxZTFjNTdlMTUyZDhhM2UxMDQ5NTQ2MjJkZDg0OTdiMDY3Y2NkYTlhZjkxMDdhNzA1OWRiYyJ9"
+          "resource": "repo://docs/future/ai-workflow/spec-product.md",
+          "version": "repo-file-v1:sha256:7b20537681232bd6e1e1625b1e82f4d29ea27ba5a926d6ea0f3475d364af2e32"
         }
       ]
     },
@@ -233,6 +229,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-09-22T02:14:43.589Z"
+    "at": "2026-10-16T11:50:57.361Z"
   }
 }

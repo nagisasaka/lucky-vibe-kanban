@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:98e7134af8cefbaea94a9df1980b03311c98ec990e8fea79a976112017038fdd",
+  "claims": [
+    {
+      "id": "claim_b19b76396a064309bf7402c5c74e707d",
+      "statement": "外部Runnerはcanonical execution resourceを同じ束でclaimし、immutable dirty sourceとcommand UUIDを用いる。interactiveはfinishまで保持し、失敗時はsettlementとoperator recoveryなしに解放しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/execution_bridge/mod.rs",
+          "version": "repo-file-v1:sha256:32c39a37d1c2d3d79f6169864b4774f9f3e454401db19b22f3598c3c151af76b"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/execution_bridge/source.rs",
+          "version": "repo-file-v1:sha256:2a0da93b7becbe7c4561a9d6e77c5e709b7f6dd5795d4467e6fc8a9a9cc7b918"
+        },
+        {
+          "resource": "repo://crates/services/src/services/resource_coordination.rs",
+          "version": "repo-file-v1:sha256:3684715667617fd58b7927742c93f536366d2248feb4f28b606feedf79fb406e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-10-16T11:50:57.361Z"
+  }
+}

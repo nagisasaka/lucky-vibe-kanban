@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d581137ec82d2577f13162f1f9f167160132353f914d31bfa98b803e16426554",
+  "pageVersion": "sha256:2a2354e8789b3fb70de1df2f8d97049a1435c4362e7c564611f6c75987498472",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -112,11 +112,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:ed3742e5a823b95200938c2ef6f68f28229e6149b360added74f2968ba62677a"
+          "version": "repo-file-v1:sha256:7691359c38dc2982ebfbda53f867bc290b79bee7a0f96088b92fbeac606e5779"
         },
         {
-          "resource": "repo://crates/server/src/startup.rs#L214-L225",
-          "version": "repo-lines-v1:sha256:d84aa8115551fb2db6a3a9341a2b0cc5724595d7f11c88ea50082d8ef0d7eb47:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MjNhYmNkNzk4M2NhZWVlZDViOGUzN2IwNjEzNzBmNGMwMDU5NjQ2MGJhZmRhNTdlZWQ5YjIwMWEyZWM0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1Mjk4YmE2NDU3MmNhODkwODg0YTFiMWViNmE1MjA2YmI3NWJkMWE3Mzk5Mzk3YWVjOGQ4NGVkMDVhMWQ4ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
+          "resource": "repo://crates/server/src/startup.rs#L214-L227",
+          "version": "repo-lines-v1:sha256:cad71a2d6351ca2a2b95407ebbccd1420b4fd14a7122e9cc078a59038b4a33c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZDI2OGMyOGY3YTI3OTY2ODljZmEwOWJmMGY0NGZkNTUyMWUwZDEyNDgwMWY0ZTJiOWVjODg4MGVkYmViMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
         }
       ]
     },
@@ -144,11 +144,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:ed3742e5a823b95200938c2ef6f68f28229e6149b360added74f2968ba62677a"
+          "version": "repo-file-v1:sha256:7691359c38dc2982ebfbda53f867bc290b79bee7a0f96088b92fbeac606e5779"
         },
         {
-          "resource": "repo://crates/server/src/startup.rs#L219-L225",
-          "version": "repo-lines-v1:sha256:18425d9af242f74dd024e6b2f20121f5a24e90a503ace2da93c2534b77619b04:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTZkMjI1NzFjYTkxYjgzNjljZDUwZWM0NjU3MDZjZjAwOTAyOTQ1MWM1YzcxMGM0OTFhMGFkNDhmN2U4NTEzYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTU2YmUyZWUxNzAwNDA2OGMxODZiZTgyM2UzMmNjNTExYzQ5YTgwNzVlZjFhZDAwMjkyMmRlMGM1OTk4YzMxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzk5NWZiZGQyYjQxYWEwNGQwYTA2MWQ1MGE2ODljMTJjMzI2MDExMTA1NjA2MTVlODIzMDY3NThkOGM0NDhiNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM3OGU1Mzk1N2I5MWIzYThhMzgyZDA1NzkxNTZmMmI1YWY4OTE5YzMxZWE5ZjUzZmMyNjQyODFmOWM5MGNmNSJ9"
+          "resource": "repo://crates/server/src/startup.rs#L219-L227",
+          "version": "repo-lines-v1:sha256:7e377439644136355f10e301a2d0a1eff720e41f389bf394351990459b6c5416:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjFmMWM3MmFhNzA5ODgyYzdiMTVkNmM2ZDhhNmZkYmQyOTIxOTQ5NTNiODQ2MGE4NmE0M2QxMzg5MmNjYjQyNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTU2YmUyZWUxNzAwNDA2OGMxODZiZTgyM2UzMmNjNTExYzQ5YTgwNzVlZjFhZDAwMjkyMmRlMGM1OTk4YzMxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2I0N2I4Yzk3OThiMzM5OTM4N2VkNTMyMjI4NDJmYTUzMzE0ZjQ4YTdiMDM1YTI5ODY3ODg5MjU4ZDc5YWJmYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM3OGU1Mzk1N2I5MWIzYThhMzgyZDA1NzkxNTZmMmI1YWY4OTE5YzMxZWE5ZjUzZmMyNjQyODFmOWM5MGNmNSJ9"
         },
         {
           "resource": "repo://docs/future/ai-workflow/spec-product.md#L1-L24",
@@ -179,8 +179,8 @@
       "statement": "Bootstrap の保存済み report は expected identity と内容 digest を照合して再読込され、Review の verdict・件数もファイルの本文と一致することを検証する。",
       "evidence": [
         {
-          "resource": "repo://crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L111",
-          "version": "repo-lines-v1:sha256:6da85e2e8e3dd769458c0db73baf6f95bfe258473b112d0e09cf4ee810c1690c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkYWNjOTBlYzAxZTQ0MGIwNTE2ODE1MWZhM2MxYmE0Nzg0MDZjYzczODYwYTNjMDkxY2RlNWI2YWZhZDIzYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3NjM4MTQ4YTkzMDRlYjA5ZWIzNzk5MGRjNWEyN2E1YmUyODBjNWRkZTUyOWE5OGJhZWVmY2M2Nzg1OTAzZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkN2NlMjM1MWEyYTMyNmJiZjhjMzVhNjFkMWIwMjllZTUwNDViZWNjMjliZmM2YmU3OTBmNTA2MjlkZWRhMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2ZmVhMDE2MzY1ZjYwNWE2YjZkZWZiNDlmNzMwNGNhMjlkYTM1ZmVkYjgxOTFkMjA1MzUyZDRkOTNlODA5YzQifQ"
+          "resource": "repo://crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113",
+          "version": "repo-lines-v1:sha256:b412d6e2996b0c4c82590db299b41fbfb4905a1f66a7cd81ad38156f25fdda9c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkYWNjOTBlYzAxZTQ0MGIwNTE2ODE1MWZhM2MxYmE0Nzg0MDZjYzczODYwYTNjMDkxY2RlNWI2YWZhZDIzYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkN2NlMjM1MWEyYTMyNmJiZjhjMzVhNjFkMWIwMjllZTUwNDViZWNjMjliZmM2YmU3OTBmNTA2MjlkZWRhMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjYTMzYTdhNDVlNDIzMTJiYTUyNzExZWI5YzcxZDZmYjhhYjFhYjM1NDllMzljZTZhOGI5YTExZjIzY2EzOWUifQ"
         }
       ]
     },
@@ -219,6 +219,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-09-22T01:26:32.834Z"
+    "at": "2026-10-16T11:50:57.361Z"
   }
 }

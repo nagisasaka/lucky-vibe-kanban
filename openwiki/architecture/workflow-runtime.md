@@ -26,10 +26,10 @@ sources:
     resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-09-22T01:26:32.834Z" }
+generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-22T01:26:32.834Z
+    at: 2026-10-16T11:50:57.361Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -76,7 +76,7 @@ driver は node iteration と snapshot を読み、Ready node を順に起動す
 | Run 取得 GET / Run events の SSE 接続 | handler 自身が reconciliation を実行する |
 | 活動中の Run を表示する UI | `useWorkflowRun` は既定4秒ごとに GET する。設定で停止・変更可能 |
 
-[startup の結線](../../crates/server/src/startup.rs#L214-L225)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L137)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
+[startup の結線](../../crates/server/src/startup.rs#L214-L227)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L141)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
 
 したがって Run の取得は純粋な表示読み取りではない。画面経由では前進しても、standalone を画面なしで動かす場合に同じ継続駆動を保証する根拠にはならない。ScheduledTask loop は定時の起動を担い、完了後の全ノード連鎖を監視する watcher の代わりではない。[定時実行の skip 条件](../workflows/task-to-integration.md#定時に-workflow-を起動する)と併せて、起動に成功した run が進行し続けるかを別に確認する。
 
@@ -104,7 +104,7 @@ Bootstrap は専用 Workspace の `execution_owner` を Workflow run に結び�
 
 OpenWiki Bootstrap は、通常 Workflow の会話引継ぎへ Review の全文を流さない。host が Reviewer の JSON と evidence path を検証し、repository shared storage へ完全なレポートを保存する。node output には repository・source SHA・Workflow run・Session・AgentRun・phase の identity、digest、verdict と件数だけを残す。[Review 完了時](../../crates/server/src/workflow_runtime/bootstrap.rs#L504-L533)、[保存と参照](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L15-L38)
 
-system Condition はこの検証済み verdict から `pass` / `refine` を決定的に選び、通常の LLM Condition を呼ばない。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、共有ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L111)
+system Condition はこの検証済み verdict から `pass` / `refine` を決定的に選び、通常の LLM Condition を呼ばない。Refiner には host が決めたファイル参照を渡す。参照の identity と内容 digest は再読込時に検証され、共有ファイルが改変された場合は再生成で隠さず拒否する。したがって、通常の上流 handoff の文字数制限を緩めずに Review の情報を保持できる。[分岐](../../crates/server/src/workflow_runtime/runner.rs#L2446-L2475)、[Refine dispatch](../../crates/server/src/workflow_runtime/bootstrap.rs#L320-L332)、[参照の再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs#L72-L113)
 
 この仕組みは任意ファイルを下流 prompt に挿入する汎用 artifact 機構ではない。詳細なレビュー契約と publication 前の再検証は [OpenWiki maintenance](../operations/openwiki-maintenance.md)へ集約する。
 

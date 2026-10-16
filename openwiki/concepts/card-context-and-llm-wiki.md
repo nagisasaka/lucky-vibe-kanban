@@ -31,7 +31,7 @@ sources:
 generated: { by: "codex", at: "2026-09-21T08:52:18.882Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-21T08:52:18.882Z
+    at: 2026-10-16T11:50:57.361Z
 ---
 
 # Card context と並列作業の参照

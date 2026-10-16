@@ -5,7 +5,7 @@ description: 同じ Issue に対する複数の Workspace を比較する Arena 
 tags: [arena, workspace, comparison, lifecycle]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-15T18:24:07.449Z
+    at: 2026-10-16T11:50:57.361Z
 sources:
   - id: openwiki-source-2a51fb8409723c3914db4954
     resource: repo://crates/db/src/models/arena_group.rs

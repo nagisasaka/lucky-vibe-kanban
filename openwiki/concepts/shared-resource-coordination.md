@@ -9,6 +9,14 @@ sources:
   - resource: repo://crates/server/src/routes/resource_coordination/runtime.rs
   - resource: repo://crates/services/src/services/resource_coordination.rs
   - resource: repo://crates/executors/src/executors/codex.rs
+  - id: openwiki-source-970aab88c12187a0a947aa42
+    resource: repo://crates/server/src/routes/execution_bridge/mod.rs
+  - id: openwiki-source-516767fac5b6f9159d5b8c8f
+    resource: repo://crates/server/src/routes/execution_bridge/source.rs
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-16T11:50:57.361Z
+generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -46,8 +54,7 @@ host は保存済みのコマンドと所有権を照合し、既存の Executio
 
 操作完了、Card 完了、Git 統合はそれぞれ別の出来事である。操作が終わっても Card
 で追加開発できる。待機要求はモデルのターンや通信接続より長く保存されるが、
-一時停止した Goal を勝手に再開しない。未解決の操作がある Workspace は cleanup と
-正式 Integration の採用元への受付を拒否する。
+一時停止した Goal を勝手に再開しない。未解決の操作がある Workspace は cleanup を拒否する。正式 Integration は固定 source commit を選ぶので source 全体の停止を要求しないが、専用実行環境・公開先 writer の idle 確認は別に必要である。[選択と公開の境界](formal-integration.md)。
 
 ## 解放されてもスキーマ変更は消えない
 
@@ -77,8 +84,20 @@ DB の履歴が実行時の正本であり、Wiki は live owner ledger とし�
   調停 AI のツール制限と、汎用作業 agent の権限は同一ではない。
 - fence は外部アダプターと対象資源が検証して初めて古い要求の実行を防げる。
   環境変数を渡すだけでは任意の ADB・SQL・AWS 呼び出しを fence できない。
-- 実機接続、外部資源固有の復旧アダプター、共有読み取り・容量 N、複数 LVK 間の調停は
-  初版の対象外。正式 Integration の検証コマンドも自動的に資源要求へ変換しない。
+- 外部資源固有の復旧アダプター、共有読み取り・容量 N、複数 LVK 間の調停は
+  初版の対象外。Windows Runner の接続は下記の execution bridge が担う。正式 Integration の検証コマンドも自動的に資源要求へ変換しない。
 
 操作方法と API の入口は [実装仕様](../../docs/design/shared-resource-coordination.md) を参照する。
 実装・テストが正本であり、このページは設計意図と危険な変更点の案内である。
+
+## 外部 Runner と interactive operation
+
+Runner は明示選択した実行 machine と credential / installation identity であり、共有 Resource 自体ではない。Runner を既存 canonical execution-slot Resource に結び、desktop・device など script が使う全資源と同じ operation で claim する。capability があることは所有権ではない。Windows の user session から outbound poll し、PowerShell を実行する。[Runner 登録・認証](../../crates/server/src/routes/execution_bridge/mod.rs)、[利用方法](../../docs/development/local-execution-bridge.md)。
+
+Source は Session / Workspace と Git HEAD に結び付く dirty checkout の immutable snapshot である。tracked と非 ignored untracked を収集し、path・case衝突・hash・上限を検査する。`.git` / `.lvk-shared` や危険な Windows path は含めない。操作の working_dir は snapshot root 相対となる。[snapshot の検査](../../crates/server/src/routes/execution_bridge/source.rs)。
+
+interactive operation は start 後も資源束を保持する。追加 command は安定 UUID で step を逐次投入し、観察結果・artifact・receipt を取得する。最後の finish が保存済み cleanup と独立 verification を実行する。step の成功だけでは operation 完了にならない。[delivery と reconcile](../../crates/server/src/routes/execution_bridge/mod.rs#L209-L402)。
+
+切断・timeout・cancel・予期しない停止は `recovery_required` として所有権を保持する。Runner は元の installation / journal で戻り、未記録副作用を自動再実行せず containment の停止を証明する。全 command receipt が揃った settlement の後でも、外部資源の確認と operator recovery が必要である。disable は新規 dispatch を止めるだけで drain を許し、token rotation は installation を変えたり資源を解放したりしない。[settlement guard](../../crates/server/src/routes/execution_bridge/mod.rs#L291-L321)、[回復条件](../../crates/server/src/routes/execution_bridge/mod.rs#L404-L419)。
+
+Linux simulator の試験は Windows の Job Object・desktop・実機の動作証明ではない。対応範囲と未実施の Windows 確認項目は [bridge の validation boundaries](../../docs/development/local-execution-bridge.md#validation-boundaries)を参照する。旧 relay / paired-host の削除とは独立して、この bridge は現行構成に残る。

@@ -8,8 +8,6 @@ sources:
     resource: repo://crates/api-types/src/issue.rs
   - id: openwiki-source-e4c80fe5a2af8a4abd8a8684
     resource: repo://crates/db/migrations/20260427000000_local_kanban.sql
-  - id: openwiki-source-cc96689b2a7b877e58513f38
-    resource: repo://crates/db/migrations/20260918000000_formal_integration.sql
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
@@ -20,8 +18,6 @@ sources:
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
     resource: repo://crates/server/src/routes/workspaces/links.rs
-  - id: openwiki-source-9870279ad197d3d37bb6575a
-    resource: repo://docs/cloud/filtering.mdx
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
   - id: openwiki-source-e0c2de9e01617a8949b78360
@@ -32,23 +28,23 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-09-22T01:26:32.834Z" }
+generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-22T01:26:32.834Z
+    at: 2026-10-16T11:50:57.361Z
 ---
 
 # Project・Issue と実施の関係
 
-**Project** は関連する仕事を集める単位で、Issue、ボードの Status、分類用 Tag を持つ。**Issue** は「何を達成するか」を表す仕事である。AI が作業する場所は [Workspace](workspace.md)、会話と実行は [Session・AgentRun](session-and-agent-run.md) が受け持つ。この分離により、一件の仕事に複数の実施や比較候補を関連付けられる。[製品上の定義](../../docs/cloud/projects.mdx#what-is-a-project)、[Issue 契約](../../crates/api-types/src/issue.rs#L20-L40)、[関連表](../../crates/db/migrations/20260427000000_local_kanban.sql#L208-L223)
+**Project** は関連する仕事を集める単位で、Issue、ボードの Status、分類用 Tag を持つ。**Issue** は「何を達成するか」を表す仕事である。AI が作業する場所は [Workspace](workspace.md)、会話と実行は [Session・AgentRun](session-and-agent-run.md) が受け持つ。この分離により、一件の仕事に複数の実施や比較候補を関連付けられる。[Issue 契約](../../crates/api-types/src/issue.rs#L20-L40)、[関連表](../../crates/db/migrations/20260427000000_local_kanban.sql#L208-L223)
 
-Cloud で Project を所有するのは [Organization](organization-and-membership.md)である。所属と Admin の違い、個人用組織、招待の受理はそのページにまとめる。Issue の担当者・Follower は組織 role ではない。
+local Project は固定 [Organization / user](organization-and-membership.md)の表示モデルに結び付く。Issue の担当者・Follower は認証権限とは別である。
 
 ## 仕事の識別と分類
 
-Issue の主キーは UUID。表示用 `simple_id` と番号、Project、Status、本文、任意の優先度・期限・完了日時、親 Issue、拡張メタデータを持つ。ローカル作成は Project ごとの最大番号から `LOCAL-N` を採番する。DB の番号・simple ID の一意性も Project 内なので、複数 Project を横断する処理で表示文字列だけをグローバル ID と扱わない。[型](../../crates/api-types/src/issue.rs#L20-L40)、[採番](../../crates/server/src/routes/local_remote.rs#L737-L748)、[一意制約](../../crates/db/migrations/20260427000000_local_kanban.sql#L45-L69)
+Issue の主キーは UUID。表示用 `simple_id` と番号、Project、Status、本文、任意の優先度・期限・完了日時、親 Issue、拡張メタデータを持つ。ローカル作成は Project ごとの最大番号から `LOCAL-N` を採番する。DB の番号・simple ID の一意性も Project 内なので、複数 Project を横断する処理で表示文字列だけをグローバル ID と扱わない。[型](../../crates/api-types/src/issue.rs#L20-L40)、[採番](../../crates/server/src/routes/local_remote.rs)、[一意制約](../../crates/db/migrations/20260427000000_local_kanban.sql#L45-L69)
 
-Status は Project の列を参照する ID であり、エージェントのプロセス状態ではない。ローカルの初期列は Todo / In Progress / In Review / Done / Cancelled で、Cancelled は初期状態で非表示。更新 API は `status_id` と `completed_at` を別々の入力として保持するため、列を Done に変えるだけで完了日時が自動計算されるとは読めない。[初期列](../../crates/server/src/routes/local_remote.rs#L49-L55)、[更新](../../crates/server/src/routes/local_remote.rs#L797-L852)
+Status は Project の列を参照する ID であり、エージェントのプロセス状態ではない。ローカルの初期列は Todo / In Progress / In Review / Done / Cancelled で、Cancelled は初期状態で非表示。更新 API は `status_id` と `completed_at` を別々の入力として保持するため、列を Done に変えるだけで完了日時が自動計算されるとは読めない。[初期列](../../crates/server/src/routes/local_remote.rs)、[更新](../../crates/server/src/routes/local_remote.rs)
 
 Issue の分類と関係はそれぞれ別の意味を持つ。
 
@@ -60,15 +56,15 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 | Tag | Project 内の分類ラベル。Issue と多対多で結ぶ |
 | Relationship | blocking / related / has_duplicate を保存する |
 
-この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。ボード操作、コメント、絞り込みの利用手順は [Issues](../../docs/cloud/issues.mdx) が詳しい。
+この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。
 
-部分更新では「送らなかった」と「null に消した」を区別する。たとえば description や priority は二重 Option であり、未指定なら既存値を保持し、明示 null ならクリアする。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs#L828-L847)
+部分更新では「送らなかった」と「null に消した」を区別する。たとえば description や priority は二重 Option であり、未指定なら既存値を保持し、明示 null ならクリアする。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
 
 ## ボード表示と共有状態
 
 Team / Personal は同じ Project の Issue 集合を見る filter preset であり、所有権・公開範囲を切り替えるものではない。既定の Team は担当者を絞らず手動順、Personal は現在 user の担当 Issue・優先度順で sub-issue も表示する。Project ごとの active view と、Project / view ごとの検索・sort・表示 option を UI preferences に保存する。[preset](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L82-L209)・[保存キー](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L744-L783)
 
-保存先は [Scratch の runtime 境界](../architecture/web-and-sync.md#ドラフト表示設定通知の保存境界)に従う。local-web では固定の UI preferences レコード、remote-web ではブラウザーの localStorage であり、Cloud user ごとのサーバー保存を仮定しない。[Scratch 化](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L27-L98)・[保存](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L235-L260)
+保存先は [Scratch の runtime 境界](../architecture/web-and-sync.md#ドラフト表示設定通知の保存境界)に従う。現行 local-web は固定の UI preferences レコードを server Scratch に保存する。[Scratch 化](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L27-L98)・[保存](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L235-L260)
 
 | 操作 | 変更する対象 |
 | --- | --- |
@@ -81,15 +77,15 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 
 `hideBlocked` は blocking 関係の元 Issue を blocker として調べる。blocker が **最後の可視 Status（sort_order 順）または任意の hidden Status** にあれば解決済みとして扱い、それ以外なら被ブロック Issue を隠す。参照先 blocker が手元の集合に存在しなければ、ブロック中と判定しない。名前が Done か、`completed_at` が埋まっているかという判定ではない。列の順序・非表示化は見た目だけでなく、この依存表示の意味を変える。[解決済み Status 集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L311-L325)・[blocking の向きと判定](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L149-L169)
 
-[Kanban の移動操作](../../docs/cloud/kanban-board.mdx#drag-and-drop)、[列のカスタマイズ](../../docs/cloud/customisation.mdx#managing-columns)、[Filtering](../../docs/cloud/filtering.mdx)は廃止表示のない操作文書である。ただし Filtering の「タイトルのみ検索」「Project 切替で filter リセット」は現在の実装に適用できない。検索は title / simple_id / issue_number の部分一致で、Project / view 別設定を保持する。filter はカテゴリー内 OR、カテゴリー間は順に適用する AND である。[検索・filter](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L82-L147)・[Project 別設定の復元](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L244-L285)
+検索は title / simple_id / issue_number の部分一致で、Project / view 別設定を保持する。filter はカテゴリー内 OR、カテゴリー間は順に適用する AND である。[検索・filter](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L82-L147)・[Project 別設定の復元](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L244-L285)
 
 ## Issue の共同作業
 
-Cloud の Attachment は Issue / Comment と Blob の関連を持ち、Session の添付 File と別の寿命である。[添付の確定・清掃・Workspace への取り込み](issue-collaboration.md#attachment-と-blob)を参照する。Follower と Assignee から誰に変更が通知されるか、保存成功でも通知が欠ける条件、既読の意味は [購読と通知](issue-collaboration.md#購読と通知)に集約する。
+担当・Follower・Comment / reaction の保存と、空の local 通知一覧、OS 向け実行通知は [Issue の共同作業](issue-collaboration.md)に集約する。旧 Cloud Attachment の保存・配送契約は現行構成にはない。
 
 ## Issue から実施へ
 
-通常の Workspace 作成は `linked_issue` を受け取り、コンテナーと Session を作る前に関連付けを行う。ローカルでは `local_workspace_links.workspace_id` が主キーで、一つの Workspace の関連先を upsert する。一件の Issue は複数 Workspace を持てる。関連解除はリンクの削除であり、Workspace の作業ファイル削除とは別の操作である。[作成順](../../crates/server/src/routes/workspaces/create.rs#L419-L438)、[関連付け・解除](../../crates/server/src/routes/workspaces/links.rs#L24-L59)
+通常の Workspace 作成は `linked_issue` を受け取り、コンテナーと Session を作る前に関連付けを行う。ローカルでは `local_workspace_links.workspace_id` が主キーで、一つの Workspace の関連先を upsert する。一件の Issue は複数 Workspace を持てる。関連解除はリンクの削除であり、Workspace の作業ファイル削除とは別の操作である。[作成順](../../crates/server/src/routes/workspaces/create.rs)、[関連付け・解除](../../crates/server/src/routes/workspaces/links.rs#L24-L59)
 
 「実施」には複数の形がある。
 
@@ -101,22 +97,20 @@ WorkflowAttempt は Project と Issue の所属を検証し、通常のテンプ
 
 ### 正式統合と Card の完了
 
-local Board の [正式 Integration](formal-integration.md)は複数 Card の採用 Workspace と commit を固定し、host 検証後の Git 公開に続いて条件付き Done を試みる。通常の status 編集とは異なり、対応する可視 Done 列と凍結した要件・関連・status・revision の一致を必要とし、完了日時と処理結果を一緒に保存する。Git が公開済みでも Card が変更済みならその状態を保持する。[条件付き Done](../../crates/db/src/models/integration.rs#L184-L235)
+local Board の [正式 Integration](formal-integration.md)は採用 commit を固定し、一件ずつ検証・review して Git 公開後に選択 Card と Integration Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
 
-このため、Done をコードの到達先や Wiki の新鮮さの証拠として使わない。Integration の予約中は Card 要件・関連 Workspace の変更も制限され、後で元に戻す編集でも requirements revision は進む。[revision と予約](../../crates/db/migrations/20260918000000_formal_integration.sql#L52-L102)。予約と回復の詳細は [正式 Integration の契約](formal-integration.md#gitdonewiki-は独立した結果)に集約する。
+通常の link / unlink は interactive 用途を要求し、既存 Workspace の unlink は Integration guard も確認する。execution-only の間は通常作業への付け替えを拒否するが、終了・cleanup 後の用途解除は可能である。[link/unlink](../../crates/server/src/routes/workspaces/links.rs)、[用途と所有者](workspace.md#操作用途と実行所有者)。内部製品が自身の Card を付ける処理と、通常ユーザーの link API は区別する。
 
-実行専用 Workspace は通常の Issue 実施へ関連付け・付け替えできない。link と unlink は remote 呼出し前に用途を検査し、local Board の内部 link 作成にも同じ interactive 要件がある。[link/unlink](../../crates/server/src/routes/workspaces/links.rs#L62-L69)、[解除前の検査](../../crates/server/src/routes/workspaces/links.rs#L149-L158)、[local link](../../crates/server/src/routes/local_remote.rs#L2073-L2090)。その恒久的な用途と、一時的な Integration 予約の違いは [Workspace](workspace.md#操作用途と実行所有者)を参照する。
+## 表示モデルとローカル保存
 
-## ローカルとクラウドの意味の違い
+共通 API の Project は organization ID と表示メタデータを含む。一方、ローカル DB の `projects` は作業ディレクトリ既定値と remote project ID を持ち、`local_project_metadata` を join してボード向けの形にする。同じ名前の Rust 型だけから同じ保存モデルだと判断しない。[共通型](../../crates/api-types/src/project.rs#L8-L17)、[ローカル型](../../crates/db/src/models/project.rs#L7-L17)、[組み立て](../../crates/server/src/routes/local_remote.rs)
 
-共通 API の Project は organization ID と表示メタデータを含む。一方、ローカル DB の `projects` は作業ディレクトリ既定値と remote project ID を持ち、`local_project_metadata` を join してボード向けの形にする。同じ名前の Rust 型だけから同じ保存モデルだと判断しない。[共通型](../../crates/api-types/src/project.rs#L8-L17)、[ローカル型](../../crates/db/src/models/project.rs#L7-L17)、[組み立て](../../crates/server/src/routes/local_remote.rs#L375-L401)
+ローカル API は固定 Local organization と Local User/Admin を返す。これは多人数認可ではない。[固定表示](organization-and-membership.md)。Web は REST snapshot で同期する。[取得と mutation の収束](../architecture/web-and-sync.md)。
 
-ローカル互換 API は固定の Local organization と Local User/Admin を返す。この擬似メンバーシップを、[Cloud の組織所属と管理権限](organization-and-membership.md) と同等の利用者管理だと説明しない。[ローカル応答](../../crates/server/src/routes/local_remote.rs#L1205-L1233)。REST と Electric の取得経路は [Web と同期](../architecture/web-and-sync.md) が説明する。
-
-Workspace をクラウドへリンクする経路では、ローカルリンクを先に保存し、remote client があればリモート Workspace を作る。後段の通信失敗はエラーとして返り、ローカル保存との一括ロールバックはない。解除はリモート削除を先に行い、404 は既に解除済みとしてローカルを消す。この非対称性は再試行・表示不整合を調べる際に重要である。[リンク順序](../../crates/server/src/routes/workspaces/links.rs#L62-L87)、[解除順序](../../crates/server/src/routes/workspaces/links.rs#L149-L169)
+Workspace link は現在ローカル表への upsert、unlink はその削除だけであり、Cloud 呼出しとの部分失敗モデルは撤去された。unlink は既に削除済みの Workspace ID も受け付ける。[実装とテスト](../../crates/server/src/routes/workspaces/links.rs)。
 
 ## 旧 Task を読むとき
 
-`tasks` と固定 enum の `TaskStatus` はソースに残る。ローカル Kanban 導入 migration は Task ID を保って `local_issues` へコピーし、旧 `workspaces.task_id` からリンク表を初期化した。現在のボード取得はリンク表と `local_issues` を join する。このため、旧 Task の状態や `task_id` だけを追って現行 Issue の挙動を説明すると境界を見失う。[移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L75-L123)、[リンク移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L225-L231)、[現行取得](../../crates/server/src/routes/local_remote.rs#L1142-L1173)
+`tasks` と固定 enum の `TaskStatus` はソースに残る。ローカル Kanban 導入 migration は Task ID を保って `local_issues` へコピーし、旧 `workspaces.task_id` からリンク表を初期化した。現在のボード取得はリンク表と `local_issues` を join する。このため、旧 Task の状態や `task_id` だけを追って現行 Issue の挙動を説明すると境界を見失う。[移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L75-L123)、[リンク移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L225-L231)、[現行取得](../../crates/server/src/routes/local_remote.rs)
 
 Repo はパス、対象ブランチ既定値、setup/cleanup/dev script などの実行資源を持つ。[Workspace](workspace.md) がそれを選択して作業環境を構成するので、Project を Git リポジトリ一個と同一視しない。[Repo の責任](../../crates/db/src/models/repo.rs#L36-L54)

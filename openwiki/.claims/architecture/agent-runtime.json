@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:11ff1a1708aa06a398c11a84a2301f802ef1d70d62d632c6508854f64f2cc391",
+  "pageVersion": "sha256:897cb932031d4d04f602767445df95686cfccf6a5bdc62313f10c8d21217263d",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -152,15 +152,19 @@
     },
     {
       "id": "claim_a3e140e96fa64a47842e6ddbd0ad17db",
-      "statement": "Native Auditの本体はasset_dir配下のSession/AgentRun/RunAttempt別manifest.jsonとframes.jsonlにあり、debugはdev_assets、releaseはOSアプリデータ領域を使う。",
+      "statement": "Native Auditのmanifest.jsonとframes.jsonlはasset_dir配下のSession/AgentRun/RunAttempt別に保存される。LVK_INSTANCE_DIR設定時はそのdata配下を優先し、未設定時のみdebugはdev_assets、releaseはOSアプリデータ領域を使う。",
       "evidence": [
         {
           "resource": "repo://crates/executors/src/runtime/native_audit.rs#L22-L23",
-          "version": "repo-lines-v1:sha256:ab11ef991120bcad790f4345c0000d757e71f75bc80972411a13cdf3f80d0394:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWEwYzBlMGE4OTg1NjVmMTYxZjBlZDBlZGZkZmI0NDA3MmE3ZTg0MmMzNmVhNzNhN2Q2MmNkYWExOTE0OWVjNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2FjNTI1Y2NkNjI3NzZmMDJlZGE3ODU3N2E4Zjc2YTkwODYyNzg2M2U1MDU4MTg3NTIyNmVhN2Y5ZWE2OGEwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmJkMzE0YzdiZDkwNGY1YTMxMWVmZTdjYjA1NDg4MmMzYTVkODk5YTljMWZmN2EyMWYxNTY1YzI4YjlhYTY2YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWRhNWRiNjcxMzkwNjlhYWNjOGFiOGE4YWM3YmQ5NWY5MzY4NGEyNmZlYjk1NWNmYmQyMGMzYWNiNTNjZGIwNyJ9"
+          "version": "repo-lines-v1:sha256:ab11ef991120bcad790f4345c0000d757e71f75bc80972411a13cdf3f80d0394:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWEwYzBlMGE4OTg1NjVmMTYxZjBlZDBlZGZkZmI0NDA3MmE3ZTg0MmMzNmVhNzNhN2Q2MmNkYWExOTE0OWVjNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2FjNTI1Y2NkNjI3NzZmMDJlZGE3ODU3N2E4Zjc2YTkwODYyNzg2M2U1MDU4MTg3NTIyNmVhN2Y5ZWE2OGEwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmJkMzE0YzdiZDkwNGY1YTMxMWVmZTdjYjA1NDg4MmMzYTVkODk5YTljMWZmN2EyMWYxNTY1YzI4YjlhYTY2YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjZkMjdiMTEyODE4ZDRlY2ZkZjU3NWYzNjk1MzEwZmNkNTk3NjE0NjgwYzdkMDc2MzYxMzM2MDJmODM0NzYxMCJ9"
         },
         {
-          "resource": "repo://crates/utils/src/assets.rs#L6-L29",
-          "version": "repo-lines-v1:sha256:2749426cf9128861bd92e938d0bac97836fa07ee20821d5294b3586224643c65:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkODExNTUwZWQwZDI5OGVlNDM4ZmYzMzk3NzJiOGJlNWIyMzMwOTFlMTc3MWIxMmU1ZmE1YzY5OWUyOThlYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NGEzZDFjOTdhYzYwMDQ4ZmNkYTM0ZjhlMWRjNWZkZGNlMzE4N2Q3NWY4NjM0ZTE5MThjY2RlNzY1OTIzM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYTY3ODk0Yjk2OWQ3NmQ2YTIxYzAwMTE4NTA5OWIyZmVlNWNiMDZhNGQ1MmRkNmQ0ODZlNzJiNDJkZjNjODMifQ"
+          "resource": "repo://crates/utils/src/assets.rs#L6-L31",
+          "version": "repo-lines-v1:sha256:ba1073b4eeece1e0e46645a5e1cd08be3ad12ad5ebdb8a7ecd3b72bc07a900b5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkODExNTUwZWQwZDI5OGVlNDM4ZmYzMzk3NzJiOGJlNWIyMzMwOTFlMTc3MWIxMmU1ZmE1YzY5OWUyOThlYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NGEzZDFjOTdhYzYwMDQ4ZmNkYTM0ZjhlMWRjNWZkZGNlMzE4N2Q3NWY4NjM0ZTE5MThjY2RlNzY1OTIzM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYTY3ODk0Yjk2OWQ3NmQ2YTIxYzAwMTE4NTA5OWIyZmVlNWNiMDZhNGQ1MmRkNmQ0ODZlNzJiNDJkZjNjODMifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/instance.rs#L1-L40",
+          "version": "repo-lines-v1:sha256:37381f1819e6dc75fc96dda38f19b481a38a91e0d21d27b88c8c8f375e6739f4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhOWU0MjVlOGY1MDI1NWVkNWQzN2FjNTAxYjBkMDUxZjJjZTc3NWFkMWM5NDljNmVlZDI2MDM2NDk0YzQ2MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwNGRjNTJhZTA0NWM4MjZjNWI2ZWUzZGRhZWU2MjU4OGMxNjllOWZmZTg5YmE3NGNiNTg4MDM2NWE4MjgyMDgifQ"
         },
         {
           "resource": "repo://crates/utils/src/native_audit.rs#L7-L31",
@@ -281,6 +285,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-09-22T01:26:32.834Z"
+    "at": "2026-10-16T11:50:57.361Z"
   }
 }

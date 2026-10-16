@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-22T01:26:32.834Z
+    at: 2026-10-16T11:50:57.361Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
@@ -23,6 +23,8 @@ sources:
     resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
+  - id: openwiki-source-06fe728b6644f76e4e63a8f4
+    resource: repo://crates/utils/src/instance.rs
   - id: openwiki-source-9b65aee0d6accda7142f90a7
     resource: repo://crates/utils/src/native_audit.rs
   - id: openwiki-source-991414672d835fda0eead290
@@ -35,7 +37,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-09-22T01:26:32.834Z" }
+generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -87,7 +89,7 @@ provider の「turn 完了」と Host の終了は別である。成功を最終
 
 ## Native Audit の保全・エクスポート・寿命
 
-Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions/<Session UUID先頭2文字>/<Session UUID>/agent-runs/<AgentRun UUID>/attempts/<RunAttempt UUID>/` にある `manifest.json` と `frames.jsonl` である。debug の asset_dir は repository の `dev_assets`、release は OS のアプリデータ領域。SQLite だけの保全では原文を保存できない。[パス構築](../../crates/utils/src/native_audit.rs#L7-L31)・[asset root](../../crates/utils/src/assets.rs#L6-L29)
+Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions/<Session UUID先頭2文字>/<Session UUID>/agent-runs/<AgentRun UUID>/attempts/<RunAttempt UUID>/` にある `manifest.json` と `frames.jsonl` である。`LVK_INSTANCE_DIR` が設定されていれば asset_dir はその `data` 配下を優先する。未設定の場合だけ debug は repository の `dev_assets`、release は OS のアプリデータ領域となる。build profile だけをデータ隔離の境界にしない。SQLite だけの保全では原文を保存できない。[パス構築](../../crates/utils/src/native_audit.rs#L7-L31)・[asset root](../../crates/utils/src/assets.rs#L6-L29)
 
 フレームは payload の無損失 base64 と checksum を保持する。プログラム上の `AuditBundle::export` は bundle を検証してから manifest / frames と、存在すれば fixture の期待イベントをそのままコピーする。脱敏された表示ログではなく、送受信した本文を含む原資料なので、共有する bundle の内容もその単位で確認する。[payload](../../crates/executors/src/runtime/native_audit.rs#L175-L213)・[読取検証](../../crates/executors/src/runtime/native_audit.rs#L849-L910)・[export](../../crates/executors/src/runtime/native_audit.rs#L922-L943)
 

@@ -26,12 +26,10 @@ sources:
     resource: repo://packages/web-core/src/features/workflow/model/useWorkflowEditorDraft.ts
   - id: openwiki-source-49c27e78a2601ac597269802
     resource: repo://packages/web-core/src/features/workflow/model/workflowEditorDraft.ts
-  - id: openwiki-source-23775c3de52f3ab95a13cb8b
-    resource: repo://README.md
-generated: { by: "codex", at: "2026-09-22T02:14:43.589Z" }
+generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-09-22T02:14:43.589Z
+    at: 2026-10-16T11:50:57.361Z
 ---
 
 # Workflow Attempt とグラフの契約
@@ -105,6 +103,6 @@ Run/Attempt の Canceled と NodeExecution の Cancelled はシリアライズ�
 
 [2026-05-16 の製品設計](../../docs/future/ai-workflow/spec-product.md) は合意された製品意図として有用だが、「上流出力を prompt に入れない」という記述は現在の template 展開・context 構築より狭い。また同文書の ExecutionProcess による agent 実行モデルは、現在の [AgentRun](session-and-agent-run.md) に読み替える必要がある。
 
-[README の例](../../README.md) には戻り矢印があるが、現在の validation は循環を受け付けない。記録から将来の loop 支援時期や、現行 fan-in を全入力待ちへ変更する意図は確定できない。グラフやテンプレートの変更では、README の図だけでなく planner・validation のテストを判断基準にする。
+現在の validation は循環を受け付けない。記録から将来の loop 支援時期や、現行 fan-in を全入力待ちへ変更する意図は確定できない。グラフやテンプレートの変更では、README の図だけでなく planner・validation のテストを判断基準にする。
 
 Repository scope の System Workflow は Issue を持たず、[OpenWiki bootstrap](../operations/openwiki-maintenance.md) の所有・終了検証に使われる。一般の Issue Workflow の操作権限や自動回復をそのまま適用しない。
