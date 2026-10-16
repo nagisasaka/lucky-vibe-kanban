@@ -1,3 +1,4 @@
+pub mod board_api;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,

@@ -23,8 +23,6 @@ export function developmentEnvironment(env, settings) {
     PREVIEW_PROXY_PORT: "4022",
     VK_ALLOWED_ORIGINS: `https://${authority(settings.app)}:${port}`,
     VK_PREVIEW_DOMAIN: "",
-    VITE_VK_SHARED_API_BASE: "",
-    VK_SHARED_API_BASE: "",
     BROWSER: "true",
     CARGO_BUILD_JOBS: env.CARGO_BUILD_JOBS || "2",
     CARGO_PROFILE_DEV_DEBUG: "0",

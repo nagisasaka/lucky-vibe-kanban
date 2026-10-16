@@ -10,17 +10,18 @@ vi.mock('@/shared/providers/HostIdProvider', () => ({
 afterEach(() => setLocalApiTransport(null));
 
 describe('execution inspection host identity', () => {
-  it('pins reads and Stop to the captured host even after navigation', async () => {
+  it('keeps local reads and rejects Stop for a retired host', async () => {
     const request = vi.fn(
       async (_path: string) =>
         new Response(JSON.stringify({ success: true, data: {} }))
     );
     setLocalApiTransport({ request, openWebSocket: vi.fn() });
     await executionRequest(null, '/local/usage');
-    await executionRequest('old-host', '/old/execution/stop', 'POST');
+    await expect(
+      executionRequest('old-host', '/old/execution/stop', 'POST')
+    ).rejects.toThrow('Remote Access hosts are no longer supported');
     expect(request.mock.calls.map(([path]) => path)).toEqual([
       '/api/workspaces/local/usage',
-      '/api/host/old-host/workspaces/old/execution/stop',
     ]);
   });
 });

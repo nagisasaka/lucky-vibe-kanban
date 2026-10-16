@@ -105,15 +105,13 @@ async function fetchWorkspaceSummariesByArchived(
   hostId: string | null
 ): Promise<Map<string, WorkspaceSummary>> {
   try {
-    const basePath = hostId ? `/api/host/${hostId}` : '/api';
-    const response = await makeLocalApiRequest(
-      `${basePath}/workspaces/summaries`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ archived }),
-      }
-    );
+    const response = await makeLocalApiRequest('/api/workspaces/summaries', {
+      method: 'POST',
+      hostScope: 'explicit',
+      hostId,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived }),
+    });
 
     if (!response.ok) {
       console.warn('Failed to fetch workspace summaries:', response.status);
@@ -141,9 +139,8 @@ export function useWorkspaces(): UseWorkspacesResult {
 
   // Two separate WebSocket connections: one for active, one for archived
   // No limit param - we fetch all and slice on frontend so backfill works when archiving
-  const apiBasePath = hostId ? `/api/host/${hostId}` : '/api';
-  const activeEndpoint = `${apiBasePath}/workspaces/streams/ws?archived=false`;
-  const archivedEndpoint = `${apiBasePath}/workspaces/streams/ws?archived=true`;
+  const activeEndpoint = `/api/workspaces/streams/ws?archived=false`;
+  const archivedEndpoint = `/api/workspaces/streams/ws?archived=true`;
 
   const initialData = useCallback(
     (): WorkspacesState => ({ workspaces: {} }),

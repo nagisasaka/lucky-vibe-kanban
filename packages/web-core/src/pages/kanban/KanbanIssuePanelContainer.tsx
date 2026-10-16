@@ -6,7 +6,7 @@ import {
   useRef,
   useMemo,
 } from 'react';
-import { useDropzone } from 'react-dropzone';
+
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { pipelinesApi } from '@/shared/lib/api';
@@ -51,16 +51,7 @@ import {
   selectIsCreateDraftDirty,
 } from './kanban-issue-panel-state';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
-import { useAzureAttachments } from '@/shared/hooks/useAzureAttachments';
-import {
-  commitIssueAttachments,
-  deleteAttachment,
-} from '@/shared/lib/remoteApi';
-import {
-  extractAttachmentIds,
-  removeAttachmentMarkdownBySource,
-  replaceAttachmentSource,
-} from '@/shared/lib/attachmentUtils';
+
 import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useCurrentKanbanRouteState } from '@/shared/hooks/useCurrentKanbanRouteState';
@@ -296,8 +287,6 @@ export function KanbanIssuePanelContainer({
 
   // Track previous issue ID to detect actual issue switches (not just data updates)
   const prevIssueIdRef = useRef<string | null>(null);
-  const prevHasPendingAttachmentsRef = useRef(false);
-  const hasPendingAttachmentsRef = useRef(false);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [formState, dispatchFormState] = useReducer(
@@ -422,166 +411,6 @@ export function KanbanIssuePanelContainer({
     [defaultStatusId, createDraftWorkspaceByDefault]
   );
 
-  // --- Image attachment upload integration ---
-
-  // Callback to insert markdown into the description field
-  const handleDescriptionInsert = useCallback(
-    (markdown: string, options?: { persist?: boolean }) => {
-      const currentDesc = latestDescriptionRef.current ?? '';
-      const separator = currentDesc.length > 0 ? '\n' : '';
-      const newDesc = currentDesc + separator + markdown;
-      latestDescriptionRef.current = newDesc;
-
-      if (kanbanCreateMode || !selectedKanbanIssueId) {
-        // Create mode: update form data
-        dispatchFormState({
-          type: 'patchCreateFormData',
-          patch: { description: newDesc },
-          fallback: createFormFallback,
-        });
-      } else {
-        // Edit mode: update local state + debounced save
-        dispatchFormState({
-          type: 'setEditDescription',
-          description: newDesc,
-        });
-        if (options?.persist !== false && !hasPendingAttachmentsRef.current) {
-          debouncedSaveDescription(newDesc);
-        }
-      }
-    },
-    [
-      kanbanCreateMode,
-      selectedKanbanIssueId,
-      createFormFallback,
-      debouncedSaveDescription,
-    ]
-  );
-
-  const handleDescriptionSourceReplace = useCallback(
-    (previousSrc: string, nextSrc: string, options?: { persist?: boolean }) => {
-      const currentDesc = latestDescriptionRef.current ?? '';
-      const { content: nextDesc, replaced } = replaceAttachmentSource(
-        currentDesc,
-        previousSrc,
-        nextSrc
-      );
-
-      if (!replaced) {
-        return false;
-      }
-      latestDescriptionRef.current = nextDesc;
-
-      if (kanbanCreateMode || !selectedKanbanIssueId) {
-        dispatchFormState({
-          type: 'patchCreateFormData',
-          patch: { description: nextDesc },
-          fallback: createFormFallback,
-        });
-      } else {
-        dispatchFormState({
-          type: 'setEditDescription',
-          description: nextDesc,
-        });
-        if (options?.persist !== false && !hasPendingAttachmentsRef.current) {
-          debouncedSaveDescription(nextDesc);
-        }
-      }
-
-      return true;
-    },
-    [
-      kanbanCreateMode,
-      selectedKanbanIssueId,
-      createFormFallback,
-      debouncedSaveDescription,
-    ]
-  );
-
-  const handleDescriptionSourceRemove = useCallback(
-    (src: string, options?: { persist?: boolean }) => {
-      const currentDesc = latestDescriptionRef.current ?? '';
-      const { content: nextDesc, removed } = removeAttachmentMarkdownBySource(
-        currentDesc,
-        src
-      );
-
-      if (!removed) {
-        return false;
-      }
-      latestDescriptionRef.current = nextDesc || null;
-
-      if (kanbanCreateMode || !selectedKanbanIssueId) {
-        dispatchFormState({
-          type: 'patchCreateFormData',
-          patch: { description: nextDesc || null },
-          fallback: createFormFallback,
-        });
-      } else {
-        dispatchFormState({
-          type: 'setEditDescription',
-          description: nextDesc || null,
-        });
-        if (options?.persist !== false && !hasPendingAttachmentsRef.current) {
-          debouncedSaveDescription(nextDesc || null);
-        }
-      }
-
-      return true;
-    },
-    [
-      kanbanCreateMode,
-      selectedKanbanIssueId,
-      createFormFallback,
-      debouncedSaveDescription,
-    ]
-  );
-
-  // Azure attachment upload hook
-  const {
-    uploadFiles,
-    getAttachmentIds,
-    clearAttachments,
-    isUploading,
-    hasPendingAttachments,
-    uploadError,
-    clearUploadError,
-    localAttachments,
-  } = useAzureAttachments({
-    projectId,
-    issueId: kanbanCreateMode
-      ? undefined
-      : (selectedKanbanIssueId ?? undefined),
-    onMarkdownInsert: handleDescriptionInsert,
-    onAttachmentSourceReplace: handleDescriptionSourceReplace,
-    onAttachmentSourceRemove: handleDescriptionSourceRemove,
-    onError: (msg) => console.error('[attachment]', msg),
-  });
-  hasPendingAttachmentsRef.current = hasPendingAttachments;
-
-  // Dropzone for drag-drop image upload on description area
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    open: openFilePicker,
-  } = useDropzone({
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) uploadFiles(acceptedFiles);
-    },
-    multiple: true,
-    noClick: true,
-    noKeyboard: true,
-  });
-
-  // Paste handler for images
-  const onPasteFiles = useCallback(
-    (files: File[]) => {
-      if (files.length > 0) uploadFiles(files);
-    },
-    [uploadFiles]
-  );
-
   // Reset local state when switching issues or modes.
   useEffect(() => {
     const currentIssueId = selectedKanbanIssueId;
@@ -606,7 +435,7 @@ export function KanbanIssuePanelContainer({
 
     if (mode === 'create') {
       // Check if the composer store has a saved draft (e.g., restored from
-      // localStorage on remote-web). Use it to seed the form instead of defaults.
+      // the composer). Use it to seed the form instead of defaults.
       const composerDraft =
         useKanbanIssueComposerStore.getState().byKey[issueComposerKey]?.draft;
       const hasSavedDraft =
@@ -649,35 +478,6 @@ export function KanbanIssuePanelContainer({
     cancelDebouncedDescription,
     createModeDefaults,
     issueComposerKey,
-  ]);
-
-  useEffect(() => {
-    const wasPending = prevHasPendingAttachmentsRef.current;
-    prevHasPendingAttachmentsRef.current = hasPendingAttachments;
-
-    if (kanbanCreateMode || !selectedKanbanIssueId) {
-      return;
-    }
-
-    if (!wasPending || hasPendingAttachments) {
-      return;
-    }
-
-    const currentDescription = displayData.description ?? null;
-    const persistedDescription = selectedIssue?.description ?? null;
-
-    if (currentDescription === persistedDescription) {
-      return;
-    }
-
-    debouncedSaveDescription(currentDescription);
-  }, [
-    kanbanCreateMode,
-    selectedKanbanIssueId,
-    hasPendingAttachments,
-    displayData.description,
-    selectedIssue?.description,
-    debouncedSaveDescription,
   ]);
 
   // Form change handler - persists changes immediately in edit mode
@@ -785,7 +585,7 @@ export function KanbanIssuePanelContainer({
           type: 'setEditDescription',
           description: value as string | null,
         });
-        if (!hasPendingAttachments) {
+        {
           debouncedSaveDescription(value as string | null);
         }
       } else if (field === 'statusId') {
@@ -832,7 +632,6 @@ export function KanbanIssuePanelContainer({
       projectId,
       createFormFallback,
       createFormData,
-      hasPendingAttachments,
       debouncedSaveTitle,
       debouncedSaveDescription,
       openStatusSelection,
@@ -848,7 +647,7 @@ export function KanbanIssuePanelContainer({
 
   // Submit handler
   const handleSubmit = useCallback(async () => {
-    if (!displayData.title.trim() || hasPendingAttachments) return;
+    if (!displayData.title.trim()) return;
     if (mode === 'create' && !contextPresets.data) return;
 
     setSubmitError(null);
@@ -881,32 +680,6 @@ export function KanbanIssuePanelContainer({
 
         // Wait for the issue to be confirmed by the backend and get the synced entity
         const syncedIssue = await persisted;
-
-        // Commit only attachments still referenced in the description
-        const allUploadedIds = getAttachmentIds();
-        if (allUploadedIds.length > 0) {
-          const referencedIds = extractAttachmentIds(
-            displayData.description ?? ''
-          );
-          const idsToCommit = allUploadedIds.filter((id) =>
-            referencedIds.has(id)
-          );
-          const idsToDelete = allUploadedIds.filter(
-            (id) => !referencedIds.has(id)
-          );
-
-          if (idsToCommit.length > 0) {
-            await commitIssueAttachments(syncedIssue.id, {
-              attachment_ids: idsToCommit,
-            });
-          }
-          for (const id of idsToDelete) {
-            deleteAttachment(id).catch((err) =>
-              console.error('Failed to delete abandoned attachment:', err)
-            );
-          }
-          clearAttachments();
-        }
 
         // Create assignee records for all selected assignees
         displayData.assigneeIds.forEach((userId) => {
@@ -1000,9 +773,6 @@ export function KanbanIssuePanelContainer({
     routeState.hostId,
     closeKanbanIssuePanel,
     issueComposerKey,
-    getAttachmentIds,
-    clearAttachments,
-    hasPendingAttachments,
     onExpectIssueOpen,
     t,
   ]);
@@ -1054,18 +824,6 @@ export function KanbanIssuePanelContainer({
     });
   }, [selectedKanbanIssueId, projectId]);
 
-  // Link PR callback - opens link PR dialog
-  const handleLinkPr = useCallback(async () => {
-    if (!selectedKanbanIssueId) return;
-    const { LinkPrToIssueDialog } = await import(
-      '@/shared/dialogs/command-bar/LinkPrToIssueDialog'
-    );
-    await LinkPrToIssueDialog.show({
-      projectId,
-      issueId: selectedKanbanIssueId,
-    });
-  }, [selectedKanbanIssueId, projectId]);
-
   // Loading state
   const isLoading = projectLoading || orgLoading;
   const isResolvingExpectedIssue =
@@ -1112,7 +870,6 @@ export function KanbanIssuePanelContainer({
       onParentIssueClick={handleParentIssueClick}
       onRemoveParentIssue={handleRemoveParentIssue}
       linkedPrs={linkedPrs}
-      onLinkPr={mode === 'edit' ? handleLinkPr : undefined}
       onClose={closeKanbanIssuePanel}
       onSubmit={handleSubmit}
       onCmdEnterSubmit={handleCmdEnterSubmit}
@@ -1147,16 +904,7 @@ export function KanbanIssuePanelContainer({
       }
       onCopyLink={mode === 'edit' ? handleCopyLink : undefined}
       onMoreActions={mode === 'edit' ? handleMoreActions : undefined}
-      onPasteFiles={onPasteFiles}
-      localAttachments={localAttachments}
-      dropzoneProps={{ getRootProps, getInputProps, isDragActive }}
-      onBrowseAttachment={openFilePicker}
-      isUploading={isUploading}
-      attachmentError={uploadError}
-      onDismissAttachmentError={clearUploadError}
-      renderDescriptionEditor={(props) => (
-        <WYSIWYGEditor {...props} localAttachments={localAttachments} />
-      )}
+      renderDescriptionEditor={(props) => <WYSIWYGEditor {...props} />}
       renderPipelineSection={() => (
         <CardContextSection
           description={displayData.description ?? ''}

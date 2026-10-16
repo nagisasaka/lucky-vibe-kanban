@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Group, type Layout, Panel, Separator } from 'react-resizable-panels';
-import { LoginRequiredPrompt } from '@/shared/dialogs/shared/LoginRequiredPrompt';
 import { KanbanContainer } from '@/features/kanban/ui/KanbanContainer';
 import { useActions } from '@/shared/hooks/useActions';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
@@ -270,7 +269,7 @@ export function ProjectKanban() {
     useCurrentKanbanRouteState();
   const appNavigation = useAppNavigation();
   const { t } = useTranslation('common');
-  const { isSignedIn, isLoaded: authLoaded } = useAuth();
+  const { isLoaded: authLoaded } = useAuth();
   const issueComposerKey = useMemo(() => {
     if (!projectId) {
       return null;
@@ -314,18 +313,6 @@ export function ProjectKanban() {
   }
 
   // If not signed in, prompt user to log in
-  if (!isSignedIn) {
-    return (
-      <div className="flex items-center justify-center h-full w-full p-base">
-        <LoginRequiredPrompt
-          className="max-w-md"
-          title={t('kanban.loginRequired.title')}
-          description={t('kanban.loginRequired.description')}
-          actionLabel={t('kanban.loginRequired.action')}
-        />
-      </div>
-    );
-  }
 
   if (!projectId || !organizationId) {
     return (

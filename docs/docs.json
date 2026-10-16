@@ -29,7 +29,6 @@
           "issue-management",
           "features/project-chat",
           "reviewing-code",
-          "remote-access",
           {
             "group": "Supported Coding Agents",
             "expanded": true,
@@ -63,20 +62,15 @@
         ]
       },
       {
-        "group": "Cloud",
+        "group": "Boards and issues",
         "pages": [
-          "cloud/index",
-          "cloud/getting-started",
-          "cloud/authentication",
-          "cloud/organizations",
-          "cloud/team-members",
-          "cloud/projects",
-          "cloud/issues",
-          "cloud/kanban-board",
-          "cloud/list-view",
-          "cloud/filtering",
-          "cloud/customisation",
-          "cloud/troubleshooting"
+          "boards/index",
+          "boards/projects",
+          "boards/issues",
+          "boards/kanban-board",
+          "boards/list-view",
+          "boards/filtering",
+          "boards/customisation"
         ]
       },
       {
@@ -91,7 +85,6 @@
             ]
           },
           "settings/projects-repositories",
-          "settings/organization-settings",
           "settings/remote-projects",
           "settings/agent-configurations",
           "settings/mcp-servers"
@@ -100,9 +93,7 @@
       {
         "group": "Self-Hosting",
         "pages": [
-          "self-hosting/local-development",
-          "self-hosting/server-container",
-          "self-hosting/deploy-docker"
+          "self-hosting/server-container"
         ]
       },
       {

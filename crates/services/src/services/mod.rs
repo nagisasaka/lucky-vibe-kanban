@@ -1,7 +1,6 @@
 pub mod agent_runtime;
 pub mod analytics;
 pub mod approvals;
-pub mod auth;
 pub mod config;
 pub mod container;
 pub mod diff_stream;
@@ -14,7 +13,6 @@ pub mod filesystem;
 pub mod filesystem_watcher;
 pub mod integration_admission;
 pub mod notification;
-pub mod oauth_credentials;
 pub mod openwiki;
 pub mod orchestration;
 pub mod parallel_context;
@@ -25,8 +23,6 @@ pub mod resource_coordination;
 #[cfg(feature = "qa-mode")]
 pub mod qa_repos;
 pub mod queued_message;
-pub mod remote_client;
-pub mod remote_sync;
 pub mod repo;
 pub mod repository_memory;
 pub mod wiki;

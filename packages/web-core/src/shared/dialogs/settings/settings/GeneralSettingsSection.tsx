@@ -210,7 +210,6 @@ export function GeneralSettingsSection() {
     if (!config) return;
     updateAndSaveConfig({
       onboarding_acknowledged: false,
-      remote_onboarding_acknowledged: false,
     });
   };
 

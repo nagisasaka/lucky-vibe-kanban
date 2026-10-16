@@ -168,18 +168,8 @@ function getMachineRequestOptions(
   runtime: AppRuntime,
   target: MachineTarget
 ): LocalApiRequestOptions {
-  if (runtime === 'remote') {
-    return {
-      hostScope: 'none',
-      relayHostId: target.apiHostId,
-    };
-  }
-
-  if (target.apiHostId) {
-    return {
-      hostScope: 'explicit',
-      hostId: target.apiHostId,
-    };
+  if (runtime === 'remote' || target.apiHostId || target.kind === 'remote') {
+    throw new Error('Remote Access hosts are no longer supported');
   }
 
   return {

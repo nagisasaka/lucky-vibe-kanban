@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useActions } from '@/shared/hooks/useActions';
 import { useSyncErrorContext } from '@/shared/hooks/useSyncErrorContext';
@@ -13,7 +13,7 @@ import {
   type MobileTabId,
 } from '@vibe/ui/components/Navbar';
 import { AppBarUserPopoverContainer } from './AppBarUserPopoverContainer';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
+
 import { NavbarActionGroups } from '@/shared/actions';
 import {
   NavbarDivider,
@@ -37,7 +37,6 @@ import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import { getProjectDestination } from '@/shared/lib/routes/appNavigation';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
-import { getRemoteAuthDegradedMessage } from '@/shared/lib/auth/remoteAuthDegraded';
 import { buildWorkspaceContext } from '@/shared/lib/workspaceContext';
 
 /**
@@ -115,14 +114,11 @@ function toNavbarSectionItems(
 
 export function NavbarContainer({
   mobileMode = false,
-  onOrgSelect,
   onOpenDrawer,
 }: {
   mobileMode?: boolean;
-  onOrgSelect?: (orgId: string) => void;
   onOpenDrawer?: () => void;
 }) {
-  const { t } = useTranslation('common');
   const { executeAction } = useActions();
   const {
     workspace: selectedWorkspace,
@@ -131,7 +127,6 @@ export function NavbarContainer({
     isCreateMode,
   } = useWorkspaceContext();
   const syncErrorContext = useSyncErrorContext();
-  const { remoteAuthDegraded } = useUserSystem();
   const appNavigation = useAppNavigation();
   const destination = useCurrentAppDestination();
   const projectDestination = useMemo(
@@ -289,31 +284,14 @@ export function NavbarContainer({
   // Build user popover slot for mobile mode
   const userPopoverSlot = useMemo(() => {
     if (!mobileMode) return undefined;
-    return (
-      <AppBarUserPopoverContainer
-        organizations={orgsData?.organizations ?? []}
-        selectedOrgId={selectedOrgId ?? ''}
-        onOrgSelect={onOrgSelect ?? (() => {})}
-      />
-    );
-  }, [mobileMode, orgsData?.organizations, selectedOrgId, onOrgSelect]);
+    return <AppBarUserPopoverContainer />;
+  }, [mobileMode]);
 
   const syncErrors = useMemo(() => {
     const errors = syncErrorContext?.errors ? [...syncErrorContext.errors] : [];
 
-    if (remoteAuthDegraded) {
-      errors.push({
-        streamId: 'remote-auth-degraded',
-        tableName: 'Remote authentication',
-        error: {
-          message: getRemoteAuthDegradedMessage(remoteAuthDegraded, t),
-        },
-        retry: () => window.location.reload(),
-      });
-    }
-
     return errors;
-  }, [remoteAuthDegraded, syncErrorContext?.errors, t]);
+  }, [syncErrorContext?.errors]);
 
   return (
     <Navbar

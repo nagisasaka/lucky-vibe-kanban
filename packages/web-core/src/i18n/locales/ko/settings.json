@@ -25,16 +25,8 @@
         "mcpDesc": "Model Context Protocol 서버",
         "agent-tools": "Agent Tools",
         "agent-toolsDesc": "Native MCP servers and Skills",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "프로젝트",
-        "remote-projectsDesc": "프로젝트 관리",
-        "relay": "Remote Access",
-        "relayDesc": "Relay tunnel and enrollment",
-        "machineSettings": "Machine Settings",
-        "accountSettings": "Account Settings",
-        "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host"
+        "remote-projectsDesc": "프로젝트 관리"
       }
     },
     "general": {
@@ -532,33 +524,8 @@
         "confirmSwitch": "저장되지 않은 변경사항이 있습니다. 정말 저장소를 전환하시겠습니까? 변경사항이 손실됩니다."
       }
     },
-    "relay": {
-      "title": "Remote Access",
-      "description": "Allow access to this instance from the web via relay tunnel.",
-      "enabled": {
-        "label": "Enable remote access",
-        "helper": "When enabled, this instance can be accessed remotely through a relay tunnel."
-      },
-      "enrollmentCode": {
-        "label": "Pairing Code",
-        "helper": "Enter this code in the browser to pair with this instance.",
-        "loginRequired": "Log in to generate a pairing code.",
-        "fetchError": "Failed to fetch pairing code.",
-        "show": "Show pairing code"
-      },
-      "host": {
-        "label": "호스트"
-      },
-      "client": {
-        "label": "클라이언트"
-      },
-      "overview": {
-        "available": "Available",
-        "unavailable": "Unavailable"
-      }
-    },
     "remoteProjects": {
-      "title": "Remote Projects",
+      "title": "프로젝트",
       "description": "Manage cloud-synced projects across organizations.",
       "loading": "Loading remote projects...",
       "loadError": "Failed to load organizations",

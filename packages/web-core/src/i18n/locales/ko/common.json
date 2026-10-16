@@ -208,30 +208,10 @@
   "states": {
     "loading": "로딩 중..."
   },
-  "orgSwitcher": {
-    "organizations": "조직",
-    "orgSettings": "조직 설정"
-  },
+  "orgSwitcher": {},
   "ok": "확인",
   "error": "오류",
-  "signIn": "로그인",
-  "signOut": "로그아웃",
-  "oauth": {
-    "title": "Lucky Vibe Kanban 로그인",
-    "description": "로그인하여 조직에 참여하고 팀과 작업을 공유하세요",
-    "continueWithGitHub": "GitHub로 계속",
-    "continueWithGoogle": "Google로 계속",
-    "waitingTitle": "인증 완료",
-    "waitingDescription": "인증을 위한 팝업 창이 열렸습니다",
-    "waitingForAuth": "인증 대기 중...",
-    "popupInstructions": "팝업 창이 열리지 않는 경우 팝업 차단 설정을 확인해주세요.",
-    "back": "뒤로",
-    "successTitle": "인증 성공!",
-    "welcomeBack": "환영합니다, {{name}}",
-    "errorTitle": "인증 실패",
-    "errorDescription": "계정 인증 중 문제가 발생했습니다",
-    "tryAgain": "다시 시도"
-  },
+  "oauth": {},
   "toolbar": {
     "sortBy": "정렬 기준",
     "groupBy": "그룹화 기준"
@@ -554,10 +534,6 @@
     "previewFileWithName": "[파일: {{name}}]",
     "imageAttachmentNameFallback": "첨부파일",
     "removeImage": "이미지 제거",
-    "maxFilesAtOnce": "한 번에 최대 {{count}}개의 파일만 업로드할 수 있습니다",
-    "fileExceedsLimit": "파일 {{filename}} 이(가) 20MB 제한을 초과했습니다",
-    "unknownError": "알 수 없는 오류",
-    "failedToUploadFile": "{{filename}} 업로드 실패: {{message}}",
     "downloadAttachment": "첨부파일 다운로드",
     "subIssues": "하위 이슈",
     "noSubIssues": "하위 이슈 없음",
@@ -568,11 +544,7 @@
       "active": "활성",
       "all": "전체"
     },
-    "loginRequired": {
-      "title": "로그인 필요",
-      "description": "이 프로젝트를 보려면 로그인하세요.",
-      "action": "로그인"
-    },
+    "loginRequired": {},
     "team": "Team",
     "personal": "Personal",
     "searchPlaceholder": "Search issues...",
@@ -703,25 +675,11 @@
     "streamsAffected": "{{count}}개 스트림이 영향을 받음",
     "streamsAffected_other": "{{count}}개 스트림이 영향을 받음",
     "status": "(상태 {{status}})",
-    "refreshPage": "페이지 새로고침",
-    "remoteAuthUnavailable": "원격 인증을 일시적으로 사용할 수 없습니다. 복구될 때까지 일부 원격 기능이 작동하지 않을 수 있습니다."
+    "refreshPage": "페이지 새로고침"
   },
-  "onboardingSignIn": {
-    "subtitle": "Sign in to continue",
-    "signedInAs": "Signed in as {{name}}.",
-    "moreOptions": "More options",
-    "featureHeader": "Feature",
-    "signedInHeader": "Signed in",
-    "skipSignInHeader": "Don't sign in",
-    "yes": "Yes",
-    "no": "No"
-  },
+  "onboardingSignIn": {},
   "appBar": {
-    "kanban": {
-      "tooltip": "프로젝트를 보려면 로그인하세요",
-      "title": "칸반 보드",
-      "description": "로그인하여 칸반 보드로 코딩 에이전트를 정리하세요."
-    }
+    "kanban": {}
   },
   "errors": {
     "generic": "An unexpected error occurred"

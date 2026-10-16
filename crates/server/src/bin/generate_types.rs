@@ -1,3 +1,5 @@
+mod board_types;
+
 use std::{collections::HashMap, env, fs, path::Path};
 
 use schemars::{JsonSchema, Schema, SchemaGenerator, generate::SchemaSettings};
@@ -201,32 +203,15 @@ fn generate_types_content() -> String {
         api_types::LoginStatus::decl(),
         api_types::ProfileResponse::decl(),
         api_types::ProviderProfile::decl(),
-        api_types::StatusResponse::decl(),
         api_types::MemberRole::decl(),
-        api_types::InvitationStatus::decl(),
         api_types::Organization::decl(),
         api_types::OrganizationWithRole::decl(),
         api_types::ListOrganizationsResponse::decl(),
-        api_types::GetOrganizationResponse::decl(),
-        api_types::CreateOrganizationRequest::decl(),
-        api_types::CreateOrganizationResponse::decl(),
-        api_types::UpdateOrganizationRequest::decl(),
-        api_types::Invitation::decl(),
-        api_types::CreateInvitationRequest::decl(),
-        api_types::CreateInvitationResponse::decl(),
-        api_types::ListInvitationsResponse::decl(),
-        api_types::GetInvitationResponse::decl(),
-        api_types::AcceptInvitationResponse::decl(),
-        api_types::RevokeInvitationRequest::decl(),
-        api_types::OrganizationMemberInfo::decl(),
         api_types::OrganizationMemberWithProfile::decl(),
         api_types::ListMembersResponse::decl(),
-        api_types::UpdateMemberRoleRequest::decl(),
-        api_types::UpdateMemberRoleResponse::decl(),
         server::routes::repo::RegisterRepoRequest::decl(),
         server::routes::repo::InitRepoRequest::decl(),
         server::routes::tags::TagSearchParams::decl(),
-        server::routes::oauth::TokenResponse::decl(),
         server::routes::config::UserSystemInfo::decl(),
         server::routes::config::Environment::decl(),
         server::routes::config::McpServerQuery::decl(),
@@ -241,16 +226,6 @@ fn generate_types_content() -> String {
         server::routes::config::CheckAgentAvailabilityQuery::decl(),
         server::routes::config::AgentGarageEntry::decl(),
         server::routes::config::AgentPresetOptionsQuery::decl(),
-        server::routes::oauth::CurrentUserResponse::decl(),
-        relay_types::StartSpake2EnrollmentRequest::decl(),
-        relay_types::FinishSpake2EnrollmentRequest::decl(),
-        relay_types::StartSpake2EnrollmentResponse::decl(),
-        relay_types::FinishSpake2EnrollmentResponse::decl(),
-        relay_types::RelayPairedClient::decl(),
-        relay_types::ListRelayPairedClientsResponse::decl(),
-        relay_types::RemoveRelayPairedClientResponse::decl(),
-        relay_types::RefreshRelaySigningSessionRequest::decl(),
-        relay_types::RefreshRelaySigningSessionResponse::decl(),
         db::models::coding_agent_turn::ResumableAgentSession::decl(),
         server::routes::sessions::NativeSessionDiscoveryState::decl(),
         server::routes::sessions::NativeSessionPreviewEntry::decl(),
@@ -268,13 +243,6 @@ fn generate_types_content() -> String {
         server::routes::sessions::review::ReviewError::decl(),
         server::routes::workspaces::integration::OpenEditorRequest::decl(),
         server::routes::workspaces::integration::OpenEditorResponse::decl(),
-        desktop_bridge::service::OpenRemoteEditorResponse::decl(),
-        server::routes::host_relay::OpenRemoteWorkspaceInEditorRequest::decl(),
-        relay_types::PairRelayHostRequest::decl(),
-        relay_types::PairRelayHostResponse::decl(),
-        relay_types::RelayPairedHost::decl(),
-        relay_types::ListRelayPairedHostsResponse::decl(),
-        relay_types::RemoveRelayPairedHostResponse::decl(),
         db::models::requests::CreateWorkspaceApiRequest::decl(),
         db::models::requests::LinkedIssueInfo::decl(),
         db::models::requests::CreateWorkspaceMode::decl(),
@@ -307,8 +275,6 @@ fn generate_types_content() -> String {
         server::routes::workspaces::pr::PrError::decl(),
         server::routes::workspaces::execution::RunScriptError::decl(),
         server::routes::workspaces::attachments::AssociateWorkspaceAttachmentsRequest::decl(),
-        server::routes::workspaces::attachments::ImportIssueAttachmentsRequest::decl(),
-        server::routes::workspaces::attachments::ImportIssueAttachmentsResponse::decl(),
         server::routes::workspaces::pr::AttachPrResponse::decl(),
         server::routes::workspaces::pr::AttachExistingPrRequest::decl(),
         server::routes::workspaces::pr::PrCommentsResponse::decl(),
@@ -321,7 +287,7 @@ fn generate_types_content() -> String {
         git_host::PullRequestDetail::decl(),
         git::GitRemote::decl(),
         server::routes::repo::ListPrsError::decl(),
-        server::routes::remote::pull_requests::LinkPrToIssueRequest::decl(),
+        server::routes::local_remote::board_api::pull_requests::LinkPrToIssueRequest::decl(),
         server::routes::workspaces::pr::CreateWorkspaceFromPrBody::decl(),
         server::routes::workspaces::pr::CreateWorkspaceFromPrResponse::decl(),
         server::routes::workspaces::pr::CreateFromPrError::decl(),
@@ -571,17 +537,6 @@ fn generate_types_content() -> String {
         executors::runtime::OrchestrationEventEnvelope::decl(),
         executors::runtime::OrchestrationState::decl(),
         serde_json::Value::decl(),
-        relay_protocol::RelayWsMessageType::decl(),
-        relay_webrtc::DataChannelMessage::decl(),
-        relay_webrtc::DataChannelRequest::decl(),
-        relay_webrtc::DataChannelResponse::decl(),
-        relay_webrtc::WsOpen::decl(),
-        relay_webrtc::WsOpened::decl(),
-        relay_webrtc::WsFrame::decl(),
-        relay_webrtc::WsClose::decl(),
-        relay_webrtc::WsError::decl(),
-        relay_webrtc::SdpOffer::decl(),
-        relay_webrtc::SdpAnswer::decl(),
     ];
 
     let body = decls
@@ -728,6 +683,8 @@ fn main() {
     println!("Generating TypeScript types…");
 
     let generated_types = generate_types_content();
+    let board_types = board_types::export_shapes();
+    let board_types_path = shared_path.join("remote-types.ts");
     let schema_content = match generate_schemas() {
         Ok(s) => s,
         Err(e) => {
@@ -754,7 +711,12 @@ fn main() {
         let schemas_up_to_date = schemas_up_to_date(&schemas_path, &schema_content);
 
         // Exit with appropriate code
-        if types_up_to_date && schemas_up_to_date {
+        let board_types_up_to_date =
+            fs::read_to_string(&board_types_path).unwrap_or_default() == board_types;
+        if !board_types_up_to_date {
+            eprintln!("shared/remote-types.ts is not up to date");
+        }
+        if types_up_to_date && schemas_up_to_date && board_types_up_to_date {
             std::process::exit(0);
         } else {
             eprintln!("Please run 'npm run generate-types' and commit the changes.");
@@ -766,6 +728,7 @@ fn main() {
         fs::remove_file(&types_path).ok();
         fs::remove_dir_all(&schemas_path).ok();
 
+        fs::write(&board_types_path, board_types).expect("unable to write board types");
         fs::write(&types_path, generated_types).expect("unable to write types.ts");
         println!("✅ TypeScript types generated in shared/types.ts");
 

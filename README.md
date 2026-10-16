@@ -40,9 +40,9 @@ LVK, nginx, Codex CLI, Git, Node.js, pnpm and a Rust development toolchain.
 - A server or container restart stops running processes; persistence does not
   promise automatic resumption of interrupted agent work.
 
-This is for one trusted user. Wildcard project previews require additional setup;
-Android/ADB remote access is not included. The local application deployed this
-way is separate from the upstream multi-user cloud backend.
+This is for one trusted user. Wildcard project previews require additional setup.
+The upstream Cloud and relay Remote Access services are retired. Access LVK at
+your server URL. External Runner execution remains available through Execution Bridge.
 
 ## Develop LVK
 
@@ -83,9 +83,8 @@ Server checks exclude the Tauri desktop app. For desktop changes, also run
 `pnpm run tauri:check`, `pnpm run tauri:lint`, and `pnpm run tauri:test` with
 the platform development libraries installed (GTK/WebKit on Linux).
 
-The separate `crates/remote` Rust workspace has an upstream private dependency.
-It is not required for local LVK development. See [AGENTS.md](AGENTS.md) for the
-supported validation scope. Do not edit generated files in `shared/` directly.
+Shared type generation runs in the public server workspace, including the local
+board contracts. Do not edit generated files in `shared/` directly.
 
 Release builds and publication run in GitHub Actions through
 [`publish-server.yml`](.github/workflows/publish-server.yml). The workflow tests

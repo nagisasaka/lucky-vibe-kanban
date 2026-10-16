@@ -52,7 +52,6 @@ use services::services::{
     file::FileService,
     notification::NotificationService,
     queued_message::QueuedMessageService,
-    remote_client::RemoteClient,
 };
 use sqlx::{SqlitePool, types::Json};
 use tokio::{sync::RwLock, task::JoinHandle};
@@ -148,7 +147,6 @@ impl LocalContainerService {
         _analytics: Option<AnalyticsContext>,
         _approvals: Approvals,
         queued_message_service: QueuedMessageService,
-        _remote_client: Option<RemoteClient>,
     ) -> Self {
         let child_store = Arc::new(RwLock::new(HashMap::new()));
         let cancellation_tokens = Arc::new(RwLock::new(HashMap::new()));

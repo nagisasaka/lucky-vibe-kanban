@@ -1,24 +1,13 @@
-import { electricCollectionOptions } from '@tanstack/electric-db-collection';
 import { createCollection } from '@tanstack/react-db';
 
-import { getAuthRuntime } from '@/shared/lib/auth/runtime';
-import {
-  getRemoteApiUrl,
-  isLocalRemoteApiEnabled,
-  makeRequest,
-} from '@/shared/lib/remoteApi';
+import { makeRequest } from '@/shared/lib/remoteApi';
 import type { MutationDefinition, ShapeDefinition } from 'shared/remote-types';
 import type { CollectionConfig, SyncError } from '@/shared/lib/electric/types';
 
 type ElectricRow = Record<string, unknown> & { [key: string]: unknown };
 
-type SourceMode = 'electric' | 'fallback';
-
 type SourceRuntime = {
-  mode: SourceMode;
-  fallbackLocked: boolean;
   refreshers: Set<() => Promise<void>>;
-  fallbackSwitchers: Set<() => void>;
 };
 
 type MutationFnParams = {
@@ -60,20 +49,7 @@ type SyncResult =
       unloadSubset?: UnloadSubsetFn;
     };
 
-type NormalizedSyncResult = {
-  cleanup?: () => void;
-  loadSubset?: LoadSubsetFn;
-  unloadSubset?: UnloadSubsetFn;
-};
-
-type SyncConfigLike = {
-  sync: (syncParams: SyncParams) => SyncResult;
-  getSyncMetadata?: () => Record<string, unknown>;
-  rowUpdateMode?: 'partial' | 'full';
-};
-
 const DEFAULT_GC_TIME_MS = 5 * 60 * 1000;
-const ELECTRIC_READY_TIMEOUT_MS = 3000;
 const FALLBACK_REFRESH_INTERVAL_MS = 30 * 1000;
 
 const collectionCache = new Map<string, ReturnType<typeof createCollection>>();
@@ -113,12 +89,17 @@ class ErrorHandler {
   }
 }
 
-function buildUrl(baseUrl: string, params: Record<string, string>): string {
-  let url = baseUrl;
-  for (const [key, value] of Object.entries(params)) {
-    url = url.replace(`{${key}}`, encodeURIComponent(value));
-  }
-  return url;
+function buildUrl(template: string, params: Record<string, string>): string {
+  return template.replace(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g, (_, key: string) => {
+    if (!(key in params)) throw new Error(`Missing API parameter: ${key}`);
+    return encodeURIComponent(params[key]);
+  });
+}
+
+function isPageVisible(): boolean {
+  return (
+    typeof document === 'undefined' || document.visibilityState !== 'hidden'
+  );
 }
 
 function buildFallbackRequestPath(
@@ -177,14 +158,6 @@ function getRowKey(item: Record<string, unknown>): string {
     .join('-');
 }
 
-function normalizeSyncResult(result: SyncResult): NormalizedSyncResult {
-  if (!result) return {};
-  if (typeof result === 'function') {
-    return { cleanup: result };
-  }
-  return result;
-}
-
 function getOrCreateSourceRuntime(sourceKey: string): SourceRuntime {
   const existing = sourceRuntimes.get(sourceKey);
   if (existing) {
@@ -192,42 +165,10 @@ function getOrCreateSourceRuntime(sourceKey: string): SourceRuntime {
   }
 
   const created: SourceRuntime = {
-    mode: 'electric',
-    fallbackLocked: false,
     refreshers: new Set(),
-    fallbackSwitchers: new Set(),
   };
   sourceRuntimes.set(sourceKey, created);
   return created;
-}
-
-function lockSourceToFallback(sourceKey: string): void {
-  const runtime = getOrCreateSourceRuntime(sourceKey);
-  if (runtime.fallbackLocked) return;
-
-  runtime.fallbackLocked = true;
-  runtime.mode = 'fallback';
-
-  const switchers = Array.from(runtime.fallbackSwitchers);
-  for (const switcher of switchers) {
-    switcher();
-  }
-}
-
-function registerFallbackSwitcher(
-  sourceKey: string,
-  switcher: () => void
-): () => void {
-  const runtime = getOrCreateSourceRuntime(sourceKey);
-  runtime.fallbackSwitchers.add(switcher);
-
-  if (runtime.fallbackLocked) {
-    switcher();
-  }
-
-  return () => {
-    runtime.fallbackSwitchers.delete(switcher);
-  };
 }
 
 function registerFallbackRefresher(
@@ -245,41 +186,13 @@ function invalidateFallbackCache(sourceKey: string): void {
   fallbackSnapshotCache.delete(sourceKey);
 }
 
-function refreshFallbackSource(sourceKey: string): void {
+async function refreshFallbackSource(sourceKey: string): Promise<void> {
   const runtime = getOrCreateSourceRuntime(sourceKey);
-  for (const refresher of runtime.refreshers) {
-    void refresher();
-  }
+  await Promise.all([...runtime.refreshers].map((refresher) => refresher()));
 }
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
-}
-
-function isPageVisible(): boolean {
-  return document.visibilityState === 'visible';
-}
-
-function isCancelledErrorMessage(message?: string): boolean {
-  if (!message) return false;
-  return /\bcancell?ed\b/i.test(message);
-}
-
-function isTransientElectricFailure(error: unknown): boolean {
-  if (isAbortError(error)) return true;
-  if (!isPageVisible()) return true;
-
-  const message = error instanceof Error ? error.message : String(error);
-  return isCancelledErrorMessage(message);
-}
-
-function isTransientElectricShapeError(error: {
-  name?: string;
-  message?: string;
-}): boolean {
-  if (error.name === 'AbortError') return true;
-  if (!isPageVisible()) return true;
-  return isCancelledErrorMessage(error.message);
 }
 
 function createErrorReporter(
@@ -294,101 +207,6 @@ function createErrorReporter(
       console.error('Shape sync error:', error);
     }
     config?.onError?.(error);
-  };
-}
-
-function createErrorHandlingFetch(args: {
-  onError: (error: SyncError) => void;
-  onElectricUnavailable: () => void;
-  isPaused: () => boolean;
-}) {
-  return async (
-    input: RequestInfo | URL,
-    init?: RequestInit
-  ): Promise<Response> => {
-    if (args.isPaused()) {
-      throw new DOMException(
-        'Shape request aborted: not authenticated',
-        'AbortError'
-      );
-    }
-
-    try {
-      return await fetch(input, init);
-    } catch (error) {
-      if (isTransientElectricFailure(error)) {
-        throw error;
-      }
-
-      const message = error instanceof Error ? error.message : 'Network error';
-      args.onError({ message });
-      args.onElectricUnavailable();
-      throw error;
-    }
-  };
-}
-
-function createElectricShapeOptions(args: {
-  shape: ShapeDefinition<unknown>;
-  params: Record<string, string>;
-  reportError: (error: SyncError) => void;
-  onElectricUnavailable: () => void;
-}) {
-  const authRuntime = getAuthRuntime();
-  let isPaused = false;
-
-  authRuntime.registerShape({
-    pause: () => {
-      isPaused = true;
-    },
-    resume: () => {
-      isPaused = false;
-    },
-  });
-
-  const url = buildUrl(args.shape.url, args.params);
-
-  return {
-    url: `${getRemoteApiUrl()}${url}`,
-    params: args.params,
-    headers: {
-      Authorization: async () => {
-        const token = await authRuntime.getToken();
-        if (!token) {
-          isPaused = true;
-          return '';
-        }
-        return `Bearer ${token}`;
-      },
-    },
-    parser: {
-      timestamptz: (value: string) => value,
-    },
-    fetchClient: createErrorHandlingFetch({
-      onError: args.reportError,
-      onElectricUnavailable: args.onElectricUnavailable,
-      isPaused: () => isPaused,
-    }),
-    onError: (error: { status?: number; message?: string; name?: string }) => {
-      if (isPaused) return;
-      if (isTransientElectricShapeError(error)) return;
-
-      const status = error.status;
-      const message = error.message || String(error);
-
-      if (status === 401) {
-        authRuntime.triggerRefresh().catch(() => {
-          args.reportError({ status, message });
-        });
-        return;
-      }
-
-      args.reportError({ status, message });
-
-      if (status === undefined || status >= 500) {
-        args.onElectricUnavailable();
-      }
-    },
   };
 }
 
@@ -444,7 +262,9 @@ async function parseResponseError(
       if (bodyText) {
         return withStatus(bodyText);
       }
-    } catch {}
+    } catch {
+      // The response body may be unreadable; retain the status-based message.
+    }
 
     return withStatus(fallbackMessage);
   }
@@ -457,10 +277,6 @@ function createFallbackSync(args: {
   reportError: (error: SyncError) => void;
 }) {
   return (syncParams: SyncParams): SyncResult => {
-    const runtime = getOrCreateSourceRuntime(args.sourceKey);
-    runtime.mode = 'fallback';
-    runtime.fallbackLocked = true;
-
     let isCleanedUp = false;
     let refreshPromise: Promise<void> | null = null;
 
@@ -511,7 +327,12 @@ function createFallbackSync(args: {
 
     const unregisterRefresher = registerFallbackRefresher(
       args.sourceKey,
-      refreshNow
+      async () => {
+        // A request started before the mutation may return an older snapshot.
+        // Wait for it, then fetch the committed state before retiring optimism.
+        if (refreshPromise) await refreshPromise;
+        await refreshNow();
+      }
     );
 
     const cachedRows = fallbackSnapshotCache.get(args.sourceKey);
@@ -536,102 +357,11 @@ function createFallbackSync(args: {
   };
 }
 
-function createHybridSync(args: {
-  sourceKey: string;
-  shape: ShapeDefinition<unknown>;
-  params: Record<string, string>;
-  reportError: (error: SyncError) => void;
-  electricSync: SyncConfigLike['sync'];
-}) {
-  const fallbackSync = createFallbackSync({
-    sourceKey: args.sourceKey,
-    shape: args.shape,
-    params: args.params,
-    reportError: args.reportError,
-  });
-
-  return (syncParams: SyncParams): SyncResult => {
-    const runtime = getOrCreateSourceRuntime(args.sourceKey);
-    if (runtime.fallbackLocked) {
-      return fallbackSync(syncParams);
-    }
-
-    runtime.mode = 'electric';
-
-    let isCleanedUp = false;
-    let usingFallback = false;
-    let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
-
-    let activeSync = normalizeSyncResult(args.electricSync(syncParams));
-
-    const switchToFallback = () => {
-      if (isCleanedUp || usingFallback) return;
-      usingFallback = true;
-
-      activeSync.cleanup?.();
-      activeSync = normalizeSyncResult(fallbackSync(syncParams));
-    };
-
-    const unregisterSwitcher = registerFallbackSwitcher(
-      args.sourceKey,
-      switchToFallback
-    );
-
-    const scheduleReadyTimeout = () => {
-      timeoutId = globalThis.setTimeout(() => {
-        if (isCleanedUp || usingFallback || syncParams.collection.isReady()) {
-          return;
-        }
-
-        if (!isPageVisible()) {
-          scheduleReadyTimeout();
-          return;
-        }
-
-        args.reportError({
-          message: `Electric sync timed out after ${ELECTRIC_READY_TIMEOUT_MS}ms, switching to fallback`,
-        });
-        lockSourceToFallback(args.sourceKey);
-      }, ELECTRIC_READY_TIMEOUT_MS);
-    };
-
-    scheduleReadyTimeout();
-
-    syncParams.collection.onFirstReady(() => {
-      if (!usingFallback) {
-        if (timeoutId) {
-          globalThis.clearTimeout(timeoutId);
-        }
-      }
-    });
-
-    return {
-      cleanup: () => {
-        isCleanedUp = true;
-        if (timeoutId) {
-          globalThis.clearTimeout(timeoutId);
-        }
-        unregisterSwitcher();
-        activeSync.cleanup?.();
-      },
-      loadSubset: (options: unknown) =>
-        activeSync.loadSubset ? activeSync.loadSubset(options) : true,
-      unloadSubset: (options: unknown) => {
-        activeSync.unloadSubset?.(options);
-      },
-    };
-  };
-}
-
-function isSourceFallbackLocked(sourceKey: string): boolean {
-  const runtime = getOrCreateSourceRuntime(sourceKey);
-  return runtime.fallbackLocked;
-}
-
-function maybeRefreshFallbackAfterMutation(sourceKey: string): void {
-  if (!isSourceFallbackLocked(sourceKey)) return;
+async function maybeRefreshFallbackAfterMutation(
+  sourceKey: string
+): Promise<void> {
   invalidateFallbackCache(sourceKey);
-  refreshFallbackSource(sourceKey);
+  await refreshFallbackSource(sourceKey);
 }
 
 export function refreshShapeFallback<TRow extends ElectricRow>(
@@ -639,9 +369,8 @@ export function refreshShapeFallback<TRow extends ElectricRow>(
   params: Record<string, string>
 ): void {
   const sourceKey = buildSourceKey(shape.table, params);
-  if (!isSourceFallbackLocked(sourceKey)) return;
   invalidateFallbackCache(sourceKey);
-  refreshFallbackSource(sourceKey);
+  void refreshFallbackSource(sourceKey);
 }
 
 function buildMutationHandlers(
@@ -649,10 +378,8 @@ function buildMutationHandlers(
   sourceKey: string
 ) {
   return {
-    onInsert: async ({
-      transaction,
-    }: MutationFnParams): Promise<{ txid: number[] } | void> => {
-      const txids = await Promise.all(
+    onInsert: async ({ transaction }: MutationFnParams): Promise<void> => {
+      await Promise.all(
         transaction.mutations.map(async (mutationItem) => {
           const data = mutationItem.modified as Record<string, unknown>;
           const response = await makeRequest(mutation.url, {
@@ -667,26 +394,13 @@ function buildMutationHandlers(
             );
             throw new Error(message);
           }
-
-          const result = (await response.json()) as { txid: number };
-          return result.txid;
         })
       );
 
-      maybeRefreshFallbackAfterMutation(sourceKey);
-
-      if (isSourceFallbackLocked(sourceKey)) {
-        return;
-      }
-
-      return { txid: txids };
+      await maybeRefreshFallbackAfterMutation(sourceKey);
     },
 
-    onUpdate: async ({
-      transaction,
-    }: MutationFnParams): Promise<{ txid: number[] } | void> => {
-      let txids: number[] = [];
-
+    onUpdate: async ({ transaction }: MutationFnParams): Promise<void> => {
       if (transaction.mutations.length > 1) {
         const updates = transaction.mutations.map((mutationItem) => {
           if (!mutationItem.key) {
@@ -711,9 +425,6 @@ function buildMutationHandlers(
           );
           throw new Error(message);
         }
-
-        const result = (await response.json()) as { txid: number };
-        txids = [result.txid];
       } else {
         const mutationItem = transaction.mutations[0];
         if (!mutationItem?.key) {
@@ -735,24 +446,13 @@ function buildMutationHandlers(
           );
           throw new Error(message);
         }
-
-        const result = (await response.json()) as { txid: number };
-        txids = [result.txid];
       }
 
-      maybeRefreshFallbackAfterMutation(sourceKey);
-
-      if (isSourceFallbackLocked(sourceKey)) {
-        return;
-      }
-
-      return { txid: txids };
+      await maybeRefreshFallbackAfterMutation(sourceKey);
     },
 
-    onDelete: async ({
-      transaction,
-    }: MutationFnParams): Promise<{ txid: number[] } | void> => {
-      const txids = await Promise.all(
+    onDelete: async ({ transaction }: MutationFnParams): Promise<void> => {
+      await Promise.all(
         transaction.mutations.map(async (mutationItem) => {
           const response = await makeRequest(
             `${mutation.url}/${mutationItem.key}`,
@@ -768,19 +468,10 @@ function buildMutationHandlers(
             );
             throw new Error(message);
           }
-
-          const result = (await response.json()) as { txid: number };
-          return result.txid;
         })
       );
 
-      maybeRefreshFallbackAfterMutation(sourceKey);
-
-      if (isSourceFallbackLocked(sourceKey)) {
-        return;
-      }
-
-      return { txid: txids };
+      await maybeRefreshFallbackAfterMutation(sourceKey);
     },
   };
 }
@@ -801,49 +492,13 @@ export function createShapeCollection<TRow extends ElectricRow>(
   }
 
   const reportError = createErrorReporter(config);
-  const onElectricUnavailable = () => lockSourceToFallback(sourceKey);
-
-  const shapeOptions = createElectricShapeOptions({
-    shape,
-    params,
-    reportError,
-    onElectricUnavailable,
-  });
-
-  const mutationHandlers = mutation
-    ? buildMutationHandlers(mutation, sourceKey)
-    : {};
-
-  const electricOptions = electricCollectionOptions({
+  const collectionOptions = {
     id: collectionId,
-    shapeOptions: shapeOptions as never,
     getKey: (item: ElectricRow) => getRowKey(item),
     gcTime: DEFAULT_GC_TIME_MS,
-    ...mutationHandlers,
-  } as never);
-
-  const electricSyncConfig = electricOptions.sync as unknown as SyncConfigLike;
-
-  const localFallbackSync = createFallbackSync({
-    sourceKey,
-    shape,
-    params,
-    reportError,
-  });
-
-  const collectionOptions = {
-    ...electricOptions,
+    ...(mutation ? buildMutationHandlers(mutation, sourceKey) : {}),
     sync: {
-      ...electricSyncConfig,
-      sync: isLocalRemoteApiEnabled()
-        ? localFallbackSync
-        : createHybridSync({
-            sourceKey,
-            shape,
-            params,
-            reportError,
-            electricSync: electricSyncConfig.sync,
-          }),
+      sync: createFallbackSync({ sourceKey, shape, params, reportError }),
     },
   };
 

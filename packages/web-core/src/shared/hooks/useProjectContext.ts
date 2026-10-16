@@ -23,7 +23,6 @@ import type {
   CreateIssueFollowerRequest,
   CreateIssueTagRequest,
   CreateIssueRelationshipRequest,
-  CreatePullRequestIssueRequest,
 } from 'shared/remote-types';
 
 /**
@@ -105,12 +104,6 @@ export interface ProjectContextValue {
     data: CreateIssueRelationshipRequest
   ) => InsertResult<IssueRelationship>;
   removeIssueRelationship: (id: string) => MutationResult;
-
-  // PullRequestIssue mutations
-  insertPullRequestIssue: (
-    data: CreatePullRequestIssueRequest
-  ) => InsertResult<PullRequestIssue>;
-  removePullRequestIssue: (id: string) => MutationResult;
 
   // Lookup helpers
   getIssue: (issueId: string) => Issue | undefined;

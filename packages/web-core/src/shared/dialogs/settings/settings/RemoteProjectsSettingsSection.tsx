@@ -17,7 +17,6 @@ import {
   PlusIcon,
   TrashIcon,
   DotsThreeIcon,
-  SignInIcon,
   XIcon,
   DotsSixVerticalIcon,
   PencilSimpleLineIcon,
@@ -43,11 +42,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@vibe/ui/components/Popover';
-import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
+
 import { Switch } from '@vibe/ui/components/Switch';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { OAuthDialog } from '@/shared/dialogs/global/OAuthDialog';
 import { CreateRemoteProjectDialog } from '@/shared/dialogs/org/CreateRemoteProjectDialog';
 import { DeleteRemoteProjectDialog } from '@/shared/dialogs/org/DeleteRemoteProjectDialog';
 import { useShape } from '@/shared/integrations/electric/hooks';
@@ -347,7 +345,7 @@ export function RemoteProjectsSettingsSection({
   const { t } = useTranslation(['settings', 'common', 'projects']);
   const { setDirty: setContextDirty } = useSettingsDirty();
   const { selectedHost } = useSettingsHost();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isLoaded } = useAuth();
   const queryClient = useQueryClient();
   const machineClient = useSettingsMachineClient();
   const machineScopeKey = machineClient?.queryScopeKey.join(':') ?? 'none';
@@ -1083,33 +1081,6 @@ export function RemoteProjectsSettingsSection({
   }
 
   // Auth check - show sign-in prompt if not signed in
-  if (!isSignedIn) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-base font-medium text-high">
-            {t(
-              'settings.remoteProjects.loginRequired.title',
-              'Sign in required'
-            )}
-          </h3>
-          <p className="text-sm text-low mt-1">
-            {t(
-              'settings.remoteProjects.loginRequired.description',
-              'Sign in to manage your remote projects.'
-            )}
-          </p>
-        </div>
-        <PrimaryButton
-          variant="secondary"
-          value={t('settings.remoteProjects.loginRequired.action', 'Sign in')}
-          onClick={() => void OAuthDialog.show({})}
-        >
-          <SignInIcon className="size-icon-xs mr-1" weight="bold" />
-        </PrimaryButton>
-      </div>
-    );
-  }
 
   // Error state
   if (orgsError) {

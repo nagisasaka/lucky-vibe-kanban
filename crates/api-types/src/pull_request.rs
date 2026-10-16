@@ -52,30 +52,3 @@ pub struct ListPullRequestsResponse {
 pub struct ListPullRequestIssuesResponse {
     pub pull_request_issues: Vec<PullRequestIssue>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct CreatePullRequestIssueRequest {
-    /// Optional client-generated ID. If not provided, server generates one.
-    /// Using client-generated IDs enables stable optimistic updates.
-    #[ts(optional)]
-    pub id: Option<Uuid>,
-    pub issue_id: Uuid,
-    pub url: String,
-    pub number: i32,
-    pub status: PullRequestStatus,
-    pub merged_at: Option<DateTime<Utc>>,
-    pub merge_commit_sha: Option<String>,
-    pub target_branch_name: String,
-}
-
-/// Request to update a PR status on the remote server.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UpdatePullRequestApiRequest {
-    pub url: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<PullRequestStatus>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub merged_at: Option<Option<DateTime<Utc>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub merge_commit_sha: Option<Option<String>>,
-}

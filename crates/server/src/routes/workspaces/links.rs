@@ -1,4 +1,3 @@
-use api_types::{CreateWorkspaceRequest, PullRequestStatus, UpsertPullRequestRequest};
 use axum::{
     Extension, Json, Router,
     extract::{Path as AxumPath, State},
@@ -6,10 +5,9 @@ use axum::{
     response::Json as ResponseJson,
     routing::{delete, post},
 };
-use db::models::{merge::MergeStatus, pull_request::PullRequest, workspace::Workspace};
+use db::models::workspace::Workspace;
 use deployment::Deployment;
 use serde::Deserialize;
-use services::services::{diff_stream, remote_client::RemoteClientError, remote_sync};
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
@@ -68,65 +66,6 @@ pub(crate) async fn link_workspace_to_issue(
     workspace.require_interactive()?;
     upsert_local_workspace_link(&deployment.db().pool, workspace.id, project_id, issue_id).await?;
 
-    if let Ok(client) = deployment.remote_client() {
-        let stats =
-            diff_stream::compute_diff_stats(&deployment.db().pool, deployment.git(), workspace)
-                .await;
-
-        client
-            .create_workspace(CreateWorkspaceRequest {
-                project_id,
-                local_workspace_id: workspace.id,
-                issue_id,
-                name: workspace.name.clone(),
-                archived: Some(workspace.archived),
-                files_changed: stats.as_ref().map(|s| s.files_changed as i32),
-                lines_added: stats.as_ref().map(|s| s.lines_added as i32),
-                lines_removed: stats.as_ref().map(|s| s.lines_removed as i32),
-            })
-            .await?;
-
-        {
-            let pool = deployment.db().pool.clone();
-            let ws_id = workspace.id;
-            let client = client.clone();
-            tokio::spawn(async move {
-                let pull_requests = match PullRequest::find_by_workspace_id(&pool, ws_id).await {
-                    Ok(prs) => prs,
-                    Err(e) => {
-                        tracing::error!(
-                            "Failed to fetch PRs for workspace {} during link: {}",
-                            ws_id,
-                            e
-                        );
-                        return;
-                    }
-                };
-                for pr in pull_requests {
-                    let pr_status = match pr.pr_status {
-                        MergeStatus::Open => PullRequestStatus::Open,
-                        MergeStatus::Merged => PullRequestStatus::Merged,
-                        MergeStatus::Closed => PullRequestStatus::Closed,
-                        MergeStatus::Unknown => continue,
-                    };
-                    remote_sync::sync_pr_to_remote(
-                        &client,
-                        UpsertPullRequestRequest {
-                            url: pr.pr_url,
-                            number: pr.pr_number as i32,
-                            status: pr_status,
-                            merged_at: pr.merged_at,
-                            merge_commit_sha: pr.merge_commit_sha,
-                            target_branch_name: pr.target_branch_name,
-                            local_workspace_id: ws_id,
-                        },
-                    )
-                    .await;
-                }
-            });
-        }
-    }
-
     Ok(())
 }
 
@@ -151,19 +90,10 @@ pub async fn unlink_workspace(
     State(deployment): State<DeploymentImpl>,
 ) -> Result<ResponseJson<ApiResponse<()>>, ApiError> {
     // Unlike POST, this idempotent route also accepts already-deleted records.
-    // Check an existing workspace before contacting the remote side.
+    // Check an existing workspace before removing its local link.
     if let Some(workspace) = Workspace::find_by_id(&deployment.db().pool, workspace_id).await? {
         workspace.require_interactive()?;
         db::models::integration::guard_workspace(&deployment.db().pool, workspace_id).await?;
-    }
-    if let Ok(client) = deployment.remote_client() {
-        match client.delete_workspace(workspace_id).await {
-            Ok(()) => {}
-            Err(RemoteClientError::Http { status: 404, .. }) => {
-                // Already absent remotely; still clear the local issue link below.
-            }
-            Err(e) => return Err(e.into()),
-        }
     }
 
     delete_local_workspace_link(&deployment.db().pool, workspace_id).await?;

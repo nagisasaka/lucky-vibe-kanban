@@ -1,10 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use axum::{
-    Extension, Json, Router,
-    extract::{Query, State},
-    response::Json as ResponseJson,
-    routing::{get, post},
+    Extension, Json, Router, extract::State, response::Json as ResponseJson, routing::post,
 };
 use db::models::{
     execution_process::ExecutionProcessView, workspace::Workspace, workspace_repo::WorkspaceRepo,
@@ -41,20 +38,9 @@ pub struct OpenEditorResponse {
     pub url: Option<String>,
 }
 
-#[derive(Debug, Serialize, TS)]
-pub struct OpenEditorPathResponse {
-    pub workspace_path: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct OpenEditorPathQuery {
-    file_path: Option<String>,
-}
-
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/preview", post(crate::routes::parallel_context::preview))
-        .route("/editor/path", get(get_workspace_editor_path))
         .route("/editor/open", post(open_workspace_in_editor))
         .route("/agent/setup", post(run_agent_setup))
         .route("/github/cli/setup", post(gh_cli_setup_handler))
@@ -141,19 +127,6 @@ pub async fn open_workspace_in_editor(
             Err(ApiError::EditorOpen(e))
         }
     }
-}
-
-pub async fn get_workspace_editor_path(
-    Extension(workspace): Extension<Workspace>,
-    State(deployment): State<DeploymentImpl>,
-    Query(query): Query<OpenEditorPathQuery>,
-) -> Result<ResponseJson<ApiResponse<OpenEditorPathResponse>>, ApiError> {
-    let path =
-        resolve_workspace_editor_path(&deployment, &workspace, query.file_path.as_deref()).await?;
-
-    Ok(ResponseJson(ApiResponse::success(OpenEditorPathResponse {
-        workspace_path: path.to_string_lossy().into_owned(),
-    })))
 }
 
 async fn resolve_workspace_editor_path(

@@ -27,7 +27,6 @@ use services::services::{
         save_config_to_file,
     },
     container::ContainerService,
-    remote_client::RemoteClientError,
 };
 use sha2::{Digest, Sha256};
 use tokio::fs;
@@ -38,8 +37,7 @@ use uuid::Uuid;
 use crate::{
     DeploymentImpl,
     error::ApiError,
-    middleware::signed_ws::{MaybeSignedWebSocket, SignedWsUpgrade},
-    runtime::relay_registration,
+    middleware::websocket::{LocalWebSocket, LocalWsUpgrade},
 };
 
 // Serialize legacy editor read/check/write, including the recent-model patch.
@@ -99,13 +97,11 @@ pub struct UserSystemInfo {
     pub config: Config,
     pub machine_id: String,
     pub login_status: LoginStatus,
-    pub remote_auth_degraded: Option<String>,
     #[serde(flatten)]
     pub profiles: ExecutorConfigs,
     pub environment: Environment,
     /// Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })
     pub capabilities: HashMap<String, Vec<BaseAgentCapability>>,
-    pub shared_api_base: Option<String>,
     pub preview_proxy_port: Option<u16>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -118,49 +114,13 @@ async fn get_user_system_info(
     State(deployment): State<DeploymentImpl>,
 ) -> ResponseJson<ApiResponse<UserSystemInfo>> {
     let config = deployment.config().read().await.clone();
-    let login_status = match tokio::time::timeout(
-        std::time::Duration::from_secs(2),
-        deployment.get_login_status(),
-    )
-    .await
-    {
-        Ok(status) => status,
-        Err(_) => {
-            tracing::warn!("timed out determining login status for /api/info");
-
-            let auth_context = deployment.auth_context();
-            let cached_profile = auth_context.cached_profile().await;
-
-            match auth_context.get_credentials().await {
-                Some(_) => {
-                    if auth_context.remote_auth_degraded_slug().await.is_none() {
-                        auth_context
-                            .set_remote_auth_degraded_slug(
-                                RemoteClientError::generic_degraded_slug(),
-                            )
-                            .await;
-                    }
-
-                    deployment
-                        .track_if_analytics_allowed(
-                            "login_status_timeout",
-                            serde_json::json!({
-                                "has_cached_profile": cached_profile.is_some(),
-                            }),
-                        )
-                        .await;
-
-                    LoginStatus::LoggedIn {
-                        profile: cached_profile,
-                    }
-                }
-                None => {
-                    auth_context.clear_profile().await;
-                    auth_context.clear_remote_auth_degraded_slug().await;
-                    LoginStatus::LoggedOut
-                }
-            }
-        }
+    let login_status = LoginStatus::LoggedIn {
+        profile: Some(api_types::ProfileResponse {
+            user_id: Uuid::from_u128(1),
+            username: Some("local".into()),
+            email: "local@vibe-kanban.local".into(),
+            providers: vec![],
+        }),
     };
 
     let user_system_info = UserSystemInfo {
@@ -168,7 +128,6 @@ async fn get_user_system_info(
         config,
         machine_id: deployment.user_id().to_string(),
         login_status,
-        remote_auth_degraded: deployment.auth_context().remote_auth_degraded_slug().await,
         profiles: ExecutorConfigs::get_cached().public_summary(),
         environment: Environment::new(),
         capabilities: {
@@ -181,7 +140,6 @@ async fn get_user_system_info(
             }
             caps
         },
-        shared_api_base: deployment.remote_info().get_api_base(),
         // An explicitly empty public domain disables server previews. Without
         // this environment variable, desktop/local behaviour is unchanged.
         preview_proxy_port: if std::env::var("VK_PREVIEW_DOMAIN").as_deref() == Ok("") {
@@ -263,20 +221,6 @@ async fn track_config_events(deployment: &DeploymentImpl, old: &Config, new: &Co
 
 async fn handle_config_events(deployment: &DeploymentImpl, old: &Config, new: &Config) {
     track_config_events(deployment, old, new).await;
-
-    let old_host_nickname = relay_registration::clean_host_nickname(old, deployment.user_id());
-    let new_host_nickname = relay_registration::clean_host_nickname(new, deployment.user_id());
-
-    match (old.relay_enabled, new.relay_enabled) {
-        (false, true) => relay_registration::spawn_relay(deployment).await,
-        (true, false) => relay_registration::stop_relay(deployment).await,
-        (true, true) => {
-            if old_host_nickname != new_host_nickname {
-                relay_registration::spawn_relay(deployment).await;
-            }
-        }
-        (false, false) => (),
-    }
 }
 
 async fn get_sound(Path(sound): Path<SoundFile>) -> Result<Response, ApiError> {
@@ -859,7 +803,7 @@ pub struct ExecutorDiscoveredOptionsStreamQuery {
 }
 
 pub async fn stream_executor_discovered_options_ws(
-    ws: SignedWsUpgrade,
+    ws: LocalWsUpgrade,
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<ExecutorDiscoveredOptionsStreamQuery>,
 ) -> impl IntoResponse {
@@ -871,7 +815,7 @@ pub async fn stream_executor_discovered_options_ws(
 }
 
 async fn handle_executor_discovered_options_ws(
-    mut socket: MaybeSignedWebSocket,
+    mut socket: LocalWebSocket,
     deployment: DeploymentImpl,
     query: ExecutorDiscoveredOptionsStreamQuery,
 ) -> anyhow::Result<()> {

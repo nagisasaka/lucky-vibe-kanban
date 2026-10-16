@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::{
     DeploymentImpl,
     error::ApiError,
-    middleware::signed_ws::{MaybeSignedWebSocket, SignedWsUpgrade},
+    middleware::websocket::{LocalWebSocket, LocalWsUpgrade},
 };
 
 /// Path parameters for scratch routes with composite key
@@ -104,7 +104,7 @@ fn parse_delete_condition(body: &[u8]) -> Result<DeleteScratch, ApiError> {
 }
 
 pub async fn stream_scratch_ws(
-    ws: SignedWsUpgrade,
+    ws: LocalWsUpgrade,
     State(deployment): State<DeploymentImpl>,
     Path(ScratchPath { scratch_type, id }): Path<ScratchPath>,
 ) -> impl IntoResponse {
@@ -116,7 +116,7 @@ pub async fn stream_scratch_ws(
 }
 
 async fn handle_scratch_ws(
-    mut socket: MaybeSignedWebSocket,
+    mut socket: LocalWebSocket,
     deployment: DeploymentImpl,
     id: Uuid,
     scratch_type: ScratchType,

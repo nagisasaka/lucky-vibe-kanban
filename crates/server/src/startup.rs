@@ -22,7 +22,6 @@ use crate::{
         scheduled_tasks::spawn_scheduled_task_loop,
         sessions::setup_gate::{reconcile_setup_launch_gates, spawn_setup_launch_gate_watcher},
     },
-    runtime::relay_registration,
     workflow_runtime::runner::{
         DeploymentAgentRunReconciliationBoundary, recover_stale_workflow_runs_with_boundary,
         spawn_workflow_completion_watcher,
@@ -53,9 +52,7 @@ impl ServerHandle {
 
     /// Run both the main and proxy servers until the shutdown token is cancelled.
     pub async fn serve(self) -> anyhow::Result<()> {
-        // Start relay tunnel so the host registers with the relay server.
-        // This must happen after the port is known (it's needed for local
-        // proxying) and is shared between the standalone binary and Tauri.
+        // Publish the bound addresses for local client and preview connections.
         self.deployment
             .client_info()
             .set_server_addr(self.main_listener.local_addr()?)
@@ -64,7 +61,6 @@ impl ServerHandle {
             .client_info()
             .set_preview_proxy_port(self.proxy_port)
             .expect("client preview proxy port already set");
-        relay_registration::spawn_relay(&self.deployment).await;
 
         let app_router = routes::router(self.deployment.clone());
         let proxy_router: axum::Router = routes::preview::subdomain_router(self.deployment.clone())

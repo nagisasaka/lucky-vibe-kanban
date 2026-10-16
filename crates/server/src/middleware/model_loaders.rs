@@ -61,17 +61,6 @@ async fn load_workspace_from_pool(
         }
     };
 
-    // Although this endpoint uses GET, the relay consumes it as authorisation
-    // to create an SSH tunnel and launch an editor. File inspection uses its
-    // own read-only endpoints and must not grant this development capability.
-    if workspace.is_execution_only() && request.uri().path().ends_with("/integration/editor/path") {
-        use axum::response::IntoResponse;
-        return Ok(crate::error::ApiError::Conflict(
-            "Execution-only workspace cannot be opened for development in an editor".into(),
-        )
-        .into_response());
-    }
-
     // Read/log operations remain available. All Workspace mutations (Git,
     // branch, scripts, editor setup, files, lifecycle) share the reservation
     // gate, rather than relying on disabled buttons or an incomplete route list.

@@ -11,27 +11,27 @@ describe('workspace file raw urls', () => {
     ).toBe('/api/workspaces/workspace-1/files/raw?repo_id=repo-1');
   });
 
-  it('scopes api raw urls for remote hosts', () => {
+  it('rejects raw URLs for retired remote hosts', () => {
     expect(
       scopeWorkspaceFileRawUrl(
         '/api/workspaces/workspace-1/files/raw?repo_id=repo-1',
         'host-1'
       )
-    ).toBe('/api/host/host-1/workspaces/workspace-1/files/raw?repo_id=repo-1');
+    ).toBeNull();
   });
 
-  it('does not double-scope host urls', () => {
+  it('rejects already scoped retired URLs', () => {
     expect(
       scopeWorkspaceFileRawUrl(
         '/api/host/host-1/workspaces/workspace-1/files/raw',
         'host-1'
       )
-    ).toBe('/api/host/host-1/workspaces/workspace-1/files/raw');
+    ).toBeNull();
   });
 
   it('preserves external URLs', () => {
-    expect(
-      scopeWorkspaceFileRawUrl('https://example.com/file.png', 'host-1')
-    ).toBe('https://example.com/file.png');
+    expect(scopeWorkspaceFileRawUrl('https://example.com/file.png', null)).toBe(
+      'https://example.com/file.png'
+    );
   });
 });

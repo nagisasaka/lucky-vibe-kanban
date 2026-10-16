@@ -289,41 +289,6 @@ impl PullRequest {
         .await
     }
 
-    pub async fn get_pending_sync(pool: &SqlitePool) -> Result<Vec<PullRequest>, sqlx::Error> {
-        sqlx::query_as!(
-            PullRequest,
-            r#"SELECT
-                id,
-                workspace_id AS "workspace_id: Uuid",
-                repo_id AS "repo_id: Uuid",
-                pr_url,
-                pr_number,
-                pr_status AS "pr_status: MergeStatus",
-                target_branch_name,
-                merged_at AS "merged_at: DateTime<Utc>",
-                merge_commit_sha,
-                created_at AS "created_at!: DateTime<Utc>",
-                updated_at AS "updated_at!: DateTime<Utc>",
-                synced_at AS "synced_at: DateTime<Utc>"
-            FROM pull_requests
-            WHERE synced_at IS NULL OR synced_at < updated_at"#,
-        )
-        .fetch_all(pool)
-        .await
-    }
-
-    pub async fn mark_synced(pool: &SqlitePool, id: &str) -> Result<(), sqlx::Error> {
-        let now = Utc::now();
-        sqlx::query!(
-            "UPDATE pull_requests SET synced_at = ? WHERE id = ?",
-            now,
-            id,
-        )
-        .execute(pool)
-        .await?;
-        Ok(())
-    }
-
     pub fn to_pr_merge(&self) -> PrMerge {
         PrMerge {
             id: Uuid::parse_str(&self.id).unwrap_or_else(|_| Uuid::nil()),

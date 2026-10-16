@@ -208,30 +208,10 @@
     },
     "currentDisabled": "Impossible de sélectionner la branche actuelle"
   },
-  "orgSwitcher": {
-    "organizations": "Organisations",
-    "orgSettings": "Paramètres de l'organisation"
-  },
+  "orgSwitcher": {},
   "ok": "OK",
   "error": "Erreur",
-  "signIn": "Se connecter",
-  "signOut": "Se déconnecter",
-  "oauth": {
-    "title": "Se connecter à Lucky Vibe Kanban",
-    "description": "Connectez-vous pour rejoindre des organisations et partager des tâches avec votre équipe",
-    "continueWithGitHub": "Continuer avec GitHub",
-    "continueWithGoogle": "Continuer avec Google",
-    "waitingTitle": "Terminer l'authentification",
-    "waitingDescription": "Une fenêtre popup a été ouverte pour l'authentification",
-    "waitingForAuth": "En attente de l'authentification...",
-    "popupInstructions": "Si la fenêtre popup ne s'est pas ouverte, veuillez vérifier les paramètres de votre bloqueur de popups.",
-    "back": "Retour",
-    "successTitle": "Authentification réussie !",
-    "welcomeBack": "Bienvenue, {{name}}",
-    "errorTitle": "Échec de l'authentification",
-    "errorDescription": "Un problème est survenu lors de l'authentification de votre compte",
-    "tryAgain": "Réessayer"
-  },
+  "oauth": {},
   "toolbar": {
     "sortBy": "Trier par",
     "groupBy": "Grouper par"
@@ -554,10 +534,6 @@
     "previewFileWithName": "[Fichier : {{name}}]",
     "imageAttachmentNameFallback": "Pièce jointe",
     "removeImage": "Supprimer l'image",
-    "maxFilesAtOnce": "Maximum {{count}} fichiers à la fois",
-    "fileExceedsLimit": "Le fichier {{filename}} dépasse la limite de 20Mo",
-    "unknownError": "Erreur inconnue",
-    "failedToUploadFile": "Échec de l'envoi de {{filename}} : {{message}}",
     "downloadAttachment": "Télécharger la pièce jointe",
     "subIssues": "Sous-tâches",
     "noSubIssues": "Aucune sous-tâche",
@@ -568,11 +544,7 @@
       "active": "Actif",
       "all": "Tout"
     },
-    "loginRequired": {
-      "title": "Connexion requise",
-      "description": "Veuillez vous connecter pour voir ce projet.",
-      "action": "Se connecter"
-    },
+    "loginRequired": {},
     "team": "Team",
     "personal": "Personal",
     "searchPlaceholder": "Search issues...",
@@ -703,25 +675,11 @@
     "streamsAffected": "{{count}} flux affecté",
     "streamsAffected_other": "{{count}} flux affectés",
     "status": "(statut {{status}})",
-    "refreshPage": "Actualiser la page",
-    "remoteAuthUnavailable": "L’authentification distante est temporairement indisponible. Certaines fonctionnalités distantes peuvent ne pas fonctionner jusqu’à son rétablissement."
+    "refreshPage": "Actualiser la page"
   },
-  "onboardingSignIn": {
-    "subtitle": "Sign in to continue",
-    "signedInAs": "Signed in as {{name}}.",
-    "moreOptions": "More options",
-    "featureHeader": "Feature",
-    "signedInHeader": "Signed in",
-    "skipSignInHeader": "Don't sign in",
-    "yes": "Yes",
-    "no": "No"
-  },
+  "onboardingSignIn": {},
   "appBar": {
-    "kanban": {
-      "tooltip": "Connectez-vous pour voir les projets",
-      "title": "Tableaux Kanban",
-      "description": "Connectez-vous pour organiser vos agents de codage avec des tableaux kanban."
-    }
+    "kanban": {}
   },
   "errors": {
     "generic": "An unexpected error occurred"

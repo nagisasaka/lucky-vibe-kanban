@@ -25,16 +25,8 @@
         "mcpDesc": "模型上下文协议服务器",
         "agent-tools": "Agent 工具",
         "agent-toolsDesc": "原生 MCP 服务器和技能",
-        "organizations": "组织设置",
-        "organizationsDesc": "管理组织成员和权限",
         "remote-projects": "项目",
-        "remote-projectsDesc": "管理项目",
-        "relay": "远程访问",
-        "relayDesc": "中继隧道和配对",
-        "machineSettings": "机器设置",
-        "accountSettings": "账号设置",
-        "pairOtherMachines": "配对其他机器",
-        "selectHost": "选择主机"
+        "remote-projectsDesc": "管理项目"
       }
     },
     "general": {
@@ -541,33 +533,8 @@
         "confirmSwitch": "您有未保存的更改。您确定要切换仓库吗？您的更改将丢失。"
       }
     },
-    "relay": {
-      "title": "远程访问",
-      "description": "允许通过中继隧道从网页访问此实例。",
-      "enabled": {
-        "label": "启用远程访问",
-        "helper": "启用后，可以通过中继隧道远程访问此实例。"
-      },
-      "enrollmentCode": {
-        "label": "配对码",
-        "helper": "在浏览器中输入此代码以配对此实例。",
-        "loginRequired": "登录后才能生成配对码。",
-        "fetchError": "获取配对码失败。",
-        "show": "显示配对码"
-      },
-      "host": {
-        "label": "主机"
-      },
-      "client": {
-        "label": "客户端"
-      },
-      "overview": {
-        "available": "可用",
-        "unavailable": "不可用"
-      }
-    },
     "remoteProjects": {
-      "title": "项目设置",
+      "title": "项目",
       "description": "管理项目信息、看板，以及当前设备使用的工作空间。",
       "loading": "正在加载远程项目...",
       "loadError": "加载组织失败",

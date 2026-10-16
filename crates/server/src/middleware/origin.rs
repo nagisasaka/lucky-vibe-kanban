@@ -6,7 +6,6 @@ use axum::{
     http::{StatusCode, header},
     response::Response,
 };
-use relay_client::RELAY_HEADER;
 use url::Url;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -39,12 +38,6 @@ impl OriginKey {
 
 #[allow(clippy::result_large_err)]
 pub fn validate_origin<B>(req: &mut Request<B>) -> Result<(), Response> {
-    // Relay-proxied requests are authenticated through the relay's own session
-    // system, so origin validation is not applicable.
-    if is_relay_request(req) {
-        return Ok(());
-    }
-
     let Some(origin) = get_origin_header(req) else {
         return Ok(());
     };
@@ -94,13 +87,6 @@ fn get_header<B>(req: &Request<B>, name: header::HeaderName) -> Option<&str> {
         .get(name)
         .and_then(|v| v.to_str().ok())
         .map(str::trim)
-}
-
-fn is_relay_request<B>(req: &Request<B>) -> bool {
-    req.headers()
-        .get(RELAY_HEADER)
-        .and_then(|v| v.to_str().ok())
-        .is_some_and(|v| v.trim() == "1")
 }
 
 fn forbidden() -> Response {
@@ -199,6 +185,14 @@ mod tests {
             let mut req = make_request(Some(origin), Some(host));
             assert!(validate_origin(&mut req).is_ok(), "{origin} vs {host}");
         }
+    }
+
+    #[test]
+    fn retired_relay_header_does_not_bypass_origin_validation() {
+        let mut req = make_request(Some("https://untrusted.example"), Some("example.com"));
+        req.headers_mut()
+            .insert("x-vk-relayed", "1".parse().unwrap());
+        assert!(is_forbidden(validate_origin(&mut req)));
     }
 
     #[test]

@@ -20,36 +20,29 @@ pub mod execution_bridge;
 pub mod execution_processes;
 pub mod frontend;
 pub mod health;
-pub mod host_relay;
 pub mod integrations;
 pub mod local_remote;
-pub mod oauth;
 pub mod openwiki;
-pub mod organizations;
 pub mod parallel_context;
 pub mod pipelines;
 pub mod preview;
 pub mod project_chat;
-pub mod relay_auth;
 pub mod releases;
-pub mod remote;
 pub mod repo;
 pub mod resource_coordination;
 pub mod scheduled_tasks;
 pub mod scratch;
 pub mod search;
 pub mod sessions;
-pub mod ssh_session;
 pub mod tags;
 pub mod terminal;
-pub mod webrtc;
 pub mod workflows;
 pub mod workspaces;
 
 pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
     let remote_mcp = crate::remote_mcp::configured_router(deployment.clone())
         .expect("Invalid remote MCP configuration; refusing to start");
-    let relay_signed_routes = Router::new()
+    let local_routes = Router::new()
         .route("/health", get(health::health_check))
         .merge(config::router())
         .merge(agent_settings::router())
@@ -59,8 +52,6 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(agent_runs::router(&deployment))
         .merge(execution_processes::router(&deployment))
         .merge(tags::router(&deployment))
-        .merge(oauth::router())
-        .merge(organizations::router())
         .merge(pipelines::router())
         .merge(filesystem::router())
         .merge(repo::router())
@@ -76,25 +67,13 @@ pub fn router(deployment: DeploymentImpl) -> IntoMakeService<Router> {
         .merge(releases::router())
         .merge(sessions::router(&deployment))
         .merge(terminal::router())
-        .route("/ssh-session", get(ssh_session::ssh_session_ws))
         .nest("/local", local_remote::router(&deployment))
-        .nest("/remote", remote::router())
-        .merge(webrtc::router())
+        .nest("/board", local_remote::board_api::router())
         .nest("/attachments", attachments::routes())
-        .layer(axum::middleware::from_fn_with_state(
-            deployment.clone(),
-            middleware::sign_relay_response,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            deployment.clone(),
-            middleware::require_relay_request_signature,
-        ))
         .with_state(deployment.clone());
 
     let api_routes = Router::new()
-        .merge(relay_auth::router())
-        .merge(host_relay::router(&deployment))
-        .merge(relay_signed_routes)
+        .merge(local_routes)
         .layer(ValidateRequestHeaderLayer::custom(
             middleware::validate_origin,
         ))

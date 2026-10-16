@@ -12,7 +12,6 @@ test("instance environment isolates state and overrides stable server settings",
     BACKEND_PORT: "3000",
     HOST: "0.0.0.0",
     PREVIEW_PROXY_PORT: "3001",
-    VK_SHARED_API_BASE: "https://wrong",
     VIBE_KANBAN_AGENT_PROCESS_HOST: "/usr/local/bin/agent-process-host",
   };
   const staging = configuration("staging", undefined, inherited);
@@ -21,7 +20,6 @@ test("instance environment isolates state and overrides stable server settings",
   assert.equal(env.BACKEND_PORT, "4020");
   assert.equal(env.HOST, "127.0.0.1");
   assert.equal(env.VK_ALLOWED_ORIGINS, "https://test.example:8443");
-  assert.equal(env.VK_SHARED_API_BASE, "");
   assert.equal(env.PREVIEW_PROXY_PORT, "0");
   assert.equal(
     env.VIBE_KANBAN_AGENT_PROCESS_HOST,

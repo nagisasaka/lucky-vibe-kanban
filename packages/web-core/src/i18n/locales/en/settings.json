@@ -13,10 +13,6 @@
     "layout": {
       "nav": {
         "title": "Settings",
-        "machineSettings": "Machine Settings",
-        "accountSettings": "Account Settings",
-        "pairOtherMachines": "Pair other machines",
-        "selectHost": "Select host",
         "general": "General",
         "generalDesc": "Theme, notifications, and preferences",
         "projects": "Projects",
@@ -29,12 +25,8 @@
         "mcpDesc": "Model Context Protocol servers",
         "agent-tools": "Agent Tools",
         "agent-toolsDesc": "Native MCP servers and Skills",
-        "organizations": "Organization Settings",
-        "organizationsDesc": "Manage organization members and permissions",
         "remote-projects": "Projects",
         "remote-projectsDesc": "Manage projects",
-        "relay": "Remote Access",
-        "relayDesc": "Relay tunnel and enrollment",
         "resources": "Shared resources"
       }
     },
@@ -564,33 +556,8 @@
         "confirmSwitch": "You have unsaved changes. Are you sure you want to switch repositories? Your changes will be lost."
       }
     },
-    "relay": {
-      "title": "Remote Access",
-      "description": "Allow access to this instance from the web via relay tunnel.",
-      "overview": {
-        "available": "Available",
-        "unavailable": "Unavailable"
-      },
-      "enabled": {
-        "label": "Enable remote access",
-        "helper": "When enabled, this instance can be accessed remotely through a relay tunnel."
-      },
-      "enrollmentCode": {
-        "label": "Pairing Code",
-        "helper": "Enter this code in the browser to pair with this instance.",
-        "loginRequired": "Log in to generate a pairing code.",
-        "fetchError": "Failed to fetch pairing code.",
-        "show": "Show pairing code"
-      },
-      "host": {
-        "label": "Host"
-      },
-      "client": {
-        "label": "Client"
-      }
-    },
     "remoteProjects": {
-      "title": "Project settings",
+      "title": "Projects",
       "description": "Manage project details, boards, and the workspace used on this device.",
       "loading": "Loading remote projects...",
       "loadError": "Failed to load organizations",

@@ -25,16 +25,8 @@
         "mcpDesc": "模型上下文協議伺服器",
         "agent-tools": "Agent 工具",
         "agent-toolsDesc": "原生 MCP 伺服器和技能",
-        "organizations": "組織設定",
-        "organizationsDesc": "管理組織成員與權限",
         "remote-projects": "專案",
-        "remote-projectsDesc": "管理專案",
-        "relay": "遠端存取",
-        "relayDesc": "中繼通道和配對",
-        "machineSettings": "機器設定",
-        "accountSettings": "帳號設定",
-        "pairOtherMachines": "配對其他機器",
-        "selectHost": "選擇主機"
+        "remote-projectsDesc": "管理專案"
       }
     },
     "general": {
@@ -536,33 +528,8 @@
         "confirmSwitch": "您有未儲存的變更。確定要切換儲存庫嗎？您的變更將會遺失。"
       }
     },
-    "relay": {
-      "title": "遠端存取",
-      "description": "允許透過中繼通道從網頁存取此實例。",
-      "enabled": {
-        "label": "啟用遠端存取",
-        "helper": "啟用後，可以透過中繼通道遠端存取此實例。"
-      },
-      "enrollmentCode": {
-        "label": "配對碼",
-        "helper": "在瀏覽器中輸入此代碼以配對此實例。",
-        "loginRequired": "登入後才能產生配對碼。",
-        "fetchError": "取得配對碼失敗。",
-        "show": "顯示配對碼"
-      },
-      "host": {
-        "label": "主機"
-      },
-      "client": {
-        "label": "用戶端"
-      },
-      "overview": {
-        "available": "可用",
-        "unavailable": "不可用"
-      }
-    },
     "remoteProjects": {
-      "title": "遠端專案",
+      "title": "專案",
       "description": "管理跨組織同步的雲端專案。",
       "loading": "正在載入遠端專案...",
       "loadError": "載入組織失敗",

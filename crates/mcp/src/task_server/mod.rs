@@ -192,7 +192,7 @@ impl McpServer {
         local_workspace_id: Uuid,
     ) -> Option<(Option<Uuid>, Option<Uuid>, Option<Uuid>)> {
         let url = self.url(&format!(
-            "/api/remote/workspaces/by-local-id/{}",
+            "/api/board/workspaces/by-local-id/{}",
             local_workspace_id
         ));
 
@@ -224,7 +224,7 @@ impl McpServer {
     }
 
     async fn fetch_remote_organization_id(&self, project_id: Uuid) -> Option<Uuid> {
-        let url = self.url(&format!("/api/remote/projects/{}", project_id));
+        let url = self.url(&format!("/api/board/projects/{}", project_id));
 
         let response = tokio::time::timeout(
             std::time::Duration::from_millis(2000),

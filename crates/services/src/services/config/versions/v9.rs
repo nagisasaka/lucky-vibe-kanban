@@ -21,10 +21,6 @@ fn default_commit_reminder_enabled() -> bool {
     false
 }
 
-fn default_relay_enabled() -> bool {
-    true
-}
-
 fn default_hidden_agents() -> Vec<BaseCodingAgent> {
     vec![
         #[cfg(feature = "qa-mode")]
@@ -39,8 +35,6 @@ pub struct Config {
     pub executor_profile: ExecutorProfileId,
     pub disclaimer_acknowledged: bool,
     pub onboarding_acknowledged: bool,
-    #[serde(default)]
-    pub remote_onboarding_acknowledged: bool,
     pub notifications: NotificationConfig,
     pub editor: EditorConfig,
     pub github: GitHubConfig,
@@ -64,10 +58,6 @@ pub struct Config {
     pub commit_reminder_prompt: Option<String>,
     #[serde(default)]
     pub send_message_shortcut: SendMessageShortcut,
-    #[serde(default = "default_relay_enabled")]
-    pub relay_enabled: bool,
-    #[serde(default)]
-    pub host_nickname: Option<String>,
     #[serde(default = "default_hidden_agents")]
     pub hidden_agents: Vec<BaseCodingAgent>,
 }
@@ -80,7 +70,6 @@ impl Config {
             executor_profile: old_config.executor_profile,
             disclaimer_acknowledged: old_config.disclaimer_acknowledged,
             onboarding_acknowledged: old_config.onboarding_acknowledged,
-            remote_onboarding_acknowledged: old_config.remote_onboarding_acknowledged,
             notifications: old_config.notifications,
             editor: old_config.editor,
             github: old_config.github,
@@ -96,8 +85,6 @@ impl Config {
             commit_reminder_enabled: false,
             commit_reminder_prompt: old_config.commit_reminder_prompt,
             send_message_shortcut: old_config.send_message_shortcut,
-            relay_enabled: old_config.relay_enabled,
-            host_nickname: old_config.host_nickname,
             // Provider visibility is rebuilt from the V1 registry; removed
             // provider entries are intentionally not carried across config
             // versions.
@@ -140,7 +127,6 @@ impl Default for Config {
             executor_profile: ExecutorProfileId::new(BaseCodingAgent::ClaudeCode),
             disclaimer_acknowledged: false,
             onboarding_acknowledged: false,
-            remote_onboarding_acknowledged: false,
             notifications: NotificationConfig::default(),
             editor: EditorConfig::default(),
             github: GitHubConfig::default(),
@@ -156,8 +142,6 @@ impl Default for Config {
             commit_reminder_enabled: false,
             commit_reminder_prompt: None,
             send_message_shortcut: SendMessageShortcut::default(),
-            relay_enabled: true,
-            host_nickname: None,
             hidden_agents: default_hidden_agents(),
         }
     }
@@ -166,6 +150,22 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn retired_cloud_fields_do_not_reset_local_settings() {
+        let mut value = serde_json::to_value(Config::default()).unwrap();
+        value["relay_enabled"] = serde_json::json!(true);
+        value["host_nickname"] = serde_json::json!("old-host");
+        value["remote_onboarding_acknowledged"] = serde_json::json!(true);
+        value["git_branch_prefix"] = serde_json::json!("retained");
+        value["commit_reminder_enabled"] = serde_json::json!(true);
+        let config: Config = serde_json::from_value(value).unwrap();
+        assert_eq!(config.git_branch_prefix, "retained");
+        assert!(config.commit_reminder_enabled);
+        let saved = serde_json::to_value(config).unwrap();
+        assert!(saved.get("relay_enabled").is_none());
+        assert!(saved.get("host_nickname").is_none());
+    }
 
     #[test]
     fn default_config_disables_commit_reminder() {
