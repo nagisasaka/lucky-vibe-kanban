@@ -101,7 +101,8 @@ impl ReportReference {
             expected.phase == BootstrapReportKind::Review,
             "Not a Review report"
         );
-        let review = CoverageReview::parse(&self.load(store, expected)?.to_string())?;
+        let review: CoverageReview = serde_json::from_value(self.load(store, expected)?)?;
+        review.validate()?;
         ensure!(
             self.verdict == Some(review.verdict)
                 && self.finding_count == review.findings.len()
@@ -121,7 +122,8 @@ impl ReportReference {
             expected.phase == BootstrapReportKind::Refine,
             "Not a Refine report"
         );
-        let report = RefinementReport::parse(&self.load(store, expected)?.to_string(), review)?;
+        let report: RefinementReport = serde_json::from_value(self.load(store, expected)?)?;
+        report.validate(review)?;
         ensure!(
             self.finding_count == report.resolutions.len() && self.material_count == 0,
             "Refine report metadata mismatch"
@@ -182,14 +184,14 @@ pub fn save_review(
         identity.phase == BootstrapReportKind::Review,
         "Review identity required"
     );
-    let review = CoverageReview::parse(&serde_json::to_string(review)?)?;
+    review.validate()?;
     save(
         store,
         identity,
-        serde_json::to_value(&review)?,
+        serde_json::to_value(review)?,
         Some(review.verdict),
         review.findings.len(),
-        material_count(&review),
+        material_count(review),
     )
 }
 
@@ -203,11 +205,11 @@ pub fn save_refinement(
         identity.phase == BootstrapReportKind::Refine,
         "Refine identity required"
     );
-    let report = RefinementReport::parse(&serde_json::to_string(report)?, review)?;
+    report.validate(review)?;
     save(
         store,
         identity,
-        serde_json::to_value(&report)?,
+        serde_json::to_value(report)?,
         None,
         report.resolutions.len(),
         0,
@@ -266,6 +268,55 @@ mod tests {
             "findings":(0..20).map(|n| json!({"severity":"material","title":format!("領域{n}"),
                 "description":"不足する契約と根拠を記載。".repeat(400),"evidencePaths":["src/main.rs"],"recommendedAction":"expand_page"})).collect::<Vec<_>>()
         }).to_string()).unwrap()
+    }
+
+    #[test]
+    fn typed_reports_keep_semantic_and_size_checks_on_save_and_load() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RepositoryMemoryStore::at_persistent(dir.path()).unwrap();
+        let id = identity();
+        let mut review = review();
+        review.verdict = CoverageVerdict::Pass;
+        assert!(save_review(&store, id.clone(), &review).is_err());
+        assert!(
+            !store
+                .bootstrap_report_path(id.source.run_id, id.phase)
+                .exists()
+        );
+        // Even a matching digest/identity cannot legitimise an invalid verdict.
+        let reference = save(
+            &store,
+            id.clone(),
+            serde_json::to_value(&review).unwrap(),
+            Some(review.verdict),
+            review.findings.len(),
+            material_count(&review),
+        )
+        .unwrap();
+        assert!(reference.load_review(&store, &id).is_err());
+        review.verdict = CoverageVerdict::NeedsRefinement;
+        review.summary = "x".repeat(super::super::MAX_REVIEW_BYTES + 1);
+        assert!(save_review(&store, identity(), &review).is_err());
+
+        review.summary = "Reviewed".into();
+        let mut id = identity();
+        id.phase = BootstrapReportKind::Refine;
+        let report = RefinementReport {
+            version: 1,
+            resolutions: vec![],
+            summary: "Unresolved".into(),
+        };
+        assert!(save_refinement(&store, id.clone(), &report, &review).is_err());
+        let reference = save(
+            &store,
+            id.clone(),
+            serde_json::to_value(&report).unwrap(),
+            None,
+            0,
+            0,
+        )
+        .unwrap();
+        assert!(reference.load_refinement(&store, &id, &review).is_err());
     }
 
     #[test]

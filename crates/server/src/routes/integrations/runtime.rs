@@ -175,7 +175,7 @@ async fn intervene_inner(
         let content = if run.payload.next_step {
             request.prompt.clone()
         } else {
-            let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?;
+            let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?;
             let memory = integration_memory(&run, store.as_ref())?;
             format!("{}\nAdditional operator instructions for this retry:\n{}",
                 prompt(&run, &repo, &root, utils::port_file::read_port_file("vibe-kanban").await.ok(), &memory)?,
@@ -781,7 +781,8 @@ async fn advance(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     }
     if run.payload.next_step {
         let (repo, _, _, root) = context(deployment, &run).await?;
-        let store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?;
+        let store =
+            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?;
         let memory = integration_memory(&run, store.as_ref())?;
         let instruction = prompt(
             &run,
@@ -1109,7 +1110,8 @@ async fn prepare(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
         )
         .await?;
     let node:Uuid=sqlx::query_scalar("SELECT id FROM orchestration_node_executions WHERE orchestration_run_id=? AND node_key='integrate'").bind(run.id).fetch_one(pool).await?;
-    let memory_store = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?;
+    let memory_store =
+        RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?;
     let memory = integration_memory(&run, memory_store.as_ref())?;
     let execution = DeploymentWorkflowAgentExecutor::new(deployment.clone())
         .run_agent(AgentNodeRequest {

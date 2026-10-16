@@ -867,11 +867,11 @@ impl LocalAgentRunPort {
                     .await
                     .map_err(port_database)?
                 {
-                    services::services::repository_memory::complete_previous_coding_runs(
+                    services::services::repository_memory::complete_successful_coding_runs(
                         &self.db.pool,
                         &store,
                         workspace.id,
-                        request.agent_run_id,
+                        Some(request.agent_run_id),
                     )
                     .await
                     .map_err(|error| {

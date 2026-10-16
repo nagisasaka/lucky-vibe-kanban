@@ -194,7 +194,7 @@ async fn owner_store(
     let Some(repo) = Repo::find_by_id(&deployment.db().pool, id).await? else {
         return Ok(None);
     };
-    Ok(RepositoryMemoryStore::existing_for_repository(
+    Ok(RepositoryMemoryStore::read_only_configured_for_repository(
         &repo.name, id,
     )?)
 }

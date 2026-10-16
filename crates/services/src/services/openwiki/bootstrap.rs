@@ -67,9 +67,14 @@ impl CoverageReview {
         );
         let review: Self = serde_json::from_str(raw)
             .context("Reviewer must return one JSON object matching the coverage schema")?;
-        ensure!(review.version == 1, "Unsupported coverage review version");
-        nonempty(&review.summary, "summary")?;
-        for finding in &review.findings {
+        review.validate()?;
+        Ok(review)
+    }
+
+    fn validate(&self) -> anyhow::Result<()> {
+        ensure!(self.version == 1, "Unsupported coverage review version");
+        nonempty(&self.summary, "summary")?;
+        for finding in &self.findings {
             nonempty(&finding.title, "finding title")?;
             nonempty(&finding.description, "finding description")?;
             ensure!(
@@ -84,15 +89,15 @@ impl CoverageReview {
                 );
             }
         }
-        let material = review
+        let material = self
             .findings
             .iter()
             .any(|finding| finding.severity == FindingSeverity::Material);
         ensure!(
-            material == (review.verdict == CoverageVerdict::NeedsRefinement),
+            material == (self.verdict == CoverageVerdict::NeedsRefinement),
             "Verdict must be needs_refinement exactly when material findings exist"
         );
-        Ok(review)
+        Ok(())
     }
 
     pub fn json_schema() -> Value {
@@ -160,10 +165,15 @@ impl RefinementReport {
         );
         let report: Self =
             serde_json::from_str(raw).context("Refiner must return the resolution JSON object")?;
-        ensure!(report.version == 1, "Unsupported Refine version");
-        nonempty(&report.summary, "Refine summary")?;
+        report.validate(review)?;
+        Ok(report)
+    }
+
+    fn validate(&self, review: &CoverageReview) -> anyhow::Result<()> {
+        ensure!(self.version == 1, "Unsupported Refine version");
+        nonempty(&self.summary, "Refine summary")?;
         let mut seen = std::collections::HashSet::new();
-        for resolution in &report.resolutions {
+        for resolution in &self.resolutions {
             ensure!(
                 resolution.finding_index < review.findings.len()
                     && seen.insert(resolution.finding_index),
@@ -212,7 +222,7 @@ impl RefinementReport {
                 "Material finding {index} has no resolution"
             );
         }
-        Ok(report)
+        Ok(())
     }
 
     pub fn requires_update(&self) -> bool {
@@ -447,6 +457,8 @@ pub fn writer_prompt(root: &Path, language: &str, review_path: Option<&Path>) ->
 
 #[cfg(test)]
 mod tests {
+    use utils::repository_memory::RepositoryWikiSyncScope;
+
     use super::*;
 
     fn pass() -> Value {
@@ -511,7 +523,12 @@ mod tests {
         for prompt in [
             writer_prompt(root, "ja", None),
             writer_prompt(root, "ja", Some(Path::new("/shared/review.json"))),
-            super::super::OpenWikiAdapter::maintenance_prompt(root, false, "ja", "{}"),
+            super::super::OpenWikiAdapter::sync_prompt(
+                root,
+                "ja",
+                "{}",
+                &RepositoryWikiSyncScope::PendingChanges,
+            ),
         ] {
             assert!(prompt.contains("only through the registered openwiki MCP server"));
             assert!(prompt.contains("Do not launch another OpenWiki MCP process"));
@@ -528,7 +545,12 @@ mod tests {
             writer_prompt(root, "ja", None),
             review_prompt(root, "ja"),
             writer_prompt(root, "ja", Some(Path::new("/shared/review.json"))),
-            super::super::OpenWikiAdapter::maintenance_prompt(root, false, "ja", "{}"),
+            super::super::OpenWikiAdapter::sync_prompt(
+                root,
+                "ja",
+                "{}",
+                &RepositoryWikiSyncScope::PendingChanges,
+            ),
         ] {
             assert_eq!(prompt.matches(KNOWLEDGE_ORGANISATION_GUIDANCE).count(), 1);
             for instruction in [
@@ -586,7 +608,12 @@ mod tests {
         for prompt in [
             review_prompt(root, "ja"),
             writer_prompt(root, "ja", Some(Path::new("/shared/review.json"))),
-            super::super::OpenWikiAdapter::maintenance_prompt(root, false, "ja", "{}"),
+            super::super::OpenWikiAdapter::sync_prompt(
+                root,
+                "ja",
+                "{}",
+                &RepositoryWikiSyncScope::PendingChanges,
+            ),
         ] {
             assert!(!prompt.contains(PAGE_PLANNING_GUIDANCE));
             assert!(!prompt.contains("concepts/job.md"));
@@ -699,11 +726,11 @@ mod tests {
 
     #[test]
     fn ordinary_sync_does_not_receive_bootstrap_role_instructions() {
-        let prompt = super::super::OpenWikiAdapter::maintenance_prompt(
+        let prompt = super::super::OpenWikiAdapter::sync_prompt(
             Path::new("/fixture/repo"),
-            false,
             "en",
             "{\"change_manifests\":[]}",
+            &RepositoryWikiSyncScope::PendingChanges,
         );
         assert!(!prompt.contains(DOCUMENTATION_GUIDANCE));
         assert!(!prompt.contains("coverage-findings"));
@@ -720,14 +747,6 @@ mod tests {
         assert!(prompt.contains("preserve all user-authored instructions"));
         assert!(!prompt.contains("force=true"));
         assert!(!prompt.contains("Return ONLY"));
-        let legacy_init = super::super::OpenWikiAdapter::maintenance_prompt(
-            Path::new("/fixture/repo"),
-            true,
-            "en",
-            "{}",
-        );
-        assert!(legacy_init.contains("mode=\"init\""));
-        assert!(!legacy_init.contains("During ordinary Sync"));
     }
 
     fn resolution(disposition: &str) -> Value {

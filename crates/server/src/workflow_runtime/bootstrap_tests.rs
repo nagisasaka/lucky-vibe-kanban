@@ -603,16 +603,76 @@ async fn check_bootstrap_cleanup_result(cancelled: bool) {
             .await
             .unwrap();
     let agent_run = Uuid::new_v4();
-    sqlx::query("INSERT INTO agent_runs (id, session_id, workspace_id, request_id, idempotency_key, correlation_id, schema_version, payload_version, runtime_profile_id, provider_id, workspace_mode, workspace_path, request_envelope, status) VALUES (?, ?, ?, ?, 'cleanup-host', ?, 1, 1, 'codex:default', 'codex', 'isolated_worktree', ?, '{}', 'running')")
-        .bind(agent_run).bind(session).bind(f.workspace_id).bind(Uuid::new_v4()).bind(run_id).bind(f.maintenance.to_str()).execute(&f.pool).await.unwrap();
     let turn = Uuid::new_v4();
     let attempt = Uuid::new_v4();
-    sqlx::query("INSERT INTO agent_turns (id, agent_run_id, request_id, intent, input_message) VALUES (?, ?, ?, 'initial', '{}')")
-        .bind(turn).bind(agent_run).bind(Uuid::new_v4()).execute(&f.pool).await.unwrap();
-    sqlx::query("INSERT INTO agent_run_attempts (id, agent_run_id, turn_id, request_id, idempotency_key, attempt_number, mode, transport, schema_version, payload_version, capability_snapshot, request_envelope, status) VALUES (?, ?, ?, ?, 'cleanup-attempt', 1, 'launch', 'app_server_jsonrpc', 1, 1, '{}', '{}', 'failed')")
-        .bind(attempt).bind(agent_run).bind(turn).bind(Uuid::new_v4()).execute(&f.pool).await.unwrap();
-    sqlx::query("INSERT INTO agent_process_registry (id, run_attempt_id, registry_status, pid, process_started_at) VALUES (?, ?, 'running', 456, ?)")
-        .bind(Uuid::new_v4()).bind(attempt).bind(chrono::Utc::now()).execute(&f.pool).await.unwrap();
+    let executor_config = ExecutorConfig::new(BaseCodingAgent::Codex);
+    let request = AgentRunRequestEnvelope {
+        schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+        payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
+        request_id: Uuid::new_v4(),
+        idempotency_key: "cleanup-host".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        correlation_id: run_id,
+        intent: AgentRunIntent::Initial,
+        runtime_profile_id: executor_config.profile_id().cache_key(),
+        provider_id: "codex".into(),
+        workspace: WorkspaceReference {
+            workspace_id: f.workspace_id,
+            mode: WorkspaceMode::IsolatedWorktree,
+            path: f.maintenance.to_string_lossy().into_owned(),
+        },
+        input: CanonicalMessage {
+            message_id: Uuid::new_v4(),
+            role: AgentRuntimeMessageRole::User,
+            content: "cleanup fixture".into(),
+        },
+        created_at: Utc::now(),
+    };
+    let attempt_request = RunAttemptRequest {
+        schema_version: request.schema_version,
+        payload_version: request.payload_version,
+        request_id: request.request_id,
+        idempotency_key: "cleanup-attempt".into(),
+        session_id: session,
+        agent_run_id: agent_run,
+        turn_id: turn,
+        run_attempt_id: attempt,
+        attempt_number: 1,
+        correlation_id: run_id,
+        mode: RunAttemptMode::Launch,
+        transport: DirectProvider::Codex.transport(),
+        runtime_profile_id: request.runtime_profile_id.clone(),
+        provider_id: request.provider_id.clone(),
+        workspace: request.workspace.clone(),
+        capability_snapshot: direct_provider_capability_snapshot(
+            DirectProvider::Codex,
+            request.runtime_profile_id.clone(),
+        ),
+        executor_config,
+        selected_skills: None,
+        reset_to_message_id: None,
+        provider_session: None,
+        created_at: request.created_at,
+    };
+    db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+        &f.pool,
+        &request,
+        &attempt_request,
+    )
+    .await
+    .unwrap();
+    sqlx::query("UPDATE agent_runs SET status = 'running'")
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE agent_run_attempts SET status = 'failed'")
+        .execute(&f.pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE agent_process_registry SET registry_status = 'running', pid = 456, process_started_at = ? WHERE run_attempt_id = ?")
+        .bind(Utc::now()).bind(attempt).execute(&f.pool).await.unwrap();
     assert!(
         super::super::bootstrap::cleanup_with_service(&f.pool, &repo, &f.store, &service)
             .await

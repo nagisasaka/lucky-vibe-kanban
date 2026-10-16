@@ -94,7 +94,7 @@ pub async fn get_status(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<RepositoryMemoryState>>, ApiError> {
     let repo = repo(&deployment, id).await?;
-    let store = RepositoryMemoryStore::existing_for_repository(&repo.name, id)?;
+    let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, id)?;
     let mut state = match &store {
         Some(store) => store.state()?,
         None => RepositoryMemoryState::enabled_defaults(
@@ -411,11 +411,7 @@ async fn prepare_run(
         workspace.id,
     )
     .await?;
-    state.status = if initial {
-        RepositoryWikiStatus::Initializing
-    } else {
-        RepositoryWikiStatus::Reconciling
-    };
+    state.status = RepositoryWikiStatus::Reconciling;
     state.maintenance_workspace_id = Some(workspace.id);
     state.maintenance_session_id = Some(session.id);
     state.active_sync_input_digest = Some(input_digest);
@@ -705,7 +701,7 @@ async fn finish_run(
     {
         return Err(completion::MaintenanceFenced("Sync ownership mismatch".into()).into());
     }
-    completion::ensure_processes_exited(&deployment.db().pool, run.id, run.status, run.updated_at)
+    let attempts = completion::ensure_processes_exited(&deployment.db().pool, run)
         .await
         .map_err(|error| {
             if error
@@ -730,6 +726,7 @@ async fn finish_run(
             completion::writer_completion_proof(
                 &deployment.db().pool,
                 run,
+                &attempts,
                 run.workspace_id,
                 FsPath::new(&run.workspace_path),
                 &root,

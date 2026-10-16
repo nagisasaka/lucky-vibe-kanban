@@ -96,7 +96,8 @@ async fn inspect_source(
     // Workspaces and other repositories are not part of this operation.
     let mut event_ids = Vec::new();
     if inspect_memory
-        && let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+        && let Some(store) =
+            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
     {
         let mut after = None;
         loop {

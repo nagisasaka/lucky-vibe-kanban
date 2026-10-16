@@ -167,7 +167,8 @@ pub(crate) async fn observe_wiki_from_pool(
         let repo = db::models::repo::Repo::find_by_id(pool, run.repository_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
-        let Some(store) = RepositoryMemoryStore::existing_for_repository(&repo.name, repo.id)?
+        let Some(store) =
+            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
         else {
             return Ok(None);
         };

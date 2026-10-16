@@ -485,13 +485,25 @@ impl Drop for RepositoryMemoryLock {
 }
 
 impl RepositoryMemoryStore {
+    /// Open configured storage for writing, preparing directories introduced by
+    /// newer versions. Pure observers use `read_only_configured_for_repository`.
     pub fn existing_for_repository(repo_name: &str, repo_id: Uuid) -> io::Result<Option<Self>> {
+        Self::read_only_configured_for_repository(repo_name, repo_id)?
+            .map(|_| Self::for_repository(repo_name, repo_id))
+            .transpose()
+    }
+
+    /// Preserve the configured/unconfigured distinction without provisioning.
+    pub fn read_only_configured_for_repository(
+        repo_name: &str,
+        repo_id: Uuid,
+    ) -> io::Result<Option<Self>> {
         let persistent = crate::path::shared_resources_dir(repo_name, repo_id).join("persistent");
         let state = persistent.join("knowledge/state.json");
         if !state.try_exists()? {
             return Ok(None);
         }
-        Self::at_persistent(&persistent).map(Some)
+        Self::read_only_at_persistent(&persistent)
     }
 
     /// Open existing records without provisioning directories or writing state.
@@ -819,6 +831,9 @@ impl RepositoryMemoryStore {
     ) -> io::Result<ManifestDiscoveryPage> {
         let directory = self.root.join("events");
         reject_symlinks(&directory)?;
+        if !directory.try_exists()? {
+            return Ok(ManifestDiscoveryPage::default());
+        }
         // Only filenames are enumerated. Bodies are read after pagination and
         // through event(), retaining bounded I/O, symlink and identity checks.
         let mut names = Vec::new();
@@ -1016,7 +1031,9 @@ impl RepositoryMemoryStore {
     }
 
     fn lock_file(&self, name: &str) -> io::Result<RepositoryMemoryLock> {
-        let path = self.root.join("locks").join(name);
+        let directory = self.root.join("locks");
+        real_directory(&directory)?;
+        let path = directory.join(name);
         reject_symlinks(&path)?;
         let file = OpenOptions::new()
             .read(true)
@@ -1034,6 +1051,11 @@ impl RepositoryMemoryStore {
     fn list_json<T: DeserializeOwned>(&self, directory: &str) -> io::Result<Vec<T>> {
         let dir = self.root.join(directory);
         reject_symlinks(&dir)?;
+        // Older stores may not have every record category. Observers must not
+        // create empty directories just to report an empty collection.
+        if !dir.try_exists()? {
+            return Ok(Vec::new());
+        }
         let mut result = Vec::new();
         for entry in fs::read_dir(dir)? {
             let path = entry?.path();
@@ -1163,6 +1185,45 @@ fn invalid(error: impl std::fmt::Display) -> io::Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn read_only_observation_of_older_storage_does_not_provision_directories() {
+        let temp = tempfile::tempdir().unwrap();
+        assert!(
+            RepositoryMemoryStore::read_only_at_persistent(temp.path())
+                .unwrap()
+                .is_none()
+        );
+        assert!(!temp.path().join("knowledge").exists());
+        let root = temp.path().join("knowledge");
+        fs::create_dir(&root).unwrap();
+        let state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
+        let saved = serde_json::to_vec(&state).unwrap();
+        fs::write(root.join("state.json"), &saved).unwrap();
+        let store = RepositoryMemoryStore::read_only_at_persistent(temp.path())
+            .unwrap()
+            .unwrap();
+        assert!(store.state().unwrap().enabled);
+        assert!(store.coding_errors().unwrap().is_empty());
+        assert!(store.runs().unwrap().is_empty());
+        assert!(store.integrations().unwrap().is_empty());
+        assert!(store.events().unwrap().is_empty());
+        assert!(
+            store
+                .discover_events(Uuid::new_v4(), None, 10)
+                .unwrap()
+                .records
+                .is_empty()
+        );
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
+        assert_eq!(fs::read(root.join("state.json")).unwrap(), saved);
+        let _lock = store.try_lock().unwrap();
+        assert!(root.join("locks").is_dir());
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 2);
+        fs::write(root.join("events"), "not a directory").unwrap();
+        assert!(store.events().is_err());
+        assert!(store.discover_events(Uuid::new_v4(), None, 10).is_err());
+    }
 
     #[test]
     fn full_report_limit_does_not_expand_other_shared_records() {

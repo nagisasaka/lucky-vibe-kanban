@@ -24,49 +24,48 @@ pub(crate) struct MaintenanceFenced(pub String);
 /// after cancellation/failure, when there is no successful operation proof.
 pub(crate) async fn ensure_processes_exited(
     pool: &SqlitePool,
-    run_id: Uuid,
-    status: AgentRunStatus,
-    updated_at: chrono::DateTime<chrono::Utc>,
-) -> anyhow::Result<()> {
-    let attempts: Vec<(Uuid, AgentRunStatus)> = sqlx::query_as(
-        "SELECT id, status FROM agent_run_attempts WHERE agent_run_id = ? ORDER BY attempt_number",
+    run: &AgentRunRecord,
+) -> anyhow::Result<Vec<(AgentRunAttemptRecord, AgentProcessRegistryRecord)>> {
+    let attempts: Vec<AgentRunAttemptRecord> = sqlx::query_as(
+        "SELECT * FROM agent_run_attempts WHERE agent_run_id = ? ORDER BY attempt_number",
     )
-    .bind(run_id)
+    .bind(run.id)
     .fetch_all(pool)
     .await?;
-    if attempts.is_empty() || !status.is_terminal() {
+    if attempts.is_empty() || !run.status.is_terminal() {
         return Err(MaintenanceFenced("Missing attempts or active AgentRun".into()).into());
     }
-    for (index, (attempt_id, attempt_status)) in attempts.iter().enumerate() {
+    let count = attempts.len();
+    let mut exited = Vec::with_capacity(count);
+    for (index, attempt) in attempts.into_iter().enumerate() {
         let process: Option<AgentProcessRegistryRecord> =
             sqlx::query_as("SELECT * FROM agent_process_registry WHERE run_attempt_id = ?")
-                .bind(attempt_id)
+                .bind(attempt.id)
                 .fetch_optional(pool)
                 .await?;
-        if let Some(process) = &process {
+        if let Some(process) = process {
             // A host endpoint is durably reserved before spawning. No endpoint
             // on a failed terminal attempt means no spawn, or confirmed startup
             // cleanup. This is cleanup evidence only, never successful proof.
-            if attempt_status.is_terminal()
-                && *attempt_status != AgentRunStatus::Succeeded
+            let unspawned = attempt.status != AgentRunStatus::Succeeded
                 && process.registry_status == "reserved"
                 && process.host_endpoint.is_none()
                 && process.host_token.is_none()
                 && process.host_pid.is_none()
-                && process.pid.is_none()
+                && process.pid.is_none();
+            if attempt.status.is_terminal()
+                && (unspawned
+                    || (process.registry_status == "exited"
+                        && process.observed_exited_at.is_some()))
             {
+                exited.push((attempt, process));
                 continue;
             }
-            if attempt_status.is_terminal()
-                && process.registry_status == "exited"
-                && process.observed_exited_at.is_some()
-            {
-                continue;
-            }
-            if index + 1 == attempts.len()
+            if index + 1 == count
                 && matches!(process.registry_status.as_str(), "spawned" | "running")
+                && process.observed_exited_at.is_none()
                 && chrono::Utc::now()
-                    .signed_duration_since(updated_at)
+                    .signed_duration_since(run.updated_at)
                     .num_seconds()
                     < 10
             {
@@ -77,16 +76,19 @@ pub(crate) async fn ensure_processes_exited(
         // from provider PID absence alone.
         return Err(MaintenanceFenced(format!(
             "Attempt {} process exit is unconfirmed",
-            attempt_id
+            attempt.id
         ))
         .into());
     }
-    Ok(())
+    Ok(exited)
 }
 
+/// Reuse the cleanup snapshot, but require confirmed exit and audited operations
+/// for every attempt; an unspawned failed host is cleanup evidence only.
 pub(crate) async fn writer_completion_proof(
     pool: &SqlitePool,
     run: &AgentRunRecord,
+    attempts: &[(AgentRunAttemptRecord, AgentProcessRegistryRecord)],
     workspace_id: Uuid,
     workspace_path: &Path,
     root: &Path,
@@ -96,24 +98,20 @@ pub(crate) async fn writer_completion_proof(
         run.workspace_id == workspace_id && run.status == AgentRunStatus::Succeeded,
         "OpenWiki AgentRun is not a successful delegated workspace run"
     );
-    let attempts: Vec<AgentRunAttemptRecord> = sqlx::query_as(
-        "SELECT * FROM agent_run_attempts WHERE agent_run_id = ? ORDER BY attempt_number",
-    )
-    .bind(run.id)
-    .fetch_all(pool)
-    .await?;
     ensure!(!attempts.is_empty(), "OpenWiki has no RunAttempts");
     ensure!(
-        attempts.last().unwrap().status == AgentRunStatus::Succeeded,
+        attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
         "Latest OpenWiki attempt did not succeed"
     );
     let mut proof = PhaseCompletionProof::new(phase);
     let mut previous_exit = None;
-    for (index, attempt) in attempts.iter().enumerate() {
+    for (index, (attempt, process)) in attempts.iter().enumerate() {
         let request = &attempt.request_envelope.0;
         request.validate_for_run(&run.request_envelope.0)?;
         ensure!(
             attempt.attempt_number == index as i64 + 1
+                && attempt.agent_run_id == run.id
+                && process.run_attempt_id == attempt.id
                 && request.run_attempt_id == attempt.id
                 && request.agent_run_id == run.id
                 && request.session_id == run.session_id
@@ -126,21 +124,6 @@ pub(crate) async fn writer_completion_proof(
             attempt.status.is_terminal(),
             "Earlier OpenWiki attempt is still active"
         );
-        let process: AgentProcessRegistryRecord =
-            sqlx::query_as("SELECT * FROM agent_process_registry WHERE run_attempt_id = ?")
-                .bind(attempt.id)
-                .fetch_one(pool)
-                .await?;
-        if index + 1 == attempts.len()
-            && matches!(process.registry_status.as_str(), "spawned" | "running")
-            && process.observed_exited_at.is_none()
-            && chrono::Utc::now()
-                .signed_duration_since(run.updated_at)
-                .num_seconds()
-                < 10
-        {
-            return Err(CompletionPending.into());
-        }
         ensure!(
             process.registry_status == "exited" && process.observed_exited_at.is_some(),
             "OpenWiki attempt {} process exit is unconfirmed",
@@ -373,9 +356,11 @@ mod tests {
             let run = AgentRunRecord::find(&self.pool, self.request.agent_run_id)
                 .await?
                 .unwrap();
+            let attempts = ensure_processes_exited(&self.pool, &run).await?;
             writer_completion_proof(
                 &self.pool,
                 &run,
+                &attempts,
                 self.request.workspace.workspace_id,
                 self.temp.path(),
                 self.temp.path(),
@@ -470,6 +455,9 @@ mod tests {
             "unfinished",
             "bad_identity",
             "still_running",
+            "missing_process",
+            "unspawned",
+            "overlap",
             "corrupt",
         ] {
             let mut f = Fixture::new().await;
@@ -492,6 +480,28 @@ mod tests {
                 }
                 "still_running" => {
                     sqlx::query("UPDATE agent_process_registry SET registry_status = 'unreachable', observed_exited_at = NULL WHERE run_attempt_id = ?")
+                        .bind(first).execute(&f.pool).await.unwrap();
+                }
+                "missing_process" => {
+                    sqlx::query("DELETE FROM agent_process_registry WHERE run_attempt_id = ?")
+                        .bind(first)
+                        .execute(&f.pool)
+                        .await
+                        .unwrap();
+                }
+                "unspawned" => {
+                    sqlx::query("UPDATE agent_process_registry SET registry_status = 'reserved', pid = NULL, host_pid = NULL, host_endpoint = NULL, host_token = NULL, process_started_at = NULL, observed_exited_at = NULL, exit_code = NULL WHERE run_attempt_id = ?")
+                        .bind(first).execute(&f.pool).await.unwrap();
+                    let run = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                        .await
+                        .unwrap()
+                        .unwrap();
+                    // Safe to restore instructions, insufficient to publish Wiki.
+                    ensure_processes_exited(&f.pool, &run).await.unwrap();
+                }
+                "overlap" => {
+                    sqlx::query("UPDATE agent_process_registry SET observed_exited_at = ? WHERE run_attempt_id = ?")
+                        .bind(chrono::Utc::now() + chrono::Duration::seconds(10))
                         .bind(first).execute(&f.pool).await.unwrap();
                 }
                 "corrupt" => {
@@ -529,12 +539,10 @@ mod tests {
             .unwrap()
             .unwrap();
         run.status = AgentRunStatus::Cancelled;
-        ensure_processes_exited(&f.pool, run.id, run.status, run.updated_at)
-            .await
-            .unwrap();
+        ensure_processes_exited(&f.pool, &run).await.unwrap();
         sqlx::query("UPDATE agent_process_registry SET registry_status = 'running', observed_exited_at = NULL").execute(&f.pool).await.unwrap();
         assert!(
-            ensure_processes_exited(&f.pool, run.id, run.status, run.updated_at)
+            ensure_processes_exited(&f.pool, &run)
                 .await
                 .unwrap_err()
                 .downcast_ref::<CompletionPending>()
@@ -542,7 +550,7 @@ mod tests {
         );
         run.updated_at -= chrono::Duration::seconds(20);
         assert!(
-            ensure_processes_exited(&f.pool, run.id, run.status, run.updated_at)
+            ensure_processes_exited(&f.pool, &run)
                 .await
                 .unwrap_err()
                 .downcast_ref::<MaintenanceFenced>()

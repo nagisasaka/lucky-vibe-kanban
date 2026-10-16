@@ -557,9 +557,13 @@ pub(super) async fn validate_child_completion(
     } else {
         None
     };
+    let attempts =
+        crate::routes::openwiki::completion::ensure_processes_exited(&deployment.db().pool, &run)
+            .await?;
     let proof = crate::routes::openwiki::completion::writer_completion_proof(
         &deployment.db().pool,
         &run,
+        &attempts,
         ctx.workspace.id,
         std::path::Path::new(
             ctx.workspace
@@ -872,14 +876,12 @@ pub(super) async fn cleanup_with_service<P: executors::runtime::AgentRunPort + '
         active == 0,
         "Bootstrap still has active children; keep maintenance fenced"
     );
-    let children: Vec<(Uuid, AgentRunStatus, chrono::DateTime<chrono::Utc>)> = sqlx::query_as(
-        "SELECT ar.id, ar.status, ar.updated_at FROM agent_runs ar JOIN sessions s ON s.id = ar.session_id WHERE s.workspace_id = ?",
+    let children: Vec<AgentRunRecord> = sqlx::query_as(
+        "SELECT ar.* FROM agent_runs ar JOIN sessions s ON s.id = ar.session_id WHERE s.workspace_id = ?",
     ).bind(state.maintenance_workspace_id).fetch_all(pool).await?;
-    for (id, status, updated_at) in children {
-        if let Err(error) = crate::routes::openwiki::completion::ensure_processes_exited(
-            pool, id, status, updated_at,
-        )
-        .await
+    for run in children {
+        if let Err(error) =
+            crate::routes::openwiki::completion::ensure_processes_exited(pool, &run).await
         {
             if error
                 .downcast_ref::<crate::routes::openwiki::completion::CompletionPending>()

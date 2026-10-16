@@ -156,61 +156,29 @@ impl OpenWikiAdapter {
         Ok(())
     }
 
-    pub fn maintenance_prompt(
-        root: &Path,
-        initialise: bool,
-        language: &str,
-        hints: &str,
-    ) -> String {
-        Self::writer_prompt(root, initialise, language, hints, false)
-    }
-
     pub fn sync_prompt(
         root: &Path,
         language: &str,
         hints: &str,
         scope: &utils::repository_memory::RepositoryWikiSyncScope,
     ) -> String {
-        Self::writer_prompt(
-            root,
-            false,
-            language,
-            hints,
-            !matches!(
-                scope,
-                utils::repository_memory::RepositoryWikiSyncScope::PendingChanges
-            ),
-        )
-    }
-
-    fn writer_prompt(
-        root: &Path,
-        initialise: bool,
-        language: &str,
-        hints: &str,
-        force_update: bool,
-    ) -> String {
-        let update_policy = if force_update {
-            ", force=true. This explicit reconciliation must review the requested scope even if OpenWiki's previous source checkpoint matches. Complete the update lifecycle, using an empty plan if no corrections are needed; a begin-noop is not sufficient"
-        } else {
+        let update_policy = if matches!(
+            scope,
+            utils::repository_memory::RepositoryWikiSyncScope::PendingChanges
+        ) {
             ". A begin status=noop is successful"
+        } else {
+            ", force=true. This explicit reconciliation must review the requested scope even if OpenWiki's previous source checkpoint matches. Complete the update lifecycle, using an empty plan if no corrections are needed; a begin-noop is not sufficient"
         };
         let protocol = format!(
-            "Call openwiki_begin with root={}, mode={}, language={}{update_policy}. Follow the installed Skill's plan / next_page / submit_page / finish protocol. Process pages sequentially in this host; do not create a competing scheduler. Success requires openwiki_finish status=complete with no sourceChanged=true unless the unforced begin-noop policy applies. Never merely declare completion after writing Markdown. Do not edit OpenWiki-managed metadata directly.",
+            "Call openwiki_begin with root={}, mode=\"update\", language={}{update_policy}. Follow the installed Skill's plan / next_page / submit_page / finish protocol. Process pages sequentially in this host; do not create a competing scheduler. Success requires openwiki_finish status=complete with no sourceChanged=true unless the unforced begin-noop policy applies. Never merely declare completion after writing Markdown. Do not edit OpenWiki-managed metadata directly.",
             serde_json::to_string(&root.to_string_lossy()).expect("path"),
-            if initialise { "\"init\"" } else { "\"update\"" },
             serde_json::to_string(language).expect("language")
         );
         let base = Self::host_prompt(root, hints, &protocol);
-        if initialise {
-            format!(
-                "{base}\nFor initial generation, plan from the full repository, not only recent changes."
-            )
-        } else {
-            format!(
-                "{base}\nDuring ordinary Sync, read all supplied Change Manifests: use goal/summary as intent, behavioral/architectural changes and invariants as investigation targets, decisions and rejected alternatives as rationale to corroborate, and tests/unresolved questions as verification limits. Workspace Memory may be newer than the integrated event: never promote unintegrated reasoning to current behaviour. Distinguish implemented behaviour from documented intent/history; report unsupported intent rather than inventing evidence. Expand research beyond changed paths where dependencies warrant it, but do not unconditionally regenerate the whole repository or copy a Manifest as a changelog. Locate existing canonical explanation homes for changed concepts or contracts and reconcile affected summaries, workflow explanations and links with the same underlying evidence. Preserve useful page paths and structure; reorganise only where the change or a verified comprehension gap warrants it. Do not rebuild the taxonomy or manufacture edits merely to follow an example layout. An unchanged, accurate Wiki remains a valid no-op."
-            )
-        }
+        format!(
+            "{base}\nDuring ordinary Sync, read all supplied Change Manifests: use goal/summary as intent, behavioral/architectural changes and invariants as investigation targets, decisions and rejected alternatives as rationale to corroborate, and tests/unresolved questions as verification limits. Workspace Memory may be newer than the integrated event: never promote unintegrated reasoning to current behaviour. Distinguish implemented behaviour from documented intent/history; report unsupported intent rather than inventing evidence. Expand research beyond changed paths where dependencies warrant it, but do not unconditionally regenerate the whole repository or copy a Manifest as a changelog. Locate existing canonical explanation homes for changed concepts or contracts and reconcile affected summaries, workflow explanations and links with the same underlying evidence. Preserve useful page paths and structure; reorganise only where the change or a verified comprehension gap warrants it. Do not rebuild the taxonomy or manufacture edits merely to follow an example layout. An unchanged, accurate Wiki remains a valid no-op."
+        )
     }
 
     /// Share host safety instructions, not Sync's unconditional begin contract.
