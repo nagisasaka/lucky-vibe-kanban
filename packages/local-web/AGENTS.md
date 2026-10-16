@@ -1,72 +1,27 @@
-## New Design System Styling Guidelines
+# Frontend and UI Guidelines
 
-### CSS Variables & Tailwind Config
+This guide covers frontend changes in `packages/local-web`, `packages/web-core`
+and `packages/ui`, as referenced by the root AGENTS.md. Paths below are relative
+to this directory unless stated otherwise.
 
-The new design uses custom CSS variables defined in `../web-core/src/app/styles/new/index.css` and configured in `tailwind.new.config.js`. All styles are scoped to the `.new-design` class.
+## Layout and Components
 
-### Colors
+- `src/app` and `src/routes` contain the local app shell and routes. Shared frontend features/pages live in `../web-core/src`; reusable components and utilities live in `../ui/src`.
+- Follow the existing feature/shared boundaries and nearby file naming. Keep data fetching and orchestration separate from presentation where that pattern is established; do not assume every component belongs in legacy `views/`, `containers/` or `ui-new/` directories.
+- Reuse existing UI components before creating new ones. Import UI components through `@vibe/ui/components/*` subpaths, following the package exports and ESLint rules.
 
-**Text colors** (use these instead of `text-gray-*`):
-- `text-high` - Primary text, highest contrast
-- `text-normal` - Standard text
-- `text-low` - Muted/secondary text, placeholders
+## Theme and Styling
 
-**Background colors**:
-- `bg-primary` - Main background
-- `bg-secondary` - Slightly darker, used for inputs, cards, sidebars
-- `bg-panel` - Panel/elevated surfaces
+- The theme tokens are defined in [`../web-core/src/app/styles/new/index.css`](../web-core/src/app/styles/new/index.css) and mapped by [`tailwind.new.config.js`](tailwind.new.config.js). Use these definitions as the source of truth for colours, typography, spacing and radii.
+- Theme variables use `:root` and `.dark`; styling is not confined to a `.new-design` wrapper. Preserve light/dark theme behaviour and mobile text scaling.
+- Use semantic text colours such as `text-high`, `text-normal` and `text-low`, and background colours such as `bg-primary`, `bg-secondary` and `bg-panel`. Use the existing `brand`, `error`, `success` and `merged` tokens where appropriate.
+- Reuse typography tokens (`text-xs` through `text-xl`, `font-ibm-plex-sans`, `font-ibm-plex-mono`) and spacing tokens (`half`, `base`, `plusfifty`, `double`). Font sizes and spacing are defined in rem; do not rely on old pixel conversions in comments or documentation.
+- Follow existing components for borders, rounded corners, hover, disabled and focus states. Preserve visible keyboard focus, accessible labels and contrast; use existing focus-ring utilities instead of removing the outline without a replacement.
 
-**Accent colors**:
-- `brand` - Orange accent (`hsl(25 82% 54%)`)
-- `error` - Error states
-- `success` - Success states
+## Validation
 
-### Typography
-
-**Font families**:
-- `font-ibm-plex-sans` - Default sans-serif
-- `font-ibm-plex-mono` - Monospace/code
-
-**Font sizes** (smaller than typical Tailwind defaults):
-- `text-xs` - 8px
-- `text-sm` - 10px
-- `text-base` - 12px (default)
-- `text-lg` - 14px
-- `text-xl` - 16px
-
-### Spacing
-
-Custom spacing tokens:
-- `p-half` / `m-half` - 6px
-- `p-base` / `m-base` - 12px
-- `p-double` / `m-double` - 24px
-
-### Border Radius
-
-Uses a small radius by default (`--radius: 0.125rem`):
-- `rounded` - Default small radius
-- `rounded-sm`, `rounded-md`, `rounded-lg` - Progressively larger
-
-### Focus States
-
-Focus rings use `ring-brand` (orange) and are inset by default.
-
-### Example Component Styling
-
-```tsx
-// Input field
-className="px-base bg-secondary rounded border text-base text-normal placeholder:text-low focus:outline-none focus:ring-1 focus:ring-brand"
-
-// Button (icon)
-className="flex items-center justify-center bg-secondary rounded border text-low hover:text-normal"
-
-// Sidebar container
-className="w-64 bg-secondary shrink-0 p-base"
-```
-
-### Architecture Rules
-
-- **View components** (in `views/`) should be stateless - receive all data via props
-- **Container components** (in `containers/`) manage state and pass to views
-- **UI components** (in `ui-new/`) are reusable primitives
-- File names in `ui-new/` must be **PascalCase** (e.g., `Field.tsx`, `Label.tsx`)
+Follow the root change-based validation guidance. Use the affected packages'
+existing type checks, lint scripts and relevant tests; include consuming packages
+when changing shared UI. Format changed files with the existing package
+configuration. For visual changes, inspect the affected states, screen sizes and
+themes where relevant, and report any visual verification that was unavailable.
