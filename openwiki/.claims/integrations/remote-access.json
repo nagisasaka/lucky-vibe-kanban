@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ddf6d180c8cb447a2e46f101b3174687173bb9123654ac7511c933cf938e163e",
+  "pageVersion": "sha256:e01144d08c3463f4c05435b583e88406b36bf217679e1ce473a4a89c6aab62a4",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -30,7 +30,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:ef8643269867a9f792078aa57a53cd53a8b1c382b68cdcb845a228d31b026038"
+          "version": "repo-file-v1:sha256:fede0e8882d45974a10add658aef1a17bbb5ce572267633bb2d04861ecbae2dd"
         }
       ]
     },
@@ -71,10 +71,28 @@
           "version": "repo-lines-v1:sha256:e3ea7808e4202c88538a1e15b6d537db85099e03d911a13d935cf09033f3d68c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkMjczZGFhYTMxNDE1MTVmYWIwM2JjMTU5NTFlZGYzZTEyZGEzNWFhYjZlNzA0NGEzNzI0ZGEyZWMyNThkMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNzI1NDg1NzlkMjhlODdmYmU4MThkNmY4ZTE4NGM2Yjk5MDBkYjAwNzQwYmVkYjgyYmU0ZWJhZjRkZWJlZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNWUyMjMxOWYyYjk3MTA5YTYxYzllZjY3MTc1YWFhZDJjYWMwNTA1MzExZmFkZjFhYjA5ODkyOWMyZTNhNTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlZTRiODgxZGE4YjFiZjdhMGJjMDljMmQ2NjQ0MzFjZmNjODZkYmE2YzU2ZTQyOGEwNTU5N2JjOTExNDBiYjAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_37985e982e9c4950887836763e177f9a",
+      "statement": "Astra廃止後も外部MCPと共通Workspace質問回答は残り、外部MCPは内部会話モデルを起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
+          "version": "repo-lines-v1:sha256:353ac9c43ce348c8019512525202c168fedb2d5bae91100b512e0752e419de1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L108-L135",
+          "version": "repo-lines-v1:sha256:31cc82b5fd22e66ec9bb852ce3cbb5ae3491c82634162e6b8c2c14beef8a621e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwNTc3ZGU5MmQwNDZhY2I2MDA5ZTBhZTdiZmRkZTFhYTUyNGViMjQ0ZTg0ZmYzYjc0MmEyYjBmMzRiOWE2NzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MTg3NTEyZDM0ZGViMWUwYThkYmI2ZmNlYzdmZWYyYWYyYTA2ZDI5NWI2ZmVlYWVkZDc0N2JhMDkzZTU3OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlODk0OWMwODMzMjBmNzg5NzAwZDk5MWQwZmEzNjE5ZDY5YmNiMzJiNDUyNTJmYjliYWU3MGRlM2Q1MzFjMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlMzc1NDNkYjYzN2U5N2M0YjVhMjQ3MDY5YWFiMTE5ODg4NjkyMjkxODVlOWVjNDMxYzVlYzQ5NmI0MWY3ZTQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L158-L171",
+          "version": "repo-lines-v1:sha256:010aca74d8c72ba1a4b8950baf6a2426413d1fc874ec81f619ec4660d0b39771:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwZTJkZjU4YjY4NzJmNzA1NzRmMzJkMmRiOTMxYjQwYWIyNGI3NzA4NTdiOTNmMTM2OTg1MDIzMjBiMDQ5NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmZDdkYTg1ZTZiMDFlYjIwYTYwN2U0MDExMWEwMDI2YjQ5YTU5YzgzZjE4MTA4ODUyNmRmY2U3ZjY0MDI2NGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmZjNjNjM3MWNmMDA5MjM1NDAyNmI0ZGVhNTM1MWViNmRhZmI3NjZjMzg5Mzg3Y2ExZjk4M2FkMGE5NmE3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3ZTNkZjhlZGQ1ZDhhNWExZjQ5Y2FiZjczZThiOTc2NDUxN2FhZjRiOTZjNmY5Mzc3NDAyYWZlNTI3NmJlM2QifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

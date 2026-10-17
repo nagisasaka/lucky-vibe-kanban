@@ -6,7 +6,7 @@
 - [Issue の添付・購読・通知](issue-collaboration.md) - local Board の担当・購読・コメントと実行通知、Session 添付との境界。
 - [Organization・Member・Invitation](organization-and-membership.md) - 固定Organizationと認証actor、承認制メンバー、過去の所有者IDを区別する。
 - [Project・Issue と実施の関係](project-and-issue.md) - ボード上の仕事と実行環境を結ぶ Project・Issue の意味、ローカル保存、旧 Task との境界。
-- [Astra のプロジェクト会話](project-chat.md) - 永続会話、送信ごとの権限上限、Codex ChatGPT 推論と LVK の操作 receipt の境界。
+- [Astra 廃止と共有機能の移行境界](project-chat.md) - 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
 - [Repository Memory の三層と統合契約](repository-memory.md) - 会話、Workspace Memory、canonical OpenWiki の権威と寿命、Change Manifest と統合記録・receipt の関係。
 - [サーバー認証・設定・セッション](server-access.md) - Local/Public配置、Basic/Auth0の有効化、Webセッションと内部capability、設定破損時の閉鎖と復旧の契約。
 - [Session・AgentRun・RunAttempt](session-and-agent-run.md) - 会話・依頼・実行試行の識別、継続と retry、provider binding、Goal と停止の契約。

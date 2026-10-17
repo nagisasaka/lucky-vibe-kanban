@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -121,6 +121,8 @@ memory 有効時は source checkpoint と明示 event の integration 記録を�
 ## 5. Push と Pull Request
 
 Push と PR 作成は、外部公開より前に未完了の source checkpoint を処理する。PR 作成は push remote と base remote を解決し、base branch の存在を検証、source を準備、branch を push、その後 GitHost API で PR を作る。push 後の PR 作成が失敗した場合も、branch の push は既に済み得る。[Push](../../crates/server/src/routes/workspaces/git.rs)・[PR 作成](../../crates/server/src/routes/workspaces/pr.rs)
+
+push は既定 remote の push URL を尊重し、PR base は target branch の remote、解決できなければ既定 fetch remote を使う。fork へ push する設定だけで PR base も fork に変わるわけではない。GitHub の登録 PAT と system 認証の選択、接続確認の限界は [GitHub 認証と push/base の契約](../integrations/github-review.md)を確認する。[remote 解決](../../crates/server/src/routes/workspaces/pr.rs#L236-L254)
 
 GitHostService の現行 provider は GitHub と Azure DevOps。未知 URL は UnsupportedProvider である。[provider 境界](../../crates/git-host/src/lib.rs) provider 固有の CLI 認証や使い方は [GitHub integration](../../docs/integrations/github-integration.mdx) と [Azure Repos integration](../../docs/integrations/azure-repos-integration.mdx) を参照する。
 

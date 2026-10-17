@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9d995c2ca2b7d15794751e3d9f36f3b2c4783962c0de0178cee5171061da9122",
+  "pageVersion": "sha256:da56d269a09d2c20a8c59942c910e64c4c4597a8b6a1a8df1bd7ff19f7774d5c",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx#L6-L27",
-          "version": "repo-lines-v1:sha256:d4c0b8304d1565655efbc8f762d6149cd84b5ac4f36bbf99a2615c8ca60a2c89:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYWM2ZDUyZmQ3MTUwMGI0ZWQ0MTczOTRlMDkzZjU5NTQ4YjdlMDk1OGMyMGE3YzkyNGExOTFlZmVhMWM2MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YmE5ODRmOGE0NGYzMzk2OWY1NGI4OGQ5ZjUyNTZjYjU4NWM1ODhjNjlhYmE3OTM0YmIxMWYyMjRmOTAzMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwZmJmNWRlNDVjY2E3NDFmNzhiMDRlZDU5MWJhZWZlYjI4Y2FjY2JhNTFjZTQzMWE2ZTdkMjM4Y2FiZjQzMjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwOTIyZGVlZDY3YTMyZWI0ZTBmY2ZhNmFlYzk4ZWRjMjFkMmM5Nzg3OTM5NjQzYjlkY2IwNjQ3NjAyNjU1OTIifQ"
+          "version": "repo-lines-v1:sha256:7fb887650f474366939c0b86b26893d94bfbee8ef9e47e99f64a6c141d24e0e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYWM2ZDUyZmQ3MTUwMGI0ZWQ0MTczOTRlMDkzZjU5NTQ4YjdlMDk1OGMyMGE3YzkyNGExOTFlZmVhMWM2MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YmE5ODRmOGE0NGYzMzk2OWY1NGI4OGQ5ZjUyNTZjYjU4NWM1ODhjNjlhYmE3OTM0YmIxMWYyMjRmOTAzMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwZmJmNWRlNDVjY2E3NDFmNzhiMDRlZDU5MWJhZWZlYjI4Y2FjY2JhNTFjZTQzMWE2ZTdkMjM4Y2FiZjQzMjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwOTIyZGVlZDY3YTMyZWI0ZTBmY2ZhNmFlYzk4ZWRjMjFkMmM5Nzg3OTM5NjQzYjlkY2IwNjQ3NjAyNjU1OTIifQ"
         }
       ]
     },
@@ -86,7 +86,7 @@
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:ab0cc7065f1108cfe6d84397a675fb5b31008579472adad5e68ade2892b72bed"
+          "version": "repo-file-v1:sha256:e6169577a6089b999256d67795a77a9bdbd890a745972d266d9d9e2eeae05c03"
         }
       ]
     },
@@ -153,10 +153,30 @@
           "version": "repo-lines-v1:sha256:cf07ce75b691f00e5901e9d401ceb8b6b188c9ec21d9be0d74ad8f974d57a91a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwM2IxMWYzMTA5YTA2NDFhMzM5OTlhMjY0OTQ0N2YwNDI5MTFhYTdjODJlMGI3NjY3MjNkZDFiMzU3NjJjMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxMDFhMDM4NzM5MzY2ZGYwNmM0ZDUyNTRmMjVhMzJhM2QxYjliZjliMTA5NDMxNGI5MjQxNTlhMjYzNmNkOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4NzFlNGM5NGU4NWU2YzgwNmE0NjhhNmQ2MWM0MjZlODdjYzllNGNkMDQ1MmQzZWU0ZDE4YjdjYTNiOTZkNTYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_9b48525998dd4401b4e135708f42ebdd",
+      "statement": "server-toolsはsccache0.18.0をlocked・no-default-featuresで/usr/local/binへ同梱するが、global Cargo wrapper/cache/incremental設定は変更せずrepository側に利用設定を委ねる。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L173-L180",
+          "version": "repo-lines-v1:sha256:6339b1ac553b5f7a22494b2803f27d67487bcc59fd98b200eac806dcdfd46f3a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTVjY2FlMGFkMGMxN2Y2YjI4YTI2ZDk2MTE5ZTQ2ZGUwZjNkMDdlNjdkYmI5NzMwOGUyYzUwYjEyMjY2NWM1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1NGM2MjhkOGE2NzM2OTVkYTM1YjA5ODQ1OWMzNWVjZjNiZTIyMTEzYjQ3ZjEwYTg4MzFkMWNhMDA1ODlhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzA1MzYyNDIzOTAwNzJkOWQwMmFjNDViMWI0ZmZmNjNhYTMyYWVmOTljYjA2ZmRmOTRjY2M3ZDNjYmI5ODcwNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_33a8722e10a64e57b4ba7d7aac22ef41",
+      "statement": "リポジトリ別PATの適用はLVK所有Git/PR操作であり任意agent shellの認証設定ではない。",
+      "evidence": [
+        {
+          "resource": "repo://docs/integrations/github-integration.mdx#L57-L81",
+          "version": "repo-lines-v1:sha256:522a345d1018c8c2edbef5185209911c55091969c5b3c346df81936bd159f99f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNjQ2ZTEyOGRjZjA0OGYyMWMxNjY5NjVjMGQ2OWQ2M2Q3MGU0YzM3NmUzOTdjNjhiNzJiZDljNzQ0YjhjN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGQ0YzE0Y2EwYWFjZGMyNGQ4MmQ3NWVkNWYyNGE3YmI2NGY3NTgyOWNkMjdlNGZiZGMxMDZlODVhNjAyZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkY2MzMjFkMjgzNzc4YzE4MWVkZjNiYjZiNjJhYjFjN2Y2MGFmZDhjZTMwMWQ2NWQ2ZDJiZDJmZDgzYjk2ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

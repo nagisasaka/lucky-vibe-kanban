@@ -32,6 +32,8 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
+  - id: openwiki-source-9d3b3180c15d3125ddbb2675
+    resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
     resource: repo://crates/server/src/routes/scratch.rs
   - id: openwiki-source-406c792263884bbf462d666c
@@ -40,6 +42,8 @@ sources:
     resource: repo://crates/server/src/routes/sessions/executor_config.rs
   - id: openwiki-source-3a27c9d52911b8d12051a764
     resource: repo://crates/server/src/routes/sessions/mod.rs
+  - id: openwiki-source-4d617b0e2fa188c6ad63ae56
+    resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
   - id: openwiki-source-8be20616e789c6a7122c8e93
@@ -58,10 +62,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -132,6 +136,14 @@ PlanWithGoal の承認 UI は、編集した objective の保存に成功して�
 **この checkout の Codex 起動経路は `NoopExecutorApprovalService` を渡している。** このサービスは tool/plan 承認を即座に Approved とし、質問回答の待機は ServiceUnavailable にする。Codex client は質問待機のエラーを TimedOut として記録する。計画承認後は Plan なら実装 turn を始め、PlanWithGoal なら保存済み objective で Goal を始めるが、この配線を人の承認による停止点と説明してはいけない。[host の注入](../../crates/local-deployment/src/process_host.rs#L333-L360)、[Noop の実装](../../crates/executors/src/approvals.rs#L69-L103)、[質問と計画処理](../../crates/executors/src/executors/codex/client.rs)
 
 さらに Codex の汎用 DirectControl は Approve/Input を「元の server request ID を使う必要がある」と Unsupported で拒否する。[制御の制約](../../crates/executors/src/executors/codex/client.rs)。廃止表示のない [chat-interface の計画レビュー手順](../../docs/workspaces/chat-interface.mdx) は承認・変更依頼という操作意図を記録するが、現在の host 配線との隔たりがある。ここはソースから確認した制限であり、対話実験の成功を意味しない。[Workflow の HumanGate](workflow-attempt.md) は別の停止・再開契約を持つ。
+
+## 非同期質問への回答と配送証拠
+
+非同期の仕様質問は上記の blocking input / tool approval と別で、Workspace UI と外部 MCP が共通の耐久回答受付を使う。Session lock 下で既存 receipt を照合し、質問が現在の Session に属し未回答であることと、follow-up queue が空であることを確認する。回答を予約してから、質問を出した元の AgentRun に Steer を送る。遅い回答で別 run や新規 follow-up を起動しない。[受付と配送](../../crates/server/src/routes/sessions/questions.rs#L158-L251)
+
+同じ質問の異なる回答は競合となり、配送が不確実なら Session の確認を要求する。command/run の証拠がない予約だけを再試行可能にし、配送後かもしれないエラーでは予約を維持する。新規本文は `LVK question answer: <request_id>` を使い、既存履歴の `Astra operation: <request_id>` も照合・予約解放判定・receipt 回復で認識する。[旧 Astra の廃止](project-chat.md)に伴って旧 marker の認識を削ると二重配送を招く。[互換処理](../../crates/server/src/routes/sessions/questions.rs#L253-L324)・[新旧 marker のテスト](../../crates/server/src/routes/sessions/questions.rs#L486-L592)
+
+外部 MCP の質問参照は Project / Workspace / Session と revision を検証し、実行承認は LVK での判断へ案内する。仕様回答の経路があることは tool approval の代理権限ではない。[MCP の質問分類](../../crates/server/src/remote_mcp/questions.rs#L94-L171)
 
 ## 未送信ドラフトと Scratch
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a0646c808753bd7d743f055bfeface675ce1f9759a52174caec953089852be3b",
+  "pageVersion": "sha256:3f5f500f97ca898c00940a3f0c1f293f4247a97a154308b492699c636a0ecfc7",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://docs/docs.json",
-          "version": "repo-file-v1:sha256:675ec6b5da44625a3a5726d8a3bbcfa4fa450ecbd8cccf6b025c3827c3754f14"
+          "version": "repo-file-v1:sha256:04d419fda18f1208252d0a22bf81ff912943167ba68f17f3570f6f024fb5ae62"
         }
       ]
     },
@@ -90,7 +90,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:be8fa5cc9c4abd71a49c9f9d253ea52f2116073c6b46f7358aaf14033e76c482"
+          "version": "repo-file-v1:sha256:2bee15e992c8e960fe5a0a51697f4af22663f2d6c5dc33af23168f06fc3f7b77"
         }
       ]
     },
@@ -122,13 +122,31 @@
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:ab0cc7065f1108cfe6d84397a675fb5b31008579472adad5e68ade2892b72bed"
+          "version": "repo-file-v1:sha256:e6169577a6089b999256d67795a77a9bdbd890a745972d266d9d9e2eeae05c03"
+        }
+      ]
+    },
+    {
+      "id": "claim_778f1ade2c1e4ec2b256c1fb55d2d6aa",
+      "statement": "内蔵Astraは廃止され、専用履歴の削除migrationを持つ一方、外部MCPとWorkspace質問回答は存続する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261016000000_remove_project_chat.sql",
+          "version": "repo-file-v1:sha256:c876ee2b499164e284e3b962e092a44c8f8174585898b193058ed5928ec9802a"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
+          "version": "repo-lines-v1:sha256:353ac9c43ce348c8019512525202c168fedb2d5bae91100b512e0752e419de1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L158-L171",
+          "version": "repo-lines-v1:sha256:010aca74d8c72ba1a4b8950baf6a2426413d1fc874ec81f619ec4660d0b39771:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwZTJkZjU4YjY4NzJmNzA1NzRmMzJkMmRiOTMxYjQwYWIyNGI3NzA4NTdiOTNmMTM2OTg1MDIzMjBiMDQ5NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmZDdkYTg1ZTZiMDFlYjIwYTYwN2U0MDExMWEwMDI2YjQ5YTU5YzgzZjE4MTA4ODUyNmRmY2U3ZjY0MDI2NGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmZjNjNjM3MWNmMDA5MjM1NDAyNmI0ZGVhNTM1MWViNmRhZmI3NjZjMzg5Mzg3Y2ExZjk4M2FkMGE5NmE3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3ZTNkZjhlZGQ1ZDhhNWExZjQ5Y2FiZjczZThiOTc2NDUxN2FhZjRiOTZjNmY5Mzc3NDAyYWZlNTI3NmJlM2QifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

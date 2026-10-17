@@ -1,60 +1,56 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:321eca2826e98dacf65fed4bf80ba898b82a5cdaad56ce4f6dfef47b51915dd7",
+  "pageVersion": "sha256:12260f00d9c737c8e7726f4632b43afa1b206b3a8069b3993cf3ec5555c56e49",
   "claims": [
     {
-      "id": "claim_f705ee07a30249d9a15dfff3ae378250",
-      "statement": "AstraはProjectの永続会話で送信ごとのdiscuss/operate上限を保存し、現在user依頼だけを操作の根拠とする。旧modeは狭い権限を保持する。",
+      "id": "claim_1495b4d9643b448e950a8c2c04ce2168",
+      "statement": "内部Project ChatのAPI・workerと専用推論は廃止され、ProjectはBoardを表示し、外部MCPは内部会話モデルを作らず既存操作を公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/project_chat/mod.rs",
-          "version": "repo-file-v1:sha256:43fec094ed96ce8c505ad2b2f3dbf0a3344996768292a0e0f88d6fde6efe0b99"
+          "resource": "repo://crates/server/src/main.rs#L101-L155",
+          "version": "repo-lines-v1:sha256:0b13e46f352f8e5b8288a968d252241fd35e9f58920d9b68773aa4f7a29d4e83:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4ZjdmMWY1OTYzOWExOWY3ZDQ2MTYyNjMwNTUzZWE3YTExYWQ0MTIyNmU4MTAyMjcxOTQwZGFkYWU4YTRiZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NmJlMmVlMTcwMDQwNjhjMTg2YmU4MjNlMzJjYzUxMWM0OWE4MDc1ZWYxYWQwMDI5MjJkZTBjNTk5OGMzMTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwZDM0ZGM0Y2I0ZDc2NzY3MDBmMTg2Mzc1MTI2ZDg1ZjZkNmVhZDMzZTk2M2FhN2M3YTM2M2YwMzdkOWRhNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjNzhlNTM5NTdiOTFiM2E4YTM4MmQwNTc5MTU2ZjJiNWFmODkxOWMzMWVhOWY1M2ZjMjY0MjgxZjljOTBjZjUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/project_chat/model.rs",
-          "version": "repo-file-v1:sha256:6b254bc2166818b0c625856b0ecb136d3c9ee076e9b74f292a278c193acf066f"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
+          "version": "repo-lines-v1:sha256:353ac9c43ce348c8019512525202c168fedb2d5bae91100b512e0752e419de1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/project_chat/tools.rs",
-          "version": "repo-file-v1:sha256:ea908c9b8962d7b62199742c029b38936ebbcf2239cec47a981ad6eed4427292"
+          "resource": "repo://crates/server/src/routes/mod.rs#L48-L81",
+          "version": "repo-lines-v1:sha256:fc2c1f57b3fd32e9dd0bd4021ba335a16090efe87ca9d9898ce5e4479e49bc3f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZGQ4YmZiMmRhOGU0ZDI1NjEwNTQ3MDg4OGFiOTVjZDFjMjg1Y2Q1ZTViNjYwMGM1YWJiZWZkNDk1MmFjZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4YjhkNGVlY2FmNGQ2NzA3NWRlZDRiMzZhNjA1ZDhiZTU4OTBjNWVlZjQ3M2MzNGMxOWI1NWQxNmMyM2UyYmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhOTEyZDEyMzU3NDgyYTQzZDdmNmNjN2ZhNTYyZGRmZjNmMDViZDBlOGNmMjkzZTY1YWQwYWI2M2U1ZmIzMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxNTMzZWViZjNiNDhjZWE1OWQwOTgyY2IyMjAyMGExNTQyY2U0MGQxYzc2ZTg2MmIzNTc2NzI1ZTZkNTQ3YWUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L989-L1035",
+          "version": "repo-lines-v1:sha256:bf1e4a2b2536343f39e5dbec04dfdd72f56c4b08fdc43746de653520c84307bd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxY2FlMjMyNWE1ZTgxNDJiNDA2YmQ3MjIwNDZlNGRiZTAzODVmM2MxNjI4NDBlNDdlZDY2MTY5ZTFlYzZmMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMDA3NGMyYjE5ZWIwNDM4YzA0YTcyYjI2MDk1NDk3YWY5NmIwMjU2MDIyYjExYjdjZDViOWFjMmVmMThkYzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1MmY5M2RkYWI0MmNhZjJiMWNmYWNkYmRhMjlkM2UwNmZiMDkxMzNjNzZiYjgxNjMzODg4Y2M5Y2M0MDk5ODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjMWMwODI2MzNmZjAwODg3ODEyYzY4NzAyYzdhYmUyYWQ3MWFmMWRjMTdjNDk0MThhMjhlYmVhYTBmNjk0ZmQifQ"
         }
       ]
     },
     {
-      "id": "claim_ab512e765a184cd68262dd4e0648ffd1",
-      "statement": "推論は明示user messageのみ。旧event queueはrestartでdoneとなり、checkpointとoperation receiptを再利用し、不確実mutationを新identityで繰り返さない。",
+      "id": "claim_7ae8ee2f92b84c04bdba4f6024d7934a",
+      "statement": "前進migrationはAstra専用の八triggerと四テーブルを削除し、Project・Issue・Workspace・Session・質問回答とpending input guardを維持する。既存履歴からのupgradeとupgrade後の書込を専用testが検査する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/project_chat/mod.rs",
-          "version": "repo-file-v1:sha256:43fec094ed96ce8c505ad2b2f3dbf0a3344996768292a0e0f88d6fde6efe0b99"
+          "resource": "repo://crates/db/migrations/20261016000000_remove_project_chat.sql",
+          "version": "repo-file-v1:sha256:c876ee2b499164e284e3b962e092a44c8f8174585898b193058ed5928ec9802a"
         },
         {
-          "resource": "repo://crates/server/src/routes/project_chat/store.rs",
-          "version": "repo-file-v1:sha256:e41af75e1588f6052ed38a5112e75c40e7af86fa2d4f56f78d5aa51af4130eb1"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/project_chat/tests.rs",
-          "version": "repo-file-v1:sha256:46768ba9354330b71c985f587442c8fb061545e07adaf632d692804299b307b9"
+          "resource": "repo://crates/db/tests/retire_project_chat.rs#L5-L89",
+          "version": "repo-lines-v1:sha256:abb3b24630272430db3a531e87fe5cf410a76edcc69871b779473fd9511e00fc:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmYTUyYjEwM2MzNzhhODZlNGE0Y2VlZDIzN2ZiZmE1NjFhZjE0OWI3YTczNzlkMjBhYTE4NDVkMTczN2JlNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
     {
-      "id": "claim_fb9d0ed787884e6f83f95dfcbae6eddf",
-      "statement": "AstraはCodex 0.154以上のChatGPT loginを使う。API keyは推論に使わず、ephemeral・環境無し・native tool無効のstructured提案をLVKがcheckpoint後実行する。",
+      "id": "claim_d51971abff7d4848a8461f5498503de8",
+      "statement": "旧Astra operation markerは質問回答の配送済み証拠として引き続き認識され、内部アシスタントの存続を意味しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/project_chat/model/codex.rs",
-          "version": "repo-file-v1:sha256:41f878fe55452306e0271b260258a578842a41308982aa9772ce0ab1f97d9be1"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/project_chat/settings.rs",
-          "version": "repo-file-v1:sha256:f55e431e8b6d5b3a7ffe0d992becd6f9ae1aaeb32d8a542f77265115545aeab7"
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L253-L324",
+          "version": "repo-lines-v1:sha256:f0f920516e5c1cc93320314e3952c1c674f414bb5cf065511c41b5ae12360061:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiZmRjYzdiMzYwNTA4MWU0Y2M4MTkxMzNmYzk5NTliZjliMDc2M2FhMTYyOWI2NDkzNjk0NGYxZGRhMzE5ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhZmEwMjlmYzZlYWY5NWY0NmRlZTU3NTIxMTA4YWM1MGMxMWU0MzUxOGQ0YmQ0MmFiMmRkZDNiNGUzYWI1MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7c95fb33356dac528cca249daaebc076a4b516c0a2cc2284d6ba3766833b2038",
+  "pageVersion": "sha256:e3c0891ea0f2f9bf8d073b66364d1c4f91356c7569e47a0d1fda58c4c2e7e484",
   "claims": [
     {
       "id": "claim_e25f3fd7a5434288a0e3798cf317080d",
@@ -8,11 +8,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/mod.rs",
-          "version": "repo-file-v1:sha256:ef8643269867a9f792078aa57a53cd53a8b1c382b68cdcb845a228d31b026038"
+          "version": "repo-file-v1:sha256:fede0e8882d45974a10add658aef1a17bbb5ce572267633bb2d04861ecbae2dd"
         },
         {
           "resource": "repo://crates/server/src/routes/workspaces/pr.rs",
-          "version": "repo-file-v1:sha256:b4eaf0445f339f2d3b044474adae802a79822dc2f8c99962552cc780911fa63b"
+          "version": "repo-file-v1:sha256:d6934c14ef4eee75b2ff8857b32a692bc4b5e8e060461615cf78ea04cdb20582"
         }
       ]
     },
@@ -25,10 +25,106 @@
           "version": "repo-file-v1:sha256:7b0f32bd47e808aecdb3ff79985211a60b0cc004a2bf2705615b7aa2db7b9941"
         }
       ]
+    },
+    {
+      "id": "claim_a04ce50c8bf940a8a781b377f04e9574",
+      "statement": "PATの対象は登録Repoのremotesと既定push URLから選び、instance内の正規化GitHub owner/repositoryで共有する。APIは登録有無だけを返し変更・接続確認はadmin限定。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/github_credentials.rs#L17-L155",
+          "version": "repo-lines-v1:sha256:5741b21075a6b27f11f836ad30282bea332e63f1d14a18988b94a6555f935f84:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYTU4OTBkOTA0NmE4ODkwZTdkNDNiYjQxZTQ5NTI5ODAzM2RiNDgzYWMyZWZmOGY0NDQ5MDM5OGZhNTIzMmQxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0OGNiNzcwMmUyMmQ4NzAxNzM3NTkxOTZmMmIzY2YyOTVhMjY5Y2VkMjI4ZDM1NzBjMWQ4Zjg0ODRkZTk4MDU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L15-L51",
+          "version": "repo-lines-v1:sha256:08f6b3346431dd40231763b4996f0b3c5bf1c9ad3c2ab88648cfca77ef69c521:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExM2ExNjJlNGZkMDdiNzg4NzNhZmNjMDNhZGI3NzBmNTFiN2ExZGM3OTM5NGM1YTQ4MjUzYjllODUwMTYxNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyZWUzNWE3ZThlYjlhODFiYTQwMTkwNDU3YjJhZWYxY2MzMzljZWZmOTkwNTc3ZWY1NWY0M2U4YjQ1OGI3OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NmI2NDA0NTc4ZTg4ODVkYThiNTMxMmY0OGUwNmNmOGQxZDRkMjNiODBmOGFjMjM2ZmZiZTFlMTZjNjI5ZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_137a34acfb184a41811512ac4a4e5710",
+      "statement": "資格情報はasset_dir配下のgithub-credentialsに平文保存し、Unix directory0700/file0600とtemporary fileのsync後置換を使う。削除は登録だけを消しGitHub失効ではなく、起動済み操作は旧tokenを保持し得る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L147-L198",
+          "version": "repo-lines-v1:sha256:7718e87f36a3f0c623a610be851b87a30d05c40363398d3cf31f04231fba76da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4Yzk5OTgyYTc0ODAxZDQ2ZjBiMGJiMzcxMDZkMzc4NDY3OTMzNmNjYmM3YjM2YmNmMzA5OTdiNzY2ZjIyNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L223-L255",
+          "version": "repo-lines-v1:sha256:92c85652709bb51030eb9bcc93789ccf5f060b77177b034f2ca9fd87fdf09983:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNzM0ZDk2NzgwOGI3YjJkNjU1NmYxYWFlOGRkMDczZTA1YTFhZTJjYTAxOWU0NGVlMjIwNjA2MjEwNDQ1NTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxZjRkZTM5YjdkNjYwZWZjZTkwMzJjOTAzMTc5Y2IyYzg2NmM3N2MzZmE5ZmVkYzM2ZDRlZjZhYjQwNmUyNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhMjgxZmEyZDFlNTVkZTQyYTFiNTQwNmFlNGI1ZDc2ZDI3OWNiNTI1MWEyMWQ2NTYwZDQ5N2UyZWY4MjU4YzEifQ"
+        },
+        {
+          "resource": "repo://docs/integrations/github-integration.mdx#L65-L81",
+          "version": "repo-lines-v1:sha256:e87d214d94034af6e5ad3d83853f7d0c35dc20d5c86521a6e132a49c4e0ec045:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NWFjYTk3MTIxNjJkMTljNDRlNjU5MTE2NTFmNTA2NGRlMzU0ODFjNWZlNWE5OGJmOWZmYTM1YWMzMTVhNDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGQ0YzE0Y2EwYWFjZGMyNGQ4MmQ3NWVkNWYyNGE3YmI2NGY3NTgyOWNkMjdlNGZiZGMxMDZlODVhNjAyZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0M2U1OGQ4ZTllOGIzNjY3NWU4OTgyN2JhZjUzNzJkYzAwNDBhOWFhNjJhMDlmNjhhNTcyYmFhMjI0Mzg2YTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78cfcabf6394477b9f64a032062d43f2",
+      "statement": "LVK Git wrapperのpush/fetch/ls-remoteとgh PR操作は対応tokenをsubprocess環境へ注入する。Git helper/headerのscope、redirect/prompt/trace抑止、ghの一時configと競合token除去、raw/encoded tokenのredactionを行う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git-host/src/github/cli.rs#L148-L234",
+          "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
+        },
+        {
+          "resource": "repo://crates/git/src/cli.rs#L889-L983",
+          "version": "repo-lines-v1:sha256:44883de0e24d7bb2c86eb9a88658376c2b310d24adff0f20c802196f565fdb5f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMGVlMmYwNjc5ODJjMGE4NzE2ZGJiODE1NDE4ZjAxZDkzMDcyZTc0ZTc3Mjc0ZjAwYjI5MzM2MDA5MGU2MDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMDEyMTMyNDYzOGIzNDU5N2Q0MDM4NWNjMzFlY2RkMzdhMGE0YTBhZmZiM2JmMjdiZDMzMTIwOGNmMDAwOTkifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L75-L144",
+          "version": "repo-lines-v1:sha256:b021ae6ad1a79ae24b0ba813f0515c3573d829aa50b0dc9e8c5afa845be5ace2:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMTkyZTk1MTk5OTg4NjcwNjU4ODM1ODUzZmRiNTlhNmRhNDBhN2Q5YTA2NmJiODZkNGZhYjRhZmI4MjhjMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYmFkZjMxNmZiM2JiMTZiNjY1MmU5MWNhODkwOTNkNDExZjlmNGRjMDNiNmViNWVjNzI5ZDFlNjJjZGQzYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1MTQ2MGY4ZWUxNDI5ZThkZGExYWJjNzZhMDRiMTQxNDFjNDI3MTUxZmM4NTUxNmJhYWI4YjBmNThkNTM3ZmUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_016c484b0e53405aac9da5f58f2e3c08",
+      "statement": "登録済みcredentialの読取・認証失敗でsystem credentialへfallbackせず、未登録なら既存認証を利用する。任意agent shellは注入対象外で、PRにはgh導入が必要。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git-host/src/github/cli.rs#L148-L234",
+          "version": "repo-lines-v1:sha256:bea5b83539584ce13fe48b8c882b287bc0da50a2165e6c29ac3f19ff1d5a4f75:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTMxMWVkYzcyOTYzM2Y0MmM4OWVjZjNkMDk5NWNiM2YxNWEyYjRlMjEyODRmYjI2MWFiYzQwYWMwOTEzNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2YTE4NDU1NWQyMDVmYTBiNTdiMjY3YjM0NDg2MTk2ZDFjZjE2MzdmMzY4Yzg1MWY0MGU4ODQ3YWEyMTI4MzIifQ"
+        },
+        {
+          "resource": "repo://crates/git/src/cli.rs#L889-L929",
+          "version": "repo-lines-v1:sha256:1804f0b09b352c396d4fdb5f32e0fa0a548787a8652b589895ab12524f6fbf70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4Y2JhNDQ0Njg0ZmZjYTdlYTA2ZWJhODllMzViMWIwMGUxZTljNzA4NmE0YTUyNWM3ZjJmYmVlZWJiMWRkN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNTdkZmQyM2EwN2YwOWViNmIwMDFmMmFhN2Q4ZGUzYmY4YThkOTIxZGRkMWI1ZGRmYjQ0MzJlNGFkNWFmNzAifQ"
+        },
+        {
+          "resource": "repo://docs/integrations/github-integration.mdx#L49-L81",
+          "version": "repo-lines-v1:sha256:19e8fe21d3aef178fabbb8af9bb3e24b1df2933f2412a86fbfc8112ea580e212:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGQ0YzE0Y2EwYWFjZGMyNGQ4MmQ3NWVkNWYyNGE3YmI2NGY3NTgyOWNkMjdlNGZiZGMxMDZlODVhNjAyZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzOTRmYTViNmQwMGExYzZiOGUyYWUyYTI4M2Q3Y2Y2M2QwNjc5NzllOTcxYmViMGU2M2FhNTJhMzhjMThmOWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_690504229d11423fa26c85c2934a5d76",
+      "statement": "接続確認はredirectなし・15秒timeoutでrepositoryとPR一覧をGETするのみで、push/PR作成のwrite権限は証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/github_credentials.rs#L117-L155",
+          "version": "repo-lines-v1:sha256:512f8999b2a0763062d12d1300f487db3063e43f10bdf97c8d73b7dcbf95446a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkMWVhMzg1YzgxOTJiZDA0YWQ4ZGZlOTc4M2I2YzgxNGRlZWU0NDUyNDdmOWVkNDAzNDY2ZmEwODY3YmVjMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_97d10b9279e3487e8c4c3aee0b027d92",
+      "statement": "pushは既定remoteのpushurlを尊重し、PR baseはtarget branchのremoteまたは既定fetch remote、head repositoryはpush先を使用する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/lib.rs#L1543-L1552",
+          "version": "repo-lines-v1:sha256:6242d2e64920d2775827e46fa203133e3cd48e290ef52f5f8e9451ee75f003c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5MWUxOTI1ZjZlMDliNjZmNzczOGIzZjExOTdlN2ZlMWY2M2Y5M2NmYjQwYjI2OTIwZmE0NDE3NTE3MWUwN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkN2E4YTdlMDU4NDI0ODE5ODAzOGJiMmQ5OWJhYzBiMjU0YmJmY2FlZDNjNDMxZTU0MTAxMTYwNTU3MGU3ZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODhiYmM5YjY1MjIyYmIyODFkNWY1M2JlOTRkNDhjZTRhMzkyYjVkMzc0ZGY0NjQzYjE3ZjJhNzA2ZDczN2IifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L236-L254",
+          "version": "repo-lines-v1:sha256:8e1728aeee729b5674217618b9fbae1685cebd229174bb54ed20ad8a1e356dc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZWY2NzY5Y2Y5ODNmMTA3MzY2Y2YyN2YwODczMjljOWY4ZGE4MjlhYmIwNGY5ZDM4MzcyMWIyNTBjYzVhNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MjljZTAwODUyMjFiYTRjZDhkMGU4ZmJlYjkwYTZiZWQxNjllYTAzZmJkZTFjNGM2OTYyOTllY2E3ZmRlMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjdmMjk0ZTFmMTFmYWExZmUxMDIxNTIwY2MwYTQ3YzdhYWJjOGE1MjZmODcwYmQxYTg0MWU0YzczMjVmZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NzJjNTMzOWIzMjQ5OThhMzFiZjEwOWE1N2ZjOGNkYjg3MDJiOTA1MTZkYjk5MmVhMTk3Mzc3NDAzMDc3ZTEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L325-L339",
+          "version": "repo-lines-v1:sha256:e40fa3bacf4643349113727d5db4ef50929970fa7fb9de26d96dd06af48d492a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkZDFjNTg3NTljZjAzZjY4NDkwN2IzM2RmM2RkZGY4YTY3MGMyZWY1ZGE2YjkyMGM2MTg4MDRkNzU4M2E2MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YmZkZjAwZTliOTRlOTRkMDhiMDY0ZGVhMzY3MTc0MDYwMjA1ODk2MzhkZjEwOTlmMmNiZjIxMmIyNDFiNmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkYjE4ZThmNWE5YzBiOWNjNThhYzE1MDBlY2RiZmI4NGQxNjM4YjRkOTQ5Y2M1NmMyMTIzODdhMGIxOTI1MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNGYxMDI0MTMzMjcyNTkzOGYyODUzOTlmNzhlZTE0Njc4NTIyMzIyZDY1NTNlNGZkYzM2N2Q1NGFhZGI5YzcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

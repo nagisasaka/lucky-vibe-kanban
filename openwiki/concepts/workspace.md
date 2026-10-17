@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
+  - id: openwiki-source-16bb0bc0baa397cce8e201b1
+    resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-6a0749527a9648c33ba957da
     resource: repo://crates/server/src/routes/workspaces/core.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
@@ -26,6 +28,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-6043692809cbf72f253c5631
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
+  - id: openwiki-source-5837e5316279163dd8bfbfd3
+    resource: repo://crates/utils/src/github_credentials.rs
   - id: openwiki-source-19419edea1d312cc9f07ef2d
     resource: repo://crates/utils/src/path.rs
   - id: openwiki-source-7d5590729f3e0f42d994b0e8
@@ -34,10 +38,10 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # Workspace と Repository
@@ -49,6 +53,8 @@ Workspace は、エージェントの [Session](session-and-agent-run.md)、作�
 **Repo** は登録された source パスと、setup/cleanup/archive/dev script、copy files、target branch・working directory の既定値を持つ。**WorkspaceRepo** は登録 Repo を特定 Workspace に接続し、その実施で使う target branch を保存する。Repo の既定値と、既存 Workspace の選択を区別する。[Repo](../../crates/db/src/models/repo.rs#L36-L54)、[membership](../../crates/db/src/models/workspace_repo.rs#L11-L34)
 
 通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に Repo 名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[複数 Repo の利用契約](../../docs/workspaces/multi-repo-sessions.mdx)
+
+GitHub 認証の設定入口は Repo にあるが、token の保存 identity は Repo UUID や Workspace ではなく、instance 内の正規化した GitHub `owner/repository` である。同じ remote を使う Workspace は資格情報を共有する。対象は登録 Repo の remotes と既定 push URL から選ぶ。[PAT の管理・適用範囲](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)に保存・削除・失敗時の契約を集約する。[対象の解決](../../crates/server/src/routes/github_credentials.rs#L32-L63)・[保存キー](../../crates/utils/src/github_credentials.rs#L147-L177)
 
 ## 二つの環境と所有権
 

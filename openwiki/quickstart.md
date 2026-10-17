@@ -8,12 +8,18 @@ sources:
     resource: repo://crates/api-types/src/issue_tag.rs
   - id: openwiki-source-d6072e60b63fe041de50f89e
     resource: repo://crates/api-types/src/tag.rs
+  - id: openwiki-source-b50ba7975e31fb9a56845b2c
+    resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-dfa8135bd6d4dbe37911c061
     resource: repo://crates/db/src/models/workspace_usage.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
     resource: repo://crates/executors/src/legacy_wiki.rs
+  - id: openwiki-source-71f837a8aa36443ad9688945
+    resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-4d617b0e2fa188c6ad63ae56
+    resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
@@ -40,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # クイックスタートと調査案内
@@ -71,7 +77,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | Issue の担当者・コメント・file 参照はどう保存するか | [Issue の共同作業](concepts/issue-collaboration.md)。local コメント・reaction・follower と通知の実装範囲 |
 | どこで変更するか、何を共有し、何を削除できるか | [Workspace・Repo](concepts/workspace.md)。Worktree / DirectFolder、物理所有権と interactive/execution_only の用途、共有領域、cleanup |
 | 会話、実行、再試行をどう識別するか | [Session・AgentRun・RunAttempt](concepts/session-and-agent-run.md)。native session、現在の承認配線、未送信ドラフト、Goal、queue、子 agent の境界 |
-| Project の相談と操作支援を使うには | [Astra Project Chat](concepts/project-chat.md)。discuss / operate、質問待ち、Codex 認証と副作用 receipt |
+| 外部会話から LVK を操作するには | [外部 MCP](integrations/remote-access.md)。認証・scope・操作 receipt。内蔵機能の履歴は [Astra 廃止と移行境界](concepts/project-chat.md) |
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
@@ -90,7 +96,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | frontend、local Board の取得と更新 | [Web と同期](architecture/web-and-sync.md) → [外部 MCP と認証](integrations/remote-access.md) |
 | ファイル、Session 添付、diff、preview、terminal、editor | [Workspace inspection](operations/workspace-inspection.md)。Board の参照は [Issue の共同作業](concepts/issue-collaboration.md) |
 | 外部 MCP が認証・認可で失敗する | [Auth0 JWTとscope](integrations/remote-access.md)。active membership、read/write/merge、stateless transportの境界 |
-| PR の作成結果や merge 観測が合わない | [GitHub と PR](integrations/github-review.md)。外部公開と local 記録の部分成功 |
+| GitHub の認証、push 先、PR 結果や merge 観測が合わない | [GitHub 認証と PR](integrations/github-review.md)。リポジトリ別 PAT、agent shell との適用差、push/base と部分成功 |
 | 外部マシンの実行を予約・回復する | [共有資源と Execution Bridge](concepts/shared-resource-coordination.md)。snapshot、Runner、settlement と operator 回復 |
 | 実行の元データを保全したい | [Native Audit の保存・エクスポート・削除](architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) |
 | Merge / Rebase / PR 後の状態が合わない | [統合までの順序と部分失敗](workflows/task-to-integration.md) → [memory の統合契約](concepts/repository-memory.md) |
@@ -126,7 +132,7 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 - Workflow の graph と prompt 展開は [WorkflowAttempt](concepts/workflow-attempt.md) の現行 validator を確認する。
 - Bootstrap v2 の一部は後続 implementation record が更新している：[OpenWiki 設計文書](operations/openwiki-maintenance.md#設計文書の読み方)。
-- [Astra](concepts/project-chat.md) は user message で動く。イベントから自律的にモデルを起動する古い設計記述は現行動作ではない。
+- [内蔵 Astra は廃止済み](concepts/project-chat.md)。旧モデル設定や専用会話履歴の説明を現行機能と扱わず、残る質問回答と外部 MCP の契約を確認する。
 - 自己開発の旧 development container と固定 staging 候補は区別する：[開発・検証](operations/development.md)・[サーバー運用](operations/server-container.md)。
 
 ## カバー範囲と限界

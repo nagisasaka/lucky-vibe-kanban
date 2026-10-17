@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:059b2bf11b73a658b030d2cb73064597e2cd28abbefc3cb705e01423cf392b2f",
+  "pageVersion": "sha256:f98a232d52bac094dec6a613de73904d0da9180a1ed8c721a89565fc03bb76cf",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -118,7 +118,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L239-L334",
-          "version": "repo-lines-v1:sha256:b6066989b277960498cac9ba39101c6b4f5f6f64aeab750bdd3a89333f38ccbf:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZWY2NzY5Y2Y5ODNmMTA3MzY2Y2YyN2YwODczMjljOWY4ZGE4MjlhYmIwNGY5ZDM4MzcyMWIyNTBjYzVhNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjdmMjk0ZTFmMTFmYWExZmUxMDIxNTIwY2MwYTQ3YzdhYWJjOGE1MjZmODcwYmQxYTg0MWU0YzczMjVmZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxOWU1NTYwMTMzYWViMmIxN2Q1Yzk4ZDI0ZWQyODQ2MjM3YzkzYjJkMzdiODE0ZTFjZjU4NDk1ZGUzYjUzNTIifQ"
+          "version": "repo-lines-v1:sha256:a414a365418f4a864bd8fe49ab3bc8d27133b60b895f162d9820cb65a9ec9004:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZWY2NzY5Y2Y5ODNmMTA3MzY2Y2YyN2YwODczMjljOWY4ZGE4MjlhYmIwNGY5ZDM4MzcyMWIyNTBjYzVhNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjdmMjk0ZTFmMTFmYWExZmUxMDIxNTIwY2MwYTQ3YzdhYWJjOGE1MjZmODcwYmQxYTg0MWU0YzczMjVmZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxOWU1NTYwMTMzYWViMmIxN2Q1Yzk4ZDI0ZWQyODQ2MjM3YzkzYjJkMzdiODE0ZTFjZjU4NDk1ZGUzYjUzNTIifQ"
         }
       ]
     },
@@ -138,7 +138,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/pr.rs",
-          "version": "repo-file-v1:sha256:b4eaf0445f339f2d3b044474adae802a79822dc2f8c99962552cc780911fa63b"
+          "version": "repo-file-v1:sha256:d6934c14ef4eee75b2ff8857b32a692bc4b5e8e060461615cf78ea04cdb20582"
         }
       ]
     },
@@ -218,7 +218,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:a8e9eeb55626f4af506d121c8521be47b3837de7473118eb101d6d6063ddd9d9"
+          "version": "repo-file-v1:sha256:f4c5e71c11cc01fbdfa0a999dbbe7e9c90ffbc5d02ea1625f032c67164fdb59d"
         },
         {
           "resource": "repo://crates/server/src/routes/workflows.rs",
@@ -295,10 +295,24 @@
           "version": "repo-file-v1:sha256:340b11c348c3cc33714e6affe92b434dd13bd5f8cda7d74eec41efb2a9bda7e4"
         }
       ]
+    },
+    {
+      "id": "claim_e1dfe691d6e1435bb51b0eeaac2d3469",
+      "statement": "PR作成時のpush先は既定remoteのpushurlを尊重し、baseはtarget branchのremoteまたは既定fetch remoteに解決する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/lib.rs#L1543-L1552",
+          "version": "repo-lines-v1:sha256:6242d2e64920d2775827e46fa203133e3cd48e290ef52f5f8e9451ee75f003c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5MWUxOTI1ZjZlMDliNjZmNzczOGIzZjExOTdlN2ZlMWY2M2Y5M2NmYjQwYjI2OTIwZmE0NDE3NTE3MWUwN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkN2E4YTdlMDU4NDI0ODE5ODAzOGJiMmQ5OWJhYzBiMjU0YmJmY2FlZDNjNDMxZTU0MTAxMTYwNTU3MGU3ZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODhiYmM5YjY1MjIyYmIyODFkNWY1M2JlOTRkNDhjZTRhMzkyYjVkMzc0ZGY0NjQzYjE3ZjJhNzA2ZDczN2IifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/pr.rs#L236-L254",
+          "version": "repo-lines-v1:sha256:8e1728aeee729b5674217618b9fbae1685cebd229174bb54ed20ad8a1e356dc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZWY2NzY5Y2Y5ODNmMTA3MzY2Y2YyN2YwODczMjljOWY4ZGE4MjlhYmIwNGY5ZDM4MzcyMWIyNTBjYzVhNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MjljZTAwODUyMjFiYTRjZDhkMGU4ZmJlYjkwYTZiZWQxNjllYTAzZmJkZTFjNGM2OTYyOTllY2E3ZmRlMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjdmMjk0ZTFmMTFmYWExZmUxMDIxNTIwY2MwYTQ3YzdhYWJjOGE1MjZmODcwYmQxYTg0MWU0YzczMjVmZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NzJjNTMzOWIzMjQ5OThhMzFiZjEwOWE1N2ZjOGNkYjg3MDJiOTA1MTZkYjk5MmVhMTk3Mzc3NDAzMDc3ZTEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

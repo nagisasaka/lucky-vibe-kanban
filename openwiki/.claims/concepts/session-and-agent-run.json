@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2764bab585a49175ec92a3515f67ed9d96c831664337f28658586c7e3bcbcaf6",
+  "pageVersion": "sha256:9d4da93a7e1447d832fee12eda41c658b998929de467717a70dbc0211485342d",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -337,10 +337,48 @@
           "version": "repo-lines-v1:sha256:6ee1ae5848d3f24bb7fbb4a4d87d58dad31a02c579794ab378444d39e644462a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlNjYyMjAxZjhmOWI4YjQ4NjBjNWFiOGQ0MzkwZjk4NDc0YmExYWRkZDEzYjE4MTNmNTdiNGFkMWM0MGQyYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_cdb7200ff7044310becd8ea22e8279a3",
+      "statement": "非同期仕様回答はUI/MCP共通受付でSession lock、質問とqueueの確認後に予約し、元AgentRunへSteerする。別runやfollow-upへ振り替えず、不確実配送では再送を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L158-L251",
+          "version": "repo-lines-v1:sha256:f5033184ff502094da8b2ae114f2ada532fbfeb11b3c24981fa397529b7b00d8:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwZTJkZjU4YjY4NzJmNzA1NzRmMzJkMmRiOTMxYjQwYWIyNGI3NzA4NTdiOTNmMTM2OTg1MDIzMjBiMDQ5NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmZjNjNjM3MWNmMDA5MjM1NDAyNmI0ZGVhNTM1MWViNmRhZmI3NjZjMzg5Mzg3Y2ExZjk4M2FkMGE5NmE3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhZDljN2UyMjEyZTlkN2FiNzhkZGNkYTU5ZjdmYzE1ZDdjNGVlNWU3OTIwZGUwM2UxNzMxYzUwM2ZhNzY3MmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_61a00d9b72174e178722eb91dfae617f",
+      "statement": "新規回答はLVK question answer markerを使い、旧Astra operation markerも配送照合・予約解放・receipt回復で認識して二重配送を防ぐ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L212-L324",
+          "version": "repo-lines-v1:sha256:7724eae897cb7a6f2fc6beaf30567eb93534f2a6649187da54d120427bec9211:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyODRmZGNjNGNiOThkZjdjYzBmYjdmZGE0ZWIxNjkyM2RkOWZhMTY2MWZjNGFhZmQ3MzFhMDk1OGZjZDU1ZTI2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyYmMzMjZkYTBkODI2Y2NhODk3NzJmODg0NmNlYjZiMjE2YTY1NGI0M2I3NWU3ZTA3MDkxODFkYTdjYTY4NmJhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NWFiN2I2ZDliNmUxOTU2NTNmYzhiNTVmNjNmMzY0NjA2ODU1YzQ1NGZjNTY1ODUxZjMxYTJmMDk0NWRhNzQyIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/questions.rs#L486-L592",
+          "version": "repo-lines-v1:sha256:143b3e1ff6e2ee7525b9f3374b7f51d25cc3e265804f585142faebb7ddfc71f5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1YzAxZTc2NzFkNDA0OTJlZTcxZTdjNTQzYjc2YjNjYjRiM2MzYzFlODBjNWU2YjM2N2MyNTZlMWUzOTc1NzA2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0MGNiMWUzYTNiZmZjMDBlNGI4NmE2ZDMwOGMwMWM0MjAyZDhmMGM0NzIzNTk2YTg2Y2EwMmQ1MTAzYTAzMGM2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MSwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_790594651fe4411596e6b6cd4fb2952a",
+      "statement": "外部MCPの質問読取はSession所属とrevisionを検査し、実行承認はLVKで判断するよう案内する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L193-L224",
+          "version": "repo-lines-v1:sha256:0a9a797a34d525267ccbe1bd51d8e4623f3b2cc9a396a4f493ef02076194077f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyYWQ4ZDcwZjRjYTcxMDg0YmZkZGJlYTBlOTc3ODhlYzgxMWZkYjZmMGExNmQ2ZjFkZTZjMzI4Y2NlNzA2MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMGQ3NTk1MGRmMGZmOWEzZWU5NjYzOWRjYzhmZjVlYWVkYjQwZDY4MmJlYTkyNjIyYjUyMGRkODg3ZDkzZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L94-L171",
+          "version": "repo-lines-v1:sha256:473d322264e97270a1e1fe37554317840d22e855b50af376c105af89b1fbd0c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYWNmNzFhNzI3MmMwMDYwY2Q5ZTJkMWI5ZTNmM2ZlMzJhMzFhMTljNGFhMTBhZmE5NmNhOTdlNWI1ZDVlZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjJjNTc4MmRiNTM0Mzc2ODZmYzBkNmE2ODA4ZGYyYzQ1N2I1ZTEyMGE5ODA3Mzg1ZWIzMjhjYmU2NzdkNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxM2E4MzY0YzEwYWE1M2UzNjgyN2FlYmM3OTEyNGIwMzJhNzRiYTc5NWIwNjIxNTkzMzY3ODhkNTg2ODg3ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNmM5NGRmYzg3YTcwMDcyOWQ0OGFkOThhNzVlMDA2ZGJiZmRlNjhhMjlkNmNmMTQ0ZTk5MWU1YjY4ZDRmZmIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

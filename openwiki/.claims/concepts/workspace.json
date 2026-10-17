@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:65ed661750cbcf7b44b9cd59049d304332cf5d83ef572469f9123e4ff3911d64",
+  "pageVersion": "sha256:280e174ef3412bdffb90a56fa3c154e1a597beeb2a8fdd63cf3da3f17ff91af6",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -235,10 +235,28 @@
           "version": "repo-file-v1:sha256:93df23718ad07647693049a05fa5b9656cbb21e10c776355598db578d5dc3318"
         }
       ]
+    },
+    {
+      "id": "claim_5b6fc0d364f4412d9baefe0250928a20",
+      "statement": "GitHub PATは登録Repoのremotesと既定push URLから対象を選ぶが、保存キーはinstance内の正規化owner/repositoryであり同じremoteを使うWorkspaceで共有する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/github_credentials.rs#L32-L63",
+          "version": "repo-lines-v1:sha256:de1d7a20e27c75cc6a6d639628aae913a4c78a87b4e40431cc8d3d942ba42238:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNzNlY2M4MmM5YzE3ZjhhNzY5OWU4YTJlMjYwNmYzNzUxM2E1YzVjMmQ2YTM4NjQxNTFjOGUyZDQxY2Q4YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0YWJhYjdiZGI3NDk1YjM1NjgwMWVlNzI4NTRhMzlhOGRjZTYyMmJkZjBkNjk3YzQ0ZWVlZWI4MzE1YTNkMzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiNmI2ZjU3ZjQxMmZiZWQxMDhiZTM5YTQwNjcyZDlhMDZlNTg2MjUxNzczYTAxMWFkOWM5MzMzOGE5OTg5OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkMjcxMzY3YjU0MWY5YTJlMGJlNjk2NjkxZDljY2I0NWY0MmVmOGE0NzgxMDUxYjUwYzBiYTI2MmVkOTA3YTAifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L147-L177",
+          "version": "repo-lines-v1:sha256:f134442101e6748e99f1ce85907b79aa8370d4efcf0547a241ba82ad8fe2fdbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4Yzk5OTgyYTc0ODAxZDQ2ZjBiMGJiMzcxMDZkMzc4NDY3OTMzNmNjYmM3YjM2YmNmMzA5OTdiNzY2ZjIyNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2ZDc0YzFhZTZmYzg2NTMyOGI5NTY0NWFjNjgyN2ZjYzQ5MzJhZDdhZDI3NjEzZDRiNzIwOGY1ZGQzNWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNTc0OWI3NDg2YTZkMGZjNWEzOGIyM2E2NjcxMzIwNmZhMjVmYTY5ZDEwMjY3NGJkN2E1NzAyYzdmOWM0OGQifQ"
+        },
+        {
+          "resource": "repo://crates/utils/src/github_credentials.rs#L15-L51",
+          "version": "repo-lines-v1:sha256:08f6b3346431dd40231763b4996f0b3c5bf1c9ad3c2ab88648cfca77ef69c521:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExM2ExNjJlNGZkMDdiNzg4NzNhZmNjMDNhZGI3NzBmNTFiN2ExZGM3OTM5NGM1YTQ4MjUzYjllODUwMTYxNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyZWUzNWE3ZThlYjlhODFiYTQwMTkwNDU3YjJhZWYxY2MzMzljZWZmOTkwNTc3ZWY1NWY0M2U4YjQ1OGI3OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NmI2NDA0NTc4ZTg4ODVkYThiNTMxMmY0OGUwNmNmOGQxZDRkMjNiODBmOGFjMjM2ZmZiZTFlMTZjNjI5ZmYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-17T03:50:48.298Z"
   }
 }

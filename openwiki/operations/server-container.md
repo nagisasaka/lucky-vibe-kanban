@@ -26,14 +26,18 @@ sources:
     resource: repo://deploy/server/server.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+  - id: openwiki-source-4815b99ed5b9f7632484ef04
+    resource: repo://docs/integrations/github-integration.mdx
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -47,6 +51,8 @@ server 配布は local LVK と coding agent を常時稼働サーバーへ置き
 root Dockerfile の最終 `server` target は prebuilt server・隣接 `agent-process-host`・MCP CLI と開発 toolchain を含む。稼働 binary は `/usr/local/bin` に置かれ、`/repos` の LVK checkout を編集・build しても、それを管理しているアプリを置換しない。小さい `runtime` target は別の起動入口を持ち、server target の認証付き ingress と同じではない。[target と起動入口](../../Dockerfile)
 
 Node 22、固定版 Codex/pnpm、repository の Rust toolchain などを image に置き、user の認証・cache は永続領域へ分ける。追加 SDK は派生 image の `/opt` や `/usr/local` に置くと、既存 home volume に隠されにくい。公開版・digest と対応する配布 kit を使い、文書の例の tag を公開済み成果物と推定しない。[image の構成](../../Dockerfile)、[派生 image の契約](../../docs/self-hosting/server-container.mdx)
+
+LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked dependencies・`--no-default-features` で導入し、`/usr/local/bin/sccache` に置く。local disk cache 用の executable 同梱であり、global Cargo wrapper・cache directory・incremental 設定を自動変更しない。home volume に隠されない配置と、各 repository が利用を設定する境界を維持する。[同梱と意図](../../Dockerfile#L173-L180)。実 image での利用可否と cache hit は別途の検証対象である。
 
 ## HTTPS と起動前検証
 
@@ -114,6 +120,8 @@ CI結果とdigestを取得し更新を要求できる。要求元agentはそのr
 forkだけに制限した書込み認証を別途設定する。repository専用Deploy keyを使う場合、
 秘密鍵は安定版の永続homeに保存し、Gitや配布imageには含めない。公開releaseの解決・
 更新要求だけならGitHub API tokenは不要である。[認証と開発手順](../../deploy/developer/README.md)
+
+LVK の画面から行う Git/PR には [リポジトリ別 PAT](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)も利用できる。agent terminal の push やホスト updater の認証とは適用範囲が異なるため、画面で token を保存したことを任意 shell の認証済み状態とみなさない。[適用範囲](../../docs/integrations/github-integration.mdx#repository-scoped-fine-grained-tokens)
 
 ホストは許可 repository・source SHA・digest・公開 workflow 成功を照合して候補を検査する。現在の自己開発手順は card ごとの独立 instance → main の固定 staging 候補 → release → stable 更新である。staging は built frontend と debug binary を使い、source watcher を走らせない。標準 updater の対象は stable の lvk のみで、旧 development サービスは互換オプションとなる。詳しい操作と一度限りのホスト移行は [STAGING.md](../../deploy/developer/STAGING.md)、独立状態の契約は [開発と検証](development.md) を参照する。
 

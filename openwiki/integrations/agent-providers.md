@@ -36,16 +36,20 @@ sources:
     resource: repo://crates/mcp/src/task_server/mod.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
+  - id: openwiki-source-71f837a8aa36443ad9688945
+    resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-65c0f36670a161dc05040e69
+    resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
     resource: repo://docs/future/agent-runtime/delegated-agent-display.md
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-17T03:50:48.298Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -140,4 +144,4 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 
 失敗は MCP の error result と success:false / error / details で返す。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
 
-認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。Astra の推論は coding provider launch と別の環境を持つ。[Astra の認証と提案実行](../concepts/project-chat.md#推論と認証の境界)。
+認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
