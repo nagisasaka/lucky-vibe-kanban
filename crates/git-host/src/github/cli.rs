@@ -145,19 +145,57 @@ impl GhCli {
         Ok(())
     }
 
-    fn run<I, S>(&self, args: I, dir: Option<&Path>) -> Result<String, GhCliError>
+    fn run<I, S>(&self, target: &str, args: I, dir: Option<&Path>) -> Result<String, GhCliError>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
         self.ensure_available()?;
         let gh = resolve_executable_path_blocking("gh").ok_or(GhCliError::NotAvailable)?;
-        let mut cmd = Command::new(&gh);
+        self.run_with_store(
+            target,
+            args,
+            dir,
+            &utils::github_credentials::Store::default(),
+            &gh,
+        )
+    }
+
+    fn run_with_store<I, S>(
+        &self,
+        target: &str,
+        args: I,
+        dir: Option<&Path>,
+        store: &utils::github_credentials::Store,
+        executable: &Path,
+    ) -> Result<String, GhCliError>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        let mut cmd = Command::new(executable);
         if let Some(d) = dir {
             cmd.current_dir(d);
         }
         for arg in args {
             cmd.arg(arg);
+        }
+        let scoped = utils::github_credentials::Repository::parse(target);
+        let credential = scoped
+            .as_ref()
+            .map(|repo| store.load(repo))
+            .transpose()
+            .map_err(|_| {
+                GhCliError::AuthFailed(
+                    "Cannot read configured GitHub token; update it in repository settings".into(),
+                )
+            })?
+            .flatten();
+        let config = tempfile::tempdir().map_err(|_| {
+            GhCliError::CommandFailed("Cannot prepare GitHub authentication".into())
+        })?;
+        if let (Some(token), Some(repo)) = (&credential, &scoped) {
+            token.configure_gh(&mut cmd, repo, config.path());
         }
         let output = cmd
             .no_window()
@@ -165,10 +203,16 @@ impl GhCli {
             .map_err(|err| GhCliError::CommandFailed(err.to_string()))?;
 
         if output.status.success() {
-            return Ok(String::from_utf8_lossy(&output.stdout).to_string());
+            let text = String::from_utf8_lossy(&output.stdout).to_string();
+            return Ok(credential
+                .as_ref()
+                .map_or_else(|| text.clone(), |c| c.redact(&text)));
         }
 
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let stderr = credential
+            .as_ref()
+            .map_or_else(|| stderr.clone(), |c| c.redact(&stderr));
 
         // Check exit code first - gh CLI uses exit code 4 for auth failures
         if output.status.code() == Some(4) {
@@ -195,6 +239,7 @@ impl GhCli {
         repo_path: &Path,
     ) -> Result<GitHubRepoInfo, GhCliError> {
         let raw = self.run(
+            remote_url,
             ["repo", "view", remote_url, "--json", "owner,name,url"],
             Some(repo_path),
         )?;
@@ -256,13 +301,14 @@ impl GhCli {
             args.push(OsString::from("--draft"));
         }
 
-        let raw = self.run(args, Some(repo_path))?;
+        let raw = self.run(&repo_spec, args, Some(repo_path))?;
         Self::parse_pr_create_text(&raw, request)
     }
 
     /// Retrieve details for a pull request by URL.
     pub fn view_pr(&self, pr_url: &str) -> Result<PullRequestDetail, GhCliError> {
         let raw = self.run(
+            pr_url,
             [
                 "pr",
                 "view",
@@ -283,6 +329,7 @@ impl GhCli {
     ) -> Result<Vec<PullRequestDetail>, GhCliError> {
         let repo_spec = repo_info.repo_spec();
         let raw = self.run(
+            &repo_spec,
             [
                 "pr",
                 "list",
@@ -306,6 +353,7 @@ impl GhCli {
             "number,url,title,headRefName,baseRefName,state,mergedAt,mergeCommit,updatedAt";
 
         let open_raw = self.run(
+            &repo_spec,
             [
                 "pr",
                 "list",
@@ -320,6 +368,7 @@ impl GhCli {
         )?;
 
         let closed_raw = self.run(
+            &repo_spec,
             [
                 "pr",
                 "list",
@@ -365,6 +414,7 @@ impl GhCli {
     ) -> Result<Vec<PrComment>, GhCliError> {
         let repo_spec = repo_info.repo_spec();
         let raw = self.run(
+            &repo_spec,
             [
                 "pr",
                 "view",
@@ -396,7 +446,7 @@ impl GhCli {
             args.push("--hostname".to_string());
             args.push(host.clone());
         }
-        let raw = self.run(args, None)?;
+        let raw = self.run(&repo_info.repo_spec(), args, None)?;
         Self::parse_pr_review_comments(&raw)
     }
 
@@ -408,6 +458,7 @@ impl GhCli {
         pr_number: i64,
     ) -> Result<(), GhCliError> {
         self.run(
+            &format!("{owner}/{repo}"),
             [
                 "pr",
                 "checkout",
@@ -564,5 +615,64 @@ impl GhCli {
                 author_association: c.author_association,
             })
             .collect())
+    }
+}
+
+#[cfg(all(test, unix))]
+mod credential_tests {
+    use std::os::unix::fs::PermissionsExt;
+
+    use utils::github_credentials::{Credential, Repository, Store};
+
+    use super::*;
+
+    #[test]
+    fn scoped_cli_uses_token_without_arguments_or_fallback_and_redacts_failures() {
+        let root = tempfile::tempdir().unwrap();
+        let store = Store::at(root.path().join("credentials"));
+        let repo = Repository::parse("owner/repo").unwrap();
+        let token = Credential::new("github_pat_fake_secret".into()).unwrap();
+        store.save(&repo, &token).unwrap();
+        let cli = root.path().join("gh");
+        std::fs::write(
+            &cli,
+            r#"#!/bin/sh
+[ "$GH_TOKEN" = github_pat_fake_secret ] || exit 9
+[ -d "$GH_CONFIG_DIR" ] || exit 9
+[ "$GH_HOST" = github.com ] || exit 9
+[ "$GH_PROMPT_DISABLED" = 1 ] || exit 9
+case "$*" in *github_pat*) exit 9;; esac
+printf 'authentication rejected %s' "$GH_TOKEN" >&2
+exit 4
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&cli, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let result = GhCli::new().run_with_store(
+            "https://github.com/owner/repo/pull/2",
+            ["pr", "view"],
+            None,
+            &store,
+            &cli,
+        );
+        let error = result.unwrap_err();
+        assert!(matches!(error, GhCliError::AuthFailed(_)));
+        assert!(!error.to_string().contains(token.token()));
+        assert!(error.to_string().contains("[REDACTED]"));
+    }
+
+    #[test]
+    fn unreadable_token_does_not_launch_cli() {
+        let root = tempfile::tempdir().unwrap();
+        let store = Store::at(root.path().into());
+        std::fs::write(root.path().join("owner!repo.json"), "broken").unwrap();
+        let result = GhCli::new().run_with_store(
+            "owner/repo",
+            ["pr", "list"],
+            None,
+            &store,
+            Path::new("/does-not-exist"),
+        );
+        assert!(matches!(result, Err(GhCliError::AuthFailed(_))));
     }
 }

@@ -1,3 +1,4 @@
+import { GithubCredentialsHarness } from './GithubCredentialsHarness';
 import { useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -544,7 +545,9 @@ function TaskAttemptsHarness() {
 const mode = new URLSearchParams(window.location.search).get('mode');
 
 createRoot(document.getElementById('root')!).render(
-  mode === 'diff-tree' ? (
+  mode === 'github-credentials' ? (
+    <GithubCredentialsHarness />
+  ) : mode === 'diff-tree' ? (
     <DiffTreeHarness />
   ) : mode === 'workflow-draft' ? (
     <WorkflowDraftHarness />

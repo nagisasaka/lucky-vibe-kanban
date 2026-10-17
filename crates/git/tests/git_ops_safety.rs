@@ -1381,3 +1381,29 @@ fn merge_base_ahead_of_task_should_error() {
         "Merge should error when base branch is ahead of task branch"
     );
 }
+
+#[test]
+fn push_uses_configured_push_url_without_changing_fetch_url() {
+    let temp = TempDir::new().unwrap();
+    let source = temp.path().join("source");
+    let fetch_path = temp.path().join("fetch.git");
+    let push_path = temp.path().join("push.git");
+    let fetch = Repository::init_bare(&fetch_path).unwrap();
+    let push = Repository::init_bare(&push_path).unwrap();
+    let svc = GitService::new();
+    svc.initialize_repo_with_main_branch(&source).unwrap();
+    let repo = Repository::open(&source).unwrap();
+    configure_user(&repo);
+    write_file(&source, "example.txt", "test");
+    commit_all(&repo, "example");
+    repo.remote("origin", fetch_path.to_str().unwrap()).unwrap();
+    repo.remote_set_pushurl("origin", Some(push_path.to_str().unwrap()))
+        .unwrap();
+    svc.push_to_remote(&source, "main", false).unwrap();
+    assert!(push.find_reference("refs/heads/main").is_ok());
+    assert!(fetch.find_reference("refs/heads/main").is_err());
+    assert_eq!(
+        repo.find_remote("origin").unwrap().url(),
+        fetch_path.to_str()
+    );
+}

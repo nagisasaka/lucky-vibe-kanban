@@ -3,17 +3,17 @@ title: "GitHub Integration"
 description: "Connect to GitHub to create pull requests and manage your workflow directly from Vibe Kanban"
 ---
 
-Vibe Kanban integrates with GitHub to let you create pull requests directly from your task attempts. This integration relies on the [GitHub CLI (`gh`)](https://cli.github.com/) being installed and authenticated on your system.
+Vibe Kanban integrates with GitHub to let you create pull requests directly from your task attempts. This integration requires the [GitHub CLI (`gh`)](https://cli.github.com/) on the LVK server. Authenticate using a repository-scoped token in Settings, or existing CLI credentials.
 
 ## Setup
 
-There is no need to configure GitHub in the Vibe Kanban settings manually. The integration is designed to work out-of-the-box if you have the GitHub CLI installed.
+Use a repository-scoped fine-grained token below to limit LVK to selected repositories. Existing system authentication remains available for repositories without an LVK token.
 
-### Automatic Setup
+### Legacy CLI setup helper
 When you attempt to create your first Pull Request, Vibe Kanban will check if the GitHub CLI is available. If it's not found or not authenticated, you will be guided through the setup process:
 
 1.  **On macOS**: You will see a dialog offering to install the GitHub CLI via Homebrew automatically.
-2.  **On Windows/Linux**: You will be provided with instructions to install the CLI manually.
+2. **On Windows or systems without Homebrew**: Install and authenticate the CLI manually. The existing helper requires Homebrew on Unix, even if `gh` is already installed. For a server container, run commands inside the container as the LVK service user, not only on the host.
 
 ### Manual Setup
 You can also set up the integration manually in your terminal before using Vibe Kanban:
@@ -38,3 +38,44 @@ Once the GitHub CLI is ready, you can create pull requests directly from a task:
 4.  Click **Create** to open the PR on GitHub.
 
 If the operation is successful, the task status will update, and a link to the new Pull Request will be available.
+
+## Repository-scoped fine-grained tokens
+
+In **Settings → Repositories → GitHub authentication**, choose a GitHub.com
+repository listed in the configured remotes. Create a
+[fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
+with access to that repository only, then save it in LVK. Administrator access is
+required to save, replace, check or remove tokens.
+
+Grant **Contents: Read and write** for Git operations and **Pull requests: Read and
+write** for PR operations. Add **Issues** only if you need issue operations, and
+**Workflows** when pushing changes to workflow definitions. Both expiring and
+non-expiring tokens work; organisation policy may require expiry or approval.
+Fine-grained tokens have GitHub limitations, including some outside-collaborator
+and cross-owner scenarios. They act as the issuing user, not a separate bot.
+
+The registered token takes precedence for LVK's Git fetch/push and GitHub CLI PR
+operations, including PR monitoring, linking and comments. LVK converts recognised
+GitHub SSH URLs to HTTPS for these Git subprocesses without changing the remote
+configuration. An invalid, expired or unreadable registered token fails the
+operation; LVK does not retry with a different user's system credentials.
+
+**Check connection** verifies GitHub API access to the repository and its PR list.
+It does not create a PR or push a commit, and does not prove write permissions.
+The GitHub CLI must still be installed for PR operations.
+
+Credentials are shared by all workspaces targeting the same GitHub repository on
+this LVK instance. They are stored in `github-credentials/` under the server's
+instance data directory, outside Git. On Unix the directory is mode `0700` and
+credential files are mode `0600`. Storage is not encrypted; protect the instance
+volume and its backups. This does not isolate secrets from processes running as
+the same OS user. Tokens are never returned by the settings API or included in
+command arguments. LVK-owned subprocesses receive them through their environment.
+
+To rotate a token, enter its replacement and save it. To remove it, use **Remove
+token**; subsequent operations return to existing system authentication. Removal
+from LVK does not revoke it on GitHub. Revoke unused tokens on GitHub separately.
+Existing operations may retain the token they started with.
+
+Agent terminal commands currently use their own Git/CLI authentication. This
+setting applies to LVK-owned operations, not arbitrary commands in an agent shell.

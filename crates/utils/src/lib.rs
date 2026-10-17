@@ -1,3 +1,4 @@
+pub mod github_credentials;
 pub mod instance;
 use std::{env, sync::OnceLock};
 

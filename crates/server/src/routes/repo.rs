@@ -395,6 +395,16 @@ pub fn router() -> Router<DeploymentImpl> {
             "/repos/{repo_id}",
             get(get_repo).put(update_repo).delete(delete_repo),
         )
+        .route(
+            "/repos/{repo_id}/github-credentials",
+            get(super::github_credentials::status)
+                .put(super::github_credentials::save)
+                .delete(super::github_credentials::remove),
+        )
+        .route(
+            "/repos/{repo_id}/github-credentials/check",
+            post(super::github_credentials::check),
+        )
         .route("/repos/{repo_id}/branches", get(get_repo_branches))
         .route(
             "/repos/{repo_id}/parallel-context",

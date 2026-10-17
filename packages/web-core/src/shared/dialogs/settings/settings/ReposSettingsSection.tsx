@@ -41,6 +41,7 @@ import {
 } from './SettingsComponents';
 import { useSettingsMachineClient } from './SettingsHostContext';
 import { useSettingsDirty } from './SettingsDirtyContext';
+import { GithubCredentialsSettings } from './GithubCredentialsSettings';
 import { RepositoryMemorySettings } from './RepositoryMemorySettings';
 
 interface RepoScriptsFormState {
@@ -535,6 +536,13 @@ export function ReposSettingsSection({
 
       {selectedRepo && draft && (
         <>
+          {machineClient && (
+            <GithubCredentialsSettings
+              key={`github:${machineClient.target.id}:${selectedRepo.id}`}
+              repoId={selectedRepo.id}
+              client={machineClient}
+            />
+          )}
           {machineClient && (
             <RepositoryMemorySettings
               key={`${machineClient.target.id}:${selectedRepo.id}`}

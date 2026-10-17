@@ -21,6 +21,9 @@ import type {
   Config,
   GetMcpServerResponse,
   GitBranch,
+  GithubCredentialStatus,
+  SaveGithubCredential,
+  GithubCredentialTarget,
   McpServerQuery,
   NativeSettingsEditRequest,
   ReadNativeSettingsRequest,
@@ -76,6 +79,19 @@ export interface MachineClient {
   getConfig: () => Promise<UserSystemInfo>;
   saveConfig: (config: Config) => Promise<Config>;
   listRepos: () => Promise<Repo[]>;
+  getGithubCredentials: (repoId: string) => Promise<GithubCredentialStatus[]>;
+  saveGithubCredential: (
+    repoId: string,
+    data: SaveGithubCredential
+  ) => Promise<void>;
+  removeGithubCredential: (
+    repoId: string,
+    data: GithubCredentialTarget
+  ) => Promise<void>;
+  checkGithubCredential: (
+    repoId: string,
+    data: GithubCredentialTarget
+  ) => Promise<void>;
   getRepositoryMemory: (repoId: string) => Promise<RepositoryMemoryState>;
   configureRepositoryMemory: (
     repoId: string,
@@ -239,6 +255,41 @@ export function createMachineClient(
     listRepos: async () =>
       handleApiResponse<Repo[]>(
         await makeMachineRequest(runtime, target, '/api/repos')
+      ),
+    getGithubCredentials: async (repoId) =>
+      handleApiResponse<GithubCredentialStatus[]>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/github-credentials`
+        )
+      ),
+    saveGithubCredential: async (repoId, data) =>
+      handleApiResponse<void>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/github-credentials`,
+          { method: 'PUT', body: JSON.stringify(data) }
+        )
+      ),
+    removeGithubCredential: async (repoId, data) =>
+      handleApiResponse<void>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/github-credentials`,
+          { method: 'DELETE', body: JSON.stringify(data) }
+        )
+      ),
+    checkGithubCredential: async (repoId, data) =>
+      handleApiResponse<void>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/github-credentials/check`,
+          { method: 'POST', body: JSON.stringify(data) }
+        )
       ),
     getRepositoryMemory: async (repoId) =>
       handleApiResponse<RepositoryMemoryState>(

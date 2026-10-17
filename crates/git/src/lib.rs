@@ -1540,6 +1540,16 @@ impl GitService {
         self.default_remote(&repo, repo_path)
     }
 
+    /// Resolve the URL actually used for pushing, including remote.<name>.pushurl.
+    pub fn get_push_remote(&self, repo_path: &Path) -> Result<GitRemote, GitServiceError> {
+        let mut remote = self.get_default_remote(repo_path)?;
+        let repo = self.open_repo(repo_path)?;
+        if let Some(url) = repo.find_remote(&remote.name)?.pushurl() {
+            remote.url = url.to_owned();
+        }
+        Ok(remote)
+    }
+
     pub fn list_remotes(&self, repo_path: &Path) -> Result<Vec<GitRemote>, GitServiceError> {
         let cli = GitCli::new();
         let remotes = cli.list_remotes(repo_path)?;
@@ -1606,7 +1616,7 @@ impl GitService {
         self.check_worktree_clean(&repo)?;
 
         // Get the remote
-        let remote = self.default_remote(&repo, worktree_path)?;
+        let remote = self.get_push_remote(worktree_path)?;
 
         let git_cli = GitCli::new();
         if let Err(e) = git_cli.push(worktree_path, &remote.url, branch_name, force) {

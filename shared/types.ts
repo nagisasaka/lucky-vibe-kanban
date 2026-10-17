@@ -566,6 +566,12 @@ export type OrganizationMemberWithProfile = { user_id: string, role: MemberRole,
 
 export type ListMembersResponse = { members: Array<OrganizationMemberWithProfile>, };
 
+export type GithubCredentialStatus = { repository: string, configured: boolean, };
+
+export type SaveGithubCredential = { repository: string, token: string, };
+
+export type GithubCredentialTarget = { repository: string, };
+
 export type RegisterRepoRequest = { path: string, display_name: string | null, };
 
 export type InitRepoRequest = { parent_path: string, folder_name: string, };

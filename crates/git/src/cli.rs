@@ -886,9 +886,41 @@ impl GitCli {
             }
         }
 
-        for a in args {
-            cmd.arg(a);
+        let mut args: Vec<OsString> = args.into_iter().map(|a| a.as_ref().to_owned()).collect();
+        let mut credential = None;
+        if args
+            .first()
+            .is_some_and(|a| ["push", "fetch", "ls-remote"].iter().any(|v| a == v))
+        {
+            for arg in &mut args {
+                let Some(repo) = arg
+                    .to_str()
+                    .filter(|s| {
+                        s.starts_with("https://github.com/")
+                            || s.starts_with("git@github.com:")
+                            || s.starts_with("ssh://git@github.com/")
+                    })
+                    .and_then(utils::github_credentials::Repository::parse)
+                else {
+                    continue;
+                };
+                let stored = utils::github_credentials::Store::default()
+                    .load(&repo)
+                    .map_err(|_| {
+                        GitCliError::AuthFailed(
+                            "Cannot read configured GitHub token; update it in repository settings"
+                                .into(),
+                        )
+                    })?;
+                if let Some(token) = stored {
+                    token.configure_git(&mut cmd, &repo);
+                    *arg = repo.https_url().into();
+                    credential = Some(token);
+                    break;
+                }
+            }
         }
+        cmd.args(args);
 
         if stdin.is_some() {
             cmd.stdin(Stdio::piped());
@@ -899,12 +931,7 @@ impl GitCli {
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
 
-        tracing::trace!(
-            stdin = ?stdin.as_ref().map(|s| String::from_utf8_lossy(s)),
-            repo = ?repo_path,
-            "Running git command: {:?}",
-            cmd
-        );
+        tracing::trace!(repo = ?repo_path, "Running git command");
 
         use utils::command_ext::NoWindowExt;
         let mut child = cmd
@@ -933,14 +960,21 @@ impl GitCli {
                 (false, true) => format!("--- stderr\n{stdout}"),
                 (true, false) => format!("--- stdout\n{stderr}"),
             };
-            return Err(GitCliError::CommandFailed(combined));
+            return Err(GitCliError::CommandFailed(
+                credential
+                    .as_ref()
+                    .map_or_else(|| combined.clone(), |c| c.redact(&combined)),
+            ));
         }
         if let Some(Err(e)) = stdin_write_result {
             return Err(GitCliError::CommandFailed(format!(
                 "failed to write to git stdin: {e}"
             )));
         }
-        Ok(out.stdout)
+        Ok(match credential {
+            Some(c) => c.redact(&String::from_utf8_lossy(&out.stdout)).into_bytes(),
+            None => out.stdout,
+        })
     }
 
     pub fn git<I, S>(&self, repo_path: &Path, args: I) -> Result<String, GitCliError>

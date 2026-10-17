@@ -1,3 +1,4 @@
+pub mod github_credentials;
 use axum::{
     Router,
     routing::{IntoMakeService, get},

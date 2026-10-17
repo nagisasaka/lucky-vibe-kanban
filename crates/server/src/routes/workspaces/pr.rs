@@ -234,10 +234,10 @@ pub async fn create_pr(
     let worktree_path = workspace_path.join(&repo.name);
 
     let git = deployment.git();
-    let push_remote = git.resolve_remote_for_branch(&repo_path, &workspace.branch)?;
+    let push_remote = git.get_push_remote(&repo_path)?;
 
     // Try to get the remote from the branch name (works for remote-tracking branches like "upstream/main").
-    // Fall back to push_remote if the branch doesn't exist locally or isn't a remote-tracking branch.
+    // Fall back to the fetch remote for the PR base; pushurl may point to a fork.
     let (target_remote, base_branch) =
         match git.get_remote_from_branch_name(&repo_path, &target_branch) {
             Ok(remote) => {
@@ -246,7 +246,7 @@ pub async fn create_pr(
                     .unwrap_or(&target_branch);
                 (remote, branch.to_string())
             }
-            Err(_) => (push_remote.clone(), target_branch.clone()),
+            Err(_) => (git.get_default_remote(&repo_path)?, target_branch.clone()),
         };
 
     match git.check_remote_branch_exists(&repo_path, &target_remote.url, &base_branch) {
