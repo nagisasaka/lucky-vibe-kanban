@@ -3,8 +3,11 @@ import {
   AgentProviderCapability,
   AgentProviderReadiness,
   BaseCodingAgent,
+  ExecutionProcessStatus,
   type AgentProviderPolicy,
+  type ExecutionProcess,
 } from 'shared/types';
+import { isChatBlockingScriptActive } from './executionProcessRuntime';
 import { deriveRuntimeActionPolicy } from './runtimeActionPolicy';
 
 const readyPolicy: AgentProviderPolicy = {
@@ -50,6 +53,64 @@ function baseInput(
 }
 
 describe('runtime action policy', () => {
+  const devServer: ExecutionProcess = {
+    id: 'dev-server',
+    session_id: 'session-1',
+    run_reason: 'devserver',
+    executor_action: {
+      typ: {
+        type: 'ScriptRequest',
+        script: 'pnpm dev',
+        language: 'Bash',
+        context: 'DevServer',
+        working_dir: null,
+      },
+      next_action: null,
+    },
+    status: ExecutionProcessStatus.running,
+    exit_code: null,
+    dropped: false,
+    started_at: '2026-10-17T00:00:00Z',
+    completed_at: null,
+    created_at: '2026-10-17T00:00:00Z',
+    updated_at: '2026-10-17T00:00:00Z',
+  };
+
+  it('allows chat sends without offering chat stop for a running dev server', () => {
+    const scriptState = {
+      isStandaloneScriptActive: [devServer].some(isChatBlockingScriptActive),
+    };
+    const initial = deriveRuntimeActionPolicy(baseInput(scriptState));
+    const followUp = deriveRuntimeActionPolicy(
+      baseInput({
+        ...scriptState,
+        hasPriorAgentRun: true,
+        isLatestAgentRunTerminal: true,
+      })
+    );
+
+    expect(initial.send_initial.allowed).toBe(true);
+    expect(followUp.send_follow_up.allowed).toBe(true);
+    expect(followUp.queue_follow_up.allowed).toBe(false);
+    expect(initial.stop.allowed).toBe(false);
+    expect(followUp.stop.allowed).toBe(false);
+  });
+
+  it('still allows cancelling an agent while a dev server is running', () => {
+    const policy = deriveRuntimeActionPolicy(
+      baseInput({
+        isStandaloneScriptActive: [devServer].some(isChatBlockingScriptActive),
+        hasPriorAgentRun: true,
+        isAgentRunActive: true,
+        canCancelAgentRun: true,
+      })
+    );
+
+    expect(policy.send_follow_up.reason).toBe('runtime_busy');
+    expect(policy.queue_follow_up.allowed).toBe(true);
+    expect(policy.stop.allowed).toBe(true);
+  });
+
   it('allows idle new session initial send', () => {
     const policy = deriveRuntimeActionPolicy(
       baseInput({

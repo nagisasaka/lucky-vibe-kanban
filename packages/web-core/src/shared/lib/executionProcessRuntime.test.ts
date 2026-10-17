@@ -3,6 +3,7 @@ import { ExecutionProcessStatus, type ExecutionProcess } from 'shared/types';
 import {
   getExecutionProcessLifecycle,
   getExecutionProcessRuntimeDisplay,
+  isChatBlockingScriptActive,
   isExecutionProcessActive,
   isExecutionProcessFailedLike,
 } from './executionProcessRuntime';
@@ -38,6 +39,31 @@ function makeProcess(overrides: Partial<ExecutionProcess>): ExecutionProcess {
 }
 
 describe('execution process runtime helpers', () => {
+  it('keeps a running dev server active without blocking chat', () => {
+    const process = makeProcess({ run_reason: 'devserver' });
+
+    expect(isExecutionProcessActive(process)).toBe(true);
+    expect(isChatBlockingScriptActive(process)).toBe(false);
+  });
+
+  it.each<ExecutionProcess['run_reason']>([
+    'setupscript',
+    'cleanupscript',
+    'archivescript',
+    'integrationvalidation',
+    'resourcecommand',
+  ])('still blocks chat for an active %s', (run_reason) => {
+    expect(isChatBlockingScriptActive(makeProcess({ run_reason }))).toBe(true);
+  });
+
+  it.each([
+    ExecutionProcessStatus.completed,
+    ExecutionProcessStatus.failed,
+    ExecutionProcessStatus.killed,
+  ])('does not block chat for a %s script', (status) => {
+    expect(isChatBlockingScriptActive(makeProcess({ status }))).toBe(false);
+  });
+
   it('uses process status for active state', () => {
     const process = makeProcess({
       status: ExecutionProcessStatus.running,

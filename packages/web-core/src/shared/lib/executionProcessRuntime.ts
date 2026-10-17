@@ -45,6 +45,15 @@ export function isExecutionProcessActive(process: ExecutionProcess): boolean {
   }
 }
 
+export function isChatBlockingScriptActive(process: ExecutionProcess): boolean {
+  return (
+    process.executor_action.typ.type === 'ScriptRequest' &&
+    // Preview servers stay alive between chat turns and have their own stop control.
+    process.run_reason !== 'devserver' &&
+    isExecutionProcessActive(process)
+  );
+}
+
 export function isExecutionProcessFailedLike(
   process: ExecutionProcess
 ): boolean {
