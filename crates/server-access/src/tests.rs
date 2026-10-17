@@ -615,6 +615,51 @@ async fn activate(f: &Fixture, idp: &Idp, cookie: &str, csrf: &str) -> (String, 
     (cookie, csrf)
 }
 #[tokio::test]
+async fn oidc_auth0_rfc3339_updated_at_preserves_validation() {
+    let f = Fixture::new(true).await;
+    let idp = Idp::new().await;
+    let (cookie, csrf) = f.setup().await;
+    for updated_at in [
+        json!("2026-10-17T07:53:42.672Z"),
+        json!("2026-10-17T16:53:42+09:00"),
+        json!(1729167600),
+        Value::Null,
+    ] {
+        let (tx, url) = start_test(&f, &idp, &cookie, &csrf).await;
+        let (code, state) = idp
+            .code(&url, "github|test-user", json!({"updated_at":updated_at}))
+            .await;
+        assert_eq!(
+            callback(&f, &idp, &format!("{cookie}; {tx}"), &code, &state)
+                .await
+                .status(),
+            StatusCode::SEE_OTHER
+        );
+    }
+    for overrides in [
+        json!({"updated_at":"not-a-date"}),
+        json!({"updated_at":true}),
+        json!({"updated_at":"2026-10-17T07:53:42Z", "nonce":"wrong"}),
+        json!({"updated_at":"2026-10-17T07:53:42Z", "aud":"wrong"}),
+        json!({"updated_at":"2026-10-17T07:53:42Z", "iss":"https://wrong.auth0.com/"}),
+        json!({"updated_at":"2026-10-17T07:53:42Z", "exp":now()-300}),
+        // The compatibility option also supports RFC3339 security timestamps;
+        // expiry validation must still reject an expired string timestamp.
+        json!({"updated_at":"2026-10-17T07:53:42Z", "exp":"2000-01-01T00:00:00Z"}),
+        json!({"updated_at":"2026-10-17T07:53:42Z", "at_hash":"wrong"}),
+    ] {
+        let (tx, url) = start_test(&f, &idp, &cookie, &csrf).await;
+        let (code, state) = idp.code(&url, "github|test-user", overrides).await;
+        assert_eq!(
+            callback(&f, &idp, &format!("{cookie}; {tx}"), &code, &state)
+                .await
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+    }
+}
+
+#[tokio::test]
 async fn oidc_browser_state_nonce_audience_replay_and_initial_admin_binding() {
     let f = Fixture::new(true).await;
     let idp = Idp::new().await;

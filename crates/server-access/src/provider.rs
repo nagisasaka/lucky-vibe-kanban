@@ -584,7 +584,7 @@ mod diagnostic_tests {
         use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
         let claims = serde_json::json!({
             "iss":"https://example.auth0.com/", "sub":"private-user", "aud":"client",
-            "iat":1, "exp":2, "updated_at":"private-date"
+            "iat":1, "exp":2, "updated_at":true
         });
         let token = format!(
             "{}.{}.AA",
