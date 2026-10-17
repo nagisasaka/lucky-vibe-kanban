@@ -284,7 +284,10 @@ impl Access {
                 let reason = match error {
                     RequestTokenError::ServerResponse(_) => "token_endpoint_rejected",
                     RequestTokenError::Request(_) => "token_transport",
-                    RequestTokenError::Parse(_, _) => "token_response_parse",
+                    RequestTokenError::Parse(error, body) => {
+                        log_token_parse_failure(&error, &body);
+                        "token_response_parse"
+                    }
                     _ => "token_response_other",
                 };
                 oidc_rejected(reason)
@@ -423,6 +426,118 @@ fn oidc_rejected(reason: &'static str) -> Error {
     Error::unauthorized()
 }
 
+// The response and JWT are untrusted and may contain credentials. Diagnostic
+// decoding never authenticates a user and only emits allowlisted static labels.
+fn parse_location(
+    error: &serde_path_to_error::Error<serde_json::Error>,
+) -> (&'static str, &'static str) {
+    let path = error.path().to_string();
+    let field = [
+        "access_token",
+        "token_type",
+        "expires_in",
+        "refresh_token",
+        "scope",
+        "id_token",
+        "error",
+        "error_description",
+        "iss",
+        "sub",
+        "aud",
+        "exp",
+        "iat",
+        "auth_time",
+        "nonce",
+        "at_hash",
+        "c_hash",
+        "azp",
+        "name",
+        "nickname",
+        "preferred_username",
+        "profile",
+        "picture",
+        "website",
+        "email",
+        "email_verified",
+        "updated_at",
+        "phone_number",
+        "phone_number_verified",
+        "birthdate",
+        "gender",
+        "locale",
+        "zoneinfo",
+        "address",
+        "given_name",
+        "family_name",
+        "middle_name",
+    ]
+    .into_iter()
+    .find(|field| path == *field)
+    .unwrap_or("unknown");
+    let category = match error.inner().classify() {
+        serde_json::error::Category::Io => "io",
+        serde_json::error::Category::Syntax => "syntax",
+        serde_json::error::Category::Data => "data",
+        serde_json::error::Category::Eof => "eof",
+    };
+    (field, category)
+}
+
+fn id_token_parse_location(body: &[u8]) -> (&'static str, &'static str, &'static str) {
+    use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+    let Ok(response) = serde_json::from_slice::<serde_json::Value>(body) else {
+        return ("response_json", "unknown", "invalid");
+    };
+    let Some(token) = response.get("id_token").and_then(|v| v.as_str()) else {
+        return ("id_token", "id_token", "missing_or_not_string");
+    };
+    let parts: Vec<_> = token.split('.').collect();
+    if parts.len() != 3 {
+        return ("jwt_compact", "id_token", "invalid");
+    }
+    for (index, stage) in [(0, "jwt_header"), (1, "jwt_claims")] {
+        let Ok(bytes) = URL_SAFE_NO_PAD.decode(parts[index]) else {
+            return (stage, "unknown", "base64");
+        };
+        if index == 0 {
+            if serde_json::from_slice::<serde_json::Value>(&bytes).is_err() {
+                return (stage, "unknown", "json");
+            }
+        } else {
+            // IdTokenClaims flattens StandardClaims, which erases nested error
+            // paths. Parse the standard claims separately for diagnostic location.
+            let mut de = serde_json::Deserializer::from_slice(&bytes);
+            if let Err(error) = serde_path_to_error::deserialize::<
+                _,
+                openidconnect::StandardClaims<CoreGenderClaim>,
+            >(&mut de)
+            {
+                let (field, category) = parse_location(&error);
+                return (stage, field, category);
+            }
+            let mut de = serde_json::Deserializer::from_slice(&bytes);
+            if let Err(error) = serde_path_to_error::deserialize::<_, CoreIdTokenClaims>(&mut de) {
+                let (field, category) = parse_location(&error);
+                return (stage, field, category);
+            }
+        }
+    }
+    ("jwt_other", "unknown", "unknown")
+}
+
+fn log_token_parse_failure(error: &serde_path_to_error::Error<serde_json::Error>, body: &[u8]) {
+    let (field, category) = parse_location(error);
+    tracing::warn!(
+        stage = "token_response",
+        field,
+        category,
+        "OIDC parse diagnostic"
+    );
+    // Flattened token response fields can also lose their original path.
+    let (stage, field, category) = id_token_parse_location(body);
+    tracing::warn!(stage, field, category, "OIDC parse diagnostic");
+}
+
 fn claims_failure(error: &openidconnect::ClaimsVerificationError) -> &'static str {
     use openidconnect::{ClaimsVerificationError as C, SignatureVerificationError as S};
     match error {
@@ -449,6 +564,47 @@ fn claims_failure(error: &openidconnect::ClaimsVerificationError) -> &'static st
 #[cfg(test)]
 mod diagnostic_tests {
     use super::*;
+
+    #[test]
+    fn token_parse_diagnostics_identify_field_without_values() {
+        let mut de = serde_json::Deserializer::from_str(
+            r#"{"access_token":"secret","token_type":"Bearer","expires_in":"private-value"}"#,
+        );
+        let error = serde_path_to_error::deserialize::<_, CoreTokenResponse>(&mut de).unwrap_err();
+        assert_eq!(parse_location(&error), ("expires_in", "data"));
+        let mut de = serde_json::Deserializer::from_str(r#"{"private-field":"private-value"}"#);
+        let error =
+            serde_path_to_error::deserialize::<_, std::collections::BTreeMap<String, u64>>(&mut de)
+                .unwrap_err();
+        assert_eq!(parse_location(&error), ("unknown", "data"));
+    }
+
+    #[test]
+    fn embedded_claim_diagnostic_never_returns_claim_values() {
+        use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+        let claims = serde_json::json!({
+            "iss":"https://example.auth0.com/", "sub":"private-user", "aud":"client",
+            "iat":1, "exp":2, "updated_at":"private-date"
+        });
+        let token = format!(
+            "{}.{}.AA",
+            URL_SAFE_NO_PAD.encode(br#"{"alg":"RS256"}"#),
+            URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims).unwrap())
+        );
+        let body = serde_json::to_vec(&serde_json::json!({"id_token":token})).unwrap();
+        assert_eq!(
+            id_token_parse_location(&body),
+            ("jwt_claims", "updated_at", "data")
+        );
+        assert_eq!(
+            id_token_parse_location(br#"{"id_token":"secret"}"#),
+            ("jwt_compact", "id_token", "invalid")
+        );
+        assert_eq!(
+            id_token_parse_location(b"not-json"),
+            ("response_json", "unknown", "invalid")
+        );
+    }
 
     #[test]
     fn claim_diagnostics_discard_sensitive_error_payloads() {

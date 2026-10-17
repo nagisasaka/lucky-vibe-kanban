@@ -8,6 +8,7 @@ anyhow = { workspace = true }
 axum = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_path_to_error = "0.1"
 tokio = { workspace = true }
 reqwest = { workspace = true, features = ["form"] }
 http = "1"
