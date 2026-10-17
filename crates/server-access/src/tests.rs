@@ -533,7 +533,11 @@ impl Idp {
             params["redirect_uri"],
             "https://203.0.113.7:8443/api/access/callback"
         );
-        let mut claims = json!({"iss":self.state.issuer,"sub":sub,"aud":"web-client","iat":now(),"exp":now()+300,"nonce":params["nonce"],"name":"Test Person"});
+        // Real providers may bind the access token into the ID token. Exercise
+        // this post-exchange check on successful callbacks too.
+        let digest = Sha256::digest(b"discarded-web-access-token");
+        let at_hash = URL_SAFE_NO_PAD.encode(&digest[..16]);
+        let mut claims = json!({"iss":self.state.issuer,"sub":sub,"aud":"web-client","iat":now(),"exp":now()+300,"nonce":params["nonce"],"name":"Test Person","at_hash":at_hash});
         if let Some(overrides) = overrides.as_object() {
             for (k, v) in overrides {
                 claims[k] = v.clone();
@@ -654,6 +658,7 @@ async fn oidc_browser_state_nonce_audience_replay_and_initial_admin_binding() {
         json!({"aud":"another-client"}),
         json!({"iss":"https://wrong.auth0.com/"}),
         json!({"exp":now()-300}),
+        json!({"at_hash":"wrong-access-token-hash"}),
     ] {
         let (tx, url) = start_test(&f, &idp, &cookie, &csrf).await;
         let (code, state) = idp.code(&url, "auth0|admin", overrides).await;

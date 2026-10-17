@@ -275,12 +275,23 @@ impl Access {
         ))?);
         let token = client
             .exchange_code(AuthorizationCode::new(code))
-            .map_err(|_| Error::unauthorized())?
+            .map_err(|_| oidc_rejected("token_request_configuration"))?
             .set_pkce_verifier(PkceCodeVerifier::new(verifier))
             .request_async(&http_client(issuer.clone()))
             .await
-            .map_err(|_| Error::unauthorized())?;
-        let id_token = token.id_token().ok_or_else(Error::unauthorized)?;
+            .map_err(|error| {
+                use openidconnect::RequestTokenError;
+                let reason = match error {
+                    RequestTokenError::ServerResponse(_) => "token_endpoint_rejected",
+                    RequestTokenError::Request(_) => "token_transport",
+                    RequestTokenError::Parse(_, _) => "token_response_parse",
+                    _ => "token_response_other",
+                };
+                oidc_rejected(reason)
+            })?;
+        let id_token = token
+            .id_token()
+            .ok_or_else(|| oidc_rejected("id_token_missing"))?;
         let mut verifier = client
             .id_token_verifier()
             .set_allowed_algs(vec![CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256]);
@@ -299,18 +310,20 @@ impl Access {
         }
         let claims = id_token
             .claims(&verifier, &Nonce::new(nonce))
-            .map_err(|_| Error::unauthorized())?;
+            .map_err(|error| oidc_rejected(claims_failure(&error)))?;
         if let Some(expected) = claims.access_token_hash() {
             let actual = AccessTokenHash::from_token(
                 token.access_token(),
-                id_token.signing_alg().map_err(|_| Error::unauthorized())?,
+                id_token
+                    .signing_alg()
+                    .map_err(|_| oidc_rejected("access_token_hash_algorithm"))?,
                 id_token
                     .signing_key(&verifier)
-                    .map_err(|_| Error::unauthorized())?,
+                    .map_err(|_| oidc_rejected("access_token_hash_key"))?,
             )
-            .map_err(|_| Error::unauthorized())?;
+            .map_err(|_| oidc_rejected("access_token_hash_calculation"))?;
             if actual != *expected {
-                return Err(Error::unauthorized());
+                return Err(oidc_rejected("access_token_hash_mismatch"));
             }
         }
         let sub = claims.subject().as_str().to_owned();
@@ -400,5 +413,69 @@ pub(crate) fn fixture_cache(issuer: &str, jwks: serde_json::Value) -> Cache {
             last_refresh: now(),
         }]),
         attempts: VecDeque::new(),
+    }
+}
+
+// Never format provider/library errors here: their payloads can contain tokens,
+// response bodies, nonce values or identity claims. Only fixed codes are logged.
+fn oidc_rejected(reason: &'static str) -> Error {
+    tracing::warn!(reason, "OIDC callback rejected");
+    Error::unauthorized()
+}
+
+fn claims_failure(error: &openidconnect::ClaimsVerificationError) -> &'static str {
+    use openidconnect::{ClaimsVerificationError as C, SignatureVerificationError as S};
+    match error {
+        C::Expired(_) => "id_token_expired",
+        C::InvalidAudience(_) => "id_token_audience",
+        C::InvalidAuthContext(_) => "id_token_auth_context",
+        C::InvalidAuthTime(_) => "id_token_auth_time",
+        C::InvalidIssuer(_) => "id_token_issuer",
+        C::InvalidNonce(_) => "id_token_nonce",
+        C::InvalidSubject(_) => "id_token_subject",
+        C::Unsupported(_) => "id_token_unsupported",
+        C::SignatureVerification(error) => match error {
+            S::NoMatchingKey => "id_token_key_missing",
+            S::AmbiguousKeyId(_) => "id_token_key_ambiguous",
+            S::DisallowedAlg(_) | S::UnsupportedAlg(_) => "id_token_algorithm",
+            S::NoSignature => "id_token_unsigned",
+            S::InvalidKey(_) => "id_token_key_invalid",
+            _ => "id_token_signature",
+        },
+        _ => "id_token_claims_other",
+    }
+}
+
+#[cfg(test)]
+mod diagnostic_tests {
+    use super::*;
+
+    #[test]
+    fn claim_diagnostics_discard_sensitive_error_payloads() {
+        use openidconnect::{ClaimsVerificationError as C, SignatureVerificationError as S};
+        let secret = "private-nonce-token-and-identity".to_owned();
+        for (error, expected) in [
+            (C::InvalidNonce(secret.clone()), "id_token_nonce"),
+            (C::InvalidIssuer(secret.clone()), "id_token_issuer"),
+            (C::InvalidAudience(secret.clone()), "id_token_audience"),
+            (C::Expired(secret.clone()), "id_token_expired"),
+            (C::Unsupported(secret.clone()), "id_token_unsupported"),
+            (C::Other(secret.clone()), "id_token_claims_other"),
+            (
+                C::SignatureVerification(S::CryptoError(secret.clone())),
+                "id_token_signature",
+            ),
+            (
+                C::SignatureVerification(S::NoMatchingKey),
+                "id_token_key_missing",
+            ),
+        ] {
+            let reason = claims_failure(&error);
+            assert_eq!(reason, expected);
+            assert!(!reason.contains(&secret));
+            let response = oidc_rejected(reason);
+            assert_eq!(response.status, axum::http::StatusCode::UNAUTHORIZED);
+            assert_eq!(response.message, "Authentication required");
+        }
     }
 }
