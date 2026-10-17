@@ -90,7 +90,7 @@ import { RenameSessionDialog } from '@vibe/ui/components/RenameSessionDialog';
 import type { TurnNavigationItem } from '@vibe/ui/components/TurnNavigationPopup';
 import { deriveRuntimeActionPolicy } from '@/shared/lib/runtimeActionPolicy';
 import { resolveWorkspaceWorkingDirectory } from '@/shared/lib/workspaceContext';
-import { isExecutionProcessActive } from '@/shared/lib/executionProcessRuntime';
+import { isChatBlockingScriptActive } from '@/shared/lib/executionProcessRuntime';
 import { deriveCanonicalAgentRunActionPolicy } from '@/features/agent-runtime';
 import { canonicalAgentControls } from '../model/canonicalAgentControls';
 import { GoalProgressCard } from './GoalProgressCard';
@@ -342,11 +342,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     stopExecution: stopStandaloneScripts,
     isStopping: isStandaloneScriptStopping,
   } = useWorkspaceExecution(workspaceId);
-  const isStandaloneScriptActive = processes.some(
-    (process) =>
-      process.executor_action.typ.type === 'ScriptRequest' &&
-      isExecutionProcessActive(process)
-  );
+  const isStandaloneScriptActive = processes.some(isChatBlockingScriptActive);
 
   // Mobile layout — enables the enlarged approval footer + one-tap deny
   const isMobile = useIsMobile();

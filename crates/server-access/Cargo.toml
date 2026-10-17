@@ -8,13 +8,15 @@ anyhow = { workspace = true }
 axum = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_path_to_error = "0.1"
 tokio = { workspace = true }
 reqwest = { workspace = true, features = ["form"] }
 http = "1"
 url = "2.5"
 uuid = { version = "1", features = ["v4", "serde"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite", "uuid"] }
-openidconnect = { version = "4.0.1", default-features = false }
+# Auth0 profile updated_at may be RFC3339 instead of numeric epoch seconds.
+openidconnect = { version = "4.0.1", default-features = false, features = ["accept-rfc3339-timestamps"] }
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
 argon2 = "0.5"
 aes-gcm = "0.10"
