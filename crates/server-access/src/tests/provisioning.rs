@@ -147,6 +147,9 @@ async fn mock(
             r
         }
         (Method::PATCH, p) if p.starts_with("clients/") => {
+            if body["jwt_configuration"].get("secret_encoded").is_some() {
+                return (StatusCode::BAD_REQUEST, Json(json!({"message":"Payload validation error: Additional properties not allowed: secret_encoded on property jwt_configuration"}))).into_response();
+            }
             let c = state
                 .clients
                 .iter_mut()
@@ -623,4 +626,43 @@ fn provider_validation_hints_never_copy_response_text() {
     let detail = super::super::provisioning::rejection_detail(b"<html>secret-token-value</html>");
     assert!(detail.contains("fields=[]; categories=[]"));
     assert!(!detail.contains("secret-token-value"));
+}
+
+#[tokio::test]
+async fn provisioning_existing_client_omits_response_only_secret_encoded() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    remote.state.lock().await.clients.push(json!({
+        "client_id":"existing_web", "client_secret":"existing-secret",
+        "name":"Existing Web", "app_type":"regular_web",
+        "jwt_configuration":{"alg":"HS256","secret_encoded":false,"lifetime_in_seconds":7200,"scopes":{}},
+        "callbacks":["https://existing.example/callback"]
+    }));
+    let mut input = remote.input("preview");
+    input["web_client_id"] = json!("existing_web");
+    let receipt = preview(&f, &remote, &cookie, &csrf, input.clone()).await;
+    let response = apply(&f, &cookie, &csrf, input, &receipt).await;
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "{}",
+        body(response).await
+    );
+    let jwt = &receipt["plan"]["web"]["settings"]["jwt_configuration"];
+    assert_eq!(
+        jwt,
+        &json!({"alg":"RS256","lifetime_in_seconds":7200,"scopes":{}})
+    );
+    assert_eq!(
+        receipt["plan"]["web"]["previous"]["jwt_configuration"]["secret_encoded"],
+        false
+    );
+    assert_eq!(
+        receipt["plan"]["web"]["settings"]["callbacks"],
+        json!([
+            "https://existing.example/callback",
+            "https://203.0.113.7:8443/api/access/callback"
+        ])
+    );
 }

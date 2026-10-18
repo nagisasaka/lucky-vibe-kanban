@@ -379,6 +379,9 @@ fn client_plan(
         .as_object()
         .cloned()
         .unwrap_or_default();
+    // Auth0 can return this legacy flag while rejecting it in client updates.
+    // Preserve other JWT settings, but do not echo this response field back.
+    jwt.remove("secret_encoded");
     jwt.insert("alg".into(), json!("RS256"));
     let mut settings = json!({
         "name":old["name"].as_str().map(str::to_owned).unwrap_or_else(|| format!("LVK {role} ({public_url})")),
