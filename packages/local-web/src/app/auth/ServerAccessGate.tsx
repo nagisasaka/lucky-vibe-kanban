@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Auth0Setup } from './Auth0Setup';
+import { ChatGptCredentials } from './ChatGptCredentials';
 import {
   accessRequest,
   loadAccessStatus,
@@ -67,6 +68,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [mcp, setMcp] = useState(false);
+  const [credentialsVersion, setCredentialsVersion] = useState(0);
   const [mode, setMode] = useState('auth0');
   const [configuration, setConfiguration] = useState<Configuration>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
@@ -405,6 +407,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                     setClientId(result.web.client_id);
                     setClientSecret(result.web.client_secret);
                     setMcp(result.mcp_enabled);
+                    setCredentialsVersion((version) => version + 1);
                     setConfirmation(undefined);
                   }}
                 />
@@ -513,6 +516,12 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   </div>
                 )}
                 <h2 className="text-lg text-high">ChatGPTへのMCP接続</h2>
+                <ChatGptCredentials
+                  key={`${issuer}:${clientId}:${credentialsVersion}`}
+                  issuer={issuer}
+                  webClientId={clientId}
+                  disabled={busy || provisioningBusy}
+                />
                 <p>
                   自動セットアップ済みなら、Auth0での作成・設定を繰り返す必要はありません。
                   ChatGPTへMCP URLと専用Client

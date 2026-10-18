@@ -24,8 +24,12 @@ pub fn router(access: Access) -> Router {
         .route("/api/access/local", post(local))
         .route("/api/access/auth0/test", post(test_auth0))
         .route(
+            "/api/access/auth0/chatgpt-credentials",
+            post(super::chatgpt::handle),
+        )
+        .route(
             "/api/access/auth0/provision",
-            post(super::provisioning::handle),
+            post(super::provisioning::handle).layer(DefaultBodyLimit::max(128 * 1024)),
         )
         .route("/api/access/callback", get(callback))
         .route("/api/access/confirmation", get(confirmation))
@@ -229,7 +233,7 @@ async fn basic(
     }
     let _slot = access.0.password_slots.try_acquire().map_err(|_| Error {
         status: StatusCode::TOO_MANY_REQUESTS,
-        message: "Authentication busy",
+        message: "Authentication busy".into(),
     })?;
     let config = Config::Basic {
         username: input.username,
@@ -639,7 +643,7 @@ async fn metadata(State(access): State<Access>) -> Result<Json<Value>, Error> {
     else {
         return Err(Error {
             status: StatusCode::NOT_FOUND,
-            message: "Remote MCP is disabled",
+            message: "Remote MCP is disabled".into(),
         });
     };
     Ok(Json(

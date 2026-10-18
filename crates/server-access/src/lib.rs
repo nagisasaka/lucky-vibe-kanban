@@ -1,5 +1,6 @@
 //! Authentication for one trusted-team LVK server. Auth0 issues OAuth tokens;
 //! this crate owns membership, browser sessions and setup, never OAuth grants.
+mod chatgpt;
 mod handlers;
 mod preview;
 mod provider;
@@ -192,31 +193,31 @@ pub fn actor_is_admin() -> bool {
 #[derive(Debug)]
 pub struct Error {
     status: StatusCode,
-    message: &'static str,
+    message: std::borrow::Cow<'static, str>,
 }
 impl Error {
     fn bad(message: &'static str) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
-            message,
+            message: message.into(),
         }
     }
     fn unauthorized() -> Self {
         Self {
             status: StatusCode::UNAUTHORIZED,
-            message: "Authentication required",
+            message: "Authentication required".into(),
         }
     }
     fn forbidden(message: &'static str) -> Self {
         Self {
             status: StatusCode::FORBIDDEN,
-            message,
+            message: message.into(),
         }
     }
     fn unavailable() -> Self {
         Self {
             status: StatusCode::SERVICE_UNAVAILABLE,
-            message: "Authentication unavailable; operator recovery may be required",
+            message: "Authentication unavailable; operator recovery may be required".into(),
         }
     }
 }
@@ -339,7 +340,7 @@ impl Access {
         if rate.1 > 30 {
             return Err(Error {
                 status: StatusCode::TOO_MANY_REQUESTS,
-                message: "Too many authentication attempts; retry in one minute",
+                message: "Too many authentication attempts; retry in one minute".into(),
             });
         }
         Ok(())
@@ -430,7 +431,7 @@ impl Access {
             else {
                 return Err(Error {
                     status: StatusCode::NOT_FOUND,
-                    message: "Remote MCP is disabled",
+                    message: "Remote MCP is disabled".into(),
                 });
             };
             let token = headers

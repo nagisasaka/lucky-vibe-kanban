@@ -215,7 +215,7 @@ impl Access {
         let (config, revision) = self.load().await?;
         let config = config.ok_or(Error {
             status: StatusCode::LOCKED,
-            message: "Server setup is incomplete",
+            message: "Server setup is incomplete".into(),
         })?;
         if matches!(config, Config::Local) {
             let mut p = Principal::local();
@@ -261,7 +261,7 @@ impl Access {
             let password = password.to_owned();
             let _slot = self.0.password_slots.try_acquire().map_err(|_| Error {
                 status: StatusCode::TOO_MANY_REQUESTS,
-                message: "Authentication busy",
+                message: "Authentication busy".into(),
             })?;
             let valid = tokio::task::spawn_blocking(move || {
                 PasswordHash::new(&password_hash).ok().is_some_and(|h| {

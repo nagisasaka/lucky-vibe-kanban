@@ -11,7 +11,9 @@ struct Remote {
     enabled: HashMap<String, BTreeSet<String>>,
     fail_resource_once: bool,
     redirect: bool,
+    malformed_json: bool,
     reject: Option<StatusCode>,
+    management_token: Option<String>,
 }
 struct Auth0 {
     issuer: String,
@@ -56,7 +58,13 @@ async fn mock(
     headers: HeaderMap,
     bytes: axum::body::Bytes,
 ) -> Response {
-    assert_eq!(headers["authorization"], "Bearer management-secret");
+    let token = state
+        .lock()
+        .await
+        .management_token
+        .clone()
+        .unwrap_or_else(|| "management-secret".into());
+    assert_eq!(headers["authorization"], format!("Bearer {token}"));
     let path = uri.path().strip_prefix("/api/v2/").unwrap();
     let mut state = state.lock().await;
     if let Some(status) = state.reject {
@@ -65,6 +73,9 @@ async fn mock(
             Json(json!({"error":"management-secret MUST NOT ESCAPE"})),
         )
             .into_response();
+    }
+    if state.malformed_json {
+        return (StatusCode::OK, "management-secret MUST NOT ESCAPE").into_response();
     }
     if state.redirect {
         return (
@@ -136,6 +147,9 @@ async fn mock(
             r
         }
         (Method::PATCH, p) if p.starts_with("clients/") => {
+            if body["jwt_configuration"].get("secret_encoded").is_some() {
+                return (StatusCode::BAD_REQUEST, Json(json!({"message":"Payload validation error: Additional properties not allowed: secret_encoded on property jwt_configuration"}))).into_response();
+            }
             let c = state
                 .clients
                 .iter_mut()
@@ -233,6 +247,15 @@ async fn provisioning_preview_apply_and_retry_preserve_auth_and_other_apps() {
     let result = body(response).await;
     assert_ne!(result["web"]["client_id"], result["chatgpt"]["client_id"]);
     assert_eq!(result["web"]["client_secret"], "secret_0");
+    let saved = f.call("POST", "/api/access/auth0/chatgpt-credentials",
+        &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+        json!({"action":"reveal","issuer":remote.issuer,"web_client_id":result["web"]["client_id"]})).await;
+    assert_eq!(saved.status(), StatusCode::OK);
+    assert_eq!(
+        body(saved).await["client_secret"],
+        result["chatgpt"]["client_secret"]
+    );
+
     assert!(f.access.load().await.unwrap().0.is_none());
     let member_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM access_members")
         .fetch_one(f.access.pool())
@@ -463,6 +486,8 @@ async fn provisioning_rejects_non_admin_forced_mode_and_remote_auth_errors() {
         StatusCode::UNAUTHORIZED,
         StatusCode::FORBIDDEN,
         StatusCode::TOO_MANY_REQUESTS,
+        StatusCode::BAD_REQUEST,
+        StatusCode::INTERNAL_SERVER_ERROR,
     ] {
         remote.state.lock().await.reject = Some(status);
         let response = f
@@ -474,12 +499,12 @@ async fn provisioning_rejects_non_admin_forced_mode_and_remote_auth_errors() {
             )
             .await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        assert!(
-            !body(response)
-                .await
-                .to_string()
-                .contains("management-secret")
-        );
+        let error = body(response).await.to_string();
+        assert!(error.contains("GET /api/v2/clients"));
+        assert!(error.contains(&format!("HTTP {}", status.as_u16())));
+        assert!(!error.contains("management-secret"));
+        assert!(!error.contains("include_fields=true"));
+        assert!(!error.contains("per_page="));
     }
     assert!(remote.state.lock().await.writes.is_empty());
 }
@@ -516,4 +541,137 @@ async fn provisioning_paginates_and_rejects_changes_after_preview() {
         StatusCode::BAD_REQUEST
     );
     assert!(remote.state.lock().await.writes.is_empty());
+}
+
+#[tokio::test]
+async fn provisioning_accepts_long_tokens_and_rejects_oversized_input_without_writes() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    for length in [8920, 65536] {
+        let token = "t".repeat(length);
+        remote.state.lock().await.management_token = Some(token.clone());
+        let mut input = remote.input("inspect");
+        input["management_token"] = json!(token);
+        let response = f
+            .call(
+                "POST",
+                PATH,
+                &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+                input,
+            )
+            .await;
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+    for (token, message) in [
+        (String::new(), "Enter an Auth0 Management API access token"),
+        ("t".repeat(65537), "65536-byte limit"),
+    ] {
+        let mut input = remote.input("inspect");
+        input["management_token"] = json!(token);
+        let response = f
+            .call(
+                "POST",
+                PATH,
+                &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+                input,
+            )
+            .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert!(body(response).await.to_string().contains(message));
+    }
+    assert!(remote.state.lock().await.writes.is_empty());
+}
+
+#[tokio::test]
+async fn provisioning_reports_json_and_transport_failures_without_response_contents() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    remote.state.lock().await.malformed_json = true;
+    let input = remote.input("inspect");
+    let response = f
+        .call(
+            "POST",
+            PATH,
+            &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+            input.clone(),
+        )
+        .await;
+    let error = body(response).await.to_string();
+    assert!(error.contains("HTTP 200 invalid JSON response"));
+    assert!(error.contains("GET /api/v2/clients"));
+    assert!(!error.contains("management-secret"));
+    drop(remote);
+    let response = f
+        .call(
+            "POST",
+            PATH,
+            &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+            input,
+        )
+        .await;
+    let error = body(response).await.to_string();
+    assert!(error.contains("connection failed") || error.contains("request transport failed"));
+    assert!(!error.contains("management-secret"));
+    assert!(!error.contains("127.0.0.1"));
+}
+
+#[test]
+fn provider_validation_hints_never_copy_response_text() {
+    let bytes = serde_json::to_vec(&json!({"message":"Payload validation error: 'Additional properties not allowed: secret-token-value' on property jwt_configuration. Bearer private-credential", "errorCode":"secret-code"})).unwrap();
+    let detail = super::super::provisioning::rejection_detail(&bytes);
+    assert!(detail.contains("fields=[jwt_configuration]"));
+    assert!(detail.contains("payload validation error"));
+    assert!(detail.contains("additional properties not allowed"));
+    for secret in [
+        "secret-token-value",
+        "private-credential",
+        "secret-code",
+        "Bearer",
+    ] {
+        assert!(!detail.contains(secret));
+    }
+    let detail = super::super::provisioning::rejection_detail(b"<html>secret-token-value</html>");
+    assert!(detail.contains("fields=[]; categories=[]"));
+    assert!(!detail.contains("secret-token-value"));
+}
+
+#[tokio::test]
+async fn provisioning_existing_client_omits_response_only_secret_encoded() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    remote.state.lock().await.clients.push(json!({
+        "client_id":"existing_web", "client_secret":"existing-secret",
+        "name":"Existing Web", "app_type":"regular_web",
+        "jwt_configuration":{"alg":"HS256","secret_encoded":false,"lifetime_in_seconds":7200,"scopes":{}},
+        "callbacks":["https://existing.example/callback"]
+    }));
+    let mut input = remote.input("preview");
+    input["web_client_id"] = json!("existing_web");
+    let receipt = preview(&f, &remote, &cookie, &csrf, input.clone()).await;
+    let response = apply(&f, &cookie, &csrf, input, &receipt).await;
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "{}",
+        body(response).await
+    );
+    let jwt = &receipt["plan"]["web"]["settings"]["jwt_configuration"];
+    assert_eq!(
+        jwt,
+        &json!({"alg":"RS256","lifetime_in_seconds":7200,"scopes":{}})
+    );
+    assert_eq!(
+        receipt["plan"]["web"]["previous"]["jwt_configuration"]["secret_encoded"],
+        false
+    );
+    assert_eq!(
+        receipt["plan"]["web"]["settings"]["callbacks"],
+        json!([
+            "https://existing.example/callback",
+            "https://203.0.113.7:8443/api/access/callback"
+        ])
+    );
 }

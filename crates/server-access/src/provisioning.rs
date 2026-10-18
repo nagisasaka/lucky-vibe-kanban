@@ -6,8 +6,79 @@ use serde_json::{Value, json};
 
 use super::*;
 
+const MAX_MANAGEMENT_TOKEN_BYTES: usize = 64 * 1024;
+
 const CLIENT_FIELDS: &str = "client_id,name,app_type,client_metadata,callbacks,allowed_logout_urls,jwt_configuration,grant_types,token_endpoint_auth_method,is_first_party,oidc_conformant,refresh_token";
 const RETRY: &str = "Auth0 setup did not finish. Existing LVK authentication is unchanged. Check Auth0 permissions, then preview again; created applications will be reused.";
+
+// Provider messages may echo credentials or input values. Emit only our own
+// finite vocabulary; never concatenate any provider-controlled text.
+pub(super) fn rejection_detail(bytes: &[u8]) -> String {
+    let value: Value = serde_json::from_slice(bytes).unwrap_or(Value::Null);
+    let message = value["message"]
+        .as_str()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let words: Vec<_> = message
+        .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+        .collect();
+    let fields: Vec<_> = [
+        "name",
+        "app_type",
+        "client_metadata",
+        "callbacks",
+        "allowed_logout_urls",
+        "jwt_configuration",
+        "alg",
+        "lifetime_in_seconds",
+        "secret_encoded",
+        "scopes",
+        "grant_types",
+        "token_endpoint_auth_method",
+        "client_authentication_methods",
+        "is_first_party",
+        "oidc_conformant",
+        "refresh_token",
+        "rotation_type",
+        "expiration_type",
+        "token_lifetime",
+        "idle_token_lifetime",
+        "leeway",
+        "infinite_token_lifetime",
+        "infinite_idle_token_lifetime",
+        "organization_usage",
+        "organization_require_behavior",
+        "resource_parameter_profile",
+        "flags",
+    ]
+    .into_iter()
+    .filter(|field| words.contains(field))
+    .collect();
+    let reasons: Vec<_> = [
+        "payload validation error",
+        "additional properties not allowed",
+        "invalid type",
+        "expected type",
+        "invalid grant types",
+        "not allowed",
+        "must be",
+        "cannot",
+        "required",
+        "too long",
+        "too short",
+        "invalid uri",
+        "invalid url",
+    ]
+    .into_iter()
+    .filter(|reason| message.contains(reason))
+    .collect();
+    format!(
+        "Provider validation hints: fields=[{}]; categories=[{}]. {}",
+        fields.join(", "),
+        reasons.join(", "),
+        RETRY
+    )
+}
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,8 +123,13 @@ struct Management<'a> {
 impl<'a> Management<'a> {
     fn new(input: &'a Input) -> Result<Self, Error> {
         provider::validate_issuer(&input.issuer)?;
-        if input.management_token.is_empty() || input.management_token.len() > 8192 {
+        if input.management_token.is_empty() {
             return Err(Error::bad("Enter an Auth0 Management API access token"));
+        }
+        if input.management_token.len() > MAX_MANAGEMENT_TOKEN_BYTES {
+            return Err(Error::bad(
+                "Auth0 Management API access token exceeds the 65536-byte limit",
+            ));
         }
         Ok(Self {
             input,
@@ -70,43 +146,116 @@ impl<'a> Management<'a> {
         path: &str,
         body: Option<&Value>,
     ) -> Result<Value, Error> {
+        // Only endpoint templates enter diagnostics; never IDs, queries, payloads or URLs.
+        let endpoint = match path.split('?').next().unwrap_or_default() {
+            "clients" => "clients",
+            "connections" => "connections",
+            "resource-servers" => "resource-servers",
+            "tenants/settings" => "tenants/settings",
+            p if p.starts_with("clients/") => "clients/{id}",
+            p if p.starts_with("connections/") => "connections/{id}/clients",
+            p if p.starts_with("resource-servers/") => "resource-servers/{id}",
+            _ => "unknown",
+        };
+        let failure = |stage: &str, status: Option<StatusCode>, hint: &str| {
+            let code = status.map(|s| s.as_u16());
+            tracing::warn!(operation = %method, endpoint, stage, http_status = ?code, "Auth0 provisioning request failed");
+            let status = code.map(|s| format!(" HTTP {s}")).unwrap_or_default();
+            Error {
+                status: StatusCode::BAD_REQUEST,
+                message: format!("Auth0 {method} /api/v2/{endpoint}:{status} {stage}. {hint}")
+                    .into(),
+            }
+        };
         // All paths are internal constants or validated IDs, never response links.
         let mut request = self
             .http
-            .request(method, format!("{}api/v2/{path}", self.input.issuer))
+            .request(
+                method.clone(),
+                format!("{}api/v2/{path}", self.input.issuer),
+            )
             .bearer_auth(&self.input.management_token);
         if let Some(body) = body {
             request = request.json(body);
         }
-        let mut response = request.send().await.map_err(|_| Error::bad(RETRY))?;
+        let mut response = request.send().await.map_err(|e| {
+            let stage = if e.is_timeout() {
+                "request timeout"
+            } else if e.is_connect() {
+                "connection failed"
+            } else if e.is_builder() {
+                "request construction failed"
+            } else {
+                "request transport failed"
+            };
+            failure(stage, None, RETRY)
+        })?;
+        let status = response.status();
         match response.status() {
             StatusCode::UNAUTHORIZED => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 management token is invalid or expired; enter a new token and preview again",
                 ));
             }
             StatusCode::FORBIDDEN => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 management token lacks required permissions; check the setup guide and preview again",
                 ));
             }
             StatusCode::TOO_MANY_REQUESTS => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 rate limit reached; wait before previewing again",
                 ));
             }
-            status if !status.is_success() => return Err(Error::bad(RETRY)),
+            status if !status.is_success() => {
+                // Bound error-body reads independently from successful responses.
+                let mut bytes = Vec::new();
+                while let Some(chunk) = response
+                    .chunk()
+                    .await
+                    .map_err(|_| failure("error response body read failed", Some(status), RETRY))?
+                {
+                    if bytes.len() + chunk.len() > 16 * 1024 {
+                        return Err(failure(
+                            "HTTP rejection (error response exceeds 16 KiB)",
+                            Some(status),
+                            RETRY,
+                        ));
+                    }
+                    bytes.extend_from_slice(&chunk);
+                }
+                let detail = rejection_detail(&bytes);
+                tracing::warn!(operation = %method, endpoint, http_status = status.as_u16(), detail, "Auth0 rejected provisioning settings");
+                return Err(failure("HTTP rejection", Some(status), &detail));
+            }
             StatusCode::NO_CONTENT => return Ok(Value::Null),
             _ => {}
         }
         let mut bytes = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(|_| Error::bad(RETRY))? {
+        while let Some(chunk) = response.chunk().await.map_err(|e| {
+            failure(
+                if e.is_timeout() {
+                    "response body timeout"
+                } else {
+                    "response body read failed"
+                },
+                Some(status),
+                RETRY,
+            )
+        })? {
             if bytes.len() + chunk.len() > 1024 * 1024 {
-                return Err(Error::bad("Auth0 response too large"));
+                return Err(failure("response exceeds 1 MiB", Some(status), RETRY));
             }
             bytes.extend_from_slice(&chunk);
         }
-        serde_json::from_slice(&bytes).map_err(|_| Error::bad(RETRY))
+        serde_json::from_slice(&bytes)
+            .map_err(|_| failure("invalid JSON response", Some(status), RETRY))
     }
     async fn list(&self, path: &str, fields: &str) -> Result<Vec<Value>, Error> {
         let mut items = Vec::new();
@@ -230,6 +379,9 @@ fn client_plan(
         .as_object()
         .cloned()
         .unwrap_or_default();
+    // Auth0 can return this legacy flag while rejecting it in client updates.
+    // Preserve other JWT settings, but do not echo this response field back.
+    jwt.remove("secret_encoded");
     jwt.insert("alg".into(), json!("RS256"));
     let mut settings = json!({
         "name":old["name"].as_str().map(str::to_owned).unwrap_or_else(|| format!("LVK {role} ({public_url})")),
@@ -492,7 +644,24 @@ pub(crate) async fn handle(
                 "started",
             )
             .await?;
-        let result = apply(&api, &plan).await;
+        let result = async {
+            let result = apply(&api, &plan).await?;
+            if let Some(chatgpt) = result.get("chatgpt") {
+                super::chatgpt::save(
+                    &access,
+                    &super::chatgpt::Credentials {
+                        issuer: plan.issuer.clone(),
+                        web_client_id: string(&result["web"], "client_id")?.into(),
+                        resource: string(&result, "resource")?.into(),
+                        client_id: string(chatgpt, "client_id")?.into(),
+                        client_secret: string(chatgpt, "client_secret")?.into(),
+                    },
+                )
+                .await?;
+            }
+            Ok::<_, Error>(result)
+        }
+        .await;
         access
             .audit(
                 session.user_id.as_deref(),
@@ -510,6 +679,9 @@ pub(crate) async fn handle(
     };
     let response = tokio::time::timeout(Duration::from_secs(120), action)
         .await
-        .map_err(|_| Error::bad(RETRY))??;
+        .map_err(|_| {
+            tracing::warn!("Auth0 provisioning overall timeout (120 seconds)");
+            Error::bad("Auth0 setup exceeded the overall 120-second timeout; preview again before retrying")
+        })??;
     Ok(secure_response(response))
 }

@@ -123,7 +123,13 @@ export function Auth0Setup({
         onConfigured(next);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Auth0の設定に失敗しました');
+      const message =
+        e instanceof Error ? e.message : 'Auth0の設定に失敗しました';
+      setError(
+        step === 'apply'
+          ? `${message} Auth0側に一部の変更が適用されている可能性があります。トークンを再入力して変更内容を確認し直してください。`
+          : message
+      );
     } finally {
       if (step === 'apply') {
         setToken('');
@@ -170,8 +176,7 @@ export function Auth0Setup({
         </details>
         {error && (
           <p role="alert" className="text-error">
-            {error}{' '}
-            途中まで作成されたアプリは残ります。トークンを再入力して変更内容を確認し直してください。
+            {error}
           </p>
         )}
         <fieldset disabled={busy || disabled} className="min-w-0 space-y-base">
@@ -358,41 +363,8 @@ export function Auth0Setup({
             {result.chatgpt && (
               <>
                 <p>
-                  ログイン試験で画面を移動する前に、ChatGPTのOAuth詳細設定へ次の情報をコピーしてください。この画面を離れるとSecretの表示は消えます。
+                  ChatGPT用の接続情報を保存しました。先にログイン試験とAuth0の有効化を完了し、ログイン後に認証設定の「ChatGPTへのMCP接続」からコピーしてください。
                 </p>
-                <label className="block">
-                  ChatGPT用Client ID
-                  <input
-                    className={field}
-                    readOnly
-                    value={result.chatgpt.client_id}
-                  />
-                </label>
-                <label className="block">
-                  ChatGPT用Client Secret
-                  <input
-                    className={field}
-                    type="password"
-                    autoComplete="off"
-                    readOnly
-                    value={result.chatgpt.client_secret}
-                  />
-                </label>
-                <button
-                  className={button}
-                  type="button"
-                  onClick={() =>
-                    void navigator.clipboard
-                      .writeText(result.chatgpt!.client_secret)
-                      .catch(() =>
-                        setError(
-                          'コピーできませんでした。Secret欄を選択してコピーしてください。'
-                        )
-                      )
-                  }
-                >
-                  ChatGPT用Secretをコピー
-                </button>
                 <p className="break-all">MCP URL：{result.resource}</p>
                 <p>
                   要求スコープは必要なものだけ選んでください：lvk:read /
