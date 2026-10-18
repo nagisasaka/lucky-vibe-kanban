@@ -1214,6 +1214,8 @@ where
         }
         if is_terminal_node(current) {
             if current == status {
+                // Retry repairs a crash between child completion and parent projection.
+                self.refresh_run_projection(run_id, run_id).await?;
                 return Ok(());
             }
             return Err(AgentRunPortError::Rejected(
@@ -1231,6 +1233,7 @@ where
             true,
         )
         .await?;
+        self.refresh_run_projection(run_id, run_id).await?;
         Ok(())
     }
 
@@ -1707,6 +1710,164 @@ pub fn evaluate_join(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct NoAgentCalls;
+
+    #[async_trait::async_trait]
+    impl AgentRunPort for NoAgentCalls {
+        async fn create(
+            &self,
+            _: executors::runtime::AgentRunRequestEnvelope,
+            _: executors::runtime::RunAttemptRequest,
+        ) -> Result<Uuid, AgentRunPortError> {
+            panic!("completion must not launch agents")
+        }
+        async fn query(
+            &self,
+            _: Uuid,
+        ) -> Result<executors::runtime::AgentRunPortSnapshot, AgentRunPortError> {
+            panic!("completion must not query agents")
+        }
+        async fn control(&self, _: AgentRunPortCommandEnvelope) -> Result<(), AgentRunPortError> {
+            panic!("completion must not control agents")
+        }
+        async fn subscribe(
+            &self,
+            _: Uuid,
+        ) -> Result<executors::runtime::AgentEventStream, AgentRunPortError> {
+            panic!("completion must not subscribe to agents")
+        }
+    }
+
+    #[tokio::test]
+    async fn product_completion_projects_parent_and_repairs_interrupted_projection() {
+        use executors::runtime::{
+            EachDownstreamExecution, OrchestrationProductKind, OrchestrationRetryPolicy,
+            RemainingUpstreamsPolicy, WorkspaceMode,
+        };
+        for (status, parent) in [
+            (
+                OrchestrationNodeStatus::Succeeded,
+                OrchestrationRunStatus::Succeeded,
+            ),
+            (
+                OrchestrationNodeStatus::Failed,
+                OrchestrationRunStatus::Failed,
+            ),
+            (
+                OrchestrationNodeStatus::Cancelled,
+                OrchestrationRunStatus::Failed,
+            ),
+        ] {
+            let pool = sqlx::sqlite::SqlitePoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .unwrap();
+            sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+            let id = Uuid::new_v4();
+            let plan = OrchestrationPlanSnapshot {
+                schema_version: 1,
+                plan_id: Uuid::new_v4(),
+                source_definition_id: id,
+                source_definition_version: "test".into(),
+                product_kind: OrchestrationProductKind::Workflow,
+                workspace_mode: WorkspaceMode::SharedWorkspace,
+                created_at: Utc::now(),
+                nodes: vec![OrchestrationPlanNode {
+                    node_key: "integrate".into(),
+                    stable_order: 0,
+                    dependencies: vec![],
+                    join: OrchestrationJoinPolicy::All,
+                    failure_policy: OrchestrationFailurePolicy::FailFast,
+                    remaining_upstreams: RemainingUpstreamsPolicy::Continue,
+                    each_downstream_execution: EachDownstreamExecution::Parallel,
+                    retry: OrchestrationRetryPolicy::default(),
+                    runtime_profile_id: None,
+                    provider_id: None,
+                    provider_config: None,
+                    requires_product_validation: true,
+                }],
+            };
+            OrchestrationRunRecord::persist_before_dispatch(
+                &pool,
+                id,
+                Uuid::new_v4(),
+                "test",
+                id,
+                &plan,
+            )
+            .await
+            .unwrap();
+            let node = Uuid::new_v4();
+            OrchestrationNodeExecutionRecord::persist_identity_before_dispatch(
+                &pool,
+                node,
+                id,
+                "integrate",
+                0,
+                0,
+            )
+            .await
+            .unwrap();
+            let service = OrchestrationService::new(pool.clone(), Arc::new(NoAgentCalls));
+            service
+                .append_event(
+                    id,
+                    id,
+                    OrchestrationEventPayload::LifecycleChanged {
+                        status: OrchestrationRunStatus::Running,
+                    },
+                )
+                .await
+                .unwrap();
+            // Reproduce a crash/failure after child completion has committed.
+            sqlx::raw_sql("CREATE TRIGGER reject_parent BEFORE UPDATE OF status ON orchestration_runs WHEN NEW.status != 'running' BEGIN SELECT RAISE(ABORT, 'parent projection interrupted'); END;").execute(&pool).await.unwrap();
+            assert!(
+                service
+                    .complete_product_node(id, node, status)
+                    .await
+                    .is_err()
+            );
+            let child: OrchestrationNodeStatus =
+                sqlx::query_scalar("SELECT status FROM orchestration_node_executions WHERE id=?")
+                    .bind(node)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(child, status);
+            sqlx::raw_sql("DROP TRIGGER reject_parent")
+                .execute(&pool)
+                .await
+                .unwrap();
+            service
+                .complete_product_node(id, node, status)
+                .await
+                .unwrap();
+            let actual: OrchestrationRunStatus =
+                sqlx::query_scalar("SELECT status FROM orchestration_runs WHERE id=?")
+                    .bind(id)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(actual, parent);
+            let count: i64 = sqlx::query_scalar("SELECT count(*) FROM orchestration_events")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            service
+                .complete_product_node(id, node, status)
+                .await
+                .unwrap();
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>("SELECT count(*) FROM orchestration_events")
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap(),
+                count
+            );
+        }
+    }
 
     #[test]
     fn waiting_projection_only_blocks_when_no_runnable_branch_exists() {

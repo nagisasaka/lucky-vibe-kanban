@@ -60,3 +60,6 @@ percent-encoding = "2.3"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+[dev-dependencies]
+toml_edit = "0.25.8"

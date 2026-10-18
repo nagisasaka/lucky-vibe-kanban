@@ -83,17 +83,22 @@ pub(super) async fn request_recovery(
         "This Integration is already being reconciled"
     );
     let id = run.id;
-    let result = if run.status == "succeeded" && run.payload.published {
-        // Git and Card receipts are already final. Retrying memory must not
-        // depend on historical process rows or on the target still being here.
-        run.payload.wiki_result = Some(match record_memory_integration(deployment, &run).await {
-            Ok(result) => result,
-            Err(error) => format!("semantic outbox pending: {error:#}"),
-        });
-        run.save(&deployment.db().pool).await.map_err(Into::into)
-    } else {
-        recover_publication(deployment, run).await
-    };
+    let result = async {
+        if run.status == "succeeded" && run.payload.published {
+            complete_product(deployment, &run, OrchestrationNodeStatus::Succeeded).await?;
+            // Git and Card receipts are already final. Retrying memory must not
+            // depend on historical process rows or on the target still being here.
+            run.payload.wiki_result =
+                Some(match record_memory_integration(deployment, &run).await {
+                    Ok(result) => result,
+                    Err(error) => format!("semantic outbox pending: {error:#}"),
+                });
+            run.save(&deployment.db().pool).await.map_err(Into::into)
+        } else {
+            recover_publication(deployment, run).await
+        }
+    }
+    .await;
     IN_FLIGHT.lock().expect("Integration task set").remove(&id);
     result
 }
@@ -1581,16 +1586,9 @@ async fn complete_product(
     run: &IntegrationRun,
     status: OrchestrationNodeStatus,
 ) -> anyhow::Result<()> {
-    let node:Option<(Uuid,OrchestrationNodeStatus)>=sqlx::query_as("SELECT id,status FROM orchestration_node_executions WHERE orchestration_run_id=? AND node_key='integrate'")
+    let node: Option<Uuid> = sqlx::query_scalar("SELECT id FROM orchestration_node_executions WHERE orchestration_run_id=? AND node_key='integrate'")
         .bind(run.id).fetch_optional(&deployment.db().pool).await?;
-    if let Some((node, current)) = node
-        && !matches!(
-            current,
-            OrchestrationNodeStatus::Succeeded
-                | OrchestrationNodeStatus::Failed
-                | OrchestrationNodeStatus::Cancelled
-        )
-    {
+    if let Some(node) = node {
         OrchestrationService::new(
             deployment.db().pool.clone(),
             Arc::new(deployment.agent_run_port().clone()),
