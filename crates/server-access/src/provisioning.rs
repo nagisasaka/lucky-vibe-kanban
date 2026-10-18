@@ -77,43 +77,98 @@ impl<'a> Management<'a> {
         path: &str,
         body: Option<&Value>,
     ) -> Result<Value, Error> {
+        // Only endpoint templates enter diagnostics; never IDs, queries, payloads or URLs.
+        let endpoint = match path.split('?').next().unwrap_or_default() {
+            "clients" => "clients",
+            "connections" => "connections",
+            "resource-servers" => "resource-servers",
+            "tenants/settings" => "tenants/settings",
+            p if p.starts_with("clients/") => "clients/{id}",
+            p if p.starts_with("connections/") => "connections/{id}/clients",
+            p if p.starts_with("resource-servers/") => "resource-servers/{id}",
+            _ => "unknown",
+        };
+        let failure = |stage: &str, status: Option<StatusCode>, hint: &str| {
+            let code = status.map(|s| s.as_u16());
+            tracing::warn!(operation = %method, endpoint, stage, http_status = ?code, "Auth0 provisioning request failed");
+            let status = code.map(|s| format!(" HTTP {s}")).unwrap_or_default();
+            Error {
+                status: StatusCode::BAD_REQUEST,
+                message: format!("Auth0 {method} /api/v2/{endpoint}:{status} {stage}. {hint}")
+                    .into(),
+            }
+        };
         // All paths are internal constants or validated IDs, never response links.
         let mut request = self
             .http
-            .request(method, format!("{}api/v2/{path}", self.input.issuer))
+            .request(
+                method.clone(),
+                format!("{}api/v2/{path}", self.input.issuer),
+            )
             .bearer_auth(&self.input.management_token);
         if let Some(body) = body {
             request = request.json(body);
         }
-        let mut response = request.send().await.map_err(|_| Error::bad(RETRY))?;
+        let mut response = request.send().await.map_err(|e| {
+            let stage = if e.is_timeout() {
+                "request timeout"
+            } else if e.is_connect() {
+                "connection failed"
+            } else if e.is_builder() {
+                "request construction failed"
+            } else {
+                "request transport failed"
+            };
+            failure(stage, None, RETRY)
+        })?;
+        let status = response.status();
         match response.status() {
             StatusCode::UNAUTHORIZED => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 management token is invalid or expired; enter a new token and preview again",
                 ));
             }
             StatusCode::FORBIDDEN => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 management token lacks required permissions; check the setup guide and preview again",
                 ));
             }
             StatusCode::TOO_MANY_REQUESTS => {
-                return Err(Error::bad(
+                return Err(failure(
+                    "HTTP rejection",
+                    Some(status),
                     "Auth0 rate limit reached; wait before previewing again",
                 ));
             }
-            status if !status.is_success() => return Err(Error::bad(RETRY)),
+            status if !status.is_success() => {
+                return Err(failure("HTTP rejection", Some(status), RETRY));
+            }
             StatusCode::NO_CONTENT => return Ok(Value::Null),
             _ => {}
         }
         let mut bytes = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(|_| Error::bad(RETRY))? {
+        while let Some(chunk) = response.chunk().await.map_err(|e| {
+            failure(
+                if e.is_timeout() {
+                    "response body timeout"
+                } else {
+                    "response body read failed"
+                },
+                Some(status),
+                RETRY,
+            )
+        })? {
             if bytes.len() + chunk.len() > 1024 * 1024 {
-                return Err(Error::bad("Auth0 response too large"));
+                return Err(failure("response exceeds 1 MiB", Some(status), RETRY));
             }
             bytes.extend_from_slice(&chunk);
         }
-        serde_json::from_slice(&bytes).map_err(|_| Error::bad(RETRY))
+        serde_json::from_slice(&bytes)
+            .map_err(|_| failure("invalid JSON response", Some(status), RETRY))
     }
     async fn list(&self, path: &str, fields: &str) -> Result<Vec<Value>, Error> {
         let mut items = Vec::new();
@@ -517,6 +572,9 @@ pub(crate) async fn handle(
     };
     let response = tokio::time::timeout(Duration::from_secs(120), action)
         .await
-        .map_err(|_| Error::bad(RETRY))??;
+        .map_err(|_| {
+            tracing::warn!("Auth0 provisioning overall timeout (120 seconds)");
+            Error::bad("Auth0 setup exceeded the overall 120-second timeout; preview again before retrying")
+        })??;
     Ok(secure_response(response))
 }

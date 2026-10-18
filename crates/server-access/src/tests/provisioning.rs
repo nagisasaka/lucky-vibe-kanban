@@ -11,6 +11,7 @@ struct Remote {
     enabled: HashMap<String, BTreeSet<String>>,
     fail_resource_once: bool,
     redirect: bool,
+    malformed_json: bool,
     reject: Option<StatusCode>,
     management_token: Option<String>,
 }
@@ -72,6 +73,9 @@ async fn mock(
             Json(json!({"error":"management-secret MUST NOT ESCAPE"})),
         )
             .into_response();
+    }
+    if state.malformed_json {
+        return (StatusCode::OK, "management-secret MUST NOT ESCAPE").into_response();
     }
     if state.redirect {
         return (
@@ -470,6 +474,8 @@ async fn provisioning_rejects_non_admin_forced_mode_and_remote_auth_errors() {
         StatusCode::UNAUTHORIZED,
         StatusCode::FORBIDDEN,
         StatusCode::TOO_MANY_REQUESTS,
+        StatusCode::BAD_REQUEST,
+        StatusCode::INTERNAL_SERVER_ERROR,
     ] {
         remote.state.lock().await.reject = Some(status);
         let response = f
@@ -481,12 +487,11 @@ async fn provisioning_rejects_non_admin_forced_mode_and_remote_auth_errors() {
             )
             .await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        assert!(
-            !body(response)
-                .await
-                .to_string()
-                .contains("management-secret")
-        );
+        let error = body(response).await.to_string();
+        assert!(error.contains("GET /api/v2/clients"));
+        assert!(error.contains(&format!("HTTP {}", status.as_u16())));
+        assert!(!error.contains("management-secret"));
+        assert!(!error.contains("fields="));
     }
     assert!(remote.state.lock().await.writes.is_empty());
 }
@@ -563,4 +568,38 @@ async fn provisioning_accepts_long_tokens_and_rejects_oversized_input_without_wr
         assert!(body(response).await.to_string().contains(message));
     }
     assert!(remote.state.lock().await.writes.is_empty());
+}
+
+#[tokio::test]
+async fn provisioning_reports_json_and_transport_failures_without_response_contents() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    remote.state.lock().await.malformed_json = true;
+    let input = remote.input("inspect");
+    let response = f
+        .call(
+            "POST",
+            PATH,
+            &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+            input.clone(),
+        )
+        .await;
+    let error = body(response).await.to_string();
+    assert!(error.contains("HTTP 200 invalid JSON response"));
+    assert!(error.contains("GET /api/v2/clients"));
+    assert!(!error.contains("management-secret"));
+    drop(remote);
+    let response = f
+        .call(
+            "POST",
+            PATH,
+            &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+            input,
+        )
+        .await;
+    let error = body(response).await.to_string();
+    assert!(error.contains("connection failed") || error.contains("request transport failed"));
+    assert!(!error.contains("management-secret"));
+    assert!(!error.contains("127.0.0.1"));
 }

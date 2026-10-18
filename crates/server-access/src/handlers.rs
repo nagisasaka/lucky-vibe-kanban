@@ -229,7 +229,7 @@ async fn basic(
     }
     let _slot = access.0.password_slots.try_acquire().map_err(|_| Error {
         status: StatusCode::TOO_MANY_REQUESTS,
-        message: "Authentication busy",
+        message: "Authentication busy".into(),
     })?;
     let config = Config::Basic {
         username: input.username,
@@ -639,7 +639,7 @@ async fn metadata(State(access): State<Access>) -> Result<Json<Value>, Error> {
     else {
         return Err(Error {
             status: StatusCode::NOT_FOUND,
-            message: "Remote MCP is disabled",
+            message: "Remote MCP is disabled".into(),
         });
     };
     Ok(Json(
