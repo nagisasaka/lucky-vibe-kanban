@@ -124,8 +124,7 @@ For new installations, install.py defaults to stable-only updates. Pass
 that adds `compose.updater-legacy-development.yaml` as a compatibility overlay.
 The base Compose file and ordinary image startup do not enable staging.
 
-The host updater intentionally treats all instance/build processes as busy.
-Stop them (including staging) before a stable update; do not whitelist arbitrary
-instance processes to bypass this gate. Start staging explicitly after an image
-update; it is not automatically restarted with stale artifacts. Host kit updates
-remain separate from image updates.
+The host updater waits for managed coding agents, not instance/build processes.
+Container replacement stops staging and other non-agent processes. Start staging
+explicitly after an image update; it is not automatically restarted with stale
+artifacts. Host kit updates remain separate from image updates.

@@ -1,3 +1,4 @@
+import { History } from "./History";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HotkeysProvider } from "react-hotkeys-hook";
@@ -8,7 +9,11 @@ createRoot(document.getElementById("root")!).render(
     client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
   >
     <HotkeysProvider>
-      <IntegrationPanel focusedRunId={null} onClearFocus={() => {}} />
+      {location.search.includes("history") ? (
+        <History />
+      ) : (
+        <IntegrationPanel focusedRunId={null} onClearFocus={() => {}} />
+      )}
     </HotkeysProvider>
   </QueryClientProvider>,
 );

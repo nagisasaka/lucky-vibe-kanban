@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from updater import (Busy, DB_RULES, Updater, assert_database_idle, atomic_json,
                      database_paths,
-                     known_service_process, read_request, validate_release,
+                     read_request, validate_release,
                      validate_request)
 
 
@@ -19,12 +19,10 @@ REQUEST = {"image": "ghcr.io/example/lvk@sha256:" + "a" * 64,
 
 
 class ValidationTests(unittest.TestCase):
-    def test_default_updates_only_stable_and_waits_for_instance_processes(self):
+    def test_default_updates_only_stable(self):
         updater = Updater({"state_directory": "/tmp/updater", "deployment_directory": "/tmp/deploy", "compose_files": ["compose.yaml"]})
         self.assertEqual(updater.services, ["lvk"])
         self.assertNotIn("--profile", updater.compose)
-        self.assertFalse(known_service_process("node deploy/developer/instance.mjs _run staging build-id"))
-        self.assertFalse(known_service_process("/var/tmp/lvk-instances/staging/builds/one/server"))
 
     def test_backup_capacity_includes_all_volumes_and_headroom(self):
         updater = Updater({"state_directory": "/tmp/updater", "deployment_directory": "/tmp/deploy", "compose_files": ["compose.yaml"]})
@@ -93,26 +91,12 @@ class ValidationTests(unittest.TestCase):
                 os.umask(old)
             self.assertEqual((root / "public").stat().st_mode & 0o777, 0o644)
 
-    def test_process_admission_rejects_untracked_commands(self):
-        self.assertTrue(known_service_process("/usr/local/bin/server"))
-        self.assertTrue(known_service_process("node /opt/lvk-development/development.mjs", True))
-        for command in ("codex", "node test.js", "bash", "rustc --crate-name foo", "node /opt/lvk-server/server.mjs --evil"):
-            self.assertFalse(known_service_process(command, True))
-
-    def test_development_preview_process_admission(self):
-        commands = [
-            'node /usr/local/bin/pnpm --dir packages/local-web run preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
-            'sh -c vite preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
-            'node /repos/lucky-vibe-kanban/packages/local-web/node_modules/.bin/../vite/bin/vite.js preview --outDir dist-preview --host 127.0.0.1 --port 4020 --strictPort',
-            '/bin/sh -c pnpm --dir packages/local-web run preview --outDir dist-preview --host "$HOST" --port "$FRONTEND_PORT" --strictPort',
-            'node /usr/local/bin/pnpm exec concurrently --kill-others --names backend,frontend --prefix-colors cyan,magenta pnpm run backend:dev:watch pnpm --dir packages/local-web run preview --outDir dist-preview --host "$HOST" --port "$FRONTEND_PORT" --strictPort',
-        ]
-        for command in commands:
-            self.assertTrue(known_service_process(command, True), command)
-            self.assertFalse(known_service_process(command, False), command)
-            self.assertFalse(known_service_process(command + ' --unexpected', True))
-        self.assertFalse(known_service_process(commands[0].replace('4020', '4030'), True))
-        self.assertFalse(known_service_process(commands[0].replace('dist-preview', '/tmp/other'), True))
+    def test_idle_does_not_inspect_unrelated_container_processes(self):
+        updater = Updater({"state_directory": "/tmp/updater", "deployment_directory": "/tmp/deploy", "compose_files": ["compose.yaml"]})
+        with patch("updater.database_paths", return_value=(Path("/unused"), Path("/unused"))), patch("updater.assert_database_idle") as idle, patch.object(updater, "command") as command:
+            updater.assert_idle([{"id": "container", "service": "lvk"}])
+            idle.assert_called_once()
+            command.assert_not_called()
 
 
 class DatabaseTests(unittest.TestCase):
@@ -151,29 +135,40 @@ class DatabaseTests(unittest.TestCase):
                 self.db.execute(f"DELETE FROM {table}")
                 self.db.commit()
 
-    def test_schedule_resource_and_latest_goal_block(self):
+    def test_schedule_resource_and_latest_goal_do_not_block(self):
         for sql, cleanup in (("INSERT INTO resource_holders VALUES ('held')", "DELETE FROM resource_holders"),
                              ("INSERT INTO scheduled_tasks VALUES (1)", "DELETE FROM scheduled_tasks")):
             self.db.execute(sql)
             self.db.commit()
-            with self.assertRaises(Busy):
-                assert_database_idle(self.path)
+            assert_database_idle(self.path)
             self.db.execute(cleanup)
             self.db.commit()
         self.db.execute("INSERT INTO agent_runs VALUES ('succeeded','a','s','2026-01-01')")
         self.db.execute('INSERT INTO agent_run_state VALUES (\'a\',\'{"goal":{"status":"active"}}\')')
         self.db.commit()
-        with self.assertRaises(Busy):
-            assert_database_idle(self.path)
+        assert_database_idle(self.path)
         self.db.execute("INSERT INTO agent_runs VALUES ('succeeded','b','s','2026-01-02')")
         self.db.execute('INSERT INTO agent_run_state VALUES (\'b\',\'{"goal":{"status":"complete"}}\')')
         self.db.commit()
         assert_database_idle(self.path)
 
+    def test_non_agent_records_do_not_block(self):
+        for table in ("execution_processes", "orchestration_runs", "workflow_runs", "integration_runs", "resource_operations", "resource_mediations", "agent_run_commands", "orchestration_outbox"):
+            self.db.execute(f"CREATE TABLE {table} (status TEXT)")
+            self.db.execute(f"INSERT INTO {table} VALUES ('running')")
+        self.db.commit()
+        assert_database_idle(self.path)
+
+    def test_null_agent_status_is_not_assumed_finished(self):
+        self.db.execute("INSERT INTO agent_runs(status) VALUES (NULL)")
+        self.db.commit()
+        with self.assertRaises(Busy):
+            assert_database_idle(self.path)
+
     def test_missing_database_or_unknown_schema_is_not_idle(self):
         with self.assertRaises(Busy):
             assert_database_idle(self.path.with_name("missing"))
-        self.db.execute("DROP TABLE resource_operations")
+        self.db.execute("DROP TABLE agent_runs")
         self.db.commit()
         with self.assertRaises(Busy):
             assert_database_idle(self.path)
@@ -206,8 +201,8 @@ class FakeUpdater(Updater):
     def volumes(self, containers):
         return {"home": "/fake"}
 
-    def check_queues(self, containers):
-        self.events.append("queue fence")
+    def drain_http_handlers(self, containers):
+        self.events.append("HTTP admission barrier")
 
     def resume(self, containers):
         self.events.append("resumed")

@@ -28,18 +28,12 @@ class Busy(Exception):
 TERMINAL = {"succeeded", "failed", "cancelled", "rolled_back", "recovery_required"}
 IN_PROGRESS = {"freezing", "stopped", "backing_up", "applying", "verifying", "rolling_back"}
 RUN_TERMINAL = ("succeeded", "failed", "cancelled", "crashed", "audit_failed")
+# Only managed coding-agent lifecycles are activity blockers. Ancillary scripts,
+# queues and orchestration projections do not establish agent liveness.
 DB_RULES = {
     "agent_runs": ("status", RUN_TERMINAL),
     "agent_run_attempts": ("status", RUN_TERMINAL),
     "agent_process_registry": ("registry_status", ("exited",)),
-    "agent_run_commands": ("delivery_status", ("delivered", "failed")),
-    "orchestration_outbox": ("delivery_status", ("delivered", "failed")),
-    "execution_processes": ("status", ("completed", "failed", "killed")),
-    "orchestration_runs": ("status", ("succeeded", "failed", "cancelled")),
-    "workflow_runs": ("status", ("succeeded", "failed", "canceled")),
-    "integration_runs": ("status", ("succeeded", "failed", "cancelled", "blocked")),
-    "resource_operations": ("status", ("succeeded", "cancelled", "recovered")),
-    "resource_mediations": ("status", ("applied", "stale", "failed")),
 }
 
 
@@ -109,48 +103,11 @@ def assert_database_idle(path):
         with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=0.1) as db:
             for table, (column, terminal) in DB_RULES.items():
                 placeholders = ",".join("?" for _ in terminal)
-                count = db.execute(f"SELECT count(*) FROM {table} WHERE {column} NOT IN ({placeholders})", terminal).fetchone()[0]
+                count = db.execute(f"SELECT count(*) FROM {table} WHERE {column} IS NULL OR {column} NOT IN ({placeholders})", terminal).fetchone()[0]
                 if count:
                     raise Busy(f"{table}: {count} unfinished operation(s)")
-            if db.execute("SELECT count(*) FROM resource_holders").fetchone()[0]:
-                raise Busy("Shared resources are still owned")
-            if db.execute("SELECT count(*) FROM scheduled_tasks WHERE enabled=1").fetchone()[0]:
-                raise Busy("Disable scheduled tasks before updating")
-            if db.execute("""SELECT count(*) FROM agent_run_state st JOIN agent_runs r ON r.id=st.agent_run_id
-                WHERE json_extract(st.state_json,'$.goal.status')='active'
-                AND r.id=(SELECT a.id FROM agent_runs a JOIN agent_run_state ast ON ast.agent_run_id=a.id WHERE a.session_id=r.session_id ORDER BY a.created_at DESC,a.id DESC LIMIT 1)""").fetchone()[0]:
-                raise Busy("An active goal must finish or be explicitly paused")
     except sqlite3.Error as error:
         raise Busy(f"Cannot establish database idle state: {error}") from error
-
-
-def known_service_process(command, development=False):
-    common = [
-        r"/usr/bin/tini -- node /opt/lvk-server/server\.mjs",
-        r"node /opt/lvk-server/server\.mjs", r"/usr/local/bin/server",
-        r"nginx: master process nginx -e stderr -c /tmp/lvk-server/nginx\.conf -g daemon off;",
-        r"nginx: worker process",
-    ]
-    dev = [
-        r"/sbin/docker-init -- node /opt/lvk-development/development\.mjs",
-        r"node /opt/lvk-development/development\.mjs",
-        r"node /usr/local/bin/pnpm run (dev:container|backend:dev:watch)",
-        r"sh -c \./scripts/start-container-dev\.sh",
-        r"node (/usr/local/bin/pnpm exec concurrently|\./node_modules/\.bin/\.\./concurrently/dist/bin/concurrently\.js) --kill-others --names backend,frontend --prefix-colors cyan,magenta pnpm run backend:dev:watch pnpm --dir packages/local-web run (?:dev|preview --outDir dist-preview) --host \"\$HOST\" --port \"\$FRONTEND_PORT\" --strictPort",
-        r"/bin/sh -c pnpm run backend:dev:watch",
-        r'/bin/sh -c pnpm --dir packages/local-web run (?:dev|preview --outDir dist-preview) --host "\$HOST" --port "\$FRONTEND_PORT" --strictPort',
-        r"node /usr/local/bin/pnpm --dir packages/local-web run (?:dev|preview --outDir dist-preview) --host 127\.0\.0\.1 --port 4020 --strictPort",
-        r"sh -c DISABLE_WORKTREE_CLEANUP=1 RUST_LOG=debug cargo watch -w crates -x 'build --bin server --bin agent-process-host' -x 'run --bin server'",
-        r"/usr/local/bin/cargo-watch watch -w crates -x build --bin server --bin agent-process-host -x run --bin server",
-        r'sh -c VITE_OPEN=\$\{VITE_OPEN:-false\} vite --host 127\.0\.0\.1 --port 4020 --strictPort',
-        r"node /repos/[^ ]+/packages/local-web/node_modules/\.bin/\.\./vite/bin/vite\.js --host 127\.0\.0\.1 --port 4020 --strictPort",
-        r"sh -c vite preview --outDir dist-preview --host 127\.0\.0\.1 --port 4020 --strictPort",
-        r"node /repos/[^ ]+/packages/local-web/node_modules/\.bin/\.\./vite/bin/vite\.js preview --outDir dist-preview --host 127\.0\.0\.1 --port 4020 --strictPort",
-        r"/repos/[^ ]+/node_modules/\.pnpm/@esbuild\+linux-x64@[0-9.]+/node_modules/@esbuild/linux-x64/bin/esbuild --service=[0-9.]+ --ping",
-        r'sh -c cargo build --bin server --bin agent-process-host && cargo run --bin server; echo "\[Finished running\. Exit status: \$\?\]"',
-        r"/var/tmp/lvk-target/debug/server",
-    ]
-    return any(re.fullmatch(pattern, command) for pattern in common + (dev if development else []))
 
 
 def database_paths(container):
@@ -218,17 +175,11 @@ class Updater:
         for container in containers:
             database, _ = database_paths(container)
             assert_database_idle(database)
-            lines = self.command(["docker", "top", container["id"], "-eo", "pid,args"]).splitlines()[1:]
-            commands = [line.strip().split(None, 1)[1] for line in lines]
-            if not commands or any(not known_service_process(c.strip(), container["service"] == "development") for c in commands):
-                raise Busy(f"{container['service']}: extra processes are running (agent, terminal, build or browser)")
 
-    def check_queues(self, containers):
-        # The queue GET takes the same admission mutex as queue POST. After the
-        # host gate closes, every older writer finishes before this read, and
-        # newer queue POSTs are rejected. This includes non-durable follow-ups.
-        code = """import json,pathlib,sqlite3,sys,urllib.request,uuid
-db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
+    def drain_http_handlers(self, containers):
+        # Drain admitted HTTP handlers after closing admission. Queued follow-ups
+        # and non-agent processes are not update blockers.
+        code = """import pathlib,sys,urllib.request
 key=pathlib.Path(sys.argv[1]).parent/'access-internal.token'
 headers={'X-LVK-Internal-Token':key.read_text()} if key.exists() else {}
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -237,12 +188,6 @@ opener=urllib.request.build_opener(NoRedirect())
 def request(url): return urllib.request.Request(url,headers=headers)
 with opener.open(request('http://127.0.0.1:'+sys.argv[2]+'/api/maintenance/ready'),timeout=30) as response:
  if response.status!=200 or response.headers.get('x-lvk-maintenance-barrier')!='1': raise RuntimeError('Application does not support draining HTTP handlers')
-for (sid,) in db.execute('SELECT id FROM sessions'):
- url='http://127.0.0.1:'+sys.argv[2]+'/api/sessions/'+str(uuid.UUID(bytes=sid))+'/queue'
- with opener.open(request(url),timeout=15) as response:
-  if response.headers.get('x-lvk-maintenance-fence')!='1': raise RuntimeError('Application lacks maintenance queue fence; bootstrap the current release first')
-  data=json.load(response)
-  if not data.get('success') or data['data']['status']!='empty': raise RuntimeError('A follow-up is queued; finish or cancel it before updating')
 """
         for c in containers:
             mount = next((m for m in c["info"]["Mounts"] if m["Destination"] == "/run/lvk-maintenance"), None)
@@ -410,7 +355,7 @@ for (sid,) in db.execute('SELECT id FROM sessions'):
             self.check_backup_space(volumes)
             self.save(job, "freezing", containers=containers, volumes=volumes)
             atomic_json(self.gate, {"job_id": job["id"]}, 0o644)
-            self.check_queues(containers)
+            self.drain_http_handlers(containers)
             for c in containers:
                 self.command(["docker", "pause", c["id"]])
             self.assert_idle(containers)

@@ -10,11 +10,17 @@ for (const mobile of [false, true]) {
     const requests: any[] = [];
     const runs: any[] = [];
     let fail = true;
+    let config = { integration_skip_validation: false };
     await page.route("**/api/**", async (route) => {
       const req = route.request();
       const path = new URL(req.url()).pathname;
       const reply = (data: unknown) =>
         route.fulfill({ json: { success: true, data } });
+      if (path === "/api/info") return reply({ config });
+      if (path === "/api/config") {
+        config = req.postDataJSON();
+        return reply(config);
+      }
       if (path.endsWith("/repositories"))
         return reply([{ id: "repo", display_name: "Example repo" }]);
       if (path.endsWith("/parallel-context"))
@@ -90,7 +96,8 @@ for (const mobile of [false, true]) {
     await start.click();
     await expect(page.getByRole("alert")).toContainText("Fixture retry");
     expect(requests[0].skip_validation).toBe(false);
-    await skip.check();
+    await skip.click();
+    await expect(skip).toBeChecked();
     await start.click();
     await expect.poll(() => requests.length).toBe(2);
     expect(requests[1].request_id).not.toBe(requests[0].request_id);
@@ -102,13 +109,13 @@ for (const mobile of [false, true]) {
       page.getByText("succeeded · Unverified", { exact: true }),
     ).toBeVisible();
     expect(requests[2]).toEqual(requests[1]);
-    await expect(skip).not.toBeChecked();
-    // A fresh page reads the persisted choice from history, not local form state.
+    await expect(skip).toBeChecked();
+    // A fresh page reads the persisted choice from server configuration, not local form state.
     await open();
     await expect(
       page.getByText("succeeded · Unverified", { exact: true }),
     ).toBeVisible();
-    await expect(skip).not.toBeChecked();
+    await expect(skip).toBeChecked();
     await page.screenshot({
       path: `test-results/integration-skip/${mobile ? "mobile-dark" : "desktop-light"}.png`,
       fullPage: true,
@@ -119,6 +126,8 @@ for (const mobile of [false, true]) {
       ),
     ).toBe(true);
     await select();
+    await skip.click();
+    await expect(skip).not.toBeChecked();
     await start.click();
     await expect.poll(() => requests.length).toBe(4);
     expect(requests[3].skip_validation).toBe(false);

@@ -1,10 +1,31 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 // Only surrounding app context is mocked; the Integration UI and API client are real.
 export const useProjectContext = () => ({
   projectId: "project",
   issues: [{ id: "card", simple_id: "LVK-1", title: "Example change" }],
 });
 export const useAppNavigation = () => ({ goToWorkspace: () => {} });
-export const useUserSystem = () => ({ profiles: {}, config: {} });
+export const useUserSystem = () => {
+  const client = useQueryClient();
+  const { data: config } = useQuery({
+    queryKey: ["config"],
+    queryFn: async () => (await (await fetch("/api/info")).json()).data.config,
+  });
+  return {
+    profiles: {},
+    config,
+    updateAndSaveConfig: async (updates: object) => {
+      client.setQueryData(["config"], { ...config, ...updates });
+      const response = await fetch("/api/config", {
+        method: "PUT",
+        body: JSON.stringify({ ...config, ...updates }),
+      });
+      if (!response.ok) return false;
+      client.setQueryData(["config"], (await response.json()).data);
+      return true;
+    },
+  };
+};
 export const useExecutorConfig = () => ({
   executorConfig: { executor: "CODEX", execution_mode: "code" },
   effectiveExecutor: "CODEX",

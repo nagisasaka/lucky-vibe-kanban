@@ -48,13 +48,23 @@ export function IntegrationPanel({
   const open = panelOpen || focusedRunId !== null;
   const [repositoryId, setRepositoryId] = useState('');
   const [target, setTarget] = useState('');
-  const [skipValidation, setSkipValidation] = useState(false);
   const [selected, setSelected] = useState<
     Record<string, IntegrationSelection>
   >({});
   const [error, setError] = useState<string | null>(null);
   const pendingRequest = useRef<CreateIntegrationRequest | null>(null);
-  const { profiles, config } = useUserSystem();
+  const { profiles, config, updateAndSaveConfig } = useUserSystem();
+  const skipValidation = config?.integration_skip_validation ?? false;
+  const preference = useMutation({
+    mutationFn: async (value: boolean) => {
+      if (
+        !(await updateAndSaveConfig({ integration_skip_validation: value }))
+      ) {
+        throw new Error('Could not save the integration validation preference');
+      }
+    },
+    onError: (error: Error) => setError(error.message),
+  });
   const agent = useExecutorConfig({
     profiles,
     lastUsedConfig: null,
@@ -109,7 +119,6 @@ export function IntegrationPanel({
     onSuccess: () => {
       pendingRequest.current = null;
       setSelected({});
-      setSkipValidation(false);
       setError(null);
       void refresh();
     },
@@ -419,9 +428,9 @@ export function IntegrationPanel({
               <input
                 type="checkbox"
                 checked={skipValidation}
-                disabled={create.isPending}
+                disabled={create.isPending || preference.isPending || !config}
                 onChange={(e) => {
-                  setSkipValidation(e.target.checked);
+                  preference.mutate(e.target.checked);
                   resetRequest();
                 }}
               />
@@ -429,8 +438,9 @@ export function IntegrationPanel({
                 Skip all integration validation (unverified)
                 <span className="block text-low">
                   Skips tests, type checks, lint and other acceptance checks for
-                  this run. Conflict review and Git safety checks still apply.
-                  The result will be recorded as unverified.
+                  new runs, including chat submissions. This preference is saved
+                  on the server. Conflict review and Git safety checks still
+                  apply. The result will be recorded as unverified.
                 </span>
               </span>
             </label>
@@ -441,6 +451,8 @@ export function IntegrationPanel({
                 !target ||
                 !validSelection ||
                 !agentReady ||
+                preference.isPending ||
+                preference.isError ||
                 create.isPending
               }
             >

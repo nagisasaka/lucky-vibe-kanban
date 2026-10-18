@@ -44,11 +44,10 @@ Requirements: Linux Docker Engine/Compose, systemd, Python **3.11+**, Bash,
 OpenSSL, GNU tar, and enough free storage for a full persistent-data backup.
 The current kit supports the repository's `lvk` and `development` services,
 local Docker named volumes and its standard source runner. Custom runners or
-extra background processes fail closed until their owner reviews the setup.
+unknown managed-agent states fail closed until their owner reviews the setup.
 Bootstrap a release containing this kit once through SSH before queueing
-updates: older releases cannot fence their in-memory follow-up queues. The
-development checkout must also contain the queue fence; a missing capability
-causes the host service to wait instead of assuming an empty queue is safe.
+updates: older releases cannot fence agent admission and drain in-flight HTTP
+handlers. Managed development checkouts must support the same maintenance barrier.
 
 Copy this directory from the reviewed source revision to the host. The host
 installation is independent of the writable checkout: application agents
@@ -163,27 +162,23 @@ the installation. That test does not use the real agent's credentials or data.
 
 ## Update and recovery contract
 
-The service waits for both applications to be idle. Active goals must finish or
-be explicitly paused, scheduled tasks must be disabled, and outstanding shared
-resource ownership must be resolved. Unknown database states/processes block
-the update instead of being assumed safe. A terminal agent status alone is
-insufficient: provider attempts, process registrations, commands and workflows
-are also checked.
-After closing the maintenance gate, the host waits for in-flight HTTP handlers
-through a readiness barrier before freezing processes.
-New mutating requests and WebSocket upgrades receive 503 while read-only
-internal health/browser probes remain available. It then reads each session's
-in-memory follow-up queue through an admission barrier. Existing queued
-instructions prevent an update, and new queue entries are rejected until the
-gate reopens. The debug application's database is in its checkout's
-`dev_assets`; the release application's database is in its persistent home.
+The service waits only for LVK-managed coding agents to finish in each managed
+application. Agent runs, provider attempts and their process registrations must
+be terminal; unknown agent states and unreadable databases still block updates.
+Shells, builds, browsers, development servers, workflow/Integration parent
+records, active Goal metadata, schedules and shared-resource records do not
+block an update by themselves. These non-agent processes will be stopped by
+container replacement; in-memory queued follow-ups are not preserved.
 
-To close the race with new requests, the host briefly freezes both containers
-and checks their databases and processes again. If work appeared, it unfreezes
-them and waits. Otherwise it terminates the **verified idle, frozen containers**
-without resuming admission. This is deliberately not a graceful application
-shutdown: SQLite's WAL recovery preserves committed transactions. No active
-agent may be terminated by this path. No implicit goal cancellation occurs.
+After closing the maintenance gate, the host drains in-flight HTTP handlers.
+New mutating requests and WebSocket upgrades receive 503 while read-only
+internal health/browser probes remain available. It freezes the containers and
+checks managed-agent records again to close the admission race. If an agent
+appeared, it unfreezes them and waits. Otherwise it terminates the frozen
+containers without resuming admission. SQLite WAL recovery preserves committed
+transactions. Image identity, backup, health and rollback checks still apply.
+The debug database is in the checkout's `dev_assets`; the release database is
+in its persistent home.
 
 With both containers stopped, the service archives all their persistent named
 volumes together with deployment configuration. Only the reproducible

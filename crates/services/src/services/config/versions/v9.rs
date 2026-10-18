@@ -60,6 +60,9 @@ pub struct Config {
     pub send_message_shortcut: SendMessageShortcut,
     #[serde(default = "default_hidden_agents")]
     pub hidden_agents: Vec<BaseCodingAgent>,
+    /// Default for new formal Integrations, including chat/MCP submissions.
+    #[serde(default)]
+    pub integration_skip_validation: bool,
 }
 
 impl Config {
@@ -89,6 +92,7 @@ impl Config {
             // provider entries are intentionally not carried across config
             // versions.
             hidden_agents: default_hidden_agents(),
+            integration_skip_validation: false,
         }
     }
 
@@ -143,6 +147,7 @@ impl Default for Config {
             commit_reminder_prompt: None,
             send_message_shortcut: SendMessageShortcut::default(),
             hidden_agents: default_hidden_agents(),
+            integration_skip_validation: false,
         }
     }
 }
@@ -150,6 +155,19 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn integration_preference_defaults_and_survives_restart() {
+        let mut value = serde_json::to_value(Config::default()).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .remove("integration_skip_validation");
+        assert!(!Config::from(value.to_string()).integration_skip_validation);
+        value["integration_skip_validation"] = serde_json::json!(true);
+        let config = Config::from(value.to_string());
+        assert!(Config::from(serde_json::to_string(&config).unwrap()).integration_skip_validation);
+    }
 
     #[test]
     fn retired_cloud_fields_do_not_reset_local_settings() {

@@ -50,7 +50,8 @@ pub struct CreateIntegrationRequest {
     pub selections: Vec<IntegrationSelection>,
     pub executor_config: Option<ExecutorConfig>,
     #[serde(default)]
-    pub skip_validation: bool,
+    #[ts(optional)]
+    pub skip_validation: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
