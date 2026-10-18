@@ -25,7 +25,7 @@ pub fn router(access: Access) -> Router {
         .route("/api/access/auth0/test", post(test_auth0))
         .route(
             "/api/access/auth0/provision",
-            post(super::provisioning::handle),
+            post(super::provisioning::handle).layer(DefaultBodyLimit::max(128 * 1024)),
         )
         .route("/api/access/callback", get(callback))
         .route("/api/access/confirmation", get(confirmation))

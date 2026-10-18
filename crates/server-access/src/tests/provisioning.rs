@@ -12,6 +12,7 @@ struct Remote {
     fail_resource_once: bool,
     redirect: bool,
     reject: Option<StatusCode>,
+    management_token: Option<String>,
 }
 struct Auth0 {
     issuer: String,
@@ -56,7 +57,13 @@ async fn mock(
     headers: HeaderMap,
     bytes: axum::body::Bytes,
 ) -> Response {
-    assert_eq!(headers["authorization"], "Bearer management-secret");
+    let token = state
+        .lock()
+        .await
+        .management_token
+        .clone()
+        .unwrap_or_else(|| "management-secret".into());
+    assert_eq!(headers["authorization"], format!("Bearer {token}"));
     let path = uri.path().strip_prefix("/api/v2/").unwrap();
     let mut state = state.lock().await;
     if let Some(status) = state.reject {
@@ -515,5 +522,45 @@ async fn provisioning_paginates_and_rejects_changes_after_preview() {
         apply(&f, &cookie, &csrf, input, &receipt).await.status(),
         StatusCode::BAD_REQUEST
     );
+    assert!(remote.state.lock().await.writes.is_empty());
+}
+
+#[tokio::test]
+async fn provisioning_accepts_long_tokens_and_rejects_oversized_input_without_writes() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    for length in [8920, 65536] {
+        let token = "t".repeat(length);
+        remote.state.lock().await.management_token = Some(token.clone());
+        let mut input = remote.input("inspect");
+        input["management_token"] = json!(token);
+        let response = f
+            .call(
+                "POST",
+                PATH,
+                &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+                input,
+            )
+            .await;
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+    for (token, message) in [
+        (String::new(), "Enter an Auth0 Management API access token"),
+        ("t".repeat(65537), "65536-byte limit"),
+    ] {
+        let mut input = remote.input("inspect");
+        input["management_token"] = json!(token);
+        let response = f
+            .call(
+                "POST",
+                PATH,
+                &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+                input,
+            )
+            .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert!(body(response).await.to_string().contains(message));
+    }
     assert!(remote.state.lock().await.writes.is_empty());
 }

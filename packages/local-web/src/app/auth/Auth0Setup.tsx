@@ -123,7 +123,13 @@ export function Auth0Setup({
         onConfigured(next);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Auth0の設定に失敗しました');
+      const message =
+        e instanceof Error ? e.message : 'Auth0の設定に失敗しました';
+      setError(
+        step === 'apply'
+          ? `${message} Auth0側に一部の変更が適用されている可能性があります。トークンを再入力して変更内容を確認し直してください。`
+          : message
+      );
     } finally {
       if (step === 'apply') {
         setToken('');
@@ -170,8 +176,7 @@ export function Auth0Setup({
         </details>
         {error && (
           <p role="alert" className="text-error">
-            {error}{' '}
-            途中まで作成されたアプリは残ります。トークンを再入力して変更内容を確認し直してください。
+            {error}
           </p>
         )}
         <fieldset disabled={busy || disabled} className="min-w-0 space-y-base">

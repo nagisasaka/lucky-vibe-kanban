@@ -6,6 +6,8 @@ use serde_json::{Value, json};
 
 use super::*;
 
+const MAX_MANAGEMENT_TOKEN_BYTES: usize = 64 * 1024;
+
 const CLIENT_FIELDS: &str = "client_id,name,app_type,client_metadata,callbacks,allowed_logout_urls,jwt_configuration,grant_types,token_endpoint_auth_method,is_first_party,oidc_conformant,refresh_token";
 const RETRY: &str = "Auth0 setup did not finish. Existing LVK authentication is unchanged. Check Auth0 permissions, then preview again; created applications will be reused.";
 
@@ -52,8 +54,13 @@ struct Management<'a> {
 impl<'a> Management<'a> {
     fn new(input: &'a Input) -> Result<Self, Error> {
         provider::validate_issuer(&input.issuer)?;
-        if input.management_token.is_empty() || input.management_token.len() > 8192 {
+        if input.management_token.is_empty() {
             return Err(Error::bad("Enter an Auth0 Management API access token"));
+        }
+        if input.management_token.len() > MAX_MANAGEMENT_TOKEN_BYTES {
+            return Err(Error::bad(
+                "Auth0 Management API access token exceeds the 65536-byte limit",
+            ));
         }
         Ok(Self {
             input,
