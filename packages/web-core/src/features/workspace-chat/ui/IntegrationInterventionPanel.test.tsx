@@ -55,6 +55,24 @@ beforeEach(() => {
   } as IntegrationRun;
 });
 describe('Integration instructions', () => {
+  it('retains the unverified label after completion and reload', () => {
+    fixture.run = JSON.parse(
+      JSON.stringify({
+        ...fixture.run!,
+        status: 'succeeded',
+        payload: {
+          ...fixture.run!.payload,
+          skip_validation: true,
+          validation: [],
+        },
+      })
+    );
+    expect(render()).toContain(
+      'Unverified — all integration validation skipped'
+    );
+    fixture.run!.payload.skip_validation = false;
+    expect(render()).not.toContain('Unverified');
+  });
   it('uses the existing steer endpoint and preserves command identity on resend', async () => {
     render();
     await fixture.send!();

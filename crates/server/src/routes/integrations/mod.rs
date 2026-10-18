@@ -49,6 +49,8 @@ pub struct CreateIntegrationRequest {
     pub target_branch: String,
     pub selections: Vec<IntegrationSelection>,
     pub executor_config: Option<ExecutorConfig>,
+    #[serde(default)]
+    pub skip_validation: bool,
 }
 
 #[derive(Debug, Deserialize)]

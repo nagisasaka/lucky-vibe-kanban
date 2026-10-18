@@ -72,6 +72,11 @@ export function IntegrationInterventionPanel({
         })}{' '}
         · {run?.status}
       </p>
+      {run?.payload.skip_validation && (
+        <p>
+          Unverified — all integration validation skipped by explicit request.
+        </p>
+      )}
       {run && <IntegrationResolutionReview run={run} />}
       <p>{t('integrationGate.instructionBoundary')}</p>
       {run?.error && (
@@ -126,6 +131,9 @@ export function IntegrationInterventionPanel({
               <p>
                 {index + 1}. {step.summary}
               </p>
+              {step.validation_skipped && (
+                <p>Unverified — validation skipped.</p>
+              )}
               {step.validation.map((check, i) => (
                 <p key={i}>
                   {check.command} — {check.result}

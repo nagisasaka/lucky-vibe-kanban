@@ -48,6 +48,7 @@ export function IntegrationPanel({
   const open = panelOpen || focusedRunId !== null;
   const [repositoryId, setRepositoryId] = useState('');
   const [target, setTarget] = useState('');
+  const [skipValidation, setSkipValidation] = useState(false);
   const [selected, setSelected] = useState<
     Record<string, IntegrationSelection>
   >({});
@@ -108,6 +109,7 @@ export function IntegrationPanel({
     onSuccess: () => {
       pendingRequest.current = null;
       setSelected({});
+      setSkipValidation(false);
       setError(null);
       void refresh();
     },
@@ -134,6 +136,7 @@ export function IntegrationPanel({
       target_branch: target,
       selections: Object.values(selected),
       executor_config: agent.executorConfig,
+      skip_validation: skipValidation,
     };
     pendingRequest.current = request;
     create.mutate(request);
@@ -166,8 +169,9 @@ export function IntegrationPanel({
             <DialogTitle>Auto Merge</DialogTitle>
             <DialogDescription>
               Select Cards and one Workspace each. LVK creates an auto-merge
-              Card with its own Workspace, merges and tests each selection in
-              order, then moves the selected Cards and auto-merge Card to Done.
+              Card with its own Workspace, merges and by default validates each
+              selection in order, then moves the selected Cards and auto-merge
+              Card to Done.
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto space-y-base min-h-0">
@@ -411,6 +415,25 @@ export function IntegrationPanel({
                 </li>
               ))}
             </ol>
+            <label className="flex items-start gap-half">
+              <input
+                type="checkbox"
+                checked={skipValidation}
+                disabled={create.isPending}
+                onChange={(e) => {
+                  setSkipValidation(e.target.checked);
+                  resetRequest();
+                }}
+              />
+              <span>
+                Skip all integration validation (unverified)
+                <span className="block text-low">
+                  Skips tests, type checks, lint and other acceptance checks for
+                  this run. Conflict review and Git safety checks still apply.
+                  The result will be recorded as unverified.
+                </span>
+              </span>
+            </label>
             <Button
               onClick={start}
               disabled={
@@ -435,12 +458,20 @@ export function IntegrationPanel({
                   className="border bg-panel p-base space-y-half"
                   aria-label={`Integration ${run.id}`}
                 >
-                  <div className="flex items-center gap-base">
-                    <strong>{run.status}</strong>
+                  <div className="flex flex-wrap items-center gap-base">
+                    <strong>
+                      {run.status}
+                      {run.payload.skip_validation && ' · Unverified'}
+                    </strong>
                     <code>{run.target_ref}</code>
                     <span className="text-low">{run.created_at}</span>
                   </div>
                   <p className="text-low break-all">Run {run.id}</p>
+                  {run.payload.skip_validation && (
+                    <p>
+                      All integration validation skipped by explicit request.
+                    </p>
+                  )}
                   {run.error && (
                     <p role="alert" className="text-error whitespace-pre-wrap">
                       {run.error}
@@ -455,14 +486,16 @@ export function IntegrationPanel({
                   {run.payload.semantic_summary && (
                     <div>
                       <p className="text-low">
-                        Agent proposal (before host validation)
+                        {run.payload.skip_validation
+                          ? 'Integration proposal (unverified)'
+                          : 'Agent proposal (before host validation)'}
                       </p>
                       <p>{run.payload.semantic_summary}</p>
                     </div>
                   )}
                   <p className="break-all">
                     B: {run.payload.base_commit ?? 'waiting for target'} → R:{' '}
-                    {run.payload.result_commit ?? 'not validated'}
+                    {run.payload.result_commit ?? 'not prepared'}
                   </p>
                   <p>
                     Git:{' '}

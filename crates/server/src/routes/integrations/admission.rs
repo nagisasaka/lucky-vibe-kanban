@@ -244,6 +244,7 @@ pub(super) async fn submit_with_expected_target(
         observed_target,
         card_id: Some(card_id),
         sequential: true,
+        skip_validation: request.skip_validation,
         executor_config: Some(serde_json::to_value(
             request
                 .executor_config
@@ -323,6 +324,7 @@ fn matches_request(
         run.project_id == request.project_id
             && run.repository_id == request.repository_id
             && run.target_ref == target_ref
+            && run.payload.skip_validation == request.skip_validation
             && expected_target.is_none_or(|expected| expected == run.payload.observed_target)
             && run.payload.executor_config
                 == Some(serde_json::to_value(

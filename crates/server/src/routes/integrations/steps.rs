@@ -131,6 +131,7 @@ pub(super) fn complete(run: &mut IntegrationRun) -> anyhow::Result<()> {
         "Merge step has already completed"
     );
     let step = IntegrationStep {
+        validation_skipped: run.payload.skip_validation,
         source_commit: run.payload.sources[run.payload.step_index].commit.clone(),
         result_commit: result,
         validation: run.payload.validation.clone(),
