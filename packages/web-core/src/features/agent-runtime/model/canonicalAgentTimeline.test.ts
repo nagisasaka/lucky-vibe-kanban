@@ -190,6 +190,8 @@ describe('mergeCanonicalAgentTimeline', () => {
           input_tokens: inputTokens,
           output_tokens: 2,
           cached_input_tokens: null,
+          context_tokens: 5,
+          model_context_window: 100,
         },
       },
     });
@@ -206,10 +208,14 @@ describe('mergeCanonicalAgentTimeline', () => {
     expect(latest.transientEvents).toHaveLength(1);
     expect(latest.transientEvents[0]?.payload).toMatchObject({
       type: 'token_usage',
-      data: { input_tokens: 20 },
+      data: { input_tokens: 20, context_tokens: 5, model_context_window: 100 },
     });
     expect(mergeAgentLiveEvent(latest, usage(4, 5))).toBe(latest);
-    expect(clearAgentLiveEvents(latest).transientEvents).toEqual([]);
+    const disconnected = clearAgentLiveEvents(latest);
+    expect(disconnected.transientEvents).toEqual([]);
+    expect(
+      mergeAgentLiveEvent(disconnected, usage(6, 20)).transientEvents
+    ).toEqual(latest.transientEvents);
   });
 
   it('replays and deduplicates by event identity while preserving cursor order', () => {

@@ -109,6 +109,9 @@ pub struct AnsweredQuestion {
 pub struct TokenUsageInfo {
     pub total_tokens: u32,
     pub model_context_window: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(type = "number | null")]
+    pub cumulative_tokens: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

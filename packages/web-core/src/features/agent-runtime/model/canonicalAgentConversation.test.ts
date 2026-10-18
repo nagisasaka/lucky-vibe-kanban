@@ -239,6 +239,131 @@ describe('projectCanonicalAgentConversation', () => {
     ).toBe('success');
   });
 
+  it('shows only observed child lifecycle state and restores it from replay', () => {
+    const child = (runId: string, sequence: number, kind: string) =>
+      event(runId, sequence, {
+        type: 'agent_activity',
+        data: {
+          activity: {
+            thread_id: 'same-child',
+            parent_thread_id: 'parent',
+            agent_path: '/root/review',
+            kind,
+            content: kind === 'answer' ? 'Findings' : null,
+          },
+        },
+      });
+    const card = (kinds: string[], status: RunState['status'] = 'running') =>
+      projectRuns([
+        {
+          runId: 'r',
+          status,
+          events: kinds.map((kind, index) => child('r', index + 1, kind)),
+        },
+      ]).entries[0];
+    const expected = (label: string, active: boolean, status = 'created') => ({
+      canonical: { active },
+      content: {
+        entry_type: {
+          status: { status },
+          action_type: { description: `parent → /root/review · ${label}` },
+        },
+      },
+    });
+    expect(card(['answer'])).toMatchObject(expected('unknown', false));
+    expect(card(['pendingInit'])).toMatchObject(expected('initializing', true));
+    expect(card(['running', 'shutdown'])).toMatchObject(
+      expected('shutdown', false)
+    );
+    expect(card(['running', 'interrupt_requested'])).toMatchObject(
+      expected('running', true)
+    );
+    expect(card(['running', 'tool', 'answer'])).toMatchObject(
+      expected('running', true)
+    );
+    expect(card(['running', 'unknown'])).toMatchObject(
+      expected('unknown', false)
+    );
+    expect(card(['completed', 'unknown'])).toMatchObject(
+      expected('unknown', false)
+    );
+    expect(card(['completed', 'unknown', 'running'])).toMatchObject(
+      expected('running', true)
+    );
+    expect(card(['completed', 'answer'])).toMatchObject(
+      expected('completed', false, 'success')
+    );
+    expect(card(['failed', 'answer', 'completed'])).toMatchObject(
+      expected('failed', false, 'failed')
+    );
+    expect(card(['interrupted', 'tool'])).toMatchObject(
+      expected('interrupted', false, 'failed')
+    );
+    expect(card(['failed', 'running', 'answer'])).toMatchObject(
+      expected('running', true)
+    );
+    expect(card(['running', 'answer'], 'succeeded')).toMatchObject(
+      expected('unknown (last observed: running)', false)
+    );
+
+    // Reusing a native child thread in a later Run cannot overwrite history.
+    const input = [
+      {
+        runId: 'old',
+        status: 'succeeded' as const,
+        events: [child('old', 1, 'running')],
+      },
+      {
+        runId: 'new',
+        status: 'running' as const,
+        events: [child('new', 1, 'completed')],
+      },
+    ];
+    const replay = projectRuns(input);
+    expect(replay.entries[0]).toMatchObject(
+      expected('unknown (last observed: running)', false)
+    );
+    expect(replay.entries[1]).toMatchObject(
+      expected('completed', false, 'success')
+    );
+    expect(replay.entries[0].canonical?.agentRunId).toBe('old');
+    expect(replay.entries[1].canonical?.agentRunId).toBe('new');
+    expect(projectRuns(input)).toEqual(replay);
+  });
+
+  it('does not create child cards without child observations, including unloaded history', () => {
+    const projection = projectRuns([
+      {
+        runId: 'r',
+        status: 'running',
+        events: [
+          event('r', 1, {
+            type: 'message',
+            data: {
+              message: {
+                message_id: 'parent',
+                role: 'assistant',
+                content: 'Working',
+              },
+              final_output: false,
+            },
+          }),
+        ],
+      },
+    ]);
+    expect(
+      projection.entries.some(
+        (entry) =>
+          entry.type === 'NORMALIZED_ENTRY' &&
+          entry.content.entry_type.type === 'tool_use' &&
+          entry.content.entry_type.action_type.action === 'task_create'
+      )
+    ).toBe(false);
+    expect(
+      projectRuns([{ runId: 'r', status: 'running', events: [] }]).entries
+    ).toEqual([]);
+  });
+
   it('keeps repeated parent live chunks together across child activity', () => {
     const runId = 'r';
     const runState = state(runId, 'running');
@@ -555,6 +680,48 @@ describe('projectCanonicalAgentConversation', () => {
     expect(controls[1].canonical?.eventIds).toHaveLength(2);
   });
 
+  it('keeps context separate from cumulative tokens and drops previous Run usage', () => {
+    const usageEvent = event('old', 1, {
+      type: 'token_usage',
+      data: {
+        input_tokens: 1000n,
+        output_tokens: 200n,
+        cached_input_tokens: 500n,
+        context_tokens: 25n,
+        model_context_window: 100n,
+      },
+    });
+    const old = {
+      runId: 'old',
+      status: 'succeeded' as const,
+      events: [usageEvent],
+    };
+    const projection = projectRuns([old]);
+    const usage = projection.entries.find(
+      (entry) =>
+        entry.type === 'NORMALIZED_ENTRY' &&
+        entry.content.entry_type.type === 'token_usage_info'
+    );
+    expect(
+      usage?.type === 'NORMALIZED_ENTRY' && usage.content.entry_type
+    ).toMatchObject({
+      total_tokens: 25,
+      model_context_window: 100,
+      cumulative_tokens: 1200,
+    });
+    const next = projectRuns([
+      old,
+      { runId: 'new', status: 'running', events: [] },
+    ]);
+    expect(
+      next.entries.some(
+        (entry) =>
+          entry.type === 'NORMALIZED_ENTRY' &&
+          entry.content.entry_type.type === 'token_usage_info'
+      )
+    ).toBe(false);
+  });
+
   it('reports token totals without inventing a context window', () => {
     const runId = 'run-usage';
     const projection = projectRuns([
@@ -585,7 +752,8 @@ describe('projectCanonicalAgentConversation', () => {
     ) {
       throw new Error('Expected token usage entry');
     }
-    expect(usage.content.entry_type.total_tokens).toBe(17);
+    expect(usage.content.entry_type.total_tokens).toBe(0);
+    expect(usage.content.entry_type.cumulative_tokens).toBe(17);
     expect(usage.content.entry_type.model_context_window).toBe(0);
   });
 });

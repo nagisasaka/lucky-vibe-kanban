@@ -1028,8 +1028,9 @@
     "noMatches": "No matches"
   },
   "contextUsage": {
+    "cumulative": "Cumulative tokens: {{tokens}}",
     "label": "Context usage",
-    "emptyTooltip": "Context usage appears after the next reply",
+    "emptyTooltip": "Context usage unavailable",
     "tooltip": "Context: {{percentage}}% · {{used}} / {{total}} tokens",
     "ariaLabel": "Context usage: {{percentage}}%"
   },

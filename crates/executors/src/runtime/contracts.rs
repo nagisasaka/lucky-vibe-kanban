@@ -417,6 +417,11 @@ pub enum AgentLiveEventPayload {
         output_tokens: u64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cached_input_tokens: Option<u64>,
+        /// Latest context occupancy, distinct from cumulative billing usage.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        context_tokens: Option<u64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        model_context_window: Option<u64>,
     },
 }
 
@@ -498,6 +503,11 @@ pub enum AgentEventPayload {
         output_tokens: u64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cached_input_tokens: Option<u64>,
+        /// Latest context occupancy, distinct from cumulative billing usage.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        context_tokens: Option<u64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        model_context_window: Option<u64>,
     },
     GoalUpdated {
         goal: AgentGoalState,

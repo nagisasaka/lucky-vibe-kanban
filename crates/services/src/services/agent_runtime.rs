@@ -362,6 +362,7 @@ impl<'a> AgentRuntimeReadService<'a> {
                     input_tokens,
                     output_tokens,
                     cached_input_tokens,
+                    ..
                 } => {
                     // Historical runs have usage in canonical events. New
                     // attempts keep a cumulative latest-value snapshot, so do

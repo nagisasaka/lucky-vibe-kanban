@@ -547,6 +547,8 @@ mod tests {
                 input_tokens: 1234,
                 output_tokens: 56,
                 cached_input_tokens: Some(12),
+                context_tokens: None,
+                model_context_window: None,
             };
         }
         journal.append(usage).await.unwrap();
