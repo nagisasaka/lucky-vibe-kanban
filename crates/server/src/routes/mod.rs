@@ -35,8 +35,8 @@ pub mod scratch;
 pub mod search;
 pub mod sessions;
 pub mod tags;
-pub mod todos;
 pub mod terminal;
+pub mod todos;
 pub mod workflows;
 pub mod workspaces;
 

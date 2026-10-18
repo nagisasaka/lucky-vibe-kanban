@@ -152,8 +152,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
         "start_integration" => Some("lvk:merge"),
         "create_todo" | "update_todo" | "delete_todo" | "create_issue" | "update_issue"
-        | "steer_execution" | "continue_execution"
-        | "answer_question" | "start_workspace" => Some("lvk:write"),
+        | "steer_execution" | "continue_execution" | "answer_question" | "start_workspace" => {
+            Some("lvk:write")
+        }
         _ => None,
     }
 }
