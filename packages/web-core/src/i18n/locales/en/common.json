@@ -1341,5 +1341,28 @@
     "evidence": "Development record / reason",
     "prerequisites": "Prerequisites and environment checks",
     "exclusions": "Replacements and exclusions"
+  },
+  "todo": {
+    "title": "TODO list",
+    "board": "Kanban board",
+    "newBody": "Add a thought or TODO…",
+    "category": "Category",
+    "uncategorized": "Uncategorized",
+    "add": "Add",
+    "showCompleted": "Show completed",
+    "empty": "No TODOs to show. Add your next thought above.",
+    "editBody": "Edit TODO",
+    "save": "Save",
+    "cancel": "Cancel",
+    "markComplete": "Mark complete: {{body}}",
+    "markIncomplete": "Mark incomplete: {{body}}",
+    "relatedCard": "Related card",
+    "itemActions": "TODO actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete this TODO?",
+    "project": "Project",
+    "chooseProject": "Choose a Project",
+    "integration": "Integrate / Auto Merge"
   }
 }

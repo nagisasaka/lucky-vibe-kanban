@@ -1,3 +1,6 @@
+import { GitMergeIcon } from '@phosphor-icons/react';
+import { useTranslation } from 'react-i18next';
+import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useMemo, useCallback, useEffect } from 'react';
 
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
@@ -119,6 +122,8 @@ export function NavbarContainer({
   mobileMode?: boolean;
   onOpenDrawer?: () => void;
 }) {
+  const { t } = useTranslation('common');
+  const openIntegration = useTodoViewStore((s) => s.setIntegrationProject);
   const { executeAction } = useActions();
   const {
     workspace: selectedWorkspace,
@@ -149,7 +154,9 @@ export function NavbarContainer({
       MOBILE_TABS.filter(
         (tab) =>
           tab.id === 'chat' ||
-          (tab.id === 'wiki' && !isCreateMode && Boolean(selectedWorkspace))
+          ((tab.id === 'wiki' || tab.id === 'todos') &&
+            !isCreateMode &&
+            Boolean(selectedWorkspace))
       ),
     [isCreateMode, selectedWorkspace]
   );
@@ -171,7 +178,11 @@ export function NavbarContainer({
 
   const handleMobileTabChange = useCallback(
     (tab: MobileTabId) => {
-      if (tab === 'wiki') openWiki(selectedWorkspace?.id);
+      if (tab === 'todos')
+        useUiPreferencesStore
+          .getState()
+          .setRightMainPanelMode('todos', selectedWorkspace?.id);
+      else if (tab === 'wiki') openWiki(selectedWorkspace?.id);
       else if (tab === 'chat') closeWiki(selectedWorkspace?.id);
       setMobileActiveTab(tab);
     },
@@ -298,7 +309,19 @@ export function NavbarContainer({
       workspaceTitle={navbarTitle}
       breadcrumbs={workspaceContext}
       leftItems={leftItems}
-      rightItems={rightItems}
+      rightItems={
+        projectDestination?.kind === 'project' && projectId
+          ? [
+              {
+                id: 'project-integration',
+                icon: GitMergeIcon,
+                tooltip: t('todo.integration'),
+                onClick: () => openIntegration(projectId),
+              },
+              ...rightItems,
+            ]
+          : rightItems
+      }
       syncErrors={syncErrors}
       mobileMode={mobileMode}
       mobileUserSlot={userPopoverSlot}

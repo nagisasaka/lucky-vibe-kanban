@@ -35,6 +35,7 @@ pub mod scratch;
 pub mod search;
 pub mod sessions;
 pub mod tags;
+pub mod todos;
 pub mod terminal;
 pub mod workflows;
 pub mod workspaces;
@@ -55,6 +56,7 @@ pub fn router(
         .merge(agent_runs::router(&deployment))
         .merge(execution_processes::router(&deployment))
         .merge(tags::router(&deployment))
+        .merge(todos::router())
         .merge(pipelines::router())
         .merge(filesystem::router())
         .merge(repo::router())

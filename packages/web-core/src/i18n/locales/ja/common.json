@@ -1234,5 +1234,28 @@
     "evidence": "開発時の記録・根拠",
     "prerequisites": "前提条件と環境の確認",
     "exclusions": "置換・除外の理由"
+  },
+  "todo": {
+    "title": "TODOリスト",
+    "board": "カンバンボード",
+    "newBody": "気付いたことやTODOを追加…",
+    "category": "カテゴリ",
+    "uncategorized": "未分類",
+    "add": "追加",
+    "showCompleted": "完了済みも表示",
+    "empty": "表示するTODOはありません。上の入力欄から追加できます。",
+    "editBody": "TODOを編集",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "markComplete": "完了にする：{{body}}",
+    "markIncomplete": "未完了に戻す：{{body}}",
+    "relatedCard": "関連カード",
+    "itemActions": "TODOの操作",
+    "edit": "編集",
+    "delete": "削除",
+    "confirmDelete": "このTODOを削除しますか？",
+    "project": "プロジェクト",
+    "chooseProject": "プロジェクトを選択",
+    "integration": "統合 / 自動マージ"
   }
 }

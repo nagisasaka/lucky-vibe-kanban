@@ -9,6 +9,7 @@ export const RIGHT_MAIN_PANEL_MODES = {
   LOGS: 'logs',
   PREVIEW: 'preview',
   WIKI: 'wiki',
+  TODOS: 'todos',
 } as const;
 
 export type RightMainPanelMode =
@@ -24,6 +25,7 @@ export type MobileTab =
   | 'logs'
   | 'preview'
   | 'wiki'
+  | 'todos'
   | 'git';
 
 export type MobileFontScale = 'default' | 'small' | 'smaller';

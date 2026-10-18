@@ -4,6 +4,22 @@
 
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.
 
+export type Todo = { id: string, project_id: string, body: string, category: string, completed: boolean, issue_id: string | null, revision: number, created_at: string, updated_at: string, };
+
+export type CreateTodo = {
+/**
+ * Stable client-generated ID. Reuse this ID when retrying the same addition.
+ */
+id: string, body: string, category: string, issue_id: string | null, };
+
+export type UpdateTodo = { expected_revision: number, body: string | null,
+/**
+ * Empty string means uncategorized. Omitted fields are preserved.
+ */
+category: string | null, completed: boolean | null, issue_id: string | null, clear_issue: boolean, };
+
+export type TodoPage = { items: Array<Todo>, next_offset: number | null, };
+
 export type Repo = { id: string, path: string, name: string, display_name: string, setup_script: string | null, cleanup_script: string | null, archive_script: string | null, copy_files: string | null, parallel_setup_script: boolean, dev_server_script: string | null, default_target_branch: string | null, default_working_dir: string | null, created_at: Date, updated_at: Date, };
 
 export type RunnerTarget = { runner_id: string, source_id: string,

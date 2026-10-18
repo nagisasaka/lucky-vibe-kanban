@@ -47,6 +47,7 @@ mod repos;
 mod resources;
 mod sessions;
 mod task_attempts;
+mod todos;
 mod workspaces;
 
 impl McpServer {
@@ -58,6 +59,7 @@ impl McpServer {
             + Self::repos_tools_router()
             + Self::remote_projects_tools_router()
             + Self::remote_issues_tools_router()
+            + Self::todo_tools_router()
             + Self::issue_assignees_tools_router()
             + Self::issue_tags_tools_router()
             + Self::issue_relationships_tools_router()

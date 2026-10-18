@@ -4,6 +4,7 @@ import {
   Layout as LayoutIcon,
   ChatsTeardrop as ChatsTeardropIcon,
   Files as FilesIcon,
+  ListChecks as ListChecksIcon,
   BookOpen as BookOpenIcon,
   GitDiff as GitDiffIcon,
   Terminal as TerminalIcon,
@@ -102,6 +103,7 @@ export type MobileTabId =
   | 'logs'
   | 'preview'
   | 'wiki'
+  | 'todos'
   | 'git';
 
 export const MOBILE_TABS: { id: MobileTabId; icon: Icon; label: string }[] = [
@@ -109,6 +111,7 @@ export const MOBILE_TABS: { id: MobileTabId; icon: Icon; label: string }[] = [
   { id: 'chat', icon: ChatsTeardropIcon, label: 'Chat' },
   { id: 'files', icon: FilesIcon, label: 'Files' },
   { id: 'wiki', icon: BookOpenIcon, label: 'Wiki' },
+  { id: 'todos', icon: ListChecksIcon, label: 'TODO' },
   { id: 'changes', icon: GitDiffIcon, label: 'Diff' },
   { id: 'logs', icon: TerminalIcon, label: 'Logs' },
   { id: 'preview', icon: DesktopIcon, label: 'Preview' },
@@ -431,7 +434,7 @@ export function Navbar({
     <nav
       data-tauri-drag-region
       className={cn(
-        'flex items-center justify-between px-base py-half bg-secondary border-b shrink-0',
+        'flex min-w-0 items-center justify-between px-base py-half bg-secondary border-b shrink-0',
         className
       )}
     >
