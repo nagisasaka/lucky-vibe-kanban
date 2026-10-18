@@ -14,6 +14,7 @@ mod operations;
 mod project_read;
 mod questions;
 mod read;
+mod run_events;
 mod runtime_read;
 mod runtime_write;
 mod todos;
@@ -305,6 +306,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(integration_read::tools());
     tools.extend(questions::tools());
     tools.extend(runtime_read::tools());
+    tools.extend(run_events::tools());
     tools.extend(runtime_write::tools());
     tools
 }
@@ -396,6 +398,7 @@ impl Remote {
         };
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
+            "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
                 json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false}),
             ),

@@ -160,7 +160,7 @@ pub(super) async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target
     fixture_with_pool(pool).await
 }
 
-async fn fixture_with_pool(
+pub(super) async fn fixture_with_pool(
     pool: SqlitePool,
 ) -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
