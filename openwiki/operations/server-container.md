@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/server-access/src/preview.rs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-45785e038b483538ab5c9894
+    resource: repo://deploy/developer/test_updater.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-eaf96aacdc40d6db8dae4f8e
@@ -34,10 +36,10 @@ sources:
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -125,18 +127,11 @@ LVK の画面から行う Git/PR には [リポジトリ別 PAT](../integrations
 
 ホストは許可 repository・source SHA・digest・公開 workflow 成功を照合して候補を検査する。現在の自己開発手順は card ごとの独立 instance → main の固定 staging 候補 → release → stable 更新である。staging は built frontend と debug binary を使い、source watcher を走らせない。標準 updater の対象は stable の lvk のみで、旧 development サービスは互換オプションとなる。詳しい操作と一度限りのホスト移行は [STAGING.md](../../deploy/developer/STAGING.md)、独立状態の契約は [開発と検証](development.md) を参照する。
 
-更新は管理対象の DB と実プロセスが idle になるまで待つ。旧構成で development も管理する場合は両方が対象となる。Goal active、未完了AgentRun/
-attempt、共有資源所有、未完了workflow、未知process、有効な定期実行は更新を妨げる。
-HTTPのreadiness barrierで既存handlerの終了を待ち、新しい変更リクエスト・WebSocket
-upgradeを503で拒否する。[HTTP barrier](../../crates/server/src/middleware/maintenance.rs)
-その後、停止で失われるin-memory follow-upを共通admission mutex付きのqueue GETで
-検査する。旧版にこの能力がなければ、まずSSHから対応版へbootstrapする。
-既定 debug DB は checkout の dev_assets、release DB は永続 home にある。instance/build process も busy とみなすため staging を終了してから stable を更新する。
-idle検査から停止までの競合を閉じるため、両コンテナーをfreezeして再検査し、仕事が
-増えていれば再開して待つ。idleを確認できた場合だけfreezeしたまま終了する。
-これはgraceful shutdownではなくSQLite WAL回復を使う停止であり、active agentを
-強制終了する手段にはしない。停止後、全永続volumeと設定を保存し、再生成可能な
-development Cargo targetだけを除外する。[状態機械と検査](../../deploy/developer/updater.py)
+host updater の活動 blocker は管理対象 DB の `agent_runs`、`agent_run_attempts`、`agent_process_registry` に限定される。run / attempt が終端、registry が exited であることを要求し、null・未知状態や読めない DB / schema は idle と扱わない。旧構成で development も管理する場合は両方の DB が対象になる。[判定](../../deploy/developer/updater.py#L28-L37)、[DB 読取](../../deploy/developer/updater.py#L98-L111)
+
+Goal の状態、queued follow-up、Workflow / orchestration の投影、共有 resource holder、定期実行設定、dev server・terminal・instance/build といった非 agent process は、この updater の blocker ではない。コンテナー置換でこれらの process は停止し、メモリ内 queue も失われ得る。これは [資源調停の所有・回復](../concepts/shared-resource-coordination.md)を解除する証拠ではなく、updater の起動可否に限った契約である。[除外対象のテスト](../../deploy/developer/test_updater.py#L94-L176)
+
+maintenance gate を閉じ、HTTP readiness barrier で受理済み handler を drain してからコンテナーを freeze し、同じ agent 活動を再検査する。競合で新しい agent が見つかれば再開して待つ。queue GET による待機検査や Docker の全 process allowlist は行わない。idle を確認した場合だけ freeze したまま停止し、全永続 volume と設定を保存する。この停止は graceful shutdown ではなく SQLite WAL 回復を使う。[順序と失敗](../../deploy/developer/updater.py#L346-L387)、[HTTP barrier](../../crates/server/src/middleware/maintenance.rs)
 
 新imageの起動・ブラウザー検査中は任意のmaintenance mountによってHTTPSを503にする。
 検査失敗時はchecksum検証済みのimage/データの組へ戻す。ホスト処理自体が中断された場合は

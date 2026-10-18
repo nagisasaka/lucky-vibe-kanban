@@ -68,10 +68,10 @@ sources:
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-16T14:44:43.872Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -87,6 +87,10 @@ verified:
 Stop は Integration の cancel、Bootstrap の所有フロー、Sync の監査付き Cancel へ委譲する。停止可能 phase を再検証し、Wiki publication 開始後は取り消さず結果の確定を待つ。終端または停止要求済みなら重複 Stop は無操作となる。[停止の境界](../../crates/server/src/routes/workspaces/usage.rs)。失敗・回復待ちの意味は [正式統合](../concepts/formal-integration.md)と [Wiki 保守](openwiki-maintenance.md)に置く。
 
 ファイル・Wiki・添付などの読取は `container_for_inspection` を経由する。execution_only では存在するパスだけを返し、cleanup 済みや未準備の worktree を再作成しない。一般の interactive 環境は従来の ensure 経路を保持する。表示に伴う復元や script 起動を追加する変更は、この用途の違いを守る必要がある。[共通の読取入口](../../crates/services/src/services/container.rs)
+
+## Project の Todo を確認する
+
+Workspace の Todo panel は作業木内のファイルではなく、現在の Card link が示す Project の共有メモを読む。未関連なら Project を選ぶ。[所属・保存・更新競合](../concepts/project-todos.md)を確認し、メモの完了を実行終了や Card Done と取り違えない。チャットを残した panel 切替の配置は [Web の状態管理](../architecture/web-and-sync.md)を参照する。
 
 ## Repo 内ファイルを読む
 
@@ -137,6 +141,8 @@ stats-only と累積本文容量の上限により、diff の old/new content �
 ## Preview と開発サーバー
 
 Dev server の開始は Workspace 内で既存 dev server の停止を試み、script のある各 Repo を Bash の ScriptRequest / DevServer として起動する。script が一つもなければ API error。途中の起動に失敗した場合、それ以前の起動を全件 rollback する構造ではない。[起動処理](../../crates/server/src/routes/workspaces/execution.rs)
+
+Dev server の稼働だけではチャット送信をブロックしない。専用停止と他 script の活動判定は [Session の入力契約](../concepts/session-and-agent-run.md#会話表示と入力)を参照する。
 
 この script 実行は [coding AgentRun](../concepts/session-and-agent-run.md) とは別の ExecutionProcess 経路である。通常の設定とログ上の URL 検出の説明は [Browser Testing](../../docs/browser-testing.mdx) を参照する。
 

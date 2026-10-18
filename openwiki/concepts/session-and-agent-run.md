@@ -62,10 +62,14 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+  - id: openwiki-source-2e251355ae5f41eedc1e63cc
+    resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts
+  - id: openwiki-source-80f810d80e1c4664d02a9f39
+    resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -182,3 +186,7 @@ Provider が内部で起動する子 agent の活動は AgentActivity として�
 ## 会話表示と入力
 
 thinking / tool の表示は会話 timeline の一部であり、表示用の経過時間や折り畳みから実行成功を判定しない。状態は AgentRun の正本を参照する。日本語ラベルは i18n、本文は Markdown renderer が扱う。[thinking 表示](../../packages/ui/src/components/ChatThinkingMessage.tsx)。IME composition 中や keyCode 229 の Enter / Tab 操作は editor command で抑制し、変換確定を送信・一覧操作と取り違えない。[keyboard guard](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx)。
+
+チャットを塞ぐ script 判定は活動中の ScriptRequest のうち `devserver` を除く。Preview server は turn 間にも稼働し専用 Stop を持つため、その存在だけで送信を待たせない。setup や IntegrationValidation 等の活動判定は残る。これは UI の送信可否であり、backend の実行所有・予約 guard を解除するものではない。[判定](../../packages/web-core/src/shared/lib/executionProcessRuntime.ts#L45-L58)、[利用箇所](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx)、[回帰テスト](../../packages/web-core/src/shared/lib/executionProcessRuntime.test.ts)
+
+長い Session は最新の会話と活動中 run を先に表示し、古い履歴の読込中も別の状態として示す。購読 batch と Session 切替時の分離は [Web の履歴同期](../architecture/web-and-sync.md#最近の会話を先に表示する)で説明する。

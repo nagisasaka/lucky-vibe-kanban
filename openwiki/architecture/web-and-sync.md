@@ -16,6 +16,8 @@ sources:
     resource: repo://packages/local-web/src/app/entry/App.tsx
   - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
+  - id: openwiki-source-397291e029ec7b98f2f46af2
+    resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
@@ -54,10 +56,12 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+  - id: openwiki-source-823cc976bdb2bdcb610e746f
+    resource: repo://tests/integration-skip/history.spec.ts
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Web の実行環境と同期
@@ -105,6 +109,12 @@ Kanban の Project / view 別表示設定も UI preferences の Scratch に入�
 AgentRun stream は Electric ではない。サーバーは Live を先に購読し、その間の到着を受け止めてから永続履歴を replay する。cursor は RunAttempt 番号と canonical sequence で進め、Live 通知で進めない。再接続時に usage の最新 snapshot も送る。[stream](../../crates/server/src/routes/agent_runs.rs#L428-L500)
 
 会話 projection は表示用 entry に変換しても AgentRun、RunAttempt、event ID を保持する。この識別を外すと、別 attempt の表示と制御が混ざり得る。[表示 identity](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L25-L73)。永続化・一時差分・劣化時の詳細は [Agent Runtime](agent-runtime.md)に集約する。
+
+### 最近の会話を先に表示する
+
+Session の購読は新しい2件と全 active run を foreground とし、その初期化を待って会話を公開する。残る履歴は foreground の準備後、前 batch の初期化またはエラーを待って3件ずつ追加する。既に開始した stream は新しい run の到着でも保持し、Session が変わると keyed component ごとに状態をリセットする。`isLoadingHistory` は初期表示の loading と別であり、古いログの遅延だけで最近の会話や制御を待たせない。[購読と公開](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L278)、[遅延履歴・active run・Session 分離のテスト](../../tests/integration-skip/history.spec.ts)
+
+Project Todo は Board collection や会話 stream とは別の REST query を使う。Project と Workspace の表示は同じ Project のメモを参照し、保存と競合、画面内 draft の寿命は [Todo の契約](../concepts/project-todos.md)にまとめる。
 
 ## State と履歴を同期させる際の注意
 

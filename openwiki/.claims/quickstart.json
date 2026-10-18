@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3f5f500f97ca898c00940a3f0c1f293f4247a97a154308b492699c636a0ecfc7",
+  "pageVersion": "sha256:d731ee9e3fa6a307d8a93397dfe037661ae114a97c5779d918e4059d92174053",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -78,19 +78,19 @@
     },
     {
       "id": "claim_c27867023eef4c09b32ee58d6cb35a4f",
-      "statement": "local Board の正式 Integration は選んだ Card と採用 Workspace を専用環境で検証し、local target 公開と条件付き Done を扱う。実行専用環境は通常の開発入口と区別する。",
+      "statement": "local Board の正式 Integration は選んだ Card と採用 Workspace を専用環境で受付時の検証方針に従って処理し、local target 公開と条件付き Done を扱う。省略は NotRun であり、実行専用環境は通常の開発入口と区別する。",
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/workspace_usage.rs",
           "version": "repo-file-v1:sha256:e0b8cd7f9d85f4c4d46d2e97aba7f40ac96d5c2461787bedac97d90e2031a1bd"
         },
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
-          "version": "repo-file-v1:sha256:809255c9c772c1a44ca678c51961292c5d393fe882983ea085d1aba6ce28db74"
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1632-L1955",
+          "version": "repo-lines-v1:sha256:69d69149294e1d59ebba1bf36aeee11abb96aeccf9cdd85025586b02278bd198:eyJzZWxlY3RlZExpbmVDb3VudCI6MzI0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhMGM5ODZjMTE3NTM5ODk2OTJjNWEyYmQ1ZTE3ZmI2OWRlZjdlNjVlNDkzZjQ1MzE4NzE5YzI1NjI4ZjkyYjQ3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhYjkxY2NjMDc4YzNmZmZlM2U5OThjZWM4OTE4NGM5NDI5MjE1NzllMGU4YTkxMzUwMjE1Mjg5MmYxN2I1YzI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MiwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYTBhZjU0NTI2NzFmOTk0NDIzMjA2NDRmNGYzNGE4MzdkZGQ3ODQ0YWY4MWM2OTI0N2E5YWJmYzMzNzNiM2RjIn0"
         },
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:2bee15e992c8e960fe5a0a51697f4af22663f2d6c5dc33af23168f06fc3f7b77"
+          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
+          "version": "repo-file-v1:sha256:78d8f6c811d4c19cdf7a433cc0dcd1bfd51c3fc8c49a5fca7cbf7f1927bca3f4"
         }
       ]
     },
@@ -136,7 +136,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
-          "version": "repo-lines-v1:sha256:353ac9c43ce348c8019512525202c168fedb2d5bae91100b512e0752e419de1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
+          "version": "repo-lines-v1:sha256:b0fb0a150646af052fa124ee00e8c2b9837ef49ad32c80526f11fa63bb056704:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs#L158-L171",
@@ -147,6 +147,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

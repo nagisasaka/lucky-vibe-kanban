@@ -46,10 +46,10 @@ sources:
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
     resource: repo://docs/future/agent-runtime/delegated-agent-display.md
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -145,3 +145,5 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 失敗は MCP の error result と success:false / error / details で返す。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
 
 認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
+
+Global stdio には [Project Todo](../concepts/project-todos.md)の共有メモ操作も含む。限定 Orchestrator router には含めない。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)

@@ -26,10 +26,10 @@ sources:
     resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -60,6 +60,8 @@ Workspace の DB row と実 worktree の準備完了は同義ではない。通�
 `OrchestrationService` は frozen plan を先に永続化し、node identity を準備する。[service](../../crates/services/src/services/orchestration.rs#L67-L105)。inbox の join 処理は製品 planner から独立しており、再送・再起動による二重の下流実行を防ぐ消費 identity を確立する。Workflow の辺の意味を `OrchestrationJoinPolicy::All` というフィールドだけから判断してはいけない。製品の Ready 判定は別に存在する。[境界を明示するコメント](../../crates/services/src/services/orchestration.rs#L417-L449)、[plan への変換](../../crates/server/src/workflow_runtime/runner.rs#L1137-L1178)
 
 watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1044-L1075)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
+
+製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。[正式 Integration](../concepts/formal-integration.md)の成功後 Recover もこの照合を通す。
 
 ## 実行の前進と待機
 

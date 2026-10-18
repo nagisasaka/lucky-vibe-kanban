@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f98a232d52bac094dec6a613de73904d0da9180a1ed8c721a89565fc03bb76cf",
+  "pageVersion": "sha256:b5f6d71dc17ebf490fe409c9ac885f2625a9bca88656de83e3ebe5238126e418",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -162,7 +162,7 @@
       "evidence": [
         {
           "resource": "repo://docs/workspaces/openwiki.mdx",
-          "version": "repo-file-v1:sha256:07904ff0003c1e7675e243c25275031f13cc10f237e22bba24f56c7a6b6a3d27"
+          "version": "repo-file-v1:sha256:6243765f453037fe0e8a3b54a5c0d4cf7c13d373fca2bc234ce9674fbc139da1"
         }
       ]
     },
@@ -268,11 +268,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:eac32874780255f37ceb2fa18c8af8c23fdb73cda5fee158c0a1a2a1c1fe892a"
+          "version": "repo-file-v1:sha256:078cb293a035653cf02e3f93db9bf6ac7b4d8125c3e35090a5cb9009254292fb"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
-          "version": "repo-file-v1:sha256:809255c9c772c1a44ca678c51961292c5d393fe882983ea085d1aba6ce28db74"
+          "version": "repo-file-v1:sha256:78d8f6c811d4c19cdf7a433cc0dcd1bfd51c3fc8c49a5fca7cbf7f1927bca3f4"
         }
       ]
     },
@@ -282,7 +282,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/integration.rs",
-          "version": "repo-file-v1:sha256:f3a5f3e97a6f459e66fd322c3158ff600d14aa910b73aa5410838822c4d20685"
+          "version": "repo-file-v1:sha256:e13adc7adefef6812929d9aca76c1e90cfef8399f75cea87de031dce77d7d95d"
         }
       ]
     },
@@ -313,6 +313,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

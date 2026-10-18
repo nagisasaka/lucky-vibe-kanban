@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:da56d269a09d2c20a8c59942c910e64c4c4597a8b6a1a8df1bd7ff19f7774d5c",
+  "pageVersion": "sha256:146cd33b8c13157d2fa7d94edd4050b7734d07f67fb4a639180a865fd2e8d2d7",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -128,11 +128,11 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:94a542a73b396b9c7da140b5cbc998477c85406fad5879d12f75cf4d34a5052a"
+          "version": "repo-file-v1:sha256:cac1dc11b3fa4e974f6deab7413aa94ef75f42d510c1921bed94a80b8075ff59"
         },
         {
           "resource": "repo://deploy/developer/updater.py",
-          "version": "repo-file-v1:sha256:96a17989a2e5292cf1552de74d93142e8212944603c3bd716117045d35763d27"
+          "version": "repo-file-v1:sha256:3dadd9c922308b4ed3583493e7236e9b41bf631e417bd381b410821c85939a35"
         },
         {
           "resource": "repo://deploy/server/acme.py",
@@ -173,10 +173,32 @@
           "version": "repo-lines-v1:sha256:522a345d1018c8c2edbef5185209911c55091969c5b3c346df81936bd159f99f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNjQ2ZTEyOGRjZjA0OGYyMWMxNjY5NjVjMGQ2OWQ2M2Q3MGU0YzM3NmUzOTdjNjhiNzJiZDljNzQ0YjhjN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxZGQ0YzE0Y2EwYWFjZGMyNGQ4MmQ3NWVkNWYyNGE3YmI2NGY3NTgyOWNkMjdlNGZiZGMxMDZlODVhNjAyZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkY2MzMjFkMjgzNzc4YzE4MWVkZjNiYjZiNjJhYjFjN2Y2MGFmZDhjZTMwMWQ2NWQ2ZDJiZDJmZDgzYjk2ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_3c0a3374a9554dfda3a4e1e54bd51fb3",
+      "statement": "host updaterの活動blockerはmanaged agent run/attempt/process registryだけで、null・未知状態とDB/schema読取失敗はidleとしない。queue・Goal状態・resource所有・workflow投影・非agent processはblockerではない。gateとHTTP drain後freezeしてagent状態を再検査する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/test_updater.py#L94-L176",
+          "version": "repo-lines-v1:sha256:03b31937cff47dcf0deb65064f93afa3d186518ee2e5bb6d48c7beeef87418f9:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4NjAxNGI2OTVmZTk0MWU5YmEzNTQzZGI0Yjk5OTgzNTRjZTc2NGE0OThmYzEzOGQwY2NjZDcxMjVhM2EyNWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhYTZmZmUxMjg4YzE4NmI3OTBkYzQ4ZTcxNzAzMWNlZjc5NzNmYTQzMjFlY2Q3ZGI1OGVlNzkwYTI3ZjQ4ZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5NWU3ZDY1YzdlNDY1MDBiODFhOTE2NjA3ZTY5NTQwMjFjNGM3NmE5ZTNmYmM1OTZiNTFjZDQ0MmFkYjVjNjIifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/updater.py#L28-L37",
+          "version": "repo-lines-v1:sha256:0f9b2b1e95cc8c1b58f5b977cd17eda54bd02b5d5a9a8c5a2295a699346b4928:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzZjM3ZWZmNDQ5ZjIxZTFjNmQyMjZkMjQyZTVhMGNmZTAxYmU1NTE1OWVhYTE3ZTg2MDE2NDAxYjg3OWFmNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NDEyNzMwOWZkZTJiZWUxOWQzODY1MWRkOWU5ZmJiZmQzM2E5MGM2Yjc1ODk4NjY4MzM3N2U1YmNjNzUyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3MmVlMTAzMmIzNTViNWMwY2Q0YjMzMGRkODY5MjcxZGExMzRiMTZlOTA4YTliZWQxMmRjYjhkMzZkZGUzNzMifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/updater.py#L346-L387",
+          "version": "repo-lines-v1:sha256:2be70d33b6fbf1ab789f4126b1b3ef68cf481f64b61589b7385c808a4fa6bede:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwNzczMzdjY2UzN2E4YWMyZmMwZGE5NzU2MDQ4NjFjYzMxNWM4M2EwYzM4ZmYyMWJhMjhlOWJkYjMwYTgxOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwMzM5OWJlNjUxZTZjMDVkMzc2OWIyODU0ODdhNWJjYmYwNDcxOThmMThhNjZjYjY0OGUzNmEyNjQ0YmVjZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0YjI4ZDE5Yzk3NmY2OGJkZDE1YTFmNzRhYzZkZmQ4MzFjMjdhYWE5NmVkNjYyZjg2NTlhMjg4YzIwNTNhYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5ZWRiOWQ2NWFiMzAzODY2ZjdkMTdhZGFjOGM5MmYwMGZkNTc3OTcxY2ZmYWNkYjZlNzQ4ZmZhZWEwMjMyNDAifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/updater.py#L98-L111",
+          "version": "repo-lines-v1:sha256:196ee1188bd94099d20ac58ace766ea195980d925bb0bb20eaab997a47498f09:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMzliMDU4NWJmOTBkMTk1ZmY3MTUyYjcyMjk3Y2IyODY3NTllZTRiMmRiN2UwOTI4OWQ5MmU4OWFkNDM4MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlOGJlMjIwOWI3MDg3ZWJlNGQ5ZTQ0YTlhNjA0NjEwMWRmYWY5MTNkMjVlNjhjZDM5ZGE2YTNmZDM5NmNjOWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZmUyMmQ3Nzg4OTk3M2M1N2FkNzJmODczZTU1Njk3OGEzZWRmZDRmMDMwZWY4MzAwMjM1NTA0M2FiY2NmOWIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

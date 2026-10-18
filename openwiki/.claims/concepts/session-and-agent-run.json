@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9d4da93a7e1447d832fee12eda41c658b998929de467717a70dbc0211485342d",
+  "pageVersion": "sha256:ab143f864f824acb50fdf3fdc75d2d2caeb7c29bf6b56280d6a74a46e1555dfa",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -375,10 +375,28 @@
           "version": "repo-lines-v1:sha256:473d322264e97270a1e1fe37554317840d22e855b50af376c105af89b1fbd0c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYWNmNzFhNzI3MmMwMDYwY2Q5ZTJkMWI5ZTNmM2ZlMzJhMzFhMTljNGFhMTBhZmE5NmNhOTdlNWI1ZDVlZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjJjNTc4MmRiNTM0Mzc2ODZmYzBkNmE2ODA4ZGYyYzQ1N2I1ZTEyMGE5ODA3Mzg1ZWIzMjhjYmU2NzdkNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxM2E4MzY0YzEwYWE1M2UzNjgyN2FlYmM3OTEyNGIwMzJhNzRiYTc5NWIwNjIxNTkzMzY3ODhkNTg2ODg3ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNmM5NGRmYzg3YTcwMDcyOWQ0OGFkOThhNzVlMDA2ZGJiZmRlNjhhMjlkNmNmMTQ0ZTk5MWU1YjY4ZDRmZmIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_4c80dd54ec6340c39e1b26dacc759b7d",
+      "statement": "チャットを塞ぐ活動中ScriptRequestの判定からdevserverを除き、Preview server稼働中でもその存在だけで送信を待たせない。他の活動中scriptは引き続き対象となる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx",
+          "version": "repo-file-v1:sha256:f75dee4d1f800d9fd7f41a81ad8205cbaed8e72dda84e3b451ca05d645fb866d"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts",
+          "version": "repo-file-v1:sha256:c2f97d69faf2ed85439d8c2c77b7e64ee35717eca6768bbc6203d45678f3bc57"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts#L45-L58",
+          "version": "repo-lines-v1:sha256:2aac440952bfd6e0e7e4f0d9fb6f93317755b6e81983f84e6aa2bd4d26f841f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwNmRlMTQyM2I4NDUwZDBkOTI3ODhkNzMwNWVhMGRlNTE4NmU5MzdjZDA3ZmE3NzhjZGU5ZDdjMDAxMGY5MWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzMzU0MjBmNDYyN2MzMWQ1MDQxOTBlMWEwMWU3N2U2MmE4OTYyZmJmMzM1YjRkNmY3NDg0OGFmMmY4ZTYxMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWI3Mzc0ZDlmMGI1MDY1YTI3MjVlOTQ4ZjUyMzYxNjc0MWZjM2FkNDZkZDBmZjE5NzMzNWEzZGYyM2YxZTkifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

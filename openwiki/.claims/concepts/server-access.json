@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ccdd6b3dae5661b9bffcff94c8aac5e89965f59cc78bfb5924357ead21dbcc06",
+  "pageVersion": "sha256:1952be8ca9dd5849694d19440ed2277e1762be826e03a641171dea9198380083",
   "claims": [
     {
       "id": "claim_c81a205c03bd40d890dd823991c3f6bc",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server-access/src/lib.rs#L240-L405",
-          "version": "repo-lines-v1:sha256:c7662208942a359e475c6d2ddeee2b9ebab5b4a1f78e63328c3f0ad2dd5233b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhNTIzN2IyNGYyZGY2MmIzZWE5NmUwNjIxYTA5MjMxYjQzYzkxNmM3M2I0MzQ1NWNkNDY3MmNhOGVkYTIwMjZlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZjk1ZjAyYmJiODYyYzU2MmYxZTlhNDU3OGZiMmY5ODM5YTJkYjViODliOGQ3NmZlNjcyYTYyOWExNTQ5Y2FhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNDI2OWVmNzZjNDNmZDU3MjEwYTQ2MTQ1OWEwOTk2YjQ1NjM0MmRjYTUyYmQ4YmIyZjc3YTJiMmYyODAyMzg3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4OTU0YjZlN2E2Mzg1MDMzYTZlOTI3YzNjOTRiZDA2MDY5MWE0OWQ0ZTU0MGJiZWNkYWE3Zjk5MjE3OTdkYTI1In0"
+          "version": "repo-lines-v1:sha256:e9d045725851b95e610f5b9ea2f5f8530f325be3ac6ba8223b1fe1f783b693e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhNTIzN2IyNGYyZGY2MmIzZWE5NmUwNjIxYTA5MjMxYjQzYzkxNmM3M2I0MzQ1NWNkNDY3MmNhOGVkYTIwMjZlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZjk1ZjAyYmJiODYyYzU2MmYxZTlhNDU3OGZiMmY5ODM5YTJkYjViODliOGQ3NmZlNjcyYTYyOWExNTQ5Y2FhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNDI2OWVmNzZjNDNmZDU3MjEwYTQ2MTQ1OWEwOTk2YjQ1NjM0MmRjYTUyYmQ4YmIyZjc3YTJiMmYyODAyMzg3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4OTU0YjZlN2E2Mzg1MDMzYTZlOTI3YzNjOTRiZDA2MDY5MWE0OWQ0ZTU0MGJiZWNkYWE3Zjk5MjE3OTdkYTI1In0"
         }
       ]
     },
@@ -44,7 +44,7 @@
         },
         {
           "resource": "repo://crates/server-access/src/store.rs#L171-L333",
-          "version": "repo-lines-v1:sha256:73d7f522143af69caa545b09ac3ae0ec12025f45b4f0e56d9d0590fe141be818:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyN2JjZDY0MjNlOTcwZjQ4Y2YwMzg0M2FiZmY1YTI2NDM4YTM1ZjhhZTk0NzNjNTI5Y2FkNTQ4ZWJmMGM4ZThmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZWQ0YWFkNGQzOGM0Mzc2MDBhZTA4M2Y5MjgzNDE3ZWY3YzU3NjNkMjNjZjllZGVhZThjODlhYWRmMzY2MGY1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyZDUyNWFjNTU0NWNmMDU3YjQ2MzkxZDdiMDA4NjdmZjRkZDE1ZjZmMzlmYzVjOTc0MzQ4NDMxMTlmNDY4OWM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NGJhYzYxNzE0NDdjMjNmNTI5M2I5ZDkzN2Q4NjYyNmQ3YjYxNGNjNDRhZGVkYzFhZThlYmJmMzFkZWFlYWU1In0"
+          "version": "repo-lines-v1:sha256:6ae229deb67ecd7dc971d719bffb14573fa71e9f63f7bcf7a712e79437d824d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyN2JjZDY0MjNlOTcwZjQ4Y2YwMzg0M2FiZmY1YTI2NDM4YTM1ZjhhZTk0NzNjNTI5Y2FkNTQ4ZWJmMGM4ZThmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZWQ0YWFkNGQzOGM0Mzc2MDBhZTA4M2Y5MjgzNDE3ZWY3YzU3NjNkMjNjZjllZGVhZThjODlhYWRmMzY2MGY1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyZDUyNWFjNTU0NWNmMDU3YjQ2MzkxZDdiMDA4NjdmZjRkZDE1ZjZmMzlmYzVjOTc0MzQ4NDMxMTlmNDY4OWM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NGJhYzYxNzE0NDdjMjNmNTI5M2I5ZDkzN2Q4NjYyNmQ3YjYxNGNjNDRhZGVkYzFhZThlYmJmMzFkZWFlYWU1In0"
         }
       ]
     },
@@ -76,7 +76,7 @@
         },
         {
           "resource": "repo://crates/server-access/src/lib.rs#L406-L435",
-          "version": "repo-lines-v1:sha256:697bde88d0932e1095bb5c511df61e62056bfba3ee87eefe44246378ef2d8c58:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxMzNlMTAwNDE0MDVhMTQ0NzM5MTI0MjI0M2Q1NWZjYzY3YmE5MTJkZWUyY2EzNDg5MzMzMWIzY2QwZTEzNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NTI2NjNhMzVmYzg3OGI4YTA5MjBiZmI5ZjYwZmZkZWQ0ZDYxYjc1ZTIxNDNhNjY0YWY4ZDhiOTRkYzBmZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwNGE1OWIzNWJlMThlNmIzMGNmNjM4Y2I1MGRiMGJmMGYzMjZlZGE1ZWU1ODA5OTFjNjgwYjhmNWU0OGI1OTQifQ"
+          "version": "repo-lines-v1:sha256:76ecd11ca654ddf5c420103590b483fd90090e7a11372b3e7b73d651c5ab6660:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxMzNlMTAwNDE0MDVhMTQ0NzM5MTI0MjI0M2Q1NWZjYzY3YmE5MTJkZWUyY2EzNDg5MzMzMWIzY2QwZTEzNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NTI2NjNhMzVmYzg3OGI4YTA5MjBiZmI5ZjYwZmZkZWQ0ZDYxYjc1ZTIxNDNhNjY0YWY4ZDhiOTRkYzBmZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwNGE1OWIzNWJlMThlNmIzMGNmNjM4Y2I1MGRiMGJmMGYzMjZlZGE1ZWU1ODA5OTFjNjgwYjhmNWU0OGI1OTQifQ"
         },
         {
           "resource": "repo://crates/server-access/src/lib.rs#L665-L680",
@@ -111,10 +111,58 @@
           "version": "repo-lines-v1:sha256:d18e0c812aab3e20874c4a7474033c5bcd3d7afa8082683a7ec2f324f35662cd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOWYxYjJmY2JjMDQ2MzQwODZmZTI0YjQwYzZjZTM3ZGJhNzBhOTNmZjc4YmQyYTg4YjA5MzkyM2M2OWE2NDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTI0OWI0ZGQ0YjI1Y2QzOGFmMTczMDM0MTRiZGFiYzA3YTgzMDlmZTI4NDQ4ZmJkNjMwNjRmODZkM2M5NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MGZmZjQzOTdlNmZmMjU2MDI0ZjE4ZGU5ZjZmYzMwNGJkYzdmYTcxN2U2Y2U0NGQ5MWYzMjBiZjlhNGMxOTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8ce2085ee94d4f7785a4f36ddf403db9",
+      "statement": "Auth0 provisioningはsetup/管理sessionとCSRFを要求し、要求内のManagement tokenでinspect/preview/applyする。Applyはplan digest・session・期限を検証し、LVK認証有効化とadmin昇格は行わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/provisioning.rs#L586-L687",
+          "version": "repo-lines-v1:sha256:eb15de10dc1139adc95f1a2e774a3799538782ad15610d9f86ec5d8481b8f02f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZmEzM2ZiYzRlNjFhNjhkY2I4MzVkYWZlYThlY2ZmOTdlNzFlNWI4MzUzZjMyYTRlOTJkNjUyZjM2ODU4NGVmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_cbb95c69dd454f83b9199d2caa20edef",
+      "statement": "Auth0作成支援はWebとChatGPT applicationを分離し所有metadataで再利用する。他applicationのconnection割当てを保持し、部分失敗はrollbackせず再Previewして再適用する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/provisioning.rs#L329-L584",
+          "version": "repo-lines-v1:sha256:24dd791e8732fc572841eba5ef139e8d3ddbcbe39c3fa95c7efc284e6476afa4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjU2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYzA4Y2I3NDhhNzM2ZWZkMGI4OTQ1MTJjYWRlYTYwNjJjNmM5ZDY0MTEyNGY5YzAwOWMyY2ZkMDFiYjVjMzAyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlZTkyODExMTk2MmJlZjI5NWYzNGE4ZGNkMDQ0MDc2MGE1Mjc2NWE4OTQ1MmM3MTNlN2ZhN2Y5MWUzYWFhZDNhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlZmY0OGMxZWViZjhjYTc2MTdlN2NlMDAyODhmZWY2MWUwN2U3ZTc4NGEwZTM3MjIyNDYwZWM5MWMzNmY1NzIxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ZTFmNjYzZmQ3NjRkMTEzYTIxNjBiNjg2ZWRkY2Q2ZmQ3Y2ViMTI1NWQ2NTJjNGViYjJlOWY2N2JkNWJhYzM3In0"
+        },
+        {
+          "resource": "repo://crates/server-access/src/tests/provisioning.rs#L236-L332",
+          "version": "repo-lines-v1:sha256:c07defe6a3de0adad1901e5a44a470e0ae942bbb694aae35d61bf4dc2618ff8a:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwZDU4OWEzNjRkYTNjNTlkNGM1Y2MwYmE5YzhjYTg3OTM1ZDBkMzYyMjgzNDI1NmFkNGVlMDc3ZDYzYmE5N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYmIwNGE4MDZjZGRlNTAwNGFmZTY4ODI4NmZmMjBhZjA4MDEzMjhmYjQ0N2IxYTRiNDZhNTdjYmZiN2E3MGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b2a33a892f843308de416b3356857c1",
+      "statement": "ChatGPT client資格情報は暗号化保存し、issuer/Web client/resource一致時だけ返す。statusはsecretを返さずrevealを明示要求し、setup/管理sessionとCSRFを必須とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/chatgpt.rs",
+          "version": "repo-file-v1:sha256:6adacab72a55e966dd6b3588a874b7cdf599ed86fa10f050495bc7650f50a78c"
+        },
+        {
+          "resource": "repo://crates/server-access/src/tests/chatgpt.rs",
+          "version": "repo-file-v1:sha256:5957f8a4d6c00407809dcf8c805c228817630ecc346345af47238cf655582557"
+        }
+      ]
+    },
+    {
+      "id": "claim_e90173afaab645ce8e157072b877d551",
+      "statement": "OIDC失敗診断は固定codeと許可したfield/categoryだけを記録し、診断用decodeで認証を許可せず401を返す。providerの生エラーや資格情報は診断に出さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/provider.rs#L422-L637",
+          "version": "repo-lines-v1:sha256:b4bc87cfcb014560d994fc6d47cc8558d2f1e6486863b0b2f4dc8d514a6359ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzMWQyODgxMTgyODRhZTc4ZmIzNWQ2NDkxYzcxMzkyYjY4OTI0ZTY3ZDE0NTAzMGRmYTBiOWJlMGQyOGVjMDcyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxOWU3NjM1NWNmMTE5OTQ4MGMzZjk5ODM2YjE0ODZjODQxZDg5MWZhYWQ5MDRjNjA4ZTA5MzAyMmQzNzU3YWVlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

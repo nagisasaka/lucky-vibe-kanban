@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3c83e2c71b4d3a9803d00def34f651f531ab4a09ce04dbb9f551c0eddd9420a4",
+  "pageVersion": "sha256:c484d00be3771b4d9629d8112296290c8e7dd54bf4711c03bbbe87cae6055db9",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -70,7 +70,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:323a8e6e491bb2552326de46d8c6fff717dfb2213e8b892d8b7f29364d9abc9c"
+          "version": "repo-file-v1:sha256:9e8a77112a3d0c5351286bf3a2dfcdec6f7c55ca837ef7e294cc03b2fefc199d"
         }
       ]
     },
@@ -176,11 +176,19 @@
     },
     {
       "id": "claim_1d439f4433b1488a997005040ae8f733",
-      "statement": "staging切替は旧実行終了と対応dataの保持を要し、stable更新前はinstance/buildもbusyと扱う。共有stagingはresource coordinationで管理する運用契約である。",
+      "statement": "staging切替は旧agent/workflow終了と対応dataの保持を要する。host updaterはmanaged coding agentを待ち、instance/buildを活動blockerにしない。image置換後はstagingを明示再起動する。共有stagingはresource coordinationで管理する。",
       "evidence": [
         {
-          "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:94a542a73b396b9c7da140b5cbc998477c85406fad5879d12f75cf4d34a5052a"
+          "resource": "repo://deploy/developer/STAGING.md#L125-L129",
+          "version": "repo-lines-v1:sha256:41df36e3e282f8ae577f7c7a6b6dac776f4c01af1154b5296c55067b38ec2951:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTc3MDBhN2RhZTc4ZmU5YzZlNWZjZDBhNjU1MjgzZWFjNzhhNjBmNjQ0Y2ExYjY4ZTcxNDIxYTZmN2E3OGJhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmU2Yzk2NmJjODE0Njc3NWMyMDkwMGU4ZTNhNmVkZmYzYTViYTk0ZDk0NTllZTFmZTJmMGQ5ZWVlZTA5YTJhYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmFiMmZiZGNiMWU1MDA2ODA5MjZhYTE0ZmY3N2VlYjUwY2NmNmI5MDEzYTU2NzBjMmJkOGYyMzdjNjc3OWY4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTNjYjE0NTAyNmZlNTAyYWM1OTdiZmExZjk0Mzk2ODk4OGRlMDYzNmU3MjRiZTlmMzVhOTMzNjE0NDYxZDY1NyJ9"
+        },
+        {
+          "resource": "repo://deploy/developer/STAGING.md#L67-L88",
+          "version": "repo-lines-v1:sha256:339947fd34180c0577d130c1fa467d69bf2ba9bc70f5b601b2fd539310359394:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNDA5YmZkYTc0YmE3NDE4MTY1YjAzNzdiNGExMGE1M2VjN2UxMTZmNzE0N2Y3YmQxY2EyYjU5Yzc5OGExOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzNDFhZjdiZWQ4ZjRlOTIzOTFiYzBhY2FmM2VmMzlkZTIzNDYxOThhYmQ0OGZiOWU0YWY3Y2FhMmFkMjVhMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGNhODg3NWJjYTI3MmZlZTdmNWM1ZDY4MzM1NjkxZDBmZDg1ZDg3MGY4MDFmODQ3OTU4YzZkOTAyYzExNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZmU0N2EwZjY3ZGU1OGZhNGY1NmQ2NGFlMTQwMzM2MTRkZmFhMDZhNDg5YmRiM2UzMzRkNzU3ZDk1ZGU2YjUifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/updater.py#L28-L37",
+          "version": "repo-lines-v1:sha256:0f9b2b1e95cc8c1b58f5b977cd17eda54bd02b5d5a9a8c5a2295a699346b4928:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzZjM3ZWZmNDQ5ZjIxZTFjNmQyMjZkMjQyZTVhMGNmZTAxYmU1NTE1OWVhYTE3ZTg2MDE2NDAxYjg3OWFmNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NDEyNzMwOWZkZTJiZWUxOWQzODY1MWRkOWU5ZmJiZmQzM2E5MGM2Yjc1ODk4NjY4MzM3N2U1YmNjNzUyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3MmVlMTAzMmIzNTViNWMwY2Q0YjMzMGRkODY5MjcxZGExMzRiMTZlOTA4YTliZWQxMmRjYjhkMzZkZGUzNzMifQ"
         }
       ]
     },
@@ -201,6 +209,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

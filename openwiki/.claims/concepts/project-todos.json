@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:34e6a87af96a9ee20c30bbc441c02b61d7a14b400222c8ef36af3725107d7b34",
+  "claims": [
+    {
+      "id": "claim_ffe4663e40c94017ac81d224a196ad07",
+      "statement": "TodoはProject共有メモであり、作成・完了でCardやagent実行を開始しない。Card参照は同一Projectに限り、Project削除でメモを削除、Card削除では参照だけを解除する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018000000_project_todos.sql",
+          "version": "repo-file-v1:sha256:dc4b8a8f608b5b7222a5be5af253190b54f351b0793ea6501963ecb768b108eb"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/todos.rs#L60-L83",
+          "version": "repo-lines-v1:sha256:3dbc2190cae1f39139d6b8daab09892367571bc692f6bf88fe1873e9efd56da6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2MTgzNjVkNjM0YzU1NTlhMWYzYzAwYzA0ZjM1MmViNjI3Zjg0YjgyYjM1ZTllOTg2NDE4YjNkYTc4NGEyMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhYzg0YmYzNzgwMmE1MTYzZWY3NGZhZTRhNWY4ZGRkMjVmYzM1YTYxNWRiNGNiNDBlMGZmMjUyOGI0OWU2ODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4MTRjNGIwOWIzMjYwOWZiNzBjMDZmYmM0NDhiZjJmNjVmMTc2NzI4OTdiMWMxZGI3MGFjNDZlMDQxMjRjNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxNzRkOTBjNDBmMDM1ZDIyMWZmYzk4YzE2YjQzZjZmNzg4YmI1ZTFjYTZmYjFkODg1ZDczMTMzODRlZjI1OTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_57eccb7d89c24898b3b3a535cf6b6f46",
+      "statement": "本文は空白のみを拒否し最大16000文字、カテゴリーはtrimして最大100文字。更新と削除はexpected_revisionで競合を拒否し、省略fieldは保持する。作成の同一ID再送は同じ内容だけ許す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/todo.rs#L75-L209",
+          "version": "repo-lines-v1:sha256:037839d71a985709fcea6011acbcfd42785b9a2c960d9eb1cbe56d66f4b7a8cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMzlmZjcwMWQ2Y2MyNzExMDNlN2Q3M2U4ZjllYzQwOTdjNjRmMDIxY2ZiMmNkZTllN2E5ODE1Zjg0NmFjMTVjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNTc4YjQwY2EwNzcyNTQzYjQ3YWM2ZDBkZWQ5YjA3NzVmNTc1OTZiMThhMDdmYzMzMmJkMmU1NmQzOGFjMTlhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhNTIxNjA0YjM1ZmM0MGFmMDBjYmE0ZWVhMmZkNWUyYzNhZjE4NjNiMzkxMTg1ZDdiZjRiYjA5ZTcyZDBjOGIzIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_811fb5da33a24092bc8afb0f1772cece",
+      "statement": "TodoはRESTとstdio MCPで同じDBモデルを使い、外部MCP変更にはread/write scopeとrequest_idのdurable receiptを要求する。DB失敗はuncertainとして保存する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/todos.rs#L41-L135",
+          "version": "repo-lines-v1:sha256:2bfbedc83edac22c2c3f3f461f050e7fe2ed62b3b42ba6e9119cb559a669cd3f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhOWI0MzI5N2ZiYzJhNTlkYTljZGEyN2Q2OTViNTA1MjQ0MDhiOWZmYTQ3NWNiNmM3M2RlOTU4MzY5ZDJiZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/todos.rs#L90-L235",
+          "version": "repo-lines-v1:sha256:6dee37855bb0e9556080da4bcf08d2f1107247daefa409bd3cdf32623b29026f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ZWNlMTFmZmNhOGZiZWZlYjg4MGYyNjJiNjEyZWVjNGI4OTE3OTRmZDFlOGE2NjY2NjA4MWI0MmFmYWJjNjdiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNjIzNTVhYjUxYjZmNzRjYmNjZmFjODBiNzNhZDMzOTU4YzNjNjc1M2NmOGM5MTU3ZDc2NjRlZDI5ZTY1YTNiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1N2NhODVlNGM2OTIyNDJjNzg1ZGFkMWNmN2ZkOGFmMDIzM2ViN2VlMGMzZTgzNzQyODc5YzA5ZGQ2YTA1M2FmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MSwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/todos.rs#L14-L71",
+          "version": "repo-lines-v1:sha256:afc67e0fab86a9ac41cef447c314d9fcede9ec027948f56262feb3a581ddc6e3:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExMjNhNGIxNDc2MWRiNjcyY2E4YmQyNTEwNjU3YzI1NTNjZDY5NzM5NjBhYWQ4NjY4Y2Q2YTA5ZTE3MmQ0ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZWQ0OTY0Y2JiY2Y4YzQ2Mjg1YjI3ZTIyMzZmYmI3YjhkNTVjZTFlNDU4OTNmNDE2OTVhMTAxMWQ0MzYzMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ4Y2I3NzAyZTIyZDg3MDE3Mzc1OTE5NmYyYjNjZjI5NWEyNjljZWQyMjhkMzU3MGMxZDhmODQ4NGRlOTgwNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5MTIzZmJhNzY5MTUwZTUzMGVlOTdiYmUyYTAyYzQ0YjIwNDc3MmE4M2MzMGZmNDNlYjUwZWRlMzljNTkxNDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0a649f6f941a4e389e2c29982d11c46b",
+      "statement": "Todo一覧は作成時刻降順・ID順のoffset paginationで、Webは完了を含め全ページを読み5秒ごとに更新する。WorkspaceはlinkのProjectを優先し未関連なら選択を使う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/todo.rs#L114-L132",
+          "version": "repo-lines-v1:sha256:b8963f3f2531dafd496a4a0c474dae94436e1af9b1603377d0c02aa806104e30:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzMTZhNDcwNTVhZWVlZTY0OWYxZWI0M2JjYmY2YzBlOWZkMjIzMjU3YjY4NWQxZGJmMTgyYTAwYWYxZmY3MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNDM1ODQzZGNkMGQ3MzY0OWYyOWY2M2RmYjM3N2U1MDBiY2ZkYmNkYmMwYTdiOGM4ODllZDEyODA5OTljYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwOTQyOTY4NzdiZjhjZDQxZjU4YzFkMzVkNmUzYTY0ZWQ0ZjJlNzgyZDQ5MGE1YjQ1YWRkMWVlMjM2NWVmMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzMDc4YjdmODdkZWIzMTI1NjlmMTk4ZjQ5YTU4MzI0MmQ3ODZiYmU4YmM2ZDZmMDc2NDgzM2U4ZmVkMzdjZjkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/model/todoApi.ts#L13-L25",
+          "version": "repo-lines-v1:sha256:75948b5362a720437f98aaa0cd14523c41cfd6a28d8d29f6b08bbedf8bcda222:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MjQ2NzEzNDE0NTljMTJhNWQ3ZWYwODA2Y2U0Mzc3NGViZjNjYmVlOTc3M2Q0ZGE1Y2JmZGM1N2Q1ZTM1N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4NTU5ZTIxNTQ1NWU0M2YwOTJiMTE0OThkYzcyMmVjYjc5ZDljNjM2MjEwYTViZWE2MjlkYzllMmU5NzEwZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZDEyYzEwMDE2MzU5NmRjZjg4NTllMzcyYTdmMjVlYmViMGYyM2EwZjg3Y2MwODIzNWFkNDI1YWM1ZTU0MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkZTYwNGIyMzI1NTE1YmQyMGM3MWY2M2RlMWZhNWNhNWQ3ZTc4OGI2ZjUwNzE1MmViNDY5MzZlNmM3NmNkY2MifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L33-L82",
+          "version": "repo-lines-v1:sha256:025c556a4c27a5494fba5049a8c34defb4266a907df74bc1d15fd093f9e84b48:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3NTE0NjgxYjQwZDEzNTIwMjRkNGI3NjUxOGExYzcxMDA2MDJkMmUwMzlkMmRjMjMxOTI2NjhhOWNiYjVmYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MDZjODEyZWRhMDE3ZWUwMzcwNmNmZjQ0N2NmMjg2YmYzMTlkOGMzYTE4ZTBlNzhlNzI4MmFjNjY3Mzk4MTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4NjhhYWU3MDg2ZTAwZWJhZTQ1YjlmMTU2YzU2MjAwZDRmZGZlYmRjZjkxMmZiY2IwNzBhZmE2N2IwNzU4MGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMzk4OTE5Y2E2ZWFlNGI3Nzk2NzI3ZWU1ODg5YjE2OTViNjBkZWEwNTNkZTA5YTYzZGUxNDhhMGEzODcyNTkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx",
+          "version": "repo-file-v1:sha256:6acca35e2f1f389f461c77d738cd19b2a844cee4414c4ae117b669669aa6c5ed"
+        }
+      ]
+    },
+    {
+      "id": "claim_7e0fce41107a43029e7e3a9da80ef50b",
+      "statement": "Todoの未送信draftはメモリ上のZustandに保持し、編集は開始時revisionを使う。競合時はエラーと再取得を行い編集入力を自動上書きしない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/model/todoViewStore.ts",
+          "version": "repo-file-v1:sha256:e481f2b6a698172f434dbbec05de88f040d37d5dd75870b3a0826d48e56f2cc2"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L182-L235",
+          "version": "repo-lines-v1:sha256:90519e753f349fb759e0815a7cb4b44fa9574d7fc2df36a67f8905e1244f4094:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0MTdlMjc3NDdmNjFiMGM1ODQ3NDQyZmY5NmZlZWFjMTdlMDFhMjJiOGJkNTZhMDRmNzk5YjM3YWYyMzZmOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZDc0MzliOTI0ZGRkYmQ5MmNkZDI3NTM0MjQ1NmRmYWFiNjM5ZTNlMjY3ODM1Y2E1ODRkNjcwYzViNTNiYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0MDA2MmE0YWYxNjAyOWVmNmJhM2M1MzE1MjhmNDU5N2I0YmM0YTJlYWM5ODI3N2NhMWRiYTgzZTBjNTQ0OGIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-10-18T14:00:51.649Z"
+  }
+}

@@ -28,10 +28,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Project・Issue と実施の関係
@@ -39,6 +39,8 @@ verified:
 **Project** は関連する仕事を集める単位で、Issue、ボードの Status、分類用 Tag を持つ。**Issue** は「何を達成するか」を表す仕事である。AI が作業する場所は [Workspace](workspace.md)、会話と実行は [Session・AgentRun](session-and-agent-run.md) が受け持つ。この分離により、一件の仕事に複数の実施や比較候補を関連付けられる。[Issue 契約](../../crates/api-types/src/issue.rs#L20-L40)、[関連表](../../crates/db/migrations/20260427000000_local_kanban.sql#L208-L223)
 
 local Project は固定Organizationと現在actorの [表示モデル](organization-and-membership.md)に結び付く。Issue の担当者・Follower は認証権限とは別である。
+
+Project には Issue と独立した [Todo 共有メモ](project-todos.md)もある。メモの完了は Card の Done や agent 実行を進めず、任意の同一 Project の Card 参照だけを持つ。Board の Todo 列や旧 `tasks` と区別する。
 
 ## 仕事の識別と分類
 
@@ -97,7 +99,7 @@ WorkflowAttempt は Project と Issue の所属を検証し、通常のテンプ
 
 ### 正式統合と Card の完了
 
-local Board の [正式 Integration](formal-integration.md)は採用 commit を固定し、一件ずつ検証・review して Git 公開後に選択 Card と Integration Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
+local Board の [正式 Integration](formal-integration.md)は採用 commit を固定し、一件ずつ選択した検証方針と必要な review を経て Git 公開後に選択 Card と Integration Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
 
 通常の link / unlink は interactive 用途を要求し、既存 Workspace の unlink は Integration guard も確認する。execution-only の間は通常作業への付け替えを拒否するが、終了・cleanup 後の用途解除は可能である。[link/unlink](../../crates/server/src/routes/workspaces/links.rs)、[用途と所有者](workspace.md#操作用途と実行所有者)。内部製品が自身の Card を付ける処理と、通常ユーザーの link API は区別する。
 

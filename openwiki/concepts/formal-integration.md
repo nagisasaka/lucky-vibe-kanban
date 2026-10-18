@@ -14,10 +14,10 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-001b80ecf41631f84729dd2e
     resource: repo://crates/server/src/routes/integrations/steps.rs
-generated: { by: "codex", at: "2026-10-16T12:21:28.631Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T12:21:28.631Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -34,21 +34,29 @@ source Card / Workspace 全体を予約する旧方式ではない。canonical G
 
 ## B から一件ずつ R を検証する
 
-B は queue の順番が来て preparation を始めた時点の target commit である。各 step は前 step の検証済み結果に次の source を history-preserving merge する。host は候補 R が B・前 step・ここまでの source の子孫であることと clean 状態を確認する。後の source を先取りして一括検証することは許されない。ただし既に履歴に含まれる場合を除く。`R=B` も許され、空 commit は不要である。[準備](../../crates/server/src/routes/integrations/runtime.rs#L990-L1048)、[祖先検査](../../crates/server/src/routes/integrations/runtime.rs#L860-L919)。
+B は queue の順番が来て preparation を始めた時点の target commit である。各 step は前 step の確定結果に次の source を history-preserving merge する。host は候補 R が B・前 step・ここまでの source の子孫であることと clean 状態を確認する。後の source を先取りして一括検証することは許されない。ただし既に履歴に含まれる場合を除く。`R=B` も許され、空 commit は不要である。[準備](../../crates/server/src/routes/integrations/runtime.rs#L990-L1048)、[祖先検査](../../crates/server/src/routes/integrations/runtime.rs#L860-L919)。
 
-各 step には自動 merge tree と候補との差分を保存する。conflict がある、または自動 merge 結果以外の変更がある場合、検証後に解決差分と説明の human review を要求する。承認は候補と scope に結び付けられ、候補が変われば流用できない。承認・検証を終えてから次の source へ進み、全 step 完了後にだけ target 公開へ進む。[解決差分](../../crates/server/src/routes/integrations/steps.rs)、[step の遷移](../../crates/server/src/routes/integrations/runtime.rs#L1287-L1330)。
+各 step には自動 merge tree と候補との差分を保存する。conflict がある、または自動 merge 結果以外の変更がある場合、選択した検証方針の処理後に解決差分と説明の human review を要求する。承認は候補と scope に結び付けられ、候補が変われば流用できない。承認と選択した検証方針の処理を終えてから次の source へ進み、全 step 完了後にだけ target 公開へ進む。[解決差分](../../crates/server/src/routes/integrations/steps.rs)、[step の遷移](../../crates/server/src/routes/integrations/runtime.rs#L1287-L1330)。
+
+## 検証方針は受付時に固定する
+
+`skip_validation` は run 全体の選択である。新規受付は明示値を優先し、省略時は保存済み server preference `integration_skip_validation` を引き継ぐ。初期値と旧記録は false。同じ request ID の再送で値を省略した場合は既存 run の選択を維持し、明示値が違えば競合になる。後から preference を変えても既存 run の方針は変わらない。[受付](../../crates/server/src/routes/integrations/admission.rs#L241-L255)、[再送](../../crates/server/src/routes/integrations/admission.rs#L318-L354)、[既定値](../../crates/services/src/services/config/versions/v9.rs#L60-L96)
+
+省略を選んだ run は受入検証の計画・前提準備・実行を行わず、proposal の validation と environment_blockers は空でなければならない。host は summary と Manifest tests に unverified / NotRun を記録し、step に `validation_skipped` を保存する。省略 run に実行証拠や検証 gate を混ぜること、検証必須 run に省略済み step を流用することは拒否する。[proposal](../../crates/server/src/routes/integrations/runtime.rs#L489-L563)、[証拠の区別](../../crates/server/src/routes/integrations/runtime.rs#L1637-L1661)、[step](../../crates/server/src/routes/integrations/steps.rs#L119-L145)
+
+省略しても clean candidate・祖先関係・source 順序・target 一致・取消と公開の排他・conflict /追加編集の human review は残る。これは failed check に対する候補限定例外とは別で、成功した Integration でも受入検証済みとは限らない。UI の選択は次回用 preference として保存され、履歴と Integration Card も未検証を示す。[UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L59-L75)、[履歴](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L470-L510)、[検証方針のテスト](../../crates/server/src/routes/integrations/runtime_tests.rs#L1250-L1356)
 
 ## 開発検証と human gate
 
-agent は Code mode で、選択集合と一致する JSON proposal、command・相対 cwd・開発上の根拠・環境要件・除外理由を提出する。ready には required command が必要で、空 command や `true` / `exit 0` / `:` は不可。対象は main とここまで採用した変更の開発受入検証を累積したもの。CI / release に存在するという理由だけで必須条件を追加せず、廃止・置換・分類変更をした検証は理由を残す。軽量な前提調査で既知の環境不足をまとめ、実行不能な plan は host テスト開始前に clarification とする。[proposal 検査](../../crates/server/src/routes/integrations/runtime.rs#L452-L626)、[方針](../../crates/server/src/routes/integrations/runtime.rs#L704-L728)。
+検証を有効にした run では、agent は Code mode で、選択集合と一致する JSON proposal、command・相対 cwd・開発上の根拠・環境要件・除外理由を提出する。ready には required command が必要で、空 command や `true` / `exit 0` / `:` は不可。対象は main とここまで採用した変更の開発受入検証を累積したもの。CI / release に存在するという理由だけで必須条件を追加せず、廃止・置換・分類変更をした検証は理由を残す。軽量な前提調査で既知の環境不足をまとめ、実行不能な plan は host テスト開始前に clarification とする。[proposal 検査](../../crates/server/src/routes/integrations/runtime.rs#L452-L626)、[方針](../../crates/server/src/routes/integrations/runtime.rs#L704-L728)。
 
-host は固定 R 上で command を Bash の `IntegrationValidation` ExecutionProcess として逐次実行する。cwd は symlink 解決後も Repo 内、前後の commit は同じ clean R、上限は一 command 一時間で、終了後の after-HEAD と process cleanup も待つ。ログの成功宣言ではなく、Session・reason・command / cwd・非 dropped・終了結果・before/after commit を再照合する。[実行](../../crates/server/src/routes/integrations/runtime.rs#L1171-L1286)、[証拠照合](../../crates/server/src/routes/integrations/runtime.rs#L1587-L1641)。これは plan の実行証明であり、意味的な完全網羅の機械的証明ではない。
+検証を有効にした run では、host は固定 R 上で command を Bash の `IntegrationValidation` ExecutionProcess として逐次実行する。cwd は symlink 解決後も Repo 内、前後の commit は同じ clean R、上限は一 command 一時間で、終了後の after-HEAD と process cleanup も待つ。ログの成功宣言ではなく、Session・reason・command / cwd・非 dropped・終了結果・before/after commit を再照合する。[実行](../../crates/server/src/routes/integrations/runtime.rs#L1171-L1286)、[証拠照合](../../crates/server/src/routes/integrations/runtime.rs#L1587-L1641)。これは plan の実行証明であり、意味的な完全網羅の機械的証明ではない。
 
 required check が通らない場合は blocked とし、失敗証拠とリスクを保存する。利用者は retry・その check と候補に限定した例外 continue・cancel を選べる。例外は合格への書換えではなく、対象候補の保証欠落を明示した判断である。actor、request ID、時刻と scope を保存し、古い判断や別候補への再利用を拒否する。[gate](../../crates/server/src/routes/integrations/runtime.rs#L1332-L1359)、[原子的判断](../../crates/db/src/models/integration.rs#L319-L460)。
 
 ## 公開・Done・Wiki は別の結果
 
-公開直前に target が B のままであること、固定 source の存在、検証・review の完了、実行環境と target writer の idle を確認する。取消と `publication_intent` は DB writer transaction で一方だけが勝つ。この境界を越えた Cancel は Git undo にならない。Git は ref lock 下で B を比較し、追加 merge commit を作らず **検証済み R そのもの**を公開する。target checkout は許可された managed path・clean 状態・一つの checkout を要求し、ignored file の衝突も保護する。Git の ref / index / files と DB は一 transaction ではない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L1643-L1721)、[Git publication](../../crates/git/src/publication.rs)。
+公開直前に target が B のままであること、固定 source の存在、選択した検証方針と review の完了、実行環境と target writer の idle を確認する。取消と `publication_intent` は DB writer transaction で一方だけが勝つ。この境界を越えた Cancel は Git undo にならない。Git は ref lock 下で B を比較し、追加 merge commit を作らず **固定した R そのもの**を公開する。target checkout は許可された managed path・clean 状態・一つの checkout を要求し、ignored file の衝突も保護する。Git の ref / index / files と DB は一 transaction ではない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L1643-L1721)、[Git publication](../../crates/git/src/publication.rs)。
 
 Git publication 確認後、選択 Card と Integration Card を Done に移す。可視列では名称 Done を優先し、なければ最後の列を選ぶ。Card の title・description・revision やリンクが途中で変わったことは現在の Done 不適格条件ではない。別 Integration の予約、Card / 移動先不在なら理由を記録して変更しない。Card 更新と receipt は同一 transaction で、一度記録した結果は再適用しない。[Done の実装](../../crates/db/src/models/integration.rs#L519-L592)、[変更後の Card を扱うテスト](../../crates/db/src/models/integration.rs#L1251-L1412)。
 
@@ -61,3 +69,5 @@ Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox �
 公開 intent 後は Recover が Git 証拠を照合する。R が適用済みなら後処理へ、ref / index / files が B のままなら未適用として止まり、新しい選択を求める。途中状態や未知の ref を推測で reset しない。確定 receipt がある場合のみ、その後の正当な target 前進を許容できる。[回復](../../crates/server/src/routes/integrations/runtime.rs#L1723-L1777)、[Git 証拠](../../crates/git/src/publication.rs#L82-L132)。
 
 standalone と embedded の monitor 配線差は [起動順序](../architecture/system.md#起動時は内側の所有者から回復する)を参照。実行結果・ログ・owner 情報は保持されるが、終了と cleanup の条件を満たす Workspace は一時的な execution-only 予約を解除し通常操作へ戻せる。[用途解除](workspace.md#操作用途と実行所有者)。
+
+成功・公開済み run の Recover は、Git や Card を再適用する前提を作らず、製品 node の完了と親 orchestration 投影を再照合してから semantic outbox を再処理する。[成功後回復](../../crates/server/src/routes/integrations/runtime.rs#L76-L106)。投影の中断修復は [Workflow Runtime](../architecture/workflow-runtime.md#durable-orchestration-が保証するもの)を参照する。

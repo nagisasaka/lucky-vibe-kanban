@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e007e9739dc65fbda2385745484fbbc48a8b53b1a9a97390a9b25f7a1ea2de40",
+  "pageVersion": "sha256:4e21e48b2589485bb1c9ae5bffe8db6673ce824a9b49bf76d098a84cef9619ad",
   "claims": [
     {
       "id": "claim_82dcbc35b88a441daa22355016e0d3f8",
@@ -215,10 +215,24 @@
           "version": "repo-lines-v1:sha256:2bfff5ec20e83da0aca7de243d80f2b3b5567128854f42fe4a35f057aa72568d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhZGIxMWRiYWE3MDg1ODE5MjM0ZGQ1OWMyMWMzZGM0NTc5NmEzMTNlZjljMzZiNTVmNmFlZTVlZTA2Y2Q3MTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYWUwMThkODU1MzI2MzBjMmNmMDk1ZThlYTlhMDc5MTE5MzI3YTU5M2MwNmNmM2Y3MjAyYzI4ZjQ4ZmMyZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5MDlhYmNlYzVhMGMzMWFlZDU4MWQxODgwYjkzNGJlYWUyYjU0NzEzNjkxMWQ5MmJmNmRiYTIzMTQ5MzU0NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5MWIwZGQ2N2ZmNmNmZDdhMjYyZmM1Zjg5OTFjMDQ1NjhiZjVjNmYxYzdhYzcyMGNjM2Q3ZjY1NmJmNWI3MGIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1c1d617f7ded4dd49138a8183ecf899b",
+      "statement": "製品所有nodeの完了は親orchestration投影を更新し、子だけ終端になった後の同じ完了通知でも親を修復する。別の終端への書換えは拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/orchestration.rs#L1185-L1240",
+          "version": "repo-lines-v1:sha256:cb62146c1976310c60a785f955282bd4afe73e475c38c64ed71e31e875b01ebc:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2Y2FjMDAzNGI3MjVkZWU4YzRhMTcyZDcxMDAyYWVlZDdjMmJmNjU4NDU2NTZmODlkNmFlNzc2YTk5YmIzYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhODU1MDU2MmJkMThlOWMzODUwM2M1YmU3NzVkYzdjMjVhZTkwYjc0ZWIyNmI1NGVkZGI1YjU2NDI1YTE1MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwYjk2NWIzZDc1OTRlMWI3NWRlYzFjMTdiOGFhNjQxNTRlMWI0NGNkMjQ2NjI1NDljNTk5MDJhZDA4YTI0NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNjQzNTVkYzcyNThkYjcxNDBhMDg1NzU5MjRmYzU4OWE1ZGUyZmIwZmIzNWRjYTFjZmI0ODRkMTI1ZDZiMzgifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/orchestration.rs#L1744-L1869",
+          "version": "repo-lines-v1:sha256:ff4ebf52ae157a8401c3cc71985653f6f9480d0548aa883378a7c3de1eabf7c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmZTA0ODJmZjEwMjIyMTNjOWUxNTkzZGEyOGNhNzQ0YzI1NDZhNDdmZGEyY2ExODY3MjFiMTE3MDM3OTc3NGEwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NTQ2ZTM0NDBjNzViY2Y2NDhmZjYyMmU4ZmYwOTI1YzFhMmE1YjJjMTY1ZjA5NTE5MjgzMDVmZjNiMDZmNmY1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMDBkYjA0MGYyOTA5YmY5NzhmZjBhOTU2YTU1ZTgzYzY1MzQxOGRlNmJiNjhmODA0MWRhOTc2ZjhkM2QyMjcwIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-18T14:00:51.649Z"
   }
 }

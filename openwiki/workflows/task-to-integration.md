@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -104,7 +104,7 @@ API が作るのは base からの detached worktree と固定 peer 一覧であ
 
 local Board の **Integrate / Auto Merge** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source は受付時、target base は queue 先頭で実行を始める時点に固定する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
 
-この [正式 Integration](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で host が検証した結果 commit を local target へ公開する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
+この [正式 Integration](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
 
 ## 4. Rebase と direct merge
 

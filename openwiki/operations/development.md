@@ -24,6 +24,8 @@ sources:
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-353b77936aed6c3d486f5cb9
+    resource: repo://deploy/developer/updater.py
   - id: openwiki-source-8b0f6773cd6f7a2a989ad880
     resource: repo://deploy/server/nginx.test.mjs
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -40,10 +42,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -99,7 +101,7 @@ LVK 自体の変更は card ごとに別 instance 名・port を使って検証�
 
 `instance:build NAME [REF]` は frontend と server / process-host を一組で build し、完了時に build identity と source revision を記録する。通常 card の未 commit 作業は dirty として記録できる。`staging:build` は main 等の固定 commit を detached snapshot にし、失敗 build を runnable candidate にしない。debug assets の参照元なので、その snapshot を実行中に削除しない。[build と記録](../../deploy/developer/instance.mjs#L115-L193)
 
-`instance:run NAME BUILD_UUID PORT` は foreground supervisor と instance ごとの run lock を持ち、build lock は別なので次候補の build と現在の実行を両立できる。staging は loopback 4020、任意の nginx ingress は HTTPS 8443 を使う。稼働中の agent / Workflow が終わってから旧候補を停止し、新候補へ切り替える。schema が進んだ DB に旧 binary だけを戻さず、対応する idle data snapshot が必要となる。共有 staging は [共有資源調停](../concepts/shared-resource-coordination.md)の対象であり、stable 更新時は instance/build process も busy と扱う。[run](../../deploy/developer/instance.mjs#L193-L217)、[更新・回復手順](../../deploy/developer/STAGING.md)
+`instance:run NAME BUILD_UUID PORT` は foreground supervisor と instance ごとの run lock を持ち、build lock は別なので次候補の build と現在の実行を両立できる。staging は loopback 4020、任意の nginx ingress は HTTPS 8443 を使う。稼働中の agent / Workflow が終わってから旧候補を停止し、新候補へ切り替える。schema が進んだ DB に旧 binary だけを戻さず、対応する idle data snapshot が必要となる。共有 staging は [共有資源調停](../concepts/shared-resource-coordination.md)の対象であり、host updater の agent 活動判定には instance/build process を含めない。image 置換で staging 等の非 agent process は停止し、更新後の staging は明示的に起動し直す。[run](../../deploy/developer/instance.mjs#L193-L217)、[更新・回復手順](../../deploy/developer/STAGING.md)
 
 stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`でsetupキーを発行する。stagingの公開URLは8443を含む。cookieはportで隔離されないため、同じhostname/IPのstableとstagingには別ブラウザープロファイルを使う。[配置とcookieの運用契約](../../deploy/developer/STAGING.md#staging)、[instance環境](../../deploy/developer/instance.mjs#L44-L64)。方式変更と失効は [共通認証](../concepts/server-access.md)に従う。
 

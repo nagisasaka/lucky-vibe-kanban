@@ -3,9 +3,6 @@ type: concept
 title: Astra 廃止と共有機能の移行境界
 description: 内蔵 Project Chat の廃止、専用履歴を削除する migration、外部 MCP と Workspace 質問回答に残る契約を説明する。
 tags: [astra, migration, project, compatibility]
-verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
 sources:
   - id: openwiki-source-b50ba7975e31fb9a56845b2c
     resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
@@ -22,6 +19,9 @@ sources:
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
 generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Astra 廃止と共有機能の移行境界

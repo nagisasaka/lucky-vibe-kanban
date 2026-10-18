@@ -26,10 +26,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -81,7 +81,7 @@ flowchart LR
 
 既存の手動直接 merge は squash を使うため、元 commit の祖先関係だけではイベントの所属を再現できない。統合前に明示的な event ID 集合と before commit を保存し、統合結果を対応付ける。Wiki の処理対象は、対象ブランチへ統合済みと確認でき、成功 receipt がまだないイベントである。[統合準備](../../crates/services/src/services/repository_memory.rs)、[イベント選択](../../crates/services/src/services/repository_memory.rs)
 
-[正式統合](formal-integration.md)は別の契約で、選択した source の履歴を保持した検証済み commit を公開する。Memory が有効な場合だけ、受付時に固定した source event と、統合固有の変更があればその event を明示的な統合記録に結び付ける。Git 公開やカードの Done が Wiki receipt の成功を意味するわけではない。[統合側の記録](../../crates/server/src/routes/integrations/runtime.rs)
+[正式統合](formal-integration.md)は別の契約で、選択した source の履歴を保持した固定 commit を、受付時の検証方針に従って公開する。検証省略時の Manifest tests は NotRun であり、統合成功をテスト合格へ読み替えない。Memory が有効な場合だけ、受付時に固定した source event と、統合固有の変更があればその event を明示的な統合記録に結び付ける。Git 公開やカードの Done が Wiki receipt の成功を意味するわけではない。[統合側の記録](../../crates/server/src/routes/integrations/runtime.rs)
 
 外部 PR の観測は LVK 所有の統合 transaction を持たない。保守的に source commit の祖先関係で証明できるイベントだけを対応付け、同じ Workspace・近い時刻という理由では未 push の変更を処理済みにしない。外部 squash/rebase の所属が証明できなければ未消費のまま残る。[外部統合の契約](../../crates/services/src/services/repository_memory.rs)
 

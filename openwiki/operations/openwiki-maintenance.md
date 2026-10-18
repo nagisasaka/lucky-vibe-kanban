@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/services/src/services/openwiki.rs
   - id: openwiki-source-7277adee5c65e8d79143e722
     resource: repo://crates/services/src/services/openwiki/bootstrap.rs
+  - id: openwiki-source-c17d420f0e18435c406dd636
+    resource: repo://crates/services/src/services/openwiki/codex_config.rs
   - id: openwiki-source-fa966dc92e5b940e2e3155e3
     resource: repo://crates/services/src/services/openwiki/completion.rs
   - id: openwiki-source-6587baa3a468f41830b5e420
@@ -34,10 +36,10 @@ sources:
     resource: repo://docs/design/openwiki-bootstrap-implementation.md
   - id: openwiki-source-a3944588bb3b08c863d66298
     resource: repo://docs/workspaces/openwiki.mdx
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-18T14:00:51.649Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -53,6 +55,10 @@ Repository settings で有効化し、統合先の **local branch** と出力言
 利用手順と依存条件は [OpenWiki repository memory](../../docs/workspaces/openwiki.mdx) を参照する。文書は pinned OpenWiki と Node.js 22 以上、既存 Codex 認証を用いる構成を定める。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[利用条件](../../docs/workspaces/openwiki.mdx)・[version 検査](../../crates/services/src/services/openwiki.rs)
 
 LVK の準備処理は public Codex integration を --force なしで準備する。変更された user 設定を上書きせず conflict とする方針が code comment に記録されている。maintenance thread は public MCP の `openwiki mcp --host codex` を必須として設定し、turn / Goal 開始前に実際の lifecycle tool catalog を確認する。[準備境界](../../crates/services/src/services/openwiki.rs)・[thread 設定](../../crates/executors/src/executors/codex.rs)・[起動前確認](../integrations/agent-providers.md#coding-agent--外部-mcp-server)
+
+Codex の TOML editor が project trust table を追加すると、OpenWiki の閉じ marker だけがファイル末尾へ移る場合がある。LVK の準備処理は installer の前にこの限定されたずれを修復する。単一 marker pair、既定の MCP command/args、同じ解析済み TOML 値を確認し、利用者の設定値は変更しない。custom MCP 値・曖昧な marker は修復せず installer の conflict として残す。[原因と修復条件](../../crates/services/src/services/openwiki/codex_config.rs#L1-L48)
+
+修復は native settings lock 下で symlink・hardlink・2 MiB超の非通常入力を拒否し、permission を維持した一時ファイルの同期後、元内容が変わっていないことを再確認して置換する。これは LVK が maintenance 起動前に行う準備であり、writer が設定ファイルを直接修正する手順ではない。[ファイル境界](../../crates/services/src/services/openwiki/codex_config.rs#L50-L92)、[再現・冪等性・拒否テスト](../../crates/services/src/services/openwiki/codex_config.rs#L95-L156)
 
 開始時は同じ Git storage の正式統合が publishing / post_processing / recovery_required にあれば拒否する。source が見えていても、その公開結果や semantic outbox が未確定の間に Wiki を先へ進めない。[正式統合との境界](../../crates/server/src/routes/openwiki.rs)
 
