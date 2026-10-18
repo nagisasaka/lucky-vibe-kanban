@@ -127,13 +127,17 @@ export type IntegrationSource = { selection: IntegrationSelection, branch: strin
 
 export type IntegrationValidation = { command: string, cwd: string, required: boolean, evidence: string, environment_requirements: string, execution_process_id: string | null, exit_code: bigint | null, result: string | null, };
 
-export type IntegrationPayload = { card_id: string | null, card_done_result: string | null, sequential: boolean, step_index: number, step_base: string | null, merge_tree: string | null, merge_conflicted: boolean, next_step: boolean, reviews: Array<IntegrationReview>, steps: Array<IntegrationStep>, gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
+export type IntegrationPayload = {
+/**
+ * Frozen at admission; omitted in old records means validation is required.
+ */
+skip_validation: boolean, card_id: string | null, card_done_result: string | null, sequential: boolean, step_index: number, step_base: string | null, merge_tree: string | null, merge_conflicted: boolean, next_step: boolean, reviews: Array<IntegrationReview>, steps: Array<IntegrationStep>, gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
 
 export type IntegrationGate = { id: string, validation_index: number, scope: string, risk: string, evidence: IntegrationValidation, decision: string | null, actor: string | null, decided_at: string | null, request_id: string | null, };
 
 export type IntegrationReview = { id: string, scope: string, step_index: number, candidate: string, diff: string, explanation: string, decision: string | null, request_id: string | null, actor: string | null, decided_at: string | null, };
 
-export type IntegrationStep = { source_commit: string, result_commit: string, validation: Array<IntegrationValidation>, gates: Array<IntegrationGate>, summary: string, };
+export type IntegrationStep = { validation_skipped: boolean, source_commit: string, result_commit: string, validation: Array<IntegrationValidation>, gates: Array<IntegrationGate>, summary: string, };
 
 export type IntegrationIntervention = { request_id: string, prompt: string, created_at: string, pending: boolean, retry_command: JsonValue | null, instruction_command: JsonValue | null, };
 
@@ -141,7 +145,7 @@ export type IntegrationStop = { stage: string, category: string, next_action: st
 
 export type IntegrationRun = { id: string, request_key: string, project_id: string, repository_id: string, storage_identity: string, target_ref: string, status: string, workspace_id: string | null, session_id: string | null, agent_run_id: string | null, payload: IntegrationPayload, cancel_requested: boolean, error: string | null, created_at: string, updated_at: string, };
 
-export type CreateIntegrationRequest = { request_id: string, project_id: string, repository_id: string, target_branch: string, selections: Array<IntegrationSelection>, executor_config: ExecutorConfig | null, };
+export type CreateIntegrationRequest = { request_id: string, project_id: string, repository_id: string, target_branch: string, selections: Array<IntegrationSelection>, executor_config: ExecutorConfig | null, skip_validation?: boolean, };
 
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 
@@ -818,7 +822,11 @@ export type DirectoryInspection = { path: string, is_git_repo: boolean, repo: Re
 
 export type SearchMode = "taskform" | "settings";
 
-export type Config = { config_version: string, theme: ThemeMode, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null, commit_reminder_enabled: boolean, commit_reminder_prompt: string | null, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>, };
+export type Config = { config_version: string, theme: ThemeMode, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null, commit_reminder_enabled: boolean, commit_reminder_prompt: string | null, send_message_shortcut: SendMessageShortcut, hidden_agents: Array<BaseCodingAgent>,
+/**
+ * Default for new formal Integrations, including chat/MCP submissions.
+ */
+integration_skip_validation: boolean, };
 
 export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean, sound_file: SoundFile, };
 

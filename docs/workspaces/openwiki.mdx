@@ -365,6 +365,17 @@ If the source branch advanced, retry against its new integrated state. If Codex
 exited without successful `openwiki_finish` (or a proven `openwiki_begin` no-op),
 inspect its tool errors rather than accepting its final prose as proof.
 
+A `Refusing to replace a modified OpenWiki MCP block` error can occur even when
+Codex's `config.toml` is valid TOML. Its TOML editor can leave the closing
+`OPENWIKI:MCP:END` comment at the end of the file when appending project trust
+tables, placing unrelated settings inside OpenWiki's managed block. Before
+installation, LVK repairs this specific marker displacement only when the MCP
+invocation is unchanged and parsing proves that every TOML value is preserved.
+Custom MCP settings, ambiguous markers or invalid TOML remain conflicts; LVK
+does not force-replace them. Retry maintenance after repairing an existing
+configuration. Repairing a file does not itself mark failed maintenance as
+successful; the next maintenance run must establish its own completion.
+
 Maintenance writers require OpenWiki's registered Codex MCP tools before starting
 their first turn. LVK uses a ten-second MCP startup timeout and a fifteen-second
 tool-discovery deadline. An **OpenWiki MCP preflight** error means the writer did

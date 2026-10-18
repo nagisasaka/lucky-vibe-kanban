@@ -8488,6 +8488,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "toml 0.8.2",
+ "toml_edit 0.25.8+spec-1.1.0",
  "tracing",
  "ts-rs 11.0.1",
  "url",

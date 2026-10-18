@@ -201,9 +201,9 @@ The Clippy argument-count exceptions are narrowly scoped and reasoned at explici
 service boundaries. No tests were disabled. Rust's dummy-frontend warning does
 not establish rendered UI coverage. Native nginx/browser tests are isolated
 fixtures; Docker rollout and real account/provider login were not performed.
-Formal Integration's existing publication validation remains mandatory when the
-operator later integrates this branch; running its regression suite here is not
-a target publication.
+MCP-created Integrations inherit the saved server validation preference at admission.
+The admitted choice remains fixed across retries and resume; skipped runs are
+recorded as unverified. Running a regression suite here is not target publication.
 
 ## Conditional UI and remaining operator actions
 

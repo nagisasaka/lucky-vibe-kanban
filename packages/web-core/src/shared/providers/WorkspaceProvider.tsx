@@ -216,7 +216,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     };
   }, []);
 
-  const isLoading = isLoadingList || isLoadingWorkspace;
+  // The selected workspace does not depend on the sidebar list finishing.
+  const isLoading = isLoadingWorkspace;
 
   useEffect(() => {
     if (!workspaceId || isCreateMode) return;

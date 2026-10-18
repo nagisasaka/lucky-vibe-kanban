@@ -394,7 +394,7 @@ export const useConversationHistory = ({
   }, [scopeKey, emitEntries]);
 
   // Canonical updates must not reset script loading or issue an initial scroll.
-  // Publish the first complete session atomically, then follow only at bottom.
+  // Publish recent runs first, then preserve the scroll anchor as history arrives.
   useEffect(() => {
     if (canonicalSession.isLoading) return;
     const initial = !canonicalInitializedRef.current;
@@ -558,5 +558,9 @@ export const useConversationHistory = ({
     }
   }, [scopeKey, idListKey, executionProcessesRaw]);
 
-  return { isFirstTurn, isLoadingHistory: isLoadingHistoryState };
+  return {
+    isFirstTurn,
+    isLoadingHistory:
+      isLoadingHistoryState || canonicalSession.isLoadingHistory,
+  };
 };

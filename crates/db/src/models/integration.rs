@@ -75,6 +75,8 @@ pub struct IntegrationGate {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct IntegrationStep {
+    #[serde(default)]
+    pub validation_skipped: bool,
     pub source_commit: String,
     pub result_commit: String,
     pub validation: Vec<IntegrationValidation>,
@@ -98,6 +100,9 @@ pub struct IntegrationReview {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct IntegrationPayload {
+    /// Frozen at admission; omitted in old records means validation is required.
+    #[serde(default)]
+    pub skip_validation: bool,
     #[serde(default)]
     pub card_id: Option<Uuid>,
     #[serde(default)]
@@ -165,7 +170,7 @@ pub struct IntegrationRun {
 
 impl IntegrationRun {
     pub fn validation_scope(&self) -> String {
-        serde_json::json!({
+        let mut scope = serde_json::json!({
             "integration": self.id, "project": self.project_id,
             "repository": self.repository_id, "target": self.target_ref,
             "base": self.payload.base_commit, "candidate": self.payload.result_commit,
@@ -179,8 +184,11 @@ impl IntegrationRun {
                 "command": v.command, "cwd": v.cwd, "required": v.required,
                 "evidence": v.evidence, "environment": v.environment_requirements
             })).collect::<Vec<_>>()
-        })
-        .to_string()
+        });
+        if self.payload.skip_validation {
+            scope["skip_validation"] = serde_json::json!(true);
+        }
+        scope.to_string()
     }
 
     pub fn validation_excepted(&self, index: usize) -> bool {
@@ -284,6 +292,11 @@ impl IntegrationRun {
             })
             .collect::<Vec<_>>()
             .join("\n");
+        let description = if self.payload.skip_validation {
+            format!("Validation skipped by explicit request — unverified.\n\n{description}")
+        } else {
+            description
+        };
         sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order,creator_user_id) VALUES(?,?,?,?,?,?,?,0,?)")
         .bind(card_id).bind(self.project_id).bind(number).bind(format!("LOCAL-{number}")).bind(status).bind(name).bind(description).bind(Uuid::from_u128(1)).execute(&mut *tx).await?;
         let owner = crate::models::workspace_usage::WorkspaceExecutionOwner::new(
@@ -1497,6 +1510,40 @@ mod tests {
                 .is_err()
         );
     }
+    #[tokio::test]
+    async fn skipped_validation_survives_storage_and_is_visible_on_the_integration_card() {
+        let (pool, mut run, _) = fixture().await;
+        run.id = Uuid::new_v4();
+        run.request_key = run.id.to_string();
+        run.workspace_id = Some(Uuid::new_v4());
+        run.payload.card_id = Some(Uuid::new_v4());
+        run.payload.skip_validation = true;
+        run.create_with_card(&pool, "unverified", "Auto merge without validation")
+            .await
+            .unwrap();
+        let saved = IntegrationRun::find(&pool, run.id).await.unwrap();
+        assert!(saved.payload.skip_validation);
+        assert!(saved.payload.validation.is_empty());
+        let description: String =
+            sqlx::query_scalar("SELECT description FROM local_issues WHERE id=?")
+                .bind(saved.payload.card_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert!(description.contains("unverified"));
+        assert!(description.contains(&run.payload.sources[0].commit));
+        let mut resumed = saved;
+        resumed.status = "integrating".into();
+        resumed.save(&pool).await.unwrap();
+        assert!(
+            IntegrationRun::find(&pool, run.id)
+                .await
+                .unwrap()
+                .payload
+                .skip_validation
+        );
+    }
+
     #[tokio::test]
     async fn admission_creates_card_workspace_and_link_atomically_without_source_reservations() {
         let (pool, original, done) = fixture().await;

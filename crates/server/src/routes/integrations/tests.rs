@@ -263,6 +263,7 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         target_branch: "main".into(),
         selections: vec![selection.clone()],
         executor_config: None,
+        skip_validation: Some(false),
     };
     for (error, expected_code) in [
         (
@@ -323,6 +324,18 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         admission::reconcile_failed_admission(&pool, &request, "changed-target", &lost_ack).await,
         Err(admission::AdmissionFailure::Uncertain)
     ));
+    request.skip_validation = Some(true);
+    assert!(matches!(
+        admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack).await,
+        Err(admission::AdmissionFailure::Uncertain)
+    ));
+    // Omitted preference on an idempotent retry keeps the original admitted choice.
+    request.skip_validation = None;
+    let retried = admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack)
+        .await
+        .unwrap();
+    assert!(!retried.payload.skip_validation);
+    request.skip_validation = Some(false);
     request.selections[0].expected_commit = "different-source".into();
     assert!(matches!(
         admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack).await,
@@ -338,4 +351,23 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         admission::reconcile_failed_admission(&pool, &request, "target-head", &lost_ack).await,
         Err(admission::AdmissionFailure::Uncertain)
     ));
+}
+
+#[test]
+fn omitted_validation_choice_preserves_default_and_rejects_non_boolean() {
+    let mut value = serde_json::json!({
+        "request_id": Uuid::new_v4(), "project_id": Uuid::new_v4(),
+        "repository_id": Uuid::new_v4(), "target_branch": "main", "selections": []
+    });
+    let request: super::CreateIntegrationRequest = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(request.skip_validation, None);
+    value["skip_validation"] = serde_json::json!(true);
+    assert!(
+        serde_json::from_value::<super::CreateIntegrationRequest>(value.clone())
+            .unwrap()
+            .skip_validation
+            .unwrap()
+    );
+    value["skip_validation"] = serde_json::json!("true");
+    assert!(serde_json::from_value::<super::CreateIntegrationRequest>(value).is_err());
 }

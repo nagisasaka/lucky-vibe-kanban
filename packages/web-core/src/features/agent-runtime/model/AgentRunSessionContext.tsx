@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { agentRunsApi } from '@/shared/lib/agentRunApi';
 import {
   buildCanonicalAgentSessionTimeline,
+  isCanonicalRunActive,
   type CanonicalAgentSessionTimeline,
 } from './canonicalAgentSessionTimeline';
 import type { CanonicalAgentTimeline } from './canonicalAgentTimeline';
@@ -26,6 +27,7 @@ export interface AgentRunSessionContextValue {
   readonly timeline: CanonicalAgentSessionTimeline | null;
   readonly conversation: CanonicalConversationProjection;
   readonly isLoading: boolean;
+  readonly isLoadingHistory: boolean;
   readonly isConnected: boolean;
   readonly error: string | null;
 }
@@ -78,6 +80,21 @@ export function AgentRunSessionProvider({
   sessionId?: string;
   children: ReactNode;
 }) {
+  return (
+    <AgentRunSessionContent key={sessionId ?? ''} sessionId={sessionId}>
+      {children}
+    </AgentRunSessionContent>
+  );
+}
+
+function AgentRunSessionContent({
+  sessionId,
+  children,
+}: {
+  sessionId?: string;
+  children: ReactNode;
+}) {
+  const [historyLimit, setHistoryLimit] = useState(0);
   const [timelines, setTimelines] = useState<
     ReadonlyMap<string, CanonicalAgentTimeline>
   >(new Map());
@@ -93,11 +110,6 @@ export function AgentRunSessionProvider({
     enabled: Boolean(sessionId),
     refetchInterval: sessionId ? AGENT_RUN_DISCOVERY_INTERVAL_MS : false,
   });
-
-  useEffect(() => {
-    setTimelines(new Map());
-    setConnections(new Map());
-  }, [sessionId]);
 
   const updateTimeline = useCallback(
     (agentRunId: string, timeline: CanonicalAgentTimeline) => {
@@ -143,9 +155,61 @@ export function AgentRunSessionProvider({
         : null,
     [sessionId, summaries, timelines]
   );
-  const streamsInitialized = summaries.every(
-    (summary) => connections.get(summary.agent_run_id)?.initialized
+  // Latest messages and active controls must not wait for every historic log.
+  const ordered = useMemo(
+    () =>
+      [...summaries].sort(
+        (a, b) =>
+          b.created_at.localeCompare(a.created_at) ||
+          b.agent_run_id.localeCompare(a.agent_run_id)
+      ),
+    [summaries]
   );
+  const foreground = useMemo(
+    () =>
+      ordered.filter(
+        (run, index) => index < 2 || isCanonicalRunActive(run.state)
+      ),
+    [ordered]
+  );
+  const foregroundIds = new Set(foreground.map((run) => run.agent_run_id));
+  const history = ordered.filter((run) => !foregroundIds.has(run.agent_run_id));
+  const historyIds = new Set(
+    history.slice(0, historyLimit).map((run) => run.agent_run_id)
+  );
+  // Keep started streams mounted when a new run shifts the recent window.
+  const subscribed = ordered.filter(
+    (run) =>
+      foregroundIds.has(run.agent_run_id) ||
+      historyIds.has(run.agent_run_id) ||
+      connections.has(run.agent_run_id)
+  );
+  const streamsInitialized = foreground.every(
+    (summary) =>
+      connections.get(summary.agent_run_id)?.initialized &&
+      timelines.has(summary.agent_run_id)
+  );
+  const isLoadingHistory = history.some(
+    (run) => !connections.get(run.agent_run_id)?.initialized
+  );
+  const historyBatchSettled = history.slice(0, historyLimit).every((run) => {
+    const connection = connections.get(run.agent_run_id);
+    return connection?.initialized || connection?.error;
+  });
+  useEffect(() => {
+    if (
+      !streamsInitialized ||
+      !historyBatchSettled ||
+      historyLimit >= history.length
+    )
+      return;
+    // Yield a paint for the latest conversation before opening the next batch.
+    const timer = window.setTimeout(
+      () => setHistoryLimit((limit) => limit + 3),
+      50
+    );
+    return () => window.clearTimeout(timer);
+  }, [streamsInitialized, historyBatchSettled, historyLimit, history.length]);
   const streamErrors = useMemo(
     () =>
       summaries
@@ -155,7 +219,7 @@ export function AgentRunSessionProvider({
   );
   const isLoading =
     Boolean(sessionId) && (runsQuery.isLoading || !streamsInitialized);
-  // Do not reveal older runs while the rest of the session is still replaying.
+  // Publish the recent conversation first; historic logs can arrive later.
   // Keep an already displayed session stable when a new run is discovered.
   const publishedRef = useRef<{
     sessionId: string | undefined;
@@ -175,9 +239,10 @@ export function AgentRunSessionProvider({
       timeline,
       conversation,
       isLoading,
+      isLoadingHistory,
       isConnected:
         summaries.length === 0 ||
-        summaries.every(
+        foreground.every(
           (summary) => connections.get(summary.agent_run_id)?.connected
         ),
       error:
@@ -189,6 +254,8 @@ export function AgentRunSessionProvider({
       runsQuery.error,
       conversation,
       isLoading,
+      isLoadingHistory,
+      foreground,
       streamErrors,
       summaries,
       timeline,
@@ -197,7 +264,7 @@ export function AgentRunSessionProvider({
 
   return (
     <AgentRunSessionContext.Provider value={value}>
-      {summaries.map((summary) => (
+      {subscribed.map((summary) => (
         <AgentRunStreamBridge
           key={summary.agent_run_id}
           agentRunId={summary.agent_run_id}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Auth0Setup } from './Auth0Setup';
 import {
   accessRequest,
   loadAccessStatus,
@@ -58,6 +59,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AccessStatus>();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [provisioningBusy, setProvisioningBusy] = useState(false);
   const [key, setKey] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -221,7 +223,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                 onChange={(e) => setKey(e.target.value)}
               />
             </label>
-            <button className={button} disabled={busy}>
+            <button className={button} disabled={busy || provisioningBusy}>
               設定を開始
             </button>
             <p className="text-low">
@@ -275,7 +277,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
-              <button className={button} disabled={busy}>
+              <button className={button} disabled={busy || provisioningBusy}>
                 ログイン
               </button>
             </form>
@@ -292,7 +294,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
               )}
               <button
                 className={button}
-                disabled={busy}
+                disabled={busy || provisioningBusy}
                 onClick={() => void login()}
               >
                 Auth0でログイン
@@ -314,7 +316,9 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                 aria-label="認証方式"
                 className={field}
                 value={mode}
-                disabled={Boolean(status.forced_mode)}
+                disabled={
+                  Boolean(status.forced_mode) || busy || provisioningBusy
+                }
                 onChange={(e) => setMode(e.target.value)}
               >
                 {status.deployment === 'local' && (
@@ -330,7 +334,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
             {mode === 'local' && (
               <button
                 className={button}
-                disabled={busy}
+                disabled={busy || provisioningBusy}
                 onClick={() =>
                   void run(async () => {
                     await accessRequest('local', {});
@@ -379,7 +383,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </label>
-                <button className={button} disabled={busy}>
+                <button className={button} disabled={busy || provisioningBusy}>
                   Basicを設定して再ログイン
                 </button>
               </form>
@@ -387,9 +391,23 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
             {mode === 'auth0' && (
               <div className="space-y-double">
                 <p>
-                  ご自身の実運用Auth0テナントと、Web用のRegular Web
-                  Applicationを用意します。Auth0提供ドメインを使い、Google／GitHub接続はAuth0の管理画面で設定してください。
+                  ご自身のAuth0テナントとGitHub／Google接続を用意します。
+                  アプリは自動セットアップで作成するか、手動で設定した情報を入力してください。
                 </p>
+                <Auth0Setup
+                  issuer={issuer}
+                  currentClientId={clientId}
+                  disabled={busy || provisioningBusy}
+                  onBusyChange={setProvisioningBusy}
+                  onIssuerChange={setIssuer}
+                  onConfigured={(result) => {
+                    setIssuer(result.issuer);
+                    setClientId(result.web.client_id);
+                    setClientSecret(result.web.client_secret);
+                    setMcp(result.mcp_enabled);
+                    setConfirmation(undefined);
+                  }}
+                />
                 <CopyValue
                   label="WebアプリのAllowed Callback URL"
                   value={configuration.callback_url}
@@ -464,7 +482,10 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                     Discovery／JWKSとPKCE
                     S256の公開設定を確認してからAuth0へ移動します。現行の認証方式は、ログイン試験後に有効化するまで維持されます。
                   </p>
-                  <button className={button} disabled={busy}>
+                  <button
+                    className={button}
+                    disabled={busy || provisioningBusy}
+                  >
                     設定をチェックしてログイン試験
                   </button>
                 </form>
@@ -479,7 +500,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                     </code>
                     <button
                       className={button}
-                      disabled={busy}
+                      disabled={busy || provisioningBusy}
                       onClick={() =>
                         void run(async () => {
                           await accessRequest('activate', {});
@@ -492,6 +513,12 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   </div>
                 )}
                 <h2 className="text-lg text-high">ChatGPTへのMCP接続</h2>
+                <p>
+                  自動セットアップ済みなら、Auth0での作成・設定を繰り返す必要はありません。
+                  ChatGPTへMCP URLと専用Client
+                  ID・Secretを登録し、接続を確認してください。
+                  以下は手動で設定する場合の手順です。
+                </p>
                 <CopyValue
                   label="MCP URL / Auth0 API Identifier / Resource / Audience"
                   value={configuration.resource}

@@ -3,6 +3,7 @@
 mod handlers;
 mod preview;
 mod provider;
+mod provisioning;
 mod store;
 
 use std::{
@@ -86,6 +87,7 @@ struct Inner {
     provider: Mutex<provider::Cache>,
     attempts: Mutex<(i64, u32)>,
     password_slots: tokio::sync::Semaphore,
+    provisioning: Mutex<()>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -295,6 +297,7 @@ impl Access {
             provider: Mutex::new(provider::Cache::default()),
             attempts: Mutex::new((now(), 0)),
             password_slots: tokio::sync::Semaphore::new(2),
+            provisioning: Mutex::new(()),
         })))
     }
     pub fn pool(&self) -> &SqlitePool {

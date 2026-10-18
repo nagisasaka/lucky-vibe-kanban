@@ -23,6 +23,10 @@ pub fn router(access: Access) -> Router {
         .route("/api/access/basic", post(basic))
         .route("/api/access/local", post(local))
         .route("/api/access/auth0/test", post(test_auth0))
+        .route(
+            "/api/access/auth0/provision",
+            post(super::provisioning::handle),
+        )
         .route("/api/access/callback", get(callback))
         .route("/api/access/confirmation", get(confirmation))
         .route("/api/access/activate", post(activate))

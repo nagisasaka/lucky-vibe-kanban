@@ -1256,6 +1256,102 @@ async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests()
     review.actor = Some(Uuid::from_u128(1));
     review.decided_at = Some("now".into());
     assert!(steps::review_approved(&run));
+    let mut skipped = run.clone();
+    skipped.payload.skip_validation = true;
+    skipped.payload.validation.clear();
+    // Changing the policy cannot reuse an existing review. A skipped run still
+    // needs approval of its actual conflict-resolution diff and candidate.
+    assert!(!steps::review_approved(&skipped));
+    steps::record_review(root, &mut skipped).unwrap();
+    assert!(!steps::review_approved(&skipped));
+    let review = skipped.payload.reviews.last_mut().unwrap();
+    assert!(review.diff.contains("+A and B"));
+    review.decision = Some("continue".into());
+    review.request_id = Some(Uuid::new_v4());
+    review.actor = Some(Uuid::from_u128(1));
+    review.decided_at = Some("now".into());
+    assert!(steps::review_approved(&skipped));
+    skipped.payload.result_commit = Some("c".repeat(40));
+    assert!(!steps::review_approved(&skipped));
     run.payload.result_commit = Some("c".repeat(40));
     assert!(!steps::review_approved(&run));
+}
+
+#[tokio::test]
+async fn explicit_skip_is_unverified_preserved_and_not_an_agent_selected_policy() {
+    let (pool, mut run, _, _) = fixture().await;
+    let mut value = development_proposal(&run);
+    value["validation"] = json!([]);
+    // An agent cannot opt out for a normally admitted run.
+    assert!(proposal(&value.to_string(), &run).is_err());
+    let old_scope = run.validation_scope();
+    run.payload.skip_validation = true;
+    assert_ne!(run.validation_scope(), old_scope);
+    assert!(verify_validation(&pool, &run).await.is_err());
+    run.payload.validation.clear();
+    value["semantics"] = json!({"goal":"selected changes", "summary":"unverified merge", "tests":[{"command":"fabricated", "result":"passed"}]});
+    let plan = proposal(&value.to_string(), &run).unwrap();
+    assert!(plan.summary.contains("Unverified"));
+    assert_eq!(plan.semantics.tests.len(), 1);
+    assert_eq!(
+        plan.semantics.tests[0].result,
+        utils::repository_memory::MemoryTestResult::NotRun
+    );
+    assert!(!hold_validation_plan(&mut run, &plan));
+    replace_validation_plan(&mut run, &plan);
+    verify_validation(&pool, &run).await.unwrap();
+    super::super::steps::complete(&mut run).unwrap();
+    let restored: IntegrationRun =
+        serde_json::from_value(serde_json::to_value(&run).unwrap()).unwrap();
+    assert!(restored.payload.skip_validation);
+    assert!(restored.payload.steps[0].validation_skipped);
+    assert!(restored.payload.steps[0].validation.is_empty());
+    verify_validation(&pool, &restored).await.unwrap();
+    // A resumed record cannot turn skipped steps into verified evidence.
+    run.payload.skip_validation = false;
+    assert!(verify_validation(&pool, &run).await.is_err());
+    run.payload.skip_validation = true;
+    run.payload.steps[0].validation_skipped = false;
+    assert!(verify_validation(&pool, &run).await.is_err());
+    run.payload.steps.clear();
+    value["validation"] = development_proposal(&run)["validation"].clone();
+    assert!(proposal(&value.to_string(), &run).is_err());
+    value["validation"] = json!([]);
+    value["outcome"] = json!("blocked");
+    let blocked = proposal(&value.to_string(), &run).unwrap();
+    assert!(hold_validation_plan(&mut run, &blocked));
+    assert_eq!(run.status, "blocked");
+    assert!(run.payload.result_commit.is_none());
+}
+
+#[tokio::test]
+async fn skipped_prompt_omits_validation_planning_but_keeps_merge_review() {
+    let (pool, mut run, _, _) = fixture().await;
+    let repo = Repo::find_by_id(&pool, run.repository_id)
+        .await
+        .unwrap()
+        .unwrap();
+    run.payload.skip_validation = true;
+    run.payload.validation.clear();
+    run.payload.sequential = true;
+    let body = prompt(&run, &repo, Path::new("/test"), None, &json!([])).unwrap();
+    assert!(body.contains("VALIDATION SKIPPED BY EXPLICIT USER REQUEST"));
+    assert!(body.contains("Do not run tests, type checks, lint, builds"));
+    assert!(body.contains("retains human approval for conflicts"));
+    assert!(body.contains(r#""validation":[],"environment_blockers":[]"#));
+    assert!(!body.contains("VALIDATION SCOPE: replay"));
+    assert!(!body.contains("Before any heavy validation"));
+    assert!(!body.contains("LVK runs tests after each step"));
+    run.payload.merge_conflicted = true;
+    assert!(!super::super::steps::review_approved(&run));
+}
+
+#[test]
+fn legacy_payload_and_steps_are_not_relabelled_as_skipped() {
+    let mut value = serde_json::to_value(IntegrationPayload::default()).unwrap();
+    value.as_object_mut().unwrap().remove("skip_validation");
+    value["steps"] = json!([{"source_commit":"source", "result_commit":"result", "validation":[], "gates":[], "summary":"old record"}]);
+    let payload: IntegrationPayload = serde_json::from_value(value).unwrap();
+    assert!(!payload.skip_validation);
+    assert!(!payload.steps[0].validation_skipped);
 }

@@ -369,6 +369,26 @@ For complex conflicts, you can ask the agent to help resolve them. Start a new m
 </Accordion>
 </AccordionGroup>
 
+## Skip validation for an auto-merge
+
+Validation is enabled by default. Before starting an Auto Merge on the local
+Board, select **Skip all integration validation (unverified)** to omit tests,
+type checks, lint, builds and other acceptance checks. Changing the checkbox saves
+the default in LVK server settings, shared by new Board and chat/MCP Integrations.
+An API request can explicitly override that default. The resolved choice covers
+every selected source and is fixed when a run starts, including retries and resume.
+
+The Integration history and Workspace show **Unverified**, and its Card and
+step records retain the skip decision. Successful publication does not mean
+validation passed. Fixed source commits, clean candidate and ancestry checks,
+human review of conflict resolutions or additional edits, target consistency
+and cancellation protections still apply.
+
+The choice is fixed when you start: changing it requires a new Integration.
+Ordinary instructions cannot turn validation off or convert an unverified
+result into a verified one. To validate later, start a new Integration with
+validation enabled. Existing skipped records remain unchanged.
+
 ## Resume a stopped formal Integration
 
 On the local Board, open **Integration runs**, review the selected Issues, base
@@ -392,8 +412,8 @@ In the Integration Workspace, use **Send instruction** while the agent is
 running. After a blocked run, repair the environment and use **Resume after repair
 / send instruction**; leave the instruction empty to retry without additional
 text. LVK retains the Integration and Session, reconciles saved execution
-identities and validates the resulting candidate again. Provider support for
-steering/resume is required; delivery errors remain visible. Other system
+identities and applies the original validation choice to the resulting candidate.
+Provider support for steering/resume is required; delivery errors remain visible. Other system
 Workspace kinds keep their existing input restrictions.
 
 <Note>

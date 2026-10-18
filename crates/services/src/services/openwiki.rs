@@ -8,6 +8,7 @@ use std::{
 use tokio::process::Command;
 
 pub mod bootstrap;
+mod codex_config;
 pub mod completion;
 pub mod inventory;
 pub mod setup;
@@ -148,6 +149,21 @@ impl OpenWikiAdapter {
         // short installation lock never serialises their coding/maintenance runs.
         let _install = INSTALL_LOCK.lock().await;
         self.verify_version(root).await?;
+        let config = if project_scope {
+            root.join(".codex/config.toml")
+        } else {
+            dirs::home_dir()
+                .ok_or_else(|| OpenWikiError::Command("User home is unavailable".into()))?
+                .join(".codex/config.toml")
+        };
+        tokio::task::spawn_blocking(move || codex_config::repair_displaced_marker(&config))
+            .await
+            .map_err(|error| OpenWikiError::Command(error.to_string()))?
+            .map_err(|_| {
+                OpenWikiError::Command(
+                    "Codex configuration repair failed; inspect its TOML and file ownership".into(),
+                )
+            })?;
         let mut args = vec!["integrations", "install", "codex"];
         if project_scope {
             args.push("--project");
