@@ -1,0 +1,669 @@
+{
+  "version": "codex-cli 0.163.0",
+  "start": {
+    "thread": {
+      "id": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+      "environments": [
+        {
+          "environmentId": "local",
+          "cwd": "/tmp/lvk-codex-smoke",
+          "runtimeWorkspaceRoots": [
+            "/tmp/lvk-codex-smoke"
+          ]
+        }
+      ],
+      "extra": null,
+      "sessionId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+      "forkedFromId": null,
+      "parentThreadId": null,
+      "preview": "",
+      "ephemeral": false,
+      "section": null,
+      "sectionEnteredAt": null,
+      "projectId": null,
+      "historyMode": "paginated",
+      "modelProvider": "smoke",
+      "model": "gpt-5.4",
+      "reasoningEffort": null,
+      "createdAt": 1792340704,
+      "updatedAt": 1792340704,
+      "recencyAt": 1792340704,
+      "status": {
+        "type": "idle"
+      },
+      "path": "/tmp/lvk-codex-smoke/sessions/2026/10/18/rollout-2026-10-18T16-25-04-01a14fd4-be9a-74e2-bb49-80f5de9932cf.jsonl",
+      "cwd": "/tmp/lvk-codex-smoke",
+      "cliVersion": "0.163.0",
+      "originator": "lvk_offline_smoke",
+      "source": "vscode",
+      "canAcceptDirectInput": true,
+      "threadSource": null,
+      "agentNickname": null,
+      "agentRole": null,
+      "gitInfo": null,
+      "name": null,
+      "daybreakEnabled": null,
+      "turns": []
+    },
+    "model": "gpt-5.4",
+    "modelProvider": "smoke",
+    "serviceTier": null,
+    "disabledPluginIds": [],
+    "cwd": "/tmp/lvk-codex-smoke",
+    "runtimeWorkspaceRoots": [
+      "/tmp/lvk-codex-smoke"
+    ],
+    "instructionSources": [],
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    },
+    "activePermissionProfile": null,
+    "reasoningEffort": null,
+    "multiAgentMode": "explicitRequestOnly"
+  },
+  "resume": {
+    "thread": {
+      "id": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+      "environments": [
+        {
+          "environmentId": "local",
+          "cwd": "/tmp/lvk-codex-smoke",
+          "runtimeWorkspaceRoots": [
+            "/tmp/lvk-codex-smoke"
+          ]
+        }
+      ],
+      "extra": null,
+      "sessionId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+      "forkedFromId": null,
+      "parentThreadId": null,
+      "preview": "Say smoke complete.",
+      "ephemeral": false,
+      "section": null,
+      "sectionEnteredAt": null,
+      "projectId": null,
+      "historyMode": "paginated",
+      "modelProvider": "smoke",
+      "model": "gpt-5.4",
+      "reasoningEffort": "medium",
+      "createdAt": 1792340704,
+      "updatedAt": 1792340705,
+      "recencyAt": 1792340705,
+      "status": {
+        "type": "idle"
+      },
+      "path": "/tmp/lvk-codex-smoke/sessions/2026/10/18/rollout-2026-10-18T16-25-04-01a14fd4-be9a-74e2-bb49-80f5de9932cf.jsonl",
+      "cwd": "/tmp/lvk-codex-smoke",
+      "cliVersion": "0.163.0",
+      "originator": "lvk_offline_smoke",
+      "source": "vscode",
+      "canAcceptDirectInput": true,
+      "threadSource": null,
+      "agentNickname": null,
+      "agentRole": null,
+      "gitInfo": null,
+      "name": null,
+      "daybreakEnabled": null,
+      "turns": [
+        {
+          "id": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+          "rootTurnId": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+          "items": [
+            {
+              "type": "userMessage",
+              "id": "01a14fd4-bed9-7fb2-9b89-ba545a565764",
+              "clientId": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Say smoke complete.",
+                  "text_elements": []
+                }
+              ]
+            },
+            {
+              "type": "plan",
+              "id": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c-plan",
+              "text": "Offline smoke plan.\n"
+            }
+          ],
+          "itemsView": "full",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340704,
+          "completedAt": 1792340705,
+          "durationMs": 63
+        },
+        {
+          "id": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+          "rootTurnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+          "items": [
+            {
+              "type": "userMessage",
+              "id": "01a14fd4-bf0b-7313-9226-875eedbc5754",
+              "clientId": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Say smoke complete.",
+                  "text_elements": []
+                }
+              ]
+            },
+            {
+              "type": "agentMessage",
+              "id": "msg_smoke",
+              "text": "Smoke complete.",
+              "phase": null,
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "full",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340705,
+          "completedAt": 1792340705,
+          "durationMs": 45
+        }
+      ]
+    },
+    "model": "gpt-5.4",
+    "modelProvider": "smoke",
+    "serviceTier": null,
+    "disabledPluginIds": [],
+    "cwd": "/tmp/lvk-codex-smoke",
+    "runtimeWorkspaceRoots": [
+      "/tmp/lvk-codex-smoke"
+    ],
+    "instructionSources": [],
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "sandbox": {
+      "type": "readOnly",
+      "networkAccess": false
+    },
+    "activePermissionProfile": null,
+    "reasoningEffort": "medium",
+    "collaborationMode": {
+      "mode": "default",
+      "settings": {
+        "model": "gpt-5.4",
+        "reasoning_effort": "medium",
+        "developer_instructions": "# Collaboration Mode: Default\n\nYou are now in Default mode. Any previous instructions for other modes (e.g. Plan mode) are no longer active.\n\nYour active mode changes only when new developer instructions with a different `<collaboration_mode>...</collaboration_mode>` change it; user requests or tool descriptions do not change mode by themselves. Known mode names are Default and Plan.\n\n## request_user_input availability\n\nUse the `request_user_input` tool only when it is listed in the available tools for this turn.\n\nIn Default mode, strongly prefer making reasonable assumptions and executing the user's request rather than stopping to ask questions.\n\nUse the `request_user_input` tool only for optional questions where the answer would materially improve the quality of the work.\n\nIf `request_user_input` returns no answers, continue with best judgment instead of asking again or treating the turn as blocked.\n\nNever use the `request_user_input` tool for permission requests or permission-related escalations.\n\nIf explicit user input is required for another reason before progress can safely continue, do not use the `request_user_input` tool. Ask the user directly with one concise plain-text question instead. Never write a multiple choice question as a textual assistant message.\n"
+      }
+    },
+    "multiAgentMode": "explicitRequestOnly",
+    "initialTurnsPage": null,
+    "turnsBackwardsCursor": "{\"requestedThreadId\":\"01a14fd4-be9a-74e2-bb49-80f5de9932cf\",\"rolloutOrdinal\":15,\"includeAnchor\":true,\"scope\":{\"kind\":\"turns\"}}",
+    "itemsBackwardsCursor": "{\"requestedThreadId\":\"01a14fd4-be9a-74e2-bb49-80f5de9932cf\",\"rolloutOrdinal\":21,\"includeAnchor\":true,\"scope\":{\"kind\":\"itemsByCreatedAtOrdinal\"}}"
+  },
+  "goal": {
+    "goal": {
+      "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+      "objective": "Smoke goal",
+      "status": "paused",
+      "tokenBudget": null,
+      "tokensUsed": 0,
+      "timeUsedSeconds": 0,
+      "createdAt": 1792340705,
+      "updatedAt": 1792340705
+    }
+  },
+  "notifications": [
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "userMessage",
+          "id": "01a14fd4-bed9-7fb2-9b89-ba545a565764",
+          "clientId": null,
+          "content": [
+            {
+              "type": "text",
+              "text": "Say smoke complete.",
+              "text_elements": []
+            }
+          ]
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+        "completedAtMs": 1792340704986
+      },
+      "emittedAtMs": 1792340704989
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "plan",
+          "id": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c-plan",
+          "text": "Offline smoke plan.\n"
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+        "completedAtMs": 1792340705008
+      },
+      "emittedAtMs": 1792340705010
+    },
+    {
+      "method": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 258400
+        }
+      },
+      "emittedAtMs": 1792340705013
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turn": {
+          "id": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+          "rootTurnId": "01a14fd4-beb5-7b72-8381-79d6cdc2a53c",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340704,
+          "completedAt": 1792340705,
+          "durationMs": 63
+        }
+      },
+      "emittedAtMs": 1792340705016
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "userMessage",
+          "id": "01a14fd4-bf0b-7313-9226-875eedbc5754",
+          "clientId": null,
+          "content": [
+            {
+              "type": "text",
+              "text": "Say smoke complete.",
+              "text_elements": []
+            }
+          ]
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+        "completedAtMs": 1792340705037
+      },
+      "emittedAtMs": 1792340705040
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_smoke",
+          "text": "Smoke complete.",
+          "phase": null,
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+        "completedAtMs": 1792340705057
+      },
+      "emittedAtMs": 1792340705058
+    },
+    {
+      "method": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 26,
+            "inputTokens": 20,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 6,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 258400
+        }
+      },
+      "emittedAtMs": 1792340705065
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turn": {
+          "id": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+          "rootTurnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_smoke",
+              "text": "Smoke complete.",
+              "phase": null,
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340705,
+          "completedAt": 1792340705,
+          "durationMs": 45
+        }
+      },
+      "emittedAtMs": 1792340705074
+    },
+    {
+      "method": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-befa-75d3-bcf0-bf9c9b277f35",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 26,
+            "inputTokens": 20,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 6,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 258400
+        }
+      },
+      "emittedAtMs": 1792340705086
+    },
+    {
+      "method": "thread/goal/cleared",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf"
+      },
+      "emittedAtMs": 1792340705086
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "userMessage",
+          "id": "01a14fd4-bf55-76b0-86b5-e6e18d54ab06",
+          "clientId": null,
+          "content": [
+            {
+              "type": "text",
+              "text": "Wait for steering.",
+              "text_elements": []
+            }
+          ]
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+        "completedAtMs": 1792340705116
+      },
+      "emittedAtMs": 1792340705118
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "userMessage",
+          "id": "01a14fd4-bf73-7822-a525-37dc354f7311",
+          "clientId": null,
+          "content": [
+            {
+              "type": "text",
+              "text": "Keep the answer short.",
+              "text_elements": []
+            }
+          ]
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+        "completedAtMs": 1792340705140
+      },
+      "emittedAtMs": 1792340705142
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_smoke",
+          "text": "Smoke complete.",
+          "phase": null,
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+        "completedAtMs": 1792340705165
+      },
+      "emittedAtMs": 1792340705168
+    },
+    {
+      "method": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 39,
+            "inputTokens": 30,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 9,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 258400
+        }
+      },
+      "emittedAtMs": 1792340705183
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turn": {
+          "id": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+          "rootTurnId": "01a14fd4-bf42-7b21-a9d7-1a5575e03462",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_smoke",
+              "text": "Smoke complete.",
+              "phase": null,
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340705,
+          "completedAt": 1792340705,
+          "durationMs": 90
+        }
+      },
+      "emittedAtMs": 1792340705191
+    },
+    {
+      "method": "thread/goal/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": null,
+        "goal": {
+          "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+          "objective": "Smoke goal",
+          "status": "paused",
+          "tokenBudget": null,
+          "tokensUsed": 0,
+          "timeUsedSeconds": 0,
+          "createdAt": 1792340705,
+          "updatedAt": 1792340705
+        }
+      },
+      "emittedAtMs": 1792340705194
+    },
+    {
+      "method": "thread/goal/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": null,
+        "goal": {
+          "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+          "objective": "Smoke goal",
+          "status": "active",
+          "tokenBudget": null,
+          "tokensUsed": 0,
+          "timeUsedSeconds": 0,
+          "createdAt": 1792340705,
+          "updatedAt": 1792340705
+        }
+      },
+      "emittedAtMs": 1792340705199
+    },
+    {
+      "method": "thread/goal/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": null,
+        "goal": {
+          "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+          "objective": "Smoke goal",
+          "status": "paused",
+          "tokenBudget": null,
+          "tokensUsed": 0,
+          "timeUsedSeconds": 0,
+          "createdAt": 1792340705,
+          "updatedAt": 1792340705
+        }
+      },
+      "emittedAtMs": 1792340705232
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_smoke",
+          "text": "Smoke complete.",
+          "phase": null,
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bfb0-77c2-85e6-f24b363795df",
+        "completedAtMs": 1792340705234
+      },
+      "emittedAtMs": 1792340705236
+    },
+    {
+      "method": "thread/tokenUsage/updated",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turnId": "01a14fd4-bfb0-77c2-85e6-f24b363795df",
+        "tokenUsage": {
+          "total": {
+            "totalTokens": 52,
+            "inputTokens": 40,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 12,
+            "reasoningOutputTokens": 0
+          },
+          "last": {
+            "totalTokens": 13,
+            "inputTokens": 10,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "outputTokens": 3,
+            "reasoningOutputTokens": 0
+          },
+          "modelContextWindow": 258400
+        }
+      },
+      "emittedAtMs": 1792340705239
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a14fd4-be9a-74e2-bb49-80f5de9932cf",
+        "turn": {
+          "id": "01a14fd4-bfb0-77c2-85e6-f24b363795df",
+          "rootTurnId": "01a14fd4-bfb0-77c2-85e6-f24b363795df",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_smoke",
+              "text": "Smoke complete.",
+              "phase": null,
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1792340705,
+          "completedAt": 1792340705,
+          "durationMs": 35
+        }
+      },
+      "emittedAtMs": 1792340705242
+    }
+  ]
+}

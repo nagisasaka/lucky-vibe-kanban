@@ -9,7 +9,6 @@ import type {
   SubmitAgentRunInputRequest,
   SteerAgentRunRequest,
   UpdateAgentRunGoalRequest,
-  UpdatePlanGoalDraftRequest,
 } from 'shared/types';
 import type { AgentEventCursor } from '@/features/agent-runtime/model/canonicalAgentTimeline';
 import { handleApiResponse } from './api';
@@ -160,17 +159,6 @@ export const agentRunsApi = {
       ...update,
     };
     return postControl(agentRunId, 'goal', request);
-  },
-
-  async updatePlanGoalDraft(
-    agentRunId: string,
-    objective: string
-  ): Promise<RunState> {
-    const request: UpdatePlanGoalDraftRequest = {
-      ...controlIdentity('plan-goal-draft', agentRunId),
-      objective,
-    };
-    return postControl(agentRunId, 'plan-goal-draft', request);
   },
 
   async clearGoal(agentRunId: string): Promise<RunState> {

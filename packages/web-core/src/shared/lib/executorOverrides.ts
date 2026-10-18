@@ -1,4 +1,4 @@
-import type { ExecutorConfig } from 'shared/types';
+import { ExecutionMode, type ExecutorConfig } from 'shared/types';
 
 /** A stored launch is a complete snapshot, not a patch over today's preset.
  * In particular absent/null reasoning means provider inheritance, not "low"
@@ -15,4 +15,15 @@ export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
   if (scratch && Object.hasOwn(scratch, field)) return scratch[field];
   if (launch) return launch[field];
   return preset?.[field];
+}
+
+/** Retain historical values in storage; a new launch of the retired mode is Plan. */
+export function normaliseExecutionMode(config: ExecutorConfig): ExecutorConfig {
+  if (config.execution_mode !== ExecutionMode.plan_with_goal) return config;
+  return {
+    ...config,
+    execution_mode: ExecutionMode.plan,
+    goal_token_budget: null,
+    goal_max_concurrent_agents: null,
+  };
 }

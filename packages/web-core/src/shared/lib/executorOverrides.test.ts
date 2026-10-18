@@ -4,7 +4,10 @@ import {
   ExecutionMode,
   type ExecutorConfig,
 } from 'shared/types';
-import { resolveExecutorOverride } from './executorOverrides';
+import {
+  normaliseExecutionMode,
+  resolveExecutorOverride,
+} from './executorOverrides';
 
 describe('immutable Session launch restoration', () => {
   const launch: ExecutorConfig = { executor: BaseCodingAgent.CODEX };
@@ -54,5 +57,33 @@ describe('immutable Session launch restoration', () => {
         null
       )
     ).toBe(0);
+  });
+});
+
+describe('retired execution mode restoration', () => {
+  it('launches old Plan with Goal drafts as Plan without mutating history', () => {
+    const saved: ExecutorConfig = {
+      executor: BaseCodingAgent.CODEX,
+      execution_mode: ExecutionMode.plan_with_goal,
+      goal_token_budget: 1000,
+      goal_max_concurrent_agents: 2,
+    };
+    expect(normaliseExecutionMode(saved)).toEqual({
+      ...saved,
+      execution_mode: ExecutionMode.plan,
+      goal_token_budget: null,
+      goal_max_concurrent_agents: null,
+    });
+    expect(saved.execution_mode).toBe(ExecutionMode.plan_with_goal);
+  });
+  it('preserves Code, Plan and Goal settings', () => {
+    for (const execution_mode of [
+      ExecutionMode.code,
+      ExecutionMode.plan,
+      ExecutionMode.goal,
+    ]) {
+      const saved = { executor: BaseCodingAgent.CODEX, execution_mode };
+      expect(normaliseExecutionMode(saved)).toBe(saved);
+    }
   });
 });

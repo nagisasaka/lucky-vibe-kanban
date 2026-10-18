@@ -62,7 +62,6 @@ pub(super) mod openwiki;
 
 struct PendingPlan {
     item_id: String,
-    text: String,
 }
 
 // Resume is a control operation, not a history importer. Decode only the
@@ -102,7 +101,7 @@ pub struct AppServerClient {
     turn_id: Arc<Mutex<Option<String>>>,
     pending_feedback: Mutex<VecDeque<String>>,
     auto_approve: bool,
-    plan_mode: bool,
+    plan_mode: AtomicBool,
     execution_mode: ExecutionMode,
     goal_token_budget: Option<i64>,
     goal_lifecycle: StdMutex<GoalLifecycle>,
@@ -110,7 +109,6 @@ pub struct AppServerClient {
     resolved_model: OnceLock<String>,
     reasoning_effort: StdMutex<Option<ProtocolReasoningEffort>>,
     pending_plan: Mutex<Option<PendingPlan>>,
-    pending_plan_goal_draft: Mutex<Option<String>>,
     repo_context: RepoContext,
     commit_reminder: bool,
     commit_reminder_prompt: String,
@@ -149,15 +147,17 @@ impl AppServerClient {
             log_writer,
             approvals,
             auto_approve,
-            plan_mode,
-            execution_mode,
+            plan_mode: AtomicBool::new(plan_mode),
+            execution_mode: match execution_mode {
+                ExecutionMode::PlanWithGoal => ExecutionMode::Plan,
+                mode => mode,
+            },
             goal_token_budget,
             goal_lifecycle: StdMutex::new(GoalLifecycle::default()),
             self_ref: weak.clone(),
             resolved_model: OnceLock::new(),
             reasoning_effort: StdMutex::new(reasoning_effort),
             pending_plan: Mutex::new(None),
-            pending_plan_goal_draft: Mutex::new(None),
             thread_id: Mutex::new(None),
             turn_id: Arc::new(Mutex::new(None)),
             pending_feedback: Mutex::new(VecDeque::new()),
@@ -202,10 +202,7 @@ impl AppServerClient {
     }
 
     fn observes_goal_lifecycle(&self) -> bool {
-        matches!(
-            self.execution_mode,
-            ExecutionMode::Goal | ExecutionMode::PlanWithGoal
-        )
+        self.execution_mode == ExecutionMode::Goal
     }
 
     fn observe_goal_updated(&self, thread: &str, status: &str) -> Option<ExecutorExitResult> {
@@ -376,19 +373,10 @@ impl AppServerClient {
                     .await?;
                 Ok(raw)
             }
-            DirectControl::UpdatePlanGoalDraft { objective } => {
-                let mut pending = self.pending_plan_goal_draft.lock().await;
-                if self.execution_mode != ExecutionMode::PlanWithGoal || pending.is_none() {
-                    return Err(ExecutorError::Io(io::Error::other(
-                        "Codex has no Plan with Goal draft awaiting approval",
-                    )));
-                }
-                *pending = Some(objective);
-                serde_json::to_vec(&serde_json::json!({
-                    "method": "lucky-vibe/plan-goal-draft/updated"
-                }))
-                .map_err(ExecutorError::from)
-            }
+            DirectControl::UpdatePlanGoalDraft { .. } => Err(ExecutorError::Io(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "Plan with Goal has been retired. Use Plan or create a Goal explicitly.",
+            ))),
             DirectControl::GoalUpdate {
                 objective,
                 status,
@@ -483,7 +471,7 @@ impl AppServerClient {
     }
 
     pub fn initial_collaboration_mode(&self) -> Result<CollaborationMode, ExecutorError> {
-        if self.plan_mode {
+        if self.plan_mode.load(Ordering::SeqCst) {
             self.collaboration_mode(ModeKind::Plan)
         } else {
             self.collaboration_mode(ModeKind::Default)
@@ -725,7 +713,7 @@ impl AppServerClient {
         thread_id: String,
         effort: Option<ProtocolReasoningEffort>,
     ) -> Result<ThreadSettingsUpdateParams, ExecutorError> {
-        let mode = if self.plan_mode {
+        let mode = if self.plan_mode.load(Ordering::SeqCst) {
             ModeKind::Plan
         } else {
             ModeKind::Default
@@ -1078,10 +1066,6 @@ impl AppServerClient {
             .as_ref()
             .ok_or(ExecutorApprovalError::ServiceUnavailable)?;
 
-        if self.execution_mode == ExecutionMode::PlanWithGoal {
-            *self.pending_plan_goal_draft.lock().await = Some(plan.text.clone());
-        }
-
         let approval_id = approval_service
             .create_tool_approval("plan")
             .or_else(|err| async {
@@ -1130,16 +1114,7 @@ impl AppServerClient {
 
         match status {
             ApprovalStatus::Approved => {
-                if self.execution_mode == ExecutionMode::PlanWithGoal {
-                    let objective = self
-                        .pending_plan_goal_draft
-                        .lock()
-                        .await
-                        .take()
-                        .unwrap_or(plan.text);
-                    self.start_goal(thread_id, objective).await?;
-                    return Ok(false);
-                }
+                self.plan_mode.store(false, Ordering::SeqCst);
                 self.spawn_turn_start(
                     thread_id,
                     "Implement the plan.".to_string(),
@@ -1148,7 +1123,6 @@ impl AppServerClient {
                 Ok(false)
             }
             ApprovalStatus::Denied { reason } => {
-                *self.pending_plan_goal_draft.lock().await = None;
                 let feedback = reason
                     .as_ref()
                     .map(|s| s.trim())
@@ -1165,10 +1139,7 @@ impl AppServerClient {
                     Ok(true)
                 }
             }
-            ApprovalStatus::TimedOut | ApprovalStatus::Pending => {
-                *self.pending_plan_goal_draft.lock().await = None;
-                Ok(true)
-            }
+            ApprovalStatus::TimedOut | ApprovalStatus::Pending => Ok(true),
         }
     }
 
@@ -1590,14 +1561,14 @@ impl AppServerClient {
         }
 
         // Detect completed plan items in the notification stream
-        if self.plan_mode
+        if self.plan_mode.load(Ordering::SeqCst)
             && method == "item/completed"
             && let Some(ref params) = notification.params
             && let Ok(completed) =
                 serde_json::from_value::<ItemCompletedNotification>(params.clone())
-            && let ThreadItem::Plan { id, text } = completed.item
+            && let ThreadItem::Plan { id, .. } = completed.item
         {
-            *self.pending_plan.lock().await = Some(PendingPlan { item_id: id, text });
+            *self.pending_plan.lock().await = Some(PendingPlan { item_id: id });
         }
 
         if method == "turn/started"
@@ -1727,7 +1698,7 @@ impl AppServerClient {
             }
 
             // Handle plan approval on turn completion
-            let pending = if self.plan_mode {
+            let pending = if self.plan_mode.load(Ordering::SeqCst) {
                 self.pending_plan.lock().await.take()
             } else {
                 None
@@ -1908,8 +1879,67 @@ mod reasoning_tests;
 
 #[cfg(test)]
 mod version_check_tests {
+    use serde_json::Value;
+
+    use super::{
+        CompletedTurnNotification, DirectControl, ItemCompletedNotification, JSONRPCNotification,
+        ResumedThread, ThreadGoalSetResponse, ThreadStartResponse,
+    };
     // Run the test executable itself as a deterministic stdio provider. No Codex
     // account, model calls, shell, Python, or timing-based sleeps are required.
+    #[test]
+    fn supported_cli_responses_remain_compatible_with_wire_types() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../../../fixtures/codex-app-server-0.163.0.json"
+        ))
+        .unwrap();
+        let start: ThreadStartResponse = serde_json::from_value(fixture["start"].clone()).unwrap();
+        let resume: ResumedThread = serde_json::from_value(fixture["resume"].clone()).unwrap();
+        assert_eq!(start.thread.id, resume.thread.id);
+        let _: ThreadGoalSetResponse = serde_json::from_value(fixture["goal"].clone()).unwrap();
+        for event in fixture["notifications"].as_array().unwrap() {
+            let notification: JSONRPCNotification = serde_json::from_value(event.clone()).unwrap();
+            match notification.method.as_str() {
+                "item/completed" => {
+                    let _: ItemCompletedNotification =
+                        serde_json::from_value(notification.params.unwrap()).unwrap();
+                }
+                "turn/completed" => {
+                    let completed: CompletedTurnNotification =
+                        serde_json::from_value(notification.params.unwrap()).unwrap();
+                    assert_eq!(completed.turn.status, TurnStatus::Completed);
+                }
+                _ => {} // Unknown/additive notifications remain auditable.
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn retired_plan_goal_draft_control_returns_actionable_error() {
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            None,
+            false,
+            true,
+            ExecutionMode::PlanWithGoal,
+            None,
+            None,
+            Default::default(),
+            false,
+            String::new(),
+            CancellationToken::new(),
+        );
+        assert_eq!(client.execution_mode(), ExecutionMode::Plan);
+        assert!(!client.observes_goal_lifecycle());
+        let error = client
+            .send_direct_control(DirectControl::UpdatePlanGoalDraft {
+                objective: "old client".into(),
+            })
+            .await
+            .unwrap_err();
+        assert!(error.to_string().contains("retired"));
+    }
+
     #[test]
     #[ignore = "subprocess fixture, invoked by transport tests"]
     fn goal_stdio_fixture() {
@@ -1944,6 +1974,20 @@ mod version_check_tests {
                     );
                 }
                 "fixture/go" => {}
+                "turn/start" if case == "plan" => {
+                    assert_eq!(request["params"]["collaborationMode"]["mode"], "default");
+                    emit(
+                        json!({"id":request["id"],"result":{"turn":{"id":"implementation","items":[],"status":"inProgress","error":null}}}),
+                    );
+                    event(
+                        "turn/started",
+                        json!({"threadId":"thread-1","turn":{"id":"implementation"}}),
+                    );
+                    event(
+                        "turn/completed",
+                        json!({"threadId":"thread-1","turn":{"id":"implementation","status":"completed"}}),
+                    );
+                }
                 "thread/goal/get" => {
                     emit(
                         json!({"id":request["id"],"result":{"goal": if case == "missing" { serde_json::Value::Null } else { goal("paused") }}}),
@@ -2057,6 +2101,7 @@ mod version_check_tests {
                 cancel.clone(),
             );
             client.register_session("thread-1").await.unwrap();
+            client.resolved_model.set("gpt-test".into()).unwrap();
             let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
                 .args([
                     "--exact",
@@ -2106,7 +2151,18 @@ mod version_check_tests {
                     ["start", "resume", "plan"].contains(&case),
                     "{case}"
                 );
-                if ["start", "resume", "plan", "turn-failed"].contains(&case) {
+                if case == "plan" {
+                    // Approval switches to Code. Changing reasoning afterwards must
+                    // not silently re-enter Plan during implementation.
+                    let update = client
+                        .build_reasoning_thread_settings_update_params(
+                            "thread-1".into(),
+                            Some(ProtocolReasoningEffort::High),
+                        )
+                        .unwrap();
+                    assert_eq!(update.collaboration_mode.unwrap().mode, ModeKind::Default);
+                }
+                if ["start", "resume", "turn-failed"].contains(&case) {
                     assert!(
                         String::from_utf8_lossy(&captured.0.lock().unwrap())
                             .contains("FINAL ANSWER AFTER GOAL COMPLETE"),

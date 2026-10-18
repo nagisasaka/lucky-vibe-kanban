@@ -13,7 +13,6 @@ describe('canonical AgentRun controls', () => {
       interruptTurn: vi.fn(async () => undefined),
       steer: vi.fn(async () => undefined),
       updateGoal: vi.fn(async () => undefined),
-      updatePlanGoalDraft: vi.fn(async () => undefined),
       clearGoal: vi.fn(async () => undefined),
       submitInput: vi.fn(async () => undefined),
       resolveApproval: vi.fn(async () => undefined),
@@ -28,7 +27,6 @@ describe('canonical AgentRun controls', () => {
     await controls.updateGoal('run-1', {
       status: AgentGoalStatus.paused,
     });
-    await controls.updatePlanGoalDraft('run-1', 'Edited objective');
     await controls.interruptTurn('run-1');
     await controls.clearGoal('run-1');
 
@@ -58,10 +56,6 @@ describe('canonical AgentRun controls', () => {
     expect(client.updateGoal).toHaveBeenCalledWith('run-1', {
       status: AgentGoalStatus.paused,
     });
-    expect(client.updatePlanGoalDraft).toHaveBeenCalledWith(
-      'run-1',
-      'Edited objective'
-    );
     expect(client.interruptTurn).toHaveBeenCalledWith('run-1');
     expect(client.clearGoal).toHaveBeenCalledWith('run-1');
   });

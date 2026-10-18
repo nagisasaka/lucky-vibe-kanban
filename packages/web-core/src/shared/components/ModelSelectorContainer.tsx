@@ -433,26 +433,25 @@ export function ModelSelectorContainer({
     : null;
   const permissionIcon = permissionMeta?.icon ?? HandIcon;
   const isCodex = agent === BaseCodingAgent.CODEX;
-  const executionMode =
+  const savedExecutionMode =
     executorConfig?.execution_mode ??
     presetOptions?.execution_mode ??
     (permissionPolicy === PermissionPolicy.PLAN
       ? ExecutionMode.plan
       : ExecutionMode.code);
-  const isGoalMode =
-    executionMode === ExecutionMode.goal ||
-    executionMode === ExecutionMode.plan_with_goal;
+  const executionMode =
+    savedExecutionMode === ExecutionMode.plan_with_goal
+      ? ExecutionMode.plan
+      : savedExecutionMode;
+  const isGoalMode = executionMode === ExecutionMode.goal;
   const parallelAgentLimit = executorConfig?.goal_max_concurrent_agents ?? 0;
   const executionModeOptions = [
     { value: ExecutionMode.code, label: 'Code' },
     { value: ExecutionMode.plan, label: 'Plan' },
     { value: ExecutionMode.goal, label: 'Goal' },
-    { value: ExecutionMode.plan_with_goal, label: 'Plan with Goal' },
   ];
   const handleExecutionModeChange = (nextMode: ExecutionMode) => {
-    const usesGoalOptions =
-      nextMode === ExecutionMode.goal ||
-      nextMode === ExecutionMode.plan_with_goal;
+    const usesGoalOptions = nextMode === ExecutionMode.goal;
     onOverrideChange({
       execution_mode: nextMode,
       ...(permissionPolicy === PermissionPolicy.PLAN
