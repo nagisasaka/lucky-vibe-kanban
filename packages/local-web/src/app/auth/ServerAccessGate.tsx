@@ -1,3 +1,4 @@
+import { rememberPushReturn, takePushReturn } from './pushReturn';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Auth0Setup } from './Auth0Setup';
 import { ChatGptCredentials } from './ChatGptCredentials';
@@ -98,6 +99,16 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('lvk-access-expired', refresh);
   }, [refresh]);
   useEffect(() => {
+    if (!status?.authenticated || settings || recovery) return;
+    try {
+      const target = takePushReturn(window.sessionStorage);
+      if (target && window.location.pathname === '/')
+        window.location.replace(target);
+    } catch {
+      /* Storage can be disabled; reopening the notification still works. */
+    }
+  }, [status?.authenticated, settings, recovery]);
+  useEffect(() => {
     if (!settings || !status?.management) return;
     void Promise.all([
       accessRequest<Configuration>('configuration'),
@@ -138,6 +149,14 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
   }
   async function login() {
     await run(async () => {
+      try {
+        rememberPushReturn(
+          window.sessionStorage,
+          window.location.pathname + window.location.search
+        );
+      } catch {
+        /* A blocked storage getter must not prevent login. */
+      }
       const result = await accessRequest<{ authorize_url: string }>('login');
       window.location.assign(result.authorize_url);
     });

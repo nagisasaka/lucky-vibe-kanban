@@ -1798,3 +1798,89 @@ async fn preview_handoff_is_browser_origin_bound_and_revocable() {
 mod provisioning;
 
 mod chatgpt;
+
+#[tokio::test]
+async fn push_consent_is_encrypted_owner_bound_and_survives_idle_but_not_revocation() {
+    let fixture = Fixture::new(true).await;
+    let (cookie, _) = fixture.basic().await;
+    let mut headers = HeaderMap::new();
+    headers.insert("cookie", cookie.parse().unwrap());
+    let principal = fixture.access.web_principal(&headers).await.unwrap();
+    let owner = principal.user_id;
+    let value = json!({"endpoint":"https://fcm.googleapis.com/fcm/send/secret-capability"});
+    assert!(
+        fixture
+            .access
+            .seal_push_registration(value.clone())
+            .is_err()
+    );
+    let sealed = ACTOR
+        .scope(principal.clone(), async {
+            fixture
+                .access
+                .seal_push_registration(value.clone())
+                .unwrap()
+        })
+        .await;
+    assert!(!String::from_utf8_lossy(&sealed).contains("secret-capability"));
+    assert_eq!(
+        fixture.access.open_push_registration(&sealed, owner).await,
+        Some(value)
+    );
+    assert!(
+        fixture
+            .access
+            .open_push_registration(&sealed, Uuid::new_v4())
+            .await
+            .is_none()
+    );
+    sqlx::query("UPDATE access_members SET state='disabled' WHERE id=?")
+        .bind(owner.to_string())
+        .execute(fixture.access.pool())
+        .await
+        .unwrap();
+    assert!(
+        fixture
+            .access
+            .open_push_registration(&sealed, owner)
+            .await
+            .is_none()
+    );
+    sqlx::query("UPDATE access_members SET state='active' WHERE id=?")
+        .bind(owner.to_string())
+        .execute(fixture.access.pool())
+        .await
+        .unwrap();
+    sqlx::query("DELETE FROM access_sessions")
+        .execute(fixture.access.pool())
+        .await
+        .unwrap();
+    assert!(
+        fixture
+            .access
+            .open_push_registration(&sealed, owner)
+            .await
+            .is_some()
+    );
+    sqlx::query("UPDATE access_settings SET revision=revision+1")
+        .execute(fixture.access.pool())
+        .await
+        .unwrap();
+    assert!(
+        fixture
+            .access
+            .open_push_registration(&sealed, owner)
+            .await
+            .is_none()
+    );
+    let mut internal = principal;
+    internal.channel = "internal";
+    assert!(
+        ACTOR
+            .scope(internal, async {
+                fixture.access.seal_push_registration(json!({}))
+            })
+            .await
+            .is_err()
+    );
+}
