@@ -247,6 +247,15 @@ async fn provisioning_preview_apply_and_retry_preserve_auth_and_other_apps() {
     let result = body(response).await;
     assert_ne!(result["web"]["client_id"], result["chatgpt"]["client_id"]);
     assert_eq!(result["web"]["client_secret"], "secret_0");
+    let saved = f.call("POST", "/api/access/auth0/chatgpt-credentials",
+        &[("cookie", &cookie), ("x-lvk-csrf", &csrf)],
+        json!({"action":"reveal","issuer":remote.issuer,"web_client_id":result["web"]["client_id"]})).await;
+    assert_eq!(saved.status(), StatusCode::OK);
+    assert_eq!(
+        body(saved).await["client_secret"],
+        result["chatgpt"]["client_secret"]
+    );
+
     assert!(f.access.load().await.unwrap().0.is_none());
     let member_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM access_members")
         .fetch_one(f.access.pool())

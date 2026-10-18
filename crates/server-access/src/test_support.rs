@@ -5,6 +5,12 @@ pub async fn access(pool: SqlitePool, directory: PathBuf, jwks: serde_json::Valu
     let issuer = "https://fixture.auth0.com/";
     provider::validate_issuer(issuer).unwrap();
     sqlx::raw_sql(include_str!(
+        "../../db/migrations/20261018010000_chatgpt_client_credentials.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::raw_sql(include_str!(
         "../../db/migrations/20261015000000_server_access.sql"
     ))
     .execute(&pool)

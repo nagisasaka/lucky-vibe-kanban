@@ -644,7 +644,24 @@ pub(crate) async fn handle(
                 "started",
             )
             .await?;
-        let result = apply(&api, &plan).await;
+        let result = async {
+            let result = apply(&api, &plan).await?;
+            if let Some(chatgpt) = result.get("chatgpt") {
+                super::chatgpt::save(
+                    &access,
+                    &super::chatgpt::Credentials {
+                        issuer: plan.issuer.clone(),
+                        web_client_id: string(&result["web"], "client_id")?.into(),
+                        resource: string(&result, "resource")?.into(),
+                        client_id: string(chatgpt, "client_id")?.into(),
+                        client_secret: string(chatgpt, "client_secret")?.into(),
+                    },
+                )
+                .await?;
+            }
+            Ok::<_, Error>(result)
+        }
+        .await;
         access
             .audit(
                 session.user_id.as_deref(),

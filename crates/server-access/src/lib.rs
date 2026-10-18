@@ -1,5 +1,6 @@
 //! Authentication for one trusted-team LVK server. Auth0 issues OAuth tokens;
 //! this crate owns membership, browser sessions and setup, never OAuth grants.
+mod chatgpt;
 mod handlers;
 mod preview;
 mod provider;

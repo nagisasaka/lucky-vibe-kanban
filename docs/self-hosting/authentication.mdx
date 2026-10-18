@@ -103,7 +103,8 @@ OAuth検出が失敗し、同じVPSをドメイン名で公開すると接続で
    対象アプリでは選んだソーシャル接続だけを有効にし、Authorization Code、RS256、
    Client Secret Basic、first-party設定を適用します。既存のCallback／Logout URLや独自metadataは保持します。
    選択していないアプリの接続設定は変更しません。
-6. ChatGPT用Client ID・Secretが表示された場合、画面を移動する前にChatGPT側へコピーします。
+6. ChatGPT用Client ID・SecretはLVKへ暗号化して保存されます。先にログイン試験とAuth0の有効化を完了し、
+   ログイン後に認証設定の「ChatGPTへのMCP接続」からコピーしてChatGPTへ入力します。
    Web用の情報はLVKのログイン試験フォームへ自動入力されます。
    **ログイン試験に成功して管理者を確認し、有効化するまで、LVKの認証方式は切り替わりません。**
 
@@ -113,7 +114,9 @@ Resource Parameter Compatibility ProfileとInclude Issuer設定はテナント�
 
 管理トークンはリクエスト処理中だけ使い、LVKのDBや監査ログには保存しません。
 適用後は失敗時も入力欄から消去しますが、Auth0側では有効期限まで有効なため、短い有効期限を使ってください。
-ChatGPT用SecretもLVKには永続保存しません。Web用Secretは、既存のログイン試験・有効化処理で暗号化して扱います。
+ChatGPT用Secretは、Web用Secretと同じサーバー鍵で暗号化してDBに保存します。
+認証設定では管理者（初回設定・復旧中はその管理セッション）の明示操作で取得でき、取得は監査ログへ記録します。
+ブラウザの永続保存領域には保存しません。Web用Secretは、既存のログイン試験・有効化処理で暗号化して扱います。
 
 Auth0への複数の変更は一括トランザクションではありません。途中失敗時は作成済みアプリを削除せず、
 トークンや権限を確認して再度プレビューしてください。自動作成アプリは公開URLと用途のmetadataで再検出し、
@@ -180,8 +183,8 @@ RBACは必須ではありません。LVK側の承認済みメンバーだけに�
 今回の導入方式は**事前登録クライアント**です。CIMDやDCRの独自実装はありません。
 ChatGPT専用のRegular Web ApplicationをAuth0に別途作り、Authorization Code＋PKCE S256、
 token endpoint認証方式`client_secret_basic`を設定します。Web用とは異なるClient IDと
-Client Secretを、ChatGPTの事前登録クライアント設定へ入力します。このChatGPT専用Secretを
-LVKへ保存する必要はありません。Discoveryの`token_endpoint_auth_methods_supported`にも
+Client Secretを、ChatGPTの事前登録クライアント設定へ入力します。LVKはこの専用SecretをMCPのトークン検証には使いません。
+自動セットアップでは、後からコピーできるよう暗号化して保存します。Discoveryの`token_endpoint_auth_methods_supported`にも
 `client_secret_basic`が公開されていることを確認します。使用中のChatGPT UIで事前登録の
 方式・資格情報を設定できない場合は、画面と公式仕様を照合し、実接続は未確認として扱います。
 WebのSecretを流用する回避はしません。[OpenAIの認証手順](https://developers.openai.com/plugins/build/auth)
@@ -189,7 +192,10 @@ WebのSecretを流用する回避はしません。[OpenAIの認証手順](https
 
 ChatGPT用の正確なcallback URLをChatGPT画面からコピーしてAuth0へ登録します。
 このドキュメントは古い固定callback URLを決め打ちしません。サーバーURLにはLVKの
-MCP URLを使います。LVKにはChatGPTのSecretや更新トークンを入力する欄はありません。
+MCP URLを使います。既存のChatGPT用Client ID・Secretは認証設定の「既存の接続情報を保存・更新」から保存できます。
+この操作はAuth0側を変更しません。Auth0でSecretを変更した場合は保存情報も更新してください。
+保存情報はAuth0 issuer・Web用Client ID・LVKの公開URLに対応付けられ、別の設定には表示されません。
+ChatGPTの更新トークンはLVKに保存しません。
 
 第三者アプリとして登録した場合、Google/GitHub接続をAuth0のdomain-level connectionに
 する必要があります。これはAuth0提供テナント内の接続設定であり、独自ドメイン購入では

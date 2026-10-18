@@ -49,6 +49,12 @@ impl Fixture {
         .execute(&pool)
         .await
         .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../db/migrations/20261018010000_chatgpt_client_credentials.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
         store::ensure_key(&dir.path().join("access.key")).unwrap();
         let access = Access(Arc::new(Inner {
             pool,
@@ -1790,3 +1796,5 @@ async fn preview_handoff_is_browser_origin_bound_and_revocable() {
 }
 
 mod provisioning;
+
+mod chatgpt;

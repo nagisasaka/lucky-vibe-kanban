@@ -24,6 +24,10 @@ pub fn router(access: Access) -> Router {
         .route("/api/access/local", post(local))
         .route("/api/access/auth0/test", post(test_auth0))
         .route(
+            "/api/access/auth0/chatgpt-credentials",
+            post(super::chatgpt::handle),
+        )
+        .route(
             "/api/access/auth0/provision",
             post(super::provisioning::handle).layer(DefaultBodyLimit::max(128 * 1024)),
         )
