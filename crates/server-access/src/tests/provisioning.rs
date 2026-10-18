@@ -491,7 +491,8 @@ async fn provisioning_rejects_non_admin_forced_mode_and_remote_auth_errors() {
         assert!(error.contains("GET /api/v2/clients"));
         assert!(error.contains(&format!("HTTP {}", status.as_u16())));
         assert!(!error.contains("management-secret"));
-        assert!(!error.contains("fields="));
+        assert!(!error.contains("include_fields=true"));
+        assert!(!error.contains("per_page="));
     }
     assert!(remote.state.lock().await.writes.is_empty());
 }
@@ -602,4 +603,24 @@ async fn provisioning_reports_json_and_transport_failures_without_response_conte
     assert!(error.contains("connection failed") || error.contains("request transport failed"));
     assert!(!error.contains("management-secret"));
     assert!(!error.contains("127.0.0.1"));
+}
+
+#[test]
+fn provider_validation_hints_never_copy_response_text() {
+    let bytes = serde_json::to_vec(&json!({"message":"Payload validation error: 'Additional properties not allowed: secret-token-value' on property jwt_configuration. Bearer private-credential", "errorCode":"secret-code"})).unwrap();
+    let detail = super::super::provisioning::rejection_detail(&bytes);
+    assert!(detail.contains("fields=[jwt_configuration]"));
+    assert!(detail.contains("payload validation error"));
+    assert!(detail.contains("additional properties not allowed"));
+    for secret in [
+        "secret-token-value",
+        "private-credential",
+        "secret-code",
+        "Bearer",
+    ] {
+        assert!(!detail.contains(secret));
+    }
+    let detail = super::super::provisioning::rejection_detail(b"<html>secret-token-value</html>");
+    assert!(detail.contains("fields=[]; categories=[]"));
+    assert!(!detail.contains("secret-token-value"));
 }

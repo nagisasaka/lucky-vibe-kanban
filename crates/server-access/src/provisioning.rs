@@ -11,6 +11,75 @@ const MAX_MANAGEMENT_TOKEN_BYTES: usize = 64 * 1024;
 const CLIENT_FIELDS: &str = "client_id,name,app_type,client_metadata,callbacks,allowed_logout_urls,jwt_configuration,grant_types,token_endpoint_auth_method,is_first_party,oidc_conformant,refresh_token";
 const RETRY: &str = "Auth0 setup did not finish. Existing LVK authentication is unchanged. Check Auth0 permissions, then preview again; created applications will be reused.";
 
+// Provider messages may echo credentials or input values. Emit only our own
+// finite vocabulary; never concatenate any provider-controlled text.
+pub(super) fn rejection_detail(bytes: &[u8]) -> String {
+    let value: Value = serde_json::from_slice(bytes).unwrap_or(Value::Null);
+    let message = value["message"]
+        .as_str()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let words: Vec<_> = message
+        .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+        .collect();
+    let fields: Vec<_> = [
+        "name",
+        "app_type",
+        "client_metadata",
+        "callbacks",
+        "allowed_logout_urls",
+        "jwt_configuration",
+        "alg",
+        "lifetime_in_seconds",
+        "secret_encoded",
+        "scopes",
+        "grant_types",
+        "token_endpoint_auth_method",
+        "client_authentication_methods",
+        "is_first_party",
+        "oidc_conformant",
+        "refresh_token",
+        "rotation_type",
+        "expiration_type",
+        "token_lifetime",
+        "idle_token_lifetime",
+        "leeway",
+        "infinite_token_lifetime",
+        "infinite_idle_token_lifetime",
+        "organization_usage",
+        "organization_require_behavior",
+        "resource_parameter_profile",
+        "flags",
+    ]
+    .into_iter()
+    .filter(|field| words.contains(field))
+    .collect();
+    let reasons: Vec<_> = [
+        "payload validation error",
+        "additional properties not allowed",
+        "invalid type",
+        "expected type",
+        "invalid grant types",
+        "not allowed",
+        "must be",
+        "cannot",
+        "required",
+        "too long",
+        "too short",
+        "invalid uri",
+        "invalid url",
+    ]
+    .into_iter()
+    .filter(|reason| message.contains(reason))
+    .collect();
+    format!(
+        "Provider validation hints: fields=[{}]; categories=[{}]. {}",
+        fields.join(", "),
+        reasons.join(", "),
+        RETRY
+    )
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Input {
@@ -145,7 +214,25 @@ impl<'a> Management<'a> {
                 ));
             }
             status if !status.is_success() => {
-                return Err(failure("HTTP rejection", Some(status), RETRY));
+                // Bound error-body reads independently from successful responses.
+                let mut bytes = Vec::new();
+                while let Some(chunk) = response
+                    .chunk()
+                    .await
+                    .map_err(|_| failure("error response body read failed", Some(status), RETRY))?
+                {
+                    if bytes.len() + chunk.len() > 16 * 1024 {
+                        return Err(failure(
+                            "HTTP rejection (error response exceeds 16 KiB)",
+                            Some(status),
+                            RETRY,
+                        ));
+                    }
+                    bytes.extend_from_slice(&chunk);
+                }
+                let detail = rejection_detail(&bytes);
+                tracing::warn!(operation = %method, endpoint, http_status = status.as_u16(), detail, "Auth0 rejected provisioning settings");
+                return Err(failure("HTTP rejection", Some(status), &detail));
             }
             StatusCode::NO_CONTENT => return Ok(Value::Null),
             _ => {}
