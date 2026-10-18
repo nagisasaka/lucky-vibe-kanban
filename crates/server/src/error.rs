@@ -28,6 +28,8 @@ use worktree_manager::WorktreeError;
 #[ts(type = "string")]
 pub enum ApiError {
     #[error(transparent)]
+    Todo(#[from] db::models::todo::TodoError),
+    #[error(transparent)]
     Repo(#[from] RepoError),
     #[error(transparent)]
     Workspace(#[from] WorkspaceError),
@@ -197,6 +199,15 @@ impl ErrorInfo {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let info = match &self {
+            ApiError::Todo(db::models::todo::TodoError::Database(_)) => ErrorInfo::internal("TodoError"),
+            ApiError::Todo(db::models::todo::TodoError::NotFound) => {
+                ErrorInfo::not_found("TodoError", "TODO or Project not found")
+            }
+            ApiError::Todo(db::models::todo::TodoError::Conflict) => ErrorInfo::conflict(
+                "TodoError",
+                "TODO changed; refresh it before retrying",
+            ),
+            ApiError::Todo(error) => ErrorInfo::bad_request("TodoError", error.to_string()),
             ApiError::Repo(RepoError::Database(_)) => ErrorInfo::internal("RepoError"),
             ApiError::Repo(RepoError::NotFound) => {
                 ErrorInfo::not_found("RepoError", "Repository not found.")

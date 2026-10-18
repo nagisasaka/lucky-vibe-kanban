@@ -14,6 +14,7 @@ import {
   RowsIcon,
   TextAlignLeftIcon,
   FilesIcon,
+  ListChecksIcon,
   BookOpenIcon,
   EyeSlashIcon,
   SidebarSimpleIcon,
@@ -636,6 +637,28 @@ export const Actions = {
         .getState()
         .toggleRightMainPanelMode(
           RIGHT_MAIN_PANEL_MODES.FILES,
+          ctx.currentWorkspaceId ?? undefined
+        );
+    },
+  },
+
+  ToggleTodosMode: {
+    id: 'toggle-todos-mode',
+    label: 'Toggle TODO list',
+    icon: ListChecksIcon,
+    requiresTarget: ActionTargetType.NONE,
+    isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
+    isActive: (ctx) => ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.TODOS,
+    isEnabled: (ctx) => !ctx.isCreateMode,
+    getLabel: (ctx) =>
+      ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.TODOS
+        ? 'Hide TODO list'
+        : 'Show TODO list',
+    execute: (ctx) => {
+      useUiPreferencesStore
+        .getState()
+        .toggleRightMainPanelMode(
+          RIGHT_MAIN_PANEL_MODES.TODOS,
           ctx.currentWorkspaceId ?? undefined
         );
     },
@@ -1545,6 +1568,7 @@ export const NavbarActionGroups = {
     Actions.ToggleLeftMainPanel,
     Actions.ToggleChangesMode,
     Actions.ToggleFilesMode,
+    Actions.ToggleTodosMode,
     Actions.ToggleWikiMode,
     Actions.ToggleLogsMode,
     Actions.TogglePreviewMode,

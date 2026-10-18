@@ -1,3 +1,4 @@
+import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Group, type Layout, Panel, Separator } from 'react-resizable-panels';
@@ -116,7 +117,10 @@ function ProjectKanbanBoard() {
 function ProjectKanbanLayout({ projectName }: { projectName: string }) {
   const { issueId, isPanelOpen } = useCurrentKanbanRouteState();
   const isMobile = useIsMobile();
-  const { getIssue } = useProjectContext();
+  const { getIssue, projectId } = useProjectContext();
+  const todoVisible = useTodoViewStore(
+    (s) => s.projectViews[projectId] === 'todos'
+  );
   const issue = issueId ? getIssue(issueId) : undefined;
   usePageTitle(issue?.title, projectName);
   const [kanbanLeftPanelSize, setKanbanLeftPanelSize] = usePaneSize(
@@ -124,7 +128,7 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
     KANBAN_DEFAULT_LEFT_PANEL_SIZE
   );
 
-  const isRightPanelOpen = isPanelOpen;
+  const isRightPanelOpen = isPanelOpen && !todoVisible;
 
   if (isMobile) {
     return isRightPanelOpen ? (

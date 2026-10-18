@@ -1,3 +1,4 @@
+import { WorkspaceTodoPanel } from '@/features/todos/ui/WorkspaceTodoPanel';
 import {
   useCallback,
   useEffect,
@@ -357,6 +358,20 @@ export function WorkspacesLayout() {
                   )}
                 </div>
 
+                <div
+                  className={cn(
+                    'flex-1 min-h-0 overflow-hidden',
+                    mobileTab !== 'todos' && 'hidden'
+                  )}
+                >
+                  {selectedWorkspace?.id && mobileTab === 'todos' && (
+                    <WorkspaceTodoPanel
+                      key={selectedWorkspace.id}
+                      workspaceId={selectedWorkspace.id}
+                    />
+                  )}
+                </div>
+
                 {/* Files tab */}
                 <div
                   className={cn(
@@ -549,6 +564,13 @@ export function WorkspacesLayout() {
                   collapsedSize="0%"
                   className="min-w-0 h-full overflow-hidden"
                 >
+                  {rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.TODOS &&
+                    selectedWorkspace?.id && (
+                      <WorkspaceTodoPanel
+                        key={selectedWorkspace.id}
+                        workspaceId={selectedWorkspace.id}
+                      />
+                    )}
                   {wikiActive && <WorkspaceWikiArticle actions={wikiActions} />}
                   {rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES &&
                     selectedWorkspace?.id && (

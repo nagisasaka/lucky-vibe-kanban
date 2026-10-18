@@ -1,3 +1,5 @@
+import { TodoPanel } from '@/features/todos/ui/TodoPanel';
+import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import {
   useMemo,
   useCallback,
@@ -190,6 +192,10 @@ export function KanbanContainer() {
   } = useOrgContext();
   const { activeWorkspaces } = useWorkspaceContext();
   const { userId } = useAuth();
+  const projectView = useTodoViewStore(
+    (s) => s.projectViews[projectId] ?? 'kanban'
+  );
+  const setProjectView = useTodoViewStore((s) => s.setProjectView);
   const [focusedIntegration, setFocusedIntegration] = useState<string | null>(
     null
   );
@@ -1009,6 +1015,28 @@ export function KanbanContainer() {
             )}
           />
 
+          <div
+            className="inline-flex shrink-0 rounded-sm border border-border p-half"
+            role="group"
+            aria-label={t('todo.title')}
+          >
+            {(['kanban', 'todos'] as const).map((view) => (
+              <button
+                type="button"
+                key={view}
+                aria-pressed={projectView === view}
+                onClick={() => setProjectView(projectId, view)}
+                className={cn(
+                  'rounded-sm px-base py-half text-sm focus-visible:ring-1 focus-visible:ring-brand',
+                  projectView === view
+                    ? 'bg-panel text-high'
+                    : 'text-low hover:text-normal'
+                )}
+              >
+                {t(view === 'kanban' ? 'todo.board' : 'todo.title')}
+              </button>
+            ))}
+          </div>
           {isLocalRemoteApiEnabled() && !routeState.hostId && (
             <IntegrationPanel
               key={projectId}
@@ -1048,56 +1076,64 @@ export function KanbanContainer() {
           </DropdownMenu>
         </div>
 
-        <div
-          className={cn(
-            'flex gap-base',
-            isMobile
-              ? 'flex-col items-start'
-              : 'min-w-0 flex-nowrap items-start overflow-hidden'
-          )}
-        >
-          <ViewNavTabs
-            activeView={kanbanViewMode}
-            onViewChange={setKanbanViewMode}
-            hiddenStatuses={hiddenStatuses}
-            selectedStatusId={listViewStatusFilter}
-            onStatusSelect={setListViewStatusFilter}
-            className={isMobile ? undefined : 'shrink-0'}
-          />
-          <KanbanFilterBar
-            className={isMobile ? undefined : 'min-w-0 flex-1'}
-            isFiltersDialogOpen={isFiltersDialogOpen}
-            onFiltersDialogOpenChange={setIsFiltersDialogOpen}
-            tags={tags}
-            users={membersWithProfiles}
-            activeViewId={activeViewId}
-            onViewChange={handleKanbanProjectViewChange}
-            viewIds={KANBAN_PROJECT_VIEW_IDS}
-            projectId={projectId}
-            currentUserId={userId}
-            filters={kanbanFilters}
-            showSubIssues={showSubIssues}
-            showWorkspaces={showWorkspaces}
-            hasActiveFilters={hasActiveFilters}
-            onSearchQueryChange={setKanbanSearchQuery}
-            onPrioritiesChange={setKanbanPriorities}
-            onAssigneesChange={setKanbanAssignees}
-            onTagsChange={setKanbanTags}
-            onSortChange={setKanbanSort}
-            onShowSubIssuesChange={setShowSubIssues}
-            onShowWorkspacesChange={setShowWorkspaces}
-            hideBlocked={hideBlocked}
-            onHideBlockedChange={setHideBlocked}
-            onClearFilters={clearKanbanFilters}
-            onCreateIssue={handleAddTask}
-            shouldAnimateCreateButton={shouldAnimateCreateButton}
-            renderFiltersDialog={(props) => <KanbanFiltersDialog {...props} />}
-            isMobile={isMobile}
-          />
-        </div>
+        {projectView === 'kanban' && (
+          <div
+            className={cn(
+              'flex gap-base',
+              isMobile
+                ? 'flex-col items-start'
+                : 'min-w-0 flex-nowrap items-start overflow-hidden'
+            )}
+          >
+            <ViewNavTabs
+              activeView={kanbanViewMode}
+              onViewChange={setKanbanViewMode}
+              hiddenStatuses={hiddenStatuses}
+              selectedStatusId={listViewStatusFilter}
+              onStatusSelect={setListViewStatusFilter}
+              className={isMobile ? undefined : 'shrink-0'}
+            />
+            <KanbanFilterBar
+              className={isMobile ? undefined : 'min-w-0 flex-1'}
+              isFiltersDialogOpen={isFiltersDialogOpen}
+              onFiltersDialogOpenChange={setIsFiltersDialogOpen}
+              tags={tags}
+              users={membersWithProfiles}
+              activeViewId={activeViewId}
+              onViewChange={handleKanbanProjectViewChange}
+              viewIds={KANBAN_PROJECT_VIEW_IDS}
+              projectId={projectId}
+              currentUserId={userId}
+              filters={kanbanFilters}
+              showSubIssues={showSubIssues}
+              showWorkspaces={showWorkspaces}
+              hasActiveFilters={hasActiveFilters}
+              onSearchQueryChange={setKanbanSearchQuery}
+              onPrioritiesChange={setKanbanPriorities}
+              onAssigneesChange={setKanbanAssignees}
+              onTagsChange={setKanbanTags}
+              onSortChange={setKanbanSort}
+              onShowSubIssuesChange={setShowSubIssues}
+              onShowWorkspacesChange={setShowWorkspaces}
+              hideBlocked={hideBlocked}
+              onHideBlockedChange={setHideBlocked}
+              onClearFilters={clearKanbanFilters}
+              onCreateIssue={handleAddTask}
+              shouldAnimateCreateButton={shouldAnimateCreateButton}
+              renderFiltersDialog={(props) => (
+                <KanbanFiltersDialog {...props} />
+              )}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
       </div>
 
-      {kanbanViewMode === 'kanban' ? (
+      {projectView === 'todos' ? (
+        <div className="flex-1 min-h-0">
+          <TodoPanel key={projectId} projectId={projectId} grid />
+        </div>
+      ) : kanbanViewMode === 'kanban' ? (
         visibleStatuses.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-low">{t('kanban.noVisibleStatuses')}</p>
@@ -1313,7 +1349,9 @@ export function KanbanContainer() {
         </div>
       )}
 
-      {isMultiSelectActive && <BulkActionBarContainer projectId={projectId} />}
+      {projectView === 'kanban' && isMultiSelectActive && (
+        <BulkActionBarContainer projectId={projectId} />
+      )}
     </div>
   );
 }

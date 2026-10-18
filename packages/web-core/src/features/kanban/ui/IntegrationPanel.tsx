@@ -1,3 +1,4 @@
+import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@vibe/ui/components/Button';
@@ -45,7 +46,10 @@ export function IntegrationPanel({
   const navigation = useAppNavigation();
   const client = useQueryClient();
   const [panelOpen, setOpen] = useState(false);
-  const open = panelOpen || focusedRunId !== null;
+  const requestedProject = useTodoViewStore((s) => s.integrationProject);
+  const setRequestedProject = useTodoViewStore((s) => s.setIntegrationProject);
+  const open =
+    panelOpen || focusedRunId !== null || requestedProject === projectId;
   const [repositoryId, setRepositoryId] = useState('');
   const [target, setTarget] = useState('');
   const [selected, setSelected] = useState<
@@ -163,14 +167,14 @@ export function IntegrationPanel({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        Integrate / Auto Merge
-      </Button>
       <Dialog
         open={open}
         onOpenChange={(value) => {
           setOpen(value);
-          if (!value) onClearFocus();
+          if (!value) {
+            onClearFocus();
+            setRequestedProject(null);
+          }
         }}
       >
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-primary text-normal">

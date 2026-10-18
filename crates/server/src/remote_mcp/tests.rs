@@ -295,6 +295,9 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     }
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
+        ("create_todo", "lvk:write"),
+        ("update_todo", "lvk:write"),
+        ("delete_todo", "lvk:write"),
         ("start_integration", "lvk:merge"),
     ] {
         let response = client.post(format!("{base}/mcp"))
@@ -1183,4 +1186,116 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
     );
     server.abort();
     let _ = server.await;
+}
+
+#[tokio::test]
+async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'todo-test')")
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let remote = Remote {
+        launch: None,
+        runtime: None,
+        pool: pool.clone(),
+        config: Arc::new(config()),
+        process_instance: Uuid::new_v4(),
+    };
+    let writer = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    let reader = auth::Principal {
+        subject: writer.subject.clone(),
+        scopes: BTreeSet::from(["lvk:read".into()]),
+    };
+    let request = Uuid::new_v4();
+    let input = json!({"project_id":project,"request_id":request,"body":"観察\n修正済み？","category":"UI"});
+    assert!(
+        todos::call(&remote, &reader, "create_todo", input.clone())
+            .await
+            .is_err()
+    );
+    assert_eq!(operation_scope("create_todo"), Some("lvk:write"));
+    assert!(
+        todos::call(
+            &remote,
+            &writer,
+            "list_todos",
+            json!({"project_id":Uuid::from_u128(2)})
+        )
+        .await
+        .is_err()
+    );
+    let a = todos::call(&remote, &writer, "create_todo", input.clone())
+        .await
+        .unwrap();
+    let b = todos::call(&remote, &writer, "create_todo", input)
+        .await
+        .unwrap();
+    assert_eq!(a["operation_id"], b["operation_id"]);
+    let result = settled_operation(&remote, &writer, project, request).await;
+    assert_eq!(result["status"], "succeeded", "{result}");
+    let todo = result["result"]["todo"].clone();
+    let id = todo["id"].clone();
+    assert_eq!(todo["completed"], false);
+    let list = todos::call(
+        &remote,
+        &reader,
+        "list_todos",
+        json!({"project_id":project}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(list["items"].as_array().unwrap().len(), 1);
+    let update = Uuid::new_v4();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":id,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+    let result = settled_operation(&remote, &writer, project, update).await;
+    assert_eq!(result["status"], "succeeded", "{result}");
+    assert_eq!(result["result"]["todo"]["body"], todo["body"]);
+    assert_eq!(result["result"]["todo"]["revision"], 2);
+    let stale = Uuid::new_v4();
+    todos::call(
+        &remote,
+        &writer,
+        "delete_todo",
+        json!({"project_id":project,"request_id":stale,"todo_id":id,"expected_revision":1}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, stale).await["status"],
+        "failed"
+    );
+    let delete = Uuid::new_v4();
+    todos::call(
+        &remote,
+        &writer,
+        "delete_todo",
+        json!({"project_id":project,"request_id":delete,"todo_id":id,"expected_revision":2}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, delete).await["status"],
+        "succeeded"
+    );
+    assert!(
+        todos::call(
+            &remote,
+            &reader,
+            "get_todo",
+            json!({"project_id":project,"todo_id":id})
+        )
+        .await
+        .is_err()
+    );
 }

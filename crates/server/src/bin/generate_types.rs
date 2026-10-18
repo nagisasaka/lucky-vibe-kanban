@@ -13,6 +13,10 @@ fn generate_types_content() -> String {
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.";
 
     let decls: Vec<String> = vec![
+        db::models::todo::Todo::decl(),
+        db::models::todo::CreateTodo::decl(),
+        db::models::todo::UpdateTodo::decl(),
+        db::models::todo::TodoPage::decl(),
         db::models::repo::Repo::decl(),
         db::models::execution_bridge::RunnerTarget::decl(),
         db::models::resource_coordination::SharedResource::decl(),

@@ -1195,5 +1195,28 @@
     "evidence": "개발 기록 / 근거",
     "prerequisites": "사전 조건 및 환경 확인",
     "exclusions": "대체 및 제외 사유"
+  },
+  "todo": {
+    "title": "TODO list",
+    "board": "Kanban board",
+    "newBody": "Add a thought or TODO…",
+    "category": "Category",
+    "uncategorized": "Uncategorized",
+    "add": "Add",
+    "showCompleted": "Show completed",
+    "empty": "No TODOs to show. Add your next thought above.",
+    "editBody": "Edit TODO",
+    "save": "Save",
+    "cancel": "Cancel",
+    "markComplete": "Mark complete: {{body}}",
+    "markIncomplete": "Mark incomplete: {{body}}",
+    "relatedCard": "Related card",
+    "itemActions": "TODO actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete this TODO?",
+    "project": "Project",
+    "chooseProject": "Choose a Project",
+    "integration": "Integrate / Auto Merge"
   }
 }

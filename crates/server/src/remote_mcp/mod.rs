@@ -16,6 +16,7 @@ mod questions;
 mod read;
 mod runtime_read;
 mod runtime_write;
+mod todos;
 mod verification_read;
 
 use std::sync::Arc;
@@ -150,7 +151,8 @@ fn transport_router(remote: Remote) -> Router {
 fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
         "start_integration" => Some("lvk:merge"),
-        "create_issue" | "update_issue" | "steer_execution" | "continue_execution"
+        "create_todo" | "update_todo" | "delete_todo" | "create_issue" | "update_issue"
+        | "steer_execution" | "continue_execution"
         | "answer_question" | "start_workspace" => Some("lvk:write"),
         _ => None,
     }
@@ -296,6 +298,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
     tools.extend(issue_write::tools());
+    tools.extend(todos::tools());
     tools.extend(launch::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
@@ -399,6 +402,9 @@ impl Remote {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(anyhow::anyhow!("Invalid project listing parameters")),
             },
+            name if todos::tools().iter().any(|tool| tool.name == name) => {
+                todos::call(self, principal, name, args).await
+            }
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await
             }

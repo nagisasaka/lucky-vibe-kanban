@@ -4,6 +4,7 @@ version = "0.1.44"
 edition = "2024"
 
 [dependencies]
+schemars = { workspace = true }
 utils = { path = "../utils" }
 executors = { path = "../executors" }
 thiserror = { workspace = true }
