@@ -78,6 +78,52 @@ GUIからnginxを書き換えたりDockerソケットを操作したりはしま
 新設定と併用すると起動時に拒否します。旧設定を退避し、Auth0設定画面で移行して
 ください。自動的に旧所有者へ読み替える処理はありません。
 
+## Auth0を自動セットアップする
+
+Auth0テナントとGitHub／Googleのソーシャル接続を用意したら、LVKの「認証・メンバー」から
+Auth0を選び、「Auth0を自動セットアップ」を開きます。セットアップ／復旧セッション、
+またはログイン済みの管理者だけが利用できます。公開HTTPS URLを先に設定してください。
+ChatGPTとの接続ではドメイン名のURLを使用してください。実接続試験ではIP直指定の
+OAuth検出が失敗し、同じVPSをドメイン名で公開すると接続できました。
+
+1. Auth0の[Management API用アクセストークン取得手順](https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens/get-management-api-access-tokens-for-production)
+   に従い、管理用Machine to Machineアプリを認可して、短い有効期限のトークンを取得します。
+   audienceは `https://YOUR-TENANT.REGION.auth0.com/api/v2/` です。
+   Webログイン用Client SecretやGitHubのPATをこの欄に入力しないでください。
+2. 必要な権限は `read:clients`、`read:client_keys`、`create:clients`、`update:clients`、
+   `read:connections`、`update:connections`、`read:tenant_settings`、`update:tenant_settings` です。
+   MCPも設定する場合は `read:resource_servers`、`create:resource_servers`、`update:resource_servers`
+   も付与します。ユーザー管理・アプリ削除の権限は不要です。
+3. issuerと管理トークンを入力して「接続とアプリを取得」を押し、既存のGitHubまたはGoogle接続を選びます。
+   Web用アプリは自動作成か、既存のRegular Web Applicationを選択できます。
+4. 「ChatGPT向けMCPも設定する」を選ぶ場合、ChatGPT画面の正確なCallback URLを入力します。
+   ChatGPT用アプリはWeb用と別にします。必要なら更新トークンも有効にできます
+   （ローテーション、最大30日、未使用7日）。ChatGPT側では `offline_access` も要求します。
+5. 「変更内容を確認」で対象と設定値を確認し、「この内容をAuth0へ適用」を押します。
+   対象アプリでは選んだソーシャル接続だけを有効にし、Authorization Code、RS256、
+   Client Secret Basic、first-party設定を適用します。既存のCallback／Logout URLや独自metadataは保持します。
+   選択していないアプリの接続設定は変更しません。
+6. ChatGPT用Client ID・Secretが表示された場合、画面を移動する前にChatGPT側へコピーします。
+   Web用の情報はLVKのログイン試験フォームへ自動入力されます。
+   **ログイン試験に成功して管理者を確認し、有効化するまで、LVKの認証方式は切り替わりません。**
+
+Resource Parameter Compatibility ProfileとInclude Issuer設定はテナント共通です。
+変更が必要な場合はプレビューに表示します。MCP用APIでは既存スコープを保持してLVKの3スコープを追加し、
+同意省略を無効にします。既存APIの署名方式がRS256でない場合は自動変更せず停止します。
+
+管理トークンはリクエスト処理中だけ使い、LVKのDBや監査ログには保存しません。
+適用後は失敗時も入力欄から消去しますが、Auth0側では有効期限まで有効なため、短い有効期限を使ってください。
+ChatGPT用SecretもLVKには永続保存しません。Web用Secretは、既存のログイン試験・有効化処理で暗号化して扱います。
+
+Auth0への複数の変更は一括トランザクションではありません。途中失敗時は作成済みアプリを削除せず、
+トークンや権限を確認して再度プレビューしてください。自動作成アプリは公開URLと用途のmetadataで再検出し、
+重複作成を避けます。曖昧な候補は明示選択を求めます。設定確認は5分間有効で、
+入力や対象設定が変わった場合は確認し直します。既存Auth0アプリへの適用はそのアプリの利用者にも影響するため、
+表示された対象を確認してください。
+
+この機能はAuth0側の設定を行います。GitHub／Google側のOAuthアプリ作成、ChatGPT側の登録・認可は別途必要です。
+管理APIを常駐利用する必要はなく、手動設定も引き続き利用できます。
+
 ## Auth0を用意する
 
 2026-10-15に[公式料金表](https://auth0.com/pricing)と公式手順を確認しました。
@@ -148,7 +194,7 @@ MCP URLを使います。LVKにはChatGPTのSecretや更新トークンを入力
 第三者アプリとして登録した場合、Google/GitHub接続をAuth0のdomain-level connectionに
 する必要があります。これはAuth0提供テナント内の接続設定であり、独自ドメイン購入では
 ありません。上記Auth0 MCP手順の`is_domain_connection`設定を管理者が一度行います。
-必要時の管理CLI操作は管理者の端末で行い、LVKへManagement API資格情報を渡しません。
+自動セットアップはfirst-partyアプリを設定します。第三者アプリ固有の管理CLI操作は管理者の端末で行ってください。
 事前登録したfirst-partyアプリの場合は、そのアプリでソーシャル接続を明示的に有効にします。
 
 APIのユーザー同意省略を無効にして、利用者が委任先と要求スコープを確認できるように

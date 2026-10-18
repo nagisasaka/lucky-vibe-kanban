@@ -29,6 +29,7 @@ pub async fn access(pool: SqlitePool, directory: PathBuf, jwks: serde_json::Valu
         provider: Mutex::new(provider::fixture_cache(issuer, jwks)),
         attempts: Mutex::new((now(), 0)),
         password_slots: tokio::sync::Semaphore::new(2),
+        provisioning: Mutex::new(()),
     }));
     let config = Config::Auth0 {
         issuer: issuer.into(),

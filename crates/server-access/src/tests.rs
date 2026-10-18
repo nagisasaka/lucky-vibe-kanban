@@ -61,6 +61,7 @@ impl Fixture {
             provider: Mutex::new(provider::Cache::default()),
             attempts: Mutex::new((now(), 0)),
             password_slots: tokio::sync::Semaphore::new(2),
+            provisioning: Mutex::new(()),
         }));
         Self { access, _dir: dir }
     }
@@ -434,6 +435,7 @@ async fn session_expiry_restart_secret_loss_and_basic_mcp_disabled() {
         provider: Mutex::new(provider::Cache::default()),
         attempts: Mutex::new((now(), 0)),
         password_slots: tokio::sync::Semaphore::new(2),
+        provisioning: Mutex::new(()),
     }));
     let mut headers = HeaderMap::new();
     headers.insert(header::COOKIE, cookie.parse().unwrap());
@@ -1543,6 +1545,7 @@ async fn persisted_authentication_child_process() {
         provider: Mutex::new(provider::Cache::default()),
         attempts: Mutex::new((now(), 0)),
         password_slots: tokio::sync::Semaphore::new(2),
+        provisioning: Mutex::new(()),
     }));
     let expected = std::env::var("LVK_TEST_EXPECT_MODE").unwrap();
     assert_eq!(
@@ -1785,3 +1788,5 @@ async fn preview_handoff_is_browser_origin_bound_and_revocable() {
     .unwrap();
     assert!(content.contains("authorise this preview"));
 }
+
+mod provisioning;
