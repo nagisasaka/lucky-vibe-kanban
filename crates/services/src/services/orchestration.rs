@@ -180,6 +180,92 @@ where
         else {
             return Ok(false);
         };
+        self.deliver_claimed(outbox).await?;
+        Ok(true)
+    }
+
+    /// Wait for this Create's durable acceptance, including concurrent delivery
+    /// by another dispatcher. Never count a discarded or unrelated command.
+    pub async fn deliver_create(
+        &self,
+        outbox_id: Uuid,
+        agent_run_id: Uuid,
+    ) -> Result<RunState, OrchestrationServiceError> {
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(30);
+        loop {
+            let outbox = sqlx::query_as::<_, OrchestrationOutboxRecord>(
+                "SELECT * FROM orchestration_outbox WHERE id=?",
+            )
+            .bind(outbox_id)
+            .fetch_one(&self.pool)
+            .await?;
+            let envelope = &outbox.command_envelope.0;
+            let AgentRunPortCommand::Create { request, .. } = &envelope.command else {
+                return Err(AgentRunPortError::Rejected("Expected a Create command".into()).into());
+            };
+            if envelope.agent_run_id != agent_run_id || request.agent_run_id != agent_run_id {
+                return Err(AgentRunPortError::Rejected(
+                    "Create dispatch identity mismatch".into(),
+                )
+                .into());
+            }
+            if outbox.delivery_status == "delivered" {
+                let parent: OrchestrationRunStatus =
+                    sqlx::query_scalar("SELECT status FROM orchestration_runs WHERE id=?")
+                        .bind(outbox.orchestration_run_id)
+                        .fetch_one(&self.pool)
+                        .await?;
+                if matches!(
+                    parent,
+                    OrchestrationRunStatus::Cancelling
+                        | OrchestrationRunStatus::Cancelled
+                        | OrchestrationRunStatus::Failed
+                ) {
+                    return Err(OrchestrationServiceError::DispatchStopped(
+                        outbox.orchestration_run_id,
+                    ));
+                }
+                let linked: bool = sqlx::query_scalar(
+                    "SELECT EXISTS(SELECT 1 FROM orchestration_agent_run_links WHERE orchestration_run_id=? AND node_execution_id=? AND agent_run_id=? AND dispatch_idempotency_key=?)",
+                ).bind(envelope.orchestration_run_id)
+                    .bind(envelope.orchestration_node_execution_id)
+                    .bind(agent_run_id).bind(&envelope.idempotency_key).fetch_one(&self.pool).await?;
+                if !linked {
+                    return Err(AgentRunPortError::Rejected(
+                        "Create was settled without accepting its AgentRun".into(),
+                    )
+                    .into());
+                }
+                let snapshot = self.port.query(agent_run_id).await?;
+                if snapshot.agent_run_id != agent_run_id
+                    || snapshot.state.agent_run_id != agent_run_id
+                    || snapshot.state.session_id != request.session_id
+                    || snapshot.state.turn_id != request.turn_id
+                {
+                    return Err(AgentRunPortError::Rejected(
+                        "Accepted AgentRun identity mismatch".into(),
+                    )
+                    .into());
+                }
+                return Ok(snapshot.state);
+            }
+            if let Some(claimed) =
+                OrchestrationOutboxRecord::claim_by_id(&self.pool, outbox_id, Utc::now()).await?
+            {
+                self.deliver_claimed(claimed).await?;
+            } else {
+                if tokio::time::Instant::now() >= deadline {
+                    return Err(AgentRunPortError::Unavailable("Create delivery is still pending; reconcile the saved command before retrying".into()).into());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            }
+        }
+    }
+
+    async fn deliver_claimed(
+        &self,
+        outbox: OrchestrationOutboxRecord,
+    ) -> Result<(), OrchestrationServiceError> {
         let command = outbox.command_envelope.0.clone();
         let orchestration_run_id = command
             .orchestration_run_id
@@ -204,7 +290,7 @@ where
             if status == OrchestrationRunStatus::Cancelling || status.is_terminal() {
                 OrchestrationOutboxRecord::mark_delivered(&self.pool, outbox.id, Utc::now())
                     .await?;
-                return Ok(true);
+                return Ok(());
             }
         }
         let result = match &command.command {
@@ -247,7 +333,7 @@ where
             Ok(()) => {
                 OrchestrationOutboxRecord::mark_delivered(&self.pool, outbox.id, Utc::now())
                     .await?;
-                Ok(true)
+                Ok(())
             }
             Err(error) => {
                 OrchestrationOutboxRecord::mark_failed(
@@ -2119,3 +2205,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "orchestration_dispatch_tests.rs"]
+mod dispatch_tests;

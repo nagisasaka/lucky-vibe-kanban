@@ -280,13 +280,9 @@ async fn resume_intervention(
             sqlx::query("UPDATE orchestration_outbox SET delivery_status='pending',available_at=? WHERE orchestration_run_id=? AND json_extract(command_envelope,'$.command.type')='create' AND delivery_status!='delivering'")
                 .bind(chrono::Utc::now()).bind(run.id).execute(pool).await?;
         }
-        orchestration.deliver_next().await?;
-        if db::models::agent_runtime::AgentRunRecord::find(pool, agent)
-            .await?
-            .is_none()
-        {
-            return Ok(false);
-        }
+        let outbox: Uuid = sqlx::query_scalar("SELECT id FROM orchestration_outbox WHERE orchestration_run_id=? AND json_extract(command_envelope,'$.command.type')='create' ORDER BY created_at LIMIT 1")
+            .bind(run.id).fetch_one(pool).await?;
+        orchestration.deliver_create(outbox, agent).await?;
     }
     if let Some(value) = intervention.instruction_command {
         use executors::runtime::AgentRunPort;
@@ -1464,15 +1460,48 @@ async fn accepted_agent_identity(
     Ok(None)
 }
 
+// Older dispatch code saved a planned identity before Create was accepted.
+// Only clear that identity with durable proof of a stopped parent and an
+// unaccepted, settled delivery. An in-flight delivery still needs reconciliation.
+async fn cancellation_agent(
+    pool: &SqlitePool,
+    run: &IntegrationRun,
+) -> anyhow::Result<Option<Uuid>> {
+    let accepted = accepted_agent_identity(pool, run).await?;
+    if let Some(agent) = accepted {
+        ensure!(
+            run.agent_run_id.is_none_or(|saved| saved == agent),
+            "Accepted Agent identity mismatch"
+        );
+        return Ok(Some(agent));
+    }
+    if run.agent_run_id.is_none() {
+        return Ok(None);
+    }
+    let agent = run.agent_run_id.unwrap();
+    ensure!(
+        db::models::agent_runtime::AgentRunRecord::find(pool, agent)
+            .await?
+            .is_none(),
+        "Accepted Agent requires reconciliation"
+    );
+    let unaccepted: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM orchestration_outbox o JOIN orchestration_runs r ON r.id=o.orchestration_run_id WHERE r.id=? AND r.status IN ('failed','cancelled','succeeded') AND o.delivery_status!='delivering' AND json_extract(o.command_envelope,'$.command.type')='create' AND json_extract(o.command_envelope,'$.agent_run_id')=?)",
+    ).bind(run.id).bind(agent.to_string()).fetch_one(pool).await?;
+    ensure!(
+        unaccepted,
+        "Dispatch acceptance is unresolved; reconcile before cancellation"
+    );
+    Ok(None)
+}
+
 async fn cancel(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow::Result<()> {
     ensure!(
         !run.payload.publication_intent,
         "Publication boundary passed; cancellation cannot undo Git"
     );
     run.status = "cancelling".into();
-    if run.agent_run_id.is_none() {
-        run.agent_run_id = accepted_agent_identity(&deployment.db().pool, &run).await?;
-    }
+    run.agent_run_id = cancellation_agent(&deployment.db().pool, &run).await?;
     run.save(&deployment.db().pool).await?;
     stop_validation(deployment, &run).await?;
     if let Some(agent) = run.agent_run_id {

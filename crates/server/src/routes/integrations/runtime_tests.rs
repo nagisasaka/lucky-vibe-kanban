@@ -1355,3 +1355,203 @@ fn legacy_payload_and_steps_are_not_relabelled_as_skipped() {
     assert!(!payload.skip_validation);
     assert!(!payload.steps[0].validation_skipped);
 }
+
+mod cancellation_recovery {
+    use chrono::Utc;
+    use db::models::orchestration::{
+        OrchestrationNodeExecutionRecord, OrchestrationOutboxRecord, OrchestrationRunRecord,
+    };
+    use executors::runtime::*;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn cancellation_distinguishes_unaccepted_identity_from_inflight_or_missing_evidence() {
+        let (pool, mut run, _, _) = fixture().await;
+        let plan = OrchestrationPlanSnapshot {
+            schema_version: 1,
+            plan_id: run.id,
+            source_definition_id: run.id,
+            source_definition_version: "test".into(),
+            product_kind: OrchestrationProductKind::Integration,
+            workspace_mode: WorkspaceMode::IsolatedWorktree,
+            created_at: Utc::now(),
+            nodes: vec![OrchestrationPlanNode {
+                node_key: "integrate".into(),
+                stable_order: 0,
+                dependencies: vec![],
+                join: OrchestrationJoinPolicy::All,
+                failure_policy: OrchestrationFailurePolicy::FailFast,
+                remaining_upstreams: RemainingUpstreamsPolicy::Continue,
+                each_downstream_execution: EachDownstreamExecution::Serial,
+                retry: OrchestrationRetryPolicy::default(),
+                runtime_profile_id: None,
+                provider_id: None,
+                provider_config: None,
+                requires_product_validation: true,
+            }],
+        };
+        OrchestrationRunRecord::persist_before_dispatch(
+            &pool,
+            run.id,
+            run.id,
+            "cancel-recovery",
+            run.id,
+            &plan,
+        )
+        .await
+        .unwrap();
+        let node = Uuid::new_v4();
+        OrchestrationNodeExecutionRecord::persist_identity_before_dispatch(
+            &pool,
+            node,
+            run.id,
+            "integrate",
+            0,
+            0,
+        )
+        .await
+        .unwrap();
+        let (mut request, mut attempt) = cancellation_requests(
+            run.session_id.unwrap(),
+            run.workspace_id.unwrap(),
+            "cancel-agent",
+        );
+        request.correlation_id = run.id;
+        attempt.correlation_id = run.id;
+        let agent = request.agent_run_id;
+        run.agent_run_id = Some(agent);
+        assert!(
+            cancellation_agent(&pool, &run).await.is_err(),
+            "missing command is not proof of non-acceptance"
+        );
+        let command = AgentRunPortCommandEnvelope {
+            schema_version: 1,
+            command_id: Uuid::new_v4(),
+            idempotency_key: "cancel-create".into(),
+            agent_run_id: agent,
+            orchestration_run_id: Some(run.id),
+            orchestration_node_execution_id: Some(node),
+            correlation_id: run.id,
+            created_at: Utc::now(),
+            command: AgentRunPortCommand::Create {
+                request: request.clone(),
+                attempt: attempt.clone(),
+            },
+        };
+        let outbox = OrchestrationOutboxRecord::enqueue(&pool, Uuid::new_v4(), &command)
+            .await
+            .unwrap();
+        assert!(
+            cancellation_agent(&pool, &run).await.is_err(),
+            "live parent can still dispatch"
+        );
+        sqlx::query("UPDATE orchestration_runs SET status='failed' WHERE id=?")
+            .bind(run.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(cancellation_agent(&pool, &run).await.unwrap(), None);
+        sqlx::query("UPDATE orchestration_outbox SET delivery_status='delivering' WHERE id=?")
+            .bind(outbox)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            cancellation_agent(&pool, &run).await.is_err(),
+            "inflight create may have been accepted"
+        );
+        db::models::agent_runtime::AgentRunRecord::persist_identity_before_launch(
+            &pool, &request, &attempt,
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            cancellation_agent(&pool, &run).await.unwrap(),
+            Some(agent),
+            "accepted but not yet linked agent must be stopped"
+        );
+    }
+    fn cancellation_requests(
+        session_id: Uuid,
+        workspace_id: Uuid,
+        idempotency_key: &str,
+    ) -> (AgentRunRequestEnvelope, RunAttemptRequest) {
+        let now = Utc::now();
+        let workspace = WorkspaceReference {
+            workspace_id,
+            mode: WorkspaceMode::SharedWorkspace,
+            path: "C:/workspace".to_string(),
+        };
+        let request = AgentRunRequestEnvelope {
+            schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+            payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
+            request_id: Uuid::new_v4(),
+            idempotency_key: idempotency_key.to_string(),
+            session_id,
+            agent_run_id: Uuid::new_v4(),
+            turn_id: Uuid::new_v4(),
+            correlation_id: Uuid::new_v4(),
+            intent: AgentRunIntent::Initial,
+            runtime_profile_id: "CODEX:default".to_string(),
+            provider_id: "codex".to_string(),
+            workspace: workspace.clone(),
+            input: CanonicalMessage {
+                message_id: Uuid::new_v4(),
+                role: AgentRuntimeMessageRole::User,
+                content: "Implement WS1".to_string(),
+            },
+            created_at: now,
+        };
+        let attempt = RunAttemptRequest {
+            schema_version: AGENT_REQUEST_SCHEMA_VERSION,
+            payload_version: AGENT_REQUEST_PAYLOAD_VERSION,
+            request_id: Uuid::new_v4(),
+            idempotency_key: format!("{idempotency_key}:attempt:1"),
+            session_id,
+            agent_run_id: request.agent_run_id,
+            turn_id: request.turn_id,
+            run_attempt_id: Uuid::new_v4(),
+            attempt_number: 1,
+            correlation_id: request.correlation_id,
+            mode: RunAttemptMode::Launch,
+            transport: AgentTransportKind::AppServerJsonrpc,
+            runtime_profile_id: request.runtime_profile_id.clone(),
+            provider_id: request.provider_id.clone(),
+            workspace,
+            capability_snapshot: CapabilitySnapshot {
+                schema_version: 1,
+                runtime_profile_id: request.runtime_profile_id.clone(),
+                provider_id: request.provider_id.clone(),
+                runtime_version: Some("1.0.0".to_string()),
+                protocol_version: Some("app-server-v2".to_string()),
+                adapter_version: "1".to_string(),
+                resolved_at: now,
+                capabilities: vec![CapabilitySnapshotEntry {
+                    capability: AgentCapability::SessionResume,
+                    state: CapabilityState::Native,
+                    source: CapabilitySource::VersionProbe,
+                    emulation_policy: None,
+                    evidence: None,
+                }],
+            },
+            executor_config: executors::profile::ExecutorConfig {
+                executor: executors::executors::BaseCodingAgent::Codex,
+                variant: Some("default".to_string()),
+                model_id: None,
+                agent_id: None,
+                reasoning_id: None,
+                permission_policy: None,
+                execution_mode: None,
+                goal_token_budget: None,
+                goal_max_concurrent_agents: None,
+            },
+            selected_skills: None,
+            reset_to_message_id: None,
+            provider_session: None,
+            created_at: now,
+        };
+
+        (request, attempt)
+    }
+}

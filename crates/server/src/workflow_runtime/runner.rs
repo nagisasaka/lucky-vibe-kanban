@@ -862,7 +862,7 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             pool.clone(),
             Arc::new(self.deployment.agent_run_port().clone()),
         );
-        orchestration
+        let outbox_id = orchestration
             .enqueue_command(AgentRunPortCommandEnvelope {
                 schema_version: ORCHESTRATION_COMMAND_SCHEMA_VERSION,
                 command_id: stable_workflow_identity(
@@ -885,7 +885,7 @@ impl WorkflowAgentExecutor for DeploymentWorkflowAgentExecutor {
             .await
             .map_err(orchestration_api_error)?;
         orchestration
-            .deliver_next()
+            .deliver_create(outbox_id, agent_run_id)
             .await
             .map_err(orchestration_api_error)?;
 
