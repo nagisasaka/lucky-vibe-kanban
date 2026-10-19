@@ -4,6 +4,11 @@ mod activity;
 mod auth;
 mod code_read;
 mod config;
+mod environment;
+#[cfg(target_os = "linux")]
+mod environment_files;
+#[cfg(target_os = "linux")]
+mod environment_process;
 mod errors;
 mod evidence_read;
 mod integration_read;
@@ -53,6 +58,7 @@ pub fn configured_router(
         Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
         Some(Arc::new(launch::ExistingLaunch(deployment))),
         access,
+        environment::Environment::configured()?.map(Arc::new),
     ))
 }
 
@@ -62,6 +68,7 @@ fn access_router(
     runtime: Option<Arc<dyn runtime_write::RuntimeActions>>,
     launch: Option<Arc<dyn launch::LaunchActions>>,
     access: server_access::Access,
+    environment: Option<Arc<environment::Environment>>,
 ) -> Router {
     use axum::{
         extract::{Extension, Request},
@@ -73,6 +80,7 @@ fn access_router(
         any(
             move |Extension(principal): Extension<server_access::Principal>,
                   mut request: Request| {
+                let environment = environment.clone();
                 let pool = pool.clone();
                 let runtime = runtime.clone();
                 let launch = launch.clone();
@@ -102,6 +110,7 @@ fn access_router(
                     });
                     bind_access_principal(&mut request);
                     let remote = Remote {
+                        environment,
                         pool,
                         runtime,
                         launch,
@@ -150,12 +159,27 @@ fn transport_router(remote: Remote) -> Router {
 
 fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
+        "run_process" | "stop_process" => Some("lvk:runtime:execute"),
+        "get_runtime_access"
+        | "list_runtime_files"
+        | "read_runtime_file"
+        | "list_processes"
+        | "inspect_process"
+        | "read_process_output" => Some("lvk:runtime:read"),
         "start_integration" => Some("lvk:merge"),
         "create_todo" | "update_todo" | "delete_todo" | "create_issue" | "update_issue"
         | "steer_execution" | "continue_execution" | "answer_question" | "start_workspace" => {
             Some("lvk:write")
         }
         _ => None,
+    }
+}
+
+fn scope_hint(name: &str, missing: &str) -> String {
+    if matches!(name, "run_process" | "stop_process") {
+        "lvk:read lvk:runtime:read lvk:runtime:execute".into()
+    } else {
+        format!("lvk:read {missing}")
     }
 }
 
@@ -183,13 +207,20 @@ async fn require_operation_scope(
     };
     if let Ok(value) = serde_json::from_slice::<Value>(&bytes)
         && value["method"] == "tools/call"
-        && let Some(scope) = value["params"]["name"]
-            .as_str()
-            .and_then(operation_scope)
-            .filter(|scope| !principal.allows(scope))
+        && let Some(scope) = value["params"]["name"].as_str().and_then(|name| {
+            let primary = operation_scope(name)?;
+            if !principal.allows(primary) {
+                Some(primary)
+            } else if primary == "lvk:runtime:execute" && !principal.allows("lvk:runtime:read") {
+                Some("lvk:runtime:read")
+            } else {
+                None
+            }
+        })
     {
+        let scopes = scope_hint(value["params"]["name"].as_str().unwrap_or_default(), scope);
         let challenge = format!(
-            "Bearer resource_metadata=\"{metadata_url}\", error=\"insufficient_scope\", scope=\"lvk:read {scope}\""
+            "Bearer resource_metadata=\"{metadata_url}\", error=\"insufficient_scope\", scope=\"{scopes}\""
         );
         let Ok(challenge) = HeaderValue::from_str(&challenge) else {
             return StatusCode::SERVICE_UNAVAILABLE.into_response();
@@ -208,7 +239,7 @@ async fn require_operation_scope(
 #[cfg(test)]
 fn router(remote: Remote, auth: Auth) -> Router {
     let resource = remote.config.resource();
-    let metadata = json!({"resource": resource, "authorization_servers": [remote.config.issuer], "scopes_supported": ["lvk:read", "lvk:write", "lvk:merge"], "bearer_methods_supported": ["header"]});
+    let metadata = json!({"resource": resource, "authorization_servers": [remote.config.issuer], "scopes_supported": server_access::SCOPES, "bearer_methods_supported": ["header"]});
     transport_router(remote)
         .layer(axum::middleware::from_fn_with_state(auth, auth::require))
         .route(
@@ -219,6 +250,7 @@ fn router(remote: Remote, auth: Auth) -> Router {
 
 #[derive(Clone)]
 struct Remote {
+    environment: Option<Arc<environment::Environment>>,
     launch: Option<Arc<dyn launch::LaunchActions>>,
     runtime: Option<Arc<dyn runtime_write::RuntimeActions>>,
     process_instance: Uuid,
@@ -292,6 +324,7 @@ fn tools() -> Vec<Tool> {
         value["_meta"] = json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read"]}]});
         serde_json::from_value(value).expect("static MCP schema")
     }).collect();
+    tools.extend(environment::tools());
     tools.extend(read::tools());
     tools.extend(project_read::tools());
     tools.extend(merge_read::tools());
@@ -373,7 +406,7 @@ impl Remote {
             return Ok(serde_json::from_value(json!({
                 "content":[{"type":"text","text":format!("Operation permission required; reconnect with {scope} before submitting this operation.")}],
                 "isError":true,
-                "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"lvk:read {scope}\"", self.config.metadata_url())]}
+                "_meta":{"mcp/www_authenticate":[format!("Bearer resource_metadata=\"{}\", error=\"insufficient_scope\", scope=\"{}\"", self.config.metadata_url(), scope_hint(request.name.as_ref(), scope))]}
             })).expect("OAuth challenge result"));
         }
         let audit_actor = context
@@ -399,6 +432,9 @@ impl Remote {
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
                 json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false}),
             ),
+            name if environment::tools().iter().any(|tool| tool.name == name) => {
+                environment::call(self, principal, name, args).await
+            }
             "list_projects" => match serde_json::from_value::<Page>(args) {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(anyhow::anyhow!("Invalid project listing parameters")),
@@ -489,3 +525,6 @@ mod runtime_write_tests;
 
 #[cfg(test)]
 mod launch_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+mod environment_tests;

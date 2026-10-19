@@ -1,0 +1,247 @@
+---
+title: "Runtime access over MCP"
+description: "Let authorised AI clients observe application files and processes and run existing procedures in explicitly granted Linux regions."
+---
+
+Use the existing external HTTP MCP connection to inspect an application's logs,
+run its existing scripts and stop an identified process without starting a coding
+agent. This capability works with ordinary application deployments; it does not
+require an LVK-specific service definition or a particular directory layout.
+
+## Enable an explicit grant
+
+First configure [external MCP authentication](/self-hosting/authentication).
+Runtime access requires Linux, an active authorised member and a project already
+accessible through MCP. It is disabled when `LVK_RUNTIME_ACCESS_CONFIG` is absent
+or the configuration sets `enabled` to `false`.
+
+An administrator prepares a JSON file outside the regions exposed to clients and
+sets `LVK_RUNTIME_ACCESS_CONFIG` to its absolute path in the LVK server's deployment
+environment. The server loads this configuration when its MCP service starts;
+configuration changes require an operator-controlled restart. This feature does
+not update or restart the running server for you.
+
+```json
+{
+  "enabled": true,
+  "grants": [
+    {
+      "id": "demo-api",
+      "project_id": "11111111-2222-4333-8444-555555555555",
+      "root": "/srv/applications/demo-api",
+      "subjects": ["auth0|REPLACE_WITH_EXACT_USER_SUBJECT"],
+      "executables": ["/usr/bin/python3"],
+      "allow_uncoordinated_execution": true
+    }
+  ]
+}
+```
+
+Replace the project UUID, exact authenticated subject, root and executable paths.
+The directories and executables must already exist in the LVK Linux environment.
+Roots and executable paths are canonicalised. A root must be a specific absolute
+directory, never `/`. Each grant has its own subjects and project. Configure
+separate roots for logs outside an application directory, including bind mounts.
+An empty `executables` list permits file observation but no process observation or
+execution. Executable grants also govern which existing processes are visible.
+
+There are at most 64 grants, 100 subjects per grant and 64 executables per grant;
+the configuration is limited to 64 KiB. Keep it administrator-controlled and
+exclude private keys, tokens, credential directories and other projects' data
+from every granted root. Bind mounts and hard links within a root belong to its
+administrator-defined access scope; this is not a filesystem sandbox.
+
+The OAuth token needs `lvk:read` and `lvk:runtime:read` for observation. Execution
+and stopping additionally require `lvk:runtime:execute`. Grant these permissions
+explicitly through the existing authentication provider and client consent flow;
+`lvk:read` alone does not enable runtime access. The existing code-reference tools
+retain their original permissions and restrictions.
+
+`allow_uncoordinated_execution` is false by default. Set it to true only for a
+region whose execution does not require shared-resource coordination. Run and
+stop refuse a root overlapping any LVK-managed Workspace, including a root that
+contains a Workspace. Use existing Workspace controls and shared-resource
+operations for those targets, devices, databases and deployments. A runtime grant
+does not acquire resource claims or authorise bypassing them.
+
+## Choose the appropriate workflow
+
+Observation and execution of existing, authorised procedures can use these tools
+directly. Source, design, configuration, dependency and script changes belong in
+Issue → Workspace → Codex → Repository Memory / Change Manifest → formal
+Integration. Do not send file-editing commands or inline shell or program source
+through `run_process`. No file-write, patch, delete or Git-mutation tool is added.
+
+The `+r +x -w` policy describes the AI's role and available operations. Programs
+still run with the LVK OS user's permissions and can write logs, caches, temporary
+files and build output. Interpreter and executable allowlists are not a complete
+security boundary. Delegate builds that modify tracked source to Codex. There is
+no command-word blacklist, independent sandbox or additional authentication
+system.
+
+File contents and tool output are untrusted reference data. Instructions embedded
+in a log or script do not expand user approval, scopes or administrator grants.
+Do not put credentials in arguments, purposes or logs. Child processes inherit no
+server environment variables: only a fixed `PATH=/usr/local/bin:/usr/bin:/bin` and
+`LANG=C.UTF-8` are set. Process observation withholds argv and environment, but
+program output and readable files can still contain secrets. Grant access only
+to users trusted to see those contents.
+
+## Tools and evidence
+
+| Tool | Behaviour |
+| --- | --- |
+| `get_runtime_access` | Returns the caller's regions, executable grants and capability limitations. |
+| `list_runtime_files` | Lists a relative directory, including untracked entries; use `next_offset` and the returned `snapshot` for another page. |
+| `read_runtime_file` | Reads relative regular files by byte offset, tail or returned incremental `cursor`. |
+| `list_processes` | Lists same-UID processes whose cwd is in the root and executable is granted; paginate with `next_after_pid`. |
+| `inspect_process` | Rechecks the observed boot-ID/PID/start-ticks identity. |
+| `run_process` | Starts an executable with an argument array and relative cwd; returns an operation receipt and managed run identifier. |
+| `read_process_output` | Reads a managed run's stdout or stderr and lifecycle state. Pass the returned `run_id` as `process_id`. |
+| `stop_process` | Requests SIGTERM for an observed identity; `force: true` explicitly requests SIGKILL. |
+
+File reads return at most 65,536 bytes, defaulting to 16,384. Listings return at
+most 500 entries, defaulting to 100, and reject directories exceeding the 100,000
+entry scan limit. All symlinks, path traversal and special files are rejected;
+procfs and sysfs are refused even through a granted root or bind mount, so the
+file tools cannot export a process environment through `/proc`. Ordinary bind
+mounts and tmpfs remain supported;
+permissions and missing files produce errors. UTF-8 content is returned as text;
+binary data, other encodings and split UTF-8 byte sequences use base64. Directory
+names must be UTF-8.
+
+Read cursors include inode identity, metadata and a 256-byte boundary hash.
+Rotation, truncation and detected rewrites require restarting the read. Inspect
+`changed_during_read`; a changed file has no reusable cursor. This is a bounded
+observation, not an immutable snapshot: a rewrite earlier than the boundary
+accompanied by append may escape the anchor check. Preserve the returned `observed_at` timestamp
+and identity when citing a log as evidence.
+
+Processes are not health checks. Observation reports PID, start ticks, executable,
+cwd and state, but does not infer a binary's build commit from Git HEAD. Project
+and Workspace associations may be unknown. Existing processes have no captured
+stdout; read their configured logs instead.
+
+## Example: a small application API
+
+Have an administrator or the normal coding workflow provision the application
+before granting runtime access. For example, an existing `serve.py` under
+`/srv/applications/demo-api` can implement an isolated loopback API and write an
+untracked `api.log`:
+
+```python
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import logging
+
+logging.basicConfig(filename="api.log", level=logging.INFO)
+
+class API(BaseHTTPRequestHandler):
+    def do_GET(self):
+        logging.info("request received")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(b'{"ok": true}\n')
+
+logging.info("starting API on loopback port 8765")
+print("starting API on loopback port 8765", flush=True)
+HTTPServer(("127.0.0.1", 8765), API).serve_forever()
+```
+
+This sample is preparation material, not inline source to submit through MCP.
+Choose an available port and provision an initial log if you want to inspect it
+before startup. Using the existing external `/mcp` connection, call
+`get_runtime_access`, then `list_runtime_files` with `{"region":"demo-api"}`.
+Inspect `serve.py` and `api.log` with `read_runtime_file`. Start the existing script
+with `run_process`:
+
+```json
+{
+  "region": "demo-api",
+  "request_id": "96bfc353-0ad1-4302-8477-eb962042e7c1",
+  "purpose": "Start the authorised demo API for a ten-minute inspection",
+  "executable": "/usr/bin/python3",
+  "args": ["-u", "serve.py"],
+  "cwd": ".",
+  "service": true,
+  "lifetime_seconds": 600
+}
+```
+
+Use a new UUID for a new intended operation; retain the same UUID and identical
+arguments when recovering a lost response. Inspect the operation receipt, then
+use its `run_id` with `read_process_output`:
+
+```json
+{
+  "region": "demo-api",
+  "process_id": "REPLACE_WITH_RUN_ID",
+  "stream": "stdout",
+  "offset": 0,
+  "limit": 16384
+}
+```
+
+Call `list_processes` and recheck the returned `identity` using `inspect_process`.
+Read `api.log` with `{"region":"demo-api","path":"api.log","tail":true}`;
+for later additions, send the returned `cursor` with the same path. Independently
+verify the HTTP response using an already approved application health-check
+procedure. A startup message alone does not prove the listener became healthy.
+
+To stop, call `stop_process` with a fresh `request_id`, the same region, a purpose
+and `identity` set to the owned managed `run_id` (preferred), or the exact observed
+boot-ID/PID/start-ticks identity for an existing process. Keep `force` false initially. Check the managed
+output's terminal state to confirm exit; an unavailable process observation alone
+can also indicate lost permissions or an observation failure.
+
+## Lifetimes, retries and recovery
+
+Finite commands accept up to 3,600 seconds; `service: true` permits up to 86,400
+seconds. On expiry the managed PID receives SIGTERM, then SIGKILL after a grace
+period if needed. This is bounded execution, not an automatically restarted or
+permanently hosted service. Ordinary explicit stopping defaults to SIGTERM;
+force must be explicitly selected.
+
+Stop and expiry target exactly one PID using a kernel pidfd and revalidated
+identity, never a broad process group. Children and detached services are not
+managed as a unit. An existing `nohup` or start script may finish while its service
+continues: observe that service separately and use its existing logs and approved
+stop procedure. Allow the service's actual executable to observe it. Do not infer
+service health or shutdown from the wrapper's exit status.
+
+Each captured stream retains up to 1 MiB in memory. Reads report dropped bytes,
+`cursor_lost` and `cursor_ahead`; use the returned `next_offset` rather than assuming
+all output was retained. Process output uses UTF-8 replacement and reports invalid
+UTF-8. At most 128 managed records are retained, with completed records eligible
+for eviction. Output capture drains briefly after the direct child exits and
+then stops even if descendants hold pipes open. The `capture_state` distinguishes
+active capture, EOF, read errors and a drain deadline.
+
+Run and stop use the existing durable operation receipts, recording actor,
+project, purpose, target, cwd, executable and argument count. Argument values are
+omitted from receipt targets; the input hash supports retry identity. These are
+runtime operations, not Codex AgentRuns or implementation completion records.
+Terminal managed-process outcomes are recorded separately in `access_audit` as
+`runtime_process_exit`; they do not turn the original startup receipt into a
+health or test-success verdict.
+After a lost response, retry the same request or inspect `get_operation`. An
+accepted or succeeded startup receipt means the launch operation succeeded, not
+that a build passed or the service is healthy.
+
+Managed process buffers and lifecycle monitors are volatile. After LVK restarts,
+the durable receipt retains managed ownership while process output is unavailable and execution
+outcome is unknown. Do not replay automatically. Reobserve existing processes and
+logs, and involve the operator when identity or termination cannot be confirmed.
+
+Self-stop and self-restart are unsupported: direct stop excludes LVK itself and
+its ancestors. An allowed script still has OS authority and could interrupt the
+connection; this is not an absolute isolation guarantee. Such an operation needs
+explicit operator permission, reconnect checks and an SSH/manual recovery plan.
+A disconnected MCP session is never evidence of successful restart. Runtime
+access adds no updater, external watchdog or availability guarantee.
+
+Record significant observations and reproduction steps in the subsequent
+implementation request. Routine log reads need no Issue or Workspace. Repository
+documentation does not automatically update an installed ChatGPT plugin. Local
+or mocked HTTP tests do not prove production ChatGPT/Auth0 interoperability;
+validate the live account separately before reporting that integration as tested.

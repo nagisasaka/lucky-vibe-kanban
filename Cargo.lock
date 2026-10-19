@@ -8369,6 +8369,7 @@ dependencies = [
  "git-host",
  "http",
  "jsonwebtoken",
+ "libc",
  "local-deployment",
  "mime_guess",
  "os_info",

@@ -30,7 +30,13 @@ use tokio::sync::Mutex;
 use url::Url;
 use uuid::Uuid;
 
-pub const SCOPES: &[&str] = &["lvk:read", "lvk:write", "lvk:merge"];
+pub const SCOPES: &[&str] = &[
+    "lvk:read",
+    "lvk:write",
+    "lvk:merge",
+    "lvk:runtime:read",
+    "lvk:runtime:execute",
+];
 const WEB_LIFETIME: i64 = 12 * 3600;
 const WEB_IDLE: i64 = 30 * 60;
 const SETUP_LIFETIME: i64 = 15 * 60;

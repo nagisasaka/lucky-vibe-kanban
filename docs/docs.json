@@ -93,7 +93,8 @@
         "group": "Self-Hosting",
         "pages": [
           "self-hosting/server-container",
-          "self-hosting/authentication"
+          "self-hosting/authentication",
+          "self-hosting/runtime-access"
         ]
       },
       {

@@ -282,7 +282,21 @@ async fn provisioning_preview_apply_and_retry_preserve_auth_and_other_apps() {
             state.resources[0]["skip_consent_for_verifiable_first_party_clients"],
             false
         );
-        assert_eq!(state.resources[0]["scopes"].as_array().unwrap().len(), 3);
+        let scopes = state.resources[0]["scopes"].as_array().unwrap();
+        assert_eq!(scopes.len(), 5);
+        assert_eq!(
+            scopes
+                .iter()
+                .map(|scope| scope["value"].as_str().unwrap())
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from([
+                "lvk:read",
+                "lvk:write",
+                "lvk:merge",
+                "lvk:runtime:read",
+                "lvk:runtime:execute"
+            ])
+        );
         assert_eq!(state.tenant["unrelated_setting"], true);
         assert_eq!(state.enabled["con_github"].len(), 3);
         assert_eq!(
