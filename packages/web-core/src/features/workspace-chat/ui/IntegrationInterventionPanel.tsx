@@ -84,7 +84,9 @@ export function IntegrationInterventionPanel({
           {t(
             run.payload.published
               ? 'integrationReview.published'
-              : 'integrationReview.notPublished'
+              : run.payload.publication_intent
+                ? 'integrationPanel.reconciling'
+                : 'integrationReview.notPublished'
           )}
         </p>
       )}

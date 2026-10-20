@@ -150,17 +150,14 @@ export function ExecutionInspectionPanel({
             Run: {run.owner.run_id}
           </p>
         )}
-        {run && (
+        {/* Integration publication is shown below from the full run, including its intent. */}
+        {run && !integration && (
           <p className="text-low">
             {run.owner?.result?.no_op && run.status === 'succeeded'
               ? 'No changes required (successful reconciliation)'
               : run.published
-                ? integration
-                  ? t('integrationReview.published')
-                  : 'Published result'
-                : integration
-                  ? t('integrationReview.notPublished')
-                  : 'Publication not confirmed; files may be unpublished'}
+                ? 'Published result'
+                : 'Publication not confirmed; files may be unpublished'}
           </p>
         )}
         {integration && sessionSelector}

@@ -158,3 +158,32 @@ it('permits the dedicated intervention UI only for an identified Integration own
   } as WorkspaceExecutionView;
   expect(render()).not.toContain('Integration intervention');
 });
+
+it.each(['publishing', 'recovery_required'])(
+  'delegates Integration publication to the full run and keeps stop disabled (%s)',
+  (status) => {
+    const owner = { kind: 'integration', run_id: 'integration' } as NonNullable<
+      Workspace['execution_owner']
+    >;
+    const originalOwner = workspace.execution_owner;
+    workspace.execution_owner = owner;
+    try {
+      fixture.data = {
+        status,
+        owner,
+        published: false,
+        can_stop: false,
+        files_available: true,
+      } as WorkspaceExecutionView;
+      const html = render();
+      expect(html).toContain('Integration intervention');
+      expect(html).not.toContain('integrationReview.notPublished');
+      expect(html).not.toContain('integrationReview.published');
+      expect(html).toMatch(
+        /<button[^>]*disabled=""[^>]*>integrationReview.stopExecution/
+      );
+    } finally {
+      workspace.execution_owner = originalOwner;
+    }
+  }
+);
