@@ -87,6 +87,7 @@ try {
     await new Promise((r) => setTimeout(r, 500));
   }
   assert.ok(base, "server did not start");
+  console.log("Isolated app ready:", base);
   const config = (await api("/api/info")).data.config;
   await api("/api/config", "PUT", {
     ...config,
@@ -264,15 +265,18 @@ try {
   );
 
   await page.goto(`${base}/workspaces/${workspace}`);
-  const editor = page.locator('[contenteditable="true"]').first();
+  const editor = page.locator("[contenteditable]").first();
   await expect(editor).toBeVisible();
   const requests = [];
   let releaseChat;
   const chatGate = new Promise((resolve) => {
     releaseChat = resolve;
   });
-  await page.route(`**/api/sessions/${session.id}/follow-up`, async (route) => {
-    requests.push(route.request().postDataJSON());
+  await page.route("**/api/sessions/*/follow-up", async (route) => {
+    requests.push({
+      ...route.request().postDataJSON(),
+      path: new URL(route.request().url()).pathname,
+    });
     await chatGate;
     await route.fulfill({
       status: 400,
@@ -305,7 +309,9 @@ try {
   assert.equal(requests.length, 0);
   await editor.press("Enter");
   await expect.poll(() => requests.length).toBe(1);
+  assert.equal(requests[0].path, `/api/sessions/${session.id}/follow-up`);
   assert.match(requests[0].prompt, /チャット一行目\nチャット二行目/);
+  await expect(editor).toHaveAttribute("contenteditable", "false");
   await editor.evaluate((el) => {
     for (let i = 0; i < 5; i++)
       el.dispatchEvent(
@@ -321,6 +327,7 @@ try {
   await expect(
     page.getByText(/Controlled execution boundary/).first(),
   ).toBeVisible();
+  await expect(editor).toHaveAttribute("contenteditable", "true");
   await page.getByRole("button", { name: "送信", exact: true }).click();
   await expect.poll(() => requests.length).toBe(2);
   assert.equal(requests[1].prompt, requests[0].prompt);
@@ -350,7 +357,13 @@ try {
   }
   throw error;
 } finally {
-  await browser?.close();
-  for (const child of children.reverse()) await stop(child);
-  await rm(instance, { recursive: true, force: true });
+  try {
+    await browser?.close();
+  } finally {
+    for (const child of children.reverse()) await stop(child);
+    await rm(instance, { recursive: true, force: true });
+    console.log(
+      "CLEANUP: browser closed, isolated server exited, dedicated instance removed.",
+    );
+  }
 }
