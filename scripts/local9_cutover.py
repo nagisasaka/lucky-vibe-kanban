@@ -22,10 +22,10 @@ import uuid
 ROOT = Path('/var/tmp/lvk-instances/dev')
 SOURCE = ROOT / 'runtime/worktrees/d546-local-3-4-integr/lucky-vibe-kanban'
 LIVE = Path('/var/tmp/vibe-kanban/worktrees/1f9a-chatgpt/lucky-vibe-kanban/target/debug/server')
-SOURCE_SHA = '33587794d71f5da0107dd34b6eb6be5393511a70'
-OLD = '3e37ca967d7faf0cdf0737568a8243b838b84b163fc18d68dd6152efde53c4d5'
-NEW = 'efa3ff3a66f0eeb0a6efc8661efc280592b6a02cf72d9d60cf35a6442c1135d6'
-PAYLOAD = '8158b60f43a4412d64b2f01e2696de717778dec2f1d3c4aaeda7167b5e88022e'
+SOURCE_SHA = '0a5cef88bc71aba5b23d60f970629073d8b46446'
+OLD = 'efa3ff3a66f0eeb0a6efc8661efc280592b6a02cf72d9d60cf35a6442c1135d6'
+NEW = '25bba6a706168ee16f3c682f7f7725d3dc35aa2966d05122e725ebf751f74d80'
+PAYLOAD = '9a871dca4b729996e063b77e4c4021bb97527980059a6a770d1c5086c655f25f'
 MAIN = 'b385a2d2d1a8683fbdcb8d931356d34f4264169c'
 RUN = 'c68ce019-9349-4679-976f-326120191c08'
 REFS = [('vk/57ca-codex-cli-plan-p', '7922bf778fa5837762f056bcf7322b5191d4d0ab'),
@@ -34,6 +34,15 @@ REFS = [('vk/57ca-codex-cli-plan-p', '7922bf778fa5837762f056bcf7322b5191d4d0ab')
         ('vk/2085-codex-lvk-mcp-li', '40487d16a091b0f67eb24ecd011e507a5f42b8db')]
 ASSET_DIGEST = '944540d7eb8081ac35cc53c06a9a86bf3f6f9bf53e470273ee17286efffbe599'
 PINS = {'/var/tmp/lvk-instances/dev/start.sh': '821dcf686c8c95c9f25cf66006578882dfd725b5ac753895d56c56a5c3f4d734', '/var/tmp/lvk-instances/dev/run.py': '9cc7008b176be6b859fb7af0547b5ffa4dbf5785a5673cf40189abc2be15bfc1', '/var/tmp/vibe-kanban/worktrees/1f9a-chatgpt/lucky-vibe-kanban/target/debug/agent-process-host': 'c59b682595955ea6f5bdcd32c3229b9de3ea4d104b939deb99bbf33e59508458'}
+
+AGENT = '65afecfc-fac6-6e71-fd42-2050835d8cdd'
+NODE = 'a3228840-6819-156a-1c0b-dca496181c2d'
+FAILED_STEER = 'd74d0df1-6ddd-45dd-b806-010bad8c73d7'
+FAILED_STEER_HASH = 'bb8152fd5f282a1b6396fbd3f752ba3c29dcde260c34806fd97ca89ec6b24976'
+RESERVATIONS = [('target', '/repos/lucky-vibe-kanban/.git', uuid.UUID(RUN).bytes),
+                ('workspace', 'ce2f5ac94131433b8257c6f22f054565', uuid.UUID(RUN).bytes)]
+HANDOFF_FILES = {'scripts/local9_cutover.py', 'scripts/test_local9_cutover.py',
+                 'docs/development/integration-dispatch-recovery.md'}
 
 
 def require(ok, message):
@@ -69,7 +78,7 @@ class Cutover:
     def __init__(self):
         self.root, self.live = ROOT, LIVE
         self.candidate = SOURCE / 'target/debug/server'
-        self.directory = Path('/var/tmp/local9-cutover-33587794')
+        self.directory = Path('/var/tmp/local9-cutover-0a5cef88')
         self.old, self.new = OLD, NEW
         self.port = 4020
         self.stop_timeout, self.start_timeout = 60, 45
@@ -78,6 +87,7 @@ class Cutover:
         self.env = None
         self.log = None
         self.launch_lock = None
+        self.operator_deadline = False
 
     def record(self, stage):
         # Fixed stage names only: never serialize environment, HTTP body or exception text.
@@ -135,19 +145,32 @@ class Cutover:
                 pass
         require(bool(inodes & links), 'Listener does not belong to verified PID')
 
+    def source(self):
+        subprocess.run(['git', '--no-optional-locks', '-C', str(SOURCE), 'merge-base', '--is-ancestor', SOURCE_SHA, 'HEAD'],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        changed = subprocess.check_output(['git', '--no-optional-locks', '-C', str(SOURCE), 'diff', '--name-only', SOURCE_SHA, '--'],
+                                          text=True, timeout=5).splitlines()
+        require(set(changed) <= HANDOFF_FILES, 'Build source changed since pinned commit')
+        untracked = subprocess.check_output(['git', '--no-optional-locks', '-C', str(SOURCE), 'ls-files', '--others', '--exclude-standard'],
+                                            text=True, timeout=5).splitlines()
+        require(not untracked, 'Untracked source requires review')
+
     def frozen(self):
         for ref, expected in [('main', MAIN)] + REFS:
-            actual = subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', 'refs/heads/' + ref], timeout=5, text=True).strip()
+            actual = subprocess.check_output(['git', '--no-optional-locks', '-C', str(SOURCE), 'rev-parse', 'refs/heads/' + ref], timeout=5, text=True).strip()
             require(actual == expected, 'Frozen Git ref changed')
         with sqlite3.connect('file:' + str(self.root / 'data/db.v2.sqlite') + '?mode=ro', uri=True, timeout=2) as db:
-            row = db.execute('SELECT status,payload FROM integration_runs WHERE id=?', (uuid.UUID(RUN).bytes,)).fetchone()
-            require(row and row[0] == 'blocked', 'Integration not blocked')
-            p = json.loads(row[1])
-            require(hashlib.sha256(row[1].encode()).hexdigest() == PAYLOAD, 'Integration payload changed')
-            require(p['skip_validation'] is True and p['published'] is False and not p['publication_intent'] and p['result_commit'] is None and p['base_commit'] == MAIN, 'Integration policy changed')
-            require([(x['branch'], x['commit']) for x in p['sources']] == REFS, 'Source selection changed')
+            self.frozen_db(db)
 
-    def idle(self, server_pid):
+    def frozen_db(self, db):
+        row = db.execute('SELECT status,payload FROM integration_runs WHERE id=?', (uuid.UUID(RUN).bytes,)).fetchone()
+        require(row and row[0] == 'blocked', 'Integration not blocked')
+        p = json.loads(row[1])
+        require(hashlib.sha256(row[1].encode()).hexdigest() == PAYLOAD, 'Integration payload changed')
+        require(p['skip_validation'] is True and p['published'] is False and not p['publication_intent'] and p['result_commit'] is None and p['base_commit'] == MAIN, 'Integration policy changed')
+        require([(x['branch'], x['commit']) for x in p['sources']] == REFS, 'Source selection changed')
+
+    def database_idle(self):
         with sqlite3.connect('file:' + str(self.root / 'data/db.v2.sqlite') + '?mode=ro', uri=True, timeout=2) as db:
             checks = [
                 "SELECT count(*) FROM agent_runs WHERE status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')",
@@ -158,18 +181,42 @@ class Cutover:
                 "SELECT count(*) FROM orchestration_outbox WHERE delivery_status!='delivered'",
                 "SELECT count(*) FROM scheduled_tasks WHERE enabled=1",
                 "SELECT count(*) FROM integration_runs WHERE status NOT IN ('blocked','succeeded','cancelled','failed')",
-                "SELECT count(*) FROM orchestration_runs WHERE status NOT IN ('failed','succeeded','cancelled') AND NOT (id=x'" + uuid.UUID(RUN).hex + "' AND status='cancelling')",
+                "SELECT count(*) FROM orchestration_inbox WHERE consumption_status!='consumed'",
             ]
             for query in checks:
                 require(db.execute(query).fetchone()[0] == 0, 'Active job, unresolved delivery or enabled schedule; finish/resolve before cutover')
-        # The one retained cancelling parent is inert only with all agent/host
-        # executions exited and all its outbox receipts delivered, checked above.
+            # The known product parent/node is inert only under the exact
+            # frozen blocked payload, terminal child and settled delivery gates.
+            self.frozen_db(db)
+            parents = db.execute("SELECT id,status,product_kind,plan_snapshot FROM orchestration_runs WHERE status NOT IN ('failed','succeeded','cancelled')").fetchall()
+            require(len(parents) == 1 and parents[0][:3] == (uuid.UUID(RUN).bytes, 'running', 'integration'), 'Unexpected active orchestration')
+            plan = json.loads(parents[0][3])
+            require(len(plan['nodes']) == 1 and plan['nodes'][0]['node_key'] == 'integrate'
+                    and plan['nodes'][0]['requires_product_validation'] is True, 'Retained parent is not product-gated')
+            nodes = db.execute("SELECT id,orchestration_run_id,node_key,iteration,status FROM orchestration_node_executions WHERE status NOT IN ('failed','succeeded','cancelled')").fetchall()
+            require(nodes == [(uuid.UUID(NODE).bytes, uuid.UUID(RUN).bytes, 'integrate', 0, 'running')], 'Unexpected active orchestration node')
+            child = db.execute('SELECT status,projection_status FROM agent_runs WHERE id=?', (uuid.UUID(AGENT).bytes,)).fetchone()
+            require(child == ('succeeded', 'projection_degraded'), 'Retained child state changed')
+            links = db.execute('SELECT agent_run_id FROM orchestration_agent_run_links WHERE orchestration_run_id=? AND node_execution_id=?', (uuid.UUID(RUN).bytes, uuid.UUID(NODE).bytes)).fetchall()
+            require(links == [(uuid.UUID(AGENT).bytes,)], 'Retained child link changed')
+            reservations = db.execute('SELECT resource_kind,resource_key,run_id FROM integration_reservations ORDER BY resource_kind,resource_key').fetchall()
+            require(reservations == RESERVATIONS, 'Unexpected reservation owner or resource')
+            for command_id, agent, status, envelope in db.execute("SELECT command_id,agent_run_id,delivery_status,command_envelope FROM agent_run_commands WHERE delivery_status!='delivered'"):
+                require(command_id == uuid.UUID(FAILED_STEER).bytes and agent == uuid.UUID(AGENT).bytes
+                        and status == 'failed' and hashlib.sha256(envelope.encode()).hexdigest() == FAILED_STEER_HASH,
+                        'Unresolved agent command requires review')
+            # The exact failed historical Steer is not the current intervention.
+            # Startup may retry and reject it via workspace ownership; no retry,
+            # new instruction or any other pending delivery is exempted here.
+
+    def idle(self, server_pid):
+        self.database_idle()
         for proc in Path('/proc').iterdir():
             if not proc.name.isdigit() or int(proc.name) in (os.getpid(), server_pid):
                 continue
             try:
                 comm = (proc / 'comm').read_text().strip()
-                require(comm not in ('cargo', 'rustc', 'agent-process-h', 'agent-process-host'), 'Concurrent build or agent host')
+                require(comm not in ('cargo', 'rustc', 'codex', 'agent-process-h', 'agent-process-host'), 'Concurrent build or agent host')
                 if proc.stat().st_uid != os.getuid():
                     continue
                 for fd in (proc / 'fd').iterdir():
@@ -190,6 +237,7 @@ class Cutover:
     def preflight(self):
         require(pwd.getpwuid(os.getuid()).pw_name == 'appuser', 'Run as appuser')
         require(not Path('/run/lvk-maintenance/active').exists(), 'Host maintenance active')
+        self.coordination()
         require(sha(self.live) == self.old and sha(self.candidate) == self.new, 'Artifact hash changed')
         elf(self.live); elf(self.candidate)
         for path, digest in PINS.items():
@@ -197,7 +245,7 @@ class Cutover:
         assets = SOURCE / 'packages/local-web/dist'
         rows = [(str(f.relative_to(assets)), sha(f)) for f in sorted(assets.rglob('*')) if f.is_file()]
         require(hashlib.sha256(json.dumps(rows).encode()).hexdigest() == ASSET_DIGEST, 'Frontend assets changed')
-        self.frozen(); self.coordination()
+        self.source(); self.frozen()
         pid = self.pid(); self.identity(pid, self.old); self.owns_listener(pid)
         self.idle(pid)
         # Preserve the actually running environment, not an assumed SSH profile.
@@ -228,7 +276,7 @@ class Cutover:
             dst.close(); src.close()
 
     def replace(self, source, digest):
-        temp = self.live.with_name('server.local9-one-shot')
+        temp = self.live.with_name('server.local9-0a5cef88-one-shot')
         with temp.open('xb') as output, open(source, 'rb') as inp:
             shutil.copyfileobj(inp, output); output.flush(); os.fsync(output.fileno())
         os.chmod(temp, 0o755)
@@ -296,11 +344,11 @@ class Cutover:
             return self.finish('SUCCESS_NO_RESUME', 0)
         except Exception as error:
             self.record('FAILED_' + type(error).__name__)
-            if type(error) is RuntimeError:
-                self.record(str(error))
             if not self.stopped:
                 return self.finish('ABORT_OR_STOP_UNCONFIRMED_OPERATOR_CHECK', 2)
             try:
+                if self.operator_deadline:
+                    signal.alarm(120)  # separate bounded recovery budget
                 # A new PID is only signalled after exe/hash/owner verification.
                 # If ownership is ambiguous, fail closed instead of overwriting.
                 pid = self.pid()
@@ -314,6 +362,8 @@ class Cutover:
             except Exception:
                 return self.finish('MANUAL_RECOVERY_REQUIRED_NO_FORCE_KILL', 4)
         finally:
+            if self.operator_deadline:
+                signal.alarm(0)
             if self.launch_lock:
                 self.launch_lock.close()
             self.log.close()
@@ -321,8 +371,18 @@ class Cutover:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--execute', action='store_true')
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--execute', action='store_true')
+    mode.add_argument('--preflight', action='store_true', help='Read-only checks; never create recovery state or stop')
     args = parser.parse_args()
+    if args.preflight:
+        try:
+            Cutover().preflight()
+            print('PREFLIGHT_OK_NO_CUTOVER')
+            return 0
+        except Exception as error:
+            print('PREFLIGHT_REFUSED_' + type(error).__name__)
+            return 2
     require(args.execute and os.isatty(0), 'Independent operator SSH TTY and --execute required')
     # Explicitly reject invocation from the server/agent ancestry.
     pid = os.getppid()
@@ -337,9 +397,11 @@ def main():
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: (_ for _ in ()).throw(RuntimeError('Operator interruption')))
+    engine = Cutover()
+    engine.operator_deadline = True
     signal.alarm(300)
-    raise SystemExit(Cutover().run())
+    raise SystemExit(engine.run())
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

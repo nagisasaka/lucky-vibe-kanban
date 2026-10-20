@@ -1,6 +1,6 @@
 # Formal Integration dispatch recovery
 
-Latest operator handoff: [third-failure source repair](#operator-handoff-for-this-repair). Earlier cutover sections are historical; do not execute the 33587794-pinned script unchanged. This repair has not been deployed.
+Latest operator handoff: [prepared 0a5cef88 SSH cutover](#prepared-one-command-operator-cutover--local-9-0a5cef88). Earlier cutover sections are historical. The new candidate is prepared, not deployed; do not rerun the 33587794-pinned script.
 
 A Create command being queued, or a global outbox delivery returning success,
 does not prove that its AgentRun exists. The dispatcher must settle the specific
@@ -693,3 +693,165 @@ binary was built for this repair. Cargo replayed an old dummy-dist build warning
 the actual preserved dist was checked to contain 992 files and a real index, not
 the placeholder. SQL changes use runtime queries; no schema or query-macro
 metadata changes are involved.
+
+
+## Prepared one-command operator cutover — LOCAL-9 0a5cef88
+
+Preparation only, 20 October 2026. Run the following **after this Codex Run has
+finished**, from an independent SSH TTY as `appuser` inside the same container.
+Keep that session open and arrange an exclusive maintenance window: no new
+UI/API submissions, agents, builds or manual launchers. Do not invoke it through
+MCP, an AgentRun, or a detached child of Codex.
+
+```bash
+python3 /var/tmp/local9-hotfix-0a5cef88-prepared/cutover.py --execute
+```
+
+This is the new one-shot script; the previously executed
+`/var/tmp/local9-hotfix-33587794-prepared/cutover.py` and its
+`/var/tmp/local9-cutover-33587794/` backup/output remain untouched. Do not rerun or
+delete them. The new staged script SHA256 is
+`25cb0f49f4a9c43e3084db3e393cc21931979c4650a218c16efa3f89c4877ca8`.
+Its audited repository source remains `scripts/local9_cutover.py`; tests are
+`scripts/test_local9_cutover.py`. No new daemon or updater service is introduced.
+
+### Verified artifact and runtime
+
+The candidate was built from exact clean source
+`0a5cef88bc71aba5b23d60f970629073d8b46446`, with:
+
+```bash
+RUSTC_WRAPPER=/usr/local/bin/sccache SCCACHE_DIR=/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/sccache CARGO_BUILD_JOBS=2 cargo build --locked --offline -p server --bin server
+```
+
+Candidate path:
+`/var/tmp/lvk-instances/dev/runtime/worktrees/d546-local-3-4-integr/lucky-vibe-kanban/target/debug/server`
+
+- New SHA256: `25bba6a706168ee16f3c682f7f7725d3dc35aa2966d05122e725ebf751f74d80`
+- Size: 1,354,244,880 bytes; ELF64, little-endian, x86-64.
+- Independently observed serving PID: 989363; `/proc/989363/exe` SHA256:
+  `efa3ff3a66f0eeb0a6efc8661efc280592b6a02cf72d9d60cf35a6442c1135d6`
+  (the previously deployed 33587794 artifact, 1,353,264,896 bytes).
+- Installed path:
+  `/var/tmp/vibe-kanban/worktrees/1f9a-chatgpt/lucky-vibe-kanban/target/debug/server`.
+  The candidate and installed binary are distinct files. Both checkouts share
+  `/repos/lucky-vibe-kanban/.git`; the deployment is not an independent Git copy.
+- `ldd` resolves libc, libgcc_s, libm and `/lib64/ld-linux-x86-64.so.2`, as for the
+  serving binary. `file` is unavailable; the ELF header was validated directly.
+- Debug rust-embed reads the preserved workspace `packages/local-web/dist` at
+  runtime: 992 real files, manifest digest
+  `944540d7eb8081ac35cc53c06a9a86bf3f6f9bf53e470273ee17286efffbe599`.
+  Retain this workspace, dist and candidate; do not rebuild/clean them before
+  cutover. The cached dummy-dist Cargo warning was not an actual replacement.
+- Launcher hashes, host executable hash and namespaces were rechecked and remain
+  pinned in the script. The unchanged start.sh uses nohup+setsid run.py, which
+  changes to the installed checkout, writes server.pid and execs server. The
+  actual process environment was checked privately; the operator program captures
+  and reuses it rather than relying on SSH environment variables.
+
+The build took 1m34s with available memory about 13 GiB, disk about 423 GiB, and
+no other Cargo/rustc or AgentRun. Only this authorised preparation Run was active.
+Runtime source remains the pinned commit; subsequent changes are limited to the
+handoff script, tests and this document, which the script explicitly permits.
+Any other tracked source change, untracked file or changed frozen ref refuses.
+There are no new migrations or host protocol changes; binary-only replacement
+is appropriate for this specific patch. No candidate was smoke-started against
+live data. The preceding 97 Rust tests/Clippy results belong to the source-repair
+run and were not rerun for these script/document changes.
+
+Build metadata/log and mock-test evidence are retained in
+`target/local9-cutover-0a5cef88/` and the private prepared directory above. There
+is no duplicate 1.35 GB candidate copy. The normal workspace target/cache is kept.
+
+### Retained state and preconditions
+
+The exact payload digest is
+`9a871dca4b729996e063b77e4c4021bb97527980059a6a770d1c5086c655f25f`:
+blocked/unpublished, result null, validation empty, four unchanged source refs,
+`skip_validation=true`, main frozen at
+`b385a2d2d1a8683fbdcb8d931356d34f4264169c`. Candidate `97903274…` remains tentative.
+
+The orphaned parent and integrate node are still `running`; their two target /
+workspace reservations remain. This is not treated as permission to ignore
+arbitrary running work. The script permits only this exact parent/node and
+reservation ownership, a single product-validation-gated plan, its exact linked
+`succeeded/projection_degraded` child, exited agent hosts and delivered outbox.
+The host scheduler excludes blocked Integrations; generic orchestration recovery
+cannot accept child success without product validation. No reservation is cleared
+and no projection is repaired by the cutover program.
+
+The historical failed Steer `d74d0df1…` is allowed only by exact command ID,
+agent, failed status and envelope digest. It is not the current intervention.
+Server startup may retry and reject that historical command at the workspace
+ownership guard, recording another failed receipt; this is existing startup
+behaviour, not a Resume or replay requested by the updater. Every other unresolved
+command, pending inbox, active agent/process/workflow/resource operation, enabled
+schedule, unexpected parent/node/reservation, build/provider process or other
+same-user SQLite handle refuses cutover. This Run must end and its host exit first.
+
+Read-only preflight passed artifact, source, frontend, frozen state, coordination,
+PID and listener ownership checks, then correctly refused this active AgentRun.
+The staged `--preflight` mode returned exit 2 without creating the cutover state
+directory or sending signals. It is safe to run that mode for inspection; it does
+not waive execution's TTY/ancestry/namespace checks. Resource coordination was
+empty; any later registration, holder or queue requires a new operator review.
+
+### Execution, outcomes and rollback
+
+The program creates `/var/tmp/local9-cutover-0a5cef88/` exactly once, mode 0700.
+It saves the old executable, startup files and private launch environment, takes
+the existing launch lock, repeats frozen/idle checks, sends verified-pidfd SIGTERM
+and waits (no force kill). After confirmed stop it copies private data and makes
+an SQLite backup via the backup API, including committed WAL pages, with integrity
+checking. It atomically switches the executable and invokes the same start.sh.
+Process identity/hash, listener ownership, HTTP health, fresh startup log evidence,
+frozen state and idle jobs must pass. It neither publishes Git nor calls Resume.
+
+The initial deadline is 300 seconds; rollback gets a separate 120-second budget,
+with stop bounded at 60 seconds and health at 45 seconds. Kernel/filesystem hangs,
+container loss or SIGKILL cannot be made safe by Python deadlines. A read-only idle
+check is not an admission lock; the exclusive maintenance window remains essential.
+
+| Exit | Durable final stage | Operator meaning |
+| --- | --- | --- |
+| 0 | `SUCCESS_NO_RESUME` | New executable healthy; original Integration still blocked |
+| 2 | `ABORT_OR_STOP_UNCONFIRMED_OPERATOR_CHECK` | A precondition/stop check failed; inspect actual PID/listener, do not blindly retry |
+| 3 | `ROLLED_BACK_NO_DB_RESTORE` | Saved 33587794 executable restored and health/frozen state checked |
+| 4 | `MANUAL_RECOVERY_REQUIRED_NO_FORCE_KILL` | Ownership/termination/rollback uncertain; leave recovery to the operator |
+
+Repeat execution or a TTY/ancestry/namespace refusal exits before entering the
+cutover (normally exit 1), preserving the existing state directory. Logs contain
+fixed stage/class names, never exception text, environment or HTTP bodies.
+`cutover.log`, `state.json`, `exit-code` and private `launcher.log` are durable in
+the new directory. Do not delete it to rearm an aborted attempt.
+
+On startup/health failure, automatic rollback stops only a verified new PID,
+atomically restores `server.old` with the pinned `efa3ff3a…` hash, starts via the
+same launcher/environment and rechecks health and frozen refs/payload. **No SQLite
+restore occurs.** Startup audit/command receipts remain recorded. For exit 4 or an
+interruption, inspect PID/executable/listener and these logs from SSH first; do
+not start a second server or kill an unverified process. The recovery files are:
+
+- `/var/tmp/local9-cutover-0a5cef88/server.old`
+- `/var/tmp/local9-cutover-0a5cef88/launch-environment.json`
+- `/var/tmp/local9-cutover-0a5cef88/db.v2.consistent.sqlite`
+- `/var/tmp/local9-cutover-0a5cef88/data/`
+
+The environment and data snapshots contain credentials: keep them private and
+never paste them into chat. Restore an executable manually only after ownership
+and termination are proven; do not automatically roll back DB or reuse the old
+33587794 cutover's backup paths for this operation.
+
+After exit 0, obtain a **fresh read-only ChatGPT/MCP check** of health, main,
+source refs, retained Integration and skipped-validation policy. Formal Resume of
+`c68ce019-9349-4679-976f-326120191c08` is a separate later action. Never resume the
+old two-source `0771cd56…`, create a replacement, or include LOCAL-11 here.
+
+Validation: AST/compile and `git diff --check` passed. Fourteen isolated mock tests
+passed, including real process switch, launcher failure and health-failure rollback,
+committed-WAL backup, repeat refusal, stale PID, changed source/main/payload/hash,
+active AgentRun, foreign reservation, unresolved command, missing product gate,
+read-only preflight and exception-text suppression. Mocks exercise the real Git
+and SQLite predicates but substitute temporary launchers, binaries, HTTP service
+and global process/coordination checks. They do not prove live Codex startup,
+real MCP authentication or Integration recovery. No live cutover was executed.
