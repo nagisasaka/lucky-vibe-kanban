@@ -229,6 +229,7 @@ export function WorkspacesSidebar({
     },
     {
       icon: PlusIcon,
+      label: t('common:workspaces.newWorkspace'),
       onClick: () => onAddWorkspace?.(),
     },
   ];

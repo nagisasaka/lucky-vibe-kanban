@@ -52,11 +52,13 @@ function truncateBranchLabel(branch: string) {
 }
 
 interface CreateChatBoxContainerProps {
+  workspaceTargetRequest?: number;
   onWorkspaceCreated: (workspaceId: string) => void;
 }
 
 export function CreateChatBoxContainer({
   onWorkspaceCreated,
+  workspaceTargetRequest = 0,
 }: CreateChatBoxContainerProps) {
   const { t } = useTranslation('common');
   const { profiles, config } = useUserSystem();
@@ -90,8 +92,7 @@ export function CreateChatBoxContainer({
   );
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const workspaceDialogOpenRef = useRef(false);
-  const [hasInitializedWorkspaceTarget, setHasInitializedWorkspaceTarget] =
-    useState(false);
+  const initializedWorkspaceTargetRequest = useRef<number | null>(null);
   const [hasConfirmedWorkspaceTarget, setHasConfirmedWorkspaceTarget] =
     useState(false);
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>([]);
@@ -284,17 +285,17 @@ export function CreateChatBoxContainer({
     if (
       !hasInitialValue ||
       !hasResolvedInitialWorkspaceDefaults ||
-      hasInitializedWorkspaceTarget
+      initializedWorkspaceTargetRequest.current === workspaceTargetRequest
     ) {
       return;
     }
 
-    setHasInitializedWorkspaceTarget(true);
+    initializedWorkspaceTargetRequest.current = workspaceTargetRequest;
     void openWorkspaceTargetDialog();
   }, [
     hasInitialValue,
     hasResolvedInitialWorkspaceDefaults,
-    hasInitializedWorkspaceTarget,
+    workspaceTargetRequest,
     openWorkspaceTargetDialog,
   ]);
 

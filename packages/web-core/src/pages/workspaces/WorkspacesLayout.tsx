@@ -75,6 +75,7 @@ export function WorkspacesLayout() {
     workspace: selectedWorkspace,
     isLoading,
     isCreateMode,
+    workspaceTargetRequest,
     selectedSession,
     selectedSessionId,
     sessions,
@@ -339,6 +340,7 @@ export function WorkspacesLayout() {
                 >
                   {isCreateMode ? (
                     <CreateChatBoxContainer
+                      workspaceTargetRequest={workspaceTargetRequest}
                       onWorkspaceCreated={handleWorkspaceCreated}
                     />
                   ) : (
@@ -520,6 +522,7 @@ export function WorkspacesLayout() {
                 <PreservedChatPanel visible={isLeftMainPanelVisible}>
                   {isCreateMode ? (
                     <CreateChatBoxContainer
+                      workspaceTargetRequest={workspaceTargetRequest}
                       onWorkspaceCreated={handleWorkspaceCreated}
                     />
                   ) : (
