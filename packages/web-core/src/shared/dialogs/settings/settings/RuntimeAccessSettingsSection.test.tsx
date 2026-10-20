@@ -58,4 +58,34 @@ describe('runtime settings UI', () => {
     expect(html).toContain('Example API');
     expect(html).toContain('API logs');
   });
+  it('shows an explicit disabled-empty recovery action and reason, without an enable form', () => {
+    const client = new QueryClient();
+    client.setQueryData(['runtime-access-settings'], {
+      revision: 0,
+      source: 'invalid_legacy',
+      legacy_error: {
+        kind: 'invalid_grant',
+        reason: 'Missing configured root',
+      },
+      projects: [],
+      settings: { enabled: false, grants: [] },
+    });
+    const html = renderToStaticMarkup(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(
+          SettingsDirtyProvider,
+          null,
+          createElement(RuntimeAccessSettingsSection)
+        )
+      )
+    );
+    expect(html).toContain('Missing configured root');
+    expect(html).toContain('無効・空の設定を保存して復旧');
+    expect(html).toContain('自動リセットは行いません');
+    expect(html).not.toContain('id="runtime-enabled"');
+    expect(html).toContain('自然終了を待ちます');
+    expect(html).toContain('daemonは自然終了しない可能性');
+  });
 });

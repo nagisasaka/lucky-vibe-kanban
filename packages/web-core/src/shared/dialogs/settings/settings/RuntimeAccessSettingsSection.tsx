@@ -41,14 +41,14 @@ export function RuntimeAccessSettingsSection() {
       },
     });
   }
-  async function save() {
+  async function save(recover = false) {
     if (!current) return;
     setBusy(true);
     setError('');
     try {
       await runtimeAccessSettings({
         revision: current.revision,
-        settings: current.settings,
+        settings: recover ? { enabled: false, grants: [] } : current.settings,
       });
       await query.refetch();
       setDraft(null);
@@ -91,7 +91,18 @@ export function RuntimeAccessSettingsSection() {
         </p>
       )}
       {query.isLoading && <p role="status">{t('runtimeAccess.loading')}</p>}
-      {current && (
+      {current?.legacy_error && (
+        <div role="alert" className="space-y-3 text-sm text-error">
+          <p>{t('runtimeAccess.invalidLegacy')}</p>
+          <p>{current.legacy_error.reason}</p>
+          <PrimaryButton
+            value={t('runtimeAccess.recover')}
+            disabled={busy}
+            onClick={() => void save(true)}
+          />
+        </div>
+      )}
+      {current && !current.legacy_error && (
         <div className="space-y-4">
           <p className="text-sm text-low">
             {t(`runtimeAccess.source.${current.source}`)}
@@ -208,7 +219,7 @@ export function RuntimeAccessSettingsSection() {
           <SettingsSaveBar
             show={!!draft}
             saving={busy}
-            onSave={save}
+            onSave={() => void save()}
             onDiscard={() => {
               setDraft(null);
               setError('');

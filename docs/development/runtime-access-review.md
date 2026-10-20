@@ -59,3 +59,42 @@ B/Cともpath alias・bind mountのcanonical資源対応を管理者が定義し
 - `cargo clippy -p server --all-targets -- -D warnings`：成功。`git diff --check`：成功。
 
 受付成功はコマンド／サービスの成功ではない。本レビューのテスト成功は正式Integrationや製品全要件の完了でもない。アクセス方針の判断を残してコミットし、正式Integration・反映は行わない。
+
+## b171f645 に対する追加修正（2026-10-20）
+
+- LOCAL-11 migrationを `20261020190000_runtime_access_settings.sql` から
+  `20261020200000_runtime_access_settings.sql` へ変更。SQLxは説明名でなく数値prefixを
+  versionとして扱う。LOCAL-19 `7a8ca3364839dcb917caeebdfacee0a7f0632c40` の
+  同prefixのkanban migrationと衝突していた。共有migrationの内容は一致し、LOCAL-19だけに
+  存在した2ファイルはテストfixtureへ読み取りコピーした。productionのmigration集合には
+  取り込んでいない。
+- 当Workspaceのprepare用SQLiteは残存していなかった。先行検証の一時DBは破棄済み。
+  新たな一時DBで、両側の集合を含むfresh、LOCAL-19からのupgrade、番号変更後LOCAL-11からの
+  upgradeをSQLx Migratorで検査し、prefix一意性・適用履歴・再実行を確認した。
+  **旧番号のLOCAL-11を適用済みのDBの移行は対象外**。そのDBには別の明示的な移行判断が必要で、
+  実DBの調査・適用・履歴書換えは行っていない。
+- legacyのファイル読取、JSON、grant検証の失敗だけを `InvalidLegacy` として分類する。
+  管理者画面は理由と「無効・空の設定を保存して復旧」を表示し、明示操作でrevision 0を
+  保存する。新しい保存revisionは1。閲覧だけではDBに書き込まず、MCPの読込は引き続き拒否。
+  保存済みJSONの破損やDB障害は503のままで、認可を省略しない。
+- ユーザー決定により取消後は自然終了を待つ。後続操作は拒否し、強制終了も自動再許可も
+  行わない。既存timeoutを維持し、daemonが自然終了しない可能性をUI・文書で説明する。
+  管理者停止UIや必須OS cleanupは追加しない。
+
+検証: `cargo test -p server --lib remote_mcp::` は58 passed / 0 failed / 2 ignored
+（専用プロセスfixtureは親テストから起動）。新規復旧テストは初回、テスト利用者を管理者に
+設定し忘れたため403で失敗し、fixtureを修正して再検証した。UI/APIの関連Vitestは3 passed。
+実ブラウザー操作、実Auth0/ChatGPT、実DBの移行、配布サーバーへの反映は未検証。
+
+追加の静的検証:
+
+- `cargo clippy -j 1 -p server --all-targets -- -D warnings`: 成功。
+- `pnpm run generate-types` / `pnpm run generate-types:check`: 成功。
+  初回生成はsignal 9で終了し、環境のOOM kill記録を確認。空きメモリ回復後、
+  `CARGO_BUILD_JOBS=1` で再実行して成功した。
+- `pnpm run prepare-db` / `pnpm run prepare-db:check`: 一時DBで成功。
+  無関係な既存メタデータ14件の削除は戻した。checkは既存のunused-query警告付きで成功。
+- `pnpm run web-core:check` / `pnpm run local-web:check`: 成功。
+- `pnpm --dir packages/web-core exec vitest run src/shared/lib/runtimeAccessApi.test.ts src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.test.tsx`: 3 passed。
+- 変更したUI本体のESLint（local-web設定）、変更UI・翻訳のPrettier、変更Rustのrustfmt、
+  `git diff --check`: 成功。

@@ -16,6 +16,7 @@ fn generate_types_content() -> String {
         server::remote_mcp::environment::Grant::decl(),
         server::remote_mcp::environment::RuntimeAccessSettings::decl(),
         server::remote_mcp::environment_settings::RuntimeAccessView::decl(),
+        server::remote_mcp::environment_settings::InvalidLegacy::decl(),
         server::remote_mcp::environment_settings::RuntimeAccessProject::decl(),
         server::remote_mcp::environment_settings::SaveRuntimeAccess::decl(),
         db::models::todo::Todo::decl(),

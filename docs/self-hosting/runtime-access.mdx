@@ -28,9 +28,10 @@ The settings API is not an MCP tool.
 Settings use the server database and a revision check. A stale save is rejected;
 reload before applying it again. Saving does not reset process output buffers.
 Revoking a region, subject or feature blocks subsequent operations, including
-stop and output reads, but does not kill running processes. Stop before revoking
-when necessary. Afterwards an OS operator must verify the process identity and
-perform cleanup; another administrator does not automatically inherit ownership.
+stop and output reads, but does not kill running processes. Wait for remaining
+processes to finish naturally; existing timeouts remain unchanged. Long-running
+daemons may never finish naturally. This policy requires no administrator stop UI
+or mandatory OS cleanup. Permissions are never automatically restored.
 Already executing operations are not cancelled by a settings save.
 
 ### Legacy JSON compatibility
@@ -41,6 +42,13 @@ saving **disabled**, the database is the sole authority and the file/environment
 variable is ignored. Settings are never merged. Do not delete the saved database
 row to restore legacy settings; use the UI to make an explicit change. Include the
 server database in backups. No automatic grant enabling or OAuth changes occur.
+If legacy JSON is missing, malformed or refers to a missing root, the administrator
+screen shows the reason and an explicit **Save disabled, empty settings to recover**
+action. This submits revision 0 and creates the first saved revision; it does not
+modify the legacy file or reset anything automatically. Subsequent requests use the
+saved disabled configuration. Database failures remain unavailable errors, not
+recoverable legacy warnings.
+
 The following is the legacy file format, not a prerequisite for using the UI:
 
 ```json

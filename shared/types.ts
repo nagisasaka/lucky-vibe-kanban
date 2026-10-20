@@ -12,7 +12,9 @@ allow_uncoordinated_execution: boolean, };
 
 export type RuntimeAccessSettings = { enabled: boolean, grants: Array<Grant>, };
 
-export type RuntimeAccessView = { projects: Array<RuntimeAccessProject>, revision: number, source: string, settings: RuntimeAccessSettings, };
+export type RuntimeAccessView = { projects: Array<RuntimeAccessProject>, revision: number, source: string, legacy_error: InvalidLegacy | null, settings: RuntimeAccessSettings, };
+
+export type InvalidLegacy = { "kind": "unreadable", "reason": string } | { "kind": "invalid_json", "reason": string } | { "kind": "invalid_grant", "reason": string };
 
 export type RuntimeAccessProject = { id: string, name: string, };
 

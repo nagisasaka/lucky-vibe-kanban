@@ -633,10 +633,12 @@
     }
   },
   "runtimeAccess": {
+    "recover": "Save disabled, empty settings to recover",
+    "invalidLegacy": "Legacy JSON configuration is invalid. Runtime access is denied. Review the reason, then explicitly save disabled, empty settings to replace it. No automatic reset occurs.",
     "title": "Runtime environment access",
     "description": "Administrators manage external MCP regions. Saved changes apply to subsequent calls without restarting.",
     "permissions": "File reads require lvk:runtime:read. Executable grants also permit process observation. Run/stop additionally require region execution permission and lvk:runtime:execute; lvk:read is still required. Run/stop refuse Workspace overlaps.",
-    "revoke": "Revocation does not terminate running processes. Revoked users cannot stop them. Stop before revoking where necessary; afterwards an operator must verify and clean up the process through the OS. Ownership is not transferred to another administrator.",
+    "revoke": "Revocation denies subsequent operations without terminating running processes. Wait for them to finish naturally; existing timeouts remain unchanged. Long-running daemons may never finish naturally. Permissions are not automatically restored.",
     "denied": "Settings unavailable. Sign in as a browser administrator.",
     "loading": "Loading…",
     "enabled": "Enable runtime environment access",

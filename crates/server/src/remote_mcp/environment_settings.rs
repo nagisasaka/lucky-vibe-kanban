@@ -19,7 +19,19 @@ pub struct RuntimeAccessView {
     #[ts(type = "number")]
     pub revision: i64,
     pub source: String,
+    pub legacy_error: Option<InvalidLegacy>,
     pub settings: RuntimeAccessSettings,
+}
+/// Only file-backed configuration failures are recoverable through an explicit save.
+#[derive(Debug, Serialize, Deserialize, TS, thiserror::Error)]
+#[serde(tag = "kind", content = "reason", rename_all = "snake_case")]
+pub enum InvalidLegacy {
+    #[error("{0}")]
+    Unreadable(String),
+    #[error("{0}")]
+    InvalidJson(String),
+    #[error("{0}")]
+    InvalidGrant(String),
 }
 #[derive(Serialize, Deserialize, TS, sqlx::FromRow)]
 pub struct RuntimeAccessProject {
@@ -91,20 +103,25 @@ pub(super) async fn load_with_legacy(
         return Ok((0, "default".into(), RuntimeAccessSettings::default()));
     };
     let mut bytes = vec![];
-    std::fs::File::open(path)?
+    std::fs::File::open(path)
+        .map_err(|e| InvalidLegacy::Unreadable(e.to_string()))?
         .take(65537)
-        .read_to_end(&mut bytes)?;
+        .read_to_end(&mut bytes)
+        .map_err(|e| InvalidLegacy::Unreadable(e.to_string()))?;
     anyhow::ensure!(
         bytes.len() <= 65536,
-        "Runtime configuration exceeds size limit"
+        InvalidLegacy::InvalidJson("Runtime configuration exceeds size limit".into())
     );
-    let mut settings: RuntimeAccessSettings = serde_json::from_slice(&bytes)?;
+    let mut settings: RuntimeAccessSettings =
+        serde_json::from_slice(&bytes).map_err(|e| InvalidLegacy::InvalidJson(e.to_string()))?;
     if settings.enabled && !settings.grants.is_empty() {
-        settings.grants = Environment::new(settings.grants)?.grants;
+        settings.grants = Environment::new(settings.grants)
+            .map_err(|e| InvalidLegacy::InvalidGrant(e.to_string()))?
+            .grants;
     }
     anyhow::ensure!(
         !settings.enabled || !settings.grants.is_empty(),
-        "Enabled runtime requires grants"
+        InvalidLegacy::InvalidGrant("Enabled runtime requires grants".into())
     );
     Ok((0, "legacy_file".into(), settings))
 }
@@ -113,13 +130,36 @@ async fn read(
     Extension(p): Extension<server_access::Principal>,
 ) -> Result<Json<RuntimeAccessView>, Error> {
     admin(&p)?;
-    let (revision, source, settings) = load(&pool).await.map_err(unavailable)?;
-    Ok(Json(RuntimeAccessView {
-        projects: projects(&pool).await?,
+    read_view(
+        &pool,
+        std::env::var_os("LVK_RUNTIME_ACCESS_CONFIG").map(std::path::PathBuf::from),
+    )
+    .await
+    .map(Json)
+}
+pub(super) async fn read_view(
+    pool: &SqlitePool,
+    legacy: Option<std::path::PathBuf>,
+) -> Result<RuntimeAccessView, Error> {
+    let (revision, source, settings, legacy_error) = match load_with_legacy(pool, legacy).await {
+        Ok((revision, source, settings)) => (revision, source, settings, None),
+        Err(e) => match e.downcast::<InvalidLegacy>() {
+            Ok(reason) => (
+                0,
+                "invalid_legacy".into(),
+                RuntimeAccessSettings::default(),
+                Some(reason),
+            ),
+            Err(e) => return Err(unavailable(e)),
+        },
+    };
+    Ok(RuntimeAccessView {
+        projects: projects(pool).await?,
         revision,
         source,
+        legacy_error,
         settings,
-    }))
+    })
 }
 async fn save(
     State(pool): State<SqlitePool>,
@@ -200,6 +240,7 @@ async fn save(
         projects: projects(&pool).await?,
         revision,
         source: "saved".into(),
+        legacy_error: None,
         settings: input.settings,
     }))
 }
