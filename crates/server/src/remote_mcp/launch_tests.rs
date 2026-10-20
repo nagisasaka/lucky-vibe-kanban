@@ -30,6 +30,7 @@ struct FixtureLaunch {
     starts: tokio::sync::Mutex<Vec<Value>>,
     integrations: tokio::sync::Mutex<Vec<Value>>,
     pause: bool,
+    skip_default: std::sync::atomic::AtomicBool,
     admission_failure: tokio::sync::Mutex<Option<crate::routes::integrations::AdmissionFailure>>,
     entered: tokio::sync::Notify,
     release: tokio::sync::Notify,
@@ -94,13 +95,25 @@ impl LaunchActions for FixtureLaunch {
         request: CreateIntegrationRequest,
         expected_target: String,
     ) -> Result<Value, crate::routes::integrations::AdmissionFailure> {
-        self.integrations.lock().await.push(json!({"request_id":request.request_id,"project_id":request.project_id,"repository_id":request.repository_id,"target_branch":request.target_branch,"expected_target":expected_target,"selections":request.selections,"executor_config":request.executor_config}));
+        self.integrations.lock().await.push(json!({"request_id":request.request_id,"project_id":request.project_id,"repository_id":request.repository_id,"target_branch":request.target_branch,"expected_target":expected_target,"selections":request.selections,"executor_config":request.executor_config,"skip_validation":request.skip_validation}));
         if let Some(failure) = self.admission_failure.lock().await.take() {
             return Err(failure);
         }
-        Ok(
-            json!({"integration_id":Uuid::new_v4(),"status":"queued","integration_accepted":true,"published":false}),
-        )
+        let payload = db::models::integration::IntegrationPayload {
+            skip_validation: request.resolved_skip_validation(
+                self.skip_default.load(std::sync::atomic::Ordering::SeqCst),
+            ),
+            ..Default::default()
+        };
+        let id = Uuid::new_v4();
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?,?,'refs/heads/main','queued',?)")
+            .bind(id).bind(request.request_id.to_string()).bind(request.project_id)
+            .bind(request.repository_id).bind("fixture")
+            .bind(sqlx::types::Json(payload)).execute(&self.pool).await.unwrap();
+        let run = db::models::integration::IntegrationRun::find(&self.pool, id)
+            .await
+            .unwrap();
+        Ok(launch::integration_result(&run))
     }
 }
 fn git(path: &std::path::Path, args: &[&str]) -> String {
@@ -166,6 +179,7 @@ async fn fixture(
         starts: Default::default(),
         integrations: Default::default(),
         pause,
+        skip_default: Default::default(),
         admission_failure: Default::default(),
         entered: Default::default(),
         release: Default::default(),
@@ -400,4 +414,156 @@ async fn integration_failure_receipts_preserve_rejection_or_uncertainty_on_retry
         assert_eq!(first, repeated);
     }
     assert_eq!(dispatch.integrations.lock().await.len(), 2);
+}
+
+#[tokio::test]
+async fn integration_validation_choice_survives_retry_and_reconnection() {
+    use std::sync::atomic::Ordering;
+    let (directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let head = git(directory.path(), &["rev-parse", "main"]);
+    for default in [false, true] {
+        for choice in [
+            None,
+            Some(Value::Null),
+            Some(json!(false)),
+            Some(json!(true)),
+        ] {
+            dispatch.skip_default.store(default, Ordering::SeqCst);
+            let mut input = json!({"project_id":target.project_id,"request_id":Uuid::new_v4(),"repository_id":repo,"target_branch":"main","expected_target_commit":head,"selections":[{"issue_id":issue,"workspace_id":target.workspace_id,"expected_commit":head}]});
+            if let Some(choice) = &choice {
+                input["skip_validation"] = choice.clone();
+            }
+            let expected = choice.as_ref().and_then(Value::as_bool).unwrap_or(default);
+            let first = launch::call(&remote, &principal, "start_integration", input.clone())
+                .await
+                .unwrap();
+            assert_eq!(first["status"], "succeeded");
+            assert_eq!(first["result"]["skip_validation"], expected);
+            assert_eq!(
+                dispatch.integrations.lock().await.last().unwrap()["skip_validation"],
+                choice.clone().unwrap_or(Value::Null)
+            );
+            dispatch.skip_default.store(!default, Ordering::SeqCst);
+            let mut reconnected = remote.clone();
+            reconnected.process_instance = Uuid::new_v4();
+            let replay = launch::call(&reconnected, &principal, "start_integration", input.clone())
+                .await
+                .unwrap();
+            assert_eq!(first, replay);
+            for section in ["summary", "validation", "sources"] {
+                let read = super::integration_read::call(&reconnected, "get_integration", json!({"project_id":target.project_id,"integration_id":first["result"]["integration_id"],"section":section})).await.unwrap();
+                assert_eq!(read["skip_validation"], expected);
+                if section == "summary" {
+                    assert_eq!(read["validation"]["passed"], 0);
+                }
+            }
+            let mut mismatch = input.clone();
+            mismatch["skip_validation"] = json!(!expected);
+            assert!(
+                launch::call(&remote, &principal, "start_integration", mismatch)
+                    .await
+                    .unwrap_err()
+                    .to_string()
+                    .contains("different input")
+            );
+            if choice.is_none() {
+                input["skip_validation"] = Value::Null;
+                assert!(
+                    launch::call(&remote, &principal, "start_integration", input)
+                        .await
+                        .unwrap_err()
+                        .to_string()
+                        .contains("different input")
+                );
+            }
+        }
+    }
+    for invalid in [json!("true"), json!(0), json!({})] {
+        let input = json!({"project_id":target.project_id,"request_id":Uuid::new_v4(),"repository_id":repo,"target_branch":"main","expected_target_commit":head,"selections":[{"issue_id":issue,"workspace_id":target.workspace_id,"expected_commit":head}],"skip_validation":invalid});
+        assert!(
+            launch::call(&remote, &principal, "start_integration", input)
+                .await
+                .is_err()
+        );
+    }
+    assert_eq!(dispatch.integrations.lock().await.len(), 8);
+}
+
+#[tokio::test]
+async fn integration_validation_http_dispatch_and_get_reconnect() {
+    let (_, auth, provider) = super::tests::fixture().await;
+    let (directory, remote, dispatch, _, target, issue, repo) = fixture(false).await;
+    let head = git(directory.path(), &["rev-parse", "main"]);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        axum::serve(listener, super::router(remote, auth))
+            .await
+            .unwrap();
+    });
+    let call = |name: &str, args: Value, token: &str| {
+        reqwest::Client::new().post(format!("{base}/mcp"))
+            .header("host", "lvk.example")
+            .header("accept", "application/json, text/event-stream")
+            .header("MCP-Protocol-Version", "2025-03-26")
+            .bearer_auth(token)
+            .json(&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":name,"arguments":args}}))
+    };
+    for default in [false, true] {
+        for choice in [
+            None,
+            Some(Value::Null),
+            Some(json!(false)),
+            Some(json!(true)),
+        ] {
+            dispatch
+                .skip_default
+                .store(default, std::sync::atomic::Ordering::SeqCst);
+            let mut input = json!({"project_id":target.project_id,"request_id":Uuid::new_v4(),"repository_id":repo,"target_branch":"main","expected_target_commit":head,"selections":[{"issue_id":issue,"workspace_id":target.workspace_id,"expected_commit":head}]});
+            if let Some(choice) = &choice {
+                input["skip_validation"] = choice.clone();
+            }
+            let expected = choice.as_ref().and_then(Value::as_bool).unwrap_or(default);
+            let first: Value = call("start_integration", input.clone(), "merge")
+                .send()
+                .await
+                .unwrap()
+                .json()
+                .await
+                .unwrap();
+            assert_ne!(first["result"]["isError"], true, "{first}");
+            let receipt = &first["result"]["structuredContent"];
+            assert_eq!(receipt["result"]["skip_validation"], expected, "{first}");
+            dispatch
+                .skip_default
+                .store(!default, std::sync::atomic::Ordering::SeqCst);
+            let get: Value = call("get_integration", json!({"project_id":target.project_id,"integration_id":receipt["result"]["integration_id"],"section":"summary"}), "read-only").send().await.unwrap().json().await.unwrap();
+            assert_eq!(
+                get["result"]["structuredContent"]["skip_validation"], expected,
+                "{get}"
+            );
+            let replay: Value = call("start_integration", input.clone(), "merge")
+                .send()
+                .await
+                .unwrap()
+                .json()
+                .await
+                .unwrap();
+            assert_eq!(&replay["result"]["structuredContent"], receipt);
+            input["skip_validation"] = json!(!expected);
+            let mismatch: Value = call("start_integration", input, "merge")
+                .send()
+                .await
+                .unwrap()
+                .json()
+                .await
+                .unwrap();
+            assert_eq!(mismatch["result"]["isError"], true, "{mismatch}");
+        }
+    }
+    assert_eq!(dispatch.integrations.lock().await.len(), 8);
+    server.abort();
+    let _ = server.await;
+    provider.abort();
+    let _ = provider.await;
 }
