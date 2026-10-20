@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:363bff36bf9c114acd170162fbe164c239e1be5e1ecd2d08fc15092e1f023462",
+  "pageVersion": "sha256:682a1cdc44979ae2118f7e6eba04ac1e4b5da0b43d2f0499af850acfdc23c798",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -170,11 +170,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/mod.rs",
-          "version": "repo-file-v1:sha256:b620d3e02cee869d489caf6196d7135d24573f9398ae8cf8ecead45f63dd51c6"
+          "version": "repo-file-v1:sha256:38b51892bd8a6e68a99e1533317385e8dc6fc49f798bba3c7f56ff6689e82543"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:078cb293a035653cf02e3f93db9bf6ac7b4d8125c3e35090a5cb9009254292fb"
+          "version": "repo-file-v1:sha256:81b4c0525d106a15dedea19f1da6a8d49fd45174c71a68917c9d2512a91e6960"
         }
       ]
     },
@@ -197,10 +197,38 @@
           "version": "repo-file-v1:sha256:5d8c1f6a9f4f5ec545cdd475e620cddb47419eeb4e0f30abc3e82d877a2f05ae"
         }
       ]
+    },
+    {
+      "id": "claim_d82bf859fdae483ea4d670c0c5e38e2a",
+      "statement": "新規IntegrationのManifestはhostがstep summaryとGit差分/base/resultから生成し、最終候補の検証結果をtestsへ反映する。agent proposalを必須とせず例外continueも失敗を合格にしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L630-L670",
+          "version": "repo-lines-v1:sha256:786191bc0e29bbd3b448d4b1d0b78a0f0fc140f927fdcb40ebe0976f1d8d8651:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmZGM5NGUzMzkyYjFhNTk0ZjQzZDE3N2JlYTlkMzU1ZWZkNTVkYzk1NGJjYTY4ZTMzOThiMGY2M2Q4NDYzYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhM2U5MzViZDgxZTNjNzVjZmQ4MTU1ZjYyMjExYTBjMWI2YTk1M2UwMmYwYTZjNzRkZjhhM2E4NzIyM2RhNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjZhNDc1ODNiMjEyMGQ2M2ZjZTJjZDlkOTlmZDYxMTczZGI5NzY1Y2JjOThkNWRjZTY0M2U5YjMzMzc1ODgifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L924-L940",
+          "version": "repo-lines-v1:sha256:adfa72f8e8354ad8716b27c745ff338268785d1d8dd576baee4f9dbe1a1f1fec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNWQyN2Y1ZGI4OWQxMDFmZmJmOTUyNzk2NGI0MjUxMjc5OGFkZmU0NDAxZmZhNDMyMzRmYmJiYWY4YWRlNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjFiNjg3YjhjYjBkYWJjZTZlM2E0MzY5OWVjMDYxMzJmYThmNDUwYzEzOTU0OGNjZTQ1MTIxOTI0MTEyYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1MWYxZTMzZGI5NWFjZjg1MzUyMzNhYWQ3NjMxNGI3NWFkOWNkOTcxY2QzODg5ZWFhZWIyMTU0MTIwYjNmMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkZjdjYjIxYmFjMWJlZGVhMWY0YjU4MTU1YzhmNmIxOTNhZjQyNzQ2YTNhOTE3ZmNlMzEzMWU3NGNmNjQ3YjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_978d47f6190148899917dcbc0fa0963c",
+      "statement": "競合jobのMemoryは凍結済み公開eventだけを解決し不在をunavailableとして渡すが、Memory有効時の公開後処理は不在・所属・祖先不一致をエラーとしてGit/Doneを戻さず残す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1465-L1578",
+          "version": "repo-lines-v1:sha256:1d70d5e4f51b1676e1ac7d39bbbc5255593335f09d3a84746dd3b26a6b4e0d8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2YmVmYjNmZTM2Zjg4Mjc2ZWVlMWE2YzBhYTRlZGExZTg3NmM1ZDk4NzdmNjQyNThhMGYyNDZiMjM2YjY4M2MxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhOThjMWI3MmI1N2M5M2JlZWM4ZDA1NDA0OWZkOWZlZjViM2I4OGYxYTEyZTk5ZGU4ZTM3N2ExNTg4MjY4YjVkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L318-L392",
+          "version": "repo-lines-v1:sha256:cab0c189d7c6e427cff081c00106df84888db9bf315650b7589f85fd91db5e4d:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyY2RlNzMyYzY5NjU1MzJmN2JlNjM5NGUyOWExNmFjOTAxY2ZmZDAyMjcyYjlhMzAxZGEyZWMxNmVhYjJhZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MzEyMzNkMjhkOTUzNWQ3YjM3NjFkMjFhM2U5YWU0M2Q4MTYwZmQ1MTAzNWExNTM3ZDAxODJlODY4OGY4OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0OTY5NTUyYmM4NmZlMDFkYzRiZTUzNjY3Y2M1NjA0NzFiYjgxNjQyMjlmNmE5YjNmODA2OTE4OTJlMmVhM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1NGZmNDMxYjQzZjVlMmEwNzVhZTA2Yzc2NTczNWVjOGM4NTI5MjdkN2JlNTc0YmU2NGJhNTQ5ZGEyNGQxMzkifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-18T14:00:51.649Z"
+    "at": "2026-10-20T17:40:06.172Z"
   }
 }

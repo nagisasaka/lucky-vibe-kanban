@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6e5224e6a6e04a39461af38b14f17f666db96bf11eab86eca929ee580b4610e7",
+  "pageVersion": "sha256:206d472be9a28ff6f9e111d6eba559c1c9fb6dffc9e38bc3e3e26686066df948",
   "claims": [
     {
       "id": "claim_6831267bb1984baabffe65be3d6b8400",
@@ -152,7 +152,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/workflow_runtime/runner.rs",
-          "version": "repo-file-v1:sha256:370097d9302789b976bfcd4ce13a0c3426aefbf5af8426823c9bdbbf729a4988"
+          "version": "repo-file-v1:sha256:985b3e173618d1be64a4c007d2ea696a7d2e5baf1a974579cb7a43af8be75b1c"
         },
         {
           "resource": "repo://crates/workflow/src/validation.rs",
@@ -225,10 +225,24 @@
           "version": "repo-lines-v1:sha256:50890357b16023750d457fcd334caa018aec8f09949232cfc9409cf923969ead:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3ZWY0YmFlNzFhNjZhMWRjZmY5ZDA4YmIyMjVkOWQyOTdlZGZiN2JkOGE0OGQ2YjM4NTYwN2IwOGY0Y2ZlM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyNDE0ZTY0NDk1ZDA5NWQ0MzA4YzE4MDdjOWU3N2RkYmQ5ZjVlNTQzNjRkNTYwNDY2MDVkMTYzMjdiOGEyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmOTFlYmE3M2NmNTA4YmZjNWM5YmUzNzlmNWFkMDliMjYwY2ZhOTdlMTEzODUwYzk0NGE0MTViYjFjNDA3MDYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8ad3750c470c48d3a58355801db1bba5",
+      "statement": "Workflow Agent nodeのStartedは特定Createの受理とidentity照合後に返るが、provider準備完了や成果物成功を意味しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/workflow_runtime/runner.rs#L865-L900",
+          "version": "repo-lines-v1:sha256:149ffbbd010d0868e06be0bb17f3a75c3f1cb85b6a22b32a934f15a0c0b0d324:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MTFmMzJiMjc3ZWI2MDFjZDFiN2IzYzI0ZmQwMDhlMjMzNzMwOTNiMDQ2MjYxMjk0NTg4NWM0YWZlN2VmYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljNGEwMjQ0ZWY4MjM1NmE4MTc0OGFhMWJiOWJjZWEyODBhZTFiYjk2YjVkNjhkZmM3OTM4YTcyYWU1MDY2MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzY2UzZjNmN2VjNGUzNzE0YmIzZTg2ZmUyNzY0OGU5OTgxNTI3YTdkMjU3NGYyMTYxODM2N2E3NDliN2RmZjUifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/orchestration.rs#L187-L269",
+          "version": "repo-lines-v1:sha256:a50cad9f5293e2ddb0b7fff52707b89cc71eb0f68b65d9c832af4fcfe657edff:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkM2YzMWViZGMwYWNjNWRlY2EyMTFhMGM0NGE0ZjVjMDFiOGQ2MzdlYTMzNDk0ZjQ2MDI0NGRlNTk0NmU5NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYzIxN2Q2Y2I2MTM4MTZjMmUxYjE2OWUwYjY0ODc1N2QyNDQ3NzAzNTFmOWM2YTY5MTNlMWY2ZmZiNjg3NWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4ODU4MjU5NDc5YmI1ZmYzY2Y0YjE2MDhjNTA0MzYzNzM5NThhMWQ3NWY2NDZlMDZiNGUyOWQ5MzVkNGMzN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlM2UwOWUzOTgyODIwNjc4N2I5OTJmOTBjMWViOThmMDBlNmJhNDBiMGY1NGZjZGUzYmJkYWQyMmNhNjhkZTgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-20T17:40:06.172Z"
   }
 }

@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # クイックスタートと調査案内
@@ -64,7 +64,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 
 1. [サーバーコンテナー](operations/server-container.md)の手順で LVK の Docker image を起動し、公開配置では [LVKの初回認証設定](concepts/server-access.md#初回設定と方式変更)、続いて実行環境内で coding agent の認証を済ませる。LVK は npm パッケージを公開しない。ソースから開発する場合は [開発環境と検証範囲](operations/development.md) を参照する。[配布版の案内](../README.md)
 2. [Project / Issue](concepts/project-and-issue.md) と、変更先の [Repo / Workspace](concepts/workspace.md) を確認する。仕事の分類と、実ファイルを置く場所は別の設定である。
-3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [正式 Integration](concepts/formal-integration.md)を使う。専用環境で受付時の検証方針に従って処理し、local target の公開と条件付き Done を扱う。検証省略の NotRun は成功したテストを意味しない。
+3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [正式 Integration](concepts/formal-integration.md)を使う。専用環境で通常 merge は host、競合解消は有限の Agent job が担当し、review 後の最終候補を受付時の検証方針に従って処理する。local target の公開と条件付き Done を扱う。検証省略の NotRun は成功したテストを意味しない。
 4. canonical repository memory は [OpenWiki 初期生成・Sync](operations/openwiki-maintenance.md)を Repo ごとに設定する。新規 Card の既定 [Shared directories context](concepts/card-context-and-llm-wiki.md)とは独立しており、旧 LLM Wiki の自動生成は終了している。成果物は [OpenWiki Viewer の表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を確認し、閲覧可能と publication 成功を区別する。
 
 サーバーに常駐させる場合は [単一サーバーコンテナー](operations/server-container.md)を参照する。信頼された一チーム向けHTTPS配布であり、データ永続化と実行プロセスの継続を区別する。旧 Cloud / relay は退役している。
@@ -87,7 +87,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
-| 採用した並列成果を安全に local target へ反映するには | [正式 Integration](concepts/formal-integration.md)。受付予約、host 検証、公開と取消、条件付き Done、回復 |
+| 採用した並列成果を安全に local target へ反映するには | [正式 Integration](concepts/formal-integration.md)。受付予約、host merge・競合 review・最終検証、公開と取消、限定 checkpoint adoption |
 | 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、Change Manifest、Workspace Memory、source checkpoint と receipt |
 
 ## 変更内容から調査する
@@ -149,4 +149,4 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
 
-今回の通常 Sync は凍結された pending changes の範囲に沿い、Codex mode/usage/子観測、外部 MCP 進捗読取、Web Push と依存する認証・UI・保存境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。実サービスへの到達性や統合 checkout の acceptance test 成功は、この文書更新からは主張しない。
+今回の通常 Sync は凍結された pending changes の範囲に沿い、Integration の host merge・競合 job・最終候補検証・旧 checkpoint adoption、一般 Workflow の Create 受理、Agent の起動前永続化と限定 Retry 回復、および依存する Memory / UI / Card 完了の境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。実サービスへの到達性や統合 checkout の acceptance test 成功は、この文書更新からは主張しない。

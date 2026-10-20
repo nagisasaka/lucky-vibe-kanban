@@ -26,10 +26,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -81,7 +81,11 @@ flowchart LR
 
 既存の手動直接 merge は squash を使うため、元 commit の祖先関係だけではイベントの所属を再現できない。統合前に明示的な event ID 集合と before commit を保存し、統合結果を対応付ける。Wiki の処理対象は、対象ブランチへ統合済みと確認でき、成功 receipt がまだないイベントである。[統合準備](../../crates/services/src/services/repository_memory.rs)、[イベント選択](../../crates/services/src/services/repository_memory.rs)
 
-[正式統合](formal-integration.md)は別の契約で、選択した source の履歴を保持した固定 commit を、受付時の検証方針に従って公開する。検証省略時の Manifest tests は NotRun であり、統合成功をテスト合格へ読み替えない。Memory が有効な場合だけ、受付時に固定した source event と、統合固有の変更があればその event を明示的な統合記録に結び付ける。Git 公開やカードの Done が Wiki receipt の成功を意味するわけではない。[統合側の記録](../../crates/server/src/routes/integrations/runtime.rs)
+[正式統合](formal-integration.md)は別の契約で、選択した source の履歴を保持した固定 commit を、受付時の検証方針に従って公開する。検証省略時の Manifest tests は NotRun であり、統合成功をテスト合格へ読み替えない。Memory が有効な場合だけ、受付時に固定した source event と、保存された統合 Manifest の event を明示的な統合記録に結び付ける。Git 公開やカードの Done が Wiki receipt の成功を意味するわけではない。[統合側の記録](../../crates/server/src/routes/integrations/runtime.rs)
+
+新規 Integration では host が各 step の summary をまとめ、最終候補の base / result と Git 差分から統合 Manifest を生成する。検証必須 run は最終候補上の実行結果を tests に反映し、例外による continue も失敗を合格に書き換えない。通常 merge に agent の semantic proposal は不要である。詳細な [最終候補の検証契約](formal-integration.md#開発検証と-human-gate)を参照する。[生成](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)・[検証証拠の反映](../../crates/server/src/routes/integrations/runtime.rs#L924-L940)
+
+競合 job へ渡す Memory は受付時に凍結した公開 event IDs だけを解決し、不在は unavailable として渡す。他 Workspace の private memory や新しい event を追加しない。一方、有効な Memory の公開後処理では選択 event の不在・所属・祖先関係の不一致をエラーにし、Git/Done を戻さず semantic outbox pending として残す。prompt の参照不足と、公開する記録の整合性は別の条件である。[競合の文脈](../../crates/server/src/routes/integrations/runtime.rs#L318-L392)・[公開後の照合](../../crates/server/src/routes/integrations/runtime.rs#L1465-L1578)
 
 外部 PR の観測は LVK 所有の統合 transaction を持たない。保守的に source commit の祖先関係で証明できるイベントだけを対応付け、同じ Workspace・近い時刻という理由では未 push の変更を処理済みにしない。外部 squash/rebase の所属が証明できなければ未消費のまま残る。[外部統合の契約](../../crates/services/src/services/repository_memory.rs)
 

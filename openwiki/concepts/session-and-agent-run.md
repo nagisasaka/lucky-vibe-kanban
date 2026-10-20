@@ -36,6 +36,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-b393e75029374eaf9cba5f7d
+    resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
     resource: repo://crates/server/src/routes/scratch.rs
   - id: openwiki-source-406c792263884bbf462d666c
@@ -72,10 +74,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
   - id: openwiki-source-bfcca8eb0acec96215c9bf83
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -113,6 +115,8 @@ Session の設定復元は最新 RunAttempt の immutable launch request を読�
 
 Retry は前回の設定・capability snapshot・Skill を引き継ぐ。設定を変えて別の仕事を始める操作と混同しない。制御リクエストも command ID、冪等キー、相関 ID を持って永続 command service を経由する。[retry 固定値](../../crates/local-deployment/src/agent_run_port.rs)、[制御 API](../../crates/server/src/routes/agent_runs.rs#L348-L373)
 
+Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[正式 Integration](formal-integration.md#競合だけを有限の-agent-job-にする) の競合処理は source ごとの新規 Create を使い、一般 Retry で次の source を実行する仕組みではない。
+
 ## Provider session の継続と取り込み
 
 Session の executor は最初の指定で設定できるが、以後の別 executor 指定は拒否する。native binding を持った Session では provider、runtime profile、native session ID を別の値へ切り替えられない。別構成を使うときは新しい Session が境界になる。[executor 検証](../../crates/server/src/routes/sessions/agent_run.rs#L154-L171)、[binding 検証](../../crates/server/src/routes/sessions/agent_run.rs#L331-L374)
@@ -127,7 +131,7 @@ Codex の resume は同じ native thread ID を要求し、fork しない。再�
 
 正本の状態は Pending / Starting / Running / AwaitingInput / AwaitingApproval / Cancelling と、終端の Succeeded / Failed / Cancelled / Crashed / AuditFailed。入力・承認待ちは終了扱いではない。ProjectionStatus はこの実行状態とは別に、正本の表示状態を安全に再構成できているかを表す。[状態契約](../../crates/executors/src/runtime/contracts.rs#L636-L691)
 
-Cancel は終端 run には無操作で、活動中なら Cancelling を保存して実プロセス側を止める。InterruptTurn は provider の現在 turn への中断要求であり、終端 run には送れない。Steer は活動中の run に空でない追加指示を渡す。projection が degraded の間は Cancel 以外の制御を拒否する。[停止境界](../../crates/local-deployment/src/agent_run_port.rs)、[steer](../../crates/local-deployment/src/agent_run_port.rs)
+Cancel は終端 run には無操作で、活動中なら Cancelling を保存して実プロセス側を止める。InterruptTurn は provider の現在 turn への中断要求であり、終端 run には送れない。Steer は活動中の run に空でない追加指示を渡す。projection が degraded の間は通常制御を拒否し、Cancel と既知の startup collision を証拠検証する明示 Retry だけが回復経路を持つ。詳細な対象・拒否条件は [Runtime の限定回復](../architecture/agent-runtime.md#明示-retry-に限る-startup-collision-の回復)に置く。[停止境界](../../crates/local-deployment/src/agent_run_port.rs)、[steer](../../crates/local-deployment/src/agent_run_port.rs)
 
 通常 interactive Workspace の送信待ち queue は **Session ごとのメモリ内 FIFO**。各項目は ID・本文・設定を持ち、本文編集、個別削除、全 ID の正確な並べ替えを Session lock 下で行う。受理済み項目と composer の新しい draft は別物である。成功した最新 run の [Repository Memory](repository-memory.md)完了後に先頭を起動する。元 run の失敗・取消、memory 完了失敗では queue を保持して pause し、次の起動失敗では先頭へ戻して pause する。古い terminal 通知は最新 run の queue を消費しない。[保存](../../crates/services/src/services/queued_message.rs)、[終端処理](../../crates/local-deployment/src/container.rs)。
 

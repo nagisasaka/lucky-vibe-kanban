@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
+  - id: openwiki-source-b393e75029374eaf9cba5f7d
+    resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
@@ -28,10 +30,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Project・Issue と実施の関係
@@ -99,7 +101,7 @@ WorkflowAttempt は Project と Issue の所属を検証し、通常のテンプ
 
 ### 正式統合と Card の完了
 
-local Board の [正式 Integration](formal-integration.md)は採用 commit を固定し、一件ずつ選択した検証方針と必要な review を経て Git 公開後に選択 Card と Integration Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
+local Board の [正式 Integration](formal-integration.md)は採用 commit を固定し、一件ずつ merge と必要な review を行い、最終候補を受付時の検証方針に従って処理する。Git 公開後に選択 Card と Integration Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
 
 通常の link / unlink は interactive 用途を要求し、既存 Workspace の unlink は Integration guard も確認する。execution-only の間は通常作業への付け替えを拒否するが、終了・cleanup 後の用途解除は可能である。[link/unlink](../../crates/server/src/routes/workspaces/links.rs)、[用途と所有者](workspace.md#操作用途と実行所有者)。内部製品が自身の Card を付ける処理と、通常ユーザーの link API は区別する。
 

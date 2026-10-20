@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4cbadf815f879ccca2892ac453fdff4c9f22cc6c9438b0c8ab191a7e93f012f6",
+  "pageVersion": "sha256:30453da59398c4daa43a9350e89d4f103eeb4c3e2909fdd9212150f3e3fd05a0",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -184,7 +184,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/integration.rs",
-          "version": "repo-file-v1:sha256:e13adc7adefef6812929d9aca76c1e90cfef8399f75cea87de031dce77d7d95d"
+          "version": "repo-file-v1:sha256:89766c7697a09b54839de0b19d9784eea8b25abde821f05a741624b2376e068f"
         }
       ]
     },
@@ -197,10 +197,20 @@
           "version": "repo-file-v1:sha256:f74be359d4fcc4a48c1cf5dfff5dae0f9197b8ec2667a6e6309aeb2a7507d9d8"
         }
       ]
+    },
+    {
+      "id": "claim_886a28dfa21b4cd2ba2e76bc87805c18",
+      "statement": "正式Integrationは各sourceのmergeと必要なreviewの後、最終候補を受付時の検証方針に従って処理する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L595-L670",
+          "version": "repo-lines-v1:sha256:7e65ccab42426af5df7ad42d7f5103b2dc1df5ec6910ef85b41966ac5fc43885:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NGQzYjE4YmZmOWQyNGFiNTE1NmUzZWY1YzE5M2Q3Y2NiMmZkMjBmZjEyYWQ5MTQ1MTRhOWM0ZmYzNjEwM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmZGM5NGUzMzkyYjFhNTk0ZjQzZDE3N2JlYTlkMzU1ZWZkNTVkYzk1NGJjYTY4ZTMzOThiMGY2M2Q4NDYzYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZjZkNjk1MTA2NWJjMjZkMzQ1OWZmZjFlYWZjYTk1M2Q1ZjIxMmNlMzk5ZmE4NTRmODQ0MzZmYzVjYTBjOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjZhNDc1ODNiMjEyMGQ2M2ZjZTJjZDlkOTlmZDYxMTczZGI5NzY1Y2JjOThkNWRjZTY0M2U5YjMzMzc1ODgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-18T14:00:51.649Z"
+    "at": "2026-10-20T17:40:06.172Z"
   }
 }

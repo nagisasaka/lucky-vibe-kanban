@@ -14,6 +14,12 @@ sources:
     resource: repo://crates/git/tests/git_ops_safety.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-595d5d0308d670e38ef27fbf
+    resource: repo://crates/server/src/routes/integrations/admission.rs
+  - id: openwiki-source-a1c709eaad59af16183269df
+    resource: repo://crates/server/src/routes/integrations/legacy_checkpoint.rs
+  - id: openwiki-source-864e2ae97802aa9a00527c40
+    resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-391f34050223d13f679b3793
@@ -50,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -102,9 +108,15 @@ Agent の review API は Workspace 内に active AgentRun があれば拒否す�
 
 API が作るのは base からの detached worktree と固定 peer 一覧であり、peer の merge や tests を自動実行する API ではない。返す指示に従ってその試行先で組み合わせを検証し、元 Workspace の reset/stash、peer の修正、target/Card 更新、Wiki 執筆を持ち込まない。試行は通常 Workspace cleanup の外側の sibling directory に残し、調査後に明示的な worktree cleanup を行う。正式統合成功の証拠にはならない。[試行の用途](../../crates/server/src/routes/parallel_context.rs)、[保持と source ref 不変の test](../../crates/worktree-manager/src/worktree_manager.rs)
 
-local Board の **Integrate / Auto Merge** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source は受付時、target base は queue 先頭で実行を始める時点に固定する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+local Board の **Integrate / Auto Merge** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source と観測 target は受付時に固定する。queue 先頭で preparation を始めるときも同じ target であることを要求し、前進していれば停止する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
 
 この [正式 Integration](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
+
+新規 run の通常 merge は host が進める。競合したときだけ有限の Agent job が index を解消し、利用者は保存された候補の解決差分を承認する。その後に次の source へ進み、全 source 完了後の最終候補で凍結 validation plan を実行する。失敗した required check は retry / 候補限定例外 / cancel の判断を待つ。[競合と承認](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[最終検証](../concepts/formal-integration.md#開発検証と-human-gate)
+
+UI の冒頭説明には「各 selection を順に検証する」という旧表現が残るが、現在の検証実行は最終候補である。候補凍結後の追加指示も拒否されるため、表示文言だけで再編集可能と判断しない。[表示文言](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L180-L198)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L138-L164)
+
+旧 run の通常 Resume 拒否は新規 engine の安全境界であり、任意の payload 書換えで回避しない。特定履歴を対象とする [checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)も、検査・adoption・正式 Resume が別の操作である。
 
 ## 4. Rebase と direct merge
 

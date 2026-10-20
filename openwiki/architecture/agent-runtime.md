@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-20T17:40:06.172Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
@@ -39,7 +39,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -51,6 +51,8 @@ Agent Runtime は、[Session 内の AgentRun](../concepts/session-and-agent-run.
 `LocalAgentRunPort::reserve` は request と attempt の整合性、Workspace を検証し、実行 ID を DB に保存する。Setup の完了待ちなどでは、予約と起動を分けられる。`launch_reserved` は既に Pending でなくなった実行を重複起動せず、現在の状態を返す。[起動境界](../../crates/local-deployment/src/agent_run_port.rs#L300-L328)
 
 `agent-process-host` は一つの provider process と Native Audit を所有する独立ホストである。アプリ側は認証付き loopback endpoint に再接続し、保存済み host-event cursor の後から観測を取り込む。このため、サーバーとの接続断をそのまま provider の終了と扱ってはいけない。[ホストの契約](../../crates/local-deployment/src/process_host.rs#L1-L5)
+
+Starting の canonical event 保存は provider launch の前提であり、書込失敗時は起動せずに戻る。同一 attempt の再配送では event ID と保存済み時刻を再利用する。初回 input event ID は従来互換を保ち、Retry の input event ID は attempt と message から生成するため、同じ本文でも別 attempt と衝突しない。[起動前の保存](../../crates/local-deployment/src/agent_run_port.rs#L2563-L2616)・[input identity](../../crates/local-deployment/src/agent_run_port.rs#L585-L605)
 
 ## 四つのデータ経路
 
@@ -121,7 +123,15 @@ usage は RunAttempt ごとに native sequence が新しい場合だけ置き換
 
 隔離時は理由、`projection_degraded`、当該観測の cursor 前進を原子的に保存し、後続観測の取り込みを継続できる。[分離処理](../../crates/local-deployment/src/agent_run_port.rs#L1969-L2051)、[失敗台帳](../../crates/db/src/models/agent_runtime.rs#L234-L310)
 
-投影が Current でない場合、backend は Cancel 以外の制御を拒否する。Cancel は終端実行には成功する無操作であり、それ以外では Cancelling へ遷移して停止を依頼する。表示が不完全でも停止経路を残す契約である。[制御ガード](../../crates/local-deployment/src/agent_run_port.rs#L2866-L2889)。この前段にある [実行専用 Workspace の所有者検証](../concepts/workspace.md#操作用途と実行所有者)は別の操作制約である。
+投影が Current でない場合、通常制御を拒否するが、Cancel と下記の証拠付き Retry の経路は残す。終端実行の Cancel は冪等な無操作である。[制御ガード](../../crates/local-deployment/src/agent_run_port.rs#L3210-L3255)。この前段の [実行専用 Workspace の所有者検証](../concepts/workspace.md#操作用途と実行所有者)は独立した条件である。
+
+### 明示 Retry に限る startup collision の回復
+
+耐久 command と owner の権限を確認した明示 Retry だけが、既知の startup input ID 衝突を再構築できる。対象は二回目以降の最新 terminal attempt、特定の単一隔離記録、終了確認済み Host/provider、完全な journal と閉じた Native Audit、元の immutable input と一致する証拠を備えるものに限定する。観測処理が自動で degraded flag を消すことはない。[証拠検査](../../crates/local-deployment/src/agent_run_port.rs#L1519-L1710)
+
+欠けた input / Running の事実を冪等に追加し、canonical history 全体を reducer で再生する。再構築後は投影状態と更新時刻以外の意味状態が以前と一致しなければ拒否する。terminal run を Running に戻したり、隔離・監査記録を消したりしない。未知の失敗、改変、未完了 tail、生存不明の process はこの回復の対象外である。[追加と再構築](../../crates/local-deployment/src/agent_run_port.rs#L1710-L1758)・[原子的な照合](../../crates/db/src/models/agent_runtime.rs#L1254-L1340)
+
+この一般 Retry の互換処理と、[正式 Integration の限定 checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)は別である。後者は歴史的 Agent を再実行せず、承認済み Git prefix を引き継ぐ。
 
 ## 取消と実プロセスの終了
 

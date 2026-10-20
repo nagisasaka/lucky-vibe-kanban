@@ -4,8 +4,12 @@ title: Workflow の実行と耐久オーケストレーション
 description: 凍結グラフから AgentRun を起動する経路、outbox・inbox・lease の役割、分岐検証と取消・再起動時の所有境界。
 tags: [workflow, orchestration, recovery, lifecycle]
 sources:
+  - id: openwiki-source-bfeb454efabf3fd2f6ca5a1e
+    resource: repo://crates/db/src/models/orchestration.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-b393e75029374eaf9cba5f7d
+    resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
@@ -20,16 +24,20 @@ sources:
     resource: repo://crates/server/src/workflow_runtime/workspace.rs
   - id: openwiki-source-bef089692ac7606992050919
     resource: repo://crates/services/src/services/openwiki/bootstrap/reports.rs
+  - id: openwiki-source-121b98c6561fe94a6783b777
+    resource: repo://crates/services/src/services/orchestration_dispatch_tests.rs
   - id: openwiki-source-b19d02455156008b43c210c8
     resource: repo://crates/services/src/services/orchestration.rs
+  - id: openwiki-source-e33d67a243cd5977ddd88a37
+    resource: repo://docs/development/integration-dispatch-recovery.md
   - id: openwiki-source-45838aa0b8eb7ea92723e949
     resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -61,7 +69,15 @@ Workspace の DB row と実 worktree の準備完了は同義ではない。通�
 
 watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1044-L1075)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
 
-製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。[正式 Integration](../concepts/formal-integration.md)の成功後 Recover もこの照合を通す。
+製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。旧 Integration の製品 node 回復もこの経路を持つが、新規の [host-owned Integration](../concepts/formal-integration.md) は専用 orchestration node を作らず、adoption 後も旧 terminal audit を書き換えない。
+
+### Create の配送と受理を区別する
+
+Workflow dispatch は enqueue が返した outbox ID を `deliver_create` に渡し、その Create の受理を待ってから Started を返す。delivered だけでは足りず、親が取消・失敗していないこと、run/node/agent/idempotency link、port query の agent/session/turn identity を照合する。他 command の配送や、停止した親の Create を破棄した事実は受理証拠にならない。別 dispatcher が配送中なら保存済み command を待ち、未受理のまま待機期限を超えれば Unavailable を返す。[受理検査](../../crates/services/src/services/orchestration.rs#L187-L269)・[呼出し](../../crates/server/src/workflow_runtime/runner.rs#L865-L900)
+
+受理された AgentRun が Pending でも Started は返り得るため、これは provider の準備完了・仕事完了の通知ではない。同一配送の replay は既存 identity を使い、配送中に親が取消された場合は Started を返さず、受理済み Agent は取消照合用に残す。[競合・再送・取消テスト](../../crates/services/src/services/orchestration_dispatch_tests.rs#L145-L247)・[途中取消](../../crates/services/src/services/orchestration_dispatch_tests.rs#L357-L376)
+
+Orchestration event 保存と製品 node 完了は、それぞれ読み取り前に `BEGIN IMMEDIATE` で SQLite writer を予約する。deferred read-to-write upgrade の競合を避ける局所変更であり、全 DB の journal mode 変更ではない。[event と完了の transaction](../../crates/db/src/models/orchestration.rs#L277-L352)。隔離 DB の競合回帰テストはこの境界を検証するが、過去の稼働環境の lock holder は未特定である。[調査記録](../../docs/development/integration-dispatch-recovery.md#historical-evidence-not-executable-instructions)
 
 ## 実行の前進と待機
 
@@ -94,7 +110,7 @@ Human Gate と Arena の選択も製品の待機境界である。Arena は別�
 
 ## 取消とシステム所有 run
 
-取消は Workflow を Cancelling にして node と子実行へ伝え、照合を続ける。終端 run への取消は現在の結果を返す。outbox は enqueue 時だけでなく delivery 時にも親状態を確認し、取消後に古い Create/Retry が残っていても新しい AgentRun を起動しない。Cancel の配送は残す。[取消経路](../../crates/server/src/workflow_runtime/runner.rs#L1692-L1740)、[配送ガード](../../crates/services/src/services/orchestration.rs#L136-L207)
+取消は Workflow を Cancelling にして node と子実行へ伝え、照合を続ける。終端 run への取消は現在の結果を返す。outbox は enqueue 時だけでなく delivery 時にも親状態を確認し、取消後に古い Create/Retry が残っていても新しい AgentRun を起動しない。Cancel の配送は残す。[取消経路](../../crates/server/src/workflow_runtime/runner.rs#L1692-L1740)、[配送ガード](../../crates/services/src/services/orchestration.rs#L271-L294)
 
 Repository scope の Workflow は maintenance owner だけが駆動できる。一般開始 API は server-managed decision source を拒否する。bootstrap の node には `requires_product_validation` を設定し、provider の成功と製品上の成功を分ける。[所有ガード](../../crates/server/src/workflow_runtime/runner.rs#L996-L1009)、[駆動ガード](../../crates/server/src/workflow_runtime/runner.rs#L2273-L2276)、[製品検証 flag](../../crates/server/src/workflow_runtime/runner.rs#L1153-L1175)。具体的な検証・再試行は [OpenWiki maintenance](../operations/openwiki-maintenance.md)が正本である。
 

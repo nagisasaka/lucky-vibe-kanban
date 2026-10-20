@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0aba3f6069f22d764c03ddc436b50ac4e39e5913441529d525bff050713f99b4",
+  "pageVersion": "sha256:90bd3010a597f91dd04f498eb445ff718020b7da72e79ef3a7f91007d0c7f991",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -78,19 +78,23 @@
     },
     {
       "id": "claim_c27867023eef4c09b32ee58d6cb35a4f",
-      "statement": "local Board の正式 Integration は選んだ Card と採用 Workspace を専用環境で受付時の検証方針に従って処理し、local target 公開と条件付き Done を扱う。省略は NotRun であり、実行専用環境は通常の開発入口と区別する。",
+      "statement": "local Boardの正式Integrationは専用環境でhost merge、競合時のAgent jobとreview、受付方針に従う最終候補検証を行いlocal target公開と条件付きDoneを扱う。省略はNotRunで通常開発環境と区別する。",
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/workspace_usage.rs",
           "version": "repo-file-v1:sha256:e0b8cd7f9d85f4c4d46d2e97aba7f40ac96d5c2461787bedac97d90e2031a1bd"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1632-L1955",
-          "version": "repo-lines-v1:sha256:69d69149294e1d59ebba1bf36aeee11abb96aeccf9cdd85025586b02278bd198:eyJzZWxlY3RlZExpbmVDb3VudCI6MzI0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhMGM5ODZjMTE3NTM5ODk2OTJjNWEyYmQ1ZTE3ZmI2OWRlZjdlNjVlNDkzZjQ1MzE4NzE5YzI1NjI4ZjkyYjQ3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhYjkxY2NjMDc4YzNmZmZlM2U5OThjZWM4OTE4NGM5NDI5MjE1NzllMGU4YTkxMzUwMjE1Mjg5MmYxN2I1YzI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MiwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYTBhZjU0NTI2NzFmOTk0NDIzMjA2NDRmNGYzNGE4MzdkZGQ3ODQ0YWY4MWM2OTI0N2E5YWJmYzMzNzNiM2RjIn0"
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1329-L1485",
+          "version": "repo-lines-v1:sha256:cbaa1d673bf5e008ffdc5040b1a049f6603b7158dfd924abffe35ec461d6bab2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMzYwYmIyYjFlMzUyOTQ4YzBlZDc3YjUxYzQ1OTY2MDdiYTc4OTlmYTg3ZDdkMjdmOGIxY2IwMDU0ODkwODgyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNWY2ZjQ2NmU1OWNmYzMwNzAzYzQ1ZjcyYWY2NWRlNTRhYzM2M2QzNTRjYzFhMzMzMDM1MGFjZDQ1MjQzNGM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkZGE2M2E5MDg5MGJiMWZiMzA3NzFmMTc5MThmNTgwZjBmZmU1NmIwNDUzNjA5OWY1Y2M5YjFhZGNjODdhMWEyIn0"
         },
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
-          "version": "repo-file-v1:sha256:78d8f6c811d4c19cdf7a433cc0dcd1bfd51c3fc8c49a5fca7cbf7f1927bca3f4"
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L467-L670",
+          "version": "repo-lines-v1:sha256:d492f1e345a46ff777d83282e6a68a068eb8a7ed100334072ae55cb9b167cae1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlMWYzYmY1NDBjZDUxOTlmYTNkZmVlZGY4MDJkNzA5M2E2MzdlMzViODBlOTkwZjc5NGEwYzViY2U1MWI4OTAzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZmRjOTRlMzM5MmIxYTU5NGY0M2QxNzdiZWE5ZDM1NWVmZDU1ZGM5NTRiY2E2OGUzMzk4YjBmNjNkODQ2M2EyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxOWU3NjM1NWNmMTE5OTQ4MGMzZjk5ODM2YjE0ODZjODQxZDg5MWZhYWQ5MDRjNjA4ZTA5MzAyMmQzNzU3YWVlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2I2YTQ3NTgzYjIxMjBkNjNmY2UyY2Q5ZDk5ZmQ2MTE3M2RiOTc2NWNiYzk4ZDVkY2U2NDNlOWIzMzM3NTg4In0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L470-L510",
+          "version": "repo-lines-v1:sha256:53fef4f0076df85f02a966e3c19eaefc949406eb597de32c7be1393846a7afee:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkNGZjMzFkMzc1MWQ3NTM0Mzc0NTdhODFmN2NlNTYyZjI4NmQwMWIwZGMyMGFlNmNmNThmZWQ2YTkwZGJjYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YWMwNzBjNzliNzNlNGRiMmQ4MWNkZGFlNjVkY2UxMGUxMzViNDkwYzE0Yzk0ZmVjMmIwMjhmODIwZDJmY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2NWIxY2IwZDJkYjA4NzdmZDAxODI0ZWFhOTAzYWY3N2NkODE5M2NhODc5M2Q5NzA0OTNmZGZiMTAyMWM3YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjYTZjZmQ5MTBlMmI2MTcwNDU2ZDAwODk0Mzk0NjYxYzg5YWQxNTk1ODZmNDM3YTAzNGNjOTFkNWU3MmI1MTUifQ"
         }
       ]
     },
@@ -161,6 +165,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-20T17:16:45.724Z"
+    "at": "2026-10-20T17:40:06.172Z"
   }
 }

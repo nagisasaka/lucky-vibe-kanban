@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/server/src/workflow_runtime/envelope.rs
   - id: openwiki-source-6f2595571056199f0f83415c
     resource: repo://crates/server/src/workflow_runtime/runner.rs
+  - id: openwiki-source-b19d02455156008b43c210c8
+    resource: repo://crates/services/src/services/orchestration.rs
   - id: openwiki-source-5bd46b87a60accbf6cd6da13
     resource: repo://crates/workflow/src/planner.rs
   - id: openwiki-source-b388436d40b78500f0d81684
@@ -26,10 +28,10 @@ sources:
     resource: repo://packages/web-core/src/features/workflow/model/useWorkflowEditorDraft.ts
   - id: openwiki-source-49c27e78a2601ac597269802
     resource: repo://packages/web-core/src/features/workflow/model/workflowEditorDraft.ts
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-20T17:40:06.172Z
 ---
 
 # Workflow Attempt とグラフの契約
@@ -45,6 +47,8 @@ Project 用定義と System 用定義があり、System テンプレートは通
 通常の Session 準備は interactive Workspace を要求する。Repository bootstrap だけは専用の内部入口を通り、execution_only、bootstrap 所有者の Repo/run ID、未完了結果、Repo membership が保存済みであることを確認してから子 Session を作る。クライアントの指定で所有検証を回避する入口ではない。[二つの準備経路](../../crates/server/src/routes/workflows.rs#L750-L793)。用途と所有の一次説明は [Workspace](workspace.md#操作用途と実行所有者)に置く。
 
 起動時はグラフ snapshot と実行状態を保存し、以後の runtime はその snapshot を使う。Attempt は最新 run ID と Workspace ID を保持し、draft/ready と running/awaiting/terminal の状態を区別する。編集されたテンプレートから進行中 run を再解釈する前提にはしない。[起動と snapshot](../../crates/server/src/workflow_runtime/runner.rs#L995-L1056)、[snapshot 読み込み](../../crates/server/src/workflow_runtime/runner.rs#L2065-L2116)、[状態と関連](../../crates/db/src/models/workflow.rs#L32-L47)
+
+Agent node の Started は、その Create の配送受理と run/node/Session/turn identity の照合後に返る。provider 準備完了や成果物成功の通知ではない。再送・並行配送・親取消との境界は [Workflow Runtime の受理契約](../architecture/workflow-runtime.md#create-の配送と受理を区別する)を参照する。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L865-L900)
 
 ## 編集・保存競合・Undo/Redo
 
