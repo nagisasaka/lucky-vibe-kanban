@@ -90,15 +90,17 @@ export function WorkspaceFilePreviewPanel({
             title="File missing"
             description="The file was not returned by the workspace API."
           />
-        ) : displayInfo?.viewKind === 'markdown' ? (
+        ) : displayInfo?.viewKind === 'markdown' && !target.line ? (
           <MarkdownFileViewer content={data.content ?? ''} />
         ) : displayInfo?.viewKind === 'image' ? (
           <ImageFileViewer src={scopedRawUrl} alt={data.name} />
         ) : displayInfo?.viewKind === 'code' ||
-          displayInfo?.viewKind === 'text' ? (
+          displayInfo?.viewKind === 'text' ||
+          displayInfo?.viewKind === 'markdown' ? (
           <CodeTextViewer
             content={data.content ?? ''}
             language={displayInfo.language}
+            line={target.line}
           />
         ) : (
           <UnsupportedFileViewer
