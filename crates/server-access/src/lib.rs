@@ -392,6 +392,50 @@ impl Access {
         }
         Ok(())
     }
+    /// Persist explicit device notification consent for an authenticated member. The
+    /// encrypted envelope is purpose-bound and never contains a login token.
+    pub fn seal_push_registration(
+        &self,
+        subscription: serde_json::Value,
+    ) -> Result<Vec<u8>, Error> {
+        let p = ACTOR
+            .try_with(Clone::clone)
+            .map_err(|_| Error::unauthorized())?;
+        if !matches!(p.channel, "local" | "basic" | "web") {
+            return Err(Error::unauthorized());
+        }
+        self.encrypt(
+            &serde_json::json!({"purpose":"web_push_v1", "subscription":subscription,
+            "user_id":p.user_id, "revision":p.revision, "channel":p.channel}),
+        )
+    }
+
+    /// Device consent outlives browser idle/logout expiry so background jobs can
+    /// notify overnight. OFF revokes it; membership/mode changes revoke delivery.
+    /// This envelope grants no API access and never renews a browser session.
+    pub async fn open_push_registration(
+        &self,
+        encrypted: &[u8],
+        owner: Uuid,
+    ) -> Option<serde_json::Value> {
+        let value: serde_json::Value = self.decrypt(encrypted).ok()?;
+        if value["purpose"] != "web_push_v1" || value["user_id"].as_str()? != owner.to_string() {
+            return None;
+        }
+        let mut p = Principal::local();
+        p.user_id = owner;
+        p.revision = value["revision"].as_i64()?;
+        p.expires = i64::MAX;
+        p.session_hash = None;
+        p.channel = match value["channel"].as_str()? {
+            "local" => "local",
+            "basic" => "basic",
+            "web" => "web",
+            _ => return None,
+        };
+        self.valid(&p).await.then(|| value["subscription"].clone())
+    }
+
     async fn valid(&self, p: &Principal) -> bool {
         if p.expires <= now() {
             return false;

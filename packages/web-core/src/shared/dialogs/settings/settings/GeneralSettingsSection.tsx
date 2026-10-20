@@ -1,3 +1,4 @@
+import { WebPushSettings } from '@/shared/components/web-push/WebPushSettings';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cloneDeep, isEqual, merge } from 'lodash';
@@ -692,6 +693,10 @@ export function GeneralSettingsSection() {
             </SettingsField>
           </>
         )}
+      </SettingsCard>
+
+      <SettingsCard title="Web Push">
+        <WebPushSettings />
       </SettingsCard>
 
       {/* Notifications */}

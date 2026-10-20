@@ -1,3 +1,4 @@
+import { ConsultChatGPT } from '@/shared/components/web-push/ConsultChatGPT';
 import { FollowUpQueue } from './FollowUpQueue';
 import { useTranslation } from 'react-i18next';
 import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuestions';
@@ -310,6 +311,13 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   const latestAgentRunState = latestAgentRun
     ? (latestAgentRun.timeline?.state ?? latestAgentRun.summary.state)
     : null;
+  const notifiedRunId = new URLSearchParams(window.location.search).get(
+    'agent_run_id'
+  );
+  const notifiedRun = canonicalTimeline?.runs.find(
+    (run) => run.summary.agent_run_id === notifiedRunId
+  );
+  const consultationRun = notifiedRunId ? notifiedRun : latestAgentRun;
   const displayedGoal = activeGoal ?? latestAgentRunState?.goal ?? null;
   const isAgentRunActive = Boolean(activeAgentRun);
   const isAgentRunCancelling = latestAgentRunState?.status === 'cancelling';
@@ -1524,6 +1532,39 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           {steerMutation.error.message}
         </p>
       )}
+      {notifiedRunId && canonicalTimeline && !notifiedRun && (
+        <p className="text-sm text-low">
+          通知対象Runはこのセッションに見つかりません。通知のSession
+          IDと履歴を確認してください。
+        </p>
+      )}
+      {notifiedRun && (
+        <p className="text-sm text-low">
+          通知対象Run: {notifiedRun.summary.agent_run_id} —{' '}
+          {(notifiedRun.timeline?.state ?? notifiedRun.summary.state)?.status}
+          。テスト・Integration・公開の結果は別途確認してください。
+        </p>
+      )}
+      {sessionId &&
+        workspaceId &&
+        consultationRun &&
+        (pendingApproval || notifiedRun || canonicalTimeline?.isTerminal) && (
+          <ConsultChatGPT
+            workspaceId={workspaceId}
+            sessionId={sessionId}
+            agentRunId={consultationRun.summary.agent_run_id}
+            questionId={
+              consultationRun === activeAgentRun
+                ? canonicalAgentActionPolicy.submit_input.controlId
+                : null
+            }
+            approvalId={
+              consultationRun === activeAgentRun
+                ? canonicalAgentActionPolicy.resolve_approval.controlId
+                : null
+            }
+          />
+        )}
       {goalProgressNode}
       {sessionId && (
         <AsyncAgentQuestions

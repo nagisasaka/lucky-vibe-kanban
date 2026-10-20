@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const projectSearchSchema = z.object({
   session_id: z.string().optional(),
+  agent_run_id: z.string().uuid().optional(),
 });
 
 export type ProjectSearch = z.infer<typeof projectSearchSchema>;

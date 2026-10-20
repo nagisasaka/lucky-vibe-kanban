@@ -39,6 +39,7 @@ pub mod terminal;
 pub mod todos;
 pub mod workflows;
 pub mod workspaces;
+mod web_push;
 
 pub fn router(
     deployment: DeploymentImpl,
@@ -49,6 +50,7 @@ pub fn router(
     let local_routes = Router::new()
         .route("/health", get(health::health_check))
         .merge(config::router())
+        .merge(web_push::router(&deployment, access.clone()))
         .merge(agent_settings::router())
         .merge(agent_tools::router())
         .merge(containers::router(&deployment))
