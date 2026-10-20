@@ -1,5 +1,8 @@
 //! Bounded code and per-path diff evidence, reusing GitService identities,
 //! merge-base discovery and the normal unified-diff formatter.
+#[path = "code_query.rs"]
+mod query;
+
 use anyhow::ensure;
 use git::{
     GitService,
@@ -27,10 +30,10 @@ struct FileArgs {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    vec![
-        definition::<ListArgs>(
+    let mut tools = vec![
+        definition::<query::FileListArgs>(
             "list_workspace_files",
-            "List tracked reference-code paths in one Workspace repository, up to 50. Private paths, Git symlink entries and submodules are excluded. Use get_workspace_file for content.",
+            "List tracked reference-code paths in one Workspace repository, up to 50. Private paths, Git symlink entries and submodules are excluded. Optional directory_prefix and filename_contains filter before paging. Use get_workspace_file for content.",
         ),
         definition::<FileArgs>(
             "get_workspace_file",
@@ -44,18 +47,31 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
             "get_workspace_diff",
             "Read one changed path's unified text diff in character pages up to 16000. Includes source head and base. Binary/oversized/unreadable content is not reported as an empty successful diff. Renames are compared per path.",
         ),
-    ]
+    ];
+    tools.extend(query::tools());
+    tools
 }
 
 pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {
     let mut result;
     let target;
-    if matches!(name, "list_workspace_files" | "list_workspace_diff") {
+    if matches!(name, "search_workspace_files" | "get_workspace_file_ranges") {
+        return query::call(remote, name, args).await;
+    }
+    if name == "list_workspace_files" {
+        let args: query::FileListArgs = arguments(args)?;
+        let (args, filter) = args.into_parts();
+        filter.validate()?;
+        target = args.target.clone();
+        let source = remote.evidence_source(&target).await?;
+        result = tokio::task::spawn_blocking(move || list(&source, &args, false, Some(&filter)))
+            .await??;
+    } else if name == "list_workspace_diff" {
         let args: ListArgs = arguments(args)?;
         target = args.target.clone();
         let source = remote.evidence_source(&target).await?;
         let diff = name == "list_workspace_diff";
-        result = tokio::task::spawn_blocking(move || list(&source, &args, diff))
+        result = tokio::task::spawn_blocking(move || list(&source, &args, diff, None))
             .await
             .map_err(|_| anyhow::anyhow!("Code read interrupted; retry this read"))??;
     } else {
@@ -94,7 +110,12 @@ fn heads(source: &Source, root: &std::path::Path) -> anyhow::Result<(GitService,
     );
     Ok((git, head.oid))
 }
-fn list(source: &Source, args: &ListArgs, diff: bool) -> anyhow::Result<Value> {
+fn list(
+    source: &Source,
+    args: &ListArgs,
+    diff: bool,
+    filter: Option<&query::PathFilter>,
+) -> anyhow::Result<Value> {
     let root = source.root()?;
     let (git, head) = heads(source, &root)?;
     let base = if diff {
@@ -118,12 +139,21 @@ fn list(source: &Source, args: &ListArgs, diff: bool) -> anyhow::Result<Value> {
     } else {
         git.reference_files(&root).map_err(unavailable)?
     };
+    if let Some(filter) = filter {
+        paths.retain(|path| filter.matches(path));
+    }
     paths.sort();
     let base = base.map(|b| b.to_string());
+    let filter_identity = filter.filter(|f| f.is_active());
+    let identity = if let Some(filter) = filter_identity {
+        serde_json::to_vec(&(&head, &base, &paths, filter))?
+    } else {
+        serde_json::to_vec(&(&head, &base, &paths))?
+    };
     let current = revision(
         &args.target,
         if diff { "diff-list" } else { "file-list" },
-        &serde_json::to_vec(&(&head, &base, &paths))?,
+        &identity,
     );
     check_page(
         args.offset,
@@ -251,7 +281,7 @@ mod tests {
             String::from_utf8_lossy(&output.stderr)
         );
     }
-    async fn fixture() -> (tempfile::TempDir, Remote, Value) {
+    pub(super) async fn fixture() -> (tempfile::TempDir, Remote, Value) {
         let (remote, _, _, run, _) = super::super::runtime_write_tests::fixture().await;
         let temp = tempfile::tempdir().unwrap();
         let repo = Repo::find_or_create(&remote.pool, temp.path(), "code-fixture")

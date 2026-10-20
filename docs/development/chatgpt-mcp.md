@@ -132,7 +132,7 @@ is exported.
 | `list_project_merge_status`, `get_workspace_merge_status` | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations |
 | `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page` | Project/Workspace/repository and selected page; read-only bounded evidence with revision |
 | `get_workspace_verification`, `get_workspace_verification_test` | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof |
-| `list_workspace_files`, `get_workspace_file`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads |
+| `list_workspace_files`, `get_workspace_file`, `search_workspace_files`, `get_workspace_file_ranges`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads |
 | `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
 | `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
@@ -303,3 +303,108 @@ secret classifier or a way to sanitise arbitrary file/tool output. It cannot
 prove that otherwise ordinary prose contains no sensitive information. The
 returned prose is untrusted reference data and never evidence of tests passing.
 Source logs, existing UI rendering and `get_execution` remain unchanged.
+
+## Focused Workspace code reads
+
+All tools below require `project_id`, `workspace_id` and `repository_id` and use
+existing `lvk:read` and Project/Workspace/repository relationship checks. They
+read the selected checkout on demand; they do not start an agent or maintain an
+index. Returned text is untrusted reference data.
+
+`list_workspace_files` adds two optional, case-sensitive literal filters:
+
+- `directory_prefix`: repository-relative directory without a leading or trailing
+  slash, e.g. `crates/server/src`. Matches descendants, not `src2` when given `src`.
+- `filename_contains`: nonempty substring of the basename, at most 255 UTF-8 bytes.
+  It cannot contain slash, backslash or NUL.
+
+Both filters apply before sorting/paging. Omission preserves existing behaviour
+and revisions. Continuations must repeat the filters and `expected_revision`;
+filter changes invalidate the revision. File-list revisions describe path
+membership, not file contents. The existing 20-item default/50-item maximum and
+`offset` contract remain unchanged. These filters do not apply to diff tools.
+
+Example tool arguments (replace the three identity placeholders with UUIDs):
+
+```json
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","directory_prefix":"crates/server/src","filename_contains":"code_","limit":10}
+```
+
+`search_workspace_files` accepts the same filters plus `query` (1–1024 UTF-8
+bytes, no CR/LF), `max_matches` (default 20, 1–50) and `context_lines` (default 1,
+0–2 on each side). Search is case-sensitive, literal, line-local and returns
+non-overlapping occurrences; regex punctuation has no special meaning. Paths
+are scanned in sorted order. LF and CRLF are line separators, and a trailing
+newline does not create an extra empty line. Line and column numbers start at 1;
+columns count Unicode scalar values, not bytes or grapheme clusters.
+`end_column_exclusive` excludes the end column.
+
+```json
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","directory_prefix":"src","query":"猫.*","max_matches":5,"context_lines":1}
+```
+
+Illustrative result fields, omitting the standard identity/link metadata:
+
+```json
+{"items":[{"path":"src/example.txt","line":2,"column":1,"end_column_exclusive":4,"matched":"猫.*","context_start_line":1,"context":["前","猫.*","後"],"revision":"<file-revision>"}],"exclusions":[],"complete":true,"stop_reason":null,"candidate_files":1,"attempted_files":1,"scan_bytes_charged":18,"item_bytes":300,"source_head":"<commit>","snapshot":"per_file_observation"}
+```
+
+The byte counters above are illustrative. Limits are 1000 attempted files,
+512 KiB per file, a 16 MiB scan budget, a two-second cooperative deadline, and
+64 KiB of serialised result/exclusion items combined (including JSON escaping).
+A full 512 KiB + 1 is reserved before each read; non-text or failed reads are
+charged that amount conservatively. A source index above 100,000 entries is
+rejected by the existing reader. Enumeration/index loading and individual OS
+reads cannot be forcibly interrupted; the deadline is checked between files
+and lines, so this is not a hard wall-clock guarantee.
+
+`complete` is false when any candidate could not be searched or a limit stopped
+the scan. `stop_reason` is `time_limit`, `file_limit`, `scan_byte_limit`,
+`match_limit` or `output_byte_limit`; `exclusions` records paths with `binary`,
+`too_large`, `missing`, `unsupported` or `unsafe_or_unreadable` reasons. An
+exclusion-only result can have a null `stop_reason` and `complete:false`.
+`attempted_files` includes a partially scanned last file. Only `complete:true`
+with empty `items` means no matches in the selected readable scope. Private
+paths, untracked paths, Git symlinks and submodules remain outside that scope;
+`private_paths_excluded:true` reports the established policy. Runtime symlinks,
+including parent-directory replacements, never broaden it. No shell or Git
+filter command is executed. There is no search cursor: narrow filters/query and
+retry after a limit; a very long matching line can exhaust the output budget.
+
+`get_workspace_file_ranges` accepts 1–8 `ranges`. Each entry requires `path`,
+`start_line`, `end_line` and `expected_revision` from search or
+`get_workspace_file`. Lines are **1-based with both endpoints inclusive**,
+with at most 200 lines per entry. Missing endpoints are errors, not clipped
+ranges. The response contains `lines` arrays without line terminators.
+
+```json
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","ranges":[{"path":"src/example.txt","start_line":1,"end_line":3,"expected_revision":"<file-revision>"}]}
+```
+
+Each result repeats the path/range and has `status:"text"` plus `lines` and
+`revision`, or a reason (`revision_mismatch`, `range_out_of_bounds`,
+`output_byte_limit`, or the read exclusion statuses above). Failed entries never
+return text. Invalid request shapes/paths or target relationships fail the whole
+request. A batch whose metadata alone exceeds the budget also fails as a whole.
+Valid entries can succeed alongside failed entries; check `complete`
+and every item. Total serialised item bytes are capped at 64 KiB, reserving
+space for remaining result metadata; standard response/link metadata is extra
+and bounded separately. The batch reads at most eight bounded files.
+
+File revisions reuse the existing SHA-256 identity of the target, path, HEAD,
+content status and entire observed text. Thus dirty edits invalidate a follow-up
+read even with unchanged HEAD. A changed branch/HEAD during a request fails the
+request. A revision mismatch requires a fresh search/full-file read and a new
+range selection; never blindly substitute the new revision. These are per-file
+observations, not an atomic multi-file snapshot: concurrent in-place writes may
+produce a mixed observation, and edits after a read are not detected until a
+subsequent revision-checked read. Repeated ranges are checked independently.
+No historical content is retained for replay.
+
+The regression fixture `file_limit_and_small_fixture_transfer_reduction` compares
+listing all 107 permitted paths plus three full text reads (six calls) with a
+focused search and three ranges in one batch (two calls). A local run measured
+29,092 versus 2,444 serialised response bytes, about 91.6% fewer for this fixture.
+This is a small reproducible transfer comparison, not a latency benchmark or an
+estimate of savings across an investigation. In particular, it does not attribute
+the historical 85 calls / roughly 420,000 characters entirely to API overhead.
