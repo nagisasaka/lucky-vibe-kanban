@@ -340,12 +340,8 @@ export function SharedAppLayout() {
           onClose={() => setIsDrawerOpen(false)}
         >
           <div className="flex flex-col h-full">
-            {/* Header: org name + close button */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <span className="text-sm font-medium text-high truncate">
-                {organizations.find((o) => o.id === selectedOrgId)?.name ??
-                  'Organization'}
-              </span>
+            {/* Drawer close button */}
+            <div className="flex items-center justify-end p-4 border-b border-border">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(false)}

@@ -34,6 +34,8 @@ const children = [];
 function start(binary, args = [], extra = {}) {
   const child = spawn(path.join(root, "target/debug", binary), args, {
     cwd: root,
+    // Own a process group so backend capability-probe children are cleaned up too.
+    detached: true,
     env: { ...env, ...extra },
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -43,14 +45,22 @@ function start(binary, args = [], extra = {}) {
   );
   return child;
 }
+function signalGroup(child, signal) {
+  try {
+    process.kill(-child.pid, signal);
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error;
+  }
+}
 async function stop(child) {
+  signalGroup(child, "SIGTERM");
   if (child.exitCode !== null || child.signalCode !== null) return;
   const exited = once(child, "exit");
-  child.kill("SIGTERM");
-  const timer = setTimeout(() => child.kill("SIGKILL"), 10000);
+  const timer = setTimeout(() => signalGroup(child, "SIGKILL"), 10000);
   await exited;
   clearTimeout(timer);
 }
+
 let browser;
 let page;
 let base;
@@ -122,6 +132,7 @@ try {
   });
   const loadingContext = await browser.newContext();
   const loadingPage = await loadingContext.newPage();
+  page = loadingPage;
   await loadingPage.route(
     "https://api.github.com/repos/nagisasaka/lucky-vibe-kanban",
     async (route) => {
@@ -196,9 +207,7 @@ try {
       ).toHaveCount(0);
       await expect(page.getByText("Local", { exact: true })).toHaveCount(0);
     }
-    await page
-      .getByRole("button", { name: "Header regression", exact: true })
-      .click();
+    await page.locator('button[aria-label="Header regression"]').click();
     await expect(page).toHaveURL(new RegExp(`/projects/${project}`));
     await page
       .getByRole("button", { name: "Local workspaces", exact: true })
@@ -219,6 +228,7 @@ try {
     }
     assert.deepEqual(obsolete, []);
     await page.screenshot({
+      animations: "disabled",
       path: path.join(output, `screenshots/${name}.png`),
     });
     results.push({
@@ -229,37 +239,65 @@ try {
     });
     await context.close();
   }
+  const mobileContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+  });
+  await mobileContext.route(
+    "https://api.github.com/repos/nagisasaka/lucky-vibe-kanban",
+    (route) => route.fulfill({ json: { stargazers_count: 0 } }),
+  );
+  page = await mobileContext.newPage();
+  page.setDefaultTimeout(15000);
+  await page.goto(`${base}/projects/${project}`);
+  await page.getByRole("button", { name: "Open menu", exact: true }).click();
+  await expect(page.getByText("Local", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Give Feedback", { exact: true })).toHaveCount(0);
+  await expect(page.locator('a[href*="discord"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "Workspaces", exact: true }).click();
+  // The fresh instance may redirect the workspace entry to its create screen.
+  await expect(page).toHaveURL(/\/workspaces(?:\/create)?$/);
+  // Test the return menu on the existing workspace, outside the automatic create dialog.
+  await page.goto(`${base}/workspaces/${workspace}`);
+  await page.getByRole("button", { name: "Projects", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Header regression", exact: true })
+    .click();
+  await expect(page).toHaveURL(`${base}/projects/${project}`);
+  await page.screenshot({
+    animations: "disabled",
+    path: path.join(output, "screenshots/mobile.png"),
+  });
+  await mobileContext.close();
+  results.push({
+    scenario: "mobile navigation",
+    viewport: "390x844",
+    navigation: "passed",
+  });
   const currentConfig = (await api("/api/info")).data.config;
   await api("/api/config", "PUT", {
     ...currentConfig,
     onboarding_acknowledged: false,
   });
   const onboardingContext = await browser.newContext();
-  await onboardingContext.route("https://github.com/**", (route) =>
-    route.fulfill({
-      contentType: "text/html",
-      body: "<title>External destination stub</title>",
-    }),
+  page = await onboardingContext.newPage();
+  page.setDefaultTimeout(15000);
+  await onboardingContext.route(
+    "https://api.github.com/repos/nagisasaka/lucky-vibe-kanban",
+    (route) => route.fulfill({ json: { stargazers_count: 0 } }),
   );
-  const onboardingPage = await onboardingContext.newPage();
-  await onboardingPage.goto(base + "/onboarding");
-  const popupPromise = onboardingPage.waitForEvent("popup");
-  await onboardingPage
-    .getByRole("button", { name: "GitHub", exact: true })
-    .click();
-  const popup = await popupPromise;
-  await expect(popup).toHaveURL(
-    "https://github.com/nagisasaka/lucky-vibe-kanban",
-  );
-  await popup.close();
+  await page.goto(base + "/onboarding");
+  // ConfigProvider bypasses onboarding; RootRedirectPage selects the only project.
+  await expect(page).toHaveURL(`${base}/projects/${project}`);
   await expect(
-    onboardingPage.getByRole("button", { name: "Discord", exact: true }),
-  ).toHaveCount(0);
-  await onboardingPage.screenshot({
-    path: path.join(output, "screenshots/onboarding.png"),
-  });
+    page.getByRole("link", { name: "Star on GitHub", exact: true }),
+  ).toHaveAttribute("href", "https://github.com/nagisasaka/lucky-vibe-kanban");
   await onboardingContext.close();
-  results.push({ scenario: "onboarding", github: "LVK", discord: "absent" });
+  results.push({
+    scenario: "local onboarding bypass",
+    result:
+      "redirected to the first project; landing component is not reachable in local mode",
+  });
   await writeFile(
     path.join(output, "results.json"),
     JSON.stringify(
@@ -269,8 +307,35 @@ try {
     ),
   );
   console.log(JSON.stringify(results, null, 2));
+} catch (error) {
+  if (page && !page.isClosed()) {
+    await page
+      .screenshot({ path: path.join(output, "screenshots/failure.png") })
+      .catch(() => {});
+    await writeFile(
+      path.join(output, "failure.html"),
+      await page.content(),
+    ).catch(() => {});
+  }
+  throw error;
 } finally {
   await browser?.close();
   for (const child of children.reverse()) await stop(child);
   await rm(instance, { recursive: true, force: true });
+  await writeFile(
+    path.join(output, "cleanup.json"),
+    JSON.stringify(
+      {
+        browserClosed: true,
+        servers: children.map((child) => ({
+          pid: child.pid,
+          exitCode: child.exitCode,
+          signal: child.signalCode,
+        })),
+        instanceRemoved: instance,
+      },
+      null,
+      2,
+    ),
+  );
 }
