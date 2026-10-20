@@ -1,5 +1,7 @@
 # Formal Integration dispatch recovery
 
+Latest operator handoff: [prepared one-command cutover](#prepared-one-command-operator-cutover--local-9-33587794). Earlier cutover sections are historical.
+
 A Create command being queued, or a global outbox delivery returning success,
 does not prove that its AgentRun exists. The dispatcher must settle the specific
 Create, verify its durable run/node/agent link, and query that AgentRun before
@@ -453,3 +455,120 @@ Second-failure validation in this workspace:
 If interrupted, resume from this committed source and retained evidence at
 `target/local9-second-failure/`; keep the serving dist intact. Recheck live
 identity and frozen payload before planning any separately authorised cutover.
+
+## Prepared one-command operator cutover — LOCAL-9 33587794
+
+This is the current handoff, superseding the manual first/second build instructions
+above. **The actual cutover has not been executed.** After this AgentRun and all
+other jobs finish, an operator may run the following one command as **appuser in
+an independent SSH TTY inside the same container namespace**:
+
+```bash
+python3 /var/tmp/local9-hotfix-33587794-prepared/cutover.py --execute
+```
+
+The program requires a TTY and rejects server/Codex ancestry. Do not invoke it
+through MCP, an AgentRun, a scheduled task, or a child detached from this agent.
+An external SSH/container-entry command is installation-specific; no unverified
+container name or SSH destination is assumed. Keep the SSH session open. HUP is
+ignored and logs are flushed to disk, but container destruction or uncatchable
+termination cannot be made safe by nohup/setsid. No updater service is installed.
+
+Candidate ELF is
+`/var/tmp/lvk-instances/dev/runtime/worktrees/d546-local-3-4-integr/lucky-vibe-kanban/target/debug/server`,
+1,353,264,896 bytes, SHA256
+`efa3ff3a66f0eeb0a6efc8661efc280592b6a02cf72d9d60cf35a6442c1135d6`.
+It was built successfully with the recorded offline command, jobs=2, from exact
+clean source `33587794d71f5da0107dd34b6eb6be5393511a70`; only operator scripts and
+documentation were added afterward, with no Rust/frontend/dependency changes.
+The serving binary remains 45bd9581, hash `3e37ca96…`, PID 960511 when rechecked.
+`ldd` resolves libc, libgcc_s, libm and the same Linux loader as the old artifact.
+No new server process was smoke-started against live data.
+
+The same 992 real frontend files were verified by their complete manifest digest.
+The candidate still depends on this workspace's `packages/local-web/dist` at
+runtime. **Retain the workspace/dist and candidate; do not clean or rebuild them
+before cutover.** Artifact metadata and build/mock-test logs are retained at
+`target/local9-cutover/`, with a private handoff copy under
+`/var/tmp/local9-hotfix-33587794-prepared/`. No duplicate 1.35 GB binary is staged.
+
+The auditable source is `scripts/local9_cutover.py`, with isolated tests in
+`scripts/test_local9_cutover.py`. Its pinned checks include old/new ELF hashes,
+launcher and agent-process-host hashes, frontend manifest, container namespaces,
+main and four source refs, exact Integration payload digest `8158b60f…`, and
+blocked/unpublished/skip-validation policy. It rejects active agents, hosts,
+execution processes, workflows, resource operations, unresolved outbox delivery,
+enabled schedules, concurrent Cargo/rustc, and other same-user SQLite handles.
+The retained cancelling Orchestration parent is permitted only for the exact
+Integration ID, with all agents/hosts exited and outbox deliveries complete.
+A changed resource-coordination registration requires a new operator review.
+
+The process captures the old server's actual launch environment in memory, then
+backs it up privately for manual recovery. It does not infer PATH or credentials
+from SSH. Backup, log and state directory is created atomically as
+`/var/tmp/local9-cutover-33587794/` (0700). **It contains credentials in the private
+launch-environment JSON and data snapshot; do not paste or upload its contents.**
+Stage names and exit codes contain no credentials. Every repeat execution refuses
+once that directory exists, including after an early abort; do not delete it to
+blindly retry. Review the recorded state first.
+
+After two idle/frozen-state checks, the program holds the existing launch lock,
+uses a verified pidfd to send SIGTERM, waits up to 60 seconds, and refuses any
+force kill. It copies the stopped private data tree and obtains a separate
+SQLite backup through the backup API (including committed WAL pages), checks
+integrity, rechecks idle state, then fsyncs and atomically renames the binary.
+It releases the launch lock immediately before invoking the unchanged start.sh
+under the captured environment. It verifies executable hash/cwd/owner, listener
+ownership, HTTP health and new startup-log evidence, then rechecks the frozen
+state and idle jobs. No Integration actions, Git publication or DB restore occur.
+
+The initial cutover deadline is 300 seconds; failure recovery uses bounded
+60-second stop and 45-second health waits (launcher timeout 10 seconds). There
+is no force-kill fallback. Kernel/filesystem hangs and process/container loss
+still require operator recovery. A maintenance window with **no new user/API
+submissions or manual launchers** is required: read-only idle checks cannot
+atomically prevent new submissions without changing server admission behaviour.
+
+Expected durable outcomes (`cutover.log`, `state.json`, `exit-code`):
+
+| Exit | Last stage | Meaning |
+| --- | --- | --- |
+| 0 | SUCCESS_NO_RESUME | New binary healthy; original Integration still blocked |
+| 2 | ABORT_OR_STOP_UNCONFIRMED_OPERATOR_CHECK | Precondition failed or stop was not confirmed; inspect actual PID/listener |
+| 3 | ROLLED_BACK_NO_DB_RESTORE | New startup/check failed; saved 45bd9581 binary restored and health/frozen state verified |
+| 4 | MANUAL_RECOVERY_REQUIRED_NO_FORCE_KILL | Ownership/termination/recovery uncertain; no blind retry |
+
+For exit 4 or interruption, inspect state and the actual PID/executable/listener
+from SSH. Do not kill an unverified PID, start a second server or restore SQLite.
+Once all relevant processes are proven stopped, the saved executable is
+`/var/tmp/local9-cutover-33587794/server.old` (expected hash `3e37ca96…`). Use the
+verified atomic executable rollback procedure above. To reproduce the captured
+startup environment after a manually verified rollback, use:
+
+```bash
+python3 - <<'PY'
+import json, subprocess
+from pathlib import Path
+backup = Path('/var/tmp/local9-cutover-33587794')
+env = json.loads((backup / 'launch-environment.json').read_text())
+subprocess.run(['/var/tmp/lvk-instances/dev/start.sh'], env=env, check=True, timeout=10)
+PY
+```
+
+That recovery command is **not** permission to bypass PID/listener checks. Do
+not automatically restore the DB. After a successful cutover, separately check
+authenticated UI/MCP and only then perform the previously authorised formal
+Resume of the retained four-source Integration. The program never resumes the
+old two-source run or creates another Integration.
+
+Validation: Python syntax check and six isolated fake-service tests passed:
+actual executable switch/health success, health failure with rollback, repeat
+refusal, stale PID refusal, changed payload, busy jobs and changed artifact
+(the repeat check shares the success test). Real read-only preflight passed
+artifact/ref/payload/coordination/PID checks and correctly refused this active
+AgentRun before any stop or state-directory creation. An initial HTTP check
+exposed internal-token Host handling; the final code uses loopback Host for the
+internal request, public Host for health, disables proxies and refuses redirects.
+The underlying 33587794 source already passed 21 Integration tests, 7 dispatch
+tests and server all-target Clippy as recorded above; those unchanged tests were
+not repeated. Actual cutover and live candidate startup remain operator work.
