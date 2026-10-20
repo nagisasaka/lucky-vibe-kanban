@@ -124,9 +124,38 @@ pub(super) async fn apply(
     ensure!(
         nodes.len() == 1
             && nodes[0].1 == "integrate"
-            && matches!(nodes[0].2.as_str(), "cancelling" | "cancelled"),
+            && matches!(
+                nodes[0].2.as_str(),
+                "cancelling" | "cancelled" | "succeeded"
+            ),
         "Historical product ownership changed"
     );
+    if nodes[0].2 == "succeeded" {
+        // Startup may settle the cancelled parent from its already terminal child.
+        // This is historical child execution evidence, never Integration success.
+        let parent: String = sqlx::query_scalar("SELECT status FROM orchestration_runs WHERE id=?")
+            .bind(id)
+            .fetch_one(pool)
+            .await?;
+        let events: Vec<(i64, String)> = sqlx::query_as("SELECT sequence,event_envelope FROM orchestration_events WHERE orchestration_run_id=? ORDER BY sequence DESC LIMIT 2")
+            .bind(id).fetch_all(pool).await?;
+        ensure!(
+            parent == "cancelled" && events.len() == 2 && events[0].0 == 110 && events[1].0 == 109,
+            "Unproven historical startup settlement"
+        );
+        let terminal: serde_json::Value = serde_json::from_str(&events[0].1)?;
+        let child: serde_json::Value = serde_json::from_str(&events[1].1)?;
+        ensure!(
+            terminal["payload"]
+                == serde_json::json!({"type":"lifecycle_changed","data":{"status":"cancelled"}})
+                && child["payload"]
+                    == serde_json::json!({"type":"node_status_changed","data":{"node_execution_id":nodes[0].0,"status":"succeeded"}}),
+            "Historical startup settlement evidence changed"
+        );
+        let linked: i64 = sqlx::query_scalar("SELECT count(*) FROM orchestration_agent_run_links l JOIN agent_runs a ON a.id=l.agent_run_id WHERE l.orchestration_run_id=? AND l.node_execution_id=? AND a.id=? AND a.status='succeeded'")
+            .bind(id).bind(nodes[0].0).bind(run.agent_run_id).fetch_one(pool).await?;
+        ensure!(linked == 1, "Historical child identity changed");
+    }
     if request.dry_run {
         return Ok(
             serde_json::json!({"adopted":false,"eligible":true,"candidate":CANDIDATE,"next_source":SOURCES[3]}),
@@ -134,16 +163,18 @@ pub(super) async fn apply(
     }
     // Idempotent legacy settlement precedes adoption. A storage failure here leaves the
     // unchanged payload blocked; repeat this same request, never recreate the Integration.
-    services::services::orchestration::OrchestrationService::new(
-        pool.clone(),
-        std::sync::Arc::new(deployment.agent_run_port().clone()),
-    )
-    .complete_product_node(
-        id,
-        nodes[0].0,
-        executors::runtime::OrchestrationNodeStatus::Cancelled,
-    )
-    .await?;
+    if nodes[0].2 == "cancelling" {
+        services::services::orchestration::OrchestrationService::new(
+            pool.clone(),
+            std::sync::Arc::new(deployment.agent_run_port().clone()),
+        )
+        .complete_product_node(
+            id,
+            nodes[0].0,
+            executors::runtime::OrchestrationNodeStatus::Cancelled,
+        )
+        .await?;
+    }
     let original: serde_json::Value = serde_json::from_str(&raw)?;
     run.payload.history.push(serde_json::json!({
         "operation":"adopt_legacy_checkpoint","request_id":request.request_id,

@@ -456,16 +456,32 @@ async fn isolated_retained_checkpoint_adoption() -> anyhow::Result<()> {
             .await?
             == raw
     );
-    // Simulate interruption after old product settlement, before the adoption CAS.
-    let node: Uuid = sqlx::query_scalar(
-        "SELECT id FROM orchestration_node_executions WHERE orchestration_run_id=?",
+    let service =
+        OrchestrationService::new(pool.clone(), Arc::new(deployment.agent_run_port().clone()));
+    // Exercise the production startup path, including saved links and child state.
+    service.reconcile_startup().await?;
+    let settled: (String, String) = sqlx::query_as("SELECT r.status,n.status FROM orchestration_runs r JOIN orchestration_node_executions n ON n.orchestration_run_id=r.id WHERE r.id=?")
+        .bind(id).fetch_one(pool).await?;
+    ensure!(settled == ("cancelled".into(), "succeeded".into()));
+    service.reconcile_startup().await?; // second restart must not append another settlement
+    let event_count: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM orchestration_events WHERE orchestration_run_id=?",
     )
     .bind(id)
     .fetch_one(pool)
     .await?;
-    OrchestrationService::new(pool.clone(), Arc::new(deployment.agent_run_port().clone()))
-        .complete_product_node(id, node, OrchestrationNodeStatus::Cancelled)
-        .await?;
+    ensure!(event_count == 110);
+    // Terminal status alone is insufficient: reject missing settlement evidence.
+    sqlx::query("UPDATE orchestration_events SET sequence=111 WHERE orchestration_run_id=? AND sequence=110")
+        .bind(id).execute(pool).await?;
+    ensure!(
+        legacy_checkpoint::apply(&deployment, id, request(true))
+            .await
+            .is_err()
+    );
+    sqlx::query("UPDATE orchestration_events SET sequence=110 WHERE orchestration_run_id=? AND sequence=111")
+        .bind(id).execute(pool).await?;
+    ensure!(legacy_checkpoint::apply(&deployment, id, request(true)).await?["eligible"] == true);
     legacy_checkpoint::apply(&deployment, id, request(false)).await?;
     legacy_checkpoint::apply(&deployment, id, request(false)).await?;
     let mut other = request(false);
@@ -518,6 +534,18 @@ async fn isolated_retained_checkpoint_adoption() -> anyhow::Result<()> {
             .fetch_one(pool)
             .await?
             == "projection_degraded"
+    );
+    let after: (String,String) = sqlx::query_as("SELECT r.status,n.status FROM orchestration_runs r JOIN orchestration_node_executions n ON n.orchestration_run_id=r.id WHERE r.id=?")
+        .bind(id).fetch_one(pool).await?;
+    ensure!(after == settled);
+    ensure!(
+        sqlx::query_scalar::<_, i64>(
+            "SELECT count(*) FROM orchestration_events WHERE orchestration_run_id=?"
+        )
+        .bind(id)
+        .fetch_one(pool)
+        .await?
+            == event_count
     );
     println!(
         "Retained checkpoint dry-run/adoption/replay/Resume passed; only step 4 applied, old degraded audit preserved"

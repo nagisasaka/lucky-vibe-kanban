@@ -70,12 +70,15 @@ review scope and resolution diff, skipped validation and exited providers.
 Unknown or pending command delivery refuses adoption. The exact historical
 failed Steer remains failed; no command or Agent projection is replayed/repaired.
 
-Dry-run changes no database rows. Execution settles the old cancelling product
+Dry-run changes no database rows. Execution settles a still-cancelling old product
 through its existing completion API, archives the complete original payload/error/
 Agent identity, and uses a payload compare-and-swap to adopt the checkpoint. The
 same request is idempotent, including interruption after product settlement.
 Adoption stays **blocked**: separate formal Resume is required and recomputes step 4.
 The old product's terminal audit outcome is not reused as new Integration success.
+For the observed startup settlement (parent cancelled, node succeeded), adoption
+requires saved events109/110 and the succeeded historical child link, then preserves
+those terminal records without rewriting them or appending another completion.
 
 The regression suite exercises real temporary Git repositories and isolated
 SQLite: clean cumulative merges, duplicate installation/completion, interrupted
@@ -142,7 +145,7 @@ cleanup.
 
 ## Prepared operator handoff
 
-Bundle: `/var/tmp/local9-mechanical-d02-prepared/`. This is a private, one-time
+Bundle: `/var/tmp/local9-mechanical-5dbe-prepared/`. This is a private, one-time
 operator deliverable outside the repository; its exact source commit, server
 SHA256/size and script hashes are recorded in `build.json`. Do not reuse it after
 source, binary, launcher, frontend, Git refs or the frozen payload changes.
@@ -151,7 +154,7 @@ After this AgentRun and all other jobs have ended, use an independent SSH TTY as
 `appuser` in the same container, with no new submissions during maintenance:
 
 ```bash
-python3 /var/tmp/local9-mechanical-d02-prepared/cutover.py --execute
+python3 /var/tmp/local9-mechanical-5dbe-prepared/cutover.py --execute
 ```
 
 The program verifies the serving ELF and ownership/namespace, frozen refs/payload,
@@ -162,7 +165,7 @@ stopped WAL-aware SQLite backup; atomically replaces the ELF; and invokes the sa
 and the new startup log. No force-kill, automatic DB restore, adoption or Resume.
 These checks do not lock out new user submissions: the maintenance window is required.
 
-Durable outcome is in `/var/tmp/local9-cutover-mechanical-d02/`:
+Durable outcome is in `/var/tmp/local9-cutover-mechanical-5dbe/`:
 
 - `SUCCESS_NO_RESUME` / exit 0: updated and healthy, Integration still frozen.
 - `ABORT_OR_STOP_UNCONFIRMED_OPERATOR_CHECK` / exit 2: inspect before any action;
@@ -183,8 +186,8 @@ After successful cutover, perform a fresh read-only MCP check. Checkpoint adopti
 is then a separate operator action, followed by an explicit UI Resume:
 
 ```bash
-python3 /var/tmp/local9-mechanical-d02-prepared/adopt.py --check
-python3 /var/tmp/local9-mechanical-d02-prepared/adopt.py --execute
+python3 /var/tmp/local9-mechanical-5dbe-prepared/adopt.py --check
+python3 /var/tmp/local9-mechanical-5dbe-prepared/adopt.py --execute
 ```
 
 Both use the same saved request identity. `--check` only tests eligibility;
@@ -241,3 +244,34 @@ The new bundle passed 17 isolated tests (14 service scenarios plus 3 process/gua
 checks) and AST/compile validation. Live read-only preflight reached the database
 activity check and reported `Active work: table=agent_runs count=1`, identifying
 this diagnostic Run. No `d02` recovery state or live cutover was created.
+
+### Startup reconciliation and retained terminal audit
+
+The `d02` operator cutover reached the new server on 2026-10-20 at 16:52:33 UTC.
+Normal startup reconciliation accepted the old succeeded child, recorded node
+Succeeded (event109), and settled the cancelling parent as Cancelled (event110).
+The old updater wrongly required a cancelling parent after startup and rolled back
+the executable. Its stopped backup and logs remain at
+`/var/tmp/local9-cutover-mechanical-d02/`; do not restore that DB or rerun old bundles.
+
+The current `5dbe` bundle pins the now-terminal historical parent/node and their
+evidence, rejects every nonterminal orchestration, and preserves the Integration
+payload/base/sources unchanged. The adoption endpoint separately verifies that
+same settlement before retaining the old terminal audit. This is not acceptance
+of the old child as a completed Integration or permission to bypass review.
+
+The isolated retained-checkpoint scenario now imports the real historical Agent
+link and invokes `OrchestrationService::reconcile_startup` twice before adoption.
+It verifies the exact transition, rejects missing settlement evidence, adopts,
+explicitly resumes source4, publishes only in the independent Git clone, and
+checks that historical terminal states/events remain unchanged.
+The prior fixture omitted the link and did not exercise startup; the prior mock
+service tests alone did not establish real startup compatibility.
+
+Verification for this correction: the explicit startup/adoption scenario passed;
+25 scoped Integration regressions passed (2 opt-in scenarios ignored in that
+selection); server all-target Clippy with `-D warnings`, scoped rustfmt/diff checks,
+and 19 isolated updater tests passed. The ordinary real-Codex conflict scenario
+was not repeated because this correction changes only historical adoption.
+The bundle manifest records the subsequent exact-source build and live read-only
+preflight. No real cutover/adoption/Resume is executed by this preparation.
