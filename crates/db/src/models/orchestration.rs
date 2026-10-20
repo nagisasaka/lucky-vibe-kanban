@@ -290,7 +290,9 @@ impl OrchestrationEventRecord {
                 key: event.event_id.to_string(),
             });
         };
-        let mut tx = pool.begin().await?;
+        // Reserve the writer before reading node/plan; deferred upgrades can
+        // fail immediately under DELETE-journal contention despite busy_timeout.
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
         let (key, current): (String, OrchestrationNodeStatus) = sqlx::query_as(
             "SELECT node_key, status FROM orchestration_node_executions WHERE id = ? AND orchestration_run_id = ?",
         ).bind(node_execution_id).bind(event.orchestration_run_id).fetch_one(&mut *tx).await?;
@@ -341,7 +343,9 @@ impl OrchestrationEventRecord {
         pool: &SqlitePool,
         event: &OrchestrationEventEnvelope,
     ) -> Result<OrchestrationReducerApply, OrchestrationPersistenceError> {
-        let mut transaction = pool.begin().await?;
+        // Reserve the writer before reading; a deferred read-to-write upgrade
+        // can fail immediately with SQLITE_BUSY despite busy_timeout.
+        let mut transaction = pool.begin_with("BEGIN IMMEDIATE").await?;
         let applied = append_and_project_in_transaction(&mut transaction, event).await?;
         transaction.commit().await?;
         Ok(applied)
@@ -602,13 +606,34 @@ impl OrchestrationOutboxRecord {
         now: DateTime<Utc>,
         redelivery_after: Duration,
     ) -> Result<Option<Self>, OrchestrationPersistenceError> {
+        Self::claim_matching(pool, now, redelivery_after, None).await
+    }
+
+    /// Claim only this durable command; a different run's delivery is not
+    /// evidence that the requested AgentRun was accepted.
+    pub async fn claim_by_id(
+        pool: &SqlitePool,
+        id: Uuid,
+        now: DateTime<Utc>,
+    ) -> Result<Option<Self>, OrchestrationPersistenceError> {
+        Self::claim_matching(pool, now, DEFAULT_OUTBOX_REDELIVERY_AFTER, Some(id)).await
+    }
+
+    async fn claim_matching(
+        pool: &SqlitePool,
+        now: DateTime<Utc>,
+        redelivery_after: Duration,
+        id: Option<Uuid>,
+    ) -> Result<Option<Self>, OrchestrationPersistenceError> {
         let mut transaction = pool.begin().await?;
         let stale_before = now - redelivery_after;
         sqlx::query(
-            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ?",
+            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ? AND (? IS NULL OR id = ?)",
         )
         .bind(now)
         .bind(stale_before)
+        .bind(id)
+        .bind(id)
         .execute(&mut *transaction)
         .await?;
         let candidate = sqlx::query_as::<_, ExistingOutboxIdentity>(
@@ -617,11 +642,14 @@ impl OrchestrationOutboxRecord {
             FROM orchestration_outbox
             WHERE delivery_status IN ('pending', 'failed')
               AND available_at <= ?
+              AND (? IS NULL OR id = ?)
             ORDER BY available_at ASC, created_at ASC
             LIMIT 1
             "#,
         )
         .bind(now)
+        .bind(id)
+        .bind(id)
         .fetch_optional(&mut *transaction)
         .await?;
         let Some(candidate) = candidate else {
@@ -2285,5 +2313,184 @@ mod tests {
             .await
             .unwrap()
         );
+    }
+    #[tokio::test]
+    async fn command_event_waits_for_writer_instead_of_failing_read_upgrade() {
+        use sqlx::{
+            Connection,
+            sqlite::{SqliteConnectOptions, SqliteJournalMode},
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let options = SqliteConnectOptions::new()
+            .filename(dir.path().join("contention.sqlite"))
+            .create_if_missing(true)
+            .journal_mode(SqliteJournalMode::Delete)
+            .busy_timeout(std::time::Duration::from_secs(2));
+        let pool = SqlitePoolOptions::new()
+            .max_connections(4)
+            .connect_with(options.clone())
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let run = Uuid::new_v4();
+        OrchestrationRunRecord::persist_before_dispatch(
+            &pool,
+            run,
+            run,
+            "contention",
+            run,
+            &plan(),
+        )
+        .await
+        .unwrap();
+        let mut locker = SqliteConnection::connect_with(&options).await.unwrap();
+        // Reproduce DELETE-journal lock upgrade failure even with a busy timeout:
+        // reader A holds SHARED, writer B holds RESERVED, A cannot become writer.
+        let mut reader = pool.begin().await.unwrap();
+        sqlx::query("SELECT * FROM orchestration_state")
+            .fetch_all(&mut *reader)
+            .await
+            .unwrap();
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut locker)
+            .await
+            .unwrap();
+        let error = sqlx::query("UPDATE orchestration_state SET updated_at=updated_at")
+            .execute(&mut *reader)
+            .await
+            .unwrap_err();
+        assert!(matches!(&error, sqlx::Error::Database(e) if e.code().as_deref() == Some("5")));
+        reader.rollback().await.unwrap();
+        let event = OrchestrationEventEnvelope {
+            schema_version: 1,
+            payload_version: 1,
+            event_id: Uuid::new_v4(),
+            orchestration_run_id: run,
+            sequence: 1,
+            correlation_id: run,
+            timestamp: Utc::now(),
+            payload: OrchestrationEventPayload::CommandQueued {
+                command_id: Uuid::new_v4(),
+                idempotency_key: "contention-create".into(),
+            },
+        };
+        let worker_pool = pool.clone();
+        let worker = tokio::spawn(async move {
+            OrchestrationEventRecord::append_and_project(&worker_pool, &event).await
+        });
+        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+        let waited = !worker.is_finished();
+        sqlx::query("COMMIT").execute(&mut locker).await.unwrap();
+        let result = worker.await.unwrap();
+        assert!(
+            waited,
+            "CommandQueued must wait before reading, not fail its read-to-write upgrade: {result:?}"
+        );
+        result.unwrap();
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM orchestration_events WHERE orchestration_run_id=?",
+        )
+        .bind(run)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(count, 1);
+        pool.close().await;
+    }
+    #[tokio::test]
+    async fn product_completion_waits_for_writer_instead_of_failing_read_upgrade() {
+        use sqlx::{
+            Connection,
+            sqlite::{SqliteConnectOptions, SqliteJournalMode},
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let options = SqliteConnectOptions::new()
+            .filename(dir.path().join("contention.sqlite"))
+            .create_if_missing(true)
+            .journal_mode(SqliteJournalMode::Delete)
+            .busy_timeout(std::time::Duration::from_secs(2));
+        let pool = SqlitePoolOptions::new()
+            .max_connections(4)
+            .connect_with(options.clone())
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let run = Uuid::new_v4();
+        let mut product_plan = plan();
+        product_plan.nodes[0].requires_product_validation = true;
+        OrchestrationRunRecord::persist_before_dispatch(
+            &pool,
+            run,
+            run,
+            "contention",
+            run,
+            &product_plan,
+        )
+        .await
+        .unwrap();
+        let node = Uuid::new_v4();
+        OrchestrationNodeExecutionRecord::persist_identity_before_dispatch(
+            &pool,
+            node,
+            run,
+            "implement",
+            0,
+            0,
+        )
+        .await
+        .unwrap();
+        let mut locker = SqliteConnection::connect_with(&options).await.unwrap();
+        // Reproduce DELETE-journal lock upgrade failure even with a busy timeout:
+        // reader A holds SHARED, writer B holds RESERVED, A cannot become writer.
+        let mut reader = pool.begin().await.unwrap();
+        sqlx::query("SELECT * FROM orchestration_state")
+            .fetch_all(&mut *reader)
+            .await
+            .unwrap();
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut locker)
+            .await
+            .unwrap();
+        let error = sqlx::query("UPDATE orchestration_state SET updated_at=updated_at")
+            .execute(&mut *reader)
+            .await
+            .unwrap_err();
+        assert!(matches!(&error, sqlx::Error::Database(e) if e.code().as_deref() == Some("5")));
+        reader.rollback().await.unwrap();
+        let event = OrchestrationEventEnvelope {
+            schema_version: 1,
+            payload_version: 1,
+            event_id: Uuid::new_v4(),
+            orchestration_run_id: run,
+            sequence: 1,
+            correlation_id: run,
+            timestamp: Utc::now(),
+            payload: OrchestrationEventPayload::NodeStatusChanged {
+                node_execution_id: node,
+                status: OrchestrationNodeStatus::Failed,
+            },
+        };
+        let worker_pool = pool.clone();
+        let worker = tokio::spawn(async move {
+            OrchestrationEventRecord::append_product_completion(&worker_pool, &event).await
+        });
+        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+        let waited = !worker.is_finished();
+        sqlx::query("COMMIT").execute(&mut locker).await.unwrap();
+        let result = worker.await.unwrap();
+        assert!(
+            waited,
+            "Product completion must wait before reading, not fail its read-to-write upgrade: {result:?}"
+        );
+        result.unwrap();
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM orchestration_events WHERE orchestration_run_id=?",
+        )
+        .bind(run)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(count, 1);
+        pool.close().await;
     }
 }

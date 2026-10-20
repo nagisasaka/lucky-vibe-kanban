@@ -239,7 +239,8 @@ pub(super) async fn submit_with_expected_target(
         .container()
         .git_branch_from_workspace(&workspace_id, &name)
         .await;
-    let payload = IntegrationPayload {
+    let mut payload = IntegrationPayload {
+        mechanical: true,
         sources,
         observed_target,
         card_id: Some(card_id),
@@ -255,6 +256,11 @@ pub(super) async fn submit_with_expected_target(
         )?),
         ..Default::default()
     };
+    payload.validation = super::mechanical::validation_plan(
+        &repo.path,
+        &payload.observed_target,
+        payload.skip_validation,
+    )?;
     let run = IntegrationRun {
         id,
         request_key: key,

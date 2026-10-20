@@ -504,7 +504,7 @@ export function IntegrationPanel({
                       <p className="text-low">
                         {run.payload.skip_validation
                           ? 'Integration proposal (unverified)'
-                          : 'Agent proposal (before host validation)'}
+                          : 'Integration candidate (see validation evidence)'}
                       </p>
                       <p>{run.payload.semantic_summary}</p>
                     </div>

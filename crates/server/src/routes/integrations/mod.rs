@@ -1,7 +1,9 @@
-//! Local Board Integration: a product of the existing Orchestration runtime.
+//! Local Board Integration: host-owned Git steps with bounded conflict jobs.
 //! The product owns source reservations, host validation and publication, not
 //! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
 mod admission;
+mod legacy_checkpoint;
+mod mechanical;
 mod runtime;
 mod steps;
 pub(crate) use admission::AdmissionFailure;
@@ -314,6 +316,10 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/integrations/{id}/recover", post(recover))
         .route("/integrations/{id}/decision", post(decide_gate))
         .route("/integrations/{id}/intervene", post(intervene))
+        .route(
+            "/integrations/{id}/adopt-checkpoint",
+            post(legacy_checkpoint::adopt),
+        )
 }
 
 #[cfg(test)]
