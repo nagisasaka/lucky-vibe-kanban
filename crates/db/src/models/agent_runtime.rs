@@ -1253,6 +1253,93 @@ impl AgentRunRecord {
         Ok(())
     }
 
+    /// Rebuild, never simply clear, a terminal projection after the caller has
+    /// verified the closed host journal + Native Audit and appended its missing
+    /// Started facts. Historical quarantine rows and all audit facts remain.
+    pub async fn rebuild_verified_start_projection(
+        pool: &SqlitePool,
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+        recovered: &[AgentEventEnvelope; 2],
+    ) -> Result<(), AgentRuntimePersistenceError> {
+        let reject = || AgentRuntimePersistenceError::IdentityConflict {
+            entity: "verified startup projection recovery",
+            key: attempt.run_attempt_id.to_string(),
+        };
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+        let current: Json<RunState> =
+            sqlx::query_scalar("SELECT state_json FROM agent_run_state WHERE agent_run_id=?")
+                .bind(request.agent_run_id)
+                .fetch_one(&mut *tx)
+                .await?;
+        if !current.status.is_terminal()
+            || current.last_run_attempt_id != Some(attempt.run_attempt_id)
+        {
+            return Err(reject());
+        }
+        let failures: Vec<(Uuid, i64, String, String)> = sqlx::query_as(
+            "SELECT run_attempt_id,host_event_sequence,error_kind,reason FROM agent_projection_failures WHERE agent_run_id=?",
+        ).bind(request.agent_run_id).fetch_all(&mut *tx).await?;
+        let reason = format!(
+            "idempotency key \"{}\" was reused with different agent event identity or payload",
+            request.input.message_id
+        );
+        if failures
+            != vec![(
+                attempt.run_attempt_id,
+                1,
+                "non_retryable_projection".into(),
+                reason,
+            )]
+        {
+            return Err(reject());
+        }
+        for expected in recovered {
+            let saved: Json<AgentEventEnvelope> =
+                sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE event_id=?")
+                    .bind(expected.event_id)
+                    .fetch_one(&mut *tx)
+                    .await?;
+            let mut comparable = expected.clone();
+            comparable.sequence = saved.sequence;
+            if saved.0 != comparable {
+                return Err(reject());
+            }
+        }
+        let events: Vec<Json<AgentEventEnvelope>> = sqlx::query_scalar(
+            "SELECT event_envelope FROM agent_events WHERE agent_run_id=? ORDER BY run_attempt_number,sequence",
+        ).bind(request.agent_run_id).fetch_all(&mut *tx).await?;
+        let mut rebuilt = RunState::pending(request);
+        for event in events {
+            reduce_agent_event(&mut rebuilt, &event)?;
+        }
+        let mut comparable = current.0.clone();
+        comparable.projection_status = ProjectionStatus::Current;
+        comparable.updated_at = rebuilt.updated_at;
+        if rebuilt.projection_status != ProjectionStatus::Current || rebuilt != comparable {
+            return Err(reject());
+        }
+        rebuilt.updated_at = Utc::now();
+        sqlx::query("UPDATE agent_run_state SET projection_status=?,state_json=?,updated_at=? WHERE agent_run_id=?")
+            .bind(rebuilt.projection_status).bind(Json(&rebuilt)).bind(rebuilt.updated_at)
+            .bind(request.agent_run_id).execute(&mut *tx).await?;
+        sqlx::query("UPDATE agent_runs SET projection_status=?,updated_at=? WHERE id=?")
+            .bind(rebuilt.projection_status)
+            .bind(rebuilt.updated_at)
+            .bind(request.agent_run_id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("UPDATE agent_run_attempts SET projection_status=?,updated_at=? WHERE id=?")
+            .bind(rebuilt.projection_status)
+            .bind(rebuilt.updated_at)
+            .bind(attempt.run_attempt_id)
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        notify_agent_event_change(request.agent_run_id);
+        Ok(())
+    }
+
     pub async fn mark_projection_degraded(
         pool: &SqlitePool,
         agent_run_id: Uuid,

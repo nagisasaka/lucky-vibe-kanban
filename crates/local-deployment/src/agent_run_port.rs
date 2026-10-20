@@ -582,6 +582,24 @@ impl LocalAgentRunPort {
         Ok(())
     }
 
+    fn startup_input_event_id(
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+    ) -> Uuid {
+        // Preserve the original launch identity for old journals. Retry inputs
+        // share a message ID, but their event/attempt/native identities do not.
+        if attempt.attempt_number == 1 {
+            return request.input.message_id;
+        }
+        use sha2::{Digest, Sha256};
+        let mut hash = Sha256::new();
+        hash.update(b"lvk:startup-input:v1");
+        hash.update(attempt.run_attempt_id.as_bytes());
+        hash.update(request.input.message_id.as_bytes());
+        let bytes: [u8; 32] = hash.finalize().into();
+        Uuid::from_bytes(bytes[..16].try_into().expect("UUID digest"))
+    }
+
     fn staged_event(
         request: &AgentRunRequestEnvelope,
         attempt: &RunAttemptRequest,
@@ -1498,6 +1516,248 @@ impl LocalAgentRunPort {
             .is_ok_and(|presence| presence == RegisteredProcessPresence::Exited)
     }
 
+    // Called only after durable command and workspace authority validation,
+    // while holding command_lock. No observer/automatic recovery enters here.
+    async fn reconcile_control_projection(
+        &self,
+        command: &AgentRunPortCommandEnvelope,
+        asset_root: &Path,
+    ) -> Result<(), AgentRunPortError> {
+        if !matches!(&command.command, AgentRunPortCommand::Cancel { .. })
+            && self
+                .query(command.agent_run_id)
+                .await?
+                .state
+                .projection_status
+                != ProjectionStatus::Current
+        {
+            if matches!(
+                &command.command,
+                AgentRunPortCommand::Retry {
+                    mode: RunAttemptMode::Resume | RunAttemptMode::Restart,
+                    ..
+                }
+            ) {
+                // Ownership/command authority has already been checked. Only
+                // this explicit Retry may reconcile the known closed attempt;
+                // ordinary controls and automatic observation cannot clear it.
+                let (request, previous) = self.load_request(command.agent_run_id).await?;
+                self.recover_retry_start_projection(&request, &previous, asset_root)
+                    .await?;
+            } else {
+                return Err(AgentRunPortError::Rejected(
+                    "canonical projection is degraded; verified Retry or cancellation is required"
+                        .to_string(),
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    async fn recover_retry_start_projection(
+        &self,
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+        asset_root: &Path,
+    ) -> Result<(), AgentRunPortError> {
+        let reject = || {
+            AgentRunPortError::Rejected(
+            "Degraded projection requires verified closed startup-collision evidence before Retry".into(),
+        )
+        };
+        let lock = self
+            .cancellation_reconciliation_lock(attempt.run_attempt_id)
+            .await;
+        let _guard = lock.lock().await;
+        let state = self.query(request.agent_run_id).await?.state;
+        if state.projection_status == ProjectionStatus::Current {
+            return Ok(());
+        }
+        if !state.status.is_terminal()
+            || state.last_run_attempt_id != Some(attempt.run_attempt_id)
+            || attempt.attempt_number < 2
+        {
+            return Err(reject());
+        }
+        let failures: Vec<(Uuid, i64, String, String)> = sqlx::query_as(
+            "SELECT run_attempt_id,host_event_sequence,error_kind,reason FROM agent_projection_failures WHERE agent_run_id=?",
+        ).bind(request.agent_run_id).fetch_all(&self.db.pool).await.map_err(port_database)?;
+        let reason = format!(
+            "idempotency key \"{}\" was reused with different agent event identity or payload",
+            request.input.message_id
+        );
+        if failures
+            != vec![(
+                attempt.run_attempt_id,
+                1,
+                "non_retryable_projection".into(),
+                reason,
+            )]
+        {
+            return Err(reject());
+        }
+        let original: Json<AgentEventEnvelope> =
+            sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE event_id=?")
+                .bind(request.input.message_id)
+                .fetch_one(&self.db.pool)
+                .await
+                .map_err(port_database)?;
+        if original.agent_run_id != request.agent_run_id
+            || original.run_attempt_number >= attempt.attempt_number
+            || original.payload
+                != (AgentEventPayload::Message {
+                    message: request.input.clone(),
+                    final_output: false,
+                })
+        {
+            return Err(reject());
+        }
+        let host: HostObservation = sqlx::query_as(
+            "SELECT host_endpoint,host_token,host_instance_id,last_host_event_sequence,registry_status,host_pid,pid,process_group_id,host_protocol_version,host_start_identity FROM agent_process_registry WHERE run_attempt_id=?",
+        ).bind(attempt.run_attempt_id).fetch_one(&self.db.pool).await.map_err(port_database)?;
+        if host.registry_status != "exited"
+            || host.host_protocol_version != Some(i64::from(HOST_PROTOCOL_VERSION))
+            || !self.host_is_confirmed_absent(&host).await
+        {
+            return Err(reject());
+        }
+        let instance = host
+            .host_instance_id
+            .as_deref()
+            .and_then(|id| Uuid::parse_str(id).ok())
+            .ok_or_else(reject)?;
+        let mut replay = HostJournalReplay::open(
+            &asset_root
+                .join("runtime/host-events")
+                .join(format!("{}-{instance}.v1.jsonl", attempt.run_attempt_id)),
+            attempt.run_attempt_id,
+            instance,
+            0,
+        )
+        .await
+        .map_err(|_| reject())?;
+        let directory = asset_root.join(utils::native_audit::attempt_relative_dir(
+            request.session_id,
+            request.agent_run_id,
+            attempt.run_attempt_id,
+        ));
+        replay
+            .verify_audit(&directory, request.session_id, request.agent_run_id)
+            .await
+            .map_err(|_| reject())?;
+        if replay.incomplete_tail || replay.terminal.as_ref().is_none_or(|e| !matches!(e.payload, HostEventPayload::Terminal { status, .. } if status == state.status)) {
+            return Err(reject());
+        }
+        let terminal = replay.terminal.as_ref().ok_or_else(reject)?;
+        if host.last_host_event_sequence < i64::try_from(terminal.sequence).map_err(|_| reject())? {
+            return Err(reject());
+        }
+        let terminal_fact: Option<Json<AgentEventEnvelope>> = sqlx::query_scalar(
+            "SELECT event_envelope FROM agent_events WHERE event_id=? AND run_attempt_id=?",
+        )
+        .bind(terminal.event_id)
+        .bind(attempt.run_attempt_id)
+        .fetch_optional(&self.db.pool)
+        .await
+        .map_err(port_database)?;
+        let terminal_fact = terminal_fact.ok_or_else(reject)?;
+        if terminal_fact.timestamp != terminal.timestamp
+            || terminal_fact.payload
+                != (AgentEventPayload::LifecycleChanged {
+                    status: state.status,
+                })
+        {
+            return Err(reject());
+        }
+        let started = replay.started.ok_or_else(reject)?;
+        let HostEventPayload::Started {
+            provider_pid,
+            process_group_id,
+            canonical_input_ref,
+            ..
+        } = started.payload
+        else {
+            return Err(reject());
+        };
+        if started.sequence != 1
+            || canonical_input_ref.sequence != 1
+            || host.pid != Some(i64::from(provider_pid))
+            || host.process_group_id != process_group_id.map(i64::from)
+            || !self
+                .provider_is_confirmed_absent(Some(provider_pid), process_group_id)
+                .await
+        {
+            return Err(reject());
+        }
+        // verify_audit checked the full hash chain; also bind the canonical
+        // input bytes to the immutable run request, not merely to a frame hash.
+        use std::io::{BufRead, Read};
+        let file = std::fs::File::open(directory.join("frames.jsonl")).map_err(|_| reject())?;
+        let mut line = String::new();
+        std::io::BufReader::new(file.take(2 * 1024 * 1024))
+            .read_line(&mut line)
+            .map_err(|_| reject())?;
+        let frame: executors::runtime::NativeAuditFrame =
+            serde_json::from_str(&line).map_err(|_| reject())?;
+        let input: CanonicalMessage =
+            serde_json::from_slice(&frame.payload_bytes().map_err(|_| reject())?)
+                .map_err(|_| reject())?;
+        if frame.sequence != 1 || input != request.input {
+            return Err(reject());
+        }
+        let identity = sqlx::query_as::<_, (Option<Uuid>, Option<Uuid>)>(
+            "SELECT orchestration_run_id,node_execution_id FROM orchestration_agent_run_links WHERE agent_run_id=?",
+        ).bind(request.agent_run_id).fetch_optional(&self.db.pool).await.map_err(port_database)?.unwrap_or((None, None));
+        let recovered = [
+            Self::staged_event(
+                request,
+                attempt,
+                AgentEventPayload::Message {
+                    message: request.input.clone(),
+                    final_output: false,
+                },
+                vec![canonical_input_ref],
+                request.created_at,
+                Some(Self::startup_input_event_id(request, attempt)),
+                identity,
+            ),
+            Self::staged_event(
+                request,
+                attempt,
+                AgentEventPayload::LifecycleChanged {
+                    status: AgentRunStatus::Running,
+                },
+                vec![],
+                started.timestamp,
+                Some(started.event_id),
+                identity,
+            ),
+        ];
+        // Append missing facts idempotently without replaying process Started
+        // side effects or changing an exited registry. Terminal state stays terminal.
+        AgentEventRecord::append_and_project_host_batch(
+            &self.db.pool,
+            &recovered,
+            &[],
+            &[],
+            attempt.run_attempt_id,
+            host.last_host_event_sequence
+                .try_into()
+                .map_err(|_| reject())?,
+        )
+        .await
+        .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?;
+        AgentRunRecord::rebuild_verified_start_projection(
+            &self.db.pool,
+            request,
+            attempt,
+            &recovered,
+        )
+        .await
+        .map_err(|e| AgentRunPortError::Rejected(e.to_string()))?;
+        Ok(())
+    }
+
     async fn recover_dead_process_host(
         &self,
         request: &AgentRunRequestEnvelope,
@@ -1842,7 +2102,7 @@ impl LocalAgentRunPort {
                         },
                         vec![canonical_input_ref],
                         request.created_at,
-                        Some(request.input.message_id),
+                        Some(Self::startup_input_event_id(request, attempt)),
                         orchestration_identity,
                     ));
                     durable_events.push(Self::staged_event(
@@ -2938,13 +3198,8 @@ impl AgentRunPort for LocalAgentRunPort {
         // prevents cancel/retry/input races between local tasks.
         let _command_guard = self.command_lock.lock().await;
         let agent_run_id = command.agent_run_id;
-        if !matches!(&command.command, AgentRunPortCommand::Cancel { .. })
-            && self.query(agent_run_id).await?.state.projection_status != ProjectionStatus::Current
-        {
-            return Err(AgentRunPortError::Rejected(
-                "canonical projection is degraded; only cancellation is allowed".to_string(),
-            ));
-        }
+        self.reconcile_control_projection(&command, &utils::assets::asset_dir())
+            .await?;
         match &command.command {
             AgentRunPortCommand::Cancel { .. } => {
                 let (request, attempt) = self.load_request(agent_run_id).await?;
@@ -3675,7 +3930,27 @@ mod tests {
         db::models::agent_runtime::AgentRunCommandRecord::enqueue(&pool, &conflicting)
             .await
             .unwrap();
-        assert!(port.control(conflicting).await.is_err());
+        assert!(port.control(conflicting.clone()).await.is_err());
+        assert!(port.children.read().await.is_empty());
+        AgentRunRecord::mark_projection_degraded(&pool, request.agent_run_id)
+            .await
+            .unwrap();
+        conflicting.command_id = Uuid::new_v4();
+        conflicting.idempotency_key = "not-authorised-in-command-store".into();
+        let error = port.control(conflicting).await.unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("not present in a durable command store")
+        );
+        assert_eq!(
+            port.query(request.agent_run_id)
+                .await
+                .unwrap()
+                .state
+                .projection_status,
+            ProjectionStatus::ProjectionDegraded
+        );
         assert!(port.children.read().await.is_empty());
     }
 
@@ -3708,7 +3983,7 @@ mod tests {
                 agent_run_id: request.agent_run_id,
                 turn_id: request.turn_id,
                 run_attempt_id: attempt.run_attempt_id,
-                run_attempt_number: 1,
+                run_attempt_number: attempt.attempt_number,
                 provider_id: "codex".into(),
                 runtime_profile_id: request.runtime_profile_id.clone(),
                 workspace_path: attempt.workspace.path.clone(),
@@ -3807,6 +4082,304 @@ mod tests {
             host_protocol_version: Some(i64::from(HOST_PROTOCOL_VERSION)),
         };
         (host, path, events)
+    }
+
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn retry_start_identity_and_verified_degraded_reconstruction() {
+        let root = TempDir::new().unwrap();
+        let mut port = LocalAgentRunPort::new(setup_runtime_db().await);
+        port.process_registry = AgentProcessRegistry::new(root.path().join("registry.json"));
+        let (request, initial) = persisted_codex_run(&port.db).await;
+        let (_, _, first) =
+            replay_fixture(root.path(), &request, &initial, i32::MAX as u32, 0, true).await;
+        port.apply_host_events(&request, &initial, vec![first[0].clone()])
+            .await
+            .unwrap();
+        let cancelled = LocalAgentRunPort::staged_event(
+            &request,
+            &initial,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Cancelled,
+            },
+            vec![],
+            Utc::now(),
+            None,
+            (None, None),
+        );
+        AgentEventRecord::append_and_project_host_batch(
+            &port.db.pool,
+            &[cancelled],
+            &[],
+            &[],
+            initial.run_attempt_id,
+            1,
+        )
+        .await
+        .unwrap();
+        let retry = RunAttemptRequest {
+            run_attempt_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            idempotency_key: "retry-start".into(),
+            attempt_number: 2,
+            mode: RunAttemptMode::Restart,
+            ..initial.clone()
+        };
+        AgentRunRecord::persist_retry_attempt_before_launch(&port.db.pool, &request, &retry)
+            .await
+            .unwrap();
+        let mut starting = LocalAgentRunPort::staged_event(
+            &request,
+            &retry,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting,
+            },
+            vec![],
+            Utc::now(),
+            None,
+            (None, None),
+        );
+        starting.sequence = 1;
+        AgentEventRecord::append_and_project(&port.db.pool, &starting)
+            .await
+            .unwrap();
+        let (host, _, events) =
+            replay_fixture(root.path(), &request, &retry, i32::MAX as u32, 0, true).await;
+        let HostEventPayload::Started {
+            canonical_input_ref,
+            ..
+        } = &events[0].payload
+        else {
+            panic!()
+        };
+        // Reproduce the historical collision, not a fabricated degraded flag.
+        let old = LocalAgentRunPort::staged_event(
+            &request,
+            &retry,
+            AgentEventPayload::Message {
+                message: request.input.clone(),
+                final_output: false,
+            },
+            vec![canonical_input_ref.clone()],
+            request.created_at,
+            Some(request.input.message_id),
+            (None, None),
+        );
+        let collision = AgentEventRecord::append_and_project_host_batch(
+            &port.db.pool,
+            &[old],
+            &[],
+            &[],
+            retry.run_attempt_id,
+            1,
+        )
+        .await
+        .unwrap_err();
+        AgentRunRecord::record_projection_failure_and_advance_cursor(
+            &port.db.pool,
+            request.agent_run_id,
+            retry.run_attempt_id,
+            1,
+            "non_retryable_projection",
+            &collision.to_string(),
+        )
+        .await
+        .unwrap();
+        port.apply_host_events(&request, &retry, events[1..].to_vec())
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_process_registry SET registry_status='exited',process_started_at=datetime('now'),observed_exited_at=datetime('now'),host_instance_id=?,host_pid=?,host_start_identity=?,host_protocol_version=?,pid=? WHERE run_attempt_id=?")
+            .bind(&host.host_instance_id).bind(host.host_pid).bind(&host.host_start_identity).bind(host.host_protocol_version).bind(i64::from(i32::MAX)).bind(retry.run_attempt_id).execute(&port.db.pool).await.unwrap();
+        let before = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(before.status, AgentRunStatus::Succeeded);
+        assert_eq!(
+            before.projection_status,
+            ProjectionStatus::ProjectionDegraded
+        );
+        // A live provider cannot be reconciled, even with a closed audit.
+        sqlx::query("UPDATE agent_process_registry SET pid=? WHERE run_attempt_id=?")
+            .bind(i64::from(std::process::id()))
+            .bind(retry.run_attempt_id)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        assert!(
+            port.recover_retry_start_projection(&request, &retry, root.path())
+                .await
+                .is_err()
+        );
+        sqlx::query("UPDATE agent_process_registry SET pid=? WHERE run_attempt_id=?")
+            .bind(i64::from(i32::MAX))
+            .bind(retry.run_attempt_id)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE agent_projection_failures SET reason='unrelated failure'")
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        assert!(
+            port.recover_retry_start_projection(&request, &retry, root.path())
+                .await
+                .is_err()
+        );
+        sqlx::query("UPDATE agent_projection_failures SET reason=?")
+            .bind(collision.to_string())
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        let audit_path = root
+            .path()
+            .join(utils::native_audit::attempt_relative_dir(
+                request.session_id,
+                request.agent_run_id,
+                retry.run_attempt_id,
+            ))
+            .join("frames.jsonl");
+        let original_audit = std::fs::read(&audit_path).unwrap();
+        std::fs::write(&audit_path, b"corrupt\n").unwrap();
+        assert!(
+            port.recover_retry_start_projection(&request, &retry, root.path())
+                .await
+                .is_err()
+        );
+        std::fs::write(&audit_path, &original_audit).unwrap();
+        let journal_path = root.path().join("runtime/host-events").join(format!(
+            "{}-{}.v1.jsonl",
+            retry.run_attempt_id,
+            host.host_instance_id.as_ref().unwrap()
+        ));
+        let journal_bytes = std::fs::read(&journal_path).unwrap();
+        let mut incomplete = journal_bytes.clone();
+        incomplete.extend_from_slice(b"{partial");
+        std::fs::write(&journal_path, incomplete).unwrap();
+        assert!(
+            port.recover_retry_start_projection(&request, &retry, root.path())
+                .await
+                .is_err()
+        );
+        std::fs::write(&journal_path, &journal_bytes).unwrap();
+        let mut command = AgentRunPortCommandEnvelope {
+            schema_version: 1,
+            command_id: Uuid::new_v4(),
+            idempotency_key: "explicit-recovery".into(),
+            agent_run_id: request.agent_run_id,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: request.correlation_id,
+            created_at: Utc::now(),
+            command: AgentRunPortCommand::Steer {
+                content: "must not steer degraded terminal attempt".into(),
+            },
+        };
+        assert!(
+            port.reconcile_control_projection(&command, root.path())
+                .await
+                .is_err()
+        );
+        command.command = AgentRunPortCommand::Retry {
+            mode: RunAttemptMode::Restart,
+            run_attempt_id: Uuid::new_v4(),
+        };
+        // Simulate interruption after corrected facts commit but before the
+        // rebuilt projection commits. Retry must reuse those exact facts.
+        sqlx::raw_sql("CREATE TRIGGER reject_rebuild BEFORE UPDATE ON agent_run_state WHEN NEW.projection_status='current' BEGIN SELECT RAISE(ABORT,'fixture interrupted rebuild'); END;").execute(&port.db.pool).await.unwrap();
+        assert!(
+            port.reconcile_control_projection(&command, root.path())
+                .await
+                .is_err()
+        );
+        let interrupted = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(
+            interrupted.projection_status,
+            ProjectionStatus::ProjectionDegraded
+        );
+        assert_eq!(interrupted.status, AgentRunStatus::Succeeded);
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_events")
+            .fetch_one(&port.db.pool)
+            .await
+            .unwrap();
+        sqlx::query("DROP TRIGGER reject_rebuild")
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        port.reconcile_control_projection(&command, root.path())
+            .await
+            .unwrap();
+        let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_events")
+            .fetch_one(&port.db.pool)
+            .await
+            .unwrap();
+        assert_eq!(after, count);
+        assert_eq!(std::fs::read(&journal_path).unwrap(), journal_bytes);
+        assert_eq!(std::fs::read(&audit_path).unwrap(), original_audit);
+        let recovered = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(recovered.projection_status, ProjectionStatus::Current);
+        assert_eq!(recovered.status, before.status);
+        assert_eq!(recovered.terminal_output, before.terminal_output);
+        port.recover_retry_start_projection(&request, &retry, root.path())
+            .await
+            .unwrap();
+        let failures: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM agent_projection_failures")
+            .fetch_one(&port.db.pool)
+            .await
+            .unwrap();
+        assert_eq!(failures, 1, "preserve quarantine evidence");
+        // The next Retry projects Running. Same-attempt redelivery is idempotent.
+        let next = RunAttemptRequest {
+            run_attempt_id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            idempotency_key: "retry-next".into(),
+            attempt_number: 3,
+            ..retry.clone()
+        };
+        AgentRunRecord::persist_retry_attempt_before_launch(&port.db.pool, &request, &next)
+            .await
+            .unwrap();
+        let mut starting = LocalAgentRunPort::staged_event(
+            &request,
+            &next,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting,
+            },
+            vec![],
+            Utc::now(),
+            None,
+            (None, None),
+        );
+        starting.sequence = 1;
+        AgentEventRecord::append_and_project(&port.db.pool, &starting)
+            .await
+            .unwrap();
+        let (_, _, fresh) =
+            replay_fixture(root.path(), &request, &next, i32::MAX as u32, 0, true).await;
+        assert_ne!(
+            LocalAgentRunPort::startup_input_event_id(&request, &retry),
+            LocalAgentRunPort::startup_input_event_id(&request, &next)
+        );
+        for _ in 0..2 {
+            port.apply_host_events(&request, &next, vec![fresh[0].clone()])
+                .await
+                .unwrap();
+        }
+        let running = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(running.status, AgentRunStatus::Running);
+        assert_eq!(running.projection_status, ProjectionStatus::Current);
+        assert!(
+            running.terminal_output.is_none(),
+            "past candidate is not new completion"
+        );
+        port.apply_host_events(&request, &next, fresh[1..].to_vec())
+            .await
+            .unwrap();
+        assert_eq!(
+            port.query(request.agent_run_id).await.unwrap().state.status,
+            AgentRunStatus::Succeeded
+        );
+        assert!(
+            port.children.read().await.is_empty(),
+            "fixture never launches a provider"
+        );
     }
 
     #[cfg(target_os = "linux")]

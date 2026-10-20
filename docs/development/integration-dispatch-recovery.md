@@ -1,6 +1,6 @@
 # Formal Integration dispatch recovery
 
-Latest operator handoff: [prepared one-command cutover](#prepared-one-command-operator-cutover--local-9-33587794). Earlier cutover sections are historical.
+Latest operator handoff: [third-failure source repair](#operator-handoff-for-this-repair). Earlier cutover sections are historical; do not execute the 33587794-pinned script unchanged. This repair has not been deployed.
 
 A Create command being queued, or a global outbox delivery returning success,
 does not prove that its AgentRun exists. The dispatcher must settle the specific
@@ -572,3 +572,124 @@ internal request, public Host for health, disables proxies and refuses redirects
 The underlying 33587794 source already passed 21 Integration tests, 7 dispatch
 tests and server all-target Clippy as recorded above; those unchanged tests were
 not repeated. Actual cutover and live candidate startup remain operator work.
+
+
+## Third failure: retry startup projection (20 October, 13:32 UTC)
+
+The prior read-only investigation established that attempt 2 reused the original
+input message UUID as its canonical event UUID. Its attempt and Native Audit
+reference differed, so the Started batch was quarantined for an idempotency
+collision. Both the input and Running fact were lost from the projection. The
+provider nevertheless completed step 1 with `outcome=ready`. The host had not
+sent the new instruction (`575bde99…`, no command receipt); it was still waiting
+for Running and blocked when the run became terminal. The older failed Steer
+`d74d0df1…` was a separate command. The final-result projection guard would also
+have rejected this degraded run. Child success was not Integration success.
+
+The source repair preserves the original input message identity but derives the
+retry startup **event** UUID from the attempt UUID and message UUID. Initial
+launch retains its historical event UUID. Same-attempt redelivery has the same
+identity and content. Provider-mapped events already include the attempt UUID;
+Started lifecycle and terminal events retain their journal event identities.
+No schema or host protocol change is needed.
+
+A formal, authorised Retry can now reconcile this specific historical failure
+before creating its next attempt. Durable command and workspace authority checks
+run first. Reconciliation requires a terminal latest attempt, exactly the known
+startup-collision quarantine, matching original input, an exited registry,
+confirmed absent host/provider, and a complete matching journal and Native Audit.
+It verifies the canonical input bytes, appends the two missing startup facts with
+stable identities, and rebuilds the projection from all canonical events. The
+rebuilt state must preserve every state field except projection status and update
+time. A late Running fact does not resurrect a terminal attempt. Unknown errors,
+live processes, missing/corrupt evidence and other projection discrepancies fail
+closed. Original audit files, events and quarantine rows are retained. A crash
+between appending facts and rebuilding leaves the run degraded and permits the
+same evidenced reconstruction to be retried; no provider is launched by it.
+
+The recovery is not a bypass for Steer and does not adopt the previous candidate
+as a completed step. The normal Retry, provider readiness, structured result,
+clean candidate/ancestry, review and publication gates still apply. The retained
+`9790327408a36f9fcef87ad15e781f40d0a5501c` candidate remains available in the
+Integration checkout; its step has not yet been accepted by the host. Existing
+same-Integration reservations are reusable by the formal intervention transaction;
+foreign reservations still reject it. Do not manually clear reservations or
+replay the old failed Steer.
+
+Product-completion settlement now reserves the SQLite writer before reading the
+node and plan (`append_product_completion`, `BEGIN IMMEDIATE`). An isolated
+DELETE-journal regression reproduces code 5 with the old deferred transaction
+and passes with the reservation. The historical live lock holder remains unknown;
+this proves a susceptible operation and a scoped correction, not that a specific
+historical task held the lock. Global journal, timeout and pool settings are unchanged.
+
+### Operator handoff for this repair
+
+1. Rebuild the source commit containing this section after review, with the
+   existing bounded/offline server build procedure. Record its full commit and
+   candidate hash. **The earlier `33587794` cutover program and pinned hash must
+   not be executed unchanged for this repair.** No new executable or cutover
+   program is staged by this source-repair run.
+2. In a separately approved maintenance window, re-inspect actual PID, launcher,
+   frontend dependencies, jobs and current frozen payload; prepare a fresh
+   one-shot SSH cutover with new hashes and state guards. Back up the currently
+   serving `33587794` executable (`efa3ff3a…`), launcher and WAL-safe SQLite state.
+   Stop/switch/start only from an independent operator SSH session, never from
+   this server's AgentRun/MCP. On startup failure restore only the saved executable
+   after confirming process ownership/termination; do not automatically restore DB.
+3. Check HTTP/MCP health, main `b385a2d2d1a8683fbdcb8d931356d34f4264169c`, all four
+   frozen source refs, unpublished state and `skip_validation=true`. Then explicitly
+   Resume **only** `c68ce019-9349-4679-976f-326120191c08` through the existing UI.
+   Keep `0771cd56…` and LOCAL-11 untouched. Do not create a replacement Integration.
+4. Verify the historical quarantine is retained, the new attempt has Current
+   projection and Running, the new instruction has a delivery receipt, and the
+   host accepts step 1 before proceeding to steps 2–4. Stop for evidence review
+   if a guard rejects; do not loop Resume or erase degradation flags. Publication
+   remains the formal Integration's responsibility and the result stays unverified.
+
+Source tests exercise isolated persistence/host-journal and Integration boundary
+fixtures; they do not prove a real Codex/provider or live four-source Integration
+has completed. No deployment, live recovery, production DB write or target/source
+branch movement is performed by this repair run.
+
+Read-only handoff check during this repair: payload SHA256
+`9a871dca4b729996e063b77e4c4021bb97527980059a6a770d1c5086c655f25f`;
+blocked, unpublished, zero accepted steps, null result, skip-validation true.
+Four saved commits match their source branches, main remains frozen, and the
+step-1 candidate checkout is clean. Attempt-2 journal sequence 748 has a matching
+canonical terminal fact and timestamp; the registry is exited. Recheck these
+conditions at cutover, rather than treating this observation as a future lock.
+
+### Source validation for the third-failure repair
+
+All Cargo commands used `--locked --offline`, two build jobs, the workspace's
+own target directory and sccache. Tests used isolated databases/journals/Git
+fixtures; no real provider launch or live Integration run was used.
+
+| Check | Result |
+| --- | --- |
+| `cargo test -p db models::orchestration::tests` | 11 passed; includes atomic/idempotent completion and writer contention |
+| `cargo test -p db --lib models::agent_runtime::tests` | 22 passed; canonical projection, quarantine, audit, cursor and SQLite retry |
+| `cargo test -p db --lib models::integration::tests` | 17 passed; ownership, durable intervention, reservation and skip-policy fences |
+| `cargo test -p local-deployment --lib agent_run_port::tests` | 19 passed; cancelled attempt, real collision, verified reconstruction, rejected corrupt/incomplete/live evidence, interrupted rebuild retry, startup redelivery and command authority |
+| `cargo test -p server --lib routes::integrations::runtime::tests` | 21 passed; readiness/Steer retry and terminal fences, structured ready acceptance, step receipt idempotence, sequential progression and skipped validation |
+| `cargo test -p services --lib dispatch_tests` | 7 passed; targeted/concurrent Create, explicit Resume and retained skip policy |
+| `cargo check -p local-deployment` | Passed; affected source also compiled by tests/Clippy |
+| `cargo clippy -p db -p local-deployment -p server --all-targets -- -D warnings` | Passed |
+| `cargo fmt -p db -p local-deployment -p server --check`, `git diff --check` | Passed |
+
+The new product-completion test was also run with only that transaction reverted
+to deferred BEGIN: it failed with SQLite code 5, then passed after restoring the
+fix. Initial regression-fixture failures were corrected (registry terminal
+constraints, attempt Starting fact, skipped admission's empty validation plan).
+The passing checks above are the final runs. The initially selected server binary
+and services file-name test filters selected zero tests; they were corrected to
+the library/module filters above and are not counted as coverage.
+
+There are 97 distinct passing tests across these scoped groups. The retry/audit
+and host step-acceptance boundaries are tested in separate fixtures; this is not
+an end-to-end live Codex/4-source success claim. No frontend or new deployment
+binary was built for this repair. Cargo replayed an old dummy-dist build warning;
+the actual preserved dist was checked to contain 992 files and a real index, not
+the placeholder. SQL changes use runtime queries; no schema or query-macro
+metadata changes are involved.

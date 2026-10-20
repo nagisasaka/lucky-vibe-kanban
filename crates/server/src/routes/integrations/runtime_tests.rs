@@ -1675,6 +1675,33 @@ mod instruction_startup {
         .await
         .unwrap();
         assert_eq!(saved, ("delivered".into(), 3));
+        // Host acceptance is separate from the child's delivery receipt. A
+        // structured ready result completes only the current frozen source.
+        run.payload.sequential = true;
+        let first_source = run.payload.sources[0].clone();
+        for index in 0..3 {
+            let mut source = first_source.clone();
+            source.selection.card_id = Uuid::new_v4();
+            source.commit = format!("{:040x}", index + 2);
+            run.payload.sources.push(source);
+        }
+        run.payload.validation.clear(); // admission chose skip for all four sources
+        let mut ready = development_proposal(&run);
+        ready["validation"] = json!([]);
+        let plan = proposal(&ready.to_string(), &run).unwrap();
+        assert!(!hold_validation_plan(&mut run, &plan));
+        replace_validation_plan(&mut run, &plan);
+        verify_validation(&pool, &run).await.unwrap();
+        super::super::super::steps::complete(&mut run).unwrap();
+        super::super::super::steps::complete(&mut run).unwrap();
+        assert_eq!(run.payload.steps.len(), 1);
+        assert!(run.payload.steps[0].validation_skipped);
+        assert_eq!(run.payload.sources.len(), 4);
+        assert!(!run.payload.published);
+        assert!(
+            run.payload.steps.len() < run.payload.sources.len(),
+            "host must continue to the remaining sources"
+        );
         for status in [
             AgentRunStatus::Pending,
             AgentRunStatus::Starting,
