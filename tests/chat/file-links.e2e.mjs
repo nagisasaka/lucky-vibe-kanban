@@ -28,6 +28,34 @@ const foreignRepoId = randomUUID();
 let server;
 let browser;
 let log = '';
+let spawnError;
+let cleanupPromise;
+function cleanup() {
+  return (cleanupPromise ??= (async () => {
+    try {
+      await browser?.close();
+    } finally {
+      if (
+        server?.pid &&
+        server.exitCode === null &&
+        server.signalCode === null
+      ) {
+        const exited = once(server, 'exit');
+        server.kill('SIGTERM');
+        const timeout = setTimeout(() => server.kill('SIGKILL'), 10_000);
+        await exited;
+        clearTimeout(timeout);
+      }
+      await rm(scratch, { recursive: true, force: true });
+    }
+  })());
+}
+process.once('SIGINT', () => {
+  void cleanup().finally(() => process.exit(130));
+});
+process.once('SIGTERM', () => {
+  void cleanup().finally(() => process.exit(143));
+});
 try {
   await mkdir(join(repo, 'src'), { recursive: true });
   await writeFile(
@@ -47,6 +75,10 @@ try {
       ...process.env,
       LVK_INSTANCE_DIR: instance,
       LVK_ACCESS_DEPLOYMENT: 'local',
+      LVK_PUBLIC_URL: '',
+      LVK_AUTH_MODE: 'local',
+      VK_ALLOWED_ORIGINS: '',
+      VK_PREVIEW_DOMAIN: '',
       HOST: '127.0.0.1',
       PORT: '0',
       BACKEND_PORT: '0',
@@ -64,9 +96,11 @@ try {
   });
   server.on('error', (error) => {
     log += error.message;
+    spawnError = error;
   });
   let base;
   for (let attempt = 0; attempt < 180; attempt++) {
+    if (spawnError) throw spawnError;
     if (server.exitCode !== null) throw new Error(`server exited: ${log}`);
     try {
       const ports = JSON.parse(
@@ -79,6 +113,7 @@ try {
     await new Promise((r) => setTimeout(r, 500));
   }
   assert.ok(base, `server did not become ready: ${log}`);
+  console.log('Isolated backend ready:', base);
   const dbFiles = await readdir(join(instance, 'data'));
   const db = dbFiles.find((name) => name === 'db.v2.sqlite');
   assert.ok(db, `database missing: ${dbFiles}`);
@@ -91,10 +126,10 @@ import sqlite3,sys,uuid
 c=sqlite3.connect(sys.argv[1])
 w,r,f=[uuid.UUID(v).bytes for v in sys.argv[2:5]]
 root=sys.argv[5]
-c.execute("INSERT INTO workspaces(id,container_ref,branch,name,usage) VALUES(?,?, 'main','file links E2E','execution_only')",(w,root))
-c.execute("INSERT INTO repos(id,path,name,display_name) VALUES(?,?, 'project','Project')",(r,root+'/project'))
-c.execute("INSERT INTO repos(id,path,name,display_name) VALUES(?,?, 'foreign','Foreign')",(f,root+'/foreign'))
-c.execute("INSERT INTO workspace_repos(id,workspace_id,repo_id,target_branch) VALUES(?,?,?,'main')",(uuid.uuid4().bytes,w,r))
+c.execute("INSERT INTO workspaces(id,container_ref,branch,name,usage,created_at,updated_at) VALUES(?,?, 'main','file links E2E','execution_only',datetime('now'),datetime('now'))",(w,root))
+c.execute("INSERT INTO repos(id,path,name,display_name,created_at,updated_at) VALUES(?,?, 'project','Project',datetime('now'),datetime('now'))",(r,root+'/project'))
+c.execute("INSERT INTO repos(id,path,name,display_name,created_at,updated_at) VALUES(?,?, 'foreign','Foreign',datetime('now'),datetime('now'))",(f,root+'/foreign'))
+c.execute("INSERT INTO workspace_repos(id,workspace_id,repo_id,target_branch,created_at,updated_at) VALUES(?,?,?,'main',datetime('now'),datetime('now'))",(uuid.uuid4().bytes,w,r))
 c.commit()
 `,
     join(instance, 'data', db),
@@ -123,6 +158,7 @@ c.commit()
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.setDefaultTimeout(30_000);
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(base, { waitUntil: 'networkidle' });
@@ -131,6 +167,7 @@ c.commit()
     await page.locator('#root').innerText(),
     'built application renders'
   );
+  console.log('Built application rendered');
   // Mount production chat + preview components on the real backend origin.
   // Only text/layout are synthetic; API requests are not intercepted or mocked.
   await page.addScriptTag({ content: result.outputFiles[0].text });
@@ -161,7 +198,8 @@ c.commit()
       .locator('[aria-current="location"]')
       .filter({ hasText: text })
       .waitFor();
-    assert.equal(await context.pages().then((pages) => pages.length), 1);
+    assert.equal(context.pages().length, 1);
+    console.log('Opened chat file link:', label);
   }
   for (const label of ['missing', 'symlink']) {
     await chat.getByRole('link', { name: label, exact: true }).click();
@@ -191,21 +229,29 @@ c.commit()
   const good = await fetch(contentUrl('src/example.ts'));
   assert.equal(good.status, 200);
   assert.match(JSON.stringify(await good.json()), /const selected = 3/);
-  for (const [path, id, ws] of [
-    ['../secret.txt'],
-    ['/etc/passwd'],
-    ['C:\\Windows\\win.ini'],
-    ['escape.txt'],
-    ['missing.txt'],
-    ['src/example.ts', foreignRepoId],
-    ['src/example.ts', repoId, randomUUID()],
+  for (const [path, status, id, ws] of [
+    ['../secret.txt', 400],
+    ['/etc/passwd', 400],
+    ['C:\\Windows\\win.ini', 400],
+    ['escape.txt', 404],
+    ['missing.txt', 404],
+    ['src/example.ts', 404, foreignRepoId],
+    ['src/example.ts', 404, repoId, randomUUID()],
   ]) {
-    const response = await fetch(contentUrl(path, id, ws));
-    assert.ok(
-      !response.ok,
-      `must reject ${path} ${id ?? ''}: ${response.status}`
-    );
-    assert.ok(!(await response.text()).includes('OUTSIDE_SECRET'));
+    for (const endpoint of ['content', 'raw']) {
+      const response = await fetch(
+        contentUrl(path, id, ws).replace(
+          '/files/content?',
+          `/files/${endpoint}?`
+        )
+      );
+      assert.equal(
+        response.status,
+        status,
+        `${endpoint} must reject ${path} ${id ?? ''}`
+      );
+      assert.ok(!(await response.text()).includes('OUTSIDE_SECRET'));
+    }
   }
   assert.deepEqual(errors, []);
   console.log(
@@ -213,6 +259,7 @@ c.commit()
       {
         result: 'passed',
         backend: base,
+        chromium: browser.version(),
         cases: [
           'built app render',
           'relative :line',
@@ -236,12 +283,5 @@ c.commit()
   console.error(log.slice(-8000));
   throw error;
 } finally {
-  await browser?.close();
-  if (server && server.exitCode === null) {
-    server.kill('SIGTERM');
-    const timeout = setTimeout(() => server.kill('SIGKILL'), 10_000);
-    await once(server, 'exit');
-    clearTimeout(timeout);
-  }
-  await rm(scratch, { recursive: true, force: true });
+  await cleanup();
 }

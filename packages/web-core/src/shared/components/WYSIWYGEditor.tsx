@@ -535,6 +535,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
 
     // Full markdown transformers for both edit and display modes.
     // Custom element transformers come first for matching precedence.
+    const enableLocalLinks = disabled && !!resolveLocalLink;
     const allTransformers: Transformer[] = useMemo(
       () => [
         TABLE_TRANSFORMER,
@@ -545,12 +546,12 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         COMPONENT_INFO_EXPORT_TRANSFORMER,
         COMPONENT_INFO_TRANSFORMER,
         // CommonMark angle destinations preserve spaces in chat file links.
-        ...(disabled && resolveLocalLink
+        ...(enableLocalLinks
           ? [{ ...LINK, importRegExp: /\[(.*?)\]\(<([^<>\n]+)>\)/ }]
           : []),
         ...TRANSFORMERS,
       ],
-      [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER, disabled, resolveLocalLink]
+      [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER, enableLocalLinks]
     );
 
     // Memoized handlers for ContentEditable to prevent re-renders
