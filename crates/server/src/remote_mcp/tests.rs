@@ -1164,6 +1164,18 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
         2,
         "{result}"
     );
+    // A real JWT with only lvk:read reaches the new handler and its schema
+    // validation (this fixture deliberately supplies incomplete arguments).
+    let events = request(&token, "list_run_events").send().await.unwrap();
+    assert_eq!(events.status(), StatusCode::OK);
+    let events: Value = events.json().await.unwrap();
+    assert_eq!(events["result"]["isError"], true);
+    assert!(
+        events["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Invalid tool parameters")
+    );
     let denied = request(&token, "create_issue").send().await.unwrap();
     assert_eq!(denied.status(), StatusCode::FORBIDDEN);
     assert!(
@@ -1178,6 +1190,14 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
         .unwrap();
     assert_eq!(
         request(&token, "list_projects")
+            .send()
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        request(&token, "list_run_events")
             .send()
             .await
             .unwrap()
@@ -1298,4 +1318,72 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         .await
         .is_err()
     );
+}
+
+#[tokio::test]
+async fn run_events_http_read_scope_and_reconnect() {
+    let (_, auth, provider) = fixture().await;
+    let (remote, _, _, target, _) = runtime_write_tests::fixture().await;
+    runtime_write_tests::emit_questions(&remote.pool, &target).await;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let server =
+        tokio::spawn(async move { axum::serve(listener, router(remote, auth)).await.unwrap() });
+    let args = json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"session_id":target.session_id,"agent_run_id":target.agent_run_id,"limit":2});
+    let request = |token: &str, args: Value| {
+        // A fresh HTTP client each time deliberately carries no MCP session state.
+        reqwest::Client::new().post(format!("{base}/mcp"))
+            .header("host", "lvk.example")
+            .header("accept", "application/json, text/event-stream")
+            .header("MCP-Protocol-Version", "2025-03-26")
+            .bearer_auth(token)
+            .json(&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_run_events","arguments":args}}))
+    };
+    for (token, status) in [("revoked", 401), ("no-scope", 403)] {
+        assert_eq!(
+            request(token, args.clone())
+                .send()
+                .await
+                .unwrap()
+                .status()
+                .as_u16(),
+            status
+        );
+    }
+    let first: Value = request("read-only", args.clone())
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_ne!(first["result"]["isError"], true, "{first}");
+    let page = &first["result"]["structuredContent"];
+    assert_eq!(page["scanned_count"], 2);
+    assert_eq!(page["has_more"], true);
+    let mut next = args.clone();
+    next["cursor"] = page["next_cursor"].clone();
+    let second: Value = request("read-only", next)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(second["result"]["structuredContent"]["scanned_count"], 1);
+    assert_eq!(second["result"]["structuredContent"]["has_more"], false);
+    let mut bad = args;
+    bad["session_id"] = json!(Uuid::new_v4());
+    let result: Value = request("read-only", bad)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(result["result"]["isError"], true);
+    server.abort();
+    let _ = server.await;
+    provider.abort();
+    let _ = provider.await;
 }

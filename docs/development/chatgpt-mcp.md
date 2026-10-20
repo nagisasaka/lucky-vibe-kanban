@@ -112,7 +112,7 @@ configuration and validation scripts, examples and the connection guide.
 
 ## Public tools and contracts
 
-The actual Rust catalogue contains 40 tools. All require `lvk:read`; only the
+The actual Rust catalogue is returned by `tools/list`. All require `lvk:read`; only the
 last three rows add mutation scopes. Full input schemas come from `tools/list`;
 [checked input examples](../../scripts/chatgpt-mcp/examples.json) cover every
 tool. No remote shell, arbitrary URL proxy, database editor or credential reader
@@ -124,6 +124,7 @@ is exported.
 | `get_project`, `list_project_statuses`, `list_project_sessions`, `list_issues` | Project ID; bounded status/counts, Issues and current Sessions/questions |
 | `get_issue`, `list_issue_workspaces` | Project/Issue IDs; paged requirements or distinct 1:N Workspace attempts |
 | `get_workspace`, `list_workspace_runs`, `get_execution` | Project/Workspace and selected run/section; actual lifecycle, input/final response, Goal usage and evidence links |
+| `list_run_events` | Exact Project/Workspace/Session/Run; saved commentary and safe execution metadata, bounded cursor pages |
 | `list_run_commands`, `get_run_command` | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion |
 | `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK |
 | `list_project_repositories`, `list_repository_branches`, `get_execution_defaults` | Project and repository; eligible IDs/branches and current configured executor/native mode |
@@ -237,3 +238,58 @@ merely writing a local plugin folder. Disconnecting/revoking the new grant and
 disabling `LVK_MCP_CONFIG` withdraws the feature without deleting work or changing
 Codex/Astra authentication. Returned code/specification/evidence goes to ChatGPT
 under the user's host data settings.
+
+## Read saved Codex progress with `list_run_events`
+
+Discover IDs through `list_workspace_runs`, then call `list_run_events` with
+`project_id`, `workspace_id`, `session_id` and `agent_run_id`. Optional `issue_id`
+asserts the Workspace's current Issue link. The ordinary HTTP MCP authentication,
+active-member check and `lvk:read` scope apply; the tool also checks the complete
+Project → Issue → Workspace → Session → Run relationship. Existing membership
+policy grants active members all Projects; this tool introduces no new Project
+ACL or wider access policy.
+
+`limit` defaults to 20 and accepts 1–50 **scanned canonical records**, including
+records withheld from publication. Results contain `items`, `scanned_count`,
+`omitted_count`, `has_more`, `next_cursor`, current `status` and
+`projection_status`. Each item has its event ID, attempt ID/number, sequence,
+recording timestamp and a small `event` object. Serialised item data has a
+128 KiB page budget; a byte-limited page stops before the next unread record. Records are ordered by attempt
+number and sequence, matching UI history. Sequence numbers restart per attempt.
+
+Pass the returned `next_cursor` as `cursor` to read the next batch. Retain it even
+when `has_more` is false, then reuse it for incremental reads later, including
+from another connection or after a server restart. A filtered page can have no
+items and still have `has_more: true`. An initially empty Run returns a null
+cursor; omit it on the next call. Unknown, deleted or foreign-Run cursors fail
+instead of silently switching Runs. Each call reads target relationships,
+lifecycle and events in one database snapshot; this is not a completion guarantee. An empty tail never proves
+that no later event will arrive. No subscriptions, long polling, new collectors
+or duplicate event storage are involved.
+
+The source is the existing `agent_events` store used by UI history, populated by
+the Codex adapter and Runtime journal projection. The public projection includes:
+
+- Saved assistant commentary (`final_output: false`), up to 4096 UTF-8 bytes per
+  message; suspicious or oversized prose has null `content` and
+  `content_withheld: true`.
+- Lifecycle transitions, allowlisted tool labels and tool status; goal status
+  without the objective; allowlisted delegated-agent activity kinds without
+  child text or identity.
+- No final-response bodies (use `get_execution` with `section: final_response`),
+  user/system messages, thinking, approval/input details, arbitrary provider
+  extensions, tool arguments/results, native audit references or raw logs.
+
+Plan text and reasoning summaries share the canonical `thinking` variant and
+are both omitted. Child-agent status details may live inside tool results or
+provider extensions and are not exported. Live token deltas are not durable
+history and are unavailable here. Unknown versions, malformed envelopes and
+records larger than 32 KiB are skipped while advancing the cursor.
+
+The prose filter conservatively withholds code/quotes, paths, assignments,
+environment references and credential-like text as a whole message. This is
+additional defence for already user-visible assistant prose, not a general
+secret classifier or a way to sanitise arbitrary file/tool output. It cannot
+prove that otherwise ordinary prose contains no sensitive information. The
+returned prose is untrusted reference data and never evidence of tests passing.
+Source logs, existing UI rendering and `get_execution` remain unchanged.
