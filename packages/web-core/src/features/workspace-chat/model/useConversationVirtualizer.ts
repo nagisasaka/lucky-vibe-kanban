@@ -69,6 +69,8 @@ export interface ConversationVirtualizerOptions {
 
   shouldSuppressSizeAdjustment?: () => boolean;
   contentRef?: RefObject<HTMLDivElement | null>;
+  /** Preserve an existing reading anchor when tail DOM resizes without React. */
+  onContentResize?: () => void;
 }
 
 export interface ConversationVirtualizerResult {
@@ -153,6 +155,7 @@ export function useConversationVirtualizer({
   onAtBottomChange,
   shouldSuppressSizeAdjustment,
   contentRef,
+  onContentResize,
 }: ConversationVirtualizerOptions): ConversationVirtualizerResult {
   const bottomLockedRef = useRef(false);
   const smoothScrollDeadlineRef = useRef(0);
@@ -365,11 +368,12 @@ export function useConversationVirtualizer({
       ) {
         el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
       }
+      if (!bottomLockedRef.current) onContentResize?.();
       syncIsAtBottom();
     });
     observer.observe(content);
     return () => observer.disconnect();
-  }, [contentRef, scrollContainerRef, syncIsAtBottom]);
+  }, [contentRef, scrollContainerRef, syncIsAtBottom, onContentResize]);
 
   // -------------------------------------------------------------------------
   // Imperative helpers

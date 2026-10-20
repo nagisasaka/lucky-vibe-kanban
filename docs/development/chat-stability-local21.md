@@ -69,3 +69,23 @@ python3 tests/chat/run-isolated.py
 未検証範囲: 履歴の長さと到着タイミング、通常follow-upの成功／失敗は合成制御であり、全providerや実運用データの長期負荷試験ではない。実providerを通したのは上記Codexのsteering経路。Rust sourceの変更はなく、Rust unit test全体は実行していない。共有dev、他Workspace、公開環境には接続・デプロイしていない（共有資源登録の読取確認を除く）。
 
 修正前のソースに追加テストを適用した比較では、末尾領域の追従待ちがタイムアウトし、prepend の同じ行が -80px から 1912px へ移動した。steering の並びは `before, steer, after` に対して `steer, before, after` になった。末尾改行の外部値読込と送信を重ねる入力試験でも、送信成功後に入力が消えずタイムアウトした。比較後には作業中ソースを復元している。
+
+
+## 独立レビュー後の追加検証（2026-10-20、base 128460b3）
+
+未検証リスクだった「prepend後、操作もtimeline更新もない間の上側tailの遅延高さ変更」を既存の軽量Chromium layout試験へ追加した。bottomから80px（既存64px契約の外側）に移動し、prependで固定したsemantic keyの上にある非仮想行をtimerで120pxから360pxへ変更する。初回は従来の400px移動では上側tail行が存在せずfixture前提が失敗したため、80pxへ調整した。
+
+製品修正前は座標が **-40px → 200px** に変わり±2px assertionが失敗した。Reactのlayout effectだけではDOM由来のresizeに応答せず、content ResizeObserverもbottom lock時だけ補正していた。既存のDOMアンカー補正を共通callbackに抽出し、bottom lockがない場合の同ResizeObserverからも呼ぶ最小修正で合格した。新observer・新scroll framework・64px閾値の変更はない。
+
+steering順序のassertは既存entry_typeのuser_message / assistant_messageのみを対象とした。将来のsystem footerを順序検査へ含めないためのテスト意図の明確化であり、LOCAL-29のコードは取り込んでいない。
+
+今回実行した検証（すべて逐次）:
+
+- `node --test tests/chat/conversation-layout.test.mjs`: 修正前失敗、修正後1/1合格。
+- `node --test --test-concurrency=1 tests/chat/conversation-layout.test.mjs tests/chat/conversation-sync.test.mjs`: 2/2合格。既存の最新追従・過去閲覧・切替も確認。
+- `pnpm --dir packages/web-core exec vitest run src/features/agent-runtime/model/canonicalAgentConversation.test.ts --maxWorkers=1 --no-file-parallelism`: 12/12合格。
+- `pnpm run web-core:check`: 合格。
+- local-webの既存ESLint設定を指定した変更production 2ファイルの限定lint: エラーなし、既存のhook依存警告2件。対象unitファイルも含めた初回lintはlocal-web tsconfigの対象外で失敗したため、対象をproductionに限定。unitファイルのlint成功とは扱わない。
+- 変更ファイルのPrettier確認と `git diff --check` を実施。
+
+試験は実Chromium＋本番リスト/hookと合成データを使用。遅延DOM高さ変更を扱い、実画像ダウンロード・実backend・実Codex・LOCAL-29統合後のfooterは今回未検証。ユーザー指定に従いbackend build・全体E2Eは再実行していない。Chromiumはfinallyでcloseし、Workspace配下のbrowser/esbuild残存プロセスがないことを確認した。マージ・デプロイ・共有再起動・TODO更新なし。

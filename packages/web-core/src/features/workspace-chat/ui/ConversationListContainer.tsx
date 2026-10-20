@@ -547,9 +547,25 @@ const ScopedConversationList = forwardRef<
     [conversationRows, firstUnvirtualizedRowIndex]
   );
 
+  const restoreHistoryAnchor = useCallback(() => {
+    const anchor = historyAnchorRef.current;
+    const el = tanstackScrollRef.current;
+    if (!anchor || !el) return false;
+    const node = Array.from(
+      el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+    ).find((row) => row.dataset.semanticKey === anchor.key);
+    if (!node) return false;
+    el.scrollTop +=
+      node.getBoundingClientRect().top -
+      el.getBoundingClientRect().top -
+      anchor.top;
+    return true;
+  }, []);
+
   const conversationVirtualizer = useConversationVirtualizer({
     rows: virtualizedRows,
     contentRef,
+    onContentResize: restoreHistoryAnchor,
     totalRowCount: conversationRows.length,
     scrollContainerRef: tanstackScrollRef,
     onAtBottomChange: handleAtBottomChange,
@@ -567,15 +583,7 @@ const ScopedConversationList = forwardRef<
       historyAnchorRef.current = null;
       return;
     }
-    const node = Array.from(
-      el.querySelectorAll<HTMLElement>('[data-semantic-key]')
-    ).find((row) => row.dataset.semanticKey === anchor.key);
-    if (node) {
-      el.scrollTop +=
-        node.getBoundingClientRect().top -
-        el.getBoundingClientRect().top -
-        anchor.top;
-    } else {
+    if (!restoreHistoryAnchor()) {
       conversationVirtualizer.virtualizer.scrollToIndex(index, {
         align: 'start',
         behavior: 'auto',

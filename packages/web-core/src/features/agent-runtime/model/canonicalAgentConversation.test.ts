@@ -135,7 +135,11 @@ describe('projectCanonicalAgentConversation', () => {
     ]);
     expect(
       streaming.entries
-        .filter((entry) => entry.content.entry_type.type !== 'loading')
+        .filter((entry) =>
+          ['user_message', 'assistant_message'].includes(
+            entry.content.entry_type.type
+          )
+        )
         .map((entry) => entry.content.content)
     ).toEqual(['before', 'steer', 'after']);
     for (const events of [
@@ -145,11 +149,15 @@ describe('projectCanonicalAgentConversation', () => {
       const projection = projectRuns([
         { runId: 'steered', status: 'succeeded', events },
       ]);
-      expect(projection.entries.map((entry) => entry.content.content)).toEqual([
-        'before',
-        'steer',
-        'after',
-      ]);
+      expect(
+        projection.entries
+          .filter((entry) =>
+            ['user_message', 'assistant_message'].includes(
+              entry.content.entry_type.type
+            )
+          )
+          .map((entry) => entry.content.content)
+      ).toEqual(['before', 'steer', 'after']);
       expect(
         projection.entries.every(
           (entry) => entry.canonical?.agentRunId === 'steered'

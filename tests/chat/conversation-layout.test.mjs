@@ -87,7 +87,8 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
     await page.evaluate(() => {
       const el = document.querySelector(".overflow-y-auto");
       el.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
-      el.scrollTop -= 400;
+      // Outside the 64px bottom lock, with offscreen tail rows above us.
+      el.scrollTop -= 80;
     });
     await page.waitForTimeout(100);
     const anchor = await page.evaluate(() => {
@@ -114,6 +115,34 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
     assert.ok(
       Math.abs(top - anchor.top) <= 2,
       `prepend moved anchor: ${anchor.top} -> ${top}`,
+    );
+    // Simulate an image/DOM resize without publishing entries or a React update.
+    // The changed row must belong to the unvirtualized tail, above the viewport.
+    await page.evaluate(() => {
+      const row = [...document.querySelectorAll("[data-semantic-key]")].find(
+        (node) =>
+          !node.hasAttribute("data-index") &&
+          node.getBoundingClientRect().bottom < 0,
+      );
+      if (!row) throw new Error("No offscreen unvirtualized tail row");
+      window.delayedTailResizeDone = false;
+      setTimeout(() => {
+        row.firstElementChild.style.height = "360px";
+        window.delayedTailResizeDone = true;
+      }, 50);
+    });
+    await page.waitForFunction(() => window.delayedTailResizeDone);
+    await page.waitForTimeout(200);
+    const resizedTop = await page.evaluate(
+      (key) =>
+        [...document.querySelectorAll("[data-semantic-key]")]
+          .find((node) => node.dataset.semanticKey === key)
+          ?.getBoundingClientRect().top,
+      anchor.key,
+    );
+    assert.ok(
+      Math.abs(resizedTop - anchor.top) <= 2,
+      `delayed tail resize moved anchor: ${anchor.top} -> ${resizedTop}`,
     );
     await page.evaluate(() =>
       window.publish(window.source(40, 100), "initial", false),
