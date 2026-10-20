@@ -59,7 +59,6 @@ import {
   PERSIST_KEYS,
   usePaneSize,
   useWorkspacePanelState,
-  useUiPreferencesStore,
   RIGHT_MAIN_PANEL_MODES,
   type RightMainPanelMode,
 } from '@/shared/stores/useUiPreferencesStore';
@@ -142,44 +141,21 @@ export function WorkspacesLayout() {
     setLeftMainPanelVisible,
     setRightMainPanelMode,
   } = useWorkspacePanelState(isCreateMode ? undefined : workspaceId);
-  const [mobileTab, setMobileTab] = useMobileActiveTab();
-  const closeWiki = useUiPreferencesStore((s) => s.closeWiki);
+  const [mobileTab] = useMobileActiveTab();
   const [wikiMobileNavigation, setWikiMobileNavigation] = useState(true);
   useEffect(() => setWikiMobileNavigation(true), [workspaceId]);
   const wikiActive = rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI;
   const wikiButtonClass =
     'rounded-sm border px-base py-half text-normal hover:bg-panel';
-  const wikiActions = (
-    <>
-      {isMobile ? (
-        <button
-          type="button"
-          className={wikiButtonClass}
-          onClick={() => setWikiMobileNavigation(true)}
-        >
-          Wiki pages
-        </button>
-      ) : (
-        <button
-          type="button"
-          className={wikiButtonClass}
-          onClick={() => setLeftMainPanelVisible(!isLeftMainPanelVisible)}
-        >
-          {isLeftMainPanelVisible ? 'Focus Wiki' : 'Show chat alongside'}
-        </button>
-      )}
-      <button
-        type="button"
-        className={wikiButtonClass}
-        onClick={() => {
-          closeWiki(workspaceId);
-          if (isMobile) setMobileTab('chat');
-        }}
-      >
-        Return to workspace
-      </button>
-    </>
-  );
+  const wikiActions = isMobile ? (
+    <button
+      type="button"
+      className={wikiButtonClass}
+      onClick={() => setWikiMobileNavigation(true)}
+    >
+      Wiki pages
+    </button>
+  ) : undefined;
   const mainContainerRef = useRef<WorkspacesMainContainerHandle>(null);
 
   const handleScrollToBottom = useCallback(

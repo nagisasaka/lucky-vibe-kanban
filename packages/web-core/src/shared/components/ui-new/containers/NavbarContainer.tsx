@@ -144,9 +144,6 @@ export function NavbarContainer({
     projectDestination !== null && projectDestination.kind !== 'project';
   const [mobileActiveTab, setMobileActiveTab] = useMobileActiveTab();
 
-  const openWiki = useUiPreferencesStore((state) => state.openWiki);
-  const closeWiki = useUiPreferencesStore((state) => state.closeWiki);
-
   // Keep the simplified mobile navigation, adding only the Wiki reader.
   // Do not reset a valid Wiki selection on workspace/session rerenders.
   const mobileWorkspaceTabs = useMemo(
@@ -178,15 +175,13 @@ export function NavbarContainer({
 
   const handleMobileTabChange = useCallback(
     (tab: MobileTabId) => {
-      if (tab === 'todos')
+      if (tab === 'todos' || tab === 'wiki')
         useUiPreferencesStore
           .getState()
-          .setRightMainPanelMode('todos', selectedWorkspace?.id);
-      else if (tab === 'wiki') openWiki(selectedWorkspace?.id);
-      else if (tab === 'chat') closeWiki(selectedWorkspace?.id);
+          .setRightMainPanelMode(tab, selectedWorkspace?.id);
       setMobileActiveTab(tab);
     },
-    [closeWiki, openWiki, selectedWorkspace?.id, setMobileActiveTab]
+    [selectedWorkspace?.id, setMobileActiveTab]
   );
 
   const { data: orgsData } = useUserOrganizations();

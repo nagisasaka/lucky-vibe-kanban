@@ -54,7 +54,6 @@ export const RightSidebar = memo(function RightSidebar({
   const setRightMainPanelMode = useUiPreferencesStore(
     (s) => s.setRightMainPanelMode
   );
-  const openWiki = useUiPreferencesStore((s) => s.openWiki);
   const { expandTerminal, isTerminalExpanded } = useLogsPanel();
   const { target: selectedFileTarget, openTarget: openFileTarget } =
     useWorkspaceFilesSelection(selectedWorkspace?.id);
@@ -259,7 +258,7 @@ export const RightSidebar = memo(function RightSidebar({
         <button
           type="button"
           className="w-full p-base text-left text-normal hover:bg-panel border-b"
-          onClick={() => openWiki(selectedWorkspace.id)}
+          onClick={() => setRightMainPanelMode('wiki', selectedWorkspace.id)}
         >
           Open Wiki
         </button>
