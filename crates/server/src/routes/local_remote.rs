@@ -48,7 +48,7 @@ use crate::{
 const LOCAL_PROJECT_COLOR: &str = "210 80% 52%";
 
 const DEFAULT_STATUSES: [(&str, &str, i32, bool); 5] = [
-    ("Todo", "210 80% 52%", 100, false),
+    ("Not Started", "210 80% 52%", 100, false),
     ("In Progress", "38 92% 50%", 200, false),
     ("In Review", "265 70% 62%", 300, false),
     ("Done", "145 63% 42%", 400, false),
@@ -827,6 +827,7 @@ pub(crate) async fn update_local_issue_checked(
         UPDATE local_issues
         SET
             status_id = ?,
+            agent_status_owner = CASE WHEN ? THEN NULL ELSE agent_status_owner END,
             title = ?,
             description = ?,
             priority = ?,
@@ -842,6 +843,7 @@ pub(crate) async fn update_local_issue_checked(
         "#,
     )
     .bind(changes.status_id.unwrap_or(existing.status_id))
+    .bind(changes.status_id.is_some())
     .bind(changes.title.unwrap_or(existing.title))
     .bind(changes.description.unwrap_or(existing.description))
     .bind(
@@ -3403,7 +3405,7 @@ pub(crate) async fn project_creation_repository_ids(
 
 #[cfg(test)]
 mod tests {
-    use api_types::{CreateIssueRequest, CreateProjectRequest, IssuePriority};
+    use api_types::{CreateIssueRequest, CreateProjectRequest, IssuePriority, UpdateIssueRequest};
     use chrono::Utc;
     use executors::runtime::{AgentRunStatus, ProjectionStatus, RunState};
     use serde_json::Value;
@@ -3454,6 +3456,7 @@ mod tests {
                 issue_number INTEGER NOT NULL,
                 simple_id TEXT NOT NULL,
                 status_id BLOB NOT NULL,
+                agent_status_owner BLOB,
                 title TEXT NOT NULL,
                 description TEXT,
                 priority TEXT,
@@ -3609,7 +3612,7 @@ mod tests {
             .expect("seed statuses");
 
         assert_eq!(statuses.len(), 5);
-        assert_eq!(statuses[0].name, "Todo");
+        assert_eq!(statuses[0].name, "Not Started");
         assert_eq!(statuses[4].name, "Cancelled");
         assert!(statuses[4].hidden);
 
@@ -3639,6 +3642,45 @@ mod tests {
         assert_eq!(issue.simple_id, "LOCAL-1");
         assert_eq!(issue.title, "First local issue");
         assert_eq!(issue.priority, Some(IssuePriority::High));
+
+        let owner = Uuid::new_v4();
+        sqlx::query("UPDATE local_issues SET agent_status_owner=? WHERE id=?")
+            .bind(owner)
+            .bind(issue.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let title_change: UpdateIssueRequest =
+            serde_json::from_value(serde_json::json!({"title":"Edited title"})).unwrap();
+        super::update_local_issue(&pool, issue.id, title_change)
+            .await
+            .unwrap();
+        let retained: Option<Uuid> =
+            sqlx::query_scalar("SELECT agent_status_owner FROM local_issues WHERE id=?")
+                .bind(issue.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(
+            retained,
+            Some(owner),
+            "title edits must not disable lifecycle sync"
+        );
+        let status_change: UpdateIssueRequest =
+            serde_json::from_value(serde_json::json!({"status_id":issue.status_id})).unwrap();
+        super::update_local_issue(&pool, issue.id, status_change)
+            .await
+            .unwrap();
+        let cleared: Option<Uuid> =
+            sqlx::query_scalar("SELECT agent_status_owner FROM local_issues WHERE id=?")
+                .bind(issue.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(
+            cleared, None,
+            "explicit manual status wins even in the same column"
+        );
     }
 
     #[tokio::test]

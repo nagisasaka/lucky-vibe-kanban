@@ -1569,6 +1569,10 @@ fn merge_provider_session_metadata(
     }
 }
 
+#[path = "agent_runtime_kanban.rs"]
+mod kanban;
+use kanban::sync_kanban_lifecycle;
+
 impl AgentEventRecord {
     /// Atomically append all durable semantics from one process-host response,
     /// project the resulting state once, and advance the host cursor. Incoming
@@ -1693,7 +1697,11 @@ impl AgentEventRecord {
             }
             let mut event = incoming.clone();
             event.sequence = state.last_event_sequence.saturating_add(1);
-            reduce_agent_event(state, &event)?;
+            let previous = (state.status, state.last_run_attempt_id);
+            let applied = reduce_agent_event(state, &event)?;
+            if applied == ReducerApply::Applied {
+                sync_kanban_lifecycle(&mut transaction, &event, &previous).await?;
+            }
             let event_json = serde_json::to_string(&event)?;
             sqlx::query(
                 r#"
@@ -2026,7 +2034,11 @@ impl AgentEventRecord {
                     event.agent_run_id,
                 ))?;
         let mut state = state_json.0;
+        let previous = (state.status, state.last_run_attempt_id);
         let applied = reduce_agent_event(&mut state, event)?;
+        if applied == ReducerApply::Applied {
+            sync_kanban_lifecycle(&mut transaction, event, &previous).await?;
+        }
         sqlx::query(
             r#"
             INSERT INTO agent_events (
@@ -2168,6 +2180,8 @@ mod tests {
 
     use super::*;
 
+    include!("agent_runtime_kanban_tests.rs");
+
     async fn setup_pool() -> SqlitePool {
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
@@ -2221,6 +2235,17 @@ mod tests {
         .execute(pool)
         .await
         .expect("create projection failure schema");
+        sqlx::raw_sql(r#"
+            CREATE TABLE local_project_statuses (id BLOB PRIMARY KEY, project_id BLOB, name TEXT, color TEXT, sort_order INTEGER, hidden INTEGER);
+            CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT);
+            CREATE TABLE local_workspace_links (workspace_id BLOB, issue_id BLOB);
+        "#).execute(pool).await.unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20261020190000_kanban_lifecycle.sql"
+        ))
+        .execute(pool)
+        .await
+        .unwrap();
     }
 
     fn requests(

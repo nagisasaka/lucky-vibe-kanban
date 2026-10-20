@@ -1533,6 +1533,31 @@ mod tests {
     }
 
     #[test]
+    fn process_exit_zero_requires_provider_success_evidence() {
+        let (status, error, _) = super::terminal_from_exit(
+            super::ExitCause::Process {
+                success: true,
+                code: Some(0),
+            },
+            executors::executors::provider_adapter::DirectProvider::Codex,
+            None,
+        );
+        assert_eq!(status, executors::runtime::AgentRunStatus::Crashed);
+        assert!(
+            error
+                .unwrap()
+                .message
+                .contains("without provider success evidence")
+        );
+        let (status, _, _) = super::terminal_from_exit(
+            super::ExitCause::Executor(executors::executors::ExecutorExitResult::Success),
+            executors::executors::provider_adapter::DirectProvider::Codex,
+            None,
+        );
+        assert_eq!(status, executors::runtime::AgentRunStatus::Succeeded);
+    }
+
+    #[test]
     fn terminal_failure_retains_provider_reason_but_cancel_does_not() {
         let error = executors::runtime::AgentRuntimeError::new(
             executors::runtime::AgentRuntimeErrorKind::Unknown,
