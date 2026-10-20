@@ -635,7 +635,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                 <MarkdownShortcutPlugin transformers={allTransformers} />
                 <ListPlugin />
                 <TablePlugin />
-                <CodeHighlightPlugin />
+                <CodeHighlightPlugin readOnly={disabled} />
                 {/* Only include editing plugins when not in read-only mode */}
                 {!disabled && (
                   <>

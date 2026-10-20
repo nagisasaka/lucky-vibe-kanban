@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { TerminalIcon, WrenchIcon } from '@phosphor-icons/react';
+import { ChatCode } from './ChatCode';
 import { cn } from '../lib/cn';
 import { ToolStatusDot, type ToolStatusLike } from './ToolStatusDot';
 
@@ -81,7 +82,7 @@ export function ChatScriptEntry({
         <span className="text-normal font-medium">{title}</span>
         {command && (
           <code className="text-low text-xs font-mono truncate block">
-            {command}
+            <ChatCode code={command} language="bash" />
           </code>
         )}
         <span className="text-low text-xs">{getSubtitle()}</span>
