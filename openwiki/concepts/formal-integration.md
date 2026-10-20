@@ -10,12 +10,20 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
     resource: repo://crates/git/src/publication.rs
+  - id: openwiki-source-83d25ea893da220229c11f8b
+    resource: repo://crates/server/src/remote_mcp/launch_tests.rs
+  - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
+    resource: repo://crates/server/src/remote_mcp/launch.rs
+  - id: openwiki-source-6adda10f98b079272f82a4cc
+    resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-a1c709eaad59af16183269df
     resource: repo://crates/server/src/routes/integrations/legacy_checkpoint.rs
   - id: openwiki-source-864e2ae97802aa9a00527c40
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
+  - id: openwiki-source-ecfa47de2e3842c785820c9b
+    resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-693f5c01a606eaeac0692368
@@ -24,10 +32,10 @@ sources:
     resource: repo://crates/server/src/routes/integrations/steps.rs
   - id: openwiki-source-e33d67a243cd5977ddd88a37
     resource: repo://docs/development/integration-dispatch-recovery.md
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-20T18:18:55.370Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-20T18:18:55.370Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -60,7 +68,9 @@ agent の責務は既存 index の競合解消と stage、および `ready` / `b
 
 ## 検証方針は受付時に固定する
 
-`skip_validation` は run 全体の選択である。新規受付は明示値を優先し、省略時は保存済み server preference `integration_skip_validation` を引き継ぐ。初期値と旧記録は false。同じ request ID の再送で値を省略した場合は既存 run の選択を維持し、明示値が違えば競合になる。後から preference を変えても既存 run の方針は変わらない。[受付](../../crates/server/src/routes/integrations/admission.rs#L242-L265)・[再送](../../crates/server/src/routes/integrations/admission.rs#L325-L359)
+`skip_validation` は run 全体の選択である。新規受付は明示値を優先し、省略または `null` は保存済み server preference `integration_skip_validation` を引き継ぐ。初期値と旧記録は false。domain 受付の同じ request ID の再送では、値の省略または `null` は既存 run の選択を維持し、明示値が違えば競合になる。後から preference を変えても既存 run の方針は変わらない。[受付](../../crates/server/src/routes/integrations/admission.rs#L242-L265)・[再送](../../crates/server/src/routes/integrations/admission.rs#L325-L359)
+
+外部 MCP では、この domain 受付より前に元の入力全体を照合する。省略と `null` の入替えも同じ request ID の再送には使えない。起動時の指定と保存値の確認は [MCP から Integration の検証方針を選ぶ](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
 
 検証必須の場合は、受付 target の Git object から `.lvk/integration-validation.json` の `commands` を読み、全 plan を凍結する。作業木・source branch・agent の proposal から選ばない。設定の欠落・不正、空の一覧、32件超、空文字や `true` / `:` / `exit 0` は受付エラーである。全 command は Repo root を cwd とする required check で、前提不足も失敗となる。[plan](../../crates/server/src/routes/integrations/mechanical.rs#L42-L85)
 
