@@ -392,82 +392,89 @@ export function CreateChatBoxContainer({
   );
 
   // Handle submit
+  const submitting = useRef(false);
   const handleSubmit = useCallback(async () => {
     setHasAttemptedSubmit(true);
-    if (!canSubmit || !executorConfig) return;
-
-    const { title } = splitMessageToTitleDescription(message);
-    const { prompt, isSlashCommand } = buildAgentPrompt(message, []);
-    const data = {
-      mode: workspaceMode,
-      executor_config: executorConfig,
-      name: title,
-      prompt,
-      repos:
-        workspaceMode === 'worktree' && selectedRepo && selectedTargetBranch
-          ? [
-              {
-                repo_id: selectedRepo.id,
-                target_branch: selectedTargetBranch,
-              },
-            ]
-          : [],
-      directory_path:
-        workspaceMode === 'direct_folder' ? directFolderPath.trim() : undefined,
-      linked_issue: linkedIssue
+    if (!canSubmit || !executorConfig || submitting.current) return;
+    submitting.current = true;
+    try {
+      const { title } = splitMessageToTitleDescription(message);
+      const { prompt, isSlashCommand } = buildAgentPrompt(message, []);
+      const data = {
+        mode: workspaceMode,
+        executor_config: executorConfig,
+        name: title,
+        prompt,
+        repos:
+          workspaceMode === 'worktree' && selectedRepo && selectedTargetBranch
+            ? [
+                {
+                  repo_id: selectedRepo.id,
+                  target_branch: selectedTargetBranch,
+                },
+              ]
+            : [],
+        directory_path:
+          workspaceMode === 'direct_folder'
+            ? directFolderPath.trim()
+            : undefined,
+        linked_issue: linkedIssue
+          ? {
+              remote_project_id: linkedIssue.remoteProjectId,
+              issue_id: linkedIssue.issueId,
+            }
+          : null,
+        selected_skills:
+          !isSlashCommand && selectedSkills.length > 0
+            ? selectedSkills
+            : undefined,
+        resume_session_id: stagedResumeSession?.agent_session_id,
+        resume_scope_path: resumeScopePath,
+        attachment_ids: getAttachmentIds(),
+      };
+      const linkToIssue = linkedIssue
         ? {
-            remote_project_id: linkedIssue.remoteProjectId,
-            issue_id: linkedIssue.issueId,
+            remoteProjectId: linkedIssue.remoteProjectId,
+            issueId: linkedIssue.issueId,
           }
-        : null,
-      selected_skills:
-        !isSlashCommand && selectedSkills.length > 0
-          ? selectedSkills
-          : undefined,
-      resume_session_id: stagedResumeSession?.agent_session_id,
-      resume_scope_path: resumeScopePath,
-      attachment_ids: getAttachmentIds(),
-    };
-    const linkToIssue = linkedIssue
-      ? {
-          remoteProjectId: linkedIssue.remoteProjectId,
-          issueId: linkedIssue.issueId,
-        }
-      : undefined;
+        : undefined;
 
-    const result = await createWorkspace.mutateAsync({
-      data,
-      linkToIssue,
-    });
+      const result = await createWorkspace.mutateAsync({
+        data,
+        linkToIssue,
+      });
 
-    if (result.workspace) {
-      onWorkspaceCreated(result.workspace.id);
+      if (result.workspace) {
+        onWorkspaceCreated(result.workspace.id);
+      }
+
+      if (linkedIssue?.remoteProjectId) {
+        const projectWorkspaceDefault =
+          workspaceMode === 'worktree' && data.repos[0]
+            ? { kind: 'git' as const, repo: data.repos[0] }
+            : workspaceMode === 'direct_folder' && data.directory_path
+              ? {
+                  kind: 'direct_folder' as const,
+                  path: data.directory_path,
+                }
+              : null;
+
+        saveProjectWorkspaceDefault(
+          linkedIssue.remoteProjectId,
+          projectWorkspaceDefault,
+          hostId
+        ).catch((err) =>
+          console.warn('Failed to save project workspace default:', err)
+        );
+      }
+
+      clearAttachments();
+      setSelectedSkills([]);
+      setStagedResumeSession(null);
+      await clearDraft();
+    } finally {
+      submitting.current = false;
     }
-
-    if (linkedIssue?.remoteProjectId) {
-      const projectWorkspaceDefault =
-        workspaceMode === 'worktree' && data.repos[0]
-          ? { kind: 'git' as const, repo: data.repos[0] }
-          : workspaceMode === 'direct_folder' && data.directory_path
-            ? {
-                kind: 'direct_folder' as const,
-                path: data.directory_path,
-              }
-            : null;
-
-      saveProjectWorkspaceDefault(
-        linkedIssue.remoteProjectId,
-        projectWorkspaceDefault,
-        hostId
-      ).catch((err) =>
-        console.warn('Failed to save project workspace default:', err)
-      );
-    }
-
-    clearAttachments();
-    setSelectedSkills([]);
-    setStagedResumeSession(null);
-    await clearDraft();
   }, [
     canSubmit,
     executorConfig,
@@ -584,7 +591,7 @@ export function CreateChatBoxContainer({
                       autoFocus
                       onPasteFiles={onPasteFiles}
                       localAttachments={localAttachments}
-                      sendShortcut={config?.send_message_shortcut}
+                      sendShortcut="Enter"
                     />
                   )}
                   agentIcon={

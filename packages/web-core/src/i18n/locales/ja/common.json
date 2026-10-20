@@ -1242,6 +1242,8 @@
     "newBody": "気付いたことやTODOを追加…",
     "category": "カテゴリ",
     "uncategorized": "未分類",
+    "categoryRequired": "カテゴリを入力してください。未分類のTODOは追加できません。",
+    "inputHint": "Enterで送信・追加、Ctrl+Enterで改行",
     "add": "追加",
     "showCompleted": "完了済みも表示",
     "empty": "表示するTODOはありません。上の入力欄から追加できます。",

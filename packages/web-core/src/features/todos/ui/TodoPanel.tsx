@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { DotsThreeIcon, ArrowSquareOutIcon } from '@phosphor-icons/react';
@@ -46,6 +46,7 @@ export function TodoPanel({
       category: draft?.category ?? '',
       ...change,
     });
+  const submitting = useRef(false);
   const create = useMutation({
     mutationFn: () =>
       todoApi.create(projectId, {
@@ -60,7 +61,20 @@ export function TodoPanel({
       void queryClient.invalidateQueries({ queryKey });
     },
     onError: (e: Error) => setError(e.message),
+    onSettled: () => {
+      submitting.current = false;
+    },
   });
+  const submit = () => {
+    if (!draft?.body.trim() || submitting.current || create.isPending) return;
+    if (!draft.category.trim()) {
+      setError(t('todo.categoryRequired'));
+      return;
+    }
+    setError(null);
+    submitting.current = true;
+    create.mutate();
+  };
   const groups = useMemo(() => {
     const grouped = new Map<string, Todo[]>();
     for (const item of query.data ?? []) {
@@ -85,7 +99,7 @@ export function TodoPanel({
           className="space-y-base"
           onSubmit={(event) => {
             event.preventDefault();
-            if (draft?.body.trim() && !create.isPending) create.mutate();
+            submit();
           }}
         >
           <textarea
@@ -97,7 +111,34 @@ export function TodoPanel({
             value={draft?.body ?? ''}
             disabled={create.isPending}
             onChange={(event) => changeDraft({ body: event.target.value })}
+            onKeyDown={(event) => {
+              if (
+                event.key !== 'Enter' ||
+                event.nativeEvent.isComposing ||
+                event.nativeEvent.keyCode === 229
+              )
+                return;
+              if (event.ctrlKey) {
+                event.preventDefault();
+                const input = event.currentTarget;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (input.value.length - (end - start) >= 16000) return;
+                changeDraft({
+                  body:
+                    input.value.slice(0, start) + '\n' + input.value.slice(end),
+                });
+                requestAnimationFrame(() =>
+                  input.setSelectionRange(start + 1, start + 1)
+                );
+                return;
+              }
+              if (event.shiftKey || event.metaKey || event.altKey) return;
+              event.preventDefault();
+              if (!event.repeat) submit();
+            }}
           />
+          <p className="text-xs text-low">{t('todo.inputHint')}</p>
           <div className="flex flex-wrap items-end gap-base">
             <label className="min-w-0 flex-1 text-sm text-low">
               {t('todo.category')}

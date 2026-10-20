@@ -61,6 +61,7 @@ export function useSessionSend({
     sessionId,
     isNewSessionMode,
   ]);
+  const inFlight = useRef(new Set<string>());
   const currentScope = useRef(scope);
   currentScope.current = scope;
   const { mutateAsync: createSession, isPending: isCreatingSession } =
@@ -96,59 +97,65 @@ export function useSessionSend({
         return null;
       }
 
-      if (isNewSessionMode) {
-        // New session flow
-        if (!workspaceId) {
-          setError('No workspace selected');
-          return null;
-        }
-        try {
-          const session = await createSession({
-            hostId,
-            workspaceId,
-            prompt: trimmed,
-            selectedSkills,
-            executorConfig: effectiveConfig,
-            resumeSessionId: options.resumeSessionId,
-            resumeScopePath: options.resumeScopePath,
-          });
-          return { createdSessionId: session.id };
-        } catch (e: unknown) {
-          const err = e as { message?: string };
-          if (currentScope.current === scope)
-            setError(
-              `Failed to create session: ${err.message ?? 'Unknown error'}`
-            );
-          return null;
-        }
-      } else {
-        // Existing session flow
-        if (!sessionId) return null;
-        setIsSendingFollowUp(true);
-        try {
-          await sessionsApi.followUp(
-            sessionId,
-            {
+      if (inFlight.current.has(scope)) return null;
+      inFlight.current.add(scope);
+      try {
+        if (isNewSessionMode) {
+          // New session flow
+          if (!workspaceId) {
+            setError('No workspace selected');
+            return null;
+          }
+          try {
+            const session = await createSession({
+              hostId,
+              workspaceId,
               prompt: trimmed,
-              selected_skills: selectedSkills,
-              executor_config: effectiveConfig,
-              resume_session_id: options.resumeSessionId || undefined,
-              resume_scope_path: options.resumeScopePath || undefined,
-            },
-            hostId
-          );
-          void queryClient.invalidateQueries({
-            queryKey: ['session-executor-config', hostId, sessionId],
-          });
-          return {};
-        } catch (e: unknown) {
-          const err = e as { message?: string };
-          if (currentScope.current === scope)
-            setError(`Failed to send: ${err.message ?? 'Unknown error'}`);
-          return null;
-        } finally {
-          setIsSendingFollowUp(false);
+              selectedSkills,
+              executorConfig: effectiveConfig,
+              resumeSessionId: options.resumeSessionId,
+              resumeScopePath: options.resumeScopePath,
+            });
+            return { createdSessionId: session.id };
+          } catch (e: unknown) {
+            const err = e as { message?: string };
+            if (currentScope.current === scope)
+              setError(
+                `Failed to create session: ${err.message ?? 'Unknown error'}`
+              );
+            return null;
+          }
+        } else {
+          // Existing session flow
+          if (!sessionId) return null;
+          setIsSendingFollowUp(true);
+          try {
+            await sessionsApi.followUp(
+              sessionId,
+              {
+                prompt: trimmed,
+                selected_skills: selectedSkills,
+                executor_config: effectiveConfig,
+                resume_session_id: options.resumeSessionId || undefined,
+                resume_scope_path: options.resumeScopePath || undefined,
+              },
+              hostId
+            );
+            void queryClient.invalidateQueries({
+              queryKey: ['session-executor-config', hostId, sessionId],
+            });
+            return {};
+          } catch (e: unknown) {
+            const err = e as { message?: string };
+            if (currentScope.current === scope)
+              setError(`Failed to send: ${err.message ?? 'Unknown error'}`);
+            return null;
+          } finally {
+            setIsSendingFollowUp(false);
+          }
         }
+      } finally {
+        inFlight.current.delete(scope);
       }
     },
     [

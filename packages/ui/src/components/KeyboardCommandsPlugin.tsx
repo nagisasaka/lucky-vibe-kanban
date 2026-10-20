@@ -5,6 +5,7 @@ import {
   $getSelection,
   $isRangeSelection,
   INDENT_CONTENT_COMMAND,
+  INSERT_LINE_BREAK_COMMAND,
   KEY_TAB_COMMAND,
   KEY_MODIFIER_COMMAND,
   KEY_ENTER_COMMAND,
@@ -172,8 +173,11 @@ export function KeyboardCommandsPlugin({
           return false;
         }
 
+        if (sendShortcut === 'Enter') return false;
+
         event.preventDefault();
         event.stopPropagation();
+        if (event.repeat) return true;
 
         if (event.shiftKey && onShiftCmdEnter) {
           onShiftCmdEnter();
@@ -207,11 +211,16 @@ export function KeyboardCommandsPlugin({
         }
 
         if (sendShortcut === 'Enter') {
-          if (event.shiftKey || event.metaKey || event.ctrlKey) {
+          if (event.ctrlKey) {
+            event.preventDefault();
+            editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+            return true;
+          }
+          if (event.shiftKey || event.metaKey || event.altKey) {
             return false;
           }
           event.preventDefault();
-          flushAndSubmit();
+          if (!event.repeat) flushAndSubmit();
           return true;
         }
 

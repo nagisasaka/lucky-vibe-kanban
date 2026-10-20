@@ -1349,6 +1349,8 @@
     "newBody": "Add a thought or TODO…",
     "category": "Category",
     "uncategorized": "Uncategorized",
+    "categoryRequired": "Enter a category before adding a TODO.",
+    "inputHint": "Enter to send/add, Ctrl+Enter for a new line",
     "add": "Add",
     "showCompleted": "Show completed",
     "empty": "No TODOs to show. Add your next thought above.",

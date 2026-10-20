@@ -5,7 +5,6 @@ import { XIcon, GearIcon } from '@phosphor-icons/react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal, type NoProps } from '@/shared/lib/modals';
 
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { cn } from '@/shared/lib/utils';
 import {
   sequentialBindings,
@@ -28,9 +27,7 @@ interface ShortcutGroup {
 }
 
 function useShortcutGroups(): ShortcutGroup[] {
-  const { config } = useUserSystem();
   const { t } = useTranslation('common');
-  const sendShortcut = config?.send_message_shortcut ?? 'ModifierEnter';
 
   return useMemo(() => {
     const mod = getModifierKey();
@@ -70,17 +67,11 @@ function useShortcutGroups(): ShortcutGroup[] {
           keys: [mod, 'E'],
           description: t('shortcuts.actions.formatInlineCode'),
         },
-        sendShortcut === 'Enter'
-          ? {
-              keys: enterKey,
-              description: t('shortcuts.actions.sendMessage'),
-              useHintKey: true,
-            }
-          : {
-              keys: [mod, enterKey],
-              description: t('shortcuts.actions.sendMessage'),
-              useHintKey: true,
-            },
+        {
+          keys: enterKey,
+          description: t('shortcuts.actions.sendMessage'),
+          useHintKey: true,
+        },
       ],
     };
 
@@ -141,7 +132,7 @@ function useShortcutGroups(): ShortcutGroup[] {
     ].filter((g) => g.shortcuts.length > 0);
 
     return [quickActions, navigation, modifiers, ...sequentialGroups];
-  }, [sendShortcut, t]);
+  }, [t]);
 }
 
 function ShortcutRow({ item }: { item: ShortcutItem }) {

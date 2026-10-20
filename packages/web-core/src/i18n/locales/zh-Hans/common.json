@@ -1299,6 +1299,8 @@
     "newBody": "Add a thought or TODO…",
     "category": "Category",
     "uncategorized": "Uncategorized",
+    "categoryRequired": "请先输入分类，再添加 TODO。",
+    "inputHint": "Enter 发送/添加，Ctrl+Enter 换行",
     "add": "Add",
     "showCompleted": "Show completed",
     "empty": "No TODOs to show. Add your next thought above.",
