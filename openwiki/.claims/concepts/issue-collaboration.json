@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:22a166d9b0ed768d6f8b2c7ba8b91ab8d017555796fb4dc4336b2fb0f041b8c5",
+  "pageVersion": "sha256:a9050219dccc763e2475e33ac868040dbb53e85b3cea0e322895f9ffc2a07fc8",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -47,10 +47,20 @@
           "version": "repo-lines-v1:sha256:016237df6d79a7f21c342ca9789c8438f9cc97f3a2ee4f45b7c04bc6337f5ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U3OGUxYTg2OTk5MmM4M2YwODUwYWYxNjk5MzJjOTBkN2E0NDI4MTM4MTEwZjdkN2MxOTAzNzFiOTdjNDllZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2U2MmU0MzNkY2IwNTU4OTNjZmNjZjFlNmZiNDI4ODdjZWZjOTdiNWY5ZmFmNjQ0YzU0MDMyMjQ2YmJiYjVjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGViYmVjNTBmNmNkZjExYmU3OWUxYzVhOGU5NzRmZGQ5NWU3Yzk4N2JkNzg2Y2U1YTZiZmNjMmFlZmVkNmIxYSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_e561efa0fb084297adeb14c16c403211",
+      "statement": "Web Pushはbrowser/Project登録に基づく別通知経路で、Codex canonical blocking input・approval・Run終端をtriggerにし、Issue担当・コメント・Follower変更そのものをtriggerにしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql",
+          "version": "repo-file-v1:sha256:a80de7474943eb7ef9b37becbb97427439e1dda69fcf5603f6c24e9e4a3423dd"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-20T17:16:45.724Z"
   }
 }

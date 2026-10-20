@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
+    resource: repo://crates/server/src/routes/web_push.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
     resource: repo://crates/server/src/startup.rs
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -28,10 +30,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # システム境界と起動順序
@@ -92,6 +94,8 @@ standalone の `main.rs` と Tauri が使う `startup.rs` の両方に回復経�
 Deployment の構築中には、DB 初期化後に既存の製品実行記録から [Workspace の用途](../concepts/workspace.md#操作用途と実行所有者)を backfill する。[呼出し](../../crates/local-deployment/src/lib.rs#L155-L156)。standalone は bootstrap fence に続いて中断した Integration preparation も fence し、OpenWiki monitor の次に [正式 Integration](../concepts/formal-integration.md) の monitor を開始する。一方、現行 embedded の対応箇所にはこの二つの Integration 呼出しがない。両起動経路で正式統合の自動進行が同じと仮定せず、desktop 対応を変更する際に確認する。[standalone の追加処理](../../crates/server/src/main.rs#L87-L137)、[embedded の現行配線](../../crates/server/src/startup.rs#L170-L225)
 
 standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使う。既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 接続の不一致を避ける理由が記録されている。[standalone listener](../../crates/server/src/main.rs#L146-L171)、[embedded listener](../../crates/server/src/startup.rs#L107-L142)
+
+Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L136)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
 
 ## 境界を変更するとき
 

@@ -6,16 +6,18 @@ tags: [issue, collaboration, attachments, notifications, lifecycle]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-2f63ca1582805a46da98d522
+    resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-4251300987fd63068dbcfd5d
     resource: repo://crates/services/src/services/notification.rs
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # Issue の添付・購読・通知
@@ -37,3 +39,5 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 `NotificationService` は設定に従い音と OS push notifier を呼ぶ。Tauri は起動前に notifier を差し替えられる。これは Board の Follower や通知 group と別の仕組みであり、呼出し成功から利用者の閲覧まで保証しない。[設定と notifier](../../crates/services/src/services/notification.rs#L10-L101)。既存 ExecutionProcess の終了処理などから呼ばれるため、全 AgentRun に同じ通知経路があるとも一般化しない。[終了処理](../../crates/services/src/services/container.rs#L257-L289)。
 
 通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。[General settings](../../docs/settings/general.mdx#notifications)はこの実行上の注意喚起の操作文書として読み、旧 Cloud の受信者規則として使わない。
+
+認証された利用者が browser と Project を明示登録する [Web Push](../integrations/web-push.md)は、上記 OS notifier / Follower と別経路である。Codex の canonical blocking input・approval と Run 終端を DB trigger で配送待ちにするため、Issue の担当・コメント・購読変更そのものからは通知を作らない。登録・同意失効・再送と ChatGPT 相談はリンク先を一次説明とする。[admission trigger](../../crates/db/migrations/20261018180000_web_push.sql)

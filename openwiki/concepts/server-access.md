@@ -16,14 +16,16 @@ sources:
     resource: repo://crates/server-access/src/provisioning.rs
   - id: openwiki-source-9d15c737f5e087237387893e
     resource: repo://crates/server-access/src/store.rs
+  - id: openwiki-source-a6cad3d930b299ebbbd793a3
+    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-a537edea423e85a3d3d1dd7e
     resource: repo://crates/server-access/src/tests/chatgpt.rs
   - id: openwiki-source-24816571d030e7526cab74f1
     resource: repo://crates/server-access/src/tests/provisioning.rs
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # サーバー認証・設定・セッション
@@ -76,6 +78,8 @@ Web cookieはHttpOnly / SameSite=Lax、公開配置ではSecureで、Domainを�
 新規要求は設定revision・期限・active membershipを照合する。継続WebSocket/SSEはleaseで2秒ごとに再検証し、logout、member無効化、期限切れ、設定変更で終了する。socket taskには資格情報を保持しない。接続終了は既に受理されたagent作業やMCP mutationの取消を意味しない。[lease](../../crates/server-access/src/lib.rs#L161-L186)、[再検証](../../crates/server-access/src/lib.rs#L406-L435)、[SSE](../../crates/server-access/src/lib.rs#L665-L680)、[実WebSocket](../../crates/server/src/middleware/websocket.rs#L43-L61)。previewの委譲も親sessionへ依存するが、別cookieを使う。[preview handoff](../operations/workspace-inspection.md#公開-preview-への認可委譲)
 
 Auth0側のrefresh取消とLVKのmember無効化は異なる。署名済みJWTは期限まで有効な場合があり、LVKは接続単位の即時JWT失効を提供しない。一般的なprovider停止時もBasic/Localへ自動fallbackしない。[運用上の失効区分](../../docs/self-hosting/authentication.mdx#L165-L188)
+
+[Web Push の device consent](../integrations/web-push.md#通知同意と所有権)は Web session と別の寿命を持つ。`server-access` は local/basic/web actor の owner・認証 revision・用途を暗号化 envelope に固定し、配送時に membership / revision を再検証する。logout や idle expiry を越えて通知できるが、login token を保存せず API access や session 延長を認めない。内部 agent / MCP channel は登録できない。[seal/open](../../crates/server-access/src/lib.rs#L394-L436)。期限・OFF・再登録の契約は通知の説明先に置く。
 
 ## 永続化・閉鎖・回復
 

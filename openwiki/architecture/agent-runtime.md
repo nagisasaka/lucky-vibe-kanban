@@ -5,10 +5,12 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-20T17:16:45.724Z
 sources:
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-d0244e39b6cb88790907b9b2
+    resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-2312e3967b9fd7f73e349d9a
@@ -37,7 +39,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-16T11:50:57.361Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -64,6 +66,12 @@ Agent Runtime は、[Session 内の AgentRun](../concepts/session-and-agent-run.
 stdout は Native Audit へ記録してから分類・投影する。Audit の書き込み失敗、解釈が必須のフレームの失敗は通知して読み取りを打ち切る。既知の audit-only 通知と任意の未知通知には canonical event を作らない。[監査優先の処理](../../crates/local-deployment/src/process_host.rs#L741-L778)、[任意通知の扱い](../../crates/executors/src/executors/provider_adapter.rs#L2041-L2050)
 
 Codex のメッセージ差分と完成メッセージは別の経路を通る。画面は完成した永続メッセージで一時表示を収束させる。再接続を「全 delta の再送」として実装しない。[Web 側の同期](web-and-sync.md)も参照。
+
+## Context と子観測の投影
+
+Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。専用 table や canonical token 履歴を増やさない。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1619-L1645)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1697-L1760)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
+
+現行 Codex mapper は v5 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。旧 v4 mapper は旧 collaboration 投影の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L553)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
 ## Host の再送記録と有界配信
 

@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/executors/src/approvals.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
+  - id: openwiki-source-d0244e39b6cb88790907b9b2
+    resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-35b6fb5835c638575801a2b6
@@ -46,16 +48,18 @@ sources:
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
-  - id: openwiki-source-8be20616e789c6a7122c8e93
-    resource: repo://docs/workspaces/chat-interface.mdx
+  - id: openwiki-source-28f588bd26222b42bea70c77
+    resource: repo://docs/development/codex-execution-observations.md
   - id: openwiki-source-23db569cee004f42315c9f61
     resource: repo://docs/workspaces/sessions.mdx
+  - id: openwiki-source-a38f11830547e0c1d7e425e5
+    resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
+  - id: openwiki-source-6f68befb805cadf03e4b569b
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-f133883544522a7fa5fc57b2
     resource: repo://packages/web-core/src/features/workspace-chat/model/canonicalAgentControls.ts
   - id: openwiki-source-14cc0373faba797a6e4d1fdd
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
-  - id: openwiki-source-713e0401e69764a879935acf
-    resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useWorkspacePendingApproval.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
   - id: openwiki-source-f0616990372eebb94bc69e6f
@@ -66,10 +70,12 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts
   - id: openwiki-source-80f810d80e1c4664d02a9f39
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+  - id: openwiki-source-bfcca8eb0acec96215c9bf83
+    resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -135,9 +141,9 @@ Cancel の応答は実プロセスの停止確認と監査の永続化を伴う�
 
 承認は provider の操作や計画を進める判断、質問は provider が求める回答である。UI は未解決イベントから `agentRunId` と `approvalId` または `inputId` を選び、`controlId` で個々の待機を識別する。承認・拒否と質問回答は別の制御であり、質問は質問名と回答の組を JSON にして送る。[待機の選択](../../packages/web-core/src/features/workspace-chat/model/hooks/useWorkspacePendingApproval.ts)、[制御への変換](../../packages/web-core/src/features/workspace-chat/model/canonicalAgentControls.ts)
 
-PlanWithGoal の承認 UI は、編集した objective の保存に成功してから承認を送る。ただし、この画面の存在や AwaitingApproval/AwaitingInput 状態の定義だけでは、人の返答を待つ経路が有効とは限らない。[objective 更新と承認の順序](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L585-L598)
+Plan with Goal の objective 編集・専用承認 UI は退役した。古い draft control は明示的な retirement error になり、通常の Goal 操作とは区別する。[control の拒否](../../crates/executors/src/executors/codex/client.rs#L378-L383)
 
-**この checkout の Codex 起動経路は `NoopExecutorApprovalService` を渡している。** このサービスは tool/plan 承認を即座に Approved とし、質問回答の待機は ServiceUnavailable にする。Codex client は質問待機のエラーを TimedOut として記録する。計画承認後は Plan なら実装 turn を始め、PlanWithGoal なら保存済み objective で Goal を始めるが、この配線を人の承認による停止点と説明してはいけない。[host の注入](../../crates/local-deployment/src/process_host.rs#L333-L360)、[Noop の実装](../../crates/executors/src/approvals.rs#L69-L103)、[質問と計画処理](../../crates/executors/src/executors/codex/client.rs)
+**この checkout の Codex 起動経路は `NoopExecutorApprovalService` を渡している。** このサービスは tool/plan 承認を即座に Approved とし、質問回答の待機は ServiceUnavailable にする。Codex client は質問待機のエラーを TimedOut として記録する。計画承認後は Default の実装 turn を始めるが、この配線を人の承認による停止点と説明してはいけない。[host の注入](../../crates/local-deployment/src/process_host.rs#L333-L360)、[Noop の実装](../../crates/executors/src/approvals.rs#L69-L103)、[質問と計画処理](../../crates/executors/src/executors/codex/client.rs)
 
 さらに Codex の汎用 DirectControl は Approve/Input を「元の server request ID を使う必要がある」と Unsupported で拒否する。[制御の制約](../../crates/executors/src/executors/codex/client.rs)。廃止表示のない [chat-interface の計画レビュー手順](../../docs/workspaces/chat-interface.mdx) は承認・変更依頼という操作意図を記録するが、現在の host 配線との隔たりがある。ここはソースから確認した制限であり、対話実験の成功を意味しない。[Workflow の HumanGate](workflow-attempt.md) は別の停止・再開契約を持つ。
 
@@ -169,9 +175,13 @@ queue 済みでも Scratch は別の編集状態として作成・更新でき�
 
 保存エラーは editor の console に残り、未 ACK backup を保持する。ただしブラウザー storage が無効・容量不足なら backup 自体が書けない。この場合も入力欄を消さないが、再読み込み後の復元は保証できない。sessionStorage の backup 失敗を、サーバーへの保存成功と取り違えない。[backup の限界](../../packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts#L24-L54)。[ボード表示設定](project-and-issue.md#ボード表示と共有状態)は別の Scratch データである。
 
+## Plan の遷移
+
+Plan は native `collaborationMode` と Codex 内蔵 instructions を使い、prompt に `/plan` を追加しない。legacy `plan: true` preset は独立した Auto / Supervised permission override より先に mode を解決し、明示 mode があればそちらを優先する。承認で Default へ移る際に client の Plan flag を解除するため、その後 reasoning depth を変えても Plan に戻らない。[mode 解決](../../crates/executors/src/executors/codex.rs#L626-L669)・[native mode](../../crates/executors/src/executors/codex/client.rs#L453-L482)・[承認遷移](../../crates/executors/src/executors/codex/client.rs#L1116-L1145)・[設定更新](../../crates/executors/src/executors/codex/client.rs#L714-L742)。CLI と wire 型の組合せは [Provider 互換境界](../integrations/agent-providers.md)に置く。
+
 ## Goal の寿命
 
-ExecutionMode の Code / Plan / Goal / PlanWithGoal は、実行方法の指定であり PermissionPolicy とは別である。Goal は objective と状態、任意 token budget、使用 token・時間を持つ。Codex の objective は 4,000 文字上限を事前検証する。[mode の定義](../../crates/executors/src/profile.rs#L21-L37)、[Goal データ](../../crates/executors/src/runtime/contracts.rs#L199-L219)、[長さ検証](../../crates/executors/src/executors/codex.rs#L1-L23)
+現在選べる ExecutionMode は Code / Plan / Goal で、PermissionPolicy とは別である。保存済み `PlanWithGoal` の enum/API 表現は互換のため残るが、新規 launch は Plan に正規化し Goal を自動作成しない。composer 復元も旧 Goal option を消す。[起動互換](../../crates/executors/src/executors/codex.rs#L585-L665)・[復元](../../packages/web-core/src/shared/lib/executorOverrides.ts#L20-L29)。Goal は objective と状態、任意 token budget、使用 token・時間を持つ。Codex の objective は 4,000 文字上限を事前検証する。[mode の定義](../../crates/executors/src/profile.rs#L21-L37)、[Goal データ](../../crates/executors/src/runtime/contracts.rs#L199-L219)、[長さ検証](../../crates/executors/src/executors/codex.rs#L1-L23)
 
 Codex Goal の管理開始は対応 RPC の成功応答で確定する。再生された通知や別 thread の完了から、この run が Goal を開始・達成したと判定しない。管理中は active、paused、blocked、usageLimited、budgetLimited でも host を維持し、同じ thread の complete/cleared で維持を解除する。[Goal lifecycle](../../crates/executors/src/executors/codex/goal_lifecycle.rs#L36-L104)、[順序・別 thread テスト](../../crates/executors/src/executors/codex/goal_lifecycle.rs#L111-L142)
 
@@ -181,7 +191,17 @@ Goal の subagent 上限は spawned agent の制約で、0 は無効化、未指
 
 Provider が内部で起動する子 agent の活動は AgentActivity として記録される。子の完了を親の terminal output、status、Goal に適用しない。LVK が所有する [Workflow ノード](workflow-attempt.md) の別 AgentRun と区別する。[reducer と回帰テスト](../../crates/executors/src/runtime/reducer.rs#L278-L298)。表示と互換性の文書は [delegated-agent-display](../../docs/future/agent-runtime/delegated-agent-display.md) を参照し、将来の Audit 再投影構想を現在の自動修復と読まない。
 
+Codex の spawn 観測だけが直接の親子関係を確定し、send/wait 等の相互作用から親を推測しない。観測された子はその Run の折り畳み task card に現れ、利用可能な prompt / message と lifecycle を別に保持する。tool 完了や interrupt 要求は子の終端証拠ではなく、状態のない再開・入力送信は以前の完了を unknown に戻す。親終了後の未完了観測も active 表示を続けず、最後に観測した状態付き unknown になる。[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L58-L178)・[表示](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L240-L310)。永続イベントから再構成するため、観測のなかった古い Run に子を補完しない。mapper 互換性は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)を参照する。
+
+親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[記録された設計と限界](../../docs/development/codex-execution-observations.md#completion-and-integration)。これは [正式 Integration](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
+
 旧 ExecutionProcess は script 実行などに残るが、coding-agent action は明示的に拒否される。現行 coding agent の活動判定・停止・履歴の正本は AgentRun を追う。[旧入口の拒否](../../crates/local-deployment/src/container.rs)、[活動判定のテスト](../../crates/server/src/routes/sessions/agent_run.rs#L873-L910)
+
+## Context 使用量の意味
+
+context gauge は親 thread の最後の測定 `last.totalTokens / modelContextWindow` を示す。累積 input + output（cached input を二重加算しない）とは別で、compaction 後に減少し得る。進行中の要求サイズのリアルタイム推定ではない。欠損・不正 capacity から偽の 0% を作らず unknown とし、モデル名から容量を推測しない。新しい Run / attempt では古い gauge を引き継がず測定を待つ。[native usage](../../crates/executors/src/executors/provider_adapter.rs#L1619-L1645)・[表示値検証](../../packages/ui/src/components/ContextUsageGauge.tsx#L6-L24)・[scope 切替](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L664-L678)。保存と replay は [usage snapshot の経路](../architecture/agent-runtime.md#context-と子観測の投影)にまとめる。
+
+blocking 待機や終端の通知・ChatGPT 相談は [Web Push](../integrations/web-push.md)、保存済み commentary の外部読取は [list_run_events](../integrations/remote-access.md#保存済み-codex-進捗の読取)を使う。通知や抜粋から実行成功・承認済み・統合済みを推定しない。
 
 ## 会話表示と入力
 

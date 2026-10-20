@@ -39,7 +39,7 @@ sources:
 generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # OpenWiki の初期生成・同期・回復

@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/api-types/src/tag.rs
   - id: openwiki-source-b50ba7975e31fb9a56845b2c
     resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
+  - id: openwiki-source-2f63ca1582805a46da98d522
+    resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-dfa8135bd6d4dbe37911c061
@@ -18,6 +20,8 @@ sources:
     resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-0987a696c656ec0d4f318f44
+    resource: repo://crates/server/src/remote_mcp/run_events.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
@@ -46,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # クイックスタートと調査案内
@@ -79,6 +83,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | どこで変更するか、何を共有し、何を削除できるか | [Workspace・Repo](concepts/workspace.md)。Worktree / DirectFolder、物理所有権と interactive/execution_only の用途、共有領域、cleanup |
 | 会話、実行、再試行をどう識別するか | [Session・AgentRun・RunAttempt](concepts/session-and-agent-run.md)。native session、現在の承認配線、未送信ドラフト、Goal、queue、子 agent の境界 |
 | 外部会話から LVK を操作するには | [外部 MCP](integrations/remote-access.md)。認証・scope・操作 receipt。内蔵機能の履歴は [Astra 廃止と移行境界](concepts/project-chat.md) |
+| タブを閉じた後の Codex 待機・終了を知りたい | [Web Push・通知同意・ChatGPT 相談](integrations/web-push.md)。Project/browser 登録、logout と別の同意寿命、配送失敗、参照先への復帰 |
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
@@ -97,6 +102,8 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | frontend、local Board の取得と更新 | [Web と同期](architecture/web-and-sync.md) → [外部 MCP と認証](integrations/remote-access.md) |
 | ファイル、Session 添付、diff、preview、terminal、editor | [Workspace inspection](operations/workspace-inspection.md)。Board の参照は [Issue の共同作業](concepts/issue-collaboration.md) |
 | 外部 MCP が認証・認可で失敗する | [Auth0 JWTとscope](integrations/remote-access.md)。active membership、read/write/merge、stateless transportの境界 |
+| 外部会話から保存済み Codex 進捗を読みたい | [list_run_events](integrations/remote-access.md#保存済み-codex-進捗の読取)。明示 Run 参照、除外を含む cursor、commentary と最終回答の分離 |
+| Plan が戻る、旧 Plan with Goal、context や子の表示が違う | [Session の Plan 遷移・context・子 lifecycle](concepts/session-and-agent-run.md#plan-の遷移) → [CLI / wire 型と mapper 互換](integrations/agent-providers.md#cli-検出と-provider-互換性) |
 | GitHub の認証、push 先、PR 結果や merge 観測が合わない | [GitHub 認証と PR](integrations/github-review.md)。リポジトリ別 PAT、agent shell との適用差、push/base と部分成功 |
 | 外部マシンの実行を予約・回復する | [共有資源と Execution Bridge](concepts/shared-resource-coordination.md)。snapshot、Runner、settlement と operator 回復 |
 | 実行の元データを保全したい | [Native Audit の保存・エクスポート・削除](architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) |
@@ -141,3 +148,5 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 この構成は、README と文書 index に加え、local server の router/startup、local Board と外部 MCP の router、Workflow/Agent runtime、Git と memory の境界から照合している。文書の章構成や直近差分だけを説明範囲にはしていない。[local API の入口](../crates/server/src/routes/mod.rs)・[外部 MCP](../crates/server/src/remote_mcp/mod.rs)・[MCP の入口](../crates/mcp/src/task_server/tools/mod.rs)
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
+
+今回の通常 Sync は凍結された pending changes の範囲に沿い、Codex mode/usage/子観測、外部 MCP 進捗読取、Web Push と依存する認証・UI・保存境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。実サービスへの到達性や統合 checkout の acceptance test 成功は、この文書更新からは主張しない。

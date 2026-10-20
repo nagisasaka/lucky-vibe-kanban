@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c81c7eecaa76627932ec912f3b9ce08b3061f8603868a0a915aba9471f23f412",
+  "claims": [
+    {
+      "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
+      "statement": "Web Pushはsecure contextとbrowser通知許可でProject/browser登録を行い、ownerはlocal/basic/web actor由来。internal/MCP登録を拒否し既存共有Project accessを利用する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L159-L181",
+          "version": "repo-lines-v1:sha256:bafa209d3c95e5c89618bd0b17796fbd0815d6e6c7b5e6f770d10d8233a44f5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhNzAwZjY4NTBhOWY3NDdlZTJmMDZjNTU0MDYzMzI2MDkwMTU1ZTYyYzgwMzQ2YzY3N2U0YmZiYzNkMDc3MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZGQxMzM3MjZmZjgxMGFlNjQ3YmRhMmVhYzMwMGE0NDUxNzA4NzNhMTMxZWM4MzQxOGJhMGQyZTc5OGU0OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3ZTY1ZTJlZDZkMzQ5N2YzNTNiMmNjZjY2Y2ZkNzQwMjdlMDQ1N2JkM2JiZDQ2NjcwMjA5MjMyNmVlY2IzOWUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L83-L93",
+          "version": "repo-lines-v1:sha256:dc2a8d7c03ed8f9c2b46cded441f967b8f026f004efaed5c6f42c16eb7d3cb0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyMGE4ZmE5ZmMzYTk0ZDQ1ZjVjNDgwMTBmMzdjNDQyMmQ1MWVhYmQyODUxOGM0NTYyZmYwMjUzYzEyY2VhYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiMjQ3YmFiNjdlMGU4YTU4MGYxYWU1MzFlYzE2ZjA0ZTIxODFhN2MxYWQzMzE0ZTg2OWJlMjM1YjMzMGU5MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMTJiYzc0ZGU0MjQ4OTQ4YTM5OWFlZDllMDU3MWZlNzdhZDg2NGIxOTg1MzU4MjFkNGIwMzY1NDA1MDNhYWMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L36-L104",
+          "version": "repo-lines-v1:sha256:3074fa1e9e2e2886f5acf46dd6a8ee53ac43ff77ff6657f8986be54bfb4285db:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5YjcwM2NlZTUyM2RkODIyZWMwNmY3YjVkMDE3NjI1MGMxYzlkZWM4MGRjODcyOWQzZjJmMDA5MmIzYWViZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNWEyNjAyYzdiOGYzMDZjNTYwZDUyMTY0MjI5NzgxZTczODFkMWFmZDM0NjRkMDMzNWYwZGMwMGRkYWE5YzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzMDhjNDMyMzE1Nzk0NWFlZWQ1NGM2YWYwYjM1ZWMyYTYxNTk5MThjMDQzZjRlNjA1NDgzN2JhNTIyOWZiYzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhMzM0YTM5YjYxMGIyZDY3OGQ4ZjczNWRmNzQ1NDgxYjE3NWVjZjJmZTA3YTkyOGRiNDBiMDM2ZmM0ZjQ4MjcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_53ace736db5449b18fc97304f4ffc1bc",
+      "statement": "endpointと鍵は封印されhashを別保存し、endpointのowner転送を拒否する。owner当たり64件が上限で既存登録更新は可能。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql#L1-L25",
+          "version": "repo-lines-v1:sha256:a7d8c296fc5f9590c704ae3861f706dab131f0106bcd385cbf54caba3d6621c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3MWM3Y2E1YTdlOTUwZDAzZjY1MjkzOTQ1MWUwMTI0OWMyYWZiYmFmYTA2OTQxMTdhN2Q2ZmRhNTk1ZDZkNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2ZmRjZTE5OTUwZDgyYzg1YjEzMzMzOTRiYWM0ZDQyYWYwYmI5ZmViNGE0YzJlMDg4OTZhN2IyNjQ0NjQ1MDkifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L187-L254",
+          "version": "repo-lines-v1:sha256:5b0ca97b85cbb57a838496a9406f69f5a492447e2d24646fccfdc5d0e3cfcf30:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwOTgyNTM2MzE2NTM5NzExNmJiMDQ5MGVjMWMwYWVmZmZlYTNiMTgyNTZlNmY1N2M3MjM3NDYxMjA1MGQ4OTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjY2NmMDdlODU4ODFlM2VjODBhOGFiNzc0ODQ4YzBmODc4NmViZmVhYzIxY2UxNDllMWI0NWUzODQxYzAxZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmOTI4YmExOWIyYTBmODU0NjExMzJkYzA1NTgzNTVjMDlhOGE3NDU2YzE3NTA2ZWQ1YTBmZjYyODZiODA2NTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyYjE4ZTA5MTY3YzVhYTQ4OWZkYjJhMDMzZTIxNGVhNGU2ZmQyNjkwNjVjNzdhM2VmYjJjNzBiZmM3M2IyYmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_01e3c5f0bc0b4600baa746ba175b0570",
+      "statement": "device同意は用途/owner/auth revisionに束縛されlogout・browser期限を越えるがAPI資格ではない。member/config失効と90日期限を適用する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/lib.rs#L394-L470",
+          "version": "repo-lines-v1:sha256:fa0108800dc58315c63c36b337996ddb3d870e2bc9ac6c4f3d1ec719cbd506d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1NzNhOTU4MDM2MGNmZWM4NGFmNTU4MjNhN2RjNTM0M2ZkNTI5MjQ4MjBjYTZkNTgzYjE4YjRmNjcxOWQwMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4YzM3Y2EwMzg1MTUzNzczZDU3YTc2OTdhYmU2MmVlNDFmNjlmNDIzZmMwYzY0ZDhiOWEwMDkzMTBiZDZiOTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODM3MGFmYTU0MTMyMTUwZWZiMDVhYzI1ZDljMDczM2JhM2YwZDNhMGZkNmJmMjdkMDQ3OWM4NDQ4ODU5NjQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L342-L385",
+          "version": "repo-lines-v1:sha256:839c8bbda3865102d4a844fdbdfd18413a5dfe450b495a6e11d4d70b5e300269:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYjY3NDI5NzQ2OWFiOTIzMzA4M2ZjZDBlYmZkMzE4YWRiYzNhNjZkNTIzODdkOTNjNTViZDEwYTE0OTY4OTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Y2RlZjgwODVhZTc0YWI2MzZkNjQ1OWY1YzZkNWZiZmIwZGIyNjRmMWIwZDc1YmFjNTE5YzliM2Y2NzE3YWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmMTkyN2M1N2FhZDVmZWMwMWFlYTVkMTJkOTRjNzBjZmY0OWI4OWQ0ODNlNWU5NzJlOTI1M2QxNmMyZmI3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3YTRiMmRhZmY1ODcyNmZlNjNmNTI0NzdhMWM2NTgzMzQzMGMyMTQzNTMxMWE0YjQwNDg1NDBlMDgxMDc0N2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a3ad3802d2d8434784be126aa80f8c90",
+      "statement": "OFFはowner登録と配送待ちを削除しsendと直列化する。最後のbrowser登録はunsubscribeし、account/key変更時はsubscriptionを置換する。既に受理された通知は撤回できない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql#L12-L25",
+          "version": "repo-lines-v1:sha256:2d7801d2c5c52940c5fe3b2e7c8fda125a5caad93bf6b741bf1852736364532a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0MDQ0OGE2YTEzNWI2YzJiY2EwM2U3M2E3ZDRjNDA4ZDUxYmI3M2Q1OTI4MzdiZTNmODUxZTZkNTkxNDkwNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmOWIwM2NmYmYwYjViOTZiMGU3NWNiMGQ2NWI1NjE0N2Y1ZTBhN2Q0Y2QyYTc2ZWM0ZDUxZTA0ZjMzNDRiYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2ZmRjZTE5OTUwZDgyYzg1YjEzMzMzOTRiYWM0ZDQyYWYwYmI5ZmViNGE0YzJlMDg4OTZhN2IyNjQ0NjQ1MDkifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L256-L270",
+          "version": "repo-lines-v1:sha256:dfeefbe8a99c557453096268b6c4eebe3124ce7faa0aca8412f624822f104c6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NThjNTk1ZTEzMTA1OGQ4ZTRiYzQzMzRjMGYxYmNkZmVjZjU5ZmU2MjA2NTBjYThhM2VlZjRmMGI5MjNiNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkOWY4ODBjN2JkMDE3OTdiYjY0OTQwZjczY2JhOTZmNzhjMTZiZWQyZGU0MGJlNzY3YzlmM2U2N2UyZGFkNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzYWRiNDQzMWZiYjExZTlhYzk3MDdlZDU4M2QyOTdkZTg4MTQ0ZDRmNjMwN2YyMWIxMzc5NGRjNmE2NmZjMDIifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L359-L385",
+          "version": "repo-lines-v1:sha256:4b6b0d0ca04e8582911e4cdfd446b2e3901d8aa3da07b365c296b4d3367ab6c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkMTkwZjBiYTk2NWVhNWM3NDBmMmI1YzM4Yzg4MDgzODE3OTQ2NzZkNGNmMmU0YTY3ODhkNWNmZGQxMzYyOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Y2RlZjgwODVhZTc0YWI2MzZkNjQ1OWY1YzZkNWZiZmIwZGIyNjRmMWIwZDc1YmFjNTE5YzliM2Y2NzE3YWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyNTU5ODcyMzIyY2FmY2I2NjkwMDRkNjg1NjQ0ZmI2YzEzYTZhYmNhMGYwNDk1NGZkZjVhODE5NTFmMjNhZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3YTRiMmRhZmY1ODcyNmZlNjNmNTI0NzdhMWM2NTgzMzQzMGMyMTQzNTMxMWE0YjQwNDg1NDBlMDgxMDc0N2YifQ"
+        },
+        {
+          "resource": "repo://docs/development/web-push.md#L50-L56",
+          "version": "repo-lines-v1:sha256:1e03d7841cbb3464fef9ed77d2048581d6769145951b8dfb32915d89cc85ce41:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmVlYTcwYzVmNWFmOTFjZGFkMzc5MDViZjZhMjU4Y2VlNTlmY2FmZTU1YTRhNDc1NmY1MWU1MGFlMzgyMTdmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmUzNDg1YzliMDA0MTBjOTViMGEzYTg4MDlhNzliMjExNjc1ZDVkN2JiNGRjNmExZDAyOWUzYTQ2MjE4ZmNkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODA4ZTZkNzc2YjFhZTc5NDY0ZjdiOTJmNDhmMjEwM2M1ODc3NDA0ZDQ4YTc5NTM5NjFkM2MzNzk1OWE0ZDk5NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWQxYWU0ODhjOGVlNzUxM2VmNTNiNmU0OTUzYjk0ZTQ0MjMzYWQyOTljZmNhZWNiNGNjMTk0ZjNlNTc3MDI1YyJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L76-L130",
+          "version": "repo-lines-v1:sha256:88a37d86b0e288db7df2cae293e5e717931876d62841a265eaf0356e6b2b1274:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZDUyYzZjZmI1NzBjNzVmY2Q0NzNlNGZlNDUxNjNlZWY5Y2U4OWU4NWI3ZWMwOGU2MmNkNWNiM2ZiOTBlM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmYWU0NzI0M2U3YWIxMGQ0NmZhZGU1ZGM3NmU2ODNkYTIwYWU4ODU5ZTc1ODYwOGMxM2M4ODFmNTdmMzBjMjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwYzI4Y2I4MGQ4YjRjNDg3MTMwZTY1M2NjMmEyZGFhOTgzZDFmNzg4ZGEyNzcyNzNmZTIwZWNiOTBkMGRlYTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_69d814fcfc134100bf6e63a9d98bdd98",
+      "statement": "SQLite triggerはCodex canonical blocking input/approvalとRun終端から同transaction内でbrowserごとのoutboxを作る。async/prose/provider turn/script/Integrationはtriggerでなく、control/terminalをattempt単位でdedupする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql",
+          "version": "repo-file-v1:sha256:a80de7474943eb7ef9b37becbb97427439e1dda69fcf5603f6c24e9e4a3423dd"
+        }
+      ]
+    },
+    {
+      "id": "claim_9bc8e27253f146de955e71dd887affee",
+      "statement": "workerはpending_blockingとterminalの最新status/attemptを再検証し、回答済み・旧retry等の通知を捨てる。通知用の別resolver/承認機構はない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L289-L307",
+          "version": "repo-lines-v1:sha256:91936a9f8262f85d67d842205274dfeae26ed7e509379c3811d67060d891a498:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjOWRiODY3NDhlN2RlNWZkMDVkMWI3YzgxNGM3MDRiYTE0ZWI2ZDI1YzNkOWYwOGI1ZGIyZTNkZTU1YjVmYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjMTFkMWQ4YWRkMjE0MjM5OTFkZmUzYjQxOWYxYTIzYjY4MTE0YTY1OGNiYTA0NGRlMGI0NzU5ZjZhNjIzMmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmOWQ0YjE5ZGFmODk4NjQxYjAyNzQyM2UwNTY2MmMxYmQ1ZTJjMDcxODllMTg4NzE0NWQ5ZjliMTg3OTliMzYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L386-L398",
+          "version": "repo-lines-v1:sha256:22d6a51d5e4d94e0aa38686e1a08efc094de6c93c9d44a1b23990bd6b87e77d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTFiNjgxZDlkN2U2MDU0YjQ4ZTA1MmE1Y2Y3Y2MzYzMzZWI0M2NkZDFmMWQyNjI4YzU4MjNkMjA3NmM4ZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5YzM5MGM2YzZjNjE5ZjM5NjRmN2QzMzVmODU5MzJlYzY2YTFlZjc0MjI0OTI4OGRkZjQ3N2Y1YmU0YTllOGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MGVkYzQwN2JmNTQ1NmNhNTg0ZjQ4NTA0MGIxYjRjZmI4ODJiYWJjMDcyZTIyODlkNWYxOGYyNTJmZWMzOTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d74ec31ec1b74b0eb53334d8fa212a12",
+      "statement": "Web Pushは許可されたHTTPS vendor endpointのみ、redirectなし15秒timeout、最大32jobを扱う。network/429/5xx最大5回30–480秒backoff、予約120秒、job1時間、receipt7日、push TTL5分のbest effortである。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L319-L430",
+          "version": "repo-lines-v1:sha256:a6e9457f281ed65bef54d056342e2d92f74b6936872c9cc8e891c74ddd9a0f03:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxNmNmOTQxYzk3OGRlN2VkMjJmMTA4YmZiZDkwNTZhMDVhNWFiOTI4MjU5MzNhZTdkNjQ1MmUyYjhjNTgyM2JjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkODk3NzFmZTFiNjYyODg3NWFhMjNlN2RiZTRhYTcxNDYxZDAwY2RmYjY2ZGRmMTFiOWQ4MjBhYzU4OTdmZGY2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5ZGUyYzYxZWFiZDI4MDMzOWVmMGVkMWUzNjc1ZjViMGUzNTY5ZmFjM2Q2NWU1M2VmZDMxZGU4ZWU2MzIxZDcyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhNTIxNjA0YjM1ZmM0MGFmMDBjYmE0ZWVhMmZkNWUyYzNhZjE4NjNiMzkxMTg1ZDdiZjRiYjA5ZTcyZDBjOGIzIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L36-L67",
+          "version": "repo-lines-v1:sha256:2661a93a2b66d34a717d6863739747e0b7e201a1337a8e8c1fd38e5c8e72deec:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3YzFjNWViYjYxZDkwMjcxMTVjOWJiMGRmMjkwNmQxZTMxYWI0Yjc3MDJjNzY1ODUyM2U3NDVkNWI0NjZiNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiMTcyZTBmYjU0ODU1NzFkNzMwNGMwYTcxZjcyMDhkM2ZmMWU1YjQzYTYyMWM4OTVkOWRmOGY1MjE2Nzk4NzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA0MDVhMGNmMmY4YWU3MDE1OGNhNGJmZjY3MjA2MTM3NGUxNzFiYWFmYjMxMGJhMmMxMGFkYjZhYzhiMmU2YWMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L95-L127",
+          "version": "repo-lines-v1:sha256:820bc46a4233159786374c38826e698b2b8fb453f961479f8c4f82123dfde44b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYjRhYTU0MGRmNTA5NTNlNTQ1ZWJiNjQ4ZTAwMWFiZWY3MDhkNTg4NDUyMGVlODE1MTk4YTczZjkwYmZhYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0MWRlMjM5NWNkMWU5MDU5ZTQwMWI2NDU2ZWFmMmY1YTAwNWM2ZjI3YWY1ZDJiYmE5ODRkZDUyNzNiMTg4ODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3YmIzNjQ2ZDE3NDQxZTBhMjczNzdiNGYyMTJhMGVkMzEzZjBiM2VmZDQ1ZWI5M2YyNjZmYWU3YzQzNDQ2MjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2Mzg4M2ZiNTRlNTFjYjVjOGU3OGM4ZWIxMTEzNWRkMzFjNjVjZjAyMGNmMTA5MTMwOWE5MjdhZDk1NDAwYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0f2b51ddbcf44d2d850ad4a512375c07",
+      "statement": "通知本文は固定汎用文で、ID/URLは暗号化payload内。endpointを含む可能性のあるnetwork errorをログに出さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L107-L117",
+          "version": "repo-lines-v1:sha256:81396db4c7343d8af807a52beba51e8465867ea4ceede858a23d4f565dc3e331:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMzkwNDRlNTI1YjRkZDgyZGVlNWIzYmUwNzU5YjI2MzNjZDJlNTBlMWQ5ZGRkYWE2MzNmNGVkODJmZWU1YTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNjQ3OWNjMjMwNDQwZmQ0MWU4MjI0MjE4Njc5Njk4NTU5ZDI4OTNiZDY3YjQzODBhZmFiODExYjM4YTU1YWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1MDczYzY3Y2JkNzUwMzVkNTgzODJkNTYzNGE1NDc3NjBlZjMxNGNiODUxNzJiODkyYjFjNDM0MzE3MmRlMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZmQ4NWI4YTQ5MzdjZTQ2MDhiZDBjNzQyODhjNTI3YTgxNzk5ZjQxYjU1N2Y0MGZjZGQxZjUyYzY0YmRhNDYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L308-L340",
+          "version": "repo-lines-v1:sha256:8ec03451be140ea39cd7ea1397b65c4edf956a205be051aa40e1dc084ea4d0df:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0ZmExYjk2ODlkNGMyMDY1Nzg3N2E5YTc1MTQxYzEyMjk4MmM1MTJlZWQ2ODgwMjQwMGEwOWIxYmIyMTVkZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZWQwN2ZlM2U0MzEyYzE4NzZkNWJiMmQ1ZjQ1MzExNDRhYTNlNzhiYjFhYjBjMDE0MzU0Nzg2MDllNGU4N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZGU1MzcwOTEzZWE0YzJlYTA0ODVhZDU4MTVlMzExYzA0YjI5M2MxYTA0NzgzMGQxZDkwOWIzY2RiMmViMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhiOWE3YWY3ZDRkM2FjMTNkYzRiNmUzYjk0ZGNkYzBiYjk3MjMwNGVkNDcxOWIwMzI0NTkyZGFkMGNjMWFkNzEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L398-L407",
+          "version": "repo-lines-v1:sha256:17213993e72b5d47d4d833a7452dd7b16f3cbb340a269cdda6a9eda6562517f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzNWVhN2FjNTlkNWQ1MDI3ZjRkYjU4YTBhMjZkMTk2NzU2ZmYyM2RkZmE4MTNiZTBmZjEwOWFjZjQwY2YwZjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3YTZiYTBlNjk2NGQ5M2ZkZWFkMjE3ZmE5OWYzYmQ0ODhlZGRmM2UxZjIwYWY5ODkxYTJkZjYzNzQyYTUwMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwMjI2NjQxYjAzZDBkNGU5OTRlMTM0MDI2NjBhMGEyNjFiZTkxMThjMmQwNDI3M2IwOWM1ZDUzZmQ4NDQ2OTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_43d4011335bf406dbe9414243071b1cf",
+      "statement": "root Service Workerはfetch handlerを持たず認証画面/APIをcacheしない。256件receiptで重複を抑制し、clickはsame-origin一致tabをfocusまたはopenする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/public/lvk-push-sw.js",
+          "version": "repo-file-v1:sha256:20b0ad5733e4b00e35c0b2ac2e07730d8e3a145aecb2b7869d1e92dfef39cf8d"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c2390e71c31470cb76151054e1956bd",
+      "statement": "composerは通知Runを区別し不在を案内する。ChatGPT相談はIDs/URLの明示copy/openとtextarea fallbackのみで、本文/code/logコピーや自動回答/承認/mergeはしない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1535-L1570",
+          "version": "repo-lines-v1:sha256:6be365b30bf2d2751f542d5a36b0c17ccafe69e66dd1fbfbfab0c827ec462370:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNjVkYTM5NzQ2NjJmZmMyY2ZjYTAwZGE0MjAwYmEzNzBiNmQ2OTFmNmI2N2ZhMzcyYjYxMzMwMDRiNzk5MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNzViYjkwOWQyYWIzYWFlNTU4NmQ5MGY3ZDYwYjBjOWVlNjNkYmUzNThlM2M2NThjMWI2YzYzYmZmMzFlNWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkZTgwOWUxNGI1MTlkOTgwYWYyMDIwYjIyYWU4Yzg3NTdkMTgwMmI0NDkzNmI2ZGRhYWQ2ZTg1YmIzY2I0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViNTFlOTkyMjg1ODUwZDJlNWVhZDZlNmM1NmVkZGIzZjc5NjRkZjE4ZTA3MjVkMDYyODkxZDgxODQxZDFjNDkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/web-push/ConsultChatGPT.tsx#L14-L124",
+          "version": "repo-lines-v1:sha256:b9b45dbbccb9369be83e92e6e71c67b8a6c6baaa03d074afa1ccc5b4374ddac1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmMGI1MTM1MzVmNzRlY2JiMDA2OTg5ZWFkOTA2ZDNlY2YwMzhhNDRlZWE2NmE5YjA3NDdiYWU2ZWQ5MDkzZTNjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMjc5ZDA5MmJkZjMzZmQ1NmMwOWYxOTJiZDZkMWQwM2Y4ZGVhMDNlNGFjZmY3MTFkNzI5YjFmYjBmMmYyNjRlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhMGM2MmE5OTU0ODg3NDFmOGQ0MGIxNmMzNTE5ZDU4NjQyZDAxNWUxNDUxZDkwMzNhOWJkMDgxMjI3NjcwY2NmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmMGM2ZDJjNTViMWZlOTg2YmIzMDhjMDBmOTgzYTIzNDY1MjQ4NTRkNDc2MTU5NjY5OGM5YzUzYzFhZTY1MmI2In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_e677903f6320499681cced6d7ec1b5f7",
+      "statement": "VAPIDはprivate PEM fileとmailto/HTTPS subjectから作り、欠損不正では登録unavailable/配送なし。公開鍵をbrowserへ渡す。実OS配送と実ChatGPT接続は別の受入対象である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L159-L201",
+          "version": "repo-lines-v1:sha256:22e06fafe3a7a9eaeff5b92588717e2c4d24d0a84766f6c40aa1cb6ce7c69a81:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhNzAwZjY4NTBhOWY3NDdlZTJmMDZjNTU0MDYzMzI2MDkwMTU1ZTYyYzgwMzQ2YzY3N2U0YmZiYzNkMDc3MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlZmZjYWMzNWI1NTgyOWFmMTA0OWU0NjMyMmI1MDRmNTE2NWViMzY5MDU3Zjc5NGM4YjA3OTgyYTk3ZjE4NWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZGQxMzM3MjZmZjgxMGFlNjQ3YmRhMmVhYzMwMGE0NDUxNzA4NzNhMTMxZWM4MzQxOGJhMGQyZTc5OGU0OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhNTM4MDhiYTdhZGZiNDhhODA3NWNjY2ViNmQ0MzcyNDEwMDA1ODdmNmM2MWQ1YWMwM2ZiNjQ2NjUyYTcyNDAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L342-L358",
+          "version": "repo-lines-v1:sha256:c8a5578688bfad775e0198107f0cfad76fe754efab86f4250dc50ced2f6d74fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYjY3NDI5NzQ2OWFiOTIzMzA4M2ZjZDBlYmZkMzE4YWRiYzNhNjZkNTIzODdkOTNjNTViZDEwYTE0OTY4OTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmMTkyN2M1N2FhZDVmZWMwMWFlYTVkMTJkOTRjNzBjZmY0OWI4OWQ0ODNlNWU5NzJlOTI1M2QxNmMyZmI3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY3Nzg0MWE5NDRjZjZjY2NiM2Y1NjNlMTQ5ZDFkYmVmZWI3OGMwZjdiMmJiMWQ0YTk0YWZkYzQ2NGU1ZGQ1MzMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/web_push.rs#L68-L81",
+          "version": "repo-lines-v1:sha256:5635dc0877ca34a7ddbc83e48d0e2fe09716b4bd271d38f89e0f2a1bc2b8f546:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiMTAzNTAzYTczZjY0MTQ5Y2UzODY4YmM0MmU5NzBmZGM3MDdkYTlmOTA3NzA1YWQ3MWI3MDgwMWYyNDIxNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlNzQ2NDZhNGVmYmVmYjk1NGEwOWE1ZTQ4NzVmZDRkMjBkMjI3MWI0Mjg0YWZhOTBiZjVhZmU4NzM5MGZmZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiZDFlYTBmMDM2NWE1MGNkZDExMTBiOTU4MGJiNjFlODYyNjFjZmZmYzNkYTE5NzI3MDJhMjY5OGFjMjE4YjkifQ"
+        },
+        {
+          "resource": "repo://docs/development/web-push.md#L105-L144",
+          "version": "repo-lines-v1:sha256:ddb3131b0720b5931fc13f52440a781b5a70a5b1efe574a26df12f14c3eed4f2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZjQwZjhhN2ZlNjFmNDJlYTA1NTYxNWUzNGE2ZTVlNTljMWEzZTQyNWIzODdmZGNlNTE1NGJjMTI2YzUwYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkM2ZiOWNjODA5NTJkZDZiMjFkOGE1ZDJlOTliODYzMTVhNzcyMzZjZWEwNWEyZjUxNDQ3ZTc4MGFkMDRlYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiOWY0OTg0Y2IzMjQyY2MyYmYyMWE0ZGFmZTQzM2U4NmJjMDdjNTJkZDgxMGY5NzBkZjgxOTRjYTI3OGY3Y2UifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-10-20T17:16:45.724Z"
+  }
+}

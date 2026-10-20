@@ -18,6 +18,10 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-0987a696c656ec0d4f318f44
+    resource: repo://crates/server/src/remote_mcp/run_events.rs
+  - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
+    resource: repo://crates/server/src/remote_mcp/tests.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
@@ -26,10 +30,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -65,6 +69,18 @@ mutation は principal + request ID と入力hashを固定した永続 receipt �
 受付を所有する非同期taskには検証済みactorを明示継承し、HTTP要求の終了後も業務書込の帰属を保つ。受理済み作業の寿命と新規要求の認証失効は別である。[actorの継承](../../crates/server/src/remote_mcp/operations.rs#L134-L190)
 
 Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続は別途受入確認が必要である。fixtureやローカルテストをその成功として扱わない。[検証範囲](../../docs/development/server-access.md)。
+
+## 保存済み Codex 進捗の読取
+
+`list_run_events` は UI と同じ canonical `agent_events` の保存済み進捗を read scope で抜粋する。新しい collector・保存先・live delta stream・subscription は作らず、native audit も読まない。最終回答は `get_execution`、通知は [Web Push](web-push.md)という別の利用経路である。[読取契約](../../crates/server/src/remote_mcp/run_events.rs#L1-L37)
+
+Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は所属の assertion である。Run・Session・Workspace・現在の Issue link、cursor と page は同じ DB read snapshot で照合する。過去 Run も読めるが Codex に限定され、別 Run の cursor や消失した cursor は再一覧を要求するエラーとなる。[scope と cursor](../../crates/server/src/remote_mcp/run_events.rs#L39-L84)。active member の全 Project access という既存認可を利用し、非公開 Project ACL を新設しない。
+
+`limit` は1–50件の**走査レコード数**であり表示件数ではない。順序は attempt 番号、canonical sequence。`next_cursor` は最後に走査した event UUID なので、除外だけの空 page に `has_more=true` があっても続きを読む。末尾で `has_more=false` でも cursor を保持すれば、別接続から追加入力を読める。128 KiB の item 合計上限に当たった未読レコードの手前で止める。[有界 page](../../crates/server/src/remote_mcp/run_events.rs#L80-L114)
+
+公開するのは assistant commentary、lifecycle、許可済み tool 名と status、Goal status、子活動の限定 kind だけである。final/user/system text、全 Thinking（歴史的 Plan text と reasoning を安全に区別できない）、承認・回答本文、tool 引数・結果、provider extension、native reference を出さない。schema/payload version が1以外、32 KiB超の envelope、不正 JSON は省略する。commentary は4,096 UTF-8 bytesを超える、またはpath・credential等の疑わしい形式なら本文全体を withheld にする。これは任意の prose が秘密を含まない保証ではなく、返された文章も命令・承認・独立した検証証拠ではない。[allowlist と filter](../../crates/server/src/remote_mcp/run_events.rs#L117-L239)
+
+変更時は空 filtered page、foreign cursor、attempt 順序、byte 上限、DB reopen 後の cursor、HTTP read scope と再接続のテストを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L264-L582)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1324-L1388)。fixture の存在や過去実行結果を実 ChatGPT account 接続成功と読み替えない。
 
 ## 外部実行とモバイル設計
 

@@ -4,10 +4,14 @@ title: Web の実行環境と同期
 description: Local shell と共有画面の責任、ローカル snapshot と AgentRun stream の異なる同期契約。
 tags: [frontend, synchronization, electric, transport]
 sources:
+  - id: openwiki-source-2f63ca1582805a46da98d522
+    resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
     resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-10897c55284ee23ee2d4e388
+    resource: repo://packages/local-web/src/app/auth/pushReturn.ts
   - id: openwiki-source-a4deecf361e70bd3b2703d13
     resource: repo://packages/local-web/src/app/auth/serverAccess.ts
   - id: openwiki-source-5d3aad6c180293a86853f6ec
@@ -58,10 +62,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # Web の実行環境と同期
@@ -77,6 +81,8 @@ UI package は既に Kanban や chat、preview などの再利用部品を持つ
 Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
 
 fetch wrapper は同じ origin の `/api/` への変更要求だけに CSRF を補う。業務APIの401/423では状態再取得イベントを送り、外部URLへCSRFを転送しない。これはWebの接続補助で、backendが最終認証を行う。セッション・失効・配置の詳細は [共通認証](../concepts/server-access.md)、歴史的ownerと現在actorの区別は [メンバー](../concepts/organization-and-membership.md)を参照する。[wrapper](../../packages/local-web/src/app/auth/serverAccess.ts#L17-L74)
+
+通知リンクから OAuth login に移る場合、gate は許可された Workspace route と `session_id` / `agent_run_id` だけを sessionStorage に保持する。復帰値は10分以内の一度限りで、認証後の `/` から戻す。storage が使えなくても login を妨げず、通知の再オープンが fallback となる。[復帰経路](../../packages/local-web/src/app/auth/pushReturn.ts)・[gate の接続](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L101-L164)。通知の意味と安全なクリック先は [Web Push](../integrations/web-push.md)を参照する。
 
 ## 同じ API 呼び出しでも対象ホストが変わる
 
@@ -102,7 +108,7 @@ Scratch は Board の業務データとは別の UI 状態で、server SQLite �
 
 Kanban の Project / view 別表示設定も UI preferences の Scratch に入る。同じ画面でも、表示設定を保存する処理と Issue を変更する REST mutation では共有範囲が異なる。Team / Personal、列操作、blocked 判定の意味は [ボード表示と共有状態](../concepts/project-and-issue.md#ボード表示と共有状態)で確認する。[preferences の保存形式](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L27-L98)
 
-通知用 hook と group 表示の型が残っていても Cloud 配信の存在を意味しない。[現在の通知境界](../concepts/issue-collaboration.md)を確認する。
+通知用 hook と group 表示の型が残っていても Cloud 配信の存在を意味しない。[Issue 通知の境界](../concepts/issue-collaboration.md)を確認する。Codex Run の blocking input・approval・終端を対象とする [Web Push](../integrations/web-push.md)は別の opt-in 経路である。
 
 ## Agent の会話は別の同期経路
 

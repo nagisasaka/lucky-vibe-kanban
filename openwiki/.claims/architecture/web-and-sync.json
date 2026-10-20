@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fe79a1373e084b954a238e3add1b6c672a22752ef4e646603cf5060e480b1d2b",
+  "pageVersion": "sha256:455e038fd40253721baa1ae66d8d0d08fb59c33a633c32f4901235772ed8edfa",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -222,7 +222,7 @@
       "evidence": [
         {
           "resource": "repo://packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148",
-          "version": "repo-lines-v1:sha256:594b42d048835087f11d282fa68f2cd1f68beb358f0c84fe2af820b6e48a5cbc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyY2Y1NjVkM2RkYzE5MDI1NzNjMTEwMmVjMjI2ZGY5NTU3ZWFjNTk4NmFhYTYxNzk3YjAzZmE2N2EwNmVhNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYjc2MWE2ZmYzNmY4MDQzZTI2MGZiYTA2NmNmYTFjNjc2MzE3MzZkYzhhNjNhNjY1NmFjMTMwYzk2NzhhOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZjQzNGUwOTA3MGQ4NjMxYWRlNjllNjRlZjg4NjI3N2Q5MWM0MDNkNDAwYTIxMjE2MGJlODE2NDczNTRkOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmODFlYmIyMTFkYzgxNGQ2ZmNjNjk4ZjEzY2U5ZmMwNTM0MDg1OTA0MzgyNzI3NzQzOGZjMmQ2M2M2ZGNjZGEifQ"
+          "version": "repo-lines-v1:sha256:f5781dfaadf92e97a73e1e53baa3aae2fcd3177d98908589058e471cbec6f99e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyY2Y1NjVkM2RkYzE5MDI1NzNjMTEwMmVjMjI2ZGY5NTU3ZWFjNTk4NmFhYTYxNzk3YjAzZmE2N2EwNmVhNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkYjc2MWE2ZmYzNmY4MDQzZTI2MGZiYTA2NmNmYTFjNjc2MzE3MzZkYzhhNjNhNjY1NmFjMTMwYzk2NzhhOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZjQzNGUwOTA3MGQ4NjMxYWRlNjllNjRlZjg4NjI3N2Q5MWM0MDNkNDAwYTIxMjE2MGJlODE2NDczNTRkOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmODFlYmIyMTFkYzgxNGQ2ZmNjNjk4ZjEzY2U5ZmMwNTM0MDg1OTA0MzgyNzI3NzQzOGZjMmQ2M2M2ZGNjZGEifQ"
         },
         {
           "resource": "repo://packages/local-web/src/app/auth/serverAccess.ts#L17-L74",
@@ -247,10 +247,34 @@
           "version": "repo-file-v1:sha256:4a348230b99bfa2a84c436f077785b48290bc1a6bbe3f9888bc11ac2a6dfd532"
         }
       ]
+    },
+    {
+      "id": "claim_e50cf4f1dcaa402c81aa0a76d5d45f04",
+      "statement": "通知からのOAuth loginは許可されたWorkspace routeとSession/Run queryだけをsessionStorageへ保存し、10分以内一度限りで認証後のroot画面から復帰する。storage失敗はloginを妨げない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/local-web/src/app/auth/ServerAccessGate.tsx#L101-L164",
+          "version": "repo-lines-v1:sha256:267ca8ed24233f58681ccd5511c0ef02f02f567932cf76dbb05cfce1939aae45:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5OGMxMDJkNWM5ZTk1ZDZhYmQyNzY2NDdmNWMxNmI1MjBjM2Q2M2M0MDkwYTk0YTIxMjJiMTI3ZGY5Mjk2NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhYTVjYzcyZjkxMjI0NDRjYWRhMDlhYjI3MmI5N2NhY2QwNmRjNDRlYzRlMTVlMzA1NjBjMDQ2ZjY1MjczYzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhMGIxNTU1ZGQ3ZTkyYjFhOTQ5ODY1Y2I5NTNmOWQyYzdhNGY4MTJiMDQxMGZjMGRhNWJjNWFmY2JlNjViOGMifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/app/auth/pushReturn.ts",
+          "version": "repo-file-v1:sha256:5dc1d1dace64ab321ebcad0c0cf2937648a0279ede57358cbd1e84ce5b50f0e5"
+        }
+      ]
+    },
+    {
+      "id": "claim_927ce9a93b6d4129a0d064947ca88fbb",
+      "statement": "Issue通知の残存hookとは別にCodexのblocking input、approval、Run終端に対するopt-in Web Pushがある。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261018180000_web_push.sql",
+          "version": "repo-file-v1:sha256:a80de7474943eb7ef9b37becbb97427439e1dda69fcf5603f6c24e9e4a3423dd"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-18T14:00:51.649Z"
+    "at": "2026-10-20T17:16:45.724Z"
   }
 }

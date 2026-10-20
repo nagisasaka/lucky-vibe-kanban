@@ -4,6 +4,8 @@ title: Agent provider・設定・MCP・Skill
 description: LVK の provider adapter が保証する能力、設定の解決、Skill の注入、MCP の二つの接続方向と変更時の境界。
 tags: [providers, capabilities, mcp, skills, configuration]
 sources:
+  - id: openwiki-source-70da521f2a76cd78ae162a26
+    resource: repo://crates/executors/Cargo.toml
   - id: openwiki-source-a5b446edff482bd8a00e1a92
     resource: repo://crates/executors/src/agent_settings/public_api.rs
   - id: openwiki-source-ff0c687c0ecdbf94f91da913
@@ -44,12 +46,20 @@ sources:
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
     resource: repo://crates/utils/src/shell.rs
+  - id: openwiki-source-c5de8230bc8ac4c0c0000287
+    resource: repo://deploy/server/release.test.mjs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+  - id: openwiki-source-459fb9f29be1bc52c827e706
+    resource: repo://docs/development/codex-compatibility.md
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
     resource: repo://docs/future/agent-runtime/delegated-agent-display.md
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+  - id: openwiki-source-92ef988228c55634defb8970
+    resource: repo://scripts/test-codex-app-server.py
+generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-20T17:16:45.724Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -58,7 +68,7 @@ LVK は provider ごとの通信を adapter で解釈し、共通の [AgentRun](
 
 ## Profile と実行能力
 
-Profile は保存した provider 設定の variant であり、個々の実行では model、agent、reasoning、permission、execution mode、budget、subagent concurrency の override を適用できる。Code / Plan / Goal / PlanWithGoal と PermissionPolicy は別軸である。設定画面の操作は [Agent Configurations](../../docs/settings/agent-configurations.mdx)、実行中の変更・Goal の寿命は [Session と AgentRun](../concepts/session-and-agent-run.md) を参照する。[型と override](../../crates/executors/src/profile.rs#L21-L37)・[override の項目](../../crates/executors/src/profile.rs#L141-L176)
+Profile は保存した provider 設定の variant であり、個々の実行では model、agent、reasoning、permission、execution mode、budget、subagent concurrency の override を適用できる。Code / Plan / Goal と PermissionPolicy は別軸である。旧 `PlanWithGoal` は保存・API 互換値として残るが新規起動では Plan となる。設定画面の操作は [Agent Configurations](../../docs/settings/agent-configurations.mdx)、実行中の変更・Goal の寿命は [Session と AgentRun](../concepts/session-and-agent-run.md) を参照する。[型と override](../../crates/executors/src/profile.rs#L21-L37)・[override の項目](../../crates/executors/src/profile.rs#L141-L176)
 
 Profile は既定値と user の profiles.json を合成して読み、保存時は既定値との差分を正規化・検証して書く。読み込みの parse 失敗はログを残して既定値へ戻るため、画面に選択肢があるだけでは保存した設定の適用を確認できない。[読み書き](../../crates/executors/src/profile.rs#L351-L410)
 
@@ -98,7 +108,7 @@ Codex の selected_skills は name/path の参照であり、渡し方は実行�
 
 両経路とも、旧 LVK 同梱 `skills/llm-wiki` 配下の参照を除外する。同じ名前でも利用者が別の場所に置いた Skill は残し、既存ファイルを削除しない。旧 Pipeline の互換処理は [Card context と LLM Wiki の終了](../concepts/card-context-and-llm-wiki.md)に置く。[選択のフィルター](../../crates/executors/src/legacy_wiki.rs#L101-L119)
 
-PlanWithGoal の承認後の遷移は [Session の承認・質問](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)、resume 時に現在の host context を会話へ反映する順序と失敗は [Provider session の継続](../concepts/session-and-agent-run.md#provider-session-の継続と取り込み)を参照する。
+Plan の承認後遷移と PlanWithGoal の退役は [Session の Plan 契約](../concepts/session-and-agent-run.md#plan-の遷移)、resume 時に現在の host context を会話へ反映する順序と失敗は [Provider session の継続](../concepts/session-and-agent-run.md#provider-session-の継続と取り込み)を参照する。
 
 Tool Manager は MCP Server と Skill を User / Project scope で扱う。Project は project_path があるときに探索し、個別の読み取りエラーも結果に収集する。これは会話単位の設定ではなく provider の実ファイルを管理する API である。[型](../../crates/executors/src/agent_tools.rs#L89-L117)・[探索](../../crates/executors/src/agent_tools.rs#L591-L618)・[操作 API](../../crates/server/src/routes/agent_tools.rs#L1-L156)
 
@@ -116,7 +126,11 @@ Host を切り替えた後に古い応答を反映しないことも、この機
 
 実行可否の確認と実 launch は同じ executable 解決を使う。絶対パス指定は別の PATH 候補へ置き換えず、通常名は PATH、有限時間の login-shell refresh、利用者の一般的な bin 配置を調べる。検出のために CLI を自動インストールしない。[共通 resolver](../../crates/utils/src/shell.rs#L55-L90)、[command builder](../../crates/executors/src/command.rs)
 
-adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v4、他 provider の mixed-content mapper は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
+adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v5、他 provider の mixed-content mapper は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
+
+配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。[互換性の判断記録](../../docs/development/codex-compatibility.md#wire-types-and-upgrade-boundary)は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
+
+保持 fixture を Rust 型へ decode するテストと Docker pin / fixture version の一致検査がある。実 CLI を使う offline smoke は一時 Codex home と local mock Responses で Plan/Default、resume、steering、Goal を検査する。[wire test](../../crates/executors/src/executors/codex/client.rs#L2013-L2039)・[pin test](../../deploy/server/release.test.mjs#L78-L95)・[smoke](../../scripts/test-codex-app-server.py)。これらは使用 RPC の互換確認であり、live model 品質・browser・配布済み実行環境の更新を証明しない。操作手順と過去の検証結果は [互換記録](../../docs/development/codex-compatibility.md)を参照する。v5 の context / 子観測と v4 replay の維持は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)で説明する。
 
 ## MCP の二つの方向
 
