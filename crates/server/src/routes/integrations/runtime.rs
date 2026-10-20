@@ -57,6 +57,10 @@ pub(crate) fn reserve_intervention(id: Uuid) -> anyhow::Result<IntegrationAction
 #[path = "runtime_tests.rs"]
 mod tests;
 
+#[cfg(test)]
+#[path = "scenario_tests.rs"]
+mod scenario_tests;
+
 pub(super) async fn request_recovery(
     deployment: &DeploymentImpl,
     mut run: IntegrationRun,
@@ -770,7 +774,7 @@ async fn prepare(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     Ok(())
 }
 
-async fn context(
+pub(super) async fn context(
     deployment: &DeploymentImpl,
     run: &IntegrationRun,
 ) -> anyhow::Result<(Repo, Workspace, Session, PathBuf)> {
@@ -1200,6 +1204,9 @@ async fn complete_product(
     run: &IntegrationRun,
     status: OrchestrationNodeStatus,
 ) -> anyhow::Result<()> {
+    if run.payload.mechanical {
+        return Ok(()); // an adopted legacy product keeps its terminal audit outcome
+    }
     let node: Option<Uuid> = sqlx::query_scalar("SELECT id FROM orchestration_node_executions WHERE orchestration_run_id=? AND node_key='integrate'")
         .bind(run.id).fetch_optional(&deployment.db().pool).await?;
     if let Some(node) = node {
