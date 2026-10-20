@@ -123,7 +123,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
         definition::<SearchArgs>(
             "search_workspace_files",
-            "Search tracked safe Workspace files for a case-sensitive single-line literal. Returns occurrences with 1-based Unicode columns, context and per-file revision. At most 1000 files, 16 MiB scan budget, 2-second cooperative deadline, 50 matches and 64 KiB item bytes. Check complete, stop_reason and exclusions; no atomic snapshot or continuation cursor.",
+            "Search tracked safe Workspace files for a case-sensitive single-line literal. Returns occurrences with 1-based Unicode columns, context and per-file revision. context_truncated and context_ranges describe shortened excerpts; metadata-only hits remain possible. At most 1000 files, 16 MiB scan budget, 2-second cooperative deadline, 50 matches and 64 KiB item bytes. Check complete, stop_reason and exclusions; no atomic snapshot or continuation cursor.",
         ),
         definition::<RangesArgs>(
             "get_workspace_file_ranges",
@@ -187,6 +187,68 @@ fn push_bounded(items: &mut Vec<Value>, item: Value, used: &mut usize) -> bool {
     items.push(item);
     true
 }
+/// Keep the exact hit even when its requested context cannot fit. Every
+/// candidate includes all metadata and the unabridged matched value in the
+/// same serialised-byte accounting as push_bounded (including its separator).
+fn fit_search_context(
+    mut item: Value,
+    lines: &[&str],
+    index: usize,
+    context_lines: usize,
+    remaining: usize,
+) -> Option<Value> {
+    item["context"] = json!([]);
+    item["context_ranges"] = json!([]);
+    item["context_start_line"] = Value::Null;
+    item["context_truncated"] = json!(true);
+    if item.to_string().len() + 1 > remaining {
+        return None;
+    }
+    let first = index.saturating_sub(context_lines);
+    let last = (index + context_lines + 1).min(lines.len());
+    let match_start = item["column"].as_u64().unwrap() as usize - 1;
+    let match_end = item["end_column_exclusive"].as_u64().unwrap() as usize - 1;
+    // Prefer full context; otherwise use small Unicode windows, then only the
+    // matching text, and finally metadata alone. Never insert synthetic ellipses.
+    for radius in [None, Some(128), Some(32), Some(0)] {
+        let mut context = Vec::new();
+        let mut ranges = Vec::new();
+        let mut truncated = false;
+        for (n, line) in lines.iter().enumerate().take(last).skip(first) {
+            if radius == Some(0) && n != index {
+                truncated = true;
+                continue;
+            }
+            let length = line.chars().count();
+            let (start, end) = match radius {
+                None => (0, length),
+                Some(radius) if n == index => (
+                    match_start.saturating_sub(radius),
+                    (match_end + radius).min(length),
+                ),
+                Some(radius) => (0, radius.min(length)),
+            };
+            truncated |= start != 0 || end != length;
+            context.push(
+                line.chars()
+                    .skip(start)
+                    .take(end - start)
+                    .collect::<String>(),
+            );
+            ranges.push(json!({"line":n+1,"start_column":start+1,"end_column_exclusive":end+1}));
+        }
+        let mut candidate = item.clone();
+        candidate["context_start_line"] = ranges[0]["line"].clone();
+        candidate["context"] = json!(context);
+        candidate["context_ranges"] = json!(ranges);
+        candidate["context_truncated"] = json!(truncated);
+        if candidate.to_string().len() < remaining {
+            return Some(candidate);
+        }
+    }
+    Some(item)
+}
+
 fn verify_head(source: &Source, root: &std::path::Path, head: &str) -> anyhow::Result<()> {
     ensure!(
         heads(source, root)?.1 == head,
@@ -259,10 +321,18 @@ fn search(source: &Source, args: &SearchArgs, duration: Duration) -> anyhow::Res
                     stop = Some("match_limit");
                     break 'files;
                 }
-                let start = index.saturating_sub(args.context_lines);
-                let end = (index + args.context_lines + 1).min(lines.len());
                 let column = line[..byte].chars().count() + 1;
-                let item = json!({"path":path,"line":index+1,"column":column,"end_column_exclusive":column+matched.chars().count(),"matched":matched,"context_start_line":start+1,"context":lines[start..end],"revision":revision});
+                let item = json!({"path":path,"line":index+1,"column":column,"end_column_exclusive":column+matched.chars().count(),"matched":matched,"revision":revision});
+                let Some(item) = fit_search_context(
+                    item,
+                    &lines,
+                    index,
+                    args.context_lines,
+                    MAX_OUTPUT_BYTES - used,
+                ) else {
+                    stop = Some("output_byte_limit");
+                    break 'files;
+                };
                 if !push_bounded(&mut items, item, &mut used) {
                     stop = Some("output_byte_limit");
                     break 'files;
@@ -535,7 +605,9 @@ mod tests {
         let large = call(&remote, "search_workspace_files", raw.clone())
             .await
             .unwrap();
-        assert_eq!(large["stop_reason"], "output_byte_limit");
+        assert_eq!(large["stop_reason"], "match_limit");
+        assert_eq!(large["items"].as_array().unwrap().len(), 20);
+        assert_eq!(large["items"][0]["context_truncated"], true);
         assert!(large.to_string().len() < MAX_OUTPUT_BYTES + 2048);
         let body = "x".repeat(500_000);
         for i in 0..40 {
@@ -707,6 +779,140 @@ mod tests {
         let result = search(&source, &parsed, Duration::from_secs(60)).unwrap();
         assert_eq!(result["stop_reason"], "file_limit");
         assert_eq!(result["attempted_files"], 1000);
+    }
+
+    fn hit(path: &str, line: usize, column: usize, matched: &str) -> Value {
+        json!({"path":path,"line":line,"column":column,
+            "end_column_exclusive":column+matched.chars().count(),
+            "matched":matched,"revision":"r".repeat(64)})
+    }
+
+    fn assert_displayed_ranges(item: &Value, lines: &[&str]) {
+        let context = item["context"].as_array().unwrap();
+        let ranges = item["context_ranges"].as_array().unwrap();
+        assert_eq!(context.len(), ranges.len());
+        for (text, range) in context.iter().zip(ranges) {
+            let line = range["line"].as_u64().unwrap() as usize;
+            let start = range["start_column"].as_u64().unwrap() as usize;
+            let end = range["end_column_exclusive"].as_u64().unwrap() as usize;
+            let expected: String = lines[line - 1]
+                .chars()
+                .skip(start - 1)
+                .take(end - start)
+                .collect();
+            assert_eq!(text.as_str().unwrap(), expected);
+            assert_eq!(text.as_str().unwrap().chars().count(), end - start);
+        }
+        assert_eq!(
+            item["context_start_line"],
+            ranges.first().map_or(Value::Null, |r| r["line"].clone())
+        );
+    }
+
+    #[test]
+    fn context_windows_keep_unicode_matches_and_report_exact_display_ranges() {
+        let matched = "猫\"\\\t\u{0001}";
+        let prefix = "界😀\"\\\u{0002}".repeat(6000);
+        let body = format!("{prefix}{matched}{prefix}");
+        let adjacent = "\u{0003}".repeat(20000);
+        let lines = [adjacent.as_str(), body.as_str(), "", adjacent.as_str()];
+        let original = hit("src/猫\".txt", 2, prefix.chars().count() + 1, matched);
+        let item = fit_search_context(original.clone(), &lines, 1, 2, MAX_OUTPUT_BYTES).unwrap();
+        assert_eq!(item["context_truncated"], true);
+        assert_displayed_ranges(&item, &lines);
+        assert!(item["context"][1].as_str().unwrap().contains(matched));
+        for field in [
+            "path",
+            "line",
+            "column",
+            "end_column_exclusive",
+            "matched",
+            "revision",
+        ] {
+            assert_eq!(item[field], original[field]);
+        }
+        assert!(item.to_string().len() < MAX_OUTPUT_BYTES);
+        let short = ["前", matched, "後"];
+        let full = fit_search_context(hit("src/a", 2, 1, matched), &short, 1, 1, MAX_OUTPUT_BYTES)
+            .unwrap();
+        assert_eq!(full["context_truncated"], false);
+        assert_eq!(full["context"], json!(short));
+        assert_displayed_ranges(&full, &short);
+    }
+
+    #[test]
+    fn metadata_and_matched_are_charged_after_json_escaping_at_exact_boundary() {
+        let path = "\u{0001}".repeat(4096);
+        let matched = "\u{0002}".repeat(1024);
+        let original = hit(&path, 1, 1, &matched);
+        let mut metadata = original.clone();
+        metadata["context"] = json!([]);
+        metadata["context_ranges"] = json!([]);
+        metadata["context_start_line"] = Value::Null;
+        metadata["context_truncated"] = json!(true);
+        let required = metadata.to_string().len() + 1;
+        assert!(required > path.len() + matched.len() + 20_000);
+        let lines = [matched.as_str()];
+        assert!(fit_search_context(original.clone(), &lines, 0, 0, required - 1).is_none());
+        let fitted = fit_search_context(original.clone(), &lines, 0, 0, required).unwrap();
+        assert_eq!(fitted, metadata);
+        assert_displayed_ranges(&fitted, &lines);
+        let mut used = MAX_OUTPUT_BYTES - required;
+        let mut items = Vec::new();
+        assert!(push_bounded(&mut items, fitted, &mut used));
+        assert_eq!(used, MAX_OUTPUT_BYTES);
+        assert!(fit_search_context(original, &lines, 0, 0, MAX_OUTPUT_BYTES - used).is_none());
+    }
+
+    #[tokio::test]
+    async fn oversized_matching_or_adjacent_lines_keep_locations_and_revision() {
+        let (temp, remote, args) = fixture().await;
+        let padding = "界\"\\\t".repeat(15000);
+        for body in [
+            format!("{padding}needle{padding}\n"),
+            format!("{padding}\nneedle\n{padding}\n"),
+        ] {
+            fs::write(temp.path().join("src/000.txt"), &body).unwrap();
+            let mut input = args.clone();
+            input["directory_prefix"] = json!("src");
+            input["filename_contains"] = json!("000");
+            input["query"] = json!("needle");
+            let found = call(&remote, "search_workspace_files", input)
+                .await
+                .unwrap();
+            assert_eq!(found["complete"], true);
+            assert_eq!(found["stop_reason"], Value::Null);
+            assert_eq!(found["items"].as_array().unwrap().len(), 1);
+            let item = &found["items"][0];
+            assert_eq!(item["context_truncated"], true);
+            assert_displayed_ranges(item, &body.lines().collect::<Vec<_>>());
+            assert!(found["item_bytes"].as_u64().unwrap() <= MAX_OUTPUT_BYTES as u64);
+            let mut full_args = args.clone();
+            full_args["path"] = json!("src/000.txt");
+            let full = super::super::call(&remote, "get_workspace_file", full_args)
+                .await
+                .unwrap();
+            assert_eq!(item["revision"], full["revision"]);
+        }
+    }
+
+    #[tokio::test]
+    async fn exhausted_metadata_budget_still_reports_explicit_output_stop() {
+        let (temp, remote, mut args) = fixture().await;
+        let query = "\u{0001}".repeat(1024);
+        fs::write(temp.path().join("src/000.txt"), query.repeat(30)).unwrap();
+        args["query"] = json!(query);
+        args["directory_prefix"] = json!("src");
+        args["max_matches"] = json!(50);
+        let found = call(&remote, "search_workspace_files", args).await.unwrap();
+        assert_eq!(found["stop_reason"], "output_byte_limit");
+        assert_eq!(found["complete"], false);
+        let items = found["items"].as_array().unwrap();
+        assert!(!items.is_empty() && items.len() < 30);
+        assert!(items.iter().all(|i| i["matched"] == query));
+        let bytes: usize = items.iter().map(|i| i.to_string().len() + 1).sum();
+        assert_eq!(found["item_bytes"], bytes);
+        assert!(bytes <= MAX_OUTPUT_BYTES);
     }
 
     #[test]

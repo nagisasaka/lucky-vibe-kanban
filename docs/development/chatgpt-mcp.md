@@ -346,7 +346,7 @@ columns count Unicode scalar values, not bytes or grapheme clusters.
 Illustrative result fields, omitting the standard identity/link metadata:
 
 ```json
-{"items":[{"path":"src/example.txt","line":2,"column":1,"end_column_exclusive":4,"matched":"猫.*","context_start_line":1,"context":["前","猫.*","後"],"revision":"<file-revision>"}],"exclusions":[],"complete":true,"stop_reason":null,"candidate_files":1,"attempted_files":1,"scan_bytes_charged":18,"item_bytes":300,"source_head":"<commit>","snapshot":"per_file_observation"}
+{"items":[{"path":"src/example.txt","line":2,"column":1,"end_column_exclusive":4,"matched":"猫.*","context_start_line":1,"context":["前","猫.*","後"],"context_ranges":[{"line":1,"start_column":1,"end_column_exclusive":2},{"line":2,"start_column":1,"end_column_exclusive":4},{"line":3,"start_column":1,"end_column_exclusive":2}],"context_truncated":false,"revision":"<file-revision>"}],"exclusions":[],"complete":true,"stop_reason":null,"candidate_files":1,"attempted_files":1,"scan_bytes_charged":18,"item_bytes":300,"source_head":"<commit>","snapshot":"per_file_observation"}
 ```
 
 The byte counters above are illustrative. Limits are 1000 attempted files,
@@ -369,7 +369,27 @@ paths, untracked paths, Git symlinks and submodules remain outside that scope;
 `private_paths_excluded:true` reports the established policy. Runtime symlinks,
 including parent-directory replacements, never broaden it. No shell or Git
 filter command is executed. There is no search cursor: narrow filters/query and
-retry after a limit; a very long matching line can exhaust the output budget.
+retry after a limit.
+
+Each hit keeps its full `matched` value and exact path, match line/columns and
+file revision even when requested context is too large. `context_truncated`
+reports whether any requested context was omitted. `context_ranges` corresponds
+one-to-one with the strings in `context`: each entry gives the actual `line`,
+`start_column` (inclusive) and `end_column_exclusive`, all 1-based and counting
+Unicode scalar values. Text is an exact substring, without synthetic ellipses.
+`context_start_line` is the first displayed line, or null when no context fits.
+
+Full context is preferred. If it exceeds the remaining serialised-item budget,
+the reader tries windows of 128, then 32 characters around the full match and
+prefixes of that length for neighbouring lines, then just the matching text.
+Finally it may return location/match metadata alone with `context:[]`,
+`context_ranges:[]` and `context_truncated:true`. Context shortening by itself
+does not make `complete` false: it does not omit a match or skip scanning.
+Every candidate is measured after JSON escaping, including `matched`, path,
+revision, range/truncation metadata and the item separator; none of these fields
+bypasses the shared 64 KiB result/exclusion-item budget. If even the metadata-only
+hit does not fit, the scan stops with `output_byte_limit` and `complete:false`.
+The existing standard response/link metadata remains outside the item budget.
 
 `get_workspace_file_ranges` accepts 1–8 `ranges`. Each entry requires `path`,
 `start_line`, `end_line` and `expected_revision` from search or
@@ -403,8 +423,8 @@ No historical content is retained for replay.
 
 The regression fixture `file_limit_and_small_fixture_transfer_reduction` compares
 listing all 107 permitted paths plus three full text reads (six calls) with a
-focused search and three ranges in one batch (two calls). A local run measured
-29,092 versus 2,444 serialised response bytes, about 91.6% fewer for this fixture.
+focused search and three ranges in one batch (two calls). A local run with
+context-range metadata measured 29,092 versus 3,081 serialised response bytes, about 89.4% fewer for this fixture.
 This is a small reproducible transfer comparison, not a latency benchmark or an
 estimate of savings across an investigation. In particular, it does not attribute
 the historical 85 calls / roughly 420,000 characters entirely to API overhead.
