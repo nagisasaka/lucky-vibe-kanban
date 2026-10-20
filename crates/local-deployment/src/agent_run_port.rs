@@ -4458,6 +4458,7 @@ mod tests {
         let (request, attempt) = persisted_codex_run(&port.db).await;
         let (host, _, events) =
             replay_fixture(root.path(), &request, &attempt, i32::MAX as u32, 1000, true).await;
+        let host_started_at = events[0].timestamp;
         let started = std::time::Instant::now();
         assert!(
             port.recover_dead_process_host_in(&request, &attempt, &host, root.path())
@@ -4506,6 +4507,35 @@ mod tests {
                 .await
                 .unwrap();
         assert_eq!(after, count);
+        let saved_started_at: chrono::DateTime<Utc> = sqlx::query_scalar(
+            "SELECT process_started_at FROM agent_process_registry WHERE run_attempt_id=?",
+        )
+        .bind(attempt.run_attempt_id)
+        .fetch_one(&port.db.pool)
+        .await
+        .unwrap();
+        assert_eq!(
+            saved_started_at, host_started_at,
+            "recovery/replay must retain the host start timestamp, not receipt time"
+        );
+        let canonical: Vec<sqlx::types::Json<AgentEventEnvelope>> =
+            sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE agent_run_id=?")
+                .bind(request.agent_run_id)
+                .fetch_all(&port.db.pool)
+                .await
+                .unwrap();
+        let running = canonical
+            .iter()
+            .find(|event| {
+                matches!(
+                    event.payload,
+                    AgentEventPayload::LifecycleChanged {
+                        status: AgentRunStatus::Running
+                    }
+                )
+            })
+            .unwrap();
+        assert_eq!(running.timestamp, host_started_at);
         eprintln!(
             "host recovery fixture: raw=1002 canonical=4 replay_ms={}",
             started.elapsed().as_millis()
