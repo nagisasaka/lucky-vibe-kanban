@@ -61,6 +61,28 @@ describe('immutable Session launch restoration', () => {
   });
 });
 
+describe('Scratch reasoning round trip', () => {
+  it('does not restore a previous effort when the backend omits a cleared null', () => {
+    const saved = { executor: BaseCodingAgent.CODEX, model_id: 'model' };
+    const previous = { ...saved, reasoning_id: 'max' };
+    expect(
+      resolveExecutorOverride('reasoning_id', {}, saved, previous, previous)
+    ).toBeNull();
+    expect(
+      resolveExecutorOverride(
+        'reasoning_id',
+        { reasoning_id: 'ultra' },
+        saved,
+        previous,
+        previous
+      )
+    ).toBe('ultra');
+    expect(
+      resolveExecutorOverride('reasoning_id', {}, null, previous, null)
+    ).toBe('max');
+  });
+});
+
 describe('retired execution mode restoration', () => {
   it('launches old Plan with Goal drafts as Plan without mutating history', () => {
     const saved: ExecutorConfig = {
@@ -102,6 +124,11 @@ describe('manual override draft persistence', () => {
     expect(
       mergeExecutorOverrides(restored, { execution_mode: ExecutionMode.plan })
     ).toEqual({ ...restored, execution_mode: ExecutionMode.plan });
+  });
+  it('keeps reasoning when reselecting the same model', () => {
+    expect(
+      mergeExecutorOverrides(restored, { model_id: restored.model_id })
+    ).toEqual(restored);
   });
   it('preserves explicit Follow Settings and clears reasoning when changing model', () => {
     expect(

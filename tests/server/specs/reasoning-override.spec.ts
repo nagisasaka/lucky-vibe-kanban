@@ -5,17 +5,22 @@ import { expect, test } from "@playwright/test";
 test("manual reasoning survives discovery, send, reload and workspace switches", async ({
   page,
   request,
-}) => {
+}, testInfo) => {
   test.skip(
     process.env.LVK_E2E_REASONING !== "1",
     "Requires a task-owned isolated instance",
   );
+  const access = await (await request.get("/api/access/status")).json();
   const api = async (
     path: string,
     data?: unknown,
     method = data === undefined ? "GET" : "POST",
   ) => {
-    const response = await request.fetch(path, { method, data });
+    const response = await request.fetch(path, {
+      method,
+      data,
+      headers: { "x-lvk-csrf": access.csrf },
+    });
     expect(response.ok(), await response.text()).toBeTruthy();
     const body = await response.json();
     expect(body.success, JSON.stringify(body)).toBe(true);
@@ -143,9 +148,17 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
     await route.fulfill({ json: { success: true, data: {} } });
   });
   const open = async (scope: typeof a) => {
-    await page.goto(
-      `/workspaces/${scope.workspace.id}?sessionId=${scope.session.id}`,
-    );
+    if (page.url().includes("/workspaces/")) {
+      await page
+        .getByRole("button", { name: scope.workspace.name, exact: true })
+        .first()
+        .click();
+      await expect(page).toHaveURL(new RegExp(scope.workspace.id));
+    } else {
+      await page.goto(
+        `/workspaces/${scope.workspace.id}?sessionId=${scope.session.id}`,
+      );
+    }
     await page.keyboard.press("Escape");
     await expect(
       page.getByRole("button", { name: /Test Model/ }).first(),
@@ -159,7 +172,7 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
       .locator("[data-model-selector-dropdown]")
       .waitFor({ state: "hidden" });
     await page
-      .getByRole("button", { name: /^(High|Max|Follow Settings)$/ })
+      .getByRole("button", { name: /^(High|Max|Follow CLI config)$/ })
       .click();
     await page.getByRole("menuitem", { name: label, exact: true }).click();
     await page.keyboard.press("Escape");
@@ -172,6 +185,10 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
   await expect
     .poll(async () => (await scratch())?.payload?.data?.executor_config)
     .toMatchObject({ model_id: "test-model", reasoning_id: "max" });
+  await modelButton().click();
+  await page.getByRole("button", { name: "Test Model", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(modelButton()).toContainText("Max");
   // Discovery omission must neither mutate Scratch nor change the explicit label.
   efforts = [];
   discoverySockets.forEach(publish);
@@ -181,6 +198,7 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
   await expect(
     page.getByRole("menuitem", { name: "Max", exact: true }),
   ).toBeDisabled();
+  await page.screenshot({ path: testInfo.outputPath("manual-max.png") });
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   efforts = ["high"];
@@ -208,11 +226,11 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
   await expect(modelButton()).toContainText("Max");
   await page.reload();
   await expect(modelButton()).toContainText("Max");
-  await choose("Follow Settings");
+  await choose("Follow CLI config");
   await expect
     .poll(
       async () =>
-        (await scratch())?.payload?.data?.executor_config.reasoning_id,
+        (await scratch())?.payload?.data?.executor_config.reasoning_id ?? null,
     )
     .toBeNull();
   await page.reload();
@@ -228,6 +246,7 @@ test("manual reasoning survives discovery, send, reload and workspace switches",
   await expect(modelButton()).not.toContainText("Max");
   await modelButton().click();
   await expect(
-    page.getByRole("button", { name: "Follow Settings", exact: true }),
+    page.getByRole("button", { name: "Follow CLI config", exact: true }),
   ).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("follow-config.png") });
 });
