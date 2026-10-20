@@ -126,7 +126,7 @@ impl Remote {
                 .is_none_or(|expected| expected == &run.updated_at),
             "Integration changed; restart reading this section"
         );
-        let mut result = json!({"integration_id":run.id,"project_id":run.project_id,"revision":run.updated_at,"status":run.status,"published":run.payload.published,"url":self.config.project_url(run.project_id)});
+        let mut result = json!({"integration_id":run.id,"project_id":run.project_id,"revision":run.updated_at,"status":run.status,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"url":self.config.project_url(run.project_id)});
         if matches!(args.section, Section::Summary) {
             ensure!(args.offset == 0, "Summary has no further pages");
             let observed =

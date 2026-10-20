@@ -56,6 +56,12 @@ pub struct CreateIntegrationRequest {
     pub skip_validation: Option<bool>,
 }
 
+impl CreateIntegrationRequest {
+    pub(crate) fn resolved_skip_validation(&self, server_default: bool) -> bool {
+        self.skip_validation.unwrap_or(server_default)
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct ListQuery {
     project_id: Uuid,

@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use anyhow::ensure;
 use async_trait::async_trait;
 use db::models::{
-    integration::IntegrationSelection,
+    integration::{IntegrationRun, IntegrationSelection},
     repo::Repo,
     requests::{
         CreateAndStartWorkspaceRequest, CreateWorkspaceMode, LinkedIssueInfo, WorkspaceRepoInput,
@@ -68,6 +68,9 @@ struct MergeArgs {
     expected_target_commit: String,
     #[schemars(length(min = 1, max = 100))]
     selections: Vec<Selection>,
+    /// true skips additional Integration validation (unverified); false runs it.
+    /// Omit or null to inherit the server integration_skip_validation preference.
+    skip_validation: Option<bool>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -149,11 +152,13 @@ impl LaunchActions for ExistingLaunch {
     ) -> Result<Value, integrations::AdmissionFailure> {
         let run =
             integrations::create_with_expected_target(&self.0, request, &expected_target).await?;
-        Ok(
-            json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"wiki":"not_verified"}),
-        )
+        Ok(integration_result(&run))
     }
 }
+pub(super) fn integration_result(run: &IntegrationRun) -> Value {
+    json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"wiki":"not_verified"})
+}
+
 fn branch(value: &str) -> anyhow::Result<()> {
     ensure!(
         value.len() <= 1024
@@ -488,7 +493,7 @@ pub(super) async fn call(
                     if !WorkspaceRepo::find_by_workspace_and_repo_id(&owned.pool,selection.workspace_id,args.repository_id).await.is_ok_and(|repo|repo.is_some()) {return ("failed",json!({"code":"workspace_repository_changed"}));}
                     match owned.require_workspace(args.project_id,selection.workspace_id).await {Ok(issue) if issue==selection.issue_id=>{},_=>return ("failed",json!({"code":"selection_scope_changed"}))}
                 }
-                let request=integrations::CreateIntegrationRequest {request_id:operation,project_id:args.project_id,repository_id:args.repository_id,target_branch:args.target_branch,selections:args.selections.into_iter().map(|s|IntegrationSelection {card_id:s.issue_id,workspace_id:s.workspace_id,expected_commit:s.expected_commit}).collect(),executor_config:None,skip_validation:None};
+                let request=integrations::CreateIntegrationRequest {request_id:operation,project_id:args.project_id,repository_id:args.repository_id,target_branch:args.target_branch,selections:args.selections.into_iter().map(|s|IntegrationSelection {card_id:s.issue_id,workspace_id:s.workspace_id,expected_commit:s.expected_commit}).collect(),executor_config:None,skip_validation:args.skip_validation};
                 let url=owned.config.project_url(args.project_id);
                 match launch.integration(request,args.expected_target_commit).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},

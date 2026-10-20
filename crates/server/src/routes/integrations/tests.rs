@@ -359,15 +359,27 @@ fn omitted_validation_choice_preserves_default_and_rejects_non_boolean() {
         "request_id": Uuid::new_v4(), "project_id": Uuid::new_v4(),
         "repository_id": Uuid::new_v4(), "target_branch": "main", "selections": []
     });
-    let request: super::CreateIntegrationRequest = serde_json::from_value(value.clone()).unwrap();
-    assert_eq!(request.skip_validation, None);
-    value["skip_validation"] = serde_json::json!(true);
-    assert!(
-        serde_json::from_value::<super::CreateIntegrationRequest>(value.clone())
-            .unwrap()
-            .skip_validation
-            .unwrap()
-    );
+    for choice in [
+        None,
+        Some(serde_json::Value::Null),
+        Some(serde_json::json!(true)),
+        Some(serde_json::json!(false)),
+    ] {
+        value.as_object_mut().unwrap().remove("skip_validation");
+        if let Some(choice) = &choice {
+            value["skip_validation"] = choice.clone();
+        }
+        let request: super::CreateIntegrationRequest =
+            serde_json::from_value(value.clone()).unwrap();
+        let explicit = choice.as_ref().and_then(serde_json::Value::as_bool);
+        assert_eq!(request.skip_validation, explicit);
+        for default in [false, true] {
+            assert_eq!(
+                request.resolved_skip_validation(default),
+                explicit.unwrap_or(default)
+            );
+        }
+    }
     value["skip_validation"] = serde_json::json!("true");
     assert!(serde_json::from_value::<super::CreateIntegrationRequest>(value).is_err());
 }

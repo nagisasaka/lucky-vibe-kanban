@@ -246,8 +246,7 @@ pub(super) async fn submit_with_expected_target(
         card_id: Some(card_id),
         sequential: true,
         skip_validation: request
-            .skip_validation
-            .unwrap_or(deployment.config().read().await.integration_skip_validation),
+            .resolved_skip_validation(deployment.config().read().await.integration_skip_validation),
         executor_config: Some(serde_json::to_value(
             request
                 .executor_config

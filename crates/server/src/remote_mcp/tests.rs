@@ -103,6 +103,7 @@ async fn fake_introspection(
     let mut result = claims();
     match form["token"].as_str() {
         "valid" => {}
+        "merge" => result["scope"] = json!("lvk:read lvk:merge"),
         "read-only" => result["scope"] = json!("lvk:read"),
         "expired" => result["exp"] = json!(1),
         "foreign" => result["sub"] = json!("other"),
@@ -113,7 +114,7 @@ async fn fake_introspection(
     (StatusCode::OK, Json(result))
 }
 
-async fn fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
+pub(super) async fn fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let provider = tokio::spawn(async move {
@@ -278,6 +279,23 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         let body: Value = response.json().await.unwrap();
         assert!(body.get("error").is_none(), "{body}");
         if request["id"] == 2 {
+            let integration = body["result"]["tools"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|tool| tool["name"] == "start_integration")
+                .unwrap();
+            let schema = &integration["inputSchema"];
+            assert_eq!(
+                schema["properties"]["skip_validation"]["type"],
+                json!(["boolean", "null"])
+            );
+            assert!(
+                !schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!("skip_validation"))
+            );
             assert_eq!(
                 body["result"]["tools"].as_array().unwrap().len(),
                 tools().len()

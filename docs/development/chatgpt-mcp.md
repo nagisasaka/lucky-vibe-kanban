@@ -138,6 +138,16 @@ is exported.
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
+`start_integration` accepts optional `skip_validation`: `true` skips additional
+Integration validation (unverified), `false` runs it, and omission or `null`
+inherits the server's `integration_skip_validation` preference at admission.
+The start receipt's `result.skip_validation` and every `get_integration` section's
+`skip_validation` report the saved, resolved boolean, even after the preference
+changes. Skipping is not a validation pass and does not bypass admission, Git,
+conflict approval, writer settlement, publication or Wiki requirements.
+Retry with the same `request_id` and identical payload; changing the flag,
+including adding or removing it, follows the existing payload mismatch rule.
+
 ## T01–T18 acceptance audit
 
 All rows below passed locally at the stated boundary. External execution uses
