@@ -1699,6 +1699,7 @@ impl AgentEventRecord {
                 input_tokens,
                 output_tokens,
                 cached_input_tokens,
+                ..
             } = &snapshot.payload
             else {
                 continue;
@@ -2732,6 +2733,8 @@ mod tests {
                 input_tokens,
                 output_tokens: 8,
                 cached_input_tokens: Some(3),
+                context_tokens: Some(7),
+                model_context_window: Some(100),
             },
         };
 
@@ -2770,6 +2773,8 @@ mod tests {
                 native_sequence: 11,
                 payload: AgentLiveEventPayload::TokenUsageSnapshot {
                     input_tokens: 30,
+                    context_tokens: Some(7),
+                    model_context_window: Some(100),
                     ..
                 },
                 ..

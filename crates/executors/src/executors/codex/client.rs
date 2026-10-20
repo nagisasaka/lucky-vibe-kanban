@@ -100,6 +100,7 @@ pub struct AppServerClient {
     thread_id: Mutex<Option<String>>,
     turn_id: Arc<Mutex<Option<String>>>,
     pending_feedback: Mutex<VecDeque<String>>,
+    child_completion: StdMutex<HashMap<String, (Option<String>, bool)>>,
     auto_approve: bool,
     plan_mode: AtomicBool,
     execution_mode: ExecutionMode,
@@ -161,6 +162,7 @@ impl AppServerClient {
             thread_id: Mutex::new(None),
             turn_id: Arc::new(Mutex::new(None)),
             pending_feedback: Mutex::new(VecDeque::new()),
+            child_completion: StdMutex::new(HashMap::new()),
             repo_context,
             commit_reminder,
             commit_reminder_prompt,
@@ -1542,6 +1544,122 @@ impl AppServerClient {
         raw: &str,
         notification: JSONRPCNotification,
     ) -> Result<JsonRpcControlFlow, ExecutorError> {
+        self.observe_child_completion(&notification).await;
+        let flow = self.process_notification_inner(raw, notification).await?;
+        match flow {
+            JsonRpcControlFlow::Exit(ExecutorExitResult::Success) => {
+                Ok(JsonRpcControlFlow::Exit(self.checked_success().await?))
+            }
+            other => Ok(other),
+        }
+    }
+
+    // Parent completion is not proof that its fanout finished. Keep this guard
+    // independent of display projection: an unknown child must never authorize
+    // successful Run completion (and therefore automatic integration).
+    async fn checked_success(&self) -> Result<ExecutorExitResult, ExecutorError> {
+        let unfinished = self
+            .child_completion
+            .lock()
+            .unwrap()
+            .values()
+            .any(|(_, done)| !done);
+        if unfinished {
+            self.log_writer.log_raw("Codex parent completed while a sub-agent was still running or its completion was unknown; refusing successful Run completion.").await?;
+            Ok(ExecutorExitResult::Failure)
+        } else {
+            Ok(ExecutorExitResult::Success)
+        }
+    }
+
+    async fn observe_child_completion(&self, notification: &JSONRPCNotification) {
+        let root = self.thread_id.lock().await.clone();
+        let Some(root) = root else { return };
+        let Some(params) = notification.params.as_ref() else {
+            return;
+        };
+        let thread = params.get("threadId").and_then(Value::as_str);
+        let method = notification.method.as_str();
+        let mut children = self.child_completion.lock().unwrap();
+        let settled = |status: &str| {
+            matches!(
+                status,
+                "completed" | "failed" | "errored" | "interrupted" | "shutdown"
+            )
+        };
+        if matches!(method, "turn/started" | "turn/completed")
+            && let Some(thread) = thread.filter(|id| *id != root)
+        {
+            let turn = params.pointer("/turn/id").and_then(Value::as_str);
+            let child = children.entry(thread.to_owned()).or_default();
+            if method == "turn/started" {
+                *child = (turn.map(str::to_owned), false);
+            } else if child.0.is_none() || child.0.as_deref() == turn {
+                child.1 = params
+                    .pointer("/turn/status")
+                    .and_then(Value::as_str)
+                    .is_some_and(settled);
+            }
+        }
+        if !matches!(method, "item/started" | "item/completed") {
+            return;
+        }
+        let Some(item) = params.get("item") else {
+            return;
+        };
+        match item.get("type").and_then(Value::as_str) {
+            Some("subAgentActivity") => {
+                if let Some(id) = item
+                    .get("agentThreadId")
+                    .and_then(Value::as_str)
+                    .filter(|id| *id != root)
+                {
+                    // An interaction (e.g. sending feedback) is not evidence of
+                    // a terminal state. Only explicit lifecycle evidence counts.
+                    match item.get("kind").and_then(Value::as_str) {
+                        Some("started" | "interacted") => {
+                            // Interacted also covers followup_task; the event
+                            // does not distinguish it from a queued message.
+                            children.entry(id.to_owned()).or_default().1 = false;
+                        }
+                        _ => {
+                            children.entry(id.to_owned()).or_default();
+                        }
+                    }
+                }
+            }
+            Some("collabAgentToolCall") => {
+                if let Some(ids) = item.get("receiverThreadIds").and_then(Value::as_array) {
+                    for id in ids
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .filter(|id| *id != root)
+                    {
+                        // A resumed/sent-input child may have been terminal
+                        // previously. Missing new state must not reuse that proof.
+                        children.entry(id.to_owned()).or_default().1 = false;
+                    }
+                }
+                if let Some(states) = item.get("agentsStates").and_then(Value::as_object) {
+                    for (id, state) in states {
+                        if id != &root {
+                            children.entry(id.clone()).or_default().1 = state
+                                .get("status")
+                                .and_then(Value::as_str)
+                                .is_some_and(settled);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    async fn process_notification_inner(
+        &self,
+        raw: &str,
+        notification: JSONRPCNotification,
+    ) -> Result<JsonRpcControlFlow, ExecutorError> {
         self.log_writer.log_raw(raw).await?;
 
         let method = notification.method.as_str();
@@ -1708,7 +1826,13 @@ impl AppServerClient {
                 tokio::spawn(async move {
                     match client.handle_plan_completed(plan).await {
                         Ok(false) => {}
-                        Ok(true) => client.rpc().request_exit(ExecutorExitResult::Success),
+                        Ok(true) => {
+                            let result = client
+                                .checked_success()
+                                .await
+                                .unwrap_or(ExecutorExitResult::Failure);
+                            client.rpc().request_exit(result);
+                        }
                         Err(error) => {
                             let _ = client
                                 .log_writer
@@ -2468,6 +2592,202 @@ mod version_check_tests {
             )
             .await,
             JsonRpcControlFlow::Exit(ExecutorExitResult::Success)
+        ));
+    }
+
+    #[tokio::test]
+    async fn code_parent_completion_with_pending_child_exits_failure() {
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            None,
+            false,
+            false,
+            ExecutionMode::Code,
+            None,
+            None,
+            Default::default(),
+            false,
+            String::new(),
+            CancellationToken::new(),
+        );
+        *client.thread_id.lock().await = Some("thread-1".into());
+        notify(
+            &client,
+            "turn/started",
+            json!({"turn":{"id":"parent-turn"}}),
+        )
+        .await;
+        notify(
+            &client,
+            "item/completed",
+            json!({"item":{"type":"subAgentActivity","kind":"started","agentThreadId":"child"}}),
+        )
+        .await;
+        assert!(matches!(
+            notify(
+                &client,
+                "turn/completed",
+                json!({"turn":{"id":"parent-turn","status":"completed"}})
+            )
+            .await,
+            JsonRpcControlFlow::Exit(ExecutorExitResult::Failure)
+        ));
+    }
+
+    #[tokio::test]
+    async fn parent_success_requires_observed_child_settlement() {
+        for status in [
+            None,
+            Some("running"),
+            Some("futureStatus"),
+            Some("completed"),
+            Some("failed"),
+        ] {
+            let client = goal_client();
+            notify(
+                &client,
+                "turn/started",
+                json!({"turn":{"id":"parent-turn"}}),
+            )
+            .await;
+            notify(&client, "item/completed", json!({"item":{"type":"subAgentActivity","kind":"started","agentThreadId":"child"}})).await;
+            if let Some(status) = status {
+                let raw = json!({"method":"turn/completed","params":{"threadId":"child","turn":{"id":"child-turn","status":status}}}).to_string();
+                assert!(matches!(
+                    client
+                        .process_notification(&raw, serde_json::from_str(&raw).unwrap())
+                        .await
+                        .unwrap(),
+                    JsonRpcControlFlow::Continue
+                ));
+            }
+            notify(
+                &client,
+                "thread/goal/updated",
+                json!({"goal":{"status":"complete"}}),
+            )
+            .await;
+            let result = notify(
+                &client,
+                "turn/completed",
+                json!({"turn":{"id":"parent-turn","status":"completed"}}),
+            )
+            .await;
+            if matches!(status, Some("completed" | "failed")) {
+                assert!(matches!(
+                    result,
+                    JsonRpcControlFlow::Exit(ExecutorExitResult::Success)
+                ));
+            } else {
+                assert!(matches!(
+                    result,
+                    JsonRpcControlFlow::Exit(ExecutorExitResult::Failure)
+                ));
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn stale_child_completion_cannot_finish_a_new_child_turn() {
+        let client = goal_client();
+        for (method, turn, status) in [
+            ("turn/started", "new", "inProgress"),
+            ("turn/completed", "old", "completed"),
+        ] {
+            let raw = json!({"method":method,"params":{"threadId":"child","turn":{"id":turn,"status":status}}}).to_string();
+            client
+                .process_notification(&raw, serde_json::from_str(&raw).unwrap())
+                .await
+                .unwrap();
+        }
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Failure
+        ));
+    }
+
+    #[tokio::test]
+    async fn interrupt_activity_is_not_completion_and_late_activity_preserves_settlement() {
+        let client = goal_client();
+        for kind in ["started", "interrupted"] {
+            notify(
+                &client,
+                "item/completed",
+                json!({"item":{"type":"subAgentActivity","kind":kind,"agentThreadId":"child"}}),
+            )
+            .await;
+            assert!(matches!(
+                client.checked_success().await.unwrap(),
+                ExecutorExitResult::Failure
+            ));
+        }
+        let raw = json!({"method":"turn/completed","params":{"threadId":"child","turn":{"id":"child-turn","status":"interrupted"}}}).to_string();
+        client
+            .process_notification(&raw, serde_json::from_str(&raw).unwrap())
+            .await
+            .unwrap();
+        notify(&client, "item/completed", json!({"item":{"type":"subAgentActivity","kind":"interrupted","agentThreadId":"child"}})).await;
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Success
+        ));
+        notify(
+            &client,
+            "item/completed",
+            json!({"item":{"type":"subAgentActivity","kind":"interacted","agentThreadId":"child"}}),
+        )
+        .await;
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Failure
+        ));
+        client.child_completion.lock().unwrap().clear();
+        // Native interactions with the parent must not make it its own child.
+        notify(
+            &client,
+            "item/completed",
+            json!({"item":{"type":"subAgentActivity","kind":"started","agentThreadId":"thread-1"}}),
+        )
+        .await;
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Success
+        ));
+    }
+
+    #[tokio::test]
+    async fn collab_tool_completion_does_not_imply_child_completion() {
+        let client = goal_client();
+        for (status, success) in [
+            ("running", false),
+            ("completed", true),
+            ("pendingInit", false),
+            ("shutdown", true),
+            ("notFound", false),
+        ] {
+            notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","status":"completed","receiverThreadIds":["child"],"agentsStates":{"child":{"status":status}}}})).await;
+            assert_eq!(
+                matches!(
+                    client.checked_success().await.unwrap(),
+                    ExecutorExitResult::Success
+                ),
+                success
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn collab_resume_without_state_invalidates_previous_completion() {
+        let client = goal_client();
+        notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"wait","receiverThreadIds":["child"],"agentsStates":{"child":{"status":"completed"}}}})).await;
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Success
+        ));
+        notify(&client, "item/completed", json!({"item":{"type":"collabAgentToolCall","tool":"resumeAgent","receiverThreadIds":["child"],"agentsStates":{}}})).await;
+        assert!(matches!(
+            client.checked_success().await.unwrap(),
+            ExecutorExitResult::Failure
         ));
     }
 

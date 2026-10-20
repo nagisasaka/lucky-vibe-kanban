@@ -312,6 +312,8 @@ export function mergeAgentLiveEvent(
             input_tokens: live.payload.data.input_tokens,
             output_tokens: live.payload.data.output_tokens,
             cached_input_tokens: live.payload.data.cached_input_tokens,
+            context_tokens: live.payload.data.context_tokens,
+            model_context_window: live.payload.data.model_context_window,
           },
         };
   const event: AgentEventEnvelope = {

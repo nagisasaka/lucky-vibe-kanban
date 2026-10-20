@@ -890,6 +890,20 @@ fn upsert_dynamic_tool_state(
     }
 }
 
+fn codex_usage_info(last: i64, window: Option<i64>, total: i64) -> crate::logs::TokenUsageInfo {
+    let context = u32::try_from(last).ok().zip(
+        window
+            .and_then(|value| u32::try_from(value).ok())
+            .filter(|value| *value > 0),
+    );
+    let (total_tokens, model_context_window) = context.unwrap_or_default();
+    crate::logs::TokenUsageInfo {
+        total_tokens,
+        model_context_window,
+        cumulative_tokens: u64::try_from(total).ok(),
+    }
+}
+
 fn add_thread_token_usage(
     notification: ThreadTokenUsageUpdatedNotification,
     msg_store: &Arc<MsgStore>,
@@ -900,13 +914,11 @@ fn add_thread_token_usage(
         entry_index,
         NormalizedEntry {
             timestamp: None,
-            entry_type: NormalizedEntryType::TokenUsageInfo(crate::logs::TokenUsageInfo {
-                total_tokens: notification.token_usage.last.total_tokens as u32,
-                model_context_window: notification
-                    .token_usage
-                    .model_context_window
-                    .unwrap_or_default() as u32,
-            }),
+            entry_type: NormalizedEntryType::TokenUsageInfo(codex_usage_info(
+                notification.token_usage.last.total_tokens,
+                notification.token_usage.model_context_window,
+                notification.token_usage.total.total_tokens,
+            )),
             content: format!(
                 "Tokens used: {} / Context window: {}",
                 notification.token_usage.last.total_tokens,
@@ -2682,15 +2694,11 @@ pub fn normalize_logs(
                             &entry_index,
                             NormalizedEntry {
                                 timestamp: None,
-                                entry_type: NormalizedEntryType::TokenUsageInfo(
-                                    crate::logs::TokenUsageInfo {
-                                        total_tokens: info.last_token_usage.total_tokens as u32,
-                                        model_context_window: info
-                                            .model_context_window
-                                            .unwrap_or_default()
-                                            as u32,
-                                    },
-                                ),
+                                entry_type: NormalizedEntryType::TokenUsageInfo(codex_usage_info(
+                                    info.last_token_usage.total_tokens,
+                                    info.model_context_window,
+                                    info.total_token_usage.total_tokens,
+                                )),
                                 content: format!(
                                     "Tokens used: {} / Context window: {}",
                                     info.last_token_usage.total_tokens,
@@ -3176,6 +3184,30 @@ impl ToNormalizedEntryOpt for Approval {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn codex_usage_fallback_rejects_invalid_context_without_losing_totals() {
+        let info = super::codex_usage_info(25, Some(100), 1200);
+        assert_eq!(
+            (
+                info.total_tokens,
+                info.model_context_window,
+                info.cumulative_tokens
+            ),
+            (25, 100, Some(1200))
+        );
+        for (last, window) in [
+            (-1, Some(100)),
+            (25, None),
+            (25, Some(0)),
+            (i64::MAX, Some(100)),
+            (25, Some(i64::MAX)),
+        ] {
+            let info = super::codex_usage_info(last, window, 1200);
+            assert_eq!(info.model_context_window, 0);
+            assert_eq!(info.cumulative_tokens, Some(1200));
+        }
+    }
+
     use std::{collections::BTreeMap, sync::Arc};
 
     use serde_json::json;

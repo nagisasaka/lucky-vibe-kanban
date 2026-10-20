@@ -415,8 +415,9 @@
     "noMatches": "Aucune correspondance"
   },
   "contextUsage": {
+    "cumulative": "Tokens cumulés : {{tokens}}",
     "label": "Utilisation du contexte",
-    "emptyTooltip": "L'utilisation du contexte apparaît après la prochaine réponse",
+    "emptyTooltip": "Utilisation du contexte indisponible",
     "tooltip": "Contexte : {{percentage}}% · {{used}} / {{total}} tokens",
     "ariaLabel": "Utilisation du contexte : {{percentage}}%"
   },

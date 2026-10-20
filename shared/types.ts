@@ -1214,7 +1214,7 @@ export type NormalizedEntry = { timestamp: string | null, entry_type: Normalized
 
 export type NormalizedEntryType = { "type": "user_message" } | { "type": "user_feedback", denied_tool: string, } | { "type": "assistant_message" } | { "type": "tool_use", tool_name: string, action_type: ActionType, status: ToolStatus, } | { "type": "system_message" } | { "type": "error_message", error_type: NormalizedEntryError, } | { "type": "thinking" } | { "type": "loading" } | { "type": "next_action", failed: boolean, execution_processes: number, needs_setup: boolean, } | { "type": "token_usage_info" } & TokenUsageInfo | { "type": "user_answered_questions", answers: Array<AnsweredQuestion>, };
 
-export type TokenUsageInfo = { total_tokens: number, model_context_window: number, };
+export type TokenUsageInfo = { total_tokens: number, model_context_window: number, cumulative_tokens?: number | null, };
 
 export type FileChange = { "action": "write", content: string, } | { "action": "delete" } | { "action": "rename", new_path: string, } | { "action": "edit",
 /**
@@ -1358,13 +1358,21 @@ export type RunAttemptRequest = { schema_version: number, payload_version: numbe
 
 export type NativeAuditReference = { stream_id: string, sequence: bigint, checksum?: string | null, };
 
-export type AgentEventPayload = { "type": "agent_activity", "data": { activity: AgentActivity, } } | { "type": "lifecycle_changed", "data": { status: AgentRunStatus, } } | { "type": "session_observed", "data": { provider_session: ProviderSessionReference, } } | { "type": "message", "data": { message: CanonicalMessage, final_output: boolean, } } | { "type": "thinking", "data": { content: string, } } | { "type": "tool_call", "data": { tool_call_id?: string | null, tool_name: string, status: AgentRuntimeToolStatus, arguments?: JsonValue | null, result?: JsonValue | null, } } | { "type": "approval_requested", "data": { approval_id: string, tool_call_id?: string | null, tool_name: string, } } | { "type": "approval_resolved", "data": { approval_id: string, approved: boolean, reason?: string | null, } } | { "type": "input_requested", "data": { input_id: string, prompt: string, } } | { "type": "input_resolved", "data": { input_id: string, answered: boolean, } } | { "type": "token_usage", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null, } } | { "type": "goal_updated", "data": { goal: AgentGoalState, } } | { "type": "goal_cleared" } | { "type": "error", "data": { error: AgentRuntimeError, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "provider_extension", "data": { provider_namespace: string, provider_event: string, payload: JsonValue, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
+export type AgentEventPayload = { "type": "agent_activity", "data": { activity: AgentActivity, } } | { "type": "lifecycle_changed", "data": { status: AgentRunStatus, } } | { "type": "session_observed", "data": { provider_session: ProviderSessionReference, } } | { "type": "message", "data": { message: CanonicalMessage, final_output: boolean, } } | { "type": "thinking", "data": { content: string, } } | { "type": "tool_call", "data": { tool_call_id?: string | null, tool_name: string, status: AgentRuntimeToolStatus, arguments?: JsonValue | null, result?: JsonValue | null, } } | { "type": "approval_requested", "data": { approval_id: string, tool_call_id?: string | null, tool_name: string, } } | { "type": "approval_resolved", "data": { approval_id: string, approved: boolean, reason?: string | null, } } | { "type": "input_requested", "data": { input_id: string, prompt: string, } } | { "type": "input_resolved", "data": { input_id: string, answered: boolean, } } | { "type": "token_usage", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
+/**
+ * Latest context occupancy, distinct from cumulative billing usage.
+ */
+context_tokens?: bigint | null, model_context_window?: bigint | null, } } | { "type": "goal_updated", "data": { goal: AgentGoalState, } } | { "type": "goal_cleared" } | { "type": "error", "data": { error: AgentRuntimeError, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "provider_extension", "data": { provider_namespace: string, provider_event: string, payload: JsonValue, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
 
 export type AgentActivity = { thread_id: string, parent_thread_id: string | null, agent_path: string | null, kind: string, content: string | null, };
 
 export type AgentEventEnvelope = { schema_version: number, payload_version: number, event_id: string, session_id: string, agent_run_id: string, turn_id: string, run_attempt_id: string, run_attempt_number: number, sequence: bigint, correlation_id: string, orchestration_run_id?: string | null, orchestration_node_execution_id?: string | null, timestamp: string, native_refs?: Array<NativeAuditReference>, payload: AgentEventPayload, };
 
-export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null, } };
+export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
+/**
+ * Latest context occupancy, distinct from cumulative billing usage.
+ */
+context_tokens?: bigint | null, model_context_window?: bigint | null, } };
 
 export type AgentLiveEvent = { schema_version: number, event_id: string, session_id: string, agent_run_id: string, turn_id: string, run_attempt_id: string, run_attempt_number: number, native_sequence: bigint, timestamp: string, payload: AgentLiveEventPayload, };
 

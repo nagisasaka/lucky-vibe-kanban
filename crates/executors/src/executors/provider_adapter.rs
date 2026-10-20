@@ -331,7 +331,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v4",
+                mapper: "codex-mapper-v5",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
@@ -533,10 +533,20 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: if self == Self::Codex {
-                MapperSemantics::V4
+                MapperSemantics::V5
             } else {
                 MapperSemantics::V3
             },
+            scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve replay before context and collaboration observations were added.
+    pub fn v4_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V4,
             scope: Default::default(),
             replay_sequence: Default::default(),
         }
@@ -720,6 +730,7 @@ pub fn require_capability(
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypedProviderEvent {
     AgentActivity(crate::runtime::AgentActivity),
+    AgentActivities(Vec<crate::runtime::AgentActivity>),
     Lifecycle(AgentRunStatus),
     SessionObserved(String),
     Message {
@@ -771,6 +782,8 @@ pub enum TypedProviderEvent {
         input_tokens: u64,
         output_tokens: u64,
         cached_input_tokens: Option<u64>,
+        context_tokens: Option<u64>,
+        model_context_window: Option<u64>,
     },
     GoalUpdated(crate::runtime::AgentGoalState),
     GoalCleared,
@@ -903,6 +916,7 @@ enum MapperSemantics {
     V2,
     V3,
     V4,
+    V5,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -913,6 +927,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V2 => "v2",
             MapperSemantics::V3 => "v3",
             MapperSemantics::V4 => "v4",
+            MapperSemantics::V5 => "v5",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -947,17 +962,23 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V2 => {
                 Ok(project_typed_event(self.provider, &decoded, manifest)?.durable_events)
             }
-            MapperSemantics::V3 | MapperSemantics::V4 => {
+            MapperSemantics::V3 | MapperSemantics::V4 | MapperSemantics::V5 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
                 }
                 if self.provider == DirectProvider::Codex {
-                    scope.apply(&mut decoded);
+                    if self.semantics == MapperSemantics::V5 {
+                        scope.apply(&mut decoded);
+                    } else {
+                        scope.apply_legacy(&mut decoded);
+                    }
                 }
                 let mut projected =
                     project_typed_event(self.provider, &decoded, manifest)?.durable_events;
-                if self.provider != DirectProvider::Codex || self.semantics == MapperSemantics::V4 {
+                if self.provider != DirectProvider::Codex
+                    || matches!(self.semantics, MapperSemantics::V4 | MapperSemantics::V5)
+                {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
                     // events. Native references retain raw ordering; canonical
                     // replay must use its own dense cursor, just as DB append does.
@@ -1453,6 +1474,8 @@ fn classify_payload_legacy(
                 .unwrap_or(0),
             cached_input_tokens: value(&["cached_input_tokens", "cache_read_tokens"])
                 .and_then(Value::as_u64),
+            context_tokens: None,
+            model_context_window: None,
         }),
         "result" | "completed" | "done" | "success" => {
             Ok(TypedProviderEvent::Lifecycle(AgentRunStatus::Succeeded))
@@ -1594,16 +1617,31 @@ fn classify_codex_payload(
             })
         }
         "thread/tokenusage/updated" | "thread.token_usage.updated" => {
-            let usage = params
-                .pointer("/tokenUsage/total")
-                .or_else(|| params.pointer("/token_usage/total"))?;
+            let snapshot = params
+                .get("tokenUsage")
+                .or_else(|| params.get("token_usage"))?;
+            let usage = snapshot.get("total")?;
+            let (Some(input_tokens), Some(output_tokens)) = (
+                codex_optional_u64(usage, &["inputTokens", "input_tokens"]),
+                codex_optional_u64(usage, &["outputTokens", "output_tokens"]),
+            ) else {
+                return Some(Ok(TypedProviderEvent::AuditOnly { event_type }));
+            };
             Some(Ok(TypedProviderEvent::TokenUsage {
-                input_tokens: codex_u64(usage, &["inputTokens", "input_tokens"]),
-                output_tokens: codex_u64(usage, &["outputTokens", "output_tokens"]),
+                input_tokens,
+                output_tokens,
                 cached_input_tokens: codex_optional_u64(
                     usage,
                     &["cachedInputTokens", "cached_input_tokens"],
                 ),
+                context_tokens: snapshot
+                    .get("last")
+                    .and_then(|last| codex_optional_u64(last, &["totalTokens", "total_tokens"])),
+                model_context_window: codex_optional_u64(
+                    snapshot,
+                    &["modelContextWindow", "model_context_window"],
+                )
+                .filter(|window| *window > 0),
             }))
         }
         "item/started" | "item.started" => {
@@ -1832,10 +1870,6 @@ fn codex_object_fields(value: &Value, fields: &[&str]) -> Value {
     Value::Object(selected)
 }
 
-fn codex_u64(value: &Value, fields: &[&str]) -> u64 {
-    codex_optional_u64(value, fields).unwrap_or(0)
-}
-
 fn codex_optional_u64(value: &Value, fields: &[&str]) -> Option<u64> {
     fields
         .iter()
@@ -1868,10 +1902,13 @@ fn map_typed_event_v1(
             input_tokens,
             output_tokens,
             cached_input_tokens,
+            ..
         } => AgentEventPayload::TokenUsage {
             input_tokens: *input_tokens,
             output_tokens: *output_tokens,
             cached_input_tokens: *cached_input_tokens,
+            context_tokens: None,
+            model_context_window: None,
         },
         TypedProviderEvent::GoalUpdated(goal) => {
             AgentEventPayload::GoalUpdated { goal: goal.clone() }
@@ -1921,12 +1958,32 @@ fn project_typed_event(
     event: &DecodedProviderEvent,
     manifest: &NativeAuditManifest,
 ) -> Result<ProviderEventProjection, NativeAuditError> {
+    if let TypedProviderEvent::AgentActivities(activities) = &event.typed {
+        let mut durable_events = Vec::new();
+        for (index, activity) in activities.iter().enumerate() {
+            let mut observation = event.clone();
+            observation.typed = TypedProviderEvent::AgentActivity(activity.clone());
+            let mut projected = project_typed_event(provider, &observation, manifest)?;
+            for projected in &mut projected.durable_events {
+                projected.event_id = canonical_provider_message_id(
+                    manifest.run_attempt_id,
+                    &format!("agent-activity:{}:{index}", event.raw.sequence),
+                );
+            }
+            durable_events.extend(projected.durable_events);
+        }
+        return Ok(ProviderEventProjection {
+            durable_events,
+            live_events: Vec::new(),
+        });
+    }
+
     // Codex 0.154 emits asynchronous questions on completed agent messages,
     // not as blocking server requests. Keep the text and persist an optional
     // extension for clients which support the question inbox. Older audit
     // versions must replay exactly as before.
     if provider == DirectProvider::Codex
-        && manifest.mapper_version.ends_with("-v4")
+        && (manifest.mapper_version.ends_with("-v4") || manifest.mapper_version.ends_with("-v5"))
         && let TypedProviderEvent::Message {
             provider_message_id: Some(message_id),
             role: AgentRuntimeMessageRole::Assistant,
@@ -2085,10 +2142,14 @@ fn project_typed_event(
             input_tokens,
             output_tokens,
             cached_input_tokens,
+            context_tokens,
+            model_context_window,
         } => Some(AgentLiveEventPayload::TokenUsageSnapshot {
             input_tokens: *input_tokens,
             output_tokens: *output_tokens,
             cached_input_tokens: *cached_input_tokens,
+            context_tokens: *context_tokens,
+            model_context_window: *model_context_window,
         }),
         _ => None,
     };
@@ -2206,7 +2267,8 @@ fn project_typed_event(
             AgentEventPayload::GoalUpdated { goal: goal.clone() }
         }
         TypedProviderEvent::GoalCleared => AgentEventPayload::GoalCleared,
-        TypedProviderEvent::MessageDelta { .. }
+        TypedProviderEvent::AgentActivities(_)
+        | TypedProviderEvent::MessageDelta { .. }
         | TypedProviderEvent::ThinkingDelta { .. }
         | TypedProviderEvent::ToolOutputDelta { .. }
         | TypedProviderEvent::TokenUsage { .. }
@@ -3101,6 +3163,135 @@ mod tests {
     }
 
     #[test]
+    fn codex_observed_usage_fixture_separates_context_from_cumulative_tokens() {
+        // Numeric provider data captured from this task's own native audit;
+        // thread/turn identifiers replaced, no prompts or output retained.
+        let payload: Value =
+            serde_json::from_str(include_str!("codex/usage-observation.fixture.json")).unwrap();
+        let provider = DirectProvider::Codex;
+        let event = provider
+            .decode_native_frame(&frame_at(provider, 1, payload))
+            .unwrap();
+        assert!(matches!(
+            event.typed,
+            TypedProviderEvent::TokenUsage {
+                input_tokens: 6_325_757,
+                output_tokens: 22_118,
+                cached_input_tokens: Some(6_207_872),
+                context_tokens: Some(134_953),
+                model_context_window: Some(258_400),
+            }
+        ));
+    }
+
+    #[test]
+    fn codex_context_missing_or_invalid_never_uses_cumulative_usage() {
+        let provider = DirectProvider::Codex;
+        for (last, window) in [
+            (Value::Null, json!(100)),
+            (json!({"totalTokens": -1}), json!(100)),
+            (json!({"totalTokens": 7}), json!(0)),
+            (json!({"totalTokens": 7}), Value::Null),
+        ] {
+            let event = provider
+                .decode_native_frame(&frame_at(
+                    provider,
+                    1,
+                    json!({
+                        "method":"thread/tokenUsage/updated",
+                        "params":{"threadId":"root", "tokenUsage":{
+                            "total":{"inputTokens":1000,"outputTokens":200},
+                            "last":last,"modelContextWindow":window
+                        }}
+                    }),
+                ))
+                .unwrap();
+            let TypedProviderEvent::TokenUsage {
+                context_tokens,
+                model_context_window,
+                ..
+            } = event.typed
+            else {
+                panic!()
+            };
+            assert!(context_tokens.is_none() || model_context_window.is_none());
+            assert_ne!(context_tokens, Some(1200));
+        }
+        // Persisted pre-change snapshots still decode with honest unknown context.
+        let old: AgentLiveEventPayload = serde_json::from_value(json!({
+            "type":"token_usage_snapshot","data":{"input_tokens":12,"output_tokens":5}
+        }))
+        .unwrap();
+        assert!(matches!(
+            old,
+            AgentLiveEventPayload::TokenUsageSnapshot {
+                context_tokens: None,
+                model_context_window: None,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn codex_collaboration_replay_has_distinct_child_ids_and_preserves_old_mapper() {
+        let provider = DirectProvider::Codex;
+        let mut scope = ProviderStreamScope::new(provider);
+        let mut root = provider
+            .decode_native_frame(&frame_at(
+                provider,
+                1,
+                json!({"result":{"thread":{"id":"root"}}}),
+            ))
+            .unwrap();
+        scope.apply(&mut root);
+        let mut children = provider.decode_native_frame(&frame_at(provider, 2, json!({
+            "method":"item/completed", "params":{"threadId":"root", "item":{
+                "type":"collabAgentToolCall", "id":"spawn", "tool":"wait", "status":"completed",
+                "senderThreadId":"root", "receiverThreadIds":["a","b"],
+                "agentsStates":{"a":{"status":"completed"},"b":{"status":"errored"}}
+            }}
+        }))).unwrap();
+        let raw = children.raw.clone();
+        scope.apply(&mut children);
+        let manifest = fixture_manifest(provider);
+        let projected = provider
+            .project_provider_event(&children, &manifest)
+            .unwrap();
+        assert_eq!(projected.durable_events.len(), 2);
+        assert_ne!(
+            projected.durable_events[0].event_id,
+            projected.durable_events[1].event_id
+        );
+        let mapper = provider.mapper();
+        mapper.map(&root.raw, &manifest).unwrap();
+        let replayed = mapper.map(&raw, &manifest).unwrap();
+        assert_eq!(
+            replayed
+                .iter()
+                .map(|event| event.event_id)
+                .collect::<Vec<_>>(),
+            projected
+                .durable_events
+                .iter()
+                .map(|event| event.event_id)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(replayed[1].sequence, replayed[0].sequence + 1);
+        let old_mapper = provider.v4_mapper();
+        let mut old_manifest = manifest.clone();
+        old_manifest.mapper_version = old_mapper.versions().mapper_version;
+        old_mapper.map(&root.raw, &old_manifest).unwrap();
+        let old = old_mapper.map(&raw, &old_manifest).unwrap();
+        assert!(matches!(
+            old.as_slice(),
+            [AgentEventEnvelope {
+                payload: AgentEventPayload::ToolCall { .. },
+                ..
+            }]
+        ));
+    }
+
+    #[test]
     fn maps_codex_web_search_results_and_total_token_usage() {
         let provider = DirectProvider::Codex;
         let search = provider
@@ -3136,8 +3327,9 @@ mod tests {
                                 "outputTokens": 12,
                                 "reasoningOutputTokens": 4
                             },
+                            "modelContextWindow": 100,
                             "last": {
-                                "totalTokens": 42,
+                                "totalTokens": 7,
                                 "inputTokens": 30,
                                 "cachedInputTokens": 10,
                                 "outputTokens": 12,
@@ -3170,6 +3362,8 @@ mod tests {
                 input_tokens: 30,
                 output_tokens: 12,
                 cached_input_tokens: Some(10),
+                context_tokens: Some(7),
+                model_context_window: Some(100),
             }
         ));
         assert_eq!(usage.typed.class(), ProviderEventClass::SnapshotOnly);
@@ -3184,6 +3378,8 @@ mod tests {
                     input_tokens: 30,
                     output_tokens: 12,
                     cached_input_tokens: Some(10),
+                    context_tokens: Some(7),
+                    model_context_window: Some(100),
                 },
                 ..
             }]

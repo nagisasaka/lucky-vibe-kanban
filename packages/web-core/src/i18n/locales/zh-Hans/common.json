@@ -983,8 +983,9 @@
     "noMatches": "无匹配项"
   },
   "contextUsage": {
+    "cumulative": "累计Token：{{tokens}}",
     "label": "上下文使用量",
-    "emptyTooltip": "上下文使用量将在下一次回复后显示",
+    "emptyTooltip": "上下文使用量暂不可用",
     "tooltip": "上下文：{{percentage}}% · {{used}} / {{total}} tokens",
     "ariaLabel": "上下文使用量：{{percentage}}%"
   },

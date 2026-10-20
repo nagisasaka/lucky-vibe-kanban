@@ -6,6 +6,21 @@ import { Tooltip } from './Tooltip';
 export interface ContextUsageInfo {
   total_tokens: number;
   model_context_window: number;
+  cumulative_tokens?: number | bigint | null;
+}
+
+export function contextUsagePercentage(
+  info?: ContextUsageInfo | null
+): number | null {
+  if (
+    !info ||
+    !Number.isSafeInteger(info.total_tokens) ||
+    info.total_tokens < 0 ||
+    !Number.isSafeInteger(info.model_context_window) ||
+    info.model_context_window <= 0
+  )
+    return null;
+  return Math.min(100, (info.total_tokens / info.model_context_window) * 100);
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -23,7 +38,8 @@ export function ContextUsageGauge({
 }: ContextUsageGaugeProps) {
   const { t } = useTranslation('common');
   const { percentage, formattedUsed, formattedTotal, status } = useMemo(() => {
-    if (!tokenUsageInfo || tokenUsageInfo.model_context_window === 0) {
+    const validPercentage = contextUsagePercentage(tokenUsageInfo);
+    if (!tokenUsageInfo || validPercentage === null) {
       return {
         percentage: 0,
         formattedUsed: '0',
@@ -32,10 +48,7 @@ export function ContextUsageGauge({
       };
     }
 
-    const pct = Math.min(
-      100,
-      (tokenUsageInfo.total_tokens / tokenUsageInfo.model_context_window) * 100
-    );
+    const pct = validPercentage;
 
     const formatTokens = (n: number) => {
       if (n >= 1_000_000) {
@@ -62,7 +75,7 @@ export function ContextUsageGauge({
 
   const progress = clamp(percentage / 100, 0, 1);
 
-  const tooltip =
+  const contextTooltip =
     status === 'empty'
       ? t('contextUsage.emptyTooltip')
       : t('contextUsage.tooltip', {
@@ -70,6 +83,15 @@ export function ContextUsageGauge({
           used: formattedUsed,
           total: formattedTotal,
         });
+
+  const cumulative =
+    tokenUsageInfo?.cumulative_tokens == null
+      ? null
+      : Number(tokenUsageInfo.cumulative_tokens);
+  const tooltip =
+    cumulative !== null && Number.isSafeInteger(cumulative) && cumulative >= 0
+      ? `${contextTooltip} · ${t('contextUsage.cumulative', { tokens: cumulative.toLocaleString() })}`
+      : contextTooltip;
 
   const progressColor =
     status === 'empty'
@@ -104,36 +126,40 @@ export function ContextUsageGauge({
         }
         role="img"
       >
-        <svg
-          viewBox="0 0 20 20"
-          className="size-icon-base -rotate-90"
-          aria-hidden="true"
-        >
-          <circle
-            cx="10"
-            cy="10"
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            className="text-border/60"
-          />
-          <circle
-            cx="10"
-            cy="10"
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={dashOffset}
-            className={cn(
-              progressColor,
-              'transition-all duration-500 ease-out'
-            )}
-          />
-        </svg>
+        {status === 'empty' ? (
+          <span aria-hidden="true">—</span>
+        ) : (
+          <svg
+            viewBox="0 0 20 20"
+            className="size-icon-base -rotate-90"
+            aria-hidden="true"
+          >
+            <circle
+              cx="10"
+              cy="10"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={strokeWidth}
+              className="text-border/60"
+            />
+            <circle
+              cx="10"
+              cy="10"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference} ${circumference}`}
+              strokeDashoffset={dashOffset}
+              className={cn(
+                progressColor,
+                'transition-all duration-500 ease-out'
+              )}
+            />
+          </svg>
+        )}
       </div>
     </Tooltip>
   );

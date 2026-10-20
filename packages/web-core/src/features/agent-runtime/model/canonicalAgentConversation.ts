@@ -21,7 +21,7 @@ import {
 
 function numericTokenCount(value: number | bigint): number {
   const count = typeof value === 'bigint' ? Number(value) : value;
-  return Number.isSafeInteger(count) ? count : Number.MAX_SAFE_INTEGER;
+  return Number.isSafeInteger(count) && count >= 0 ? count : NaN;
 }
 
 function displaySequence(event: AgentEventEnvelope): bigint {
@@ -221,6 +221,7 @@ function appendRunEntries(
       path: string;
       parent: string | null;
       status: ToolStatus;
+      observedState: string;
     }
   >();
   const approvalIndexes = new Map<string, number>();
@@ -248,6 +249,7 @@ function appendRunEntries(
             path: activity.agent_path ?? activity.thread_id,
             parent: activity.parent_thread_id,
             status: { status: 'created' },
+            observedState: 'unknown',
           };
           agentEntries.set(activity.thread_id, agent);
           output.push(
@@ -262,13 +264,34 @@ function appendRunEntries(
         if (activity.parent_thread_id) agent.parent = activity.parent_thread_id;
         if (activity.content)
           agent.content.push(`### ${activity.kind}\n\n${activity.content}`);
-        if (activity.kind === 'completed' && agent.status.status !== 'failed')
+        // Messages and tools describe activity, not a lifecycle transition.
+        // Keep the last explicit state until another lifecycle observation arrives.
+        if (activity.kind === 'completed' && agent.status.status !== 'failed') {
           agent.status = { status: 'success' };
-        else if (['failed', 'interrupted'].includes(activity.kind))
+          agent.observedState = 'completed';
+        } else if (['failed', 'interrupted'].includes(activity.kind)) {
           agent.status = { status: 'failed' };
-        else if (['started', 'running'].includes(activity.kind))
+          agent.observedState = activity.kind;
+        } else if (
+          ['started', 'running', 'pendingInit', 'shutdown', 'unknown'].includes(
+            activity.kind
+          )
+        ) {
           agent.status = { status: 'created' };
+          agent.observedState =
+            activity.kind === 'pendingInit' ? 'initializing' : activity.kind;
+        }
         const status = agent.status;
+        const observedActive = ['started', 'running', 'initializing'].includes(
+          agent.observedState
+        );
+        const active = runActive && observedActive;
+        // A parent ending is not evidence that the child completed. Historical
+        // observations remain useful, but must not look like a live child run.
+        const stateLabel =
+          !runActive && observedActive
+            ? `unknown (last observed: ${agent.observedState})`
+            : agent.observedState;
         const entry = normalizedPatch(
           event,
           {
@@ -277,7 +300,7 @@ function appendRunEntries(
               tool_name: 'Agent',
               action_type: {
                 action: 'task_create',
-                description: `${agent.parent ?? '?'} → ${agent.path} · ${activity.kind === 'completed' && status.status === 'failed' ? 'failed' : activity.kind}`,
+                description: `${agent.parent ?? '?'} → ${agent.path} · ${stateLabel}`,
                 subagent_type: agent.path,
                 result: {
                   type: { type: 'markdown' },
@@ -289,15 +312,11 @@ function appendRunEntries(
             content: agent.path,
             timestamp: event.timestamp,
           },
-          runActive && status.status === 'created'
+          active
         );
         entry.patchKey = output[agent.index].patchKey;
         entry.canonical = output[agent.index].canonical;
-        mergeEventIdentity(
-          entry,
-          event,
-          runActive && status.status === 'created'
-        );
+        mergeEventIdentity(entry, event, active);
         output[agent.index] = entry;
         break;
       }
@@ -528,9 +547,17 @@ function appendRunEntries(
             entry_type: {
               type: 'token_usage_info',
               total_tokens:
+                payload.data.context_tokens == null
+                  ? 0
+                  : numericTokenCount(payload.data.context_tokens),
+              model_context_window:
+                payload.data.context_tokens == null ||
+                payload.data.model_context_window == null
+                  ? 0
+                  : numericTokenCount(payload.data.model_context_window),
+              cumulative_tokens:
                 numericTokenCount(payload.data.input_tokens) +
                 numericTokenCount(payload.data.output_tokens),
-              model_context_window: 0,
             },
             content: '',
             timestamp: event.timestamp,
@@ -637,8 +664,20 @@ export function projectCanonicalAgentConversation(
   const entries: PatchTypeWithKey[] = [];
   for (const run of timeline.runs) appendRunEntries(run, entries);
 
+  // A new Run/attempt without usage must not inherit the previous context gauge.
+  const latest = timeline.latestRun;
+  const latestState = latest?.timeline?.state ?? latest?.summary.state;
+  const currentEntries = entries.filter(
+    (entry) =>
+      entry.type !== 'NORMALIZED_ENTRY' ||
+      entry.content.entry_type.type !== 'token_usage_info' ||
+      (entry.canonical?.agentRunId === latest?.summary.agent_run_id &&
+        (!latestState?.last_run_attempt_id ||
+          entry.canonical?.runAttemptId === latestState.last_run_attempt_id))
+  );
+
   return {
-    entries,
+    entries: currentEntries,
     activeAgentRunIds: new Set(
       timeline.runs
         .filter((run) =>
