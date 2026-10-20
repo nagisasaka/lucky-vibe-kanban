@@ -1,9 +1,10 @@
+import { LVK_GITHUB_REPOSITORY } from '@vibe/ui/lib/repository';
 import { useQuery } from '@tanstack/react-query';
 
 async function fetchGitHubStars(): Promise<number | null> {
   try {
     const res = await fetch(
-      'https://api.github.com/repos/BloopAI/vibe-kanban',
+      `https://api.github.com/repos/${LVK_GITHUB_REPOSITORY}`,
       { cache: 'no-store' }
     );
 
@@ -13,7 +14,10 @@ async function fetchGitHubStars(): Promise<number | null> {
     }
 
     const data = await res.json();
-    if (typeof data?.stargazers_count === 'number') {
+    if (
+      Number.isSafeInteger(data?.stargazers_count) &&
+      data.stargazers_count >= 0
+    ) {
       return data.stargazers_count;
     }
 
@@ -26,7 +30,7 @@ async function fetchGitHubStars(): Promise<number | null> {
 
 export function useGitHubStars() {
   return useQuery({
-    queryKey: ['github-stars'],
+    queryKey: ['github-stars', LVK_GITHUB_REPOSITORY],
     queryFn: fetchGitHubStars,
     refetchInterval: 10 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
