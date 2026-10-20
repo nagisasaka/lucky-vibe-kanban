@@ -106,3 +106,232 @@ missing AgentRun state, explicit Integration resume with the same identity and
 skip policy, and cancellation of an unaccepted planned identity. Source tests do
 not establish that a deployed server contains the fix or that publication has
 succeeded.
+
+## Development instance cutover handoff — 2026-10-20
+
+**Preparation only: none of the stop, backup, install, start or rollback commands
+below were executed. Run the cutover from an independent operator SSH session,
+never from this server's MCP or an AgentRun it hosts.** Finish this AgentRun and
+all other active agents, workflows, resource operations and builds first. Review
+resource coordination again at cutover time; the preparation snapshot was empty.
+Do not resume either Integration as part of this procedure.
+
+### Inspected deployment and candidate
+
+The dev instance is `/var/tmp/lvk-instances/dev` (appuser, mode 0700).
+PID 270619, owned by appuser, started on 2026-10-18 13:57:43 UTC, has PPID 1
+and PID=PGID=SID. Both its executable directory and cwd are the retained checkout
+`/var/tmp/vibe-kanban/worktrees/1f9a-chatgpt/lucky-vibe-kanban`.
+This is a Git worktree sharing `/repos/lucky-vibe-kanban/.git`, **not an independent
+repository copy**. Never reset, checkout or build in that deployment checkout.
+Its current source HEAD is `49c0482165fec154e9cf605937c724cf8e13f8a2`;
+`deployed-build.json` instead records `45b6a4fb5d783e19a0b818694bd703737f687db4`.
+Neither proves the executable's source. The observed running executable SHA256 is
+`b6ecc36d59dfda72eef9c9d07894f8c6a6339ebd59f60bed176009cc1d144521`.
+
+`start.sh` requires appuser, obtains `start.lock`, refuses occupied port 4020,
+then uses `nohup setsid python3 run.py`. `run.py` writes `server.pid`, changes to
+the retained checkout and execs `target/debug/server`. It preserves inherited
+environment plus its explicit public-mode settings, binds 127.0.0.1:4020 and sets
+`VIBE_KANBAN_AGENT_PROCESS_HOST` to that checkout's `target/debug/agent-process-host`.
+The source installs a SIGTERM handler and graceful HTTP shutdown. There is no
+active Supervisor process; the present `control.sh`/Supervisor configuration is
+not the stop/start path for this PID. Do not use `control.sh restart`.
+
+Active log: `/var/tmp/lvk-instances/dev/logs/server.log`; `server.log` at instance
+root is a different historical file. Settings and SQLite are `data/config.json`
+and `data/db.v2.sqlite`, mode 0600. Preserve the whole private `data/` tree,
+`runtime/`, existing environment and run scripts. Do not print environment or
+credential files. The existing launch does not require sudo; SSH must enter the
+same filesystem/process namespace as appuser. The external host/container SSH
+entry command was not discoverable here and is an operator prerequisite.
+
+Candidate source is exactly `45bd958184f3513e10efa1ac5a9793d5109aae59`.
+Candidate path:
+`/var/tmp/lvk-instances/dev/runtime/worktrees/d546-local-3-4-integr/lucky-vibe-kanban/target/debug/server`.
+Build command, from that workspace root:
+
+```bash
+RUSTC_WRAPPER=/usr/local/bin/sccache \
+SCCACHE_DIR=/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/sccache \
+CARGO_BUILD_JOBS=2 cargo build --locked --offline -p server --bin server
+```
+
+The existing sccache daemon reports `/home/appuser/.cache/sccache`, differing
+from the requested directory; it was not stopped or reconfigured. The own
+workspace target was reused, with 439 GiB free disk and 13 GiB available RAM
+before building. No concurrent Cargo build was observed.
+
+This is a **binary-only replacement with a retained external asset dependency**.
+Debug rust-embed resolves frontend files from the candidate's compile-time
+workspace `packages/local-web/dist`, not the deployment cwd. Retain that workspace
+and its dist after the switch; do not rebuild/clean it while serving. Existing
+real frontend assets were copied there (992 files, 77 MiB), not regenerated from
+missing node_modules. Their manifest digest (sorted relative path/SHA256 pairs,
+Python JSON encoding) is
+`944540d7eb8081ac35cc53c06a9a86bf3f6f9bf53e470273ee17286efffbe599`.
+Tracked `packages/`, `shared/`, executor/agent-host sources and DB migrations have
+no differences between LOCAL-9 and either recorded deployed commit or current
+deployment checkout HEAD, and those deployment paths are clean. This supports
+reusing the old agent-process-host and UI; their original build provenance is
+not independently certified. No migration change is introduced by LOCAL-9.
+Do not replace the agent-process-host, frontend in the live checkout or run.py.
+
+### Operator SSH cutover
+
+Use Bash with the same established startup environment. If its equivalence is
+unknown, resolve it before stopping. Do not source arbitrary `.env` files.
+First inspect the current PID/executable again and confirm no other user of this
+binary or checkout and no automatic service manager. Stop if reality differs.
+The following variables are used in all blocks, including rollback:
+
+```bash
+set -euo pipefail
+umask 077
+test "$(id -un)" = appuser
+instance=/var/tmp/lvk-instances/dev
+source_root=/var/tmp/lvk-instances/dev/runtime/worktrees/d546-local-3-4-integr/lucky-vibe-kanban
+live=/var/tmp/vibe-kanban/worktrees/1f9a-chatgpt/lucky-vibe-kanban/target/debug/server
+candidate="$source_root/target/debug/server"
+backup="$instance/backup-local9-$(date -u +%Y%m%dT%H%M%SZ)"
+export instance backup
+test "$(sha256sum "$candidate" | cut -d' ' -f1)" = 3e37ca967d7faf0cdf0737568a8243b838b84b163fc18d68dd6152efde53c4d5
+test "$(sha256sum "$live" | cut -d' ' -f1)" = b6ecc36d59dfda72eef9c9d07894f8c6a6339ebd59f60bed176009cc1d144521
+test "$(git -C "$source_root" rev-parse refs/heads/main)" = b385a2d2d1a8683fbdcb8d931356d34f4264169c
+pid=$(cat "$instance/server.pid")
+test "$(readlink -f "/proc/$pid/exe")" = "$live"
+ps -p "$pid" -o pid,ppid,pgid,sid,user,lstart,comm
+mkdir -m 700 "$backup"
+cp -p "$live" "$backup/server.old"
+cp -p "$instance/start.sh" "$instance/run.py" "$instance/deployed-build.json" "$backup/"
+```
+
+Record and compare the Integration payload using this read-only check before
+stop and again after startup (also in rollback). This verifies the entire frozen
+payload, including selections and validation policy, not just the status:
+
+```bash
+python3 - <<'PY'
+import hashlib, json, sqlite3, uuid
+c = sqlite3.connect('file:/var/tmp/lvk-instances/dev/data/db.v2.sqlite?mode=ro', uri=True)
+r = c.execute('SELECT status,payload,updated_at FROM integration_runs WHERE id=?',
+              (uuid.UUID('c68ce019-9349-4679-976f-326120191c08').bytes,)).fetchone()
+assert r and r[0] == 'blocked'
+p = json.loads(r[1])
+assert p['skip_validation'] is True and p['published'] is False
+assert not p['publication_intent'] and p['result_commit'] is None
+assert p['base_commit'] == 'b385a2d2d1a8683fbdcb8d931356d34f4264169c'
+assert hashlib.sha256(r[1].encode()).hexdigest() == 'e6ad3a8ecdc52e66368a560042f6c08a50ece913a30f89908b51d08c885a9191'
+print('Frozen Integration unchanged:', r[0], r[2])
+PY
+```
+
+After operator confirmation that all writers/agents are idle, graceful stop:
+
+```bash
+kill -TERM "$pid"
+for attempt in $(seq 1 60); do
+  test ! -e "/proc/$pid" && break
+  sleep 1
+done
+test ! -e "/proc/$pid"  # If this fails: STOP; do not force-kill or switch.
+python3 - <<'PY'
+import socket
+with socket.socket() as s:
+    assert s.connect_ex(('127.0.0.1', 4020)) != 0, 'Listener still present'
+PY
+```
+
+Back up the stopped private data tree, then use SQLite backup API to obtain a
+consistent independent database, including any committed WAL pages. Require all
+other DB writers stopped; do not copy only the live `.sqlite` file:
+
+```bash
+cp -a "$instance/data" "$backup/data"
+python3 - <<'PY'
+import os, sqlite3
+src = sqlite3.connect('file:' + os.environ['instance'] + '/data/db.v2.sqlite?mode=ro', uri=True)
+dst = sqlite3.connect(os.environ['backup'] + '/db.v2.consistent.sqlite')
+src.backup(dst)
+assert dst.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+dst.close(); src.close()
+PY
+# Atomic rename on the live binary's filesystem; never truncate its old inode.
+test ! -e "$live.local9-new"
+install -m 755 "$candidate" "$live.local9-new"
+test "$(sha256sum "$candidate" | cut -d' ' -f1)" = "$(sha256sum "$live.local9-new" | cut -d' ' -f1)"
+mv -T "$live.local9-new" "$live"
+"$instance/start.sh"
+```
+
+Health and identity checks (startup request alone is not success):
+
+```bash
+curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
+  -H 'Host: dev.luckyvibekanban.com' http://127.0.0.1:4020/api/health
+curl --fail --silent --show-error https://dev.luckyvibekanban.com/api/health
+newpid=$(cat "$instance/server.pid")
+test "$(readlink -f "/proc/$newpid/exe")" = "$live"
+test "$(sha256sum "/proc/$newpid/exe" | cut -d' ' -f1)" = "$(sha256sum "$candidate" | cut -d' ' -f1)"
+test "$(git -C "$source_root" rev-parse refs/heads/main)" = b385a2d2d1a8683fbdcb8d931356d34f4264169c
+```
+
+Repeat the frozen-payload check above. Using the existing authenticated LVK MCP
+connection, call **only** `get_integration(project_id="2e066b19-db27-4b8a-943e-ea097aa601c3",
+ integration_id="c68ce019-9349-4679-976f-326120191c08", section="summary")`.
+Require blocked, four sources, unpublished, result_commit=null, validation.total=0.
+Open the authenticated UI and verify JS/CSS load; inspect new startup log entries
+locally without sharing secrets. HTTP health alone does not test Agent dispatch.
+Only after operator acceptance may a separate authorised action formally Resume
+the retained four-source Integration. Leave `0771cd56-...` untouched.
+
+### Immediate rollback
+
+If startup, UI, MCP or identity checks fail, admit no new work. Stop the new PID
+with the same verified-executable, SIGTERM and 60-second exit/listener checks.
+If it does not exit, stop the procedure and investigate; never overwrite or
+restore data beneath a running process. Then:
+
+```bash
+test ! -e "$live.local9-rollback"
+install -m 755 "$backup/server.old" "$live.local9-rollback"
+mv -T "$live.local9-rollback" "$live"
+"$instance/start.sh"
+```
+
+Repeat HTTP, old-binary hash, main and frozen Integration checks. A binary
+rollback normally preserves the current DB because this fix adds no migrations.
+Do **not** automatically restore the DB: startup may have recorded legitimate
+activity. If data rollback is independently required, keep the server and all
+writers stopped, preserve the failed data directory for diagnosis, and obtain an
+explicit operator decision before restoring the private data snapshot/consistent
+SQLite backup without stale `-wal`/`-shm` sidecars. `runtime/` and worktrees must
+remain intact. Do not resume/create Integrations to test rollback.
+
+### Completed preparation evidence
+
+- Candidate SHA256: `3e37ca967d7faf0cdf0737568a8243b838b84b163fc18d68dd6152efde53c4d5`;
+  size 1,353,357,576 bytes; ELF debug executable, current mode 0700.
+- Offline build succeeded in 2m06s. `ldd` resolved all dependencies: loader
+  `/lib64/ld-linux-x86-64.so.2`, `libc.so.6`, `libgcc_s.so.1`, `libm.so.6` from
+  `/lib/x86_64-linux-gnu/`. Keep this host ABI; this is not a portable release.
+- `cargo test --locked --offline -p server --lib production_fallback_keeps_api_misses_out_of_spa`:
+  1 passed. Real copied assets were hash-compared with the deployment assets.
+  Cargo replayed an old build-script dummy-dist warning; the actual index and
+  992-file asset set were verified and the real-asset test passed.
+- Existing live HTTP health returned OK with `Host: dev.luckyvibekanban.com`;
+  plain loopback Host is rejected. Authenticated MCP `get_integration` succeeded.
+  These are pre-cutover live checks, **not candidate process smoke tests**.
+- No candidate server process was launched and no live-data startup was tested.
+  This binary has no safe `--help`/`--version` command: unknown arguments fall
+  through to ordinary startup. Do not use them as smoke tests.
+- Earlier dispatch, locking and cancellation regression results are recorded
+  above. They were not unnecessarily repeated for this documentation-only work.
+- Build/test logs and artifact metadata are retained under the own workspace's
+  `target/local9-handoff/`. The build artifact remains `target/debug/server`;
+  verify its pinned hash before use. Retain the 77 MiB copied dist and normal
+  Cargo target, not additional duplicate binaries.
+- Cutover/rollback commands are reviewed instructions, not executed evidence.
+  If preparation is interrupted, first check remaining Cargo processes and the
+  recorded artifact digest; reuse the existing target and logs. Do not infer
+  successful deployment from a completed build or documentation commit.
