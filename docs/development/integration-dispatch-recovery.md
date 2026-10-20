@@ -142,7 +142,7 @@ cleanup.
 
 ## Prepared operator handoff
 
-Bundle: `/var/tmp/local9-mechanical-c179-prepared/`. This is a private, one-time
+Bundle: `/var/tmp/local9-mechanical-d02-prepared/`. This is a private, one-time
 operator deliverable outside the repository; its exact source commit, server
 SHA256/size and script hashes are recorded in `build.json`. Do not reuse it after
 source, binary, launcher, frontend, Git refs or the frozen payload changes.
@@ -151,7 +151,7 @@ After this AgentRun and all other jobs have ended, use an independent SSH TTY as
 `appuser` in the same container, with no new submissions during maintenance:
 
 ```bash
-python3 /var/tmp/local9-mechanical-c179-prepared/cutover.py --execute
+python3 /var/tmp/local9-mechanical-d02-prepared/cutover.py --execute
 ```
 
 The program verifies the serving ELF and ownership/namespace, frozen refs/payload,
@@ -162,7 +162,7 @@ stopped WAL-aware SQLite backup; atomically replaces the ELF; and invokes the sa
 and the new startup log. No force-kill, automatic DB restore, adoption or Resume.
 These checks do not lock out new user submissions: the maintenance window is required.
 
-Durable outcome is in `/var/tmp/local9-cutover-mechanical-c179/`:
+Durable outcome is in `/var/tmp/local9-cutover-mechanical-d02/`:
 
 - `SUCCESS_NO_RESUME` / exit 0: updated and healthy, Integration still frozen.
 - `ABORT_OR_STOP_UNCONFIRMED_OPERATOR_CHECK` / exit 2: inspect before any action;
@@ -183,8 +183,8 @@ After successful cutover, perform a fresh read-only MCP check. Checkpoint adopti
 is then a separate operator action, followed by an explicit UI Resume:
 
 ```bash
-python3 /var/tmp/local9-mechanical-c179-prepared/adopt.py --check
-python3 /var/tmp/local9-mechanical-c179-prepared/adopt.py --execute
+python3 /var/tmp/local9-mechanical-d02-prepared/adopt.py --check
+python3 /var/tmp/local9-mechanical-d02-prepared/adopt.py --execute
 ```
 
 Both use the same saved request identity. `--check` only tests eligibility;
@@ -213,3 +213,31 @@ SQLite, not browser/MCP end-to-end automation. The real Codex scenario performs
 actual provider execution. No live cutover, checkpoint adoption or Resume was run.
 The operator bundle's build manifest records the later build and read-only live
 preflight result.
+
+### Operator preflight abort and new preparation (16:42 UTC)
+
+The first mechanical updater aborted during preflight, before binary backup or
+server stop. Preserve `/var/tmp/local9-cutover-mechanical-c179/` and the old
+`/var/tmp/local9-mechanical-c179-prepared/`; do not delete state to rearm it.
+The generic historical RuntimeError did not record the exact failed guard.
+
+A residual Codex app-server (PID 1077248, started 15:17:43 UTC) independently
+violated the all-process idle guard. Its own trace contained only initialization,
+no thread identity or turn start; it had no registered Agent host or children.
+Its pipes remained connected to the old server. After explicit operator
+authorisation and identity/evidence rechecks, this one process exited on SIGTERM.
+The server PID/ELF, frozen refs and Integration payload remained unchanged.
+Discovery cancellation is a possible origin, not a proven root cause of the leak.
+
+The new `d02` bundle uses a separate one-time recovery directory and the same
+verified source21d26f6a/server artifact. It reports fixed guard reasons (table/count
+or process PID/name) without dumping environment or remote exception bodies.
+Running Codex/build/host processes remain forbidden; exited zombies do not count
+as executing processes, while durable DB/host settlement checks still apply.
+It neither kills residual processes nor bypasses them automatically.
+The current diagnostic AgentRun must finish before operator execution.
+
+The new bundle passed 17 isolated tests (14 service scenarios plus 3 process/guard
+checks) and AST/compile validation. Live read-only preflight reached the database
+activity check and reported `Active work: table=agent_runs count=1`, identifying
+this diagnostic Run. No `d02` recovery state or live cutover was created.
