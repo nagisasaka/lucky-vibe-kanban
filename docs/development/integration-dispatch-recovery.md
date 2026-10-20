@@ -1,6 +1,108 @@
 # Formal Integration dispatch recovery
 
-Latest operator handoff: [prepared 0a5cef88 SSH cutover](#prepared-one-command-operator-cutover--local-9-0a5cef88). Earlier cutover sections are historical. The new candidate is prepared, not deployed; do not rerun the 33587794-pinned script.
+## Current source: host-owned merge engine (2026-10-20)
+
+New Integrations use Git for every ordinary merge. AI is created only when
+`merge-tree` reports a conflict. The full conflict instruction and immutable
+Create identity are saved before dispatch; there is no Integration-wide
+Orchestration node, reused AgentRun, or Retry/Steer step hand-off. Each conflict
+job gets a fresh AgentRun in the same Integration Workspace/Session. It stages
+resolutions; the host verifies the merge identity/index, creates the merge commit,
+records its OID before moving the private branch, and requests candidate-bound
+human review. Approval continues the Git loop without another agent.
+
+Git operations preserve parents and selected source OIDs. Already included
+sources need no extra commit. A durable candidate intent allows an interrupted
+installation to be recognised without a second merge. Unexpected dirty files,
+HEAD, MERGE_HEAD, or an unsettled writer stop progress; they are never reset.
+Known conflict metadata cleanup after a successful branch CAS is idempotent.
+Publication still uses the existing exact-candidate intent/CAS and recovery path.
+Starting projection persistence is also a provider-launch prerequisite: a failed
+write does not launch a provider or mark an unexecuted attempt as executed.
+
+### Validation configuration
+
+Unless validation was explicitly skipped at admission, the frozen target commit
+must contain `.lvk/integration-validation.json`, for example:
+
+```json
+{"commands":["pnpm run check","pnpm run lint","pnpm run backend:test"]}
+```
+
+Commands run from the repository root and are required. Missing/malformed config
+rejects admission. The configuration is read from the exact target Git object,
+not the current worktree, source branches, AI response, or historical test logs.
+Repository prerequisites belong in this list too: LVK's checked-in configuration
+builds the real frontend before its normal check/lint/backend-test gates.
+The entire plan is frozen at admission and runs once on the final candidate;
+prefix steps record merge/review evidence, not a claim that each prefix was tested.
+Existing exact-command/commit execution evidence and explicit validation gates
+remain in force. Test failure does not start an AI repair loop. An explicit
+`skip_validation=true` reads no plan, executes no checks, and reports unverified.
+
+### Existing retained Integration and deployment boundary
+
+**Do not execute the old cutover scripts or Resume the retained four-source run
+as a way to adopt this implementation.** Those scripts pin historical hashes.
+No new server artifact/cutover is prepared by this change.
+
+Old payloads default to `mechanical=false`. Their audit remains readable and
+publication recovery remains available, but this engine refuses their ordinary
+Resume with `LEGACY_INTEGRATION`. It does not reconstruct projections, advance
+step indices, reuse historical Create/Steer commands, or silently migrate them.
+Explicit Cancel remains available through the existing safe writer settlement.
+There is no second legacy execution engine to maintain.
+
+For `c68ce019-9349-4679-976f-326120191c08`, preserve candidate
+`8d0eda6b75cce0d0930a17c46d43c5d162f58e7b`, the three accepted steps and scoped
+human approval, frozen main/source commits and `skip_validation=true`. A separate
+reviewed checkpoint migration must verify those facts plus exited writers and
+settled historical commands before permitting mechanical step 4. That migration
+is **not implemented or executed here**. Never flip the payload flag by direct
+SQLite editing. The old two-source `0771cd56...` must not be resumed.
+
+Operator follow-up: review source/tests and legacy handling, decide and implement
+the explicit retained-checkpoint migration if recovery is desired, then build a
+new immutable artifact and prepare a newly pinned SSH cutover. No deployment,
+service restart, live DB change, Integration action or main publication is part
+of this source implementation. A deployment of this source alone does not
+restore the retained run.
+
+The regression suite exercises real temporary Git repositories and isolated
+SQLite: clean cumulative merges, duplicate installation/completion, interrupted
+conflict cleanup, unresolved/dirty/moved state, durable approval/replay/staleness,
+frozen validation and skip policy, conflict Create identity, and legacy refusal.
+These boundary tests do not claim live provider/browser or live cutover coverage.
+
+### Source validation
+
+The following checks passed for this implementation (2026-10-20):
+
+- `cargo test --locked --offline -p server --lib routes::integrations`: 25 tests.
+- `cargo test --locked --offline -p local-deployment --lib agent_run_port::tests`:
+  20 tests, including failed Starting persistence and idempotent redelivery.
+- `cargo test --locked --offline -p db --lib models::integration`: 17 tests.
+- `cargo clippy --locked --offline -p server -p local-deployment -p db --all-targets -- -D warnings`.
+- `cargo run --locked --offline --bin generate_types` and the same command with
+  `-- --check`.
+- `pnpm run web-core:check`, `pnpm run local-web:check`, and
+  `pnpm --dir packages/web-core exec vitest run src/features/kanban/ui/IntegrationGateControls.test.tsx --maxWorkers=1`
+  (4 tests).
+- Scoped ESLint/Prettier for `IntegrationPanel.tsx`, changed Rust file formatting,
+  and `git diff --check`.
+
+Rust checks ran sequentially with two build jobs and the existing workspace
+target/cache. No full live Integration, provider execution, frontend browser
+test, deployment build or cutover was run. SQLx metadata regeneration/check was
+unavailable because `sqlx-cli` is not installed; this change introduces no schema
+migration or compile-time query macro change. The normal workspace `target/`,
+installed dependencies and retained real frontend `dist/` remain in place; the
+currently serving debug binary depends on that `dist/`.
+
+## Historical dispatch recovery notes
+
+All cutover commands and Resume advice below describe earlier builds and are
+historical. They are not instructions for this implementation.
 
 A Create command being queued, or a global outbox delivery returning success,
 does not prove that its AgentRun exists. The dispatcher must settle the specific

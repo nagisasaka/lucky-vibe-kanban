@@ -2560,17 +2560,13 @@ impl LocalAgentRunPort {
                 return;
             }
         };
-        self.append_recoverable(
-            &request,
-            &attempt,
-            AgentEventPayload::LifecycleChanged {
-                status: AgentRunStatus::Starting,
-            },
-            Vec::new(),
-            Utc::now(),
-            None,
-        )
-        .await;
+        // Starting is a launch prerequisite, not a best-effort observation. A failed
+        // write must never launch a provider under the previous attempt's terminal state.
+        if let Err(error) = self.record_starting(&request, &attempt).await {
+            tracing::error!(agent_run_id=%request.agent_run_id, run_attempt_id=%attempt.run_attempt_id,
+                %error, "Starting was not persisted; provider was not launched");
+            return;
+        }
 
         if let Err(error) = self
             .launch_process_host(&request, &attempt, provider, &launch)
@@ -2589,6 +2585,35 @@ impl LocalAgentRunPort {
             )
             .await;
         }
+    }
+
+    async fn record_starting(
+        &self,
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+    ) -> Result<(), AgentRunPortError> {
+        let id =
+            Uuid::from_u128(attempt.run_attempt_id.as_u128() ^ 0x54c14fdca86b4564a4892cc851df03b1);
+        // Preserve the original observation time on same-attempt redelivery.
+        // The control/launch lock serialises this read with another launch.
+        let saved: Option<Json<AgentEventEnvelope>> =
+            sqlx::query_scalar("SELECT event_envelope FROM agent_events WHERE event_id=?")
+                .bind(id)
+                .fetch_optional(&self.db.pool)
+                .await
+                .map_err(port_database)?;
+        let timestamp = saved.map(|e| e.timestamp).unwrap_or_else(Utc::now);
+        self.append_event(
+            request,
+            attempt,
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting,
+            },
+            Vec::new(),
+            timestamp,
+            Some(id),
+        )
+        .await
     }
 
     async fn validate_durable_command(
@@ -4082,6 +4107,36 @@ mod tests {
             host_protocol_version: Some(i64::from(HOST_PROTOCOL_VERSION)),
         };
         (host, path, events)
+    }
+
+    #[tokio::test]
+    async fn starting_write_failure_is_not_an_observation_and_retry_is_idempotent() {
+        let port = LocalAgentRunPort::new(setup_runtime_db().await);
+        let (request, attempt) = persisted_codex_run(&port.db).await;
+        sqlx::raw_sql("CREATE TRIGGER reject_start BEFORE INSERT ON agent_events BEGIN SELECT RAISE(ABORT,'injected write failure'); END;")
+            .execute(&port.db.pool).await.unwrap();
+        assert!(port.record_starting(&request, &attempt).await.is_err());
+        let state = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(state.status, AgentRunStatus::Pending);
+        assert_eq!(
+            state.projection_status,
+            executors::runtime::ProjectionStatus::Current
+        );
+        assert_eq!(state.last_event_sequence, 0);
+        assert!(port.children.read().await.is_empty());
+        sqlx::raw_sql("DROP TRIGGER reject_start")
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        port.record_starting(&request, &attempt).await.unwrap();
+        port.record_starting(&request, &attempt).await.unwrap();
+        let state = port.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(state.status, AgentRunStatus::Starting);
+        assert_eq!(state.last_event_sequence, 1);
+        assert_eq!(
+            state.projection_status,
+            executors::runtime::ProjectionStatus::Current
+        );
     }
 
     #[cfg(target_os = "linux")]

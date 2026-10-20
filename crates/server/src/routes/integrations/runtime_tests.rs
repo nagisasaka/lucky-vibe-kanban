@@ -1,7 +1,9 @@
 use db::models::{
     execution_process::CreateExecutionProcess,
     execution_process_repo_state::CreateExecutionProcessRepoState,
-    integration::{IntegrationPayload, IntegrationSelection, IntegrationSource},
+    integration::{
+        IntegrationPayload, IntegrationSelection, IntegrationSource, IntegrationValidation,
+    },
     workspace::CreateWorkspace,
 };
 use serde_json::json;
@@ -200,197 +202,6 @@ async fn host_proof_requires_after_head_and_matches_plan_not_self_report() {
 }
 
 #[tokio::test]
-async fn proposal_rejects_changed_selection_empty_plan_and_placeholder_success() {
-    let (_pool, run, _, _) = fixture().await;
-    let mut value = json!({"outcome":"ready","selected_card_ids":[run.payload.sources[0].selection.card_id],
-        "summary":"all selected requirements integrated; host tests pending", "validation":[{"command":"node --test","cwd":".","required":true,"evidence":"package.json","environment_requirements":"no external services"}],"exclusions":[],"semantics":{"goal":"combined request","summary":"compatibility resolution"}});
-    proposal(&value.to_string(), &run).unwrap();
-    value.as_object_mut().unwrap().remove("semantics");
-    let without_memory = proposal(&value.to_string(), &run).unwrap();
-    assert!(!without_memory.semantics.unresolved_questions.is_empty());
-    value["selected_card_ids"] = json!([]);
-    assert!(proposal(&value.to_string(), &run).is_err());
-    value["selected_card_ids"] = json!([run.payload.sources[0].selection.card_id]);
-    for command in ["true", "exit 0", ":", " "] {
-        value["validation"][0]["command"] = json!(command);
-        assert!(proposal(&value.to_string(), &run).is_err());
-    }
-    value["validation"][0]["command"] = json!("node --test");
-    value["validation"][0]["cwd"] = json!("../peer");
-    assert!(proposal(&value.to_string(), &run).is_err());
-    value["validation"] = json!([]);
-    assert!(proposal(&value.to_string(), &run).is_err());
-}
-
-fn development_proposal(run: &IntegrationRun) -> serde_json::Value {
-    json!({
-        "outcome": "ready",
-        "selected_card_ids": run.payload.sources.iter().map(|source| source.selection.card_id).collect::<Vec<_>>(),
-        "summary": "Replay the recorded development checks on this candidate",
-        "validation": [{"command": "node --test", "cwd": ".", "required": true,
-            "evidence": "A final development verification", "environment_requirements": "node --version checked"}],
-        "environment_blockers": [], "exclusions": []
-    })
-}
-
-#[tokio::test]
-async fn cumulative_plan_keeps_distinct_branch_checks_and_deduplicates_without_reusing_results() {
-    let (pool, mut run, _, _) = fixture().await;
-    let mut value = development_proposal(&run);
-    let mut duplicate = value["validation"][0].clone();
-    duplicate["required"] = json!(false);
-    duplicate["evidence"] = json!("B uses the same suite, including its new regression");
-    let mut other = value["validation"][0].clone();
-    other["command"] = json!("make test");
-    other["cwd"] = json!("native");
-    other["evidence"] = json!("B final native checks");
-    let mut different_directory = value["validation"][0].clone();
-    different_directory["cwd"] = json!("browser");
-    value["validation"]
-        .as_array_mut()
-        .unwrap()
-        .extend([duplicate, other, different_directory]);
-    let plan = proposal(&value.to_string(), &run).unwrap();
-    assert!(!hold_validation_plan(&mut run, &plan));
-    replace_validation_plan(&mut run, &plan);
-    assert_eq!(run.payload.validation.len(), 3);
-    let common = &run.payload.validation[0];
-    assert!(common.required);
-    assert!(common.evidence.contains("A final"));
-    assert!(common.evidence.contains("B uses"));
-    assert_eq!(run.payload.validation[1].command, "make test");
-    assert_eq!(run.payload.validation[2].cwd, "browser");
-    assert!(
-        run.payload
-            .validation
-            .iter()
-            .all(|v| v.execution_process_id.is_none()
-                && v.exit_code.is_none()
-                && v.result.is_none())
-    );
-    assert!(verify_validation(&pool, &run).await.is_err());
-}
-
-#[tokio::test]
-async fn revised_plan_does_not_resurrect_ci_only_or_retired_commands_from_completed_steps() {
-    for (old, reason) in [
-        (
-            "pnpm run prepare-db:check",
-            "Earlier planning added this solely from CI; neither branch required it during development",
-        ),
-        (
-            "make test-old",
-            "A replaced test-old with node --test while preserving the same regression tests",
-        ),
-    ] {
-        let (_, mut run, _, _) = fixture().await;
-        run.payload.validation[0].command = old.into();
-        super::super::steps::complete(&mut run).unwrap();
-        let mut value = development_proposal(&run);
-        assert!(
-            proposal(&value.to_string(), &run).is_err(),
-            "silent omission must need clarification"
-        );
-        value["exclusions"] = json!([reason]);
-        let plan = proposal(&value.to_string(), &run).unwrap();
-        replace_validation_plan(&mut run, &plan);
-        assert_eq!(run.payload.validation.len(), 1);
-        assert_eq!(run.payload.validation[0].command, "node --test");
-        assert_eq!(run.payload.exclusions, [reason]);
-        assert_eq!(run.payload.steps[0].validation[0].command, old);
-        assert_eq!(
-            run.payload.history.last().unwrap()["validation"][0]["command"],
-            old
-        );
-    }
-}
-
-#[tokio::test]
-async fn known_environment_blockers_hold_the_whole_plan_even_when_agent_claims_ready() {
-    let (pool, mut run, _, _) = fixture().await;
-    let mut value = development_proposal(&run);
-    value["environment_blockers"] = json!([
-        "node executable missing",
-        "Build volume lacks the recorded required space"
-    ]);
-    let plan = proposal(&value.to_string(), &run).unwrap();
-    assert!(hold_validation_plan(&mut run, &plan));
-    assert_eq!(run.status, "blocked");
-    assert_eq!(
-        run.payload.stop.as_ref().unwrap().category,
-        "validation_environment"
-    );
-    assert!(
-        run.error
-            .as_ref()
-            .unwrap()
-            .contains("node executable missing")
-    );
-    assert!(run.error.as_ref().unwrap().contains("Build volume"));
-    assert!(run.payload.result_commit.is_none());
-    assert!(run.payload.validation[0].execution_process_id.is_none());
-    assert!(run.payload.validation[0].result.is_none());
-    assert!(
-        run.payload.gates.is_empty(),
-        "do not ask for one failure exception per missing prerequisite"
-    );
-    assert!(verify_validation(&pool, &run).await.is_err());
-    value["environment_blockers"] = json!([]);
-    let repaired = proposal(&value.to_string(), &run).unwrap();
-    assert!(!hold_validation_plan(&mut run, &repaired));
-    // Removing a known blocker does not turn an unexecuted plan into proof.
-    assert!(verify_validation(&pool, &run).await.is_err());
-}
-
-#[tokio::test]
-async fn ambiguous_development_records_can_be_held_without_inventing_a_validation_plan() {
-    let (pool, mut run, _, _) = fixture().await;
-    let mut value = development_proposal(&run);
-    value["outcome"] = json!("blocked");
-    value["validation"] = json!([]);
-    value["summary"] =
-        json!("Does the recorded manual browser check have a repeatable development procedure?");
-    let plan = proposal(&value.to_string(), &run).unwrap();
-    assert!(hold_validation_plan(&mut run, &plan));
-    assert_eq!(
-        run.payload.stop.as_ref().unwrap().category,
-        "validation_plan"
-    );
-    assert!(run.error.as_ref().unwrap().contains("manual browser check"));
-    assert!(run.payload.validation.is_empty());
-    assert!(verify_validation(&pool, &run).await.is_err());
-}
-
-#[tokio::test]
-async fn dispatched_prompt_uses_resolved_api_port_and_selected_identity() {
-    let (pool, mut run, _, _) = fixture().await;
-    let repo = Repo::find_by_id(&pool, run.repository_id)
-        .await
-        .unwrap()
-        .unwrap();
-    super::super::steps::complete(&mut run).unwrap();
-    run.payload.validation.clear();
-    run.payload.exclusions = vec!["Superseded CI-only check".into()];
-    run.error = Some("Missing compiler; reassess before replay".into());
-    let body = prompt(&run, &repo, Path::new("/test"), Some(4021), &json!([])).unwrap();
-    assert!(body.contains(&format!(
-        "http://127.0.0.1:4021/api/repos/{}/parallel-context",
-        repo.id
-    )));
-    assert!(body.contains(&run.payload.sources[0].selection.card_id.to_string()));
-    assert!(body.contains(&run.payload.sources[0].commit));
-    // A resumed/next-step prompt still includes the completed prefix and the
-    // previous diagnosis even when the current proposal has no runnable plan.
-    assert!(body.contains("package.json test + selected acceptance"));
-    assert!(body.contains("node --test"));
-    assert!(body.contains("Superseded CI-only check"));
-    assert!(body.contains("Missing compiler; reassess before replay"));
-    let unavailable = prompt(&run, &repo, Path::new("/test"), None, &json!([])).unwrap();
-    assert!(!unavailable.contains("http://127.0.0.1:"));
-    assert!(unavailable.contains("do not invent an endpoint"));
-}
-
-#[tokio::test]
 async fn selected_followup_memory_reaches_prompt_without_importing_other_events() {
     let (pool, mut run, _, _) = fixture().await;
     let repo = Repo::find_by_id(&pool, run.repository_id)
@@ -457,20 +268,20 @@ async fn selected_followup_memory_reaches_prompt_without_importing_other_events(
         memory[0]["events"][0]["decisions"][0]["rationale"],
         "Preserve mobile access"
     );
-    let body = prompt(&run, &repo, Path::new("/test"), None, &memory).unwrap();
+    run.payload.step_base = Some("a".repeat(40));
+    let body = prompt(&run, &repo, Path::new("/test"), &memory).unwrap();
     assert!(body.contains("Improve tool output display"));
     assert!(body.contains(&event.semantics.goal));
     for test in &event.semantics.tests {
         assert!(body.contains(test.summary.as_ref().unwrap()));
     }
     assert!(body.contains("make test-preview"));
-    assert!(body.contains("TA union TB"));
-    assert!(body.contains("do not explore them to expand the plan"));
+    assert!(body.contains("検証と公開はホストが管理"));
     assert!(!body.contains(&later.semantics.goal));
     assert!(!body.contains(&foreign.semantics.goal));
-    assert!(body.contains("Do not block solely for that omission"));
+    assert!(body.contains("メモリ欠落だけを停止理由にしない"));
     assert!(!body.contains("Integrate ALL and ONLY the selected requirements"));
-    assert!(body.contains("Do not read peer-private Workspace Memory or conversations"));
+    assert!(body.contains("他Workspaceの非公開メモリや会話は読まない"));
 
     // Absent public memory is represented honestly, not converted into a veto.
     let missing = integration_memory(&run, None).unwrap();
@@ -1235,16 +1046,6 @@ async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests()
     run.payload.result_commit = Some(command(&["rev-parse", "HEAD"]));
     // The host receives the full organised plan; it must execute both branches'
     // checks again on the new cumulative candidate.
-    let mut value = development_proposal(&run);
-    let mut b_check = value["validation"][0].clone();
-    b_check["command"] = json!("make test-b");
-    b_check["evidence"] = json!("B development verification");
-    value["validation"].as_array_mut().unwrap().push(b_check);
-    let plan = proposal(&value.to_string(), &run).unwrap();
-    replace_validation_plan(&mut run, &plan);
-    assert_eq!(run.payload.validation.len(), 2);
-    assert!(run.payload.validation[0].execution_process_id.is_none());
-    assert!(run.payload.validation[0].result.is_none());
     steps::record_review(root, &mut run).unwrap();
     let review = run.payload.reviews.last().unwrap();
     assert!(review.diff.contains("+A and B"));
@@ -1280,70 +1081,20 @@ async fn sequential_merges_review_only_resolutions_and_retain_cumulative_tests()
 #[tokio::test]
 async fn explicit_skip_is_unverified_preserved_and_not_an_agent_selected_policy() {
     let (pool, mut run, _, _) = fixture().await;
-    let mut value = development_proposal(&run);
-    value["validation"] = json!([]);
-    // An agent cannot opt out for a normally admitted run.
-    assert!(proposal(&value.to_string(), &run).is_err());
     let old_scope = run.validation_scope();
     run.payload.skip_validation = true;
     assert_ne!(run.validation_scope(), old_scope);
     assert!(verify_validation(&pool, &run).await.is_err());
     run.payload.validation.clear();
-    value["semantics"] = json!({"goal":"selected changes", "summary":"unverified merge", "tests":[{"command":"fabricated", "result":"passed"}]});
-    let plan = proposal(&value.to_string(), &run).unwrap();
-    assert!(plan.summary.contains("Unverified"));
-    assert_eq!(plan.semantics.tests.len(), 1);
-    assert_eq!(
-        plan.semantics.tests[0].result,
-        utils::repository_memory::MemoryTestResult::NotRun
-    );
-    assert!(!hold_validation_plan(&mut run, &plan));
-    replace_validation_plan(&mut run, &plan);
     verify_validation(&pool, &run).await.unwrap();
     super::super::steps::complete(&mut run).unwrap();
     let restored: IntegrationRun =
         serde_json::from_value(serde_json::to_value(&run).unwrap()).unwrap();
-    assert!(restored.payload.skip_validation);
     assert!(restored.payload.steps[0].validation_skipped);
     assert!(restored.payload.steps[0].validation.is_empty());
     verify_validation(&pool, &restored).await.unwrap();
-    // A resumed record cannot turn skipped steps into verified evidence.
     run.payload.skip_validation = false;
     assert!(verify_validation(&pool, &run).await.is_err());
-    run.payload.skip_validation = true;
-    run.payload.steps[0].validation_skipped = false;
-    assert!(verify_validation(&pool, &run).await.is_err());
-    run.payload.steps.clear();
-    value["validation"] = development_proposal(&run)["validation"].clone();
-    assert!(proposal(&value.to_string(), &run).is_err());
-    value["validation"] = json!([]);
-    value["outcome"] = json!("blocked");
-    let blocked = proposal(&value.to_string(), &run).unwrap();
-    assert!(hold_validation_plan(&mut run, &blocked));
-    assert_eq!(run.status, "blocked");
-    assert!(run.payload.result_commit.is_none());
-}
-
-#[tokio::test]
-async fn skipped_prompt_omits_validation_planning_but_keeps_merge_review() {
-    let (pool, mut run, _, _) = fixture().await;
-    let repo = Repo::find_by_id(&pool, run.repository_id)
-        .await
-        .unwrap()
-        .unwrap();
-    run.payload.skip_validation = true;
-    run.payload.validation.clear();
-    run.payload.sequential = true;
-    let body = prompt(&run, &repo, Path::new("/test"), None, &json!([])).unwrap();
-    assert!(body.contains("VALIDATION SKIPPED BY EXPLICIT USER REQUEST"));
-    assert!(body.contains("Do not run tests, type checks, lint, builds"));
-    assert!(body.contains("retains human approval for conflicts"));
-    assert!(body.contains(r#""validation":[],"environment_blockers":[]"#));
-    assert!(!body.contains("VALIDATION SCOPE: replay"));
-    assert!(!body.contains("Before any heavy validation"));
-    assert!(!body.contains("LVK runs tests after each step"));
-    run.payload.merge_conflicted = true;
-    assert!(!super::super::steps::review_approved(&run));
 }
 
 #[test]
@@ -1556,215 +1307,337 @@ mod cancellation_recovery {
     }
 }
 
-mod instruction_startup {
-    use std::sync::Mutex;
-
-    use db::models::agent_runtime::AgentRunRecord;
-    use executors::runtime::*;
-
-    use super::*;
-
-    struct StartingPort {
-        pool: SqlitePool,
-        state: Mutex<Option<RunState>>,
-        calls: Mutex<Vec<Uuid>>,
-        error: Mutex<Option<&'static str>>,
+struct MergeRepo {
+    dir: tempfile::TempDir,
+    base: String,
+}
+impl MergeRepo {
+    fn new() -> Self {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let g = |args: &[&str]| super::super::mechanical::git(root, args).unwrap();
+        g(&["init", "-b", "main"]);
+        g(&["config", "user.name", "Test"]);
+        g(&["config", "user.email", "test@localhost"]);
+        std::fs::write(root.join("feature"), "base\n").unwrap();
+        g(&["add", "."]);
+        g(&["commit", "-m", "base"]);
+        let base = g(&["rev-parse", "HEAD"]);
+        Self { dir, base }
     }
-
-    #[async_trait::async_trait]
-    impl AgentRunPort for StartingPort {
-        async fn create(
-            &self,
-            request: AgentRunRequestEnvelope,
-            attempt: RunAttemptRequest,
-        ) -> Result<Uuid, AgentRunPortError> {
-            AgentRunRecord::persist_identity_before_launch(&self.pool, &request, &attempt)
-                .await
-                .unwrap();
-            let mut state = RunState::pending(&request);
-            // Real host registration reports Running before the provider thread exists.
-            state.status = AgentRunStatus::Running;
-            *self.state.lock().unwrap() = Some(state);
-            Ok(request.agent_run_id)
-        }
-
-        async fn query(&self, id: Uuid) -> Result<AgentRunPortSnapshot, AgentRunPortError> {
-            Ok(AgentRunPortSnapshot {
-                agent_run_id: id,
-                state: self.state.lock().unwrap().clone().unwrap(),
-            })
-        }
-
-        async fn subscribe(&self, _: Uuid) -> Result<AgentEventStream, AgentRunPortError> {
-            panic!("unexpected subscribe")
-        }
-
-        async fn control(
-            &self,
-            command: AgentRunPortCommandEnvelope,
-        ) -> Result<(), AgentRunPortError> {
-            assert!(matches!(command.command, AgentRunPortCommand::Steer { .. }));
-            self.calls.lock().unwrap().push(command.command_id);
-            match *self.error.lock().unwrap() {
-                Some(message) => Err(AgentRunPortError::Unavailable(message.into())),
-                None => Ok(()),
-            }
-        }
+    fn git(&self, args: &[&str]) -> String {
+        super::super::mechanical::git(self.dir.path(), args).unwrap()
     }
+    fn branch(&self, name: &str, file: &str, text: &str) -> String {
+        self.git(&["checkout", "-b", name, &self.base]);
+        std::fs::write(self.dir.path().join(file), text).unwrap();
+        self.git(&["add", "."]);
+        self.git(&["commit", "-m", name]);
+        self.git(&["rev-parse", "HEAD"])
+    }
+}
 
-    #[tokio::test]
-    async fn fresh_create_immediate_steer_waits_retries_same_command_and_fences_terminal() {
-        let (pool, mut run, _, _) = fixture().await;
-        run.payload.skip_validation = true;
-        let (request, attempt) = cancellation_recovery::cancellation_requests(
-            run.session_id.unwrap(),
-            run.workspace_id.unwrap(),
-            "startup-instruction",
-        );
-        let port = StartingPort {
-            pool: pool.clone(),
-            state: Mutex::new(None),
-            calls: Mutex::new(vec![]),
-            error: Mutex::new(Some("I/O error: Codex has no active thread")),
-        };
-        let agent = port.create(request, attempt).await.unwrap();
-        let command = AgentRunPortCommandEnvelope {
-            schema_version: 1,
-            command_id: Uuid::new_v4(),
-            idempotency_key: "startup-steer".into(),
-            agent_run_id: agent,
-            orchestration_run_id: None,
-            orchestration_node_execution_id: None,
-            correlation_id: run.id,
-            created_at: chrono::Utc::now(),
-            command: AgentRunPortCommand::Steer {
-                content: "operator instruction".into(),
-            },
-        };
-        for error in [
-            "I/O error: Codex has no active thread",
-            "I/O error: Codex has no active turn",
-        ] {
-            *port.error.lock().unwrap() = Some(error);
-            assert_eq!(
-                deliver_intervention_instruction(&pool, &port, command.clone())
-                    .await
-                    .unwrap(),
-                InstructionDelivery::Waiting
-            );
-            assert_eq!(
-                port.state.lock().unwrap().as_ref().unwrap().status,
-                AgentRunStatus::Running
-            );
-        }
-        *port.error.lock().unwrap() = None;
-        for _ in 0..2 {
-            assert_eq!(
-                deliver_intervention_instruction(&pool, &port, command.clone())
-                    .await
-                    .unwrap(),
-                InstructionDelivery::Delivered
-            );
-        }
-        assert_eq!(*port.calls.lock().unwrap(), vec![command.command_id; 3]);
-        let saved: (String, i64) = sqlx::query_as(
-            "SELECT delivery_status,delivery_attempts FROM agent_run_commands WHERE command_id=?",
+#[tokio::test]
+async fn mechanical_clean_steps_preserve_history_without_agent_or_validation_execution() {
+    use super::super::{mechanical as m, steps};
+    let (pool, mut run, _, _) = fixture().await;
+    let repo = MergeRepo::new();
+    let a = repo.branch("a", "a", "a\n");
+    let b = repo.branch("b", "b", "b\n");
+    repo.git(&["checkout", "-b", "integration", &repo.base]);
+    run.payload.mechanical = true;
+    run.payload.skip_validation = true;
+    run.payload.validation.clear();
+    run.payload.base_commit = Some(repo.base.clone());
+    run.payload.step_base = Some(repo.base.clone());
+    let mut second = run.payload.sources[0].clone();
+    second.commit = b.clone();
+    run.payload.sources[0].commit = a.clone();
+    run.payload.sources.push(second);
+    for source in [&a, &b] {
+        steps::prepare(repo.dir.path(), &mut run).unwrap();
+        assert!(!run.payload.merge_conflicted);
+        assert!(run.agent_run_id.is_none());
+        assert!(run.payload.conflict_dispatch.is_none());
+        let before = run.payload.step_base.clone().unwrap();
+        let tree = run.payload.merge_tree.clone().unwrap();
+        let result = m::candidate(
+            repo.dir.path(),
+            &before,
+            source,
+            &tree,
+            run.id,
+            run.payload.step_index,
         )
-        .bind(command.command_id)
-        .fetch_one(&pool)
+        .unwrap();
+        assert_eq!(repo.git(&["rev-parse", "HEAD"]), before); // object preparation never moves branch
+        run.payload.result_commit = Some(result.clone());
+        // Simulate a durable intent restored after process loss.
+        run = serde_json::from_value(serde_json::to_value(run).unwrap()).unwrap();
+        m::install(repo.dir.path(), &before, source, &result, false).unwrap();
+        m::install(repo.dir.path(), &before, source, &result, false).unwrap();
+        steps::record_review(repo.dir.path(), &mut run).unwrap();
+        assert!(run.payload.reviews.is_empty());
+        steps::complete(&mut run).unwrap();
+        steps::complete(&mut run).unwrap();
+        run.payload.step_index += 1;
+        run.payload.step_base = Some(result);
+    }
+    assert_eq!(run.payload.steps.len(), 2);
+    assert!(
+        run.payload
+            .steps
+            .iter()
+            .all(|s| s.validation.is_empty() && s.validation_skipped)
+    );
+    assert_eq!(repo.git(&["rev-parse", "main"]), repo.base);
+    let last = run.payload.result_commit.as_deref().unwrap();
+    assert_eq!(repo.git(&["merge-base", last, &a]), a);
+    assert_eq!(repo.git(&["merge-base", last, &b]), b);
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM agent_runs")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        0
+    );
+    verify_validation(&pool, &run).await.unwrap();
+}
+
+#[tokio::test]
+async fn mechanical_conflict_approval_continues_without_retry_and_rejects_stale_approval() {
+    use super::super::{mechanical as m, steps};
+    let (pool, mut run, _, _) = fixture().await;
+    let repo = MergeRepo::new();
+    let a = repo.branch("a", "feature", "A\n");
+    let b = repo.branch("b", "feature", "B\n");
+    repo.git(&["checkout", "-b", "integration", &a]);
+    run.payload.mechanical = true;
+    run.payload.sequential = true;
+    run.payload.skip_validation = true;
+    run.payload.validation.clear();
+    run.payload.base_commit = Some(repo.base.clone());
+    run.payload.step_base = Some(a.clone());
+    run.payload.sources[0].commit = b.clone();
+    steps::prepare(repo.dir.path(), &mut run).unwrap();
+    assert!(run.payload.merge_conflicted);
+    m::prepare_conflict(repo.dir.path(), &a, &b).unwrap();
+    assert!(m::resolution_tree(repo.dir.path(), &a, &b).is_err());
+    m::prepare_conflict(repo.dir.path(), &a, &b).unwrap(); // reuse exact interrupted conflict
+    assert!(m::prepare_conflict(repo.dir.path(), &a, &repo.base).is_err());
+    std::fs::write(repo.dir.path().join("feature"), "A and B\n").unwrap();
+    repo.git(&["add", "feature"]);
+    let tree = m::resolution_tree(repo.dir.path(), &a, &b).unwrap();
+    let candidate = m::candidate(repo.dir.path(), &a, &b, &tree, run.id, 0).unwrap();
+    run.payload.result_commit = Some(candidate.clone());
+    // Crash after branch CAS, before merge metadata cleanup is safe to reconcile.
+    repo.git(&["update-ref", "HEAD", &candidate, &a]);
+    m::install(repo.dir.path(), &a, &b, &candidate, true).unwrap();
+    m::install(repo.dir.path(), &a, &b, &candidate, true).unwrap();
+    steps::record_review(repo.dir.path(), &mut run).unwrap();
+    assert!(!steps::review_approved(&run));
+    run.status = "blocked".into();
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'review')")
+        .bind(run.project_id)
+        .execute(&pool)
         .await
         .unwrap();
-        assert_eq!(saved, ("delivered".into(), 3));
-        // Host acceptance is separate from the child's delivery receipt. A
-        // structured ready result completes only the current frozen source.
-        run.payload.sequential = true;
-        let first_source = run.payload.sources[0].clone();
-        for index in 0..3 {
-            let mut source = first_source.clone();
-            source.selection.card_id = Uuid::new_v4();
-            source.commit = format!("{:040x}", index + 2);
-            run.payload.sources.push(source);
-        }
-        run.payload.validation.clear(); // admission chose skip for all four sources
-        let mut ready = development_proposal(&run);
-        ready["validation"] = json!([]);
-        let plan = proposal(&ready.to_string(), &run).unwrap();
-        assert!(!hold_validation_plan(&mut run, &plan));
-        replace_validation_plan(&mut run, &plan);
-        verify_validation(&pool, &run).await.unwrap();
-        super::super::super::steps::complete(&mut run).unwrap();
-        super::super::super::steps::complete(&mut run).unwrap();
-        assert_eq!(run.payload.steps.len(), 1);
-        assert!(run.payload.steps[0].validation_skipped);
-        assert_eq!(run.payload.sources.len(), 4);
-        assert!(!run.payload.published);
-        assert!(
-            run.payload.steps.len() < run.payload.sources.len(),
-            "host must continue to the remaining sources"
-        );
-        for status in [
-            AgentRunStatus::Pending,
-            AgentRunStatus::Starting,
-            AgentRunStatus::Cancelling,
-            AgentRunStatus::Cancelled,
-            AgentRunStatus::Failed,
-            AgentRunStatus::Succeeded,
-        ] {
-            port.state.lock().unwrap().as_mut().unwrap().status = status;
-            let expected = if status.is_terminal() {
-                InstructionDelivery::Terminal
-            } else {
-                InstructionDelivery::Waiting
-            };
-            assert_eq!(
-                deliver_intervention_instruction(&pool, &port, command.clone())
-                    .await
-                    .unwrap(),
-                expected
-            );
-        }
-        assert_eq!(
-            port.calls.lock().unwrap().len(),
-            3,
-            "terminal/waiting executions must never be steered"
-        );
-        assert!(run.payload.skip_validation);
-    }
+    sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,payload) VALUES(?,?,?,?,?,?,'blocked',?,?,?)")
+        .bind(run.id).bind(&run.request_key).bind(run.project_id).bind(run.repository_id).bind(&run.storage_identity).bind(&run.target_ref).bind(run.workspace_id).bind(run.session_id).bind(&run.payload).execute(&pool).await.unwrap();
+    let request = Uuid::new_v4();
+    let review = run.payload.reviews[0].id;
+    let scope = run.validation_scope();
+    IntegrationRun::decide_review(
+        &pool,
+        run.id,
+        run.project_id,
+        review,
+        request,
+        "continue",
+        &scope,
+    )
+    .await
+    .unwrap();
+    IntegrationRun::decide_review(
+        &pool,
+        run.id,
+        run.project_id,
+        review,
+        request,
+        "continue",
+        &scope,
+    )
+    .await
+    .unwrap();
+    let mut saved = IntegrationRun::find(&pool, run.id).await.unwrap();
+    assert_eq!(saved.status, "integrating");
+    assert!(!saved.payload.resume_validation);
+    assert!(steps::review_approved(&saved));
+    assert!(saved.payload.intervention.is_none());
+    assert!(saved.agent_run_id.is_none());
+    steps::complete(&mut saved).unwrap();
+    saved.payload.result_commit = Some(a);
+    assert!(!steps::review_approved(&saved));
+    assert_eq!(repo.git(&["rev-parse", "main"]), repo.base);
+}
 
-    #[tokio::test]
-    async fn ambiguous_provider_failure_is_not_a_startup_retry() {
-        let (pool, run, _, _) = fixture().await;
-        let (request, attempt) = cancellation_recovery::cancellation_requests(
-            run.session_id.unwrap(),
-            run.workspace_id.unwrap(),
-            "startup-error",
-        );
-        let port = StartingPort {
-            pool: pool.clone(),
-            state: Mutex::new(None),
-            calls: Mutex::new(vec![]),
-            error: Mutex::new(Some("transport disconnected")),
-        };
-        let agent = port.create(request, attempt).await.unwrap();
-        let command = AgentRunPortCommandEnvelope {
-            schema_version: 1,
-            command_id: Uuid::new_v4(),
-            idempotency_key: "startup-error-steer".into(),
-            agent_run_id: agent,
-            orchestration_run_id: None,
-            orchestration_node_execution_id: None,
-            correlation_id: run.id,
-            created_at: chrono::Utc::now(),
-            command: AgentRunPortCommand::Steer {
-                content: "instruction".into(),
-            },
-        };
-        assert!(
-            deliver_intervention_instruction(&pool, &port, command)
-                .await
-                .unwrap_err()
-                .to_string()
-                .contains("transport disconnected")
-        );
-    }
+#[tokio::test]
+async fn mechanical_candidate_refuses_dirty_or_moved_head_and_keeps_source_refs() {
+    use super::super::{mechanical as m, steps};
+    let (_, mut run, _, _) = fixture().await;
+    let repo = MergeRepo::new();
+    let source = repo.branch("source", "feature", "source\n");
+    repo.git(&["checkout", "-b", "integration", &repo.base]);
+    run.payload.step_base = Some(repo.base.clone());
+    run.payload.sources[0].commit = source.clone();
+    steps::prepare(repo.dir.path(), &mut run).unwrap();
+    let candidate = m::candidate(
+        repo.dir.path(),
+        &repo.base,
+        &source,
+        run.payload.merge_tree.as_deref().unwrap(),
+        run.id,
+        0,
+    )
+    .unwrap();
+    std::fs::write(repo.dir.path().join("untracked"), "keep me").unwrap();
+    assert!(m::install(repo.dir.path(), &repo.base, &source, &candidate, false).is_err());
+    repo.git(&["add", "."]);
+    repo.git(&["commit", "-m", "unexpected writer"]);
+    assert!(m::install(repo.dir.path(), &repo.base, &source, &candidate, false).is_err());
+    assert_eq!(repo.git(&["rev-parse", "source"]), source);
+    assert_eq!(repo.git(&["rev-parse", "main"]), repo.base);
+}
+
+#[test]
+fn mechanical_validation_is_frozen_from_target_and_skip_never_reads_or_runs_commands() {
+    use super::super::mechanical as m;
+    let repo = MergeRepo::new();
+    assert!(m::validation_plan(repo.dir.path(), &repo.base, false).is_err());
+    assert!(
+        m::validation_plan(Path::new("/does-not-exist"), "invalid", true)
+            .unwrap()
+            .is_empty()
+    );
+    std::fs::create_dir(repo.dir.path().join(".lvk")).unwrap();
+    std::fs::write(
+        repo.dir.path().join(".lvk/integration-validation.json"),
+        r#"{"commands":["test -f feature"]}"#,
+    )
+    .unwrap();
+    repo.git(&["add", "."]);
+    repo.git(&["commit", "-m", "validation policy"]);
+    let frozen = repo.git(&["rev-parse", "HEAD"]);
+    std::fs::write(
+        repo.dir.path().join(".lvk/integration-validation.json"),
+        r#"{"commands":["false"]}"#,
+    )
+    .unwrap();
+    let plan = m::validation_plan(repo.dir.path(), &frozen, false).unwrap();
+    assert_eq!(plan[0].command, "test -f feature");
+    assert!(plan[0].required);
+    assert!(plan[0].result.is_none());
+}
+
+#[tokio::test]
+async fn mechanical_conflict_create_freezes_current_step_and_legacy_requires_explicit_migration() {
+    use executors::{
+        executors::BaseCodingAgent, profile::ExecutorConfig, runtime::AgentRunPortCommand,
+    };
+
+    use super::super::mechanical as m;
+    let (pool, mut run, _, _) = fixture().await;
+    assert!(m::require_engine(&run).is_err());
+    run.payload.mechanical = true;
+    m::require_engine(&run).unwrap();
+    run.payload.executor_config =
+        Some(serde_json::to_value(ExecutorConfig::new(BaseCodingAgent::Codex)).unwrap());
+    let repo = Repo::find_by_id(&pool, run.repository_id)
+        .await
+        .unwrap()
+        .unwrap();
+    run.payload.step_base = Some("c".repeat(40));
+    let content = prompt(&run, &repo, Path::new("/test"), &json!([])).unwrap();
+    let dispatch = m::conflict_request(&run, "/test".into(), content.clone()).unwrap();
+    let saved = serde_json::to_value(&dispatch).unwrap();
+    let restored: AgentRunPortCommand = serde_json::from_value(saved.clone()).unwrap();
+    assert_eq!(serde_json::to_value(&restored).unwrap(), saved);
+    let AgentRunPortCommand::Create { request, attempt } = restored else {
+        panic!("Only Create allowed")
+    };
+    assert_eq!(request.input.content, content);
+    assert_eq!(request.correlation_id, run.id);
+    assert_eq!(attempt.attempt_number, 1);
+    assert!(attempt.provider_session.is_none());
+    attempt.validate_for_run(&request).unwrap();
+    assert!(m::resolution(r#"{"outcome":"ready","summary":"resolved"}"#).is_ok());
+    assert!(m::resolution(r#"{"outcome":"ready","summary":"resolved","validation":[]}"#).is_err());
+    assert!(m::resolution(r#"{"outcome":"published","summary":"done"}"#).is_err());
+}
+
+#[tokio::test]
+async fn mechanical_create_redelivery_and_cancellation_use_only_accepted_identity() {
+    use db::models::agent_runtime::AgentRunRecord;
+    use executors::{
+        executors::BaseCodingAgent, profile::ExecutorConfig, runtime::AgentRunPortCommand,
+    };
+    let (pool, mut run, _, _) = fixture().await;
+    run.payload.mechanical = true;
+    run.payload.executor_config =
+        Some(serde_json::to_value(ExecutorConfig::new(BaseCodingAgent::Codex)).unwrap());
+    let dispatch = super::super::mechanical::conflict_request(
+        &run,
+        "/test".into(),
+        "resolve current conflict".into(),
+    )
+    .unwrap();
+    let AgentRunPortCommand::Create { request, attempt } = &dispatch else {
+        unreachable!()
+    };
+    run.agent_run_id = Some(request.agent_run_id);
+    run.payload.conflict_dispatch = Some(serde_json::to_value(&dispatch).unwrap());
+    assert_eq!(cancellation_agent(&pool, &run).await.unwrap(), None);
+    let (first, second) = tokio::join!(
+        AgentRunRecord::persist_identity_before_launch(&pool, request, attempt),
+        AgentRunRecord::persist_identity_before_launch(&pool, request, attempt)
+    );
+    assert_eq!(first.unwrap().agent_run_id, second.unwrap().agent_run_id);
+    assert_eq!(
+        cancellation_agent(&pool, &run).await.unwrap(),
+        Some(request.agent_run_id)
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM agent_runs")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        1
+    );
+    let mut changed = request.clone();
+    changed.input.content = "other step".into();
+    assert!(
+        AgentRunRecord::persist_identity_before_launch(&pool, &changed, attempt)
+            .await
+            .is_err()
+    );
+    run.payload.conflict_dispatch = Some(
+        serde_json::to_value(AgentRunPortCommand::Create {
+            request: changed,
+            attempt: attempt.clone(),
+        })
+        .unwrap(),
+    );
+    assert!(cancellation_agent(&pool, &run).await.is_err());
+}
+
+#[test]
+fn mechanical_branch_guard_rejects_target_detached_and_unrelated_source_branches() {
+    use super::super::mechanical as m;
+    let repo = MergeRepo::new();
+    assert!(m::require_private_branch(repo.dir.path(), "main", "refs/heads/main").is_err());
+    assert!(m::require_private_branch(repo.dir.path(), "integration", "refs/heads/main").is_err());
+    repo.git(&["checkout", "-b", "integration"]);
+    m::require_private_branch(repo.dir.path(), "integration", "refs/heads/main").unwrap();
+    repo.git(&["checkout", "--detach"]);
+    assert!(m::require_private_branch(repo.dir.path(), "integration", "refs/heads/main").is_err());
 }

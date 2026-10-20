@@ -1,7 +1,8 @@
-//! Local Board Integration: a product of the existing Orchestration runtime.
+//! Local Board Integration: host-owned Git steps with bounded conflict jobs.
 //! The product owns source reservations, host validation and publication, not
 //! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
 mod admission;
+mod mechanical;
 mod runtime;
 mod steps;
 pub(crate) use admission::AdmissionFailure;

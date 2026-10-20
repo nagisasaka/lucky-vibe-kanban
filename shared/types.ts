@@ -145,6 +145,14 @@ export type IntegrationValidation = { command: string, cwd: string, required: bo
 
 export type IntegrationPayload = {
 /**
+ * Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
+ */
+mechanical: boolean,
+/**
+ * Immutable Create envelope for the current conflict job; no Retry/Steer hand-off.
+ */
+conflict_dispatch: JsonValue | null,
+/**
  * Frozen at admission; omitted in old records means validation is required.
  */
 skip_validation: boolean, card_id: string | null, card_done_result: string | null, sequential: boolean, step_index: number, step_base: string | null, merge_tree: string | null, merge_conflicted: boolean, next_step: boolean, reviews: Array<IntegrationReview>, steps: Array<IntegrationStep>, gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };

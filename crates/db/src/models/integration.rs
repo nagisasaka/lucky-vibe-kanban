@@ -100,6 +100,12 @@ pub struct IntegrationReview {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct IntegrationPayload {
+    /// Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
+    #[serde(default)]
+    pub mechanical: bool,
+    /// Immutable Create envelope for the current conflict job; no Retry/Steer hand-off.
+    #[serde(default)]
+    pub conflict_dispatch: Option<serde_json::Value>,
     /// Frozen at admission; omitted in old records means validation is required.
     #[serde(default)]
     pub skip_validation: bool,
@@ -463,8 +469,13 @@ impl IntegrationRun {
             run.cancel_requested = true;
             run.status = "cancelling".into();
         } else {
-            run.status = "validating".into();
-            run.payload.resume_validation = true;
+            run.status = if run.payload.mechanical {
+                "integrating"
+            } else {
+                "validating"
+            }
+            .into();
+            run.payload.resume_validation = !run.payload.mechanical;
         }
         sqlx::query("UPDATE integration_runs SET status=?,payload=?,cancel_requested=?,error=NULL,updated_at=datetime('now','subsec') WHERE id=?")
             .bind(&run.status).bind(&run.payload).bind(run.cancel_requested).bind(id).execute(&mut *tx).await?;
