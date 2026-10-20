@@ -106,14 +106,14 @@ for (const mobile of [false, true]) {
     await expect(start).toBeEnabled();
     await start.click();
     await expect(
-      page.getByText("succeeded · Unverified", { exact: true }),
+      page.getByText("Succeeded · Unverified", { exact: true }),
     ).toBeVisible();
     expect(requests[2]).toEqual(requests[1]);
     await expect(skip).toBeChecked();
     // A fresh page reads the persisted choice from server configuration, not local form state.
     await open();
     await expect(
-      page.getByText("succeeded · Unverified", { exact: true }),
+      page.getByText("Succeeded · Unverified", { exact: true }),
     ).toBeVisible();
     await expect(skip).toBeChecked();
     await page.screenshot({

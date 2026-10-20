@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { IntegrationInterventionPanel } from './IntegrationInterventionPanel';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { Session, Workspace } from 'shared/types';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
@@ -71,10 +71,39 @@ export function ExecutionInspectionPanel({
     },
   });
   const run = execution.data;
+  const Metadata = integration ? 'details' : Fragment;
+  const sessionSelector = (
+    <label className="flex items-center gap-base text-normal">
+      {integration ? t('integrationReview.session') : 'Session'}
+      <select
+        aria-label={
+          integration ? t('integrationReview.session') : 'Execution session'
+        }
+        className="bg-primary border border-border rounded-sm p-half min-w-0 flex-1"
+        value={selectedSessionId ?? ''}
+        onChange={(event) => onSelectSession(event.target.value)}
+      >
+        {!selectedSessionId && (
+          <option value="">
+            {integration
+              ? t('integrationReview.selectSession')
+              : 'Select saved session'}
+          </option>
+        )}
+        {sessions.map((session) => (
+          <option key={session.id} value={session.id}>
+            {session.name ?? session.id}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
   return (
     <section
       className={`border-t border-border bg-secondary p-base flex flex-col gap-half text-sm${integration ? ' max-h-[65vh] overflow-y-auto' : ''}`}
-      aria-label="Execution inspection"
+      aria-label={
+        integration ? t('integrationReview.title') : 'Execution inspection'
+      }
     >
       <div className="flex items-center justify-between gap-base">
         <strong className="text-high">
@@ -90,8 +119,12 @@ export function ExecutionInspectionPanel({
           onClick={() => execution.stop.mutate()}
         >
           {run?.stop_requested || execution.stop.isPending
-            ? 'Stopping…'
-            : 'Stop execution'}
+            ? integration
+              ? t('integrationPanel.stopping')
+              : 'Stopping…'
+            : integration
+              ? t('integrationReview.stopExecution')
+              : 'Stop execution'}
         </PrimaryButton>
       </div>
       {!integration && (
@@ -100,28 +133,43 @@ export function ExecutionInspectionPanel({
           development becomes available after execution and cleanup finish.
         </p>
       )}
-      <p className="text-normal">
-        {run?.status ?? 'Loading execution…'} ·{' '}
-        {run?.owner?.kind ?? workspace.execution_owner?.kind ?? 'Unknown owner'}
-      </p>
-      {run?.owner?.run_id && (
-        <p className="font-mono text-xs text-low break-all">
-          Run: {run.owner.run_id}
+      <Metadata>
+        {integration && (
+          <summary className="cursor-pointer">
+            {t('integrationReview.executionDetails')}
+          </summary>
+        )}
+        <p className="text-normal">
+          {run?.status ?? 'Loading execution…'} ·{' '}
+          {run?.owner?.kind ??
+            workspace.execution_owner?.kind ??
+            'Unknown owner'}
         </p>
-      )}
-      {run && (
-        <p className="text-low">
-          {run.owner?.result?.no_op && run.status === 'succeeded'
-            ? 'No changes required (successful reconciliation)'
-            : run.published
-              ? 'Published result'
-              : 'Publication not confirmed; files may be unpublished'}
-        </p>
-      )}
+        {run?.owner?.run_id && (
+          <p className="font-mono text-xs text-low break-all">
+            Run: {run.owner.run_id}
+          </p>
+        )}
+        {run && (
+          <p className="text-low">
+            {run.owner?.result?.no_op && run.status === 'succeeded'
+              ? 'No changes required (successful reconciliation)'
+              : run.published
+                ? integration
+                  ? t('integrationReview.published')
+                  : 'Published result'
+                : integration
+                  ? t('integrationReview.notPublished')
+                  : 'Publication not confirmed; files may be unpublished'}
+          </p>
+        )}
+        {integration && sessionSelector}
+      </Metadata>
       {run && !run.files_available && (
         <p className="text-warning">
-          Files are missing or unprepared. Inspection will not recreate the
-          worktree. Saved logs remain available.
+          {integration
+            ? t('integrationReview.filesMissing')
+            : 'Files are missing or unprepared. Inspection will not recreate the worktree. Saved logs remain available.'}
         </p>
       )}
       {[
@@ -137,22 +185,7 @@ export function ExecutionInspectionPanel({
             {error}
           </p>
         ))}
-      <label className="flex items-center gap-base text-normal">
-        Session
-        <select
-          aria-label="Execution session"
-          className="bg-primary border border-border rounded-sm p-half min-w-0 flex-1"
-          value={selectedSessionId ?? ''}
-          onChange={(event) => onSelectSession(event.target.value)}
-        >
-          {!selectedSessionId && <option value="">Select saved session</option>}
-          {sessions.map((session) => (
-            <option key={session.id} value={session.id}>
-              {session.name ?? session.id}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!integration && sessionSelector}
       {run?.owner?.kind === 'integration' && run.owner.run_id && (
         <IntegrationInterventionPanel integrationId={run.owner.run_id} />
       )}

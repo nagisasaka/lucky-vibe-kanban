@@ -1,4 +1,4 @@
-//! Opt-in isolated host scenario. No production DB, repository or network listener.
+//! Opt-in isolated host/browser scenarios. No production DB or repository.
 //! The deterministic variant supplies provider events; the opt-in real variant uses Codex.
 use db::models::{
     agent_runtime::{AgentEventRecord, AgentRunRecord},
@@ -24,8 +24,69 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
         "Use a fresh isolated instance"
     );
     let deployment = DeploymentImpl::new(tokio_util::sync::CancellationToken::new()).await?;
+    merge_scenario(&deployment, &instance, None).await
+}
+
+// Browser mode uses the real router/access layer and the same deterministic
+// provider-event fixture as the host scenario. No production test backdoor.
+#[tokio::test]
+#[ignore = "requires a fresh isolated instance, built frontend and Chromium"]
+async fn isolated_review_browser() -> anyhow::Result<()> {
+    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    ensure!(
+        instance
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with("local9-scenario-")
+    );
+    ensure!(
+        !instance.join("data/db.v2.sqlite").exists(),
+        "Use a fresh isolated instance"
+    );
+    ensure!(std::env::var("LVK_ACCESS_DEPLOYMENT").as_deref() == Ok("local"));
+    ensure!(std::env::var("LVK_AUTH_MODE").as_deref() == Ok("local"));
+    let shutdown = tokio_util::sync::CancellationToken::new();
+    let deployment = DeploymentImpl::new(shutdown.clone()).await?;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
+    let addr = listener.local_addr()?;
+    deployment.client_info().set_server_addr(addr).unwrap();
+    let access =
+        server_access::Access::from_env(deployment.db().pool.clone(), utils::assets::asset_dir())?;
+    let router = crate::routes::router(deployment.clone(), access);
+    let stop = shutdown.clone();
+    let server = tokio::spawn(async move {
+        axum::serve(listener, router)
+            .with_graceful_shutdown(async move { stop.cancelled().await })
+            .await
+    });
+    let result = async {
+        for mode in ["approve", "cancel", "stale", "empty"] {
+            merge_scenario(
+                &deployment,
+                &instance,
+                Some((&format!("http://{addr}"), mode)),
+            )
+            .await?;
+        }
+        anyhow::Ok(())
+    }
+    .await;
+    shutdown.cancel();
+    server.await??;
+    result
+}
+
+async fn merge_scenario(
+    deployment: &DeploymentImpl,
+    instance: &Path,
+    browser: Option<(&str, &str)>,
+) -> anyhow::Result<()> {
     let pool = &deployment.db().pool;
-    let root = instance.join("fixture");
+    let root = instance.join(format!(
+        "fixture-{}",
+        browser.map_or("host", |(_, mode)| mode)
+    ));
     std::fs::create_dir_all(&root)?;
     let git = |args: &[&str]| super::super::mechanical::git(&root, args);
     git(&["init", "-b", "main"])?;
@@ -44,6 +105,11 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
     let status = Uuid::new_v4();
     sqlx::query("INSERT INTO projects(id,name) VALUES(?,'isolated integration')")
         .bind(project)
+        .execute(pool)
+        .await?;
+    sqlx::query("INSERT INTO local_project_metadata(project_id,organization_id) VALUES(?,?)")
+        .bind(project)
+        .bind(Uuid::from_u128(2))
         .execute(pool)
         .await?;
     sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Done','blue',0)")
@@ -118,16 +184,50 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
     run.create_with_card(pool, "scenario-integration", "Isolated scenario")
         .await?;
     ensure!(admission::target_right(pool, &run).await?);
-    advance(&deployment, run.clone()).await?;
-    let real = std::env::var("LVK_INTEGRATION_REAL_PROVIDER").as_deref() == Ok("1");
+    advance(deployment, run.clone()).await?;
+    let real =
+        browser.is_none() && std::env::var("LVK_INTEGRATION_REAL_PROVIDER").as_deref() == Ok("1");
+    let mut browser_process: Option<tokio::process::Child> = None;
+    let mut changed_candidate = false;
+    let signal = instance.join("replace-candidate");
     let mut approved = false;
-    for _ in 0..300 {
+    for _ in 0..1200 {
         run = IntegrationRun::find(pool, id).await?;
-        if run.status == "succeeded" {
+        if ["succeeded", "cancelled"].contains(&run.status.as_str()) {
             break;
         }
+        if let Some(child) = &mut browser_process
+            && let Some(status) = child.try_wait()?
+        {
+            ensure!(status.success(), "Browser failed: {status}");
+        }
+        if browser.is_some_and(|(_, mode)| mode == "stale") && signal.exists() && !changed_candidate
+        {
+            let (_, _, _, checkout) = context(deployment, &run).await?;
+            std::fs::write(checkout.join("feature"), "A\nC\nreviewed again\n")?;
+            super::super::mechanical::git(&checkout, &["add", "feature"])?;
+            super::super::mechanical::git(
+                &checkout,
+                &[
+                    "-c",
+                    "user.name=Browser fixture",
+                    "-c",
+                    "user.email=test@localhost",
+                    "commit",
+                    "-m",
+                    "new candidate",
+                ],
+            )?;
+            run.payload.result_commit = Some(super::super::mechanical::git(
+                &checkout,
+                &["rev-parse", "HEAD"],
+            )?);
+            super::super::steps::record_review(&checkout, &mut run)?;
+            run.save(pool).await?;
+            changed_candidate = true;
+        }
         if run.payload.step_index == 2 && run.payload.conflict_dispatch.is_none() && !real {
-            let (_, ws, _, checkout) = context(&deployment, &run).await?;
+            let (_, ws, _, checkout) = context(deployment, &run).await?;
             super::super::steps::prepare(&checkout, &mut run)?;
             ensure!(run.payload.merge_conflicted);
             let before = run.payload.step_base.as_deref().unwrap();
@@ -155,7 +255,7 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
                     message: CanonicalMessage {
                         message_id: Uuid::new_v4(),
                         role: AgentRuntimeMessageRole::Assistant,
-                        content: r#"{"outcome":"ready","summary":"Preserved both A and C"}"#.into(),
+                        content: serde_json::json!({"outcome":"ready", "summary": "feature の同じ行で A と C の追加が衝突しました。独立した機能なので、片方を失わないよう両方を残して解消しました。意味上の妥当性は人間の確認が必要です。"}).to_string(),
                     },
                     final_output: true,
                 },
@@ -203,11 +303,35 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
             );
             ensure!(!approved && run.payload.step_index == 2);
             ensure!(git(&["rev-parse", "main"])? == base);
+            if let Some((base_url, mode)) = browser {
+                if browser_process.is_none() {
+                    if mode == "empty" {
+                        // Simulate a retained record without an explanation. Current
+                        // provider parsing correctly rejects empty ready summaries.
+                        run.payload.reviews.last_mut().unwrap().explanation = "  ".into();
+                        run.save(pool).await?;
+                    }
+                    browser_process = Some(
+                        tokio::process::Command::new("node")
+                            .arg(
+                                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                                    .join("../../tests/integration-review/browser.mjs"),
+                            )
+                            .env("LVK_REVIEW_BASE_URL", base_url)
+                            .env("LVK_REVIEW_RUN", id.to_string())
+                            .env("LVK_REVIEW_MODE", mode)
+                            .env("LVK_REVIEW_SIGNAL", &signal)
+                            .spawn()?,
+                    );
+                }
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                continue;
+            }
             let review = run.payload.reviews.last().unwrap().id;
             let request_id = Uuid::new_v4();
             for _ in 0..2 {
                 decide_gate(
-                    &deployment,
+                    deployment,
                     id,
                     super::super::GateDecisionRequest {
                         project_id: project,
@@ -219,15 +343,42 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
                 .await?;
             }
             approved = true;
-        } else if let Err(error) = advance(&deployment, run.clone()).await {
-            cancel(&deployment, run).await?;
+        } else if let Err(error) = advance(deployment, run.clone()).await {
+            cancel(deployment, run).await?;
             return Err(error);
         }
-        tokio::time::sleep(Duration::from_millis(if real { 1000 } else { 10 })).await;
+        tokio::time::sleep(Duration::from_millis(if real {
+            1000
+        } else if browser.is_some() {
+            100
+        } else {
+            10
+        }))
+        .await;
     }
     run = IntegrationRun::find(pool, id).await?;
+    if let Some(mut child) = browser_process {
+        let status = tokio::time::timeout(Duration::from_secs(60), child.wait()).await??;
+        ensure!(status.success(), "Browser failed: {status}");
+        if browser.is_some_and(|(_, mode)| mode != "approve") {
+            ensure!(run.status == "cancelled" && !run.payload.published);
+            ensure!(git(&["rev-parse", "main"])? == base);
+            ensure!(
+                run.payload
+                    .reviews
+                    .iter()
+                    .all(|review| review.decision.as_deref() != Some("continue"))
+            );
+            println!(
+                "Browser {:?}: cancelled; target remains {base}; no review approved",
+                browser.map(|(_, mode)| mode)
+            );
+            return Ok(());
+        }
+        approved = true;
+    }
     if run.status != "succeeded" {
-        cancel(&deployment, run).await?;
+        cancel(deployment, run).await?;
         bail!("Scenario timed out; test conflict cancellation requested");
     }
     ensure!(approved && run.payload.published && run.payload.steps.len() == 4);
@@ -242,7 +393,13 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
         sqlx::query_scalar::<_, i64>("SELECT count(*) FROM agent_runs")
             .fetch_one(pool)
             .await?
-            == 1
+            == if browser.is_some() {
+                sqlx::query_scalar::<_, i64>("SELECT count(*) FROM integration_runs")
+                    .fetch_one(pool)
+                    .await?
+            } else {
+                1
+            }
     );
     ensure!(
         sqlx::query_scalar::<_, i64>("SELECT count(*) FROM integration_reservations")
@@ -250,10 +407,10 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
             .await?
             == 0
     );
-    request_recovery(&deployment, run).await?;
+    request_recovery(deployment, run).await?;
     ensure!(git(&["rev-parse", "main"])? == final_commit);
     println!(
-        "Isolated host scenario passed; real_provider={real}, approved step 3, step 4 published exactly once"
+        "Isolated host scenario passed; real_provider={real}, approved step 3, step 4 published exactly once; base={base}, candidate={final_commit}"
     );
     Ok(())
 }

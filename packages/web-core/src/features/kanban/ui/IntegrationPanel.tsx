@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +26,6 @@ import {
 import {
   integrationApi,
   integrationCanCancel,
-  integrationDoneLabel,
   integrationSelectionIsCurrent,
 } from '@/shared/lib/integrationApi';
 import type {
@@ -42,6 +42,7 @@ export function IntegrationPanel({
   focusedRunId: string | null;
   onClearFocus: () => void;
 }) {
+  const { t } = useTranslation('common');
   const { projectId, issues } = useProjectContext();
   const navigation = useAppNavigation();
   const client = useQueryClient();
@@ -64,7 +65,7 @@ export function IntegrationPanel({
       if (
         !(await updateAndSaveConfig({ integration_skip_validation: value }))
       ) {
-        throw new Error('Could not save the integration validation preference');
+        throw new Error(t('integrationPanel.saveError'));
       }
     },
     onError: (error: Error) => setError(error.message),
@@ -179,12 +180,9 @@ export function IntegrationPanel({
       >
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-primary text-normal">
           <DialogHeader>
-            <DialogTitle>Auto Merge</DialogTitle>
+            <DialogTitle>{t('integrationPanel.title')}</DialogTitle>
             <DialogDescription>
-              Select Cards and one Workspace each. LVK creates an auto-merge
-              Card with its own Workspace, merges and by default validates each
-              selection in order, then moves the selected Cards and auto-merge
-              Card to Done.
+              {t('integrationPanel.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto space-y-base min-h-0">
@@ -193,16 +191,12 @@ export function IntegrationPanel({
                 {dataError}
               </p>
             )}
-            <p className="text-low">
-              The selected commits are fixed when you start. Review conflict
-              resolutions, respond to failed tests, and send additional
-              instructions in the auto-merge Workspace.
-            </p>
+            <p className="text-low">{t('integrationPanel.help')}</p>
             <div className="flex gap-base">
               <label className="flex-1">
-                Repository
+                {t('integrationPanel.repository')}
                 <select
-                  aria-label="Integration repository"
+                  aria-label={t('integrationPanel.repositoryLabel')}
                   className="block w-full bg-secondary border p-half"
                   value={repositoryId}
                   disabled={create.isPending}
@@ -213,7 +207,9 @@ export function IntegrationPanel({
                     resetRequest();
                   }}
                 >
-                  <option value="">Select repository</option>
+                  <option value="">
+                    {t('integrationPanel.selectRepository')}
+                  </option>
                   {repos.data?.map((repo) => (
                     <option key={repo.id} value={repo.id}>
                       {repo.display_name}
@@ -222,9 +218,9 @@ export function IntegrationPanel({
                 </select>
               </label>
               <label className="flex-1">
-                Local target branch
+                {t('integrationPanel.branch')}
                 <select
-                  aria-label="Integration target branch"
+                  aria-label={t('integrationPanel.branchLabel')}
                   className="block w-full bg-secondary border p-half"
                   value={target}
                   disabled={create.isPending}
@@ -233,7 +229,7 @@ export function IntegrationPanel({
                     resetRequest();
                   }}
                 >
-                  <option value="">Select target explicitly</option>
+                  <option value="">{t('integrationPanel.selectBranch')}</option>
                   {branches.data
                     ?.filter((b) => !b.is_remote)
                     .map((branch) => (
@@ -249,9 +245,9 @@ export function IntegrationPanel({
               className="flex gap-base items-center"
             >
               <label>
-                Integration agent
+                {t('integrationPanel.agent')}
                 <select
-                  aria-label="Integration agent"
+                  aria-label={t('integrationPanel.agent')}
                   className="block bg-secondary border p-half"
                   value={agent.effectiveExecutor ?? ''}
                   onChange={(e) => {
@@ -262,7 +258,7 @@ export function IntegrationPanel({
                     resetRequest();
                   }}
                 >
-                  <option value="">Select agent</option>
+                  <option value="">{t('integrationPanel.selectAgent')}</option>
                   {providerOptions.map((option) => (
                     <option
                       key={option.executor}
@@ -295,13 +291,12 @@ export function IntegrationPanel({
               />
               {!agentReady && (
                 <span className="text-low">
-                  Choose an available agent in Code mode. Goal and Plan are not
-                  formal Integration modes.
+                  {t('integrationPanel.agentHelp')}
                 </span>
               )}
             </fieldset>
             <fieldset disabled={create.isPending} className="space-y-half">
-              <legend>Cards and adopted Workspaces</legend>
+              <legend>{t('integrationPanel.cards')}</legend>
               {issues.map((issue) => {
                 const candidates =
                   activities.data?.filter(
@@ -335,7 +330,9 @@ export function IntegrationPanel({
                       {issue.simple_id}: {issue.title}
                     </label>
                     <select
-                      aria-label={`Adopted Workspace for ${issue.title}`}
+                      aria-label={t('integrationPanel.adopted', {
+                        title: issue.title,
+                      })}
                       className="max-w-[55%] bg-secondary border p-half"
                       disabled={!(issue.id in selected)}
                       value={selected[issue.id]?.workspace_id ?? ''}
@@ -354,7 +351,9 @@ export function IntegrationPanel({
                         resetRequest();
                       }}
                     >
-                      <option value="">Choose Workspace</option>
+                      <option value="">
+                        {t('integrationPanel.selectWorkspace')}
+                      </option>
                       {candidates.map((ws) => (
                         <option
                           key={ws.workspace_id}
@@ -362,10 +361,11 @@ export function IntegrationPanel({
                           disabled={!ws.observed_head_oid}
                         >
                           {ws.name ?? ws.branch} ·{' '}
-                          {ws.observed_head_oid?.slice(0, 10) ?? 'unknown HEAD'}
+                          {ws.observed_head_oid?.slice(0, 10) ??
+                            t('integrationPanel.unknownHead')}
                           {Number(ws.active_agent_runs) ||
                           Number(ws.active_scripts)
-                            ? ' (busy)'
+                            ? t('integrationPanel.busy')
                             : ''}
                         </option>
                       ))}
@@ -376,14 +376,17 @@ export function IntegrationPanel({
                         candidates
                       ) && (
                         <span className="text-error">
-                          Selected commit changed; reselect the Workspace.
+                          {t('integrationPanel.selectionChanged')}
                         </span>
                       )}
                   </div>
                 );
               })}
             </fieldset>
-            <ol className="space-y-half" aria-label="Merge order">
+            <ol
+              className="space-y-half"
+              aria-label={t('integrationPanel.order')}
+            >
               {Object.values(selected).map((selection, index, ordered) => (
                 <li
                   key={selection.card_id}
@@ -404,7 +407,12 @@ export function IntegrationPanel({
                       key={label}
                       size="sm"
                       variant="outline"
-                      aria-label={`Move ${selection.card_id} ${Number(offset) < 0 ? 'up' : 'down'}`}
+                      aria-label={t(
+                        Number(offset) < 0
+                          ? 'integrationPanel.moveUp'
+                          : 'integrationPanel.moveDown',
+                        { card: selection.card_id }
+                      )}
                       disabled={
                         create.isPending ||
                         index + Number(offset) < 0 ||
@@ -439,12 +447,9 @@ export function IntegrationPanel({
                 }}
               />
               <span>
-                Skip all integration validation (unverified)
+                {t('integrationPanel.skip')}
                 <span className="block text-low">
-                  Skips tests, type checks, lint and other acceptance checks for
-                  new runs, including chat submissions. This preference is saved
-                  on the server. Conflict review and Git safety checks still
-                  apply. The result will be recorded as unverified.
+                  {t('integrationPanel.skipHelp')}
                 </span>
               </span>
             </label>
@@ -460,9 +465,11 @@ export function IntegrationPanel({
                 create.isPending
               }
             >
-              {create.isPending ? 'Reserving…' : 'Start selected Integration'}
+              {create.isPending
+                ? t('integrationPanel.reserving')
+                : t('integrationPanel.start')}
             </Button>
-            <h3 className="text-lg">Integration runs</h3>
+            <h3 className="text-lg">{t('integrationPanel.runs')}</h3>
             {[...(runs.data ?? [])]
               .sort(
                 (a, b) =>
@@ -476,17 +483,18 @@ export function IntegrationPanel({
                 >
                   <div className="flex flex-wrap items-center gap-base">
                     <strong>
-                      {run.status}
-                      {run.payload.skip_validation && ' · Unverified'}
+                      {t(`integrationReview.status.${run.status}`, {
+                        defaultValue: run.status,
+                      })}
+                      {run.payload.skip_validation &&
+                        ` · ${t('integrationPanel.unverified')}`}
                     </strong>
                     <code>{run.target_ref}</code>
                     <span className="text-low">{run.created_at}</span>
                   </div>
                   <p className="text-low break-all">Run {run.id}</p>
                   {run.payload.skip_validation && (
-                    <p>
-                      All integration validation skipped by explicit request.
-                    </p>
+                    <p>{t('integrationPanel.skipped')}</p>
                   )}
                   {run.error && (
                     <p role="alert" className="text-error whitespace-pre-wrap">
@@ -503,46 +511,63 @@ export function IntegrationPanel({
                     <div>
                       <p className="text-low">
                         {run.payload.skip_validation
-                          ? 'Integration proposal (unverified)'
-                          : 'Integration candidate (see validation evidence)'}
+                          ? t('integrationPanel.proposal')
+                          : t('integrationPanel.candidate')}
                       </p>
                       <p>{run.payload.semantic_summary}</p>
                     </div>
                   )}
-                  <p className="break-all">
-                    B: {run.payload.base_commit ?? 'waiting for target'} → R:{' '}
-                    {run.payload.result_commit ?? 'not prepared'}
-                  </p>
+                  <details>
+                    <summary>{t('integrationReview.candidate')}</summary>
+                    <p className="break-all">
+                      B:{' '}
+                      {run.payload.base_commit ?? t('integrationPanel.waiting')}{' '}
+                      → R:{' '}
+                      {run.payload.result_commit ??
+                        t('integrationPanel.notPrepared')}
+                    </p>
+                  </details>
                   <p>
                     Git:{' '}
                     {run.payload.published
-                      ? 'published'
+                      ? t('integrationPanel.published')
                       : run.payload.publication_intent
-                        ? 'reconciling publication'
-                        : 'not published'}{' '}
-                    · Wiki: {run.payload.wiki_result ?? 'not scheduled'}
+                        ? t('integrationPanel.reconciling')
+                        : t('integrationPanel.notPublished')}{' '}
+                    · Wiki:{' '}
+                    {run.payload.wiki_result ??
+                      t('integrationPanel.notScheduled')}
                   </p>
                   <ul>
                     {run.payload.sources.map((source) => (
                       <li key={source.selection.card_id}>
                         {source.title}: {source.commit.slice(0, 10)} ·{' '}
-                        {integrationDoneLabel(
-                          run.status,
-                          run.payload.published,
-                          source.done_result
-                        )}
+                        {source.done_result ??
+                          t(
+                            !run.payload.published &&
+                              ['cancelled', 'blocked', 'failed'].includes(
+                                run.status
+                              )
+                              ? 'integrationPanel.doneNotApplied'
+                              : run.status === 'recovery_required'
+                                ? 'integrationPanel.doneReconciling'
+                                : 'integrationPanel.donePending'
+                          )}
                       </li>
                     ))}
                   </ul>
                   {run.payload.validation.length > 0 && (
                     <details>
-                      <summary>Host validation evidence</summary>
+                      <summary>{t('integrationPanel.validation')}</summary>
                       <ul>
                         {run.payload.validation.map((v, i) => (
                           <li key={i} className="break-all">
                             {v.command} ({v.cwd}) —{' '}
-                            {v.required ? 'required' : 'optional'}:{' '}
-                            {v.result ?? 'not executed'}, exit{' '}
+                            {v.required
+                              ? t('integrationPanel.required')
+                              : t('integrationPanel.optional')}
+                            : {v.result ?? t('integrationPanel.notExecuted')},
+                            exit{' '}
                             {v.exit_code == null ? '—' : String(v.exit_code)},
                             process {v.execution_process_id ?? '—'};{' '}
                             {v.evidence}
@@ -561,7 +586,7 @@ export function IntegrationPanel({
                           navigation.goToWorkspace(run.workspace_id!);
                         }}
                       >
-                        Open integration Workspace
+                        {t('integrationPanel.openWorkspace')}
                       </Button>
                     )}
                     {integrationCanCancel(
@@ -577,8 +602,8 @@ export function IntegrationPanel({
                         }
                       >
                         {run.cancel_requested
-                          ? 'Stopping…'
-                          : 'Cancel Integration'}
+                          ? t('integrationPanel.stopping')
+                          : t('integrationPanel.cancel')}
                       </Button>
                     )}
                     {(['recovery_required', 'post_processing'].includes(
@@ -596,14 +621,14 @@ export function IntegrationPanel({
                           action.mutate({ id: run.id, recover: true })
                         }
                       >
-                        Reconcile publication (no remerge)
+                        {t('integrationPanel.reconcile')}
                       </Button>
                     )}
                   </div>
                 </section>
               ))}
             {!runs.data?.length && (
-              <p className="text-low">No formal Integration runs.</p>
+              <p className="text-low">{t('integrationPanel.noRuns')}</p>
             )}
           </div>
         </DialogContent>

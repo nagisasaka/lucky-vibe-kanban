@@ -67,11 +67,9 @@ describe('Integration instructions', () => {
         },
       })
     );
-    expect(render()).toContain(
-      'Unverified — all integration validation skipped'
-    );
+    expect(render()).toContain('integrationReview.unverified');
     fixture.run!.payload.skip_validation = false;
-    expect(render()).not.toContain('Unverified');
+    expect(render()).not.toContain('integrationReview.unverified');
   });
   it('uses the existing steer endpoint and preserves command identity on resend', async () => {
     render();
@@ -147,4 +145,14 @@ describe('Integration instructions', () => {
     expect(html).toContain('Replaced the retired development command');
     expect(html).toContain('<details open=""');
   });
+});
+
+it('does not offer instructions that cannot change a frozen review candidate', () => {
+  fixture.run = {
+    ...fixture.run!,
+    status: 'blocked',
+    payload: { ...fixture.run!.payload, stop: { category: 'merge_review' } },
+  } as IntegrationRun;
+  expect(render()).not.toContain('<textarea');
+  expect(render()).toContain('integrationGate.cancel');
 });

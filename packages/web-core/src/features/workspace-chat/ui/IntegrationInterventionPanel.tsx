@@ -70,15 +70,26 @@ export function IntegrationInterventionPanel({
           current: (run?.payload.step_index ?? 0) + 1,
           total: run?.payload.sources?.length ?? 0,
         })}{' '}
-        · {run?.status}
+        ·{' '}
+        {run &&
+          t(`integrationReview.status.${run.status}`, {
+            defaultValue: run.status,
+          })}
       </p>
       {run?.payload.skip_validation && (
-        <p>
-          Unverified — all integration validation skipped by explicit request.
+        <p>{t('integrationReview.unverified')}</p>
+      )}
+      {run && (
+        <p role="status">
+          {t(
+            run.payload.published
+              ? 'integrationReview.published'
+              : 'integrationReview.notPublished'
+          )}
         </p>
       )}
       {run && <IntegrationResolutionReview run={run} />}
-      <p>{t('integrationGate.instructionBoundary')}</p>
+      {!reviewing && <p>{t('integrationGate.instructionBoundary')}</p>}
       {run?.error && (
         <p role="alert" className="whitespace-pre-wrap">
           {run.error}
@@ -86,12 +97,15 @@ export function IntegrationInterventionPanel({
       )}
       {run?.payload.stop && (
         <p>
-          {run.payload.stop.stage}: {run.payload.stop.next_action}
+          {reviewing &&
+          run.payload.stop.next_action ===
+            'Review the frozen resolution diff and approve to continue'
+            ? t('integrationReview.nextAction')
+            : run.payload.stop.next_action}
         </p>
       )}
       {run && <IntegrationGateControls run={run} />}
-      {(!!run?.payload.validation?.length ||
-        !!run?.payload.exclusions?.length) && (
+      {!!run?.payload.validation?.length && (
         <details open={run?.status === 'blocked'}>
           <summary>{t('integrationReview.validationPlan')}</summary>
           {run?.payload.validation?.map((check, index) => (
@@ -111,17 +125,17 @@ export function IntegrationInterventionPanel({
               </p>
             </div>
           ))}
-          {!!run?.payload.exclusions?.length && (
-            <div>
-              <p>{t('integrationReview.exclusions')}</p>
-              <ul>
-                {run.payload.exclusions.map((reason, index) => (
-                  <li key={index}>{reason}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </details>
+      )}
+      {!!run?.payload.exclusions?.length && (
+        <div>
+          <p>{t('integrationReview.exclusions')}</p>
+          <ul>
+            {run.payload.exclusions.map((reason, index) => (
+              <li key={index}>{reason}</li>
+            ))}
+          </ul>
+        </div>
       )}
       {!!run?.payload.steps?.length && (
         <details>
@@ -132,7 +146,7 @@ export function IntegrationInterventionPanel({
                 {index + 1}. {step.summary}
               </p>
               {step.validation_skipped && (
-                <p>Unverified — validation skipped.</p>
+                <p>{t('integrationReview.unverified')}</p>
               )}
               {step.validation.map((check, i) => (
                 <p key={i}>
@@ -151,28 +165,32 @@ export function IntegrationInterventionPanel({
           </pre>
         </details>
       )}
-      <textarea
-        aria-label={t('integrationGate.instruction')}
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        className="bg-primary border border-border rounded-sm p-half w-full"
-      />
-      <PrimaryButton
-        disabled={
-          send.isPending ||
-          !run ||
-          !['blocked', 'integrating'].includes(run.status) ||
-          ((run.status === 'integrating' || reviewing) && !prompt.trim()) ||
-          run.payload.publication_intent
-        }
-        onClick={() => send.mutate()}
-      >
-        {reviewing
-          ? t('integrationReview.revise')
-          : run?.status === 'integrating'
-            ? t('integrationGate.send')
-            : t('integrationGate.resume')}
-      </PrimaryButton>
+      {!reviewing && (
+        <>
+          <textarea
+            aria-label={t('integrationGate.instruction')}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="bg-primary border border-border rounded-sm p-half w-full"
+          />
+          <PrimaryButton
+            disabled={
+              send.isPending ||
+              !run ||
+              !['blocked', 'integrating'].includes(run.status) ||
+              ((run.status === 'integrating' || reviewing) && !prompt.trim()) ||
+              run.payload.publication_intent
+            }
+            onClick={() => send.mutate()}
+          >
+            {reviewing
+              ? t('integrationReview.revise')
+              : run?.status === 'integrating'
+                ? t('integrationGate.send')
+                : t('integrationGate.resume')}
+          </PrimaryButton>
+        </>
+      )}
       {run &&
         !['succeeded', 'cancelled', 'failed'].includes(run.status) &&
         !run.payload.publication_intent && (
