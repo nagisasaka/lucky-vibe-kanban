@@ -1405,3 +1405,71 @@ async fn run_events_http_read_scope_and_reconnect() {
     provider.abort();
     let _ = provider.await;
 }
+
+#[tokio::test]
+async fn resource_observation_http_read_scope_and_input_boundary() {
+    let (remote, auth, provider) = fixture().await;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let server =
+        tokio::spawn(async move { axum::serve(listener, router(remote, auth)).await.unwrap() });
+    let request = |token: &str, args: Value| {
+        reqwest::Client::new().post(format!("{base}/mcp"))
+            .header("host", "lvk.example")
+            .header("accept", "application/json, text/event-stream")
+            .header("MCP-Protocol-Version", "2025-03-26")
+            .bearer_auth(token)
+            .json(&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_resource_observation","arguments":args}}))
+    };
+    for (token, status) in [("revoked", 401), ("no-scope", 403)] {
+        assert_eq!(
+            request(token, json!({}))
+                .send()
+                .await
+                .unwrap()
+                .status()
+                .as_u16(),
+            status
+        );
+    }
+    // Read-only reaches parameter validation, with no statistics read or new
+    // permission. The same boundary rejects command/path overrides.
+    let result: Value = request("read-only", json!({"path":"/etc/passwd"}))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(result["result"]["isError"], true, "{result}");
+    assert!(
+        result["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Invalid"),
+        "{result}"
+    );
+    let result: Value = request("read-only", json!({}))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_ne!(result["result"]["isError"], true, "{result}");
+    let observation = &result["result"]["structuredContent"];
+    assert_eq!(observation["schema_version"], 1);
+    assert_eq!(observation["scope"]["statistics"], "system-visible");
+    assert_eq!(observation["completion"], "complete");
+    assert!(
+        observation["system_visible"]["cpu_usage"]["sampling_duration_ms"]
+            .as_f64()
+            .unwrap()
+            >= 500.0
+    );
+    assert!(observation.to_string().len() < 8192);
+    server.abort();
+    provider.abort();
+    let _ = server.await;
+    let _ = provider.await;
+}
