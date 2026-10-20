@@ -9,16 +9,16 @@ use super::{
     *,
 };
 
-struct Http {
-    base: String,
-    task: tokio::task::JoinHandle<()>,
+pub(super) struct Http {
+    pub(super) base: String,
+    pub(super) task: tokio::task::JoinHandle<()>,
 }
 impl Drop for Http {
     fn drop(&mut self) {
         self.task.abort();
     }
 }
-async fn serve(remote: Remote, auth: Auth) -> Http {
+pub(super) async fn serve(remote: Remote, auth: Auth) -> Http {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
     let task =
@@ -26,7 +26,7 @@ async fn serve(remote: Remote, auth: Auth) -> Http {
     Http { base, task }
 }
 impl Http {
-    async fn rpc(&self, token: &str, method: &str, params: Value) -> (u16, Value) {
+    pub(super) async fn rpc(&self, token: &str, method: &str, params: Value) -> (u16, Value) {
         let response = reqwest::Client::new()
             .post(format!("{}/mcp", self.base))
             .header("Host", "lvk.example")
@@ -47,7 +47,7 @@ impl Http {
             },
         )
     }
-    async fn call(&self, token: &str, name: &str, input: Value) -> Value {
+    pub(super) async fn call(&self, token: &str, name: &str, input: Value) -> Value {
         let (status, body) = self
             .rpc(token, "tools/call", json!({"name":name,"arguments":input}))
             .await;
@@ -55,12 +55,12 @@ impl Http {
         assert!(body.get("error").is_none(), "{body}");
         body["result"].clone()
     }
-    async fn value(&self, name: &str, input: Value) -> Value {
+    pub(super) async fn value(&self, name: &str, input: Value) -> Value {
         let result = self.call("runtime", name, input).await;
         assert_ne!(result["isError"], true, "{result}");
         result["structuredContent"].clone()
     }
-    async fn settle(&self, request: Uuid) -> Value {
+    pub(super) async fn settle(&self, request: Uuid) -> Value {
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
                 let value = self
@@ -79,7 +79,7 @@ impl Http {
         .unwrap()
     }
 }
-fn grant(root: &Path, executable: PathBuf) -> Grant {
+pub(super) fn grant(root: &Path, executable: PathBuf) -> Grant {
     Grant {
         id: "example-api".into(),
         project_id: Uuid::from_u128(1),
@@ -442,5 +442,23 @@ async fn environment_http_launch_boundaries_and_failures() {
             .await["isError"],
         true
     );
+    // No AgentRun exists, and archival does not change this current restriction.
+    sqlx::query("UPDATE workspaces SET archived=1")
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        http.call("runtime", "run_process", input(Uuid::new_v4(), &echo, "."))
+            .await["isError"],
+        true
+    );
+    assert_eq!(http.call("runtime", "stop_process", json!({"region":"example-api","request_id":Uuid::new_v4(),"identity":"unselected","purpose":"Verify overlap admission"})).await["isError"], true);
+    let read = http
+        .value(
+            "read_runtime_file",
+            json!({"region":"example-api","path":"not-executable"}),
+        )
+        .await;
+    assert!(read.to_string().contains("ordinary file, not executable"));
     provider.abort();
 }

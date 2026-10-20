@@ -62,7 +62,11 @@ region whose execution does not require shared-resource coordination. Run and
 stop refuse a root overlapping any LVK-managed Workspace, including a root that
 contains a Workspace. Use existing Workspace controls and shared-resource
 operations for those targets, devices, databases and deployments. A runtime grant
-does not acquire resource claims or authorise bypassing them.
+does not acquire resource claims or authorise bypassing them. This is a current
+implementation restriction, including idle and archived Workspaces, not an
+agreed restriction of the general runtime-access requirements. Workspace
+execution policy remains pending; an idle check alone cannot prevent a competing
+launch. See the [review and coordination options](../development/runtime-access-review.md).
 
 ## Choose the appropriate workflow
 
@@ -86,6 +90,31 @@ server environment variables: only a fixed `PATH=/usr/local/bin:/usr/bin:/bin` a
 `LANG=C.UTF-8` are set. Process observation withholds argv and environment, but
 program output and readable files can still contain secrets. Grant access only
 to users trusted to see those contents.
+
+### Existing toolchain scripts
+
+An absolute interpreter path can launch an existing script. After `exec`, process
+observation and stop check the **current** executable and cwd, even for a managed
+`run_id`. Grant both the launcher (for example `/bin/sh`) and the canonical target
+(for example `/usr/bin/python3`) before starting. Granting only the shell can
+accept the launch while denying later observation and stop; captured output
+remains owner-bound. A script that changes cwd outside its grant has the same
+limitation. A run identifier never widens the grant.
+
+`HOME`, `CARGO_HOME`, `RUSTUP_HOME`, `NVM_DIR` and `VIRTUAL_ENV` are not inherited.
+Cargo/rustup may need an explicit home and toolchain/cache paths; a non-interactive
+shell does not automatically initialise nvm or activate a Python virtualenv.
+Prefer an existing trusted wrapper that exports only the required non-secret
+paths and sources its existing activation file. Alternatively use an absolute
+installed Python/Node executable when activation is unnecessary. An absolute
+venv interpreter alone does not set `VIRTUAL_ENV` or add its scripts to `PATH`.
+For nvm, source the installation's `nvm.sh` explicitly and choose an installed
+version; grant the resolved Node binary as well. Do not print the entire environment.
+
+Creating or modifying such a wrapper is a Codex source/configuration task, not
+inline shell code submitted through this MCP. No new environment-override API is
+provided. Check each procedure's requirements and side effects; these examples
+do not establish compatibility with every Cargo, nvm or venv installation.
 
 ## Tools and evidence
 
@@ -230,7 +259,8 @@ that a build passed or the service is healthy.
 
 Managed process buffers and lifecycle monitors are volatile. After LVK restarts,
 the durable receipt retains managed ownership while process output is unavailable and execution
-outcome is unknown. Do not replay automatically. Reobserve existing processes and
+outcome is unknown. The in-memory lifetime timeout no longer supervises a surviving
+child after host termination. This is not a durable runtime limit. Do not replay automatically. Reobserve existing processes and
 logs, and involve the operator when identity or termination cannot be confirmed.
 
 Self-stop and self-restart are unsupported: direct stop excludes LVK itself and

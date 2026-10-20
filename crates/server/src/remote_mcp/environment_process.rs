@@ -663,6 +663,136 @@ mod tests {
                 .is_err()
         );
     }
+    // Reproduction: a managed launch is not a grant for every later executable.
+    #[tokio::test]
+    async fn exec_transition_requires_target_grant_and_minimal_environment() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        let shell = Path::new("/bin/sh").canonicalize().unwrap();
+        let sleep = Path::new("/bin/sleep").canonicalize().unwrap();
+        let script = root.join("existing-start.sh");
+        std::fs::write(&script, "printf '%s|%s|%s|%s|%s|%s' \"$PATH\" \"$LANG\" \"${HOME-unset}\" \"${CARGO_HOME-unset}\" \"${NVM_DIR-unset}\" \"${VIRTUAL_ENV-unset}\"; exec /bin/sleep 30\n").unwrap();
+        let registry = ProcessRegistry::default();
+        let run = registry
+            .run(
+                "alice",
+                &root,
+                &shell,
+                &[script.to_string_lossy().into()],
+                &root,
+                60,
+                false,
+            )
+            .await
+            .unwrap();
+        let id = run["run_id"].as_str().unwrap();
+        let identity = run["identity"].as_str().unwrap();
+        let _cleanup = TestProcessCleanup::new(identity).unwrap();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while observe(run["pid"].as_u64().unwrap() as u32)
+                .unwrap()
+                .executable
+                != sleep
+            {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        let launcher_only = vec![shell.clone()];
+        assert!(inspect(&root, &launcher_only, identity).is_err());
+        assert!(
+            list(&root, &launcher_only, 0, 200).unwrap()["processes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|p| p["identity"] != identity)
+        );
+        assert!(
+            registry
+                .stop("alice", &root, &launcher_only, id, false)
+                .is_err()
+        );
+        assert!(
+            ProcessRegistry::default()
+                .stop("alice", &root, &launcher_only, identity, false)
+                .is_err()
+        );
+        let allowed = vec![shell, sleep];
+        assert_eq!(
+            inspect(&root, &allowed, identity).unwrap()["identity"],
+            identity
+        );
+        assert!(registry.stop("bob", &root, &allowed, id, false).is_err());
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let text = registry
+                    .output("alice", &root, id, "stdout", 0, 1024)
+                    .unwrap();
+                if text["output"]["text"]
+                    == "/usr/local/bin:/usr/bin:/bin|C.UTF-8|unset|unset|unset|unset"
+                {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        registry.stop("alice", &root, &allowed, id, false).unwrap();
+    }
+
+    #[tokio::test]
+    async fn existing_wrapper_can_prepare_explicit_nonsecret_environment() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        let shell = Path::new("/bin/sh").canonicalize().unwrap();
+        let script = root.join("existing-test.sh");
+        // Fixture activation only; this does not claim to exercise nvm, Cargo or a real venv.
+        std::fs::write(
+            root.join("activate"),
+            "VIRTUAL_ENV=$PWD/venv; export VIRTUAL_ENV; PATH=$VIRTUAL_ENV/bin:$PATH; export PATH\n",
+        )
+        .unwrap();
+        std::fs::write(&script, "HOME=$PWD/home; CARGO_HOME=$PWD/cargo; NVM_DIR=$PWD/nvm; export HOME CARGO_HOME NVM_DIR; . ./activate; printf '%s\\n' \"$HOME\" \"$CARGO_HOME\" \"$NVM_DIR\" \"$VIRTUAL_ENV\" \"$PATH\"\n").unwrap();
+        let registry = ProcessRegistry::default();
+        let run = registry
+            .run(
+                "alice",
+                &root,
+                &shell,
+                &[script.to_string_lossy().into()],
+                &root,
+                10,
+                false,
+            )
+            .await
+            .unwrap();
+        let _cleanup = TestProcessCleanup::new(run["identity"].as_str().unwrap()).unwrap();
+        let id = run["run_id"].as_str().unwrap();
+        let output = tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let output = registry
+                    .output("alice", &root, id, "stdout", 0, 4096)
+                    .unwrap();
+                if output["state"] == "exited" {
+                    break output;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(output["exit_code"], 0);
+        let root = root.display();
+        assert_eq!(
+            output["output"]["text"],
+            format!(
+                "{root}/home\n{root}/cargo\n{root}/nvm\n{root}/venv\n{root}/venv/bin:/usr/local/bin:/usr/bin:/bin\n"
+            )
+        );
+    }
+
     #[tokio::test]
     async fn finite_timeout_and_fast_exit_are_observed() {
         let tmp = tempfile::tempdir().unwrap();
