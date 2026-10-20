@@ -18,6 +18,7 @@ import { randomUUID } from 'node:crypto';
 
 // Run after building this checkout's server and local-web. Own instance, DB,
 // runtime, kernel-assigned loopback ports, browser context and foreground child.
+const nativeLayout = process.argv.includes('--native');
 const scratch = await mkdtemp(join(tmpdir(), 'lvk-chat-files-'));
 const instance = join(scratch, 'instance');
 const workspace = join(scratch, 'workspace');
@@ -139,146 +140,219 @@ c.commit()
     workspace,
   ]);
 
-  const result = await build({
-    entryPoints: ['tests/chat/file-links.fixture.tsx'],
-    bundle: true,
-    write: false,
-    format: 'iife',
-    globalName: 'fileLinks',
-    jsx: 'automatic',
-    nodePaths: [resolve('packages/web-core/node_modules')],
-    alias: { '@': resolve('packages/web-core/src') },
-    define: {
-      'process.env.NODE_ENV': '"production"',
-      'import.meta.env': '{}',
-      'import.meta.hot': 'undefined',
-    },
-    loader: { '.css': 'empty', '.woff2': 'dataurl', '.wasm': 'dataurl' },
-  });
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  page.setDefaultTimeout(30_000);
-  const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(base, { waitUntil: 'networkidle' });
-  assert.match(await page.title(), /Lucky Vibe Kanban/i);
-  assert.ok(
-    await page.locator('#root').innerText(),
-    'built application renders'
-  );
-  console.log('Built application rendered');
-  // Mount production chat + preview components on the real backend origin.
-  // Only text/layout are synthetic; API requests are not intercepted or mocked.
-  await page.addScriptTag({ content: result.outputFiles[0].text });
-  await page.evaluate(
-    ({ workspaceId, workspace }) =>
-      window.fileLinks.mount(workspaceId, workspace),
-    { workspaceId, workspace }
-  );
-  const chat = page.getByRole('region', { name: 'Chat' });
-  const preview = page.getByRole('region', { name: 'File preview' });
-  await chat.getByRole('link', { name: 'relative', exact: true }).waitFor();
-  await page.waitForFunction(() =>
-    document.querySelector('section a[tabindex="0"]')
-  );
-  for (const [label, text] of [
-    ['relative', 'const selected = 3;'],
-    ['absolute', 'const fourth = 4;'],
-    ['spaces', 'space second'],
-    ['encoded', 'space second'],
-    ['markdown', 'markdown selected'],
-  ]) {
-    const link = chat.getByRole('link', { name: label, exact: true });
-    if (label === 'absolute') {
-      await link.focus();
-      await page.keyboard.press('Enter');
-    } else await link.click();
-    await preview
-      .locator('[aria-current="location"]')
-      .filter({ hasText: text })
-      .waitFor();
-    assert.equal(context.pages().length, 1);
-    console.log('Opened chat file link:', label);
-  }
-  for (const label of ['missing', 'symlink']) {
-    await chat.getByRole('link', { name: label, exact: true }).click();
-    await preview
-      .getByText('Could not load preview', { exact: true })
-      .waitFor();
-    assert.ok(!(await preview.innerText()).includes('OUTSIDE_SECRET'));
-  }
-  for (const label of [
-    'outside',
-    'traversal',
-    'encoded-traversal',
-    'dangerous',
-  ]) {
-    const link = chat.getByRole('link', { name: label, exact: true });
-    assert.equal(await link.getAttribute('aria-disabled'), 'true');
-    assert.equal(await link.getAttribute('href'), null);
-  }
-  const external = chat.getByRole('link', { name: 'external', exact: true });
-  assert.equal(await external.getAttribute('href'), 'https://example.com/docs');
-  assert.equal(await external.getAttribute('target'), '_blank');
-  assert.equal(await external.getAttribute('rel'), 'noopener noreferrer');
-
-  // Real backend boundary regressions, deliberately bypassing frontend guards.
-  const contentUrl = (path, id = repoId, ws = workspaceId) =>
-    `${base}/api/workspaces/${ws}/files/content?${new URLSearchParams({ repo_id: id, path })}`;
-  const good = await fetch(contentUrl('src/example.ts'));
-  assert.equal(good.status, 200);
-  assert.match(JSON.stringify(await good.json()), /const selected = 3/);
-  for (const [path, status, id, ws] of [
-    ['../secret.txt', 400],
-    ['/etc/passwd', 400],
-    ['C:\\Windows\\win.ini', 400],
-    ['escape.txt', 404],
-    ['missing.txt', 404],
-    ['src/example.ts', 404, foreignRepoId],
-    ['src/example.ts', 404, repoId, randomUUID()],
-  ]) {
-    for (const endpoint of ['content', 'raw']) {
-      const response = await fetch(
-        contentUrl(path, id, ws).replace(
-          '/files/content?',
-          `/files/${endpoint}?`
-        )
+  if (nativeLayout) {
+    await writeFile(
+      join(repo, 'src/example.ts'),
+      Array.from({ length: 160 }, (_, i) =>
+        i === 119 ? 'const nativeSelected = 120;' : `// native line ${i + 1}`
+      ).join('\n')
+    );
+    execFileSync('git', ['init', '-b', 'main', repo]);
+    execFileSync('git', ['-C', repo, 'add', '.']);
+    execFileSync('git', [
+      '-C',
+      repo,
+      '-c',
+      'user.name=E2E',
+      '-c',
+      'user.email=e2e@example.invalid',
+      'commit',
+      '-m',
+      'Native file link fixture',
+    ]);
+    const seed = JSON.parse(
+      execFileSync(
+        'python3',
+        [
+          'tests/chat/file-links.native-seed.py',
+          join(instance, 'data', db),
+          workspaceId,
+          workspace,
+        ],
+        { encoding: 'utf8' }
+      )
+    );
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 1000 },
+    });
+    const page = await context.newPage();
+    page.setDefaultTimeout(30_000);
+    const errors = [];
+    page.on('response', (response) => {
+      if (response.url().includes('/files/'))
+        console.log('Native file response:', response.status(), response.url());
+    });
+    page.on('pageerror', (error) => errors.push(error.message));
+    const { verifyNativeFileLink } = await import('./file-links.native.mjs');
+    try {
+      await verifyNativeFileLink(
+        page,
+        base,
+        workspaceId,
+        repoId,
+        seed.session_id
       );
-      assert.equal(
-        response.status,
-        status,
-        `${endpoint} must reject ${path} ${id ?? ''}`
-      );
-      assert.ok(!(await response.text()).includes('OUTSIDE_SECRET'));
+      assert.deepEqual(errors, []);
+    } catch (error) {
+      console.error('Native page:', await page.locator('body').innerText());
+      console.error('Browser errors:', errors);
+      throw error;
     }
-  }
-  assert.deepEqual(errors, []);
-  console.log(
-    JSON.stringify(
-      {
+    console.log(
+      JSON.stringify({
         result: 'passed',
+        mode: 'native-layout',
         backend: base,
         chromium: browser.version(),
-        cases: [
-          'built app render',
-          'relative :line',
-          'absolute #L keyboard',
-          'spaces and Unicode',
-          'encoded filename',
-          'markdown line',
-          'missing error',
-          'symlink confinement',
-          'disabled unsafe links',
-          'HTTPS native attributes',
-          'real API traversal/absolute/repo membership/workspace isolation',
-        ],
-        mocks: 'none; seeded DB and synthetic conversation layout only',
+        mocks: 'none; dedicated DB conversation seed only',
+      })
+    );
+  } else {
+    const result = await build({
+      entryPoints: ['tests/chat/file-links.fixture.tsx'],
+      bundle: true,
+      write: false,
+      format: 'iife',
+      globalName: 'fileLinks',
+      jsx: 'automatic',
+      nodePaths: [resolve('packages/web-core/node_modules')],
+      alias: { '@': resolve('packages/web-core/src') },
+      define: {
+        'process.env.NODE_ENV': '"production"',
+        'import.meta.env': '{}',
+        'import.meta.hot': 'undefined',
       },
-      null,
-      2
-    )
-  );
+      loader: { '.css': 'empty', '.woff2': 'dataurl', '.wasm': 'dataurl' },
+    });
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    page.setDefaultTimeout(30_000);
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto(base, { waitUntil: 'networkidle' });
+    assert.match(await page.title(), /Lucky Vibe Kanban/i);
+    assert.ok(
+      await page.locator('#root').innerText(),
+      'built application renders'
+    );
+    console.log('Built application rendered');
+    // Mount production chat + preview components on the real backend origin.
+    // Only text/layout are synthetic; API requests are not intercepted or mocked.
+    await page.addScriptTag({ content: result.outputFiles[0].text });
+    await page.evaluate(
+      ({ workspaceId, workspace }) =>
+        window.fileLinks.mount(workspaceId, workspace),
+      { workspaceId, workspace }
+    );
+    const chat = page.getByRole('region', { name: 'Chat' });
+    const preview = page.getByRole('region', { name: 'File preview' });
+    await chat.getByRole('link', { name: 'relative', exact: true }).waitFor();
+    await page.waitForFunction(() =>
+      document.querySelector('section a[tabindex="0"]')
+    );
+    for (const [label, text] of [
+      ['relative', 'const selected = 3;'],
+      ['absolute', 'const fourth = 4;'],
+      ['spaces', 'space second'],
+      ['encoded', 'space second'],
+      ['markdown', 'markdown selected'],
+    ]) {
+      const link = chat.getByRole('link', { name: label, exact: true });
+      if (label === 'absolute') {
+        await link.focus();
+        await page.keyboard.press('Enter');
+      } else await link.click();
+      await preview
+        .locator('[aria-current="location"]')
+        .filter({ hasText: text })
+        .waitFor();
+      assert.equal(context.pages().length, 1);
+      console.log('Opened chat file link:', label);
+    }
+    for (const label of ['missing', 'symlink']) {
+      await chat.getByRole('link', { name: label, exact: true }).click();
+      await preview
+        .getByText('Could not load preview', { exact: true })
+        .waitFor();
+      assert.ok(!(await preview.innerText()).includes('OUTSIDE_SECRET'));
+    }
+    for (const label of [
+      'outside',
+      'traversal',
+      'encoded-traversal',
+      'dangerous',
+    ]) {
+      const link = chat.getByRole('link', { name: label, exact: true });
+      assert.equal(await link.getAttribute('aria-disabled'), 'true');
+      assert.equal(await link.getAttribute('href'), null);
+    }
+    const external = chat.getByRole('link', { name: 'external', exact: true });
+    assert.equal(
+      await external.getAttribute('href'),
+      'https://example.com/docs'
+    );
+    assert.equal(await external.getAttribute('target'), '_blank');
+    assert.equal(await external.getAttribute('rel'), 'noopener noreferrer');
+
+    // Real backend boundary regressions, deliberately bypassing frontend guards.
+    const contentUrl = (path, id = repoId, ws = workspaceId) =>
+      `${base}/api/workspaces/${ws}/files/content?${new URLSearchParams({ repo_id: id, path })}`;
+    const good = await fetch(contentUrl('src/example.ts'));
+    assert.equal(good.status, 200);
+    assert.match(JSON.stringify(await good.json()), /const selected = 3/);
+    for (const [path, status, id, ws] of [
+      ['../secret.txt', 400],
+      ['/etc/passwd', 400],
+      ['C:\\Windows\\win.ini', 400],
+      ['escape.txt', 404],
+      ['missing.txt', 404],
+      ['src/example.ts', 404, foreignRepoId],
+      ['src/example.ts', 404, repoId, randomUUID()],
+    ]) {
+      for (const endpoint of ['content', 'raw']) {
+        const response = await fetch(
+          contentUrl(path, id, ws).replace(
+            '/files/content?',
+            `/files/${endpoint}?`
+          )
+        );
+        assert.equal(
+          response.status,
+          status,
+          `${endpoint} must reject ${path} ${id ?? ''}`
+        );
+        assert.ok(!(await response.text()).includes('OUTSIDE_SECRET'));
+      }
+    }
+    assert.deepEqual(errors, []);
+    console.log(
+      JSON.stringify(
+        {
+          result: 'passed',
+          backend: base,
+          chromium: browser.version(),
+          cases: [
+            'built app render',
+            'relative :line',
+            'absolute #L keyboard',
+            'spaces and Unicode',
+            'encoded filename',
+            'markdown line',
+            'missing error',
+            'symlink confinement',
+            'disabled unsafe links',
+            'HTTPS native attributes',
+            'real API traversal/absolute/repo membership/workspace isolation',
+          ],
+          mocks: 'none; seeded DB and synthetic conversation layout only',
+        },
+        null,
+        2
+      )
+    );
+  }
 } catch (error) {
   console.error(log.slice(-8000));
   throw error;
