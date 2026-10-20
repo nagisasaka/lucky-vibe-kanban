@@ -17,9 +17,17 @@ const launch: ExecutorConfig = {
 };
 function Composer({ scope }: { scope: string }) {
   const [scratch, setScratch] = useState(saved[scope]);
-  const { executorConfig, setOverrides } = useExecutorConfig({
+  const { executorConfig, setOverrides, setVariant } = useExecutorConfig({
     profiles: {
       CODEX: {
+        HIGH: {
+          CODEX: {
+            append_prompt: null,
+            plan: false,
+            execution_mode: ExecutionMode.code,
+            model_reasoning_effort: "high",
+          },
+        },
         DEFAULT: {
           CODEX: {
             append_prompt: null,
@@ -49,6 +57,7 @@ function Composer({ scope }: { scope: string }) {
     <>
       <output id="config">{JSON.stringify(executorConfig)}</output>
       <output id="saved">{JSON.stringify(scratch)}</output>
+      <button onClick={() => setVariant("HIGH")}>High preset</button>
       <button onClick={() => setOverrides({ reasoning_id: "ultra" })}>
         Ultra
       </button>

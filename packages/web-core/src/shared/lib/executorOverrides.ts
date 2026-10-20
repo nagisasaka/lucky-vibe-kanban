@@ -3,7 +3,8 @@ import { ExecutionMode, type ExecutorConfig } from 'shared/types';
 /** A stored launch is a complete snapshot, not a patch over today's preset.
  * In particular absent/null reasoning means provider inheritance, not "low"
  * or the possibly edited preset. Other draft fields may be partial edits;
- * absent reasoning in a server draft represents a serialized None override.
+ * identity-only drafts select a preset; override snapshots may contain a
+ * serialized None reasoning override.
  */
 export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
   field: K,
@@ -14,9 +15,15 @@ export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
 ): ExecutorConfig[K] | undefined {
   if (Object.hasOwn(selection, field)) return selection[field];
   if (scratch) {
-    // ExecutorConfig serializes None reasoning by omitting the key. Normalize
-    // that to inheritance, so a cleared effort cannot return from the launch.
-    const draft: ExecutorConfig = { reasoning_id: null, ...scratch };
+    // setExecutor/setVariant persist only identity and expect preset fallback.
+    // setOverrides persists the effective selection. In that snapshot Rust
+    // omits None reasoning, which must block the previous effort on restore.
+    const hasOverrides = Object.keys(scratch).some(
+      (key) => key !== 'executor' && key !== 'variant'
+    );
+    const draft: ExecutorConfig = hasOverrides
+      ? { reasoning_id: null, ...scratch }
+      : scratch;
     if (Object.hasOwn(draft, field)) return draft[field];
   }
   if (launch) return launch[field];

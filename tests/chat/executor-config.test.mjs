@@ -33,7 +33,7 @@ test("executor hook preserves explicit reasoning and inherited model across remo
           }));
           builder.onLoad({ filter: /.*/, namespace: "mock" }, () => ({
             contents:
-              'export const usePresetOptions = () => ({data: {executor: "CODEX", reasoning_id: "low"}});',
+              'export const usePresetOptions = (executor, variant) => ({data: {executor, reasoning_id: variant === "HIGH" ? "high" : null, permission_policy: "AUTO", execution_mode: "code"}});',
           }));
         },
       },
@@ -92,6 +92,41 @@ test("executor hook preserves explicit reasoning and inherited model across remo
         (await read()).reasoning_id,
         null,
         "changing model must not restore preset/launch reasoning",
+      );
+      await click("High preset");
+      assert.deepEqual(
+        await read("saved"),
+        { executor: "CODEX", variant: "HIGH" },
+        "setVariant persists identity only, not an explicit reasoning clear",
+      );
+      assert.equal((await read()).reasoning_id, "high");
+      await click("Remount");
+      assert.equal(
+        (await read()).reasoning_id,
+        "high",
+        "preset survives persistence/remount",
+      );
+      assert.equal(
+        (await read()).model_id,
+        undefined,
+        "preset uses CLI model inheritance",
+      );
+      await click("Ultra");
+      await click("Remount");
+      assert.equal((await read()).reasoning_id, "ultra");
+      await click("Follow Settings");
+      await click("Remount");
+      assert.equal(
+        (await read()).reasoning_id,
+        null,
+        "explicit clear blocks the high preset without a model override",
+      );
+      await click("High preset");
+      await click("Remount");
+      assert.equal(
+        (await read()).reasoning_id,
+        "high",
+        "reselecting the preset discards the explicit clear",
       );
       assert.deepEqual(errors, []);
       await page.close();

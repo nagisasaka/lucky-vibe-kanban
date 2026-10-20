@@ -13,8 +13,9 @@
 既存Scratchに実効選択を保存し、古い部分的ドラフトはモデルを継承して復元する。
 同じモデルの再選択では深度を維持し、別モデルを選ぶ場合は深度を明示的に解除する。
 `null` は設定追従（画面の `Follow CLI config`）として保持する。
-既存backendはNoneの推論深度をJSONから省略するため、Scratchにキーがない場合も
-設定追従として復元し、前回launchの手動値を再適用しない。保存形式は変更しない。
+既存backendはNoneの推論深度をJSONから省略するため、overrideを含むScratchで
+キーがない場合は設定追従として復元する。executor/variantだけのScratchはpreset選択
+としてfallbackを許可する（下記P2修正）。保存形式は変更しない。
 CLI/TOMLの読込方針、モデルの対応能力、backendの実行設定解決は変更していない。
 
 ## 検証方法
@@ -53,7 +54,7 @@ hook単独のChromium試験は実Reactと`useExecutorConfig`を使用するが�
 - 送信payloadの`reasoning_id`が`max`であり、送信待ち・合成応答後・再読込でもMaxを維持。
 - Follow CLI configへ明示変更すると`null`を保存・送信し、再表示でも設定追従を維持。
 
-## 実行結果（2026-10-20、条件付き再開後）
+## 前回の実行結果（2026-10-20、HEAD 527f9c36まで）
 
 | コマンド | 結果 |
 | --- | --- |
@@ -102,3 +103,41 @@ fixtureはリポジトリ未接続のWorkspaceで、Git status/diffの検証は�
 画面画像は`test-results/server/reasoning-override-manual--81251-load-and-workspace-switches/`に保持。
 通常の`target/`（約12GB）とfrontend出力・依存は再利用のため保持する。
 中断時checkpointの`.task-7079/`（約52KB）は中断履歴として保持し、改変していない。
+
+## P2レビュー修正（2026-10-20）
+
+`setVariant` / `setExecutor` はidentityだけを保存するため、そのScratchのreasoning欠落を
+明示クリアと扱うのは誤りだった。`resolveExecutorOverride` はidentityだけのドラフトを
+通常のfallbackへ通し、overrideを含む保存済み選択についてはNoneの復元を維持する。
+CLI/model policy、保存形式、設定のscopeは変更していない。
+
+fixtureの固定preset応答をvariant別に修正した。Codex実装の`get_preset_options`に沿って
+permission_policy/execution_modeを返し、High presetはmodel未指定とした。
+controlled/uncontrolled各経路で以下を観測した。
+
+- High preset選択時の保存値は正確に `{executor: "CODEX", variant: "HIGH"}`。
+- 保存後・remount後ともに実効reasoningはhigh。
+- 手動ultraの保存・remountでultraを保持。
+- Follow Settingsの保存でnullが省略されてもremount後はnull（highに戻らない）。
+- preset再選択・remountでhighへ復帰。
+
+今回の検証は実React/hook + Playwright/Chromium、preset取得とScratch保存はmock。
+backendのNone省略をfixtureで模倣している。上記の前回実backend E2E結果は今回の
+修正ソースの実行結果ではない。最新指示のtargeted tests優先に従い、全面buildと
+実アプリE2Eは再実施していない。実モデルへの要求も行っていない。
+
+| コマンド | 今回の結果 |
+| --- | --- |
+| `pnpm --dir packages/web-core exec vitest run src/shared/lib/modelSelector.test.ts src/shared/lib/executorOverrides.test.ts --maxWorkers=1` | 24件通過 |
+| `node --test tests/chat/executor-config.test.mjs` | 1件通過、内部でcontrolled/uncontrolled両方を実行 |
+
+既存形式で全overrideが省略されidentityだけになった過去データから、当時の操作意図を
+復元することはできない。その形は既存setVariant/setExecutorの契約に従いpreset選択
+として扱う。モデル未指定でも通常のCodex presetにはpermission_policyとexecution_modeが
+含まれるため、その実効選択を保存する明示クリアは区別できる。
+
+追加静的検査: `pnpm run web-core:check`、
+`pnpm --dir packages/local-web exec eslint ../web-core/src/shared/lib/executorOverrides.ts --config .eslintrc.cjs --no-ignore --max-warnings 0`、
+`git diff --check` はすべて通過。heavy commandは逐次実行。
+Chromiumはfinallyでcloseし、試験終了後の自Workspace cwdに紐づく
+Chromium/esbuild/serverプロセスは0件。今回試験サーバーや専用DBは作成していない。
