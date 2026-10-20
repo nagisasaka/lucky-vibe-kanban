@@ -1472,7 +1472,7 @@ mod cancellation_recovery {
             "accepted but not yet linked agent must be stopped"
         );
     }
-    fn cancellation_requests(
+    pub(super) fn cancellation_requests(
         session_id: Uuid,
         workspace_id: Uuid,
         idempotency_key: &str,
@@ -1553,5 +1553,191 @@ mod cancellation_recovery {
         };
 
         (request, attempt)
+    }
+}
+
+mod instruction_startup {
+    use std::sync::Mutex;
+
+    use db::models::agent_runtime::AgentRunRecord;
+    use executors::runtime::*;
+
+    use super::*;
+
+    struct StartingPort {
+        pool: SqlitePool,
+        state: Mutex<Option<RunState>>,
+        calls: Mutex<Vec<Uuid>>,
+        error: Mutex<Option<&'static str>>,
+    }
+
+    #[async_trait::async_trait]
+    impl AgentRunPort for StartingPort {
+        async fn create(
+            &self,
+            request: AgentRunRequestEnvelope,
+            attempt: RunAttemptRequest,
+        ) -> Result<Uuid, AgentRunPortError> {
+            AgentRunRecord::persist_identity_before_launch(&self.pool, &request, &attempt)
+                .await
+                .unwrap();
+            let mut state = RunState::pending(&request);
+            // Real host registration reports Running before the provider thread exists.
+            state.status = AgentRunStatus::Running;
+            *self.state.lock().unwrap() = Some(state);
+            Ok(request.agent_run_id)
+        }
+
+        async fn query(&self, id: Uuid) -> Result<AgentRunPortSnapshot, AgentRunPortError> {
+            Ok(AgentRunPortSnapshot {
+                agent_run_id: id,
+                state: self.state.lock().unwrap().clone().unwrap(),
+            })
+        }
+
+        async fn subscribe(&self, _: Uuid) -> Result<AgentEventStream, AgentRunPortError> {
+            panic!("unexpected subscribe")
+        }
+
+        async fn control(
+            &self,
+            command: AgentRunPortCommandEnvelope,
+        ) -> Result<(), AgentRunPortError> {
+            assert!(matches!(command.command, AgentRunPortCommand::Steer { .. }));
+            self.calls.lock().unwrap().push(command.command_id);
+            match *self.error.lock().unwrap() {
+                Some(message) => Err(AgentRunPortError::Unavailable(message.into())),
+                None => Ok(()),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn fresh_create_immediate_steer_waits_retries_same_command_and_fences_terminal() {
+        let (pool, mut run, _, _) = fixture().await;
+        run.payload.skip_validation = true;
+        let (request, attempt) = cancellation_recovery::cancellation_requests(
+            run.session_id.unwrap(),
+            run.workspace_id.unwrap(),
+            "startup-instruction",
+        );
+        let port = StartingPort {
+            pool: pool.clone(),
+            state: Mutex::new(None),
+            calls: Mutex::new(vec![]),
+            error: Mutex::new(Some("I/O error: Codex has no active thread")),
+        };
+        let agent = port.create(request, attempt).await.unwrap();
+        let command = AgentRunPortCommandEnvelope {
+            schema_version: 1,
+            command_id: Uuid::new_v4(),
+            idempotency_key: "startup-steer".into(),
+            agent_run_id: agent,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: run.id,
+            created_at: chrono::Utc::now(),
+            command: AgentRunPortCommand::Steer {
+                content: "operator instruction".into(),
+            },
+        };
+        for error in [
+            "I/O error: Codex has no active thread",
+            "I/O error: Codex has no active turn",
+        ] {
+            *port.error.lock().unwrap() = Some(error);
+            assert_eq!(
+                deliver_intervention_instruction(&pool, &port, command.clone())
+                    .await
+                    .unwrap(),
+                InstructionDelivery::Waiting
+            );
+            assert_eq!(
+                port.state.lock().unwrap().as_ref().unwrap().status,
+                AgentRunStatus::Running
+            );
+        }
+        *port.error.lock().unwrap() = None;
+        for _ in 0..2 {
+            assert_eq!(
+                deliver_intervention_instruction(&pool, &port, command.clone())
+                    .await
+                    .unwrap(),
+                InstructionDelivery::Delivered
+            );
+        }
+        assert_eq!(*port.calls.lock().unwrap(), vec![command.command_id; 3]);
+        let saved: (String, i64) = sqlx::query_as(
+            "SELECT delivery_status,delivery_attempts FROM agent_run_commands WHERE command_id=?",
+        )
+        .bind(command.command_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(saved, ("delivered".into(), 3));
+        for status in [
+            AgentRunStatus::Pending,
+            AgentRunStatus::Starting,
+            AgentRunStatus::Cancelling,
+            AgentRunStatus::Cancelled,
+            AgentRunStatus::Failed,
+            AgentRunStatus::Succeeded,
+        ] {
+            port.state.lock().unwrap().as_mut().unwrap().status = status;
+            let expected = if status.is_terminal() {
+                InstructionDelivery::Terminal
+            } else {
+                InstructionDelivery::Waiting
+            };
+            assert_eq!(
+                deliver_intervention_instruction(&pool, &port, command.clone())
+                    .await
+                    .unwrap(),
+                expected
+            );
+        }
+        assert_eq!(
+            port.calls.lock().unwrap().len(),
+            3,
+            "terminal/waiting executions must never be steered"
+        );
+        assert!(run.payload.skip_validation);
+    }
+
+    #[tokio::test]
+    async fn ambiguous_provider_failure_is_not_a_startup_retry() {
+        let (pool, run, _, _) = fixture().await;
+        let (request, attempt) = cancellation_recovery::cancellation_requests(
+            run.session_id.unwrap(),
+            run.workspace_id.unwrap(),
+            "startup-error",
+        );
+        let port = StartingPort {
+            pool: pool.clone(),
+            state: Mutex::new(None),
+            calls: Mutex::new(vec![]),
+            error: Mutex::new(Some("transport disconnected")),
+        };
+        let agent = port.create(request, attempt).await.unwrap();
+        let command = AgentRunPortCommandEnvelope {
+            schema_version: 1,
+            command_id: Uuid::new_v4(),
+            idempotency_key: "startup-error-steer".into(),
+            agent_run_id: agent,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            correlation_id: run.id,
+            created_at: chrono::Utc::now(),
+            command: AgentRunPortCommand::Steer {
+                content: "instruction".into(),
+            },
+        };
+        assert!(
+            deliver_intervention_instruction(&pool, &port, command)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("transport disconnected")
+        );
     }
 }

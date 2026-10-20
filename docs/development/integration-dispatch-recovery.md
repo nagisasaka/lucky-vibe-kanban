@@ -109,6 +109,10 @@ succeeded.
 
 ## Development instance cutover handoff — 2026-10-20
 
+Historical first-hotfix handoff. After the 12:53 Resume failure, use the second-failure
+section below to update binary and payload preconditions; do not execute these
+old assertions unchanged.
+
 **Preparation only: none of the stop, backup, install, start or rollback commands
 below were executed. Run the cutover from an independent operator SSH session,
 never from this server's MCP or an AgentRun it hosts.** Finish this AgentRun and
@@ -335,3 +339,117 @@ remain intact. Do not resume/create Integrations to test rollback.
   If preparation is interrupted, first check remaining Cargo processes and the
   recorded artifact digest; reuse the existing target and logs. Do not infer
   successful deployment from a completed build or documentation commit.
+
+## Second failure after first hotfix deployment — 2026-10-20 12:53 UTC
+
+The preceding cutover section is historical preparation for **45bd9581**. The
+operator has now deployed that binary (PID 960511 when inspected; SHA256
+`3e37ca967d7faf0cdf0737568a8243b838b84b163fc18d68dd6152efde53c4d5`).
+It contains the Create fix but **not the subsequent instruction-readiness fix**.
+Do not reuse the old pre-Resume payload digest as the next cutover precondition.
+
+The second failure is a demonstrated startup race, followed by product-driven
+cancellation. It is not another missing AgentRun or SQLite lock failure.
+Read-only evidence from `data/db.v2.sqlite`, `logs/server.log:296` and the eight
+native audit frames for attempt `7b7cf75b-8209-f85f-1792-7823676fb7a0`:
+
+| UTC time | Recorded observation |
+| --- | --- |
+| 12:53:17.337 | AgentRun `65afecfc-fac6-6e71-fd42-2050835d8cdd` Starting |
+| 12:53:17.413 | Running, projected from process-host registration |
+| 12:53:17.434 | Specific Create outbox delivered |
+| 12:53:17.441–.482 | Steer `d74d0df1-6ddd-45dd-b806-010bad8c73d7` persisted then failed, one delivery attempt |
+| 12:53:17.487 | Server logged `agent run port is unavailable: I/O error: Codex has no active thread` |
+| 12:53:17.524 | Orchestration Cancel outbox created |
+| 12:53:17.540 | Native initialize response (request 1), after Steer already failed |
+| 12:53:17.542 | Canonical Cancelling |
+| 12:53:17.564 | `I/O error: server was shutdown while waiting for account/read response` |
+| 12:53:26.568 | Canonical Cancelled; audit subsequently complete, eight frames |
+| 12:53:26.605 | Integration blocked, stop stage integrating/category technical_recovery |
+
+`LocalAgentRunPort` projects Running when the host registers its child.
+`DeferredCodexControl` exposes the connected client before its async initialize,
+account/read, thread/start and turn/start sequence finishes. The exact no-thread
+(and analogous no-turn) error in `AppServerClient::send_direct_control` is raised
+locally **before** the Steer RPC is sent. `resume_intervention` previously treated
+Running as ready. Its dispatch error propagated to `hold`, which found the
+workspace busy and called `cancel`. Thus the account/read shutdown error is
+subsequent to cancellation, not evidence of an earlier worker crash. No preceding
+provider authentication failure or stale-host failure was recorded. Stderr at
+12:53:17.513 does report bubblewrap absent from PATH, but explicitly selects the
+bundled fallback; initialize and config/read subsequently respond. This warning
+is not the source of the pre-send no-thread error. This does
+not certify that provider startup will otherwise succeed on the next attempt.
+
+The observed agent-process-host executable remains the deployment checkout's
+`target/debug/agent-process-host`. The failed attempt registry is exited; recorded host PID 962508 and child PID
+962510 no longer exist. There was no provider-session observation in
+the failed run's six canonical events; never attempt to Steer its cancelled
+attempt. The existing formal Resume code selects Retry/Restart when no provider
+session is saved, or Retry/Resume when one exists, then delivers the saved
+instruction to the new attempt under the same AgentRun identity.
+
+### Narrow fix and evidence limits
+
+`deliver_intervention_instruction` checks canonical state, then uses the existing
+durable command service. Pending/Starting/Cancelling wait; terminal states never
+receive Steer. Only the two exact adapter pre-send errors (`Codex has no active
+thread` / `Codex has no active turn`, with the existing I/O prefix) return Waiting.
+The normal one-second Integration monitor retries the same saved command ID and
+idempotency key. Failed delivery receipts remain visible until that same command
+succeeds; delivered receipts prevent resend. No arbitrary transport error is
+retried because delivery could be ambiguous. No global worker, permission,
+provider protocol, schema or timeout changes are made. An indefinitely stuck
+provider remains visible and requires operator diagnosis; startup waiting does
+not automatically cancel it. Port-level terminal fencing still handles a state
+change between query and send.
+
+Regression tests use fresh persisted Create identities and a mock port with
+Running but no native thread/turn, then exercise readiness, same-command retry,
+delivered replay, waiting/terminal fences, and a non-retryable transport failure.
+They do not launch a real provider or prove end-to-end Integration publication.
+
+### Follow-up operator deployment and recovery
+
+1. Review the new LOCAL-9 commit and its test results. Build a **new** server
+   artifact from that immutable revision using the offline build command above,
+   record its new digest and verify the external dist dependency. The old
+   `target/local9-handoff/artifact.json` and digest describe 45bd9581 only; this
+   investigation did not build or deploy a second candidate server executable.
+2. Keep main at `b385a2d2d1a8683fbdcb8d931356d34f4264169c`. Before any cutover,
+   finish agents/builds and inspect resource coordination, PID, executable and
+   live state again from independent SSH. Current frozen payload SHA256 is
+   `8158b60f43a4412d64b2f01e2696de717778dec2f1d3c4aaeda7167b5e88022e`;
+   status blocked, skip_validation=true, unpublished, no publication intent,
+   result_commit=null, zero validations. Require that payload and original four
+   sources to remain unchanged during cutover.
+3. Adapt the checked cutover procedure above: expected old binary hash is now
+   `3e37ca967d7faf0cdf0737568a8243b838b84b163fc18d68dd6152efde53c4d5`, and expected
+   candidate hash must come from the new build. Use a fresh private backup path;
+   save this currently serving binary for rollback. Use graceful stop, stopped
+   WAL-aware backup, atomic rename and the existing start.sh. Do not execute
+   these steps via the server's MCP. This source change requires no agent-host
+   replacement, migration, source-ref movement or config change.
+4. Verify HTTP, UI, authenticated read-only MCP, main and new frozen payload
+   digest. Rollback, if needed, restores the just-backed-up 45bd9581 binary using
+   the same stopped-server procedure, not the pre-first-hotfix binary. Do not
+   automatically restore DB or resume work during rollback.
+5. Only after operator acceptance, use a **new explicit formal Resume request**
+   on `c68ce019-9349-4679-976f-326120191c08`. The cancelled attempt must be
+   restarted by the supported Retry path, never directly steered. Do not replay
+   the old failed Steer alone, create another Integration or resume `0771cd56`.
+   Observe new attempt identity, provider startup, instruction receipt and
+   progression while preserving skip_validation=true.
+
+Second-failure validation in this workspace:
+
+- `cargo test --offline --locked -p server --lib routes::integrations::runtime::tests`: 21 passed (including two new readiness regressions).
+- `cargo test --offline --locked -p services --lib dispatch_tests`: 7 passed (including concurrent Create, replay, cancellation and formal resume policy).
+- `cargo clippy --offline --locked -p server --all-targets -- -D warnings`: passed, including type checking.
+- Scoped `rustfmt --check` and `git diff --check`: passed.
+- Initial test compilation caught a missing mock `subscribe` method; corrected before the passing run.
+- No real-provider startup, second binary build, hotpatch, Resume or publication was performed.
+
+If interrupted, resume from this committed source and retained evidence at
+`target/local9-second-failure/`; keep the serving dist intact. Recheck live
+identity and frozen payload before planning any separately authorised cutover.

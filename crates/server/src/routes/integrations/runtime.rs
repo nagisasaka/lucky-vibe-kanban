@@ -285,29 +285,79 @@ async fn resume_intervention(
         orchestration.deliver_create(outbox, agent).await?;
     }
     if let Some(value) = intervention.instruction_command {
-        use executors::runtime::AgentRunPort;
-        let snapshot = deployment
-            .agent_run_port()
-            .query(run.agent_run_id.context("Missing Agent")?)
-            .await?;
-        if matches!(
-            snapshot.state.status,
-            AgentRunStatus::Pending | AgentRunStatus::Starting
-        ) {
-            return Ok(false);
+        match deliver_intervention_instruction(
+            pool,
+            deployment.agent_run_port(),
+            serde_json::from_value(value)?,
+        )
+        .await?
+        {
+            InstructionDelivery::Waiting => return Ok(false),
+            InstructionDelivery::Delivered => {}
+            InstructionDelivery::Terminal => {
+                run.payload.intervention.as_mut().unwrap().pending = false;
+                run.save(pool).await?;
+                bail!(
+                    "Agent ended before the additional instruction was delivered. Inspect the retained instruction and resume explicitly."
+                );
+            }
         }
-        if snapshot.state.status.is_terminal() {
-            run.payload.intervention.as_mut().unwrap().pending = false;
-            run.save(pool).await?;
-            bail!(
-                "Agent ended before the additional instruction was delivered. Inspect the retained instruction and resume explicitly."
-            );
-        }
-        commands.dispatch(serde_json::from_value(value)?).await?;
     }
     run.payload.intervention.as_mut().unwrap().pending = false;
     run.save(pool).await?;
     Ok(true)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum InstructionDelivery {
+    Waiting,
+    Delivered,
+    Terminal,
+}
+
+async fn deliver_intervention_instruction<P: executors::runtime::AgentRunPort>(
+    pool: &SqlitePool,
+    port: &P,
+    command: executors::runtime::AgentRunPortCommandEnvelope,
+) -> anyhow::Result<InstructionDelivery> {
+    use executors::runtime::{AgentRunPortCommand, AgentRunPortError};
+    use services::services::agent_runtime::{AgentRunCommandError, AgentRunCommandService};
+
+    ensure!(
+        matches!(command.command, AgentRunPortCommand::Steer { .. }),
+        "Expected intervention Steer"
+    );
+    let snapshot = port.query(command.agent_run_id).await?;
+    if snapshot.state.status.is_terminal() {
+        return Ok(InstructionDelivery::Terminal);
+    }
+    if matches!(
+        snapshot.state.status,
+        AgentRunStatus::Pending | AgentRunStatus::Starting | AgentRunStatus::Cancelling
+    ) {
+        return Ok(InstructionDelivery::Waiting);
+    }
+    match AgentRunCommandService::new(pool, port)
+        .dispatch(command)
+        .await
+    {
+        Ok(()) => Ok(InstructionDelivery::Delivered),
+        // Running currently means the process host registered the worker, not
+        // that Codex completed initialize/account/read/thread/start/turn/start.
+        // These exact adapter errors occur BEFORE any Steer RPC is sent. Keep
+        // the saved command identity and let the normal Integration tick retry;
+        // do not send the transient startup failure through hold()/cancel().
+        // Never retry arbitrary transport errors: their delivery is ambiguous.
+        Err(AgentRunCommandError::Port(AgentRunPortError::Unavailable(message)))
+            if matches!(
+                message.as_str(),
+                "I/O error: Codex has no active thread" | "I/O error: Codex has no active turn"
+            ) =>
+        {
+            Ok(InstructionDelivery::Waiting)
+        }
+        Err(error) => Err(error.into()),
+    }
 }
 
 pub(super) async fn decide_gate(
