@@ -4,11 +4,12 @@ mod activity;
 mod auth;
 mod code_read;
 mod config;
-mod environment;
+pub mod environment;
 #[cfg(target_os = "linux")]
 mod environment_files;
 #[cfg(target_os = "linux")]
 mod environment_process;
+pub mod environment_settings;
 mod errors;
 mod evidence_read;
 mod integration_read;
@@ -53,13 +54,18 @@ pub fn configured_router(
     deployment: DeploymentImpl,
     access: server_access::Access,
 ) -> anyhow::Result<Router> {
+    let environment = Arc::new(environment::Environment::managed(
+        deployment.db().pool.clone(),
+    ));
+    let settings = environment_settings::router(deployment.db().pool.clone());
     Ok(access_router(
         deployment.db().pool.clone(),
         Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
         Some(Arc::new(launch::ExistingLaunch(deployment))),
         access,
-        environment::Environment::configured()?.map(Arc::new),
-    ))
+        Some(environment),
+    )
+    .merge(settings))
 }
 
 // Production HTTP entry, shared with the JWT-to-tool integration fixture.
@@ -527,6 +533,8 @@ mod runtime_write_tests;
 mod launch_tests;
 
 #[cfg(all(test, target_os = "linux"))]
-mod environment_tests;
-#[cfg(all(test, target_os = "linux"))]
 mod environment_restart_tests;
+#[cfg(all(test, target_os = "linux"))]
+mod environment_settings_tests;
+#[cfg(all(test, target_os = "linux"))]
+mod environment_tests;

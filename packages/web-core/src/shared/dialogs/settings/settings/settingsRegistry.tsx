@@ -46,11 +46,18 @@ const ResourceSettingsSection = lazy(() =>
   }))
 );
 
+const RuntimeAccessSettingsSection = lazy(() =>
+  import('./RuntimeAccessSettingsSection').then((module) => ({
+    default: module.RuntimeAccessSettingsSection,
+  }))
+);
+
 export type SettingsSectionType =
   | 'general'
   | 'repos'
   | 'remote-projects'
   | 'agents'
+  | 'mcp-integration'
   | 'mcp'
   | 'agent-tools'
   | 'resources';
@@ -65,6 +72,7 @@ export type SettingsSectionInitialState = {
     | undefined;
   agents: { executor?: string; variant?: string } | undefined;
   mcp: undefined;
+  'mcp-integration': undefined;
   'agent-tools': undefined;
   resources: undefined;
 };
@@ -91,6 +99,7 @@ export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
     group: 'host',
     showInNavigation: false,
   },
+  { id: 'mcp-integration', icon: PlugIcon, group: 'host' },
   { id: 'agent-tools', icon: WrenchIcon, group: 'host' },
   { id: 'resources', icon: BuildingsIcon, group: 'host' },
   { id: 'remote-projects', icon: KanbanIcon, group: 'universal' },
@@ -128,6 +137,8 @@ export function renderSettingsSection(
       );
     case 'agents':
       return <AgentsSettingsSection />;
+    case 'mcp-integration':
+      return <RuntimeAccessSettingsSection />;
     case 'mcp':
       return <McpSettingsSection />;
     case 'agent-tools':

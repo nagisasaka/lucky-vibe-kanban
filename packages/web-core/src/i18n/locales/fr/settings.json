@@ -26,7 +26,8 @@
         "agent-tools": "Agent Tools",
         "agent-toolsDesc": "Native MCP servers and Skills",
         "remote-projects": "Projets",
-        "remote-projectsDesc": "Gérer les projets"
+        "remote-projectsDesc": "Gérer les projets",
+        "mcp-integration": "MCP integration"
       }
     },
     "general": {
@@ -619,6 +620,29 @@
           }
         }
       }
+    }
+  },
+  "runtimeAccess": {
+    "title": "Runtime environment access",
+    "description": "Administrators manage external MCP regions. Saved changes apply to subsequent calls without restarting.",
+    "permissions": "File reads require lvk:runtime:read. Executable grants also permit process observation. Run/stop additionally require region execution permission and lvk:runtime:execute; lvk:read is still required. Run/stop refuse Workspace overlaps.",
+    "revoke": "Revocation does not terminate running processes. Revoked users cannot stop them. Stop before revoking where necessary; afterwards an operator must verify and clean up the process through the OS. Ownership is not transferred to another administrator.",
+    "denied": "Settings unavailable. Sign in as a browser administrator.",
+    "loading": "Loading…",
+    "enabled": "Enable runtime environment access",
+    "name": "Display name",
+    "project": "Target Project ID",
+    "root": "Allowed root (absolute directory path)",
+    "subjects": "User subjects (one per line)",
+    "executables": "Allowed executables (absolute paths, one per line; empty for file reads only)",
+    "execute": "Allow execution and stop (only where shared-resource coordination is unnecessary)",
+    "osAuthority": "The root bounds files and cwd, not OS authority. Programs run with the LVK OS user’s permissions and may write logs, build output and other files.",
+    "remove": "Remove region",
+    "add": "Add region",
+    "source": {
+      "default": "Disabled by default.",
+      "saved": "Using saved settings. Legacy JSON is ignored.",
+      "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
     }
   }
 }

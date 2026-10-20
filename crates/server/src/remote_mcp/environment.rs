@@ -1,17 +1,20 @@
 //! Explicit administrator grants for application environments; never source editing.
-use std::{io::Read, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::ensure;
 use rmcp::model::Tool;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use ts_rs::TS;
 use uuid::Uuid;
 
 use super::{Remote, auth::Principal, read::arguments};
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize, TS)]
 #[serde(deny_unknown_fields)]
-pub(super) struct Grant {
+pub struct Grant {
+    #[serde(default)]
+    pub display_name: String,
     pub id: String,
     pub project_id: Uuid,
     pub root: PathBuf,
@@ -23,37 +26,41 @@ pub(super) struct Grant {
     pub allow_uncoordinated_execution: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Default, Deserialize, Serialize, TS)]
 #[serde(deny_unknown_fields)]
-struct Settings {
-    enabled: bool,
-    grants: Vec<Grant>,
+pub struct RuntimeAccessSettings {
+    pub enabled: bool,
+    pub grants: Vec<Grant>,
 }
 
 pub(super) struct Environment {
     pub grants: Vec<Grant>,
+    pub settings_pool: Option<sqlx::SqlitePool>,
     #[cfg(target_os = "linux")]
     pub processes: super::environment_process::ProcessRegistry,
 }
 
 impl Environment {
-    pub fn configured() -> anyhow::Result<Option<Self>> {
-        let Some(path) = std::env::var_os("LVK_RUNTIME_ACCESS_CONFIG") else {
-            return Ok(None);
-        };
-        let mut bytes = Vec::new();
-        std::fs::File::open(path)?
-            .take(65537)
-            .read_to_end(&mut bytes)?;
-        ensure!(
-            bytes.len() <= 65536,
-            "Runtime access configuration is too large"
-        );
-        let settings: Settings = serde_json::from_slice(&bytes)?;
-        if !settings.enabled {
-            return Ok(None);
+    pub fn managed(pool: sqlx::SqlitePool) -> Self {
+        Self {
+            grants: vec![],
+            settings_pool: Some(pool),
+            #[cfg(target_os = "linux")]
+            processes: Default::default(),
         }
-        Self::new(settings.grants).map(Some)
+    }
+
+    async fn current_grants(&self) -> anyhow::Result<Vec<Grant>> {
+        if let Some(pool) = &self.settings_pool {
+            let (_, _, settings) = super::environment_settings::load(pool).await?;
+            ensure!(
+                settings.enabled,
+                "Runtime access is disabled by administrator"
+            );
+            Ok(settings.grants)
+        } else {
+            Ok(self.grants.clone())
+        }
     }
 
     pub fn new(mut grants: Vec<Grant>) -> anyhow::Result<Self> {
@@ -71,6 +78,21 @@ impl Environment {
             ensure!(
                 !grant.subjects.is_empty() && grant.subjects.len() <= 100,
                 "Runtime grants require explicit subjects"
+            );
+            ensure!(
+                grant.display_name.len() <= 160
+                    && grant
+                        .subjects
+                        .iter()
+                        .all(|s| !s.trim().is_empty() && s.len() <= 512),
+                "Invalid runtime display name or subject"
+            );
+            ensure!(
+                !grant
+                    .root
+                    .components()
+                    .any(|c| matches!(c, std::path::Component::ParentDir)),
+                "Runtime root cannot contain traversal"
             );
             ensure!(grant.root.is_absolute(), "Runtime root must be absolute");
             grant.root = grant.root.canonicalize()?;
@@ -90,13 +112,15 @@ impl Environment {
         }
         Ok(Self {
             grants,
+            settings_pool: None,
             #[cfg(target_os = "linux")]
             processes: Default::default(),
         })
     }
 
-    fn grant(&self, principal: &Principal, id: &str) -> anyhow::Result<Grant> {
-        self.grants
+    async fn grant(&self, principal: &Principal, id: &str) -> anyhow::Result<Grant> {
+        self.current_grants()
+            .await?
             .iter()
             .find(|g| g.id == id && g.subjects.contains(&principal.subject))
             .cloned()
@@ -322,7 +346,7 @@ pub(super) async fn call(
             input.as_object().is_some_and(|v| v.is_empty()),
             "Invalid runtime capability arguments"
         );
-        let grants: Vec<_> = environment.grants.iter().filter(|g| g.subjects.contains(&principal.subject) && remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"project_id":g.project_id,"root":g.root,"executables":g.executables,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
+        let grants: Vec<_> = environment.current_grants().await?.iter().filter(|g| g.subjects.contains(&principal.subject) && remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"display_name":g.display_name,"project_id":g.project_id,"root":g.root,"executables":g.executables,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
         return Ok(
             json!({"regions":grants,"platform":"linux","environment_inheritance":"none; fixed PATH and LANG only","file_write_tools":false,"os_write_sandbox":false,"shared_resources":"use existing resource coordination; these grants cannot authorise shared-resource use","workspace_execution":"not supported; managed Workspace trees are refused","self_restart":"not supported; use operator recovery","output_persistence":"bounded memory, unavailable after server restart","build_provenance":"not established","reference_data_only":true}),
         );
@@ -332,7 +356,7 @@ pub(super) async fn call(
         .and_then(|o| o.remove("region"))
         .and_then(|v| v.as_str().map(str::to_owned))
         .ok_or_else(|| anyhow::anyhow!("Runtime region required"))?;
-    let grant = environment.grant(principal, &region)?;
+    let grant = environment.grant(principal, &region).await?;
     remote.require_project(grant.project_id).await?;
     #[cfg(not(target_os = "linux"))]
     {
@@ -440,6 +464,7 @@ pub(super) async fn call(
                 );
                 let targets = json!({"region":region,"root":grant.root,"purpose":purpose,"target":target,"arguments":"omitted; input hash retained"});
                 let owned = remote.clone();
+                let principal = principal.clone();
                 let operation = name.to_owned();
                 let receipt = remote
                     .operations()
@@ -452,6 +477,12 @@ pub(super) async fn call(
                         targets,
                         move |operation_id| async move {
                             let result = async {
+                                let current = environment.grant(&principal, &grant.id).await?;
+                                ensure!(
+                                    serde_json::to_value(&current)?
+                                        == serde_json::to_value(&grant)?,
+                                    "Runtime grant changed; submit a new deliberate request"
+                                );
                                 execution_region(&owned, &grant).await?;
                                 if operation == "run_process" {
                                     let a: Run = arguments(input)?;

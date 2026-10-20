@@ -12,14 +12,36 @@ require an LVK-specific service definition or a particular directory layout.
 
 First configure [external MCP authentication](/self-hosting/authentication).
 Runtime access requires Linux, an active authorised member and a project already
-accessible through MCP. It is disabled when `LVK_RUNTIME_ACCESS_CONFIG` is absent
-or the configuration sets `enabled` to `false`.
+accessible through MCP. It is disabled by default.
 
-An administrator prepares a JSON file outside the regions exposed to clients and
-sets `LVK_RUNTIME_ACCESS_CONFIG` to its absolute path in the LVK server's deployment
-environment. The server loads this configuration when its MCP service starts;
-configuration changes require an operator-controlled restart. This feature does
-not update or restart the running server for you.
+Open **Settings → MCP integration → Runtime environment access** (Japanese:
+**設定 → MCP連携 → 実行環境へのアクセス**) as a browser administrator. Enable the
+feature, add a region with a display name, Project, absolute root and exact user
+subjects, then save. Add executable paths for process observation and explicitly
+allow execution/stop only for regions that need no shared-resource coordination.
+Saving takes effect on subsequent requests without environment-variable edits or
+an LVK restart. Existing Basic/Auth0 administrator roles and browser CSRF protection
+apply; ordinary members, OAuth MCP tokens and internal agent tokens cannot edit
+these settings. Local mode retains its existing trusted-local administrator model.
+The settings API is not an MCP tool.
+
+Settings use the server database and a revision check. A stale save is rejected;
+reload before applying it again. Saving does not reset process output buffers.
+Revoking a region, subject or feature blocks subsequent operations, including
+stop and output reads, but does not kill running processes. Stop before revoking
+when necessary. Afterwards an OS operator must verify the process identity and
+perform cleanup; another administrator does not automatically inherit ownership.
+Already executing operations are not cancelled by a settings save.
+
+### Legacy JSON compatibility
+
+Until the first UI save, `LVK_RUNTIME_ACCESS_CONFIG` remains an optional fallback.
+Its JSON is read when runtime settings are requested. After any UI save, including
+saving **disabled**, the database is the sole authority and the file/environment
+variable is ignored. Settings are never merged. Do not delete the saved database
+row to restore legacy settings; use the UI to make an explicit change. Include the
+server database in backups. No automatic grant enabling or OAuth changes occur.
+The following is the legacy file format, not a prerequisite for using the UI:
 
 ```json
 {
@@ -27,6 +49,7 @@ not update or restart the running server for you.
   "grants": [
     {
       "id": "demo-api",
+      "display_name": "Demo API",
       "project_id": "11111111-2222-4333-8444-555555555555",
       "root": "/srv/applications/demo-api",
       "subjects": ["auth0|REPLACE_WITH_EXACT_USER_SUBJECT"],
@@ -62,11 +85,11 @@ region whose execution does not require shared-resource coordination. Run and
 stop refuse a root overlapping any LVK-managed Workspace, including a root that
 contains a Workspace. Use existing Workspace controls and shared-resource
 operations for those targets, devices, databases and deployments. A runtime grant
-does not acquire resource claims or authorise bypassing them. This is a current
-implementation restriction, including idle and archived Workspaces, not an
-agreed restriction of the general runtime-access requirements. Workspace
-execution policy remains pending; an idle check alone cannot prevent a competing
-launch. See the [review and coordination options](../development/runtime-access-review.md).
+does not acquire resource claims or authorise bypassing them. The initial release
+retains this restriction by explicit product decision, including idle and archived
+Workspaces. Workspace source reference remains available through existing MCP
+code-reference tools. See the [earlier review](../development/runtime-access-review.md)
+for the investigation; its pending decision was resolved by retaining the restriction.
 
 ## Choose the appropriate workflow
 

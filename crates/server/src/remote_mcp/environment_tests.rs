@@ -81,6 +81,7 @@ impl Http {
 }
 pub(super) fn grant(root: &Path, executable: PathBuf) -> Grant {
     Grant {
+        display_name: "Example API".into(),
         id: "example-api".into(),
         project_id: Uuid::from_u128(1),
         root: root.into(),

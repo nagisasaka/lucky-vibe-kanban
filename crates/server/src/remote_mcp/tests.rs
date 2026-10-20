@@ -1146,7 +1146,8 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
             access.clone(),
             remote.environment,
         )
-        .merge(server_access::router(access.clone())),
+        .merge(server_access::router(access.clone()))
+        .merge(environment_settings::router(pool.clone())),
     );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -1219,6 +1220,18 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
         disabled.json::<Value>().await.unwrap()["result"]["isError"],
         true
     );
+    // A real signed token accepted by /mcp cannot become a browser settings credential.
+    for method in [reqwest::Method::GET, reqwest::Method::PUT] {
+        let denied = client
+            .request(method, format!("{base}/api/runtime-access-settings"))
+            .header("host", "203.0.113.7:8443")
+            .bearer_auth(&runtime_read_token)
+            .json(&json!({"revision":0,"settings":{"enabled":true,"grants":[]}}))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+    }
     sqlx::query("UPDATE access_members SET state='disabled'")
         .execute(&pool)
         .await
