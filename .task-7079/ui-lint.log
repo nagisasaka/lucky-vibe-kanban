@@ -1,0 +1,8 @@
+
+> lucky-vibe-kanban@0.1.44-lvk.1 ui:lint /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban
+> pnpm --filter @vibe/ui run lint
+
+
+> @vibe/ui@0.1.0 lint /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/ui
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+

@@ -1,0 +1,8 @@
+
+> lucky-vibe-kanban@0.1.44-lvk.1 ui:check /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban
+> pnpm --filter @vibe/ui run check
+
+
+> @vibe/ui@0.1.0 check /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/ui
+> tsc --noEmit -p tsconfig.json
+

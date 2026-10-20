@@ -27,3 +27,16 @@ export function normaliseExecutionMode(config: ExecutorConfig): ExecutorConfig {
     goal_max_concurrent_agents: null,
   };
 }
+
+/** Save edits through the existing draft path as a complete selection. */
+export function mergeExecutorOverrides(
+  config: ExecutorConfig,
+  partial: Partial<ExecutorConfig>
+): ExecutorConfig {
+  const next = { ...config, ...partial };
+  if ('model_id' in partial && !('reasoning_id' in partial)) {
+    // Explicit inheritance blocks the previous launch/preset from resurfacing.
+    next.reasoning_id = null;
+  }
+  return next;
+}

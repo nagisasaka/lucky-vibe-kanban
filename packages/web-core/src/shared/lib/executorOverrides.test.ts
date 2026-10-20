@@ -5,6 +5,7 @@ import {
   type ExecutorConfig,
 } from 'shared/types';
 import {
+  mergeExecutorOverrides,
   normaliseExecutionMode,
   resolveExecutorOverride,
 } from './executorOverrides';
@@ -85,5 +86,36 @@ describe('retired execution mode restoration', () => {
       const saved = { executor: BaseCodingAgent.CODEX, execution_mode };
       expect(normaliseExecutionMode(saved)).toBe(saved);
     }
+  });
+});
+
+describe('manual override draft persistence', () => {
+  const restored: ExecutorConfig = {
+    executor: BaseCodingAgent.CODEX,
+    model_id: 'custom/model',
+    reasoning_id: 'max',
+  };
+  it('retains model identity when editing reasoning and reasoning when editing another field', () => {
+    expect(mergeExecutorOverrides(restored, { reasoning_id: 'ultra' })).toEqual(
+      { ...restored, reasoning_id: 'ultra' }
+    );
+    expect(
+      mergeExecutorOverrides(restored, { execution_mode: ExecutionMode.plan })
+    ).toEqual({ ...restored, execution_mode: ExecutionMode.plan });
+  });
+  it('preserves explicit Follow Settings and clears reasoning when changing model', () => {
+    expect(
+      mergeExecutorOverrides(restored, { reasoning_id: null }).reasoning_id
+    ).toBeNull();
+    expect(
+      mergeExecutorOverrides(restored, { model_id: 'other' }).reasoning_id
+    ).toBeNull();
+    expect(
+      mergeExecutorOverrides(restored, {
+        model_id: 'other',
+        reasoning_id: 'high',
+      }).reasoning_id
+    ).toBe('high');
+    expect(restored.reasoning_id).toBe('max');
   });
 });
