@@ -148,7 +148,7 @@ ARG CODEX_VERSION=0.163.0
 ARG CARGO_WATCH_VERSION=8.5.3
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    nginx apache2-utils openssl curl bash git git-lfs gh ripgrep \
+    nginx apache2-utils openssl curl bash git git-lfs gh ripgrep less \
     build-essential libclang-dev libssl-dev pkg-config cmake ninja-build nasm \
     python3 python3-venv unzip zip \
  && rm -rf /var/lib/apt/lists/* \

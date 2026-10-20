@@ -27,6 +27,8 @@ docker run --rm --entrypoint sh "$image" -ec '
   test -x /usr/local/bin/agent-process-host
   vibe-kanban-mcp --help
   node --version; pnpm --version; git --version; git lfs version
+  less --version
+  test "$(printf "lvk-less-smoke\n" | less)" = "lvk-less-smoke"
   rustc --version; cargo --version; cargo watch --version
   sccache --version
   cargo clippy --version; cargo fmt --version
