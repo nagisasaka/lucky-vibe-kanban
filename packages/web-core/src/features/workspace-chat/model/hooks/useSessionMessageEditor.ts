@@ -71,10 +71,14 @@ export function useSessionMessageEditor({
   const isScratchLoading = isServerScratchLoading && !pendingLocal;
 
   const [localMessage, setMessage] = useState('');
+  const messageRef = useRef(localMessage);
+  messageRef.current = localMessage;
   const hasLoadedRef = useRef(false);
   const revision = useRef(0);
   const getDraftRevision = useCallback(() => revision.current, []);
   const setLocalMessage = useCallback((value: string) => {
+    if (messageRef.current === value) return;
+    messageRef.current = value;
     revision.current++;
     hasLoadedRef.current = true;
     setHasInitialValue(true);

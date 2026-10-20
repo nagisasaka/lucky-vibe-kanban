@@ -68,6 +68,7 @@ export interface ConversationVirtualizerOptions {
   onAtBottomChange?: (atBottom: boolean) => void;
 
   shouldSuppressSizeAdjustment?: () => boolean;
+  contentRef?: RefObject<HTMLDivElement | null>;
 }
 
 export interface ConversationVirtualizerResult {
@@ -151,6 +152,7 @@ export function useConversationVirtualizer({
   scrollContainerRef,
   onAtBottomChange,
   shouldSuppressSizeAdjustment,
+  contentRef,
 }: ConversationVirtualizerOptions): ConversationVirtualizerResult {
   const bottomLockedRef = useRef(false);
   const smoothScrollDeadlineRef = useRef(0);
@@ -277,6 +279,9 @@ export function useConversationVirtualizer({
         bottomLockedRef.current = false;
       }
 
+      if (isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)) {
+        bottomLockedRef.current = true;
+      }
       prevScrollTopRef.current = currentScrollTop;
       syncIsAtBottom();
     };
@@ -347,6 +352,25 @@ export function useConversationVirtualizer({
     scrollContainerRef,
   ]);
 
+  // The tail is outside TanStack's measurements. Images, markdown and streamed
+  // text can grow without changing row count or virtual head size.
+  useEffect(() => {
+    const content = contentRef?.current;
+    const el = scrollContainerRef.current;
+    if (!content || !el) return;
+    const observer = new ResizeObserver(() => {
+      if (
+        bottomLockedRef.current &&
+        performance.now() >= smoothScrollDeadlineRef.current
+      ) {
+        el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      }
+      syncIsAtBottom();
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [contentRef, scrollContainerRef, syncIsAtBottom]);
+
   // -------------------------------------------------------------------------
   // Imperative helpers
   // -------------------------------------------------------------------------
@@ -362,6 +386,7 @@ export function useConversationVirtualizer({
         smoothScrollDeadlineRef.current = performance.now() + 500;
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
       } else {
+        smoothScrollDeadlineRef.current = 0;
         el.scrollTop = el.scrollHeight - el.clientHeight;
       }
     },
@@ -410,7 +435,10 @@ export function useConversationVirtualizer({
   const checkIsAtBottom = useCallback((): boolean => {
     const el = scrollContainerRef.current;
     if (!el) return true;
-    return isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight);
+    return (
+      bottomLockedRef.current ||
+      isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)
+    );
   }, [scrollContainerRef]);
 
   const releaseBottomLock = useCallback(() => {

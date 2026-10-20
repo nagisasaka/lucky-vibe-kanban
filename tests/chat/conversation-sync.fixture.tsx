@@ -50,8 +50,10 @@ function Harness() {
       }),
   } as any);
   const ref = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const scroll = useConversationVirtualizer({
     rows: [],
+    contentRef,
     totalRowCount: version,
     scrollContainerRef: ref,
   });
@@ -66,7 +68,13 @@ function Harness() {
     );
   return (
     <div ref={ref} id="scroller" style={{ height: 300, overflow: "auto" }}>
-      <div style={{ height: 3000 + version * 100 }}>history</div>
+      <div
+        ref={contentRef}
+        id="content"
+        style={{ height: 3000 + version * 100 }}
+      >
+        history
+      </div>
     </div>
   );
 }

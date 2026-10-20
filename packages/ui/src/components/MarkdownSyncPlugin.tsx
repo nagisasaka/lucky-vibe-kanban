@@ -29,12 +29,14 @@ export function MarkdownSyncPlugin({
 }: MarkdownSyncPluginProps) {
   const [editor] = useLexicalComposerContext();
   const lastSerializedRef = useRef<string | undefined>(undefined);
+  const lastExternalValueRef = useRef<string | undefined>(undefined);
   const prevTransformersRef = useRef(transformers);
 
   // Detect transformer changes and force re-parse
   if (transformers !== prevTransformersRef.current) {
     prevTransformersRef.current = transformers;
     lastSerializedRef.current = undefined;
+    lastExternalValueRef.current = undefined;
   }
 
   // Handle editable state
@@ -44,28 +46,32 @@ export function MarkdownSyncPlugin({
 
   // Handle controlled value changes (external → editor)
   useEffect(() => {
+    if (value === lastExternalValueRef.current) return;
+    lastExternalValueRef.current = value;
     if (value === lastSerializedRef.current) return;
 
     try {
-      editor.update(() => {
-        if (value.trim() === '') {
-          $getRoot().clear();
-        } else {
-          $convertFromMarkdownString(value, transformers);
-        }
-
-        // Only position cursor at end if editor already has focus (user is actively editing)
-        // This prevents unwanted focus when value changes externally (e.g., panel opening)
-        const rootElement = editor.getRootElement();
-        if (rootElement?.contains(document.activeElement)) {
-          const root = $getRoot();
-          const lastNode = root.getLastChild();
-          if (lastNode) {
-            lastNode.selectEnd();
+      editor.update(
+        () => {
+          if (value.trim() === '') {
+            $getRoot().clear();
+          } else {
+            $convertFromMarkdownString(value, transformers);
           }
-        }
-      });
-      lastSerializedRef.current = value;
+
+          // Only position cursor at end if editor already has focus (user is actively editing)
+          // This prevents unwanted focus when value changes externally (e.g., panel opening)
+          const rootElement = editor.getRootElement();
+          if (rootElement?.contains(document.activeElement)) {
+            const root = $getRoot();
+            const lastNode = root.getLastChild();
+            if (lastNode) {
+              lastNode.selectEnd();
+            }
+          }
+        },
+        { tag: 'markdown-sync' }
+      );
     } catch (err) {
       console.error('Failed to parse markdown', err);
     }
@@ -73,7 +79,7 @@ export function MarkdownSyncPlugin({
 
   // Handle editor changes (editor → external)
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
+    return editor.registerUpdateListener(({ editorState, tags }) => {
       onEditorStateChange?.(editorState);
       if (!onChange) return;
 
@@ -84,7 +90,9 @@ export function MarkdownSyncPlugin({
       if (markdown === lastSerializedRef.current) return;
 
       lastSerializedRef.current = markdown;
-      onChange(markdown);
+      // Parsing controlled markdown may normalize trailing newlines. This is
+      // not a user edit and must not invalidate an in-flight send snapshot.
+      if (!tags.has('markdown-sync')) onChange(markdown);
     });
   }, [editor, onChange, onEditorStateChange, transformers]);
 

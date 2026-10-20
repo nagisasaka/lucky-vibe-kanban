@@ -30,16 +30,51 @@ function displaySequence(event: AgentEventEnvelope): bigint {
   return typeof sequence === 'bigint' ? sequence : BigInt(sequence);
 }
 
-function displayEventSort(
-  a: AgentEventEnvelope,
-  b: AgentEventEnvelope
-): number {
-  if (a.run_attempt_number !== b.run_attempt_number) {
-    return a.run_attempt_number - b.run_attempt_number;
+function conversationEvents(
+  run: CanonicalAgentSessionRun
+): AgentEventEnvelope[] {
+  if (!run.timeline) return [];
+  // Only canonical sequence orders persisted events. Native audit counters can
+  // be much larger and host-authored steering has no native reference at all.
+  const durable = [...run.timeline.events].sort((a, b) => {
+    if (a.run_attempt_number !== b.run_attempt_number)
+      return a.run_attempt_number - b.run_attempt_number;
+    return BigInt(a.sequence) < BigInt(b.sequence)
+      ? -1
+      : BigInt(a.sequence) > BigInt(b.sequence)
+        ? 1
+        : 0;
+  });
+  const positioned = durable.map((event, index) => ({
+    event,
+    position: index * 2,
+  }));
+  for (const event of run.timeline.transientEvents) {
+    // Place live deltas after the last durable predecessor without comparing
+    // canonical and native counters, or disturbing durable replay order.
+    let position = -1;
+    durable.forEach((candidate, index) => {
+      const precedes =
+        candidate.run_attempt_number < event.run_attempt_number ||
+        (candidate.run_attempt_number === event.run_attempt_number &&
+          ((candidate.native_refs?.length ?? 0) > 0
+            ? displaySequence(candidate) <= displaySequence(event)
+            : Date.parse(candidate.timestamp) <= Date.parse(event.timestamp)));
+      if (precedes) position = index * 2 + 1;
+    });
+    positioned.push({ event, position });
   }
-  const aSequence = displaySequence(a);
-  const bSequence = displaySequence(b);
-  return aSequence < bSequence ? -1 : aSequence > bSequence ? 1 : 0;
+  return positioned
+    .sort(
+      (a, b) =>
+        a.position - b.position ||
+        (displaySequence(a.event) < displaySequence(b.event)
+          ? -1
+          : displaySequence(a.event) > displaySequence(b.event)
+            ? 1
+            : 0)
+    )
+    .map(({ event }) => event);
 }
 
 function identityFromEvents(
@@ -202,16 +237,13 @@ function appendRunEntries(
   run: CanonicalAgentSessionRun,
   output: PatchTypeWithKey[]
 ) {
-  const events = run.timeline
-    ? [...run.timeline.events, ...run.timeline.transientEvents].sort(
-        displayEventSort
-      )
-    : [];
-  const state = run.timeline?.state ?? run.summary.state;
-  const runActive = isCanonicalRunActive(state);
   const liveIds = new Set(
     run.timeline?.transientEvents.map((event) => event.event_id)
   );
+  const events = conversationEvents(run);
+  const state = run.timeline?.state ?? run.summary.state;
+  const runActive = isCanonicalRunActive(state);
+
   const toolIndexes = new Map<string, number>();
   const agentEntries = new Map<
     string,
