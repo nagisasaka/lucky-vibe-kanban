@@ -7,6 +7,7 @@ import type {
   ToolStatus,
 } from 'shared/types';
 import { AgentRuntimeToolStatus } from 'shared/types';
+import { newestRunState } from './canonicalAgentTimeline';
 
 import type {
   CanonicalConversationIdentity,
@@ -15,6 +16,7 @@ import type {
 } from '@/shared/hooks/useConversationHistory/types';
 import {
   isCanonicalRunActive,
+  isCanonicalRunTerminal,
   type CanonicalAgentSessionRun,
   type CanonicalAgentSessionTimeline,
 } from './canonicalAgentSessionTimeline';
@@ -643,6 +645,39 @@ function appendRunEntries(
       });
     }
   }
+  // One footer per canonical run. Derive from persisted timestamps on every
+  // projection; reconnects and React remounts must never accumulate local time.
+  const timingState = newestRunState(
+    run.summary.state,
+    run.timeline?.state ?? null
+  )!;
+  const terminal = isCanonicalRunTerminal(timingState);
+  const terminalEvent = events.find(
+    (event) =>
+      event.run_attempt_id === timingState.last_run_attempt_id &&
+      event.payload.type === 'lifecycle_changed' &&
+      isCanonicalRunTerminal({ ...state, status: event.payload.data.status })
+  );
+  const completedAt =
+    timingState.last_run_attempt_id === run.summary.state.last_run_attempt_id
+      ? run.summary.completed_at
+      : null;
+  output.push({
+    type: 'NORMALIZED_ENTRY',
+    content: {
+      entry_type: { type: 'system_message' },
+      content: '',
+      timestamp: run.summary.created_at,
+    },
+    patchKey: `agent-run:${run.summary.agent_run_id}:elapsed`,
+    runTiming: {
+      startedAt: run.summary.created_at,
+      endedAt: terminal
+        ? (completedAt ?? terminalEvent?.timestamp ?? null)
+        : null,
+      active: !terminal,
+    },
+  });
 }
 
 export function projectCanonicalAgentConversation(

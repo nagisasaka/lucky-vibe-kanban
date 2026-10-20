@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../lib/cn';
 
 interface ChatElapsedTimeProps {
@@ -39,43 +39,22 @@ export function ChatElapsedTime({
   className,
 }: ChatElapsedTimeProps) {
   const [now, setNow] = useState(() => Date.now());
-  const [fallbackEndedAtMs, setFallbackEndedAtMs] = useState<number | null>(
-    null
-  );
-  const hasBeenActiveRef = useRef(active);
   const startedAtMs = useMemo(() => parseTime(startedAt), [startedAt]);
   const endedAtMs = useMemo(() => parseTime(endedAt), [endedAt]);
+  const ticking = active && startedAtMs != null && endedAtMs == null;
 
   useEffect(() => {
-    setFallbackEndedAtMs(null);
-    hasBeenActiveRef.current = false;
-  }, [startedAtMs, endedAtMs]);
-
-  useEffect(() => {
-    if (!active || !startedAtMs) return;
-
-    hasBeenActiveRef.current = true;
+    if (!ticking) return;
     setNow(Date.now());
-    const intervalId = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
+    const intervalId = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(intervalId);
-  }, [active, startedAtMs]);
+  }, [ticking, startedAtMs]);
 
-  useEffect(() => {
-    if (active || !startedAtMs || endedAtMs || !hasBeenActiveRef.current) {
-      return;
-    }
+  if (startedAtMs == null) return null;
 
-    setFallbackEndedAtMs((current) => current ?? Date.now());
-  }, [active, startedAtMs, endedAtMs]);
-
-  if (!startedAtMs) return null;
-
-  const fallbackEnd =
-    fallbackEndedAtMs ?? (hasBeenActiveRef.current ? now : null);
-  const effectiveEnd = active ? now : (endedAtMs ?? fallbackEnd);
+  // A recorded end always wins, including a temporarily stale active flag.
+  // Missing terminal evidence is unknown, never the browser's mount time.
+  const effectiveEnd = endedAtMs ?? (ticking ? now : null);
 
   if (effectiveEnd == null) return null;
 
@@ -83,7 +62,7 @@ export function ChatElapsedTime({
     <span
       className={cn(
         'shrink-0 text-xs tabular-nums text-low',
-        active && 'text-normal',
+        ticking && 'text-normal',
         className
       )}
     >

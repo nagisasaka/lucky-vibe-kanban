@@ -31,6 +31,7 @@ export interface SidebarWorkspace {
   hasPendingApproval?: boolean;
   hasRunningDevServer?: boolean;
   hasUnseenActivity?: boolean;
+  latestProcessStartedAt?: string;
   latestProcessCompletedAt?: string;
   latestProcessStatus?: AgentRunStatus;
   prStatus?: 'open' | 'merged' | 'closed' | 'unknown';
@@ -81,6 +82,7 @@ function toSidebarWorkspace(
     hasPendingApproval: summary?.has_pending_approval,
     hasRunningDevServer: summary?.has_running_dev_server,
     hasUnseenActivity: summary?.has_unseen_turns,
+    latestProcessStartedAt: summary?.latest_process_started_at ?? undefined,
     latestProcessCompletedAt: summary?.latest_process_completed_at ?? undefined,
     latestProcessStatus: summary?.latest_process_status ?? undefined,
     prStatus: summary?.pr_status ?? undefined,

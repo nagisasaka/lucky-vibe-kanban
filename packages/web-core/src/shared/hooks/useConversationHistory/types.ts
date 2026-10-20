@@ -18,6 +18,7 @@ export interface CanonicalConversationIdentity {
 
 export type PatchTypeWithKey = PatchType & {
   patchKey: string;
+  runTiming?: { startedAt: string; endedAt: string | null; active: boolean };
   executionProcessId?: string;
   canonical?: CanonicalConversationIdentity;
 };

@@ -66,6 +66,8 @@ pub struct AgentRunRecord {
 
 #[derive(Debug, Clone, FromRow)]
 pub struct AgentRunWorkspaceSummaryRecord {
+    pub created_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub agent_run_id: Uuid,
     pub workspace_id: Uuid,
     pub session_id: Uuid,
@@ -330,16 +332,19 @@ impl AgentRunRecord {
                        ar.session_id,
                        state.status,
                        state.updated_at,
+                       ar.created_at,
+                       attempt.finished_at AS completed_at,
                        ROW_NUMBER() OVER (
                            PARTITION BY ar.workspace_id
                            ORDER BY ar.created_at DESC, ar.id DESC
                        ) AS row_number
                 FROM agent_runs ar
                 JOIN agent_run_state state ON state.agent_run_id = ar.id
+                LEFT JOIN agent_run_attempts attempt ON attempt.id = state.last_run_attempt_id
                 JOIN workspaces workspace ON workspace.id = ar.workspace_id
                 WHERE workspace.archived = ?
             )
-            SELECT agent_run_id, workspace_id, session_id, status, updated_at
+            SELECT agent_run_id, workspace_id, session_id, status, updated_at, created_at, completed_at
             FROM ranked_runs
             WHERE row_number = 1
             "#,
@@ -3225,6 +3230,16 @@ mod tests {
                 .await
                 .unwrap();
         assert_eq!(finished_after_late_event, finished_at);
+        let summaries = AgentRunRecord::find_latest_for_workspaces(&pool, false)
+            .await
+            .unwrap();
+        let summary = summaries
+            .iter()
+            .find(|row| row.workspace_id == workspace_id)
+            .unwrap();
+        assert_eq!(summary.completed_at, Some(finished_at));
+        assert!(summary.updated_at > finished_at);
+        assert!(summary.created_at <= finished_at);
         assert!(
             AgentRunRecord::find_workspaces_with_unseen(&pool, false)
                 .await

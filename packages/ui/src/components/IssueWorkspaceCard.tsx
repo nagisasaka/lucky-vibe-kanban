@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import { UserAvatar, type UserAvatarUser } from './UserAvatar';
 import { RunningDots } from './RunningDots';
+import { ChatElapsedTime } from './ChatElapsedTime';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,7 @@ export interface WorkspaceWithStats {
   hasPendingApproval?: boolean;
   hasRunningDevServer?: boolean;
   hasUnseenActivity?: boolean;
+  latestProcessStartedAt?: string;
   latestProcessCompletedAt?: string;
   latestProcessStatus?: AgentRunStatus;
 }
@@ -247,13 +249,30 @@ export function IssueWorkspaceCard({
                 weight="fill"
               />
             )}
+            <ChatElapsedTime
+              startedAt={workspace.latestProcessStartedAt}
+              endedAt={workspace.latestProcessCompletedAt}
+              active={
+                !!workspace.latestProcessStatus &&
+                [
+                  'pending',
+                  'starting',
+                  'running',
+                  'awaiting_input',
+                  'awaiting_approval',
+                  'cancelling',
+                ].includes(workspace.latestProcessStatus)
+              }
+            />
           </div>
 
-          {hasLiveStatusIndicator && (
+          {hasLiveStatusIndicator && !workspace.latestProcessStartedAt && (
             <span className="text-low/50 shrink-0">·</span>
           )}
 
-          <span className="whitespace-nowrap shrink-0">{timeAgo}</span>
+          {!workspace.latestProcessStartedAt && (
+            <span className="whitespace-nowrap shrink-0">{timeAgo}</span>
+          )}
           {workspace.filesChanged > 0 && (
             <>
               <span className="text-low/50 shrink-0">·</span>

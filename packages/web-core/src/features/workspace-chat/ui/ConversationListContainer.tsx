@@ -43,6 +43,7 @@ import { useConversationHistory } from '../model/hooks/useConversationHistory';
 import { useSetTokenUsageInfo } from '../model/contexts/EntriesContext';
 import type { WorkspaceWithSession } from '@/shared/types/attempt';
 import type { RepoWithTargetBranch } from 'shared/types';
+import { ChatElapsedTime } from '@vibe/ui/components/ChatElapsedTime';
 import { ChatEmptyState } from '@vibe/ui/components/ChatEmptyState';
 import { ChatScriptPlaceholder } from '@vibe/ui/components/ChatScriptPlaceholder';
 import { ScriptFixerDialog } from '@/shared/dialogs/scripts/ScriptFixerDialog';
@@ -72,6 +73,13 @@ function renderRowContent(
   resetAction: UseResetProcessResult,
   repos: RepoWithTargetBranch[]
 ): React.ReactNode {
+  if ('runTiming' in entry && entry.runTiming) {
+    return (
+      <div className="px-base py-half" data-testid="run-elapsed">
+        <ChatElapsedTime {...entry.runTiming} />
+      </div>
+    );
+  }
   if (isAggregatedGroup(entry)) {
     return (
       <DisplayConversationEntry
