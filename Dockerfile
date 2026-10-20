@@ -144,7 +144,7 @@ COPY --from=builder /usr/local/bin/vibe-kanban-mcp /usr/local/bin/vibe-kanban-mc
 # unauthenticated local image and must not be published directly to the Internet.
 FROM runtime-base AS server-tools
 USER root
-ARG CODEX_VERSION=0.154.0
+ARG CODEX_VERSION=0.163.0
 ARG CARGO_WATCH_VERSION=8.5.3
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \

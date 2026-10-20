@@ -8,7 +8,10 @@ import type {
 import { getVariantOptions } from '@/shared/lib/executor';
 import { filterVisibleAgents } from '@/shared/lib/agentVisibility';
 import { usePresetOptions } from '@/shared/hooks/usePresetOptions';
-import { resolveExecutorOverride } from '@/shared/lib/executorOverrides';
+import {
+  normaliseExecutionMode,
+  resolveExecutorOverride,
+} from '@/shared/lib/executorOverrides';
 
 function getProfileKey(
   executor: BaseCodingAgent | null,
@@ -188,7 +191,7 @@ function useEffectiveOverrides(
       }
     }
 
-    return resolved;
+    return normaliseExecutionMode(resolved);
   }, [
     effectiveExecutor,
     resolvedVariant,

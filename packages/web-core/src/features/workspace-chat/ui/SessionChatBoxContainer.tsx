@@ -9,7 +9,6 @@ import { useDropzone } from 'react-dropzone';
 import {
   BaseAgentCapability,
   AgentGoalStatus,
-  ExecutionMode,
   type Session,
   type BaseCodingAgent,
   type ExecutorConfig,
@@ -94,7 +93,6 @@ import { isChatBlockingScriptActive } from '@/shared/lib/executionProcessRuntime
 import { deriveCanonicalAgentRunActionPolicy } from '@/features/agent-runtime';
 import { canonicalAgentControls } from '../model/canonicalAgentControls';
 import { GoalProgressCard } from './GoalProgressCard';
-import { PlanGoalApprovalCard } from './PlanGoalApprovalCard';
 import { useWorkspaceRecord } from '@/shared/hooks/useWorkspaceRecord';
 import { ExecutionInspectionPanel } from './ExecutionInspectionPanel';
 
@@ -594,47 +592,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     onPersist: (cfg) => void saveToScratch(localMessageRef.current, cfg),
   });
   const providerPolicy = useAgentProviderPolicy(effectiveExecutor);
-  const planWithGoalObjective = useMemo(() => {
-    if (
-      executorConfig?.execution_mode !== ExecutionMode.plan_with_goal ||
-      pendingApproval?.kind !== 'approval' ||
-      !['plan', 'codex.plan'].includes(pendingApproval.toolName)
-    ) {
-      return null;
-    }
-    for (let index = entries.length - 1; index >= 0; index--) {
-      const entry = entries[index];
-      if (entry?.type !== 'NORMALIZED_ENTRY') continue;
-      const entryType = entry.content.entry_type;
-      if (
-        entryType.type === 'tool_use' &&
-        entryType.action_type.action === 'plan_presentation' &&
-        entryType.action_type.plan.trim()
-      ) {
-        return entryType.action_type.plan;
-      }
-    }
-    return null;
-  }, [entries, executorConfig?.execution_mode, pendingApproval]);
-  const planGoalApprovalMutation = useMutation({
-    mutationFn: async (objective: string) => {
-      if (pendingApproval?.kind !== 'approval') return;
-      await canonicalAgentControls.updatePlanGoalDraft(
-        pendingApproval.agentRunId,
-        objective
-      );
-      await approveAsync({
-        approvalId: pendingApproval.approvalId,
-        agentRunId: pendingApproval.agentRunId,
-      });
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: workspaceSummaryKeys.all,
-      });
-      onScrollToBottom();
-    },
-  });
   const [stagedResumeSession, setStagedResumeSession] =
     useState<ResumableAgentSession | null>(null);
 
@@ -1549,14 +1506,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       }
     />
   );
-  const planGoalApprovalNode = planWithGoalObjective && (
-    <PlanGoalApprovalCard
-      objective={planWithGoalObjective}
-      busy={planGoalApprovalMutation.isPending}
-      error={planGoalApprovalMutation.error?.message}
-      onApprove={(objective) => planGoalApprovalMutation.mutate(objective)}
-    />
-  );
 
   return (
     <div className="flex w-chat max-w-full flex-col">
@@ -1575,7 +1524,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           {steerMutation.error.message}
         </p>
       )}
-      {planGoalApprovalNode}
       {goalProgressNode}
       {sessionId && (
         <AsyncAgentQuestions
@@ -1697,7 +1645,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
             : undefined
         }
         approvalMode={
-          pendingApproval?.kind === 'approval' && !planWithGoalObjective
+          pendingApproval?.kind === 'approval'
             ? {
                 isActive: true,
                 onApprove: handleApprove,

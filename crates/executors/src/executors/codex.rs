@@ -586,22 +586,18 @@ impl Codex {
         if self.plan && self.execution_mode == ExecutionMode::Code {
             ExecutionMode::Plan
         } else {
-            self.execution_mode
+            match self.execution_mode {
+                ExecutionMode::PlanWithGoal => ExecutionMode::Plan,
+                mode => mode,
+            }
         }
     }
 
     pub(crate) fn prepare_execution_prompt(&self, prompt: String) -> String {
-        let prompt = format!(
+        format!(
             "{prompt}{}",
             goal_concurrency_constraint(self.goal_max_concurrent_agents)
-        );
-        if self.effective_execution_mode() == ExecutionMode::PlanWithGoal {
-            format!(
-                "{prompt}\n\nProduce an approval-ready goal contract as the final plan, with sections named Outcome, Constraints, Implementation Plan, and Verification and Completion Criteria. The approved text will become the persistent Goal objective, so make it self-contained and include measurable completion conditions."
-            )
-        } else {
-            prompt
-        }
+        )
     }
 
     /// V1 direct-runtime metadata and decoder entry point.
@@ -630,6 +626,8 @@ impl Codex {
     }
 
     pub(crate) fn apply_direct_overrides(&mut self, executor_config: &ExecutorConfig) {
+        // Preserve legacy Plan presets before applying independent permissions.
+        self.execution_mode = self.effective_execution_mode();
         if let Some(model_id) = &executor_config.model_id {
             self.model = Some(model_id.clone());
         }
@@ -659,7 +657,10 @@ impl Codex {
             }
         }
         if let Some(execution_mode) = executor_config.execution_mode {
-            self.execution_mode = execution_mode;
+            self.execution_mode = match execution_mode {
+                ExecutionMode::PlanWithGoal => ExecutionMode::Plan,
+                mode => mode,
+            };
             self.plan = matches!(
                 execution_mode,
                 ExecutionMode::Plan | ExecutionMode::PlanWithGoal
@@ -1745,6 +1746,25 @@ mod tests {
     }
 
     #[test]
+    fn legacy_plan_preset_survives_independent_permission_overrides() {
+        for policy in [
+            crate::model_selector::PermissionPolicy::Auto,
+            crate::model_selector::PermissionPolicy::Supervised,
+        ] {
+            let mut executor = test_executor();
+            executor.plan = true;
+            let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+            config.permission_policy = Some(policy);
+            executor.apply_direct_overrides(&config);
+            assert_eq!(executor.effective_execution_mode(), ExecutionMode::Plan);
+            // An explicit mode selection still wins over the legacy preset.
+            config.execution_mode = Some(ExecutionMode::Code);
+            executor.apply_direct_overrides(&config);
+            assert_eq!(executor.effective_execution_mode(), ExecutionMode::Code);
+        }
+    }
+
+    #[test]
     fn goal_overrides_are_scoped_to_the_app_server_thread() {
         let mut executor = test_executor();
         let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
@@ -1787,16 +1807,15 @@ mod tests {
     }
 
     #[test]
-    fn plan_with_goal_requests_an_approval_ready_goal_contract() {
+    fn legacy_plan_with_goal_runs_as_plan_without_goal_contract() {
         let mut executor = test_executor();
         let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
         config.execution_mode = Some(ExecutionMode::PlanWithGoal);
         executor.apply_direct_overrides(&config);
 
         let prompt = executor.prepare_execution_prompt("Implement it".to_string());
-        assert!(prompt.contains("Outcome"));
-        assert!(prompt.contains("Constraints"));
-        assert!(prompt.contains("Verification and Completion Criteria"));
+        assert_eq!(executor.effective_execution_mode(), ExecutionMode::Plan);
+        assert_eq!(prompt, "Implement it");
     }
 
     #[test]

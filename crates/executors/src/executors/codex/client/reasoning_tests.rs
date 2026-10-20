@@ -139,6 +139,19 @@ async fn resolved_reasoning_survives_start_resume_and_mode_selection() {
                         assert_eq!(client.current_reasoning_effort(), expected);
                         let selected = client.initial_collaboration_mode().unwrap();
                         assert_eq!(selected.settings.reasoning_effort, expected);
+                        assert_eq!(
+                            selected.mode,
+                            if matches!(mode, ExecutionMode::Plan | ExecutionMode::PlanWithGoal) {
+                                codex_protocol::config_types::ModeKind::Plan
+                            } else {
+                                codex_protocol::config_types::ModeKind::Default
+                            }
+                        );
+                        // null selects Codex's built-in instructions for the mode.
+                        assert_eq!(
+                            serde_json::to_value(&selected).unwrap()["settings"]["developer_instructions"],
+                            Value::Null
+                        );
                         // Plan -> Code and post-approval turns reuse this state too.
                         let code = client
                             .collaboration_mode(codex_protocol::config_types::ModeKind::Default)

@@ -84,7 +84,14 @@ test("Docker distribution includes the prebuilt app, process host, pinned tools,
   );
   assert.match(docker, /FROM runtime-base AS runtime/);
   assert.match(docker, /FROM server-tools AS server/);
-  assert.match(docker, /ARG CODEX_VERSION=\d+\.\d+\.\d+/);
+  const codexFixture = JSON.parse(
+    await readFile(
+      new URL("crates/executors/fixtures/codex-app-server-0.163.0.json", root),
+      "utf8",
+    ),
+  );
+  const codexVersion = docker.match(/ARG CODEX_VERSION=(\d+\.\d+\.\d+)/)?.[1];
+  assert.equal(codexFixture.version, `codex-cli ${codexVersion}`);
   assert.match(docker, /rust-toolchain\.toml/);
   assert.match(
     docker,

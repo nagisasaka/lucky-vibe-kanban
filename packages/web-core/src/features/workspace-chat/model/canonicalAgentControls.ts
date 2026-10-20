@@ -9,7 +9,6 @@ export interface CanonicalAgentControlClient {
     agentRunId: string,
     update: { objective?: string; status?: AgentGoalStatus }
   ): Promise<unknown>;
-  updatePlanGoalDraft(agentRunId: string, objective: string): Promise<unknown>;
   clearGoal(agentRunId: string): Promise<unknown>;
   submitInput(
     agentRunId: string,
@@ -37,8 +36,6 @@ export function createCanonicalAgentControls(
       agentRunId: string,
       update: { objective?: string; status?: AgentGoalStatus }
     ) => client.updateGoal(agentRunId, update),
-    updatePlanGoalDraft: (agentRunId: string, objective: string) =>
-      client.updatePlanGoalDraft(agentRunId, objective),
     clearGoal: (agentRunId: string) => client.clearGoal(agentRunId),
     submitInput: (agentRunId: string, inputId: string, content: string) =>
       client.submitInput(agentRunId, inputId, content),
