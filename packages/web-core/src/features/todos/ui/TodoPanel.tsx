@@ -1,4 +1,5 @@
-import { useId, useMemo, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { DotsThreeIcon, ArrowSquareOutIcon } from '@phosphor-icons/react';
@@ -188,35 +189,87 @@ export function TodoPanel({
         ) : !query.isError && groups.length === 0 ? (
           <p className="py-double text-low">{t('todo.empty')}</p>
         ) : null}
-        <div
-          className={cn(
-            'grid items-start gap-double',
-            grid
-              ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]'
-              : 'grid-cols-1'
-          )}
-        >
+        <TodoCategoryLayout grid={grid}>
           {groups.map(([category, items]) => (
-            <section
-              key={category}
-              className="min-w-0 overflow-hidden rounded-sm border border-border bg-secondary"
-            >
-              <h3 className="border-b border-border px-base py-base font-medium text-high break-words">
-                {category || t('todo.uncategorized')}{' '}
-                <span className="ml-half text-xs font-normal text-low">
-                  {items.length}
-                </span>
-              </h3>
-              <ul className="divide-y divide-border">
-                {items.map((item) => (
-                  <TodoRow key={item.id} todo={item} categories={categories} />
-                ))}
-              </ul>
-            </section>
+            <div key={category} className="min-w-0">
+              <div className="pb-double">
+                <section className="min-w-0 overflow-hidden rounded-sm border border-border bg-secondary">
+                  <h3 className="border-b border-border px-base py-base font-medium text-high break-words">
+                    {category || t('todo.uncategorized')}{' '}
+                    <span className="ml-half text-xs font-normal text-low">
+                      {items.length}
+                    </span>
+                  </h3>
+                  <ul className="divide-y divide-border">
+                    {items.map((item) => (
+                      <TodoRow
+                        key={item.id}
+                        todo={item}
+                        categories={categories}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              </div>
+            </div>
           ))}
-        </div>
+        </TodoCategoryLayout>
       </div>
     </section>
+  );
+}
+
+// Sparse row placement keeps category DOM/keyboard order and top-to-bottom
+// visual order. Do not use dense packing, which can move later categories ahead.
+function TodoCategoryLayout({
+  grid,
+  children,
+}: {
+  grid: boolean;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const container = ref.current;
+    if (!container || !grid) return;
+    const measure = (content: Element) => {
+      const cell = content.parentElement!;
+      cell.style.gridRowEnd = `span ${Math.max(
+        1,
+        Math.ceil(content.getBoundingClientRect().height)
+      )}`;
+    };
+    // Observe natural content height, not the grid cell's allocated row height.
+    // This also handles text wrapping, editing, completion and font-size changes.
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) measure(entry.target);
+    });
+    for (const cell of container.children) {
+      const content = cell.firstElementChild!;
+      measure(content);
+      observer.observe(content);
+    }
+    return () => {
+      observer.disconnect();
+      for (const cell of container.children) {
+        (cell as HTMLElement).style.removeProperty('grid-row-end');
+      }
+    };
+  }, [grid, children]);
+
+  return (
+    <div
+      ref={ref}
+      data-testid="todo-categories"
+      className={cn(
+        'grid items-start gap-x-double',
+        grid
+          ? 'auto-rows-[1px] grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]'
+          : 'grid-cols-1'
+      )}
+    >
+      {children}
+    </div>
   );
 }
 

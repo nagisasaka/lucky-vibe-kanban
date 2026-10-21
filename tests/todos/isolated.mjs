@@ -9,6 +9,7 @@ import { once } from "node:events";
 import { createInterface } from "node:readline";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { checkCategoryLayout } from "./layout.mjs";
 
 const root = process.cwd();
 const output = path.join(root, ".build/todo-validation");
@@ -328,6 +329,8 @@ try {
       (el) => getComputedStyle(el).gridTemplateColumns.split(" ").length,
     );
   assert.ok(columns > 1, "desktop TODO grid must use multiple columns");
+
+  await checkCategoryLayout({ page, grid, api, todoPath, output });
 
   await page.goto(`${base}/workspaces/${workspace}`);
   const editor = page.locator('[contenteditable="true"]').first();

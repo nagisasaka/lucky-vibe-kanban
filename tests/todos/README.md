@@ -25,3 +25,20 @@ node tests/todos/isolated.mjs
 Use `LVK_CHROMIUM_EXECUTABLE=/absolute/path/to/chromium` to use an installed
 Chromium instead of Playwright's default browser. This does not test a live
 ChatGPT account or external OAuth provider.
+
+The same isolated run also calls `layout.mjs`: it adds 24 mixed-height categories
+(including a 30-line item and unbroken text), checks that a short column is filled
+before the tall first category ends, and checks pairwise card bounds, category
+order and horizontal overflow at 1600/1000/390/320px. It opens and resizes an edit
+form, saves multiline content, checks Tab order, reaches the last category at
+each width, opens deletion confirmation and deletes a category's last item.
+The existing run also covers completion/reopening, creation, dark/light themes,
+reload and the single-column workspace panel. These checks use the real isolated
+API/SQLite and built frontend, with no browser route mocks.
+
+Layout uses sparse CSS Grid placement with measured row spans. Category sorting,
+item order and DOM/Tab order remain unchanged; categories are read top-to-bottom,
+left-to-right when their tops align. Dense backfilling and column-major CSS
+columns are intentionally avoided because they can change that reading order.
+There is no category-collapse control; expansion coverage uses the existing edit
+form and deletion confirmation.
