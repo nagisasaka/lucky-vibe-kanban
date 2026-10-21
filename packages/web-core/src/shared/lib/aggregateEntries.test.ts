@@ -60,6 +60,20 @@ function thinkingEntry(
 }
 
 describe('aggregateConsecutiveEntries', () => {
+  it('keeps pending command approval visible outside collapsed tool groups', () => {
+    const pending = toolEntry(
+      'pending',
+      {
+        action: 'command_run',
+        command: 'echo review-me',
+        category: 'other',
+        result: null,
+      },
+      { status: 'pending_approval', approval_id: 'approval-1' }
+    );
+    expect(aggregateConsecutiveEntries([pending])).toEqual([pending]);
+  });
+
   it('wraps running command runs into an in-progress tool call group', () => {
     const result = aggregateConsecutiveEntries(
       [

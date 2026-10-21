@@ -62,10 +62,20 @@ pub(crate) fn encode_control(control: DirectControl) -> Result<Vec<u8>, serde_js
             "method":"thread/goal/clear",
             "params":{"threadId":"<active-thread>"}
         }),
-        DirectControl::Approve { .. } | DirectControl::Input { .. } => {
+        // Host-owned semantic control. The live client resolves the waiter;
+        // only the original request handler writes a native approval response.
+        DirectControl::Approve {
+            request_id,
+            approved,
+            reason,
+        } => serde_json::json!({
+            "method":"lucky-vibe/approval/resolve",
+            "params":{"approvalId":request_id,"approved":approved,"reason":reason}
+        }),
+        DirectControl::Input { .. } => {
             return Err(serde_json::Error::io(std::io::Error::new(
                 std::io::ErrorKind::Unsupported,
-                "Codex approval/input responses require the original server request id",
+                "Codex input responses require the original server request id",
             )));
         }
     };

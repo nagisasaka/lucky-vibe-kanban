@@ -1519,6 +1519,19 @@ fn classify_codex_payload(
 
     let params = payload.get("params").unwrap_or(payload);
     match event_type.as_str() {
+        "lucky-vibe/approval/status" => Some(
+            params
+                .get("pending")
+                .and_then(Value::as_u64)
+                .map(|pending| {
+                    TypedProviderEvent::Lifecycle(if pending > 0 {
+                        AgentRunStatus::AwaitingApproval
+                    } else {
+                        AgentRunStatus::Running
+                    })
+                })
+                .ok_or(NativeAuditError::MalformedFrame(sequence)),
+        ),
         "thread/goal/updated" | "thread.goal.updated" => {
             let goal = params.get("goal")?;
             let status = match goal.get("status").and_then(Value::as_str)? {
@@ -3469,6 +3482,31 @@ mod tests {
     }
 
     #[test]
+    fn codex_pending_approval_count_projects_the_ui_lifecycle() {
+        for (pending, status) in [
+            (2, AgentRunStatus::AwaitingApproval),
+            (1, AgentRunStatus::AwaitingApproval),
+            (0, AgentRunStatus::Running),
+        ] {
+            let provider = DirectProvider::Codex;
+            let decoded = provider
+                .decode_native_frame(&frame(
+                    provider,
+                    serde_json::json!({
+                        "method": "lucky-vibe/approval/status", "params": { "pending": pending }
+                    }),
+                ))
+                .unwrap();
+            let events = provider
+                .map_provider_event(&decoded, &fixture_manifest(provider))
+                .unwrap();
+            assert!(
+                matches!(events[0].payload, AgentEventPayload::LifecycleChanged { status: actual } if actual == status)
+            );
+        }
+    }
+
+    #[test]
     fn maps_approval_and_waiting_input_to_canonical_events() {
         let manifest = NativeAuditManifest {
             audit_schema_version: crate::runtime::NATIVE_AUDIT_SCHEMA_VERSION,
@@ -3819,11 +3857,18 @@ mod tests {
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v4"
+                    "-v5"
                 } else {
                     "-v3"
                 }
             ));
+            assert!(
+                provider
+                    .v4_mapper()
+                    .versions()
+                    .mapper_version
+                    .ends_with("-v4")
+            );
             assert!(
                 provider
                     .v3_mapper()

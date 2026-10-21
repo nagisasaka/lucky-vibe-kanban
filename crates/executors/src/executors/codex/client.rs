@@ -100,6 +100,7 @@ pub struct AppServerClient {
     thread_id: Mutex<Option<String>>,
     turn_id: Arc<Mutex<Option<String>>>,
     pending_feedback: Mutex<VecDeque<String>>,
+    pending_tool_approvals: Mutex<usize>,
     child_completion: StdMutex<HashMap<String, (Option<String>, bool)>>,
     auto_approve: bool,
     plan_mode: AtomicBool,
@@ -162,6 +163,7 @@ impl AppServerClient {
             thread_id: Mutex::new(None),
             turn_id: Arc::new(Mutex::new(None)),
             pending_feedback: Mutex::new(VecDeque::new()),
+            pending_tool_approvals: Mutex::new(0),
             child_completion: StdMutex::new(HashMap::new()),
             repo_context,
             commit_reminder,
@@ -436,12 +438,28 @@ impl AppServerClient {
                     .await?;
                 Ok(raw)
             }
-            DirectControl::Approve { .. } | DirectControl::Input { .. } => {
-                Err(ExecutorError::Io(io::Error::new(
-                    io::ErrorKind::Unsupported,
-                    "Codex approval/input responses must use the original server request id",
-                )))
+            DirectControl::Approve {
+                request_id,
+                approved,
+                reason,
+            } => {
+                self.approvals
+                    .as_ref()
+                    .ok_or(ExecutorApprovalError::ServiceUnavailable)?
+                    .resolve_tool_approval(&request_id, approved, reason.clone())
+                    .await?;
+                Ok(super::command_adapter::encode_control(
+                    DirectControl::Approve {
+                        request_id,
+                        approved,
+                        reason,
+                    },
+                )?)
             }
+            DirectControl::Input { .. } => Err(ExecutorError::Io(io::Error::new(
+                io::ErrorKind::Unsupported,
+                "Codex input responses must use the original server request id",
+            ))),
         }
     }
 
@@ -802,7 +820,8 @@ impl AppServerClient {
                     .await?;
                 let (decision, feedback) = self.file_change_decision(&status);
                 let response = FileChangeRequestApprovalResponse { decision };
-                send_server_response(peer, request_id, response).await?;
+                self.send_tool_approval_response(peer, request_id, response)
+                    .await?;
                 if let Some(message) = feedback {
                     tracing::debug!("queueing file change denial feedback: {message}");
                     self.enqueue_feedback(message).await;
@@ -837,7 +856,8 @@ impl AppServerClient {
                     .await?;
                 let (decision, feedback) = self.command_execution_decision(&status);
                 let response = CommandExecutionRequestApprovalResponse { decision };
-                send_server_response(peer, request_id, response).await?;
+                self.send_tool_approval_response(peer, request_id, response)
+                    .await?;
                 if let Some(message) = feedback {
                     tracing::debug!("queueing exec denial feedback: {message}");
                     self.enqueue_feedback(message).await;
@@ -951,6 +971,28 @@ impl AppServerClient {
         }
     }
 
+    async fn send_tool_approval_response<T: Serialize>(
+        &self,
+        peer: &JsonRpcPeer,
+        request_id: RequestId,
+        response: T,
+    ) -> Result<(), ExecutorError> {
+        let payload = JSONRPCResponse {
+            id: request_id,
+            result: serde_json::to_value(response)?,
+        };
+        // Retain the original native ID and exact decision next to the request.
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "type": "approval_protocol_response", "response": payload,
+                })
+                .to_string(),
+            )
+            .await?;
+        peer.send(&payload).await
+    }
+
     async fn request_tool_approval(
         &self,
         tool_name: &str,
@@ -986,7 +1028,23 @@ impl AppServerClient {
             )
             .await;
 
-        approval_service
+        {
+            let mut pending = self.pending_tool_approvals.lock().await;
+            *pending += 1;
+            self.log_writer
+                .log_raw(
+                    &serde_json::json!({
+                        "type": "approval_requested", "approval_id": approval_id,
+                        "tool_call_id": tool_call_id, "tool_name": display_tool_name,
+                    })
+                    .to_string(),
+                )
+                .await?;
+
+            self.log_tool_approval_count(*pending).await?;
+        }
+
+        let result = approval_service
             .wait_tool_approval(&approval_id, self.cancel.clone())
             .or_else(|err| async {
                 self.handle_approval_error(display_tool_name, tool_call_id)
@@ -994,7 +1052,39 @@ impl AppServerClient {
                 Err(err)
             })
             .await
-            .map_err(ExecutorError::from)
+            .map_err(ExecutorError::from);
+        let (approved, reason) = match &result {
+            Ok(ApprovalStatus::Approved) => (true, None),
+            Ok(ApprovalStatus::Denied { reason }) => (false, reason.clone()),
+            Ok(_) => (false, Some("Approval timed out".to_string())),
+            Err(error) => (false, Some(error.to_string())),
+        };
+        {
+            let mut pending = self.pending_tool_approvals.lock().await;
+            *pending -= 1;
+            self.log_writer
+                .log_raw(
+                    &serde_json::json!({
+                        "type": "approval_resolved", "approval_id": approval_id,
+                        "approved": approved, "reason": reason,
+                    })
+                    .to_string(),
+                )
+                .await?;
+            self.log_tool_approval_count(*pending).await?;
+        }
+        result
+    }
+
+    async fn log_tool_approval_count(&self, pending: usize) -> Result<(), ExecutorError> {
+        self.log_writer
+            .log_raw(
+                &serde_json::json!({
+                    "method": "lucky-vibe/approval/status", "params": { "pending": pending },
+                })
+                .to_string(),
+            )
+            .await
     }
 
     async fn handle_approval_error(&self, display_tool_name: &str, tool_call_id: &str) {
@@ -3364,5 +3454,254 @@ mod version_check_tests {
 
         assert_eq!(params.effort, None);
         assert_eq!(params.collaboration_mode, None);
+    }
+}
+
+#[cfg(all(test, unix))]
+mod approval_regression_tests {
+    use super::*;
+
+    struct WaitingService {
+        fail: bool,
+        requested: tokio::sync::Notify,
+        response: Mutex<Option<tokio::sync::oneshot::Sender<ApprovalStatus>>>,
+        receiver: Mutex<Option<tokio::sync::oneshot::Receiver<ApprovalStatus>>>,
+    }
+
+    #[async_trait]
+    impl ExecutorApprovalService for WaitingService {
+        async fn create_tool_approval(&self, _: &str) -> Result<String, ExecutorApprovalError> {
+            if self.fail {
+                return Err(ExecutorApprovalError::request_failed(
+                    "fixture service failure",
+                ));
+            }
+            self.requested.notify_one();
+            Ok("human-approval-id".into())
+        }
+        async fn wait_tool_approval(
+            &self,
+            _: &str,
+            cancel: CancellationToken,
+        ) -> Result<ApprovalStatus, ExecutorApprovalError> {
+            let rx = self.receiver.lock().await.take().unwrap();
+            tokio::select! {
+                biased;
+                _ = cancel.cancelled() => Err(ExecutorApprovalError::Cancelled),
+                result = rx => result.map_err(ExecutorApprovalError::request_failed),
+            }
+        }
+        async fn resolve_tool_approval(
+            &self,
+            id: &str,
+            approved: bool,
+            reason: Option<String>,
+        ) -> Result<(), ExecutorApprovalError> {
+            if id != "human-approval-id" {
+                return Err(ExecutorApprovalError::ServiceUnavailable);
+            }
+            self.response
+                .lock()
+                .await
+                .take()
+                .ok_or(ExecutorApprovalError::ServiceUnavailable)?
+                .send(if approved {
+                    ApprovalStatus::Approved
+                } else {
+                    ApprovalStatus::Denied { reason }
+                })
+                .map_err(|_| ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn create_question_approval(
+            &self,
+            _: &str,
+            _: usize,
+        ) -> Result<String, ExecutorApprovalError> {
+            Err(ExecutorApprovalError::ServiceUnavailable)
+        }
+        async fn wait_question_answer(
+            &self,
+            _: &str,
+            _: CancellationToken,
+        ) -> Result<QuestionStatus, ExecutorApprovalError> {
+            Err(ExecutorApprovalError::ServiceUnavailable)
+        }
+    }
+
+    #[tokio::test]
+    async fn command_file_protocol_preserves_original_ids_and_waits_for_human() {
+        use super::super::jsonrpc::ExitSignalSender;
+        for kind in ["command", "file"] {
+            for action in [
+                "accept",
+                "reject",
+                "feedback",
+                "cancel",
+                "missing",
+                "broken",
+                "full-access",
+                "legacy-noop",
+            ] {
+                let trace = tempfile::tempdir().unwrap();
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                let waiting = Arc::new(WaitingService {
+                    fail: action == "broken",
+                    requested: Default::default(),
+                    response: Mutex::new(Some(tx)),
+                    receiver: Mutex::new(Some(rx)),
+                });
+                let approvals: Option<Arc<dyn ExecutorApprovalService>> = match action {
+                    "missing" | "full-access" => None,
+                    "legacy-noop" => Some(Arc::new(crate::approvals::NoopExecutorApprovalService)),
+                    _ => Some(waiting.clone()),
+                };
+                let cancel = CancellationToken::new();
+                let client = AppServerClient::new(
+                    LogWriter::new(tokio::io::sink()),
+                    approvals,
+                    action == "full-access",
+                    false,
+                    ExecutionMode::Code,
+                    None,
+                    None,
+                    Default::default(),
+                    false,
+                    String::new(),
+                    cancel.clone(),
+                );
+                let mut child = tokio::process::Command::new("python3")
+                    .arg(concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        "/../../tests/supervised/codex_fixture.py"
+                    ))
+                    .env("LVK_APPROVAL_FIXTURE_TRACE", trace.path())
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .kill_on_drop(true)
+                    .spawn()
+                    .unwrap();
+                let trace_file = trace.path().join(format!("{}.jsonl", child.id().unwrap()));
+                let (exit_tx, exit_rx) = tokio::sync::oneshot::channel();
+                let peer = JsonRpcPeer::spawn(
+                    child.stdin.take().unwrap(),
+                    child.stdout.take().unwrap(),
+                    client.clone(),
+                    ExitSignalSender::new(exit_tx),
+                    cancel.clone(),
+                );
+                client.connect(peer.clone());
+                client.set_resolved_model("fixture-model".into());
+                client
+                    .register_session("01a14fd4-be9a-74e2-bb49-80f5de9932cf")
+                    .await
+                    .unwrap();
+                let exercise = async {
+                    peer.send(&serde_json::json!({"method":"fixture/go","scenario":kind}))
+                        .await
+                        .unwrap();
+                    if !matches!(action, "missing" | "broken" | "full-access" | "legacy-noop") {
+                        waiting.requested.notified().await;
+                        tokio::time::sleep(Duration::from_millis(30)).await;
+                        let before = std::fs::read_to_string(&trace_file).unwrap();
+                        assert!(
+                            !before.contains("\"decision\""),
+                            "{kind}/{action}: replied before human"
+                        );
+                        if action == "cancel" {
+                            cancel.cancel();
+                        } else {
+                            client
+                                .send_direct_control(DirectControl::Approve {
+                                    request_id: "human-approval-id".into(),
+                                    approved: action == "accept",
+                                    reason: (action == "feedback")
+                                        .then(|| "Do not run this".into()),
+                                })
+                                .await
+                                .unwrap();
+                        }
+                    }
+                    let _ = exit_rx.await.unwrap();
+                };
+                let result = tokio::time::timeout(Duration::from_secs(5), exercise).await;
+                cancel.cancel();
+                child.kill().await.ok();
+                child.wait().await.unwrap();
+                result.unwrap_or_else(|_| panic!("fixture timed out: {kind}/{action}"));
+                let records: Vec<Value> = std::fs::read_to_string(trace_file)
+                    .unwrap()
+                    .lines()
+                    .map(|line| serde_json::from_str(line).unwrap())
+                    .collect();
+                let responses: Vec<_> = records
+                    .iter()
+                    .filter(|v| {
+                        v["direction"] == "client_to_provider"
+                            && v["value"]["result"]["decision"].is_string()
+                    })
+                    .collect();
+                if matches!(action, "missing" | "broken" | "cancel") {
+                    assert!(responses.is_empty());
+                } else {
+                    assert_eq!(responses.len(), 1, "{kind}/{action}");
+                    assert_eq!(
+                        responses[0]["value"]["id"],
+                        if kind == "command" {
+                            serde_json::json!(701)
+                        } else {
+                            serde_json::json!("file-native-702")
+                        }
+                    );
+                    assert_eq!(
+                        responses[0]["value"]["result"]["decision"],
+                        match action {
+                            "accept" | "legacy-noop" => "accept",
+                            "reject" => "decline",
+                            "feedback" => "cancel",
+                            "full-access" => "acceptForSession",
+                            _ => unreachable!(),
+                        }
+                    );
+                }
+                eprintln!(
+                    "protocol {kind}/{action}: {} native response(s), original ID preserved",
+                    responses.len()
+                );
+            }
+        }
+    }
+
+    // Reproduces the pre-fix host injection through the actual client request path.
+    #[tokio::test]
+    async fn legacy_noop_injection_accepts_command_and_file_without_a_human() {
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            Some(Arc::new(crate::approvals::NoopExecutorApprovalService)),
+            false,
+            false,
+            ExecutionMode::Code,
+            None,
+            None,
+            Default::default(),
+            false,
+            String::new(),
+            CancellationToken::new(),
+        );
+        for (tool, display) in [
+            ("bash", "codex.exec_command"),
+            ("edit", "codex.apply_patch"),
+        ] {
+            let status = tokio::time::timeout(
+                Duration::from_millis(200),
+                client.request_tool_approval(tool, display, "original-item"),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            assert!(matches!(status, ApprovalStatus::Approved));
+            eprintln!(
+                "BEFORE: {display}, auto_approve=false, Noop -> Approved without human response"
+            );
+        }
     }
 }

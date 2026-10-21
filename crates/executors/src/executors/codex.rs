@@ -670,6 +670,16 @@ impl Codex {
         self.goal_max_concurrent_agents = executor_config.goal_max_concurrent_agents;
     }
 
+    fn auto_approve_tool_requests(&self) -> bool {
+        matches!(
+            (&self.sandbox, &self.ask_for_approval),
+            (
+                Some(SandboxMode::DangerFullAccess),
+                None | Some(AskForApproval::Never)
+            )
+        )
+    }
+
     pub(crate) fn use_direct_approvals(&mut self, approvals: Arc<dyn ExecutorApprovalService>) {
         self.approvals = Some(approvals);
     }
@@ -1305,10 +1315,7 @@ impl Codex {
         let (exit_signal_tx, exit_signal_rx) = tokio::sync::oneshot::channel();
         let cancel = tokio_util::sync::CancellationToken::new();
 
-        let auto_approve = matches!(
-            (&self.sandbox, &self.ask_for_approval),
-            (Some(SandboxMode::DangerFullAccess), None)
-        );
+        let auto_approve = self.auto_approve_tool_requests();
         let execution_mode = self.effective_execution_mode();
         let plan_mode = matches!(
             execution_mode,
@@ -1743,6 +1750,27 @@ mod tests {
             overrides.get("model_reasoning_effort"),
             Some(&json!("minimal"))
         );
+    }
+
+    #[test]
+    fn supervised_waits_but_full_access_auto_keeps_its_permission_contract() {
+        let mut executor = test_executor();
+        executor.sandbox = Some(super::SandboxMode::DangerFullAccess);
+        executor.ask_for_approval = None;
+        assert!(executor.auto_approve_tool_requests());
+        let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+        config.permission_policy = Some(crate::model_selector::PermissionPolicy::Supervised);
+        executor.apply_direct_overrides(&config);
+        assert!(!executor.auto_approve_tool_requests());
+        assert!(matches!(
+            executor.ask_for_approval,
+            Some(AskForApproval::UnlessTrusted)
+        ));
+        config.permission_policy = Some(crate::model_selector::PermissionPolicy::Auto);
+        executor.apply_direct_overrides(&config);
+        assert!(executor.auto_approve_tool_requests());
+        executor.sandbox = Some(super::SandboxMode::WorkspaceWrite);
+        assert!(!executor.auto_approve_tool_requests());
     }
 
     #[test]

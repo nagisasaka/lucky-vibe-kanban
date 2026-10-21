@@ -28,6 +28,17 @@ impl ExecutorApprovalError {
 /// Abstraction for executor approval backends.
 #[async_trait]
 pub trait ExecutorApprovalService: Send + Sync {
+    /// Resolve a pending tool request owned by this service. Unsupported services
+    /// fail closed; a provider request ID must never be fabricated from this ID.
+    async fn resolve_tool_approval(
+        &self,
+        _approval_id: &str,
+        _approved: bool,
+        _reason: Option<String>,
+    ) -> Result<(), ExecutorApprovalError> {
+        Err(ExecutorApprovalError::ServiceUnavailable)
+    }
+
     /// Creates a tool approval request. Returns the approval_id immediately.
     async fn create_tool_approval(&self, tool_name: &str) -> Result<String, ExecutorApprovalError>;
 
