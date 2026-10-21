@@ -2,6 +2,7 @@ import { CaretDownIcon, ListMagnifyingGlassIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/cn';
+import { ChatCode } from './ChatCode';
 import { ActivityText } from './ActivityText';
 import { ChatElapsedTime } from './ChatElapsedTime';
 import { ToolStatusDot, type ToolStatusLike } from './ToolStatusDot';
@@ -48,7 +49,7 @@ function getEntryDetails(entry: AggregatedEntry) {
   if (!content.trim() && !entry.command?.trim()) return null;
 
   return {
-    command: entry.command?.trim() || null,
+    command: entry.command?.trim() ? entry.command : null,
     content,
   };
 }
@@ -61,7 +62,7 @@ function ToolEntryDetails({ entry }: { entry: AggregatedEntry }) {
     <div className="mx-base mb-half overflow-hidden rounded-sm border border-border/70 bg-panel/70">
       {details.command && (
         <pre className="overflow-x-auto border-b border-border/70 px-base py-half font-mono text-xs leading-relaxed text-normal whitespace-pre-wrap break-words">
-          {details.command}
+          <ChatCode code={details.command} language="bash" />
         </pre>
       )}
       <pre className="max-h-56 overflow-auto px-base py-half font-mono text-xs leading-relaxed text-low whitespace-pre-wrap break-words">
@@ -153,7 +154,11 @@ export function ChatAggregatedToolEntries({
             )}
           </span>
           <ActivityText active={isRunning} className="min-w-0 flex-1 truncate">
-            {headerSummary}
+            {entry.command === headerSummary ? (
+              <ChatCode code={headerSummary} language="bash" />
+            ) : (
+              headerSummary
+            )}
           </ActivityText>
           {detail && (
             <span className="hidden shrink-0 text-xs text-low sm:inline">
@@ -264,7 +269,11 @@ export function ChatAggregatedToolEntries({
                         entry.command && 'font-mono text-xs'
                       )}
                     >
-                      {entry.summary}
+                      {entry.command === entry.summary ? (
+                        <ChatCode code={entry.summary} language="bash" />
+                      ) : (
+                        entry.summary
+                      )}
                     </span>
                     <ChatElapsedTime
                       startedAt={entry.startedAt}
