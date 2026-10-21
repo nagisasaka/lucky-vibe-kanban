@@ -177,6 +177,7 @@ LVK画面で「設定をチェックしてログイン試験」を押し、管�
 Auth0にLVK MCP用APIを作り、GUIに表示されるMCP URLをIdentifierに設定します。
 この文字列がresourceとaudienceにもなります。末尾スラッシュを追加しないでください。
 RS256を選び、`lvk:read`、`lvk:write`、`lvk:merge`をAPI Permissionsに登録します。
+任意の実行環境アクセスを有効にする場合は、`lvk:runtime:read`と`lvk:runtime:execute`も登録し、必要な利用者にだけ許可してください。
 読み取りだけならreadのみ、Issueや実行の変更にはwrite、統合にはmergeも要求します。
 RBACは必須ではありません。LVK側の承認済みメンバーだけに操作を許可します。
 
@@ -274,3 +275,10 @@ Authorizationをプロジェクトのサーバーへ渡しません。LVKログ�
 プレビューを独立タブで開いて認可・表示してください。
 IPだけの既存公開構成の同一オリジンpreview禁止は維持し、ローカルpreviewは維持します。
 詳しい検証範囲は`docs/development/server-access.md`に記録しています。
+
+## 実行環境へのアクセス権限
+
+[実行環境アクセスMCP](/self-hosting/runtime-access)では、独立した
+`lvk:runtime:read`・`lvk:runtime:execute`権限、管理者による許可領域の設定、
+実行上限を説明しています。既存の`lvk:read`だけでは、アプリケーションの
+実行環境のファイルやプロセスへアクセスできません。

@@ -104,6 +104,8 @@ async fn fake_introspection(
     match form["token"].as_str() {
         "valid" => {}
         "merge" => result["scope"] = json!("lvk:read lvk:merge"),
+        "runtime" => result["scope"] = json!("lvk:read lvk:runtime:read lvk:runtime:execute"),
+        "runtime-read" => result["scope"] = json!("lvk:read lvk:runtime:read"),
         "read-only" => result["scope"] = json!("lvk:read"),
         "expired" => result["exp"] = json!(1),
         "foreign" => result["sub"] = json!("other"),
@@ -153,6 +155,7 @@ pub(super) async fn fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
     }
     (
         Remote {
+            environment: None,
             launch: None,
             runtime: None,
             process_instance: Uuid::new_v4(),
@@ -389,6 +392,7 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         workspaces.push(id);
     }
     let remote = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         process_instance: Uuid::new_v4(),
@@ -665,6 +669,7 @@ async fn question_reads_preserve_options_distinguish_approvals_and_observe_direc
             .unwrap();
     }
     let remote = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         process_instance: Uuid::new_v4(),
@@ -847,6 +852,7 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
             .bind(id).bind(id.to_string()).bind(project).bind(repo).bind(serde_json::to_string(&payload).unwrap()).execute(&pool).await.unwrap();
     }
     let remote = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         process_instance: Uuid::new_v4(),
@@ -962,6 +968,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
         sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(id).execute(&pool).await.unwrap();
     }
     let remote = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         pool: pool.clone(),
@@ -1093,6 +1100,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     let mut rotated = (*remote.config).clone();
     rotated.issuer = "https://other.example".into();
     let rotated = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         config: Arc::new(rotated),
@@ -1149,8 +1157,15 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
     Arc::make_mut(&mut remote.config).issuer = "https://fixture.auth0.com/".into();
     let pool = remote.pool.clone();
     let app = access.layer(
-        access_router(remote.pool, remote.runtime, remote.launch, access.clone())
-            .merge(server_access::router(access.clone())),
+        access_router(
+            remote.pool,
+            remote.runtime,
+            remote.launch,
+            access.clone(),
+            remote.environment,
+        )
+        .merge(server_access::router(access.clone()))
+        .merge(environment_settings::router(pool.clone())),
     );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base = format!("http://{}", listener.local_addr().unwrap());
@@ -1202,6 +1217,51 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
             .unwrap()
             .contains("insufficient_scope")
     );
+    // Production Access middleware must require runtime scopes in addition to lvk:read.
+    for tool in [
+        "get_runtime_access",
+        "read_runtime_file",
+        "run_process",
+        "stop_process",
+    ] {
+        let denied = request(&token, tool).send().await.unwrap();
+        assert_eq!(denied.status(), StatusCode::FORBIDDEN, "{tool}");
+        assert!(
+            denied.headers()["www-authenticate"]
+                .to_str()
+                .unwrap()
+                .contains("lvk:runtime:")
+        );
+    }
+    let runtime_read_token = jsonwebtoken::encode(&header, &json!({"iss":"https://fixture.auth0.com/","sub":"member","aud":access.resource(),"exp":server_access::now()+300,"scope":"lvk:read lvk:runtime:read"}), &jsonwebtoken::EncodingKey::from_rsa_pem(pem.as_bytes()).unwrap()).unwrap();
+    for tool in ["run_process", "stop_process"] {
+        let denied = request(&runtime_read_token, tool).send().await.unwrap();
+        assert_eq!(denied.status(), StatusCode::FORBIDDEN);
+        assert!(
+            denied.headers()["www-authenticate"]
+                .to_str()
+                .unwrap()
+                .contains("lvk:runtime:execute")
+        );
+    }
+    let disabled = client.post(format!("{base}/mcp")).header("host", "203.0.113.7:8443").header("accept", "application/json, text/event-stream").bearer_auth(&runtime_read_token).json(&json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_runtime_access","arguments":{}}})).send().await.unwrap();
+    assert_eq!(disabled.status(), StatusCode::OK);
+    assert_eq!(
+        disabled.json::<Value>().await.unwrap()["result"]["isError"],
+        true
+    );
+    // A real signed token accepted by /mcp cannot become a browser settings credential.
+    for method in [reqwest::Method::GET, reqwest::Method::PUT] {
+        let denied = client
+            .request(method, format!("{base}/api/runtime-access-settings"))
+            .header("host", "203.0.113.7:8443")
+            .bearer_auth(&runtime_read_token)
+            .json(&json!({"revision":0,"settings":{"enabled":true,"grants":[]}}))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+    }
     sqlx::query("UPDATE access_members SET state='disabled'")
         .execute(&pool)
         .await
@@ -1241,6 +1301,7 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         .await
         .unwrap();
     let remote = Remote {
+        environment: None,
         launch: None,
         runtime: None,
         pool: pool.clone(),

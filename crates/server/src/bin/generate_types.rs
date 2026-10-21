@@ -13,6 +13,12 @@ fn generate_types_content() -> String {
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.";
 
     let decls: Vec<String> = vec![
+        server::remote_mcp::environment::Grant::decl(),
+        server::remote_mcp::environment::RuntimeAccessSettings::decl(),
+        server::remote_mcp::environment_settings::RuntimeAccessView::decl(),
+        server::remote_mcp::environment_settings::InvalidLegacy::decl(),
+        server::remote_mcp::environment_settings::RuntimeAccessProject::decl(),
+        server::remote_mcp::environment_settings::SaveRuntimeAccess::decl(),
         db::models::todo::Todo::decl(),
         db::models::todo::CreateTodo::decl(),
         db::models::todo::UpdateTodo::decl(),

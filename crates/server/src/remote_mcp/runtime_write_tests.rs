@@ -215,6 +215,7 @@ pub(super) async fn fixture_with_pool(
         fail_after_delivery: Default::default(),
     });
     let remote = Remote {
+        environment: None,
         launch: None,
         pool,
         config: Arc::new(config()),
@@ -536,6 +537,7 @@ async fn reopened_database_preserves_work_questions_and_uncertain_operation_iden
     // New adapter generation and a newly opened file-backed DB, with no runtime
     // dispatcher installed: these reads cannot resume or create model work.
     let restarted = Remote {
+        environment: None,
         pool: SqlitePool::connect_with(options).await.unwrap(),
         process_instance: Uuid::new_v4(),
         config,

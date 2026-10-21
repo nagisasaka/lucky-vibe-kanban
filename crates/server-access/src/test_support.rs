@@ -67,3 +67,8 @@ pub async fn web_session(access: &Access) -> String {
         .unwrap();
     format!("lvk_session={token}")
 }
+
+/// Downstream boundary tests only; never exposed by production builds.
+pub fn internal_token(access: &Access) -> String {
+    access.0.internal_token.clone()
+}

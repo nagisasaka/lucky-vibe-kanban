@@ -8734,6 +8734,7 @@ dependencies = [
  "git-host",
  "http 1.4.0",
  "jsonwebtoken",
+ "libc",
  "local-deployment",
  "mime_guess",
  "os_info",
