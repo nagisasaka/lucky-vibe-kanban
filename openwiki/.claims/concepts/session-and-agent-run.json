@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4de8af1788a1369f6abbbb3c55b70d2ef7b50a00bea599e981d88a0df06bfa43",
+  "pageVersion": "sha256:0d2b34c7e0843425cbf1a68722cc96b9f481da0cf7c285b7916d3cba2e2956d8",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -757,10 +757,88 @@
           "version": "repo-lines-v1:sha256:04ed4a585b0faef35c779228a4ba0ffad04c7a8b99b54b54fdf0063ab6afb217:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5ODk3YjkzMWVhMmQwZDU1NTFjNTM4YzU4ZGZlN2Y3NGU1YTc1YWQzNWM4NTgzOTgwNTU4ZGFiMjA1OTkzN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyM2ExYjYwYzQ3NWIwMDhiMjQwNTY1ODRmZDdkYWIzMjcwMDNjM2QwNmI4OWYwYzA4OTVkZDg2MmY4YmY5MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzNGNlYmI3MTZiY2MwMjZmNDc2NTFmOTU5ZTM1ZTI1NjYxMjNjNmRiMWM0ZjlkMjk5ZmIwZGM0NTU3NTJlYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4NTI2NmY5YTBkNGE1ZTY3ZGI1ZmU2OTMzYzJiNDY2M2ExZGNhOWFiZWRlYjBhYmM5YWIwNWJmZTRhZjc2ZTMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_33f89b84a87745a0a45008f0dd450b06",
+      "statement": "Session composer は最新 launch と Scratch を useExecutorConfig に渡し、選択変更を既存 Scratch 保存へ戻す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L580-L601",
+          "version": "repo-lines-v1:sha256:997c8b1edd9cd3b3bfab6adfc1a7b590ac73d181edded33256c53808d3d43a17:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0OTBmMjYxYjQ1ZWU0MWY0NGM0MTNlMGQzMzdlYTIzYzgyYWQwNGUwNGM3NWIyOGI1MDNkMTQzOGFjNGE0MjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxZmRjYWMzNzIzODJjMTNhNDQ0Zjc4Njk0MGJlMDk2NzI1MGFmMWJmZjQzODc4ZjVhZDZlMjQwMDA1ZTA4N2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxNzdhY2EzMmJiMWY2YTUzYmU3YmUzM2M4ZmRiNjU2ZWZiMGVlMzI3MDEyYjNhMThjZWNkNzhmODRkZjcyYjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_81cf8e5b4479418094d28db11ae99305",
+      "statement": "override 復元は画面選択、適合 Scratch、適合 launch、preset の順で、launch のフィールド欠落は preset へ fallback しない。reasoning は model を先に解決して照合し、model キーを持たない旧部分 Scratch は継承 model と適合させる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts#L142-L207",
+          "version": "repo-lines-v1:sha256:dc8e2c88ac65ae6c6fd0b62d303b953a59b82f6de52b7723069e18111ce8a952:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwOWU0NTBkZmNmODFhNDE5YTVhMDMwZDQyZjc1OTQ1NzM3YjMzODg1MmFhYjY3OTcxZDgzYTcyZTRkYjFiY2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5OTllZmRmOGE3YzI4ZWFmNWRmNDVmOTQ5OTg1NmE5MWFhMjRhNjNlZGVhNWI3ZTYwODFhNDA2ZTc2NjE3ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4NmYxMWJjYTcxMzMyMTVhMjAzNWMzOTVhODJiNTk3MzQxZTljZWRlNjAwZWE1NmNhODliZmI1MzQyNWU3MTkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts#L25-L33",
+          "version": "repo-lines-v1:sha256:9a7bb8601e4561b0b975245829972f7fcdea42184969c1f2b368c6a3252e2e73:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmUzYzAyMTdkOWVkNjJjYTc5OTc0ODNlMGI4ZDY0ODc5YWUxYWIwMWE5M2Q0N2NjYjY2OTZhMDRhMDc1Y2I2ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmNkYzc2ZDEyZTUzMDRkMzA3OWVkYjVmODkwMDA3ZWEwNWYyMjZlNGQ5M2I2OTU2ODQ2MGNhZmFmODAwNzQ0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTgxMmE3M2U0N2M0ZDA5ZjNmNTNjN2IxMDBlOTc1OTQ4YTQwNWMzMzgzYTljNzk2MzI5NWEyZDQyMGNjZWMwZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGFlYTVkMmEyNDQxZjU4NDY0MjRhZTZhYWRjOWExMjFkODU5NGM2ZTdiYmYyM2UxYjQ2N2M0Y2RhMzVjOTU1MyJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L9-L30",
+          "version": "repo-lines-v1:sha256:ddaf0426ff041f2d4eb67a4de5d4e56284654fe0b64002131759939fc2e48cac:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxZjBiYTg1OTRlMmE2ZTZlMWU4ODg5YWNkY2E0NTA2MDNjYWU5NzgzMzFkOGIyNmJhYTBmNzgyZTRjM2MzZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZGY0MmJmMGNlYzhhN2MwMDI1MTQ5YWY4Mjg0MTE2ZWI1YWZmZmRkYzc2NGRlNWVkYTBhYmU1MjUxNTMyNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ZjUzM2NmYjhlNDI1M2M0NjlhZjRhZDVkM2JkOTY0N2RjNDU4ZGUxMWNlYzkwYjNlNzRkOGUwZWE3ZThiYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NDkyMTY4YTQ3ZTA2YWEwZDdlOTQ4MDEzYjY0ZGRjNDU1M2I4YzczNzFkNGQ4MzFmOGEwNjk0ZjM3NjFkY2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_190273b0bddd4a0eaf13b9f5cea8997e",
+      "statement": "executor/variant のみの Scratch は preset 選択として fallback を許すが、override キーを含む Scratch は省略された reasoning を null に復元して以前の effort を遮断する。Rust は None を省略するため、過去の identity-only データから元のクリア意図は識別できない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/profile.rs#L141-L174",
+          "version": "repo-lines-v1:sha256:df17cffc30ea9818fa38c7fd22d60bf8268970846f53c2a601460da9948e5a76:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzODc5ZDI2ODk0ZDA1YzI0MzJjNWM4YmQ1NWEyMDI5YjYxZWEyNjYxNjBlN2M2YTg1NWRmZDU4Mzk3ZmFhODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMTMxY2IzY2EwYTE3OTA0MWY1MDc5YWU0MjMyZDhmOGZlZGM2NzI4ZWI0NDBmZmI4ZWRhOGRhODdkMDUxNzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmYWMyMTk5MmM2ZGY1NWMzZDE1ODMwMTI5NDdmMGY4NTlhYWQ5MmJjZjc1YTQ5N2M5OWU1ODlmOTE1ZWRkY2MifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L16-L30",
+          "version": "repo-lines-v1:sha256:e6d5f51e8ecce898d3e9e2c4e0854a8aae12351c66b59377d75871c184e49428:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5MWZkNGM1NDVmYjZkZjAyNGZkZjRhNWM5OTEzYzk5YTk5NzhjY2Y3M2VlNDdmMjZiNGQyNjEzMzRlMWQ4MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZGY0MmJmMGNlYzhhN2MwMDI1MTQ5YWY4Mjg0MTE2ZWI1YWZmZmRkYzc2NGRlNWVkYTBhYmU1MjUxNTMyNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2YTAyMjVhNWQ2NjE4NGNhYWY1MWJiNDcxN2I4Nzc5NDJmNWVlM2IzMDNlOGI4YTYzOTk2YzQxMzg0MGVhYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NDkyMTY4YTQ3ZTA2YWEwZDdlOTQ4MDEzYjY0ZGRjNDU1M2I4YzczNzFkNGQ4MzFmOGEwNjk0ZjM3NjFkY2QifQ"
+        },
+        {
+          "resource": "repo://tests/server/reasoning-override.md#L134-L137",
+          "version": "repo-lines-v1:sha256:d693cafd4e8bccb60b7e9d3c2a57570fdd1cc885bae89004a737c8bb9870547e:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzEzM2M3NWQzNmI1MDcyZDE0NzhkMTQ3YzBjZGRkYjI5MGJhOTliMTZmODhhODg5YTJhYjNjMmU4MDkyYmQ3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkyOTE5NWMyOWJkNTJlM2U1MzYxOGQ4YzIyNzFiYTVmMGIxOTZhMDAwZjIwM2YyZGViZjZmZjUxMzQ0ZDVhZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjdmOTgzNTY2ZWI0MTI2NjdiNzVjMThkZDdjMWFmYmIxMDcwMWJmZDhhOWNhYThhZDk0ODA5YzUxNWI2M2UyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGRiMGRjMzVlY2U2ODg1N2JjYjI0MGQzMGExN2M3MTA3MDgwZTZkOTQ3YTIyNTQwZGEyMWYyZTNhZjU4OGY1OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_33290fb7ceb1438bac001cc357f1d976",
+      "statement": "setOverrides は有効設定全体を保存し、同じ model_id の再選択では reasoning を維持する。異なる model_id への変更で reasoning を同時指定しなければ null にし、executor/variant 選択は identity-only を保存する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts#L298-L343",
+          "version": "repo-lines-v1:sha256:7e3c4e5d55e0d891c5e2ab32b35d14734015cc1041a4617b352f207f592861fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllNzQ5NTcyODA2MjgxZWVkODhjMGYwOTc3M2I1ZmNkYThlZWZhYjU5OGE4ZmE3ZTlhMzA0ZDU0YjlmYTc4NjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5NWZhMGYxMTE3YjVlYTQwNDM0MTQwZGRlMWEzNDBjNzIwZGRiZjMyNjIxMmUxOTE4MzhkNGIxNTZkMzE2YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMzI5NjM1MzhkNTE0OGFlOTY4ZTQ3YTFmNGI3ZTliYjlhNTY1MTUwNmMxN2UyZWI3NTM5ZGIyYzNiOWE5MmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhYTAyZTM2ZjFlYTg1NmM2MWVkOWEzOTdmNTUxYTY5N2Y4YjM3MDkwNGMxZDA1MDgwYjk3ZmRkZDdhNjZjMjMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L43-L59",
+          "version": "repo-lines-v1:sha256:e6fd62100e1119e43a94a7dff6cc6a3f285eb5829e2d5fc7a8fa6b97c7f8a6d8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YzJhNGFmMzQ0YTlkNmU0NWU5MTY3NzJlMmFmNzIxNDg1NmVlZDAwN2YwZWI1ZjVhMzFmYzAxZjRiYTA3NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_eda5065b8a4f49da8aede1501ae09181",
+      "statement": "推論設定の hook Chromium 試験は preset/保存を fixture 化し、アプリ E2E も discovery・最新 launch・follow-up を mock する。開発記録の P2 修正後は全面 build と実アプリ E2E を再実施していない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/executor-config.test.mjs#L7-L134",
+          "version": "repo-lines-v1:sha256:a477bdb61363572c831e8882a618c879a563a76a95388f2a355cb240a129fd9a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MWQ2ZTVjYTNhOWQ3OGQyMjQyY2QyMzUxYjNiNjNhMjQ3YjRjMDNmMzJmMTU1OGViMGI1NGQ0OGJhMWUwMDhiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmI5YWJmMGJhMmUxYjkxYzdkODdhMjgzNjQxNzE1NTc1NjYyMmIwZWY5Y2MxMzZhZWE2ODVlNzRiM2IxODIyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMjg0YWM5NTQzOTk5OGRmMGRjNTllMmE4ZGQwNThlNTgyNDg5ZDY4NWQ4NmU1Y2MyMmRmNmVhNzllNjg1MjRlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMjI3MmMxYjIxNmMxMjhmNjI0NzViYmJmNTBlOGI4ZDE3NzQ3YTk4ZTIwYjFlMjkxMzU3NTQ1MmUyNTA5NzllIn0"
+        },
+        {
+          "resource": "repo://tests/server/reasoning-override.md#L124-L137",
+          "version": "repo-lines-v1:sha256:54e8ee948cc32d95835787cf2c79d498259b93761d590b2b0d485c8bf86f10f8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGQ0OGIwZTZjMjMxMDE0NTljMjQxZmRjYWUxMzY3MWI1OTM5MDllOThjMzhmZmUzMzMwMWU3ZTNkZjQ1OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5MjkxOTVjMjliZDUyZTNlNTM2MThkOGMyMjcxYmE1ZjBiMTk2YTAwMGYyMDNmMmRlYmY2ZmY1MTM0NGQ1YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiN2Q2ZTRiOGFiY2RmNGViMGM5ZWRjYTc5N2I2Mzg5OTljMWU1M2I1M2NlNmQ4ZWI2ZDk5ODYzNGZkZWI5OWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYjBkYzM1ZWNlNjg4NTdiY2IyNDBkMzBhMTdjNzEwNzA4MGU2ZDk0N2EyMjU0MGRhMjFmMmUzYWY1ODhmNTgifQ"
+        },
+        {
+          "resource": "repo://tests/server/specs/reasoning-override.spec.ts#L125-L158",
+          "version": "repo-lines-v1:sha256:f1f1a9da7aa31eeffe03f698da1231a58ad6d6218d4444e8db889dc88161942d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjYzMwNTFiYTVjYTM4MmJjMzEwODEzMjc2MDEyN2QxMWU3NzU4ZTlmNDNjZDY4NmEwNWE4NGY3OTM2YTM4MDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1NDVhNGM1OGIwZjA2NmE4MjQ4OGI5ZjI5ZWE5NmM3NjAyNzgyNmYwNzM3ZmYxNjVlZTU1OTgyY2MzNzQzYWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3ZTM1MzE4ODdjOGQ5MDE5MzI5NzU4ZGVkNmJjNjNlNjRjOGJiNGFiZDI1ZDBkNWVmODBjODg3MjM3NmI3MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyNTI5ZTgxMjhmM2ZlYmZkNzMzZjVmYTc1NGQ4MmVkNzU5NTM4NDMwZjQ5MWZjZmRjN2ZiYzExZDkwMzBkMGEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:55:18.362Z"
+    "at": "2026-10-21T04:00:57.506Z"
   }
 }

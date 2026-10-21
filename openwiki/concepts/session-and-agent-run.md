@@ -92,6 +92,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
+  - id: openwiki-source-8e74802914b6f2f7c720c935
+    resource: repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
   - id: openwiki-source-2e251355ae5f41eedc1e63cc
@@ -102,6 +104,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
   - id: openwiki-source-53a9c69af17738e7a2b63de9
     resource: repo://tests/chat/editor-display.test.mjs
+  - id: openwiki-source-50cc39e5ff794c3dae7e9bb1
+    resource: repo://tests/chat/executor-config.test.mjs
   - id: openwiki-source-dea540ef1c25316603003cab
     resource: repo://tests/chat/input-operations.isolated.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
@@ -112,10 +116,14 @@ sources:
     resource: repo://tests/run-elapsed/isolated.mjs
   - id: openwiki-source-854d9f0ac30502f5da093e06
     resource: repo://tests/run-elapsed/README.md
-generated: { by: "codex", at: "2026-10-21T03:55:18.362Z" }
+  - id: openwiki-source-72a2b9f460b7f7fb9b577089
+    resource: repo://tests/server/reasoning-override.md
+  - id: openwiki-source-41cd17d604a882467f19e826
+    resource: repo://tests/server/specs/reasoning-override.spec.ts
+generated: { by: "codex", at: "2026-10-21T04:00:57.506Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:55:18.362Z
+    at: 2026-10-21T04:00:57.506Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -141,6 +149,29 @@ Attempt 検証は run/turn/Session/correlation の一致だけでなく、provid
 profile 比較では variant 省略と正確な `DEFAULT` だけを同一視する。保存済み ID の表記は変更せず、`PLAN`・小文字の `default`・異なる provider は混同しない。既存履歴を migration で書き換えるのではなく、binding と request の比較境界で共通規則を使う。[identity](../../crates/executors/src/profile/runtime_identity.rs#L1-L13)
 
 Session の設定復元は最新 RunAttempt の immutable launch request を読み、現在の可変 preset や script 実行から推測しない。起動前の native adoption では保存済み binding を使う。最新の保存値が壊れていたらエラーであり、古い run や別 Session の設定へ黙って戻さない。モデル・reasoning・mode・Goal budget 等の保存値と、provider が実行時に解決した既定値は区別する。[復元](../../crates/server/src/routes/sessions/executor_config.rs)、[順序・破損テスト](../../crates/server/src/routes/sessions/executor_config.rs)
+
+### Composer の手動推論設定と復元
+
+composer の `reasoning_id` は利用者の明示 override であり、provider が実行時に解決した effort そのものではない。`null` は画面の **Follow CLI config**（設定追従）を表す。[Provider の解決済み effort](../integrations/agent-providers.md#codex-の-override-と解決済み-effort-を分ける)と分けて診断する。Session composer は最新 launch 設定と Scratch を `useExecutorConfig` に渡し、変更を既存の Scratch 保存へ戻す。新しい preference store や実行 scheduler は使わない。[接続](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L580-L601)
+
+各 override は明示的な画面選択 → 適合する Scratch → 適合する最新 launch → preset の順で解決する。ただし launch が存在する場合、そのフィールドの欠落も snapshot の値として扱い、現在の preset へ再 fallback しない。Scratch と launch は executor/variant を照合し、reasoning は解決した model とも照合する。古い部分ドラフトで model キー自体がなければ、継承した model に対する reasoning として扱う。model を先に解決する順序もこの判定の一部である。[解決順と照合](../../packages/web-core/src/shared/hooks/useExecutorConfig.ts#L25-L33)・[復元](../../packages/web-core/src/shared/hooks/useExecutorConfig.ts#L142-L207)・[snapshot の優先規則](../../packages/web-core/src/shared/lib/executorOverrides.ts#L9-L30)
+
+Scratch の保存形は次の二つを区別する。
+
+| 保存形 | 復元時の意味 |
+| --- | --- |
+| `executor` / `variant` だけ | preset 選択。reasoning の欠落を明示クリアとせず、通常の fallback を許す |
+| identity 以外の override キーを含む | 有効選択の snapshot。reasoning キーが省略されても `null` として復元し、以前の launch/preset の effort を復活させない |
+
+Rust の `ExecutorConfig` は `Option::None` を JSON から省略するため、保存前の `null` が応答で欠落し得る。すべての欠落を fallback にすると明示した設定追従が戻り、逆に identity-only までクリアにすると preset の選択を壊す。判別は既存の保存形に依存し、全 override が省略された過去の identity-only データから当時の意図を復元することはできない。その形は preset 選択として扱う。[シリアライズ](../../crates/executors/src/profile.rs#L141-L174)・[判別](../../packages/web-core/src/shared/lib/executorOverrides.ts#L16-L30)・[記録された修正理由と限界](../../tests/server/reasoning-override.md#p2レビュー修正2026-10-20)
+
+`setOverrides` は編集差分だけでなく、解決済み model identity を含む有効設定全体を保存する。同じ model_id の再選択では reasoning を維持し、別の model_id に変えたときだけ、同時に reasoning を指定していなければ明示 `null` にする。他の項目の変更では reasoning を消さない。executor / variant の選択は identity-only を保存する別操作である。[保存](../../packages/web-core/src/shared/hooks/useExecutorConfig.ts#L298-L343)・[モデル変更判定](../../packages/web-core/src/shared/lib/executorOverrides.ts#L43-L59)。保存 ACK と送信後の削除は [Scratch の寿命](#未送信ドラフトと-scratch)に従い、候補一覧から値が消えた場合の表示は [discovery と override](../integrations/agent-providers.md#discovery-と手動-override-の境界)で扱う。
+
+### 推論設定の検証境界
+
+[解決・保存の unit tests](../../packages/web-core/src/shared/lib/executorOverrides.test.ts)は、identity-only preset、None の省略、明示値、同一/別モデル選択を検査する。[Chromium hook 試験](../../tests/chat/executor-config.test.mjs#L7-L134)は controlled / uncontrolled の両経路を使うが preset と保存先は fixture である。[アプリ E2E](../../tests/server/specs/reasoning-override.spec.ts#L125-L158)も discovery・最新 launch・follow-up 応答を mock するため、実 provider の回答や TOML 解決の証拠ではない。
+
+[開発記録](../../tests/server/reasoning-override.md)は `527f9c36` までの実 backend E2E と、その後の P2 修正に対する限定試験を分けている。後者で全面 build / 実アプリ E2E は再実施していない。今回の Sync は凍結 source `5ccbd3f5a11e63e9d336cf0e325c2f96818aab8a` を、selector・hook・Session composer・Rust の保存型・試験という独立した入口から静的に照合した。凍結入力の正式 Integration は明示的な検証省略であり、今回も製品テストを再実行していない。無関係な既存説明の再検証や live provider 成功を主張しない。
 
 ## Follow-up と retry
 

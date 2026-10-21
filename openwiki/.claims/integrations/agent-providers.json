@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a4a02c7eb74669e15c42dd6b207c72b5e6e3218f21306244acf9c4408f61cd33",
+  "pageVersion": "sha256:01b5a2485d8a45e9379a1b3ef1d4ac9b7aaafcb84aba9073d3c6a49da68ba288",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -387,10 +387,42 @@
           "version": "repo-lines-v1:sha256:a70a8369f950a078df53c190d2750aa81769ab6614d8650b71142fbd0ebfcb6d:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmYTMyMjk5Y2Y3NjlkZTcyZWE5MjIyNzg2MGMzYWYyOTk0ZTExODY4Y2M0NmU3ZDM5ODIyOWQ5NzZiY2I4MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZjMwNDBlNjM5ZTA2OGNmYjY5YzQxMDQ4ZDViOGI4YWRlZWQzMDUyMmRkZWY3Y2I5YjMxZGVkNWFiMTZjY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5NzQ3ZDhlZmY4MzQwNjgzMTU1YTUzYzg0MjRiMGM2ZjY5ZmFjYWUzMDBjNTUyYjRmNjAzZjVmNDY1ZDk0ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNjgyZjRjNDhjZDg0YTk4NjgwOGQ3OWY5YmE3MWYxNDkyN2QyYWI0MGQxNGI4ZmIzYzM1NGIyYjE1MWMyNzMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_a725def5371f4f2ab8e1fd4093b45611",
+      "statement": "Model selector は discovery 候補が空または手動値を欠いていても非空の明示 reasoning_id を保持し、候補の既定値を補完しない。未指定/null/空文字は表示上 null になる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L197-L217",
+          "version": "repo-lines-v1:sha256:76e6e04315e484eae873de0e251f6765d7d0c221a652639264fe111aa16f6511:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4N2Q4OTc1ZWU5MjlkNDgwODYzNTBjYmE0OTQzMWYyNjdlYzZhZTNjMzYxNzJhMTU4ODFmMjE1NzcwZWNkNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1NGNhNDRlMDI0ZTg2MDg2OTI0NzkzM2NkZjMxMzhiZmNiNjg5NzhlMTE5YThkZjZlNjU4NmJkMGVlZjZkZGQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/modelSelector.ts#L175-L184",
+          "version": "repo-lines-v1:sha256:81fa470c1b366841ccff478af93e369fe29a0b4754481df66e9b4cd6ced8eccc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2YjIzMWYyOTJiOGEyMmEyZmU3NzM4MjdjYmM1MzMzNDgxM2RhZThlMGEyNjIxMTJhMjA1ZmM1YmM2OWE4MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZjFiZmNiZGUyMzdhMTIxNDEyMDUyNDRhOWNhNDAzM2I4OGVkYzAwNTlmNmQ1YzAzM2U0MTcxMmRhYTEyMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlMjA3ZDkwZTJmMWNkNTdkNDAzMDY0YmYwNDQzZWRjNTZjMTgzZWYyN2FkYjhiOWZlZDc1MmIyMzJmMmU1OTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc2db72fc0aa473f864178262c55c787",
+      "statement": "推論メニューは候補がなくても保持中の値を表示でき、一覧外の値をチェック付き disabled 項目で示す。Follow CLI config は null を選び、モデルボタンのラベルも候補のない場合に保持中の effort を使う。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ModelList.tsx#L210-L220",
+          "version": "repo-lines-v1:sha256:e227b071b8035b88a40a30ea8a303bd2a4bd8c0bc72340b96aae141cb9489fbf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyOWNkNjU2YzA2MTA1OWE4ZTQwYjIxNjhmNTdlM2RiMjE2YmIwODdjM2I0M2IyM2ZiZTk3ODFkYjg4ZWRhY2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3NzBmM2M4YWYwOTRiNmI1MzYyOTM3ZjIwZWRhNjgyYWY0MzRhYWU3ZmQ1Yjg1ZTg1Y2UyZDRlOTliNDdiYmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzZTVmZjBkYjI3NGM3NGVkNzBkMmFhOWYyZDVhY2NiOWQ0MDE1OWYzZTU1Yzg1MDQwZDQxNDQ3MDMzOWFhOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkMGU3MTViMTYwOTMzMjk4N2VmNDJhYTA4MWYwZGVmZTkxZGJkNDE1ZjcxZjlkYzlkMGE5YjVkZTA0NjVjNzIifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/ModelList.tsx#L32-L106",
+          "version": "repo-lines-v1:sha256:e3db53490f7746fce48b7b5c4cd2505b2c8f6a66e8e3678aa2b6f06be9c941ce:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMzRjMzFhZDA5YmRiYzYzNjQyNjA0Y2EyNDQzMDU5ZjQ5NmViNDRkYmNmZThlODE1MTZhNjRiNzM3YmY3ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzMzVkYzc4Mzg0MjVjNGFjYjkzNThlZTRlNjU3ZTZkNmRmMjA1ZDUyYjBiMmYyMzlkM2QyMzMwN2VjZTg4MTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiYWVkOTJhNTJmNTRiNmFiMjU0NmMxODY2MjI1ODAyZjYxNmI0NDZlNjAxMWNkODQ0MmY2ZjQzNTcxZjFhNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjZmM1NjE3MTY4ZDhjZDU3MzE4YzU3MDY4MGRiMmUyYmNmYzIyMjZiMjUzMTRmMTQ0NThmMDEwMjNkZWI0MTkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L394-L407",
+          "version": "repo-lines-v1:sha256:a95a56930d8adf651df4f5004eaff9bb9774382eb1391e2a79ebe8fe3d00a993:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMjhmYjM1NmFiMzk0YzdmNWZhNTU4YzdiZTVkMTRkMjRhNWQ1OWMwMmM5OTc5NzkxM2QxYjExYzNmMjczN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4ZjE5YjI3OGJhMDYyNGE5OGVhZTcxZDYwOTg5NmI4NzA1OTdiMjNkMDFiYTMwMjAyNzBlYzdiMGU5MGUxNDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkYjNlN2NkMGMzYTYyMzA0NzY2ODE2MWQxMDRlOTlkODYyMDljYTNlNzc1NGEyNWIxMTlhNDkwNzg3ODA0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2MDEyOGZmMWZiYTQ1NTI5MWU1MmYwZDczN2MzNmViMDhlZTAzOGYxNWMwNWYxMDc4MzJmODI2YTc0NzQ1MmYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T02:54:34.061Z"
+    "at": "2026-10-21T04:00:57.506Z"
   }
 }

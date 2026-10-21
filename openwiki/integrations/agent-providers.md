@@ -54,12 +54,18 @@ sources:
     resource: repo://docs/development/codex-compatibility.md
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
     resource: repo://docs/future/agent-runtime/delegated-agent-display.md
+  - id: openwiki-source-223410809ba8bde718d60d3b
+    resource: repo://packages/ui/src/components/ModelList.tsx
+  - id: openwiki-source-f2fdb07edb2a73ea40538a98
+    resource: repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx
+  - id: openwiki-source-f66eb76c24833219ccd50c84
+    resource: repo://packages/web-core/src/shared/lib/modelSelector.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-21T04:00:57.506Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T02:54:34.061Z
+    at: 2026-10-21T04:00:57.506Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -92,6 +98,14 @@ Approval が Native という capability snapshot と、host に人の応答を�
 LVK の profile/実行 override が空でも、app-server は利用者・project 設定から model と reasoning effort を解決できる。client は `thread/start` / `thread/resume` の応答を採用してから collaboration mode と turn を構築する。したがって依頼の JSON の `reasoning_effort: null` だけで「設定ファイルの effort が無視された」と結論しない。逆に provider が返した `None` も解決結果として採用し、前回の明示値を残さない。[採用処理](../../crates/executors/src/executors/codex/client.rs#L183-L190)、[start/resume と turn](../../crates/executors/src/executors/codex/client.rs#L257-L322)
 
 実際の値を診断するときは、依頼 override と native の thread 応答・後続 turn の設定を分けて確認する。継承の回帰テストは [reasoning_tests](../../crates/executors/src/executors/codex/client/reasoning_tests.rs#L67-L205) にある。LVK の型が値を表現できることを、任意の provider/model がその値に対応する保証とは扱わない。
+
+### Discovery と手動 override の境界
+
+model discovery が返す reasoning 候補は表示用メタデータであり、保存済みの明示値を消す権限を持たない。候補が空、古い、または手動値を含まなくても、selector は非空の `reasoning_id` を保持する。候補の既定値を明示 override として補完せず、未指定・`null`・空文字は表示上の設定追従となる。[表示値の解決](../../packages/web-core/src/shared/lib/modelSelector.ts#L175-L184)・[container の接続](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L197-L217)
+
+推論メニューは候補がなくても保持中の値があれば表示でき、一覧にない値はチェック付きの disabled 項目として示す。利用者は **Follow CLI config** を選んで `null` へ戻せる。モデルボタンのラベルも候補からモデルを取得できない場合に保持中の effort を使う。この表示は provider がその effort を受理した証拠ではない。[メニュー](../../packages/ui/src/components/ModelList.tsx#L32-L106)・[モデル行の表示条件](../../packages/ui/src/components/ModelList.tsx#L210-L220)・[ボタンのラベル](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L394-L407)
+
+これは CLI/TOML の解決方針を変更する契約ではなく、発見結果の変化で利用者の選択を暗黙に書き換えないための境界である。送信・再表示の保持は [composer の手動推論設定と復元](../concepts/session-and-agent-run.md#composer-の手動推論設定と復元)を正本とし、Scratch の None 省略、preset 選択、モデル変更時の解除をそこで説明する。[候補欠落の回帰テスト](../../packages/web-core/src/shared/lib/modelSelector.test.ts#L126-L173)は表示値の保持を検査するもので、live model の対応能力を検証しない。
 
 ## Skill と Tool Manager
 
