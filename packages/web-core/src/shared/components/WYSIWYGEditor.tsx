@@ -14,7 +14,7 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { TRANSFORMERS, type Transformer } from '@lexical/markdown';
+import { LINK, TRANSFORMERS, type Transformer } from '@lexical/markdown';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { CodeBlockEscapePlugin } from '@vibe/ui/components/CodeBlockEscapePlugin';
 import { InlineCodeBoundaryPlugin } from '@vibe/ui/components/InlineCodeBoundaryPlugin';
@@ -118,6 +118,7 @@ type WysiwygProps = {
   /** Keyboard shortcut mode for sending messages */
   sendShortcut?: SendMessageShortcut;
   /** Task attempt ID for resolving .vibe-attachments paths */
+  resolveLocalLink?: (href: string) => (() => void) | undefined;
   workspaceId?: string;
   /** Session ID used for workspace-scoped APIs (attachments, slash command discovery) */
   sessionId?: string;
@@ -289,6 +290,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       onCmdEnter,
       onShiftCmdEnter,
       sendShortcut,
+      resolveLocalLink,
       workspaceId,
       sessionId,
       repoId,
@@ -533,6 +535,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
 
     // Full markdown transformers for both edit and display modes.
     // Custom element transformers come first for matching precedence.
+    const enableLocalLinks = disabled && !!resolveLocalLink;
     const allTransformers: Transformer[] = useMemo(
       () => [
         TABLE_TRANSFORMER,
@@ -542,9 +545,13 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         PR_COMMENT_TRANSFORMER,
         COMPONENT_INFO_EXPORT_TRANSFORMER,
         COMPONENT_INFO_TRANSFORMER,
+        // CommonMark angle destinations preserve spaces in chat file links.
+        ...(enableLocalLinks
+          ? [{ ...LINK, importRegExp: /\[(.*?)\]\(<([^<>\n]+)>\)/ }]
+          : []),
         ...TRANSFORMERS,
       ],
-      [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER]
+      [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER, enableLocalLinks]
     );
 
     // Memoized handlers for ContentEditable to prevent re-renders
@@ -688,7 +695,9 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                   </>
                 )}
                 {/* Link sanitization for read-only mode */}
-                {disabled && <ReadOnlyLinkPlugin />}
+                {disabled && (
+                  <ReadOnlyLinkPlugin resolveLocalLink={resolveLocalLink} />
+                )}
                 {/* Clickable code for file paths in read-only mode */}
                 {disabled && findMatchingDiffPath && onCodeClick && (
                   <ClickableCodePlugin

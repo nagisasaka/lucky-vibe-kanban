@@ -27,6 +27,7 @@ export interface WorkspaceFilePreviewTarget {
   path: string;
   source: WorkspaceFilePreviewSource;
   sessionId?: string;
+  line?: number;
 }
 
 export type WorkspaceFileViewKind =
