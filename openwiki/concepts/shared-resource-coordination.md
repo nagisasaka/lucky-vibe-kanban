@@ -9,6 +9,8 @@ sources:
   - resource: repo://crates/server/src/routes/resource_coordination/runtime.rs
   - resource: repo://crates/services/src/services/resource_coordination.rs
   - resource: repo://crates/executors/src/executors/codex.rs
+  - id: openwiki-source-3ef7bc8590ef87216eade432
+    resource: repo://crates/server/src/remote_mcp/resource_observation.rs
   - id: openwiki-source-970aab88c12187a0a947aa42
     resource: repo://crates/server/src/routes/execution_bridge/mod.rs
   - id: openwiki-source-516767fac5b6f9159d5b8c8f
@@ -17,10 +19,10 @@ sources:
     resource: repo://scripts/local-runner/control.py
   - id: openwiki-source-0e63365a39605f8b71f6bd5c
     resource: repo://scripts/local-runner/test_control.py
-generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
+generated: { by: "codex", at: "2026-10-21T02:54:34.061Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-21T02:54:34.061Z
 ---
 
 # 共有リソースの所有権と AI 調停
@@ -30,6 +32,8 @@ LVK の並列化には三つの異なる整合性がある。worktree はソー�
 共有リソース調停は、その間に行う実機・DB・デプロイ環境などへの操作を調整する。
 意味の記録があっても、同じ実機への同時操作や互換性のない DB 変更は防げない。
 このため、AI の意味判断と、プログラムによる所有権の管理を分ける。
+
+サーバーの負荷を判断材料にする場合は、外部 MCP の [オンデマンド資源観測](../integrations/remote-access.md#オンデマンド資源観測)を使う。`get_resource_observation` は system-visible 統計と cgroup 制限を読むだけで、資源の予約・実行受付・将来の安全性を保証しない。観測値からこのページの所有権や解放条件を推定してはいけない。[観測の境界](../../crates/server/src/remote_mcp/resource_observation.rs#L55-L69)
 
 ## 調停 AI は所有権の根拠にならない
 

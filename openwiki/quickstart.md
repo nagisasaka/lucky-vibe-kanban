@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-21T02:54:34.061Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-21T02:54:34.061Z
 ---
 
 # クイックスタートと調査案内
@@ -105,6 +105,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 外部会話から保存済み Codex 進捗を読みたい | [list_run_events](integrations/remote-access.md#保存済み-codex-進捗の読取)。明示 Run 参照、除外を含む cursor、commentary と最終回答の分離 |
 | Plan が戻る、旧 Plan with Goal、context や子の表示が違う | [Session の Plan 遷移・context・子 lifecycle](concepts/session-and-agent-run.md#plan-の遷移) → [CLI / wire 型と mapper 互換](integrations/agent-providers.md#cli-検出と-provider-互換性) |
 | GitHub の認証、push 先、PR 結果や merge 観測が合わない | [GitHub 認証と PR](integrations/github-review.md)。リポジトリ別 PAT、agent shell との適用差、push/base と部分成功 |
+| サーバーの現在の負荷と制限を外部から読む | [オンデマンド資源観測](integrations/remote-access.md#オンデマンド資源観測)。system-visible と cgroup の区別、unknown、部分失敗、worker 上限。資源予約の代わりにはならない |
 | 外部マシンの実行を予約・回復する | [共有資源と Execution Bridge](concepts/shared-resource-coordination.md)。snapshot、Runner、settlement と operator 回復 |
 | 実行の元データを保全したい | [Native Audit の保存・エクスポート・削除](architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) |
 | Merge / Rebase / PR 後の状態が合わない | [統合までの順序と部分失敗](workflows/task-to-integration.md) → [memory の統合契約](concepts/repository-memory.md) |
@@ -149,4 +150,4 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
 
-今回の通常 Sync は凍結された pending changes の範囲に沿い、Integration の host merge・競合 job・最終候補検証・旧 checkpoint adoption、一般 Workflow の Create 受理、Agent の起動前永続化と限定 Retry 回復、および依存する Memory / UI / Card 完了の境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。実サービスへの到達性や統合 checkout の acceptance test 成功は、この文書更新からは主張しない。
+今回の通常 Sync は凍結された pending changes に沿い、`get_resource_observation` の外部 MCP 登録・認可・audit、固定 Linux collector、cgroup parser、部分失敗と worker 寿命、HTTP / fixture テスト、既存の共有資源調停との説明境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。凍結入力の Integration 記録は検証省略を明記しており、この文書更新でもテスト再実行や実 Auth0 / ChatGPT 接続確認は行っていない。

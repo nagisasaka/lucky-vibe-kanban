@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9709baa4b56ca35a35d0785cb7bd154f966eb3ae0022e10346b391c301ab2577",
+  "pageVersion": "sha256:2cbf98dc6add3400694da48443d3df81be4e6129efa33d7e80cb42325b9c2483",
   "claims": [
     {
       "id": "claim_b19b76396a064309bf7402c5c74e707d",
@@ -37,10 +37,24 @@
           "version": "repo-file-v1:sha256:3310e8e6c7480720349c2e03f739f0723817b45f56815da76fed36d59403637f"
         }
       ]
+    },
+    {
+      "id": "claim_fc34913e28cc4a95b66cb939309674b7",
+      "statement": "get_resource_observation は system-visible 統計と別枠の cgroup 制限を返す観測であり、資源予約・実行受付・将来の安全性を保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/resource_observation.rs#L21-L25",
+          "version": "repo-lines-v1:sha256:cd1f9afb4c8dd6c5b9a0c9aae1bea5cda4b9061ed4c6a70e2721dd2abc5535a5:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWY1ZmRlNGJiZmEwYWJlMDFhMWM2ZjgyODYyMGFkMTA0M2NiMzc0NmY3NmI3MGU1ZWUzNzdlYTA0NjA2YTBmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWU5Mzk1MzA0MWE1OTAwNzcwY2Q3NzcyOTg1OGZmZGZhNWFhNjViZmUzY2NmMzMwMzBmYWE5MGNlZTQ2YTI3YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2U3OGU0MmI4YmI4ZGM3NmRmOWRiYzYxMDU1OWYzMGFmMDA1NTBmNGI3MTcwYjY2ZmEwN2I4M2MxMDM2ZTJhMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTJlNjc2ZGZmOThjMzM0MzUxMDI1N2YyNzAxZDg0NTI2MGUwZTQxZmRlZmIzZDIxMTZlN2ZjYmQ3OTAzMDgxYSJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/resource_observation.rs#L55-L69",
+          "version": "repo-lines-v1:sha256:917e476a3db85fe0d111cbd5498150609b8641bb4ce00acfd509adff21fe6351:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4YWY4OWY2N2ExNThmNGM5MGMzNjJkYTE4M2UwYTc3NmNiMjFmYTQ5YzViZmI5OGFjNzY0NjljYWI2YzJkZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxODk3YzdiNjMyYzJiNDdjNGI4YzRjMWM3N2I4MmViYjJjOGYxMzk0Zjg4MmFjMTZlMTllYzZiYTIwMTIwY2EifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-21T02:54:34.061Z"
   }
 }

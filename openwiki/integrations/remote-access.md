@@ -24,6 +24,12 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-ccbefbdb32b7223afc06bb2b
+    resource: repo://crates/server/src/remote_mcp/read.rs
+  - id: openwiki-source-3ef7bc8590ef87216eade432
+    resource: repo://crates/server/src/remote_mcp/resource_observation.rs
+  - id: openwiki-source-7365f8427e56589791478b2b
+    resource: repo://crates/server/src/remote_mcp/resource_observation/linux.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
     resource: repo://crates/server/src/remote_mcp/run_events.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
@@ -44,10 +50,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-20T18:18:55.370Z" }
+generated: { by: "codex", at: "2026-10-21T02:54:34.061Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T18:18:55.370Z
+    at: 2026-10-21T02:54:34.061Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -107,6 +113,33 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 公開するのは assistant commentary、lifecycle、許可済み tool 名と status、Goal status、子活動の限定 kind だけである。final/user/system text、全 Thinking（歴史的 Plan text と reasoning を安全に区別できない）、承認・回答本文、tool 引数・結果、provider extension、native reference を出さない。schema/payload version が1以外、32 KiB超の envelope、不正 JSON は省略する。commentary は4,096 UTF-8 bytesを超える、またはpath・credential等の疑わしい形式なら本文全体を withheld にする。これは任意の prose が秘密を含まない保証ではなく、返された文章も命令・承認・独立した検証証拠ではない。[allowlist と filter](../../crates/server/src/remote_mcp/run_events.rs#L117-L239)
 
 変更時は空 filtered page、foreign cursor、attempt 順序、byte 上限、DB reopen 後の cursor、HTTP read scope と再接続のテストを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L264-L582)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1324-L1388)。fixture の存在や過去実行結果を実 ChatGPT account 接続成功と読み替えない。
+
+## オンデマンド資源観測
+
+`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。内部モデル、監視 daemon、履歴 DB、UI、自動 admission / stop policy は追加しない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L17-L45)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L360-L403)
+
+### 可視範囲と値の意味
+
+schema version 1 は収集開始の `timestamp`、終了応答の `completed_at`、`scope`、`system_visible`、`cgroup`、`completion`、`errors` を返す。ファイルを順番に読むため atomic snapshot ではない。`scope.statistics` は常に `system-visible`、environment と physical-host visibility は `unknown` である。VPS / container の外側まで見えているとは断定できず、system-visible 使用率を container 内の使用率や実行に使える余力へ読み替えない。[応答初期値と順次収集](../../crates/server/src/remote_mcp/resource_observation.rs#L55-L136)
+
+| 観測 | 解釈 |
+| --- | --- |
+| memory / swap bytes | `/proc/meminfo` の total、MemAvailable、swap total と total − free。MemAvailable は MemFree とは異なる |
+| online CPU count | online logical CPU 数であり、idle CPU 数や割当保証ではない |
+| load average | 1 / 5 / 15 分平均。CPU percent ではない |
+| CPU usage | `/proc/stat` の aggregate counter 差分。約500 ms待ち、実測 `sampling_duration_ms` を返す。idle と iowait を idle と扱い、guest を二重計上しない。counter の逆行・差分ゼロは unknown |
+
+[収集と sample](../../crates/server/src/remote_mcp/resource_observation.rs#L72-L136)・[時間計測](../../crates/server/src/remote_mcp/resource_observation.rs#L179-L199)・[CPU 算出](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L134-L162)
+
+cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgroup` の cgroup v2 root mount を確認できた場合だけ固定 namespace-root files を読む。memory current / max、CPU quota÷period、effective cpuset 数と `effective_cpu_bound_cores` を返す。CPU bound は online count・quota・cpuset の最小値で、quota の明示 unlimited は上限を加えず、必要入力の unknown は結果にも伝わる。v1、nested membership、別 mount layout を mount-root の値で代用しない。非可視の祖先制限は unknown のままで、root の `max` は全祖先の無制限を証明しない。memory headroom の推定はしない。[限定 layout と値](../../crates/server/src/remote_mcp/resource_observation.rs#L104-L143)・[quota / bound / mount 検証](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L50-L116)
+
+### 部分失敗と worker の寿命
+
+数値は `known` と value、または `unknown` と定型 error を持つ。limit の明示 `max` だけが `unlimited` であり、欠落・不正・読取失敗をゼロや unlimited に変換しない。`completion: complete` は収集終了であり、全 field が known という意味ではない。timeout は受信済みの値を保持して `errors: ["timeout"]`、done のない worker 終了は `worker_failed` を返す。CPU sample が未到着なら duration は null のままである。[field と初期値](../../crates/server/src/remote_mcp/resource_observation.rs#L48-L69)・[受信と失敗](../../crates/server/src/remote_mcp/resource_observation.rs#L138-L172)
+
+server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/remote_mcp/resource_observation.rs#L11-L45)・[worker 所有権](../../crates/server/src/remote_mcp/resource_observation.rs#L202-L227)
+
+変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/remote_mcp/resource_observation.rs#L229-L389)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1409-L1475)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。この Sync は source とテスト内容の確認であり、テスト再実行、実 Auth0 / ChatGPT 接続、他 OS の検証は行っていない。
 
 ## 外部実行とモバイル設計
 
