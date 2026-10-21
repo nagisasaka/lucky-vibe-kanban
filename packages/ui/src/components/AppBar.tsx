@@ -12,6 +12,7 @@ import {
   StarIcon,
   type Icon,
 } from '@phosphor-icons/react';
+import { LVK_GITHUB_URL } from '../lib/repository';
 import { cn } from '../lib/cn';
 import { AppBarSocialLink } from './AppBarSocialLink';
 
@@ -50,12 +51,10 @@ interface AppBarProps {
   notificationBell?: ReactNode;
   userPopover?: ReactNode;
   starCount?: number | null;
-  onlineCount?: number | null;
   appVersion?: string | null;
   updateVersion?: string | null;
   onUpdateClick?: () => void;
   githubIconPath: string;
-  discordIconPath: string;
 }
 
 export interface AppBarProject {
@@ -77,7 +76,7 @@ const appBarItemBaseClassName =
 
 type AppBarSection = {
   key: 'local' | 'projects';
-  label: string;
+  label?: string;
   items: AppBarSectionItem[];
 };
 
@@ -139,19 +138,16 @@ export function AppBar({
   notificationBell,
   userPopover,
   starCount,
-  onlineCount,
   appVersion,
   updateVersion,
   onUpdateClick,
   githubIconPath,
-  discordIconPath,
 }: AppBarProps) {
   const sections: AppBarSection[] = [];
 
   if (showWorkspacesButton) {
     sections.push({
       key: 'local',
-      label: 'Local',
       items: [
         {
           key: 'local-workspaces',
@@ -306,7 +302,9 @@ export function AppBar({
     >
       {sections.map((section) => (
         <div key={section.key} className="flex flex-col items-center gap-1">
-          <AppBarSectionLabel>{section.label}</AppBarSectionLabel>
+          {section.label && (
+            <AppBarSectionLabel>{section.label}</AppBarSectionLabel>
+          )}
           {section.items.map((item) => (
             <div
               key={item.key}
@@ -320,12 +318,12 @@ export function AppBar({
         </div>
       ))}
 
-      {/* Bottom section: Notifications + User popover + GitHub + Discord */}
+      {/* Bottom section: Notifications + User popover + GitHub */}
       <div className="mt-auto pt-base flex flex-col items-center gap-4">
         {notificationBell}
         {userPopover}
         <AppBarSocialLink
-          href="https://github.com/BloopAI/vibe-kanban"
+          href={LVK_GITHUB_URL}
           label="Star on GitHub"
           iconPath={githubIconPath}
           badge={
@@ -335,14 +333,6 @@ export function AppBar({
                 {formatStarCount(starCount)}
               </>
             )
-          }
-        />
-        <AppBarSocialLink
-          href="https://discord.gg/AC4nwVtJM3"
-          label="Join our Discord"
-          iconPath={discordIconPath}
-          badge={
-            onlineCount != null && (onlineCount > 999 ? '999+' : onlineCount)
           }
         />
         {updateVersion ? (

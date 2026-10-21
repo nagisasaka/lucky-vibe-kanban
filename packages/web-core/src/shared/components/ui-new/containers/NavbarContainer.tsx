@@ -6,8 +6,6 @@ import { useMemo, useCallback, useEffect } from 'react';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useActions } from '@/shared/hooks/useActions';
 import { useSyncErrorContext } from '@/shared/hooks/useSyncErrorContext';
-import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
-import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import {
   Navbar,
   MOBILE_TABS,
@@ -189,11 +187,6 @@ export function NavbarContainer({
     [closeWiki, openWiki, selectedWorkspace?.id, setMobileActiveTab]
   );
 
-  const { data: orgsData } = useUserOrganizations();
-  const selectedOrgId = useOrganizationStore((s) => s.selectedOrgId);
-  const orgName =
-    orgsData?.organizations.find((o) => o.id === selectedOrgId)?.name ?? '';
-
   // Get action visibility context (includes all state for visibility/active/enabled)
   const actionCtx = useActionVisibilityContext();
 
@@ -260,7 +253,7 @@ export function NavbarContainer({
   const navbarTitle = isCreateMode
     ? 'Create Workspace'
     : isOnProjectPage
-      ? orgName
+      ? undefined
       : workspacePath ||
         (selectedWorkspace?.branch === 'direct-folder'
           ? ''

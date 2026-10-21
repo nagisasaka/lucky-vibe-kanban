@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { siDiscord, siGithub } from 'simple-icons';
+import { siGithub } from 'simple-icons';
 import { XIcon, PlusIcon, LayoutIcon } from '@phosphor-icons/react';
 import { SyncErrorProvider } from '@/shared/providers/SyncErrorProvider';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
@@ -17,7 +17,6 @@ import { AppBarUserPopoverContainer } from './AppBarUserPopoverContainer';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
 import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
-import { useDiscordOnlineCount } from '@/shared/hooks/useDiscordOnlineCount';
 import { useGitHubStars } from '@/shared/hooks/useGitHubStars';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { useAppUpdateStore } from '@/shared/stores/useAppUpdateStore';
@@ -61,7 +60,6 @@ export function SharedAppLayout() {
   const { appVersion } = useUserSystem();
   const updateVersion = useAppUpdateStore((s) => s.updateVersion);
   const restartForUpdate = useAppUpdateStore((s) => s.restart);
-  const { data: onlineCount } = useDiscordOnlineCount();
   const { data: starCount } = useGitHubStars();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAppBarHovered, setIsAppBarHovered] = useState(false);
@@ -284,12 +282,10 @@ export function SharedAppLayout() {
               notificationBell={<AppBarNotificationBellContainer />}
               userPopover={<AppBarUserPopoverContainer />}
               starCount={starCount}
-              onlineCount={onlineCount}
               appVersion={appVersion}
               updateVersion={updateVersion}
               onUpdateClick={restartForUpdate ?? undefined}
               githubIconPath={siGithub.path}
-              discordIconPath={siDiscord.path}
             />
             {/* Desktop content. */}
             <div className="relative min-h-0 overflow-hidden">
@@ -344,12 +340,8 @@ export function SharedAppLayout() {
           onClose={() => setIsDrawerOpen(false)}
         >
           <div className="flex flex-col h-full">
-            {/* Header: org name + close button */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <span className="text-sm font-medium text-high truncate">
-                {organizations.find((o) => o.id === selectedOrgId)?.name ??
-                  'Organization'}
-              </span>
+            {/* Drawer close button */}
+            <div className="flex items-center justify-end p-4 border-b border-border">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(false)}
