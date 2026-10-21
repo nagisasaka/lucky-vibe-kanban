@@ -18,8 +18,6 @@ pub struct WorkspaceTokenUsage {
     pub completeness: String,
     pub scope: String,
     pub thread_count: i64,
-    pub attempt_count: i64,
-    pub observed_attempt_count: i64,
     pub providers: Vec<String>,
     /// Requested models are not proof of the model actually used for a counter.
     pub requested_models: Vec<String>,
@@ -55,11 +53,6 @@ impl WorkspaceTokenUsage {
         .bind(workspace_id)
         .fetch_one(&mut *tx)
         .await?;
-        let (attempt_count, observed_attempt_count): (i64, i64) = sqlx::query_as(
-            "SELECT COUNT(*), COUNT(CASE WHEN json_extract(u.event_json,'$.payload.data.cumulative_usage.provider_id')='codex' THEN 1 END)
-             FROM agent_run_attempts a JOIN agent_runs r ON r.id=a.agent_run_id
-             LEFT JOIN agent_run_usage_snapshots u ON u.run_attempt_id=a.id WHERE r.workspace_id=?"
-        ).bind(workspace_id).fetch_one(&mut *tx).await?;
         let providers = sqlx::query_scalar("SELECT DISTINCT provider_id FROM workspace_token_usage WHERE workspace_id=? ORDER BY provider_id")
             .bind(workspace_id).fetch_all(&mut *tx).await?;
         let requested_models = sqlx::query_scalar("SELECT DISTINCT json_extract(a.request_envelope,'$.executor_config.model_id') FROM agent_run_attempts a JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=? AND json_extract(a.request_envelope,'$.executor_config.model_id') IS NOT NULL ORDER BY 1")
@@ -72,7 +65,7 @@ impl WorkspaceTokenUsage {
             cached_input_observed_threads: totals.cached_threads, reasoning_observed_threads: totals.reasoning_threads,
             completeness: if totals.threads == 0 { "unknown" } else { "partial" }.into(),
             scope: "Codex parent-thread cumulative totals observed since collection began (a first report may include earlier usage in that thread); cached input is included in input, reasoning in output. Unreported usage, child-thread usage not included by the provider, unsupported providers and unmeasured history are unknown. Requested models are not actual model attribution. Not a cost estimate.".into(),
-            thread_count: totals.threads, attempt_count, observed_attempt_count, providers, requested_models,
+            thread_count: totals.threads, providers, requested_models,
             first_observed_at: totals.first, updated_at: totals.updated,
         })
     }

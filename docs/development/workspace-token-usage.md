@@ -33,6 +33,14 @@ providerとthreadは保存し、APIにはprovider一覧と既存run attemptに�
 要求モデルは実際に処理したモデルの証明ではなく、thread内のモデル切替ごとの消費配分も不明。モデル別の料金換算は行わない。
 計測のための生プロンプト追加保存はない。
 
+## 正常resumeの根拠（Codex rust-v0.154.0）
+
+[session/mod.rs](https://raw.githubusercontent.com/openai/codex/refs/tags/rust-v0.154.0/codex-rs/core/src/session/mod.rs) のresumed分岐は `last_token_info_from_rollout` → `state.set_token_info` で既報情報を復元する。
+その後の [state/session.rs](https://github.com/openai/codex/blob/rust-v0.154.0/codex-rs/core/src/state/session.rs) の `update_token_info_from_usage` → `history.update_token_info`、
+[context_manager/history.rs](https://github.com/openai/codex/blob/rust-v0.154.0/codex-rs/core/src/context_manager/history.rs) の `update_token_info` → `TokenUsageInfo::new_or_append` を経て、
+[protocol.rs](https://raw.githubusercontent.com/openai/codex/refs/tags/rust-v0.154.0/codex-rs/protocol/src/protocol.rs) は既存infoをcloneし、`append_last_usage` → `total_token_usage.add_assign(last)` で加算する。
+この版の正常resumeは既報totalを復元後に加算する設計。実アカウントの精度試験を意味せず、異常resetや未報告分など上記の制約は残る。
+
 ## 検証記録
 
 開始コミット: `9f16bce8b189e00aeb2ef8fc90b8d129e85ab1fd`。
@@ -80,7 +88,7 @@ Viteには既存依存データの古さ、Tailwind content、chunk sizeのwarni
 
 E2Eで確認した値は、unknown → total 120 → total 200（input 165、output 35、cached 60、reasoning 10）。
 内訳欠損threadを含む1/2の取得範囲、partial、ページ再読込、日本語ラベル、390px幅、
-stdio MCPとAPI集計JSONの完全一致を確認した。試験fixtureは意図的にAgentRunを起動せず保存行を投入するため、画面例のattempt数は0/0。
+stdio MCPとAPI集計JSONの完全一致を確認した。試験fixtureはAgentRunを起動せず保存行を投入する。
 通知処理・複数Session/run・同一thread resume・通知重複・失敗/キャンセル保持はRust fixtureで確認した。
 最終E2Eのserverと子プロセスは停止し、各 `.build/tokens-instance-*` は削除済み。
 
@@ -93,3 +101,31 @@ stdio MCPとAPI集計JSONの完全一致を確認した。試験fixtureは意図
 - マージ、デプロイ、稼働開発版/安定版の再起動、本番DB変更、OpenWiki更新は実施していない。
 - 再検証用に通常の `target/`、`node_modules/`、自Workspaceのfrontend `dist/`、ローカルSQLx CLIを保持。
   `.build/` の検証ログと `test-results/server/` の画面証拠も保持する。他Workspaceのファイルは削除していない。
+
+### 2026-10-21 独立レビュー後の最小修正
+
+基点は `2100743c59e9ec9cbc4a753313b0e771de2f0eed`。上位AIのレビュー判断に沿い、最新snapshotに依存して後退し得る報告試行数を削除した。
+`observed_attempt_count` と表示専用の分母 `attempt_count` を共通集計型・API/MCP応答・生成型から除去し、UI coverage行と日英キーも削除。
+everflagや履歴走査は追加せず、unknown/partial、thread数、キャッシュ/推論の内訳取得thread数を維持した。
+日英のUI説明はCodex親threadの報告値であり、親に含まれない子thread使用量は不明と明記した。
+
+変更対象はDB集計/fixture、生成TypeScript型、チャット末尾コンポーネント、日英翻訳、既存Chromium spec、本記録。
+以下は今回の変更後ソースで逐次実行した結果（上記の初回実装検証とは別）。
+
+| 実行コマンド | 結果 |
+| --- | --- |
+| `cargo test -p db -p server --lib workspace_tokens` | 3件成功。既存fixtureにvalid 42→cumulative_usage=None後の総量・内訳・partial・thread数保持を追加。外部MCPの共通集計とproject scopeも確認 |
+| `cargo build --bin server --bin vibe-kanban-mcp --bin generate_types` | 成功。このバイナリでE2Eを実行 |
+| `target/debug/generate_types` / `target/debug/generate_types --check` | 生成・一致確認とも成功 |
+| `pnpm run web-core:check` | 成功 |
+| `pnpm run local-web:lint` | 成功 |
+| `pnpm --dir packages/local-web run build` | TypeScript・Vite成功、既存warningのみ |
+| `node tests/server/run-workspace-tokens.mjs` | Chromium通常起動1件、隔離サーバー再起動後1件成功。unknown→120→200、partial、内訳1/2、APIとstdio MCP一致、試行数フィールド不在、日英の親/子範囲説明を確認 |
+| `pnpm run prepare-db` / `pnpm run prepare-db:check` | 成功。既存未使用metadata14件の生成時削除は復元し、check成功（既存unused warningのみ） |
+| `git diff --check` | 成功 |
+
+Rustは前回同様sccache・自Workspace targetを使用。SQLx CLIは既存 `.build/sqlx-cli/bin` をPATHへ追加した。
+代表の詳細画面と390px画面を確認。E2E終了後に隔離サーバー停止・一時状態削除まで完了した。
+今回のログは `.build/review-*.log`、画面証拠は `test-results/server/` に保持する。
+実アカウント精度、有料モデル、全suite、正式Integration、別providerの追加計測は実施していない。
+マージ・Wiki更新・deploy・稼働版restart・live DB変更・自Workspace外cleanupも行っていない。

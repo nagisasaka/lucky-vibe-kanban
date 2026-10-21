@@ -3035,17 +3035,14 @@ mod tests {
         assert_eq!(value.cached_input_tokens, Some(6)); // already included in input
         assert_eq!(value.reasoning_tokens, Some(4)); // already included in output
         assert_eq!(value.completeness, "partial");
-        assert_eq!(value.observed_attempt_count, 4);
         assert_eq!(value.thread_count, 2);
-        // A missing report adds no zero, and must remain visible in coverage.
+        // A missing report adds no zero; coverage remains partial.
         let (request, attempt) = requests(session, workspace, "no-usage");
         AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
             .await
             .unwrap();
         let value = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
         assert_eq!(value.total_tokens, Some(56));
-        assert_eq!(value.attempt_count, 5);
-        assert_eq!(value.observed_attempt_count, 4);
     }
 
     #[tokio::test]
@@ -3088,7 +3085,7 @@ mod tests {
         .unwrap();
         let unknown = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
         assert_eq!(unknown.total_tokens, None);
-        assert_eq!(unknown.observed_attempt_count, 0);
+        assert_eq!(unknown.completeness, "unknown");
         snapshot.native_sequence = 2;
         if let AgentLiveEventPayload::TokenUsageSnapshot {
             cumulative_usage, ..
@@ -3115,7 +3112,62 @@ mod tests {
         assert_eq!(zero.total_tokens, Some(0));
         assert_eq!(zero.cached_input_tokens, None);
         assert_eq!(zero.reasoning_tokens, None);
-        assert_eq!(zero.observed_attempt_count, 1);
+        assert_eq!(zero.completeness, "partial");
+
+        // A valid positive report followed by a replaceable context-full snapshot
+        // must retain the durable total, breakdown and partial coverage.
+        for (sequence, cumulative_usage) in [
+            (
+                3,
+                Some(executors::runtime::CumulativeTokenUsage {
+                    provider_id: "codex".into(),
+                    provider_session_id: "zero-thread".into(),
+                    total_tokens: 42,
+                    reasoning_tokens: Some(4),
+                }),
+            ),
+            (4, None),
+        ] {
+            let snapshot = AgentLiveEvent {
+                schema_version: 1,
+                event_id: Uuid::new_v4(),
+                session_id: session,
+                agent_run_id: request.agent_run_id,
+                turn_id: request.turn_id,
+                run_attempt_id: attempt.run_attempt_id,
+                run_attempt_number: 1,
+                native_sequence: sequence,
+                timestamp: Utc::now(),
+                payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                    cumulative_usage,
+                    input_tokens: 30,
+                    output_tokens: 12,
+                    cached_input_tokens: Some(10),
+                    context_tokens: None,
+                    model_context_window: None,
+                },
+            };
+            AgentEventRecord::append_and_project_host_batch(
+                &pool,
+                &[],
+                &[snapshot],
+                &[],
+                attempt.run_attempt_id,
+                sequence,
+            )
+            .await
+            .unwrap();
+            let retained = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+            assert_eq!(retained.total_tokens, Some(42));
+            assert_eq!(retained.input_tokens, Some(30));
+            assert_eq!(retained.output_tokens, Some(12));
+            assert_eq!(retained.cached_input_tokens, Some(10));
+            assert_eq!(retained.reasoning_tokens, Some(4));
+            assert_eq!(retained.completeness, "partial");
+            assert_eq!(retained.thread_count, 1);
+            assert_eq!(retained.cached_input_observed_threads, 1);
+            assert_eq!(retained.reasoning_observed_threads, 1);
+        }
     }
 
     #[tokio::test]

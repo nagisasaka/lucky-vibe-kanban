@@ -1475,8 +1475,7 @@
     "cached": "Cached input (included in input)",
     "output": "Output",
     "reasoning": "Reasoning (included in output)",
-    "scope": "Reported Codex thread totals. Unreported usage, unsupported providers and unmeasured history are unknown. Not cost or context occupancy.",
-    "coverage": "Attempts with usage reports: {{observed}} / {{total}}",
+    "scope": "Reported cumulative totals of Codex parent threads. Child-thread usage not included in the parent is unknown, as are unreported usage, unsupported providers and unmeasured history. Not cost or context occupancy.",
     "updated": "Last update",
     "breakdownCoverage": "Threads reporting breakdown: {{observed}} / {{total}}"
   }

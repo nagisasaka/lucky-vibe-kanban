@@ -388,7 +388,7 @@ export type WorkspaceTokenUsage = { workspace_id: string, total_tokens: bigint |
 /**
  * Unknown without verified reports; otherwise partial: unreported work is unknowable.
  */
-completeness: string, scope: string, thread_count: bigint, attempt_count: bigint, observed_attempt_count: bigint, providers: Array<string>,
+completeness: string, scope: string, thread_count: bigint, providers: Array<string>,
 /**
  * Requested models are not proof of the model actually used for a counter.
  */

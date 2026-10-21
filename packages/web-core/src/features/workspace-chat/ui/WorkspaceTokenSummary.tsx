@@ -50,12 +50,6 @@ export function WorkspaceTokenSummary({
               {t('workspaceTokens.reasoning')}: {number(data.reasoning_tokens)}{' '}
               ({coverage(data.reasoning_observed_threads)})
             </p>
-            <p>
-              {t('workspaceTokens.coverage', {
-                observed: Number(data.observed_attempt_count),
-                total: Number(data.attempt_count),
-              })}
-            </p>
             {data.updated_at && (
               <p>
                 {t('workspaceTokens.updated')}: {data.updated_at}

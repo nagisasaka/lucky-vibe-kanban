@@ -148,6 +148,12 @@ with db:
   }
   await expect(summary.locator("summary")).toContainText("200");
   await summary.locator("summary").click();
+  await expect(summary).toContainText(
+    "Reported cumulative totals of Codex parent threads",
+  );
+  await expect(summary).toContainText(
+    "Child-thread usage not included in the parent is unknown",
+  );
   await expect(summary).toContainText("Input: 165");
   await expect(summary).toContainText("Output: 35");
   await expect(summary).toContainText("Cached input (included in input): 60");
@@ -158,6 +164,8 @@ with db:
   });
   const value = await api(`/api/workspaces/${scope.workspace.id}/tokens`);
   expect(await mcp(scope.workspace.id)).toEqual(value);
+  expect(value).not.toHaveProperty("observed_attempt_count");
+  expect(value).not.toHaveProperty("attempt_count");
   expect(value.total_tokens).toBe(200);
   expect(value.completeness).toBe("partial");
   await page.reload();
@@ -172,6 +180,9 @@ with db:
     "Workspace累積トークン",
   );
   await expect(page.getByTestId("workspace-tokens")).toContainText("一部のみ");
+  await summary.locator("summary").click();
+  await expect(summary).toContainText("Codex親threadの報告済み累積値");
+  await expect(summary).toContainText("親に含まれない子thread分");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByTestId("workspace-tokens")).toBeVisible();
   await page.screenshot({
