@@ -336,8 +336,6 @@ type State = {
 
   // Workspace-specific panel state
   workspacePanelStates: Record<string, WorkspacePanelState>;
-  // Ephemeral navigation history, deliberately not persisted in UI scratch.
-  wikiReturnPanelStates: Record<string, WorkspacePanelState>;
 
   // Selected built-in kanban view per project
   kanbanProjectViewSelections: Record<string, KanbanProjectViewSelection>;
@@ -395,8 +393,6 @@ type State = {
     mode: RightMainPanelMode | null,
     workspaceId?: string
   ) => void;
-  openWiki: (workspaceId?: string) => void;
-  closeWiki: (workspaceId?: string) => void;
   setLeftSidebarVisible: (value: boolean) => void;
   setLeftMainPanelVisible: (value: boolean, workspaceId?: string) => void;
   triggerPreviewRefresh: () => void;
@@ -477,7 +473,6 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
 
   // Workspace-specific panel state
   workspacePanelStates: {},
-  wikiReturnPanelStates: {},
 
   // Kanban per-project view selection
   kanbanProjectViewSelections: {},
@@ -568,15 +563,6 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
     const state = get();
     const wsState =
       state.workspacePanelStates[workspaceId] ?? DEFAULT_WORKSPACE_PANEL_STATE;
-    if (mode === RIGHT_MAIN_PANEL_MODES.WIKI) {
-      if (wsState.rightMainPanelMode === mode) state.closeWiki(workspaceId);
-      else state.openWiki(workspaceId);
-      return;
-    }
-    if (wsState.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI) {
-      state.setRightMainPanelMode(mode, workspaceId);
-      return;
-    }
     const isCurrentlyActive = wsState.rightMainPanelMode === mode;
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
     set({
@@ -602,19 +588,6 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
     const state = get();
     const wsState =
       state.workspacePanelStates[workspaceId] ?? DEFAULT_WORKSPACE_PANEL_STATE;
-    if (mode === RIGHT_MAIN_PANEL_MODES.WIKI) {
-      state.openWiki(workspaceId);
-      return;
-    }
-    const leavingWiki =
-      wsState.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI;
-    if (leavingWiki && mode === null) {
-      state.closeWiki(workspaceId);
-      return;
-    }
-    const wikiReturnPanelStates = { ...state.wikiReturnPanelStates };
-    const priorPanelState = wikiReturnPanelStates[workspaceId];
-    if (leavingWiki) delete wikiReturnPanelStates[workspaceId];
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
     set({
       workspacePanelStates: {
@@ -622,79 +595,14 @@ export const useUiPreferencesStore = create<State>()((set, get) => ({
         [workspaceId]: {
           ...wsState,
           rightMainPanelMode: mode,
-          ...(leavingWiki && {
-            isLeftMainPanelVisible:
-              priorPanelState?.isLeftMainPanelVisible ?? true,
-          }),
         },
       },
-      ...(leavingWiki && { wikiReturnPanelStates }),
       ...(mode !== null && {
         isLeftSidebarVisible: isWideScreen()
           ? state.isLeftSidebarVisible
           : false,
       }),
       ...(isMobile && mode !== null && { mobileActiveTab: mode as MobileTab }),
-    });
-  },
-
-  openWiki: (workspaceId) => {
-    if (!workspaceId) return;
-    const state = get();
-    const wsState =
-      state.workspacePanelStates[workspaceId] ?? DEFAULT_WORKSPACE_PANEL_STATE;
-    const alreadyOpen =
-      wsState.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI;
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    set({
-      workspacePanelStates: {
-        ...state.workspacePanelStates,
-        [workspaceId]: {
-          ...wsState,
-          rightMainPanelMode: RIGHT_MAIN_PANEL_MODES.WIKI,
-          // Opening another page must not reset an explicitly chosen split.
-          isLeftMainPanelVisible: alreadyOpen
-            ? wsState.isLeftMainPanelVisible
-            : false,
-        },
-      },
-      ...(!alreadyOpen && {
-        wikiReturnPanelStates: {
-          ...state.wikiReturnPanelStates,
-          [workspaceId]: { ...wsState },
-        },
-      }),
-      isRightSidebarVisible: true,
-      isLeftSidebarVisible: isWideScreen() ? state.isLeftSidebarVisible : false,
-      ...(isMobile && { mobileActiveTab: 'wiki' as MobileTab }),
-    });
-  },
-
-  closeWiki: (workspaceId) => {
-    if (!workspaceId) return;
-    const state = get();
-    if (
-      state.workspacePanelStates[workspaceId]?.rightMainPanelMode !==
-      RIGHT_MAIN_PANEL_MODES.WIKI
-    ) {
-      return;
-    }
-    const wikiReturnPanelStates = { ...state.wikiReturnPanelStates };
-    // After reload the ephemeral return target is absent: show ordinary chat.
-    const previous =
-      wikiReturnPanelStates[workspaceId] ?? DEFAULT_WORKSPACE_PANEL_STATE;
-    delete wikiReturnPanelStates[workspaceId];
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    set({
-      workspacePanelStates: {
-        ...state.workspacePanelStates,
-        [workspaceId]: { ...previous },
-      },
-      wikiReturnPanelStates,
-      ...(previous.rightMainPanelMode === null && {
-        isLeftSidebarVisible: true,
-      }),
-      ...(isMobile && { mobileActiveTab: 'chat' as MobileTab }),
     });
   },
 
