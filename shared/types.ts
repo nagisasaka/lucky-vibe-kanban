@@ -802,6 +802,10 @@ lines_added: number | null,
  */
 lines_removed: number | null,
 /**
+ * Creation time of the latest canonical AgentRun (including waits and retries).
+ */
+latest_process_started_at?: string,
+/**
  * When the latest canonical AgentRun reached its current terminal state
  */
 latest_process_completed_at?: string,
@@ -1394,7 +1398,11 @@ export type AgentRunPortSnapshot = { agent_run_id: string, state: RunState, };
 
 export type AgentEventCursor = { run_attempt_number: number, sequence: bigint, };
 
-export type AgentRunSummary = { agent_run_id: string, session_id: string, turn_id: string, state: RunState, created_at: string, updated_at: string, };
+export type AgentRunSummary = { agent_run_id: string, session_id: string, turn_id: string, state: RunState,
+/**
+ * Persisted terminal time of the current attempt; never a projection update time.
+ */
+completed_at?: string, created_at: string, updated_at: string, };
 
 export type AgentRunHistoryPage = { agent_run_id: string, state: RunState, events: Array<AgentEventEnvelope>, next_cursor: AgentEventCursor | null, has_more: boolean, };
 

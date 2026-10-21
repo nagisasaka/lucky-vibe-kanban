@@ -128,6 +128,7 @@ export function IssueTaskAttemptsSectionContainer({
         hasPendingApproval: localWorkspace?.hasPendingApproval,
         hasRunningDevServer: localWorkspace?.hasRunningDevServer,
         hasUnseenActivity: localWorkspace?.hasUnseenActivity,
+        latestProcessStartedAt: localWorkspace?.latestProcessStartedAt,
         latestProcessCompletedAt: localWorkspace?.latestProcessCompletedAt,
         latestProcessStatus: localWorkspace?.latestProcessStatus,
       };

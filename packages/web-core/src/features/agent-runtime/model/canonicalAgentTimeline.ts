@@ -387,7 +387,7 @@ function newestCursor(
     : current;
 }
 
-function newestRunState(
+export function newestRunState(
   current: RunState | null,
   candidate: RunState | null
 ): RunState | null {

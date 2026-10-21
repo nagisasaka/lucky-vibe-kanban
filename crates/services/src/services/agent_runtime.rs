@@ -28,6 +28,9 @@ pub struct AgentRunSummary {
     pub session_id: Uuid,
     pub turn_id: Uuid,
     pub state: RunState,
+    /// Persisted terminal time of the current attempt; never a projection update time.
+    #[ts(optional)]
+    pub completed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -160,6 +163,7 @@ where
 
 #[derive(Debug, FromRow)]
 struct AgentRunSummaryRow {
+    completed_at: Option<DateTime<Utc>>,
     agent_run_id: Uuid,
     session_id: Uuid,
     turn_id: Uuid,
@@ -203,12 +207,14 @@ impl<'a> AgentRuntimeReadService<'a> {
             SELECT ar.id AS agent_run_id,
                    ar.session_id,
                    at.id AS turn_id,
+                   attempt.finished_at AS completed_at,
                    state.state_json,
                    ar.created_at,
                    ar.updated_at
             FROM agent_runs ar
             JOIN agent_turns at ON at.agent_run_id = ar.id
             JOIN agent_run_state state ON state.agent_run_id = ar.id
+            LEFT JOIN agent_run_attempts attempt ON attempt.id = state.last_run_attempt_id
             WHERE ar.session_id = ?
             ORDER BY ar.created_at, ar.id
             "#,
@@ -220,6 +226,7 @@ impl<'a> AgentRuntimeReadService<'a> {
         Ok(rows
             .into_iter()
             .map(|row| AgentRunSummary {
+                completed_at: row.completed_at,
                 agent_run_id: row.agent_run_id,
                 session_id: row.session_id,
                 turn_id: row.turn_id,

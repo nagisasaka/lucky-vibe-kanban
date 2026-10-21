@@ -323,11 +323,14 @@ describe('projectCanonicalAgentConversation', () => {
     expect(replay.entries[0]).toMatchObject(
       expected('unknown (last observed: running)', false)
     );
-    expect(replay.entries[1]).toMatchObject(
+    expect(replay.entries.filter((entry) => !entry.runTiming)[1]).toMatchObject(
       expected('completed', false, 'success')
     );
     expect(replay.entries[0].canonical?.agentRunId).toBe('old');
-    expect(replay.entries[1].canonical?.agentRunId).toBe('new');
+    expect(
+      replay.entries.filter((entry) => !entry.runTiming)[1].canonical
+        ?.agentRunId
+    ).toBe('new');
     expect(projectRuns(input)).toEqual(replay);
   });
 
@@ -360,7 +363,9 @@ describe('projectCanonicalAgentConversation', () => {
       )
     ).toBe(false);
     expect(
-      projectRuns([{ runId: 'r', status: 'running', events: [] }]).entries
+      projectRuns([
+        { runId: 'r', status: 'running', events: [] },
+      ]).entries.filter((entry) => !entry.runTiming)
     ).toEqual([]);
   });
 
@@ -475,7 +480,7 @@ describe('projectCanonicalAgentConversation', () => {
     ];
     const projection = projectRuns(input);
     const entries = projection.entries.filter(
-      (e) => e.type === 'NORMALIZED_ENTRY'
+      (e) => e.type === 'NORMALIZED_ENTRY' && !e.runTiming
     );
     expect(entries).toHaveLength(2);
     const first = entries[0];
@@ -538,13 +543,16 @@ describe('projectCanonicalAgentConversation', () => {
     ]);
 
     expect(
-      projection.entries.map((entry) => ({
-        type:
-          entry.type === 'NORMALIZED_ENTRY'
-            ? entry.content.entry_type.type
-            : entry.type,
-        content: entry.type === 'NORMALIZED_ENTRY' ? entry.content.content : '',
-      }))
+      projection.entries
+        .filter((entry) => !entry.runTiming)
+        .map((entry) => ({
+          type:
+            entry.type === 'NORMALIZED_ENTRY'
+              ? entry.content.entry_type.type
+              : entry.type,
+          content:
+            entry.type === 'NORMALIZED_ENTRY' ? entry.content.content : '',
+        }))
     ).toEqual([
       { type: 'user_message', content: 'Build it' },
       { type: 'assistant_message', content: 'Hello' },
@@ -756,4 +764,141 @@ describe('projectCanonicalAgentConversation', () => {
     expect(usage.content.entry_type.cumulative_tokens).toBe(17);
     expect(usage.content.entry_type.model_context_window).toBe(0);
   });
+});
+
+describe('canonical run elapsed footers', () => {
+  it.each([
+    'running',
+    'awaiting_input',
+    'awaiting_approval',
+    'cancelling',
+  ] as const)(
+    'counts wall time through %s without adding replayed events',
+    (status) => {
+      const input = [{ runId: 'live', status, events: [] }];
+      const first = projectRuns(input);
+      expect(
+        first.entries
+          .filter((entry) => entry.runTiming)
+          .map((entry) => entry.runTiming)
+      ).toEqual([
+        { startedAt: '2026-08-14T00:00:00Z', endedAt: null, active: true },
+      ]);
+      expect(projectRuns(input)).toEqual(first);
+    }
+  );
+
+  it.each([
+    'succeeded',
+    'failed',
+    'cancelled',
+    'crashed',
+    'audit_failed',
+  ] as const)(
+    'freezes %s at terminal evidence, independently of a later run',
+    (status) => {
+      const runs = [
+        {
+          runId: 'old',
+          status,
+          events: [
+            event('old', 12, { type: 'lifecycle_changed', data: { status } }),
+          ],
+        },
+        { runId: 'new', status: 'running' as const, events: [] },
+      ];
+      const footers = projectRuns(runs).entries.filter(
+        (entry) => entry.runTiming
+      );
+      expect(footers).toHaveLength(2);
+      expect(footers[0].runTiming).toEqual({
+        startedAt: '2026-08-14T00:00:00Z',
+        endedAt: '2026-08-14T00:00:12Z',
+        active: false,
+      });
+      expect(footers[1].runTiming?.active).toBe(true);
+      expect(
+        projectRuns(runs).entries.filter((entry) => entry.runTiming)
+      ).toEqual(footers);
+    }
+  );
+
+  it('uses persisted completion even after late projection updates, with or without Goal', () => {
+    for (const goal of [
+      undefined,
+      {
+        objective: 'goal',
+        status: 'complete',
+        time_used_seconds: 7n,
+        tokens_used: 0n,
+        token_budget: null,
+      },
+    ]) {
+      const runState = { ...state('done', 'succeeded'), goal } as RunState;
+      const summary = {
+        agent_run_id: 'done',
+        session_id: SESSION_ID,
+        turn_id: 'turn-done',
+        state: runState,
+        created_at: '2026-08-14T00:00:00Z',
+        completed_at: '2026-08-14T00:00:12Z',
+        updated_at: '2026-08-15T00:00:00Z',
+      };
+      const projection = projectCanonicalAgentConversation(
+        buildCanonicalAgentSessionTimeline(SESSION_ID, [summary])
+      );
+      expect(projection.entries.at(-1)?.runTiming).toEqual({
+        startedAt: summary.created_at,
+        endedAt: summary.completed_at,
+        active: false,
+      });
+    }
+  });
+});
+
+it('uses the newest canonical revision for the clock during reconnect and retry', () => {
+  const running = { ...state('reconnect', 'running'), last_event_sequence: 1n };
+  const finished = {
+    ...running,
+    status: 'succeeded' as const,
+    last_event_sequence: 2n,
+  };
+  const summary: AgentRunSummary = {
+    agent_run_id: 'reconnect',
+    session_id: SESSION_ID,
+    turn_id: 'turn-reconnect',
+    state: finished,
+    created_at: '2026-08-14T00:00:00Z',
+    updated_at: '2026-08-14T00:00:12Z',
+    completed_at: '2026-08-14T00:00:12Z',
+  };
+  const project = (live: RunState) =>
+    projectCanonicalAgentConversation(
+      buildCanonicalAgentSessionTimeline(
+        SESSION_ID,
+        [summary],
+        new Map([
+          [
+            'reconnect',
+            mergeCanonicalAgentTimeline(
+              emptyCanonicalAgentTimeline(),
+              [],
+              live
+            ),
+          ],
+        ])
+      )
+    ).entries.at(-1)?.runTiming;
+  expect(project(running)).toEqual({
+    startedAt: summary.created_at,
+    endedAt: summary.completed_at,
+    active: false,
+  });
+  expect(
+    project({
+      ...running,
+      last_run_attempt_number: 2,
+      last_run_attempt_id: 'retry',
+    })
+  ).toEqual({ startedAt: summary.created_at, endedAt: null, active: true });
 });
