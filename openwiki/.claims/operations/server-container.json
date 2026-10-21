@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:146cd33b8c13157d2fa7d94edd4050b7734d07f67fb4a639180a865fd2e8d2d7",
+  "pageVersion": "sha256:9ab2c0f1ca4a4019f6254c9c814413a02818d9ee7b22342da477e812d276f4c4",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -195,10 +195,44 @@
           "version": "repo-lines-v1:sha256:196ee1188bd94099d20ac58ace766ea195980d925bb0bb20eaab997a47498f09:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmMzliMDU4NWJmOTBkMTk1ZmY3MTUyYjcyMjk3Y2IyODY3NTllZTRiMmRiN2UwOTI4OWQ5MmU4OWFkNDM4MDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlOGJlMjIwOWI3MDg3ZWJlNGQ5ZTQ0YTlhNjA0NjEwMWRmYWY5MTNkMjVlNjhjZDM5ZGE2YTNmZDM5NmNjOWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZmUyMmQ3Nzg4OTk3M2M1N2FkNzJmODczZTU1Njk3OGEzZWRmZDRmMDMwZWY4MzAwMjM1NTA0M2FiY2NmOWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_2e4c15ae4278485ebe10b2d3d3e43ae1",
+      "statement": "less は server-tools の apt package として導入され、server-browser を経て server image に継承されるが、runtime-base から分岐する小型 runtime はこの追加を継承しない。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L136-L156",
+          "version": "repo-lines-v1:sha256:810d9dec5aac41937c32d6019a91ee858aa3ffedca0591105f36e235acc9e9aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZmM4OWI3MmU2MDNkYWU4NmJmMzRmYzAwYWY1ZjgwMmU0MzZiODY3OTE1YzFmZTZjMmIzYjkxN2E1NTJmOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OTkzNDU0NjEwNjRlM2JiMWRhNjEwYmU1MTVlMzA1NTEwOTc4NDFkMmZmYmVhZjgwMzczNWVkOTk3MjNmZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Y2MwYTU0NWUwYzFlY2MxNjc0NDA0ZGZjOWEzYTYyMzExNmU3NjIwN2U3YjExZWU1YWFjNjVkOTgzMjI5MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2MGQ2NjY3MDkyZWIxMGY1ZTE3ZmQwNDAyM2UxYWNhOWMzNjg2ZGQ3YTU3MDk0MDI5YjU0YjVjZGM5M2RkZjEifQ"
+        },
+        {
+          "resource": "repo://Dockerfile#L182-L201",
+          "version": "repo-lines-v1:sha256:c1b6caa8f9cdbf91d234b0232d6d561e95e350b0a69974f397480f49bcf4c8fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYTdjOTI5OGE2ODlhZmMwMzFjNzE3OGJmZjYxOGUwNWMzMmFhYjJhZDBjYzQ3Y2NlMTRkNDk5NGVkN2UyY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYjMzN2VlNWJlMjI0ZGM0ZmI4N2ZiZmE0YTNlY2Q1NTBlOTU5MDMzMmNkY2YyMDE2OTIzMzRlZDRmOWJiZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjOTI0YzgyMzRjZmIzYjIwMzJhY2MxOTE2OTA0YzllZmY2ZmZiY2NiM2JlYjk4Mzk2ZDU0YTFlYTA3NDgzOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhYjhmY2ZkNGJhZWNlZjJjYTRlMTkyMjYxZTg4YzgwYTljZGMzZDlhYjJiMmZhNjM1ZWY5MTAwYThmYmJhZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3840f13634b74c03ad78cc110eda8cf3",
+      "statement": "任意の development Compose は LVK_IMAGE の toolchain image を参照し、利用可能な toolchain は選択した image に依存する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/compose.development.yaml#L1-L8",
+          "version": "repo-lines-v1:sha256:d1443c2128358f1de09c403d0d1236491999fded83da68426f7de4e490d0f92b:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmRhNzZhNWEyYTZkYjQ1NmVhZTQ2MWFiNmRjMzhiYWFmMGE0ZDRkYWE3NjFhNmJkNzczMjk5NjE1N2FmNTk4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmNjNDExOGY0MjllZDY1YzI2ZTk4NzAxNDlmYzE0NDc5MmY5ODcyOTc4YzI0MDNjZTM1NTY2N2QyNTdjZTJmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjY1ZDQ1Nzk3MTZlYzMyM2VhMzdhNTQxOTAwODdlNTllYTExOGNkMDA1MWM2YmZkYWEyODcwOGYxNTI2MGI4MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_caf8fb0e99714e3bb111efb353dd3f6d",
+      "statement": "image smoke は UID 10001 のコンテナーで less --version と非TTY pipeの文字列出力を検査し、sh -ec で失敗時に停止する。対話端末でのページ操作はこの検査の対象ではない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/smoke-image.sh#L24-L38",
+          "version": "repo-lines-v1:sha256:942336e8110b8e9c418f0ca49df1ebc0bb05e869275977c8befe499c45d10d0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-18T14:00:51.649Z"
+    "at": "2026-10-21T06:09:59.078Z"
   }
 }
