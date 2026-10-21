@@ -18,12 +18,16 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
+  - id: openwiki-source-5da526ef53eeceecc5bb4b70
+    resource: repo://crates/server/src/routes/filesystem.rs
   - id: openwiki-source-16bb0bc0baa397cce8e201b1
     resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-6a0749527a9648c33ba957da
     resource: repo://crates/server/src/routes/workspaces/core.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
     resource: repo://crates/server/src/routes/workspaces/create.rs
+  - id: openwiki-source-371e2191a5fb043bb2506b5b
+    resource: repo://crates/services/src/services/filesystem.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-6043692809cbf72f253c5631
@@ -38,10 +42,20 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+  - id: openwiki-source-00110cdcfec890895b99690a
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
+  - id: openwiki-source-dbe2d46e94202832ad4e5e7b
+    resource: repo://packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx
+  - id: openwiki-source-5d2382a0f231c830f95f103c
+    resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
+  - id: openwiki-source-5ea1902fdf1213351e6386d9
+    resource: repo://packages/web-core/src/shared/lib/api.ts
+  - id: openwiki-source-9ca1dca04d93c4fed8664d25
+    resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
+generated: { by: "codex", at: "2026-10-21T05:35:32.360Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-17T03:50:48.298Z
+    at: 2026-10-21T05:35:32.360Z
 ---
 
 # Workspace と Repository
@@ -84,6 +98,24 @@ script の例外は IntegrationValidation だけで、validating 状態・未取
 既存データの移行は名称から推測しない。Integration/Repository bootstrap の実行記録、または一致する maintenance の保存記録を根拠に分類し、証拠なしは interactive のままにする。過去 Sync の AgentRun が一つに定まらなければ run ID は不明のまま、複数の所有証拠が衝突すれば `conflicting_evidence` として閲覧専用にする。archive・Session・監査・Git 履歴を書き換える移行ではない。[証拠に基づく backfill](../../crates/services/src/services/workspace_usage.rs)
 
 終了後の解除は `cleanup_allowed` に加え、Integration が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は Repo 所属から Board が一意に決まる時だけ作り、既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
+
+## 一覧から作成先を選ぶ
+
+通常の Workspace 入口は既存一覧を表示する。新しい作業を始めるときは「＋」から作成先 chooser を開く。create 画面で再び「＋」を押しても chooser を開き直せ、取消で本文 draft や確定済みの作成先を捨てない。route と再選択要求の伝達は [Web の一覧遷移と作成要求](../architecture/web-and-sync.md#workspace-の一覧遷移と作成要求)にまとめる。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[選択の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
+
+chooser では directory を読み込み、作業方式を選び、Worktree なら Repo と target branch を確認してから確定する。パスを編集すると inspection・方式・branch を破棄し、読み込み失敗や処理中には確定できない。branch 一覧にない以前の選択値を復元しない。確認済みかつ有効な target が揃って初めて composer が表示される。これは実際の [作成・Setup・起動](../workflows/task-to-integration.md#1-作業先を作り起動を予約する)に先立つ UI の契約であり、サーバー側の作成検証を代替しない。[derived state の無効化と branch](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L107-L151)・[inspection と失敗](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L156-L238)・[確定条件](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L340-L374)・[composer の表示条件](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L104-L117)
+
+### サーバーのパスと端末のファイルを区別する
+
+「サーバーを参照」は `ServerFolderPickerDialog` から既存の `/api/filesystem/directory` を読む。ブラウザー端末の file/directory input でも、サーバー OS の native dialog でもない。パス未指定なら server の home を一覧化し、API が返す entries のうち directory だけを表示する。API はドットで始まる子項目を除外するため、一覧に出ないことをパス不存在の証明にしない。パス直接入力も利用できる。[一覧 API の接続](../../packages/web-core/src/shared/lib/api.ts#L958-L969)・[picker](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L23-L133)・[一覧生成](../../crates/services/src/services/filesystem.rs#L316-L364)
+
+入力したパスは「パスを読み込む」または Enter で明示的に読み込む。chooser の blur は inspection を起動しないので、参照ボタンへの focus 移動と読込処理を結び付けない。picker は新しい要求時に古い一覧を消し、失敗を表示する。読み込み中、一覧なし、入力値と取得済み `current_path` が不一致の場合は選択不可である。取消は `null` を返し、選択時だけ親 chooser がそのパスを inspect する。picker は effect cleanup の active flag、親は request ID により古い応答の反映を防ぐ。[明示読込](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L428-L472)・[一覧の応答と選択](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L133)・[親への結果](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L274-L307)
+
+directory 一覧と inspection は異なる処理である。inspection はパスを正規化し、存在・directory・可読性を検査する。選択先に `.git` があり Repo を開ける場合は **Repo を登録**して返すので、まだ Workspace を作成していない段階でも登録の副作用がある。chooser を後で取り消すことを、この Repo 登録の rollback と解釈しない。[検証](../../crates/server/src/routes/filesystem.rs#L42-L81)・[登録を伴う inspection](../../crates/server/src/routes/filesystem.rs#L117-L142)
+
+同じ chooser は Project 設定の既定作業先にも使う。そこでは `purpose: project_default` で開き、確定結果を Git の Repo/branch または DirectFolder の path として保存用の値に変換する。参照・読込を変更すると新規 Workspace とこの設定の両方へ影響する。[Project の呼出側](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L558-L605)。`fileSystemApi.list` は host scope を明示的に受け渡すが、remote host 接続を復活させたわけではなく、[local transport の拒否契約](../architecture/web-and-sync.md#同じ-api-呼び出しでも対象ホストが変わる)に従う。旧 native picker API も別用途の実装として残るため、全 folder picker が置き換わったとは扱わない。[scope の伝達](../../packages/web-core/src/shared/lib/api.ts#L149-L164)・[remote 拒否](../../packages/web-core/src/shared/lib/localApiTransport.ts#L35-L61)・[native picker](../../crates/server/src/routes/filesystem.rs#L83-L115)
+
+変更時の検証入口と、Agent 起動・実 worktree 作成を含まない試験の限界は [Workspace 導線の検証範囲](../architecture/web-and-sync.md#workspace-導線の検証範囲)を参照する。
 
 ## 作成・準備の失敗
 

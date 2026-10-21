@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:280e174ef3412bdffb90a56fa3c154e1a597beeb2a8fdd63cf3da3f17ff91af6",
+  "pageVersion": "sha256:3bb42c2372801f3a842a718f6d2992fc2b7fd895ee396cf9435e5e00adfbff61",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -253,10 +253,102 @@
           "version": "repo-lines-v1:sha256:08f6b3346431dd40231763b4996f0b3c5bf1c9ad3c2ab88648cfca77ef69c521:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExM2ExNjJlNGZkMDdiNzg4NzNhZmNjMDNhZGI3NzBmNTFiN2ExZGM3OTM5NGM1YTQ4MjUzYjllODUwMTYxNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyZWUzNWE3ZThlYjlhODFiYTQwMTkwNDU3YjJhZWYxY2MzMzljZWZmOTkwNTc3ZWY1NWY0M2U4YjQ1OGI3OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2NmI2NDA0NTc4ZTg4ODVkYThiNTMxMmY0OGUwNmNmOGQxZDRkMjNiODBmOGFjMjM2ZmZiZTFlMTZjNjI5ZmYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1b79b1853137487c98e5b2e57f3a8f95",
+      "statement": "Workspace 作成先 chooser は inspection・作業方式・Worktree の Repo/target branch が揃うまで確定不可で、パス編集は派生状態を無効化し、branch 一覧に存在しない以前の選択を復元しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L107-L151",
+          "version": "repo-lines-v1:sha256:6ff2cbc01b827e89377f860d5681586ebf605f1307cb9707453f9fdd0ecb7bc6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZGM2MWFhYTFjZGZiMTIzN2NkNzYxZGM2NDdmMjFkYzJjYWQyY2MxMmNlN2U4NjM3YmVhNTMxODhhNDY3NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxZGFlNWQ4MDE5YWRlZDRhY2RmODJiZjk4MGMwZWVhZWQ5Y2ZlNGRmNGY3YTA4YjBlZDJkY2YxODhlMjk1YjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ZGJjY2M1OTJjNWQxYWZkZmQxYzk2MzcwYzA2NjMwMGZkNzU4MzYxOTVkNjhhOGJkNGM4ZDg1YjlhNWYzYTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L269-L272",
+          "version": "repo-lines-v1:sha256:9df3ab13844cd96b044913e07bf001df562f5520512e15bd92331dcaeea16acd:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTUzNTU2YTkzZDk5ZDlmMDhlZjk2MTY0MzIxMTk0MDYyYTg5NmI5OTUyN2JkY2JkYzkzYWM2YzQ5MTdiYmJiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQ5ZTEyNTQ2NDI1NTc2ZDNkZWFlOGM5YjlkYmYxMjhkNWQ2ZGRhZjVkN2ZlODU3OTM0OTI3ZGVmZmEzYjlkZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTM5NDYwNWY2MDIxYmMwMmFkNTZmMjU4Njc0ZGU5ZjYyYmE5M2FmZjZiODkxZjk1MTNhZjVjYjc0Y2E3ZjdlMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWJjZTE0ZTU2YjkwMmRlMWUxMTIyYTVlNWQxNTQ1Y2UxZTY4MTM1NTNkOWU0ZTdkNGJhYTY3NDEwNjk5YTFhMSJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L340-L374",
+          "version": "repo-lines-v1:sha256:b0b0293eca423e48813ff00fadf9799d6867cb12b7400597fd0eb3d32295f096:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1N2JjYTc5ZDI5Yjg1Zjg3NDgwNjc0ZWQ4ZjAxMmE3M2E1Y2Y3OGMxMGJjMTI3OTEyZTVkNGY0NmYxMzA0MjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhYzQ3OGYwNjViM2UwMDNkYjYxZGVkYTFhM2I2YzI4MGY3MDliMTgwMmJkMmQzYTljYTA3NmJjYzFjMzdjOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1MThkYWM5ZWZhZjIzYTJlYmJkNjk1ZWIwMDA4MzVmOTA5OTIyNTViNzgwOGEyOTNlYjEyOTZjOGJmMDBmNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyNjFiN2Q3MDQyZDlhZDE5MzQ4NGZjZjg2NWNhNDI5MjA1YWE4YmY1Y2IzNjk2MzNjMDI2YTY4MDVjOGNkYzAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dbc3f18d26d542589639709d6e1045b1",
+      "statement": "Workspace の server picker は filesystem directory API の directory entries を表示し、未指定では server home を読む。API はドットで始まる子項目を除くため、一覧の不在はパス不存在を意味しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/filesystem.rs#L316-L364",
+          "version": "repo-lines-v1:sha256:246c16fd6b4bd43a3c9b5a9b1157697a4cc89c0bae72dca006cffdd5e2509b2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjN2FjOGZkZjk4ZjM0Mzk1MjkwZjY4ZTljOTAwYzI0MTFhNDU2MGUzYzNiMDEyOTcwY2UyOWM0ZGYxYmVhODkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L133",
+          "version": "repo-lines-v1:sha256:8fdf904b468647210f93ad009bc19fc47cdaba7b6f2ddb035034b0e537998428:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MjFkNmRjOGU1MDllZmM2Yjk3Nzk2YWY5ZDMwYjNkYzQyNDg0MzEyNzhiOWViZDc4MGMzNjUyZmY2ZWJmZmI3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5ZjNhODAzMjMzNDc4OTc2ODhiMzU5N2RiYTg1ZDcyMDliNjAwZWNhZTUxYTk1OGRlNmI5MWUxNmY1OTYyNDNjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyYzNmOGFmMDcyN2JlMDA5NTgyNGVkY2RkM2E1M2RkYTMxODJjNmVlMTJmOWM4NWJhNjk4ZGMxZTk1ZDdjZTA0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZjg3NmNkNWJlMDI5MDAyNTM2NjA0ZTk2M2Q3NjFlOTI4OTc5Y2I1YjI0MTJlZTc1YTI1ZmUyOGZiYzE0Y2Q3In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a2f53fcafa28459bba4c836b78aa2461",
+      "statement": "パス読込は明示ボタンまたは Enter で行い、picker は要求時に一覧を消し、loading・一覧なし・入力と current_path 不一致では確定させず、取消は null として親の inspection を起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L133",
+          "version": "repo-lines-v1:sha256:8fdf904b468647210f93ad009bc19fc47cdaba7b6f2ddb035034b0e537998428:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MjFkNmRjOGU1MDllZmM2Yjk3Nzk2YWY5ZDMwYjNkYzQyNDg0MzEyNzhiOWViZDc4MGMzNjUyZmY2ZWJmZmI3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5ZjNhODAzMjMzNDc4OTc2ODhiMzU5N2RiYTg1ZDcyMDliNjAwZWNhZTUxYTk1OGRlNmI5MWUxNmY1OTYyNDNjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyYzNmOGFmMDcyN2JlMDA5NTgyNGVkY2RkM2E1M2RkYTMxODJjNmVlMTJmOWM4NWJhNjk4ZGMxZTk1ZDdjZTA0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZjg3NmNkNWJlMDI5MDAyNTM2NjA0ZTk2M2Q3NjFlOTI4OTc5Y2I1YjI0MTJlZTc1YTI1ZmUyOGZiYzE0Y2Q3In0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L274-L307",
+          "version": "repo-lines-v1:sha256:7a9aa7c9706e09a14d37a9fc986845a13d1879406b9bc78cfeeff936b8f0d17a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNDIwYmZlM2QzNjIzY2RiZTNmMTNhYjE3ZWVjY2RlZjkyMzFjYTYwY2Y0OTM5MDZkYTk4ZDU1Nzc2MjNhM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjNzBhZmY3NjUxOWFlYzMxOGM2OTNkOGM4YWYyZjBlNDhiY2RjZDk4OTk5N2VmZTY4YjlkNjE5YjA2OWZhNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjYTVmMjEwMzRjMTVjNTFiNTQwY2EyNDczM2I2ZDgxYjQ2MTg2ZjIzYjA5ZTFhNzAyYTI0NWE2YmNkNTg5MDIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L428-L472",
+          "version": "repo-lines-v1:sha256:463094b3aae75e12eeec502c9ffc8a6455be95b2fd7c62ed2380d6bda62c253f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjNmU3YWYyZjJmNGFhMzQzODJkMWIyNGM0M2JiYTExZTUyNzdiZjY4ZmU2YTgzZmFiYWYwNDg4MDJhNTY5MzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4OGNhZjU2ZGJmNDgxYTRiNTcyN2MwM2U4YmZiZTVhZTExNzAxOGNkYjU2NTdlYjFhYzg0Mjg4NWIwNDE3NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0YjljYWU1NTAwN2VhZWZlNTQwMjI5YjY0NTdkNDA3OGIxNzQyMDI5ZGVmM2IxNGYyNWVmYzY1MjE5NWZlNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1MzExNzU4M2QyNDU1NTUzYjRlMzMzNjhhZTYyNTQ4ZmU0NGQ4ZWMwYmQ3NWYyNTIxODFjNzM2MjMzOTEyOTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cca2fa39de8b4301b874e34b9e11cd19",
+      "statement": "directory inspection はサーバーパスの正規化・可読性検査を行い、.git があり開ける Repo を登録するため、Workspace 作成前でも Repo 登録の副作用を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/filesystem.rs#L117-L142",
+          "version": "repo-lines-v1:sha256:84c915292e596407952394e94b84c98f86207cd1de8d88027ae24e10f5015c9a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMzI2YjYzNWYyYjA2MGQ4MmU1NDg3N2NlOWUxMmExMTg0NzUzMzJkYzQzZWQ5ZWJiNjdjMjk0MjBhYzFkZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwZGQyOThmODg2ZTlmYTU1NDg0ZGJhNDI5NmQ5MTRjNGUwNDIyNDg2YWEyZjg5NGY4NmJjNTYxNzdjOWEwZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkOGMyN2I3OWI5MzI5Yzc1OTMyNzBmZTZlZmM1MDFiY2I4N2Y0MjcyNzIxYTYzODEzMDM2ZjhlMmEwMzVjODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4ZmUxMjI5NGUzOGUzYWQzZGM2MzUxZTYyMmQ5Y2QxNWFlYTYwNTkzZmFmYjIxMWY0NjNiN2VmZTBiYjcyYjYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/filesystem.rs#L42-L81",
+          "version": "repo-lines-v1:sha256:a6d005a1583ad56ce8a78e4c8b3b926d8e403dbace7338a59b784fd179821dc6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5MTBlZjgzZmM4YmUwOWQ1MGEzNTZiZTJmNTc0MzI3MDg5MDFlZTllNTNmYjU3ZjRlZjBmMWU0NTU3MWE0ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlZTAyMDBjOGZiMjk2YzgxZjNkYzY3MTBhYjc5ODhhMjU2OTUyY2M5MGZmMGUyNGZlYTc1MjY1MTE1MWFkZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjYTViYzRmOGEzN2U3OWFhYTJmMzUxZjJiMjQwODdiNjMwMmFjNGNmNTJlYTljNjI3ODgxNWVlMDlmNTcwMDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5c3ee0fdeb3481ab430344e69168657",
+      "statement": "Project の既定作業先設定も WorkspaceTargetDialog を project_default として共有し、確定結果を Git の Repo/branch または DirectFolder path に変換するため directory chooser の変更は両 workflow に影響する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L558-L605",
+          "version": "repo-lines-v1:sha256:e0ff8e6384e8172d082c5407aa12696124afe06029bdd6be102ac9a4472107ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4Y2NmZDVjYjUwY2FmYjEzOGZiMzcwODlmOWFiMzkxNDAyOGU3ZmRjY2JjZjcyZmExZTllMDRiZTI0NWJkODUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYzJiYzc1YjdhMWI4N2QwZjFlMjJjMGMyNDVmYmM5MzZiNmVkYzAyYzI2NjQ4OWMxMzliYWMxNjJhMjIwNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZDNkYjI0YTllOWIxODNjZmEzNjc2ZDU0YTFkZjlhMjA4Mjk0MGNlNjI2NDA1NWUzOGNmYjBkNGUzYmM0MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxYTk2ZjU2ODljMzcxOTNhZWExN2FmZDdhMzYyNmYzYTczMjVhY2ZhODg1Zjk2ZWEwN2RiN2VhZTkzYWE2NDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ab4fdf387d74633b9748ed692babaa9",
+      "statement": "filesystem list は host scope を伝達するが local transport は remote host を拒否し、旧サーバー native picker API も別実装として残る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/filesystem.rs#L83-L115",
+          "version": "repo-lines-v1:sha256:e834729570fe00a6d2b160b424be3199575626052ecb5a72ff5cef4647c5100d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYTU4OTJiYzI5YWEzOTg5MTJiMWM5MTBiODUzZWY2MDgwODY5MDhkMDBiOTRlNzdiMTE1NjQ0OTA4ZDg1N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhODI1ZWVjYWM2YjlmOTY4OTJhZmI3OThkNWYzNzRhYWRiMDRmYjUyODc3MDIyY2Y1YWEyNWY0MmVkMTM4Y2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwZTVhOTM3ZTY5ZjU5MWNmZjYxZjg1ZjhlZGVkZTlhZWEyOTI4NDg4MTgxY2U4MTBhZjQ2YWE4NTU0YTUwZGYifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/api.ts#L958-L968",
+          "version": "repo-lines-v1:sha256:287d8ae640fe61d6d39c12d4888498ad7e96c93a2f159152739329b026dd9cca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmYzY4MGU3YzYzNzQwMTMyZTY2NzY2MmY2Zjg0MDZlZDVkMzExOTBkNWI5ODgyZmI5NzVmZjI1OWI2ZTFiN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiOWY5YzBjNmY1MDNhYzAxYzUyMDk4ZWZjOGFjOGU2NWI2MmI3MTc4ZGI1MDY0M2ZmZDhmM2U0ZmFlYzc5ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY4Y2FiZGJiYWM2Yzc1ZTM1Mzc3OWE5ZTljMTMxMzZlYWY0ZDNjZWM3NDliYmIwN2M5MmM1ZTMwYjYxNTBiMmIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/localApiTransport.ts#L35-L61",
+          "version": "repo-lines-v1:sha256:2b87f2f86d3bfcec5f04b61fb7a2bd02faa6810ab18d19e1e9d5b703b2c97c9b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyYzczYzk2Y2MxMWQ5ODU1YTI0OWZlNjI1NjdjNDcwZmQyZDNlYzkzNzYxMTcyNzU5Y2Y3MzczMjM5M2IwMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkOGE5M2NmZmM5Nzc1ZjU1ZjBjMjRjZDBmODJhODNkOTgxZWYzNjA4NzZiYWQxZDA0ZDhiODA2N2RmYjEyYmEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-17T03:50:48.298Z"
+    "at": "2026-10-21T05:35:32.360Z"
   }
 }

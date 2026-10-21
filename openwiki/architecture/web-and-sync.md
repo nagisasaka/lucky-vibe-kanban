@@ -78,14 +78,20 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
     resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
+  - id: openwiki-source-89a716f39968e2030cf296c0
+    resource: repo://packages/web-core/src/pages/root/RootRedirectPage.tsx
   - id: openwiki-source-2fb74c0fc81d817149606557
     resource: repo://packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx
+  - id: openwiki-source-27129bb783a0bcb3964399f2
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx
   - id: openwiki-source-0894249b732085a9800940bd
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-8e27f9b63333a62bc1b246ff
     resource: repo://packages/web-core/src/shared/actions/index.ts
   - id: openwiki-source-caba6442d1d02b97bf406c6a
     resource: repo://packages/web-core/src/shared/command-bar/actions/pages.ts
+  - id: openwiki-source-649882ab70d5bba1d79459a5
+    resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
   - id: openwiki-source-986a5914454c708e7540f1e6
@@ -138,10 +144,16 @@ sources:
     resource: repo://tests/header/README.md
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-21T04:18:31.031Z" }
+  - id: openwiki-source-4bfe8064f685e5073ef06513
+    resource: repo://tests/workspace-navigation/playwright.config.ts
+  - id: openwiki-source-f6a73bd9a093b3a0004194f2
+    resource: repo://tests/workspace-navigation/run-isolated.py
+  - id: openwiki-source-b87e3253bd1458a0091f8587
+    resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
+generated: { by: "codex", at: "2026-10-21T05:39:12.277Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:18:31.031Z
+    at: 2026-10-21T05:39:12.277Z
 ---
 
 # Web の実行環境と同期
@@ -167,6 +179,20 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 `tests/header/isolated.mjs` は checkout の build 済み server / frontend と専用の一時 instance を使い、実 API で Project と独立 Workspace を作る。GitHub API だけを mock し、loading → 0、正数、HTTP 失敗、負数、欠落、通信失敗と、desktop / 390px drawer の往復遷移、旧導線の不在を検査する。終了時は browser を閉じ、所有 server process group を停止して待ち、一時 instance を削除する。[隔離と API 操作](../../tests/header/isolated.mjs#L11-L120)・[stars と desktop](../../tests/header/isolated.mjs#L128-L241)・[mobile](../../tests/header/isolated.mjs#L242-L276)・[cleanup](../../tests/header/isolated.mjs#L321-L341)。再実行は [header 試験手順](../../tests/header/README.md)と [開発環境](../operations/development.md)を参照する。mock の成功から live GitHub の到達性や件数を保証しない。
 
 local shell の ConfigProvider は onboarding を acknowledged として公開し、LandingPage はその値を見て root へ戻る。このため隔離 browser 試験が検査するのは onboarding bypass であり、LandingPage 内の social link の操作ではない。後者はソース照合の範囲である。[config の上書き](../../packages/local-web/src/app/providers/ConfigProvider.tsx#L49-L59)・[redirect](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L172-L179)・[bypass 試験](../../tests/header/isolated.mjs#L277-L300)。[開発時の検証記録](../../tests/header/VALIDATION.md)と、統合後の検証成功は区別する。今回のヘッダー Sync は凍結 source `db5fe7976ca152829ad46d498342a8f3fe889b27` の実装・呼出側・試験定義を静的に照合した。供給された正式 Integration は検証省略であり、今回も製品テストや live GitHub 確認は実施していない。無関係な既存節の再検証を意味しない。
+
+## Workspace の一覧遷移と作成要求
+
+`/workspaces` の `WorkspacesLanding` は `Workspaces` → `WorkspacesLayout` を描画する。通常の Workspace 入口は一覧を開き、作成 route への転送や最後の Workspace の自動選択を行わない。一方、`/` の `RootRedirectPage` は別の入口で、Project を解決できない場合などに作成 route へ進む。両者の挙動を一括して変更しない。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[root の分岐](../../packages/web-core/src/pages/root/RootRedirectPage.tsx#L18-L50)
+
+sidebar の「＋」は `navigateToCreate` を呼ぶ。この処理は route 遷移に加えて provider の `workspaceTargetRequest` を増やすため、既に create route にいる場合も新しい選択要求を伝えられる。layout の desktop / mobile 両方が同じ値を composer へ渡す。composer は draft と既定値の準備を待ち、最後に扱った request と異なる場合に chooser を開く。dialog-open ref は重複表示を防ぐ。これは作成回数や Workspace ID ではなく UI 内の再選択要求である。[要求の発行](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L244-L251)・[mobile](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L338-L350)・[desktop](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L522-L531)・[受信](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L284-L300)
+
+chooser の取消は選択値を適用せず戻り、再表示のために composer を作り直したり message を消去したりしない。確定した作成先を初期値として再び渡す。作成先確認と directory 参照の詳細は [Workspace の作成先選択](../concepts/workspace.md#一覧から作成先を選ぶ)を正本とし、永続 draft の scope は [Scratch の契約](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)と区別する。[結果の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
+
+### Workspace 導線の検証範囲
+
+`WorkspacesLanding.test.tsx` は作成転送用 navigation hook を使わず一覧を描画することを確認する。`tests/workspace-navigation/workspace-navigation.spec.ts` は実 API で設定と空 Workspace を作り、一覧への通常遷移、＋の再選択、取消、確定パスの復元、存在しないパスのエラー、server directory の選択、日本語・dark・390px の表示を検査する。Agent 起動・実 worktree 作成・message draft の保存復元をこの E2E が証明するわけではない。[unit test](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.test.tsx#L1-L21)・[browser 試験](../../tests/workspace-navigation/workspace-navigation.spec.ts#L1-L207)
+
+`run-isolated.py` は checkout の build 済み server / agent-process-host と frontend を前提に、一時 instance と loopback で試験を実行する。終了時は試験 process group と残存 browser、port、一時 instance を確認する。Playwright 設定は loopback URL と既知の常用 port の除外を要求する。[隔離と cleanup](../../tests/workspace-navigation/run-isolated.py#L64-L138)・[接続先制約](../../tests/workspace-navigation/playwright.config.ts#L1-L25)。今回の Sync は凍結 source `1458145b8b2db8b00be6d002996a2c64d7a3494d` を静的に照合した。正式 Integration の入力記録は検証省略であり、開発時の成功報告を統合後の成功証拠へ読み替えない。製品テストは再実行せず、無関係な既存節を再検証したとも扱わない。
 
 ## 認証が製品画面より先に確定する
 
