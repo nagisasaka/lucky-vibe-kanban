@@ -12,6 +12,7 @@ import { isTauriMac } from '@/shared/lib/platform';
 
 import { NavbarContainer } from './NavbarContainer';
 import { AppBar } from '@vibe/ui/components/AppBar';
+import { BuildInfoLabel } from '@vibe/ui/components/BuildInfoLabel';
 import { MobileDrawer } from '@vibe/ui/components/MobileDrawer';
 import { AppBarUserPopoverContainer } from './AppBarUserPopoverContainer';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
@@ -57,7 +58,7 @@ export function SharedAppLayout() {
     (s) => s.isLeftSidebarVisible
   );
   const { isSignedIn } = useAuth();
-  const { appVersion } = useUserSystem();
+  const { buildInfo } = useUserSystem();
   const updateVersion = useAppUpdateStore((s) => s.updateVersion);
   const restartForUpdate = useAppUpdateStore((s) => s.restart);
   const { data: starCount } = useGitHubStars();
@@ -282,7 +283,7 @@ export function SharedAppLayout() {
               notificationBell={<AppBarNotificationBellContainer />}
               userPopover={<AppBarUserPopoverContainer />}
               starCount={starCount}
-              appVersion={appVersion}
+              buildInfo={buildInfo}
               updateVersion={updateVersion}
               onUpdateClick={restartForUpdate ?? undefined}
               githubIconPath={siGithub.path}
@@ -393,6 +394,12 @@ export function SharedAppLayout() {
                 </button>
               ))}
             </div>
+
+            {isMobile && isDrawerOpen && (
+              <div className="px-4 pb-base">
+                <BuildInfoLabel buildInfo={buildInfo} />
+              </div>
+            )}
 
             {/* Create Project button */}
             {isSignedIn && (

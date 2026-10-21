@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 import type {
+  BuildInfo,
   Config,
   Environment,
   BaseAgentCapability,
@@ -10,6 +11,7 @@ import type { ExecutorProfile } from 'shared/types';
 
 export interface UserSystemState {
   appVersion: string | null;
+  buildInfo?: BuildInfo | null;
   previewProxyPort: number | null;
   previewProxyDomain?: string | null;
   config: Config | null;
@@ -26,6 +28,7 @@ export interface UserSystemContextType {
 
   // Hot path - config helpers (most frequently used)
   appVersion: string | null;
+  buildInfo?: BuildInfo | null;
   previewProxyPort: number | null;
   previewProxyDomain?: string | null;
   config: Config | null;

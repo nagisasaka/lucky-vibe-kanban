@@ -38,6 +38,7 @@ export function useUserSystemController({
   });
 
   const config = userSystemInfo?.config || null;
+  const buildInfo = userSystemInfo?.build_info ?? null;
   const appVersion = userSystemInfo?.version || null;
   const previewProxyPort = userSystemInfo?.preview_proxy_port ?? null;
   const previewProxyDomain = userSystemInfo?.preview_proxy_domain ?? null;
@@ -145,6 +146,7 @@ export function useUserSystemController({
     () => ({
       system: {
         appVersion,
+        buildInfo,
         previewProxyPort,
         previewProxyDomain,
         config,
@@ -155,6 +157,7 @@ export function useUserSystemController({
         loginStatus,
       },
       appVersion,
+      buildInfo,
       previewProxyPort,
       previewProxyDomain,
       config,
@@ -175,6 +178,7 @@ export function useUserSystemController({
     [
       machineId,
       appVersion,
+      buildInfo,
       capabilities,
       config,
       environment,

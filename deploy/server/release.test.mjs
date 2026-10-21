@@ -32,6 +32,27 @@ test("release builds the server target, tests before publishing, and does not pu
   assert.equal(steps[build].with.target, "server");
   assert.equal(steps[build].with.push, false);
   assert.equal(steps[build].with.load, true);
+  // The executable must receive the same source identity as the OCI labels,
+  // including in a Docker context with no .git directory.
+  const buildArgs = steps[build].with["build-args"];
+  assert.match(buildArgs, /LVK_BUILD_REVISION=\$\{\{ github.sha \}\}/);
+  assert.match(
+    buildArgs,
+    /LVK_BUILD_RELEASE_TAG=\$\{\{ github.ref_type == 'tag' && github.ref_name \|\| '' \}\}/,
+  );
+  assert.match(
+    buildArgs,
+    /LVK_BUILD_KIND=\$\{\{ github.ref_type == 'tag' && 'release' \|\| 'development' \}\}/,
+  );
+  assert.match(buildArgs, /LVK_BUILD_DIRTY=false/);
+  const docker = await readFile(new URL("Dockerfile", root), "utf8");
+  const builder = docker
+    .split("FROM dependencies AS builder")[1]
+    .split("FROM node:")[0];
+  for (const name of ["REVISION", "KIND", "RELEASE_TAG", "DIRTY"]) {
+    assert.ok(builder.includes(`ARG LVK_BUILD_${name}=""`));
+  }
+
   assert.equal(
     steps[build].with["cache-from"].trim().split("\n")[0],
     "type=registry,ref=${{ steps.image.outputs.cache }}",

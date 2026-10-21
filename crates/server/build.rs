@@ -1,8 +1,37 @@
+mod build_metadata;
+
 use std::{fs, path::Path};
 
 fn main() {
     // Load .env from the workspace root
     let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    // Refresh on every Cargo invocation: Git HEAD/index watches alone miss
+    // untracked edits and dirty -> clean transitions. This file never exists.
+    if std::env::var_os("LVK_BUILD_REVISION").is_none() {
+        println!(
+            "cargo:rerun-if-changed={}/lvk-build-identity-refresh",
+            std::env::var("OUT_DIR").unwrap()
+        );
+    }
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build_metadata.rs");
+    for name in [
+        "LVK_BUILD_REVISION",
+        "LVK_BUILD_KIND",
+        "LVK_BUILD_RELEASE_TAG",
+        "LVK_BUILD_DIRTY",
+    ] {
+        println!("cargo:rerun-if-env-changed={name}");
+    }
+    let metadata = build_metadata::resolve(&workspace_root, |key| std::env::var(key).ok());
+    for (name, value) in [
+        ("REVISION", metadata.revision),
+        ("KIND", metadata.kind),
+        ("RELEASE_TAG", metadata.release_tag),
+        ("DIRTY", metadata.dirty),
+    ] {
+        println!("cargo:rustc-env=LVK_BUILD_{name}={value}");
+    }
     let env_file = workspace_root.join(".env");
     dotenv::from_path(&env_file).ok();
 

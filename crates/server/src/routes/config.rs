@@ -91,9 +91,37 @@ impl Environment {
     }
 }
 
+/// Identity captured when this server binary was built, never at startup.
+#[derive(Debug, Serialize, Deserialize, TS)]
+pub struct BuildInfo {
+    pub revision: String,
+    pub kind: Option<String>,
+    pub release_tag: Option<String>,
+    pub dirty: Option<bool>,
+}
+
+impl BuildInfo {
+    fn current() -> Option<Self> {
+        let revision = env!("LVK_BUILD_REVISION");
+        if revision.is_empty() {
+            return None;
+        }
+        let known = |value: &str| (!value.is_empty()).then(|| value.to_owned());
+        Some(Self {
+            revision: revision.to_owned(),
+            kind: known(env!("LVK_BUILD_KIND")),
+            release_tag: known(env!("LVK_BUILD_RELEASE_TAG")),
+            dirty: env!("LVK_BUILD_DIRTY").parse().ok(),
+        })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UserSystemInfo {
     pub version: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub build_info: Option<BuildInfo>,
     pub config: Config,
     pub machine_id: String,
     pub login_status: LoginStatus,
@@ -125,6 +153,7 @@ async fn get_user_system_info(
 
     let user_system_info = UserSystemInfo {
         version: env!("CARGO_PKG_VERSION").to_string(),
+        build_info: BuildInfo::current(),
         config,
         machine_id: deployment.user_id().to_string(),
         login_status,

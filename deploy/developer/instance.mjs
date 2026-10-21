@@ -153,6 +153,11 @@ async function main() {
     const env = {
       ...process.env,
       NODE_OPTIONS: process.env.NODE_OPTIONS || "--max-old-space-size=4096",
+      // Freeze the same identity recorded below in build.json into the binary.
+      LVK_BUILD_REVISION: revision,
+      LVK_BUILD_KIND: "development",
+      LVK_BUILD_RELEASE_TAG: "",
+      LVK_BUILD_DIRTY: String(dirty),
       CARGO_TARGET_DIR: join(config.root, "target"),
       CARGO_PROFILE_DEV_DEBUG: "0",
       CARGO_INCREMENTAL: "0",
