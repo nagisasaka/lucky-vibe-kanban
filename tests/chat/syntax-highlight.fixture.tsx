@@ -17,7 +17,9 @@ const transformers = [CODE];
 function Harness() {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState<string | undefined>('bash');
-  const [markdown, setMarkdown] = useState('');
+  const [markdown, setMarkdown] = useState(
+    '```json\n{"initial": true}\n```\n\n```unknown-language\n  untouched  \n```'
+  );
   api.setCode = setCode;
   api.setLanguage = setLanguage;
   api.setMarkdown = setMarkdown;
