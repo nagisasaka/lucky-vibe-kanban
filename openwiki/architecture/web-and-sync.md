@@ -130,6 +130,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/workspaceSessionSelection.test.ts
   - id: openwiki-source-cf7deb2cd54542f4c2fd7515
     resource: repo://packages/web-core/src/shared/hooks/workspaceSessionSelection.ts
+  - id: openwiki-source-e2edafaa4d21c8bc7ea6ee6f
+    resource: repo://packages/web-core/src/shared/lib/aggregateEntries.ts
   - id: openwiki-source-e665e0fe8e478ec542e0ace4
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
@@ -162,10 +164,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
+generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:15:33.468Z
+    at: 2026-10-21T06:22:38.402Z
 ---
 
 # Web の実行環境と同期
@@ -259,6 +261,12 @@ AgentRun stream は Electric ではない。サーバーは Live を先に購読
 会話内の永続イベントは `run_attempt_number`、canonical `sequence` の順で並べる。native audit の番号とは大きさを比較しない。backend の Steer は provider へ制御を書き込んだ後、command ID を message ID とする User message を native refs なしで保存する。この host 作成イベントを native 番号付きの応答と一律にソートすると、追加指示が古い応答より前へ移動してしまう。[steering の保存](../../crates/local-deployment/src/agent_run_port.rs#L3360-L3400)・[会話順の組立て](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L29-L80)
 
 Live delta はまず整列済みの永続列へ挿入位置を求める。同じ attempt の先行候補に native refs があれば native sequence、なければ timestamp を比較し、最後の先行候補の後ろへ置く。先行 attempt も候補となり、候補がなければ列の前に置く。これは一時表示の配置規則であり、永続列の順序や replay cursor を置き換えない。受信側は event ID の重複を除き、確定 message を受け取ると同じ message ID の一時表示を取り除く。[配置](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L54-L79)・[確定時の置換](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L175-L204)。入力の受理・queue・停止の意味は [Session の実行状態](../concepts/session-and-agent-run.md#状態停止送信待ち)に置く。
+
+### 承認カードの操作内容を保持する
+
+`approval_requested` が既存 `tool_call_id` に対応するとき、会話 projection は元の tool 名・action と表示 identity を保ち、status を pending approval に更新する。command の本文、汎用 tool の引数（file change の diff を含む）は JSON 本文として残し、判断対象を承認名だけで置き換えない。元 tool がなければ独立した承認 entry を作る。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L464-L515)・[command/file の回帰テスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L701-L756)
+
+`pending_approval` の tool entry は tool/file-change group を flush して単独表示し、折り畳み集約に隠さない。この表示規則が承認待機を実装するわけではない。判断・拒否・取消の意味は [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)、待機状態の正本は [host の結果と件数の投影](agent-runtime.md#codex-の承認待機を所有する場所)に従う。[集約境界](../../packages/web-core/src/shared/lib/aggregateEntries.ts#L274-L285)・[単独表示のテスト](../../packages/web-core/src/shared/lib/aggregateEntries.test.ts#L62-L75)
 
 ### Run の時間表示を同期状態から分ける
 

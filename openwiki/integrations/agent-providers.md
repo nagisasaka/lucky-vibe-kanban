@@ -12,8 +12,6 @@ sources:
     resource: repo://crates/executors/src/agent_tools.rs
   - id: openwiki-source-9ad3b97da67cba82e9d5ffc0
     resource: repo://crates/executors/src/agent_tools/public_api.rs
-  - id: openwiki-source-13210275fc6cb3d346bc25ae
-    resource: repo://crates/executors/src/approvals.rs
   - id: openwiki-source-7fd554effd70be44f98fe686
     resource: repo://crates/executors/src/config_write.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -32,6 +30,8 @@ sources:
     resource: repo://crates/executors/src/profile.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
+  - id: openwiki-source-5a8e26da42457b4b47bca3ee
+    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-0a300791bc056c6eee6a577a
     resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-773e3d7e88410badd1cab059
@@ -66,10 +66,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
+generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:59:59.398Z
+    at: 2026-10-21T06:22:38.402Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -93,7 +93,9 @@ Profile は既定値と user の profiles.json を合成して読み、保存時
 
 Unknown は能力が解決されていない状態であり、「上流に機能がない」という証拠にはならない。能力を要求する経路は Native を許可し、Emulated は明示許可を要し、Unknown と Unsupported は拒否する。native 子 agent の観測と capability gating の整合性を変える際は両方を確認する。[snapshot](../../crates/executors/src/executors/provider_adapter.rs)・[能力の検証](../../crates/executors/src/executors/provider_adapter.rs)
 
-Approval が Native という capability snapshot と、host に人の応答を待つサービスが接続されていることは別である。[Codex の現行 Noop 配線](../concepts/session-and-agent-run.md#承認質問と現在の接続状態) を合わせて確認する。
+Approval が Native という capability snapshot と、host に人の応答を待つサービスが接続されていることは別である。[Codex の command/file 待機と Plan・質問の境界](../concepts/session-and-agent-run.md#承認質問と現在の接続状態) を合わせて確認する。Codex host は command/file 用 waiter を持つが、他 provider の注入は Noop のままであり、capability 名だけから全 provider の対話承認を保証しない。[host の分岐](../../crates/local-deployment/src/process_host.rs#L348-L366)
+
+Codex の Supervised override は、approval policy が未指定または Never の場合に UnlessTrusted へ変更し、別の明示 policy は保持する。sandbox 自体はこの override で変更しない。client の自動承認は DangerFullAccess と未指定/Never の組合せだけに限定する。[override と自動承認条件](../../crates/executors/src/executors/codex.rs#L628-L680)・[回帰テスト](../../crates/executors/src/executors/codex.rs#L1755-L1776)
 
 起動時には provider と profile の一致を検証する。Initial は native session を持てず、FollowUp / Resume は native session を必要とする。reset_to_message_id を伴う会話の巻き戻しは ClaudeCode の FollowUp / Resume に限定される。native session ID は UUID と仮定せず、空白・制御文字や provider ごとの option 解釈の危険を拒否する。[起動の検証](../../crates/executors/src/executors/provider_adapter.rs)
 

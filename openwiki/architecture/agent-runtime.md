@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:37:52.801Z
+    at: 2026-10-21T06:22:38.402Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -25,10 +25,14 @@ sources:
     resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
+  - id: openwiki-source-5a8e26da42457b4b47bca3ee
+    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
     resource: repo://crates/services/src/services/agent_runtime.rs
+  - id: openwiki-source-024bbfcff36a8b1f88b9bcf3
+    resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
@@ -45,7 +49,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-21T03:37:52.801Z" }
+generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -59,6 +63,14 @@ Agent Runtime は、[Session 内の AgentRun](../concepts/session-and-agent-run.
 `agent-process-host` は一つの provider process と Native Audit を所有する独立ホストである。アプリ側は認証付き loopback endpoint に再接続し、保存済み host-event cursor の後から観測を取り込む。このため、サーバーとの接続断をそのまま provider の終了と扱ってはいけない。[ホストの契約](../../crates/local-deployment/src/process_host.rs#L1-L5)
 
 Starting の canonical event 保存は provider launch の前提であり、書込失敗時は起動せずに戻る。同一 attempt の再配送では event ID と保存済み時刻を再利用する。初回 input event ID は従来互換を保ち、Retry の input event ID は attempt と message から生成するため、同じ本文でも別 attempt と衝突しない。[起動前の保存](../../crates/local-deployment/src/agent_run_port.rs#L2563-L2616)・[input identity](../../crates/local-deployment/src/agent_run_port.rs#L585-L605)
+
+## Codex の承認待機を所有する場所
+
+Codex の command/file approval waiter は provider と同じ process host に置く。`ProcessHostApprovals` は既存 `ExecutorApprovalBridge` を DB・通知 service なしで再利用し、UI への記録は canonical event 経路に任せる。launch audit の `approval_behavior` も Codex では `host_tool_waiter`、他 provider では `noop` と区別する。人の判断と Plan/質問の違いは [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)を正本とする。[host wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L1-L82)・[bridge](../../crates/services/src/services/approvals/executor_approvals.rs#L40-L83)・[launch audit](../../crates/local-deployment/src/agent_run_port.rs#L190-L214)
+
+UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、件数が残る間は AwaitingApproval、0 で Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
+
+Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・protocol failure・通常終了でも cancellation token を cancel して承認 task を解放する。その後に既存 process cleanup、control 解放、出力 drain を行う。waiter の配置はアプリとの再接続を意図したものだが、この変更の fixture 試験はサーバー再起動越しの回復まで証明しない。[終了処理](../../crates/local-deployment/src/process_host.rs#L1054-L1073)・[検証の境界](../concepts/session-and-agent-run.md#承認の検証範囲)
 
 ## 四つのデータ経路
 
@@ -97,7 +109,7 @@ provider の「turn 完了」と Host の終了は別である。成功を最終
 
 ### 終了時の stdout 所有権と drain
 
-Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置換 pipe の writer を `LogWriter` に持たせる。`DeferredCodexControl → AppServerClient → LogWriter` という参照が残ると、provider の cleanup 後も Host 自身が writer を保持し、EOF を待てなくなる。`monitor_process` は制御 loop と既存の process cleanup を終えた後、出力 drain の前に `drop(control)` する。この順序は不要になった所有参照を解放するためであり、cleanup を省略するものではない。[pipe と control の生成](../../crates/executors/src/executors/codex.rs#L1296-L1362)・[writer の所有](../../crates/executors/src/executors/codex/client.rs#L1950-L1973)・[解放位置](../../crates/local-deployment/src/process_host.rs#L1049-L1062)
+Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置換 pipe の writer を `LogWriter` に持たせる。`DeferredCodexControl → AppServerClient → LogWriter` という参照が残ると、provider の cleanup 後も Host 自身が writer を保持し、EOF を待てなくなる。`monitor_process` は制御 loop と既存の process cleanup を終えた後、出力 drain の前に `drop(control)` する。この順序は不要になった所有参照を解放するためであり、cleanup を省略するものではない。[pipe と control の生成](../../crates/executors/src/executors/codex.rs#L1307-L1368)・[writer の所有](../../crates/executors/src/executors/codex/client.rs#L2041-L2064)・[解放位置](../../crates/local-deployment/src/process_host.rs#L1054-L1073)
 
 drain の上限は5秒のままで、残った出力の投影・監査失敗を処理してから Audit close と Host Terminal へ進む。drain timeout 自体は警告を記録し provider terminal status を維持するため、timeout と AuditFailure を同一視しない。EOF 所有権の修正は、上限短縮や画面の先行した送信再開とは異なる。Unix の process group 停止には引き続き SIGINT / SIGTERM 後の各2秒の猶予があり、全終了が即時になる保証はない。[drain と終端保存](../../crates/local-deployment/src/process_host.rs#L1062-L1173)・[drain 定数](../../crates/local-deployment/src/process_host.rs#L68)・[停止の猶予](../../crates/utils/src/process.rs#L168-L207)
 

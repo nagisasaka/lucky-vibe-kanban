@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:436524961dec036b86a971836dccbed023cdfd814c87cc3a432d37e5b29c5ca1",
+  "pageVersion": "sha256:d8bc2b4c1cc4029ff94284a61f6fa29f7156be30f062ae35e06fc2c98742e7ad",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -919,10 +919,28 @@
           "version": "repo-lines-v1:sha256:7d6ae473fed5faf046ac2c4d58d817d04efa7ac8fee2a469629d01f01adc972d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ1NWFlZjJiNzllMzJkZjEyOWIxZDQ1YmIyMmVlNGRkMzkxOTE3ZjRiOTVmNTFjNzgyNWRlNTEwNTBhNTQ1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTQ0NGEzMWQ4ZWM3ZTg4Zjg1NTcxNTI2YmYyN2M5NTg4MjBkZmZkMjlmNjg1MjFkMGMwNWI3NzA1YTFmMThiNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2E1NzZhZjhiN2VmNGM5NzRlOTFjZDA0MTE4MThhNzMyYWY3NDgwYjZhZmM3YjFhMGMyOTY5ODNkZTRlNzU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTdmMmJmZmZhNDMzYzgxY2IxZmM1YWJkYjk1MDhmZDAyOTdhMzBkNTNiODk5NDNlMDk5ODhlYWI0YmUxZWJiMSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_cdd411a09c4e4536a491083c0f2d2c64",
+      "statement": "既存 tool_call_id に対応する承認要求は元の tool 名・action・identity と command/tool 引数を保持して pending approval に更新し、pending_approval entry は集約せず単独表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L701-L756",
+          "version": "repo-lines-v1:sha256:6713024441c513ceaa5b3b599f07807669082a4e6b2a1c2e11c6366487d7af65:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNmZlYThmNGMzYWNmMWM3MDlmNDVkNTBhY2Y5YjhkYWI1MmY2OTBlNGVkMTNkNDk0Y2I3NTVhZjNiYmFmMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2ZDM5MjQzNjdhMzUxYjU5OGU5NmJiZTZkOGE5NDljYzE2NGZkNmU3NDFiOGI4NDkzZTkzY2EwOWJiZGU5OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwZWVhYzQ2MThhODM1ZTRjYTRlODE3NzJlMjc2YjVjOGUwODgyMjg0NGZiMTRjYjhiZDI5YWY5YmIzMWUwODQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L464-L515",
+          "version": "repo-lines-v1:sha256:cbae658cef30904e16eaf9359a3292da18bdf96e771903df794938bdf54f7cdb:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNzQ4NTE3NzAyZTg3NWRkNWUyOWI3YmIwMjdhZjQ4MjI3NjcwY2I4YTQ4OGEyOTc0MGY1ZTlhYTg2OTAwMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNzQ4NTE3NzAyZTg3NWRkNWUyOWI3YmIwMjdhZjQ4MjI3NjcwY2I4YTQ4OGEyOTc0MGY1ZTlhYTg2OTAwMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5YTZiNmQxYjI1MThjODJhMTdiZDc4YmZlMGZjMmM1YTU0ZDQ0MmFmZjc1MmMzMWVlOGQxNDExZTUzMWY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzZDMyYjg2YjE2MDE2ZTE2ODk0ZWI2MjE0MDVhZTMxODUwNmQ5OGNlNTAyMDU2ZWY0OTFmNGYwNTBmMWExYWQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/aggregateEntries.ts#L274-L285",
+          "version": "repo-lines-v1:sha256:2e6160ab1b8b1391e147b0102ad7c4829f68adeb863fa360f54af6129b8c3e9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzMWVmYmRmZGUxNTYyNmYwMDI4Zjc4ZWM2NjViODI4OGUzYjQyN2IzMmFmMWRjNGQ1YjkxM2M3M2FhZWRkNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3ZjdjNmYxYTFjMGNjOWUyZmI0ODYzYmNhMDEyZTMwZmYyNjMwOWY5NTZhM2Q1YzIwMzExMDljOWIxNDJkZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1NDBiZTQ0MTZkZWI0YWRlYjg2YTQ0OGE0OWExNTFhN2M5MGRmMzc0YTg3ZTdkZjg0NzNjYTg5ODVkZWJjNmYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:15:33.468Z"
+    "at": "2026-10-21T06:22:38.402Z"
   }
 }

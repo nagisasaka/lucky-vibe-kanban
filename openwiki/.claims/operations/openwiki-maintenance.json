@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3c5d0a4546e4ca6eb4929db6bdc2be68a6773979ae3c8bdc43ddfc5155c5663c",
+  "pageVersion": "sha256:b44907eae8cf5c1b7057c5bcff9c9a175677ad8f46af2b58e6dfa50e9b625695",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:016073aaf3a92963f16836ae6228fd4539c21aaa88ac1298bd1018ddc3842588"
+          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -146,7 +146,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:016073aaf3a92963f16836ae6228fd4539c21aaa88ac1298bd1018ddc3842588"
+          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
         },
         {
           "resource": "repo://crates/server/src/workflow_runtime/bootstrap.rs",
@@ -439,6 +439,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-20T17:16:45.724Z"
+    "at": "2026-10-21T06:22:38.402Z"
   }
 }

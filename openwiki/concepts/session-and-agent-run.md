@@ -8,8 +8,6 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
-  - id: openwiki-source-13210275fc6cb3d346bc25ae
-    resource: repo://crates/executors/src/approvals.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -34,6 +32,8 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
+  - id: openwiki-source-5a8e26da42457b4b47bca3ee
+    resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -50,10 +50,16 @@ sources:
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
     resource: repo://crates/services/src/services/agent_runtime.rs
+  - id: openwiki-source-7d8384e54754a811ab7ab92e
+    resource: repo://crates/services/src/services/approvals.rs
+  - id: openwiki-source-024bbfcff36a8b1f88b9bcf3
+    resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
   - id: openwiki-source-28f588bd26222b42bea70c77
     resource: repo://docs/development/codex-execution-observations.md
+  - id: openwiki-source-a1d892c714d0a8077eb963fd
+    resource: repo://docs/development/supervised-approval-change-manifest.md
   - id: openwiki-source-23db569cee004f42315c9f61
     resource: repo://docs/workspaces/sessions.mdx
   - id: openwiki-source-e4d0ff0d72ea9774e1af777c
@@ -120,10 +126,14 @@ sources:
     resource: repo://tests/server/reasoning-override.md
   - id: openwiki-source-41cd17d604a882467f19e826
     resource: repo://tests/server/specs/reasoning-override.spec.ts
-generated: { by: "codex", at: "2026-10-21T04:00:57.506Z" }
+  - id: openwiki-source-ab644b7f8ef21b6ad0ec37f2
+    resource: repo://tests/supervised/README.md
+  - id: openwiki-source-5184ef612e83b7ab35d62e7b
+    resource: repo://tests/supervised/run_isolated.py
+generated: { by: "codex", at: "2026-10-21T06:27:46.219Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:00:57.506Z
+    at: 2026-10-21T06:27:46.219Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -240,9 +250,27 @@ Board の列は AgentRun の状態表示と別である。In Progress は着手�
 
 Plan with Goal の objective 編集・専用承認 UI は退役した。古い draft control は明示的な retirement error になり、通常の Goal 操作とは区別する。[control の拒否](../../crates/executors/src/executors/codex/client.rs#L378-L383)
 
-**この checkout の Codex 起動経路は `NoopExecutorApprovalService` を渡している。** このサービスは tool/plan 承認を即座に Approved とし、質問回答の待機は ServiceUnavailable にする。Codex client は質問待機のエラーを TimedOut として記録する。計画承認後は Default の実装 turn を始めるが、この配線を人の承認による停止点と説明してはいけない。[host の注入](../../crates/local-deployment/src/process_host.rs#L333-L360)、[Noop の実装](../../crates/executors/src/approvals.rs#L69-L103)、[質問と計画処理](../../crates/executors/src/executors/codex/client.rs)
+### Supervised の command/file 承認
 
-さらに Codex の汎用 DirectControl は Approve/Input を「元の server request ID を使う必要がある」と Unsupported で拒否する。[制御の制約](../../crates/executors/src/executors/codex/client.rs)。廃止表示のない [chat-interface の計画レビュー手順](../../docs/workspaces/chat-interface.mdx) は承認・変更依頼という操作意図を記録するが、現在の host 配線との隔たりがある。ここはソースから確認した制限であり、対話実験の成功を意味しない。[Workflow の HumanGate](workflow-attempt.md) は別の停止・再開契約を持つ。
+Codex host は `ProcessHostApprovals` を注入し、command/file 要求は既存 UI での明示回答を待つ。Supervised は native approval policy が未指定 / Never の場合に `UnlessTrusted` にし、他の明示 policy は保持する。すべての操作について必ず要求が発生するという保証ではなく、native provider が出した要求を LVK が勝手に承認しない契約である。DangerFullAccess と未指定 / Never の組合せだけは従来の全許可を維持する。[host 配線](../../crates/local-deployment/src/process_host.rs#L348-L366)・[permission 設定](../../crates/executors/src/executors/codex.rs#L626-L683)
+
+UI の `approvalId` は host waiter の識別子であり、native JSON-RPC request ID ではない。Approve は waiter を解決し、元 request handler が元の数値または文字列 ID で応答する。未知・重複・完了後の回答はエラーとなり、別の native 応答を生成しない。待機中の操作内容は [承認カードの詳細保持](../architecture/web-and-sync.md#承認カードの操作内容を保持する)、所有者と canonical 件数の投影は [runtime の承認経路](../architecture/agent-runtime.md#codex-の承認待機を所有する場所)を参照する。[制御](../../crates/executors/src/executors/codex/client.rs#L441-L465)・[元 ID の応答](../../crates/executors/src/executors/codex/client.rs#L971-L994)・[回答照合](../../crates/services/src/services/approvals.rs#L142-L178)
+
+command/file の明示承認は native `accept`、理由なし拒否と timeout は `decline`、非空の拒否理由は `cancel` と feedback queue への追加になる。全許可では `acceptForSession` を返す。service 不在・異常・取消を Approved に変換しない。取消済み token と準備済み回答が競合すると bridge は取消を優先する。[応答への変換](../../crates/executors/src/executors/codex/client.rs#L1282-L1342)・[待機と取消](../../crates/services/src/services/approvals/executor_approvals.rs#L123-L148)・[protocol 試験](../../crates/executors/src/executors/codex/client.rs#L3522-L3677)
+
+### Plan・一般質問との境界
+
+Plan と一般質問はこの command/file 修正の対象外である。wrapper は Plan の tool approval を Noop に委譲し即 Approved、質問の待機は ServiceUnavailable のままにする。client は質問待機エラーを TimedOut として記録し、Plan 承認後は Default の実装 turn を始める。汎用 DirectControl の Input は引き続き Unsupported だが、Approve は host waiter に接続済みである。[wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L26-L82)・[質問と Plan](../../crates/executors/src/executors/codex/client.rs#L1104-L1243)・[Input の制限](../../crates/executors/src/executors/codex/client.rs#L441-L465)
+
+したがって [chat-interface の計画レビュー手順](../../docs/workspaces/chat-interface.mdx)を現在の人による Plan 停止点の証拠にはできない。[Workflow の HumanGate](workflow-attempt.md)と[非同期の仕様質問](#非同期質問への回答と配送証拠)も、それぞれ別の停止・回答契約である。
+
+### 承認の検証範囲
+
+変更時は client の command/file protocol fixture（accept/reject/feedback/cancel、missing/broken service、full access、旧 Noop）、host wrapper の未知・重複・遅延回答、bridge の early answer/timeout/取消競合を別々に確認する。[client 試験](../../crates/executors/src/executors/codex/client.rs#L3459-L3707)・[host 試験](../../crates/local-deployment/src/process_host/approvals.rs#L84-L176)・[bridge 試験](../../crates/services/src/services/approvals/executor_approvals.rs#L235-L277)
+
+[隔離 browser 試験](../../tests/supervised/approval.spec.ts)は実 backend/host/API/WebSocket/UI と Python protocol peer をつなぎ、待機中 reload、並行2要求の残件、操作詳細、元 native ID、監査参照/checksum を検査する。runner はこの checkout の server と agent-process-host を明示固定し、継承した host override による別 binary の混入を避ける。[実行手順と限界](../../tests/supervised/README.md)・[隔離 runner](../../tests/supervised/run_isolated.py)
+
+[開発時の検証記録](../../docs/development/supervised-approval-change-manifest.md)には初期失敗と最終成功があるが、実モデル・native sandbox 判定、Windows、サーバー再起動越し回復は未検証である。今回の通常 Sync は凍結 source `456fb0215c06e4c1a403275c83f7f69170cb5434` の host/client/bridge、UI 投影・集約、試験定義を静的に照合した。製品テストは再実行しておらず、凍結入力の正式 Integration も検証省略である。過去の成功記録を統合候補の合格や無関係な Wiki 全体の再検証へ読み替えない。
 
 ## 非同期質問への回答と配送証拠
 

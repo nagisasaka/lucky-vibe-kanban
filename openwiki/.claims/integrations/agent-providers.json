@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6c614164cd289bba688569ea5c5f2319cefdf5fd273a8040d92377ab7cf65f7e",
+  "pageVersion": "sha256:b3419d0161ac6b6fbb9891767c3890d14d287ccd6ec9e35616e198168ef6d08b",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -195,20 +195,6 @@
       ]
     },
     {
-      "id": "claim_fa71c82c0a574601866cf2c567e2caa2",
-      "statement": "Approval の Native capability と人の応答サービスの接続は別であり現行 host は Noop を注入する。",
-      "evidence": [
-        {
-          "resource": "repo://crates/executors/src/approvals.rs#L69-L103",
-          "version": "repo-lines-v1:sha256:1eb1d21d1ab105ba5f53ca324883359e18061c1bec80d34ecd0ea7120847aeb6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxMWMxNmI2NDRhYjYzZTI0NTNlOTNkMDZlNTFhMTI3ZmQ5ZjQ0ODgxZDVmZDlhNjAyMjlhYWYxY2M1Y2I4YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmYTA4MWMxYmFiNjU3NWI2YzQ0MTYyN2RjYzBkYjQ1ZWEyYjRjM2Q2ZDk5MjViOWM0YmYyMTA4YWIyNTI5MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkZWEyYzljODVkOTMyNTUwMWY3ZDMyNjZkYjM0ZDBiMGNjMTc5MjEwMGE1MjdhZjE4OTc0NTk5M2Y4NzNjYmYifQ"
-        },
-        {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L302-L329",
-          "version": "repo-lines-v1:sha256:a5e27f95a5f851c0b06c61267fc62628a2b498a3f25f176f6fc12bf155e81fce:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlZTRmN2FiYWYwMTRmMjA2YjI5MjdmM2U5NGU0MzQ4ZjBkMmE4MzY0ZDU4Y2ZlYmI2NDU5M2VmOTM0ZGNjZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyNzEzNGU5ZTkyOGNmNzkzNjNkMmU0OTc2NWIyNmJhNTllMzExOTY5NTIxZGYzNzdiZTNiOTA1NzM4M2ZhNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
-        }
-      ]
-    },
-    {
       "id": "claim_f1f4a829c75f49618229a60425bac548",
       "statement": "Codex の model と reasoning effort は thread start/resume 応答から採用され、設定継承した値も intentional None も後続の mode/turn に使われる。",
       "evidence": [
@@ -228,7 +214,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:016073aaf3a92963f16836ae6228fd4539c21aaa88ac1298bd1018ddc3842588"
+          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/openwiki.rs",
@@ -242,7 +228,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:016073aaf3a92963f16836ae6228fd4539c21aaa88ac1298bd1018ddc3842588"
+          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
         }
       ]
     },
@@ -252,7 +238,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:016073aaf3a92963f16836ae6228fd4539c21aaa88ac1298bd1018ddc3842588"
+          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
         },
         {
           "resource": "repo://crates/executors/src/legacy_wiki.rs",
@@ -433,10 +419,38 @@
           "version": "repo-file-v1:sha256:4ffd7e5e4d9b55b25d7c3681f66fa048de1cba4c9ee554bda71a1e42605f0858"
         }
       ]
+    },
+    {
+      "id": "claim_04876c9dbf3642abbf378dcdf141c748",
+      "statement": "Approval Native capability と対話承認の配線は別で、Codex host は command/file waiter を注入する一方、他 provider は Noop を注入する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L348-L366",
+          "version": "repo-lines-v1:sha256:8e895046ce86ec2466d11ff05e2cfd1049f39209cfd79a66927bb9048448a50c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzFjZGYwM2I1N2E2ODdjZGY1NmRiYmNkOWIzMjAxMTlmYTZiNzIzMWI0NDI5YzNkMzU3NmI4NGMwOTFlMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGY1NmQ5OTRjNDY1NTQyNDNmZjlhYWU5MDFkMWU1NDliN2I0OGY3OWIzZmZhYzEwZmI1MWM4ODljNTZlNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNjNhMTVmZTdhNmM0NjI0N2YxNDQwNGUyMmY3NDhjNDBjYzk1MTU5NTcxMzk3YmI5MGRlMDcyMjU3Njk4ZGMifQ"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/process_host/approvals.rs#L26-L82",
+          "version": "repo-lines-v1:sha256:737b2a31a919bd35c85c2638b62b8be75c4b06a4d2147da2a95fcbfe09c60c2f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZTFmMjg4OTc0ZmIwZGZlNjNiZTE3YjQ4ZWY5NjJjOTU0MzMzY2MyODMyOTQ3ZDcwMTFjODAyNDI2ZjBkM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM0MzMwZDNjNTNhOTY5ZTRmNjM5M2U2N2UwNTA0MzhiYjIzNmI3NDc3ZmM0MzViN2YwZWUzODc4ZmJlMzNhMGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiZDQwMjIwMzQ1NzAzODBmNDFmOTBiOWRlNjVmMGFjMGIwZDA0MDc1Y2FkNTczY2I0NDQ1NGNiNDcyMmNhNTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f6f53549e176412993c532b2c308a154",
+      "statement": "Codex Supervised override は未指定/Never だけを UnlessTrusted に変え、別の明示 policy と sandbox は保持する。自動承認は DangerFullAccess と未指定/Never の組合せに限定する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1755-L1776",
+          "version": "repo-lines-v1:sha256:afd5f49a0932d252eedded051c48eca614b16af9cb9c884a7f315e5efdc47be9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1YmVkMjUwNGYxMzc0MTkyMGI2ZWRjZTRhMDdlYzI3OGY2MWZkZGZjYTZkM2Y1ODViMzUxY2Q2MzJkZmIwNzkifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L628-L680",
+          "version": "repo-lines-v1:sha256:043440d5091cc5bebfb74e19f76af470d5215efb3796adbe3bc5197d938f1365:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYmQ1YWFhZmU5MDg1MTQzMzNhOGZmNTllZTA3YTc3MDhjYjNlOTA1Y2MwNWU4M2U1M2YzOTY1Mjg2YWVhOWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMmUzNzk2MjA2Y2E3MTg1NjFkNGQ5MzIxZGI2ZTBkMTZmYmFiOTQ3ZjQ4MWUyYjliNjhjMThmNzE0ZDE2ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmODFmZTkzZDExODFlZmExZjIwNjMwYjUzZWQzODExNWZiZWJkYjY0ODhkMmI5NWE3MjE4ZjQ3OWVmM2E5Y2UifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:59:59.398Z"
+    "at": "2026-10-21T06:22:38.402Z"
   }
 }
