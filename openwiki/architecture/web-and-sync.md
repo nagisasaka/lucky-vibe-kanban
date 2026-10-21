@@ -28,10 +28,20 @@ sources:
     resource: repo://packages/local-web/src/app/entry/App.tsx
   - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
+  - id: openwiki-source-0538c702500041c84ca85af7
+    resource: repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx
+  - id: openwiki-source-9fa3c3bb81a61c7549d33839
+    resource: repo://packages/ui/src/components/ChatCode.tsx
+  - id: openwiki-source-7178b2bafadec69965c4e1cd
+    resource: repo://packages/ui/src/components/ChatScriptEntry.tsx
+  - id: openwiki-source-d89c4480040eee7fa41a6000
+    resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
+  - id: openwiki-source-1383d6dc4e3d9d2ea475e735
+    resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
@@ -62,6 +72,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
+  - id: openwiki-source-10caf2340da819f813f5ea62
+    resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx
   - id: openwiki-source-70a9c5225d8ef0472482d401
@@ -94,12 +106,16 @@ sources:
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
+  - id: openwiki-source-0a43f232c5a84b7f94378d02
+    resource: repo://tests/chat/syntax-highlight.test.mjs
+  - id: openwiki-source-7c49efe20c19a1848e432191
+    resource: repo://tests/chat/syntax-isolated-e2e.mjs
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-21T04:07:06.425Z" }
+generated: { by: "codex", at: "2026-10-21T04:12:45.998Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:07:06.425Z
+    at: 2026-10-21T04:12:45.998Z
 ---
 
 # Web の実行環境と同期
@@ -187,6 +203,18 @@ anchor は React 更新後だけでなく、末尾 lock がないときの同じ
 built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順・過去の結果](../../docs/development/chat-stability-local21.md)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
 
 今回の Sync は凍結 source `a044769b1dfdf1972c6e10937fa0dfb98faf31db` のチャット変更を、購読・投影・backend の steering 保存・リスト・editor・試験定義という独立した入口で静的に照合した。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合後の成功証拠へ読み替えない。この Sync で製品テストを再実行したことや、無関係な過去の Wiki 全体を再検証したことは意味しない。
+
+## チャットのコード装飾と本文の境界
+
+コードの色付けには二つの表示経路がある。command と script は UI の `ChatCode` が Prism token を React の文字列と span に変換し、Markdown fence は `AppChatMarkdown` → disabled の `WYSIWYGEditor` → Lexical `CodeHighlightPlugin` を通る。両方が既存の `CODE_HIGHLIGHT_CLASSES` と syntax CSS 変数を使う。UI package は Prism を直接依存に持ち、共有 helper が bash / JSON grammar を登録するため、command 側だけでなく Lexical 側の対応言語にも関わる。[文字列の描画](../../packages/ui/src/components/ChatCode.tsx#L1-L31)・[grammar と上限](../../packages/ui/src/lib/chat-code-highlighting.ts#L1-L23)・[Markdown の接続](../../packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L22-L39)・[共通テーマ](../../packages/ui/src/lib/code-highlight-theme.ts#L1-L36)
+
+ツールの見出しは実 command と表示 summary が等しい場合だけ装飾し、説明文を shell code として扱わない。展開詳細は空白だけの command を除外する判定に trim を使うが、描画には前後空白を含む元の文字列を渡す。script の command も同じ描画部品を使い、ツール出力本文は別の plain pre に残る。ここでの `language="bash"` は表示側が固定した字句装飾であり、provider が実際に選んだ shell を証明しない。[見出しと詳細](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L46-L77)・[単一見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L153-L163)・[集約内の見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L264-L279)・[script](../../packages/ui/src/components/ChatScriptEntry.tsx#L78-L89)。実行と event の責任は [Agent Runtime](agent-runtime.md)にあり、色付けから実行分類を逆算しない。
+
+同期 tokenization は文字列の `length` が16,384以下で、指定言語が登録済みの場合に限る。これは UTF-16 code unit 数の上限であり、byte 数や表示上の文字数ではない。長文・未指定・未対応言語、tokenizer の例外では全文を plain 表示し、切り捨てない。read-only Lexical は既定言語を `text` にし、fallback 時も改行・tab node を作り直す。editable editor は従来の tokenizer を使うため、この上限を composer 全体の入力制限と解釈しない。コードコメントは streaming 中の同期処理を有界にする目的を記録している。[guard と fallback](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)・[read-only tokenizer](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L46)・[disabled の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L641-L650)
+
+`ChatCode` は装飾のみを所有し、コピー、空白のレイアウト、折返しは呼出側の責任である。Markdown コピーは装飾 DOM を読み戻さず editor の `value` から行う。ただし既存処理として escaped underscore を unescape するため、全入力について byte 単位の同一性を保証する説明は誤りになる。[装飾の責任](../../packages/ui/src/components/ChatCode.tsx#L18-L31)・[Markdown コピー](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L447-L459)。入力の保存・送信は [Session の composer 契約](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、高さ変化への追従は本ページの[履歴の閲覧位置](#履歴の閲覧位置と末尾追従)を参照する。
+
+検証の入口は `syntax-highlight.test.mjs` の Chromium fixture と `syntax-isolated-e2e.mjs` の built-app 試験である。前者は部分文字列・未閉鎖 fence、bash/sh/JSON などの装飾、未知・未指定・長文の fallback、文字列と focus の保持を検査する。後者は build 済み frontend/server と一時 SQLite の Workspace / Session を使い、AgentRun 一覧と WebSocket event を fixture に置き換えて command コピー、Markdown コピー、入力保持、light/dark、長文を検査する。provider の生成そのものを検証する試験ではない。終了時には browser/server、残存 PID、port、一時DBの cleanup を確認する。[component 試験](../../tests/chat/syntax-highlight.test.mjs#L7-L108)・[隔離条件](../../tests/chat/syntax-isolated-e2e.mjs#L1-L81)・[fixture と操作](../../tests/chat/syntax-isolated-e2e.mjs#L146-L325)・[cleanup](../../tests/chat/syntax-isolated-e2e.mjs#L350-L414)。再実行の環境準備は [開発と検証](../operations/development.md)を参照する。今回のコード装飾 Sync は凍結 source `777488ca3a430b56d19e2df9437de5f848dc00e2` と試験定義を静的に照合したもので、製品試験を再実行していない。供給された正式 Integration の記録も validation skipped であり、開発時の成功報告を統合後の検証成功へ読み替えない。
 
 ## チャットのファイルリンクを既存 panel へ渡す
 
