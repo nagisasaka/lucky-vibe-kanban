@@ -28,6 +28,12 @@ sources:
     resource: repo://packages/local-web/src/app/entry/App.tsx
   - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
+  - id: openwiki-source-2bc26d0169842f4566548104
+    resource: repo://packages/local-web/src/app/providers/ConfigProvider.tsx
+  - id: openwiki-source-5345acc0f5e557e263435988
+    resource: repo://packages/ui/src/components/AppBar.tsx
+  - id: openwiki-source-b2fc2a264ac3c8fd4fc0ac15
+    resource: repo://packages/ui/src/components/AppBarSocialLink.tsx
   - id: openwiki-source-0538c702500041c84ca85af7
     resource: repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx
   - id: openwiki-source-9fa3c3bb81a61c7549d33839
@@ -42,6 +48,8 @@ sources:
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
     resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
+  - id: openwiki-source-2a1a06abf88738697abb7c30
+    resource: repo://packages/ui/src/lib/repository.ts
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
@@ -50,10 +58,14 @@ sources:
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
+  - id: openwiki-source-f6872c1e7e07221eda6db545
+    resource: repo://packages/web-core/src/features/onboarding/ui/LandingPage.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
+  - id: openwiki-source-b58899ddf6c6173903fabe61
+    resource: repo://packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx
   - id: openwiki-source-3e72be92e5674f5611856ac3
     resource: repo://packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts
   - id: openwiki-source-952ab4470659b6dc518fab38
@@ -70,12 +82,22 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx
   - id: openwiki-source-0894249b732085a9800940bd
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
+  - id: openwiki-source-8e27f9b63333a62bc1b246ff
+    resource: repo://packages/web-core/src/shared/actions/index.ts
+  - id: openwiki-source-caba6442d1d02b97bf406c6a
+    resource: repo://packages/web-core/src/shared/command-bar/actions/pages.ts
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
+  - id: openwiki-source-986a5914454c708e7540f1e6
+    resource: repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx
+  - id: openwiki-source-4f5acbe99dd0d72515b7e82b
+    resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx
+  - id: openwiki-source-5cead200f725b8a7ed11e3cd
+    resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
@@ -110,12 +132,16 @@ sources:
     resource: repo://tests/chat/syntax-highlight.test.mjs
   - id: openwiki-source-7c49efe20c19a1848e432191
     resource: repo://tests/chat/syntax-isolated-e2e.mjs
+  - id: openwiki-source-b8dd26804205bb3bb293d01e
+    resource: repo://tests/header/isolated.mjs
+  - id: openwiki-source-21c2ff0d1558af038f1aaa2e
+    resource: repo://tests/header/README.md
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-21T04:12:45.998Z" }
+generated: { by: "codex", at: "2026-10-21T04:18:31.031Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:12:45.998Z
+    at: 2026-10-21T04:18:31.031Z
 ---
 
 # Web の実行環境と同期
@@ -125,6 +151,22 @@ verified:
 Local App は TanStack Router と Hotkeys、設定、ローカル identity、Tauri listener を組み立てる。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
 
 UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と [抽出前の監査](../../docs/frontend-ui-library-refactor-audit.md)は現行配置の全体図ではない。監査は責任分割の経緯を知る資料として読み、古い `local-web/src/components` の位置を変更先にしない。
+
+## 共有ナビゲーションと外部リポジトリ表示
+
+`SharedAppLayout` は Project 一覧、Workspace への遷移、モバイル drawer と外部 GitHub 件数の取得を接続し、UI package の `AppBar` は渡された値と callback を描画する。単独の `Local` 見出し、Project navbar の Organization 名、モバイル drawer の Organization 名は表示しない。ただし Project 一覧は引き続き選択 Organization ID で取得し、Workspace 入口と Project の選択・作成を維持する。Workspace navbar はパス、または `direct-folder` 以外のブランチ名を表示する。[一覧の scope](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L87-L127)・[drawer の遷移](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L337-L412)・[Workspace 見出し](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L243-L260)・[AppBar の入口](../../packages/ui/src/components/AppBar.tsx#L148-L180)。見出しの整理は [Organization の identity・権限](../concepts/organization-and-membership.md)や [Workspace の実行単位](../concepts/workspace.md)の廃止を意味しない。
+
+外部リンクと stars API は `packages/ui/src/lib/repository.ts` の公式リポジトリ `nagisasaka/lucky-vibe-kanban` を共通参照する。AppBar と LandingPage の GitHub リンク、web-core の `useGitHubStars` の API URL と query key が同じ identity を使う。定数のコメントは README / README.ja.md と origin を選定根拠として記録し、両 README の source link も一致する。[共通定義](../../packages/ui/src/lib/repository.ts#L1-L3)・[AppBar](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[LandingPage](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L88-L101)・[英語 README](../../README.md)・[日本語 README](../../README.ja.md)
+
+stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読み、非負の safe integer だけを採用する。HTTP エラー、通信・JSON 解析失敗、欠落・不正値は `null` にする。初回 loading や `null` ではバッジを出さず、実数 `0` は表示する。リンク自体は件数取得に依存しない。query はリポジトリ単位で、stale time と定期再取得は10分、retry と mount 時の再取得は無効である。[取得・query lifecycle](../../packages/web-core/src/shared/hooks/useGitHubStars.ts#L1-L41)・[バッジの条件](../../packages/ui/src/components/AppBar.tsx#L325-L336)・[リンクとバッジの描画](../../packages/ui/src/components/AppBarSocialLink.tsx#L18-L46)。この表示用 API は Board の snapshot 同期や [GitHub 認証・PR 操作](../integrations/github-review.md)とは別の経路である。
+
+旧 `Give Feedback` survey action は navbar と command bar の General に存在せず、AppBar と LandingPage の Discord リンクもない。共有 shell は Discord 人数 hook を呼ばない。これは外部サービスへの UI 導線の整理であり、Agent approval の feedback を除去する契約ではない。[navbar actions](../../packages/web-core/src/shared/actions/index.ts#L1555-L1569)・[command bar](../../packages/web-core/src/shared/command-bar/actions/pages.ts#L35-L44)・[AppBar の外部領域](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[shell の取得](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L60-L69)・[approval feedback](../../packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx#L41-L101)
+
+### ヘッダー検証の入口と限界
+
+`tests/header/isolated.mjs` は checkout の build 済み server / frontend と専用の一時 instance を使い、実 API で Project と独立 Workspace を作る。GitHub API だけを mock し、loading → 0、正数、HTTP 失敗、負数、欠落、通信失敗と、desktop / 390px drawer の往復遷移、旧導線の不在を検査する。終了時は browser を閉じ、所有 server process group を停止して待ち、一時 instance を削除する。[隔離と API 操作](../../tests/header/isolated.mjs#L11-L120)・[stars と desktop](../../tests/header/isolated.mjs#L128-L241)・[mobile](../../tests/header/isolated.mjs#L242-L276)・[cleanup](../../tests/header/isolated.mjs#L321-L341)。再実行は [header 試験手順](../../tests/header/README.md)と [開発環境](../operations/development.md)を参照する。mock の成功から live GitHub の到達性や件数を保証しない。
+
+local shell の ConfigProvider は onboarding を acknowledged として公開し、LandingPage はその値を見て root へ戻る。このため隔離 browser 試験が検査するのは onboarding bypass であり、LandingPage 内の social link の操作ではない。後者はソース照合の範囲である。[config の上書き](../../packages/local-web/src/app/providers/ConfigProvider.tsx#L49-L59)・[redirect](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L172-L179)・[bypass 試験](../../tests/header/isolated.mjs#L277-L300)。[開発時の検証記録](../../tests/header/VALIDATION.md)と、統合後の検証成功は区別する。今回のヘッダー Sync は凍結 source `db5fe7976ca152829ad46d498342a8f3fe889b27` の実装・呼出側・試験定義を静的に照合した。供給された正式 Integration は検証省略であり、今回も製品テストや live GitHub 確認は実施していない。無関係な既存節の再検証を意味しない。
 
 ## 認証が製品画面より先に確定する
 
