@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:dc8578ca0f72de607fc78516c643a45a4a277ab7777f71c6c8b346b705b974ee",
+  "pageVersion": "sha256:3dbbe1fbc2f623cc8a65070e4bdf18fef984dab86f862d73c502b27761ae72c8",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -250,15 +250,19 @@
     },
     {
       "id": "claim_f044cbe0e9b54f9aa3d8cc257b601789",
-      "statement": "Wiki を閉じると保存した panel 状態を復帰し、再読込で ephemeral な戻り先がない場合は通常チャットを表示する。Wiki 本文は既存 MarkdownPreview を使う。",
+      "statement": "Wiki 本文は既存 MarkdownPreview を使う。Wiki を閉じると共通右ペーン mode は null となり、以前のペーンを復元せず layout が左チャットを表示する。保存済みの会話非表示設定は Wiki を開くだけでは上書きしない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L437-L451",
-          "version": "repo-lines-v1:sha256:afa8148b7f75a7c68c747d30e49249b78b1aa1d993b1894a25c9a5fd1adfac53:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYmYzODQ3ZWI0YjI2Y2QxMWZlY2Y5YTFmNTdlYzA5MTRiZmU3ODI4ZGEyNWIyODM4ZTJjYjJlOTRlMzEyZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNDlhNjFiNGM4ZDc4ZTRkMThlMmZjODBmMjE1NWE5NTNiYWY1YWNlY2Y5ZmRiM2QyNDIwNDFkOTM4NmNiYTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwYzI2NTZhODhiNmQ2NDE2OGEwNzExMGFhYTdmYzU1M2Q4OTQ5ZTIzNjMzYmYwYTc2MTVmYWQ2MjllNzczYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA0NzI1NTZjNGQwMDNhYzUwMzM4MjcxZWI1YjNmZjMyMmI2Yzg5Y2IwNGEwZGRlZjVhYzYyN2FkYmNkMjc3MGYifQ"
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L332-L345",
+          "version": "repo-lines-v1:sha256:a86fe8c7b01b67d5700b86cc2cb20df5f769bd1a6090eea7c05cda1770e98f6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzN2ExYjg1MGZjMWNkYmFhZDIzMjk4YzY2MTkwNWJmYzNkNTBmYWY5MzJhMmM1Nzg0YzNlYTY1M2FiYmFkOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YjhjMTA4NWY5NWExYWZhYmU1ZDE1MmFkNThkYjlkYzI2MzM2YzEyMThlMmI4NDBhZTdhZDgyNmEwZDU3NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjMDAyZGQ4ZWY1MThlNDc1ZGIyNjVhYWUyOTI1ZjhkODU0NTAyNzEyN2M0OTcxMzI0ZGM5MzdiZWZhYzkxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMDA4NTlhZmNmODA2ODdkODkwZDg1YTY0Mzg4OGIzYTljZjcwMGFjZmY2MWJmNzE2ZjMyN2ZmMWM5NmYyODkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L639-L697",
-          "version": "repo-lines-v1:sha256:44e9a68f2534277a60987d9aee6508c644aff5f576848f07697ffc3f4bec3277:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMGU1OTMzNGNkNzMwNzEzNDIwNzg1N2MyM2M3Nzk0YzU1ODI2ODZmYjc3MmI2NDQ4ZTQ0NjY0MGEzNjI4N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyZWQxNjExY2Q0ZThkMjYxNDU3MTcyMjk2N2IwOWExNWE3MjllODZlYjM2MjQ4YTQ4NTEzZTc4NzM5YjViM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZWYxOTJkMWIzNzNmOGVkNjA0ODdiM2I3NDI2MWVhYTdmOWE0ODIyMTdkZDllYzFlNjNlZTgwZDIxZWI5YTUifQ"
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210",
+          "version": "repo-lines-v1:sha256:251d872b3162f6038e8ac1e61c50bb5cebe4bdc32a16328f343328174016fdf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyOWRlZjA5MDcxOTM4MGY2Yjg3NTg5NTI4ODk4NmJlZWEwODZmMjZhZDFkOTdkMjk4NDcwMzE2MmRmZWU5YmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NDZmZGFmZTFjNzNiYzRkMjc0ZmI4MWYxOWQ4OWFjOGE1ZTE0Mzc5MDc4MDMyNGIzODMwODIzNDRjZWE1ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNTFhNDY1ZDQ5NjZjYjI1YmM5MDVkZGEwNjJjMTgzMDhlODQwOWFjOTBlNDdjM2Q5YWQ0NmNiM2RiNDMxNzIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607",
+          "version": "repo-lines-v1:sha256:e56cf6bfb7233c71b4802ed396d68918fdc91a93b654dd63536a2992a9119d70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYTg5ZWU5NGMyMGM2ZWM3MmM1ZTBmYmIyYzFkNDdhNzdiNmIzN2RhMDQyNWUwODhkNWM1MTkxNjMxYWI0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MGE3MzhhZTAxZTYyY2Q5NDc2NzViNmRjMmZjODEzMGJlNzczMTE3ODdiYzlhZDJmZDNmYzNiNmNmYjY4MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZWYxOTJkMWIzNzNmOGVkNjA0ODdiM2I3NDI2MWVhYTdmOWE0ODIyMTdkZDllYzFlNjNlZTgwZDIxZWI5YTUifQ"
         }
       ]
     },
@@ -517,6 +521,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T04:07:06.425Z"
+    "at": "2026-10-21T05:41:24.899Z"
   }
 }

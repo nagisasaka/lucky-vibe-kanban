@@ -70,6 +70,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
+  - id: openwiki-source-0894249b732085a9800940bd
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
@@ -88,10 +90,10 @@ sources:
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-21T04:07:06.425Z" }
+generated: { by: "codex", at: "2026-10-21T05:41:24.899Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:07:06.425Z
+    at: 2026-10-21T05:41:24.899Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -154,7 +156,9 @@ Wiki は `openwiki/` の読取専用表示に統一され、repository 選択・
 
 ツリーは公開された Wiki snapshot のページだけから組み立て、index を入口にする。検索は本文、タイトル、summary、tags 等へ空白区切りの全 term を適用する。OpenWiki の階層内相対リンクや `/openwiki/...`、`[[wikilink]]` は既知ページへ解決するが、Wiki root 外の source path を任意ファイル読取へ変換しない。ページ切替はパス単位であり、リンクの fragment を保持した節スクロールまでこの resolver が保証するわけではない。[ツリーと検索](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts)、[リンク解決](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts)
 
-本文は既存の `MarkdownPreview` を再利用する。Wiki を閉じると同一ブラウザー内で保存していた panel 構成へ戻り、再読込で戻り先が失われた場合は通常チャットへ戻る。表示切替で [Session / AgentRun](../concepts/session-and-agent-run.md) を作り直すものではない。共有 reader とチャット保持の実装は [Web の状態管理](../architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす)に集約する。[renderer](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx)、[表示の保存・復帰](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts)
+本文は既存の `MarkdownPreview` を再利用する。desktop では Wiki アイコンまたは右サイドバーの `Open Wiki` で右メインペーンに開き、既定では左に会話を残す。同じアイコンで閉じると右ペーンは未選択になり、以前の Changes / Logs へ戻す専用の復帰操作はない。他のペーンへ直接切り替えることもできる。表示切替で [Session / AgentRun](../concepts/session-and-agent-run.md) を作り直すものではない。[renderer](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L332-L345)・[共通ペーン操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607)
+
+保存済み設定で会話が非表示なら、Wiki を開くだけでは表示に戻らない。共通チャット表示操作、または右ペーンを閉じる操作で戻す。右サイドバーを隠していた場合も Wiki が強制的に開き直すことはない。モバイルでは Wiki タブからツリーと本文を開き、会話には Chat タブで戻る。これは desktop の右ペーン選択を解除する操作とは異なる。保存値の由来を識別できない制約、共通 layout の補正、下書き保持と試験範囲は [通常ペーン操作と保存済み設定](../architecture/web-and-sync.md#通常ペーン操作と保存済み設定)、共有 reader の責任は [Wiki の状態管理](../architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす)にまとめる。[チャット表示操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L534-L552)・[閉じた後の layout](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)・[モバイル入口](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L173-L183)
 
 adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry と `INSTRUCTIONS.md` をページから除く。root・子 entry の symlink を拒否し、index を含め最大2,000ページ、1ページ512 KiB、合計16 MiBを超えれば snapshot 全体をエラーにする。切り詰めた Wiki を正常応答にはしない。frontmatter は optional だが、ある場合は正しい YAML mapping を要求する。Claims 解釈・設定書込・初期化・修復はしない。[adapter](../../crates/services/src/services/wiki/openwiki.rs)、[安全な読取](../../crates/services/src/services/wiki.rs)、[旧ファイル保持と容量の test](../../crates/services/src/services/wiki/openwiki.rs)
 

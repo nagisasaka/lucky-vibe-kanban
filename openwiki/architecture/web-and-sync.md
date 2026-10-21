@@ -82,6 +82,8 @@ sources:
     resource: repo://packages/web-core/src/pages/root/RootRedirectPage.tsx
   - id: openwiki-source-2fb74c0fc81d817149606557
     resource: repo://packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx
+  - id: openwiki-source-6559800b59b62e086689d27d
+    resource: repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx
   - id: openwiki-source-27129bb783a0bcb3964399f2
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -130,6 +132,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
+  - id: openwiki-source-5ef837b2bc54d286b3dedd8f
+    resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
   - id: openwiki-source-3744cbc03f96140414e0b945
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
@@ -144,16 +148,18 @@ sources:
     resource: repo://tests/header/README.md
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
+  - id: openwiki-source-b1f4325353088fa9d003b939
+    resource: repo://tests/server-access/workspace-wiki.mjs
   - id: openwiki-source-4bfe8064f685e5073ef06513
     resource: repo://tests/workspace-navigation/playwright.config.ts
   - id: openwiki-source-f6a73bd9a093b3a0004194f2
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-21T05:39:12.277Z" }
+generated: { by: "codex", at: "2026-10-21T05:41:24.899Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:39:12.277Z
+    at: 2026-10-21T05:41:24.899Z
 ---
 
 # Web の実行環境と同期
@@ -300,11 +306,27 @@ JSON Patch stream は接続成立と初回 snapshot の Ready を分ける。再
 
 ## Wiki のナビゲーションと本文を一つの状態で動かす
 
-Workspace の Wiki は本文をメイン領域、ナビゲーションを右側へ分けて表示するが、二つの独立した reader ではない。`WorkspaceWikiProvider` が Workspace ID ごとに一つの controller を所有し、repository、選択ページ、検索、読取結果を両 surface で共有する。モバイルでは本文とナビゲーションを切り替える。[共有 controller](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx#L39-L91)、[画面への配置](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L509-L628)
+Workspace の Wiki は本文を右メインペーン、ナビゲーションを右サイドバーへ分けて表示する。既定では左のチャットと並ぶが、二つの独立した reader ではない。`WorkspaceWikiProvider` が Workspace ID ごとに一つの controller を所有し、repository、選択ページ、検索、読取結果を両 surface で共有する。モバイルでは本文とナビゲーションを切り替える。[共有 controller](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx#L39-L91)、[画面への配置](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L488-L625)
 
 表示対象は canonical OpenWiki 一種類であり、legacy 形式の切替状態は持たない。repository を切り替えると snapshot・選択・検索・scroll 状態をリセットし、再取得する。controller はリクエスト sequence と応答の Workspace / repository identity を検査し、遅れて返った別対象の結果で現在の画面を上書きしない。[scope と応答の扱い](../../packages/web-core/src/features/wiki/model/wikiViewerController.ts#L11-L119)。実際に読む checkout と reader の範囲は [Wiki inspection](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を参照する。
 
 Wiki を開くことはチャットや AgentRun の終了ではない。`PreservedChatPanel` は composer と timeline を unmount せず、非表示時に `inert` / `aria-hidden` を付ける。最後の表示幅を保つのは、幅ゼロによる仮想化 timeline の再計算を避けるためである。Wiki の表示設定と実行 lifecycle を結び付けない。[chat の保持](../../packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx#L4-L52)。操作と表示元の確認は [Workspace の検査](../operations/workspace-inspection.md)を参照する。
+
+### 通常ペーン操作と保存済み設定
+
+Wiki アイコンは共通 `toggleRightMainPanelMode`、右サイドバーの入口は `setRightMainPanelMode` を呼ぶ。Wiki を開くと既存の右メインペーンを置き換え、同じアイコンで閉じると mode は `null` になる。以前の Changes / Logs 等へ戻す履歴や Wiki 専用 Focus / Return 操作はない。操作は Workspace ごとの mode を変更し、左チャットの表示設定と右サイドバーの表示設定を上書きしない。右ペーンを開く際の左サイドバー非表示は幅2,048px以下の共通規則であり、チャット非表示とは別である。[共通 state](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607)・[アイコン](../../packages/web-core/src/shared/actions/index.ts#L678-L698)・[sidebar の入口](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx#L244-L265)
+
+`UI_PREFERENCES` Scratch は Workspace ごとの `right_main_panel_mode` と `is_left_main_panel_visible` を保存・復元する。保存済みの `wiki + false` は読み込み時にも false のままで、Wiki の再選択や他の右ペーンへの切替では会話を再表示しない。右ペーンが `null` になると layout の共通 effect が左チャットと左サイドバーを表示する。この二段階を store 単体の動作と混同しない。[保存と復元](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L57-L76)・[false の保持](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L121-L132)・[hydrate](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L263-L287)・[layout の補正](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)
+
+この panel payload は mode と表示 bool だけで、旧 Wiki 操作による非表示と利用者の明示的な非表示を区別する由来情報を持たない。従って保存値だけから両者を識別して移行することはできない、というのが現行 schema からの帰結である。現在の読込処理に Wiki 専用の自動補正はない。過去の非表示を一律 true にする仕様まで実装済みとは扱わず、変更する場合は明示設定を上書きする扱いを別途決める必要がある。[panel 型](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L56-L65)・[読込変換](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L121-L132)
+
+モバイルでは Wiki / Todo タブが共通右ペーン mode を設定し、Chat タブは `mobileActiveTab` だけを切り替える。Chat へ戻っても右ペーン mode を閉じる操作ではないため、desktop に戻した際の選択とモバイルの表示タブを同一状態と見なさない。Wiki のページツリーと本文は `Wiki pages` で往復し、タブ切替中も chat と Wiki の surface を mount したままにする。[タブ操作](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L173-L183)・[mobile surface](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L310-L391)。通常の pane 選択は URL を変更せず、永続 message draft は [Session の Scratch](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)が扱う。
+
+### Wiki ペーン変更の検証境界
+
+[store の回帰テスト](../../packages/web-core/src/shared/stores/useUiPreferencesStore.test.ts#L27-L117)は、共通 set / toggle、他ペーンへの切替、明示的な非表示、Workspace 間の分離、390 / 1,000 / 1,440 / 2,560px の規則を検査する。[実アプリ試験](../../tests/server-access/workspace-wiki.mjs#L1-L58)は build 済み frontend / server と一時 instance・実 API・二ページの Wiki fixture を使い、agent を実行しない。[browser 操作](../../tests/server-access/workspace-wiki.mjs#L185-L276)は左右配置、専用ボタンの不在、ページ選択保持、他ペーン切替、Scratch 保存・reload、URL と browser back、1,000px と390pxでの下書き保持を検査する。終了処理は browser、server process group、残存子 process、port と一時データの cleanup を確認する。[cleanup](../../tests/server-access/workspace-wiki.mjs#L290-L333)
+
+この Wiki ペーン Sync は凍結 source `5c4ebd1f2838b7aecdda592bc64b70e847faf25b` を、操作入口・store・layout・Scratch・reader controller・backend 読取境界・試験定義から静的に照合した。供給された Change Manifest の開発時成功報告と、正式 Integration の明示的な検証省略は別の記録である。この Sync では製品テストを再実行しておらず、実 provider・外部認証の成功や、無関係な既存節全体の再検証は主張しない。凍結 Workspace Memory の後続レビューにある追加試験結果も、統合済み試験定義や移行実装の代わりにはしない。
 
 ## 統一一覧と実行予約
 

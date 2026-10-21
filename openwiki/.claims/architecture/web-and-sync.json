@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2f99ceb278cc8c9b53a189123b0a16fd025b55039351faa1a601be8e50a7bf7c",
+  "pageVersion": "sha256:c8bdfb30aa321aa43559fc3bda4cbd203399beb511af76a842ba4f47b385653c",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -793,10 +793,82 @@
           "version": "repo-lines-v1:sha256:04dc7b8a683eb96cbab2ead1aec6c2673bdc7fb13840d5de0789adc83e6c4d7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZjhlYTcxOTFmOGMzMGViZjE3Zjk5ZGRkZWQ1MDUzYmFiYzVmYTVhYTZkOTMzOWZhN2ViOGNiOWE4ZTJlYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNDZhNTUxYjdkZDMzNDI0OTc2MDhhZmIyZTcxN2M5ZDIxZjgyOWU0MTQ4ODE0ZWUxODkxZGUzYzAxY2MzZWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1ZmUxZTBjY2Y2NDZmNzFiZTc4ZWVmNDFhYWRlN2RhYmM4MzQ0MjBiZWYwNjhmYjZjOWYyZDZmYzEzMDU3YWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d4b31ecff95f4bc79aedb5b30e3ab6ce",
+      "statement": "Wiki は共通右ペーン set/toggle で選択し、閉じると null となり以前のペーンを復元しない。左チャットと右サイドバーの表示設定を保持し、右ペーンを開く際は幅2048px以下で左サイドバーを隠す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx#L244-L265",
+          "version": "repo-lines-v1:sha256:51f05bf42fbb36d3a47cbb4626bad7046f2065c41cd86e7522af1f68dff2b4d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNzZiY2ZlN2M4ZDdlZWM4NTVlMDE5NzJjOTUwYzIyZWJmMDg4Yjc0MzE4ZDQ1MTQwYzEwZWRjOGY0MzBjZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljMGE0ZTgyNzliYzllZGNiYWViYjQ2ZTk1MWM4NmIwYzM0OWU4ZTM0ZjJjMGNlNjgyMDQ4MGMyMTU1NDliZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0MzdmOWNlMDhlYzIxNDQyMTUwYWUzMTBjZTY4ZTIwODYyNjAzMWNiNTMxMGExYjYwZTc2Zjc1ZGNhNjM4N2UifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L678-L698",
+          "version": "repo-lines-v1:sha256:e434a380c8ee91ea9bca8ce8b64f9e62c330646389d5ba589bf1772e8cb63ee3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmN2FmOGFmMzc3YWNlMzIyM2ZiMzAzYTM0ZDg2OTM0ODgxMmRiNzRkYWRmN2ExNjczZGM5ZmMyZjBjY2M5NGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0ZjgxYTFjMWE1N2EzNjdmZDcwMzBkZGE3ZGIzNzMxYTMwMGE1ZjkwMDJlNmZkZTQ5MjJjNDg1NzllMTY4ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiMGZiNTBjNzdjMmM5ZmQxZGY2NzlhMTEyYTg2OGFkNmZlOGU3MDg1M2Y5YTA2NTNlN2FkNzMzNjcwOWNhNzQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L279-L279",
+          "version": "repo-lines-v1:sha256:8f088da95f04b382779775a8b24545744164e44509f32ea320ec5ebeaebfb129:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGYwODhkYTk1ZjA0YjM4Mjc3OTc3NWE4YjI0NTQ1NzQ0MTY0ZTQ0NTA5ZjMyZWEzMjBlYzVlYmVhZWJmYjEyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGYwODhkYTk1ZjA0YjM4Mjc3OTc3NWE4YjI0NTQ1NzQ0MTY0ZTQ0NTA5ZjMyZWEzMjBlYzVlYmVhZWJmYjEyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDMwMjc1OTEwMDViODlkMTY0ZjkwYmU2NDQyNzY3NmEzZGUxNzU3MzE1MjliYWI3ODhiYjVjYzMzZTQ2NzA5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzM0ZDQxMzQ4ODk4OTQ2OGM2OTQ0N2FhNzRkYWUzZTI4ZDcxMjM3OTJjYWQ2Mjg0ZTYyNmZjZWM5ZDM5ZTQ5NSJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607",
+          "version": "repo-lines-v1:sha256:e56cf6bfb7233c71b4802ed396d68918fdc91a93b654dd63536a2992a9119d70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYTg5ZWU5NGMyMGM2ZWM3MmM1ZTBmYmIyYzFkNDdhNzdiNmIzN2RhMDQyNWUwODhkNWM1MTkxNjMxYWI0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MGE3MzhhZTAxZTYyY2Q5NDc2NzViNmRjMmZjODEzMGJlNzczMTE3ODdiYzlhZDJmZDNmYzNiNmNmYjY4MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZWYxOTJkMWIzNzNmOGVkNjA0ODdiM2I3NDI2MWVhYTdmOWE0ODIyMTdkZDllYzFlNjNlZTgwZDIxZWI5YTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e8406d5f8d2c41e78a8fdc95bf3b640e",
+      "statement": "Workspace panel の Scratch は mode と左チャット表示 bool を復元し、wiki + false を自動補正しない。由来情報を持たず旧自動非表示と明示非表示を識別できない。右ペーンが null になった際のチャット再表示は layout effect が担当する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210",
+          "version": "repo-lines-v1:sha256:251d872b3162f6038e8ac1e61c50bb5cebe4bdc32a16328f343328174016fdf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyOWRlZjA5MDcxOTM4MGY2Yjg3NTg5NTI4ODk4NmJlZWEwODZmMjZhZDFkOTdkMjk4NDcwMzE2MmRmZWU5YmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NDZmZGFmZTFjNzNiYzRkMjc0ZmI4MWYxOWQ4OWFjOGE1ZTE0Mzc5MDc4MDMyNGIzODMwODIzNDRjZWE1ZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNTFhNDY1ZDQ5NjZjYjI1YmM5MDVkZGEwNjJjMTgzMDhlODQwOWFjOTBlNDdjM2Q5YWQ0NmNiM2RiNDMxNzIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L121-L132",
+          "version": "repo-lines-v1:sha256:3efddf9893cddc956fe2148bc9e2197d20056b0d6510a3ca830ebb93df4a9282:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTg1ODgxYTUzZThlOWJkNTFmMjBkODY4MTBhMmE1ZjRhZTYwNDE0NjQ4ZmQ0MjZkZmM1N2M5NzMzZmVlY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjMGUzM2ZlM2FkMjRlZTRlOGQzYzU5ODI3ZWQ1NDFhMWYyMTNlZGYwMjNhMzUwN2Y0MjI0MDBiYTRmOTk0ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0MTBjMWQyOWI4ZDg3ZWM0OTM3OWVjNjQ4OWNlNmQxZmJjZjQwMzI2ZjI0ZTJmNmVkYTU1OTg0YWVlMmI2YTQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L57-L76",
+          "version": "repo-lines-v1:sha256:b8895ed94d2188937d483a1c87cb1e63f177da052e85c52ba004d6d0930d0ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjOTI5NzFkNzU1MWQzZWEyOTdmYmQyNTUzNTc5YzkyOTBhZmJkYjBmNTM0MzkzYTc4MDYwNmIxYTlmZTc4YjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmMjE3Y2JlZTcwYTM3MDM4NDNkMWY1YjZkOWYzOGI0ZGViOTE4ZTQ2NjBmOGRjNjc5ODliYTU4YTQ3NWNlNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3NTBkYzY5OGViNWEyOWRlZGUzODRkNzQ1MzdmMDk3ZGFiN2UxOGIxYTYyZjYzNmNlZjJiYzA5MDNhOWYyZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkMjJmM2QzODBhZjRkNmUzZGJjMGIyMDdlMGY1MWY4N2RiOGE1ZmM3NzhlM2I5MzM2NmRlZjAyYTZhMWNiZTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L56-L65",
+          "version": "repo-lines-v1:sha256:5b173be7bf982ba0ebee4905ba0629acf00bfd6d7f071a3f793617536f0b5e27:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1YzUxOWIzMDIxODNjNjRmZmI4YmQwYzQyNGY3NWRkMGNiZmExY2MyY2Q5NjgxNGQxNDBmNzAxOTFkYTc1YzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMWQxYTYzMzkwMjI5Yzc5ODM0N2U4M2EwNDA1NDQxYzk0MDAwMzUyODRhZDE2OGMxYmY2Y2RmMWQ3MGEzNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhYzkwOWFmZWI2MTIyYzNkZGU3ZDk0NDNkNDg5NjJmZmEyNmYwNDBhZDIxYjllNTQ5YmM2NzczNzg1MGQyOGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4ZjYwZjNlYTlmZDk3NWU4ZmU4ZGY4MmVmNGU1NGYxOWY4MzdmNGY2MWE1ZjY0N2Q4YWRkYmM0NDQ1ZWRiNjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f56299f09a51449fa7021cd461ca7a7e",
+      "statement": "モバイルの Wiki / Todo は右ペーン mode を選択するが Chat は mobileActiveTab だけを変更し、Wiki の右ペーン選択を閉じない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L173-L183",
+          "version": "repo-lines-v1:sha256:c8baef1c3e23610705b55894e7a219153c341b8064c285f66da61994ca77da68:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwNjk5OTNkMmRlMDIyNGEzNzA1YTY5NTVhNDdlMzgwNDQ1MjYyNmFlNTRhYjZlZjgyNjEzNzIzMTZkNGM3N2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlM2M3MDE0NWQyMDQxZGE1MGNjZDEyNjE1ODZjZTJkYjBjMWJkNTJlNTc2MDdiYjkwNzUzYzZjODFmOGQ5NjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f1607c7f8c141da803d5c045a3727aa",
+      "statement": "workspace-wiki の実アプリ試験は一時 instance の実 API と Wiki fixture でペーン配置・切替・URL/back・reload・desktop/mobile の下書き保持と cleanup を検査し、agent 実行を行わない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/server-access/workspace-wiki.mjs#L1-L58",
+          "version": "repo-lines-v1:sha256:79033658e39e2f4be944ab15211c8148a77b030b6a80e071c1f11446d05ccfe0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YmFhYjg0Njk5NjBlZjg5NDY3NzdiNzFhYThjOTJjZTdjYjI3OWZlMjFlMmFlZDM5MzQ2OWEwZjcwMDJkM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2OGZjODczMTQwYWZjMjM1ZGU4MWRkYjkxMTgwYjkxYTY5ZWQ5NzQ0MDlhZjE0ZDEwOTI1MWVmM2JmOTU1YzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlYjc3MDg1YWQ1OTVmY2UzZGI4YTE0MzVkZTZlODVkZjEzYjY3ZTNmMDk5YWEwNmY0ZjE2MGJmMjhkNTYxYTIifQ"
+        },
+        {
+          "resource": "repo://tests/server-access/workspace-wiki.mjs#L185-L276",
+          "version": "repo-lines-v1:sha256:6fd3b161444d804527c7cadb9a205bee6cdf3782460c0f08ffcd9a5962939dbb:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNmUxMWIwZjIxNWQyZjAyZDMwZDQ5ZjQ0MmJjOTI4ZGYwOTU5NDk0OWM2ZmRjMjgwNmNjNjJkNjcxNDk3MjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZDlhOTY1Yzg0MWJhNzg4YWYxMzQyZTZiNDU5MjRiYjNjNzc1ZWYwZmYzOWFhMmZlYzExZDRlZDYyN2QxYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmNDQxOTIxMDU2MjJlOWRlM2FlMmE4ZTJiY2MyODQyZGEzMTEyNTIzNDczODcxM2UzMmJiMmVlZmJjNWYwNzIifQ"
+        },
+        {
+          "resource": "repo://tests/server-access/workspace-wiki.mjs#L290-L333",
+          "version": "repo-lines-v1:sha256:586d1f003f538148d230f51c72e3eec464a26d72b2ec7d3b1757bd6cda7a96e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMGQ0NGQxNDY0MmFlMzQ4MjM1ZmQ5ZWFmZGEzMDBlZTEyNjU3MTZhMzBhNWJjMWQzYmEzZmEwYWZhODU0NjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyZmVlMGJmZWMwZTc4Mjk3MzNkODA4MzI1YWM1NWQzYWIzMGQ5MjNhZDgzYjM4NmRkZmYwOTg5NTkxZjRmMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:39:12.277Z"
+    "at": "2026-10-21T05:41:24.899Z"
   }
 }
