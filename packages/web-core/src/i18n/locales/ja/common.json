@@ -1260,5 +1260,13 @@
     "project": "プロジェクト",
     "chooseProject": "プロジェクトを選択",
     "integration": "統合 / 自動マージ"
+  },
+  "serverFolderPicker": {
+    "title": "サーバーのディレクトリを選択",
+    "description": "ブラウザ端末ではなく、LVKサーバー上のディレクトリを表示します。",
+    "path": "サーバーのディレクトリパス",
+    "load": "パスを読み込む",
+    "select": "このディレクトリを選択",
+    "browse": "サーバーを参照"
   }
 }

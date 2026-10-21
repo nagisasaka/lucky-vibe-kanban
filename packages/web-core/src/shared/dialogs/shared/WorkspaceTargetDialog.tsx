@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from '@vibe/ui/components/KeyboardDialog';
 import BranchSelector from '@/shared/components/tasks/BranchSelector';
-import { FolderPickerDialog } from '@/shared/dialogs/shared/FolderPickerDialog';
+import { ServerFolderPickerDialog } from '@/shared/dialogs/shared/ServerFolderPickerDialog';
 import { fileSystemApi, repoApi } from '@/shared/lib/api';
 import { cn } from '@/shared/lib/utils';
 import { defineModal } from '@/shared/lib/modals';
@@ -277,7 +277,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
       setError(null);
 
       try {
-        const selectedPath = await FolderPickerDialog.show({
+        const selectedPath = await ServerFolderPickerDialog.show({
           value: path,
           title: t('createMode.workspaceDialog.nativePickerTitle', {
             defaultValue: 'Choose working directory',
@@ -431,11 +431,6 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                   id="workspace-directory-path"
                   value={path}
                   onChange={(event) => handlePathChange(event.target.value)}
-                  onBlur={() => {
-                    if (path.trim() && !inspection && !isBusy) {
-                      void inspectPath(path);
-                    }
-                  }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       event.preventDefault();
@@ -451,6 +446,14 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                 <Button
                   type="button"
                   variant="outline"
+                  onClick={() => void inspectPath(path)}
+                  disabled={isBusy}
+                >
+                  {t('serverFolderPicker.load', { defaultValue: 'Load path' })}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => void handleBrowse()}
                   disabled={isBusy}
                   className="shrink-0 gap-half"
@@ -460,8 +463,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                   ) : (
                     <FolderOpen className="size-icon-xs" />
                   )}
-                  {t('createMode.workspaceDialog.browse', {
-                    defaultValue: 'Browse',
+                  {t('serverFolderPicker.browse', {
+                    defaultValue: 'Browse server',
                   })}
                 </Button>
               </div>

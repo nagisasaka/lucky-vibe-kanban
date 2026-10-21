@@ -5,6 +5,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
 import { useHostId } from '@/shared/providers/HostIdProvider';
 import { useParams } from '@tanstack/react-router';
@@ -37,6 +38,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const appNavigation = useAppNavigation();
   const currentDestination = useCurrentAppDestination();
   const queryClient = useQueryClient();
+
+  const [workspaceTargetRequest, setWorkspaceTargetRequest] = useState(0);
 
   const isCreateMode = currentDestination?.kind === 'workspaces-create';
 
@@ -241,6 +244,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
 
   const navigateToCreate = useMemo(
     () => () => {
+      setWorkspaceTargetRequest((request) => request + 1);
       appNavigation.goToWorkspacesCreate();
     },
     [appNavigation]
@@ -257,6 +261,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       isCreateMode,
       selectWorkspace,
       navigateToCreate,
+      workspaceTargetRequest,
       sessions,
       selectedSession,
       selectedSessionId,
@@ -278,6 +283,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       isCreateMode,
       selectWorkspace,
       navigateToCreate,
+      workspaceTargetRequest,
       sessions,
       selectedSession,
       selectedSessionId,

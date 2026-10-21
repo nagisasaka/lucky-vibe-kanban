@@ -1367,5 +1367,13 @@
     "project": "Project",
     "chooseProject": "Choose a Project",
     "integration": "Integrate / Auto Merge"
+  },
+  "serverFolderPicker": {
+    "title": "Choose server directory",
+    "description": "Directories on the LVK server, not on this browser’s device.",
+    "path": "Server directory path",
+    "load": "Load path",
+    "select": "Select this directory",
+    "browse": "Browse server"
   }
 }
