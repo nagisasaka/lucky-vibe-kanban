@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5c05f93b8951add75cd0565da972f70b38d77ce80a6e731e60f4eec14e736b27",
+  "pageVersion": "sha256:4de8af1788a1369f6abbbb3c55b70d2ef7b50a00bea599e981d88a0df06bfa43",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -390,7 +390,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx",
-          "version": "repo-file-v1:sha256:a227426ebf711c0afec30ea9d688ea8340368e43902daec40624e8edfacb5c8e"
+          "version": "repo-file-v1:sha256:1b49e4cc31585f0d8a78e04b3029cd644b21a71bfa9b3fcc81e6f243c5770444"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts",
@@ -668,17 +668,99 @@
       "evidence": [
         {
           "resource": "repo://tests/chat/editor-display.test.mjs#L75-L141",
-          "version": "repo-lines-v1:sha256:aea3a0a21c4a4f21edc6fc34dcb2b2da41f7c8ed5d75502f9493e62bdfb11e28:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNTQ3OTBlYWZlYjhjZDg5M2RhMTc4NDI1Mzk5ODE2OWM4YTBkMWMxMzc5MWUzMzdmZjBjNDY2OGE5OTg0YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNDRhNWFlNzdmOGY3ODBhYzhlNzc0NThkNDljOWI5ODgzMzBkNWQ3MmI1YTBjZjYxMzQyZGY1YzY3OTkyNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyNTFlZDQyODEzMTgwMGZkNTJhOWE4YzhiNzUzZjg1NzQ5ZjZjOWVjZWNhZGYyYjgzYmRiOTBhMWQwNDEwNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2N2FjYTBmNDVjNmVmM2QzYzk1NjQ5MjliNDhlOTM4MWFjYTVmY2ZmMTA4MzhlNWE2NWRkOTIyYjA3MGJjZTEifQ"
+          "version": "repo-lines-v1:sha256:22d9cf9d5fafab6edec03a2d23cd6a3dd47a599ee6c4525c150f691d53db9259:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNTQ3OTBlYWZlYjhjZDg5M2RhMTc4NDI1Mzk5ODE2OWM4YTBkMWMxMzc5MWUzMzdmZjBjNDY2OGE5OTg0YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNDRhNWFlNzdmOGY3ODBhYzhlNzc0NThkNDljOWI5ODgzMzBkNWQ3MmI1YTBjZjYxMzQyZGY1YzY3OTkyNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyNTFlZDQyODEzMTgwMGZkNTJhOWE4YzhiNzUzZjg1NzQ5ZjZjOWVjZWNhZGYyYjgzYmRiOTBhMWQwNDEwNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2N2FjYTBmNDVjNmVmM2QzYzk1NjQ5MjliNDhlOTM4MWFjYTVmY2ZmMTA4MzhlNWE2NWRkOTIyYjA3MGJjZTEifQ"
         },
         {
           "resource": "repo://tests/chat/isolated.spec.ts#L295-L372",
           "version": "repo-lines-v1:sha256:3b940a680551fd67988b7ce8d3be4362975e75c3435ef4ef769bad240c64ec4c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMWFmYzA5NmQ1NjBjY2I1N2FmNzI0MTZkYzkxMmM2NjAyYzhhYTc2Mzk1YWQ4NzIzNmYyMTExMDFhZWMzNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhNmE1YTc1ZDUyMWFkZGIyMTA1MzJiMTQ0NzZkOWRjMWE4YTQyMGZmNjEwZTFhZDI5OTk5ZTQwYmY5NmU5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwOGU4OTgxODcyYjIyMzUzNTk3YzFiODUwOTdiZDIyOWZlMGQwZDQwNTRlM2JlMzZjYzkyMzE2OGNjYjc0OGUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8a62544e8bbb411ab759ed683ac6d055",
+      "statement": "Sessionと新規WorkspaceのcomposerはEnter送信に固定され保存済みModifierEnter設定を使わず、General Settingsは操作案内を表示する。一方共通keyboard pluginにはModifierEnter modeが残る。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42",
+          "version": "repo-lines-v1:sha256:a120a37948c801bf11b8ff21f7ab8cbdee709b4c2abe78fa0204d3ded7544010:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxZjdiODNmYTEyNzFlNGJkNjQ4ZmQxN2EwMjFkMzdiYmE2NmRlYmQ3ZmRkYzVkNjRmNzk4ZGE2MTkxYTA0YTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4MDNhYzgxMzMwMjk5NGZlYmE4MDJiOGU5ZjkxNWQ2YjZkYmQwMWM0MmNjZTMwY2JhMGUwNmZjYThmYjZiNzQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344",
+          "version": "repo-lines-v1:sha256:920721658adea7745f23e4a66acf8bcc4a81c7a20925c334ce731f629455c386:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTUzOWIwZjY2ZDJmOTdjYjM3MjE1MjYyZjkzMzVkOGQ2OTIyMDhkMGQxZmJlZGQ5ZmUyMjY2NDAwYWNhNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyMGUwZTY4Y2UxMjY2ODI5Y2NiMjQ5N2U4YmRmMzJiZWM4YWUyNjAxMzA3NzgwMjUxNTFlNjY1NGFmMTYzMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiZjc0ODc0ZGE4MGFjNDZhZDEwOWVjMTIyMWExN2U2ODA1YTQyNWY4ZTE4MjRlZDRlYjQzNjgwMWI3MjM5OGIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596",
+          "version": "repo-lines-v1:sha256:38513d43546eaf5fb1205de1c818de7223e3ccb161cfce5d3c35ed5b4e5c78ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiY2ZjZmFlMDQ0MWI0NjNmMjk3MDMzZjk0ZjVkNmI3NTA1ZTM3N2U5NjM0NWEzYjg0ZTQ0NjY4NmFmM2ExMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5YzFhNjg0ZGQ1NzM3ZGRhOTc5ZmY3ZmVkMzQ4ZWM5Mzg3NTMxZTc3ZjBlMDU5YmNhNGVjZjE4NmJhNjEwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZDgzNmM5MDM0YTkyMjk5MjgyMjkwOGU2MDkxMWJiYjZmNWJmMWEzNDU3YzRiNTUyZDYzMWMyZTEyNDYzZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNjZhOTUyNzYwMDlmYjE4ZThhYzczYzRkMmJjZmRiMjY4MjlmOTAwNzc4YTM0MzYwNjMyNmFjZmJjOTc0NjUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L772-L782",
+          "version": "repo-lines-v1:sha256:c82f8a86611d6c0e8d920dc39190f75c85d08731b3b0a4da1796a2ca5f422c95:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmN2MyMmY1YmRhMzUwM2NhNDBkYTYyODg3ZTUwNjZhMTk4NDIyNjJmMWVjODRkYzU2NWRhNmZiMWNkYjMyMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZTA2MmMzZmE2ZWFlYTg0ZTU3YTRlY2ZhNTc4NzEwOGEwMzcyYjliOWY4YjNkMTY4OTcyMjkyMjc0Y2I3YWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NzliNzU1MTYxZDUwNTVmMDVkN2VkNTZkMmZjYTgwNjIxM2YxMTZlMDY1ODFjMDA5YjdkMjRjZTQ2MmIwNjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5f82fa1d2cdb446fac906b623a5a0f63",
+      "statement": "Enter modeではCtrl+Enterは改行、修飾キーなしEnterはrepeat時に送信せず、IME・keyCode229・typeaheadには送信を譲る。送信callbackは状態に応じ通常送信・queue・質問回答等へ分岐する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236",
+          "version": "repo-lines-v1:sha256:12a4f5f525c2cc812b4506bd3915718b068906871d9223243007f9b8d46843b1:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjNmYwNzY0ZGIwYTE4YTE5ZGY1ZTU3YmRlNTkyODBkZTA3YTk1YjBlMTEzZGQ5NTllMWU5NmFhMjJiMzNlMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYmMyODQ5YjQwNjM1NTBmYzYxOTNkODljYjlhOGY4MWVmMTk2MTRjY2U3YmU3YjRmNzMxMzkwN2M1NjlkYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMGVjM2YxNDRlYmNiNzNhNTg4NjcwNTcyZjIzNjExMDkyODEyYTJlNmQ3NjVmNjc2Y2RmN2JhY2FmYjdiMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiZGZiZTliYWRjNmFmYWZiMjM4ZGRhNzgzZWRiNTA3NGIxMjNjZjVkYmIxYmExNmEyOGE2ODliNGE3ZWIyYmMifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/SessionChatBox.tsx#L495-L520",
+          "version": "repo-lines-v1:sha256:8395f24d33828cea6031b0743c3cec14920df81c14adcc4196f8c9f2c0e79b28:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmZjViNmRiNjU4MGU3NzMwMmM4OWI5MzU0ZDYwMDY0OWY2OTQ4ODcwNTY1OGJhOWYyMjljNmE0N2NmMGQzNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhNTQ4ZjJkMDQyNDk1NzM4ZjdlNmQxOTlhMThmZWVhYzQ5YjFlYjk5MmM1MjUyMjYyMWJmNjAzNTI0MmNjNGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ZWRmNTQ1MWZhYTBlZmY2ZDU3MmU3MTViY2U3MDY5MWE4MGY1MjVkYTllMjgwMWYwMzhiMjQ3ODljNjUzY2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2ba5e15925a4f9dac534b31fa528529",
+      "statement": "useSessionSendはhost/Workspace/Session/新規mode単位のin-flight setで同scopeの送信重複を抑え、新規Workspace作成は別の同期refで抑える。いずれもfinallyで解除する画面内guardである。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L58-L159",
+          "version": "repo-lines-v1:sha256:26a90e5609241e5347b98819c4a5037eec5575f6771464ae483c8f0f3c00c5e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkYWJmNDY3OGRkZmUxMmQ3ZjM2NTYzMWU2N2E1MjE2N2VjNGZmMzc3OGZjM2E5NDA1OWQyYTMzN2U5NjBkNDE5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5YjYyZjYwZDg1OTBhNTc5Y2Y0NmY4ZDY3Mzc4YzRjNTcyYjk2MmNlY2NkYjkwYzdhNWY3YjQyYjk2MDc4MmE0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YzA1MGE5OTAwMTg5OTUzZTM3OGRmM2M4NjgzMzY1MGU4ZGY0YmI1YmIwYWRmNWJiM2U4MmU2MDhlZTIzN2FjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0NTkwYTBmZjY4NjA4MDU4ZTYzNjVlMTUzYWM4ZDEyZWYxZWMzNGRmMzdkMzM0YzRhOWFjNmI2MGM4NTcwOGQwIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L395-L474",
+          "version": "repo-lines-v1:sha256:dcef2f582dbc98f19a54201e976c31255cb2eda34faa51fcf1979fc4e07fa0f7:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkMmJhMTgwOWE4Zjg0N2I1NDg4OGRiM2RiMmQyODQ3Mjk4ZWM0OTBhMTcwYWFiYzRlNWQ5ODBjODk2ZDczZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3ZmUwN2Q4YzY2ODcxNDFhMDZhZjczY2I2OWE4YTIzYTQyMTI4N2JhZmExN2Q3YzA5OWY1YTg3YzM3YTExZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0ZThhYTFmNDhiNjlhZjM2MWJkM2NhZjNjNTdjYzk2OGYwNjI1YjgwYzc5MTlmNWM0M2ZlYmY0OGQ2N2Y2NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5MjY0MTJhMjk2MDQzZDlkMmFkZTljYTRmODUzOTM5ZjZkNWUyNGQzYjBlZDQyNjc3N2I2ZDJiOGQ0OGIwOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff34ef9bec304c61a547f01ae70cc783",
+      "statement": "入力操作E2Eは実画面からのfollow-upのSession IDとpromptを検査し、400失敗応答をmockして再送を確認するため、実provider成功を検証しない。IME確認は合成イベントである。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/input-operations.isolated.mjs#L267-L339",
+          "version": "repo-lines-v1:sha256:35beb1f37af0671ef4ae2ab3958fd3dc8fe0348da583772021fa8b649818a125:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkNjMzYzNiYTU3Zjk2ODJkMTEwOWUxMTliZTZlNmQ0ODM1YTU4MDZhZTYxZTZkZmVmNDkxYjliYzdkZjhhNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMDJjM2RlZWU4OGFiOGQ3ZGYwNTc2Y2FjYzU5ZjUzNmVhMjYwNzY4ZGI1OWVlZTAzMWRhZGYyNzQ0NWZjZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNDJiODc0NjY3YThlNTRhNzk5NTJkM2VmNjA1ZjJkZWNhNThiYzFmNDZhYzhiMDQxYjYwNTI0ODExNmVkNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGI1ODA3M2NhZTI2MDNmMzJkMzQyMTc4NGQyYjI4MzUwZjcwMjI5ZTQ0YWIzMTE0Y2I3YWI3OWI2NTkxNDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7fac88bb094d437997097dedfb7330be",
+      "statement": "input-operations隔離E2Eの送信中contenteditable=false期待は現行SessionChatBoxのsending中編集可能契約と不一致であり、isolated.spec.tsの保存済みModifierEnter設定後Ctrl+Enter送信期待も現行Enter固定composerと不一致である。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/SessionChatBox.tsx#L915-L928",
+          "version": "repo-lines-v1:sha256:dff33b4d563a9828226a34d69cff1d308ad150deeb1e7a3027d1a5d88e8972cd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1MTA4ODYyN2Y3NDE1NWFjMjA1MGMwNjVlYzE4MjgwNWI0MDJkZWY5OWNlNTZjZDg1NGQ0YTJiMWE2MGU1OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmM1ODE3NTE0MDk4OGQwY2VlZWY4NjUyZjhkOWJiMWIzYzQzNzQzYmI4Yzk1OGRkZDAyYThkNDBmMzgyZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNmRjNjY4OWU0MmJlMmNiMmU2MWI4YmYyZDQxMDdkNWFhYWViYjI5NDE2MjI5OTA3YTZhNDg1NGFlMTMxNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjZDE5YWRiNWJhY2QxOGU0ZjM3MmY4NWZlZDE0MTM4NDM4YzkwMzUzMzVkZjBjZGFkZWI3NDY1ODNjYjg1Y2YifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344",
+          "version": "repo-lines-v1:sha256:920721658adea7745f23e4a66acf8bcc4a81c7a20925c334ce731f629455c386:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTUzOWIwZjY2ZDJmOTdjYjM3MjE1MjYyZjkzMzVkOGQ2OTIyMDhkMGQxZmJlZGQ5ZmUyMjY2NDAwYWNhNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyMGUwZTY4Y2UxMjY2ODI5Y2NiMjQ5N2U4YmRmMzJiZWM4YWUyNjAxMzA3NzgwMjUxNTFlNjY1NGFmMTYzMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiZjc0ODc0ZGE4MGFjNDZhZDEwOWVjMTIyMWExN2U2ODA1YTQyNWY4ZTE4MjRlZDRlYjQzNjgwMWI3MjM5OGIifQ"
+        },
+        {
+          "resource": "repo://tests/chat/input-operations.isolated.mjs#L310-L330",
+          "version": "repo-lines-v1:sha256:c8f608912c099a3505b025d5381094d51a77d280e84f347020716824a9bdf45e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhZTM4OTI4M2I2YmE2MmZkOTA4MmExMDhkMzFmZmQ5NDA1YjQ3MTc2MmY5YzA3MTE0M2MwOTM5NDk2NmIxNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTMxNGQ4YTNhN2U1MTE3ODc0ODlmZjFlYTIyYjZhODY1ZmM0NWJjNTg5YjdlY2UzODIxNDg1NjFkNDZiYzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3YThhYzlkZWU5ODQzZWY1ZmExMGIwN2IzZmUyNzk3YWM4YWUzNzE2NjA0NmM2NmI2MDIwNDg5MDczMTljODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzMTYzOGYyMTZkMTlkOGM0NzAxYWQ2YWVjODFlYmEyNTEyYjY5ODIzZjkwNDU2MTIzZDhiZGIzYWMxZDFiODUifQ"
+        },
+        {
+          "resource": "repo://tests/chat/isolated.spec.ts#L353-L371",
+          "version": "repo-lines-v1:sha256:04ed4a585b0faef35c779228a4ba0ffad04c7a8b99b54b54fdf0063ab6afb217:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5ODk3YjkzMWVhMmQwZDU1NTFjNTM4YzU4ZGZlN2Y3NGU1YTc1YWQzNWM4NTgzOTgwNTU4ZGFiMjA1OTkzN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyM2ExYjYwYzQ3NWIwMDhiMjQwNTY1ODRmZDdkYWIzMjcwMDNjM2QwNmI4OWYwYzA4OTVkZDg2MmY4YmY5MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzNGNlYmI3MTZiY2MwMjZmNDc2NTFmOTU5ZTM1ZTI1NjYxMjNjNmRiMWM0ZjlkMjk5ZmIwZGM0NTU3NTJlYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4NTI2NmY5YTBkNGE1ZTY3ZGI1ZmU2OTMzYzJiNDY2M2ExZGNhOWFiZWRlYjBhYmM5YWIwNWJmZTRhZjc2ZTMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:49:21.125Z"
+    "at": "2026-10-21T03:55:18.362Z"
   }
 }

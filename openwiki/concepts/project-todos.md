@@ -5,7 +5,7 @@ description: Project に保存する Todo と Issue・実行の違い、Web と�
 tags: [todos, project, persistence, mcp, concurrency]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-21T03:55:18.362Z
 sources:
   - id: openwiki-source-9c3e7b4b0d07a43f862a9bd7
     resource: repo://crates/db/migrations/20261018000000_project_todos.sql
@@ -25,7 +25,9 @@ sources:
     resource: repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx
   - id: openwiki-source-8cbec0ee8d7f6154508744c9
     resource: repo://packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+  - id: openwiki-source-dea540ef1c25316603003cab
+    resource: repo://tests/chat/input-operations.isolated.mjs
+generated: { by: "codex", at: "2026-10-21T03:55:18.362Z" }
 ---
 
 # Project Todo の共有メモ
@@ -60,6 +62,17 @@ Project の Board / Todos 切替と Workspace の Todo panel は同じ Project �
 
 追加 draft と表示先は Zustand のメモリ上に保持し、pane 切替では残るが、DB に保存した Todo と同じ永続性は持たない。編集は開始時 revision を保持し、競合で再取得しても入力を自動上書きせずエラーを示す。追加失敗でも draft の ID を保持する。[画面状態](../../packages/web-core/src/features/todos/model/todoViewStore.ts)、[追加と編集](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L41-L68)、[編集 revision](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L182-L235)
 
+### 追加 UI の入力契約
+
+追加欄は Enter で追加し、Ctrl+Enter で選択範囲を改行に置き換える。IME composition 中・keyCode 229 の Enter は追加に使わず、キー repeat でも追加しない。Ctrl+Enter は16,000の入力上限を越える挿入を拒否する。既存項目の編集 textarea はこの追加専用ハンドラーを使わない。[追加操作](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L98-L139)・[既存項目の編集](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L264-L296)
+
+Enter と追加ボタンは共通の submit 検査を通る。空白だけの本文は送らず、カテゴリが空・空白だけならエラーを表示し draft を保持する。**カテゴリ必須は追加 UI の要件**であり、保存モデル・REST・MCP の任意カテゴリ契約を変更しない。既存未分類項目の表示・編集も残る。[共通検査](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L49-L77)・[保存検査](../../crates/db/src/models/todo.rs#L82-L86)・[REST](../../crates/server/src/routes/todos.rs#L43-L59)・[外部 MCP の作成](../../crates/server/src/remote_mcp/todos.rs#L154-L176)。この境界は [LOCAL-26 の仕様判断](../../tests/chat/input-operations-validation.md#変更と仕様判断)にも記録されている。
+
+追加開始時に同期 ref を立て、React の pending 表示前の連打も抑える。pending 中は本文・カテゴリ・ボタンを無効にし、成功時だけ draft を消して一覧を再取得する。失敗時は本文と ID を保持し、成功・失敗のどちらでも settled で ref を解除する。これはその画面内の重複抑止であり、上記の保存時 ID 照合を代替しない。[guard と結果処理](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L42-L77)・[入力の無効化](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L105-L165)。同じ Enter / Ctrl+Enter の操作でも、[チャットの送信中 draft](session-and-agent-run.md#送信中の編集と-markdown-正規化)は編集可能であり、Todo の pending と区別する。
+
 ## 変更時の検証入口
 
 [モデルテスト](../../crates/db/src/models/todo_tests.rs)は並行 revision、所属、文字列、完了・再開、pagination を確認する。[MCP テスト](../../crates/server/src/remote_mcp/tests.rs#L1191-L1300)は scope・receipt再送・revision を確認する。[隔離 E2E](../../tests/todos/isolated.mjs)は実 backend、Web、stdio を組み合わせる検証入口である。これらの存在は今回の実行結果や実 ChatGPT 接続成功を意味しない。
+
+
+入力操作の [隔離 E2E](../../tests/chat/input-operations.isolated.mjs#L183-L264)は空本文・カテゴリ必須・合成 IME・改行・repeat・保留中の重複追加を対象にする。Todo POST は遅延だけを制御して実 backend に通し、保存済み本文と件数を REST で照合する。チャット側は失敗応答の mock であり、[現行の編集可能契約と試験期待の差](session-and-agent-run.md#入力操作の検証範囲と未解決点)を別に扱う。開発時の [実行記録](../../tests/chat/input-operations-validation.md)は過去の結果で、この Sync は製品テストを再実行していない。

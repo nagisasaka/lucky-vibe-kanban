@@ -78,6 +78,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/goalElapsed.ts
   - id: openwiki-source-14cc0373faba797a6e4d1fdd
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
+  - id: openwiki-source-08c30c5f079994cddbe25a3b
+    resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
   - id: openwiki-source-e3ad3a00ca485cc7e1958008
@@ -86,6 +88,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx
   - id: openwiki-source-f0616990372eebb94bc69e6f
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
+  - id: openwiki-source-649882ab70d5bba1d79459a5
+    resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
+  - id: openwiki-source-6d0dfae3c1582e1af83405d4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
   - id: openwiki-source-2e251355ae5f41eedc1e63cc
@@ -96,6 +102,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
   - id: openwiki-source-53a9c69af17738e7a2b63de9
     resource: repo://tests/chat/editor-display.test.mjs
+  - id: openwiki-source-dea540ef1c25316603003cab
+    resource: repo://tests/chat/input-operations.isolated.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
   - id: openwiki-source-f2e3f1d703b1fe9ce39ce327
@@ -104,10 +112,10 @@ sources:
     resource: repo://tests/run-elapsed/isolated.mjs
   - id: openwiki-source-854d9f0ac30502f5da093e06
     resource: repo://tests/run-elapsed/README.md
-generated: { by: "codex", at: "2026-10-21T03:49:21.125Z" }
+generated: { by: "codex", at: "2026-10-21T03:55:18.362Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:49:21.125Z
+    at: 2026-10-21T03:55:18.362Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -242,6 +250,27 @@ Markdown editor への外部値読み込みは、末尾改行などを正規化�
 キー送信は editor の最新 Markdown を `flushSync` で親へ反映した後、ref に保持した現在の送信 callback を呼ぶ。flush 前の closure では更新前 snapshot を送信対象にし得るためである。IME 中の Enter / Ctrl+Enter 抑制は維持する。[flush 後の callback](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L150-L171)。これらは表示・draft ACK の変更であり、[永続 steering の保存と表示順](../architecture/web-and-sync.md#永続会話と-live-の順序)とは別の責任を持つ。
 
 変更時の editor fixture は、末尾改行付き外部値の読み込みと送信成功、同値のキー flush、失敗時入力、送信中の追加入力、focus と IME を確認する。built-app 試験でも実 Scratch と制御した follow-up 応答を使うため、実 provider の通常 follow-up 成功を証明するものではない。[editor 試験](../../tests/chat/editor-display.test.mjs#L75-L141)・[built-app 入力試験](../../tests/chat/isolated.spec.ts#L295-L372)。今回の静的照合と開発時の実行記録の区別は [チャット検証境界](../architecture/web-and-sync.md#チャット表示の検証境界)を参照する。
+
+### Enter 操作と重複送信の境界
+
+既存・新規 Session の composer と新規 Workspace の入力は `sendShortcut="Enter"` を明示するため、保存済み `send_message_shortcut` が `ModifierEnter` でも Enter 送信になる。General Settings は選択 UI を持たず、Enter で送信・Ctrl+Enter で改行という案内を表示する。共通 keyboard plugin 自体は `ModifierEnter` を引き続き扱うので、アプリの指定と共通部品の既定値を混同しない。[Session の指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)・[Workspace 作成の指定](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596)・[設定表示](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L772-L782)・[共通部品の既定値](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42)
+
+Enter mode は Ctrl+Enter を明示的な line break に変換する。IME composition・keyCode 229・typeahead 表示中は送信処理を譲り、修飾キーなしの Enter の repeat は消費するだけで送信しない。Ctrl のない Shift / Meta / Alt 付き Enter はこの送信処理の対象外である。flush 後の callback は現在の画面状態に従い、通常送信だけでなく実行中の queue や質問回答などへ分岐するため、Enter が常に新しい AgentRun を作るわけではない。[キーの分岐](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236)・[状態別操作](../../packages/ui/src/components/SessionChatBox.tsx#L495-L520)。[Todo 追加](project-todos.md#追加-ui-の入力契約)も Enter / Ctrl+Enter を使うが、カテゴリ検査や pending 中の編集禁止は Todo 側の責任である。
+
+`useSessionSend` は host・Workspace・Session・新規 Session mode の組を scope とし、await 前に in-flight set へ登録して同じ scope の重複送信を拒否する。新規 Session 作成と既存 Session follow-up の双方に適用し、finally で解除する。新規 Workspace 作成には別の同期 ref guard があり、作成処理と draft cleanup を囲んで finally で解除する。いずれも hook / component 内の抑止であり、別タブ・別 client を含む永続的な冪等性や backend の実行受付を保証するものではない。[Session の guard](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L58-L159)・[Workspace 作成の guard](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L395-L474)。解除後の再送可否と、成功 ACK で消してよい入力の判定は別であり、後者は上記の scope・revision・content 照合に従う。
+
+### 入力操作の検証範囲と未解決点
+
+[editor fixture](../../tests/chat/editor-display.test.mjs#L127-L150)は Ctrl+Enter の改行・repeat 抑止と共通部品の ModifierEnter mode を検査する。[入力操作の隔離 E2E](../../tests/chat/input-operations.isolated.mjs#L267-L339)は実 Workspace 画面から送る Session ID と複数行 prompt を調べ、follow-up だけを保留後の400応答へ置き換えて再送を確認する。実 agent/provider の成功や OS 日本語 IME の手操作は検証しない。Todo の保存境界は [Todo の検証入口](project-todos.md#変更時の検証入口)に置く。
+
+統合済み source と試験期待には二つの不一致が残る。
+
+- `input-operations.isolated.mjs` は送信保留中の `contenteditable=false` を要求するが、現行 `SessionChatBox` は通常の `sending` 中も本文を編集可能にする。[試験の期待](../../tests/chat/input-operations.isolated.mjs#L310-L330)・[現行 editor](../../packages/ui/src/components/SessionChatBox.tsx#L915-L928)
+- 既存 `isolated.spec.ts` は設定を ModifierEnter に変えた後の Ctrl+Enter で追加リクエストを期待するが、現行 Session composer は Enter に固定され、Ctrl+Enter は改行になる。[旧設定に依存する期待](../../tests/chat/isolated.spec.ts#L353-L371)・[固定指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)
+
+これらは静的照合で見つけた不整合で、今回実行して失敗を観測したという意味ではない。[LOCAL-26 の開発時検証記録](../../tests/chat/input-operations-validation.md)の成功を、統合後 checkout の試験成功に読み替えない。試験期待と現行契約の調整・再検証は未解決であり、この文書保守では source や tests を変更しない。
+
+今回の通常 Sync は凍結 source `a1c1fd694851904f4f68eddbbc93dfd5de89bd9b` の入力操作変更を対象に、共通 keyboard、各 composer と送信 hook、設定 UI、Todo の REST/MCP・保存モデル、独立した fixture / E2E の入口から照合した。正式 Integration の検証は明示的に省略されている。製品テストは再実行しておらず、無関係な過去の Wiki 全体を再検証したとは扱わない。
 
 ## Plan の遷移
 
