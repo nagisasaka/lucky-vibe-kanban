@@ -1053,6 +1053,12 @@ async fn monitor_process(
         cause = ExitCause::WaitFailure(error.to_string());
     }
 
+    // Codex's control peer retains AppServerClient -> LogWriter -> stdout.
+    // No further controls are processed after leaving the loop. Release that
+    // writer ownership after process cleanup, so EOF can arrive while we drain
+    // the remaining output instead of waiting for our own handle's lifetime.
+    drop(control);
+
     let drain_result = tokio::time::timeout(PROCESS_OUTPUT_DRAIN_TIMEOUT, async {
         while !(stdout_closed && stderr_closed) {
             match notices.recv().await {
@@ -1366,6 +1372,147 @@ mod tests {
             terminal: AtomicBool::new(false),
             shutdown: Notify::new(),
         })
+    }
+
+    // Codex's control peer owns AppServerClient -> LogWriter -> stdout pipe.
+    // Keep a real writer in the control handle to reproduce that ownership.
+    #[cfg(unix)]
+    struct OutputOwningControl {
+        _writer: Mutex<Box<dyn tokio::io::AsyncWrite + Send + Unpin>>,
+    }
+
+    #[cfg(unix)]
+    impl std::fmt::Debug for OutputOwningControl {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str("OutputOwningControl")
+        }
+    }
+
+    #[cfg(unix)]
+    #[async_trait::async_trait]
+    impl ExecutorControl for OutputOwningControl {
+        async fn send(
+            &self,
+            _: DirectControl,
+        ) -> Result<Vec<u8>, executors::executors::ExecutorError> {
+            Ok(Vec::new())
+        }
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn terminal_drain_releases_control_owned_output() {
+        for success in [true, false] {
+            let root = tempfile::tempdir().unwrap();
+            let host = test_host(&root.path().join("host.jsonl")).await;
+            let writer = Arc::new(Mutex::new(
+                NativeAuditWriter::create_in(
+                    root.path(),
+                    NativeAuditMetadata {
+                        session_id: Uuid::new_v4(),
+                        agent_run_id: Uuid::new_v4(),
+                        turn_id: Uuid::new_v4(),
+                        run_attempt_id: host.run_attempt_id,
+                        run_attempt_number: 1,
+                        provider_id: "codex".into(),
+                        runtime_profile_id: "test".into(),
+                        workspace_path: root.path().display().to_string(),
+                        runtime_version: None,
+                        protocol_version: None,
+                        adapter_version: "1".into(),
+                        mapper_version: "1".into(),
+                        created_at: Utc::now(),
+                    },
+                )
+                .unwrap(),
+            ));
+            use utils::command_ext::GroupSpawnNoWindowExt;
+            let mut command = tokio::process::Command::new("/bin/sh");
+            command
+                .args(["-c", if success { "exit 0" } else { "exit 1" }])
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped());
+            let mut child = command.group_spawn_no_window().unwrap();
+            let mut output = executors::stdout_dup::create_stdout_pipe_writer(&mut child).unwrap();
+            // A raw audit frame avoids provider decoding in this ownership test;
+            // the final buffered bytes must be retained before terminal.
+            output.write_all(b"final audit bytes\n").await.unwrap();
+            output.flush().await.unwrap();
+            let stdout = child.inner().stdout.take().unwrap();
+            let (notices_tx, notices_rx) = mpsc::channel(64);
+            // ChildStdout and ChildStderr are distinct types, so read this pipe
+            // directly and persist it before announcing EOF to the monitor.
+            let audit = writer.clone();
+            let reader = tokio::spawn(async move {
+                let mut reader = BufReader::new(stdout);
+                let mut bytes = Vec::new();
+                use tokio::io::AsyncReadExt;
+                reader.read_to_end(&mut bytes).await.unwrap();
+                assert_eq!(bytes, b"final audit bytes\n");
+                let result = audit.lock().await.append_native_output(
+                    NativeAuditChannel::Stderr,
+                    "text/plain",
+                    Uuid::new_v4(),
+                    &bytes,
+                );
+                let _ = notices_tx.send(OutputNotice::StdoutClosed).await;
+                let _ = notices_tx.send(OutputNotice::StderrClosed).await;
+                result
+            });
+            let (_commands_tx, commands_rx) = mpsc::channel(1);
+            let started_at = Utc::now();
+            let started = std::time::Instant::now();
+            monitor_process(
+                host.clone(),
+                DirectProvider::Codex,
+                Uuid::new_v4(),
+                child,
+                None,
+                None,
+                None,
+                Some(Arc::new(OutputOwningControl {
+                    _writer: Mutex::new(Box::new(output)),
+                })),
+                writer.clone(),
+                notices_rx,
+                commands_rx,
+            )
+            .await;
+            let elapsed = started.elapsed();
+            let tail = reader.await.unwrap();
+            eprintln!(
+                "terminal drain success={success} start={started_at} end={} elapsed_ms={}",
+                Utc::now(),
+                elapsed.as_millis()
+            );
+            assert!(
+                elapsed < Duration::from_secs(2),
+                "control-owned writer forced drain deadline: {elapsed:?}"
+            );
+            tail.unwrap();
+            let manifest = writer.lock().await.manifest().clone();
+            assert_eq!(
+                manifest.integrity_status,
+                NativeAuditIntegrityStatus::Complete
+            );
+            assert_eq!(
+                manifest.frame_count, 1,
+                "tail must be audited before terminal"
+            );
+            let response = host.response_after(0).await.unwrap();
+            assert!(response.terminal);
+            // Exit code zero alone is deliberately NOT provider success proof.
+            // Releasing a writer must not weaken that classification either.
+            let expected = if success {
+                AgentRunStatus::Crashed
+            } else {
+                AgentRunStatus::Failed
+            };
+            assert!(response.events.iter().any(|event| matches!(
+                &event.payload,
+                HostEventPayload::Terminal { status, .. } if *status == expected
+            )));
+        }
     }
 
     fn test_payload(host: &SharedHost) -> HostEventPayload {
