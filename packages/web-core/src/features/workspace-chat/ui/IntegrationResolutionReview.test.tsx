@@ -81,3 +81,32 @@ describe('merge resolution review', () => {
     expect(html).not.toContain('<button');
   });
 });
+
+it('discloses mechanical details but keeps missing explanation and validation visible', () => {
+  const value = {
+    ...run,
+    payload: {
+      ...run.payload,
+      validation: [],
+      reviews: [{ ...run.payload.reviews[0], explanation: '  ' }],
+    },
+  };
+  const html = render(value);
+  expect(html).toContain('<details>');
+  expect(html).not.toContain('<details open');
+  expect(html.indexOf('integrationReview.missingExplanation')).toBeLessThan(
+    html.indexOf('<details>')
+  );
+  expect(html.indexOf('integrationReview.notValidated')).toBeLessThan(
+    html.indexOf('<details>')
+  );
+});
+it.each([
+  { ...run, cancel_requested: true },
+  { ...run, payload: { ...run.payload, publication_intent: true } },
+])(
+  'does not offer approval once cancellation or publication starts',
+  (value) => {
+    expect(render(value)).not.toContain('<button');
+  }
+);

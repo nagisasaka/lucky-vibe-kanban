@@ -24,6 +24,8 @@ export default defineConfig({
       { find: "shared", replacement: `${root}/shared` },
       ...[
         "react",
+        "i18next",
+        "react-i18next",
         "react-dom",
         "react-hotkeys-hook",
         "@tanstack/react-query",

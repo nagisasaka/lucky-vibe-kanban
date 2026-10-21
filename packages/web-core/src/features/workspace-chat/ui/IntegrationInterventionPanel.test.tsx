@@ -67,11 +67,9 @@ describe('Integration instructions', () => {
         },
       })
     );
-    expect(render()).toContain(
-      'Unverified — all integration validation skipped'
-    );
+    expect(render()).toContain('integrationReview.unverified');
     fixture.run!.payload.skip_validation = false;
-    expect(render()).not.toContain('Unverified');
+    expect(render()).not.toContain('integrationReview.unverified');
   });
   it('uses the existing steer endpoint and preserves command identity on resend', async () => {
     render();
@@ -101,16 +99,19 @@ describe('Integration instructions', () => {
       expect(fixture.steer).not.toHaveBeenCalled();
     }
   );
-  it('offers no instruction dispatch during publication', () => {
-    fixture.run = {
-      ...fixture.run!,
-      status: 'publishing',
-      payload: { ...fixture.run!.payload, publication_intent: true },
-    };
-    expect(render()).toContain('disabled=""');
-    expect(fixture.steer).not.toHaveBeenCalled();
-    expect(fixture.intervene).not.toHaveBeenCalled();
-  });
+  it.each(['publishing', 'recovery_required'])(
+    'offers no instruction dispatch during %s',
+    (status) => {
+      fixture.run = {
+        ...fixture.run!,
+        status,
+        payload: { ...fixture.run!.payload, publication_intent: true },
+      };
+      expect(render()).toContain('disabled=""');
+      expect(fixture.steer).not.toHaveBeenCalled();
+      expect(fixture.intervene).not.toHaveBeenCalled();
+    }
+  );
   it('shows the unexecuted plan, its development evidence and grouped environment findings', () => {
     fixture.run = {
       ...fixture.run!,
@@ -148,3 +149,68 @@ describe('Integration instructions', () => {
     expect(html).toContain('<details open=""');
   });
 });
+
+it('does not offer instructions that cannot change a frozen review candidate', () => {
+  fixture.run = {
+    ...fixture.run!,
+    status: 'blocked',
+    payload: { ...fixture.run!.payload, stop: { category: 'merge_review' } },
+  } as IntegrationRun;
+  expect(render()).not.toContain('<textarea');
+  expect(render()).toContain('integrationGate.cancel');
+});
+
+it.each(['publishing', 'recovery_required', 'blocked'])(
+  'shows uncertain publication and suppresses controls with intent (%s)',
+  (status) => {
+    fixture.run = {
+      ...fixture.run!,
+      status,
+      payload: {
+        ...fixture.run!.payload,
+        published: false,
+        publication_intent: true,
+        result_commit: 'candidate',
+        validation: [],
+        stop: { category: 'merge_review' },
+        reviews: [
+          {
+            id: 'review',
+            candidate: 'candidate',
+            step_index: 1,
+            explanation: 'Preserve both changes',
+            diff: '+ both',
+            decision: null,
+          },
+        ],
+      },
+    } as IntegrationRun;
+    const html = render();
+    expect(html).toContain('integrationPanel.reconciling');
+    expect(html).not.toContain('integrationReview.notPublished');
+    expect(html).not.toContain('integrationReview.published');
+    expect(html).not.toContain('integrationReview.approve');
+    expect(html).not.toContain('integrationGate.cancel');
+    expect(html).not.toContain('<textarea');
+  }
+);
+
+it.each([
+  [false, false, 'integrationReview.notPublished'],
+  [true, false, 'integrationReview.published'],
+  [true, true, 'integrationReview.published'],
+] as const)(
+  'shows publication with published=%s, intent=%s',
+  (published, intent, expected) => {
+    fixture.run!.payload.published = published;
+    fixture.run!.payload.publication_intent = intent;
+    const html = render();
+    expect(html).toContain(expected);
+    expect(html).not.toContain('integrationPanel.reconciling');
+    expect(html).not.toContain(
+      published
+        ? 'integrationReview.notPublished'
+        : 'integrationReview.published'
+    );
+  }
+);
