@@ -48,22 +48,34 @@ sources:
     resource: repo://crates/server/src/routes/sessions/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
+  - id: openwiki-source-7151ac14cb4570c5c04781dd
+    resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
   - id: openwiki-source-28f588bd26222b42bea70c77
     resource: repo://docs/development/codex-execution-observations.md
   - id: openwiki-source-23db569cee004f42315c9f61
     resource: repo://docs/workspaces/sessions.mdx
+  - id: openwiki-source-e4d0ff0d72ea9774e1af777c
+    resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
+  - id: openwiki-source-a46d1ceab41257b518aa5a4a
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts
   - id: openwiki-source-6f68befb805cadf03e4b569b
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
+  - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
   - id: openwiki-source-f133883544522a7fa5fc57b2
     resource: repo://packages/web-core/src/features/workspace-chat/model/canonicalAgentControls.ts
+  - id: openwiki-source-dd21d5cad7649302ce861cfc
+    resource: repo://packages/web-core/src/features/workspace-chat/model/goalElapsed.ts
   - id: openwiki-source-14cc0373faba797a6e4d1fdd
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
+  - id: openwiki-source-c294940cc86e5328c123d83c
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx
   - id: openwiki-source-f0616990372eebb94bc69e6f
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
@@ -74,10 +86,16 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
   - id: openwiki-source-bfcca8eb0acec96215c9bf83
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+  - id: openwiki-source-f2e3f1d703b1fe9ce39ce327
+    resource: repo://tests/chat/run-elapsed.test.mjs
+  - id: openwiki-source-a41f30f4cf117b514c91218b
+    resource: repo://tests/run-elapsed/isolated.mjs
+  - id: openwiki-source-854d9f0ac30502f5da093e06
+    resource: repo://tests/run-elapsed/README.md
+generated: { by: "codex", at: "2026-10-21T03:43:44.672Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-21T03:43:44.672Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -116,6 +134,28 @@ Session の設定復元は最新 RunAttempt の immutable launch request を読�
 Retry は前回の設定・capability snapshot・Skill を引き継ぐ。設定を変えて別の仕事を始める操作と混同しない。制御リクエストも command ID、冪等キー、相関 ID を持って永続 command service を経由する。[retry 固定値](../../crates/local-deployment/src/agent_run_port.rs)、[制御 API](../../crates/server/src/routes/agent_runs.rs#L348-L373)
 
 Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[正式 Integration](formal-integration.md#競合だけを有限の-agent-job-にする) の競合処理は source ごとの新規 Create を使い、一般 Retry で次の source を実行する仕組みではない。
+
+## Run の経過時間と Goal 会計
+
+Board の最新 Run とチャットの各 Run footer の経過時間は、AgentRun の `created_at` から現在 attempt の保存済み `finished_at` までの壁時計時間である。活動中は現在時刻との差を表示する。実プロセスの開始時刻や CPU 使用時間ではなく、Pending、入力・承認待ち、Cancelling、同じ Run の retry を含む。Retry では起点をリセットせず、新しい Follow-up の Run とは合算しない。API と画面への経路は [Web の時間表示](../architecture/web-and-sync.md#run-の時間表示を同期状態から分ける)を参照する。[時刻の取得](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[Run ごとの計算](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)
+
+### 終了の証拠と再接続
+
+永続化では attempt の `finished_at` が未設定のとき、終端 state の時刻を一度だけ保存する。後続イベントが projection の `updated_at` を進めても終了時刻を更新しない。したがって `updated_at` を終了時刻へ流用すると、完了済み Run の表示時間が増える。[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1775-L1794)・[単一 event 保存](../../crates/db/src/models/agent_runtime.rs#L2099-L2119)・[遅延 event の回帰テスト](../../crates/db/src/models/agent_runtime.rs#L3210-L3267)
+
+チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
+
+共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。終了根拠がない非活動 Run や開始時刻が不正な Run は時間を表示せず、ブラウザーの mount 時刻で補わない。再マウント時も timestamp 差から再計算し、ローカル加算 counter を復元しない。活動中はブラウザーの時計を使い、負の差は0へ丸めるため、精密な provider 稼働時間の測定ではない。[表示と時計](../../packages/ui/src/components/ChatElapsedTime.tsx#L11-L69)
+
+### Goal の時間は別の値
+
+Goal の `time_used_seconds` は provider 報告値であり、Run footer の壁時計時間へ置き換えない。Goal card は Goal と Run がともに active のときだけ報告値へ経過秒を補間し、非活動 Run では `Recorded time` として保存された報告値を表示する。Goal のない Run にも footer があり、二つの値が異なること自体は異常ではない。[Goal 表示](../../packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx#L54-L98)・[補間条件](../../packages/web-core/src/features/workspace-chat/model/goalElapsed.ts#L1-L15)
+
+### 検証の入口と限界
+
+変更時は、DB の遅延イベントテスト、[canonical projection の時間テスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L769-L904)、[制御時計を使う browser component テスト](../../tests/chat/run-elapsed.test.mjs)、[隔離 API・SQLite・WebSocket・画面のテスト](../../tests/run-elapsed/isolated.mjs)を別の境界として読む。隔離テストも provider 記録は合成であり、実モデルの時間精度を証明しない。再現手順は [run-elapsed README](../../tests/run-elapsed/README.md)に置く。
+
+[開発時の検証記録](../../tests/run-elapsed/VALIDATION.md)は成功した試験と、`cargo sqlx` 未導入で metadata 検査前に失敗した `prepare-db:check` を区別している。今回の Sync は凍結 source `2b95298fc4efba657c676644a57bafa620b9e017` の実装・テスト内容を静的に照合したもので、製品テストは再実行していない。凍結入力では正式 Integration の検証は明示的に省略されており、開発時の成功記録を統合候補の検証成功と扱わない。無関係な過去の説明全体を再検証したという意味でもない。
 
 ## Provider session の継続と取り込み
 

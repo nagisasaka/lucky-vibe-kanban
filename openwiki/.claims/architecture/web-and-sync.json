@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:455e038fd40253721baa1ae66d8d0d08fb59c33a633c32f4901235772ed8edfa",
+  "pageVersion": "sha256:c0be67a1b2a791205adc9689e21da781780213b20aff80c593e7c2f33739cb17",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -125,8 +125,16 @@
       "statement": "Workspace UIは実行用途を別一覧へ分離せず、summary集計で実行状態を示し、用途変更を詳細cacheに反映する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaces.ts",
-          "version": "repo-file-v1:sha256:7b25daf7de563f0a40b995ce3c75699bb7397f6e4a310d505f25fab1516b481e"
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaces.ts#L196-L225",
+          "version": "repo-lines-v1:sha256:66d19321001c91c86094753d64e22883ae7e125aaabd7375a69724b3bb9aeed2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNWMzYWE2NGZjOGZhNzM0MmI3NmU2MGRkYzIzM2I5MmJhZjFmYWY4ZGFiZDliOTA3MTQ4YmVhYTc5NTJkMGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3NzFlN2UwOTVjYzM1NjYxMjc3MzA4YzI1YzVhZDNjYWU0NTFhMzRlZDk5ZDUwM2NjOGQwMWI1Njc1MTI0MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4MjQ2NGIyYzcxMTc1MDNiYmY5NzZhYTM4MjIwNjczM2Q2NDJmYWJiMGFkYzZiODBjZDY3YjQ4MmRlZjYwZjEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89",
+          "version": "repo-lines-v1:sha256:e5c38894e651da9b7c2bb05eebe6ffa6390121b348cad71cf73c43e51998cebd:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMWQxYTYzMzkwMjI5Yzc5ODM0N2U4M2EwNDA1NDQxYzk0MDAwMzUyODRhZDE2OGMxYmY2Y2RmMWQ3MGEzNzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2OGVmN2MxOWFiMGNlOGE3NDZjNGMxNmFkMzdhMTZmZjJlNzBlZjIyYTMwNDA3YjFmNzU2Y2JkODE5NWU0NGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwODJhZmFjMmUyOGIzNjY5N2I2MWU4MThjZTE1YWJlZTI5YjZlY2U3MTYyMDRhNmZmNjMyNWM3NDk1MjQwMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhYzQwMDNjMGNhMmIyZjNlZmYwZDNmM2QzNjIzYWYxMjA1ZDcxNmViM2M0MWI4Yjg3OGY2YzJiYmY4MTEwZTIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L72-L97",
+          "version": "repo-lines-v1:sha256:96929f859656ea4048495d9078fa7eaade208b99ba59d34e68da5e138cf3e28f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMDAyYWIzMWU4YjcyNWU1YTE1MWM0ZGJiODM2MGEzZGZiMTg2NmY2MDAwYjQ4NjUwMjY2YTQ0NGY0MGUwZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzMTNjZWIxNzM2YjkwNmVmZGYzMTM2ZDYxOWVhYThkYzcxYWMyZTllMDkwMDg2YzE1ZjFjZWRiZjNjN2YwZWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2ZGNkMmU0NDMwMThlNjRiY2IzOWQzNjhlNDRhNDNhYzBiM2E5M2NjMmM2ODk2MzdlY2VkZTJlYzFkYmJmMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NzgwNTExOGJiYjVjMjQ1Yzc2MGM3Y2E2ODQ2MWI3ZWUyZWJmMDZmMzY3M2ZjMGE2MGQyMjk2MzNmNDJlMzAifQ"
         }
       ]
     },
@@ -271,10 +279,60 @@
           "version": "repo-file-v1:sha256:a80de7474943eb7ef9b37becbb97427439e1dda69fcf5603f6c24e9e4a3423dd"
         }
       ]
+    },
+    {
+      "id": "claim_68774cb8ccc04b4d860fe70f64ead2d7",
+      "statement": "Board summaryのlatest_process時刻は作成日時・ID降順の最新AgentRunを対象とし、開始はcreated_at、終了は終端時の現在attempt.finished_atから返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L323-L357",
+          "version": "repo-lines-v1:sha256:ddb354f378355066b5b8c064ad1b1a1c596fc60a9269d85ef201a3bae88d9fc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkOTFmZTA5ZGZiYjU4YjMxOTAwZjMyZjBjMjIyYWI5NDJlNDhjNDgzN2FhOTlkNTFmZDczYmZlNGE4YzRhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiOGU5NzgwMDUwMmY5ZDUwYTY1OWI0M2ZjZGZhNTdmODM3M2E3ODllMTg2YmZiMWFhMTY1Njk3MmFiYjcyY2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzZDY3MjBlYTk0YzAxYTIyOGI3NGFhZjQ3Y2VmNDE3ODc2ZWJmYzM1MDZlYTQwNzg0MDU3OGE2NTQ1MzgxY2QifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192",
+          "version": "repo-lines-v1:sha256:9676e89b56e956fc1730853491bdf7ae8f0b99430b26154ad3cfd563d64e334e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0ZTNjN2Q2M2YxOWEwYjJiZWJlZjM1ODAzYzg1ZDQzMDVhNjUzZjEzNGY0NDYxMzJhNDExZjYzMmZkNDg0N2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMGNjNzZjMDdhY2Y2MmUyYTRkYWIyYWMzMDAxM2M1ZWEzYWM3ZTNjNzgzZjk0ODJkY2M2MzQ4ODQ4ZTQyNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNDliNTEyZGEwZjdhNWJhYTFkMGY2M2RhZTdhMjA5YmUwZDM2MWVkZDJhN2NiYjVkNjE0N2NjMGU1NWJjMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNzdjYzA5N2I2NTc2YWQ5MmEzZmViOTEwYzlmN2U1M2E5ZDlhNzFhZjJkM2UxOTQ3ZjMyZTE0MDI5NzU2NWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f30e7062a0494699b487820a180bace3",
+      "statement": "Workspace一覧は初期stream取得後にsummaryを15秒周期でも取得し、カードの経過時間は最新Runのstatusを用いるため、Workspace全体のrunning集計と別の表示となる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/workspace_summary.rs#L85-L134",
+          "version": "repo-lines-v1:sha256:68af1eb320a229bf00255569604b7342f506ab96d7d491f8f0f49c7f8c53ed75:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NjI2Y2I4OTg3YWU5YjE2ODBjOTBhYjkxMjAzZGUwZjY1M2U5NzBmOGQ1NDUxOTU3OWM2M2QyNDA4MDJiYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNDQxM2ZjYTUzZmFlMzI5MzQ3MmM3Y2E0M2U0MGNlZTU4Njg3YWI1NTAyMGEwNTk2MjE5ZTJlMzBhOGNhZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllODM1ZGU2MWZiMWQ3ZmJkODVhZTEyMjE2MDY2NjUyYjFjZjIxMDE4ODNmYTY1ZmRlYWQxZjc3NmY3NmQ3NGIifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275",
+          "version": "repo-lines-v1:sha256:cf8d14ba4b658d9174fc361e5b10ff8b2bfb9788d7fba1acfc1022128e82e5a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNWM0MTljMGNjMWNjZjMzNjBmMmVkOGUwMGI1YTQzNWJkZWFmYmYyOTNhZDNjZjJmMzVjYTdhMTUzOTEwZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ODNlODNhNjM2NzFlMjhjOTVmZmVmZjA2NTA3ODE3MzU1Mzk3OTBlNTU4MTU1YTk1ZGZiYzJlYjA0ZTQ2NTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2N2JkNGQ1ZTc5OTRhNTQ4YzhjNzBmOWQ5Yzc2MTc4MmFjNDY4M2EyYjg5ZGM1MThmN2IxYzIyMDQ0YTc1YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkOTI2M2YzZGU3MTFkOTAyZDlmZTIwZTBhNmYxMTcxZTYyYzgwZmJkZmYyNDFiMTY2YTMxZGRlMDRiNzNhYjUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194",
+          "version": "repo-lines-v1:sha256:08b8a66f1e69aa92632687e4df07c09d6cf0357a0791a45bfde4e1dbd241d332:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkN2UyYjY1NTliYzdmYjIyNTQxZWUwMjY3ZDBjYmY4YTIxNDdmODBlZDJmNDI1NjRlNDJlYmZhNzgwNWM0MzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMjk3MDg4ODMyNDYyMTY0ODAzYmY2OTAyM2Y3ZjMwMzU3Y2U3MTEyMzBmN2YyZWFlMmVmMGY5OWEwZjA2OTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiODFmOGU3NTg2N2IyMDYxMjczZDllMTJhMzNhYTMzMjZjNGMwYjQ1MzE3NDAyZGNiZWJlMzY4ODc3YjMyM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3YWQ4ZGI4OGI3ZTNjZTQwNmVhN2ZhNWIyYzJkNTkyMmUzNGUzMmNmMjdhMjU0NjEyY2I5OTdkZGUxYjZhNDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8212ef3a8a81486c8a799fff9bc0df28",
+      "statement": "SessionのRun一覧は現在attemptのcompleted_atを返し、会話projectionはGoalの有無と独立したRunごとの時間footerを作って共通ChatElapsedTimeで描画する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/agent_runtime.rs#L201-L237",
+          "version": "repo-lines-v1:sha256:41514569b14546a502dfe334e13eebb1154a97a637038e295d4a6596715928a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YmE1MTAyMWRkNDJmZDFiYmNiODVmYTM4NmEzNWJiYWViNTRhNTM3YzljZTQ4MjVjMDNlODVkY2ZlMDk0MTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjODFjMzVmMTM5YzNjMzQwYWVlNTA1ZmI4NjAxZWNiYTQyYmFiOGEzOTU5ZmQ5NjdiN2ZjZmVkMDhjNTkxZGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlYzBlMmMzYmViOGIxYmYwZjAzMjdkYzUxYThlYzliY2Q5MjEwZGUyZjI5ZmFkNTUyZjI5NTc1ZWZiMTYzYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMWEwOGQwNTJhYTg2Y2ZkZDA3ZjEwYzM3ZjczZTliMjNhMWMwNWUzZDM0OWEwNjBhNTVlN2Y1ZGVmODk1ZWEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679",
+          "version": "repo-lines-v1:sha256:a7c1c46c1566fdf041b7544d3fd4be7a5692e40b2f45eb08e5aa2f2995370215:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwYjFkMDg3MzY0MTIwM2QyNjMzZTZhZWRlYzk2NDk0ZWJlNmQ5MzQ5MzBmYzFmZWFjYzdlYmExNTdjM2U5MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmMDY5ZGRiNWI4M2FkMmMyN2JhZTc2MTViOTQwNzAyZTViOGE4YzQyNDYyNDk4Mzc5MmU1Yzg3OWQxMzcwMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82",
+          "version": "repo-lines-v1:sha256:4332bf06c68c648197469fe2184052887d89e0d10552c67009522cfaeb1192c4:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGY4YjI4NGU0ZWI2Njk4YWIzMjdlZDFjNzBjY2ZiMzU4MTNjMjgzNzZlYzViZjM1NjVhNTkzZGRlNDlmOWJiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjkxZTg1NWRjNzUyYjQzODNiM2EwMDY0ZGUwNTNkNTBmMzdmZjY5NDI0NzQ4ZThiNzE1MmU3YWYzMDExNWMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmEwYTU5ZDA3ZTFlN2VlZjIyZDgyYmE5OThkMWM5M2M4ZDQ5YmNjNWIxNGVhODEyZWQ3MTYyOTE0OTdhOWJiYSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-20T17:16:45.724Z"
+    "at": "2026-10-21T03:43:44.672Z"
   }
 }

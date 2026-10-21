@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ceedf5e4b5dc64238371c5dd65cd58f8d0464e865ab527dec774555fd9c41f4c",
+  "pageVersion": "sha256:145dc882bdde215ca222bd0f1730031ed405a8fd9bc80ac6f01cac94ee171166",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
       "statement": "Session は Workspace 内の会話であり、AgentRun は依頼、RunAttempt はその実行試行を別識別で保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L31-L92",
-          "version": "repo-lines-v1:sha256:4fc4d6e362757f0705be875ff78ec4f063d408ea410d2c3a4f15b3db32eab9ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyNDNjYWExNzQzNjM0NmM4NTZmYWJlM2YxNGIyZjA2OGM5MzQxN2I4NjFiYWQ2YzJlZTI5ZGU0N2U1OWRmYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MjUwODc4MmM5OTZlZTMxNDE5OGZlYTJmNjE2MzFjZDczZTc2N2ZiMDVlYjZlZjY4MWZhZDg5MTZiZjFlMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTdjNWU1ODRlZjdhY2E0NGU0ZjlhN2U3YzI1ZGU1MDZlZmJmNTZiZjAyMGZmZmY2NjJhMmI5M2M3ZWZmNjQifQ"
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L47-L110",
+          "version": "repo-lines-v1:sha256:c19128e13c24eb7365102b1fc9363066033ede0005495024facd1b82057e7de7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyNDNjYWExNzQzNjM0NmM4NTZmYWJlM2YxNGIyZjA2OGM5MzQxN2I4NjFiYWQ2YzJlZTI5ZGU0N2U1OWRmYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MjUwODc4MmM5OTZlZTMxNDE5OGZlYTJmNjE2MzFjZDczZTc2N2ZiMDVlYjZlZjY4MWZhZDg5MTZiZjFlMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTdjNWU1ODRlZjdhY2E0NGU0ZjlhN2U3YzI1ZGU1MDZlZmJmNTZiZjAyMGZmZmY2NjJhMmI5M2M3ZWZmNjQifQ"
         },
         {
           "resource": "repo://crates/db/src/models/session.rs#L22-L31",
@@ -523,10 +523,102 @@
           "version": "repo-lines-v1:sha256:00b54c2774c6e2d3204cbb32ab7829a08f804a094cde6c02cdcd86491b0a7d76:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkY2EwZTgxMGQ2OGFlYThkNzZjMWY1YzgxNmMxMGM0NThlYjg5YzVlNzQxN2FjNWIyNmRhOGM0ZDMxYzk1NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NjBlOTljYTdjNTRiYzQyYjIxZTM2ZjRkYThjNWJlYjIzYjkwZjBjYjU2MjkyNWM2MDY1OTdiNzE0NTg3NGMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_cb991f9c3b944f578cf9c2b2c0bfcc2b",
+      "statement": "Runの経過時間はcreated_atを起点とし現在attemptの終了までの壁時計時間を示すため待機・同じRunのretryを含み、別Runとは合算しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/agent_runtime.rs#L201-L237",
+          "version": "repo-lines-v1:sha256:41514569b14546a502dfe334e13eebb1154a97a637038e295d4a6596715928a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YmE1MTAyMWRkNDJmZDFiYmNiODVmYTM4NmEzNWJiYWViNTRhNTM3YzljZTQ4MjVjMDNlODVkY2ZlMDk0MTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjODFjMzVmMTM5YzNjMzQwYWVlNTA1ZmI4NjAxZWNiYTQyYmFiOGEzOTU5ZmQ5NjdiN2ZjZmVkMDhjNTkxZGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlYzBlMmMzYmViOGIxYmYwZjAzMjdkYzUxYThlYzliY2Q5MjEwZGUyZjI5ZmFkNTUyZjI5NTc1ZWZiMTYzYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMWEwOGQwNTJhYTg2Y2ZkZDA3ZjEwYzM3ZjczZTliMjNhMWMwNWUzZDM0OWEwNjBhNTVlN2Y1ZGVmODk1ZWEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L769-L904",
+          "version": "repo-lines-v1:sha256:df991dca1eebf7ad19d7a0ccfff7b41a17018d13b51ca1be51b6e013f1ccf01b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlMzk1N2I5MWM3ZDBiNDRiYjIxNWM1NTc4ZjhiMzc5YWQ2NzBhYWEwODU3ZTExZDViYzQ1OWE2MDU4MmIzNjk5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNzc5ZDExOGQ2ZTNjYmY0NTA1Mzk3NDhkZWU3YTQzMDdhY2JlNjQ0NmNiYTI5N2YyNzYwZmE1ZDBiYmExYmMyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679",
+          "version": "repo-lines-v1:sha256:a7c1c46c1566fdf041b7544d3fd4be7a5692e40b2f45eb08e5aa2f2995370215:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwYjFkMDg3MzY0MTIwM2QyNjMzZTZhZWRlYzk2NDk0ZWJlNmQ5MzQ5MzBmYzFmZWFjYzdlYmExNTdjM2U5MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmMDY5ZGRiNWI4M2FkMmMyN2JhZTc2MTViOTQwNzAyZTViOGE4YzQyNDYyNDk4Mzc5MmU1Yzg3OWQxMzcwMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_72ea3c73105f4775964c9a2583fbdc1e",
+      "statement": "attempt.finished_atは未設定時の終端で一度だけ保存され、後続イベントによるprojection.updated_atの更新では変更されない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1775-L1794",
+          "version": "repo-lines-v1:sha256:610759fb1c789499b29cdcc71e10a0fc8b5e4b5b7b62387262df83fd3a346da7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwNDFlMjk3ODQwNjE2MDdjMDQ1NjkzZGNiNjVjM2E1MWQxZDIxY2E3MWE5N2FiOTI2MDgyMmI1NjhjZDBkZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1Y2EyODlkNjc4NzY1Yzk4MTMwMTM2MzhlMDI2Njg5MzY4ZTg5MzljMWNkMGFkYzgyNzVjMmU3OWZhMmM0MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5YmRhMjc1YTI0NzUzYTg0OWNiYzA5M2M0N2Y2NTdjNTYwYWI5YWQwY2YyOWIzNjJjMWE2OTRhMmRiZGFkZjMifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L2099-L2119",
+          "version": "repo-lines-v1:sha256:fc1a851068d6f9fbaee067404ef57642dd71858ffcb67f1862e54ef895bf3630:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2N2RmOTU0NTI2MDdmYWI4NGFhZDM2YmJjMDlkYjU4MDA4YWQxNTZjZjQxOTM1Zjk3NGIzN2U0YTAzNzk1NTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkZDI2NmYxMzNiMjFhY2IwYjZlMGU5ZTE3MjdlZGRkNTMzMDJjNTk1MjQ1ZTU3OGJhYjczYzUzYzIwNzk1YjIifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L3210-L3267",
+          "version": "repo-lines-v1:sha256:743a5de8e16ffab7041ed1da9c4d994ee87096223e32da679e6dd698d19931b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlZmRkNzEyODUzNTUyYmU4OTQ0OTliNWZkNzZiOGE1MjYwMDc1YmQ4MjllNzM4N2NhMWNkNzQ4MTAyZTdkN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwMmI5M2MyYjFiM2FiMDJiMjYyODU3ZTJkMTYyMGYwZmE4OTRjZTBlYzhiMzRiMzI1ZjhjMzc0YzRjMGY4MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMGFlMzczMjJiMjEzNjA3NTlhN2FhYjBmZmMzMTVlZTJjNzkzOTZiOWIwMWYzNTY3MmRiMzMxYjEzMzA5YzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NWZkMTFjNzk1NzRlNzY3N2I3ZWY4M2U3ZjQ5ODA5OGIwYTkyZDlkYzNhOTcwNjQ2ODA0MmM1ZDc4NjQ3YjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2d08b628162240db9cb8e3ce9553b8a3",
+      "statement": "チャットの時計はattempt番号・event sequence・更新時刻で新しいstateを選び、終端時は一致するattemptのsummary.completed_at、次にterminal lifecycle event時刻を使い、新retryへ前attemptの終了時刻を引き継がない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679",
+          "version": "repo-lines-v1:sha256:a7c1c46c1566fdf041b7544d3fd4be7a5692e40b2f45eb08e5aa2f2995370215:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwYjFkMDg3MzY0MTIwM2QyNjMzZTZhZWRlYzk2NDk0ZWJlNmQ5MzQ5MzBmYzFmZWFjYzdlYmExNTdjM2U5MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmMDY5ZGRiNWI4M2FkMmMyN2JhZTc2MTViOTQwNzAyZTViOGE4YzQyNDYyNDk4Mzc5MmU1Yzg3OWQxMzcwMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406",
+          "version": "repo-lines-v1:sha256:527c0900d367a98e5f4709faa50a1c31a181ac0c107402ee8abf6e13fcabf5b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhNjExYWQ2Yzk2ZGY0NmM1ZTA4OWM1MzNhYTZhNWIyMDFjYmFlNTU5NTUyMmRjYWU5MzI0Yzc4YjY2MTlhYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmN2FkODgyN2UwM2RkZTEwNTJjZTk0MDdjNjYzMDY2ZDliMjM5MmU2MzdlOTFhNmUxNDc0MjlhZTUyNDUzMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiMTA2NGVjNjMxZDRhNzE2YjRhYmRiYTA1ODEzNmFiNzhjNjU2ZTNlMzdiZTFkODAzNjM5ZGY3YjQzMjFmZTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_eb01df6c84544aeca8522a868a023698",
+      "statement": "ChatElapsedTimeは有効な終了時刻をactive flagより優先し、開始不明または非活動かつ終了不明なら表示せず、ブラウザー観測時刻で終了を補完しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ChatElapsedTime.tsx#L11-L69",
+          "version": "repo-lines-v1:sha256:5f5b59d9237fb8029b5677a544ee6fed60811a8386cf83b79c1ac7241010232e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3YTliZWVlYTA3M2U5MDQyNDRjODExZmI3MzA3ZWFlNjhlOWJlNGRmZTk5NjlhMzcxZDM1OTI5YjdjYjliOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwYmM3NmRiMGQ4YTkyYWExYjJhZmUzZWFjZTJlMmJlZGQzNWExNmJlYmI0ODI3YWMwYWZkMTUwNjQ2OWEwNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZjM2Yjg5N2NjNjExODc0YmM3ODVlYzQ3YmZkMjUwMWZhMzViZDE2NTI4ZjgxNzNhYzRjZmNlOTZjNjhjMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmMzAyM2VjYWIxZTM0OGIzNjVhYWEyMjA2MjM3ZTlhZmZkNzA0MTcwMDBiNzMxMGRiYmMxYmUxNmE2MjczZGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d4a142e8fcd94238bc8f156a05e735c5",
+      "statement": "Goal cardはprovider報告time_used_secondsをRun壁時計とは別に保持し、GoalとRunがactiveのときだけ補間し、非活動Runでは保存報告値をRecorded timeとして表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/goalElapsed.ts#L1-L15",
+          "version": "repo-lines-v1:sha256:fdadd7bbb141e131234e6982b205fd8d02e45b52167cb2e28a677861a6a57f91:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NmI1YzVlZDAxMzM0NmM5MjRmZTQ3YTBhZTM3YTc1MmQ1YjE4MTlhZGUxMTIzZTRlMmZiOTdkNzAzZDM2ZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx#L54-L98",
+          "version": "repo-lines-v1:sha256:76aaa28707300c744254f7881a714965979377334b25dc36e9686efa4a83147e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjODU3NjM2ZDE3MDQxYWRkYzEwMzBkNjY4ZTA4NzAyNTQ3MWMwM2U4N2UzOGI5NzA0Y2ExNDcxOTViYjk0MTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0NDRhMzFkOGVjN2U4OGY4NTU3MTUyNmJmMjdjOTU4ODIwZGZmZDI5ZjY4NTIxZDBjMDViNzcwNWExZjE4YjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NzNkMGFhOGQyMWMzMjMwODgwYTE3MjVmYmNmY2U3ZGNkMTE3YzBlMjkwMmEyOWI3MzFkYzJmZmYxM2Y5N2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NmY2NjU1YjczYjU5OGIwZWY5ZTIwYzhjMDI2N2I0ZTYxM2U0ODE5MWQwMTRlZjM0OWZlNGNiMDY2MTM1YTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_55fe59860e7a45d4bf09ee29fc95a779",
+      "statement": "run-elapsedのcomponentテストは制御時計とcanonical fixtureを使い、隔離テストは実API・SQLite・WebSocket・built UIを使うがprovider記録は合成である。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/run-elapsed.test.mjs#L7-L35",
+          "version": "repo-lines-v1:sha256:b4e3eb9b9942c19a184f27dcf7f1d9ff441839ead150db23cd4cc8d17bf9bf03:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwODMwZTRmZmI4NWE5ODhlZTM5NjQwMzg5ODIyMjA5MWQ3YzlhMjQ0OWNhNGVhMTRiMWE4ZmU2N2M2NGIxZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZjEyNmRiYWY0MWQwOWZlZDllYWVmN2M2NWMzNzNlZjAyM2RiODAxODkwMmQyNWQ4ZWNhMzFkNDE1MmNiMWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NTQwYzhiNzI0NDQ1MTM3MmYxYWM0ODdmMGQ4MDM2MDk2NTM1ODY1NzFjZDgzNTQ0OWY2YjQ1N2Q5Njc0YTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhOTNiMzBlOTU1ZjFmOWQxOGNiYzRlYTg4NGE0NTM1MDQyODRkZmMyZjIyMThmMjc2NTc2YTM0YTRhZjNmYjQifQ"
+        },
+        {
+          "resource": "repo://tests/run-elapsed/README.md#L19-L31",
+          "version": "repo-lines-v1:sha256:55da57158c71dcae91290462c6568faaac3ad777b6e7b064316f91475706e96b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NDcxNmRhYjEyMzdiYzM2ZWYzNGE5NWJlZWY5NDJlYzQ3MWE5NWUyYmU2MTk2MDYwNjMwMDRkOWU2NDM5YzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNjFiNmQzZDcyNjRiNzUwMWNmYWE4N2QzZjI1MTc5N2RkODMwNmJmYmU0ZjEwMWQzMDdiMGQ2MzFiYjJkM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOTdiYjNkM2JmYmUyOTBjNWM4ODA5MDJkYzhlNjllOTZlZjViMWUzZDIyYjllMTZlNzAwZTE5MzA5ODQ2NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjMDg4YzRjZjdkODE3MzQ1MTMzZDFlOTQ3ZDlmZDg3M2E2YjA0NDJmYzhlODM3MzUyMTcwNjdkNzRkOGY2NTEifQ"
+        },
+        {
+          "resource": "repo://tests/run-elapsed/isolated.mjs#L1-L52",
+          "version": "repo-lines-v1:sha256:8cb84a07259c4afa4163372dc7e47ab6f45c5f08b4c40299896fb0045c49e1aa:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0YTU0NzQ2YTgwYTM4MzdkMzFkZTMyZDliMTk1MGZhZjhhNDg4ZjIxODg2N2U4ZTU3MmEwZmM3ODE5OWU4NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwOWIyOTljYTZjNDc4Y2JmODg5OTNlZjY3YTI2ODI5YjdlN2U2ZDFhZTI0ZGM0ZWQ2Y2ZjYjA0ZjI3OWYwYzIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:28:49.332Z"
+    "at": "2026-10-21T03:43:44.672Z"
   }
 }

@@ -6,10 +6,16 @@ tags: [frontend, synchronization, electric, transport]
 sources:
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
+  - id: openwiki-source-d20a82e2192a07c687b838cb
+    resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
     resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
+    resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
+  - id: openwiki-source-7151ac14cb4570c5c04781dd
+    resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-10897c55284ee23ee2d4e388
     resource: repo://packages/local-web/src/app/auth/pushReturn.ts
   - id: openwiki-source-a4deecf361e70bd3b2703d13
@@ -20,12 +26,18 @@ sources:
     resource: repo://packages/local-web/src/app/entry/App.tsx
   - id: openwiki-source-f5c8f8cc45fdf36d98b214ce
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
+  - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
+    resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
+  - id: openwiki-source-6f68befb805cadf03e4b569b
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
+  - id: openwiki-source-cd106619cfd7af68eb9464fc
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-2fb74c0fc81d817149606557
@@ -60,12 +72,14 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
+  - id: openwiki-source-3b6f5885b9d50925c82267dd
+    resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-21T03:43:44.672Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-21T03:43:44.672Z
 ---
 
 # Web の実行環境と同期
@@ -116,6 +130,14 @@ AgentRun stream は Electric ではない。サーバーは Live を先に購読
 
 会話 projection は表示用 entry に変換しても AgentRun、RunAttempt、event ID を保持する。この識別を外すと、別 attempt の表示と制御が混ざり得る。[表示 identity](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L25-L73)。永続化・一時差分・劣化時の詳細は [Agent Runtime](agent-runtime.md)に集約する。
 
+### Run の時間表示を同期状態から分ける
+
+Board の Workspace summary は、Workspace ごとに作成日時と ID の降順で選んだ最新 AgentRun の `created_at` を `latest_process_started_at` に返す。`latest_process_completed_at` はその Run が終端のときだけ現在 attempt の保存済み `finished_at` を返す。`latest_process_*` という互換名は旧 ExecutionProcess の時計を意味しない。[最新 Run の選択](../../crates/db/src/models/agent_runtime.rs#L323-L357)・[API の組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192)
+
+`useWorkspaces` は一覧 stream に summary を重ね、初期化後に15秒周期でも再取得する。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
+
+Session 側は Run 一覧の `completed_at` を受け、会話 projection が Run ごとに一つの `runTiming` footer を生成し、`ConversationListContainer` が共通の `ChatElapsedTime` を描画する。Goal 専用表示に依存しない。[Run 一覧](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[footer](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[描画](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82)。待機・retry、終了根拠の欠損、再接続時の新旧比較、Goal 会計との違いは [Run の経過時間](../concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)を正本とする。表示のための新旧比較を、stream cursor や実行制御の変更と混同しない。
+
 ### 最近の会話を先に表示する
 
 Session の購読は新しい2件と全 active run を foreground とし、その初期化を待って会話を公開する。残る履歴は foreground の準備後、前 batch の初期化またはエラーを待って3件ずつ追加する。既に開始した stream は新しい run の到着でも保持し、Session が変わると keyed component ごとに状態をリセットする。`isLoadingHistory` は初期表示の loading と別であり、古いログの遅延だけで最近の会話や制御を待たせない。[購読と公開](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L278)、[遅延履歴・active run・Session 分離のテスト](../../tests/integration-skip/history.spec.ts)
@@ -138,7 +160,7 @@ Wiki を開くことはチャットや AgentRun の終了ではない。`Preserv
 
 ## 統一一覧と実行予約
 
-Workspace 一覧は execution_only を恒久的な別カテゴリへ分離しない。stream の用途変更を詳細 cache に反映し、実行予約解放後に通常の操作へ戻れる。running 表示では最新一件だけでなく summary の実行集計を優先する。[一覧](../../packages/web-core/src/shared/hooks/useWorkspaces.ts)。予約と解放条件の正本は [Workspace](../concepts/workspace.md#操作用途と実行所有者)である。
+Workspace 一覧は execution_only を恒久的な別カテゴリへ分離しない。stream の用途変更を詳細 cache に反映し、実行予約解放後に通常の操作へ戻れる。running 表示では最新一件だけでなく summary の実行集計を優先する。[一覧](../../packages/web-core/src/shared/hooks/useWorkspaces.ts)・[用途変更時の詳細 cache 無効化](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L72-L97)。予約と解放条件の正本は [Workspace](../concepts/workspace.md#操作用途と実行所有者)である。
 
 予約中は inspection panel が owner view と Stop を扱い、現在実行中の Wiki agent には追加指示を送れる。owner query は host / Workspace をキーにし、取得失敗を空の成功へ変換しない。[owner view](../../packages/web-core/src/shared/hooks/useWorkspaceOwner.ts)・[指示 UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L159-L175)。backend も所有者を再検証するため、古い画面の操作権限を信頼しない。
 
