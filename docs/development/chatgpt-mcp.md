@@ -124,6 +124,7 @@ is exported.
 | `get_project`, `list_project_statuses`, `list_project_sessions`, `list_issues` | Project ID; bounded status/counts, Issues and current Sessions/questions |
 | `get_issue`, `list_issue_workspaces` | Project/Issue IDs; paged requirements or distinct 1:N Workspace attempts |
 | `get_workspace`, `list_workspace_runs`, `get_execution` | Project/Workspace and selected run/section; actual lifecycle, input/final response, Goal usage and evidence links |
+| `get_resource_observation` | No arguments; bounded on-demand Linux system-visible statistics and separate cgroup limits |
 | `list_run_events` | Exact Project/Workspace/Session/Run; saved commentary and safe execution metadata, bounded cursor pages |
 | `list_run_commands`, `get_run_command` | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion |
 | `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK |
@@ -303,3 +304,66 @@ secret classifier or a way to sanitise arbitrary file/tool output. It cannot
 prove that otherwise ordinary prose contains no sensitive information. The
 returned prose is untrusted reference data and never evidence of tests passing.
 Source logs, existing UI rendering and `get_execution` remain unchanged.
+
+
+## Observe server resources on demand
+
+Call `get_resource_observation` with `{}` and the existing `lvk:read` grant.
+This server-wide read needs no Project ID or additional OS permission. It returns
+schema version 1 with `timestamp` (collection start), `completed_at`, `scope`,
+`system_visible`, `cgroup`, `completion` and `errors`. Files are read sequentially, not as an atomic snapshot. All values are observations,
+not reservations, scheduling decisions or guarantees of future execution safety.
+If LVK itself freezes, this MCP cannot respond either.
+
+Each numeric field is `{status: "known", value: ...}` or
+`{status: "unknown", error: ...}`. A cgroup limit explicitly containing `max`
+returns `{status: "unlimited"}`; unreadable, malformed and missing values never
+mean zero or unlimited. Valid fields survive errors elsewhere, including timeout.
+`completion: "complete"` means collection ended, not that every field is known.
+
+`system_visible` contains:
+
+- `memory_total_bytes`, `memory_available_bytes` (Linux MemAvailable, not MemFree),
+  `swap_total_bytes` and `swap_used_bytes` from `/proc/meminfo`.
+- `online_cpu_count` from `/sys/devices/system/cpu/online`. This is logical online
+  capacity, not idle CPUs or a promise of CPU allocation to this process.
+- `load_average`: the 1, 5 and 15 minute averages from `/proc/loadavg`, never CPU percentages.
+- `cpu_usage.percent`: aggregate non-idle counter delta from `/proc/stat`, with
+  `sampling_duration_ms` reporting the measured interval (normally about 500 ms;
+  null before a sample completes). Idle and iowait are treated as idle; guest
+  counters are not double-counted. Counter regression or zero delta is unknown.
+
+The scope is always **system-visible**, which may be a VPS guest or container
+view. The environment type is explicitly `unknown`: these statistics do not
+reliably identify virtualisation or establish visibility into the physical host.
+System-visible memory/load/CPU percentages can exceed or differ from a container's
+allocation; do not interpret them as container-local usage or available capacity.
+
+For `/proc/self/cgroup` equal to `0::/` and `/proc/self/mountinfo` confirming a
+cgroup v2 root mount at `/sys/fs/cgroup`, the fixed namespace-root files
+under `/sys/fs/cgroup` provide `memory_current_bytes`, `memory_max_bytes`,
+`cpu_quota_cores` (`cpu.max` quota/period), `cpuset_cpu_count`
+(`cpuset.cpus.effective`) and `effective_cpu_bound_cores`. The latter is the minimum
+of online CPUs, a known quota (or explicit unlimited) and the effective cpuset;
+it is unknown if any required input is unknown. Hidden ancestor limits remain
+unknown and can further reduce capacity. A namespace-root `max` does not prove
+that every ancestor is unlimited. cgroup v1, nested process membership and other
+mount layouts are unsupported/unknown; the tool never substitutes mount-root
+statistics for a known nested process cgroup. There is no estimated memory headroom.
+
+Collection reads only fixed Linux statistics paths, accepting at most 64 KiB
+per file (one extra byte detects oversized input). The
+fixed output contains only numbers, timestamps and constant labels/errors, with
+an enforced 8 KiB JSON limit; it never includes raw files, process lists, arguments or filesystem paths.
+At most two dedicated worker threads per server process are admitted, without a
+waiting queue. A busy caller gets a retryable tool error. The response deadline is
+two seconds, preserving received fields. Sampling never occupies Tokio's common
+blocking executor. A worker retains its slot until it actually exits, including
+when a caller disconnects or times out; a stuck kernel read cannot accumulate
+unbounded workers. No daemon, history database, UI, automatic admission or stop
+policy is created. Authentication and the normal MCP audit remain unchanged.
+
+Validation uses parser/collector fixtures and timeout/concurrency tests. The
+ignored `resource_observation::tests::live_smoke` test is an explicit small live
+read, without stress or environment changes. Live Auth0/ChatGPT connectivity and
+other operating systems are separate from fixture coverage.

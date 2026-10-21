@@ -1,5 +1,12 @@
 [
   {
+    "tool": "get_resource_observation",
+    "arguments": {},
+    "scopes": [
+      "lvk:read"
+    ]
+  },
+  {
     "tool": "get_connection",
     "arguments": {},
     "scopes": [
