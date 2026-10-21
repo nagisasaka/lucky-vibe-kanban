@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9ab2c0f1ca4a4019f6254c9c814413a02818d9ee7b22342da477e812d276f4c4",
+  "pageVersion": "sha256:b3256a0e2687dcc5274b24bd64ed64c793aa038d72e7e01a20dd526b6cdf93ab",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -128,7 +128,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:cac1dc11b3fa4e974f6deab7413aa94ef75f42d510c1921bed94a80b8075ff59"
+          "version": "repo-file-v1:sha256:d3d9abe2abbfc0ad418674a091e42c95883516928df3bbf55f1e9f7356200a72"
         },
         {
           "resource": "repo://deploy/developer/updater.py",
@@ -229,10 +229,72 @@
           "version": "repo-lines-v1:sha256:942336e8110b8e9c418f0ca49df1ebc0bb05e869275977c8befe499c45d10d0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyM2U5ZGY1N2IwMzE4MzBiODJkMDIyNzNjZDI0MzM1MzlmNjJkNmM3MzFhMzU3M2Y5OWJiYWIwZWY2NzI0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWIyNTNjNWY5NjAxN2VhNmU1ODhkYjUxMWMyM2Q2MTAyNDhhZTdhNDExZDI1MzJiYWNiMjIwMGNiYTU3MjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliNzU2ZWZjNTU0N2IyYzEzM2I1MjZlZjcwM2MyNjgxNWFjNDNjOWJhNzU4ZmJlMDkwZDgxMjgxNWRjMmE0OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhZmJlYjE3MmUyMmI1NWE0NjIzODE1ZDU2NzE3YmQxYjExZTAyYTUwNTllMDBhZTAwYWNjNzBjMjNkYzM5ZmUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_15d6394b5148488cb35af8a824a80649",
+      "statement": "server build identityはbuild.rsのrustc-envで固定され、APIはenv!から読むためruntimeのcheckoutやLVK_BUILD_*に依存しない。versionはCARGO_PKG_VERSIONを維持し、revision不明では任意build_infoを省略する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/build.rs#L18-L36",
+          "version": "repo-lines-v1:sha256:6a855a4847e7f423e9736d1d00951f772ec366dd79c8929bcf18988a2d5d0a05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjZTNjNzg4MmRiMGNmN2M5YTg2YTM0N2EwZGZjMTliNmQxYTBiODJkNjFiMzAzNmI2MzBmMTY4ZmM5ZDRjNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NjhlNjZhMzFkMTUyNDNjOTMwMjU2NzkwZTA5N2UxOTA3ZGMwYWI5MjU2ZDAxNjdmZWQ0Yjk0ZmMzODMxZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NzUwODc3OTI4YjU1NWYyODE3MDI2MjFjMTA5MzM4NzA1NzY0NDI1YjVjMjI5M2ZjYjg4YTRkYmY4NzhiNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNTc4NGE3OGJlZGRlMzkxNzE1ZTMxNzk0ZTQxZGYxMDI1OTc4YTM4NmU2MzA4YjI3ZTcxYzNiNTE5ZWI3NDAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L93-L156",
+          "version": "repo-lines-v1:sha256:681266270887773c90e9313be90bc44c5f5e1a1572db2c3151897c791c18a42a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmMWIzYzM4ZjA3MWYxOGNjNGQwOWIxYmRjMzllYTk4YTRhYWQ2ZmM1OGY0NDRkOWI5MmFjNmIxMzdhMzYyOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzYWU4N2M3ZjYwZWIyYWQ0ZDA4ZmRhMjFkODIxMWQ1MTJmMTk1ZjczNjNkNDNjZmEwMjYyZWQ3OTI1ZjkzYmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1be0f952b72b47d28e8b657f70af5a0d",
+      "statement": "LVK_BUILD_REVISIONの明示値は空でもGit fallbackを止め、他の欠落入力も補完しない。未指定だけはcanonical source rootとGit top-levelの一致を要求し、HEAD・未追跡を含むdirty・developmentを取得する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/build_metadata.rs#L25-L55",
+          "version": "repo-lines-v1:sha256:ff89c9f7761d81637dbb64b754c8a656796faa84480ee8ad46dbabd4d0148724:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4NGQ2MDc0MDExYmY1ZjQ0YmIyZmQzYjRkMGNmZGUwYTk0NzRlOTdkMzM2MjdhOWM2Y2I0ZTUwMDgzYzQ4MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2MDU5M2NjNjA5OWYyYjQ4Y2M1MjRjYWVlNGFhYWU0NGEwYWY0NTcyNWUyYTBlMzIyMjVkMDFmNTdhODhlZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzOTIxYmRhZGYwMDg3MjMyMWYxMGYzMTAwZGM5NmE4NTAxZWU3ODMyMjBlNDEwNWMxMTFhZmViZjkwYWI2NDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bad7662735a140a5ac8e91f86519ab28",
+      "statement": "metadata resolverは40/64桁hex revisionを小文字化し不正revisionでは全体を不明にする。kindはdevelopmentまたは有効tag付きrelease、tagはv始まりの英数字/dot/hyphenでreleaseのみ保持、dirtyはtrue/falseのみ既知とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/build_metadata.rs#L56-L86",
+          "version": "repo-lines-v1:sha256:e7806bdedfe786ffc479fae4aaff13cca506669bf62fc5122c0256004c311c28:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1YjcwNmNiMWQ2YzA5N2E2NmE3NjczMzE1ZmRmNWJlYmFlMWI1MjIzMmRkZWMzZGFkODc2MzgzNTAwMjg0NTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzNzFmYTFmMzMxMGFiNTJmMWEwYjZjNTYyMDM2NzM1MGY1OGViZDk0ODVkMDc1ODcxMjMyYzZjMmQ0NGYyNGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a3ac76b39a554c17b7869c7530f8967e",
+      "statement": "直接Cargo buildは未追跡とdirty解消を見落とさないため存在しないrefresh pathでbuild scriptを毎回再評価し、注入環境変数も監視する。metadata解決はdotenv読込より前に行う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/build.rs#L5-L36",
+          "version": "repo-lines-v1:sha256:e2f272df8839f1fb4c86fac03275c2cdfc9110ec62995da4cfee40895d5880dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYjllZWU5MWJjMGIxYTc3YjVmMjI0ZmQ2OTQ1ZjNkZWMyMzRlNTU5NmI5NDc1YzkwYzVhZWM5ZTZhZTIwYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NjhlNjZhMzFkMTUyNDNjOTMwMjU2NzkwZTA5N2UxOTA3ZGMwYWI5MjU2ZDAxNjdmZWQ0Yjk0ZmMzODMxZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczMWFlY2M2OGU4NTcyNTk3NDQ0Nzk2YjRiMzk4NWFjOTlkYjBmNGZiMGM3YzJlYjA3MmYyZDZjY2M4OThlMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNTc4NGE3OGJlZGRlMzkxNzE1ZTMxNzk0ZTQxZGYxMDI1OTc4YTM4NmU2MzA4YjI3ZTcxYzNiNTE5ZWI3NDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b5dbf9cec6494f239a9cbd88b38d78e9",
+      "statement": "Docker builderのLVK_BUILD_*既定値は空で、配布経路は既存source SHA/tagとkind/dirtyをbuild引数で渡す契約である。注入しないimageではsidebar identityを持たず、runtime overrideではない。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L80-L100",
+          "version": "repo-lines-v1:sha256:9f706ec92c1c6ea9909d89cd3bea5475e4d1c652773686d7e6d20c69ac89611a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxYTI3ZTQ1NGM5YWJlYjM5MzdkZTcyYzg3NzkwMDA3MWI1ODZiZGFmZGIyYmIwZGJmYTU0ZTA2YzI2ODFjOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMzk1YTQyMGZkYjIyMTVlZjVjMjE2ZTFlZmIwODU5NWY1Y2EwMmRjYWIxMzFhNWE4NmZlNWFhZGNjNzkzNjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmYmRmYzJlNTA4NzdjMzYxMTQ4ZGFmOTA1YzdhNGIyZTlkYzQyYWIxZGE3NzNlN2EyMTYyMzBhMmRlYWI3MWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjZjBhYmE1NjUwZTIyYWQ0NGYwN2UzMWJjNWNkNzRiODdjODI4NmMxNWM1NmJlMDI2ZmQzNGVkMTI2ZTQ1MjEifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/STAGING.md#L36-L52",
+          "version": "repo-lines-v1:sha256:fac2d30f5669cf146305590ab0cfec481e5a82e36c2052e2650608f4cd4cac70:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkZGE4NGJlNzZhYjQ3ZDM0ODA3OTJjZDdkMTAzZmYzZWE3OTFlOTEzNTQwNjRkNGNkMjcwNjBjZThmMmRhMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlYzg2YmI3YzAzZTAwODQ5M2VjMWE0YmQ4NmU1MmFjZWFmOWIzZmUzOGIxNzExMzFiNmFmZDI0ZmVjMDBmODMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ODM2YWM3NWViZGU4ZTE2MWJlN2JhZTY5MWM2MjFiYzQ4MmVjNGJjMjNlYWM0NmZhNjNmNDI5MTQzM2MxODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzODkwOWRkYTI4NjFjMzczZmIxN2FkOWU2ODI2NjI2YmFmMGQ0YTI4NjUzZTAyZTg3ODg1OGY5NTFkNmQwMmQifQ"
+        },
+        {
+          "resource": "repo://deploy/server/release.test.mjs#L37-L58",
+          "version": "repo-lines-v1:sha256:9e5ba43b35549452a4e20f00ba29aa4aee25f24eac35cf334f7d35a70d5c0058:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMTg2NjFhNWMwODJmMWM5OGI0MmY3YjE4NGM3YzMzMDQ2Zjk1ODlkYjYwZGZjNTY3ZThkMjJmMzAyMjM2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwNDFlNjczZGYwNjUwMTJkZDYwMjg1MWFiZTU4MmY3OTBmMGEyOWE1NDBhZTk2NjUwZGFmMmMwMmYwNjBlYzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzNzFmNDEyYjNlNzliNzkzYzgxNjcxNjQzOTU2NWI0YjY3YzdlY2NiOGEwODE4YjVmNGU5ZGY5MWNiOTY1ZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MmMwMTFkNGQ2MmNjYjQ1ZTE0NjM2NjZjNTIyODRhZmVlZmM4OTRiNDJmNDQxYzdjODc0OTAzMWRlZmM0ZTcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:09:59.078Z"
+    "at": "2026-10-21T06:15:33.468Z"
   }
 }

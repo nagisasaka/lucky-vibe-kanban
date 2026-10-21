@@ -10,6 +10,8 @@ sources:
     resource: repo://CONTRIBUTORS.md
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-d4130322a85c68ce2ddc220a
+    resource: repo://crates/server/build_metadata.rs
   - id: openwiki-source-32657d5732db65a52d550bc6
     resource: repo://crates/server/src/bin/generate_types.rs
   - id: openwiki-source-88fc73cd214d9f8c3b051c4f
@@ -28,6 +30,8 @@ sources:
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-8b0f6773cd6f7a2a989ad880
     resource: repo://deploy/server/nginx.test.mjs
+  - id: openwiki-source-c5de8230bc8ac4c0c0000287
+    resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
   - id: openwiki-source-96cd4c94fb57fb4764608e3d
@@ -38,6 +42,10 @@ sources:
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-29176c627ccc31a24d3d6ab2
+    resource: repo://tests/build-info/component.test.mjs
+  - id: openwiki-source-3b8e596f6d78967bbf29a877
+    resource: repo://tests/build-info/isolated.mjs
   - id: openwiki-source-67c9f08f4593b3acbf1fe7b8
     resource: repo://tests/terminal-latency/codex-fixture.mjs
   - id: openwiki-source-a8dd8312a18cc58d1cb88211
@@ -52,10 +60,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-21T03:37:52.801Z" }
+generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:59:59.398Z
+    at: 2026-10-21T06:15:33.468Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -109,10 +117,7 @@ runner は終了時に自身の instance に属する process の停止を確認
 
 5ケースは正常終了、失敗、取消、WebSocket 再接続、終了後のページ再表示である。各ケースで活動中 follow-up の400拒否を確認し、Send 有効化後は実ボタンで次 Run を一つだけ開始して成功を確認する。再接続は実 frame を転送したまま切断だけを注入する。`canonicalAt` は HTTP poll の観測時刻であり DB commit 時刻ではなく、reload の値は navigation / loading 時間も含む。[拒否と接続](../../tests/terminal-latency/latency.spec.ts#L6-L93)・[終端と次の実行](../../tests/terminal-latency/latency.spec.ts#L114-L213)
 
-<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L19-L40] heading anchor "L19-L40" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
-<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L65-L78] heading anchor "L65-L78" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
-<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L109-L114] heading anchor "L109-L114" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
-[2026-10-20 の測定記録](../../tests/terminal-latency/RESULTS.md#前後の時刻と差分)には正常終了の9056→4050ms、各版5ケース成功が記録される。ただし各ケース各版1回の比較であり、本番の分位点や負荷時性能の保証ではない。実 Codex、Windows、高負荷は未確認と明記されている。この記録は過去の試験成績であって、この Wiki Sync での再実行結果ではない。[条件](../../tests/terminal-latency/RESULTS.md#L19-L40)・[結果と限界](../../tests/terminal-latency/RESULTS.md#L65-L78)・[未確認事項](../../tests/terminal-latency/RESULTS.md#L109-L114)
+[2026-10-20 の測定記録](../../tests/terminal-latency/RESULTS.md#前後の時刻と差分)には正常終了の9056→4050ms、各版5ケース成功が記録される。ただし各ケース各版1回の比較であり、本番の分位点や負荷時性能の保証ではない。実 Codex、Windows、高負荷は未確認と明記されている。この記録は過去の試験成績であって、この Wiki Sync での再実行結果ではない。[条件](../../tests/terminal-latency/RESULTS.md#測定条件)・[結果と限界](../../tests/terminal-latency/RESULTS.md#再現操作と観測結果)・[未確認事項](../../tests/terminal-latency/RESULTS.md#未確認事項仕様判断)
 
 ## モバイル向け built preview
 
@@ -129,6 +134,18 @@ LVK 自体の変更は card ごとに別 instance 名・port を使って検証�
 `instance:run NAME BUILD_UUID PORT` は foreground supervisor と instance ごとの run lock を持ち、build lock は別なので次候補の build と現在の実行を両立できる。staging は loopback 4020、任意の nginx ingress は HTTPS 8443 を使う。稼働中の agent / Workflow が終わってから旧候補を停止し、新候補へ切り替える。schema が進んだ DB に旧 binary だけを戻さず、対応する idle data snapshot が必要となる。共有 staging は [共有資源調停](../concepts/shared-resource-coordination.md)の対象であり、host updater の agent 活動判定には instance/build process を含めない。image 置換で staging 等の非 agent process は停止し、更新後の staging は明示的に起動し直す。[run](../../deploy/developer/instance.mjs#L193-L217)、[更新・回復手順](../../deploy/developer/STAGING.md)
 
 stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`でsetupキーを発行する。stagingの公開URLは8443を含む。cookieはportで隔離されないため、同じhostname/IPのstableとstagingには別ブラウザープロファイルを使う。[配置とcookieの運用契約](../../deploy/developer/STAGING.md#staging)、[instance環境](../../deploy/developer/instance.mjs#L44-L64)。方式変更と失効は [共通認証](../concepts/server-access.md)に従う。
+
+### ビルド情報の検証境界
+
+instance runner は `build.json` と同じ revision / dirty を build 環境へ注入し、種別を `development` に固定する。staging という環境名や Cargo profile から release と推定しない。直接 Cargo build の再評価、明示注入の優先順位、API の optional 契約は [ビルド時ソース識別](server-container.md#ビルド時ソース識別と-api-の契約)にまとめる。[注入と記録](../../deploy/developer/instance.mjs#L131-L195)
+
+検証は三つの境界を分ける。`crates/server/build_metadata.rs` の unit tests は明示 release、未知・不正入力、development の tag 除外、実 Git の clean → 未追跡 dirty → clean と空 injection の優先を扱う。`node --test tests/build-info/component.test.mjs` は SSR で native button、dialog trigger、日英 label、40/64桁 SHA と欠落時の非表示を検査する。配布引数の接続は [release test](../../deploy/server/release.test.mjs#L37-L58)が静的に検査するが、image 実行の代用にはならない。[metadata tests](../../crates/server/build_metadata.rs#L93-L191)・[component tests](../../tests/build-info/component.test.mjs#L29-L74)
+
+`node tests/build-info/isolated.mjs` は root の `target/debug/server` と `agent-process-host`、build 済み frontend、Chromium を前提に、一時 instance / SQLite と loopback を使う。別 Git checkout から起動し、実行時に偽の `LVK_BUILD_*` を渡しても実 binary の情報が返ることを確認する。実 metadata は試験開始時の checkout HEAD / dirty と一致する必要があるので、build 後に source 状態を変えた古い binary で実行しない。[準備と起動](../../tests/build-info/isolated.mjs#L20-L84)・[API の照合](../../tests/build-info/isolated.mjs#L119-L157)
+
+ブラウザー試験は Tab / Enter / Space、Escape / Close、focus 復帰、390px / 320px の touch 操作と画面内収容を検査する。release・unknown・legacy 欠落のケースは `/api/info` の metadata だけを置き換える fixture であり、公開済み release image の試験ではない。mobile の実値ケースは dirty 表示を固定で期待するため、clean checkout では前提が一致しない点にも注意する。touch は Pixel 7 の Chromium emulation であり実 Android や screen reader 音声の保証ではない。[metadata 置換と操作](../../tests/build-info/isolated.mjs#L183-L309)・[ケースの区別](../../tests/build-info/isolated.mjs#L332-L417)。表示の責任分割は [共有 shell のビルド情報](../architecture/web-and-sync.md#稼働バイナリのビルド情報を表示する)を参照する。
+
+終了処理は browser を閉じ、server 終了を待ち、PID・port・一時 instance の除去を記録する。証跡先は既定 `test-results/build-info`、`LVK_BUILD_INFO_EVIDENCE` で変更できる。[cleanup](../../tests/build-info/isolated.mjs#L434-L473)。今回の Sync は凍結 source `393670802114ed09b421a52d6dd186a6da5dc2f5` を build resolver、instance、API、context、UI と独立した試験定義から静的に照合した。凍結入力の開発時成功報告と正式 Integration の明示的な検証省略は別であり、この文書保守では製品テスト・Docker build・実機試験を再実行していない。無関係な過去の説明全体の再検証も意味しない。
 
 ## Docker 配布と同梱 binary
 

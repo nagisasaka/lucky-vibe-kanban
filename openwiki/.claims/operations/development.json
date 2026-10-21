@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5e9083c0dd205259b06f077729717028aa78a4676e09f77ce21881d66559accc",
+  "pageVersion": "sha256:20cb59ca5b001261ca5830c54da8b9dde690f06570bc4c5b28df5fdacf3c0541",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -70,7 +70,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:37defd918eb866562389a08ac60d58abab73bddc3776dfd3acaf1ecc95363c60"
+          "version": "repo-file-v1:sha256:0d4f9f7fbe5185829af2ad5a649a1b3a78ac4a43e7baef6ce063e307827d923c"
         }
       ]
     },
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/instance.mjs",
-          "version": "repo-file-v1:sha256:e4e6782985e091ea07940c3e3bf5f9fedbd630d4c61c879b1a2c1cad82f0ba9b"
+          "version": "repo-file-v1:sha256:23c96e4569c0e4d62fed33ef8d83b39a8c31827630934c941e0b5c992b0587da"
         }
       ]
     },
@@ -287,10 +287,74 @@
           "version": "repo-lines-v1:sha256:b1f909cb21cb625e19b410336d046fde7360f8b1c0b298985637403bc0a037aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYTc2ODQ4NDk0MDQzNDRmZDE2ZTg3NjQ5N2M3ZDM0ZGQ3NGYyNWY4ZGFlMzM4YzM2NDFjMTViNzY2YzJjZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NjMyZGEzZmYxYjhmOWNlYmFjZGRlNjM2YWVlNWY0ZjkzZTA2NDMwYjQ4MTA5MjcxOWYyZmI4Yjc0ZWY5OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZjcxMDZjMTM4NjJlN2M0MTA5MDhkOTAyYzlhMTdmMWVmMmNmMWYxZDhkY2JiNDc0YzAzYzdhYzA0NjI4ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4NjYwYjdkYmY5N2NkM2ViNjRjNDUxMmNiZWQ2MTIwNTM0OGE2NzcyYmI1ZjcyZTMzMjgxNTU2MGI5YWFmYmIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_f65f834ea24146cda5459b830bb39d9c",
+      "statement": "instance buildはbuild.jsonと同じrevision/dirtyをLVK_BUILD_*へ注入し、stagingを含めkindをdevelopmentに固定する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/instance.mjs#L131-L195",
+          "version": "repo-lines-v1:sha256:43a3b303c3abf0e85bb4bb34dfe323a12ac576729cfaad0afd7700946695c527:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZGQ2YjE5NmYzNGNmNDYxYjE1ZmIyMTUxMzVlMWUyNWQwYTY3NDc1YTdkMzRhYWQ2MDBhN2JhNDI3MjVhYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NTQxNmU5NWI1OTlkYWY3ODNhZTA4OWI4OTIzMzgzZGQ2NjNiZDdiYzBmNWZhZmNjOGE5YTgxNTgwNmM1MjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhYWIxYmVjNmUzMzRhMjUxOWEwOGViNDE3NTNkYWI5N2RlODNkNzJhMjhhMDczZTc0NzViMjk1Zjc3ZGY2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ODJlYTMzYWEzNjYzZTY3YmZmNzY0MDIwYjQxNWNjNDY3Njk3MzZjNDRhNThiOTkzNmE5MTQ1MDlhOWRkYzkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a882a45b16924fe08bf24bc999d25413",
+      "statement": "ビルド情報のunit/SSRテストはmetadataの明示・未知・dirty遷移とnative trigger/日英/40・64桁/非表示を検査し、release testはbuild引数の接続を静的に検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/build_metadata.rs#L93-L191",
+          "version": "repo-lines-v1:sha256:c6a147368bf9de52677b07019535fd5c82cdd5d8b0f47479e7fcd79876397751:eyJzZWxlY3RlZExpbmVDb3VudCI6OTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllNjg0NWQwYmUwOGFiMmZjNGRhYTQ4ZWQ2N2YwOWYwNGM2YzE0YmExYjM5YThjNDI5ZWU3Y2FmY2M0ZTU0NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NTA5Mjg0OGExNzY4NDg4ZDdmNWQ1NDZjMWQ2OGU5NmFjMDVkOThjZTI2NThlM2JjODFiMDU0M2I4NTg1YWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://deploy/server/release.test.mjs#L37-L58",
+          "version": "repo-lines-v1:sha256:9e5ba43b35549452a4e20f00ba29aa4aee25f24eac35cf334f7d35a70d5c0058:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMTg2NjFhNWMwODJmMWM5OGI0MmY3YjE4NGM3YzMzMDQ2Zjk1ODlkYjYwZGZjNTY3ZThkMjJmMzAyMjM2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwNDFlNjczZGYwNjUwMTJkZDYwMjg1MWFiZTU4MmY3OTBmMGEyOWE1NDBhZTk2NjUwZGFmMmMwMmYwNjBlYzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzNzFmNDEyYjNlNzliNzkzYzgxNjcxNjQzOTU2NWI0YjY3YzdlY2NiOGEwODE4YjVmNGU5ZGY5MWNiOTY1ZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MmMwMTFkNGQ2MmNjYjQ1ZTE0NjM2NjZjNTIyODRhZmVlZmM4OTRiNDJmNDQxYzdjODc0OTAzMWRlZmM0ZTcifQ"
+        },
+        {
+          "resource": "repo://tests/build-info/component.test.mjs#L29-L74",
+          "version": "repo-lines-v1:sha256:283b7d63074029cb01d9ffaf5abdcd3caf49dc9241598e17907c165122e7ff68:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NGRlNWFhYzc4MzhjODJiNWQ1OTJkYjQ0OTgzYzc4YTFkYzkwMTEzOTc1ZWY3N2EyNjQ5YzEzZDYwZmFhMTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_754c5c58e9d64ed387856f57a8297ef8",
+      "statement": "build-info isolated試験は実debug binaryと一時instanceを別checkoutから起動しruntime上書きが効かないことを確認する。release/unknownはAPI metadata fixtureで、keyboardと390/320px touchを検査する。mobile実値ケースはdirtyを固定期待する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L119-L157",
+          "version": "repo-lines-v1:sha256:3b764dcce14e439b971c4b0ca4c48c5f153ebbce05a8cbd361c82dd8ea3cc0f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZDZkNGI2Zjg5ODk2ZjMzOWI4ZGNlMzQxYTY1MGZhYzhmNGU2YjBiNGYyMTg3Y2NmOTkyMzI4MmUyZmI2YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxYWJjZjZhMjNlNDI1NzEzYmU1ZmY4YzkyOWI0MzliYmQyYmEzMDgwZjY2MDQwNjM1YTViMTg3ZjI0N2NkZjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMjcwMWEzYmVhMjQxMWU2ZjU2YTE5MzA5MzBlZGQ2ZDQxMWM0NGIxNWQwYzcxN2UxZWIwN2I2YTc4MGFkZGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYmE0ZjAxMDJjNDE5ZGZhMDg0M2Q0Nzk5MTNkMjIwNzUzNTI3ZGY3Mzc3ZDI2MWFiODQyN2ZlYjU1MzA0NDcifQ"
+        },
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L183-L309",
+          "version": "repo-lines-v1:sha256:1cc11ca6e089a0e592e54a1a316c06487b129fc9a04d5a6e331e1391261aa427:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlN2YwNTY2YzZmODMwZTA5NjQ3MDAyNWVlYzYyZWVhMjg2Mzg3MzMzMjJkNDliNDc2MTk4MjViZDNlNWQ2NmM0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmU0YTZjOTY1ZmRkMDE1MTRmMWJhNWJkYzI5ZTE4MzdhNDA0MDJjMWYwYjliMzk4YzE3OWNlNTcxOWM4YTU3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjODk4NTJlNGMwNThlMDQ5MGFjOGI0YWQzODU1ZTIyYmRlNTY5OGJkODhiODQ0Nzg3YjJjZTA1ZGFkZTc4MTY1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5ZGVhYTI5MzAyYTNkYzI4MDI0NDVjMzhmMTQ0MmM4NDAzNzAzOGRhYTBhYWQxMWFkZGM3OWIyY2I4MzlkNWUwIn0"
+        },
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L20-L84",
+          "version": "repo-lines-v1:sha256:b4baa1faf4eb597e544aec326ed56106d3b99e92e00fc23ad924930a2f97110e:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGM0ZmUzNTk3OTc3YjEwNTI3MDgwOGNlNmE1MWNlNDUzYzgzMWRlM2E4MmJlOTc2YzZkOTUxZTExOTM0ODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0OWViYzBjZWZkNjIzOTZkODQ0NDZmMDE5ZjY5NWE4NWJiM2JmMDc4ZDU0NTI2OWY0NTJhYWE1YzQzM2ZiNzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiNDQxYTgwNTIyNjZjY2MwNjliZjczMjUxMWUyNmEwYTE5ODgxZTA1OTU4ZWNmMmRmY2ZmZGJmMjViYzI3MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYjg4Mjc4ODVjODIwYTBhYjBlYjhiOTk3ZGQ5ZTc1M2NjZjVlZjhjMDExOTg3MDNmODhjMDI2NTM1NTgxZDcifQ"
+        },
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L332-L417",
+          "version": "repo-lines-v1:sha256:bad663781df958d40a5356a9e103ad110e721f4872e2223a8df954f2e88faf83:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2M2Q1MzVjZTM4MDYzZDZiNGM1MWQ4YzM4NmE3ZjliM2U1ODBhMTRhMTBjMDdiMTk4ZGZhZjE5YzkzYTNiZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4OWIwNWM3MmI4NGY2MjE2YmUyMTM3OTk3YmJlODJmNjU5ZjI5YWRkNTZmY2IwODg1ZWEwODAyZDM2NjY5NjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhMTQwMGJkOWJhNDNmMmZhOWUzNTE1YTU0OGVkZjRmMjhlYWVhYTc1YzE1MGMxZDk0ZGU3MTdjMWQ2ZWYyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2OTMxNzNkZjlkYjAyYzU5Y2QyY2ZmZGFlZDllYjVlNDI4M2U1Y2JiNDA1OGFhNjRkMDkwNDc1NDc3NWVlN2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2a2bed786d0a46169d61e992ebc75aa7",
+      "statement": "build-info isolated試験は終了時にbrowser/server終了を待ちPID・port・一時instance除去を記録し、証跡先は既定test-results/build-infoまたはLVK_BUILD_INFO_EVIDENCEである。",
+      "evidence": [
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L20-L24",
+          "version": "repo-lines-v1:sha256:fef12694b8c5f29d3202a96a742eb682ca2410807fff73b1cd161895c1ad7e59:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGJkYzRmZTM1OTc5NzdiMTA1MjcwODA4Y2U2YTUxY2U0NTNjODMxZGUzYTgyYmU5NzZjNmQ5NTFlMTE5MzQ4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmMxMjUxZDVlODk2MDU0ZjQ2NmMxMTI1OWQyMjU1ZjA3MjJiNWUyNTRjMzA2YjljMmFkMzYxYjEzZmE5MDk0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWI0NDFhODA1MjI2NmNjYzA2OWJmNzMyNTExZTI2YTBhMTk4ODFlMDU5NThlY2YyZGZjZmZkYmYyNWJjMjcxOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTA1ZjM1M2QwZTg1ZDdhZDhhZTQ2OGRkNTQwYjI3YjM3ZjY4NjAzNjhlZGIxZGEwZmQxMDdhNTRmZDA2YzQxOSJ9"
+        },
+        {
+          "resource": "repo://tests/build-info/isolated.mjs#L434-L473",
+          "version": "repo-lines-v1:sha256:4a36719606c101212735d6368a35140d2a0830e3364f065a9638f5ea233bd621:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMzc5ZWM0MjdkOGNjYWFlNzEzYzNmMzNjNGQwN2NkZTAzNWM1MTliOWI5OTcwMWYzNGVmZTUyNTFhMDcyMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZmFjMTM1YzU5MTIxMDcyNGU1YjIzMTMxMTE3YTNhZjRlNzg1NTZiNzNkYWQzZGE5NDQxNDNhZmQxOWM1NjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:59:59.398Z"
+    "at": "2026-10-21T06:15:33.468Z"
   }
 }

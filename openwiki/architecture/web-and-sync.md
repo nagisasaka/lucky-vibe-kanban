@@ -34,6 +34,8 @@ sources:
     resource: repo://packages/ui/src/components/AppBar.tsx
   - id: openwiki-source-b2fc2a264ac3c8fd4fc0ac15
     resource: repo://packages/ui/src/components/AppBarSocialLink.tsx
+  - id: openwiki-source-6a6615932d0836983751ed06
+    resource: repo://packages/ui/src/components/BuildInfoLabel.tsx
   - id: openwiki-source-0538c702500041c84ca85af7
     resource: repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx
   - id: openwiki-source-9fa3c3bb81a61c7549d33839
@@ -44,6 +46,8 @@ sources:
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
+  - id: openwiki-source-b5c65c61c678426ad814529a
+    resource: repo://packages/ui/src/components/Popover.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
@@ -112,6 +116,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
+  - id: openwiki-source-b30612082181a81aa92d89df
+    resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
   - id: openwiki-source-ffa337e3881da0103a10e223
     resource: repo://packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts
   - id: openwiki-source-012d640135a03bd20065dc93
@@ -156,10 +162,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-21T05:41:24.899Z" }
+generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:41:24.899Z
+    at: 2026-10-21T06:15:33.468Z
 ---
 
 # Web の実行環境と同期
@@ -179,6 +185,14 @@ UI package は既に Kanban や chat、preview などの再利用部品を持つ
 stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読み、非負の safe integer だけを採用する。HTTP エラー、通信・JSON 解析失敗、欠落・不正値は `null` にする。初回 loading や `null` ではバッジを出さず、実数 `0` は表示する。リンク自体は件数取得に依存しない。query はリポジトリ単位で、stale time と定期再取得は10分、retry と mount 時の再取得は無効である。[取得・query lifecycle](../../packages/web-core/src/shared/hooks/useGitHubStars.ts#L1-L41)・[バッジの条件](../../packages/ui/src/components/AppBar.tsx#L325-L336)・[リンクとバッジの描画](../../packages/ui/src/components/AppBarSocialLink.tsx#L18-L46)。この表示用 API は Board の snapshot 同期や [GitHub 認証・PR 操作](../integrations/github-review.md)とは別の経路である。
 
 旧 `Give Feedback` survey action は navbar と command bar の General に存在せず、AppBar と LandingPage の Discord リンクもない。共有 shell は Discord 人数 hook を呼ばない。これは外部サービスへの UI 導線の整理であり、Agent approval の feedback を除去する契約ではない。[navbar actions](../../packages/web-core/src/shared/actions/index.ts#L1555-L1569)・[command bar](../../packages/web-core/src/shared/command-bar/actions/pages.ts#L35-L44)・[AppBar の外部領域](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[shell の取得](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L60-L69)・[approval feedback](../../packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx#L41-L101)
+
+### 稼働バイナリのビルド情報を表示する
+
+`useUserSystemController` は `/api/info` の任意 `build_info` を `buildInfo` として context に渡し、従来の `version` / `appVersion` は別に保持する。`SharedAppLayout` が desktop の AppBar と mobile drawer へ同じ値を渡す。表示するのは Workspace の HEAD ではなく server binary の識別情報であり、生成・注入・不明値の契約は [ビルド時ソース識別](../operations/server-container.md#ビルド時ソース識別と-api-の契約)を正本とする。[context の接続](../../packages/web-core/src/shared/hooks/useUserSystemController.ts#L40-L46)・[desktop](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L260-L290)
+
+`BuildInfoLabel` は40桁または64桁の16進 SHA がある場合だけ先頭7文字を表示し、取得不能・欠落・不正値ではボタン自体を出さない。package version へ fallback しない。詳細は full SHA、開発版または tag 付きリリース版、dirty / clean / 不明を示す。desktop では既存の `updateVersion` があれば Update ボタンがこの表示より優先される。[表示条件と詳細](../../packages/ui/src/components/BuildInfoLabel.tsx#L16-L36)・[Update の優先](../../packages/ui/src/components/AppBar.tsx#L340-L357)
+
+詳細は hover 専用ではなく native button と共有 Radix Popover を使う。Enter / Space / tap で開き、Close・Escape・外側操作で閉じる既存機構を使う。上開き、8px collision padding、画面幅上限と文字折返しで狭幅に対応する。mobile は AppBar を描画しないため drawer 内に置き、`isMobile && isDrawerOpen` の間だけ mount して、閉じた drawer にこの新しい focus target を残さない。[詳細部品](../../packages/ui/src/components/BuildInfoLabel.tsx#L38-L69)・[共有 Popover](../../packages/ui/src/components/Popover.tsx#L9-L49)・[drawer の条件](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L398-L402)。キーボード・touch・focus 復帰と metadata fixture の検証境界は [ビルド情報の試験](../operations/development.md#ビルド情報の検証境界)を参照する。
 
 ### ヘッダー検証の入口と限界
 

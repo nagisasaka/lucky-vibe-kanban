@@ -6,6 +6,12 @@ tags: [server, docker, deployment, preview, persistence]
 sources:
   - id: openwiki-source-c16d91d3eae6ee7bafc2593e
     resource: repo://crates/server-access/src/preview.rs
+  - id: openwiki-source-d4130322a85c68ce2ddc220a
+    resource: repo://crates/server/build_metadata.rs
+  - id: openwiki-source-f72d699e94c301e4e47d097c
+    resource: repo://crates/server/build.rs
+  - id: openwiki-source-a9b6d4be264787a78357c9d6
+    resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-45785e038b483538ab5c9894
@@ -26,6 +32,8 @@ sources:
     resource: repo://deploy/server/healthcheck.mjs
   - id: openwiki-source-078e9842bd26cfd05bb35acc
     resource: repo://deploy/server/nginx.conf.template
+  - id: openwiki-source-c5de8230bc8ac4c0c0000287
+    resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
     resource: repo://deploy/server/server.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
@@ -40,10 +48,10 @@ sources:
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-21T06:09:59.078Z" }
+generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:09:59.078Z
+    at: 2026-10-21T06:15:33.468Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -63,6 +71,24 @@ LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked depe
 `less` は `server-tools` の apt package として導入され、`server-browser` を経て最終 `server` image に継承される。小型 `runtime` は `runtime-base` から分岐するため、この開発 toolchain の追加を継承しない。[stage の境界](../../Dockerfile#L136-L156)、[server への継承](../../Dockerfile#L182-L201)。任意の旧 development Compose も `LVK_IMAGE` を参照するため、利用できる toolchain は選択した image に依存する。checkout の変更だけで稼働中 image に追加されるわけではない。[開発 Compose の image 選択](../../deploy/server/compose.development.yaml#L1-L8)
 
 image smoke は UID 10001 のコンテナー内で `less --version` と、非 TTY の pipe 入力が同じ文字列として出力されることを検査し、失敗すれば `sh -ec` により検査を止める。この検査は対話端末でのページ操作を扱わない。[実行条件と検査](../../deploy/server/smoke-image.sh#L24-L38)。[配布 kit の静的・native 検証](development.md#サーバー配布-kit-の検証)と image の実行確認は別である。この Sync では検査定義をソースで確認しており、Docker build/run や `less` の実行成功は確認していない。
+
+### ビルド時ソース識別と API の契約
+
+ビルド情報は「この server binary を作ったソース」を説明する。現在の Workspace / 起動先 checkout、package version、image digest、配布の成功状態とは別の情報である。`build.rs` が取得値を `cargo:rustc-env` へ固定し、`BuildInfo::current()` がコンパイル時の `env!` から読むため、起動時の `LVK_BUILD_*` で上書きされない。`/api/info` の `version` は従来の `CARGO_PKG_VERSION` を維持し、別の任意 `build_info` に revision と nullable な kind / release_tag / dirty を返す。revision がなければ `build_info` 自体を省略する。[固定の境界](../../crates/server/build.rs#L18-L36)・[API 型と応答](../../crates/server/src/routes/config.rs#L93-L156)
+
+入力の優先順位は一つの契約として扱う。
+
+- `LVK_BUILD_REVISION` の明示値は空文字でも authoritative であり、Git fallback を無効にする。この経路では `LVK_BUILD_KIND`、`LVK_BUILD_RELEASE_TAG`、`LVK_BUILD_DIRTY` の未指定項目を checkout から補わない。
+- revision が未指定の直接 Cargo build だけは、source root と Git top-level の canonical path が一致することを確かめて HEAD と未追跡ファイルを含む dirty を取得し、kind を `development` にする。別 repository 内に展開した source archive を親 repository の版と扱わない。
+- 有効な revision は40桁または64桁の16進値で、小文字化する。不正 revision は情報全体を不明にする。kind は `development`、または有効な tag を伴う `release` のみ。tag は `v` 始まりで英数字・`.`・`-` のみを許し、release 以外では除去する。dirty は文字列 `true` / `false` だけを既知とし、それ以外は不明にする。nearest tag や package version から補完しない。
+
+[優先順位と Git root](../../crates/server/build_metadata.rs#L25-L55)・[正規化と未知値](../../crates/server/build_metadata.rs#L56-L86)。取得不能はビルド情報を失うが、resolver がそれ自体を build error にする経路ではない。
+
+直接 Cargo build は、存在しない refresh path を `rerun-if-changed` に指定して毎回 Git 状態を再評価する。HEAD / index の監視だけでは未追跡変更と dirty → clean を見落とす、という理由がコードに記録されている。明示注入では環境変数の変更を監視する。metadata の解決は root `.env` の読込より前なので、この build script の dotenv 読込に `LVK_BUILD_*` の注入を期待しない。[再評価と読込順](../../crates/server/build.rs#L5-L36)
+
+instance runner は `build.json` と同じ revision / dirty を注入する。既存の image 配布経路は source SHA と release tag を build 引数へ渡し、tag build を release、それ以外を development、dirty を false とする契約である。Docker builder の引数既定は空なので、注入しないローカル image に Git fallback や sidebar identity を期待しない。これらはビルド入力であり runtime 設定ではない。[instance の注入](../../deploy/developer/instance.mjs#L131-L195)・[Docker builder](../../Dockerfile#L80-L100)・[配布引数の静的回帰検査](../../deploy/server/release.test.mjs#L37-L58)・[運用契約](../../deploy/developer/STAGING.md#isolated-state)
+
+UI はこの optional 情報を使い、短い SHA のボタンから詳細を開く。欠落時の非表示、Update との優先関係、mobile drawer の寿命は [共有 shell の表示契約](../architecture/web-and-sync.md#稼働バイナリのビルド情報を表示する)に置く。source identity の表示だけで公開済み image・実配布・validation 成功を保証しない。実 Git、API、SSR、keyboard / touch と release fixture の検証範囲および今回の静的調査の限界は [ビルド情報の検証境界](development.md#ビルド情報の検証境界)を参照する。
 
 ## HTTPS と起動前検証
 
