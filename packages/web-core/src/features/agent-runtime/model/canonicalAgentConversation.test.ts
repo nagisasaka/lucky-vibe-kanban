@@ -65,6 +65,7 @@ function projectRuns(
     runId: string;
     status: RunState['status'];
     events: AgentEventEnvelope[];
+    transientEvents?: AgentEventEnvelope[];
   }>
 ) {
   const summaries: AgentRunSummary[] = [];
@@ -80,14 +81,14 @@ function projectRuns(
       created_at: `2026-08-14T00:0${index}:00Z`,
       updated_at: `2026-08-14T00:0${index}:00Z`,
     });
-    timelines.set(
-      run.runId,
-      mergeCanonicalAgentTimeline(
+    timelines.set(run.runId, {
+      ...mergeCanonicalAgentTimeline(
         emptyCanonicalAgentTimeline(),
         run.events,
         runState
-      )
-    );
+      ),
+      transientEvents: run.transientEvents ?? [],
+    });
   });
 
   return projectCanonicalAgentConversation(
@@ -96,6 +97,75 @@ function projectRuns(
 }
 
 describe('projectCanonicalAgentConversation', () => {
+  it('keeps persisted steering between provider messages across replay', () => {
+    const message = (
+      sequence: number,
+      role: 'user' | 'assistant',
+      content: string
+    ) =>
+      event('steered', sequence, {
+        type: 'message',
+        data: {
+          message: { message_id: `message-${sequence}`, role, content },
+          final_output: false,
+        },
+      });
+    const before = message(2, 'assistant', 'before');
+    before.native_refs = [
+      { sequence: 900n } as AgentEventEnvelope['native_refs'][number],
+    ];
+    const steering = message(3, 'user', 'steer');
+    const after = message(4, 'assistant', 'after');
+    after.native_refs = [
+      { sequence: 1000n } as AgentEventEnvelope['native_refs'][number],
+    ];
+    const live = {
+      ...after,
+      event_id: 'live-after',
+      sequence: 999n,
+      native_refs: [],
+    };
+    const streaming = projectRuns([
+      {
+        runId: 'steered',
+        status: 'running',
+        events: [before, steering],
+        transientEvents: [live],
+      },
+    ]);
+    expect(
+      streaming.entries
+        .filter((entry) =>
+          ['user_message', 'assistant_message'].includes(
+            entry.content.entry_type.type
+          )
+        )
+        .map((entry) => entry.content.content)
+    ).toEqual(['before', 'steer', 'after']);
+    for (const events of [
+      [before, steering, after],
+      [after, steering, before, steering],
+    ]) {
+      const projection = projectRuns([
+        { runId: 'steered', status: 'succeeded', events },
+      ]);
+      expect(
+        projection.entries
+          .filter((entry) =>
+            ['user_message', 'assistant_message'].includes(
+              entry.content.entry_type.type
+            )
+          )
+          .map((entry) => entry.content.content)
+      ).toEqual(['before', 'steer', 'after']);
+      expect(
+        projection.entries.every(
+          (entry) => entry.canonical?.agentRunId === 'steered'
+        )
+      ).toBe(true);
+    }
+  });
+
   it('shows a running shell command and ordered live output, then replaces it with the durable result', () => {
     const runId = 'shell-live';
     const runState = state(runId, 'running');

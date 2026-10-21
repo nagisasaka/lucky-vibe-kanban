@@ -919,7 +919,8 @@ export function SessionChatBox<TExecutor extends string = string>({
         value: editor.value,
         onChange: editor.onChange,
         onCmdEnter: handleCmdEnter,
-        disabled: isDisabled,
+        // Sending locks submission controls, but the next draft remains editable.
+        disabled: isDisabled && status !== 'sending',
         repoIds,
         executor: agent || executor?.selected || null,
         onPasteFiles: actions.onPasteFiles,

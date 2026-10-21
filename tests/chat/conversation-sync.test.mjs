@@ -141,6 +141,27 @@ test("chat replay, scope cleanup, and scroll intent", async () => {
       1200,
       "stream growth must not override upward input",
     );
+    await page.evaluate(() => window.scroll.scrollToBottom("auto"));
+    await page.evaluate(
+      () => (document.getElementById("content").style.height = "6000px"),
+    );
+    await page.waitForFunction(
+      () => document.getElementById("scroller").scrollTop === 5700,
+    );
+    await page.evaluate(() => {
+      const el = document.getElementById("scroller");
+      el.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
+      el.scrollTop = 1000;
+    });
+    await page.waitForTimeout(30);
+    await page.evaluate(
+      () => (document.getElementById("content").style.height = "6500px"),
+    );
+    await page.waitForTimeout(50);
+    assert.equal(
+      await page.evaluate(() => document.getElementById("scroller").scrollTop),
+      1000,
+    );
     await page.evaluate(() => {
       window.processes = {
         ...window.processes,
@@ -199,13 +220,19 @@ test("chat replay, scope cleanup, and scroll intent", async () => {
       "closed script callbacks cannot contaminate the next workspace",
     );
     await page.evaluate(() => {
-      window.runs = ["old", "latest"].map((id, i) => ({
+      window.runs = [
+        "historic-1",
+        "historic-2",
+        "historic-3",
+        "old",
+        "latest",
+      ].map((id, i) => ({
         agent_run_id: id,
         session_id: "s",
         created_at: `2026-10-09T00:00:0${i}Z`,
         state: {
           agent_run_id: id,
-          status: "running",
+          status: "succeeded",
           projection_status: "current",
           last_run_attempt_number: 1,
           last_event_sequence: 0,
@@ -216,6 +243,13 @@ test("chat replay, scope cleanup, and scroll intent", async () => {
     });
     await page.waitForFunction(
       () => window.sockets.filter((s) => /old|latest/.test(s.url)).length === 2,
+    );
+    assert.equal(
+      await page.evaluate(
+        () => window.sockets.filter((s) => s.url.includes("/historic-")).length,
+      ),
+      0,
+      "only the latest two runs are loaded before foreground is ready",
     );
     await page.evaluate(() => {
       window.readyRun = (id) => {

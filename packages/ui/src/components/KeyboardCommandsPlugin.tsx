@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
@@ -35,6 +35,8 @@ export function KeyboardCommandsPlugin({
   sendShortcut = 'ModifierEnter',
 }: Props) {
   const [editor] = useLexicalComposerContext();
+  const submitRef = useRef(onCmdEnter);
+  submitRef.current = onCmdEnter;
   const { isOpen: isTypeaheadOpen } = useTypeaheadOpen();
 
   useEffect(() => {
@@ -154,7 +156,8 @@ export function KeyboardCommandsPlugin({
           onChange(markdown);
         });
       }
-      onCmdEnter?.();
+      // flushSync may have replaced the composer snapshot and its callback.
+      submitRef.current?.();
     };
 
     const unregisterModifier = editor.registerCommand(

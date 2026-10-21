@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -25,9 +26,13 @@ void i18n.use(initReactI18next).init({
   resources: { ja: { common, tasks } },
   initImmediate: false,
 });
-function Capture() {
+function Capture({ id }: { id: string }) {
   const [editor] = useLexicalComposerContext();
-  api.enter = (composing: boolean, modifier = false, legacy = false) =>
+  api[id === "composer" ? "enter" : "pendingEnter"] = (
+    composing: boolean,
+    modifier = false,
+    legacy = false,
+  ) =>
     editor.dispatchCommand(
       modifier ? KEY_MODIFIER_COMMAND : KEY_ENTER_COMMAND,
       new KeyboardEvent("keydown", {
@@ -46,6 +51,7 @@ function Editor({
   onChange,
   editable = true,
   shortcut = "Enter",
+  onSubmit,
 }: any) {
   return (
     <LexicalComposer
@@ -67,12 +73,14 @@ function Editor({
         placeholder={null}
         ErrorBoundary={LexicalErrorBoundary}
       />
-      {id === "composer" && (
+      {(id === "composer" || onSubmit) && (
         <TypeaheadOpenProvider>
-          <Capture />
+          <Capture id={id} />
           <KeyboardCommandsPlugin
             sendShortcut={shortcut}
-            onCmdEnter={() => api.submissions++}
+            onChange={onChange}
+            transformers={transformers}
+            onCmdEnter={onSubmit ?? (() => api.submissions++)}
           />
         </TypeaheadOpenProvider>
       )}
@@ -88,11 +96,26 @@ function PendingDraft() {
   api.setScratchSnapshot = setSnapshot;
   const draft = useSessionMessageEditor({ scratchId: "pending-session" });
   api.pendingDraft = draft;
+  const submit = () => {
+    const revision = draft.getDraftRevision();
+    const content = draft.localMessage;
+    api.sent = content;
+    api.finishSend = (success: boolean) => {
+      if (success && draft.getDraftRevision() === revision)
+        draft.setLocalMessage("");
+    };
+  };
+  api.pendingSubmit = submit;
+  api.restoreAndSubmit = (value: string) => {
+    flushSync(() => draft.setLocalMessage(value));
+    api.pendingSubmit();
+  };
   return (
     <Editor
       id="pending-composer"
       value={draft.hasInitialValue ? draft.localMessage : ""}
       onChange={draft.setLocalMessage}
+      onSubmit={submit}
     />
   );
 }

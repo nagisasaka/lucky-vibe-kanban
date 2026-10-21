@@ -72,6 +72,36 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     );
     await page.waitForFunction(() => !window.pendingDraft.isScratchLoading);
     assert.equal(await pending.textContent(), "読み込み中の入力");
+    // A controlled restore with trailing blank paragraphs is normalized by
+    // Lexical after render. That echo must not count as a newer user draft.
+    await page.evaluate(() => window.restoreAndSubmit("改行付き\n\n"));
+    await pending.focus();
+    await page.waitForTimeout(50);
+    await page.evaluate(() => window.finishSend(true));
+    await page.waitForFunction(
+      () => document.querySelector("#pending-composer").textContent === "",
+      null, {timeout: 2000}
+    );
+    // The keyboard flush emits the same serialization once more before send.
+    // This must not invalidate the acknowledgement revision on selection updates.
+    await pending.fill("送信内容");
+    await pending.press("Shift+Enter");
+    await page.evaluate(() => window.pendingEnter(false));
+    await page.waitForTimeout(50);
+    assert.ok((await page.evaluate(() => window.sent)).startsWith("送信内容"));
+    await page.evaluate(() => window.finishSend(true));
+    await page.waitForFunction(
+      () => document.querySelector("#pending-composer").textContent === "",
+      null, {timeout: 2000}
+    );
+    await pending.fill("失敗時の下書き");
+    await page.evaluate(() => window.pendingEnter(false));
+    await page.evaluate(() => window.finishSend(false));
+    assert.equal(await pending.textContent(), "失敗時の下書き");
+    await page.evaluate(() => window.pendingEnter(false));
+    await pending.fill("送信待ち中の追加入力");
+    await page.evaluate(() => window.finishSend(true));
+    assert.equal(await pending.textContent(), "送信待ち中の追加入力");
     const composer = page.locator("#composer");
     await composer.fill("入力");
     await page.evaluate(() => window.setDraft("遅れて復元された別の入力欄"));
@@ -113,7 +143,12 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     await page.waitForFunction(
       () => document.querySelector("#composer").textContent === "",
     );
-    for (const text of ["検索結果", "ファイルの内容", "確認した内容", "単独の出力"]) {
+    for (const text of [
+      "検索結果",
+      "ファイルの内容",
+      "確認した内容",
+      "単独の出力",
+    ]) {
       assert.equal(await page.getByText(text, { exact: true }).count(), 0);
     }
     const tools = page.getByRole("button", { name: "ツール呼び出し完了" });
@@ -121,24 +156,48 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
     await tools.click();
     const search = page.getByRole("button", { name: "検索", exact: true });
     await search.click();
-    assert.equal(await page.getByText("rg needle", { exact: true }).isVisible(), true);
-    assert.equal(await page.getByText("検索結果", { exact: true }).isVisible(), true);
+    assert.equal(
+      await page.getByText("rg needle", { exact: true }).isVisible(),
+      true,
+    );
+    assert.equal(
+      await page.getByText("検索結果", { exact: true }).isVisible(),
+      true,
+    );
     await search.click();
     assert.equal(await page.getByText("検索結果", { exact: true }).count(), 0);
     await page.getByRole("button", { name: "読み込み", exact: true }).click();
-    assert.equal(await page.getByText("ファイルの内容", { exact: true }).isVisible(), true);
+    assert.equal(
+      await page.getByText("ファイルの内容", { exact: true }).isVisible(),
+      true,
+    );
     await tools.click();
-    assert.equal(await page.getByText("ファイルの内容", { exact: true }).count(), 0);
+    assert.equal(
+      await page.getByText("ファイルの内容", { exact: true }).count(),
+      0,
+    );
     const thinking = page.getByRole("button", { name: "思考内容" });
     await thinking.click();
-    assert.equal(await page.getByText("確認した内容", { exact: true }).isVisible(), true);
+    assert.equal(
+      await page.getByText("確認した内容", { exact: true }).isVisible(),
+      true,
+    );
     await thinking.click();
-    assert.equal(await page.getByText("確認した内容", { exact: true }).count(), 0);
+    assert.equal(
+      await page.getByText("確認した内容", { exact: true }).count(),
+      0,
+    );
     const single = page.getByRole("button", { name: "単独コマンド" });
     await single.click();
-    assert.equal(await page.getByText("単独の出力", { exact: true }).isVisible(), true);
+    assert.equal(
+      await page.getByText("単独の出力", { exact: true }).isVisible(),
+      true,
+    );
     await single.click();
-    assert.equal(await page.getByText("単独の出力", { exact: true }).count(), 0);
+    assert.equal(
+      await page.getByText("単独の出力", { exact: true }).count(),
+      0,
+    );
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

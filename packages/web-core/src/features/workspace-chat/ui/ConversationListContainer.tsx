@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -176,7 +177,7 @@ function renderRowContent(
   return null;
 }
 
-export const ConversationList = forwardRef<
+const ScopedConversationList = forwardRef<
   ConversationListHandle,
   ConversationListProps
 >(function ConversationList(
@@ -215,7 +216,6 @@ export const ConversationList = forwardRef<
     source: ConversationTimelineSource;
     addType: AddEntryType;
     loading: boolean;
-    isInitialLoad: boolean;
   } | null>(null);
   // rAF throttle: at most one state update per animation frame.
   // Replaces the previous 100ms trailing debounce which never fired during
@@ -225,6 +225,7 @@ export const ConversationList = forwardRef<
   // rAF naturally limits updates to the display refresh rate (~60fps) while
   // ensuring every frame reflects the latest data.
   const rafIdRef = useRef<number | null>(null);
+  const initialScrollAppliedRef = useRef(false);
   const planRevealSpacerRef = useRef<HTMLDivElement | null>(null);
   const pendingInteractionAnchorRef = useRef<{
     element: HTMLElement;
@@ -312,9 +313,11 @@ export const ConversationList = forwardRef<
   }, []);
 
   const programmaticScrollDeadlineRef = useRef(0);
+  const historyAnchorRef = useRef<{ key: string; top: number } | null>(null);
 
   const shouldSuppressInteractionDrivenSizeAdjustment = useCallback(
     () =>
+      historyAnchorRef.current !== null ||
       performance.now() < programmaticScrollDeadlineRef.current ||
       (pendingInteractionAnchorRef.current !== null &&
         performance.now() < pendingInteractionAnchorDeadlineRef.current),
@@ -374,6 +377,8 @@ export const ConversationList = forwardRef<
     [clearPendingInteractionAnchor, runInteractionAnchorCorrection]
   );
 
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
   const flushPendingUpdate = () => {
     rafIdRef.current = null;
     const pending = pendingUpdateRef.current;
@@ -396,6 +401,37 @@ export const ConversationList = forwardRef<
       prevRowsRef.current
     );
 
+    const el = tanstackScrollRef.current;
+    if (el && !readerAtBottomRef.current && !historyAnchorRef.current) {
+      const top = el.getBoundingClientRect().top;
+      const node = Array.from(
+        el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+      ).find((row) => row.getBoundingClientRect().bottom > top);
+      if (node?.dataset.semanticKey) {
+        historyAnchorRef.current = {
+          key: node.dataset.semanticKey,
+          top: node.getBoundingClientRect().top - top,
+        };
+      }
+    }
+    // A prepend changes indices without changing the tail's identity. Keep the
+    // boundary attached to its row, otherwise each batch turns more history
+    // into unvirtualized DOM (and invalidates previous measurement assumptions).
+    for (const boundary of [
+      visibleTailStartRef,
+      lastSettledTailStartIndexRef,
+    ]) {
+      const key =
+        boundary.current == null
+          ? null
+          : prevRowsRef.current[boundary.current]?.semanticKey;
+      if (key) {
+        const index = derivedTimeline.rows.findIndex(
+          (row) => row.semanticKey === key
+        );
+        boundary.current = index < 0 ? null : index;
+      }
+    }
     prevEntriesRef.current = derivedTimeline.displayEntries;
     prevRowsRef.current = derivedTimeline.rows;
 
@@ -403,7 +439,13 @@ export const ConversationList = forwardRef<
     setDataVersion((current) => current + 1);
     setEntries(derivedEntries.entries);
 
-    scrollOnEntriesChangedRef.current?.(pending.addType, pending.isInitialLoad);
+    if (derivedTimeline.rows.length > 0) {
+      scrollOnEntriesChangedRef.current?.(
+        pending.addType,
+        !initialScrollAppliedRef.current
+      );
+      initialScrollAppliedRef.current = true;
+    }
 
     if (loading) {
       setLoading(pending.loading);
@@ -419,7 +461,6 @@ export const ConversationList = forwardRef<
       source,
       addType,
       loading: newLoading,
-      isInitialLoad: addType === 'initial',
     };
 
     if (rafIdRef.current === null) {
@@ -514,12 +555,48 @@ export const ConversationList = forwardRef<
     [conversationRows, firstUnvirtualizedRowIndex]
   );
 
+  const restoreHistoryAnchor = useCallback(() => {
+    const anchor = historyAnchorRef.current;
+    const el = tanstackScrollRef.current;
+    if (!anchor || !el) return false;
+    const node = Array.from(
+      el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+    ).find((row) => row.dataset.semanticKey === anchor.key);
+    if (!node) return false;
+    el.scrollTop +=
+      node.getBoundingClientRect().top -
+      el.getBoundingClientRect().top -
+      anchor.top;
+    return true;
+  }, []);
+
   const conversationVirtualizer = useConversationVirtualizer({
     rows: virtualizedRows,
+    contentRef,
+    onContentResize: restoreHistoryAnchor,
     totalRowCount: conversationRows.length,
     scrollContainerRef: tanstackScrollRef,
     onAtBottomChange: handleAtBottomChange,
     shouldSuppressSizeAdjustment: shouldSuppressInteractionDrivenSizeAdjustment,
+  });
+
+  useLayoutEffect(() => {
+    const anchor = historyAnchorRef.current;
+    const el = tanstackScrollRef.current;
+    if (!anchor || !el) return;
+    const index = conversationRows.findIndex(
+      (row) => row.semanticKey === anchor.key
+    );
+    if (index < 0) {
+      historyAnchorRef.current = null;
+      return;
+    }
+    if (!restoreHistoryAnchor()) {
+      conversationVirtualizer.virtualizer.scrollToIndex(index, {
+        align: 'start',
+        behavior: 'auto',
+      });
+    }
   });
 
   // NOTE: Do NOT call conversationVirtualizer.virtualizer.measure() when
@@ -533,6 +610,7 @@ export const ConversationList = forwardRef<
       align: 'start' | 'center' | 'end' = 'start',
       behavior: 'auto' | 'smooth' = 'smooth'
     ): boolean => {
+      historyAnchorRef.current = null;
       if (index < 0 || index >= conversationRows.length) return false;
 
       const scrollEl = tanstackScrollRef.current;
@@ -586,6 +664,7 @@ export const ConversationList = forwardRef<
 
   const scrollToBottomAndClearSpacer = useCallback(
     (behavior?: 'auto' | 'smooth') => {
+      historyAnchorRef.current = null;
       if (planRevealSpacerRef.current) {
         planRevealSpacerRef.current.style.height = '0px';
       }
@@ -623,6 +702,7 @@ export const ConversationList = forwardRef<
 
   // Expose scroll functionality via ref — delegates to TanStack Virtual
   const scrollToPreviousUserMessage = useCallback(() => {
+    historyAnchorRef.current = null;
     conversationVirtualizer.releaseBottomLock();
 
     const scrollEl = tanstackScrollRef.current;
@@ -824,132 +904,162 @@ export const ConversationList = forwardRef<
           className="h-full overflow-y-auto scrollbar-none"
           style={{ overflowAnchor: 'none', contain: 'strict' }}
           onClickCapture={handleConversationClickCapture}
+          onWheelCapture={() => {
+            historyAnchorRef.current = null;
+          }}
+          onTouchStartCapture={() => {
+            historyAnchorRef.current = null;
+          }}
+          onPointerDownCapture={() => {
+            historyAnchorRef.current = null;
+          }}
+          onKeyDownCapture={() => {
+            historyAnchorRef.current = null;
+          }}
         >
-          <div className="pt-2">
-            {showSetupPlaceholder && (
-              <div className="my-base px-double">
-                <ChatScriptPlaceholder
-                  type="setup"
-                  onConfigure={canConfigure ? handleConfigureSetup : undefined}
-                />
+          <div ref={contentRef}>
+            <div className="pt-2">
+              {showSetupPlaceholder && (
+                <div className="my-base px-double">
+                  <ChatScriptPlaceholder
+                    type="setup"
+                    onConfigure={
+                      canConfigure ? handleConfigureSetup : undefined
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            {isLoadingHistory && !showLoader && (
+              <div className="flex flex-col items-center gap-2 px-double py-3">
+                <div className="flex w-full max-w-md flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-16 animate-pulse rounded-full bg-foreground/10" />
+                    <div className="h-2.5 flex-1 animate-pulse rounded-full bg-foreground/[0.06]" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-2.5 w-24 animate-pulse rounded-full bg-foreground/[0.07]"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <div
+                      className="h-2.5 w-32 animate-pulse rounded-full bg-foreground/[0.05]"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                  </div>
+                </div>
+                <span className="text-xs text-low">
+                  {t('conversation.loadingEarlierMessages')}
+                </span>
               </div>
             )}
-          </div>
 
-          {isLoadingHistory && !showLoader && (
-            <div className="flex flex-col items-center gap-2 px-double py-3">
-              <div className="flex w-full max-w-md flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-16 animate-pulse rounded-full bg-foreground/10" />
-                  <div className="h-2.5 flex-1 animate-pulse rounded-full bg-foreground/[0.06]" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2.5 w-24 animate-pulse rounded-full bg-foreground/[0.07]"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                  <div
-                    className="h-2.5 w-32 animate-pulse rounded-full bg-foreground/[0.05]"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                </div>
-              </div>
-              <span className="text-xs text-low">
-                {t('conversation.loadingEarlierMessages')}
-              </span>
-            </div>
-          )}
-
-          {showEmptyState && (
-            <div className="flex min-h-full items-center justify-center px-double py-12">
-              <ChatEmptyState
-                title={
-                  attempt.usage === 'execution_only'
-                    ? 'No saved messages in this session.'
-                    : t('conversation.emptyTitle', {
-                        defaultValue:
-                          'Send a message to start the conversation.',
-                      })
-                }
-                description={
-                  attempt.usage === 'execution_only'
-                    ? 'This execution is inspected here; its owner controls agent activity.'
-                    : t('conversation.emptyDescription', {
-                        defaultValue:
-                          'Your workspace conversation will appear here once a new turn starts.',
-                      })
-                }
-              />
-            </div>
-          )}
-
-          {virtualizedRows.length > 0 && (
-            <div
-              style={{
-                height: `${totalSize}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {virtualItems.map((virtualItem) => {
-                const row = virtualizedRows[virtualItem.index];
-                if (!row) return null;
-                return (
-                  <div
-                    key={row.semanticKey}
-                    data-index={virtualItem.index}
-                    data-row-index={virtualItem.index}
-                    data-semantic-key={row.semanticKey}
-                    ref={measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
-                  >
-                    {renderRowContent(row.entry, attempt, resetAction, repos)}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {unvirtualizedTailRows.map((row, tailIndex) => {
-            const rowIndex = firstUnvirtualizedRowIndex + tailIndex;
-            return (
-              <div
-                key={row.semanticKey}
-                data-row-index={rowIndex}
-                data-semantic-key={row.semanticKey}
-              >
-                {renderRowContent(row.entry, attempt, resetAction, repos)}
-              </div>
-            );
-          })}
-
-          {/* Plan-reveal spacer: provides extra scroll room so plan-reveal
-              can align the plan entry to the top of the viewport. Height is set
-              imperatively in scrollToAbsoluteIndex and cleared on scrollToBottom. */}
-          <div ref={planRevealSpacerRef} style={{ height: 0 }} />
-
-          {/* Footer placeholder */}
-          <div className="pb-2">
-            {showCleanupPlaceholder && (
-              <div className="my-base px-double">
-                <ChatScriptPlaceholder
-                  type="cleanup"
-                  onConfigure={
-                    canConfigure ? handleConfigureCleanup : undefined
+            {showEmptyState && (
+              <div className="flex min-h-full items-center justify-center px-double py-12">
+                <ChatEmptyState
+                  title={
+                    attempt.usage === 'execution_only'
+                      ? 'No saved messages in this session.'
+                      : t('conversation.emptyTitle', {
+                          defaultValue:
+                            'Send a message to start the conversation.',
+                        })
+                  }
+                  description={
+                    attempt.usage === 'execution_only'
+                      ? 'This execution is inspected here; its owner controls agent activity.'
+                      : t('conversation.emptyDescription', {
+                          defaultValue:
+                            'Your workspace conversation will appear here once a new turn starts.',
+                        })
                   }
                 />
               </div>
             )}
+
+            {virtualizedRows.length > 0 && (
+              <div
+                style={{
+                  height: `${totalSize}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualItems.map((virtualItem) => {
+                  const row = virtualizedRows[virtualItem.index];
+                  if (!row) return null;
+                  return (
+                    <div
+                      key={row.semanticKey}
+                      data-index={virtualItem.index}
+                      data-row-index={virtualItem.index}
+                      data-semantic-key={row.semanticKey}
+                      ref={measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualItem.start}px)`,
+                      }}
+                    >
+                      {renderRowContent(row.entry, attempt, resetAction, repos)}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {unvirtualizedTailRows.map((row, tailIndex) => {
+              const rowIndex = firstUnvirtualizedRowIndex + tailIndex;
+              return (
+                <div
+                  key={row.semanticKey}
+                  data-row-index={rowIndex}
+                  data-semantic-key={row.semanticKey}
+                >
+                  {renderRowContent(row.entry, attempt, resetAction, repos)}
+                </div>
+              );
+            })}
+
+            {/* Plan-reveal spacer: provides extra scroll room so plan-reveal
+              can align the plan entry to the top of the viewport. Height is set
+              imperatively in scrollToAbsoluteIndex and cleared on scrollToBottom. */}
+            <div ref={planRevealSpacerRef} style={{ height: 0 }} />
+
+            {/* Footer placeholder */}
+            <div className="pb-2">
+              {showCleanupPlaceholder && (
+                <div className="my-base px-double">
+                  <ChatScriptPlaceholder
+                    type="cleanup"
+                    onConfigure={
+                      canConfigure ? handleConfigureCleanup : undefined
+                    }
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </ApprovalFormProvider>
+  );
+});
+
+// Scope all refs, pending frames and virtual measurements to the conversation.
+export const ConversationList = forwardRef<
+  ConversationListHandle,
+  ConversationListProps
+>(function ConversationList(props, ref) {
+  return (
+    <ScopedConversationList
+      {...props}
+      ref={ref}
+      key={`${props.attempt.id}:${props.sessionScopeId ?? props.attempt.session?.id ?? 'new'}`}
+    />
   );
 });
 
