@@ -30,6 +30,8 @@ sources:
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
+  - id: openwiki-source-bb23b715172e6051c10e1afc
+    resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
@@ -46,10 +48,14 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts
   - id: openwiki-source-952ab4470659b6dc518fab38
     resource: repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts
+  - id: openwiki-source-d32b3d54fb9362eee85118ce
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx
   - id: openwiki-source-cd106619cfd7af68eb9464fc
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
+  - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
+    resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
   - id: openwiki-source-2fb74c0fc81d817149606557
     resource: repo://packages/web-core/src/pages/workspaces/PreservedChatPanel.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -90,10 +96,10 @@ sources:
     resource: repo://tests/chat/isolated.spec.ts
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-21T03:49:21.125Z" }
+generated: { by: "codex", at: "2026-10-21T04:07:06.425Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:49:21.125Z
+    at: 2026-10-21T04:07:06.425Z
 ---
 
 # Web の実行環境と同期
@@ -181,6 +187,14 @@ anchor は React 更新後だけでなく、末尾 lock がないときの同じ
 built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順・過去の結果](../../docs/development/chat-stability-local21.md)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
 
 今回の Sync は凍結 source `a044769b1dfdf1972c6e10937fa0dfb98faf31db` のチャット変更を、購読・投影・backend の steering 保存・リスト・editor・試験定義という独立した入口で静的に照合した。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合後の成功証拠へ読み替えない。この Sync で製品テストを再実行したことや、無関係な過去の Wiki 全体を再検証したことは意味しない。
+
+## チャットのファイルリンクを既存 panel へ渡す
+
+`AppChatMarkdown` は read-only の `WYSIWYGEditor` に `useChatFileLink` の resolver を渡す。UI package の `ReadOnlyLinkPlugin` は Repo や API を所有せず、解決された callback だけを実行する。既存の inline code → Changes 操作は別 callback のまま残る。Workspace / Repo metadata と preview action が揃わない間はローカルリンクを有効化しない。[チャット側の接続](../../packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L19-L39)、[metadata と action の依存](../../packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L33)
+
+リンク DOM の `href` は無効化・sanitization 済みの場合があるため、plugin は Lexical node の元 URL から再評価する。resolver が変わると既存 node も処理し直すので、後から Workspace metadata が到着した場合にも有効状態を更新できる。ローカルリンクは DOM の href を除去し、click / Enter で callback を呼ぶ。HTTPS は通常の新規タブと `noopener noreferrer` を保つ。[DOM 更新と再評価](../../packages/ui/src/components/ReadOnlyLinkPlugin.tsx#L15-L77)
+
+通常 layout の bridge は解決済み target を `openTarget` へ渡し、right main panel を `FILES` へ切り替える。これにより会話からも既存の file selection / viewer を使う。ファイル名の形式、行指定、曖昧さと拒否、backend の最終検査は [チャットから Repo 内ファイルを開く契約](../operations/workspace-inspection.md#チャットから-repo-内ファイルを開く)を正本とする。[panel への接続](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L650-L677)
 
 ## State と履歴を同期させる際の注意
 

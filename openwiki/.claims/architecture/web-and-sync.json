@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8f5fdb96eb2247b73849e098a6d89a01bf201f5cbc6e11d436af31da3a9269e7",
+  "pageVersion": "sha256:729be319a79473b300930fc934ad7d9bed3ce270c6ce1c933a24abebbe37aa98",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -455,10 +455,44 @@
           "version": "repo-lines-v1:sha256:080f0c59355c3f10b53ad4d28bbc16cbdd456cfb1a08eda839489690e98f7047:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzOTY4MTI4ZTYzNTZlYjkyODBhYjU3NDRmZjdlNGViZjY4OWM2YWE4MDFjZjg3NjI0YThiMTIyZmFlZTUxOTgwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4YjIzNmM3OWE2NzFjYWJjNDM1M2FjMDc2ZmU4MzY4M2E1ZTRjYjFjM2FlMjRkMTEwYzkxNTk5YmQ5YTcxZjVmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZDhmZDA5MTc5MDhiMzQ2YzNmYWJiNjQ2YjU5Mzc2ZDQ1NmY1NDRiNWMwOTZlYWQ0ODRmZWEzNmU1YzkyZjE0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZDk5MTQ2YmQ2MWNhOTNiMzQzMmY5NTE5N2IzOTdmN2I0Y2JiNzg1MGEwZDAwYTFjYjFkNzliZGM4ZmRjNjcyIn0"
         }
       ]
+    },
+    {
+      "id": "claim_9c26fc01182849798e932a69295eda1d",
+      "statement": "チャットの AppChatMarkdown は read-only editor に Workspace/Repo metadata と preview action に依存する local-link resolver を渡し、inline code の Changes 操作は別 callback として保持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L19-L39",
+          "version": "repo-lines-v1:sha256:b07d43caacd6dfe5f4631a85305fb929321abdc4fa569c31a133123e5bfdd5d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NTFmOWNjYmNmMzVkYzI5MWY2OGZjMzY5MDc4NjQ5YmE3OTVhYzQ2MjA4OWJhMTNiMjFmNzI5ZThlNDM0YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NjM2NTQwZTliOWI0Mzg2ZjJmYTgyNTFjNWUzYTM1ODk3MWFkOGNlMDNiNmMyMGI3Y2FlOGRhNGRkY2FlODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MGZlN2U3M2JmY2YwYzVjMGRlZGFhZTNkY2YzNDE0YTg4MWJhMzI4NmE0NGE3ZmMwMzllNGE3YTM4YTlmMjYifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L33",
+          "version": "repo-lines-v1:sha256:86550644cdd55b7a23408a4f75ad2a1961c9cbe085fc905c5a1f26b1683c534b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MWQxZjIwNTY3ODIyZDY0OTIwNTdmNjY1ODI2NDM2MGM5YjIzNzI0YzdiMzA0M2U0OGMzMzkwNTA5OGRiY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3Y2E2ODNjNmYwMjcwMDhiMTMzODNjNjQxNzAzZjQxZWRjMjUzMDkwOTM1MzA4ODM4ZmJjMjdiZTY3ODFjNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d6732de3ac3740459f3f9a32604eac94",
+      "statement": "ReadOnlyLinkPlugin は Lexical node の元 URL から既存リンクも resolver 変更時に再評価し、local link は href を除去して click/Enter callback にし、HTTPS の新規タブと noopener noreferrer を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx#L15-L77",
+          "version": "repo-lines-v1:sha256:998a6f48a314581a099276b08e8434470594f24bb2a52ebfaa76c4d73b8c0b1b:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViOTdhNTIzNDg1OWFmNjA4NmRjYjI3ZTQ0YTIyOTZlODI0MzI5NzdhMzE0MWVlYjBlZTI1NWJhYTkwN2Q5ZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzMDJiN2UwYmE3YmRlZTU5OTM4NGRjOTQ1NzViNmQwMmE4OTNjMzA1MTg3MGMxYTlmYjNkOGQ2MjEzMzcyNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkOTFlNWQwODkzNTAxZjVmZGY2NmNjOTc3NGZiNDZjNmFiMjQ0Njg2ZWExNTE5ZWM4ZDYwZGE2OTE3NmE0YjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3c87105967d04457ab3b5aea01b64c3a",
+      "statement": "通常 WorkspacesLayout の file preview bridge は target を openTarget に渡して right main panel を FILES へ切り替え、チャットから既存 file viewer を開く。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L650-L677",
+          "version": "repo-lines-v1:sha256:5327c671828469919978176fb24fe5bb9d9fa23872e8b183f8b33182c4a93ef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0YTRmMDg1MmNhZTMxYjM4OTU5YmRhNDYyMWU3Mzk2YTc1Y2U5ZGM5MmNjZWQyNDgxNGJiYzgwOGZhNjQxMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:49:21.125Z"
+    "at": "2026-10-21T04:07:06.425Z"
   }
 }

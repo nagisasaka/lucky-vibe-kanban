@@ -46,16 +46,32 @@ sources:
     resource: repo://crates/services/src/services/wiki/openwiki.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
+  - id: openwiki-source-bb23b715172e6051c10e1afc
+    resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-69854837467c3beec23ecb8d
     resource: repo://packages/web-core/src/features/wiki/model/wikiNavigation.ts
   - id: openwiki-source-0cd94f38cc1a16e284fe2b1c
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
+  - id: openwiki-source-714cddfb6b8044e60077cdf6
+    resource: repo://packages/web-core/src/features/workspace-files/model/chatFileLink.ts
+  - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
+    resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
+  - id: openwiki-source-18dc5170d4dade4bcfbc64d8
+    resource: repo://packages/web-core/src/features/workspace-files/model/useWorkspaceFileContent.ts
+  - id: openwiki-source-0f1df48871fe6f036c219dff
+    resource: repo://packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts
   - id: openwiki-source-1be0c4423a1ed260c67b498f
     resource: repo://packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts
+  - id: openwiki-source-e26b48aa743da73944d9c0b1
+    resource: repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx
+  - id: openwiki-source-ece894e6e087af564c07e38d
+    resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
+  - id: openwiki-source-10caf2340da819f813f5ea62
+    resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
@@ -64,14 +80,18 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
   - id: openwiki-source-7156bd32d206a84b272e44b5
     resource: repo://packages/web-core/src/shared/stores/useWorkspaceDiffStore.ts
+  - id: openwiki-source-bf19bdc211e26b0fb155fc08
+    resource: repo://tests/chat/file-links.md
+  - id: openwiki-source-ba7e6a69f93643706f63da9e
+    resource: repo://tests/chat/file-links.native.mjs
   - id: openwiki-source-be2dcdcefb33abee0a49e75a
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-21T04:07:06.425Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-21T04:07:06.425Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -103,6 +123,28 @@ directory は最大2,000 entries、text preview は512 KiBまでで truncated �
 raw は streaming 応答で no-store と nosniff を付ける。明示された raster image MIME のみ inline とし、それ以外は application/octet-stream / attachment で返す。HTML や SVG を raw URL で main UI の実行 content に変えない。[raw 応答](../../crates/server/src/routes/workspaces/files.rs)・[MIME policy](../../crates/server/src/routes/workspaces/files.rs)
 
 raw URL は local のものをそのまま使い、退役した remote host ID または host-scoped URL は拒否する。host ID なしの外部 URL は保持する。[URL test](../../packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts)
+
+## チャットから Repo 内ファイルを開く
+
+<!-- openwiki: broken internal link [src/example.ts:120] file "src/example.ts:120" does not exist. Fix the href or restore the target, then delete this comment. -->
+チャットの Markdown file link は、現在の Workspace / Repo に属するファイルを既存 preview で読むための参照である。`[source](src/example.ts:120)` を開くと file panel が選択される。リンクを別の Workspace の会話に移したときも、解決基準は表示先の Workspace である。本文 renderer から panel までの責務は [Web の接続構造](../architecture/web-and-sync.md#チャットのファイルリンクを既存-panel-へ渡す)にまとめる。[resolver の入力](../../packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L23)
+
+相対パスは Repo 基準で、`./` と Repo 名 prefix を扱う。Repo が一つなら省略できるが、複数 Repo で所属を一意に解決できなければリンクを無効のままにし、推測して開かない。絶対形式は現在の `container_ref/repo.name/` 配下だけを repo-relative target に変換する。Windows 形式も slash を正規化して同じ条件を使う。元の host checkout の `Repo.path` へ fallback しない。[チャットの変換](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L36-L77)、[共通の Repo 解決](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts#L77-L157)
+
+<!-- openwiki: broken internal link [<path with spaces:2>] file "<path with spaces:2>" does not exist. Fix the href or restore the target, then delete this comment. -->
+行指定は `:line[:column]`、`#Lline`、`#Lline-Lend` 等を受け付けるが、保存する位置は正の安全な整数の**開始行だけ**であり、column や範囲の選択を約束しない。行 suffix を外してから URL decode を一度だけ行うため、encoded `#` / `:` はファイル名として残る。空白は percent encoding または `[label](<path with spaces:2>)` を使える。後者の transformer は local resolver がある read-only editor で有効になる。[位置と decode 順序](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L35)、[angle destination](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L536-L555)
+
+text/code viewer は選択行に `aria-current=location` を付けて中央へスクロールする。Markdown は行指定がある場合にソース表示へ切り替え、指定なしでは従来の Markdown 表示を使う。描画済み本文の位置をソース行と扱わないための選択である。存在しない行や backend が切り詰めた範囲外には選択行 DOM がなく、追加読込や最終行への補正はしない。[viewer の分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L90-L108)、[行の選択](../../packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L17-L48)
+
+空の値、通常の `#section`、network path、親参照、control character、不正な percent encoding、未処理の query / fragment、現在の root 外の絶対パスや任意 URI scheme は local resolver が拒否する。HTTPS は plugin が外部リンクとして扱い、HTTP や `file://` は有効化しない。local action がなければ `href` を除き `aria-disabled=true` とする。[入力の検査](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L55)、[リンクの有効状態](../../packages/ui/src/components/ReadOnlyLinkPlugin.tsx#L20-L58)
+
+フロントエンドで解決できたことは、ファイルの存在や読取許可の証明ではない。target の Workspace / Repo / path を既存 content API に渡し、欠落・symlink 逸脱等の取得失敗は既存 preview error と Retry を表示する。最終的な membership と canonical-root 検査は [Repo 内ファイルの読取境界](#repo-内ファイルを読む)のままである。[取得](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFileContent.ts#L13-L26)、[失敗表示](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L65-L91)
+
+### ファイルリンクの検証範囲
+
+[resolver の unit test](../../packages/web-core/src/features/workspace-files/model/chatFileLink.test.ts)は相対・現在 root・Windows・行 suffix・decode・曖昧な Repo・拒否入力を扱う。[component と実 backend の E2E](../../tests/chat/file-links.e2e.mjs)は合成会話を使い、内容表示、Enter、空白・日本語、Markdown source、欠落・symlink、content/raw の拒否を検査する。これだけでは通常 layout の切替を保証しないため、`--native` は seed した保存済み会話を通常 Workspace route で開き、リンククリックから実 content API、native panel、120 行目の選択と viewport 内への scroll まで確認する。[native 試験](../../tests/chat/file-links.native.mjs#L5-L81)
+
+[実装時の検証記録](../../tests/chat/file-links.md)には開発時の成功と失敗・修正の記録がある。今回の Sync は凍結 source `271f62441d4a7ecb7f43ff0cd77e02f0371c762f` について renderer、layout、resolver、viewer、backend と試験定義を静的に照合した。正式 Integration は明示的な検証省略と凍結入力に記録されており、この Sync で製品テストを再実行したことや過去の無関係な説明を再検証したことを意味しない。agent による会話生成、実 Basic/Auth0 login、モバイル layout はこの native 試験の検証範囲外である。
 
 ## Wiki の本文・ツリーと表示元を確認する
 
