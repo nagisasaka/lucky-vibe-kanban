@@ -198,7 +198,11 @@ impl FrozenDirectProviderLaunchSpec {
             provider_session: self.provider_session.as_ref(),
             reset_to_message_id: self.reset_to_message_id.as_deref(),
             selected_skills: &self.selected_skills,
-            approval_behavior: "noop",
+            approval_behavior: if self.provider == DirectProvider::Codex {
+                "host_tool_waiter"
+            } else {
+                "noop"
+            },
             current_dir: &self.current_dir,
             env: AuditedExecutionEnv {
                 vars: &self.env.vars,
@@ -3343,6 +3347,11 @@ impl AgentRunPort for LocalAgentRunPort {
                     },
                 )
                 .await?;
+                if provider == DirectProvider::Codex {
+                    // The request handler emits the matching resolution after
+                    // its waiter completes, including timeout/cancel outcomes.
+                    return Ok(());
+                }
                 self.append_event(
                     &request,
                     &attempt,
@@ -4871,7 +4880,7 @@ mod tests {
             audited["selected_skills"],
             serde_json::to_value(&selected_skills).unwrap()
         );
-        assert_eq!(audited["approval_behavior"], "noop");
+        assert_eq!(audited["approval_behavior"], "host_tool_waiter");
         assert_eq!(audited["current_dir"], attempt.workspace.path);
         assert_eq!(audited["env"]["vars"]["VK_AGENT_RUN_ID"], "frozen-run");
     }

@@ -216,11 +216,12 @@ impl Approvals {
     }
 
     pub(crate) async fn cancel(&self, id: &str) {
-        if let Some((_, _pending_approval)) = self.pending.remove(id) {
+        if let Some((_, pending_approval)) = self.pending.remove(id) {
             let outcome = ApprovalOutcome::Denied {
                 reason: Some("Cancelled".to_string()),
             };
-            self.completed.insert(id.to_string(), outcome);
+            self.completed.insert(id.to_string(), outcome.clone());
+            let _ = pending_approval.response_tx.send(outcome);
             let _ =
                 self.patches_tx
                     .send(crate::services::events::patches::approvals_patch::resolved(

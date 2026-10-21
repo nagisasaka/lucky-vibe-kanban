@@ -481,6 +481,32 @@ function appendRunEntries(
         } else {
           const previous = output[existingIndex];
           next.patchKey = previous.patchKey;
+          if (
+            previous.type === 'NORMALIZED_ENTRY' &&
+            previous.content.entry_type.type === 'tool_use' &&
+            next.type === 'NORMALIZED_ENTRY' &&
+            next.content.entry_type.type === 'tool_use'
+          ) {
+            const action = previous.content.entry_type.action_type;
+            const details =
+              action.action === 'command_run'
+                ? { command: action.command }
+                : action.action === 'tool'
+                  ? action.arguments
+                  : null;
+            next.content = {
+              ...previous.content,
+              content:
+                details == null
+                  ? previous.content.content
+                  : '```json\n' + JSON.stringify(details, null, 2) + '\n```',
+              entry_type: {
+                ...previous.content.entry_type,
+                status: next.content.entry_type.status,
+              },
+              timestamp: event.timestamp,
+            };
+          }
           mergeEventIdentity(previous, event, runActive);
           next.canonical = previous.canonical;
           output[existingIndex] = next;

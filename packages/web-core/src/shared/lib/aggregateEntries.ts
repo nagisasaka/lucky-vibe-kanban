@@ -271,6 +271,18 @@ export function aggregateConsecutiveEntries(
       continue;
     }
 
+    // Keep human decisions visible as individual approval cards.
+    if (
+      entry.type === 'NORMALIZED_ENTRY' &&
+      entry.content.entry_type.type === 'tool_use' &&
+      entry.content.entry_type.status.status === 'pending_approval'
+    ) {
+      flushToolGroup();
+      flushFileChangeGroup();
+      result.push(entry);
+      continue;
+    }
+
     const aggregationType = getAggregationType(entry);
     const shouldWrapToolActivity = aggregationType !== null;
     const fileEditPath = getFileEditPath(entry);

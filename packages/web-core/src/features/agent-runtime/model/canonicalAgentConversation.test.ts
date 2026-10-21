@@ -698,6 +698,63 @@ describe('projectCanonicalAgentConversation', () => {
     );
   });
 
+  it.each([
+    ['Shell', { command: 'echo review-me' }],
+    ['FileChange', { changes: [{ path: 'review.txt', diff: '+review me' }] }],
+  ])('preserves %s details when approval is requested', (toolName, args) => {
+    const runId = 'run-approval-details';
+    const entries = projectRuns([
+      {
+        runId,
+        status: 'awaiting_approval',
+        events: [
+          event(runId, 1, {
+            type: 'tool_call',
+            data: {
+              tool_call_id: 'tool-1',
+              tool_name: toolName as string,
+              status: AgentRuntimeToolStatus.running,
+              arguments: args,
+              result: null,
+            },
+          }),
+          event(runId, 2, {
+            type: 'approval_requested',
+            data: {
+              tool_call_id: 'tool-1',
+              tool_name: 'codex.approval',
+              approval_id: 'approval-1',
+            },
+          }),
+        ],
+      },
+    ]).entries;
+    const tool = entries.find(
+      (entry) =>
+        entry.type === 'NORMALIZED_ENTRY' &&
+        entry.content.entry_type.type === 'tool_use'
+    );
+    if (
+      tool?.type !== 'NORMALIZED_ENTRY' ||
+      tool.content.entry_type.type !== 'tool_use'
+    )
+      throw new Error('missing tool');
+    expect(tool.content.entry_type.tool_name).toBe(toolName);
+    expect(tool.content.content).toContain(
+      toolName === 'Shell' ? 'echo review-me' : '+review me'
+    );
+    expect(tool.content.entry_type.action_type).toMatchObject(
+      toolName === 'Shell'
+        ? { action: 'command_run', command: 'echo review-me' }
+        : { action: 'tool', arguments: args }
+    );
+    expect(tool.content.entry_type.status).toMatchObject({
+      status: 'pending_approval',
+      approval_id: 'approval-1',
+    });
+    expect(tool.canonical?.eventIds).toHaveLength(2);
+  });
+
   it('resolves canonical approval and input controls in place', () => {
     const runId = 'run-control';
     const projection = projectRuns([

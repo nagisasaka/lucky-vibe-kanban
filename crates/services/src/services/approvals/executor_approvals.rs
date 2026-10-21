@@ -5,7 +5,9 @@ use db::{self, DBService, models::execution_process::ExecutionProcess};
 use executors::approvals::{ExecutorApprovalError, ExecutorApprovalService};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
-use utils::approvals::{ApprovalOutcome, ApprovalRequest, ApprovalStatus, QuestionStatus};
+use utils::approvals::{
+    ApprovalOutcome, ApprovalRequest, ApprovalResponse, ApprovalStatus, QuestionStatus,
+};
 use uuid::Uuid;
 
 use crate::services::{approvals::Approvals, notification::NotificationService};
@@ -14,8 +16,7 @@ type ApprovalWaiter = futures::future::Shared<futures::future::BoxFuture<'static
 
 pub struct ExecutorApprovalBridge {
     approvals: Approvals,
-    db: DBService,
-    notification_service: NotificationService,
+    notifications: Option<(DBService, NotificationService)>,
     execution_process_id: Uuid,
     /// Waiters stored between create and wait phases, keyed by approval_id.
     waiters: Mutex<HashMap<String, ApprovalWaiter>>,
@@ -30,9 +31,19 @@ impl ExecutorApprovalBridge {
     ) -> Arc<Self> {
         Arc::new(Self {
             approvals,
-            db,
-            notification_service,
+            notifications: Some((db, notification_service)),
             execution_process_id,
+            waiters: Mutex::new(HashMap::new()),
+        })
+    }
+
+    /// The process host owns waiters across application reconnects. Its canonical
+    /// event stream supplies the UI, so it does not open the application's DB.
+    pub fn for_process_host(approvals: Approvals, run_attempt_id: Uuid) -> Arc<Self> {
+        Arc::new(Self {
+            approvals,
+            notifications: None,
+            execution_process_id: run_attempt_id,
             waiters: Mutex::new(HashMap::new()),
         })
     }
@@ -64,8 +75,12 @@ impl ExecutorApprovalBridge {
             .await
             .insert(approval_id.clone(), waiter);
 
+        let Some((db, notification_service)) = &self.notifications else {
+            return Ok(approval_id);
+        };
+
         let (workspace_name, workspace_id) =
-            ExecutionProcess::load_context(&self.db.pool, self.execution_process_id)
+            ExecutionProcess::load_context(&db.pool, self.execution_process_id)
                 .await
                 .map(|ctx| {
                     let name = ctx
@@ -95,7 +110,7 @@ impl ExecutorApprovalBridge {
             )
         };
 
-        self.notification_service
+        notification_service
             .notify(&title, &message, workspace_id)
             .await;
 
@@ -120,6 +135,7 @@ impl ExecutorApprovalBridge {
             })?;
 
         let outcome = tokio::select! {
+            biased;
             _ = cancel.cancelled() => {
                 tracing::info!("Approval request cancelled for approval_id={}", approval_id);
                 self.approvals.cancel(approval_id).await;
@@ -134,6 +150,29 @@ impl ExecutorApprovalBridge {
 
 #[async_trait]
 impl ExecutorApprovalService for ExecutorApprovalBridge {
+    async fn resolve_tool_approval(
+        &self,
+        approval_id: &str,
+        approved: bool,
+        reason: Option<String>,
+    ) -> Result<(), ExecutorApprovalError> {
+        self.approvals
+            .respond(
+                approval_id,
+                ApprovalResponse {
+                    execution_process_id: self.execution_process_id,
+                    status: if approved {
+                        ApprovalOutcome::Approved
+                    } else {
+                        ApprovalOutcome::Denied { reason }
+                    },
+                },
+            )
+            .await
+            .map_err(ExecutorApprovalError::request_failed)?;
+        Ok(())
+    }
+
     async fn create_tool_approval(&self, tool_name: &str) -> Result<String, ExecutorApprovalError> {
         self.create_internal(tool_name, false, None, None).await
     }
@@ -190,5 +229,49 @@ impl ExecutorApprovalService for ExecutorApprovalBridge {
                 ))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn process_host_timeout_and_early_answer_use_existing_waiters() {
+        let bridge = ExecutorApprovalBridge::for_process_host(Approvals::new(), Uuid::new_v4());
+        let id = bridge.create_tool_approval("bash").await.unwrap();
+        bridge
+            .resolve_tool_approval(&id, false, Some("No".into()))
+            .await
+            .unwrap();
+        assert!(
+            matches!(bridge.wait_tool_approval(&id, CancellationToken::new()).await.unwrap(), ApprovalStatus::Denied { reason: Some(reason) } if reason == "No")
+        );
+        let id = bridge
+            .create_internal("edit", false, None, Some(Duration::from_millis(1)))
+            .await
+            .unwrap();
+        assert!(matches!(
+            bridge
+                .wait_tool_approval(&id, CancellationToken::new())
+                .await
+                .unwrap(),
+            ApprovalStatus::TimedOut
+        ));
+        assert!(bridge.resolve_tool_approval(&id, true, None).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn cancellation_wins_a_ready_answer_and_does_not_become_approval() {
+        let bridge = ExecutorApprovalBridge::for_process_host(Approvals::new(), Uuid::new_v4());
+        let id = bridge.create_tool_approval("edit").await.unwrap();
+        bridge.resolve_tool_approval(&id, true, None).await.unwrap();
+        let cancel = CancellationToken::new();
+        cancel.cancel();
+        assert!(matches!(
+            bridge.wait_tool_approval(&id, cancel).await,
+            Err(ExecutorApprovalError::Cancelled)
+        ));
+        assert!(bridge.resolve_tool_approval(&id, true, None).await.is_err());
     }
 }

@@ -46,6 +46,7 @@ use uuid::Uuid;
 
 use crate::transport::{TransportError, read_json_frame, write_json_frame};
 
+mod approvals;
 pub(crate) mod journal;
 use journal::HostJournal;
 
@@ -354,7 +355,11 @@ impl SharedHost {
             provider_session: launch.provider_session.as_ref(),
             reset_to_message_id: launch.reset_to_message_id.as_deref(),
             selected_skills: &launch.selected_skills,
-            approvals: Arc::new(NoopExecutorApprovalService),
+            approvals: if launch.provider == DirectProvider::Codex {
+                approvals::ProcessHostApprovals::new(launch.run_attempt_id)
+            } else {
+                Arc::new(NoopExecutorApprovalService)
+            },
             current_dir: &launch.current_dir,
             env: &env,
         })
@@ -1045,6 +1050,12 @@ async fn monitor_process(
             }
         }
     };
+
+    // Release approval tasks even when the provider exits without a cancel
+    // command (EOF, crash, protocol failure, or ordinary completion).
+    if let Some(cancellation) = cancellation.as_ref() {
+        cancellation.cancel();
+    }
 
     if !cancellation_requested
         && !matches!(cause, ExitCause::Process { .. } | ExitCause::Cancelled)
