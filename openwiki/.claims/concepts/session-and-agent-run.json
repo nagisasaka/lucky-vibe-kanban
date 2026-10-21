@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:145dc882bdde215ca222bd0f1730031ed405a8fd9bc80ac6f01cac94ee171166",
+  "pageVersion": "sha256:5c05f93b8951add75cd0565da972f70b38d77ce80a6e731e60f4eec14e736b27",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -228,7 +228,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts",
-          "version": "repo-file-v1:sha256:a9706c6bbea72d20d497936c34ffa76423e253532694998952e9846d7f0e11ec"
+          "version": "repo-file-v1:sha256:ee401bda7c749963a451588ef1c1a3083408e10b79c94f3ef30e0463027e6cd7"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useScratch.ts",
@@ -615,10 +615,70 @@
           "version": "repo-lines-v1:sha256:8cb84a07259c4afa4163372dc7e47ab6f45c5f08b4c40299896fb0045c49e1aa:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0YTU0NzQ2YTgwYTM4MzdkMzFkZTMyZDliMTk1MGZhZjhhNDg4ZjIxODg2N2U4ZTU3MmEwZmM3ODE5OWU4NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwOWIyOTljYTZjNDc4Y2JmODg5OTNlZjY3YTI2ODI5YjdlN2U2ZDFhZTI0ZGM0ZWQ2Y2ZjYjA0ZjI3OWYwYzIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_4fb2efacf8df427e8f16b422304d837d",
+      "statement": "通常sending状態でも本文editorは編集できる。ACKのcontent snapshotは本文に加え設定・Skill・添付・review・resume選択を含み、失敗や新しい編集を消費しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/SessionChatBox.tsx#L915-L930",
+          "version": "repo-lines-v1:sha256:8a8245982327472b2883c9e228df5eeceb8a60cdd7c23ee3f1fe5a0e21c8bf60:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1MTA4ODYyN2Y3NDE1NWFjMjA1MGMwNjVlYzE4MjgwNWI0MDJkZWY5OWNlNTZjZDg1NGQ0YTJiMWE2MGU1OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwNDVhYTcyMzY3MDhlZjQ5NzBiZTc3MjI2NGQzMjI2NWE4MTE3YWQxNGMyNmU4ODdlZjVjZTg0ZDVmMDY3NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNmRjNjY4OWU0MmJlMmNiMmU2MWI4YmYyZDQxMDdkNWFhYWViYjI5NDE2MjI5OTA3YTZhNDg1NGFlMTMxNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxZWViNzA2Mzk2ZDUzNDRmYmIwYzk4Mzc1Zjk2OWU0MzVkNjlhY2IwNjY0YTRjMWU1Yjk1YjM3MTRmNGIwNzcifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/sessionDraft.ts",
+          "version": "repo-file-v1:sha256:28e91038f54a5ae2f9a9218734c7f52ae61f8f7cec5f196e5a11295416a38c85"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L688-L762",
+          "version": "repo-lines-v1:sha256:e4d9b670228dcee4b6285018e78b0122a111820a77f995260b3e5033fbf055e9:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNWNjMjUyNWNmMGM3Y2ExNDE4YjQ5NTVlNGY1YWFkMTQ2ZTc3ZGJhYWNlYzEzZjAzYTNhMzY1MGUwYjIzMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxMmYzMzM5YzQ1M2EwYzA5OGM4YTc4YjYzNTgwNzA2YTUwZmE4YTc3NDQyZTRkNzlmNTkyN2JiZmViY2VhOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyY2JmNTUzZjM3Yzg1Mjc4YjlkN2RiMDVmMDZhOGYyNTQyMGY5OGYxNDE3YTE1ZjlmMzQxN2QxNjU0ZjI3NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4YWI5OTVjYTJhYTllZDczMjMwZmZlY2ZlZGZjODQxMmM1YTc5NDdiMzhlMGEwMDM3ODczY2JiYmEwNDhiOGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9bac411bbc8f4182b61e8287ad891706",
+      "statement": "MarkdownSyncPluginは外部値の解析をmarkdown-sync tagで識別し正規化serializationを親のonChangeへ返さない。外部値とserializationを別に追跡しtransformer変更時にリセットする。editor hookも同値本文でrevisionを増やさない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/MarkdownSyncPlugin.tsx#L30-L97",
+          "version": "repo-lines-v1:sha256:08df274c790e47c69c0b6e7f758e4d0f06cee7a2e3583d34be88483ba121d12f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2M2IwNDVhZjU4MGI4NDBiODgzZWMxM2Q0YjFjMmM1YjRiYjIwNTczOGM0MjI2M2FlYzI0NzNkYjBkYjI5ZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiZGM0NTcxMTIyNzY3OWRiOWQzODZiOTdlODBmMWI3M2RmMjQ5N2EwMDY2YmUxZWU4N2ZkYTJjYzk1YWJhMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MDM5M2U2OGMxZDQzNGZiZDNlODBlNTBkNDdiZWIyZTY5OTE0ZDc2YTVhY2ViNjdhYjRlYTMyNjcwOWE2ZGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkOTFlNWQwODkzNTAxZjVmZGY2NmNjOTc3NGZiNDZjNmFiMjQ0Njg2ZWExNTE5ZWM4ZDYwZGE2OTE3NmE0YjUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L73-L86",
+          "version": "repo-lines-v1:sha256:093a904f31937ddd24519bf50ac7beb7867a177d183a5c86c9c139c8d5797d92:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0OTkxNDU4NmExMTkxMzNiZjFjOTc5YjdhZjI3ZDY0Zjg3ZmE0OTRlOGMwM2RiNzRlZjRkOTNmZTA1MjM2YjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzUyZjA4YjM5YjA4YjAxYzhkMzA4YmY4ODBiMGJlZjAyZmQxZGZjYzlkOWFhOTNhNGQxYjVmNGQ1OGI2Y2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZTBlNmYzMDQ5NTg3MmEzOTRhZGM4M2Q2Zjk2NzI4NjBmM2U3YzcyMTJhYzEyZTM5YjA0ODk3MTAzODU0ODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwYmViNGI5YTM3NDYyZjViYTRjZWJiMWZmMDkzOTQ3NWUwNDQwYzliMzI0YjJjOGQzYjlhMzlhYWM4MGYwNjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_51b27b178aad4669a73199656f26dd38",
+      "statement": "キー送信は最新MarkdownをflushSyncで親へ反映した後にrefの現在callbackを呼び、flush前のsnapshotを使うclosureを避ける。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L150-L160",
+          "version": "repo-lines-v1:sha256:788b643675344ed88649304a132d6842bbce3f0f63baed6489c759b5b8436370:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NTgzZDdlY2JkNjNkOTU4NTAwOTdiZDkwZWJkM2JiYTZiMTYzYTk5MzM0MzgzYmJjNGJhYWQ4ODc1ZDljYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNTg5YzUzMzY3ZTgxOWM5ODM0Yzg1YmVlZjdlMjUxNWFmNjAyYjNhNGRhZGUzMWZkNzA4ODFkMzU0MWE3OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhMWE2MWM2ZjhhOWExZGE3ODRjYzFhMzljMjQ0NGJiOGIwMjcwM2YzMjI3ZjA0YTg5ODRjMDQ3ODhlMWRjYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmYjQ0Yjc2N2ExYWE3Y2Y3YThkYTEzZGE4NmVjYTA2OGE5OGI1YTk3ZjM4NGRhMDA3MzA4OTY3NmNmZDkwMjgifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L35-L40",
+          "version": "repo-lines-v1:sha256:f7f847ced541bf9ae5cc8dc7904263b5d41336c8a1a47f8f9942c3d5a0bf515b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBiMTE2NjdjN2ViMTMyZmJlNjAzOWJjY2JhOTAxMTk1ODY4YjU2YmE3NjRkYWNhOTYxYmM2ZmNkYWZkYTkyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFjMDdjYWMxMWQ4YWQ2MTMzMWRmZGZmNDU3OTUyMDM0MDhjMjMxYTQ2MDQ1ZGU4NWM0NmI3MmUwZDYzOGMwZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGY3MDdhODdhZTA2NmM5NzJiNmZjZDZiNGYxNTFjMGFkMjJlNzIyYzdlYTRkNTNlMDdlYzQxYzk1MWM1OWVmOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjc0MTEzNzYxYjViYWI2YzZlNzJkMGRlYzEyY2EwODA0YWEwOTNhMDBmNDc3MzY2ZDZmMWZjNTcwYWQ5OWQ1YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_148226cd89664aecae0284d1e765894c",
+      "statement": "editor fixtureは改行正規化と送信成功・失敗・追加入力・focus・IMEを検査し、built-app入力試験は実Scratchと合成follow-up応答を使う。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/editor-display.test.mjs#L75-L141",
+          "version": "repo-lines-v1:sha256:aea3a0a21c4a4f21edc6fc34dcb2b2da41f7c8ed5d75502f9493e62bdfb11e28:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNTQ3OTBlYWZlYjhjZDg5M2RhMTc4NDI1Mzk5ODE2OWM4YTBkMWMxMzc5MWUzMzdmZjBjNDY2OGE5OTg0YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNDRhNWFlNzdmOGY3ODBhYzhlNzc0NThkNDljOWI5ODgzMzBkNWQ3MmI1YTBjZjYxMzQyZGY1YzY3OTkyNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyNTFlZDQyODEzMTgwMGZkNTJhOWE4YzhiNzUzZjg1NzQ5ZjZjOWVjZWNhZGYyYjgzYmRiOTBhMWQwNDEwNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2N2FjYTBmNDVjNmVmM2QzYzk1NjQ5MjliNDhlOTM4MWFjYTVmY2ZmMTA4MzhlNWE2NWRkOTIyYjA3MGJjZTEifQ"
+        },
+        {
+          "resource": "repo://tests/chat/isolated.spec.ts#L295-L372",
+          "version": "repo-lines-v1:sha256:3b940a680551fd67988b7ce8d3be4362975e75c3435ef4ef769bad240c64ec4c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMWFmYzA5NmQ1NjBjY2I1N2FmNzI0MTZkYzkxMmM2NjAyYzhhYTc2Mzk1YWQ4NzIzNmYyMTExMDFhZWMzNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhNmE1YTc1ZDUyMWFkZGIyMTA1MzJiMTQ0NzZkOWRjMWE4YTQyMGZmNjEwZTFhZDI5OTk5ZTQwYmY5NmU5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwOGU4OTgxODcyYjIyMzUzNTk3YzFiODUwOTdiZDIyOWZlMGQwZDQwNTRlM2JlMzZjYzkyMzE2OGNjYjc0OGUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:43:44.672Z"
+    "at": "2026-10-21T03:49:21.125Z"
   }
 }

@@ -60,6 +60,12 @@ sources:
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
+  - id: openwiki-source-5ac2756548e33cbcc86886e2
+    resource: repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx
+  - id: openwiki-source-84123960815ca9b2c23d8a0b
+    resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
+  - id: openwiki-source-583a89a619287948ed95b211
+    resource: repo://packages/ui/src/components/SessionChatBox.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts
   - id: openwiki-source-6f68befb805cadf03e4b569b
@@ -74,6 +80,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
+  - id: openwiki-source-e3ad3a00ca485cc7e1958008
+    resource: repo://packages/web-core/src/features/workspace-chat/model/sessionDraft.ts
   - id: openwiki-source-c294940cc86e5328c123d83c
     resource: repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx
   - id: openwiki-source-f0616990372eebb94bc69e6f
@@ -86,16 +94,20 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
   - id: openwiki-source-bfcca8eb0acec96215c9bf83
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
+  - id: openwiki-source-53a9c69af17738e7a2b63de9
+    resource: repo://tests/chat/editor-display.test.mjs
+  - id: openwiki-source-adbcc4477d532869e93682ad
+    resource: repo://tests/chat/isolated.spec.ts
   - id: openwiki-source-f2e3f1d703b1fe9ce39ce327
     resource: repo://tests/chat/run-elapsed.test.mjs
   - id: openwiki-source-a41f30f4cf117b514c91218b
     resource: repo://tests/run-elapsed/isolated.mjs
   - id: openwiki-source-854d9f0ac30502f5da093e06
     resource: repo://tests/run-elapsed/README.md
-generated: { by: "codex", at: "2026-10-21T03:43:44.672Z" }
+generated: { by: "codex", at: "2026-10-21T03:49:21.125Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:43:44.672Z
+    at: 2026-10-21T03:49:21.125Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -220,6 +232,16 @@ Plan with Goal の objective 編集・専用承認 UI は退役した。古い d
 queue 済みでも Scratch は別の編集状態として作成・更新できる。旧 queue-ID guard は削除されている。条件付き ACK は送信 snapshot が一致する版だけを消し、queue 消費は新しい draft を削除しない。[Scratch CRUD](../../crates/server/src/routes/scratch.rs)。
 
 保存エラーは editor の console に残り、未 ACK backup を保持する。ただしブラウザー storage が無効・容量不足なら backup 自体が書けない。この場合も入力欄を消さないが、再読み込み後の復元は保証できない。sessionStorage の backup 失敗を、サーバーへの保存成功と取り違えない。[backup の限界](../../packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts#L24-L54)。[ボード表示設定](project-and-issue.md#ボード表示と共有状態)は別の Scratch データである。
+
+### 送信中の編集と Markdown 正規化
+
+通常の送信待ち `sending` では送信操作の制約を保ちつつ、本文 editor は編集可能にする。成功 ACK が消費できるのは送信時と同じ scope・revision・content の composer だけである。content は本文だけでなく設定・Skill・添付・review・resume 選択を含む snapshot なので、trim した本文の一致だけへ弱めてはいけない。送信失敗や、待機中に新しく編集した draft は消さない。[送信中の editor](../../packages/ui/src/components/SessionChatBox.tsx#L915-L930)・[snapshot と ACK](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L688-L762)・[一致判定のテスト](../../packages/web-core/src/features/workspace-chat/model/sessionDraft.test.ts)
+
+Markdown editor への外部値読み込みは、末尾改行などを正規化しても新規ユーザー編集ではない。`MarkdownSyncPlugin` はその更新に `markdown-sync` tag を付け、serialization の追跡は更新するが親の `onChange` へ返さない。外部値と直近 serialization を別々に追跡し、transformer の変更時には両方をリセットして再解析する。editor hook も同一本文の通知では revision を増やさない。この二つの区別が、送信中の正規化通知だけで ACK の一致条件が崩れることを防ぐ。[外部値と編集通知](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L30-L97)・[同値通知](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L73-L86)
+
+キー送信は editor の最新 Markdown を `flushSync` で親へ反映した後、ref に保持した現在の送信 callback を呼ぶ。flush 前の closure では更新前 snapshot を送信対象にし得るためである。IME 中の Enter / Ctrl+Enter 抑制は維持する。[flush 後の callback](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L150-L171)。これらは表示・draft ACK の変更であり、[永続 steering の保存と表示順](../architecture/web-and-sync.md#永続会話と-live-の順序)とは別の責任を持つ。
+
+変更時の editor fixture は、末尾改行付き外部値の読み込みと送信成功、同値のキー flush、失敗時入力、送信中の追加入力、focus と IME を確認する。built-app 試験でも実 Scratch と制御した follow-up 応答を使うため、実 provider の通常 follow-up 成功を証明するものではない。[editor 試験](../../tests/chat/editor-display.test.mjs#L75-L141)・[built-app 入力試験](../../tests/chat/isolated.spec.ts#L295-L372)。今回の静的照合と開発時の実行記録の区別は [チャット検証境界](../architecture/web-and-sync.md#チャット表示の検証境界)を参照する。
 
 ## Plan の遷移
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c0be67a1b2a791205adc9689e21da781780213b20aff80c593e7c2f33739cb17",
+  "pageVersion": "sha256:8f5fdb96eb2247b73849e098a6d89a01bf201f5cbc6e11d436af31da3a9269e7",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -329,10 +329,136 @@
           "version": "repo-lines-v1:sha256:4332bf06c68c648197469fe2184052887d89e0d10552c67009522cfaeb1192c4:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGY4YjI4NGU0ZWI2Njk4YWIzMjdlZDFjNzBjY2ZiMzU4MTNjMjgzNzZlYzViZjM1NjVhNTkzZGRlNDlmOWJiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjkxZTg1NWRjNzUyYjQzODNiM2EwMDY0ZGUwNTNkNTBmMzdmZjY5NDI0NzQ4ZThiNzE1MmU3YWYzMDExNWMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMmEwYTU5ZDA3ZTFlN2VlZjIyZDgyYmE5OThkMWM5M2M4ZDQ5YmNjNWIxNGVhODEyZWQ3MTYyOTE0OTdhOWJiYSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_dc1386296ecc4a58a54eed193dcf6f45",
+      "statement": "会話の永続イベントはattempt番号とcanonical sequenceで並べ、native audit番号と混在ソートしない。Steerはprovider制御送信後にcommand IDのUser messageをnative refsなしで保存する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3360-L3400",
+          "version": "repo-lines-v1:sha256:0483a7451e1e4251ef8a95cad6bb5e0051fbf2e94e7608a0b95176329ab1df76:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTE5ZmRiZjJmMjFiMmMxOTg3MzgwNjE0NWM3ZjU4ZjlmOGFmYWYyNGUxNDQ0M2Y2NDBiOTkwMzIwYzI2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3NjJhMTcwOGRiNjllNzlhMDMwNmVkNTEwOWVlYWY4ZTg2MjM5OTdmZTRmMTE4MTQ0MjUyY2E3MTE3MjU3YmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMmEyOWE4MGY1MGIxNjI4ZGNjNTM0MzA1MWE3MTVhM2I0MWJiNmUzYjI5ZDgzZmFmZWUzZDYyMjdkZDc1M2UifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L29-L53",
+          "version": "repo-lines-v1:sha256:4f6f691713fc9944a9e6c3640a6831229192a0a198f36e0cc0dacc698c3e737d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2ZlNGU4NjlmZjg1MDAwNTFhNjI0ZDVhYWM0ZGQzY2Y1NGUxMjgzZjRlNGY1NTVkNDUwYWVhM2RlNTIyNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkOTgzNTQ5OWU1YmE5MWY4NzI2N2M5NTJiNzhlYWVkZDZjNDY2Zjk1YjY4ODFiMDdiNDZjY2FlYzBjZGYxNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3MjE5MTUwZDYxYTdjNjFlNjEyMDEzYjJmYTJkN2ZmMDQwOTRhZTg2YzBiMGIwNjcwMGQ3NWQ2Mjg4ZWVlZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1OTJkMTM3MjIyZDIwMGVhYTFhNDJlOTAzMjQ3ZjYyMTIyZTMwZDMwMGJiZTZlZjI0ZjRkYTg4NTAyYTlkNjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3422a934e21e41089108c01aeeb1f497",
+      "statement": "Live表示は永続列の最後の先行候補の後へ挿入し、同attemptでは候補のnative refsの有無に応じnative sequenceかtimestampを比較する。受信側はevent IDを重複排除し確定message IDの一時表示を除く。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L54-L79",
+          "version": "repo-lines-v1:sha256:6c824c49b8ef1ba4ec05f379f4237d553ab31bd1322059ef000bfa6474467f85:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5NGVlZjI4OWM0M2FkYTU3MTlkY2YyN2QxYTZjYzRlNzEzOGEwYTdhNmM5MTQ1YzQ4ZmJlNzMzYWRiMTg0ZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNjZkMzY0NTMwMjM5OTY1ODg5NzViYjNhYjBmZWQ5YTZiYjVjNDliNGUyMmUxNzQzMzBjNTJhODE3Mzg2MWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODlhY2E2NTQ4Zjk0ZWU0Zjk4ZWRmNTg3M2RlNjQ2YTQ5MDk5YzMwY2JjZjdjMTk2NzE1NGM4M2IxZDViMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1MGNlNjZhZTQyZTBiOGExZWYwMzk4MWI4N2FjMjgyZWI0OGM0ODUxMWMxYWFhNWJiNzg0MjFhYzYyYTgxZTcifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L175-L204",
+          "version": "repo-lines-v1:sha256:c517b26adf03013d93996b832c3a3a790ba7ef1a6f7473063873e40a52f880c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzYzU1YjAzMWUxZGVkNDAwNzAwOTJlZTg2NWU2NDU2ZTdiOGRjM2Q3N2I1YTgzZGRlNzIzNjViYWU1ZmQzYzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwN2EwOTJkOTdmMGJjYTA0OWQ4MzJmZTNkMjE1ZGQ5YWMzNmQ2YzkzM2UzOWQ3NjIwNWM3ZWQyMjlkMTM4MmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjYzczYzA0MjNkM2U1NTExNzA1MWMwZjNiNTRkNzc5NDU1OWVlNDE3OTk3Y2ZlZmQ0ZTI0NDgxMzgwMTY3Y2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0NzE0Y2U0ZjhmYWE2NWYyMWI2MWU3Y2QzZWE2MjYyODA2YTc1ZDI0OTI4ZWU4ZGMxZWFhNjU5YmZiZmU2ODIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c0707c4cd374ce1a4a6d08f1845720e",
+      "statement": "ConversationListはWorkspace/Sessionをkeyに状態を分離し保留rAFをcleanupする。初回スクロールは最初の非空行適用だけで、遅いinitial通知で再実行しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1052-L1065",
+          "version": "repo-lines-v1:sha256:f29a6eff826c2e6f9fefb279d818fd1e5912f5e03f9e3a29881329b1a893cfea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNTA3Y2QwNDQ2ZWE4MDI4ODlhMGVhYzE5YzU5MTZjYTExYTU0MmM4YmFhOTZiYWMxYjc3OTgzNDFkYzkyZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4MGQyZGQ0ZjI4OWQyNmRjNzU3YzJiNjVhMDZjMzkyMjdhNjcxN2M0YjQ4YjVhMzk3OTJjOWYxMWU0MWFlYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0MDJhMGFjOTc4M2MyYTI5OGNmNTVjMDUwMjFjN2M1ZDk1NmU2NWUzNDFkMmExZTVlMDgyMGFkMmIxOTVhZDIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L273-L302",
+          "version": "repo-lines-v1:sha256:4346392fcc99eb558fc03d81298a975b33f42cd170f286a5f4a3ff89f2b19006:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0NzIwZmQzNWI2NDgyOWI0MTRlZjdmM2ZkMTgwYjEwMDJmYWI3Yjg0MmNjNzA0MDljN2UwNDNjMzk4YzJmYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0NzlmMzUxZGIwNDQ5ODI1MTdmZjg4YzMyNWZlN2ZiNmQ0ODkzMzRjYTc0NzVmZWMzZjI0OGQ2YjJhNzhjYWYifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L439-L469",
+          "version": "repo-lines-v1:sha256:7d6bc1338236f7aa6ddd735190473af9a645753145a45d6cdc0572a32a57640f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlOWI3MmE1ZmI1Y2Y1ZTlhNTc1YTdhMjQzMTE1OTUxZjFkNjQyMDM5ODEwODQ4OWE2ODUwYWNkN2ZjODkwZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNTQzM2IzMjhmZTI5YjM0ODllZGU2NDNmYTUzMWVhZDU5NmQ5NmQzMjM5MjlkNDUwZGE4Y2Y1YmUxZWNlMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5MjUzY2E1OTBjMzI5MjE1ZjllYTU1MzA4MDg5NWE0MWI2NjU3OTNmM2Y0N2FhOWM3MWRiODI1MzFjZjA3YTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_60d8b813fc7840488e9bb6fc9d2adf1b",
+      "statement": "末尾付近は64pxで判定し、bottom lock時はcontent ResizeObserverでも追従する。上向き入力はlockを解放し、末尾付近のscrollで再取得する。smooth scroll猶予中は即時補正を抑える。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts#L11-L17",
+          "version": "repo-lines-v1:sha256:f56ac6f8f0668142f7686ee4f75ac14ba45ddf85163161a3d0ec7d83cf8afab2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjZiYTJiNTk5NjczMmU3MTM5MGQzZTBjYzViOWJmZGZlNThhZTNkNmQzODNjZWFhMzI3NGIzNzU5NjU1ZGViZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJhMTg1OGQ3ZjUyNGI4M2IxMzk4ZTRhNGFhMWUwYzBjMGViY2IxNzY4NjliOWY4NTViMTJmMGMyYTgxMzBiNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2Q4NDgwMDcyYmRkZTI1ZjQ0OTViYzBlODQwODczNDA2MTQ0ODc1YjkzOTRhMjcwNmVmMTI2MWU1MmZjNDY0YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWJkZTgyNzRjYzc2ODdmMTZlNmRkYmYzMzUxZTJiNzlmYmUzMWUzMzBlYmM5OGNkZDc1ODFjOGY0YTIyNzZiZCJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L259-L378",
+          "version": "repo-lines-v1:sha256:7c7e5782246c4c387c463525677282916b8d0b0df3b92cbc2823df87806dc8a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmMWI4ZmM5ZDUwZDkyYjlkM2VlODBlNzA3MDg0NTkyOWM3MzQ3YmU0N2E4NTcxYmU5ZWY2N2E5NzA3NmEzY2E1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5MGY1NTk2ZWRmMDY1ZTU0MWI0ZjUzOTY1MzQ5M2YxZTViYWJjM2Y3MmU0MDFjODE0Zjg2YmE4ZmVhOWM2NGM1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5MjQzNzJlYWE4NDhmY2FjMzA0M2E1OTFkMWYyYmVkNWE5ZTI5OTc5OTY2OTg3YzAwYmRkZjAzYjIyYzUxMjZkIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_84f16cae9cea431d9d819f22a451ea07",
+      "statement": "過去閲覧中の更新は可視行のsemantic keyと相対位置を捕捉して復元し、非仮想化の末尾境界も行keyで再解決する。anchor行がDOMにない場合はvirtualizerへ移動し、行が消えればanchorを破棄する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L404-L436",
+          "version": "repo-lines-v1:sha256:6a77c10721ff0e936e9e7decf93e24dbb2b76238de73086c27b7aadda378efbe:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMWI2YTgzNmE1YTgzZDNkMzJiNDIyMzgwOTEwOTFkMTdhNDZjMjBmZTU0ZTRmOGJmMzQ2ZTdhOTc0YzJhZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ODM2ODQzMDcxOTI5NDA2MTk3ZTQxMmNiZjQ1OWExM2IzNTUyMDRhNmI2OTAxYWQwOTY2NTBlZTQ4MjE2NzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkODU3YzdlZjVmMGVlZDdjMGIxNzM5YzRmNjhhNjdkYjY1YzNhZjZhYWFmMWQ0YzI2YzZhNmMwYjNiM2E4YzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MDYwOGU2N2ZhMDA0YTQ5NjU3YTI5MWZhNGYwYWM5YTQwYmZkZDgwMDc3NjJmY2RkM2I2NDZkNTQ5MWE1YWIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L558-L601",
+          "version": "repo-lines-v1:sha256:dc0da6ee484073ed37dc0b6568b4e6ed6da4757f4ddef38b9ee89ff3a5fe6537:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlMDkyMzYxZmM5ODIyYjZhZjJmYzVlMWEwYzgxNjQ3YzNlZDgwNmRkZThlODM2NGE2MmU5NDE3MjRmYjk1MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MzY2MzlmMGEyYjYwNTE2ODMwMzJjYzI3OWUxYmIxZGRlMjgzNzA1ZTE4NmM0YzRkNzA1OWVjNDBhY2E4MmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyYzA3MGYzYjZlYjdiZjMyNDgxODExYzJhODY0OTgxMjc0M2FiODRjNDVmYWZkZmYyNmY2MDhlOWRlNWViNjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_438143099c5e4f3aa28589096d91af26",
+      "statement": "保持済み履歴anchorはbottom lockがないときのcontent ResizeObserverでも復元する。anchor中はvirtualizerサイズ補正を抑え、利用者入力や明示jumpで解放する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L360-L378",
+          "version": "repo-lines-v1:sha256:bfcca4c81509b3c10e0e3f9b239a89688181b538c3de3d8ce242c4341e4c31f1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxYjhmYzlkNTBkOTJiOWQzZWU4MGU3MDcwODQ1OTI5YzczNDdiZTQ3YTg1NzFiZTllZjY3YTk3MDc2YTNjYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZmY5YTE3Mjg0NTc2MGZjODE5Zjc0NzQ1Y2JlZTkxYzIwYWMwZTdmOTg5MmE5YzUwNTRiNWQ5ZWFiOTNhZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyNDM3MmVhYTg0OGZjYWMzMDQzYTU5MWQxZjJiZWQ1YTllMjk5Nzk5NjY5ODdjMDBiZGRmMDNiMjJjNTEyNmQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L315-L329",
+          "version": "repo-lines-v1:sha256:a4a92d8741b1191be7bf343c7fa20ef405082b9f4bae47ccc6694dd51884308c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyYTJkZThlNzUwZTIzZThiNThiOTRjNTllNDM4NWNkZTgyZTM3ZGFjOTBlMWViMDVlZDRhMjFjZGFlZjNkN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMTFjMmI2ZDExNzAxZDExYjdlNzAzMzRlNWU3MDQ4N2RkNTVlNmYxZGEwNjYwOWUyMWM4ZTQ1ZDBkNWYyYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxMTNkZjBmZTkyNjRlZDJhOGJhMDY0YzEzMWJlMTBlMWVlNTIxNDdkMDdkN2FlOTRlOTk2MzU2MDQxZWI0YTAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L608-L613",
+          "version": "repo-lines-v1:sha256:698b4943742cf4666554d97b5740906f979876f8e4c2db528516151f24237011:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDIzZWU2NWJkODI0Zjk3ZTgyN2I5Y2RhMWU2YmYyYTNkNWFhMGJlN2I1ZjQ4NjEyMGNiNzRjMmY4MGQ2MzVkYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDE2M2E2NjUyY2Q4OTRhODVkYzY1NjcyMDJkNGYyNzY3ZmEwNGQwNGVhMzRmM2M2ODk4M2M3MDRmOTZjNDJlMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjcyZmNhN2QwZjI3YTA2MDdkYzU1MmZlNmJiMzE2ZjFhMGJiZDE5YjlhN2NmMDUxODk0YTQ2OWJlNzgwN2M3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNkMjBmZWU4YTlkNzFiYmQ3ZjA4OTdlNjc1OWU0NTE3YzkxYzY5ZjQ3NzdiMzg2NTRiZjg4MDcyOTY5MDExYyJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L665-L672",
+          "version": "repo-lines-v1:sha256:ac22c84ad78f49ce8df28ff1d46a1712f59a771204a32cd5513edcee521cd5bc:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDk2NTRkZDhjZTNlNjE1ZTFiYWQyOWYyMDlhMDkwMTUzNDFlZTA1ZjQzODdhZWUxNmIwNWNmOGE5ZDE4MjliMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGQyMzJmMTg2YmEzYjNmMjFhY2EzZjhlOGNhZmRhYjA3Yzc1MjI0YWM5Mzc3YzgwOTlmZGRjZjRhMzMyOGU1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTJmOWU1NzE0YzViYjc1ZTEwMTk1MDcyMzY3YmI2MDBiNTIzZmZlN2JmNDRhNzA4M2JkNWRhNjU2N2RhYzVjYiJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L901-L920",
+          "version": "repo-lines-v1:sha256:dd233d7a51257ac5924f52b0e8077f03ef39098513a969250773c1844306b10a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YjhjMTA4NWY5NWExYWZhYmU1ZDE1MmFkNThkYjlkYzI2MzM2YzEyMThlMmI4NDBhZTdhZDgyNmEwZDU3NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MjY5ZTQ0YjY2YTM5NTY2ZGMzOTZlZWRmMWI0YTlhYzMwYjU4ZjNhMjE5ODNhMjQyMWJjNzYyODIzNmFlMzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmMDkzY2QwYTU3MTczMjc5MTY5YTEyYmNjNGU0NDAxMzI2YzAyMThmMmM5ZGJhZTliMGI5NWY0NjQ0ODU2MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczNzU5ZmY0ZDVhNzU5ZTUwOTk0YTYwMDgzNzI1MmQ0M2JhYjE0ZWVlMzEwNDViZWYyNWYyN2YzODVjZWIzNDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_19eb576c99474a5fbe7a659586758275",
+      "statement": "layout試験はprepend後の遅延DOM resizeと遅いinitialで同一行座標を検査し、projection試験はuser/assistantだけのsteering順序とreplay重複・Run identityを検査する。built-app試験は合成履歴、mock follow-upと実Scratch、実Codex steeringの経路を分ける。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L100-L166",
+          "version": "repo-lines-v1:sha256:25e1254c4fa9763e4ca1b9a3ed90dd049d1826c3fd581667fb7cbde5732a7296:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlZjQ1NGU4NzNmOTEzNzIyNmZhY2QyN2I0Y2JlNTdjNjk3YTY0ZTMyM2I3OTlmNWZkNTBiYmM5YmE3MDM3NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5N2IyZWMyZmViMDhjYTkxMDFiZTQ2MmQwM2QzMzIyZWE2Y2U4NDRhMmVjY2M0YTM5MTM5NzAyNmQxYjcyYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyZjJjMmVlZTM1N2VhZjUxODQxODE2MDY4NGE4ZWY5Y2ZhYWQyOTA1NTZiZjc3Y2JmN2RiZGM4NjY3OTBhZjEifQ"
+        },
+        {
+          "resource": "repo://tests/chat/conversation-layout.test.mjs#L87-L172",
+          "version": "repo-lines-v1:sha256:8ff33acd3dfc9f46eaff3f08524e3901b07cc0ed8a53826b99218169c562862f:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjNWY2NTI5Y2ZhNDAxOWRlY2QzZWNmNWIwNDQzZDM5ZDM2ZjhiZDAzOTFiN2YyYTg1MjRhOTY1YzRlZjBhNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYzA0MjIxNTAyNWM4OGFlMmYxNjgyNmY4YmQ3ZDllNTJkZWE3M2YyZmIzNjU2ZTQxY2EwZTQ2NjA0NmU1MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlYWFjYzZjZjAzYmE4ZDQzZmY3YTdmNjE2NDZmMzIyNTI0MWExZmQwOWZkMTMxM2E5NjI0MWI2YmQ3ODE5MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3MjM4Nzk2MWRiNzZkOGNmNjk1NWEyNTY5ZGIzNzk4MGQ2OTQzOGI4Y2MwNTYwMWFkZDQ2NWFiMjU0N2Q2NmQifQ"
+        },
+        {
+          "resource": "repo://tests/chat/isolated.spec.ts#L152-L203",
+          "version": "repo-lines-v1:sha256:86115af40c73976589ab3996d50302cd0cc0d6eca6d57ab64f8937ed53203e4e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlMzc5ODJiMjg0ZmQyNWU0ZjNlN2QwMzMxMzg2MWQ5OGY5Yjk0YzViMmFkY2UxM2EyYzAxM2FlNGExOTFhNmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwMjY3ZTYyZmMwMWFjNjg0NmJkNzMyNzJkYTc5YzU3MTIzZTcwNjQwOTFmNjEyZmJjNDc5ZjFiN2VjOGJmNGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5MDg5ZmFjNDQzZTEyZWM2YjBjZTA1ZGZmNzkzM2M4MzgxYjkwMWE3NDFhNTIxOWI4NTU4MjU5MmI5MTQwZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1MzgzZjI2ZDA0YjZiN2Y4NzgzMDYwYjJlZTFhNThkMjg1YTIyNjBlN2IyZjliNDMzOGRiOWFlNTcyMzY4NjAifQ"
+        },
+        {
+          "resource": "repo://tests/chat/isolated.spec.ts#L295-L320",
+          "version": "repo-lines-v1:sha256:0c2c42c765d97bac15f57bbbf756478ca84dcd14a3f841b9a9fb820544182081:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMWFmYzA5NmQ1NjBjY2I1N2FmNzI0MTZkYzkxMmM2NjAyYzhhYTc2Mzk1YWQ4NzIzNmYyMTExMDFhZWMzNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhNmE1YTc1ZDUyMWFkZGIyMTA1MzJiMTQ0NzZkOWRjMWE4YTQyMGZmNjEwZTFhZDI5OTk5ZTQwYmY5NmU5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNWFjMTY3MTY2MjViZDcyYThkMjRkMDNiNDBjMDFhMTNlMWYwMWFhNzgwNGJkOGM3MmU3YzBkZWE2YjE2MzIifQ"
+        },
+        {
+          "resource": "repo://tests/chat/isolated.spec.ts#L374-L473",
+          "version": "repo-lines-v1:sha256:080f0c59355c3f10b53ad4d28bbc16cbdd456cfb1a08eda839489690e98f7047:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzOTY4MTI4ZTYzNTZlYjkyODBhYjU3NDRmZjdlNGViZjY4OWM2YWE4MDFjZjg3NjI0YThiMTIyZmFlZTUxOTgwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4YjIzNmM3OWE2NzFjYWJjNDM1M2FjMDc2ZmU4MzY4M2E1ZTRjYjFjM2FlMjRkMTEwYzkxNTk5YmQ5YTcxZjVmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZDhmZDA5MTc5MDhiMzQ2YzNmYWJiNjQ2YjU5Mzc2ZDQ1NmY1NDRiNWMwOTZlYWQ0ODRmZWEzNmU1YzkyZjE0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhZDk5MTQ2YmQ2MWNhOTNiMzQzMmY5NTE5N2IzOTdmN2I0Y2JiNzg1MGEwZDAwYTFjYjFkNzliZGM4ZmRjNjcyIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T03:43:44.672Z"
+    "at": "2026-10-21T03:49:21.125Z"
   }
 }

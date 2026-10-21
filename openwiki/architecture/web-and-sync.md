@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
+    resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-162bcfe1ee47c1047ccf7d52
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
@@ -30,12 +32,20 @@ sources:
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
+  - id: openwiki-source-a46d1ceab41257b518aa5a4a
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts
   - id: openwiki-source-6f68befb805cadf03e4b569b
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
+  - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
+    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
+  - id: openwiki-source-3e72be92e5674f5611856ac3
+    resource: repo://packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts
+  - id: openwiki-source-952ab4470659b6dc518fab38
+    resource: repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts
   - id: openwiki-source-cd106619cfd7af68eb9464fc
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
@@ -74,12 +84,16 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
+  - id: openwiki-source-3744cbc03f96140414e0b945
+    resource: repo://tests/chat/conversation-layout.test.mjs
+  - id: openwiki-source-adbcc4477d532869e93682ad
+    resource: repo://tests/chat/isolated.spec.ts
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
-generated: { by: "codex", at: "2026-10-21T03:43:44.672Z" }
+generated: { by: "codex", at: "2026-10-21T03:49:21.125Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:43:44.672Z
+    at: 2026-10-21T03:49:21.125Z
 ---
 
 # Web の実行環境と同期
@@ -130,6 +144,12 @@ AgentRun stream は Electric ではない。サーバーは Live を先に購読
 
 会話 projection は表示用 entry に変換しても AgentRun、RunAttempt、event ID を保持する。この識別を外すと、別 attempt の表示と制御が混ざり得る。[表示 identity](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L25-L73)。永続化・一時差分・劣化時の詳細は [Agent Runtime](agent-runtime.md)に集約する。
 
+### 永続会話と Live の順序
+
+会話内の永続イベントは `run_attempt_number`、canonical `sequence` の順で並べる。native audit の番号とは大きさを比較しない。backend の Steer は provider へ制御を書き込んだ後、command ID を message ID とする User message を native refs なしで保存する。この host 作成イベントを native 番号付きの応答と一律にソートすると、追加指示が古い応答より前へ移動してしまう。[steering の保存](../../crates/local-deployment/src/agent_run_port.rs#L3360-L3400)・[会話順の組立て](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L29-L80)
+
+Live delta はまず整列済みの永続列へ挿入位置を求める。同じ attempt の先行候補に native refs があれば native sequence、なければ timestamp を比較し、最後の先行候補の後ろへ置く。先行 attempt も候補となり、候補がなければ列の前に置く。これは一時表示の配置規則であり、永続列の順序や replay cursor を置き換えない。受信側は event ID の重複を除き、確定 message を受け取ると同じ message ID の一時表示を取り除く。[配置](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L54-L79)・[確定時の置換](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L175-L204)。入力の受理・queue・停止の意味は [Session の実行状態](../concepts/session-and-agent-run.md#状態停止送信待ち)に置く。
+
 ### Run の時間表示を同期状態から分ける
 
 Board の Workspace summary は、Workspace ごとに作成日時と ID の降順で選んだ最新 AgentRun の `created_at` を `latest_process_started_at` に返す。`latest_process_completed_at` はその Run が終端のときだけ現在 attempt の保存済み `finished_at` を返す。`latest_process_*` という互換名は旧 ExecutionProcess の時計を意味しない。[最新 Run の選択](../../crates/db/src/models/agent_runtime.rs#L323-L357)・[API の組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192)
@@ -143,6 +163,24 @@ Session 側は Run 一覧の `completed_at` を受け、会話 projection が Ru
 Session の購読は新しい2件と全 active run を foreground とし、その初期化を待って会話を公開する。残る履歴は foreground の準備後、前 batch の初期化またはエラーを待って3件ずつ追加する。既に開始した stream は新しい run の到着でも保持し、Session が変わると keyed component ごとに状態をリセットする。`isLoadingHistory` は初期表示の loading と別であり、古いログの遅延だけで最近の会話や制御を待たせない。[購読と公開](../../packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx#L80-L278)、[遅延履歴・active run・Session 分離のテスト](../../tests/integration-skip/history.spec.ts)
 
 Project Todo は Board collection や会話 stream とは別の REST query を使う。Project と Workspace の表示は同じ Project のメモを参照し、保存と競合、画面内 draft の寿命は [Todo の契約](../concepts/project-todos.md)にまとめる。
+
+### 履歴の閲覧位置と末尾追従
+
+購読の段階化と、画面上の位置保持は別の責任を持つ。`ConversationList` は Workspace ID と Session scope を React key にし、保留中の rAF・測定値・初回表示状態を会話ごとに分離する。通知を rAF でまとめても、最初に非空の行を適用した一回だけ初回スクロールを行う。遅れて来た `initial` 通知を再度の初回ジャンプと扱わない。[scope と cleanup](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L273-L302)・[非空の初回適用](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L379-L469)・[key](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1052-L1065)
+
+リストは仮想化された前方と、通常 DOM として描画する末尾を組み合わせる。末尾付近の判定は64pxで、末尾 lock 中は内容領域の `ResizeObserver` でも追従する。画像・Markdown・streamed text の高さだけが変わり、行数や仮想領域の測定サイズが変わらない場合にも必要な補正である。上向き wheel・touch・キー入力などで lock を解放し、末尾付近へ戻れば再取得する。smooth scroll の猶予中は即時補正を抑える。[閾値](../../packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts#L11-L17)・[入力と実寸補正](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L259-L378)
+
+過去を読んでいる間に行を更新すると、最初の可視行の semantic key と viewport 内の相対位置を記憶する。prepend 後は同じ行の位置差で scrollTop を補正し、DOM にまだなければ virtualizer でその行へ移動する。行が消えたら anchor を破棄する。末尾の非仮想化境界も数値 index を固定せず、以前の境界行の key から再解決するため、prepend のたびに非仮想 DOM 範囲が広がらない。[anchor と境界の捕捉](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L404-L436)・[復元](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L558-L601)
+
+anchor は React 更新後だけでなく、末尾 lock がないときの同じ content ResizeObserver からも復元する。prepend 後に viewport より上の非仮想行が DOM だけで遅れて伸びる場合を取りこぼさないためである。anchor 保持中は virtualizer 側のサイズ補正を抑えて二重補正を避ける。wheel / touchstart / pointerdown / keydown や明示 jump は anchor を解放し、利用者の次の閲覧操作を固定し続けない。[補正の調停](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L315-L329)・[resize](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L360-L378)・[操作による解除](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L901-L920)
+
+### チャット表示の検証境界
+
+変更時は layout の Chromium fixture で prepend・遅い initial・DOM の遅延 resize 後の同一行座標と scope 切替を確認し、canonical projection の unit test で live と replay の `before → steer → after`、重複、Run identity を確認する。順序 assertion は user / assistant message を対象にし、時間 footer を会話本文と混同しない。[layout 試験](../../tests/chat/conversation-layout.test.mjs#L87-L172)・[順序試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L100-L166)。composer の試験対象は [送信 snapshot の保護](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)を参照する。
+
+built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制御した follow-up 応答、実 Codex steering の3経路を区別する。[試験定義](../../tests/chat/isolated.spec.ts)と [再実行手順・過去の結果](../../docs/development/chat-stability-local21.md)を参照し、component fixture の成功を provider 全体の保証にしない。特に遅延 DOM resize の追加検証は実画像ダウンロードや全体 E2E の再実行ではない。
+
+今回の Sync は凍結 source `a044769b1dfdf1972c6e10937fa0dfb98faf31db` のチャット変更を、購読・投影・backend の steering 保存・リスト・editor・試験定義という独立した入口で静的に照合した。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合後の成功証拠へ読み替えない。この Sync で製品テストを再実行したことや、無関係な過去の Wiki 全体を再検証したことは意味しない。
 
 ## State と履歴を同期させる際の注意
 
