@@ -17,7 +17,7 @@ sources:
 generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-21T03:28:49.332Z
 ---
 
 # Issue の添付・購読・通知

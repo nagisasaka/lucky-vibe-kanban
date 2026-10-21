@@ -60,10 +60,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-20T18:18:55.370Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T18:18:55.370Z
+    at: 2026-10-21T03:28:49.332Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -103,6 +103,8 @@ completion event を取りこぼした watcher は DB の gate から追いつ�
 差分・実ファイル・動作確認には [Workspace inspection](../operations/workspace-inspection.md) を使う。人の inline comment から Agent に修正を依頼する操作は [Reviewing Code](../../docs/reviewing-code.mdx) にまとまっている。
 
 Agent の review API は Workspace 内に active AgentRun があれば拒否する。use_all_workspace_commits は Repo ごとの fork point を review context に使い、intent=Review、selected_skills なしで起動する。OpenWiki の independent Review と同じ隔離プロトコルではない。[review の起動](../../crates/server/src/routes/sessions/review.rs)
+
+関連 Card は Workspace 作成・予約では未着手のままで、確認された実開始で In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。追加実行では再び In Progress へ戻る。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、正式 Integration の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
 
 ## 並列変更を試してから正式統合する
 

@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-21T02:54:34.061Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T02:54:34.061Z
+    at: 2026-10-21T03:28:49.332Z
 ---
 
 # クイックスタートと調査案内
@@ -99,6 +99,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | provider や model 設定、MCP、Skill の追加 | [Provider integration](integrations/agent-providers.md)。effort override と解決済み値、外部 MCP を使う方向と LVK MCP を公開する方向を分ける |
 | Workflow の分岐、取消、outbox、再起動回復 | [Graph の契約](concepts/workflow-attempt.md) → [Workflow Runtime](architecture/workflow-runtime.md) |
 | 定期的に作業を実行したい | [ScheduledTask の起動・skip 条件](workflows/task-to-integration.md#定時に-workflow-を起動する) |
+| Card の列が動かない、失敗後も In Progress、追加実行で戻る | [Kanban と実行の同期契約](concepts/project-and-issue.md#kanban-と実行の同期契約)。実開始時刻、手動変更優先、他 run の待機と正式 Integration の Done の違い |
 | frontend、local Board の取得と更新 | [Web と同期](architecture/web-and-sync.md) → [外部 MCP と認証](integrations/remote-access.md) |
 | ファイル、Session 添付、diff、preview、terminal、editor | [Workspace inspection](operations/workspace-inspection.md)。Board の参照は [Issue の共同作業](concepts/issue-collaboration.md) |
 | 外部 MCP が認証・認可で失敗する | [Auth0 JWTとscope](integrations/remote-access.md)。active membership、read/write/merge、stateless transportの境界 |
@@ -150,4 +151,6 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
 
-今回の通常 Sync は凍結された pending changes に沿い、`get_resource_observation` の外部 MCP 登録・認可・audit、固定 Linux collector、cgroup parser、部分失敗と worker 寿命、HTTP / fixture テスト、既存の共有資源調停との説明境界を照合した。無関係な過去の説明全体を再検証したという意味ではない。凍結入力の Integration 記録は検証省略を明記しており、この文書更新でもテスト再実行や実 Auth0 / ChatGPT 接続確認は行っていない。
+今回の通常 Sync は凍結された pending changes と統合済み source `fdc1e00d1294c4325ecf4db4389903dd6af4042b` に沿い、Not Started への改名、canonical event と Kanban の同期、Host Started の保存、手動更新の Web / MCP 経路、実開始時刻による競合、正式 Integration の Done / receipt と独立 Todo の境界を照合した。入口は migration、DB 保存・回帰テスト、process host / port、Board 更新 API と UI、Integration 完了処理を用いた。無関係な過去の説明全体を再検証したという意味ではない。
+
+凍結入力には開発時のテスト成功報告がある一方、正式 Integration は明示的に検証省略と記録されている。今回の文書保守では source とテスト内容を静的に確認し、製品テストは再実行していない。SQLx metadata 準備、実 provider、ブラウザー E2E の成功をこの Sync の結果として主張しない。時計逆行や完全同時刻の物理的開始順の限界は [同期契約](concepts/project-and-issue.md#複数-workspace-と開始順)に記録する。

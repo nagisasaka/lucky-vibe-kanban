@@ -74,10 +74,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/executionProcessRuntime.ts
   - id: openwiki-source-bfcca8eb0acec96215c9bf83
     resource: repo://packages/web-core/src/shared/lib/executorOverrides.ts
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-21T03:28:49.332Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -140,6 +140,8 @@ resume は active run 不在・maintenance / Integration guard を確認して�
 実行専用 Workspace の終端通知では、上記の通常 source 完了・queue 消費を行わない。所有する統合・Wiki 保守が結果を確定し、一般の follow-up や retry を許可するかも [操作用途と実行所有者](workspace.md#操作用途と実行所有者)で検証する。[通常終端処理からの除外](../../crates/local-deployment/src/container.rs)
 
 Cancel の応答は実プロセスの停止確認と監査の永続化を伴う。子プロセスの猶予・停止失敗の扱いは [Agent Runtime の取消](../architecture/agent-runtime.md#取消と実プロセスの終了)を参照する。
+
+Board の列は AgentRun の状態表示と別である。In Progress は着手済み・未完了を示し、失敗や取消後にも残る。開始・成功を列へ反映する条件と複数 Workspace の競合は [Kanban と実行の同期契約](project-and-issue.md#kanban-と実行の同期契約)を参照する。OS の exit 0 だけを成功と扱わず、provider の成功根拠がない正常終了は Crashed にする。[終了判定](../../crates/local-deployment/src/process_host.rs#L1192-L1268)・[回帰テスト](../../crates/local-deployment/src/process_host.rs#L1535-L1562)
 
 ## 承認・質問と現在の接続状態
 

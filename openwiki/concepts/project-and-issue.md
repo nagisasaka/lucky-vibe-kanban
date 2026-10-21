@@ -8,6 +8,12 @@ sources:
     resource: repo://crates/api-types/src/issue.rs
   - id: openwiki-source-e4c80fe5a2af8a4abd8a8684
     resource: repo://crates/db/migrations/20260427000000_local_kanban.sql
+  - id: openwiki-source-5c1907109b5a72a746e85a0c
+    resource: repo://crates/db/migrations/20261020190000_kanban_lifecycle.sql
+  - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
+    resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
+  - id: openwiki-source-5c693a62e6ccf09ccb60592f
+    resource: repo://crates/db/src/models/agent_runtime_kanban.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
@@ -30,10 +36,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-21T03:28:49.332Z
 ---
 
 # Project・Issue と実施の関係
@@ -42,13 +48,13 @@ verified:
 
 local Project は固定Organizationと現在actorの [表示モデル](organization-and-membership.md)に結び付く。Issue の担当者・Follower は認証権限とは別である。
 
-Project には Issue と独立した [Todo 共有メモ](project-todos.md)もある。メモの完了は Card の Done や agent 実行を進めず、任意の同一 Project の Card 参照だけを持つ。Board の Todo 列や旧 `tasks` と区別する。
+Project には Issue と独立した [Todo 共有メモ](project-todos.md)もある。メモの完了は Card の Done や agent 実行を進めず、任意の同一 Project の Card 参照だけを持つ。Board の Not Started 列（旧 Todo）や旧 `tasks` と区別する。
 
 ## 仕事の識別と分類
 
 Issue の主キーは UUID。表示用 `simple_id` と番号、Project、Status、本文、任意の優先度・期限・完了日時、親 Issue、拡張メタデータを持つ。ローカル作成は Project ごとの最大番号から `LOCAL-N` を採番する。DB の番号・simple ID の一意性も Project 内なので、複数 Project を横断する処理で表示文字列だけをグローバル ID と扱わない。[型](../../crates/api-types/src/issue.rs#L20-L40)、[採番](../../crates/server/src/routes/local_remote.rs)、[一意制約](../../crates/db/migrations/20260427000000_local_kanban.sql#L45-L69)
 
-Status は Project の列を参照する ID であり、エージェントのプロセス状態ではない。ローカルの初期列は Todo / In Progress / In Review / Done / Cancelled で、Cancelled は初期状態で非表示。更新 API は `status_id` と `completed_at` を別々の入力として保持するため、列を Done に変えるだけで完了日時が自動計算されるとは読めない。[初期列](../../crates/server/src/routes/local_remote.rs)、[更新](../../crates/server/src/routes/local_remote.rs)
+Status は Project の列を参照する ID であり、エージェントのプロセス状態ではない。ローカルの初期列は Not Started / In Progress / In Review / Done / Cancelled で、Cancelled は初期状態で非表示。更新 API は `status_id` と `completed_at` を別々の入力として保持するため、列を Done に変えるだけで完了日時が自動計算されるとは読めない。[初期列](../../crates/server/src/routes/local_remote.rs)、[更新](../../crates/server/src/routes/local_remote.rs)
 
 Issue の分類と関係はそれぞれ別の意味を持つ。
 
@@ -63,6 +69,35 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。
 
 部分更新では「送らなかった」と「null に消した」を区別する。たとえば description や priority は二重 Option であり、未指定なら既存値を保持し、明示 null ならクリアする。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
+
+## Kanban と実行の同期契約
+
+Not Started は未着手、In Progress は着手済み・未完了、In Review は自動同期上のレビュー待ちを表す。In Progress だけから「今も実行中」と判断せず、[AgentRun の状態](session-and-agent-run.md#状態停止送信待ち)を見る。Workspace 作成や Starting だけでは列を動かさず、開始の証拠を持つ Running で移動する。成功でも Done にはせず、[正式 Integration の公開後完了](#正式統合と-card-の完了)と分ける。[同期処理](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)
+
+| 観測と条件 | 自動同期の結果 |
+| --- | --- |
+| 最新の実開始 attempt が初めて Running になる | 可視の Not Started / In Progress / In Review から In Progress へ移し、その attempt を owner とする |
+| 最新実開始 attempt が成功し、その owner を保持、他の関連 run も非活動になった | 可視の In Progress から In Review へ移す |
+| 開始前の失敗、または最新実開始 attempt の失敗・取消・crash・AuditFailed | 成功として列を進めない。開始後は通常 In Progress を保持する |
+| Done、独自名の列、非表示の現在列、必要な可視の移動先がない | 自動移動しない |
+
+移動先は同じ Project の名前が一致する可視列から sort_order 順の先頭を選ぶ。名前を変更した独自列を推測して対応付けない。追加実行は In Review から再び In Progress に戻れる。[列の選択と制約](../../crates/db/src/models/agent_runtime_kanban.rs#L63-L109)・[開始と失敗の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L81-L202)
+
+### 複数 Workspace と開始順
+
+最新とは Issue に現在 link された全 Workspace の attempt のうち、`agent_process_registry.process_started_at` があるものを全精度の DateTime で比較した最大値である。受付順、event 到着順、完了順は使わない。完全に同時刻なら attempt UUID の大小を決定的な tie-break に使う。これは物理的な先後の証拠ではなく、ホスト時計の逆行時の真の開始順もこの実装からは保証できない。開始根拠が欠けていれば到着時刻で補わない。[比較の実装と理由](../../crates/db/src/models/agent_runtime_kanban.rs#L40-L61)・[1ns 差、同時刻、配送順の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L474-L575)
+
+終端時は最新 attempt の成功と owner を確認し、別 run に Pending / Starting / Running / AwaitingInput / AwaitingApproval / Cancelling があれば待つ。最新 attempt が既に成功していても古い run が活動中なら移動せず、その古い run の終端（失敗を含む）で条件が揃って In Review へ進む場合がある。したがって「失敗イベントでは絶対に列が変わらない」という一般化はしない。最新実開始 attempt 自身の失敗を、古い成功で隠すことはない。[終端条件](../../crates/db/src/models/agent_runtime_kanban.rs#L86-L102)・[待機の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L288-L323)
+
+### 手動操作と再送
+
+非公開の `local_issues.agent_status_owner` は自動移動を行った attempt の token である。status_id が変わると DB trigger が解除し、共有更新 API は同じ列の明示指定でも解除する。タイトルだけの編集では保持する。解除後の旧 Running 再送や成功で手動変更・再オープンを取り消さない。ただし、その後の新しい実開始は対象の標準列なら新たな owner を取得できる。これは恒久的な自動同期オフ設定ではない。[trigger](../../crates/db/migrations/20261020190000_kanban_lifecycle.sql#L5-L13)・[共有更新 API](../../crates/server/src/routes/local_remote.rs#L807-L859)・[同列指定とタイトルの回帰](../../crates/server/src/routes/local_remote.rs#L3646-L3682)。Web と外部 MCP はこの更新処理を共有する。[MCP の更新](../../crates/server/src/remote_mcp/issue_write.rs#L213-L233)
+
+同期は [canonical event 保存の原子性](../architecture/agent-runtime.md#canonical-event-から-board-への副作用)に従う。別 scheduler や UI ごとの終了フックは持たず、再送や projection rebuild を新しい開始と扱わない。
+
+### 既存 Todo 列の移行
+
+migration は名前 Todo、色 `210 80% 52%`、sort_order 100、hidden 0 がすべて一致する列だけを Not Started に改名する。列 ID と Issue の参照は保ち、カスタマイズ済み列は残す。これは既定属性一致による判定であり、生成元を証明する仕組みではない。[移行](../../crates/db/migrations/20261020190000_kanban_lifecycle.sql#L1-L3)・[ID とカスタム列の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L247-L285)。独立した [Project Todo](project-todos.md) と旧 TaskStatus の API 表現は改名の対象ではない。
 
 ## ボード表示と共有状態
 

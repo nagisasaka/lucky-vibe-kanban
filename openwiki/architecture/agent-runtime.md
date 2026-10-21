@@ -5,8 +5,10 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-21T03:28:49.332Z
 sources:
+  - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
+    resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -39,7 +41,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -112,6 +114,12 @@ Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions
 一つの host response の永続イベント、provider session 観測、投影、usage snapshot、cursor 更新を同じ transaction に収める。canonical sequence は密な連番を割り当て、生フレームや host の sequence とは区別する。cursor だけ先へ進めると再接続時に未反映データを失う。[batch の入口](../../crates/db/src/models/agent_runtime.rs#L1479-L1554)、[cursor と commit](../../crates/db/src/models/agent_runtime.rs#L1772-L1793)
 
 usage は RunAttempt ごとに native sequence が新しい場合だけ置き換える。同じ sequence に異なる内容が来ると冪等性の衝突として拒否し、古い通知は無視する。[usage 更新](../../crates/db/src/models/agent_runtime.rs#L1723-L1755)
+
+### Canonical event から Board への副作用
+
+Kanban 同期は単一 event と host batch の両保存経路で、reducer が `Applied` を返したときにだけ同じ transaction 内で呼ぶ。event・投影・Board 更新（host batch では cursor も）は一緒に commit / rollback する。projection rebuild や OS exit に別の列更新を足すと、この境界と再送保護を壊す。[単一保存](../../crates/db/src/models/agent_runtime.rs#L2037-L2042)・[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1699-L1705)・[rollback / replay 回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L325-L381)
+
+開始の入力根拠は provider spawn 後の Host Started。port はその timestamp を process registry に保存してから、同じ時刻の canonical Running を作る。registry 保存と canonical batch は別段階なので、両者全体を単一 transaction と説明しない。回復テストは再送後も開始時刻を保持することを確認する。[Started の生成](../../crates/local-deployment/src/process_host.rs#L436-L455)・[取り込み](../../crates/local-deployment/src/agent_run_port.rs#L2065-L2122)・[回復の検証](../../crates/local-deployment/src/agent_run_port.rs#L4509-L4537)。列の意味、開始時刻による競合判定、手動変更優先は [Kanban と実行の同期契約](../concepts/project-and-issue.md#kanban-と実行の同期契約)に集約する。
 
 ## 障害を区別する
 

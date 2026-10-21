@@ -5,7 +5,7 @@ description: Project に保存する Todo と Issue・実行の違い、Web と�
 tags: [todos, project, persistence, mcp, concurrency]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-21T03:28:49.332Z
 sources:
   - id: openwiki-source-9c3e7b4b0d07a43f862a9bd7
     resource: repo://crates/db/migrations/20261018000000_project_todos.sql
@@ -25,12 +25,12 @@ sources:
     resource: repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx
   - id: openwiki-source-8cbec0ee8d7f6154508744c9
     resource: repo://packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
 ---
 
 # Project Todo の共有メモ
 
-Todo は Project 内で共有する本文・任意カテゴリー・明示的な完了状態を持つメモである。[Issue / Card](project-and-issue.md)や Board の Todo 列、旧 Task、agent の実行計画とは別の `project_todos` レコードであり、作成や完了で Card や実行を自動生成しない。本文は参照データで、実行指示として扱わない。[モデル](../../crates/db/src/models/todo.rs#L1-L45)、[外部 MCP の操作契約](../../crates/server/src/remote_mcp/todos.rs#L60-L83)
+Todo は Project 内で共有する本文・任意カテゴリー・明示的な完了状態を持つメモである。[Issue / Card](project-and-issue.md)や Board の [Not Started 列（旧 Todo）](project-and-issue.md#kanban-と実行の同期契約)、旧 Task、agent の実行計画とは別の `project_todos` レコードであり、作成や完了で Card や実行を自動生成しない。本文は参照データで、実行指示として扱わない。[モデル](../../crates/db/src/models/todo.rs#L1-L45)、[外部 MCP の操作契約](../../crates/server/src/remote_mcp/todos.rs#L60-L83)
 
 ## 所属と寿命
 
