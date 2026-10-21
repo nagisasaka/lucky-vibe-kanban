@@ -606,7 +606,9 @@ export type InitRepoRequest = { parent_path: string, folder_name: string, };
 
 export type TagSearchParams = { search: string | null, };
 
-export type UserSystemInfo = { version: string, config: Config, machine_id: string, login_status: LoginStatus, environment: Environment,
+export type BuildInfo = { revision: string, kind: string | null, release_tag: string | null, dirty: boolean | null, };
+
+export type UserSystemInfo = { version: string, build_info?: BuildInfo, config: Config, machine_id: string, login_status: LoginStatus, environment: Environment,
 /**
  * Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })
  */

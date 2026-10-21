@@ -1,4 +1,12 @@
 {
+  "buildInfo": {
+    "development": "開発版",
+    "release": "リリース版",
+    "unknownKind": "ビルド種別: 不明",
+    "dirty": "未コミット変更: あり",
+    "clean": "未コミット変更: なし",
+    "unknownDirty": "未コミット変更: 不明"
+  },
   "cardContext": {
     "title": "カードコンテキスト",
     "sharedDirectories": "共有ディレクトリ",

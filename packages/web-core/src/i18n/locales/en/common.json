@@ -1,4 +1,12 @@
 {
+  "buildInfo": {
+    "development": "Development build",
+    "release": "Release build",
+    "unknownKind": "Build type unknown",
+    "dirty": "Uncommitted changes: yes",
+    "clean": "Uncommitted changes: no",
+    "unknownDirty": "Uncommitted changes: unknown"
+  },
   "cardContext": {
     "title": "Card context",
     "sharedDirectories": "Shared directories",

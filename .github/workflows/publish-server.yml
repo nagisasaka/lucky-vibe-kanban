@@ -76,6 +76,11 @@ jobs:
           load: true
           push: false
           tags: ${{ steps.image.outputs.reference }}
+          build-args: |
+            LVK_BUILD_REVISION=${{ github.sha }}
+            LVK_BUILD_KIND=${{ github.ref_type == 'tag' && 'release' || 'development' }}
+            LVK_BUILD_RELEASE_TAG=${{ github.ref_type == 'tag' && github.ref_name || '' }}
+            LVK_BUILD_DIRTY=false
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

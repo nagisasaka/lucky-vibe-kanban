@@ -58,7 +58,7 @@ export function SharedAppLayout() {
     (s) => s.isLeftSidebarVisible
   );
   const { isSignedIn } = useAuth();
-  const { appVersion } = useUserSystem();
+  const { buildInfo } = useUserSystem();
   const updateVersion = useAppUpdateStore((s) => s.updateVersion);
   const restartForUpdate = useAppUpdateStore((s) => s.restart);
   const { data: onlineCount } = useDiscordOnlineCount();
@@ -285,7 +285,7 @@ export function SharedAppLayout() {
               userPopover={<AppBarUserPopoverContainer />}
               starCount={starCount}
               onlineCount={onlineCount}
-              appVersion={appVersion}
+              buildInfo={buildInfo}
               updateVersion={updateVersion}
               onUpdateClick={restartForUpdate ?? undefined}
               githubIconPath={siGithub.path}

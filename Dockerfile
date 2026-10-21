@@ -78,6 +78,10 @@ RUN cargo chef cook --locked --release --recipe-path recipe.json \
     --bin server --bin agent-process-host --bin vibe-kanban-mcp
 
 FROM dependencies AS builder
+ARG LVK_BUILD_REVISION=""
+ARG LVK_BUILD_KIND=""
+ARG LVK_BUILD_RELEASE_TAG=""
+ARG LVK_BUILD_DIRTY=""
 ARG POSTHOG_API_KEY=""
 ARG POSTHOG_API_ENDPOINT=""
 ARG SENTRY_DSN=""

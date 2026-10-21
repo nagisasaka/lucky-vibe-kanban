@@ -36,6 +36,23 @@ Do not delete the retained staging source snapshot: debug frontend assets are
 read from it. Completed builds have a `build.json` with commit/profile/identity.
 A failed build never becomes a runnable candidate or replaces a running server.
 
+The sidebar shows the server binary's build-time Git SHA (seven characters).
+Its details include the full SHA, development/release identity and dirty state;
+unknown fields remain unknown and an unknown SHA hides the label. Launching the
+binary from another checkout does not change this identity. Instance builds
+embed the same revision/dirty values recorded in `build.json`. Direct Cargo
+builds inspect their source checkout at build time, including untracked files.
+The build script refreshes this inspection on each Cargo invocation to avoid
+stale identity after untracked edits or dirty-to-clean transitions.
+
+The existing image workflow passes `LVK_BUILD_REVISION`, `LVK_BUILD_KIND`
+(`development` or `release`), `LVK_BUILD_RELEASE_TAG` (the existing `v*` tag for
+releases) and `LVK_BUILD_DIRTY` (`true`/`false`) as Docker build arguments.
+These are build inputs, not runtime overrides. An explicitly supplied revision,
+even empty, disables Git fallback; unspecified fields stay unknown. Local image
+builds without these arguments have no sidebar identity. No version is inferred
+from package manifests or the nearest Git tag.
+
 ## Card development
 
 From the card's worktree, after installing dependencies:

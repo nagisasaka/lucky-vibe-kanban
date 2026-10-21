@@ -12,6 +12,8 @@ import {
   StarIcon,
   type Icon,
 } from '@phosphor-icons/react';
+import type { BuildInfo } from 'shared/types';
+import { BuildInfoLabel } from './BuildInfoLabel';
 import { cn } from '../lib/cn';
 import { AppBarSocialLink } from './AppBarSocialLink';
 
@@ -51,7 +53,7 @@ interface AppBarProps {
   userPopover?: ReactNode;
   starCount?: number | null;
   onlineCount?: number | null;
-  appVersion?: string | null;
+  buildInfo?: BuildInfo | null;
   updateVersion?: string | null;
   onUpdateClick?: () => void;
   githubIconPath: string;
@@ -140,7 +142,7 @@ export function AppBar({
   userPopover,
   starCount,
   onlineCount,
-  appVersion,
+  buildInfo,
   updateVersion,
   onUpdateClick,
   githubIconPath,
@@ -361,14 +363,7 @@ export function AppBar({
             </button>
           </Tooltip>
         ) : (
-          appVersion && (
-            <p
-              className="text-[9px] font-ibm-plex-mono text-low leading-none truncate max-w-10 text-center"
-              title={`v${appVersion}`}
-            >
-              v{appVersion}
-            </p>
-          )
+          <BuildInfoLabel buildInfo={buildInfo} />
         )}
       </div>
     </div>
