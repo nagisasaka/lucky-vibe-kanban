@@ -18,6 +18,12 @@ sources:
     resource: repo://crates/db/src/models/workspace_usage.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
     resource: repo://crates/executors/src/legacy_wiki.rs
+  - id: openwiki-source-076036ed7bdac82d628d39d1
+    resource: repo://crates/server/src/remote_mcp/environment_process.rs
+  - id: openwiki-source-6cb471b32e19ce921b78d86e
+    resource: repo://crates/server/src/remote_mcp/environment_settings.rs
+  - id: openwiki-source-0801a7e5bbcc064c12effc80
+    resource: repo://crates/server/src/remote_mcp/environment.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
@@ -50,10 +56,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
+generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:50:08.804Z
+    at: 2026-10-21T05:59:59.398Z
 ---
 
 # クイックスタートと調査案内
@@ -83,6 +89,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | どこで変更するか、何を共有し、何を削除できるか | [Workspace・Repo](concepts/workspace.md)。Worktree / DirectFolder、物理所有権と interactive/execution_only の用途、共有領域、cleanup |
 | 会話、実行、再試行をどう識別するか | [Session・AgentRun・RunAttempt](concepts/session-and-agent-run.md)。native session、現在の承認配線、未送信ドラフト、Goal、queue、子 agent の境界 |
 | 外部会話から LVK を操作するには | [外部 MCP](integrations/remote-access.md)。認証・scope・操作 receipt。内蔵機能の履歴は [Astra 廃止と移行境界](concepts/project-chat.md) |
+| 外部会話からログを読み既存アプリを動かすには | [実行環境へのアクセス](concepts/runtime-access.md)。管理者grant、runtime scope、直接processの寿命とAgentRun・共有資源との違い |
 | タブを閉じた後の Codex 待機・終了を知りたい | [Web Push・通知同意・ChatGPT 相談](integrations/web-push.md)。Project/browser 登録、logout と別の同意寿命、配送失敗、参照先への復帰 |
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
@@ -102,7 +109,8 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | Card の列が動かない、失敗後も In Progress、追加実行で戻る | [Kanban と実行の同期契約](concepts/project-and-issue.md#kanban-と実行の同期契約)。実開始時刻、手動変更優先、他 run の待機と正式 Integration の Done の違い |
 | frontend、local Board の取得と更新 | [Web と同期](architecture/web-and-sync.md) → [外部 MCP と認証](integrations/remote-access.md) |
 | ファイル、Session 添付、diff、preview、terminal、editor | [Workspace inspection](operations/workspace-inspection.md)。Board の参照は [Issue の共同作業](concepts/issue-collaboration.md) |
-| 外部 MCP が認証・認可で失敗する | [Auth0 JWTとscope](integrations/remote-access.md)。active membership、read/write/merge、stateless transportの境界 |
+| 外部 MCP が認証・認可で失敗する | [Auth0 JWTとscope](integrations/remote-access.md)。active membership、read/write/merge と runtime専用scope、stateless transportの境界 |
+| 実行環境の許可を保存・取り消す、legacy設定を復旧する | [Runtime Access の管理設定](concepts/runtime-access.md#管理設定の保存適用取消)。DB優先・revision競合・明示復旧と、取消が停止を意味しない契約 |
 | 外部会話から保存済み Codex 進捗を読みたい | [list_run_events](integrations/remote-access.md#保存済み-codex-進捗の読取)。明示 Run 参照、除外を含む cursor、commentary と最終回答の分離 |
 | Plan が戻る、旧 Plan with Goal、context や子の表示が違う | [Session の Plan 遷移・context・子 lifecycle](concepts/session-and-agent-run.md#plan-の遷移) → [CLI / wire 型と mapper 互換](integrations/agent-providers.md#cli-検出と-provider-互換性) |
 | GitHub の認証、push 先、PR 結果や merge 観測が合わない | [GitHub 認証と PR](integrations/github-review.md)。リポジトリ別 PAT、agent shell との適用差、push/base と部分成功 |
@@ -152,6 +160,6 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
 
-今回の通常 Sync は凍結された pending changes と統合済み source `fdc1e00d1294c4325ecf4db4389903dd6af4042b` に沿い、Not Started への改名、canonical event と Kanban の同期、Host Started の保存、手動更新の Web / MCP 経路、実開始時刻による競合、正式 Integration の Done / receipt と独立 Todo の境界を照合した。入口は migration、DB 保存・回帰テスト、process host / port、Board 更新 API と UI、Integration 完了処理を用いた。無関係な過去の説明全体を再検証したという意味ではない。
+今回の通常 Sync は凍結された pending changes と統合済み source `736c2b8a8a2ee9835dc0bbe57a49d69b4e6a71a9` に沿い、Runtime Access の管理設定・認可・ファイル/プロセス操作・取消と再起動を照合した。HTTP router と共通認証、SQLite設定/migration、process/file実装、UI/API、独立した認可・restart・migrationテストを入口に依存境界を確認した。詳細は [Runtime Access の検証範囲](concepts/runtime-access.md#変更時の検証と残る範囲)にまとめる。無関係な過去の説明全体を再検証したという意味ではない。
 
-凍結入力には開発時のテスト成功報告がある一方、正式 Integration は明示的に検証省略と記録されている。今回の文書保守では source とテスト内容を静的に確認し、製品テストは再実行していない。SQLx metadata 準備、実 provider、ブラウザー E2E の成功をこの Sync の結果として主張しない。時計逆行や完全同時刻の物理的開始順の限界は [同期契約](concepts/project-and-issue.md#複数-workspace-と開始順)に記録する。
+凍結入力には開発時のテスト成功報告がある一方、正式 Integration は明示的に検証省略と記録されている。今回の文書保守では source とテスト内容を静的に確認し、製品テストは再実行していない。実 Auth0/ChatGPT、ブラウザー E2E、配布サーバーや実DB移行の成功をこの Sync の結果として主張しない。

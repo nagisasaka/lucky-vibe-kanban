@@ -22,10 +22,12 @@ sources:
     resource: repo://crates/server-access/src/tests/chatgpt.rs
   - id: openwiki-source-24816571d030e7526cab74f1
     resource: repo://crates/server-access/src/tests/provisioning.rs
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+  - id: openwiki-source-6cb471b32e19ce921b78d86e
+    resource: repo://crates/server/src/remote_mcp/environment_settings.rs
+generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:16:45.724Z
+    at: 2026-10-21T05:59:59.398Z
 ---
 
 # サーバー認証・設定・セッション
@@ -57,7 +59,9 @@ Auth0設定はdiscovery成功だけで有効化しない。PKCE S256とclient_se
 
 設定画面の作成支援は setup / 管理 session と CSRF を要求し、Management API token をその要求内だけで使う。Inspect は既存 Regular Web Application と GitHub / Google connection を列挙し、Preview は実際の差分を示す。Apply は plan digest・session・5分の期限を暗号化した confirmation と再取得した現在の plan を照合する。変更や期限切れなら再 Preview が必要であり、この工程だけでは LVK の認証設定や admin を切り替えない。[支援 handler](../../crates/server-access/src/provisioning.rs#L586-L687)、[既存認証保持のテスト](../../crates/server-access/src/tests/provisioning.rs#L236-L307)
 
-作成対象は Web 用と必要時の ChatGPT 用の別 application、MCP resource と scope、選択 connection の割当てである。既存 callback / metadata / scope 等を保持しつつ必要値を足すが、tenant の issuer 応答・resource parameter 設定も変更する。選択 application の connection 割当てだけを更新し、他 application の接続を一括置換しない。同じ URL / 役割の ownership metadata で作成済み application を再利用する。途中失敗は Auth0 側の作成を rollback せず、再 Preview 後の再適用で収束させる。LVK の実ログイン検証と activate は引き続き別段階である。[plan と apply](../../crates/server-access/src/provisioning.rs#L329-L584)、[部分失敗の再試行](../../crates/server-access/src/tests/provisioning.rs#L309-L332)
+作成対象は Web 用と必要時の ChatGPT 用の別 application、MCP resource と scope、選択 connection の割当てである。既存 callback / metadata / scope 等を保持しつつ必要値を足すが、tenant の issuer 応答・resource parameter 設定も変更する。選択 application の connection 割当てだけを更新し、他 application の接続を一括置換しない。同じ URL / 役割の ownership metadata で作成済み application を再利用する。途中失敗は Auth0 側の作成を rollback せず、再 Preview 後の再適用で収束させる。LVK の実ログイン検証と activate は引き続き別段階である。[plan と apply](../../crates/server-access/src/provisioning.rs#L329-L584)、[部分失敗の再試行](../../crates/server-access/src/tests/provisioning.rs#L323-L347)
+
+MCP resource の必要 scope は `lvk:read` / `lvk:write` / `lvk:merge` に `lvk:runtime:read` / `lvk:runtime:execute` を加えた5種類である。作成支援が scope を定義することは runtime grant の有効化ではない。管理者専用の設定API、DB優先の保存と取消後の寿命は [実行環境へのアクセス](runtime-access.md#管理設定の保存適用取消)を正本とする。MCP bearer や内部agentはこの設定を拡張できない。[scope](../../crates/server-access/src/lib.rs#L33-L39)・[追加と保持](../../crates/server-access/src/provisioning.rs#L466-L472)・[管理者境界](../../crates/server/src/remote_mcp/environment_settings.rs#L62-L81)
 
 ### ChatGPT の資格情報を再表示する
 

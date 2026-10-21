@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
+  - id: openwiki-source-9e15762bf7a432b7605f8466
+    resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
     resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
@@ -60,10 +62,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-21T03:20:25.153Z" }
+generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:20:25.153Z
+    at: 2026-10-21T05:59:59.398Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -82,9 +84,9 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・agent起動/制御などの変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
-transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L58-L147)、[session ID拒否](../../crates/server-access/src/lib.rs#L437-L477)
+transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
 ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支援の preview / apply と、保存済み専用 secret の明示 reveal は [サーバー認証の設定契約](../concepts/server-access.md#auth0-の作成支援と有効化を分ける)を参照する。設定を作成・保存できても、実アカウントでの接続成功を証明したことにはならない。
 
@@ -99,6 +101,12 @@ mutation は principal + request ID と入力hashを固定した永続 receipt �
 受付を所有する非同期taskには検証済みactorを明示継承し、HTTP要求の終了後も業務書込の帰属を保つ。受理済み作業の寿命と新規要求の認証失効は別である。[actorの継承](../../crates/server/src/remote_mcp/operations.rs#L134-L190)
 
 Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続は別途受入確認が必要である。fixtureやローカルテストをその成功として扱わない。[検証範囲](../../docs/development/server-access.md)。
+
+## アプリケーションの実行環境を扱う
+
+[Runtime Access](../concepts/runtime-access.md) は管理者が許可した Linux region で、未追跡ログの読取、プロセス観測、既存プログラムの起動・停止を提供する。既存コード参照の制限を緩める機能でも、共有資源の予約でもない。利用前の管理設定とscope、Workspace重複拒否、出力・停止・再起動の寿命は同ページを正本とする。[runtime dispatch](../../crates/server/src/remote_mcp/environment.rs#L329-L429)
+
+`run_process` / `stop_process` も上記の永続receiptを使う。`get_operation` でそれらの履歴を読むには `lvk:runtime:read` を追加要求する。receipt成功と実プロセスの終了・healthを分け、現在grantを失った後の履歴参照を停止権限の復活と扱わない。[receipt読取](../../crates/server/src/remote_mcp/issue_write.rs#L156-L180)・[実行契約](../concepts/runtime-access.md#起動観測停止の寿命)
 
 ## Workspace のコード根拠を絞って読む
 
@@ -164,7 +172,7 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 
 ## オンデマンド資源観測
 
-`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。内部モデル、監視 daemon、履歴 DB、UI、自動 admission / stop policy は追加しない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L17-L45)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L360-L403)
+`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。内部モデル、監視 daemon、履歴 DB、UI、自動 admission / stop policy は追加しない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L17-L45)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
 
 ### 可視範囲と値の意味
 

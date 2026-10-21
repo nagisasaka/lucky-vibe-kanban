@@ -16,6 +16,10 @@ sources:
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-076036ed7bdac82d628d39d1
+    resource: repo://crates/server/src/remote_mcp/environment_process.rs
+  - id: openwiki-source-0801a7e5bbcc064c12effc80
+    resource: repo://crates/server/src/remote_mcp/environment.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -30,10 +34,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-20T17:16:45.724Z" }
+generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T02:54:34.061Z
+    at: 2026-10-21T05:59:59.398Z
 ---
 
 # システム境界と起動順序
@@ -102,3 +106,5 @@ Web Push の worker は共通 router の組立て時に起動し、SQLite outbox
 API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。通常の server 検証は Tauri を除外するため、desktop の検証済みとは読み替えない。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
 
 外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)へ切り替えられる。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
+
+外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment.rs#L458-L540)

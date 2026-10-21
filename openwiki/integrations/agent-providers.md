@@ -58,14 +58,18 @@ sources:
     resource: repo://packages/ui/src/components/ModelList.tsx
   - id: openwiki-source-f2fdb07edb2a73ea40538a98
     resource: repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx
+  - id: openwiki-source-71c7c94338c94576d4db90b5
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx
   - id: openwiki-source-f66eb76c24833219ccd50c84
     resource: repo://packages/web-core/src/shared/lib/modelSelector.ts
+  - id: openwiki-source-bd678cc808ff9bca99021f97
+    resource: repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-generated: { by: "codex", at: "2026-10-21T04:00:57.506Z" }
+generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T04:00:57.506Z
+    at: 2026-10-21T05:59:59.398Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -175,3 +179,5 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
 
 Global stdio には [Project Todo](../concepts/project-todos.md)の共有メモ操作も含む。限定 Orchestrator router には含めない。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)
+
+Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の管理設定](../concepts/runtime-access.md#管理設定の保存適用取消)であり、上記のcoding agent向けnative MCP config editorとは別の入口である。直接アプリケーションを動かす権限・環境・停止の契約は同ページを参照する。[設定registry](../../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143)

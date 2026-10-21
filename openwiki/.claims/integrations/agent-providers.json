@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:01b5a2485d8a45e9379a1b3ef1d4ac9b7aaafcb84aba9073d3c6a49da68ba288",
+  "pageVersion": "sha256:6c614164cd289bba688569ea5c5f2319cefdf5fd273a8040d92377ab7cf65f7e",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -320,7 +320,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
-          "version": "repo-lines-v1:sha256:4f3d2071223b99fa4ba2f0dfc39041934d6b75e48f35a9aaee4a8c1bbf0cc4c6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
+          "version": "repo-lines-v1:sha256:24638ef5a2d7329f39ae9e69944cdad786fe47c90d69f09585991665418c12b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/mod.rs#L48-L81",
@@ -419,10 +419,24 @@
           "version": "repo-lines-v1:sha256:a95a56930d8adf651df4f5004eaff9bb9774382eb1391e2a79ebe8fe3d00a993:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMjhmYjM1NmFiMzk0YzdmNWZhNTU4YzdiZTVkMTRkMjRhNWQ1OWMwMmM5OTc5NzkxM2QxYjExYzNmMjczN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4ZjE5YjI3OGJhMDYyNGE5OGVhZTcxZDYwOTg5NmI4NzA1OTdiMjNkMDFiYTMwMjAyNzBlYzdiMGU5MGUxNDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkYjNlN2NkMGMzYTYyMzA0NzY2ODE2MWQxMDRlOTlkODYyMDljYTNlNzc1NGEyNWIxMTlhNDkwNzg3ODA0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2MDEyOGZmMWZiYTQ1NTI5MWU1MmYwZDczN2MzNmViMDhlZTAzOGYxNWMwNWYxMDc4MzJmODI2YTc0NzQ1MmYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0404a21631a748c2ad3ac2bd629aad6b",
+      "statement": "SettingsのMCP連携は外部Runtime Accessの管理設定で、coding providerのnative MCP configを編集する入口とは分かれている。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143",
+          "version": "repo-lines-v1:sha256:fe7994a1af9e447c4ba3db1354fb36cf7087b71de241cbd8220f6e280a77e8a1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiMTA3ZTUzODczOTRhYThjZjk1YzQ1ZGE1OGU5MzExYmZkMThlMjdjNTMwZGQwNTg3NjA1MGYwMjA4Njc0OGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2YTQ0ZDI1NDZmMjhkMGU1ODViNWRhOTRhY2UxYjcyMjcyYWJhYTMwMTI5MWJjMGQ5YmFhYmYwMjM4ZWJlNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4ZjJmNGFjYjJmMmVjMDliNjE4YzFkZDA1YzQzOTQ1YzY5NjAwNjQzYTJkMDExNTM0YmMyMjYzNTE4YWQxN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMmE0NThiMzY0NTExMWE5ZjBkZTVjZjQ1N2E2N2RmMWRkMDllMTE5NjA5NDFjMmRiYzgyOTlkMTcxZWY1NDkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts",
+          "version": "repo-file-v1:sha256:4ffd7e5e4d9b55b25d7c3681f66fa048de1cba4c9ee554bda71a1e42605f0858"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T04:00:57.506Z"
+    "at": "2026-10-21T05:59:59.398Z"
   }
 }
