@@ -1209,6 +1209,8 @@
     "newBody": "Add a thought or TODO…",
     "category": "Category",
     "uncategorized": "Uncategorized",
+    "categoryRequired": "請先輸入分類，再新增 TODO。",
+    "inputHint": "Enter 傳送/新增，Ctrl+Enter 換行",
     "add": "Add",
     "showCompleted": "Show completed",
     "empty": "No TODOs to show. Add your next thought above.",

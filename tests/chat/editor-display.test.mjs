@@ -133,6 +133,15 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
       0,
       "IME confirmation must not submit",
     );
+    await composer.fill("改行前");
+    await composer.press("Control+Enter");
+    await page.keyboard.type("次の行");
+    assert.equal(await page.evaluate(() => window.submissions), 0);
+    assert.match(await composer.innerText(), /改行前\n次の行/);
+    await composer.dispatchEvent("keydown", {
+      key: "Enter", keyCode: 13, repeat: true,
+    });
+    assert.equal(await page.evaluate(() => window.submissions), 0);
     await page.evaluate(() => window.setShortcut("ModifierEnter"));
     await page.waitForTimeout(50);
     await page.evaluate(() => window.enter(true, true));

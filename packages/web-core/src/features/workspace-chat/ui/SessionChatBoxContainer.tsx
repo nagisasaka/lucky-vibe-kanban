@@ -1336,10 +1336,10 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         autoFocus
         onPasteFiles={onPasteFiles}
         localAttachments={localAttachments}
-        sendShortcut={config?.send_message_shortcut}
+        sendShortcut="Enter"
       />
     ),
-    [config?.send_message_shortcut, selectedSkills, sessionId, workspaceId]
+    [selectedSkills, sessionId, workspaceId]
   );
 
   const resumePickerNode =

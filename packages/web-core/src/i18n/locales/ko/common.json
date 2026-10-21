@@ -1203,6 +1203,8 @@
     "newBody": "Add a thought or TODO…",
     "category": "Category",
     "uncategorized": "Uncategorized",
+    "categoryRequired": "TODO를 추가하기 전에 카테고리를 입력하세요.",
+    "inputHint": "Enter로 전송/추가, Ctrl+Enter로 줄바꿈",
     "add": "Add",
     "showCompleted": "Show completed",
     "empty": "No TODOs to show. Add your next thought above.",

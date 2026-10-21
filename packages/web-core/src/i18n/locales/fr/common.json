@@ -1203,6 +1203,8 @@
     "newBody": "Add a thought or TODO…",
     "category": "Category",
     "uncategorized": "Uncategorized",
+    "categoryRequired": "Saisissez une catégorie avant d’ajouter une tâche.",
+    "inputHint": "Entrée pour envoyer/ajouter, Ctrl+Entrée pour un saut de ligne",
     "add": "Add",
     "showCompleted": "Show completed",
     "empty": "No TODOs to show. Add your next thought above.",
