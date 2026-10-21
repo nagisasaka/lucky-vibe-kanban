@@ -384,6 +384,16 @@ export type WorkspaceExecutionTerminalStatus = "succeeded" | "failed" | "cancell
 
 export type WorkspaceExecutionView = { workspace_id: string, owner: WorkspaceExecutionOwner | null, status: string, terminal: boolean, can_stop: boolean, stop_requested: boolean, error: string | null, files_available: boolean, published: boolean, };
 
+export type WorkspaceTokenUsage = { workspace_id: string, total_tokens: bigint | null, input_tokens: bigint | null, output_tokens: bigint | null, cached_input_tokens: bigint | null, reasoning_tokens: bigint | null, cached_input_observed_threads: bigint, reasoning_observed_threads: bigint,
+/**
+ * Unknown without verified reports; otherwise partial: unreported work is unknowable.
+ */
+completeness: string, scope: string, thread_count: bigint, attempt_count: bigint, observed_attempt_count: bigint, providers: Array<string>,
+/**
+ * Requested models are not proof of the model actually used for a counter.
+ */
+requested_models: Array<string>, first_observed_at: string | null, updated_at: string | null, };
+
 export type WorkspaceWithStatus = { is_running: boolean, is_errored: boolean, id: string, task_id: string | null, container_ref: string | null, workspace_kind: WorkspaceKind, container_ownership: ContainerOwnership, usage: WorkspaceUsage, execution_owner: WorkspaceExecutionOwner | null, branch: string, setup_completed_at: string | null, created_at: string, updated_at: string, archived: boolean, pinned: boolean, name: string | null, worktree_deleted: boolean,
 /**
  * AI Arena group this workspace belongs to, if any.
@@ -1398,7 +1408,13 @@ export type AgentActivity = { thread_id: string, parent_thread_id: string | null
 
 export type AgentEventEnvelope = { schema_version: number, payload_version: number, event_id: string, session_id: string, agent_run_id: string, turn_id: string, run_attempt_id: string, run_attempt_number: number, sequence: bigint, correlation_id: string, orchestration_run_id?: string | null, orchestration_node_execution_id?: string | null, timestamp: string, native_refs?: Array<NativeAuditReference>, payload: AgentEventPayload, };
 
-export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": { input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
+export type CumulativeTokenUsage = { provider_id: string, provider_session_id: string, total_tokens: bigint, reasoning_tokens: bigint | null, };
+
+export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": {
+/**
+ * Verified provider semantics; absent on historical/unsupported snapshots.
+ */
+cumulative_usage?: CumulativeTokenUsage | null, input_tokens: bigint, output_tokens: bigint, cached_input_tokens?: bigint | null,
 /**
  * Latest context occupancy, distinct from cumulative billing usage.
  */

@@ -1465,5 +1465,19 @@
     "donePending": "Done pending",
     "doneNotApplied": "Done not applied",
     "doneReconciling": "Done awaiting reconciliation"
+  },
+  "workspaceTokens": {
+    "label": "Workspace cumulative tokens",
+    "unknown": "Unknown",
+    "partial": "Partial",
+    "error": "Unavailable",
+    "input": "Input",
+    "cached": "Cached input (included in input)",
+    "output": "Output",
+    "reasoning": "Reasoning (included in output)",
+    "scope": "Reported Codex thread totals. Unreported usage, unsupported providers and unmeasured history are unknown. Not cost or context occupancy.",
+    "coverage": "Attempts with usage reports: {{observed}} / {{total}}",
+    "updated": "Last update",
+    "breakdownCoverage": "Threads reporting breakdown: {{observed}} / {{total}}"
   }
 }

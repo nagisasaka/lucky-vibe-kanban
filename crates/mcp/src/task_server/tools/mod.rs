@@ -415,6 +415,7 @@ mod tests {
             "create_session".to_string(),
             "get_context".to_string(),
             "get_execution".to_string(),
+            "get_workspace_tokens".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "run_resource_operation".to_string(),

@@ -315,3 +315,14 @@ pub async fn stop(deployment: &DeploymentImpl, workspace: &Workspace) -> Result<
     }
     Ok(())
 }
+
+/// Same persisted aggregate exposed by MCP get_workspace.
+pub async fn tokens(
+    State(deployment): State<DeploymentImpl>,
+    Extension(workspace): Extension<Workspace>,
+) -> Result<Json<ApiResponse<db::models::workspace_tokens::WorkspaceTokenUsage>>, ApiError> {
+    Ok(Json(ApiResponse::success(
+        db::models::workspace_tokens::WorkspaceTokenUsage::get(&deployment.db().pool, workspace.id)
+            .await?,
+    )))
+}

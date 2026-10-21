@@ -413,6 +413,9 @@ pub enum AgentLiveEventPayload {
     /// value is also persisted as a replaceable snapshot for reconnects and
     /// stats; it never becomes canonical event history.
     TokenUsageSnapshot {
+        /// Verified provider semantics; absent on historical/unsupported snapshots.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cumulative_usage: Option<CumulativeTokenUsage>,
         input_tokens: u64,
         output_tokens: u64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -423,6 +426,16 @@ pub enum AgentLiveEventPayload {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         model_context_window: Option<u64>,
     },
+}
+
+/// Codex thread totals include cached input in input and reasoning in output.
+/// Thread identity prevents adding the same cumulative counter across resumes.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+pub struct CumulativeTokenUsage {
+    pub provider_id: String,
+    pub provider_session_id: String,
+    pub total_tokens: u64,
+    pub reasoning_tokens: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]

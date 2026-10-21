@@ -2,6 +2,7 @@
 
 import {
   type ProfilesContent,
+  type WorkspaceTokenUsage,
   type ReplaceProfilesRequest,
   type RecentModelsPatch,
   ApprovalStatus,
@@ -458,6 +459,10 @@ export const sessionsApi = {
 
 // Workspace APIs
 export const workspacesApi = {
+  getTokens: async (workspaceId: string): Promise<WorkspaceTokenUsage> => {
+    const response = await makeRequest(`/api/workspaces/${workspaceId}/tokens`);
+    return handleApiResponse<WorkspaceTokenUsage>(response);
+  },
   createAndStart: async (
     data: CreateAndStartWorkspaceRequest
   ): Promise<CreateAndStartWorkspaceResponse> => {
