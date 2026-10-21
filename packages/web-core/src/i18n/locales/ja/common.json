@@ -1,5 +1,6 @@
 {
   "buildInfo": {
+    "details": "ビルド情報",
     "development": "開発版",
     "release": "リリース版",
     "unknownKind": "ビルド種別: 不明",

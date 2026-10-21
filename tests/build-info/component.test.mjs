@@ -27,38 +27,29 @@ new Function("module", "exports", "require", result.outputFiles[0].text)(
 const { render } = module.exports;
 const revision = "0123456789abcdef0123456789abcdef01234567";
 
-test("development: short SHA and full identity with dirty state", async () => {
+test("known identity renders a native keyboard and touch popover trigger", async () => {
   const html = await render({
     revision,
     kind: "development",
     release_tag: null,
     dirty: true,
   });
-  assert.match(html, />0123456<\/p>/);
-  assert.ok(html.includes(revision));
-  assert.ok(html.includes("開発版"));
-  assert.ok(html.includes("未コミット変更: あり"));
-  assert.ok(html.includes("aria-label="));
+  assert.match(html, /<button/);
+  assert.match(html, /type="button"/);
+  assert.match(html, />0123456<\/button>/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.ok(html.includes('aria-label="ビルド情報: 0123456"'));
+  assert.ok(!html.includes("title="), "details must not depend on hover");
 });
-test("release: existing full tag and clean state in details", async () => {
-  const html = await render({
-    revision,
-    kind: "release",
-    release_tag: "v0.1.50-lvk.1-server.9",
-    dirty: false,
-  });
-  assert.ok(html.includes("リリース版 (v0.1.50-lvk.1-server.9)"));
-  assert.ok(html.includes("未コミット変更: なし"));
-});
-test("partial identity does not guess kind or dirty; missing identity is hidden", async () => {
+test("partial identity still offers details, missing or invalid identity stays hidden", async () => {
   const html = await render({
     revision,
     kind: null,
     release_tag: null,
     dirty: null,
   });
-  assert.ok(html.includes("ビルド種別: 不明"));
-  assert.ok(html.includes("未コミット変更: 不明"));
+  assert.match(html, /aria-haspopup="dialog"/);
   for (const value of [
     undefined,
     null,
@@ -68,17 +59,16 @@ test("partial identity does not guess kind or dirty; missing identity is hidden"
     assert.equal(await render(value), "");
   }
 });
-test("English details and SHA-256 identifiers are supported", async () => {
+test("English trigger and SHA-256 identifiers are supported", async () => {
   const html = await render(
     {
       revision: "a".repeat(64),
-      kind: "development",
-      release_tag: null,
+      kind: "release",
+      release_tag: "v0.1.50-lvk.1-server.9",
       dirty: false,
     },
     "en",
   );
-  assert.ok(html.includes("Development build"));
-  assert.ok(html.includes("Uncommitted changes: no"));
-  assert.match(html, />aaaaaaa<\/p>/);
+  assert.ok(html.includes('aria-label="Build information: aaaaaaa"'));
+  assert.match(html, />aaaaaaa<\/button>/);
 });

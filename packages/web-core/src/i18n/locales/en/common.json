@@ -1,5 +1,6 @@
 {
   "buildInfo": {
+    "details": "Build information",
     "development": "Development build",
     "release": "Release build",
     "unknownKind": "Build type unknown",

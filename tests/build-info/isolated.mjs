@@ -1,6 +1,6 @@
 // Built application + real, disposable SQLite. Only the explicitly named
 // /api/info cases below replace metadata; all other app requests use the server.
-import { chromium, expect } from "@playwright/test";
+import { chromium, devices, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { createWriteStream } from "node:fs";
@@ -180,7 +180,13 @@ try {
       ? route.continue()
       : route.abort(),
   );
-  async function check(name, value, expectedDetails, fixture = true) {
+  async function check(
+    name,
+    value,
+    expectedDetails,
+    fixture = true,
+    touch = false,
+  ) {
     await page.unroute("**/api/info");
     if (fixture)
       await page.route("**/api/info", async (route) => {
@@ -195,17 +201,97 @@ try {
     if (await initialDialog.isVisible()) {
       results.dismissedDialogs ??= [];
       results.dismissedDialogs.push(await initialDialog.innerText());
-      await page.keyboard.press("Escape");
+      if (touch)
+        await initialDialog
+          .getByRole("button", { name: "キャンセル", exact: true })
+          .tap();
+      else await page.keyboard.press("Escape");
       await expect(initialDialog).toBeHidden();
     }
+    if (touch)
+      await page.getByRole("button", { name: "Projects", exact: true }).tap();
     const label = page.getByTestId("app-build-info");
     if (value?.revision) {
       await expect(label).toBeVisible();
       await expect(label).toHaveText(value.revision.slice(0, 7));
-      const title = await label.getAttribute("title");
+      const dialog = page.getByRole("dialog", {
+        name: "ビルド情報",
+        exact: true,
+      });
+      if (touch) {
+        await label.tap();
+      } else {
+        // Reach the trigger using actual Tab navigation, without locator.focus().
+        for (
+          let i = 0;
+          i < 80 &&
+          !(await label.evaluate((el) => el === document.activeElement));
+          i++
+        ) {
+          await page.keyboard.press("Tab");
+        }
+        await expect(label).toBeFocused();
+        assert.ok(await label.evaluate((el) => el.matches(":focus-visible")));
+        await page.keyboard.press("Enter");
+      }
+      await expect(label).toHaveAttribute("aria-expanded", "true");
+      await expect(dialog).toBeVisible();
+      await expect(dialog).toHaveCSS("opacity", "1");
+      const paragraph = dialog.locator("p");
+      await expect(paragraph).toBeVisible();
       for (const detail of expectedDetails)
-        assert.ok(title.includes(detail), title);
-      await label.hover();
+        await expect(paragraph).toContainText(detail);
+      const details = await paragraph.innerText();
+      const bounds = await dialog.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const p = el.querySelector("p");
+        return {
+          x: r.x,
+          y: r.y,
+          right: r.right,
+          bottom: r.bottom,
+          viewportWidth: innerWidth,
+          viewportHeight: innerHeight,
+          textWidth: p.clientWidth,
+          textScrollWidth: p.scrollWidth,
+        };
+      });
+      assert.ok(
+        bounds.x >= 0 &&
+          bounds.y >= 0 &&
+          bounds.right <= bounds.viewportWidth &&
+          bounds.bottom <= bounds.viewportHeight,
+        JSON.stringify(bounds),
+      );
+      assert.ok(
+        bounds.textScrollWidth <= bounds.textWidth,
+        "full SHA details are clipped",
+      );
+      const close = dialog.getByRole("button", { name: "閉じる", exact: true });
+      await expect(close).toBeFocused();
+      await page.screenshot({
+        path: path.join(output, `${name}-details.png`),
+        animations: "disabled",
+      });
+      if (touch) {
+        await close.tap();
+      } else {
+        await page.keyboard.press("Escape");
+      }
+      await expect(dialog).toHaveCount(0);
+      await expect(label).toBeFocused();
+      await expect(label).toHaveAttribute("aria-expanded", "false");
+      // Reopen with Space (keyboard) or tap, then exercise another dismiss path.
+      if (touch) await label.tap();
+      else await page.keyboard.press("Space");
+      await expect(dialog).toBeVisible();
+      await expect(dialog).toHaveCSS("opacity", "1");
+      await expect(close).toBeFocused();
+      if (touch)
+        await page.touchscreen.tap(120, 24); // drawer header, outside details
+      else await page.keyboard.press("Enter"); // auto-focused Close button
+      await expect(dialog).toHaveCount(0);
+      if (!touch) await expect(label).toBeFocused();
       const layout = await label.evaluate((el) => ({
         width: el.getBoundingClientRect().width,
         scroll: el.scrollWidth,
@@ -217,7 +303,16 @@ try {
         layout.scroll <= layout.client,
         "seven-character SHA is clipped",
       );
-      results.cases.push({ name, fixture, title, layout });
+      results.cases.push({
+        name,
+        fixture,
+        input: touch ? "touch" : "keyboard",
+        details,
+        bounds,
+        layout,
+        dismiss: touch ? "close tap + outside tap" : "Escape + Close Enter",
+        focusRestored: true,
+      });
     } else {
       // Wait for the application shell, so absence cannot pass before loading.
       await expect(page.getByRole("button").first()).toBeVisible();
@@ -284,6 +379,41 @@ try {
     [expectedSha, "開発版"],
     false,
   );
+  assert.deepEqual(errors, []);
+  await page.close();
+  page = await browser.newPage({
+    ...devices["Pixel 7"],
+    viewport: { width: 390, height: 844 },
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.route("**/*", (route) =>
+    new URL(route.request().url()).origin === base
+      ? route.continue()
+      : route.abort(),
+  );
+  await check(
+    "actual-mobile-touch",
+    info.data.build_info,
+    [expectedSha, "開発版", "未コミット変更: あり"],
+    false,
+    true,
+  );
+  await page.setViewportSize({ width: 320, height: 700 });
+  await check(
+    "fixture-mobile-unknown-touch",
+    { revision: "a".repeat(64), kind: null, release_tag: null, dirty: null },
+    ["a".repeat(64), "ビルド種別: 不明", "未コミット変更: 不明"],
+    true,
+    true,
+  );
+  await check(
+    "fixture-mobile-release-touch",
+    release,
+    [expectedSha, release.release_tag, "未コミット変更: なし"],
+    true,
+    true,
+  );
+  await check("fixture-mobile-hidden", null, [], true, true);
   assert.deepEqual(errors, []);
   results.status = "passed";
 } catch (error) {
