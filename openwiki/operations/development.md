@@ -38,14 +38,24 @@ sources:
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-67c9f08f4593b3acbf1fe7b8
+    resource: repo://tests/terminal-latency/codex-fixture.mjs
+  - id: openwiki-source-a8dd8312a18cc58d1cb88211
+    resource: repo://tests/terminal-latency/latency.spec.ts
+  - id: openwiki-source-a53d4e495dbfa4b6be9ca682
+    resource: repo://tests/terminal-latency/README.md
+  - id: openwiki-source-00fd62855c4297a48ed4a170
+    resource: repo://tests/terminal-latency/RESULTS.md
+  - id: openwiki-source-596c6cb75168f4c904bcc50d
+    resource: repo://tests/terminal-latency/run.py
   - id: openwiki-source-966297deb875824dc95ee8d5
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-21T03:37:52.801Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-18T14:00:51.649Z
+    at: 2026-10-21T03:37:52.801Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -88,6 +98,21 @@ backend の watch 起動は DISABLE_WORKTREE_CLEANUP=1 を設定する。[Worksp
 Workflow の Playwright は1 workerで専用 fixture を立ち上げる。fixture は製品の Workflow component/model を import するが、実 provider と DB を含む本番実行全体の test ではない。たとえば Card context test は折り畳み、read-only preview、保存 description との独立性を確認する。[test 設定](../../tests/workflow/playwright.config.ts)・[fixture](../../tests/workflow/fixture/src/main.tsx#L1-L24)・[Card context test](../../tests/workflow/specs/card-context.spec.ts)
 
 実行制御の変更は [監査・投影の回復 tests](../architecture/agent-runtime.md)、Graph の変更は [Workflow の validation/planner tests](../concepts/workflow-attempt.md)、memory checkpoint は [Repository memory の冪等性 tests](../concepts/repository-memory.md) へ進む。画面上の成功と永続状態の成功を分けて検証する。
+
+## Terminal から次操作までの回帰試験
+
+終了通知から次の送信までを調べるときは `tests/terminal-latency/` を使う。外部 Codex app-server の JSON-RPC だけを fixture に置換し、実 adapter・process host・監査・SQLite・HTTP/WebSocket・React・Chromium を通す。実 Codex cloud/model や認証サービスの相互運用を検証する試験ではない。[試験の境界](../../tests/terminal-latency/README.md#reproduce)・[provider fixture](../../tests/terminal-latency/codex-fixture.mjs#L1-L65)。原因と cleanup / drain の所有権契約は [Runtime の終了時 stdout](../architecture/agent-runtime.md#終了時の-stdout-所有権と-drain)を参照する。
+
+repository toolchain と依存関係を用意し、root で frontend を `pnpm --dir packages/local-web run build`、両 binary を `cargo build --bin server --bin agent-process-host` で build してから `python3 tests/terminal-latency/run.py` を実行する。runner は `target/debug` の両 binary を使い、新規 `LVK_INSTANCE_DIR` と loopback の動的 port を設定する。継承した `VIBE_KANBAN_AGENT_PROCESS_HOST` を自身の binary に固定し、`LVK_PUBLIC_URL` を空にする点が、別 build や公開 URL の混入を避けるために重要である。Chromium は `LVK_E2E_CHROMIUM` で指定できる。source と binary の hash を保存し、browser test は fixture の実親 executable も照合する。[起動・provenance](../../tests/terminal-latency/run.py#L21-L84)・[親の照合](../../tests/terminal-latency/latency.spec.ts#L193-L202)
+
+runner は終了時に自身の instance に属する process の停止を確認してから一時 DB/runtime を削除する。残存 process があればエラーにして一時領域を回復用に残す。監査由来の時刻、Host journal、fixture 観測などの診断資料は `test-results/terminal-latency-instance/` に残る。[cleanup と記録](../../tests/terminal-latency/run.py#L85-L130)
+
+5ケースは正常終了、失敗、取消、WebSocket 再接続、終了後のページ再表示である。各ケースで活動中 follow-up の400拒否を確認し、Send 有効化後は実ボタンで次 Run を一つだけ開始して成功を確認する。再接続は実 frame を転送したまま切断だけを注入する。`canonicalAt` は HTTP poll の観測時刻であり DB commit 時刻ではなく、reload の値は navigation / loading 時間も含む。[拒否と接続](../../tests/terminal-latency/latency.spec.ts#L6-L93)・[終端と次の実行](../../tests/terminal-latency/latency.spec.ts#L114-L213)
+
+<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L19-L40] heading anchor "L19-L40" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
+<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L65-L78] heading anchor "L65-L78" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
+<!-- openwiki: broken internal link [../../tests/terminal-latency/RESULTS.md#L109-L114] heading anchor "L109-L114" does not exist in "../../tests/terminal-latency/RESULTS.md". Fix the href or restore the target, then delete this comment. -->
+[2026-10-20 の測定記録](../../tests/terminal-latency/RESULTS.md#前後の時刻と差分)には正常終了の9056→4050ms、各版5ケース成功が記録される。ただし各ケース各版1回の比較であり、本番の分位点や負荷時性能の保証ではない。実 Codex、Windows、高負荷は未確認と明記されている。この記録は過去の試験成績であって、この Wiki Sync での再実行結果ではない。[条件](../../tests/terminal-latency/RESULTS.md#L19-L40)・[結果と限界](../../tests/terminal-latency/RESULTS.md#L65-L78)・[未確認事項](../../tests/terminal-latency/RESULTS.md#L109-L114)
 
 ## モバイル向け built preview
 

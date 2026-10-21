@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c484d00be3771b4d9629d8112296290c8e7dd54bf4711c03bbbe87cae6055db9",
+  "pageVersion": "sha256:53dd07cd2bb728dd320715b917373a61fec98eae7b57f846db68704ce493a265",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -205,10 +205,92 @@
           "version": "repo-lines-v1:sha256:7b7533abaa318dfa6fa9fd9778c9b601a7d0baab0f3804be157b8ac5d79814ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDZiZTU5ZDZiZjJjOTZlZTFjMmQ3ZjVlY2ExZTdmNjQwNWM1YTg3YTcwZDg5NGIzYWM1ODE0MmE4YmM5ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjhiOGEwNGM3MGQwM2U3ZWM5ODZkOWE0OWU3YzFhMWM3YmFlMjU0YWY3NmMzZjc3ODQyYmQ5NzAyZWRmZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzMWE1MDczZGY3OGQ3Zjc0MmQ3MjEzODVjNzRiZDQzMzhjOGJkMmI4ODI0MjgwZDViNzk2ZmJhYzBmNjA1ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYWZjN2FiOTAwNGY1NmQxYmQwNTU2MTliYmFkYzc1ZjI1ZjgwYmNmNjM0ZTA5Njg3MzY4MGNmMDg1MDQxMGUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_51b5e64ac7ed468693ad1aeb8b137cee",
+      "statement": "terminal-latency は外部 Codex app-server JSON-RPC を fixture に置換して実 backend と Chromium を通す試験であり、実 Codex cloud/model・認証サービスの相互運用を検証しない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/terminal-latency/README.md#L43-L47",
+          "version": "repo-lines-v1:sha256:4b8fba2361df43a0cd2d0f579575fd03d0228311712e70ef0d634aa6557b97bd:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTBjNTk1MmVmY2Y4M2U2Zjk5NzBhZjM2ZDlmOWM1NDk2ZTNmOTY0NTU5NDM0YTU5YTg1OWY3YzIyOWMyZjc4NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDBkNjIwNTI1NmNjODIwM2ZmZjc2YTFmMWFkYzY5NGQzMjMyOTUyZDY4ZWVmZjk5YjBhNmQ2MTUwMTIxOWYzMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDJmMzg1YWJlNjk2MGM5Y2IyYmFlNzBmZjQ1ZTMzZjRmMTI3MDU1MTQ2YjliNjhmZDExNTRkZWM4ZWZlNmVmYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTAwZDAxMzU3NWFlNjkyYzhmOGE0ZmIwNjAxYzViOWVmOWU4ZTFhYjg0ZmJlMDVkZjdkM2ZiMTk3Yjk4ZjdjYyJ9"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/codex-fixture.mjs#L1-L65",
+          "version": "repo-lines-v1:sha256:132a12b6ebed5e947cce913b0cee3d925465776f8826aa0143b509baacbe65be:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MjUyZDlhYmQ0MjZlZjcyNDUwMDAzYmQzZTM3MjZlN2ExYzkyYjc5NzZmN2E0ZTEwZjEzMDQ0OTIzNjNjZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxOWZkZjZhNGQwNDY1YTQ1M2QyYzMzMmJiMmYzYmUyNjI5ZWExMTNlOTFiM2U4YTU1MDI2Nzc4ODAzYzM5OTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhYjEwMzYwMTU2MmZhODI4Zjk0M2NkZTI0ZWE1ODhiYjQzZTFhZDQ2YzAzNDU1ODY3YTc1ZWRhZjdhOWJhYmYifQ"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/run.py#L21-L84",
+          "version": "repo-lines-v1:sha256:ceed12c18d62dfe9ed5758820d4f8463fa6d8fe51e523779aa5d1c72c89fd3ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmN2E5MWYwYTAzZTM2ZTg1YTJhODJjNmU4M2M4ZGMxZmYwZjAxMzgxNTVlOTgzZTc5OTVjYzZkMDAzNjRkOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxMTcxZmNiYjdmYmE3M2NkYjg2NWE4MDY2ZTkwM2QyZWM4NGU4MGVjYTZjNmQ1OWE0MTAyZWMxYmIxYThkOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxNDUxYzE5MWMwZTllNzhkNGU5NjRjNGIxMmFlYmVmZThjMjBiNzMwMGJiNTlmNzAzZjFjZjczMTk3Y2RhNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ae58de26c864b0284ab07678e3aba3b",
+      "statement": "terminal-latency runner は build 済み target/debug の server と agent-process-host、新規 LVK_INSTANCE_DIR、loopback 動的 port を使い、継承 process host と公開 URL を明示上書きする。source/binary hash と fixture 親 executable によって試験対象を識別する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/terminal-latency/latency.spec.ts#L193-L202",
+          "version": "repo-lines-v1:sha256:7cbaaa405ba32b99ae31cc1e868550fe1d3407e80bca5fa2b2f4aaedb99768b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMDg0YmQ4YmFlNzA4Nzk5ZjM2MmM2YzhiYjMyNGQ3MDRlZTI3NjhjZjdlMzY3OTlmMTA4ZDBhMjE3MDVhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiMjM2Yzc5YTY3MWNhYmM0MzUzYWMwNzZmZTgzNjgzYTVlNGNiMWMzYWUyNGQxMTBjOTE1OTliZDlhNzFmNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlMTNiMjRmNmNlOTdiNmE1YWE3ODg1Njg1ZTJjZmYxZjFlMTM3ZTcxNmIxMjQyNzJmYTRiNjQ1YTE2ZjJmMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4NjBlMTQzOGYxZTViNDgxMTgxYzQxYjYyZWJkZjdkYmU4YjA3NGQyODJlNzgyM2ZmZDY4NmM5YzJkNzQ5M2YifQ"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/run.py#L21-L84",
+          "version": "repo-lines-v1:sha256:ceed12c18d62dfe9ed5758820d4f8463fa6d8fe51e523779aa5d1c72c89fd3ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmN2E5MWYwYTAzZTM2ZTg1YTJhODJjNmU4M2M4ZGMxZmYwZjAxMzgxNTVlOTgzZTc5OTVjYzZkMDAzNjRkOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxMTcxZmNiYjdmYmE3M2NkYjg2NWE4MDY2ZTkwM2QyZWM4NGU4MGVjYTZjNmQ1OWE0MTAyZWMxYmIxYThkOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxNDUxYzE5MWMwZTllNzhkNGU5NjRjNGIxMmFlYmVmZThjMjBiNzMwMGJiNTlmNzAzZjFjZjczMTk3Y2RhNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_968596c9054e41f884ea6265d3dcebba",
+      "statement": "terminal-latency runner は所有 instance process の停止確認後だけ一時状態を削除し、残存時は回復用に保持して失敗する。診断 journal と監査由来時刻は test-results/terminal-latency-instance に残す。",
+      "evidence": [
+        {
+          "resource": "repo://tests/terminal-latency/run.py#L21-L24",
+          "version": "repo-lines-v1:sha256:e1735798ec622fe51cb299e76b0a6319010e55c976debcb97118028c37665de3:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWJlYzE5ZWUyNmI4MjQyYWE4Nzc5Y2JiYmFkYjJmMTQzZjZhNGVmODkxZjFhM2UxNDc0M2QwYmE0OTU4NzUyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjExNzFmY2JiN2ZiYTczY2RiODY1YTgwNjZlOTAzZDJlYzg0ZTgwZWNhNmM2ZDU5YTQxMDJlYzFiYjFhOGQ5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWQ0MDJhMWE5NDQzOTgwYjJkODQyNzA2NDY2M2ExY2M5Y2EyOTY3MmVjZDk4NDcyOWZlMDUwMDU4MmViZGM4MSJ9"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/run.py#L40-L50",
+          "version": "repo-lines-v1:sha256:e075ffb136f78b61d55f8d3353ed4c391f0ff27ffd45ab1630f024208d5ab3df:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4MDYwNDNlOWU5MmFmNmI2NDk5YzY1ZmRiYjg3MGNiZGY2MDBiMjhkZjc1ZmFkODQ5YzRkODlmMDE0ODZjODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1MDg0MmVmNzgxYTNmNGY1MmY2OTM3ODU5YTU4NTM1YTA0MDcwNDM3OTVkZDE3ODdmOGQ2OWY4MDI3M2RjMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5M2ViNTY4N2I2ZmZjNmQ3NWNjMzk2NzE2ZGFjOTljZjVkOTE2NDg2MTFhZDIyY2ZmZWNmYjU0YzI5MTQ0ZGMifQ"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/run.py#L85-L130",
+          "version": "repo-lines-v1:sha256:d0612021d703a866c0e111cd02a7b478c89bdd2cc2cec7a837a345943c211c7e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmYzMwZTZkNTQ5NjU4YTRiMDU1ZWY5YTE4YWRiNDRlYjI2ZDBkODZmNjNjYjhiOTgwMTg1NzdmMTBiODIyODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNDRiMjM4ZTQ0OGVjMjViYTQzNjZmYzFlMWE5YTRjYzQ1NmY2ZTFlNGI2MWZhM2QxMWJiODg3NGVkY2YyMjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwMGFjOGY4NDUzYTkzOTg4NWZiNTk4Zjg2ZGQwYzZiMTVkZDg4ODYyNDhiYzgxNGE4ZjA5NzBmNjdhZWUzYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_79d327f0502c4f10ac894508220b9f2c",
+      "statement": "browser 回帰は正常・失敗・取消・再接続・再表示の各ケースで活動中 follow-up 拒否と Send からの単一の次 Run 成功を検査する。canonicalAt は HTTP 観測時刻で、reload 値は再 navigation を含む。",
+      "evidence": [
+        {
+          "resource": "repo://tests/terminal-latency/latency.spec.ts#L114-L213",
+          "version": "repo-lines-v1:sha256:5f4ac5ed5bd60d07173e3ed4dbc31eaf9dd09c77c9e62395f361a4954dcd9350:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkOTMxMzYwMjY2MWY1NWVjZGY3MGQ1YTZmNmMzYjA4ZWY0OThjMGY2MGEyNWU5OWUyMmZiZDgzODg2ZmNhM2U3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzYTNlNDZmOTQyNzZiNmY2ZjRlZDFmMDJhZjc4YmVmNmEyZWUxYzQzOWRkNTU4NGI5NzM5NDgzMTMyMTRkMmI3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3YjFkMWU0NTRiMTdiN2YzMzVmMmMyYzc5NjM4ZTA2Yzg3YWU3MDE0MmNiYWI2NjZlY2NlZjg4Y2YxNzYxMGVjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MSwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIn0"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/latency.spec.ts#L6-L93",
+          "version": "repo-lines-v1:sha256:bdf4e6a03498a7019ad3737b2c6bb3c5cb5aad70ea7314fb47c4d22ce666fe7c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNTkyMzhhOWY0MDdhZGQyY2U5NzQwN2U4MDcwMzg1Zjg5ZjU3ZTI5YWRhOTQ2MTUzNzllZTM3Mzk1NmI1YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0NWYyZTg5NTczODA3OGU3ZWY2M2ZmOTVkMmVmMmMyNDMxYmQ3ODliZTBhMzBjOTFmNzZlNGJiY2M4YzhlNGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxY2FjMmE5MDE2MTA3YWIzNjQ1NmJhMGJmNzRjMTAyMzU1NTQwYjdiODI3YjNkYzQ3YmEzMzFhNzFiNGZkZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2OGRkNDZhYzFhODE0M2M0MjJjZGI2NGQzN2QyOTllNDkyMDBhYjdkMzc2MjQyYWRhYzI4ZmQ3NzhmMTBlMWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_45a3c0637c5445529c432cfa421a4595",
+      "statement": "2026-10-20 の測定記録は正常終了9056→4050msと各版5ケース成功を報告するが各ケース各版1回の履歴であり、本番性能保証ではなく、実 Codex・Windows・高負荷は未確認としている。",
+      "evidence": [
+        {
+          "resource": "repo://tests/terminal-latency/RESULTS.md#L109-L114",
+          "version": "repo-lines-v1:sha256:6d90b2b8e1cb22a66a73ba862de3814c55f1fe185937be091709feacb451eb9b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGYxYWMzMGNmNTk2YjU5YWM1MDFjMTc5ZDE1ZDViYzk0ZTE2NDU2NGM2N2Q4NTE2N2U5NTc4ZWU3YWE3NmU3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2Y4YWVjYzQ1NjMxMzM4YjE2YmYwZWFlMDMwY2I3ZGY0N2EwZDliYTQ4NjNjZGIzN2Y4MGFiMmNmYjIzMDlkNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjlhYzgyYzFlNzQ2YTA4OTkwYzE4MWY3YjhmZGRlZjUxOWE0MmMxNWFkMThmYmNjNzdlYjIyMGQzYWI5MTllZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/RESULTS.md#L19-L40",
+          "version": "repo-lines-v1:sha256:604ce5751ee5c5844f4da6be6db835695d490de87ba1ca7772f6a0ba2ddc6be3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmNzhmZDViNTcyYWI2ZjgyZWY2MGVlYmM5OGJmNDI3OThkMDUyYmJlMGE2YjA0NTE2ZmJmYTIzMWUyNTg4YmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3N2JhOTJkNGE5MTBhNzhkNThjMDJkN2U0MWI0OTdlMmYzMDU1MmQwZDU1ZDJkZTQyOWQyNWVhNTI0NWM1MzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4MGNlNmE1ZjAxNmExOTMxMjk5YzcxNTA5NDAyNzlkMGE3MWFlYzExZWZkOTFkZmIzNmE2NGQ5ODJjMTc3MmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzZjcxMDZjMTM4NjJlN2M0MTA5MDhkOTAyYzlhMTdmMWVmMmNmMWYxZDhkY2JiNDc0YzAzYzdhYzA0NjI4ODIifQ"
+        },
+        {
+          "resource": "repo://tests/terminal-latency/RESULTS.md#L44-L78",
+          "version": "repo-lines-v1:sha256:b1f909cb21cb625e19b410336d046fde7360f8b1c0b298985637403bc0a037aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYTc2ODQ4NDk0MDQzNDRmZDE2ZTg3NjQ5N2M3ZDM0ZGQ3NGYyNWY4ZGFlMzM4YzM2NDFjMTViNzY2YzJjZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NjMyZGEzZmYxYjhmOWNlYmFjZGRlNjM2YWVlNWY0ZjkzZTA2NDMwYjQ4MTA5MjcxOWYyZmI4Yjc0ZWY5OTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZjcxMDZjMTM4NjJlN2M0MTA5MDhkOTAyYzlhMTdmMWVmMmNmMWYxZDhkY2JiNDc0YzAzYzdhYzA0NjI4ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4NjYwYjdkYmY5N2NkM2ViNjRjNDUxMmNiZWQ2MTIwNTM0OGE2NzcyYmI1ZjcyZTMzMjgxNTU2MGI5YWFmYmIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-18T14:00:51.649Z"
+    "at": "2026-10-21T03:37:52.801Z"
   }
 }

@@ -5,14 +5,18 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-21T03:37:52.801Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-22b82518475034ade38104e6
+    resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
     resource: repo://crates/executors/src/executors/codex/agent_scope.rs
+  - id: openwiki-source-c88a7c6fabdac15166554032
+    resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-2312e3967b9fd7f73e349d9a
@@ -41,7 +45,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+generated: { by: "codex", at: "2026-10-21T03:37:52.801Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -90,6 +94,14 @@ protocol v2 の Subscribe は cursor から追いつき、通知と heartbeat �
 複数回の通信失敗だけでは死亡としない。Host の開始 identity を照合して終了を確認した後、journal の checksum・連番・run identity と、閉じた Native Audit に対する参照を検証してから再生する。provider / process group が生存中または不明なら終端成功を採用せず、観測・正規 Cancel の対象として残す。代替 provider を勝手に起動しない。[回復入口](../../crates/local-deployment/src/agent_run_port.rs#L1497-L1555)、[子と終端の確認](../../crates/local-deployment/src/agent_run_port.rs#L1580-L1653)
 
 provider の「turn 完了」と Host の終了は別である。成功を最終化する証拠は、出力 drain と Audit close 後の Host Terminal。未完了 journal tail を除いた再生は完全回復とは呼ばず、終端証拠のない死亡を成功へ昇格させない。この順序は [OpenWiki publication](../operations/openwiki-maintenance.md) が閉じた監査を読むためにも必要である。[Audit と terminal](../../crates/local-deployment/src/process_host.rs#L1090-L1166)
+
+### 終了時の stdout 所有権と drain
+
+Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置換 pipe の writer を `LogWriter` に持たせる。`DeferredCodexControl → AppServerClient → LogWriter` という参照が残ると、provider の cleanup 後も Host 自身が writer を保持し、EOF を待てなくなる。`monitor_process` は制御 loop と既存の process cleanup を終えた後、出力 drain の前に `drop(control)` する。この順序は不要になった所有参照を解放するためであり、cleanup を省略するものではない。[pipe と control の生成](../../crates/executors/src/executors/codex.rs#L1296-L1362)・[writer の所有](../../crates/executors/src/executors/codex/client.rs#L1950-L1973)・[解放位置](../../crates/local-deployment/src/process_host.rs#L1049-L1062)
+
+drain の上限は5秒のままで、残った出力の投影・監査失敗を処理してから Audit close と Host Terminal へ進む。drain timeout 自体は警告を記録し provider terminal status を維持するため、timeout と AuditFailure を同一視しない。EOF 所有権の修正は、上限短縮や画面の先行した送信再開とは異なる。Unix の process group 停止には引き続き SIGINT / SIGTERM 後の各2秒の猶予があり、全終了が即時になる保証はない。[drain と終端保存](../../crates/local-deployment/src/process_host.rs#L1062-L1173)・[drain 定数](../../crates/local-deployment/src/process_host.rs#L68)・[停止の猶予](../../crates/utils/src/process.rs#L168-L207)
+
+Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS pipe の writer を保持させ、最終 bytes が監査へ入り、2秒未満で終端へ到達し、Audit が Complete になることを検査する。provider 完了証拠のない exit 0 は Crashed、非ゼロ終了は Failed のままであり、所有権解放が成功条件を弱めないことも確認する。[回帰試験](../../crates/local-deployment/src/process_host.rs#L1377-L1516)。実 backend から次の Send までの検証範囲・測定限界は [terminal 回帰試験の運用](../operations/development.md#terminal-から次操作までの回帰試験)に置く。
 
 ## 制御入力の送信と監査の順序
 
