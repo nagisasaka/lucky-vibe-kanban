@@ -130,10 +130,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-21T06:27:46.219Z" }
+generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:27:46.219Z
+    at: 2026-10-21T09:00:23.191Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -322,14 +322,9 @@ Enter mode は Ctrl+Enter を明示的な line break に変換する。IME compo
 
 [editor fixture](../../tests/chat/editor-display.test.mjs#L127-L150)は Ctrl+Enter の改行・repeat 抑止と共通部品の ModifierEnter mode を検査する。[入力操作の隔離 E2E](../../tests/chat/input-operations.isolated.mjs#L267-L339)は実 Workspace 画面から送る Session ID と複数行 prompt を調べ、follow-up だけを保留後の400応答へ置き換えて再送を確認する。実 agent/provider の成功や OS 日本語 IME の手操作は検証しない。Todo の保存境界は [Todo の検証入口](project-todos.md#変更時の検証入口)に置く。
 
-統合済み source と試験期待には二つの不一致が残る。
+以前記録した二つの試験期待の不一致は、凍結 source `0cae202fc7b1048b9787e73607fa1a3e2706afcd` で解消されている。`input-operations.isolated.mjs` は送信保留中も `contenteditable=true` とし、続く5回の Enter で要求が1件のままであることを確認する。編集可能と重複送信可能を同一視しない。[送信保留中の検査](../../tests/chat/input-operations.isolated.mjs#L310-L340)。`isolated.spec.ts` は保存済み ModifierEnter 設定を復元した後も Ctrl+Enter では送らず、追加入力後の Enter で正確な複数行 prompt が送られることを検査する。[改行と payload](../../tests/chat/isolated.spec.ts#L356-L383)。
 
-- `input-operations.isolated.mjs` は送信保留中の `contenteditable=false` を要求するが、現行 `SessionChatBox` は通常の `sending` 中も本文を編集可能にする。[試験の期待](../../tests/chat/input-operations.isolated.mjs#L310-L330)・[現行 editor](../../packages/ui/src/components/SessionChatBox.tsx#L915-L928)
-- 既存 `isolated.spec.ts` は設定を ModifierEnter に変えた後の Ctrl+Enter で追加リクエストを期待するが、現行 Session composer は Enter に固定され、Ctrl+Enter は改行になる。[旧設定に依存する期待](../../tests/chat/isolated.spec.ts#L353-L371)・[固定指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)
-
-これらは静的照合で見つけた不整合で、今回実行して失敗を観測したという意味ではない。[LOCAL-26 の開発時検証記録](../../tests/chat/input-operations-validation.md)の成功を、統合後 checkout の試験成功に読み替えない。試験期待と現行契約の調整・再検証は未解決であり、この文書保守では source や tests を変更しない。
-
-今回の通常 Sync は凍結 source `a1c1fd694851904f4f68eddbbc93dfd5de89bd9b` の入力操作変更を対象に、共通 keyboard、各 composer と送信 hook、設定 UI、Todo の REST/MCP・保存モデル、独立した fixture / E2E の入口から照合した。正式 Integration の検証は明示的に省略されている。製品テストは再実行しておらず、無関係な過去の Wiki 全体を再検証したとは扱わない。
+今回の照合は変更された試験と既存 editor・Session composer・keyboard の契約を対象とした。[開発時の検証記録](../../tests/integrated-main/VALIDATION.md#minimal-corrections)には初期失敗と修正後の結果が記録されるが、今回の正式 Integration は検証省略であり、Wiki Sync でも製品テストを再実行していない。実 provider・OS IME・実端末の確認や無関係な過去の説明全体の再検証は主張しない。
 
 ## Plan の遷移
 

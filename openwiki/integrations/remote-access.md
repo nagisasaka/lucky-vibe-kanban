@@ -62,10 +62,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
+generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:59:59.398Z
+    at: 2026-10-21T09:00:23.191Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -168,7 +168,7 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 
 公開するのは assistant commentary、lifecycle、許可済み tool 名と status、Goal status、子活動の限定 kind だけである。final/user/system text、全 Thinking（歴史的 Plan text と reasoning を安全に区別できない）、承認・回答本文、tool 引数・結果、provider extension、native reference を出さない。schema/payload version が1以外、32 KiB超の envelope、不正 JSON は省略する。commentary は4,096 UTF-8 bytesを超える、またはpath・credential等の疑わしい形式なら本文全体を withheld にする。これは任意の prose が秘密を含まない保証ではなく、返された文章も命令・承認・独立した検証証拠ではない。[allowlist と filter](../../crates/server/src/remote_mcp/run_events.rs#L117-L239)
 
-変更時は空 filtered page、foreign cursor、attempt 順序、byte 上限、DB reopen 後の cursor、HTTP read scope と再接続のテストを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L264-L582)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1324-L1388)。fixture の存在や過去実行結果を実 ChatGPT account 接続成功と読み替えない。
+変更時は空 filtered page、foreign cursor、attempt 順序、byte 上限、DB reopen 後の cursor、HTTP read scope と再接続のテストを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L264-L584)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1403-L1467)。fixture の存在や過去実行結果を実 ChatGPT account 接続成功と読み替えない。
 
 ## オンデマンド資源観測
 

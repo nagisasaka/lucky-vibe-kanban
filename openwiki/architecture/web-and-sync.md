@@ -46,6 +46,8 @@ sources:
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
+  - id: openwiki-source-84123960815ca9b2c23d8a0b
+    resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
   - id: openwiki-source-b5c65c61c678426ad814529a
     resource: repo://packages/ui/src/components/Popover.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
@@ -146,6 +148,8 @@ sources:
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
+  - id: openwiki-source-ea2ab447e65950eeb4c72491
+    resource: repo://tests/chat/syntax-highlight.fixture.tsx
   - id: openwiki-source-0a43f232c5a84b7f94378d02
     resource: repo://tests/chat/syntax-highlight.test.mjs
   - id: openwiki-source-7c49efe20c19a1848e432191
@@ -164,10 +168,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
+generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:22:38.402Z
+    at: 2026-10-21T09:00:23.191Z
 ---
 
 # Web の実行環境と同期
@@ -308,9 +312,13 @@ built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制�
 
 同期 tokenization は文字列の `length` が16,384以下で、指定言語が登録済みの場合に限る。これは UTF-16 code unit 数の上限であり、byte 数や表示上の文字数ではない。長文・未指定・未対応言語、tokenizer の例外では全文を plain 表示し、切り捨てない。read-only Lexical は既定言語を `text` にし、fallback 時も改行・tab node を作り直す。editable editor は従来の tokenizer を使うため、この上限を composer 全体の入力制限と解釈しない。コードコメントは streaming 中の同期処理を有界にする目的を記録している。[guard と fallback](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)・[read-only tokenizer](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L46)・[disabled の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L641-L650)
 
+保存済み Markdown の初回表示では、`CodeHighlightPlugin` が `useLayoutEffect` で変換を登録し、その後 `MarkdownSyncPlugin` の `useEffect` が本文を取り込む。この順序が逆になると、初期履歴のコードが次の stream 更新まで plain のまま残り得る。登録は editor / readOnly に依存し、返された解除処理を effect cleanup に渡す。[登録順序](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L31-L48)・[初期本文の同期](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L47-L78)。回帰 fixture は最初から JSON と未知言語の fence を渡し、更新前に JSON の装飾と未知言語の前後空白の保持を確認する。stream 更新後だけの検査ではこの初期化不具合を検出できない。[初期 fixture](../../tests/chat/syntax-highlight.fixture.tsx#L17-L23)・[更新前の assertion](../../tests/chat/syntax-highlight.test.mjs#L29-L44)。
+
 `ChatCode` は装飾のみを所有し、コピー、空白のレイアウト、折返しは呼出側の責任である。Markdown コピーは装飾 DOM を読み戻さず editor の `value` から行う。ただし既存処理として escaped underscore を unescape するため、全入力について byte 単位の同一性を保証する説明は誤りになる。[装飾の責任](../../packages/ui/src/components/ChatCode.tsx#L18-L31)・[Markdown コピー](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L447-L459)。入力の保存・送信は [Session の composer 契約](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、高さ変化への追従は本ページの[履歴の閲覧位置](#履歴の閲覧位置と末尾追従)を参照する。
 
 検証の入口は `syntax-highlight.test.mjs` の Chromium fixture と `syntax-isolated-e2e.mjs` の built-app 試験である。前者は部分文字列・未閉鎖 fence、bash/sh/JSON などの装飾、未知・未指定・長文の fallback、文字列と focus の保持を検査する。後者は build 済み frontend/server と一時 SQLite の Workspace / Session を使い、AgentRun 一覧と WebSocket event を fixture に置き換えて command コピー、Markdown コピー、入力保持、light/dark、長文を検査する。provider の生成そのものを検証する試験ではない。終了時には browser/server、残存 PID、port、一時DBの cleanup を確認する。[component 試験](../../tests/chat/syntax-highlight.test.mjs#L7-L108)・[隔離条件](../../tests/chat/syntax-isolated-e2e.mjs#L1-L81)・[fixture と操作](../../tests/chat/syntax-isolated-e2e.mjs#L146-L325)・[cleanup](../../tests/chat/syntax-isolated-e2e.mjs#L350-L414)。再実行の環境準備は [開発と検証](../operations/development.md)を参照する。今回のコード装飾 Sync は凍結 source `777488ca3a430b56d19e2df9437de5f848dc00e2` と試験定義を静的に照合したもので、製品試験を再実行していない。供給された正式 Integration の記録も validation skipped であり、開発時の成功報告を統合後の検証成功へ読み替えない。
+
+今回の追加照合は凍結 source `0cae202fc7b1048b9787e73607fa1a3e2706afcd` の初期装飾修正と試験整合を対象とした。変換登録・Markdown 同期・実 editor への接続・初期 fixture を照合した。projection の更新試験は3件の message identity に加え、summary 由来の4件目の elapsed footer を明示的に検査する。[footer の試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L149-L178)。[開発時の検証記録](../../tests/integrated-main/VALIDATION.md#interpretation-and-limits)は protocol fixture、合成 IME、viewport 模擬、実サービス未検証を区別しており、試験名の「real Codex」だけで実 model の確認済みとは扱わない。今回の正式 Integration は検証省略で、この Wiki Sync でも製品テストを再実行していない。
 
 ## チャットのファイルリンクを既存 panel へ渡す
 
