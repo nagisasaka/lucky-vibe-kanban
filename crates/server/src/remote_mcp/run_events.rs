@@ -359,6 +359,7 @@ mod tests {
         assert_eq!(tail["items"], json!([]));
         // A new Remote instance has no in-memory cursor/subscription state.
         let restored = Remote {
+            environment: None,
             pool: remote.pool.clone(),
             config: remote.config.clone(),
             runtime: None,
@@ -542,6 +543,7 @@ mod tests {
         args["cursor"] = first["next_cursor"].clone();
         remote.pool.close().await;
         let reopened = Remote {
+            environment: None,
             pool: sqlx::sqlite::SqlitePoolOptions::new()
                 .max_connections(1)
                 .connect_with(options)

@@ -311,7 +311,8 @@ try {
   await expect.poll(() => requests.length).toBe(1);
   assert.equal(requests[0].path, `/api/sessions/${session.id}/follow-up`);
   assert.match(requests[0].prompt, /チャット一行目\nチャット二行目/);
-  await expect(editor).toHaveAttribute("contenteditable", "false");
+  // Typeahead stays editable while the submission guard rejects duplicate sends.
+  await expect(editor).toHaveAttribute("contenteditable", "true");
   await editor.evaluate((el) => {
     for (let i = 0; i < 5; i++)
       el.dispatchEvent(

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $createCodeHighlightNode,
@@ -35,7 +35,9 @@ export function CodeHighlightPlugin({
 }) {
   const [editor] = useLexicalComposerContext();
 
-  useEffect(() => {
+  // Register transforms before MarkdownSyncPlugin parses the initial history.
+  // Late registration can leave the first render plain until a stream update.
+  useLayoutEffect(() => {
     return registerCodeHighlighting(
       editor,
       readOnly ? readOnlyTokenizer : undefined

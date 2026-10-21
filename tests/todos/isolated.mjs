@@ -316,9 +316,13 @@ try {
   await page
     .getByRole("button", { name: "統合 / 自動マージ", exact: true })
     .click();
-  await expect(page.getByText("Auto Merge", { exact: true })).toBeVisible();
+  const integrationTitle = page.getByRole("heading", {
+    name: "自動マージ",
+    exact: true,
+  });
+  await expect(integrationTitle).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByText("Auto Merge", { exact: true })).toHaveCount(0);
+  await expect(integrationTitle).toHaveCount(0);
   await page.screenshot({
     path: path.join(output, "screenshots/project-dark.png"),
     fullPage: true,

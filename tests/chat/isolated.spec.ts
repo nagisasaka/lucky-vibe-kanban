@@ -304,8 +304,10 @@ test("built application: newline send, failure, later input, Enter/Ctrl+Enter an
   let release: (() => void) | undefined;
   let fail = false;
   let requests = 0;
+  const submittedPrompts: string[] = [];
   await page.route(`**/api/sessions/${session.id}/follow-up`, async (route) => {
     requests++;
+    submittedPrompts.push(route.request().postDataJSON().prompt);
     await new Promise<void>((resolve) => {
       release = resolve;
     });
@@ -365,7 +367,13 @@ test("built application: newline send, failure, later input, Enter/Ctrl+Enter an
   await expect(editor).toHaveText("Newer input must survive");
   fail = false;
   await editor.press("Control+Enter");
+  await page.keyboard.insertText("continued line");
+  expect(requests).toBe(3);
+  await editor.press("Enter");
   await expect.poll(() => requests).toBe(4);
+  expect(submittedPrompts.at(-1)).toBe(
+    "Newer input must survive\ncontinued line",
+  );
   release!();
   await expect(editor).toHaveText("");
   await page.screenshot({ path: test.info().outputPath("composer-clear.png") });

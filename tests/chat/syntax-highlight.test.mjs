@@ -29,6 +29,18 @@ test('chat syntax preserves streamed, unknown, plain and long text without movin
     page.on('pageerror', (e) => errors.push(e.message));
     await page.setContent('<div id="root"></div>');
     await page.addScriptTag({ content: result.outputFiles[0].text });
+    // Loaded history must highlight on mount, before any streamed update.
+    await page.waitForFunction(() =>
+      document.querySelector(
+        '#markdown code[data-language="json"] [class*="syntax-"]'
+      )
+    );
+    assert.equal(
+      await page
+        .locator('#markdown code[data-language="unknown-language"]')
+        .textContent(),
+      '  untouched  '
+    );
     await page.locator('#composer').fill('入力保持');
     const code = '  echo "$HOME" && printf \'<script> & 日本語\\n\'\t\r\n';
     for (const value of [code.slice(0, 10), code, 'echo "unterminated']) {

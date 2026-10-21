@@ -158,10 +158,21 @@ describe('projectCanonicalAgentConversation', () => {
           )
           .map((entry) => entry.content.content)
       ).toEqual(['before', 'steer', 'after']);
+      // The run footer is derived from the summary, not a provider event.
+      // Keep checking every message identity and also account for the footer.
+      expect(projection.entries).toHaveLength(4);
+      expect(projection.entries.at(-1)).toMatchObject({
+        patchKey: 'agent-run:steered:elapsed',
+        runTiming: {
+          startedAt: '2026-08-14T00:00:00Z',
+          endedAt: null,
+          active: false,
+        },
+      });
       expect(
-        projection.entries.every(
-          (entry) => entry.canonical?.agentRunId === 'steered'
-        )
+        projection.entries
+          .filter((entry) => !entry.runTiming)
+          .every((entry) => entry.canonical?.agentRunId === 'steered')
       ).toBe(true);
     }
   });
