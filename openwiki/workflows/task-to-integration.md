@@ -58,12 +58,16 @@ sources:
     resource: repo://docs/workspaces/openwiki.mdx
   - id: openwiki-source-db035046d01e3f24722812c8
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
+  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
+  - id: openwiki-source-06868af84d952b8087cf3ebb
+    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-21T05:50:08.804Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -122,7 +126,9 @@ local Board の **Integrate / Auto Merge** では、Repo・local target と各 C
 
 新規 run の通常 merge は host が進める。競合したときだけ有限の Agent job が index を解消し、利用者は保存された候補の解決差分を承認する。その後に次の source へ進み、全 source 完了後の最終候補で凍結 validation plan を実行する。失敗した required check は retry / 候補限定例外 / cancel の判断を待つ。[競合と承認](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[最終検証](../concepts/formal-integration.md#開発検証と-human-gate)
 
-UI の冒頭説明には「各 selection を順に検証する」という旧表現が残るが、現在の検証実行は最終候補である。候補凍結後の追加指示も拒否されるため、表示文言だけで再編集可能と判断しない。[表示文言](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L180-L198)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L138-L164)
+Board の案内も現在は「順に取り込み、最後の候補を検証する」という流れを説明する。競合で止まったら実行 Workspace を開き、保存済みの解消説明と未検証・古い候補の表示を読み、必要に応じて詳細の差分を開く。説明が不十分なら承認せず確認する。固定候補のレビュー中に追加指示で修正する経路はなく、承認して続行するか Integration を中止する。[説明・操作条件の正本](../concepts/formal-integration.md#保存済み説明から候補をレビューする)・[Board の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1302-L1305)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
+
+承認後も Git の反映、Card の Done、Wiki の結果を別々に確認する。「反映結果の照合中」は未反映の確定ではないので、古い画面や status だけから再統合しない。[公開状態と回復](../concepts/formal-integration.md#公開donewiki-は別の結果)を確認する。実行の識別子や保存済み Session は [inspection の詳細](../operations/workspace-inspection.md#実行専用-workspace-の確認)から調べられる。
 
 旧 run の通常 Resume 拒否は新規 engine の安全境界であり、任意の payload 書換えで回避しない。特定履歴を対象とする [checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)も、検査・adoption・正式 Resume が別の操作である。
 

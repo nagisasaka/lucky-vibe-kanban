@@ -30,12 +30,20 @@ sources:
     resource: repo://crates/server/src/routes/integrations/scenario_tests.rs
   - id: openwiki-source-001b80ecf41631f84729dd2e
     resource: repo://crates/server/src/routes/integrations/steps.rs
-  - id: openwiki-source-e33d67a243cd5977ddd88a37
-    resource: repo://docs/development/integration-dispatch-recovery.md
-generated: { by: "codex", at: "2026-10-20T18:18:55.370Z" }
+  - id: openwiki-source-db035046d01e3f24722812c8
+    resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
+  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
+  - id: openwiki-source-2b041ccdd1b3cb2c0a7e82a6
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx
+  - id: openwiki-source-0b2c1cfa8089016da3ce0c95
+    resource: repo://tests/integration-review/browser.mjs
+  - id: openwiki-source-9871b94e679a5398da344b52
+    resource: repo://tests/integration-review/README.md
+generated: { by: "codex", at: "2026-10-21T05:54:57.084Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T18:18:55.370Z
+    at: 2026-10-21T05:54:57.084Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -66,6 +74,14 @@ agent の責務は既存 index の競合解消と stage、および `ready` / `b
 
 各 step の自動 merge tree と候補との差分を保存し、conflict または自動結果以外の変更がある場合は candidate/scope に結び付いた human review を要求する。承認後は新たな agent を起動せず merge loop を進める。候補が変われば承認を流用できない。**review は次の source に進む前、受入検証は全 source の最終候補で行う。** prefix step の空の validation は prefix をテスト済みとする証拠ではない。[review と step](../../crates/server/src/routes/integrations/steps.rs#L48-L164)・[承認後の状態](../../crates/db/src/models/integration.rs#L463-L481)
 
+### 保存済み説明から候補をレビューする
+
+レビューの説明は `record_review` がその時点の `semantic_summary` を保存したもので、画面は保存本文を表示する。空白だけなら説明欠落を明示し、理由を生成して補わない。説明の十分性や解消の意味的妥当性は人が判断する。候補識別子と自動 merge tree からの解消差分は native `details` 内に置き、説明、古い未決候補の警告、現在候補に検証記録がない表示は折り畳まない。[説明の保存](../../crates/server/src/routes/integrations/steps.rs#L48-L97)・[表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L28-L79)
+
+承認ボタンは未決 review が現在の候補と一致し、run が `blocked` / `merge_review` で、取消要求も公開 intent もない場合だけ表示する。同じ mounted UI 内の再送では review ID ごとに同じ request ID を使い、成功・失敗のどちらでも integrations query を無効化して再取得する。これは backend の candidate/scope・取消・公開検査の代替ではない。古い画面から送った承認も DB 側で拒否できる。[UI の条件と再取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L10-L25)・[操作条件](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L70-L105)・[原子的判断](../../crates/db/src/models/integration.rs#L420-L482)
+
+`merge_review` 中は追加指示の入力欄を出さず、承認または Integration 中止を案内する。固定済み候補への非空の指示は backend でも拒否されるため、説明が足りないときは承認せず確認する。一般の Agent approval とこの解消 review は別の判断である。表示元と Session の選び方は [実行専用 Workspace の確認](../operations/workspace-inspection.md#実行専用-workspace-の確認)を参照する。[介入 UI](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L169-L214)・[候補凍結の guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
+
 ## 検証方針は受付時に固定する
 
 `skip_validation` は run 全体の選択である。新規受付は明示値を優先し、省略または `null` は保存済み server preference `integration_skip_validation` を引き継ぐ。初期値と旧記録は false。domain 受付の同じ request ID の再送では、値の省略または `null` は既存 run の選択を維持し、明示値が違えば競合になる。後から preference を変えても既存 run の方針は変わらない。[受付](../../crates/server/src/routes/integrations/admission.rs#L242-L265)・[再送](../../crates/server/src/routes/integrations/admission.rs#L325-L359)
@@ -87,6 +103,8 @@ required check が通らない場合は blocked とし、失敗証拠とリス�
 ## 公開・Done・Wiki は別の結果
 
 公開直前に target が B のままであること、固定 source の存在、選択した検証方針と review の完了、実行環境と target writer の idle を確認する。取消と `publication_intent` は DB writer transaction で一方だけが勝つ。この境界を越えた Cancel は Git undo にならない。Git は ref lock 下で B を比較し、追加 merge commit を作らず **固定した R そのもの**を公開する。target checkout は許可された managed path・clean 状態・一つの checkout を要求し、ignored file の衝突も保護する。Git の ref / index / files と DB は一 transaction ではない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L1329-L1407)、[Git publication](../../crates/git/src/publication.rs)。
+
+Board 一覧と Workspace の専用介入欄は、完全な IntegrationRun の `published` を優先し、true なら反映済み、false かつ `publication_intent` があれば「反映結果の照合中」、どちらもなければ未反映と表示する。status 名だけで未反映と推測しない。Git 更新後の receipt 保存が失敗し得るため、intent が残る `blocked` / `recovery_required` でも未反映と断定できない。これは再実行の指示ではなく、下記の Recover による証拠照合を必要とする状態である。[Board の表示](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L530-L540)・[Workspace の表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L82-L92)・[Git と DB の引渡し](../../crates/server/src/routes/integrations/runtime.rs#L1383-L1406)
 
 Git publication 確認後、選択 Card と Integration Card を Done に移す。可視列では名称 Done を優先し、なければ最後の列を選ぶ。Card の title・description・revision やリンクが途中で変わったことは現在の Done 不適格条件ではない。別 Integration の予約、Card / 移動先不在なら理由を記録して変更しない。Card 更新と receipt は同一 transaction で、一度記録した結果は再適用しない。[Done の実装](../../crates/db/src/models/integration.rs#L540-L610)、[変更後の Card を扱うテスト](../../crates/db/src/models/integration.rs#L1251-L1412)。
 
@@ -114,6 +132,10 @@ standalone と embedded の monitor 配線差は [起動順序](../architecture/
 
 ## 検証の入口と記録の限界
 
-[機械的 merge の回帰テスト](../../crates/server/src/routes/integrations/runtime_tests.rs#L1340-L1650)は実 temporary Git を使い、重複適用、conflict cleanup 中断、承認の再送と失効、dirty/moved HEAD、固定 plan と skip、Create identity を扱う。[隔離 scenario](../../crates/server/src/routes/integrations/scenario_tests.rs)は production host entrypoint を使い、conflict→review→次 source→publication、startup reconciliation→adoption→Resume を検査する。通常は ignore され、独立した新規 `LVK_INSTANCE_DIR` を要求する。実 Codex は追加 opt-in、adoption は private fixture を要し、browser/MCP E2E とは異なる。
+[機械的 merge の回帰テスト](../../crates/server/src/routes/integrations/runtime_tests.rs#L1340-L1643)は実 temporary Git を使い、重複適用、conflict cleanup 中断、承認の再送と失効、dirty/moved HEAD、固定 plan と skip、Create identity を扱う。[隔離 scenario](../../crates/server/src/routes/integrations/scenario_tests.rs)は production host entrypoint を使い、conflict→review→次 source→publication、startup reconciliation→adoption→Resume を検査する。通常は ignore され、独立した新規 `LVK_INSTANCE_DIR` を要求する。host scenario の実 Codex は追加 opt-in、adoption は private fixture を要する。browser scenario は別の ignored test として用意され、外部 MCP の E2E はこれらの試験範囲に含まれない。
 
 [調査・回復記録](../../docs/development/integration-dispatch-recovery.md)は設計判断と過去の検証結果を残す。旧 per-step handoff の撤去後も、一般 Workflow の配送受理と SQLite writer 予約、一般 Retry の回復は依存先がある。記録中の instance 固定 cutover 手順や live 未実行の記述を、現在の配置状態として扱わない。この Sync は統合 source を調査したもので、過去の binary、live adoption、公表済みテスト成功を再確認したものではない。
+
+[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L306-L414)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L342-L356)
+
+公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された正式 Integration は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。

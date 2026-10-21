@@ -54,6 +54,8 @@ sources:
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
+  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
   - id: openwiki-source-714cddfb6b8044e60077cdf6
     resource: repo://packages/web-core/src/features/workspace-files/model/chatFileLink.ts
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
@@ -90,10 +92,10 @@ sources:
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-21T05:41:24.899Z" }
+generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:41:24.899Z
+    at: 2026-10-21T05:50:08.804Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -103,6 +105,10 @@ verified:
 ## 実行専用 Workspace の確認
 
 実行中の inspection は [用途が execution_only の Workspace](../concepts/workspace.md#操作用途と実行所有者)を表示する。通常 chat composer の代わりに、owner kind/run、状態、公開結果、ファイルの有無、保存済み Session の選択、所有者の Stop を示す。新規 chat・Session・queue・executor 選択は作らず、現在の所有者が出している承認・質問への応答を残す。Wiki 実行中には追加指示を steer でき、Integration には専用介入 UI がある。実行と cleanup 完了後は通常 composer に戻り、所有者の履歴は残る。[inspection UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx)
+
+Integration では owner/run の識別子、状態、保存済み Session 選択を「実行の詳細」に折り畳み、解消説明と判断を主表示する。公開結果は `publication_intent` を持たない `WorkspaceExecutionView` から重複表示せず、owner の run ID を使って完全な IntegrationRun を取得する専用介入欄へ委ねる。詳細を開くことは新規 Session の作成ではない。[配置と委譲](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L75-L188)・[owner view の型](../../crates/server/src/routes/workspaces/usage.rs#L24-L36)・[run の取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L24-L30)
+
+保存説明、解消差分、検証記録を確認して承認または中止する際は [保存済み説明から候補をレビューする](../concepts/formal-integration.md#保存済み説明から候補をレビューする)を参照する。公開の「照合中」は未反映の確定ではない。[公開・Done・Wiki の読み分け](../concepts/formal-integration.md#公開donewiki-は別の結果)に判定と回復の契約をまとめる。
 
 `GET /api/workspaces/<id>/usage` と executions 一覧は既存 owner 記録から状態を投影する。Integration の Git 公開、Bootstrap の Workflow 完了、Sync の保存済み結果はそれぞれの正本から読み、Generator や AgentRun の成功を公開済みと推測しない。Sync の AgentRun が終端でも repository owner が残る間は `finalizing` である。成功 no-op は新しい Wiki commit がない成功として表示する。[状態の由来](../../crates/server/src/routes/workspaces/usage.rs)
 

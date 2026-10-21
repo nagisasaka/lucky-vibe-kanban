@@ -50,10 +50,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-21T05:50:08.804Z
 ---
 
 # クイックスタートと調査案内
@@ -112,6 +112,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | Merge / Rebase / PR 後の状態が合わない | [統合までの順序と部分失敗](workflows/task-to-integration.md) → [memory の統合契約](concepts/repository-memory.md) |
 | Wiki を読む、表示対象が違う | [Wiki の本文・ツリーと表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する) → [共有 reader とチャット保持](architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす) |
 | Wiki が stale/error、Bootstrap が途中で止まる | [OpenWiki の phase・共通索引・レポート・完了証拠・回復](operations/openwiki-maintenance.md)。MCP 起動前確認と公開条件を分けて診断する |
+| Integration の説明不足、古い候補、反映結果の照合中 | [保存済み解消説明と承認条件](concepts/formal-integration.md#保存済み説明から候補をレビューする) → [公開・Done・Wiki の区別](concepts/formal-integration.md#公開donewiki-は別の結果)。操作は [統合までの手順](workflows/task-to-integration.md#並列変更を試してから正式統合する) |
 | 統合・Wiki 実行のログを見る、所有者を止める | [Execution の閲覧と停止](operations/workspace-inspection.md#実行専用-workspace-の確認)。通常開発用 Workspace と操作入口を分ける |
 | local LVK を常駐サーバーへ置く | [単一サーバーコンテナー](operations/server-container.md)。HTTPSとbackend認証、preview handoff、volume、停止と rollback |
 | モバイル表示の検証 | [built preview と検証](operations/development.md)。稼働 API と分離した frontend bundle |

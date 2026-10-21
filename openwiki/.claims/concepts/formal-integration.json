@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f12fe7023fe74bf3707614a1d67ff2ac66a04b6d6045fb27542a054646419b7c",
+  "pageVersion": "sha256:9c6af9f8419093eb7298d81d3c4e6a283a159ed609fa9b6269c0327c6a586ab8",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -332,19 +332,23 @@
     },
     {
       "id": "claim_fe172bfe19c944b3a12032d8141ed1cd",
-      "statement": "Integrationの隔離scenarioは通常ignoreされ、新規専用LVK_INSTANCE_DIRを要求する。実Codexとlegacy fixtureは追加opt-inで、browser/MCP E2Eではない。",
+      "statement": "Integrationの隔離scenarioは通常ignoreされ新規専用LVK_INSTANCE_DIRを要求する。hostの実Codexとlegacy fixtureは追加opt-inであり、browser版は実router/local Access・一時SQLite/Gitを使いproviderイベントを固定する。実AI・public認証・外部MCPのE2Eは証明しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L1-L25",
-          "version": "repo-lines-v1:sha256:5a821d6d299683b6ae60883d71fa6a5d32ee30e2fe3568f6e52fa787c4bbd09b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiOWZmZjI5MjYwMWRmNzg2YjIyNzYwMjVhZDVlMjkwMDM4ZGQwMjRkNDYyMmM0MTIxMGU1YTc3ZmU0M2EyMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmMGEzMWE0OGViN2UyZjFjMmVkNDQyYTI2YWNiODgzY2NlNDNmYTcwMmU5Y2FjY2NiODFhYWE2NDA2M2M3MjYifQ"
+          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L1-L77",
+          "version": "repo-lines-v1:sha256:c610844d685f39b64383a3eb02c3799d9955fcdb7f31d653c979094c4a82f49a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMmY3YzdiMGZkM2FhZjgyMmU4YmExMjEyNGIzMmIwZGYyOWJiYjcwMTUzMTYwYTMwMzhkNmE0YzUwY2QzMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlY2UxMWZmY2E4ZmJlZmViODgwZjI2MmI2MTJlZWM0Yjg5MTc5NGZkMWU4YTY2NjY2MDgxYjQyYWZhYmM2N2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwNTZjOTg4NmQ5ZmM4MTg3ODBkODJhMGFmMWE2MzFlY2FlYzliOWU2YzdlYmQ3NzRkY2VjMTBiM2U2MTQ3YjMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L260-L287",
-          "version": "repo-lines-v1:sha256:a08652f7f1dcf70b44538dfc5ab707abab0bbf35109a25e4d2df4340dbe8f051:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NDVmNjE1MDBkZTdlZGRhMmQ1YjgxMzMzN2Q5ZWJjMmIyN2Y0MGI2ODgyZDQ1NjA1MjYxYzM4ZjJlNWI1MTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2NWUyNjBiNjRlYzhlYjRiZWU5N2M4NWFkMTNmYjIwNDRhYzI2ZGYyNWUxZDM2Njg5NGU2ZTdlYWMxZmJhYmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjMjRhMjAxMGFkNzYwMTQ0MWIwYWJmMWMyZmQyNWI5MjRmYWVhOTAyMWViOGRhNmYxYzUwOTc2MDZjZGNkN2YifQ"
+          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L185-L190",
+          "version": "repo-lines-v1:sha256:53fd79c30688c3d01a5a207d712485e3cd327c1a2b4afc8e31a2263a1edbfa65:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZiOWM3NDgyMDcwYjRiZDMxNjFmMzA5NTk0MWQ0ODIxZWU4YmMxNjM2YTAzNmJiZTdhMjAzZTM4NjUxZjk3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGZiM2Y4NzY4OWMzMTY5NDI4ZDc3NTY0ZGRhZTcxMmU0Yjk0YTg2ZGZmZTk0N2VkYmRmMzA0Y2MwMjY2NWViMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmI2ODI2MDM1MTA0ZWY4YzgzYjRlOWFlNzdhOTgzOWQ2MzkwMjFjODU1YTYzODEzNDQ5Y2M4YzZiMmYzZjMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk5NDQ1ZDE4Yjk5MWJkNDY1NDBiY2Q5MTY5MWQ2OTdiOGY1MWY3YTY4NDA0YjgzY2FiZGMxMWI2MTAwODE1NiJ9"
         },
         {
-          "resource": "repo://docs/development/integration-dispatch-recovery.md#L195-L225",
-          "version": "repo-lines-v1:sha256:58737eb5307da2cf143a8025248f4349e2ff9b8d97ae8b98cfbae2777d5e7049:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNjgwMTY3YmY2YjdkMjA5NmM2ZGMwMGYzNGI1MzczMTFlMmVmYTJiYzg2MDg0NzQwNzUyNWY1Mzc3MDA4NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3OGM4NjFmMWVkNDVhNjdhYzllMWYwMDk1ZTgzMTBiMTQ0OTM1MDNkYjFmMzFiOWQ0Njc2Mzc4NzI1NTBiNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzZjg4NWM5NDcwODIzNTE0NzJmOTRlMmI1NGJlOTc2NDdkYWVkYWE0M2RhNWYxN2NiNGYwNDA5OWZjOTIzOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NjJmOWNmNjAxYWZmZGQzNjJkMTlhNTVjMDA4YThjNjhjOTY0Nzc3YmIyZmJkNTA0ZjI1ZWZlMzA5Y2U2ZmYifQ"
+          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L418-L440",
+          "version": "repo-lines-v1:sha256:b45caf6c96d5119f5fbf18a308d045d4a61d810d540dd5d7003be819f7456a3a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxOTQ4NGVlZGYzNjRmYjhjMTJmMWViOThmYmY2YTliNGY2NTBmNDI3ODc0YThkNzM1OTAxMGFhZGU0MzFiYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OTRmNWUwMGFlYWVhNTE0NjUzNzY2ZDFmMmEyNDk5ODJhMzk5NzQ2MDZkYWU3NjJhMDkzMWMyODA4M2IxMWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExZmRmYTlmNmE5ZDk1OWY4ODhjM2UyZjQyZGE1NTE2NzA2MzliMGExYmZmYzY4NGQ2OGVkZmE1MjQzOTUwZWEifQ"
+        },
+        {
+          "resource": "repo://tests/integration-review/README.md#L15-L42",
+          "version": "repo-lines-v1:sha256:03aa75d220be3bdd2974fc2bd1882ed73f445b7bbbfd9b66edcce54cc4add09d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NDA2OWYzMzU5NzNlMDAwMzU3ZDYzNWFmY2RiM2EwODUzNGQ0Y2RmZjZhZjkyNzM2ZjQ5OGM1YWUzZWUyNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5ZmJmMmJmYmMzZWY2MjNjODg1ZTE4MDA3MTM2YWJkMGQwYzM1YzI1NWUxYTRmZGZjNDdlNGM2ODMxNWEzMmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhNzExZGNlZTg5YWRiYjcwYjg5YjAyMWI5ZjhiNDRlN2FlNmUzMmE1ODdjNTg1NjI5NTRmYTc3ZWMzZGRjNDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -365,10 +369,84 @@
           "version": "repo-lines-v1:sha256:b79345e4c75d77d7a3e5e6a419157d66c50986a02952ccd7102a8f5bb2a54a88:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4ODJlMjMzZjAxYjQ2NzBmMWRlMTY5M2JiZmRjZjk1MzQzNGQ3NWI1M2RjNWNiZjJiMGM2NGEzZmYyYTFjMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzN2QzNTEzYjAzYmJkNjUxZWE1YzJlNzViYWJlY2RhODliY2Q4ZjgxYWNmOWQ1NmJkMDk1NmNkYzkwMDkzYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1MGJmMmI4YjY1MWJlMWVkMWQ5NDA2ZTgyNjYyM2ZlNDg2ODU0MjY3ODNjZTRhN2QzZjIxOTM4MDJkYmVkMWYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_b19d10b9b80a457487cc71f299bb4ff1",
+      "statement": "競合レビューUIは保存済み説明を主表示し空白なら欠落を示す。候補と解消差分はdetails内に置き、古い未決候補と現在候補の検証記録欠落を展開せず表示する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/steps.rs#L48-L97",
+          "version": "repo-lines-v1:sha256:60b3e1c5801b7380d5e728a906b094f5adc8eda06f71232c038e8d5320acce2b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY0OTIwZTcyMzI3NGEwODk1ZjhkYTc2MzRlMWE4MzVkZWZkYTA1ZTg5OTY2MDdlNzVjNGNiZDYwM2Y5ZDIwZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwNDkwODAyOWFiOWJmODAxODU5MDI0NzlhY2UwNWMyMDBhMjBkNjZiY2MzNzk0MTJjOTk5ZWQ1NzUyYmNmODMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L28-L79",
+          "version": "repo-lines-v1:sha256:67ae62f1da34bafecb3a7b5edced96edee36592b2289b51a57e668bd560cd87e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkZjNiZjJiYzMwNjRiYWRhMGFiNTk4NWU3NjZkNzgyMmM3MmE1N2M4ODNhNTUyZWZmOWFlMDJkY2RkMGFkNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNTkyYThiNjE0YzZlMzA3MzUxZDhjYmFhMjc5YmNjYmU2MWNkM2I3NjgyY2Y2NTE0Yzc4NDAxYTY0ZWMyNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5Njg2YjJiODlmMzcxN2UzYmMwZmQ4NTU4OWZkZjhhYjQ4MTM3OThkMTQxNmEzYmQxMjU5ODI1YTAwYjdmZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhZDViMTE4M2U5MjY0YzgxZjNiN2JhNWJkN2E1ZDlkODU3ODA4Yzk3ZWMxOTNmMmRhN2ZiMGZhMDNlNTczMDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_99a4e8a33a274970bf934a576ab3cb04",
+      "statement": "レビュー承認UIは現在の未決候補、blocked/merge_review、取消要求なし、公開intentなしに限定する。同じmounted UIでreviewごとのrequest IDを再送に保持し、成功と失敗の双方でintegrations queryを無効化する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L10-L25",
+          "version": "repo-lines-v1:sha256:60e71a78a1e1616c8f84ca6067c90b1f2db96764847e0be92729d6ee15c54906:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyZGIwZTU1OGU1M2U0NGQ3YzlmMzE1ZTRjODg1ZDA3N2EzZjMwYTlmOWJhZmNlYmZkNmEwMmI2NGNiZWZlNDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxODczZGY5OGU1ODJmZDM3ZGQ2ZGM3MDk4NTg1MjQ2NjRjNTIwNDFlNzRlYjAwOWJhY2Q2ZmUzNDQ2MDkxNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNjA4Njk0ZWI4Mjg4YzRmZDQ5M2U3YTcxYTUxZjYzMjMxNmI2MDlkNGQyYmJlYTc4YjdiODc0MDA4MDQwYWEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L70-L105",
+          "version": "repo-lines-v1:sha256:5687e5d1e3e3eee4f7ecd29a87717e15e15762ace986a704ad6e8850182983b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3Zjg3Nzk0NWE5YWFiNDlkZWY3Y2Y3NDY2ZmM3ZjkxMmZmOTViZjJmMjljMzNjY2JmYjQ5OTcyN2ZmMTI5NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxZGM0NjRmNDBlMWQwOGFiNDIwZDRkNDhkOTI1NWE0NjMwZjY0ZDc0YTY3ZmM1YjJkNWUzYWMzNTMyYjM5Y2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_04fa63e78fe84c168e7d72cf4f2d3b64",
+      "statement": "merge_review中の介入UIは追加指示欄を隠し承認または中止を案内する。backendは固定候補への非空の追加指示を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L125-L143",
+          "version": "repo-lines-v1:sha256:d6bb0ff74897d7ec11b02739041a61be6958dcdce008f932f0843fa1350f1fd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0NzQ1NDYwYzkzMzM0OWE0YjgxMmYwNmRjOGQyMzc5NTc4NjYxMDY4ZWNhYTAxY2I3ZDk2MzlhZmJlN2ZiM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3ZDc2ZTcwNGFhNjI5MjgwNDcxNTMxZDNjMWNkZTZmODQ3ODc5ZTc5MDZkNzc1ZTlhZmI1YTQwOWYxYTAxNmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczYjM5Y2VlZDU0M2VjMzI1Y2E4MTYyZWUwMjljZmEyNmMyZjE2ZGU3OWI4OTEzNjIwNmJkMDRhZjBhNzQ0NjQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L169-L214",
+          "version": "repo-lines-v1:sha256:f1915e9ed6564d303745d43831499c582b2cc58fece5ec98e1a03a9f0ef78a90:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTRlMjNhYTIxM2NjZTUyMTcyOGE2MDg4MTY2MTFjNmFmODc4MGNiOTM0NmE5MjcwMjA0NDg3OWUwODgyYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_51aa728a9ffd4e7297e390870a7a9a88",
+      "statement": "BoardとWorkspaceのIntegration公開表示はpublishedを優先し、falseかつpublication_intentなら照合中、それ以外は未反映とする。Git更新とreceipt保存は原子的でないためstatusだけから未反映と推定しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1383-L1406",
+          "version": "repo-lines-v1:sha256:f36673effbf2c7fa41acde5168ecb7fea053f26deeb3c6e89b6b90f55cd8a97f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3OWI4MzJlN2JjYWNjYjVkMDhkNTY4ZjI4MWZhYjRmNzFmYWY5NzA4ZTU3Zjg0NjZjNjRjOGQ2ZTlmZjE4NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzNDY5NTQ1MjhmYWY3MDBkYzZlYjZjNjFiY2MzNWI1NjhhNDQ2ZTg2OTgxMDkyYWYxYWU5MTg4NzgxNGQwNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg0ZDJiYmRkNmYzZTE2NGU4MjBiNTQ4Mzc0ZWI0NGY0ZWIyNGFjODdhZmM1MmZlOTdjNGY1YzViMzhkMWFiMTcifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L530-L540",
+          "version": "repo-lines-v1:sha256:73d723419f9ff37ec873baac89296e0ffb3bef92f5458d92fbfd27875449e448:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyMGNlZjg2Y2E5NDM2N2M2MzUxMzBhNzkyZTFjZDVmNTFjODI3NmNiNDM4YjcwOGQwM2RmMjM1YTFkNGM3OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2MmFlMGY1YWEwNWUwODM4MDQyZmNmYmNkYWExYTFiMzY3NTk0N2YxOWEyOWU3YTYyNmM2YmE1NTNlOGVhMTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1ZDhkNmZkODBkNWEzY2E0MGIwNjBhNTM5MGFlNGY5NGRkZDkzZTlmN2E1MGE3OWZmYzA3ZTMxNDM3ZjE3NDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2MTEwNGM1N2EwYjkyMDgwYzIzOWRmMmNiOGRmZjNlYWZiODk3YTYzZmZlNTg3YzQ2YWU0Y2Y0ZTU1MDUyMmUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L82-L92",
+          "version": "repo-lines-v1:sha256:cba9fb15a8fd8fbe4da4f1147aae9773c9d86ac8288df4968165bfd1563367bd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyOGY4YjU3ZTI5MmY4ZmVlNTNhYmM2ZjIzOWU5ZGE3MmZhOWMwOGE0NzhlN2E3ODY2NDJmYTY0YmVmZTkzMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3Mjg0N2QwOTk5YmFkNjc4MTNkNjk5ZDdjNGI0MDRlNDJhNjc2NTQwNTM5NjgyNjU3NDRlYWQ2ZDQ1MWY5YzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhMTNjOTJjMWE2NjYyMzcxNWY5NWU3MjIzZjdiMmNkOGIzOTA5M2U5MDlkNDE2YmI4ODZiNGZjNWJmYmQ5YTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_28f14a8f9ded4356a70a40a508cd7c23",
+      "statement": "隔離browser試験は承認公開、取消時target不変、古い候補の承認拒否、保存説明欠落、reload、キーボード詳細開閉と判断再送を検査し、test自身がadvanceを駆動する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/scenario_tests.rs#L306-L414",
+          "version": "repo-lines-v1:sha256:ad83516768c2d08535b39cc7a285c482909821a005494ffea6bcdbed8112aad7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3YTRiZjU1ZTUxMDU3ZjMzMzFiZWM5M2ZlNDI4MDIxN2FmY2FiYWUxNDdkYjVmZjIxMmUwNzdlN2UzZTZiN2ZmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NGU0MjA4Y2Q2ZmZiOGM0YTM1NDdiMmY1NGFkYTE5OTc4YzNmMzY1ZTc4Zjk1MDJlZjUxNDVjZGQyYWE4NTQzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4N2FiODBlMTU4MTUyZGQ1NjcwNWNhMDczMjY3Y2IxMDcxZWQ4MWVkMjFlM2MwYWY1ODc1MjVmMjc5NmJkNzg3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzNWY2ZjQ2NmU1OWNmYzMwNzAzYzQ1ZjcyYWY2NWRlNTRhYzM2M2QzNTRjYzFhMzMzMDM1MGFjZDQ1MjQzNGM0In0"
+        },
+        {
+          "resource": "repo://tests/integration-review/browser.mjs",
+          "version": "repo-file-v1:sha256:fe0b260c3f5a8aa04ab42429195bfda6a90e3281bb45f6bde7aa8fd6a906b253"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-20T18:18:55.370Z"
+    "at": "2026-10-21T05:54:57.084Z"
   }
 }

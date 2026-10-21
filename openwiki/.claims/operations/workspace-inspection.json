@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3dbbe1fbc2f623cc8a65070e4bdf18fef984dab86f862d73c502b27761ae72c8",
+  "pageVersion": "sha256:f854eb9355b7de1f762ac5bb0d0892d72232a3fc23f3ac549d3defd40d802c04",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -276,7 +276,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
-          "version": "repo-file-v1:sha256:49fefbc688c69d937881371dee49e6844e00e5207231cb2510c6f207cf74be33"
+          "version": "repo-file-v1:sha256:14ea3432f5d01d5ae99dd28044e9eccec0711e999534c286746ab50289794d2a"
         }
       ]
     },
@@ -517,10 +517,28 @@
           "version": "repo-lines-v1:sha256:2e95160951be558433faa7f145cc265e2c8140b43298d19e9ddda0e6fb274295:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3NmEzZTFmNDQyYWQ2MjZhYmVkZjdjYmQzZDg2ZGM1MmFlMmI2MDNmZjExY2IzMGYwYzM3NDM0OWQwZTI2NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmNjMyNjkxMzgxYjkxMmRkODkzYzlmOTVlM2FhN2I3YTc4YzQzMjM3NjE2ODAzNDU2YWIzNDA3YWQxYjZkMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_222494fd4b43406ea400c1c957f8b16d",
+      "statement": "Integration inspectionでは実行metadataと保存済みSession選択をdetailsに置き、publication_intentを含まないWorkspaceExecutionViewでは公開状態を重複表示せず、owner run IDから完全なIntegrationRunを取得する専用介入欄に委ねる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L24-L36",
+          "version": "repo-lines-v1:sha256:2a0d652c2ccc09d2cfef66795962c7d6f600cd11c4564eb3b25ecda2e35d2778:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMjJhOGM2ZGQzYzc1NzUwNDhjNDI4NzNhMzk4ZTJmYTFmMTJjZGVlZTUyNmNhMjU3Y2UyYmE3NzUzZTJkZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmYzI4YzEyZDMwYmIyNjAxMWEyYWE3M2NiM2IwMGExNTdmNjIxOWMzYTM2MDRiMjdhY2IxMTJjZmIwYjNiOGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmODFmZmQ5NjY2ZmY0ZGIyNmJhMTc5ZWJiZGY4ZTM1YTM0YTExNGQyNWYwMWEyYTFlYTZmZjZhNTY5ZjJjYjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ZTlmNzU1NzExZjYyMmVmNWU2Y2MzNDY3N2M1ODBiYmRkMTYxZDk5MWZlNzFiYTRhMWZhYmU1MzUzNzYyMmIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L75-L188",
+          "version": "repo-lines-v1:sha256:3b16faa12ddece18e524d6cec43de2d5234fe644eb0bc59b272086cd7d6337c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlMWFkNDRmMGVjOWQzMmE5N2I5MmYxYTcwZjA4ODQxZDNkYTZkNjVmMzdiMjYwYWNkZWU5ZGZkNTc5Yzc3N2UyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MTMwMDQ4NDdlMDRkODg0MTJmOTRlYWI2YjA1NjQ5ZDYyYjA0MjNkMDQ5YmI0YjMyN2E4MTYzMTZkNjQ0M2NiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1ZDlkZjc2NjlhMjlkMzdmOWIwNzNkMjU4ZDI3ODExYjIzOTdhYmM2YzM4YmE0ZDEzMGY3NGYyZWI0OGIzYWViIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YTBmOGM2NzBhNDA5ZjM1ZDc2NGJjN2U0NTBjNzFlM2IxNTA0Y2Y3ZjQ2OWYyZmFhOGU2MDdlZWVjMjE2MGZiIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L24-L30",
+          "version": "repo-lines-v1:sha256:7840898780df52d0c6af4577329b2f949ada4416cede7891675f76a3afc19b05:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzk5OTdlYWJkZWNiZjVjZWExYTM4MDhjZmMwYWYzNWI5NjM3MDA2YmNlODk2NTRiYTgxOWQ4ZGFkMmRiMDcyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzFhMWM3NjQyMjEzYTlhNmQ2MWM1MTJlZjdjYjgxMWYxZWNhNzU5N2FlNzhmZjZmYmY4MDA4YTQyMWMwYjIzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTkyMWU5NmFmNGRhN2RiYzI1ODUyNTlmYjA3YzhhOGEzY2MzOGFjZWQxZWI0M2U4NmM1OTg3MzY5OGY5ZWY1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjRkM2Q5NzRlMDVmYWE5ZTE2NTgwYjY1MmEzZDhmOTdjZmQzOWUyZmNhMDE2MjEyZTNiZmFlNjI1MmVjMGQyNSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:41:24.899Z"
+    "at": "2026-10-21T05:50:08.804Z"
   }
 }
