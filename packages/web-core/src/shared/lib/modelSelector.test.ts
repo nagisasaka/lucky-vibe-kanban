@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { ModelInfo } from 'shared/types';
 import {
   buildModelSelectionOverride,
-  getReasoningOverrideRepair,
   parseModelId,
   resolveConfiguredReasoningIdForOptions,
   resolveDefaultReasoningId,
-  resolveReasoningOverrideState,
   resolveReasoningIdForOptions,
 } from './modelSelector';
 
@@ -146,7 +144,7 @@ describe('model selector reasoning overrides', () => {
         'low',
         true
       )
-    ).toBeNull();
+    ).toBe('low');
     expect(
       resolveConfiguredReasoningIdForOptions(
         models[0].reasoning_options,
@@ -156,50 +154,20 @@ describe('model selector reasoning overrides', () => {
     ).toBeNull();
   });
 
-  it('repairs invalid or stale configured reasoning without auto-applying defaults', () => {
-    expect(
-      getReasoningOverrideRepair(models[0].reasoning_options, 'xhigh', true)
-    ).toBeNull();
-    expect(
-      getReasoningOverrideRepair(models[0].reasoning_options, 'low', true)
-    ).toEqual({ reasoning_id: null });
-    expect(
-      getReasoningOverrideRepair(models[0].reasoning_options, '', true)
-    ).toEqual({ reasoning_id: null });
-    expect(
-      getReasoningOverrideRepair(models[2].reasoning_options, 'high', true)
-    ).toEqual({ reasoning_id: null });
-    expect(
-      getReasoningOverrideRepair(models[0].reasoning_options, undefined, false)
-    ).toBeNull();
-    expect(
-      getReasoningOverrideRepair(models[0].reasoning_options, null, true)
-    ).toBeNull();
-  });
-
-  it('keeps the container state on CLI config when no override exists', () => {
-    expect(
-      resolveReasoningOverrideState(
-        models[0].reasoning_options,
-        undefined,
-        false
-      )
-    ).toEqual({
-      selectedReasoningId: null,
-      repair: null,
-    });
-  });
-
-  it('clears stale container state instead of applying discovery defaults', () => {
-    expect(
-      resolveReasoningOverrideState(
-        models[0].reasoning_options,
-        'unsupported',
-        true
-      )
-    ).toEqual({
-      selectedReasoningId: null,
-      repair: { reasoning_id: null },
-    });
-  });
+  it.each(['max', 'ultra', 'custom-effort'])(
+    'retains explicit %s across discovery gaps',
+    (effort) => {
+      for (const options of [[], models[0].reasoning_options]) {
+        expect(
+          resolveConfiguredReasoningIdForOptions(options, effort, true)
+        ).toBe(effort);
+        expect(
+          resolveConfiguredReasoningIdForOptions(options, null, true)
+        ).toBeNull();
+        expect(
+          resolveConfiguredReasoningIdForOptions(options, undefined, false)
+        ).toBeNull();
+      }
+    }
+  );
 });

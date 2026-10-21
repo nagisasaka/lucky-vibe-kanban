@@ -1,0 +1,5 @@
+
+> @vibe/local-web@0.1.44-lvk.1 build /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/local-web
+> tsc && vite build
+
+ ELIFECYCLE  Command failed.

@@ -5,6 +5,7 @@ import {
   type ExecutorConfig,
 } from 'shared/types';
 import {
+  mergeExecutorOverrides,
   normaliseExecutionMode,
   resolveExecutorOverride,
 } from './executorOverrides';
@@ -60,6 +61,57 @@ describe('immutable Session launch restoration', () => {
   });
 });
 
+describe('Scratch reasoning round trip', () => {
+  it('lets identity-only preset selections fall back instead of clearing reasoning', () => {
+    const preset = { executor: BaseCodingAgent.CODEX, reasoning_id: 'high' };
+    for (const saved of [
+      { executor: BaseCodingAgent.CODEX },
+      { executor: BaseCodingAgent.CODEX, variant: 'HIGH' },
+    ]) {
+      expect(
+        resolveExecutorOverride('reasoning_id', {}, saved, null, preset)
+      ).toBe('high');
+    }
+    expect(
+      resolveExecutorOverride(
+        'reasoning_id',
+        {},
+        { ...preset, reasoning_id: null },
+        null,
+        preset
+      )
+    ).toBeNull();
+    expect(
+      resolveExecutorOverride(
+        'reasoning_id',
+        {},
+        { executor: BaseCodingAgent.CODEX, execution_mode: ExecutionMode.code },
+        null,
+        preset
+      )
+    ).toBeNull();
+  });
+  it('does not restore a previous effort when the backend omits a cleared null', () => {
+    const saved = { executor: BaseCodingAgent.CODEX, model_id: 'model' };
+    const previous = { ...saved, reasoning_id: 'max' };
+    expect(
+      resolveExecutorOverride('reasoning_id', {}, saved, previous, previous)
+    ).toBeNull();
+    expect(
+      resolveExecutorOverride(
+        'reasoning_id',
+        { reasoning_id: 'ultra' },
+        saved,
+        previous,
+        previous
+      )
+    ).toBe('ultra');
+    expect(
+      resolveExecutorOverride('reasoning_id', {}, null, previous, null)
+    ).toBe('max');
+  });
+});
+
 describe('retired execution mode restoration', () => {
   it('launches old Plan with Goal drafts as Plan without mutating history', () => {
     const saved: ExecutorConfig = {
@@ -85,5 +137,41 @@ describe('retired execution mode restoration', () => {
       const saved = { executor: BaseCodingAgent.CODEX, execution_mode };
       expect(normaliseExecutionMode(saved)).toBe(saved);
     }
+  });
+});
+
+describe('manual override draft persistence', () => {
+  const restored: ExecutorConfig = {
+    executor: BaseCodingAgent.CODEX,
+    model_id: 'custom/model',
+    reasoning_id: 'max',
+  };
+  it('retains model identity when editing reasoning and reasoning when editing another field', () => {
+    expect(mergeExecutorOverrides(restored, { reasoning_id: 'ultra' })).toEqual(
+      { ...restored, reasoning_id: 'ultra' }
+    );
+    expect(
+      mergeExecutorOverrides(restored, { execution_mode: ExecutionMode.plan })
+    ).toEqual({ ...restored, execution_mode: ExecutionMode.plan });
+  });
+  it('keeps reasoning when reselecting the same model', () => {
+    expect(
+      mergeExecutorOverrides(restored, { model_id: restored.model_id })
+    ).toEqual(restored);
+  });
+  it('preserves explicit Follow Settings and clears reasoning when changing model', () => {
+    expect(
+      mergeExecutorOverrides(restored, { reasoning_id: null }).reasoning_id
+    ).toBeNull();
+    expect(
+      mergeExecutorOverrides(restored, { model_id: 'other' }).reasoning_id
+    ).toBeNull();
+    expect(
+      mergeExecutorOverrides(restored, {
+        model_id: 'other',
+        reasoning_id: 'high',
+      }).reasoning_id
+    ).toBe('high');
+    expect(restored.reasoning_id).toBe('max');
   });
 });

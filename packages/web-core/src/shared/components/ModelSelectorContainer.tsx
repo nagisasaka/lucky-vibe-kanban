@@ -30,7 +30,7 @@ import {
   isModelAvailable,
   buildModelSelectionOverride,
   findModelForSelection,
-  resolveReasoningOverrideState,
+  resolveConfiguredReasoningIdForOptions,
 } from '@/shared/lib/modelSelector';
 import { profilesApi } from '@/shared/lib/api';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
@@ -206,25 +206,11 @@ export function ModelSelectorContainer({
       Object.prototype.hasOwnProperty.call(executorConfig, 'reasoning_id')
   );
   const configuredReasoningId = executorConfig?.reasoning_id;
-  const reasoningOverrideState = useMemo(
-    () =>
-      resolveReasoningOverrideState(
-        selectedReasoningOptions,
-        configuredReasoningId,
-        hasConfiguredReasoning
-      ),
-    [configuredReasoningId, hasConfiguredReasoning, selectedReasoningOptions]
+  const selectedReasoningId = resolveConfiguredReasoningIdForOptions(
+    selectedReasoningOptions,
+    configuredReasoningId,
+    hasConfiguredReasoning
   );
-  const selectedReasoningId = reasoningOverrideState.selectedReasoningId;
-
-  useEffect(() => {
-    if (loadingModels) return;
-
-    const repair = reasoningOverrideState.repair;
-    if (repair) {
-      onOverrideChange(repair);
-    }
-  }, [loadingModels, onOverrideChange, reasoningOverrideState]);
 
   const defaultAgentId =
     config?.agents.find((entry) => entry.is_default)?.id ?? null;
@@ -410,12 +396,10 @@ export function ModelSelectorContainer({
   const displaySelectedModel = showModelSelector
     ? getSelectedModel(config.models, selectedProviderId, selectedModelId)
     : null;
-  const reasoningLabel = displaySelectedModel
-    ? getReasoningLabel(
-        displaySelectedModel.reasoning_options,
-        selectedReasoningId
-      )
-    : null;
+  const reasoningLabel = getReasoningLabel(
+    displaySelectedModel?.reasoning_options ?? EMPTY_REASONING_OPTIONS,
+    selectedReasoningId
+  );
   const modelLabelBase = loadingModels
     ? loadingLabel
     : (displaySelectedModel?.name ?? selectedModelId ?? defaultLabel);

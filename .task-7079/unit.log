@@ -1,0 +1,11 @@
+
+ RUN  v3.2.7 /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/web-core
+
+ ✓ src/shared/lib/modelSelector.test.ts (15 tests) 31ms
+ ✓ src/shared/lib/executorOverrides.test.ts (6 tests) 23ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  19:13:40
+   Duration  1.87s (transform 795ms, setup 0ms, collect 969ms, tests 54ms, environment 0ms, prepare 743ms)
+

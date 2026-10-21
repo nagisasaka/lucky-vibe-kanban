@@ -173,49 +173,13 @@ export function resolveReasoningIdForOptions(
 }
 
 export function resolveConfiguredReasoningIdForOptions(
-  options: ReasoningOption[],
+  _options: ReasoningOption[],
   configuredReasoningId: string | null | undefined,
   hasConfiguredReasoning: boolean
 ): string | null {
-  if (options.length === 0 || !hasConfiguredReasoning) return null;
-  if (configuredReasoningId == null) return null;
-  return resolveReasoningIdForOptions(options, configuredReasoningId);
-}
-
-export function getReasoningOverrideRepair(
-  options: ReasoningOption[],
-  configuredReasoningId: string | null | undefined,
-  hasConfiguredReasoning: boolean
-): { reasoning_id: null } | null {
-  if (!hasConfiguredReasoning || configuredReasoningId == null) return null;
-  if (configuredReasoningId === '') return { reasoning_id: null };
-  if (options.length === 0) return { reasoning_id: null };
-  return resolveReasoningIdForOptions(options, configuredReasoningId) ===
-    configuredReasoningId
-    ? null
-    : { reasoning_id: null };
-}
-
-export function resolveReasoningOverrideState(
-  options: ReasoningOption[],
-  configuredReasoningId: string | null | undefined,
-  hasConfiguredReasoning: boolean
-): {
-  selectedReasoningId: string | null;
-  repair: { reasoning_id: null } | null;
-} {
-  return {
-    selectedReasoningId: resolveConfiguredReasoningIdForOptions(
-      options,
-      configuredReasoningId,
-      hasConfiguredReasoning
-    ),
-    repair: getReasoningOverrideRepair(
-      options,
-      configuredReasoningId,
-      hasConfiguredReasoning
-    ),
-  };
+  // Discovery is metadata, not authority to erase a saved explicit override.
+  // It may be empty, stale, or omit a provider-supported custom effort.
+  return hasConfiguredReasoning ? configuredReasoningId || null : null;
 }
 
 export function buildModelSelectionOverride(

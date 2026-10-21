@@ -1,0 +1,13 @@
+
+> lucky-vibe-kanban@0.1.44-lvk.1 web-core:check /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban
+> pnpm --filter @vibe/web-core run check
+
+
+> @vibe/web-core@0.1.18 check /var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/web-core
+> tsc --noEmit
+
+Terminated
+/var/tmp/lvk-instances/dev/runtime/worktrees/d12e-/lucky-vibe-kanban/packages/web-core:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @vibe/web-core@0.1.18 check: `tsc --noEmit`
+Exit status 143
+ ELIFECYCLE  Command failed with exit code 143.

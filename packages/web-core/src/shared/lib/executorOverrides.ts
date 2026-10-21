@@ -2,7 +2,9 @@ import { ExecutionMode, type ExecutorConfig } from 'shared/types';
 
 /** A stored launch is a complete snapshot, not a patch over today's preset.
  * In particular absent/null reasoning means provider inheritance, not "low"
- * or the possibly edited preset. A draft, in contrast, may be a partial edit.
+ * or the possibly edited preset. Other draft fields may be partial edits;
+ * identity-only drafts select a preset; override snapshots may contain a
+ * serialized None reasoning override.
  */
 export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
   field: K,
@@ -12,7 +14,18 @@ export function resolveExecutorOverride<K extends keyof ExecutorConfig>(
   preset: ExecutorConfig | null | undefined
 ): ExecutorConfig[K] | undefined {
   if (Object.hasOwn(selection, field)) return selection[field];
-  if (scratch && Object.hasOwn(scratch, field)) return scratch[field];
+  if (scratch) {
+    // setExecutor/setVariant persist only identity and expect preset fallback.
+    // setOverrides persists the effective selection. In that snapshot Rust
+    // omits None reasoning, which must block the previous effort on restore.
+    const hasOverrides = Object.keys(scratch).some(
+      (key) => key !== 'executor' && key !== 'variant'
+    );
+    const draft: ExecutorConfig = hasOverrides
+      ? { reasoning_id: null, ...scratch }
+      : scratch;
+    if (Object.hasOwn(draft, field)) return draft[field];
+  }
   if (launch) return launch[field];
   return preset?.[field];
 }
@@ -26,4 +39,21 @@ export function normaliseExecutionMode(config: ExecutorConfig): ExecutorConfig {
     goal_token_budget: null,
     goal_max_concurrent_agents: null,
   };
+}
+
+/** Save edits through the existing draft path as a complete selection. */
+export function mergeExecutorOverrides(
+  config: ExecutorConfig,
+  partial: Partial<ExecutorConfig>
+): ExecutorConfig {
+  const next = { ...config, ...partial };
+  if (
+    'model_id' in partial &&
+    (partial.model_id ?? null) !== (config.model_id ?? null) &&
+    !('reasoning_id' in partial)
+  ) {
+    // Explicit inheritance blocks the previous launch/preset from resurfacing.
+    next.reasoning_id = null;
+  }
+  return next;
 }

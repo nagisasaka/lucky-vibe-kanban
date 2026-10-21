@@ -56,7 +56,7 @@ function ReasoningDropdown({
   onSelect,
 }: ReasoningDropdownProps) {
   const { t } = useTranslation('common');
-  if (!options.length) return null;
+  if (!options.length && !selectedId) return null;
 
   const selectedLabel =
     getReasoningLabel(options, selectedId) ??
@@ -91,6 +91,11 @@ function ReasoningDropdown({
         >
           {t('modelSelector.followCliConfig')}
         </DropdownMenuItem>
+        {selectedId && !options.some((option) => option.id === selectedId) && (
+          <DropdownMenuItem icon={CheckIcon} disabled>
+            {selectedLabel}
+          </DropdownMenuItem>
+        )}
         {options.map((option) => (
           <DropdownMenuItem
             key={option.id}
@@ -208,8 +213,7 @@ export function ModelList({
             const isReasoningConfigurable = model.reasoning_options.length > 0;
             const showReasoningSelector =
               isSelected &&
-              isReasoningConfigurable &&
-              reasoningOptions.length > 0;
+              (reasoningOptions.length > 0 || Boolean(selectedReasoningId));
 
             return (
               <div

@@ -9,6 +9,7 @@ import { getVariantOptions } from '@/shared/lib/executor';
 import { filterVisibleAgents } from '@/shared/lib/agentVisibility';
 import { usePresetOptions } from '@/shared/hooks/usePresetOptions';
 import {
+  mergeExecutorOverrides,
   normaliseExecutionMode,
   resolveExecutorOverride,
 } from '@/shared/lib/executorOverrides';
@@ -173,16 +174,22 @@ function useEffectiveOverrides(
     for (const field of OVERRIDE_FIELDS) {
       const modelMustMatch = field === 'reasoning_id';
       const scratchModelMatches =
-        !modelMustMatch || scratchConfig?.model_id === resolved.model_id;
+        !modelMustMatch ||
+        // Older drafts may contain only the edited field. An omitted model
+        // inherits the same fallback model as the rest of that draft.
+        (scratchConfig && !Object.hasOwn(scratchConfig, 'model_id')) ||
+        (scratchConfig?.model_id ?? null) === (resolved.model_id ?? null);
       const lastUsedModelMatches =
-        !modelMustMatch || lastUsedConfig?.model_id === resolved.model_id;
+        !modelMustMatch ||
+        (lastUsedConfig?.model_id ?? null) === (resolved.model_id ?? null);
 
       const value = resolveExecutorOverride(
         field,
         userSelections,
         scratchMatches && scratchModelMatches ? scratchConfig : null,
         lastUsedMatches && lastUsedModelMatches ? lastUsedConfig : null,
-        !modelMustMatch || presetOptions?.model_id === resolved.model_id
+        !modelMustMatch ||
+          (presetOptions?.model_id ?? null) === (resolved.model_id ?? null)
           ? presetOptions
           : null
       );
@@ -323,34 +330,14 @@ export function useExecutorConfig({
   // Changing model clears reasoning selection; other overrides are independent.
   const setOverrides = useCallback(
     (partial: Partial<ExecutorConfig>) => {
-      if (controlled) {
-        if (!executorConfig) return;
-        const next = { ...executorConfig, ...partial };
-        if ('model_id' in partial && !('reasoning_id' in partial))
-          delete next.reasoning_id;
-        persist(next);
-        return;
-      }
-      setUserSelections((prev) => {
-        const next = { ...prev, ...partial };
-        if ('model_id' in partial && !('reasoning_id' in partial)) {
-          delete next.reasoning_id;
-        }
-        const persistedConfig = executor.effective
-          ? {
-              ...next,
-              executor: executor.effective,
-              variant: variant.resolved,
-            }
-          : null;
-        // Persist with current effective executor/variant
-        if (persistedConfig) {
-          persist(persistedConfig);
-        }
-        return next;
-      });
+      if (!executorConfig) return;
+      // Persist the complete effective selection, including its model identity.
+      // A partial scratch would lose restored reasoning on the next mount.
+      const next = mergeExecutorOverrides(executorConfig, partial);
+      if (!controlled) setUserSelections(next);
+      persist(next);
     },
-    [executor.effective, variant.resolved, persist, controlled, executorConfig]
+    [persist, controlled, executorConfig]
   );
 
   return {
