@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0676d8074acb8993ce2c3148ff6d53b60a8ba5a38230dd3c06463e99768bffd8",
+  "pageVersion": "sha256:c1f2a996b8a3c35c6972fb17831c0d189e8e3d090119511959a7457a767c8bf9",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -179,10 +179,20 @@
           "version": "repo-lines-v1:sha256:b84b8e2638841d021d10db27a7925b4b3e1358fa7f67f0d74b86fc6ee5696316:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NzU1YzdmMWRiOWY2OWQ1MDY2YzYxYTRlY2QxYjZjODI4ZmQ1MTA3NTdmNjk2ZmM2MDIyMWVjZmZhMGI4ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjODdjNTllZThhODU3NTUzNzJjMzI2MWRmMGI2ZjUwNTQ1ZTRhOGEwOWJiNDAyOWVmMjQ2ZmNkZTA3NjkzNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1OTI1ZTk0OGNkYThmNDUwMDMxODQyZDYyYjk2NTY3ZmMwZmIyMWQyNTNjZjBmN2E3YWQ4MDU2YjAxNmQ0YTYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_47e89c024f204681ab680ab5735ea2d3",
+      "statement": "Workspace累積トークンは取得済みCodex親thread報告を集計し、未取得はunknown、報告ありもpartialとして全量を保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L42-L70",
+          "version": "repo-lines-v1:sha256:96d82cfdd563449d8a0b0582e68cf8256feb4ef80f9e518a23ec4885a0081b68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYjY5ZDY5NDM5ODU5NDUzNTc0NDdiZmE3Zjg4ZWE2NWM2NWFmZGNmOWVhMWMxZTIyYzcyMjMzOGI0N2IxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDZjOWY2MjE2ZDk3ZmZmYTFjODE3ZTExZjUwNGMwNWVmMmJiYzA3MzNmNWUzOTU3YTc0ZDc0ZjU2OTZjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:59:59.398Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

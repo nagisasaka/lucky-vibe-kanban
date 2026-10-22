@@ -42,6 +42,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/resource_observation/linux.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
     resource: repo://crates/server/src/remote_mcp/run_events.rs
+  - id: openwiki-source-3651b7ce4535b584634e8bc8
+    resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
@@ -56,16 +58,18 @@ sources:
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
+  - id: openwiki-source-af328071d51bff75b5246d3b
+    resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-4055aa6b8c5089e24c2a9f7c
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-74a1893f4c1e77eb654658f7
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T09:00:23.191Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -91,6 +95,12 @@ transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否す
 ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支援の preview / apply と、保存済み専用 secret の明示 reveal は [サーバー認証の設定契約](../concepts/server-access.md#auth0-の作成支援と有効化を分ける)を参照する。設定を作成・保存できても、実アカウントでの接続成功を証明したことにはならない。
 
 [Project Todo](../concepts/project-todos.md)も外部 MCP の対象で、read は取得、write は作成・更新・削除を許す。変更結果は下記の operation receipt で確認する。メモを登録することは agent の仕事開始ではない。
+
+## Workspace の報告済みトークンを読む
+
+外部 MCP `get_workspace` は、Project と Workspace の関係を `require_workspace` で検証してから `token_usage` を返す。UI の `/api/workspaces/{id}/tokens` と同じ `WorkspaceTokenUsage::get` を読み、欠損時にも実行を開始しない。[外部入口](../../crates/server/src/remote_mcp/runtime_read.rs#L80-L90)・[HTTP API](../../crates/server/src/routes/workspaces/usage.rs#L319-L328)。stdio では [別 tool の get_workspace_tokens](agent-providers.md#外部-mcp-client--lvk) を使う。
+
+この値は [Workspace 単位の報告済み累積値](../concepts/workspace.md#workspace-累積トークン)であり、run 完了の証拠や料金ではない。`unknown/partial`、内数と取得 thread 数、要求モデルと実使用モデルの違いを同ページで確認する。共通集計との JSON 一致、別 Project・存在しない Workspace の拒否を [fixture](../../crates/server/src/remote_mcp/runtime_read.rs#L279-L317)が検査する。実 Auth0 接続を使った検証結果ではない。
 
 ## 参照結果と操作 receipt
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:70adfa37f65d27649c492951ac666440d9202fffe1bdda6f9399ff6e776e1ec2",
+  "pageVersion": "sha256:5c1eef0656b0b834d91fff58aeec13780946249819eef9336618ed28b7401bdd",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -272,7 +272,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/usage.rs",
-          "version": "repo-file-v1:sha256:e2ffe06b73b43e778eb9209bc60add58c8c20aed5651fd2ee60922dcc32b87ce"
+          "version": "repo-file-v1:sha256:8b43e8535d88c17e03d0797e60e68749a84f69959afed9465533c4195688fab1"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx",
@@ -535,10 +535,42 @@
           "version": "repo-lines-v1:sha256:7840898780df52d0c6af4577329b2f949ada4416cede7891675f76a3afc19b05:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzk5OTdlYWJkZWNiZjVjZWExYTM4MDhjZmMwYWYzNWI5NjM3MDA2YmNlODk2NTRiYTgxOWQ4ZGFkMmRiMDcyNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzFhMWM3NjQyMjEzYTlhNmQ2MWM1MTJlZjdjYjgxMWYxZWNhNzU5N2FlNzhmZjZmYmY4MDA4YTQyMWMwYjIzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTkyMWU5NmFmNGRhN2RiYzI1ODUyNTlmYjA3YzhhOGEzY2MzOGFjZWQxZWI0M2U4NmM1OTg3MzY5OGY5ZWY1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjRkM2Q5NzRlMDVmYWE5ZTE2NTgwYjY1MmEzZDhmOTdjZmQzOWUyZmNhMDE2MjEyZTNiZmFlNjI1MmVjMGQyNSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_e9c8698e6aa4430ca1d928dc9dd094af",
+      "statement": "チャット末尾のWorkspaceTokenSummaryはWorkspace単位に5秒で再取得し、総量・内訳・取得thread数・更新時刻を表示する。nullは不明、partialは一部のみ、取得失敗時は詳細を隠しエラー表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037",
+          "version": "repo-lines-v1:sha256:9103ddd56eff85b9690a69367527f00bf5f3582cb8b73be6f7447ce9a56318af:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU0NmY2N2NkNjAwZGQwMDI3YTE4NGRhZjk4NDNjYTMzYWZkMGJlNzM2YjI3MzA3ZWYwZTc1OTMxZGNmNTliNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkyOWE1NmY5MDk3MzYyNzAzZmIzNTZhMTc2ZWZmMzM4NTE4ZjZmMDBhYzVhMDdiODcwMTY0OGNkZTI2NTIyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWU4MWM0MGNkYjk2Y2U1MjM3NjUxNDc3ZWM4MzA5MTEzZTlmMGJhMjI2M2M0Zjc5ZTE4YjJmNzM0NjRhMmU1NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk2YWZmOGExZGRlNDAyZmNlNDdhMzVjYjFmOTM2MTYzMDhiNmQxYzFlNWJhYzA2YTlmZGFlN2ZhMGU4MDUwYSJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L63",
+          "version": "repo-lines-v1:sha256:5315b2ee1e260b5826c219b42a1b38ca45db2b82ec1074af12efd130a2713705:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4M2I1M2ZkMWJlNTkzMzkyYzEwMzA3ZGY2MDQ4Yjc0YjRiYWU0OWYwN2QyNjMyMTQxMThhYWUzMTNkZTJhNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1NjA0ZTRjZmFlZjRmMGRmZjIwOGQzZTk0NzBlOTQ2M2Y5MWQ4ZTU5N2ZlOTQyMjQ4YzAwNTc3MDc1MDhiZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json#L1362-L1374",
+          "version": "repo-lines-v1:sha256:990d5d902c7ec111523d91046d28365738f8cb0582e0b9ee9164b810d331ebc4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMWRmNmNjYjJjM2RlYjY2ZDYwYjM0MmUwNmYyZTFlNWRmYThhYjM4MTViMWNmNWZiZTMwNzE2MzdmN2YyMzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5MWUzNTAxMjg1ZjdmODRhNzk0NDI0Njg4ODdmNjdiODA3MWFhNmYzZjM5YTQ2NTNlMGM5NmRkMDlmYzJmZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_65074b9d6a7b483c86a5e04672ffa5c0",
+      "statement": "Workspace tokens handlerは保存済みWorkspaceTokenUsageを読むだけで、同ファイルの実行所有者usage/Stop処理とは別のAPIである。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/mod.rs#L26-L48",
+          "version": "repo-lines-v1:sha256:067592febdf340cf656a5f4a98f7f0b677248d24a6e883de430dc7c9237e3282:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0M2Y3OTQ4ODlmMDRiODc3NjA3N2MwZjJmYjVkYjgzNDIyM2M1ZTI5NGNmNmIxYmU1YzdlYTQ5NGQ0YTlhNmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNDhlOTYzODYwZjJjOThlZDg0OTc3YWM4ZTM1MmVmYjRiZjRmZThmZGFjZTkwMTM2YjM5MWRhMWU3NTFmMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYzRhOGIyM2ZlYTJmY2Y0MWUxOTdkZmJkMjQxMzgyNTQ0YTJlNjg1NTIyZDFkNjZkYmM0ODQ1ZjdmNWU1YzMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L319-L328",
+          "version": "repo-lines-v1:sha256:58046b9c12fc0bae0a973289173b6b389ee3b2c75964c5113c366f2bb1f7cebf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5ZGMxZjM1MGViNzdjYjc4MTJlODUzMjZhZmFjY2I5ZGY5ZWMyZWMwODdiNDJiNDdjZTI0ZDUzY2VmOTFlY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:15:33.468Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

@@ -38,6 +38,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/mod.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
+  - id: openwiki-source-9994439c3151f599f949bf7f
+    resource: repo://crates/mcp/src/task_server/tools/workspaces.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
@@ -66,10 +68,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:22:38.402Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -171,6 +173,8 @@ Reviewer は別の信頼済み role で、ReadOnly / approval Never を設定し
 ### 外部 MCP client → LVK
 
 LVK のローカル MCP server は stdio で動き、HTTP backend に要求を転送する。Global は Issue、Project、Repo、Workspace、Session などを扱い、Orchestrator は実行 context を必須とする限定 router で、list_workspaces と delete_workspace を公開しない。[起動](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[context の取得](../../crates/mcp/src/task_server/mod.rs#L87-L119)・[公開 router](../../crates/mcp/src/task_server/tools/mod.rs#L52-L73)
+
+両 stdio router は `get_workspace_tokens` を公開する。Workspace ID を省略すると現在 context を使い、context がなければ明示 ID が必要になる。Orchestrator は別 Workspace を拒否し、既存 `/api/workspaces/{id}/tokens` の読取へ転送する。欠損を補う AgentRun は起動しない。[tool](../../crates/mcp/src/task_server/tools/workspaces.rs#L99-L130)・[scope](../../crates/mcp/src/task_server/tools/mod.rs#L182-L208)。値の契約は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、認証付き HTTP MCP の別入口は [get_workspace の集計](remote-access.md#workspace-の報告済みトークンを読む)にまとめる。
 
 backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の環境変数と port file を用いる。したがって「stdio client で接続する」ことと「backend が必ず localhost に固定される」ことは別である。導入例は [Vibe Kanban MCP Server](../../docs/integrations/vibe-kanban-mcp-server.mdx) を参照する。[backend URL の解決](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L100-L133)
 

@@ -6,14 +6,24 @@ tags: [workspace, repository, worktree, ownership, storage]
 sources:
   - id: openwiki-source-94559828ba40b7dfdd09bad0
     resource: repo://crates/db/migrations/20260921000000_workspace_usage.sql
+  - id: openwiki-source-f9386b5537a5146f7ac841ae
+    resource: repo://crates/db/migrations/20261021173000_workspace_tokens.sql
+  - id: openwiki-source-d20a82e2192a07c687b838cb
+    resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
   - id: openwiki-source-d76d1a64a0c116ad812aa678
     resource: repo://crates/db/src/models/workspace_repo.rs
+  - id: openwiki-source-c30cc36c4bbe315c59b8e38f
+    resource: repo://crates/db/src/models/workspace_tokens.rs
   - id: openwiki-source-dfa8135bd6d4dbe37911c061
     resource: repo://crates/db/src/models/workspace_usage.rs
   - id: openwiki-source-5f083da2f629bcd57e386ad4
     resource: repo://crates/db/src/models/workspace.rs
+  - id: openwiki-source-d0244e39b6cb88790907b9b2
+    resource: repo://crates/executors/src/executors/codex/agent_scope.rs
+  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
+    resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
@@ -42,6 +52,8 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
+  - id: openwiki-source-1dc77f9d01b63e6f9dfd9b6b
+    resource: repo://docs/development/workspace-token-usage.md
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-dbe2d46e94202832ad4e5e7b
@@ -52,10 +64,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/api.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-21T05:35:32.360Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:35:32.360Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # Workspace と Repository
@@ -98,6 +110,30 @@ script の例外は IntegrationValidation だけで、validating 状態・未取
 既存データの移行は名称から推測しない。Integration/Repository bootstrap の実行記録、または一致する maintenance の保存記録を根拠に分類し、証拠なしは interactive のままにする。過去 Sync の AgentRun が一つに定まらなければ run ID は不明のまま、複数の所有証拠が衝突すれば `conflicting_evidence` として閲覧専用にする。archive・Session・監査・Git 履歴を書き換える移行ではない。[証拠に基づく backfill](../../crates/services/src/services/workspace_usage.rs)
 
 終了後の解除は `cleanup_allowed` に加え、Integration が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は Repo 所属から Board が一意に決まる時だけ作り、既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
+
+## Workspace 累積トークン
+
+Workspace 累積トークンは、人や上位 AI が消費の偏りを確認するための、provider が報告した取得済み使用量である。料金・週次枠・[現在の context 占有率](session-and-agent-run.md#context-使用量の意味)や各 run の経過時間を表すものではない。操作権限を表す上記の `usage` とも別概念である。画面の確認方法は [累積値の閲覧](../operations/workspace-inspection.md#累積トークンを確認する)へ進む。[目的と範囲](../../docs/development/workspace-token-usage.md#取得できる範囲と制約)
+
+### 何を取得し、何を未知とするか
+
+対象は既存投影経路で親に属すると判定された Codex native `thread/tokenUsage/updated` の `tokenUsage.total`。thread ID と総量があり、`total = input + output`、cached input ≤ input、reasoning ≤ output が成立するときだけ採用する。cached input は入力、reasoning は出力の内数なので総量へ再加算しない。`last.totalTokens` は context 用であり、総量と内訳が矛盾する context-full 合成通知、汎用 usage、識別情報のない旧 snapshot を集計の証拠にしない。[adapter の検証](../../crates/executors/src/executors/provider_adapter.rs#L1969-L2025)・[親 scope](../../crates/executors/src/executors/codex/agent_scope.rs#L187-L200)
+
+新規テーブルへの過去履歴の backfill はなく、既存 snapshot や監査全体を走査して欠損を埋めない。ただし最初に届いた報告が、その thread の以前の消費を含むことはある。子 thread を独立に計測・加算せず、親報告に含まれない子消費、未対応 provider、未報告の最終分は不明のままにする。[移行](../../crates/db/migrations/20261021173000_workspace_tokens.sql)・[応答の scope](../../crates/db/src/models/workspace_tokens.rs#L60-L70)
+
+### 集計の identity と寿命
+
+保存キーは Workspace・provider・provider session（Codex thread）である。同じ thread の resume が別 Session / RunAttempt にまたがっても、累積 snapshot を足さず、既報 total 以上の報告で置き換える。別 thread は合計する。低い total は無視するため、失敗・取消・再送で既報消費を減らさない。provider が同じ thread の counter を reset しても差分を推定せず、既報最大値を保持する。これは reset 後の真の消費量を保証する方式ではない。[更新条件](../../crates/db/src/models/agent_runtime.rs#L1830-L1860)・[resume と終端状態の試験](../../crates/db/src/models/agent_runtime.rs#L2941-L3058)
+
+採用する後続報告で cached/reasoning が欠損した場合は既報内訳を残す。累積情報のない新しい snapshot に置き換わっても thread 集計は残る。テーブルは Workspace に外部キーで従属し、Workspace の DB 削除で cascade される。保存の原子性・host journal と snapshot の関係は [Runtime の保存境界](../architecture/agent-runtime.md#workspace-累積値の保存境界)にまとめる。[欠損の保持](../../crates/db/src/models/agent_runtime.rs#L1845-L1859)・[valid → None の試験](../../crates/db/src/models/agent_runtime.rs#L3061-L3170)・[寿命](../../crates/db/migrations/20261021173000_workspace_tokens.sql#L1-L14)
+
+### API 値の読み方と採用理由
+
+`WorkspaceTokenUsage::get` が全入口の共通集計である。有効行なしなら総量・内訳は `null`、`completeness=unknown`。有効な 0 の報告は数値 0 で、1 thread 以上あれば常に `partial` とし `complete` を返さない。内訳は取得値だけの和で、cached/reasoning はそれぞれ取得 thread 数も返す。その数は全消費の取得率でも attempt 数でもない。最初の観測時刻は行の最小、最終更新は最大であり、provider の最終消費まで捕捉できた証明ではない。[共通集計](../../crates/db/src/models/workspace_tokens.rs#L42-L70)
+
+`providers` は保存済み報告の provider 一覧、`requested_models` は同 Workspace の attempt request にある要求モデル一覧である。実使用モデルの確定や thread 内モデル別消費の配分には使えない。[一覧の取得](../../crates/db/src/models/workspace_tokens.rs#L55-L70)
+
+[実装記録](../../docs/development/workspace-token-usage.md)は、同一 thread の resume 二重加算を避けること、意味を確認できない通知を推計しないことを設計理由としている。レビュー後には最新の置換可能 snapshot に基づく報告 attempt 数が後退し得るため、その分子・表示専用分母を削除し、everflag や履歴走査を加えなかった。現行 API にもそれらの attempt 数はない。正常 resume の外部実装根拠は記録中の特定 Codex 版についての説明であり、実アカウント精度や異常 reset の保証とは区別する。[レビュー判断](../../docs/development/workspace-token-usage.md#2026-10-21-独立レビュー後の最小修正)・[現行応答型](../../crates/db/src/models/workspace_tokens.rs#L7-L25)。fixture の分担と残る未検証範囲は [トークン集計の検証](../operations/development.md#workspace-トークン集計の検証)を参照する。
 
 ## 一覧から作成先を選ぶ
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bb46f6e49b4b1f590776dbdcf34e1a26c8008be34d1876bfb97a3adce745a1f5",
+  "pageVersion": "sha256:e34f2ca6ba8ae86692207627a5ce20f70c4f08d7f7696b05848c96cdeb4c1653",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -69,8 +69,8 @@
       "statement": "usage snapshotはRunAttempt単位で新しいnative sequenceだけを採用し、同一sequenceの内容衝突を拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1696-L1728",
-          "version": "repo-lines-v1:sha256:814e29b3f230622c380ee7dd43216daff87f3a86b11e795609ee8e5c534c0bc4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NWM0MjBiZDRkYWM2MWU4ZWNiYjRhZmFiYzcxZDM2MDhiZWMwODhiNzA3ZDc3NzQ2MjZlYTYyMWFhNTJjMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0MjJkNTUzMmI5YjJlYjQ3NWY1MDZjZTg3ZTQ5NjdiNWI4ODIyZWJmM2E3OTlhZDAxMDdmY2M3MDc5NzhjMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0YWFkMzUwMDBlMWZjMWE2MTFlNTBjNzUwMzc1N2Q4ZGVjNWZmOTVjYzRmMmE0NTNiNWQyNDQ2M2Q4YzczMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjMTZlNDAzYTZjZWI1Yzg1NTJkNDA5NGViNTljYmRhOTJkOWQ5N2IxMGE5ZjUxZWM0YzVhY2FkNThlNDM1OTQifQ"
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1861-L1907",
+          "version": "repo-lines-v1:sha256:91cf9149c3ca16e46f2ee84eba79b93442141845a44e0bd25fed127025deba17:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NWM0MjBiZDRkYWM2MWU4ZWNiYjRhZmFiYzcxZDM2MDhiZWMwODhiNzA3ZDc3NzQ2MjZlYTYyMWFhNTJjMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlYzkwMWQ4ODAxYjMxYjU0MjliZTk4ZjM1YTAzNTBiMDcxM2E2NDBhZmFhNDk3OGQyZDM5ODViMDExOGJmY2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzMTQ0ZTM0YzQ1MzNjMmQ1OTJjZDU5ZTJmYmU2NWE5MjEyMGNiMTViNzA3NzJlNTJlNTI0NjE2MTVhYmYzZDIifQ"
         }
       ]
     },
@@ -291,11 +291,11 @@
       "statement": "Codex contextの任意値はlast.totalTokens/modelContextWindowから得て既存usage snapshot JSONとhost journalで保存・replayし、累積usageと区別する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1697-L1760",
-          "version": "repo-lines-v1:sha256:9e6678de3ede5bfa126ecbe722729ca2f1743db0060556d71d7dfa4b4143f025:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MDBiZWQ2MjhhMGYwYjlkMGQxMGYyNGJlYzA5ZjNkMzg3OGRhZDE2ZGUyMjFmY2UxYzY4OGM3YjQ3NDM5NGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYTk2Y2ViNDBhMjE5ZDFmNzc5ZTNkMzkwOGMwM2MxOGVmM2Y2NDA5MWZkMjc3NTRiMzY2MjZkZmU4ZGU0OGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUyYzU5Yjk3OGEzYjRhNDI3MTIyNTcwYTdiNGExOWEwZjc5YzJiMWUyYTAwN2JiNWU3NTIxYzk1Y2QzM2RhOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYzk0ZjJiMzJkMjBkN2Q0NjI5Y2NhOWU0MWE1MzdjMjJjN2Q3YzIzNWQxMGEyZDhiYWJhYjJiNzk1N2Q4M2IifQ"
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1861-L1907",
+          "version": "repo-lines-v1:sha256:91cf9149c3ca16e46f2ee84eba79b93442141845a44e0bd25fed127025deba17:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NWM0MjBiZDRkYWM2MWU4ZWNiYjRhZmFiYzcxZDM2MDhiZWMwODhiNzA3ZDc3NzQ2MjZlYTYyMWFhNTJjMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlYzkwMWQ4ODAxYjMxYjU0MjliZTk4ZjM1YTAzNTBiMDcxM2E2NDBhZmFhNDk3OGQyZDM5ODViMDExOGJmY2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzMTQ0ZTM0YzQ1MzNjMmQ1OTJjZDU5ZTJmYmU2NWE5MjEyMGNiMTViNzA3NzJlNTJlNTI0NjE2MTVhYmYzZDIifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1619-L1645",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1632-L1658",
           "version": "repo-lines-v1:sha256:1f35db553a841c30dbd8d3f6fe7e3d42020b439c3edddaa69c4fe54f981aa1bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGRiMDMxZmI2ZDRlNjM3YTI0ODdjMWFiODlhYjZmY2ExODU2MWVmOGYzNWQ0ODBhYzFhOWIxOTlhOTI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNjRkMzQzZmM3MTVkOTFkMDE0Njg3OTVjOWRmZDhmNzVjODgzYmQyM2NiZTBiZTk3N2M3ZjYwMTUzNDk0YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjYzhkYjMyMzAwYjIwODA1ZWYzOTA1Y2U2M2YzNzkyMDIzN2RiZmU3ZDE0N2ZmM2Y3NmFiOTg0MDMzZjAxODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YTI3MjBkYmRkZmRhYWE3YzQ5ZGIzYWZmNTA1NTdmZDg4MGZiNDIwMjBmNmEzMTU3NmVlNGU3N2E1NjBlZjAifQ"
         },
         {
@@ -473,10 +473,34 @@
           "version": "repo-lines-v1:sha256:338082f4cd9ce9694f7223f77fb3217559f814cb95cfd20d559948f9e8f8994d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OGNiZGNmNmM3ZGE4OTY0YWFkNDJkYTZkNjllYjExNDM1ZTg3MGIxYTJmMWYxYTFlYjAxYjg2ODU1MTdlMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNjM4MjY3MTNjYWIxNjYzNTI1YjQzYzNmY2M4ZjMwNmE1NThlMjE3NGE0NWNjMTI2ZjlmN2ZlMWQ1Mjc4ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzN2U3NGE3NDZmM2U0ZmE5OGQ3Y2I5OGRiMDdkMzBiZmY2NWNlZjY3NmYxN2FiMWVhNDkzYWM0ODQ5MDY4MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljYWMwNGQ5MDlkMWFhZGU0NGY4MDJiZGU4ZTk1ZTY1NzU2Yjg0NmIzZDdlNzEyYjgzNzU3NzdkN2VjOGQxYTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_4487ef6c1ff342578246828a66a01f75",
+      "statement": "任意のcumulative_usageは検証済みCodex native thread総量だけに付与され、旧snapshotの欠落は互換として扱われる。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1969-L2025",
+          "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/runtime/contracts.rs#L411-L440",
+          "version": "repo-lines-v1:sha256:e209fce72387e316e41be58e074f25aabff184f88959576c354769b5b5111780:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2ODlkMjRmMTAxYjVmNTE2MmVmNWQwYzNiMzZmZjc0Nzg4ODI3NzBjYmIzMTQ0OTk0M2U4OGU5NTFkYTVkOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhMmYyZDE2ZDk3YTlmMDBlY2RlYTA5MjI0YzM5YmZhNmFjOGEzNjA4M2ZjYWQwZjFkZTI4N2E4MWM2ZTQ3ODAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7a1f371ab46b4629a0f3bc5d82aac2b1",
+      "statement": "Workspace thread最大報告値はRunAttempt snapshotとhost cursorと同一transactionで保存され、snapshot内容衝突またはcursor identity不一致ならcommitされない。thread totalとattempt sequenceは別の更新条件である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1797-L1928",
+          "version": "repo-lines-v1:sha256:e5fbe927ed725a08e2333c8bb56f688fbd365e06a296f209c11471a639488100:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3NjAwYmVkNjI4YTBmMGI5ZDBkMTBmMjRiZWMwOWYzZDM4NzhkYWQxNmRlMjIxZmNlMWM2ODhjN2I0NzQzOTRlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1ZWU2ZGExYWQxMzgxOTk5ODU0NDA1NTQyZGE3MzkxNTU1NmQzM2IxOGQwOTgzMTgxYWE4YWY2NjE3MTA1OWYzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlMmM1OWI5NzhhM2I0YTQyNzEyMjU3MGE3YjRhMTlhMGY3OWMyYjFlMmEwMDdiYjVlNzUyMWM5NWNkMzNkYTljIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZWY2NTNlMzVmMTUxNTZjZjZkM2EyOGZhOWZhODY4N2Q0ODFmMGUzZmRiM2I4N2FlODRhM2VlMmZmYmQzYWFlIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:22:38.402Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

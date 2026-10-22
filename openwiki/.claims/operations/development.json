@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:20cb59ca5b001261ca5830c54da8b9dde690f06570bc4c5b28df5fdacf3c0541",
+  "pageVersion": "sha256:6ff20c055aad5cf3989bfe1caef89d3d062e52d18ef438c0650f93c44a34f03a",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -70,7 +70,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:0d4f9f7fbe5185829af2ad5a649a1b3a78ac4a43e7baef6ce063e307827d923c"
+          "version": "repo-file-v1:sha256:d82c0c502d8564ec6c40f08bd5a77152d0589aa987a2a9148e03269906b55400"
         }
       ]
     },
@@ -351,10 +351,52 @@
           "version": "repo-lines-v1:sha256:4a36719606c101212735d6368a35140d2a0830e3364f065a9638f5ea233bd621:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMzc5ZWM0MjdkOGNjYWFlNzEzYzNmMzNjNGQwN2NkZTAzNWM1MTliOWI5OTcwMWYzNGVmZTUyNTFhMDcyMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmZmFjMTM1YzU5MTIxMDcyNGU1YjIzMTMxMTE3YTNhZjRlNzg1NTZiNzNkYWQzZGE5NDQxNDNhZmQxOWM1NjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_773fa885e26245e58adc3a6b9d648d99",
+      "statement": "Workspace token試験はadapter検証、DBのresume/重複/欠損/終端保持、journal再生、外部MCP scopeを分けて検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L2941-L3170",
+          "version": "repo-lines-v1:sha256:2e18c6041f81c7359f613342e3e8540f0312af2e01fe0ca4a2ea819baf78f3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNWViN2EzYTk3MzI0MWU5YTQzMTQ3OTJhNTA5ZjhjMmQ1Mjg1ZWMxMzI1ZmQ2MTYxMzlkMDM1YmEwNzEyY2EzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5In0"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L3461-L3504",
+          "version": "repo-lines-v1:sha256:7d4571689c12c4b4be7740181ca27778c27c9e0be46850fbb0b177e257725bd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1ZWI3YTNhOTczMjQxZTlhNDMxNDc5MmE1MDlmOGMyZDUyODVlYzEzMjVmZDYxNjEzOWQwMzViYTA3MTJjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjZTRmYzYyMzM3YjBjMWIyNjljZDU0ZTFjZWVjYzhkMzMzNTAxMWNjOWZmYzk2MTBiM2I5NDg5Yjk1MTY5ZmUifQ"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/process_host/journal.rs#L527-L589",
+          "version": "repo-lines-v1:sha256:5377562ce246ed709750232b58a1e9e33fb4b79353aac1d76089a4b8df7816ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmNTA0NGI0NTFkOWUxMjE0M2E3ZTExYmNlYzVlYmFjY2U1NWM3ODM3ZDBjY2I5YTY3OGI4N2U3ZDY0MTNiYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1MjY2OWMwYzQzN2I5NzJhMDI4MWI5OThiZWFmODhlMDg1YjdmYmIxMjg2MWI3MTkwZGM2NzkyMDJmMWMxNGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjZDE3Y2Y0YjI1YjBlN2NhYjI0NjIzZGUwZDEwNTBiNDgyN2MyMjA2Yzk0ZmNmNTZjOTQ4MmJiNzBiYjExODMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L279-L317",
+          "version": "repo-lines-v1:sha256:3411c83881248f3b5c1963f8ffa0a52714af885d1af1b3b3637f5b6e37709226:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExODBhZjk4M2I3ZmIwM2Q3NjNiMWRlMWI3Mjg4OWQwMzdhZTdlYWJlOTUyNzk4NTU1OTkyYTg0OGNiNDcwYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d0954cac895d4ee89a8a74152c6a9dc3",
+      "statement": "workspace-tokens E2E runnerは既存debug binaryと隔離instanceを使い、同DBでserverを再起動し、終了時の対象process残存ならstateを保持して失敗する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/server/run-workspace-tokens.mjs#L13-L214",
+          "version": "repo-lines-v1:sha256:9eaa0efef7292e1137b71158cd3de1c4c1f3df528536b3dc561bb93ae370a015:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkZmY0ZDIyNDMyZTJiODcwYTNiMzZjNWJjOGUzMzdiYmYyZDlkMjIzMWRhNTEwMzc1ZGFlMDVlMjJmOTA0MDMyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2Q3MGYwYjc1OTYzMGY3NzljNWVhNzJlZTEzMjllMDk1MTJhYmY3ZmZmZTA4NDQ1YmEzMDljYWViOTlkMmJlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_76d5f083c0034726b096e408bb4629ab",
+      "statement": "Workspace tokensブラウザー試験はproviderを起動せず保存行をseedし、unknown/partial、更新・内訳・日英・390px・reload/restart・実stdioとAPI一致・attempt数field不在を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/server/specs/workspace-tokens.spec.ts#L7-L191",
+          "version": "repo-lines-v1:sha256:a13d7717c3638178fec08c2861f537bb1b908d3643bc62831037a100980f3247:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1OTEwNmFlMWMwNjgxODI0Zjc3ZWRiY2VjZGNjOTVhY2ZhYTNkY2M3MGQwZWRhOWQxMDBjMjA2OTNhN2FiODY2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMzcwZTljYTdiZmJhNTk0Nzg3M2M1YjhkZjg5MTNlODM1NWMxM2MzOTIyZjQ4NGIzYWQ4NDFmNDZlMjk0N2Y4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:15:33.468Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

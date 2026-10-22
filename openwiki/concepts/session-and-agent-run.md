@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
+  - id: openwiki-source-c30cc36c4bbe315c59b8e38f
+    resource: repo://crates/db/src/models/workspace_tokens.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -90,10 +92,14 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
   - id: openwiki-source-e3ad3a00ca485cc7e1958008
     resource: repo://packages/web-core/src/features/workspace-chat/model/sessionDraft.ts
+  - id: openwiki-source-cd106619cfd7af68eb9464fc
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-c294940cc86e5328c123d83c
     resource: repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx
   - id: openwiki-source-f0616990372eebb94bc69e6f
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
+  - id: openwiki-source-3f4f76b473cff31732d54424
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-649882ab70d5bba1d79459a5
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
@@ -130,10 +136,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T09:00:23.191Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -353,6 +359,8 @@ Codex の spawn 観測だけが直接の親子関係を確定し、send/wait 等
 context gauge は親 thread の最後の測定 `last.totalTokens / modelContextWindow` を示す。累積 input + output（cached input を二重加算しない）とは別で、compaction 後に減少し得る。進行中の要求サイズのリアルタイム推定ではない。欠損・不正 capacity から偽の 0% を作らず unknown とし、モデル名から容量を推測しない。新しい Run / attempt では古い gauge を引き継がず測定を待つ。[native usage](../../crates/executors/src/executors/provider_adapter.rs#L1619-L1645)・[表示値検証](../../packages/ui/src/components/ContextUsageGauge.tsx#L6-L24)・[scope 切替](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L664-L678)。保存と replay は [usage snapshot の経路](../architecture/agent-runtime.md#context-と子観測の投影)にまとめる。
 
 blocking 待機や終端の通知・ChatGPT 相談は [Web Push](../integrations/web-push.md)、保存済み commentary の外部読取は [list_run_events](../integrations/remote-access.md#保存済み-codex-進捗の読取)を使う。通知や抜粋から実行成功・承認済み・統合済みを推定しない。
+
+チャット末尾の [Workspace 累積トークン](workspace.md#workspace-累積トークン)は、選択 Session や現在の Run の gauge とは集計範囲が異なる。同じ Workspace の保存済み thread 報告を読み、Session を切り替えてもその範囲を変えない。各 run の経過時間とも別の表示である。[Workspace 指定の取得](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L18)・[集計単位](../../crates/db/src/models/workspace_tokens.rs#L42-L70)・[配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037)
 
 ## 会話表示と入力
 

@@ -10,10 +10,18 @@ sources:
     resource: repo://CONTRIBUTORS.md
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-d20a82e2192a07c687b838cb
+    resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
+    resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-5d78398344c565f028fc5984
+    resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
     resource: repo://crates/server/build_metadata.rs
   - id: openwiki-source-32657d5732db65a52d550bc6
     resource: repo://crates/server/src/bin/generate_types.rs
+  - id: openwiki-source-3651b7ce4535b584634e8bc8
+    resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-88fc73cd214d9f8c3b051c4f
     resource: repo://crates/tauri-app/src/main.rs
   - id: openwiki-source-57eebdf400ca14f6e9abea48
@@ -46,6 +54,10 @@ sources:
     resource: repo://tests/build-info/component.test.mjs
   - id: openwiki-source-3b8e596f6d78967bbf29a877
     resource: repo://tests/build-info/isolated.mjs
+  - id: openwiki-source-a1c202ba8b2becaa93218bc0
+    resource: repo://tests/server/run-workspace-tokens.mjs
+  - id: openwiki-source-f7bef772fe7a00d12c00a997
+    resource: repo://tests/server/specs/workspace-tokens.spec.ts
   - id: openwiki-source-67c9f08f4593b3acbf1fe7b8
     resource: repo://tests/terminal-latency/codex-fixture.mjs
   - id: openwiki-source-a8dd8312a18cc58d1cb88211
@@ -60,10 +72,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:15:33.468Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -118,6 +130,16 @@ runner は終了時に自身の instance に属する process の停止を確認
 5ケースは正常終了、失敗、取消、WebSocket 再接続、終了後のページ再表示である。各ケースで活動中 follow-up の400拒否を確認し、Send 有効化後は実ボタンで次 Run を一つだけ開始して成功を確認する。再接続は実 frame を転送したまま切断だけを注入する。`canonicalAt` は HTTP poll の観測時刻であり DB commit 時刻ではなく、reload の値は navigation / loading 時間も含む。[拒否と接続](../../tests/terminal-latency/latency.spec.ts#L6-L93)・[終端と次の実行](../../tests/terminal-latency/latency.spec.ts#L114-L213)
 
 [2026-10-20 の測定記録](../../tests/terminal-latency/RESULTS.md#前後の時刻と差分)には正常終了の9056→4050ms、各版5ケース成功が記録される。ただし各ケース各版1回の比較であり、本番の分位点や負荷時性能の保証ではない。実 Codex、Windows、高負荷は未確認と明記されている。この記録は過去の試験成績であって、この Wiki Sync での再実行結果ではない。[条件](../../tests/terminal-latency/RESULTS.md#測定条件)・[結果と限界](../../tests/terminal-latency/RESULTS.md#再現操作と観測結果)・[未確認事項](../../tests/terminal-latency/RESULTS.md#未確認事項仕様判断)
+
+## Workspace トークン集計の検証
+
+[累積値の契約](../concepts/workspace.md#workspace-累積トークン)を変更するときは、通知の解釈、耐久保存、読取と表示を別の入口から照合する。`cargo test -p executors -p db -p server -p local-deployment -p mcp --lib workspace_tokens` は adapter の包含・矛盾通知拒否、DB の resume / 再送・複数 Session・失敗/取消後の保持・unknown と 0・valid → None、journal replay、外部 MCP の共通集計と scope を対象にする。MCP crate にはこの filter に一致する試験がないため、crate 名がコマンドにあるだけで stdio を検証済みと扱わない。[adapter](../../crates/executors/src/executors/provider_adapter.rs#L3461-L3504)・[DB](../../crates/db/src/models/agent_runtime.rs#L2941-L3170)・[journal](../../crates/local-deployment/src/process_host/journal.rs#L527-L589)・[外部 MCP](../../crates/server/src/remote_mcp/runtime_read.rs#L279-L317)
+
+ブラウザーと実 stdio の境界は root から `node tests/server/run-workspace-tokens.mjs` を使う。先に同 checkout の `target/debug/server` と `target/debug/vibe-kanban-mcp`、実 frontend dist、Playwright/Chromium を用意する。runner は `.build/tokens-instance-*` の一時 instance と動的 loopback port を使い、初回試験後に同 DB で server を再起動して保持を検査する。終了時は自身の instance 環境を持つ process の停止を確認してから削除し、残存時は失敗して一時 state を残す。[起動と二段階実行](../../tests/server/run-workspace-tokens.mjs#L13-L167)・[cleanup](../../tests/server/run-workspace-tokens.mjs#L168-L214)
+
+ブラウザー fixture は保存行を投入し、unknown → 120 → 200、partial、内訳の 1/2 thread、5秒再取得、日英表示、390px 幅、reload と server restart、API と実 stdio MCP の JSON 一致、削除済み attempt 数 field の不在を確認する。provider は起動しないため、通知からの保存は上記 Rust fixture と組み合わせて確認する。[試験本体](../../tests/server/specs/workspace-tokens.spec.ts#L7-L191)
+
+[開発時記録](../../docs/development/workspace-token-usage.md#検証記録)の成功報告は今回の Sync の再実行結果ではない。凍結された統合 source `066b2b4bd93d06d046865d66ae16bf1537e8b184` を adapter、schema/保存、API/MCP、UI、独立した試験定義から静的に照合した。入力にある正式 Integration は明示的な検証省略であり、今回も製品テストや有料モデル run は実行していない。実アカウント精度・実 Auth0 経由・全 provider・子 thread 独立計測・counter reset 後の差分の保証はない。無関係な過去の説明全体を再検証したものでもない。
 
 ## モバイル向け built preview
 

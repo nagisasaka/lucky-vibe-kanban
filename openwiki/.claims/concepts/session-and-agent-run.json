@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:71448834f98d5cd6479673f5a4ee860c180a37a73187ebfa734cde37c2b267f9",
+  "pageVersion": "sha256:df956dae5bd4f9b35d931308cf1097fd127b6a53e9312bf21e7133202fd1053e",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -877,10 +877,28 @@
           "version": "repo-lines-v1:sha256:b2ff732380ccccb1374c9ce493dd58450333be76567b21d4612be8e02b18d5d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiYWYyZDNkZDI1ZjhjZjZmOGRkMDIzN2UyMTA4OGM1OTlhM2JmZmFlOGM3MjBiYjI3OTFiMjUyODNkZjA5MTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4MTVkMmE1YmQ1ODYyYTU0MTM0NzU0MjRhZTdkOWI2ZTgxZDk2MDc4NmMzYWI4ZTVjMmE5ZDRkOWEyNWFlYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwZjdkNjFmMTJkYmZiOTkwODc1ZmUzOTYwMzA4NmQ3ODIwYTUwOWVmODJmY2JlYzc0NDA3YmZkMjU0NWRmODYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_808baaa0c4ab452f84a309d4dc20ec9b",
+      "statement": "チャット末尾の累積トークンはWorkspace IDで取得する保存済みthread集計であり、選択Sessionや現在Runのcontext gaugeとは別の範囲である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L42-L70",
+          "version": "repo-lines-v1:sha256:96d82cfdd563449d8a0b0582e68cf8256feb4ef80f9e518a23ec4885a0081b68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYjY5ZDY5NDM5ODU5NDUzNTc0NDdiZmE3Zjg4ZWE2NWM2NWFmZGNmOWVhMWMxZTIyYzcyMjMzOGI0N2IxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDZjOWY2MjE2ZDk3ZmZmYTFjODE3ZTExZjUwNGMwNWVmMmJiYzA3MzNmNWUzOTU3YTc0ZDc0ZjU2OTZjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037",
+          "version": "repo-lines-v1:sha256:9103ddd56eff85b9690a69367527f00bf5f3582cb8b73be6f7447ce9a56318af:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU0NmY2N2NkNjAwZGQwMDI3YTE4NGRhZjk4NDNjYTMzYWZkMGJlNzM2YjI3MzA3ZWYwZTc1OTMxZGNmNTliNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkyOWE1NmY5MDk3MzYyNzAzZmIzNTZhMTc2ZWZmMzM4NTE4ZjZmMDBhYzVhMDdiODcwMTY0OGNkZTI2NTIyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWU4MWM0MGNkYjk2Y2U1MjM3NjUxNDc3ZWM4MzA5MTEzZTlmMGJhMjI2M2M0Zjc5ZTE4YjJmNzM0NjRhMmU1NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk2YWZmOGExZGRlNDAyZmNlNDdhMzVjYjFmOTM2MTYzMDhiNmQxYzFlNWJhYzA2YTlmZGFlN2ZhMGU4MDUwYSJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L18",
+          "version": "repo-lines-v1:sha256:4cab489ed5a9ff395e048abbc16b06d19b8049e4f7b90c97af78bfcc4baec046:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4M2I1M2ZkMWJlNTkzMzkyYzEwMzA3ZGY2MDQ4Yjc0YjRiYWU0OWYwN2QyNjMyMTQxMThhYWUzMTNkZTJhNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNjFmNjdkNjc2OWQxOGFkMDgzMDU1YjEyNDU0YTcxYzU0ZjY0YzJlMzZmYzdhZjNjYjZhOGY5OTA4M2I3MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1NjA0ZTRjZmFlZjRmMGRmZjIwOGQzZTk0NzBlOTQ2M2Y5MWQ4ZTU5N2ZlOTQyMjQ4YzAwNTc3MDc1MDhiZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YTZhMjhmNzM2NzUzMjMwOWQ2YWZkYmJhMWE4ZTY0OTYwMGQ4ODdhZmNhNDdlNzM0ZDQxZjNhY2I3MThmYjQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T09:00:23.191Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

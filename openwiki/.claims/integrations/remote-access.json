@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b8e4b2328f9638d91718128fd495060bb99d83a705d0a43e4d8a2e7605571bba",
+  "pageVersion": "sha256:d224f47e8f52eabfabf9a872343a767fc7f844d709658cb1a3a3444e978518b0",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -505,10 +505,34 @@
           "version": "repo-lines-v1:sha256:72230fe49762084b234fe88900bbec620625312e686eec5cb4aad493a19724fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5YTU3ZjQ0ZmE5YjJkNmJmZGQ5NGE0MjY5NzA4ZTU0YzMxOThjZTM1NmY2MDg2NzZhOTQwZTUwYzk4YmQ1ZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzUzODM0MWFlYjRjNzQ4MDZiZDZiY2UyYTI1YjNjNjUxMGFlZjg4YzI0YjRhNWFiNWU1MDI0YjlkNTljZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5ODJlMDlmZWViNjFlNTk5NmUxYTVhZTMxMGJlNDNhNzAwYWM4OGRlYjBlZjk2YTk5ZDc5OGFmMDljNGY5ZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0NWI4NjhmOGIzMjZkYTAwYjQ3YjlhM2YwY2Y3ZDc3ZmM4YzM3MDlmMDY3ZjQ0ZWY1Y2Y3ZmZlNGRhMzhjNjkifQ"
         }
       ]
+    },
+    {
+      "id": "claim_afe7597ebcaa41e8a884e286bd306c5a",
+      "statement": "外部MCP get_workspaceはProject/Workspaceの関係検証後、UI tokens APIと同じWorkspaceTokenUsage::getの結果をtoken_usageに返し、読取で実行を起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L80-L90",
+          "version": "repo-lines-v1:sha256:206bf67482b1a1f02becba1e9f5a232f0f1a9ec8153171ab3f7572d490678e01:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiY2Q4YzI5MTVlMzg2MzdhNjU1ZmNlNDY2MzQzYzc1ZTIxNDdhMjY5ZWZjMThjZGJjZDg3NTM3NThlZDU4NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjOWU0MWEzMDUyMDIzNDkwNDI2ZGZhNmI3ODM5NWVjMmNiOWE0ODFlMmRjZjRkNmMwMWFiNGNjZGViZjNhZTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/usage.rs#L319-L328",
+          "version": "repo-lines-v1:sha256:58046b9c12fc0bae0a973289173b6b389ee3b2c75964c5113c366f2bb1f7cebf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5ZGMxZjM1MGViNzdjYjc4MTJlODUzMjZhZmFjY2I5ZGY5ZWMyZWMwODdiNDJiNDdjZTI0ZDUzY2VmOTFlY2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_005953879b39442586f8296d497797e8",
+      "statement": "外部MCP token fixtureは共通集計JSONとの一致と別Project・存在しないWorkspaceの拒否を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L279-L317",
+          "version": "repo-lines-v1:sha256:3411c83881248f3b5c1963f8ffa0a52714af885d1af1b3b3637f5b6e37709226:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExODBhZjk4M2I3ZmIwM2Q3NjNiMWRlMWI3Mjg4OWQwMzdhZTdlYWJlOTUyNzk4NTU1OTkyYTg0OGNiNDcwYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T09:00:23.191Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

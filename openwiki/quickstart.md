@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
+  - id: openwiki-source-c30cc36c4bbe315c59b8e38f
+    resource: repo://crates/db/src/models/workspace_tokens.rs
   - id: openwiki-source-dfa8135bd6d4dbe37911c061
     resource: repo://crates/db/src/models/workspace_usage.rs
   - id: openwiki-source-38bb7eaa90f0c92a0514844d
@@ -56,10 +58,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-21T05:59:59.398Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:59:59.398Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # クイックスタートと調査案内
@@ -103,6 +105,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | --- | --- |
 | 起動、DB、desktop と server の差 | [システム境界と起動順](architecture/system.md) → [開発・検証](operations/development.md) |
 | Agent が止まった、表示と監査が合わない、再接続したい | [Session の状態](concepts/session-and-agent-run.md) → [Agent Runtime の監査・投影・回復](architecture/agent-runtime.md) |
+| Workspace の累積トークン、内訳、不明・一部のみの意味 | [Workspace 累積トークン](concepts/workspace.md#workspace-累積トークン) → [画面で確認](operations/workspace-inspection.md#累積トークンを確認する)。context gauge・各 run 時間との違い、thread 単位の保持、MCP の同じ集計を確認する |
 | provider や model 設定、MCP、Skill の追加 | [Provider integration](integrations/agent-providers.md)。effort override と解決済み値、外部 MCP を使う方向と LVK MCP を公開する方向を分ける |
 | Workflow の分岐、取消、outbox、再起動回復 | [Graph の契約](concepts/workflow-attempt.md) → [Workflow Runtime](architecture/workflow-runtime.md) |
 | 定期的に作業を実行したい | [ScheduledTask の起動・skip 条件](workflows/task-to-integration.md#定時に-workflow-を起動する) |
@@ -160,6 +163,6 @@ Settings の Tag は tag_name/content を持つ、再利用する prompt text �
 
 この Wiki は実装理解のための要約であり、すべての UI 項目や依存 package の一覧ではない。外部サービス、配布済み binary、IDE extension、model の意味的な出力品質は、この source 調査だけでは確定しない。製品 test の実行結果については [検証記録の限界](operations/development.md) を参照する。
 
-今回の通常 Sync は凍結された pending changes と統合済み source `736c2b8a8a2ee9835dc0bbe57a49d69b4e6a71a9` に沿い、Runtime Access の管理設定・認可・ファイル/プロセス操作・取消と再起動を照合した。HTTP router と共通認証、SQLite設定/migration、process/file実装、UI/API、独立した認可・restart・migrationテストを入口に依存境界を確認した。詳細は [Runtime Access の検証範囲](concepts/runtime-access.md#変更時の検証と残る範囲)にまとめる。無関係な過去の説明全体を再検証したという意味ではない。
+今回の通常 Sync は凍結された pending changes と統合済み source `066b2b4bd93d06d046865d66ae16bf1537e8b184` に沿い、Workspace 累積トークンを照合した。native adapter と親 thread scope、migration と snapshot/host cursor の保存、UI の query と HTTP router、stdio/外部 MCP、独立した Rust fixture と Chromium spec を入口として確認した。集計は取得済み Codex 親 thread の報告値であり、未取得は unknown、報告ありも partial で全量を保証しない。[集計契約](concepts/workspace.md#workspace-累積トークン)・[根拠となる応答](../crates/db/src/models/workspace_tokens.rs#L42-L70)・[検証の分担](operations/development.md#workspace-トークン集計の検証)。無関係な過去の説明全体を再検証したという意味ではない。
 
 凍結入力には開発時のテスト成功報告がある一方、正式 Integration は明示的に検証省略と記録されている。今回の文書保守では source とテスト内容を静的に確認し、製品テストは再実行していない。実 Auth0/ChatGPT、ブラウザー E2E、配布サーバーや実DB移行の成功をこの Sync の結果として主張しない。

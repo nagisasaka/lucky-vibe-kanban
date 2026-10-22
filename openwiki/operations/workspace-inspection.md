@@ -32,6 +32,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/git.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
     resource: repo://crates/server/src/routes/workspaces/integration.rs
+  - id: openwiki-source-6459ca8fb9da2218e17b3ac9
+    resource: repo://crates/server/src/routes/workspaces/mod.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
     resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
@@ -52,10 +54,14 @@ sources:
     resource: repo://packages/web-core/src/features/wiki/model/wikiNavigation.ts
   - id: openwiki-source-0cd94f38cc1a16e284fe2b1c
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx
+  - id: openwiki-source-cd106619cfd7af68eb9464fc
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-a836651555f6dfa0a9ab8ce3
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
+  - id: openwiki-source-3f4f76b473cff31732d54424
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-714cddfb6b8044e60077cdf6
     resource: repo://packages/web-core/src/features/workspace-files/model/chatFileLink.ts
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
@@ -70,6 +76,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
+  - id: openwiki-source-06868af84d952b8087cf3ebb
+    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -92,10 +100,10 @@ sources:
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:15:33.468Z
+    at: 2026-10-22T07:38:38.993Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -115,6 +123,14 @@ Integration では owner/run の識別子、状態、保存済み Session 選択
 Stop は Integration の cancel、Bootstrap の所有フロー、Sync の監査付き Cancel へ委譲する。停止可能 phase を再検証し、Wiki publication 開始後は取り消さず結果の確定を待つ。終端または停止要求済みなら重複 Stop は無操作となる。[停止の境界](../../crates/server/src/routes/workspaces/usage.rs)。失敗・回復待ちの意味は [正式統合](../concepts/formal-integration.md)と [Wiki 保守](openwiki-maintenance.md)に置く。
 
 ファイル・Wiki・添付などの読取は `container_for_inspection` を経由する。execution_only では存在するパスだけを返し、cleanup 済みや未準備の worktree を再作成しない。一般の interactive 環境は従来の ensure 経路を保持する。表示に伴う復元や script 起動を追加する変更は、この用途の違いを守る必要がある。[共通の読取入口](../../crates/services/src/services/container.rs)
+
+## 累積トークンを確認する
+
+チャット末尾の「Workspace累積トークン」を開くと、入力・出力、入力の内数であるキャッシュ、出力の内数である推論、内訳取得 thread 数、最終更新を読める。対象は選択 Session だけでなく Workspace 全体であり、各 run の既存時間表示は別に残る。[末尾への配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037)・[表示](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L25-L63)
+
+React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を5秒間隔で再取得する。未取得は「不明」、取得済みでも `partial` は「一部のみ」と表示する。取得エラー時は「取得失敗」を出し、保持済み data があっても詳細内訳を表示しない。0 は不明に置換しない。[取得と分岐](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L12-L60)・[日本語](../../packages/web-core/src/i18n/locales/ja/common.json#L1362-L1374)
+
+`/tokens` は保存済み集計の読取で、同じファイルに実装される `/usage` の実行所有者 inspection / Stop とは別機能である。欠損を補うために AgentRun を起動せず、UI・stdio MCP・外部 MCP は共通集計を使う。[読取 handler](../../crates/server/src/routes/workspaces/usage.rs#L319-L328)。取得範囲と最大値の寿命、未報告の子 thread や料金推定の限界は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、操作入口は [stdio](../integrations/agent-providers.md#外部-mcp-client--lvk)と [外部 MCP](../integrations/remote-access.md#workspace-の報告済みトークンを読む)で確認する。
 
 ## Project の Todo を確認する
 

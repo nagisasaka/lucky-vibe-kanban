@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b3419d0161ac6b6fbb9891767c3890d14d287ccd6ec9e35616e198168ef6d08b",
+  "pageVersion": "sha256:96201f113922e685b3b57a48ef08a5fe07ba67d9c7675a7caadcbe13394f6e31",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -134,7 +134,7 @@
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs",
-          "version": "repo-file-v1:sha256:176341ac2ff7a03faac66b56ce63f4b299ed32d70eb17284d826e921a2c5730f"
+          "version": "repo-file-v1:sha256:8f9c07284d8f2b4b89fe8c1f27202b3fd099309cc8b7d59c6238cd3f65344ec0"
         }
       ]
     },
@@ -447,10 +447,28 @@
           "version": "repo-lines-v1:sha256:043440d5091cc5bebfb74e19f76af470d5215efb3796adbe3bc5197d938f1365:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYmQ1YWFhZmU5MDg1MTQzMzNhOGZmNTllZTA3YTc3MDhjYjNlOTA1Y2MwNWU4M2U1M2YzOTY1Mjg2YWVhOWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmMmUzNzk2MjA2Y2E3MTg1NjFkNGQ5MzIxZGI2ZTBkMTZmYmFiOTQ3ZjQ4MWUyYjliNjhjMThmNzE0ZDE2ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmODFmZTkzZDExODFlZmExZjIwNjMwYjUzZWQzODExNWZiZWJkYjY0ODhkMmI5NWE3MjE4ZjQ3OWVmM2E5Y2UifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c7f9bef8d930419a82fc3bc7631581a7",
+      "statement": "GlobalとOrchestratorのstdio MCPはget_workspace_tokensを公開し、明示またはcontext由来Workspace IDを使う。Orchestratorは別Workspaceを拒否し、tokens APIを読むだけでAgentRunを起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L182-L208",
+          "version": "repo-lines-v1:sha256:7f354286cd9d24ac19b2a5b303f731f0dfc3c766c66da0b3ffe8d7f9d61d1865:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYzMyNjAwYzBmYmI3MDA2YmMzOGM5ZjZmNzM4NTc4NDNjMWZlOWI3YjE4NTkxOWQxMGU2M2MyN2U2ZWFkM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4NWRhMmY0ZjhiY2E1NGVkYzhkNWExYmZmYTU5ZjczYThkZDIwMWU3YjI0YzY0ZDlkYjI2MGFlYzM4ZTdmMmYifQ"
+        },
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L54-L78",
+          "version": "repo-lines-v1:sha256:0994deb191c3a5bb02ad0ea9a037791407244256d87abf5cdba3ed8396d2294d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkOThhNDIxOTNmYTY3MzNiZjE3OTkwMmNiMmMxZTE5NmJmOGQzYzdkNTE2YjRhOGU4NmU3YWIyYmQ3MWEyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4ZGYxYWE1NzAxMmJkMGY1ZWRlNTc1MzM1N2Q5NzEzM2FlNjhlYmM5YjMwYjQ3NTQ2Yzg0ZGNlZmM3YzFiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNTVlMjVmNTEzYjg2MzY1M2M1MzQ5NDliZTE1MTU3Y2Y5ZWZiZmY2Mzc4YjllNzdjYmMwNmU5ZjAxMjM4NTAifQ"
+        },
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/workspaces.rs#L99-L130",
+          "version": "repo-lines-v1:sha256:33d18b567f361ef1d2b71188262f36993a4ebb92598f11b02af0db6e92998fc0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjMTY3MmNiYWViMGQwNTI1NTZlNzVlNTgwMzI2ZjQ5YWQxMjllNTU2M2U0YjNjY2I1MDc0MWFkNzQxMjRlMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzMTc2YmNiMjlhN2JjMTNhOWEwMGM4OGZjNmY4OTU0OTZjOTRjNGUzYzhiMWY0ODg4OTc1NmI0NDQ5ODc4NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4MGM4NDhiMTM1MTNhMWFlNmNkZGUzYzUyZDRiZWNhOTM1ODkxMGUxNzc3NWFiMTBkYWQ4OWVlMDcxZTBjMmEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:22:38.402Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

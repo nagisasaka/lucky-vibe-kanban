@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3bb42c2372801f3a842a718f6d2992fc2b7fd895ee396cf9435e5e00adfbff61",
+  "pageVersion": "sha256:a8551441d6850d27af6cf75c147db0d95760793c19de85db994858fa2688fb84",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -345,10 +345,114 @@
           "version": "repo-lines-v1:sha256:2b87f2f86d3bfcec5f04b61fb7a2bd02faa6810ab18d19e1e9d5b703b2c97c9b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyYzczYzk2Y2MxMWQ5ODU1YTI0OWZlNjI1NjdjNDcwZmQyZDNlYzkzNzYxMTcyNzU5Y2Y3MzczMjM5M2IwMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkOGE5M2NmZmM5Nzc1ZjU1ZjBjMjRjZDBmODJhODNkOTgxZWYzNjA4NzZiYWQxZDA0ZDhiODA2N2RmYjEyYmEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0cb144b50f6f413c8b8af14ea888f47e",
+      "statement": "Workspace累積トークンは取得済みprovider報告の軽量ガイドであり、料金、週次枠、context占有率、各run時間ではない。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/workspace-token-usage.md#L1-L24",
+          "version": "repo-lines-v1:sha256:d1bf989b1f2ab67e67904993eea11a55ac8a9dd5fd2671e52a5b1578ab5b9072:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YmIxYTBiZWI4NzI5ZjkxZTA0OGI3NDZiZjNjMWE4MTRjMzM2ZTBlZWQxZDVmY2RkNWI1ZDUzNjRkNmQzYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkY2UyZjBlNWViYmFjODJjN2I2YjMwODY2ZWQ2ZDdjOWY4NDUxYzM2NGI0ZDdkM2I0OTljY2QyZjM1NWUwMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxMzBhMTg0NDVlOGRkMDk0MmY4NDFkZWJlMzE4YWQ5ZjU2NzlhNmY2MWFmZTJkYjU4NWYzNGIxMjFjN2NmNjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b54aaad9d1964d4f9e10ec881d8b79e6",
+      "statement": "累積対象は親scopeのCodex native thread totalで、thread identity、total=input+output、cached/inputとreasoning/outputの包含を検証し、汎用通知や矛盾値は採用しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/agent_scope.rs#L187-L200",
+          "version": "repo-lines-v1:sha256:6bb72f8a1767eeecb43e9216f23bf4c57a08f512db8ae807c4ff5b71a1537567:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNmEwZjM4YmQ0NGU4MGZkZjI2MDUwZTkxZjJlZTI5ZWZhNTkxOTAyZjYxNDYzNTlmNTY0MmU1MGUxMWNmNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTBkODc1YTIxNTU4NmI1OThjMzU0NjY2NzUzNzQ2Y2U5YzM3NmM2ZjFhYzY0NzVkYTY0N2Q2MTYwNjI5ZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWY4NmQyOGU3ODRmOWZkMzFmYjcyZDE1ZjYwY2JjZWFhZmRkNjY5Y2JkNWI2ZGE3ODg4YTAyMzMyMWViYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwNTY1MTFlZTQyOTJlODQ5MjRjYTVmOWUzNDViMjg0YjRhOWU0YTNlOGMxMjkwNmE3ZWUwZjlhNGRmNTU5NmYifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1969-L2025",
+          "version": "repo-lines-v1:sha256:77dd2b524accb891169676bb5746a882b21eec42b753b94b2756b285a76a1810:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNTNlMjQ4ODZlZDg5OTFmZDZhMjdkNzhjM2Q3MDI2N2JjNTVjOWFhYjg1NWI5MDk4NzJkNzJlNDYzNmM1NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3ZDJlZGY4MmVhNDVmZTNkZTk0ZDYxYmRlYjgxMTg2Y2JiN2IxY2IxMjk5Yzg4OTUyMTRhZDZmNzgwNGEzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1NTY5NTQ5ZTdiNzE2ZmM1OGMyNmNhNDFmMDY3ZWFmMzA3MzVlODZkZmExN2EwY2IwMzdkZjNkZjFlMTgzZjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d02b06304f843528cde4d848c762439",
+      "statement": "計測開始時に過去履歴をbackfillせず、初回thread報告には過去分が含まれ得る。親に含まれない子消費や未対応provider・未報告分は未知とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261021173000_workspace_tokens.sql#L1-L14",
+          "version": "repo-lines-v1:sha256:94cd13ad0105f804168cbb4cc2f2ea965deab172d3521415475b66585941a119:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0ZTJiNGE2NDllZjE4NWM1NWVjNWViYTMyMGJmNTBlZTk4Zjk5NDljZTBjOTZlNzZhMzgyZjI5YzQwMWUyMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L60-L70",
+          "version": "repo-lines-v1:sha256:f0f15e8eb41453fe5268ec6ed5651f605999eb8c0ffcdc2ea84d5643ddf465ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxNzZkNGU5YTBhNDViNmIyNzRiOGFjY2YzZmUzMjdjZmU2MzBkNGM5MjY3NDNlMDNhOGU4ZTMxZjk2YWRhNmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZTk4ODM1YzFlZjkxMzgyYTkwZjJlYTAxNGVlNjJkYmNjNGMwODdhYTcxZDZiYTdmZTkxYjFkMWEzMTE0MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_82b84d155bc8492d95375666b93d9531",
+      "statement": "Workspace/provider/thread単位に最大報告totalを保存し、resumeや複数attemptを加算せず別threadを合算する。低い報告や失敗・取消で減らさず、reset後の差分は推定しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1830-L1860",
+          "version": "repo-lines-v1:sha256:7834d0fcf1081c29e8881a2c1d95f96404faaacbc8ad804b549fb10d0f40ad30:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlZDgyYzJmZmM5ZmJiNGQwYzI3YmM3ZTMxNjdhYWE4OGU3YWIwNmMxYjExZjYyYzk5OTYzOGZhYmM1MjQ2ZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0YWFkMzUwMDBlMWZjMWE2MTFlNTBjNzUwMzc1N2Q4ZGVjNWZmOTVjYzRmMmE0NTNiNWQyNDQ2M2Q4YzczMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwNWEyNDIwYjM5YzJhNTJiODg3N2VkMzVlYTQzMDk3MmFjMDgwMzA3Y2RlMWUxOWE4NDlhOTRjNWZhZjRiNWIifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L2941-L3058",
+          "version": "repo-lines-v1:sha256:898a86621fd4ec38eba2c19ec680b47e8ff32cd73e3a66885735fbe45b1c2744:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiNzAzODMyMWRiYzcxZTNkOGMzZjQxZjZhZGFlMGZjZTUzMjIxY2Q0ZmM3MDFjYzc2YjE3M2FlZmIyZjQ4YjQxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNWViN2EzYTk3MzI0MWU5YTQzMTQ3OTJhNTA5ZjhjMmQ1Mjg1ZWMxMzI1ZmQ2MTYxMzlkMDM1YmEwNzEyY2EzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMTRjYzljODI4MjhjZjE2MmY5ZmI3YzU3YjZmNGYyYzZmNzYyNmU4ODBkYjJhOGEyNmNhZWQwZmMxYzUzNGVmIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_0543934915a14899a13b0ca1078dad70",
+      "statement": "採用報告の欠損cached/reasoningは既報値を保持し、後続snapshotの累積情報欠落でも集計は消えず、Workspace DB削除時はcascadeする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261021173000_workspace_tokens.sql#L1-L14",
+          "version": "repo-lines-v1:sha256:94cd13ad0105f804168cbb4cc2f2ea965deab172d3521415475b66585941a119:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0ZTJiNGE2NDllZjE4NWM1NWVjNWViYTMyMGJmNTBlZTk4Zjk5NDljZTBjOTZlNzZhMzgyZjI5YzQwMWUyMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1845-L1859",
+          "version": "repo-lines-v1:sha256:e00e6166b01a39f3136205f873c7dfa6081f39f46e8f9a43c1077e33d3bd06dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NTdlYWNhNTFkNzA1ODFmNmY1MjQwYjg2MzYzZGY1ZDcxMTM0ZTJjYWYzMTAwNjg5YTRlODg3ODY5MTkxY2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlZTIzMTI0MGIyYmZjNWM3MDYwOTc4ZWQ0ODQ1ODVkYTAxM2E3NTk1Yzg4MGYxNDBmNzkwNmE0YzEwMzZiOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyZDcwYjZiMTZiYjJmMmI3NzI4NGY0NWFkYzljNmM2YTYxM2I1ZmQwYmE3MDc5ZTk1OTAzMGEwMjYxZmNiOGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0NTFiZWU5MjhhZDZlN2ZkYWMzMGJmZjY0MjFkZmJmYmQxNDg2NDkzN2Q1ZTQ1Njk5ZWI2MzM0OTZiNmZhMzkifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L3061-L3170",
+          "version": "repo-lines-v1:sha256:781d4906165f4fbc10cc2b424850ec367f3f6be97e2aef229270c1ebed0b6389:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4YzAyNTQyOGViNGEyNDY4ZmZjNjFkNDFkMmFjNzA4MzNkZDY2NDhjM2FmZjU1OWZjMTdmOWJiZDZkZjE0YTVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YmY2MzRlYTIyMjMzZDU0NmM1ODMzOTNmNDc1YzBmOTZmODI1ODZiZGM0MWMwMmZkMWVlMDYwNGY0NzgxYmI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_327c8670fbee480899f4e257c67deea6",
+      "statement": "有効行がなければnull/unknown、有効な0は0であり、報告があれば常にpartial。内訳は取得値の和と取得thread数を返し、観測時刻の最小と更新時刻の最大を返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L42-L70",
+          "version": "repo-lines-v1:sha256:96d82cfdd563449d8a0b0582e68cf8256feb4ef80f9e518a23ec4885a0081b68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYjY5ZDY5NDM5ODU5NDUzNTc0NDdiZmE3Zjg4ZWE2NWM2NWFmZGNmOWVhMWMxZTIyYzcyMjMzOGI0N2IxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDZjOWY2MjE2ZDk3ZmZmYTFjODE3ZTExZjUwNGMwNWVmMmJiYzA3MzNmNWUzOTU3YTc0ZDc0ZjU2OTZjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5c5b33a356974ae988eaab3e547ba505",
+      "statement": "providersは保存報告のprovider一覧、requested_modelsはWorkspaceのattempt要求モデル一覧であり実使用モデルや消費配分を証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L55-L70",
+          "version": "repo-lines-v1:sha256:720458e495ac57da40c1aec7cb0616743f4afce616d688e5034198b3d02e942c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3MTBmYTc2Y2UwOTdjMWJkY2IxZTIyMTdhZTYwODhhYjE1Njk3NDQxN2QzYWNhN2E0NjQyMzRjZDU2NzVjZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_30f1d9baa10b46ad912192413023ac7b",
+      "statement": "実装記録は最新snapshotによる報告attempt数の後退を理由に分子・表示専用分母を削除し、everflagや履歴走査を追加しなかったと記録し、現行応答型にもattempt数はない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/workspace_tokens.rs#L7-L25",
+          "version": "repo-lines-v1:sha256:5951c4f03e878090f58d44eeec49229089f2cb5b1bc7803b2d958e0c5e6f4639:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3MjgzMTc2OGQ3ZWViZThjMjU2NWRjOWRlMTg3NzYwNWMyY2FjNDExMzgwM2ZiZGFkNTM1NmRmZTc4NmFhOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1NjQ1YzI0OGRhNmE2Nzc3YTAyZmM0ZjJlMWY3NGI0MjhmY2VlZDg5ZmYzZTM0MTVmNzFmOTdmYjAzNmM1ZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlOGUyNWRjNWM2YWZhNDYxNzVhN2JmYzE2N2VkYTc0Nzg1MDkxYWNjNDE4ZjIwMDY1NmNkZWMwYmZhMzhiMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjNGJmNzljYThhYTkwMTg5NjAwZDA0ODEyOGEzOTkxMmFlYmNiYTVkNzU2YWRhM2UyMjAwZTBkMWUyOWE5NmMifQ"
+        },
+        {
+          "resource": "repo://docs/development/workspace-token-usage.md#L107-L113",
+          "version": "repo-lines-v1:sha256:5989da07bbf240e5f466c7806b65f7ab80e095c1c6cce8f67d0d24336f185015:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTYxNmFhYTE0MjM1NzRiOGI1MTA2NzliNTI0MTVhYjI5OGQ5ZTc5MTczZTkzYzY4NzRhYzMzYTM3NjY0OTNkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2YwMTk2MWVmYThkYTE4ZjU3NjFhMGQ2ZmU4MzdmNDAyMTFmNjhjODYyNzNjOTNkZWExZmYxMzVjMzdjM2FkOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjY0YTlkZjVhNmQ3NjRmZjljMmUwMjRmZGNmMTM2NDAzN2E4OTEwMDVkODJlZTdjMDVmNGNlMmU2N2JlNzEyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk5MDE2NjIwM2M5YTdhNWM3MTIyOGMyMTFkNjNlNmUxMjAzZmE0MTU1MmMxYzk2Nzg2YmY3ZTU4OTg0YjI4ZiJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:35:32.360Z"
+    "at": "2026-10-22T07:38:38.993Z"
   }
 }

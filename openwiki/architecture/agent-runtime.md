@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:22:38.402Z
+    at: 2026-10-22T07:38:38.993Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -19,6 +19,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-351583963abfe37bbf137f7e
+    resource: repo://crates/executors/src/runtime/contracts.rs
   - id: openwiki-source-2312e3967b9fd7f73e349d9a
     resource: repo://crates/executors/src/runtime/native_audit.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -49,7 +51,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-21T06:22:38.402Z" }
+generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -89,7 +91,7 @@ Codex のメッセージ差分と完成メッセージは別の経路を通る�
 
 ## Context と子観測の投影
 
-Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。専用 table や canonical token 履歴を増やさない。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1619-L1645)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1697-L1760)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
+Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。context 用の専用 table や canonical token 履歴は増やさない。Workspace 累積トークンは別の thread 単位集計として保存する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1632-L1658)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
 
 現行 Codex mapper は v5 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。旧 v4 mapper は旧 collaboration 投影の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L553)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
@@ -137,7 +139,13 @@ Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions
 
 一つの host response の永続イベント、provider session 観測、投影、usage snapshot、cursor 更新を同じ transaction に収める。canonical sequence は密な連番を割り当て、生フレームや host の sequence とは区別する。cursor だけ先へ進めると再接続時に未反映データを失う。[batch の入口](../../crates/db/src/models/agent_runtime.rs#L1479-L1554)、[cursor と commit](../../crates/db/src/models/agent_runtime.rs#L1772-L1793)
 
-usage は RunAttempt ごとに native sequence が新しい場合だけ置き換える。同じ sequence に異なる内容が来ると冪等性の衝突として拒否し、古い通知は無視する。[usage 更新](../../crates/db/src/models/agent_runtime.rs#L1723-L1755)
+RunAttempt の usage snapshot は RunAttempt ごとに native sequence が新しい場合だけ置き換える。同じ sequence に異なる内容が来ると冪等性の衝突として拒否し、古い通知は無視する。[usage 更新](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)
+
+### Workspace 累積値の保存境界
+
+`TokenUsageSnapshot.cumulative_usage` は、Codex native 通知の thread identity と total の整合性を adapter が確認できた場合だけ付く任意 field である。旧 snapshot は欠落したまま deserialize でき、汎用 usage を累積と推定しない。[適合判定](../../crates/executors/src/executors/provider_adapter.rs#L1969-L2025)・[互換 field](../../crates/executors/src/runtime/contracts.rs#L411-L440)
+
+DB はこの情報を再検証し、`workspace_token_usage` の thread 単位最大値を既存 snapshot と host cursor と同一 transaction で保存する。snapshot の同一 sequence 内容衝突や cursor identity 不一致なら commit しない。thread の total 比較と RunAttempt snapshot の sequence 比較は別の更新条件であり、後者の最新値を全 attempt 分加算してはならない。[保存・衝突・commit](../../crates/db/src/models/agent_runtime.rs#L1797-L1928)。集計の意味、欠損内訳・取消・reset の扱いは [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)を正本とする。
 
 ### Canonical event から Board への副作用
 
