@@ -1,5 +1,60 @@
 # 設計メモの検証・追加レビュー修正
 
+## 最終検証（2026-10-23 JST）
+
+ユーザーのheavy並行実行承認後、以下の検証を実行して成功した。以前の「GO待ち／未実行」は下記の経緯記録であり、この最終結果で更新する。
+
+製品ソースは `c4b992d2b7c170f47fae5449b9f802d81fbb2f19` から変更不要。E2E手順の一覧返却形式と削除確認ダイアログの指定を修正し、削除拒否UI・履歴不変assertionを追加した。クリーンな受入確認commitは `7e1a3b4cf62944de6005c159f428523364eabdf6`。`git HEAD == serverBuild.revision`、両dirty=falseをassertしたChromium E2Eが成功。文書更新後の最終HEADについても同じ一致条件で再実行することを完了条件とする（最終実行ログ `.build/design-notes/final/e2e-final.log`）。
+
+### 実行コマンドと結果
+
+Cargoは `CARGO_BUILD_JOBS=2` と既存sccacheを使用。重いコマンドはこのWorkspace内で逐次実行。Playwrightは単一Nodeプロセス・単一browser、並列workerなし（実質workers=1）。
+
+| コマンド | 結果 |
+| --- | --- |
+| `cargo test -p db design_note --lib` | 8件成功。長文/Unicode、44メモ・43追記・44版のページ継続、上限、不正ページ、固定revision、本文と追記の履歴、複数SQLite接続競合、再送を含む。 |
+| `cargo test -p server design_note_mcp --lib` | 2件成功。scope/Project境界、初回/再送/get_operation、成功receipt保存結果256 bytes未満・operation応答4096 bytes未満、legacy全文receipt投影、正本の最大10万文字本文＋追記の保持。 |
+| `cargo test -p server project_delete_temporarily_protects_design_history_without_data_loss --lib` | 1件成功。409と暫定理由、Project/関連子/本文/履歴/追記/receiptの全column不変、メモなしProject削除。 |
+| `cargo test -p server http_discovery_authentication_and_tool_call_roundtrip --lib` | 1件成功。外部HTTPの認証・scope challenge回帰。 |
+| `pnpm run generate-types:check` | 成功。生成型・schemaに差分なし。 |
+| `pnpm run prepare-db:check` | 成功。隔離一時DBへ全migration適用、metadata整合。既存のpotentially unused queries警告あり。 |
+| `cargo clippy -p db -p server -p mcp --all-targets -- -D warnings` | 成功。 |
+| `pnpm run web-core:check` / `pnpm run local-web:check` | 各成功。 |
+| `pnpm run local-web:lint` | 成功。 |
+| `pnpm --dir packages/local-web exec eslint ../web-core/src/features/design-notes ../web-core/src/features/kanban/ui/KanbanContainer.tsx ../web-core/src/features/todos/model/todoViewStore.ts ../web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx --ext ts,tsx --config .eslintrc.cjs --max-warnings 0` | 成功。 |
+| `pnpm --dir packages/local-web run build` | 成功。既存Browserslist/Tailwind/chunkサイズ警告あり。 |
+| `cargo build --bin server --bin agent-process-host --bin vibe-kanban-mcp` | 成功。既存targetを再利用。commit凍結後はserverのbuild identity更新のみを再ビルド。 |
+| `node tests/design-notes/isolated.mjs` | 成功。Chromium 147.0.7727.15、隔離DBとOS割当port 41547。 |
+| `node --check tests/design-notes/isolated.mjs` / `git diff --check` | 成功。 |
+
+各ログは `.build/design-notes/final/` に保持。SQLx CLIは既存のこのWorkspaceのtarget内0.8.6 binaryを再利用し、再インストール・重複binary作成を避けた。generated filesやquery metadataは変更していない。
+
+### 実ブラウザの操作・観察
+
+- 1440px一覧＋本文、390/320px一覧→詳細→一覧、light/dark、再読込を確認。初版/各版/復元、追記訂正/訂正前出典/非表示/再表示/明示統合を検証。
+- UI/UI・UI/MCP競合の拒否、下書き保持・現在版比較・明示再適用を検証。編集中に追記を非表示にされても下書きを保持。
+- CSRF拒否、REST/MCPの別Project参照拒否、同一request_id再送、異なる入力の再利用拒否、安全なMarkdownを確認。
+- 実stdio MCPで10万Unicode文字の本文と追記を保存。後続の本文更新後も再送は元の確定id/revisionを返し、receiptは256 bytes未満。bounded readで元の本文・追記全文を復元。
+- 設定画面→Projectの削除メニュー→確認画面→削除を操作。実DELETEの409と履歴保護理由を画面に表示し、削除成功表示が出ないこと、Projectが残ること、本文detail・全本文版・全追記版が操作前後で一致することを確認。
+- 画像はdesktop-dark/mobile-light/delete-refusedの3枚に限定し、目視でも確認。DOM/API assertionが主な検証で、画像だけで合否を判断していない。
+
+初回の追加UI試験は、既存KeyboardDialogに`role=dialog`がないためlocatorで失敗した。実画面の見出しから確認内容を特定するよう試験のみ修正。製品側の拒否処理・assertionを緩めず再実行して成功した。
+
+### リソース・片付け・未検証範囲
+
+工程前に `/proc/meminfo`、CPU差分、load、memory PSI、swap増減、disk空きを記録。19:55 UTCのswap約1.44GiB増加とmemory full avg10=10.2で次工程を自動停止。待機後、available 13.6GiB・swap減少・圧迫低下を確認して再開した。停止は検証失敗ではなく工程開始ガード。観測ログは `.build/design-notes/final/resources.jsonl`。
+
+自分の試験server/agent-process-host/MCP残存プロセス0、一時instance DBディレクトリ0、prepare_db.sqliteなしを確認。既存target（約35GB）・依存関係・built frontend（約77MB）は継続作業用に保持。証拠ログ/画像はtask-owned `.build/design-notes/` に保持。共有cache、稼働サーバー/DB、他Workspaceは変更していない。
+
+実Auth0/ChatGPTアカウント、Firefox/WebKit、実機モバイル、Tauri、全workspace一括試験、正式Integration、稼働DBへのmigrationは未検証。外部MCPはRust/HTTP fixture、実ブラウザは隔離local認証＋stdio MCPで検証。有料モデル呼出しは追加していない。ユーザーからc4b992d2の独立再レビューでP1/P2解消・追加ブロッカーなしの報告を受領。今回の変更は試験と報告のみ。
+
+Project永久削除方針は人間判断待ち。暫定409を維持し、main merge/deploy/Wiki/Skill更新は実施していない。
+
+---
+
+## 以下は実装・追加レビュー時点の経緯記録
+
+
 今回の追加修正はコード修正と軽量チェックまで。LOCAL-88が重い検証を使うため、ユーザー指示によりRustコンパイル・型生成・ブラウザE2Eの前で停止する。**修正後のRust/API/UI実行結果は未検証**であり、前回成功を今回の成功とは扱わない。この報告書を含む修正commitは `git log -1 --format=%H -- docs/development/design-notes-validation.md` で特定できる。
 
 ## 今回の修正

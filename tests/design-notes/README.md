@@ -55,7 +55,7 @@ node tests/design-notes/isolated.mjs
 E2Eはこのcheckoutのtarget/debugのbinaryとbuilt frontendを使用し、新規
 LVK_INSTANCE_DIR・SQLite・loopbackのOS割当ポートで起動する。現行サーバーや共有DBは
 使わず、有料モデルも呼ばない。finallyで開始した子プロセスを停止・待機し、一時DBを削除。
-スクリーンショット2枚とログは `.build/design-notes/e2e/` に残す。
+スクリーンショット3枚とログは `.build/design-notes/e2e/` に残す。
 `LVK_CHROMIUM_EXECUTABLE`で既存Chromiumの絶対パスを指定できる。
 
 ブラウザ検査は作成・編集・複数メモ、初版・全版・復元、MCP追記と再送、
@@ -78,8 +78,9 @@ Markdownの危険リンク、1440/390/320px、再読込を実APIとDOMで照合�
 ## 追加レビュー修正の検証待ち
 
 追跡可能な報告: [設計メモの検証・追加レビュー修正](../../docs/development/design-notes-validation.md)。
-LOCAL-88との競合を避け、追加修正では軽量チェックのみ実施。Rust・型生成・ブラウザの
-最終検証はユーザーの後続指示待ち。前回E2E成功を今回の修正の検証結果とは扱わない。
+追加修正時はLOCAL-88との競合を避け軽量チェックのみで停止した。その後ユーザーの
+heavy並行実行承認を受け、Rust/HTTP/MCP、型生成、SQLx、Lint/Clippy/build、隔離E2Eを
+実行して成功。最新の結果・対象commit・未検証範囲は上記の追跡報告を参照。
 軽量SQL smoke: `python3 tests/design-notes/bounded-read-sql.py`。
 
 MCP書込みの成功結果は `{note:{id,revision},addition:null|{id,revision}}` のみ。
