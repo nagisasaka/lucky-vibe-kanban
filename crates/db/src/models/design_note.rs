@@ -107,6 +107,32 @@ pub struct DesignNoteResult {
     pub note: DesignNote,
     pub addition: Option<DesignNoteAddition>,
 }
+/// MCP success evidence only. Revisions describe the committed operation result,
+/// not the latest state. Full immutable snapshots are available via bounded reads.
+#[derive(Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+pub struct DesignNoteReceipt {
+    pub note: DesignNoteVersion,
+    pub addition: Option<DesignNoteVersion>,
+}
+#[derive(Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+pub struct DesignNoteVersion {
+    pub id: Uuid,
+    pub revision: i32,
+}
+impl DesignNoteResult {
+    pub fn mcp_receipt(&self) -> DesignNoteReceipt {
+        DesignNoteReceipt {
+            note: DesignNoteVersion {
+                id: self.note.id,
+                revision: self.note.revision,
+            },
+            addition: self.addition.as_ref().map(|a| DesignNoteVersion {
+                id: a.id,
+                revision: a.revision,
+            }),
+        }
+    }
+}
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct DesignNoteDetail {
     pub note: DesignNote,

@@ -370,6 +370,24 @@ try {
   await page.getByTestId('design-notes').getByRole('button',{name:/最初の理想/}).click();
   await expect(page.getByTestId('note-body')).toContainText('一つ目の画面で保存した本文');
   assert.deepEqual(errors,[]);
+  // Real stdio transport: maximum body + addition must never escape in a write receipt.
+  const longText = '😀'.repeat(100000);
+  const longCreate = {request_id:randomUUID(),operation:{action:'create',title:'bounded receipt',body:longText}};
+  const createdReceipt = await tool('write_design_note',{project_id:foreign,input:longCreate});
+  const longId = createdReceipt.note.id;
+  const longAppend = {request_id:randomUUID(),operation:{action:'append',note_id:longId,addition:{heading:'long',content:longText,kind:'proposal',source:'synthetic/test',speaker:'AI',referenced_body_revision:1}}};
+  const addedReceipt = await tool('write_design_note',{project_id:foreign,input:longAppend});
+  await tool('write_design_note',{project_id:foreign,input:{request_id:randomUUID(),operation:{action:'update',note_id:longId,expected_revision:1,title:'changed',body:'changed'}}});
+  for (const [input,receipt] of [[longCreate,createdReceipt],[longAppend,addedReceipt]]) {
+    const retry = await tool('write_design_note',{project_id:foreign,input});
+    assert.deepEqual(retry,receipt);
+    assert.ok(Buffer.byteLength(JSON.stringify(receipt)) < 256);
+    assert.equal(receipt.note.revision,1);
+    assert.deepEqual(Object.keys(receipt.note).sort(),['id','revision']);
+    if (receipt.addition) assert.deepEqual(Object.keys(receipt.addition).sort(),['id','revision']);
+  }
+  assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,revision:1})).body,longText);
+  assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,addition_id:addedReceipt.addition.id,revision:1})).content,longText);
   console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload'],ports:new URL(base).port},null,2));
 } catch(error) {
   if(page) await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});

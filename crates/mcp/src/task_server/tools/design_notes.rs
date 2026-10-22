@@ -1,4 +1,7 @@
-use db::models::{design_note::DesignNoteWrite, design_note_read::DesignNoteRead as ReadArgs};
+use db::models::{
+    design_note::{DesignNoteResult, DesignNoteWrite},
+    design_note_read::DesignNoteRead as ReadArgs,
+};
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
     tool_router,
@@ -73,7 +76,7 @@ impl McpServer {
         }
     }
     #[tool(
-        description = "Explicit design note operation using stable input.request_id for identical retries. Autonomous AI recording MUST use append; update/restore/integrate require explicit body-edit intent. Keep source/speaker distinct from recorder, distinguish decision/proposal/open_question, avoid duplicates. All changes preserve history."
+        description = "Explicit design note operation using stable input.request_id for identical retries. Autonomous AI recording MUST use append; update/restore/integrate require explicit body-edit intent. Keep source/speaker distinct from recorder, distinguish decision/proposal/open_question, avoid duplicates. All changes preserve history. Success returns only {note:{id,revision},addition:null|{id,revision}} for the committed operation, including retries; no body/content. Read full snapshots with get_design_note using these IDs/revisions."
     )]
     async fn write_design_note(
         &self,
@@ -81,10 +84,10 @@ impl McpServer {
     ) -> Result<CallToolResult, ErrorData> {
         let url = self.url(&format!("/api/projects/{}/design-notes", a.project_id));
         match self
-            .send_json::<serde_json::Value>(self.client.post(url).json(&a.input))
+            .send_json::<DesignNoteResult>(self.client.post(url).json(&a.input))
             .await
         {
-            Ok(v) => Self::success(&v),
+            Ok(v) => Self::success(&v.mcp_receipt()),
             Err(e) => Ok(Self::tool_error(e)),
         }
     }

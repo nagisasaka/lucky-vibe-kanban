@@ -517,3 +517,57 @@ async fn bounded_metadata_pages_cover_many_notes_additions_and_histories() {
     assert_eq!(old["source"], "test/message");
     assert_eq!(old["hidden"], false);
 }
+
+#[tokio::test]
+async fn mcp_write_receipt_is_small_and_replays_committed_versions() {
+    let (pool, p, _) = fixture().await;
+    let long = "😀".repeat(100_000);
+    let create = write(json!({"action":"create","title":"long","body":long}));
+    let n = DesignNote::write(&pool, p, "human", create.clone())
+        .await
+        .unwrap();
+    let receipt = n.mcp_receipt();
+    assert!(serde_json::to_vec(&receipt).unwrap().len() < 256);
+    assert_eq!(n.note.body, long); // UI REST result remains complete.
+    let append = write(
+        json!({"action":"append","note_id":n.note.id,"addition":{"heading":"idea","content":long,"kind":"proposal","source":"test","speaker":"AI","referenced_body_revision":1}}),
+    );
+    let result = DesignNote::write(&pool, p, "AI", append.clone())
+        .await
+        .unwrap();
+    let saved = result.mcp_receipt();
+    assert!(serde_json::to_vec(&saved).unwrap().len() < 256);
+    assert_eq!(result.addition.as_ref().unwrap().content, long);
+    DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.note.id,"expected_revision":1,"title":"new","body":"new"}))).await.unwrap();
+    assert_eq!(
+        DesignNote::write(&pool, p, "human", create)
+            .await
+            .unwrap()
+            .mcp_receipt(),
+        receipt
+    );
+    assert_eq!(
+        DesignNote::write(&pool, p, "AI", append)
+            .await
+            .unwrap()
+            .mcp_receipt(),
+        saved
+    );
+    assert_eq!(saved.note.revision, 1);
+    assert_eq!(
+        DesignNote::detail(&pool, p, n.note.id)
+            .await
+            .unwrap()
+            .additions
+            .len(),
+        1
+    );
+    assert_eq!(
+        bounded_snapshot(
+            &pool,
+            json!({"project_id":p,"note_id":n.note.id,"revision":1})
+        )
+        .await["body"],
+        long
+    );
+}

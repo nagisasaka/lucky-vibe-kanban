@@ -1660,3 +1660,94 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     let first: Value = serde_json::from_str(first["content_page"].as_str().unwrap()).unwrap();
     assert_eq!(first["body"], "original");
 }
+
+#[tokio::test]
+async fn design_note_mcp_write_initial_retry_and_operation_are_bounded() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'bounded-write')")
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let remote = Remote {
+        environment: None,
+        launch: None,
+        runtime: None,
+        pool: pool.clone(),
+        config: Arc::new(config()),
+        process_instance: Uuid::new_v4(),
+    };
+    let principal = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    let long = "😀".repeat(100_000);
+    let create = Uuid::new_v4();
+    let input = json!({"project_id":project,"input":{"request_id":create,"operation":{"action":"create","title":"long","body":long}}});
+    let initial = design_notes::call(&remote, &principal, "write_design_note", input.clone())
+        .await
+        .unwrap();
+    assert!(serde_json::to_vec(&initial).unwrap().len() < 4096);
+    let created = settled_operation(&remote, &principal, project, create).await;
+    assert_eq!(created["status"], "succeeded");
+    let id = created["result"]["note"]["id"].clone();
+    let request = Uuid::new_v4();
+    let append = json!({"project_id":project,"input":{"request_id":request,"operation":{"action":"append","note_id":id,"addition":{"heading":"long","content":long,"kind":"proposal","source":"test","speaker":"AI","referenced_body_revision":1}}}});
+    let initial = design_notes::call(&remote, &principal, "write_design_note", append.clone())
+        .await
+        .unwrap();
+    let settled = settled_operation(&remote, &principal, project, request).await;
+    let replay = design_notes::call(&remote, &principal, "write_design_note", append.clone())
+        .await
+        .unwrap();
+    for value in [&created, &initial, &settled, &replay] {
+        assert!(serde_json::to_vec(value).unwrap().len() < 4096);
+    }
+    assert_eq!(settled["status"], "succeeded");
+    assert_eq!(settled["result"], replay["result"]);
+    assert!(settled["result"]["note"].get("body").is_none());
+    assert!(settled["result"]["addition"].get("content").is_none());
+    let stored: String = sqlx::query_scalar("SELECT result FROM remote_mcp_operations WHERE id=?")
+        .bind(Uuid::parse_str(settled["operation_id"].as_str().unwrap()).unwrap())
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(stored.len() < 256);
+    assert_eq!(
+        serde_json::from_str::<Value>(&stored).unwrap(),
+        settled["result"]
+    );
+    // Legacy full-snapshot receipts must also stay bounded on retrieval/retry.
+    let mut legacy = settled["result"].clone();
+    legacy["note"]["body"] = json!(long);
+    legacy["addition"]["content"] = json!(long);
+    sqlx::query("UPDATE remote_mcp_operations SET result=? WHERE id=?")
+        .bind(legacy.to_string())
+        .bind(Uuid::parse_str(settled["operation_id"].as_str().unwrap()).unwrap())
+        .execute(&pool)
+        .await
+        .unwrap();
+    for value in [
+        settled_operation(&remote, &principal, project, request).await,
+        design_notes::call(&remote, &principal, "write_design_note", append)
+            .await
+            .unwrap(),
+    ] {
+        assert!(serde_json::to_vec(&value).unwrap().len() < 4096);
+        assert_eq!(value["status"], "succeeded");
+        assert_eq!(value["result"], settled["result"]);
+    }
+    let note = Uuid::parse_str(id.as_str().unwrap()).unwrap();
+    let detail = db::models::design_note::DesignNote::detail(&pool, project, note)
+        .await
+        .unwrap();
+    assert_eq!(detail.note.body, long);
+    assert_eq!(detail.additions.len(), 1);
+    assert_eq!(detail.additions[0].content, long);
+}

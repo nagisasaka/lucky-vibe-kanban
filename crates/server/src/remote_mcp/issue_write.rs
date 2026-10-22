@@ -102,6 +102,18 @@ impl Remote {
         };
         let targets = object(&receipt.targets);
         let result = receipt.result.as_deref().and_then(object);
+        // Older saved successful design-note receipts may contain full snapshots.
+        // Project at every delivery (including get_operation/retry), without rewriting
+        // the stored evidence or replacing committed revisions with current state.
+        let result = if receipt.operation == "write_design_note" && receipt.status == "succeeded" {
+            result
+                .and_then(|v| {
+                    serde_json::from_value::<db::models::design_note::DesignNoteReceipt>(v).ok()
+                })
+                .and_then(|v| serde_json::to_value(v).ok())
+        } else {
+            result
+        };
         let unreadable = targets.is_none()
             || (receipt.result.is_some() && result.is_none())
             || (matches!(receipt.status.as_str(), "succeeded" | "failed") && result.is_none());

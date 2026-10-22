@@ -23,7 +23,7 @@ struct WriteArgs {
 pub(super) fn tools() -> Vec<Tool> {
     let mut write = definition::<WriteArgs>(
         "write_design_note",
-        "Explicit design-note operation with stable input.request_id. Autonomous AI recording MUST use append, never update/restore/integrate without explicit body-edit intent. Preserve human intent, attribute speaker/source honestly, distinguish decision/proposal/open_question, avoid duplicates. Reuse identical request on retry. Changes preserve all history.",
+        "Explicit design-note operation with stable input.request_id. Autonomous AI recording MUST use append, never update/restore/integrate without explicit body-edit intent. Preserve human intent, attribute speaker/source honestly, distinguish decision/proposal/open_question, avoid duplicates. Reuse identical request on retry. Changes preserve all history. Returns an operation receipt; use get_operation until settled. Succeeded result is only {note:{id,revision},addition:null|{id,revision}}, pinned to that committed operation, including retries. Read full content with get_design_note using those IDs/revisions.",
     );
     let mut value = serde_json::to_value(&write).expect("tool");
     value["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":false});
@@ -73,7 +73,7 @@ pub(super) async fn call(
                 json!({"project_id":a.project_id}),
                 move |_| async move {
                     match DesignNote::write(&owned.pool, a.project_id, &actor, a.input).await {
-                        Ok(result) => ("succeeded", json!(result)),
+                        Ok(result) => ("succeeded", json!(result.mcp_receipt())),
                         Err(
                             db::models::design_note::DesignNoteError::Database(_)
                             | db::models::design_note::DesignNoteError::Json(_),

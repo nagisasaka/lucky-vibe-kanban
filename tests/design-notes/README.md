@@ -81,3 +81,8 @@ Markdownの危険リンク、1440/390/320px、再読込を実APIとDOMで照合�
 LOCAL-88との競合を避け、追加修正では軽量チェックのみ実施。Rust・型生成・ブラウザの
 最終検証はユーザーの後続指示待ち。前回E2E成功を今回の修正の検証結果とは扱わない。
 軽量SQL smoke: `python3 tests/design-notes/bounded-read-sql.py`。
+
+MCP書込みの成功結果は `{note:{id,revision},addition:null|{id,revision}}` のみ。
+stdioは直接これを返し、外部HTTPはoperation receiptのsucceeded resultに保存する。
+再送は元の確定版を返す。全文は返却ID/revisionを使ってbounded readで取得する。
+UI RESTのDesignNoteResult契約は変更しない。

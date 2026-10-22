@@ -6,7 +6,7 @@
 
 ### MCPの読み出し量
 
-[共通projection](../../crates/db/src/models/design_note_read.rs)を内部stdio・外部HTTP MCPから使用する。保存先はUIと同じテーブル・履歴。ユーザーが認めた「MCP read projectionのみを小さくする」方針を採用し、UI用RESTの既存返却形式・書込み結果形式は変更しない。MCPは従来の大量本文list/history・無制限additions detailを呼ばなくなる。
+[共通projection](../../crates/db/src/models/design_note_read.rs)を内部stdio・外部HTTP MCPから使用する。保存先はUIと同じテーブル・履歴。ユーザーが認めた「MCP read projectionのみを小さくする」方針を採用し、UI用RESTの既存返却形式・書込み結果形式は変更しない（MCP書込み結果は後述の追加修正で小さくした）。MCPは従来の大量本文list/history・無制限additions detailを呼ばなくなる。
 
 - `list_design_notes`: 本文なしのメタデータ、既定・最大20件。`next_cursor`を`cursor`として続ける。
 - `get_design_note`, `section=additions`: 非表示を含む追記メタデータ、最大20件。同じcursor方式。返却されたid・revisionを指定して追記内容を読む。
@@ -67,3 +67,21 @@ offset>0には保存済みrevisionが必須。初回のrevision・文字列・�
 隔離Chromium 147.0.7727.15、専用port、新規LVK_INSTANCE_DIR/SQLiteで、ソースとbinaryが同commit・dirty=falseを照合。複数メモ、初版/履歴/復元、MCP追記/再送、UI/UI・UI/MCP競合と下書き保持、訂正/非表示/統合、Project境界、安全なMarkdown、1440/390/320px、light/dark、再読込を検証。独立GPT-6 Astraレビュー指摘を修正し、試験プロセスと一時DBを片付けた。詳細ログ/画像はローカル `.build/design-notes/validation.md` に残る。
 
 実Auth0/ChatGPT、Firefox/WebKit、実機モバイル、Tauri、全workspace一括試験、正式Integrationは前回も未検証。今回もmain merge/deploy/Wiki/Skill更新、稼働サーバー・共有DBへの変更は行わない。
+
+## 追加再レビュー: MCP書込み結果の上限
+
+今回もLOCAL-88のheavy検証との競合を避け、軽量修正・チェックのみ。Rust試験・型生成・ブラウザE2Eは後続GO待ち。
+
+MCP成功結果の型を `DesignNoteReceipt { note: { id, revision }, addition: null | { id, revision } }` に統一した。本文・追記内容・title・source等の可変長文字列を含めない。UUIDと整数だけなので最大本文10万文字＋追記10万文字でも256 bytes未満の結果になる。stdioは既存RESTの完全なDesignNoteResultを受け取り、この型へ投影してMCPに返す。UI RESTの契約・保存先・DBの冪等性receiptは維持する。
+
+外部HTTP MCPはoperation実行の成功時に投影してから結果を保存する。初回受付のoperation wrapper、再送、get_operationのstatus/operation_id/request_idは従来どおり。成功結果だけが小さいreceiptとなる。failed/uncertainの扱いや同じrequest_idのfingerprint検証は変更しない。過去の全文入り成功operationも共通receipt返却箇所でこの型に投影するため、取得・再送で全文を返さない。既存保存証拠は書き換えない。不正な保存結果は従来のreceipt_unreadable/uncertain経路で扱う。
+
+revisionは**その書込みで確定した版**であり、再送時の現在版ではない。全文は `get_design_note` にnote_id・返却revision（追記はaddition_idと追記revision）を渡し、既存のbounded readで取得する。両MCPのtool descriptionに返却形と読取経路を明記した。Project削除の暫定409は変更なし。
+
+追加回帰試験（未実行）:
+
+- DB: `mcp_write_receipt_is_small_and_replays_committed_versions`。最大長の本文/追記、初回receipt上限、後続更新後も初回確定版を再送、重複なし、UI用結果の全文保持とbounded read復元。
+- 外部MCP: `design_note_mcp_write_initial_retry_and_operation_are_bounded`。初回・再送・get_operationのwrapper上限、operation保存結果上限、全文の非返却、legacy全文入りreceiptの取得/再送投影、確定status維持、正本の全文/件数保持。
+- 既存isolated E2Eに最大長の実stdio書込み・後続更新後の再送一致・receipt上限・bounded read全文復元を追加。既存assertionは維持。
+
+今回実行した軽量チェック: 変更Rustファイルの `rustfmt --edition 2024 --config skip_children=true --check`、`node --check tests/design-notes/isolated.mjs`、`python3 tests/design-notes/bounded-read-sql.py`、`git diff --check` は成功。SQL smokeは既存read/deleteの回帰確認であり、今回のMCP write transport実行の証明ではない。Rustコンパイル・上記Rust試験・実MCP/ブラウザ実行は未実施。
