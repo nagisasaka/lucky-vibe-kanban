@@ -158,6 +158,15 @@ function IssueCommentsSectionContent() {
               : t('kanban.unknownUser')
             : t('kanban.deletedUser'),
           message: comment.message,
+          review: comment.recorded_principal
+            ? {
+                label: comment.reviewer_label,
+                principal: comment.recorded_principal,
+                targetRevision: comment.target_revision,
+                currentRevision: comment.current_issue_revision,
+                updatedAt: comment.updated_at,
+              }
+            : undefined,
           createdAt: comment.created_at,
           author: author ?? null,
           canModify,

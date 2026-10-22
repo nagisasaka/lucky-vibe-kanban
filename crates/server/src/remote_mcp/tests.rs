@@ -316,6 +316,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     }
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
+        ("add_issue_comment", "lvk:write"),
         ("create_todo", "lvk:write"),
         ("update_todo", "lvk:write"),
         ("delete_todo", "lvk:write"),
