@@ -55,7 +55,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
         definition::<WorkspaceArgs>(
             "get_workspace",
-            "Read Workspace identity, session/run counts and review link. Use list_workspace_runs for current execution IDs. An agent turn ending does not prove tests, merge or Wiki completion.",
+            "Read Workspace identity, session/run counts, cumulative token_usage (reported scope, not cost) and review link. Use list_workspace_runs for current execution IDs. An agent turn ending does not prove tests, merge or Wiki completion.",
         ),
         definition::<RunListArgs>(
             "list_workspace_runs",
@@ -85,7 +85,7 @@ impl Remote {
         let row = sqlx::query("SELECT substr(name,1,500) AS name,length(coalesce(name,''))>500 AS name_truncated,archived,pinned,updated_at,(SELECT count(*) FROM sessions WHERE workspace_id=workspaces.id) AS session_count,(SELECT count(*) FROM agent_runs WHERE workspace_id=workspaces.id) AS run_count FROM workspaces WHERE id=?")
             .bind(args.workspace_id).fetch_one(&self.pool).await?;
         Ok(
-            json!({"workspace_id":args.workspace_id,"project_id":args.project_id,"issue_id":issue,"name":row.try_get::<Option<String>,_>("name")?,"name_truncated":row.try_get::<bool,_>("name_truncated")?,"archived":row.try_get::<bool,_>("archived")?,"pinned":row.try_get::<bool,_>("pinned")?,"updated_at":row.try_get::<String,_>("updated_at")?,"session_count":row.try_get::<i64,_>("session_count")?,"run_count":row.try_get::<i64,_>("run_count")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Inspect recorded verification and Integration results; run completion alone is not proof"}}),
+            json!({"token_usage":db::models::workspace_tokens::WorkspaceTokenUsage::get(&self.pool,args.workspace_id).await?,"workspace_id":args.workspace_id,"project_id":args.project_id,"issue_id":issue,"name":row.try_get::<Option<String>,_>("name")?,"name_truncated":row.try_get::<bool,_>("name_truncated")?,"archived":row.try_get::<bool,_>("archived")?,"pinned":row.try_get::<bool,_>("pinned")?,"updated_at":row.try_get::<String,_>("updated_at")?,"session_count":row.try_get::<i64,_>("session_count")?,"run_count":row.try_get::<i64,_>("run_count")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Inspect recorded verification and Integration results; run completion alone is not proof"}}),
         )
     }
 
@@ -270,5 +270,48 @@ mod tests {
             .await
             .unwrap();
         assert!(call(&remote, "list_workspace_runs", args).await.is_err());
+    }
+}
+
+#[cfg(test)]
+mod token_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn workspace_tokens_share_api_aggregate_and_enforce_project_scope() {
+        let (remote, _, _, target, _) = crate::remote_mcp::runtime_write_tests::fixture().await;
+        let args = json!({"project_id":target.project_id,"workspace_id":target.workspace_id});
+        let initial = call(&remote, "get_workspace", args.clone()).await.unwrap();
+        assert_eq!(initial["token_usage"]["completeness"], "unknown");
+        assert!(initial["token_usage"]["total_tokens"].is_null());
+        sqlx::query("INSERT INTO workspace_token_usage VALUES(?,'codex','fixture',42,30,12,10,4,'2026-10-21T00:00:00Z','2026-10-21T00:00:00Z')")
+            .bind(target.workspace_id).execute(&remote.pool).await.unwrap();
+        let result = call(&remote, "get_workspace", args).await.unwrap();
+        let shared = db::models::workspace_tokens::WorkspaceTokenUsage::get(
+            &remote.pool,
+            target.workspace_id,
+        )
+        .await
+        .unwrap();
+        assert_eq!(result["token_usage"], serde_json::to_value(shared).unwrap());
+        assert_eq!(result["token_usage"]["total_tokens"], 42);
+        assert!(
+            call(
+                &remote,
+                "get_workspace",
+                json!({"project_id":Uuid::new_v4(),"workspace_id":target.workspace_id})
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            call(
+                &remote,
+                "get_workspace",
+                json!({"project_id":target.project_id,"workspace_id":Uuid::new_v4()})
+            )
+            .await
+            .is_err()
+        );
     }
 }

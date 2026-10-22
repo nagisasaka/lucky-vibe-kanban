@@ -23,6 +23,7 @@ import { useConversationVirtualizer } from '../model/useConversationVirtualizer'
 import { useScrollCommandExecutor } from '../model/useScrollCommandExecutor';
 
 import DisplayConversationEntry from './DisplayConversationEntry';
+import { WorkspaceTokenSummary } from './WorkspaceTokenSummary';
 import { ApprovalFormProvider } from '@/shared/hooks/ApprovalForm';
 import { useEntriesActions } from '../model/contexts/EntriesContext';
 import {
@@ -1028,6 +1029,8 @@ const ScopedConversationList = forwardRef<
               can align the plan entry to the top of the viewport. Height is set
               imperatively in scrollToAbsoluteIndex and cleared on scrollToBottom. */}
             <div ref={planRevealSpacerRef} style={{ height: 0 }} />
+
+            <WorkspaceTokenSummary workspaceId={attempt.id} />
 
             {/* Footer placeholder */}
             <div className="pb-2">

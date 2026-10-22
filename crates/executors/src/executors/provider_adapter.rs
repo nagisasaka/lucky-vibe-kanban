@@ -1966,6 +1966,63 @@ fn map_typed_event_v1(
     }])
 }
 
+// Only native Codex thread totals have verified cumulative/inclusion semantics.
+// Generic usage frames intentionally remain unknown for Workspace accounting.
+fn codex_cumulative_usage(
+    provider: DirectProvider,
+    event: &DecodedProviderEvent,
+) -> Option<crate::runtime::CumulativeTokenUsage> {
+    if provider != DirectProvider::Codex {
+        return None;
+    }
+    let raw = event.raw.payload_json.as_ref()?;
+    let method = raw.get("method")?.as_str()?.to_ascii_lowercase();
+    if !matches!(
+        method.as_str(),
+        "thread/tokenusage/updated" | "thread.token_usage.updated"
+    ) {
+        return None;
+    }
+    let params = raw.get("params")?;
+    let thread = params
+        .get("threadId")
+        .or_else(|| params.get("thread_id"))?
+        .as_str()?;
+    if thread.is_empty() {
+        return None;
+    }
+    let total = params
+        .get("tokenUsage")
+        .or_else(|| params.get("token_usage"))?
+        .get("total")?;
+    let total_tokens = codex_optional_u64(total, &["totalTokens", "total_tokens"])?;
+    let TypedProviderEvent::TokenUsage {
+        input_tokens,
+        output_tokens,
+        cached_input_tokens,
+        ..
+    } = &event.typed
+    else {
+        return None;
+    };
+    let reasoning_tokens =
+        codex_optional_u64(total, &["reasoningOutputTokens", "reasoning_output_tokens"]);
+    // Codex can also emit synthetic context-full counts. They are not usage
+    // evidence when the provider total and its input/output breakdown disagree.
+    if input_tokens.checked_add(*output_tokens) != Some(total_tokens)
+        || cached_input_tokens.is_some_and(|v| v > *input_tokens)
+        || reasoning_tokens.is_some_and(|v| v > *output_tokens)
+    {
+        return None;
+    }
+    Some(crate::runtime::CumulativeTokenUsage {
+        provider_id: "codex".into(),
+        provider_session_id: thread.into(),
+        total_tokens,
+        reasoning_tokens,
+    })
+}
+
 fn project_typed_event(
     provider: DirectProvider,
     event: &DecodedProviderEvent,
@@ -2158,6 +2215,7 @@ fn project_typed_event(
             context_tokens,
             model_context_window,
         } => Some(AgentLiveEventPayload::TokenUsageSnapshot {
+            cumulative_usage: codex_cumulative_usage(provider, event),
             input_tokens: *input_tokens,
             output_tokens: *output_tokens,
             cached_input_tokens: *cached_input_tokens,
@@ -3388,6 +3446,7 @@ mod tests {
             projected.live_events.as_slice(),
             [AgentLiveEvent {
                 payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                    cumulative_usage: None,
                     input_tokens: 30,
                     output_tokens: 12,
                     cached_input_tokens: Some(10),
@@ -3397,6 +3456,50 @@ mod tests {
                 ..
             }]
         ));
+    }
+
+    #[test]
+    fn workspace_tokens_retain_codex_thread_total_and_reasoning_inclusion() {
+        let provider = DirectProvider::Codex;
+        let decoded = provider
+            .decode_native_frame(&frame_at(
+                provider,
+                1,
+                json!({
+                    "method": "thread/tokenUsage/updated",
+                    "params": {"threadId": "resume-thread", "tokenUsage": {
+                        "total": {"totalTokens": 42, "inputTokens": 30, "cachedInputTokens": 10,
+                            "outputTokens": 12, "reasoningOutputTokens": 4},
+                        "last": {"totalTokens": 7}, "modelContextWindow": 100
+                    }}
+                }),
+            ))
+            .unwrap();
+        let result = provider
+            .project_provider_event(&decoded, &fixture_manifest(provider))
+            .unwrap();
+        let AgentLiveEventPayload::TokenUsageSnapshot {
+            cumulative_usage: Some(usage),
+            ..
+        } = &result.live_events[0].payload
+        else {
+            panic!("missing verified scope")
+        };
+        assert_eq!(usage.provider_session_id, "resume-thread");
+        assert_eq!(usage.total_tokens, 42); // not 42 + cached 10 + reasoning 4
+        assert_eq!(usage.reasoning_tokens, Some(4));
+        let mut invalid = decoded.clone();
+        invalid.raw.payload_json.as_mut().unwrap()["params"]["tokenUsage"]["total"]["totalTokens"] =
+            json!(100_000);
+        assert!(codex_cumulative_usage(provider, &invalid).is_none());
+        let generic = provider
+            .decode_native_frame(&frame_at(
+                provider,
+                2,
+                json!({"type":"usage", "input_tokens":30,"output_tokens":12}),
+            ))
+            .unwrap();
+        assert!(codex_cumulative_usage(provider, &generic).is_none());
     }
 
     #[test]

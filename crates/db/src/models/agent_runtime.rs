@@ -1827,6 +1827,37 @@ impl AgentEventRecord {
                         std::io::Error::new(std::io::ErrorKind::InvalidData, error),
                     ))
                 })?;
+            // Persist the thread high-water mark in the same transaction as host
+            // cursor/snapshot acceptance. A replay, resume or lower stale counter
+            // cannot add it again or erase already reported consumption.
+            if let AgentLiveEventPayload::TokenUsageSnapshot {
+                cumulative_usage: Some(usage),
+                ..
+            } = &snapshot.payload
+                && usage.provider_id == "codex"
+                && !usage.provider_session_id.is_empty()
+                && usage.total_tokens == (input_tokens as u64).saturating_add(output_tokens as u64)
+                && cached_input_tokens.is_none_or(|v| v <= input_tokens)
+                && usage
+                    .reasoning_tokens
+                    .is_none_or(|v| v <= output_tokens as u64)
+            {
+                sqlx::query(
+                    "INSERT INTO workspace_token_usage
+                     (workspace_id,provider_id,provider_session_id,total_tokens,input_tokens,output_tokens,cached_input_tokens,reasoning_tokens,first_observed_at,updated_at)
+                     SELECT workspace_id,?,?,?,?,?,?,?,?,? FROM agent_runs WHERE id=?
+                     ON CONFLICT(workspace_id,provider_id,provider_session_id) DO UPDATE SET
+                     total_tokens=excluded.total_tokens,input_tokens=excluded.input_tokens,output_tokens=excluded.output_tokens,
+                     cached_input_tokens=COALESCE(excluded.cached_input_tokens,workspace_token_usage.cached_input_tokens),reasoning_tokens=COALESCE(excluded.reasoning_tokens,workspace_token_usage.reasoning_tokens),updated_at=MAX(workspace_token_usage.updated_at,excluded.updated_at)
+                     WHERE excluded.total_tokens >= workspace_token_usage.total_tokens"
+                )
+                .bind(&usage.provider_id).bind(&usage.provider_session_id)
+                .bind(i64::try_from(usage.total_tokens).map_err(|_| sqlx::Error::Protocol("Token total overflow".into()))?)
+                .bind(input_tokens).bind(output_tokens).bind(cached_input_tokens)
+                .bind(usage.reasoning_tokens.and_then(|v| i64::try_from(v).ok()))
+                .bind(snapshot.timestamp).bind(snapshot.timestamp).bind(snapshot.agent_run_id)
+                .execute(&mut *transaction).await?;
+            }
             let event_json = serde_json::to_string(snapshot)?;
             let existing: Option<(i64, String)> = sqlx::query_as(
                 "SELECT native_sequence, event_json FROM agent_run_usage_snapshots WHERE run_attempt_id = ?",
@@ -2240,6 +2271,12 @@ mod tests {
         .execute(pool)
         .await
         .expect("create projection failure schema");
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20261021173000_workspace_tokens.sql"
+        ))
+        .execute(pool)
+        .await
+        .unwrap();
         sqlx::raw_sql(r#"
             CREATE TABLE local_project_statuses (id BLOB PRIMARY KEY, project_id BLOB, name TEXT, color TEXT, sort_order INTEGER, hidden INTEGER);
             CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT);
@@ -2847,6 +2884,7 @@ mod tests {
             native_sequence,
             timestamp: Utc::now(),
             payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                cumulative_usage: None,
                 input_tokens,
                 output_tokens: 8,
                 cached_input_tokens: Some(3),
@@ -2889,6 +2927,7 @@ mod tests {
             [AgentLiveEvent {
                 native_sequence: 11,
                 payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                    cumulative_usage: None,
                     input_tokens: 30,
                     context_tokens: Some(7),
                     model_context_window: Some(100),
@@ -2897,6 +2936,238 @@ mod tests {
                 ..
             }]
         ));
+    }
+
+    #[tokio::test]
+    async fn workspace_tokens_deduplicate_resumes_and_keep_failed_reported_usage() {
+        use crate::models::workspace_tokens::WorkspaceTokenUsage;
+        let pool = setup_pool().await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        assert_eq!(
+            WorkspaceTokenUsage::get(&pool, workspace)
+                .await
+                .unwrap()
+                .total_tokens,
+            None
+        );
+        for (index, input, thread, status) in [
+            (0, 20, "thread-a", "succeeded"),
+            (1, 30, "thread-a", "failed"), // resumed cumulative total, not +38
+            (2, 25, "thread-a", "cancelled"), // stale lower value cannot erase 38
+            (3, 10, "thread-b", "cancelled"), // separate Session/thread adds 18
+        ] {
+            let session = if index == 3 {
+                let id = Uuid::new_v4();
+                sqlx::query("INSERT INTO sessions(id,workspace_id) VALUES(?,?)")
+                    .bind(id)
+                    .bind(workspace)
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+                id
+            } else {
+                session
+            };
+            let (request, attempt) = requests(session, workspace, &format!("tokens-{index}"));
+            AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+                .await
+                .unwrap();
+            let snapshot = AgentLiveEvent {
+                schema_version: 1,
+                event_id: Uuid::new_v4(),
+                session_id: session,
+                agent_run_id: request.agent_run_id,
+                turn_id: request.turn_id,
+                run_attempt_id: attempt.run_attempt_id,
+                run_attempt_number: 1,
+                native_sequence: 1,
+                timestamp: Utc::now(),
+                payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                    cumulative_usage: Some(executors::runtime::CumulativeTokenUsage {
+                        provider_id: "codex".into(),
+                        provider_session_id: thread.into(),
+                        total_tokens: input + 8,
+                        reasoning_tokens: Some(2),
+                    }),
+                    input_tokens: input,
+                    output_tokens: 8,
+                    cached_input_tokens: Some(3),
+                    context_tokens: None,
+                    model_context_window: None,
+                },
+            };
+            for _ in 0..2 {
+                // byte-identical replay/reconnect is idempotent
+                AgentEventRecord::append_and_project_host_batch(
+                    &pool,
+                    &[],
+                    std::slice::from_ref(&snapshot),
+                    &[],
+                    attempt.run_attempt_id,
+                    1,
+                )
+                .await
+                .unwrap();
+            }
+            let mut repeated = snapshot.clone();
+            repeated.native_sequence = 2;
+            AgentEventRecord::append_and_project_host_batch(
+                &pool,
+                &[],
+                &[repeated],
+                &[],
+                attempt.run_attempt_id,
+                2,
+            )
+            .await
+            .unwrap();
+            sqlx::query("UPDATE agent_runs SET status=? WHERE id=?")
+                .bind(status)
+                .bind(request.agent_run_id)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        let value = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+        assert_eq!(value.total_tokens, Some(56));
+        assert_eq!(value.input_tokens, Some(40));
+        assert_eq!(value.output_tokens, Some(16));
+        assert_eq!(value.cached_input_tokens, Some(6)); // already included in input
+        assert_eq!(value.reasoning_tokens, Some(4)); // already included in output
+        assert_eq!(value.completeness, "partial");
+        assert_eq!(value.thread_count, 2);
+        // A missing report adds no zero; coverage remains partial.
+        let (request, attempt) = requests(session, workspace, "no-usage");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        let value = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+        assert_eq!(value.total_tokens, Some(56));
+    }
+
+    #[tokio::test]
+    async fn workspace_tokens_distinguish_unknown_zero_and_missing_breakdowns() {
+        use crate::models::workspace_tokens::WorkspaceTokenUsage;
+        let pool = setup_pool().await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        let (request, attempt) = requests(session, workspace, "zero-usage");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        let mut snapshot = AgentLiveEvent {
+            schema_version: 1,
+            event_id: Uuid::new_v4(),
+            session_id: session,
+            agent_run_id: request.agent_run_id,
+            turn_id: request.turn_id,
+            run_attempt_id: attempt.run_attempt_id,
+            run_attempt_number: 1,
+            native_sequence: 1,
+            timestamp: Utc::now(),
+            payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                cumulative_usage: None,
+                input_tokens: 0,
+                output_tokens: 0,
+                cached_input_tokens: None,
+                context_tokens: None,
+                model_context_window: None,
+            },
+        };
+        AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            &[],
+            std::slice::from_ref(&snapshot),
+            &[],
+            attempt.run_attempt_id,
+            1,
+        )
+        .await
+        .unwrap();
+        let unknown = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+        assert_eq!(unknown.total_tokens, None);
+        assert_eq!(unknown.completeness, "unknown");
+        snapshot.native_sequence = 2;
+        if let AgentLiveEventPayload::TokenUsageSnapshot {
+            cumulative_usage, ..
+        } = &mut snapshot.payload
+        {
+            *cumulative_usage = Some(executors::runtime::CumulativeTokenUsage {
+                provider_id: "codex".into(),
+                provider_session_id: "zero-thread".into(),
+                total_tokens: 0,
+                reasoning_tokens: None,
+            });
+        }
+        AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            &[],
+            &[snapshot],
+            &[],
+            attempt.run_attempt_id,
+            2,
+        )
+        .await
+        .unwrap();
+        let zero = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+        assert_eq!(zero.total_tokens, Some(0));
+        assert_eq!(zero.cached_input_tokens, None);
+        assert_eq!(zero.reasoning_tokens, None);
+        assert_eq!(zero.completeness, "partial");
+
+        // A valid positive report followed by a replaceable context-full snapshot
+        // must retain the durable total, breakdown and partial coverage.
+        for (sequence, cumulative_usage) in [
+            (
+                3,
+                Some(executors::runtime::CumulativeTokenUsage {
+                    provider_id: "codex".into(),
+                    provider_session_id: "zero-thread".into(),
+                    total_tokens: 42,
+                    reasoning_tokens: Some(4),
+                }),
+            ),
+            (4, None),
+        ] {
+            let snapshot = AgentLiveEvent {
+                schema_version: 1,
+                event_id: Uuid::new_v4(),
+                session_id: session,
+                agent_run_id: request.agent_run_id,
+                turn_id: request.turn_id,
+                run_attempt_id: attempt.run_attempt_id,
+                run_attempt_number: 1,
+                native_sequence: sequence,
+                timestamp: Utc::now(),
+                payload: AgentLiveEventPayload::TokenUsageSnapshot {
+                    cumulative_usage,
+                    input_tokens: 30,
+                    output_tokens: 12,
+                    cached_input_tokens: Some(10),
+                    context_tokens: None,
+                    model_context_window: None,
+                },
+            };
+            AgentEventRecord::append_and_project_host_batch(
+                &pool,
+                &[],
+                &[snapshot],
+                &[],
+                attempt.run_attempt_id,
+                sequence,
+            )
+            .await
+            .unwrap();
+            let retained = WorkspaceTokenUsage::get(&pool, workspace).await.unwrap();
+            assert_eq!(retained.total_tokens, Some(42));
+            assert_eq!(retained.input_tokens, Some(30));
+            assert_eq!(retained.output_tokens, Some(12));
+            assert_eq!(retained.cached_input_tokens, Some(10));
+            assert_eq!(retained.reasoning_tokens, Some(4));
+            assert_eq!(retained.completeness, "partial");
+            assert_eq!(retained.thread_count, 1);
+            assert_eq!(retained.cached_input_observed_threads, 1);
+            assert_eq!(retained.reasoning_observed_threads, 1);
+        }
     }
 
     #[tokio::test]

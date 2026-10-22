@@ -1358,5 +1358,18 @@
     "donePending": "Doneへの移動待ち",
     "doneNotApplied": "Doneへ未移動",
     "doneReconciling": "Doneへの移動を照合中"
+  },
+  "workspaceTokens": {
+    "label": "Workspace累積トークン",
+    "unknown": "不明",
+    "partial": "一部のみ",
+    "error": "取得失敗",
+    "input": "入力",
+    "cached": "キャッシュ入力（入力の内数）",
+    "output": "出力",
+    "reasoning": "推論（出力の内数）",
+    "scope": "Codex親threadの報告済み累積値。親に含まれない子thread分、未報告分、未対応provider、未計測履歴は不明です。料金やコンテキスト使用率ではありません。",
+    "updated": "最終更新",
+    "breakdownCoverage": "内訳取得thread: {{observed}} / {{total}}"
   }
 }

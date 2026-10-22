@@ -524,7 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn transient_text_is_bounded_not_durable_but_usage_survives_replay() {
+    async fn workspace_tokens_survive_replay_while_transient_text_is_bounded() {
         let root = tempfile::tempdir().unwrap();
         let path = root.path().join("journal");
         let attempt = Uuid::new_v4();
@@ -544,6 +544,12 @@ mod tests {
         let mut usage = live(1001, attempt, "not text");
         if let HostEventPayload::Projected { live_events, .. } = &mut usage.payload {
             live_events[0].payload = AgentLiveEventPayload::TokenUsageSnapshot {
+                cumulative_usage: Some(executors::runtime::CumulativeTokenUsage {
+                    provider_id: "codex".into(),
+                    provider_session_id: "persisted-thread".into(),
+                    total_tokens: 1290,
+                    reasoning_tokens: Some(10),
+                }),
                 input_tokens: 1234,
                 output_tokens: 56,
                 cached_input_tokens: Some(12),
@@ -572,6 +578,7 @@ mod tests {
         assert!(matches!(
             live_events[0].payload,
             AgentLiveEventPayload::TokenUsageSnapshot {
+                cumulative_usage: Some(_),
                 input_tokens: 1234,
                 ..
             }

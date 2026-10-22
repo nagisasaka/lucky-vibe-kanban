@@ -96,8 +96,38 @@ struct McpDeleteWorkspaceResponse {
     delete_branches: bool,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct McpWorkspaceTokensRequest {
+    #[schemars(description = "Workspace ID; defaults to the current workspace context")]
+    workspace_id: Option<Uuid>,
+}
+
 #[tool_router(router = workspaces_tools_router, vis = "pub")]
 impl McpServer {
+    #[tool(
+        description = "Read Workspace cumulative reported tokens and breakdown/coverage. Unknown usage stays unknown; no execution is started. Not a cost or context-occupancy estimate."
+    )]
+    async fn get_workspace_tokens(
+        &self,
+        Parameters(request): Parameters<McpWorkspaceTokensRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let workspace_id = match self.resolve_workspace_id(request.workspace_id) {
+            Ok(id) => id,
+            Err(error) => return Ok(Self::tool_error(error)),
+        };
+        if let Err(error) = self.scope_allows_workspace(workspace_id) {
+            return Ok(Self::tool_error(error));
+        }
+        let url = self.url(&format!("/api/workspaces/{workspace_id}/tokens"));
+        match self
+            .send_json::<serde_json::Value>(self.client.get(&url))
+            .await
+        {
+            Ok(value) => Self::success(&value),
+            Err(error) => Ok(Self::tool_error(error)),
+        }
+    }
+
     #[tool(description = "List local workspaces with optional filters and pagination.")]
     async fn list_workspaces(
         &self,

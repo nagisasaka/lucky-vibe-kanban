@@ -23,3 +23,5 @@ pub mod workflow;
 pub mod workspace;
 pub mod workspace_repo;
 pub mod workspace_usage;
+
+pub mod workspace_tokens;
