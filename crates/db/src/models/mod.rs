@@ -25,3 +25,5 @@ pub mod workspace_repo;
 pub mod workspace_usage;
 
 pub mod workspace_tokens;
+
+pub mod design_note;

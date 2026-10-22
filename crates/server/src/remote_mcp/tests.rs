@@ -317,6 +317,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
         ("create_todo", "lvk:write"),
+        ("write_design_note", "lvk:write"),
         ("update_todo", "lvk:write"),
         ("delete_todo", "lvk:write"),
         ("start_integration", "lvk:merge"),
@@ -1533,4 +1534,111 @@ async fn resource_observation_http_read_scope_and_input_boundary() {
     provider.abort();
     let _ = server.await;
     let _ = provider.await;
+}
+
+#[tokio::test]
+async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    for id in [project, Uuid::from_u128(2)] {
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'note-test')")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let remote = Remote {
+        environment: None,
+        launch: None,
+        runtime: None,
+        pool: pool.clone(),
+        config: Arc::new(config()),
+        process_instance: Uuid::new_v4(),
+    };
+    let writer = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    let reader = auth::Principal {
+        subject: writer.subject.clone(),
+        scopes: BTreeSet::from(["lvk:read".into()]),
+    };
+    let request = Uuid::new_v4();
+    let input = json!({"project_id":project,"input":{"request_id":request,"operation":{"action":"create","title":"Human intent","body":"original"}}});
+    assert!(
+        design_notes::call(&remote, &reader, "write_design_note", input.clone())
+            .await
+            .is_err()
+    );
+    assert_eq!(operation_scope("write_design_note"), Some("lvk:write"));
+    assert!(
+        design_notes::call(
+            &remote,
+            &writer,
+            "list_design_notes",
+            json!({"project_id":Uuid::from_u128(2)})
+        )
+        .await
+        .is_err()
+    );
+    let a = design_notes::call(&remote, &writer, "write_design_note", input.clone())
+        .await
+        .unwrap();
+    let b = design_notes::call(&remote, &writer, "write_design_note", input)
+        .await
+        .unwrap();
+    assert_eq!(a["operation_id"], b["operation_id"]);
+    let result = settled_operation(&remote, &writer, project, request).await;
+    assert_eq!(result["status"], "succeeded", "{result}");
+    let id = result["result"]["note"]["id"].clone();
+    let append = Uuid::new_v4();
+    let input = json!({"project_id":project,"input":{"request_id":append,"operation":{"action":"append","note_id":id,"addition":{"heading":"Suggestion","content":"Consider another tool","kind":"proposal","source":"message/1","speaker":"AI","referenced_body_revision":1}}}});
+    design_notes::call(&remote, &writer, "write_design_note", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, append).await["status"],
+        "succeeded"
+    );
+    design_notes::call(&remote, &writer, "write_design_note", input)
+        .await
+        .unwrap();
+    let detail = design_notes::call(
+        &remote,
+        &reader,
+        "get_design_note",
+        json!({"project_id":project,"note_id":id}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(detail["note"]["revision"], 1);
+    assert_eq!(detail["note"]["body"], "original");
+    assert_eq!(detail["additions"].as_array().unwrap().len(), 1);
+    let update = Uuid::new_v4();
+    design_notes::call(&remote,&writer,"write_design_note",json!({"project_id":project,"input":{"request_id":update,"operation":{"action":"update","note_id":id,"expected_revision":1,"title":"Human intent","body":"explicit edit"}}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, update).await["status"],
+        "succeeded"
+    );
+    let stale = Uuid::new_v4();
+    design_notes::call(&remote,&writer,"write_design_note",json!({"project_id":project,"input":{"request_id":stale,"operation":{"action":"update","note_id":id,"expected_revision":1,"title":"stale","body":"lost"}}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, stale).await["status"],
+        "failed"
+    );
+    let history = design_notes::call(
+        &remote,
+        &reader,
+        "get_design_note_history",
+        json!({"project_id":project,"note_id":id}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(history.as_array().unwrap().len(), 2);
+    assert_eq!(history[0]["body"], "original");
 }
