@@ -1616,9 +1616,18 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     )
     .await
     .unwrap();
-    assert_eq!(detail["note"]["revision"], 1);
-    assert_eq!(detail["note"]["body"], "original");
-    assert_eq!(detail["additions"].as_array().unwrap().len(), 1);
+    let body: Value = serde_json::from_str(detail["content_page"].as_str().unwrap()).unwrap();
+    assert_eq!(body["revision"], 1);
+    assert_eq!(body["body"], "original");
+    let additions = design_notes::call(
+        &remote,
+        &reader,
+        "get_design_note",
+        json!({"project_id":project,"note_id":id,"section":"additions"}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(additions["items"].as_array().unwrap().len(), 1);
     let update = Uuid::new_v4();
     design_notes::call(&remote,&writer,"write_design_note",json!({"project_id":project,"input":{"request_id":update,"operation":{"action":"update","note_id":id,"expected_revision":1,"title":"Human intent","body":"explicit edit"}}})).await.unwrap();
     assert_eq!(
@@ -1639,6 +1648,15 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     )
     .await
     .unwrap();
-    assert_eq!(history.as_array().unwrap().len(), 2);
-    assert_eq!(history[0]["body"], "original");
+    assert_eq!(history["items"].as_array().unwrap().len(), 2);
+    let first = design_notes::call(
+        &remote,
+        &reader,
+        "get_design_note",
+        json!({"project_id":project,"note_id":id,"revision":history["items"][0]["revision"]}),
+    )
+    .await
+    .unwrap();
+    let first: Value = serde_json::from_str(first["content_page"].as_str().unwrap()).unwrap();
+    assert_eq!(first["body"], "original");
 }

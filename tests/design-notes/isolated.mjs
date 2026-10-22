@@ -211,7 +211,26 @@ try {
   await expect(panel.getByTestId('note-body')).toContainText('人間の本文。目的を問い直す。');
   await panel.getByRole('button',{name:'この版を新しい版として復元'}).click();
   await expect.poll(async()=>(await api(`${notePath}/${id}`)).data.note.revision).toBe(4);
-  const history = await tool('get_design_note_history',{project_id:project,note_id:id});
+  async function mcpSnapshot(args) {
+    let content = '';
+    for (;;) {
+      const part = await tool('get_design_note',args);
+      assert.ok(part.content_page.length <= 8000);
+      content += part.content_page;
+      if (!part.has_more) return JSON.parse(content);
+      args = {...args, offset:part.next_offset, revision:part.revision};
+    }
+  }
+  async function mcpHistory(args) {
+    const result = [];
+    for (;;) {
+      const page = await tool('get_design_note_history',args);
+      for (const item of page.items) result.push(await mcpSnapshot({...args,revision:item.revision}));
+      if (!page.has_more) return result;
+      args = {...args,after_revision:page.next_after_revision};
+    }
+  }
+  const history = await mcpHistory({project_id:project,note_id:id});
   assert.equal(history.length,4); assert.equal(history[0].body,original); assert.equal(history[3].body,original);
   // Correction preserves original source/contents; hiding is reversible.
   let entry = panel.getByTestId('note-addition');
@@ -235,7 +254,7 @@ try {
   detail = (await api(`${notePath}/${id}`)).data;
   assert.equal(detail.note.revision,5); assert.equal(detail.additions.length,1);
   assert.equal(detail.additions[0].revision,4);
-  const additionHistory = await tool('get_design_note_history',{project_id:project,note_id:id,addition_id:appended.addition.id});
+  const additionHistory = await mcpHistory({project_id:project,note_id:id,addition_id:appended.addition.id});
   assert.equal(additionHistory.length,4); assert.equal(additionHistory[0].source,addition.source);
   // Two real browser tabs: the second editor cannot overwrite a committed first edit.
   const second = await browser.newPage({viewport:{width:1280,height:900}});
@@ -299,6 +318,12 @@ try {
   await api(`/api/projects/${foreign}/design-notes/${id}`,'GET',undefined,404);
   await api(`/api/projects/${foreign}/design-notes`,'POST',{request_id:randomUUID(),operation:{action:'restore',note_id:id,expected_revision:once.note.revision,revision:1}},404);
   await tool('get_design_note',{project_id:foreign,note_id:id},true);
+  const beforeDelete = (await api(`${notePath}/${id}`)).data;
+  const protectedDelete = await api(`/api/local/v1/projects/${project}`,'DELETE',undefined,409);
+  assert.match(JSON.stringify(protectedDelete),/履歴/);
+  assert.match(JSON.stringify(protectedDelete),/一時的/);
+  assert.deepEqual((await api(`${notePath}/${id}`)).data,beforeDelete);
+
   // Multiple notes, visible proposal/open question distinction, safe Markdown renderer.
   await write({action:'append',note_id:id,addition:{...addition,heading:'AI提案',kind:'proposal',speaker:'AI',content:'<script>window.__noteXss=true</script>\n[unsafe](javascript:alert(1))'}});
   await write({action:'append',note_id:id,addition:{...addition,heading:'未決事項',kind:'open_question',speaker:'ユーザー',content:'保持期限は未合意'}});

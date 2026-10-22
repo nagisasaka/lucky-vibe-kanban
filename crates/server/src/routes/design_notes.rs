@@ -19,6 +19,10 @@ struct Page {
 }
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
+        .route(
+            "/projects/{project}/design-notes/mcp-read/{tool}",
+            get(mcp_read),
+        )
         .route("/projects/{project}/design-notes", get(list).post(write))
         .route("/projects/{project}/design-notes/{id}", get(read))
         .route(
@@ -81,5 +85,21 @@ async fn write(
     .to_string();
     Ok(Json(ApiResponse::success(
         DesignNote::write(&d.db().pool, p, &actor, input).await?,
+    )))
+}
+
+// Same canonical database, separate bounded wire projection for both MCP transports.
+async fn mcp_read(
+    State(d): State<DeploymentImpl>,
+    Path((project, tool)): Path<(Uuid, String)>,
+    Query(q): Query<db::models::design_note_read::DesignNoteRead>,
+) -> Result<Json<ApiResponse<serde_json::Value>>, ApiError> {
+    if q.project_id != project {
+        return Err(ApiError::DesignNote(
+            db::models::design_note::DesignNoteError::NotFound,
+        ));
+    }
+    Ok(Json(ApiResponse::success(
+        db::models::design_note_read::read(&d.db().pool, &tool, q).await?,
     )))
 }

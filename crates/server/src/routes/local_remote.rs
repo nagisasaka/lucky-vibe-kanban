@@ -1586,12 +1586,31 @@ async fn delete_project(
     State(deployment): State<DeploymentImpl>,
     Path(project_id): Path<Uuid>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
-    sqlx::query("DELETE FROM projects WHERE id = ?")
-        .bind(project_id)
-        .execute(&deployment.db().pool)
-        .await?;
-
+    delete_project_preserving_design_history(&deployment.db().pool, project_id).await?;
     Ok(ResponseJson(DeleteResponse { txid: txid() }))
+}
+
+// Temporary protection pending a human decision about whole-Project deletion.
+// First statement is a conditional write: no check/delete race with note creation,
+// and no cascading side effect occurs when history or retry receipts exist.
+async fn delete_project_preserving_design_history(
+    pool: &sqlx::SqlitePool,
+    project_id: Uuid,
+) -> Result<(), ApiError> {
+    let mut tx = pool.begin().await?;
+    let deleted = sqlx::query("DELETE FROM projects WHERE id=? AND NOT EXISTS(SELECT 1 FROM design_notes WHERE project_id=?) AND NOT EXISTS(SELECT 1 FROM design_note_requests WHERE project_id=?)")
+        .bind(project_id).bind(project_id).bind(project_id).execute(&mut *tx).await?.rows_affected();
+    if deleted == 0 {
+        let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM projects WHERE id=?)")
+            .bind(project_id)
+            .fetch_one(&mut *tx)
+            .await?;
+        if exists {
+            return Err(ApiError::Conflict("設計メモの本文・追記・履歴を保護するため、Projectの削除を一時的に保留しています。Project全体を削除する場合の履歴保持方針は未決定です。データは削除されていません。".into()));
+        }
+    }
+    tx.commit().await?;
+    Ok(())
 }
 
 async fn create_project_status(
@@ -3411,6 +3430,107 @@ mod tests {
     use serde_json::Value;
     use sqlx::{SqlitePool, sqlite::SqlitePoolOptions, types::Json};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn project_delete_temporarily_protects_design_history_without_data_loss() {
+        use axum::response::IntoResponse;
+        use db::models::design_note::{DesignNote, DesignNoteWrite};
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE children(id INTEGER PRIMARY KEY, project_id BLOB REFERENCES projects(id) ON DELETE CASCADE);").execute(&pool).await.unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261023000000_design_notes.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let p = Uuid::new_v4();
+        let empty = Uuid::new_v4();
+        for id in [p, empty] {
+            sqlx::query("INSERT INTO projects VALUES(?)")
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        sqlx::query("INSERT INTO children VALUES(1,?)")
+            .bind(p)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let input: DesignNoteWrite=serde_json::from_value(serde_json::json!({"request_id":Uuid::new_v4(),"operation":{"action":"create","title":"human intent","body":"original"}})).unwrap();
+        let n = DesignNote::write(&pool, p, "human", input)
+            .await
+            .unwrap()
+            .note;
+        let input: DesignNoteWrite=serde_json::from_value(serde_json::json!({"request_id":Uuid::new_v4(),"operation":{"action":"append","note_id":n.id,"addition":{"heading":"idea","content":"keep","kind":"proposal","source":"message/1","speaker":"AI","referenced_body_revision":1}}})).unwrap();
+        DesignNote::write(&pool, p, "AI", input).await.unwrap();
+        // Compare every row, including original snapshots, sources and retry receipts.
+        let tables = [
+            "projects",
+            "children",
+            "design_notes",
+            "design_note_revisions",
+            "design_note_additions",
+            "design_note_addition_revisions",
+            "design_note_requests",
+        ];
+        async fn dump(pool: &SqlitePool, table: &str) -> Vec<String> {
+            use sqlx::Row;
+            let columns = sqlx::query(&format!("PRAGMA table_info({table})"))
+                .fetch_all(pool)
+                .await
+                .unwrap();
+            let fields = columns
+                .iter()
+                .map(|r| format!("quote(\"{}\")", r.get::<String, _>("name")))
+                .collect::<Vec<_>>()
+                .join(",");
+            sqlx::query_scalar(&format!(
+                "SELECT json_array({fields}) FROM {table} ORDER BY rowid"
+            ))
+            .fetch_all(pool)
+            .await
+            .unwrap()
+        }
+        let mut before = Vec::new();
+        for table in tables {
+            before.push(dump(&pool, table).await);
+        }
+        let err = super::delete_project_preserving_design_history(&pool, p)
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("履歴"));
+        assert!(err.to_string().contains("一時的"));
+        assert_eq!(
+            err.into_response().status(),
+            axum::http::StatusCode::CONFLICT
+        );
+        for (table, rows) in tables.into_iter().zip(before) {
+            assert_eq!(
+                rows,
+                dump(&pool, table).await,
+                "{table} changed after refused deletion"
+            );
+        }
+        assert_eq!(
+            DesignNote::detail(&pool, p, n.id).await.unwrap().additions[0].source,
+            "message/1"
+        );
+        assert_eq!(
+            DesignNote::history(&pool, p, n.id, 0).await.unwrap()[0].body,
+            "original"
+        );
+        super::delete_project_preserving_design_history(&pool, empty)
+            .await
+            .unwrap();
+        super::delete_project_preserving_design_history(&pool, empty)
+            .await
+            .unwrap();
+    }
 
     async fn setup_pool() -> SqlitePool {
         let pool = SqlitePoolOptions::new()

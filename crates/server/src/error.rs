@@ -208,7 +208,8 @@ impl IntoResponse for ApiError {
                 db::models::design_note::DesignNoteError::Conflict => {
                     ErrorInfo::conflict("DesignNoteError", error.to_string())
                 }
-                db::models::design_note::DesignNoteError::Invalid => {
+                db::models::design_note::DesignNoteError::Invalid
+                | db::models::design_note::DesignNoteError::InvalidRead => {
                     ErrorInfo::bad_request("DesignNoteError", error.to_string())
                 }
                 _ => ErrorInfo::internal("DesignNoteError"),

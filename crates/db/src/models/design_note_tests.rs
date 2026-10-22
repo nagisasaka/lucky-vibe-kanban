@@ -352,3 +352,168 @@ async fn invalid_references_and_failed_writes_leave_no_partial_history() {
         .unwrap();
     assert_eq!(receipts, 3);
 }
+
+// One helper reconstructs complete JSON without assuming a one-page response.
+async fn bounded_snapshot(pool: &SqlitePool, mut args: Value) -> Value {
+    let mut content = String::new();
+    loop {
+        let page = super::super::design_note_read::read(
+            pool,
+            "get_design_note",
+            serde_json::from_value(args.clone()).unwrap(),
+        )
+        .await
+        .unwrap();
+        assert!(serde_json::to_vec(&page).unwrap().len() < 32_000);
+        content.push_str(page["content_page"].as_str().unwrap());
+        if page["next_offset"].is_null() {
+            break;
+        }
+        args["offset"] = page["next_offset"].clone();
+        args["revision"] = page["revision"].clone();
+    }
+    serde_json::from_str(&content).unwrap()
+}
+
+#[tokio::test]
+async fn bounded_reads_preserve_unicode_long_content_and_pinned_revisions() {
+    use super::super::design_note_read::{DesignNoteRead, read};
+    let (pool, p, other) = fixture().await;
+    // 100,000 Unicode scalars, including astral, combining and escaped control chars.
+    let content = "理😀e\u{301}\n".repeat(20_000);
+    let n = DesignNote::write(
+        &pool,
+        p,
+        "human",
+        write(json!({"action":"create","title":"長文","body":content})),
+    )
+    .await
+    .unwrap()
+    .note;
+    let args = json!({"project_id":p,"note_id":n.id,"limit":397});
+    let first = read(
+        &pool,
+        "get_design_note",
+        serde_json::from_value(args.clone()).unwrap(),
+    )
+    .await
+    .unwrap();
+    DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.id,"expected_revision":1,"title":"new","body":"changed"}))).await.unwrap();
+    let old = bounded_snapshot(
+        &pool,
+        json!({"project_id":p,"note_id":n.id,"revision":first["revision"],"limit":397}),
+    )
+    .await;
+    assert_eq!(old["body"], content);
+    assert_eq!(old["revision"], 1);
+    assert_eq!(
+        bounded_snapshot(&pool, args.clone()).await["body"],
+        "changed"
+    );
+    for bad in [
+        json!({"offset":1}),
+        json!({"limit":4001}),
+        json!({"limit":0}),
+        json!({"page_size":21}),
+        json!({"revision":0}),
+        json!({"revision":999}),
+        json!({"offset":999999,"revision":1}),
+        json!({"project_id":other}),
+    ] {
+        let mut a = args.clone();
+        a.as_object_mut()
+            .unwrap()
+            .extend(bad.as_object().unwrap().clone());
+        assert!(
+            read(
+                &pool,
+                "get_design_note",
+                serde_json::from_value::<DesignNoteRead>(a).unwrap()
+            )
+            .await
+            .is_err()
+        );
+    }
+}
+
+#[tokio::test]
+async fn bounded_metadata_pages_cover_many_notes_additions_and_histories() {
+    use super::super::design_note_read::read;
+    let (pool, p, _) = fixture().await;
+    let n = create(&pool, p).await;
+    let content = "😀".repeat(100_000);
+    let mut addition_id = Uuid::nil();
+    for i in 0..43 {
+        DesignNote::write(
+            &pool,
+            p,
+            "human",
+            write(json!({"action":"create","title":format!("note {i}"),"body":content})),
+        )
+        .await
+        .unwrap();
+        let result = DesignNote::write(&pool,p,"AI",write(json!({"action":"append","note_id":n.id,"addition":{"heading":"idea","content":content,"kind":"proposal","source":"test/message","speaker":"AI","referenced_body_revision":1}}))).await.unwrap();
+        addition_id = result.addition.unwrap().id;
+        DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.id,"expected_revision":i+1,"title":"changed","body":content}))).await.unwrap();
+    }
+    for i in 1..44 {
+        DesignNote::write(&pool,p,"human",write(json!({"action":"set_addition_hidden","note_id":n.id,"addition_id":addition_id,"expected_revision":i,"hidden":i%2==1}))).await.unwrap();
+    }
+    for (tool, extra, cursor_key, response_key, expected) in [
+        ("list_design_notes", json!({}), "cursor", "next_cursor", 44),
+        (
+            "get_design_note",
+            json!({"section":"additions"}),
+            "cursor",
+            "next_cursor",
+            43,
+        ),
+        (
+            "get_design_note_history",
+            json!({}),
+            "after_revision",
+            "next_after_revision",
+            44,
+        ),
+        (
+            "get_design_note_history",
+            json!({"addition_id":addition_id}),
+            "after_revision",
+            "next_after_revision",
+            44,
+        ),
+    ] {
+        let mut args = json!({"project_id":p,"note_id":n.id});
+        args.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        let mut count = 0;
+        let mut seen = std::collections::HashSet::new();
+        loop {
+            let page = read(&pool, tool, serde_json::from_value(args.clone()).unwrap())
+                .await
+                .unwrap();
+            assert!(serde_json::to_vec(&page).unwrap().len() < 32_000);
+            let items = page["items"].as_array().unwrap();
+            assert!(items.len() <= 20);
+            for item in items {
+                assert!(item.get("body").is_none() && item.get("content").is_none());
+                assert!(seen.insert(item.get("id").unwrap_or(&item["revision"]).to_string()));
+            }
+            count += items.len();
+            if !page["has_more"].as_bool().unwrap() {
+                break;
+            }
+            args[cursor_key] = page[response_key].clone();
+        }
+        assert_eq!(count, expected);
+    }
+    let old = bounded_snapshot(
+        &pool,
+        json!({"project_id":p,"note_id":n.id,"addition_id":addition_id,"revision":1}),
+    )
+    .await;
+    assert_eq!(old["content"], content);
+    assert_eq!(old["source"], "test/message");
+    assert_eq!(old["hidden"], false);
+}

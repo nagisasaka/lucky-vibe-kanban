@@ -14,10 +14,20 @@ append/correct_addition/set_addition_hidden/integrate。各変更に必要なrev
 同じrequest_id・同じ認証主体・同じProject・同じ入力の再送は保存済み結果を返す。
 保存済みの同じIDに異なる入力を指定した場合と、古いrevisionは409。競合時は下書きを保持し、現在版を確認する。
 
+UI用RESTの返却形式は維持する。MCPは同じDBへの小さいread projectionを使う。
+
 内部stdio / 外部HTTP MCPは list_design_notes / get_design_note /
 get_design_note_history / write_design_note を提供する。外部書込みは既存のoperation
 receiptを返すため get_operation で結果を確認する。外部は lvk:read と lvk:write、
 設定されたProject範囲に従う。内部stdioは既存の内部認証を使う。
+MCP一覧は本文なしの最大20件、next_cursorをcursorとして継続する。
+get_design_noteのsection=additionsで追記メタデータを同じ方式で取得する。
+履歴は最大20版のメタデータ、next_after_revisionをafter_revisionとして継続する。
+get_design_noteは本文、addition_id指定時は追記の保存snapshotを最大4000 Unicode文字の
+content_pageとして返す。next_offsetと返却revisionで続きを取得し、全ページを結合して
+JSONとして読む。offset>0にはrevision必須。revision指定は不変の過去版を読み、途中で
+編集されても混ざらない。一覧集合はliveであり同時追加時は再走査する。
+
 自発的AI記録はappendを使い、本文更新・復元・統合には明示された本文編集意図が必要。
 これは新しい承認キューではなく、MCPの利用契約である。
 
@@ -64,3 +74,10 @@ Markdownの危険リンク、1440/390/320px、再読込を実APIとDOMで照合�
   重複回避、初版/履歴参照を扱う。現時点ではSkillを変更しない。
 
 永久削除・保持期限は未合意。履歴を削除する仕様は追加していない。
+
+## 追加レビュー修正の検証待ち
+
+追跡可能な報告: [設計メモの検証・追加レビュー修正](../../docs/development/design-notes-validation.md)。
+LOCAL-88との競合を避け、追加修正では軽量チェックのみ実施。Rust・型生成・ブラウザの
+最終検証はユーザーの後続指示待ち。前回E2E成功を今回の修正の検証結果とは扱わない。
+軽量SQL smoke: `python3 tests/design-notes/bounded-read-sql.py`。

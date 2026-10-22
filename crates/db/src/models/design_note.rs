@@ -123,6 +123,10 @@ pub enum DesignNoteError {
         "Invalid design note input (title/heading 1–300, body/content up to 100000, source/speaker 1–2000, quote/reason up to 2000 characters)"
     )]
     Invalid,
+    #[error(
+        "Invalid design note read: page_size 1–20, limit 1–4000 Unicode characters; use cursor/after_revision for metadata and a saved revision with next_offset for text pages"
+    )]
+    InvalidRead,
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error(transparent)]
