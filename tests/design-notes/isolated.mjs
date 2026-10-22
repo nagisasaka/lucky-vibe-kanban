@@ -332,7 +332,7 @@ try {
   await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('別の本文');
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByTestId('note-body')).toContainText('別の本文');
-  assert.equal((await tool('list_design_notes',{project_id:project})).length,2);
+  assert.equal((await tool('list_design_notes',{project_id:project})).items.length,2);
   await panel.getByRole('button',{name:/最初の理想/}).click();
   await expect(panel.getByTestId('note-addition').filter({hasText:'AI提案'})).toContainText('提案');
   await expect(panel.getByTestId('note-addition').filter({hasText:'保持期限は未合意'})).toContainText('未決事項');
@@ -388,7 +388,33 @@ try {
   }
   assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,revision:1})).body,longText);
   assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,addition_id:addedReceipt.addition.id,revision:1})).content,longText);
-  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload'],ports:new URL(base).port},null,2));
+  // Confirm deletion refusal through the real settings UI, not only REST.
+  await page.setViewportSize({width:1440,height:1000});
+  await page.goto(`${base}/projects/${project}`);
+  await page.getByRole('button',{name:'Project menu',exact:true}).click();
+  await page.getByRole('menuitem',{name:'Edit project settings',exact:true}).click();
+  const projectRow = page.locator('div.group').filter({has:page.getByText('設計メモ検証',{exact:true})});
+  await projectRow.hover();
+  await projectRow.locator('button[aria-haspopup="menu"]').click();
+  await page.getByRole('menuitem',{name:'削除',exact:true}).click();
+  // Existing KeyboardDialog has a heading but no role=dialog.
+  const confirmDelete = page.getByRole('heading',{name:'Delete Project?',exact:true}).locator('..').locator('..');
+  await expect(confirmDelete).toBeVisible();
+  const preserved = await api(`${notePath}/${id}`);
+  const preservedHistory = await mcpHistory({project_id:project,note_id:id});
+  const preservedAdditions = await Promise.all(preserved.data.additions.map(a=>mcpHistory({project_id:project,note_id:id,addition_id:a.id})));
+  const refusal = page.waitForResponse(r=>r.request().method()==='DELETE' && r.url().endsWith(`/api/local/v1/projects/${project}`));
+  await confirmDelete.getByRole('button',{name:'削除',exact:true}).click();
+  assert.equal((await refusal).status(),409);
+  await expect(page.getByText(/設計メモの本文・追記・履歴を保護するため/)).toBeVisible();
+  await expect(page.getByText('Project deleted successfully',{exact:true})).toHaveCount(0);
+  await expect(projectRow).toBeVisible();
+  assert.deepEqual(await api(`${notePath}/${id}`),preserved);
+  assert.deepEqual(await mcpHistory({project_id:project,note_id:id}),preservedHistory);
+  assert.deepEqual(await Promise.all(preserved.data.additions.map(a=>mcpHistory({project_id:project,note_id:id,addition_id:a.id}))),preservedAdditions);
+  await page.screenshot({path:path.join(output,'screenshots/delete-refused.png')});
+  assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload','bounded Unicode/pinned read','bounded stdio write/retry','409 deletion UI and unchanged history'],ports:new URL(base).port},null,2));
 } catch(error) {
   if(page) await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});
   throw error;
