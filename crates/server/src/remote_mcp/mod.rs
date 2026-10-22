@@ -15,6 +15,8 @@ mod evidence_read;
 mod integration_read;
 mod issue_comment_text;
 mod issue_comments;
+#[cfg(all(test, unix))]
+mod issue_comments_browser;
 mod issue_write;
 mod launch;
 mod merge_read;

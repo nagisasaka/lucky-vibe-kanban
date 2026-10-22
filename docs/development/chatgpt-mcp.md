@@ -567,15 +567,21 @@ and unresolved safety/functionality trade-offs to the human. Re-review is a
 separate manual request.
 
 
-The next isolated UI/API E2E can be run with
-`node tests/server/run-issue-comments.mjs` after generating types and building
-this checkout's server and frontend. It creates a unique
-`.build/issue-comments-instance-*` directory, loopback ephemeral ports and
-fixture data, then stops its processes and removes disposable state. Follow
-shared-resource coordination before execution when applicable. The fixture
-seeds review provenance and exercises the real comment API/UI, including an
-ordinary body over 16,000 characters, old target revisions and edited bodies.
-It does not prove OAuth/MCP interoperability: MCP paging, scope and concurrent
-append regressions are in `remote_mcp::issue_comments` Rust tests. The runner and
-spec were prepared without starting a server or Chromium in the bounded-read
-fix run; final-code E2E remains pending.
+The isolated MCP/UI E2E runs with
+`node tests/server/run-issue-comments.mjs` after generating types, building
+this checkout's server and frontend, and compiling the server library tests.
+It creates a unique `.build/issue-comments-instance-*` directory, loopback
+ephemeral ports and fixture data, then stops its processes and removes
+disposable state. Follow shared-resource coordination before execution when
+applicable. An environment allowlist excludes inherited live MCP, database,
+ provider and authentication configuration.
+
+A test-only bridge uses fixture JWTs with the real authentication middleware
+and MCP handlers against the UI server's isolated database. Reviews are posted
+concurrently through MCP and read in Chromium; retries, a UI-created body over
+16,000 characters, complete MCP body paging, old target revisions and edited
+bodies are checked. The bridge is excluded from production builds. This
+proves the fixture MCP-to-UI path, not real Auth0/ChatGPT interoperability.
+Further scope, revision conflict and cross-Project/Issue/comment regressions
+are covered by `remote_mcp::issue_comments` Rust tests. The runner saves a
+representative screenshot at `.build/local88/issue-comments-final.png`.

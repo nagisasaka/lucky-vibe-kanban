@@ -32,7 +32,15 @@ export type IssueRelationship = { id: string, issue_id: string, related_issue_id
 
 export type IssueRelationshipType = "blocking" | "related" | "has_duplicate";
 
-export type IssueComment = { id: string, issue_id: string, author_id: string | null, parent_id: string | null, message: string, created_at: string, updated_at: string, };
+export type IssueComment = { id: string, issue_id: string, author_id: string | null, parent_id: string | null, message: string,
+/**
+ * Self-reported label, never a verified model identity.
+ */
+reviewer_label: string | null, target_revision: string | null,
+/**
+ * Authenticated MCP issuer/subject, separate from the recording actor.
+ */
+recorded_principal: string | null, current_issue_revision: string, created_at: string, updated_at: string, };
 
 export type IssueCommentReaction = { id: string, comment_id: string, user_id: string, emoji: string, created_at: string, };
 
@@ -62,7 +70,7 @@ export enum MemberRole { ADMIN = "ADMIN", MEMBER = "MEMBER" }
 
 export type OrganizationMember = { organization_id: string, user_id: string, role: MemberRole, joined_at: string, last_seen_at: string | null, };
 
-export type CreateProjectRequest = { 
+export type CreateProjectRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
@@ -73,7 +81,7 @@ export type UpdateProjectRequest = { name: string | null, color: string | null, 
 
 export type UpdateNotificationRequest = { seen: boolean | null, };
 
-export type CreateTagRequest = { 
+export type CreateTagRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
@@ -82,7 +90,7 @@ id?: string, project_id: string, name: string, color: string, };
 
 export type UpdateTagRequest = { name: string | null, color: string | null, };
 
-export type CreateProjectStatusRequest = { 
+export type CreateProjectStatusRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
@@ -91,7 +99,7 @@ id?: string, project_id: string, name: string, color: string, sort_order: number
 
 export type UpdateProjectStatusRequest = { name: string | null, color: string | null, sort_order: number | null, hidden: boolean | null, };
 
-export type CreateIssueRequest = { 
+export type CreateIssueRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
@@ -100,35 +108,35 @@ id?: string, project_id: string, status_id: string, title: string, description: 
 
 export type UpdateIssueRequest = { status_id?: string | null, title?: string | null, description?: string | null | null, priority?: IssuePriority | null | null, start_date?: string | null | null, target_date?: string | null | null, completed_at?: string | null | null, sort_order?: number | null, parent_issue_id?: string | null | null, parent_issue_sort_order?: number | null | null, extension_metadata?: JsonValue | null, };
 
-export type CreateIssueAssigneeRequest = { 
+export type CreateIssueAssigneeRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
  */
 id?: string, issue_id: string, user_id: string, };
 
-export type CreateIssueFollowerRequest = { 
+export type CreateIssueFollowerRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
  */
 id?: string, issue_id: string, user_id: string, };
 
-export type CreateIssueTagRequest = { 
+export type CreateIssueTagRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
  */
 id?: string, issue_id: string, tag_id: string, };
 
-export type CreateIssueRelationshipRequest = { 
+export type CreateIssueRelationshipRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
  */
 id?: string, issue_id: string, related_issue_id: string, relationship_type: IssueRelationshipType, };
 
-export type CreateIssueCommentRequest = { 
+export type CreateIssueCommentRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
@@ -137,7 +145,7 @@ id?: string, issue_id: string, message: string, parent_id: string | null, };
 
 export type UpdateIssueCommentRequest = { message: string | null, parent_id: string | null | null, };
 
-export type CreateIssueCommentReactionRequest = { 
+export type CreateIssueCommentReactionRequest = {
 /**
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.

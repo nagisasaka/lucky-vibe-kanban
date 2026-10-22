@@ -5,7 +5,7 @@ import { realpathSync, existsSync } from "node:fs";
 import { dirname, basename, resolve, join } from "node:path";
 
 // Seeds only this run's disposable instance. No copies of real application data.
-export function seedIssueComments(instance) {
+export function seedIssueComments(instance, { reviews = true } = {}) {
   const root = realpathSync(instance);
   assert.equal(dirname(root), realpathSync(".build"));
   assert.ok(basename(root).startsWith("issue-comments-instance-"));
@@ -48,17 +48,18 @@ export function seedIssueComments(instance) {
     const insert = db.prepare(
       "INSERT INTO local_issue_comments(id,issue_id,author_id,message,reviewer_label,target_revision,recorded_principal) VALUES(?,?,?,?,?,?,?)",
     );
-    comments.forEach((id, index) =>
-      insert.run(
-        bytes(id),
-        bytes(issue),
-        bytes("00000000-0000-0000-0000-000000000001"),
-        `## Opinion ${index + 1}\nIndependent fixture review`,
-        index ? "Dot" : "ChatGPT",
-        revision,
-        '["fixture-issuer","shared-user"]',
-      ),
-    );
+    if (reviews)
+      comments.forEach((id, index) =>
+        insert.run(
+          bytes(id),
+          bytes(issue),
+          bytes("00000000-0000-0000-0000-000000000001"),
+          `## Opinion ${index + 1}\nIndependent fixture review`,
+          index ? "Dot" : "ChatGPT",
+          revision,
+          '["fixture-issuer","shared-user"]',
+        ),
+      );
     db.exec("COMMIT");
     return { project, issue, comments, revision };
   } finally {

@@ -1,3 +1,4 @@
+import { isolatedEnvironment } from "./fixtures/issue-comments-env.mjs";
 import { spawn } from "node:child_process";
 import {
   mkdtemp,
@@ -20,19 +21,7 @@ await writeFile(
 const log = createWriteStream(".build/issue-comments-server.log");
 const startServer = () =>
   spawn(resolve("target/debug/server"), [], {
-    env: {
-      ...process.env,
-      LVK_INSTANCE_DIR: instance,
-      LVK_ACCESS_DEPLOYMENT: "local",
-      LVK_AUTH_MODE: "local",
-      LVK_PUBLIC_URL: "",
-      HOST: "127.0.0.1",
-      BACKEND_PORT: "0",
-      PORT: "0",
-      PREVIEW_PROXY_PORT: "0",
-      DISABLE_WORKTREE_CLEANUP: "1",
-      RUST_LOG: "info",
-    },
+    env: isolatedEnvironment(process.env, instance, process.cwd()),
     stdio: ["ignore", "pipe", "pipe"],
   });
 let server = startServer();
@@ -44,10 +33,14 @@ server.on("error", (error) => {
 });
 let stopped = new Promise((resolve) => server.once("close", resolve));
 let testProcess;
+let bridge;
+let bridgeStopped;
+let bridgeError;
 let interrupted = false;
 const interrupt = () => {
   interrupted = true;
   testProcess?.kill("SIGTERM");
+  bridge?.kill("SIGTERM");
   server.kill("SIGTERM");
 };
 process.on("SIGINT", interrupt);
@@ -78,6 +71,51 @@ try {
   }
   if (!baseURL) throw Error("Isolated server startup timed out");
   console.log("Isolated instance:", instance, "URL:", baseURL);
+  const isolatedEnv = isolatedEnvironment(process.env, instance, process.cwd());
+  if (
+    [
+      "LVK_MCP_CONFIG",
+      "DATABASE_URL",
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+    ].some((key) => key in isolatedEnv)
+  )
+    throw Error("Live environment inherited");
+  bridge = spawn(
+    "cargo",
+    [
+      "test",
+      "-p",
+      "server",
+      "--lib",
+      "remote_mcp::issue_comments_browser::issue_comments_browser_bridge",
+      "--",
+      "--ignored",
+      "--exact",
+      "--nocapture",
+    ],
+    { env: isolatedEnv, stdio: ["ignore", "pipe", "pipe"] },
+  );
+  bridge.stdout.pipe(log, { end: false });
+  bridge.stderr.pipe(log, { end: false });
+  bridgeStopped = new Promise((resolve) => bridge.once("close", resolve));
+  bridge.on("error", (error) => {
+    bridgeError = error;
+  });
+  let ready = false;
+  for (let n = 0; n < 180; n++) {
+    if (bridgeError) throw bridgeError;
+    if (bridge.exitCode !== null || interrupted)
+      throw Error("MCP bridge exited before readiness");
+    try {
+      JSON.parse(await readFile(instance + "/mcp-fixture.json", "utf8"));
+      ready = true;
+      break;
+    } catch {}
+    await delay(1000);
+  }
+  if (!ready) throw Error("MCP bridge readiness timed out");
+
   testProcess = spawn(
     process.execPath,
     [
@@ -86,11 +124,11 @@ try {
       "-c",
       "tests/server/playwright.config.ts",
       "tests/server/specs/issue-comment-reviews.spec.ts",
-      "--reporter=list",
+      "--reporter=list,html",
     ],
     {
       env: {
-        ...process.env,
+        ...isolatedEnv,
         LVK_E2E_BASE_URL: baseURL,
         LVK_INSTANCE_DIR: instance,
         LVK_E2E_ISSUE_COMMENTS: "1",
@@ -106,6 +144,16 @@ try {
   });
   process.exitCode = code ?? 1;
 } finally {
+  if (bridge) {
+    await writeFile(resolve(instance, "mcp-fixture-stop"), "stop");
+    const killBridge = setTimeout(() => bridge.kill("SIGKILL"), 15000);
+    const bridgeCode = await bridgeStopped;
+    clearTimeout(killBridge);
+    if (bridgeCode !== 0) {
+      process.exitCode = 1;
+      console.error("MCP bridge did not exit successfully:", bridgeCode);
+    }
+  }
   server.kill("SIGTERM");
   const timeout = setTimeout(() => server.kill("SIGKILL"), 15000);
   await stopped;

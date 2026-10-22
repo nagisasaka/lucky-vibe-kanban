@@ -224,3 +224,34 @@ test("isolated browser fixture seeds only its guarded disposable database", asyn
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("browser child environment excludes live credentials and service settings", async () => {
+  const { isolatedEnvironment } = await import(
+    "./fixtures/issue-comments-env.mjs"
+  );
+  const child = isolatedEnvironment(
+    {
+      PATH: "/bin",
+      HOME: "/home/fixture",
+      LVK_MCP_CONFIG: "forbidden",
+      DATABASE_URL: "forbidden",
+      OPENAI_API_KEY: "forbidden",
+      ANTHROPIC_API_KEY: "forbidden",
+      LVK_AUTH_MODE: "auth0",
+      LVK_INSTANCE_DIR: "/live",
+    },
+    "/isolated",
+    "/workspace",
+  );
+  assert.equal(child.LVK_INSTANCE_DIR, "/isolated");
+  assert.equal(child.LVK_AUTH_MODE, "local");
+  assert.equal(child.CARGO_BUILD_JOBS, "2");
+  assert.equal(child.HOST, "127.0.0.1");
+  for (const key of [
+    "LVK_MCP_CONFIG",
+    "DATABASE_URL",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+  ])
+    assert.equal(child[key], undefined);
+});
