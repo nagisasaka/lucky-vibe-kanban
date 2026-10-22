@@ -92,9 +92,7 @@ async fn restart_host() {
         .execute(&remote.pool)
         .await
         .unwrap();
-    let region = grant(&root.join("app"), PathBuf::from("/bin/sh"));
-    let mut region = region;
-    region.executables.push(PathBuf::from("/bin/sleep"));
+    let region = grant(&root.join("app"));
     let mut other = region.clone();
     other.id = "other-grant".into();
     remote.environment = Some(Arc::new(Environment::new(vec![region, other]).unwrap()));

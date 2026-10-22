@@ -34,8 +34,6 @@ describe('runtime settings UI', () => {
             display_name: 'API logs',
             project_id: 'project',
             root: '/srv/api',
-            subjects: ['member'],
-            executables: [],
             allow_uncoordinated_execution: false,
           },
         ],
@@ -57,6 +55,9 @@ describe('runtime settings UI', () => {
     expect(html).toContain('取り消しても稼働中プロセスは終了しません');
     expect(html).toContain('Example API');
     expect(html).toContain('API logs');
+    expect(html).not.toContain('対象利用者subject');
+    expect(html).not.toContain('許可実行ファイル');
+    expect(html).toContain('許可ディレクトリ（絶対パス）');
   });
   it('shows an explicit disabled-empty recovery action and reason, without an enable form', () => {
     const client = new QueryClient();

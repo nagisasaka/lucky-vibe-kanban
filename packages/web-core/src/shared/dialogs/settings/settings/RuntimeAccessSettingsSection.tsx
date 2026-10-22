@@ -8,7 +8,6 @@ import {
   SettingsCard,
   SettingsCheckbox,
   SettingsInput,
-  SettingsTextarea,
   SettingsSaveBar,
 } from './SettingsComponents';
 import { useSettingsDirty } from './SettingsDirtyContext';
@@ -58,24 +57,10 @@ export function RuntimeAccessSettingsSection() {
       setBusy(false);
     }
   }
-  const field = (
-    label: string,
-    value: string,
-    change: (v: string) => void,
-    multiline = false
-  ) => (
+  const field = (label: string, value: string, change: (v: string) => void) => (
     <label className="block space-y-2 text-sm text-normal">
       <span>{label}</span>
-      {multiline ? (
-        <SettingsTextarea
-          value={value}
-          onChange={change}
-          disabled={busy}
-          rows={3}
-        />
-      ) : (
-        <SettingsInput value={value} onChange={change} disabled={busy} />
-      )}
+      <SettingsInput value={value} onChange={change} disabled={busy} />
     </label>
   );
   return (
@@ -83,8 +68,12 @@ export function RuntimeAccessSettingsSection() {
       title={t('runtimeAccess.title')}
       description={t('runtimeAccess.description')}
     >
-      <p className="text-sm text-low">{t('runtimeAccess.permissions')}</p>
-      <p className="text-sm text-low">{t('runtimeAccess.revoke')}</p>
+      <details className="text-sm text-low">
+        <summary>{t('runtimeAccess.help')}</summary>
+        <p>{t('runtimeAccess.permissions')}</p>
+        <p>{t('runtimeAccess.osAuthority')}</p>
+        <p>{t('runtimeAccess.revoke')}</p>
+      </details>
       {(error || query.error) && (
         <p role="alert" className="text-sm text-error">
           {error || t('runtimeAccess.denied')}
@@ -151,23 +140,9 @@ export function RuntimeAccessSettingsSection() {
               {field(t('runtimeAccess.root'), grant.root, (root) =>
                 patch(index, { root })
               )}
-              {field(
-                t('runtimeAccess.subjects'),
-                grant.subjects.join('\n'),
-                (value) => patch(index, { subjects: value.split('\n') }),
-                true
-              )}
-              {field(
-                t('runtimeAccess.executables'),
-                grant.executables.join('\n'),
-                (value) =>
-                  patch(index, { executables: value ? value.split('\n') : [] }),
-                true
-              )}
               <SettingsCheckbox
                 id={`execute-${grant.id}`}
                 label={t('runtimeAccess.execute')}
-                description={t('runtimeAccess.osAuthority')}
                 checked={grant.allow_uncoordinated_execution}
                 disabled={busy}
                 onChange={(allow_uncoordinated_execution) =>
@@ -207,8 +182,6 @@ export function RuntimeAccessSettingsSection() {
                       display_name: '',
                       project_id: '',
                       root: '',
-                      subjects: [],
-                      executables: [],
                       allow_uncoordinated_execution: false,
                     },
                   ],

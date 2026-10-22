@@ -98,3 +98,33 @@ B/Cともpath alias・bind mountのcanonical資源対応を管理者が定義し
 - `pnpm --dir packages/web-core exec vitest run src/shared/lib/runtimeAccessApi.test.ts src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.test.tsx`: 3 passed。
 - 変更したUI本体のESLint（local-web設定）、変更UI・翻訳のPrettier、変更Rustのrustfmt、
   `git diff --check`: 成功。
+
+
+## 2026-10-22 の設定簡素化（追加合意）
+
+最新main `32aed2418f94c51c4973890be1a2d55f53b09205` に既存Workspaceブランチを
+fast-forwardして着手。main自体は変更しない。上記のSubject指定・実行ファイル許可リストの
+記録は過去仕様であり、追加合意により入力・保存・認可判定から削除した。
+認証・scope・既定無効・Project・ディレクトリ・Workspace除外・UID・PID/起動時刻・
+管理対象のreceipt所有者・出力制限は維持する。execによる実行ファイル変更だけでは
+観察・停止を拒否しない。cwdを許可領域外へ移す場合の制限は従来どおり。
+
+旧serialized grantの `subjects` / `executables` は `deny_unknown_fields` により拒否する。
+黙って読み捨てて許可を拡張せず、自動変換やDB初期化もしない。legacyファイルは既存の
+無効・空設定の明示保存で復旧できる。旧DB行は503のままとし、既存管理者APIから現revisionを
+指定した新形式への明示的な置換が必要。今回のユーザーは未保存であり、複雑な移行機構は追加しない。
+
+UIは指定文言を採用し、詳細は折りたたみヘルプに集約した。最小試験とfrontend型検査・ビルドを
+行い、広範な結合試験、実ブラウザーE2E、実Auth0/ChatGPT、実サーバー反映は今回の対象外。
+成果物のパス・hash・ビルド元SHAはWorkspace内の `target/local11-simplify/artifacts.json` に記録する。
+独立レビュー待ちで停止し、正式Integration・Wiki更新・デプロイは行わない。
+
+この追加変更の最小試験は、`remote_mcp::environment_process::tests` の6件と、
+`environment_http_catalog_and_authorization_are_explicit`、
+`environment_configuration_refuses_root_and_duplicate_grants`、
+`environment_http_launch_boundaries_and_failures`、
+`simplified_grants_serialize_without_subjects_or_executables_and_reject_old_fields`
+の4件が成功。後者4件は同じコンパイル済みlibtestを `--exact` で選択して実行した。
+UI/APIの関連Vitest 3件、生成型生成/check、web-core/local-web型検査、変更UIのlint、
+rustfmtと差分検査も成功。最初のRustコンパイルではテストのPathBuf import欠落を検出し、
+修正後に再実行した。最終ビルド結果・成果物hashは上記artifacts.jsonに記録する。

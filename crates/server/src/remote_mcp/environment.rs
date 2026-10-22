@@ -18,9 +18,6 @@ pub struct Grant {
     pub id: String,
     pub project_id: Uuid,
     pub root: PathBuf,
-    pub subjects: Vec<String>,
-    #[serde(default)]
-    pub executables: Vec<PathBuf>,
     /// Explicit assertion: this directory is not a coordinated shared resource.
     #[serde(default)]
     pub allow_uncoordinated_execution: bool,
@@ -76,16 +73,8 @@ impl Environment {
                 "Runtime grant IDs must be unique and bounded"
             );
             ensure!(
-                !grant.subjects.is_empty() && grant.subjects.len() <= 100,
-                "Runtime grants require explicit subjects"
-            );
-            ensure!(
-                grant.display_name.len() <= 160
-                    && grant
-                        .subjects
-                        .iter()
-                        .all(|s| !s.trim().is_empty() && s.len() <= 512),
-                "Invalid runtime display name or subject"
+                grant.display_name.len() <= 160,
+                "Invalid runtime display name"
             );
             ensure!(
                 !grant
@@ -100,15 +89,6 @@ impl Environment {
                 grant.root.is_dir() && grant.root.parent().is_some(),
                 "Runtime root must be a specific directory, not filesystem root"
             );
-            ensure!(
-                grant.executables.len() <= 64,
-                "Too many runtime executables"
-            );
-            for exe in &mut grant.executables {
-                ensure!(exe.is_absolute(), "Runtime executable must be absolute");
-                *exe = exe.canonicalize()?;
-                ensure!(exe.is_file(), "Runtime executable must be a regular file");
-            }
         }
         Ok(Self {
             grants,
@@ -118,11 +98,11 @@ impl Environment {
         })
     }
 
-    async fn grant(&self, principal: &Principal, id: &str) -> anyhow::Result<Grant> {
+    async fn grant(&self, id: &str) -> anyhow::Result<Grant> {
         self.current_grants()
             .await?
             .iter()
-            .find(|g| g.id == id && g.subjects.contains(&principal.subject))
+            .find(|g| g.id == id)
             .cloned()
             .ok_or_else(|| anyhow::anyhow!("Runtime region not permitted"))
     }
@@ -179,7 +159,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "list_processes",
-            "Observe same-UID Linux processes with cwd and executable inside this grant. No argv or environment disclosure. Listing is live, not health or build provenance.",
+            "Observe same-UID Linux processes with cwd inside this grant. No argv or environment disclosure. Listing is live, not health or build provenance.",
             json!({"after_pid":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":100}}),
             &[],
             false,
@@ -193,7 +173,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "run_process",
-            "Run an existing executable/script with argv and relative cwd. Do not send editing commands or inline shell/program source. Requires explicit user authorisation and an uncoordinated region outside LVK Workspaces; use existing resource coordination for shared devices/databases/deployments. request_id is durable: retry same input/key or get_operation after lost response. Receipt success means startup only, not service health/tests. Expiry sends SIGTERM, then SIGKILL after 5 seconds if necessary. Service lifetime is capped; detached children require separate observation/stop. Self-restart is unsupported.",
+            "Run an existing executable/script with argv and relative cwd. The directory limits cwd, not command access; commands run with the LVK OS user permissions. Do not send editing commands or inline shell/program source. Requires explicit user authorisation and an uncoordinated region outside LVK Workspaces; use existing resource coordination for shared devices/databases/deployments. request_id is durable: retry same input/key or get_operation after lost response. Receipt success means startup only, not service health/tests. Expiry sends SIGTERM, then SIGKILL after 5 seconds if necessary. Service lifetime is capped; detached children require separate observation/stop. Self-restart is unsupported.",
             json!({"request_id":uuid,"purpose":text,"executable":text,"args":{"type":"array","items":{"type":"string"},"maxItems":128},"cwd":text,"service":{"type":"boolean","default":false},"lifetime_seconds":{"type":"integer","minimum":1,"maximum":86400}}),
             &[
                 "request_id",
@@ -346,7 +326,7 @@ pub(super) async fn call(
             input.as_object().is_some_and(|v| v.is_empty()),
             "Invalid runtime capability arguments"
         );
-        let grants: Vec<_> = environment.current_grants().await?.iter().filter(|g| g.subjects.contains(&principal.subject) && remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"display_name":g.display_name,"project_id":g.project_id,"root":g.root,"executables":g.executables,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
+        let grants: Vec<_> = environment.current_grants().await?.iter().filter(|g| remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"display_name":g.display_name,"project_id":g.project_id,"root":g.root,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
         return Ok(
             json!({"regions":grants,"platform":"linux","environment_inheritance":"none; fixed PATH and LANG only","file_write_tools":false,"os_write_sandbox":false,"shared_resources":"use existing resource coordination; these grants cannot authorise shared-resource use","workspace_execution":"not supported; managed Workspace trees are refused","self_restart":"not supported; use operator recovery","output_persistence":"bounded memory, unavailable after server restart","build_provenance":"not established","reference_data_only":true}),
         );
@@ -356,7 +336,7 @@ pub(super) async fn call(
         .and_then(|o| o.remove("region"))
         .and_then(|v| v.as_str().map(str::to_owned))
         .ok_or_else(|| anyhow::anyhow!("Runtime region required"))?;
-    let grant = environment.grant(principal, &region).await?;
+    let grant = environment.grant(&region).await?;
     remote.require_project(grant.project_id).await?;
     #[cfg(not(target_os = "linux"))]
     {
@@ -386,12 +366,7 @@ pub(super) async fn call(
                     (1..=100).contains(&a.limit),
                     "Process page limit must be 1 to 100"
                 );
-                let mut value = environment_process::list(
-                    &grant.root,
-                    &grant.executables,
-                    a.after_pid,
-                    a.limit,
-                )?;
+                let mut value = environment_process::list(&grant.root, a.after_pid, a.limit)?;
                 if let Some(items) = value["processes"].as_array_mut() {
                     for item in items {
                         item["project_id"] = json!(grant.project_id);
@@ -401,8 +376,7 @@ pub(super) async fn call(
             }
             "inspect_process" => {
                 let a: Inspect = arguments(input)?;
-                let mut value =
-                    environment_process::inspect(&grant.root, &grant.executables, &a.identity)?;
+                let mut value = environment_process::inspect(&grant.root, &a.identity)?;
                 value["project_id"] = json!(grant.project_id);
                 Ok(value)
             }
@@ -432,10 +406,7 @@ pub(super) async fn call(
                     let a: Run = arguments(input.clone())?;
                     ensure!(a.executable.is_absolute(), "Executable must be absolute");
                     let executable = a.executable.canonicalize()?;
-                    ensure!(
-                        grant.executables.contains(&executable),
-                        "Executable not permitted"
-                    );
+                    ensure!(executable.is_file(), "Executable must be a regular file");
                     ensure!(
                         a.args.len() <= 128
                             && a.args.iter().map(String::len).sum::<usize>() <= 32768,
@@ -464,7 +435,6 @@ pub(super) async fn call(
                 );
                 let targets = json!({"region":region,"root":grant.root,"purpose":purpose,"target":target,"arguments":"omitted; input hash retained"});
                 let owned = remote.clone();
-                let principal = principal.clone();
                 let operation = name.to_owned();
                 let receipt = remote
                     .operations()
@@ -477,7 +447,7 @@ pub(super) async fn call(
                         targets,
                         move |operation_id| async move {
                             let result = async {
-                                let current = environment.grant(&principal, &grant.id).await?;
+                                let current = environment.grant(&grant.id).await?;
                                 ensure!(
                                     serde_json::to_value(&current)?
                                         == serde_json::to_value(&grant)?,
@@ -488,8 +458,8 @@ pub(super) async fn call(
                                     let a: Run = arguments(input)?;
                                     let executable = a.executable.canonicalize()?;
                                     ensure!(
-                                        grant.executables.contains(&executable),
-                                        "Executable not permitted"
+                                        executable.is_file(),
+                                        "Executable must be a regular file"
                                     );
                                     ensure!(
                                         !std::path::Path::new(&a.cwd).is_absolute()
@@ -523,7 +493,6 @@ pub(super) async fn call(
                                     environment.processes.stop(
                                         &process_owner,
                                         &grant.root,
-                                        &grant.executables,
                                         &identity,
                                         a.force,
                                     )
