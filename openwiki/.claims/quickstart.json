@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c1f2a996b8a3c35c6972fb17831c0d189e8e3d090119511959a7457a767c8bf9",
+  "pageVersion": "sha256:879e0c93ab9035fdef0d23f300cc4286c49a3c96e28481ef8d046b3349891c31",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -164,11 +164,15 @@
     },
     {
       "id": "claim_f655f68d3b224653a0e6246e88737f7b",
-      "statement": "外部HTTP MCPのRuntime Accessは管理者grantと専用scopeで既存アプリの観測・直接実行を提供し、設定保存と取消・再起動の寿命はAgentRunや共有資源予約と別の契約を持つ。",
+      "statement": "外部HTTP MCPのRuntime AccessはProject・ディレクトリ単位の管理者grantと専用scopeで既存アプリの観測・直接実行を提供し、設定保存と取消・再起動の寿命はAgentRunや共有資源予約と別の契約を持つ。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L276-L369",
-          "version": "repo-lines-v1:sha256:e679cedd695ce39e00f71adf9049ad275158aef9984c63b3f5637f9967d39c8f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhOTE3OTQzMGJmNWYzMzRiNmE0NDM1YjhkNGZhZTk2NTRhM2E0N2UxZWU4MzQxM2FlODFiYTRkMjA4MWI5YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiOWUzMzg3MDM0MDg5YWU3ZmJkNDFkMGMyNjk1ZDM4MDZkMjc0OTlkNGJhNzMxMGQ2MGEwYThjYjZjNTgzNTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmNjIzODIwYmMzM2I3NDVhZjAzNGNmMmM1MWEyYzNlYmI3NjU5YzdkMDYzZjM1OTJlYWFjYzg0ZDUzOWY2OWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkYjExYzRlYTlhMjg0Y2IwODViMTgyZWNkMGUzZTcyNDBhZjNiNGQ5M2I5ZTg2YTA5MmNjM2VjM2U5MmFlZDYifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L13-L31",
+          "version": "repo-lines-v1:sha256:fdbcef87c6003bfd41250af42b87f0d48d9cdfcdd33cc64428ea50dc95b4b2ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxM2M5ZmM1NTE4NjZlZmZiYzc0NzU2MjY2Y2U0ZjIwMGE3MmJlNzVlYjBkZTkzZmNmNzZmYmJmZTM1YWI5MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4Njg0MWE1MGMzNjJiNTE1ZTNmMjIzZWUzYTRkYjZkM2I2MjVhMjU2MjVjOTEwMmJmMGIwN2UwMzY1YjY0MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiM2E5OGUwZDM1NzZlMzMxZmZlMGQ0YzIzMGQ0NjdhYmZlZGMzOTA3ODcyM2IyNjg5YzgxMDRiM2UzMTQ3OTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L256-L403",
+          "version": "repo-lines-v1:sha256:095e8c404d48d621650956a06a1903740d9c465c63016aac3d728d0d93ca9d66:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxYTkxNzk0MzBiZjVmMzM0YjZhNDQzNWI4ZDRmYWU5NjU0YTNhNDdlMWVlODM0MTNhZTgxYmE0ZDIwODFiOWM1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNTEzODJhZjZlYzEzM2Y0MzUyNTA4OTlhZDMxODkwZjRmNjU3ZTU0NDJhYjc0OTk1NjIzMzkxMTM2NTdmYTMzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlZjYyMzgyMGJjMzNiNzQ1YWYwMzRjZjJjNTFhMmMzZWJiNzY1OWM3ZDA2M2YzNTkyZWFhY2M4NGQ1MzlmNjllIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxYmM0ZTY4ODM4MzhiNDQwNGQwY2RlYTllOTFkYTI1ODAxODY3ZmU2ZDhjMzM3Y2ZlY2Y5MjU0ODkyMjhkZTY3In0"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L1-L34",
@@ -193,6 +197,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-22T07:38:38.993Z"
+    "at": "2026-10-22T13:28:07.786Z"
   }
 }

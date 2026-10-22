@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:31f6cb7854bd91adcfe1f6f4f69e4589d9f96dca66e2a6fdb75e3b0e0c7ed7dc",
+  "pageVersion": "sha256:e81b764927dc426dadba9c34b52d89f00f22249e2bd68ff14ada60462420d6a1",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -175,8 +175,8 @@
       "statement": "Runtime AccessはAgentRunを作らず、共有するprocess registryと既存operation receiptで直接プロセスを実行し、設定の永続化と出力・寿命監視の揮発状態を分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L458-L540",
-          "version": "repo-lines-v1:sha256:b7d87180881e732941ecb94eb765c5af2c205d3e6b9b30870fdd3cf8f3214f10:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2NzQ1ZTVkZGI1ZjU0YzhmZjY4ZGRmYTg3ZDQ4MjhmODg3MjUxM2Y5MzYyYjYwZGE0MGZlZGI4ZmZmM2M3ZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwMDEwNWUwYTY4NTIxYzNkMzMyNjE1MzkwZTg1OWUzOWNmMjQxMjc0YTdkNzgxZDE5NmEzYWRhMDdiMTBmZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5NTYyODUxYzk4NzYwYWVlMzA4OWQyN2FjOGRjOTkyMzdjYjBiNTJiZDkzM2U4MjFiMTg4OGE2NjRiNWUzZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0MWEzZjBiOTg4ZmY4NzhlN2IyMzY4MGNmMzQzODk2MDJlZDUxZTk2MTk2NTRlNTI0NjA5YWE3ZDQzYjcxNzMifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L398-L510",
+          "version": "repo-lines-v1:sha256:2c6041627edd3355f6b98b65ba21d32f8cfc8692cf274fa3f007f7bea7390a82:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzY2ZmN2NhMmM4YzhkMmIxYzFmMWE1MmU4ZGYwY2NiZjZmM2JhZjY2M2NlOTljMzI2NmE3ZTYyM2MzNjNkYzQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0YmUwM2Q3YjQzMjg4YjM0N2NiNzBmZTc4MjE0OGFmMzA5YTJlZTg0NzA3NDlkNWFlYmRkNTFkZTVjOWM3MjE5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjYTJkODM1MmQ2YWZiN2E3ZGJhOTA1ZTJiNzI2NmU2OTBhNjM2NzM2NTlmZTNkNDQ2ZGJlOWUzMDY2OWU3YjE2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3MDU5MDFjMGQ4ZmRjOGRhOWQ4YTAzYmVhNzk2NmYxMDk4MjkwN2EwY2VlOTIzMWQ1ZDhhZDllYjhmMmM1NWFmIn0"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L1-L34",
@@ -184,7 +184,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs#L355-L456",
-          "version": "repo-lines-v1:sha256:7cf1ab3e28a73dafda46a181a8d27a5aab0618d319576de8ba054ab78f0f738d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzOTg4MGRjZjc1OGJkOGYxZGZjNTFhMDllMGJmMDlkMjZkZDdlMzg1NTA5MzlkMzAyM2JiZjkxNDE2MzViNjgzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2NWFlZTNkNDQ3N2M5YTk1ZmFlZDlmNTE4NDRhYWY2Zjk1ZTAxMDUwNTI0MDlkNDNjMjkxZWU3YmM2ZWFjY2Y4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyOGIyOGE2NGUzMTkwNjk3YmI3ZThkYzAzYmNhMGU4YzY5ZTJhNGVlNTJjMDkyNWRiNjlmMTdjYmEzMDNmM2JlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5NmFhYzVjNjZjZmYzMGZjNWUyMDExNzNiZjEzN2RhMTYyMWE1Njc4YjMzNTQ3ZmI3ODlhZmYxNDQ0ZmRiOGQyIn0"
+          "version": "repo-lines-v1:sha256:a8097abb22ba1645d9f732948668e1f96a752563fcc8d47e3cf945ab1bebb54a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMGNiM2Q5MDkwMzU1NmE4ZDg5MmJhMDUxYzFiZDY4MTIxOTc3NmYzYjgyOTQzMmRhNjI3ZmQ2MjcyZjI1YzgxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5ZTU5Yjg5MjQ1YmMyZjhiMThlMTQxNTJiYmNjMGJhNTEyMGVkYzE1MzlmNzg0ZmFhMWMzYjM4MWJlODk1MGIxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlZTJlYzc1ODQ2ODQxNDZiMTJlZGZmNTJiMDcyYzk3NzMzYjQzZWVjNWUyMzgyZGVlZTk5OWJhY2ZmMjcwMDRjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5Mjc5NzBiMzJiNjA4NWI2MDFmZDc3ZmMzZTUzM2YwNDFkMGM5OWMzOWZjOTE5N2RiN2NkZjJmNmU3NTBkODlhIn0"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs#L55-L72",
@@ -195,6 +195,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:59:59.398Z"
+    "at": "2026-10-22T13:28:07.786Z"
   }
 }
