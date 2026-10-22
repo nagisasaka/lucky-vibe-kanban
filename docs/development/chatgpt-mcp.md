@@ -495,7 +495,7 @@ the historical 85 calls / roughly 420,000 characters entirely to API overhead.
 
 ### Share Issue specification reviews
 
-External HTTP MCP clients can use `list_issue_comments` and `add_issue_comment`
+External HTTP MCP clients can use `list_issue_comments`, `get_issue_comment` and `add_issue_comment`
 to share independent opinions on the existing Board comments. This does not
 add an AI orchestrator or extend the internal stdio tool catalogue.
 
@@ -509,7 +509,31 @@ add an AI orchestrator or extend the internal stdio tool catalogue.
 3. Another client can read `list_issue_comments` with `project_id`, `issue_id`,
    optional `limit` (1–50) and `cursor`. Follow `next_cursor` while `has_more` is
    true. A cursor must belong to the same Issue; after its deletion restart the
-   listing. Humans see the same comments in the existing Issue panel.
+   listing. Each item has `message_preview` (up to 256 Unicode scalars) and
+   `message_truncated`; the combined preview body is at most 12,800 characters.
+   The preview is not the full comment when truncated. Humans see the same
+   comments in the existing Issue panel.
+4. To read a complete body, call `get_issue_comment` with `project_id`,
+   `issue_id`, `comment_id`, `offset: 0`, and optional `limit` (1–16,000;
+   default 8,000). Append `message_page` from successive `next_offset` values,
+   passing the initial `comment_revision` as `expected_comment_revision` on
+   every subsequent call. The last page has `has_more: false` and a null
+   `next_offset`. Offset equal to `total_characters` returns an empty terminal
+   page; an offset beyond the body is an error. Empty comments are readable.
+   Offsets count Unicode scalar values, not UTF-8 bytes, UTF-16 units or
+   grapheme clusters; combining marks count separately. Do not prepend the
+   list preview to body pages.
+
+The comment edit revision is a content identity (SHA-256 of the scoped identity,
+edit timestamp and body), distinct from the reviewed Issue revision. An edit
+between pages causes a revision mismatch with no body returned; restart at zero.
+It also detects a same-length edit whose timestamp did not change. Each body
+request streams the entire stored body in 16 KiB chunks inside one read snapshot
+for hashing and character counting, while retaining only the requested page.
+Consequently work per page scales with comment size, but response body size and
+application buffer size are bounded. This preserves existing long comments and
+embedded NUL characters without introducing stored full-text history. Character
+limits describe body text; JSON escaping and fixed per-item metadata add bytes.
 
 Reviews preserve the supplied revision even if the Issue has since changed.
 The response includes `current_issue_revision` and, for each comment with a
@@ -524,7 +548,8 @@ issuer/subject pair from the authenticated MCP request, fixed at initial
 posting. It is independent of `reviewer_label`, including when two AIs share
 one OAuth account. Existing comment editing retains initial attribution and
 exposes `updated_at`; the UI shows the last edit separately. Normal comment
-requests cannot set review provenance fields.
+requests cannot set review provenance fields. These remain editable comments,
+not immutable or tamper-proof audit records.
 
 Appending requires `lvk:read` and `lvk:write` plus existing Project access.
 Reading requires `lvk:read`. The existing durable operation receipt handles
@@ -540,3 +565,17 @@ latest decisions and existing delegation; model names, recency and the number
 of similar opinions confer no authority. Return significant product decisions
 and unresolved safety/functionality trade-offs to the human. Re-review is a
 separate manual request.
+
+
+The next isolated UI/API E2E can be run with
+`node tests/server/run-issue-comments.mjs` after generating types and building
+this checkout's server and frontend. It creates a unique
+`.build/issue-comments-instance-*` directory, loopback ephemeral ports and
+fixture data, then stops its processes and removes disposable state. Follow
+shared-resource coordination before execution when applicable. The fixture
+seeds review provenance and exercises the real comment API/UI, including an
+ordinary body over 16,000 characters, old target revisions and edited bodies.
+It does not prove OAuth/MCP interoperability: MCP paging, scope and concurrent
+append regressions are in `remote_mcp::issue_comments` Rust tests. The runner and
+spec were prepared without starting a server or Chromium in the bounded-read
+fix run; final-code E2E remains pending.

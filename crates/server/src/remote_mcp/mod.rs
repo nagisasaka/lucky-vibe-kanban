@@ -13,6 +13,7 @@ pub mod environment_settings;
 mod errors;
 mod evidence_read;
 mod integration_read;
+mod issue_comment_text;
 mod issue_comments;
 mod issue_write;
 mod launch;
