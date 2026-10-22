@@ -79,14 +79,12 @@ impl Http {
         .unwrap()
     }
 }
-pub(super) fn grant(root: &Path, executable: PathBuf) -> Grant {
+pub(super) fn grant(root: &Path) -> Grant {
     Grant {
         display_name: "Example API".into(),
         id: "example-api".into(),
         project_id: Uuid::from_u128(1),
         root: root.into(),
-        subjects: vec!["owner-subject".into()],
-        executables: vec![executable],
         allow_uncoordinated_execution: true,
     }
 }
@@ -95,8 +93,7 @@ pub(super) fn grant(root: &Path, executable: PathBuf) -> Grant {
 async fn environment_http_catalog_and_authorization_are_explicit() {
     let (mut remote, auth, provider) = tests::fixture().await;
     let dir = tempfile::tempdir().unwrap();
-    let mut region = grant(dir.path(), PathBuf::from("/bin/echo"));
-    region.subjects = vec!["someone-else".into()];
+    let region = grant(dir.path());
     remote.environment = Some(Arc::new(Environment::new(vec![region]).unwrap()));
     let http = serve(remote.clone(), auth.clone()).await;
     let (status, catalog) = http.rpc("runtime", "tools/list", json!({})).await;
@@ -141,8 +138,11 @@ async fn environment_http_catalog_and_authorization_are_explicit() {
         );
     }
     assert_eq!(
-        http.value("get_runtime_access", json!({})).await["regions"],
-        json!([])
+        http.value("get_runtime_access", json!({})).await["regions"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
     );
     assert_eq!(
         http.call(
@@ -211,7 +211,7 @@ server.serve_forever()
 "#,
     )
     .unwrap();
-    let region = grant(dir.path(), python.clone());
+    let region = grant(dir.path());
     let mut second_region = region.clone();
     second_region.id = "same-directory-other-grant".into();
     remote.environment = Some(Arc::new(
@@ -374,11 +374,22 @@ server.serve_forever()
 #[test]
 fn environment_configuration_refuses_root_and_duplicate_grants() {
     let directory = tempfile::tempdir().unwrap();
-    let region = grant(directory.path(), PathBuf::from("/bin/echo"));
+    let region = grant(directory.path());
     assert!(Environment::new(vec![region.clone(), region.clone()]).is_err());
-    let mut broad = region;
-    broad.root = PathBuf::from("/");
-    assert!(Environment::new(vec![broad]).is_err());
+    for root in [
+        PathBuf::from("/"),
+        PathBuf::from("relative"),
+        directory.path().join("../outside"),
+        directory.path().join("missing"),
+    ] {
+        let mut invalid = region.clone();
+        invalid.root = root;
+        assert!(Environment::new(vec![invalid]).is_err());
+    }
+    assert_eq!(
+        Environment::new(vec![region]).unwrap().grants[0].root,
+        directory.path().canonicalize().unwrap()
+    );
 }
 
 #[tokio::test]
@@ -400,8 +411,7 @@ async fn environment_http_launch_boundaries_and_failures() {
     let echo = Path::new("/bin/echo").canonicalize().unwrap();
     let invalid_program = directory.path().join("not-executable");
     std::fs::write(&invalid_program, "ordinary file, not executable").unwrap();
-    let mut region = grant(directory.path(), echo.clone());
-    region.executables.push(invalid_program.clone());
+    let region = grant(directory.path());
     remote.environment = Some(Arc::new(Environment::new(vec![region]).unwrap()));
     let http = serve(remote, auth).await;
     let input = |request: Uuid, executable: &Path, cwd: &str| json!({"region":"example-api","request_id":request,"purpose":"Verify launch boundary","executable":executable,"args":[],"cwd":cwd,"lifetime_seconds":10});
@@ -409,7 +419,7 @@ async fn environment_http_launch_boundaries_and_failures() {
         http.call(
             "runtime",
             "run_process",
-            input(Uuid::new_v4(), Path::new("/bin/sleep"), ".")
+            input(Uuid::new_v4(), Path::new("relative-program"), ".")
         )
         .await["isError"],
         true

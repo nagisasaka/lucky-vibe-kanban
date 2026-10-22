@@ -128,12 +128,9 @@ fn protected(pid: u32) -> bool {
     }
     pid <= 1
 }
-fn scoped(root: &Path, allowed: &[PathBuf], pid: u32) -> Result<Observation> {
+fn scoped(root: &Path, pid: u32) -> Result<Observation> {
     let observation = observe(pid)?;
-    if protected(pid)
-        || !observation.cwd.starts_with(root)
-        || !allowed.contains(&observation.executable)
-    {
+    if protected(pid) || !observation.cwd.starts_with(root) {
         bail!("process_scope_denied");
     }
     Ok(observation)
@@ -150,7 +147,7 @@ fn metadata(o: &Observation) -> Value {
     json!({"observed_at":chrono::Utc::now(),"identity":o.identity,"pid":o.pid,"parent_pid":o.ppid,"start_ticks":o.ticks,"state":o.state,"cwd":o.cwd,"executable":o.executable,"argv":"withheld","environment":"withheld","project_id":null,"workspace_id":null,"build_commit":"unknown","stdout_availability":"managed runs only; otherwise read configured log files"})
 }
 
-pub fn list(root: &Path, allowed: &[PathBuf], after_pid: u32, limit: usize) -> Result<Value> {
+pub fn list(root: &Path, after_pid: u32, limit: usize) -> Result<Value> {
     let mut ids: Vec<u32> = std::fs::read_dir("/proc")?
         .filter_map(|e| e.ok()?.file_name().to_str()?.parse().ok())
         .filter(|p| *p > after_pid)
@@ -160,7 +157,7 @@ pub fn list(root: &Path, allowed: &[PathBuf], after_pid: u32, limit: usize) -> R
     let mut items = Vec::new();
     let mut next = None;
     for pid in ids {
-        if let Ok(o) = scoped(root, allowed, pid) {
+        if let Ok(o) = scoped(root, pid) {
             if items.len() == limit {
                 next = items.last().and_then(|v: &Value| v["pid"].as_u64());
                 break;
@@ -170,8 +167,8 @@ pub fn list(root: &Path, allowed: &[PathBuf], after_pid: u32, limit: usize) -> R
     }
     Ok(json!({"processes":items,"next_after_pid":next,"snapshot":false}))
 }
-pub fn inspect(root: &Path, allowed: &[PathBuf], identity: &str) -> Result<Value> {
-    let o = scoped(root, allowed, pid_from(identity)?)?;
+pub fn inspect(root: &Path, identity: &str) -> Result<Value> {
+    let o = scoped(root, pid_from(identity)?)?;
     if o.identity != identity {
         bail!("process_identity_changed");
     }
@@ -456,14 +453,7 @@ impl ProcessRegistry {
             json!({"observed_at":chrono::Utc::now(),"run_id":id,"identity":r.identity,"state":r.state,"exit_code":r.exit_code,"signal":r.signal,"stream":stream,"output":buffer.page(offset,limit)}),
         )
     }
-    pub fn stop(
-        &self,
-        owner: &str,
-        root: &Path,
-        allowed: &[PathBuf],
-        identity: &str,
-        force: bool,
-    ) -> Result<Value> {
+    pub fn stop(&self, owner: &str, root: &Path, identity: &str, force: bool) -> Result<Value> {
         let mut selected_identity = identity.to_owned();
         for (id, record) in self.records.lock().unwrap().iter() {
             let r = record.lock().unwrap();
@@ -485,7 +475,7 @@ impl ProcessRegistry {
             }
         }
         let identity = selected_identity.as_str();
-        let o = scoped(root, allowed, pid_from(identity)?)?;
+        let o = scoped(root, pid_from(identity)?)?;
         if o.identity != identity {
             bail!("process_identity_changed");
         }
@@ -574,14 +564,7 @@ mod tests {
     fn self_is_protected_and_identity_mismatch_is_rejected() {
         let o = observe(std::process::id()).unwrap();
         assert!(protected(o.pid));
-        assert!(
-            inspect(
-                Path::new("/"),
-                std::slice::from_ref(&o.executable),
-                &o.identity
-            )
-            .is_err()
-        );
+        assert!(inspect(Path::new("/"), &o.identity).is_err());
         assert!(signal_identity(&format!("wrong:{}:{}", o.pid, o.ticks), 0).is_err());
     }
     #[tokio::test]
@@ -612,7 +595,6 @@ mod tests {
         let identity = run["identity"].as_str().unwrap();
         let _cleanup = TestProcessCleanup::new(identity).unwrap();
         assert!(registry.output("bob", &root, id, "stdout", 0, 100).is_err());
-        let allowed = vec![shell, Path::new("/bin/sleep").canonicalize().unwrap()];
         for _ in 0..100 {
             if registry
                 .output("alice", &root, id, "stdout", 0, 100)
@@ -633,14 +615,8 @@ mod tests {
                 .unwrap()["output"]["text"],
             "error"
         );
-        assert!(
-            registry
-                .stop("bob", &root, &allowed, identity, false)
-                .is_err()
-        );
-        registry
-            .stop("alice", &root, &allowed, identity, false)
-            .unwrap();
+        assert!(registry.stop("bob", &root, identity, false).is_err());
+        registry.stop("alice", &root, identity, false).unwrap();
         for _ in 0..100 {
             if registry
                 .output("alice", &root, id, "stdout", 0, 100)
@@ -652,9 +628,7 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         assert_eq!(
-            registry
-                .stop("alice", &root, &allowed, identity, false)
-                .unwrap()["stopped"],
+            registry.stop("alice", &root, identity, false).unwrap()["stopped"],
             true
         );
         assert!(
@@ -663,9 +637,9 @@ mod tests {
                 .is_err()
         );
     }
-    // Reproduction: a managed launch is not a grant for every later executable.
+    // Executable transitions preserve access without weakening PID/owner checks.
     #[tokio::test]
-    async fn exec_transition_requires_target_grant_and_minimal_environment() {
+    async fn exec_transition_preserves_observation_stop_and_minimal_environment() {
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path().canonicalize().unwrap();
         let shell = Path::new("/bin/sh").canonicalize().unwrap();
@@ -699,31 +673,15 @@ mod tests {
         })
         .await
         .unwrap();
-        let launcher_only = vec![shell.clone()];
-        assert!(inspect(&root, &launcher_only, identity).is_err());
         assert!(
-            list(&root, &launcher_only, 0, 200).unwrap()["processes"]
+            list(&root, 0, 200).unwrap()["processes"]
                 .as_array()
                 .unwrap()
                 .iter()
-                .all(|p| p["identity"] != identity)
+                .any(|p| p["identity"] == identity)
         );
-        assert!(
-            registry
-                .stop("alice", &root, &launcher_only, id, false)
-                .is_err()
-        );
-        assert!(
-            ProcessRegistry::default()
-                .stop("alice", &root, &launcher_only, identity, false)
-                .is_err()
-        );
-        let allowed = vec![shell, sleep];
-        assert_eq!(
-            inspect(&root, &allowed, identity).unwrap()["identity"],
-            identity
-        );
-        assert!(registry.stop("bob", &root, &allowed, id, false).is_err());
+        assert_eq!(inspect(&root, identity).unwrap()["identity"], identity);
+        assert!(registry.stop("bob", &root, id, false).is_err());
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
                 let text = registry
@@ -739,7 +697,7 @@ mod tests {
         })
         .await
         .unwrap();
-        registry.stop("alice", &root, &allowed, id, false).unwrap();
+        registry.stop("alice", &root, id, false).unwrap();
     }
 
     #[tokio::test]
@@ -805,15 +763,8 @@ mod tests {
             .unwrap();
         let _cleanup = TestProcessCleanup::new(run["identity"].as_str().unwrap()).unwrap();
         let id = run["run_id"].as_str().unwrap();
-        assert!(inspect(&root, &[], run["identity"].as_str().unwrap()).is_err());
-        assert!(
-            inspect(
-                Path::new("/unrelated"),
-                &[sleep],
-                run["identity"].as_str().unwrap()
-            )
-            .is_err()
-        );
+        assert!(inspect(&root, run["identity"].as_str().unwrap()).is_ok());
+        assert!(inspect(Path::new("/unrelated"), run["identity"].as_str().unwrap()).is_err());
         tokio::time::sleep(Duration::from_millis(1300)).await;
         assert_eq!(
             registry

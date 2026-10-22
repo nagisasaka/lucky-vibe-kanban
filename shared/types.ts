@@ -4,7 +4,7 @@
 
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.
 
-export type Grant = { display_name: string, id: string, project_id: string, root: string, subjects: Array<string>, executables: Array<string>,
+export type Grant = { display_name: string, id: string, project_id: string, root: string,
 /**
  * Explicit assertion: this directory is not a coordinated shared resource.
  */

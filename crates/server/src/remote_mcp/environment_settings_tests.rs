@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use axum::{
     body::{Body, to_bytes},
     http::{Request, StatusCode},
@@ -148,15 +150,13 @@ async fn settings_browser_admin_save_reload_revoke_and_no_ai_escalation() {
         true
     );
     std::fs::write(tmp.path().join("log"), "test log").unwrap();
-    let grant = environment_tests::grant(tmp.path(), PathBuf::from("/bin/sleep"));
+    let grant = environment_tests::grant(tmp.path());
     let input = json!({"revision":0,"settings":{"enabled":true,"grants":[grant]}});
     for (field, value) in [
         ("root", json!("/")),
         ("root", json!("../outside")),
         ("root", json!(tmp.path().join("missing"))),
-        ("subjects", json!([""])),
         ("project_id", json!(Uuid::nil())),
-        ("executables", json!(["relative"])),
     ] {
         let mut bad = input.clone();
         bad["settings"]["grants"][0][field] = value;
@@ -191,18 +191,17 @@ async fn settings_browser_admin_save_reload_revoke_and_no_ai_escalation() {
     assert_eq!(receipt["status"], "succeeded", "{receipt}");
     let identity = receipt["result"]["identity"].as_str().unwrap();
     let _cleanup = environment_process::TestProcessCleanup::new(identity).unwrap();
-    let mut removed_subject: Value = serde_json::from_str(&body).unwrap();
-    removed_subject.as_object_mut().unwrap().remove("source");
-    removed_subject.as_object_mut().unwrap().remove("projects");
-    removed_subject
+    let mut removed_region: Value = serde_json::from_str(&body).unwrap();
+    removed_region.as_object_mut().unwrap().remove("source");
+    removed_region.as_object_mut().unwrap().remove("projects");
+    removed_region
         .as_object_mut()
         .unwrap()
         .remove("legacy_error");
-    removed_subject["settings"]["grants"][0]["subjects"] = json!(["another-subject"]);
+    removed_region["settings"]["grants"] = json!([]);
+    removed_region["settings"]["enabled"] = json!(false);
     assert_eq!(
-        request(&app, "PUT", &cookie, &csrf, removed_subject)
-            .await
-            .0,
+        request(&app, "PUT", &cookie, &csrf, removed_region).await.0,
         StatusCode::OK
     );
     assert_eq!(http.call("runtime","stop_process",json!({"region":"example-api","identity":identity,"request_id":Uuid::new_v4(),"purpose":"Must be denied"})).await["isError"],true);
@@ -233,7 +232,7 @@ async fn settings_browser_admin_save_reload_revoke_and_no_ai_escalation() {
     // Disabling an unchanged saved grant must work even after its directory disappears.
     let disappearing = tmp.path().join("disappearing");
     std::fs::create_dir(&disappearing).unwrap();
-    let mut input = json!({"revision":3,"settings":{"enabled":true,"grants":[environment_tests::grant(&disappearing,PathBuf::from("/bin/sleep"))]}});
+    let mut input = json!({"revision":3,"settings":{"enabled":true,"grants":[environment_tests::grant(&disappearing)]}});
     let (status, saved) = request(&app, "PUT", &cookie, &csrf, input.clone()).await;
     assert_eq!(status, StatusCode::OK);
     input["settings"] = serde_json::from_str::<Value>(&saved).unwrap()["settings"].clone();
@@ -246,7 +245,6 @@ async fn settings_browser_admin_save_reload_revoke_and_no_ai_escalation() {
     );
     provider.abort();
 }
-use std::path::PathBuf;
 
 #[tokio::test]
 async fn settings_persist_and_saved_disable_supersedes_legacy() {
@@ -269,7 +267,7 @@ async fn settings_persist_and_saved_disable_supersedes_legacy() {
     .await
     .unwrap();
     let file = tmp.path().join("legacy.json");
-    let legacy = json!({"enabled":true,"grants":[environment_tests::grant(tmp.path(),PathBuf::from("/bin/sh"))]});
+    let legacy = json!({"enabled":true,"grants":[environment_tests::grant(tmp.path())]});
     std::fs::write(&file, legacy.to_string()).unwrap();
     let loaded = environment_settings::load_with_legacy(&pool, Some(file.clone()))
         .await
@@ -332,8 +330,7 @@ async fn invalid_legacy_recovery_is_explicit_and_storage_errors_fail_closed() {
             "malformed" => std::fs::write(&file, "{").unwrap(),
             "missing_file" => std::fs::remove_file(&file).unwrap(),
             _ => {
-                let grant =
-                    environment_tests::grant(&tmp.path().join("missing"), PathBuf::from("/bin/sh"));
+                let grant = environment_tests::grant(&tmp.path().join("missing"));
                 std::fs::write(&file, json!({"enabled":true,"grants":[grant]}).to_string())
                     .unwrap();
             }
@@ -493,5 +490,18 @@ async fn runtime_and_local19_migrations_have_unique_sqlx_versions_fresh_and_upgr
             .await
             .unwrap();
         pool.close().await;
+    }
+}
+
+#[test]
+fn simplified_grants_serialize_without_subjects_or_executables_and_reject_old_fields() {
+    let value = json!({"enabled":false,"grants":[{"id":"region","display_name":"API","project_id":Uuid::nil(),"root":"/srv/api","allow_uncoordinated_execution":false}]});
+    let settings: environment::RuntimeAccessSettings =
+        serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(serde_json::to_value(settings).unwrap(), value);
+    for field in ["subjects", "executables"] {
+        let mut old = value.clone();
+        old["grants"][0][field] = json!([]);
+        assert!(serde_json::from_value::<environment::RuntimeAccessSettings>(old).is_err());
     }
 }

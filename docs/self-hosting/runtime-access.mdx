@@ -16,9 +16,10 @@ accessible through MCP. It is disabled by default.
 
 Open **Settings → MCP integration → Runtime environment access** (Japanese:
 **設定 → MCP連携 → 実行環境へのアクセス**) as a browser administrator. Enable the
-feature, add a region with a display name, Project, absolute root and exact user
-subjects, then save. Add executable paths for process observation and explicitly
-allow execution/stop only for regions that need no shared-resource coordination.
+feature, add a region with a display name, Project and absolute directory, then save.
+Explicitly allow execution/stop only for regions that need no shared-resource coordination.
+Authenticated, scoped AI clients are trusted to execute with the LVK OS user permissions;
+there is no per-region subject or executable allowlist.
 Saving takes effect on subsequent requests without environment-variable edits or
 an LVK restart. Existing Basic/Auth0 administrator roles and browser CSRF protection
 apply; ordinary members, OAuth MCP tokens and internal agent tokens cannot edit
@@ -27,7 +28,7 @@ The settings API is not an MCP tool.
 
 Settings use the server database and a revision check. A stale save is rejected;
 reload before applying it again. Saving does not reset process output buffers.
-Revoking a region, subject or feature blocks subsequent operations, including
+Revoking a region or feature blocks subsequent operations, including
 stop and output reads, but does not kill running processes. Wait for remaining
 processes to finish naturally; existing timeouts remain unchanged. Long-running
 daemons may never finish naturally. This policy requires no administrator stop UI
@@ -49,6 +50,14 @@ modify the legacy file or reset anything automatically. Subsequent requests use 
 saved disabled configuration. Database failures remain unavailable errors, not
 recoverable legacy warnings.
 
+The removed `subjects` and `executables` fields remain unknown fields under
+`deny_unknown_fields`: old serialized grants are rejected, never silently broadened.
+An old legacy file follows the explicit disabled-empty recovery flow above. An old
+saved database row remains unavailable (503); an administrator must explicitly replace
+it with new-format settings using its current revision through the existing settings API.
+No automatic conversion or database reset is performed. Receipt actor/owner identities
+remain for auditing and process ownership; they are not a configurable subject allowlist.
+
 The following is the legacy file format, not a prerequisite for using the UI:
 
 ```json
@@ -60,23 +69,18 @@ The following is the legacy file format, not a prerequisite for using the UI:
       "display_name": "Demo API",
       "project_id": "11111111-2222-4333-8444-555555555555",
       "root": "/srv/applications/demo-api",
-      "subjects": ["auth0|REPLACE_WITH_EXACT_USER_SUBJECT"],
-      "executables": ["/usr/bin/python3"],
       "allow_uncoordinated_execution": true
     }
   ]
 }
 ```
 
-Replace the project UUID, exact authenticated subject, root and executable paths.
-The directories and executables must already exist in the LVK Linux environment.
-Roots and executable paths are canonicalised. A root must be a specific absolute
-directory, never `/`. Each grant has its own subjects and project. Configure
-separate roots for logs outside an application directory, including bind mounts.
-An empty `executables` list permits file observation but no process observation or
-execution. Executable grants also govern which existing processes are visible.
+Replace the project UUID and root. Directories must already exist and are canonicalised.
+A root must be a specific absolute directory, never `/`. Configure separate roots for
+logs outside an application directory, including bind mounts. The directory bounds
+file reads and execution cwd, not command access: commands can access paths outside cwd.
 
-There are at most 64 grants, 100 subjects per grant and 64 executables per grant;
+There are at most 64 grants;
 the configuration is limited to 64 KiB. Keep it administrator-controlled and
 exclude private keys, tokens, credential directories and other projects' data
 from every granted root. Bind mounts and hard links within a root belong to its
@@ -109,8 +113,7 @@ through `run_process`. No file-write, patch, delete or Git-mutation tool is adde
 
 The `+r +x -w` policy describes the AI's role and available operations. Programs
 still run with the LVK OS user's permissions and can write logs, caches, temporary
-files and build output. Interpreter and executable allowlists are not a complete
-security boundary. Delegate builds that modify tracked source to Codex. There is
+files and build output. The configured directory is not an OS sandbox. Delegate builds that modify tracked source to Codex. There is
 no command-word blacklist, independent sandbox or additional authentication
 system.
 
@@ -124,13 +127,11 @@ to users trusted to see those contents.
 
 ### Existing toolchain scripts
 
-An absolute interpreter path can launch an existing script. After `exec`, process
-observation and stop check the **current** executable and cwd, even for a managed
-`run_id`. Grant both the launcher (for example `/bin/sh`) and the canonical target
-(for example `/usr/bin/python3`) before starting. Granting only the shell can
-accept the launch while denying later observation and stop; captured output
-remains owner-bound. A script that changes cwd outside its grant has the same
-limitation. A run identifier never widens the grant.
+An absolute interpreter path can launch an existing script. After `exec`, observation
+and stop continue to work without registering either executable. The current cwd
+must remain in the granted directory; changing cwd outside it prevents observation
+and stop through that region. Same-UID, protected-process, PID/start identity and
+managed ownership checks remain. A run identifier never widens the directory scope.
 
 `HOME`, `CARGO_HOME`, `RUSTUP_HOME`, `NVM_DIR` and `VIRTUAL_ENV` are not inherited.
 Cargo/rustup may need an explicit home and toolchain/cache paths; a non-interactive
@@ -151,10 +152,10 @@ do not establish compatibility with every Cargo, nvm or venv installation.
 
 | Tool | Behaviour |
 | --- | --- |
-| `get_runtime_access` | Returns the caller's regions, executable grants and capability limitations. |
+| `get_runtime_access` | Returns available regions and capability limitations. |
 | `list_runtime_files` | Lists a relative directory, including untracked entries; use `next_offset` and the returned `snapshot` for another page. |
 | `read_runtime_file` | Reads relative regular files by byte offset, tail or returned incremental `cursor`. |
-| `list_processes` | Lists same-UID processes whose cwd is in the root and executable is granted; paginate with `next_after_pid`. |
+| `list_processes` | Lists same-UID processes whose cwd is in the root; paginate with `next_after_pid`. |
 | `inspect_process` | Rechecks the observed boot-ID/PID/start-ticks identity. |
 | `run_process` | Starts an executable with an argument array and relative cwd; returns an operation receipt and managed run identifier. |
 | `read_process_output` | Reads a managed run's stdout or stderr and lifecycle state. Pass the returned `run_id` as `process_id`. |
@@ -266,7 +267,7 @@ Stop and expiry target exactly one PID using a kernel pidfd and revalidated
 identity, never a broad process group. Children and detached services are not
 managed as a unit. An existing `nohup` or start script may finish while its service
 continues: observe that service separately and use its existing logs and approved
-stop procedure. Allow the service's actual executable to observe it. Do not infer
+stop procedure. Observe the service within its granted cwd. Do not infer
 service health or shutdown from the wrapper's exit status.
 
 Each captured stream retains up to 1 MiB in memory. Reads report dropped bytes,

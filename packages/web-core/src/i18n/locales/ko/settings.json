@@ -626,25 +626,24 @@
     "recover": "Save disabled, empty settings to recover",
     "invalidLegacy": "Legacy JSON configuration is invalid. Runtime access is denied. Review the reason, then explicitly save disabled, empty settings to replace it. No automatic reset occurs.",
     "title": "Runtime environment access",
-    "description": "Administrators manage external MCP regions. Saved changes apply to subsequent calls without restarting.",
-    "permissions": "File reads require lvk:runtime:read. Executable grants also permit process observation. Run/stop additionally require region execution permission and lvk:runtime:execute; lvk:read is still required. Run/stop refuse Workspace overlaps.",
+    "description": "Manage areas outside Workspaces where external MCP may access files and execute programs.",
+    "permissions": "Authentication and lvk:runtime:read are required. Run/stop also require region execution permission and lvk:runtime:execute (alongside lvk:read). Run/stop cannot overlap Workspaces.",
     "revoke": "Revocation denies subsequent operations without terminating running processes. Wait for them to finish naturally; existing timeouts remain unchanged. Long-running daemons may never finish naturally. Permissions are not automatically restored.",
     "denied": "Settings unavailable. Sign in as a browser administrator.",
     "loading": "Loading…",
     "enabled": "Enable runtime environment access",
     "name": "Display name",
     "project": "Target Project ID",
-    "root": "Allowed root (absolute directory path)",
-    "subjects": "User subjects (one per line)",
-    "executables": "Allowed executables (absolute paths, one per line; empty for file reads only)",
+    "root": "Allowed directory (absolute path)",
     "execute": "Allow execution and stop (only where shared-resource coordination is unnecessary)",
-    "osAuthority": "The root bounds files and cwd, not OS authority. Programs run with the LVK OS user’s permissions and may write logs, build output and other files.",
+    "osAuthority": "The allowed directory bounds file reads and execution cwd, not an OS sandbox. Commands run with the LVK OS user permissions and can access paths outside cwd.",
     "remove": "Remove region",
     "add": "Add region",
     "source": {
       "default": "Disabled by default.",
       "saved": "Using saved settings. Legacy JSON is ignored.",
       "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
-    }
+    },
+    "help": "Permissions and limits"
   }
 }
