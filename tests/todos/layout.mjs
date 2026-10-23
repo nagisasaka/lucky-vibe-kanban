@@ -34,6 +34,12 @@ export async function checkCategoryLayout({
     { timeout: 15000 },
   );
 
+  // Preserve the original tall-category packing regression with expanded text.
+  await grid
+    .locator(`[data-todo-id="${fixtures[0].id}"]`)
+    .getByRole("button", { name: "もっと見る", exact: true })
+    .click();
+
   let expectedCategories = fixtures.map((f) => f.category);
   async function geometry(label) {
     await expect

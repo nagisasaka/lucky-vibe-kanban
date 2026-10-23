@@ -13,6 +13,7 @@ import {
 import type { Todo, UpdateTodo } from 'shared/types';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { cn } from '@/shared/lib/utils';
+import { TodoBody } from './TodoBody';
 import { todoApi } from '../model/todoApi';
 import { useTodoViewStore } from '../model/todoViewStore';
 
@@ -392,17 +393,12 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
             }
           />
           <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={edit}
+            <TodoBody
+              body={todo.body}
+              completed={todo.completed}
               disabled={mutation.isPending}
-              className={cn(
-                'w-full whitespace-pre-wrap break-words text-left hover:text-high focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand',
-                todo.completed && 'text-low line-through'
-              )}
-            >
-              {todo.body}
-            </button>
+              onEdit={edit}
+            />
             <span
               className="mt-half block text-xs text-low"
               title={t('todo.creationSourceHint')}

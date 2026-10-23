@@ -1198,6 +1198,8 @@
     "exclusions": "Sustituciones y exclusiones"
   },
   "todo": {
+    "expandBody": "Ver más",
+    "collapseBody": "Ver menos",
     "creationSource": "Creado mediante: {{source}}",
     "creationSourceUnknown": "Desconocido",
     "creationSourceHint": "La vía utilizada para crear este TODO, no quién lo ideó o escribió.",

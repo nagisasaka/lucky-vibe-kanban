@@ -1198,6 +1198,8 @@
     "exclusions": "Remplacements et exclusions"
   },
   "todo": {
+    "expandBody": "Voir plus",
+    "collapseBody": "Voir moins",
     "creationSource": "Créé via : {{source}}",
     "creationSourceUnknown": "Inconnu",
     "creationSourceHint": "Le canal utilisé pour créer ce TODO, pas la personne qui l’a conçu ou rédigé.",
