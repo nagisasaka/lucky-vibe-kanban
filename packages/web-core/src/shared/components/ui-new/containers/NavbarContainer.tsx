@@ -1,3 +1,5 @@
+import { ResourceSummary } from '@vibe/ui/components/ResourceSummary';
+import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
 import { GitMergeIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
@@ -292,8 +294,11 @@ export function NavbarContainer({
     return errors;
   }, [syncErrorContext?.errors]);
 
+  const resources = useResourceObservation();
+
   return (
     <Navbar
+      resourceSlot={<ResourceSummary {...resources} />}
       workspaceTitle={navbarTitle}
       breadcrumbs={workspaceContext}
       leftItems={leftItems}

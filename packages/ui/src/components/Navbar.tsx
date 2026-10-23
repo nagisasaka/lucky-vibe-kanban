@@ -172,6 +172,7 @@ export interface NavbarProps {
   rightItems?: NavbarSectionItem[];
   // Optional additional content for left side (after leftItems)
   leftSlot?: ReactNode;
+  resourceSlot?: ReactNode;
   // Sync errors shown in the right section
   syncErrors?: readonly SyncErrorIndicatorError[] | null;
   className?: string;
@@ -199,6 +200,7 @@ export function Navbar({
   leftItems = [],
   rightItems = [],
   leftSlot,
+  resourceSlot,
   syncErrors,
   className,
   mobileMode = false,
@@ -250,7 +252,7 @@ export function Navbar({
         )}
       >
         {/* Row 1: Tab bar (workspace pages) or minimal header (project pages) */}
-        <div className="flex items-center justify-between px-base py-half">
+        <div className="flex items-center justify-between flex-wrap gap-half px-base py-half">
           {isOnProjectPage ? (
             <div className="flex items-center gap-base">
               {isOnProjectSubRoute
@@ -349,59 +351,62 @@ export function Navbar({
           )}
 
           {/* Right side: sync indicator + action buttons + user slot */}
-          <div className="flex items-center gap-1 shrink-0">
-            <SyncErrorIndicator errors={syncErrors} />
-            {isOnProjectPage &&
-              rightItems
-                .filter((item): item is NavbarActionItem => !isDivider(item))
-                .map((item) => (
-                  <NavbarIconButton
-                    key={item.id}
-                    icon={item.icon}
-                    isActive={item.isActive}
-                    onClick={item.onClick}
-                    aria-label={item.tooltip}
-                    tooltip={item.tooltip}
-                    disabled={!!item.disabled}
-                    className={
-                      item.disabled ? 'opacity-40 cursor-not-allowed' : ''
-                    }
-                  />
-                ))}
-            {onReload && (
-              <button
-                type="button"
-                className="flex items-center justify-center text-low hover:text-normal"
-                onClick={onReload}
-                aria-label="Reload"
-              >
-                <ArrowClockwiseIcon className="size-icon-sm" />
-              </button>
-            )}
-            {!isOnProjectPage && onOpenSettings && (
-              <button
-                type="button"
-                className="flex items-center justify-center text-low hover:text-normal"
-                onClick={onOpenSettings}
-                aria-label="Settings"
-              >
-                <GearIcon className="size-icon-sm" />
-              </button>
-            )}
-            {!isOnProjectPage && onOpenCommandBar && (
-              <button
-                type="button"
-                className="flex items-center justify-center text-low hover:text-normal"
-                onClick={onOpenCommandBar}
-                aria-label="Command bar"
-              >
-                <ListIcon className="size-icon-sm" />
-              </button>
-            )}
-            {mobileUserSlot && (
-              <div className="h-4 w-px bg-border mx-0.5 shrink-0" />
-            )}
-            {mobileUserSlot}
+          <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1 ml-auto">
+            {resourceSlot}
+            <div className="flex items-center gap-1 shrink-0">
+              <SyncErrorIndicator errors={syncErrors} />
+              {isOnProjectPage &&
+                rightItems
+                  .filter((item): item is NavbarActionItem => !isDivider(item))
+                  .map((item) => (
+                    <NavbarIconButton
+                      key={item.id}
+                      icon={item.icon}
+                      isActive={item.isActive}
+                      onClick={item.onClick}
+                      aria-label={item.tooltip}
+                      tooltip={item.tooltip}
+                      disabled={!!item.disabled}
+                      className={
+                        item.disabled ? 'opacity-40 cursor-not-allowed' : ''
+                      }
+                    />
+                  ))}
+              {onReload && (
+                <button
+                  type="button"
+                  className="flex items-center justify-center text-low hover:text-normal"
+                  onClick={onReload}
+                  aria-label="Reload"
+                >
+                  <ArrowClockwiseIcon className="size-icon-sm" />
+                </button>
+              )}
+              {!isOnProjectPage && onOpenSettings && (
+                <button
+                  type="button"
+                  className="flex items-center justify-center text-low hover:text-normal"
+                  onClick={onOpenSettings}
+                  aria-label="Settings"
+                >
+                  <GearIcon className="size-icon-sm" />
+                </button>
+              )}
+              {!isOnProjectPage && onOpenCommandBar && (
+                <button
+                  type="button"
+                  className="flex items-center justify-center text-low hover:text-normal"
+                  onClick={onOpenCommandBar}
+                  aria-label="Command bar"
+                >
+                  <ListIcon className="size-icon-sm" />
+                </button>
+              )}
+              {mobileUserSlot && (
+                <div className="h-4 w-px bg-border mx-0.5 shrink-0" />
+              )}
+              {mobileUserSlot}
+            </div>
           </div>
         </div>
 
@@ -474,6 +479,7 @@ export function Navbar({
         data-tauri-drag-region
         className="flex-1 flex items-center justify-end gap-base"
       >
+        {resourceSlot}
         <SyncErrorIndicator errors={syncErrors} />
         {rightItems.map((item, index) =>
           renderItem(

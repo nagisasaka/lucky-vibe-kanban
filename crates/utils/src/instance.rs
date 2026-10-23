@@ -9,11 +9,27 @@ pub fn instance_dir() -> Option<PathBuf> {
     })
 }
 
+/// Resolve an already-initialised instance without creating any directories.
+pub fn instance_dir_read_only() -> std::io::Result<Option<PathBuf>> {
+    std::env::var_os("LVK_INSTANCE_DIR")
+        .map(|value| {
+            resolve_existing_instance_dir(Path::new(&value), &crate::assets::prod_asset_dir_path())
+        })
+        .transpose()
+}
+
 fn resolve_instance_dir(path: &Path, stable: &Path) -> std::io::Result<PathBuf> {
     if !path.is_absolute() {
         return Err(std::io::Error::other("Relative instance directory"));
     }
     std::fs::create_dir_all(path)?;
+    resolve_existing_instance_dir(path, stable)
+}
+
+fn resolve_existing_instance_dir(path: &Path, stable: &Path) -> std::io::Result<PathBuf> {
+    if !path.is_absolute() {
+        return Err(std::io::Error::other("Relative instance directory"));
+    }
     let path = path.canonicalize()?;
     // Canonicalize the nearest existing ancestor so symlink aliases cannot
     // silently redirect an instance into the default stable data directory.
@@ -44,6 +60,23 @@ fn resolve_instance_dir(path: &Path, stable: &Path) -> std::io::Result<PathBuf> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn read_only_resolution_never_creates_missing_instance() {
+        let root = tempfile::tempdir().unwrap();
+        let instance = root.path().join("absent");
+        let stable = root.path().join("stable");
+        assert!(resolve_existing_instance_dir(&instance, &stable).is_err());
+        assert!(!instance.exists());
+        assert!(resolve_existing_instance_dir(Path::new("relative"), &stable).is_err());
+        std::fs::create_dir(&instance).unwrap();
+        assert_eq!(
+            resolve_existing_instance_dir(&instance, &stable).unwrap(),
+            instance
+        );
+        assert!(!stable.exists());
+        assert!(!instance.join("data").exists());
+    }
 
     #[test]
     fn isolated_paths_reject_stable_aliases_and_relative_paths() {

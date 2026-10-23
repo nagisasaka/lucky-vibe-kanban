@@ -31,6 +31,7 @@ pub mod preview;
 pub mod releases;
 pub mod repo;
 pub mod resource_coordination;
+mod resource_observation;
 pub mod scheduled_tasks;
 pub mod scratch;
 pub mod search;
@@ -66,6 +67,7 @@ pub fn router(
         .merge(repo::router())
         .merge(integrations::router())
         .merge(resource_coordination::router())
+        .merge(resource_observation::router())
         .merge(execution_bridge::router())
         .merge(events::router(&deployment))
         .merge(approvals::router())
