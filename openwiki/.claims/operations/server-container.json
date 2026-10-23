@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b3256a0e2687dcc5274b24bd64ed64c793aa038d72e7e01a20dd526b6cdf93ab",
+  "pageVersion": "sha256:0ca64094c26417b374bd60d2e078a18aff12de34b77107a5e15cd0d03be179be",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -86,7 +86,7 @@
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:e6169577a6089b999256d67795a77a9bdbd890a745972d266d9d9e2eeae05c03"
+          "version": "repo-file-v1:sha256:d5bc389a401e935f99bf1d5d9fb509b42fba21125f2b51df5bf4a99991b3ec37"
         }
       ]
     },
@@ -291,10 +291,52 @@
           "version": "repo-lines-v1:sha256:9e5ba43b35549452a4e20f00ba29aa4aee25f24eac35cf334f7d35a70d5c0058:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMTg2NjFhNWMwODJmMWM5OGI0MmY3YjE4NGM3YzMzMDQ2Zjk1ODlkYjYwZGZjNTY3ZThkMjJmMzAyMjM2NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwNDFlNjczZGYwNjUwMTJkZDYwMjg1MWFiZTU4MmY3OTBmMGEyOWE1NDBhZTk2NjUwZGFmMmMwMmYwNjBlYzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzNzFmNDEyYjNlNzliNzkzYzgxNjcxNjQzOTU2NWI0YjY3YzdlY2NiOGEwODE4YjVmNGU5ZGY5MWNiOTY1ZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MmMwMTFkNGQ2MmNjYjQ1ZTE0NjM2NjZjNTIyODRhZmVlZmM4OTRiNDJmNDQxYzdjODc0OTAzMWRlZmM0ZTcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_ca2f91a8dc464ebc937e2f89fc21e219",
+      "statement": "旧LVK npx packaging/download/cache管理と互換launcherは撤去され、serverはDockerまたはsource dev、MCPは直接binaryまたは外部HTTP、desktopはTauri source scriptsへ移行する。",
+      "evidence": [
+        {
+          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L328",
+          "version": "repo-lines-v1:sha256:2d8e8fbb6fc136cc17ded958139af297088e6b85c85d05c902c04d7721bee70d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyZmMyYzk2OTAxYTQ0MTZmZjMwMmExZTI5ODI2MjZiZTFmZDUyN2NjMDg0YjEwMjhhMzY4NDYxOWNlMzNlZDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkYzBjOGJiM2I3OTViMjA3YTgxMGYzZTY1ODcyYTFiYWEzZDRjY2Q0YmYwMjQyNDU4ZWZlNjhiM2NiNWI3ZmYifQ"
+        },
+        {
+          "resource": "repo://package.json#L1-L50",
+          "version": "repo-lines-v1:sha256:194a27e68ebe3a9c713244052501f6b28ea0c31253d5eed39484fdff455e2a1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_94b2e25f988a422488581f6d4b3e851e",
+      "statement": "直接stdio MCPは既存HTTP backendを利用し、mode省略時global、orchestratorは明示指定する。ランチャーのようにbackendを起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49",
+          "version": "repo-lines-v1:sha256:76d627c6083e324160c55c6da06c87fd1d9ac9740bbbf1d6bee7a4e0da740a97:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1YmRhNGQ0ZDJkMjJiYWIxZmUyOTdlNDhjYzEzYzRmMmU3ZTI1MzEyMGZmZGNhYzMwZTJkZjFmNTRjMzFlZWEifQ"
+        },
+        {
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L133",
+          "version": "repo-lines-v1:sha256:67bb780c7cf950fe58807bef6bd9d267a17d482487e7b309d5b7ba0305f00547:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMTk1OGU1OGQ1NjAxYzQzMzY3Y2M1ZDExMjc4MGQ1YmM0MjU5YTA2OTU5NWRkZTQ0YTViMWE5ODJkZTI2YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhODc0NzAzZWViOWJlMzM1MDk5ZDkzY2JkMDQ1MTQ2OTcyNWE0ZDIwYzI0NGMxYTNmMjAxN2UxNjM1NzM0YTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxYzNkMGQ3MDYzMmQyMTUxODI3NWI2N2M0NGIzMjVhNTc3NTRhZDNlMTRmMjUyNDM4NWE4ZDA1MzUwZDNlZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3ZGFhOTA5YWY3NTZmMGI2ZDYxMmZiZDk4MjNkNGYzNDE0NzRkOWYyMTE5YmU1NDAwMWM1ZjhlZDlhODJiYzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8106971186ee48079f3716a0e630ecff",
+      "statement": "旧launcher撤去は既存データ・download済みbinary/cacheの削除や無効化を行わず、agent CLIおよび第三者MCPのnpx設定を撤去するものではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/default_mcp.json#L1-L45",
+          "version": "repo-lines-v1:sha256:5d244a71284b217c55ef264b520832ad81465be673b358a42e93dcbd72fc15c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMmI0ODUzMjVjZTVkNWM1MTQ2MzFjYWNmYzgwMjA1YzI0NzA3YTM5ZDcwMjA5NTFmMGIxNjVjZTJhM2UwYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ZGVjNjNkNmNjYmJmYTViNzM1ZTg4YTU2MTVjM2NiNzA4NWJiZWRlNDFjMTZhNDJkOThkNjJiMGFkMjBkYWYifQ"
+        },
+        {
+          "resource": "repo://docs/self-hosting/server-container.mdx#L330-L330",
+          "version": "repo-lines-v1:sha256:ddecf434c01f2e97632e09bbe90ca543878e5424bb73638b2717ae9a2341d4cd:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRlY2Y0MzRjMDFmMmU5NzYzMmUwOWJiZTkwY2E1NDM4NzhlNTQyNGJiNzM2MzhiMjcxN2FlOWEyMzQxZDRjZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRlY2Y0MzRjMDFmMmU5NzYzMmUwOWJiZTkwY2E1NDM4NzhlNTQyNGJiNzM2MzhiMjcxN2FlOWEyMzQxZDRjZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjEwOTQwYTcyZjU0YmEyMDgzOGNlMTBlMjc3NGEyNWEyOTljNDEwYWY0ODNlMWEwMWMyNTQ0YjUwZDgzZTRlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YwODYxMDExNzQwYTU3ZGIyNTgyY2U5M2E4OWUwNjdmZGYzNGM0OGE2MTNhOWViYzc2NWVkZmU1YmM0MDQxMSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:15:33.468Z"
+    "at": "2026-10-23T19:41:54.254Z"
   }
 }

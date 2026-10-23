@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:88fbfc8aeb98a90d79d4e7f14b9025b10325bec43163602a556e9e1ff8cb14b3",
+  "pageVersion": "sha256:74b09cefea411a3afc9a92238a6c9f7623e17b037788f47bd1f4425f857eaa6e",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:2eb9adf9aa978dc390f13c8478a6b001f2e1b5417d462358b7719d88cd6f397c"
+          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
         },
         {
           "resource": "repo://rust-toolchain.toml",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:2eb9adf9aa978dc390f13c8478a6b001f2e1b5417d462358b7719d88cd6f397c"
+          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
         }
       ]
     },
@@ -36,7 +36,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:2eb9adf9aa978dc390f13c8478a6b001f2e1b5417d462358b7719d88cd6f397c"
+          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
         }
       ]
     },
@@ -132,7 +132,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:2eb9adf9aa978dc390f13c8478a6b001f2e1b5417d462358b7719d88cd6f397c"
+          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
         }
       ]
     },
@@ -393,10 +393,24 @@
           "version": "repo-lines-v1:sha256:a13d7717c3638178fec08c2861f537bb1b908d3643bc62831037a100980f3247:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1OTEwNmFlMWMwNjgxODI0Zjc3ZWRiY2VjZGNjOTVhY2ZhYTNkY2M3MGQwZWRhOWQxMDBjMjA2OTNhN2FiODY2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMzcwZTljYTdiZmJhNTk0Nzg3M2M1YjhkZjg5MTNlODM1NWMxM2MzOTIyZjQ4NGIzYWQ4NDFmNDZlMjk0N2Y4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
+    },
+    {
+      "id": "claim_a9341a82110b404fa2cb6c65dcbb554a",
+      "statement": "旧npx-cli/local-build.shとrootのnpm用bin/files・build:npx/build:npx-cli/check:npx-cli/prepack/test:npmは撤去され、ソース開発とTauriのscriptsは残る。",
+      "evidence": [
+        {
+          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
+          "version": "repo-lines-v1:sha256:fb0976f5c4225855b800c0f69d75c1221d971ab71d39cf68337b3ac8f8ff0f0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZWNmNDM0YzAxZjJlOTc2MzJlMDliYmU5MGNhNTQzODc4ZTU0MjRiYjczNjM4YjI3MTdhZTlhMjM0MWQ0Y2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
+        },
+        {
+          "resource": "repo://package.json#L1-L50",
+          "version": "repo-lines-v1:sha256:194a27e68ebe3a9c713244052501f6b28ea0c31253d5eed39484fdff455e2a1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T19:15:59.449Z"
+    "at": "2026-10-23T19:41:54.254Z"
   }
 }

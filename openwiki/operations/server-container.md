@@ -4,6 +4,10 @@ title: 単一サーバーコンテナーの運用境界
 description: local LVK をサーバー上で動かす配布構成。HTTPS、認証、preview origin、永続化、停止と回復の契約。
 tags: [server, docker, deployment, preview, persistence]
 sources:
+  - id: openwiki-source-b50585f67dac89cd8eecc75d
+    resource: repo://crates/executors/default_mcp.json
+  - id: openwiki-source-0a300791bc056c6eee6a577a
+    resource: repo://crates/mcp/src/bin/vibe_kanban_mcp.rs
   - id: openwiki-source-c16d91d3eae6ee7bafc2593e
     resource: repo://crates/server-access/src/preview.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
@@ -46,12 +50,14 @@ sources:
     resource: repo://docs/integrations/github-integration.mdx
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
+  - id: openwiki-source-5b54a58d1b51cd490b0e7162
+    resource: repo://package.json
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-21T06:15:33.468Z" }
+generated: { by: "codex", at: "2026-10-23T19:41:54.254Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:15:33.468Z
+    at: 2026-10-23T19:41:54.254Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -71,6 +77,22 @@ LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked depe
 `less` は `server-tools` の apt package として導入され、`server-browser` を経て最終 `server` image に継承される。小型 `runtime` は `runtime-base` から分岐するため、この開発 toolchain の追加を継承しない。[stage の境界](../../Dockerfile#L136-L156)、[server への継承](../../Dockerfile#L182-L201)。任意の旧 development Compose も `LVK_IMAGE` を参照するため、利用できる toolchain は選択した image に依存する。checkout の変更だけで稼働中 image に追加されるわけではない。[開発 Compose の image 選択](../../deploy/server/compose.development.yaml#L1-L8)
 
 image smoke は UID 10001 のコンテナー内で `less --version` と、非 TTY の pipe 入力が同じ文字列として出力されることを検査し、失敗すれば `sh -ec` により検査を止める。この検査は対話端末でのページ操作を扱わない。[実行条件と検査](../../deploy/server/smoke-image.sh#L24-L38)。[配布 kit の静的・native 検証](development.md#サーバー配布-kit-の検証)と image の実行確認は別である。この Sync では検査定義をソースで確認しており、Docker build/run や `less` の実行成功は確認していない。
+
+### 旧 npx ランチャーの撤去と移行
+
+旧 LVK npx ランチャーの npm packaging・download・展開・cache 管理は撤去済みで、互換ランチャーは提供しない。Docker のみを配布する方針に対応した変更であり、source build の入口は残る。[移行契約](../../docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)・[現行 package](../../package.json)
+
+| 以前の入口 | 現行の経路 |
+| --- | --- |
+| `npx lucky-vibe-kanban` | このページの Docker 配置、またはソース開発の `pnpm run dev` |
+| `lucky-vibe-kanban mcp` / `--mcp` | 直接 build した `vibe-kanban-mcp --mode global`、または認証付き外部 HTTP MCP |
+| `lucky-vibe-kanban --desktop` | desktop 対応環境で `pnpm run tauri:dev` / `pnpm run tauri:build` |
+
+直接 build では frontend を用意し、`server`・`agent-process-host`・`vibe-kanban-mcp` を同じ checkout から作る。[具体的な build 手順](../../docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)を使い、[開発時の検証範囲](development.md#検証の対象を取り違えない)と配布 image の検証を区別する。Docker もこの三つの binary を同梱する。[build と配置](../../Dockerfile#L98-L101)・[server image](../../Dockerfile#L199-L202)
+
+stdio binary は既存 HTTP backend に接続するため、ランチャーの代わりに backend を自動起動するものではない。`--mode` 省略時は global、orchestrator は明示指定する。接続先の `VIBE_BACKEND_URL` / host・port 解決、内部資格情報と router の制約は [MCP client の接続境界](../integrations/agent-providers.md#外部-mcp-client--lvk)を参照する。[起動処理](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[mode の検証](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L97)。起動方法の移行は [HTTP MCP の認証・scope](../integrations/remote-access.md#認証付き外部-mcp)を免除しない。
+
+撤去は既存アプリデータ・download 済み binary・`~/.vibe-kanban/bin` 等の cache の削除や、既存 launcher の遠隔無効化を行わない。agent CLI や第三者 MCP の npx 設定も別の責任範囲である。[保持する範囲](../../docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)・[直接 LVK binary と第三者 preset](../../crates/executors/default_mcp.json)。古いローカル成果物が残ることと、現行 source がその launcher を提供することを混同しない。
 
 ### ビルド時ソース識別と API の契約
 

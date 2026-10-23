@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c51a67dc253c61d7101b82bc93d7c795198bab671246337e4cb4cd7bc3cf8710",
+  "pageVersion": "sha256:7005564e12d10e43afdf5d9f5970a211e0a241080cf9b1b30245ad18838e66e9",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://docs/design/openwiki-implementation-checkpoints.md",
-          "version": "repo-file-v1:sha256:231b85b4338eed9ca8a4b0c94c003ef2fc00530308642b0b1e63da4a103eb814"
+          "version": "repo-file-v1:sha256:0715d0a1ec0f3360d5b57d1e75634e73b8d57c80241d38766a0863ea3bd174db"
         }
       ]
     },
@@ -229,6 +229,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-20T18:18:55.370Z"
+    "at": "2026-10-23T19:41:54.254Z"
   }
 }

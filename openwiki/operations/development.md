@@ -40,6 +40,8 @@ sources:
     resource: repo://deploy/server/nginx.test.mjs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
     resource: repo://deploy/server/release.test.mjs
+  - id: openwiki-source-2e1d91f21691cd271afffb6f
+    resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
   - id: openwiki-source-96cd4c94fb57fb4764608e3d
@@ -72,10 +74,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T19:41:54.254Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:15:59.449Z
+    at: 2026-10-23T19:41:54.254Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -176,8 +178,11 @@ LVK の配布先は GHCR の Docker image のみ。root Dockerfile の `server` 
 `vibe-kanban-mcp` を同じ image に同梱する。既定 MCP 設定は同梱バイナリを直接起動し、
 npm から別バージョンを取得しない。
 
-`npx-cli/` と旧 version validator は upstream 由来の保管コードであり、
-現在の LVK の公開手順ではない。旧 NPX 文書も廃止案内へ置き換えた。
+`npx-cli/` と `local-build.sh` は撤去済みで、root package の npm 用 bin/files と
+`build:npx` / `build:npx-cli` / `check:npx-cli` / `prepack` / `test:npm` も存在しない。
+旧 version validator は残るが、現行の公開手順ではない。[現行 scripts](../../package.json)。
+旧 server・MCP・desktop 起動方法からの移行は
+[旧 npx ランチャーの撤去と移行](server-container.md#旧-npx-ランチャーの撤去と移行)を参照する。
 配布 image と Compose の更新・旧名 volume の引継ぎは
 [サーバーコンテナー](server-container.md)を参照する。
 
