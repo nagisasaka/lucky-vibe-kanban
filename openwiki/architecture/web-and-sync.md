@@ -64,6 +64,10 @@ sources:
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
+  - id: openwiki-source-e0c2de9e01617a8949b78360
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
+  - id: openwiki-source-0c16a411788f6c8651e3028e
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx
   - id: openwiki-source-f6872c1e7e07221eda6db545
     resource: repo://packages/web-core/src/features/onboarding/ui/LandingPage.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
@@ -160,6 +164,10 @@ sources:
     resource: repo://tests/header/README.md
   - id: openwiki-source-823cc976bdb2bdcb610e746f
     resource: repo://tests/integration-skip/history.spec.ts
+  - id: openwiki-source-249425b2ca74a9cd2211b712
+    resource: repo://tests/kanban/isolated.mjs
+  - id: openwiki-source-62d93277f2c37df9b3fcebae
+    resource: repo://tests/kanban/README.md
   - id: openwiki-source-b1f4325353088fa9d003b939
     resource: repo://tests/server-access/workspace-wiki.mjs
   - id: openwiki-source-4bfe8064f685e5073ef06513
@@ -168,10 +176,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-21T09:00:23.191Z" }
+generated: { by: "codex", at: "2026-10-23T18:52:05.040Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T09:00:23.191Z
+    at: 2026-10-23T18:52:05.040Z
 ---
 
 # Web の実行環境と同期
@@ -243,6 +251,24 @@ API の未定義 path が SPA の `index.html` を成功応答として返すと
 [Project・Issue](../concepts/project-and-issue.md)の collection はローカル REST snapshot を取得する。`electric/collections.ts` という名前でも Electric transport は使わない。cached snapshot を表示した後に再取得し、30秒周期でも更新する。取得エラーでは初回 Ready を解除する経路があるため、Ready は取得成功の証明ではない。[snapshot の処理](../../packages/web-core/src/shared/lib/electric/collections.ts#L295-L382)
 
 mutation は REST 成功後に cache を破棄し、進行中の古い取得を待ってから**mutation 後に開始した新しい snapshot**を待つ。これにより楽観更新を古い snapshot で巻き戻さない。txid を Electric へ渡す契約はなくなった。[refresh と mutation](../../packages/web-core/src/shared/lib/electric/collections.ts#L345-L434)・[競合回帰テスト](../../packages/web-core/src/shared/lib/electric/collections.test.ts)
+
+### コンパクト Kanban の操作と保存の境界
+
+グリッド表示は web-core の `KanbanGrid` が dnd-kit を使い、リスト表示は UI package の hello-pangea `KanbanProvider` を使う。両方とも同じ `handleDragEnd` に接続する。グリッドは測定したカードまたは列の drop 先を、列 ID と配列 index を持つ既存 `DropResult` に変換するため、表示を二列にしても別の保存モデルは作らない。[変換](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L24-L95)・[二つの接続先](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1137-L1353)。列内の配置・展開・重要状態の意味は [コンパクトカードの表示契約](../concepts/project-and-issue.md#コンパクトカードの表示契約)を正本とする。
+
+pointer collision はカードを優先し、空列も drop 対象にする。keyboard は sortable の座標を使い、drop 後に同じ Issue ID のカードへ focus を戻す。内側の button・link・summary 等から mouse/touch drag を開始せず、子要素の key 操作もカード側で横取りしない。カード自身の Enter は詳細を開き、drag 後の click は抑止する。複数選択中は sortable を無効にする。[sensor と focus](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L52-L87)・[操作の分離](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L128-L190)・[複数選択の接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1200)
+
+保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。先に画面の配列を更新し、影響する列の順序と移動先 status を bulk mutation へ渡す。失敗時は console に記録し、この handler 自身には明示 rollback がない。完了後500msで同期抑止を解除するので、drag の見た目だけを保存成功と扱わず、上記の REST snapshot 収束と合わせて調べる。[既存 handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L723-L823)
+
+重要状態の入力は既存 `useWorkspaces` の summary と Project の Workflow query を使う。Workspace 表示設定を off にしても Workflow query を無効にしない。summary の取得失敗・不正応答は空 map に戻り、summary がないと running は一覧 stream に fallback、承認等の追加 field は undefined になる。このため重要状態のラベルがないことは、待機や失敗が存在しない証明ではない。[常時取得](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L299-L308)・[summary の合成と失敗](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L134)。取得周期と最新 Run の時計との差は [時間表示の同期](#run-の時間表示を同期状態から分ける)を参照する。
+
+### コンパクト Kanban の検証範囲
+
+再実行は [隔離試験の手順](../../tests/kanban/README.md)に従い、互換性を確認した既存 backend を `LVK_TEST_SERVER` に指定して `node tests/kanban/isolated.mjs` を使う。一時 instance / SQLite・動的 loopback port と、この checkout の Vite を接続し、frontend の Git 状態と backend build identity を記録する。互換性の確認は呼出側の前提であり、記録だけで schema 一致を証明しない。finally は browser / Vite を閉じ、backend の終了を待ち、一時 instance を削除する。[起動と識別](../../tests/kanban/isolated.mjs#L10-L86)・[Vite](../../tests/kanban/isolated.mjs#L134-L151)・[cleanup](../../tests/kanban/isolated.mjs#L451-L470)
+
+実 API の経路は Issue と 1:N Workspace link、展開、空列への移動、保存順序、reload、keyboard の横・次段・列間移動と取消を検査する。geometry は CSS 幅2560/1280/390と列幅535/536px境界の往復を扱う。一方、承認・入力・失敗・未確認更新・dev server の表示は summary 応答の overlay fixture であり、実 agent / Workflow の状態遷移を検証しない。[実 API と配置](../../tests/kanban/isolated.mjs#L97-L244)・[移動と保存](../../tests/kanban/isolated.mjs#L245-L355)・[fixture](../../tests/kanban/isolated.mjs#L371-L443)
+
+この Sync は凍結 source `291992a606a9ac386e3ee6f56e7d587bf91eb33e` の描画、操作、保存 handler、summary hook、独立した試験定義を静的に照合した。[開発時記録](../../tests/kanban/VALIDATION.md)の成功報告と、入力にある正式 Integration の明示的な検証省略は別である。この文書保守では製品テストを再実行していない。実機 touch、実 model / Workflow、Firefox / WebKit、production bundle は開発時記録でも未検証であり、無関係な過去の Wiki の再検証も主張しない。
 
 ## ドラフト・表示設定・通知の保存境界
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4b79e02bfc2944c3fc55a897fb0c380677f15c17e2a302db8873d067d2dbff30",
+  "pageVersion": "sha256:d138bf6def674ba276fb41f047d1b1f87e3da9f52e1296f9a75eef4163983e1b",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -309,10 +309,66 @@
           "version": "repo-lines-v1:sha256:bba2950c21dce0fd47db19f1af9aaa994d27342d7c842ca8b4376c46b445e9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYTVkZjc4NzFlMDRhMzI5Yzk2YmRiZjZkNzA5ODMyYjkxNDU1NGUxZmIwZjNmNTkxMzE4YjE3ZTdhOTYwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NzMyODRjODM3MTQ4ZjVhZDhmNDg4MDQxM2EwNzc1NGY3MTI0NDk5YWIyNzlhYjIxZmZjYTc2MjY1MjRjZmMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_2f8ebf0027554ad78476a3b0bff3a97d",
+      "statement": "Kanbanは可視Statusごとの列内で実幅33.5rem以上なら二列、未満なら一列の通常gridを使う。二列閾値は16remカード二枚とgap/paddingを確保する設計で、一列時に16remの最小幅を強制するものではない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L468-L476",
+          "version": "repo-lines-v1:sha256:337c32ef23e06fe9d35b0b181da62ff2e98b934ee446745efee5f3a12bd605b3:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg4MGI0YjExOWE4ZTRhOTI0NjQ5Y2Q2NzM3NTU4YmRlOGMyNmIyZWUyODVkNmFmZmE1NGFjMjgwMjljMDUwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDAzMWIxNmQ3YmE1NTljYTkzNDJiMDU5YzAyNjE5ZjI4NTRkMDI5ZWZhN2ZhZjk1NDRmNTk1MWEwYjJmYWE5NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjIwZTI5NjA5NWQwY2RkZDU2NThkZTYzOTgwZjY5MmU3ZjA2YTU1MGQ0OTY1Y2IyYmYyNjkzZjg4NmFmZjk2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODljOWMyNjZmYzBjMWZmZjM3N2QyNjYwNzZmYzQwNTJjMzcyZjZhZjZiNWU2MjJkYzA4OGUwZWU2MjNiOTQ0YiJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/kanban-grid.css#L3-L21",
+          "version": "repo-lines-v1:sha256:78938acc56a1a530770a18046d551edd017b1533bf01f961b3ace6a05e5e8bd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlNDQ3ZGQ1NGE3NTdkY2ZhMGUwNDE2NDAwMTg0ZDU0Yzk5ZGM3MWEwZDY5MGFkZWVhNzVmNTQyNjJmNDBhZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5YzgzYTA2Y2MzYTVkZDc0MDViYWQ1OWM3MGM0NDAzMDRjZjA5NjhkYjZlNWIwYTJkMDg2ODE3MTMwODA5ZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_af90db1c0a7445e0961484d1a9833d3c",
+      "statement": "コンパクトカードはIssue番号・タイトルと未archive Workspace数を残し、本文と通常Workspace一覧をnative detailsへ入れる。showWorkspacesは展開内一覧に適用し、WorkflowAttemptとIntegration入口は折り畳みの外に残す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L61",
+          "version": "repo-lines-v1:sha256:103ee8827ffce61948d94a887ddc95ed69689e718d30335e39f4122153834602:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhOTU0NWIwY2UwNWMyZDk3NTg0OTcxMTUzNTI1YjMwNzJmMzY0YjgwZDQ4NjdlOTljOGE0NTllNzI1MTBhYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyMzY3YjU5MmM2MWE2NmYyY2JlNzlmODY3YTgxOWE0ZGMxZjM1NDJjNmFlYmZlMjg1OTQ3YjlmZDVlODExOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1207",
+          "version": "repo-lines-v1:sha256:3175a698d07dd1377644135ceb02b5820e7733e5d197f37c209c9c19aebb0481:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ZWMyZWFmYmNhNTMwZmRlYzI0YWExMGMyNWVlYWE1YzUwMTY4YmQxMGY4NTkxOTA0OWUzZjIxZWY5ZTM0M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NGRkZDcwNTFkMjU0MTJiYWRjMjY0N2ZjOWE0ZTU3NTJkZGU3YjBkYjUyOTcyNDNhNzdhMjcyODhlODMwNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMDUxZTUyYTMxMzM5ZWI2YjI5MTU2YzFlNzRjZTFkNTdlY2NmOThhODQ0M2I1NDY0MjAwNThlZGNkNzU5MzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2MTljM2FjNzM2ZDgzZjVkNTNiMzQ2ODFiZjc2Y2E1ZmQ4N2EwMzRjMTA4MWM1ZGYwZTQ5OTQ5MmNjZDQ0ZmMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1249-L1326",
+          "version": "repo-lines-v1:sha256:95893d7edf61104c71c12034ac045c667fbbcc87c9b296cc58ee681646893836:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzM2NlOTNjMWVkMjQ4MGNkNmFjM2I3MWZlNmZhMDM4YTgyZmQxNDk5MTU1MjdiMTU3OTc0Y2ZmYWQzYjdhZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OGMxZjBiMjYzOTA5YWQ1MmFjMjQ2OGY4MmI5OGJhMTgxMGJkZTY0MjQxNDRiYmI5NTc5NDkzNmE3NjM4OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNWIxMGFhOTRhYzllMDA0OWI5OWQwYTg4NGQ5M2FjNjMzMDM4ZTJjMzY1NjRmYjBiYTA5ZmNkNmIyN2IxOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzNDNhNWFiMGE0ZGEwMjVlOTE3OGNlNDVkY2ExM2Q5OGI2MmRjZjY3MWZjNzkxYjlhNjg0MDE3YWYxNGFjMDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bbb3f3e8ed6c4f46b08475b5686c1d17",
+      "statement": "カードの件数は未archiveの関連Workspace全体だが、状態集約はlocal_workspace_idがありactive一覧に存在するWorkspaceを使う。Workflow Workspaceは状態集約に含め通常の展開一覧から除外するため、件数と展開一覧枚数は一致を保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1283-L1326",
+          "version": "repo-lines-v1:sha256:7d79a1588cb5fb97db9bc1b40633491ed743ffa81a35c56c6627d9f22522fa0b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkOTc5OGZlZDQ2M2Y4MzZlZmVlMDRmZDM2MjFlZTA3ZWUwY2Y5MjEwMDcxNjVlZjIyOTMxY2ZmNmJhNTNlOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OGMxZjBiMjYzOTA5YWQ1MmFjMjQ2OGY4MmI5OGJhMTgxMGJkZTY0MjQxNDRiYmI5NTc5NDkzNmE3NjM4OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1ZDExYjZmM2YzNTAyOGY1OWFkZWExOGJhODYxMjQyNTBjMGRkNDFjMzNlMzlmMTZlOWFkYjA5MTU3OWNlODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzNDNhNWFiMGE0ZGEwMjVlOTE3OGNlNDVkY2ExM2Q5OGI2MmRjZjY3MWZjNzkxYjlhNjg0MDE3YWYxNGFjMDAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721",
+          "version": "repo-lines-v1:sha256:c00b04caa2964100474bd597f195e4123de0dbddc68af3c058b09f7943c4e8a5:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTYzZDRlZjY3MDJiODExMTRjZWFhNzA0ZGYwMDg1NDk2ZmUzZWUxMTEzODBlNDA1YWZiNTA1YzIxZjMyNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkMmZkYTk0MmQ2MDAzMmMxY2Y3OGE4N2UyY2E3NWJiNTJjOGJhNjI1YmIxYjA4ZmYzNzFkZjU1ZWMwZDBiYmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyN2I1MWE1NDVmZmRkNTg5MjllMjZmOTVmNDM3ZTdhNzg4OWIyOWZmYzI1YWRlODBlODExMjk5ODI4OTk5NjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36c0b61d947c4f25a85b016a0c5089b0",
+      "statement": "コンパクトカードは承認・入力・実行・失敗・未確認更新・dev serverのフラグを独立に集約する。承認はhasPendingApprovalまたはawaiting_approval、入力はawaiting_input、失敗は最新statusのfailed/crashed/audit_failedを調べる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49",
+          "version": "repo-lines-v1:sha256:e572b170877cb75b02d5fcfa26d549bb32083a7c19163a8d8ea862e35968a4a6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjlkYWRjZDQ3YTA4MmVjNzA1NDY5MWRjNjQyNTdiYzVkZjM5MDEwODQ0YTVlN2VjYjE0YmUyMTY2ODljMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiMWRjZjE5MTUzZGU2OTI1YTY4NGI3MWVhMDQ0MDFhNjA5MDhkYWMzOTVhYjNhZDE2Y2Q0MjZmY2ZmNjgwNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZTQzOTVjYWQ3MTJhYWU3YjRhZmVkMjQ1MTFmOGUwNWZlOTk0NzgxNWUwNDdjMTBjN2MwNTFmMzcyNDI2NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiZjJhZGE1ZDg4NjdhOTI0ZTk4YzhmY2RiNjkwNDE2Zjg2YzcyNmZjYzFkM2Q0YzY5Y2NmOGQ5MjhiODgxNmIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T14:57:15.192Z"
+    "at": "2026-10-23T18:52:05.040Z"
   }
 }

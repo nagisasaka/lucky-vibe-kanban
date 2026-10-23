@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ffa0f0f064272931140761ba24e49035bc97e8d1eef4ee18d8a101ddd0a969c1",
+  "pageVersion": "sha256:1989d98fa3c6c9dbd816ca5e889c87eee94ef472cc7de189e1cd33c50fd7101d",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -973,10 +973,106 @@
           "version": "repo-lines-v1:sha256:251edde1e6ddcc8690af91b895ca364773ab0edf3d07dc31c425e4fed3a64812:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0NWY0Njg3YTMyOGNiYTk1MDc0Mjk4MjI5YzYwM2RlOTdlNDJmODFmOTNkYTUxNDUzMWM0Y2Y5OTVkZmZjODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwMzRhNDdmZmI3YjBlMTBhNDM2NjhkY2RmODY0NzhiYmU0NmM3OWE1Mjc3MWJiMjBkNzRhZWUyMDVmNzZhYWYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_7aef5d81c1724ecfb74c47e5491cec5a",
+      "statement": "Kanbanのgridはdnd-kitのdrop先を既存DropResultへ変換し、hello-pangeaを使うlistと同じhandleDragEndへ渡す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1137-L1353",
+          "version": "repo-lines-v1:sha256:b23b33b8c8e14178f0bff2705a6f86f7f234d50609b664c9bd77e1362a0c5b6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ZWVhOTNiNGM2N2I5ZTE5OWVhMmMzYmMzZjdjYzUxM2ViMDJhYWI5NWIwMWVlZTk3ODIxMDZhZGYwODI2ZjYyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4Nzg1ZDljOTAyZWI2MDllZWQ1YzcyNWUyNTAyNmFjMzY3YzJiYjhiYjRjYjZhZGU4NWFmZGEwNzU5NTFlZjczIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiMjA3NGRhZmMxMGExNDU2YzA4MTlkOWM2MWQxOTkzZGE5MWI4ZWIyODNkODhiNmQzM2M2NzMxMTU1NjRlZWIzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2NWJiNDcyMTM3MTcxMTYzNWMzN2MwNGZlZmFlMzE4Y2VjZDA2YWYyNjNiY2NjNDdiMTZmOTczNzAzNmI5NzMwIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L24-L95",
+          "version": "repo-lines-v1:sha256:2a2e5957a3fe54736d0def3c9ed43fbd9baa46fad91f7e1504ffa941f6a38db0:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmODQwNTI2MTc5ZTlhYTRjN2FhODYzOWNkYmE2MjAyYTlhNmFlMGEyN2NlMjVhMzQ5MjNiNDVjY2NkODA4ZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3NTczYTRmZDMyMDlkNDFiNzdhYWJhZWE2OGNmNWE4ZWJiYjBiM2U3ZTFkMDE5Y2VmNzkyNDIwYjQ4ZmZmNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhNzc0MWEwNjM4MzdjNjhhMGZiY2MyM2UwZjUyMjczOWQ1M2UzNzkwNmFjNmFmY2Y3NDkzN2VjYzhiZTJhMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ccdc49915404498c8986733c7920ac86",
+      "statement": "グリッドは子controlのmouse/touch dragとkey横取りを避け、drag後のclickを抑止し、keyboard drop後にIssue IDでfocusを戻す。複数選択中はsortableを無効にする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1200",
+          "version": "repo-lines-v1:sha256:b1b0042ce251c0bbebdbf02ec3072b822efb94187364af23746ef31123bdb5cc:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDhlYzJlYWZiY2E1MzBmZGVjMjRhYTEwYzI1ZWVhYTVjNTAxNjhiZDEwZjg1OTE5MDQ5ZTNmMjFlZjllMzQzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWFhYjliODM5MWNjMmY0NTBmMjc3YzJlNTZkNTFiYTQ0MWU2YjE0ZTZkYzFkZGQ5YzU4YTNmNDNiNDlmMWQ3MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmQwNTFlNTJhMzEzMzllYjZiMjkxNTZjMWU3NGNlMWQ1N2VjY2Y5OGE4NDQzYjU0NjQyMDA1OGVkY2Q3NTkzNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWY4Y2JmMzRiYjYwODgxYWI2MjliZWNlOThiNWFjYTliNDRkNDljNDg1ZGY2YjlmZmM4YjM3M2VlMDAyODliOCJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L128-L190",
+          "version": "repo-lines-v1:sha256:c3d14804b9bc42c9d82ca4f8c956de5b90e6af2f83a7c4fa54acf5ed4d752853:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwMWY0YTFkYzFjOWQ2MzNkMzhkODNhZmI1YjE1NTA1ZGIwNDc3ZWU4MmFkNmQyMjMzZTMyNWFlYmE2NDg3MWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MWY1MzBjZGEwZDViMmRkMjRkNzE2Yzg2ZDQ1MWFhZTEzNmU4MTA5NzgzZmQ5ZjBlNGNlY2MyNjRhYTIwODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUyODg5YzdlYWVjNTk4OTg5ZmYxMGIyMmY4MmRmZTJlYjI0OGY5OTE1ZGVhN2JlN2RkNDI2ZmNhNzhlZTQ0ZmEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L52-L87",
+          "version": "repo-lines-v1:sha256:722419e50c7ea209b3d3173027f722435847aafd3df1a24b15bcd28492e44498:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNTBlMzEwNzhhYTlkYWVmYjQ4ZmU0OWY1YTQ0NzRkYTI1OGYyMDFhM2IyZDhlMWUyZjM2NGRhNjMyNjBlNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5MmE4NmI2OTU3MGNmYzBhYTZmNDQwNzFmODY2ZGRiODM5ODhlYjdlOTI5NmMyNDcyOWMxMmU4MTk0ZjdiZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzNGUxODMyYmM2MmM5ZGE5YzdhZTUyNTU4MTg4OWY1OGRkZmJjYWY0MmY2ODA0YzY0NjNkODZkNWFiZDAyZGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_49c4e28ff4a948c9b91085a5c464e478",
+      "statement": "Kanbanの移動handlerは非Manualの同列並べ替えを拒否し、列間移動を許可する。楽観的な配列更新後にbulk保存し、失敗をconsoleへ記録するがhandler内で明示rollbackせず、完了後500msで同期抑止を解除する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L723-L823",
+          "version": "repo-lines-v1:sha256:f44785d33816741faf6bac14bdc638e5c7a6bf3145750a0f8abfc957c656e19b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiZDljZTU2ODUyZTE5NzBkOTgwZDIzOWQzODMxMDcwM2Q2OTNlMzJkMmM5MDdhNzRkZDk3ZDc1YTQ0NWU4ZDFjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OWMxMzU5MDY2NTYzMjNkMWM1ZWE0MTY1NGVlNjZhZmI1ODVhY2RjZmFlYWNhMTIxZDVlMzBiZjE5M2VlZGQ3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1M2JlMzAzZmY5OTcyNzc1NDAwZDIzZjU2NzI1YzEyNDA2ZmIxMTY1NGJhZjNlYjAzZjQxODBhMWI4ZWQ0ODhkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhYTU0MDE1MzE2MDBmNzcwZWNhNjVmOGVlYTdmNTNkNDk1YmYyN2YzZTFhMzI4M2I1NGQyZTc3Yzk2MWNlZDJiIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_439846ebf53c4df1a1451db8b6735a9c",
+      "statement": "Workspace表示設定をoffにしてもProject Workflow queryは取得される。Workspace summary取得失敗は空mapとなり、追加状態fieldはundefined、runningはstreamへfallbackするため、重要状態ラベル不在は状態不在を証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L299-L308",
+          "version": "repo-lines-v1:sha256:2fabb111763d1860a5e178c89de942eb834a88d55a5ff9fc67ebf5ca7b72ba15:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4ZTQ2ODE5ZTA3NDJlMzdlZjEzNmIwNTU0YjBiMDZhZWIwYjZkYTAyYjMwMzE4YWUzN2QxZGNhZDBjZWRlZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNzYyZTFiYTE0OWU3NTA5ZTM1MWJmZDQ1Y2NkNGJhNDRlODlhODUyNDc1Njc5MTBjMzM0Y2M5ZTg3ZDdhNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyYTFhZWQzMTVmOGQ5MzFiMjE2ZDg1ZTU1OTg5ZmFkMmIxODhkM2I2NTU2OWYxMGRhNGUzYjg4NTJlYTBlZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NjlmOWZmMGI5MjQ0ZDVlMjVkMjA0NjhlNWYzZjFiMjZkNTNiZDYxOTZkOWQ5MzI1ZWJkMTdjOGE0MmM5NDgifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L134",
+          "version": "repo-lines-v1:sha256:508f158ff3dbaf9a616ed88bc91f75e704dccd8c2e8e3eaa0465811fec5e0416:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxZGM0NjVkMTU5OGYxMzEwNDM1ODY0MDQ4MjBiOWNjOGFiZjE2ZGUwYjk1N2Y1MjRhMzFjYzBkOTVhOGMyYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1YmU3YjJmYWE1ZWIxNTRiNjNkNDZhYTk0MWMzZTgwYjRlNGEzZDMxZGYyZGYwYjE3YWM3NTRhZGIzZmQ5ZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiOTE5YmJkMmE5ZTUxZDcxODcyZDk5ZjY5NWExMDkxMDQ5OWFkMWEwNDM3NjM4YWUyYjk5ZGRkNDA4NDJiMTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_de27cb215b37498cb5b3077d679406b8",
+      "statement": "Kanban隔離試験は呼出側が互換backendを指定し、一時instanceとViteを起動してsource/build identityを記録する。finallyでbrowser/Viteを閉じbackend終了を待ってinstanceを削除する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/kanban/README.md#L3-L16",
+          "version": "repo-lines-v1:sha256:5188fdf77a287f4f2a592978751a72b74ea9163d7b36b3f94b7e8348300ea468:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwMTU5MjM4YzFhMDJmNzQwMDY3NDJlNTllMzVkZGFjODUxZjI2ZWRmNTc2MGVlZjQwOTBjODU4MjI1N2NmMjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5M2Y0M2FjZmI0MzRjNTczM2QzODc1NzNmNjRmYTkyMjk5NmU1NDQ3MzFiZGNlNTQ1MGI5ZTZmMWVmMzE5MmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkNjlhMGEwYTFjZWUyNjZhYzgwNzMwN2U2ZDNmNDk0MDExZmEyZTE3OTBkMzBmYmQ5ODE3ZDA0Y2RmYTU3M2YifQ"
+        },
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L10-L86",
+          "version": "repo-lines-v1:sha256:64f65bcaacd1b735478a9aa99f7b0a4d74550909fb9c4a854a352c35c68124cc:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGM0ZmUzNTk3OTc3YjEwNTI3MDgwOGNlNmE1MWNlNDUzYzgzMWRlM2E4MmJlOTc2YzZkOTUxZTExOTM0ODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyYTkzNTViMjcwMTIwYjA4NmNjODI3NmVhNjA1NWZhZGZkNGNkYWQ1ZTIyMTI4OGRmNmNlZjVmM2RkNDE0MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzMzhkZDJlZGI1MTg4MTNmNjFlMjU4MDM0ZWE3YjdkN2I0NTdjNDVmNzJiNTY3NmRlNWU0MjNjMGU3YTk0NTcifQ"
+        },
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L134-L151",
+          "version": "repo-lines-v1:sha256:9d68483bd0f65234abfa628719dfc67e5c1828c8400aeee41f67c8fb38b98201:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MDJkMTBjZjcxZDIzMzYzYzNlMzNhNmE1ZGVhMTIxYzFhN2E4MzU0M2ZmYWYxZmM0N2ViYThjOTJiNTdlOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlZjM1MTQ1OTRjYWY4ZjViYzIxZDBhYTE4OWY3Y2VlZDY5MzJhYjc0NzcxNTAyYmMwNzExZGI0ZDFjOTFhZWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ZTZiOTZlMDA2MjRiMTY3OWY5MWZlZjcyMmU1ZDM5YzkxMWRhOGEzOTdkZjM0OWVmNzA0MWQ2ZWZjMTU0MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwYmFiZjY5NmNhN2JkODNlMmE3MzA0MWJjMjYxZjVjZjU4OTA5MjYxNDAyYjExNGNlNzZmYWE2YmQzMDA5N2QifQ"
+        },
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L451-L470",
+          "version": "repo-lines-v1:sha256:e1eb11afa2586ce49d5b7015a4c6ed3845154beabaeecd53de9fd7201c70184a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0MDg1NTBjYjYwMzZlNGNmOGY1ZDVlYzU1NzdlZmI1NWM4ZWNiNjQ1ZGQ2NjM5ZDg1MWI2OGIzNjg2OWE4MGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1M2FiMjZiMjBlYmUwMGJiYjg3NTE1OTU4ZWYxMjliOWFjNjE2ZGQzZjdhNjFmMGM4ZjJjZjgwM2YwZjVlYWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b94cdab0afb24eb697ab4ea5ad080585",
+      "statement": "Kanban browser試験は実APIでIssue/Workspace linkと移動保存・配置を検査し、重要状態表示だけはsummary応答fixtureを使うため実providerやWorkflow実行の証拠ではない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L245-L355",
+          "version": "repo-lines-v1:sha256:c23f7648bba9a2868ec44597a990093809ac8d5bc61255e9ba1ddc3a65826bb0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzZDhlYzAxYjMyYmNhYTM3ZGRkODg4MDBkOTE3N2I2YTRkNDZmNDBiNjhjYzgyZjhiMmUzNzViYzllYjVjMDRlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4MjdjMWNkYzkzMmU3MWYxYjA3ZTY3MTRjZWUzNWNjYmRhNTk0MzBiODllZTIwY2VlM2E0MWViOGNhMWZmZGJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2NDc3ZDEwZTJjYTNmYjRiOGJhOWU5ZmRlMjU0N2UxMDE2MmI0MGJkZGJhOGJhMWEyODZjMjVkOTNkNmQwNzI3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMGY4YjU1YTVmMGU5NDkyZTE5ODI3YTE1NWI2NGE4OGU3ZGFlNTQ2ZDY0NThiMDI1YzZiMmM4YjYwZThkOTIyIn0"
+        },
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L371-L443",
+          "version": "repo-lines-v1:sha256:2702b87384361cf8597ac8191ccddd4772efbdd3f135eec5db47ce92b1acb4f9:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlkNWFjYWIxOTdkMmQyMWFiMmJlNWMwZDIxOWVhZDlmMzczYTQ5MjI3N2UyNTZhY2U2YzY1ZmY1MTgzODA5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MjIyMGI1NmZmYTU0Y2UwNzc3NjJmYTllOTI1ZWMzZDcwNzNhNDAyZTZlNGY1NTBmNDRiMTZlNDhkYzdiOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwODRhY2ZhZDJjOWYwYjg2NjZkYzAxMjM3Njc3OWRjNWY0YWI2ZjQ5N2I2YTgyYjdhYTVlNjEyODEwNGVmNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjYmJjNjhjOGY5Yjg5N2NmYTYyZGYzNGUwN2VhMjQyMDIyODA1YTQ4YmU5OWM5MTAxZjgwODkyN2EyZjk0MzEifQ"
+        },
+        {
+          "resource": "repo://tests/kanban/isolated.mjs#L97-L244",
+          "version": "repo-lines-v1:sha256:c712f468b3270b73fe6fd70511af34289392b9ed55e2fb20c8be71e91fda8cd1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0MThkMTIxMjQ4YmQ3OTAxYTlhNGQyZWRlMWIzYmJjM2FiZTY5OTVmYzAwOTRhYmQ4ZDRkN2FmNDY3ZDY4MjBkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyZDg1NjhiNGRlMzg3YTA5ODdmY2YxY2QxM2JmN2Y0YmMwNzZiMjM3MjYxMmQzNzFkN2Y4MjAxNmZlZWIyY2IwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkMDY4MDFhM2Y1ZDU2N2M0OGJhMzUzMGFhMmM0M2ZmOWY4ZGQzNmNhNmFkOWIyNjAyYWYzNDgyMGM1NGNlZDYyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzYzMyNjJiZTFkZmZkZjUxMjk3Y2NiYjJkOWEzNjI2YTVmYmEyYmMwODVjZTQxOTI4NWZjYTJiMDI2ZjNjODczIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T09:00:23.191Z"
+    "at": "2026-10-23T18:52:05.040Z"
   }
 }

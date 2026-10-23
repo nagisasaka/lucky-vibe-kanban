@@ -34,6 +34,10 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/links.rs
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
+  - id: openwiki-source-cae8a3c125596fe3e7ed7b37
+    resource: repo://packages/web-core/src/features/kanban/ui/kanban-grid.css
+  - id: openwiki-source-b39952c69795059582eecfdf
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
@@ -42,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
+generated: { by: "codex", at: "2026-10-23T18:52:05.040Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T18:52:05.040Z
 ---
 
 # Project・Issue と実施の関係
@@ -125,6 +129,16 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 `hideBlocked` は blocking 関係の元 Issue を blocker として調べる。blocker が **最後の可視 Status（sort_order 順）または任意の hidden Status** にあれば解決済みとして扱い、それ以外なら被ブロック Issue を隠す。参照先 blocker が手元の集合に存在しなければ、ブロック中と判定しない。名前が Done か、`completed_at` が埋まっているかという判定ではない。列の順序・非表示化は見た目だけでなく、この依存表示の意味を変える。[解決済み Status 集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L311-L325)・[blocking の向きと判定](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L149-L169)
 
 検索は title / simple_id / issue_number の部分一致で、Project / view 別設定を保持する。filter はカテゴリー内 OR、カテゴリー間は順に適用する AND である。[検索・filter](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L82-L147)・[Project 別設定の復元](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L244-L285)
+
+### コンパクトカードの表示契約
+
+Kanban のカードは Issue を表し、内側の Workspace はその仕事の実施を表す。カードを小さくしても Issue と Workspace の 1:N 関係や [実行による列の同期](#kanban-と実行の同期契約)は変わらない。可視 Status ごとに列を描画し、その列の実幅が33.5rem以上なら内部のカードを二列、未満なら一列に置く。物理解像度や画面全体の幅で固定せず、三列や masonry にしない。標準 root 16px では閾値536 CSS pxで、二列時の16remカード二枚と gap・padding を確保する設計である。一列時のカード幅を常に16rem以上に制限する CSS ではない。[可視列](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L468-L476)・[幅と通常 grid](../../packages/web-core/src/features/kanban/ui/kanban-grid.css#L3-L21)。[開発時の判断記録](../../tests/kanban/VALIDATION.md#変更と判断)は、文字縮小や一次元 DnD の CSS だけの grid 化を避けた理由を記録している。
+
+Issue 番号と既存サイズ・省略表示のタイトル、未 archive の関連 Workspace 数を折り畳みの外に残す。native `details` を開くと本文と Workspace 一覧を読める。「Workspace 表示」設定は展開内の一覧に適用し、本文や重要状態を隠す設定ではない。WorkflowAttempt のカードと選択元 Card に対応する Integration の入口も展開の外にある。[タイトル](../../packages/ui/src/components/KanbanCardContent.tsx#L210-L241)・[展開](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L61)・[入口と一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1249-L1326)
+
+件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、展開内の通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1283-L1326)。従って件数は展開後の通常 Workspace カード枚数を保証しない。
+
+承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
 ## Issue の共同作業
 
