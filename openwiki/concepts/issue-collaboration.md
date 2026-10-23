@@ -40,10 +40,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
+generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T19:04:53.809Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -107,4 +107,4 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。[General settings](../../docs/settings/general.mdx#notifications)はこの実行上の注意喚起の操作文書として読み、旧 Cloud の受信者規則として使わない。
 
-認証された利用者が browser と Project を明示登録する [Web Push](../integrations/web-push.md)は、上記 OS notifier / Follower と別経路である。Codex の canonical blocking input・approval と Run 終端を DB trigger で配送待ちにするため、Issue の担当・コメント・購読変更そのものからは通知を作らない。登録・同意失効・再送と ChatGPT 相談はリンク先を一次説明とする。[admission trigger](../../crates/db/migrations/20261018180000_web_push.sql)
+認証された利用者が browser と Project を明示登録する [Web Push](../integrations/web-push.md)は、上記 OS notifier / Follower と別経路である。Codex の canonical blocking input・approval と Run 終端を DB trigger で配送待ちにするため、Issue の担当・コメント・購読変更そのものからは通知を作らない。登録・同意失効・再送と通知からの会話復帰はリンク先を一次説明とする。[admission trigger](../../crates/db/migrations/20261018180000_web_push.sql)

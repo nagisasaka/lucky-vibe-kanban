@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d37786bcf6344cb9351633155d6add501e0707a993ce71a486d174fe2d452a7f",
+  "pageVersion": "sha256:a8021d57aca040f5544429a4e921de2eab171273d7252a294c8645bf3c20e0c6",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -346,7 +346,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx",
-          "version": "repo-file-v1:sha256:9998bdf8eee5218c2217fffd53f6b49bf4cf10398c826cb05e0efb50443cdb6c"
+          "version": "repo-file-v1:sha256:d1474536ed257548a06903b968ace470d30658bc4c2b1660f241723a9a64c51c"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts",
@@ -939,6 +939,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T15:33:24.249Z"
+    "at": "2026-10-23T19:04:53.809Z"
   }
 }

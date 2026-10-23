@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:6df14e5e398616a199d121a99817aa3603af9a2f3783fcd173f5f238d935b6b6",
+  "pageVersion": "sha256:896faf5fc6beb30038e942b9e6cba6288965fc415332011b28f4aadbc6dbe659",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -161,12 +161,12 @@
       "statement": "Web Push workerは共通router組立時に起動してDB outboxを処理し、設定がない場合も期限管理を行うが配送しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/web_push.rs#L342-L358",
+          "resource": "repo://crates/server/src/routes/web_push.rs#L326-L342",
           "version": "repo-lines-v1:sha256:c8a5578688bfad775e0198107f0cfad76fe754efab86f4250dc50ced2f6d74fe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYjY3NDI5NzQ2OWFiOTIzMzA4M2ZjZDBlYmZkMzE4YWRiYzNhNjZkNTIzODdkOTNjNTViZDEwYTE0OTY4OTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmMTkyN2M1N2FhZDVmZWMwMWFlYTVkMTJkOTRjNzBjZmY0OWI4OWQ0ODNlNWU5NzJlOTI1M2QxNmMyZmI3ZTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY3Nzg0MWE5NDRjZjZjY2NiM2Y1NjNlMTQ5ZDFkYmVmZWI3OGMwZjdiMmJiMWQ0YTk0YWZkYzQ2NGU1ZGQ1MzMifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/web_push.rs#L95-L136",
-          "version": "repo-lines-v1:sha256:6d007fb25b75005ed776a2dcaaf8df40b47f4086a8889b3fe48a7244dd50a18e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYjRhYTU0MGRmNTA5NTNlNTQ1ZWJiNjQ4ZTAwMWFiZWY3MDhkNTg4NDUyMGVlODE1MTk4YTczZjkwYmZhYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3YmIzNjQ2ZDE3NDQxZTBhMjczNzdiNGYyMTJhMGVkMzEzZjBiM2VmZDQ1ZWI5M2YyNjZmYWU3YzQzNDQ2MjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdhOTQwNjVkZDVmNjE4ODJiMmU1NzZmZDJlODAwNzkxNmZlMmJiZGNkYWRkYzNjOWMxZjdlZTY4MTdhNGJlM2EifQ"
+          "resource": "repo://crates/server/src/routes/web_push.rs#L95-L135",
+          "version": "repo-lines-v1:sha256:92ac25cc5ab048ca6344c661bc8c1064bdef26d8f25ef1061e6af2ceaa09478a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYjRhYTU0MGRmNTA5NTNlNTQ1ZWJiNjQ4ZTAwMWFiZWY3MDhkNTg4NDUyMGVlODE1MTk4YTczZjkwYmZhYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3YmIzNjQ2ZDE3NDQxZTBhMjczNzdiNGYyMTJhMGVkMzEzZjBiM2VmZDQ1ZWI5M2YyNjZmYWU3YzQzNDQ2MjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3MzE3MzRlN2M3ZTM0ZjU2YzQ5ZDkzY2Y5OGY5ZDc4MmZlYTVmYThmODk2OTBmZWJkYjY2NWM3MjhkZDU5ODEifQ"
         }
       ]
     },
@@ -213,6 +213,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T14:57:15.192Z"
+    "at": "2026-10-23T19:04:53.809Z"
   }
 }
