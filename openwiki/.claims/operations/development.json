@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:74b09cefea411a3afc9a92238a6c9f7623e17b037788f47bd1f4425f857eaa6e",
+  "pageVersion": "sha256:94c9d49ac243f3ffd3f7f3c677401dc88c44986473cfe3e40d1778a6f923e178",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
+          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
         },
         {
           "resource": "repo://rust-toolchain.toml",
@@ -18,11 +18,11 @@
     },
     {
       "id": "claim_85f5dffca19d45848787e540d32b665b",
-      "statement": "devはport解決してWeb/backendを並行起動し、watchはcleanup無効でserverとprocess hostをbuildする。Tauriは別script。",
+      "statement": "devはport解決してWeb/backendを並行起動し、watchはserverとprocess hostをbuildする。旧cleanup無効化変数は設定せず、Tauriは別scriptである。",
       "evidence": [
         {
-          "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
+          "resource": "repo://package.json#L12-L51",
+          "version": "repo-lines-v1:sha256:0fa27d7a012ca5b43efa6d4e2f974bb369e08f59bfd351955da83a11371a67e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMTIwMjUyZjYyZmY4OWU2YzdjNGRjMzU1NGM0N2Y4MjdmNjllZWM0NjczNjZiY2E5ODljMWI2N2RiMTlhMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMTY4MDc0NWFkZWVjYjE3M2VmNDI2Y2RlMGQ2YzMzNzYzYzk2MTc3ZDYzMWQ3NDhmMDIwY2M3OGExNzVkODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
         }
       ]
     },
@@ -36,7 +36,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
+          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
         }
       ]
     },
@@ -132,7 +132,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:5f54697ee15277ef16795446e3792f96420e1808e2d0ee499565063f6d4bf0f3"
+          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
         }
       ]
     },
@@ -152,11 +152,11 @@
       "evidence": [
         {
           "resource": "repo://crates/utils/src/assets.rs",
-          "version": "repo-file-v1:sha256:c2a6fca58c3ba64510c2c4aeee0c383c3509a2e7595cccfb38dc7375b2e61af9"
+          "version": "repo-file-v1:sha256:652f815f8decd3284ef2bc4e3022fb356982c15f77745c4fc3b0bedb960b4145"
         },
         {
           "resource": "repo://crates/utils/src/instance.rs#L1-L42",
-          "version": "repo-lines-v1:sha256:c01fa867f0c6d1ff962b0df4e87088cdc710fc5866b3d363c3c6f96a70cd4b59:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhOWU0MjVlOGY1MDI1NWVkNWQzN2FjNTAxYjBkMDUxZjJjZTc3NWFkMWM5NDljNmVlZDI2MDM2NDk0YzQ2MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
+          "version": "repo-lines-v1:sha256:4d06c4957b8f63b01447fe5c688556e3a3b3e4552bb754d22d9b1c76a0772b32:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhOWU0MjVlOGY1MDI1NWVkNWQzN2FjNTAxYjBkMDUxZjJjZTc3NWFkMWM5NDljNmVlZDI2MDM2NDk0YzQ2MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
         },
         {
           "resource": "repo://deploy/developer/STAGING.md#L20-L36",
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/instance.mjs",
-          "version": "repo-file-v1:sha256:23c96e4569c0e4d62fed33ef8d83b39a8c31827630934c941e0b5c992b0587da"
+          "version": "repo-file-v1:sha256:bc519f985dbf6734b5b19dd0554cff59eb47ec449a41f60ada1ee42718f360ae"
         }
       ]
     },
@@ -184,7 +184,7 @@
         },
         {
           "resource": "repo://deploy/developer/STAGING.md#L67-L88",
-          "version": "repo-lines-v1:sha256:339947fd34180c0577d130c1fa467d69bf2ba9bc70f5b601b2fd539310359394:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNDA5YmZkYTc0YmE3NDE4MTY1YjAzNzdiNGExMGE1M2VjN2UxMTZmNzE0N2Y3YmQxY2EyYjU5Yzc5OGExOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzNDFhZjdiZWQ4ZjRlOTIzOTFiYzBhY2FmM2VmMzlkZTIzNDYxOThhYmQ0OGZiOWU0YWY3Y2FhMmFkMjVhMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGNhODg3NWJjYTI3MmZlZTdmNWM1ZDY4MzM1NjkxZDBmZDg1ZDg3MGY4MDFmODQ3OTU4YzZkOTAyYzExNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZmU0N2EwZjY3ZGU1OGZhNGY1NmQ2NGFlMTQwMzM2MTRkZmFhMDZhNDg5YmRiM2UzMzRkNzU3ZDk1ZGU2YjUifQ"
+          "version": "repo-lines-v1:sha256:4eae942c3ce776291f19345d9cffde722c7577286dd3c0a12e96633743ab7599:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkNDA5YmZkYTc0YmE3NDE4MTY1YjAzNzdiNGExMGE1M2VjN2UxMTZmNzE0N2Y3YmQxY2EyYjU5Yzc5OGExOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzNDFhZjdiZWQ4ZjRlOTIzOTFiYzBhY2FmM2VmMzlkZTIzNDYxOThhYmQ0OGZiOWU0YWY3Y2FhMmFkMjVhMTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkZGNhODg3NWJjYTI3MmZlZTdmNWM1ZDY4MzM1NjkxZDBmZDg1ZDg3MGY4MDFmODQ3OTU4YzZkOTAyYzExNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4ZmU0N2EwZjY3ZGU1OGZhNGY1NmQ2NGFlMTQwMzM2MTRkZmFhMDZhNDg5YmRiM2UzMzRkNzU3ZDk1ZGU2YjUifQ"
         },
         {
           "resource": "repo://deploy/developer/updater.py#L28-L37",
@@ -202,7 +202,7 @@
         },
         {
           "resource": "repo://deploy/developer/instance.mjs#L44-L64",
-          "version": "repo-lines-v1:sha256:7b7533abaa318dfa6fa9fd9778c9b601a7d0baab0f3804be157b8ac5d79814ae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDZiZTU5ZDZiZjJjOTZlZTFjMmQ3ZjVlY2ExZTdmNjQwNWM1YTg3YTcwZDg5NGIzYWM1ODE0MmE4YmM5ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjhiOGEwNGM3MGQwM2U3ZWM5ODZkOWE0OWU3YzFhMWM3YmFlMjU0YWY3NmMzZjc3ODQyYmQ5NzAyZWRmZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzMWE1MDczZGY3OGQ3Zjc0MmQ3MjEzODVjNzRiZDQzMzhjOGJkMmI4ODI0MjgwZDViNzk2ZmJhYzBmNjA1ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYWZjN2FiOTAwNGY1NmQxYmQwNTU2MTliYmFkYzc1ZjI1ZjgwYmNmNjM0ZTA5Njg3MzY4MGNmMDg1MDQxMGUifQ"
+          "version": "repo-lines-v1:sha256:eb6a788f096a09832cf8e70776c09011552f7b4ba379094797be29942b533d34:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMDZiZTU5ZDZiZjJjOTZlZTFjMmQ3ZjVlY2ExZTdmNjQwNWM1YTg3YTcwZDg5NGIzYWM1ODE0MmE4YmM5ODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjhiOGEwNGM3MGQwM2U3ZWM5ODZkOWE0OWU3YzFhMWM3YmFlMjU0YWY3NmMzZjc3ODQyYmQ5NzAyZWRmZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzMWE1MDczZGY3OGQ3Zjc0MmQ3MjEzODVjNzRiZDQzMzhjOGJkMmI4ODI0MjgwZDViNzk2ZmJhYzBmNjA1ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQzYWZjN2FiOTAwNGY1NmQxYmQwNTU2MTliYmFkYzc1ZjI1ZjgwYmNmNjM0ZTA5Njg3MzY4MGNmMDg1MDQxMGUifQ"
         }
       ]
     },
@@ -404,13 +404,91 @@
         },
         {
           "resource": "repo://package.json#L1-L50",
-          "version": "repo-lines-v1:sha256:194a27e68ebe3a9c713244052501f6b28ea0c31253d5eed39484fdff455e2a1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+          "version": "repo-lines-v1:sha256:8e2099107abc74d9b89e689a4e3dd9bfe0deb08b7917e1482de41acd096ff224:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_35d1613f136e40099d4d66e4f4459a49",
+      "statement": "開発switch kitは外部で試験済みの成果物への切替を担い、build・Git操作・migration実行は行わず、新serverの通常起動にmigrationを任せる。operatorによる別途配置を要する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/README.md#L1-L13",
+          "version": "repo-lines-v1:sha256:f781db0f2aefdfb3fd9338368bdedeb831b189bac95fb693e9dd9b83c9c742a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMyMDc4YzYyNzQwMjA0OWY4MzE3M2RlMDBkYmQ2NTdmNzJhZGEwMGM3NTg1NTdjMjY5NWRjYWFjZGU2N2YzYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3OWFiNTEzNGJlYTVmNjQ2N2I3OTZiMTNkM2Q4M2JiODNjMjM3N2M2YjQ0OTQ3OGI3OWRkNTM1Y2U4Y2VkZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3MjBmMDNlYzc2M2QzNjg3ZWUyZTg4NTY1YzU3ZTEyZWUxYWQ1OTJhOWY0YTQ1YWFiYTAxNTIxOGM1NTA3MTYifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L571-L620",
+          "version": "repo-lines-v1:sha256:7a4750207e30d9e523787da460b751532fe085b2b2eb225794ab0f087bc5de85:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4OGFkMTQzOThkOGVmNGE3OThhMGJkM2U1NmQyMjliZTU4NWQ0MmQ2NzFjMjQyZWZkNGJhZmY4MmQxMTM2YzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhNzI5NTFhYTUwNmFlMjg5MzYxOTY0MWNlZmE0YTkyYjg0MmZhNDk3MGJmOTAwYzUyMTcxNjM0NzY4MWVmNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhYTFhOGVhNWFlMmNmMjhjZGZjZTIzMTdmZTY5ZjcwYjdiYzFiM2NmOTlkNjU4MzQ2NWMzYWZmNTgwNzMyZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1ZmQ4YTRhZjRiYmU5NTc1NTgyNTg5ZDY3MjUzNWY0ZDVkOGU3NjBkNTU1ZTNkNDgxYjUzNGQ5MWQ4MzlmZDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e691ae488d004302919f95dfae14cb3a",
+      "statement": "switchは同じUUID/入力を再実行せず、別要求の並行切替をlockで拒否し、受付の原子的保存後に独立workerへlockを渡す。失われたworkerの未完了結果はinterruptedとし自動再実行しない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L369-L405",
+          "version": "repo-lines-v1:sha256:935942ded01bb3187d4da9931bee5656e858ba697fbcb57ad862aa9b5fbf78b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyOTNlNTEzMjM2NjQ4NjcwYWM0YWYxODdmYmE3NDBiMTE0ZTU1YzIxN2YzNDhmNGJmZDExNzg4YjkxOTg3MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlYzNiZjQyM2Y2MDA1YWRhM2E5M2QwNTA5MGFjZTI5NWM2NTE1YTlmNWNiNTJiMjU0Y2NkZTkxNjcwMzkxOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2NDE0NWE0ZmZhMWYwY2Y4ZmFhYTM3NGE0MTJjZTgzMmM5NGM1NzQ0NGRmZjhmMjRjMmFlNDAyZWI3Y2NlNDUifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L623-L712",
+          "version": "repo-lines-v1:sha256:8861aee0d026755fddf3838d95c59eaa16d88ec68e8713648d2121622c04f657:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZjU1Nzc1ZjVhODEyOWJlZTQyYTRmMjhkM2VmNjU2NTM2MTJkMGM2MjA3NTMxZjc3MDczZjZhNzlhNjRhOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmZjgwNTc1MmQ4YzdiM2M3MWEyYjMwMDcxMzdkZDMzYWQxNjZmZTM1ZWMwYzc5ZjMzNzg0ZDcwZjlhMTIwZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzMzhhODcyNjJjODVhNmQ2YTcwZDJiMjExY2ZiYzg3NTk5MTNiNjg0NzAxMjIzYTlkYmUxMjE3Zjk4MjZmMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5M2JkNjZlMmJiNzFmM2I4YTkyNDA2NGJiZjdiMDdjNTkwM2E3NzNmYTRmOGMzNTQ2MDYwMzg2NjcxZDNhNzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ae551898428c4f23a05fa3bd52fe45c4",
+      "statement": "switchは現在の物理使用とresource holders/queueを拒否し、業務履歴の終端判定は要求しない。実切替はno_new_work宣言を必要とし、登録済み対象instance/DBには独立engineでなく既存資源bundleが必要である。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/README.md#L89-L101",
+          "version": "repo-lines-v1:sha256:2debebb37d638607847f5999b188e2ac17a2f0fac11d7446e8d7bd68d6eab7bc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlN2E5ZTdlZjVjMWM0YzBiYjU1MmZjOThiYzg3OTc5ODBiODk0YTY1ZDM5ZjVkYWVhNmIxNzE3YzdmNTk5NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4ODVkZDZjMTAyZTJiYTIzYTY0Y2RhMzdjMjBhMmYxYWI4Njg3ZDI4ODFlMDI3ZmQzYzUwOTQxNWU0MTVkMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmMmM5YTBlMDk2NDAyOTRlMzA2NWU3ODRhNWQ3ZDhiMmRjZGUyYTlhOWFhNWE4ZTA1NDZmZWJhMjU5Mzg3MDMifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L311-L339",
+          "version": "repo-lines-v1:sha256:f248b6ad03dfb3787473d509c915c37b8c3a53fcfec9ceeb962fc33abb1200d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYmFiMzUxZGFlNWI4NjAzOTQ4ZDQyNjAzZDc0ZDI4NTYyNTA2ZDg4NDMxNDRlMjc4MTAxMTdjNWYzOTE4ZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZDQyNzRmMTFkM2FlYTQwNDc4MWJmZDcxODc4ZTRjYWEzZjg0NzlkNGFjZDlhMjZjZWY4MGY1ODE2MDM1YWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2ZjgyMTNkMzE5NTFkNzczMTAwNDIyZWI5NjVjYTE4MzJhNjY1ODBjOWI3MTdlYzBlNjA3N2E3ZGY2OWU3NDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxODc1ZWI1Mzc3NjAwNzkwNjliZDJhNzlkZmNkMjg3ZDlhNzcwMDNmNGUyN2QyMzY2ZjBmMzVhZTU0YTZiNTAifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_support.py#L137-L243",
+          "version": "repo-lines-v1:sha256:653e56d08586c311d782b7e730ef0b455ed9d59c291683f3f02f6e24f7736a82:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyMTdmM2EyZmQxZTk0OTM3Njc4MTg2YzU4NmUzZDE0NzZkMDVkYmExMWEwMDRhNzY4MTU0MTkxOGI2ZjZhZjVjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzZmE0OWFjZjYyODkyZThiMWFkMjFkMTFhNTFmN2U2NTY0Y2ZhYjVlYzBjNGUzNjZjMTIxNTM5NTk5OGM3ZTFmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMTlkZTIxZTIxNjU1YzFhZWNmZjYwMjZjZGRiOThlZTA4OWQ1ZGIzYjc0NGE2ZmI3ODA3NGQ3YjI0MWQyMjE2In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_5cb8eb0bc8fa4b0284522312051a9683",
+      "statement": "switch kitは新旧成果物を保全して新binaryをコピー先から起動するがdebug frontend/source依存は元pathを保持し、旧cleanup無効化設定をrun.pyと稼働環境に引き続き要求する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L280-L309",
+          "version": "repo-lines-v1:sha256:f079396367245fb815f0706e412dc3a95f84bcaa4354fa5fa6ff22d4fe666ebb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0YjI5YTE4NTQ5NzEwMjUwNjNkODI4NjljOGJmMTA1Nzk2MWM0N2UzMGU0NDM2NjgyZTRmNzI5MTAxMDc0NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiM2NlYjhiOWY2YTZiYzEwZDdhMGVhZTAzYWZjNTQwMmIwNTM5YmNjYWRjY2Q2MTQ1MTkxYzBjN2YyMDdmNTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmNmJlNzYyNzhjNWM0MWFlZmM3YWJlODI5OTNmNDkyODYyNDIzNmI5MGQ4YWQyNWY4NzY2OTE2NGM3Yzc4YzcifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L452-L527",
+          "version": "repo-lines-v1:sha256:8bac6e98ca174e9b749dc723ba62fd51e519625ab99e817387b3c8f60ac2404b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNTY2ZWRmNWFmNjg1ZjYxYjAzMWY5NmM2OWJmNmU2MTllNjcyZTZmZjNjZmM4NzNhYTJjMGJiMWE3M2E4YWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMTcwYzhjNTljMmE1NjczMmE5NTgyN2JiNjlkNmUwNDk1ZmJhNGY5ZGNlNjQ4NmZiYzUxYzgyY2JkYmZhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdhYmRmNGZjOTViZmU3MDZmMzgwZGJjZjIwZmZmMDEzY2RjMTc2Y2M3MWI0NDRkMjhkYzJlODM3NzE3ZWNlZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlYzI1ZDQ3NDNhYTg2OTZlZTIyZjkxN2RkN2UyYjFhOTljMDFmOTFjZjA3OWU4NTRkZGY3ZGEzNGUzOTdjMjMifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L95-L151",
+          "version": "repo-lines-v1:sha256:b0a7f36e88458aed6c6cdadb640df1d83ed95182b374bf257aba75c676540d98:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0NzEyM2U5OTM0MzcyYTJiZDZjZTA0YWZiM2QyNzZlMjliYzAyNjYyZDRiZThkYzg4NGU5YmNlNDdmM2I2ZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4ZDRlMzM5MWE3OTBlNTY4ZGMzNmM5ODE1MTZiZTMzMThiNzI5YzM2ODllYzVjMzc4ODg4M2Q5NDM1MGVkMzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ed8e98b8cbf46bdbd9783e818adb77b",
+      "statement": "switchはpidfd/TERM停止後にSQLite backup APIでWAL確定分を保全し、整合性とbackup markerを確認する。起動後health・成果物・DB検査に失敗しても自動rollbackや失敗data削除を行わない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L528-L620",
+          "version": "repo-lines-v1:sha256:0ddbe08ef39d090e3feeb20485c0817017bd88c2e415eb0b46a5c2e68bd0ef98:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0OTM1ZWNhOWYwNGIwNTI3NWVjODkyN2Y2MTU5OGVkOGU5NzAxZGMzOWY4Y2Q2YjgyZGEyMGNmN2U4YjFjYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhNzI5NTFhYTUwNmFlMjg5MzYxOTY0MWNlZmE0YTkyYjg0MmZhNDk3MGJmOTAwYzUyMTcxNjM0NzY4MWVmNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NzY2YWUwYmRlMTFiMWQ3Mzc2MWFhOTQ2NmQ1NGFlZDRhNjAwYTc1YjkxNTgzNGMyMGQ0NTY0MzA4Zjg5Y2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1ZmQ4YTRhZjRiYmU5NTc1NTgyNTg5ZDY3MjUzNWY0ZDVkOGU3NjBkNTU1ZTNkNDgxYjUzNGQ5MWQ4MzlmZDIifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_support.py#L222-L296",
+          "version": "repo-lines-v1:sha256:4d278af8509957da3d92c8aed44c27b625c3b12a86ab50ac67c298586b1de7c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmNGUyMzdkY2JjMTZjYTYyZTRlZDRlMTQ3YTk3N2VmNzY5ZDc2NDJkNGY4MDk0NjM2N2NlNjAyY2RmYWE0MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZjllNDYwNWIzZDEyZjBlNjAzNmZlN2MxMDhmOGU4Y2FkN2U3NzA5NGU1OTAwNmMzNzI5MDAzZmU4NjEyZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T19:41:54.254Z"
+    "at": "2026-10-23T22:40:49.979Z"
   }
 }

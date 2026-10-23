@@ -49,7 +49,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T18:52:05.040Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T18:52:05.040Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # Project・Issue と実施の関係

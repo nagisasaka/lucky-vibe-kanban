@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-4f90d37fb90b7f5198b7b293
     resource: repo://crates/server/src/routes/frontend.rs
+  - id: openwiki-source-d8c782d4a4246db71e503283
+    resource: repo://crates/server/src/routes/resource_observation.rs
   - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
     resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
@@ -52,10 +54,14 @@ sources:
     resource: repo://packages/ui/src/components/Popover.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
+  - id: openwiki-source-78a41cdef116a246f388e17c
+    resource: repo://packages/ui/src/components/ResourceSummary.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
     resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
   - id: openwiki-source-2a1a06abf88738697abb7c30
     resource: repo://packages/ui/src/lib/repository.ts
+  - id: openwiki-source-536269ea917b55a30e54f617
+    resource: repo://packages/ui/src/lib/resourceObservation.ts
   - id: openwiki-source-397291e029ec7b98f2f46af2
     resource: repo://packages/web-core/src/features/agent-runtime/model/AgentRunSessionContext.tsx
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
@@ -118,6 +124,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
+  - id: openwiki-source-03db0ba02433b52c9bfe6db3
+    resource: repo://packages/web-core/src/shared/hooks/useResourceObservation.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
     resource: repo://packages/web-core/src/shared/hooks/useScratch.ts
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
@@ -176,10 +184,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-23T18:52:05.040Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T18:52:05.040Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # Web の実行環境と同期
@@ -199,6 +207,14 @@ UI package は既に Kanban や chat、preview などの再利用部品を持つ
 stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読み、非負の safe integer だけを採用する。HTTP エラー、通信・JSON 解析失敗、欠落・不正値は `null` にする。初回 loading や `null` ではバッジを出さず、実数 `0` は表示する。リンク自体は件数取得に依存しない。query はリポジトリ単位で、stale time と定期再取得は10分、retry と mount 時の再取得は無効である。[取得・query lifecycle](../../packages/web-core/src/shared/hooks/useGitHubStars.ts#L1-L41)・[バッジの条件](../../packages/ui/src/components/AppBar.tsx#L325-L336)・[リンクとバッジの描画](../../packages/ui/src/components/AppBarSocialLink.tsx#L18-L46)。この表示用 API は Board の snapshot 同期や [GitHub 認証・PR 操作](../integrations/github-review.md)とは別の経路である。
 
 旧 `Give Feedback` survey action は navbar と command bar の General に存在せず、AppBar と LandingPage の Discord リンクもない。共有 shell は Discord 人数 hook を呼ばない。これは外部サービスへの UI 導線の整理であり、Agent approval の feedback を除去する契約ではない。[navbar actions](../../packages/web-core/src/shared/actions/index.ts#L1555-L1569)・[command bar](../../packages/web-core/src/shared/command-bar/actions/pages.ts#L35-L44)・[AppBar の外部領域](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[shell の取得](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L60-L69)・[approval feedback](../../packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx#L41-L101)
+
+### CPU・RAM・DISK の共通観測を表示する
+
+NavbarContainer は `useResourceObservation` の値を UI の ResourceSummary に渡す。認証付き `GET /api/resource-observation` は [MCP と共通の collector](../integrations/remote-access.md#オンデマンド資源観測)を使い、別の CPU sampler や監視 daemon を作らない。HTTP は `no-store`、collector の失敗は503になる。[HTTP](../../crates/server/src/routes/resource_observation.rs#L9-L25)・[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L297-L302)
+
+query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は data(D) と worktree base(W) を別々に示し、tooltip に空き容量と filesystem identity を残す。70%以上を橙、80%以上を赤にし、表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L72)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L69)
+
+モバイルは資源表示と icon/user group を折り返して狭幅に収める。観測対象と unknown の意味は collector の正本で確認し、LOAD・SWAP をこのヘッダーへ読み替えない。回帰入口は `tests/resource-observation/model.test.mjs`、component fixture、実 NavbarContainer と認証 router を通す `full-app.mjs`。実 Auth0、別 mount、OS による tab backgrounding は別の検証である。[配置](../../packages/ui/src/components/Navbar.tsx#L350-L390)・[試験](../../tests/resource-observation/README.md)
 
 ### 稼働バイナリのビルド情報を表示する
 

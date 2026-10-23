@@ -21,7 +21,7 @@ sources:
 generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # Astra 廃止と共有機能の移行境界

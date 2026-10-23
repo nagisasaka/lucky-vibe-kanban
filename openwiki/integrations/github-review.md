@@ -22,10 +22,10 @@ sources:
     resource: repo://crates/utils/src/github_credentials.rs
   - id: openwiki-source-4815b99ed5b9f7632484ef04
     resource: repo://docs/integrations/github-integration.mdx
-generated: { by: "codex", at: "2026-10-17T03:50:48.298Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # GitHub 認証・PR とレビューの境界
@@ -64,7 +64,7 @@ push、remote PR 作成、local PR レコード作成は一括 transaction で�
 
 ## 観測と完了を分ける
 
-PR monitor は open PR の remote status を調べ、closed / merged を local レコードへ保存する。merged Workspace に open PR が残らず pinned でない場合は archive を試みる。archive 失敗はログとなり、remote merge を元へ戻すものではない。[monitor](../../crates/services/src/services/pr_monitor.rs#L119-L202)。
+PR monitor は open PR の remote status を調べ、closed / merged を local レコードへ保存する。PR の merge 観測や merged PR の attach で Workspace を自動 archive しない。作業木の解放は [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)として別途確認する。[monitor](../../crates/services/src/services/pr_monitor.rs#L119-L159)。
 
 外部 merge の観測は local target の更新、正式 Integration の検証、Card Done、Wiki 更新の証明ではない。Memory event を統合済みと判断する祖先関係と receipt の境界は [外部 PR と Repository Memory](../concepts/repository-memory.md#source-統合と-wiki-反映を分ける)を参照する。
 

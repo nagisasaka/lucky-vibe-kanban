@@ -38,12 +38,10 @@ sources:
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
-  - id: openwiki-source-23775c3de52f3ab95a13cb8b
-    resource: repo://README.md
 generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:04:53.809Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # システム境界と起動順序

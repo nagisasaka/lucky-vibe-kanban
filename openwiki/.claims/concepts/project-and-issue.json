@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d138bf6def674ba276fb41f047d1b1f87e3da9f52e1296f9a75eef4163983e1b",
+  "pageVersion": "sha256:282413c7c479c80487e1932db2fb3d1b6885c57bb568c2eb6cbb84fc7b0ad849",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
+          "version": "repo-file-v1:sha256:05c884cf077ca24ecd9abab99936b43d745f8efc3867c1e7e93fe4004f7075bb"
         }
       ]
     },
@@ -32,7 +32,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
+          "version": "repo-file-v1:sha256:05c884cf077ca24ecd9abab99936b43d745f8efc3867c1e7e93fe4004f7075bb"
         }
       ]
     },
@@ -104,7 +104,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
+          "version": "repo-file-v1:sha256:05c884cf077ca24ecd9abab99936b43d745f8efc3867c1e7e93fe4004f7075bb"
         }
       ]
     },
@@ -369,6 +369,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T18:52:05.040Z"
+    "at": "2026-10-23T22:40:49.979Z"
   }
 }

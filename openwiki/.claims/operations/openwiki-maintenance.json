@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b44907eae8cf5c1b7057c5bcff9c9a175677ad8f46af2b58e6dfa50e9b625695",
+  "pageVersion": "sha256:493571bd856eef5c430db35871de6923536eea5070d83c5234a8494361ee92c3",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:35e95c2451092f0fcb60f2012e6e8459b43fb5f995ae7073e9ad2a99a9d556aa"
+          "version": "repo-file-v1:sha256:490926a5cee03943d30c352af34057c274a5d658bc8afbddd70b81fcc78d041d"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:35e95c2451092f0fcb60f2012e6e8459b43fb5f995ae7073e9ad2a99a9d556aa"
+          "version": "repo-file-v1:sha256:490926a5cee03943d30c352af34057c274a5d658bc8afbddd70b81fcc78d041d"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -380,7 +380,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:35e95c2451092f0fcb60f2012e6e8459b43fb5f995ae7073e9ad2a99a9d556aa"
+          "version": "repo-file-v1:sha256:490926a5cee03943d30c352af34057c274a5d658bc8afbddd70b81fcc78d041d"
         }
       ]
     },
@@ -390,7 +390,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:35e95c2451092f0fcb60f2012e6e8459b43fb5f995ae7073e9ad2a99a9d556aa"
+          "version": "repo-file-v1:sha256:490926a5cee03943d30c352af34057c274a5d658bc8afbddd70b81fcc78d041d"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki/completion.rs",
@@ -414,7 +414,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:35e95c2451092f0fcb60f2012e6e8459b43fb5f995ae7073e9ad2a99a9d556aa"
+          "version": "repo-file-v1:sha256:490926a5cee03943d30c352af34057c274a5d658bc8afbddd70b81fcc78d041d"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/sync_scope.rs",
@@ -435,10 +435,28 @@
           "version": "repo-lines-v1:sha256:36e20aa272aea39cfa78b985bd4347ea8988fa01e6a18d5dbfeea6afb4227611:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmNzQ3NThkYTc4MDY0N2YyNDI1NDcyMmJkZGQyZjRmM2MyODRmNzc5MzNiNGFiODZmMDhmN2I1ZjFhODFlNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjYWMxOGI1MDAwMzEzYmExNTg1MmY5NGMwNjliMDJmMTAyYWVlM2FhNWJhYTI3NDc0MTI0ODhiMjJlNTUyMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwNDJjZTI1YWQ5ZmVjMzU1M2EzMGI2ZDYxMzk5YjM3MDAxMDcxMzFjYmNlN2ExMDk5MmUzZDhlNjhhOTJjNTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d9556b2d72074f44ac9f782c81f4f86d",
+      "statement": "OpenWiki host準備はWorkspace lifecycle barrier下のRAII予約でarchiveと排他し、future完了/error/cancelで解放する。AgentRun終端後のactive maintenance/bootstrap所有も手動archiveを拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L330-L350",
+          "version": "repo-lines-v1:sha256:97c55c11828d2c3e1f8cde50feb1060dd5e54532f6d0014fad9792e83b9ab067:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmNTYyM2MzOGM2YTFjZjBmYzNmMzIwOGFhYzYxOTE0NTllMDNjYTUzZGNiYzk1YmNlNzU5OGFjNGRmM2I1MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiYTcwODI5ZDYyNzQzNTFmNDNmZjk2OTA0ZjdlMjBlNjVmYWI2OTkxOGI2YzhiYmRiOTFiYWUyODQxMGE4N2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNTBmM2ZkODFkMGMxYTViZGNhNzQ2N2I3ODA1MWRhOTRmZGRhNzAxYzIzMWM5ZjZhYzBjN2JhZGQxYmI4ZjgifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/preparation.rs#L1-L41",
+          "version": "repo-lines-v1:sha256:ecdeaa06663efb69813330f4313eccdbc32570a61a289e24aa4074d0544d73b5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlOTNjMWVlMjMyZmNhMzMzN2Y1NGRiMWIxZGJkMTdmMzIyOTYwYzc5NGY0MWVjYzVhZGM4OTg3YWJiMGJkYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/archive.rs#L45-L124",
+          "version": "repo-lines-v1:sha256:06f473672e7a9eefcc332bb5baeb002c54d3cd30fbb627ce2ecac9c6696e96e5:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5M2I5YzUyMjgzMzI3MDE1NWI2YjQ2Yzc0M2Q0YjM0MmZhZTNhMWJjZWMxZjg3ZTU5OGNlN2RlMmViMjU4MjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4MjliNTY4NzhmNTEyMjNhZDYzMTNhZTJmYjI2YzNlNTJiMGU4MWY0NzA4NzAxMzQwNGM0YWI0YzMxZmJjOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0ZjM1NmY0OWFiY2QxMjQ5Njk3YzgyMmIxZGEyZmJkY2QyZjM3ZTAzMGEwZGYxYzFjYmQ0YTViMzIyYzZkM2MifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T06:22:38.402Z"
+    "at": "2026-10-23T22:40:49.979Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0ca64094c26417b374bd60d2e078a18aff12de34b77107a5e15cd0d03be179be",
+  "pageVersion": "sha256:62eea98bde0680ff3e73b5db1647830f7efab509652eaf1b604cbff67e61245d",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -128,7 +128,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/STAGING.md",
-          "version": "repo-file-v1:sha256:d3d9abe2abbfc0ad418674a091e42c95883516928df3bbf55f1e9f7356200a72"
+          "version": "repo-file-v1:sha256:f4b5f4d3cc632cd93e53e9bc1bd5297d5ac77dbbd07084572cb74ef5468be818"
         },
         {
           "resource": "repo://deploy/developer/updater.py",
@@ -302,7 +302,7 @@
         },
         {
           "resource": "repo://package.json#L1-L50",
-          "version": "repo-lines-v1:sha256:194a27e68ebe3a9c713244052501f6b28ea0c31253d5eed39484fdff455e2a1c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+          "version": "repo-lines-v1:sha256:8e2099107abc74d9b89e689a4e3dd9bfe0deb08b7917e1482de41acd096ff224:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
         }
       ]
     },
@@ -337,6 +337,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T19:41:54.254Z"
+    "at": "2026-10-23T22:40:49.979Z"
   }
 }

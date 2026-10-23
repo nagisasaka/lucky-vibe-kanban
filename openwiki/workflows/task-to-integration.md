@@ -64,10 +64,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-21T05:50:08.804Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:50:08.804Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -142,7 +142,7 @@ Git safety tests は通常の untracked file の保存、tracked dirty change �
 
 checkout 済み base の staged changes は拒否する。専用 test は staged file を残したまま merge が失敗することを検証する。[test](../../crates/git/tests/git_ops_safety.rs)
 
-memory 有効時は source checkpoint と明示 event の integration 記録を準備してから Git を実行し、成功した commit を保存する。その後で local Merge record、Workspace archive が続く。Git 成功と後段の記録保存は一つの transaction ではない。[統合順序](../../crates/server/src/routes/workspaces/git.rs)
+memory 有効時は source checkpoint と明示 event の integration 記録を準備してから Git を実行し、成功した commit を保存する。その後で local Merge record を保存する。Workspace は自動 archive しない。Git 成功と後段の記録保存は一つの transaction ではない。[統合順序](../../crates/server/src/routes/workspaces/git.rs)
 
 ## 5. Push と Pull Request
 
@@ -160,9 +160,9 @@ PR の状態観測と archive の契約は [GitHub と PR](../integrations/githu
 
 正式 Integration は Git 公開を確認してから、選択 Card と Integration Card の完了結果を保存する。現在は受付時の title/revision 一致を Done の条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進める。他 run の予約等で更新できなかった結果も記録する。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
 
-Direct merge 後は pinned でなければ Workspace archive を試みる。この条件はその Repo の merge 後に評価される。一方 PR monitor は merged を観測した際、Workspace の open PR が0で、かつ pinned でない場合に archive する。複数 Repo の作業では両者の条件が異なる。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
+Direct merge の成功、PR の merged 観測、正式 Integration の Card 完了は、Workspace を自動 archive しない。PR monitor は状態と merge commit を記録し、open PR が0になった場合の analytics を更新する。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
 
-手動 merge / PR monitor の archive は、正式 Integration の Card 完了更新とは別である。旧操作文書に Done 自動遷移とあっても、削除済み remote 同期を現行 local Board の更新処理として推定しない。
+作業領域を解放する場合は [手動 archive の確認と失敗条件](../concepts/workspace.md#archive削除期限-cleanup)へ進む。未 commit の作業も削除対象になるため、統合成功だけで削除可否を推定しない。Card の Done、履歴の保持、物理 worktree の削除は別の結果である。
 
 ## 7. 統合後に canonical memory を更新する
 

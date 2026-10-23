@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/environment_settings_tests.rs
   - id: openwiki-source-6cb471b32e19ce921b78d86e
     resource: repo://crates/server/src/remote_mcp/environment_settings.rs
+  - id: openwiki-source-2260918d1f9b90281f9755f9
+    resource: repo://crates/server/src/remote_mcp/environment_switch.rs
   - id: openwiki-source-be65ae3f61eba813d7981f61
     resource: repo://crates/server/src/remote_mcp/environment_tests.rs
   - id: openwiki-source-0801a7e5bbcc064c12effc80
@@ -34,10 +36,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-22T13:28:07.786Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # 実行環境へのアクセス
@@ -101,6 +103,14 @@ cursor はpath、device/inode、metadata、offset、直前最大256 bytesのhash
 起動・停止receiptは永続化するが、出力、exit outcome、寿命monitorは復元しない。旧process instanceのaccepted/running receiptは読取時にuncertainとなり、自動再実行しない。既に成功したstartup receiptも現在のhealthへ更新されない。再起動後は再観測して判断する。[receipt](../../crates/server/src/remote_mcp/operations.rs#L208-L245)・[揮発registry](../../crates/server/src/remote_mcp/environment_process.rs#L19-L34)・[再起動テスト](../../crates/server/src/remote_mcp/environment_restart_tests.rs#L108-L242)
 
 生き残った管理対象を「所有者不明の外部プロセス」として扱い直さないため、stopは永続launch receiptをidentity/run_idで検索し、issuer/subject owner、Project、grant IDを照合する。停止時にはさらに現在のgrant、cwd、UIDとidentityを確認する。executableの変更自体は拒否理由にならない。detached子孫や失われたmonitorを補うsupervisorはない。[durable owner](../../crates/server/src/remote_mcp/environment.rs#L278-L307)・[停止への接続](../../crates/server/src/remote_mcp/environment.rs#L489-L498)
+
+## 開発 instance の専用自己再起動
+
+`self_restart` は既存の試験済み成果物への切替を、管理者が配置した独立 engine に渡す。通常の `run_process` の揮発出力・寿命 monitor では、呼出元 server 自身の終了を越える transaction を所有できないため別経路とする。切替 engine の保全・失敗・復旧契約は [開発用成果物切替](../operations/development.md#開発用成果物切替と復旧)にまとめる。[専用 handoff](../../crates/server/src/remote_mcp/environment_switch.rs#L1-L102)
+
+既存 read/runtime:read と Project/grant 検証に加え、実行には runtime:execute、`allow_uncoordinated_execution`、非空 purpose、`no_new_work:true` が必要である。管理者設定の `LVK_SELF_RESTART_ENGINE`、`LVK_SELF_RESTART_CONFIG`、`LVK_INSTANCE_DIR` は絶対・canonical パスで、grant root は instance と完全一致、config は instance 直下でなければならない。tool 自体は権限や設定を作らない。[設定照合](../../crates/server/src/remote_mcp/environment_switch.rs#L36-L61)・[受付](../../crates/server/src/remote_mcp/environment_switch.rs#L104-L198)
+
+`request_id` を保存し、再接続後は同じ region と ID で `get_self_restart_operation` を呼ぶ。engine の所有 identity は principal・grant ID・Project から作り、現在の認可も再確認する。一般の `get_operation` は受付監査にすぎず、`succeeded` でも切替成功を表さない。受付応答が不明なら新IDで再実行せず専用照会で結果を回復する。旧serverのreceiptが uncertain でも engine の永続結果は独立して取得できる。[receipt と結果](../../crates/server/src/remote_mcp/environment_switch.rs#L104-L198)・[履歴scope](../../crates/server/src/remote_mcp/issue_write.rs#L165-L197)
 
 ## 変更時の検証と残る範囲
 

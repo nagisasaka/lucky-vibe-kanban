@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:19d6496790fef866649c509d4705c4890b7dcc3b8bd18b645e7096abd2050e73",
+  "pageVersion": "sha256:7fdabb03876f2eaca6bdbfd6a695738248b724dab6025aaddbdaf1faa8c79e6a",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -100,11 +100,11 @@
     },
     {
       "id": "claim_e69f5c1643e240728b5bf8b2673fbb69",
-      "statement": "memory有効mergeはsource checkpoint/integration準備、Git、integration結果、local Merge、archive順で複数段階となる。",
+      "statement": "memory有効mergeはsource checkpoint/integration準備、Git、integration結果、local Mergeの順であり一つのtransactionではない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/git.rs",
-          "version": "repo-file-v1:sha256:a9667b9b1336d8aa43c2634fb4b963189d0e9357c091882c91a9bd92cf45eb03"
+          "resource": "repo://crates/server/src/routes/workspaces/git.rs#L230-L311",
+          "version": "repo-lines-v1:sha256:a20a66f6c0d9cc100455164840883775b8943c8ed885a9e3bcaf9d20b8dbb507:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwYzU5ZjUwZWY2OTUwNjI5MWNlMjg0MzM5ODI4MDYxMzE5YWRkMzkwNDhkMGY3MDE2NjI2NGQ0MzgzMTY1N2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmY3ZjIwMmQzMTc1NGRkYjY4ZjY5NDBhYzllODUxOThjN2U2Mjk0MjBkMGZlYmUxM2VjNTlkMGIwYzViZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3MTYwZmQwNDM0ZGFjNGQ1YzQ5MjgzOGYzOGI5NTcwODQ1MmMyZmFkOTE4NTQ0ZjQyMmYxNmE2NTIxYWY1NzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliMTRlYzQwMDlkNzVmMWZiMzMxNDhkMTZkNmYyYzEyMjQ3MWY3YTA4MjUwMWJhYWY4OTcxNWY5N2MzZjFiZWQifQ"
         }
       ]
     },
@@ -138,21 +138,21 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/pr.rs",
-          "version": "repo-file-v1:sha256:d6934c14ef4eee75b2ff8857b32a692bc4b5e8e060461615cf78ea04cdb20582"
+          "version": "repo-file-v1:sha256:b3320d317948c367c6d984798fa405d47ea4ee661dba09880c888461d7957b13"
         }
       ]
     },
     {
       "id": "claim_f96e28545f9b4e6092f18c462d8a31fb",
-      "statement": "direct mergeはpinnedでなければarchive、PR monitorはmerged観測かつopen PRゼロかつ非pinnedでarchiveする。",
+      "statement": "direct mergeとPR monitorはWorkspaceを自動archiveしない。PR monitorは状態とmerge commitを保存し、open PRゼロ時のanalyticsを更新する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/git.rs",
-          "version": "repo-file-v1:sha256:a9667b9b1336d8aa43c2634fb4b963189d0e9357c091882c91a9bd92cf45eb03"
+          "resource": "repo://crates/server/src/routes/workspaces/git.rs#L284-L311",
+          "version": "repo-lines-v1:sha256:d96755a13b87e8172da663c3b3cf53d98872be13a0153fa2e7d61e1dc927b9a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmNDBmMDFmOTE3MzgwZjc0YmVkNGE4NzRiZmI1ZDBlMjk3ODAwN2VhYzhlY2FjZjhmMjRmNDkxM2JjYWExNTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmY3ZjIwMmQzMTc1NGRkYjY4ZjY5NDBhYzllODUxOThjN2U2Mjk0MjBkMGZlYmUxM2VjNTlkMGIwYzViZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmNDlkNmU0N2IyM2I4NGFmMDdkZWViMGY0ODNkN2I0MTBlZGI3ZDhjMzJlYWVkY2Y5YmNjZDExMzczZDUxNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliMTRlYzQwMDlkNzVmMWZiMzMxNDhkMTZkNmYyYzEyMjQ3MWY3YTA4MjUwMWJhYWY4OTcxNWY5N2MzZjFiZWQifQ"
         },
         {
-          "resource": "repo://crates/services/src/services/pr_monitor.rs",
-          "version": "repo-file-v1:sha256:7b0f32bd47e808aecdb3ff79985211a60b0cc004a2bf2705615b7aa2db7b9941"
+          "resource": "repo://crates/services/src/services/pr_monitor.rs#L113-L159",
+          "version": "repo-lines-v1:sha256:73a6786bd6755fadd96aa1d0382bf975f06730c74a554d71c8d0f84b3c3ef979:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE3MjQwODM0ZDFkY2ViZjdmOTE3YzNhMTJjMzQ1ZjY0OGQ5YTJlZjA4NWI1NjdjNWJjZmFlZGIwZjhhZjM0ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -375,6 +375,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:50:08.804Z"
+    "at": "2026-10-23T22:40:49.979Z"
   }
 }

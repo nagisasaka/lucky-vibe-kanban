@@ -4,6 +4,8 @@ title: ファイル・差分・プレビュー・端末の境界
 description: Workspace 内のファイル・Wiki 閲覧、添付、差分配信、dev server preview、PTY、editor 操作で異なるパス・ホスト・寿命の契約を説明する。
 tags: [workspace, files, wiki, diff, preview, terminal]
 sources:
+  - id: openwiki-source-343f68138e6e2d3312d2774c
+    resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-5aa384eaafe1283b1b8cc4a4
     resource: repo://crates/preview-proxy/src/api.rs
   - id: openwiki-source-0099d841c439c1dde012669e
@@ -100,10 +102,10 @@ sources:
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T15:33:24.249Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -122,7 +124,7 @@ Integration では owner/run の識別子、状態、保存済み Session 選択
 
 Stop は Integration の cancel、Bootstrap の所有フロー、Sync の監査付き Cancel へ委譲する。停止可能 phase を再検証し、Wiki publication 開始後は取り消さず結果の確定を待つ。終端または停止要求済みなら重複 Stop は無操作となる。[停止の境界](../../crates/server/src/routes/workspaces/usage.rs)。失敗・回復待ちの意味は [正式統合](../concepts/formal-integration.md)と [Wiki 保守](openwiki-maintenance.md)に置く。
 
-ファイル・Wiki・添付などの読取は `container_for_inspection` を経由する。execution_only では存在するパスだけを返し、cleanup 済みや未準備の worktree を再作成しない。一般の interactive 環境は従来の ensure 経路を保持する。表示に伴う復元や script 起動を追加する変更は、この用途の違いを守る必要がある。[共通の読取入口](../../crates/services/src/services/container.rs)
+ファイル・Wiki・添付などの読取は `container_for_inspection` を経由する。lifecycle lock 内で状態を再読込し、execution_only または archived なら既存パスだけを使い、cleanup 済みや未準備の worktree を再作成しない。未 archive の interactive 環境は ensure 経路を保持する。表示に伴う復元や script 起動を追加する変更は、この用途の違いを守る必要がある。[共通の読取入口](../../crates/services/src/services/container.rs)
 
 ## 累積トークンを確認する
 
@@ -197,6 +199,8 @@ Workspace 作成は明示された attachment_ids を関連づけ、linked_issue
 ## 差分は現在の比較基準から再構成する
 
 Git diff は専用の local WebSocket 経路を持つ。diff stream は現在の base commit と worktree から差分を計算し、Repo ID と複数 Repo 用 prefix を付けて replace patch を配信する。WorkspaceRepo の target_branch が変わったら base を再計算して stream を reset する。[API](../../crates/server/src/routes/workspaces/git.rs)・[snapshot](../../crates/services/src/services/diff_stream.rs)・[target 変更](../../crates/services/src/services/diff_stream.rs)
+
+archive 済みで worktree が削除済みまたは存在しない場合は、保存された branch と base commit の差分を一度配信し、Ready を返す。watcher や worktree 再作成は行わない。これは削除前の未 commit ファイルの保存ではない。[snapshot の選択](../../crates/local-deployment/src/container.rs#L1836-L1849)・[branch snapshot](../../crates/services/src/services/diff_stream.rs#L169-L196)。履歴と branch を残す [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)と、明示的な再開を区別する。
 
 stats-only と累積本文容量の上限により、diff の old/new content を省くことがある。本文がないことと変更がないことを同一視しない。追加・削除行数は可能なら省略前に計算して保持する。[省略の契約](../../crates/services/src/services/diff_stream.rs) レビュー後に変更を統合する手順は [Task から統合まで](../workflows/task-to-integration.md) に続く。
 

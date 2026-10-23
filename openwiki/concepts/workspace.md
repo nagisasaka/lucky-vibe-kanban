@@ -24,6 +24,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
+    resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
@@ -32,12 +34,24 @@ sources:
     resource: repo://crates/server/src/routes/filesystem.rs
   - id: openwiki-source-16bb0bc0baa397cce8e201b1
     resource: repo://crates/server/src/routes/github_credentials.rs
+  - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
+    resource: repo://crates/server/src/routes/openwiki/preparation.rs
+  - id: openwiki-source-9d283785aa68b40f3cd1ceb2
+    resource: repo://crates/server/src/routes/workspaces/archive_processes.rs
+  - id: openwiki-source-15fe6957ffd50a6292794c19
+    resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-6a0749527a9648c33ba957da
     resource: repo://crates/server/src/routes/workspaces/core.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
     resource: repo://crates/server/src/routes/workspaces/create.rs
+  - id: openwiki-source-303d74f74def684d4690dea9
+    resource: repo://crates/server/src/routes/workspaces/git.rs
+  - id: openwiki-source-379c8cd3e1e9932f9adda9ee
+    resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-371e2191a5fb043bb2506b5b
     resource: repo://crates/services/src/services/filesystem.rs
+  - id: openwiki-source-72948db7f01925b4b2ff17af
+    resource: repo://crates/services/src/services/pr_monitor.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-6043692809cbf72f253c5631
@@ -54,6 +68,8 @@ sources:
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
   - id: openwiki-source-1dc77f9d01b63e6f9dfd9b6b
     resource: repo://docs/development/workspace-token-usage.md
+  - id: openwiki-source-5f6ef843ad438c4b8a15f879
+    resource: repo://docs/workspaces/managing-workspaces.mdx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-dbe2d46e94202832ad4e5e7b
@@ -64,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/api.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-22T07:38:38.993Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # Workspace と Repository
@@ -93,7 +109,7 @@ GitHub 認証の設定入口は Repo にあるが、token の保存 identity は
 
 DirectFolder で選択先が開ける Git Repo なら Repo を登録し、現在の branch を使い、選択ディレクトリの親を container_ref にする。通常の Repo 相対解決で選択先に到達するためである。Git Repo でなければ選択先自体をルートとし、Repo membership を持たない。DirectFolder は新しい Git worktree を作る操作ではない。[DirectFolder 作成](../../crates/server/src/routes/workspaces/create.rs)、[既存パス検証](../../crates/local-deployment/src/container.rs)
 
-Worktree の保管先を変更すると、指定先の `.vibe-kanban-workspaces` 子ディレクトリを使用する。既存ユーザーフォルダーを orphan cleanup の対象にしないため、アプリ所有の子ディレクトリに限定するという理由がソースに記録されている。[保管先](../../crates/worktree-manager/src/worktree_manager.rs#L511-L523)
+Worktree の保管先を変更すると、指定先の `.vibe-kanban-workspaces` 子ディレクトリを使用する。アプリ所有領域を区別するための配置であり、現在は起動時 orphan 回収を行わない。[保管先](../../crates/worktree-manager/src/worktree_manager.rs#L609-L625)
 
 ## 操作用途と実行所有者
 
@@ -101,7 +117,7 @@ Worktree の保管先を変更すると、指定先の `.vibe-kanban-workspaces`
 
 `execution_owner` は kind・run ID・Repo ID により製品の実行記録を指す。準備中は run ID が未確定でもよいが、dispatch 前に所有者へ結び付け、別 run に付け替えて過去の環境を再利用しない。Sync など製品側に残らない結果は、同じ所有者へ succeeded/failed/cancelled、Wiki commit、no-op、診断を保存する。AgentRun の成功だけでは公開結果を推定しない。[一度だけの結付けと結果保存](../../crates/db/src/models/workspace_usage.rs#L81-L131)
 
-実行専用環境でも Session と監査ログは残り、ファイルが現存すれば閲覧できる。予約中の汎用 chat・Session 作成・retry・Git・terminal・script・ファイル変更等は通常の開発入口では許可しない。現在委任中の Wiki AgentRun への追加指示だけは owner identity と非終端・非取消を確認する専用例外がある。Workspace middleware は read と seen を残し、停止は所有者専用入口へ渡す。旧 editor tunnel は現行構成から削除されている。[共通境界](../../crates/server/src/middleware/model_loaders.rs)。表示と停止の導線は [実行履歴の確認](../operations/workspace-inspection.md#実行専用-workspace-の確認)を参照する。
+実行専用環境でも Session と監査ログは残り、ファイルが現存すれば閲覧できる。予約中の汎用 chat・Session 作成・retry・Git・terminal・script・ファイル変更等は通常の開発入口では許可しない。現在委任中の Wiki AgentRun への追加指示だけは owner identity と非終端・非取消を確認する専用例外がある。Workspace middleware は read と seen を残し、停止は所有者専用入口へ渡す。手動 archive の prepare/confirm だけは usage による拒否の例外で、実際の使用中判定を必須にする。unarchive・再利用・他の mutation の権限は緩めない。旧 editor tunnel は現行構成から削除されている。[共通境界](../../crates/server/src/middleware/model_loaders.rs)。表示と停止の導線は [実行履歴の確認](../operations/workspace-inspection.md#実行専用-workspace-の確認)を参照する。
 
 所有者ラベル自体は起動権限ではない。各 dispatch で Repo membership と未完了の所有を確認し、Integration は保存済み Workspace/Session/correlation と予約を、Bootstrap は Workflow と現在の delegated child を、Sync は maintenance state と起動前に固定した AgentRun ID を照合する。不明 kind や欠けた owner は閲覧対象のままにし、任意の実行権限を与えない。[agent の検証](../../crates/services/src/services/workspace_usage.rs)
 
@@ -176,7 +192,17 @@ provision lock は配置処理を守る。利用者の共有ファイルへの�
 
 ## Archive、削除、期限 cleanup
 
-Archive は Workspace の状態更新であり、その後に archive 処理を呼ぶ。後段失敗はログに残し、状態更新の成功応答を返す。Archive と完全削除の完了を同じ表示状態で判断しない。[更新順](../../crates/server/src/routes/workspaces/core.rs)
+Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI と stdio MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L220)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
+
+確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
+
+実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の debug frontend 参照も観測する。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L183-L265)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
+
+削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L160-L265)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
+
+閲覧は archive 済みや execution-only の worktree を再生成しない。削除済みなら diff は残った Git branch の commit を使い、消えた未commit内容は復元しない。unarchive または明示的な実行準備で環境を再生成する。直接の AgentRun 予約は archive/worktree削除済みを拒否する。[受動読取と明示再開](../../crates/services/src/services/container.rs#L705-L744)・[起動の検査](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)・[差分閲覧](../operations/workspace-inspection.md#差分の未取得エラー空を区別する)
+
+旧30分周期・1/72時間閾値と起動時 orphan 回収は撤去された。通常 merge・PR merge 観測・Arena 選択も自動 archive しない。経過時間、pinned、候補敗退を worktree 解放の証拠にしない。[手動操作の利用契約](../../docs/workspaces/managing-workspaces.mdx)・[merge](../../crates/server/src/routes/workspaces/git.rs#L275-L312)・[PR monitor](../../crates/services/src/services/pr_monitor.rs#L125-L159)・[Arena](arena.md)
 
 明示削除の DB transaction は書き込み lock を先に取得し、非終端 AgentRun または spawned/running/unreachable の process registry が残る場合に拒否する。生きた orchestration の関連も保護する。terminal の正本表示だけで実プロセス消滅を証明したことにはならない。[削除 guard](../../crates/workspace-manager/src/workspace_manager.rs#L233-L349)
 
@@ -184,10 +210,6 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 
 明示削除は Session の process logs と **Native Audit のディレクトリも削除対象**にする。この処理は container path の有無とは独立しているため、External の作業ファイル保護は監査履歴の保持を意味しない。調査・保全が必要なら削除前に [Native Audit の保存先とエクスポート契約](../architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) を確認する。[削除対象と順序](../../crates/workspace-manager/src/workspace_manager.rs#L436-L515)
 
-期限 cleanup は別経路で、30 分間隔に候補を探す。SQL は managed、未削除、旧 ExecutionProcess の活動と時刻を見て、archive は 1 時間・それ以外は 72 時間を閾値にする。`DISABLE_WORKTREE_CLEANUP` が環境に存在すれば期限 cleanup を止める。[候補 SQL](../../crates/db/src/models/workspace.rs#L337-L393)、[周期と停止設定](../../crates/local-deployment/src/container.rs)
-
-実際の期限 cleanup は Integration の予約と execution owner を再検証する。実行専用環境は非終端 AgentRun、reserved/spawned/running/unreachable の registry、実行中 script があれば保持する。さらに所有者の終端を要求し、Integration の recovery_required や active Wiki maintenance、不明 owner は削除しない。検証エラーでも保持する。[cleanup 本体](../../crates/local-deployment/src/container.rs)、[所有者ごとの保持条件](../../crates/services/src/services/workspace_usage.rs)
-
-**変更時の確認点:** この追加 guard は interactive の非予約 Workspace には AgentRun/registry 検査を加えない。通常環境の期限 cleanup と明示削除には依然として差があり、長時間の AgentRun に対する安全性を明示削除から類推しない。実行専用環境のファイルが cleanup 済みなら、閲覧要求で worktree や script を再作成せず明示エラーにする。保存済みログは別に閲覧できる。[受動的な閲覧ルート](../../crates/services/src/services/workspace_usage.rs)
+変更時は `manual_archive` Rust fixture と `workspace-archive:e2e` を併せて確認する。後者は UI/API/stdio MCP、取消・確認後競合、削除失敗、未登録 process と frontend 使用、履歴/branch 保持、diff と再開を扱う。fixture は実 installer・実 Auth0・非Linux の完全保護を証明しない。[単体入口](../../crates/server/src/routes/workspaces/archive.rs#L568-L933)・[受入入口](../../tests/server/specs/workspace-archive.spec.ts)
 
 利用手順は [Multi-Repo & Sessions](../../docs/workspaces/multi-repo-sessions.mdx)、レビュー・ファイル操作の境界は [Workspace の確認と実行](../operations/workspace-inspection.md)、Git 統合までの順序は [依頼から統合まで](../workflows/task-to-integration.md) を参照。

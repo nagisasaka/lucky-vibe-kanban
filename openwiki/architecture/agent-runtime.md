@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T15:33:24.249Z
+    at: 2026-10-23T22:40:49.979Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -51,7 +51,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -60,7 +60,7 @@ Agent Runtime は、[Session 内の AgentRun](../concepts/session-and-agent-run.
 
 ## 起動と所有者
 
-`LocalAgentRunPort::reserve` は request と attempt の整合性、Workspace を検証し、実行 ID を DB に保存する。Setup の完了待ちなどでは、予約と起動を分けられる。`launch_reserved` は既に Pending でなくなった実行を重複起動せず、現在の状態を返す。[起動境界](../../crates/local-deployment/src/agent_run_port.rs#L300-L328)
+`LocalAgentRunPort::reserve` は Workspace の lifecycle lock を保持して request と attempt の整合性、Workspace を検証し、実行 ID を DB に保存する。Setup の完了待ちなどでは、予約と起動を分けられる。archive 済み・worktree 削除済みなら明示再開前の起動を拒否し、[手動 archive](../concepts/workspace.md#archive削除期限-cleanup)と予約の競合を防ぐ。[Workspace 検証](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)`launch_reserved` は既に Pending でなくなった実行を重複起動せず、現在の状態を返す。[起動境界](../../crates/local-deployment/src/agent_run_port.rs#L306-L344)
 
 `agent-process-host` は一つの provider process と Native Audit を所有する独立ホストである。アプリ側は認証付き loopback endpoint に再接続し、保存済み host-event cursor の後から観測を取り込む。このため、サーバーとの接続断をそのまま provider の終了と扱ってはいけない。[ホストの契約](../../crates/local-deployment/src/process_host.rs#L1-L5)
 

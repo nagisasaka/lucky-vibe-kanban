@@ -34,6 +34,12 @@ sources:
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-417b2b5ecb26c89c1b06df88
+    resource: repo://deploy/developer/switch/README.md
+  - id: openwiki-source-9e0cfce0846bb98d2dc47de0
+    resource: repo://deploy/developer/switch/start_binary.py
+  - id: openwiki-source-67b7631c2182dcc02247e199
+    resource: repo://deploy/developer/switch/start_support.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-8b0f6773cd6f7a2a989ad880
@@ -74,10 +80,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-23T19:41:54.254Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:41:54.254Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -98,7 +104,7 @@ verified:
 
 Tauri の `beforeDevCommand` は frontend と backend watch を並行起動する。debug build の window はその外部 frontend に接続し、production build だけが `server::startup::start()` で backend を内蔵起動してから window を開く。したがって desktop の開発試験を、production の embedded startup・completion watcher 配線を検証した証拠にしない。[開発前処理](../../crates/tauri-app/tauri.conf.json#L6-L12)、[debug / production 分岐](../../crates/tauri-app/src/main.rs#L176-L239)
 
-backend の watch 起動は DISABLE_WORKTREE_CLEANUP=1 を設定する。[Workspace の期限切れ cleanup](../concepts/workspace.md) の挙動を検証するときは、この開発時の差を考慮する。Agent runtime の変更では server だけでなく独立 process host の binary も変更対象になる。[watch 定義](../../package.json)
+通常 backend watch と instance runner は旧 cleanup 無効化変数を設定しない。自動期限 cleanup は撤去され、作業木の解放は [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)に従う。Agent runtime の変更では server だけでなく独立 process host の binary も変更対象になる。[watch 定義](../../package.json)
 
 旧 Cloud / relay の起動scriptと別Cargo workspaceは撤去された。local Board API と外部MCP / Runnerの検証は現行serverを対象にする。
 
@@ -158,6 +164,22 @@ LVK 自体の変更は card ごとに別 instance 名・port を使って検証�
 `instance:run NAME BUILD_UUID PORT` は foreground supervisor と instance ごとの run lock を持ち、build lock は別なので次候補の build と現在の実行を両立できる。staging は loopback 4020、任意の nginx ingress は HTTPS 8443 を使う。稼働中の agent / Workflow が終わってから旧候補を停止し、新候補へ切り替える。schema が進んだ DB に旧 binary だけを戻さず、対応する idle data snapshot が必要となる。共有 staging は [共有資源調停](../concepts/shared-resource-coordination.md)の対象であり、host updater の agent 活動判定には instance/build process を含めない。image 置換で staging 等の非 agent process は停止し、更新後の staging は明示的に起動し直す。[run](../../deploy/developer/instance.mjs#L193-L217)、[更新・回復手順](../../deploy/developer/STAGING.md)
 
 stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`でsetupキーを発行する。stagingの公開URLは8443を含む。cookieはportで隔離されないため、同じhostname/IPのstableとstagingには別ブラウザープロファイルを使う。[配置とcookieの運用契約](../../deploy/developer/STAGING.md#staging)、[instance環境](../../deploy/developer/instance.mjs#L44-L64)。方式変更と失効は [共通認証](../concepts/server-access.md)に従う。
+
+## 開発用成果物切替と復旧
+
+`deploy/developer/switch` は稼働中 Linux 開発 instance を外部で試験済みの binary・agent host・source・frontend へ切り替える operator 配置用 kit である。repository に存在することは live 導入を意味しない。Git操作・build・試験証拠の審査や migration SQL の実行はせず、新server自身が通常起動時に migration を行う。初回起動・supervisor配下の復旧とは別で、MCP側の権限と受付契約は [専用自己再起動](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を参照する。[利用契約](../../deploy/developer/switch/README.md)・[事前条件](../../deploy/developer/switch/start_binary.py#L311-L361)
+
+同期CLIと非同期workerは共通 `execute` を使う。同じrequest UUID・同じ入力なら既存結果を返し、入力違い・別要求の並行切替を拒否する。受付を原子的に保存してから worker へ lock FD を渡し、呼出元の終了を越えて処理する。workerが失われlockが解放された未完了要求は interrupted となり自動再実行しない。[受付](../../deploy/developer/switch/start_binary.py#L623-L712)・[結果回復](../../deploy/developer/switch/start_binary.py#L369-L405)
+
+事前に作業・schedule・論理queueを調整し、実行には `--no-new-work` を渡す。dry-runはこの宣言不要だが物理使用を検査する。engineは過去Runの終端履歴を判定せず、現在のserver子孫、instance process、dataの使用者を拒否する。共有資源のsnapshotにholders/queueがあれば拒否し、未使用の登録だけでは拒否しない。ただし対象instance/DB自体が登録資源なら、この独立engineではなく [資源bundleの契約](../concepts/shared-resource-coordination.md)を使う必要がある。この前提をresourceの自由記述から自動判定する機構ではない。[物理guard](../../deploy/developer/switch/start_support.py#L137-L243)・[運用上の前提](../../deploy/developer/switch/README.md#競合backup失敗)
+
+成果物hashとfrontend treeを確認し、新旧binary/host・回復用frontendをoperationへコピーする。新binaryは保存先から起動するが、debug frontendの絶対参照先・source/runtime依存は元の保持先を使う。外部cleanupや再buildでも必要な間は保持する。現行kitには旧 `DISABLE_WORKTREE_CLEANUP=1` を `run.py` と稼働環境の両方で要求するguardが残る。通常serverの自動cleanup撤去やinstance runnerの変数削除によって、このkitの条件まで消えたとは扱わない。保管先がbuilds外ならretain指定、管理worktree内ならDB登録も確認する。[保持検査](../../deploy/developer/switch/start_binary.py#L95-L151)・[稼働環境検査](../../deploy/developer/switch/start_binary.py#L280-L309)・[成果物保存](../../deploy/developer/switch/start_binary.py#L452-L527)
+
+pidfdで起動時刻等のidentityを再照合してTERMを送り、60秒で終了未確認なら自動KILLせず止まる。停止後はdataと起動設定を保全し、SQLite backup APIでWALの確定分を含む単独DBを作る。integrity/FK・manifest・fsyncを確認し `backup-complete.json` を置く。worktree・target・node_modules・共有cache全体はbackup対象ではない。[停止](../../deploy/developer/switch/start_support.py#L222-L243)・[SQLite backup](../../deploy/developer/switch/start_support.py#L260-L296)・[完成marker](../../deploy/developer/switch/start_binary.py#L528-L566)
+
+起動後はhealth、listener、exe/cwd、frontend entry、取得可能なbuild情報、DB整合性を照合する。結果の正本は `instance/switch-operations/UUID/result.json`。failed/interruptedではstageと実process、backup marker、保護ログを確認する。自動DB rollback・旧binary復帰・失敗データ削除は行わず、起動後失敗のserverが診断用に残る場合もある。health成功はAuth0/UI/MCPの実接続成功ではない。[起動検査と失敗](../../deploy/developer/switch/start_binary.py#L408-L620)
+
+検証入口はPython `test_switch.py`、Rust `environment_switch_tests.rs`、隔離した `test_real_server.py`。mock IdPによるMCP切断・再接続、PID差異・WAL・失敗・重複要求を扱うが、実Auth0/ChatGPT、live cutover、外部保持方針まで保証しない。今回のWiki保守は静的照合で、凍結入力の開発時成功報告と最終Integrationの明示的検証省略を区別する。[fixture](../../deploy/developer/switch/test_switch.py)・[HTTP handoff fixture](../../crates/server/src/remote_mcp/environment_switch_tests.rs)
 
 ### ビルド情報の検証境界
 

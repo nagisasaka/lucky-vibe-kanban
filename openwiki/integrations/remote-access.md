@@ -40,18 +40,20 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
-  - id: openwiki-source-ccbefbdb32b7223afc06bb2b
-    resource: repo://crates/server/src/remote_mcp/read.rs
   - id: openwiki-source-3ef7bc8590ef87216eade432
     resource: repo://crates/server/src/remote_mcp/resource_observation.rs
-  - id: openwiki-source-7365f8427e56589791478b2b
-    resource: repo://crates/server/src/remote_mcp/resource_observation/linux.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
     resource: repo://crates/server/src/remote_mcp/run_events.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
+  - id: openwiki-source-47f0a8c78f8e76d48dfdd192
+    resource: repo://crates/server/src/resource_observation.rs
+  - id: openwiki-source-8eb245a586a88c8ce0dfd2b5
+    resource: repo://crates/server/src/resource_observation/disk.rs
+  - id: openwiki-source-7cfd6d36fabe8e3d6102302d
+    resource: repo://crates/server/src/resource_observation/linux.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
@@ -62,6 +64,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/tests.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-d8c782d4a4246db71e503283
+    resource: repo://crates/server/src/routes/resource_observation.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
@@ -72,10 +76,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -198,11 +202,11 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 
 ## オンデマンド資源観測
 
-`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。内部モデル、監視 daemon、履歴 DB、UI、自動 admission / stop policy は追加しない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L17-L45)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
+`get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。collector は `server::resource_observation` にあり、認証付き Web API と [資源ヘッダー](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)も同じ観測経路を使う。内部モデル・監視 daemon・履歴 DB・自動 admission / stop policy は持たない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L9-L20)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
 
 ### 可視範囲と値の意味
 
-schema version 1 は収集開始の `timestamp`、終了応答の `completed_at`、`scope`、`system_visible`、`cgroup`、`completion`、`errors` を返す。ファイルを順番に読むため atomic snapshot ではない。`scope.statistics` は常に `system-visible`、environment と physical-host visibility は `unknown` である。VPS / container の外側まで見えているとは断定できず、system-visible 使用率を container 内の使用率や実行に使える余力へ読み替えない。[応答初期値と順次収集](../../crates/server/src/remote_mcp/resource_observation.rs#L55-L136)
+schema version 1 は収集開始の `timestamp`、終了応答の `completed_at`、`scope`、`system_visible`、`cgroup`、`disks`、`completion`、`errors` を返す。ファイルを順番に読むため atomic snapshot ではない。`scope.statistics` は常に `system-visible`、environment と physical-host visibility は `unknown` である。VPS / container の外側まで見えているとは断定できず、system-visible 使用率を container 内の使用率や実行に使える余力へ読み替えない。[応答初期値と順次収集](../../crates/server/src/resource_observation.rs#L41-L134)
 
 | 観測 | 解釈 |
 | --- | --- |
@@ -211,20 +215,28 @@ schema version 1 は収集開始の `timestamp`、終了応答の `completed_at`
 | load average | 1 / 5 / 15 分平均。CPU percent ではない |
 | CPU usage | `/proc/stat` の aggregate counter 差分。約500 ms待ち、実測 `sampling_duration_ms` を返す。idle と iowait を idle と扱い、guest を二重計上しない。counter の逆行・差分ゼロは unknown |
 
-[収集と sample](../../crates/server/src/remote_mcp/resource_observation.rs#L72-L136)・[時間計測](../../crates/server/src/remote_mcp/resource_observation.rs#L179-L199)・[CPU 算出](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L134-L162)
+[収集と sample](../../crates/server/src/resource_observation.rs#L63-L134)・[時間計測](../../crates/server/src/resource_observation.rs#L171-L195)・[CPU 算出](../../crates/server/src/resource_observation/linux.rs#L134-L162)
 
-cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgroup` の cgroup v2 root mount を確認できた場合だけ固定 namespace-root files を読む。memory current / max、CPU quota÷period、effective cpuset 数と `effective_cpu_bound_cores` を返す。CPU bound は online count・quota・cpuset の最小値で、quota の明示 unlimited は上限を加えず、必要入力の unknown は結果にも伝わる。v1、nested membership、別 mount layout を mount-root の値で代用しない。非可視の祖先制限は unknown のままで、root の `max` は全祖先の無制限を証明しない。memory headroom の推定はしない。[限定 layout と値](../../crates/server/src/remote_mcp/resource_observation.rs#L104-L143)・[quota / bound / mount 検証](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L50-L116)
+cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgroup` の cgroup v2 root mount を確認できた場合だけ固定 namespace-root files を読む。memory current / max、CPU quota÷period、effective cpuset 数と `effective_cpu_bound_cores` を返す。CPU bound は online count・quota・cpuset の最小値で、quota の明示 unlimited は上限を加えず、必要入力の unknown は結果にも伝わる。v1、nested membership、別 mount layout を mount-root の値で代用しない。非可視の祖先制限は unknown のままで、root の `max` は全祖先の無制限を証明しない。memory headroom の推定はしない。[限定 layout と値](../../crates/server/src/resource_observation.rs#L98-L142)・[quota / bound / mount 検証](../../crates/server/src/resource_observation/linux.rs#L50-L116)
+
+### DISK の対象と読み取り専用の解決
+
+`disks` は設定された data と worktree base の各 directory handle に `fstatvfs` を行い、容量・使用量・一般ユーザーが使える空き容量・filesystem identity を別々に返す。同一 filesystem でも合算しない。使用率は予約blockを考慮した `used / (used + available)` であり、単純な used/total ではない。[収集と算式](../../crates/server/src/resource_observation/disk.rs#L1-L93)
+
+保存先は directory を作らない resolver で求め、不在を親directoryの値で代用しない。DirectFolder や配下の別 mount を網羅する測定でもない。欠落・非directory・不正counterはその対象だけ unknown とする。[読み取り専用 resolver](../../crates/utils/src/assets.rs#L15-L28)・[worktree base](../../crates/worktree-manager/src/worktree_manager.rs#L619-L625)・[欠落を作成しない試験](../../crates/server/src/resource_observation/disk.rs#L140-L150)
 
 ### 部分失敗と worker の寿命
 
-数値は `known` と value、または `unknown` と定型 error を持つ。limit の明示 `max` だけが `unlimited` であり、欠落・不正・読取失敗をゼロや unlimited に変換しない。`completion: complete` は収集終了であり、全 field が known という意味ではない。timeout は受信済みの値を保持して `errors: ["timeout"]`、done のない worker 終了は `worker_failed` を返す。CPU sample が未到着なら duration は null のままである。[field と初期値](../../crates/server/src/remote_mcp/resource_observation.rs#L48-L69)・[受信と失敗](../../crates/server/src/remote_mcp/resource_observation.rs#L138-L172)
+数値は `known` と value、または `unknown` と定型 error を持つ。limit の明示 `max` だけが `unlimited` であり、欠落・不正・読取失敗をゼロや unlimited に変換しない。`completion: complete` は収集終了であり、全 field が known という意味ではない。timeout は受信済みの値を保持して `errors: ["timeout"]`、done のない worker 終了は `worker_failed` を返す。CPU sample が未到着なら duration は null のままである。[field と初期値](../../crates/server/src/resource_observation.rs#L33-L61)・[受信と失敗](../../crates/server/src/resource_observation.rs#L144-L169)
 
-server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/remote_mcp/resource_observation.rs#L11-L45)・[worker 所有権](../../crates/server/src/remote_mcp/resource_observation.rs#L202-L227)
+server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/resource_observation.rs#L10-L31)・[worker 所有権](../../crates/server/src/resource_observation.rs#L197-L220)
 
-変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/remote_mcp/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/remote_mcp/resource_observation.rs#L229-L389)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1409-L1475)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。この Sync は source とテスト内容の確認であり、テスト再実行、実 Auth0 / ChatGPT 接続、他 OS の検証は行っていない。
+変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L223-L364)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1487-L1553)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。この Sync は source とテスト内容の確認であり、テスト再実行、実 Auth0 / ChatGPT 接続、他 OS の検証は行っていない。
 
 ## 外部実行とモバイル設計
 
 Windows Runnerはexecution slot等のcanonical Resourceをclaimし、immutable source snapshotとinteractive commandを使う。接続認証・containment・settlementの責任はMCP bearerや旧paired hostと異なる。[Runnerの所有・回復](../concepts/shared-resource-coordination.md#外部-runner-と-interactive-operation)。
 
 [AI Mobile Design](../../docs/ai-mobile/design.md)はv0.1 draftである。web/PWA中心という意図は読めるが、記載されたremote-web / relay baselineやQR pairing案は現行実装の証拠にならない。現在のスマートフォンからの入口は直接local-webであり、UI確認には [built preview](../operations/development.md)を使う。外部IdP、HTTPS経路、Windows hardwareの実接続はこの静的source照合では試験していない。
+
+自己再起動は通常 run_process と別の [専用 handoff と結果照会](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を使う。一般 operation receipt の成功は切替成功を証明しない。

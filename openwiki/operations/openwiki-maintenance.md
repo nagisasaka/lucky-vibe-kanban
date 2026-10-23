@@ -12,6 +12,10 @@ sources:
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
     resource: repo://crates/server/src/routes/openwiki/completion.rs
+  - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
+    resource: repo://crates/server/src/routes/openwiki/preparation.rs
+  - id: openwiki-source-15fe6957ffd50a6292794c19
+    resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-251033c862e5156391353c53
     resource: repo://crates/server/src/workflow_runtime/bootstrap_tests.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
@@ -36,10 +40,10 @@ sources:
     resource: repo://docs/design/openwiki-bootstrap-implementation.md
   - id: openwiki-source-a3944588bb3b08c863d66298
     resource: repo://docs/workspaces/openwiki.mdx
-generated: { by: "codex", at: "2026-10-18T14:00:51.649Z" }
+generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T06:22:38.402Z
+    at: 2026-10-23T22:40:49.979Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -65,6 +69,8 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 両経路とも [実行専用 Workspace](../concepts/workspace.md#操作用途と実行所有者)を作り、起動前に owner を保存する。通常 Sync は選択 event と Memory の凍結入力を作り、その digest/source/event 集合を host state に保存してから AgentRun を予約・所有者へ bind する。[準備と起動の順序](../../crates/server/src/routes/openwiki.rs)、[Sync の入力と予約](../../crates/server/src/routes/openwiki.rs)。全 manifest/chunk の読取、未統合 Memory の権威、空入力の意味は [凍結入力の契約](../concepts/repository-memory.md#sync-の入力は統合済み-source-に結び付く凍結-snapshot)を参照する。
 
 明示 Sync の対象は現在の統合ソース全体、または指定 SHA からの範囲である。SHA は選択 branch の祖先である必要があり、初期生成に開始 SHA は指定できない。範囲外 event の扱いと未確認領域は [Repository memory](../concepts/repository-memory.md) の契約に従う。[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs)
+
+準備 future は Workspace lifecycle barrier 内で archive 状態を再確認して RAII 予約を取得する。installer 待機など AgentRun/Workflow がまだない期間も [手動 archive の busy 判定](../concepts/workspace.md#archive削除期限-cleanup)で保護し、future の完了・error・cancelで解放する。AgentRun終端後も repository state の active_run_id/bootstrap が残る host finalizing は archive 不可である。単に usage ラベルが execution_only という理由で永久に拒否する方式ではない。[準備の寿命](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)・[呼出位置](../../crates/server/src/routes/openwiki.rs#L330-L350)・[未完了所有の照合](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)
 
 ## Bootstrap の phase と所有権
 
