@@ -131,23 +131,7 @@ fn subscription_router(service: PushService) -> Router<SqlitePool> {
     Router::new()
         .route("/web-push", get(status).post(subscribe))
         .route("/web-push/{id}", post(unsubscribe))
-        .route("/web-push/context/{workspace}", get(context))
         .layer(Extension(service))
-}
-
-async fn context(State(pool): State<SqlitePool>, Path(workspace): Path<Uuid>) -> ApiResult<Value> {
-    actor()?;
-    let link: Option<(Uuid, Uuid)> = sqlx::query_as(
-        "SELECT project_id,issue_id FROM local_workspace_links WHERE workspace_id=?",
-    )
-    .bind(workspace)
-    .fetch_optional(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(
-        link.map(|(project_id, issue_id)| json!({"project_id":project_id,"issue_id":issue_id}))
-            .unwrap_or(Value::Null),
-    ))
 }
 
 #[derive(Serialize, sqlx::FromRow)]
