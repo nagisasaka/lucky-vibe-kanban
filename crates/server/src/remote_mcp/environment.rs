@@ -98,7 +98,7 @@ impl Environment {
         })
     }
 
-    async fn grant(&self, id: &str) -> anyhow::Result<Grant> {
+    pub(super) async fn grant(&self, id: &str) -> anyhow::Result<Grant> {
         self.current_grants()
             .await?
             .iter()
@@ -169,6 +169,28 @@ pub(super) fn tools() -> Vec<Tool> {
             "Recheck an observed PID identity; unavailable is not successful shutdown. Existing process stdout is unavailable: use its configured log files.",
             json!({"identity":text}),
             &["identity"],
+            false,
+        ),
+        tool(
+            "self_restart",
+            "Request an administrator-configured development instance switch using externally tested artifacts. Coordinate idle work first. Admission is NOT completion. The independent engine persists the transaction; after reconnect use get_self_restart_operation with the SAME request_id. Active resource holders or queued operations are refused; registration alone is not occupancy. The target instance/DB must be unregistered; registered targets require a resource operation bundle. Ordinary run_process still cannot self-restart.",
+            json!({"request_id":uuid,"purpose":text,"binary":text,"source":text,"agent_host":text,"frontend":text,"manifest":text,"frontend_mode":{"enum":["external","embedded"]},"no_new_work":{"type":"boolean"},"retain_worktree":{"type":"boolean","default":false}}),
+            &[
+                "request_id",
+                "purpose",
+                "binary",
+                "source",
+                "agent_host",
+                "frontend",
+                "no_new_work",
+            ],
+            true,
+        ),
+        tool(
+            "get_self_restart_operation",
+            "Read the durable switch-engine result after reconnection. Uses current runtime grant and original principal ownership; MCP admission success is not cutover success. A missing result never authorises automatic replay.",
+            json!({"request_id":uuid}),
+            &["request_id"],
             false,
         ),
         tool(
@@ -328,7 +350,7 @@ pub(super) async fn call(
         );
         let grants: Vec<_> = environment.current_grants().await?.iter().filter(|g| remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"display_name":g.display_name,"project_id":g.project_id,"root":g.root,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
         return Ok(
-            json!({"regions":grants,"platform":"linux","environment_inheritance":"none; fixed PATH and LANG only","file_write_tools":false,"os_write_sandbox":false,"shared_resources":"use existing resource coordination; these grants cannot authorise shared-resource use","workspace_execution":"not supported; managed Workspace trees are refused","self_restart":"not supported; use operator recovery","output_persistence":"bounded memory, unavailable after server restart","build_provenance":"not established","reference_data_only":true}),
+            json!({"regions":grants,"platform":"linux","environment_inheritance":"none; fixed PATH and LANG only","file_write_tools":false,"os_write_sandbox":false,"shared_resources":"use existing resource coordination; these grants cannot authorise shared-resource use","workspace_execution":"not supported; managed Workspace trees are refused","self_restart":"dedicated self_restart/get_self_restart_operation only; requires administrator-installed engine/config and explicit instance grant; run_process unsupported","output_persistence":"bounded memory, unavailable after server restart","build_provenance":"not established","reference_data_only":true}),
         );
     }
     let region = input
@@ -349,6 +371,9 @@ pub(super) async fn call(
         let owner = remote.principal_key(principal);
         let process_owner = json!([owner, grant.id, grant.project_id]).to_string();
         match name {
+            "self_restart" | "get_self_restart_operation" => {
+                super::environment_switch::call(remote, principal, &grant, name, input).await
+            }
             "list_runtime_files" | "read_runtime_file" => {
                 let is_list = name == "list_runtime_files";
                 tokio::task::spawn_blocking(move || {

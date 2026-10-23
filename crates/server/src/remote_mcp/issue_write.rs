@@ -181,7 +181,10 @@ pub(super) async fn call(
             receipt.project_id == args.project_id,
             "Operation not found in this Project"
         );
-        if matches!(receipt.operation.as_str(), "run_process" | "stop_process") {
+        if matches!(
+            receipt.operation.as_str(),
+            "run_process" | "stop_process" | "self_restart"
+        ) {
             ensure!(
                 principal.allows("lvk:runtime:read"),
                 "Runtime read permission required"
