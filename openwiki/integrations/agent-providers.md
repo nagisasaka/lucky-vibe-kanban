@@ -6,6 +6,8 @@ tags: [providers, capabilities, mcp, skills, configuration]
 sources:
   - id: openwiki-source-70da521f2a76cd78ae162a26
     resource: repo://crates/executors/Cargo.toml
+  - id: openwiki-source-a7d7b5cf722fd5837c4eb16e
+    resource: repo://crates/executors/default_profiles.json
   - id: openwiki-source-a5b446edff482bd8a00e1a92
     resource: repo://crates/executors/src/agent_settings/public_api.rs
   - id: openwiki-source-ff0c687c0ecdbf94f91da913
@@ -14,6 +16,14 @@ sources:
     resource: repo://crates/executors/src/agent_tools/public_api.rs
   - id: openwiki-source-7fd554effd70be44f98fe686
     resource: repo://crates/executors/src/config_write.rs
+  - id: openwiki-source-bfcf08b9feacd16360e862a4
+    resource: repo://crates/executors/src/executors/claude.rs
+  - id: openwiki-source-5514d83ac049ec5c68456f7b
+    resource: repo://crates/executors/src/executors/claude/auth.rs
+  - id: openwiki-source-b352d709d360d1bf77a8f1d5
+    resource: repo://crates/executors/src/executors/claude/command_adapter.rs
+  - id: openwiki-source-7c91fae76fb68d8e144a3d4f
+    resource: repo://crates/executors/src/executors/claude/slash_commands.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
@@ -28,6 +38,8 @@ sources:
     resource: repo://crates/executors/src/legacy_wiki.rs
   - id: openwiki-source-f07f62eba81c4ffbaf0db9d5
     resource: repo://crates/executors/src/profile.rs
+  - id: openwiki-source-bccd47f2decfe8aa6a080767
+    resource: repo://crates/executors/src/provider_policy.rs
   - id: openwiki-source-8fd7f4fe2d73e778cc63c256
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-5a8e26da42457b4b47bca3ee
@@ -46,12 +58,16 @@ sources:
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-379c8cd3e1e9932f9adda9ee
+    resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
+  - id: openwiki-source-416673f852b62093837a9a91
+    resource: repo://docs/agents/claude-code.mdx
   - id: openwiki-source-459fb9f29be1bc52c827e706
     resource: repo://docs/development/codex-compatibility.md
   - id: openwiki-source-bd8b8c5ef2cd6ade70bfa3e5
@@ -68,10 +84,14 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/runtimeAccessApi.ts
   - id: openwiki-source-92ef988228c55634defb8970
     resource: repo://scripts/test-codex-app-server.py
-generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
+  - id: openwiki-source-7d0c710ba947513a98d2c88d
+    resource: repo://tests/claude-subscription/README.md
+  - id: openwiki-source-d8023ed75464072c99cdef5c
+    resource: repo://tests/claude-subscription/subscription.spec.ts
+generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T14:57:15.192Z
+    at: 2026-10-23T15:33:24.249Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -114,6 +134,34 @@ model discovery が返す reasoning 候補は表示用メタデータであり�
 推論メニューは候補がなくても保持中の値があれば表示でき、一覧にない値はチェック付きの disabled 項目として示す。利用者は **Follow CLI config** を選んで `null` へ戻せる。モデルボタンのラベルも候補からモデルを取得できない場合に保持中の effort を使う。この表示は provider がその effort を受理した証拠ではない。[メニュー](../../packages/ui/src/components/ModelList.tsx#L32-L106)・[モデル行の表示条件](../../packages/ui/src/components/ModelList.tsx#L210-L220)・[ボタンのラベル](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L394-L407)
 
 これは CLI/TOML の解決方針を変更する契約ではなく、発見結果の変化で利用者の選択を暗黙に書き換えないための境界である。送信・再表示の保持は [composer の手動推論設定と復元](../concepts/session-and-agent-run.md#composer-の手動推論設定と復元)を正本とし、Scratch の None 省略、preset 選択、モデル変更時の解除をそこで説明する。[候補欠落の回帰テスト](../../packages/web-core/src/shared/lib/modelSelector.test.ts#L126-L173)は表示値の保持を検査するもので、live model の対応能力を検証しない。
+
+## Claude のサブスクリプション専用 profile
+
+`SUBSCRIPTION` は通常 Issue → Workspace → Session で公式 `claude` CLI の subscription login を使うための任意 preset で、`require_subscription_login: true` と `approvals: true` を持つ。DEFAULT の置換でも新しい provider / scheduler でもない。既存の stream-json、native resume、取消 adapter を使い、Claude native Goal や Arena の追加対応を意味しない。`approvals: true` だけで人の待機 UI が配線されるわけではなく、上記の host approval 境界を引き続き確認する。[preset](../../crates/executors/default_profiles.json#L3-L15)・[direct launch](../../crates/executors/src/executors/claude.rs#L215-L237)・[command adapter](../../crates/executors/src/executors/claude/command_adapter.rs#L33-L115)
+
+利用者は **LVK の実行環境内の同じ account と設定ディレクトリ**で CLI を準備し、`claude auth login` / `claude auth status` を行ってから Subscription preset を選ぶ。別マシンでの login を server の設定と取り違えない。導入・同意・実アカウント確認の手順は [Claude Code 操作文書](../../docs/agents/claude-code.mdx)に置く。LVK は credential file を読み取って SDK へ転用せず、public auth metadata を確認する。[auth probe](../../crates/executors/src/executors/claude/auth.rs#L1-L128)
+
+### 認証の確認と拒否条件
+
+実行直前の `spawn_internal` は現在の cwd と execution env に profile env を合成して認証を確認する。新規・follow-up / resume の direct launch がこの経路を通る。`claude --settings … auth status` は10秒で制限し、成功 exit、`loggedIn: true`、`authMethod: "claude.ai"`、`apiProvider: "firstParty"` のすべてを要求する。JSON 不正・未 login・異なる provider・timeout を別課金方式への fallback で回復しない。stderr は捨て、stdout の原文を診断へ含めない。[起動前確認](../../crates/executors/src/executors/claude.rs#L739-L775)・[判定](../../crates/executors/src/executors/claude/auth.rs#L35-L49)・[環境と timeout](../../crates/executors/src/executors/claude/auth.rs#L78-L128)
+
+専用 profile は router、base command override、非空の追加 CLI 引数を拒否する。また API key/token、OAuth token 注入、custom headers、base URL / profile、Bedrock / Vertex / Foundry 選択など、ソースで列挙する競合環境変数の非空値を拒否し、診断には変数名だけを出す。任意の wrapper や引数で preflight 後の認証を変えられないようにするという理由がソースコメントに記録されている。他方式を意図するときは別 profile を使う。[拒否集合と理由](../../crates/executors/src/executors/claude/auth.rs#L12-L99)
+
+runtime と実 CLI discovery probe は per-process settings の `forceLoginMethod: "claudeai"` および空の `ANTHROPIC_CUSTOM_HEADERS` を渡し、通常の CLI 設定ファイルを書き換えない。ただし managed settings は本来の優先順位を維持するため、管理者設定を超える普遍的な保証ではない。従来の `disable_api_key` は一変数を取り除く別機能で、厳格 profile はその除去より前に競合を検査する。[settings と適用](../../crates/executors/src/executors/claude/command_adapter.rs#L11-L33)・[runtime / discovery](../../crates/executors/src/executors/claude/command_adapter.rs#L80-L145)・[除去との順序](../../crates/executors/src/executors/claude.rs#L739-L775)
+
+### 選択 profile と discovery の一貫性
+
+`/api/agents/profile-policy` は executor / variant を解決し、存在しない profile を拒否する。厳格 Claude profile だけ auth probe を行い、実行ファイル欠落を MissingExecutable、それ以外の認証確認失敗を AuthRequired として、InitialRun / FollowUp / SessionResume / WorkflowAgentStep / TeamSlot を除く。一般の installation 検出は `.claude.json` の更新時刻を login 証拠にしない。[policy API](../../crates/server/src/routes/config.rs#L804-L838)・[失敗と能力](../../crates/executors/src/provider_policy.rs#L96-L134)・[installation](../../crates/executors/src/executors/claude.rs#L727-L736)
+
+policy と discovery は共通の scope 解決を使う。Session 指定時は所属 Workspace と agent working dir、Workspace だけならその container path、Repo だけなら Repo path を使う。policy は scope がなければ server cwd を使う。この確認は server 環境での readiness であり、実 launch の完全な execution env を保証しない。[scope 解決](../../crates/services/src/services/container.rs#L105-L193)・[policy env](../../crates/server/src/routes/config.rs#L823-L836)。[composer の接続](../concepts/session-and-agent-run.md#選択した-claude-profile-の-readiness)は選択 variant と scope を保持し、確認失敗を別 profile の Ready で補わない。
+
+discovery stream も選択 variant を渡し、未存在 profile を DEFAULT へ代替しない。厳格 profile の要求から DEFAULT の global cache refresh を並行起動しない。Claude cache key は command 設定と `require_subscription_login` を含み、認証モードを分離する。実 CLI の command/plugin probe は認証確認後に起動するが、cache hit は既存 options を返し得るため、モデル・補完候補が表示されたことは現在の login 成功の証拠ではない。[stream の選択](../../crates/server/src/routes/config.rs#L893-L908)・[別 profile の refresh 抑止](../../crates/services/src/services/container.rs#L196-L233)・[cache key](../../crates/executors/src/executors/claude.rs#L367-L369)・[cache hit](../../crates/executors/src/executors/claude.rs#L513-L540)・[CLI probe](../../crates/executors/src/executors/claude/slash_commands.rs#L239-L265)
+
+### 検証の範囲と残る確認
+
+[auth unit tests](../../crates/executors/src/executors/claude/auth.rs#L147-L260)は競合設定、秘密値の非表示、wrapper 拒否、metadata / exit 判定を扱う。[frontend tests](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.test.ts)と [discovery URL tests](../../packages/web-core/src/shared/lib/agentDiscovery.test.ts)は profile 別の失敗と scope を検査する。[隔離 browser 試験](../../tests/claude-subscription/subscription.spec.ts)は実 backend / host と offline CLI fixture を接続し、拒否・初回実行・期限切れ後の follow-up 拒否・Stop / native resume と Issue UI の preset 選択を検査する。高速終了時の証拠は [shared host の drain 契約](../architecture/agent-runtime.md#os-終了より遅い-provider-終端証拠)で扱う。
+
+fixture は公式 CLI でも実モデルでもない。auth metadata は実モデル応答、refresh 可能性、残 quota を証明しない。公式 CLI / account での期限切れ・更新・quota・network 挙動と managed settings の影響は別途確認が必要である。[検証手順と限界](../../tests/claude-subscription/README.md#live-validation-remains-separate)。この Sync は統合済み source と試験定義の静的照合であり、製品テストや live Claude 検証の再実行ではない。
 
 ## Skill と Tool Manager
 

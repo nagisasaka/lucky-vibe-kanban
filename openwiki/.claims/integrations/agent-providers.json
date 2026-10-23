@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:01e3bcf0a98782cfba7a1dcc5b767b6d9bee6708e432895ccde21db95422643d",
+  "pageVersion": "sha256:df10f0ad0acfa41bca60726ff790bdb64e660c5f1e2595c7f09a9f1b64ee5df8",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -475,10 +475,148 @@
           "version": "repo-lines-v1:sha256:daad8411437bb4803ae28082b11f76fc1d45dc907618e38026c946e5d271c2ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNTM5ZDg1Mzg2YTI5NDIzZjUzNWFiYjQ2Y2M4NjgwNzI3ODdhOGI4ZDJkMzhjY2QxY2ZkZGRiYjNjMGFmOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NTc2OWQ1MDFmYTZhMmJkMzc4ZWZmMTk3MDRmYWE2MTBkZmJjMmZmNGE5OTMzNDYzZWY1ZDBkZDAyOTcwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ZmQwMTkzOWNhY2ZhMDg3MDNiNDY2ZDUxM2RlNTYzODk4Zjk3ZThlMGQwZjNlNjcwZDYyOGYzM2Y5YzM5MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_a3d517e6234e4817bd7aacc96bf83371",
+      "statement": "SUBSCRIPTION は require_subscription_login と approvals を有効にする任意 Claude preset で、既存 direct launch、stream-json、native resume・取消を使う。新たな Goal/Arena 対応を意味しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/default_profiles.json#L3-L15",
+          "version": "repo-lines-v1:sha256:75a6ade3f4e18f41768884a2c5989f886bfcc2c793405c7146a0175853750367:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMzhjM2FjMWE3M2NmMzQ2OWUzMzlmMWU1ZTNmODk3OTAwNjMzZWZhNjU2NGQyODE2NDlkZGNkNzAxMGRmMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmMGNkYjk3MmE3YmZiN2VkMjQ2ZjlmZjY3MjM4NWU1NWY0OTY4ZmMxMTA0M2RjNWI2ODRkNTFkZmEzMWRiY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODczNWZhOTFlMDhjZTc4OGUzOTRiMGRjMjZiNjhiMWIyNGFhNDYzZTM3OWFjNGRmMTA2Y2QyYjBjZjNmYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5ODFjODg0ODM1Yzk2Y2I0Y2M5MGM2NGU5ZGNmYzViNDJmMTYzMGIxMjBmMzY5NjRhZDk2OWY0MGE4Nzg2NGEifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L215-L237",
+          "version": "repo-lines-v1:sha256:234f08b30d853e89b265d5eed8f4dd64daec6c1267293a600fa7d424d37adf82:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyZGMwYmI2YWNhN2EyM2E0YjRkOTA5ZGIwNzUyOGE1N2VmOGIwOWIzYzYxMGU4MmQyZjJkNzliZDEyYTRlMjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4MDJjZGJhMzIyZDM2YjJhZmNkN2QwZjA4ZWUzZmI3MDNjMjg0ZmJlYmM4ZjBiMmEyNzU2NmNhY2YxNWQxMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5NTBjMzk4MzNjMjkyN2RkM2RiYjcyYzFmNzc2OTFjNWYxZTg3OGNiYzk4MmFlZjFkZDVhZjI5NThiMDg2NWQifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/command_adapter.rs#L33-L115",
+          "version": "repo-lines-v1:sha256:3c618a2fbbc3e8a849b883a6dbe88124f4a060da719031adb2ff8b1430de77a9:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3ZWVmNzYxZTdiMjc4YWIyOGY0NjMxMzZhZmFiYzRiNzJjNDlkZTEwNTVhNzJmYjZiZDI3N2NiNDBjNTVhYmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4MzYxZjU0ZGYxMjY0NDUyOGFhY2NhNWI2NjNmZjNkN2ZiYzgzNjJmZDU2OWI0ZGYxN2IzOTk0NWY2MmJkMzQifQ"
+        },
+        {
+          "resource": "repo://docs/agents/claude-code.mdx#L61-L68",
+          "version": "repo-lines-v1:sha256:2d28fa216b851726a8fa34bcabe34edb4634debef6498ec9fa2078f177772a72:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDVhZGIxZjdiOWMzYzhlYjc1MzY0ZGRjNmQ4MDhkNDkyZjE4NTIzNjRjNjUzMWU0ZTQ2ZGM2MWFmMWIyNWY3OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzVkMmE0ZGMzZjI4OGJjNDdhODVmNjI2YzA0NmRkNjlhMjcyODI2YzM2Y2I2MWFjNmJiMDQ4MDk5ZThkNTQ1YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b49d46f0e2c54048b1b5562e5df2a66e",
+      "statement": "厳格 Claude profile は実行直前に cwd と profile 合成済み env で public auth status を10秒以内に確認し、成功 exit・loggedIn true・claude.ai・firstParty を要求する。credential file を読み出さず、CLI 原文を診断に含めず、別課金方式に fallback しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L739-L775",
+          "version": "repo-lines-v1:sha256:869086822139dd7c8f953b03993a224255102abf5fc7d1dfb031ac43d85bcadb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YmVmNGEwNTU0NGQ1MjQ5Mzk5YTY4YTQzZGZkOGFjOGVjODVhMGVkMzhlYmJhMGIzYmMwZTBjNDA5YzQ5NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ZTVhZjQ4YmUzYWQzZjMzMDVlNjM5YWViMTFjYWRhZTJjNjE3NmI5Y2Q4ZTMyMzAyNWYwZTMzY2I3MTVkNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3NTRmNTBiN2QxMDkyODE1N2JmZjViMzUzZjFiNDRmOGNmMTBhZmQxNWIxOWY2MTlhMGJlNmNkYzE4MWM0MDYifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/auth.rs#L1-L128",
+          "version": "repo-lines-v1:sha256:4a3bc21bee8c1549c224e69479a34a5e7d9609dfbcb2a18742f69278b62b1eb7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYjBmZDNiNzE2ODI5M2M1NTZkMzNkNjFjOGMyYzkxNzgxZjMyMTYwNjM4M2ZmZWE1M2ZlYTg4ZGZiYmNlOTBjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MDJlMjg0MTBkY2Q5M2VmMDEwZTEwMDAxNzgyMzRkYjY0MTA1Zjg2NWI1Nzg5MDdhNGIxMjQ0MjRkMjg4ZDE3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhNTIxNjA0YjM1ZmM0MGFmMDBjYmE0ZWVhMmZkNWUyYzNhZjE4NjNiMzkxMTg1ZDdiZjRiYjA5ZTcyZDBjOGIzIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_31834317e81e4332aa554032ef07e29b",
+      "statement": "厳格 Claude profile は router・base command override・非空追加引数と列挙済み競合環境変数を拒否する。診断は変数名だけを含み、runtime/discovery に forceLoginMethod と空 custom headers の per-process settings を渡すが、managed settings の優先順位は維持する。disable_api_key の除去より先に競合を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L739-L775",
+          "version": "repo-lines-v1:sha256:869086822139dd7c8f953b03993a224255102abf5fc7d1dfb031ac43d85bcadb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YmVmNGEwNTU0NGQ1MjQ5Mzk5YTY4YTQzZGZkOGFjOGVjODVhMGVkMzhlYmJhMGIzYmMwZTBjNDA5YzQ5NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ZTVhZjQ4YmUzYWQzZjMzMDVlNjM5YWViMTFjYWRhZTJjNjE3NmI5Y2Q4ZTMyMzAyNWYwZTMzY2I3MTVkNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3NTRmNTBiN2QxMDkyODE1N2JmZjViMzUzZjFiNDRmOGNmMTBhZmQxNWIxOWY2MTlhMGJlNmNkYzE4MWM0MDYifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/auth.rs#L12-L99",
+          "version": "repo-lines-v1:sha256:7e51dae333dec46f4661f5dee65422994101985e7710d7c2d76362ee720cc101:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmN2FjMzBhN2NjY2NiZTJlMmRjZDgzMjk3YTg1NTEyMTk5MzNjZTM2ZmEwMzAxODE2OTZjNDM1NWZjZjc5ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NjE0YjFjODZmYTAyY2M1YTE4M2FjODNlZTM1YjFjMzczZTE3ODcxOWEyM2Y0NzBmMThjODkzOTAyNTBjODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2OGM5MzBkNWQyOGIwNjg5MTU5YzU2OWMwMDgzMTUxZTA0MDNjNzA5MjY2MGUzNjBiNmJhNDUzNGUzMzY4NmIifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/command_adapter.rs#L11-L33",
+          "version": "repo-lines-v1:sha256:58b331120237c1099e8e6e9452e7ff0e2c3d60a9d404353a623b4d8b460687d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4NDhlN2U5ZTljMzYyMGMzZDZlZDY5N2Q0YjIxMWM2MWUxZWRlZGQyZDMwMjZiZDhiY2E1MDE4NTkxNGRhM2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2NTBiZTg5YTU1OTQ2N2M5MGQxYTIwNDAyMTdkZDcyMDdiMmE4MTA2OWI5MTE0ZWVjYjQxY2ExNDliNzhmMzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzZTMxMGFhNzFmNTE0YjZlZTNiMmNhZDI0MDE0YjA1YjcwM2RmYWE5NWU1MDdmM2QxOTQ2ZWY0OGQzZmJlOTcifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/command_adapter.rs#L80-L145",
+          "version": "repo-lines-v1:sha256:b92ae387605e44a99b64566283a2072f874caa0befab9071cc5bc6fe96515ad4:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjEzNGZjNjE1NzY4MzJhODZjNTYyZWRjMTQzMDE5NjA5MWUzNzVjNzI0ZTFlMDVjMjEwNTUxNTVkNGQxNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMzI0MmVmMTU3ODE3NzIwOTE0OTM0YzM5NDBhZjY5OGZhY2M3NWFiMDhmMGYxMDYyMTgxNmZhMjE1YWM3ZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3ZmEwYjczNzYzYmY5ZmRlMTc4ZDlmOWMxOWQ2MGU1YmIwYTJmOGUwYWZiZDU4MWI4NTFiNDU3OTNhYWY1ZjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwM2MxNzY3MmQzZThjZjE5MjA5MWY3ZTlhZjZiZDBiMTcxMjk3NjBlYTFmMGI0Yjc2MDUyM2ZlMGU4ZjA1YzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8e4e2f4bb74d47e5aa76cb8b9c96826c",
+      "statement": "profile-policy は選択 profile の存在を検証し厳格 Claude だけ認証確認する。ExecutableNotFound は MissingExecutable、他の確認失敗は AuthRequired となり実行系能力を除く。一般 availability は .claude.json 更新時刻を login 証拠にしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L727-L736",
+          "version": "repo-lines-v1:sha256:bbd45f5bb6815e0744a88122a558c344eaea321c8f43f05918ced26e2cbad18e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0YWEyYTIwYWE1YTAyYjIzYjE5YTgxNmQ0ZTRkMGZmOGIxNzM3NGEzODM4OWQxNmI1NzkxODM2ODBmZjg4NGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOTY2ZGEyZTgwODBiNDI3Y2FjOTE2Y2RmMzAyYWNiN2MxYTFhYzIyY2FjNzcxZGUyODlhMjU3YjQyMTc1M2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlMTNiMjMzNGIxOGUzZGRhMzVhNWE3ODdhMzg4NjBkMTBmOTAxZDZhZGJlOTIxZGFiN2NlMmY2Mzg4ZjE0ZTAifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/provider_policy.rs#L96-L134",
+          "version": "repo-lines-v1:sha256:92436b005ef2362c6c202e330f74baff39b9038af26fee52844ea5985e06e4c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkMTFhYWQxZWU5NWVjNGM2MGYwOWU1OGU4MDdlOGRmNWRlY2ZhNzhkNzEyYjUyOTYwOTc5OWRmM2FhYWJjNzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2ZjI4NGE1YTZhOWJkZWJmNjU4M2VlYWZjZGZhNmJhYjQ4ZGUxZjhiNGMwYTcxNDJjMTFjN2ZiY2UzZjFhM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwNWIwM2IyNTI4YjRkNjc2NjAwZGJkMzI2YzFhOGQwN2IzYzU0MDY3YzBiOTM4MmFiM2E1ZTE2YzJlNmYxZDMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L804-L838",
+          "version": "repo-lines-v1:sha256:f37b64edca0ae418167c782bcdbe293b7f4b6e74ba68f0e6807cf7701647e75b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4ZTg0NmIyZDdiNDNjNjRkODMxMmY0MWJlYzQxOGJkZjkxNThlY2I5ZjBkZWI5Njg2MDQyZjA4ZGY2MTY4M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmM2FjYzRhNWJlYzUzNjFiN2FkNWI1MjNmZTE2Y2JiZDdmZGU2YjlkMTAxZGFlN2E5ZTY4M2QyNjVmN2VlZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2N2FlZGU5ZjhhNjdiNjczNTk1YmYyOTRhN2NjNWJmNmVmNTM4MzYwZjA1MzdmOGRmNTk2NTI1NmVkNGYxNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMzEyNmM1NjljYjE5NDEzZWM0NzdmMmNkNjdlM2FmYTcwZTQyNjNiOTI0M2Y4NzI4NmI1MTkwZmU2YjU3NWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a9f1f02770e34bdfbc23b3aeda4066bd",
+      "statement": "policy と discovery は Session/Workspace/Repo の共通 scope 解決を使い、Session 所属を照合する。policy は scope 不在時 server cwd を使う server readiness であり、完全な execution env での launch 前確認とは別である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L804-L838",
+          "version": "repo-lines-v1:sha256:f37b64edca0ae418167c782bcdbe293b7f4b6e74ba68f0e6807cf7701647e75b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4ZTg0NmIyZDdiNDNjNjRkODMxMmY0MWJlYzQxOGJkZjkxNThlY2I5ZjBkZWI5Njg2MDQyZjA4ZGY2MTY4M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmM2FjYzRhNWJlYzUzNjFiN2FkNWI1MjNmZTE2Y2JiZDdmZGU2YjlkMTAxZGFlN2E5ZTY4M2QyNjVmN2VlZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2N2FlZGU5ZjhhNjdiNjczNTk1YmYyOTRhN2NjNWJmNmVmNTM4MzYwZjA1MzdmOGRmNTk2NTI1NmVkNGYxNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMzEyNmM1NjljYjE5NDEzZWM0NzdmMmNkNjdlM2FmYTcwZTQyNjNiOTI0M2Y4NzI4NmI1MTkwZmU2YjU3NWQifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/container.rs#L105-L205",
+          "version": "repo-lines-v1:sha256:5a1d1aef78921acc6a16ce17dd279c366ce3ac2eda1e79904c1d5726eabea8b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4ZGRlNjgwZTVjODViYTZjMzIyYmQ3MmU2MDVjN2ZlMjcxODRmMjgyMzY4NjhiYzg4MGRhNWU4NDAxN2IyYmVmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkYWNhZDEwNTIxNDg4MmYyNzQyZTE2YzRkNmQ2NzYxMWZmNGRmMWRhODk4YzE3N2I5NmQxNDRlMWJlODYyNTY4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxZGI5ZGVkNDY1NzdkOWM3NTE0MmU0YTA4ZjZkNzc3NGEyZWM3MTcxZGMxNzBjOTk0ZDg1NzY4YjM1OWY5OWVhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5NDg5NzVkNDE2NTEyZjc3ZmMyNzU1NTMzZjAxNTU0ODQwMmNlN2MwZGZmMGJkM2RmZjE4MjQ2ZGJjNWIzNDVmIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_aee8319348c140d9850cbc00160ec532",
+      "statement": "discovery は選択 profile を DEFAULT に代替せず、厳格 Claude では DEFAULT global refresh を抑止する。cache key に command 設定と require_subscription_login を含め、実 CLI probe は認証確認するが cached options の表示は現在の login 成功の証拠ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L367-L369",
+          "version": "repo-lines-v1:sha256:7eb14482c4dcd1f350f3a083e9b4968d04691cbca13acff0e0d5e13a8aaba0b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWY1NzBhNzNhMTA1MWViYjQ4NGU4Y2Q3OTgzZjllOTQ4NTU4MTBkMmNkMTdlYTJlODIxY2ExM2M4MjBmZDAyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTZlZDU5NzRlYmYzNDhiMDQxMmFlOTAzZDlmMjYwOGNmYjQ3MzhkMDMxNzljZGY0MTcyMWIzZTAxZTliOTQxZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDI2ZWViZmYzMjFiZDI5NzY3YzdhMjQxNjBkY2RmMWUyNmQ3Y2JkMGNmZWJlNzQxZWFlOTBhODI1YzlhMDQ0NSJ9"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude.rs#L513-L540",
+          "version": "repo-lines-v1:sha256:5c30527b303c36e481e5bf24bbcc08398dd965a0b78b4079fb550d8081159239:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYmI2MmY3ZGU5ODgwMDYxMWUxNDJkYTA4YzhmZWZhMzY0Y2NmMGIwZmIxMDA3Y2VmY2RkZjdiZGI5ZTdmYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkOTllN2M0OTcxM2MzMzc2Njc3MTI5MWRiY2NjMzc2NGM0OTk1N2U5N2U0NjgyN2U3ODIxMzliM2FiZjk5NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiNTIzNjI3YmM5ZTUyZWNjY2EyMTZlNjljZmFiNTgyYTg4MTA0ZTIyNjA2YzIxYTkyY2M0NTk5NjgyNWMzOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2ZTJmMzliZGJhODA1ZmZhNmQ0ZjNkZGQ1NGRlZWM5NzBiYmU0ZjI5NjNjMzFmNjc5MzdhMWM4MGVmZTU2NGQifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/claude/slash_commands.rs#L239-L265",
+          "version": "repo-lines-v1:sha256:37d2d3e8457a946fe6e93c891c28d5308bd15397ed2bbf5094a04208415d987b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwOWJhMzdiMTlhYTg4MmQ1NzhjZGE3YTM2MzhiYzg4MmFhZmVkNTc0ZDUzYTc2YzZmYmMzOTEzNDFmYWIzZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYTUyMjUzODhjMTU4YWRiZDk0MDVlNWQzMmVjMDdhNzcyOTg1Y2VmMzk5OTQ0YjAyNDI5ZDg3MTJlY2YwZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjYzIwYjhiZWQ0MDUzZDU2NWQ0YzU2ZTU1ZjdkYzU0YzMxZTUzMDk3YWY1ZGY1M2ZjOWYzNjliNjc5YjJmOGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2YjViNGM3MTcyMGQ1MmYyM2Q0NjdjZjU4YTI0ZTgwYWMyZDczYjI1ZDQ2NzAzZTBmNDg2YmFiNmRlMzBhOWQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L893-L908",
+          "version": "repo-lines-v1:sha256:666c8eb6f6afdc0857b9c16ce18a9e5f6a5a3005271961c695205115badcf8d7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1NTg4YTU1ZWEyNzIzZmVhMDJmNmMzZWU0ZjdjZmNkNWVhYzgwZGY3OTY3YzEzYzkyNDhjZTU4YWVjMjlmYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MDdmY2ZjMDY1NDhjYTBhZWE1YjFkYjE0ZTI0ODY0MThlZDhkOTcyZDFlMTM4OWMxOWZmMGQ4NmExMjMzN2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0NjFmZjY3MjlkMmY5NjcwZjUxMmZkYWQ3MjMxMDg3NzA3NDY4ZTE5YjU5ZmY0OTUzOWUzZWY3NzA5ZjM3N2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2MWFhMDYwODllNmMwYWQzZjcwZDA3ZmM3MmM1Mzc4ZDRmYzcwNWI2OGM3MzVkYWY2ZGYyMTQ2NDA1NjM1ZWEifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/container.rs#L196-L233",
+          "version": "repo-lines-v1:sha256:442dd68c697e8d399839419eadfb070108caad3222baee3288253663eeb9f8a6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjN2U0M2NhYzRmM2ViMmMyMjRkZmYwNWZjNDY1NzJhMzBhNTRhNjgwY2RlZGE3MTYxYjFlNTdlMjE5MThlYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4ZTYyOThlYzY4NDgwZDhhYWU0MzYwNzUxNjhhNDQ0YTJiYzMzYTg3YzdiZTdiNzBmMzFlYWFmNDU1ZDdhNGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1Zjg1MjJmMTg2ZmJhOGU5ZjBmYjA1M2ExZGFjMjViZmZlMzQzOWVkOGU4ODNmYzlmYjgzNzNiYTRiZTdmMjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d4710a401bb24372b7715aa7cf994f29",
+      "statement": "Claude subscription の隔離試験は offline CLI fixture と実 server/host/browser で auth拒否、初回・follow-up、失敗、Stop/native resume、Issue UIと新規Session discovery scopeを検査する。公式 CLI、実アカウント、モデル、refresh、quota の成功はこの fixture では証明しない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/claude-subscription/README.md#L50-L66",
+          "version": "repo-lines-v1:sha256:d4c93f4108c3bde621edb30b87691bd584d50eb7329f2dbd3c5fab2f4725a910:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYzA4OWFjMGNlMGFjYzM4Njg5ZDRhMTczY2Q1OTdiZDhiYzJiNmNiZjkwMTNkOTdmY2RlYzNmNTUyMzkwZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNjk3MWE3N2U1MWU3MDE5MjkzN2Y3ZGVkZTkxMjI3MGUwMGMyZmVmNzYzZTA0MWY3MzdhMDQ1NzYzOWM2ZWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjYWE5ODJjZDFmOTQxNDVhZWEyMWEzMjdjNTY2NGQyNzRmYjQ0ZGRhYjdiNmViZGQ1OWI4MmY4YWYyZDg2NGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/claude-subscription/subscription.spec.ts#L193-L243",
+          "version": "repo-lines-v1:sha256:931fd4eeda1cf5bf829650a00594155b727ec36019f9131a4e8dd0260beed95d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwMzQ5M2UwYTBlYmUyNmY1ZWUwNWZlZmU3YmE0OTIyN2ZiNTMyMTAwY2MwMTk4Y2VmMTA1NGY1ODgzYjkyYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhODA5NTEyOWY3ZGM0YjFkNDBkODNjMjM5NjFiMTg1N2JiZjE3YWIwMTY4MmZiYjQ5ZmQyYTUyY2EwMmE5ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0Yjc1NTJlZWU2NzQxNjZmY2VmZDdjNzk1N2Q3OGZlOTE4ZDM0MjYyYmQzMWYzNjViNWU0NWUwMmRlZTNjYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwODA5Y2Q4OWZkZWFmMjFjMDk1YjI4YTlkNjkzYTY0NTQ1ZDVkNGEwYTlhYWVhZGJiYjljNThkMWM5YzlmN2YifQ"
+        },
+        {
+          "resource": "repo://tests/claude-subscription/subscription.spec.ts#L317-L383",
+          "version": "repo-lines-v1:sha256:16cf75b59cd90448ca5c1fe849fc21fb6c506a6f563b804cccadf80b96f2c79a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3M2U3NmNkYTFmZjdkMmMxYzJmMTc5NzZlN2RkMDYzN2NkMjExNjc1ZmU1NmI4NTI3MmNlNjg0MmE1N2NkMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNjkwZTEzNDEzM2Y4ZThiZDdlOTVlN2QzMTQ2MDNkNGNhMjU1ZmRlYTYzODMzZjU3ZGFlZmExZDc5NTAwMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2ODhkMDJjMDA1NjdjMDg1MTkxZjhhMTE4Y2EyM2RlNTg1MzM4YTEyZjMwNjQ4ODExZDM2ZjI2NGI1YWRlODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5OGU0NmZiMDQzYzRjMDcyMTVkY2RjYmFlNDljNzYwZDM1YjMzMjU2YzA3MThlYzRjNTNkZWE5OTUzYTRhZjAifQ"
+        },
+        {
+          "resource": "repo://tests/claude-subscription/subscription.spec.ts#L76-L141",
+          "version": "repo-lines-v1:sha256:03f6b46288566a077604f871166c5e83b3f8ab0c6ad8e715971e0a28278ef8c1:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjMGEyMzQ2N2ZmNzA4NjliNzUwMTRjMmVlYTBlMTRhNDM1NGZjYmM2NmE3YWU3Njc4ZGU0MGY4ODBhMWQ4MzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMjcwNmQ1Mjc2MmRlNjFmNjMyYjkxN2JmZjg1NDYyOTNjMjMwMGU4MmNiZGIxNDA3OGUyOWZiYmY0OGUzNWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYmM5NWM0NTRmZDhlOGZjYTc0OWNiM2Q2MjFkZTE1OTU2MmEyZjFjNWU2YWYwYjljZDQxNmU4ZmRlNWU3ZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmYzNjODcwZDhkNTZmNTExMDcxYjg3YjNkMjBkNzExMDk3YjI0MzY5Njg0YjBjMzUyNTU0YThlZWZiOGFmNzYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T14:57:15.192Z"
+    "at": "2026-10-23T15:33:24.249Z"
   }
 }

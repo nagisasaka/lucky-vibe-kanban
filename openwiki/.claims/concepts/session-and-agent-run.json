@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:df956dae5bd4f9b35d931308cf1097fd127b6a53e9312bf21e7133202fd1053e",
+  "pageVersion": "sha256:d37786bcf6344cb9351633155d6add501e0707a993ce71a486d174fe2d452a7f",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -346,7 +346,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx",
-          "version": "repo-file-v1:sha256:1b49e4cc31585f0d8a78e04b3029cd644b21a71bfa9b3fcc81e6f243c5770444"
+          "version": "repo-file-v1:sha256:9998bdf8eee5218c2217fffd53f6b49bf4cf10398c826cb05e0efb50443cdb6c"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/executionProcessRuntime.test.ts",
@@ -642,11 +642,11 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344",
-          "version": "repo-lines-v1:sha256:920721658adea7745f23e4a66acf8bcc4a81c7a20925c334ce731f629455c386:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTUzOWIwZjY2ZDJmOTdjYjM3MjE1MjYyZjkzMzVkOGQ2OTIyMDhkMGQxZmJlZGQ5ZmUyMjY2NDAwYWNhNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyMGUwZTY4Y2UxMjY2ODI5Y2NiMjQ5N2U4YmRmMzJiZWM4YWUyNjAxMzA3NzgwMjUxNTFlNjY1NGFmMTYzMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiZjc0ODc0ZGE4MGFjNDZhZDEwOWVjMTIyMWExN2U2ODA1YTQyNWY4ZTE4MjRlZDRlYjQzNjgwMWI3MjM5OGIifQ"
+          "version": "repo-lines-v1:sha256:399f803e582cf72350f90af6a844c82d66802683f01ad06daa588e990d98fae7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlOTUzOWIwZjY2ZDJmOTdjYjM3MjE1MjYyZjkzMzVkOGQ2OTIyMDhkMGQxZmJlZGQ5ZmUyMjY2NDAwYWNhNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyMGUwZTY4Y2UxMjY2ODI5Y2NiMjQ5N2U4YmRmMzJiZWM4YWUyNjAxMzA3NzgwMjUxNTFlNjY1NGFmMTYzMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiZjc0ODc0ZGE4MGFjNDZhZDEwOWVjMTIyMWExN2U2ODA1YTQyNWY4ZTE4MjRlZDRlYjQzNjgwMWI3MjM5OGIifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596",
-          "version": "repo-lines-v1:sha256:38513d43546eaf5fb1205de1c818de7223e3ccb161cfce5d3c35ed5b4e5c78ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiY2ZjZmFlMDQ0MWI0NjNmMjk3MDMzZjk0ZjVkNmI3NTA1ZTM3N2U5NjM0NWEzYjg0ZTQ0NjY4NmFmM2ExMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5YzFhNjg0ZGQ1NzM3ZGRhOTc5ZmY3ZmVkMzQ4ZWM5Mzg3NTMxZTc3ZjBlMDU5YmNhNGVjZjE4NmJhNjEwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZDgzNmM5MDM0YTkyMjk5MjgyMjkwOGU2MDkxMWJiYjZmNWJmMWEzNDU3YzRiNTUyZDYzMWMyZTEyNDYzZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNjZhOTUyNzYwMDlmYjE4ZThhYzczYzRkMmJjZmRiMjY4MjlmOTAwNzc4YTM0MzYwNjMyNmFjZmJjOTc0NjUifQ"
+          "version": "repo-lines-v1:sha256:cca5736403a0062d3949fae364b4deda09ddddbdcc0684e8910906e86d209ee0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiY2ZjZmFlMDQ0MWI0NjNmMjk3MDMzZjk0ZjVkNmI3NTA1ZTM3N2U5NjM0NWEzYjg0ZTQ0NjY4NmFmM2ExMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5YzFhNjg0ZGQ1NzM3ZGRhOTc5ZmY3ZmVkMzQ4ZWM5Mzg3NTMxZTc3ZjBlMDU5YmNhNGVjZjE4NmJhNjEwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZDgzNmM5MDM0YTkyMjk5MjgyMjkwOGU2MDkxMWJiYjZmNWJmMWEzNDU3YzRiNTUyZDYzMWMyZTEyNDYzZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNjZhOTUyNzYwMDlmYjE4ZThhYzczYzRkMmJjZmRiMjY4MjlmOTAwNzc4YTM0MzYwNjMyNmFjZmJjOTc0NjUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L772-L782",
@@ -895,10 +895,50 @@
           "version": "repo-lines-v1:sha256:4cab489ed5a9ff395e048abbc16b06d19b8049e4f7b90c97af78bfcc4baec046:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4M2I1M2ZkMWJlNTkzMzkyYzEwMzA3ZGY2MDQ4Yjc0YjRiYWU0OWYwN2QyNjMyMTQxMThhYWUzMTNkZTJhNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNjFmNjdkNjc2OWQxOGFkMDgzMDU1YjEyNDU0YTcxYzU0ZjY0YzJlMzZmYzdhZjNjYjZhOGY5OTA4M2I3MWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1NjA0ZTRjZmFlZjRmMGRmZjIwOGQzZTk0NzBlOTQ2M2Y5MWQ4ZTU5N2ZlOTQyMjQ4YzAwNTc3MDc1MDhiZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YTZhMjhmNzM2NzUzMjMwOWQ2YWZkYmJhMWE4ZTY0OTYwMGQ4ODdhZmNhNDdlNzM0ZDQxZjNhY2I3MThmYjQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_f3a1acbad060445dabeb1dc3e0140fec",
+      "statement": "Session composer の Claude readiness は選択 variant と Workspace/Session scope を使い診断を表示する。hook の確認失敗時は provider 全体の Ready を代用せず Unknown・空 capability を返す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1378-L1389",
+          "version": "repo-lines-v1:sha256:b4e151f2106d08b053503d9c54f8eab6bb387d6d95e9435b3151f6594b1a6ac8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmNTU4YjczMDkzMjA4MTlkMGFiOTg5ZDZmZDE3NDllOTBjMmRjNWZjM2U5Yjg5OTNiMmNjNGRlN2MxMTM0YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwNjI3MjNlOWQ4MWYwMjVlOTJlMjcyMDM2YTdkYmY4MDRmOWNhNjBmY2M4NjM4OTMwYzAyMGUxY2E3YTFiY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNmI3M2M5ODI3MTVmMmI4MjcyMjk3NmI5YzZmZjE5MGJhODIxNDlhZjhlODZiODc5NmRmNjNiOTU3YTI3OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4ZjQyZGIyYmFmMzEzYWI1NmQxNzViY2MwYWExY2E2NjY4ZTRmNzBhMjA1ODllNTE5ZjM1NGQ2MTUyNGNiMDgifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L602-L606",
+          "version": "repo-lines-v1:sha256:55f18a6e92677d1aae32f4c13b52b973536a2da17724a63ca4f9857efcf1934a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzI5YzFiY2E5NDA5NTI2YmEwMDFlYWVkOTRhMjdkOGRmMTBlMDc3MjQyZjI3ZmNjODVhNTNhYjAyMzYxZTk1NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODk0ZGQ5YTliYWZiN2U0MDA5NzNmOGQ1ZTYwMDRjYzIyMWY3NmZhYzM2OWQ4MTNmOWNmNGE0ZmU4MmMzNDE5ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2Q5ZGQyMmYwOTMzZjA5YWUyYWExNWM4Mjk2ZjcxNzMyNGU1ZTMyYjFjMWY0M2NmZGU1MDUwOWUzN2RlZDdmNiJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L38-L82",
+          "version": "repo-lines-v1:sha256:8fef3e69991d9d66c271c02853a7939c8164b7dadf270ff818fa83bfceeae114:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0ZDg2Njk5NjE5ODA3ZmVkZWJiMWI1NTY1MWJkNTJjY2IyN2E0Y2NhNmI0NGU0MDViMmUwODE0MTYwNmZiZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhMmEwM2Q1N2MwZWNjY2I0MTA1Mzc5NDNkNGEzNDY4YjNhOTIyNjc0M2M1YmZmOWI3MzQ4ZjQxYWY0MDEyODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmNjYzYjFiN2VjOWY2YWYxNTVmYzlkZjBmNTZhMTdiMTk1MjcwN2NmNTU1Yjg3N2NkMWQ0ZGRmNDZlY2NkNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmNzFlYmQ2NmJmYTExZTllMWJlYzc4ZmJiMmI2YzE4YjI2ODQ0NDI4YzQ5OWZhNTcwMzk4OTdmYmMxOGJjNDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6e41aa39ab064a43be7f425f571153a4",
+      "statement": "Workspace作成とSessionのeditorは選択variantをtooling discoveryへ渡し、Claudeのmodel selectorはSession未作成でもWorkspace scopeを保持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1326-L1348",
+          "version": "repo-lines-v1:sha256:73b065c98c5e8f690acac12fc705025d7539fba02d2a76735588188e7939cd7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMmViNjZlYjg4MWNmZTQxZTllOGIxYWExYTZlNGZjNzRkZDBiNzA5MmE3Y2VlZGMxMTJkZGUyZTJlYjQ4YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMmJhODZhYzM4YTI1NDg5ZDBiZGRlMDBlZDkwNDZkNzY4Yzg3NzMzZDczNWQ1ZjZkMDg0YWFiYzNjM2M0YzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjZWMxYTM3MzljOTM1N2Y4MDAyYjA4OGFhOTM4OTk2MzA1NmM0NzdiNWY1MTI2MjhhMzE5OTQ1ODQ3NDY1M2UifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L580-L597",
+          "version": "repo-lines-v1:sha256:e371cae44183489a616d6d3dc6fca211745c23c1665a2afb020af593b0de4989:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5NzNkMWViOGJmZTA5OTliMmZlMGNmMzU0ZmY1NzFjODRkYWZkOGMwNTllNTYwOGE1ZTMzMWU3MmFmMGVmZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzNTJmZjk4MzYxNjk0NWUwOWFiNTJjNmRjNWJjMzg1NmZiMmE2OTdiZTViYzAyOGViNzFmMmIzZTJlZmMzODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4NjQ3NWI1MDg1NWNmM2IxMzMzNTA2OGU5NWJhMjA2Y2FmNzZjZDNlNTA5ZjA1MGU4ZjAwMTFhMjMzMmUxMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNzczYzZhMWE2MjMxNmJjM2MwYjAyMzQwNmIyNWFkMzg1NzdlOWNjNWEyYTA2MjI3NTI4YTUwOWQ4N2U1NWMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121",
+          "version": "repo-lines-v1:sha256:e29dd0e174316caf9e7bb0aa455f06ca1a468cb31a4d33042321de6535660e79:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTg2NmE1NWQwOGNhYjRmYjU0ODgwZGMzZTkzNjY5MGZmMzQ1NDkyOGExMDZhOGExODIxOTI2NTE5OTk4YjgyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzJlNDg3Y2VlNjdlNzJjMWY2MGUyMjkxZGUwMmJhNDBkNTFlYzRmNTAwZTlhZDRkMDUwYmVlY2VmZmU1M2E4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5NWM4MWNjNjA1YzJhODZiY2RkYTBlYmVjZDllMGViM2FjOTE3NGY2MWM2ODE3NGVmYzU3YTFlNTJmN2YwZCJ9"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L341-L349",
+          "version": "repo-lines-v1:sha256:d77f0cd6a1d8a6a605ad860bcd88ef53433d356a228b948af8bc0cda80761011:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IxMmYxNjJjNGViZTRiZTE2NWQ0NzAwMDFjOGJiYWI0YjFjMzgyYzJkMTNkOTVmMzg0OTk3ZGI0NTZiZGY2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDY0YTFlYzExNDk3Y2EyMTYyZDRmYjFiZmVjYzZmNzdkMTUzMGI5ZTI2Yzc2MjJjNzIyMTAzYWUzYWI0YzM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMzMDA5NmViNjcxY2M5ZjYzNmRlNDhiMTEwYTU2NGZkNWIxZWI0MTY5NjE2ODAxMWM1MWRlODMwYTk4YjA5OCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-22T07:38:38.993Z"
+    "at": "2026-10-23T15:33:24.249Z"
   }
 }

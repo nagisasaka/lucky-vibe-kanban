@@ -102,8 +102,14 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-649882ab70d5bba1d79459a5
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
+  - id: openwiki-source-f2fdb07edb2a73ea40538a98
+    resource: repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx
+  - id: openwiki-source-10caf2340da819f813f5ea62
+    resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
+  - id: openwiki-source-5c0f3d6c25953013a1112676
+    resource: repo://packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts
   - id: openwiki-source-8e74802914b6f2f7c720c935
     resource: repo://packages/web-core/src/shared/hooks/useExecutorConfig.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
@@ -136,10 +142,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-22T07:38:38.993Z
+    at: 2026-10-23T15:33:24.249Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -188,6 +194,12 @@ Rust の `ExecutorConfig` は `Option::None` を JSON から省略するため�
 [解決・保存の unit tests](../../packages/web-core/src/shared/lib/executorOverrides.test.ts)は、identity-only preset、None の省略、明示値、同一/別モデル選択を検査する。[Chromium hook 試験](../../tests/chat/executor-config.test.mjs#L7-L134)は controlled / uncontrolled の両経路を使うが preset と保存先は fixture である。[アプリ E2E](../../tests/server/specs/reasoning-override.spec.ts#L125-L158)も discovery・最新 launch・follow-up 応答を mock するため、実 provider の回答や TOML 解決の証拠ではない。
 
 [開発記録](../../tests/server/reasoning-override.md)は `527f9c36` までの実 backend E2E と、その後の P2 修正に対する限定試験を分けている。後者で全面 build / 実アプリ E2E は再実施していない。今回の Sync は凍結 source `5ccbd3f5a11e63e9d336cf0e325c2f96818aab8a` を、selector・hook・Session composer・Rust の保存型・試験という独立した入口から静的に照合した。凍結入力の正式 Integration は明示的な検証省略であり、今回も製品テストを再実行していない。無関係な既存説明の再検証や live provider 成功を主張しない。
+
+### 選択した Claude profile の readiness
+
+Session composer は executor に加え selected variant と Workspace / Session scope を readiness 確認へ渡し、Claude の診断をモデル選択欄に表示する。確認失敗を provider 全体の Ready で代用せず、hook は Unknown・空の capability を返す。これは起動許可の確約ではなく、[サブスクリプション専用 profile の実行前確認](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)が実際の実行環境で再度適用される。[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L602-L606)・[診断表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1378-L1389)・[失敗時の扱い](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L38-L82)
+
+新規 Workspace と Session の editor は選択 variant を tooling discovery へ渡す。Claude の新規 Session では Session ID がまだなくても model discovery の Workspace cwd を保持する。したがって preset の切替を実行 payload だけへ反映し、補完やモデル探索を別 profile のままにしてはいけない。認証・cache 分離の詳細は [Provider discovery の契約](../integrations/agent-providers.md#選択-profile-と-discovery-の一貫性)に置く。[editor の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L341-L349)・[Workspace 作成](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L580-L597)・[Session editor](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1326-L1348)・[model scope](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121)
 
 ## Follow-up と retry
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:319baa97dec312a9208f7f28ef7c743a2581a1841f4059e5e3539f19651a5e4b",
+  "pageVersion": "sha256:3db625f26f841f4758392b6f8b45013a0030ac8bfae25e6b1fc181019b3dfa1e",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -330,7 +330,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/config.rs",
-          "version": "repo-file-v1:sha256:4eb7d26d662c63a77d30b76070c0527028e675a5f86250d29c09f64a6a654204"
+          "version": "repo-file-v1:sha256:23c3e5be08fdc0c650e8c9c59fa91e3cb44871bb2381c4477fbfd7b7889c23ca"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/previewProxyUrl.ts",
@@ -571,6 +571,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T14:57:15.192Z"
+    "at": "2026-10-23T15:33:24.249Z"
   }
 }

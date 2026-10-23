@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-22T07:38:38.993Z
+    at: 2026-10-23T15:33:24.249Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -51,7 +51,7 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -115,7 +115,13 @@ Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置
 
 drain の上限は5秒のままで、残った出力の投影・監査失敗を処理してから Audit close と Host Terminal へ進む。drain timeout 自体は警告を記録し provider terminal status を維持するため、timeout と AuditFailure を同一視しない。EOF 所有権の修正は、上限短縮や画面の先行した送信再開とは異なる。Unix の process group 停止には引き続き SIGINT / SIGTERM 後の各2秒の猶予があり、全終了が即時になる保証はない。[drain と終端保存](../../crates/local-deployment/src/process_host.rs#L1062-L1173)・[drain 定数](../../crates/local-deployment/src/process_host.rs#L68)・[停止の猶予](../../crates/utils/src/process.rs#L168-L207)
 
-Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS pipe の writer を保持させ、最終 bytes が監査へ入り、2秒未満で終端へ到達し、Audit が Complete になることを検査する。provider 完了証拠のない exit 0 は Crashed、非ゼロ終了は Failed のままであり、所有権解放が成功条件を弱めないことも確認する。[回帰試験](../../crates/local-deployment/src/process_host.rs#L1377-L1516)。実 backend から次の Send までの検証範囲・測定限界は [terminal 回帰試験の運用](../operations/development.md#terminal-から次操作までの回帰試験)に置く。
+Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS pipe の writer を保持させ、最終 bytes が監査へ入り、2秒未満で終端へ到達し、Audit が Complete になることを検査する。provider 完了証拠のない exit 0 は Crashed、非ゼロ終了は Failed のままであり、所有権解放が成功条件を弱めないことも確認する。[回帰試験](../../crates/local-deployment/src/process_host.rs#L1499-L1613)。実 backend から次の Send までの検証範囲・測定限界は [terminal 回帰試験の運用](../operations/development.md#terminal-から次操作までの回帰試験)に置く。
+
+### OS 終了より遅い provider 終端証拠
+
+高速な CLI では OS の exit が最終 stdout frame より先に監視 loop へ届く。drain 中に `ProviderTerminal` が届いた場合、現在の原因が正常な `Process` 終了のときだけ、その provider status を採用する。exit 0 だけでは成功にせず、既に選んだ取消・監査エラー・非ゼロ終了を後着の成功で上書きしない。drain 内の監査・protocol failure は引き続き終端原因となり、Audit close と Host Terminal の保存順も維持する。[採用条件と最終化](../../crates/local-deployment/src/process_host.rs#L1073-L1183)
+
+`process_exit_before_terminal_output_preserves_provider_evidence` は、process 終了の選択後に通知を送る handshake で順序を固定し、exit 0＋provider success、exit 0＋provider failure、exit 1＋provider success を検査する。これは shared host の契約であり、[Claude subscription](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)だけの別 scheduler ではない。[順序の回帰試験](../../crates/local-deployment/src/process_host.rs#L1421-L1497)
 
 ## 制御入力の送信と監査の順序
 
