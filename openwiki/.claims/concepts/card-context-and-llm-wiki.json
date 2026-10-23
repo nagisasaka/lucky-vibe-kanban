@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8d204ca5621b95000ea928320776620def00a308ba74259df46bdf1b2ee3894b",
+  "pageVersion": "sha256:baad6b823e5e178969222bd4366e1f1322b66d49f9781c1280a6be69304cb0d0",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -139,10 +139,80 @@
           "version": "repo-lines-v1:sha256:e7823613081e2651afade748489130cbb78c2c3867ba3a7879c9a42e7a1cf26a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYzhjZjkyZWE0YjBiYzE1ZTM0MzhjYWNkM2VmZThlZjMwNzMxYzQ4YTZjODhhYmNmOTdjZWRhY2U0NWIzYWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlZmNmYjZiNGZiYWY1ZTA0YWJmOTJkNGZmZThhZDJhZjlhMmFmY2NmNzc3NjMwOTBiZGJkMmY0NTA1M2E5YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlMDk5MmM1Y2YxMjMyNzkwYjdiNDY1NGJkMGE5YTZjMTg3MTEwNWQyMzYzNzM0NWMxODA3Yzc4ZmY2OTUwZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0YThmZjIzMDY3NzVjNWZmYjc5ZTkzMDkwNzQ4ZGYyODRmM2VhNGEzNjc1YzVmYWQ5MDFiZTVmOWNiNmFmZmYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_7c17afb983a9486d82a56f0edef25520",
+      "statement": "CardContextSection は「共有ディレクトリの補助案内」とOFFでも共有領域・Repository Memoryは無効にならない説明を表示し、checkbox変更を toggleSharedDirectories、withCardContext、onDescriptionChange に渡す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L33-L44",
+          "version": "repo-lines-v1:sha256:795d75f922c24e84bd3131786d73e10dcc4aee26f59e2f8ee2b4622aa5b025d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNGQ4OTY2MTNhYWVjNjI3MjYyMmQ2NWZiZjcxOWY4YmUwMjAwZjViZjkzNGI2MTdkNjgzOTQ1NGY2YzI2YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1YWE2ZDVkNGJmYjhiODNhOTU5YWNjZWNlNjgzYzA0MThjY2RmYmFhZGVlYmI3MTI0M2Y2MjQ4ZmY0MWYyNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxYWE1N2JhYjgzMzQxM2Q4YjdlODRlZjg4YjY1ZWVlN2Q4YWZlNDFmMTFlNDNiZjU3ZWZhYTAwZDE3NWM1ZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5MzYwMDYyNWM4MGE5YjRlNTFhNTQ3YzFhNGUyNWMzZDBkNmE3MjIxOTlhZjlmNjM1ZWRmOWQyY2FkOGY1MDMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L96-L109",
+          "version": "repo-lines-v1:sha256:7f46f6af38b13a456cb3aa17ee2ebc0c2936b5d11f250663d1fdb304d7a3fcf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YzMzOTUwMjU0YWZlZGJmYjllZTFmODBjMjU1YzQxODFmODcyZTlkOTAwMDIzYmJiYjcyMzJjYWU1ZGFjODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwMDBlZDI5NGVkOGQ1NzI2MWIyZjc0NTczNWJkMWRlODhiYzliN2I0ZTc5NDRlZGExOWYwMDAwYzM0NWM2ZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNzgyYjVmMDAwMDQ3Y2I3YWRkZjhmZDc3MzE2Mjc5YzM0OTE3ZGM5NTA2ODNmZGU4ZGNhZWNlNDBjZTgwNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0NjAyMDcxYzIzMGQ2MDg0NjBkMTA5MDkxNWQxZmE1NTNiYTY3NWQwYTBlMmQ1Yzg2NzliY2EwNmFlZjZkOTQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json#L11-L17",
+          "version": "repo-lines-v1:sha256:52f9a4ca60598c84fb5a909575b83b4e4c67293d72037dc9d968c24ad26de55b:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmY3MTdlZmVkNjc3MTQwNzg5ZWExMGRmNmFiMmRlZDZjMzA5YmNjMzQ0NmM4Y2QwNTRjMWI4NmJhZDQ0MTZlOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE2MjQ2YWE5ZGJhNWI3OTVlYTg5ZTdkYThhMDVmYTZmYjFkYTAwYTA0NGRlNjdkMmY0ZmYwMWY5MjQwNzlhNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjA3YjI5M2U3Zjk2M2VjNDAwNWE5ODg0YzhlZDdmMzJiNWFlOGI3NGQ2YWY5ZDhhYmYyMDlkNTFkMmZjNDA1MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGY5MGI4M2JkZDgwNGI3Yzg4MzliMGMwNDVkNDZmNGJhY2Y2MWQ2NjExODI5NDkxYzZjYTdlM2ZmNGQzMDc1OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4a7ac573cd2d44bdb27c16c71cf12e0a",
+      "statement": "splitPromptContext は表示専用で、fence外の行頭から完全一致する lvk:card-context、lvk:shared-directories、vk:pipeline の start/end のみを認識する。正しい異種入れ子と閉鎖後の反復を扱うが、同種再入・不一致end・未閉鎖startではメッセージ全体を未分割に戻す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/lib/splitPromptContext.ts#L6-L61",
+          "version": "repo-lines-v1:sha256:5570a5417e995d67121875ac5094cb9e428e288f5bbbd4345be865a81e8b8e02:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0M2Q0Y2Q5MzA5ODM4NzUzM2Y3YjA2OWRlNTVkODk4MjQ3ODhkYzVhMzk4MGI3NTU2MDU4YzllZTY3NjJmN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NjAzYzU3MGNmODg0NmJlNTNkZjc4NDU5ZTFjYTRiYjAyNTdlOTgyYWNhNThlNWUzYzQzMzlmMmM4ZjkwODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllMDE3ZTE0YjMyN2Q1Zjc3ZjEwNTU5ZWMzZTQ3OTNiYWEyMDE1MjRiN2UyMzdhZTNlODkxNjUxYjdjMzU5NTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e0a1c4564d1f46a7abf75339c28bdb39",
+      "statement": "PromptContext は補助ブロックを閉じた native details のplain pre、通常部分を従来rendererで描画し、補助ブロックがなければ追加操作なしで元の全文をrendererへ返す。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/PromptContext.tsx#L16-L42",
+          "version": "repo-lines-v1:sha256:2c94182b788ccf3054d6545638904f7b921037e31bf65b037f09a6ae1336036d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMGMwNDY1NGI0NzllMDFmOWU1MjY3N2FlYmU0OWZhNzkyMGU0NWMwZjc4ZGQ1YzBjMjU4NzZkMjRkNDA1YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhOTU0NWIwY2UwNWMyZDk3NTg0OTcxMTUzNTI1YjMwNzJmMzY0YjgwZDQ4NjdlOTljOGE0NTllNzI1MTBhYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwYTQwNTRkYmQ1ZWNmNTM5MDc0MzIyMTE4NzEyZDg3YmIwMzE0MmNkOTVlZDcwYzYwNmNiZDdkMjlkYzY3NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzMzdmNjdiZjhjZjFmMmJiODZiNzY0MTZiMzVjZTAyZGVjZmExNTNkMjkyZWIwMWFhZTg0OGM5NWY4NWM5YjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2694a13e91d149669471ce48a53e3b17",
+      "statement": "表示分割は元文字列のsliceを使いCRLFやmarkerを保持する。全文表示と全文コピーは元のcontentを使い、clipboard失敗はcopyFailedを表示して全文展開によるコピーを案内する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/PromptContext.tsx#L35-L61",
+          "version": "repo-lines-v1:sha256:94b7a182b82d4d6136304134416c86a58eed78cbc029df003de23523ac1eb702:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmMTA4ZGU2MTIzNDU4YjhiNTEwOTQzZGUwZTQ3ZjA2ODc0Njc0ODk2OTMwNGNhZDdlN2I2NjczZjMzMWY3NjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjZGJiODgwOTE3NGQ3MzY1ZDljNWRmMmUxOTZlMmU4OTllOWQxZWY2YmY4ZDU2ODQ2YjMxN2YxMTczNGVlNjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/lib/splitPromptContext.ts#L42-L61",
+          "version": "repo-lines-v1:sha256:1d96b610ea922970f8aad4dc9d139d87aab32c3cca80777d4999291291359523:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5ZmEwZThlMmUwZWQ4MGVjYWY0MjJjZTgxY2I0Y2E1Y2VhY2M2ZGRmZDI4NjcyNzM3ZWEzOTA3NGU0YTE1MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NjAzYzU3MGNmODg0NmJlNTNkZjc4NDU5ZTFjYTRiYjAyNTdlOTgyYWNhNThlNWUzYzQzMzlmMmM4ZjkwODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlYTk1ZDY0NTcxOGIzMjc0OWFjNzdiZWZhZmRiY2VkZTdmZDY0M2Q3NWUyOTEzMWYxYzBmMzc2ZWZlODNhNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/i18n/locales/ja/tasks.json#L375-L381",
+          "version": "repo-lines-v1:sha256:39547041267a06539413ab7b862b3e34465cc3222db526ad3fb93eab7dcbda90:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGYzYWUxYThiNTExODc3YTdhZDUzYTczYThjZjJhZDMyZjJlMDAxYmM4ZDUzMGYwMWQzNGIyODUyOTNkMmI4YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYwY2RiOTcyYTdiZmI3ZWQyNDZmOWZmNjcyMzg1ZTU1ZjQ5NjhmYzExMDQzZGM1YjY4NGQ1MWRmYTMxZGJjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTk0NWRjZGQ0YWU4ZGQ0MmIzOTJlN2EzZmNkYTNlOGU5ZTc4ZWZhZTdmY2QyYjY4MjM1YWU0NGIyYjQ4NzQxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmJhZTJlNDg3Mzg4MDdjOGRmN2MzN2E0MjZmYTgyYzdhMTM1MWUzNTRiMmEzZDI0ZjE5NDFjMGE2MzkyN2JhNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_78604a7c4b4b4d699f672c0f707b1ff7",
+      "statement": "prompt-context のChromium fixtureはparserのfallback・文字列再結合、全文表示とコピー成功/失敗、編集callback、案内toggle、390/1280pxとlight/darkを検査するが、clipboardとMarkdown rendererを置換しており実providerや保存APIの統合試験ではない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/prompt-context.fixture.tsx#L23-L47",
+          "version": "repo-lines-v1:sha256:1fc558f999a5c193e212d84e78ab49eddf3af3a125b396695b35e11b8bd3c46f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyNzFiZDkzZjNlMDYwOTJjMDBjNzYzZjE4NDdjMTNkZGMyNWY1NzJhYjE4Y2E4ODExMWVkZDAxM2Y2NWEwYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYTU5M2ViODNjNzlmZTljNmQyNjhkMWMxYjg3ODdhMDkyODEwODYyYjIxZmU4YTFkMTYyZjRmMWQxZjMxMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MzIyYzA4ZDg4YmZiNzRkZjI0ZGFlZGYxNWMwYTAxMWIxMDIwYTQ5MTBkNjk1NzM4NzU3ZWRlNjUzMTVmM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiODJlMmUzOTYwYTc2YjUzNzVkMTUxNGQ0ODRlYmEyM2NmZTdhY2ZkNGM3MGU3NTljOWFkYzAxNjE1NGRjMzgifQ"
+        },
+        {
+          "resource": "repo://tests/chat/prompt-context.test.mjs#L53-L179",
+          "version": "repo-lines-v1:sha256:37fe97b16a16add08c81efabdd962966e71193104a28243992ce7d8bc14e3bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMmIwNzVkY2JhYzZiM2ZmMjFlOWRiZjUxZWY5YzgzMzU4YmYyM2YyZjE1ZGIzN2Q5NzM2MGI1M2RlNmI4ZWUzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZTc1YzcwZDk0NjM2MjVlMTA3OWZkOGZjOGVlNjJhZDJlOTJjNDJiZWFhYmZkODViNzhkOGUwYTQ5NzliOTRhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YzA0ZTQwODk3MjRiMGViNjNlNjk0ZDA1MzA5ZmYzYWVmMjJmMDU0OTNiOTM3MjM4NzIyYzYyN2VmZjc1NjFjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjNGEzOWFiMjc1OTFkMzZmOTM3M2E1MGE1YWQ1MDJmYTM1NWU2YjBkZWNhYzg0NjRlZjBmMDgyYTNjMTg3OTg3In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T11:50:57.361Z"
+    "at": "2026-10-23T23:13:08.630Z"
   }
 }

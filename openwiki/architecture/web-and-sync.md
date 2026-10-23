@@ -44,6 +44,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatCode.tsx
   - id: openwiki-source-7178b2bafadec69965c4e1cd
     resource: repo://packages/ui/src/components/ChatScriptEntry.tsx
+  - id: openwiki-source-8fc81a64a6927ed4ae184ab7
+    resource: repo://packages/ui/src/components/ChatUserMessage.tsx
   - id: openwiki-source-d89c4480040eee7fa41a6000
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
@@ -52,6 +54,8 @@ sources:
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
   - id: openwiki-source-b5c65c61c678426ad814529a
     resource: repo://packages/ui/src/components/Popover.tsx
+  - id: openwiki-source-c0945aff6520d3600561e893
+    resource: repo://packages/ui/src/components/PromptContext.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-78a41cdef116a246f388e17c
@@ -90,6 +94,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx
   - id: openwiki-source-cd106619cfd7af68eb9464fc
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
+  - id: openwiki-source-7ffa3a3051962e891da8067e
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
@@ -184,10 +190,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-23T23:13:08.630Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-23T23:13:08.630Z
 ---
 
 # Web の実行環境と同期
@@ -301,6 +307,12 @@ Kanban の Project / view 別表示設定も UI preferences の Scratch に入�
 AgentRun stream は Electric ではない。サーバーは Live を先に購読し、その間の到着を受け止めてから永続履歴を replay する。cursor は RunAttempt 番号と canonical sequence で進め、Live 通知で進めない。再接続時に usage の最新 snapshot も送る。[stream](../../crates/server/src/routes/agent_runs.rs#L428-L500)
 
 会話 projection は表示用 entry に変換しても AgentRun、RunAttempt、event ID を保持する。この識別を外すと、別 attempt の表示と制御が混ざり得る。[表示 identity](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L25-L73)。永続化・一時差分・劣化時の詳細は [Agent Runtime](agent-runtime.md)に集約する。
+
+### User message の補助情報を表示時だけ折り畳む
+
+`UserMessageEntry` は元の `content` と編集 callback を `ChatUserMessage` へ渡し、UI package の `PromptContext` が表示だけを分割する。通常部分は従来の `AppChatMarkdown`、補助部分と元の全文は native `details` 内の plain `pre` で描画する。編集開始は分割結果ではなく元の `content` を使い、実行 process・fork capability・編集中状態による既存の可否判定を維持する。[呼出側と編集](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L882-L930)・[UI への接続](../../packages/ui/src/components/ChatUserMessage.tsx#L74-L88)・[表示部品](../../packages/ui/src/components/PromptContext.tsx#L16-L42)
+
+認識する marker、曖昧入力の fallback、全文コピーと試験の限界は [Card context の表示契約](../concepts/card-context-and-llm-wiki.md#チャットの補助情報と元の全文)を正本とする。この表示境界を会話の保存・provider 注入・権限制御へ流用しない。
 
 ### 永続会話と Live の順序
 

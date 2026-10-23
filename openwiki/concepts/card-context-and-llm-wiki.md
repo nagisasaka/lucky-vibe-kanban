@@ -22,16 +22,30 @@ sources:
     resource: repo://docs/superpowers/specs/2026-09-09-llm-wiki-design.md
   - id: openwiki-source-6e1b3f3856aa7fc901ac98d4
     resource: repo://docs/workspaces/llm-wiki.mdx
+  - id: openwiki-source-c0945aff6520d3600561e893
+    resource: repo://packages/ui/src/components/PromptContext.tsx
+  - id: openwiki-source-1d9ab14665c35291c675b104
+    resource: repo://packages/ui/src/lib/splitPromptContext.ts
   - id: openwiki-source-483f7cd15b3732e8f861ec5c
     resource: repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts
   - id: openwiki-source-ddf0f7c06298de76526a4f7c
     resource: repo://packages/web-core/src/features/pipeline/model/cardContext.ts
   - id: openwiki-source-74b3285af184d8dc6de75ea4
     resource: repo://packages/web-core/src/features/pipeline/model/cardPipeline.ts
-generated: { by: "codex", at: "2026-09-21T08:52:18.882Z" }
+  - id: openwiki-source-98daa093d94c1426c81c6133
+    resource: repo://packages/web-core/src/features/pipeline/ui/CardContextSection.tsx
+  - id: openwiki-source-06868af84d952b8087cf3ebb
+    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
+  - id: openwiki-source-1dc3b065185d29e12afc5b4a
+    resource: repo://packages/web-core/src/i18n/locales/ja/tasks.json
+  - id: openwiki-source-5d59d00b98fae58771e90f3a
+    resource: repo://tests/chat/prompt-context.fixture.tsx
+  - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
+    resource: repo://tests/chat/prompt-context.test.mjs
+generated: { by: "codex", at: "2026-10-23T23:13:08.630Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T11:50:57.361Z
+    at: 2026-10-23T23:13:08.630Z
 ---
 
 # Card context と並列作業の参照
@@ -47,6 +61,24 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 初回 Workspace リクエストは保存済み context を含む。既存 Workspace に作る fresh Session にも、現在関連する local Card の **保存済み Shared directories 部分**をそのまま渡す。Card が未関連のときだけ initial prompt に戻り、関連 Card の空 description は旧 Card の指示を復活させない。continuation には保存指示を繰り返さず、現在の identity と参照案内を渡す。[初回リクエストのテスト](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L65-L74)、[保存方針の取得](../../crates/services/src/services/parallel_context.rs#L134-L157)、[fresh / continuation](../../crates/services/src/services/parallel_context.rs#L160-L198)
 
 実際の launch は選択された Repo ごとに policy を読み、存在するときだけ並列参照 context を追加する。provider の再開と現在 run の identity は [Session](session-and-agent-run.md) および [Codex 接続](../integrations/agent-providers.md)が扱う。[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L758-L775)、[追加条件](../../crates/local-deployment/src/agent_run_port.rs#L848-L865)
+
+## チャットの補助情報と元の全文
+
+設定画面の「共有ディレクトリの補助案内」（英語では `Shared directory guidance`）は、ONで案内を追加し、OFFでも共有領域と Repository Memory を無効にしないことを明示する。checkbox は `toggleSharedDirectories` → `withCardContext` → `onDescriptionChange` で保存対象の文脈を更新する。[設定の接続](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L33-L44)・[checkbox と説明](../../packages/web-core/src/features/pipeline/ui/CardContextSection.tsx#L96-L109)・[日本語文言](../../packages/web-core/src/i18n/locales/ja/common.json#L11-L17)。この設定と、以下のチャット内の開閉は別の操作である。
+
+user message の `PromptContext` は、完全な既知 marker ブロックを既定で閉じた「補助情報」にし、通常本文は従来の Markdown renderer に渡す。認識対象は `<!-- lvk:card-context:start -->` / `end`、`lvk:shared-directories`、`vk:pipeline` の三種類だけである。marker は行頭から単独行で一致する必要があり、末尾の空白・tab は許す。見出し、文中の単語、marker のない runtime 案内から補助情報を推定しない。[表示の分岐](../../packages/ui/src/components/PromptContext.tsx#L16-L34)・[marker の判定](../../packages/ui/src/lib/splitPromptContext.ts#L15-L37)。実際の呼出側との責任分界は [Web の user message 表示](../architecture/web-and-sync.md#user-message-の補助情報を表示時だけ折り畳む)を参照する。
+
+parser は backtick / tilde の fenced code 内の marker を無視する。引用符 `>` やインデント付きの行も marker の完全一致にならず、そのまま通常本文に残る。異なる種類の正しく入れ子になったブロックは外側単位で折り畳み、閉じた後の同種ブロックの反復も扱う。一方、同じ種類の未閉鎖ブロックへの再入、対応しない end、閉じられない start があれば、既に見つけた正常ブロックも含め**メッセージ全体**を未分割へ戻す。ここで「表示する」は通常 renderer へ渡す意味であり、HTML comment 自体の可視化保証ではない。[stack と全体 fallback](../../packages/ui/src/lib/splitPromptContext.ts#L15-L61)
+
+分割結果は元の文字列を `slice` したもので、marker や CRLF を正規化しない。補助情報を展開すると marker を含む plain text が見え、「元の全文を表示」も元の `content` を `pre` へ渡す。「元の全文をコピー」は表示 DOM や Markdown のコピー処理を経ず `navigator.clipboard.writeText(content)` を呼び、失敗時は成功扱いにせず全文展開によるコピーを案内する。折畳み対象が一つもなければ、この追加の全文表示・コピー操作は出さず従来 renderer のみになる。[文字列の保持](../../packages/ui/src/lib/splitPromptContext.ts#L42-L61)・[全文表示とコピー](../../packages/ui/src/components/PromptContext.tsx#L16-L61)・[失敗時の文言](../../packages/web-core/src/i18n/locales/ja/tasks.json#L375-L381)
+
+これは表示量を減らす仕組みであり、送信 token の削減、保存 prompt の書換え、権限や Wiki 消費の切替ではない。表示用 parser を Card の保存・編集 parser と取り違えない。元の保存文脈を継承する条件は上記の [fresh Session 契約](#保存と-fresh-session-への継承)に従い、backend では並列案内の条件分岐と Repository Memory の注入を別々に扱う。[独立した注入境界](../../crates/local-deployment/src/agent_run_port.rs#L908-L941)
+
+### 表示変更の検証範囲
+
+`node --test tests/chat/prompt-context.test.mjs` は Chromium の隔離 component fixture で、通常文・fence・引用・不完全／不一致 marker の fallback、CRLF を含む再結合、入れ子 preset、反復ブロック、開閉とキーボード、全文コピーの成功／失敗、編集 callback、案内 ON/OFF の復元を検査する。390 / 1280px と light / dark の実 theme CSS で横 overflow も検査する。[入力と操作の assertion](../../tests/chat/prompt-context.test.mjs#L65-L179)。clipboard と Markdown renderer は置換されており、OS clipboard、実 Markdown の全描画、保存 API や実 provider の統合試験ではない。[fixture の renderer と編集 callback](../../tests/chat/prompt-context.fixture.tsx#L23-L47)・[clipboard の置換](../../tests/chat/prompt-context.test.mjs#L53-L62)。初回要求・明示 OFF・旧文脈の保持は別の [Card context model の回帰](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L43-L128)で確認する。
+
+この Sync は凍結入力全3チャンクと source `ba8519ab44f29d2493412b2f3d21f38d55fe07fd` を対象に、設定と保存 model、会話の呼出側、表示 parser、backend の注入境界、独立した試験定義を静的に照合した。入力には開発時の成功報告と、正式 Integration の明示的な検証省略が別々に記録されている。本 Sync では製品テストを再実行しておらず、無関係な過去の説明全体を再検証したとは扱わない。
 
 ## 並列活動と固定したソースを読む
 

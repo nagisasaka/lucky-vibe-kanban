@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fb533a901cecd05cffb6bd8dd1569056a03c4b87956375dbdbe432c91eedf002",
+  "pageVersion": "sha256:424a8778761d592e0ecea50b3c1cc9dc1264a753d6e29fcf60b7ac4c688d080a",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1091,10 +1091,28 @@
           "version": "repo-lines-v1:sha256:70c3031883c27391a35794169caef91a3a95e5751a2a3ecb862302da5e3457fa:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyODkzNDkxNmVkMDkwNmQxODhkZWZlZDJmYjlkZmQ0MDMwZDQxZTBkOWM3MTJjNWYxNjczMmQ5NDBkMTU5YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d475d38017ff4fd29fa91c320da6e1c1",
+      "statement": "UserMessageEntry は元の content と編集 callback を ChatUserMessage に渡す。PromptContext は表示だけを分割し、通常部分に AppChatMarkdown、補助部分と全文に details/pre を使う。編集開始は元の content と既存の process・fork capability・編集中状態の判定を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/ChatUserMessage.tsx#L74-L88",
+          "version": "repo-lines-v1:sha256:4f856d6d5518785ef0878001e0bb2bbec0c9d6b41b5a6ea1d594e3a796998c7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5MTM5NmRkNTNkZjAxY2MwMWU3MmNjZGY3NzFjYWY3NGNmZWQxYzI1NTExYzQ2ODNhNGE3OThkZDNjZTY1M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2Y2M3NWE0ZWUxYWY2NmE3MmU4NWIxMzI5YzZiY2Q4MzkwYzcyMmNkYjg0ZTMxMjYxNDAwZmNhYWZmNzhiM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiOGI2MDBhNWI0NDhiMWU0ZDAyZGYwOTc0NmVkM2NhMzE3MmY3NWM0YWFiYjAxZGRlMDgwZTM2Y2FiMDc0YjQifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/PromptContext.tsx#L16-L42",
+          "version": "repo-lines-v1:sha256:2c94182b788ccf3054d6545638904f7b921037e31bf65b037f09a6ae1336036d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMGMwNDY1NGI0NzllMDFmOWU1MjY3N2FlYmU0OWZhNzkyMGU0NWMwZjc4ZGQ1YzBjMjU4NzZkMjRkNDA1YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhOTU0NWIwY2UwNWMyZDk3NTg0OTcxMTUzNTI1YjMwNzJmMzY0YjgwZDQ4NjdlOTljOGE0NTllNzI1MTBhYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwYTQwNTRkYmQ1ZWNmNTM5MDc0MzIyMTE4NzEyZDg3YmIwMzE0MmNkOTVlZDcwYzYwNmNiZDdkMjlkYzY3NDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzMzdmNjdiZjhjZjFmMmJiODZiNzY0MTZiMzVjZTAyZGVjZmExNTNkMjkyZWIwMWFhZTg0OGM5NWY4NWM5YjkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L882-L930",
+          "version": "repo-lines-v1:sha256:4cddb9e4970e8557ab45bd1e7981cc4925a292c78a75318f7556d3a523da66aa:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MGUyYzFlNjE3NDRjYzc5YjRiYWU1YWIzMjlhNDAyMjk4OGFkMDk2ZTc5Y2I2OTA4ZjJkZTEyNzQ2YjZjNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1YjNkNDA4NWU5OTIyMjc0ZmQ3ZTBjOWQ3NzZkYTg4MDFlOGU0Njk5YWRjOWM5NGNlOGZlZDc5YTllZDVlZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkMzM1Y2MyMDFkMTk5ODkwZDdkZjg0OTY5OWQzN2MzNjlhZDRhMzIzZWY3ZWZiZGY4ZjkyNjJiZTE5OTgxNjYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-23T23:13:08.630Z"
   }
 }
