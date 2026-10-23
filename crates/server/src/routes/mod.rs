@@ -22,6 +22,7 @@ pub mod execution_bridge;
 pub mod execution_processes;
 pub mod frontend;
 pub mod health;
+pub mod integration_validation;
 pub mod integrations;
 pub mod local_remote;
 pub mod openwiki;

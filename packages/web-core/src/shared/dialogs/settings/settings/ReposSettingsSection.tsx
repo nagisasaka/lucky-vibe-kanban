@@ -42,6 +42,7 @@ import {
 import { useSettingsMachineClient } from './SettingsHostContext';
 import { useSettingsDirty } from './SettingsDirtyContext';
 import { GithubCredentialsSettings } from './GithubCredentialsSettings';
+import { IntegrationValidationSettings } from './IntegrationValidationSettings';
 import { RepositoryMemorySettings } from './RepositoryMemorySettings';
 
 interface RepoScriptsFormState {
@@ -724,6 +725,15 @@ export function ReposSettingsSection({
                 </p>
               )}
             </SettingsCard>
+          )}
+
+          {machineClient && (
+            <IntegrationValidationSettings
+              key={`validation:${machineClient.target.id}:${selectedRepo.id}`}
+              repoId={selectedRepo.id}
+              repoPath={selectedRepo.path}
+              client={machineClient}
+            />
           )}
 
           {/* Scripts settings */}

@@ -1,4 +1,8 @@
 import type {
+  IntegrationValidationSettings,
+  SaveIntegrationValidationSettings,
+} from './integrationValidationSettings';
+import type {
   AgentSettingOperationError,
   AgentSettingsDiscoveryQuery,
   AgentSettingsInventoryView as AgentSettingsInventory,
@@ -92,6 +96,13 @@ export interface MachineClient {
     repoId: string,
     data: GithubCredentialTarget
   ) => Promise<void>;
+  getIntegrationValidation: (
+    repoId: string
+  ) => Promise<IntegrationValidationSettings>;
+  saveIntegrationValidation: (
+    repoId: string,
+    data: SaveIntegrationValidationSettings
+  ) => Promise<IntegrationValidationSettings>;
   getRepositoryMemory: (repoId: string) => Promise<RepositoryMemoryState>;
   configureRepositoryMemory: (
     repoId: string,
@@ -289,6 +300,26 @@ export function createMachineClient(
           target,
           `/api/repos/${repoId}/github-credentials/check`,
           { method: 'POST', body: JSON.stringify(data) }
+        )
+      ),
+    getIntegrationValidation: async (repoId) =>
+      handleApiResponse<IntegrationValidationSettings>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/integration-validation`
+        )
+      ),
+    saveIntegrationValidation: async (repoId, data) =>
+      handleApiResponse<IntegrationValidationSettings>(
+        await makeMachineRequest(
+          runtime,
+          target,
+          `/api/repos/${repoId}/integration-validation`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(data),
+          }
         )
       ),
     getRepositoryMemory: async (repoId) =>

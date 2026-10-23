@@ -39,12 +39,6 @@ pub(super) fn require_private_branch(
     Ok(())
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct ValidationPlan {
-    commands: Vec<String>,
-}
-
 /// Read configuration from the frozen target, never from an AI response or a moving worktree.
 pub(super) fn validation_plan(
     root: &Path,
@@ -56,18 +50,9 @@ pub(super) fn validation_plan(
     }
     let text = git(root, &["show", &format!("{base}:.lvk/integration-validation.json")])
         .context("VALIDATION_UNAVAILABLE: configure .lvk/integration-validation.json on the selected target, or explicitly select skipped validation")?;
-    let plan: ValidationPlan = serde_json::from_str(&text)?;
-    ensure!(
-        !plan.commands.is_empty() && plan.commands.len() <= 32,
-        "Validation requires 1–32 commands"
-    );
-    plan.commands
+    super::super::integration_validation::parse_commands(&text)?
         .into_iter()
         .map(|command| {
-            ensure!(
-                !command.trim().is_empty() && !matches!(command.trim(), "true" | ":" | "exit 0"),
-                "Empty/placeholder validation command"
-            );
             Ok(IntegrationValidation {
                 command,
                 cwd: ".".into(),

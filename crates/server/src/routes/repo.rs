@@ -405,6 +405,10 @@ pub fn router() -> Router<DeploymentImpl> {
             "/repos/{repo_id}/github-credentials/check",
             post(super::github_credentials::check),
         )
+        .route(
+            "/repos/{repo_id}/integration-validation",
+            get(super::integration_validation::get).put(super::integration_validation::save),
+        )
         .route("/repos/{repo_id}/branches", get(get_repo_branches))
         .route(
             "/repos/{repo_id}/parallel-context",

@@ -1,5 +1,23 @@
 {
   "settings": {
+    "integrationValidation": {
+      "title": "正式Integrationの検証",
+      "description": "リポジトリルートから順番に実行する必須Bashコマンドを定義します。保存してもコマンドは実行しません。",
+      "timing": "登録された作業木のファイルを編集します。通常のGit手順で、正式Integrationの対象branchへこのファイルをcommitしてください。新規Integrationはその対象commitの設定を固定します。既存runと「検証をすべて省略」の意味は変わりません。自動commitやbranch切替は行いません。",
+      "concurrency": "保存時に読込時のファイル・branch・HEADを照合し、競合を拒否します。再読込前に必要な下書きを別途控えてください。外部Gitやエディタとは排他されないため、保存中は同じ作業木の編集・branch切替を避けてください。",
+      "loading": "検証設定を読み込み中…",
+      "loadError": "検証設定を読み込めませんでした。再読込してください。",
+      "saveError": "検証設定を保存できませんでした。下書きは保持しています。",
+      "missing": "この作業木には設定ファイルがまだありません。",
+      "json": "設定JSON（詳細・修復）",
+      "invalid": "commands配列のみを指定し、空でない文字列を1〜32件入力してください。true、:、exit 0だけのコマンドは使用できません。",
+      "command": "コマンド",
+      "save": "検証コマンドを保存",
+      "reload": "下書きを破棄して再読込",
+      "saved": "ファイルを保存し、読戻しました。新規Integrationを開始する前に対象branchへcommitしてください。コマンドは実行していません。",
+      "add": "コマンドを追加",
+      "remove": "コマンドを削除"
+    },
     "common": {
       "unsavedChanges": "• 未保存の変更があります",
       "discardChangesConfirm": "Discard unsaved changes?"

@@ -61,3 +61,31 @@ it('keeps explicit local and remote routing separate from the ambient route', as
   await expect(remote.listRepos()).rejects.toThrow('Remote Access');
   expect(request).not.toHaveBeenCalled();
 });
+
+it('reads and saves Integration JSON with the edited revision and guards stale clients', async () => {
+  let available = true;
+  const client = createMachineClient(
+    'local',
+    { id: 'local', apiHostId: null, kind: 'local', label: 'LVK server' },
+    () => available
+  );
+  await client.getIntegrationValidation('repo');
+  expect(request.mock.calls[0][0]).toBe(
+    '/api/repos/repo/integration-validation'
+  );
+  const data = {
+    expected_revision: 'revision',
+    content: '{"commands":["echo test"]}',
+  };
+  request.mockResolvedValue(new Response('{}'));
+  await client.saveIntegrationValidation('repo', data);
+  expect(request.mock.calls[1][1]).toMatchObject({
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  available = false;
+  await expect(client.saveIntegrationValidation('repo', data)).rejects.toThrow(
+    'Host'
+  );
+  expect(request).toHaveBeenCalledTimes(2);
+});
