@@ -30,6 +30,7 @@ mod operations;
 mod project_read;
 mod questions;
 mod read;
+mod repository_wiki;
 mod resource_observation;
 mod run_events;
 mod runtime_read;
@@ -186,9 +187,18 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "read_process_output"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
         "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
-        "add_issue_comment" | "write_design_note" | "create_todo" | "update_todo"
-        | "delete_todo" | "create_issue" | "update_issue" | "steer_execution"
-        | "continue_execution" | "answer_question" | "start_workspace" => Some("lvk:write"),
+        "add_issue_comment"
+        | "write_design_note"
+        | "create_todo"
+        | "update_todo"
+        | "delete_todo"
+        | "create_issue"
+        | "update_issue"
+        | "steer_execution"
+        | "continue_execution"
+        | "answer_question"
+        | "start_workspace"
+        | "sync_repository_wiki" => Some("lvk:write"),
         _ => None,
     }
 }
@@ -354,6 +364,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(todos::tools());
     tools.extend(design_notes::tools());
     tools.extend(launch::tools());
+    tools.extend(repository_wiki::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
     tools.extend(integration_write::tools());
@@ -475,6 +486,12 @@ impl Remote {
             }
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await
+            }
+            name if repository_wiki::tools()
+                .iter()
+                .any(|tool| tool.name == name) =>
+            {
+                repository_wiki::call(self, principal, name, args).await
             }
             name if launch::tools().iter().any(|tool| tool.name == name) => {
                 launch::call(self, principal, name, args).await

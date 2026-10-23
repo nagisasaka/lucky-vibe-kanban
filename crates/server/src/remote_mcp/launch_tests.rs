@@ -29,6 +29,8 @@ struct FixtureLaunch {
     pool: SqlitePool,
     starts: tokio::sync::Mutex<Vec<Value>>,
     integrations: tokio::sync::Mutex<Vec<Value>>,
+    wiki_requests: tokio::sync::Mutex<Vec<Value>>,
+    wiki_success: std::sync::atomic::AtomicBool,
     pause: bool,
     skip_default: std::sync::atomic::AtomicBool,
     admission_failure: tokio::sync::Mutex<Option<crate::routes::integrations::AdmissionFailure>>,
@@ -37,6 +39,26 @@ struct FixtureLaunch {
 }
 #[async_trait]
 impl LaunchActions for FixtureLaunch {
+    async fn wiki_status(&self, repository: Uuid) -> anyhow::Result<Value> {
+        Ok(
+            json!({"repository_id":repository,"status":"stale","current_source_commit":"a".repeat(40)}),
+        )
+    }
+    async fn wiki_sync(&self, request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
+        self.wiki_requests.lock().await.push(json!({"repository_id":request.repository_id,"source":request.expected_source_commit,"from_commit":request.from_commit}));
+        self.entered.notify_one();
+        if self.pause {
+            self.release.notified().await;
+        }
+        if self.wiki_success.load(std::sync::atomic::Ordering::SeqCst) {
+            return Ok(
+                json!({"repository_id":request.repository_id,"workspace_id":Uuid::new_v4(),"agent_run_id":Uuid::new_v4(),"execution_accepted":true,"wiki_complete":false}),
+            );
+        }
+        // A mock rejects admission; no model or real Wiki is used.
+        anyhow::bail!("Repository maintenance already active; inspect the existing execution")
+    }
+
     async fn defaults(&self) -> ExecutorConfig {
         let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
         config.variant = Some("SAVED".into());
@@ -178,6 +200,8 @@ async fn fixture(
         pool: remote.pool.clone(),
         starts: Default::default(),
         integrations: Default::default(),
+        wiki_requests: Default::default(),
+        wiki_success: Default::default(),
         pause,
         skip_default: Default::default(),
         admission_failure: Default::default(),
@@ -566,4 +590,129 @@ async fn integration_validation_http_dispatch_and_get_reconnect() {
     let _ = server.await;
     provider.abort();
     let _ = provider.await;
+}
+
+#[tokio::test]
+async fn wiki_admission_is_scoped_durable_and_never_replayed_after_failure() {
+    use super::repository_wiki::call;
+    let (_directory, remote, dispatch, principal, target, _issue, repo) = fixture(true).await;
+    let request = Uuid::new_v4();
+    let input = json!({"project_id":target.project_id,"repository_id":repo,"request_id":request,
+        "expected_target_branch":"main","expected_source_commit":"a".repeat(40),"from_commit":"b".repeat(40)});
+    let mut readonly = principal.clone();
+    readonly.scopes.remove("lvk:write");
+    assert!(
+        call(&remote, &readonly, "sync_repository_wiki", input.clone())
+            .await
+            .is_err()
+    );
+    let mut foreign = input.clone();
+    foreign["repository_id"] = json!(Uuid::new_v4());
+    assert!(
+        call(&remote, &principal, "sync_repository_wiki", foreign)
+            .await
+            .is_err()
+    );
+    assert!(dispatch.wiki_requests.lock().await.is_empty());
+    let read_args = json!({"project_id":target.project_id,"repository_id":repo});
+    assert_eq!(
+        call(&remote, &readonly, "get_repository_wiki", read_args.clone())
+            .await
+            .unwrap()["status"],
+        "stale"
+    );
+    let first = call(&remote, &principal, "sync_repository_wiki", input.clone())
+        .await
+        .unwrap();
+    dispatch.entered.notified().await;
+    let repeat = call(&remote, &principal, "sync_repository_wiki", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(first["operation_id"], repeat["operation_id"]);
+    assert_eq!(dispatch.wiki_requests.lock().await.len(), 1);
+    let result_args =
+        json!({"project_id":target.project_id,"repository_id":repo,"request_id":request});
+    let pending = call(
+        &remote,
+        &readonly,
+        "get_repository_wiki_sync",
+        result_args.clone(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(pending["execution"]["wiki_complete"], false);
+    dispatch.release.notify_one();
+    let settled = settled_operation(&remote, &principal, target.project_id, request).await;
+    assert_eq!(settled["status"], "uncertain");
+    let reread = call(
+        &remote,
+        &readonly,
+        "get_repository_wiki_sync",
+        result_args.clone(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(reread["admission"]["operation_id"], first["operation_id"]);
+    assert_eq!(reread["execution"]["wiki_complete"], false);
+    let replay = call(&remote, &principal, "sync_repository_wiki", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(replay["status"], "uncertain");
+    assert_eq!(dispatch.wiki_requests.lock().await.len(), 1);
+    let mut changed = input;
+    changed["expected_source_commit"] = json!("c".repeat(40));
+    assert!(
+        call(&remote, &principal, "sync_repository_wiki", changed)
+            .await
+            .is_err()
+    );
+    let mut other_actor = principal;
+    other_actor.subject = "other".into();
+    assert!(
+        call(
+            &remote,
+            &other_actor,
+            "get_repository_wiki_sync",
+            result_args
+        )
+        .await
+        .is_err()
+    );
+}
+
+#[tokio::test]
+async fn wiki_accepted_execution_is_not_publication_success() {
+    use super::repository_wiki::call;
+    let (_directory, remote, dispatch, principal, target, _issue, repo) = fixture(false).await;
+    dispatch
+        .wiki_success
+        .store(true, std::sync::atomic::Ordering::SeqCst);
+    let request = Uuid::new_v4();
+    let input = json!({"project_id":target.project_id,"repository_id":repo,"request_id":request,
+        "expected_target_branch":"main","expected_source_commit":"a".repeat(40)});
+    call(&remote, &principal, "sync_repository_wiki", input.clone())
+        .await
+        .unwrap();
+    let settled = settled_operation(&remote, &principal, target.project_id, request).await;
+    assert_eq!(settled["status"], "succeeded");
+    assert_eq!(settled["result"]["execution_accepted"], true);
+    assert_eq!(settled["result"]["wiki_complete"], false);
+    assert!(settled["result"]["agent_run_id"].is_string());
+    // Missing domain evidence must preserve the receipt and never invent success.
+    let read = call(
+        &remote,
+        &principal,
+        "get_repository_wiki_sync",
+        json!({"project_id":target.project_id,"repository_id":repo,"request_id":request}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(read["admission"]["result"], settled["result"]);
+    assert_eq!(read["execution"]["status"], "evidence_unavailable");
+    assert_eq!(read["execution"]["wiki_complete"], false);
+    let replay = call(&remote, &principal, "sync_repository_wiki", input)
+        .await
+        .unwrap();
+    assert_eq!(replay["result"], settled["result"]);
+    assert_eq!(dispatch.wiki_requests.lock().await.len(), 1);
 }

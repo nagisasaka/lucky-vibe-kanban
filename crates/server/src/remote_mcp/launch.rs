@@ -120,6 +120,12 @@ pub(super) trait LaunchActions: Send + Sync {
         anyhow::bail!("Integration cancellation service unavailable")
     }
 
+    async fn wiki_status(&self, _repository: Uuid) -> anyhow::Result<Value> {
+        anyhow::bail!("Wiki service unavailable")
+    }
+    async fn wiki_sync(&self, _request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
+        anyhow::bail!("Wiki service unavailable")
+    }
     async fn defaults(&self) -> ExecutorConfig;
     async fn start(
         &self,
@@ -152,6 +158,12 @@ impl LaunchActions for ExistingLaunch {
         Ok(())
     }
 
+    async fn wiki_status(&self, repository: Uuid) -> anyhow::Result<Value> {
+        super::repository_wiki::status(&self.0, repository).await
+    }
+    async fn wiki_sync(&self, request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
+        super::repository_wiki::sync(&self.0, request).await
+    }
     async fn defaults(&self) -> ExecutorConfig {
         self.0.config().read().await.executor_profile.clone().into()
     }

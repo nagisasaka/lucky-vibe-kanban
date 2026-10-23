@@ -134,11 +134,34 @@ is exported.
 | `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page` | Project/Workspace/repository and selected page; read-only bounded evidence with revision |
 | `get_workspace_verification`, `get_workspace_verification_test` | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof |
 | `list_workspace_files`, `get_workspace_file`, `search_workspace_files`, `get_workspace_file_ranges`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads |
+| `get_repository_wiki` | Project/repository; saved target branch, current source HEAD, UI freshness and maintenance IDs, without starting work |
+| `sync_repository_wiki` (`lvk:write`) | Project/repository/request, observed branch/source and optional `from_commit`; existing UI reconciliation admission, never implicit initial generation |
+| `get_repository_wiki_sync` | Project/repository/original request; durable admission, exact execution publication/reconciliation evidence and separate latest freshness |
 | `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
 | `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
 | `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
+
+For Repository Wiki recovery, discover current Project/repository IDs, then read
+`get_repository_wiki`. Pass its `target_branch` as `expected_target_branch` and
+`current_source_commit` as `expected_source_commit` to `sync_repository_wiki`.
+The saved target and source are checked under the existing maintenance lock;
+active writers, unresolved Integration, branch and publication guards remain in
+the UI's common path. Omit `from_commit` for current-source reconciliation, or
+pass a SHA for the UI's since-commit scope. Missing Wiki requires explicit
+initialisation in Repository settings; this tool cannot start Bootstrap.
+
+Reuse the original `request_id` after a lost response. `get_operation` and
+`get_repository_wiki_sync` distinguish a running admission from accepted
+execution. Admission `succeeded` means only that execution was accepted;
+`wiki_complete` requires the retained host reconciliation result and publication
+checkpoint, with no remaining host ownership. A publication checkpoint alone is
+an intent journal, and AgentRun success alone is insufficient. A completed old
+execution does not prove that today's source is current. Reads never advance
+reconciliation. An `uncertain` admission may have reserved a writer: inspect the
+latest maintenance identities before requesting another run. Public error codes
+omit private diagnostics; retained details remain in the existing execution UI.
 
 `start_integration` accepts optional `skip_validation`: `true` skips additional
 Integration validation (unverified), `false` runs it, and omission or `null`
