@@ -1121,6 +1121,15 @@
     "noCommands": "No commands available for this agent."
   },
   "kanban": {
+    "compact": {
+      "workspaces": "Workspaces: {{count}} · Details",
+      "approval": "Approval required",
+      "input": "Input required",
+      "running": "Running",
+      "failed": "Failed",
+      "unseen": "Unseen activity",
+      "devServer": "Dev server running"
+    },
     "commentLastEditedAt": "Last edited at (body may differ from the original post)",
     "reviewLabel": "Reviewer label (self-reported, not verified)",
     "recordedPrincipal": "Initial authenticated MCP principal (issuer / subject)",

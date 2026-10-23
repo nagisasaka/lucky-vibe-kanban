@@ -1,0 +1,21 @@
+@config '../../../../../local-web/tailwind.new.config.js';
+
+/* Measure each status column, not the screen's physical resolution. Keep DOM
+   order stable across resizing, disclosure and data updates. */
+.kanban-grid-column {
+  container-type: inline-size;
+}
+
+.kanban-grid-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Two readable 16rem cards plus the gap and outer padding; never a third. */
+@container (min-width: 33.5rem) {
+  .kanban-grid-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
