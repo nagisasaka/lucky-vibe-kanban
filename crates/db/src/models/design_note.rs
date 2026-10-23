@@ -188,7 +188,7 @@ impl DesignNote {
         Ok(sqlx::query_as("SELECT * FROM design_notes WHERE project_id=? ORDER BY updated_at DESC,id LIMIT 100 OFFSET ?").bind(project).bind(offset).fetch_all(pool).await?)
     }
     pub async fn get(pool: &SqlitePool, project: Uuid, id: Uuid) -> Result<Self, DesignNoteError> {
-        sqlx::query_as("SELECT * FROM design_notes WHERE project_id=? AND id=?")
+        sqlx::query_as("SELECT * FROM design_notes WHERE project_id=? AND id=? AND EXISTS(SELECT 1 FROM projects WHERE projects.id=design_notes.project_id)")
             .bind(project)
             .bind(id)
             .fetch_optional(pool)
@@ -257,7 +257,7 @@ impl DesignNote {
         // First statement is a write: serialize competing SQLite writers before reading revisions.
         sqlx::query("INSERT INTO design_note_requests(project_id,actor,request_id,input) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM projects WHERE id=?) ON CONFLICT DO NOTHING")
             .bind(project).bind(actor).bind(input.request_id).bind(&serialized).bind(project).execute(&mut *tx).await?;
-        let prior: Option<(String, Option<String>)> = sqlx::query_as("SELECT input,result FROM design_note_requests WHERE project_id=? AND actor=? AND request_id=?").bind(project).bind(actor).bind(input.request_id).fetch_optional(&mut *tx).await?;
+        let prior: Option<(String, Option<String>)> = sqlx::query_as("SELECT input,result FROM design_note_requests WHERE project_id=? AND actor=? AND request_id=? AND EXISTS(SELECT 1 FROM projects WHERE projects.id=design_note_requests.project_id)").bind(project).bind(actor).bind(input.request_id).fetch_optional(&mut *tx).await?;
         let (saved_input, result) = prior.ok_or(DesignNoteError::NotFound)?;
         if saved_input != serialized {
             return Err(DesignNoteError::Conflict);
@@ -302,7 +302,7 @@ impl DesignNote {
                     DesignNoteAction::Create { .. } => unreachable!(),
                 };
                 let mut note: Self =
-                    sqlx::query_as("SELECT * FROM design_notes WHERE project_id=? AND id=?")
+                    sqlx::query_as("SELECT * FROM design_notes WHERE project_id=? AND id=? AND EXISTS(SELECT 1 FROM projects WHERE projects.id=design_notes.project_id)")
                         .bind(project)
                         .bind(id)
                         .fetch_optional(&mut *tx)

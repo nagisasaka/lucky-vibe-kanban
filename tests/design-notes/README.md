@@ -55,7 +55,7 @@ node tests/design-notes/isolated.mjs
 E2Eはこのcheckoutのtarget/debugのbinaryとbuilt frontendを使用し、新規
 LVK_INSTANCE_DIR・SQLite・loopbackのOS割当ポートで起動する。現行サーバーや共有DBは
 使わず、有料モデルも呼ばない。finallyで開始した子プロセスを停止・待機し、一時DBを削除。
-スクリーンショット3枚とログは `.build/design-notes/e2e/` に残す。
+スクリーンショット3枚とログは `.build/design-notes/retention-e2e/` に残す。
 `LVK_CHROMIUM_EXECUTABLE`で既存Chromiumの絶対パスを指定できる。
 
 ブラウザ検査は作成・編集・複数メモ、初版・全版・復元、MCP追記と再送、
@@ -87,3 +87,16 @@ MCP書込みの成功結果は `{note:{id,revision},addition:null|{id,revision}}
 stdioは直接これを返し、外部HTTPはoperation receiptのsucceeded resultに保存する。
 再送は元の確定版を返す。全文は返却ID/revisionを使ってbounded readで取得する。
 UI RESTのDesignNoteResult契約は変更しない。
+
+## Project削除時の暫定保持（2026-10-23の明示承認）
+
+設計メモを理由にProject削除を拒否しない。本文・追記・全版・出典・request receiptを
+元Project IDとともに残し、削除時の名称とOrganizationを保持する。
+削除済みProjectのメモは既存REST/MCPから参照・更新できず、同じProject IDの再作成も拒否する。
+他機能のIntegration/MCP operation等による既存の削除制約は維持する。
+保持後の閲覧・持ち出し・再関連付け・保持期限はLOCAL-99
+(`7360a413-e8f5-447b-a252-ba74de005976`)で決定する。復元UIは今回追加しない。
+
+E2Eは設定画面からの削除成功・一覧からの消失に加え、隔離SQLiteの全保存columnを
+削除前後でSHA-256比較し、元識別情報、FK整合性、再削除、削除後と別Projectからの拒否を確認する。
+`sql-snapshot.py`はtask-ownedの隔離E2E DBのみをread-onlyで開き、本文や出典の内容は出力しない。

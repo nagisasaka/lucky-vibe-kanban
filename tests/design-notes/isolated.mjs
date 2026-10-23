@@ -12,7 +12,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 const root = process.cwd();
-const output = path.join(root, ".build/design-notes/e2e");
+const output = path.join(root, ".build/design-notes/retention-e2e");
 await mkdir(path.join(output, "screenshots"), { recursive: true });
 const instance = await mkdtemp(path.join(output, "instance-"));
 const env = {
@@ -318,11 +318,6 @@ try {
   await api(`/api/projects/${foreign}/design-notes/${id}`,'GET',undefined,404);
   await api(`/api/projects/${foreign}/design-notes`,'POST',{request_id:randomUUID(),operation:{action:'restore',note_id:id,expected_revision:once.note.revision,revision:1}},404);
   await tool('get_design_note',{project_id:foreign,note_id:id},true);
-  const beforeDelete = (await api(`${notePath}/${id}`)).data;
-  const protectedDelete = await api(`/api/local/v1/projects/${project}`,'DELETE',undefined,409);
-  assert.match(JSON.stringify(protectedDelete),/履歴/);
-  assert.match(JSON.stringify(protectedDelete),/一時的/);
-  assert.deepEqual((await api(`${notePath}/${id}`)).data,beforeDelete);
 
   // Multiple notes, visible proposal/open question distinction, safe Markdown renderer.
   await write({action:'append',note_id:id,addition:{...addition,heading:'AI提案',kind:'proposal',speaker:'AI',content:'<script>window.__noteXss=true</script>\n[unsafe](javascript:alert(1))'}});
@@ -388,7 +383,7 @@ try {
   }
   assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,revision:1})).body,longText);
   assert.equal((await mcpSnapshot({project_id:foreign,note_id:longId,addition_id:addedReceipt.addition.id,revision:1})).content,longText);
-  // Confirm deletion refusal through the real settings UI, not only REST.
+  // Real UI deletion retains every SQL column of notes, revisions and receipts.
   await page.setViewportSize({width:1440,height:1000});
   await page.goto(`${base}/projects/${project}`);
   await page.getByRole('button',{name:'Project menu',exact:true}).click();
@@ -400,21 +395,39 @@ try {
   // Existing KeyboardDialog has a heading but no role=dialog.
   const confirmDelete = page.getByRole('heading',{name:'Delete Project?',exact:true}).locator('..').locator('..');
   await expect(confirmDelete).toBeVisible();
-  const preserved = await api(`${notePath}/${id}`);
-  const preservedHistory = await mcpHistory({project_id:project,note_id:id});
-  const preservedAdditions = await Promise.all(preserved.data.additions.map(a=>mcpHistory({project_id:project,note_id:id,addition_id:a.id})));
-  const refusal = page.waitForResponse(r=>r.request().method()==='DELETE' && r.url().endsWith(`/api/local/v1/projects/${project}`));
+  const sqlSnapshot = () => JSON.parse(execFileSync('python3',[
+    'tests/design-notes/sql-snapshot.py',path.join(instance,'data/db.v2.sqlite'),project
+  ],{encoding:'utf8'}));
+  const preserved = sqlSnapshot();
+  const deletion = page.waitForResponse(r=>r.request().method()==='DELETE' && r.url().endsWith(`/api/local/v1/projects/${project}`));
   await confirmDelete.getByRole('button',{name:'削除',exact:true}).click();
-  assert.equal((await refusal).status(),409);
-  await expect(page.getByText(/設計メモの本文・追記・履歴を保護するため/)).toBeVisible();
-  await expect(page.getByText('Project deleted successfully',{exact:true})).toHaveCount(0);
-  await expect(projectRow).toBeVisible();
-  assert.deepEqual(await api(`${notePath}/${id}`),preserved);
-  assert.deepEqual(await mcpHistory({project_id:project,note_id:id}),preservedHistory);
-  assert.deepEqual(await Promise.all(preserved.data.additions.map(a=>mcpHistory({project_id:project,note_id:id,addition_id:a.id}))),preservedAdditions);
-  await page.screenshot({path:path.join(output,'screenshots/delete-refused.png')});
+  assert.equal((await deletion).status(),200);
+  await expect(page.getByText('Project deleted successfully',{exact:true})).toBeVisible();
+  await expect(projectRow).toHaveCount(0);
+  const retained = sqlSnapshot();
+  assert.equal(retained.project_exists,false);
+  assert.deepEqual(retained.tables,preserved.tables);
+  assert.equal(retained.identity.id,project.replaceAll('-','').toUpperCase());
+  assert.equal(retained.identity.name,'設計メモ検証');
+  assert.equal(retained.identity.organization_id,'00000000000000000000000000000002');
+  assert.ok(retained.identity.deleted_at);
+  assert.deepEqual(retained.foreign_key_check,[]);
+  await api(`/api/local/v1/projects/${project}`,'DELETE');
+  assert.deepEqual(sqlSnapshot(),retained,'repeated delete must not alter retained data');
+  await api(notePath,'GET',undefined,404);
+  await api(`${notePath}/${id}`,'GET',undefined,404);
+  await api(`${notePath}/${id}/history`,'GET',undefined,404);
+  await api(notePath,'POST',updateInput,404);
+  await tool('get_design_note',{project_id:project,note_id:id},true);
+  await tool('write_design_note',{project_id:project,input:updateInput},true);
+  await api(`/api/projects/${foreign}/design-notes/${id}`,'GET',undefined,404);
+  await api(`/api/projects/${foreign}/design-notes`,'POST',{request_id:randomUUID(),operation:{action:'restore',note_id:id,expected_revision:once.note.revision,revision:1}},404);
+  await tool('get_design_note',{project_id:foreign,note_id:id},true);
+  assert.deepEqual(sqlSnapshot(),retained,'denied reads/writes preserve all SQL records');
+  console.log(JSON.stringify({sqlRetention:{before:preserved,after:retained}},null,2));
+  await page.screenshot({path:path.join(output,'screenshots/delete-retained.png')});
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload','bounded Unicode/pinned read','bounded stdio write/retry','409 deletion UI and unchanged history'],ports:new URL(base).port},null,2));
+  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload','bounded Unicode/pinned read','bounded stdio write/retry','200 deletion UI, SQL history retention, closed deleted scope and repeated deletion'],ports:new URL(base).port},null,2));
 } catch(error) {
   if(page) await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});
   throw error;
@@ -422,4 +435,5 @@ try {
   await browser?.close();
   for(const child of children.reverse()) await stop(child);
   await rm(instance,{recursive:true,force:true});
+  console.log(JSON.stringify({cleanup:{childrenStopped:children.length,temporaryInstanceRemoved:true},at:new Date().toISOString()}));
 }

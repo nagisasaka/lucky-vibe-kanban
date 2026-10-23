@@ -1,0 +1,117 @@
+LOCAL-83 Project削除時の履歴保持: 実ログ抜粋
+ソース固定前の隔離試験。前回409仕様の結果とは区別する。
+
+$ cargo test -p db design_note --lib
+出典: .build/design-notes/retention/db-test-2.log
+   Compiling db v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/db)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.73s
+     Running unittests src/lib.rs (target/debug/deps/db-94030fab3eb33f78)
+
+running 8 tests
+test models::design_note::tests::revisions_restore_and_retries_preserve_first_record ... ok
+test models::design_note::tests::concurrent_body_writes_have_one_winner ... ok
+test models::design_note::tests::invalid_references_and_failed_writes_leave_no_partial_history ... ok
+test models::design_note::tests::additions_corrections_hiding_and_explicit_integration_preserve_attribution ... ok
+test models::design_note::tests::independent_sqlite_connections_reject_stale_body_and_deduplicate_retries ... ok
+test models::design_note::tests::mcp_write_receipt_is_small_and_replays_committed_versions ... ok
+test models::design_note::tests::bounded_reads_preserve_unicode_long_content_and_pinned_revisions ... ok
+test models::design_note::tests::bounded_metadata_pages_cover_many_notes_additions_and_histories ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 97 filtered out; finished in 8.23s
+
+
+$ cargo test -p server project_delete_retains_design_history_atomically --lib
+出典: .build/design-notes/retention/delete-test.log
+   Compiling db v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/db)
+   Compiling server v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/server)
+   Compiling workspace-manager v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/workspace-manager)
+   Compiling git-host v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/git-host)
+   Compiling services v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/services)
+   Compiling deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/deployment)
+   Compiling local-deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/local-deployment)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 12s
+     Running unittests src/lib.rs (target/debug/deps/server-4ecb5813dcfd5681)
+
+running 1 test
+test routes::local_remote::tests::project_delete_retains_design_history_atomically ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 292 filtered out; finished in 0.90s
+
+
+$ cargo test -p server design_note_mcp --lib
+出典: .build/design-notes/retention/mcp-test.log
+   Compiling server v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.60s
+     Running unittests src/lib.rs (target/debug/deps/server-4ecb5813dcfd5681)
+
+running 3 tests
+test remote_mcp::tests::design_note_mcp_deleted_project_is_not_available ... ok
+test remote_mcp::tests::design_note_mcp_scope_receipts_history_and_project_boundaries ... ok
+test remote_mcp::tests::design_note_mcp_write_initial_retry_and_operation_are_bounded ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 290 filtered out; finished in 2.03s
+
+
+$ cargo test -p server http_discovery_authentication_and_tool_call_roundtrip --lib
+出典: .build/design-notes/retention/http-test.log
+   Compiling server v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.01s
+     Running unittests src/lib.rs (target/debug/deps/server-4ecb5813dcfd5681)
+
+running 1 test
+test remote_mcp::tests::http_discovery_authentication_and_tool_call_roundtrip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 292 filtered out; finished in 0.17s
+
+
+$ pnpm run prepare-db:check
+出典: .build/design-notes/retention/sqlx-check.log
+Applied 20261010000000/migrate project chat (4.755838ms)
+Applied 20261013000000/migrate remote mcp operations (6.412739ms)
+Applied 20261015000000/migrate server access (3.128074ms)
+Applied 20261015010000/migrate preview access (2.287821ms)
+Applied 20261016000000/migrate remove project chat (2.957977ms)
+Applied 20261018000000/migrate project todos (2.255462ms)
+Applied 20261018010000/migrate chatgpt client credentials (1.790007ms)
+Applied 20261018180000/migrate web push (3.533916ms)
+Applied 20261020190000/migrate kanban lifecycle (6.500108ms)
+Applied 20261020200000/migrate runtime access settings (1.581644ms)
+Applied 20261021173000/migrate workspace tokens (2.026304ms)
+Applied 20261023000000/migrate design notes (2.885738ms)
+Applied 20261023110000/migrate retain design notes on project delete (4.646706ms)
+Checking prepared queries...
+    Checking db v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/db)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.63s
+warning: potentially unused queries found in .sqlx; you may want to re-run sqlx prepare
+SQLx check complete!
+
+$ cargo clippy -p db -p server --all-targets -- -D warnings
+出典: .build/design-notes/retention/clippy.log
+    Checking rmcp v1.8.0
+   Compiling server v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/server)
+    Checking codex-app-server-protocol v0.144.1 (https://github.com/openai/codex.git?tag=rust-v0.144.1#44918ea1)
+    Checking executors v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/executors)
+    Checking db v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/db)
+    Checking git-host v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/git-host)
+    Checking workspace-manager v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/workspace-manager)
+    Checking services v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/services)
+    Checking deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/deployment)
+    Checking local-deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/local-deployment)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 33s
+
+工程前/中の実観測（UTC）:
+{"time": "2026-10-23T10:48:58Z", "available_GiB": 13.48, "swap_GiB": 0.49, "swap_growth_MiB": 0.0, "cpu_percent": 0.5, "load": [2.6142578125, 1.40234375, 1.88330078125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.92, "swap": 523968512}
+{"time": "2026-10-23T10:49:05Z", "available_GiB": 13.52, "swap_GiB": 0.49, "swap_growth_MiB": -0.0, "cpu_percent": 2.3, "load": [2.2119140625, 1.35595703125, 1.86279296875], "memory_full_avg10": 0.0, "disk_free_GiB": 230.91, "swap": 523952128}
+{"time": "2026-10-23T10:50:27Z", "available_GiB": 13.68, "swap_GiB": 0.52, "swap_growth_MiB": 32.3, "cpu_percent": 1.3, "load": [0.990234375, 1.189453125, 1.76220703125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.69, "swap": 557793280}
+{"time": "2026-10-23T10:51:10Z", "available_GiB": 13.69, "swap_GiB": 0.5, "swap_growth_MiB": -22.9, "cpu_percent": 90.8, "load": [2.20654296875, 1.5615234375, 1.8642578125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.55, "swap": 533770240}
+{"time": "2026-10-23T10:52:03Z", "available_GiB": 13.31, "swap_GiB": 0.45, "swap_growth_MiB": -50.1, "cpu_percent": 12.5, "load": [2.03759765625, 1.6142578125, 1.86669921875], "memory_full_avg10": 0.05, "disk_free_GiB": 229.83, "swap": 481189888}
+{"time": "2026-10-23T10:53:13Z", "available_GiB": 11.27, "swap_GiB": 0.42, "swap_growth_MiB": -25.3, "cpu_percent": 20.5, "load": [1.69677734375, 1.626953125, 1.8544921875], "memory_full_avg10": 0.0, "disk_free_GiB": 229.6, "swap": 454688768}
+{"time": "2026-10-23T10:54:25Z", "available_GiB": 13.15, "swap_GiB": 0.43, "swap_growth_MiB": 3.2, "cpu_percent": 1.5, "load": [4.7333984375, 2.45947265625, 2.11767578125], "memory_full_avg10": 0.21, "disk_free_GiB": 228.45, "swap": 458084352}
+{"time": "2026-10-23T10:54:36Z", "available_GiB": 13.43, "swap_GiB": 0.43, "swap_growth_MiB": -0.2, "cpu_percent": 47.6, "load": [4.0048828125, 2.3779296875, 2.09423828125], "memory_full_avg10": 0.06, "disk_free_GiB": 228.45, "swap": 457900032}
+{"time": "2026-10-23T10:55:02Z", "available_GiB": 13.63, "swap_GiB": 0.7, "swap_growth_MiB": 279.0, "cpu_percent": 0.0, "load": [2.97900390625, 2.26611328125, 2.064453125], "memory_full_avg10": 0.74, "disk_free_GiB": 227.91, "swap": 750485504}
+{"time": "2026-10-23T10:55:23Z", "available_GiB": 13.49, "swap_GiB": 0.74, "swap_growth_MiB": 40.8, "cpu_percent": 4.0, "load": [2.490234375, 2.19921875, 2.04638671875], "memory_full_avg10": 0.15, "disk_free_GiB": 227.93, "swap": 793235456}
+{"time": "2026-10-23T10:55:40Z", "available_GiB": 13.69, "swap_GiB": 0.74, "swap_growth_MiB": -0.6, "cpu_percent": 1.0, "load": [2.146484375, 2.13720703125, 2.0283203125], "memory_full_avg10": 0.02, "disk_free_GiB": 227.86, "swap": 792645632}
+{"time": "2026-10-23T10:56:44Z", "available_GiB": 13.63, "swap_GiB": 1.03, "swap_growth_MiB": 300.2, "cpu_percent": 25.7, "load": [1.49462890625, 1.9423828125, 1.966796875], "memory_full_avg10": 0.11, "disk_free_GiB": 227.64, "swap": 1107386368}
+{"time": "2026-10-23T10:57:46Z", "available_GiB": 12.0, "swap_GiB": 1.03, "swap_growth_MiB": -6.0, "cpu_percent": 30.6, "load": [1.81640625, 1.94140625, 1.96533203125], "memory_full_avg10": 0.0, "disk_free_GiB": 227.1, "swap": 1101123584}
+
+独立レビュー: /root/retention_review。実装および実MCP/Integration fixture追加を読取レビュー。P1/P2ブロッカーなし。レビュー担当は試験未実行。

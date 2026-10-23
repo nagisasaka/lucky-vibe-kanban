@@ -20,11 +20,11 @@ def statement(text, prefix):
 
 conn = sqlite3.connect(':memory:')
 conn.row_factory = sqlite3.Row
-conn.executescript('PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY);'
+conn.executescript('PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY, name TEXT DEFAULT "fixture"); CREATE TABLE local_project_metadata(project_id BLOB, organization_id BLOB);'
                    'CREATE TABLE children(id INTEGER PRIMARY KEY, project_id BLOB REFERENCES projects(id) ON DELETE CASCADE);')
 conn.executescript((ROOT / 'crates/db/migrations/20261023000000_design_notes.sql').read_text())
 p, empty = uuid.uuid4().bytes, uuid.uuid4().bytes
-conn.executemany('INSERT INTO projects VALUES(?)', [(p,), (empty,)])
+conn.executemany('INSERT INTO projects(id) VALUES(?)', [(p,), (empty,)])
 conn.execute('INSERT INTO children VALUES(1,?)', (p,))
 body = '理😀e\u0301\n' * 20000
 ids = sorted(uuid.uuid4().bytes for _ in range(44))
@@ -93,13 +93,22 @@ while True:
     after = rows[19]['revision']
 assert seen == list(range(1, 45))
 
-# Conditional DELETE must never cascade partially into other Project children.
+# Upgrade a populated old schema, preserving every canonical SQL value.
+tables = ['design_notes','design_note_revisions','design_note_additions','design_note_addition_revisions','design_note_requests']
+def snapshot():
+    return {t: [tuple(r) for r in conn.execute('SELECT * FROM '+t+' ORDER BY rowid')] for t in tables}
 conn.execute('INSERT INTO design_note_requests VALUES(?,?,?,?,?)', (p, 'human', uuid.uuid4().bytes, '{}', '{}'))
-delete_query = statement(delete_source, 'DELETE FROM projects WHERE id=? AND NOT EXISTS')
-before = '\n'.join(conn.iterdump())
-assert conn.execute(delete_query, (p, p, p)).rowcount == 0
-assert '\n'.join(conn.iterdump()) == before
-assert conn.execute(delete_query, (empty, empty, empty)).rowcount == 1
-assert conn.execute(delete_query, (empty, empty, empty)).rowcount == 0
+before = snapshot()
+conn.commit()
+conn.executescript('BEGIN;'+(ROOT / 'crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql').read_text()+'COMMIT;')
+assert snapshot() == before
+delete_query = statement(delete_source, 'DELETE FROM projects WHERE id=?')
+assert conn.execute(delete_query, (p,)).rowcount == 1
+assert snapshot() == before
+assert conn.execute('SELECT deleted_at FROM design_note_projects WHERE id=?',(p,)).fetchone()[0]
+assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
+assert conn.execute(delete_query, (p,)).rowcount == 0
+assert conn.execute(delete_query, (empty,)).rowcount == 1
+assert conn.execute(delete_query, (empty,)).rowcount == 0
 conn.close()
-print('PASS: bounded metadata SQL, Unicode/pinned snapshot, history continuation, protected DELETE with exact dump equality, empty Project deletion')
+print('PASS: bounded metadata SQL, Unicode/pinned snapshot, history continuation, old-schema migration and retained DELETE with exact row equality')

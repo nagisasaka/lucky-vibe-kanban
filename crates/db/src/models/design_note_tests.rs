@@ -7,7 +7,7 @@ async fn fixture() -> (SqlitePool, Uuid, Uuid) {
         .connect("sqlite::memory:")
         .await
         .unwrap();
-    sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY);")
+    sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY, name TEXT NOT NULL DEFAULT 'test'); CREATE TABLE local_project_metadata(project_id BLOB PRIMARY KEY, organization_id BLOB);")
         .execute(&pool)
         .await
         .unwrap();
@@ -17,10 +17,16 @@ async fn fixture() -> (SqlitePool, Uuid, Uuid) {
     .execute(&pool)
     .await
     .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023110000_retain_design_notes_on_project_delete.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
     let p = Uuid::new_v4();
     let other = Uuid::new_v4();
     for id in [p, other] {
-        sqlx::query("INSERT INTO projects VALUES(?)")
+        sqlx::query("INSERT INTO projects(id) VALUES(?)")
             .bind(id)
             .execute(&pool)
             .await
@@ -117,13 +123,30 @@ async fn revisions_restore_and_retries_preserve_first_record() {
     let history = DesignNote::history(&pool, p, n.id, 0).await.unwrap();
     assert_eq!(history.len(), 3);
     assert_eq!(history[1].body, updated.body);
-    assert!(
-        sqlx::query("DELETE FROM projects WHERE id=?")
-            .bind(p)
-            .execute(&pool)
-            .await
-            .is_err()
-    );
+    let snapshots: Vec<String> = sqlx::query_scalar(
+        "SELECT snapshot FROM design_note_revisions WHERE note_id=? ORDER BY revision",
+    )
+    .bind(n.id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    sqlx::query("DELETE FROM projects WHERE id=?")
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert!(matches!(
+        DesignNote::history(&pool, p, n.id, 0).await,
+        Err(DesignNoteError::NotFound)
+    ));
+    let retained: Vec<String> = sqlx::query_scalar(
+        "SELECT snapshot FROM design_note_revisions WHERE note_id=? ORDER BY revision",
+    )
+    .bind(n.id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(snapshots, retained);
 }
 #[tokio::test]
 async fn additions_corrections_hiding_and_explicit_integration_preserve_attribution() {
@@ -225,7 +248,7 @@ async fn independent_sqlite_connections_reject_stale_body_and_deduplicate_retrie
         .connect_with(options)
         .await
         .unwrap();
-    sqlx::raw_sql("CREATE TABLE projects(id BLOB PRIMARY KEY);")
+    sqlx::raw_sql("CREATE TABLE projects(id BLOB PRIMARY KEY, name TEXT NOT NULL DEFAULT 'test'); CREATE TABLE local_project_metadata(project_id BLOB PRIMARY KEY, organization_id BLOB);")
         .execute(&pool)
         .await
         .unwrap();
@@ -235,8 +258,14 @@ async fn independent_sqlite_connections_reject_stale_body_and_deduplicate_retrie
     .execute(&pool)
     .await
     .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023110000_retain_design_notes_on_project_delete.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
     let p = Uuid::new_v4();
-    sqlx::query("INSERT INTO projects VALUES(?)")
+    sqlx::query("INSERT INTO projects(id) VALUES(?)")
         .bind(p)
         .execute(&pool)
         .await

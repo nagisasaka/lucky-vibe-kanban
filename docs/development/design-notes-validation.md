@@ -1,6 +1,50 @@
 # 設計メモの検証・追加レビュー修正
 
-## 最終検証（2026-10-23 JST）
+## Project削除時の履歴保持への仕様変更（2026-10-23）
+
+ユーザーの明示承認（Sentinel_8b61522118bc81919b1376f97e4ecf09 / Sentinel_039bd13620908191a85b4f6bfdc1b9a4）により、設計メモを理由とする暫定409は撤回。Projectを削除しても本文・追記・全履歴・出典を残す。以下の以前の409試験・削除案は経緯であり、現行受入条件ではない。
+
+開始時HEADは `52d5606665310cb51d4f463da6efec7552d083ca`、作業ツリーclean。前回検証 `d561caf0cb50f4599d84fd2cf4e332900e120b2f` との差は `tests/design-notes/evidence-final.txt` の88行追加のみ。Vibe Kanbanによる2026-10-22 20:19:03 UTCのcheckpoint（LVK-Memory-Source: d56c90df-59e8-4d1e-9202-f89b4d39926a）で、製品コード差分や出所不明変更はなかった。前回証跡は保全。
+
+### 保存・アクセスの境界
+
+追加migration `20261023110000_retain_design_notes_on_project_delete.sql` で、設計メモとrequest receiptのFKを保持専用 `design_note_projects` に付け替える。既存migrationは変更せず、全5テーブルの保存column・snapshot・出典をそのままコピーし、FKを無効にせず依存順に再構成する。保持IDは最初の書込み時に用意し、Project削除直前triggerが元ID・削除時名称・Organization・削除日時を保存する。Project削除や他のCASCADEが失敗すれば保持情報の変更も同一SQL文でrollbackされる。
+
+削除済みデータは別Projectへ移さない。既存REST/MCPはlive Projectの存在を必須とし、旧request_id再送からの全文取得も拒否する。同じProject IDの再作成はtriggerで拒否し、新Projectが履歴や権限を継承することを防ぐ。元Organizationがない場合はNULLのまま保存し、権限を推測しない。保持専用表からの新しい閲覧APIや復元UIは追加しない。
+
+既存の `integration_runs`（RESTRICT）と `remote_mcp_operations`（NO ACTION）等の削除制約は変更しない。このため、これらを持つProjectの削除は従来どおり失敗し得る。これは設計メモの409を残すものではない。保持後の閲覧・持ち出し・再関連付け・保持期限は **LOCAL-99 (`7360a413-e8f5-447b-a252-ba74de005976`)** に委ねる。
+
+### 独立レビューと検証の根拠
+
+独立エージェントが実装と追加試験を読取レビューし、P1/P2ブロッカーなしと報告。live Project不存在でも古いreceiptを返せる点、本文getのProject存在条件、同UUID再作成、metadataのCASCADE前保存を確認した。失敗原子性fixtureを合成制約から実MCP operation／Integration行へ強化し、再レビューでもブロッカーなし。レビュー自体は試験実行の証拠ではない。
+
+実行ログは `.build/design-notes/retention/`、ブラウザの隔離出力は `.build/design-notes/retention-e2e/` に分離し、前回ログを上書きしない。各工程はcargo jobs<=2で逐次、ブラウザは単一プロセス・単一browser。最終実行のSHA・日時・SQL比較・cleanupは通常パス `tests/design-notes/evidence-retention-final.txt` に収録する。最終実行後の証跡追加に伴うdirtyと、試験時点のclean状態を区別する。
+
+### この仕様変更に対する実行結果
+
+| コマンド | 結果 |
+| --- | --- |
+| `cargo test -p db design_note --lib` | 8件成功。長文・多数件・Unicode・pinned revision・競合・初版復元・訂正/非表示/統合・元の確定receipt再送を維持。初回は旧「削除失敗」assertが1件残って失敗し、承認された新仕様の削除成功/履歴不変/参照拒否へ置換後に全件成功。 |
+| `cargo test -p server project_delete_retains_design_history_atomically --lib` | 1件成功。旧全migration適用済みSQLiteファイルに本文2版・追記2版を保存して追加migrationへ更新、全5テーブルを全column比較。実MCP operation/Integrationによる失敗時もProject・metadata・保持ID・制約元行が不変。成功/再削除/UUID再使用拒否/別Project拒否/FK整合性を確認。 |
+| `cargo test -p server design_note_mcp --lib` | 3件成功。削除済みProjectと別Projectへの拒否、無許可writeでoperationを作らないこと、従来のscope・初回/再送/get_operation上限と内容保持。 |
+| `cargo test -p server http_discovery_authentication_and_tool_call_roundtrip --lib` | 1件成功。 |
+| `pnpm run prepare-db:check` | 成功。隔離DBへ追加分を含む全migrationを適用。SQLx metadata変更なし。既存のpotentially unused queries警告あり。 |
+| `cargo clippy -p db -p server --all-targets -- -D warnings` | 成功。 |
+| `python3 tests/design-notes/bounded-read-sql.py` | 成功。旧スキーマの長文・多数件を移行、保存行完全一致、削除後の保持・FK・再削除。 |
+| `node --check tests/design-notes/isolated.mjs` | 成功。 |
+| `rustfmt --edition 2024 --config skip_children=true --check crates/db/src/models/design_note.rs crates/db/src/models/design_note_tests.rs crates/server/src/routes/local_remote.rs crates/server/src/remote_mcp/tests.rs` / `git diff --check` | 成功。 |
+
+これらの実ログ抜粋は [evidence-retention-checks.txt](../../tests/design-notes/evidence-retention-checks.txt)。Cargoは `CARGO_BUILD_JOBS=2`、既存sccache/targetを再利用した。sccacheの既存serverは `/home/appuser/.cache/sccache` を使用し、推奨共有パスとは異なる。既存serverを停止・再設定していない。SQLx CLI 0.8.6は既存target内のbinaryへ一時symlinkを作り再利用し、インストール/重複buildを避けた。
+
+この文書を含むソースをcommitで固定後、`cargo build --bin server --bin agent-process-host --bin vibe-kanban-mcp` → `node tests/design-notes/isolated.mjs` の順に実行する。**最終build/E2Eの実結果・commit SHA・SQL比較は [evidence-retention-final.txt](../../tests/design-notes/evidence-retention-final.txt) が根拠**。ソースcommitの自己参照を避けるため、この最終実行証跡は実行後に通常パスへ追加し、試験時点のclean状態と追加後の状態を明記する。この文書の事前記載だけでE2E成功とは扱わない。
+
+ブラウザは1440/390/320px、既存の競合・復元・訂正・非表示・統合・Markdown安全性・MCP長文/再送のassertionを維持し、旧409受入部分を削除成功表示・Project一覧消失・SQL保存比較・再削除・削除後のREST/stdio拒否に置換。SQL比較は全5テーブルの全columnをSQLite quoteで固定表現にし、行数とSHA-256を照合する。実本文や出典内容は証跡に出力しない。
+
+型/フロント製品コード・依存定義は `git diff --exit-code d561caf0 -- packages/local-web packages/web-core packages/ui shared package.json pnpm-lock.yaml` で差分なしを確認。型生成・フロント型/Lint/buildは今回は再実行せず前回built assetsを再利用する。実Auth0/ChatGPT、Firefox/WebKit、実機モバイル、Tauri、全workspace一括試験、正式Integration、実稼働DB適用は対象外。main merge/deploy/Wiki/Skill更新なし。
+
+---
+
+## 前回仕様の最終検証（2026-10-23 JST）
 
 ユーザーのheavy並行実行承認後、以下の検証を実行して成功した。以前の「GO待ち／未実行」は下記の経緯記録であり、この最終結果で更新する。
 

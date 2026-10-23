@@ -1751,3 +1751,101 @@ async fn design_note_mcp_write_initial_retry_and_operation_are_bounded() {
     assert_eq!(detail.additions.len(), 1);
     assert_eq!(detail.additions[0].content, long);
 }
+
+#[tokio::test]
+async fn design_note_mcp_deleted_project_is_not_available() {
+    use db::models::design_note::{DesignNote, DesignNoteWrite};
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let project = Uuid::from_u128(1);
+    let other = Uuid::from_u128(2);
+    for id in [project, other] {
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let input = json!({"request_id":Uuid::new_v4(),"operation":{"action":"create","title":"retained","body":"intent"}});
+    let note = DesignNote::write(
+        &pool,
+        project,
+        "fixture",
+        serde_json::from_value::<DesignNoteWrite>(input.clone()).unwrap(),
+    )
+    .await
+    .unwrap()
+    .note;
+    sqlx::query("DELETE FROM projects WHERE id=?")
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut cfg = config();
+    cfg.project_ids.insert(other);
+    let remote = Remote {
+        environment: None,
+        launch: None,
+        runtime: None,
+        pool: pool.clone(),
+        config: Arc::new(cfg),
+        process_instance: Uuid::new_v4(),
+    };
+    let writer = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    for p in [project, other] {
+        for tool in ["get_design_note", "get_design_note_history"] {
+            assert!(
+                design_notes::call(
+                    &remote,
+                    &writer,
+                    tool,
+                    json!({"project_id":p,"note_id":note.id})
+                )
+                .await
+                .is_err()
+            );
+        }
+    }
+    assert!(
+        design_notes::call(
+            &remote,
+            &writer,
+            "list_design_notes",
+            json!({"project_id":project})
+        )
+        .await
+        .is_err()
+    );
+    assert!(
+        design_notes::call(
+            &remote,
+            &writer,
+            "write_design_note",
+            json!({"project_id":project,"input":input})
+        )
+        .await
+        .is_err()
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM remote_mcp_operations")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        0
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, String>("SELECT body FROM design_notes WHERE id=?")
+            .bind(note.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        "intent"
+    );
+}
