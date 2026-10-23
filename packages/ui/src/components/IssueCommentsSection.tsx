@@ -1,7 +1,7 @@
-import type { Ref, ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { LocalAttachmentMetadata } from './WorkspaceContext';
-import { cn } from '../lib/cn';
+import type { Ref, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import type { LocalAttachmentMetadata } from "./WorkspaceContext";
+import { cn } from "../lib/cn";
 import {
   DotsThreeIcon,
   SmileyIcon,
@@ -10,23 +10,23 @@ import {
   TrashIcon,
   ArrowBendUpLeftIcon,
   PaperclipIcon,
-} from '@phosphor-icons/react';
+} from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from './RadixTooltip';
-import { ErrorAlert } from './ErrorAlert';
-import { UserAvatar, type UserAvatarUser } from './UserAvatar';
-import { CollapsibleSectionHeader } from './CollapsibleSectionHeader';
+} from "./RadixTooltip";
+import { ErrorAlert } from "./ErrorAlert";
+import { UserAvatar, type UserAvatarUser } from "./UserAvatar";
+import { CollapsibleSectionHeader } from "./CollapsibleSectionHeader";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from './Dropdown';
-import { EmojiPicker } from './EmojiPicker';
+} from "./Dropdown";
+import { EmojiPicker } from "./EmojiPicker";
 
 export interface IssueCommentData {
   id: string;
@@ -36,6 +36,13 @@ export interface IssueCommentData {
   createdAt: string;
   author?: UserAvatarUser | null;
   canModify: boolean;
+  review?: {
+    label: string | null;
+    principal: string;
+    targetRevision: string | null;
+    currentRevision: string;
+    updatedAt: string;
+  };
 }
 
 export interface ReactionGroup {
@@ -57,7 +64,7 @@ function formatRelativeTime(dateString: string): string {
   if (diffDays > 0) return `${diffDays}d`;
   if (diffHours > 0) return `${diffHours}h`;
   if (diffMinutes > 0) return `${diffMinutes}m`;
-  return 'now';
+  return "now";
 }
 
 interface DropzoneProps {
@@ -132,11 +139,11 @@ export function IssueCommentsSection({
   onDismissAttachmentError,
   renderEditor,
 }: IssueCommentsSectionProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   return (
     <CollapsibleSectionHeader
-      title={t('kanban.comments')}
+      title={t("kanban.comments")}
       persistKey="kanban-issue-comments"
       defaultExpanded={true}
       actions={[]}
@@ -149,14 +156,14 @@ export function IssueCommentsSection({
             <div className="h-4 bg-secondary rounded w-1/2" />
           </div>
         ) : comments.length === 0 ? (
-          <p className="text-low">{t('kanban.noCommentsYet')}</p>
+          <p className="text-low">{t("kanban.noCommentsYet")}</p>
         ) : (
           comments.map((comment) => (
             <CommentItem
               key={comment.id}
               comment={comment}
               isEditing={editingCommentId === comment.id}
-              editValue={editingCommentId === comment.id ? editingValue : ''}
+              editValue={editingCommentId === comment.id ? editingValue : ""}
               onEditValueChange={onEditingValueChange}
               onStartEdit={() => onStartEdit(comment.id)}
               onSaveEdit={onSaveEdit}
@@ -179,8 +186,8 @@ export function IssueCommentsSection({
           {renderEditor({
             value: commentInput,
             onChange: onCommentInputChange,
-            placeholder: t('kanban.enterCommentPlaceholder'),
-            className: 'min-h-[20px]',
+            placeholder: t("kanban.enterCommentPlaceholder"),
+            className: "min-h-[20px]",
             localAttachments,
             onCmdEnter: onSubmitComment,
             onPasteFiles,
@@ -192,7 +199,7 @@ export function IssueCommentsSection({
               <ErrorAlert
                 message={attachmentError}
                 onDismiss={onDismissAttachmentError}
-                dismissLabel={t('buttons.close')}
+                dismissLabel={t("buttons.close")}
               />
             </div>
           )}
@@ -204,18 +211,18 @@ export function IssueCommentsSection({
                     <button
                       type="button"
                       onClick={onBrowseAttachment}
-                      title={t('kanban.attachFile')}
+                      title={t("kanban.attachFile")}
                       className={cn(
-                        'size-[22px] rounded-full bg-panel border border-border',
-                        'flex items-center justify-center',
-                        'text-low hover:text-normal transition-colors'
+                        "size-[22px] rounded-full bg-panel border border-border",
+                        "flex items-center justify-center",
+                        "text-low hover:text-normal transition-colors",
                       )}
-                      aria-label={t('kanban.attachFile')}
+                      aria-label={t("kanban.attachFile")}
                     >
                       <PaperclipIcon size={12} />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{t('kanban.attachFileHint')}</TooltipContent>
+                  <TooltipContent>{t("kanban.attachFileHint")}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
@@ -224,10 +231,10 @@ export function IssueCommentsSection({
               onClick={onSubmitComment}
               disabled={!commentInput.trim() || isUploading}
               className={cn(
-                'size-[22px] rounded-full bg-panel border border-border',
-                'flex items-center justify-center',
-                'text-high hover:bg-secondary transition-colors',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
+                "size-[22px] rounded-full bg-panel border border-border",
+                "flex items-center justify-center",
+                "text-high hover:bg-secondary transition-colors",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >
               <ArrowUpIcon size={12} weight="bold" />
@@ -236,7 +243,7 @@ export function IssueCommentsSection({
           {dropzoneProps?.isDragActive && (
             <div className="absolute inset-0 z-50 bg-primary/80 backdrop-blur-sm border-2 border-dashed border-brand rounded flex items-center justify-center">
               <p className="text-sm font-medium text-high">
-                {t('kanban.dropFilesHere')}
+                {t("kanban.dropFilesHere")}
               </p>
             </div>
           )}
@@ -275,7 +282,7 @@ function CommentItem({
   onReply,
   renderEditor,
 }: CommentItemProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const timeAgo = formatRelativeTime(comment.createdAt);
 
   return (
@@ -304,19 +311,64 @@ function CommentItem({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem icon={PencilSimpleIcon} onSelect={onStartEdit}>
-                {t('buttons.edit')}
+                {t("buttons.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 icon={TrashIcon}
                 variant="destructive"
                 onSelect={onDelete}
               >
-                {t('buttons.delete')}
+                {t("buttons.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
       </div>
+
+      {comment.review && (
+        <dl
+          className="text-xs text-low break-words"
+          data-testid="comment-provenance"
+        >
+          {comment.review.label && (
+            <div>
+              <dt>{t("kanban.reviewLabel")}</dt>
+              <dd>{comment.review.label}</dd>
+            </div>
+          )}
+          <div>
+            <dt>{t("kanban.recordedPrincipal")}</dt>
+            <dd>{comment.review.principal}</dd>
+          </div>
+          <div>
+            <dt>{t("kanban.recordedAt")}</dt>
+            <dd>
+              <time dateTime={comment.createdAt}>{comment.createdAt}</time>
+            </dd>
+          </div>
+          {comment.review.updatedAt !== comment.createdAt && (
+            <div>
+              <dt>{t("kanban.commentLastEditedAt")}</dt>
+              <dd>{comment.review.updatedAt}</dd>
+            </div>
+          )}
+          {comment.review.targetRevision && (
+            <>
+              <div>
+                <dt>{t("kanban.reviewTargetRevision")}</dt>
+                <dd>{comment.review.targetRevision}</dd>
+              </div>
+              {comment.review.targetRevision !==
+                comment.review.currentRevision && (
+                <div className="text-normal">
+                  <dt>{t("kanban.reviewDifferentRevision")}</dt>
+                  <dd>{comment.review.currentRevision}</dd>
+                </div>
+              )}
+            </>
+          )}
+        </dl>
+      )}
 
       {/* Message - editable or read-only */}
       {isEditing ? (
@@ -326,7 +378,7 @@ function CommentItem({
             onChange: onEditValueChange,
             autoFocus: true,
             onCmdEnter: onSaveEdit,
-            className: 'min-h-[40px]',
+            className: "min-h-[40px]",
           })}
           <div className="flex gap-half justify-end">
             <button
@@ -334,18 +386,18 @@ function CommentItem({
               onClick={onCancelEdit}
               className="px-base py-half text-low hover:text-normal"
             >
-              {t('buttons.cancel')}
+              {t("buttons.cancel")}
             </button>
             <button
               type="button"
               onClick={onSaveEdit}
               disabled={!editValue.trim()}
               className={cn(
-                'px-base py-half bg-brand text-on-brand rounded-sm',
-                'hover:bg-brand-hover disabled:opacity-50'
+                "px-base py-half bg-brand text-on-brand rounded-sm",
+                "hover:bg-brand-hover disabled:opacity-50",
               )}
             >
-              {t('buttons.save')}
+              {t("buttons.save")}
             </button>
           </div>
         </div>
@@ -353,7 +405,7 @@ function CommentItem({
         renderEditor({
           value: comment.message,
           disabled: true,
-          className: 'text-normal',
+          className: "text-normal",
         })
       )}
 
@@ -368,11 +420,11 @@ function CommentItem({
                   type="button"
                   onClick={() => onToggleReaction(reaction.emoji)}
                   className={cn(
-                    'flex items-center gap-half px-base py-half rounded-sm',
-                    'border transition-colors',
+                    "flex items-center gap-half px-base py-half rounded-sm",
+                    "border transition-colors",
                     reaction.hasReacted
-                      ? 'bg-brand/10 border-brand text-brand'
-                      : 'bg-secondary border-border text-low hover:text-normal'
+                      ? "bg-brand/10 border-brand text-brand"
+                      : "bg-secondary border-border text-low hover:text-normal",
                   )}
                 >
                   <span className="color-emoji">{reaction.emoji}</span>
@@ -380,7 +432,7 @@ function CommentItem({
                 </button>
               </TooltipTrigger>
               <TooltipContent className="bg-panel border border-border">
-                {reaction.userNames.join(', ')}
+                {reaction.userNames.join(", ")}
               </TooltipContent>
             </Tooltip>
           ))}
@@ -403,7 +455,7 @@ function CommentItem({
           className="flex items-center gap-half text-low hover:text-normal transition-colors"
         >
           <ArrowBendUpLeftIcon size={16} />
-          <span className="font-light">{t('buttons.reply')}</span>
+          <span className="font-light">{t("buttons.reply")}</span>
         </button>
       </div>
     </div>

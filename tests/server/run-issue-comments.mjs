@@ -1,0 +1,202 @@
+import { isolatedEnvironment } from "./fixtures/issue-comments-env.mjs";
+import { spawn } from "node:child_process";
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  readdir,
+  readlink,
+  writeFile,
+  rm,
+} from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+await mkdir(".build", { recursive: true });
+const instance = await mkdtemp(resolve(".build/issue-comments-instance-"));
+await writeFile(
+  resolve(instance, "issue-comments-e2e-owner"),
+  "disposable fixture\n",
+);
+const log = createWriteStream(".build/issue-comments-server.log");
+const startServer = () =>
+  spawn(resolve("target/debug/server"), [], {
+    env: isolatedEnvironment(process.env, instance, process.cwd()),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+let server = startServer();
+server.stdout.pipe(log, { end: false });
+server.stderr.pipe(log, { end: false });
+let spawnError;
+server.on("error", (error) => {
+  spawnError = error;
+});
+let stopped = new Promise((resolve) => server.once("close", resolve));
+let testProcess;
+let bridge;
+let bridgeStopped;
+let bridgeError;
+let interrupted = false;
+const interrupt = () => {
+  interrupted = true;
+  testProcess?.kill("SIGTERM");
+  bridge?.kill("SIGTERM");
+  server.kill("SIGTERM");
+};
+process.on("SIGINT", interrupt);
+process.on("SIGTERM", interrupt);
+try {
+  let baseURL;
+  for (let n = 0; n < 120; n++) {
+    if (spawnError) throw spawnError;
+    if (interrupted) throw Error("Interrupted");
+    if (server.exitCode !== null)
+      throw Error("Server exited " + server.exitCode);
+    try {
+      const ports = JSON.parse(
+        await readFile(instance + "/ports/vibe-kanban.port", "utf8"),
+      );
+      baseURL = "http://127.0.0.1:" + ports.main_port;
+      if (
+        (
+          await fetch(baseURL + "/api/info", {
+            signal: AbortSignal.timeout(3000),
+          })
+        ).ok
+      )
+        break;
+    } catch {}
+    baseURL = undefined;
+    await delay(1000);
+  }
+  if (!baseURL) throw Error("Isolated server startup timed out");
+  console.log("Isolated instance:", instance, "URL:", baseURL);
+  const isolatedEnv = isolatedEnvironment(process.env, instance, process.cwd());
+  if (
+    [
+      "LVK_MCP_CONFIG",
+      "DATABASE_URL",
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+    ].some((key) => key in isolatedEnv)
+  )
+    throw Error("Live environment inherited");
+  bridge = spawn(
+    "cargo",
+    [
+      "test",
+      "-p",
+      "server",
+      "--lib",
+      "remote_mcp::issue_comments_browser::issue_comments_browser_bridge",
+      "--",
+      "--ignored",
+      "--exact",
+      "--nocapture",
+    ],
+    { env: isolatedEnv, stdio: ["ignore", "pipe", "pipe"] },
+  );
+  bridge.stdout.pipe(log, { end: false });
+  bridge.stderr.pipe(log, { end: false });
+  bridgeStopped = new Promise((resolve) => bridge.once("close", resolve));
+  bridge.on("error", (error) => {
+    bridgeError = error;
+  });
+  let ready = false;
+  for (let n = 0; n < 180; n++) {
+    if (bridgeError) throw bridgeError;
+    if (bridge.exitCode !== null || interrupted)
+      throw Error("MCP bridge exited before readiness");
+    try {
+      JSON.parse(await readFile(instance + "/mcp-fixture.json", "utf8"));
+      ready = true;
+      break;
+    } catch {}
+    await delay(1000);
+  }
+  if (!ready) throw Error("MCP bridge readiness timed out");
+
+  testProcess = spawn(
+    process.execPath,
+    [
+      resolve("node_modules/@playwright/test/cli.js"),
+      "test",
+      "-c",
+      "tests/server/playwright.config.ts",
+      "tests/server/specs/issue-comment-reviews.spec.ts",
+      "--reporter=list,html",
+    ],
+    {
+      env: {
+        ...isolatedEnv,
+        LVK_E2E_BASE_URL: baseURL,
+        LVK_INSTANCE_DIR: instance,
+        LVK_E2E_ISSUE_COMMENTS: "1",
+        LVK_E2E_CREDENTIALS_FILE: "",
+        LVK_E2E_TRACE: "0",
+      },
+      stdio: "inherit",
+    },
+  );
+  const code = await new Promise((resolve, reject) => {
+    testProcess.once("close", resolve);
+    testProcess.once("error", reject);
+  });
+  process.exitCode = code ?? 1;
+} finally {
+  if (bridge) {
+    await writeFile(resolve(instance, "mcp-fixture-stop"), "stop");
+    const killBridge = setTimeout(() => bridge.kill("SIGKILL"), 15000);
+    const bridgeCode = await bridgeStopped;
+    clearTimeout(killBridge);
+    if (bridgeCode !== 0) {
+      process.exitCode = 1;
+      console.error("MCP bridge did not exit successfully:", bridgeCode);
+    }
+  }
+  server.kill("SIGTERM");
+  const timeout = setTimeout(() => server.kill("SIGKILL"), 15000);
+  await stopped;
+  clearTimeout(timeout);
+  log.end();
+  process.off("SIGINT", interrupt);
+  process.off("SIGTERM", interrupt);
+  // The unique instance environment is inherited by only our server/test
+  // children, including Chromium. Never match a shared process by executable.
+  const remaining = async () => {
+    const owned = [];
+    for (const entry of await readdir("/proc")) {
+      if (!/^\d+$/.test(entry)) continue;
+      try {
+        const cwd = await readlink(`/proc/${entry}/cwd`);
+        if (cwd !== process.cwd() && !cwd.startsWith(process.cwd() + "/"))
+          continue;
+        const env = await readFile(`/proc/${entry}/environ`, "utf8");
+        if (env.split("\0").includes(`LVK_INSTANCE_DIR=${instance}`))
+          owned.push(Number(entry));
+      } catch {
+        /* Process already exited or is not accessible. */
+      }
+    }
+    return owned;
+  };
+  for (const pid of await remaining()) {
+    try {
+      process.kill(pid, "SIGTERM");
+    } catch (error) {
+      if (error.code !== "ESRCH") throw error;
+    }
+  }
+  let survivors = [];
+  for (let n = 0; n < 50; n++) {
+    survivors = await remaining();
+    if (!survivors.length) break;
+    await delay(100);
+  }
+  if (survivors.length)
+    throw Error(
+      `Task children still alive: ${survivors.join(", ")}; retaining ${instance}`,
+    );
+  await rm(instance, { recursive: true, force: true });
+  console.log("Isolated server stopped and task state removed");
+}

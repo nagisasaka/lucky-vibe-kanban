@@ -79,6 +79,12 @@ pub fn export_shapes() -> String {
     ];
 
     for decl in type_decls {
+        // Match the main generator: ts-rs doc comments can introduce trailing spaces.
+        let decl = decl
+            .lines()
+            .map(str::trim_end)
+            .collect::<Vec<_>>()
+            .join("\n");
         let trimmed = decl.trim_start();
         if trimmed.starts_with("export") {
             output.push_str(&decl);

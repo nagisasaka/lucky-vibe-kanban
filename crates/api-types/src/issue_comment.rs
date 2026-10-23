@@ -12,6 +12,12 @@ pub struct IssueComment {
     pub author_id: Option<Uuid>,
     pub parent_id: Option<Uuid>,
     pub message: String,
+    /// Self-reported label, never a verified model identity.
+    pub reviewer_label: Option<String>,
+    pub target_revision: Option<String>,
+    /// Authenticated MCP issuer/subject, separate from the recording actor.
+    pub recorded_principal: Option<String>,
+    pub current_issue_revision: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

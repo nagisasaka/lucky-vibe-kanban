@@ -210,7 +210,7 @@ impl Remote {
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
-            json!({"id":args.issue_id,"project_id":args.project_id,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
+            json!({"id":args.issue_id,"project_id":args.project_id,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"review_target":{"issue_id":args.issue_id,"revision":revision},"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
         )
     }
 

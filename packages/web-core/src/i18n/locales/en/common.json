@@ -1121,6 +1121,12 @@
     "noCommands": "No commands available for this agent."
   },
   "kanban": {
+    "commentLastEditedAt": "Last edited at (body may differ from the original post)",
+    "reviewLabel": "Reviewer label (self-reported, not verified)",
+    "recordedPrincipal": "Initial authenticated MCP principal (issuer / subject)",
+    "recordedAt": "Recorded at",
+    "reviewTargetRevision": "Reviewed Issue revision",
+    "reviewDifferentRevision": "Different from current Issue revision",
     "noVisibleStatuses": "All statuses are hidden. Use display settings or switch to another tab to view issues.",
     "noProjectFound": "No project found",
     "unassigned": "Unassigned",

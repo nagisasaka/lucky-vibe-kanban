@@ -1069,6 +1069,10 @@ fn issue_comment_from_row(row: &SqliteRow) -> Result<IssueComment, sqlx::Error> 
         author_id: row.try_get("author_id")?,
         parent_id: row.try_get("parent_id")?,
         message: row.try_get("message")?,
+        reviewer_label: row.try_get("reviewer_label")?,
+        target_revision: row.try_get("target_revision")?,
+        recorded_principal: row.try_get("recorded_principal")?,
+        current_issue_revision: row.try_get("current_issue_revision")?,
         created_at: row.try_get("created_at")?,
         updated_at: row.try_get("updated_at")?,
     })
@@ -1080,10 +1084,10 @@ async fn list_issue_comments(
 ) -> Result<Vec<IssueComment>, ApiError> {
     let rows = sqlx::query(
         r#"
-        SELECT id, issue_id, author_id, parent_id, message, created_at, updated_at
-        FROM local_issue_comments
-        WHERE issue_id = ?
-        ORDER BY created_at ASC
+        SELECT c.*, i.updated_at AS current_issue_revision
+        FROM local_issue_comments c JOIN local_issues i ON i.id = c.issue_id
+        WHERE c.issue_id = ?
+        ORDER BY c.created_at ASC, c.id ASC
         "#,
     )
     .bind(issue_id)
@@ -1099,9 +1103,9 @@ async fn list_issue_comments(
 async fn get_issue_comment(pool: &SqlitePool, comment_id: Uuid) -> Result<IssueComment, ApiError> {
     let row = sqlx::query(
         r#"
-        SELECT id, issue_id, author_id, parent_id, message, created_at, updated_at
-        FROM local_issue_comments
-        WHERE id = ?
+        SELECT c.*, i.updated_at AS current_issue_revision
+        FROM local_issue_comments c JOIN local_issues i ON i.id = c.issue_id
+        WHERE c.id = ?
         "#,
     )
     .bind(comment_id)

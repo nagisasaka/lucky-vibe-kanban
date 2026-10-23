@@ -13,6 +13,10 @@ pub mod environment_settings;
 mod errors;
 mod evidence_read;
 mod integration_read;
+mod issue_comment_text;
+mod issue_comments;
+#[cfg(all(test, unix))]
+mod issue_comments_browser;
 mod issue_write;
 mod launch;
 mod merge_read;
@@ -175,10 +179,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "inspect_process"
         | "read_process_output" => Some("lvk:runtime:read"),
         "start_integration" => Some("lvk:merge"),
-        "create_todo" | "update_todo" | "delete_todo" | "create_issue" | "update_issue"
-        | "steer_execution" | "continue_execution" | "answer_question" | "start_workspace" => {
-            Some("lvk:write")
-        }
+        "add_issue_comment" | "create_todo" | "update_todo" | "delete_todo" | "create_issue"
+        | "update_issue" | "steer_execution" | "continue_execution" | "answer_question"
+        | "start_workspace" => Some("lvk:write"),
         _ => None,
     }
 }
@@ -340,6 +343,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
     tools.extend(issue_write::tools());
+    tools.extend(issue_comments::tools());
     tools.extend(todos::tools());
     tools.extend(launch::tools());
     tools.extend(activity::tools());
@@ -453,6 +457,9 @@ impl Remote {
             },
             name if todos::tools().iter().any(|tool| tool.name == name) => {
                 todos::call(self, principal, name, args).await
+            }
+            name if issue_comments::tools().iter().any(|tool| tool.name == name) => {
+                issue_comments::call(self, principal, name, args).await
             }
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await
