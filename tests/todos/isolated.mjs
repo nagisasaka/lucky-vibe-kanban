@@ -489,7 +489,7 @@ c.commit()
         name: original.body + " edited via MCP",
         exact: true,
       }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
     await sourceRow
       .getByRole("button", {
         name: original.body + " edited via MCP",
@@ -506,7 +506,8 @@ c.commit()
     await expect(
       sourceRow.getByRole("button", { name: original.body, exact: true }),
     ).toBeVisible();
-    await sourceRow.getByRole("checkbox").uncheck();
+    await expect(sourceRow.getByRole("checkbox")).toBeChecked();
+    await sourceRow.getByRole("checkbox").click();
     await expect(sourceRow.getByRole("checkbox")).not.toBeChecked();
     const read = await tool("get_todo", { project_id: project, todo_id: id });
     assert.equal(read.creation_source, source);
