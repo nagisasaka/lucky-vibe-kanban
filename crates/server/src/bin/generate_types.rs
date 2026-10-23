@@ -26,6 +26,7 @@ fn generate_types_content() -> String {
         db::models::design_note::DesignNoteWrite::decl(),
         db::models::design_note::DesignNoteResult::decl(),
         db::models::design_note::DesignNoteDetail::decl(),
+        db::models::todo::TodoCreationSource::decl(),
         db::models::todo::Todo::decl(),
         db::models::todo::CreateTodo::decl(),
         db::models::todo::UpdateTodo::decl(),

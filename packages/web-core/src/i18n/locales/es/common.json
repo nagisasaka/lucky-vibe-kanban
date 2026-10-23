@@ -1198,6 +1198,9 @@
     "exclusions": "Sustituciones y exclusiones"
   },
   "todo": {
+    "creationSource": "Creado mediante: {{source}}",
+    "creationSourceUnknown": "Desconocido",
+    "creationSourceHint": "La vía utilizada para crear este TODO, no quién lo ideó o escribió.",
     "title": "TODO list",
     "board": "Kanban board",
     "newBody": "Add a thought or TODO…",

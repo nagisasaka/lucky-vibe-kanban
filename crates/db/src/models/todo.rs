@@ -6,6 +6,17 @@ use sqlx::{FromRow, SqlitePool};
 use ts_rs::TS;
 use uuid::Uuid;
 
+/// Recorded by the trusted server entrypoint, never supplied in a mutation DTO.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS)]
+#[serde(rename_all = "snake_case")]
+#[sqlx(rename_all = "snake_case")]
+pub enum TodoCreationSource {
+    Ui,
+    Mcp,
+    #[default]
+    Unknown,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, TS)]
 pub struct Todo {
     pub id: Uuid,
@@ -13,6 +24,8 @@ pub struct Todo {
     pub body: String,
     pub category: String,
     pub completed: bool,
+    #[serde(default)]
+    pub creation_source: TodoCreationSource,
     pub issue_id: Option<Uuid>,
     pub revision: i32,
     pub created_at: String,
@@ -143,14 +156,23 @@ impl Todo {
     pub async fn create(
         pool: &SqlitePool,
         project: Uuid,
+        input: CreateTodo,
+    ) -> Result<Self, TodoError> {
+        Self::create_from(pool, project, input, TodoCreationSource::Unknown).await
+    }
+
+    pub async fn create_from(
+        pool: &SqlitePool,
+        project: Uuid,
         mut input: CreateTodo,
+        source: TodoCreationSource,
     ) -> Result<Self, TodoError> {
         input.category = input.category.trim().to_owned();
         validate(&input.body, &input.category)?;
         Self::require_project(pool, project).await?;
         Self::require_issue(pool, project, input.issue_id).await?;
-        sqlx::query("INSERT INTO project_todos(id,project_id,body,category,issue_id) VALUES(?,?,?,?,?) ON CONFLICT(id) DO NOTHING")
-            .bind(input.id).bind(project).bind(&input.body).bind(&input.category).bind(input.issue_id).execute(pool).await?;
+        sqlx::query("INSERT INTO project_todos(id,project_id,body,category,issue_id,creation_source) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING")
+            .bind(input.id).bind(project).bind(&input.body).bind(&input.category).bind(input.issue_id).bind(source).execute(pool).await?;
         let todo = Self::get(pool, project, input.id).await?;
         if todo.body != input.body
             || todo.category != input.category

@@ -1347,6 +1347,18 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
     assert_eq!(result["status"], "succeeded", "{result}");
     let todo = result["result"]["todo"].clone();
     let id = todo["id"].clone();
+    assert_eq!(todo["creation_source"], "mcp");
+    let read = todos::call(
+        &remote,
+        &reader,
+        "get_todo",
+        json!({"project_id":project,"todo_id":id}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(read["creation_source"], "mcp");
+    assert!(todos::call(&remote, &writer, "create_todo", json!({"project_id":project,"request_id":Uuid::new_v4(),"body":"fake","creation_source":"ui"})).await.is_err());
+    assert!(todos::call(&remote, &writer, "update_todo", json!({"project_id":project,"request_id":Uuid::new_v4(),"todo_id":id,"changes":{"expected_revision":1,"creation_source":"ui"}})).await.is_err());
     assert_eq!(todo["completed"], false);
     let list = todos::call(
         &remote,
@@ -1357,12 +1369,14 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
     .await
     .unwrap();
     assert_eq!(list["items"].as_array().unwrap().len(), 1);
+    assert_eq!(list["items"][0]["creation_source"], "mcp");
     let update = Uuid::new_v4();
     todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":id,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
     let result = settled_operation(&remote, &writer, project, update).await;
     assert_eq!(result["status"], "succeeded", "{result}");
     assert_eq!(result["result"]["todo"]["body"], todo["body"]);
     assert_eq!(result["result"]["todo"]["revision"], 2);
+    assert_eq!(result["result"]["todo"]["creation_source"], "mcp");
     let stale = Uuid::new_v4();
     todos::call(
         &remote,

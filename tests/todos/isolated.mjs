@@ -75,7 +75,7 @@ async function api(url, method = "GET", body, expected = 200) {
   return result;
 }
 try {
-  const server = start("server");
+  let server = start("server");
   server.stdout.pipe(createWriteStream(path.join(output, "server.stdout.log")));
   for (let i = 0; i < 240; i++) {
     assert.equal(server.exitCode, null, "isolated server exited");
@@ -127,6 +127,118 @@ try {
   ];
   for (const [category, body] of samples)
     await api(todoPath, "POST", { id: randomUUID(), body, category });
+  // Recreate the pre-feature schema only in this stopped, task-owned fixture.
+  // Restart exercises the production migrator against populated legacy TODOs.
+  await stop(server);
+  const legacyId = execFileSync(
+    "python3",
+    [
+      "-c",
+      `
+import sqlite3,sys
+c=sqlite3.connect(sys.argv[1])
+c.execute("DROP TRIGGER project_todos_creation_source_immutable")
+c.execute("ALTER TABLE project_todos DROP COLUMN creation_source")
+c.execute("DELETE FROM _sqlx_migrations WHERE version=20261024000000")
+print(c.execute("SELECT lower(hex(id)) FROM project_todos ORDER BY created_at,id LIMIT 1").fetchone()[0])
+c.commit()
+`,
+      path.join(instance, "data/db.v2.sqlite"),
+    ],
+    { encoding: "utf8" },
+  )
+    .trim()
+    .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, "$1-$2-$3-$4-$5");
+  server = start("server");
+  server.stdout.pipe(
+    createWriteStream(path.join(output, "server-restart.stdout.log")),
+  );
+  base = undefined;
+  for (let i = 0; i < 240; i++) {
+    assert.equal(server.exitCode, null, "restarted server exited");
+    try {
+      const ports = JSON.parse(
+        await readFile(path.join(instance, "ports/vibe-kanban.port"), "utf8"),
+      );
+      const candidate = `http://127.0.0.1:${ports.main_port}`;
+      if ((await fetch(candidate + "/api/info")).ok) {
+        base = candidate;
+        break;
+      }
+    } catch {}
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  assert.ok(base, "restarted server did not start");
+  assert.equal(
+    (await api(`${todoPath}/${legacyId}`)).data.creation_source,
+    "unknown",
+  );
+  const internalToken = (
+    await readFile(path.join(instance, "data/access-internal.token"), "utf8")
+  ).trim();
+  const unclassifiedId = randomUUID();
+  const unclassified = await fetch(base + todoPath, {
+    method: "POST",
+    redirect: "error",
+    headers: {
+      "content-type": "application/json",
+      "x-lvk-internal-token": internalToken,
+    },
+    body: JSON.stringify({
+      id: unclassifiedId,
+      body: "unknown internal route",
+    }),
+  });
+  assert.equal((await unclassified.json()).data.creation_source, "unknown");
+  await api(`${todoPath}/${unclassifiedId}?expected_revision=1`, "DELETE");
+  await api(
+    `/api/internal/projects/${project}/todos`,
+    "POST",
+    { id: randomUUID(), body: "web cannot claim MCP" },
+    403,
+  );
+  // A header is not accepted as provenance, and input DTOs reject arbitrary labels.
+  const spoof = await fetch(base + todoPath, {
+    method: "POST",
+    redirect: "error",
+    headers: {
+      "content-type": "application/json",
+      "x-lvk-csrf": "local",
+      "x-lvk-creation-source": "mcp",
+    },
+    body: JSON.stringify({
+      id: randomUUID(),
+      body: "spoof",
+      creation_source: "mcp",
+    }),
+  });
+  assert.equal(spoof.status, 422);
+  const headerId = randomUUID();
+  const headerOnly = await fetch(base + todoPath, {
+    method: "POST",
+    redirect: "error",
+    headers: {
+      "content-type": "application/json",
+      "x-lvk-csrf": "local",
+      "x-lvk-creation-source": "mcp",
+    },
+    body: JSON.stringify({ id: headerId, body: "web route" }),
+  });
+  assert.equal((await headerOnly.json()).data.creation_source, "ui");
+  const crossRouteRetry = await fetch(
+    base + `/api/internal/projects/${project}/todos`,
+    {
+      method: "POST",
+      redirect: "error",
+      headers: {
+        "content-type": "application/json",
+        "x-lvk-internal-token": internalToken,
+      },
+      body: JSON.stringify({ id: headerId, body: "web route" }),
+    },
+  );
+  assert.equal((await crossRouteRetry.json()).data.creation_source, "ui");
+  await api(`${todoPath}/${headerId}?expected_revision=1`, "DELETE");
   const workspace = (
     await api("/api/workspaces", "POST", { name: "TODO 動作確認" })
   ).data.id;
@@ -235,7 +347,13 @@ try {
     (await api(`${todoPath}/${mcpId}`)).data.body,
     "MCPから追加したメモ",
   );
+  assert.equal(
+    (await tool("get_todo", { project_id: project, todo_id: mcpId }))
+      .creation_source,
+    "mcp",
+  );
   const list = await tool("list_todos", { project_id: project });
+  assert.equal(list.items.find((t) => t.id === mcpId).creation_source, "mcp");
   assert.equal(list.items.length, samples.length + 1);
 
   browser = await chromium.launch({
@@ -274,6 +392,16 @@ try {
     await tool("list_todos", { project_id: project })
   ).items.find((t) => t.body === "UIから追加\n原因はまだ不明？");
   assert.ok(created, "UI addition must be readable via MCP");
+  assert.equal(created.creation_source, "ui");
+  for (const [id, source] of [
+    [created.id, "ui"],
+    [mcpId, "mcp"],
+    [legacyId, "unknown"],
+  ]) {
+    await expect(
+      page.locator(`[data-todo-id="${id}"] [data-creation-source="${source}"]`),
+    ).toBeVisible();
+  }
   let row = page.locator(`[data-todo-id="${created.id}"]`);
   await row
     .getByRole("button", { name: "UIから追加\n原因はまだ不明？", exact: true })
@@ -336,6 +464,80 @@ try {
 
   await checkCategoryLayout({ page, grid, api, todoPath, output });
 
+  // Both interfaces edit every source; provenance remains the initial route.
+  await grid.getByLabel("完了済みも表示", { exact: true }).check();
+  for (const [id, source] of [
+    [created.id, "ui"],
+    [mcpId, "mcp"],
+    [legacyId, "unknown"],
+  ]) {
+    const original = (await api(`${todoPath}/${id}`)).data;
+    const changed = await tool("update_todo", {
+      project_id: project,
+      todo_id: id,
+      changes: {
+        expected_revision: original.revision,
+        body: original.body + " edited via MCP",
+        category: "経路検証",
+        completed: true,
+      },
+    });
+    assert.equal(changed.creation_source, source);
+    const sourceRow = page.locator(`[data-todo-id="${id}"]`);
+    await expect(
+      sourceRow.getByRole("button", {
+        name: original.body + " edited via MCP",
+        exact: true,
+      }),
+    ).toBeVisible({ timeout: 15000 });
+    await sourceRow
+      .getByRole("button", {
+        name: original.body + " edited via MCP",
+        exact: true,
+      })
+      .click();
+    await sourceRow
+      .getByLabel("TODOを編集", { exact: true })
+      .fill(original.body);
+    await sourceRow
+      .getByLabel("カテゴリ", { exact: true })
+      .fill(original.category);
+    await sourceRow.getByRole("button", { name: "保存", exact: true }).click();
+    await expect(
+      sourceRow.getByRole("button", { name: original.body, exact: true }),
+    ).toBeVisible();
+    await expect(sourceRow.getByRole("checkbox")).toBeChecked();
+    await sourceRow.getByRole("checkbox").click();
+    await expect(sourceRow.getByRole("checkbox")).not.toBeChecked();
+    const read = await tool("get_todo", { project_id: project, todo_id: id });
+    assert.equal(read.creation_source, source);
+    assert.equal(read.body, original.body);
+    assert.equal(read.category, original.category);
+    assert.equal(read.completed, false);
+  }
+  await page.reload();
+  if (!(await grid.isVisible()))
+    await page.getByRole("button", { name: "TODOリスト", exact: true }).click();
+  for (const [id, source] of [
+    [created.id, "ui"],
+    [mcpId, "mcp"],
+    [legacyId, "unknown"],
+  ]) {
+    await expect(
+      page.locator(`[data-todo-id="${id}"] [data-creation-source="${source}"]`),
+    ).toBeVisible();
+    assert.equal(
+      (await tool("list_todos", { project_id: project })).items.find(
+        (t) => t.id === id,
+      ).creation_source,
+      source,
+    );
+  }
+  await page.screenshot({
+    path: path.join(output, "screenshots/creation-sources.png"),
+    fullPage: true,
+  });
+
   await page.goto(`${base}/workspaces/${workspace}`);
   const editor = page.locator('[contenteditable="true"]').first();
   await editor.fill("未送信のチャットを保持");
@@ -357,7 +559,10 @@ try {
   await tool("update_todo", {
     project_id: project,
     todo_id: mcpId,
-    changes: { expected_revision: 1, body: "MCPで更新 → UIにも反映" },
+    changes: {
+      expected_revision: (await api(`${todoPath}/${mcpId}`)).data.revision,
+      body: "MCPで更新 → UIにも反映",
+    },
   });
   await expect(
     panel.getByRole("button", { name: "MCPで更新 → UIにも反映", exact: true }),
@@ -386,7 +591,10 @@ try {
   await tool("update_todo", {
     project_id: project,
     todo_id: mcpId,
-    changes: { expected_revision: 2, issue_id: issue },
+    changes: {
+      expected_revision: (await api(`${todoPath}/${mcpId}`)).data.revision,
+      issue_id: issue,
+    },
   });
   await expect(
     panel.getByRole("button", { name: "関連カード", exact: true }),
@@ -460,7 +668,7 @@ try {
   await tool("delete_todo", {
     project_id: project,
     todo_id: mcpId,
-    expected_revision: 3,
+    expected_revision: (await api(`${todoPath}/${mcpId}`)).data.revision,
   });
   await expect(page.locator(`[data-todo-id="${mcpId}"]`)).toHaveCount(0, {
     timeout: 15000,

@@ -81,7 +81,7 @@ impl McpServer {
         &self,
         Parameters(a): Parameters<CreateArgs>,
     ) -> Result<CallToolResult, ErrorData> {
-        let url = self.url(&format!("/api/projects/{}/todos", a.project_id));
+        let url = self.url(&format!("/api/internal/projects/{}/todos", a.project_id));
         match self
             .send_json::<Todo>(self.client.post(url).json(&a.input))
             .await

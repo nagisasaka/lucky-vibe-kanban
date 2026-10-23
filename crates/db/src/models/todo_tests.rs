@@ -15,6 +15,12 @@ async fn fixture() -> (SqlitePool, Uuid, Uuid) {
     .execute(&pool)
     .await
     .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261024000000_todo_creation_source.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
     let project = Uuid::new_v4();
     let foreign = Uuid::new_v4();
     for id in [project, foreign] {
@@ -224,4 +230,107 @@ async fn validation_and_pagination_do_not_lose_or_invent_items() {
         Todo::create(&pool, p, conflicting).await,
         Err(TodoError::Conflict)
     ));
+}
+
+#[tokio::test]
+async fn creation_source_is_immutable_even_across_retries() {
+    let (pool, p, _) = fixture().await;
+    for source in [
+        TodoCreationSource::Ui,
+        TodoCreationSource::Mcp,
+        TodoCreationSource::Unknown,
+    ] {
+        let input = note("original");
+        let a = Todo::create_from(&pool, p, input.clone(), source)
+            .await
+            .unwrap();
+        let retry = Todo::create_from(&pool, p, input, TodoCreationSource::Mcp)
+            .await
+            .unwrap();
+        assert_eq!(retry.creation_source, source);
+        let updated = Todo::update(&pool, p, a.id, changes(json!({"expected_revision":1,"body":"edited","category":"changed","completed":true}))).await.unwrap();
+        assert_eq!(updated.creation_source, source);
+        assert_eq!(
+            Todo::get(&pool, p, a.id).await.unwrap().creation_source,
+            source
+        );
+        assert!(
+            sqlx::query("UPDATE project_todos SET creation_source=? WHERE id=?")
+                .bind(if source == TodoCreationSource::Ui {
+                    "mcp"
+                } else {
+                    "ui"
+                })
+                .bind(a.id)
+                .execute(&pool)
+                .await
+                .is_err()
+        );
+    }
+    assert!(
+        serde_json::from_value::<CreateTodo>(
+            json!({"id":Uuid::new_v4(),"body":"fake","creation_source":"ui"})
+        )
+        .is_err()
+    );
+    assert!(
+        serde_json::from_value::<UpdateTodo>(json!({"expected_revision":1,"creation_source":"ui"}))
+            .is_err()
+    );
+}
+
+#[tokio::test]
+async fn creation_source_migration_preserves_all_existing_columns_and_order() {
+    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+    sqlx::raw_sql("CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE local_issues(id BLOB PRIMARY KEY, project_id BLOB);").execute(&pool).await.unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261018000000_project_todos.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let p = Uuid::new_v4();
+    let issue = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects VALUES(?)")
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO local_issues VALUES(?,?)")
+        .bind(issue)
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    for i in 1..=3 {
+        sqlx::query("INSERT INTO project_todos(id,project_id,body,category,completed,issue_id,revision,created_at,updated_at) VALUES(?,?,'line 1\nline 2','category',1,?,7,?, 'preserved')")
+            .bind(Uuid::from_u128(i)).bind(p).bind(issue).bind(format!("2026-10-2{i}")).execute(&pool).await.unwrap();
+    }
+    let snapshot = "SELECT json_array(hex(id),hex(project_id),body,category,completed,hex(issue_id),revision,created_at,updated_at) FROM project_todos ORDER BY created_at DESC,id";
+    let before: Vec<String> = sqlx::query_scalar(snapshot).fetch_all(&pool).await.unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261024000000_todo_creation_source.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let after: Vec<String> = sqlx::query_scalar(snapshot).fetch_all(&pool).await.unwrap();
+    assert_eq!(before, after);
+    let page = Todo::list(
+        &pool,
+        p,
+        TodoQuery {
+            include_completed: true,
+            limit: 100,
+            offset: 0,
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(page.items.len(), 3);
+    assert!(
+        page.items
+            .iter()
+            .all(|t| t.creation_source == TodoCreationSource::Unknown)
+    );
 }
