@@ -1,5 +1,5 @@
 use anyhow::ensure;
-use db::models::todo::{CreateTodo, Todo, TodoError, TodoQuery, UpdateTodo};
+use db::models::todo::{CreateTodo, Todo, TodoCreationSource, TodoError, TodoQuery, UpdateTodo};
 use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -162,7 +162,7 @@ pub(super) async fn call(
                     input,
                     json!({"project_id":a.project_id}),
                     move |id| async move {
-                        match Todo::create(
+                        match Todo::create_from(
                             &owned.pool,
                             a.project_id,
                             CreateTodo {
@@ -171,6 +171,7 @@ pub(super) async fn call(
                                 category: a.category,
                                 issue_id: a.issue_id,
                             },
+                            TodoCreationSource::Mcp,
                         )
                         .await
                         {

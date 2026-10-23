@@ -403,6 +403,20 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
             >
               {todo.body}
             </button>
+            <span
+              className="mt-half block text-xs text-low"
+              title={t('todo.creationSourceHint')}
+              data-creation-source={todo.creation_source}
+            >
+              {t('todo.creationSource', {
+                source:
+                  todo.creation_source === 'ui'
+                    ? 'UI'
+                    : todo.creation_source === 'mcp'
+                      ? 'MCP'
+                      : t('todo.creationSourceUnknown'),
+              })}
+            </span>
             {todo.issue_id && (
               <button
                 type="button"

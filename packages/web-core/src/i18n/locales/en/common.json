@@ -1389,6 +1389,9 @@
     "approvalFailed": "Approval could not be applied. Check the latest candidate and status."
   },
   "todo": {
+    "creationSource": "Created via: {{source}}",
+    "creationSourceUnknown": "Unknown",
+    "creationSourceHint": "The route used to create this TODO, not who conceived or authored it.",
     "title": "TODO list",
     "board": "Kanban board",
     "newBody": "Add a thought or TODO…",

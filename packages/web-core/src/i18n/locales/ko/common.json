@@ -1198,6 +1198,9 @@
     "exclusions": "대체 및 제외 사유"
   },
   "todo": {
+    "creationSource": "생성 경로: {{source}}",
+    "creationSourceUnknown": "알 수 없음",
+    "creationSourceHint": "이 TODO를 생성한 경로이며, 제안자나 작성자를 나타내지 않습니다.",
     "title": "TODO list",
     "board": "Kanban board",
     "newBody": "Add a thought or TODO…",

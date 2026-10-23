@@ -1198,6 +1198,9 @@
     "exclusions": "Remplacements et exclusions"
   },
   "todo": {
+    "creationSource": "Créé via : {{source}}",
+    "creationSourceUnknown": "Inconnu",
+    "creationSourceHint": "Le canal utilisé pour créer ce TODO, pas la personne qui l’a conçu ou rédigé.",
     "title": "TODO list",
     "board": "Kanban board",
     "newBody": "Add a thought or TODO…",

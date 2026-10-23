@@ -1204,6 +1204,9 @@
     "exclusions": "替換與排除原因"
   },
   "todo": {
+    "creationSource": "建立途徑：{{source}}",
+    "creationSourceUnknown": "未知",
+    "creationSourceHint": "此 TODO 建立時使用的途徑，不表示提出者或作者。",
     "title": "TODO list",
     "board": "Kanban board",
     "newBody": "Add a thought or TODO…",

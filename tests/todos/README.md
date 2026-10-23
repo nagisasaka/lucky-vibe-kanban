@@ -42,3 +42,11 @@ left-to-right when their tops align. Dense backfilling and column-major CSS
 columns are intentionally avoided because they can change that reading order.
 There is no category-collapse control; expansion coverage uses the existing edit
 form and deletion confirmation.
+
+Creation-source coverage is recorded in [the change manifest](creation-source-validation.md).
+The isolated run migrates populated pre-feature TODO rows in its own stopped
+instance, then checks `unknown`, UI creation, authenticated stdio MCP creation,
+read APIs, rejected provenance overrides, and both interfaces editing all three
+sources. The internal creation endpoint requires the existing local-agent token;
+ordinary internal REST calls remain `unknown`. This records the entry route,
+not an author identity. The HTTP MCP receipt test covers the other transport.

@@ -1,9 +1,11 @@
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
-    routing::get,
+    routing::{get, post},
 };
-use db::models::todo::{CreateTodo, Todo, TodoError, TodoPage, TodoQuery, UpdateTodo};
+use db::models::todo::{
+    CreateTodo, Todo, TodoCreationSource, TodoError, TodoPage, TodoQuery, UpdateTodo,
+};
 use deployment::Deployment;
 use serde::Deserialize;
 use utils::response::ApiResponse;
@@ -18,6 +20,7 @@ pub fn router() -> Router<DeploymentImpl> {
             get(workspace_project),
         )
         .route("/projects/{project_id}/todos", get(list).post(create))
+        .route("/internal/projects/{project_id}/todos", post(create_mcp))
         .route(
             "/projects/{project_id}/todos/{todo_id}",
             get(read).patch(update).delete(delete),
@@ -46,9 +49,33 @@ async fn create(
     Json(input): Json<CreateTodo>,
 ) -> Result<Json<ApiResponse<Todo>>, ApiError> {
     Ok(Json(ApiResponse::success(
-        Todo::create(&d.db().pool, project, input).await?,
+        Todo::create_from(&d.db().pool, project, input, web_creation_source()).await?,
     )))
 }
+// ACTOR is populated by access middleware after credential verification.
+// Internal callers using the generic REST API are not assumed to be the UI.
+fn web_creation_source() -> TodoCreationSource {
+    match server_access::ACTOR.try_with(|p| p.channel).ok() {
+        Some("local" | "basic" | "web") => TodoCreationSource::Ui,
+        _ => TodoCreationSource::Unknown,
+    }
+}
+
+async fn create_mcp(
+    State(d): State<DeploymentImpl>,
+    Path(project): Path<Uuid>,
+    Json(input): Json<CreateTodo>,
+) -> Result<Json<ApiResponse<Todo>>, ApiError> {
+    if server_access::ACTOR.try_with(|p| p.channel).ok() != Some("internal") {
+        return Err(ApiError::Forbidden(
+            "Internal MCP authentication required".into(),
+        ));
+    }
+    Ok(Json(ApiResponse::success(
+        Todo::create_from(&d.db().pool, project, input, TodoCreationSource::Mcp).await?,
+    )))
+}
+
 async fn update(
     State(d): State<DeploymentImpl>,
     Path((project, id)): Path<(Uuid, Uuid)>,

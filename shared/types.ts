@@ -50,7 +50,9 @@ export type DesignNoteDetail = { note: DesignNote,
  */
 additions: Array<DesignNoteAddition>, };
 
-export type Todo = { id: string, project_id: string, body: string, category: string, completed: boolean, issue_id: string | null, revision: number, created_at: string, updated_at: string, };
+export type TodoCreationSource = "ui" | "mcp" | "unknown";
+
+export type Todo = { id: string, project_id: string, body: string, category: string, completed: boolean, creation_source: TodoCreationSource, issue_id: string | null, revision: number, created_at: string, updated_at: string, };
 
 export type CreateTodo = {
 /**
