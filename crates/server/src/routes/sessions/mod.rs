@@ -440,6 +440,14 @@ async fn prepare_coding_agent_execution_for_session(
         }
     };
 
+    // The saved-Goal UI action and MCP adapter both use this exact command.
+    // Never silently start a fresh provider thread when its binding is missing.
+    if prompt.trim() == "/goal resume" && provider_session.is_none() {
+        return Err(ApiError::Conflict(
+            "Saved Goal resume requires an existing provider session binding".into(),
+        ));
+    }
+
     if has_explicit_resume && let Some(reference) = provider_session.as_ref() {
         agent_run::bind_provider_session(pool, session.id, reference).await?;
     }

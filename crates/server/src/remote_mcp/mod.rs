@@ -15,6 +15,7 @@ pub mod environment_settings;
 mod environment_switch;
 mod errors;
 mod evidence_read;
+mod goals;
 mod integration_read;
 mod integration_write;
 #[cfg(test)]
@@ -187,8 +188,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
         "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
         "add_issue_comment" | "write_design_note" | "create_todo" | "update_todo"
-        | "delete_todo" | "create_issue" | "update_issue" | "steer_execution"
-        | "continue_execution" | "answer_question" | "start_workspace" => Some("lvk:write"),
+        | "delete_todo" | "create_issue" | "update_issue" | "steer_execution" | "pause_goal"
+        | "resume_goal" | "cancel_goal" | "clear_goal" | "continue_execution"
+        | "answer_question" | "start_workspace" => Some("lvk:write"),
         _ => None,
     }
 }
@@ -362,6 +364,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(run_events::tools());
     tools.extend(resource_observation::tools());
     tools.extend(runtime_write::tools());
+    tools.extend(goals::tools());
     tools
 }
 
@@ -452,6 +455,9 @@ impl Remote {
         };
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
+            name if goals::tools().iter().any(|tool| tool.name == name) => {
+                goals::call(self, principal, name, args).await
+            }
             "get_resource_observation" => resource_observation::call(args).await,
             "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
