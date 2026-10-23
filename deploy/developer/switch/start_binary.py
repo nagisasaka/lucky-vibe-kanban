@@ -308,8 +308,9 @@ def observation():
     return want
 
 
-def preflight(a):
-    s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
+def preflight(a, *, dry_run=False):
+    if not dry_run:
+        s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
     s.need(not P("/run/lvk-maintenance/active").exists(), "Host maintenance active")
     s.need(
         not (DEV / "run/supervisor.sock").exists(),
@@ -329,8 +330,7 @@ def preflight(a):
         P(selection["old_paths"]["frontend"])
     )[0]
     s.resources()
-    s.idle(DEV / "data/db.v2.sqlite")
-    s.pre_stop_writers(selection["current_process"]["pid"])
+    s.idle(selection["current_process"]["pid"])
     s.need(
         not any(p.is_symlink() for p in (DEV / "data").rglob("*")),
         "Data symlinks refused",
@@ -528,11 +528,10 @@ def execute(op, request, config_path):
             "Launch configuration changed",
         )
         s.resources()
-        s.idle(DEV / "data/db.v2.sqlite")
+        s.idle(want["pid"])
         s.stop(want, selected["old_hashes"]["binary"])
         stage("backup")
         s.stopped()
-        s.idle(DEV / "data/db.v2.sqlite")
         (op / "settings").mkdir(mode=0o700)
         shutil.copy2(DEV / "run.py", op / "settings/run.py")
         shutil.copy2(config_path, op / "settings/switch.json")
@@ -754,7 +753,7 @@ def main():
         result = status(a.request_id, a.owner)
     elif a.dry_run:
         s.need(a.binary, "--binary required")
-        result = preflight(a)
+        result = preflight(a, dry_run=True)
     else:
         s.need(a.binary and a.request_id, "--binary and --request-id required")
         result = submit(a, config_path)

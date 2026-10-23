@@ -17,6 +17,11 @@ extern int sqlite3_exec(sqlite3 *, const char *, void *, void *, char **);
 #define FRONTEND "/missing/frontend"
 #endif
 int main(void) {
+  if (getenv("FIXTURE_CHILD") && fork() == 0) {
+    /* No data FD exists yet. A real server child must still prevent cutover. */
+    sleep(30);
+    return 0;
+  }
   char path[4096];
   snprintf(path, sizeof(path), "%s/data/db.v2.sqlite", getenv("LVK_INSTANCE_DIR"));
   sqlite3 *db = NULL;
@@ -36,7 +41,7 @@ int main(void) {
     char html[8192]={0};
     const char *body = "{\"success\":true}";
     if (strstr(request, "/api/info")) body="{\"success\":true,\"data\":{\"build_info\":{\"kind\":\"fixture\"}}}";
-    else if (strstr(request, "/api/resource-coordination/snapshot")) body="{\"success\":true,\"data\":{\"resources\":[],\"holders\":[],\"queue\":[]}}";
+    else if (strstr(request, "/api/resource-coordination/snapshot")) body="{\"success\":true,\"data\":{\"resources\":[{\"id\":\"unused-fixture-device\",\"description\":\"Unused peripheral unrelated to this instance\"}],\"holders\":[],\"queue\":[]}}";
     else if (strstr(request, "GET /index.html ")) {
       FILE *file=fopen(FRONTEND "/index.html","r");
       if(file){fread(html,1,sizeof(html)-1,file);fclose(file);}

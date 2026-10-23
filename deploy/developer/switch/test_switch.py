@@ -284,16 +284,24 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         self.assertEqual(repeated["status"], "interrupted")
         self.assertIsNone(self.old.poll())
 
-    def test_registered_resources_and_changed_identity_refused(self):
-        with patch.object(
-            support,
-            "get",
-            return_value={
-                "success": True,
-                "data": {"resources": [{}], "holders": [], "queue": []},
+    def test_registered_unused_resources_allowed_but_holders_and_queue_refused(self):
+        snapshot = {
+            "success": True,
+            "data": {
+                "resources": [{"id": "unrelated-device"}],
+                "holders": [],
+                "queue": [],
             },
-        ):
-            with self.assertRaises(support.Refuse):
+        }
+        with patch.object(support, "get", return_value=snapshot):
+            engine.preflight(self.args())
+            for key in ("holders", "queue"):
+                snapshot["data"][key] = [{"operation_id": "active-operation"}]
+                with self.assertRaises(support.Refuse):
+                    engine.preflight(self.args())
+                snapshot["data"][key] = []
+        with patch.object(support, "get", side_effect=ConnectionError):
+            with self.assertRaises(ConnectionError):
                 engine.preflight(self.args())
         want = engine.observation()
         want["start"] = "wrong"
@@ -409,18 +417,136 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
             innocent.terminate()
             innocent.wait()
 
-    def test_busy_and_missing_artifact(self):
+    def add_stale_history(self):
+        # Deliberately unresolved logical history, with no live process attached.
+        # Even stale 'running' text is not proof of a currently executing process.
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
-            db.execute("INSERT INTO agent_runs VALUES('running')")
-        result = self.run_cli(self.cli())
-        self.assertEqual(result["status"], "failed")
-        self.assertIsNone(self.old.poll())
+            db.executescript("""
+                INSERT INTO agent_runs VALUES('audit_failed'),('running');
+                INSERT INTO agent_run_attempts VALUES('audit_failed'),('running');
+                INSERT INTO agent_process_registry VALUES('reserved');
+                INSERT INTO integration_runs VALUES('blocked');
+                INSERT INTO integration_reservations VALUES('logical-reservation');
+                INSERT INTO agent_run_commands VALUES('pending');
+                INSERT INTO orchestration_outbox VALUES('pending');
+                INSERT INTO bridge_commands VALUES('pending');
+                INSERT INTO scheduled_tasks VALUES(1);
+            """)
+
+    def test_stale_history_does_not_gate_cutover_or_get_rewritten(self):
+        self.add_stale_history()
+        state = self.run_cli(self.cli())
+        self.assertEqual(state["status"], "succeeded", state)
+        with contextlib.closing(sqlite3.connect(self.db)) as db:
+            self.assertEqual(
+                db.execute(
+                    "SELECT registry_status FROM agent_process_registry"
+                ).fetchall(),
+                [("reserved",)],
+            )
+            self.assertEqual(
+                db.execute("SELECT status FROM integration_runs").fetchall(),
+                [("blocked",)],
+            )
+            self.assertEqual(
+                db.execute("SELECT delivery_status FROM agent_run_commands").fetchall(),
+                [("pending",)],
+            )
+
+    def test_current_instance_process_blocks_even_with_terminal_history(self):
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
-            db.execute("DELETE FROM agent_runs")
-        Path(self.builds[1]["binary"]).unlink()
+            db.execute("INSERT INTO agent_runs VALUES('succeeded')")
+        current = subprocess.Popen(
+            ["sleep", "30"],
+            env={**os.environ, "LVK_INSTANCE_DIR": str(self.instance)},
+            start_new_session=True,
+        )
+        try:
+            dry_command = self.cli()
+            dry_command.remove("--no-new-work")
+            result = self.run_cli(dry_command + ["--dry-run"])
+            self.assertEqual(result["status"], "refused", result)
+            self.assertIn("Other instance process remains", result["reason"])
+            self.assertFalse((self.instance / "switch-operations").exists())
+            self.assertFalse((self.instance / "start.lock").exists())
+            result = self.run_cli(self.cli())
+            self.assertEqual(result["status"], "failed", result)
+            self.assertIn("Other instance process remains", result["reason"])
+            self.assertIsNone(self.old.poll())
+            self.assertIsNone(current.poll())
+        finally:
+            current.terminate()
+            current.wait()
+
+    def test_external_data_user_blocks_with_stale_history(self):
+        self.add_stale_history()
+        env = {k: v for k, v in os.environ.items() if k != "LVK_INSTANCE_DIR"}
+        reader = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys,time; f=open(sys.argv[1],'rb'); print('ready',flush=True); time.sleep(30)",
+                str(self.db),
+            ],
+            env=env,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            self.assertEqual(reader.stdout.readline().strip(), "ready")
+            result = self.run_cli(self.cli())
+            self.assertEqual(result["status"], "failed", result)
+            self.assertIn("data reader/writer", result["reason"])
+            self.assertIsNone(self.old.poll())
+        finally:
+            reader.terminate()
+            reader.wait()
+            reader.stdout.close()
+
+    def test_server_child_without_data_fd_blocks(self):
+        self.old.terminate()
+        self.old.wait()
+        self.write_run(self.builds[0], {"FIXTURE_CHILD": "1"})
+        self.old = subprocess.Popen(
+            [sys.executable, str(self.instance / "run.py")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.wait_port()
         result = self.run_cli(self.cli())
-        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["status"], "failed", result)
+        self.assertIn("child processes", result["reason"])
         self.assertIsNone(self.old.poll())
+
+    def test_dry_run_without_attestation_and_real_switch_still_requires_it(self):
+        self.add_stale_history()
+        command = self.cli()
+        command.remove("--no-new-work")
+        before = (self.instance / "run.py").read_bytes()
+        result = self.run_cli(command + ["--dry-run"])
+        self.assertIn("backup", result)
+        self.assertFalse((self.instance / "switch-operations").exists())
+        self.assertFalse((self.instance / "start.lock").exists())
+        self.assertEqual((self.instance / "run.py").read_bytes(), before)
+        self.assertIsNone(self.old.poll())
+        result = self.run_cli(command)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("--no-new-work", result["reason"])
+        self.assertEqual((self.instance / "run.py").read_bytes(), before)
+        self.assertIsNone(self.old.poll())
+
+    def test_unrelated_process_allowed_and_missing_artifact_refused(self):
+        innocent = subprocess.Popen(["sleep", "30"])
+        try:
+            engine.preflight(self.args())
+            Path(self.builds[1]["binary"]).unlink()
+            result = self.run_cli(self.cli())
+            self.assertEqual(result["status"], "failed")
+            self.assertIsNone(self.old.poll())
+            self.assertIsNone(innocent.poll())
+        finally:
+            innocent.terminate()
+            innocent.wait()
 
     def test_backup_failure_preserves_data_and_old_reference(self):
         args = self.args()

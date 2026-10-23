@@ -13,9 +13,6 @@ def configure(instance, port):
     PORT = port
 
 
-TERMINAL = ("succeeded", "failed", "cancelled", "crashed", "audit_failed")
-
-
 class Refuse(Exception):
     pass
 
@@ -141,8 +138,8 @@ def resources():
     j = get("/api/resource-coordination/snapshot")
     need(j.get("success"), "Resource snapshot failed")
     need(
-        not any(j["data"][k] for k in ["resources", "holders", "queue"]),
-        "Resources registered/busy: coordinate explicitly; do not bypass",
+        not any(j["data"][k] for k in ["holders", "queue"]),
+        "Resource holders or queued operations remain; coordinate before switching",
     )
 
 
@@ -152,57 +149,16 @@ def ro(path):
     return closing(c)
 
 
-def idle(path):
-    with ro(path) as c:
-        c.execute("BEGIN")
-        rules = {
-            "agent_runs": ("status", TERMINAL),
-            "agent_run_attempts": ("status", TERMINAL),
-            "execution_processes": ("status", ("completed", "failed", "killed")),
-            "workflow_runs": ("status", ("succeeded", "failed", "canceled")),
-            "workflow_attempts": (
-                "status",
-                ("succeeded", "failed", "cancelled", "canceled"),
-            ),
-            "resource_operations": ("status", ("succeeded", "cancelled", "recovered")),
-            "agent_run_commands": ("delivery_status", ("delivered", "failed")),
-            "orchestration_outbox": ("delivery_status", ("delivered", "failed")),
-            "bridge_commands": ("status", ("done",)),
-        }
-        for t, (col, ends) in rules.items():
-            n = c.execute(
-                f"SELECT count(*) FROM {t} WHERE {col} IS NULL OR {col} NOT IN ("
-                + ",".join("?" for _ in ends)
-                + ")",
-                ends,
-            ).fetchone()[0]
-            need(n == 0, f"Unfinished work: {t} count={n}")
-        need(
-            c.execute(
-                "SELECT count(*) FROM scheduled_tasks WHERE enabled!=0"
-            ).fetchone()[0]
-            == 0,
-            "Enabled schedule exists",
-        )
-        need(
-            c.execute(
-                "SELECT count(*) FROM agent_process_registry WHERE registry_status != 'exited'"
-            ).fetchone()[0]
-            == 0,
-            "Unsettled process registry",
-        )
-        need(
-            c.execute(
-                "SELECT count(*) FROM integration_runs WHERE status NOT IN ('succeeded','failed','cancelled')"
-            ).fetchone()[0]
-            == 0,
-            "Unsettled Integration",
-        )
-        need(
-            c.execute("SELECT count(*) FROM integration_reservations").fetchone()[0]
-            == 0,
-            "Integration reservations exist",
-        )
+def idle(server_pid):
+    """Physical occupancy only; work eligibility is the caller's responsibility.
+
+    Historical Run/registry/Integration/delivery states are not process identities.
+    Never require rewriting them to deploy. The caller coordinates work/schedules
+    and attests --no-new-work; current children, instance processes and data users
+    remain hard guards, rechecked inside the pidfd-bound stop.
+    """
+    need(not descendants(server_pid), "Dev has child processes; finish them first")
+    pre_stop_writers(server_pid)
 
 
 def process_files(p):
@@ -252,7 +208,11 @@ def pre_stop_writers(allowed_pid):
     for p in P("/proc").iterdir():
         if not p.name.isdigit() or int(p.name) in [os.getpid(), allowed_pid]:
             continue
-        _, targets = process_files(p)
+        env, targets = process_files(p)
+        need(
+            env.get(b"LVK_INSTANCE_DIR") != str(DEV).encode(),
+            f"Other instance process remains: PID {p.name}",
+        )
         need(
             not any(t.startswith(str(DEV / "data") + "/") for t in targets),
             f"Other instance data reader/writer: PID {p.name}",

@@ -35,7 +35,7 @@ Linux、Python 3.11以降、pidfd対応kernel、同一OSユーザーを前提と
 
 別の成果物はパスと新しいrequest UUIDを指定します。スクリプト編集、SHA一致、特定Issue/Runへの例外は不要です。同期実行も非同期実行も同じ`execute()`を使います。TTYの有無を権限の代用にせず、明示入力・対象identity・排他・idle確認を必須にします。稼働serverの子として同期実行すると子孫検査で停止前に拒否されます。自己再起動には専用MCP経路を使います。
 
-同じ引数に`--dry-run`を加えると、停止・backup・起動をせず、選択物・現process・backup範囲と見込み容量を表示します。idle確認も含みます。結果や引数に秘密値を入れないでください。
+同じ引数に`--dry-run`を加えると、停止・backup・起動をせず、選択物・現process・backup範囲と見込み容量を表示します。現在の物理使用状況の確認も含みます。観測だけなので`--no-new-work`は不要です。実切替には引き続き事前調整と同flagが必須です。結果や引数に秘密値を入れないでください。
 
 `--source`省略時は従来の`target/debug/server`配置を推定し、hostはbinaryと同じディレクトリ、frontendはsourceの`packages/local-web/dist`を既定にします。異なる配置では全パスを明示してください。
 
@@ -97,9 +97,9 @@ MCPを有効にするには、operatorがserver起動環境に`LVK_SELF_RESTART_
 
 ## 競合・backup・失敗
 
-既存resource coordinationのsnapshotを確認します。登録resources、holders、queueがある場合は、今回の独立自己再起動経路では明示拒否します。通常のmanaged resource operationからdetachする迂回はしません。登録資源を伴う自己再起動のhandoffは今回の範囲外です。
+既存resource coordinationのsnapshotを確認し、現在のholdersまたはqueueがある場合は明示拒否します。未使用resourceの登録だけでは拒否しません。登録は使用中を意味せず、この観測も資源の取得・使用許可ではありません。呼出し側は各資源のusage契約と既存調停を守り、切替中に新規使用を始めないよう調整します。通常のmanaged resource operationからdetachする迂回はしません。この独立engineは対象instance／DB自体が登録資源ではないことが導入・呼出しの前提です。対象が登録済みなら空き状態でも本経路で切り替えず、既存のoperation bundle契約を用います。engineは自由記述のresource説明から対象identityを推測しません。使用中資源の所有を再起動へ引き継ぐhandoffは今回の範囲外です。
 
-既存の実行中agent/workflow、未確定registry、Integration、予約、配信待ち、enabled scheduleなどは停止前に拒否します。過去Run IDの例外はありません。過去の未確定記録もoperatorの通常の復旧手順で解決する必要があります。データを開いている他processやserver子孫も拒否します。`--no-new-work`はこの検査後に新規作業を入れない外部調整の確認であり、汎用scheduler停止機能ではありません。
+AI／人間は、agent/workflow/Integrationの業務上の作業可否、配信待ち・論理予約・schedule、再起動による中断の扱いを事前確認し、新規作業を止める調整を行います。`--no-new-work`はその調整の確認であり、単なる強制実行flagや汎用scheduler停止機能ではありません。engineは全履歴のterminal判定や過去stale記録の修復を要求しません。特定Run ID例外も設けません。代わりに、現在のserver子孫、対象instance環境を持つ他process、dataを開いている他processを拒否し、pidfdによる停止直前と停止後にも物理使用を再確認します。DBのrunning表示だけで現processの存在を断定せず、表示がterminalでも実在するprocessを見逃しません。MCPのscope・Project・grant・所有者認可は変更しません。
 
 停止には、起動時刻・boot・exe・cwd・instance・portを照合したpidfdを使います。TERMで停止を確認できなければ次へ進まず、自動SIGKILLしません。停止後のbackupは`data/`と起動設定・helperだけです。`db.v2.sqlite`はSQLite backup APIでWALの確定済み内容を含む単独DBとして保存し、integrity/FKとmanifestを確認します。worktree、Git repository、target、node_modules、共有cache全体は含めません。任意のdata symlinkは拒否します。
 

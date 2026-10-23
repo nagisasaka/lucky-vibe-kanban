@@ -173,7 +173,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "self_restart",
-            "Request an administrator-configured development instance switch using externally tested artifacts. Coordinate idle work first. Admission is NOT completion. The independent engine persists the transaction; after reconnect use get_self_restart_operation with the SAME request_id. Registered shared resources are refused; ordinary run_process still cannot self-restart.",
+            "Request an administrator-configured development instance switch using externally tested artifacts. Coordinate idle work first. Admission is NOT completion. The independent engine persists the transaction; after reconnect use get_self_restart_operation with the SAME request_id. Active resource holders or queued operations are refused; registration alone is not occupancy. The target instance/DB must be unregistered; registered targets require a resource operation bundle. Ordinary run_process still cannot self-restart.",
             json!({"request_id":uuid,"purpose":text,"binary":text,"source":text,"agent_host":text,"frontend":text,"manifest":text,"frontend_mode":{"enum":["external","embedded"]},"no_new_work":{"type":"boolean"},"retain_worktree":{"type":"boolean","default":false}}),
             &[
                 "request_id",
