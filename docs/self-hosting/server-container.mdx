@@ -306,6 +306,29 @@ The Dockerfile uses a pinned `cargo-chef` to build Rust dependencies before copy
 
 The first build after this change populates the cache and can still take a long time. To measure reuse, dispatch another build on the same commit and compare the build-step duration, then repeat after a normal source change. A same-commit cache hit does not measure Rust recompilation time. Check the dependency and tool-installation steps for `CACHED` in the build logs, and require the smoke tests to pass on each run.
 
+## Legacy npx CLI migration
+
+The legacy LVK npx launcher and its npm packaging, download, extraction and cache-management code have been removed. LVK publishes Docker images only; there is no replacement npm package or compatibility launcher.
+
+| Retired entrypoint | Supported route |
+| --- | --- |
+| `npx lucky-vibe-kanban` (default server/browser launch) | Use the Docker setup on this page, or `pnpm run dev` for source development. |
+| `lucky-vibe-kanban mcp` and `lucky-vibe-kanban --mcp` | Use the directly built `vibe-kanban-mcp --mode global` stdio binary, or the [authenticated external MCP endpoint](/self-hosting/authentication). Pass `--mode orchestrator` explicitly when required. |
+| `lucky-vibe-kanban --desktop` | Use `pnpm run tauri:dev` or `pnpm run tauri:build` in a desktop-capable source environment. Tauri itself remains supported in source. |
+| `build:npx`, `build:npx-cli`, `check:npx-cli`, `prepack`, `test:npm` and `local-build.sh` (including `--desktop` / `--all`) | Use the source commands below or the Docker release workflow. npm archives are no longer built or tested. |
+
+From a source checkout with the repository's Node, pnpm and Rust toolchains, you can build the server and stdio MCP binaries directly:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --dir packages/local-web run build
+cargo build --locked --release --bin server --bin agent-process-host --bin vibe-kanban-mcp
+```
+
+Run `target/release/server` with your existing instance configuration. For a local stdio MCP client, configure the absolute path to `target/release/vibe-kanban-mcp` with arguments `--mode global`, and point it at the intended running server with `VIBE_BACKEND_URL` or `MCP_HOST` / `MCP_PORT`. Existing authentication and authorisation requirements still apply. Docker continues to include all three binaries; the HTTP MCP API, OAuth and permissions are unchanged.
+
+This removal does not delete existing application data, downloaded binaries or caches such as `~/.vibe-kanban/bin`. Previously downloaded launchers are not updated or disabled by this source change. Agent CLIs (including Codex), third-party MCP launch commands using npx, Tauri, Arena, notifications and editor integrations are unaffected.
+
 ## Validation boundaries
 
 The kit includes Docker-free Node/Python tests for settings, IP certificate validation, atomic certificate export, reload retries, supervision, Compose/workflow structure and shell syntax; native nginx integration tests exercise TLS, Basic authentication, WebSockets, SSE and preview isolation. Rust and TypeScript tests cover public preview URLs and redirects.

@@ -3,6 +3,8 @@ title: "OpenWiki repository memory implementation checkpoints"
 description: "Architecture mapping, implementation decisions and verification for repository memory."
 ---
 
+> Historical validation record: the legacy npx CLI and its build/check commands have since been retired. Results below describe their original revisions, not current validation requirements.
+
 # OpenWiki repository memory implementation
 
 The normative contract is `openwiki-repository-memory.md`, read in full before

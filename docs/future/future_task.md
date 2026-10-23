@@ -145,7 +145,7 @@
 - **预估工时**：每项 2–4 天。
 - **关键文件**：
   - `crates/tauri-app/` Tauri 端做托盘 / 通知
-  - `npx-cli/` 检测 WSL2 + PowerShell module
+  - 旧 `npx-cli/` WSL2 / PowerShell launcher 提案已随 CLI 退役；不再作为实现入口。
   - `crates/worktree-manager/` 对 WSL 路径的支持
 
 #### T0-4. 附件本地化（git-build.md 点名待办）
