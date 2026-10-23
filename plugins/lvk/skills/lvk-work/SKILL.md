@@ -69,8 +69,21 @@ confirmation. Otherwise show exactly the returned message:
 「ワークツリーが削除されます」. Ask the user once, then submit that token only if
 confirmed. Cancellation means do not submit it. Do not ask for a second approval.
 The server checks usage again immediately before deletion. If use began after
-preflight, archive fails without deleting the worktree. An expired token requires
-a fresh preflight.
+preflight and is observed by the final check, archive fails without deleting the
+worktree. An expired token requires a fresh preflight.
+
+On Linux, both checks also inspect observable OS process references: exe, cwd,
+open files, mapped files and existing path arguments, including unregistered
+servers and LVK itself. Debug LVK also protects its filesystem frontend assets.
+This is a snapshot, not a lock on external process creation. Other PID namespaces,
+permission-hidden information, references held only in application configuration
+or memory, and external starts after the last observation are not covered.
+Unreadable unrelated processes do not by themselves prevent archive. Non-Linux
+hosts do not have this procfs observation; managed DB/registry checks still apply.
+
+The execution-only usage label alone does not prevent manual archive. Active
+runs, processes, Integrations and reservations still do. Archiving does not
+change that label or grant permission to reuse the workspace.
 
 If `deletion_error` is returned, archive has still completed. Show the returned
 error verbatim; do not claim physical deletion succeeded or retry deletion

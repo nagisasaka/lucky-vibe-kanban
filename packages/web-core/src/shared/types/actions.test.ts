@@ -7,7 +7,10 @@ import {
   type ActionVisibilityContext,
 } from './actions';
 
-const context = { workspaceReadOnly: true } as ActionVisibilityContext;
+const context = {
+  workspaceReadOnly: true,
+  workspaceArchived: false,
+} as ActionVisibilityContext;
 function action(id: string, requiresTarget = ActionTargetType.WORKSPACE) {
   return {
     id,
@@ -18,10 +21,17 @@ function action(id: string, requiresTarget = ActionTargetType.WORKSPACE) {
 }
 
 describe('execution-only action policy', () => {
+  it('allows manual archive but keeps unarchive restricted', () => {
+    const archive = action('archive-workspace');
+    expect(isActionVisible(archive, context)).toBe(true);
+    expect(isActionEnabled(archive, context)).toBe(true);
+    const archived = { ...context, workspaceArchived: true };
+    expect(isActionVisible(archive, archived)).toBe(false);
+    expect(isActionEnabled(archive, archived)).toBe(false);
+  });
   it.each([
     'duplicate-workspace',
     'rename-workspace',
-    'archive-workspace',
     'delete-workspace',
     'start-review',
     'spin-off-workspace',

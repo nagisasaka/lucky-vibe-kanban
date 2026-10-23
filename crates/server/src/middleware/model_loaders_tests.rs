@@ -81,10 +81,13 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
         "/files/content",
     ];
     let mut workspace_routes = Router::new();
-    for suffix in workspace_paths
-        .into_iter()
-        .chain(["/files/tree", "/seen", "/execution/stop"])
-    {
+    for suffix in workspace_paths.into_iter().chain([
+        "/files/tree",
+        "/seen",
+        "/execution/stop",
+        "/archive/prepare",
+        "/archive/confirm",
+    ]) {
         workspace_routes =
             workspace_routes.route(&format!("/workspaces/{{id}}{suffix}"), any(handler.clone()));
     }
@@ -96,6 +99,7 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
     let router = Router::new()
         .merge(workspace_routes.layer(from_fn_with_state(pool.clone(), load_workspace_from_pool)))
         .merge(session_routes.layer(from_fn_with_state(pool.clone(), load_session_from_pool)));
+    let router = Router::new().nest("/api", router);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let server = tokio::spawn(async move {
@@ -108,14 +112,17 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
             reqwest::Method::PUT,
             reqwest::Method::DELETE,
         ] {
-            let response = client.request(method, format!("http://{address}/workspaces/{}{suffix}", internal.id))
+            let response = client.request(method, format!("http://{address}/api/workspaces/{}{suffix}", internal.id))
                 .json(&serde_json::json!({ "internal": true, "owner_id": internal.execution_owner, "usage": "interactive" })).send().await.unwrap();
             assert_eq!(response.status(), StatusCode::CONFLICT, "{suffix}");
         }
     }
     for suffix in ["", "/follow-up", "/queue", "/setup", "/review"] {
         let response = client
-            .post(format!("http://{address}/sessions/{}{suffix}", session.id))
+            .post(format!(
+                "http://{address}/api/sessions/{}{suffix}",
+                session.id
+            ))
             .send()
             .await
             .unwrap();
@@ -153,7 +160,7 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
     ] {
         assert_eq!(
             client
-                .request(method, format!("http://{address}/{path}"))
+                .request(method, format!("http://{address}/api/{path}"))
                 .send()
                 .await
                 .unwrap()
@@ -161,7 +168,30 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
             StatusCode::NO_CONTENT
         );
     }
-    assert_eq!(effects.load(Ordering::SeqCst), 5);
+    for suffix in ["prepare", "confirm"] {
+        let url = format!(
+            "http://{address}/api/workspaces/{}/archive/{suffix}",
+            internal.id
+        );
+        for method in [reqwest::Method::PUT, reqwest::Method::DELETE] {
+            assert_eq!(
+                client.request(method, &url).send().await.unwrap().status(),
+                StatusCode::CONFLICT
+            );
+        }
+        assert_eq!(
+            client.post(&url).send().await.unwrap().status(),
+            StatusCode::NO_CONTENT
+        );
+    }
+    assert_eq!(effects.load(Ordering::SeqCst), 7);
+    assert!(
+        Workspace::find_by_id(&pool, internal.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_execution_only()
+    );
     assert_eq!(
         Session::find_by_workspace_id(&pool, internal.id)
             .await

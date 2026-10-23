@@ -154,13 +154,62 @@ with sqlite3.connect(root/'data/db.v2.sqlite') as db: db.execute(sys.argv[2],arg
     await page
       .getByRole("navigation")
       .getByRole("button", { name: "Archive", exact: true })
-      .click();
+      .click({ timeout: 30_000 });
+  };
+  const waitForIdle = async (ws: any) => {
+    // Initial inspection can briefly spawn processes in this fixture's cwd.
+    // Success cases wait for their observable use to settle. Deliberate busy
+    // cases below do not use this helper and must reject immediately.
+    await expect
+      .poll(
+        async () => {
+          const response = await request.post(
+            `/api/workspaces/${ws.id}/archive/prepare`,
+            { headers },
+          );
+          const result = await response.json();
+          if (!result.success) {
+            expect(JSON.stringify(result)).toContain(
+              "使用中のWorkspaceはarchiveできません。",
+            );
+          }
+          return result.success;
+        },
+        { timeout: 15_000 },
+      )
+      .toBe(true);
   };
   // KeyboardDialog is a portal without an ARIA dialog role.
   const dialog = page.getByRole("heading", {
     name: "ワークツリーが削除されます",
     exact: true,
   });
+  const showIdleConfirmation = async (ws: any) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await waitForIdle(ws);
+      await clickArchive();
+      await expect(
+        dialog.or(page.getByRole("heading", { name: "Error", exact: true })),
+      ).toBeVisible();
+      if (await dialog.isVisible()) return;
+      // A new inspection child can start after the successful preflight.
+      // Assert the required immediate refusal, then model an explicit retry.
+      // Deliberate busy/race cases never take this retry path.
+      const busyError = page.getByText(
+        /使用中のWorkspaceはarchiveできません。.*PID \d+:/,
+      );
+      await expect(busyError).toBeVisible();
+      console.log(
+        "Fixture inspection race rejected:",
+        await busyError.textContent(),
+      );
+      await expect(dialog).toHaveCount(0);
+      expect((await api(`/api/workspaces/${ws.id}`)).archived).toBe(false);
+      expect(existsSync(ws.container_ref)).toBe(true);
+      await page.getByRole("button", { name: "OK", exact: true }).click();
+    }
+    throw new Error("Fixture inspection processes did not settle");
+  };
   const ws = await create("Archive UI fixture");
   const tree = join(ws.container_ref, repo.name);
   writeFileSync(join(tree, "retained.txt"), "committed work\n");
@@ -176,12 +225,12 @@ with sqlite3.connect(root/'data/db.v2.sqlite') as db: db.execute(sys.argv[2],arg
     "retained work",
   );
   await open(ws);
-  await clickArchive();
+  await showIdleConfirmation(ws);
   await expect(dialog).toHaveCount(1);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   expect((await api(`/api/workspaces/${ws.id}`)).archived).toBe(false);
   expect(existsSync(ws.container_ref)).toBe(true);
-  await clickArchive();
+  await showIdleConfirmation(ws);
   await expect(dialog).toHaveCount(1);
   await page.screenshot({
     path: testInfo.outputPath("archive-confirmation.png"),
@@ -316,6 +365,127 @@ with sqlite3.connect(root/'data/db.v2.sqlite') as db: db.execute(sys.argv[2],arg
       })
     ).error,
   ).toBe(true);
+
+  // These are our own foreground fixture children, with no DB/registry entries.
+  // They start after prepare to exercise the final OS observation as well.
+  for (const reference of ["cwd", "frontend-file"]) {
+    const external = await create(`Unregistered ${reference} fixture`);
+    const assets = join(
+      external.container_ref,
+      repo.name,
+      "packages/local-web/dist",
+    );
+    mkdirSync(assets, { recursive: true });
+    const asset = join(assets, "index.html");
+    writeFileSync(asset, "LOCAL-105 frontend fixture");
+    const ready = await mcp({ workspace_id: external.id, archived: true });
+    expect(ready.error).toBe(false);
+    const child = spawn(
+      "python3",
+      [
+        "-c",
+        [
+          "import sys,os,time",
+          "target=sys.stdin.readline().strip()",
+          reference === "cwd" ? "os.chdir(target)" : "asset=open(target)",
+          "print('ready',flush=True)",
+          "time.sleep(60)",
+        ].join("\n"),
+      ],
+      { cwd: instance, stdio: ["pipe", "pipe", "pipe"] },
+    );
+    child.stderr.resume();
+    const stopped = new Promise<void>((done) =>
+      child.once("close", () => done()),
+    );
+    const lines = createInterface({ input: child.stdout });
+    try {
+      child.stdin.end(
+        (reference === "cwd" ? external.container_ref : asset) + "\n",
+      );
+      expect((await lines[Symbol.asyncIterator]().next()).value).toBe("ready");
+      await open(external);
+      await clickArchive();
+      await expect(
+        page.getByText("使用中のWorkspaceはarchiveできません。", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      await expect(dialog).toHaveCount(0);
+      await page.screenshot({
+        path: testInfo.outputPath(`unregistered-${reference}-rejected.png`),
+      });
+      await page.getByRole("button", { name: "OK", exact: true }).click();
+      expect(
+        (await mcp({ workspace_id: external.id, archived: true })).error,
+      ).toBe(true);
+      expect(
+        (
+          await mcp({
+            workspace_id: external.id,
+            archived: true,
+            confirmation_token: ready.data.confirmation_token,
+          })
+        ).error,
+      ).toBe(true);
+      expect((await api(`/api/workspaces/${external.id}`)).archived).toBe(
+        false,
+      );
+      expect(existsSync(external.container_ref)).toBe(true);
+    } finally {
+      lines.close();
+      child.kill("SIGTERM");
+      await stopped;
+    }
+    const retry = await mcp({ workspace_id: external.id, archived: true });
+    expect(retry.error).toBe(false);
+    expect(
+      (
+        await mcp({
+          workspace_id: external.id,
+          archived: true,
+          confirmation_token: retry.data.confirmation_token,
+        })
+      ).error,
+    ).toBe(false);
+    expect(existsSync(external.container_ref)).toBe(false);
+  }
+
+  // Archive does not grant execution-only workspaces permission to resume work.
+  // Exercise both the unreleased label and the state after owner release.
+  for (const usage of ["execution_only", "interactive"]) {
+    const completed = await create(`Completed ${usage} fixture`);
+    seed("UPDATE workspaces SET usage=? WHERE id=?", [
+      usage,
+      { uuid: completed.id },
+    ]);
+    if (usage === "execution_only") {
+      const denied = await request.put(`/api/workspaces/${completed.id}`, {
+        headers,
+        data: { name: "must remain denied" },
+      });
+      expect(denied.status()).toBe(409);
+    }
+    await open(completed);
+    await showIdleConfirmation(completed);
+    await expect(dialog).toHaveCount(1);
+    await page.screenshot({
+      path: testInfo.outputPath(`completed-${usage}-confirmation.png`),
+    });
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    const ready = await mcp({ workspace_id: completed.id, archived: true });
+    expect(ready.error).toBe(false);
+    const done = await mcp({
+      workspace_id: completed.id,
+      archived: true,
+      confirmation_token: ready.data.confirmation_token,
+    });
+    expect(done.error).toBe(false);
+    expect(done.data.workspace.archived).toBe(true);
+    expect(done.data.workspace.worktree_deleted).toBe(true);
+    expect(done.data.workspace.usage).toBe(usage);
+    expect(existsSync(completed.container_ref)).toBe(false);
+  }
 
   const empty = await api("/api/workspaces", { name: "Empty fixture" });
   const emptyReady = await mcp({ workspace_id: empty.id, archived: true });

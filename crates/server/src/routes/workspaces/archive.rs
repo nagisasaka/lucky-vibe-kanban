@@ -52,11 +52,12 @@ async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiErro
         OR EXISTS(SELECT 1 FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=?1 AND p.status='running')
         OR EXISTS(SELECT 1 FROM integration_reservations WHERE resource_kind='workspace' AND resource_key=?2)
         OR EXISTS(SELECT 1 FROM resource_operations WHERE workspace_id=?1 AND status IN ('queued','blocked','launching','running','recovery_required'))
+        OR EXISTS(SELECT 1 FROM resource_mediations WHERE workspace_id=?1 AND status IN ('pending','preparing','running'))
         OR EXISTS(SELECT 1 FROM workflow_runs w WHERE w.status NOT IN ('succeeded','failed','canceled') AND (
             w.workspace_id=?1
             OR EXISTS(SELECT 1 FROM workflow_attempts a WHERE a.id=w.attempt_id AND a.workspace_id=?1)
             OR EXISTS(SELECT 1 FROM node_executions n JOIN agent_runs r ON r.id=n.agent_run_id WHERE n.run_id=w.id AND r.workspace_id=?1)))
-        OR EXISTS(SELECT 1 FROM workspaces WHERE id=?1 AND usage<>'interactive')"
+        OR EXISTS(SELECT 1 FROM integration_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled'))"
     ).bind(id).bind(db::models::integration::resource_key(id)).fetch_one(conn).await?;
     if busy {
         return Err(ApiError::Conflict(
@@ -89,6 +90,7 @@ async fn prepare_for_pool(
     if workspace.archived {
         return Err(ApiError::Conflict("Workspace is already archived".into()));
     }
+    super::archive_processes::check(workspace.container_ref.as_deref()).await?;
     let token = Uuid::new_v4();
     let mut confirmations = CONFIRMATIONS.lock().await;
     confirmations.retain(|_, value| value.expires > Instant::now());
@@ -164,6 +166,7 @@ where
     let repos = WorkspaceRepo::find_repos_for_workspace(pool, id).await?;
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     check_idle(&mut tx, id).await?;
+    super::archive_processes::check(workspace.container_ref.as_deref()).await?;
     sqlx::query("UPDATE workspaces SET archived=1, updated_at=datetime('now','subsec') WHERE id=?")
         .bind(id)
         .execute(&mut *tx)
@@ -306,6 +309,98 @@ mod tests {
     async fn busy(pool: &SqlitePool, session: &Session, reason: &str) {
         sqlx::query("INSERT INTO execution_processes(id,session_id,run_reason,status) VALUES(?,?,?,'running')")
             .bind(Uuid::new_v4()).bind(session.id).bind(reason).execute(pool).await.unwrap();
+    }
+
+    #[tokio::test]
+    #[cfg(target_os = "linux")]
+    async fn manual_archive_unregistered_process_blocks_preflight_and_confirmation_race() {
+        struct FixtureChild(std::process::Child);
+        impl Drop for FixtureChild {
+            fn drop(&mut self) {
+                let _ = self.0.kill();
+                let _ = self.0.wait();
+            }
+        }
+        let (_root, pool, ws, _repo, _session) = fixture().await;
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        let child = FixtureChild(
+            std::process::Command::new("/bin/sleep")
+                .arg("60")
+                .current_dir(ws.container_ref.as_ref().unwrap())
+                .spawn()
+                .unwrap(),
+        );
+        assert!(prepare_for_pool(&pool, &ws).await.is_err());
+        assert!(
+            archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+                Ok(true)
+            })
+            .await
+            .is_err()
+        );
+        assert!(
+            !Workspace::find_by_id(&pool, ws.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .archived
+        );
+        assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
+        drop(child);
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        let result = archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+            Ok(true)
+        })
+        .await
+        .unwrap();
+        assert!(result.workspace.archived && result.workspace.worktree_deleted);
+    }
+
+    #[tokio::test]
+    async fn manual_archive_completed_execution_only_before_and_after_release() {
+        for usage in ["execution_only", "interactive"] {
+            let (_root, pool, ws, _repo, session) = fixture().await;
+            // A completed preparation result, with no active Integration run.
+            // Use the real release function for the after-release variant.
+            let owner = serde_json::json!({
+                "kind": "integration", "run_id": null, "repository_id": null,
+                "result": { "status": "succeeded", "completed_at": chrono::Utc::now(),
+                    "error": null, "wiki_commit": null, "no_op": false }
+            });
+            sqlx::query(
+                "UPDATE workspaces SET usage='execution_only',execution_owner=? WHERE id=?",
+            )
+            .bind(owner.to_string())
+            .bind(ws.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+            let ws = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+            busy(&pool, &session, "devserver").await;
+            assert!(prepare_for_pool(&pool, &ws).await.is_err());
+            sqlx::query("UPDATE execution_processes SET status='completed'")
+                .execute(&pool)
+                .await
+                .unwrap();
+            if usage == "interactive" {
+                services::services::workspace_usage::release_completed(&pool)
+                    .await
+                    .unwrap();
+            }
+            let ws = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+            assert_eq!(ws.is_execution_only(), usage == "execution_only");
+            let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+            let result = archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+                Ok(true)
+            })
+            .await
+            .unwrap();
+            assert!(result.workspace.archived && result.workspace.worktree_deleted);
+            assert_eq!(
+                result.workspace.usage, ws.usage,
+                "archive must not grant reuse permissions"
+            );
+        }
     }
 
     #[tokio::test]
@@ -520,6 +615,59 @@ mod tests {
                 .archived
         );
         assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
+    }
+
+    #[tokio::test]
+    async fn manual_archive_execution_only_integration_without_reservation_is_busy_until_terminal()
+    {
+        let (_root, pool, ws, repo, _session) = fixture().await;
+        sqlx::query("UPDATE workspaces SET usage='execution_only' WHERE id=?")
+            .bind(ws.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let project = Uuid::new_v4();
+        let integration = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,workspace_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?,?,'fixture','main','preparing','{}')")
+            .bind(integration).bind(integration.to_string()).bind(project).bind(repo.id).bind(ws.id).execute(&pool).await.unwrap();
+        let ws = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+        assert!(prepare_for_pool(&pool, &ws).await.is_err());
+        sqlx::query("UPDATE integration_runs SET status='succeeded' WHERE id=?")
+            .bind(integration)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        let result = archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+            Ok(true)
+        })
+        .await
+        .unwrap();
+        assert!(result.workspace.archived && result.workspace.worktree_deleted);
+        assert!(result.workspace.is_execution_only());
+    }
+
+    #[tokio::test]
+    async fn manual_archive_rejects_active_resource_mediation_without_agent() {
+        let (_root, pool, ws, _repo, _session) = fixture().await;
+        let operation = Uuid::new_v4();
+        sqlx::query("INSERT INTO resource_operations(id,workspace_id,session_id,spec,status) VALUES(?,?,?,'{}','succeeded')")
+            .bind(operation).bind(Uuid::new_v4()).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
+        let mediation = Uuid::new_v4();
+        sqlx::query("INSERT INTO resource_mediations(id,trigger_operation_id,snapshot,status,workspace_id) VALUES(?,?,'{}','preparing',?)")
+            .bind(mediation).bind(operation).bind(ws.id).execute(&pool).await.unwrap();
+        assert!(prepare_for_pool(&pool, &ws).await.is_err());
+        sqlx::query("UPDATE resource_mediations SET status='applied' WHERE id=?")
+            .bind(mediation)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(prepare_for_pool(&pool, &ws).await.is_ok());
     }
 
     #[tokio::test]

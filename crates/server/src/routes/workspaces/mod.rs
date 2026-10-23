@@ -1,4 +1,5 @@
 pub mod archive;
+mod archive_processes;
 pub mod attachments;
 pub mod codex_setup;
 pub mod core;

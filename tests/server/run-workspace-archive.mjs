@@ -19,10 +19,22 @@ await writeFile(
   `${instance}/runtime/worktrees/orphan-fixture/retained`,
   "retain\n",
 );
+// Archive tests do not use agent providers. Do not launch a host-installed
+// provider for background UI capability discovery inside these worktrees.
+const fixtureBin = `${instance}/fixture-bin`;
+await mkdir(fixtureBin);
+for (const command of ["codex", "claude"]) {
+  await writeFile(
+    `${fixtureBin}/${command}`,
+    "#!/bin/sh\n# LOCAL-105 fixture only\nexit 1\n",
+    { mode: 0o755 },
+  );
+}
 const env = {
   ...isolatedEnvironment(process.env, instance, process.cwd()),
   CARGO_BUILD_JOBS: "1",
 };
+env.PATH = `${fixtureBin}:${env.PATH ?? "/usr/bin:/bin"}`;
 delete env.DISABLE_WORKTREE_CLEANUP; // Exercise the default startup behavior.
 const log = createWriteStream(".build/workspace-archive-server.log");
 const server = spawn(resolve("target/debug/server"), [], {
