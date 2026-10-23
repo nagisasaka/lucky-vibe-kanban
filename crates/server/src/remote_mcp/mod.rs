@@ -16,6 +16,9 @@ mod environment_switch;
 mod errors;
 mod evidence_read;
 mod integration_read;
+mod integration_write;
+#[cfg(test)]
+pub(crate) mod integration_write_tests;
 mod issue_comment_text;
 mod issue_comments;
 #[cfg(all(test, unix))]
@@ -182,18 +185,10 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "inspect_process"
         | "read_process_output"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
-        "start_integration" => Some("lvk:merge"),
-        "add_issue_comment"
-        | "write_design_note"
-        | "create_todo"
-        | "update_todo"
-        | "delete_todo"
-        | "create_issue"
-        | "update_issue"
-        | "steer_execution"
-        | "continue_execution"
-        | "answer_question"
-        | "start_workspace" => Some("lvk:write"),
+        "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
+        "add_issue_comment" | "write_design_note" | "create_todo" | "update_todo"
+        | "delete_todo" | "create_issue" | "update_issue" | "steer_execution"
+        | "continue_execution" | "answer_question" | "start_workspace" => Some("lvk:write"),
         _ => None,
     }
 }
@@ -361,6 +356,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(launch::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
+    tools.extend(integration_write::tools());
     tools.extend(questions::tools());
     tools.extend(runtime_read::tools());
     tools.extend(run_events::tools());
@@ -515,6 +511,12 @@ impl Remote {
             }
             name if activity::tools().iter().any(|tool| tool.name == name) => {
                 activity::call(self, name, args).await
+            }
+            name if integration_write::tools()
+                .iter()
+                .any(|tool| tool.name == name) =>
+            {
+                integration_write::call(self, principal, name, args).await
             }
             name if integration_read::tools()
                 .iter()

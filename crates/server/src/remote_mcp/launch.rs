@@ -108,6 +108,18 @@ struct DefaultsArgs {
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
+    async fn decide_integration(
+        &self,
+        _id: Uuid,
+        _request: integrations::GateDecisionRequest,
+        _expected: integrations::DecisionExpectation,
+    ) -> anyhow::Result<()> {
+        anyhow::bail!("Integration decision service unavailable")
+    }
+    async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
+        anyhow::bail!("Integration cancellation service unavailable")
+    }
+
     async fn defaults(&self) -> ExecutorConfig;
     async fn start(
         &self,
@@ -123,6 +135,23 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
+    async fn decide_integration(
+        &self,
+        id: Uuid,
+        request: integrations::GateDecisionRequest,
+        expected: integrations::DecisionExpectation,
+    ) -> anyhow::Result<()> {
+        integrations::decide_gate_checked(&self.0, id, request, Some(expected)).await
+    }
+    async fn cancel_integration(&self, id: Uuid) -> anyhow::Result<()> {
+        let _ = integrations::cancel(
+            axum::extract::State(self.0.clone()),
+            axum::extract::Path(id),
+        )
+        .await?;
+        Ok(())
+    }
+
     async fn defaults(&self) -> ExecutorConfig {
         self.0.config().read().await.executor_profile.clone().into()
     }
