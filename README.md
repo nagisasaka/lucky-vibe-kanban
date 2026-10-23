@@ -25,7 +25,9 @@ provide included model usage or a public, unrestricted agent service.
 
 LVK is distributed **only as Docker images** through GHCR, initially for Linux
 amd64. This fork does not publish an npm package. For local development, run from
-source using the instructions below.
+source using the instructions below. The legacy npx launcher has been removed;
+see the [migration guide](docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)
+for server, MCP and desktop entrypoints.
 
 ## Run on your own server
 

@@ -68,6 +68,7 @@ coverage/
 .env
 packages/**/dist
 
+# Retired npm build artefacts: keep existing local files ignored.
 build-npm-package-codesign.sh
 
 npx-cli/bin/

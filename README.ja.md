@@ -24,6 +24,8 @@ LVK にモデルの利用料金は含まれておらず、誰でも無制限に�
 
 LVK は GHCR を通じて **Docker イメージのみ**を配布します。現在の対象は Linux amd64 です。
 このフォークでは npm パッケージを公開しません。ローカルで開発する場合は、後述の手順でソースから起動してください。
+旧 npx ランチャーは廃止しました。server・MCP・desktop の各入口は
+[移行案内](docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)を参照してください。
 
 ## 自分のサーバーで動かす
 

@@ -2156,10 +2156,7 @@ test("runs an issue-bound workflow attempt without template selection", async ({
 
 Add a short script or documented Playwright command for release verification against the real local app:
 
-```bash
-pnpm run build:npx
-npx --yes ./npx-cli --data-dir ./tmp-workflow-attempt-smoke
-```
+The original npm-packaged smoke proposal is retired with the legacy CLI. For current source builds and isolated instance testing, follow [the staging guide](../../../deploy/developer/STAGING.md); do not run this historical smoke against a live instance.
 
 Then use Playwright against the printed localhost URL to:
 

@@ -297,8 +297,7 @@ WebSocket 复用现有 workspace stream，前端聚合。
 - [ ] `cargo test --workspace`
 - [ ] `pnpm run check && pnpm run lint`
 - [ ] `pnpm run format`（提交前必须）
-- [ ] 在 Windows 本机 npx 重新打包：`pnpm run build:npx && pnpm pack`
-- [ ] 用打包后的 `.tgz` 跑一次 spec.md §7 全部 AC（验证不只是 dev mode 能跑）
+旧 npx / `.tgz` 打包验收已退役。Arena 功能验收仍适用；当前构建与隔离实例验证参见 [staging 指南](../../../deploy/developer/STAGING.md)，不恢复 npm 发布。
 
 ---
 

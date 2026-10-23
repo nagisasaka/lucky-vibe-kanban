@@ -8,7 +8,6 @@
 - `packages/ui/`: Reusable UI components and utilities.
 - `shared/`: Generated TypeScript types (`types.ts`, `remote-types.ts`) and agent tool schemas (`schemas/`). Do not edit generated files directly.
 - `assets/`, `dev_assets_seed/`, `dev_assets/`: Packaged and local development assets.
-- `npx-cli/`: Legacy CLI source retained from upstream; not published by LVK.
 - `scripts/`: Development helpers; `deploy/`: server distribution and contributor tooling; `docs/`: documentation.
 
 ### Task-specific guides
