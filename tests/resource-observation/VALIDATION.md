@@ -85,3 +85,70 @@ smokeの観測時刻は `2026-10-23T15:05:20Z`、CPU sampling durationは
 - full workspace/Tauri/正式Integrationは今回の対象外。独立レビューは未実施。
 - 通常の `target/`（約26GB）と `node_modules/`（約1GB）は継続作業・再利用用に保持。
   Chromium/smoke証跡は約0.3MB。無関係なprocessのkillやcleanupは行っていない。
+
+## 独立レビュー後の実アプリ受入追加（同日）
+
+上記は初回commit `77ebfec3` までの記録。独立レビューから、Navbar直描画の
+fixtureでは実right icons・40px user slot・実router接続を証明できないとの指摘を
+受け、`full-app.mjs` を追加した。今回はそのcommitからの追加変更であり、mainを
+取り込み直していない。独立レビューは上位AI側で実施済みで、本節は実装者の
+追加試験記録。
+
+実NavbarContainerのproject/320pxでは389pxに広がり、Settingsとuser slotが
+画面外に出ることを再現した。モバイルだけ、観測値とアイコン群をそれぞれ
+まとまりとして折り返す。アイコンや機能を減らさず、desktop構造は維持した。
+`Navbar.tsx` が今回唯一の製品コード変更。既存の共通collector/API/hookは再利用し、
+専用サンプラーや認証の迂回は追加していない。
+
+テストは実server binary・built local-web・一時DBを使う。loopback TLS proxyと
+ローカルBasic認証でSecure cookieを維持し、実ログイン画面からログインする。
+Auth0、本番DB、既存serverには接続しない。Integrationはパネル表示のみで実行しない。
+空の隔離workspaceにはrepositoryを登録していないため、Git/file系APIに通常の
+「repositoryなし」エラーが出る。これは資源APIの取得成功とは区別する。
+
+追加試験結果:
+
+| コマンド/範囲 | 結果 |
+| --- | --- |
+| `pnpm --dir packages/local-web run build` | 成功。既存distはplaceholderだったため実bundleを生成し、Navbar修正後も再生成。tscを含む |
+| `CARGO_BUILD_JOBS=1 cargo build -p server --bin server` | 成功。古いbinaryを共通観測実装入りに更新。sccache/既存target利用。製品Rustの追加変更なし |
+| `pnpm run ui:check` / `pnpm run web-core:check` / `pnpm run ui:lint` | すべて成功 |
+| `node tests/resource-observation/full-app.mjs` | 最終16ケース成功、uncaught page errorなし、同時資源リクエスト最大1 |
+| `GOMAXPROCS=1 UV_THREADPOOL_SIZE=1 node tests/resource-observation/browser.mjs` | Navbar修正後のcomponent回帰12ケース成功、cleanup成功 |
+| `git diff --check` | 成功 |
+
+実routerでは未認証GET 401、実Basicフォームログイン後GET 200と`no-store`、
+有効CSRFを付けたPOST 405を確認。通常観測はChromium自身が実APIへ送信し、
+観測値の置換は100%/503/遅延/staleケースだけ。実測DISKの両targetが隔離保存先の
+`stat().dev`と一致し、filesystem IDと空きGiBがtooltipに届くことを確認した。
+
+12の画面ケースはproject root / issue subroute / workspace ×
+320 / 767 / 768 / 1280px。すべてdocument/nav横幅、表示buttonの左右座標、
+tooltip左右座標がviewport内。モバイル実user slotは40px、projectには実Integration・
+Command Bar・Guide・Settingsも含む。4幅すべてでIntegrationパネルも開いた。
+追加4ケースは全値100%の赤表示、503、6秒遅延（client timeout 5秒）、45秒stale。
+44秒前の観測時刻を返し、実hookの時計更新で数値から灰色へ変わることを確認した。
+
+非表示は`document.visibilityState`を上書きして`visibilitychange`を発火し、
+実時間17秒で取得が止まり、再表示で1回再開することを確認。OSによる実タブの
+background化の検証ではない。実SPAのworkspace→project→workspace遷移では
+fresh queryの重複取得なし。境界70/80、別filesystem、欠損は既存fixtureを再利用。
+
+証跡は `test-results/resource-observation/full-app/`:
+
+- `results.json`: 実router認証、16ケースの座標・tooltip、保存先照合、polling、cleanup。
+- `*-header.png` / 同名`.png`: tooltipなしの実アイコン群 / tooltip表示。
+- `integration-{320,767,768,1280}.png`: 実Integrationパネル。
+- `project-100-percent-320*.png`, `api-{503,delayed,stale-45-seconds}*.png`。
+- `before-fix-project-320.png`, `before-fix-results.json`: 修正前389pxの再現。
+- `server.log`: 隔離serverのみ。外部通信遮断と未登録repositoryに由来する
+  console/networkエラーは結果に保持し、uncaught page errorとは分けている。
+
+試験harnessの応答照合・DISK子要素の色判定を修正し、TLS proxyのkeep-aliveと
+route対象を絞ってasset取得の不安定性を解消した後の最終結果。最終実行では
+asset取得の予期しない失敗なし。中断したharnessの私有scratchは、該当portの
+非listenを確認して削除した。最終cleanupも全項目trueで、私有instance残留なし。
+
+追加範囲でも実Auth0、別実mount、非Linux、agent実行、正式Integration、配布済み
+サーバーは未検証。通常target約29GB/node_modules約982MBは再利用用に保持し、
+証跡約2MBを保存。重いbuildは直列・job1、他作業のkill/cleanupはしていない。
