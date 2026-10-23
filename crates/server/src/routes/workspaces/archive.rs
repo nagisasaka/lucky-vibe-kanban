@@ -60,6 +60,11 @@ async fn check_idle_with_memory(
     id: Uuid,
     memory: impl FnOnce(&str, Uuid) -> std::io::Result<Option<RepositoryMemoryStore>>,
 ) -> Result<(), ApiError> {
+    if crate::routes::openwiki::preparation::is_active(id) {
+        return Err(ApiError::Conflict(
+            "使用中のWorkspaceはarchiveできません。".into(),
+        ));
+    }
     let busy: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))
         OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=?1 AND p.registry_status IN ('reserved','spawned','running','unreachable'))
@@ -398,6 +403,70 @@ mod tests {
         .await
         .unwrap();
         assert!(result.workspace.archived && result.workspace.worktree_deleted);
+    }
+
+    #[tokio::test]
+    async fn manual_archive_rejects_host_preparation_wait_and_prevents_late_start() {
+        let (_root, pool, ws, _repo, _session) = fixture().await;
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        // Simulate an installer lock wait: the actual host preparation guard is
+        // held, but no Agent/process/Workflow or durable run exists yet.
+        let preparation = crate::routes::openwiki::preparation::begin(&pool, ws.id)
+            .await
+            .unwrap();
+        let refusal = tokio::time::timeout(Duration::from_secs(1), prepare_for_pool(&pool, &ws))
+            .await
+            .unwrap();
+        assert!(matches!(refusal, Err(ApiError::Conflict(_))));
+        assert!(matches!(
+            archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+                Ok(true)
+            })
+            .await,
+            Err(ApiError::Conflict(_))
+        ));
+        assert!(
+            !Workspace::find_by_id(&pool, ws.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .archived
+        );
+        assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
+        drop(preparation);
+        assert!(!crate::routes::openwiki::preparation::is_active(ws.id));
+        // Cancellation drops the future's guard, just as normal completion or
+        // a preparation error does; no permanent usage-based refusal remains.
+        let started = std::sync::Arc::new(tokio::sync::Notify::new());
+        let task = tokio::spawn({
+            let pool = pool.clone();
+            let started = started.clone();
+            async move {
+                let _preparation = crate::routes::openwiki::preparation::begin(&pool, ws.id)
+                    .await
+                    .unwrap();
+                started.notify_one();
+                std::future::pending::<()>().await;
+            }
+        });
+        started.notified().await;
+        assert!(prepare_for_pool(&pool, &ws).await.is_err());
+        task.abort();
+        assert!(task.await.unwrap_err().is_cancelled());
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        let result = archive_for_pool(&pool, ws.id, prepared.confirmation_token, || async {
+            Ok(true)
+        })
+        .await
+        .unwrap();
+        assert!(result.workspace.archived && result.workspace.worktree_deleted);
+        // Archive wins admission first: host preparation cannot resume it.
+        assert!(
+            crate::routes::openwiki::preparation::begin(&pool, ws.id)
+                .await
+                .is_err()
+        );
+        assert!(!Path::new(ws.container_ref.as_ref().unwrap()).exists());
     }
 
     #[tokio::test]

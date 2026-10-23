@@ -1,6 +1,7 @@
 //! Repository maintenance uses ordinary LVK workspace/session/AgentRun owners.
 //! The shared durable pointer and OS lock fence writers across server restarts.
 pub(crate) mod completion;
+pub(crate) mod preparation;
 use std::{
     io::Write,
     path::{Path as FsPath, PathBuf},
@@ -329,6 +330,7 @@ async fn prepare_run(
     )
     .await?;
     let preparation = async {
+    let _preparation = preparation::begin(&deployment.db().pool, workspace.id).await?;
     services::services::workspace_usage::ensure_wiki_board_link(&deployment.db().pool, &workspace).await?;
     WorkspaceRepo::create_many(
         &deployment.db().pool,
