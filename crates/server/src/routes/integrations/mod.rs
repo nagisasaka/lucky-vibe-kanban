@@ -15,8 +15,8 @@ use axum::{
 use db::models::integration::{IntegrationRun, IntegrationSelection};
 use deployment::Deployment;
 use executors::profile::ExecutorConfig;
-pub(crate) use runtime::reserve_intervention;
 pub use runtime::spawn_monitor;
+pub(crate) use runtime::{decide_gate_checked, reserve_intervention};
 use serde::Deserialize;
 use ts_rs::TS;
 use utils::{
@@ -239,7 +239,7 @@ pub(crate) async fn observe_wiki_from_pool(
     }
 }
 
-async fn cancel(
+pub(crate) async fn cancel(
     State(deployment): State<DeploymentImpl>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
@@ -295,11 +295,41 @@ async fn intervene(
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct GateDecisionRequest {
-    project_id: Uuid,
-    gate_id: Uuid,
-    request_id: Uuid,
-    decision: String,
+pub(crate) struct GateDecisionRequest {
+    pub project_id: Uuid,
+    pub gate_id: Uuid,
+    pub request_id: Uuid,
+    pub decision: String,
+}
+
+/// Frozen evidence read by an external reviewer. Checked under the same
+/// mutation lock as the UI decision, before any domain mutation.
+#[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct DecisionExpectation {
+    pub revision: String,
+    pub base_commit: String,
+    pub candidate_commit: String,
+    /// SHA-256 of the existing validation scope (including frozen sources).
+    pub scope_digest: String,
+}
+
+pub(crate) fn scope_digest(run: &IntegrationRun) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(run.validation_scope().as_bytes()))
+}
+
+impl DecisionExpectation {
+    pub(crate) fn verify(&self, run: &IntegrationRun) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            self.revision == run.updated_at
+                && Some(self.base_commit.as_str()) == run.payload.base_commit.as_deref()
+                && Some(self.candidate_commit.as_str()) == run.payload.result_commit.as_deref()
+                && self.scope_digest == scope_digest(run),
+            "STALE_CANDIDATE: read the current Integration and pending gate again"
+        );
+        Ok(())
+    }
 }
 
 async fn decide_gate(

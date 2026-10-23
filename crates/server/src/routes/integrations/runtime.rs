@@ -203,6 +203,15 @@ pub(super) async fn decide_gate(
     id: Uuid,
     request: super::GateDecisionRequest,
 ) -> anyhow::Result<()> {
+    decide_gate_checked(deployment, id, request, None).await
+}
+
+pub(crate) async fn decide_gate_checked(
+    deployment: &DeploymentImpl,
+    id: Uuid,
+    request: super::GateDecisionRequest,
+    expected: Option<super::DecisionExpectation>,
+) -> anyhow::Result<()> {
     ensure!(
         matches!(request.decision.as_str(), "continue" | "retry" | "cancel"),
         "Invalid decision"
@@ -213,6 +222,10 @@ pub(super) async fn decide_gate(
     let pool = &deployment.db().pool;
     let run = IntegrationRun::find(pool, id).await?;
     ensure!(run.project_id == request.project_id, "Project mismatch");
+    if let Some(expected) = expected {
+        expected.verify(&run)?;
+    }
+
     if let Some(review) = run.payload.reviews.iter().find(|r| r.id == request.gate_id) {
         if review.request_id == Some(request.request_id) {
             ensure!(

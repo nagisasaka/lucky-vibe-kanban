@@ -24,7 +24,7 @@ async fn isolated_merge_approval_publication() -> anyhow::Result<()> {
         "Use a fresh isolated instance"
     );
     let deployment = DeploymentImpl::new(tokio_util::sync::CancellationToken::new()).await?;
-    merge_scenario(&deployment, &instance, None).await
+    merge_scenario(&deployment, &instance, None, None).await
 }
 
 // Browser mode uses the real router/access layer and the same deterministic
@@ -66,6 +66,7 @@ async fn isolated_review_browser() -> anyhow::Result<()> {
                 &deployment,
                 &instance,
                 Some((&format!("http://{addr}"), mode)),
+                None,
             )
             .await?;
         }
@@ -81,6 +82,7 @@ async fn merge_scenario(
     deployment: &DeploymentImpl,
     instance: &Path,
     browser: Option<(&str, &str)>,
+    mcp: Option<&str>,
 ) -> anyhow::Result<()> {
     let pool = &deployment.db().pool;
     let root = instance.join(format!(
@@ -185,8 +187,9 @@ async fn merge_scenario(
         .await?;
     ensure!(admission::target_right(pool, &run).await?);
     advance(deployment, run.clone()).await?;
-    let real =
-        browser.is_none() && std::env::var("LVK_INTEGRATION_REAL_PROVIDER").as_deref() == Ok("1");
+    let real = browser.is_none()
+        && mcp.is_none()
+        && std::env::var("LVK_INTEGRATION_REAL_PROVIDER").as_deref() == Ok("1");
     let mut browser_process: Option<tokio::process::Child> = None;
     let mut changed_candidate = false;
     let signal = instance.join("replace-candidate");
@@ -327,6 +330,27 @@ async fn merge_scenario(
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 continue;
             }
+            if let Some(mode) = mcp {
+                crate::remote_mcp::integration_write_tests::exercise(
+                    deployment,
+                    &run,
+                    mode == "cancel",
+                )
+                .await?;
+                if mode == "cancel" {
+                    let current = IntegrationRun::find(pool, id).await?;
+                    cancel(deployment, current).await?;
+                    let terminal = IntegrationRun::find(pool, id).await?;
+                    crate::remote_mcp::integration_write_tests::terminal(
+                        deployment, &terminal, true,
+                    )
+                    .await?;
+                    ensure!(git(&["rev-parse", "main"])? == base);
+                    return Ok(());
+                }
+                approved = true;
+                continue;
+            }
             let review = run.payload.reviews.last().unwrap().id;
             let request_id = Uuid::new_v4();
             for _ in 0..2 {
@@ -407,6 +431,9 @@ async fn merge_scenario(
             .await?
             == 0
     );
+    if mcp.is_some() {
+        crate::remote_mcp::integration_write_tests::terminal(deployment, &run, false).await?;
+    }
     request_recovery(deployment, run).await?;
     ensure!(git(&["rev-parse", "main"])? == final_commit);
     println!(
@@ -708,4 +735,34 @@ async fn isolated_retained_checkpoint_adoption() -> anyhow::Result<()> {
         "Retained checkpoint dry-run/adoption/replay/Resume passed; only step 4 applied, old degraded audit preserved"
     );
     Ok(())
+}
+
+// Each invocation owns a fresh instance; no Integration monitor or real provider.
+async fn mcp_scenario(mode: &str) -> anyhow::Result<()> {
+    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    ensure!(
+        instance
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with("local9-scenario-")
+    );
+    ensure!(
+        !instance.join("data/db.v2.sqlite").exists(),
+        "Use a fresh isolated instance"
+    );
+    let deployment = DeploymentImpl::new(tokio_util::sync::CancellationToken::new()).await?;
+    merge_scenario(&deployment, &instance, None, Some(mode)).await
+}
+
+#[tokio::test]
+#[ignore = "requires a fresh LVK_INSTANCE_DIR; run alone in its own process"]
+async fn isolated_mcp_integration_approval() -> anyhow::Result<()> {
+    mcp_scenario("approve").await
+}
+
+#[tokio::test]
+#[ignore = "requires a fresh LVK_INSTANCE_DIR; run alone in its own process"]
+async fn isolated_mcp_integration_cancel() -> anyhow::Result<()> {
+    mcp_scenario("cancel").await
 }

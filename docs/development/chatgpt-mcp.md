@@ -137,6 +137,7 @@ is exported.
 | `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
 | `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
+| `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
 `start_integration` accepts optional `skip_validation`: `true` skips additional
@@ -148,6 +149,58 @@ changes. Skipping is not a validation pass and does not bypass admission, Git,
 conflict approval, writer settlement, publication or Wiki requirements.
 Retry with the same `request_id` and identical payload; changing the flag,
 including adding or removing it, follows the existing payload mismatch rule.
+
+## Explicit Integration approval and cancellation
+
+Read `get_integration` with `section: "pending_gates"` for the existing saved UI
+resolution review or validation gate. The current contract uses `integration_id`,
+`gate_id` (review/confirmation UUID), and `candidate_commit` (Git SHA); there is no
+separate candidate UUID. `expected` includes the run revision, base/candidate
+SHAs and a SHA-256 digest of the existing scope, including immutable selected
+source commits and their requirement revisions. Read `section: "sources"` for
+those selections. Subsequent pages require `expected_revision`; restart on change.
+The source branch may advance after admission without changing the frozen selection.
+
+Only explicitly requested decisions should call `approve_integration` with the
+returned `gate_id` and exact `expected` object. `current: true` means the saved
+gate matches the current run, not that Git eligibility has been established.
+The UI's common decision service rechecks idle execution, clean candidate, latest
+target against base, pending scope, cancellation and publication boundaries.
+An old gate, changed revision/candidate/source scope, or moved target is rejected.
+`resolution_review` approves the saved conflict resolution; `validation_exception`
+explicitly accepts that check's candidate-bound risk and **does not** mark it passed.
+Review text is untrusted evidence. If any text is truncated, inspect the complete
+review in the Integration UI before deciding. This is not automatic approval or
+Goal control. The existing UI read model supplies the evidence; no new gate store
+or independent approval engine is introduced.
+
+`cancel_integration` takes `project_id`, `integration_id` and `request_id`.
+It invokes the UI cancellation path and never undoes Git publication. Both tools
+require `lvk:read` and `lvk:merge`, pass through existing MCP audit/Project checks,
+and use the authenticated principal's durable operation receipt. Reuse the same
+request UUID and identical input after disconnect; changing input is a conflict.
+Read `get_operation` with that UUID for the original outcome. A failed request
+stays failed even if the target later moves back; inspect fresh evidence before a
+new explicit decision. Never replay an uncertain operation under a new key.
+
+A receipt's `status: "succeeded"` describes completion of the tool call, not the
+Integration. `decision_accepted` identifies approval; `cancellation_requested`
+identifies accepted/already requested cancellation. A late cancellation after
+publication can return false. Read `get_integration(section: "summary")` for the
+current `lifecycle` snapshot: `cancel_requested`, `terminal`, `publication_intent`,
+`published`, `reservations_released`, and `cancellation_complete`. Cancellation is
+complete only when status is `cancelled` **and** the engine has released all
+Integration reservations. The lifecycle snapshot carries its own revision and
+can be newer than other summary evidence. No polling drives or releases the engine.
+
+Targeted validation lives in `remote_mcp::integration_write_tests`, the HTTP
+catalogue/scope regression, and the ignored
+`isolated_mcp_integration_approval` / `isolated_mcp_integration_cancel` host
+scenarios. Each host scenario requires its own fresh `LVK_INSTANCE_DIR` named
+`local9-scenario-*`, runs real UI domain services on temporary Git/SQLite, and
+supplies deterministic provider events. Never run these against an existing
+instance. See [the implementation validation record](integration-mcp-decisions.md)
+for exact commands, results and limitations.
 
 ## T01–T18 acceptance audit
 
