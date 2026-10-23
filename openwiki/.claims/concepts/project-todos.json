@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:97d0b55f20cf04148c657a95c78f946f6c8fd0725092e73e5dec29d56b9d8d7a",
+  "pageVersion": "sha256:53b19fe89c088e5709e38b0856dfa17e40f00618a21064a2e708f987036c2c97",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -200,15 +200,15 @@
     },
     {
       "id": "claim_eb585149ccb0491e8422de60b299af82",
-      "statement": "Todo配置E2Eは隔離実backendから24カテゴリーを作成し、圧縮配置、矩形の重なり・overflow、カテゴリーと項目順、Tab、幅変更、編集・完了表示・削除による再配置を検査する。",
+      "statement": "Todo配置E2Eは隔離実backendから24カテゴリーを作成し、長文fixtureを展開して高低差を保ち、圧縮配置、矩形の重なり・overflow、カテゴリーと項目順、Tab、幅変更、編集・完了表示・削除による再配置を検査する。",
       "evidence": [
         {
-          "resource": "repo://tests/todos/isolated.mjs#L332-L334",
-          "version": "repo-lines-v1:sha256:e3c0fa225e46e631245898f0d12ca8107e37b9f01487d17625611ed2a35d349f:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmE5OGJmN2Y0ZDE4NmRiY2YzZDE0MTc3NDE2YjcwMDAyYzMzMzRiOTNkYTkyOWNkMTdhZWVmMWZiYzhiMzI2NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWM4ZDNkYjM2ZTE1MTM3OWJkYzJkNDA2MTVkZjdlYmExODhlMTUyYWUxMGE4N2FjMDFmMGU1ZmYxN2I1MGJkOCJ9"
+          "resource": "repo://tests/todos/isolated.mjs#L491-L501",
+          "version": "repo-lines-v1:sha256:acdb0882bbc94e77f28417d42d1a6034ec3e142efbc826693d5d183ff46a13e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjY2U0YmMwNjM5Y2E2YjJiNTBmMTgzNTkxMjUxNGI3NDg1NzI4MzZjMGJkZjcwNzllZDY4MjZhMDNkYTNhNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0OGNmNTdkNGIwOTFhMTgzMmFlZGJmMTM4NmRjM2UzZGY5N2JiZjkwNjBjMjRlN2RmYjkxNDE5NDdiMmQzMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmMTQ2ZDYxNTI5ZmQyNjgwZTU4MDA4NDMyZWYxN2ViMGU3MmJhOWU0ZDk5Yzg2YTUzYTlkODYyYWM4NGJkZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3YjljOTZiN2ViNmFlZWQ5N2RlMjA4YTNlZGI1NTQzY2E3MWM3NWRhMzc3N2VkYmM5NjlhYzgxNzY3MWNmMzYifQ"
         },
         {
-          "resource": "repo://tests/todos/layout.mjs#L14-L221",
-          "version": "repo-lines-v1:sha256:62d42a61f780cfa1865e985f01b3ad433b8bbe0ca86698496c4da95a384655d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjA4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3Nzg2ODRhNWEyNDljMTUyZDYwZTJlNDMzZGRhMWFlZjQ3MDY3MWJjZDRkYjY3ZDdmNDM0NTA0OWU5ZGE5OWZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmMmI4M2I4MDJmYjI4NTFiMzNkMzZjYTg0MzQwYzNjNjRhOGRmYzU5ODVmZGU2ZTc5OTllYTAzYzY2ZGRmNjc3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+          "resource": "repo://tests/todos/layout.mjs#L14-L227",
+          "version": "repo-lines-v1:sha256:f9eda99c1724cc23fc28b805397a0fbe0fd8797b2aa8af418bc873131437a05c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3Nzg2ODRhNWEyNDljMTUyZDYwZTJlNDMzZGRhMWFlZjQ3MDY3MWJjZDRkYjY3ZDdmNDM0NTA0OWU5ZGE5OWZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmMmI4M2I4MDJmYjI4NTFiMzNkMzZjYTg0MzQwYzNjNjRhOGRmYzU5ODVmZGU2ZTc5OTllYTAzYzY2ZGRmNjc3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     },
@@ -333,10 +333,98 @@
           "version": "repo-lines-v1:sha256:c7a4e2f117ee694b4f2c120b14511beaaf8b579c1af8874aef6ca41cb361a0b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkZjlmNTMwNjExZjkyNGE2Y2QzZDlmNTljMjliOTYyZmFhN2M0NWQzZWYyZmUyMDg2YzNiMTlhMmVkZDRkNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYzBmYTIyNWU0NmU2MzEyNDU4OThmMGQxMmNhODEwN2UzN2I5ZjAxNDg3ZDE3NjI1NjExZWQyYTM1ZDM0OWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNmJmNDFlOTFlMTVlOTdkNTlmNWE1ZmVhMTMwOTRmZjk5MDM5ODk0NjAyMzdjNjVmZDZhN2E5Y2JlYTFmYTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_40ffbf0eeef2489785fb495a1a9b391b",
+      "statement": "Todo本文は全文を保持したままCSSで4表示行に制限し、実overflow時だけ独立した展開ボタンを表示する。改行と空白を保ち連続文字も折返し、ボタンはaria-expandedとaria-controlsを持つ。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoBody.tsx#L43-L92",
+          "version": "repo-lines-v1:sha256:765a6bd3b0ee3f8dc2bdfd88029245d77dd970177c076d1d6b38e0ead636edcf:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3ZThjYjU4NTFkNWU0NTdiZDM1NDRmMzE1YjMxNWY1ZTQyYzZjZGUxYWFiMjQzOGVlMTZmZGRjOGFkYmNlNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiNTE1MzllNzUwZDAzZTM4Mzc5MTFhYTdiNGZmNTRkMGUyZjNlYTIyMTA2YzI0NDQwM2RkZWZlZWE2MGIyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4cb421a4a294c9086e06f2c027e1476",
+      "statement": "Todo本文は省略・展開中とも一回の操作で全文編集を開き、本文と交差する非空の選択があるpointer clickでは編集を抑止する。保存には編集開始時revisionと全文を渡し、取消は保存しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoBody.tsx#L56-L81",
+          "version": "repo-lines-v1:sha256:6ded2d7e1ffcf63efd58cd36973ddb74b219aa3fcb61d52944d2f9a661bbe332:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNWE2OTczNWZlZjI3ZDBmM2VlNDcyMWNiZjRlYWU5OGIyM2NhYmQ4MGJmNWFiOTBmYjBlYWY4ZGY1ODkxYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNjRlYzE0ODM4OWQyZDUyNmJiNDVlNTc4N2UwOTM5MTI2NWYxMjMxY2EyNWNiOWJkMzQ0N2QyNDczODY0NjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwNWMzZTFmMWU3MTJlZjQ5YjRkZTM3YTE3M2I1MDlhYTViNWY5Mzk0OGFmMGYxNTA3NWFkNGNmNGMwMjBhMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTgwNTA5YmQ2YmMwOWMxODZmMGYyZGU1NzFjMThiZjFmMWU5YjcyZjNiZDk1MjM4NTdkNjdiMDUyMjk0MTAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L311-L400",
+          "version": "repo-lines-v1:sha256:66cf5374a968a03f7e3b28b7c3f9a35b1f7ed07f31529dd821ca20abe4a252f6:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYTdhMTA5YWNiOGI2YWM5ZjNiMTU1NzIwYTgwZjVkNWU2Yjc4NmRkNmIzMmY5ZjllMWZmMjE3ZWViZjc3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNjY2ZmUzNjI2ZTQ4NTAwZmEzOGM4YjJjNDhhOWFmYzRhZWI4MGRlNDdiNGU5MDJlN2VkNTQ5NDg0YmQxZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiZDU4NWE0NDc1MjM4Y2QyYjE3ZTZiN2Y4N2Q2Mzg1YTY4MWE4MTExNDY1MzkzMzFjYmI3YWUyZTZkNWIyYjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMDZlYTM5Njc2NDVkYjg0NzlkMGIzMWRlOTM3YmYzYWQ2NTVkZjY5YzRkZmQ5Njg4YTU1MDg2YWJhNjdkZmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e849dea7e2d64bf8bce24938a29e3750",
+      "statement": "Todoの展開stateは表示コンポーネント内に保持し、編集後の再mountでは省略へ戻る。同じmount内ではoverflow消失でボタンが隠れても展開stateを維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoBody.tsx#L16-L41",
+          "version": "repo-lines-v1:sha256:ec1c2d0594e7daefb988bf486c53e04023246724816e3957905605941a3f2a6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0NGU5NmRmYTA3YzQ3ZGQwYmQyZTliOTY3NzdlNTE4ZDVhMmZmYTliZDcyNDRmZmU5MDkwZjA5OWUyYjE4MzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZmVjMWJhMzU1NDRlOTdhNzdlMThlODY0M2IyZjNlOWQxMTllZmYxYzkyYzcxNDI1MTY0NDk1MTJjZTlkZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1ZWRjZjVlOTQzNzg0YWY2YjBiODNjYjQzNDhkYTY5ZTA3NzlkY2Q0Yzg3NjI3YWI3ZTdmMzU1NWRjZDBmYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjM2JmM2RmZmI3MWEwYmUwNTU1MGYzOWQ4ZTYyNzY3MDBhNWRkZTZjNTQ0M2JkNmRhNTYwYjg1NjQyMTg0ZWYifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoBody.tsx#L75-L92",
+          "version": "repo-lines-v1:sha256:e28c422a873fe74d0527b54093c880d8e2430a8bfc92e8000e52f440b51d7f76:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmMWI0MzY3ZTYyYzNiYThjYWY2OTc0ZjNmNTBiZDUxMmMzNDE0MmE2ZmNkZjhlZGQ3YTM0OTVlNGZlZjgwMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOWRmMmQ3MjI3MDRjODM5NWZiNzEzZjU0NzhhMjIwZjQ4ZjliYThlYzRhZjM1YTlmNjk3YTE5N2NiYTBjOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L296-L401",
+          "version": "repo-lines-v1:sha256:350cb0513085136f9fcc3f0cd3a57662b9640104fdb1936208273699200a2cd4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3MDI2NDI2NmRlZjI3Njg0OTUwNDdkM2EyMzQ0Y2UxNmNlNTVlMjc4OGRlYWM1YTk4MzZmMzFjNjQ0YjRjNDM0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyYTQxNDM2NzY2YjJmOGM0ZmQ3MDc2ZTlhN2JlMmZiM2MyNDU3MjgyMjhiY2I5ZGMzYTc2ZjUxYTVhNDBjMWQ4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyMTNlYTQ1NzI4NTk1NzQ3NTIwM2ExZjIzNWNhMTYyMWI5NjdlNjU1YWJlNTc2ZDhhNmM3ODU1NjM0NDY5NmI1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ODg4ZTVjYWI0ZDc3NmIxMDUyMjZkMzg2YzVlNWFkNzk2YzgxOTAzMTg1ZmI1NzYxMzg2NmQyMDNmOWZhNWY0In0"
+        },
+        {
+          "resource": "repo://tests/todos/body-expansion.mjs#L136-L159",
+          "version": "repo-lines-v1:sha256:dbaf176367eb80444755604198d30bb2b664839882aec8fc29da94262d6e8f4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4YzQzYmIyNzAyODU3MmVhMTdjZDI1NDBkZTc5ZmNjNzU5ZGRkYmVmM2VkMjFiM2FjZDIwNDYwODkwYzMxNmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjYmYwOGU1MTU5ZWQxMjU1ODU3NjdlNWQ3YzU5MGViOThiYTA5YzNhYmJhZWJhN2RjYjNlZmQ4NGU3NzE2YzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MGRjNmI0Yjc3YjQ4ZTMzZWFlZWFjY2ZjMzM5OGU4ZWFkYjY5MzUxMzZhMTk2NDQxMTliZDM1ZjA1YWJlZTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_85f75d6aaae641b8b776cf267665e6ae",
+      "statement": "Todoは同幅・同書式で常時4行clampした非表示probeにより展開中もoverflowを測り、本文変更、ResizeObserver、font ready/loadingdoneに追従する。cleanupはobserver・listenerを解除し遅延結果をactive guardで無視する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoBody.tsx#L22-L55",
+          "version": "repo-lines-v1:sha256:a2b409daf065714eb8da7495a12c4dbd7b74c90895ca82445f0361f9d44168a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0NjU0MjAzODVkYTAzZGZhYWEzNzUwZTliZjUzMDhhOTkyYjNlNWM0NDQ4ZjM1ZGZhZTg1NWExMTkwN2M3NjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MmJhZTNkZWQ2NjliNjg3ZTkyNWNlMGYyODM1OTNkMjUyMGFhNDdmOTlmYTFiOWVhNmE1YzBkYWEwNGZmM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5YTQ3YWM0ZWNjM2JhNjYwMzZiODAyZWY4ZGE2Y2MzN2EyNDczMDM1YWZiZDc1OWM3ZDFhNGMzN2MyY2M4ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQwYzUyY2NkYWQyMzEyNGQ3MDMyMTFjOTAxMjgxOTRmY2IxMjY1MWMyNGFmNTAyZDkyYmNlYzY5Njg3ZjMzYjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0d700f539bd84fe79b485fc5c07bd49d",
+      "statement": "Todo長文のブラウザー検査は4行境界、独立展開、全文編集とAPI保存値、選択保持、幅と遅延font、keyboard/touchを扱う。fontはLiberation Mono、選択は合成Range/click、touchはemulationである。",
+      "evidence": [
+        {
+          "resource": "repo://tests/todos/body-expansion.mjs#L16-L221",
+          "version": "repo-lines-v1:sha256:c0364552fd8b2f8960349135b900bc7c8dffe51eaf81124c1d4b40d0ae44b1b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhMDg0Y2I2ZDI5NGVmMjg3YmNlMmYwOTk1NDhkZGNlZDJhMGExZTU3MWZmOWViYjEwODkyY2QyM2QwZTJhMmEwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MWE4NjdhNzJjYmRhNGM2ZTk5M2ZhNmJjZDdmZjUyM2NiM2QyOGYyMTU2ZTVjZGE3MDM2Mjg5NTEzYWQ5ZWMwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmMmI4M2I4MDJmYjI4NTFiMzNkMzZjYTg0MzQwYzNjNjRhOGRmYzU5ODVmZGU2ZTc5OTllYTAzYzY2ZGRmNjc3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlZWNhMzgxOTRiNWE1OGI0NTEyZTYwYzlmMjIxMmJlYjAxMmEyM2UzOWQ2NWZiMjE3MmE2MDNlZjc4MWI0NmE0In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_7061cf8672434ee1a83f3bca697559db",
+      "statement": "Todo隔離harnessは独自instanceと動的loopback portを用い、LVK_TODO_BIN_DIRでbinaryを指定、LVK_TODO_VITE=1でcheckoutを配信する経路を持つ。finallyにbrowser・Vite・子プロセスと一時instanceのcleanupを置き、再利用binaryの対象API/schema互換性確認は検証手順の前提である。",
+      "evidence": [
+        {
+          "resource": "repo://tests/todos/README.md#L61-L75",
+          "version": "repo-lines-v1:sha256:24535f7ba44aa3267bc16a89ef700d11c2b0289a96fb0591311d10fbd8546303:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1ZGE5ZDRjZWZjZjZkYzFhMzFiZjA2NmQ4OTNkYTIzZmUxMThhMWQ1MDI5Mjc1ZmIwODliOWI5NjZhYjZlZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMyY2IxODQwODQzMjQyMTZlZDJkMTJkNzI3YjgxYjIzMmMxNTg4YmVkMjdkMzQ5ODgwOGU1Yzc0N2Y5OWVkY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/todos/isolated.mjs#L15-L66",
+          "version": "repo-lines-v1:sha256:d95111b8c48cc9eabd1e096182d5c7d52b90ed5cf1434bbed57db951f7aff7a7:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGM0ZmUzNTk3OTc3YjEwNTI3MDgwOGNlNmE1MWNlNDUzYzgzMWRlM2E4MmJlOTc2YzZkOTUxZTExOTM0ODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMmViMDhjMmVkMTFlOGI2NDg0MjI5OGEyY2ZjZDJiZGJhNWE3MDQ5YTljNGQxNDdiYThiNjhlNDZlMTkzNGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZWY3MTk0OTdhNWMxYmI5MGY3MWY3ZWY3MmRkZmUwZDdhMjZiZmY3ZmZmN2RlNGUwMjJmODc1NWE0ODZlMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlNjZhNmU1ZmY4MTJiMjQ3ZmUyOTcwNDYwMGI4MjAwMjM2ZjEyMzZjYjk2ODQ0ZjE1MzJhY2IwNzcxZTQwYzkifQ"
+        },
+        {
+          "resource": "repo://tests/todos/isolated.mjs#L369-L383",
+          "version": "repo-lines-v1:sha256:d976041a3a0d0ffd38a13c201964c13b53ae06e32023cf81f06f319837bb787e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjY2MyMTUwYjdiNjFhMjFiMzU5OGNiMjliMDdjNzFjMmY0YWJjOWU0NmUyNDZjZTIyNWIyN2M1NWFkYTFmYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmOTliYzc3Mjk1MmFhMmY4NDcxZjkxNjJhNmVmZjkxNGQwYjNmMmJiYjkyZTU4ZjUzODkwODU2ZGI5ZGM3NzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyZDU0YmI4OThmMDc0MThlODg2NzcwMDU5OWNmZDhkNDJlMjBhMjM1Yzc5ZmFiZjk2MDIwYTg2YTMwZGExMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNWI1OTk2NDAyZThmZmI3NGQ1M2ZmZGZlZGFiZDI4NWUxYjQ1NWQ0MDA1M2IyOWZhZjVkOWQ1NWFiNjViMTEifQ"
+        },
+        {
+          "resource": "repo://tests/todos/isolated.mjs#L734-L740",
+          "version": "repo-lines-v1:sha256:4a8c8a3752998e7368847a9c42446ef4057cffa849d203dfab2011cd179930e9:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFjYmU2ZTllNDY2MWIzMDQxYjM3MWRmYzY2YmRjNzE2Njg3NmUxNmY4ZTNmYzk0NGY3MWMxMGE5NWU2YWMxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTE4MTU4MDhmYzhlZDQ0MWFhMjM1ZWJiYWY3OTJlZWMwMzliMzA3MWEwM2ZhNzlkY2FmNTY0MWFkYmE2ZDRmNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T19:15:59.449Z"
+    "at": "2026-10-23T19:31:31.371Z"
   }
 }

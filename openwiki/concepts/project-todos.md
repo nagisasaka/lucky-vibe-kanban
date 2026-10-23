@@ -30,6 +30,8 @@ sources:
     resource: repo://packages/web-core/src/features/todos/model/todoApi.ts
   - id: openwiki-source-cc2b48361dc9ee47e4a6cc4c
     resource: repo://packages/web-core/src/features/todos/model/todoViewStore.ts
+  - id: openwiki-source-d5ef8f6e8bb11a12faded949
+    resource: repo://packages/web-core/src/features/todos/ui/TodoBody.tsx
   - id: openwiki-source-748c9fc87da8ec6efd060367
     resource: repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx
   - id: openwiki-source-8cbec0ee8d7f6154508744c9
@@ -38,16 +40,20 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-dea540ef1c25316603003cab
     resource: repo://tests/chat/input-operations.isolated.mjs
+  - id: openwiki-source-41ab8765eb20ab728ac050c4
+    resource: repo://tests/todos/body-expansion.mjs
   - id: openwiki-source-377661330a398dbc51b24a19
     resource: repo://tests/todos/isolated.mjs
   - id: openwiki-source-535ab30a62460ea3bb688c51
     resource: repo://tests/todos/layout-validation.md
   - id: openwiki-source-e252f7831699ea3488a22e81
     resource: repo://tests/todos/layout.mjs
-generated: { by: "codex", at: "2026-10-23T19:15:59.449Z" }
+  - id: openwiki-source-39e16c61b69c47aba760577d
+    resource: repo://tests/todos/README.md
+generated: { by: "codex", at: "2026-10-23T19:31:31.371Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:15:59.449Z
+    at: 2026-10-23T19:31:31.371Z
 ---
 
 # Project Todo の共有メモ
@@ -107,6 +113,18 @@ Enter と追加ボタンは共通の submit 検査を通る。空白だけの本
 
 追加開始時に同期 ref を立て、React の pending 表示前の連打も抑える。pending 中は本文・カテゴリ・ボタンを無効にし、成功時だけ draft を消して一覧を再取得する。失敗時は本文と ID を保持し、成功・失敗のどちらでも settled で ref を解除する。これはその画面内の重複抑止であり、上記の保存時 ID 照合を代替しない。[guard と結果処理](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L42-L77)・[入力の無効化](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L105-L165)。同じ Enter / Ctrl+Enter の操作でも、[チャットの送信中 draft](session-and-agent-run.md#送信中の編集と-markdown-正規化)は編集可能であり、Todo の pending と区別する。
 
+### 長文の省略・展開と全文編集
+
+本文は plain text の全文を保持し、表示だけを CSS の4行に制限する。改行・空白は保持し、連続文字も幅に合わせて折り返す。4行は文字数や改行数ではなく実際の表示行であり、実 overflow がある場合だけ独立した「もっと見る／折りたたむ」ボタンを表示する。ボタンは `aria-expanded` と本文への `aria-controls` を持つ。[表示と操作](../../packages/web-core/src/features/todos/ui/TodoBody.tsx#L43-L92)
+
+短文・省略中・展開中のどの状態でも本文の一回クリックは全文編集を開く。本文を最初に展開してから編集する二段階操作ではない。本文 button と交差する非空の文字選択がある pointer click は編集を開始せず、選択を保つ。keyboard activation はこの pointer 判定で抑止しない。保存には編集開始時の revision と全文を渡し、取消は保存しない。完了、作成経路、関連 Card、メニューは本文展開と別の操作・表示である。[選択の判定](../../packages/web-core/src/features/todos/ui/TodoBody.tsx#L56-L81)・[編集と保存](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L311-L400)
+
+展開状態は `TodoBody` 内の一時 state で、DB・API や追加 draft の store に保存しない。編集開始で表示コンポーネントが外れ、保存成功・取消で再 mount したときは省略へ戻る。幅変更で overflow がなくなると展開ボタンは消えるが、同じ mount の展開 state は保持するため、再び狭くなると展開済みのボタンが戻る。[state](../../packages/web-core/src/features/todos/ui/TodoBody.tsx#L16-L41)・[編集との切替](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L296-L401)・[幅変更の回帰](../../tests/todos/body-expansion.mjs#L136-L159)
+
+実測には、表示本文と同幅・同書式で常に4行に制限した非表示の `aria-hidden` span を使う。展開中も `scrollHeight > clientHeight` で省略時の overflow を判定できる。本文変更時の effect と `ResizeObserver`、`document.fonts.ready` / `loadingdone` で再測定し、cleanup で observer・listener を解除、遅い promise の結果も active guard で無視する。表示側と測定側の幅・書式・改行処理を揃えることが変更時の契約である。[測定と cleanup](../../packages/web-core/src/features/todos/ui/TodoBody.tsx#L22-L55)
+
+高さ変更の配置は次節のカテゴリー用 observer が担当し、本文の overflow 測定とは別の責任を持つ。[カテゴリーの自然高測定](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L233-L259) この表示だけの変更と一時 state の判断は [開発時の設計記録](../../tests/todos/body-expansion-validation.md#範囲と判断)にも残されている。
+
 ### カテゴリー配置と読み順
 
 Project の Todos 表示は複数列を許す `grid` を指定し、Workspace の panel は既定の単列を使う。Project 側も幅が狭ければ単列になる。列幅は `auto-fit` と `minmax(min(100%,320px),1fr)` で決まり、カテゴリーは `localeCompare` 順、カテゴリー内の項目は取得順を保つ。[Project の入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1139-L1147)・[Workspace の入口](../../packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx#L50-L56)・[グループ化](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L79-L88)
@@ -124,15 +142,19 @@ Project の Todos 表示は複数列を許す `grid` を指定し、Workspace �
 
 入力操作の [隔離 E2E](../../tests/chat/input-operations.isolated.mjs#L183-L264)は空本文・カテゴリ必須・合成 IME・改行・repeat・保留中の重複追加を対象にする。Todo POST は遅延だけを制御して実 backend に通し、保存済み本文と件数を REST で照合する。チャット側は失敗応答の mock であり、[現行の編集可能契約と試験期待の差](session-and-agent-run.md#入力操作の検証範囲と未解決点)を別に扱う。開発時の [実行記録](../../tests/chat/input-operations-validation.md)は過去の結果で、この Sync は製品テストを再実行していない。
 
-カテゴリー配置の [隔離ブラウザー検査](../../tests/todos/layout.mjs)は `isolated.mjs` から呼ばれ、24個の高低差のあるカテゴリーを実 API で追加する。重なり・横はみ出し・カテゴリー上端順・API と DOM の項目順、短い列への配置、Tab 移動を検査する。1600/1000/390/320px の幅、編集 textarea の拡大と保存、完了表示、削除確認と最後の項目削除を扱う。折畳み操作の試験ではない。[検査内容](../../tests/todos/layout.mjs#L14-L221)・[呼出し](../../tests/todos/isolated.mjs#L332-L334)
+カテゴリー配置の [隔離ブラウザー検査](../../tests/todos/layout.mjs)は `isolated.mjs` から呼ばれ、24個の高低差のあるカテゴリーを実 API で追加する。重なり・横はみ出し・カテゴリー上端順・API と DOM の項目順、短い列への配置、Tab 移動を検査する。1600/1000/390/320px の幅、編集 textarea の拡大と保存、完了表示、削除確認と最後の項目削除を扱う。長文 fixture を最初に展開し、高低差のある配置条件を維持する。カテゴリー全体を折りたたむ操作の試験ではない。[検査内容](../../tests/todos/layout.mjs#L14-L227)・[呼出し](../../tests/todos/isolated.mjs#L491-L501)
 
-[検証手順](../../tests/todos/README.md)は built frontend と server・agent-process-host・vibe-kanban-mcp の事前 build を要求する。試験は独自の `LVK_INSTANCE_DIR` と loopback の自動割当 port を使う。[開発時の記録](../../tests/todos/layout-validation.md)には Chromium E2E の成功と初回 checkbox 即時判定の失敗・修正が残るが、Firefox・WebKit・実機モバイルは未検証である。これは今回の統合済み checkout に対する再実行結果ではない。
+[検証手順](../../tests/todos/README.md)の既定経路は built frontend と server・agent-process-host・vibe-kanban-mcp の事前 build を使う。frontend 限定の検証には `LVK_TODO_BIN_DIR` で互換 binary を指定し、`LVK_TODO_VITE=1` でこの checkout の frontend を配信する経路もある。再利用前に binary の build SHA と対象 API/schema の互換性を確認する必要がある。試験は独自の `LVK_INSTANCE_DIR` と loopback の自動割当 port を使い、Vite は試験用 backend へ接続する。終了時の `finally` に browser・Vite・子プロセスの停止と一時 instance 削除を置く。[起動](../../tests/todos/isolated.mjs#L15-L66)・[Vite](../../tests/todos/isolated.mjs#L369-L383)・[cleanup](../../tests/todos/isolated.mjs#L734-L740) [開発時の記録](../../tests/todos/layout-validation.md)には Chromium E2E の成功と初回 checkbox 即時判定の失敗・修正が残るが、Firefox・WebKit・実機モバイルは未検証である。これは今回の統合済み checkout に対する再実行結果ではない。
 
 過去の配置 Sync は凍結 source `3e644b488173dad2cf2e10a994181f544055845c` の Todo 配置変更を対象に、表示入口・データ順序・計測と cleanup・検査コードを静的に照合した。供給された統合記録は明示的な検証省略を示しており、本 Sync も製品 E2E を再実行していない。無関係な既存説明全体の再検証や、統合後のブラウザー動作確認を主張しない。
 
 
 作成経路の変更では [DB 回帰](../../crates/db/src/models/todo_tests.rs#L235-L336)が三経路の再送・更新・直接 SQL に対する不変性と、旧行の全既存列・順序の保持を検査する。[HTTP MCP 回帰](../../crates/server/src/remote_mcp/tests.rs#L1292-L1415)は scope、receipt 再送、単体／一覧読取、経路の自己申告拒否と更新後の保持を扱う。[隔離試験](../../tests/todos/isolated.mjs#L178-L241)は通常 Web による内部入口の拒否と汎用内部 REST の unknown、[相互編集・再読込](../../tests/todos/isolated.mjs#L467-L535)は全三経路を UI と stdio で編集した後の保持を確認する。独立した試験入口であり、実 OAuth / ChatGPT 接続を証明するものではない。
 
-今回の Sync は凍結入力の全3チャンクと統合済み source `a18cb18d72cd5d5b6068455e6561362e4cbbe768` に対し、認証 middleware、REST・両 MCP、migration・保存モデル、生成型・表示、DB / HTTP MCP / 隔離試験の定義を静的に照合した。[開発時記録](../../tests/todos/creation-source-validation.md)の成功と、供給された正式 Integration の明示的な検証省略を区別する。この文書保守では製品テストを再実行せず、実 Auth0 / ChatGPT、稼働 DB 移行、混在版や別 browser engine の動作を確認していない。無関係な過去の Wiki 内容全体を再検証したとは扱わない。
+過去の作成経路 Sync は凍結入力の全3チャンクと統合済み source `a18cb18d72cd5d5b6068455e6561362e4cbbe768` に対し、認証 middleware、REST・両 MCP、migration・保存モデル、生成型・表示、DB / HTTP MCP / 隔離試験の定義を静的に照合した。[開発時記録](../../tests/todos/creation-source-validation.md)の成功と、供給された正式 Integration の明示的な検証省略を区別する。この文書保守では製品テストを再実行せず、実 Auth0 / ChatGPT、稼働 DB 移行、混在版や別 browser engine の動作を確認していない。無関係な過去の Wiki 内容全体を再検証したとは扱わない。
+
+長文表示の [ブラウザー検査](../../tests/todos/body-expansion.mjs#L16-L230)は短文・4行境界・改行・日本語・連続文字、独立した展開／折畳み、全文編集・保存／取消後の API 本文、選択保持、完了・メニュー、幅変更、遅延 font、keyboard と touch を扱う。遅延 font は Liberation Mono を新しい FontFace として読み込むため、その font の存在が前提である。選択の試験は DOM Range と合成 click、touch は browser emulation であり、実機の文字選択 UI の証明ではない。[試験の条件](../../tests/todos/body-expansion.mjs#L121-L221)
+
+今回の Sync は全3チャンクと凍結 source `efc95458bd297b2b202cf11ec3352f4795d3f33f` を照合し、本文表示、編集と API 呼出し、保存 DTO、カテゴリーの高さ測定、翻訳ラベル、独立したブラウザー試験と harness を確認した。[開発時記録](../../tests/todos/body-expansion-validation.md)は型検査・対象 lint・Chromium E2E の成功と初期 harness 失敗、未実施の Firefox / WebKit / 実機等を区別している。供給された正式 Integration 記録は明示的な検証省略であり、本 Sync でも製品テストは再実行していない。無関係な過去の説明全体、統合後のブラウザー動作、任意の混在 binary 互換性を再検証したとは扱わない。
 
 設計の意図・本文の版履歴・出典付きの独立追記を残す場合は、同じ Project 表示切替から [設計メモ](design-notes.md)を使う。Todo の完了・削除とは異なる履歴保持の契約を持つ。
