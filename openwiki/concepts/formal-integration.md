@@ -40,10 +40,10 @@ sources:
     resource: repo://tests/integration-review/browser.mjs
   - id: openwiki-source-9871b94e679a5398da344b52
     resource: repo://tests/integration-review/README.md
-generated: { by: "codex", at: "2026-10-21T05:54:57.084Z" }
+generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T05:54:57.084Z
+    at: 2026-10-23T13:57:47.467Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -90,7 +90,7 @@ agent の責務は既存 index の競合解消と stage、および `ready` / `b
 
 検証必須の場合は、受付 target の Git object から `.lvk/integration-validation.json` の `commands` を読み、全 plan を凍結する。作業木・source branch・agent の proposal から選ばない。設定の欠落・不正、空の一覧、32件超、空文字や `true` / `:` / `exit 0` は受付エラーである。全 command は Repo root を cwd とする required check で、前提不足も失敗となる。[plan](../../crates/server/src/routes/integrations/mechanical.rs#L42-L85)
 
-この repository の設定は、実 frontend build → `pnpm run check` → `pnpm run lint` → `pnpm run backend:test` の順である。前提の準備も固定 plan に含めるため、source が設定を書き換えても当該 run の plan は変わらない。[設定](../../.lvk/integration-validation.json)
+この repository の設定は、`pnpm install --frozen-lockfile` → 実 frontend build → `pnpm run check` → `pnpm run lint` → `pnpm run backend:test` の順である。依存の準備も固定 plan に含めるため、source が設定を書き換えても当該 run の plan は変わらない。[設定](../../.lvk/integration-validation.json)
 
 省略 run は設定自体を読まず、検証を実行せず、summary と Manifest tests に unverified / NotRun、step に `validation_skipped` を保存する。省略 run と検証実行証拠・gate の混在、必須 run と省略済み step の混在は拒否する。clean・祖先・source 順序・target 一致・review・取消と公開の排他は維持する。[省略の検査](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1283)・[Manifest](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)。これは failed check の候補限定例外とは別で、成功した Integration でも受入検証済みとは限らない。UI は次回用 preference と未検証表示を持つ。[UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
 

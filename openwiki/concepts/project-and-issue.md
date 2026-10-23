@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
+  - id: openwiki-source-a43253b5be9686da077b8067
+    resource: repo://crates/server/src/remote_mcp/issue_comments.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
@@ -36,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-21T03:28:49.332Z" }
+generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-21T03:28:49.332Z
+    at: 2026-10-23T13:57:47.467Z
 ---
 
 # Project・Issue と実施の関係
@@ -121,6 +123,8 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 ## Issue の共同作業
 
 担当・Follower・Comment / reaction の保存と、空の local 通知一覧、OS 向け実行通知は [Issue の共同作業](issue-collaboration.md)に集約する。旧 Cloud Attachment の保存・配送契約は現行構成にはない。
+
+外部 AI の仕様レビューも同じコメントに追記する。レビュー対象の Issue revision を保持するが、投稿自体で要求・status を更新したり実装を始めたりはしない。来歴と編集、全文取得の契約は [共有レビュー](issue-collaboration.md#共有レビューは通常コメントとして残す)を参照する。[投稿処理](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)
 
 ## Issue から実施へ
 

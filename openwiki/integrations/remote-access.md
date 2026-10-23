@@ -22,6 +22,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
+  - id: openwiki-source-a43253b5be9686da077b8067
+    resource: repo://crates/server/src/remote_mcp/issue_comments.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
@@ -66,10 +68,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-22T07:38:38.993Z" }
+generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-22T07:38:38.993Z
+    at: 2026-10-23T13:57:47.467Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -95,6 +97,12 @@ transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否す
 ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支援の preview / apply と、保存済み専用 secret の明示 reveal は [サーバー認証の設定契約](../concepts/server-access.md#auth0-の作成支援と有効化を分ける)を参照する。設定を作成・保存できても、実アカウントでの接続成功を証明したことにはならない。
 
 [Project Todo](../concepts/project-todos.md)も外部 MCP の対象で、read は取得、write は作成・更新・削除を許す。変更結果は下記の operation receipt で確認する。メモを登録することは agent の仕事開始ではない。
+
+## Issue のレビューを共有する
+
+外部 HTTP MCP は `list_issue_comments` / `get_issue_comment` を read scope、`add_issue_comment` を read + write scope で公開し、Project と Issue の所属を確認する。通常の operation receipt による追記なので、モデルの起動・要求変更・承認を兼ねない。内部 stdio の catalog は別である。[登録と dispatch](../../crates/server/src/remote_mcp/mod.rs#L343-L350)・[handler の認可](../../crates/server/src/remote_mcp/issue_comments.rs#L85-L153)
+
+利用時は `get_issue` の `review_target` を保持してレビューを投稿し、他の client は一覧プレビューから必要な全文を読む。レビュー対象の Issue revision と、本文の編集混在を防ぐ comment revision は別の値である。上限・再送・編集後の来歴・古い対象の意味は [Issue の共有レビュー](../concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を正本とする。特に全文はプレビューと連結せず、[revision を固定した分割取得](../concepts/issue-collaboration.md#長文を編集混在なく読む)を使う。[公開 tool 契約](../../crates/server/src/remote_mcp/issue_comments.rs#L65-L82)
 
 ## Workspace の報告済みトークンを読む
 
