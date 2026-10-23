@@ -689,3 +689,55 @@ async fn provisioning_existing_client_omits_response_only_secret_encoded() {
         ])
     );
 }
+
+#[tokio::test]
+async fn provisioning_refresh_choice_controls_plan_without_automatic_writes() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.setup().await;
+    let remote = Auth0::new().await;
+    for enabled in [true, false] {
+        let mut input = remote.input("preview");
+        input["refresh_tokens"] = json!(enabled);
+        let receipt = preview(&f, &remote, &cookie, &csrf, input).await;
+        let plan = &receipt["plan"];
+        assert_eq!(
+            plan["web"]["settings"]["grant_types"],
+            json!(["authorization_code"])
+        );
+        assert_eq!(
+            plan["chatgpt"]["settings"]["grant_types"],
+            if enabled {
+                json!(["authorization_code", "refresh_token"])
+            } else {
+                json!(["authorization_code"])
+            }
+        );
+        assert_eq!(
+            plan["resource"]["settings"]["allow_offline_access"],
+            enabled
+        );
+        let rotation = &plan["chatgpt"]["settings"]["refresh_token"];
+        if enabled {
+            assert_eq!(rotation["rotation_type"], "rotating");
+            assert_eq!(rotation["token_lifetime"], 2592000);
+            assert_eq!(rotation["idle_token_lifetime"], 604800);
+        } else {
+            assert!(rotation.is_null());
+        }
+    }
+    // OFF must not disable offline access already used by other API clients.
+    remote.state.lock().await.resources.push(json!({
+        "id":"existing_api", "identifier":format!("{}/mcp", f.access.0.public_url.as_ref().unwrap()),
+        "signing_alg":"RS256", "allow_offline_access":true
+    }));
+    let mut input = remote.input("preview");
+    input["refresh_tokens"] = json!(false);
+    let receipt = preview(&f, &remote, &cookie, &csrf, input).await;
+    assert_eq!(receipt["plan"]["resource"]["id"], "existing_api");
+    assert!(
+        receipt["plan"]["resource"]["settings"]
+            .get("allow_offline_access")
+            .is_none()
+    );
+    assert!(remote.state.lock().await.writes.is_empty());
+}

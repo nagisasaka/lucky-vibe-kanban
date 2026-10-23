@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-for (const mobile of [false, true]) {
-  test(`Auth0 setup previews, applies and hands off to login (${mobile ? 'mobile dark' : 'desktop light'})`, async ({ page }) => {
+for (const [mobile, refreshEnabled] of [[false, true], [false, false], [true, true], [true, false]]) {
+  test(`Auth0 setup previews, applies and hands off to login (${mobile ? 'mobile dark' : 'desktop light'}, refresh ${refreshEnabled})`, async ({ page }) => {
     await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 });
     await page.emulateMedia({ colorScheme: mobile ? 'dark' : 'light' });
     const calls: string[] = [];
@@ -38,6 +38,7 @@ for (const mobile of [false, true]) {
         calls.push(input.step);
         if (input.step === 'inspect' && failInspect) { failInspect = false; return respond({ error: 'Fixture inspect failure' }, 400); }
         if (input.step === 'inspect') return respond({ clients: [{ client_id: 'existing-web', name: 'Existing Web' }], connections: [{ id: 'con_github', name: 'GitHub', strategy: 'github' }] });
+        if (input.step !== 'inspect') expect(input.refresh_tokens).toBe(refreshEnabled);
         if (input.step === 'preview') return respond({ confirmation: 'fixture-confirmation', plan: { web: { id: null, settings: { callbacks: ['https://lvk.example/api/access/callback'] } }, chatgpt: { id: null, settings: { callbacks: [input.chatgpt_callback] } }, resource: { id: null, settings: {} }, tenant: { resource_parameter_profile: 'compatibility' } } });
         expect(input.confirmation).toBe('fixture-confirmation');
         if (failApply) { failApply = false; return respond({ error: 'Fixture partial failure; preview again' }, 400); }
@@ -66,11 +67,22 @@ for (const mobile of [false, true]) {
     await expect(token).toHaveValue(managementToken);
     await page.getByRole('button', { name: '接続とアプリを取得' }).click();
     await page.getByLabel('ChatGPT向けMCPも設定する').check();
+    const refresh = page.getByLabel('更新トークンを設定する');
+    await expect(refresh).toBeChecked();
+    if (!refreshEnabled) await refresh.uncheck();
+    // Inspect and hiding/reopening MCP options must retain the explicit choice.
+    await page.getByRole('button', { name: '接続とアプリを取得' }).click();
+    await page.getByLabel('ChatGPT向けMCPも設定する').uncheck();
+    await page.getByLabel('ChatGPT向けMCPも設定する').check();
+    await expect(refresh).toBeChecked({ checked: refreshEnabled });
     await page.getByLabel('ChatGPTに表示された正確なCallback URL').fill('https://chatgpt.com/callback');
     await page.getByRole('button', { name: '変更内容を確認', exact: true }).click();
-    expect(calls).toEqual(['inspect','inspect','preview']);
+    expect(calls).toEqual(['inspect','inspect','inspect','preview']);
     const apply = page.getByRole('button', { name: 'この内容をAuth0へ適用' });
     await expect(apply).toBeVisible();
+    await refresh.setChecked(!refreshEnabled);
+    await expect(apply).toHaveCount(0);
+    await refresh.setChecked(refreshEnabled);
     // Editing any plan input invalidates the previous confirmation in the UI.
     await page.getByLabel('ChatGPTに表示された正確なCallback URL').fill('https://chatgpt.com/callback-new');
     await expect(apply).toHaveCount(0);
@@ -84,6 +96,13 @@ for (const mobile of [false, true]) {
     await page.getByRole('button', { name: '変更内容を確認', exact: true }).click();
     await apply.click();
     await expect(token).toHaveValue('');
+    const scopeGuidance = page.getByText('要求スコープは必要なものだけ選んでください：');
+    if (refreshEnabled) await expect(scopeGuidance).toContainText('offline_access');
+    else await expect(scopeGuidance).not.toContainText('offline_access');
+    // The completion guidance describes the applied plan, not later edits.
+    await refresh.setChecked(!refreshEnabled);
+    if (refreshEnabled) await expect(scopeGuidance).toContainText('offline_access');
+    else await expect(scopeGuidance).not.toContainText('offline_access');
     await expect(page.getByLabel('Web用Client ID', { exact: true })).toHaveValue('web-created');
     await expect(page.getByLabel('Web用Client Secret', { exact: true })).toHaveValue('fixture-web-secret');
     await expect(page.getByLabel('ChatGPT用Client Secret', { exact: true })).toHaveAttribute('type','password');
@@ -91,7 +110,7 @@ for (const mobile of [false, true]) {
     const storage = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
     expect(storage).not.toContain(managementToken);
     expect(storage).not.toContain('fixture-chat-secret');
-    await page.screenshot({ path: `test-results/auth0-setup/${mobile ? 'mobile-dark' : 'desktop-light'}.png`, fullPage: true });
+    await page.screenshot({ path: `test-results/auth0-setup/${mobile ? 'mobile-dark' : 'desktop-light'}-refresh-${refreshEnabled}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.getByRole('button', { name: '設定をチェックしてログイン試験' }).click();
     await expect(page).toHaveURL(/fixture-authorize/);
@@ -125,7 +144,7 @@ for (const mobile of [false, true]) {
     expect(afterStorage).not.toContain('imported-secret');
     expect(afterStorage).not.toContain('fixture-chat-secret');
     await page.evaluate((dark) => document.documentElement.classList.toggle('dark', dark), mobile);
-    await page.screenshot({ path: `test-results/auth0-setup/saved-${mobile ? 'mobile-dark' : 'desktop-light'}.png`, fullPage: true });
+    await page.screenshot({ path: `test-results/auth0-setup/saved-${mobile ? 'mobile-dark' : 'desktop-light'}-refresh-${refreshEnabled}.png`, fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 }

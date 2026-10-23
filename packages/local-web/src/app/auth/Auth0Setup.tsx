@@ -62,13 +62,13 @@ export function Auth0Setup({
   const [chat, setChat] = useState('');
   const [callback, setCallback] = useState('');
   const [mcp, setMcp] = useState(false);
-  const [refresh, setRefresh] = useState(false);
+  const [refresh, setRefresh] = useState(true);
   const [preview, setPreview] = useState<{
     plan: Plan;
     confirmation: string;
     input: string;
   }>();
-  const [result, setResult] = useState<Result>();
+  const [result, setResult] = useState<Result & { refresh_tokens: boolean }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const options = {
@@ -119,7 +119,7 @@ export function Auth0Setup({
           ...input,
           confirmation: validPreview.confirmation,
         });
-        setResult(next);
+        setResult({ ...next, refresh_tokens: refresh });
         onConfigured(next);
       }
     } catch (e) {
@@ -369,7 +369,7 @@ export function Auth0Setup({
                 <p>
                   要求スコープは必要なものだけ選んでください：lvk:read /
                   lvk:write / lvk:merge
-                  {refresh
+                  {result.refresh_tokens
                     ? '。更新する場合は offline_access も指定します。'
                     : ''}
                 </p>
