@@ -1,0 +1,189 @@
+LOCAL-83 Project削除時の設計メモ保持: 最終実行証跡
+今回の実行は隔離fixtureのみ。main merge/deploy/Wiki/Skill更新なし。
+コード・試験・検証報告は下記gitHEADで固定。実行時はclean。
+この証跡を最終実行後に新規untrackedとして追加し、試験対象commitを変更しない。
+前回 d561caf0 の409仕様の証跡は別ファイル evidence-final.txt に保全。
+
+[今回の変更・実行範囲]
+Project削除成功時も設計メモ/本文各版/追記各版/出典/receiptを保持。
+元Project ID・名称・Organizationは保持ID表へ保存。削除済みREST/MCPアクセスと同UUID再作成を拒否。
+Integration/MCP operationの既存削除制約は維持。失敗時の全行不変と旧DB migrationはRust fixtureで確認。
+保持後の閲覧/持出し/再関連付け/保持期限はLOCAL-99へ委ねる。
+詳細と実コマンド: docs/development/design-notes-validation.md
+Rust/SQLx/Clippyログ: tests/design-notes/evidence-retention-checks.txt
+
+[最終ビルド実ログ末尾]
+$ CARGO_BUILD_JOBS=2 RUSTC_WRAPPER=/usr/local/bin/sccache cargo build --bin server --bin agent-process-host --bin vibe-kanban-mcp
+   Compiling db v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/db)
+   Compiling server v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/server)
+   Compiling workspace-manager v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/workspace-manager)
+   Compiling git-host v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/git-host)
+   Compiling mcp v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/mcp)
+   Compiling services v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/services)
+   Compiling deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/deployment)
+   Compiling local-deployment v0.1.44 (/var/tmp/lvk-instances/dev/runtime/worktrees/1007-ai-mcp/lucky-vibe-kanban/crates/local-deployment)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 46s
+
+[最終E2Eの実行wrapper記録: 実際の開始/終了日時と終了コード]
+{
+  "command": "node tests/design-notes/isolated.mjs",
+  "gitHEAD": "242556b7c4d082d1caad2e7ab60631e6c0ab0776",
+  "dirty": false,
+  "started_at": "2026-10-23T11:02:28.945714+00:00",
+  "finished_at": "2026-10-23T11:02:59.399453+00:00",
+  "exit_code": 0
+}
+
+[最終E2E実ログ全文]
+出典: .build/design-notes/retention/e2e-final.log
+SHA256: 9b1804a8690e6ae472c12c1414941c677a42ff55addf24c947bd32e2b177d2de
+{
+  "sqlRetention": {
+    "before": {
+      "tables": {
+        "design_notes": {
+          "rows": 3,
+          "sha256": "2a8873b408066979b21e323f06bec56fad2906a503bbfd69198e07e80717614d"
+        },
+        "design_note_revisions": {
+          "rows": 11,
+          "sha256": "9befdb1677221b4cd9bd1bd59faa7af1c2111948a99c6c663409933b4b1c948d"
+        },
+        "design_note_additions": {
+          "rows": 4,
+          "sha256": "7864fee0a438a45238889870db898fcf813c5208f81750d00b12854007d2fb30"
+        },
+        "design_note_addition_revisions": {
+          "rows": 12,
+          "sha256": "7f73b1448ff04d467475b4ea06467fa3831a956cdcbbb8587439e2f295f9c742"
+        },
+        "design_note_requests": {
+          "rows": 23,
+          "sha256": "48ac1e09faf2be41de3260937b0f3da2900b5a98b19656a002351f1fb71acc97"
+        }
+      },
+      "project_exists": true,
+      "identity": {
+        "id": "0849FD00CD11422F88FA233D7725749F",
+        "name": "設計メモ検証",
+        "organization_id": "00000000000000000000000000000002",
+        "deleted_at": null
+      },
+      "foreign_key_check": []
+    },
+    "after": {
+      "tables": {
+        "design_notes": {
+          "rows": 3,
+          "sha256": "2a8873b408066979b21e323f06bec56fad2906a503bbfd69198e07e80717614d"
+        },
+        "design_note_revisions": {
+          "rows": 11,
+          "sha256": "9befdb1677221b4cd9bd1bd59faa7af1c2111948a99c6c663409933b4b1c948d"
+        },
+        "design_note_additions": {
+          "rows": 4,
+          "sha256": "7864fee0a438a45238889870db898fcf813c5208f81750d00b12854007d2fb30"
+        },
+        "design_note_addition_revisions": {
+          "rows": 12,
+          "sha256": "7f73b1448ff04d467475b4ea06467fa3831a956cdcbbb8587439e2f295f9c742"
+        },
+        "design_note_requests": {
+          "rows": 23,
+          "sha256": "48ac1e09faf2be41de3260937b0f3da2900b5a98b19656a002351f1fb71acc97"
+        }
+      },
+      "project_exists": false,
+      "identity": {
+        "id": "0849FD00CD11422F88FA233D7725749F",
+        "name": "設計メモ検証",
+        "organization_id": "00000000000000000000000000000002",
+        "deleted_at": "2026-10-23T11:02:58.845Z"
+      },
+      "foreign_key_check": []
+    }
+  }
+}
+{
+  "result": "passed",
+  "commit": "242556b7c4d082d1caad2e7ab60631e6c0ab0776",
+  "dirty": false,
+  "serverBuild": {
+    "revision": "242556b7c4d082d1caad2e7ab60631e6c0ab0776",
+    "kind": "development",
+    "release_tag": null,
+    "dirty": false
+  },
+  "chromium": "147.0.7727.15",
+  "checks": [
+    "UI create/edit/multiple notes",
+    "MCP append and identical retry",
+    "UI/MCP conflict",
+    "UI/UI conflict",
+    "initial/history/restore",
+    "correction/hiding/attribution history",
+    "explicit integration",
+    "API retry and project boundary",
+    "MCP project boundary",
+    "safe Markdown",
+    "desktop/mobile 390/320",
+    "reload",
+    "bounded Unicode/pinned read",
+    "bounded stdio write/retry",
+    "200 deletion UI, SQL history retention, closed deleted scope and repeated deletion"
+  ],
+  "ports": "36117"
+}
+{"cleanup":{"childrenStopped":2,"temporaryInstanceRemoved":true},"at":"2026-10-23T11:02:59.380Z"}
+
+[操作と観察]
+設定画面で対象Projectの削除を確認し、DELETE HTTP 200・成功表示・対象行の消失をDOM assertionで確認。
+削除後の画像も目視し、成功表示と別Projectのみの一覧を確認した。
+SQL比較は全5テーブルの全column（SQLite quote表現、rowid順）をJSON化したSHA-256と行数。
+前後でメモ3件、本文版11件、追記4件、追記版12件、receipt23件すべて一致。
+再削除後および拒否された読取/書込み後にも同じSQL保存状態であることをassert。
+元Project ID/名称/Organizationと削除日時を確認し、foreign_key_checkは前後とも空。
+既存の競合、初版復元、訂正、非表示、統合、長文Unicode/pinned revision、receipt再送、権限境界、390/320pxのassertionも成功。
+
+[独立したcleanup確認]
+サーバー終了後に、このWorkspaceのtarget/debug server/agent-process-host/vibe-kanban-mcpの/proc/exeを照合。
+一時instanceディレクトリとSQLx一時DBも確認。
+{
+  "test_processes": 0,
+  "temporary_instances": 0,
+  "prepare_db_exists": false
+}
+
+[資源観測: ビルド/E2E前および工程中]
+{"time": "2026-10-23T10:48:58Z", "available_GiB": 13.48, "swap_GiB": 0.49, "swap_growth_MiB": 0.0, "cpu_percent": 0.5, "load": [2.6142578125, 1.40234375, 1.88330078125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.92, "swap": 523968512}
+{"time": "2026-10-23T10:49:05Z", "available_GiB": 13.52, "swap_GiB": 0.49, "swap_growth_MiB": -0.0, "cpu_percent": 2.3, "load": [2.2119140625, 1.35595703125, 1.86279296875], "memory_full_avg10": 0.0, "disk_free_GiB": 230.91, "swap": 523952128}
+{"time": "2026-10-23T10:50:27Z", "available_GiB": 13.68, "swap_GiB": 0.52, "swap_growth_MiB": 32.3, "cpu_percent": 1.3, "load": [0.990234375, 1.189453125, 1.76220703125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.69, "swap": 557793280}
+{"time": "2026-10-23T10:51:10Z", "available_GiB": 13.69, "swap_GiB": 0.5, "swap_growth_MiB": -22.9, "cpu_percent": 90.8, "load": [2.20654296875, 1.5615234375, 1.8642578125], "memory_full_avg10": 0.0, "disk_free_GiB": 230.55, "swap": 533770240}
+{"time": "2026-10-23T10:52:03Z", "available_GiB": 13.31, "swap_GiB": 0.45, "swap_growth_MiB": -50.1, "cpu_percent": 12.5, "load": [2.03759765625, 1.6142578125, 1.86669921875], "memory_full_avg10": 0.05, "disk_free_GiB": 229.83, "swap": 481189888}
+{"time": "2026-10-23T10:53:13Z", "available_GiB": 11.27, "swap_GiB": 0.42, "swap_growth_MiB": -25.3, "cpu_percent": 20.5, "load": [1.69677734375, 1.626953125, 1.8544921875], "memory_full_avg10": 0.0, "disk_free_GiB": 229.6, "swap": 454688768}
+{"time": "2026-10-23T10:54:25Z", "available_GiB": 13.15, "swap_GiB": 0.43, "swap_growth_MiB": 3.2, "cpu_percent": 1.5, "load": [4.7333984375, 2.45947265625, 2.11767578125], "memory_full_avg10": 0.21, "disk_free_GiB": 228.45, "swap": 458084352}
+{"time": "2026-10-23T10:54:36Z", "available_GiB": 13.43, "swap_GiB": 0.43, "swap_growth_MiB": -0.2, "cpu_percent": 47.6, "load": [4.0048828125, 2.3779296875, 2.09423828125], "memory_full_avg10": 0.06, "disk_free_GiB": 228.45, "swap": 457900032}
+{"time": "2026-10-23T10:55:02Z", "available_GiB": 13.63, "swap_GiB": 0.7, "swap_growth_MiB": 279.0, "cpu_percent": 0.0, "load": [2.97900390625, 2.26611328125, 2.064453125], "memory_full_avg10": 0.74, "disk_free_GiB": 227.91, "swap": 750485504}
+{"time": "2026-10-23T10:55:23Z", "available_GiB": 13.49, "swap_GiB": 0.74, "swap_growth_MiB": 40.8, "cpu_percent": 4.0, "load": [2.490234375, 2.19921875, 2.04638671875], "memory_full_avg10": 0.15, "disk_free_GiB": 227.93, "swap": 793235456}
+{"time": "2026-10-23T10:55:40Z", "available_GiB": 13.69, "swap_GiB": 0.74, "swap_growth_MiB": -0.6, "cpu_percent": 1.0, "load": [2.146484375, 2.13720703125, 2.0283203125], "memory_full_avg10": 0.02, "disk_free_GiB": 227.86, "swap": 792645632}
+{"time": "2026-10-23T10:56:44Z", "available_GiB": 13.63, "swap_GiB": 1.03, "swap_growth_MiB": 300.2, "cpu_percent": 25.7, "load": [1.49462890625, 1.9423828125, 1.966796875], "memory_full_avg10": 0.11, "disk_free_GiB": 227.64, "swap": 1107386368}
+{"time": "2026-10-23T10:57:46Z", "available_GiB": 12.0, "swap_GiB": 1.03, "swap_growth_MiB": -6.0, "cpu_percent": 30.6, "load": [1.81640625, 1.94140625, 1.96533203125], "memory_full_avg10": 0.0, "disk_free_GiB": 227.1, "swap": 1101123584}
+{"time": "2026-10-23T10:59:32Z", "available_GiB": 14.13, "swap_GiB": 0.85, "swap_growth_MiB": -180.2, "cpu_percent": 1.0, "load": [0.57421875, 1.50244140625, 1.80615234375], "memory_full_avg10": 0.0, "disk_free_GiB": 226.78, "swap": 912138240}
+{"time": "2026-10-23T11:00:36Z", "available_GiB": 12.98, "swap_GiB": 0.85, "swap_growth_MiB": 0.4, "cpu_percent": 13.0, "load": [1.6494140625, 1.64404296875, 1.8349609375], "memory_full_avg10": 0.28, "disk_free_GiB": 226.51, "swap": 912609280}
+{"time": "2026-10-23T11:01:25Z", "available_GiB": 12.14, "swap_GiB": 0.85, "swap_growth_MiB": -0.1, "cpu_percent": 16.3, "load": [1.46240234375, 1.5908203125, 1.8056640625], "memory_full_avg10": 0.0, "disk_free_GiB": 226.35, "swap": 912510976}
+{"time": "2026-10-23T11:02:28Z", "available_GiB": 14.03, "swap_GiB": 0.85, "swap_growth_MiB": -1.0, "cpu_percent": 1.0, "load": [1.60595703125, 1.63037109375, 1.80712890625], "memory_full_avg10": 0.23, "disk_free_GiB": 224.53, "swap": 911433728}
+
+[限界]
+実Auth0/ChatGPTアカウント、Firefox/WebKit、実機モバイル、Tauri、全workspace一括試験、正式Integration、稼働DB migrationは未検証。
+型/フロント製品コード/依存定義は前回検証d561caf0から差分なし。型生成・frontend型/Lint/buildは今回は再実行せず既存built assetsを再利用。
+新スキーマの旧DB upgradeは全旧migration適用済みの隔離SQLiteで試験し、実データは使用していない。
+sccache既存serverの保存先は推奨共有パスと異なる /home/appuser/.cache/sccache。停止・再設定なし。
+最終E2Eのassertionは成功時に上のchecksとして記録される。個々のassertionの逐次traceを創作していない。
+
+[証跡追加後のGit状態]
+試験時点: git HEAD == serverBuild.revision、source dirty=false、serverBuild dirty=false。
+証跡取得直前のgit status --shortは出力なし。
+証跡追加後のgit status --short:
+?? tests/design-notes/evidence-retention-final.txt
+証跡ファイルのみuntracked。この追加後のdirtyを試験時点の状態と混同しない。
