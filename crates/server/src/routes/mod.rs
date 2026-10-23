@@ -16,6 +16,7 @@ pub mod containers;
 pub mod filesystem;
 // pub mod github;
 pub mod attachments;
+pub mod design_notes;
 pub mod events;
 pub mod execution_bridge;
 pub mod execution_processes;
@@ -37,9 +38,9 @@ pub mod sessions;
 pub mod tags;
 pub mod terminal;
 pub mod todos;
+mod web_push;
 pub mod workflows;
 pub mod workspaces;
-mod web_push;
 
 pub fn router(
     deployment: DeploymentImpl,
@@ -59,6 +60,7 @@ pub fn router(
         .merge(execution_processes::router(&deployment))
         .merge(tags::router(&deployment))
         .merge(todos::router())
+        .merge(design_notes::router())
         .merge(pipelines::router())
         .merge(filesystem::router())
         .merge(repo::router())

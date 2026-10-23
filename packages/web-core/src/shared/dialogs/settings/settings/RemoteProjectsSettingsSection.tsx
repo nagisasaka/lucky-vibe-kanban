@@ -947,13 +947,15 @@ export function RemoteProjectsSettingsSection({
   };
 
   const handleDeleteProject = async (project: Project) => {
+    setError(null);
+    setSuccess(null);
     try {
       const result = await DeleteRemoteProjectDialog.show({
         projectName: project.name,
       });
 
       if (result === 'deleted') {
-        remove(project.id);
+        await remove(project.id).persisted;
         if (selectedProjectId === project.id) {
           setSelectedProjectId(null);
           setFormState(null);
@@ -966,8 +968,8 @@ export function RemoteProjectsSettingsSection({
         );
         setTimeout(() => setSuccess(null), 3000);
       }
-    } catch {
-      // Dialog cancelled
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 

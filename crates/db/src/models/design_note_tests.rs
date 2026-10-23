@@ -1,0 +1,602 @@
+use serde_json::{Value, json};
+
+use super::*;
+async fn fixture() -> (SqlitePool, Uuid, Uuid) {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY, name TEXT NOT NULL DEFAULT 'test'); CREATE TABLE local_project_metadata(project_id BLOB PRIMARY KEY, organization_id BLOB);")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023000000_design_notes.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023110000_retain_design_notes_on_project_delete.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let p = Uuid::new_v4();
+    let other = Uuid::new_v4();
+    for id in [p, other] {
+        sqlx::query("INSERT INTO projects(id) VALUES(?)")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    (pool, p, other)
+}
+fn write(v: Value) -> DesignNoteWrite {
+    DesignNoteWrite {
+        request_id: Uuid::new_v4(),
+        operation: serde_json::from_value(v).unwrap(),
+    }
+}
+async fn create(pool: &SqlitePool, p: Uuid) -> DesignNote {
+    DesignNote::write(
+        pool,
+        p,
+        "human",
+        write(json!({"action":"create","title":"初版","body":"人間の理想"})),
+    )
+    .await
+    .unwrap()
+    .note
+}
+#[tokio::test]
+async fn revisions_restore_and_retries_preserve_first_record() {
+    let (pool, p, other) = fixture().await;
+    let initial = write(json!({"action":"create","title":"初版","body":"人間の理想"}));
+    let n = DesignNote::write(&pool, p, "human", initial.clone())
+        .await
+        .unwrap()
+        .note;
+    let update = write(
+        json!({"action":"update","note_id":n.id,"expected_revision":1,"title":"現在","body":"新しい人間の判断"}),
+    );
+    let updated = DesignNote::write(&pool, p, "human", update.clone())
+        .await
+        .unwrap()
+        .note;
+    assert_eq!(updated.revision, 2);
+    assert_eq!(
+        DesignNote::write(&pool, p, "human", initial)
+            .await
+            .unwrap()
+            .note
+            .revision,
+        1
+    );
+    assert_eq!(
+        DesignNote::write(&pool, p, "human", update.clone())
+            .await
+            .unwrap()
+            .note
+            .revision,
+        2
+    );
+    assert!(matches!(
+        DesignNote::write(
+            &pool,
+            p,
+            "human",
+            DesignNoteWrite {
+                request_id: Uuid::new_v4(),
+                ..update.clone()
+            }
+        )
+        .await,
+        Err(DesignNoteError::Conflict)
+    ));
+    assert!(matches!(
+        DesignNote::write(&pool, other, "human", update.clone()).await,
+        Err(DesignNoteError::NotFound)
+    ));
+    let mut changed = update;
+    changed.operation = DesignNoteAction::Create {
+        title: "bad".into(),
+        body: "bad".into(),
+    };
+    assert!(matches!(
+        DesignNote::write(&pool, p, "human", changed).await,
+        Err(DesignNoteError::Conflict)
+    ));
+    let restored = DesignNote::write(
+        &pool,
+        p,
+        "human",
+        write(json!({"action":"restore","note_id":n.id,"expected_revision":2,"revision":1})),
+    )
+    .await
+    .unwrap()
+    .note;
+    assert_eq!(restored.revision, 3);
+    assert_eq!(restored.body, n.body);
+    let history = DesignNote::history(&pool, p, n.id, 0).await.unwrap();
+    assert_eq!(history.len(), 3);
+    assert_eq!(history[1].body, updated.body);
+    let snapshots: Vec<String> = sqlx::query_scalar(
+        "SELECT snapshot FROM design_note_revisions WHERE note_id=? ORDER BY revision",
+    )
+    .bind(n.id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    sqlx::query("DELETE FROM projects WHERE id=?")
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert!(matches!(
+        DesignNote::history(&pool, p, n.id, 0).await,
+        Err(DesignNoteError::NotFound)
+    ));
+    let retained: Vec<String> = sqlx::query_scalar(
+        "SELECT snapshot FROM design_note_revisions WHERE note_id=? ORDER BY revision",
+    )
+    .bind(n.id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(snapshots, retained);
+}
+#[tokio::test]
+async fn additions_corrections_hiding_and_explicit_integration_preserve_attribution() {
+    let (pool, p, other) = fixture().await;
+    let n = create(&pool, p).await;
+    let content = json!({"heading":"新しい判断","content":"別ツールで満たせれば終了も合理的","kind":"decision","source":"conversation/message-1","speaker":"user","referenced_body_revision":1,"short_quote":"理想"});
+    let append = write(json!({"action":"append","note_id":n.id,"addition":content}));
+    let a = DesignNote::write(&pool, p, "AI recorder", append.clone())
+        .await
+        .unwrap()
+        .addition
+        .unwrap();
+    assert_eq!(
+        DesignNote::write(&pool, p, "AI recorder", append)
+            .await
+            .unwrap()
+            .addition
+            .unwrap()
+            .id,
+        a.id
+    );
+    assert_eq!(DesignNote::get(&pool, p, n.id).await.unwrap().revision, 1);
+    assert_eq!(a.recorder, "AI recorder");
+    assert_eq!(a.speaker, "user");
+    let mut correction = content.clone();
+    correction["source"] = json!("conversation/message-2");
+    correction["content"] = json!("訂正");
+    let corrected = DesignNote::write(&pool,p,"human",write(json!({"action":"correct_addition","note_id":n.id,"addition_id":a.id,"expected_revision":1,"addition":correction}))).await.unwrap().addition.unwrap();
+    assert_eq!(corrected.recorder, a.recorder);
+    assert_eq!(corrected.editor, "human");
+    let hidden = DesignNote::write(&pool,p,"human",write(json!({"action":"set_addition_hidden","note_id":n.id,"addition_id":a.id,"expected_revision":2,"hidden":true}))).await.unwrap().addition.unwrap();
+    assert!(hidden.hidden);
+    assert!(DesignNote::write(&pool,p,"human",write(json!({"action":"integrate","note_id":n.id,"expected_revision":1,"addition_id":a.id,"expected_addition_revision":3}))).await.is_err());
+    DesignNote::write(&pool,p,"human",write(json!({"action":"set_addition_hidden","note_id":n.id,"addition_id":a.id,"expected_revision":3,"hidden":false}))).await.unwrap();
+    let integrated = DesignNote::write(&pool,p,"human",write(json!({"action":"integrate","note_id":n.id,"expected_revision":1,"addition_id":a.id,"expected_addition_revision":4}))).await.unwrap().note;
+    assert_eq!(integrated.revision, 2);
+    assert!(integrated.body.starts_with(&n.body));
+    assert!(integrated.body.contains("conversation/message-2"));
+    let history = DesignNote::addition_history(&pool, p, n.id, a.id, 0)
+        .await
+        .unwrap();
+    assert_eq!(history.len(), 4);
+    assert_eq!(history[0].source, a.source);
+    assert_eq!(history[0].content, a.content);
+    assert!(
+        DesignNote::addition_history(&pool, other, n.id, a.id, 0)
+            .await
+            .is_err()
+    );
+    assert_eq!(
+        DesignNote::history(&pool, p, n.id, 0).await.unwrap()[0].body,
+        n.body
+    );
+    let mut invalid = content;
+    invalid["short_quote"] = json!("存在しない引用");
+    assert!(
+        DesignNote::write(
+            &pool,
+            p,
+            "AI",
+            write(json!({"action":"append","note_id":n.id,"addition":invalid}))
+        )
+        .await
+        .is_err()
+    );
+}
+#[tokio::test]
+async fn concurrent_body_writes_have_one_winner() {
+    let (pool, p, _) = fixture().await;
+    let n = create(&pool, p).await;
+    let input = write(
+        json!({"action":"update","note_id":n.id,"expected_revision":1,"title":"next","body":"new"}),
+    );
+    let other = DesignNoteWrite {
+        request_id: Uuid::new_v4(),
+        ..input.clone()
+    };
+    let (a, b) = tokio::join!(
+        DesignNote::write(&pool, p, "UI", input),
+        DesignNote::write(&pool, p, "MCP", other)
+    );
+    assert_eq!(usize::from(a.is_ok()) + usize::from(b.is_ok()), 1);
+    assert_eq!(
+        DesignNote::history(&pool, p, n.id, 0).await.unwrap().len(),
+        2
+    );
+}
+
+#[tokio::test]
+async fn independent_sqlite_connections_reject_stale_body_and_deduplicate_retries() {
+    let directory = tempfile::tempdir().unwrap();
+    let options = sqlx::sqlite::SqliteConnectOptions::new()
+        .filename(directory.path().join("notes.sqlite"))
+        .create_if_missing(true)
+        .foreign_keys(true)
+        .busy_timeout(std::time::Duration::from_secs(10));
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(4)
+        .connect_with(options)
+        .await
+        .unwrap();
+    sqlx::raw_sql("CREATE TABLE projects(id BLOB PRIMARY KEY, name TEXT NOT NULL DEFAULT 'test'); CREATE TABLE local_project_metadata(project_id BLOB PRIMARY KEY, organization_id BLOB);")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023000000_design_notes.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261023110000_retain_design_notes_on_project_delete.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let p = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects(id) VALUES(?)")
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let n = create(&pool, p).await;
+    let input = write(
+        json!({"action":"update","note_id":n.id,"expected_revision":1,"title":"next","body":"new"}),
+    );
+    let other = DesignNoteWrite {
+        request_id: Uuid::new_v4(),
+        ..input.clone()
+    };
+    let (a, b) = tokio::join!(
+        DesignNote::write(&pool, p, "UI", input),
+        DesignNote::write(&pool, p, "MCP", other)
+    );
+    assert_eq!(usize::from(a.is_ok()) + usize::from(b.is_ok()), 1);
+    assert!(matches!(
+        a.err().or(b.err()),
+        Some(DesignNoteError::Conflict)
+    ));
+    assert_eq!(
+        DesignNote::history(&pool, p, n.id, 0).await.unwrap().len(),
+        2
+    );
+    let input = write(
+        json!({"action":"update","note_id":n.id,"expected_revision":2,"title":"third","body":"same retry"}),
+    );
+    let (a, b) = tokio::join!(
+        DesignNote::write(&pool, p, "UI", input.clone()),
+        DesignNote::write(&pool, p, "UI", input)
+    );
+    assert_eq!(a.unwrap().note.revision, 3);
+    assert_eq!(b.unwrap().note.revision, 3);
+    assert_eq!(
+        DesignNote::history(&pool, p, n.id, 0).await.unwrap().len(),
+        3
+    );
+    pool.close().await;
+}
+
+#[tokio::test]
+async fn invalid_references_and_failed_writes_leave_no_partial_history() {
+    let (pool, p, other) = fixture().await;
+    let note = create(&pool, p).await;
+    let foreign = create(&pool, other).await;
+    let content = json!({"heading":"idea","content":"proposal","kind":"proposal","source":"message","speaker":"AI","referenced_body_revision":1});
+    let addition = DesignNote::write(
+        &pool,
+        other,
+        "AI",
+        write(json!({"action":"append","note_id":foreign.id,"addition":content})),
+    )
+    .await
+    .unwrap()
+    .addition
+    .unwrap();
+    for action in [
+        json!({"action":"correct_addition","note_id":note.id,"addition_id":addition.id,"expected_revision":1,"addition":content}),
+        json!({"action":"integrate","note_id":note.id,"expected_revision":1,"addition_id":addition.id,"expected_addition_revision":1}),
+        json!({"action":"restore","note_id":note.id,"expected_revision":1,"revision":99}),
+        json!({"action":"update","note_id":note.id,"expected_revision":1,"title":" ","body":"invalid"}),
+    ] {
+        assert!(
+            DesignNote::write(&pool, p, "human", write(action))
+                .await
+                .is_err()
+        );
+    }
+    for (key, value) in [
+        ("kind", json!("approved_by_user")),
+        ("referenced_body_revision", json!(99)),
+        ("speaker", json!("")),
+        ("source", json!("")),
+    ] {
+        let mut invalid = content.clone();
+        invalid[key] = value;
+        assert!(
+            DesignNote::write(
+                &pool,
+                p,
+                "AI",
+                write(json!({"action":"append","note_id":note.id,"addition":invalid}))
+            )
+            .await
+            .is_err()
+        );
+    }
+    assert_eq!(
+        DesignNote::history(&pool, p, note.id, 0)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(
+        DesignNote::detail(&pool, p, note.id)
+            .await
+            .unwrap()
+            .additions
+            .is_empty()
+    );
+    assert_eq!(
+        DesignNote::addition_history(&pool, other, foreign.id, addition.id, 0)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    let receipts: i64 = sqlx::query_scalar("SELECT count(*) FROM design_note_requests")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(receipts, 3);
+}
+
+// One helper reconstructs complete JSON without assuming a one-page response.
+async fn bounded_snapshot(pool: &SqlitePool, mut args: Value) -> Value {
+    let mut content = String::new();
+    loop {
+        let page = super::super::design_note_read::read(
+            pool,
+            "get_design_note",
+            serde_json::from_value(args.clone()).unwrap(),
+        )
+        .await
+        .unwrap();
+        assert!(serde_json::to_vec(&page).unwrap().len() < 32_000);
+        content.push_str(page["content_page"].as_str().unwrap());
+        if page["next_offset"].is_null() {
+            break;
+        }
+        args["offset"] = page["next_offset"].clone();
+        args["revision"] = page["revision"].clone();
+    }
+    serde_json::from_str(&content).unwrap()
+}
+
+#[tokio::test]
+async fn bounded_reads_preserve_unicode_long_content_and_pinned_revisions() {
+    use super::super::design_note_read::{DesignNoteRead, read};
+    let (pool, p, other) = fixture().await;
+    // 100,000 Unicode scalars, including astral, combining and escaped control chars.
+    let content = "理😀e\u{301}\n".repeat(20_000);
+    let n = DesignNote::write(
+        &pool,
+        p,
+        "human",
+        write(json!({"action":"create","title":"長文","body":content})),
+    )
+    .await
+    .unwrap()
+    .note;
+    let args = json!({"project_id":p,"note_id":n.id,"limit":397});
+    let first = read(
+        &pool,
+        "get_design_note",
+        serde_json::from_value(args.clone()).unwrap(),
+    )
+    .await
+    .unwrap();
+    DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.id,"expected_revision":1,"title":"new","body":"changed"}))).await.unwrap();
+    let old = bounded_snapshot(
+        &pool,
+        json!({"project_id":p,"note_id":n.id,"revision":first["revision"],"limit":397}),
+    )
+    .await;
+    assert_eq!(old["body"], content);
+    assert_eq!(old["revision"], 1);
+    assert_eq!(
+        bounded_snapshot(&pool, args.clone()).await["body"],
+        "changed"
+    );
+    for bad in [
+        json!({"offset":1}),
+        json!({"limit":4001}),
+        json!({"limit":0}),
+        json!({"page_size":21}),
+        json!({"revision":0}),
+        json!({"revision":999}),
+        json!({"offset":999999,"revision":1}),
+        json!({"project_id":other}),
+    ] {
+        let mut a = args.clone();
+        a.as_object_mut()
+            .unwrap()
+            .extend(bad.as_object().unwrap().clone());
+        assert!(
+            read(
+                &pool,
+                "get_design_note",
+                serde_json::from_value::<DesignNoteRead>(a).unwrap()
+            )
+            .await
+            .is_err()
+        );
+    }
+}
+
+#[tokio::test]
+async fn bounded_metadata_pages_cover_many_notes_additions_and_histories() {
+    use super::super::design_note_read::read;
+    let (pool, p, _) = fixture().await;
+    let n = create(&pool, p).await;
+    let content = "😀".repeat(100_000);
+    let mut addition_id = Uuid::nil();
+    for i in 0..43 {
+        DesignNote::write(
+            &pool,
+            p,
+            "human",
+            write(json!({"action":"create","title":format!("note {i}"),"body":content})),
+        )
+        .await
+        .unwrap();
+        let result = DesignNote::write(&pool,p,"AI",write(json!({"action":"append","note_id":n.id,"addition":{"heading":"idea","content":content,"kind":"proposal","source":"test/message","speaker":"AI","referenced_body_revision":1}}))).await.unwrap();
+        addition_id = result.addition.unwrap().id;
+        DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.id,"expected_revision":i+1,"title":"changed","body":content}))).await.unwrap();
+    }
+    for i in 1..44 {
+        DesignNote::write(&pool,p,"human",write(json!({"action":"set_addition_hidden","note_id":n.id,"addition_id":addition_id,"expected_revision":i,"hidden":i%2==1}))).await.unwrap();
+    }
+    for (tool, extra, cursor_key, response_key, expected) in [
+        ("list_design_notes", json!({}), "cursor", "next_cursor", 44),
+        (
+            "get_design_note",
+            json!({"section":"additions"}),
+            "cursor",
+            "next_cursor",
+            43,
+        ),
+        (
+            "get_design_note_history",
+            json!({}),
+            "after_revision",
+            "next_after_revision",
+            44,
+        ),
+        (
+            "get_design_note_history",
+            json!({"addition_id":addition_id}),
+            "after_revision",
+            "next_after_revision",
+            44,
+        ),
+    ] {
+        let mut args = json!({"project_id":p,"note_id":n.id});
+        args.as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        let mut count = 0;
+        let mut seen = std::collections::HashSet::new();
+        loop {
+            let page = read(&pool, tool, serde_json::from_value(args.clone()).unwrap())
+                .await
+                .unwrap();
+            assert!(serde_json::to_vec(&page).unwrap().len() < 32_000);
+            let items = page["items"].as_array().unwrap();
+            assert!(items.len() <= 20);
+            for item in items {
+                assert!(item.get("body").is_none() && item.get("content").is_none());
+                assert!(seen.insert(item.get("id").unwrap_or(&item["revision"]).to_string()));
+            }
+            count += items.len();
+            if !page["has_more"].as_bool().unwrap() {
+                break;
+            }
+            args[cursor_key] = page[response_key].clone();
+        }
+        assert_eq!(count, expected);
+    }
+    let old = bounded_snapshot(
+        &pool,
+        json!({"project_id":p,"note_id":n.id,"addition_id":addition_id,"revision":1}),
+    )
+    .await;
+    assert_eq!(old["content"], content);
+    assert_eq!(old["source"], "test/message");
+    assert_eq!(old["hidden"], false);
+}
+
+#[tokio::test]
+async fn mcp_write_receipt_is_small_and_replays_committed_versions() {
+    let (pool, p, _) = fixture().await;
+    let long = "😀".repeat(100_000);
+    let create = write(json!({"action":"create","title":"long","body":long}));
+    let n = DesignNote::write(&pool, p, "human", create.clone())
+        .await
+        .unwrap();
+    let receipt = n.mcp_receipt();
+    assert!(serde_json::to_vec(&receipt).unwrap().len() < 256);
+    assert_eq!(n.note.body, long); // UI REST result remains complete.
+    let append = write(
+        json!({"action":"append","note_id":n.note.id,"addition":{"heading":"idea","content":long,"kind":"proposal","source":"test","speaker":"AI","referenced_body_revision":1}}),
+    );
+    let result = DesignNote::write(&pool, p, "AI", append.clone())
+        .await
+        .unwrap();
+    let saved = result.mcp_receipt();
+    assert!(serde_json::to_vec(&saved).unwrap().len() < 256);
+    assert_eq!(result.addition.as_ref().unwrap().content, long);
+    DesignNote::write(&pool,p,"human",write(json!({"action":"update","note_id":n.note.id,"expected_revision":1,"title":"new","body":"new"}))).await.unwrap();
+    assert_eq!(
+        DesignNote::write(&pool, p, "human", create)
+            .await
+            .unwrap()
+            .mcp_receipt(),
+        receipt
+    );
+    assert_eq!(
+        DesignNote::write(&pool, p, "AI", append)
+            .await
+            .unwrap()
+            .mcp_receipt(),
+        saved
+    );
+    assert_eq!(saved.note.revision, 1);
+    assert_eq!(
+        DesignNote::detail(&pool, p, n.note.id)
+            .await
+            .unwrap()
+            .additions
+            .len(),
+        1
+    );
+    assert_eq!(
+        bounded_snapshot(
+            &pool,
+            json!({"project_id":p,"note_id":n.note.id,"revision":1})
+        )
+        .await["body"],
+        long
+    );
+}

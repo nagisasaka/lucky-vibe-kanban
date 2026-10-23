@@ -4,6 +4,7 @@ mod activity;
 mod auth;
 mod code_read;
 mod config;
+mod design_notes;
 pub mod environment;
 #[cfg(target_os = "linux")]
 mod environment_files;
@@ -179,8 +180,16 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "inspect_process"
         | "read_process_output" => Some("lvk:runtime:read"),
         "start_integration" => Some("lvk:merge"),
-        "add_issue_comment" | "create_todo" | "update_todo" | "delete_todo" | "create_issue"
-        | "update_issue" | "steer_execution" | "continue_execution" | "answer_question"
+        "add_issue_comment"
+        | "write_design_note"
+        | "create_todo"
+        | "update_todo"
+        | "delete_todo"
+        | "create_issue"
+        | "update_issue"
+        | "steer_execution"
+        | "continue_execution"
+        | "answer_question"
         | "start_workspace" => Some("lvk:write"),
         _ => None,
     }
@@ -345,6 +354,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(issue_write::tools());
     tools.extend(issue_comments::tools());
     tools.extend(todos::tools());
+    tools.extend(design_notes::tools());
     tools.extend(launch::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
@@ -455,6 +465,9 @@ impl Remote {
                 Ok(page) => self.projects(page).await,
                 Err(_) => Err(anyhow::anyhow!("Invalid project listing parameters")),
             },
+            name if design_notes::tools().iter().any(|tool| tool.name == name) => {
+                design_notes::call(self, principal, name, args).await
+            }
             name if todos::tools().iter().any(|tool| tool.name == name) => {
                 todos::call(self, principal, name, args).await
             }

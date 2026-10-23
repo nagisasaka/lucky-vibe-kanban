@@ -1,0 +1,88 @@
+LOCAL-83 最終実行の既存証跡（転載のみ）
+証跡取得日時 UTC: 2026-10-22T20:18:51.554813+00:00
+対象: d561caf0cb50f4599d84fd2cf4e332900e120b2f
+今回は既存ファイルの読取とGit状態・差分の取得のみ。ビルド・テストの再実行、コード修正、新commitなし。
+
+[日時と証拠の限界]
+e2e-final.log自体には開始・終了日時および数値終了コードは存在しない。
+同ログのファイルmtime UTC: 2026-10-22T20:11:42.194748+00:00
+mtimeは取得時のファイル属性であり、厳密な実行終了日時の証明ではない。
+最終E2E前の資源観測として記録された resources.jsonl 最終行（実行開始・終了時刻そのものではない）:
+{"time": "2026-10-22T20:11:11Z", "available_GiB": 11.73, "swap_GiB": 1.6, "swap_growth_MiB": -176.6, "cpu_percent": 31.1, "load": [2.53515625, 2.57763671875, 2.93115234375], "memory_full_avg10": 0.01, "disk_free_GiB": 5.88, "swap": 1713029120}
+
+[既存最終実行ログ全文]
+出典: .build/design-notes/final/e2e-final.log
+SHA256: 431459eacce95fa2856e4d757458cdcd0319c14cdcdbb737a0ef3d81c8e73a80
+{
+  "result": "passed",
+  "commit": "d561caf0cb50f4599d84fd2cf4e332900e120b2f",
+  "dirty": false,
+  "serverBuild": {
+    "revision": "d561caf0cb50f4599d84fd2cf4e332900e120b2f",
+    "kind": "development",
+    "release_tag": null,
+    "dirty": false
+  },
+  "chromium": "147.0.7727.15",
+  "checks": [
+    "UI create/edit/multiple notes",
+    "MCP append and identical retry",
+    "UI/MCP conflict",
+    "UI/UI conflict",
+    "initial/history/restore",
+    "correction/hiding/attribution history",
+    "explicit integration",
+    "API retry and project boundary",
+    "MCP project boundary",
+    "safe Markdown",
+    "desktop/mobile 390/320",
+    "reload",
+    "bounded Unicode/pinned read",
+    "bounded stdio write/retry",
+    "409 deletion UI and unchanged history"
+  ],
+  "ports": "42287"
+}
+
+ログはresult=passedと15項目のchecksを記録している。個々のassertionの逐次トレースはこのログには存在しない。
+commit（試験時git HEAD）とserverBuild.revisionは同一で、sourceとserverBuildのdirtyはともにfalse。
+
+[終了コードの別出典]
+数値終了コードは上のログファイルには存在しない。
+既存会話に保持された最終実行のtool応答（write_stdin/session_id=79753、chunk_id=289e70）では
+exit_code: 0
+output: "PASS e2e-final\n"
+と記録された。これは既存会話の実行記録の転載であり、ログファイル内の値でも今回の再実行結果でもない。
+
+[cleanupの既存記録]
+出典: .build/design-notes/validation.md / 最終HEAD一致確認
+commit `d561caf0cb50f4599d84fd2cf4e332900e120b2f`、source dirty=false、serverBuild dirty=false、revision一致で隔離Chromium E2E成功。port 42287。試験プロセス0、一時DB0を再確認。追跡報告: docs/development/design-notes-validation.md。最終ログ: .build/design-notes/final/e2e-final.log。
+上記は既存報告内のcleanup確認記録。e2e-final.log自体にcleanupの件数や詳細traceは存在しない。
+今回cleanupや稼働プロセス検査を再実行したという意味ではない。
+
+[証跡取得時のGit状態]
+git rev-parse HEAD:
+d561caf0cb50f4599d84fd2cf4e332900e120b2f
+証跡ファイル作成前 git status --short:
+(出力なし: clean)
+
+[要求されたcommit間差分: 実際のGit出力]
+$ git diff --stat c4b992d2..d561caf0
+ docs/development/design-notes-validation.md | 55 +++++++++++++++++++++++++++++
+ tests/design-notes/README.md                |  7 ++--
+ tests/design-notes/isolated.mjs             | 30 ++++++++++++++--
+ 3 files changed, 87 insertions(+), 5 deletions(-)
+
+$ git diff --name-status c4b992d2..d561caf0
+M	docs/development/design-notes-validation.md
+M	tests/design-notes/README.md
+M	tests/design-notes/isolated.mjs
+
+
+[証跡追加後のGit状態]
+$ git status --short
+?? tests/design-notes/evidence-final.txt
+
+新規untracked証跡により現在の作業ツリーはdirty。試験時点のdirty=falseと区別する。
+この証跡はstage・commitしていない。
+git check-ignore --no-index tests/design-notes/evidence-final.txt: exit_code=1（1: ignore対象ではない）

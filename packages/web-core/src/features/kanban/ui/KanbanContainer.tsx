@@ -1,3 +1,4 @@
+import { DesignNotePanel } from '@/features/design-notes/ui/DesignNotePanel';
 import { TodoPanel } from '@/features/todos/ui/TodoPanel';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import {
@@ -1017,11 +1018,14 @@ export function KanbanContainer() {
           />
 
           <div
-            className="inline-flex shrink-0 rounded-sm border border-border p-half"
+            className={cn(
+              'inline-flex max-w-full flex-wrap shrink-0 rounded-sm border border-border p-half',
+              isMobile && 'col-span-2'
+            )}
             role="group"
-            aria-label={t('todo.title')}
+            aria-label="プロジェクト表示"
           >
-            {(['kanban', 'todos'] as const).map((view) => (
+            {(['kanban', 'todos', 'design-notes'] as const).map((view) => (
               <button
                 type="button"
                 key={view}
@@ -1034,7 +1038,9 @@ export function KanbanContainer() {
                     : 'text-low hover:text-normal'
                 )}
               >
-                {t(view === 'kanban' ? 'todo.board' : 'todo.title')}
+                {view === 'design-notes'
+                  ? '設計メモ'
+                  : t(view === 'kanban' ? 'todo.board' : 'todo.title')}
               </button>
             ))}
           </div>
@@ -1130,7 +1136,11 @@ export function KanbanContainer() {
         )}
       </div>
 
-      {projectView === 'todos' ? (
+      {projectView === 'design-notes' ? (
+        <div className="flex-1 min-h-0">
+          <DesignNotePanel key={projectId} projectId={projectId} />
+        </div>
+      ) : projectView === 'todos' ? (
         <div className="flex-1 min-h-0">
           <TodoPanel key={projectId} projectId={projectId} grid />
         </div>

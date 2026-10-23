@@ -37,6 +37,7 @@ impl ToolError {
 }
 
 mod context;
+mod design_notes;
 mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
@@ -60,6 +61,7 @@ impl McpServer {
             + Self::remote_projects_tools_router()
             + Self::remote_issues_tools_router()
             + Self::todo_tools_router()
+            + Self::design_note_tools_router()
             + Self::issue_assignees_tools_router()
             + Self::issue_tags_tools_router()
             + Self::issue_relationships_tools_router()

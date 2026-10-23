@@ -20,6 +20,36 @@ export type RuntimeAccessProject = { id: string, name: string, };
 
 export type SaveRuntimeAccess = { revision: number, settings: RuntimeAccessSettings, };
 
+export type DesignNote = { id: string, project_id: string, title: string, body: string, revision: number, editor: string, change_reason: string | null, created_at: string, updated_at: string, };
+
+export type DesignNoteAddition = { id: string, note_id: string, heading: string, content: string, kind: string, recorder: string, source: string, speaker: string, referenced_body_revision: number, short_quote: string | null, hidden: boolean, revision: number, editor: string, created_at: string, updated_at: string, };
+
+export type AdditionContent = { heading: string, content: string,
+/**
+ * decision = attributed human decision; proposal = suggestion; open_question = unresolved.
+ */
+kind: string,
+/**
+ * Conversation/message reference, not an assertion of approval.
+ */
+source: string,
+/**
+ * Who expressed the idea; distinct from the authenticated recorder.
+ */
+speaker: string, referenced_body_revision: number, short_quote: string | null, };
+
+export type DesignNoteAction = { "action": "create", title: string, body: string, } | { "action": "update", note_id: string, expected_revision: number, title: string, body: string, change_reason: string | null, } | { "action": "restore", note_id: string, expected_revision: number, revision: number, change_reason: string | null, } | { "action": "append", note_id: string, addition: AdditionContent, } | { "action": "correct_addition", note_id: string, addition_id: string, expected_revision: number, addition: AdditionContent, } | { "action": "set_addition_hidden", note_id: string, addition_id: string, expected_revision: number, hidden: boolean, } | { "action": "integrate", note_id: string, expected_revision: number, addition_id: string, expected_addition_revision: number, change_reason: string | null, };
+
+export type DesignNoteWrite = { request_id: string, operation: DesignNoteAction, };
+
+export type DesignNoteResult = { note: DesignNote, addition: DesignNoteAddition | null, };
+
+export type DesignNoteDetail = { note: DesignNote,
+/**
+ * Includes hidden additions so the user can inspect and undo hiding.
+ */
+additions: Array<DesignNoteAddition>, };
+
 export type Todo = { id: string, project_id: string, body: string, category: string, completed: boolean, issue_id: string | null, revision: number, created_at: string, updated_at: string, };
 
 export type CreateTodo = {

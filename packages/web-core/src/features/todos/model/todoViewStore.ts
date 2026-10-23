@@ -2,11 +2,14 @@ import { create } from 'zustand';
 
 type Draft = { id: string; body: string; category: string };
 interface TodoViewState {
-  projectViews: Record<string, 'kanban' | 'todos'>;
+  projectViews: Record<string, 'kanban' | 'todos' | 'design-notes'>;
   integrationProject: string | null;
   drafts: Record<string, Draft>;
   workspaceProjects: Record<string, string>;
-  setProjectView: (project: string, view: 'kanban' | 'todos') => void;
+  setProjectView: (
+    project: string,
+    view: 'kanban' | 'todos' | 'design-notes'
+  ) => void;
   setIntegrationProject: (project: string | null) => void;
   setDraft: (project: string, draft: Draft) => void;
   clearDraft: (project: string) => void;
