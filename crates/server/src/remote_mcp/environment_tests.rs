@@ -108,9 +108,11 @@ async fn environment_http_catalog_and_authorization_are_explicit() {
         "run_process",
         "read_process_output",
         "stop_process",
+        "self_restart",
+        "get_self_restart_operation",
     ] {
         let tool = tools.iter().find(|t| t["name"] == name).unwrap();
-        let mutation = matches!(name, "run_process" | "stop_process");
+        let mutation = matches!(name, "run_process" | "stop_process" | "self_restart");
         assert_eq!(tool["annotations"]["readOnlyHint"], !mutation);
         assert_eq!(tool["annotations"]["destructiveHint"], mutation);
         assert_eq!(tool["inputSchema"]["additionalProperties"], false);
@@ -129,6 +131,8 @@ async fn environment_http_catalog_and_authorization_are_explicit() {
         ("read-only", "get_runtime_access", 403),
         ("runtime-read", "run_process", 403),
         ("runtime-read", "stop_process", 403),
+        ("runtime-read", "self_restart", 403),
+        ("read-only", "get_self_restart_operation", 403),
     ] {
         assert_eq!(
             http.rpc(token, "tools/call", json!({"name":name,"arguments":{}}))

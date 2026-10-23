@@ -93,6 +93,10 @@ and workflows finish**, then start the candidate. Logs go to the foreground
 console; the hosting terminal/job should retain them. A signal stops only this
 instance's process group. Builds and runs refuse to start during host maintenance.
 
+For an explicit, externally validated development artifact cutover, see the
+[development switch kit](switch/README.md). It provides synchronous CLI and a
+dedicated MCP handoff with durable results; installation is an operator action.
+
 Starting a new schema can migrate staging data. Back up idle staging state before
 such a switch; rollback requires the matching data snapshot, not just an old
 binary. Stable data is never used. Health/E2E failure after starting a candidate

@@ -10,6 +10,8 @@ mod environment_files;
 #[cfg(target_os = "linux")]
 mod environment_process;
 pub mod environment_settings;
+#[cfg(target_os = "linux")]
+mod environment_switch;
 mod errors;
 mod evidence_read;
 mod integration_read;
@@ -167,13 +169,14 @@ fn transport_router(remote: Remote) -> Router {
 
 fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
-        "run_process" | "stop_process" => Some("lvk:runtime:execute"),
+        "run_process" | "stop_process" | "self_restart" => Some("lvk:runtime:execute"),
         "get_runtime_access"
         | "list_runtime_files"
         | "read_runtime_file"
         | "list_processes"
         | "inspect_process"
-        | "read_process_output" => Some("lvk:runtime:read"),
+        | "read_process_output"
+        | "get_self_restart_operation" => Some("lvk:runtime:read"),
         "start_integration" => Some("lvk:merge"),
         "create_todo" | "update_todo" | "delete_todo" | "create_issue" | "update_issue"
         | "steer_execution" | "continue_execution" | "answer_question" | "start_workspace" => {
@@ -184,7 +187,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
 }
 
 fn scope_hint(name: &str, missing: &str) -> String {
-    if matches!(name, "run_process" | "stop_process") {
+    if matches!(name, "run_process" | "stop_process" | "self_restart") {
         "lvk:read lvk:runtime:read lvk:runtime:execute".into()
     } else {
         format!("lvk:read {missing}")
@@ -544,3 +547,6 @@ mod environment_restart_tests;
 mod environment_settings_tests;
 #[cfg(all(test, target_os = "linux"))]
 mod environment_tests;
+
+#[cfg(all(test, target_os = "linux"))]
+mod environment_switch_tests;
