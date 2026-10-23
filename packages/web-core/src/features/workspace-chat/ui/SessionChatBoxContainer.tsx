@@ -1,4 +1,3 @@
-import { ConsultChatGPT } from '@/shared/components/web-push/ConsultChatGPT';
 import { FollowUpQueue } from './FollowUpQueue';
 import { useTranslation } from 'react-i18next';
 import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuestions';
@@ -317,7 +316,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   const notifiedRun = canonicalTimeline?.runs.find(
     (run) => run.summary.agent_run_id === notifiedRunId
   );
-  const consultationRun = notifiedRunId ? notifiedRun : latestAgentRun;
   const displayedGoal = activeGoal ?? latestAgentRunState?.goal ?? null;
   const isAgentRunActive = Boolean(activeAgentRun);
   const isAgentRunCancelling = latestAgentRunState?.status === 'cancelling';
@@ -1560,26 +1558,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           。テスト・Integration・公開の結果は別途確認してください。
         </p>
       )}
-      {sessionId &&
-        workspaceId &&
-        consultationRun &&
-        (pendingApproval || notifiedRun || canonicalTimeline?.isTerminal) && (
-          <ConsultChatGPT
-            workspaceId={workspaceId}
-            sessionId={sessionId}
-            agentRunId={consultationRun.summary.agent_run_id}
-            questionId={
-              consultationRun === activeAgentRun
-                ? canonicalAgentActionPolicy.submit_input.controlId
-                : null
-            }
-            approvalId={
-              consultationRun === activeAgentRun
-                ? canonicalAgentActionPolicy.resolve_approval.controlId
-                : null
-            }
-          />
-        )}
       {goalProgressNode}
       {sessionId && (
         <AsyncAgentQuestions

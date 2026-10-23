@@ -1,4 +1,4 @@
-# Browser Web Push and ChatGPT consultation
+# Browser Web Push
 
 Web Push is optional and off until each authenticated user explicitly registers a
 browser for a Project in **Settings → General → Web Push**. The existing native
@@ -55,8 +55,7 @@ opening details still requires login. Re-register after the 90-day consent expir
 Lock-screen text contains only LVK, event category and generic instructions. No Issue
 title, prompt, command, response, exception text or secret is included. IDs/relative
 navigation URLs are inside the encrypted push payload. Detailed data and all answers
-or approvals remain behind LVK authentication. ChatGPT consultation copies only IDs
-and a reference URL; it never copies question text, code, tokens or log contents.
+or approvals remain behind LVK authentication.
 
 **OFF** deletes that registration and queued deliveries. You can remove other listed
 registrations for your own account. Removing the last registration on the current
@@ -96,15 +95,6 @@ Project/Issue/Workspace route with `session_id` and `agent_run_id`. The auth gat
 the requested URL through login. A result reference in the composer identifies the
 notified Run even when a newer Run exists; the timeline remains the full result source.
 
-## ChatGPT consultation
-
-On a blocking question/approval or a completed Run, use **ChatGPTに相談 — 依頼文をコピー**,
-then **ChatGPTを開く**, and paste. If Clipboard API access fails, the selectable text
-area is the fallback. No undocumented ChatGPT deep link or automatic submission is
-used. Connect the existing LVK MCP to ChatGPT to retrieve the reference. `get_question`
-and `answer_question` remain subject to their existing scope/revision rules; execution
-approvals must be decided in LVK. This feature never answers, approves or merges.
-
 ## Manual acceptance checks
 
 Use an isolated authorised HTTPS deployment with a configured key and ordinary
@@ -120,13 +110,13 @@ See [WebKit's support conditions](https://webkit.org/blog/13878/web-push-for-web
    blocking specification question in A: only A's devices receive generic text.
    Reopen a notification and verify Project, Issue, Workspace and Session identities.
 3. Trigger execution approval. Review/approve/deny using the existing LVK controls;
-   the ChatGPT copy action must not submit an answer or approval. Repeat with a
-   resolved question before the next worker tick and confirm no stale notification.
+   repeat with a resolved question before the next worker tick and confirm no stale
+   notification.
 4. Observe successful, failed, cancelled and abnormal Run endings. Confirm that
    messages do not claim tests passed, Integration succeeded or main was published.
    Retry a Run and check old results/questions are not attributed to the new attempt.
 5. Click while the matching tab exists, while all tabs are closed, and after login
-   expires. Check that login returns to the requested reference. Compare copied
+   expires. Check that login returns to the requested reference. Compare the target
    Project/Issue/Workspace/Session/Run/question IDs against the existing MCP reads.
 6. Check OFF on the current device and remote removal of your other registration;
    later events must not send. Verify another account cannot list/delete your entries.
@@ -136,7 +126,7 @@ See [WebKit's support conditions](https://webkit.org/blog/13878/web-push-for-web
    restore it within an hour and verify bounded retry/dedup. Test expired browser
    endpoints and VAPID rotation/re-registration. Never log real endpoint capabilities.
 8. Test mobile widths, light/dark themes, disabled notifications, non-HTTPS/unsupported
-   browsers, clipboard failure and popup restrictions. Check iOS home-screen launch.
+   browsers and popup restrictions. Check iOS home-screen launch.
 
 OS focus modes, battery/network policy, forced browser shutdown and revoked permission
 can delay or prevent delivery. A fully stopped browser is not universally woken by
@@ -145,7 +135,7 @@ Web Push. Keep LVK's own state as the source of truth, not the presence/absence 
 Automated checks: `cargo test -p server web_push --lib`,
 `cargo test -p server-access push_consent`,
 `node --test tests/web-push/*.test.mjs`, `pnpm --dir packages/web-core exec vitest run src/shared/components/web-push`.
-These do not prove live OS delivery or real ChatGPT-account interoperability.
+These do not prove live OS delivery.
 
 ## Parallel Issue handoff
 
@@ -154,7 +144,7 @@ Shared touchpoints are `crates/server/src/routes/mod.rs`, `crates/server/Cargo.t
 `Cargo.lock`, server-access consent helpers/tests, `ServerAccessGate.tsx`,
 `packages/public/site.webmanifest`, `SessionChatBoxContainer.tsx`, General Settings
 and Project search validation. The new migration is `20261018180000_web_push.sql`.
-Consultation and browser settings components live under shared/components/web-push
+Browser settings components live under shared/components/web-push
 so existing feature and shared-layer import boundaries are preserved. The existing
 question service is read-only from the push worker and remains the canonical resolver; no MCP schema or approval control path is changed.
 Use LVK's formal Integration workflow to reconcile changes; this Workspace does not
