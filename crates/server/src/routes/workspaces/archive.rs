@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use services::services::container::ContainerService;
 use sqlx::{SqliteConnection, SqlitePool};
 use tokio::sync::Mutex;
-use utils::response::ApiResponse;
+use utils::{repository_memory::RepositoryMemoryStore, response::ApiResponse};
 use uuid::Uuid;
 use workspace_manager::WorkspaceManager;
 
@@ -44,8 +44,22 @@ pub struct ArchiveResult {
 }
 
 // The same predicate runs before presenting confirmation and under the final
-// admission barrier. Unknown/unsettled owners count as busy, even after a run ends.
+// admission barrier. Persisted unfinished host work also counts as busy after
+// its AgentRun ends; usage alone never determines whether work is active.
 async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiError> {
+    check_idle_with_memory(
+        conn,
+        id,
+        RepositoryMemoryStore::read_only_configured_for_repository,
+    )
+    .await
+}
+
+async fn check_idle_with_memory(
+    conn: &mut SqliteConnection,
+    id: Uuid,
+    memory: impl FnOnce(&str, Uuid) -> std::io::Result<Option<RepositoryMemoryStore>>,
+) -> Result<(), ApiError> {
     let busy: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))
         OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=?1 AND p.registry_status IN ('reserved','spawned','running','unreachable'))
@@ -58,11 +72,41 @@ async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiErro
             OR EXISTS(SELECT 1 FROM workflow_attempts a WHERE a.id=w.attempt_id AND a.workspace_id=?1)
             OR EXISTS(SELECT 1 FROM node_executions n JOIN agent_runs r ON r.id=n.agent_run_id WHERE n.run_id=w.id AND r.workspace_id=?1)))
         OR EXISTS(SELECT 1 FROM integration_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled'))"
-    ).bind(id).bind(db::models::integration::resource_key(id)).fetch_one(conn).await?;
+    ).bind(id).bind(db::models::integration::resource_key(id)).fetch_one(&mut *conn).await?;
     if busy {
         return Err(ApiError::Conflict(
             "使用中のWorkspaceはarchiveできません。".into(),
         ));
+    }
+    // Read the current owner through the same connection, including inside the
+    // final SQLite transaction. Do not use cleanup_allowed: its usage/unknown-
+    // owner policy applies to automatic release, not manual archive permission.
+    let owner: Option<sqlx::types::Json<db::models::workspace_usage::WorkspaceExecutionOwner>> =
+        sqlx::query_scalar("SELECT execution_owner FROM workspaces WHERE id=?")
+            .bind(id)
+            .fetch_one(&mut *conn)
+            .await?;
+    if let Some(owner) = owner
+        && matches!(
+            owner.kind.as_str(),
+            db::models::workspace_usage::OPENWIKI_SYNC
+                | db::models::workspace_usage::OPENWIKI_BOOTSTRAP
+        )
+        && let Some(repo_id) = owner.repository_id
+        && let Some(name) = sqlx::query_scalar::<_, String>("SELECT name FROM repos WHERE id=?")
+            .bind(repo_id)
+            .fetch_optional(&mut *conn)
+            .await?
+        && let Some(store) = memory(&name, repo_id)?
+    {
+        let state = store.state()?;
+        if state.maintenance_workspace_id == Some(id)
+            && (state.active_run_id.is_some() || state.bootstrap.is_some())
+        {
+            return Err(ApiError::Conflict(
+                "使用中のWorkspaceはarchiveできません。".into(),
+            ));
+        }
     }
     Ok(())
 }
@@ -354,6 +398,102 @@ mod tests {
         .await
         .unwrap();
         assert!(result.workspace.archived && result.workspace.worktree_deleted);
+    }
+
+    #[tokio::test]
+    async fn manual_archive_rechecks_unfinished_host_maintenance_without_active_agent() {
+        use utils::repository_memory::{
+            OpenWikiBootstrapOwner, OpenWikiBootstrapPhase, RepositoryMemoryState,
+        };
+
+        for kind in ["openwiki_sync", "openwiki_bootstrap"] {
+            let (root, pool, ws, repo, _session) = fixture().await;
+            let persistent = root.path().join("isolated-memory");
+            std::fs::create_dir(&persistent).unwrap();
+            let store = RepositoryMemoryStore::at_persistent(&persistent).unwrap();
+            let owner = db::models::workspace_usage::WorkspaceExecutionOwner::new(
+                kind,
+                repo.id,
+                Some(Uuid::new_v4()),
+            );
+            sqlx::query(
+                "UPDATE workspaces SET usage='execution_only',execution_owner=? WHERE id=?",
+            )
+            .bind(sqlx::types::Json(owner))
+            .bind(ws.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+            let mut state = RepositoryMemoryState::default();
+            let save = |state: &RepositoryMemoryState| {
+                let _lock = store.try_lock().unwrap();
+                store.save_state(state).unwrap();
+            };
+            // Inject only the read-only store location. The real DB+memory idle
+            // predicate is shared by prepare and the final deletion transaction.
+            let resolve = |name: &str, id: Uuid| {
+                assert_eq!(name, repo.name);
+                assert_eq!(id, repo.id);
+                RepositoryMemoryStore::read_only_at_persistent(&persistent)
+            };
+            save(&state);
+            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+                .await
+                .unwrap();
+            state.maintenance_workspace_id = Some(ws.id);
+            if kind == "openwiki_sync" {
+                state.active_run_id = Some(Uuid::new_v4());
+            } else {
+                state.bootstrap = Some(OpenWikiBootstrapOwner {
+                    workflow_run_id: Uuid::new_v4(),
+                    server_instance_id: Uuid::new_v4(),
+                    phase: OpenWikiBootstrapPhase::Publishing,
+                    child: None,
+                    review_fingerprint: None,
+                });
+            }
+            save(&state);
+            // No live Agent/process exists. Host finalization alone must reject
+            // both a fresh prepare and a recheck after an earlier idle result.
+            assert!(matches!(
+                check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve).await,
+                Err(ApiError::Conflict(_))
+            ));
+            let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+            assert!(matches!(
+                check_idle_with_memory(&mut tx, ws.id, resolve).await,
+                Err(ApiError::Conflict(_))
+            ));
+            tx.rollback().await.unwrap();
+            assert!(
+                !Workspace::find_by_id(&pool, ws.id)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .archived
+            );
+            assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
+            // An unrelated maintenance workspace does not block this one.
+            state.maintenance_workspace_id = Some(Uuid::new_v4());
+            save(&state);
+            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+                .await
+                .unwrap();
+            // Historical attribution and execution-only usage are not busy.
+            state.maintenance_workspace_id = Some(ws.id);
+            state.active_run_id = None;
+            state.bootstrap = None;
+            save(&state);
+            check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve)
+                .await
+                .unwrap();
+            // A damaged known ownership record cannot authorize deletion.
+            std::fs::write(persistent.join("knowledge/state.json"), "invalid").unwrap();
+            assert!(matches!(
+                check_idle_with_memory(&mut pool.acquire().await.unwrap(), ws.id, resolve).await,
+                Err(ApiError::Io(_))
+            ));
+        }
     }
 
     #[tokio::test]
