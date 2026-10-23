@@ -1,4 +1,5 @@
-// SDK submodules
+// Official CLI protocol submodules
+mod auth;
 pub mod client;
 pub mod command_adapter;
 pub mod protocol;
@@ -137,6 +138,13 @@ pub struct ClaudeCode {
     pub dangerously_skip_permissions: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disable_api_key: Option<bool>,
+    /// Require the official CLI to report a first-party Claude subscription login.
+    #[schemars(
+        title = "Require Subscription Login",
+        description = "Verify the official Claude CLI login before each run. Reject API/provider credentials and custom command overrides instead of using another billing method."
+    )]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub require_subscription_login: Option<bool>,
     #[serde(flatten)]
     pub cmd: CmdOverrides,
 
@@ -246,6 +254,7 @@ impl ClaudeCode {
     }
 
     async fn supports_effort_flag(&self) -> Result<bool, ExecutorError> {
+        self.validate_subscription_profile()?;
         let builder = command_adapter::ClaudeCodeCommandAdapter::new(self).build_effort_probe()?;
 
         let command_parts = builder.build_initial()?;
@@ -356,7 +365,7 @@ impl ClaudeCode {
     }
 
     fn compute_cmd_key(&self) -> String {
-        serde_json::to_string(&self.cmd).unwrap_or_default()
+        serde_json::to_string(&(&self.cmd, self.require_subscription_login)).unwrap_or_default()
     }
 }
 
@@ -722,19 +731,7 @@ impl StandardCodingAgentExecutor for ClaudeCode {
         ) {
             return AvailabilityInfo::NotFound;
         }
-        let auth_file_path = dirs::home_dir().map(|home| home.join(".claude.json"));
-
-        if let Some(path) = auth_file_path
-            && let Some(timestamp) = std::fs::metadata(&path)
-                .ok()
-                .and_then(|m| m.modified().ok())
-                .and_then(|modified| modified.duration_since(std::time::UNIX_EPOCH).ok())
-                .map(|d| d.as_secs() as i64)
-        {
-            return AvailabilityInfo::LoginDetected {
-                last_auth_timestamp: timestamp,
-            };
-        }
+        // A config file timestamp is not evidence of an authenticated CLI.
         AvailabilityInfo::InstallationFound
     }
 }
@@ -747,6 +744,7 @@ impl ClaudeCode {
         command_parts: CommandParts,
         env: &ExecutionEnv,
     ) -> Result<SpawnedChild, ExecutorError> {
+        self.check_subscription_login(current_dir, env).await?;
         let (program_path, args) = command_parts.into_resolved().await?;
         let combined_prompt = self.append_prompt.combine_prompt(prompt);
 
@@ -3010,6 +3008,7 @@ mod tests {
             cmd: crate::command::CmdOverrides::default(),
             approvals_service: None,
             disable_api_key: None,
+            require_subscription_login: None,
         }
     }
 
@@ -3346,6 +3345,7 @@ mod tests {
             },
             approvals_service: None,
             disable_api_key: None,
+            require_subscription_login: None,
         };
         let msg_store = Arc::new(MsgStore::new());
         let current_dir = std::path::PathBuf::from("/tmp/test-worktree");

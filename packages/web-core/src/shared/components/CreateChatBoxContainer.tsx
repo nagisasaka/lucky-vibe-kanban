@@ -587,6 +587,7 @@ export function CreateChatBoxContainer({
                       repoIds={repoIds}
                       repoId={repoId}
                       executor={executor}
+                      executorVariant={selectedVariant}
                       selectedSkills={selectedSkills}
                       onSelectedSkillsChange={setSelectedSkills}
                       autoFocus

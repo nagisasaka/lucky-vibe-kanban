@@ -109,6 +109,7 @@ type WysiwygProps = {
   repoIds?: string[];
   /** Enables `/` command autocomplete (agent-specific). */
   executor?: BaseCodingAgent | null;
+  executorVariant?: string | null;
   /** Structured Codex skills selected from `$` mentions. */
   selectedSkills?: SelectedSkill[];
   /** Called when structured Codex skill selections change. */
@@ -285,6 +286,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       className,
       repoIds,
       executor = null,
+      executorVariant,
       selectedSkills = [],
       onSelectedSkillsChange,
       onCmdEnter,
@@ -339,6 +341,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       (state) => state.setFileSearchRepo
     );
     const executorTooling = useExecutorTooling(executor, {
+      variant: executorVariant,
       workspaceId,
       sessionId,
       repoId,

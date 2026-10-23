@@ -94,6 +94,45 @@ pub fn direct_provider_capability_snapshot(
 }
 
 impl AgentProviderPolicy {
+    /// Apply the selected profile's CLI authentication preflight without changing
+    /// another profile's readiness or exposing raw CLI output.
+    pub fn require_authentication(&mut self, result: Result<(), crate::executors::ExecutorError>) {
+        match result {
+            Ok(()) => {
+                self.readiness = AgentProviderReadiness::Ready;
+                self.diagnostics.clear();
+            }
+            Err(error) => {
+                self.readiness = if matches!(
+                    error,
+                    crate::executors::ExecutorError::ExecutableNotFound { .. }
+                ) {
+                    AgentProviderReadiness::MissingExecutable
+                } else {
+                    AgentProviderReadiness::AuthRequired
+                };
+                self.diagnostics = vec![AgentProviderDiagnostic {
+                    kind: if self.readiness == AgentProviderReadiness::MissingExecutable {
+                        AgentProviderDiagnosticKind::MissingExecutable
+                    } else {
+                        AgentProviderDiagnosticKind::AuthRequired
+                    },
+                    message: error.to_string(),
+                }];
+                self.capabilities.retain(|capability| {
+                    !matches!(
+                        capability,
+                        AgentProviderCapability::InitialRun
+                            | AgentProviderCapability::FollowUp
+                            | AgentProviderCapability::SessionResume
+                            | AgentProviderCapability::WorkflowAgentStep
+                            | AgentProviderCapability::TeamSlot
+                    )
+                });
+            }
+        }
+    }
+
     pub fn for_agent(
         executor: BaseCodingAgent,
         agent: &CodingAgent,
@@ -254,6 +293,54 @@ mod tests {
             serde_json::from_value(serde_json::json!({}))
                 .expect("claude config should deserialize"),
         )
+    }
+
+    #[test]
+    fn authentication_failure_blocks_execution_without_removing_other_profile_support() {
+        let agent = claude_agent();
+        let original = AgentProviderPolicy::for_agent(
+            BaseCodingAgent::ClaudeCode,
+            &agent,
+            AvailabilityInfo::InstallationFound,
+        );
+        let mut subscription = original.clone();
+        subscription.require_authentication(Err(crate::executors::ExecutorError::AuthRequired(
+            "Run claude auth login".into(),
+        )));
+        assert_eq!(subscription.readiness, AgentProviderReadiness::AuthRequired);
+        assert!(
+            !subscription
+                .capabilities
+                .contains(&AgentProviderCapability::InitialRun)
+        );
+        assert!(
+            !subscription
+                .capabilities
+                .contains(&AgentProviderCapability::FollowUp)
+        );
+        assert!(
+            !subscription
+                .capabilities
+                .contains(&AgentProviderCapability::SessionResume)
+        );
+        assert_eq!(
+            subscription.diagnostics[0].message,
+            "Auth required: Run claude auth login"
+        );
+        assert!(
+            original
+                .capabilities
+                .contains(&AgentProviderCapability::InitialRun)
+        );
+        let mut ready = original;
+        ready.require_authentication(Ok(()));
+        assert_eq!(ready.readiness, AgentProviderReadiness::Ready);
+        assert!(ready.diagnostics.is_empty());
+        assert!(
+            ready
+                .capabilities
+                .contains(&AgentProviderCapability::SessionResume)
+        );
     }
 
     #[test]

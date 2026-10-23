@@ -599,7 +599,11 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     hiddenAgents: config?.hidden_agents,
     onPersist: (cfg) => void saveToScratch(localMessageRef.current, cfg),
   });
-  const providerPolicy = useAgentProviderPolicy(effectiveExecutor);
+  const providerPolicy = useAgentProviderPolicy(
+    effectiveExecutor,
+    selectedVariant,
+    { workspaceId, sessionId }
+  );
   const [stagedResumeSession, setStagedResumeSession] =
     useState<ResumableAgentSession | null>(null);
 
@@ -1329,6 +1333,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         className="min-h-double max-h-[50vh] overflow-y-auto"
         repoIds={repoIds}
         executor={executor}
+        executorVariant={selectedVariant}
         selectedSkills={selectedSkills}
         onSelectedSkillsChange={setSelectedSkills}
         workspaceId={workspaceId}
@@ -1339,7 +1344,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         sendShortcut="Enter"
       />
     ),
-    [selectedSkills, sessionId, workspaceId]
+    [selectedSkills, selectedVariant, sessionId, workspaceId]
   );
 
   const resumePickerNode =
@@ -1370,6 +1375,16 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
             presetOptions={presetOptions}
           />
         )}
+        {effectiveExecutor === 'CLAUDE_CODE' &&
+          providerPolicy?.diagnostics.map((diagnostic) => (
+            <p
+              key={diagnostic.kind}
+              role="status"
+              className="text-xs text-error"
+            >
+              {diagnostic.message}
+            </p>
+          ))}
         {stagedResumeSession && (
           <AgentSessionResumeChip
             session={stagedResumeSession}

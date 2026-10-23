@@ -1099,7 +1099,15 @@ async fn monitor_process(
                 Some(OutputNotice::ProtocolFailure(error)) => {
                     return Some(ExitCause::ProtocolFailure(error));
                 }
-                Some(OutputNotice::ProviderTerminal(_)) => {}
+                Some(OutputNotice::ProviderTerminal(status)) => {
+                    // A fast CLI may exit before its final stdout frame reaches
+                    // the monitor. Successful process exit alone is not enough,
+                    // but the audited terminal frame completes that evidence.
+                    // Never override cancellation, audit errors or a nonzero exit.
+                    if matches!(cause, ExitCause::Process { success: true, .. }) {
+                        cause = ExitCause::ProviderTerminal(status);
+                    }
+                }
                 None => break,
             }
         }
@@ -1407,6 +1415,84 @@ mod tests {
             _: DirectControl,
         ) -> Result<Vec<u8>, executors::executors::ExecutorError> {
             Ok(Vec::new())
+        }
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn process_exit_before_terminal_output_preserves_provider_evidence() {
+        for (exit_code, terminal, expected) in [
+            (0, AgentRunStatus::Succeeded, AgentRunStatus::Succeeded),
+            (0, AgentRunStatus::Failed, AgentRunStatus::Failed),
+            (1, AgentRunStatus::Succeeded, AgentRunStatus::Failed),
+        ] {
+            let root = tempfile::tempdir().unwrap();
+            let host = test_host(&root.path().join("host.jsonl")).await;
+            let writer = Arc::new(Mutex::new(
+                NativeAuditWriter::create_in(
+                    root.path(),
+                    NativeAuditMetadata {
+                        session_id: Uuid::new_v4(),
+                        agent_run_id: Uuid::new_v4(),
+                        turn_id: Uuid::new_v4(),
+                        run_attempt_id: host.run_attempt_id,
+                        run_attempt_number: 1,
+                        provider_id: "claude_code".into(),
+                        runtime_profile_id: "test".into(),
+                        workspace_path: root.path().display().to_string(),
+                        runtime_version: None,
+                        protocol_version: None,
+                        adapter_version: "1".into(),
+                        mapper_version: "1".into(),
+                        created_at: Utc::now(),
+                    },
+                )
+                .unwrap(),
+            ));
+            use utils::command_ext::GroupSpawnNoWindowExt;
+            let mut child = tokio::process::Command::new("/bin/sh")
+                .args(["-c", &format!("exit {exit_code}")])
+                .group_spawn_no_window()
+                .unwrap();
+            child.wait().await.unwrap();
+            let cancellation = CancellationToken::new();
+            let after_exit = cancellation.clone();
+            let (notices_tx, notices_rx) = mpsc::channel(8);
+            let producer = tokio::spawn(async move {
+                // The monitor cancels only after choosing the exit cause. This
+                // handshake deterministically places the terminal in the drain.
+                after_exit.cancelled().await;
+                notices_tx
+                    .send(OutputNotice::ProviderTerminal(terminal))
+                    .await
+                    .unwrap();
+                notices_tx.send(OutputNotice::StdoutClosed).await.unwrap();
+                notices_tx.send(OutputNotice::StderrClosed).await.unwrap();
+            });
+            let (_commands_tx, commands_rx) = mpsc::channel(1);
+            monitor_process(
+                host.clone(),
+                DirectProvider::ClaudeCode,
+                Uuid::new_v4(),
+                child,
+                None,
+                Some(cancellation),
+                None,
+                None,
+                writer,
+                notices_rx,
+                commands_rx,
+            )
+            .await;
+            producer.await.unwrap();
+            let response = host.response_after(0).await.unwrap();
+            assert!(
+                response.events.iter().any(|event| matches!(
+                    &event.payload,
+                    HostEventPayload::Terminal { status, .. } if *status == expected
+                )),
+                "exit={exit_code}, terminal={terminal:?}"
+            );
         }
     }
 

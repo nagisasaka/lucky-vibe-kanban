@@ -8,6 +8,12 @@ use crate::{
     executors::provider_adapter::{DirectControl, DirectIntent, encode_stdio_rpc},
 };
 
+// Session-scoped official CLI setting. It blocks API credentials at startup;
+// Custom headers from ordinary CLI settings are neutralised for this profile;
+// managed settings retain their native higher priority.
+pub(super) const SUBSCRIPTION_SETTINGS: &str =
+    r#"{"forceLoginMethod":"claudeai","env":{"ANTHROPIC_CUSTOM_HEADERS":""}}"#;
+
 pub struct ClaudeCodeCommandAdapter<'a> {
     agent: &'a ClaudeCode,
 }
@@ -15,6 +21,14 @@ pub struct ClaudeCodeCommandAdapter<'a> {
 impl<'a> ClaudeCodeCommandAdapter<'a> {
     pub fn new(agent: &'a ClaudeCode) -> Self {
         Self { agent }
+    }
+
+    fn with_authentication_settings(&self, builder: CommandBuilder) -> CommandBuilder {
+        if self.agent.require_subscription_login.unwrap_or(false) {
+            builder.extend_params(["--settings", SUBSCRIPTION_SETTINGS])
+        } else {
+            builder
+        }
     }
 
     pub fn build_runtime(
@@ -74,7 +88,7 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
             "--replay-user-messages",
         ]);
 
-        apply_overrides(builder, &self.agent.cmd)
+        apply_overrides(self.with_authentication_settings(builder), &self.agent.cmd)
     }
 
     pub fn build_for_intent(
@@ -119,10 +133,12 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
                     "--output-format=stream-json",
                     "--max-turns",
                     "1",
-                    "--",
-                    "/",
                 ]);
-        apply_overrides(builder, &self.agent.cmd)
+        apply_overrides(
+            self.with_authentication_settings(builder)
+                .extend_params(["--", "/"]),
+            &self.agent.cmd,
+        )
     }
 }
 
@@ -193,6 +209,41 @@ mod tests {
             Some("max")
         );
         assert_eq!(probe.params.unwrap().last().map(String::as_str), Some("/"));
+    }
+
+    #[test]
+    fn subscription_settings_apply_to_runtime_and_discovery_before_prompt() {
+        let agent: ClaudeCode = serde_json::from_value(serde_json::json!({
+            "require_subscription_login": true
+        }))
+        .unwrap();
+        let adapter = ClaudeCodeCommandAdapter::new(&agent);
+        for builder in [
+            adapter.build_runtime(false).unwrap(),
+            adapter.build_discovery_probe().unwrap(),
+        ] {
+            let params = builder.params.unwrap();
+            let settings = params.iter().position(|arg| arg == "--settings").unwrap();
+            assert_eq!(params[settings + 1], SUBSCRIPTION_SETTINGS);
+            let parsed: serde_json::Value = serde_json::from_str(&params[settings + 1]).unwrap();
+            assert_eq!(parsed["forceLoginMethod"], "claudeai");
+            assert_eq!(parsed["env"]["ANTHROPIC_CUSTOM_HEADERS"], "");
+            if let Some(prompt_start) = params.iter().position(|arg| arg == "--") {
+                assert!(settings < prompt_start);
+                assert_eq!(params.last().unwrap(), "/");
+            }
+            assert!(!params.iter().any(|arg| arg == "--bare"));
+        }
+        let legacy: ClaudeCode = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert!(
+            !ClaudeCodeCommandAdapter::new(&legacy)
+                .build_runtime(false)
+                .unwrap()
+                .params
+                .unwrap()
+                .iter()
+                .any(|arg| arg == "--settings")
+        );
     }
 
     #[test]

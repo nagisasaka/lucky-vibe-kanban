@@ -2,6 +2,7 @@
 
 import {
   type ProfilesContent,
+  type AgentProviderPolicy,
   type WorkspaceTokenUsage,
   type ReplaceProfilesRequest,
   type RecentModelsPatch,
@@ -1549,6 +1550,20 @@ export const scratchApi = {
 
 // Agents API
 export const agentsApi = {
+  getProfilePolicy: async (
+    query: AgentPresetOptionsQuery & {
+      workspace_id?: string;
+      session_id?: string;
+    }
+  ): Promise<AgentProviderPolicy> => {
+    const params = new URLSearchParams({ executor: query.executor });
+    if (query.variant) params.set('variant', query.variant);
+    if (query.workspace_id) params.set('workspace_id', query.workspace_id);
+    if (query.session_id) params.set('session_id', query.session_id);
+    const response = await makeRequest(`/api/agents/profile-policy?${params}`);
+    return handleApiResponse<AgentProviderPolicy>(response);
+  },
+
   getGarage: async (): Promise<AgentGarageEntry[]> => {
     const response = await makeRequest('/api/agents/garage');
     return handleApiResponse<AgentGarageEntry[]>(response);
@@ -1556,13 +1571,19 @@ export const agentsApi = {
 
   getDiscoveredOptionsStreamUrl: (
     agent: BaseCodingAgent,
-    opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
+    opts?: {
+      workspaceId?: string;
+      sessionId?: string;
+      repoId?: string;
+      variant?: string | null;
+    }
   ): string => {
     const params = new URLSearchParams();
     params.set('executor', agent);
     if (opts?.workspaceId) params.set('workspace_id', opts.workspaceId);
     if (opts?.sessionId) params.set('session_id', opts.sessionId);
     if (opts?.repoId) params.set('repo_id', opts.repoId);
+    if (opts?.variant) params.set('variant', opts.variant);
 
     return `/api/agents/discovered-options/ws?${params.toString()}`;
   },

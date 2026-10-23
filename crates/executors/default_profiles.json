@@ -5,6 +5,12 @@
         "CLAUDE_CODE": {
           "dangerously_skip_permissions": true
         }
+      },
+      "SUBSCRIPTION": {
+        "CLAUDE_CODE": {
+          "require_subscription_login": true,
+          "approvals": true
+        }
       }
     },
     "GEMINI": {

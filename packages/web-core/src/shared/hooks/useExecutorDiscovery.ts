@@ -27,17 +27,23 @@ const defaultOptions: ExecutorDiscoveredOptions = {
 
 function useExecutorDiscovery(
   agent: BaseCodingAgent | null | undefined,
-  opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
+  opts?: {
+    workspaceId?: string;
+    sessionId?: string;
+    repoId?: string;
+    variant?: string | null;
+  }
 ) {
-  const { workspaceId, sessionId, repoId } = opts ?? {};
+  const { workspaceId, sessionId, repoId, variant } = opts ?? {};
   const endpoint = useMemo(() => {
     if (!agent) return undefined;
     return agentsApi.getDiscoveredOptionsStreamUrl(agent, {
       workspaceId,
       sessionId,
       repoId,
+      variant,
     });
-  }, [agent, workspaceId, sessionId, repoId]);
+  }, [agent, workspaceId, sessionId, repoId, variant]);
 
   const initialData = useCallback(
     (): ExecutorDiscoveryStreamState => ({
@@ -79,7 +85,12 @@ function useExecutorDiscovery(
 
 export function useModelSelectorConfig(
   agent: BaseCodingAgent | null | undefined,
-  opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
+  opts?: {
+    workspaceId?: string;
+    sessionId?: string;
+    repoId?: string;
+    variant?: string | null;
+  }
 ) {
   const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
     agent,
@@ -98,7 +109,12 @@ export function useModelSelectorConfig(
 
 export function useSlashCommands(
   agent: BaseCodingAgent | null | undefined,
-  opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
+  opts?: {
+    workspaceId?: string;
+    sessionId?: string;
+    repoId?: string;
+    variant?: string | null;
+  }
 ) {
   const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
     agent,
@@ -116,7 +132,12 @@ export function useSlashCommands(
 
 export function useExecutorTooling(
   agent: BaseCodingAgent | null | undefined,
-  opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
+  opts?: {
+    workspaceId?: string;
+    sessionId?: string;
+    repoId?: string;
+    variant?: string | null;
+  }
 ) {
   const { options, error, isConnected, isInitialized } = useExecutorDiscovery(
     agent,
