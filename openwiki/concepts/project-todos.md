@@ -3,12 +3,11 @@ type: concept
 title: Project Todo の共有メモ
 description: Project に保存する Todo と Issue・実行の違い、Web と二つの MCP の共有データ、競合・再送・表示の契約。
 tags: [todos, project, persistence, mcp, concurrency]
-verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-21T05:31:54.935Z
 sources:
   - id: openwiki-source-9c3e7b4b0d07a43f862a9bd7
     resource: repo://crates/db/migrations/20261018000000_project_todos.sql
+  - id: openwiki-source-830e28055c4ae6f5464df312
+    resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-77fa2216e4e605d16556c5db
     resource: repo://crates/db/src/models/todo.rs
   - id: openwiki-source-2d2a5b79056fd785f8bb7684
@@ -35,7 +34,10 @@ sources:
     resource: repo://tests/todos/layout-validation.md
   - id: openwiki-source-e252f7831699ea3488a22e81
     resource: repo://tests/todos/layout.mjs
-generated: { by: "codex", at: "2026-10-21T05:31:54.935Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # Project Todo の共有メモ
@@ -80,7 +82,7 @@ Enter と追加ボタンは共通の submit 検査を通る。空白だけの本
 
 ### カテゴリー配置と読み順
 
-Project の Todos 表示は複数列を許す `grid` を指定し、Workspace の panel は既定の単列を使う。Project 側も幅が狭ければ単列になる。列幅は `auto-fit` と `minmax(min(100%,320px),1fr)` で決まり、カテゴリーは `localeCompare` 順、カテゴリー内の項目は取得順を保つ。[Project の入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1133-L1136)・[Workspace の入口](../../packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx#L50-L56)・[グループ化](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L79-L88)
+Project の Todos 表示は複数列を許す `grid` を指定し、Workspace の panel は既定の単列を使う。Project 側も幅が狭ければ単列になる。列幅は `auto-fit` と `minmax(min(100%,320px),1fr)` で決まり、カテゴリーは `localeCompare` 順、カテゴリー内の項目は取得順を保つ。[Project の入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1139-L1147)・[Workspace の入口](../../packages/web-core/src/features/todos/ui/WorkspaceTodoPanel.tsx#L50-L56)・[グループ化](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L79-L88)
 
 複数列の配置は sparse CSS Grid の1px行と実測 row span を組み合わせる。短いカテゴリーの後へ次のカテゴリーを配置できるため、通常の行単位 Grid のように前行の最長カテゴリーの終了まで全列を待たせない。DOM はカテゴリー順のままで、上端の位置順、同じ高さなら左から右へ読む。dense backfill と CSS columns を避ける理由は読み順を守るためであり、すべての隙間を埋めることより順序を優先する。[配置実装](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L192-L274)・[記録された判断](../../tests/todos/layout-validation.md#change-and-ordering-decision)
 
@@ -100,3 +102,5 @@ Project の Todos 表示は複数列を許す `grid` を指定し、Workspace �
 [検証手順](../../tests/todos/README.md)は built frontend と server・agent-process-host・vibe-kanban-mcp の事前 build を要求する。試験は独自の `LVK_INSTANCE_DIR` と loopback の自動割当 port を使う。[開発時の記録](../../tests/todos/layout-validation.md)には Chromium E2E の成功と初回 checkbox 即時判定の失敗・修正が残るが、Firefox・WebKit・実機モバイルは未検証である。これは今回の統合済み checkout に対する再実行結果ではない。
 
 今回の Sync は凍結 source `3e644b488173dad2cf2e10a994181f544055845c` の Todo 配置変更を対象に、表示入口・データ順序・計測と cleanup・検査コードを静的に照合した。供給された統合記録は明示的な検証省略を示しており、本 Sync も製品 E2E を再実行していない。無関係な既存説明全体の再検証や、統合後のブラウザー動作確認を主張しない。
+
+設計の意図・本文の版履歴・出典付きの独立追記を残す場合は、同じ Project 表示切替から [設計メモ](design-notes.md)を使う。Todo の完了・削除とは異なる履歴保持の契約を持つ。

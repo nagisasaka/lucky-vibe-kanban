@@ -6,6 +6,8 @@ tags: [remote, authentication, relay, mobile, self-hosting]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-27eb1d689068b93b5282d2b6
+    resource: repo://crates/db/src/models/design_note_read.rs
   - id: openwiki-source-d83dfc60bdfadf451d836df3
     resource: repo://crates/git/src/reference.rs
   - id: openwiki-source-7d94e7454f63f16057833046
@@ -18,6 +20,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/code_query.rs
   - id: openwiki-source-0009a6c83972b5e5975ba606
     resource: repo://crates/server/src/remote_mcp/code_read.rs
+  - id: openwiki-source-2a0ddba6878eea1524264906
+    resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
@@ -68,10 +72,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -90,13 +94,17 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・agent起動/制御などの変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御などの変更に `lvk:write`、正式Integration開始に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
 transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
 ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支援の preview / apply と、保存済み専用 secret の明示 reveal は [サーバー認証の設定契約](../concepts/server-access.md#auth0-の作成支援と有効化を分ける)を参照する。設定を作成・保存できても、実アカウントでの接続成功を証明したことにはならない。
 
 [Project Todo](../concepts/project-todos.md)も外部 MCP の対象で、read は取得、write は作成・更新・削除を許す。変更結果は下記の operation receipt で確認する。メモを登録することは agent の仕事開始ではない。
+
+## 設計意図を記録・参照する
+
+[設計メモ](../concepts/design-notes.md)は Project の本文版と会話からの独立追記を保存する。`list_design_notes` / `get_design_note` / `get_design_note_history` は read、`write_design_note` は read + write を要求する。本文ページは返された保存版を固定して読み、書込結果は確定したIDとrevisionだけの receipt で確認する。利用時の出典・明示本文編集・再送・削除後閉鎖の詳細は [設計メモのMCP境界](../concepts/design-notes.md#ui-rest-と-mcp-の境界)を参照する。
 
 ## Issue のレビューを共有する
 

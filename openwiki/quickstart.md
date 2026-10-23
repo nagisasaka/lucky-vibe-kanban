@@ -12,6 +12,10 @@ sources:
     resource: repo://crates/db/migrations/20261016000000_remove_project_chat.sql
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
+  - id: openwiki-source-c2fc034438311f3aa02f5ee5
+    resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
+  - id: openwiki-source-830e28055c4ae6f5464df312
+    resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-0ba09128382dd913fe9a4c4a
     resource: repo://crates/db/src/models/tag.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
@@ -40,6 +44,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
+  - id: openwiki-source-5d1b4189d87b8ac4c58a8f4c
+    resource: repo://docs/development/design-notes-validation.md
   - id: openwiki-source-98acd1706f9355ed92cb62a8
     resource: repo://docs/docs.json
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -60,10 +66,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # クイックスタートと調査案内
@@ -89,6 +95,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | LVKへ入る認証と設定の寿命は何か | [サーバー認証・設定・セッション](concepts/server-access.md)。Local/Public、初回setup、Basic/Auth0切替、失効、内部agentと回復 |
 | 何を作るか、誰の仕事か、status や親子関係は何か | [Project・Issue](concepts/project-and-issue.md)。ボード表示と共有 status の差、Workspace との link と旧 Task の違いもここ |
 | 小さな作業メモと Card の要求をどう使い分けるか | [Project Todo](concepts/project-todos.md)。Project 所属、任意の Card link、完了・削除、revision 競合と操作 receipt |
+| 設計意図と判断の変遷をどう残すか | [設計メモ](concepts/design-notes.md)。本文と独立追記、初版・復元、出典、競合、MCPの固定版読取、Project削除後の保持 |
 | Issue の担当者・コメント・file 参照はどう保存するか | [Issue の共同作業](concepts/issue-collaboration.md)。共有レビューの来歴・対象版・全文読取、local コメント・reaction・follower と通知の実装範囲 |
 | どこで変更するか、何を共有し、何を削除できるか | [Workspace・Repo](concepts/workspace.md)。Worktree / DirectFolder、物理所有権と interactive/execution_only の用途、共有領域、cleanup |
 | 会話、実行、再試行をどう識別するか | [Session・AgentRun・RunAttempt](concepts/session-and-agent-run.md)。native session、現在の承認配線、未送信ドラフト、Goal、queue、子 agent の境界 |
@@ -174,10 +181,19 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 前回の Runtime Access の凍結入力は、開発時のテスト成功報告と正式 Integration の検証省略を区別していた。これはその対象範囲の履歴であり、後続 Integration の検証結果を示すものではない。
 
 
-### 今回の Sync の照合範囲
+### 共有レビュー Sync の照合範囲
 
 統合済み source `be97e258698174883272eadcd325ae743d30b7d8` と凍結された pending changes を対象に、[Issue の共有レビュー](concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を照合した。独立した入口として外部 HTTP の認証・catalog・dispatch、投稿 receipt と actor 継承、migration と通常 Web 編集、Rust API 型・生成型・Web 表示、Unicode decoder・SQL・handler 回帰、隔離 JWT bridge と Chromium spec を確認した。対象 Issue revision と本文 revision、追記と要求変更、来歴と監査証明を分けて正本へ反映した。[投稿・読取の根拠](../crates/server/src/remote_mcp/issue_comments.rs#L85-L279)・[UI の根拠](../packages/ui/src/components/IssueCommentsSection.tsx#L327-L373)・[検証入口](concepts/issue-collaboration.md#変更時の検証入口)
 
 同じ範囲で、[正式 Integration の固定検証 plan](concepts/formal-integration.md#検証方針は受付時に固定する)に依存準備 `pnpm install --frozen-lockfile` が先頭追加されたことを確認した。[設定](../.lvk/integration-validation.json)
 
 凍結入力には、初回の型生成・Rust/browser 検証の保留、その後の開発検証成功、最後の正式 Integration の install / frontend build / check / lint / backend:test 成功が順に記録されている。これらは供給された過去の実行記録であり、今回の文書保守による再実行結果ではない。今回行ったのは source・テスト内容・文書差分の静的照合で、実 Auth0/ChatGPT、配布サーバー、実DB移行は確認していない。無関係な過去の Wiki 内容全体を再検証したとは扱わない。
+
+
+### 今回の設計メモ Sync の照合範囲
+
+凍結入力全9チャンクと統合済み source `b7371bd196c9113a16e1efc8116bcf480f588d09` を対象に、[設計メモ](concepts/design-notes.md)を照合した。独立した入口として Project 表示と編集state、RESTとactor、stdio/HTTP MCPのcatalog・scope・receipt、DBの版管理・有界読取、保持migrationとProject削除、DB/server/隔離ブラウザの回帰定義を確認した。共有routerの変更で影響した既存Claimsも再照合した。無関係な過去のWiki内容全体を再検証したとは扱わない。
+
+途中のProject削除409方針は撤回済みで、最終実装は履歴を保持し既存アクセスを閉じる。保持後の閲覧・持出し・再関連付け・期限は未決である。[現行保持契約](concepts/design-notes.md#project-を削除した後の保持)。メモの記録を実行承認とせず、独立追記と本文への明示統合を区別する。
+
+凍結入力は開発検証の保留・後続成功と、最終Integrationの install / frontend build / check / lint / backend:test 成功を記録している。欠落したsemantic draftのcheckpointから動機は推定していない。これらは供給された過去の実行記録であり、今回の文書保守によるテスト再実行ではない。今回の検証はソース・テスト内容・リンク・文書差分とOpenWiki lifecycleの検証で、実Auth0/ChatGPTや稼働DBへのmigration適用は含まない。[変更時の検証入口](concepts/design-notes.md#変更時の検証入口)

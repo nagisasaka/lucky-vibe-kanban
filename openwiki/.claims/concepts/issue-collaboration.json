@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7a535242f685afa56b3bb81dbfd9346e2691abf9a1c3c296d32dcab5c8003213",
+  "pageVersion": "sha256:17785f8255350fbf6b91316c9bbfd3a445859632aaf85ccc89c126069b9d7e50",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -30,7 +30,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:1246e3c79f723d6f355d9ed535ef777e834c6a2e236ef16103e86126f465acac"
+          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
         }
       ]
     },
@@ -60,15 +60,15 @@
     },
     {
       "id": "claim_661e3dd8d20c466f9f528764dc3b7f60",
-      "statement": "共有レビューは既存local_issue_commentsのnullable来歴であり、外部HTTP MCPで追記・参照する。内部stdio catalogは拡張せず、投稿はIssue更新やAgentRun起動を行わない。",
+      "statement": "共有レビューは既存local_issue_commentsのnullable来歴であり、外部HTTP MCPで追記・参照する。共有レビュー用の内部stdio catalogは拡張せず、投稿はIssue更新やAgentRun起動を行わない。",
       "evidence": [
         {
           "resource": "repo://crates/db/migrations/20261023100000_issue_comment_reviews.sql#L1-L5",
           "version": "repo-lines-v1:sha256:e68d2a01e5ec264137919b4350d46661edd6ed13a874c6a3f9e524667a417dc8:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDBhYjMzZGNlNjRmMjI4MzM3NTc5NjgzYWM5YmIyZGYwYTA3ZDk2OWYwMjU3ODcwZjZlNDBjYzQwNzVlNjJjMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDJiZTljYjUzMzc2OTFhMzMwNjIxNThiMDVkN2NiMmI4YmMyNjA4YjkwZmEwMDkyNGNjZjIyZjczOGFjMDJlMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         },
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L42-L80",
-          "version": "repo-lines-v1:sha256:dd70243f2d8ffac411ee7950d78bcb752a3ed500be63a8ef3ff79e1e9046838b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYmVjNDlhN2VhZjRmYWExYzM3NjI3MjYxYjk5MjQ2NzU0N2IzZTQ1MWExM2M4ZGM4ODgxZWVlYTVkZDZmZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY5NDZlY2YwZTQ2NzRmN2NmMTVmZmU5Y2UyZTdlYTA4NjViZjY1Nzk2YWZmNzg2NDI1NzZjYzVhMzE0NTE5ZWQifQ"
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L49-L79",
+          "version": "repo-lines-v1:sha256:daad8411437bb4803ae28082b11f76fc1d45dc907618e38026c946e5d271c2ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNTM5ZDg1Mzg2YTI5NDIzZjUzNWFiYjQ2Y2M4NjgwNzI3ODdhOGI4ZDJkMzhjY2QxY2ZkZGRiYjNjMGFmOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NTc2OWQ1MDFmYTZhMmJkMzc4ZWZmMTk3MDRmYWE2MTBkZmJjMmZmNGE5OTMzNDYzZWY1ZDBkZDAyOTcwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ZmQwMTkzOWNhY2ZhMDg3MDNiNDY2ZDUxM2RlNTYzODk4Zjk3ZThlMGQwZjNlNjcwZDYyOGYzM2Y5YzM5MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_comments.rs#L135-L153",
@@ -207,6 +207,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T13:57:47.467Z"
+    "at": "2026-10-23T14:57:15.192Z"
   }
 }

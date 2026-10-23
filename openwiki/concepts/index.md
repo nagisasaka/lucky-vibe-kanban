@@ -2,6 +2,7 @@
 
 - [Arena による比較と選択](arena.md) - 同じ Issue に対する複数の Workspace を比較する Arena の意味、Design と Implementation の契約、選択・再試行・終了の寿命。
 - [Card context と並列作業の参照](card-context-and-llm-wiki.md) - 保存済み Card context の継承、並列 Workspace の参照、固定 commit の読取、および旧 LLM Wiki の廃止境界。
+- [設計メモ・本文履歴と独立追記](design-notes.md) - Project の設計意図を本文と独立追記として残す契約。版管理、出典、競合、UIとMCPの応答境界、Project削除後の履歴保持を説明する。
 - [正式 Integration の選択・検証・公開](formal-integration.md) - local Board で採用した Card と Workspace の変更を固定し、固定候補を受付時の検証方針に従って公開する契約。予約、取消、条件付き Done、Wiki と回復の境界。
 - [Issue のコメント・レビュー・添付・通知](issue-collaboration.md) - Issue の共有レビューと通常コメントの来歴、対象 revision、再送・全文読取・編集の契約、および購読・添付・通知との境界。
 - [Organization・Member・Invitation](organization-and-membership.md) - 固定Organizationと認証actor、承認制メンバー、過去の所有者IDを区別する。

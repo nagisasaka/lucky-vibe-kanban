@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:16454bdbe2f5a548f13d19b85f9987dcd151fd8e05d1d420cf34f2d1f051e49a",
+  "pageVersion": "sha256:4b79e02bfc2944c3fc55a897fb0c380677f15c17e2a302db8873d067d2dbff30",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:1246e3c79f723d6f355d9ed535ef777e834c6a2e236ef16103e86126f465acac"
+          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
         }
       ]
     },
@@ -32,7 +32,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:1246e3c79f723d6f355d9ed535ef777e834c6a2e236ef16103e86126f465acac"
+          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
         }
       ]
     },
@@ -104,7 +104,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:1246e3c79f723d6f355d9ed535ef777e834c6a2e236ef16103e86126f465acac"
+          "version": "repo-file-v1:sha256:67acb667302821ce9bc7f7ff43ab4a7146a3e4bdfedd04acd797a6f0e296df25"
         }
       ]
     },
@@ -291,10 +291,28 @@
           "version": "repo-lines-v1:sha256:5e7ae998da02993fcfaf19a66e881b7d5014615a5cf0ed613da399ad1fec24b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5NmU1MWNjOTk2NDhkNDhjZGFjN2IyYzFhMWZjZmIzMzQwZDNkNDBjODZkZTEzZGZkOTg3MDhiMzIyMTAyYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYmM0NWU2Njg0NWJjZjllMmI2YTc1MDUyY2YxZmNhNTc5ZGNjYzMzYjQ2OWE3NWU1ZTQ2YjU2MzIxY2U5ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyN2Y5ZTQwYWNiNDFmMTlmMjNhZGU4NGRkODljMGNlNGU3N2M3YjFjNmRlNGE3NDg3NjY5OWU2NWNkMWVjMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1ZjgwOGM0M2U3M2UwYjY1MDM0YmIxN2I1NjQ3YzdkMTc4MDBhZmE0NzE4NGNlM2IyNmI5NDZlZTE5MDU0YjYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_e599167996c9463cb82ecdb32fe35dd2",
+      "statement": "Project削除後も設計メモの履歴は保持されるが、既存の読取・更新APIはlive Projectを必要とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql",
+          "version": "repo-file-v1:sha256:faea3d3b63b1ba97fe5936bb7987a7e60420fdf444590b45c6e67479f0260184"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L173-L196",
+          "version": "repo-lines-v1:sha256:07ffe93de17df1f5fa637ea58af2d8abb366445030dd27bcf2efd6aada3df3b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwODZkNWY0NjAzYTk4Yjk4M2E1OTI4YjdlMmMzNTUwNTllNDZiNzFlODkwYzU5NWYyZmMzMDMxMDcxYzE0OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYTllODVlMmU2NmIwMWQ5OWI0MDAzNDIzNjA3ZDI0YmQ1OTZkMDQ4OGQ0ZGY5NzJkZmYwZTA5ODZjOWFhNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4ZTEwNzViMjUxNTgxZGVjOTAwMTYzYzJiNjY0NGY4ZjVkYmEwNmRhNmJmYjBkNzIyYjlmM2ZjZmRhYjQ4MTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxOThhNGVhNGUwNjIyNzQyMTRkYzM4ZjBiY2RhMDc0MTdkZTU3YjYwMDY3N2Y3YjdhMWRhYzQzNTcwZTJjYTQifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L249-L268",
+          "version": "repo-lines-v1:sha256:bba2950c21dce0fd47db19f1af9aaa994d27342d7c842ca8b4376c46b445e9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYTVkZjc4NzFlMDRhMzI5Yzk2YmRiZjZkNzA5ODMyYjkxNDU1NGUxZmIwZjNmNTkxMzE4YjE3ZTdhOTYwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NzMyODRjODM3MTQ4ZjVhZDhmNDg4MDQxM2EwNzc1NGY3MTI0NDk5YWIyNzlhYjIxZmZjYTc2MjY1MjRjZmMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T13:57:47.467Z"
+    "at": "2026-10-23T14:57:15.192Z"
   }
 }

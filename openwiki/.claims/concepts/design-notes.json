@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c703dc8116d40ce7bfe09c7c17a4b2ee942067d231e4ae6eaebd6736c267c489",
+  "claims": [
+    {
+      "id": "claim_4e9b35333650431290516aff5f98065c",
+      "statement": "設計メモはProjectごとに複数の本文と独立追記を保持し、初版はメモの最初の記録であってProject創始時の思想とは限らない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L366-L413",
+          "version": "repo-lines-v1:sha256:f9e641debe2c667c76b3c6e0838ad9c4409ca3867952140e06d2c5f25658daff:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExMzljNmYyNDdhMGVlMzFiYjc0NTIzMDc1OTg0ZDM1ZTU0YWVkYmFjMjgwZGQxMWM0MzU0NjNmZjE0N2QyMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMjE1ZmQwM2NmYzJiZWViZjgwNGExN2FjNWU5NDc5NTFmN2NkMmRjMDU2MDUyMjQ5OWM2MDZmZGJjZDcxODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjNGMwMTY5MjI2MzI5NDIyYjcyNTdlZTRiOGRjODcyZWU5NzIxNTQxMDM0YzljMTQ5YTA0ZThmZDRkYTU3YmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MTM5NjI2ZjQ3NGQ0YzFlNDU2MjE0ZDc4N2UyNmU0ZTczMTNlNDliZDc5NjIwZjcxOGU5ODM0NjlmNmNlMTAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L94-L121",
+          "version": "repo-lines-v1:sha256:9e235a766ac5948e8a63bbedb651e177a6e06e20e139a300929b6b65c01cc551:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxY2FlMjMyNWE1ZTgxNDJiNDA2YmQ3MjIwNDZlNGRiZTAzODVmM2MxNjI4NDBlNDdlZDY2MTY5ZTFlYzZmMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNjllZGE2OTRhZjM5MjFjY2Y3M2JjZWZjNTRmNTk0MmIxZGQ1OGEwNjBlNDViZjZkMGNhNmM2ZjNmN2IzNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzNjNiMGY5NTA3YzU3YjQ2OGZlMzJjMjM3MTYxMmE5ODAyMGE2NTU4YjQ3MmQ3ZjRjNmU1ZGFiZTAzZDBhZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxYmRmYzY1MzI2M2ZhOWZhZmM2YjJlNDk0MDQ1MzNkNDZjOThiOGY4M2JhNDUwYTU2OWMzMWMxMTI4ZmEwYWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_41024aac0e6443db82340f2970707ffe",
+      "statement": "MCPは自発的AI記録にappendを要求し本文編集には明示意図を求めるが、これはtoolの利用契約でありDBによる自然言語承認判定ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L249-L269",
+          "version": "repo-lines-v1:sha256:401d37264e67ca2a1e3b40c261f22212380ce231aba05ddc2476ce054cbd7053:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNDE4Y2EyNmQzZWZhZGM1MjQ3YzBhOTg0OTBlMDVjNWQzNTljYTRmNmFlNjZlMWUwNzNmZTM5Zjg3NTQ3ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1NmYzNjljZjhhNTY4OTJlMDQ1Mjg5MGY5MmM2Y2JiOTM0MGJiOWQxZDE1MjAyZThjODg1YWE0OGI2ZDk0NmYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/design_notes.rs#L24-L48",
+          "version": "repo-lines-v1:sha256:d83e7f30229feb81587a37339446af0a0466f3844cccec0e883c60f512a5c1e4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhMDZkOWMwZmUyNTY2NWYxN2IyNWVlY2EwNzljNTU0MTIwYjljY2U3N2UyZWI1YmFhZmQyNTg2YmJmZWQyZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiZmVjMDFiNGVkOTRhMWM3YTIzZTVkOTcxMDIzMjY3YWM1MjBkZjgzNzI4YmFiZWYzYWIwNzQxYjUwYzc4MTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhMDhjOTRiNzg0NWRiOTRlOGQ2ZDNjMTY5ZmI2NjkzNWNkMzQwNTNlZDdmOGI1NmJkNjY5ZmJkYmRlNDM4ZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e762f2f616d14ee7ac16810ba72b8db4",
+      "statement": "本文更新・復元・統合は新しい本文版を作り、追記作成・訂正・非表示は独立追記履歴を残す。統合は本文と追記の版を照合し、非表示追記を拒否して出典付きで末尾へ追加する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L313-L432",
+          "version": "repo-lines-v1:sha256:5d584cba6269f1c38f5cb33777baf7fb2377a41e6e2d04b01cc31e791b3b736a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkOTUyNDJkMTQwMTZiYjMyYzg2MmM5MDJjMzc2NTQ2YzJlN2I5MWQwM2IyYjg4MGIwNDY4ZDZiMDJmMmI1MWNmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3ZTRkMjNlZTFjY2MyMzI0OTY5N2Y2NDIxNGRkMWQzMTI0MjRjZDI4MGEzMTMzMjZkMWFlNzExNTM5OTY5M2FjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZTdlMWFiZDZlYjI2OGIyNzExNTFjM2RlZDFmZWM2OTFjNTE4YTA3NjZjNTllZTA3M2I3NDk0ZDJlNDkwYWI5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiYjliMmQzZTMxYTEyOTE1MjIyY2Q4NTljNGQzZmE3ZjVmN2U4YTE5ODY0ZDdiZGVhYTk4ZGVjZWY4YTM5ZjRiIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_62bd106d3c0040eda500d6884c40ce75",
+      "statement": "追記の記録者はactor由来で発言者と出典は入力値であり、訂正でも記録者を保つ。参照本文版と短い引用の包含を検証する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L358-L400",
+          "version": "repo-lines-v1:sha256:be650aee6863cafd7c2ec043130d2cf65dd6339935e8afc325ee3e56a76d65ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliMTcyYWRlN2M4M2Q0NGU1ZTA0YzQzNDliNjMxODBlMWMwNGYxYWM0Y2E2OTUwMzA3YTc3MmNiZDAxYjZjNmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYjMzOWMxN2Q0Y2M1NGU3MGM0ZmNmZWNiNjExYmI5ZTdkMzYzZjI1YjE4ZTA5MjNhMWQzMDZjYzk1OTI0ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1OTAwYjdiMmQzNzM1YTViOTQ1YTg3OWY1MDFjNDQyODM2YTNlMmU0YjlhMjIwNzFmNGIyZmIzZjNhNzZlNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllMWZiMTFkM2M5OTNmNDg3NWFlYWUwYTU5OWRmY2VlOWI0M2E3Njc0YzI5Y2UwMTFhN2JlYjg1ZmMwNzBiN2UifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L474-L514",
+          "version": "repo-lines-v1:sha256:395ad81a6b79bd69be991d2d462801bf7a03fd275cf4f779582031d704c00e78:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNzBkMWRjMjZkOTczN2Y2MzhjNGM0MjRkZDMwZDhlMWMwMjA4ZmNlNmE0YzQzOWFiYWUyMzcxOGJjYTExYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjMGFmNmI5NjIxOTNjYzU2MGNlNjNjOWFjMjFlYjNlNTRkZGEzYTkxOTdhOTRkZTI4ZGMwMmYyZDdhZmRlOTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxNmNiOGJmN2Q3NzFiMWFlZWZkOTllYWIxOTlmMjg3NjE2ZGUzNTQ5MDA1ZWFlMTU0NjUxNzIxZTE1M2FiYmYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/design_notes.rs#L72-L89",
+          "version": "repo-lines-v1:sha256:983ecce4fc8db70a1024c91e82bd7e5fb6b2ebb8441866fd0bbb8da363f880f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZWRkYjg3ZGE1ZjFkM2VmYmMwMWQ3MDI2YTI1ZmIwM2U4ZDBmM2VjZWY2ZDU3N2ExNjljYzRmYzMwYWE1ZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0OWNjODQ5Y2Y2OTBkMjliMjRhNDc5OTYzMmVhYjQ1ZDQzODEyZTY0MTY2N2M0MmYwMWY0MmMzZGQ5YzYzZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjViMTk4MTExNzRiNzJlMDIxNTgxNGUwNTJkM2M1OTlhNDgyZThiNWU4ZDEyOTNlNmM2MzE5YTc1NjU1YTk3MzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a71d280e18cd4b83bbe13d279451cd9f",
+      "statement": "同一Project・actor・request IDの同一入力再送は元の確定結果を返し、入力変更は競合となる。request・履歴・結果は同一transactionに保存する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L249-L269",
+          "version": "repo-lines-v1:sha256:401d37264e67ca2a1e3b40c261f22212380ce231aba05ddc2476ce054cbd7053:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiNDE4Y2EyNmQzZWZhZGM1MjQ3YzBhOTg0OTBlMDVjNWQzNTljYTRmNmFlNjZlMWUwNzNmZTM5Zjg3NTQ3ODgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ1NmYzNjljZjhhNTY4OTJlMDQ1Mjg5MGY5MmM2Y2JiOTM0MGJiOWQxZDE1MjAyZThjODg1YWE0OGI2ZDk0NmYifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L416-L432",
+          "version": "repo-lines-v1:sha256:ca2638d7c3133e4a7a6d9e99e930a8f4b319782020ef5dcb4a5a83fb70c4f93e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNDhkM2Y5OTljZGY1ZTc3ODY1MjM2YzM4N2YxY2FlMzUyNTQzMGM2M2Q1N2ZjNmIzYjllNWU4NzgzYjEzMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNGQyM2VlMWNjYzIzMjQ5Njk3ZjY0MjE0ZGQxZDMxMjQyNGNkMjgwYTMxMzMyNmQxYWU3MTE1Mzk5NjkzYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkOWJmNjcyM2E3NjIyMzBlN2IwYzQyMjZkOGI0YzliMzZkYTNlMzcyZGRkZDc0ZGRmNTYxZDc5Yzg4NTg4OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiOWIyZDNlMzFhMTI5MTUyMjJjZDg1OWM0ZDNmYTdmNWY3ZThhMTk4NjRkN2JkZWFhOThkZWNlZjhhMzlmNGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8931e39208be45948ba41bb5e37fbdc1",
+      "statement": "UIは編集中の下書きと版を保持して競合時に現在版を再取得し、比較後の再適用を明示操作にする。同じ入力の応答喪失時はrequest IDを再利用する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L266-L320",
+          "version": "repo-lines-v1:sha256:7a326147d8372da2908bbdba1c2641787f0ddc7c7dbd776df639d587709da20f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2MWRmMmFiZDYxZWJiYTVmYmJkNGUyZWIwZWFlNjg2YTUwMDMzZDI5MTBlZjg1ZTJlYzgyZWZmZmI0MTQ4N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1NmM2NTEzYjM1MGVmNDZkODgxMTNjMWQwNGE1NjMyNjc5YjhjZWVkZjIwZTExYTFhOGI1ODU5NmM3NzVkODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZjhlY2NhMmJlZWMwZDBmYWE2NDNmNDhkNDFlZWFhZWYxNjM3NGQ3NjBlODJhMjI0ZWQ1OGU0NTg2N2E5NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0ZTc3MGNkMmU4NzIxNzAzYmE3NTkxODk4ODQ2ZjE3ZWMxYTYxY2MyMzYyNGY2YmUyZGJkYTBjNTZiYmYzN2EifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L32-L80",
+          "version": "repo-lines-v1:sha256:afdfa393783598b005173dfce8b3167606347d3073e90de9f9e7cd52757e9160:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhMzA2MzQwODkwNWNkNmM5OTBjMTc4YTBjZjlmODA4MGUwNTQyMmJiOWQ3MDI3YmM1YWE4MzI5NjU4ZTkyYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2Q5Mzc5YTVhY2RmMDc0MTg2NDI4YjY1MDQ2OWIxM2I5NDFlOGMzMDIyNzY2ZDRmYzNjOTY4OWRjMjM4YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5MDg2MWVlZTZmMDlhNjM5OTJmZWI4MDljZjUzMmE1MDgxNDIxNTRkZDdhYTQ2MTQ3MGE2N2U0YjliMjc5MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkZjZiMDdiMTk1N2ExNGVhMWRmNGYzMDY5Yjk1MzVmNzM2YjIyM2E2MGJjN2MwMmQ3MTg1YThiOTU1NDNlMmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_062fa9cf776141e2be4e1c612c29bdd4",
+      "statement": "UI RESTの完全な結果と異なり両MCPは共通projectionで最大20件のlive metadataと最大4000 Unicode文字の不変revision JSONページを返し、offset継続にはrevisionを要求する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note_read.rs#L33-L177",
+          "version": "repo-lines-v1:sha256:12031e24b40592607a50391bea2ea839cb0d333910438cee8f1e74157224e4d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4M2I3NThiYzliZDk2MDRjNGJkOTVmNTUxNDgxMGZlM2E2OTRkZDgwNTdkZWY0N2U2NTY4ODRiNTc3MjJiYTE2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5NTVhODRmYTlhZDljMGJlY2Q0YzM1NTEwMGM5NGM4ZTE1MTA4ZTJkODIyZDhkNjQyOWVlYmY4NDVlMjI5ODk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/design-notes/model/designNoteApi.ts#L20-L39",
+          "version": "repo-lines-v1:sha256:6071bea89e0941df7cd68a3773a1184dd3de314fdfcc8326741aa6619527dc5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwNTkzMWEzYzhiOWI1YmM5N2UwN2I0MzdhMmQ4MjVhYTk2Y2E4OGI2NDkxODBjNmU1ZmRjZTliZTBmNGIwNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMWQxYTYzMzkwMjI5Yzc5ODM0N2U4M2EwNDA1NDQxYzk0MDAwMzUyODRhZDE2OGMxYmY2Y2RmMWQ3MGEzNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjZDc2MTA1NzgwMDUwNjRhZWY4NGRkNWQ4NmI0MzliZTMwYmRmZWUwMDkyOTMzYjNiNGM5MDlmZGQ1NWI5ZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e6749af9183f4f1bbb0030791f758d2f",
+      "statement": "設計メモはstdio global routerに含まれorchestrator routerには含まれず、外部HTTP書込はreadとwrite scopeおよびProject照合を必要とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L49-L79",
+          "version": "repo-lines-v1:sha256:daad8411437bb4803ae28082b11f76fc1d45dc907618e38026c946e5d271c2ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNTM5ZDg1Mzg2YTI5NDIzZjUzNWFiYjQ2Y2M4NjgwNzI3ODdhOGI4ZDJkMzhjY2QxY2ZkZGRiYjNjMGFmOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NTc2OWQ1MDFmYTZhMmJkMzc4ZWZmMTk3MDRmYWE2MTBkZmJjMmZmNGE5OTMzNDYzZWY1ZDBkZDAyOTcwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ZmQwMTkzOWNhY2ZhMDg3MDNiNDY2ZDUxM2RlNTYzODk4Zjk3ZThlMGQwZjNlNjcwZDYyOGYzM2Y5YzM5MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/design_notes.rs#L50-L94",
+          "version": "repo-lines-v1:sha256:c0304663db402ea3ef8702e96be88b244ee73bb9255dafa6a428a8a2f936140f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3OTA2YzRhMmJmYTk3OWMwNTllNmY3MzdiM2U1YTc2ZDhmMzM4ZTVhOGY0MThjNzNmMjQ4YWEwYjFlN2FhYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZWJkY2U4ZmQ2YzQzODYyZGE4ZTM2MTRlZjQzNTc0YWRlNGY3YWNmZjAwMjk3N2MwMTQwMWViZjNlYjg3OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba735c6386084233a54dc31f5e6e0ac7",
+      "statement": "MCP書込成功は確定IDとrevisionだけを返す。旧全文入りoperationは保存証拠を変更せず返却時に投影し、解釈不能ならuncertainとする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/mcp/src/task_server/tools/design_notes.rs#L81-L94",
+          "version": "repo-lines-v1:sha256:290cb69982607a651974f7df3808c7f601de0753879e9f05e596378d22a1077c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjYzI5YjAyZjg5ZTIxYjQwZjVhNjdlYzIwYzI5MWIyODExMzI3OWZjNDk5ZWM1NmYxZDcwOWU2MWUwNjJlZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkOTliMWIzYzZkOTcyNGU3NmM2Y2E0MWUzYzk2MWJjYmRmNzllM2UzNTMzMDQ0MWMwYjEyMzUyMGVmZTJiNzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/design_notes.rs#L67-L94",
+          "version": "repo-lines-v1:sha256:333bdab670dc818398d7c0abb1ac726ad6a83ca90b8054068d7aaec0b0aaf3ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2OWNlMjMxZTRjZTRkODA2ZGMxMWJjOWFiNDk1ZmIwYTA3ZDQ4OWM1MmQ2NGYxMDY5OGEwYjdlYTk0MDZhZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxNDQzNmIxM2U0MzIxZmZkMTQ1NzdmNzYzOWZiYzg4NmJjZmRjMzRkMzkyYjQxMzQzZjNiZmZhYzgxYjhiODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs#L97-L139",
+          "version": "repo-lines-v1:sha256:628694c44c9f949b2cfe8b831d73014eb9290bf4705d65399b56109a0d1763b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhYzZjMzI3NmMwZjEzMjYxYTI1M2QzZDNkMjRiN2Y2Yzg0MjhlODgwODJlNGI1ODczZTU5ZTA5OGM0ZDJiMmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxOTRhYjk0YTQ1YWE3MmFmNTgyYzA1YTQzN2M3YTZhNTcxNzMzMTk5YjQwMzgwYWQxYzE3MzA2NzBjMmI3M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMWY0OGYzZmUxN2Q4ZDU3NTZjNzgxMWJjM2U2MmUwNzZjZWU5M2Y0OTY1Nzk5MGMxZGQ1MzdhZDE5ZGMxNDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NWUyNjBiNjRlYzhlYjRiZWU5N2M4NWFkMTNmYjIwNDRhYzI2ZGYyNWUxZDM2Njg5NGU2ZTdlYWMxZmJhYmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_582c26b6492e4e6ea504676e0463a426",
+      "statement": "Project削除後も設計メモ5表と元Project identityを保持する。live Projectを要求して既存アクセスを閉鎖し、同ID再作成を拒否する。他機能のFK拒否時は保持情報もrollbackする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql",
+          "version": "repo-file-v1:sha256:faea3d3b63b1ba97fe5936bb7987a7e60420fdf444590b45c6e67479f0260184"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L173-L196",
+          "version": "repo-lines-v1:sha256:07ffe93de17df1f5fa637ea58af2d8abb366445030dd27bcf2efd6aada3df3b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwODZkNWY0NjAzYTk4Yjk4M2E1OTI4YjdlMmMzNTUwNTllNDZiNzFlODkwYzU5NWYyZmMzMDMxMDcxYzE0OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYTllODVlMmU2NmIwMWQ5OWI0MDAzNDIzNjA3ZDI0YmQ1OTZkMDQ4OGQ0ZGY5NzJkZmYwZTA5ODZjOWFhNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4ZTEwNzViMjUxNTgxZGVjOTAwMTYzYzJiNjY0NGY4ZjVkYmEwNmRhNmJmYjBkNzIyYjlmM2ZjZmRhYjQ4MTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxOThhNGVhNGUwNjIyNzQyMTRkYzM4ZjBiY2RhMDc0MTdkZTU3YjYwMDY3N2Y3YjdhMWRhYzQzNTcwZTJjYTQifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L249-L268",
+          "version": "repo-lines-v1:sha256:bba2950c21dce0fd47db19f1af9aaa994d27342d7c842ca8b4376c46b445e9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2FhOTgzZThiOGQ5M2JhZDgyZjhlYjNiNjVhZDEwMWFlNGU0ZGViZmFmYTFkZWJmYjkyYzQzMWVhYTQyMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYTVkZjc4NzFlMDRhMzI5Yzk2YmRiZjZkNzA5ODMyYjkxNDU1NGUxZmIwZjNmNTkxMzE4YjE3ZTdhOTYwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNGRjNzhlZWU5OTBjOWI4OWU0ZmUyODhiYTllYmM1YzMyZGRiM2MwZTk1NDQ3MDcwNGIyNjcxMmQ5OTdiMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3NzMyODRjODM3MTQ4ZjVhZDhmNDg4MDQxM2EwNzc1NGY3MTI0NDk5YWIyNzlhYjIxZmZjYTc2MjY1MjRjZmMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L3502-L3626",
+          "version": "repo-lines-v1:sha256:49601fb83f2d1ce6a43fc594f6ebbb6d99df0475c0c5b5442a55678b3ebfc57a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4Yjc5MjNmY2VjMTkwMDAxYjhjNDMxNzg4NjY5NWZkODIwZGE0ZTdlNzE3ZGRmZTJlNTYyMGY5ZmYzYzRiZGFmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NTZhZDZhMjliOGJlYWExZDMwMDU2YmMzZDE3MmY2OWY1YWNjNDYyNmY3NWRiNmYxNGJhZWEwN2JkYjg2OGU4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwNTgzNDk2YzVjN2VhZjgwZWQ0ZWJlZmI3NWE3Y2ZjNmY2YTkxZDNhODRlM2IxMTY1MmRiMTAyZDdkZDVhMWQxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_e81d4d36b95349c286b7b8284e4a80d2",
+      "statement": "削除後の閲覧・持出し・再関連付け・保持期限はLOCAL-99の未決事項として記録されている。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/design-notes-validation.md#L5-L19",
+          "version": "repo-lines-v1:sha256:1a3390853a72c8425b718555ca29710c00ac17472df38db09ca8e3664abd1df9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1NmM3YTJkYjFjN2NkMjg0MTRlMmNjMzNkZGE2MzZjM2MxZmQwMGIwM2NkNTNkZjdhMDRjYTE1YmRlNTk0MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkMDJhNTk1NWRiZDc2M2I0MzRkYjhkNmExN2NkODY5ZmRkYjI3ODVhOTE3Y2U5ZmI1MmEyNjYzNjk3ZWVjOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmZDk0N2M2YWMxNjhjYjA1NDA4Zjg0M2U2MjBlZWU1OTg1YmU4NWViN2Q0ZmJjOTE3NTBlZGE3NDI3MzhjODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmYTM1Y2QyZjAyMzgyYjc2MjliYmUwNjIxOGZkZGQ2ZGZhMTJjM2QwNTUyOTg0ZTI1YWM3YTRkNGNlMmYwOGQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.1",
+    "at": "2026-10-23T14:57:15.192Z"
+  }
+}

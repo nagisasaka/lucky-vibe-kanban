@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b1f8bab044dc1d35fe13b26993d02671969dd7f63316e00861c844bec5840691",
+  "pageVersion": "sha256:c08e319689c1d9f3601c692459960580463f2eec68c80955929acfa4c82f7614",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -72,7 +72,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/todos/model/todoViewStore.ts",
-          "version": "repo-file-v1:sha256:e481f2b6a698172f434dbbec05de88f040d37d5dd75870b3a0826d48e56f2cc2"
+          "version": "repo-file-v1:sha256:f4defa4cbc365465a35cbac58f52f7e0f4f529e9f0d75024e11e6191fecbae45"
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L276-L329",
@@ -153,8 +153,8 @@
       "statement": "Todoカテゴリー配置はProjectでauto-fitの複数列を許し狭幅では単列となる一方、Workspaceはgridを指定せず単列を使う。カテゴリーはlocaleCompare順、各カテゴリー内はAPI取得順を保持する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1133-L1136",
-          "version": "repo-lines-v1:sha256:0d9d221775d1d2c7114ac436f6c702b68a14681cc4b2ab7d96dd1adbd5bc4817:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmIyYWUxMzA0N2ZmYWZjYTNlYmMxMzE0Y2RkYTc3M2ZlN2IyY2QzOWI3M2MzZjI3M2RkZjYwYzliZTk0ODA5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWYyMTVmZDAzY2ZjMmJlZWJmODA0YTE3YWM1ZTk0Nzk1MWY3Y2QyZGMwNTYwNTIyNDk5YzYwNmZkYmNkNzE4NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjBkZjRmZmY2NzI2NDBmYjEyNjNiNWY3ODM4MGZlY2U1MmFlYTg5MGIyMGI5MTIzODBjZGU5YjYxODgyZGM4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg5OGZiYTBmNjNmYzQ3NWNiMDI5NjQwYzA1N2Q1ZmM1ZTI3MjAwYWM0NzI3ZmE4Y2RkMzY2Y2U3OWMwMjRiYyJ9"
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1139-L1147",
+          "version": "repo-lines-v1:sha256:cf7886b03634bc60bbccdab0b4a80365bcdb2ed157cfe4be0c9af95c94439736:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzY4YTRhZjkwOTA2MTQzMzVlODYwMDVjOGQ1NzVhMmRiYWMxMDUyMWM1ZGMzZGE3NzQ3YzA5NWMwNjk0MTllMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzNiMWQ4YmQ5OWQxN2ZhMmNhM2JiOWRlM2MyNzljMGYzMzJkNjRiY2RlZGM1MDY4Y2U5MGMxY2YyMTQ5NWJiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjBkZjRmZmY2NzI2NDBmYjEyNjNiNWY3ODM4MGZlY2U1MmFlYTg5MGIyMGI5MTIzODBjZGU5YjYxODgyZGM4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGJhMTlhNGFhMzExNjBhYTdkYzhmM2JlNGFmNDM2MmQ4MjJhMmNlMTI2NWUxOTI3YzFkMTkyNzRiZDE4ZDc2ZiJ9"
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L22-L27",
@@ -221,10 +221,24 @@
           "version": "repo-lines-v1:sha256:07da52b1cd3e408745f8a9e9047e54118295004838859d94a442e89c83332010:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNDFiOWUyNjlmNTc3ZWVhMmMzZmIzOTE4NDk4MmEzYTVmNWQzZmI2NDcyMjA0NzEwZWNmZjExMDQzNTllZTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwMWFjZmNjOGM1ZDMzNjA4ZDkyZTNjYmI0Yzc3Nzk0ZTJkNzdhY2Q5YTgzZThlYmYzNGUzYzNhZDYxMWJkMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1aaa1305bd8f4705914951c4fc018f0d",
+      "statement": "Projectの表示切替から設計メモを選べ、本文版履歴と独立追記を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/design_note.rs#L313-L432",
+          "version": "repo-lines-v1:sha256:5d584cba6269f1c38f5cb33777baf7fb2377a41e6e2d04b01cc31e791b3b736a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkOTUyNDJkMTQwMTZiYjMyYzg2MmM5MDJjMzc2NTQ2YzJlN2I5MWQwM2IyYjg4MGIwNDY4ZDZiMDJmMmI1MWNmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3ZTRkMjNlZTFjY2MyMzI0OTY5N2Y2NDIxNGRkMWQzMTI0MjRjZDI4MGEzMTMzMjZkMWFlNzExNTM5OTY5M2FjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZTdlMWFiZDZlYjI2OGIyNzExNTFjM2RlZDFmZWM2OTFjNTE4YTA3NjZjNTllZTA3M2I3NDk0ZDJlNDkwYWI5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiYjliMmQzZTMxYTEyOTE1MjIyY2Q4NTljNGQzZmE3ZjVmN2U4YTE5ODY0ZDdiZGVhYTk4ZGVjZWY4YTM5ZjRiIn0"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1028-L1046",
+          "version": "repo-lines-v1:sha256:8d23f3cb1f129ef73d6811b6ce8b55ff4ddaba4c7feeb77532d58eded5b09e66:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNDM1Y2M3NGY0ZmEyZTlhOTZiNDg2NTFlMDE0ODg0MDk0ZWIxZWI3NTY4ODdmNmM0ZDU5NmI2ZTkyZDczMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMDA2Mzk5NzZmYTc2MzFhNWRiZDI3ZTNlNGNjMjI3YmI0YzM3MWM3NTVlNjVlNzlkNDlkZDMwMGVkOGY0M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwYmIzMDBjMGUyODMxNDc0ZjI4MDAxYTU3MTRjZTQ1ZmI3YzM2NWU0ZDk2NGFlOGNjMWY0MGY0M2FmMmE4M2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NmY5Nzc3NTAxYjc0MTFhN2JmYTJhNzBiYzFlNDI2MDE0NzhhYzgxNDA3ZThkMDgyZWYzZDFjZmE5ZTAyNjMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-21T05:31:54.935Z"
+    "at": "2026-10-23T14:57:15.192Z"
   }
 }

@@ -40,10 +40,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -60,7 +60,7 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 外部の複数 AI client は同じ Issue に独立した意見を追記し、Web の既存コメント欄で人と共有できる。専用の AI 会話・投票・承認・自動再レビュー機構ではない。投稿は Issue の要求、status、revision を更新せず、Workspace / AgentRun の開始や AI 通知も行わない。採用する要求の変更は別の `update_issue` で revision を照合する。[投稿と不変条件のテスト](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[要求変更との分離](../../crates/server/src/remote_mcp/issue_comments.rs#L297-L400)
 
-保存先は既存 `local_issue_comments` で、migration が nullable な reviewer label・target revision・recorded principal と一覧用 index を加える。過去の通常コメントはそのまま読める。外部 HTTP MCP に読取・追記を公開するが、内部 stdio catalog は別のままである。[migration](../../crates/db/migrations/20261023100000_issue_comment_reviews.sql)・[外部接続の入口](../integrations/remote-access.md#issue-のレビューを共有する)・[stdio router](../../crates/mcp/src/task_server/tools/mod.rs#L42-L80)
+保存先は既存 `local_issue_comments` で、migration が nullable な reviewer label・target revision・recorded principal と一覧用 index を加える。過去の通常コメントはそのまま読める。外部 HTTP MCP に読取・追記を公開するが、内部 stdio catalog は別のままである。[migration](../../crates/db/migrations/20261023100000_issue_comment_reviews.sql)・[外部接続の入口](../integrations/remote-access.md#issue-のレビューを共有する)・[stdio router](../../crates/mcp/src/task_server/tools/mod.rs#L49-L79)
 
 ### 来歴と二つの revision
 

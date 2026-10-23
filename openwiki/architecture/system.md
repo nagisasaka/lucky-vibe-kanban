@@ -10,18 +10,24 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
+  - id: openwiki-source-104d584b7b5ffa5973f60cde
+    resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-5b20a61dbf36c0c143a466eb
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-2a0ddba6878eea1524264906
+    resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-076036ed7bdac82d628d39d1
     resource: repo://crates/server/src/remote_mcp/environment_process.rs
   - id: openwiki-source-0801a7e5bbcc064c12effc80
     resource: repo://crates/server/src/remote_mcp/environment.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-dbc5a93efbaa86561714413e
+    resource: repo://crates/server/src/routes/design_notes.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
@@ -34,10 +40,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-22T13:28:07.786Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # システム境界と起動順序
@@ -105,6 +111,6 @@ Web Push の worker は共通 router の組立て時に起動し、SQLite outbox
 
 API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。通常の server 検証は Tauri を除外するため、desktop の検証済みとは読み替えない。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
 
-外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)へ切り替えられる。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
+外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)へ切り替えられる。設計メモの本文・追記履歴は SQLite が正本で、UI REST と両 MCP は同じ保存状態へ異なる応答形式を提供する。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
 
 外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment.rs#L398-L510)

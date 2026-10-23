@@ -10,10 +10,14 @@ sources:
     resource: repo://crates/db/migrations/20260427000000_local_kanban.sql
   - id: openwiki-source-5c1907109b5a72a746e85a0c
     resource: repo://crates/db/migrations/20261020190000_kanban_lifecycle.sql
+  - id: openwiki-source-c2fc034438311f3aa02f5ee5
+    resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
     resource: repo://crates/db/src/models/agent_runtime_kanban.rs
+  - id: openwiki-source-830e28055c4ae6f5464df312
+    resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
@@ -38,10 +42,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
+generated: { by: "codex", at: "2026-10-23T14:57:15.192Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T14:57:15.192Z
 ---
 
 # Project・Issue と実施の関係
@@ -51,6 +55,8 @@ verified:
 local Project は固定Organizationと現在actorの [表示モデル](organization-and-membership.md)に結び付く。Issue の担当者・Follower は認証権限とは別である。
 
 Project には Issue と独立した [Todo 共有メモ](project-todos.md)もある。メモの完了は Card の Done や agent 実行を進めず、任意の同一 Project の Card 参照だけを持つ。Board の Not Started 列（旧 Todo）や旧 `tasks` と区別する。
+
+設計の意図と変遷は [設計メモ](design-notes.md) に本文・独立追記として保持する。Project 削除時もその履歴は残るが、既存APIでのアクセスは閉じる。他機能の削除制約と、保持後の閲覧方針は [削除後の契約](design-notes.md#project-を削除した後の保持)を参照する。
 
 ## 仕事の識別と分類
 
