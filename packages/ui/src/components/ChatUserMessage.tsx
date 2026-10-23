@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { PencilSimpleIcon, ArrowUUpLeftIcon } from '@phosphor-icons/react';
 import { ChatEntryContainer } from './ChatEntryContainer';
 import { Tooltip } from './Tooltip';
+import { PromptContext } from './PromptContext';
 
 export interface ChatUserMessageRenderProps {
   content: string;
@@ -80,7 +81,10 @@ export function ChatUserMessage({
       isGreyed={isGreyed}
       headerRight={headerActions}
     >
-      {renderMarkdown({ content, workspaceId })}
+      <PromptContext
+        content={content}
+        renderContent={(text) => renderMarkdown({ content: text, workspaceId })}
+      />
     </ChatEntryContainer>
   );
 }

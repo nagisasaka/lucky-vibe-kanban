@@ -104,6 +104,9 @@ export function CardContextSection({
           />
           {t('cardContext.sharedDirectories')}
         </label>
+        <p className="text-xs text-low">
+          {t('cardContext.sharedDirectoriesHelp')}
+        </p>
         {selected &&
           selected.stages.map((stage) => (
             <label

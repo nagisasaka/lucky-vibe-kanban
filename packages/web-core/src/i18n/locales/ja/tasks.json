@@ -372,6 +372,13 @@
     }
   },
   "conversation": {
+    "promptContext": {
+      "auxiliary": "補助情報",
+      "fullText": "元の全文を表示",
+      "copyFullText": "元の全文をコピー",
+      "copied": "コピーしました",
+      "copyFailed": "コピーできませんでした。全文を展開してコピーしてください。"
+    },
     "you": "あなた",
     "thinking": "考え中",
     "todo": "タスク",

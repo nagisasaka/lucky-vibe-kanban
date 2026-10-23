@@ -10,7 +10,8 @@
   },
   "cardContext": {
     "title": "カードコンテキスト",
-    "sharedDirectories": "共有ディレクトリ",
+    "sharedDirectories": "共有ディレクトリの補助案内",
+    "sharedDirectoriesHelp": "ONで補助案内を追加します。OFFでも共有領域とRepository Memoryは無効になりません。",
     "none": "未選択",
     "description": "選択したプリセットはワークスペース作成時の最初の依頼に含まれます。既存セッションには反映されません。以下は読み取り専用です。今回固有の指示はカードの説明に記入してください。",
     "preview": "カードコンテキストの指示文",

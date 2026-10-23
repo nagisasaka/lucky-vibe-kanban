@@ -115,6 +115,13 @@
     "noTasks": "No tasks"
   },
   "conversation": {
+    "promptContext": {
+      "auxiliary": "Additional context",
+      "fullText": "Show original full text",
+      "copyFullText": "Copy original full text",
+      "copied": "Copied",
+      "copyFailed": "Copy failed. Expand the full text to copy it."
+    },
     "executors": "Executors",
     "saveAsDefault": "Save as default",
     "you": "You",
