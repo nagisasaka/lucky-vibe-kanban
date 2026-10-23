@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type {
-  AgentGarageEntry,
-  AgentProviderCapability,
-  AgentProviderPolicy,
-  BaseCodingAgent,
+import {
+  AgentProviderReadiness,
+  AgentProviderDiagnosticKind,
+  type AgentGarageEntry,
+  type AgentProviderCapability,
+  type AgentProviderPolicy,
+  type BaseCodingAgent,
 } from 'shared/types';
 import { agentsApi } from '@/shared/lib/api';
 import {
@@ -22,7 +24,9 @@ export const agentProviderPolicyKeys = {
 const EMPTY_REQUIRED_CAPABILITIES: readonly AgentProviderCapability[] = [];
 
 export function useAgentProviderPolicy(
-  executor: BaseCodingAgent | null | undefined
+  executor: BaseCodingAgent | null | undefined,
+  variant?: string | null,
+  scope?: { workspaceId?: string; sessionId?: string }
 ): AgentProviderPolicy | null {
   const { data: garage } = useQuery<AgentGarageEntry[]>({
     queryKey: agentProviderPolicyKeys.garage(),
@@ -31,10 +35,51 @@ export function useAgentProviderPolicy(
     staleTime: 5 * 60 * 1000,
   });
 
+  const isClaude = executor === 'CLAUDE_CODE';
+  const { data: profilePolicy, isError: profileError } = useQuery({
+    queryKey: [
+      ...agentProviderPolicyKeys.all,
+      'profile',
+      executor,
+      variant ?? null,
+      scope?.workspaceId ?? null,
+      scope?.sessionId ?? null,
+    ],
+    queryFn: () =>
+      agentsApi.getProfilePolicy({
+        executor: executor!,
+        variant: variant ?? null,
+        workspace_id: scope?.workspaceId,
+        session_id: scope?.sessionId,
+      }),
+    enabled: isClaude,
+    staleTime: 0,
+    retry: false,
+  });
+
   return useMemo(() => {
     if (!executor) return null;
+    if (isClaude) {
+      if (profileError) {
+        return {
+          executor,
+          readiness: AgentProviderReadiness.UNKNOWN,
+          capabilities: [],
+          legacy: false,
+          disabled: false,
+          diagnostics: [
+            {
+              kind: AgentProviderDiagnosticKind.UNKNOWN,
+              message:
+                'Unable to check the selected agent profile. Reopen the session to retry.',
+            },
+          ],
+        };
+      }
+      return profilePolicy ?? null;
+    }
     return garage?.find((entry) => entry.executor === executor)?.policy ?? null;
-  }, [executor, garage]);
+  }, [executor, garage, isClaude, profileError, profilePolicy]);
 }
 
 interface UseAgentProviderOptionsInput {

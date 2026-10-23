@@ -1,36 +1,68 @@
 ---
 title: "Claude Code"
-description: "Set up Anthropic's Claude Code agent"
+description: "Use the official Claude Code CLI in a normal LVK Workspace"
 icon: https://www.vibekanban.com/images/logos/claude.svg#"
 ---
 
-<Note>
-LVK is distributed as Docker images. Use the [server guide](/self-hosting/server-container) for deployment. The `pnpm run dev` examples below require a source checkout with dependencies installed.
-</Note>
+LVK runs the unmodified `claude` executable on the execution server's PATH and
+uses its streaming CLI protocol. Install and update the CLI yourself using
+[Anthropic's setup instructions](https://code.claude.com/docs/en/setup).
+LVK does not install the CLI, sign you in, or copy OAuth credentials into an SDK.
+For Docker installations, prepare the CLI and its persistent configuration under
+the account that executes agents inside the server environment. Signing in on a
+different computer or under a different account does not configure that server.
 
+## Use your Claude subscription
 
 <Steps>
-<Step title="Install Claude Code">
-  ```bash
-  npm install --global @anthropic-ai/claude-code
-  ```
-
-  Vibe Kanban launches the `claude` command from your PATH. Keep the CLI
-  updated independently; Vibe Kanban does not bundle or pin a Claude Code
-  runtime version.
-</Step>
-
-<Step title="Follow the login instructions">
-  Complete the authentication flow as prompted. For more details, see the [Claude Code documentation](https://docs.claude.com/en/docs/claude-code/quickstart).
-</Step>
-
-<Step title="Start Vibe Kanban">
-  Once authenticated, launch Vibe Kanban:
+<Step title="Sign in yourself">
+  In the LVK execution environment, using the same account and
+  `CLAUDE_CONFIG_DIR` (if configured), run:
 
   ```bash
-  pnpm run dev
+  claude auth login
+  claude auth status
   ```
 
-  You can now select Claude Code when creating task attempts.
+  Choose your Claude subscription account. Complete any installation, login,
+  consent and applicable terms review yourself. See the official
+  [authentication guide](https://code.claude.com/docs/en/authentication) and
+  [product integration conditions](https://code.claude.com/docs/en/legal-and-compliance).
+</Step>
+<Step title="Choose the subscription preset">
+  Open an Issue, create its Workspace, select **Claude Code**, and select
+  **Subscription** in the **Preset** menu. Submit your task. Continue in the
+  same Session to send additional instructions; output and execution status
+  appear in the conversation. **Stop** cancels the running operation. A later
+  follow-up resumes the stored native CLI session.
 </Step>
 </Steps>
+
+The `SUBSCRIPTION` preset sets `require_subscription_login: true`. LVK checks the
+CLI's public authentication metadata before discovery and execution, requiring
+`loggedIn: true`, `authMethod: "claude.ai"` and `apiProvider: "firstParty"`.
+It also passes the official per-process `forceLoginMethod: "claudeai"` setting.
+The profile does not select an API-key or cloud-provider fallback.
+
+This preset rejects conflicting authentication/routing environment variables,
+custom authentication headers, routers, command wrappers and extra CLI arguments.
+Diagnostics name the conflicting variable without its value. Per-process CLI
+settings also clear custom headers from ordinary CLI settings for this preset.
+Review your CLI
+settings as well: managed settings retain their native precedence. Use a separate
+LVK profile when you intentionally want another authentication method; existing
+profiles remain available.
+
+A missing CLI or rejected login produces a setup diagnostic. Run `claude auth
+status` yourself to investigate, and sign in again when required. Metadata checks
+do not prove that a model request will succeed, that a login can still refresh,
+or that subscription quota remains. Expiration, quota and network failures during
+execution remain CLI failures; LVK does not switch billing methods to recover.
+
+## Validation boundary
+
+Repository tests use an offline CLI fixture with an isolated LVK server, process
+host and Chromium browser. They exercise the LVK protocol and UI without a real
+Claude account or model request. Real CLI installation, account compatibility,
+refresh behaviour and model success require a separate test by the signed-in
+user. Claude native Goal control and Arena are outside this integration.

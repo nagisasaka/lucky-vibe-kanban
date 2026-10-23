@@ -67,6 +67,14 @@
         "null"
       ]
     },
+    "require_subscription_login": {
+      "title": "Require Subscription Login",
+      "description": "Verify the official Claude CLI login before each run. Reject API/provider credentials and custom command overrides instead of using another billing method.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "base_command_override": {
       "title": "Base Command Override",
       "description": "Override the base command with a custom command",

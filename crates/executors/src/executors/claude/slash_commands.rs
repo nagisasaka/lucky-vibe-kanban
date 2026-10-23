@@ -240,6 +240,11 @@ impl ClaudeCode {
         &self,
         current_dir: &Path,
     ) -> Result<DiscoveredCommands, ExecutorError> {
+        self.check_subscription_login(
+            current_dir,
+            &ExecutionEnv::new(RepoContext::default(), false, String::new()),
+        )
+        .await?;
         let command_builder = self
             .build_slash_commands_discovery_command_builder()
             .await?;

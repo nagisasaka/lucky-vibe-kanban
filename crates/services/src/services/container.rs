@@ -102,13 +102,12 @@ pub trait ContainerService {
 
     fn workspace_to_current_dir(&self, workspace: &Workspace) -> PathBuf;
 
-    async fn discover_executor_options(
+    async fn executor_discovery_paths(
         &self,
-        executor_profile_id: ExecutorProfileId,
         session_id: Option<Uuid>,
         workspace_id: Option<Uuid>,
         repo_id: Option<Uuid>,
-    ) -> Result<Option<BoxStream<'static, Patch>>, ContainerError> {
+    ) -> Result<(Option<PathBuf>, Option<PathBuf>), ContainerError> {
         let (workdir, repo_path) = if let Some(session_id) = session_id {
             let session = Session::find_by_id(&self.db().pool, session_id)
                 .await?
@@ -191,6 +190,19 @@ pub trait ContainerService {
             (None, None)
         };
 
+        Ok((workdir, repo_path))
+    }
+
+    async fn discover_executor_options(
+        &self,
+        executor_profile_id: ExecutorProfileId,
+        session_id: Option<Uuid>,
+        workspace_id: Option<Uuid>,
+        repo_id: Option<Uuid>,
+    ) -> Result<Option<BoxStream<'static, Patch>>, ContainerError> {
+        let (workdir, repo_path) = self
+            .executor_discovery_paths(session_id, workspace_id, repo_id)
+            .await?;
         #[cfg(feature = "qa-mode")]
         {
             let _ = executor_profile_id;
@@ -200,12 +212,19 @@ pub trait ContainerService {
         }
         #[cfg(not(feature = "qa-mode"))]
         {
-            let executor =
-                ExecutorConfigs::get_cached().get_coding_agent_or_default(&executor_profile_id);
+            let executor = ExecutorConfigs::get_cached()
+                .get_coding_agent(&executor_profile_id)
+                .ok_or_else(|| ContainerError::Other(anyhow!("Agent profile not found")))?;
 
             // Spawn background task to refresh global cache for this executor
             let base_agent = executors::executors::BaseCodingAgent::from(&executor);
-            executors::executors::utils::spawn_global_cache_refresh_for_agent(base_agent);
+            // A subscription-only request must not also launch DEFAULT discovery
+            // with a different credential/provider selection in the background.
+            if !matches!(&executor, executors::executors::CodingAgent::ClaudeCode(claude)
+                if claude.require_subscription_login.unwrap_or(false))
+            {
+                executors::executors::utils::spawn_global_cache_refresh_for_agent(base_agent);
+            }
 
             let stream = executor
                 .discover_options(workdir.as_deref(), repo_path.as_deref())

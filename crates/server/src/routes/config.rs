@@ -12,7 +12,8 @@ use axum::{
 use deployment::{Deployment, DeploymentError};
 use executors::{
     executors::{
-        AvailabilityInfo, BaseAgentCapability, BaseCodingAgent, StandardCodingAgentExecutor,
+        AvailabilityInfo, BaseAgentCapability, BaseCodingAgent, CodingAgent,
+        StandardCodingAgentExecutor,
     },
     mcp_config::{McpConfig, read_agent_config, write_agent_config},
     profile::{ExecutorConfigs, ExecutorProfileId},
@@ -58,6 +59,7 @@ pub fn router() -> Router<DeploymentImpl> {
         )
         .route("/agents/check-availability", get(check_agent_availability))
         .route("/agents/garage", get(get_agent_garage))
+        .route("/agents/profile-policy", get(get_agent_profile_policy))
         .route("/agents/preset-options", get(get_agent_preset_options))
         .route(
             "/agents/discovered-options/ws",
@@ -799,6 +801,43 @@ pub struct AgentPresetOptionsQuery {
     pub variant: Option<String>,
 }
 
+/// Server-environment readiness for the selected profile. Launch always checks
+/// again in the actual Workspace with its full execution environment.
+async fn get_agent_profile_policy(
+    State(deployment): State<DeploymentImpl>,
+    Query(query): Query<ExecutorDiscoveredOptionsStreamQuery>,
+) -> Result<ResponseJson<ApiResponse<AgentProviderPolicy>>, ApiError> {
+    let profiles = ExecutorConfigs::get_cached();
+    let profile_id = match query.variant {
+        Some(variant) => ExecutorProfileId::with_variant(query.executor, variant),
+        None => ExecutorProfileId::new(query.executor),
+    };
+    let agent = profiles
+        .get_coding_agent(&profile_id)
+        .ok_or_else(|| ApiError::BadRequest("Agent profile not found".to_owned()))?;
+    let mut policy =
+        AgentProviderPolicy::for_agent(query.executor, &agent, agent.get_availability_info());
+    if let CodingAgent::ClaudeCode(claude) = &agent
+        && claude.require_subscription_login.unwrap_or(false)
+    {
+        let (workdir, repo_path) = deployment
+            .container()
+            .executor_discovery_paths(query.session_id, query.workspace_id, query.repo_id)
+            .await?;
+        let current_dir = match workdir.or(repo_path) {
+            Some(path) => path,
+            None => std::env::current_dir()?,
+        };
+        let env = executors::env::ExecutionEnv::new(
+            executors::env::RepoContext::default(),
+            false,
+            String::new(),
+        );
+        policy.require_authentication(claude.check_subscription_login(&current_dir, &env).await);
+    }
+    Ok(ResponseJson(ApiResponse::success(policy)))
+}
+
 async fn get_agent_preset_options(
     Query(query): Query<AgentPresetOptionsQuery>,
 ) -> ResponseJson<ApiResponse<executors::profile::ExecutorConfig>> {
@@ -823,6 +862,7 @@ async fn get_agent_preset_options(
 #[derive(Debug, Deserialize)]
 pub struct ExecutorDiscoveredOptionsStreamQuery {
     executor: BaseCodingAgent,
+    variant: Option<String>,
     #[serde(default)]
     session_id: Option<Uuid>,
     #[serde(default)]
@@ -853,7 +893,10 @@ async fn handle_executor_discovered_options_ws(
     match deployment
         .container()
         .discover_executor_options(
-            ExecutorProfileId::new(query.executor),
+            match query.variant {
+                Some(variant) => ExecutorProfileId::with_variant(query.executor, variant),
+                None => ExecutorProfileId::new(query.executor),
+            },
             query.session_id,
             query.workspace_id,
             query.repo_id,

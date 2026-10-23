@@ -114,7 +114,8 @@ export function ModelSelectorContainer({
     loadingModels,
     error: streamError,
   } = useModelSelectorConfig(agent, {
-    workspaceId: sessionId ? workspaceId : undefined,
+    variant: resolvedPreset,
+    workspaceId: agent === 'CLAUDE_CODE' || sessionId ? workspaceId : undefined,
     sessionId,
   });
 
@@ -461,6 +462,7 @@ export function ModelSelectorContainer({
         <DropdownMenuTriggerButton
           size="sm"
           icon={SlidersHorizontalIcon}
+          aria-label={t('modelSelector.preset')}
           label={
             resolvedPreset?.toLowerCase() !== 'default'
               ? presetLabel
