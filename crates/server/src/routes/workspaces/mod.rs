@@ -1,3 +1,4 @@
+pub mod archive;
 pub mod attachments;
 pub mod codex_setup;
 pub mod core;
@@ -31,6 +32,8 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
                 .put(core::update_workspace)
                 .delete(core::delete_workspace),
         )
+        .route("/archive/prepare", post(archive::prepare))
+        .route("/archive/confirm", post(archive::confirm))
         .route("/messages/first", get(core::get_first_user_message))
         .route("/seen", axum::routing::put(core::mark_seen))
         .route("/usage", get(usage::get))

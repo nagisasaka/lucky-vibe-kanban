@@ -500,6 +500,30 @@ export const workspacesApi = {
     return handleApiResponse<Workspace>(response);
   },
 
+  prepareArchive: async (
+    workspaceId: string
+  ): Promise<{ confirmation_token: string; message: string }> => {
+    const response = await makeRequest(
+      `/api/workspaces/${workspaceId}/archive/prepare`,
+      { method: 'POST' }
+    );
+    return handleApiResponse(response);
+  },
+
+  confirmArchive: async (
+    workspaceId: string,
+    confirmationToken: string
+  ): Promise<{ workspace: Workspace; deletion_error: string | null }> => {
+    const response = await makeRequest(
+      `/api/workspaces/${workspaceId}/archive/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ confirmation_token: confirmationToken }),
+      }
+    );
+    return handleApiResponse(response);
+  },
+
   /** Get workspace with latest session */
   getWithSession: async (
     workspaceId: string

@@ -23,7 +23,6 @@ use db::{
         workspace_repo::WorkspaceRepo,
     },
 };
-use deployment::DeploymentError;
 use executors::{
     actions::{Executable, ExecutorAction},
     env::{ExecutionEnv, RepoContext},
@@ -114,7 +113,6 @@ pub(crate) async fn should_disable_default_commit_for_workspace(
 pub struct LocalContainerService {
     db: DBService,
     agent_run_port: LocalAgentRunPort,
-    workspace_manager: WorkspaceManager,
     child_store: Arc<RwLock<HashMap<Uuid, Arc<RwLock<AsyncGroupChild>>>>>,
     cancellation_tokens: Arc<RwLock<HashMap<Uuid, CancellationToken>>>,
     msg_stores: Arc<RwLock<HashMap<Uuid, Arc<MsgStore>>>>,
@@ -136,7 +134,6 @@ impl LocalContainerService {
     pub async fn new(
         db: DBService,
         agent_run_port: LocalAgentRunPort,
-        workspace_manager: WorkspaceManager,
         msg_stores: Arc<RwLock<HashMap<Uuid, Arc<MsgStore>>>>,
         config: Arc<RwLock<Config>>,
         git: GitService,
@@ -156,7 +153,6 @@ impl LocalContainerService {
         let container = LocalContainerService {
             db,
             agent_run_port,
-            workspace_manager,
             child_store,
             cancellation_tokens,
             msg_stores,
@@ -177,7 +173,6 @@ impl LocalContainerService {
         container
             .reconcile_registered_agent_processes("startup")
             .await;
-        container.spawn_workspace_cleanup();
 
         container
     }
@@ -625,52 +620,6 @@ impl LocalContainerService {
         }
 
         let _ = Workspace::mark_worktree_deleted(&self.db.pool, workspace.id).await;
-    }
-
-    async fn cleanup_expired_workspaces(&self) -> Result<(), DeploymentError> {
-        if std::env::var("DISABLE_WORKTREE_CLEANUP").is_ok() {
-            tracing::info!(
-                "Expired workspace cleanup is disabled via DISABLE_WORKTREE_CLEANUP environment variable"
-            );
-            return Ok(());
-        }
-
-        let expired_workspaces = Workspace::find_expired_for_cleanup(&self.db.pool).await?;
-        if expired_workspaces.is_empty() {
-            tracing::debug!("No expired workspaces found");
-            return Ok(());
-        }
-        tracing::info!(
-            "Found {} expired workspaces to clean up",
-            expired_workspaces.len()
-        );
-        for workspace in &expired_workspaces {
-            self.cleanup_workspace(workspace).await;
-        }
-        Ok(())
-    }
-
-    fn spawn_workspace_cleanup(&self) {
-        let container = self.clone();
-        tokio::spawn(async move {
-            container
-                .workspace_manager
-                .cleanup_orphan_workspaces()
-                .await;
-
-            let mut cleanup_interval =
-                tokio::time::interval(tokio::time::Duration::from_secs(1800)); // 30 minutes
-            loop {
-                cleanup_interval.tick().await;
-                tracing::info!("Starting periodic workspace cleanup...");
-                container
-                    .cleanup_expired_workspaces()
-                    .await
-                    .unwrap_or_else(|e| {
-                        tracing::error!("Failed to clean up expired workspaces: {}", e)
-                    });
-            }
-        });
     }
 
     /// Record the current HEAD commit for each repository as the "after" state.
@@ -1178,7 +1127,19 @@ impl LocalContainerService {
             Ok(reference.0)
         })
         .transpose()?;
-        let workspace_path = self.ensure_container_exists(&workspace).await?;
+        let lifecycle = services::services::workspace_lifecycle::lock(workspace.id).await;
+        let workspace = Workspace::find_by_id(&self.db.pool, workspace.id)
+            .await?
+            .ok_or(SessionError::WorkspaceNotFound)?;
+        if workspace.archived {
+            return Err(ContainerError::Other(anyhow!(
+                "Workspace was archived; queued follow-up is paused until explicit resume"
+            )));
+        }
+        let workspace_path = self
+            .ensure_container_exists_locked(&workspace, &lifecycle)
+            .await?;
+        drop(lifecycle);
         let (request, attempt) = build_queued_agent_run_requests(
             session.id,
             &workspace,
@@ -1432,10 +1393,12 @@ impl ContainerService for LocalContainerService {
         Ok(())
     }
 
-    async fn ensure_container_exists(
+    async fn ensure_container_exists_locked(
         &self,
         workspace: &Workspace,
+        guard: &services::services::workspace_lifecycle::Guard,
     ) -> Result<ContainerRef, ContainerError> {
+        assert_eq!(guard.workspace_id, workspace.id);
         self.touch(workspace).await?;
         if workspace.is_direct_folder() {
             let container_ref = workspace
@@ -1812,8 +1775,23 @@ impl ContainerService for LocalContainerService {
 
         let mut streams = Vec::new();
 
-        let container_ref = self.container_for_inspection(workspace).await?;
-        let workspace_root = PathBuf::from(container_ref);
+        let lifecycle = services::services::workspace_lifecycle::lock(workspace.id).await;
+        let workspace = Workspace::find_by_id(&self.db.pool, workspace.id)
+            .await?
+            .ok_or_else(|| ContainerError::Other(anyhow!("Workspace missing")))?;
+        let archived = workspace.archived;
+        let workspace_root = if archived {
+            PathBuf::from(workspace.container_ref.as_deref().unwrap_or(""))
+        } else if workspace.is_execution_only() {
+            services::services::workspace_usage::inspection_root(&workspace)
+                .map_err(ContainerError::Other)?
+        } else {
+            PathBuf::from(
+                self.ensure_container_exists_locked(&workspace, &lifecycle)
+                    .await?,
+            )
+        };
+        drop(lifecycle);
 
         for repo in repositories {
             let worktree_path = workspace_root.join(&repo.name);
@@ -1842,23 +1820,31 @@ impl ContainerService for LocalContainerService {
                 }
             };
 
-            let stream = self
-                .create_live_diff_stream(diff_stream::DiffStreamArgs {
-                    git_service: self.git().clone(),
-                    db: self.db().clone(),
-                    workspace_id: workspace.id,
-                    repo_id: repo.id,
-                    repo_path: repo.path.clone(),
-                    worktree_path: worktree_path.clone(),
-                    branch: branch.to_string(),
-                    target_branch: target_branch.clone(),
-                    base_commit: base_commit.clone(),
-                    stats_only,
-                    path_prefix: Some(repo.name.clone()),
-                })
-                .await?;
-
-            streams.push(Box::pin(stream));
+            let args = diff_stream::DiffStreamArgs {
+                git_service: self.git().clone(),
+                db: self.db().clone(),
+                workspace_id: workspace.id,
+                repo_id: repo.id,
+                repo_path: repo.path.clone(),
+                worktree_path: worktree_path.clone(),
+                branch: branch.to_string(),
+                target_branch: target_branch.clone(),
+                base_commit: base_commit.clone(),
+                stats_only,
+                path_prefix: Some(repo.name.clone()),
+            };
+            let stream: futures::stream::BoxStream<'static, Result<LogMsg, std::io::Error>> =
+                if archived && (workspace.worktree_deleted || !args.worktree_path.is_dir()) {
+                    Box::pin(futures::stream::iter(
+                        diff_stream::archived_snapshot(&args)
+                            .map_err(|error| ContainerError::Other(anyhow!(error)))?
+                            .into_iter()
+                            .map(Ok),
+                    ))
+                } else {
+                    Box::pin(self.create_live_diff_stream(args).await?)
+                };
+            streams.push(stream);
         }
 
         if streams.is_empty() {

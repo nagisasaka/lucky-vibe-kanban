@@ -166,6 +166,34 @@ pub struct DiffStreamArgs {
     pub path_prefix: Option<String>,
 }
 
+/// Archived workspaces have no filesystem watcher or recreation side effects.
+pub fn archived_snapshot(args: &DiffStreamArgs) -> Result<Vec<LogMsg>, DiffStreamError> {
+    let diffs =
+        args.git_service
+            .get_branch_diffs(&args.repo_path, &args.base_commit, &args.branch)?;
+    let mut entries = HashMap::new();
+    let cumulative = Arc::new(AtomicUsize::new(0));
+    for mut diff in diffs {
+        let raw_path = GitService::diff_path(&diff);
+        apply_stream_omit_policy(&mut diff, &cumulative, args.stats_only);
+        diff.old_path = diff
+            .old_path
+            .map(|path| prefix_path(path, args.path_prefix.as_deref()));
+        diff.new_path = diff
+            .new_path
+            .map(|path| prefix_path(path, args.path_prefix.as_deref()));
+        diff.repo_id = Some(args.repo_id);
+        entries.insert(raw_path, diff);
+    }
+    Ok(vec![
+        LogMsg::JsonPatch(ConversationPatch::replace_repo_diffs(
+            args.path_prefix.as_deref().unwrap_or("_"),
+            entries,
+        )),
+        LogMsg::Ready,
+    ])
+}
+
 struct DiffStreamManager {
     args: DiffStreamArgs,
     tx: mpsc::Sender<Result<LogMsg, io::Error>>,

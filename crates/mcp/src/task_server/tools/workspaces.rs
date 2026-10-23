@@ -59,6 +59,10 @@ struct McpUpdateWorkspaceRequest {
     workspace_id: Option<Uuid>,
     #[schemars(description = "Set archived state")]
     archived: Option<bool>,
+    #[schemars(
+        description = "Token returned by the archive preflight. Supply only after showing its exact message and receiving one user confirmation. Omit to prepare; cancel by not submitting the token."
+    )]
+    confirmation_token: Option<Uuid>,
     #[schemars(description = "Set pinned state")]
     pinned: Option<bool>,
     #[schemars(description = "Set workspace display name (empty string clears it)")]
@@ -206,6 +210,7 @@ impl McpServer {
             archived,
             pinned,
             name,
+            confirmation_token,
         }): Parameters<McpUpdateWorkspaceRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let workspace_id = match self.resolve_workspace_id(workspace_id) {
@@ -216,6 +221,34 @@ impl McpServer {
             return Ok(Self::tool_error(error_result));
         }
 
+        if archived == Some(true) {
+            if pinned.is_some() || name.is_some() {
+                return Ok(Self::tool_error(super::ToolError::message(
+                    "Archive must be a separate update",
+                )));
+            }
+            let action = if confirmation_token.is_some() {
+                "confirm"
+            } else {
+                "prepare"
+            };
+            let url = self.url(&format!("/api/workspaces/{workspace_id}/archive/{action}"));
+            let request = self.client.post(url);
+            let request = match confirmation_token {
+                Some(token) => request.json(&serde_json::json!({ "confirmation_token": token })),
+                None => request,
+            };
+            let result: serde_json::Value = match self.send_json(request).await {
+                Ok(result) => result,
+                Err(error) => return Ok(Self::tool_error(error)),
+            };
+            return McpServer::success(&result);
+        }
+        if confirmation_token.is_some() {
+            return Ok(Self::tool_error(super::ToolError::message(
+                "confirmation_token requires archived=true",
+            )));
+        }
         let url = self.url(&format!("/api/workspaces/{}", workspace_id));
         let payload = UpdateWorkspace {
             archived,

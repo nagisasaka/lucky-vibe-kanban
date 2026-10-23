@@ -23,15 +23,16 @@ pub async fn load_workspace_middleware(
         axum::http::Method::GET | axum::http::Method::HEAD | axum::http::Method::OPTIONS
     );
     let owner_stop = request.uri().path().ends_with("/execution/stop");
-    let _admission = if mutating && !owner_stop {
-        Some(
-            services::services::integration_admission::MUTATIONS
-                .lock()
-                .await,
-        )
-    } else {
-        None
-    };
+    let _admission =
+        if mutating && !owner_stop && !request.uri().path().ends_with("/archive/confirm") {
+            Some(
+                services::services::integration_admission::MUTATIONS
+                    .lock()
+                    .await,
+            )
+        } else {
+            None
+        };
     load_workspace_from_pool(
         State(deployment.db().pool.clone()),
         Path(workspace_id),

@@ -55,3 +55,25 @@ permissions. Do not copy personal ChatGPT memory or the whole conversation into
 LVK. Copy only the agreement needed for implementation. If access or scopes are
 missing, use the supported connection/authorisation flow; do not request secrets
 in chat or bypass the host's confirmation controls.
+
+## Manual Workspace archive
+
+Archive is a user-confirmed operation that releases the managed worktree while
+retaining Issue/Workspace conversations, execution history and the Git branch.
+It is separate from explicit Workspace delete. Never infer archive permission
+from merge, PR closure, an Arena outcome, inactivity or task completion.
+
+For stdio MCP `update_workspace(archived=true)`, first omit `confirmation_token` to run
+preflight. If it rejects a busy Workspace, report the error without asking for
+confirmation. Otherwise show exactly the returned message:
+「ワークツリーが削除されます」. Ask the user once, then submit that token only if
+confirmed. Cancellation means do not submit it. Do not ask for a second approval.
+The server checks usage again immediately before deletion. If use began after
+preflight, archive fails without deleting the worktree. An expired token requires
+a fresh preflight.
+
+If `deletion_error` is returned, archive has still completed. Show the returned
+error verbatim; do not claim physical deletion succeeded or retry deletion
+silently. Viewing archived cards/history/diffs does not recreate their worktree.
+Unarchive or explicitly resume work to recreate it. Existing archived Workspaces
+and orphan directories are never bulk-deleted by this change.

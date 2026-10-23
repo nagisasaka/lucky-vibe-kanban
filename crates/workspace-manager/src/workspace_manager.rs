@@ -691,6 +691,26 @@ impl WorkspaceManager {
         Ok(())
     }
 
+    /// Archive must report every physical cleanup failure rather than treating
+    /// best-effort cleanup as proof that the worktree was deleted.
+    pub async fn cleanup_workspace_strict(
+        workspace_dir: &Path,
+        repos: &[Repo],
+    ) -> Result<(), WorkspaceError> {
+        for repo in repos {
+            WorktreeManager::cleanup_worktree(&WorktreeCleanup::new(
+                workspace_dir.join(&repo.name),
+                Some(repo.path.clone()),
+            ))
+            .await?;
+        }
+        match tokio::fs::remove_dir_all(workspace_dir).await {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(WorkspaceError::Io(error)),
+        }
+    }
+
     /// Get the base directory for workspaces (same as worktree base dir)
     pub fn get_workspace_base_dir() -> PathBuf {
         WorktreeManager::get_worktree_base_dir()
@@ -769,122 +789,6 @@ impl WorkspaceManager {
                 );
             }
         }
-    }
-
-    pub async fn cleanup_orphan_workspaces(&self) {
-        if std::env::var("DISABLE_WORKTREE_CLEANUP").is_ok() {
-            info!(
-                "Orphan workspace cleanup is disabled via DISABLE_WORKTREE_CLEANUP environment variable"
-            );
-            return;
-        }
-
-        // Always clean up the default directory
-        let default_dir = WorktreeManager::get_default_worktree_base_dir();
-        self.cleanup_orphans_in_directory(&default_dir).await;
-
-        // Also clean up custom directory if it's different from the default
-        let current_dir = Self::get_workspace_base_dir();
-        if current_dir != default_dir {
-            self.cleanup_orphans_in_directory(&current_dir).await;
-        }
-    }
-
-    async fn cleanup_orphans_in_directory(&self, workspace_base_dir: &Path) {
-        if !workspace_base_dir.exists() {
-            debug!(
-                "Workspace base directory {} does not exist, skipping orphan cleanup",
-                workspace_base_dir.display()
-            );
-            return;
-        }
-
-        let entries = match std::fs::read_dir(workspace_base_dir) {
-            Ok(entries) => entries,
-            Err(e) => {
-                error!(
-                    "Failed to read workspace base directory {}: {}",
-                    workspace_base_dir.display(),
-                    e
-                );
-                return;
-            }
-        };
-
-        for entry in entries {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(e) => {
-                    warn!("Failed to read directory entry: {}", e);
-                    continue;
-                }
-            };
-
-            let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-
-            let workspace_path_str = path.to_string_lossy().to_string();
-            if let Ok(false) =
-                DbWorkspace::container_ref_exists(&self.db.pool, &workspace_path_str).await
-            {
-                info!("Found orphaned workspace: {}", workspace_path_str);
-                if let Err(e) = Self::cleanup_workspace_without_repos(&path).await {
-                    error!(
-                        "Failed to remove orphaned workspace {}: {}",
-                        workspace_path_str, e
-                    );
-                } else {
-                    info!(
-                        "Successfully removed orphaned workspace: {}",
-                        workspace_path_str
-                    );
-                }
-            }
-        }
-    }
-
-    async fn cleanup_workspace_without_repos(workspace_dir: &Path) -> Result<(), WorkspaceError> {
-        info!(
-            "Cleaning up orphaned workspace at {}",
-            workspace_dir.display()
-        );
-
-        let entries = match std::fs::read_dir(workspace_dir) {
-            Ok(entries) => entries,
-            Err(e) => {
-                debug!(
-                    "Cannot read workspace directory {}, attempting direct removal: {}",
-                    workspace_dir.display(),
-                    e
-                );
-                return tokio::fs::remove_dir_all(workspace_dir)
-                    .await
-                    .map_err(WorkspaceError::Io);
-            }
-        };
-
-        for entry in entries.filter_map(|e| e.ok()) {
-            let path = entry.path();
-            if path.is_dir()
-                && let Err(e) = WorktreeManager::cleanup_suspected_worktree(&path).await
-            {
-                warn!("Failed to cleanup suspected worktree: {}", e);
-            }
-        }
-
-        if workspace_dir.exists()
-            && let Err(e) = tokio::fs::remove_dir_all(workspace_dir).await
-        {
-            debug!(
-                "Could not remove workspace directory {}: {}",
-                workspace_dir.display(),
-                e
-            );
-        }
-
-        Ok(())
     }
 }
 

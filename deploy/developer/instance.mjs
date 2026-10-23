@@ -49,7 +49,6 @@ export function environment(config, build, env = process.env) {
     VK_PREVIEW_DOMAIN: "",
     VIBE_KANBAN_AGENT_PROCESS_HOST: join(build, "agent-process-host"),
     TMPDIR: join(config.root, "tmp"),
-    DISABLE_WORKTREE_CLEANUP: "1",
     BROWSER: "true",
   };
 }

@@ -390,6 +390,15 @@ pub(crate) async fn dispatch_control_for_input(
         db::models::workspace::Workspace::find_by_id(&deployment.db().pool, run.workspace_id)
             .await?
             .ok_or_else(|| ApiError::BadRequest("Workspace not found".into()))?;
+    if matches!(&command, AgentRunPortCommand::Retry { .. })
+        && (workspace.archived || workspace.worktree_deleted)
+    {
+        use services::services::container::ContainerService;
+        deployment
+            .container()
+            .ensure_container_exists(&workspace)
+            .await?;
+    }
     // Serialise free-form intervention against candidate freezing/publication.
     // The port independently checks the durable Integration identity and phase.
     let _integration_guard = if workspace.is_execution_only()

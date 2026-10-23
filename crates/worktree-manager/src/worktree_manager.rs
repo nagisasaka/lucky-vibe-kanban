@@ -609,7 +609,7 @@ impl WorktreeManager {
     pub fn get_worktree_base_dir() -> std::path::PathBuf {
         if let Some(override_path) = WORKSPACE_DIR_OVERRIDE.get() {
             // Always use app-owned subdirectory within custom path for safety.
-            // This ensures orphan cleanup never touches user's existing folders.
+            // Keep managed worktrees separate from the user's existing folders.
             return override_path.join(".vibe-kanban-workspaces");
         }
         Self::get_default_worktree_base_dir()
@@ -618,18 +618,6 @@ impl WorktreeManager {
     /// Get the default base directory (ignoring any override)
     pub fn get_default_worktree_base_dir() -> std::path::PathBuf {
         utils::path::get_vibe_kanban_temp_dir().join("worktrees")
-    }
-
-    pub async fn cleanup_suspected_worktree(path: &Path) -> Result<bool, WorktreeError> {
-        let git_marker = path.join(".git");
-        if !git_marker.exists() || !git_marker.is_file() {
-            return Ok(false);
-        }
-
-        debug!("Cleaning up suspected worktree at {}", path.display());
-        let cleanup = WorktreeCleanup::new(path.to_path_buf(), None);
-        Self::cleanup_worktree(&cleanup).await?;
-        Ok(true)
     }
 }
 
