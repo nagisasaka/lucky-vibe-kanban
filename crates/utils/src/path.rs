@@ -110,7 +110,18 @@ pub fn normalize_macos_private_alias<P: AsRef<Path>>(p: P) -> PathBuf {
 }
 
 pub fn get_vibe_kanban_temp_dir() -> std::path::PathBuf {
-    if let Some(root) = crate::instance::instance_dir() {
+    temp_dir_for_instance(crate::instance::instance_dir())
+}
+
+/// Resolve runtime storage without initialising an instance directory.
+pub fn get_vibe_kanban_temp_dir_read_only() -> std::io::Result<PathBuf> {
+    Ok(temp_dir_for_instance(
+        crate::instance::instance_dir_read_only()?,
+    ))
+}
+
+fn temp_dir_for_instance(root: Option<PathBuf>) -> PathBuf {
+    if let Some(root) = root {
         return root.join("runtime");
     }
     let dir_name = if cfg!(debug_assertions) {

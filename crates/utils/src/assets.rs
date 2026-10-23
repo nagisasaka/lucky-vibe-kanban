@@ -4,23 +4,27 @@ use rust_embed::RustEmbed;
 const PROJECT_ROOT: &str = env!("CARGO_MANIFEST_DIR");
 
 pub fn asset_dir() -> std::path::PathBuf {
-    let path = if let Some(root) = crate::instance::instance_dir() {
+    let path = asset_path(crate::instance::instance_dir());
+
+    if !path.exists() {
+        std::fs::create_dir_all(&path).expect("Failed to create asset directory");
+    }
+    path
+}
+
+/// Resolve the configured data destination without creating directories.
+pub fn asset_dir_path() -> std::io::Result<std::path::PathBuf> {
+    Ok(asset_path(crate::instance::instance_dir_read_only()?))
+}
+
+fn asset_path(root: Option<std::path::PathBuf>) -> std::path::PathBuf {
+    if let Some(root) = root {
         root.join("data")
     } else if cfg!(debug_assertions) {
         std::path::PathBuf::from(PROJECT_ROOT).join("../../dev_assets")
     } else {
         prod_asset_dir_path()
-    };
-
-    // Ensure the directory exists
-    if !path.exists() {
-        std::fs::create_dir_all(&path).expect("Failed to create asset directory");
     }
-
-    path
-    // ✔ macOS → ~/Library/Application Support/MyApp
-    // ✔ Linux → ~/.local/share/myapp   (respects XDG_DATA_HOME)
-    // ✔ Windows → %APPDATA%\Example\MyApp
 }
 
 pub fn prod_asset_dir_path() -> std::path::PathBuf {

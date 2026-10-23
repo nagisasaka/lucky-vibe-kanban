@@ -172,6 +172,7 @@ export interface NavbarProps {
   rightItems?: NavbarSectionItem[];
   // Optional additional content for left side (after leftItems)
   leftSlot?: ReactNode;
+  resourceSlot?: ReactNode;
   // Sync errors shown in the right section
   syncErrors?: readonly SyncErrorIndicatorError[] | null;
   className?: string;
@@ -199,6 +200,7 @@ export function Navbar({
   leftItems = [],
   rightItems = [],
   leftSlot,
+  resourceSlot,
   syncErrors,
   className,
   mobileMode = false,
@@ -250,7 +252,7 @@ export function Navbar({
         )}
       >
         {/* Row 1: Tab bar (workspace pages) or minimal header (project pages) */}
-        <div className="flex items-center justify-between px-base py-half">
+        <div className="flex items-center justify-between flex-wrap gap-half px-base py-half">
           {isOnProjectPage ? (
             <div className="flex items-center gap-base">
               {isOnProjectSubRoute
@@ -349,7 +351,8 @@ export function Navbar({
           )}
 
           {/* Right side: sync indicator + action buttons + user slot */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
+            {resourceSlot}
             <SyncErrorIndicator errors={syncErrors} />
             {isOnProjectPage &&
               rightItems
@@ -474,6 +477,7 @@ export function Navbar({
         data-tauri-drag-region
         className="flex-1 flex items-center justify-end gap-base"
       >
+        {resourceSlot}
         <SyncErrorIndicator errors={syncErrors} />
         {rightItems.map((item, index) =>
           renderItem(

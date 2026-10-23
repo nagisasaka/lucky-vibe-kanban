@@ -615,6 +615,14 @@ impl WorktreeManager {
         Self::get_default_worktree_base_dir()
     }
 
+    /// Resolve the same configured destination without creating instance state.
+    pub fn get_worktree_base_dir_read_only() -> std::io::Result<std::path::PathBuf> {
+        if let Some(override_path) = WORKSPACE_DIR_OVERRIDE.get() {
+            return Ok(override_path.join(".vibe-kanban-workspaces"));
+        }
+        Ok(utils::path::get_vibe_kanban_temp_dir_read_only()?.join("worktrees"))
+    }
+
     /// Get the default base directory (ignoring any override)
     pub fn get_default_worktree_base_dir() -> std::path::PathBuf {
         utils::path::get_vibe_kanban_temp_dir().join("worktrees")

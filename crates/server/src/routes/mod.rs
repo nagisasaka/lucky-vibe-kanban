@@ -30,6 +30,7 @@ pub mod preview;
 pub mod releases;
 pub mod repo;
 pub mod resource_coordination;
+mod resource_observation;
 pub mod scheduled_tasks;
 pub mod scratch;
 pub mod search;
@@ -37,9 +38,9 @@ pub mod sessions;
 pub mod tags;
 pub mod terminal;
 pub mod todos;
+mod web_push;
 pub mod workflows;
 pub mod workspaces;
-mod web_push;
 
 pub fn router(
     deployment: DeploymentImpl,
@@ -64,6 +65,7 @@ pub fn router(
         .merge(repo::router())
         .merge(integrations::router())
         .merge(resource_coordination::router())
+        .merge(resource_observation::router())
         .merge(execution_bridge::router())
         .merge(events::router(&deployment))
         .merge(approvals::router())
