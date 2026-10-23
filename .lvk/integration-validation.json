@@ -1,5 +1,6 @@
 {
   "commands": [
+    "pnpm install --frozen-lockfile",
     "pnpm --dir packages/local-web run build",
     "pnpm run check",
     "pnpm run lint",
