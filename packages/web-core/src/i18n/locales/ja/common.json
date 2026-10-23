@@ -1291,6 +1291,8 @@
     "approvalFailed": "承認を適用できませんでした。最新の候補と状態を確認してください。"
   },
   "todo": {
+    "expandBody": "もっと見る",
+    "collapseBody": "折りたたむ",
     "creationSource": "作成経路: {{source}}",
     "creationSourceUnknown": "不明",
     "creationSourceHint": "作成時に使われた経路です。発案者や著作者を示すものではありません。",

@@ -1294,6 +1294,8 @@
     "exclusions": "替换与排除原因"
   },
   "todo": {
+    "expandBody": "展开",
+    "collapseBody": "收起",
     "creationSource": "创建途径：{{source}}",
     "creationSourceUnknown": "未知",
     "creationSourceHint": "此 TODO 创建时使用的途径，不表示提出者或作者。",

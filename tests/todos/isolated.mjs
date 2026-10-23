@@ -9,6 +9,7 @@ import { once } from "node:events";
 import { createInterface } from "node:readline";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { checkBodyExpansion } from "./body-expansion.mjs";
 import { checkCategoryLayout } from "./layout.mjs";
 
 const root = process.cwd();
@@ -35,11 +36,18 @@ for (const key of [
   delete env[key];
 const children = [];
 function start(binary, args = [], extra = {}) {
-  const child = spawn(path.join(root, "target/debug", binary), args, {
-    cwd: root,
-    env: { ...env, ...extra },
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+  const child = spawn(
+    path.join(
+      process.env.LVK_TODO_BIN_DIR || path.join(root, "target/debug"),
+      binary,
+    ),
+    args,
+    {
+      cwd: root,
+      env: { ...env, ...extra },
+      stdio: ["pipe", "pipe", "pipe"],
+    },
+  );
   children.push(child);
   child.stderr.pipe(
     createWriteStream(path.join(output, `${binary}.stderr.log`)),
@@ -54,6 +62,8 @@ async function stop(child) {
   await exited;
   clearTimeout(timer);
 }
+let vite;
+let webBase;
 let browser;
 let page;
 let base;
@@ -356,6 +366,19 @@ c.commit()
   assert.equal(list.items.find((t) => t.id === mcpId).creation_source, "mcp");
   assert.equal(list.items.length, samples.length + 1);
 
+  webBase = base;
+  if (process.env.LVK_TODO_VITE === "1") {
+    process.env.BACKEND_PORT = new URL(base).port;
+    process.chdir(path.join(root, "packages/local-web"));
+    const { createServer } = await import("vite");
+    vite = await createServer({
+      root: path.join(root, "packages/local-web"),
+      configFile: path.join(root, "packages/local-web/vite.config.ts"),
+      server: { host: "127.0.0.1", port: 0, open: false },
+    });
+    await vite.listen();
+    webBase = `http://127.0.0.1:${vite.httpServer.address().port}`;
+  }
   browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox"],
@@ -367,10 +390,13 @@ c.commit()
     viewport: { width: 1600, height: 1000 },
     locale: "ja-JP",
   });
-  page.setDefaultTimeout(15000);
+  page.setDefaultTimeout(process.env.LVK_TODO_VITE === "1" ? 60000 : 15000);
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(`${base}/projects/${project}`);
+  page.on("pageerror", (e) => {
+    errors.push(e.message);
+    console.error("PAGE ERROR", e.message);
+  });
+  await page.goto(`${webBase}/projects/${project}`);
   await page.getByRole("button", { name: "TODOリスト", exact: true }).click();
   const grid = page.getByTestId("todo-grid");
   await expect(grid).toBeVisible();
@@ -462,6 +488,16 @@ c.commit()
     );
   assert.ok(columns > 1, "desktop TODO grid must use multiple columns");
 
+  await checkBodyExpansion({
+    page,
+    browser,
+    webBase,
+    project,
+    grid,
+    api,
+    todoPath,
+    output,
+  });
   await checkCategoryLayout({ page, grid, api, todoPath, output });
 
   // Both interfaces edit every source; provenance remains the initial route.
@@ -538,7 +574,7 @@ c.commit()
     fullPage: true,
   });
 
-  await page.goto(`${base}/workspaces/${workspace}`);
+  await page.goto(`${webBase}/workspaces/${workspace}`);
   const editor = page.locator('[contenteditable="true"]').first();
   await editor.fill("未送信のチャットを保持");
   await page
@@ -636,7 +672,7 @@ c.commit()
   );
   await expect(page.getByTestId("todo-grid")).toHaveCount(0);
 
-  await page.goto(`${base}/projects/${project}`);
+  await page.goto(`${webBase}/projects/${project}`);
   if (!(await grid.isVisible()))
     await page.getByRole("button", { name: "TODOリスト", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -697,6 +733,8 @@ c.commit()
   throw error;
 } finally {
   await browser?.close();
+  await vite?.close();
+  process.chdir(root);
   for (const child of children.reverse()) await stop(child);
   await rm(instance, { recursive: true, force: true });
 }

@@ -1398,6 +1398,8 @@
     "approvalFailed": "Approval could not be applied. Check the latest candidate and status."
   },
   "todo": {
+    "expandBody": "Show more",
+    "collapseBody": "Show less",
     "creationSource": "Created via: {{source}}",
     "creationSourceUnknown": "Unknown",
     "creationSourceHint": "The route used to create this TODO, not who conceived or authored it.",

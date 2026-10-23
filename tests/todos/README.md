@@ -50,3 +50,26 @@ read APIs, rejected provenance overrides, and both interfaces editing all three
 sources. The internal creation endpoint requires the existing local-agent token;
 ordinary internal REST calls remain `unknown`. This records the entry route,
 not an author identity. The HTTP MCP receipt test covers the other transport.
+
+Long-body checks in `body-expansion.mjs` verify four rendered lines, independent
+expansion/collapse, full-text single-click editing, save/cancel, selection,
+completion/menu isolation, viewport and width changes, keyboard and touch.
+The late-font check uses the installed **Liberation Mono** font. It loads a new
+FontFace after rendering to exercise wrapping changes at the same clamped height.
+The tall category in the layout check is explicitly expanded to retain its
+original packing regression.
+
+For frontend-only work, reuse API/schema-compatible binaries read-only and serve
+this checkout through Vite, without a Rust or frontend production build:
+
+```sh
+LVK_TODO_BIN_DIR=/absolute/path/to/compatible/target/debug \
+LVK_TODO_VITE=1 \
+LVK_CHROMIUM_EXECUTABLE=/absolute/path/to/chrome \
+node tests/todos/isolated.mjs
+```
+
+Vite uses a dynamic loopback port and proxies only to the test-owned backend.
+Both close in `finally`. Record the binary build SHA and compare the relevant
+API/schema with the checkout before reusing artifacts. See
+[the long-body Change Manifest](body-expansion-validation.md) for this run.
