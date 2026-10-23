@@ -25,6 +25,7 @@ import {
   resolveLabel,
   getActionLabel,
   isInspectionAction,
+  isManualArchiveAction,
 } from '@/shared/types/actions';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { UserContext } from '@/shared/hooks/useUserContext';
@@ -237,6 +238,7 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
       })(),
     };
   }, [
+    appNavigation,
     appRuntime,
     hostId,
     queryClient,
@@ -277,7 +279,10 @@ export function ActionsProvider({ children }: ActionsProviderProps) {
           workspaceId ?? executorContext.currentWorkspaceId;
         if (targetWorkspaceId && !isInspectionAction(action)) {
           const target = await workspacesApi.get(targetWorkspaceId);
-          if (target.usage !== 'interactive') {
+          if (
+            target.usage !== 'interactive' &&
+            !isManualArchiveAction(action, target.archived)
+          ) {
             throw new Error(
               'This workspace is execution-only. Use its owner controls and inspection views.'
             );

@@ -312,6 +312,8 @@ impl LocalAgentRunPort {
         request: AgentRunRequestEnvelope,
         attempt: RunAttemptRequest,
     ) -> Result<Uuid, AgentRunPortError> {
+        let _lifecycle =
+            services::services::workspace_lifecycle::lock(request.workspace.workspace_id).await;
         attempt
             .validate_for_run(&request)
             .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
@@ -740,6 +742,11 @@ impl LocalAgentRunPort {
             .await
             .map_err(port_database)?
             .ok_or(AgentRunPortError::NotFound(request.workspace.workspace_id))?;
+        if workspace.archived || workspace.worktree_deleted {
+            return Err(AgentRunPortError::Rejected(
+                "Workspace was archived; resume it explicitly before starting execution".into(),
+            ));
+        }
         let current_dir = Path::new(&request.workspace.path);
         services::services::workspace_usage::validate_agent_owner(
             &self.db.pool,
@@ -3574,6 +3581,9 @@ impl AgentRunPort for LocalAgentRunPort {
                     provider_session,
                     created_at: command.created_at,
                 };
+                let lifecycle =
+                    services::services::workspace_lifecycle::lock(request.workspace.workspace_id)
+                        .await;
                 let workspace = self.validate_workspace(&request).await?;
                 AgentRunRecord::persist_retry_attempt_before_launch(
                     &self.db.pool,
@@ -3582,6 +3592,7 @@ impl AgentRunPort for LocalAgentRunPort {
                 )
                 .await
                 .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
+                drop(lifecycle);
                 self.start_attempt(request, attempt, workspace).await;
                 Ok(())
             }

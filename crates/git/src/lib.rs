@@ -433,6 +433,87 @@ impl GitService {
             .collect())
     }
 
+    /// Read committed branch differences without checking out a worktree.
+    pub fn get_branch_diffs(
+        &self,
+        repo_path: &Path,
+        base_commit: &Commit,
+        branch: &str,
+    ) -> Result<Vec<Diff>, GitServiceError> {
+        let repo = Repository::open(repo_path)?;
+        let base = repo.find_commit(base_commit.as_oid())?.tree()?;
+        let head = repo
+            .find_branch(branch, git2::BranchType::Local)?
+            .get()
+            .peel_to_tree()?;
+        let delta = repo.diff_tree_to_tree(Some(&base), Some(&head), None)?;
+        let mut result = Vec::new();
+        for entry in delta.deltas() {
+            let added = entry.status() == git2::Delta::Added;
+            let deleted = entry.status() == git2::Delta::Deleted;
+            let old_path = (!added)
+                .then(|| {
+                    entry
+                        .old_file()
+                        .path()
+                        .map(|p| p.to_string_lossy().into_owned())
+                })
+                .flatten();
+            let new_path = (!deleted)
+                .then(|| {
+                    entry
+                        .new_file()
+                        .path()
+                        .map(|p| p.to_string_lossy().into_owned())
+                })
+                .flatten();
+            let old_blob = (!added)
+                .then(|| repo.find_blob(entry.old_file().id()).ok())
+                .flatten();
+            let new_blob = (!deleted)
+                .then(|| repo.find_blob(entry.new_file().id()).ok())
+                .flatten();
+            let content_omitted = old_blob
+                .iter()
+                .chain(new_blob.iter())
+                .any(|b| b.is_binary() || b.size() > MAX_INLINE_DIFF_BYTES);
+            let old_content = if content_omitted {
+                None
+            } else {
+                old_blob.as_ref().and_then(Self::blob_to_string)
+            };
+            let new_content = if content_omitted {
+                None
+            } else {
+                new_blob.as_ref().and_then(Self::blob_to_string)
+            };
+            let counts = (!content_omitted).then(|| {
+                compute_line_change_counts(
+                    old_content.as_deref().unwrap_or(""),
+                    new_content.as_deref().unwrap_or(""),
+                )
+            });
+            result.push(Diff {
+                change: if added {
+                    DiffChangeKind::Added
+                } else if deleted {
+                    DiffChangeKind::Deleted
+                } else {
+                    DiffChangeKind::Modified
+                },
+                old_path,
+                new_path,
+                old_content,
+                new_content,
+                content_omitted,
+                additions: counts.map(|c| c.0),
+                deletions: counts.map(|c| c.1),
+                repo_id: None,
+            });
+        }
+        Ok(result)
+    }
+
     /// Returns file paths that differ from base commit, without loading content.
     /// Much cheaper than `get_diffs` — skips content loading (`status_entry_to_diff`),
     /// only runs git name-status commands to get the file list.

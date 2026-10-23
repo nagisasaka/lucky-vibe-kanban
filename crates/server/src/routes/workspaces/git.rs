@@ -294,12 +294,6 @@ pub async fn merge_workspace(
     )
     .await?;
 
-    if !workspace.pinned
-        && let Err(e) = deployment.container().archive_workspace(workspace.id).await
-    {
-        tracing::error!("Failed to archive workspace {}: {}", workspace.id, e);
-    }
-
     deployment
         .track_if_analytics_allowed(
             "task_attempt_merged",
@@ -412,11 +406,17 @@ pub async fn get_workspace_branch_status(
         .map(|wr| (wr.repo_id, wr.target_branch.clone()))
         .collect();
 
-    let container_ref = deployment
-        .container()
-        .container_for_inspection(&workspace)
-        .await?;
-    let workspace_dir = PathBuf::from(&container_ref);
+    let workspace_dir = if workspace.archived {
+        // Committed branch/merge metadata remains available after archive.
+        PathBuf::from(workspace.container_ref.as_deref().unwrap_or_default())
+    } else {
+        PathBuf::from(
+            deployment
+                .container()
+                .container_for_inspection(&workspace)
+                .await?,
+        )
+    };
 
     let all_merges = Merge::find_by_workspace_id(pool, workspace.id).await?;
     let merges_by_repo: HashMap<Uuid, Vec<Merge>> =

@@ -680,7 +680,6 @@ async fn cleanup_failed_workflow_arena(
 ) -> Result<(), ApiError> {
     for workspace in Workspace::find_by_arena_group_id(pool, arena_group_id).await? {
         Workspace::set_arena_status(pool, workspace.id, ArenaStatus::Archived).await?;
-        Workspace::set_archived(pool, workspace.id, true).await?;
     }
     ArenaGroup::delete(pool, arena_group_id).await?;
     Ok(())
@@ -924,7 +923,6 @@ async fn mark_arena_winner(
             continue;
         }
         Workspace::set_arena_status(pool, sibling.id, ArenaStatus::Archived).await?;
-        Workspace::set_archived(pool, sibling.id, true).await?;
     }
 
     Ok(())

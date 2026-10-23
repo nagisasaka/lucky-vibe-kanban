@@ -243,7 +243,12 @@ export function isActionVisible(
   action: ActionDefinition,
   ctx: ActionVisibilityContext
 ): boolean {
-  if (ctx.workspaceReadOnly && !isInspectionAction(action)) return false;
+  if (
+    ctx.workspaceReadOnly &&
+    !isInspectionAction(action) &&
+    !isManualArchiveAction(action, ctx.workspaceArchived)
+  )
+    return false;
   return action.isVisible ? action.isVisible(ctx) : true;
 }
 
@@ -258,8 +263,21 @@ export function isActionEnabled(
   action: ActionDefinition,
   ctx: ActionVisibilityContext
 ): boolean {
-  if (ctx.workspaceReadOnly && !isInspectionAction(action)) return false;
+  if (
+    ctx.workspaceReadOnly &&
+    !isInspectionAction(action) &&
+    !isManualArchiveAction(action, ctx.workspaceArchived)
+  )
+    return false;
   return action.isEnabled ? action.isEnabled(ctx) : true;
+}
+
+/** Manual archive has its own busy checks and confirmation; this never permits resume. */
+export function isManualArchiveAction(
+  action: ActionDefinition,
+  archived: boolean
+): boolean {
+  return action.id === 'archive-workspace' && !archived;
 }
 
 /** Usage is generic: no Wiki/Integration names in workspace action policy. */

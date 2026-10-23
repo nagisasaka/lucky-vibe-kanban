@@ -69,8 +69,28 @@ Select **Archive** from the workspace actions, or click the **Archive** button (
 Archived workspaces can be viewed by clicking **View Archive** at the bottom of the sidebar.
 
 <Info>
-**Archiving preserves everything.** Your conversation history, sessions, notes, and worktree files all remain intact. You can unarchive at any time to continue working.
+Manual archive asks once: 「ワークツリーが削除されます」. After confirmation,
+the managed worktree is physically removed. Conversation and execution history,
+notes and the Git branch remain. Viewing archived cards, history or diffs does
+not recreate files; unarchive or explicitly resume work to recreate the worktree.
+Uncommitted files are not retained by physical deletion.
 </Info>
+
+Busy workspaces are rejected before confirmation and checked again immediately
+before deletion. The execution-only usage label alone is not a reason to reject
+manual archive; archiving does not grant permission to resume other operations.
+
+On Linux, checks include observable process exe/cwd, open and mapped files, and
+existing path arguments. Unregistered servers and LVK itself are included; debug
+LVK also protects its filesystem frontend assets. Other PID namespaces,
+permission-hidden information, references held only in application configuration
+or memory, and external processes starting after the last observation are outside
+this guarantee. Unreadable unrelated processes alone do not block archive. Other
+platforms retain managed DB/registry checks but have no procfs observation.
+
+If physical deletion fails, the workspace remains archived with deletion marked
+incomplete. The returned message includes the actual error:
+「ワークツリーの物理削除に失敗しました（エラー内容）。手動で削除してください。」
 
 ## Deleting Workspaces
 
@@ -100,7 +120,7 @@ When you delete a workspace:
 
 | Action | Worktree | Conversation | Can Restore? |
 |--------|----------|--------------|--------------|
-| **Archive** | Kept on disk | Preserved | Yes - unarchive anytime |
+| **Archive** | Removed after confirmation | Preserved | Recreate from the retained branch when resuming |
 | **Delete** | Removed | Deleted | No - permanent |
 
 **Use Archive when:**
@@ -153,9 +173,9 @@ Get-ChildItem "$env:TEMP\vibe-kanban\worktrees" -Recurse | Measure-Object -Prope
 
 To reduce disk usage:
 
-1. **Delete completed workspaces** - Use Delete (not Archive) for tasks that are finished and merged
-2. **Review archived workspaces** - Archived workspaces still consume disk space
-3. **Configure cleanup scripts** - Add cleanup scripts to remove build artifacts (like `node_modules`) when workspaces close
+1. **Archive idle workspaces** - Confirm removal of their managed worktrees while retaining history and branches.
+2. **Review deletion failures** - An archived workspace can still occupy space if physical deletion failed.
+3. **Keep needed work committed** - Regeneration restores the retained branch, not uncommitted files.
 
 <Tip>
 Large directories like `node_modules`, `target/`, or `build/` are copied into each worktree. Consider adding cleanup scripts to remove these when you're done with a workspace.
@@ -173,9 +193,9 @@ an active execution reservation: inspection never recreates its missing files.
 
 ## Orphan Cleanup
 
-Vibe Kanban automatically cleans up "orphaned" worktrees on startup - these are worktree directories that no longer have a matching workspace in the database (e.g., if the app crashed during deletion).
-
-This cleanup runs automatically, so you don't need to manually manage stale worktree directories.
+Timer cleanup and startup orphan-directory collection are disabled. Merge,
+PR closure and Arena outcomes do not automatically archive workspaces. Existing
+archived workspaces and orphan directories are not bulk-deleted on migration.
 
 ## Renaming Workspaces
 

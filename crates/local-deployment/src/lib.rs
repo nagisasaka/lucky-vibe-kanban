@@ -149,7 +149,6 @@ impl Deployment for LocalDeployment {
         let container = LocalContainerService::new(
             db.clone(),
             agent_run_port.clone(),
-            workspace_manager.clone(),
             msg_stores.clone(),
             config.clone(),
             git.clone(),

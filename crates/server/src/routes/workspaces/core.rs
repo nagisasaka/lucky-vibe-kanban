@@ -8,6 +8,7 @@ use db::models::{
     agent_runtime::AgentRunRecord,
     execution_process::{ExecutionProcess, ExecutionProcessStatus},
     workspace::{Workspace, WorkspaceError},
+    workspace_repo::WorkspaceRepo,
 };
 use deployment::Deployment;
 use serde::Deserialize;
@@ -44,7 +45,23 @@ pub async fn update_workspace(
     Json(request): Json<db::models::requests::UpdateWorkspace>,
 ) -> Result<ResponseJson<ApiResponse<Workspace>>, ApiError> {
     let pool = &deployment.db().pool;
-    let is_archiving = request.archived == Some(true) && !workspace.archived;
+    if request.archived == Some(true) {
+        return Err(ApiError::BadRequest(
+            "Use the archive confirmation flow".into(),
+        ));
+    }
+    if request.archived == Some(false)
+        && workspace.archived
+        && (workspace.is_direct_folder()
+            || !WorkspaceRepo::find_by_workspace_id(pool, workspace.id)
+                .await?
+                .is_empty())
+    {
+        deployment
+            .container()
+            .ensure_container_exists(&workspace)
+            .await?;
+    }
 
     Workspace::update(
         pool,
@@ -57,10 +74,6 @@ pub async fn update_workspace(
     let updated = Workspace::find_by_id(pool, workspace.id)
         .await?
         .ok_or(WorkspaceError::WorkspaceNotFound)?;
-
-    if is_archiving && let Err(e) = deployment.container().archive_workspace(workspace.id).await {
-        tracing::error!("Failed to archive workspace {}: {}", workspace.id, e);
-    }
 
     Ok(ResponseJson(ApiResponse::success(updated)))
 }

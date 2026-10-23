@@ -1965,9 +1965,7 @@ async fn delete_issue_comment_reaction(
 // One arena_group represents N parallel attempts at a single local
 // kanban issue, each running in its own workspace + worktree under a
 // different executor. See docs/future/ai-arena/spec.md for the full
-// design and notes-step0.md §2 / §5 for the rationale behind the
-// promote-via-archived-flag pattern (it triggers the existing 1h
-// accelerated cleanup path in `find_expired_for_cleanup`).
+// design. Arena outcomes do not archive or delete Workspace worktrees.
 // ─────────────────────────────────────────────────────────────────────
 
 const ARENA_MIN_ATTEMPTS: usize = 2;
@@ -2695,7 +2693,7 @@ async fn cleanup_failed_arena_group(pool: &SqlitePool, group_id: Uuid) -> Result
 
     for ws in siblings.iter() {
         DbWorkspace::set_arena_status(pool, ws.id, ArenaStatus::Archived).await?;
-        DbWorkspace::set_archived(pool, ws.id, true).await?;
+
         archived += 1;
     }
 
@@ -3200,16 +3198,12 @@ async fn promote_arena_workspace(
     DbWorkspace::set_arena_status(pool, payload.workspace_id, ArenaStatus::Promoted).await?;
     ArenaGroup::set_promoted(pool, group.id, payload.workspace_id).await?;
 
-    // 2. Archive every other sibling (arena_status=archived AND archived=true)
-    //    so the existing 1h cleanup path picks them up. We deliberately do
-    //    NOT call container.delete here — that synchronously removes the
-    //    worktree and would block this request.
+    // 2. Record the Arena outcome; retain sibling Workspaces and worktrees.
     for ws in siblings.iter() {
         if ws.id == payload.workspace_id {
             continue;
         }
         DbWorkspace::set_arena_status(pool, ws.id, ArenaStatus::Archived).await?;
-        DbWorkspace::set_archived(pool, ws.id, true).await?;
     }
 
     let group = ArenaGroup::find_by_id(pool, group.id)
@@ -3335,7 +3329,7 @@ async fn dissolve_arena_group(
     let mut archived = 0usize;
     for ws in siblings.iter() {
         DbWorkspace::set_arena_status(pool, ws.id, ArenaStatus::Archived).await?;
-        DbWorkspace::set_archived(pool, ws.id, true).await?;
+
         archived += 1;
     }
 

@@ -23,15 +23,16 @@ pub async fn load_workspace_middleware(
         axum::http::Method::GET | axum::http::Method::HEAD | axum::http::Method::OPTIONS
     );
     let owner_stop = request.uri().path().ends_with("/execution/stop");
-    let _admission = if mutating && !owner_stop {
-        Some(
-            services::services::integration_admission::MUTATIONS
-                .lock()
-                .await,
-        )
-    } else {
-        None
-    };
+    let _admission =
+        if mutating && !owner_stop && !request.uri().path().ends_with("/archive/confirm") {
+            Some(
+                services::services::integration_admission::MUTATIONS
+                    .lock()
+                    .await,
+            )
+        } else {
+            None
+        };
     load_workspace_from_pool(
         State(deployment.db().pool.clone()),
         Path(workspace_id),
@@ -69,7 +70,18 @@ async fn load_workspace_from_pool(
         axum::http::Method::GET | axum::http::Method::HEAD | axum::http::Method::OPTIONS
     ) && !request.uri().path().ends_with("/seen")
     {
-        if workspace.is_execution_only() && !owner_stop {
+        // Only manual archive bypasses the usage label. Its handlers check live
+        // owners/processes before confirmation and again before physical deletion.
+        // All other execution-only mutation restrictions remain in force.
+        let original_path = request
+            .extensions()
+            .get::<axum::extract::OriginalUri>()
+            .map(|uri| uri.0.path())
+            .unwrap_or_else(|| request.uri().path());
+        let manual_archive = request.method() == axum::http::Method::POST
+            && (original_path == format!("/api/workspaces/{workspace_id}/archive/prepare")
+                || original_path == format!("/api/workspaces/{workspace_id}/archive/confirm"));
+        if workspace.is_execution_only() && !owner_stop && !manual_archive {
             use axum::response::IntoResponse;
             return Ok(crate::error::ApiError::Conflict(format!(
                 "Workspace {} is reserved for an execution; inspect /api/workspaces/{}/usage and use its execution controls", workspace.id, workspace.id

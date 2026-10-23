@@ -523,43 +523,6 @@ pub trait ContainerService {
         Ok(())
     }
 
-    /// Archive a workspace: set archived flag, stop running dev servers, and run archive script.
-    async fn archive_workspace(&self, workspace_id: Uuid) -> Result<(), ContainerError> {
-        let pool = &self.db().pool;
-
-        Workspace::set_archived(pool, workspace_id, true).await?;
-
-        // Stop running dev servers
-        if let Ok(dev_servers) =
-            ExecutionProcess::find_running_dev_servers_by_workspace(pool, workspace_id).await
-        {
-            for dev_server in dev_servers {
-                if let Err(e) = self
-                    .stop_execution(&dev_server, ExecutionProcessStatus::Killed)
-                    .await
-                {
-                    tracing::error!(
-                        "Failed to stop dev server {} for workspace {}: {}",
-                        dev_server.id,
-                        workspace_id,
-                        e
-                    );
-                }
-            }
-        }
-
-        // Run archive script (silently skips if not configured)
-        if let Err(e) = self.try_run_archive_script(workspace_id).await {
-            tracing::error!(
-                "Failed to run archive script for workspace {}: {}",
-                workspace_id,
-                e
-            );
-        }
-
-        Ok(())
-    }
-
     fn setup_actions_for_repos(&self, repos: &[Repo]) -> Option<ExecutorAction> {
         let repos_with_setup: Vec<_> = repos.iter().filter(|r| r.setup_script.is_some()).collect();
 
@@ -742,19 +705,42 @@ pub trait ContainerService {
     async fn ensure_container_exists(
         &self,
         workspace: &Workspace,
+    ) -> Result<ContainerRef, ContainerError> {
+        let guard = super::workspace_lifecycle::lock(workspace.id).await;
+        let current = Workspace::find_by_id(&self.db().pool, workspace.id)
+            .await?
+            .ok_or_else(|| ContainerError::Other(anyhow!("Workspace missing")))?;
+        let path = self
+            .ensure_container_exists_locked(&current, &guard)
+            .await?;
+        if current.archived {
+            Workspace::set_archived(&self.db().pool, current.id, false).await?;
+        }
+        Ok(path)
+    }
+
+    async fn ensure_container_exists_locked(
+        &self,
+        workspace: &Workspace,
+        guard: &super::workspace_lifecycle::Guard,
     ) -> Result<ContainerRef, ContainerError>;
 
-    /// Inspection must never recreate an internal execution's environment.
+    /// Passive inspection never resumes an archived Workspace, including when
+    /// the caller loaded its record before a concurrent archive.
     async fn container_for_inspection(
         &self,
         workspace: &Workspace,
     ) -> Result<ContainerRef, ContainerError> {
-        if workspace.is_execution_only() {
-            return super::workspace_usage::inspection_root(workspace)
+        let guard = super::workspace_lifecycle::lock(workspace.id).await;
+        let current = Workspace::find_by_id(&self.db().pool, workspace.id)
+            .await?
+            .ok_or_else(|| ContainerError::Other(anyhow!("Workspace missing")))?;
+        if current.is_execution_only() || current.archived {
+            return super::workspace_usage::inspection_root(&current)
                 .map(|path| path.to_string_lossy().into_owned())
                 .map_err(ContainerError::Other);
         }
-        self.ensure_container_exists(workspace).await
+        self.ensure_container_exists_locked(&current, &guard).await
     }
 
     async fn is_container_clean(&self, workspace: &Workspace) -> Result<bool, ContainerError>;
@@ -882,6 +868,7 @@ pub trait ContainerService {
         executor_action: &ExecutorAction,
         run_reason: &ExecutionProcessRunReason,
     ) -> Result<ExecutionProcess, ContainerError> {
+        let lifecycle = super::workspace_lifecycle::lock(workspace.id).await;
         super::workspace_usage::validate_script_owner(
             &self.db().pool,
             workspace.id,
@@ -907,17 +894,15 @@ pub trait ContainerService {
             )));
         }
 
-        let mut workspace_for_execution = workspace.clone();
+        let mut workspace_for_execution = Workspace::find_by_id(&self.db().pool, workspace.id)
+            .await?
+            .ok_or_else(|| ContainerError::Other(anyhow!("Workspace missing")))?;
         if !has_container_ref(&workspace_for_execution)
-            && let Some(refreshed_workspace) =
-                Workspace::find_by_id(&self.db().pool, workspace.id).await?
+            || workspace_for_execution.worktree_deleted
+            || workspace_for_execution.archived
         {
-            workspace_for_execution = refreshed_workspace;
-        }
-        if !has_container_ref(&workspace_for_execution) {
-            workspace_for_execution.container_ref = None;
             let container_ref = self
-                .ensure_container_exists(&workspace_for_execution)
+                .ensure_container_exists_locked(&workspace_for_execution, &lifecycle)
                 .await?;
             workspace_for_execution.container_ref = Some(container_ref);
         }
@@ -975,6 +960,7 @@ pub trait ContainerService {
             return Err(e.into());
         }
 
+        drop(lifecycle);
         if let Err(start_error) = self
             .start_execution_inner(
                 &workspace_for_execution,

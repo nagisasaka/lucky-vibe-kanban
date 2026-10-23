@@ -268,8 +268,25 @@ export const Actions = {
         ? getNextWorkspaceId(ctx.activeWorkspaces, workspaceId)
         : null;
 
-      // Perform the archive/unarchive
-      await workspacesApi.update(workspaceId, { archived: !wasArchived });
+      if (wasArchived) {
+        await workspacesApi.update(workspaceId, { archived: false });
+      } else {
+        // Reject busy workspaces before showing the single confirmation.
+        const prepared = await workspacesApi.prepareArchive(workspaceId);
+        const result = await ConfirmDialog.show({
+          title: prepared.message,
+          message: '',
+          confirmText: 'Archive',
+          variant: 'destructive',
+        });
+        if (result !== 'confirmed') return;
+        const archived = await workspacesApi.confirmArchive(
+          workspaceId,
+          prepared.confirmation_token
+        );
+        invalidateWorkspaceQueries(ctx.queryClient, workspaceId);
+        if (archived.deletion_error) throw new Error(archived.deletion_error);
+      }
       invalidateWorkspaceQueries(ctx.queryClient, workspaceId);
 
       // Select next workspace after successful archive

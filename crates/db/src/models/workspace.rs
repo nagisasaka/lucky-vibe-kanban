@@ -313,85 +313,6 @@ impl Workspace {
         .await
     }
 
-    pub async fn container_ref_exists(
-        pool: &SqlitePool,
-        container_ref: &str,
-    ) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query!(
-            r#"SELECT EXISTS(SELECT 1 FROM workspaces WHERE container_ref = ?) as "exists!: bool""#,
-            container_ref
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(result.exists)
-    }
-
-    /// Find workspaces that are expired and eligible for cleanup.
-    /// Uses accelerated cleanup (1 hour) for archived workspaces.
-    /// Uses standard cleanup (72 hours) for non-archived workspaces.
-    pub async fn find_expired_for_cleanup(
-        pool: &SqlitePool,
-    ) -> Result<Vec<Workspace>, sqlx::Error> {
-        sqlx::query_as!(
-            Workspace,
-            r#"
-            SELECT
-                w.id as "id!: Uuid",
-                w.task_id as "task_id: Uuid",
-                w.container_ref,
-                w.workspace_kind as "workspace_kind!: WorkspaceKind",
-                w.container_ownership as "container_ownership!: ContainerOwnership",
-                       w.usage as "usage!: WorkspaceUsage", w.execution_owner as "execution_owner: Json<WorkspaceExecutionOwner>",
-                w.branch as "branch!",
-                w.setup_completed_at as "setup_completed_at: DateTime<Utc>",
-                w.created_at as "created_at!: DateTime<Utc>",
-                w.updated_at as "updated_at!: DateTime<Utc>",
-                w.archived as "archived!: bool",
-                w.pinned as "pinned!: bool",
-                w.name,
-                w.worktree_deleted as "worktree_deleted!: bool",
-                w.arena_group_id   as "arena_group_id: Uuid",
-                w.arena_status     as "arena_status!: ArenaStatus"
-            FROM workspaces w
-            LEFT JOIN sessions s ON w.id = s.workspace_id
-            LEFT JOIN execution_processes ep ON s.id = ep.session_id AND ep.completed_at IS NOT NULL
-            WHERE w.container_ref IS NOT NULL
-                AND w.worktree_deleted = FALSE
-                AND w.container_ownership = 'managed'
-                AND w.id NOT IN (
-                    SELECT DISTINCT s2.workspace_id
-                    FROM sessions s2
-                    JOIN execution_processes ep2 ON s2.id = ep2.session_id
-                    WHERE ep2.completed_at IS NULL
-                )
-            GROUP BY w.id, w.container_ref, w.updated_at
-            HAVING datetime('now', 'localtime',
-                CASE
-                    WHEN w.archived = 1
-                    THEN '-1 hours'
-                    ELSE '-72 hours'
-                END
-            ) > datetime(
-                MAX(
-                    max(
-                        datetime(w.updated_at),
-                        datetime(ep.completed_at)
-                    )
-                )
-            )
-            ORDER BY MAX(
-                CASE
-                    WHEN ep.completed_at IS NOT NULL THEN ep.completed_at
-                    ELSE w.updated_at
-                END
-            ) ASC
-            "#
-        )
-        .fetch_all(pool)
-        .await
-    }
-
     pub async fn create(
         pool: &SqlitePool,
         data: &CreateWorkspace,
@@ -572,11 +493,7 @@ impl Workspace {
         Ok(())
     }
 
-    /// Flip the arena status of a workspace. Caller is responsible for
-    /// the surrounding semantics: when promoting one workspace, also
-    /// archive its siblings; when archiving, also call `set_archived(true)`
-    /// to trigger the 1h accelerated cleanup path used by
-    /// `find_expired_for_cleanup`.
+    /// Arena selection status is independent from manual Workspace archival.
     pub async fn set_arena_status(
         pool: &SqlitePool,
         workspace_id: Uuid,

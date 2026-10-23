@@ -3,11 +3,7 @@ use std::{sync::Arc, time::Duration};
 use chrono::Utc;
 use db::{
     DBService,
-    models::{
-        merge::MergeStatus,
-        pull_request::PullRequest,
-        workspace::{Workspace, WorkspaceError},
-    },
+    models::{merge::MergeStatus, pull_request::PullRequest, workspace::WorkspaceError},
 };
 use git_host::{GitHostError, GitHostProvider, GitHostService};
 use serde_json::json;
@@ -44,7 +40,7 @@ pub struct PrMonitorService<C: ContainerService> {
     db: DBService,
     poll_interval: Duration,
     analytics: Option<AnalyticsContext>,
-    container: C,
+    _container: C,
     sync_notify: Arc<Notify>,
 }
 
@@ -59,7 +55,7 @@ impl<C: ContainerService + Send + Sync + 'static> PrMonitorService<C> {
             db,
             poll_interval: Duration::from_secs(60),
             analytics,
-            container,
+            _container: container,
             sync_notify,
         };
         tokio::spawn(async move {
@@ -144,58 +140,19 @@ impl<C: ContainerService + Send + Sync + 'static> PrMonitorService<C> {
         )
         .await?;
 
-        // If this is a workspace PR and it was merged, try to archive
         if matches!(&status.status, MergeStatus::Merged)
             && let Some(workspace_id) = pr.workspace_id
+            && let Some(analytics) = &self.analytics
+            && PullRequest::count_open_for_workspace(&self.db.pool, workspace_id).await? == 0
         {
-            self.try_archive_workspace(workspace_id, pr.pr_number)
-                .await?;
+            analytics.analytics_service.track_event(
+                &analytics.user_id,
+                "pr_merged",
+                Some(json!({ "workspace_id": workspace_id.to_string() })),
+            );
         }
 
         info!("PR #{} status changed to {:?}", pr.pr_number, status.status);
-
-        Ok(())
-    }
-
-    /// Archive workspace if all its PRs are merged/closed
-    async fn try_archive_workspace(
-        &self,
-        workspace_id: uuid::Uuid,
-        pr_number: i64,
-    ) -> Result<(), PrMonitorError> {
-        let Some(workspace) = Workspace::find_by_id(&self.db.pool, workspace_id).await? else {
-            return Ok(());
-        };
-
-        let open_pr_count =
-            PullRequest::count_open_for_workspace(&self.db.pool, workspace_id).await?;
-
-        if open_pr_count == 0 {
-            info!(
-                "PR #{} was merged, archiving workspace {}",
-                pr_number, workspace.id
-            );
-            if !workspace.pinned
-                && let Err(e) = self.container.archive_workspace(workspace.id).await
-            {
-                error!("Failed to archive workspace {}: {}", workspace.id, e);
-            }
-
-            if let Some(analytics) = &self.analytics {
-                analytics.analytics_service.track_event(
-                    &analytics.user_id,
-                    "pr_merged",
-                    Some(json!({
-                        "workspace_id": workspace.id.to_string(),
-                    })),
-                );
-            }
-        } else {
-            info!(
-                "PR #{} was merged, leaving workspace {} active with {} open PR(s)",
-                pr_number, workspace.id, open_pr_count
-            );
-        }
 
         Ok(())
     }
