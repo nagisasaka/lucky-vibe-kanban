@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
     resource: repo://crates/git/src/publication.rs
+  - id: openwiki-source-33abd750e40bc0d544b210b5
+    resource: repo://crates/server/src/remote_mcp/integration_write_tests.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
     resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
@@ -30,6 +32,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/scenario_tests.rs
   - id: openwiki-source-001b80ecf41631f84729dd2e
     resource: repo://crates/server/src/routes/integrations/steps.rs
+  - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
+    resource: repo://docs/development/integration-mcp-decisions.md
   - id: openwiki-source-db035046d01e3f24722812c8
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-a836651555f6dfa0a9ab8ce3
@@ -40,10 +44,10 @@ sources:
     resource: repo://tests/integration-review/browser.mjs
   - id: openwiki-source-9871b94e679a5398da344b52
     resource: repo://tests/integration-review/README.md
-generated: { by: "codex", at: "2026-10-23T13:57:47.467Z" }
+generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T13:57:47.467Z
+    at: 2026-10-23T23:24:04.082Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -100,6 +104,8 @@ host は全 source の merge/review 後、最終候補 R 上で固定 commands �
 
 required check が通らない場合は blocked とし、失敗証拠とリスクを保存する。利用者は retry・その check と候補に限定した例外 continue・cancel を選べる。例外は合格への書換えではなく、対象候補の保証欠落を明示した判断である。actor、request ID、時刻と scope を保存し、古い判断や別候補への再利用を拒否する。自動 AI 修正ループは開始しない。[gate](../../crates/server/src/routes/integrations/runtime.rs#L945-L972)・[原子的判断](../../crates/db/src/models/integration.rs#L325-L407)
 
+外部 MCP の明示承認もこの UI 共通判断へ入り、取消も既存 handler を使う。新しい承認 engine や自動承認は作らない。MCP 固有の固定証拠・scope・再送と、取消受付から予約解放までの読み方は [MCP から承認・取消する](../integrations/remote-access.md#mcp-から-integration-を承認取消する)を参照する。[共通経路への委譲](../../crates/server/src/remote_mcp/launch.rs#L135-L154)
+
 ## 公開・Done・Wiki は別の結果
 
 公開直前に target が B のままであること、固定 source の存在、選択した検証方針と review の完了、実行環境と target writer の idle を確認する。取消と `publication_intent` は DB writer transaction で一方だけが勝つ。この境界を越えた Cancel は Git undo にならない。Git は ref lock 下で B を比較し、追加 merge commit を作らず **固定した R そのもの**を公開する。target checkout は許可された managed path・clean 状態・一つの checkout を要求し、ignored file の衝突も保護する。Git の ref / index / files と DB は一 transaction ではない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L1329-L1407)、[Git publication](../../crates/git/src/publication.rs)。
@@ -136,6 +142,8 @@ standalone と embedded の monitor 配線差は [起動順序](../architecture/
 
 [調査・回復記録](../../docs/development/integration-dispatch-recovery.md)は設計判断と過去の検証結果を残す。旧 per-step handoff の撤去後も、一般 Workflow の配送受理と SQLite writer 予約、一般 Retry の回復は依存先がある。記録中の instance 固定 cutover 手順や live 未実行の記述を、現在の配置状態として扱わない。この Sync は統合 source を調査したもので、過去の binary、live adoption、公表済みテスト成功を再確認したものではない。
 
-[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L306-L414)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L342-L356)
+[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L342-L356)
 
 公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された正式 Integration は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。
+
+MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scenario_tests.rs#L741-L768) は、実 Git / SQLite と共通 domain に adapter から入り、承認後の公開と、取消受付時の予約保持から解放までを検査する。[adapter の境界試験](../../crates/server/src/remote_mcp/integration_write_tests.rs#L26-L244)は権限不足、別 Project、固定証拠の各要素・live target の変更、同一要求の同時送信、receipt と現在状態の差も扱う。provider は固定イベントであり、新 tool の成功を HTTP transport 全体で確認する E2E や実 Auth0 / ChatGPT の確認とは異なる。[実装時の検証記録と限界](../../docs/development/integration-mcp-decisions.md)を今回の試験実行結果に読み替えない。

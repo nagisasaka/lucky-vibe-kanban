@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:78caee902da295e3aa0664401978cdcd970faa028cf63436274558330e9553d5",
+  "pageVersion": "sha256:6e23113b9149f5c51ea9c51bf7780a500bf8cd0b3ba885667bf8cffb6d69665a",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -36,7 +36,7 @@
     },
     {
       "id": "claim_1e117248305448bdab99c81eff53f5d0",
-      "statement": "外部MCPはAuth0設定で有効化したstateless HTTPで署名JWTとactive membershipを検証し、Project集合は現在DBから取得する。全操作read、Issue/Todo・設計メモ・agent操作write、Integration開始mergeに加え、runtime観測はruntime:read、起動停止はruntime:executeも必要で、Local/Basicや旧introspection設定では公開しない。",
+      "statement": "外部MCPはAuth0設定で有効化したstateless HTTPで署名JWTとactive membershipを検証し、Project集合は現在DBから取得する。全操作read、Issue/Todo・設計メモ・agent操作write、Integration開始・承認・取消mergeに加え、runtime観測はruntime:read、起動停止はruntime:executeも必要で、Local/Basicや旧introspection設定では公開しない。",
       "evidence": [
         {
           "resource": "repo://crates/server-access/src/lib.rs#L288-L292",
@@ -51,8 +51,8 @@
           "version": "repo-lines-v1:sha256:2441b22dd0879576df773cd47cb405943050537fc6530095f2fec5932daac02c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOWYxYjJmY2JjMDQ2MzQwODZmZTI0YjQwYzZjZTM3ZGJhNzBhOTNmZjc4YmQyYTg4YjA5MzkyM2M2OWE2NDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTI0OWI0ZGQ0YjI1Y2QzOGFmMTczMDM0MTRiZGFiYzA3YTgzMDlmZTI4NDQ4ZmJkNjMwNjRmODZkM2M5NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiOTc5YTI5MGQyNTIzZWViOTc1NzFkZDBiZTBlMGJlYTA4YjRmYWU3OGRmNGVmMDYwOGZiZGQ0YTM4MGFkMWIifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L75-L246",
-          "version": "repo-lines-v1:sha256:8fc98b0706fab0b950a9a4735e8f09a5d43b273e5354a195722e70b82db8f4e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTczLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3ZmI0NWYxY2E2NTFlN2RmNDI1MDEyMDUzNTc3MTk1YTA5YTNmNjliMDFmMmVlMWFlOGRhMWIxMmI0NGExNTRmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNzZkMjZiMmY4YzI5Zjc0ZTIzYWI0ZTY4Mjg2Y2I3ZjM1MzQ2ZDY0MDVlODJkM2ExNGRmZDFlZjdiMzgwZThkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyZGMwN2U5MDliOGE2MWU2OWZkMWQwOTJkMzE4NDRhNDlmY2JiMzVmZTc1ZTQ2YzJkNDNmYzg5ZDgzMzRmODY5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5NWNiMDUwYzQ0MGM2ZjUyZjFlMzk5ZmE1YTY2MjM1M2NiNzFjMmRmZmY4YjA1ZWUzODhkMDk1ODJjMzJlYWVhIn0"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L84-L246",
+          "version": "repo-lines-v1:sha256:59bce8bc3a0c8ee3b6afde8c5427500227938b91a67ca548b6572c584aa11d1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0ZGMyNDAxOWZiODFhMDk1YTQ0ZGYxZTI3MDA3NGVhMTNmMjY3NDdlZmYxYTc0ZDBlNjUwNjRjOWNmNzNkNzJjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxMGM2N2M2Y2E5NGRiYzc0NDZiYzgxOWZiYWU3ZWQ0OTVhZGE0Y2QwM2NkYzdhYmM1NDUzNmE4OTM0Nzk5NGU0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjYjczMDczYmMxZGQ3MTM0Zjc4NjBjMTJkYjI1MzJmNWVhMDYzNGFlNWU2MTVlODc2NGUyNDllNjlkNjgxOTRhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3ZTU3NmFmNmEzMWVhNDU1MmQwMWM3YmIzMGFlMTc4NzhiZjg5MjQ3Nzc4YWJmM2FlZTBmNDk5ZWZmM2ZjNmViIn0"
         }
       ]
     },
@@ -82,7 +82,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L58",
-          "version": "repo-lines-v1:sha256:aaa7a9b8ee98aa44fdf9af3badd74bbf891e0d2d0b50ec87b030ae82e7c61703:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
+          "version": "repo-lines-v1:sha256:9931c09fd580a886195b5687d456a9eef94715f9921482ad804eb6871085a869:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmMGIzM2JjNTRjZTY5YWI1MDQ0NjcyNGQ3NTZkY2Y3ZmJhNGZiNGQ2MzdlMmI5YzQzZjdhNjA5N2UzNGZlNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOGU4NTVhMTBhYWE4M2YyMGY3NmUyMzBmNGJjMWQ2OWMzNzA1MWQ0MmQwNGMzNGVkNzA1ZTg0MWE4MWExYWMifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/questions.rs#L108-L135",
@@ -99,8 +99,8 @@
       "statement": "list_run_eventsは既存canonical agent_eventsのCodex保存進捗をread scopeで返し、Project/Workspace/Session/Run必須と任意Issue assertion、cursor/pageを一つのread snapshotで検証する。新規collectorやaudit/live読取ではない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L167-L181",
-          "version": "repo-lines-v1:sha256:24e4fa42326d945d16eb81f8629e02daa25633c1bab5e4fddfadac2d3fc38370:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MzIxMzc5NDNjZDAyMmM5YmU2NmVmZjY4MmQ0MWYwNDMxYmQ3NTJiMjJhYTg3ODEzNTZkNzE2M2E2MmIyZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlZWE4MmM2OTkyNTRmNGRjNDQ2YWZkYTIwZjM3Y2M4ZWIwMTkxM2E3YzQ2NWM5YzZjNmQ2MzgxMDJlNzcyNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczODE5OTE2MWM3NWNmMDFjOTZhZDgwNzdiZmY5ODljZmRkMGM4N2UwN2FjYzYwMDBmMDhkMDRkZDY2NTRlZmYifQ"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L177-L193",
+          "version": "repo-lines-v1:sha256:ca453450496b12e3aea50b8a9d3028b610854b55d003adedcd09c0d4fd389e18:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlZWE4MmM2OTkyNTRmNGRjNDQ2YWZkYTIwZjM3Y2M4ZWIwMTkxM2E3YzQ2NWM5YzZjNmQ2MzgxMDJlNzcyNDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwODA0OTgxNzA4NmNjYzlhZTZjYTQzYzliMGQxNmI5MDUzZWMyZWVhMzM0MDZiNmUzNzRhODAyODg1ODMwYWMifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L1-L84",
@@ -177,11 +177,11 @@
       "statement": "start_integrationの受付成功receiptのresult.skip_validationとget_integrationの全sectionは保存された解決済みbooleanを返し、後の設定変更や検証件数から方針を推測しない。受付、実行完了、publication、Wiki確認は独立した結果である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/integration_read.rs#L107-L171",
-          "version": "repo-lines-v1:sha256:903ad011533e36571625961045850720cf4f6bfc5681448f1be31bce9b39edd8:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZTNhZDZkMmE1NmUwZmQyN2RhYjA5Mzc0ODVjZGRlMDE5MWMwMDU2NGFjYTQ5ZTI3NzJkNTM3MWQwYzViNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0OTE1ZTcwN2VmMGIzM2VhOWZhOGExNzk3YWNkYTg3ZDM0YzM5ZGE3OTllOTYyZWM0ODMwYjk5ZjhjMjgzOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/integration_read.rs#L107-L175",
+          "version": "repo-lines-v1:sha256:291d3dbd3869d9b4530816c5e815caf47bd0ebd89afd883fe50103a474c928bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYjFhZTY3YjcxYzA5NWVkZjI0OWFhMjliMmZhNGQ1ZDhmZDFmODRkZDVjYWMyNTViMjdhZjkwNjczNDZlZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5M2NlNmEyNjdjYTY5NjhmZmU3NGFmMzg4NDgzMTYzMGIwZDQxZTlhOTU4YTg0MTJhNmQzODg3ODYxOTlkNDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjOWI1MjYzZjNjMDY0MDVjMDNiZmFjNWVmZDQ2MTQ5N2JjN2RiY2Y1OGNmYjFlMjljYjk5ZTdiMGVjNmUxMTcifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/launch.rs#L148-L160",
+          "resource": "repo://crates/server/src/remote_mcp/launch.rs#L177-L189",
           "version": "repo-lines-v1:sha256:0681570bb674f5fc94df1b846e2bc226ae1a613c18c6238c862e65bde4312fb4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3Y2RiYTRlYzFjYjAwYzdhZDQ5ZDc5ZmI1Zjc1NGRkYzhhNTc0NzY1YTU4NzlhMmQ3YTk3YjkxMWJiN2QzYTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmNDM1OWYxYThiNWUyNTJkMmYyODhjZWZmMGZjYmU5ODQ5YjE0NWFkM2ViOGQ1MDNmZjU0YWRiYjM5NTllOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3NGQ1NGM0OTcyOTRlMDQyODU2MDE5M2VhZDVmZDg0NDJiMWNjNzMyYTYxYmY1ZGJjNjJmN2MzMjkxMTg2YmIifQ"
         },
         {
@@ -571,10 +571,134 @@
           "version": "repo-lines-v1:sha256:18f50aa8769a6afe37c8cfcbb708d141348d4469ed1e5565cad4dbb1f5660196:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNWM4NmU3ZDM2YWQzYTg3NTc5MTU4YTNkZmY2ZWM0OWZmNTU3MTdmOThlMzkyNTcwZmYzYmJiZmY5Yzg5NjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YmFhMDdjYjcxNDkzNDQ4OGE3NDVhNWIxNWQ2YmEzMzNhMWYyMDVkMmRmMDRhNjQwMzk4YzBlMzZjMWY4NWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_2126fe7d093348e48b77402bf48f84db",
+      "statement": "approve_integrationとcancel_integrationはread/mergeとProject所属を検査し、既存receipt経由でUI共通判断・取消へ委譲する。adapterはIntegration状態を直接更新せず、Goalやコメントから自動承認しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write.rs#L17-L145",
+          "version": "repo-lines-v1:sha256:5d8afaa31ad428b27161c0f01f6b2b7dc294b3178ef21305fbcf90b5e217e3d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxNmRiMmJmMTViMDcyMzY1ZDZhZDI1M2UyMjY3MjU2ZjQ3MTQ0NmE1MDZmZWYwNzA1M2RmZDA1MDg2MTFlMjIxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNjIzNTVhYjUxYjZmNzRjYmNjZmFjODBiNzNhZDMzOTU4YzNjNjc1M2NmOGM5MTU3ZDc2NjRlZDI5ZTY1YTNiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwZDZiNDFiZmRmYjU2YzQ2MjgyZWE3ZjJkOTYwYzM2Yzk1Mzk0NjE4M2RkZTRjYTUwMGI5NDVlMTJjYmE0ODQ4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MSwiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/launch.rs#L135-L154",
+          "version": "repo-lines-v1:sha256:23c833673a13acc55d4a76114ab237e03eff03a67ba4826c85646948c00c1c8f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3YjhhNjExY2E5OTJhZjg1ODMxNWQzMTY2ZDExM2RmMjhhODc1NWIwZDI2MGJmYmRhMjI5YTQ0YjQ3MGMwNTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc1MmQ5Nzk5OGUxZDA2OTdmM2VhOThmY2VmODgxYzBlODY3M2RiM2U5OTUzNDk5MmY1ZWZiZjhkYzVmOWQ5MGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwYWVlNjdkNzExNjQxYjlmMjM2NzQ4OGNmZTE3NzBjZGViMWY4Y2EzY2M4MmI3MmVlNjM4ZmM1OWI3MDAxNjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_88406bd912e34d5782df02d923082ddf",
+      "statement": "pending_gatesは保存済み未決reviewとvalidation gateを返し、currentはblocked・取消/公開intentなし・scope一致、reviewではcandidate一致も示すが、live Git/writerの変更時検査を代替しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_read.rs#L131-L159",
+          "version": "repo-lines-v1:sha256:fc492cdaed8101745164fbd35f5153bf0ff3e3946f0876314a0d67fb588ff76c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3ZTM2MjA5ZmUzZjFmZWZmMDM5OGRiNzk4YzMxODEyZTFmMDcwZTQxYjBhZDc2MWUyYzU5ZDQ3YjhiODQ0MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlODAxOWQyM2QzZjY2NWIyYmQzY2M5ZjlmYWY0NmJlZjE2NGRlMjhiYjg5YzI2NGIyNzk0NDFkMTJlNTJjZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNzA4OGRlOGZhMmI5YzdlN2E0ZWIzN2U2YjlkM2Y1NTM5NGJhMGZhYTgwZGM5ZTViNzI5YTQ4N2Q5MjliMDcifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L209-L324",
+          "version": "repo-lines-v1:sha256:6e10a09238e1fd6f4ccd20cde09769b9c995f3756ef14faa841c9ade801909dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkZGFlZmQwYzI4NGUwODkxMDI1Nzg5OTgwM2I3MjZhZWVlMWY5ZTAxYzk5ZDExYmZiNmIzYTEzM2YwMWNmN2YxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzMGMxZjE4OGYxNDJlZDdhODI0NjgwYjIwNzE3MmM1NTE5YmM2MTRhNDhmZGE3Y2YxNjdlZGI4ZGRmNzk5NTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZTUxYTQ4YmRkYzA2YjA2M2Y0NWNiMmY4NzJmZmNkNDI4MDcyOGZiYWRjOGYzOTc1NmY1ZTMzYWJkNzk5MzA3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YTkzMjVlZjRhYTYzNjViZjQzOGQxMjA3YjIxNjIwOWY5NjcxMDQ5OTc5YTQ4MDI4MGU3NGI2NTdjMDc1MzYxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_27833d9ed1664dcdb336a0c154f651cf",
+      "statement": "pending_gatesの続頁はexpected_revisionを要求し、1–50件、説明/diff/risk各16000文字・command2000文字の上限と個別truncated flagを持つ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_read.rs#L107-L159",
+          "version": "repo-lines-v1:sha256:37dcb7ead3050bac1ee767a6aeba93281cc501e8fc3cd0de277688442252eb08:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYjFhZTY3YjcxYzA5NWVkZjI0OWFhMjliMmZhNGQ1ZDhmZDFmODRkZDVjYWMyNTViMjdhZjkwNjczNDZlZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5M2NlNmEyNjdjYTY5NjhmZmU3NGFmMzg4NDgzMTYzMGIwZDQxZTlhOTU4YTg0MTJhNmQzODg3ODYxOTlkNDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNzA4OGRlOGZhMmI5YzdlN2E0ZWIzN2U2YjlkM2Y1NTM5NGJhMGZhYTgwZGM5ZTViNzI5YTQ4N2Q5MjliMDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef8cc0b6471f4b2f8b75a80653f907fc",
+      "statement": "MCP承認はgate_idとrevision/base/candidate/既存validation_scopeのSHA-256を固定し、UI共通mutation lock下で期待値を照合する。scopeには固定sourcesとplanを含み、古い証拠やlive target前進を拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L178-L198",
+          "version": "repo-lines-v1:sha256:7b3419797deca3b0aa0c1c5127a9992baf424628bc95f7370c1c58ef050c4952:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NWYxNGExNjI4ZGU3OTNlZWQ5ZGE2OTg0Mjc2NjE5MTMwMzJjODg3MTc2YjY4NGRhMWMwMzM3OTgzZjFkNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA1YmM5ZTQ0MTFlMzI0NmRlNzNhYjU2ZjNjYmUzNjU2MzJlMWQ0NDk4NWUxNDk3YzE5YmNjYTg0ZDY1YzA5NGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4YTA5NmU5OTY0NWZhODEwYzY5MWE5OGZlN2Y0YTM2NzcwNTVhYzZiNmQ3M2UxMmE5M2YyNmYwZTE3NDJjYmEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/mod.rs#L306-L333",
+          "version": "repo-lines-v1:sha256:829d51a067079755960fad050282f1077b5a05aeb401ffb155bc61fa1b929161:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZWZhNGUxYzkzZDkxYWIxNjI1MjgzNTBjYzcwZDdhOGFkM2Q2NDM1NzZlNTkyMDRlYTlhYmFlZDAxNTBjZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5ZDhmMzZmZjVhMDRkNjM1MDlkNmE4MzVmMjMwMWUyYTE1MmFhOWM3YTZjNDU2ZmFiZjViOGVjOGMyMzdlOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjViYmRkMTFhYWEwMDhhZmVhMDBhM2M0YWFhYWYyZGQxNThkMGFlZmE2MzFjMmEzM2E4NjVjNGY1YWJmMjI1YmYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L209-L324",
+          "version": "repo-lines-v1:sha256:6e10a09238e1fd6f4ccd20cde09769b9c995f3756ef14faa841c9ade801909dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkZGFlZmQwYzI4NGUwODkxMDI1Nzg5OTgwM2I3MjZhZWVlMWY5ZTAxYzk5ZDExYmZiNmIzYTEzM2YwMWNmN2YxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzMGMxZjE4OGYxNDJlZDdhODI0NjgwYjIwNzE3MmM1NTE5YmM2MTRhNDhmZGE3Y2YxNjdlZGI4ZGRmNzk5NTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZTUxYTQ4YmRkYzA2YjA2M2Y0NWNiMmY4NzJmZmNkNDI4MDcyOGZiYWRjOGYzOTc1NmY1ZTMzYWJkNzk5MzA3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YTkzMjVlZjRhYTYzNjViZjQzOGQxMjA3YjIxNjIwOWY5NjcxMDQ5OTc5YTQ4MDI4MGU3NGI2NTdjMDc1MzYxIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_67aa55e8528e460289ef53d1774822bc",
+      "statement": "approve_integrationはcontinueに固定され、validation gateでは失敗を合格に書き換えない候補/check限定例外となる。MCP receiptのprincipalと既存domain gate/reviewの固定local operator actor表現は別である。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L337-L417",
+          "version": "repo-lines-v1:sha256:c0a73db4e0825dee5660e2922dd34c6122d0e742177a3b2cb3c888e3b0e68fd7:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmY2ZjNmIwMjAzOWM1Y2EzODA2Mzc5OTlkYTYwZTUzNWIxOWFhMzllOWIzN2U4ZTZjM2QzOTEyZDljNjdlMjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmNjczZTgyZmM2NzZhZmNhOGI5NmM3ZmRjZjZkMjMxMzE5OWNkNmM0NmVmZDcxMWVkNmI1N2Y2ZGFhN2ZhNzMifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L458-L462",
+          "version": "repo-lines-v1:sha256:c1320fc29d1aee81eb672b0234452bddbf7be6a3d11ba41c5056ee0121329144:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTcwMzRiOTY2MjYwODgyOTM2MzJlYjNjZTQ3MTFmZjExYWU4ODdiNTI2NDUxYWJiZTM1YTQ0NGNjNjhhNTBkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjM1ZTJiMGMyNDRmODY1NDE0ODllYWIwM2JjZDFiMzRlYjczZmY3NTExYTI3YWZkMmIwNDMyNTBhMTRjODMxOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGFmN2Y2OWNmN2IxYzVhMTkyMjdkZDY2OTY1ZGZiZDE5MTViZjQ4MTU3ZWE3OTJiNDkwYWJjMmVhZGQ3MjMxMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjdiMTQ2OTVlYzE1ZDUzNWM0MTNiNDZkZTk1NWE0ZTQyMjljYzQ4MWM3MzJlZDVmOWI1NjVkMzk0ZjRkMTg3MiJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write.rs#L112-L145",
+          "version": "repo-lines-v1:sha256:631cda3084eab6318e4d920dd437610f3a27c2990510101bae0297eb091ade23:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwODMzZjY1YTg1ZTA2NDYzOTU4NjIxYjM1Y2EwMzI0ODk4YjMwOWFkYTkwOWRjZWU3ZGU1ZDBlNjllNzgzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MjM1NWFiNTFiNmY3NGNiY2NmYWM4MGI3M2FkMzM5NThjM2M2NzUzY2Y4YzkxNTdkNzY2NGVkMjllNjVhM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5NjA5MjY0NTc4NGYyNzM5MTRhYWNmMzJlZDc5NGFlMDZhODM4YWNjZjczY2I5NjM0OWEyMmI3OTk1NWY1NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cd4ce9cd9404682b7e7cfcb47716685",
+      "statement": "cancel_integrationは公開境界後のGit undoを行わず、遅い取消がsucceeded receiptを返しても取消要求の新規受理を意味しない。結果の取消flagと公開状態を読み戻す必要がある。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L504-L531",
+          "version": "repo-lines-v1:sha256:ee3248b22d6402f700f3f2fe53800047d3e099bc0a15bbb000eb0d3c8c4e8f75:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZWZkOTE1ZWE5ODhhNjllNzBkOGE0ZWVjNWU5ZDg3ODRiNTM5ODY5ODczYTY1ZmE2MTA1MTZhOGVkN2RkMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MjI1YWY5YjllYWY5MTQyNjg5N2I5ZjAwMmNhZDAwYWYxYWQ5M2Q4OWQwNGYyZDU3YTRhNjM3OTg1OTE4NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzNDQ3MTM3MGMyZDhkNjNhYmNkNzc1YjA0OGU1YzI2MzI5ZDk2YjJkMmU3YmE0OGEyNGU5YTQxN2Q4OWI4N2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5NzRlMDE4YmIzODNkY2Q1ZWIzZTg3OWU1ZmM3MTk2ZjVmMGZhZDg1ODc0M2ZiMGZiNDE2YmFmOTEyODY1ZjQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write.rs#L115-L145",
+          "version": "repo-lines-v1:sha256:77dbdd90f28ad52695a4dd5ac571b4e7c084d9b8e614c2691113d5ed2d1451aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyYjcwNDM4Y2E1ZGYzYzkzOWVjZGY0ZWZhZWYzODIyMTlmODhhNGFjM2MxMjVhYzc1NDM0NzlhYjdhMWUwNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MjM1NWFiNTFiNmY3NGNiY2NmYWM4MGI3M2FkMzM5NThjM2M2NzUzY2Y4YzkxNTdkNzY2NGVkMjllNjVhM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjY2UxYmFhMTZiMjQ5ZmZlMmM5YjI4MDQyMTQ1ODQ5MDAwNjNkNDJjN2MwNjRiM2ZhNGU4MDVhNjlmMGFkMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78e9e9ba9c144afc988119bda1439905",
+      "statement": "summary.lifecycleはrunと予約を同一SQLite snapshotで読み、cancelledかつ予約なしだけをcancellation_completeとする。terminalはcancelled/succeeded/failedで、過去のoperation receiptやsummary全体とのatomic snapshotではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_read.rs#L160-L174",
+          "version": "repo-lines-v1:sha256:837d6ee9c31d4fce5a1fa972259bc394e61a3fce09fa56f19409b100ba76a4f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViODlkYzRlMDkyMTEyMGE0M2UxZTgyMmNjNzRlNGE2MTVhMTczOWRjZjFkMDAyZGZmNDFjMThmMTI1MzJmOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4YmYzNWYwNmQzZDE3YjQ3ODA4M2U2NDRmMTI0ZmM0ZjNiNGRmOGM0ZTcwMWJmMTc2M2E4N2FhYjJkZTg0NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmMjQ3YmZlMjc5NzM3ZmM4OTExODFiOThiNzcxODAzMTBmZmVkNTAxNzZkYjMzYWE3NDA4MTMzMGI2NTU2NDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlODUzYWRhNTBjMGFmNWVmNjEwNWY5N2YyZmYzMTMxMDRiZjllNjhhZWViMGQyODkyYmIwOTIwYjFiMjY2ZTkifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write.rs#L53-L79",
+          "version": "repo-lines-v1:sha256:5c0452ceebfe8ecdbad2884e3a703298139fa57936a6454151331940c4debcc6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1OTIwYzk1MzJmNDJkNDgyMWFhMjE4ZWU0Y2VjZjliMjYwZDY2ZjE4MWJiMjg4MTQ0OGFiYWI2YzZjNDYzY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhZTkxMGM1ZDI2NmIwOTIzYmM2NGMyMmRkZTg4YjM1NzQyZjU3NTg5YTdkNDBlZjE2NmQ0YjBmZDk1NmQyZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAxZDc4YmIyMjI2YmM0MmEwMWUwYmE5NGJlNmI1N2VhZjEyZjAwNjY4Nzk2M2NmMmI2ZDA1MDFlNDM0ZjhmZDQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1144-L1165",
+          "version": "repo-lines-v1:sha256:3f463d94cde74a84d9c2f945f970528aec05d0eda7d94c048cb47d275d5616e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMmI1MGZiNzM0ZTdmZDBlNzc1OGNhYjAyMjVjYmFjOWNhNjc0OTI5NzMxNDRmMGFlNGRmOTc4ODEyODkwMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5MDY1YjY4ZjRiMDE5NDgzNjMzMDhjMTQyMjZjNjYyOGY5YTI4MDJlMjA5MzBmNWMxYjFkZjZiNTJiZDY5OGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyMTQwNzlhNzg1YTM1MzllOGEwMzA2ZTQxODQ5ODhiYjFhMTI5NWE1MDE3MjE2NzAxMmQ4ZGFjM2RiZWU0MDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c4f933fb4b45456d9916069747ac5911",
+      "statement": "Integration判断の再送は元の入力とrequest IDを固定し、SQLx errorまたは判断後の状態観測失敗はuncertainとして読み戻しを要求する。受付receiptは現在のterminal状態へ更新される履歴ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write.rs#L112-L145",
+          "version": "repo-lines-v1:sha256:631cda3084eab6318e4d920dd437610f3a27c2990510101bae0297eb091ade23:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwODMzZjY1YTg1ZTA2NDYzOTU4NjIxYjM1Y2EwMzI0ODk4YjMwOWFkYTkwOWRjZWU3ZGU1ZDBlNjllNzgzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2MjM1NWFiNTFiNmY3NGNiY2NmYWM4MGI3M2FkMzM5NThjM2M2NzUzY2Y4YzkxNTdkNzY2NGVkMjllNjVhM2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5NjA5MjY0NTc4NGYyNzM5MTRhYWNmMzJlZDc5NGFlMDZhODM4YWNjZjczY2I5NjM0OWEyMmI3OTk1NWY1NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/integration_write_tests.rs#L190-L244",
+          "version": "repo-lines-v1:sha256:29c10b818cfcb6e6447517e79c943ac338b9b92d0508cc1721df9bf5e090b038:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMTBhYWE3MTAzMTM2NjIwYWE1YWI4NGIzYzRmNmM5OWM4ZmNhNDJhYzQ0MDZjZDNlYzkyNDA0MmU1MzVjYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxZjI0N2ZjMGU1NjI0MzQ5NzBhZjY3YTg3MTgyZjM2NDAwMWNkZDQ3NDcwOWEzYjRlNTU2ODBhNzQwYTgzNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MDFhZjUxNzU2OWJkNmVlZDE1OTk2NmYwMWViMzM5ZDViOWJhNDJkZDNjZGI0YmU0YWJhMDVmYjYxZWFmZmEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/operations.rs#L208-L245",
+          "version": "repo-lines-v1:sha256:4401399c3de2b7ec82b4d52170fcd844f5eb9f45b07cb4654cb396c827485057:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhOTQ0YzZjZTM4NjBhM2FkM2E4OGNiMDFkM2ZkNzZkMDUzMzYzYWVkZTE5MWUyN2MzOTY4YTBhOTQyMTE5MTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiZTJlOGE3NzVkZTZjMTlmMDM4NjE0ZWEwYjRiOGY5ODA2YzRjNzE1ZTE2YTBmYWI2N2MxNmQ2NmFkZDkwMTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiMzcyODM4MjYzNTIwOTFiMWZjYjFhY2NhMTA1N2M2YTQ3YjFhYzg4ZDMzOGY2Y2U2ZmI1NGUwNTk4MzZmMTgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-23T23:24:04.082Z"
   }
 }

@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
+  - id: openwiki-source-1083b3cf6ec502f1c6eb3811
+    resource: repo://crates/server/src/remote_mcp/integration_write.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
     resource: repo://crates/server/src/remote_mcp/launch.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
@@ -64,10 +66,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-23T23:24:04.082Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -123,6 +125,8 @@ local Board の **Integrate / Auto Merge** では、Repo・local target と各 C
 この [正式 Integration](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
 
 外部会話からは `start_integration` の `skip_validation` で同じ検証方針を選び、受付 receipt と `get_integration` で保存済みの選択を確認できる。再接続時の入力一致と結果の読み分けは [MCP の検証方針・再送契約](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
+
+外部会話で判断を続ける場合は、`get_integration(section="pending_gates")` の保存説明・失敗証拠と対象候補を読み、明示承認時にだけ `approve_integration` を送る。中止は `cancel_integration` で要求し、受付 receipt と `summary.lifecycle.cancellation_complete` を分けて確認する。固定証拠の渡し方と古い候補の拒否、取消後の予約解放は [MCP の承認・取消契約](../integrations/remote-access.md#mcp-から-integration-を承認取消する)を参照する。[公開操作](../../crates/server/src/remote_mcp/integration_write.rs#L17-L79)
 
 新規 run の通常 merge は host が進める。競合したときだけ有限の Agent job が index を解消し、利用者は保存された候補の解決差分を承認する。その後に次の source へ進み、全 source 完了後の最終候補で凍結 validation plan を実行する。失敗した required check は retry / 候補限定例外 / cancel の判断を待つ。[競合と承認](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[最終検証](../concepts/formal-integration.md#開発検証と-human-gate)
 

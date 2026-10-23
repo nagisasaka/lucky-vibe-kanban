@@ -41,7 +41,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-23T23:24:04.082Z
 ---
 
 # システム境界と起動順序
