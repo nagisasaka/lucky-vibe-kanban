@@ -322,6 +322,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         ("update_todo", "lvk:write"),
         ("delete_todo", "lvk:write"),
         ("start_integration", "lvk:merge"),
+        ("sync_repository_wiki", "lvk:write"),
     ] {
         let response = client.post(format!("{base}/mcp"))
             .header("host", "lvk.example")

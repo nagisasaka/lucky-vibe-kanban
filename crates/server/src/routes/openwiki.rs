@@ -94,7 +94,17 @@ pub async fn get_status(
     State(deployment): State<DeploymentImpl>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<RepositoryMemoryState>>, ApiError> {
-    let repo = repo(&deployment, id).await?;
+    let (state, _) = status_snapshot(&deployment, id).await?;
+    Ok(Json(ApiResponse::success(state)))
+}
+
+/// Keep the displayed freshness and the caller's source precondition tied to
+/// the same observed HEAD. Reads never initialise or reconcile repository state.
+pub(crate) async fn status_snapshot(
+    deployment: &DeploymentImpl,
+    id: Uuid,
+) -> Result<(RepositoryMemoryState, Option<String>), ApiError> {
+    let repo = repo(deployment, id).await?;
     let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, id)?;
     let mut state = match &store {
         Some(store) => store.state()?,
@@ -105,6 +115,7 @@ pub async fn get_status(
     if let Some(store) = &store {
         state.coding_errors = store.coding_errors()?;
     }
+    let mut current_source = None;
     if let Some(branch) = &state.target_branch {
         let head = deployment.git().get_branch_oid(&repo.path, branch)?;
         let pending = match &store {
@@ -123,8 +134,9 @@ pub async fn get_status(
             .map_err(api_error)?;
         state.wiki_exists = exists;
         state.status = state.derived_status(exists, pending, source_matches);
+        current_source = Some(head);
     }
-    Ok(Json(ApiResponse::success(state)))
+    Ok((state, current_source))
 }
 
 pub async fn configure(
@@ -185,7 +197,7 @@ pub async fn sync(
     } else {
         serde_json::from_slice(&body).map_err(api_error)?
     };
-    start_reconciliation_request(&deployment, id, Some(request))
+    start_reconciliation_request(&deployment, id, Some(request), None)
         .await
         .map_err(api_error)?;
     get_status(State(deployment), Path(id)).await
@@ -193,14 +205,66 @@ pub async fn sync(
 
 /// Reserve before activation so recovery always knows the exact process owner.
 pub async fn start_reconciliation(deployment: &DeploymentImpl, id: Uuid) -> anyhow::Result<()> {
-    start_reconciliation_request(deployment, id, None).await
+    start_reconciliation_request(deployment, id, None, None)
+        .await
+        .map(|_| ())
+}
+
+/// MCP pins the observed saved configuration and source, but shares every UI
+/// admission/publication guard. It cannot implicitly bootstrap a missing Wiki.
+pub(crate) async fn sync_checked(
+    deployment: &DeploymentImpl,
+    id: Uuid,
+    request: SyncRepositoryMemory,
+    expected_branch: &str,
+    expected_source: &str,
+) -> anyhow::Result<RepositoryMemoryState> {
+    start_reconciliation_request(
+        deployment,
+        id,
+        Some(request),
+        Some((expected_branch, expected_source)),
+    )
+    .await
+}
+
+fn check_sync_available(state: &RepositoryMemoryState) -> anyhow::Result<()> {
+    if !state.enabled {
+        bail!("Enable OpenWiki repository memory first");
+    }
+    if state.active_run_id.is_some() || state.bootstrap.is_some() {
+        bail!(
+            "Repository maintenance already has an active AgentRun; inspect its workspace or wait for recovery"
+        );
+    }
+    Ok(())
+}
+
+fn check_sync_target(
+    state: &RepositoryMemoryState,
+    source: &str,
+    initial: bool,
+    expected: Option<(&str, &str)>,
+) -> anyhow::Result<()> {
+    if let Some((branch, commit)) = expected {
+        anyhow::ensure!(
+            state.target_branch.as_deref() == Some(branch) && source == commit,
+            "Wiki target changed; read get_repository_wiki and confirm the current source before a new request"
+        );
+        anyhow::ensure!(
+            !initial,
+            "No existing Wiki on the selected source; initialize explicitly through Repository settings"
+        );
+    }
+    Ok(())
 }
 
 async fn start_reconciliation_request(
     deployment: &DeploymentImpl,
     id: Uuid,
     request: Option<SyncRepositoryMemory>,
-) -> anyhow::Result<()> {
+    expected: Option<(&str, &str)>,
+) -> anyhow::Result<RepositoryMemoryState> {
     let repo = repo(deployment, id).await?;
     workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
     let storage = deployment
@@ -220,14 +284,7 @@ async fn start_reconciliation_request(
         .try_lock()
         .context("Another repository maintainer is starting or publishing")?;
     let mut state = store.state()?;
-    if !state.enabled {
-        bail!("Enable OpenWiki repository memory first");
-    }
-    if state.active_run_id.is_some() || state.bootstrap.is_some() {
-        bail!(
-            "Repository maintenance already has an active AgentRun; inspect its workspace or wait for recovery"
-        );
-    }
+    check_sync_available(&state)?;
     // Validate user input before reserving a writer or changing error/freshness state.
     let branch = state
         .target_branch
@@ -235,6 +292,7 @@ async fn start_reconciliation_request(
         .context("Choose an integration branch")?;
     let source = deployment.git().get_branch_oid(&repo.path, branch)?;
     let initial = !services::services::openwiki::has_canonical_wiki(&repo.path, &source)?;
+    check_sync_target(&state, &source, initial, expected)?;
     let scope = match request {
         Some(request) => {
             if initial && request.from_commit.is_some() {
@@ -264,7 +322,7 @@ async fn start_reconciliation_request(
         store.save_state(&state)?;
         return Err(error);
     }
-    Ok(())
+    Ok(store.state()?)
 }
 
 async fn prepare_run(
@@ -840,6 +898,30 @@ pub fn spawn_recovery_monitor(deployment: DeploymentImpl) {
 #[cfg(test)]
 mod adoption_tests {
     use super::*;
+
+    #[test]
+    fn checked_sync_rejects_stale_target_missing_wiki_and_existing_owner() {
+        let mut state = RepositoryMemoryState::enabled_defaults(Some("main".into()));
+        let source = "a".repeat(40);
+        assert!(check_sync_available(&state).is_ok());
+        assert!(check_sync_target(&state, &source, false, Some(("main", &source))).is_ok());
+        assert!(check_sync_target(&state, &source, false, Some(("other", &source))).is_err());
+        assert!(
+            check_sync_target(&state, &source, false, Some(("main", &"b".repeat(40)))).is_err()
+        );
+        assert!(check_sync_target(&state, &source, true, Some(("main", &source))).is_err());
+        // UI bootstrap behavior is unchanged.
+        assert!(check_sync_target(&state, &source, true, None).is_ok());
+        state.active_run_id = Some(Uuid::new_v4());
+        assert!(check_sync_available(&state).is_err());
+        state.active_run_id = None;
+        state.status = RepositoryWikiStatus::Error;
+        state.error = Some("retained failure".into());
+        assert!(check_sync_available(&state).is_ok());
+        assert_eq!(state.error.as_deref(), Some("retained failure"));
+        state.enabled = false;
+        assert!(check_sync_available(&state).is_err());
+    }
 
     #[test]
     fn scoped_coverage_survives_automatic_sync_and_failed_full_review() {
