@@ -519,6 +519,15 @@
     "noCommands": "このエージェントで利用可能なコマンドはありません。"
   },
   "kanban": {
+    "compact": {
+      "workspaces": "Workspace: {{count}} · 詳細",
+      "approval": "承認待ち",
+      "input": "入力待ち",
+      "running": "実行中",
+      "failed": "失敗",
+      "unseen": "未確認の更新",
+      "devServer": "開発サーバー実行中"
+    },
     "commentLastEditedAt": "最終編集日時（本文は初回投稿から変更されている場合があります）",
     "reviewLabel": "レビュー者ラベル（自己申告・未検証）",
     "recordedPrincipal": "初回投稿時の認証済みMCP主体（issuer / subject）",

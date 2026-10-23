@@ -1,3 +1,5 @@
+import { KanbanGrid, KanbanGridCard, KanbanGridCards } from './KanbanGrid';
+import { KanbanCardDetails } from './KanbanCardDetails';
 import { DesignNotePanel } from '@/features/design-notes/ui/DesignNotePanel';
 import { TodoPanel } from '@/features/todos/ui/TodoPanel';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
@@ -56,8 +58,6 @@ import type {
 import {
   KanbanProvider,
   KanbanBoard,
-  KanbanCard,
-  KanbanCards,
   KanbanHeader,
   type DropResult,
 } from '@vibe/ui/components/KanbanBoard';
@@ -303,10 +303,9 @@ export function KanbanContainer() {
   const showWorkspaces =
     projectViewPreferences?.showWorkspaces ?? defaultShowWorkspaces;
   const hideBlocked = projectViewPreferences?.hideBlocked ?? defaultHideBlocked;
-  const { data: projectWorkflowAttemptData } = useProjectWorkflowAttempts(
-    projectId,
-    { enabled: showWorkspaces }
-  );
+  // Workflow attention states stay visible even when workspace details are hidden.
+  const { data: projectWorkflowAttemptData } =
+    useProjectWorkflowAttempts(projectId);
 
   const hasActiveFilters = useMemo(
     () =>
@@ -657,10 +656,6 @@ export function KanbanContainer() {
   );
 
   const workflowAttemptsByIssueId = useMemo(() => {
-    if (!showWorkspaces) {
-      return new Map<string, WorkflowAttemptResponse[]>();
-    }
-
     const map = new Map<string, WorkflowAttemptResponse[]>();
     for (const attempt of projectWorkflowAttempts) {
       const attempts = map.get(attempt.issue_id) ?? [];
@@ -668,13 +663,9 @@ export function KanbanContainer() {
       map.set(attempt.issue_id, attempts);
     }
     return map;
-  }, [projectWorkflowAttempts, showWorkspaces]);
+  }, [projectWorkflowAttempts]);
 
   const workspacesByIssueId = useMemo(() => {
-    if (!showWorkspaces) {
-      return new Map<string, WorkspaceWithStats[]>();
-    }
-
     const map = new Map<string, WorkspaceWithStats[]>();
 
     for (const issue of issues) {
@@ -682,7 +673,6 @@ export function KanbanContainer() {
         .filter(
           (workspace) =>
             !workspace.archived &&
-            !workflowWorkspaceIds.has(workspace.id) &&
             !!workspace.local_workspace_id &&
             localWorkspacesById.has(workspace.local_workspace_id)
         )
@@ -722,10 +712,8 @@ export function KanbanContainer() {
 
     return map;
   }, [
-    showWorkspaces,
     issues,
     getWorkspacesForIssue,
-    workflowWorkspaceIds,
     localWorkspacesById,
     prsByWorkspaceId,
     membersWithProfilesById,
@@ -1151,11 +1139,7 @@ export function KanbanContainer() {
           </div>
         ) : (
           <div className="flex-1 overflow-x-auto px-double">
-            <KanbanProvider
-              onDragEnd={handleDragEnd}
-              className="min-w-full"
-              columnClassName="auto-cols-[minmax(260px,1fr)]"
-            >
+            <KanbanGrid onDragEnd={handleDragEnd}>
               {visibleStatuses.map((status) => {
                 const issueIds = items[status.id] ?? [];
 
@@ -1182,8 +1166,8 @@ export function KanbanContainer() {
                         </button>
                       </div>
                     </KanbanHeader>
-                    <KanbanCards id={status.id}>
-                      {issueIds.map((issueId, index) => {
+                    <KanbanGridCards id={status.id} items={issueIds}>
+                      {issueIds.map((issueId) => {
                         const issue = issueMap[issueId];
                         if (!issue) return null;
                         const issueWorkflowAttempts =
@@ -1206,22 +1190,18 @@ export function KanbanContainer() {
                         });
 
                         return (
-                          <KanbanCard
+                          <KanbanGridCard
                             key={issue.id}
                             id={issue.id}
                             name={issue.title}
-                            index={index}
-                            className="group"
                             onClick={(e) => handleCardClick(issue.id, e)}
                             isOpen={selectedKanbanIssueId === issue.id}
-                            isMobile={isMobile}
                             isSelected={selectedIssueIds.has(issue.id)}
                             dragDisabled={isMultiSelectActive}
                           >
                             <KanbanCardContent
                               displayId={issue.simple_id}
                               title={issue.title}
-                              description={issue.description}
                               priority={issue.priority}
                               tags={getTagObjectsForIssue(issue.id)}
                               assignees={issueAssigneesMap[issue.id] ?? []}
@@ -1292,50 +1272,64 @@ export function KanbanContainer() {
                                   {run.target_ref.replace('refs/heads/', '')}
                                 </button>
                               ))}
-                            {(issueWorkflowAttempts.length > 0 ||
-                              issueWorkspaces.length > 0) && (
-                              <div className="mt-base flex flex-col gap-half">
-                                {issueWorkflowAttempts.map((attempt) => (
-                                  <IssueWorkflowAttemptCard
-                                    key={attempt.id}
-                                    attempt={workflowAttemptToKanbanCard(
-                                      attempt
-                                    )}
-                                    onClick={() =>
-                                      openIssueWorkflowAttempt(
-                                        attempt.workflow_id
+                            {issueWorkflowAttempts.map((attempt) => (
+                              <IssueWorkflowAttemptCard
+                                key={attempt.id}
+                                attempt={workflowAttemptToKanbanCard(attempt)}
+                                onClick={() =>
+                                  openIssueWorkflowAttempt(attempt.workflow_id)
+                                }
+                              />
+                            ))}
+                            <KanbanCardDetails
+                              count={
+                                getWorkspacesForIssue(issue.id).filter(
+                                  (workspace) => !workspace.archived
+                                ).length
+                              }
+                              workspaces={issueWorkspaces}
+                              description={issue.description}
+                            >
+                              {showWorkspaces &&
+                                (issueWorkflowAttempts.length > 0 ||
+                                  issueWorkspaces.length > 0) && (
+                                  <div className="mt-base flex flex-col gap-half">
+                                    {issueWorkspaces
+                                      .filter(
+                                        (workspace) =>
+                                          !workflowWorkspaceIds.has(
+                                            workspace.id
+                                          )
                                       )
-                                    }
-                                  />
-                                ))}
-                                {issueWorkspaces.map((workspace) => (
-                                  <IssueWorkspaceCard
-                                    key={workspace.id}
-                                    workspace={workspace}
-                                    onClick={
-                                      workspace.localWorkspaceId
-                                        ? () =>
-                                            openIssueWorkspace(
-                                              issue.id,
-                                              workspace.localWorkspaceId!
-                                            )
-                                        : undefined
-                                    }
-                                    showOwner={false}
-                                    showStatusBadge={false}
-                                    showNoPrText={false}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </KanbanCard>
+                                      .map((workspace) => (
+                                        <IssueWorkspaceCard
+                                          key={workspace.id}
+                                          workspace={workspace}
+                                          onClick={
+                                            workspace.localWorkspaceId
+                                              ? () =>
+                                                  openIssueWorkspace(
+                                                    issue.id,
+                                                    workspace.localWorkspaceId!
+                                                  )
+                                              : undefined
+                                          }
+                                          showOwner={false}
+                                          showStatusBadge={false}
+                                          showNoPrText={false}
+                                        />
+                                      ))}
+                                  </div>
+                                )}
+                            </KanbanCardDetails>
+                          </KanbanGridCard>
                         );
                       })}
-                    </KanbanCards>
+                    </KanbanGridCards>
                   </KanbanBoard>
                 );
               })}
-            </KanbanProvider>
+            </KanbanGrid>
           </div>
         )
       ) : (
