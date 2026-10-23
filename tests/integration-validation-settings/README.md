@@ -64,3 +64,69 @@ Rust fixtureは一時GitでJSON互換、非実行・index/HEAD不変、競合、
 スクリーンショットは `test-results/integration-validation-settings/` に保存しGit対象外。
 一時bundle/CSSは終了時に削除し、browser/fixtureサーバーを停止する。通常のnode_modulesを再利用用に保持する。
 main merge・デプロイ・再起動・実認証設定変更は実施していない。fresh独立レビューは統括側の別依頼を待つ。
+
+## Rust / 実HTTP接続の追加検証
+
+Rust枠を調整した後、次の専用runnerを使用する。
+
+```sh
+python3 tests/integration-validation-settings/run-rust.py
+# 失敗箇所だけ再実行する場合: 引数に check / unit / frozen / http を指定
+```
+
+`CARGO_BUILD_JOBS=2`、既存wrapperを尊重したsccache、Workspaceの通常targetを使用する。
+各コマンドのlog・開始終了epoch・所要・exit codeを
+`test-results/integration-validation-settings/rust/` に残す。
+新規 `local130-validation-*` 一時instanceだけを `LVK_INSTANCE_DIR` に設定し、
+実環境のDBやrepoは読み書きしない。プロセス群を停止してから一時instanceを片付ける。
+
+追加のignored test `isolated_validation_settings_http_and_executor` は実際のrepo router、
+GET/PUT handler、local Access/CSRF層をloopback port 0で起動する。
+JSON欠落読取、CSRF拒否、400の入力拒否、保存・読戻し、古いrevisionとpublication lockの409、
+Unix非root環境の書込権限不足500と元ファイル保持を検査する。
+保存後のHEAD/index不変・非実行、通常commit後の固定target plan読取、後続作業木編集の無影響、
+skipを確認し、planの複数行commandを既存 `ScriptRequest::spawn` のBash実行器で実行する。
+出力markerはfixture repo外の一時instance内に限定し、repoはcleanのままにする。
+これは正式Integrationのadmission→container→publication全体を駆動するE2Eではない。
+
+### 2026-10-24 追試結果（JST）
+
+前節の「Rust未実行」は初回実装時点の履歴。今回、対象実装
+`b745d92eaeaffd3cdd84c9764b508290c0e0ee4a` と本commitの試験差分に対し、
+以下を実施してすべて成功した。製品UI/APIコードの変更はなく、既存UI16件・型・lintは再実行していない。
+
+| 工程 / コマンド | 開始–終了 JST | 所要 | 結果 |
+| --- | --- | --- | --- |
+| 事前確認・HTTP fixture準備・他cargo終了待ち | 08:21:08–08:25:01 | 3分53秒 | ps/RAM/disk/snapshot確認後に開始 |
+| `cargo check -p server` | 08:25:01–08:32:25 | 443.65秒 | 成功 |
+| `cargo test -p server --lib routes::integration_validation::tests` 初回 | 08:32:33–08:41:48 | 554.52秒 | fixtureのclosure寿命エラーE0373、試験実行前に停止 |
+| 同上、修正後 | 08:42:05–08:44:26 | 141.48秒 | 7件成功 |
+| `cargo test -p server --lib mechanical_validation_is_frozen_from_target_and_skip_never_reads_or_runs_commands` | 08:44:26–08:45:08 | 41.63秒 | 1件成功 |
+| `cargo test -p server --lib isolated_validation_settings_http_and_executor -- --ignored --nocapture --test-threads=1` | 08:45:08–08:45:28 | 20.54秒 | 1件成功 |
+
+全Rustコマンドは専用runnerから `CARGO_BUILD_JOBS=2` と既存共有sccacheを指定。
+このWorkspaceには開始時targetがなく、通常の `target/` を作成・以降再利用した。
+serverの既存build identity更新により後続cargoでもserverが再処理されたが、依存全体のやり直しやcleanはしていない。
+E0373は同時保存fixtureのthread closureを `move` にする2行の修正で解消した。
+追加HTTP fixtureのコンパイル・実行も成功し、非root（UID10001）で書込権限不足500の分岐を実行した。
+HTTP testのmarkerは保存時に存在せず、明示的な既存ScriptRequest実行後だけ生成された。
+
+実行証拠（Git対象外、合計約100 KiB）:
+
+- `test-results/integration-validation-settings/rust/check.{log,json}`
+- `test-results/integration-validation-settings/rust/unit-compile-failure.{log,json}`
+- `test-results/integration-validation-settings/rust/unit.{log,json}`
+- `test-results/integration-validation-settings/rust/frozen.{log,json}`
+- `test-results/integration-validation-settings/rust/http.{log,json}`
+- `test-results/integration-validation-settings/rust/cache-{mid,final}.log`
+
+08:45:58時点で一時instance残存0、試験サーバー/ScriptRequestは終了待ち済み。
+通常target約13 GiBは再利用用に保持。共有sccacheは指定保存先・上限10 GiBのままで、
+最終共有累積Rust hit2975/miss1105（他作業分を含む）。resetや他Workspace停止・削除なし。
+ディスク空きは開始110 GiB → Rust開始109 GiB → 終了86 GiB、RAM availableは終了約14 GiB。
+観測中はRAM available4 GiB/disk50 GiBの抑制ラインに達していない。
+
+今回も未検証: public Basic/Auth0、実データ、正式Integrationのadmission→container監督→publication全体、
+production frontend build。既存実行器への接続は固定plan読取と実ScriptRequest/Bashまでを検証した。
+稼働server更新、main merge、deploy、再起動、実環境認証設定変更は実施していない。
+fresh独立レビューは統括側が別途実施する。

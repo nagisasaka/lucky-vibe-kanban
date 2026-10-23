@@ -163,8 +163,8 @@ fn concurrent_saves_have_only_one_winner() {
                 &serde_json::json!({"commands": [command]}).to_string(),
             )
         };
-        let a = scope.spawn(|| run("echo a"));
-        let b = scope.spawn(|| run("echo b"));
+        let a = scope.spawn(move || run("echo a"));
+        let b = scope.spawn(move || run("echo b"));
         let a = a.join().unwrap();
         let b = b.join().unwrap();
         assert_ne!(a.is_ok(), b.is_ok());

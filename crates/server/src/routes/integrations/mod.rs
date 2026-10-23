@@ -330,3 +330,6 @@ pub fn router() -> Router<DeploymentImpl> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod validation_settings_tests;
