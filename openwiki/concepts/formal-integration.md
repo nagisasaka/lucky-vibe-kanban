@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/launch.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-54244fc34a5fffa34c37581d
+    resource: repo://crates/server/src/routes/integration_validation.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-a1c709eaad59af16183269df
@@ -32,6 +34,10 @@ sources:
     resource: repo://crates/server/src/routes/integrations/scenario_tests.rs
   - id: openwiki-source-001b80ecf41631f84729dd2e
     resource: repo://crates/server/src/routes/integrations/steps.rs
+  - id: openwiki-source-3254b00661fe378ce617d822
+    resource: repo://crates/server/src/routes/integrations/validation_settings_tests.rs
+  - id: openwiki-source-c1a5c9bda8d34af222d811c1
+    resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
     resource: repo://docs/development/integration-mcp-decisions.md
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -40,14 +46,22 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
   - id: openwiki-source-2b041ccdd1b3cb2c0a7e82a6
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx
+  - id: openwiki-source-344aff2e68b53276f6be4e40
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
+  - id: openwiki-source-d6bd59c0727afcf22386a8f5
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-0b2c1cfa8089016da3ce0c95
     resource: repo://tests/integration-review/browser.mjs
   - id: openwiki-source-9871b94e679a5398da344b52
     resource: repo://tests/integration-review/README.md
-generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
+  - id: openwiki-source-b5ef058c3b0ea87dbc8234d6
+    resource: repo://tests/integration-validation-settings/browser.mjs
+  - id: openwiki-source-55dc8812ccee9a0d59fffb13
+    resource: repo://tests/integration-validation-settings/README.md
+generated: { by: "codex", at: "2026-10-23T23:54:58.621Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:24:04.082Z
+    at: 2026-10-23T23:54:58.621Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -92,11 +106,29 @@ agent の責務は既存 index の競合解消と stage、および `ready` / `b
 
 外部 MCP では、この domain 受付より前に元の入力全体を照合する。省略と `null` の入替えも同じ request ID の再送には使えない。起動時の指定と保存値の確認は [MCP から Integration の検証方針を選ぶ](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
 
-検証必須の場合は、受付 target の Git object から `.lvk/integration-validation.json` の `commands` を読み、全 plan を凍結する。作業木・source branch・agent の proposal から選ばない。設定の欠落・不正、空の一覧、32件超、空文字や `true` / `:` / `exit 0` は受付エラーである。全 command は Repo root を cwd とする required check で、前提不足も失敗となる。[plan](../../crates/server/src/routes/integrations/mechanical.rs#L42-L85)
+検証必須の場合は、受付 target の Git object から `.lvk/integration-validation.json` の `commands` を読み、全 plan を凍結する。作業木・source branch・agent の proposal から選ばない。設定の欠落・不正、空の一覧、32件超、空文字や `true` / `:` / `exit 0` は受付エラーである。全 command は Repo root を cwd とする required check で、前提不足も失敗となる。[固定 target の読取](../../crates/server/src/routes/integrations/mechanical.rs#L42-L70)・[共通 parser](../../crates/server/src/routes/integration_validation.rs#L23-L43)
 
 この repository の設定は、`pnpm install --frozen-lockfile` → 実 frontend build → `pnpm run check` → `pnpm run lint` → `pnpm run backend:test` の順である。依存の準備も固定 plan に含めるため、source が設定を書き換えても当該 run の plan は変わらない。[設定](../../.lvk/integration-validation.json)
 
 省略 run は設定自体を読まず、検証を実行せず、summary と Manifest tests に unverified / NotRun、step に `validation_skipped` を保存する。省略 run と検証実行証拠・gate の混在、必須 run と省略済み step の混在は拒否する。clean・祖先・source 順序・target 一致・review・取消と公開の排他は維持する。[省略の検査](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1283)・[Manifest](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)。これは failed check の候補限定例外とは別で、成功した Integration でも受入検証済みとは限らない。UI は次回用 preference と未検証表示を持つ。[UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+
+## 検証コマンドの編集と反映
+
+検証設定は Repo の `.lvk/integration-validation.json` が正本である。Repository settings のエディターは登録 checkout の path・branch・HEAD を表示し、その作業木を編集する。startup/cleanup の DB 設定とは保存先が異なる。DB へ別の command 設定を複製せず、既存の target Git object 読取を維持する判断が記録されている。保存は commit・stage・branch 切替・push・コマンド実行を行わない。目的の target branch に通常の Git 手順で反映してから、新規 Integration の受付で plan を固定する。既存 run の plan は変わらない。[設定画面への接続](../../packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L730-L738)・[保存処理](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[受付時の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)・[設計判断](../../tests/integration-validation-settings/README.md#正式integration検証設定の隔離試験)
+
+### 編集内容と下書きの寿命
+
+JSON は `commands` だけを持つ object で、1〜32個の文字列を順序どおりに扱う。一つの要素は複数行でもよく、実行時は一つの Bash script になる。空白だけの文字列と、trim 後の `true`・`:`・`exit 0` は拒否するが、これはコマンドの有用性や成功を保証する検査ではない。保存 API と凍結 target reader は同じ Rust parser を使い、UI にも保存可否の検査がある。[parser](../../crates/server/src/routes/integration_validation.rs#L23-L43)・[UI の判定](../../packages/web-core/src/shared/lib/integrationValidationSettings.ts#L14-L40)・[実行器への引渡し](../../crates/server/src/routes/integrations/runtime.rs#L831-L862)
+
+UI は順序付きの複数行入力と追加・削除、raw JSON の修復欄を持つ。読取は JSON の妥当性を要求しないため、不正な既存内容も修復できる。欠落ファイルは `content: null` として表示し、有効な内容を保存して作成する。編集中は最初に読んだ revision を下書きの base に保持する。保存失敗・再読込失敗でも mounted component の下書きを残し、保存成功時はサーバーの読戻し結果を cache に入れる。明示的な「下書きを破棄して再読込」は取得成功時だけ下書きを捨てる。これは再起動をまたぐ永続 draft ではない。[状態と操作](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L29-L98)・[JSON と command 入力](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L108-L204)
+
+### 保存 API の競合と失敗
+
+`GET /api/repos/{repo_id}/integration-validation` は登録 Repo の checkout から `branch`・`head`・`revision`・`content` を返す。`PUT` は `expected_revision` と `content` を受け取る。commit を持つ local branch が必要で、detached HEAD は対象外。`.lvk` と設定ファイルの symlink・非通常型を拒否し、内容は最大1 MiBの UTF-8 に制限する。[route](../../crates/server/src/routes/repo.rs#L408-L412)・[読取](../../crates/server/src/routes/integration_validation.rs#L61-L130)
+
+revision は branch・HEAD・ファイルの存在と正確な内容の組から計算する SHA-256 であり、整形だけの変更も競合になる。PUT は Git common directory 単位の既存 publication guard を使うので、別 Repo ID でも同じ storage の保存を同時に通せない。guard を取れない場合や revision 不一致は409となる。検証後、同じ `.lvk` 内の一時ファイルへ書き、既存 permission を引き継ぎ、sync・再照合して原子的に置換し、読戻す。外部 editor や任意の Git 操作はこの lock に参加しないため、最後の比較以降の外部更新まで完全に排他する契約ではない。保存中は外部編集・branch 切替を避ける。[保存順序](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[storage lock](../../crates/git/src/publication.rs#L134-L161)
+
+保存成功の表示は読戻しまでの成功であり、target への commit や検証成功ではない。また置換後の読戻しにも失敗経路があるので、エラー表示だけから「ファイルは変更されていない」と断定しない。下書きを控えて現在のファイルを確認し、競合時は再読込した版を基に編集し直す。[置換と読戻し](../../crates/server/src/routes/integration_validation.rs#L163-L171)・[UI の失敗処理](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L64-L98)。一連の操作は [正式統合への手順](../workflows/task-to-integration.md#並列変更を試してから正式統合する)を参照する。
 
 ## 開発検証と human gate
 
@@ -147,3 +179,11 @@ standalone と embedded の monitor 配線差は [起動順序](../architecture/
 公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された正式 Integration は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。
 
 MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scenario_tests.rs#L741-L768) は、実 Git / SQLite と共通 domain に adapter から入り、承認後の公開と、取消受付時の予約保持から解放までを検査する。[adapter の境界試験](../../crates/server/src/remote_mcp/integration_write_tests.rs#L26-L244)は権限不足、別 Project、固定証拠の各要素・live target の変更、同一要求の同時送信、receipt と現在状態の差も扱う。provider は固定イベントであり、新 tool の成功を HTTP transport 全体で確認する E2E や実 Auth0 / ChatGPT の確認とは異なる。[実装時の検証記録と限界](../../docs/development/integration-mcp-decisions.md)を今回の試験実行結果に読み替えない。
+
+### 検証設定エディターの試験境界
+
+[ファイル編集の Rust fixture](../../crates/server/src/routes/integration_validation/tests.rs)は JSON・複数行互換、保存時の HEAD/index 不変と非実行、同時保存の一勝者、branch/HEAD/内容の競合、symlink・サイズ制限を扱う。[凍結 plan の回帰](../../crates/server/src/routes/integrations/runtime_tests.rs#L1512-L1545)は、未コミット設定が受付に効かず、commit 後の target を読むこと、後続の作業木変更が plan を変えないこと、skip が設定を読まないことを検査する。
+
+[隔離 HTTP 試験](../../crates/server/src/routes/integrations/validation_settings_tests.rs#L21-L150)は一時 instance・Git・SQLite と loopback port 0、production Repo router と local Access/CSRF を使う。GET/PUT、403/400/409、非 root Unix の書込権限不足500、保存後の非実行と読戻しを確認し、commit した plan を既存 `ScriptRequest` の Bash 実行へつなぐ。正式 Integration の admission→container 監督→publication 全体を駆動する E2E ではない。[ブラウザ fixture](../../tests/integration-validation-settings/browser.mjs#L1-L198)は製品 component と mock API を使うため、下書き・修復・保存表示の検査と実サーバー保存の検査を区別する。
+
+今回の設定編集 Sync は凍結 source `8079c5159e3c7b0d4817487177be6bf319de451e` の UI、transport、保存 handler、Git lock、受付・実行器、試験定義を静的に照合した。[開発時記録](../../tests/integration-validation-settings/README.md#rust--実http接続の追加検証)では初回の Rust 未実行を後続の限定試験成功が補っているが、public Basic/Auth0、正式 Integration 全体、production frontend build の検証を意味しない。供給された正式 Integration は検証省略であり、この Wiki 保守でも製品試験を再実行していない。独立レビュー待ちという入力は完了証拠ではなく、無関係な過去の Wiki 内容の再検証も主張しない。

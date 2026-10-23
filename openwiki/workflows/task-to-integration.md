@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/integration_write.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
     resource: repo://crates/server/src/remote_mcp/launch.rs
+  - id: openwiki-source-54244fc34a5fffa34c37581d
+    resource: repo://crates/server/src/routes/integration_validation.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
   - id: openwiki-source-a1c709eaad59af16183269df
@@ -64,12 +66,16 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
   - id: openwiki-source-06868af84d952b8087cf3ebb
     resource: repo://packages/web-core/src/i18n/locales/ja/common.json
+  - id: openwiki-source-bfe4f914c0604a66edc02213
+    resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
+  - id: openwiki-source-d6bd59c0727afcf22386a8f5
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
+generated: { by: "codex", at: "2026-10-23T23:50:43.997Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:24:04.082Z
+    at: 2026-10-23T23:50:43.997Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -119,6 +125,8 @@ Agent の review API は Workspace 内に active AgentRun があれば拒否す�
 組合せ試験には `POST /api/workspaces/<id>/integration/preview` がある。自分の base commit と peer の commit を明示し、Repo membership、各 commit がその Workspace branch に帰属する祖先であること、自分の checkout が指定 base に一致して clean なことを確認する。古い固定 commit は許すが、自動的に新 HEAD へ追従しない。自分を含む source は最大100件である。[preview の受付](../../crates/server/src/routes/parallel_context.rs)
 
 API が作るのは base からの detached worktree と固定 peer 一覧であり、peer の merge や tests を自動実行する API ではない。返す指示に従ってその試行先で組み合わせを検証し、元 Workspace の reset/stash、peer の修正、target/Card 更新、Wiki 執筆を持ち込まない。試行は通常 Workspace cleanup の外側の sibling directory に残し、調査後に明示的な worktree cleanup を行う。正式統合成功の証拠にはならない。[試行の用途](../../crates/server/src/routes/parallel_context.rs)、[保持と source ref 不変の test](../../crates/worktree-manager/src/worktree_manager.rs)
+
+検証コマンドを変更する場合は、先に Settings → Repositories の「正式Integrationの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 Integration を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
 
 local Board の **Integrate / Auto Merge** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source と観測 target は受付時に固定する。queue 先頭で preparation を始めるときも同じ target であることを要求し、前進していれば停止する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
 

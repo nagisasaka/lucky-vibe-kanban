@@ -85,7 +85,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:24:04.082Z
+    at: 2026-10-23T23:50:43.997Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
