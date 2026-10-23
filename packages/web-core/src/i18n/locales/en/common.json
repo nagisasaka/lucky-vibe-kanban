@@ -10,7 +10,8 @@
   },
   "cardContext": {
     "title": "Card context",
-    "sharedDirectories": "Shared directories",
+    "sharedDirectories": "Shared directory guidance",
+    "sharedDirectoriesHelp": "ON adds guidance. OFF does not disable shared storage or Repository Memory.",
     "none": "None",
     "description": "Selected presets are included in the initial request when creating a workspace. Existing sessions are not updated. The instructions below are read-only; write task-specific instructions in the description.",
     "preview": "Card context instructions",
