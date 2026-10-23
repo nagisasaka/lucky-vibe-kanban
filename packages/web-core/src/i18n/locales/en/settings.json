@@ -1,5 +1,23 @@
 {
   "settings": {
+    "integrationValidation": {
+      "title": "Formal Integration validation",
+      "description": "Define the required Bash commands to run in order from the repository root. Saving does not execute commands.",
+      "timing": "This edits the registered checkout only. Commit this file onto the intended Integration target branch using your normal Git workflow. New Integrations freeze the file from that target commit; existing runs and the Skip all validation option are unchanged. No automatic commit or branch switch.",
+      "concurrency": "Saving checks the loaded file, branch and HEAD. A conflicting save is rejected; keep your draft elsewhere before reloading. External Git/editor operations do not share this lock: avoid editing or switching this checkout while saving.",
+      "loading": "Loading validation settings…",
+      "loadError": "Could not load validation settings. Reload to try again.",
+      "saveError": "Could not save validation settings. Your draft is retained.",
+      "missing": "No configuration file exists in this checkout yet.",
+      "json": "Configuration JSON (advanced / repair)",
+      "invalid": "Use only a commands array with 1–32 non-empty strings. Placeholder commands true, : and exit 0 are not allowed.",
+      "command": "Command",
+      "save": "Save validation commands",
+      "reload": "Discard draft and reload",
+      "saved": "File saved and read back. Commit it onto the intended target branch before starting a new Integration. No commands were run.",
+      "add": "Add command",
+      "remove": "Remove command"
+    },
     "common": {
       "unsavedChanges": "• You have unsaved changes",
       "discardChangesConfirm": "Discard unsaved changes?"

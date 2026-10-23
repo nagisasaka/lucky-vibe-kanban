@@ -1519,12 +1519,17 @@ fn mechanical_validation_is_frozen_from_target_and_skip_never_reads_or_runs_comm
             .unwrap()
             .is_empty()
     );
-    std::fs::create_dir(repo.dir.path().join(".lvk")).unwrap();
-    std::fs::write(
-        repo.dir.path().join(".lvk/integration-validation.json"),
-        r#"{"commands":["test -f feature"]}"#,
+    // Exercise the same file editor used by the settings API, then normal Git publication.
+    let snapshot = crate::routes::integration_validation::read_settings(repo.dir.path()).unwrap();
+    crate::routes::integration_validation::save_settings(
+        repo.dir.path(),
+        crate::routes::integration_validation::SaveValidationSettings {
+            expected_revision: snapshot.revision,
+            content: r#"{"commands":["test -f feature"]}"#.into(),
+        },
     )
     .unwrap();
+    assert!(m::validation_plan(repo.dir.path(), &repo.base, false).is_err());
     repo.git(&["add", "."]);
     repo.git(&["commit", "-m", "validation policy"]);
     let frozen = repo.git(&["rev-parse", "HEAD"]);
