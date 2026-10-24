@@ -140,6 +140,26 @@ Use the relevant guidance when working on distribution, deployment or isolated i
 - For server distribution changes, `pnpm run server:check` provides Docker-free kit tests alongside relevant source checks. Report skipped native tests and unavailable image/host validation. When deploying, verify the published image and use its immutable digest.
 - For isolated instance testing or staging/deployment work, follow [`deploy/developer/STAGING.md`](deploy/developer/STAGING.md). Staging is opt-in contributor tooling, not a completion step for every task. Instance state must be separate from stable state via `LVK_INSTANCE_DIR`; debug/release is not an isolation boundary. Claim registered shared staging resources through resource coordination and stop test processes before releasing claims. Publishing an image does not deploy it.
 
+### Shared development instance
+
+- Build and run the necessary code, E2E and migration-compatibility checks in an
+  isolated Workspace/instance. The shared public development instance is fixed at
+  `/var/tmp/lvk-instances/dev`; do not use its data or running artifacts for tests.
+- Before placement, identify the tested server, agent-process-host and frontend
+  by actual hashes/build metadata, not checkout HEAD alone. Retain their required
+  source/runtime paths outside cleanup or explicitly coordinate their retention;
+  never overwrite artifacts still in use.
+- Agents own candidate selection, builds, tests, prior migration-compatibility
+  validation and work coordination. `start.sh` owns the authorised cutover;
+  the server owns startup migrations. Preserve the instance DB, authentication,
+  encryption keys and required launch settings. Placement is not cutover approval.
+- Use the existing [development switch procedure](deploy/developer/switch/README.md)
+  for CLI inputs, dry-run, backup and durable operation results. Coordinate idle
+  work before switching; a successful dry-run alone is not permission to stop dev.
+- After failure, inspect that operation's stage, logs, backup and actual process
+  state using the linked recovery guidance. Preserve failed data and evidence;
+  do not assume an old binary can use a migrated DB or perform an automatic rollback.
+
 ## Coding Style & Security
 
 - Rust: follow `rustfmt.toml`; snake_case modules, PascalCase types.
