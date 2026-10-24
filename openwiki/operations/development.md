@@ -24,6 +24,12 @@ sources:
     resource: repo://crates/server/src/bin/generate_types.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-6c4d6d22a9d50e0def61c50d
+    resource: repo://crates/server/src/routes/workspaces/integration.rs
+  - id: openwiki-source-66c6304230dff031e0d0b855
+    resource: repo://crates/services/src/services/config/editor/mod.rs
+  - id: openwiki-source-ae8c631b5b4385c934e47d60
+    resource: repo://crates/services/src/services/config/versions/v9.rs
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
@@ -70,6 +76,8 @@ sources:
     resource: repo://tests/build-info/component.test.mjs
   - id: openwiki-source-3b8e596f6d78967bbf29a877
     resource: repo://tests/build-info/isolated.mjs
+  - id: openwiki-source-492bc994297fdb3fa913fe0c
+    resource: repo://tests/chat/external-editors.test.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
@@ -90,10 +98,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
+generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-24T17:19:36.105Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -292,6 +300,16 @@ local API の生成元は Rust の generate_types binary であり、shared/type
 prepare-db は一時 SQLite を作り、migration を適用してから cargo sqlx prepare を実行し、finally で一時 DB を削除する。--check でも一時 DB の作成と migration は行うため、単なる読み取り専用の型検査ではない。[SQLite 準備](../../scripts/prepare-db.js)。
 
 本番 DB の migration checksum 不一致は、debug build と非 Windows ではエラーになる。Windows release は記録済み checksum を更新して再試行する分岐を持ち、その根拠として改行等の platform 差を code comment が挙げる。これは任意の schema 不一致を修復する保証ではない。起動時の schema guard は [システムの永続化境界](../architecture/system.md) を参照する。[platform 分岐と記録された理由](../../crates/db/src/lib.rs#L29-L73)
+
+## 外部エディター URI 連携の検証
+
+[外部エディターの契約](workspace-inspection.md#外部エディターの-uri-連携)を変更するときは三層を分ける。services の editor unit test は URI の path/query encoding・不正構文・file context・旧 schema 読込を検査し、v9 config test は v6〜v9 の全体読込と他設定・空一覧の保持を検査する。[URI tests](../../crates/services/src/services/config/editor/mod.rs#L181-L330)・[Config migration test](../../crates/services/src/services/config/versions/v9.rs#L154-L189)
+
+server の `routes::workspaces::integration::editor_tests` は一時ディレクトリで Workspace / Repo / file の解決と欠落時の非復元、traversal・symlink 逸脱を確認する。実 DB や外部 IDE 起動を試すものではない。[path tests](../../crates/server/src/routes/workspaces/integration.rs#L210-L331)
+
+`node --test tests/chat/external-editors.test.mjs` は実設定 UI・Config controller・選択 dialog を Chromium に載せ、API を fixture に置換する。初期値保存、並べ替え、全削除保存、空一覧保持、対象別 request、古い候補の非表示、リンクの明示クリックと opener 分離を検査する。[fixture 境界](../../tests/chat/external-editors.test.mjs#L16-L66)・[操作検査](../../tests/chat/external-editors.test.mjs#L120-L285)。小さな helper の回帰は [初期値と diff path の Vitest](../../packages/web-core/src/shared/lib/externalEditors.test.ts)にある。
+
+この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。[開発時の検証記録](../../docs/development/external-editor-uri-validation.md)と、凍結入力に記録された正式 Integration の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
 
 ## 文書の適用範囲
 

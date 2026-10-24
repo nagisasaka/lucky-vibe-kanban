@@ -14,12 +14,16 @@ sources:
     resource: repo://crates/server-access/src/preview.rs
   - id: openwiki-source-a6cad3d930b299ebbbd793a3
     resource: repo://crates/server-access/src/tests.rs
+  - id: openwiki-source-7464a2d1db8e85c09420cf28
+    resource: repo://crates/server/src/middleware/model_loaders.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-875a0d6590ed93103083efa6
     resource: repo://crates/server/src/routes/preview.rs
+  - id: openwiki-source-c1a5c9bda8d34af222d811c1
+    resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-7c1b10f112cb99ba82426b5a
     resource: repo://crates/server/src/routes/terminal.rs
   - id: openwiki-source-75b2a3e21f7d8cbca4f8565a
@@ -40,6 +44,10 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
+  - id: openwiki-source-66c6304230dff031e0d0b855
+    resource: repo://crates/services/src/services/config/editor/mod.rs
+  - id: openwiki-source-cd98b68683664db6e92e6010
+    resource: repo://crates/services/src/services/config/versions/v7.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-b04f793d57fd8b570d4984e3
@@ -48,8 +56,12 @@ sources:
     resource: repo://crates/services/src/services/wiki.rs
   - id: openwiki-source-3bef0d0bfd4066b26b945f6c
     resource: repo://crates/services/src/services/wiki/openwiki.rs
+  - id: openwiki-source-c128bdfa7a156621b004df06
+    resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
+  - id: openwiki-source-8c7998811f24db89c5190835
+    resource: repo://docs/development/external-editor-uri-validation.md
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-69854837467c3beec23ecb8d
@@ -76,6 +88,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts
   - id: openwiki-source-e26b48aa743da73944d9c0b1
     resource: repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx
+  - id: openwiki-source-48d5859237df58130423c433
+    resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
   - id: openwiki-source-06868af84d952b8087cf3ebb
@@ -88,6 +102,12 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
+  - id: openwiki-source-6d0dfae3c1582e1af83405d4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
+  - id: openwiki-source-b30612082181a81aa92d89df
+    resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
+  - id: openwiki-source-ea8e692dfd4142379f167b66
+    resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
@@ -106,10 +126,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
+generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-24T17:19:36.105Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -254,9 +274,46 @@ SSEは親sessionのleaseで止まり、WebSocketはserverからproxyへ`Connecti
 
 Terminal は interactive 用途を要求してから Workspace directory を検証し、Repo が一つならその下、複数なら Workspace root を初期 cwd とする。WebSocket 接続ごとに PTY session を作り、input/output は base64、resize は別 command として扱い、接続終了時に PTY を閉じる。会話の Session を resume する経路ではない。[cwd と起動](../../crates/server/src/routes/terminal.rs)・[通信と終了](../../crates/server/src/routes/terminal.rs)
 
-editor は path の解決と外部 editor の起動を担う。実行専用 Workspace は editor path の GET も middleware で拒否し、SSH tunnel 開設の認可に転用させない。[用途 guard](../../crates/server/src/middleware/model_loaders.rs)file_path 未指定で Repo が一つならその Repo を開き、指定された file_path は Workspace path へ join する。現行 editor resolver は file viewer の normalize/canonical-root 検査を再利用していない。この差を消す変更では、既存の editor path 契約を先に確認する。[editor path](../../crates/server/src/routes/workspaces/integration.rs)
+## 外部エディターの URI 連携
 
-旧 remote host の SSH tunnel / editor relay は現行 router に存在しない。local editor の導入手順は [VSCode Extension Integration](../../docs/integrations/vscode-extension.mdx) を参照する。外部 extension の公開版互換性は checkout だけでは確定しない。
+外部エディター連携は、名前と URI テンプレートの順序付き一覧を server 共通の `Config.editor.entries` に保存し、対象パスからリンク候補を返す機能である。利用者ごとの IDE 設定や server 上のプロセス起動ではない。起動・protocol handler・接続認証は browser / OS / IDE が担当する。旧 CLI / Custom command 実行、拡張導入、IDE availability 検出の代わりに、すべての入口が同じ候補一覧を使う。[設定と展開](../../crates/services/src/services/config/editor/mod.rs#L1-L68)・[API](../../crates/server/src/routes/workspaces/integration.rs#L30-L99)
+
+### 設定の初期化と保存
+
+`entries: null` または欠落だけが未初期化で、`[]` は意図的な空一覧である。通常の user-system 読込時に browser の `window.location.hostname` を埋めた `vscode://vscode-remote/ssh-remote+HOST<lvk_workspace_dir>` の VS Code 行を作り、通常の Config 保存で固定する。保存済みの一覧は別 hostname からアクセスしても再生成しない。初期行も編集・削除できる通常データであり、専用初期化 API や初期化競合を排他する仕組みはない。[初期値](../../packages/web-core/src/shared/lib/externalEditors.ts#L1-L17)・[読込と保存](../../packages/web-core/src/shared/hooks/useUserSystemController.ts#L33-L49)
+
+設定と onboarding は共通 `ExternalEditorSettings` で追加・編集・削除・順序変更を扱う。General Settings の deep merge は通常配列を index 単位で扱うため、editor は merge 後に全置換する。これを通常の merge だけに戻すと、削除した行や空一覧が保存 draft に残り得る。[一覧編集](../../packages/web-core/src/shared/components/ExternalEditorSettings.tsx)・[置換と理由](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L149-L163)・[onboarding](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L380-L385)
+
+server は保存前に表示名の空白のみ・80文字超・trim 後の完全一致重複とテンプレート構文を検査し、エラー理由を返す。保存に成功してから in-memory Config を置換する。onboarding analytics は URI ではなく登録件数を記録する。[検証](../../crates/services/src/services/config/editor/mod.rs#L40-L51)・[保存と event](../../crates/server/src/routes/config.rs#L182-L233)
+
+### 対象と worktree の寿命
+
+| 操作元 | 解決するディレクトリ / ファイル |
+| --- | --- |
+| Workspace 全体 | Repo が一つならその worktree、複数またはゼロなら Workspace root |
+| Workspace の Repo | membership を確認した `container_ref/repo.name` |
+| ファイル preview / diff | 明示 `repo_id` と Repo 相対 `file_path`。ディレクトリ変数は Repo root、ファイル変数は解決したファイル |
+| Repository settings | 登録済み元 Repo の `Repo.path`。Workspace worktree ではなく、body の Repo/file 指定は拒否 |
+
+Workspace API は `inspection_root` を使い、削除済み・未準備・不在の実体を拒否する。`container_for_inspection` は通常 interactive Workspace を復元し得るため、このリンク解決には使わないという理由がコードに記録されている。既存の絶対ディレクトリを canonicalize するだけで、archive 状態にかかわらず欠落 worktree を作成・復元しない。[対象解決と理由](../../crates/server/src/routes/workspaces/integration.rs#L101-L156)・[実体の条件](../../crates/services/src/services/workspace_usage.rs#L272-L288)・[元 Repo](../../crates/server/src/routes/repo.rs#L161-L185)
+
+ファイル指定は Repo が一つでも `repo_id` を必須とし、file viewer の相対パス正規化・canonical-root 検査を再利用する。絶対パス、drive、親参照、NUL、欠落、Repo 外へ解決される symlink を拒否し、最終 target が通常ファイルでなければ失敗する。[ファイルの検査](../../crates/server/src/routes/workspaces/integration.rs#L131-L143)・[共通境界](../../crates/server/src/routes/workspaces/files.rs#L324-L394)。diff のパスは Repo 名 prefix を持つため UI で最初の prefix を外して送る。preview は元から Repo 相対であり、同じ除去を二度適用してはいけない。[diff の変換](../../packages/web-core/src/shared/lib/externalEditors.ts#L19-L23)・[呼出元](../../packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx#L437-L442)・[preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx#L64-L66)
+
+現在の Workspace 入口は `POST /editor/open` である。リンク生成のみでも、execution_only や Integration 予約中の Workspace では共通 mutation guard が拒否する。旧 editor path GET や SSH tunnel を開設する権限の説明を現行 API に持ち込まない。旧 remote host の SSH tunnel / editor relay は現行 router に存在しない。[route](../../crates/server/src/routes/workspaces/integration.rs#L40-L46)・[予約 guard](../../crates/server/src/middleware/model_loaders.rs#L65-L103)
+
+### URI 展開と失敗の意味
+
+`<lvk_workspace_dir>` と `<lvk_file_path>` は URI の path または query の値だけで使える。path では `/` を保ち、query 値では `/` も含め percent-encode する。変数内の `%` は `%25` になり、固定部分の正しい `%XX` は維持する。固定の日本語・空白等も encode する。scheme / authority / query 名 / fragment の変数、未知変数、不正 percent escape、制御文字、8192 UTF-8 bytes 超、path 展開による意図しない authority 生成は拒否する。[展開](../../crates/services/src/services/config/editor/mod.rs#L70-L177)
+
+これは URI 構文検査であり、scheme の安全性を審査する allowlist ではない。任意 scheme を OS が処理できる保証もない。ファイル context がなければ file 専用テンプレートは `url: null` と理由を持ち、他の directory 候補は使える。対象パス自体の解決失敗は API 全体のエラー、テンプレートごとの適用不可は候補単位の結果として区別する。[候補生成](../../crates/services/src/services/config/editor/mod.rs#L54-L67)・[scheme と context の回帰](../../crates/services/src/services/config/editor/mod.rs#L220-L282)
+
+操作ではまず候補を取得し、選択画面の実リンクを明示クリックする。リンクは `target=_blank` と `noopener noreferrer` を使う。再確認中・取得失敗時に前のリンクを出さず、空一覧と適用不可理由を表示する。server 応答やクリックは IDE 起動・接続成功を証明しない。[画面の責任分割](../architecture/web-and-sync.md#通知音エディターの接続先)・[候補の表示](../../packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L58-L88)
+
+### 旧設定と検証限界
+
+旧 editor type / custom command / SSH 欄は deserialize 時に無視し、実行や URI への自動変換をしない。entries がなければ上記の通常初期化へ進む。ただし全体 Config の v7 移行入口は v6 を直接 deserialize するため、v5 以前から現行版への全設定移行まで保証しない。この既存制限を editor schema の互換読込と混同しない。[旧値の扱い](../../crates/services/src/services/config/editor/mod.rs#L18-L25)・[全体移行入口](../../crates/services/src/services/config/versions/v7.rs#L58-L69)・[記録された制限](../../docs/development/external-editor-uri-validation.md#途中で判明した制限)
+
+変更時は [URI・パス・browser fixture の検証境界](development.md#外部エディター-uri-連携の検証)を参照する。実 IDE / WSL / SSH 認証、Docker Attach、ネストした Dev Containers URI は未検証である。この Sync はソースと試験定義の照合であり、実機接続や正式 Integration の検証成功を意味しない。
 
 ## 実行履歴を調査・保全する
 

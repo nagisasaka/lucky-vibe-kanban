@@ -44,6 +44,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
+  - id: openwiki-source-6c4d6d22a9d50e0def61c50d
+    resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
@@ -66,16 +68,18 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
   - id: openwiki-source-ddf0f7c06298de76526a4f7c
     resource: repo://packages/web-core/src/features/pipeline/model/cardContext.ts
+  - id: openwiki-source-7e0da77c31130e66a4b635a5
+    resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
   - id: openwiki-source-ab4a5800fcfc16d8494e494a
     resource: repo://packages/web-core/src/shared/lib/localIdentity.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T11:34:45.992Z" }
+generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-24T17:19:36.105Z
 ---
 
 # クイックスタートと調査案内
@@ -154,8 +158,9 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 
 ## 編集・接続の不調から調べる
 
-ブラウザーの Markdown / HTML / raw paste、音の試聴、server 側 editor 起動は [Web の操作境界](architecture/web-and-sync.md#ブラウザー操作と廃止された-native-bridge)を確認する。native shell の廃止と共有機能の存続を分け、貼り付け fixture と実 OS clipboard・live 通知の検証範囲は [開発・検証](operations/development.md#ブラウザー貼り付けの回帰)で確認する。
+ブラウザーの Markdown / HTML / raw paste、音の試聴は [Web の操作境界](architecture/web-and-sync.md#ブラウザー操作と廃止された-native-bridge)を確認する。native shell の廃止と共有機能の存続を分け、貼り付け fixture と実 OS clipboard・live 通知の検証範囲は [開発・検証](operations/development.md#ブラウザー貼り付けの回帰)で確認する。
 
+- 外部エディターは server で起動せず、設定した URI の候補を明示クリックして browser / OS へ渡す。[共有設定・パス解決・非復元・適用不可の契約](operations/workspace-inspection.md#外部エディターの-uri-連携)から調べ、[選択 dialog の取得と表示](architecture/web-and-sync.md#通知音エディターの接続先)を確認する。
 - 未送信本文が戻らない、前回の実行設定が違う場合は [Session の設定復元](concepts/session-and-agent-run.md#実行設定の復元と-default-identity)と [Scratch の ACK・pending backup](concepts/session-and-agent-run.md#未送信ドラフトと-scratch)を分けて確認する。
 - Workflow の保存競合、再読込後の draft、Undo/Redo は [編集契約](concepts/workflow-attempt.md#編集保存競合undoredo)へ進む。Undo は実行や Git を戻す操作ではない。
 - 設定値が非表示なのは未設定と同義ではない。[機密設定の明示読取・保持/置換/削除](integrations/agent-providers.md#設定の公開と変更の安全境界)を確認する。

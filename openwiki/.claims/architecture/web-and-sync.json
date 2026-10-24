@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:39b08f7c204fde56d140962a51ffb46617e35c53b2cfb8e13eba844b2cf2e0a1",
+  "pageVersion": "sha256:2eebfab20067844469c5ffb257ed2c6ed8f4ae5ca40b9c0f6fa6bfa9031b904c",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1156,15 +1156,15 @@
     },
     {
       "id": "claim_02613d681e1b46c5a0f3192b3e472f32",
-      "statement": "useOpenInEditor は interactive Workspace の server API を呼び、返された URL を開き、editor 未指定での失敗時は選択 dialog を提示する。",
+      "statement": "useOpenInEditor は対象を EditorSelectionDialog へ渡し、dialog が server API で解決した候補を明示的なリンククリックで browser / OS に委譲する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/integration.rs#L83-L130",
-          "version": "repo-lines-v1:sha256:377ac6cd5c319f4e2771a8e39ab75e9b374ec54bb6c39b2fbd7bf01214d8282e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmJhMThmOTA2MmZlMjY5ZGNkM2FhYjhmM2YzNWY1MmI2M2U0YmY2NjVmMmIxMDcwMzFkZjlmZGM5Y2M2N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMmU1ZjIzYzI2ZWVmMzZiM2NjNDgxYjhkNTU3YTIwM2Q2MWFjMjVmMzE0OTZlMTBiYjRlMmQxMmJlYzZhZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxOWFlNTExZTE1NjJiNDliMmI0NGM1MDdiNGZlYmFhYTdhOTI4Y2UzZGEwYjI1NjJhNTAyN2RlZTI3ZDNlYjQifQ"
+          "resource": "repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L21-L98",
+          "version": "repo-lines-v1:sha256:4f22017b22a184dbca30597b40a65d741553024e526d8aebcbadf49c0916928c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNTg3NDBjMjgyNTFkMGZiODc3OGNiOGFmOTllMjRiMWI3ZGY0MWY3YTQwOWY3NGY0MjAyNGYyZTRiNTRiMTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzOTA3NzA5Y2VhN2MwMDNlYTViNjVlMjBhNmFlOGVjOWU2ZjA2MTg2YjNlOTMwMTRjNjdiYTc3MTE2YjI3MmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2NmRiMWQ0Nzc0NWZmYTQwOGRmMWQyN2M0YmE1NGMzNzExNjYzODMyNzgzZDRkNTM0NGFhNWRhYmRjZWQ0OTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts#L13-L49",
-          "version": "repo-lines-v1:sha256:c8daad78da485d3fda775276c61abd3300b3a3b896fd33c138bbe316aa1b8f06:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4Mzg5ODYxOGNmMWU4MGMzODcwYTI2MzVmOWEyNjIyNmI5ZjFiNzgxMjVlYzI2NTEyYjg0N2RkNTEzM2Q0MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxMWNhNmJhYjZiNjZlYzhjMWFiM2MwMjcwMDU5MjU4OTAzODVhNTI1YzA4ZTEwYzUyMDQ2YTNmODJhMmE5NzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts#L1-L17",
+          "version": "repo-lines-v1:sha256:91c39fbd21b8c8950cbcce61aba3ef6a89722868eb0a3929aa758aba0c1cca09:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxMTNmMTk1MDRlNTliOTNjMTJkOGNiNjNiNGE4Y2VmODIyZTQwMzFiYjk1NDA5Zjg5OWUzMWYyNTQ3M2NkMGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -1195,10 +1195,20 @@
           "version": "repo-lines-v1:sha256:e9ef15f7bec6478ecc365818ef0ed9674582df310046215ee6ab80fd509af0b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZTZmYmQ5OGE0ZGY0NTBhM2Y0YzA2ZGMzZGE0YTUwOTk1ZGMyZmVmNzVkZTg4ODU3NzhmOWQ4MTBmZDgzN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTI1YmRjZTRlZWQ2ZGEyNTE1NDVkMjg5MjI3MDMyZTU2N2JjODk1ZWFhMzVlN2M3ZmYwNDIzZWJlYjRmMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZTM4NWRjZjNiMjQwOWIwNTNiMzBlNDhhM2MzY2MwMDIwNDA0ODE1MThjNTU4MWE1MWY4NjZkYzM2MjA3MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhNTI1MDg5MmRmNGE0YzQ5M2VhMWNmN2Y1NGFkN2Y1OGRlMDUzMTJmMjM3YTJlOTQ0ZjgwNmMxMGY5YWE1MGYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_d3fba0705c2f494b8cf1d59920bb68cd",
+      "statement": "外部エディター選択dialogは対象とeditor設定をquery keyに含め、再取得中・エラー時には古いリンクを表示せず、空一覧と候補の適用不可理由を区別する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L26-L88",
+          "version": "repo-lines-v1:sha256:1b81c20f05f0c8fadb6c3a2a1869d8623f2a6aac7571b13ec28ac685215e447a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4NTM1ZDU5MDhiOGMxODBjYTgzNzFmN2UwZjkyMjM3MGEwN2Q3OGUyZTllZjk2NzY5YzU0MzMwMjA5NzJmYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3Zjg3Nzk0NWE5YWFiNDlkZWY3Y2Y3NDY2ZmM3ZjkxMmZmOTViZjJmMjljMzNjY2JmYjQ5OTcyN2ZmMTI5NDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxMzZlZWZhZWM5YzBlOWM2ZDY2MmE3MjcxM2JhMzk1NTA0NTA3ZTA0NjI2MzdmOTAzOWNkMjczMzExMzY4NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyOTNhMTliNDc4ZmU2MmI2M2I0YWY4MWNiMWUxNmZhZWU3MzExYzc1ZWJhY2FkOTM3NzgzZTVjYzE4OGM2YTgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:58:13.588Z"
+    "at": "2026-10-24T17:19:36.105Z"
   }
 }

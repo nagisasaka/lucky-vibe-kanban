@@ -16,8 +16,6 @@ sources:
     resource: repo://crates/server/src/routes/frontend.rs
   - id: openwiki-source-d8c782d4a4246db71e503283
     resource: repo://crates/server/src/routes/resource_observation.rs
-  - id: openwiki-source-6c4d6d22a9d50e0def61c50d
-    resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
     resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
@@ -130,6 +128,8 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
+  - id: openwiki-source-7e0da77c31130e66a4b635a5
+    resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
@@ -208,10 +208,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
+generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-24T17:19:36.105Z
 ---
 
 # Web の実行環境と同期
@@ -240,7 +240,9 @@ App の native 通知 bridge がなくても、[Board 通知一覧](../concepts/
 
 browser の音再生 helper は `new Audio(url).play()` を await する。たとえば設定画面の試聴は `/api/sounds/` を再生し、失敗を catch してログへ残す。これは server OS notifier の音再生とは別であり、実際の再生成功は browser の許可等にも依存する。[helper](../../packages/web-core/src/shared/lib/utils.ts#L11-L15)・[試聴](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L171-L181)
 
-`useOpenInEditor` は interactive Workspace で server の editor API を呼び、URL が返れば新しい tab を開く。失敗時に editor 指定がなければ選択 dialog を提示する。native desktop bridge を必要とせず、server 側で Workspace path と editor 設定を扱う。[hook](../../packages/web-core/src/shared/hooks/useOpenInEditor.ts#L13-L49)・[server](../../crates/server/src/routes/workspaces/integration.rs#L83-L130)。接続先・失敗の詳しい契約は [Workspace の editor 操作](../operations/workspace-inspection.md)を参照する。
+`useOpenInEditor` は Workspace ID と任意の Repo / file target を `EditorSelectionDialog` に渡す。dialog が server API から解決済み候補を取得し、利用者が実リンクをクリックして browser / OS handler へ委譲する。非同期応答後の自動 `window.open` や server 側 CLI 起動は行わない。[hook](../../packages/web-core/src/shared/hooks/useOpenInEditor.ts#L1-L17)・[候補取得とリンク](../../packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L21-L98)。共有 Config、対象ディレクトリ、URI 展開の契約は [外部エディターの URI 連携](../operations/workspace-inspection.md#外部エディターの-uri-連携)に置く。
+
+query key は Workspace・Repo・file・editor 設定を含む。再取得中とエラー時は cache に残る古いリンクを表示せず、空一覧と候補単位の適用不可理由を区別する。成功応答は IDE 起動や認証成功の証拠ではない。[表示条件](../../packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L26-L88)
 
 ## 共有ナビゲーションと外部リポジトリ表示
 

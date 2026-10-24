@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5851c049391f1b5062291252bdf9467c52a814beff6b7ec64ecba01c2f2f2444",
+  "pageVersion": "sha256:18f450872793b5ffb784722ae6ca37232451acf459a5bbf22fe6494775510801",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:adfedaae3bf8462b5843e5e67b212c8998e80f24606b5ba351002f801563d16a"
+          "version": "repo-file-v1:sha256:4572502cd41d103d650eabef2131a521340881dc2dd56a0308089934e8131b70"
         }
       ]
     },
@@ -599,10 +599,42 @@
           "version": "repo-lines-v1:sha256:ff15b6f2c351e0f80043206a659a340335cd15c9c42a93e026d66f16ca285e75:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlZTFjNTk5Yjc4MjFmYjM2ZWEzNDZjMjM3YWM1MmMwMDNlYTkxMWJkNzcyMDI3ZGEzNzI0Y2ZjYzgxY2FhNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxNTBlNzRhOWM0ZTY1NDIwYjFiNGI4NzhiNmY4N2E2OWJiNTE3YzQ1Njk0ZmM4NGViNTg4OTk1N2RhMWRiZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3NmE0MzhjZWI5MTA0ZGYxYjEyZmE3YjQ0OWU1NGVhOTIyYTM2M2U4MGRlNDMwMmQ2NmVkZTI1YjU1ZjZlYjQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1b1ce29dacec49a1956bc7da0066eb2a",
+      "statement": "外部エディターのserver回帰は一時ディレクトリで対象解決・非復元・traversalとsymlink逸脱を検査し、browser回帰はAPIをfixtureへ置換して実設定UIとdialogの保存・明示クリック・古い候補の非表示を検査する。実IDE接続の証明ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/integration.rs#L210-L331",
+          "version": "repo-lines-v1:sha256:e6ad3c0105635dbae1b4b96de58a228c984140a935cfa2732cd881ed443d5ac7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYTE2YmJlNDhiN2YzMGY3ZTZlNzJjYTQ4YjllMGJmNzc0YmQ3NGU3N2ZmNTI1NDhkOTRiN2FhMzM2MDllZjMzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNzY3MThkNDNlYmM3Zjk4ZDY1NDJiNGM1MmZhMDMyZmE1OTcwNzYwNWQwN2IxNzkyOWRiNzJmOTYwMjI3NzYwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://tests/chat/external-editors.test.mjs#L120-L285",
+          "version": "repo-lines-v1:sha256:c693b9f4dec0a0c3ba2e4eb477c4266ca3c7ddaf0854b18023424a22a53102ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNjkyMjA2MmMwNjU3NmJmYWZjZDRhNGEzZTFmZDczZDEzZWQ0ZjAyYWY0MjBlNzdjMGViYThlNzUzZjIxMjZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NmY4ZTA1NmU5MTgyMmI5MmE3MGNlYzgyY2ZmZDlhMDI4ZGJhYjY4Nzg1ZGU2ODU1Y2U2YTA4N2Y1MGZhYzBiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNzQwZDFhODE0ZWJhMDIwYmI1MDJkYTc3OTg5NzJlOGM4M2JkNWJiNGUxNDY4MzNmOWYwYzg2MTUwZGNjODM1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YjZiNmI3Yzk1OGE5ZjVmZmM3ZGZmY2NhYzc1Njg1ZGQ2NzYwZGI1YTI1YTFhOTAwOGY1ZWQ5YTI3YWNlYTVmIn0"
+        },
+        {
+          "resource": "repo://tests/chat/external-editors.test.mjs#L16-L66",
+          "version": "repo-lines-v1:sha256:2f3dc8412f5e6bff720c049181b21628ff8586d9c977c7459a402a47420af491:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjN2VmYjU0MzE2Mzg0MTVhZWJiYWYwYTYyZWYwZTNiYmY3ZTdlMGZkZjNlYmM2OGE0MWQ5OGFiNjg1MzVlZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiOTEwMGVlZDAxNjJlM2ZkNDk5MTQwNWE3MTQ5YjcwNjE2YzlhYzM4YjViNTJkN2I3YzUyOGQ4MDY4M2ExZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjdlYzhkN2QxYjQ1YTgzZGY4ZGVkMmI5Y2YyZDdkOGZjYWY3YjQxZDg0ZWI0ZThkZGUwY2ExMDVkMDhhMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwYmU1Y2UwOGRiYjE2MTdmNzIzZDIxZGNmYmNhMDM0MGMyMGM5NGEwOGIzNDQ5Y2E3Nzc5Mzk4OTA0MGRkMDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78c6cc1f3be8457b8c2f776c50f083a7",
+      "statement": "外部エディター設定の移行試験はv6〜v9の全体読込・他設定保持・明示空一覧を検証し、v2〜v5は旧editor schema読込を別に検証する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/config/editor/mod.rs#L286-L307",
+          "version": "repo-lines-v1:sha256:55126313475c91224b9734e43db287437c7afb69040ea9d425346e89e435b935:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkZmE0MGI1NDZiZDE2N2ZlMTYwZmYyN2M4ZmRkNjJhOTE4OGIyNjEyMzg4Nzk3ZjRlYjFlNGNhMTg0ZDAzZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2OWEwMzRmNGEyOTljZDM1YzAzYjdmMTM0M2YwNTBmZGYxNDBlNDU2MTExMmQzNjZhZDI0NTliMWQwOTU4ZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwODM5ZDllMDVlZmY0OTkzODhhNjU2ZWYxNWU2ZDg4ZTRkM2FjZWU4ODkzODNkZjY3MWFkZmI1MTU2MDIwNmIifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L154-L189",
+          "version": "repo-lines-v1:sha256:95f2bf238b5cb457fd7ba874f81a38e85f7c2f665531a2c4de528af3ebe11bd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDZiYTc0MDgyYjhhNTVhZTY1ZjQ3MDEzMGJkNmY4NDZkYTQ1ZWFmMzI4OTQ4YTZhZTBiOWJiNGZjNTE4NWEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:40:59.450Z"
+    "at": "2026-10-24T17:19:36.105Z"
   }
 }
