@@ -37,7 +37,6 @@ pub type NotificationConfig = versions::v9::NotificationConfig;
 pub type EditorConfig = versions::v9::EditorConfig;
 pub type ThemeMode = versions::v9::ThemeMode;
 pub type SoundFile = versions::v9::SoundFile;
-pub type EditorType = versions::v9::EditorType;
 pub type GitHubConfig = versions::v9::GitHubConfig;
 pub type UiLanguage = versions::v9::UiLanguage;
 pub type ShowcaseState = versions::v9::ShowcaseState;

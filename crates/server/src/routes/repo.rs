@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use axum::{
     Router,
     extract::{Path, Query, State},
@@ -17,18 +15,10 @@ use ts_rs::TS;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
+use super::workspaces::integration::{
+    OpenEditorRequest, OpenEditorResponse, existing_editor_directory,
+};
 use crate::{DeploymentImpl, error::ApiError};
-
-#[derive(serde::Deserialize)]
-pub struct OpenEditorRequest {
-    pub editor_type: Option<String>,
-    pub git_repo_path: Option<PathBuf>,
-}
-
-#[derive(Debug, serde::Serialize, ts_rs::TS)]
-pub struct OpenEditorResponse {
-    pub url: Option<String>,
-}
 
 #[derive(Debug, Deserialize, TS)]
 pub struct RegisterRepoRequest {
@@ -178,41 +168,20 @@ pub async fn open_repo_in_editor(
         .get_by_id(&deployment.db().pool, repo_id)
         .await?;
 
-    let editor_config = {
-        let config = deployment.config().read().await;
-        let editor_type_str = payload.as_ref().and_then(|req| req.editor_type.as_deref());
-        config.editor.with_override(editor_type_str)
-    };
-
-    match editor_config.open_file(&repo.path).await {
-        Ok(url) => {
-            tracing::info!(
-                "Opened editor for repo {} at path: {}{}",
-                repo_id,
-                repo.path.to_string_lossy(),
-                if url.is_some() { " (remote mode)" } else { "" }
-            );
-
-            deployment
-                .track_if_analytics_allowed(
-                    "repo_editor_opened",
-                    serde_json::json!({
-                        "repo_id": repo_id.to_string(),
-                        "editor_type": payload.as_ref().and_then(|req| req.editor_type.as_ref()),
-                        "remote_mode": url.is_some(),
-                    }),
-                )
-                .await;
-
-            Ok(ResponseJson(ApiResponse::success(OpenEditorResponse {
-                url,
-            })))
-        }
-        Err(e) => {
-            tracing::error!("Failed to open editor for repo {}: {:?}", repo_id, e);
-            Err(ApiError::EditorOpen(e))
-        }
+    if payload
+        .as_ref()
+        .is_some_and(|p| p.file_path.is_some() || p.repo_id.is_some())
+    {
+        return Err(ApiError::BadRequest(
+            "Repository management opens the registered repository directory".into(),
+        ));
     }
+    let directory = existing_editor_directory(&repo.path).await?;
+    let config = deployment.config().read().await;
+    let entries = config.editor.links(&directory.to_string_lossy(), None);
+    Ok(ResponseJson(ApiResponse::success(OpenEditorResponse {
+        entries,
+    })))
 }
 
 pub async fn search_repo(

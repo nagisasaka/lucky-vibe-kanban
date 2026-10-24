@@ -65,41 +65,6 @@
         "variant": "預設",
         "defaultLabel": "預設"
       },
-      "editor": {
-        "title": "編輯器",
-        "description": "設定您的程式碼編輯體驗。",
-        "type": {
-          "label": "編輯器類型",
-          "placeholder": "選擇編輯器",
-          "helper": "選擇您偏好的程式碼編輯器介面。"
-        },
-        "customCommand": {
-          "label": "自訂編輯器指令",
-          "placeholder": "例如：code、subl、vim",
-          "helper": "輸入啟動自訂編輯器的指令，用於開啟檔案。"
-        },
-        "remoteSsh": {
-          "host": {
-            "label": "遠端 SSH 主機（選填）",
-            "placeholder": "例如：主機名稱或 IP 位址",
-            "helper": "若 Lucky Vibe Kanban 在遠端伺服器上執行，請設定此項。設定後，點擊在編輯器中開啟將產生 URL 以透過 SSH 開啟編輯器，而非執行本機指令。"
-          },
-          "user": {
-            "label": "遠端 SSH 使用者（選填）",
-            "placeholder": "例如：使用者名稱",
-            "helper": "遠端連線的 SSH 使用者名稱。若未設定，VS Code 將使用您的 SSH 設定或提示輸入。"
-          }
-        },
-        "autoInstallExtension": {
-          "label": "自動安裝 VS Code 擴充功能",
-          "helper": "在 VS Code 或 Cursor 中開啟專案時自動安裝 Lucky Vibe Kanban 擴充功能。此操作在背景執行；如果擴充功能已安裝，則不會產生影響。"
-        },
-        "availability": {
-          "checking": "檢查可用性...",
-          "available": "可用",
-          "notFound": "在 PATH 中找不到"
-        }
-      },
       "github": {
         "title": "GitHub 整合",
         "cliSetup": {
@@ -650,5 +615,21 @@
       "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
     },
     "help": "Permissions and limits"
+  },
+  "externalEditors": {
+    "title": "External editor integrations",
+    "description": "These settings are shared by this LVK server. Edit the URI if your PC uses a different SSH host or alias.",
+    "variables": "Use <lvk_workspace_dir> for the workspace/repository directory and <lvk_file_path> for a file. Placeholders are supported in URI paths and query values. Names must be unique (1–80 characters); templates up to 8192 bytes.",
+    "migration": "Previous IDE, command and SSH settings are no longer used. Configure a named URI here.",
+    "name": "Menu name",
+    "template": "URI template",
+    "up": "Move up",
+    "down": "Move down",
+    "remove": "Remove",
+    "add": "Add integration",
+    "open": "Open in external editor",
+    "delegate": "Select a link to hand it to your browser and OS. LVK cannot confirm that the editor opened or connected.",
+    "loading": "Resolving links…",
+    "empty": "No external editors configured. Add an integration in Settings."
   }
 }

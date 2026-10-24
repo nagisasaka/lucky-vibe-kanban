@@ -25,69 +25,16 @@ Choose the default agent and variant for new task attempts. This profile is pre-
 You can override the default agent configuration per attempt in the create attempt dialog.
 </Tip>
 
-## Editor Integration
+## External editor integrations
 
-Configure integration with your preferred code editor for a seamless development workflow.
+Register editable menu names and URI templates in Settings → General. The initial
+VS Code URI uses your browser's LVK hostname once as its SSH host. Entries are
+shared server settings; edit the URI to match your own SSH host or alias.
 
-### Selecting Your Editor
-
-Choose from various supported editors:
-- **VS Code** - Microsoft's popular code editor
-- **Cursor** - VSCode fork with AI-native features
-- **Windsurf** - VSCode fork optimised for collaborative development
-- **Antigravity** - Google's AI-native code editor
-- **Neovim**, **Emacs**, **Sublime Text** - Other popular editors
-- **Custom** - Use a custom shell command
-
-### Remote SSH Configuration
-
-<Frame>
-<img src="/images/vk-editor-ssh.png" alt="Vibe Kanban settings editor section showing ssh configuration options." />
-</Frame>
-
-When running Vibe Kanban on a remote server (e.g., accessed via Cloudflare tunnel, ngrok, or as a systemctl service), you can configure VSCode-based editors to open projects via SSH instead of assuming localhost.
-
-This feature is available for **VS Code**, **Cursor**, and **Windsurf** editors.
-
-#### When to Use Remote SSH
-
-Enable remote SSH configuration when:
-- Vibe Kanban runs on a remote server (VPS, cloud instance, etc.)
-- You access the web UI through a tunnel or reverse proxy
-- Your code files are on a different machine than your browser
-- You want your local editor to connect to the remote server via SSH
-
-#### Configuration Fields
-
-1. **Remote SSH Host** (Optional)
-   - The hostname or IP address of your remote server
-   - Examples: `example.com`, `192.168.1.100`, `my-server`
-   - Must be accessible via SSH from your local machine
-
-2. **Remote SSH User** (Optional)
-   - The SSH username for connecting to the remote server
-   - If not specified, SSH will use your default user or SSH config
-
-#### How It Works
-
-When remote SSH is configured, clicking "Open in VSCode" (or Cursor/Windsurf):
-1. Generates a special protocol URL like: `vscode://vscode-remote/ssh-remote+user@host/path/to/project`
-2. Opens in your default browser, which launches your local editor
-3. Your editor connects to the remote server via SSH
-4. The project or task worktree opens in the remote context
-
-This works for both project-level and task worktree opening.
-
-#### Prerequisites
-
-- SSH access configured between your local machine and remote server
-- SSH keys or credentials set up (no password prompts)
-- VSCode Remote-SSH extension installed (or equivalent for Cursor/Windsurf)
-- The remote server path must be accessible via SSH
-
-<Tip>
-Test your SSH connection first with `ssh user@host` to ensure it works without prompting for passwords.
-</Tip>
+See [External editor integrations](/settings/general#external-editor-integrations)
+for placeholders, path/query encoding, target selection and migration from old
+IDE/Custom/SSH settings. LVK delegates URI links to your browser and OS and no
+longer launches editor CLI commands or installs extensions.
 
 ## Git Configuration
 

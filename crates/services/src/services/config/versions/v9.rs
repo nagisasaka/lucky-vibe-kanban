@@ -3,8 +3,8 @@ use executors::{executors::BaseCodingAgent, profile::ExecutorProfileId};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 pub use v8::{
-    EditorConfig, EditorType, GitHubConfig, NotificationConfig, SendMessageShortcut, ShowcaseState,
-    SoundFile, ThemeMode, UiLanguage,
+    EditorConfig, GitHubConfig, NotificationConfig, SendMessageShortcut, ShowcaseState, SoundFile,
+    ThemeMode, UiLanguage,
 };
 
 use crate::services::config::versions::v8;
@@ -155,6 +155,38 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn editor_migration_preserves_other_settings_and_explicit_empty() {
+        for version in ["v9", "v8", "v7", "v6"] {
+            let mut value = match version {
+                "v6" => serde_json::to_value(super::super::v6::Config::default()),
+                "v7" => serde_json::to_value(super::super::v7::Config::default()),
+                "v8" => serde_json::to_value(v8::Config::default()),
+                _ => serde_json::to_value(Config::default()),
+            }
+            .unwrap();
+            value["git_branch_prefix"] = serde_json::json!("retained");
+            value["workspace_dir"] = serde_json::json!("/custom/workspaces");
+            value["analytics_enabled"] = serde_json::json!(false);
+            value["editor"] = serde_json::json!({"editor_type":"FUTURE_IDE","custom_command":"never execute", "remote_ssh_host":"old"});
+            let migrated = Config::from(value.to_string());
+            // Verify the existing v6→v9 migration path and the current format.
+            assert_eq!(
+                migrated.workspace_dir.as_deref(),
+                Some("/custom/workspaces"),
+                "{version}"
+            );
+            assert!(!migrated.analytics_enabled, "{version}");
+            assert!(migrated.editor.entries.is_none());
+        }
+        let mut value = serde_json::to_value(Config::default()).unwrap();
+        value["editor"] = serde_json::json!({"entries":[]});
+        value["git_branch_prefix"] = serde_json::json!("retained");
+        let config = Config::from(value.to_string());
+        assert_eq!(config.git_branch_prefix, "retained");
+        assert!(config.editor.entries.unwrap().is_empty());
+    }
 
     #[test]
     fn integration_preference_defaults_and_survives_restart() {

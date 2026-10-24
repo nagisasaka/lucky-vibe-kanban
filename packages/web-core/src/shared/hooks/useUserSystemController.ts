@@ -1,3 +1,4 @@
+import { initializeExternalEditors } from '@/shared/lib/externalEditors';
 import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
@@ -32,7 +33,17 @@ export function useUserSystemController({
 
   const { data: userSystemInfo, isLoading } = useQuery({
     queryKey,
-    queryFn: load,
+    queryFn: async () => {
+      const info = await load();
+      if (info.config.editor.entries == null) {
+        const editor = initializeExternalEditors(
+          info.config.editor,
+          window.location.hostname
+        );
+        info.config = await save({ ...info.config, editor });
+      }
+      return info;
+    },
     enabled,
     staleTime: 5 * 60 * 1000,
   });
@@ -80,7 +91,10 @@ export function useUserSystemController({
   }, [config, save]);
 
   const updateAndSaveConfig = useCallback(
-    async (updates: Partial<Config>): Promise<boolean> => {
+    async (
+      updates: Partial<Config>,
+      onError?: (message: string) => void
+    ): Promise<boolean> => {
       if (!config) return false;
 
       const newConfig = { ...config, ...updates };
@@ -97,6 +111,7 @@ export function useUserSystemController({
         });
         return true;
       } catch (err) {
+        onError?.(err instanceof Error ? err.message : String(err));
         console.error('Error saving config:', err);
         queryClient.invalidateQueries({ queryKey });
         return false;

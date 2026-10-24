@@ -18,7 +18,6 @@ import { usePostHog } from 'posthog-js/react';
 import { LVK_GITHUB_URL } from '@vibe/ui/lib/repository';
 import {
   BaseCodingAgent,
-  EditorType,
   SoundFile,
   ThemeMode,
   type EditorConfig,
@@ -26,9 +25,8 @@ import {
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { AgentIcon, getAgentName } from '@/shared/components/AgentIcon';
-import { IdeIcon } from '@/shared/components/IdeIcon';
+import { ExternalEditorSettings } from '@/shared/components/ExternalEditorSettings';
 import { filterVisibleAgents } from '@/shared/lib/agentVisibility';
-import { getIdeName } from '@/shared/lib/ideName';
 import { cn, playSound } from '@/shared/lib/utils';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
@@ -126,11 +124,13 @@ export function LandingPage() {
 
   const [initialized, setInitialized] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<BaseCodingAgent>(
     BaseCodingAgent.CLAUDE_CODE
   );
-  const [editorType, setEditorType] = useState<EditorType>(EditorType.VS_CODE);
-  const [customCommand, setCustomCommand] = useState('');
+  const [editorConfig, setEditorConfig] = useState<EditorConfig>({
+    entries: [],
+  });
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundFile, setSoundFile] = useState<SoundFile>(randomDefaultSoundFile);
   const hasTrackedStageViewRef = useRef(false);
@@ -154,8 +154,7 @@ export function LandingPage() {
     if (!config || initialized) return;
 
     setSelectedAgent(config.executor_profile.executor);
-    setEditorType(config.editor.editor_type);
-    setCustomCommand(config.editor.custom_command || '');
+    setEditorConfig(config.editor);
     setInitialized(true);
   }, [config, initialized]);
 
@@ -209,8 +208,6 @@ export function LandingPage() {
     });
   }, [config?.hidden_agents, profiles, selectedAgent]);
 
-  const editorOptions = useMemo(() => Object.values(EditorType), []);
-
   const previewSound = async (value: SoundFile) => {
     try {
       await playSound(`/api/sounds/${value}`);
@@ -229,48 +226,38 @@ export function LandingPage() {
     void previewSound(value);
   };
 
-  const isCustomEditorValid =
-    editorType !== EditorType.CUSTOM || customCommand.trim() !== '';
-  const canContinue = !saving && isCustomEditorValid;
+  const canContinue = !saving;
 
   const handleContinue = async () => {
     if (!config || !canContinue) return;
-
-    const editorConfig: EditorConfig = {
-      editor_type: editorType,
-      custom_command:
-        editorType === EditorType.CUSTOM ? customCommand.trim() : null,
-      remote_ssh_host: null,
-      remote_ssh_user: null,
-      auto_install_extension: true,
-    };
 
     trackRemoteOnboardingEvent(REMOTE_ONBOARDING_EVENTS.STAGE_SUBMITTED, {
       stage: 'landing',
       method: 'continue',
       selected_agent: selectedAgent,
-      editor_type: editorType,
-      custom_editor_command_set:
-        editorType === EditorType.CUSTOM && customCommand.trim() !== '',
       sound_enabled: soundEnabled,
       sound_file: soundEnabled ? soundFile : null,
     });
 
+    setSaveError(null);
     setSaving(true);
-    const success = await updateAndSaveConfig({
-      onboarding_acknowledged: true,
-      disclaimer_acknowledged: true,
-      executor_profile: {
-        executor: selectedAgent,
-        variant: null,
+    const success = await updateAndSaveConfig(
+      {
+        onboarding_acknowledged: true,
+        disclaimer_acknowledged: true,
+        executor_profile: {
+          executor: selectedAgent,
+          variant: null,
+        },
+        editor: editorConfig,
+        notifications: {
+          ...config.notifications,
+          sound_enabled: soundEnabled,
+          sound_file: soundFile,
+        },
       },
-      editor: editorConfig,
-      notifications: {
-        ...config.notifications,
-        sound_enabled: soundEnabled,
-        sound_file: soundFile,
-      },
-    });
+      setSaveError
+    );
     setSaving(false);
 
     if (success) {
@@ -391,63 +378,15 @@ export function LandingPage() {
               </div>
             </section>
 
-            {/* Column 2: Code Editor */}
             <section className="space-y-half">
-              <h2 className="text-sm font-medium text-high">Code Editor</h2>
-              <div className="grid gap-1.5">
-                {editorOptions.map((editor) => {
-                  const selected = editorType === editor;
-
-                  return (
-                    <button
-                      key={editor}
-                      type="button"
-                      onClick={() => setEditorType(editor)}
-                      className={cn(
-                        'flex items-center gap-base rounded-sm border px-base py-half text-left',
-                        selected
-                          ? 'border-brand bg-brand/10'
-                          : 'border-border bg-panel hover:bg-primary'
-                      )}
-                    >
-                      <IdeIcon
-                        editorType={editor}
-                        className="size-icon-sm shrink-0"
-                      />
-                      <span className="text-sm text-normal flex-1 truncate">
-                        {getIdeName(editor)}
-                      </span>
-                      {selected && (
-                        <CheckIcon
-                          className="size-icon-xs text-brand shrink-0"
-                          weight="bold"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {editorType === EditorType.CUSTOM && (
-                <div className="space-y-half">
-                  <label className="text-sm font-medium text-normal">
-                    Custom Command
-                  </label>
-                  <input
-                    type="text"
-                    value={customCommand}
-                    onChange={(e) => setCustomCommand(e.target.value)}
-                    placeholder="e.g. code --wait"
-                    className={cn(
-                      'w-full bg-panel border rounded-sm px-base py-half text-sm text-high',
-                      'placeholder:text-low placeholder:opacity-80 focus:outline-none',
-                      'focus:ring-1 focus:ring-brand',
-                      customCommand.trim() === ''
-                        ? 'border-warning/60'
-                        : 'border-border'
-                    )}
-                  />
-                </div>
+              <ExternalEditorSettings
+                value={editorConfig}
+                onChange={setEditorConfig}
+              />
+              {saveError && (
+                <p role="alert" className="text-error">
+                  {saveError}
+                </p>
               )}
             </section>
 

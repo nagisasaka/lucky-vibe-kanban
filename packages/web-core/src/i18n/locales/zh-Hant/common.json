@@ -1,7 +1,4 @@
 {
-  "editorNames": {
-    "custom": "自訂"
-  },
   "buttons": {
     "save": "儲存",
     "cancel": "取消",
@@ -1131,7 +1128,7 @@
     }
   },
   "modelSelector": {
-    "followCliConfig": "\u8ddf\u96a8 CLI \u8a2d\u5b9a",
+    "followCliConfig": "跟隨 CLI 設定",
     "preset": "預設配置",
     "custom": "自訂",
     "permissions": "權限",

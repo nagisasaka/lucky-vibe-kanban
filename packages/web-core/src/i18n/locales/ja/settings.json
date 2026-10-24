@@ -84,41 +84,6 @@
         "variant": "デフォルト",
         "defaultLabel": "デフォルト"
       },
-      "editor": {
-        "title": "エディター",
-        "description": "コード編集体験を設定します。",
-        "type": {
-          "label": "エディタータイプ",
-          "placeholder": "エディターを選択",
-          "helper": "お好みのコードエディターインターフェースを選択してください。"
-        },
-        "customCommand": {
-          "label": "カスタムエディターコマンド",
-          "placeholder": "例: code, subl, vim",
-          "helper": "カスタムエディターを起動するコマンドを入力してください。ファイルを開くために使用されます。"
-        },
-        "remoteSsh": {
-          "host": {
-            "label": "リモートSSHホスト（オプション）",
-            "placeholder": "例: ホスト名またはIPアドレス",
-            "helper": "Lucky Vibe Kanbanがリモートサーバーで実行されている場合に設定してください。設定すると、「エディターで開く」をクリックしたときに、ローカルコマンドを実行する代わりにSSH経由でエディターを開くURLが生成されます。"
-          },
-          "user": {
-            "label": "リモートSSHユーザー（オプション）",
-            "placeholder": "例: ユーザー名",
-            "helper": "リモート接続のSSHユーザー名。設定されていない場合、VS CodeはSSH設定を使用するか、入力を求めます。"
-          }
-        },
-        "autoInstallExtension": {
-          "label": "Auto-install VS Code Extension",
-          "helper": "Automatically install the Lucky Vibe Kanban extension when opening a project in VS Code or Cursor. This runs in the background and has no effect if the extension is already installed."
-        },
-        "availability": {
-          "checking": "利用可能性を確認中...",
-          "available": "利用可能",
-          "notFound": "PATHに見つかりません"
-        }
-      },
       "github": {
         "title": "GitHub連携",
         "cliSetup": {
@@ -734,5 +699,21 @@
       "legacy_file": "従来JSONから読み込みました。保存すると以後は保存済み設定のみを使用します。"
     },
     "help": "権限と制限について"
+  },
+  "externalEditors": {
+    "title": "外部エディター連携",
+    "description": "この設定はLVKサーバー共通です。利用者PCのSSH接続先やaliasが異なる場合はURIを編集してください。",
+    "variables": "<lvk_workspace_dir> はWorkspace／Repoディレクトリ、<lvk_file_path> は対象ファイルです。URIのpathとquery値で使用できます。表示名は重複なしの1〜80文字、テンプレートは8192バイト以内です。",
+    "migration": "旧IDE・コマンド・SSH設定は使用しません。名前付きURIをここで再設定できます。",
+    "name": "メニュー表示名",
+    "template": "URIテンプレート",
+    "up": "上へ",
+    "down": "下へ",
+    "remove": "削除",
+    "add": "連携を追加",
+    "open": "外部エディターで開く",
+    "delegate": "リンクを選ぶとブラウザとOSへ委譲します。LVKはエディターの起動や接続の成功を確認できません。",
+    "loading": "リンクを解決中…",
+    "empty": "外部エディターが未登録です。設定から連携を追加してください。"
   }
 }

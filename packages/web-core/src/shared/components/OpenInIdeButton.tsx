@@ -1,8 +1,5 @@
-import { useMemo } from 'react';
 import { Button } from '@vibe/ui/components/Button';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { IdeIcon } from '@/shared/components/IdeIcon';
-import { getIdeName } from '@/shared/lib/ideName';
 
 type OpenInIdeButtonProps = {
   onClick: () => void;
@@ -15,13 +12,7 @@ export function OpenInIdeButton({
   disabled = false,
   className,
 }: OpenInIdeButtonProps) {
-  const { config } = useUserSystem();
-  const editorType = config?.editor?.editor_type ?? null;
-
-  const label = useMemo(() => {
-    const ideName = getIdeName(editorType);
-    return `Open in ${ideName}`;
-  }, [editorType]);
+  const label = 'Open in external editor';
 
   return (
     <Button
@@ -33,7 +24,7 @@ export function OpenInIdeButton({
       aria-label={label}
       title={label}
     >
-      <IdeIcon editorType={editorType} className="h-4 w-4" />
+      <IdeIcon className="h-4 w-4" />
       <span className="sr-only">{label}</span>
     </Button>
   );

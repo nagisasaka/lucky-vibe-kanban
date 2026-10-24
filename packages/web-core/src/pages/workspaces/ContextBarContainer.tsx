@@ -6,7 +6,6 @@ import {
 } from '@vibe/ui/components/ContextBar';
 import { Tooltip } from '@vibe/ui/components/Tooltip';
 import { useActions } from '@/shared/hooks/useActions';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { IdeIcon } from '@/shared/components/IdeIcon';
 import { useContextBarPosition } from '@/shared/hooks/useContextBarPosition';
 import { ContextBarActionGroups } from '@/shared/actions';
@@ -22,7 +21,6 @@ import {
   getActionIcon,
   getActionTooltip,
 } from '@/shared/types/actions';
-import type { EditorType } from 'shared/types';
 import { useActionVisibilityContext } from '@/shared/hooks/useActionVisibilityContext';
 import { CopyButton } from '@/shared/components/CopyButton';
 import { isRealMobileDevice } from '@/shared/hooks/useIsMobile';
@@ -101,7 +99,6 @@ function buildSpecialItem(
   tooltip: string,
   shortcut: string | undefined,
   enabled: boolean,
-  editorType: EditorType | null,
   onExecuteAction: () => void
 ): ContextBarRenderItem {
   if (iconType === 'ide-icon') {
@@ -121,10 +118,7 @@ function buildSpecialItem(
             onClick={onExecuteAction}
             disabled={!enabled}
           >
-            <IdeIcon
-              editorType={editorType}
-              className="size-icon-xs opacity-50 group-hover:opacity-80 transition-opacity"
-            />
+            <IdeIcon className="size-icon-xs opacity-50 group-hover:opacity-80 transition-opacity" />
           </button>
         </Tooltip>
       ),
@@ -154,9 +148,6 @@ export function ContextBarContainer({
   containerRef,
 }: ContextBarContainerProps) {
   const { executeAction } = useActions();
-  const { config } = useUserSystem();
-  const editorType =
-    (config?.editor?.editor_type as EditorType | undefined) ?? null;
 
   // Get visibility context (now includes dev server state)
   const actionCtx = useActionVisibilityContext();
@@ -199,7 +190,6 @@ export function ContextBarContainer({
               tooltip,
               shortcut,
               enabled,
-              editorType,
               execute
             ),
           ];
@@ -225,7 +215,7 @@ export function ContextBarContainer({
         ];
       });
     },
-    [actionCtx, editorType, handleExecuteAction]
+    [actionCtx, handleExecuteAction]
   );
 
   // Filter visible actions and map to render items

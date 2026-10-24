@@ -184,12 +184,7 @@ function CommandBarContent({
         search={state.search}
         onSearchChange={(query) => dispatch({ type: 'SEARCH_CHANGE', query })}
         renderSpecialActionIcon={(iconName) =>
-          iconName === 'ide-icon' ? (
-            <IdeIcon
-              editorType={visibilityContext.editorType}
-              className="h-4 w-4"
-            />
-          ) : null
+          iconName === 'ide-icon' ? <IdeIcon className="h-4 w-4" /> : null
         }
       />
     </CommandDialog>

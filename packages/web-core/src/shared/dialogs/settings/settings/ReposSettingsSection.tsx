@@ -1,3 +1,4 @@
+import { EditorSelectionDialog } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -539,6 +540,14 @@ export function ReposSettingsSection({
 
       {selectedRepo && draft && (
         <>
+          <PrimaryButton
+            variant="default"
+            onClick={() =>
+              EditorSelectionDialog.show({ repoId: selectedRepo.id })
+            }
+          >
+            {t('externalEditors.open')}
+          </PrimaryButton>
           {machineClient && (
             <GithubCredentialsSettings
               key={`github:${machineClient.target.id}:${selectedRepo.id}`}

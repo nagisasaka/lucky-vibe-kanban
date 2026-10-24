@@ -1,3 +1,4 @@
+import { ExternalEditorSettings } from '@/shared/components/ExternalEditorSettings';
 import { WebPushSettings } from '@/shared/components/web-push/WebPushSettings';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +13,6 @@ import {
   type BaseCodingAgent,
   DEFAULT_COMMIT_REMINDER_PROMPT,
   DEFAULT_PR_DESCRIPTION_PROMPT,
-  EditorType,
   type ExecutorProfileId,
   SoundFile,
   ThemeMode,
@@ -151,6 +151,9 @@ export function GeneralSettingsSection() {
       setDraft((prev: typeof config) => {
         if (!prev) return prev;
         const next = merge({}, prev, patch);
+        // Entries are an ordered replacement, not an index-wise array merge:
+        // removals (including []) must not retain rows from the previous draft.
+        if (patch?.editor) next.editor = cloneDeep(patch.editor);
         if (!isEqual(next, config)) {
           setDirty(true);
         }
@@ -186,7 +189,7 @@ export function GeneralSettingsSection() {
     setSuccess(false);
 
     try {
-      await updateAndSaveConfig(draft);
+      if (!(await updateAndSaveConfig(draft, setError))) return;
       setTheme(draft.theme);
       setDirty(false);
       setSuccess(true);
@@ -237,11 +240,6 @@ export function GeneralSettingsSection() {
   const themeOptions = Object.values(ThemeMode).map((theme) => ({
     value: theme,
     label: toPrettyCase(theme),
-  }));
-
-  const editorOptions = Object.values(EditorType).map((editor) => ({
-    value: editor,
-    label: toPrettyCase(editor),
   }));
 
   const soundOptions = Object.values(SoundFile).map((sound) => ({
@@ -314,117 +312,11 @@ export function GeneralSettingsSection() {
         )}
       </SettingsCard>
 
-      {/* Editor */}
-      <SettingsCard
-        title={t('settings.general.editor.title')}
-        description={t('settings.general.editor.description')}
-      >
-        <SettingsField
-          label={t('settings.general.editor.type.label')}
-          description={t('settings.general.editor.type.helper')}
-        >
-          <SettingsSelect
-            value={draft?.editor.editor_type}
-            options={editorOptions}
-            onChange={(value: EditorType) =>
-              updateDraft({
-                editor: { ...draft!.editor, editor_type: value },
-              })
-            }
-            placeholder={t('settings.general.editor.type.placeholder')}
-          />
-        </SettingsField>
-
-        {draft?.editor.editor_type === EditorType.CUSTOM && (
-          <SettingsField
-            label={t('settings.general.editor.customCommand.label')}
-            description={t('settings.general.editor.customCommand.helper')}
-          >
-            <SettingsInput
-              value={draft?.editor.custom_command || ''}
-              onChange={(value) =>
-                updateDraft({
-                  editor: {
-                    ...draft!.editor,
-                    custom_command: value || null,
-                  },
-                })
-              }
-              placeholder={t(
-                'settings.general.editor.customCommand.placeholder'
-              )}
-            />
-          </SettingsField>
-        )}
-
-        {(draft?.editor.editor_type === EditorType.VS_CODE ||
-          draft?.editor.editor_type === EditorType.CURSOR ||
-          draft?.editor.editor_type === EditorType.WINDSURF ||
-          draft?.editor.editor_type === EditorType.GOOGLE_ANTIGRAVITY ||
-          draft?.editor.editor_type === EditorType.ZED) && (
-          <>
-            <SettingsField
-              label={t('settings.general.editor.remoteSsh.host.label')}
-              description={t('settings.general.editor.remoteSsh.host.helper')}
-            >
-              <SettingsInput
-                value={draft?.editor.remote_ssh_host || ''}
-                onChange={(value) =>
-                  updateDraft({
-                    editor: {
-                      ...draft!.editor,
-                      remote_ssh_host: value || null,
-                    },
-                  })
-                }
-                placeholder={t(
-                  'settings.general.editor.remoteSsh.host.placeholder'
-                )}
-              />
-            </SettingsField>
-
-            {draft?.editor.remote_ssh_host && (
-              <SettingsField
-                label={t('settings.general.editor.remoteSsh.user.label')}
-                description={t('settings.general.editor.remoteSsh.user.helper')}
-              >
-                <SettingsInput
-                  value={draft?.editor.remote_ssh_user || ''}
-                  onChange={(value) =>
-                    updateDraft({
-                      editor: {
-                        ...draft!.editor,
-                        remote_ssh_user: value || null,
-                      },
-                    })
-                  }
-                  placeholder={t(
-                    'settings.general.editor.remoteSsh.user.placeholder'
-                  )}
-                />
-              </SettingsField>
-            )}
-          </>
-        )}
-
-        {(draft?.editor.editor_type === EditorType.VS_CODE ||
-          draft?.editor.editor_type === EditorType.VS_CODE_INSIDERS ||
-          draft?.editor.editor_type === EditorType.CURSOR) && (
-          <SettingsCheckbox
-            id="auto-install-extension"
-            label={t('settings.general.editor.autoInstallExtension.label')}
-            description={t(
-              'settings.general.editor.autoInstallExtension.helper'
-            )}
-            checked={draft?.editor.auto_install_extension ?? true}
-            onChange={(checked) =>
-              updateDraft({
-                editor: {
-                  ...draft!.editor,
-                  auto_install_extension: checked,
-                },
-              })
-            }
+      <SettingsCard title={t('externalEditors.title')}>
+        {draft && (
+          <ExternalEditorSettings
+            value={draft.editor}
+            onChange={(editor) => updateDraft({ editor })}
           />
         )}
       </SettingsCard>

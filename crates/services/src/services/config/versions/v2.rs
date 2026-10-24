@@ -6,33 +6,12 @@ use strum_macros::EnumString;
 use ts_rs::TS;
 use utils::{assets::SoundAssets, cache_dir};
 
-// Re-export editor config from the dedicated editor module
-pub use crate::services::config::editor::{EditorConfig, EditorType};
+pub use crate::services::config::editor::EditorConfig;
 use crate::services::config::versions::v1;
 
-// Keep the From conversions here since v1 types are only accessible within versions module
 impl From<v1::EditorConfig> for EditorConfig {
-    fn from(old: v1::EditorConfig) -> Self {
-        EditorConfig::new(
-            EditorType::from(old.editor_type),
-            old.custom_command,
-            None,
-            None,
-            true,
-        )
-    }
-}
-
-impl From<v1::EditorType> for EditorType {
-    fn from(old: v1::EditorType) -> Self {
-        match old {
-            v1::EditorType::VsCode => EditorType::VsCode,
-            v1::EditorType::Cursor => EditorType::Cursor,
-            v1::EditorType::Windsurf => EditorType::Windsurf,
-            v1::EditorType::IntelliJ => EditorType::IntelliJ,
-            v1::EditorType::Zed => EditorType::Zed,
-            v1::EditorType::Custom => EditorType::Custom,
-        }
+    fn from(_: v1::EditorConfig) -> Self {
+        Self::default()
     }
 }
 
