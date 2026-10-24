@@ -868,7 +868,7 @@ impl Codex {
                 )))
             })?;
 
-            let mut ownership = utils::process::OwnedProcessGroup::capture(&mut child, "codex-discovery")
+            let mut ownership = workspace_utils::process::OwnedProcessGroup::capture(&mut child, "codex-discovery")
                 .inspect_err(|error| { tracing::error!(purpose = "codex-discovery", %error, "could not establish process ownership"); })?;
             let cancel = tokio_util::sync::CancellationToken::new();
             let mut reader_task = None;
@@ -1730,9 +1730,14 @@ mod tests {
                 record.display()
             ));
             let cwd = root.path().to_path_buf();
+            // Pin fixture identities before allowing successful discovery to clean them.
+            let (finish_tx, finish_rx) = tokio::sync::oneshot::channel::<()>();
             let mut call = Box::pin(async move {
                 agent
-                    .with_discovery_app_server(&cwd, |_| async { Ok(()) })
+                    .with_discovery_app_server(&cwd, move |_| async move {
+                        let _ = finish_rx.await;
+                        Ok(())
+                    })
                     .await
             });
             let mut unrelated = tokio::process::Command::new("sleep")
@@ -1751,7 +1756,10 @@ mod tests {
             let wrapper = FixtureProcess::open(pids["wrapper"].as_u64().unwrap() as u32);
             let native = FixtureProcess::open(pids["native"].as_u64().unwrap() as u32);
             match mode {
-                "normal" => call.await.unwrap(),
+                "normal" => {
+                    finish_tx.send(()).unwrap();
+                    call.await.unwrap();
+                }
                 "timeout" => {
                     assert!(
                         tokio::time::timeout(std::time::Duration::from_millis(20), call)

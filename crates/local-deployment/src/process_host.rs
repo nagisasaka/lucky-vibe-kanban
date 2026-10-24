@@ -905,153 +905,155 @@ async fn monitor_process(
             Result<ExecutorExitResult, tokio::sync::oneshot::error::RecvError>,
         >()),
     };
-    let mut cause = if let Err(error) = &ownership {
-        ExitCause::WaitFailure(error.to_string())
-    } else {
-        loop {
-            tokio::select! {
-                _ = host.journal_failed.notified() => break ExitCause::AuditFailure("Host journal flush failed".into()),
-                status = ownership.as_ref().expect("ownership checked").wait(&mut child) => {
-                    break match status {
-                        Ok(status) => ExitCause::Process {
-                            success: status.success(),
-                            code: status.code().map(i64::from),
-                        },
-                        Err(error) => ExitCause::WaitFailure(error.to_string()),
-                    };
-                }
-                result = &mut exit_signal => {
-                    break match result {
-                        Ok(result) => ExitCause::Executor(result),
-                        Err(_) => ExitCause::ExecutorChannelClosed,
-                    };
-                }
-                notice = notices.recv(), if !(stdout_closed && stderr_closed) => {
-                    match notice {
-                        Some(OutputNotice::StdoutClosed) => stdout_closed = true,
-                        Some(OutputNotice::StderrClosed) => stderr_closed = true,
-                        Some(OutputNotice::Projected { durable_events, live_events, native_ref, _byte_budget }) => {
-                            remember_provider_error(&durable_events, &mut provider_error);
-                            if let Err(error) = host.append_event(HostEventPayload::Projected {
-                                durable_events,
-                                live_events,
-                                native_ref,
-                            }).await { break ExitCause::AuditFailure(error.to_string()); }
-                        }
-                        Some(OutputNotice::ProviderTerminal(status)) => break ExitCause::ProviderTerminal(status),
-                        Some(OutputNotice::AuditFailure(error)) => break ExitCause::AuditFailure(error),
-                        Some(OutputNotice::ProtocolFailure(error)) => break ExitCause::ProtocolFailure(error),
-                        None => {
-                            stdout_closed = true;
-                            stderr_closed = true;
-                        }
+    let mut cause = loop {
+        let ownership = match ownership.as_mut() {
+            Ok(ownership) => ownership,
+            Err(error) => break ExitCause::WaitFailure(error.to_string()),
+        };
+        tokio::select! {
+            _ = host.journal_failed.notified() => break ExitCause::AuditFailure("Host journal flush failed".into()),
+            status = ownership.wait(&mut child) => {
+                break match status {
+                    Ok(status) => ExitCause::Process {
+                        success: status.success(),
+                        code: status.code().map(i64::from),
+                    },
+                    Err(error) => ExitCause::WaitFailure(error.to_string()),
+                };
+            }
+            result = &mut exit_signal => {
+                break match result {
+                    Ok(result) => ExitCause::Executor(result),
+                    Err(_) => ExitCause::ExecutorChannelClosed,
+                };
+            }
+            notice = notices.recv(), if !(stdout_closed && stderr_closed) => {
+                match notice {
+                    Some(OutputNotice::StdoutClosed) => stdout_closed = true,
+                    Some(OutputNotice::StderrClosed) => stderr_closed = true,
+                    Some(OutputNotice::Projected { durable_events, live_events, native_ref, _byte_budget }) => {
+                        remember_provider_error(&durable_events, &mut provider_error);
+                        if let Err(error) = host.append_event(HostEventPayload::Projected {
+                            durable_events,
+                            live_events,
+                            native_ref,
+                        }).await { break ExitCause::AuditFailure(error.to_string()); }
+                    }
+                    Some(OutputNotice::ProviderTerminal(status)) => break ExitCause::ProviderTerminal(status),
+                    Some(OutputNotice::AuditFailure(error)) => break ExitCause::AuditFailure(error),
+                    Some(OutputNotice::ProtocolFailure(error)) => break ExitCause::ProtocolFailure(error),
+                    None => {
+                        stdout_closed = true;
+                        stderr_closed = true;
                     }
                 }
-                command = commands.recv() => {
-                    let Some(ProcessCommand::Control { bytes, control: direct_control, cancel, result }) = command else {
-                        continue;
-                    };
-                    // Snapshot before native interrupt can reparent tool children.
-                    let descendants = if cancel {
-                        utils::process::CancelledDescendants::capture(child.inner().id())
-                    } else {
-                        Ok(utils::process::CancelledDescendants::default())
-                    };
-                    let sent_bytes = if let Some(control_peer) = control.as_ref() {
-                        match direct_control {
-                            Some(direct_control) => control_peer
-                                .send(direct_control)
-                                .await
-                                .map_err(|error| error.to_string()),
-                            None if !cancel => {
-                                Err("provider control payload is missing".to_string())
-                            }
-                            None => Ok(Vec::new()),
+            }
+            command = commands.recv() => {
+                let Some(ProcessCommand::Control { bytes, control: direct_control, cancel, result }) = command else {
+                    continue;
+                };
+                // Snapshot before native interrupt can reparent tool children.
+                let descendants = if cancel {
+                    utils::process::CancelledDescendants::capture(child.inner().id())
+                } else {
+                    Ok(utils::process::CancelledDescendants::default())
+                };
+                let sent_bytes = if let Some(control_peer) = control.as_ref() {
+                    match direct_control {
+                        Some(direct_control) => control_peer
+                            .send(direct_control)
+                            .await
+                            .map_err(|error| error.to_string()),
+                        None if !cancel => {
+                            Err("provider control payload is missing".to_string())
                         }
-                    } else if !bytes.is_empty() {
-                        if let Some(stdin) = stdin.as_mut() {
-                            let write_result = stdin.write_all(&bytes).await;
-                            let write_result = match write_result {
-                                Ok(()) => stdin.flush().await,
-                                Err(error) => Err(error),
-                            };
-                            write_result
-                                .map(|_| bytes)
-                                .map_err(|error| error.to_string())
-                        } else if !cancel {
-                            Err("provider stdin is owned by its protocol adapter".to_string())
-                        } else {
-                            Ok(Vec::new())
-                        }
+                        None => Ok(Vec::new()),
+                    }
+                } else if !bytes.is_empty() {
+                    if let Some(stdin) = stdin.as_mut() {
+                        let write_result = stdin.write_all(&bytes).await;
+                        let write_result = match write_result {
+                            Ok(()) => stdin.flush().await,
+                            Err(error) => Err(error),
+                        };
+                        write_result
+                            .map(|_| bytes)
+                            .map_err(|error| error.to_string())
+                    } else if !cancel {
+                        Err("provider stdin is owned by its protocol adapter".to_string())
                     } else {
                         Ok(Vec::new())
-                    };
-                    let sent_bytes = match sent_bytes {
-                        Ok(sent_bytes) => sent_bytes,
-                        Err(message) => {
-                            if !cancel {
-                                let _ = result.send(Err(message));
-                                continue;
-                            }
-                            // Cancellation is still authoritative when the
-                            // provider-native interrupt is unavailable (for
-                            // example before Codex has established its thread).
-                            // Continue to token/process cleanup instead of
-                            // turning a recoverable control race into a protocol
-                            // failure.
-                            tracing::warn!(%message, "provider-native cancellation was unavailable; using process cleanup");
-                            Vec::new()
-                        }
-                    };
-                    if !sent_bytes.is_empty() {
-                        let audit_result = {
-                            let mut writer = writer.lock().await;
-                            writer.append_native_input(
-                                NativeAuditChannel::Stdin,
-                                "application/x-ndjson",
-                                correlation_id,
-                                &sent_bytes,
-                            )
-                        };
-                        if let Err(error) = audit_result {
-                            let message = error.to_string();
-                            let _ = result.send(Err(message.clone()));
-                            break ExitCause::AuditFailure(message);
-                        }
                     }
-                    if cancel {
-                        cancellation_requested = true;
-                        // Native interrupt is asynchronous. Closing its transport
-                        // immediately can kill the provider before it terminates
-                        // tool jobs in their own process groups. Never require an
-                        // acknowledgement: unavailable/unresponsive control still
-                        // falls back to bounded process cleanup below.
-                        cancel_provider_transport(
-                            !sent_bytes.is_empty(),
-                            &mut exit_signal,
-                            cancellation.as_ref(),
-                            PROVIDER_CANCEL_GRACE,
-                        ).await;
-                        cancel_result = Some(result);
-                        // Both cleanups are bounded and run concurrently so the
-                        // native grace + process cleanup + audit drain fit inside
-                        // the cancellation protocol deadline.
-                        let (kill_result, descendant_result) = tokio::join!(
-                            ownership.as_mut().expect("ownership checked").terminate(&mut child),
-                            async {
-                                match descendants {
-                                    Ok(descendants) => descendants.terminate().await,
-                                    Err(error) => Err(error),
-                                }
-                            }
-                        );
-                        match kill_result.and(descendant_result) {
-                            Ok(()) => break ExitCause::Cancelled,
-                            Err(error) => break ExitCause::WaitFailure(error.to_string()),
+                } else {
+                    Ok(Vec::new())
+                };
+                let sent_bytes = match sent_bytes {
+                    Ok(sent_bytes) => sent_bytes,
+                    Err(message) => {
+                        if !cancel {
+                            let _ = result.send(Err(message));
+                            continue;
                         }
+                        // Cancellation is still authoritative when the
+                        // provider-native interrupt is unavailable (for
+                        // example before Codex has established its thread).
+                        // Continue to token/process cleanup instead of
+                        // turning a recoverable control race into a protocol
+                        // failure.
+                        tracing::warn!(%message, "provider-native cancellation was unavailable; using process cleanup");
+                        Vec::new()
                     }
-                    let _ = result.send(Ok(()));
+                };
+                if !sent_bytes.is_empty() {
+                    let audit_result = {
+                        let mut writer = writer.lock().await;
+                        writer.append_native_input(
+                            NativeAuditChannel::Stdin,
+                            "application/x-ndjson",
+                            correlation_id,
+                            &sent_bytes,
+                        )
+                    };
+                    if let Err(error) = audit_result {
+                        let message = error.to_string();
+                        let _ = result.send(Err(message.clone()));
+                        break ExitCause::AuditFailure(message);
+                    }
                 }
+                if cancel {
+                    cancellation_requested = true;
+                    // Native interrupt is asynchronous. Closing its transport
+                    // immediately can kill the provider before it terminates
+                    // tool jobs in their own process groups. Never require an
+                    // acknowledgement: unavailable/unresponsive control still
+                    // falls back to bounded process cleanup below.
+                    cancel_provider_transport(
+                        !sent_bytes.is_empty(),
+                        &mut exit_signal,
+                        cancellation.as_ref(),
+                        PROVIDER_CANCEL_GRACE,
+                    ).await;
+                    cancel_result = Some(result);
+                    // Both cleanups are bounded and run concurrently so the
+                    // native grace + process cleanup + audit drain fit inside
+                    // the cancellation protocol deadline.
+                    let (kill_result, descendant_result) = tokio::join!(
+                        ownership.terminate(&mut child),
+                        async {
+                            match descendants {
+                                Ok(descendants) => descendants.terminate().await,
+                                Err(error) => Err(error),
+                            }
+                        }
+                    );
+                    match (kill_result, descendant_result) {
+                        (Ok(()), Ok(())) => break ExitCause::Cancelled,
+                        (Err(group), Err(descendants)) => break ExitCause::WaitFailure(format!(
+                            "group cleanup failed: {group}; descendant cleanup failed: {descendants}")),
+                        (Err(error), _) | (_, Err(error)) => break ExitCause::WaitFailure(error.to_string()),
+                    }
+                }
+                let _ = result.send(Ok(()));
             }
         }
     };
@@ -1062,7 +1064,12 @@ async fn monitor_process(
         cancellation.cancel();
     }
 
+    // Only Linux wait retains an unreaped identity anchor. Preserve other
+    // platforms' natural-exit behavior; never introduce post-reap PGID signals.
+    let needs_group_cleanup = cfg!(target_os = "linux")
+        || !matches!(cause, ExitCause::Process { .. } | ExitCause::Cancelled);
     if !cancellation_requested
+        && needs_group_cleanup
         && let Ok(ownership) = ownership.as_mut()
         && let Err(error) = ownership.terminate(&mut child).await
     {
@@ -1426,10 +1433,29 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn process_exit_before_terminal_output_preserves_provider_evidence() {
+        #[cfg(target_os = "linux")]
+        struct PinnedFixture(std::os::fd::OwnedFd);
+        #[cfg(target_os = "linux")]
+        impl Drop for PinnedFixture {
+            fn drop(&mut self) {
+                use std::os::fd::AsRawFd;
+                // Failure cleanup can only signal this fixture's pinned child.
+                unsafe {
+                    nix::libc::syscall(
+                        nix::libc::SYS_pidfd_send_signal,
+                        self.0.as_raw_fd(),
+                        nix::libc::SIGKILL,
+                        std::ptr::null::<nix::libc::siginfo_t>(),
+                        0,
+                    );
+                }
+            }
+        }
         for (exit_code, terminal, expected) in [
             (0, AgentRunStatus::Succeeded, AgentRunStatus::Succeeded),
             (0, AgentRunStatus::Failed, AgentRunStatus::Failed),
             (1, AgentRunStatus::Succeeded, AgentRunStatus::Failed),
+            (-1, AgentRunStatus::Cancelled, AgentRunStatus::Cancelled),
         ] {
             let root = tempfile::tempdir().unwrap();
             let host = test_host(&root.path().join("host.jsonl")).await;
@@ -1455,10 +1481,51 @@ mod tests {
                 .unwrap(),
             ));
             use utils::command_ext::GroupSpawnNoWindowExt;
+            let script = if cfg!(target_os = "linux") || exit_code < 0 {
+                format!(
+                    "sleep 60 & echo $! > child.pid; {}",
+                    if exit_code < 0 {
+                        "wait".to_string()
+                    } else {
+                        format!("exit {exit_code}")
+                    }
+                )
+            } else {
+                // Other platforms retain the original direct-exit test.
+                format!("echo 0 > child.pid; exit {exit_code}")
+            };
             let child = tokio::process::Command::new("/bin/sh")
-                .args(["-c", &format!("exit {exit_code}")])
+                .args(["-c", &script])
+                .current_dir(root.path())
+                .kill_on_drop(true)
                 .group_spawn_no_window()
                 .unwrap();
+            let mut unrelated = tokio::process::Command::new("sleep")
+                .arg("60")
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            let child_pid = tokio::time::timeout(Duration::from_secs(5), async {
+                loop {
+                    if let Ok(text) = tokio::fs::read_to_string(root.path().join("child.pid")).await
+                        && let Ok(pid) = text.trim().parse::<u32>()
+                    {
+                        break pid;
+                    }
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .unwrap();
+            #[cfg(target_os = "linux")]
+            let native = {
+                use std::os::fd::FromRawFd;
+                let fd = unsafe { nix::libc::syscall(nix::libc::SYS_pidfd_open, child_pid, 0) };
+                assert!(fd >= 0);
+                PinnedFixture(unsafe { std::os::fd::OwnedFd::from_raw_fd(fd as i32) })
+            };
+            #[cfg(not(target_os = "linux"))]
+            let _ = child_pid;
             let cancellation = CancellationToken::new();
             let after_exit = cancellation.clone();
             let (notices_tx, notices_rx) = mpsc::channel(8);
@@ -1473,7 +1540,19 @@ mod tests {
                 notices_tx.send(OutputNotice::StdoutClosed).await.unwrap();
                 notices_tx.send(OutputNotice::StderrClosed).await.unwrap();
             });
-            let (_commands_tx, commands_rx) = mpsc::channel(1);
+            let (commands_tx, commands_rx) = mpsc::channel(1);
+            let (result_tx, result_rx) = oneshot::channel();
+            if exit_code < 0 {
+                commands_tx
+                    .send(ProcessCommand::Control {
+                        bytes: Vec::new(),
+                        control: None,
+                        cancel: true,
+                        result: result_tx,
+                    })
+                    .await
+                    .unwrap();
+            }
             monitor_process(
                 host.clone(),
                 DirectProvider::ClaudeCode,
@@ -1489,6 +1568,27 @@ mod tests {
             )
             .await;
             producer.await.unwrap();
+            let unrelated_alive = unrelated.try_wait().unwrap().is_none();
+            unrelated.kill().await.unwrap();
+            assert!(unrelated_alive);
+            #[cfg(target_os = "linux")]
+            {
+                use std::os::fd::AsRawFd;
+                let mut poll = nix::libc::pollfd {
+                    fd: native.0.as_raw_fd(),
+                    events: nix::libc::POLLIN,
+                    revents: 0,
+                };
+                assert!(unsafe { nix::libc::poll(&mut poll, 1, 0) } >= 0);
+                assert_ne!(
+                    poll.revents & nix::libc::POLLIN,
+                    0,
+                    "owned child survived monitor cleanup"
+                );
+            }
+            if exit_code < 0 {
+                result_rx.await.unwrap().unwrap();
+            }
             let response = host.response_after(0).await.unwrap();
             assert!(
                 response.events.iter().any(|event| matches!(

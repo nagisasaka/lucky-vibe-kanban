@@ -83,10 +83,30 @@ impl OwnedProcessGroup {
         let descendants = super::CancelledDescendants::capture(Some(self.root.pid));
         let group_cleanup = async {
             for signal in [nix::libc::SIGINT, nix::libc::SIGTERM] {
-                for member in self.root.members()? {
-                    member.signal(signal)?;
+                let members = self.root.members()?;
+                let mut alive = false;
+                for member in &members {
+                    if !member.exited()? {
+                        member.signal(signal)?;
+                        alive = true;
+                    }
                 }
-                tokio::time::sleep(Duration::from_secs(2)).await;
+                if !alive {
+                    break;
+                }
+                // Grace is a deadline, not a mandatory delay after kernel exit.
+                // Keep the anchor until the final rescan also confirms no late forks.
+                let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
+                loop {
+                    let mut exited = true;
+                    for member in &members {
+                        exited &= member.exited()?;
+                    }
+                    if exited || tokio::time::Instant::now() >= deadline {
+                        break;
+                    }
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
             }
             tokio::time::timeout(Duration::from_secs(5), async {
                 loop {
@@ -143,6 +163,7 @@ impl OwnedProcessGroup {
 
 impl Drop for OwnedProcessGroup {
     fn drop(&mut self) {
+        #[cfg(target_os = "linux")]
         if !self.settled {
             tracing::error!(
                 purpose = self.purpose,
@@ -336,6 +357,69 @@ mod linux {
 mod tests {
     use super::*;
     use crate::command_ext::GroupSpawnNoWindowExt;
+
+    #[tokio::test]
+    async fn owned_group_reproduces_direct_drop_native_survivor() {
+        let root = tempfile::tempdir().unwrap();
+        let record = root.path().join("pids.json");
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/codex-process-cleanup/fake_app_server.py");
+        let mut unrelated = tokio::process::Command::new("sleep")
+            .arg("60")
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let mut child = tokio::process::Command::new("python3")
+            .arg(fixture)
+            .arg("stall")
+            .arg(&record)
+            .stdin(std::process::Stdio::piped())
+            .kill_on_drop(true)
+            .group_spawn_no_window()
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while !record.exists() {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        let pids: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(record).unwrap()).unwrap();
+        let pid = pids["native"].as_u64().unwrap() as u32;
+        let native = linux::Process::pin(pid, linux::identity(pid).unwrap()).unwrap();
+        let wrapper = linux::Process::leader(child.inner().id().unwrap()).unwrap();
+        // This is the old discovery lifetime edge: RPC retains stdin, but the
+        // AsyncGroupChild is dropped without explicit group cleanup.
+        let retained_rpc_stdin = child.inner().stdin.take();
+        drop(child);
+        let root_exit = tokio::time::timeout(Duration::from_secs(5), async {
+            while !wrapper.exited().unwrap() {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await;
+        let native_survived = !native.exited().unwrap();
+        let unrelated_survived = unrelated.try_wait().unwrap().is_none();
+        // Exact fixture cleanup before assertions, including on a failed reproduction.
+        wrapper.signal(nix::libc::SIGKILL).unwrap();
+        native.signal(nix::libc::SIGKILL).unwrap();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while !native.exited().unwrap() {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        drop(retained_rpc_stdin);
+        unrelated.kill().await.unwrap();
+        root_exit.unwrap();
+        assert!(
+            native_survived,
+            "expected old direct-child-only drop to leak native"
+        );
+        assert!(unrelated_survived);
+    }
 
     #[tokio::test]
     async fn owned_group_cleans_orphan_after_wrapper_exit_and_preserves_unrelated() {
