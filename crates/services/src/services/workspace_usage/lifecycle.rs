@@ -35,19 +35,20 @@ pub async fn allows_wiki_instruction(
 
 /// Create a normal Board card when repository membership identifies one Board.
 /// Never choose arbitrarily between projects or replace a user's existing link.
+/// Return false when no link can be established; new runs must reject that outcome.
 pub async fn ensure_wiki_board_link(
     pool: &SqlitePool,
     workspace: &Workspace,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
     let Some(owner) = workspace
         .execution_owner
         .as_ref()
         .filter(|owner| matches!(owner.kind.as_str(), OPENWIKI_BOOTSTRAP | OPENWIKI_SYNC))
     else {
-        return Ok(());
+        return Ok(false);
     };
     let Some(repo_id) = owner.repository_id else {
-        return Ok(());
+        return Ok(false);
     };
     let linked: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM local_workspace_links WHERE workspace_id=?)",
@@ -56,7 +57,7 @@ pub async fn ensure_wiki_board_link(
     .fetch_one(pool)
     .await?;
     if linked {
-        return Ok(());
+        return Ok(true);
     }
     // Serialize the membership check and issue-number allocation without
     // generating a spurious Workspace update on every monitor tick.
@@ -68,7 +69,7 @@ pub async fn ensure_wiki_board_link(
     .fetch_one(&mut *tx)
     .await?;
     if linked {
-        return Ok(());
+        return Ok(true);
     }
     let projects: Vec<Uuid> = sqlx::query_scalar(
         "SELECT project_id FROM project_repos WHERE repo_id=?
@@ -82,12 +83,12 @@ pub async fn ensure_wiki_board_link(
     .fetch_all(&mut *tx)
     .await?;
     let [project_id] = projects.as_slice() else {
-        return Ok(());
+        return Ok(false);
     };
     let status: Option<Uuid> = sqlx::query_scalar("SELECT id FROM local_project_statuses WHERE project_id=? AND hidden=0 ORDER BY sort_order,id LIMIT 1")
         .bind(project_id).fetch_optional(&mut *tx).await?;
     let Some(status) = status else {
-        return Ok(());
+        return Ok(false);
     };
     let number: i64 = sqlx::query_scalar(
         "SELECT COALESCE(MAX(issue_number),0)+1 FROM local_issues WHERE project_id=?",
@@ -110,7 +111,7 @@ pub async fn ensure_wiki_board_link(
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
-    Ok(())
+    Ok(true)
 }
 
 /// Release completed reservations only after all processes and product cleanup

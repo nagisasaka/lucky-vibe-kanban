@@ -389,7 +389,10 @@ async fn prepare_run(
     .await?;
     let preparation = async {
     let _preparation = preparation::begin(&deployment.db().pool, workspace.id).await?;
-    services::services::workspace_usage::ensure_wiki_board_link(&deployment.db().pool, &workspace).await?;
+    anyhow::ensure!(
+        services::services::workspace_usage::ensure_wiki_board_link(&deployment.db().pool, &workspace).await?,
+        "OpenWiki requires a linked Issue before execution. Associate the repository with exactly one Board with a visible status, then retry."
+    );
     WorkspaceRepo::create_many(
         &deployment.db().pool,
         workspace.id,
