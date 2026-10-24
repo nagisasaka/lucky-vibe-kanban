@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/server/src/routes/frontend.rs
   - id: openwiki-source-d8c782d4a4246db71e503283
     resource: repo://crates/server/src/routes/resource_observation.rs
+  - id: openwiki-source-6c4d6d22a9d50e0def61c50d
+    resource: repo://crates/server/src/routes/workspaces/integration.rs
   - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
     resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
@@ -52,6 +54,8 @@ sources:
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
+  - id: openwiki-source-c97c0bce06c35a57f7816f78
+    resource: repo://packages/ui/src/components/PasteMarkdownPlugin.tsx
   - id: openwiki-source-b5c65c61c678426ad814529a
     resource: repo://packages/ui/src/components/Popover.tsx
   - id: openwiki-source-c0945aff6520d3600561e893
@@ -124,12 +128,16 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
+  - id: openwiki-source-6d0dfae3c1582e1af83405d4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx
   - id: openwiki-source-5cead200f725b8a7ed11e3cd
     resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
     resource: repo://packages/web-core/src/shared/hooks/useJsonPatchWsStream.ts
+  - id: openwiki-source-145474ecb854b8600d49f7f8
+    resource: repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts
   - id: openwiki-source-03db0ba02433b52c9bfe6db3
     resource: repo://packages/web-core/src/shared/hooks/useResourceObservation.ts
   - id: openwiki-source-43d7a2f6bd06c556e7d48e3c
@@ -158,6 +166,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
+  - id: openwiki-source-01d821b4d50944c26f066eb1
+    resource: repo://packages/web-core/src/shared/lib/utils.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
@@ -166,6 +176,8 @@ sources:
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
+  - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
+    resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-ea2ab447e65950eeb4c72491
     resource: repo://tests/chat/syntax-highlight.fixture.tsx
   - id: openwiki-source-0a43f232c5a84b7f94378d02
@@ -190,19 +202,39 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-23T23:13:08.630Z" }
+generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:13:08.630Z
+    at: 2026-10-24T02:27:43.655Z
 ---
 
 # Web の実行環境と同期
 
 ## 画面と実行環境を分ける
 
-Local App は TanStack Router と Hotkeys、設定、ローカル identity、Tauri listener を組み立てる。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
+Local App は TanStack Router と Hotkeys、設定、ローカル identity を組み立てる。Tauri の通知クリック・更新 listener と native 通知 bridge は撤去済みである。共有画面と hooks は web-core にある。Remote Web shell は削除済みである。[Local App](../../packages/local-web/src/app/entry/App.tsx)
 
 UI package は既に Kanban や chat、preview などの再利用部品を持つ。[Kanban の例](../../packages/ui/src/components/KanbanBoard.tsx#L1-L58)。`packages/ui/README.md` の「initial scaffold」と [抽出前の監査](../../docs/frontend-ui-library-refactor-audit.md)は現行配置の全体図ではない。監査は責任分割の経緯を知る資料として読み、古い `local-web/src/components` の位置を変更先にしない。
+
+## ブラウザー操作と廃止された native bridge
+
+Tauri shell の廃止後も Local Web を Docker server または source 開発 server に接続する。native window drag、独自 zoom と pinch 抑止、native updater は現在の browser bootstrap の責任ではない。[bootstrap](../../packages/local-web/src/app/entry/Bootstrap.tsx)・[配布入口](../operations/server-container.md#旧-npx-ランチャーの撤去と移行)。画面の desktop / mobile はレスポンシブ配置の区別であり、Tauri の有無を意味しない。
+
+### Markdown・HTML・raw の貼り付け
+
+共有 `PasteMarkdownPlugin` はブラウザーの `ClipboardEvent` を受け取り、clipboard-read API や native IPC を要求しない。Ctrl/Cmd+Shift+V の raw 指定は HTML より優先され、plain text をそのまま挿入する。通常 paste で HTML があれば Lexical の既定処理へ委譲し、plain text だけなら Markdown を変換する。ClipboardEvent・clipboard data・対象 text がない場合は処理を引き取らない。[入力と優先順位](../../packages/ui/src/components/PasteMarkdownPlugin.tsx#L32-L79)
+
+Markdown 変換は selection を変更するため、変換前に clone し挿入前に復元する。空の変換結果または例外では元の text を raw で挿入する。listener と Lexical command は unmount 時に解除する。[selection と fallback](../../packages/ui/src/components/PasteMarkdownPlugin.tsx#L81-L123)。この入力処理は [保存済みドラフト](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)の永続化とは別の責任である。
+
+`tests/chat/paste-markdown.test.mjs` は実 plugin の Chromium fixture に ClipboardEvent を送って Markdown、HTML、HTML 付き raw を検査する。OS clipboard 自体や全ブラウザーの shortcut を検証するものではない。[fixture](../../tests/chat/paste-markdown.fixture.tsx)・[試験](../../tests/chat/paste-markdown.test.mjs)
+
+### 通知・音・エディターの接続先
+
+App の native 通知 bridge がなくても、[Board 通知一覧](../concepts/issue-collaboration.md)と [Web Push の同意・配送](../integrations/web-push.md)は別経路として残る。後者は Service Worker 登録と利用者の許可を必要とし、Tauri listener の代替として自動的に有効になるものではない。[登録](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L36-L104)
+
+browser の音再生 helper は `new Audio(url).play()` を await する。たとえば設定画面の試聴は `/api/sounds/` を再生し、失敗を catch してログへ残す。これは server OS notifier の音再生とは別であり、実際の再生成功は browser の許可等にも依存する。[helper](../../packages/web-core/src/shared/lib/utils.ts#L11-L15)・[試聴](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L171-L181)
+
+`useOpenInEditor` は interactive Workspace で server の editor API を呼び、URL が返れば新しい tab を開く。失敗時に editor 指定がなければ選択 dialog を提示する。native desktop bridge を必要とせず、server 側で Workspace path と editor 設定を扱う。[hook](../../packages/web-core/src/shared/hooks/useOpenInEditor.ts#L13-L49)・[server](../../crates/server/src/routes/workspaces/integration.rs#L83-L130)。接続先・失敗の詳しい契約は [Workspace の editor 操作](../operations/workspace-inspection.md)を参照する。
 
 ## 共有ナビゲーションと外部リポジトリ表示
 

@@ -4,6 +4,8 @@ title: Issue のコメント・レビュー・添付・通知
 description: Issue の共有レビューと通常コメントの来歴、対象 revision、再送・全文読取・編集の契約、および購読・添付・通知との境界。
 tags: [issue, collaboration, attachments, notifications, lifecycle]
 sources:
+  - id: openwiki-source-16e6e7418602542c69565bde
+    resource: repo://Cargo.lock
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
   - id: openwiki-source-0acdd41dbcd239be02c04d7f
@@ -26,6 +28,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/sql/comment_previews.sql
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-1b60b440460908f618460dff
+    resource: repo://crates/services/Cargo.toml
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-4251300987fd63068dbcfd5d
@@ -34,16 +38,18 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-937b9a0a3ac3b33029304371
     resource: repo://packages/ui/src/components/IssueCommentsSection.tsx
+  - id: openwiki-source-23775c3de52f3ab95a13cb8b
+    resource: repo://README.md
   - id: openwiki-source-f284b1b389192e12a534f782
     resource: repo://tests/server/fixtures/issue-comments-env.mjs
   - id: openwiki-source-f664d705bf90836a434465e7
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
+generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T02:27:43.655Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -103,7 +109,9 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 ## 実行時の注意喚起
 
-`NotificationService` は設定に従い音と OS push notifier を呼ぶ。Tauri は起動前に notifier を差し替えられる。これは Board の Follower や通知 group と別の仕組みであり、呼出し成功から利用者の閲覧まで保証しない。[設定と notifier](../../crates/services/src/services/notification.rs#L10-L101)。既存 ExecutionProcess の終了処理などから呼ばれるため、全 AgentRun に同じ通知経路があるとも一般化しない。[終了処理](../../crates/services/src/services/container.rs#L257-L289)。
+`NotificationService` は設定に従い音と OS push notifier を呼ぶ。起動前の notifier 差替え API は残るが、Tauri shell とその呼出元は廃止されている。未登録なら `DefaultPushNotifier` を使う。これは Board の Follower や通知 group と別の仕組みであり、呼出し成功から利用者の閲覧まで保証しない。[設定と notifier](../../crates/services/src/services/notification.rs#L10-L101)。既存 ExecutionProcess の終了処理などから呼ばれるため、全 AgentRun に同じ通知経路があるとも一般化しない。[終了処理](../../crates/services/src/services/container.rs#L257-L289)。
+
+Linux の既定 notifier は `notify-rust` を使う。services の依存であり、lockfile 内の推移依存 `tauri-winrt-notification` という名前だけを根拠に desktop 専用と判断して削除しない。ブラウザーの音再生・native bridge 撤去は [Web の操作境界](../architecture/web-and-sync.md#通知音エディターの接続先)を参照する。[OS notifier](../../crates/services/src/services/notification.rs#L170-L195)・[依存宣言](../../crates/services/Cargo.toml#L35-L35)・[lockfile の依存辺](../../Cargo.lock#L4726-L4737)
 
 通知を調べる際は、まず実際の呼出し元、sound / push 設定、実行 OS の notifier を確認する。[General settings](../../docs/settings/general.mdx#notifications)はこの実行上の注意喚起の操作文書として読み、旧 Cloud の受信者規則として使わない。
 

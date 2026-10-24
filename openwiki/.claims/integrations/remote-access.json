@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e51c6eeba2513ce347aecc005a1379bf1d956b160e607f3e62d9711d93eefb4c",
+  "pageVersion": "sha256:449eeef4d5f854872bc522f8f14342f087f2c85b7eaed29bdb7c3afc341eaccd",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
+          "version": "repo-file-v1:sha256:37e25fb55d3e98ef0112f6e6e4db56584089076a1aef35ec44262d89813f4299"
         },
         {
           "resource": "repo://crates/server/src/middleware/origin.rs",
@@ -797,6 +797,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T01:51:44.796Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

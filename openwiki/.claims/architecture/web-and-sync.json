@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:424a8778761d592e0ecea50b3c1cc9dc1264a753d6e29fcf60b7ac4c688d080a",
+  "pageVersion": "sha256:c1afe394540835538a60f03b2a838f6a9f29af43f2207bf22fae380e68f04e95",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
-      "statement": "Local shellはruntime=local、設定、ローカル認証、Tauri listenerと共有画面を組み立てる。",
+      "statement": "Local shell は runtime=local、設定、ローカル認証、Hotkeys と Router を組み立て、Tauri listener と native 通知 bridge は持たない。",
       "evidence": [
         {
-          "resource": "repo://packages/local-web/src/app/entry/App.tsx#L20-L43",
-          "version": "repo-lines-v1:sha256:1f0ec0bb14324558b5fdb04994db12f6ac70f7ffe410dac6046a5e21376c47a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmYzMzZGE1MTNkZWZjMmZkZjg3YzNiNjY2OTkyYmMwZTUyMmZhZTA5N2YxMjYxZDg3MDIxOGUxNGY5ZTY5NzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMDMxYzcyOTFhMTE1ZDNiZmIyZDNmYmI1ODhlNDJhNDQ3NTVhOTRlYWE1ZWRiYjJkMTYyOTZjZDg0ZjgxNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZjFiZmNiZGUyMzdhMTIxNDEyMDUyNDRhOWNhNDAzM2I4OGVkYzAwNTlmNmQ1YzAzM2U0MTcxMmRhYTEyMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMifQ"
+          "resource": "repo://packages/local-web/src/app/entry/App.tsx#L1-L36",
+          "version": "repo-lines-v1:sha256:79c177ac51e5fc28db318e3ac0b12e2a889fb95e604bd9bf245ad7dfd916a220:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZDAxMjIwOTk1NDgzM2YxNDc0YjgwMDgzYjI3ZWQ4OWQxMjU0NjgwOWVlMWQ1YTE3MWVhZmJhM2U3YmYyMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YWE5NTFhNjI5ZjJmNDlhOGQ2MzNhZWVhZTg5OTRjYzU1M2YwYTU5MzFmYzU0NjBhYjM4YjEwMDVkZjdlNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -872,7 +872,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L260-L290",
-          "version": "repo-lines-v1:sha256:058205819542260bd448f2200c5cf93703fb263d410239d64e2498baaff9e604:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwYjlkMWRkMjRjYzhkMDJjNjMwNjc3YTU5NmIzNjQyOTYxYTcwNTkzM2YzZmM4MmY2OTM1MjNiNzBkMTY0NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNDE0MzY3NjZiMmY4YzRmZDcwNzZlOWE3YmUyZmIzYzI0NTcyODIyOGJjYjlkYzNhNzZmNTFhNWE0MGMxZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjZmYjk3ZmQzNDQyNDQ2MmU5YjU3MDg5NmRlM2UyMWE2NWIwMGUwZDgxNzJlOWIzYjIyOGQ2Mjg4YjRlZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1OWYwMzEzNWZiN2U0ZmU2ZDUxNGY1MmYwM2ZjYTIwNGEwNzZjYWE4NTNiZDdiYWYxNjliNGExZGViYTBiNTYifQ"
+          "version": "repo-lines-v1:sha256:e6df02108a244444c3aa2726b4de71f0d66f3822677172a1753a11b7f9035f17:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwYjlkMWRkMjRjYzhkMDJjNjMwNjc3YTU5NmIzNjQyOTYxYTcwNTkzM2YzZmM4MmY2OTM1MjNiNzBkMTY0NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNDE0MzY3NjZiMmY4YzRmZDcwNzZlOWE3YmUyZmIzYzI0NTcyODIyOGJjYjlkYzNhNzZmNTFhNWE0MGMxZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjZmYjk3ZmQzNDQyNDQ2MmU5YjU3MDg5NmRlM2UyMWE2NWIwMGUwZDgxNzJlOWIzYjIyOGQ2Mjg4YjRlZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1OWYwMzEzNWZiN2U0ZmU2ZDUxNGY1MmYwM2ZjYTIwNGEwNzZjYWE4NTNiZDdiYWYxNjliNGExZGViYTBiNTYifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L398-L402",
@@ -1109,10 +1109,68 @@
           "version": "repo-lines-v1:sha256:4cddb9e4970e8557ab45bd1e7981cc4925a292c78a75318f7556d3a523da66aa:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MGUyYzFlNjE3NDRjYzc5YjRiYWU1YWIzMjlhNDAyMjk4OGFkMDk2ZTc5Y2I2OTA4ZjJkZTEyNzQ2YjZjNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1YjNkNDA4NWU5OTIyMjc0ZmQ3ZTBjOWQ3NzZkYTg4MDFlOGU0Njk5YWRjOWM5NGNlOGZlZDc5YTllZDVlZGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkMzM1Y2MyMDFkMTk5ODkwZDdkZjg0OTY5OWQzN2MzNjlhZDRhMzIzZWY3ZWZiZGY4ZjkyNjJiZTE5OTgxNjYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_6184f05708b04034ac1cef3f66aced0d",
+      "statement": "PasteMarkdownPlugin は ClipboardEvent のデータを使い、Shift raw を HTML より優先し、通常 HTML は Lexical へ委譲、plain text は Markdown 変換する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/PasteMarkdownPlugin.tsx#L32-L79",
+          "version": "repo-lines-v1:sha256:2ddce97cc73e22a26bc59e04b4bf21e3a79d4d7a6bae0e4f4c1cded5e1511b65:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NjZmYmZhODg5OThkYTc0NjU2YzUwMTk0OTU2YzI1ZjA4NDk0NTc2NjBjMDA5ZmU2M2QxZTlmYTlkYzkzMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwM2JhNGU2ZjkzOWMwMmU5YTRlMzE0YTY1MzQ0OGE2NzhjMDZlNGJmNDk3MmJlZDI1NzM1OTFkYTAxN2VhOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NDlhZWVmYTVlNjdjYzNjZmJhYzg3ODdhMTc4N2E5NTI2MGM3ZGM1ZTlkMjk1NmI4NjIwYThkMzI1NjU0MWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVlMjI5YzBmYmFhNWY4ODg2YTU2MTc4ZjE2M2FlN2NkY2U2NmJiMmRkYjhhMzAxZTFmNmNiM2EzMDYzNWVlNmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_35cb8d9551b441bca8482ecfe525c0d0",
+      "statement": "Markdown paste は変換前の selection を clone・復元し、空結果や例外時は raw text に fallback、unmount 時に listener と command を解除する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/PasteMarkdownPlugin.tsx#L81-L123",
+          "version": "repo-lines-v1:sha256:6eb779a7a475e4d337cce741adb04bcdd764443cb1201eb36b9ee9cad4cf8ab5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4ZjE3MzNlZDU4NDYyYTQ5MmY1MzRhODA5MDBmMTY3M2E3MmNlYjY1ZGM3N2EyNDU5YWVkYjg2OTYyMzM1NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4ZDI2MWQwMThiYjcxMDE5NGY1MjdmY2IwYWUwYWVjNjcwOGIxZjA1MzdjNDJlNzgwNzgxNjk1ZGJiMzQ3OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYxYjY0YTE4Nzc5MmYwNTYwOGJkNzg3NDUzZjc5ZDYwYmM2NWI3OGEwZGVkNTk2ODdkYjU1ZTE3ODczZjE4ZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkOTFlNWQwODkzNTAxZjVmZGY2NmNjOTc3NGZiNDZjNmFiMjQ0Njg2ZWExNTE5ZWM4ZDYwZGE2OTE3NmE0YjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a997adccda6c438f85c22192b3b6f00d",
+      "statement": "貼り付け回帰 fixture は Chromium に ClipboardEvent を送って Markdown・HTML・raw の優先を検査するが OS clipboard 自体は使用しない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/paste-markdown.test.mjs#L26-L97",
+          "version": "repo-lines-v1:sha256:0b5124195ebde4808b86d6f43a9eef4e1f60525b41f7da485fd654c7dc179c0b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NTk1ZjRlZTVmZjYzZDUwOTUwNDE5ZGMzNDQxNDUxMzg1MWRjOTczNmZkMTdhNGY3YmZhOTMwYjI2MWI2ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5YzcyZDJlZDQyNGE4OWQ3MjdlYzcwNzc2ODkzNTVjYmUyMDg5ZmMyNDliYzRiMzhjZTM3MGFkOWNiZDg0NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bfbfbd8af1e441e29ded5e9999543875",
+      "statement": "browser の playSound は HTMLAudioElement.play を await し、設定の試聴呼出元は失敗を catch してログに記録する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L171-L181",
+          "version": "repo-lines-v1:sha256:adbc163e87e1952a1f53eb71758a3e5eb21b76ba621b0159be7d80f38301dd34:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkMjBmZWM3YzY2ZWI5ZDFmN2E3NzA1YTJiZGNjYTI1ZGY0NTMyZWI1YmU4OWY2NGQ1MzZkY2IxZDk3NWVkNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTM0NTQwZTJhOTk0YjQwMWVmYzYyMjBkZDNkOThkYjc4NGYyMjI0ODE3OTI4NDlmODhhMjJkOWM0N2IyZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNzdiOGMxNTU2ZDNiZTE0YmM1N2FiNzhjNWJhMTY0MjY4YjljNjdmM2VmOWQ1OGQyMTk5OGQ3NzY4YTUyMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0Njg0Y2FmYjg5MjJlYzQ1MDY0OGUyNmZlYmEzMmExZWYyZjNkMWUxNGQwZDZjMWE0ZTFkN2JjNjNmMTMwMDMifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/lib/utils.ts#L11-L15",
+          "version": "repo-lines-v1:sha256:1ec36bce52d8763805027e0fc21eda4027982d2628fecb39550f52b641345150:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzYzZWQzZTk5M2Y3ZDI3MjY0MzE5ODdjZTUwM2Y3MTViMDllZjk2YTM4ZmVjZGQwYjhhZmRlYjY2YjFjNTNkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDZmYTI1YmIwYzRhYmUzMjliMjlmNjdiZDJmNjlhOGMxZDRiZWMzM2FlMzg4MTJiYmY3NTY0YzQyZmIzZmQ0YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGU3MmNhZWMzMTVkMWVjYTQ4NTYwMjY4ZmU2NjljY2I5MjY1MTk5ZDNmMmFjMWNiMzIxYzNmMTlhOTEyODliMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_02613d681e1b46c5a0f3192b3e472f32",
+      "statement": "useOpenInEditor は interactive Workspace の server API を呼び、返された URL を開き、editor 未指定での失敗時は選択 dialog を提示する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/integration.rs#L83-L130",
+          "version": "repo-lines-v1:sha256:377ac6cd5c319f4e2771a8e39ab75e9b374ec54bb6c39b2fbd7bf01214d8282e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmJhMThmOTA2MmZlMjY5ZGNkM2FhYjhmM2YzNWY1MmI2M2U0YmY2NjVmMmIxMDcwMzFkZjlmZGM5Y2M2N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMmU1ZjIzYzI2ZWVmMzZiM2NjNDgxYjhkNTU3YTIwM2Q2MWFjMjVmMzE0OTZlMTBiYjRlMmQxMmJlYzZhZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxOWFlNTExZTE1NjJiNDliMmI0NGM1MDdiNGZlYmFhYTdhOTI4Y2UzZGEwYjI1NjJhNTAyN2RlZTI3ZDNlYjQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useOpenInEditor.ts#L13-L49",
+          "version": "repo-lines-v1:sha256:c8daad78da485d3fda775276c61abd3300b3a3b896fd33c138bbe316aa1b8f06:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4Mzg5ODYxOGNmMWU4MGMzODcwYTI2MzVmOWEyNjIyNmI5ZjFiNzgxMjVlYzI2NTEyYjg0N2RkNTEzM2Q0MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxMWNhNmJhYjZiNjZlYzhjMWFiM2MwMjcwMDU5MjU4OTAzODVhNTI1YzA4ZTEwYzUyMDQ2YTNmODJhMmE5NzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T23:13:08.630Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

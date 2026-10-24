@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:62eea98bde0680ff3e73b5db1647830f7efab509652eaf1b604cbff67e61245d",
+  "pageVersion": "sha256:1efc78a7a5ede7aa24ffab79824812751d81ab75f155a137bb0cb13c339642a7",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -86,7 +86,7 @@
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:d5bc389a401e935f99bf1d5d9fb509b42fba21125f2b51df5bf4a99991b3ec37"
+          "version": "repo-file-v1:sha256:da1cfbd7279f8e9e24b9bf89a449a6e9e8a685d444a7e3f5e820123d08bcb8e0"
         }
       ]
     },
@@ -294,15 +294,15 @@
     },
     {
       "id": "claim_ca2f91a8dc464ebc937e2f89fc21e219",
-      "statement": "旧LVK npx packaging/download/cache管理と互換launcherは撤去され、serverはDockerまたはsource dev、MCPは直接binaryまたは外部HTTP、desktopはTauri source scriptsへ移行する。",
+      "statement": "旧 LVK npx launcher と Tauri shell/build コマンドは撤去され、server/desktop は Docker または source Web をブラウザーで利用し、MCP は直接 binary または認証付き外部 HTTP を使う。既存 desktop data/application は自動削除・移行しない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L328",
-          "version": "repo-lines-v1:sha256:2d8e8fbb6fc136cc17ded958139af297088e6b85c85d05c902c04d7721bee70d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyZmMyYzk2OTAxYTQ0MTZmZjMwMmExZTI5ODI2MjZiZTFmZDUyN2NjMDg0YjEwMjhhMzY4NDYxOWNlMzNlZDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkYzBjOGJiM2I3OTViMjA3YTgxMGYzZTY1ODcyYTFiYWEzZDRjY2Q0YmYwMjQyNDU4ZWZlNjhiM2NiNWI3ZmYifQ"
+          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
+          "version": "repo-lines-v1:sha256:0d71dd015a7a8f0cc54a910d0f85d6eb853e2526634da43477a3c4edfc034302:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
         },
         {
-          "resource": "repo://package.json#L1-L50",
-          "version": "repo-lines-v1:sha256:8e2099107abc74d9b89e689a4e3dd9bfe0deb08b7917e1482de41acd096ff224:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+          "resource": "repo://package.json#L1-L45",
+          "version": "repo-lines-v1:sha256:c44a2eba2c2c61dc8a6b7e2c035c3d06a33274dd41d5a05c34e45ee076f79cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
         }
       ]
     },
@@ -330,13 +330,13 @@
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx#L330-L330",
-          "version": "repo-lines-v1:sha256:ddecf434c01f2e97632e09bbe90ca543878e5424bb73638b2717ae9a2341d4cd:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRlY2Y0MzRjMDFmMmU5NzYzMmUwOWJiZTkwY2E1NDM4NzhlNTQyNGJiNzM2MzhiMjcxN2FlOWEyMzQxZDRjZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRlY2Y0MzRjMDFmMmU5NzYzMmUwOWJiZTkwY2E1NDM4NzhlNTQyNGJiNzM2MzhiMjcxN2FlOWEyMzQxZDRjZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjEwOTQwYTcyZjU0YmEyMDgzOGNlMTBlMjc3NGEyNWEyOTljNDEwYWY0ODNlMWEwMWMyNTQ0YjUwZDgzZTRlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YwODYxMDExNzQwYTU3ZGIyNTgyY2U5M2E4OWUwNjdmZGYzNGM0OGE2MTNhOWViYzc2NWVkZmU1YmM0MDQxMSJ9"
+          "version": "repo-lines-v1:sha256:893115a0632a73887ff6f104e4ad4c005d598098dbb5a08be3134330130b6408:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjEwOTQwYTcyZjU0YmEyMDgzOGNlMTBlMjc3NGEyNWEyOTljNDEwYWY0ODNlMWEwMWMyNTQ0YjUwZDgzZTRlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YwODYxMDExNzQwYTU3ZGIyNTgyY2U5M2E4OWUwNjdmZGYzNGM0OGE2MTNhOWViYzc2NWVkZmU1YmM0MDQxMSJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:94c9d49ac243f3ffd3f7f3c677401dc88c44986473cfe3e40d1778a6f923e178",
+  "pageVersion": "sha256:b5a36c12ca975501e8851024d2f66ebd50b77f046ef1f5034187809562538efe",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
+          "version": "repo-file-v1:sha256:c796586dcd4d111a1eda0144265d7dbeecc8b41d30b67b2327ccb84b4db75f19"
         },
         {
           "resource": "repo://rust-toolchain.toml",
@@ -18,25 +18,29 @@
     },
     {
       "id": "claim_85f5dffca19d45848787e540d32b665b",
-      "statement": "devはport解決してWeb/backendを並行起動し、watchはserverとprocess hostをbuildする。旧cleanup無効化変数は設定せず、Tauriは別scriptである。",
+      "statement": "dev は port 解決後に Web/backend を並行起動し、watch は server と process host を build する。旧 cleanup 無効化変数を設定せず、Tauri 開発 script は撤去済みである。",
       "evidence": [
         {
-          "resource": "repo://package.json#L12-L51",
-          "version": "repo-lines-v1:sha256:0fa27d7a012ca5b43efa6d4e2f974bb369e08f59bfd351955da83a11371a67e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMTIwMjUyZjYyZmY4OWU2YzdjNGRjMzU1NGM0N2Y4MjdmNjllZWM0NjczNjZiY2E5ODljMWI2N2RiMTlhMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMTY4MDc0NWFkZWVjYjE3M2VmNDI2Y2RlMGQ2YzMzNzYzYzk2MTc3ZDYzMWQ3NDhmMDIwY2M3OGExNzVkODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+          "resource": "repo://package.json#L12-L45",
+          "version": "repo-lines-v1:sha256:775a94d5633299fceea4a2bfb27c0d12641b3f7f8c14a45d9659a513720e2c1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMTIwMjUyZjYyZmY4OWU2YzdjNGRjMzU1NGM0N2Y4MjdmNjllZWM0NjczNjZiY2E5ODljMWI2N2RiMTlhMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMTY4MDc0NWFkZWVjYjE3M2VmNDI2Y2RlMGQ2YzMzNzYzYzk2MTc3ZDYzMWQ3NDhmMDIwY2M3OGExNzVkODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
         }
       ]
     },
     {
       "id": "claim_ecd571870f284b82923c7179ae1c8d6a",
-      "statement": "root check/lint/backend:testはlocal frontendとTauriを除くRustを対象とし、旧Remote/relay workspaceは撤去された。",
+      "statement": "root check/lint は local frontend と現行 Rust workspace、backend:test は現行 Rust workspace を対象とし、Tauri crate と旧 Remote/relay workspace は含まれない。",
       "evidence": [
         {
-          "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
+          "resource": "repo://Cargo.toml#L1-L23",
+          "version": "repo-lines-v1:sha256:97baa5c3cda0cd61f97c5bcc30e9863edbea1564458e1d1f71ca1679d96e2fe3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzNGUxMDJjODYxZjk5NGQyYWFjZTkxMTRkMzkyZGJjMTYyMTkwZTAwYmU4ZmUzNTdkNDcyMTUwY2E0Mzk2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkMDg4NmM0YzZkNzIwZWJiOGEyMWQ5NGY2MjYzZDcwN2IyZDY1OGM5YTE2YWI0NTk0ODk3ZTUwYWFiYWU0ODUifQ"
         },
         {
-          "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
+          "resource": "repo://package.json#L30-L36",
+          "version": "repo-lines-v1:sha256:70ff80cd8fd6ffecabbf7af30f86f5db25d1e29d59945a3f1c12e2bad2c1e191:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU0ZTUxMGM1ZjAxZGVlMWQ3NGJkMmU5MDgyZWE1MTZmMGM0Y2E3ZjQ3Nzc3MTM2YWZkZDAwZGU1MTU5NGIxZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODE2ODI3YmRhMWNiN2U3YTdkNjY3MWZkNTdkZTY4MTAxYTU3NzRmY2ZmNTgzODM0ZWM1ZTljMTVkNTNmYjZmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2E1ODFkNDI2NWVjZDgyZDYzZmQ2MmNjMjAwYzUzNzQ5ZjZmMjdhYWJkMTI4M2MxYjdlOThlNzM0OTRkNDkzZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2Y4ZjM5ZmYyNmUxYTU4MDY2N2UzYmIwNjQ2NWZjOTRiOTI4MDVhODM4YzNhNGJlMzc2NjNlODcwZTQ4ODFhYiJ9"
+        },
+        {
+          "resource": "repo://package.json#L6-L8",
+          "version": "repo-lines-v1:sha256:26e7c1040837dbc5c362085f116f99c6ac4b83fbe524dbf26378faf2d7df6710:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzcwMTJlZWRjNDdiNDAyZGIyYjRkMGM0ZDRlMDA0MWU3NDkyYmYyZTA1ZDRmZTRkYzU2MzY0ZDg2MTljNWNiZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkwM2ExN2M2YTFjY2I1NjUyYWIyNGQ2YzI5ZmIwNWNjZjk3ODBkMWJiZmM5ODczZTg3MTBlMGE4YWJmNGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlhODkxMTRhNDhiMDE2YmQzZjQyNTZjYTExOGZiZjY0Yjg2NmMwOTgzN2NhYTJlNGMxNjdiOGY5NTJhYzUwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWIxNjgwNzQ1YWRlZWNiMTczZWY0MjZjZGUwZDZjMzM3NjNjOTYxNzdkNjMxZDc0OGYwMjBjYzc4YTE3NWQ4NCJ9"
         }
       ]
     },
@@ -109,20 +113,6 @@
       ]
     },
     {
-      "id": "claim_223f7c8d4f4249fbb83f5f2adb0274f3",
-      "statement": "Tauri debug は beforeDevCommand で起動する外部 Vite/backend を利用し、production だけが server::startup::start によって backend を内蔵起動するため、tauri:dev の成功は production startup の実行確認ではない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/tauri-app/src/main.rs#L176-L239",
-          "version": "repo-lines-v1:sha256:bf6eb35b11fe999e55783ddd0f0274b91d17e49fd66aac95530165e10f68a78f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhODA1M2ZjNmE5YjY3MGJlYzgyNGVjZjM0OTBjYWY2MjQ2Njc2NzYzMDhmMGNiNzQzNTlkMWY1MGY4MTc1NTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YWMyMDU2OGQxZTM0MmVmMzdhNDUwY2Y1MzY5YTNhYTZlNzNkOGMxMzJjM2M3YzYyMjJmNDAyMmMzZmNjZWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmOTNhNDE4ZWQ2YjAwODRkZGRmNzk5ZWJlMTdhMzZhNmJiODcxZTZiYzgxMWJjNTVhM2IzYTczMTQ0MjYwYzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMmQ0NDk2YmU2NWVhMzA2ZGFhZTk5OTllYmExOTNhNTM2NTNhZGI1MTRhMDJmMmUxMDBiYmNlMWVkYmI4NWQifQ"
-        },
-        {
-          "resource": "repo://crates/tauri-app/tauri.conf.json#L6-L12",
-          "version": "repo-lines-v1:sha256:e2fda74137ad3db3d2784ff60d7ae41dd835bb4c3a7b5a4de3e9ec5cda3065a0:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2IwNzIwMWJkYjZiYzA1OTIwODQ5NjM2ODE4NjFhNGZhMTRhZmRhNTkxYjZkNTY2MWI3NDU4ZDkyMWQ1ZDBlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTc1NWY1YjNhNmQ3YmQzOTQzZWQ1MmRiNDNhY2Y5ZDQwMzViYjdkZjc4NDA4Mjg3MTk1ZGRlY2Y1NDU2MWMzYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDg3ZmU1MzQzYmU1ZDdhMjEyZmQxMTVmNzE4ZjJlYjMxNWQxNzlkZTdhYWMzZDBhZWYxOWNkMWNlMGU2NTAzZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjA2ZmEyZmNlOTQ2MDQ4ZDJjODRmNTQzYTI4NWI1ZjUzYzY5Zjg4MjE1ZmIwZWJmN2NhNzA3ZDE4OGE1N2M0NSJ9"
-        }
-      ]
-    },
-    {
       "id": "claim_5ee6770810fc4885b0a8827105afbcde",
       "statement": "server:check は配布 kit の Node tests を実行し、native nginx 検査は nginx 未導入なら skip、LVK_REQUIRE_NGINX_TEST=1 なら欠落を失敗にする。",
       "evidence": [
@@ -132,7 +122,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:603fc66a503cb22354b89f73c65c19486a11de330de748e93c4bd690b3ad2596"
+          "version": "repo-file-v1:sha256:c796586dcd4d111a1eda0144265d7dbeecc8b41d30b67b2327ccb84b4db75f19"
         }
       ]
     },
@@ -396,15 +386,15 @@
     },
     {
       "id": "claim_a9341a82110b404fa2cb6c65dcbb554a",
-      "statement": "旧npx-cli/local-build.shとrootのnpm用bin/files・build:npx/build:npx-cli/check:npx-cli/prepack/test:npmは撤去され、ソース開発とTauriのscriptsは残る。",
+      "statement": "旧 npx-cli/local-build.sh と npm 用 scripts に続いて Tauri shell と tauri:* コマンドも撤去され、ブラウザーと Docker server または source Web 開発を使う。既存 desktop data の自動削除・移行はしない。",
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
-          "version": "repo-lines-v1:sha256:fb0976f5c4225855b800c0f69d75c1221d971ab71d39cf68337b3ac8f8ff0f0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZWNmNDM0YzAxZjJlOTc2MzJlMDliYmU5MGNhNTQzODc4ZTU0MjRiYjczNjM4YjI3MTdhZTlhMjM0MWQ0Y2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
+          "version": "repo-lines-v1:sha256:0d71dd015a7a8f0cc54a910d0f85d6eb853e2526634da43477a3c4edfc034302:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
         },
         {
-          "resource": "repo://package.json#L1-L50",
-          "version": "repo-lines-v1:sha256:8e2099107abc74d9b89e689a4e3dd9bfe0deb08b7917e1482de41acd096ff224:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM5Mzk2NzYxZDNlZDg4ZGIyMTIwZTVlYjg2ZTlmNTYxYTY2YjFkZGI4NGY2ZjhmOWQ5YjczZjMzZjFhYzRjODQifQ"
+          "resource": "repo://package.json#L1-L45",
+          "version": "repo-lines-v1:sha256:c44a2eba2c2c61dc8a6b7e2c035c3d06a33274dd41d5a05c34e45ee076f79cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
         }
       ]
     },
@@ -485,10 +475,20 @@
           "version": "repo-lines-v1:sha256:4d278af8509957da3d92c8aed44c27b625c3b12a86ab50ac67c298586b1de7c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmNGUyMzdkY2JjMTZjYTYyZTRlZDRlMTQ3YTk3N2VmNzY5ZDc2NDJkNGY4MDk0NjM2N2NlNjAyY2RmYWE0MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjZjllNDYwNWIzZDEyZjBlNjAzNmZlN2MxMDhmOGU4Y2FkN2U3NzA5NGU1OTAwNmMzNzI5MDAzZmU4NjEyZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_399d911e1b2740ec8bc05222a5b3d327",
+      "statement": "貼り付け試験は esbuild と Chromium で共有 plugin に ClipboardEvent を送り、Markdown・HTML・raw の結果を検査し finally で browser を閉じるが、OS clipboard 自体は検証しない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/chat/paste-markdown.test.mjs#L1-L97",
+          "version": "repo-lines-v1:sha256:f0c27752a165d92bf185b9e243ff4f68ba950b75e46651a9981fd17c555fc05e:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ODY1YmNjMGI5NTc5NmJjZDE1MjRiMzBkNzFiZmFhN2M5NTY3MDQ3YjA2Mjg2NWRiMmQ0OTA2MGU5MmUzMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9d2aed3eda8ad6429d51079dd7a1e0cdb267fcc082d27b1de3113fd26945d82f",
+  "pageVersion": "sha256:73e50e3a9d14e01f1b564a21ec15b0d4b76e8c67811e78bf5372aac793a49067",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:f951a920ee611a2792e7e7f760f7df94d5d716554a3cfd5260b5309cc3b65453"
+          "version": "repo-file-v1:sha256:34070375d49ea56476ba8533e373938b8ffecda04c90630ed9ba57721d76461c"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:f951a920ee611a2792e7e7f760f7df94d5d716554a3cfd5260b5309cc3b65453"
+          "version": "repo-file-v1:sha256:34070375d49ea56476ba8533e373938b8ffecda04c90630ed9ba57721d76461c"
         }
       ]
     },
@@ -31,8 +31,8 @@
           "version": "repo-lines-v1:sha256:0afe6cc2edd6dea5b39fbd7c06c15be95dc343bb89981e5df39f430fe08f4626:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkNDM1N2NiNDRkNTI0NTA4YzQ0OWJjZmVjMDg3NDZhNjg1NzY0Y2VlZmIzYTI5MmIxNzRhYjQ5NTA3ODI1ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OTdiZmY3ZmMwZjNlNWNmYmRmNWRkNDdlNTVjYzdkY2ZhMTE5OGMzYWZhNmJlOWZmMzNkNGIxMzUyNWQ1NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0NWZkNjk2NWViODdhY2UwOTI4Yjk5MWFiNjk3NDI0ZDVmYjhhYzZmOWRlZWJjNDM3YjJiZmFlYTIwZDcxYWMifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99",
-          "version": "repo-lines-v1:sha256:cb79b3fcd6376dc4c53d9f8ae15e4ec1b5c9b1dc22269cc9c737dac7ee017b09:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMjk0Y2JmOGJiNDU4ZjlmN2EyMTY2OGY4ZWVmZjQ4YzU1NmQxZjI0MjJjZjBlYzA4ZDY3YmQyZjg3ODFjYzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiMTRjMWFkOTQyNjkxNmM4ZTkyYjEzYzFkYTI3NjY4MTA4NDYxYTI5NTdjZTExNjBiZjY0NGU4MGJhNjM0ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiM2E2NWFmNjIyYjcxMjQyMzliYTkyZWU1NzExZWEwMmVmYjMzMDIzODZkYTI1NjA2ZWYzOThlYTAzNmFhMzYifQ"
+          "resource": "repo://packages/local-web/src/app/entry/Bootstrap.tsx#L45-L67",
+          "version": "repo-lines-v1:sha256:a55acdc39099224be45c3477739d617283190a891bbd68aa2338a3d8da395149:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNjRkZTg1ZTEzZWFhMDhjY2JjMzdhMDc2YjZiMGMxYjNiYzM5OTY4NDAyZTBiN2Y5YWYxNjE5ODE2MGUxMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNWUxMjBjMGE0MGE2NDNmMDMyMjNhMjg4OTM3YTRlYTQwYWUwZjAzYzViNjFkNDg2ZTY4Y2Y1Nzc0MDFjZTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5OTY3ZWMxZWQzODM2ZjhlYjE3YWZmMTcyYjViZmVmN2RlNjA0ODVhNDM5YzZjYTExYzU5MWUxNzU1NzM5YWUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/lib/localIdentity.ts",
@@ -126,7 +126,7 @@
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:d5bc389a401e935f99bf1d5d9fb509b42fba21125f2b51df5bf4a99991b3ec37"
+          "version": "repo-file-v1:sha256:da1cfbd7279f8e9e24b9bf89a449a6e9e8a685d444a7e3f5e820123d08bcb8e0"
         }
       ]
     },
@@ -228,7 +228,7 @@
     },
     {
       "id": "claim_62b548f9bb5248749b6a8f6e5a1bc37f",
-      "statement": "旧LVK npxランチャーは撤去済みで、server・MCP・desktopの移行先はserver guideに案内される。",
+      "statement": "旧 LVK npx launcher と Tauri desktop shell は撤去済みで、server guide はブラウザー経由の Docker/source Web と直接 binary/外部 HTTP MCP への移行を案内する。",
       "evidence": [
         {
           "resource": "repo://README.md#L24-L30",
@@ -236,7 +236,7 @@
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
-          "version": "repo-lines-v1:sha256:fb0976f5c4225855b800c0f69d75c1221d971ab71d39cf68337b3ac8f8ff0f0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZWNmNDM0YzAxZjJlOTc2MzJlMDliYmU5MGNhNTQzODc4ZTU0MjRiYjczNjM4YjI3MTdhZTlhMjM0MWQ0Y2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
+          "version": "repo-lines-v1:sha256:0d71dd015a7a8f0cc54a910d0f85d6eb853e2526634da43477a3c4edfc034302:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
         }
       ]
     },
@@ -257,6 +257,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T01:51:44.796Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

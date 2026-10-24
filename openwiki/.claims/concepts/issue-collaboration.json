@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:54caf8329e1c94d638ed8f43c3d0d8d3ed559ea9bd6b11849b4a1a4df437a94b",
+  "pageVersion": "sha256:fe9d5572ddcaca548928508f93fcab44769840b5a04865bd4b377e0cf6e6af9b",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -26,7 +26,7 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:90040dcfc459a114f73526f9e2c847a3417cd95d6ee63c2c1fd953d33c2d848f"
+          "version": "repo-file-v1:sha256:37e25fb55d3e98ef0112f6e6e4db56584089076a1aef35ec44262d89813f4299"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
@@ -203,10 +203,36 @@
           "version": "repo-lines-v1:sha256:7f319f6a90766da9fe0d9b3da9b88d792e32d533b7c173288bdcd4119d8d9b40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ZTkzY2E3ODFlMTMyZjEzMTQ4YTUxMTFmNTI4MjZkMmU1ODcxZDc1OTYwNzhiODFmOTA1ODAwZTNjMTRiMWU5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4MmNlY2JlNzM1ZjI1ODVjYzhmMjU4ZmY3ZTgyYjc2ZDg0N2NlZGIyYWM4OTU4ZjBjOTUyNzdmN2YzNDg5MTkxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
+    },
+    {
+      "id": "claim_f7e196c048e34bf9a935d56d49272e58",
+      "statement": "Tauri shell は廃止されたが OS notifier 差替え API は残り、未登録時は DefaultPushNotifier を使う。Linux 通知は services の notify-rust に依存し、lockfile の tauri-winrt-notification はその推移依存である。",
+      "evidence": [
+        {
+          "resource": "repo://Cargo.lock#L4726-L4737",
+          "version": "repo-lines-v1:sha256:94eb5387195d22cefd00f6b50b73d77ef8f45ec35407bc625613dcba6b7af546:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNmY5MDI5ODUxYjEwZGJmZDliYWJkMzA5MWEwYjQwNDZmZjBiZTAwNTlmMTA4NWY4ZjlhZDg3OWY3ZGQwZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NDE2ZTA5Zjc4YmEzMTZjMDMyNTY4MjEzYjg1NWVlNzU2ZTQxNTY1ZDkxOGYwOTUxOWM4MWZkNjIwZjQwNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2NTkyMGJhMmUzYzAwYjVkMGU1NzUzYjEyY2EzYTYxMDRjNmE3MDMxYjMwZDk3NGE3YTE3Y2UyOTE0NWMyM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhZTAxY2NmMjM0Yzc3MGY1ZTVjMWY2MjU5NzQ1MmZlZTZjZTM2NDc4YWU5NmQ5NzE5YzhmZGMyNDUwMGIxNDIifQ"
+        },
+        {
+          "resource": "repo://README.md#L85-L87",
+          "version": "repo-lines-v1:sha256:0d835cd19f41255ebcb53720f525409657eeccbc50e6358c2eb1b66e607b8ff5:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2M0MWNkYzkyOTEyZDUxYTkxNjQxMTFmNjg4MzE0ODA3MmNhYTI3ZDllZTdhZTIzMTgyN2YxNGIxZmEwZTgyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjNhMDUxMDg2MDAxZTczNGNkMzNhYTE3NmEwNDEyNzliOWI3NDM4MmFiZTM5Nzc5N2JjY2ZhY2UzNjAyNTYzZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2Y3ZDkzZDQyOTZlZDM1Njk1NjZlYWUwNzkxYTlhNjk1OTI1NTY0MmM1ZGU2MTkyN2NiMmM2YTc5ZWI3ODk2YSJ9"
+        },
+        {
+          "resource": "repo://crates/services/Cargo.toml#L35-L35",
+          "version": "repo-lines-v1:sha256:034ee1bc2edfc452bcdb533004f8a9da6d7429fd2b61922283b91da9538a95e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDM0ZWUxYmMyZWRmYzQ1MmJjZGI1MzMwMDRmOGE5ZGE2ZDc0MjlmZDJiNjE5MjIyODNiOTFkYTk1MzhhOTVlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDM0ZWUxYmMyZWRmYzQ1MmJjZGI1MzMwMDRmOGE5ZGE2ZDc0MjlmZDJiNjE5MjIyODNiOTFkYTk1MzhhOTVlMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGU1YWY1YWNjMTgxNmI5ZjVhYzU4ZGRjZmEzYjE0OGVkZDUxNDk0ZjY0ZDQxMTgxYjc2ZmZjNWUyMjc1M2I4NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmNjMTJkMjQ4ZGI5N2NjMzMwNTZjZDQ3MTFlNzUyNzM1YmNjNTQ4Zjk1MjI1ZjMwOWJmMDRlMGM1ZGQ0MzIwYSJ9"
+        },
+        {
+          "resource": "repo://crates/services/src/services/notification.rs#L170-L195",
+          "version": "repo-lines-v1:sha256:f3eb51ab85d202a47f8996184a548304f83cae82d25bf21890b6d4269ca6d88a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4YTMxYjAzZTg4ZmRjOThiZjU0ZDFiZGQ5MTU0Yzg2MmU3NGVjYWYxOTM3MmI5Y2Y5YjhhYjEzZGM2Njg0YjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4OGI4ZTRmMDg1YmMyYzQ1YWU5OGVmOGIwZmI1N2YzYmEzMWI2Y2Q4ZjYxNjM4NzYyYzg0MmRkOTM5MWQ0ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3ZTE2ZjMzZjkwZWRiMWUxNGRmMjM5NzAyNDNlNTY2MjNjOTkxYjI3ZTg0NWRmOGVlZmU5NjkxYzY5NzgyZTkifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/notification.rs#L19-L52",
+          "version": "repo-lines-v1:sha256:11965e8e074d478240a9e181938d95e66a11f69a5482674049a36e9c0f5290af:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlYmFjOGE5MWM3MmQ1M2VmNDM2ZmRmMGJhZWI2ODQyZGUxZDM4Y2JjNjBiNTk4MDQ4NmZmODgwMTEzODFiMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4YTdmYWVhMDYzODQwMTVmNDVhNGFhMTFiYzkyZDQ5ZmEzNGJkODE3YTFmY2IwZGI3YTM3OWU4YTE0ZDllNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T02:27:43.655Z"
   }
 }

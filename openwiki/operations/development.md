@@ -22,10 +22,6 @@ sources:
     resource: repo://crates/server/src/bin/generate_types.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
-  - id: openwiki-source-88fc73cd214d9f8c3b051c4f
-    resource: repo://crates/tauri-app/src/main.rs
-  - id: openwiki-source-57eebdf400ca14f6e9abea48
-    resource: repo://crates/tauri-app/tauri.conf.json
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
@@ -62,6 +58,8 @@ sources:
     resource: repo://tests/build-info/component.test.mjs
   - id: openwiki-source-3b8e596f6d78967bbf29a877
     resource: repo://tests/build-info/isolated.mjs
+  - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
+    resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
     resource: repo://tests/server/run-workspace-tokens.mjs
   - id: openwiki-source-f7bef772fe7a00d12c00a997
@@ -80,15 +78,17 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T02:27:43.655Z
 ---
 
 # 開発・検証・運用文書の使い分け
 
 変更箇所から [システムの境界](../architecture/system.md) を選び、その境界の検証を行う。README は開発の入口だが、コマンドの実際の対象は package.json と各 Cargo manifest で確認する。
+
+<a id="ローカル開発の入口"></a>
 
 ## 開発環境と起動形態
 
@@ -98,11 +98,10 @@ verified:
 | --- | --- | --- |
 | ローカル Web と backend | pnpm run dev | frontend/backend/preview の port を解決し並行起動する |
 | Backend の再起動開発 | pnpm run backend:dev | agent-process-host を build してから server を実行する |
-| Tauri desktop の開発 | pnpm run tauri:dev | 外部 Vite / backend に接続する debug 起動。production の embedded backend 起動とは異なる |
 
 [各 script](../../package.json)
 
-Tauri の `beforeDevCommand` は frontend と backend watch を並行起動する。debug build の window はその外部 frontend に接続し、production build だけが `server::startup::start()` で backend を内蔵起動してから window を開く。したがって desktop の開発試験を、production の embedded startup・completion watcher 配線を検証した証拠にしない。[開発前処理](../../crates/tauri-app/tauri.conf.json#L6-L12)、[debug / production 分岐](../../crates/tauri-app/src/main.rs#L176-L239)
+Tauri shell、native frontend bridge、desktop packaging/updater scripts と `tauri:*` コマンドは撤去済みである。ブラウザーから Docker server または上記の source 開発環境を使う。既存 desktop data の削除・移行は自動実行しない。[移行契約](server-container.md#旧-npx-ランチャーの撤去と移行)。`server::startup` API は残るが、現行 desktop アプリの起動入口ではない。standalone と library startup の回復・watcher の差は [起動順序](../architecture/system.md#起動時は内側の所有者から回復する)で確認する。
 
 通常 backend watch と instance runner は旧 cleanup 無効化変数を設定しない。自動期限 cleanup は撤去され、作業木の解放は [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)に従う。Agent runtime の変更では server だけでなく独立 process host の binary も変更対象になる。[watch 定義](../../package.json)
 
@@ -112,20 +111,26 @@ Tauri の `beforeDevCommand` は frontend と backend watch を並行起動す�
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |
-| pnpm run check | local-web / web-core / ui の型、legacy path guard、Tauriを除く cargo check |
-| pnpm run lint | local-web / ui の lint、Tauriを除く Clippy（qa-mode、all-targets）、未使用 i18n key 検査 |
-| pnpm run backend:test | Tauriを除くRust tests。全workspaceを明示したCargo実行はTauriも含む |
+| pnpm run check | local-web / web-core / ui の型、legacy path guard、現行 Rust workspace の cargo check |
+| pnpm run lint | local-web / ui の lint、現行 Rust workspace の Clippy（qa-mode、all-targets）、未使用 i18n key 検査 |
+| pnpm run backend:test | 現行 Rust workspace の tests |
 | pnpm run workflow:e2e | 専用 Vite fixture に対する Chromium UI tests |
 | web-core の test:wiki | Pipeline model と Wiki feature の Vitest。全 frontend tests の包括実行ではない |
 | pnpm run server:check | server 配布 kit の Node tests。native nginx test の実行には nginx が必要 |
 
 [コマンド定義](../../package.json)・[Wiki test script](../../packages/web-core/package.json#L100-L104)
 
-通常のcheck/lint/testはTauriを明示除外する。desktopは `tauri:check` / `tauri:lint` / `tauri:test` という別入口で検証する。[Cargo構成](../../Cargo.toml)、[script](../../package.json)。
+Tauri crate 自体が workspace からなくなったため、backend の check/lint/test は `--workspace` を使い、旧 `--exclude vibe-kanban-tauri` はない。[Cargo構成](../../Cargo.toml)、[script](../../package.json)。
 
 Workflow の Playwright は1 workerで専用 fixture を立ち上げる。fixture は製品の Workflow component/model を import するが、実 provider と DB を含む本番実行全体の test ではない。たとえば Card context test は折り畳み、read-only preview、保存 description との独立性を確認する。[test 設定](../../tests/workflow/playwright.config.ts)・[fixture](../../tests/workflow/fixture/src/main.tsx#L1-L24)・[Card context test](../../tests/workflow/specs/card-context.spec.ts)
 
 実行制御の変更は [監査・投影の回復 tests](../architecture/agent-runtime.md)、Graph の変更は [Workflow の validation/planner tests](../concepts/workflow-attempt.md)、memory checkpoint は [Repository memory の冪等性 tests](../concepts/repository-memory.md) へ進む。画面上の成功と永続状態の成功を分けて検証する。
+
+### ブラウザー貼り付けの回帰
+
+`node --test tests/chat/paste-markdown.test.mjs` は esbuild と Playwright/Chromium を使い、共有 plugin を直接描画する。Markdown、HTML、HTML 付き raw paste の結果を検査し、browser を finally で閉じる。入力の優先順位・selection 復元・fallback は [貼り付け契約](../architecture/web-and-sync.md#markdownhtmlraw-の貼り付け)を正本とする。[試験定義](../../tests/chat/paste-markdown.test.mjs)
+
+この fixture は OS clipboard を操作せず ClipboardEvent を生成するため、実 OS の clipboard、Firefox/WebKit、live Web Push 配送の保証にはならない。今回の Sync は凍結 source `749367be4937b0ed8338a72995aa84109b3ab0aa` を manifest、browser entry、共有 plugin、notification service、server startup と独立した試験定義から静的照合した。供給された開発時検証報告、より新しい Workspace Memory の compile 報告、正式 Integration の明示的な検証省略は別の証拠であり、この Wiki 保守では製品テスト・Rust build・live 配送を再実行していない。変更に無関係な過去の内容全体を再検証したものではない。
 
 ## Terminal から次操作までの回帰試験
 

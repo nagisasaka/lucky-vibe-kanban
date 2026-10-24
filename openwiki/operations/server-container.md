@@ -54,10 +54,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-23T19:41:54.254Z" }
+generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T02:27:43.655Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -86,13 +86,15 @@ image smoke は UID 10001 のコンテナー内で `less --version` と、非 TT
 | --- | --- |
 | `npx lucky-vibe-kanban` | このページの Docker 配置、またはソース開発の `pnpm run dev` |
 | `lucky-vibe-kanban mcp` / `--mcp` | 直接 build した `vibe-kanban-mcp --mode global`、または認証付き外部 HTTP MCP |
-| `lucky-vibe-kanban --desktop` | desktop 対応環境で `pnpm run tauri:dev` / `pnpm run tauri:build` |
+| `lucky-vibe-kanban --desktop` | Docker server または source 開発 server をブラウザーで開く。Tauri shell と build コマンドは廃止済み |
 
 直接 build では frontend を用意し、`server`・`agent-process-host`・`vibe-kanban-mcp` を同じ checkout から作る。[具体的な build 手順](../../docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)を使い、[開発時の検証範囲](development.md#検証の対象を取り違えない)と配布 image の検証を区別する。Docker もこの三つの binary を同梱する。[build と配置](../../Dockerfile#L98-L101)・[server image](../../Dockerfile#L199-L202)
 
 stdio binary は既存 HTTP backend に接続するため、ランチャーの代わりに backend を自動起動するものではない。`--mode` 省略時は global、orchestrator は明示指定する。接続先の `VIBE_BACKEND_URL` / host・port 解決、内部資格情報と router の制約は [MCP client の接続境界](../integrations/agent-providers.md#外部-mcp-client--lvk)を参照する。[起動処理](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49)・[mode の検証](../../crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L97)。起動方法の移行は [HTTP MCP の認証・scope](../integrations/remote-access.md#認証付き外部-mcp)を免除しない。
 
 撤去は既存アプリデータ・download 済み binary・`~/.vibe-kanban/bin` 等の cache の削除や、既存 launcher の遠隔無効化を行わない。agent CLI や第三者 MCP の npx 設定も別の責任範囲である。[保持する範囲](../../docs/self-hosting/server-container.mdx#legacy-npx-cli-migration)・[直接 LVK binary と第三者 preset](../../crates/executors/default_mcp.json)。古いローカル成果物が残ることと、現行 source がその launcher を提供することを混同しない。
+
+Tauri 撤去も既存 desktop data や download 済み application を削除・移行しない。残る [browser の貼り付け・音・editor 接続](../architecture/web-and-sync.md#ブラウザー操作と廃止された-native-bridge)、[Web Push の同意と配送](../integrations/web-push.md)、[server OS notifier](../concepts/issue-collaboration.md#実行時の注意喚起)を個別に確認する。native shell の削除から共有 runtime の廃止を推定しない。[維持する範囲](../../docs/self-hosting/server-container.mdx#L330-L330)
 
 ### ビルド時ソース識別と API の契約
 

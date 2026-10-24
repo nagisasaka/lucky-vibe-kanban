@@ -6,6 +6,8 @@ tags: [workflow, orchestration, recovery, lifecycle]
 sources:
   - id: openwiki-source-bfeb454efabf3fd2f6ca5a1e
     resource: repo://crates/db/src/models/orchestration.rs
+  - id: openwiki-source-5b20a61dbf36c0c143a466eb
+    resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -34,10 +36,12 @@ sources:
     resource: repo://docs/future/ai-workflow/spec-product.md
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+  - id: openwiki-source-23775c3de52f3ab95a13cb8b
+    resource: repo://README.md
+generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-24T02:27:43.655Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -87,14 +91,16 @@ driver は node iteration と snapshot を読み、Ready node を順に起動す
 
 ### 起動形態と前進の契機
 
+Tauri shell は廃止されたが `server::startup` は公開 API として残る。以下の library 経路を現在の desktop 製品の起動方法と読まない。[現在のシステム境界](system.md#起動時は内側の所有者から回復する)・[公開 API](../../crates/server/src/lib.rs#L1-L9)
+
 | 起動・要求 | 通常 Workflow を進める主体 |
 | --- | --- |
-| Tauri が使う `startup::initialize_deployment` | 起動時回復の後に completion watcher を開始する |
+| 残存 library API の `startup::initialize_deployment` | 起動時回復の後に completion watcher を開始する |
 | standalone `main.rs` | 起動時回復と ScheduledTask loop はあるが、通常 completion watcher の起動呼出しはない |
 | Run 取得 GET / Run events の SSE 接続 | handler 自身が reconciliation を実行する |
 | 活動中の Run を表示する UI | `useWorkflowRun` は既定4秒ごとに GET する。設定で停止・変更可能 |
 
-[startup の結線](../../crates/server/src/startup.rs#L214-L227)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L141)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
+[startup の結線](../../crates/server/src/startup.rs#L214-L231)・[standalone の回復と定時 loop](../../crates/server/src/main.rs#L87-L141)・[GET](../../crates/server/src/routes/workflows.rs#L2028-L2045)・[SSE 接続時](../../crates/server/src/routes/workflows.rs#L2066-L2085)・[UI polling](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts#L26-L56)
 
 したがって Run の取得は純粋な表示読み取りではない。画面経由では前進しても、standalone を画面なしで動かす場合に同じ継続駆動を保証する根拠にはならない。ScheduledTask loop は定時の起動を担い、完了後の全ノード連鎖を監視する watcher の代わりではない。[定時実行の skip 条件](../workflows/task-to-integration.md#定時に-workflow-を起動する)と併せて、起動に成功した run が進行し続けるかを別に確認する。
 
