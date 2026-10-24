@@ -250,6 +250,7 @@ try {
         for (const d of value.disks) {
           d.observation.value.used_percent = 100;
           d.observation.value.available_bytes = 0;
+          d.observation.value.used_bytes = d.observation.value.total_bytes;
         }
         return await route.fulfill({ json: { success: true, data: value } });
       }
@@ -466,28 +467,19 @@ try {
     }
   // API values from the private instance must reach the unmocked browser tooltip.
   await open(paths.workspace, 1280);
-  assert.equal(actual.disks.length, 2);
-  assert.equal(actual.disks[0].target, "lvk_data");
-  assert.equal(actual.disks[1].target, "worktree_base");
+  assert.equal(actual.disks.length, 1);
+  assert.equal(actual.disks[0].target, "worktree_base");
   await page.getByTestId("resource-disk").focus();
   const liveText = await page.getByRole("tooltip").innerText();
-  for (const [i, d] of actual.disks.entries()) {
+  for (const d of actual.disks) {
     assert.equal(
       d.observation.value.filesystem_id,
-      String(
-        (
-          await stat(
-            path.join(instance, i === 0 ? "data" : "runtime/worktrees"),
-          )
-        ).dev,
-      ),
+      String((await stat(path.join(instance, "runtime/worktrees"))).dev),
     );
     assert.equal(d.observation.status, "known");
-    assert.ok(liveText.includes(d.observation.value.filesystem_id));
-    assert.ok(
-      liveText.includes(
-        `${(d.observation.value.available_bytes / 1024 ** 3).toFixed(1)} GiB`,
-      ),
+    assert.ok(liveText.includes("Worktree filesystem"));
+    await expect(page.getByTestId("resource-disk")).toHaveText(
+      `DISK ${Math.floor(d.observation.value.used_percent)}% (${Number((d.observation.value.used_bytes / 1e9).toFixed(2))}GB / ${Number((d.observation.value.total_bytes / 1e9).toFixed(2))}GB)`,
     );
   }
   results.diskWiring = {
@@ -509,13 +501,8 @@ try {
     );
     await expect(page.getByTestId(`resource-${metric}`)).toContainText("100%");
   }
-  await expect(page.getByTestId("resource-disk").locator("span")).toHaveClass([
-    /text-error/,
-    /text-error/,
-  ]);
-  await expect(page.getByTestId("resource-disk")).toHaveText(
-    "DISK D 100% W 100%",
-  );
+  await expect(page.getByTestId("resource-disk")).toHaveClass(/text-error/);
+  await expect(page.getByTestId("resource-disk")).toContainText("DISK 100%");
   mode = "failed";
   await Promise.all([
     page.waitForResponse((r) => r.url().endsWith("/api/resource-observation")),

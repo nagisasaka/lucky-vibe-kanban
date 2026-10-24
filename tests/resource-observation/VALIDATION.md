@@ -1,3 +1,54 @@
+# 現在の追加仕様（2026-10-24）
+
+Issue revision `2026-10-24 14:00:43.970` が以下の過去記録より優先する。
+現在はworktree保存先filesystemだけを観測し、DISKを単一表示する。
+物理filesystemのtotal、used=total-free、percent=used/totalに統一し、GBは10進。
+以前のD/W表示・used+available分母は履歴であり、現在の契約ではない。
+
+今回の基点は `737252a5`。clean・当該Workspaceの非使用をGitとプロセスのcwd/exeで
+確認後、作業ブランチへmainをfast-forwardした。main自体は変更していない。
+通常型検査、共通backend観測回帰、表示fixtureによるChromiumを対象に選んだ。
+認証/取得hookを変更していないため、過去の実アプリ全ケースや全backend試験を
+機械的に再実行せず、既存full-app harnessの期待値を新schemaへ整合させた。
+
+独立レビューはfresh contextの別agentがsource/diffを読み取りで実施。
+確定した機能/認可不具合なし。MCP文書のschema v1/2保存先という残存記述の指摘を
+修正した。実装者の自己確認と独立レビューを区別する。
+
+今回の実行結果:
+
+| 検証 | 結果 |
+| --- | --- |
+| `node --test tests/resource-observation/model.test.mjs` | 5件成功。物理total/used/%一致、旧分母不整合の拒否、0/100、欠損・重複、70/80、stale |
+| `pnpm run ui:check` / `web-core:check` / `local-web:check` / `ui:lint` | すべて成功 |
+| `node tests/resource-observation/browser.mjs` | 最終15ケース成功。実Navbar/ResourceSummary/hook/CSSの隔離fixture、通常/320px/768px/欠損/stale/100%、4右アイコン＋40px user slot、横あふれなし |
+| `CARGO_BUILD_JOBS=1 cargo test -p server resource_observation --lib -- --test-threads=1` | 18件成功、明示smoke1件は別実行。MCP catalog/read scope、Web認証、共通collectorと単一対象を含む |
+| `cargo test -p server resource_observation::tests::live_smoke --lib -- --ignored --exact --test-threads=1 --nocapture` | 1件成功、小規模readのみ |
+| scoped Prettier / rustfmt / `git diff --check` / `node --check tests/resource-observation/full-app.mjs` | 成功 |
+
+Rustは既存target/sccache、jobs=1・test threads=1。LOCAL-162のprocessと空きメモリ・
+ディスクを確認し、frontend完了後に対象試験のみ起動した。キャッシュ削除なし。
+初回コンパイル4分05秒。smoke時は現行build metadata更新のためserverが再評価されたが、
+全試験は繰り返していない。source変更後のfull-app build/E2E・全backend・正式Integration・
+実Auth0は未実施。full-app harnessは新応答に整合し構文検査のみ行った。
+
+smokeは2026-10-24 14:11:18 UTC、schema v2、worktree_baseの1件のみ。
+実測used=899322654720 bytes、total=1053492277248 bytes、percent=85.36585166711124。
+used/totalとの一致を確認した。availableは111103979520 bytesの生値として残るが、
+表示%や容量の分母には使わない。CPU sample 500.224435ms。観測時点の値であり、
+physical host全体の可視性・将来容量・予約を保証しない。
+
+証跡（Git対象外）は `test-results/resource-observation/single-disk/`。
+`results.json`、`capacity-90.png`、`narrow-100-header.png`、
+`desktop-boundary-768.png`、`missing.png`、`stale.png`、各ログ、
+`smoke-summary.json`、`review.json`を保存。ブラウザー/fixtureサーバー終了、scratch削除成功。
+独立レビュー後の追確認でも指摘なし。非表示は既存のvisibility模擬試験であり、
+OSタブbackgroundや実別mountの検証ではない。旧full-app証跡は過去revisionの記録。
+
+開始 2026-10-24 22:59:44 JST。main merge/Wiki/deploy/restart、TODO完了は行わない。
+
+---
+
 # LOCAL-37 追加実装の検証記録（2026-10-23）
 
 作業ブランチ `vk/5416-mcp` の clean 状態を確認し、開始時点の main

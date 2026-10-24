@@ -42,6 +42,24 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
       ? ((total - available) / total) * 100
       : null;
   const disks = Array.isArray(root.disks) ? root.disks : [];
+  const matches = disks.filter((d) => record(d).target === 'worktree_base');
+  const observation = record(
+    record(matches.length === 1 ? matches[0] : null).observation
+  );
+  const disk = record(
+    observation.status === 'known' ? observation.value : null
+  );
+  const diskTotal = number(disk.total_bytes);
+  const diskUsed = number(disk.used_bytes);
+  const diskPercent = percent(disk.used_percent);
+  const validDisk =
+    !stale &&
+    diskTotal !== null &&
+    diskTotal > 0 &&
+    diskUsed !== null &&
+    diskUsed <= diskTotal &&
+    diskPercent !== null &&
+    Math.abs(diskPercent - (diskUsed / diskTotal) * 100) < 0.000001;
   return {
     stale,
     timestamp: Number.isFinite(timestamp)
@@ -50,23 +68,10 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
     cpu: stale ? null : percent(known(record(system.cpu_usage).percent)),
     duration: number(record(system.cpu_usage).sampling_duration_ms),
     ram: stale ? null : ram,
-    disks: ['lvk_data', 'worktree_base'].map((target) => {
-      const matches = disks.filter((d) => record(d).target === target);
-      const observation = record(
-        record(matches.length === 1 ? matches[0] : null).observation
-      );
-      const value = record(
-        observation.status === 'known' ? observation.value : null
-      );
-      return {
-        target,
-        percent: stale ? null : percent(value.used_percent),
-        available: stale ? null : number(value.available_bytes),
-        filesystem:
-          typeof value.filesystem_id === 'string'
-            ? value.filesystem_id
-            : 'unknown',
-      };
-    }),
+    disk: {
+      percent: validDisk ? diskPercent : null,
+      used: validDisk ? diskUsed : null,
+      total: validDisk ? diskTotal : null,
+    },
   };
 }

@@ -6,7 +6,7 @@ function percentage(value: number | null) {
   return value === null ? '—' : `${Math.floor(value)}%`;
 }
 function space(value: number | null) {
-  return value === null ? 'unknown' : `${(value / 1024 ** 3).toFixed(1)} GiB`;
+  return value === null ? '—' : `${Number((value / 1e9).toFixed(2))}GB`;
 }
 
 export function ResourceSummary({
@@ -22,7 +22,7 @@ export function ResourceSummary({
   const scope = `System-visible; physical host unknown. ${view.stale ? 'Unavailable or stale. ' : ''}Observed: ${view.timestamp}.`;
   return (
     <div
-      className="flex items-center gap-base text-xs shrink-0"
+      className="flex max-w-full shrink-0 flex-wrap items-center gap-base text-xs"
       aria-label="Server resources"
       data-testid="resource-summary"
     >
@@ -52,16 +52,15 @@ export function ResourceSummary({
       </Tooltip>
       <Tooltip
         className="max-w-[min(24rem,calc(100vw-1rem))] whitespace-normal"
-        content={`${view.stale ? 'Unavailable or stale. ' : ''}DISK: configured LVK data directory (D) and worktree base directory (W), separately; other workspace destinations are not measured. ${view.disks.map((disk, i) => `${i === 0 ? 'D' : 'W'}: ${percentage(disk.percent)}, ${space(disk.available)} available, filesystem ${disk.filesystem}.`).join(' ')} Usage: used / (used + available). Observed: ${view.timestamp}.`}
+        content={`${view.stale ? 'Unavailable or stale. ' : ''}Worktree filesystem: used / total capacity. 1 GB = 1,000,000,000 bytes. Observed: ${view.timestamp}.`}
       >
-        <span tabIndex={0} className="text-low" data-testid="resource-disk">
-          DISK{' '}
-          <span className={resourceTone(view.disks[0].percent)}>
-            D {percentage(view.disks[0].percent)}
-          </span>{' '}
-          <span className={resourceTone(view.disks[1].percent)}>
-            W {percentage(view.disks[1].percent)}
-          </span>
+        <span
+          tabIndex={0}
+          className={resourceTone(view.disk.percent)}
+          data-testid="resource-disk"
+        >
+          DISK {percentage(view.disk.percent)} ({space(view.disk.used)} /{' '}
+          {space(view.disk.total)})
         </span>
       </Tooltip>
     </div>

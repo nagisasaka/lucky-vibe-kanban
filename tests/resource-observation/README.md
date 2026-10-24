@@ -18,9 +18,10 @@ mounts or host configuration changes. The ordinary HTTP access regression also
 performs one small read through the shared collector with a disposable auth DB.
 
 The model fixtures check the exact 70/80 boundaries, available-based RAM, invalid
-and missing values, distinct filesystem IDs, partial errors and stale timing.
+and missing values, physical used/total/percent consistency, duplicate or absent
+worktree observations, partial errors and stale timing.
 Rust fixtures check counter parsing, unlimited limits, quotas/cpusets, sampling,
-timeout with retained partial disk values, admission bounds, filesystem arithmetic,
+timeout with retained partial disk values, admission bounds, physical filesystem arithmetic,
 missing destinations and the MCP/Web authentication boundaries.
 
 The Chromium test bundles the real Navbar, ResourceSummary and polling hook. It
@@ -59,7 +60,7 @@ Secure session cookies; it does not access Auth0 or an existing LVK server. Keys
 and passwords stay in memory/private temporary files. Browser external requests
 are blocked. No agent run or Integration is started.
 
-Real Chromium requests verify resource API authentication and disk values reaching
+Real Chromium requests verify resource API authentication and worktree disk values reaching
 the tooltip. Project root, issue subroute and workspace pages use the actual right
 icons and user slot at 320/767/768/1280px. Explicit resource-response overrides cover
 100%, 503, a six-second delay and a 44-second-old observation crossing the 45-second

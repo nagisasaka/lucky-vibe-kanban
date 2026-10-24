@@ -1542,7 +1542,7 @@ async fn resource_observation_http_read_scope_and_input_boundary() {
         .unwrap();
     assert_ne!(result["result"]["isError"], true, "{result}");
     let observation = &result["result"]["structuredContent"];
-    assert_eq!(observation["schema_version"], 1);
+    assert_eq!(observation["schema_version"], 2);
     assert_eq!(observation["scope"]["statistics"], "system-visible");
     assert_eq!(observation["completion"], "complete");
     assert!(

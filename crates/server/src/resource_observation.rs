@@ -43,7 +43,7 @@ fn field<T: serde::Serialize>(result: Result<T, &'static str>) -> Value {
 fn initial() -> Value {
     let unknown = field::<u64>(Err("not_observed"));
     json!({
-        "schema_version":1, "timestamp":chrono::Utc::now(),
+        "schema_version":2, "timestamp":chrono::Utc::now(),
         "scope":{"statistics":"system-visible", "environment":"unknown",
             "physical_host_visibility":"unknown"},
         "system_visible":{
@@ -143,8 +143,6 @@ async fn receive(
                 result["cgroup"][key] = value;
             } else if name == "disks.0" {
                 result["disks"][0] = value;
-            } else if name == "disks.1" {
-                result["disks"][1] = value;
             } else if name == "cgroup" {
                 result[name] = value;
             } else if name == "done" {
@@ -278,14 +276,14 @@ mod tests {
     async fn timeout_preserves_partial_values() {
         let (send, recv) = mpsc::channel(3);
         send.send(("online_cpu_count", field(Ok(4)))).await.unwrap();
-        send.send(("disks.0", json!({"target":"lvk_data","observation":{"status":"known","value":{"used_percent":70}}}))).await.unwrap();
+        send.send(("disks.0", json!({"target":"worktree_base","observation":{"status":"known","value":{"used_percent":70}}}))).await.unwrap();
         let result = receive(recv, Duration::from_millis(10), initial()).await;
         assert_eq!(result["system_visible"]["online_cpu_count"]["value"], 4);
         assert_eq!(
             result["disks"][0]["observation"]["value"]["used_percent"],
             70
         );
-        assert_eq!(result["disks"][1]["observation"]["status"], "unknown");
+        assert_eq!(result["disks"].as_array().unwrap().len(), 1);
         assert_eq!(result["errors"], json!(["timeout"]));
         assert_eq!(
             result["system_visible"]["swap_used_bytes"]["status"],
@@ -349,9 +347,8 @@ mod tests {
     async fn live_smoke() {
         let result = observation().await.unwrap();
         assert_eq!(result["completion"], "complete");
-        assert_eq!(result["disks"].as_array().unwrap().len(), 2);
-        assert_eq!(result["disks"][0]["target"], "lvk_data");
-        assert_eq!(result["disks"][1]["target"], "worktree_base");
+        assert_eq!(result["disks"].as_array().unwrap().len(), 1);
+        assert_eq!(result["disks"][0]["target"], "worktree_base");
         assert!(result.to_string().len() < 8192);
         assert!(
             result["system_visible"]["cpu_usage"]["sampling_duration_ms"]
