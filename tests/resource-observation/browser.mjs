@@ -25,18 +25,12 @@ const fixture = (cpu = 42, ram = 42, disk = 42) => ({
   },
   disks: [
     {
-      target: "lvk_data",
-      observation: known({
-        used_percent: disk,
-        available_bytes: 30 * 1024 ** 3,
-        filesystem_id: "101",
-      }),
-    },
-    {
       target: "worktree_base",
       observation: known({
-        used_percent: disk + 1,
-        available_bytes: 20 * 1024 ** 3,
+        used_percent: disk,
+        total_bytes: 1000e9,
+        used_bytes: disk * 10e9,
+        available_bytes: (100 - disk) * 5e9,
         filesystem_id: "202",
       }),
     },
@@ -124,15 +118,40 @@ try {
     assert.equal(requests, 1, "two subscribers must share a single fetch");
     const summary = page.getByTestId("resource-summary");
     assert.doesNotMatch(await summary.innerText(), /load|swap/i);
+    await page.screenshot({
+      path: path.join(output, `${name}-header.png`),
+      animations: "disabled",
+    });
+    const navItems = await page.locator("nav button").evaluateAll((items) =>
+      items
+        .filter((el) => el.getClientRects().length)
+        .map((el) => ({
+          left: el.getBoundingClientRect().left,
+          right: el.getBoundingClientRect().right,
+        })),
+    );
+    assert.ok(
+      navItems.every((item) => item.left >= 0 && item.right <= width),
+      `${name}: clipped navbar icon`,
+    );
     await page.getByTestId("resource-disk").focus();
     const tooltip = page.getByRole("tooltip");
     await expect(tooltip).toBeVisible();
     await expect(tooltip).toHaveCSS("opacity", "1");
     assert.doesNotMatch(await tooltip.innerText(), /load|swap/i);
     if (!["failed", "stale", "missing"].includes(name)) {
-      await expect(tooltip).toContainText("30.0 GiB");
-      await expect(tooltip).toContainText("filesystem 101");
-      await expect(tooltip).toContainText("filesystem 202");
+      await expect(tooltip).toContainText(
+        "Worktree filesystem: used / total capacity",
+      );
+      const disk = values.disks[0].observation.value;
+      await expect(page.getByTestId("resource-disk")).toHaveText(
+        `DISK ${Math.floor(disk.used_percent)}% (${Number((disk.used_bytes / 1e9).toFixed(2))}GB / 1000GB)`,
+      );
+    } else {
+      await expect(page.getByTestId("resource-disk")).toHaveText(
+        "DISK — (— / —)",
+      );
+      await expect(page.getByTestId("resource-disk")).toHaveClass(/text-low/);
     }
     await page.screenshot({
       path: path.join(output, `${name}.png`),
@@ -149,6 +168,11 @@ try {
     );
     results.cases.push({ name, layout, requests });
   }
+  await check("capacity-90", fixture(42, 42, 90), "text-success");
+  await check("narrow-100", fixture(100, 100, 100), "text-error", {
+    width: 320,
+    project: true,
+  });
   await check("normal", fixture(), "text-success");
   await check("warning-70", fixture(70, 70, 70), "text-orange-500");
   await check("high-80-dark", fixture(80, 80, 80), "text-error", {
@@ -168,6 +192,9 @@ try {
   await check("narrow-project-320", fixture(80, 70, 42), "text-error", {
     width: 320,
     project: true,
+  });
+  await check("desktop-boundary-768", fixture(100, 100, 100), "text-error", {
+    width: 768,
   });
   // Deterministic wall-clock and visibility tests exercise the real hook.
   await page.clock.install();

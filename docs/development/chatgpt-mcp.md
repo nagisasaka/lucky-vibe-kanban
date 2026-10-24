@@ -386,7 +386,7 @@ Source logs, existing UI rendering and `get_execution` remain unchanged.
 
 Call `get_resource_observation` with `{}` and the existing `lvk:read` grant.
 This server-wide read needs no Project ID or additional OS permission. It returns
-schema version 1 with `timestamp` (collection start), `completed_at`, `scope`,
+schema version 2 with `timestamp` (collection start), `completed_at`, `scope`,
 `system_visible`, `cgroup`, `disks`, `completion` and `errors`. Files are read sequentially, not as an atomic snapshot. All values are observations,
 not reservations, scheduling decisions or guarantees of future execution safety.
 If LVK itself freezes, this MCP cannot respond either.
@@ -427,8 +427,8 @@ that every ancestor is unlimited. cgroup v1, nested process membership and other
 mount layouts are unsupported/unknown; the tool never substitutes mount-root
 statistics for a known nested process cgroup. There is no estimated memory headroom.
 
-Collection reads fixed Linux statistics paths and filesystem counters for the two
-configured storage destinations (no caller paths), accepting at most 64 KiB
+Collection reads fixed Linux statistics paths and filesystem counters for the
+configured worktree-base destination (no caller paths), accepting at most 64 KiB
 per file (one extra byte detects oversized input). The
 fixed output contains only numbers, timestamps and constant labels/errors, with
 an enforced 8 KiB JSON limit; it never includes raw files, process lists, arguments or filesystem paths.
@@ -440,15 +440,18 @@ when a caller disconnects or times out; a stuck kernel read cannot accumulate
 unbounded workers. No daemon, history database, automatic admission or stop
 policy is created. Authentication and the normal MCP audit remain unchanged.
 
-`disks` contains separate entries for `lvk_data` (configured LVK data directory)
-and `worktree_base` (configured worktree base, including the configured override).
-Each entry has `scope: "configured_destination_filesystem"` and an `observation`
-field containing known values or an unknown/error. Known values are `filesystem_id`
-(the visible filesystem device ID, as a string), `total_bytes`, `used_bytes`,
-`available_bytes` and `used_percent`. Linux `fstatvfs` is applied to an open directory
-handle; percent is `used / (used + available_to_unprivileged_user) * 100`, accounting
-for reserved blocks. Identical IDs indicate a shared filesystem; entries are never
-summed. Missing/unreadable destinations remain unknown, without creating them or
+`schema_version: 2` changes DISK to the worktree filesystem only and changes the
+percentage denominator to physical filesystem capacity. `disks` contains exactly
+one `worktree_base` entry (the configured worktree base, including its override).
+The LVK data directory is no longer measured. Consumers must select by target,
+not the old array index. The entry has `scope: "configured_destination_filesystem"`
+and an `observation` with known values or an unknown/error. Known values include
+`filesystem_id` (visible device ID as a string), `total_bytes`, `used_bytes`,
+`available_bytes`, `used_percent` and `percent_basis: "used / total"`.
+Linux `fstatvfs` reads an open directory handle: total is `f_blocks * f_frsize`,
+used is `(f_blocks - f_bfree) * f_frsize`, and percent is `used / total * 100`.
+`available_bytes` remains a raw MCP/API value and is not the percentage denominator.
+Missing/unreadable destinations remain unknown, without creating them or
 substituting an ancestor. Arbitrary DirectFolder destinations and separately mounted
 subdirectories inside the base are not inventoried. Paths are not returned.
 
@@ -457,8 +460,9 @@ collector and worker limit as MCP and returns the normal `ApiResponse` envelope,
 with `Cache-Control: no-store` (503 if unavailable). It inherits the existing local
 API access/origin boundary; MCP still requires `lvk:read`. The header shows CPU,
 RAM and DISK only. CPU uses the existing sample, RAM is `(total - MemAvailable) /
-total`, and DISK labels D/W for data/worktrees with individual free space in its
-tooltip. System-visible CPU/RAM are not cgroup-local or physical-host measurements.
+total`. DISK displays e.g. `DISK 90% (900GB / 1000GB)` using the same used/total
+values as its percentage. GB is decimal (1 GB = 10^9 bytes); capacities show up to
+two decimal places. The tooltip identifies the worktree filesystem, not directory size. System-visible CPU/RAM are not cgroup-local or physical-host measurements.
 Values below 70% are green, from 70% orange, from 80% red; values are floored for
 display so rounding cannot contradict the colour. Unknown, fetch failure or samples
 at least 45 seconds old show grey dashes. A shared query polls every 15 seconds

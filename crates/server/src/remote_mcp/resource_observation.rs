@@ -9,7 +9,7 @@ struct Args {}
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![definition::<Args>(
         "get_resource_observation",
-        "Observe LVK server-visible Linux memory, swap, online CPU capacity, load averages, data/worktree filesystem usage and a roughly 500ms CPU sample, with separately labelled cgroup v2 limits. Read-only, bounded and on-demand; unknown fields retain errors. Not physical-host visibility, reserved capacity, admission or a prediction of future execution safety. No arguments.",
+        "Observe LVK server-visible Linux memory, swap, online CPU capacity, load averages, worktree filesystem usage (used / total physical filesystem capacity) and a roughly 500ms CPU sample, with separately labelled cgroup v2 limits. Read-only, bounded and on-demand; unknown fields retain errors. Not physical-host visibility, reserved capacity, admission or a prediction of future execution safety. No arguments.",
     )]
 }
 

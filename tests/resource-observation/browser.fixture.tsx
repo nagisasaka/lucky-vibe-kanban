@@ -15,12 +15,19 @@ function App() {
     <>
       <Navbar
         workspaceTitle="Example workspace"
-        mobileMode={innerWidth < 600}
+        mobileMode={innerWidth < 768}
         isOnProjectPage={new URLSearchParams(location.search).has("project")}
         onReload={() => {}}
         onOpenSettings={() => {}}
         onOpenCommandBar={() => {}}
-        rightItems={[{ id: "settings", icon: GearIcon, tooltip: "Settings" }]}
+        rightItems={["Integration", "Command Bar", "Guide", "Settings"].map(
+          (label) => ({ id: label, icon: GearIcon, tooltip: label }),
+        )}
+        mobileUserSlot={
+          <button aria-label="User settings" className="size-10 shrink-0">
+            <GearIcon />
+          </button>
+        }
         resourceSlot={<ResourceSummary {...resources} />}
       />
       <DuplicateSubscriber />

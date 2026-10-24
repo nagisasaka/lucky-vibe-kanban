@@ -68,7 +68,7 @@ mod tests {
         let body: Value =
             serde_json::from_slice(&to_bytes(response.into_body(), 16384).await.unwrap()).unwrap();
         assert_eq!(body["success"], true);
-        assert_eq!(body["data"]["disks"].as_array().unwrap().len(), 2);
+        assert_eq!(body["data"]["disks"].as_array().unwrap().len(), 1);
         assert_eq!(body["data"]["scope"]["statistics"], "system-visible");
         // A session alone cannot use a write method (CSRF boundary or 405).
         let status = app.oneshot(request("POST", true)).await.unwrap().status();
