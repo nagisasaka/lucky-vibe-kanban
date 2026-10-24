@@ -19,7 +19,10 @@ use utils::repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus};
 use uuid::Uuid;
 
 mod lifecycle;
-pub use lifecycle::{allows_wiki_instruction, ensure_wiki_board_link, release_completed};
+pub use lifecycle::{
+    allows_wiki_instruction, ensure_wiki_board_link, ensure_wiki_board_link_for_project,
+    release_completed,
+};
 
 /// Only existing, host-owned records establish historical usage. Ordinary
 /// workflows, unlinked workspaces and names are deliberately not evidence.

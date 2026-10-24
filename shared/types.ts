@@ -231,6 +231,10 @@ export type ConfigureRepositoryMemory = { enabled: boolean, target_branch: strin
 
 export type SyncRepositoryMemory = {
 /**
+ * Optional originating Project; omitted by repository-only and older clients.
+ */
+project_id?: string,
+/**
  * Review changes after this commit through the frozen integrated head.
  * Omit to reconcile against the complete current source.
  */

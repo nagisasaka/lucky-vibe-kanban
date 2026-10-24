@@ -39,6 +39,16 @@ pub async fn ensure_wiki_board_link(
     pool: &SqlitePool,
     workspace: &Workspace,
 ) -> anyhow::Result<()> {
+    ensure_wiki_board_link_for_project(pool, workspace, None).await
+}
+
+/// The caller must validate an explicit Project against the repository's current
+/// associations. Without one, retain historical unambiguous-Board inference.
+pub async fn ensure_wiki_board_link_for_project(
+    pool: &SqlitePool,
+    workspace: &Workspace,
+    project_id: Option<Uuid>,
+) -> anyhow::Result<()> {
     let Some(owner) = workspace
         .execution_owner
         .as_ref()
@@ -70,17 +80,21 @@ pub async fn ensure_wiki_board_link(
     if linked {
         return Ok(());
     }
-    let projects: Vec<Uuid> = sqlx::query_scalar(
-        "SELECT project_id FROM project_repos WHERE repo_id=?
+    let projects: Vec<Uuid> = if let Some(project_id) = project_id {
+        vec![project_id]
+    } else {
+        sqlx::query_scalar(
+            "SELECT project_id FROM project_repos WHERE repo_id=?
          UNION SELECT i.project_id FROM workspace_repos wr
          JOIN local_workspace_links l ON l.workspace_id=wr.workspace_id
          JOIN local_issues i ON i.id=l.issue_id
          WHERE wr.repo_id=? ORDER BY project_id",
-    )
-    .bind(repo_id)
-    .bind(repo_id)
-    .fetch_all(&mut *tx)
-    .await?;
+        )
+        .bind(repo_id)
+        .bind(repo_id)
+        .fetch_all(&mut *tx)
+        .await?
+    };
     let [project_id] = projects.as_slice() else {
         return Ok(());
     };

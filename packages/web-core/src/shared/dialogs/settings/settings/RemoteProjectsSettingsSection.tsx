@@ -1470,6 +1470,7 @@ export function RemoteProjectsSettingsSection({
                     <div className="space-y-base border-t border-border p-base">
                       <SettingsMachineUserSystemProvider>
                         <ReposSettingsSection
+                          projectId={selectedProjectId ?? undefined}
                           key={`${machineScopeKey}:${gitWorkspaceDefault.repo_id}`}
                           initialState={{
                             repoId: gitWorkspaceDefault.repo_id,

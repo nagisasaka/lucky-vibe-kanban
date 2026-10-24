@@ -21,8 +21,9 @@ history are preserved, not migrated or deleted; see [legacy data handling](/work
    run uses the saved branch and language, not the draft shown in the form.
 3. If the saved branch has no tracked `openwiki/` directory, select **Initialize
    Wiki**. LVK creates an OpenWiki maintenance workspace and a repository-scoped
-   Bootstrap Workflow. When one Board is associated with the repository, the
-   workspace also gets a linked card. Select
+   Bootstrap Workflow. When started from Project settings, the workspace gets a linked card in
+   that Project if it has a visible status. The saved working-location default
+   is sufficient; a development card need not exist yet. Select
    **View Workflow** in these settings or above the maintenance workspace's logs
    to open the existing Workflow **Canvas** and **Dashboard**.
 4. Wait for **Current**. A successful model exit alone is not sufficient: LVK
@@ -95,10 +96,23 @@ use the Dashboard for step status, errors and whole-workflow cancellation.
 The Bootstrap workflow does not offer template editing or individual step retry.
 After resolving a failure, start a new bootstrap from repository settings.
 The chat's session selection remains independent of the Workflow view.
-Maintenance workspaces appear in the ordinary workspace list. When the repository
-belongs to exactly one Board, LVK also creates a linked card, including for retained
-maintenance workspaces from earlier versions. If multiple Boards are associated,
-LVK leaves the choice to you instead of choosing a destination automatically.
+Maintenance workspaces appear in the ordinary workspace list. Project settings
+and authorised MCP sync requests carry their originating Project
+into maintenance. LVK checks the existing Project/Repo association, including saved
+Git working-location defaults, before creating the linked card. An unrelated
+Project is rejected through the existing error display; check **Configure project
+working location**, save the correct repository, and retry. MCP requests must also
+be authorised for that Project.
+
+Repository-only settings, automatic sync and older clients omit this Project
+context. They keep the existing behaviour: create a card only when one Board can
+be inferred from repository bindings or existing linked workspaces. With no Board
+or multiple candidates, maintenance still runs without a card. A Board without a
+visible status also retains this behaviour; add or unhide a status in Project
+settings before a later run if a card is wanted. Existing workspace links are
+never moved. Historical backfill retains the same unambiguous-Board rule.
+These compatibility paths intentionally remain; not every maintenance workspace
+is guaranteed to have an Issue.
 While maintenance runs, select its active session to send additional instructions,
 answer approval/input requests, or use **Stop execution** before publication.
 File changes, new sessions and unrelated development wait until the owner finishes

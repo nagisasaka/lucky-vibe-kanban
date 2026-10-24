@@ -217,6 +217,7 @@ pub(super) async fn sync(deployment: &DeploymentImpl, args: SyncArgs) -> anyhow:
         deployment,
         args.repository_id,
         openwiki::SyncRepositoryMemory {
+            project_id: Some(args.project_id),
             from_commit: args.from_commit,
         },
         &args.expected_target_branch,

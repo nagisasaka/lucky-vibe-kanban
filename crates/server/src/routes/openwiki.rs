@@ -2,6 +2,7 @@
 //! The shared durable pointer and OS lock fence writers across server restarts.
 pub(crate) mod completion;
 pub(crate) mod preparation;
+mod project_context;
 use std::{
     io::Write,
     path::{Path as FsPath, PathBuf},
@@ -51,6 +52,9 @@ pub struct ConfigureRepositoryMemory {
 #[derive(Debug, Default, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct SyncRepositoryMemory {
+    /// Optional originating Project; omitted by repository-only and older clients.
+    #[ts(optional)]
+    pub project_id: Option<Uuid>,
     /// Review changes after this commit through the frozen integrated head.
     /// Omit to reconcile against the complete current source.
     pub from_commit: Option<String>,
@@ -266,6 +270,8 @@ async fn start_reconciliation_request(
     expected: Option<(&str, &str)>,
 ) -> anyhow::Result<RepositoryMemoryState> {
     let repo = repo(deployment, id).await?;
+    let project_id = request.as_ref().and_then(|request| request.project_id);
+    project_context::validate(&deployment.db().pool, id, project_id).await?;
     workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
     let storage = deployment
         .git()
@@ -309,7 +315,7 @@ async fn start_reconciliation_request(
         None => RepositoryWikiSyncScope::PendingChanges,
     };
     let result = prepare_run(
-        deployment, &repo, &store, &mut state, &source, initial, scope,
+        deployment, &repo, &store, &mut state, &source, initial, scope, project_id,
     )
     .await;
     if let Err(error) = result {
@@ -325,6 +331,7 @@ async fn start_reconciliation_request(
     Ok(store.state()?)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn prepare_run(
     deployment: &DeploymentImpl,
     repo: &Repo,
@@ -333,6 +340,7 @@ async fn prepare_run(
     source: &str,
     initial: bool,
     scope: RepositoryWikiSyncScope,
+    project_id: Option<Uuid>,
 ) -> anyhow::Result<()> {
     let branch = state
         .target_branch
@@ -389,7 +397,7 @@ async fn prepare_run(
     .await?;
     let preparation = async {
     let _preparation = preparation::begin(&deployment.db().pool, workspace.id).await?;
-    services::services::workspace_usage::ensure_wiki_board_link(&deployment.db().pool, &workspace).await?;
+    project_context::link(&deployment.db().pool, &workspace, project_id).await?;
     WorkspaceRepo::create_many(
         &deployment.db().pool,
         workspace.id,

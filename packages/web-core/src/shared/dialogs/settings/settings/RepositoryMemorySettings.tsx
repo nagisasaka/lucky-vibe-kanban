@@ -15,8 +15,10 @@ import {
 export function RepositoryMemorySettings({
   repo,
   client,
+  projectId,
 }: {
   repo: Repo;
+  projectId?: string;
   client: MachineClient;
 }) {
   const query = useQuery({
@@ -76,6 +78,7 @@ export function RepositoryMemorySettings({
     try {
       if (sync)
         await client.syncRepositoryMemory(repo.id, {
+          ...(projectId ? { project_id: projectId } : {}),
           from_commit: needsCommit ? fromCommit.trim() : null,
         });
       else
