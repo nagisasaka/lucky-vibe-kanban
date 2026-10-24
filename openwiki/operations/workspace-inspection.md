@@ -84,6 +84,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
+  - id: openwiki-source-9231a80ee56432d71077b70c
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
@@ -100,17 +102,25 @@ sources:
     resource: repo://tests/chat/file-links.native.mjs
   - id: openwiki-source-be2dcdcefb33abee0a49e75a
     resource: repo://tests/server-access/preview-static.mjs
+  - id: openwiki-source-c6d955097c4a7a9e7b1873ee
+    resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:50:43.997Z
+    at: 2026-10-24T14:58:13.588Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
 
 これらの機能は同じ [Workspace](../concepts/workspace.md) の成果物を扱うが、実ファイルの閲覧、Git との差分、アプリの実行、shell の操作は別の経路である。画面の操作方法は [Reviewing Code](../../docs/reviewing-code.mdx) と [Browser Testing](../../docs/browser-testing.mdx) に譲り、ここでは実装変更に関わる契約を整理する。
+
+## Issue 番号から Workspace を探す
+
+Workspace 一覧の検索欄には名前・branch のほか `106` や `LOCAL-106` を入力できる。対象が archive 済みなら Archived に切り替え、見つからない場合は Project / PR filter と関連情報の取得状態も確認する。同じ Issue の複数 Workspace や別 Project の同じ識別子が並ぶ場合があるため、番号だけで作業先を断定しない。[検索の適用](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L408-L495)・[複数結果と archive の回帰](../../tests/server/specs/workspace-search.spec.ts#L102-L131)
+
+番号は部分一致であり、関連情報の取得前には名前・branch で探せる。表示件数との関係、再取得と失敗の意味は [Workspace 一覧検索の契約](../concepts/workspace.md#一覧検索と-issue-識別子)を参照する。対象を選んだ後は、以下の用途・履歴・ファイルの状態を確認する。
 
 ## 実行専用 Workspace の確認
 

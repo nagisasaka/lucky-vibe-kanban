@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a0209289fbd49adf80d08ef203d7c4dc3596b387069e12b6705b4e631aeea7f6",
+  "pageVersion": "sha256:39b08f7c204fde56d140962a51ffb46617e35c53b2cfb8e13eba844b2cf2e0a1",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1181,10 +1181,24 @@
           "version": "repo-lines-v1:sha256:3d52bc99b65feb2c388f7c91ff54688273a3c6df3e6116846d0b13d1d82497d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NmEyNDU1MzI5MDI3OGU4M2EzMzE1NDA4YmViOTBkMDlhMTcxNTk1ZTI5NWNiZmFkMjVlZjNkMjAwZTcyYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYTYyNTcxMWFkMjkxYzJmNTdkNTY1ZmY1NjZiNDM0NmMwYWM4YmFjY2I5M2UzNDliZTQzMzJhOWMwZTFmNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_6bc6c9bec5ac4656b8834fe48894a48e",
+      "statement": "Workspace 一覧のIssue識別子検索は既存UserProviderのUSER_WORKSPACES_SHAPE関連情報をlocal_workspace_idで結合し、検索専用の取得経路を追加しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L306-L333",
+          "version": "repo-lines-v1:sha256:24b0b9d7162e55a69bf9db28e356a9c931dfc2f93a8a8d7ab74cd959fc04e85b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjZWRmNzFiYzAwYmZkODJhNWFjNDFjYmZiNDk2ZjEwYjc3MDc0NTIxZGIyMzc5MTlkZTY0NWY1NjBkMzkwNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzNTQxMjFmM2I1MGU3MTA3MGRlNTZmYTc4ODMyNTZiNDY2ZTc4YzdiMjdhOWM1MzRiNzFmMzAyMDY3NThhZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NzE0NDFmOGYzMDE4Y2FjNzkxNjgzZGIxYzkzOWRhZjIxODE5NTJmNjJiZDU3MGJlMjEwNGM1OTJmYjZhZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNDg0MmI4OTkzY2IwZjBjYzExOGExMmVmODg5ZjRkNzU1NmMwMGVjNGE5MTVkNDA1OWJmODVhZmVhYWQzMDkifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/remote/UserProvider.tsx#L14-L39",
+          "version": "repo-lines-v1:sha256:e9ef15f7bec6478ecc365818ef0ed9674582df310046215ee6ab80fd509af0b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZTZmYmQ5OGE0ZGY0NTBhM2Y0YzA2ZGMzZGE0YTUwOTk1ZGMyZmVmNzVkZTg4ODU3NzhmOWQ4MTBmZDgzN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMTI1YmRjZTRlZWQ2ZGEyNTE1NDVkMjg5MjI3MDMyZTU2N2JjODk1ZWFhMzVlN2M3ZmYwNDIzZWJlYjRmMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZTM4NWRjZjNiMjQwOWIwNTNiMzBlNDhhM2MzY2MwMDIwNDA0ODE1MThjNTU4MWE1MWY4NjZkYzM2MjA3MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhNTI1MDg5MmRmNGE0YzQ5M2VhMWNmN2Y1NGFkN2Y1OGRlMDUzMTJmMjM3YTJlOTQ0ZjgwNmMxMGY5YWE1MGYifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:54:41.863Z"
+    "at": "2026-10-24T14:58:13.588Z"
   }
 }

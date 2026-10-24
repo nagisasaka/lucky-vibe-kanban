@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b95cdd1c352a1cbd2ebb4ff204e3aef0335798e26f99642e30330b7fe6f2d22e",
+  "pageVersion": "sha256:cfba907bc7156e097941f9b4c88e3b1420eab4083e3efe36fde7ec26df5afc0b",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -573,10 +573,24 @@
           "version": "repo-lines-v1:sha256:9402cd5483fae5568d209db4aabb156b1755fc173efb6b9b42d74dab354ba4d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNGQ1YjM0ZWVkYWYzM2I3NTg5NTAyNDUxODZmZTRjYmM3NWY3MmVkMTcwOWMwODE2YWU4Y2Y5MzQ1YTU5NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjZTNjODBmZjEzZjdlNjg0MjYxZWM1YjMwYWRkNDRiMTllMDA2MDE0MTM1NjA1ZWI4MDViNTVmYTY3YTY2ZGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxMTYwYWZjMmJlODcxNmMxNTg1MWMzOTRlYzQxYzU5MjU2MzM2MWUyNjAxNDFiNjE5YzgwMDczMGEwY2MxM2YifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8ef00b1659554a8ab67bb47c17ab0d31",
+      "statement": "Workspace一覧ではIssue番号・識別子でも検索でき、結果はActive/ArchivedとProject/PR filterに従い、同じ識別子の複数Workspaceや別Projectの結果も現れる。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L408-L495",
+          "version": "repo-lines-v1:sha256:96b21782fc5066f97719f3ae446479ed28b3e28efa2055c9dd7e185a96bbc843:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxMjE1YTUxNzU0ZWEyNDQ1YjE2OTQ3NWRjZWQ2Yjg4MTYzMjY1MzA1YTgxNzMyYzJmNzNjMThjMGRiMzZlNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmOWRiYzdmMmYyNGI1Mjg0MzU3Zjk4NjMwNmZlZjA0MTdjYzZmODFhODNhMDJiZjgxNTBmNzExMmY4ODNiMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjZWJiYzI4OGQzYzNkNTI3NjI3Mzg0MTZhZTlmNzU5ODI0NjExZDk4NmNkZDc3ODY5ZmUxZTdkMTI2M2NjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MWZlZGRiODhhNjk0ZjAxZjQ4OTgyNzAxZjU3NWUyM2E4ODZmYTQ2ZTgzYjZlODA1NmY1MTY2NGVjNTQ0N2QifQ"
+        },
+        {
+          "resource": "repo://tests/server/specs/workspace-search.spec.ts#L102-L131",
+          "version": "repo-lines-v1:sha256:66745d7182dc423f9e480feb50eca4d1a818365891d87f9e73eff82fe1e883dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5NWQ3NDcwMzA5ZDY2NjcyNTE1Yzc0MjBmYTQwNGQzMDdjYTJlMmYxMzQ3MDU2NzAzYmJlNTQ3MGRmNWJmMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkYTcyNTMzZWE0NTQxYzYyZWNlNWJlNTA3ZWQ5MGQ0MDI4ODA0MDA2ZDQwMTE4NmU0ODAyY2FjZjdlYmQ5YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwNmU5ZDZhNzcxNzU5OTUyMTUyNjRkYzBkMGE0MTk0ZTM4OGRiYmRhZWI1YWY4MWVlM2QxMjViM2UwYTdhMTAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T23:50:43.997Z"
+    "at": "2026-10-24T14:58:13.588Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1fcf3ea9e7417b7d8549f47ecd26c5921a04355a07dd8836507e0fd4b33e1926",
+  "pageVersion": "sha256:cab216c05cbf35abdce6c8f1d13d1ce07360d74ece2c4ef7b701feb3a628344e",
   "claims": [
     {
       "id": "claim_47f88605cb734f0e8f28726920324a17",
@@ -39,8 +39,8 @@
       "statement": "公開配置の本人IDをUIへ渡しても既存Workspaceの歴史的固定所有者を更新せず、共有環境の操作可否を表示上の所有者一致から分離する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L1150-L1225",
-          "version": "repo-lines-v1:sha256:4683a803b2e9ea1287430affd72ddd81bf506e81ff67d14d7350d12f481d378b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0Y2EwYjQwOGM0NGM1MTc2NDNmN2U2NTQwZjkyY2JkNzI3ODZmYzA5MWVmMzg2ODIxY2E2YzMzNzU5NWUyYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMjk4YzhlYTdhOGM5ODNhMGIxODk1ZjY1N2Q3OTUxOTRjMTNiYzM1MWM5NzhjYjY3OWU4ZWFlNmMzODJjYmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NWYxNTE4N2UwNjFlMTUyZjNlODg2MGQ4Y2M4MDM4ZjZjYjY5Y2Q5ODVhNDU5MzBjNjU1ZTA5MjQ3YzdmNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4MTJkNjQ3OTFkNzc3NTE1NzQwYTYxZDdkMmI5NzM2ZGE0N2YxMmNlZGU4MjBmMDQ2MmJjZGQ0ODFlNGM4ODEifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L1170-L1237",
+          "version": "repo-lines-v1:sha256:c94433a7befd0cb8f3a132eef2c8b9859d4b04e480a599ece876722631280961:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkNTFlZTc5NTExMDM1ZTNmNjg5OWUzYmIwNjBjOTkwOTdhZDEwMGUwZTYxMjg5ZjViOTMxNTc5MzYzOTcwZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhNGY1ZjNkNjEzMmQxZGNmM2QxODkwMzBjM2E3MGU3NjUzNDY4NDQ5NTE4OWEwYzc0NTU4OGIwNGRhMWYzNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NTE4NGExMzEyNjc4NDQ1NGM5MTNlNTliZjAxYjBhNDc1MThkNGNlMmNiMWRlYzMxMmE4ZGU5ZDRmYWZhNTEifQ"
         },
         {
           "resource": "repo://packages/ui/src/components/IssueWorkspacesSection.tsx#L55-L84",
@@ -55,6 +55,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-16T14:34:12.007Z"
+    "at": "2026-10-24T14:58:13.588Z"
   }
 }

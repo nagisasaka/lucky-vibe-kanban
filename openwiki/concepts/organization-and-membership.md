@@ -19,7 +19,7 @@ sources:
 generated: { by: "codex", at: "2026-10-16T14:34:12.007Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-16T14:34:12.007Z
+    at: 2026-10-24T14:58:13.588Z
 ---
 
 # Organization・Member・Invitation

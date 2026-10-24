@@ -4,6 +4,8 @@ title: Workspace と Repository
 description: 作業環境の所有権と用途、実行所有者、複数 Repo、共有資源、削除と回復の境界。
 tags: [workspace, repository, worktree, ownership, storage]
 sources:
+  - id: openwiki-source-4f78929732c14c8386f96755
+    resource: repo://crates/api-types/src/workspace.rs
   - id: openwiki-source-94559828ba40b7dfdd09bad0
     resource: repo://crates/db/migrations/20260921000000_workspace_usage.sql
   - id: openwiki-source-f9386b5537a5146f7ac841ae
@@ -44,6 +46,8 @@ sources:
     resource: repo://crates/server/src/routes/filesystem.rs
   - id: openwiki-source-16bb0bc0baa397cce8e201b1
     resource: repo://crates/server/src/routes/github_credentials.rs
+  - id: openwiki-source-1ffb01d1ba3953937e0771bf
+    resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
     resource: repo://crates/server/src/routes/openwiki/preparation.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
@@ -82,6 +86,12 @@ sources:
     resource: repo://docs/development/workspace-token-usage.md
   - id: openwiki-source-5f6ef843ad438c4b8a15f879
     resource: repo://docs/workspaces/managing-workspaces.mdx
+  - id: openwiki-source-3c7b1a2410e6c04380babfb7
+    resource: repo://packages/web-core/src/pages/workspaces/workspaceSearch.test.ts
+  - id: openwiki-source-cf9a630f7915909bbd487245
+    resource: repo://packages/web-core/src/pages/workspaces/workspaceSearch.ts
+  - id: openwiki-source-9231a80ee56432d71077b70c
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
   - id: openwiki-source-00110cdcfec890895b99690a
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-dbe2d46e94202832ad4e5e7b
@@ -90,12 +100,18 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx
   - id: openwiki-source-5ea1902fdf1213351e6386d9
     resource: repo://packages/web-core/src/shared/lib/api.ts
+  - id: openwiki-source-e665e0fe8e478ec542e0ace4
+    resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
+  - id: openwiki-source-fa8e70f692a61e2ed2f1fa2a
+    resource: repo://tests/server/run-workspace-search.mjs
+  - id: openwiki-source-c6d955097c4a7a9e7b1873ee
+    resource: repo://tests/server/specs/workspace-search.spec.ts
+generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-24T14:58:13.588Z
 ---
 
 # Workspace と Repository
@@ -162,6 +178,22 @@ Workspace 累積トークンは、人や上位 AI が消費の偏りを確認す
 `providers` は保存済み報告の provider 一覧、`requested_models` は同 Workspace の attempt request にある要求モデル一覧である。実使用モデルの確定や thread 内モデル別消費の配分には使えない。[一覧の取得](../../crates/db/src/models/workspace_tokens.rs#L55-L70)
 
 [実装記録](../../docs/development/workspace-token-usage.md)は、同一 thread の resume 二重加算を避けること、意味を確認できない通知を推計しないことを設計理由としている。レビュー後には最新の置換可能 snapshot に基づく報告 attempt 数が後退し得るため、その分子・表示専用分母を削除し、everflag や履歴走査を加えなかった。現行 API にもそれらの attempt 数はない。正常 resume の外部実装根拠は記録中の特定 Codex 版についての説明であり、実アカウント精度や異常 reset の保証とは区別する。[レビュー判断](../../docs/development/workspace-token-usage.md#2026-10-21-独立レビュー後の最小修正)・[現行応答型](../../crates/db/src/models/workspace_tokens.rs#L7-L25)。fixture の分担と残る未検証範囲は [トークン集計の検証](../operations/development.md#workspace-トークン集計の検証)を参照する。
+
+## 一覧検索と Issue 識別子
+
+Workspace sidebar の検索は作業環境を探すための表示絞り込みであり、Issue 本文の検索や Issue 番号の一意解決ではない。Active / Archived の両方で入力を trim・小文字化し、Workspace の名前、branch、関連 Issue の `issue_simple_id` のいずれかへの部分一致で残す。`106` と `local-106` は `LOCAL-1060` にも一致し、同じ識別子が複数 Project や複数 Workspace に現れても結果を統合しない。[比較](../../packages/web-core/src/pages/workspaces/workspaceSearch.ts#L1-L12)・[両一覧への適用](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L408-L495)・[複数結果の回帰](../../tests/server/specs/workspace-search.spec.ts#L102-L120)
+
+識別子の正本は `local_issues.simple_id`。既存の user / project Workspace 関連情報 API が `workspaces` → `local_workspace_links` → `local_issues` の JOIN から毎回取得し、API 型は nullable な `issue_simple_id` を持つ。未リンク Workspace はこの関連情報一覧に入らないが、通常のローカル Workspace 一覧から消えるわけではない。sidebar は既存 `UserProvider` の関連情報を `local_workspace_id` で重ねる。検索のために全 Issue を別取得したり Workspace ごとに問い合わせたりしない。[取得と JOIN](../../crates/server/src/routes/local_remote.rs#L1170-L1237)・[API 型](../../crates/api-types/src/workspace.rs#L6-L22)・[結合](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L306-L333)
+
+関連情報の初回未取得・取得失敗・識別子欠落では、利用可能な名前・branch の照合を続ける。識別子で見つからないことを Issue 未関連の証明にはしない。既存 snapshot は取得失敗で空に置き換えられず、既報の関連情報が残る場合もある。通常の30秒間隔の再取得で成功した snapshot が届くと照合結果を更新する。これは厳密な反映期限ではなく、ローカル一覧と関連情報の原子的 snapshot でもない。[取得・失敗・再取得](../../packages/web-core/src/shared/lib/electric/collections.ts#L275-L357)・[周期](../../packages/web-core/src/shared/lib/electric/collections.ts#L53-L53)・[fallback 比較](../../packages/web-core/src/pages/workspaces/workspaceSearch.ts#L6-L11)。同期経路の全体は [Web の snapshot 同期](../architecture/web-and-sync.md#issue-データの読み取りと書き込み)を参照する。
+
+Project / PR filter を先に適用し、Active / Archived の区分を保ったまま検索する。空白だけの入力は検索なしで、通常は50件ずつ表示する。検索中は取得済み一覧の一致分を表示件数で切らずに示すため、通常の最初の50件にない Workspace も見つかる。権限を拡張する検索ではなく、user 関連情報 API は明示された別 user ID に空一覧を返す既存境界を持つ。[filter と検索](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L400-L495)・[表示件数](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L541-L567)・[ページ単位](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L62-L62)・[API の対象境界](../../crates/server/src/routes/local_remote.rs#L1464-L1489)。探し方は [対象 Workspace の確認](../operations/workspace-inspection.md#issue-番号から-workspace-を探す)へ進む。
+
+### 検索変更時の検証境界
+
+比較の回帰は [workspaceSearch.test.ts](../../packages/web-core/src/pages/workspaces/workspaceSearch.test.ts)、両 API の JOIN・複数 Project / Workspace・archive・未リンク除外・再取得は [Rust fixture](../../crates/server/src/routes/local_remote.rs#L3895-L3981)が扱う。[隔離 runner](../../tests/server/run-workspace-search.mjs)は build 済み server と専用一時 instance を使い、終了待機後に instance を削除する。[Chromium spec](../../tests/server/specs/workspace-search.spec.ts)は実画面と API、取得失敗から通常 polling による回復、trim・大文字小文字、50件境界、filter、識別子変更を検査する。provider 起動を fixture で抑止しており、実 Agent や外部認証を検証する試験ではない。
+
+今回の通常 Sync は凍結 manifest と全3チャンクの hash、および統合済み source `8158d0da2af13e20dc9aa2cc62116a9a938e9afb` を照合した。独立した入口として sidebar と比較関数、既存 provider / snapshot、API 型と生成型、SQL と handler、Rust・unit・browser fixture を確認した。凍結入力の開発試験成功は過去の報告であり、正式 Integration は検証を明示的に省略している。この保守で製品試験を再実行したとは扱わず、無関係な過去の Wiki 全体の再検証も主張しない。
 
 ## 一覧から作成先を選ぶ
 

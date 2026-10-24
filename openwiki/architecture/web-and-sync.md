@@ -114,6 +114,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx
   - id: openwiki-source-0894249b732085a9800940bd
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
+  - id: openwiki-source-9231a80ee56432d71077b70c
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
   - id: openwiki-source-8e27f9b63333a62bc1b246ff
     resource: repo://packages/web-core/src/shared/actions/index.ts
   - id: openwiki-source-caba6442d1d02b97bf406c6a
@@ -168,6 +170,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-01d821b4d50944c26f066eb1
     resource: repo://packages/web-core/src/shared/lib/utils.ts
+  - id: openwiki-source-f19e845a46caccf16c347093
+    resource: repo://packages/web-core/src/shared/providers/remote/UserProvider.tsx
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
@@ -204,10 +208,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-24T14:54:41.863Z" }
+generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:54:41.863Z
+    at: 2026-10-24T14:58:13.588Z
 ---
 
 # Web の実行環境と同期
@@ -279,6 +283,8 @@ local shell の ConfigProvider は onboarding を acknowledged として公開�
 sidebar の「＋」は `navigateToCreate` を呼ぶ。この処理は route 遷移に加えて provider の `workspaceTargetRequest` を増やすため、既に create route にいる場合も新しい選択要求を伝えられる。layout の desktop / mobile 両方が同じ値を composer へ渡す。composer は draft と既定値の準備を待ち、最後に扱った request と異なる場合に chooser を開く。dialog-open ref は重複表示を防ぐ。これは作成回数や Workspace ID ではなく UI 内の再選択要求である。[要求の発行](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L244-L251)・[mobile](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L338-L350)・[desktop](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L522-L531)・[受信](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L284-L300)
 
 chooser の取消は選択値を適用せず戻り、再表示のために composer を作り直したり message を消去したりしない。確定した作成先を初期値として再び渡す。作成先確認と directory 参照の詳細は [Workspace の作成先選択](../concepts/workspace.md#一覧から作成先を選ぶ)を正本とし、永続 draft の scope は [Scratch の契約](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)と区別する。[結果の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
+
+Workspace 一覧の検索は、ローカル一覧に `UserProvider` の既存関連情報を `local_workspace_id` で重ねて Issue 識別子を照合する。`USER_WORKSPACES_SHAPE` の REST snapshot と既存の再取得を使い、検索専用 API や別の同期経路を持たない。入力の正規化、取得失敗時の意味、Project / PR / archive と表示件数の契約は [Workspace 一覧検索の正本](../concepts/workspace.md#一覧検索と-issue-識別子)を参照する。[provider](../../packages/web-core/src/shared/providers/remote/UserProvider.tsx#L14-L39)・[関連情報の結合](../../packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx#L306-L333)
 
 ### Workspace 導線の検証範囲
 
