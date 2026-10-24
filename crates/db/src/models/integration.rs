@@ -612,7 +612,7 @@ impl IntegrationRun {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::models::{
         repo::Repo,
@@ -620,7 +620,7 @@ mod tests {
         workspace::{CreateWorkspace, Workspace},
     };
 
-    async fn fixture() -> (SqlitePool, IntegrationRun, Uuid) {
+    pub(crate) async fn fixture() -> (SqlitePool, IntegrationRun, Uuid) {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
             .connect("sqlite::memory:")
