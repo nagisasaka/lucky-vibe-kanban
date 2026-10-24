@@ -46,10 +46,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-23T18:52:05.040Z" }
+generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T02:16:46.128Z
 ---
 
 # Project・Issue と実施の関係
@@ -88,12 +88,14 @@ Not Started は未着手、In Progress は着手済み・未完了、In Review �
 
 | 観測と条件 | 自動同期の結果 |
 | --- | --- |
-| 最新の実開始 attempt が初めて Running になる | 可視の Not Started / In Progress / In Review から In Progress へ移し、その attempt を owner とする |
+| 最新の実開始 attempt が初めて Running になる | 可視の Not Started / In Progress / In Review / Done から In Progress へ移し、その attempt を owner とする |
 | 最新実開始 attempt が成功し、その owner を保持、他の関連 run も非活動になった | 可視の In Progress から In Review へ移す |
 | 開始前の失敗、または最新実開始 attempt の失敗・取消・crash・AuditFailed | 成功として列を進めない。開始後は通常 In Progress を保持する |
-| Done、独自名の列、非表示の現在列、必要な可視の移動先がない | 自動移動しない |
+| 独自名の列、非表示の現在列、必要な可視の移動先がない | 自動移動しない |
 
-移動先は同じ Project の名前が一致する可視列から sort_order 順の先頭を選ぶ。名前を変更した独自列を推測して対応付けない。追加実行は In Review から再び In Progress に戻れる。[列の選択と制約](../../crates/db/src/models/agent_runtime_kanban.rs#L63-L109)・[開始と失敗の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L81-L202)
+移動先は同じ Project の名前が一致する可視列から sort_order 順の先頭を選ぶ。名前を変更した独自列を推測して対応付けない。追加実行は In Review や Done から再び In Progress に戻れる。Done でも予約・Starting・開始前の失敗では列を変えず、最新の新しい実開始を必要とする。[列の選択と制約](../../crates/db/src/models/agent_runtime_kanban.rs#L63-L109)・[開始と失敗の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L81-L202)
+
+Done からの再着手は既存の Running 同期で扱い、別の再開処理は持たない。旧 attempt の Running・終端再送では再着手させず、過去の Integration receipt も新しい作業を Done に戻さない。[公開後 receipt の境界](formal-integration.md#公開donewiki-は別の結果)と、両 canonical 保存経路で一巡を確認する [DB 回帰テスト](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706)を参照する。
 
 ### 複数 Workspace と開始順
 

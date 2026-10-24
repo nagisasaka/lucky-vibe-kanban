@@ -4,6 +4,10 @@ title: Issue から実行・レビュー・統合まで
 description: 通常作業をまたぐ作成、Setup gate、会話、レビュー、Git/PR、Issue 状態と repository memory の更新順序を説明する。
 tags: [workflow, setup, review, git, pull-requests, scheduling]
 sources:
+  - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
+    resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
+  - id: openwiki-source-5c693a62e6ccf09ccb60592f
+    resource: repo://crates/db/src/models/agent_runtime_kanban.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-29ff4fcd8f66b24767de429c
@@ -72,10 +76,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-23T23:50:43.997Z" }
+generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:50:43.997Z
+    at: 2026-10-24T02:16:46.128Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -116,7 +120,7 @@ completion event を取りこぼした watcher は DB の gate から追いつ�
 
 Agent の review API は Workspace 内に active AgentRun があれば拒否する。use_all_workspace_commits は Repo ごとの fork point を review context に使い、intent=Review、selected_skills なしで起動する。OpenWiki の independent Review と同じ隔離プロトコルではない。[review の起動](../../crates/server/src/routes/sessions/review.rs)
 
-関連 Card は Workspace 作成・予約では未着手のままで、確認された実開始で In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。追加実行では再び In Progress へ戻る。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、正式 Integration の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
+関連 Card は Workspace 作成・予約だけでは現在列を変えず、確認された新しい実開始で対象の標準列から In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。In Review や Done の Card も追加実行の実開始で再び In Progress へ戻る。Starting や開始前の失敗だけでは Done を戻さない。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、正式 Integration の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
 
 ## 並列変更を試してから正式統合する
 

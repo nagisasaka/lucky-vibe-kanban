@@ -6,6 +6,8 @@ tags: [integration, git, validation, lifecycle, recovery]
 sources:
   - id: openwiki-source-60b1754d1fc954c43279f888
     resource: repo://.lvk/integration-validation.json
+  - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
+    resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
@@ -58,10 +60,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-23T23:54:58.621Z" }
+generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:54:58.621Z
+    at: 2026-10-24T02:16:46.128Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -145,6 +147,8 @@ required check が通らない場合は blocked とし、失敗証拠とリス�
 Board 一覧と Workspace の専用介入欄は、完全な IntegrationRun の `published` を優先し、true なら反映済み、false かつ `publication_intent` があれば「反映結果の照合中」、どちらもなければ未反映と表示する。status 名だけで未反映と推測しない。Git 更新後の receipt 保存が失敗し得るため、intent が残る `blocked` / `recovery_required` でも未反映と断定できない。これは再実行の指示ではなく、下記の Recover による証拠照合を必要とする状態である。[Board の表示](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L530-L540)・[Workspace の表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L82-L92)・[Git と DB の引渡し](../../crates/server/src/routes/integrations/runtime.rs#L1383-L1406)
 
 Git publication 確認後、選択 Card と Integration Card を Done に移す。可視列では名称 Done を優先し、なければ最後の列を選ぶ。Card の title・description・revision やリンクが途中で変わったことは現在の Done 不適格条件ではない。別 Integration の予約、Card / 移動先不在なら理由を記録して変更しない。Card 更新と receipt は同一 transaction で、一度記録した結果は再適用しない。[Done の実装](../../crates/db/src/models/integration.rs#L540-L610)、[変更後の Card を扱うテスト](../../crates/db/src/models/integration.rs#L1251-L1412)。
+
+Done は作業の再開を禁止する状態ではない。[新しい実開始による再着手](project-and-issue.md#kanban-と実行の同期契約)で In Progress に戻った後も、過去の Integration の記録済み receipt は再適用されず、新しい作業を Done に戻さない。次の公開は別 Integration の receipt で完了を記録する。[両保存経路を通る回帰テスト](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706)は Done → In Progress → In Review → 新しい Integration の Done と、旧 receipt・旧終端 attempt の再送保護を扱う。これは DB fixture であり、実 provider 起動や Git 公開の検証を代替しない。
 
 Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox へ結ぶ。Memory 無効なら記録を新設しない。semantic outbox や後続 Wiki の失敗は成功した Git / Done を取り消さず、Integration succeeded は Wiki 完了の証明ではない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L1465-L1582)。記録の寿命と acknowledgement は [Repository Memory](repository-memory.md)に説明する。
 

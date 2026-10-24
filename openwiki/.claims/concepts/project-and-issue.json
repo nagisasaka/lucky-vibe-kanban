@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:282413c7c479c80487e1932db2fb3d1b6885c57bb568c2eb6cbb84fc7b0ad849",
+  "pageVersion": "sha256:3c7daadc41a5c053d0f476d10146b26789a3b4c8797288eb7924e8e76565caba",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -184,7 +184,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/integration.rs",
-          "version": "repo-file-v1:sha256:89766c7697a09b54839de0b19d9784eea8b25abde821f05a741624b2376e068f"
+          "version": "repo-file-v1:sha256:8d4135c71f2c250897d1d42d0c48d9c64a0819d132a4469d82cc73bb774bb5d7"
         }
       ]
     },
@@ -224,11 +224,15 @@
     },
     {
       "id": "claim_a6a093a7bd7b474ba89f3d4224702919",
-      "statement": "Kanban自動同期は開始証拠のある最新attemptのRunningで可視の標準列をIn Progressへ移し、最新成功とowner保持および他run非活動を条件にIn Reviewへ移す。Startingや最新attemptの失敗だけで成功列へ進めず、Done・独自名・hidden列を動かさない。",
+      "statement": "Kanban自動同期は開始証拠のある最新attemptの新しいRunningで可視のNot Started・In Progress・In Review・DoneをIn Progressへ移し、最新成功とowner保持および他run非活動を条件にIn Reviewへ移す。Startingや開始前の失敗でDoneを再着手させず、独自名・hidden列は動かさない。",
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L13-L109",
-          "version": "repo-lines-v1:sha256:a40eb5a76173ebe044e6dce55b1ecc95fe6277cc8c97bf891db5b24ec6bda691:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNmVjNDZkZWI5YTc1MzlmMjNlOWJjZDJjMWQwOTc4ZGZiNWM3M2ExZTZiZmNkODhmNmZmZmYwYzY0Nzc4MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYTEyMWU4Y2NhMzNhMmNlOTdlZjViMDI0NmMzZGM1YTM1OGFjZDRiMmQ3NDczMTJlMGQ4NGMxYmJjODM3MGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
+          "version": "repo-lines-v1:sha256:18c08cc39934f2f3fd68be0c175bee98b57fa4894ef86a6f450f4d93e2ff82e6:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNmVjNDZkZWI5YTc1MzlmMjNlOWJjZDJjMWQwOTc4ZGZiNWM3M2ExZTZiZmNkODhmNmZmZmYwYzY0Nzc4MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYTEyMWU4Y2NhMzNhMmNlOTdlZjViMDI0NmMzZGM1YTM1OGFjZDRiMmQ3NDczMTJlMGQ4NGMxYmJjODM3MGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706",
+          "version": "repo-lines-v1:sha256:6b9139628d66f4db1999a1cd9ccab5d95aef512cdb8bdb45037d56dac07b9509:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4ODZiMTI0OTljZjU4MDdmMThjOGNkMzYwYmU5YTk0OWM4MTJkOTVlZGExYzUzNDE5OTExYzQ2NDZlOGZhZTQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NzcyZTkyNzVjYjZhMjRmZmE4OTUyY2NhNzdlNmE0YTVhMmFkZTYzY2VkNDM1MWM2YmM1ODYwYWFmZTUyMmQxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     },
@@ -274,7 +278,7 @@
         },
         {
           "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L70-L109",
-          "version": "repo-lines-v1:sha256:2d744246f9209d74d38db4ca2f58f818082cdef2967a2964e35fad2007bd04a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhYmM3MWQ4M2JmYzFjZTE4NDA5M2M4NzA2ZjhkZmY3NzA2ZjkxMTZlZmFjNzIzMWI3NTFhZDJkZDU4MTg1ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZWI4ZWRjNTgzNmM2MGZkNTI3Mjk3MGVmOWJiNDlhZWMzMDE0OTNhNzc1ZmYwNzk2Yjk3MmMwZTZmOGU3Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
+          "version": "repo-lines-v1:sha256:166edf528ed22786c9a6ba86d0c1687cdaeda8150e1215af7b38e3b16905e6da:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhYmM3MWQ4M2JmYzFjZTE4NDA5M2M4NzA2ZjhkZmY3NzA2ZjkxMTZlZmFjNzIzMWI3NTFhZDJkZDU4MTg1ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZWI4ZWRjNTgzNmM2MGZkNTI3Mjk3MGVmOWJiNDlhZWMzMDE0OTNhNzc1ZmYwNzk2Yjk3MmMwZTZmOGU3Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs#L807-L859",
@@ -365,10 +369,28 @@
           "version": "repo-lines-v1:sha256:e572b170877cb75b02d5fcfa26d549bb32083a7c19163a8d8ea862e35968a4a6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjlkYWRjZDQ3YTA4MmVjNzA1NDY5MWRjNjQyNTdiYzVkZjM5MDEwODQ0YTVlN2VjYjE0YmUyMTY2ODljMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiMWRjZjE5MTUzZGU2OTI1YTY4NGI3MWVhMDQ0MDFhNjA5MDhkYWMzOTVhYjNhZDE2Y2Q0MjZmY2ZmNjgwNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZTQzOTVjYWQ3MTJhYWU3YjRhZmVkMjQ1MTFmOGUwNWZlOTk0NzgxNWUwNDdjMTBjN2MwNTFmMzcyNDI2NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiZjJhZGE1ZDg4NjdhOTI0ZTk4YzhmY2RiNjkwNDE2Zjg2YzcyNmZjYzFkM2Q0YzY5Y2NmOGQ5MjhiODgxNmIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8ee58e1ee0a34032a624808d2b058672",
+      "statement": "Doneからの新規実開始は既存の同期処理で扱い、旧attemptのRunning・終端再送や過去Integration receiptの再適用は新しい作業状態を上書きしない。両canonical保存経路のDB回帰テストがこの関係を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L16-L23",
+          "version": "repo-lines-v1:sha256:4cbb21aa377c4907ba8f041cd9a378e229dc185139b28cd6de4280c6b1b87b28:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzNmZDk4Y2I0YmY4NTkwYTdmMjExNTIyNjA4MzcxNmNmZDRkZjUwMWJlNDVhMTI5ZWI2M2Q1NjQwMmY1OTYwNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzg4N2Y2NWMxMzVhMmI0NzJjYzk5YWMyM2VjM2JjMDAxYzcyOGE5ZDU1YWI4NTBjZWRmMWE4OWYyNmU5Y2U5NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzQ1OWRiMzA3YTFiODA0NmY0YjQ5NGYxYmQ2MGE0ZjJjNzAyNTg3NzA0OWNhOWZhMDZiZjM0YWU1ZDc2OGRlMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFmM2M5MDIxOTEzOGQ4MzFjM2I5YmU0MzAxYjllOTAwZTY4YzRhYjZmNWJlNjNkMTIxMDNmZWRiZDY3Mjc3NCJ9"
+        },
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706",
+          "version": "repo-lines-v1:sha256:6b9139628d66f4db1999a1cd9ccab5d95aef512cdb8bdb45037d56dac07b9509:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4ODZiMTI0OTljZjU4MDdmMThjOGNkMzYwYmU5YTk0OWM4MTJkOTVlZGExYzUzNDE5OTExYzQ2NDZlOGZhZTQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NzcyZTkyNzVjYjZhMjRmZmE4OTUyY2NhNzdlNmE0YTVhMmFkZTYzY2VkNDM1MWM2YmM1ODYwYWFmZTUyMmQxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L540-L610",
+          "version": "repo-lines-v1:sha256:8adedb2858a16dbd0cbaab1c0dd723d18bf91e3a901e2301a4c81ed6a6ce1c69:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyOWNiMmZlN2RiYzA3OGFhMWQyZjZjMjYwNWJjNzgwMzg3YWI3YTE4NzkwNTE3ODBhZTc3ZDIzZGQ1ZDZlZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1NWNlZmIxZWMxNGI2MjgzNDgwMjMwOTg3NTQwZDFmYmQyNzA4Yzc3N2FhMzc4ZmE0YmI1YmRlMzMzNjAxZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T02:16:46.128Z"
   }
 }
