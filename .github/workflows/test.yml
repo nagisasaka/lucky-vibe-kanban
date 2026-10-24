@@ -25,7 +25,6 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
-      tauri: ${{ steps.filter.outputs.tauri }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
@@ -74,36 +73,6 @@ jobs:
               - 'rustfmt.toml'
               - 'rust-toolchain.toml'
               - '.cargo/**'
-              - '.github/workflows/test.yml'
-              - '.github/actions/**'
-            tauri:
-              - 'crates/tauri-app/**'
-              - 'crates/api-types/**'
-              - 'crates/client-info/**'
-              - 'crates/db/**'
-              - 'crates/deployment/**'
-              - 'crates/executors/**'
-              - 'crates/git/**'
-              - 'crates/git-host/**'
-              - 'crates/local-deployment/**'
-              - 'crates/mcp/**'
-              - 'crates/preview-proxy/**'
-              - 'crates/server/**'
-              - 'crates/server-access/**'
-              - 'crates/services/**'
-              - 'crates/utils/**'
-              - 'crates/workspace-manager/**'
-              - 'crates/worktree-manager/**'
-              - 'crates/ws-bridge/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - 'rustfmt.toml'
-              - 'rust-toolchain.toml'
-              - '.cargo/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - '.npmrc'
               - '.github/workflows/test.yml'
               - '.github/actions/**'
 
@@ -228,7 +197,7 @@ jobs:
         run: |
           set -x
           cargo fmt --all -- --check & pid_fmt=$!
-          cargo clippy --workspace --all-targets --exclude vibe-kanban-tauri -- -D warnings
+          cargo clippy --workspace --all-targets -- -D warnings
           wait $pid_fmt
 
   backend-test:
@@ -255,34 +224,4 @@ jobs:
           rev: 6e4a9d6f2c4964f30ff54a8cd5466f8869267daa # cargo-nextest-0.9.132
 
       - name: Run Cargo tests
-        run: cargo nextest run --workspace --exclude vibe-kanban-tauri
-
-  tauri-checks:
-    needs: changes
-    if: always() && (needs.changes.outputs.tauri == 'true' || needs.changes.result == 'skipped')
-    runs-on: *runner_label
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Rust
-        uses: ./.github/actions/cargo-checks-common-setup
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          components: rustfmt, clippy
-          cache-key: tauri-checks-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_LABEL }}
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential \
-            libssl-dev libayatana-appindicator3-dev librsvg2-dev \
-            libxdo-dev file pkg-config xdg-utils
-
-      - name: Run Tauri fmt, clippy, and compile checks
-        run: |
-          cargo fmt --all --manifest-path crates/tauri-app/Cargo.toml -- --check
-          cargo clippy --all-targets --manifest-path crates/tauri-app/Cargo.toml -- -D warnings
-          cargo check -p vibe-kanban-tauri
+        run: cargo nextest run --workspace

@@ -12,7 +12,6 @@ import {
   $convertFromMarkdownString,
   type Transformer,
 } from '@lexical/markdown';
-import { getTauriInvoke, isTauriRuntime } from '../lib/platform';
 
 type Props = {
   transformers: Transformer[];
@@ -30,71 +29,11 @@ export function PasteMarkdownPlugin({ transformers }: Props) {
   const [editor] = useLexicalComposerContext();
   const shiftHeldRef = useRef(false);
 
-  const readRawClipboardText = async (): Promise<string> => {
-    const tauriInvoke = getTauriInvoke();
-
-    if (tauriInvoke) {
-      try {
-        const text = await tauriInvoke('read_clipboard_text');
-        if (typeof text === 'string') {
-          return text;
-        }
-      } catch {
-        // Fall back to navigator clipboard below.
-      }
-    }
-
-    return navigator.clipboard.readText();
-  };
-
   useEffect(() => {
-    // Track Shift key state during paste shortcut
+    // Native paste events supply clipboard data without read permission prompts.
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
-        const isRawPasteCombo = e.shiftKey;
         shiftHeldRef.current = e.shiftKey;
-
-        // Tauri/WebKit may not dispatch a paste ClipboardEvent for Cmd+Shift+V.
-        // Fallback: handle raw paste directly from clipboard on keydown.
-        if (isRawPasteCombo) {
-          // Browser should use native paste event path (no clipboard-read
-          // permission prompts). Tauri may not emit paste events, so keep
-          // fallback there only.
-          if (!isTauriRuntime()) {
-            return;
-          }
-
-          const rootElement = editor.getRootElement();
-          const activeEl = document.activeElement;
-          const domSelection = window.getSelection();
-          const hasSelectionInsideEditor =
-            !!rootElement &&
-            !!domSelection?.anchorNode &&
-            rootElement.contains(domSelection.anchorNode);
-          const isEditorFocused =
-            !!rootElement && !!activeEl && rootElement.contains(activeEl);
-          const shouldHandleRawPaste =
-            isEditorFocused || hasSelectionInsideEditor;
-
-          if (!shouldHandleRawPaste) {
-            return;
-          }
-
-          e.preventDefault();
-          e.stopPropagation();
-
-          void readRawClipboardText()
-            .then((text) => {
-              if (!text) return;
-
-              editor.update(() => {
-                const selection = $getSelection();
-                if (!$isRangeSelection(selection)) return;
-                selection.insertRawText(text);
-              });
-            })
-            .catch(() => {});
-        }
       }
     };
 
@@ -102,8 +41,7 @@ export function PasteMarkdownPlugin({ transformers }: Props) {
       shiftHeldRef.current = false;
     };
 
-    // Use window capture listeners so Tauri/WebKit shortcut handling does not
-    // bypass tracking when the event target is outside the editor root.
+    // Track modifiers before the editor receives the native paste event.
     window.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('keyup', handleKeyUp, true);
 
