@@ -21,6 +21,7 @@ export function domain(value, name) {
   if (
     typeof value !== "string" ||
     value.length > 253 ||
+    /[\r\n]/.test(value) ||
     !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(
       value,
     )
@@ -30,6 +31,40 @@ export function domain(value, name) {
     );
   }
   return value;
+}
+
+// Keep this grammar aligned with acme.py; shared fixtures exercise both parsers.
+export function previewRoutes(env, app) {
+  const csv = env.LVK_PREVIEW_ROUTES ?? "";
+  if (csv && env.LVK_PREVIEW_DOMAIN)
+    throw new Error(
+      "LVK_PREVIEW_ROUTES and LVK_PREVIEW_DOMAIN are mutually exclusive",
+    );
+  if (!csv) return [];
+  const seen = new Set();
+  return csv.split(",").map((entry) => {
+    // Only surrounding ASCII spaces/tabs are ignored, in both runtimes.
+    const match = /^[ \t]*([^:]+):([0-9]+)[ \t]*$/.exec(entry);
+    if (!match || match[0] !== entry)
+      throw new Error(
+        "LVK_PREVIEW_ROUTES requires non-empty hostname:port entries",
+      );
+    const host = domain(match[1], "LVK_PREVIEW_ROUTES hostname");
+    const port = Number(match[2]);
+    if (!Number.isInteger(port) || port < 1024 || port > 65535)
+      throw new Error("LVK_PREVIEW_ROUTES port must be 1024..65535");
+    // Stable/development backends, legacy preview and both nginx listeners.
+    if ([3000, 3001, 4021, 4022, 8443, 8444].includes(port))
+      throw new Error(
+        `LVK_PREVIEW_ROUTES port ${port} is reserved for LVK/nginx`,
+      );
+    if (host === app || seen.has(host))
+      throw new Error(
+        `LVK_PREVIEW_ROUTES duplicate host or LVK_HOST collision: ${host}`,
+      );
+    seen.add(host);
+    return { host, port };
+  });
 }
 
 export function serverSettings(env) {
@@ -48,9 +83,11 @@ export function serverSettings(env) {
   if (preview && (app === preview || app.endsWith(`.${preview}`))) {
     throw new Error("LVK_HOST must be outside the preview wildcard domain");
   }
+  const routes = previewRoutes(env, app);
   return {
     app,
     preview,
+    ...(routes.length ? { routes } : {}),
     ...(env.LVK_ACCESS_DEPLOYMENT === "public"
       ? { managedAccess: true, legacyBasic: env.LVK_PROXY_AUTH !== "backend" }
       : {}),
@@ -208,7 +245,33 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
     )
     .replace("@@MCP_LOCATIONS@@", mcpLocations(settings, mcpBackend))
     .replace("@@PREFIXED_APP@@", prefixedAppLocation(settings))
-    .replace("@@PREVIEW_SERVER@@", previewServer)
+    .replace(
+      "@@PREVIEW_SERVER@@",
+      previewServer +
+        (settings.routes ?? [])
+          .map(
+            ({ host, port }) => `
+    server {
+        listen 8443 ssl;
+        server_name ${host};
+        auth_basic off;
+        # Independent apps own their authentication. Defining headers here
+        # replaces the LVK-specific inherited proxy header list completely.
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Port 443;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Proxy-Authorization "";
+        proxy_set_header X-LVK-Internal-Token "";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        location / { proxy_pass http://127.0.0.1:${port}; }
+    }`,
+          )
+          .join("\n"),
+    )
     .replace(
       "@@STAGING_SERVER@@",
       settings.staging
@@ -245,6 +308,7 @@ export function validateSecrets(
   }
   for (const host of [
     settings.app,
+    ...(settings.routes ?? []).map(({ host }) => host),
     ...(settings.preview ? [`3000.${settings.preview}`] : []),
   ]) {
     if (!(isIP(host) ? cert.checkIP(host) : cert.checkHost(host)))

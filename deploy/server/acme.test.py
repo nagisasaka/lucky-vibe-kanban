@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -27,6 +28,33 @@ class Certificates(unittest.TestCase):
             acme.certbot_command({**env, "LVK_ACME_AGREE_TOS": ""})
         with self.assertRaises(ValueError):
             acme.certbot_command({**env, "LVK_PREVIEW_DOMAIN": "preview.example.com"})
+
+    def test_shared_route_grammar(self):
+        cases = json.loads(Path(__file__).with_name("preview-routes.cases.json").read_text())
+        for case in cases:
+            with self.subTest(case=case):
+                if case["valid"]:
+                    self.assertEqual(acme.preview_routes(case["env"], case["env"]["LVK_HOST"]), case["routes"])
+                else:
+                    with self.assertRaises(ValueError):
+                        acme.preview_routes(case["env"], case["env"]["LVK_HOST"])
+
+    def test_route_orders_and_changed_hosts(self):
+        env = {"LVK_HOST": "lvk.example.test", "LVK_ACME_AGREE_TOS": "yes"}
+        for count in [0, 6, 24]:
+            csv = ",".join(f"p{i}.example.test:4020" for i in range(count))
+            command = acme.certbot_command({**env, "LVK_PREVIEW_ROUTES": csv})
+            self.assertEqual(command.count("--domains"), count + 1)
+            self.assertIn("--renew-with-new-domains", command)
+        with self.assertRaisesRegex(ValueError, "25 identifiers.*externally managed"):
+            acme.certbot_command({**env, "LVK_PREVIEW_ROUTES": csv + ",extra.test:4020"})
+        for csv in ["dev.example.test:4020", "new.example.test:18443", ""]:
+            command = acme.certbot_command({**env, "LVK_PREVIEW_ROUTES": csv})
+            self.assertEqual([command[i + 1] for i, arg in enumerate(command) if arg == "--domains"],
+                             [env["LVK_HOST"]] + ([csv.split(":")[0]] if csv else []))
+        command = acme.certbot_command({**env, "LVK_HOST": "8.8.8.8", "LVK_PREVIEW_ROUTES": "dev.example.test:4020"})
+        self.assertIn("--ip-address", command)
+        self.assertIn("dev.example.test", command)
 
     def make_certificate(self, directory, serial):
         directory.mkdir()

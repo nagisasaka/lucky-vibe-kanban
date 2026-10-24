@@ -1,0 +1,397 @@
+[
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": ""
+    },
+    "valid": true,
+    "routes": []
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "dev.example.com:4020"
+    },
+    "valid": true,
+    "routes": [
+      {
+        "host": "dev.example.com",
+        "port": 4020
+      }
+    ]
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": " a.example.test:01024\t,b.example.test:65535 "
+    },
+    "valid": true,
+    "routes": [
+      {
+        "host": "a.example.test",
+        "port": 1024
+      },
+      {
+        "host": "b.example.test",
+        "port": 65535
+      }
+    ]
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "p0.example.test:18443,p1.example.test:18443,p2.example.test:18443,p3.example.test:18443,p4.example.test:18443,p5.example.test:18443"
+    },
+    "valid": true,
+    "routes": [
+      {
+        "host": "p0.example.test",
+        "port": 18443
+      },
+      {
+        "host": "p1.example.test",
+        "port": 18443
+      },
+      {
+        "host": "p2.example.test",
+        "port": 18443
+      },
+      {
+        "host": "p3.example.test",
+        "port": 18443
+      },
+      {
+        "host": "p4.example.test",
+        "port": 18443
+      },
+      {
+        "host": "p5.example.test",
+        "port": 18443
+      }
+    ]
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "",
+      "LVK_PREVIEW_DOMAIN": "preview.example.test"
+    },
+    "valid": true,
+    "routes": []
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": " "
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": ","
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.example.test:1024,"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": ",a.example.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.example.test:1024,,b.example.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "lvk.example.test:4020"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.example.test:1024,a.example.test:2048"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "https://a.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test/path:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "*.a.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "127.0.0.1:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "[::1]:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "localhost:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "UPPER.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a..test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "-a.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a_.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test;return 200:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test\n:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test.:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.test:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.aa:1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:0"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1023"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:65536"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:3000"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:3001"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:4021"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:8443"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:8444"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:-1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:+1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1e4"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1024.0"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test: 1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1024\n"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1024\r"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1024\u00a0"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test :1024"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:1024",
+      "LVK_PREVIEW_DOMAIN": "preview.test"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "a.test:4022"
+    },
+    "valid": false
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd:1024"
+    },
+    "valid": true,
+    "routes": [
+      {
+        "host": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "port": 1024
+      }
+    ]
+  },
+  {
+    "env": {
+      "LVK_HOST": "lvk.example.test",
+      "LVK_PREVIEW_ROUTES": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd:1024"
+    },
+    "valid": false
+  }
+]

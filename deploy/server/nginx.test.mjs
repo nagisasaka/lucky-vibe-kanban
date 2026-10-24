@@ -17,7 +17,14 @@ import {
   renderNginx,
   serverSettings,
   withMcpIngress,
+  validateSecrets,
 } from "./server.mjs";
+
+const independentHosts = [
+  "dev.example.test",
+  "alias.example.test",
+  ["a".repeat(63), "b".repeat(63), "c".repeat(63), "d".repeat(61)].join("."),
+];
 
 const nginx = process.env.LVK_TEST_NGINX || "nginx";
 const available = spawnSync(nginx, ["-v"]).status === 0;
@@ -36,7 +43,14 @@ function verifyIdentity(host, certificate) {
   return checkServerIdentity(host, certificate);
 }
 
-for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
+for (const {
+  host,
+  prefix,
+  managed = false,
+  mcpBackend = 3000,
+  independent = false,
+} of [
+  { host: "lvk.example.test", independent: true },
   { host: "127.0.0.1", managed: true, mcpBackend: 4021 },
   { host: "lvk.example.test" },
   { host: "127.0.0.1" },
@@ -45,7 +59,7 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
   { host: "lvk.example.test", prefix: "/team/lvk", mcpBackend: 4021 },
 ])
   test(
-    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host}, ${managed ? "backend access" : `MCP ${prefix ?? "disabled"}`})`,
+    `HTTPS ingress protects HTTP/WS/SSE and isolates previews (${host}, ${independent ? "CSV routes" : managed ? "backend access" : `MCP ${prefix ?? "disabled"}`})`,
     {
       skip:
         !available && "nginx not installed (set LVK_TEST_NGINX to a binary)",
@@ -57,6 +71,11 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
       const sockets = new Set();
       let streamEnded = false;
       const backend = createServer((req, res) => {
+        if (independent)
+          res.setHeader(
+            "Set-Cookie",
+            "app_session=response; Secure; HttpOnly; SameSite=Lax",
+          );
         if (
           managed &&
           req.headers.host?.startsWith("5173.preview.example.test") &&
@@ -106,7 +125,16 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
         socket.on("close", () => sockets.delete(socket));
       });
       backend.on("upgrade", (req, socket) => {
-        assert.equal(req.headers.authorization, undefined);
+        assert.equal(
+          req.headers.authorization,
+          independent ? "Bearer app-token" : undefined,
+        );
+        if (independent) {
+          assert.equal(req.headers.host, "dev.example.test");
+          assert.equal(req.headers.cookie, "app_session=fixture");
+          assert.equal(req.headers.origin, "https://dev.example.test");
+          assert.equal(req.headers["x-forwarded-proto"], "https");
+        }
         assert.equal(req.headers["sec-websocket-protocol"], "vite-hmr");
         socket.write(
           "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Protocol: vite-hmr\r\n\r\n",
@@ -141,7 +169,7 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
           "-subj",
           "/CN=lvk.example.test",
           "-addext",
-          "subjectAltName=DNS:lvk.example.test,DNS:*.preview.example.test,IP:127.0.0.1,IP:2001:db8::1",
+          `subjectAltName=DNS:lvk.example.test,DNS:*.preview.example.test,${independentHosts.map((host) => `DNS:${host}`).join(",")},IP:127.0.0.1,IP:2001:db8::1`,
           "-keyout",
           keyPath,
           "-out",
@@ -157,7 +185,13 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
       await writeFile(join(dir, "mime.types"), "types { text/html html; }\n");
       let settings = serverSettings({
         LVK_HOST: host,
-        LVK_PREVIEW_DOMAIN: "preview.example.test",
+        ...(independent
+          ? {
+              LVK_PREVIEW_ROUTES: independentHosts
+                .map((host) => `${host}:${backendPort}`)
+                .join(","),
+            }
+          : { LVK_PREVIEW_DOMAIN: "preview.example.test" }),
         ...(managed
           ? { LVK_ACCESS_DEPLOYMENT: "public", LVK_PROXY_AUTH: "backend" }
           : {}),
@@ -277,6 +311,70 @@ for (const { host, prefix, managed = false, mcpBackend = 3000 } of [
         }
       }
       assert(ready, `${errors}\n${connectionError?.message ?? ""}`);
+      if (independent) {
+        const key = await readFile(keyPath);
+        const noBasic = {
+          ...settings,
+          managedAccess: true,
+          legacyBasic: false,
+        };
+        validateSecrets(ca, key, null, noBasic);
+        for (let i = 0; i < settings.routes.length; i++) {
+          const routes = settings.routes.map((route, index) =>
+            index === i ? { ...route, host: "missing.example.test" } : route,
+          );
+          assert.throws(
+            () => validateSecrets(ca, key, null, { ...noBasic, routes }),
+            /does not cover missing/,
+          );
+        }
+        // Basic still protects LVK, but independent applications decide access.
+        assert.equal((await request()).status, 401);
+        for (const route of settings.routes) {
+          assert.equal((await request("/", route.host)).status, 200);
+          const response = await request("/path?query=kept", route.host, {
+            Authorization: "Bearer app-token",
+            Cookie: "app_session=fixture",
+            Host: `${route.host}:443`,
+            Origin: `https://${route.host}`,
+            "X-Forwarded-Proto": "http",
+            "X-Forwarded-For": "forged",
+            "X-LVK-Internal-Token": "forged",
+            "X-App-Auth": "custom-token",
+          });
+          assert.equal(response.status, 200);
+          assert.deepEqual(response.headers["set-cookie"], [
+            "app_session=response; Secure; HttpOnly; SameSite=Lax",
+          ]);
+          const received = JSON.parse(response.body);
+          assert.equal(received.path, "/path?query=kept");
+          assert.equal(received.headers.authorization, "Bearer app-token");
+          assert.equal(received.headers.cookie, "app_session=fixture");
+          assert.equal(received.headers.host, `${route.host}:443`);
+          assert.equal(
+            received.headers["x-forwarded-host"],
+            `${route.host}:443`,
+          );
+          assert.equal(received.headers["x-forwarded-proto"], "https");
+          assert.equal(received.headers["x-forwarded-port"], "443");
+          assert.equal(received.headers["x-forwarded-for"], "127.0.0.1");
+          assert.equal(received.headers["x-lvk-internal-token"], undefined);
+          assert.equal(received.headers["x-app-auth"], "custom-token");
+        }
+        const ws = await request("/socket", "dev.example.test", {
+          Authorization: "Bearer app-token",
+          Cookie: "app_session=fixture",
+          Origin: "https://dev.example.test",
+          Upgrade: "websocket",
+          Connection: "Upgrade",
+          "Sec-WebSocket-Protocol": "vite-hmr",
+          "Sec-WebSocket-Version": "13",
+          "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+        });
+        assert.equal(ws.status, 101);
+        assert.equal(ws.headers["sec-websocket-protocol"], "vite-hmr");
+        return;
+      }
       if (managed) {
         // The backend owns authorization; nginx must forward the credentials
         // and cookies needed by it, while stripping local/relay capabilities.

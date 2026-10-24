@@ -8,6 +8,7 @@ import { execFileSync } from "node:child_process";
 import { test } from "node:test";
 import { parse } from "yaml";
 import {
+  previewRoutes,
   backendEnvironment,
   authority,
   certificateReloader,
@@ -451,4 +452,78 @@ test("MCP Compose override requires explicit configuration and leaves default se
     /^\$\{LVK_MCP_INTROSPECTION_SECRET:\?/,
   );
   assert.equal(override.services.lvk.ports, undefined);
+});
+
+test("CSV route grammar agrees with the ACME parser fixtures", async () => {
+  const cases = JSON.parse(
+    await readFile(new URL("./preview-routes.cases.json", import.meta.url)),
+  );
+  for (const entry of cases) {
+    if (entry.valid)
+      assert.deepEqual(serverSettings(entry.env).routes ?? [], entry.routes);
+    else
+      assert.throws(
+        () => serverSettings(entry.env),
+        undefined,
+        JSON.stringify(entry.env),
+      );
+  }
+  assert.deepEqual(
+    previewRoutes(
+      {
+        LVK_PREVIEW_ROUTES: " dev.example.com:04020\t,alias.example.com:4020 ",
+      },
+      "lvk.example.com",
+    ),
+    [
+      { host: "dev.example.com", port: 4020 },
+      { host: "alias.example.com", port: 4020 },
+    ],
+  );
+  const routes = Array.from(
+    { length: 101 },
+    (_, i) => `p${i}.example.test:18443`,
+  ).join(",");
+  assert.equal(
+    serverSettings({ LVK_HOST: "lvk.example.test", LVK_PREVIEW_ROUTES: routes })
+      .routes.length,
+    101,
+  );
+});
+
+test("Compose passes the identical CSV to nginx and Certbot", async () => {
+  for (const [file, service] of [
+    ["compose.yaml", "lvk"],
+    ["compose.acme.yaml", "certificates"],
+  ]) {
+    const config = parse(
+      await readFile(new URL(file, import.meta.url), "utf8"),
+    );
+    assert.equal(
+      config.services[service].environment.LVK_PREVIEW_ROUTES,
+      "${LVK_PREVIEW_ROUTES:-}",
+    );
+  }
+});
+
+test("six independent hosts render direct upstreams including ordinary dev:4020", async () => {
+  const routes = [
+    "dev.example.com:4020",
+    ...Array.from({ length: 5 }, (_, i) => `p${i}.example.com:18443`),
+  ];
+  const settings = serverSettings({
+    LVK_HOST: "lvk.example.com",
+    LVK_PREVIEW_ROUTES: routes.join(","),
+  });
+  const template = await readFile(
+    new URL("./nginx.conf.template", import.meta.url),
+    "utf8",
+  );
+  const config = renderNginx(template, settings);
+  for (const { host, port } of settings.routes) {
+    assert(config.includes(`server_name ${host};`));
+    assert(config.includes(`proxy_pass http://127.0.0.1:${port};`));
+  }
+  assert.equal((config.match(/auth_basic off;/g) ?? []).length, 6);
+  assert(!config.includes("preview_target"));
 });

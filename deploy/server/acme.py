@@ -22,6 +22,37 @@ LINEAGE = Path("/etc/letsencrypt/live/lvk")
 PRODUCTION = "https://acme-v02.api.letsencrypt.org/directory"
 
 
+def preview_routes(env, app):
+    """Same grammar as server.mjs, checked with preview-routes.cases.json."""
+    csv = env.get("LVK_PREVIEW_ROUTES", "")
+    if csv and env.get("LVK_PREVIEW_DOMAIN"):
+        raise ValueError("LVK_PREVIEW_ROUTES and LVK_PREVIEW_DOMAIN are mutually exclusive")
+    if not csv:
+        return []
+    routes, seen = [], set()
+    label = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+    pattern = rf"(?:{label}\.)+[a-z](?:[a-z0-9-]{{0,61}}[a-z0-9])?"
+    for entry in csv.split(","):
+        match = re.fullmatch(r"[ \t]*([^:]+):([0-9]+)[ \t]*", entry)
+        if not match:
+            raise ValueError("LVK_PREVIEW_ROUTES requires non-empty hostname:port entries")
+        host, raw_port = match.groups()
+        if len(host) > 253 or not re.fullmatch(pattern, host):
+            raise ValueError("LVK_PREVIEW_ROUTES hostname must be a lowercase DNS hostname")
+        # Avoid Python's integer-string limit while accepting leading zeroes.
+        digits = raw_port.lstrip("0") or "0"
+        if len(digits) > 5 or not 1024 <= int(digits) <= 65535:
+            raise ValueError("LVK_PREVIEW_ROUTES port must be 1024..65535")
+        port = int(digits)
+        if port in (3000, 3001, 4021, 4022, 8443, 8444):
+            raise ValueError(f"LVK_PREVIEW_ROUTES port {port} is reserved for LVK/nginx")
+        if host == app or host in seen:
+            raise ValueError(f"LVK_PREVIEW_ROUTES duplicate host or LVK_HOST collision: {host}")
+        seen.add(host)
+        routes.append({"host": host, "port": port})
+    return routes
+
+
 def certbot_command(env):
     host = env.get("LVK_HOST", "")
     try:
@@ -34,6 +65,13 @@ def certbot_command(env):
             raise ValueError("LVK_HOST must be a public IP or lowercase DNS hostname")
     if address and (not address.is_global or address.is_multicast or "%" in host):
         raise ValueError("Let's Encrypt requires a public IP address")
+    routes = preview_routes(env, host)
+    # shortlived supports 25 identifiers, including LVK_HOST (DNS or IP).
+    if len(routes) + 1 > 25:
+        raise ValueError(
+            "Let's Encrypt shortlived permits at most 25 identifiers including LVK_HOST; "
+            "use externally managed TLS (COMPOSE_FILE=compose.yaml) for more hosts"
+        )
     if env.get("LVK_ACME_AGREE_TOS") != "yes":
         raise ValueError(
             "Read the Let's Encrypt subscriber agreement and set LVK_ACME_AGREE_TOS=yes"
@@ -52,6 +90,8 @@ def certbot_command(env):
         "--deploy-hook", "python /opt/lvk-acme/acme.py publish",
     ]
     command += ["--ip-address" if address else "--domains", host]
+    for route in routes:
+        command += ["--domains", route["host"]]
     email = env.get("LVK_ACME_EMAIL")
     command += ["--email", email] if email else ["--register-unsafely-without-email"]
     return command
