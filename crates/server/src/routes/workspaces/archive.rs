@@ -20,7 +20,13 @@ use workspace_manager::WorkspaceManager;
 use crate::{DeploymentImpl, error::ApiError};
 
 pub const CONFIRMATION: &str = "ワークツリーが削除されます";
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum ConfirmationScope {
+    Local,
+    Remote { principal: String, project_id: Uuid },
+}
 struct Confirmation {
+    scope: ConfirmationScope,
     workspace_id: Uuid,
     container_ref: Option<String>,
     branch: String,
@@ -30,7 +36,8 @@ static CONFIRMATIONS: LazyLock<Mutex<HashMap<Uuid, Confirmation>>> = LazyLock::n
 
 #[derive(Serialize)]
 pub struct PreparedArchive {
-    confirmation_token: Uuid,
+    pub(crate) confirmation_token: Uuid,
+    pub(crate) expires_at: chrono::DateTime<chrono::Utc>,
     message: &'static str,
 }
 #[derive(Deserialize)]
@@ -39,8 +46,8 @@ pub struct ConfirmArchive {
 }
 #[derive(Serialize)]
 pub struct ArchiveResult {
-    workspace: Workspace,
-    deletion_error: Option<String>,
+    pub(crate) workspace: Workspace,
+    pub(crate) deletion_error: Option<String>,
 }
 
 // The same predicate runs before presenting confirmation and under the final
@@ -135,7 +142,18 @@ async fn prepare_for_pool(
     pool: &SqlitePool,
     workspace: &Workspace,
 ) -> Result<PreparedArchive, ApiError> {
-    check_idle(&mut *pool.acquire().await?, workspace.id).await?;
+    prepare_scoped(pool, workspace, ConfirmationScope::Local).await
+}
+
+pub(crate) async fn prepare_scoped(
+    pool: &SqlitePool,
+    workspace: &Workspace,
+    scope: ConfirmationScope,
+) -> Result<PreparedArchive, ApiError> {
+    let mut connection = pool.acquire().await?;
+    check_project(&mut connection, workspace.id, &scope).await?;
+    check_idle(&mut connection, workspace.id).await?;
+    drop(connection);
     if workspace.archived {
         return Err(ApiError::Conflict("Workspace is already archived".into()));
     }
@@ -146,6 +164,7 @@ async fn prepare_for_pool(
     confirmations.insert(
         token,
         Confirmation {
+            scope,
             workspace_id: workspace.id,
             container_ref: workspace.container_ref.clone(),
             branch: workspace.branch.clone(),
@@ -154,6 +173,7 @@ async fn prepare_for_pool(
     );
     Ok(PreparedArchive {
         confirmation_token: token,
+        expires_at: chrono::Utc::now() + chrono::Duration::seconds(600),
         message: CONFIRMATION,
     })
 }
@@ -189,13 +209,34 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<bool, ApiError>>,
 {
+    archive_scoped(pool, id, token, ConfirmationScope::Local, settled).await
+}
+
+pub(crate) async fn archive_scoped<F, Fut>(
+    pool: &SqlitePool,
+    id: Uuid,
+    token: Uuid,
+    scope: ConfirmationScope,
+    settled: F,
+) -> Result<ArchiveResult, ApiError>
+where
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<bool, ApiError>>,
+{
     let _lifecycle = services::services::workspace_lifecycle::lock(id).await;
-    let confirmation = CONFIRMATIONS
-        .lock()
-        .await
-        .remove(&token)
-        .filter(|value| value.workspace_id == id && value.expires > Instant::now())
-        .ok_or_else(|| ApiError::Conflict("Archive confirmation expired or already used".into()))?;
+    let confirmation = {
+        let mut confirmations = CONFIRMATIONS.lock().await;
+        if !confirmations.get(&token).is_some_and(|value| {
+            value.workspace_id == id && value.scope == scope && value.expires > Instant::now()
+        }) {
+            return Err(ApiError::Conflict(
+                "Archive confirmation expired, used or belongs to another caller/target".into(),
+            ));
+        }
+        confirmations
+            .remove(&token)
+            .expect("validated confirmation")
+    };
     let workspace = Workspace::find_by_id(pool, id)
         .await?
         .ok_or_else(|| ApiError::BadRequest("Workspace missing".into()))?;
@@ -214,6 +255,7 @@ where
     }
     let repos = WorkspaceRepo::find_repos_for_workspace(pool, id).await?;
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    check_project(&mut tx, id, &scope).await?;
     check_idle(&mut tx, id).await?;
     super::archive_processes::check(workspace.container_ref.as_deref()).await?;
     sqlx::query("UPDATE workspaces SET archived=1, updated_at=datetime('now','subsec') WHERE id=?")
@@ -248,8 +290,31 @@ where
     })
 }
 
+async fn check_project(
+    conn: &mut SqliteConnection,
+    id: Uuid,
+    scope: &ConfirmationScope,
+) -> Result<(), ApiError> {
+    if let ConfirmationScope::Remote { project_id, .. } = scope {
+        let belongs: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id JOIN projects p ON p.id=l.project_id WHERE l.workspace_id=? AND l.project_id=? AND i.project_id=?)")
+            .bind(id).bind(project_id).bind(project_id).fetch_one(conn).await?;
+        if !belongs {
+            return Err(ApiError::Conflict(
+                "Workspace does not exist in this Project".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
-mod tests {
+pub(crate) async fn expire_for_test(token: Uuid) {
+    CONFIRMATIONS.lock().await.get_mut(&token).unwrap().expires =
+        Instant::now() - Duration::from_secs(1);
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
     use std::path::Path;
 
     use db::models::{
@@ -275,7 +340,7 @@ mod tests {
         );
     }
 
-    async fn fixture() -> (tempfile::TempDir, SqlitePool, Workspace, Repo, Session) {
+    pub(crate) async fn fixture() -> (tempfile::TempDir, SqlitePool, Workspace, Repo, Session) {
         let root = tempfile::tempdir().unwrap();
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)

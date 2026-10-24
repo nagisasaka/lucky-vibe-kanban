@@ -38,6 +38,7 @@ mod runtime_read;
 mod runtime_write;
 mod todos;
 mod verification_read;
+mod workspace_archive;
 
 use std::sync::Arc;
 
@@ -203,7 +204,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "continue_execution"
         | "answer_question"
         | "start_workspace"
-        | "sync_repository_wiki" => Some("lvk:write"),
+        | "sync_repository_wiki"
+        | "prepare_workspace_archive"
+        | "confirm_workspace_archive" => Some("lvk:write"),
         _ => None,
     }
 }
@@ -379,6 +382,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(resource_observation::tools());
     tools.extend(runtime_write::tools());
     tools.extend(goals::tools());
+    tools.extend(workspace_archive::tools());
     tools
 }
 
@@ -469,6 +473,9 @@ impl Remote {
         };
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
+            "prepare_workspace_archive" | "confirm_workspace_archive" => {
+                workspace_archive::call(self, principal, request.name.as_ref(), args).await
+            }
             name if goals::tools().iter().any(|tool| tool.name == name) => {
                 goals::call(self, principal, name, args).await
             }
