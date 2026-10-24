@@ -13,6 +13,7 @@ services:
       - "80:80"
     environment:
       LVK_HOST: ${LVK_HOST:?Set LVK_HOST to a public IP or DNS hostname}
+      LVK_PREVIEW_ROUTES: ${LVK_PREVIEW_ROUTES:-}
       LVK_PREVIEW_DOMAIN: ${LVK_PREVIEW_DOMAIN:-}
       LVK_ACME_AGREE_TOS: ${LVK_ACME_AGREE_TOS:?Set to yes after reading the Let's Encrypt subscriber agreement}
       LVK_ACME_EMAIL: ${LVK_ACME_EMAIL:-}

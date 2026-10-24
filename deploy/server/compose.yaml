@@ -12,6 +12,7 @@ services:
       LVK_PUBLIC_URL: ${LVK_PUBLIC_URL:-}
       LVK_PROXY_AUTH: ${LVK_PROXY_AUTH:-auto}
       LVK_HOST: ${LVK_HOST:?Set LVK_HOST to a public IP or DNS hostname}
+      LVK_PREVIEW_ROUTES: ${LVK_PREVIEW_ROUTES:-}
       LVK_PREVIEW_DOMAIN: ${LVK_PREVIEW_DOMAIN:-}
     volumes:
       - home:/home/appuser

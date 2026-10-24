@@ -87,7 +87,7 @@ secrets/
     └── privkey.pem
 ```
 
-Set certificate ownership to UID/GID 10001, directory modes to 750 and file modes to 640. The certificate must cover the app IP/DNS name and, when enabled, `*.LVK_PREVIEW_DOMAIN`. Wildcard certificates usually require DNS-01 validation. The automatic companion intentionally rejects a non-empty `LVK_PREVIEW_DOMAIN`; it cannot obtain wildcard certificates using its IP/HTTP validation flow. In this externally managed mode only port 443 is published.
+Set certificate ownership to UID/GID 10001, directory modes to 750 and file modes to 640. The certificate must cover the app IP/DNS name, every `LVK_PREVIEW_ROUTES` hostname and, when enabled, `*.LVK_PREVIEW_DOMAIN`. Wildcard certificates usually require DNS-01 validation. The automatic companion intentionally rejects a non-empty `LVK_PREVIEW_DOMAIN`; it cannot obtain wildcard certificates using its IP/HTTP validation flow. In this externally managed mode only port 443 is published.
 
 ## Start and sign in
 
@@ -148,7 +148,62 @@ retained for existing installations only. Do not use them for a new contributor
 installation. Agent credentials stay in the persistent home; application data
 and execution state are isolated by the instance directory.
 
-## Project previews
+## Independent application routes
+
+Set one CSV variable in the deployment `.env`:
+
+```dotenv
+LVK_PREVIEW_ROUTES=dev.example.com:4020,preview1.example.com:18443
+LVK_PREVIEW_DOMAIN=
+```
+
+Each DNS hostname forwards external HTTPS on port 443 through nginx to an HTTP
+listener at `127.0.0.1:<port>` **inside the LVK container**. Start each application
+in that container; a host or another container's loopback is not reachable this
+way. There are no numbered slots or special rules for `dev`. This only configures
+communication: it adds no preview UI, database or dynamic route management.
+
+Use lowercase fully qualified DNS hostnames without a trailing dot, scheme,
+path, wildcard or IP literal. Entries may have surrounding ASCII spaces/tabs;
+spaces within `hostname:port`, newlines, empty CSV elements, duplicate hostnames
+and collisions with `LVK_HOST` are errors. Ports are decimal 1024–65535 (leading
+zeroes are accepted); 3000, 3001, 4021, 4022, 8443 and 8444 are reserved for the
+LVK backends/legacy proxies and nginx listeners, including optional development
+and staging configurations. Port 4020 is allowed. Different hostnames may share
+a port. Empty/unset disables these routes; whitespace alone is invalid.
+`LVK_PREVIEW_DOMAIN` and a non-empty CSV are mutually exclusive and fail startup.
+
+HTTP and WebSocket requests preserve the original Host, application Authorization,
+Cookie, Origin and WebSocket headers. nginx supplies HTTPS forwarded information.
+Proxy credentials and the LVK internal token are removed. These routes do not
+require LVK login or nginx Basic authentication, even when LVK itself uses Basic.
+Configure each application's authentication, database, public URL/HMR settings
+and DNS yourself. An unauthenticated application is publicly accessible. Use
+host-only application cookies to avoid sharing credentials across sibling hosts.
+
+The ACME companion requests `LVK_HOST` plus every configured hostname using
+HTTP-01: all names must resolve to this server and reach its port 80. It retains
+the shortlived/IP flow and renews the same lineage when names are added or removed.
+The current [shortlived profile](https://letsencrypt.org/docs/profiles/#shortlived)
+allows **25 SAN identifiers**, so this companion rejects more than 24 routes
+before calling Certbot. The route parser has no count cap. For more names, use
+externally managed TLS (`COMPOSE_FILE=compose.yaml`) with one certificate covering
+all names, subject to your issuer's limits. No automatic multi-certificate
+management is provided. Let's Encrypt also limits new orders to
+[300 per account per three hours](https://letsencrypt.org/docs/rate-limits/#new-orders-per-account);
+changing names can consume issuance limits. Avoid repeated forced issuance.
+
+Routes and the Certbot command are read at process startup. After changing `.env`,
+recreate the affected Compose services; a restart or nginx reload alone does not
+load changed Compose environment values. With ACME, recreate `certificates`,
+wait for a certificate covering the new names, then recreate `lvk`. With external
+TLS, provision the complete certificate first, then recreate `lvk`. Plan for
+running applications/agents to stop during recreation. Both startup and automatic
+certificate reload validate every configured hostname. Certificate-only renewal
+keeps the existing route configuration and reloads nginx within the existing
+30-second polling cycle without restarting agents.
+
+## Legacy project previews
 
 The domain-free setup runs the application and agents, but does not provide wildcard browser previews. You can use SSH port forwarding to reach project development servers, or opt into the separate preview domain with externally managed TLS. Project HTML must remain on a separate origin from LVK.
 

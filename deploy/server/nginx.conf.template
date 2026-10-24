@@ -7,6 +7,8 @@ http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
     server_tokens off;
+    # Accommodate fully qualified DNS names up to 253 bytes.
+    server_names_hash_bucket_size 512;
     # Do not log query strings, credentials, or agent messages.
     log_format safe '$remote_addr $request_method $uri $status';
     access_log /dev/stdout safe;
