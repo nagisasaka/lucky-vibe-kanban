@@ -88,6 +88,22 @@ or memory, and external processes starting after the last observation are outsid
 this guarantee. Unreadable unrelated processes alone do not block archive. Other
 platforms retain managed DB/registry checks but have no procfs observation.
 
+For external remote MCP, call `prepare_workspace_archive` with explicit
+`project_id` and `workspace_id`. Show the returned target and
+「ワークツリーが削除されます」 once, then call `confirm_workspace_archive` only
+if confirmed, using its token and a stable `request_id`. Both stages require
+`lvk:read`, `lvk:write` and Project access. Cancelling means not confirming.
+The ten-minute token is bound to the authenticated caller, Project, Workspace
+and prepared target; it cannot be exchanged with UI/stdio tokens. The stdio
+entry remains `update_workspace(archived=true)` with its confirmation token.
+
+After losing a remote response, inspect `get_operation(project_id, request_id)`
+or repeat the exact confirm request with the same request ID. A settled receipt
+is returned without repeating deletion. Inspect `archived`, `worktree_deleted`
+and `deletion_error` separately; `get_workspace` returns the current archive and
+deletion flags. An uncertain receipt requires investigation, not another deletion.
+Unconfirmed tokens do not survive a server restart; receipts do.
+
 If physical deletion fails, the workspace remains archived with deletion marked
 incomplete. The returned message includes the actual error:
 「ワークツリーの物理削除に失敗しました（エラー内容）。手動で削除してください。」

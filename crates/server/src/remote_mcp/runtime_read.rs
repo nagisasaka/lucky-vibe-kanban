@@ -82,10 +82,10 @@ impl Remote {
         let issue = self
             .require_workspace(args.project_id, args.workspace_id)
             .await?;
-        let row = sqlx::query("SELECT substr(name,1,500) AS name,length(coalesce(name,''))>500 AS name_truncated,archived,pinned,updated_at,(SELECT count(*) FROM sessions WHERE workspace_id=workspaces.id) AS session_count,(SELECT count(*) FROM agent_runs WHERE workspace_id=workspaces.id) AS run_count FROM workspaces WHERE id=?")
+        let row = sqlx::query("SELECT substr(name,1,500) AS name,length(coalesce(name,''))>500 AS name_truncated,archived,worktree_deleted,pinned,updated_at,(SELECT count(*) FROM sessions WHERE workspace_id=workspaces.id) AS session_count,(SELECT count(*) FROM agent_runs WHERE workspace_id=workspaces.id) AS run_count FROM workspaces WHERE id=?")
             .bind(args.workspace_id).fetch_one(&self.pool).await?;
         Ok(
-            json!({"token_usage":db::models::workspace_tokens::WorkspaceTokenUsage::get(&self.pool,args.workspace_id).await?,"workspace_id":args.workspace_id,"project_id":args.project_id,"issue_id":issue,"name":row.try_get::<Option<String>,_>("name")?,"name_truncated":row.try_get::<bool,_>("name_truncated")?,"archived":row.try_get::<bool,_>("archived")?,"pinned":row.try_get::<bool,_>("pinned")?,"updated_at":row.try_get::<String,_>("updated_at")?,"session_count":row.try_get::<i64,_>("session_count")?,"run_count":row.try_get::<i64,_>("run_count")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Inspect recorded verification and Integration results; run completion alone is not proof"}}),
+            json!({"token_usage":db::models::workspace_tokens::WorkspaceTokenUsage::get(&self.pool,args.workspace_id).await?,"workspace_id":args.workspace_id,"project_id":args.project_id,"issue_id":issue,"name":row.try_get::<Option<String>,_>("name")?,"name_truncated":row.try_get::<bool,_>("name_truncated")?,"archived":row.try_get::<bool,_>("archived")?,"worktree_deleted":row.try_get::<bool,_>("worktree_deleted")?,"pinned":row.try_get::<bool,_>("pinned")?,"updated_at":row.try_get::<String,_>("updated_at")?,"session_count":row.try_get::<i64,_>("session_count")?,"run_count":row.try_get::<i64,_>("run_count")?,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Inspect recorded verification and Integration results; run completion alone is not proof"}}),
         )
     }
 

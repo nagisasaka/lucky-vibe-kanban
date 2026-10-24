@@ -72,6 +72,19 @@ The server checks usage again immediately before deletion. If use began after
 preflight and is observed by the final check, archive fails without deleting the
 worktree. An expired token requires a fresh preflight.
 
+For external **remote MCP**, use `prepare_workspace_archive(project_id, workspace_id)`
+and then, only after that same single user confirmation, `confirm_workspace_archive`
+with the same Project/Workspace, returned `confirmation_token` and a stable
+`request_id`. Both calls require `lvk:read` and `lvk:write` and current Project
+access. Tokens expire after ten minutes and bind the authenticated issuer/subject,
+Project, Workspace and prepared target. Never transfer tokens between remote
+callers or between remote and UI/stdio. Remote does not expose `update_workspace`.
+After response loss, read `get_operation(project_id, request_id)` or repeat the
+exact original confirm request with the same request ID. Never silently retry
+with a new request ID. The durable result separates `archived`, `worktree_deleted`
+and `deletion_error`; `get_workspace` also reports the current deletion flag.
+Server restarts invalidate unconfirmed tokens, while operation receipts remain.
+
 On Linux, both checks also inspect observable OS process references: exe, cwd,
 open files, mapped files and existing path arguments, including unregistered
 servers and LVK itself. Debug LVK also protects its filesystem frontend assets.

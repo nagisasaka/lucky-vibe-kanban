@@ -201,6 +201,29 @@ wish, a harmless preference of your choosing. LVK never fetches or synchronises
 ChatGPT personal memory, and this integration does not promise recall on every
 request. Record Chat and Work separately when testing both.
 
+## Archive a Workspace through remote MCP
+
+The remote catalog exposes `prepare_workspace_archive` and
+`confirm_workspace_archive`; stdio's `update_workspace` is a separate tool.
+Supply explicit `project_id` and `workspace_id` at both stages. Both require
+`lvk:read` and `lvk:write`, permitted Project access and matching Workspace
+membership. Preparation does not delete files or set `archived`.
+
+Show the returned target and exact message 「ワークツリーが削除されます」 and
+ask once. If confirmed, submit its `confirmation_token` with a stable
+`request_id`; cancellation means not submitting. Tokens expire after ten minutes,
+are single-use, and are bound to the authenticated issuer/subject and exact
+Project/Workspace/target. Do not transfer UI/stdio tokens to remote or vice versa.
+Busy checks run before confirmation and again before physical deletion.
+
+After response loss, use `get_operation(project_id, request_id)` or repeat the
+exact confirm request with the same request ID. Inspect `result.archived`,
+`result.worktree_deleted` and `result.deletion_error` independently. Physical
+failure still archives and reports the actual deletion error; do not retry
+silently. `get_workspace` exposes the current two state flags. Uncertain results
+require investigation. Server restarts invalidate pending confirmation tokens,
+while durable operation receipts remain available.
+
 ## Refresh, disconnect and recover
 
 After a reviewed server update changes tool metadata, open the custom MCP

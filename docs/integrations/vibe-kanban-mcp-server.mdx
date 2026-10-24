@@ -135,7 +135,7 @@ Supported relationship types: `blocking`, `related`, `has_duplicate`.
 | Tool | Purpose | Required Parameters | Optional Parameters | Returns |
 |------|---------|-------------------|-------------------|---------|
 | `list_workspaces` | List local workspaces | None | `archived`<br/>`pinned`<br/>`branch`<br/>`name_search`<br/>`limit`<br/>`offset` | Paginated list of workspaces |
-| `update_workspace` | Update a workspace's properties | None | `workspace_id`<br/>`archived`<br/>`pinned`<br/>`name` | Updated workspace details |
+| `update_workspace` | Update a workspace's properties; archive requires prepare then one user confirmation | None | `workspace_id`<br/>`archived`<br/>`pinned`<br/>`name`<br/>`confirmation_token` | Archive preflight token or updated workspace details, with deletion outcome |
 | `delete_workspace` | Delete a local workspace | None | `workspace_id`<br/>`delete_remote`<br/>`delete_branches` | Deletion confirmation |
 | `link_workspace_issue` | Link a workspace to a remote issue | `workspace_id`<br/>`issue_id` | None | Link confirmation |
 

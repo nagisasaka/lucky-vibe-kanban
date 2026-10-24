@@ -64,6 +64,10 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    async fn archive_scripts_settled(&self, _workspace: Uuid) -> Result<bool, ApiError> {
+        Err(ApiError::Conflict("Archive runtime unavailable".into()))
+    }
+
     async fn goal(
         &self,
         target: Target,
@@ -107,6 +111,11 @@ pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunCont
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    async fn archive_scripts_settled(&self, workspace: Uuid) -> Result<bool, ApiError> {
+        use services::services::container::ContainerService;
+        Ok(self.0.container().scripts_settled(workspace).await?)
+    }
+
     async fn goal(
         &self,
         target: Target,
