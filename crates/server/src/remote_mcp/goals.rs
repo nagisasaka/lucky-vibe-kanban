@@ -253,7 +253,7 @@ pub(super) async fn dispatch(
             json!({"agent_run_id":result.agent_run_id,"session_id":target.session_id,"execution_accepted":true,"goal_transition_confirmed":false,"run_terminal":false}),
         );
     }
-    agent_runs::dispatch_control(
+    let _ = agent_runs::dispatch_control(
         deployment,
         target.agent_run_id,
         identity(operation, format!("mcp:{operation}")),

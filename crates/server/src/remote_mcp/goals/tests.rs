@@ -295,3 +295,112 @@ fn goal_resume_keeps_saved_configuration_and_does_not_auto_approve() {
     let config: ExecutorConfig = serde_json::from_value(json!({"executor":"CLAUDE_CODE"})).unwrap();
     assert!(resume_config(config).is_err());
 }
+
+/// Uses the actual Deployment/Session services, not FixtureRuntime::goal.
+/// Run alone: Deployment owns instance-global paths and background services.
+#[tokio::test]
+#[ignore = "requires an empty goal-mcp-fixture-* LVK_INSTANCE_DIR; run alone with Codex disabled"]
+async fn goal_real_dispatch_releases_lock_and_rejects_missing_provider_binding()
+-> anyhow::Result<()> {
+    use std::{path::PathBuf, time::Duration};
+
+    use services::services::config::Config;
+
+    use crate::remote_mcp::runtime_write_tests::{emit_questions, fixture_with_pool};
+
+    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    anyhow::ensure!(instance.is_absolute());
+    anyhow::ensure!(
+        instance
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with("goal-mcp-fixture-")
+    );
+    anyhow::ensure!(
+        instance.read_dir()?.next().is_none(),
+        "Use a fresh empty fixture instance"
+    );
+    anyhow::ensure!(std::env::var("LVK_GOAL_TEST_CODEX_DISABLED").as_deref() == Ok("1"));
+    std::fs::create_dir_all(instance.join("data"))?;
+    let config = Config {
+        onboarding_acknowledged: true,
+        analytics_enabled: false,
+        workspace_dir: Some(instance.join("workspaces").to_string_lossy().into()),
+        ..Default::default()
+    };
+    std::fs::write(
+        instance.join("data/config.json"),
+        serde_json::to_vec(&config)?,
+    )?;
+    let shutdown = tokio_util::sync::CancellationToken::new();
+    let deployment = DeploymentImpl::new(shutdown.clone()).await?;
+    let pool = &deployment.db().pool;
+    let (_, _, _, target, _) = fixture_with_pool(pool.clone()).await;
+    // A real saved launch configuration, but deliberately no provider binding.
+    emit_questions(pool, &target).await;
+    seed(pool, &target, "blocked").await;
+    sqlx::query("UPDATE agent_runs SET status='cancelled' WHERE id=?")
+        .bind(target.agent_run_id)
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "UPDATE agent_run_attempts SET status='cancelled',request_envelope=? WHERE agent_run_id=?",
+    )
+    .bind(json!({"executor_config":ExecutorConfig::new(BaseCodingAgent::Codex)}).to_string())
+    .bind(target.agent_run_id)
+    .execute(pool)
+    .await?;
+    let folder = instance.join("direct-folder");
+    std::fs::create_dir(&folder)?;
+    sqlx::query("UPDATE workspaces SET workspace_kind='direct_folder',container_ref=? WHERE id=?")
+        .bind(folder.to_string_lossy().as_ref())
+        .bind(target.workspace_id)
+        .execute(pool)
+        .await?;
+    let before = observation(pool, &target, None).await?;
+    let result = tokio::time::timeout(
+        Duration::from_secs(10),
+        dispatch(
+            &deployment,
+            target.clone(),
+            Uuid::new_v4(),
+            Action::Resume,
+            before["revision"].as_str().unwrap().to_owned(),
+        ),
+    )
+    .await
+    .expect("dispatch must release its lock before follow_up_checked reacquires it");
+    assert!(
+        matches!(result, Err(ApiError::Conflict(ref message)) if message == "Saved Goal resume requires an existing provider session binding"),
+        "expected the real shared-path rejection, got {result:?}"
+    );
+    // Both nested Session admission scopes must have released their lock.
+    let guard = tokio::time::timeout(
+        Duration::from_secs(1),
+        deployment
+            .queued_message_service()
+            .lock_session(target.session_id),
+    )
+    .await?;
+    drop(guard);
+    for (table, expected) in [
+        ("agent_runs", 1),
+        ("agent_run_attempts", 1),
+        ("agent_run_commands", 0),
+        ("agent_process_registry", 0),
+        ("execution_processes", 0),
+        ("agent_provider_sessions", 0),
+    ] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+            .fetch_one(pool)
+            .await?;
+        assert_eq!(count, expected, "unexpected side effect in {table}");
+    }
+    let after = observation(pool, &target, None).await?;
+    assert_eq!(after["run_status"], "cancelled");
+    assert_eq!(after["goal_status"], "blocked");
+    assert_eq!(after["revision"], before["revision"]);
+    shutdown.cancel();
+    Ok(())
+}
