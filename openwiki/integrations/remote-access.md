@@ -46,6 +46,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-0545bff1ae2507a92137efaf
+    resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-3ef7bc8590ef87216eade432
     resource: repo://crates/server/src/remote_mcp/resource_observation.rs
   - id: openwiki-source-0987a696c656ec0d4f318f44
@@ -82,10 +84,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-23T23:24:04.082Z" }
+generated: { by: "codex", at: "2026-10-24T00:34:47.934Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:50:43.997Z
+    at: 2026-10-24T00:34:47.934Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -104,7 +106,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御などの変更に `lvk:write`、正式Integrationの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期などの変更に `lvk:write`、正式Integrationの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
 transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
@@ -121,6 +123,12 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 外部 HTTP MCP は `list_issue_comments` / `get_issue_comment` を read scope、`add_issue_comment` を read + write scope で公開し、Project と Issue の所属を確認する。通常の operation receipt による追記なので、モデルの起動・要求変更・承認を兼ねない。内部 stdio の catalog は別である。[登録と dispatch](../../crates/server/src/remote_mcp/mod.rs#L343-L350)・[handler の認可](../../crates/server/src/remote_mcp/issue_comments.rs#L85-L153)
 
 利用時は `get_issue` の `review_target` を保持してレビューを投稿し、他の client は一覧プレビューから必要な全文を読む。レビュー対象の Issue revision と、本文の編集混在を防ぐ comment revision は別の値である。上限・再送・編集後の来歴・古い対象の意味は [Issue の共有レビュー](../concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を正本とする。特に全文はプレビューと連結せず、[revision を固定した分割取得](../concepts/issue-collaboration.md#長文を編集混在なく読む)を使う。[公開 tool 契約](../../crates/server/src/remote_mcp/issue_comments.rs#L65-L82)
+
+## Repository Wiki の同期を依頼する
+
+`get_repository_wiki` と `get_repository_wiki_sync` は read、`sync_repository_wiki` は read + write で、Project と repository の所属を検証する。正式 Integration の merge scope とは別である。adapter は `LaunchActions` から UI 共通の状態観測・Sync 受付へ接続し、独立した Wiki scheduler やモデル選択を作らない。[catalog と所属・権限](../../crates/server/src/remote_mcp/repository_wiki.rs#L54-L98)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L161-L166)
+
+既存 Wiki の同期・再同期が対象で、初期生成は Repository settings に残る。観測した branch/source の固定、元 request ID による再送、受付と公開完了の区別は [OpenWiki 保守の MCP 手順](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を正本とする。返された文章や `needs_sync` は新しい実行への承認ではない。既存の [operation receipt](#参照結果と操作-receipt)を回復してから対象状態を確認する。[開始契約](../../docs/development/chatgpt-mcp.md)
 
 ## Workspace の報告済みトークンを読む
 

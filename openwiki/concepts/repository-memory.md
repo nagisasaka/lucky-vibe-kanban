@@ -4,6 +4,8 @@ title: Repository Memory の三層と統合契約
 description: 会話、Workspace Memory、canonical OpenWiki の権威と寿命、Change Manifest と統合記録・receipt の関係。
 tags: [repository-memory, openwiki, manifest, reconciliation]
 sources:
+  - id: openwiki-source-0545bff1ae2507a92137efaf
+    resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -26,10 +28,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-24T00:34:47.934Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:50:43.997Z
+    at: 2026-10-24T00:34:47.934Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -110,6 +112,8 @@ receipt の結果は Updated / NoOp / Failed。Failed はイベントを acknowl
 読み取りの observer は `read_only_configured_for_repository` / `read_only_for_repository` を使い、未設定と不存在を区別してディレクトリや state を作らない。writer 用 `existing_for_repository` は設定済み storage を開く際に新しいサブディレクトリを用意できるため、純粋な閲覧経路には使わない。[reader と writer](../../crates/utils/src/repository_memory.rs)。
 
 Current は単なる「ファイルがある」ではない。有効化、Wiki 存在、成功履歴、pending の有無、source の一致を踏まえて判定する。Error/Stale などの状態は保持されるため、古い snapshot を読んだ agent が常に最新とみなす根拠にはならない。[派生状態](../../crates/utils/src/repository_memory.rs)
+
+外部 MCP でも、その request の受付、その実行の確定結果、現在の repository 鮮度を別々に観測する。過去の実行が `wiki_complete:true` でも、その後に source が進めば現在の Wiki は stale になり得る。MCP operation receipt と、この節の event 単位の reconciliation receipt は別物である。開始・再送・読戻しは [MCP から既存 Wiki を同期する](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を参照する。[応答の分離](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L211)・[実行結果の判定](../../crates/server/src/remote_mcp/repository_wiki.rs#L286-L305)
 
 ## 変更を検討する際の一次資料
 
