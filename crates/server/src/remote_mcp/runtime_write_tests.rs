@@ -26,8 +26,8 @@ use crate::{
 pub(super) struct FixtureRuntime {
     pool: SqlitePool,
     queue: QueuedMessageService,
-    calls: tokio::sync::Mutex<Vec<Value>>,
-    fail_after_delivery: std::sync::atomic::AtomicBool,
+    pub(super) calls: tokio::sync::Mutex<Vec<Value>>,
+    pub(super) fail_after_delivery: std::sync::atomic::AtomicBool,
 }
 impl FixtureRuntime {
     async fn record(&self, run: Uuid, command: Uuid, payload: Value) -> Result<(), ApiError> {
@@ -109,6 +109,41 @@ impl FixtureRuntime {
 }
 #[async_trait]
 impl RuntimeActions for FixtureRuntime {
+    async fn goal(
+        &self,
+        target: Target,
+        operation: Uuid,
+        action: super::goals::Action,
+        revision: String,
+    ) -> Result<Value, ApiError> {
+        let _guard = self.queue.lock_session(target.session_id).await;
+        let finished = super::goals::validate(&self.pool, &target, action, &revision).await?;
+        if finished {
+            let run = Uuid::new_v4();
+            insert_run(&self.pool, target.session_id, target.workspace_id, run).await;
+            self.calls
+                .lock()
+                .await
+                .push(json!({"run":run,"command":operation}));
+            return Ok(json!({"agent_run_id":run,"execution_accepted":true}));
+        }
+        self.record(
+            target.agent_run_id,
+            operation,
+            serde_json::to_value(action.command()).unwrap(),
+        )
+        .await?;
+        if self
+            .fail_after_delivery
+            .swap(false, std::sync::atomic::Ordering::SeqCst)
+        {
+            return Err(ApiError::Conflict("fixture failed after dispatch".into()));
+        }
+        Ok(
+            json!({"agent_run_id":target.agent_run_id,"command_id":operation,"instruction_accepted":true,"termination_confirmed":false}),
+        )
+    }
+
     async fn change(
         &self,
         target: Target,

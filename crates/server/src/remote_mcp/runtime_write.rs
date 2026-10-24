@@ -64,6 +64,14 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    async fn goal(
+        &self,
+        target: Target,
+        operation: Uuid,
+        action: super::goals::Action,
+        revision: String,
+    ) -> Result<Value, ApiError>;
+
     async fn change(
         &self,
         target: Target,
@@ -88,7 +96,7 @@ pub(super) trait RuntimeActions: Send + Sync {
 }
 pub(super) struct ExistingRuntime(pub DeploymentImpl);
 
-fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunControlIdentity {
+pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunControlIdentity {
     agent_runs::AgentRunControlIdentity {
         command_id: operation,
         correlation_id: operation,
@@ -99,6 +107,16 @@ fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunControlIdentity
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    async fn goal(
+        &self,
+        target: Target,
+        operation: Uuid,
+        action: super::goals::Action,
+        revision: String,
+    ) -> Result<Value, ApiError> {
+        super::goals::dispatch(&self.0, target, operation, action, revision).await
+    }
+
     async fn change(
         &self,
         target: Target,
