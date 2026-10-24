@@ -62,6 +62,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/runtime_write.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
+  - id: openwiki-source-0ce0e179a46d5c36c5f05ecf
+    resource: repo://crates/server/src/remote_mcp/workspace_archive.rs
   - id: openwiki-source-47f0a8c78f8e76d48dfdd192
     resource: repo://crates/server/src/resource_observation.rs
   - id: openwiki-source-8eb245a586a88c8ce0dfd2b5
@@ -88,12 +90,14 @@ sources:
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-74a1893f4c1e77eb654658f7
     resource: repo://docs/ai-mobile/tailscale-local-access.md
+  - id: openwiki-source-d6e65c1c70d582aa76ba14d4
+    resource: repo://docs/development/chatgpt-mcp-setup.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
+generated: { by: "codex", at: "2026-10-24T11:23:36.861Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:37:05.680Z
+    at: 2026-10-24T11:23:36.861Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -112,7 +116,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期などの変更に `lvk:write`、正式Integrationの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、正式Integrationの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
 transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
@@ -137,6 +141,12 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 認可済みの `project_id` は共通 Sync 受付へ引き継がれ、保守 Workspace の Issue 紐付けに使われる。Repo が関連しているだけでは別 Project の接続認可を得ない。共有 Repo の選択先と Issue なしの互換経路は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)で説明する。[引継ぎ](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)・[認可と引継ぎの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L613-L659)
 
 既存 Wiki の同期・再同期が対象で、初期生成は Repository settings に残る。観測した branch/source の固定、元 request ID による再送、受付と公開完了の区別は [OpenWiki 保守の MCP 手順](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を正本とする。返された文章や `needs_sync` は新しい実行への承認ではない。既存の [operation receipt](#参照結果と操作-receipt)を回復してから対象状態を確認する。[開始契約](../../docs/development/chatgpt-mcp.md)
+
+## Workspace を外部 MCP から archive する
+
+履歴を残して作業木を解放する入口は `prepare_workspace_archive` と `confirm_workspace_archive` である。両方に明示的な `project_id` / `workspace_id` と `lvk:read` + `lvk:write` が必要で、対象の所属を検査する。stdio の `update_workspace` と token を交換できない。物理所有権、busy 検査、token の束縛・寿命、削除失敗の詳細は [Workspace の archive 契約](../concepts/workspace.md#外部-mcp-の確認と結果の回復)を正本とする。[外部 tool](../../crates/server/src/remote_mcp/workspace_archive.rs#L16-L117)
+
+prepare の対象・branch と正確なメッセージ「ワークツリーが削除されます」を利用者に一度示し、確認後だけ token と stable `request_id` で confirm する。取消は confirm を送らないことで成立し、prepare だけでは archive や削除を行わない。応答喪失は元要求の再送か `get_operation` で回復し、receipt と `get_workspace` の現在値を照合する。`succeeded` だけから削除済みと判断せず、`archived`・`worktree_deleted`・`deletion_error` を読む。busy 拒否は別手段での削除許可ではない。[操作手順](../../docs/development/chatgpt-mcp-setup.md#archive-a-workspace-through-remote-mcp)・[結果の転送](../../crates/server/src/remote_mcp/workspace_archive.rs#L98-L117)
 
 ## Workspace の報告済みトークンを読む
 
@@ -238,7 +248,7 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 HTTP MCP の `get_goal` と `pause_goal` / `resume_goal` / `cancel_goal` / `clear_goal` は、既存 Codex Goal を観測・制御する入口である。新規 objective の作成、達成の代理宣言、自動承認は提供しない。Goal と Run の寿命、Cancel と Clear の意味、保存 Goal の再開は [Session の Goal 契約](../concepts/session-and-agent-run.md#goal-の寿命)を正本とする。stdio の独立 catalog に同じ操作があると仮定しない。[公開契約](../../crates/server/src/remote_mcp/goals.rs#L75-L111)・[HTTP 登録](../../crates/server/src/remote_mcp/mod.rs#L374-L383)
 
-読取には `lvk:read`、四つの変更操作には追加で `lvk:write` が必要である。既存の Project 認可・Workspace 所属検査、HTTP scope・access audit、永続 Operations を通り、`RuntimeActions` が UI 共通の command / Session follow-up へ委譲する。独自 Goal scheduler や直接の projection 書換えは作らない。[scope](../../crates/server/src/remote_mcp/mod.rs#L180-L210)・[監査と dispatch](../../crates/server/src/remote_mcp/mod.rs#L429-L476)・[共通 runtime](../../crates/server/src/remote_mcp/runtime_write.rs#L109-L119)・[受付](../../crates/server/src/remote_mcp/goals.rs#L271-L311)
+読取には `lvk:read`、四つの変更操作には追加で `lvk:write` が必要である。既存の Project 認可・Workspace 所属検査、HTTP scope・access audit、永続 Operations を通り、`RuntimeActions` が UI 共通の command / Session follow-up へ委譲する。独自 Goal scheduler や直接の projection 書換えは作らない。[scope](../../crates/server/src/remote_mcp/mod.rs#L180-L210)・[監査と dispatch](../../crates/server/src/remote_mcp/mod.rs#L429-L476)・[共通 runtime](../../crates/server/src/remote_mcp/runtime_write.rs#L119-L127)・[受付](../../crates/server/src/remote_mcp/goals.rs#L271-L311)
 
 ### 対象と状態を固定する
 

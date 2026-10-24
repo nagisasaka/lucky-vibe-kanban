@@ -30,6 +30,16 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
+  - id: openwiki-source-9e15762bf7a432b7605f8466
+    resource: repo://crates/server/src/remote_mcp/issue_write.rs
+  - id: openwiki-source-6adda10f98b079272f82a4cc
+    resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-3651b7ce4535b584634e8bc8
+    resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-0ce0e179a46d5c36c5f05ecf
+    resource: repo://crates/server/src/remote_mcp/workspace_archive.rs
+  - id: openwiki-source-044c1a309edb203d2c4c162b
+    resource: repo://crates/server/src/remote_mcp/workspace_archive/tests.rs
   - id: openwiki-source-5da526ef53eeceecc5bb4b70
     resource: repo://crates/server/src/routes/filesystem.rs
   - id: openwiki-source-16bb0bc0baa397cce8e201b1
@@ -82,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/api.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
+generated: { by: "codex", at: "2026-10-24T11:23:36.861Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:37:05.680Z
+    at: 2026-10-24T11:23:36.861Z
 ---
 
 # Workspace と Repository
@@ -194,13 +204,23 @@ provision lock は配置処理を守る。利用者の共有ファイルへの�
 
 ## Archive、削除、期限 cleanup
 
-Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI と stdio MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L220)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
+Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI・stdio MCP・外部 HTTP MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L178)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
 
-確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
+確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
 
-実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の debug frontend 参照も観測する。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L183-L265)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
+実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の debug frontend 参照も観測する。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 
-削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L160-L265)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
+削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L265-L290)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
+
+### 外部 MCP の確認と結果の回復
+
+外部 MCP は明示した Project / Workspace に対して `prepare_workspace_archive` → 利用者の一回確認 → `confirm_workspace_archive` を行う。両段階で read/write scope と Project・Workspace 所属を検査し、prepare は target・branch・期限・確認メッセージを返す。stdio の入口は引き続き `update_workspace(archived=true)` であり、外部用の tool と同一ではない。[外部 adapter](../../crates/server/src/remote_mcp/workspace_archive.rs#L16-L117)・[stdio adapter](../../crates/mcp/src/task_server/tools/workspaces.rs#L224-L245)
+
+外部 token は issuer/subject の principal と Project に追加で束縛され、UI/stdio の Local scope と相互流用できない。確認時に scope・Workspace・期限が一致した token を消費し、その後 target の path/branch、script、busy 状態を再検査する。異なる呼出元の試行は正当な token を消費しないが、正当な token の消費後に busy や対象変更で拒否された場合は同じ token で再実行できない。Project 所属は最終 DB transaction 内でも照合する。token はメモリー上のみで、server 再起動を越えない。[scope と token](../../crates/server/src/routes/workspaces/archive.rs#L22-L40)・[消費と再検査](../../crates/server/src/routes/workspaces/archive.rs#L215-L307)・[principal identity](../../crates/server/src/remote_mcp/issue_write.rs#L81-L85)
+
+confirm は stable `request_id` と入力を永続 operation に結びつける。応答を失ったら `get_operation` または完全に同じ confirm 要求で結果を回復する。別 ID で削除を再試行しない。receipt の `succeeded` は共通 archive 処理が結果を返した意味で、物理削除の成功とは限らない。`result.archived`、`result.worktree_deleted`、`result.deletion_error` を別々に読み、現在値は `get_workspace` の二つの flag でも確認する。再起動前に未確定だった receipt は `uncertain` となり、自動再実行されない。[receipt への接続](../../crates/server/src/remote_mcp/workspace_archive.rs#L88-L117)・[再送と不確実性](../../crates/server/src/remote_mcp/operations.rs#L208-L245)・[現在値](../../crates/server/src/remote_mcp/runtime_read.rs#L80-L90)。接続時の権限と操作順序は [外部 MCP の archive 導線](../integrations/remote-access.md#workspace-を外部-mcp-から-archive-する)を参照する。
+
+### 履歴と再開
 
 閲覧は archive 済みや execution-only の worktree を再生成しない。削除済みなら diff は残った Git branch の commit を使い、消えた未commit内容は復元しない。unarchive または明示的な実行準備で環境を再生成する。直接の AgentRun 予約は archive/worktree削除済みを拒否する。[受動読取と明示再開](../../crates/services/src/services/container.rs#L705-L744)・[起動の検査](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)・[差分閲覧](../operations/workspace-inspection.md#差分の未取得エラー空を区別する)
 
@@ -215,3 +235,5 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 変更時は `manual_archive` Rust fixture と `workspace-archive:e2e` を併せて確認する。後者は UI/API/stdio MCP、取消・確認後競合、削除失敗、未登録 process と frontend 使用、履歴/branch 保持、diff と再開を扱う。fixture は実 installer・実 Auth0・非Linux の完全保護を証明しない。[単体入口](../../crates/server/src/routes/workspaces/archive.rs#L568-L933)・[受入入口](../../tests/server/specs/workspace-archive.spec.ts)
 
 利用手順は [Multi-Repo & Sessions](../../docs/workspaces/multi-repo-sessions.mdx)、レビュー・ファイル操作の境界は [Workspace の確認と実行](../operations/workspace-inspection.md)、Git 統合までの順序は [依頼から統合まで](../workflows/task-to-integration.md) を参照。
+
+外部 MCP の回帰 fixture は署名 JWT → Access → HTTP `/mcp` → 共通 archive を通し、scope・member 失効・Project allowlist、呼出元／対象／Local token の取り違え、期限、確認後 busy、branch 変化、同一要求の回復、物理削除失敗と履歴保持を検査する。script-store の liveness は fixture port なので実 script の収束や実 Auth0/ChatGPT 接続を証明しない。この Sync では定義を静的に照合し、製品テストを再実行していない。[HTTP 回帰](../../crates/server/src/remote_mcp/workspace_archive/tests.rs#L1-L611)
