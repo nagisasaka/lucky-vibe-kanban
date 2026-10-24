@@ -1,135 +1,171 @@
-# 開発版の成果物切替
+# 開発版の成果物切替と自己再起動
 
-`start.sh` は、外部でビルド・互換性試験を済ませた成果物へ、稼働中の開発instanceを切り替えます。Git操作、ビルド、試験証拠の審査、migration SQLの収集・解釈・実行、履歴修正は行いません。migrationは新serverの通常の起動機構が実行します。事前のコード・E2E・DB互換性確認、作業停止の調整、切替判断は呼出し側の責任です。
+開発者専用です。安定版image更新・停止済みserverの復旧とは別の入口です。
+外側で対象選択、build、migration互換性試験、新規作業停止を済ませます。
+engineはSQL収集・migration審査・buildを行わず、migrationは新serverのstartupが実行します。
+自動DB rollbackはありません。live環境への導入・切替には別途承認が必要です。
 
-このディレクトリは置換用kitです。リポジトリへ追加しても稼働環境へはインストールされません。既存の開発版入口・stable・コンテナー・updater・公開ネットワーク・認証権限は変更しません。最終インストールと実行はoperatorが行います。
+## 配置と正本
 
-## インスタンス設定と導入
-
-Linux、Python 3.11以降、pidfd対応kernel、同一OSユーザーを前提とします。対象は明示したinstanceのloopback listenerです。初回起動・supervisor管理・停止済みinstanceの復旧には既存のoperator手順を使ってください。
-
-1. 既存の`start.sh`、`start_binary.py`、`start_support.py`、途中配置された`start_migrations.py`と試験記録を、owner限定の回復ディレクトリへ保存します。原本は削除しません。
-2. このkitの`start.sh`、`start_binary.py`、`start_support.py`を、worktree cleanup対象外の保持ディレクトリへコピーします。旧`start_migrations.py`は新engineから参照されません。
-3. instance直下へowner限定の`switch.json`を配置します。例の値は対象環境へ置き換えます。
-
-```json
-{"instance":"/absolute/instances/development","port":4020}
+```text
+INSTANCE/
+  launch.json                 # 唯一の永続起動設定、0600
+  current.json                # 原子的に置換するrelease選択（秘密なし）
+  server.pid
+  switch/                     # operatorが配置する固定kit、sourceにリンクしない
+    launcher.py
+    start.sh
+    start_binary.py
+    start_support.py
+  releases/RELEASE_ID/         # 通常current + previous、切替中のみcandidate追加
+    server
+    agent-process-host
+    vibe-kanban-mcp
+  data/                       # DB、認証、必要設定・添付等
+  runtime/                    # Workspace、Agentのcwdは各Workspace
+  switch-operations/UUID/      # 永続request/snapshot/result/log、最新backup
 ```
 
-既存の`run.py`を起動設定の正本として保持します。対応する形式は、`source = Path(...)`、`env.update({...})`内の`VIBE_KANBAN_AGENT_PROCESS_HOST`、`os.execve(binary, argv, env)`が各一つの既存形式です。`env`の既存設定を維持し、切替対象の参照だけをASTで更新します。対応しない形式は停止前に拒否します。設定ファイルを候補成果物として実行して検査することはありません。
-
-`DISABLE_WORKTREE_CLEANUP='1'`を既存の`env.update`と稼働process環境で確認します。引用符の種類には依存しません。instanceの`builds/`に保持したsource snapshotを推奨します。それ以外のsourceは`--retain-worktree`が必要です。instanceのcleanup管理下にあるworktreeはDBの登録も確認します。元のsource/frontend/runtime依存は、稼働・復旧に必要な間、外部のcleanupや再ビルドでも削除・上書きしないでください。全worktreeのコピーは不要です。
-
-## 同期CLI
+`launch.json`は `{"port":4020,"environment":{"PATH":"/usr/local/bin:/usr/bin:/bin", ...}}`
+という形です。operatorが既存の必要な起動環境（認証・暗号鍵・HOME等の**参照**を含む）を
+明示して保持します。HOMEや認証ディレクトリをbundleへ丸ごとコピーしません。
+launcherはinstance、loopback、port、絶対agenthost、bundle優先PATHを設定し、instanceをcwdにします。
+起動設定へ秘密を含む場合もあります。0600で保持しログ・報告へ出さないでください。
+毎回run.pyを書き換えません。停止中でも外部terminalから次で起動できます。
 
 ```bash
-/path/to/installed/switch/start.sh \
-  --config /absolute/instances/development/switch.json \
-  --binary /absolute/build-A/server \
-  --agent-host /absolute/build-A/agent-process-host \
-  --source /absolute/retained-source-A \
-  --frontend /absolute/retained-source-A/packages/local-web/dist \
-  --retain-worktree --no-new-work \
-  --request-id 8bf3990b-9ec8-4ec9-9027-fdf035bb58d2
+python3 /absolute/INSTANCE/switch/launcher.py /absolute/INSTANCE
 ```
 
-別の成果物はパスと新しいrequest UUIDを指定します。スクリプト編集、SHA一致、特定Issue/Runへの例外は不要です。同期実行も非同期実行も同じ`execute()`を使います。TTYの有無を権限の代用にせず、明示入力・対象identity・排他・idle確認を必須にします。稼働serverの子として同期実行すると子孫検査で停止前に拒否されます。自己再起動には専用MCP経路を使います。
+`current.json`は `{"release":"/absolute/INSTANCE/releases/ID","manifest":BUNDLE_MANIFEST}`。
+releaseはcopy先だけを参照し、元source、frontend、target出力へのfallbackはありません。
+Agent host明示pathが欠落すると起動は失敗し、別のhostへfallbackしません。
+OS runtime libraries、Python3、Git、選択provider CLI等は運用環境の互換性固定済み依存です。
+provider CLIやユーザー認証をbundleへ無差別に収集しません。
 
-同じ引数に`--dry-run`を加えると、停止・backup・起動をせず、選択物・現process・backup範囲と見込み容量を表示します。現在の物理使用状況の確認も含みます。観測だけなので`--no-new-work`は不要です。実切替には引き続き事前調整と同flagが必須です。結果や引数に秘密値を入れないでください。
-
-`--source`省略時は従来の`target/debug/server`配置を推定し、hostはbinaryと同じディレクトリ、frontendはsourceの`packages/local-web/dist`を既定にします。異なる配置では全パスを明示してください。
-
-## 成果物のidentity
-
-実binary/agent hostのSHA-256、frontend全ファイルのSHA-256 tree、起動後の`/proc/PID/exe`、cwd、listener、配信された`index.html`、`/api/info`の取得可能なbuild情報を記録・照合します。checkout HEADからbinaryの出所は推定しません。
-
-既定の`--frontend-mode external`はdebug binary内のfrontend絶対パスを検査します。この文字列検査だけで同一buildを証明するものではなく、外部のbuild/互換性試験が前提です。frontend内蔵binaryは`--frontend-mode embedded --manifest /path/build-manifest.json`を使います。manifestは次の形式で、外部のbuild担当が実成果物に結び付けて作成します。`instance.mjs`の従来の`build.json`はhashを持たないため、そのままではこのmanifestの代用になりません。
-
-```json
-{
-  "artifacts": [
-    {"path":"/absolute/build/server","sha256":"..."},
-    {"path":"/absolute/build/agent-process-host","sha256":"..."}
-  ],
-  "frontend": {
-    "path":"/absolute/source/packages/local-web/dist",
-    "tree_sha256":"...",
-    "files":{"index.html":"...","assets/example.js":"..."}
-  }
-}
-```
-
-Tree hashは相対パスの昇順で`SHA256 + "  " + relative_path + "\n"`を連結したUTF-8のSHA-256です。`source_sha`は任意で、指定すると起動後build revisionも照合します。`--sha`はmanifestのrevisionに対する任意の追加制約です。内蔵assetsとmanifestの対応自体をengineが再ビルドして証明することはありません。
-
-新旧binary/hostとfrontendの復旧用コピーをoperationに保存します。新binary/hostはこの保存先から起動するため、元のCargo出力を再ビルドしても稼働binaryは上書きされません。debug frontendの絶対参照先とsource/runtime依存は元の保持先を使い続けます。
-
-## 非同期とMCP
-
-CLIに`--async`を加えると、永続`operation_id`と`result_path`を返します。独立workerが切替全体を担当し、新session・独立I/Oで起動して排他FDを引き継ぎます。呼出し元の終了やMCP切断でworkerをcleanupしません。新serverへは排他FDを渡しません。
+## buildとbundle作成（切替engineの外側）
 
 ```bash
-/path/to/installed/switch/start.sh \
-  --config /absolute/instances/development/switch.json \
-  --status --request-id 8bf3990b-9ec8-4ec9-9027-fdf035bb58d2
+pnpm install --frozen-lockfile
+pnpm --dir packages/local-web run build
+CARGO_BUILD_JOBS=2 cargo build -p server -p local-deployment -p mcp \
+  --bin server --bin agent-process-host --bin vibe-kanban-mcp \
+  --features server/developer-runtime
+python3 deploy/developer/switch/bundle.py \
+  --server /absolute/target/debug/server \
+  --agent-host /absolute/target/debug/agent-process-host \
+  --mcp /absolute/target/debug/vibe-kanban-mcp \
+  --output /absolute/new-bundle
 ```
 
-MCPを有効にするには、operatorがserver起動環境に`LVK_SELF_RESTART_ENGINE`（保持した`start_binary.py`の絶対パス）、`LVK_SELF_RESTART_CONFIG`（instance直下の`switch.json`）を設定し、対象instanceと完全一致する既存runtime grantを用意します。既存のruntime設定・Project許可・scopeを再利用し、ここから権限は作成しません。**最初の導入は、専用toolを含むserverへのoperatorによる同期切替が必要です。** 旧serverの`run_process`で制約を迂回して自己再起動しないでください。
+`developer-runtime`はdebug profileでもfrontendとutilsのSoundAssets/ScriptAssetsの
+RustEmbed `debug-embed`を有効にします。通常の開発時外部frontend参照と区別します。
+`runtime-payload`はDB/listener/認証の初期化前に終了する検査コマンドです。
+serverは実際のasset bytesが埋込みであることとhash一覧を返します。
+kitは3実行ファイルと`bundle.json`だけを受け入れ、symlink、欠落、hash/権限不一致を拒否します。
+manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（frontend/sounds/scriptsのSHA256）を
+コピー済みpayloadと照合します。manifest宣言だけをembeddedの証明にはしません。
+起動後はindex.htmlとJS/CSSをHTTPでhash照合します。画像等も埋込みprobeで検査しますが、
+既存の予約済みMCP routeと衝突する/mcp/*画像URL等の配信は切替healthの対象にしません。
+この検査は選択した実行ファイルを実行するため、外部で検証済みの信頼するbundleだけを渡してください。
 
-`self_restart`の引数例:
+## CLIとMCP
+
+```bash
+/absolute/INSTANCE/switch/start.sh \
+  --bundle /absolute/new-bundle --dry-run
+/absolute/INSTANCE/switch/start.sh \
+  --bundle /absolute/new-bundle --request-id UUID --no-new-work
+/absolute/INSTANCE/switch/start.sh \
+  --status --request-id UUID
+```
+
+同期CLIとMCPは同じengineです。CLIのinstanceは配置先switch/の親から解決し、
+隔離fixture等で必要な場合だけ`--instance`で明示します。CLIの`--async`は受付だけを返します。
+`--dry-run`は停止・copy・candidate実行をせず、現時点のhash/idle/容量見積りを確認します。
+実切替では稼働中にcandidateをrelease領域へcopyし、hash・権限・全runtime起動・embedded payloadを検査します。
+その後はコピー先だけを参照します。切替lock内でidentity、listener、hash、idleを再照合して停止し、
+整合backup→current原子切替→固定launcher起動→health/identity/DB検査→永続receiptへ進みます。
 
 ```json
 {
   "region":"configured-development-instance",
   "request_id":"8bf3990b-9ec8-4ec9-9027-fdf035bb58d2",
-  "purpose":"外部互換性試験済み成果物への開発版切替",
-  "binary":"/absolute/build/server",
-  "agent_host":"/absolute/build/agent-process-host",
-  "source":"/absolute/retained-source",
-  "frontend":"/absolute/retained-source/packages/local-web/dist",
-  "retain_worktree":true,
+  "purpose":"外部互換性試験済みbundleへの開発版切替",
+  "bundle":"/absolute/new-bundle",
   "no_new_work":true
 }
 ```
 
-復帰後は`get_self_restart_operation`へ同じ`region`と`request_id`を渡します。現在のgrant/Project/read scopeと、元のprincipal・grantの所有を再確認します。MCPの`get_operation`は**受付監査**であり、切替成功ではありません。旧processのreceiptが`uncertain`でも、専用照会はengineの永続結果を参照できます。MCP所有の結果をCLIで見る場合は、保護された`request.json`のownerを`--owner`に指定します。ownerは秘密値ではありませんが、結果を公開しないでください。
+専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
+currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
+停止直前にworkerがlistener/identity/hashを独立に再検証します。
+`LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
+対象instanceと完全一致する既存runtime grant、Project、scope、principal ownershipを維持します。
+汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。
 
-同一ID・同一入力の再送は既存operationへ対応します。入力違いは拒否し、別IDの並行要求も排他で拒否します。workerが消失し排他が解放された未完了operationは`interrupted`として記録し、自動再実行しません。受付用一時ディレクトリの原子的な公開前には切替を開始しません。
+受付processの終了はpidfdで待ち、新session・独立I/Oのworkerが切替lockを保持します。
+固定sleepや呼出元の生存には依存しません。新serverへlock FDは渡しません。
+復帰後は`get_self_restart_operation`へ同じregion/request_idを指定します。
+`get_operation`は受付監査であり完了証明ではありません。
+同一ID・同一入力は既存結果、入力違いID再利用・別ID並行要求は拒否します。
+現在のgrant/Project/read scopeと元principal所有を結果取得時にも確認します。
+CLIでMCP所有operationを見る場合だけ、保護されたrequestのownerを`--owner`で指定します。
 
-## 競合・backup・失敗
+### 旧契約からの移行
 
-既存resource coordinationのsnapshotを確認し、現在のholdersまたはqueueがある場合は明示拒否します。未使用resourceの登録だけでは拒否しません。登録は使用中を意味せず、この観測も資源の取得・使用許可ではありません。呼出し側は各資源のusage契約と既存調停を守り、切替中に新規使用を始めないよう調整します。通常のmanaged resource operationからdetachする迂回はしません。この独立engineは対象instance／DB自体が登録資源ではないことが導入・呼出しの前提です。対象が登録済みなら空き状態でも本経路で切り替えず、既存のoperation bundle契約を用います。engineは自由記述のresource説明から対象identityを推測しません。使用中資源の所有を再起動へ引き継ぐhandoffは今回の範囲外です。
+旧CLIの`--config/--binary/--agent-host/--source/--frontend/--frontend-mode/--manifest/--sha/--retain-worktree`、
+旧MCPの対応fieldは新契約では受理しません。`--instance/--bundle`（MCPはbundle）へ明示移行します。
+旧`switch.json`を自動解釈せず、旧run.pyをAST書換えしません。
+既存operation結果の所有・状態照会は同じ永続形式です。旧要求への新入力での再実行はしません。
 
-AI／人間は、agent/workflow/Integrationの業務上の作業可否、配信待ち・論理予約・schedule、再起動による中断の扱いを事前確認し、新規作業を止める調整を行います。`--no-new-work`はその調整の確認であり、単なる強制実行flagや汎用scheduler停止機能ではありません。engineは全履歴のterminal判定や過去stale記録の修復を要求しません。特定Run ID例外も設けません。代わりに、現在のserver子孫、対象instance環境を持つ他process、dataを開いている他processを拒否し、pidfdによる停止直前と停止後にも物理使用を再確認します。DBのrunning表示だけで現processの存在を断定せず、表示がterminalでも実在するprocessを見逃しません。MCPのscope・Project・grant・所有者認可は変更しません。
+初回legacy移行だけは**外部terminalのoperator作業**です。本変更は自動的にlive移行しません。
+1. 新bundleを隔離検証し、固定kitと単一launch.jsonの内容をレビューします。旧起動設定・依存worktreeを保持します。
+2. 新規作業を止め、既存の承認済み停止手順で旧PID/start/boot/listenerを確認して停止します。
+3. SQLite backup APIでWAL込みのDBと必要data・旧起動設定を整合backupし検証します。唯一の既存backupを先に消しません。
+4. instanceのrelease領域に検証済みbundleをcopyし、初期currentをそのmanifestとcopy先で作成します。
+   固定kitと0600のlaunch.jsonへ必要環境を移します。旧run.py/switch.jsonは復旧資料として保持し、起動の正本には使いません。
+5. 外部terminalから固定launcherで起動し、health/UI/API/Agenthost/Agent内MCPとWorkspace cwdを確認します。
+6. build元を隠した隔離試験で独立性を証明した後、旧worktree保全例外をoperatorが解消します。
+   稼働参照やcleanup ownershipを確認せず旧worktreeを削除・archiveしてはいけません。
+以後はbundle指定だけで切替でき、scriptの編集は不要です。移行途中は旧serverへ新MCP契約を期待しません。
 
-停止には、起動時刻・boot・exe・cwd・instance・portを照合したpidfdを使います。TERMで停止を確認できなければ次へ進まず、自動SIGKILLしません。停止後のbackupは`data/`と起動設定・helperだけです。`db.v2.sqlite`はSQLite backup APIでWALの確定済み内容を含む単独DBとして保存し、integrity/FKとmanifestを確認します。worktree、Git repository、target、node_modules、共有cache全体は含めません。任意のdata symlinkは拒否します。
+## 保持と失敗復旧
 
-結果は`instance/switch-operations/UUID/`に保存されます。
+停止後backupの対象はdata/、launch/current、固定kitです。runtime/worktrees、target、node_modules、
+共有cache、Git全体、HOMEは対象外です。data symlinkは拒否します。
+SQLite backup APIでWALのcommit済データを単独DBへ取り込み、integrity/FK/manifest/fsyncを確認します。
+通常releaseはcurrent+previousの2世代、candidate追加時だけ3世代です。
+最新backupは1セット、新backup検証と切替成功までは旧backupを残し一時2セット分の空き容量を見積もります。
+成功した切替だけが古い大容量release/backupを整理します。小さなreceipt/manifest/logは別に保持します。
 
-- `result.json`: status、最後のstage、safeな失敗理由、health/identity/DB確認の結果。
-- `request.json`、`selection.json`、`launch-selection.json`: 要求と実際の成果物identity。
-- `settings/`、`data/`、`data-manifest.json`、`backup-complete.json`: 検証済みbackup。complete markerのないbackupを復旧用完成品と扱わないでください。
-- `artifacts/`: 保持した新旧実行ファイルとfrontend。
-- `worker.json`、`launch.json`、`worker.log`、`server.log`: worker/起動の確認情報とowner限定ログ。
+`switch-operations/UUID`のrequest/selection/launch-selection/result、worker/launch PID、保護log、
+settings/data/data-manifest/backup-completeを確認します。complete markerなしのbackupは完成扱いしません。
+失敗時はartifact/DB/logを保持し、未解決のfailed/interrupted/未完了operationがある間は新切替を拒否します。
+同じIDの再送は自動retryしません。worker消失はlock観測からinterruptedとなります。
+operatorはprocess/listener、migration後DB、backupの実状態を確認し、復旧方針を決めてください。
+自動SIGKILL・DB rollback・旧binaryへの復帰はしません。新serverが診断用に残る場合もあります。
+復旧後、不要な失敗releaseを所有者が整理し、失敗operationを管理領域外の保護された復旧記録へ移すことで
+新切替のfenceを解除できます。記録を成功へ書き換えず、診断資料を失わないでください。
 
-`accepted`/`running`は成功ではありません。`failed`/`interrupted`ではstage、process/listenerの実状態、backup marker、保護ログを確認してください。起動後に失敗したserverは診断のため残る場合があります。自動DB rollback、旧binaryへの自動復帰、失敗データ削除は行いません。migration後のDBに旧binaryを向けられるとは仮定しないでください。旧成果物への復旧にも対応するDB・設定と外部判断が必要です。
+resource snapshotのholders/queueは停止前に拒否します。未使用resource登録だけでは拒否しません。
+この独立engineは対象instance/DBが登録資源でないことが前提です。登録対象なら既存resource operation bundleを使います。
+`--no-new-work`は外部調整の確認で、他の資源使用やscheduler停止を代行する強制flagではありません。
 
-engineは認証・暗号鍵を結果やstdoutへ展開せず、旧process環境をメモリ内で新processへ引き継ぎます。任意server自身のログまで秘密非出力を保証するものではないため、`server.log`も公開せず扱ってください。health成功はAuth0/UI/MCPの機能確認と別です。
-
-## 隔離検証
+## 検証
 
 ```bash
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
-CARGO_BUILD_JOBS=2 cargo test -p server --lib remote_mcp::environment -- --test-threads=2
+CARGO_BUILD_JOBS=2 cargo test -p server --features developer-runtime --lib remote_mcp::environment -- --test-threads=2
 ```
 
-Python試験にはC compilerとSQLite runtime libraryが必要です。fixtureだけを一時領域で構築し、2組の成果物、server起動時migration、WAL、PID違い、競合、backup/起動/health失敗、呼出し元/worker終了、重複要求を検証します。MCP試験はproduction HTTPルーターと実engineを使い、engineが呼出し元MCP fixtureを停止してから別成果物を起動し、再接続したMCP hostから同じ結果を取得します。mock IdPを使うため実Auth0の証明ではありません。
+C/SQLite fixtureはlive DB・実認証・実モデルを使いません。production MCP routerの隔離testは
+呼出元processをengineで停止して、再接続先から同じreceiptを取得します。
+実bundle検証は`test_real_server.py --bundle /absolute/bundle --source /absolute/repository`。
+sourceは試験用の過去schema構築にだけ使い、起動設定へ入りません。
+Python SQLiteが3.42未満なら試験用環境にpysqlite3-binaryが必要です。
+health/asset hash成功と実Auth0・browser UI操作・実課金Agentの検証は区別してください。
 
-既存LVKバイナリの通常migration機構も別途隔離検証できます。
-
-```bash
-python3 deploy/developer/switch/test_real_server.py \
-  --binary /absolute/tested/server --agent-host /absolute/tested/agent-process-host \
-  --source /absolute/retained-source --frontend /absolute/retained-source/packages/local-web/dist
-```
-
-この試験だけが、外部test setupとして空の過去schemaを構築します。PythonのSQLiteが3.42未満なら試験用venvに`pysqlite3-binary`を用意します。engineにはこの依存・migration処理を持ち込みません。試験はlive DBをコピーせず、終了時にfixtureのprocessと一時データを片付けます。
+Git Skillは依頼された原文に固定同期しています。その旧「configured engine/configuration」という記述は
+ここでいう固定kit/launch.jsonに対応します。新MCP fieldへSkill原文を改稿してはいません。
+リリース直前のlive plugin版再照合は別工程です。

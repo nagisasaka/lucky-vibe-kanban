@@ -21,6 +21,13 @@ struct LaunchConfig {
 }
 
 fn main() -> anyhow::Result<()> {
+    if std::env::args().nth(1).as_deref() == Some("runtime-payload") {
+        println!(
+            "{}",
+            serde_json::json!({"component": "vibe-kanban-mcp", "protocol": 1})
+        );
+        return Ok(());
+    }
     let launch_config = resolve_launch_config()?;
 
     tokio::runtime::Builder::new_multi_thread()

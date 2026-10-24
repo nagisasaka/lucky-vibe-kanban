@@ -1,6 +1,8 @@
 """Own all isolated artifacts/processes for the production HTTP MCP subprocess test."""
 
 import json
+import shutil
+import start_support
 import signal
 import sys
 import time
@@ -13,8 +15,12 @@ fixture.setUp()
 if len(sys.argv) > 2:
     fixture.old.terminate()
     fixture.old.wait(timeout=5)
-    previous = dict(fixture.builds[0], binary=str(Path(sys.argv[2]).resolve()))
-    fixture.write_run(previous)
+    current_file = fixture.instance / "current.json"
+    current = json.loads(current_file.read_text())
+    target = Path(current["release"]) / "server"
+    shutil.copy2(Path(sys.argv[2]).resolve(), target)
+    current["manifest"]["files"]["server"] = start_support.digest(target)
+    current_file.write_text(json.dumps(current))
 stop = False
 
 
@@ -30,7 +36,7 @@ root = Path(sys.argv[1])
     json.dumps(
         {
             "instance": str(fixture.instance),
-            "config": str(fixture.config),
+            "port": fixture.port,
             "selection": fixture.builds[1],
         }
     )

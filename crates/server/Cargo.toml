@@ -70,6 +70,7 @@ rmcp = { version = "1.8.0", features = ["server", "transport-streamable-http-ser
 dotenv = "0.15"
 
 [features]
+developer-runtime = ["rust-embed/debug-embed", "utils/embedded-assets"]
 default = []
 qa-mode = ["services/qa-mode", "executors/qa-mode"]
 

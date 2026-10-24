@@ -12,7 +12,7 @@ pub(super) async fn check(root: Option<&str>) -> Result<(), ApiError> {
     };
     let root = std::path::PathBuf::from(root);
     let observation = tokio::task::spawn_blocking(move || {
-        let assets = if cfg!(debug_assertions) {
+        let assets = if cfg!(debug_assertions) && !cfg!(feature = "developer-runtime") {
             // RustEmbed reads this path at request time in debug builds, even
             // when the executable was copied elsewhere and no fd is held open.
             Some(Path::new(concat!(

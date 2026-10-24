@@ -3,6 +3,8 @@
 import argparse
 import contextlib
 import json
+import hashlib
+import shutil
 import os
 from pathlib import Path
 import signal
@@ -38,9 +40,11 @@ class SwitchTest(unittest.TestCase):
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             self.port = sock.getsockname()[1]
-        self.config = self.instance / "switch.json"
-        self.config.write_text(
-            json.dumps({"instance": str(self.instance), "port": self.port})
+        self.config = self.instance / "launch.json"
+        self.config.write_text(json.dumps({"environment": {}, "port": self.port}))
+        self.config.chmod(0o600)
+        shutil.copytree(
+            HERE, self.instance / "switch", ignore=shutil.ignore_patterns("__pycache__")
         )
         self.db = self.instance / "data/db.v2.sqlite"
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
@@ -63,45 +67,55 @@ class SwitchTest(unittest.TestCase):
             )
         self.builds = []
         for rev in [1, 2]:
-            source = self.instance / "builds" / str(rev)
-            front = source / "packages/local-web/dist"
-            front.mkdir(parents=True)
-            (front / "index.html").write_text(f"frontend-{rev}")
-            binary = source / "server"
-            host = source / "agent-process-host"
+            bundle = self.root / f"build-{rev}"
+            bundle.mkdir()
+            html = f"frontend-{rev}"
+            assets = {
+                "frontend/index.html": hashlib.sha256(html.encode()).hexdigest(),
+                "sounds/fixture": "fixture",
+                "scripts/fixture": "fixture",
+            }
+            payload = json.dumps({"embedded": True, "assets": assets})
             subprocess.run(
                 [
                     "cc",
                     "-Wall",
                     "-Wextra",
                     f"-DREVISION={rev}",
-                    f'-DFRONTEND="{front}"',
+                    "-DHTML=" + json.dumps(html),
+                    "-DPAYLOAD=" + json.dumps(payload),
                     str(HERE / "fixture_server.c"),
                     "-l:libsqlite3.so.0",
                     "-o",
-                    str(binary),
+                    str(bundle / "server"),
                 ],
                 check=True,
                 capture_output=True,
             )
-            host.write_bytes(binary.read_bytes())
-            host.chmod(0o700)
-            self.builds.append(
-                dict(
-                    binary=str(binary),
-                    agent_host=str(host),
-                    source=str(source),
-                    frontend=str(front),
-                )
-            )
+            for name in ["agent-process-host", "vibe-kanban-mcp"]:
+                shutil.copy2(bundle / "server", bundle / name)
+            manifest = {
+                "format": 1,
+                "assets": assets,
+                "files": {
+                    name: support.digest(bundle / name) for name in engine.PAYLOAD
+                },
+            }
+            (bundle / "bundle.json").write_text(json.dumps(manifest))
+            self.builds.append({"bundle": str(bundle)})
+        (self.instance / "releases").mkdir()
         self.write_run(self.builds[0])
         self.old = subprocess.Popen(
-            [sys.executable, str(self.instance / "run.py")],
+            [
+                sys.executable,
+                str(self.instance / "switch/launcher.py"),
+                str(self.instance),
+            ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         self.wait_port()
-        engine.configure(self.config)
+        engine.configure(self.instance)
 
     def tearDown(self):
         # Do not signal raw PIDs from untrusted files. Record pidfds while processes
@@ -133,26 +147,21 @@ class SwitchTest(unittest.TestCase):
         self.temp.cleanup()
 
     def write_run(self, selection, extra=None):
+        bundle = Path(selection["bundle"])
+        release = self.instance / "releases/initial"
+        if not release.exists():
+            shutil.copytree(bundle, release)
+        manifest = json.loads((bundle / "bundle.json").read_text())
+        (self.instance / "current.json").write_text(
+            json.dumps({"release": str(release), "manifest": manifest})
+        )
         env = {
-            "LVK_INSTANCE_DIR": str(self.instance),
-            "BACKEND_PORT": str(self.port),
-            "HOST": "127.0.0.1",
-            "DISABLE_WORKTREE_CLEANUP": "1",
-            "VIBE_KANBAN_AGENT_PROCESS_HOST": selection["agent_host"],
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
             "FIXTURE_SECRET": "do-not-print-this",
         }
         env.update(extra or {})
-        (self.instance / "run.py").write_text(f"""import os
-from pathlib import Path
-root=Path(__file__).resolve().parent
-source=Path({selection['source']!r})
-lvk_frontend_dependency={selection['frontend']!r}
-env=os.environ.copy()
-env.update({env!r})
-os.chdir(source)
-(root/'server.pid').write_text(str(os.getpid()))
-os.execve({selection['binary']!r},[{selection['binary']!r}],env)
-""")
+        self.config.write_text(json.dumps({"port": self.port, "environment": env}))
+        self.config.chmod(0o600)
 
     def wait_port(self):
         deadline = time.monotonic() + 5
@@ -165,13 +174,7 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         self.fail("fixture did not listen")
 
     def args(self, revision=1, **extra):
-        values = dict(
-            self.builds[revision],
-            manifest=None,
-            sha=None,
-            retain_worktree=False,
-            no_new_work=True,
-        )
+        values = dict(self.builds[revision], no_new_work=True)
         values.update(extra)
         return argparse.Namespace(**values)
 
@@ -179,8 +182,8 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         command = [
             sys.executable,
             str(HERE / "start_binary.py"),
-            "--config",
-            str(self.config),
+            "--instance",
+            str(self.instance),
             "--request-id",
             request or str(uuid.uuid4()),
             "--no-new-work",
@@ -204,6 +207,104 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
             time.sleep(0.05)
         self.fail("worker did not settle")
 
+    def test_copied_bundle_survives_hidden_build_sources(self):
+        original = engine.preserve
+        for revision in [0, 1]:
+            request = str(uuid.uuid4())
+            op = self.instance / "switch-operations" / request
+            op.mkdir(parents=True)
+            args = self.args(revision)
+            support.save(op / "result.json", {"status": "accepted"})
+            request_data = {"arguments": vars(args), "snapshot": engine.snapshot()}
+            support.save(op / "request.json", request_data)
+
+            def hidden(selected, operation):
+                copied = original(selected, operation)
+                Path(selected["bundle"]).rename(Path(selected["bundle"] + "-hidden"))
+                return copied
+
+            with patch.object(engine, "preserve", side_effect=hidden):
+                result = engine.execute(op, request_data, self.config)
+            self.assertEqual(result["status"], "succeeded", result)
+            self.assertEqual(
+                support.get_bytes("/index.html"), f"frontend-{revision + 1}".encode()
+            )
+        self.assertEqual(len(list((self.instance / "releases").iterdir())), 2)
+        self.assertEqual(
+            len(list((self.instance / "switch-operations").glob("*/data"))), 1
+        )
+
+    def test_corrupt_copy_refused_and_failed_request_fences_growth(self):
+        original = engine.shutil.copy2
+
+        def corrupt(source, dest, *args, **kwargs):
+            result = original(source, dest, *args, **kwargs)
+            if Path(dest).name == "agent-process-host":
+                Path(dest).write_bytes(b"corrupt")
+            return result
+
+        op = self.instance / "switch-operations" / str(uuid.uuid4())
+        op.mkdir(parents=True)
+        request = {"arguments": vars(self.args()), "snapshot": engine.snapshot()}
+        support.save(op / "result.json", {"status": "accepted"})
+        with patch.object(engine.shutil, "copy2", side_effect=corrupt):
+            result = engine.execute(op, request, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertIsNone(self.old.poll())
+        count = len(list((self.instance / "releases").iterdir()))
+        refused = self.run_cli(self.cli())
+        self.assertEqual(refused["status"], "refused", refused)
+        self.assertEqual(len(list((self.instance / "releases").iterdir())), count)
+
+    def test_manifest_claim_cannot_prove_embedded_payload(self):
+        bundle = Path(self.builds[1]["bundle"])
+        m = json.loads((bundle / "bundle.json").read_text())
+        m["assets"]["frontend/index.html"] = "untrue"
+        (bundle / "bundle.json").write_text(json.dumps(m))
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "failed", result)
+        self.assertIsNone(self.old.poll())
+
+    def test_snapshot_mismatch_is_pre_stop_failure(self):
+        request = str(uuid.uuid4())
+        snapshot = engine.snapshot()
+        snapshot["identity"]["start"] = "not-self"
+        result = subprocess.run(
+            self.cli(request=request, extra=["--async", "--snapshot-stdin"]),
+            input=json.dumps(snapshot),
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+        state = self.settle(request)
+        self.assertEqual(state["status"], "failed", state)
+        self.assertIsNone(self.old.poll())
+
+    def test_previous_backup_survives_failed_next_backup(self):
+        first = self.run_cli(self.cli(0))
+        self.assertEqual(first["status"], "succeeded", first)
+        backup = Path(first["result_path"]).parent / "data"
+        manifest = support.tree_manifest(backup)
+        op = self.instance / "switch-operations" / str(uuid.uuid4())
+        op.mkdir()
+        support.save(op / "result.json", {"status": "accepted"})
+        request = {"arguments": vars(self.args()), "snapshot": engine.snapshot()}
+        with patch.object(support, "backup_data", side_effect=OSError("private")):
+            result = engine.execute(op, request, self.config)
+        self.assertEqual(result["stage"], "backup", result)
+        self.assertEqual(support.tree_manifest(backup), manifest)
+        self.assertEqual(len(list((self.instance / "releases").iterdir())), 3)
+
+    def test_installed_cli_resolves_instance_without_duplicate_input(self):
+        command = self.cli()
+        command[1] = str(self.instance / "switch/start_binary.py")
+        index = command.index("--instance")
+        del command[index : index + 2]
+        result = self.run_cli(command + ["--dry-run"])
+        self.assertEqual(result["snapshot"]["instance"], str(self.instance))
+        self.assertIsNone(self.old.poll())
+
     def test_two_artifacts_and_server_owned_migration(self):
         for revision in [0, 1]:
             state = self.run_cli(self.cli(revision))
@@ -217,7 +318,7 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
             )
             self.assertFalse((op / "data/builds").exists())
             self.assertFalse((op / "data/runtime").exists())
-            self.assertTrue((op / "artifacts/old-server").is_file())
+            self.assertEqual(len(list((self.instance / "releases").iterdir())), 2)
             self.assertEqual(state["checks"]["auth0_ui_mcp"], "not_verified")
             with contextlib.closing(
                 sqlite3.connect(op / "data/db.v2.sqlite")
@@ -306,7 +407,9 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         want = engine.observation()
         want["start"] = "wrong"
         with self.assertRaises(support.Refuse):
-            support.stop(want, support.digest(self.builds[0]["binary"]))
+            support.stop(
+                want, support.digest(str(self.instance / "releases/initial/server"))
+            )
         self.assertIsNone(self.old.poll())
 
     def test_incomplete_admission_is_not_replayed(self):
@@ -317,55 +420,10 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         # or manually damaged records are treated as interrupted, never restarted.
         command = self.cli(request=request)
         args = vars(self.args())
-        args["frontend_mode"] = "external"
+
         support.save(op / "request.json", {"owner": "operator", "arguments": args})
         result = engine.status(request, "operator")
         self.assertEqual(result["status"], "interrupted")
-        self.assertIsNone(self.old.poll())
-
-    def test_embedded_manifest_and_corruption_refusal(self):
-        selection = self.builds[1]
-        tree, files = engine.frontend_hash(Path(selection["frontend"]))
-        manifest = self.root / "manifest.json"
-        content = {
-            "artifacts": [
-                {"path": selection[k], "sha256": support.digest(selection[k])}
-                for k in ["binary", "agent_host"]
-            ],
-            "frontend": {
-                "path": selection["frontend"],
-                "tree_sha256": tree,
-                "files": files,
-            },
-        }
-        manifest.write_text(json.dumps(content))
-        selected = engine.inspect(
-            self.args(frontend_mode="embedded", manifest=str(manifest))
-        )
-        self.assertEqual(selected["frontend_mode"], "embedded")
-        content["artifacts"][0]["sha256"] = "wrong"
-        manifest.write_text(json.dumps(content))
-        with self.assertRaises(support.Refuse):
-            engine.inspect(self.args(frontend_mode="embedded", manifest=str(manifest)))
-        self.assertIsNone(self.old.poll())
-
-    def test_corrupt_old_copy_refused_before_stop(self):
-        op = self.instance / "copy-failure"
-        op.mkdir()
-        support.save(op / "result.json", {"status": "accepted"})
-        original = engine.shutil.copy2
-
-        def corrupt(source, destination, *args, **kwargs):
-            result = original(source, destination, *args, **kwargs)
-            if Path(destination).name == "old-agent-process-host":
-                Path(destination).write_bytes(b"corrupt")
-            return result
-
-        with patch.object(engine.shutil, "copy2", side_effect=corrupt):
-            result = engine.execute(
-                op, {"owner": "operator", "arguments": vars(self.args())}, self.config
-            )
-        self.assertEqual(result["status"], "failed")
         self.assertIsNone(self.old.poll())
 
     def test_mcp_driver_termination_cleans_owned_server(self):
@@ -409,8 +467,7 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         try:
             (self.instance / "server.pid").write_text(str(innocent.pid))
             result = self.run_cli(self.cli())
-            self.assertEqual(result["status"], "failed")
-            self.assertEqual(result["stage"], "preflight")
+            self.assertEqual(result["status"], "refused")
             self.assertIsNone(innocent.poll())
             self.assertIsNone(self.old.poll())
         finally:
@@ -508,7 +565,11 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         self.old.wait()
         self.write_run(self.builds[0], {"FIXTURE_CHILD": "1"})
         self.old = subprocess.Popen(
-            [sys.executable, str(self.instance / "run.py")],
+            [
+                sys.executable,
+                str(self.instance / "switch/launcher.py"),
+                str(self.instance),
+            ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -522,24 +583,24 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         self.add_stale_history()
         command = self.cli()
         command.remove("--no-new-work")
-        before = (self.instance / "run.py").read_bytes()
+        before = (self.instance / "current.json").read_bytes()
         result = self.run_cli(command + ["--dry-run"])
         self.assertIn("backup", result)
         self.assertFalse((self.instance / "switch-operations").exists())
         self.assertFalse((self.instance / "start.lock").exists())
-        self.assertEqual((self.instance / "run.py").read_bytes(), before)
+        self.assertEqual((self.instance / "current.json").read_bytes(), before)
         self.assertIsNone(self.old.poll())
         result = self.run_cli(command)
         self.assertEqual(result["status"], "failed")
         self.assertIn("--no-new-work", result["reason"])
-        self.assertEqual((self.instance / "run.py").read_bytes(), before)
+        self.assertEqual((self.instance / "current.json").read_bytes(), before)
         self.assertIsNone(self.old.poll())
 
     def test_unrelated_process_allowed_and_missing_artifact_refused(self):
         innocent = subprocess.Popen(["sleep", "30"])
         try:
             engine.preflight(self.args())
-            Path(self.builds[1]["binary"]).unlink()
+            Path(str(Path(self.builds[1]["bundle"]) / "server")).unlink()
             result = self.run_cli(self.cli())
             self.assertEqual(result["status"], "failed")
             self.assertIsNone(self.old.poll())
@@ -552,9 +613,13 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         args = self.args()
         op = self.instance / "failure"
         op.mkdir()
-        request = {"owner": "operator", "arguments": vars(args)}
+        request = {
+            "owner": "operator",
+            "arguments": vars(args),
+            "snapshot": engine.snapshot(),
+        }
         support.save(op / "result.json", {"status": "accepted"})
-        before = (self.instance / "run.py").read_bytes()
+        before = (self.instance / "current.json").read_bytes()
         with patch.object(
             support, "backup_data", side_effect=OSError("private-secret")
         ):
@@ -562,14 +627,35 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         self.assertEqual(result["stage"], "backup")
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["reason"], "OSError")
-        self.assertEqual((self.instance / "run.py").read_bytes(), before)
+        self.assertEqual((self.instance / "current.json").read_bytes(), before)
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
             self.assertEqual(
                 db.execute("SELECT value FROM user_data").fetchone()[0], "committed"
             )
 
+    def restart_old(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.old = subprocess.Popen(
+            [
+                sys.executable,
+                str(self.instance / "switch/launcher.py"),
+                str(self.instance),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.wait_port()
+
+    def test_changed_launch_settings_refused_before_stop(self):
+        self.write_run(self.builds[0], {"ADDED_SETTING": "1"})
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "refused", result)
+        self.assertIsNone(self.old.poll())
+
     def test_health_failure_no_rollback(self):
         self.write_run(self.builds[0], {"FIXTURE_BAD_HEALTH": "1"})
+        self.restart_old()
         result = self.run_cli(self.cli())
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["stage"], "health", result)
@@ -579,14 +665,31 @@ os.execve({selection['binary']!r},[{selection['binary']!r}],env)
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
             self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
 
-    def test_start_failure_no_rollback(self):
-        self.write_run(self.builds[0], {"FIXTURE_EXIT": "1"})
+    def test_startup_probe_failure_keeps_old_server(self):
+        # Candidate exits after startup migration; old server keeps serving.
+        bundle = Path(self.builds[1]["bundle"])
+        (bundle / "server").write_text("#!/bin/sh\nexit 1\n")
+        manifest = json.loads((bundle / "bundle.json").read_text())
+        manifest["files"]["server"] = support.digest(bundle / "server")
+        (bundle / "bundle.json").write_text(json.dumps(manifest))
         result = self.run_cli(self.cli())
         self.assertEqual(result["status"], "failed")
-        self.assertEqual(result["stage"], "health", result)
-        self.assertTrue(
-            (Path(result["result_path"]).parent / "data/db.v2.sqlite").is_file()
-        )
+        self.assertEqual(result["stage"], "preflight", result)
+        self.assertIsNone(self.old.poll())
+
+    def test_exited_unreaped_admission_does_not_count_as_live_work(self):
+        child = subprocess.Popen(["true"])
+        try:
+            deadline = time.monotonic() + 5
+            while (
+                Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+                != "Z"
+            ):
+                self.assertLess(time.monotonic(), deadline)
+                time.sleep(0.01)
+            self.assertNotIn(child.pid, support.descendants(os.getpid()))
+        finally:
+            child.wait(timeout=5)
 
     def test_lock_refuses_conflict(self):
         with (self.instance / "start.lock").open("a") as lock:

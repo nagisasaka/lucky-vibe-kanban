@@ -3,6 +3,9 @@ name = "utils"
 version = "0.1.44"
 edition = "2024"
 
+[features]
+embedded-assets = ["rust-embed/debug-embed"]
+
 [dependencies]
 base64 = "0.22"
 tokio-util = { version = "0.7", features = ["io", "codec"] }

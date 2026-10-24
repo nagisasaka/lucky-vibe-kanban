@@ -295,12 +295,26 @@ outcome is unknown. The in-memory lifetime timeout no longer supervises a surviv
 child after host termination. This is not a durable runtime limit. Do not replay automatically. Reobserve existing processes and
 logs, and involve the operator when identity or termination cannot be confirmed.
 
-Self-stop and self-restart are unsupported: direct stop excludes LVK itself and
-its ancestors. An allowed script still has OS authority and could interrupt the
-connection; this is not an absolute isolation guarantee. Such an operation needs
-explicit operator permission, reconnect checks and an SSH/manual recovery plan.
-A disconnected MCP session is never evidence of successful restart. Runtime
-access adds no updater, external watchdog or availability guarantee.
+Ordinary `run_process` cannot self-restart, and direct stop excludes LVK itself
+and its ancestors. An allowed script still has OS authority; this is not an
+absolute isolation guarantee. Do not use it to bypass the dedicated restart path.
+
+LVK developers can install the fixed development switch kit under their instance
+and use `self_restart` with `region`, `request_id`, `purpose`, `bundle`, and
+`no_new_work: true`. This requires the existing instance-scoped grant and runtime
+execute scope. The server supplies its own identity and bound listener; the caller
+selects only the externally tested bundle. `launch.json` is the single persistent
+launch configuration; separate engine/config environment variables are unnecessary.
+This developer capability does not update ordinary users' stable container images.
+
+Admission is not completion. After reconnecting, use `get_self_restart_operation`
+with the same region/request ID to read the durable outcome, then verify the
+running service. An already stopped server requires the external fixed launcher
+or operator recovery. Failure preserves evidence and fences new switches; there
+is no automatic database rollback. See the repository's
+[development switch procedure](../../deploy/developer/switch/README.md)
+for the bundle/CLI contract, initial legacy migration, retention and isolated tests.
+Runtime access adds no external watchdog or availability guarantee.
 
 Record significant observations and reproduction steps in the subsequent
 implementation request. Routine log reads need no Issue or Workspace. Repository

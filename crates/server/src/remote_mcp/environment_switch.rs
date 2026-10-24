@@ -15,17 +15,8 @@ use super::{Principal, Remote, environment::Grant, read::arguments};
 struct Restart {
     request_id: Uuid,
     purpose: String,
-    binary: PathBuf,
-    source: PathBuf,
-    agent_host: PathBuf,
-    frontend: PathBuf,
-    #[serde(default)]
-    manifest: Option<PathBuf>,
+    bundle: PathBuf,
     no_new_work: bool,
-    #[serde(default)]
-    frontend_mode: Option<String>,
-    #[serde(default)]
-    retain_worktree: bool,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -34,51 +25,93 @@ struct Status {
 }
 
 fn configured(grant: &Grant) -> Result<(PathBuf, PathBuf)> {
-    let engine = PathBuf::from(std::env::var("LVK_SELF_RESTART_ENGINE")?);
-    let config = PathBuf::from(std::env::var("LVK_SELF_RESTART_CONFIG")?);
-    let instance = PathBuf::from(std::env::var("LVK_INSTANCE_DIR")?);
+    let instance = utils::instance::instance_dir_read_only()?
+        .ok_or_else(|| anyhow::anyhow!("Developer instance required"))?;
     ensure!(
-        engine.is_absolute() && config.is_absolute() && instance.is_absolute(),
-        "Self restart requires administrator-installed absolute paths"
-    );
-    ensure!(
-        engine.canonicalize()? == engine
-            && config.canonicalize()? == config
-            && instance.canonicalize()? == instance,
-        "Self restart configuration cannot be aliased"
-    );
-    ensure!(
-        grant.root == instance && config.parent() == Some(instance.as_path()),
+        grant.root == instance,
         "Self restart requires an explicit grant for this instance"
     );
-    let settings: Value = serde_json::from_slice(&std::fs::read(&config)?)?;
+    let engine = instance.join("switch/start_binary.py");
+    let config = instance.join("launch.json");
     ensure!(
-        settings["instance"].as_str() == instance.to_str(),
-        "Self restart instance mismatch"
+        engine.canonicalize()? == engine && config.canonicalize()? == config,
+        "Self restart configuration cannot be aliased"
     );
-    Ok((engine, config))
+    Ok((engine, instance))
+}
+
+fn snapshot(instance: &std::path::Path) -> Result<Value> {
+    let pid = std::process::id();
+    let proc = PathBuf::from(format!("/proc/{pid}"));
+    let stat = std::fs::read_to_string(proc.join("stat"))?;
+    let start = stat
+        .rsplit_once(')')
+        .ok_or_else(|| anyhow::anyhow!("Invalid process identity"))?
+        .1
+        .split_whitespace()
+        .nth(19)
+        .ok_or_else(|| anyhow::anyhow!("Missing process start"))?;
+    let listener = super::LOCAL_LISTENER
+        .get()
+        .ok_or_else(|| anyhow::anyhow!("Local listener identity unavailable"))?;
+    ensure!(
+        listener.ip() == std::net::Ipv4Addr::LOCALHOST,
+        "Self restart requires loopback listener"
+    );
+    let port = listener.port();
+    let current: Value = serde_json::from_slice(&std::fs::read(instance.join("current.json"))?)?;
+    Ok(json!({
+        "identity": {"pid": pid, "start": start,
+            "boot": std::fs::read_to_string("/proc/sys/kernel/random/boot_id")?.trim(),
+            "exe": std::fs::read_link(proc.join("exe"))?, "cwd": std::env::current_dir()?},
+        "instance": instance, "data": utils::assets::asset_dir_path()?, "port": port,
+        "current": current,
+        "launch_hash": std::env::var("LVK_LAUNCH_CONFIG_SHA256")?
+    }))
 }
 
 async fn invoke(grant: &Grant, owner: &str, args: Vec<String>) -> Result<Value> {
-    let (engine, config) = configured(grant)?;
+    let (engine, instance) = configured(grant)?;
+    let handoff = if args.iter().any(|a| a == "--async") {
+        Some(snapshot(&instance)?)
+    } else {
+        None
+    };
     let mut command = tokio::process::Command::new("/usr/bin/python3");
     command
         .arg(engine)
-        .arg("--config")
-        .arg(config)
+        .arg("--instance")
+        .arg(instance)
         .arg("--owner")
         .arg(owner)
         .args(args)
         .env_clear()
         .env("PATH", "/usr/local/bin:/usr/bin:/bin")
         .env("LANG", "C.UTF-8")
-        .stdin(Stdio::null())
+        .stdin(if handoff.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .kill_on_drop(true);
     // Only the short admission/status client is managed here. Its worker creates
     // a new session, owns the lock, closes inherited I/O, and persists all stages.
-    let output = tokio::time::timeout(Duration::from_secs(15), command.output()).await??;
+    if handoff.is_some() {
+        command.arg("--snapshot-stdin");
+    }
+    let mut child = command.spawn()?;
+    if let Some(handoff) = handoff {
+        use tokio::io::AsyncWriteExt;
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| anyhow::anyhow!("Missing handoff pipe"))?;
+        stdin.write_all(&serde_json::to_vec(&handoff)?).await?;
+        stdin.shutdown().await?;
+    }
+    let output = tokio::time::timeout(Duration::from_secs(15), child.wait_with_output()).await??;
     ensure!(
         output.stdout.len() <= 65536,
         "Self restart response too large"
@@ -145,39 +178,14 @@ pub(super) async fn call(
         a.request_id.to_string(),
         "--no-new-work".into(),
     ];
-    for (key, path) in [
-        ("--binary", a.binary),
-        ("--source", a.source),
-        ("--agent-host", a.agent_host),
-        ("--frontend", a.frontend),
-    ] {
-        ensure!(path.is_absolute(), "Artifact paths must be absolute");
-        args.extend([
-            key.into(),
-            path.to_str()
-                .ok_or_else(|| anyhow::anyhow!("Non-UTF8 artifact path"))?
-                .into(),
-        ]);
-    }
-    if let Some(path) = a.manifest {
-        ensure!(path.is_absolute(), "Manifest path must be absolute");
-        args.extend([
-            "--manifest".into(),
-            path.to_str()
-                .ok_or_else(|| anyhow::anyhow!("Non-UTF8 manifest path"))?
-                .into(),
-        ]);
-    }
-    if let Some(mode) = a.frontend_mode {
-        ensure!(
-            matches!(mode.as_str(), "external" | "embedded"),
-            "Invalid frontend mode"
-        );
-        args.extend(["--frontend-mode".into(), mode]);
-    }
-    if a.retain_worktree {
-        args.push("--retain-worktree".into());
-    }
+    ensure!(a.bundle.is_absolute(), "Bundle path must be absolute");
+    args.extend([
+        "--bundle".into(),
+        a.bundle
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("Non-UTF8 bundle path"))?
+            .into(),
+    ]);
     let owned = remote.clone();
     let grant = grant.clone();
     let original = json!({"region":grant.id,"arguments":input});
@@ -195,4 +203,17 @@ pub(super) async fn call(
         }
     }).await?;
     Ok(remote.receipt_value(receipt))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bundle_contract_rejects_legacy_fields() {
+        let mut value = json!({"request_id":Uuid::new_v4(), "purpose":"fixture", "bundle":"/bundle", "no_new_work":true});
+        assert!(serde_json::from_value::<Restart>(value.clone()).is_ok());
+        value["source"] = json!("/legacy-source");
+        assert!(serde_json::from_value::<Restart>(value).is_err());
+    }
 }

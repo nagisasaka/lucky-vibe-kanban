@@ -10,7 +10,7 @@ use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "../../packages/local-web/dist"]
-struct Assets;
+pub struct Assets;
 
 pub(super) fn router(api_routes: Router) -> Router {
     Router::new()

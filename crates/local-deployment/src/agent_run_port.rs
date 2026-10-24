@@ -3638,7 +3638,7 @@ impl AgentRunPort for LocalAgentRunPort {
 fn resolve_process_host_executable() -> Result<PathBuf, AgentRunPortError> {
     if let Some(path) = std::env::var_os("VIBE_KANBAN_AGENT_PROCESS_HOST") {
         let path = PathBuf::from(path);
-        if path.is_file() {
+        if path.is_absolute() && path.is_file() {
             return Ok(path);
         }
         return Err(AgentRunPortError::Unavailable(format!(
