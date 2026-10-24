@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4dfd4ba4185626c906ba91016cfc1a3ea4b0c1eebee3c20af2d66c32b039c128",
+  "pageVersion": "sha256:d6262955a5724635b1f68c8765f4275c5b0906576cce35b15860c66c09128fa2",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -214,7 +214,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
+          "version": "repo-file-v1:sha256:78804a33da7d90effc28f14661d4d8571a324566306ec135589a19fb6668dee7"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/openwiki.rs",
@@ -228,7 +228,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
+          "version": "repo-file-v1:sha256:78804a33da7d90effc28f14661d4d8571a324566306ec135589a19fb6668dee7"
         }
       ]
     },
@@ -238,7 +238,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:6de2e76704c512f4201828bedee31118e5940f2bd2053a9c504e6994fddebb2f"
+          "version": "repo-file-v1:sha256:78804a33da7d90effc28f14661d4d8571a324566306ec135589a19fb6668dee7"
         },
         {
           "resource": "repo://crates/executors/src/legacy_wiki.rs",
@@ -613,10 +613,70 @@
           "version": "repo-lines-v1:sha256:03f6b46288566a077604f871166c5e83b3f8ab0c6ad8e715971e0a28278ef8c1:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjMGEyMzQ2N2ZmNzA4NjliNzUwMTRjMmVlYTBlMTRhNDM1NGZjYmM2NmE3YWU3Njc4ZGU0MGY4ODBhMWQ4MzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkMjcwNmQ1Mjc2MmRlNjFmNjMyYjkxN2JmZjg1NDYyOTNjMjMwMGU4MmNiZGIxNDA3OGUyOWZiYmY0OGUzNWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYmM5NWM0NTRmZDhlOGZjYTc0OWNiM2Q2MjFkZTE1OTU2MmEyZjFjNWU2YWYwYjljZDQxNmU4ZmRlNWU3ZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmYzNjODcwZDhkNTZmNTExMDcxYjg3YjNkMjBkNzExMDk3YjI0MzY5Njg0YjBjMzUyNTU0YThlZWZiOGFmNzYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_37831e8e71ee4d699d79a21ca4f88dcb",
+      "statement": "Codex discoveryは一時app-serverでmodelとSkillを順に取得し、modelの失敗・空結果・timeoutではfallbackを維持し、Skillの失敗・timeoutはload errorとして返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L475-L566",
+          "version": "repo-lines-v1:sha256:dfcbe4b48b62f2252240484a814dcf3b73fc400f74d96840bc9f7b709b2be967:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNTI4ZWMxZjBmN2FlMzAxYTEyNGNlZGMwOGI3YThkZTdhZmQxZDE3Y2JiODAzNzYxMzA4NTgzZjQ0NWY2MjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4YjhkNGVlY2FmNGQ2NzA3NWRlZDRiMzZhNjA1ZDhiZTU4OTBjNWVlZjQ3M2MzNGMxOWI1NWQxNmMyM2UyYmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0MDUwOTc0NGQ5ZjlmYTkxNjk5YWQzMzgyMWI5MzExYjY4NzZkNWRlNjg1ZGRjZDYyMWU5MzYyMjMxNDVlNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzN2NiNTdkYzVkNzYxNDJhNDgwMDE0MTA3N2U5NGMyOWU5YmRiM2I2ZDJlZjRjNTQ3OWJhOTJmODZkMWRlYTQifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L808-L827",
+          "version": "repo-lines-v1:sha256:5eab6f5481fd81cd39e0e103365bbb8b1874384f520fc42e412b26c0d5b88bc2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ODk1MDI4OWIxNThlZmNhN2I2NzM0YzgyODZmOTNjMDc2OWYwMGQzOWI2Njg4ODRkODEzNDM1MDRiYTA2NGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4YWM0ZGQ1ZWQ4MWJmZGU2MDZmMzVjYWY2MTVhZjg0NjNiNDIxNWZmNjIyZDhiZGY0YjRkZWM3YWZmMGQxMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ebf1ce61fb04eb9963cfe20cfa04346",
+      "statement": "Codex discoveryのcaller guardはtimeout・future drop・task abortでowner taskへcancelを通知し、ownerはprocess/RPC cleanupを続ける。通常はownerをawaitするが、caller消失はcleanup完了を意味しない。WebSocket handlerの切断はstreamを破棄する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L829-L943",
+          "version": "repo-lines-v1:sha256:94c8c41107bb2b38b55403a6f6c59424e8e6adb0c99433630a328bdcea3022b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2YzI5NjBhY2U4YjE2OWJlY2E2NjIwOGQyOTQ3YWNjNjQwZTU2ZjZhMzUyNGFlNzM0YTU5OWMyOGI1MzlkNDVhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ODkzZjQwZTM3ODFlYjg5NmM4MmQwNDZhMDgwNjdhMTFlMzVjZGYyZjFkZmFmMjZmZWE5MGI4ZGI2Njc2NDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmOTg4OGU1YTkxODgyMWUxN2M4NDczNmM3MjMxMDg0YzNiODZjNDI5MWY2YTQxMWM3ZTZmNzBkZTA5ZTRmMzg4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMDY5MTZmMTQ4Y2YxYjE1Yzg0N2M4MDVjN2VhN2IyMDJiNDdmODhjNGViZDRkNjI1ZDE2MGQ5NjQ0NDJjODgwIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/config.rs#L909-L940",
+          "version": "repo-lines-v1:sha256:bd3400260a5ef275abc17e80eda581550f26a2c52cbdf3572f0b7ce17b82ab39:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMzczNjcyNDY4MzZlYjNhMWFlNzNmYTRiYmIzMzcwZTBmMjUzNmI3N2ZmMmU5MTQzNTI5MTkwMWI5YTM3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmOTVlOWI0M2NlODM3ZGRiMTU2NGRkNjZmYWZkYTBmMjUyMTczNTZlMTgzMWNmNjQwMmNmZTU2YWNlNjY5ZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkZTFhODljZDNhZmE1YTA5NGYwNmY0MGNlNzM3NDg4ZjhlYWFlM2UwZTU5MGNlNjMxYmYyMTIzOWQzOTMzOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmYTlmNTc3YmYzZTM4YjZiOGY1NmFhOTVjOTM1N2UzMGZjM2FlNDYxYjVkYTViMjk0ZGZlYTNjOTlhOGZiMDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_aec16c7fc92f416fba04ce1c884056f6",
+      "statement": "Codex discoveryは所有権確立後のinitialize/probe errorと捕捉panicでもprocess cleanupと追跡RPC readerの結果を観測し、readerを5秒待機・timeout後abortして1秒待機する。cleanup失敗時はprobe成功を返さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L865-L943",
+          "version": "repo-lines-v1:sha256:195803a0f26049d75bf7c17721ddc4b418383b5ed447eef7f1c47c98ff6fc9ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZjE0OGIwOWE4YzRlOTMzODI0ZTAxNDI2ODg2ZjNmYzJkNWY0MjE2ZmUxZDZhYjg4NTgxZmYyNDdhMjlhZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NTU4ZDgyZjMyOGUwYWY3MDk3MTdhNzgzODRlZWEyMTI0MzJhMGQ2YzJlMWIwMjExNTNiZDk5ZjM5YjJjMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwNjkxNmYxNDhjZjFiMTVjODQ3YzgwNWM3ZWE3YjIwMmI0N2Y4OGM0ZWJkNGQ2MjVkMTYwZDk2NDQ0MmM4ODAifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex/jsonrpc.rs#L209-L215",
+          "version": "repo-lines-v1:sha256:2906e3001336c3a5d5223a789da4fcf26ccad8de3105450438c5129621b65c63:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmQ0NWQyNTI4MWY0NmVkOWQ2MzY3MmFiYWNhOTMwNzYwODgwYjZhNTBlMWQ5MjNlNmMwMTYxMWUwOTg3ODg0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2YzNGVhMjY2NDExN2ZmYTM3ZDc2MjQ4NWJkNTYyZjk4ZTYzMGI4M2FlY2FkMWY4NTU4ODcxYmU0Njg0M2FlZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDFkMjZjODdkYjI2ZTIxZjFmZTAyZWMzNmYwMzZhMjVlMTY3NDNlNWQ3NjFlZTc0NWFjZDQyZmYyYmI2MDg0ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDE4ODU5OTVhNjg5MTJkNzg4MDc3ZjQzMTM0MTEzYTZjZTNjOTc1YzlhMDU3MTkyZDZiYjlkZTYwYzZhZDhhYyJ9"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex/jsonrpc.rs#L72-L102",
+          "version": "repo-lines-v1:sha256:928d83d600d22502d9f1ba8cdd09c3ac0c39e6763529c808caeee5d1e067fd22:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjODc4ZTA1ODRjYmE5ZTRhMzVlZjAzNTk1MTNhOTFkZTNkYjQwZDQ2ZTgzYWJlMGRiNGMwNmRkNzFhZWY2NjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBkN2ZhMzA1MWIyMDI4NzM5NzI2ZTc5YzA5ODI3MWE5M2ZhNmE1ODNlNzYzN2FmMWRhNzZjMjVlNTY0NzRkNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk1MmViOWQ2YjJiM2Y4NmQ3M2EzOTMyNjAxMDFjMzVhZWU2MWIwM2RkYTQxNmY5N2FmZmU5YjEzZTYwZjAzMDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c95732c3fee2416298a408ae6b120df2",
+      "statement": "Linuxのdiscovery fixtureは通常・timeout・future drop・caller abortの4ケースでwrapper/native終了、leader reap、無関係process生存を検査するが実WebSocket router切断や実providerの試験ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1684-L1798",
+          "version": "repo-lines-v1:sha256:baf1dd3f0c1d3b7139049e837d315ee7700ab084c30b337075d72a413d537043:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhYjEzNmRjYmEzZDUyMWZmZjc4OWQwZWI5MzgzYmMyZTkxMWVkMDg1Njk0MGZhYTgyOGEyOWU3NTM2NWVhOGQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MjZkZGFkYmNmMWQyOTBhM2VlNzY2YzBjM2E1ZmI0OTc1MDA0ZDFjZWU2YmE0ODA4ZDU1M2U4Nzg4MzJiMTY4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYTkyMWMzZGMwN2ZiNDBjOWU1ZGQ5NDJhOGVjYTM4MzQwOGI2NzcxMzA4ZjY4MTExNGVmMmEzMmQ3ZGYzMGE4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2YzI2OTY4Njc3Mzk5ZWI4MzFhNWUwNjUxZGE5YTU0ZjZiNWQyMmU5ODRhYWUyYTkzYjNkYTBmY2RiZDIyZjNjIn0"
+        },
+        {
+          "resource": "repo://tests/codex-process-cleanup/README.md#L45-L57",
+          "version": "repo-lines-v1:sha256:3d53a75f457df161379f1650968c18d0f48f975c7125b38fcff643717a1160ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2OGE1NzdhMjdiOWNjMmI0OTlkZTEwOWVkZDI1NTM0MzEyOGFlMWU5MTdmMDdlYTg4YjJhYjFjNTI3YzJmYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZDJlZjQ2YTIxN2U5NjkwNzU1NzE4MjFmNGJkN2Q5Y2ZmMTJkMjg3OTc1NDFjYjBkNTczYWFjMjE0MjMxYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjOGQ1NGUzNzJlZTdhYTM5Mzc5OWE4MWI0MzZjMGU0ODc4MzVjNzJmOGM0OWQ0MTcwZTlkMTU4MWFhOTYzMGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlMjhlMjI4NjI1MDVkYzJhOWI2NWYyMjhjOGM4MmNlZWM0Y2I4NzI4M2JlY2U0NzBmYzEyNzM4MTkxZmRkNDgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T14:40:59.450Z"
+    "at": "2026-10-24T17:12:45.140Z"
   }
 }

@@ -30,6 +30,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-38fc795b99b30483be700b71
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
+  - id: openwiki-source-680ceb819b2bbd9dbba3a8d4
+    resource: repo://crates/executors/src/executors/codex/jsonrpc.rs
   - id: openwiki-source-1222b138c478c7fe70625991
     resource: repo://crates/executors/src/executors/mod.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -88,10 +90,12 @@ sources:
     resource: repo://tests/claude-subscription/README.md
   - id: openwiki-source-d8023ed75464072c99cdef5c
     resource: repo://tests/claude-subscription/subscription.spec.ts
-generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
+  - id: openwiki-source-141584dac09cf0f93be6bff5
+    resource: repo://tests/codex-process-cleanup/README.md
+generated: { by: "codex", at: "2026-10-24T17:12:45.140Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-24T17:12:45.140Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -134,6 +138,18 @@ model discovery が返す reasoning 候補は表示用メタデータであり�
 推論メニューは候補がなくても保持中の値があれば表示でき、一覧にない値はチェック付きの disabled 項目として示す。利用者は **Follow CLI config** を選んで `null` へ戻せる。モデルボタンのラベルも候補からモデルを取得できない場合に保持中の effort を使う。この表示は provider がその effort を受理した証拠ではない。[メニュー](../../packages/ui/src/components/ModelList.tsx#L32-L106)・[モデル行の表示条件](../../packages/ui/src/components/ModelList.tsx#L210-L220)・[ボタンのラベル](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L394-L407)
 
 これは CLI/TOML の解決方針を変更する契約ではなく、発見結果の変化で利用者の選択を暗黙に書き換えないための境界である。送信・再表示の保持は [composer の手動推論設定と復元](../concepts/session-and-agent-run.md#composer-の手動推論設定と復元)を正本とし、Scratch の None 省略、preset 選択、モデル変更時の解除をそこで説明する。[候補欠落の回帰テスト](../../packages/web-core/src/shared/lib/modelSelector.test.ts#L126-L173)は表示値の保持を検査するもので、live model の対応能力を検証しない。
+
+### Codex discovery の所有者と終了
+
+Codex discovery は model/Skill の候補を取得する一時 app-server であり、会話 turn を実行する AgentRun とは別の寿命を持つ。選択 profile と Session/Workspace/Repo の scope を解決した WebSocket stream が model probe、必要なら Skill probe を順に進める。model の失敗・空結果・timeout は fallback 候補を維持し、Skill の失敗・timeout は Skill load error を返す。候補の表示や loaded flag は process cleanup 完了の証拠ではない。[stream と probe](../../crates/executors/src/executors/codex.rs#L475-L566)・[共通 scope](../../crates/services/src/services/container.rs#L196-L235)
+
+`with_discovery_app_server` は caller の future に cancellation guard を置き、spawn・initialize・probe・cleanup を別の Tokio owner task に所有させる。caller の timeout、future drop、task abort は cancellation を通知するが、owner task 自体を drop しない。WebSocket handler の切断も stream を破棄する入口となる。通常呼出しは owner の終了まで await する一方、timeout や切断が返った時点では cleanup がまだ進行し得る。[owner と guard](../../crates/executors/src/executors/codex.rs#L829-L943)・[WebSocket の終了](../../crates/server/src/routes/config.rs#L909-L940)
+
+所有権の確立後は initialize/probe の error や捕捉した panic でも transport cancellation、owned process cleanup、追跡した JSON-RPC reader の待機へ進む。reader は最大5秒待ち、timeout なら abort 後に最大1秒で停止を確認する。process cleanup と reader cleanup の結果を両方観測し、cleanup が失敗すれば成功した probe の結果を返さない。spawn/所有権確立自体の失敗はこの後段 cleanup 保証とは別である。[cleanup と失敗](../../crates/executors/src/executors/codex.rs#L865-L943)・[reader の追跡と終了](../../crates/executors/src/executors/codex/jsonrpc.rs#L72-L102)・[transport shutdown](../../crates/executors/src/executors/codex/jsonrpc.rs#L209-L215)
+
+group の識別子再利用防止、自然終了時の orphan 回収、別 session の子孫 snapshot と失敗時の限界は [Runtime の owned process group](../architecture/agent-runtime.md#linux-の-owned-process-group)を正本とする。この owner は外部 supervisor ではなく、Tokio runtime 全体の破棄や OS kill を越えて回収する保証はない。
+
+Linux の `discovery_cleanup_normal_timeout_drop_abort` は fake app-server を使い、通常・timeout・future drop・caller abort の4ケースで wrapper/native の終了、leader reap、無関係なプロセスの生存を確認する。future drop は実 WebSocket router の切断試験ではなく、公式 CLI・実 provider/model・非 Linux の動作確認でもない。[実 Rust fixture](../../crates/executors/src/executors/codex.rs#L1684-L1798)・[試験結果と限界](../../tests/codex-process-cleanup/README.md#executed-rust-validation-2026-10-25-jst)。今回の静的照合と正式 Integration の検証省略は [cleanup の検証範囲](../architecture/agent-runtime.md#codex-cleanup-の検証範囲)に記録した。
 
 ## Claude のサブスクリプション専用 profile
 

@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T17:12:45.140Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -43,6 +43,8 @@ sources:
     resource: repo://crates/utils/src/native_audit.rs
   - id: openwiki-source-991414672d835fda0eead290
     resource: repo://crates/utils/src/process.rs
+  - id: openwiki-source-7272325fd3387a1cecfd5cbc
+    resource: repo://crates/utils/src/process/owned_group.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-11be03870aae85a259cab5c1
@@ -51,7 +53,9 @@ sources:
     resource: repo://docs/future/agent-runtime/data-planes-and-recovery.md
   - id: openwiki-source-37db6fa2c961da1810d195e7
     resource: repo://docs/future/agent-runtime/README.md
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+  - id: openwiki-source-141584dac09cf0f93be6bff5
+    resource: repo://tests/codex-process-cleanup/README.md
+generated: { by: "codex", at: "2026-10-24T17:12:45.140Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -72,7 +76,7 @@ Codex の command/file approval waiter は provider と同じ process host に�
 
 UI の ResolveApproval は host の waiter を解決する。Codex では port 側で解決 event を先行生成せず、request handler が待機結果（timeout・取消を含む）から `approval_resolved` を出す。`approval_requested` / `approval_resolved` と未解決件数の通知を adapter が canonical に投影し、件数が残る間は AwaitingApproval、0 で Running にする。native request ID への応答と semantic control の監査記録は異なるものであり、UI の回答受付だけを native 操作の実行成功と扱わない。[制御配送](../../crates/local-deployment/src/agent_run_port.rs#L3318-L3367)・[client の結果記録](../../crates/executors/src/executors/codex/client.rs#L971-L1092)・[件数の投影](../../crates/executors/src/executors/provider_adapter.rs#L1522-L1535)
 
-Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・protocol failure・通常終了でも cancellation token を cancel して承認 task を解放する。その後に既存 process cleanup、control 解放、出力 drain を行う。waiter の配置はアプリとの再接続を意図したものだが、この変更の fixture 試験はサーバー再起動越しの回復まで証明しない。[終了処理](../../crates/local-deployment/src/process_host.rs#L1054-L1073)・[検証の境界](../concepts/session-and-agent-run.md#承認の検証範囲)
+Host の監視 loop を離れた際は、明示 Cancel でなく EOF・crash・protocol failure・通常終了でも cancellation token を cancel して承認 task を解放する。その後に既存 process cleanup、control 解放、出力 drain を行う。waiter の配置はアプリとの再接続を意図したものだが、この変更の fixture 試験はサーバー再起動越しの回復まで証明しない。[終了処理](../../crates/local-deployment/src/process_host.rs#L1061-L1085)・[検証の境界](../concepts/session-and-agent-run.md#承認の検証範囲)
 
 ## 四つのデータ経路
 
@@ -111,17 +115,17 @@ provider の「turn 完了」と Host の終了は別である。成功を最終
 
 ### 終了時の stdout 所有権と drain
 
-Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置換 pipe の writer を `LogWriter` に持たせる。`DeferredCodexControl → AppServerClient → LogWriter` という参照が残ると、provider の cleanup 後も Host 自身が writer を保持し、EOF を待てなくなる。`monitor_process` は制御 loop と既存の process cleanup を終えた後、出力 drain の前に `drop(control)` する。この順序は不要になった所有参照を解放するためであり、cleanup を省略するものではない。[pipe と control の生成](../../crates/executors/src/executors/codex.rs#L1307-L1368)・[writer の所有](../../crates/executors/src/executors/codex/client.rs#L2041-L2064)・[解放位置](../../crates/local-deployment/src/process_host.rs#L1054-L1073)
+Codex adapter は実 stdout を JSON-RPC transport に渡し、Host が読む置換 pipe の writer を `LogWriter` に持たせる。`DeferredCodexControl → AppServerClient → LogWriter` という参照が残ると、provider の cleanup 後も Host 自身が writer を保持し、EOF を待てなくなる。`monitor_process` は制御 loop と既存の process cleanup を終えた後、出力 drain の前に `drop(control)` する。この順序は不要になった所有参照を解放するためであり、cleanup を省略するものではない。[pipe と control の生成](../../crates/executors/src/executors/codex.rs#L1342-L1403)・[writer の所有](../../crates/executors/src/executors/codex/client.rs#L2041-L2064)・[解放位置](../../crates/local-deployment/src/process_host.rs#L1061-L1085)
 
-drain の上限は5秒のままで、残った出力の投影・監査失敗を処理してから Audit close と Host Terminal へ進む。drain timeout 自体は警告を記録し provider terminal status を維持するため、timeout と AuditFailure を同一視しない。EOF 所有権の修正は、上限短縮や画面の先行した送信再開とは異なる。Unix の process group 停止には引き続き SIGINT / SIGTERM 後の各2秒の猶予があり、全終了が即時になる保証はない。[drain と終端保存](../../crates/local-deployment/src/process_host.rs#L1062-L1173)・[drain 定数](../../crates/local-deployment/src/process_host.rs#L68)・[停止の猶予](../../crates/utils/src/process.rs#L168-L207)
+drain の上限は5秒のままで、残った出力の投影・監査失敗を処理してから Audit close と Host Terminal へ進む。drain timeout 自体は警告を記録し provider terminal status を維持するため、timeout と AuditFailure を同一視しない。EOF 所有権の修正は、上限短縮や画面の先行した送信再開とは異なる。Linux の owned group 停止には SIGINT / SIGTERM 後に各最大2秒の猶予があるが、捕捉した全プロセスの終了を確認すれば早く抜ける。固定4秒の待機ではなく、最後の再走査と leader 回収も必要である。詳細は [group 所有権](#linux-の-owned-process-group)を参照する。[drain と終端保存](../../crates/local-deployment/src/process_host.rs#L1085-L1204)・[drain 定数](../../crates/local-deployment/src/process_host.rs#L68)・[停止の猶予](../../crates/utils/src/process/owned_group.rs#L79-L160)
 
-Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS pipe の writer を保持させ、最終 bytes が監査へ入り、2秒未満で終端へ到達し、Audit が Complete になることを検査する。provider 完了証拠のない exit 0 は Crashed、非ゼロ終了は Failed のままであり、所有権解放が成功条件を弱めないことも確認する。[回帰試験](../../crates/local-deployment/src/process_host.rs#L1499-L1613)。実 backend から次の Send までの検証範囲・測定限界は [terminal 回帰試験の運用](../operations/development.md#terminal-から次操作までの回帰試験)に置く。
+Unix の `terminal_drain_releases_control_owned_output` は、control に実 OS pipe の writer を保持させ、最終 bytes が監査へ入り、2秒未満で終端へ到達し、Audit が Complete になることを検査する。provider 完了証拠のない exit 0 は Crashed、非ゼロ終了は Failed のままであり、所有権解放が成功条件を弱めないことも確認する。[回帰試験](../../crates/local-deployment/src/process_host.rs#L1603-L1717)。実 backend から次の Send までの検証範囲・測定限界は [terminal 回帰試験の運用](../operations/development.md#terminal-から次操作までの回帰試験)に置く。
 
 ### OS 終了より遅い provider 終端証拠
 
 高速な CLI では OS の exit が最終 stdout frame より先に監視 loop へ届く。drain 中に `ProviderTerminal` が届いた場合、現在の原因が正常な `Process` 終了のときだけ、その provider status を採用する。exit 0 だけでは成功にせず、既に選んだ取消・監査エラー・非ゼロ終了を後着の成功で上書きしない。drain 内の監査・protocol failure は引き続き終端原因となり、Audit close と Host Terminal の保存順も維持する。[採用条件と最終化](../../crates/local-deployment/src/process_host.rs#L1073-L1183)
 
-`process_exit_before_terminal_output_preserves_provider_evidence` は、process 終了の選択後に通知を送る handshake で順序を固定し、exit 0＋provider success、exit 0＋provider failure、exit 1＋provider success を検査する。これは shared host の契約であり、[Claude subscription](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)だけの別 scheduler ではない。[順序の回帰試験](../../crates/local-deployment/src/process_host.rs#L1421-L1497)
+`process_exit_before_terminal_output_preserves_provider_evidence` は、process 終了の選択後に通知を送る handshake で順序を固定し、exit 0＋provider success、exit 0＋provider failure、exit 1＋provider success と取消を検査する。Linux では wrapper が残した子の終了と無関係なプロセスの生存も確認する。これは shared host の契約であり、[Claude subscription](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)だけの別 scheduler ではない。[順序の回帰試験](../../crates/local-deployment/src/process_host.rs#L1433-L1601)
 
 ## 制御入力の送信と監査の順序
 
@@ -183,10 +187,24 @@ Kanban 同期は単一 event と host batch の両保存経路で、reducer が 
 
 host は native interrupt の前に子プロセスを捕捉し、送信できた場合は最大2秒、provider 自身による tool cleanup を待ってから transport を閉じる。native interrupt が利用不能でも取消を中断せず、process group と捕捉した子の終了を並行して試みる。両方の cleanup が成功して初めて Cancelled とし、待機失敗は Crashed になる。取消応答も監査の終了と terminal 記録の後で返す。[取消経路](../../crates/local-deployment/src/process_host.rs#L941-L1042)、[完了応答](../../crates/local-deployment/src/process_host.rs#L1090-L1166)、[失敗状態](../../crates/local-deployment/src/process_host.rs#L1227-L1241)
 
-Linux では別 session に移る tool も扱うため `/proc` から子孫を列挙し、親と開始時刻を再照合した pidfd を保持する。PID 再利用で無関係なプロセスを停止しないための仕組みであり、捕捉後の daemon 化まで閉じ込める sandbox ではない。Linux 以外ではこの子孫捕捉は空の処理となり、既存 process group cleanup に依存する。[捕捉の範囲](../../crates/utils/src/process.rs#L8-L83)、[終了確認](../../crates/utils/src/process.rs#L85-L136)。独立 session の子だけを停止する [focused test](../../crates/utils/src/process.rs#L220-L259)と、応答しない native interrupt でも取消が有限時間で進む [test](../../crates/local-deployment/src/process_host.rs#L1517-L1553)がある。
+Linux では別 session に移る tool も扱うため `/proc` から子孫を列挙し、親と開始時刻を再照合した pidfd を保持する。PID 再利用で無関係なプロセスを停止しないための仕組みであり、捕捉後の daemon 化まで閉じ込める sandbox ではない。Linux 以外ではこの子孫捕捉は空の処理となり、既存 process group cleanup に依存する。[捕捉の範囲](../../crates/utils/src/process.rs#L8-L83)、[終了確認](../../crates/utils/src/process.rs#L85-L136)。独立 session の子だけを停止する [focused test](../../crates/utils/src/process.rs#L220-L259)と、応答しない native interrupt でも取消が有限時間で進む [test](../../crates/local-deployment/src/process_host.rs#L1863-L1899)がある。
+
+### Linux の owned process group
+
+`OwnedProcessGroup` は provider を起動した所有者が終了まで保持する識別情報であり、独立 supervisor ではない。共通 process host と [Codex discovery の owner task](../integrations/agent-providers.md#codex-discovery-の所有者と終了)で使う。Linux では `waitid(P_PIDFD, WNOWAIT)` で終了を観測して leader を未回収のまま保持し、PID・開始時刻・PGID・session と親を照合する。leader を先に reap してから数値 PGID だけに signal を送ると識別子再利用を防げないため、回収を cleanup の最後に置く。[所有と待機](../../crates/utils/src/process/owned_group.rs#L16-L53)・[identity 検査](../../crates/utils/src/process/owned_group.rs#L226-L290)・[非回収 wait](../../crates/utils/src/process/owned_group.rs#L326-L354)
+
+host は Linux の自然終了でも group cleanup を省略しない。cleanup は anchor を照合して同じ group/session の member を `/proc` から再走査し、開始時刻を照合した pidfd だけへ signal を送る。SIGINT / SIGTERM の各最大2秒の猶予後、最大5秒で SIGKILL・再走査・終了確認を繰り返し、成功後に最大5秒で leader を reap する。観測時点の別 session の子孫も既存 snapshot で捕捉し、group と並行して停止する。これは将来の任意の daemon を閉じ込める保証ではなく、観測前に逃れて reparent された子孫は保証範囲外である。[host の自然終了](../../crates/local-deployment/src/process_host.rs#L888-L923)・[cleanup と回収順](../../crates/utils/src/process/owned_group.rs#L79-L160)
+
+所有権の確立失敗・終了待機失敗は host の `WaitFailure` となり、`Crashed` へ分類する。group と子孫の cleanup が両方失敗した場合は両方の理由を保持する。未確認の所有権を drop しても自動回収は走らず、Linux では未完了のログを残す。OS kill や Tokio runtime 全体の破棄を越える回収保証ではない。非 Linux は従来の group cleanup を使い、自然終了後の追加 cleanup は導入しない。[host の失敗](../../crates/local-deployment/src/process_host.rs#L1040-L1083)・[分類](../../crates/local-deployment/src/process_host.rs#L1275-L1282)・[未完了 drop](../../crates/utils/src/process/owned_group.rs#L164-L173)・[検証限界](../../tests/codex-process-cleanup/README.md#ownership-and-limits)
 
 ## 変更時の検証と未解決点
 
 `host_batch_commits_events_projection_and_cursor_atomically` は密な sequence、重複受信、内容衝突時の event・cursor・provider session の rollback を検証する。[テスト](../../crates/db/src/models/agent_runtime.rs#L2392-L2512)を、mapper や永続化単位の変更時に確認する。
 
 完全な canonical projection を Native Audit から再構築する管理操作は、[回復文書](../../docs/future/agent-runtime/data-planes-and-recovery.md#compatibility-and-future-work)では将来作業とされる。失敗台帳が存在することを自動修復の保証と解釈しない。古い mapper と履歴の互換性を含む設計意図は [Runtime 目標設計](../../docs/future/agent-runtime/architecture.md)に記録されており、個別機能の実装有無は現行 adapter と照合する。
+
+### Codex cleanup の検証範囲
+
+[隔離回帰の説明](../../tests/codex-process-cleanup/README.md)は Python による wrapper-only 死亡の機構再現、Linux primitive の確認、実 Rust の owner/RPC/host 経路を区別する。utils の [direct-drop 再現と owned orphan cleanup](../../crates/utils/src/process/owned_group.rs#L358-L470)、host の [自然終了・取消 fixture](../../crates/local-deployment/src/process_host.rs#L1433-L1601)、既存の drain・native interrupt 試験が変更時の入口となる。実 WebSocket router 切断、実 provider/model、非 Linux、runtime 全体の破棄はこの fixture 群の検証結果に含めない。過去に消えた PID の発生源も確定していない。
+
+今回の Sync は凍結入力全4チャンクの hash と統合 source `90a48e66f19509f44aab65900ccbc0462efdef04` を照合した。discovery の WebSocket・scope 解決、model/skill probe、RPC reader、共通 host の自然終了・取消・drain、utils の identity・子孫 snapshot、独立 fixture 定義から対象を確認した。凍結 Change Manifest と上記検証記録は開発時の focused Rust 成功（utils 5、discovery 1試験内4ケース、host 10）を報告するが、最終 Integration は明示的に検証省略されている。この文書保守は静的照合であり、製品テストの再実行や無関係な Wiki 全体の再検証ではない。
