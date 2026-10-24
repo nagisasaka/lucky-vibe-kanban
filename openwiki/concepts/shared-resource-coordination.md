@@ -24,7 +24,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T14:51:11.908Z
 ---
 
 # 共有リソースの所有権と AI 調停

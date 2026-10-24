@@ -194,6 +194,8 @@ sources:
     resource: repo://tests/kanban/isolated.mjs
   - id: openwiki-source-62d93277f2c37df9b3fcebae
     resource: repo://tests/kanban/README.md
+  - id: openwiki-source-2651e132dfea3c98790877f6
+    resource: repo://tests/resource-observation/model.test.mjs
   - id: openwiki-source-b1f4325353088fa9d003b939
     resource: repo://tests/server-access/workspace-wiki.mjs
   - id: openwiki-source-4bfe8064f685e5073ef06513
@@ -202,10 +204,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-24T14:54:41.863Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:27:43.655Z
+    at: 2026-10-24T14:54:41.863Z
 ---
 
 # Web の実行環境と同期
@@ -250,7 +252,9 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 
 NavbarContainer は `useResourceObservation` の値を UI の ResourceSummary に渡す。認証付き `GET /api/resource-observation` は [MCP と共通の collector](../integrations/remote-access.md#オンデマンド資源観測)を使い、別の CPU sampler や監視 daemon を作らない。HTTP は `no-store`、collector の失敗は503になる。[HTTP](../../crates/server/src/routes/resource_observation.rs#L9-L25)・[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L297-L302)
 
-query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は data(D) と worktree base(W) を別々に示し、tooltip に空き容量と filesystem identity を残す。70%以上を橙、80%以上を赤にし、表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L72)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L69)
+query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は worktree filesystem 一つを `DISK 90% (900GB / 1000GB)` の形で示す。容量は10進 GB（1 GB = 1,000,000,000 bytes）で小数第2位まで丸め、不要な末尾ゼロを省く。tooltip は対象・使用量/物理総容量という意味・単位・観測時刻を説明する。[観測対象と分母の契約](../integrations/remote-access.md#disk-の対象と読み取り専用の解決)を正本とする。70%以上を橙、80%以上を赤にし、表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L77)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L68)
+
+表示モデルは `worktree_base` がちょうど一件で known、total が正、used が0以上total以下、percent が0〜100、かつ `used / total * 100` との差が `0.000001` 未満の場合だけ DISK の三つの値を採用する。欠落・重複・不正・古い値ではまとめて灰色の `DISK — (— / —)` にし、正常な CPU/RAM は保持する。schema番号自体による分岐ではなく表示する数値を検査するため、旧分母の値も不整合なら未知になる。[整合性検査](../../packages/ui/src/lib/resourceObservation.ts#L43-L77)・[欠落・重複・旧分母・0/100の回帰](../../tests/resource-observation/model.test.mjs#L80-L119)
 
 モバイルは資源表示と icon/user group を折り返して狭幅に収める。観測対象と unknown の意味は collector の正本で確認し、LOAD・SWAP をこのヘッダーへ読み替えない。回帰入口は `tests/resource-observation/model.test.mjs`、component fixture、実 NavbarContainer と認証 router を通す `full-app.mjs`。実 Auth0、別 mount、OS による tab backgrounding は別の検証である。[配置](../../packages/ui/src/components/Navbar.tsx#L350-L390)・[試験](../../tests/resource-observation/README.md)
 

@@ -92,12 +92,14 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-d6e65c1c70d582aa76ba14d4
     resource: repo://docs/development/chatgpt-mcp-setup.md
+  - id: openwiki-source-a6728d75b2bdf1a00440e8fa
+    resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-24T11:23:36.861Z" }
+generated: { by: "codex", at: "2026-10-24T14:51:11.908Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:23:36.861Z
+    at: 2026-10-24T14:51:11.908Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -292,7 +294,7 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 
 ### 可視範囲と値の意味
 
-schema version 1 は収集開始の `timestamp`、終了応答の `completed_at`、`scope`、`system_visible`、`cgroup`、`disks`、`completion`、`errors` を返す。ファイルを順番に読むため atomic snapshot ではない。`scope.statistics` は常に `system-visible`、environment と physical-host visibility は `unknown` である。VPS / container の外側まで見えているとは断定できず、system-visible 使用率を container 内の使用率や実行に使える余力へ読み替えない。[応答初期値と順次収集](../../crates/server/src/resource_observation.rs#L41-L134)
+schema version 2 は収集開始の `timestamp`、終了応答の `completed_at`、`scope`、`system_visible`、`cgroup`、`disks`、`completion`、`errors` を返す。ファイルを順番に読むため atomic snapshot ではない。`scope.statistics` は常に `system-visible`、environment と physical-host visibility は `unknown` である。VPS / container の外側まで見えているとは断定できず、system-visible 使用率を container 内の使用率や実行に使える余力へ読み替えない。[応答初期値と順次収集](../../crates/server/src/resource_observation.rs#L41-L134)
 
 | 観測 | 解釈 |
 | --- | --- |
@@ -307,9 +309,11 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 ### DISK の対象と読み取り専用の解決
 
-`disks` は設定された data と worktree base の各 directory handle に `fstatvfs` を行い、容量・使用量・一般ユーザーが使える空き容量・filesystem identity を別々に返す。同一 filesystem でも合算しない。使用率は予約blockを考慮した `used / (used + available)` であり、単純な used/total ではない。[収集と算式](../../crates/server/src/resource_observation/disk.rs#L1-L93)
+`disks` は `worktree_base` 一件だけを返す。設定された worktree base（override を含む）の directory handle に `fstatvfs` を行うため、これは worktree 配下のファイルサイズ合計ではなく、その保存先 filesystem 全体の使用量である。data directory は観測しない。schema v2 は対象数と使用率の意味の変更を表すため、consumer は旧配列位置ではなく target で選択する。[単一対象](../../crates/server/src/resource_observation/disk.rs#L8-L30)・[v2 の移行契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)
 
-保存先は directory を作らない resolver で求め、不在を親directoryの値で代用しない。DirectFolder や配下の別 mount を網羅する測定でもない。欠落・非directory・不正counterはその対象だけ unknown とする。[読み取り専用 resolver](../../crates/utils/src/assets.rs#L15-L28)・[worktree base](../../crates/worktree-manager/src/worktree_manager.rs#L619-L625)・[欠落を作成しない試験](../../crates/server/src/resource_observation/disk.rs#L140-L150)
+既知の観測は `total_bytes`、`used_bytes`、`available_bytes`、`used_percent`、`percent_basis: "used / total"`、文字列の device ID `filesystem_id` を持つ。total は `f_blocks * f_frsize`、free は `f_bfree * f_frsize`、used は total − free、percent は `used / total * 100` であり、量と率が同じ物理 filesystem 総容量を基準にする。一般ユーザーが使える `available_bytes` は `f_bavail * f_frsize` の生 API 値として保持するが、分母には使わない。例えば total=1000、free=300、available=200 なら used=700、70% となる。「物理容量」はこの filesystem の分母の意味であり、上記の physical-host visibility が既知になるわけではない。[算式・counter 読取](../../crates/server/src/resource_observation/disk.rs#L32-L73)・[予約領域が異なる例と0/100%](../../crates/server/src/resource_observation/disk.rs#L83-L97)。表示単位と不整合値の扱いは [Web の表示契約](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)へ進む。
+
+保存先は directory を作らない resolver で求め、不在を親directoryの値で代用しない。DirectFolder や配下の別 mount を網羅する測定でもない。欠落・非directory・読取失敗・counter overflow、total=0、free>total、available>free は DISK を unknown にする。他の成功した観測値は保持する。[読み取り専用のパス解決](../../crates/utils/src/path.rs#L117-L125)・[worktree base](../../crates/worktree-manager/src/worktree_manager.rs#L618-L624)・[失敗条件](../../crates/server/src/resource_observation/disk.rs#L32-L79)・[単一対象と非作成の試験](../../crates/server/src/resource_observation/disk.rs#L99-L137)
 
 ### 部分失敗と worker の寿命
 
@@ -317,7 +321,7 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/resource_observation.rs#L10-L31)・[worker 所有権](../../crates/server/src/resource_observation.rs#L197-L220)
 
-変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L223-L364)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1487-L1553)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。この Sync は source とテスト内容の確認であり、テスト再実行、実 Auth0 / ChatGPT 接続、他 OS の検証は行っていない。
+変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L220-L361)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1493-L1560)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。`live_smoke` は明示実行用の ignored test である。[開発時の検証記録](../../tests/resource-observation/VALIDATION.md)には単一 DISK の対象試験と smoke の成功、full-app harness の更新と構文確認が記録されているが、新仕様の full-app E2E は再実行されていない。今回の Sync は固定 source `8ea251d0bc234497e69e20588420900d011fddf3` とテスト定義の静的照合であり、供給された正式 Integration は明示的な検証省略だった。テスト再実行、実 Auth0 / ChatGPT 接続、実際に異なる mount、他 OS の検証は行っておらず、無関係な既存節の再検証も意味しない。
 
 ## 外部実行とモバイル設計
 

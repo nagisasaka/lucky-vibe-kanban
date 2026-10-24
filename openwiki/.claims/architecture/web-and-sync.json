@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c1afe394540835538a60f03b2a838f6a9f29af43f2207bf22fae380e68f04e95",
+  "pageVersion": "sha256:a0209289fbd49adf80d08ef203d7c4dc3596b387069e12b6705b4e631aeea7f6",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1072,19 +1072,19 @@
     },
     {
       "id": "claim_aebb50f355e04ce98754e37e90c57598",
-      "statement": "資源ヘッダーは認証付きHTTPからMCPと共通のcollectorを読み、visible時15秒周期で取得する。失敗・非表示・45秒以上古い値は未知表示とし、RAMはavailable基準、DISKはdataとworktreeを分離し70/80%で色を変える。",
+      "statement": "資源ヘッダーは認証付きHTTPからMCPと共通のcollectorをvisible時15秒周期で読み、失敗・非表示・45秒以上古い値を未知表示にする。RAMはavailable基準、DISKはworktree filesystem一つの使用率と使用量/総容量を10進GBで示し、70/80%で色を変える。",
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/resource_observation.rs#L9-L25",
           "version": "repo-lines-v1:sha256:18f50aa8769a6afe37c8cfcbb708d141348d4469ed1e5565cad4dbb1f5660196:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNWM4NmU3ZDM2YWQzYTg3NTc5MTU4YTNkZmY2ZWM0OWZmNTU3MTdmOThlMzkyNTcwZmYzYmJiZmY5Yzg5NjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YmFhMDdjYjcxNDkzNDQ4OGE3NDVhNWIxNWQ2YmEzMzNhMWYyMDVkMmRmMDRhNjQwMzk4YzBlMzZjMWY4NWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
         },
         {
-          "resource": "repo://packages/ui/src/components/ResourceSummary.tsx#L1-L69",
-          "version": "repo-lines-v1:sha256:3bcc847b1e29b13e1eeb60b11bb08de939cf7006cf4dcee188bd28f023419f50:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ODJkZjQ4N2I4OTAyMzhjZjE1NmRjYjAwZDcwN2U3MGZmNzJhMGYwZGYzMWU2YjEzNzA3MjIwOGNkZmIyMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/components/ResourceSummary.tsx#L1-L68",
+          "version": "repo-lines-v1:sha256:784a7cf155100f3934f82e755c7f5b39bdb535563b8ffa693b7c4f41786796e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ODJkZjQ4N2I4OTAyMzhjZjE1NmRjYjAwZDcwN2U3MGZmNzJhMGYwZGYzMWU2YjEzNzA3MjIwOGNkZmIyMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L1-L72",
-          "version": "repo-lines-v1:sha256:6afac7bae1889a06499f24ab7ad4a953e970991412dfd2de64ffdf3891e21c37:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NjY0ZjAwYzQ4OTVmOTY0ZDZhYzY2ZmFkM2ViYjVjZjQ2Y2NhY2YyNWE0ZjAxOTMzZTEzZjRjZDkwODQ0YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L1-L77",
+          "version": "repo-lines-v1:sha256:eabde3cbcb3d0849b192b0672a3ec4c2071fb753f49fff4bddd7d59007be7a41:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NjY0ZjAwYzQ4OTVmOTY0ZDZhYzY2ZmFkM2ViYjVjZjQ2Y2NhY2YyNWE0ZjAxOTMzZTEzZjRjZDkwODQ0YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45",
@@ -1167,10 +1167,24 @@
           "version": "repo-lines-v1:sha256:c8daad78da485d3fda775276c61abd3300b3a3b896fd33c138bbe316aa1b8f06:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4Mzg5ODYxOGNmMWU4MGMzODcwYTI2MzVmOWEyNjIyNmI5ZjFiNzgxMjVlYzI2NTEyYjg0N2RkNTEzM2Q0MmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxMWNhNmJhYjZiNjZlYzhjMWFiM2MwMjcwMDU5MjU4OTAzODVhNTI1YzA4ZTEwYzUyMDQ2YTNmODJhMmE5NzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_5c200e6106ce4e058cd8cad2fb41d9ea",
+      "statement": "DISK表示は一件のknown worktree_baseについて正のtotal、0以上total以下のused、0〜100のpercentとused/total*100との差0.000001未満を要求する。欠落・重複・不整合・staleなら三値を未知にするが正常なCPU/RAMは保持し、schema番号では分岐しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L28-L77",
+          "version": "repo-lines-v1:sha256:d3bab827ff86ad0fae2e1d3ffba6b476845f2f1c3d9a61a0082bfeb8600094ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOWExMGVhZDE0NDA2MDE3NDhiMThmYzNjZjY0MGZjMDg0OWQzMzc4YTgxZGYyZjY3YmI2ZGE0MGJhYjhmZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZTU1NmNjY2E4YzYzZGExY2QwODFhZTllOGMxZWU1ZTdkNjhiZWRiN2MwYmRhNTBlYmM3MDE3ZTcwZGYyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/resource-observation/model.test.mjs#L80-L119",
+          "version": "repo-lines-v1:sha256:3d52bc99b65feb2c388f7c91ff54688273a3c6df3e6116846d0b13d1d82497d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NmEyNDU1MzI5MDI3OGU4M2EzMzE1NDA4YmViOTBkMDlhMTcxNTk1ZTI5NWNiZmFkMjVlZjNkMjAwZTcyYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyYTYyNTcxMWFkMjkxYzJmNTdkNTY1ZmY1NjZiNDM0NmMwYWM4YmFjY2I5M2UzNDliZTQzMzJhOWMwZTFmNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T02:27:43.655Z"
+    "at": "2026-10-24T14:54:41.863Z"
   }
 }
