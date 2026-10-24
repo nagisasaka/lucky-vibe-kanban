@@ -8,7 +8,6 @@ import { useIsMobile } from '@/shared/hooks/useIsMobile';
 import { useVisualViewportHeightVar } from '@/shared/hooks/useVisualViewportHeightVar';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { cn } from '@/shared/lib/utils';
-import { isTauriMac } from '@/shared/lib/platform';
 
 import { NavbarContainer } from './NavbarContainer';
 import { AppBar } from '@vibe/ui/components/AppBar';
@@ -260,11 +259,7 @@ export function SharedAppLayout() {
         {!isMobile && (
           <>
             {/* Desktop corner spacer. */}
-            <div
-              data-tauri-drag-region
-              className="bg-secondary"
-              style={isTauriMac() ? { minWidth: 56 } : undefined}
-            />
+            <div className="bg-secondary" />
             {/* Desktop navbar. */}
             <NavbarContainer onOpenDrawer={() => setIsDrawerOpen(true)} />
             {/* Desktop AppBar sidebar. */}

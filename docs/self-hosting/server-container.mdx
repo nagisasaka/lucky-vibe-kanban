@@ -314,7 +314,7 @@ The legacy LVK npx launcher and its npm packaging, download, extraction and cach
 | --- | --- |
 | `npx lucky-vibe-kanban` (default server/browser launch) | Use the Docker setup on this page, or `pnpm run dev` for source development. |
 | `lucky-vibe-kanban mcp` and `lucky-vibe-kanban --mcp` | Use the directly built `vibe-kanban-mcp --mode global` stdio binary, or the [authenticated external MCP endpoint](/self-hosting/authentication). Pass `--mode orchestrator` explicitly when required. |
-| `lucky-vibe-kanban --desktop` | Use `pnpm run tauri:dev` or `pnpm run tauri:build` in a desktop-capable source environment. Tauri itself remains supported in source. |
+| `lucky-vibe-kanban --desktop` | Open the Docker server in your browser (or use the source web development environment). The Tauri desktop shell and its build commands are retired. |
 | `build:npx`, `build:npx-cli`, `check:npx-cli`, `prepack`, `test:npm` and `local-build.sh` (including `--desktop` / `--all`) | Use the source commands below or the Docker release workflow. npm archives are no longer built or tested. |
 
 From a source checkout with the repository's Node, pnpm and Rust toolchains, you can build the server and stdio MCP binaries directly:
@@ -327,7 +327,7 @@ cargo build --locked --release --bin server --bin agent-process-host --bin vibe-
 
 Run `target/release/server` with your existing instance configuration. For a local stdio MCP client, configure the absolute path to `target/release/vibe-kanban-mcp` with arguments `--mode global`, and point it at the intended running server with `VIBE_BACKEND_URL` or `MCP_HOST` / `MCP_PORT`. Existing authentication and authorisation requirements still apply. Docker continues to include all three binaries; the HTTP MCP API, OAuth and permissions are unchanged.
 
-This removal does not delete existing application data, downloaded binaries or caches such as `~/.vibe-kanban/bin`. Previously downloaded launchers are not updated or disabled by this source change. Agent CLIs (including Codex), third-party MCP launch commands using npx, Tauri, Arena, notifications and editor integrations are unaffected.
+This removal does not delete existing application data, downloaded binaries or caches such as `~/.vibe-kanban/bin`. Previously downloaded launchers are not updated or disabled by this source change. Agent CLIs (including Codex), third-party MCP launch commands using npx, Arena, browser notifications and editor integrations are unaffected. The subsequent Tauri retirement removes only its native shell and bridges: Web Push, in-app notifications, browser sound playback, native browser paste and server-side editor opening remain available. Existing desktop data and downloaded applications are not removed or migrated automatically.
 
 ## Validation boundaries
 

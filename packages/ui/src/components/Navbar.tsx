@@ -433,18 +433,15 @@ export function Navbar({
   }
 
   // ---- Desktop layout ----
-  // data-tauri-drag-region must be on every non-interactive element for Tauri 2
-  // window dragging to work (the attribute does not propagate to children).
   return (
     <nav
-      data-tauri-drag-region
       className={cn(
         'flex min-w-0 items-center justify-between px-base py-half bg-secondary border-b shrink-0',
         className
       )}
     >
       {/* Left - Archive & Old UI Link + optional slot */}
-      <div data-tauri-drag-region className="flex-1 flex items-center gap-base">
+      <div className="flex-1 flex items-center gap-base">
         {leftItems.map((item, index) =>
           renderItem(
             item,
@@ -455,30 +452,21 @@ export function Navbar({
       </div>
 
       {/* Center - Breadcrumbs or Workspace Title */}
-      <div
-        data-tauri-drag-region
-        className="flex-1 flex items-center justify-center min-w-0"
-      >
+      <div className="flex-1 flex items-center justify-center min-w-0">
         {breadcrumbs && breadcrumbs.length > 0 ? (
           <NavbarBreadcrumbs
             breadcrumbs={breadcrumbs}
             textClassName="text-base"
           />
         ) : (
-          <p
-            data-tauri-drag-region
-            className="text-base text-low truncate cursor-default select-none"
-          >
+          <p className="text-base text-low truncate cursor-default select-none">
             {workspaceTitle ?? ''}
           </p>
         )}
       </div>
 
       {/* Right - Sync Error Indicator + Diff Controls + Panel Toggles (dividers inline) */}
-      <div
-        data-tauri-drag-region
-        className="flex-1 flex items-center justify-end gap-base"
-      >
+      <div className="flex-1 flex items-center justify-end gap-base">
         {resourceSlot}
         <SyncErrorIndicator errors={syncErrors} />
         {rightItems.map((item, index) =>

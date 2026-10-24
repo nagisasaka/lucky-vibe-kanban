@@ -34,7 +34,7 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - Web development: `pnpm run local-web:dev`.
 - Frontend type checks: `pnpm run local-web:check`, `pnpm run web-core:check`, `pnpm run ui:check`.
 - Frontend lint: `pnpm run local-web:lint`, `pnpm run ui:lint`. `web-core` currently has no standalone lint script.
-- Backend workspace checks: `pnpm run backend:check`, `pnpm run backend:lint`, `pnpm run backend:test`. All exclude `vibe-kanban-tauri`; lint includes all targets and `qa-mode`.
+- Backend workspace checks: `pnpm run backend:check`, `pnpm run backend:lint`, `pnpm run backend:test`. Lint includes all targets and `qa-mode`.
 - Broad checks: `pnpm run check` runs the legacy path guard, frontend type checks and backend check. `pnpm run lint` runs local-web/UI ESLint, backend Clippy and the unused-i18n-key check.
 - Broad formatting: `pnpm run format` runs `cargo fmt --all` and web-core/local-web Prettier. It does not include the UI package; use scoped formatting for normal changes.
 
@@ -118,17 +118,16 @@ Choose validation for the changed behaviour and affected consumers. The broad co
 | Generated API types or SQL | Run the relevant generation/check commands above and tests for changed API behaviour, queries or migrations. |
 | Routing, authentication or execution boundaries | Include regression tests across the affected boundary and relevant integration/E2E coverage. |
 | Cross-cutting changes | Expand to affected packages and broad check/lint/test commands as needed. |
-| Desktop | Run `pnpm run tauri:check`, `pnpm run tauri:lint`, and `pnpm run tauri:test` in a desktop-capable environment. |
 
 - Add meaningful regression tests for new behaviour, bug fixes and edge cases, using existing test infrastructure. Text or formatting changes do not need new tests by default.
 - Before running tests that include `production_fallback_keeps_api_misses_out_of_spa` (including the full `backend:test` suite), build the real frontend with `pnpm --dir packages/local-web run build` if it is missing or stale. The test requires `dist/index.html` and bundled JS/CSS; the build script's placeholder is insufficient. Tests in unrelated crates do not require this build.
-- Run heavyweight Rust gates sequentially in a checkout. Server/container checks must exclude Tauri; unqualified `cargo check/clippy/test --workspace` includes it. Linux desktop validation needs GTK/WebKit development packages from the Tauri CI job; do not install them into the production image just for server checks.
+- Run heavyweight Rust gates sequentially in a checkout. The Rust workspace contains the server and shared crates; the retired Tauri desktop app is not included.
 - Format changed files or the affected package using its existing configuration. Avoid unrelated formatting changes and do not run the whole-repository formatter as a routine completion step.
 - Review the final diff and run `git diff --check`. Report the selected validation, why it covers the change, results, and anything skipped or unavailable. Missing prerequisites and skipped checks are not passes. Repeat or broaden expensive checks only after new changes, failures or unresolved concerns justify it.
 
 ### Formal Integration
 
-By default, formal server/container Integration must validate the frozen candidate with `pnpm run check`, `pnpm run lint`, and `pnpm run backend:test`, plus relevant boundary tests. The frontend prerequisite above applies. Desktop changes additionally require the Tauri gates in a capable environment. This contract is separate from scoped development checks: missing prerequisites are failures; fix the plan/environment and create a new Integration instead of bypassing validation. The explicit run-level “Skip all integration validation (unverified)” option is the supported exception: new runs inherit the saved server preference unless the request explicitly overrides it; when selected at admission, do not run acceptance checks or prepare their plan, and record the integrated candidate as unverified. This choice does not waive clean-candidate/ancestry checks, conflict-resolution review, target consistency, cancellation or publication protections. It cannot be enabled retroactively through agent instructions.
+By default, formal server/container Integration must validate the frozen candidate with `pnpm run check`, `pnpm run lint`, and `pnpm run backend:test`, plus relevant boundary tests. The frontend prerequisite above applies. This contract is separate from scoped development checks: missing prerequisites are failures; fix the plan/environment and create a new Integration instead of bypassing validation. The explicit run-level “Skip all integration validation (unverified)” option is the supported exception: new runs inherit the saved server preference unless the request explicitly overrides it; when selected at admission, do not run acceptance checks or prepare their plan, and record the integrated candidate as unverified. This choice does not waive clean-candidate/ancestry checks, conflict-resolution review, target consistency, cancellation or publication protections. It cannot be enabled retroactively through agent instructions.
 
 ## Release and Deployment
 

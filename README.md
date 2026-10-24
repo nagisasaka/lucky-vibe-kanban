@@ -78,12 +78,12 @@ agent work while the development app restarts.
 | `pnpm run lint`              | Web lint, server Rust Clippy and unused translation keys             |
 | `pnpm run format`            | Rust and web formatting                                              |
 | `pnpm run server:check`      | Server configuration and ingress tests                               |
-| `pnpm run backend:test`      | Server Rust workspace tests (excluding Tauri)                        |
+| `pnpm run backend:test`      | Server Rust workspace tests                                          |
 | `pnpm run generate-types`    | Generate shared TypeScript types from Rust                           |
 
-Server checks exclude the Tauri desktop app. For desktop changes, also run
-`pnpm run tauri:check`, `pnpm run tauri:lint`, and `pnpm run tauri:test` with
-the platform development libraries installed (GTK/WebKit on Linux).
+The Tauri desktop shell is retired. Use the browser with the Docker server or
+the source development environment; browser notifications and editor integrations
+remain available.
 
 Shared type generation runs in the public server workspace, including the local
 board contracts. Do not edit generated files in `shared/` directly.
