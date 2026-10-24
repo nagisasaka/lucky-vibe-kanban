@@ -36,6 +36,8 @@ sources:
     resource: repo://deploy/server/healthcheck.mjs
   - id: openwiki-source-078e9842bd26cfd05bb35acc
     resource: repo://deploy/server/nginx.conf.template
+  - id: openwiki-source-8b0f6773cd6f7a2a989ad880
+    resource: repo://deploy/server/nginx.test.mjs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
@@ -46,6 +48,8 @@ sources:
     resource: repo://deploy/server/smoke-image.sh
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
+  - id: openwiki-source-b548a221f2376a10ae5d152c
+    resource: repo://docs/development/preview-routes-validation.md
   - id: openwiki-source-4815b99ed5b9f7632484ef04
     resource: repo://docs/integrations/github-integration.mdx
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -54,10 +58,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-24T11:38:17.046Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:27:43.655Z
+    at: 2026-10-24T11:38:17.046Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -118,21 +122,45 @@ UI はこの optional 情報を使い、短い SHA のボタンから詳細を�
 
 Compose は host の `443` だけを nginx の `8443` へ公開する。Rust backend は `127.0.0.1:3000`、preview proxy は `3001` を使い、supervisor は継承された HOST/PORT を上書きする。許可 origin は設定したアプリの HTTPS origin である。[port と mount](../../deploy/server/compose.yaml)、[backend 環境](../../deploy/server/server.mjs)
 
-`LVK_HOST` は IP アドレスまたは scheme/port/path を含まない小文字 DNS 名を受け付ける。任意の `LVK_PREVIEW_DOMAIN` を使う場合、アプリ名を preview wildcard と同じかその配下に置けない。起動前に TLS 証明書の期間、アプリ名と preview の代表 host 名への対応、秘密鍵との一致を検証する。既存のnginx Basicを維持する配置ではbcrypt htpasswdも検証する。新規公開配置はhtpasswdなしで起動し、LVKの初期設定を完了するまで業務APIをロックする。volume 書込権と `nginx -t` も通ってからサービスを開始する。[設定](../../deploy/server/server.mjs)、[起動順](../../deploy/server/server.mjs)
+`LVK_HOST` は IP アドレスまたは scheme/port/path を含まない小文字 DNS 名を受け付ける。任意の `LVK_PREVIEW_DOMAIN` を使う場合、アプリ名を preview wildcard と同じかその配下に置けない。起動前に TLS 証明書の期間、アプリ名・独立 CSV 経路の全 host 名・legacy preview の代表 host 名への対応、秘密鍵との一致を検証する。既存のnginx Basicを維持する配置ではbcrypt htpasswdも検証する。新規公開配置はhtpasswdなしで起動し、LVKの初期設定を完了するまで業務APIをロックする。volume 書込権と `nginx -t` も通ってからサービスを開始する。[設定](../../deploy/server/server.mjs)、[起動順](../../deploy/server/server.mjs)
 
-基本 Compose は既存証明書を使う。任意の compose.acme.yaml は専用 Certbot companion と acme volume を追加し、TCP 80 を証明書検証専用に公開する。公開 IP または DNS 名のアプリ証明書を扱い、wildcard preview は別管理となる。[ACME 構成](../../deploy/server/compose.acme.yaml)・[発行と更新](../../deploy/server/acme.py)。起動検査はブラウザーによる trust chain 検証の代わりではない。証明書・鍵・htpasswd は `/run/lvk-secrets` へ read-only mount し、欠けた host path を Compose が自動作成しない。更新・認証情報変更の具体手順は [運用文書](../../docs/self-hosting/server-container.mdx#renew-certificates-and-rotate-credentials)に置く。[mount](../../deploy/server/compose.yaml)、[証明書の責任](../../docs/self-hosting/server-container.mdx)
+基本 Compose は既存証明書を使う。任意の compose.acme.yaml は専用 Certbot companion と acme volume を追加し、TCP 80 を証明書検証専用に公開する。公開 IP または DNS 名のアプリと独立 CSV 経路の証明書を扱い、wildcard preview は別管理となる。[ACME 構成](../../deploy/server/compose.acme.yaml)・[発行と更新](../../deploy/server/acme.py)。起動検査はブラウザーによる trust chain 検証の代わりではない。証明書・鍵・htpasswd は `/run/lvk-secrets` へ read-only mount し、欠けた host path を Compose が自動作成しない。更新・認証情報変更の具体手順は [運用文書](../../docs/self-hosting/server-container.mdx#renew-certificates-and-rotate-credentials)に置く。[mount](../../deploy/server/compose.yaml)、[証明書の責任](../../docs/self-hosting/server-container.mdx)
 
 公開配置の認証はLVKのserver-accessが担う。管理者が `docker compose exec lvk server setup-token` で15分間有効な一度限りのキーを発行し、HTTPS画面でBasic/Auth0を設定する。Auth0は実ログイン試験と本人確認後に有効化する。既存htpasswdがある場合はnginx Basicも維持し、LVK側の設定後に運用者が `LVK_PROXY_AUTH=backend` へ切り替える。新規配置では事前のhtpasswd作成は不要。旧 `LVK_MCP_CONFIG` は拒否される。[認証手順](../../docs/self-hosting/authentication.mdx)、[MCPのscope](../integrations/remote-access.md)、[生成されるingress](../../deploy/server/server.mjs)。管理認証のingressはWeb資格情報をbackendへ転送する一方、内部agent用のヘッダーを外部から受け渡さない。WebSocket upgrade を通し、proxy buffering/cache は無効にする。access log は query string・認証情報・agent 本文を含めず method/URI/status を記録する。[ingress 契約](../../deploy/server/nginx.conf.template)
 
+## 独立アプリの CSV ルート
+
+`LVK_PREVIEW_ROUTES=dev.example.com:4020,preview1.example.com:18443` は、名前ごとの外部 HTTPS を **LVK コンテナー内**の `127.0.0.1:<port>` の HTTP アプリへ転送する静的設定である。ホストや別コンテナーの loopback へは届かない。名前付き slot、preview UI、DB、動的ルート管理は作らず、アプリ起動・DNS・公開 URL/HMR・認証は各アプリの運用者が担う。[生成される経路](../../deploy/server/server.mjs#L248-L276)・[運用契約](../../docs/self-hosting/server-container.mdx#independent-application-routes)
+
+### 入力と経路の境界
+
+空または未設定なら無効。各項目は小文字の完全な DNS 名と10進 port で、項目の外側の ASCII space/tab だけを許す。末尾 dot・scheme・path・wildcard・IP literal・改行・空要素・重複 host・`LVK_HOST` との衝突は拒否する。DNS 名は最大253文字、port は1024–65535で先頭ゼロを許す。同じ port への別名は許可する。3000・3001・4021・4022・8443・8444は LVK/nginx 用に予約するが、4020は普通のアプリ port として使える。`dev` に特別な処理はない。[JS parser](../../deploy/server/server.mjs#L18-L68)・[Python parser](../../deploy/server/acme.py#L25-L55)
+
+非空の `LVK_PREVIEW_DOMAIN` と CSV は同時に使えず、起動時に拒否する。legacy の wildcard preview と独立経路では port の除外集合も認証責任も違う。既存の UI preview は引き続き wildcard domain から URL を生成し、この CSV を UI の preview 一覧へ変換しない。[設定の排他](../../deploy/server/server.mjs#L34-L90)・[UI の URL](../../packages/web-core/src/shared/lib/previewProxyUrl.ts#L4-L35)・[legacy の port 検査](../../crates/server-access/src/preview.rs#L29-L48)
+
+独立経路では nginx Basic を無効化し、LVK の server-access/handoff を経由せず upstream へ渡す。Host・Authorization・Cookie・Origin・WebSocket の情報はアプリへ保持し、HTTPS の forwarded 情報を設定する。`Proxy-Authorization` と `X-LVK-Internal-Token` は除去する。nginx の header 定義をこの server block で置き換えることが、親の LVK 用資格情報除去を継承しないための重要な境界である。LVK 側が認証済みでも、このアプリが認証を実装しなければ匿名で到達できる。cookie は sibling host 間へ資格情報を広げない host-only 運用を使う。[転送設定](../../deploy/server/server.mjs#L252-L274)・[認証境界の回帰](../../deploy/server/nginx.test.mjs#L332-L377)・[cookie の運用](../../docs/self-hosting/server-container.mdx#independent-application-routes)。LVK の認証委譲が必要な既存経路は、下記 [別 origin の preview](#preview-は別-origin)を参照する。
+
+### 証明書と設定変更の寿命
+
+同じ TLS 証明書が `LVK_HOST` と全 route 名を満たす必要があり、起動時と証明書 reload 前に全件を検査する。ACME companion は両 Compose から渡される同じ CSV を解析し、`LVK_HOST` が IP なら IP 識別子、各 route は DNS 識別子として、既存の `shortlived` profile と単一 `lvk` lineage へ注文する。HTTP-01 のため各名の DNS と port 80 到達性が必要で、wildcard preview は引き続き拒否する。[証明書検査](../../deploy/server/server.mjs#L296-L319)・[注文の生成](../../deploy/server/acme.py#L58-L96)・[companion 配線](../../deploy/server/compose.acme.yaml#L1-L42)
+
+この実装は `LVK_HOST` を含む25識別子まで、つまり最大24 route を Certbot 呼出し前に許可する。これは既存 shortlived 運用を維持するための ACME 側の上限で、parser 自体に件数上限はない。超える場合は全名を満たす外部管理証明書と基本 Compose を使う。複数証明書への自動分割はない。[上限と単一注文](../../deploy/server/acme.py#L68-L96)・[101経路の parser 回帰](../../deploy/server/server.test.mjs#L483-L491)・[記録された判断](../../docs/development/preview-routes-validation.md#独立レビューと判断)
+
+route と Certbot 引数は process 起動時に固定するため、`.env` 変更後は対象 Compose service の再作成が必要である。restart や nginx reload だけでは変更した Compose 環境を取り込まない。ACME では先に `certificates` を再作成し、新しい全名を満たす証明書を待ってから `lvk` を再作成する。外部管理なら証明書を先に用意する。この再作成では稼働アプリ・agent の停止を見込む。[運用順序](../../docs/self-hosting/server-container.mdx#independent-application-routes)・[起動時設定](../../deploy/server/server.mjs#L457-L508)・[Certbot 引数の固定](../../deploy/server/acme.py#L159-L176)
+
+証明書だけの更新は既存 route 設定を保ち、30秒周期で検出して nginx を reload する。名前不足・key 不一致・nginx 検査失敗なら新 fingerprint を採用せず、失敗を記録して次周期に再試行する。backend/agent の再起動は行わない。[検査と採用順序](../../deploy/server/server.mjs#L352-L374)・[reload と再試行](../../deploy/server/server.mjs#L508-L523)
+
+JS/Python に parser を置く構造は、新しい配布 runtime 依存や mount を増やさず既存入口を使うという凍結 Change Manifest の判断と一致する。両者の差異は [共有 fixture と native nginx の検証](development.md#独立アプリの-csv-ルートを変更するとき)で監視する。長い有効 DNS 名が nginx の既定 hash bucket では失敗した記録に対応し、template は512を指定する。[設定](../../deploy/server/nginx.conf.template#L6-L11)・[再現と修正の記録](../../docs/development/preview-routes-validation.md#独立レビューと判断)。実 ACME 発行・DNS・配布 image の成功はこの source 照合では確定しない。
+
 ## Preview は別 origin
 
-開発サーバー `5173` の公開 URL は `https://5173.<preview-domain>` になる。公開認証層が許すportは1024–65535から3000・3001・4020・4021・8443・8444を除いたもの。UIやnginxの古い除外集合だけで許可を判断しない。main origin の `/api/preview` と `/api/host/<id>/preview` は 403 にし、project-controlled HTML を LVK の origin へ持ち込まない。[nginx の分離](../../deploy/server/nginx.conf.template)、[preview host の生成](../../deploy/server/server.mjs)
+legacy `LVK_PREVIEW_DOMAIN` を使う開発サーバー `5173` の公開 URL は `https://5173.<preview-domain>` になる。公開認証層が許すportは1024–65535から3000・3001・4020・4021・8443・8444を除いたもの。UIやnginxの古い除外集合だけで許可を判断しない。main origin の `/api/preview` と `/api/host/<id>/preview` は 403 にし、project-controlled HTML を LVK の origin へ持ち込まない。[nginx の分離](../../deploy/server/nginx.conf.template)、[preview host の生成](../../deploy/server/server.mjs)
 
 UI も公開 preview domain がある場合は HTTPS wildcard URL を使い、relay host を組み合わせない。preview 無効なら wildcard server は作らない。backend認証ではログイン済みLVKからoriginごとに認可を委譲する。第三者cookieを拒否するブラウザーでは独立タブで認可・表示する。親sessionの失効、cookieの分離、資格情報除去は [preview handoff](workspace-inspection.md#公開-preview-への認可委譲)に集約する。HTML/JavaScript に埋め込まれた絶対 localhost URL を全て書き換える保証はない。[URL 構築](../../packages/web-core/src/shared/lib/previewProxyUrl.ts)、[preview の運用制限](../../docs/self-hosting/server-container.mdx)。ローカル表示との関係は [Workspace preview](workspace-inspection.md#preview-と開発サーバー)を参照する。
 
 `compose.local.yaml`は公開presetとは別で、nginxを経ずserverを直接起動しhost loopbackに3000を公開する。コンテナー内部のbindは0.0.0.0でも、配置を明示LocalにしてHostのloopback検査を残す。[Local preset](../../deploy/server/compose.local.yaml)、[配置の制約](../concepts/server-access.md#配置と認証方式は別の設定)
 
-運用文書の初期段落に残る「Auth0ではpublic previewを拒否」という記述は、現在のhandoff実装および同文書のProject previews節と一致しない。実装は任意のpreview domainに対する限定認可を提供する。[handoff](../../crates/server-access/src/preview.rs)、[現在の運用節](../../docs/self-hosting/server-container.mdx#project-previews)
+運用文書の初期段落に残る「Auth0ではpublic previewを拒否」という記述は、現在のhandoff実装および同文書のLegacy project previews節と一致しない。実装は任意のpreview domainに対する限定認可を提供する。[handoff](../../crates/server-access/src/preview.rs)、[現在の運用節](../../docs/self-hosting/server-container.mdx#legacy-project-previews)
 
 ## 永続化と実行の寿命
 

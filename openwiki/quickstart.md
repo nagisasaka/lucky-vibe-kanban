@@ -48,6 +48,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
   - id: openwiki-source-df6b7819295f53fc2381f23d
     resource: repo://deploy/server/compose.yaml
+  - id: openwiki-source-89d0fb22262f0a0ac1df7d1e
+    resource: repo://deploy/server/server.mjs
   - id: openwiki-source-5d1b4189d87b8ac4c58a8f4c
     resource: repo://docs/development/design-notes-validation.md
   - id: openwiki-source-98acd1706f9355ed92cb62a8
@@ -70,10 +72,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T11:23:36.861Z" }
+generated: { by: "codex", at: "2026-10-24T11:34:45.992Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:23:36.861Z
+    at: 2026-10-24T11:34:45.992Z
 ---
 
 # クイックスタートと調査案内
@@ -147,6 +149,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 外部会話から Integration の承認・取消を進める | [MCP の固定 gate・期待値・操作 receipt](integrations/remote-access.md#mcp-から-integration-を承認取消する)。候補の失効、検証例外、取消受付と予約解放の違いを確認する |
 | 統合・Wiki 実行のログを見る、所有者を止める | [Execution の閲覧と停止](operations/workspace-inspection.md#実行専用-workspace-の確認)。通常開発用 Workspace と操作入口を分ける |
 | local LVK を常駐サーバーへ置く | [単一サーバーコンテナー](operations/server-container.md)。HTTPSとbackend認証、preview handoff、volume、停止と rollback |
+| 同じコンテナーの独立アプリを DNS 名ごとに公開する | [独立アプリの CSV ルート](operations/server-container.md#独立アプリの-csv-ルート)。アプリ自身の認証、legacy preview との排他、証明書と再作成の順序を確認する |
 | モバイル表示の検証 | [built preview と検証](operations/development.md)。稼働 API と分離した frontend bundle |
 
 ## 編集・接続の不調から調べる
@@ -229,3 +232,11 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 今回の Sync は凍結 manifest と全1チャンクの SHA-256、統合済み source `505b8f9cac53b26c9609068672fa18a87b7b58a8` を照合した。HTTP 認証・catalog・scope、外部 adapter、UI/stdio の共通 archive、DB 所属・busy 検査、strict cleanup、operation receipt と現在値の読取、署名 JWT を使う HTTP fixture を独立した入口として確認した。詳細は [Workspace の確認と回復](concepts/workspace.md#外部-mcp-の確認と結果の回復)、利用導線は [外部 MCP](integrations/remote-access.md#workspace-を外部-mcp-から-archive-する)に集約した。共有入口に関係する既存 Claims は再確認したが、無関係な過去の説明全体を再検証したものではない。
 
 凍結 Change Manifest は正式 Integration の検証を明示的に省略したと記録し、意味的な変更理由や開発テスト結果は供給していない。この保守は実装・試験定義・文書差分の静的照合であり、製品テストや実 Auth0/ChatGPT 接続の再実行ではない。fixture の script liveness と実環境の検証範囲も区別する。
+
+### 独立アプリ経路の照合範囲
+
+今回の Sync は凍結 manifest と全3チャンクの SHA-256、統合済み source `fc29341d2862a46d4a78273ea0662a3eec19e899` を照合した。Compose 両サービスの環境配線、JS の起動・nginx 生成・TLS reload、Python の ACME 注文、legacy preview の UI URL と backend 認可、共通 parser fixture と native nginx の転送試験を独立した入口として確認した。詳細契約は [サーバー運用の独立経路](operations/server-container.md#独立アプリの-csv-ルート)、変更時の検証は [配布 kit の CSV 回帰](operations/development.md#独立アプリの-csv-ルートを変更するとき)に集約した。無関係な過去の説明全体を再検証したものではない。
+
+CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、LVK login/handoff による保護を追加しない。既存の wildcard preview とは認証責任が異なるため、アプリ自身の認証と cookie の運用を確認する。[転送と資格情報](../deploy/server/server.mjs#L248-L276)
+
+凍結 Change Manifest は開発時の局所・native 試験成功と正式 Integration の検証省略を区別している。[開発記録](../docs/development/preview-routes-validation.md)も実 ACME・DNS・VPS・アプリ・配布 image を未確認としている。今回の検証は統合 source・試験定義・文書差分・リンクと OpenWiki lifecycle の静的照合であり、製品試験や証明書発行の再実行ではない。

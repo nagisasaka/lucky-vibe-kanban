@@ -38,10 +38,14 @@ sources:
     resource: repo://deploy/developer/switch/start_support.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
+  - id: openwiki-source-85c8f44da40d30a5a7a1f9c7
+    resource: repo://deploy/server/acme.test.py
   - id: openwiki-source-8b0f6773cd6f7a2a989ad880
     resource: repo://deploy/server/nginx.test.mjs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
     resource: repo://deploy/server/release.test.mjs
+  - id: openwiki-source-229e22cb29e176ae1fe594e1
+    resource: repo://deploy/server/server.test.mjs
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -78,10 +82,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-24T11:38:56.795Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:27:43.655Z
+    at: 2026-10-24T11:38:56.795Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -234,6 +238,14 @@ npm から別バージョンを取得しない。
 `pnpm run server:check` は `node --test deploy/server/*.test.mjs` を実行する。設定・証明書・process supervision 等の検査と、nginx を実際に起動する TLS/Basic 認証・WebSocket・SSE・preview 境界の検査を含む。nginx がなければ後者は skip するため、全 subtest が実行されたかを結果で確認する。`LVK_TEST_NGINX` で実行ファイルを指定でき、`LVK_REQUIRE_NGINX_TEST=1` は欠落を失敗にする。[script](../../package.json)、[native test の前提](../../deploy/server/nginx.test.mjs)
 
 この確認だけで Docker image の build・実配置・live agent 認証が成功したことにはならない。配布済み binary と作業 checkout の分離、永続 volume、停止・更新・復旧の契約は [サーバーコンテナー](server-container.md)に置く。[記録された検証限界](../../docs/self-hosting/server-container.mdx#validation-boundaries)
+
+### 独立アプリの CSV ルートを変更するとき
+
+[独立アプリ経路の契約](server-container.md#独立アプリの-csv-ルート)は nginx supervisor の JavaScript と ACME companion の Python に同じ入力規則を要求する。共有 `preview-routes.cases.json` を両側で読み、受理・拒否だけでなく host/port 配列の期待値を比較する。JavaScript 側は101経路の受理、同一 upstream の別名、Compose 両サービスへの同じ環境変数の受渡しを検査し、Python 側は25識別子境界と名前の追加・置換・削除、IP と DNS の混在注文を検査する。[JS の回帰](../../deploy/server/server.test.mjs#L457-L529)・[Python の回帰](../../deploy/server/acme.test.py#L32-L57)
+
+native nginx fixture は自己署名証明書と loopback の模擬 upstream を使い、LVK の Basic 保護と独立経路への匿名到達の併存、Authorization/Cookie/Host/forwarded 情報、独自認証ヘッダー、Set-Cookie、WebSocket upgrade/subprotocol、各 route の証明書名不足を検査する。253文字の DNS 名も含む。parser が受理するだけでは nginx の設定読込成功を保証しないため、長い名前の回帰はこの層で扱う。[fixture と長い名前](../../deploy/server/nginx.test.mjs#L23-L66)・[到達と認証の検査](../../deploy/server/nginx.test.mjs#L314-L377)
+
+[開発時の検証記録](../../docs/development/preview-routes-validation.md)には native nginx を含む39件成功・Compose CLI 1件省略と、期待値補強後の局所18件成功が記録されている。実 ACME/DNS/VPS/アプリ・配布 image は未確認であり、凍結された正式 Integration の入力も検証の明示省略を記録する。今回の Wiki 保守は source と試験定義の静的照合で、これらの成功を再実行したものではない。
 
 ## 版番号の検証と選別移植の追跡
 

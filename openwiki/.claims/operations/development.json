@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b5a36c12ca975501e8851024d2f66ebd50b77f046ef1f5034187809562538efe",
+  "pageVersion": "sha256:2d5517a91a41a0aa30b58a45da721bbbd570b29d53e90d37920c1f2a28deb210",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -118,7 +118,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/nginx.test.mjs",
-          "version": "repo-file-v1:sha256:3931a3bcd1dab7cfc825885e318317d11d18bea2a946bb66583c14d5ad3fc776"
+          "version": "repo-file-v1:sha256:b8d18b03d526c2dd8c37d3f0574e48f56d23dc91469099f1168ea75145c6ac96"
         },
         {
           "resource": "repo://package.json",
@@ -485,10 +485,38 @@
           "version": "repo-lines-v1:sha256:f0c27752a165d92bf185b9e243ff4f68ba950b75e46651a9981fd17c555fc05e:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5ODY1YmNjMGI5NTc5NmJjZDE1MjRiMzBkNzFiZmFhN2M5NTY3MDQ3YjA2Mjg2NWRiMmQ0OTA2MGU5MmUzMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0aeabf02fb0b4d8b89e6e1c5a7a24af0",
+      "statement": "CSV経路のJS/Python parserは共有fixtureの受理・拒否とhost/port期待値を検証し、JSは101経路とCompose環境配線、PythonはACMEの25識別子境界と名前変更を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/acme.test.py#L32-L57",
+          "version": "repo-lines-v1:sha256:31201dbf14aa4683f811238550e94aa6ea50a759020bbb967f50948853a0eea5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExZTY5MGI0YjEzMGFhY2RkNjc2MGM1YThmMWE0ZTU1NmYwZjkyYjY4ZjU5ZmVjNzA5MWFhMDdlY2M5OWMwNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyNGUyYjQzZjQxYmUxMzc5YTQxOGI3ZGE2ZWM4ODk3Mjk2MmRhODUyMWEwMGYyOTJmMjM0ZWUxYjhjYWFlZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0OTc1YjBhMzYxOTcyODZkMTdhYWU5ZWE5MmJkNzM2N2U4YzljZjg4YzI1MTdkYTAwNDhjNzM5N2VlYTg3YzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2NzJiM2I2MTAzNDEyM2RhZjhkN2QxODM3MGNmNDgxODU1ZTVmODA0ZTAzNGJhMDdhOTY0ZDM4MjQ2ZWY5NTUifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.test.mjs#L457-L507",
+          "version": "repo-lines-v1:sha256:40c37b7e5c791e80c3d5c59cfb3bf37600ebaac56cb786d47f0ee17a249e7c2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyYzZlZWNhZjU3NzM2MzQ5ZWEzMmNlMGE0MGY0ODA5M2IzNWEzOWY3Y2QyMTUzMGNjZjc3OWFmMTA2ZGYzZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjMzExMjdiZjRmNDY5Nzc5NWJjYzBjYmNlZGFkZWY4NGY5MzY5NWI3NTQ0YWJjZGYxMzUzMmVjNTg0NzQwM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyZmM1NTA4NDc5YmIyN2NkYTkwNjFkNTYwY2E2ZjFkNDkxYTkxODNjMzM4MmE3MzA5ODg4ZmFjMTE5MjZiOGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fae198f9980e4f878e653e26afe263d9",
+      "statement": "独立経路のnative nginx fixtureは253文字DNS名、LVK Basic保護との匿名到達の併存、資格情報と応答cookieの保持、WebSocket upgrade/subprotocol、route証明書名不足を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/nginx.test.mjs#L23-L66",
+          "version": "repo-lines-v1:sha256:1b66c86633818caacf58b0484b34809aac7d19d3638b352083513071965e4d93:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYmIwOGU2ZDM2NGUxNzM0YzEyZjRkM2M4MmQ3YTZhOTAyMjkzM2IyZDM5ZDgxMWY0OTUzZjRhYjgxYTc4ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmMWIxNjgyMWZiZGE3NmIyOWVlZTgxNGY3YmMwNzQ1YzJiNjE3OGVkNTJkMmQzMzllZDNhNjAxNTRjNDA1OWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5YjBjNWE1NzEwZmY1Mjg4NDFiYjVhZGIwZmI0YWJmNmUyMzNhMmFmNzU4ZDU5MzNlMDE3YWM3ZTA1ZmEzMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYjVjZGE5ZWU2MzRlMmI0Zjc4NDc5MGNhZTRlNmMxODZjNTliOTk5NmIxMTE3OWQyZTE2ZmZlM2Y1MDcwMWYifQ"
+        },
+        {
+          "resource": "repo://deploy/server/nginx.test.mjs#L314-L377",
+          "version": "repo-lines-v1:sha256:8a28c7391c3be84daabb9c7b5b6db0723d122678ce9746c11cfd7c5745d1ac60:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYTU3MTFkNTYzMmZhYTk2MWJjYjQwMjM0NTlkMGI1MjE5NzFhODRlZmIzOGNlYmFmMWMyZTI1OWM1MTg2NjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExMDg1NzM1YWJmOGIwNzg1YjUwMzdmMDU4Yjc1MjlhMmM5ZTk1M2RlOTYxNzI1ZDAwY2IxZjY1NjM3MmQwMTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NmVlNDVlMzgxNGQwMDUyNjc5ODRmNmVhY2JlZTBkMzgzNWQzY2YzZDFiNzFhY2MxOGM3ZmY5M2Q1NzE1MDgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T02:27:43.655Z"
+    "at": "2026-10-24T11:38:56.795Z"
   }
 }

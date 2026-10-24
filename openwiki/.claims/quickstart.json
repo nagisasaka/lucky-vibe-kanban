@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c25ac12cfecd960ff4332010a8c5dfe9f3d8cb3b25b8f74bbd0e3c77bfa14e2c",
+  "pageVersion": "sha256:5fb21f3a6853bf843d5c71f1c2fe0491d2a6bb2d1e82cd5e7623b53f4f722aa1",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -122,11 +122,11 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/compose.yaml",
-          "version": "repo-file-v1:sha256:e1e69887a5ae19eae822b3e29c827d565bf4fb99c754f5fa09b63f510fc8e471"
+          "version": "repo-file-v1:sha256:ac92e6d8af30817f8670bbeb92277320c7c28e9a1570227d8e0f0f5e7f570418"
         },
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:da1cfbd7279f8e9e24b9bf89a449a6e9e8a685d444a7e3f5e820123d08bcb8e0"
+          "version": "repo-file-v1:sha256:5a5c63f2f9b2c772af7cc702af6d74e11a3815ce2eeeafb66ee306327ffc20f4"
         }
       ]
     },
@@ -253,10 +253,20 @@
           "version": "repo-lines-v1:sha256:50674bc7cb2b3102aa61700fd5acf080b33abae0888ab71131e5dad1bd457ab9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI3YjZkOWI2ZTE5NTY1M2ZjOGI1NWY2M2YzNjQ2MDY4NTVjNDU0ZmM1NjU4NTFmMzFhMmYwOTQ1ZGE3NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5MjViM2Q2N2I1MmQ4ZjkzNzliNDVhMzFhNjQwMzQ0MjQwYTExYzdhNWRmNDZkZjQwNzUzMzhjZmVkZDZjN2UifQ"
         }
       ]
+    },
+    {
+      "id": "claim_f877920d6fc7471ebfb8bf7e1d9b3770",
+      "statement": "CSV独立経路はLVKコンテナー内のHTTPアプリへHTTPSを転送し、LVK login/handoffによる保護を追加しないため、既存wildcard previewと認証責任が異なる。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/server.mjs#L248-L276",
+          "version": "repo-lines-v1:sha256:9223ad2cb7b76161eb0195a681ee224dfc79a8103068982ef0b90021a827d71a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiYmQwZjVkNGVlYWIwMDA0OTFjM2Q4MTM3NGZjNWMxNDlkNzE0YmYxOWI1MzRlNDA2ODc5YTcxYmNmNDhhNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1NTg5NjFiY2IzOWRlYzdlMTVhMDUxMTI0MzQ1Y2UxZWZhZDcxZDVmNzZiMTg5NzZiZGU2MDA3MGExNWYyNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhM2ZjZjA2NDU4MmIyZjYzOTVmYTVmOGJjMDk5MDFlNTA3NTRhZDk0MGI5NTQ5OGM1YzQ5YjYwYTE5ZGQxMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1ZDUxZDg4ZjE3MzQxOTM5Njg2YjllZGM4MTliY2I1ODA2NzEwM2M0YmUzYTMwOGE2ODY0OWI5MDQxZmEyZjcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T11:23:36.861Z"
+    "at": "2026-10-24T11:34:45.992Z"
   }
 }

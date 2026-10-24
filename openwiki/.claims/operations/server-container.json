@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1efc78a7a5ede7aa24ffab79824812751d81ab75f155a137bb0cb13c339642a7",
+  "pageVersion": "sha256:c8a77f9f092a4c4bfa0180e290409b09ef0a898958b9cc29d4f82d348808f55d",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -18,25 +18,29 @@
       "evidence": [
         {
           "resource": "repo://deploy/server/compose.yaml",
-          "version": "repo-file-v1:sha256:e1e69887a5ae19eae822b3e29c827d565bf4fb99c754f5fa09b63f510fc8e471"
+          "version": "repo-file-v1:sha256:ac92e6d8af30817f8670bbeb92277320c7c28e9a1570227d8e0f0f5e7f570418"
         },
         {
           "resource": "repo://deploy/server/server.mjs",
-          "version": "repo-file-v1:sha256:754d1687035863e0d6554d29e47fbbe66c647e0dd2df9b076a4215cdf21523d7"
+          "version": "repo-file-v1:sha256:e6df6ba27f416141e99e212a7e306053c42e2aa939cf0c6d17cd0235b90bef6e"
         }
       ]
     },
     {
       "id": "claim_07677b6ba6c34969a18b360e351df5f9",
-      "statement": "起動時はdomain分離・証明書期間/host/key・volume書込権・nginx設定を検査する。bcrypt htpasswdは既存proxy Basicを維持する場合の要件で、新規backend認証配置には不要である。",
+      "statement": "起動時はdomain分離・証明書期間/アプリと全CSV経路およびlegacy preview代表host/key・volume書込権・nginx設定を検査する。bcrypt htpasswdは既存proxy Basicを維持する場合の要件で、新規backend認証配置には不要である。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/server.mjs#L219-L270",
-          "version": "repo-lines-v1:sha256:da92100b95e747b923c1bc85210be14d95882491d54114f5d7157c00677c10dc:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1NDU4ZjI4N2M4ODI2ODZhYTJmNmFlMGYwZWJhOGUyNGIyNjBkOGUwYzk0MzQ1YjRhZmI5OTE2OTcwYjRhZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjYzM2NWY4N2FjYmNkNjc0NmM0YmZkNzczYjY2MGI0MWI4NGQ5OWMxNTM3MmNjN2RjYzViZGYwMDZlZjYxZmQifQ"
+          "resource": "repo://deploy/server/server.mjs#L296-L338",
+          "version": "repo-lines-v1:sha256:9329bd5b8112a38870345e53e4203d35019cd0dc5c0793a55af11b810d00f604:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZGQ3YmZhMDZkYjc4MmI5YmVjYmRmNDcyMWJlNDQ4NDkwNGVmMTA5OGUxYjkzZWVhOGIxNjBiNzAxMTQ3MWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5NWZhMGYxMTE3YjVlYTQwNDM0MTQwZGRlMWEzNDBjNzIwZGRiZjMyNjIxMmUxOTE4MzhkNGIxNTZkMzE2YmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1OTM3Njc5MWU2OTQ3NmY3YTA3MTg5NmRjMjViOTEzN2VmODQyM2UzZTk2MzQwY2NmYWMzMzIzZDQyY2E1MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyMzI5ZDE1MDg1NGIzZTc4YjI0NmMwMDQ5M2FhOGRmMWQ5MDgzNGVkZWMyNTY3ZGY4NDEyZThjZDE3YzhiNWUifQ"
         },
         {
-          "resource": "repo://deploy/server/server.mjs#L393-L450",
-          "version": "repo-lines-v1:sha256:b6d32482ee9fae76400199946da9838342026c078a9f4151ef378a99aaaf279f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlODIwMGViZDE3MDliNmE2NzViZWNiM2JlOWYzOWU1M2JiYWMwMmNjOTI3MjM0NjJjMDU0NjhlYjBkYTZhMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3Mjc1NGFjZjI1MDY5OGIwNzY5NDk2OTM2MDljOTJhMzVlYjk0OWFmOTY4MWJhMjBiNTczZDEzYjg0ZmExODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwMmJkYmQ4ODg3NjRmYTVkMTVhMzU0ZmRiODc5MGY0YzAyMjcyNzFiZDkwYzA2MWNiMTc5YzVlOTZlZGJmOTIifQ"
+          "resource": "repo://deploy/server/server.mjs#L457-L508",
+          "version": "repo-lines-v1:sha256:305ccf781821c2f47163a9b622959b0271bf3eec61339c7bc7c2c69e0287a337:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlODIwMGViZDE3MDliNmE2NzViZWNiM2JlOWYzOWU1M2JiYWMwMmNjOTI3MjM0NjJjMDU0NjhlYjBkYTZhMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OGUyMGIxMzQ5MWQ3ZjBhYjI3ZmFhZDMzMmRiNmE5NzFkMjEyZWU4ZjAyZDBiNmUyNWJkMDc0OTQyYTUwZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5ZDRkYTM5ZTY5OTU1Zjk4OTYyYmE5YjkwMzg3YjZlYjE5MDE3MWFlYjIyNWIxZmY5ZThlZTY0ZjVkNDczYWYifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L70-L90",
+          "version": "repo-lines-v1:sha256:91f0592556ac01f9daaf2a9d1b77be9efa8e37a321b0f7c76c803139d3c38f92:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyNTdhYjdkNmZmMTlhZjczY2IwNDQ4ZjlhYzY5OGZhMWIyNWJhNGE5MDkyODNiMmZmZTZkMjM3NTM2Njk2ZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwZTdhZGNlZDQ1OTNmNDk4MWI5ZThmYmJiMjhlN2M5Y2NhOTQwOTJmODVkNzhkMWEwYjYzODQzN2ZkOTgxOGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkNTZkNTIzMTE3Y2E2ZGMxMGNjZDU0MWMxOTE2YTdiNTEzNDg3ZmE5ZDQ1ZGU5MmUwYTFmN2UzMzM1MmEzNTAifQ"
         }
       ]
     },
@@ -86,7 +90,7 @@
       "evidence": [
         {
           "resource": "repo://docs/self-hosting/server-container.mdx",
-          "version": "repo-file-v1:sha256:da1cfbd7279f8e9e24b9bf89a449a6e9e8a685d444a7e3f5e820123d08bcb8e0"
+          "version": "repo-file-v1:sha256:5a5c63f2f9b2c772af7cc702af6d74e11a3815ce2eeeafb66ee306327ffc20f4"
         }
       ]
     },
@@ -136,11 +140,11 @@
         },
         {
           "resource": "repo://deploy/server/acme.py",
-          "version": "repo-file-v1:sha256:f0f3e77205f94284b8235c0ac5c836628ae0662a9a3d101e105ada463bc9b48d"
+          "version": "repo-file-v1:sha256:977d651a31bdb4c0053dae9896d60e0571b7f32141c5720473aea88d28070e7e"
         },
         {
           "resource": "repo://deploy/server/compose.acme.yaml",
-          "version": "repo-file-v1:sha256:73503f7ed2388f55bb8e8f053c02079ce032e14536dd0e46e1fe36ee3f01b63c"
+          "version": "repo-file-v1:sha256:3fe791387638418815f274902e4313196e685a4870210328ba5184892ade8405"
         }
       ]
     },
@@ -333,10 +337,120 @@
           "version": "repo-lines-v1:sha256:893115a0632a73887ff6f104e4ad4c005d598098dbb5a08be3134330130b6408:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjEwOTQwYTcyZjU0YmEyMDgzOGNlMTBlMjc3NGEyNWEyOTljNDEwYWY0ODNlMWEwMWMyNTQ0YjUwZDgzZTRlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YwODYxMDExNzQwYTU3ZGIyNTgyY2U5M2E4OWUwNjdmZGYzNGM0OGE2MTNhOWViYzc2NWVkZmU1YmM0MDQxMSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_713148cadf984c568ff4da354fec0c6a",
+      "statement": "独立CSV経路は小文字DNS名:1024–65535の10進portを受け付け、空要素・重複host・LVK_HOST衝突・legacy domain併用・予約port 3000/3001/4021/4022/8443/8444を拒否する。4020と同一portへの別名は許し、parserに件数上限はない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/acme.py#L25-L55",
+          "version": "repo-lines-v1:sha256:4a3d6393d04d6dcb86bb58ccc0eb7f7f4a5474511b1ecdc68bbf774363276f26:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyZWZkOTgwZDMxNGYzZjQyMTQyODVlODg3N2RjZDI2NTA0NGMxYzJhNWZkYjE1ZDc5N2M4OGYxNTViNmI2Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliY2I3ZDNkYzc1YjVhMjMwYjRkZjQ0MDQ5ZjcyZWIyM2FjYTk3MjM3YTZlYzk3MTk4NDNhNTRiNzIwYTA3ODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2ZjMyYzQ0NmZjMmIzZTZiMTYwMGU1NDhiODNiOWNhNzBlNjI0NzI4ODA4YjhmZjYxOWI5NGVlZDBiNGRjYjUifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L18-L68",
+          "version": "repo-lines-v1:sha256:2bbff4e2d92b1aca3e9695d3dd547272fff293cb32645a09d89a3b8510b0bc14:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4MWYxMGI1NmRhMzViYjY0ODNmM2QxMDJlZjhhNjU4NjAxZjUxMjEzOWE0NDJjZGQ1NDY2NDg0ZDAyMjA0ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkMjJjZjJjYTRmNmQwZjUxNjg3NGIzM2UzNTgyYzIzMTAzNjFjNTZjMjQxZWJmMTUzYTM5MTdkOGNlYjE0NjkifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.test.mjs#L457-L491",
+          "version": "repo-lines-v1:sha256:460b66d66b79692e4f6dbd6daf8d58456c7dacd6261a1e1a5ef9b298d8ec72d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyYzZlZWNhZjU3NzM2MzQ5ZWEzMmNlMGE0MGY0ODA5M2IzNWEzOWY3Y2QyMTUzMGNjZjc3OWFmMTA2ZGYzZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjMzExMjdiZjRmNDY5Nzc5NWJjYzBjYmNlZGFkZWY4NGY5MzY5NWI3NTQ0YWJjZGYxMzUzMmVjNTg0NzQwM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYzhiNGUwOWQyYTlhMDM0YmM5N2UwNTVjNWNiMzExY2QzNjg1ZDMyMjg1MzgyNDk2ZTdhZDExM2MwOWQ3YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9d2e6ee300b4a62b231433cb0cb4015",
+      "statement": "CSV routeはコンテナー内loopback HTTPアプリへ直接転送する静的設定であり、preview UI・DB・動的管理を追加しない。アプリ起動・DNS・認証は運用者の責任である。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/server.mjs#L248-L276",
+          "version": "repo-lines-v1:sha256:9223ad2cb7b76161eb0195a681ee224dfc79a8103068982ef0b90021a827d71a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiYmQwZjVkNGVlYWIwMDA0OTFjM2Q4MTM3NGZjNWMxNDlkNzE0YmYxOWI1MzRlNDA2ODc5YTcxYmNmNDhhNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1NTg5NjFiY2IzOWRlYzdlMTVhMDUxMTI0MzQ1Y2UxZWZhZDcxZDVmNzZiMTg5NzZiZGU2MDA3MGExNWYyNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhM2ZjZjA2NDU4MmIyZjYzOTVmYTVmOGJjMDk5MDFlNTA3NTRhZDk0MGI5NTQ5OGM1YzQ5YjYwYTE5ZGQxMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1ZDUxZDg4ZjE3MzQxOTM5Njg2YjllZGM4MTliY2I1ODA2NzEwM2M0YmUzYTMwOGE2ODY0OWI5MDQxZmEyZjcifQ"
+        },
+        {
+          "resource": "repo://docs/self-hosting/server-container.mdx#L151-L183",
+          "version": "repo-lines-v1:sha256:79e269284264e92dd60ffe2f9dda7e5beb3668881c88fb6e7a79e00f184c7faa:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYzFmNTcwMTBjMTI3ZDViMzg3NGZmYWZmYzdmZGI2ZTgyZDE1Y2VjYjVlYTQ1OWM3ZWZhM2FjZTYxZWE3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNTFhNzgyYjEzMTFhYWQ4MDZkM2NiYzgwMDUxMTNkN2VjYWI3YjQ5YzI3ODBhNDFhYzRkN2M0MGNhMTI2MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkNTI2ZGU0ZjczMTAxNmZmYThlZjI4MzQ2MjYwMzVjNDgxOTI1Y2JiYjM2MWYwYmRjODg0NmZmYjBiM2Y0ZjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_481dfad886b349ab9a865394fe0b4177",
+      "statement": "独立routeはnginx BasicとLVK handoffを経由せず、アプリのAuthorization/Cookie/Host/Origin/WebSocket情報を保持しHTTPS forwarded情報を設定する。Proxy-Authorizationと内部tokenは除去するため、LVK認証の有無はアプリのアクセス保護を保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/nginx.test.mjs#L332-L377",
+          "version": "repo-lines-v1:sha256:280ba1b662fb91ab0893bedd60eb4dec1dcea58bfcd5668181aa7c3a7853f935:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMGNhMjNkYzVmZDAwYTM0OGMyNWUxOTZkMmYxZDFjYTFmNjgyZDQxZmIxZWEwNzRlM2NlOGEzYmE1ZGRmMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2YjJiMTIzNmJjOWZhMWY5ZTYzNGU1MDIwOTlmM2Q1ZDNjOGQxMzJjNTI2ZTcyOWUzMjM3ODZkMmRhYmZkNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NmVlNDVlMzgxNGQwMDUyNjc5ODRmNmVhY2JlZTBkMzgzNWQzY2YzZDFiNzFhY2MxOGM3ZmY5M2Q1NzE1MDgifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L252-L274",
+          "version": "repo-lines-v1:sha256:a1b06af3a26ff8bf20b49d995bfed3cc1be6494942f8102f547f95705fc5a26f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNmUyNDhkYjZhZDYwMjBmYWE5YjdkNjgzNjFmMzNkN2NmZjZiYTBjYmJlOTI1OGY4M2MxZjgzZDdmNjY2ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwMjQxNmUzYmFjYmZkY2UxYjI5MjA2NDgyYTkxZjAzYzJiMGE4NGUwYjJmNDcxYjYzYTQzYmY2NmYxODVkNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmZDc2N2YxZmI3NDA5NTM2YjExNWMwMTkwNGQ3OTljNDRhZGQ1NzZiNGVhNTU1MDY5NjgzNDU4MTllNjg4MzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6bc2183c94f74a069b5de4cd571ba63f",
+      "statement": "ACME companionはLVK_HOSTとCSVの全DNS名を単一lvk lineageのshortlived注文へ含め、25識別子超をCertbot呼出し前に拒否する。wildcardは拒否し、外部証明書にはこのroute数制限を課さない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/acme.py#L58-L96",
+          "version": "repo-lines-v1:sha256:886a135b58133c9e57af5ed3b12f0e75b9f807455f63b87abe344fce0f04bfd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYTVjNjZlMTdiMTQ1Mzk3ODM0YjhjODU0ZGM0MTkzZTIxMjUxODBhODk5NmExNGMzMTg4MzMyNmIyZWZiY2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2NjM3N2JkOTRhOTI4ZGFiNDJmYWU4NDI2NGY2MzQ5YjYyNzdkZjA4NjRmMGMyYTdkOTdkZjhmNmJhMzI5MWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwYjQ1Y2M2OTZjMWFhZDIxMGUyYjg0MTViOGRmMmNiYmYwNDMzZjFiNDRiMWM1ZWQ4MGE3MTQyMDliYjA4MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMDgyZDEyNzRlODM0M2JhNGNlYTNhMTQwNDMwMTI3MTNkNjRjMDNiMmU1ODljZDgxOGEwMmU3YTM2NDVlM2QifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.test.mjs#L483-L491",
+          "version": "repo-lines-v1:sha256:a7fd5a2751591bee23ef3d6a8c0ab77b489b1fa37a0b0b9f18c6babed213e46b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGRiOTFlM2VhODJjNTA2ZjJmMjE2NTk1MzcyM2Q1YmNhYjMzYTM5MjA3MjhiZmMxODFhMGM1ZWQ2ZmM3NWQ5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzExZjgyMmEyMWEzOWZjNTBmMzlmM2IyZGNkYzVlN2U1MWViZDVmMzRhNDA1MmJiOWJjMDcwZTJhODZjY2Q3NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmNjOGI0ZTA5ZDJhOWEwMzRiYzk3ZTA1NWM1Y2IzMTFjZDM2ODVkMzIyODUzODI0OTZlN2FkMTEzYzA5ZDdiMyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8d9b66c26b964885b5aee09a3a574af4",
+      "statement": "route設定とCertbot引数は起動時に固定され、Compose環境変更は対象service再作成が必要。ACMEではcertificatesの新証明書を待ってlvkを再作成する運用順序を持つ。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/acme.py#L159-L176",
+          "version": "repo-lines-v1:sha256:96186e15bc126972e5495c28fef13d28e778bc2eef3d252d563f18a379165014:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NzhlYzM3NjcwMGU1ZDQzMmZhMzQyNzkxODlmNmFmNmFmYmYyNTI1ZjY3MTViOGJkYmFiN2I3Yjc5MDVmYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlN2JjYmY1NGY0YzkxNGQyNWNiNmFlNzcxZmM3ZGJjOGE3NjkwZjVhM2MwMDBkNzI2YjMyMGUzNzg3ZDZiODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjMjFmNzAwNWU0ZDljZTNhNmQ0MmY5ZDgzZjI4ZTJiNmQ0ZTFkOWIwYmVkMmNkNGFlOWEyNTJlNzc0MjJhMGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiYTE1MThmN2Y5NjJkZThiYTNiYjA3YTUwOGNjYjQyNjQwY2FkMWEwNmYxN2ViNzViYjM2Njc4YjllYWZlNTcifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L457-L508",
+          "version": "repo-lines-v1:sha256:305ccf781821c2f47163a9b622959b0271bf3eec61339c7bc7c2c69e0287a337:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlODIwMGViZDE3MDliNmE2NzViZWNiM2JlOWYzOWU1M2JiYWMwMmNjOTI3MjM0NjJjMDU0NjhlYjBkYTZhMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OGUyMGIxMzQ5MWQ3ZjBhYjI3ZmFhZDMzMmRiNmE5NzFkMjEyZWU4ZjAyZDBiNmUyNWJkMDc0OTQyYTUwZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5ZDRkYTM5ZTY5OTU1Zjk4OTYyYmE5YjkwMzg3YjZlYjE5MDE3MWFlYjIyNWIxZmY5ZThlZTY0ZjVkNDczYWYifQ"
+        },
+        {
+          "resource": "repo://docs/self-hosting/server-container.mdx#L196-L204",
+          "version": "repo-lines-v1:sha256:f4fcb618e94aa977808d696e9e5d2e993312016fe213b4b9a058e9c9f2041857:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjZjZjY3YThhNDE0MDdmNjljYTAyMDdjOGRjMGEyZGE1Nzk4N2I1NmNhYmUyMWNlNjllZGYxMzBjZmY4NzgzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNiZjNiOTRmZGMwYTJjY2QxMjlhZGMyMjE4ZDQ0MDZiNDM3NWUwM2IwNjE3OGY0MzI4YjVkNGUwZWYwMWQ4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmM1ODc2OGVmNTVmOWQ2MGJlMDU2MjNmZTA0MzljN2FmZjRmYjkyODFjOWI1ODU3OTBiNDE2YTM0MGRhYTJjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGNmMTIxMjFlNmE5N2Q3Yjk4MzEwOWMzNzdlZmEzNTYyODM0NTJlZWMwMjllM2E5MTk5ZGQ3MGMyMzk0NTkyMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_34709882f71743709c0d4b4c7963d876",
+      "statement": "証明書だけの更新は30秒周期で全route identityとkeyを検証しnginxをreloadする。失敗時はfingerprintを採用せずログと再試行を行いbackend/agentを再起動しない。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/server.mjs#L296-L319",
+          "version": "repo-lines-v1:sha256:bd3e073fddc77a5671b69460b130241cc801e0f4cd1140cc12634ae843f2b1c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZGQ3YmZhMDZkYjc4MmI5YmVjYmRmNDcyMWJlNDQ4NDkwNGVmMTA5OGUxYjkzZWVhOGIxNjBiNzAxMTQ3MWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZjQ1MDA4NmU2OTAwYThmYzhhZGI3NTk3NTQwODZmYjk1OTYxZGU2MmJmYjU5NWQyYTIxZDMxMmM5OTE5OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1OTM3Njc5MWU2OTQ3NmY3YTA3MTg5NmRjMjViOTEzN2VmODQyM2UzZTk2MzQwY2NmYWMzMzIzZDQyY2E1MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NDIyM2E3ZTQ5NzhkMWU5ODk1NmNlNTJhOTM1NTA0ZWQwYWUxNTI1ODllMDQ0YmNkMDZlODE0YTY3NWEzYTMifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L352-L374",
+          "version": "repo-lines-v1:sha256:1c5d1134bea673de09773ed716cbde530f27be1af178f0a6f873523deddd8532:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMzkwODVlM2YyOTJhZTQ1YzExOTllNWFlNGMzMmY1NTJiOWU0YTlmOTkzZDRiNjIzZDkxOTI2NmU4ZTVkODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliYWU1YmEzMjIxMGY4YWVjNzBmN2MzZDg1OWYzYmJkZmIzMWM0Nzg0MmU4MzQ5ZjM5YTQwOGI3OWQ4ZTU3MTUifQ"
+        },
+        {
+          "resource": "repo://deploy/server/server.mjs#L508-L523",
+          "version": "repo-lines-v1:sha256:d3e2bb0c91ed4f60cc5ee27beca9af7dbc1dfee4c9c8738dbbb2d2487e9ffa1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OGUyMGIxMzQ5MWQ3ZjBhYjI3ZmFhZDMzMmRiNmE5NzFkMjEyZWU4ZjAyZDBiNmUyNWJkMDc0OTQyYTUwZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NTk1ZjRlZTVmZjYzZDUwOTUwNDE5ZGMzNDQxNDUxMzg1MWRjOTczNmZkMTdhNGY3YmZhOTMwYjI2MWI2ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzMTczYWQ1MjY5Zjc0NjExODc3YzM2YTMxNDQyNjk2ZDJlMmQzNmY1NjkzN2U2ZDRhOWFiMDNhNzc2ZmEyNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2Y2I0Mjg2ZjEyMDUzMmM5ZmNkZjYyNTE2NjEzZTZiYjE2ZDhkYmEwZGU3YzMzZGJkZjYyYmIxOGM0MDIwNDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3ee139cdfaae49539f67b167970e5bb9",
+      "statement": "有効な長いDNS名でnginxの既定hash bucketが不足した再現記録に対応し、templateはserver_names_hash_bucket_sizeを512とする。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/server/nginx.conf.template#L6-L11",
+          "version": "repo-lines-v1:sha256:df32a8c8b3ba3fe40b69650204b1c35d66af63ae4ba5163f4c265547223b63c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjYyNzBiN2QwZDA2ZTM1ZTU2NDMwY2FlMjI2NzdkMWMxOWRmNGQwZjljMjM3OGEyZjkzZjVhNmEwZGViMzEzZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTAwYjRkZjlkNDUyMWI2ODBhZDU1YWM0Y2MxODAzODcyMWNmMTgyN2U5Zjk3MGU5OGE0NDk2ZDM5N2JhYTY0YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjE4ZDMxZDQ3ZjQzZTk5MDg4NzdkNDJiMTRiNDZjZjM1N2JlZDk2ODYzODRhYmVjYjk3MmQxZTEzMjgzYTM1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTcwZDI4N2I3OTM1ZDBhM2UzMWUwZmZlNDhjNGEyZmY0ZjgwYmU4NGQ4NjI2NDI4MzUzMzAzOGNiOTllMjkyMCJ9"
+        },
+        {
+          "resource": "repo://docs/development/preview-routes-validation.md#L45-L54",
+          "version": "repo-lines-v1:sha256:df6d82388046eac6a8bb4eeefa64038ce5e472becba27d340c6c84b7d8963e2d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwMWIyN2M1NzNmMzYwZTk2ODIyNTJjMTRjYTJjNmJmYTQzODhmMzE5MDUxMzhlYWVhZjFiNGUxZTliMGQ5YmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ODE4YjQ1MDJiMGY2NTY0OWFmZTg3ZDJhMTRiNDIzM2RmZjJiY2YyYzEzM2MwYzFkM2UyZjhmOTBlODYyNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZTI0MWY1YWI4OTUxNWM3NDVhYzQ4MzVjZDliM2VlNzAyMzc3ZTM3YmNlYzZjZDI0YmFjOTFjOTcwYWNiYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkMjYyNWMwNGNmYzBjMGRkMTUyNzdmM2Q2N2IyYWZiODQ1NTdmOTM5OWEyMWRkMjA1YzMxNDFjZjdmZDZjZGUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T02:27:43.655Z"
+    "at": "2026-10-24T11:38:17.046Z"
   }
 }
