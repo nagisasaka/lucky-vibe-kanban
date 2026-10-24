@@ -113,7 +113,7 @@ pub struct WorkspaceFileQuery {
 }
 
 #[derive(Debug, Clone)]
-struct NormalizedWorkspacePath {
+pub(super) struct NormalizedWorkspacePath {
     fs_path: PathBuf,
     display_path: String,
 }
@@ -320,7 +320,9 @@ pub(super) async fn resolve_workspace_repo_root(
     })
 }
 
-fn normalize_relative_path(path: Option<&str>) -> Result<NormalizedWorkspacePath, ApiError> {
+pub(super) fn normalize_relative_path(
+    path: Option<&str>,
+) -> Result<NormalizedWorkspacePath, ApiError> {
     let raw = path.unwrap_or("");
     if raw.contains('\0') {
         return Err(ApiError::BadRequest("Path is invalid".to_string()));
@@ -362,7 +364,7 @@ fn has_windows_drive_prefix(value: &str) -> bool {
     bytes.len() >= 2 && bytes[1] == b':' && bytes[0].is_ascii_alphabetic()
 }
 
-async fn canonical_target_under_root(
+pub(super) async fn canonical_target_under_root(
     canonical_repo_root: &Path,
     target: &NormalizedWorkspacePath,
 ) -> Result<PathBuf, ApiError> {

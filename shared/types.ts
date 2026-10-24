@@ -692,10 +692,6 @@ export type ReplaceProfilesRequest = { content: string, expected_revision: strin
 
 export type RecentModelsPatch = { executor: BaseCodingAgent, recently_used_models: ExecutorRecentModels | null, };
 
-export type CheckEditorAvailabilityQuery = { editor_type: EditorType, };
-
-export type CheckEditorAvailabilityResponse = { available: boolean, };
-
 export type CheckAgentAvailabilityQuery = { executor: BaseCodingAgent, };
 
 export type AgentGarageEntry = { executor: BaseCodingAgent, availability: AvailabilityInfo, capabilities: Array<BaseAgentCapability>,
@@ -736,9 +732,9 @@ export type StartReviewRequest = { executor_config: ExecutorConfig, additional_p
 
 export type ReviewError = { "type": "process_already_running" };
 
-export type OpenEditorRequest = { editor_type: string | null, file_path: string | null, };
+export type OpenEditorRequest = { repo_id: string | null, file_path: string | null, };
 
-export type OpenEditorResponse = { url: string | null, };
+export type OpenEditorResponse = { entries: Array<EditorLink>, };
 
 export type CreateWorkspaceApiRequest = { name: string | null, };
 
@@ -924,11 +920,18 @@ export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean
 
 export enum ThemeMode { LIGHT = "LIGHT", DARK = "DARK", SYSTEM = "SYSTEM" }
 
-export type EditorConfig = { editor_type: EditorType, custom_command: string | null, remote_ssh_host: string | null, remote_ssh_user: string | null, auto_install_extension: boolean, };
+export type EditorConfig = {
+/**
+ * None is uninitialized; Some([]) is an intentionally empty list.
+ * Unknown legacy editor/command/SSH fields are ignored, never executed.
+ */
+entries: Array<EditorEntry> | null, };
 
-export enum EditorType { VS_CODE = "VS_CODE", VS_CODE_INSIDERS = "VS_CODE_INSIDERS", CURSOR = "CURSOR", WINDSURF = "WINDSURF", INTELLI_J = "INTELLI_J", ZED = "ZED", XCODE = "XCODE", GOOGLE_ANTIGRAVITY = "GOOGLE_ANTIGRAVITY", CUSTOM = "CUSTOM" }
+export type EditorEntry = { name: string, uri_template: string, };
 
-export type EditorOpenError = { "type": "executable_not_found", executable: string, editor_type: EditorType, } | { "type": "invalid_command", details: string, editor_type: EditorType, } | { "type": "launch_failed", executable: string, details: string, editor_type: EditorType, };
+export type EditorLink = { name: string, url: string | null, unavailable_reason: string | null, };
+
+export type EditorOpenError = { message: string, };
 
 export type GitHubConfig = { pat: string | null, oauth_token: string | null, username: string | null, primary_email: string | null, default_pr_base: string | null, };
 

@@ -49,10 +49,7 @@ pub(super) enum ThemeMode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(super) struct EditorConfig {
-    pub editor_type: EditorType,
-    pub custom_command: Option<String>,
-}
+pub(super) struct EditorConfig {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(super) struct GitHubConfig {
@@ -61,17 +58,6 @@ pub(super) struct GitHubConfig {
     pub username: Option<String>,
     pub primary_email: Option<String>,
     pub default_pr_base: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub(super) enum EditorType {
-    VsCode,
-    Cursor,
-    Windsurf,
-    IntelliJ,
-    Zed,
-    Custom,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

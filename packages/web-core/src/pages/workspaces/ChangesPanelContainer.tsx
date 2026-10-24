@@ -1,3 +1,4 @@
+import { editorFilePathFromDiff } from '@/shared/lib/externalEditors';
 import { memo, useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -434,8 +435,11 @@ const DiffFileItem = memo(function DiffFileItem({
   }, [filePath]);
 
   const handleOpenInIde = useCallback(() => {
-    openInEditor({ filePath });
-  }, [openInEditor, filePath]);
+    openInEditor({
+      filePath: editorFilePathFromDiff(filePath),
+      repoId: diff.repoId ?? undefined,
+    });
+  }, [openInEditor, filePath, diff.repoId]);
 
   const githubCommentCount = githubCommentsForFile.length;
 

@@ -22,11 +22,7 @@ use executors::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use services::services::{
-    config::{
-        Config, ConfigError, SoundFile,
-        editor::{EditorConfig, EditorType},
-        save_config_to_file,
-    },
+    config::{Config, ConfigError, SoundFile, save_config_to_file},
     container::ContainerService,
 };
 use sha2::{Digest, Sha256};
@@ -53,10 +49,6 @@ pub fn router() -> Router<DeploymentImpl> {
         .route("/mcp-config", get(get_mcp_servers).post(update_mcp_servers))
         .route("/profiles", get(get_profiles).put(update_profiles))
         .route("/profiles/recent-models", put(update_recent_models))
-        .route(
-            "/editors/check-availability",
-            get(check_editor_availability),
-        )
         .route("/agents/check-availability", get(check_agent_availability))
         .route("/agents/garage", get(get_agent_garage))
         .route("/agents/profile-policy", get(get_agent_profile_policy))
@@ -193,6 +185,10 @@ async fn update_config(
 ) -> ResponseJson<ApiResponse<Config>> {
     let config_path = config_path();
 
+    if let Err(error) = new_config.editor.validate() {
+        return ResponseJson(ApiResponse::error(&error.to_string()));
+    }
+
     // Validate git branch prefix
     if !git::is_valid_branch_prefix(&new_config.git_branch_prefix) {
         return ResponseJson(ApiResponse::error(
@@ -231,7 +227,7 @@ async fn track_config_events(deployment: &DeploymentImpl, old: &Config, new: &Co
             "onboarding_completed",
             serde_json::json!({
                 "profile": new.executor_profile,
-                "editor": new.editor
+                "external_editor_count": new.editor.entries.as_ref().map_or(0, Vec::len)
             }),
         ),
         (
@@ -699,35 +695,6 @@ mod settings_safety_tests {
                 .confirmed_sensitive_read
         );
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-pub struct CheckEditorAvailabilityQuery {
-    editor_type: EditorType,
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-pub struct CheckEditorAvailabilityResponse {
-    available: bool,
-}
-
-async fn check_editor_availability(
-    State(_deployment): State<DeploymentImpl>,
-    Query(query): Query<CheckEditorAvailabilityQuery>,
-) -> ResponseJson<ApiResponse<CheckEditorAvailabilityResponse>> {
-    // Construct a minimal EditorConfig for checking
-    let editor_config = EditorConfig::new(
-        query.editor_type,
-        None,  // custom_command
-        None,  // remote_ssh_host
-        None,  // remote_ssh_user
-        false, // auto_install_extension
-    );
-
-    let available = editor_config.check_availability().await;
-    ResponseJson(ApiResponse::success(CheckEditorAvailabilityResponse {
-        available,
-    }))
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]

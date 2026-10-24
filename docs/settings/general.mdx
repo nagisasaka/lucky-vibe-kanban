@@ -33,94 +33,72 @@ The selected agent and variant appear pre-selected in the attempt creation dialo
 You can override the default agent configuration per attempt in the create attempt dialog. The default is just a convenience for your most common workflow.
 </Tip>
 
-## Editor
+## External editor integrations
 
-<Frame>
-<img src="/images/settings-editor.png" alt="Editor settings showing Editor Type dropdown and Remote SSH Host input" />
-</Frame>
+Register a **menu name** and **URI template** in Settings → General. Add, edit,
+remove or reorder entries; the menu follows the saved order. Settings are shared
+by everyone using this LVK server. Names must be unique and contain 1–80 characters;
+templates may contain up to 8192 UTF-8 bytes.
 
-Configure your code editing experience.
+The initial entry is editable **VS Code** data. Its SSH host is filled once from
+the hostname in your browser's LVK address:
 
-### Selecting Your Editor
-
-Choose from various supported editors:
-
-- **VS Code** - Microsoft's popular code editor
-- **Cursor** - VSCode fork with AI-native features
-- **Windsurf** - VSCode fork optimised for collaborative development
-- **Zed** - High-performance code editor
-- **Antigravity** - Google's AI-native code editor
-- **Neovim**, **Emacs**, **Sublime Text** - Other popular editors
-- **Custom** - Use a custom shell command
-
-### Custom Editor Example
-
-When selecting **Custom**, you can specify any shell command to open files. The command receives the file or directory path as an argument.
-
-```bash
-# Example: Open with IntelliJ IDEA
-idea
-
-# Example: Open with Sublime Text (custom path)
-/Applications/Sublime\ Text.app/Contents/SharedSupport/bin/subl
-
-# Example: Open with a custom script
-~/scripts/open-editor.sh
+```text
+vscode://vscode-remote/ssh-remote+your-lvk-host<lvk_workspace_dir>
 ```
 
-### Opening Your Editor
+Edit the host if your PC uses a different SSH address or alias. Visiting LVK through
+another hostname does not rewrite saved entries. Removing every entry leaves the
+list empty, including after a reload.
 
-<Frame>
-<img src="/images/settings-open-in-ide.png" alt="Open in IDE option in the context bar" />
-</Frame>
+### URI placeholders
 
-Once configured, you can open your editor from several places:
+- `<lvk_workspace_dir>`: the absolute Workspace or selected repository directory.
+- `<lvk_file_path>`: the absolute target file path, available only in file contexts.
 
-- **Context bar** - Click your IDE logo icon in the floating context bar to open the workspace
-- **Command bar** - Press `Cmd/Ctrl + K` and select "Open in IDE"
+Placeholders work in URI paths and query parameter values. Path expansion preserves
+`/` separators; query expansion encodes the whole value. Spaces, Japanese characters
+and literal percent signs in paths are encoded. Existing `%XX` escapes in the fixed
+part of a template remain escaped; use `%25` for a literal percent sign there.
+Placeholders in schemes, authorities, query names or fragments are not supported.
+The path placeholder includes its leading slash. For example, use `custom:<lvk_workspace_dir>`
+rather than `custom:/<lvk_workspace_dir>`: the extra slash would turn the expanded
+path into a URI authority, which LVK rejects.
 
-<Tip>
-The context bar shows your configured IDE's logo. For more details, see the [Workspaces Interface Guide](/workspaces/interface).
-</Tip>
+Examples of editable templates (replace the fixed host or distribution yourself):
 
-## Remote SSH Configuration
+```text
+vscode://vscode-remote/wsl+Ubuntu<lvk_workspace_dir>
+jetbrains://idea/navigate/reference?projectHint=<lvk_workspace_dir>
+https://your-web-ide.example/open?path=<lvk_workspace_dir>
+```
 
-When running Vibe Kanban on a remote server (e.g., accessed via Cloudflare tunnel, ngrok, or as a systemctl service), you can configure VSCode-based editors to open projects via SSH instead of assuming localhost.
+LVK does not choose an IDE-specific URI format. Consult your application's URI
+handler documentation for its current format. HTTP and HTTPS links are supported.
 
-This feature is available for **VS Code**, **Cursor**, and **Windsurf** editors.
+### Open a target
 
-### When to Use Remote SSH
+Choose **Open in external editor** from the context or command bar, then select
+a named link. Links are prepared before you click; your browser and OS handle the
+handoff, permissions and authentication. LVK cannot confirm application launch or
+connection success.
 
-Enable remote SSH configuration when:
-- Vibe Kanban runs on a remote server (VPS, cloud instance, etc.)
-- You access the web UI through a tunnel or reverse proxy
-- Your code files are on a different machine than your browser
-- You want your local editor to connect to the remote server via SSH
+A single-repository Workspace opens its worktree. A multi-repository Workspace
+opens its root; a repository action opens that repository's worktree. Repository
+settings open the registered original repository. File previews also offer the
+initial VS Code entry, which opens the directory; add a separate file template
+if you want to open the file itself. File-only entries explain why they cannot
+be used from a folder context. Missing directories or files produce an error;
+resolving a link never restores or creates a worktree.
 
-### Configuration Fields
+Previous IDE selections, Custom commands and separate SSH settings are no longer
+used. Register a named URI to reconfigure them. LVK does not run editor commands,
+install extensions or check IDE availability. The browser and OS decide how to
+handle each URI scheme; LVK adds no scheme allowlist or denylist.
 
-- **Remote SSH Host** (Optional) - The hostname or IP address of your remote server (e.g., `example.com`, `192.168.1.100`, `my-server`). Must be accessible via SSH from your local machine.
-
-### How It Works
-
-When remote SSH is configured, clicking "Open in Editor" (or Cursor/Windsurf):
-1. Generates a special protocol URL like: `vscode://vscode-remote/ssh-remote+user@host/path/to/project`
-2. Opens in your default browser, which launches your local editor
-3. Your editor connects to the remote server via SSH
-4. The project or task worktree opens in the remote context
-
-This works for both project-level and task worktree opening.
-
-### Prerequisites
-
-- SSH access configured between your local machine and remote server
-- SSH keys or credentials set up (no password prompts)
-- VSCode Remote-SSH extension installed (or equivalent for Cursor/Windsurf)
-- The remote server path must be accessible via SSH
-
-<Tip>
-Test your SSH connection first with `ssh user@host` to ensure it works without prompting for passwords.
-</Tip>
+Windows application launch, Remote SSH authentication and Dev Containers folder
+selection require real-device verification. Nested container URI formats are not
+an implemented connection guarantee.
 
 ## Git
 

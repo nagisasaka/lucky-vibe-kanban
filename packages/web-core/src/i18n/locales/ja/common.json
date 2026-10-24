@@ -18,9 +18,6 @@
     "loadFailed": "プリセットを読み込めませんでした",
     "retry": "再試行"
   },
-  "editorNames": {
-    "custom": "カスタム"
-  },
   "branchSelector": {
     "badges": {
       "current": "現在",

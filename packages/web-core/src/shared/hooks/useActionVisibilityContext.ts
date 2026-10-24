@@ -8,7 +8,6 @@ import {
 import { useDiffViewMode } from '@/shared/stores/useDiffViewStore';
 import { useDiffPaths } from '@/shared/stores/useWorkspaceDiffStore';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
-import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { useDevServer } from '@/shared/hooks/useDevServer';
 import { useBranchStatus } from '@/shared/hooks/useBranchStatus';
 import { useShape } from '@/shared/integrations/electric/hooks';
@@ -86,7 +85,6 @@ export function useActionVisibilityContext(
   const layoutMode: LayoutMode = isProjectDestination(destination)
     ? 'kanban'
     : 'workspaces';
-  const { config } = useUserSystem();
   const { isStarting, isStopping, runningDevServers } =
     useDevServer(workspaceId);
   const { data: branchStatus } = useBranchStatus(workspaceId);
@@ -136,7 +134,6 @@ export function useActionVisibilityContext(
       hasDiffs: diffPathsSet.size > 0,
       diffViewMode,
       isAllDiffsExpanded,
-      editorType: config?.editor?.editor_type ?? null,
       devServerState,
       runningDevServers,
       hasGitRepos: repos.length > 0,
@@ -163,7 +160,6 @@ export function useActionVisibilityContext(
     diffPathsSet,
     diffViewMode,
     expanded,
-    config?.editor?.editor_type,
     isStarting,
     isStopping,
     runningDevServers,

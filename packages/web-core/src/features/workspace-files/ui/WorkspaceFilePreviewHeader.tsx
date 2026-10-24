@@ -62,7 +62,7 @@ export function WorkspaceFilePreviewHeader({
   };
 
   const handleOpenEditor = () => {
-    void openInEditor({ filePath: target.path });
+    void openInEditor({ filePath: target.path, repoId: target.repoId });
   };
 
   return (

@@ -1,11 +1,6 @@
 import type { Icon } from '@phosphor-icons/react';
 import type { QueryClient } from '@tanstack/react-query';
-import type {
-  EditorType,
-  ExecutionProcess,
-  Workspace,
-  PatchType,
-} from 'shared/types';
+import type { ExecutionProcess, Workspace, PatchType } from 'shared/types';
 import type { Workspace as RemoteWorkspace } from 'shared/remote-types';
 import type { DiffViewMode } from '@/shared/stores/useDiffViewStore';
 import type { LayoutMode } from '@/shared/stores/useUiPreferencesStore';
@@ -126,7 +121,6 @@ export interface ActionVisibilityContext {
   isAllDiffsExpanded: boolean;
 
   // Dev server state
-  editorType: EditorType | null;
   devServerState: DevServerState;
   runningDevServers: ExecutionProcess[];
 

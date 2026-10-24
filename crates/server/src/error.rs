@@ -345,9 +345,6 @@ impl IntoResponse for ApiError {
                 message: Some("Failed to process file. Please try again.".into()),
             },
 
-            ApiError::EditorOpen(EditorOpenError::LaunchFailed { .. }) => {
-                ErrorInfo::internal("EditorLaunchError")
-            }
             ApiError::EditorOpen(_) => {
                 ErrorInfo::bad_request("EditorOpenError", format!("{}", self))
             }

@@ -18,9 +18,6 @@
     "loadFailed": "Unable to load presets",
     "retry": "Retry"
   },
-  "editorNames": {
-    "custom": "Custom"
-  },
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",

@@ -56,7 +56,12 @@ export function UnsupportedFileViewer({
                 type="button"
                 size="xs"
                 variant="secondary"
-                onClick={() => void openInEditor({ filePath: target.path })}
+                onClick={() =>
+                  void openInEditor({
+                    filePath: target.path,
+                    repoId: target.repoId,
+                  })
+                }
                 className="gap-half"
               >
                 <ExternalLink className="size-3" />

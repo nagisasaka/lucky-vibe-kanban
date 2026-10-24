@@ -3,8 +3,7 @@ use executors::{executors::BaseCodingAgent, profile::ExecutorProfileId};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 pub use v7::{
-    EditorConfig, EditorType, GitHubConfig, NotificationConfig, ShowcaseState, SoundFile,
-    ThemeMode, UiLanguage,
+    EditorConfig, GitHubConfig, NotificationConfig, ShowcaseState, SoundFile, ThemeMode, UiLanguage,
 };
 
 use crate::services::config::versions::v7;

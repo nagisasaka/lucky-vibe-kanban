@@ -66,7 +66,6 @@ import { ResolveConflictsDialog } from '@/shared/dialogs/tasks/ResolveConflictsD
 import { RenameWorkspaceDialog } from '@vibe/ui/components/RenameWorkspaceDialog';
 import { ProjectsGuideDialog } from '@vibe/ui/components/ProjectsGuideDialog';
 import { CreatePRDialog } from '@/shared/dialogs/command-bar/CreatePRDialog';
-import { getIdeName } from '@/shared/lib/ideName';
 import { EditorSelectionDialog } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
 import { StartReviewDialog } from '@/shared/dialogs/command-bar/StartReviewDialog';
 import { WorkspacesGuideDialog } from '@/shared/dialogs/shared/WorkspacesGuideDialog';
@@ -771,30 +770,16 @@ export const Actions = {
   // === ContextBar Actions ===
   OpenInIDE: {
     id: 'open-in-ide',
-    label: 'Open in IDE',
+    label: 'Open in external editor',
     icon: 'ide-icon' as const,
     requiresTarget: ActionTargetType.NONE,
     isVisible: (ctx) => ctx.hasWorkspace,
-    getTooltip: (ctx) => `Open in ${getIdeName(ctx.editorType)}`,
+    getTooltip: () => 'Open in external editor',
     execute: async (ctx) => {
-      if (!ctx.currentWorkspaceId) return;
-      try {
-        const response = await workspacesApi.openEditor(
-          ctx.currentWorkspaceId,
-          {
-            editor_type: null,
-            file_path: null,
-          }
-        );
-        if (response.url) {
-          window.open(response.url, '_blank');
-        }
-      } catch {
-        // Show editor selection dialog on failure
-        EditorSelectionDialog.show({
+      if (ctx.currentWorkspaceId)
+        await EditorSelectionDialog.show({
           selectedAttemptId: ctx.currentWorkspaceId,
         });
-      }
     },
   },
 
@@ -1145,23 +1130,15 @@ export const Actions = {
 
   RepoOpenInIDE: {
     id: 'repo-open-in-ide',
-    label: 'Open Repo in IDE',
+    label: 'Open repo in external editor',
     icon: DesktopIcon,
     requiresTarget: ActionTargetType.GIT,
     isVisible: (ctx) => ctx.hasWorkspace && ctx.hasGitRepos,
-    execute: async (_ctx, _workspaceId, repoId) => {
-      try {
-        const response = await repoApi.openEditor(repoId, {
-          editor_type: null,
-          file_path: null,
-        });
-        if (response.url) {
-          window.open(response.url, '_blank');
-        }
-      } catch (err) {
-        console.error('Failed to open repo in editor:', err);
-        throw new Error('Failed to open repository in IDE');
-      }
+    execute: async (_ctx, workspaceId, repoId) => {
+      await EditorSelectionDialog.show({
+        selectedAttemptId: workspaceId,
+        repoId,
+      });
     },
   },
 

@@ -65,41 +65,6 @@
         "variant": "PAR DÉFAUT",
         "defaultLabel": "Par défaut"
       },
-      "editor": {
-        "title": "Éditeur",
-        "description": "Configurez votre expérience d'édition de code.",
-        "type": {
-          "label": "Type d'éditeur",
-          "placeholder": "Sélectionner un éditeur",
-          "helper": "Choisissez votre interface d'éditeur de code préférée."
-        },
-        "customCommand": {
-          "label": "Commande d'éditeur personnalisée",
-          "placeholder": "ex: code, subl, vim",
-          "helper": "Saisissez la commande pour lancer votre éditeur personnalisé. Elle sera utilisée pour ouvrir les fichiers."
-        },
-        "remoteSsh": {
-          "host": {
-            "label": "Hôte SSH distant (optionnel)",
-            "placeholder": "ex: nom d'hôte ou adresse IP",
-            "helper": "Définissez ceci si Lucky Vibe Kanban fonctionne sur un serveur distant. Lorsque défini, cliquer sur \"Ouvrir dans l'éditeur\" générera une URL pour ouvrir votre éditeur via SSH au lieu de lancer une commande locale."
-          },
-          "user": {
-            "label": "Utilisateur SSH distant (optionnel)",
-            "placeholder": "ex: nom d'utilisateur",
-            "helper": "Nom d'utilisateur SSH pour la connexion distante. S'il n'est pas défini, VS Code utilisera votre config SSH ou vous demandera."
-          }
-        },
-        "autoInstallExtension": {
-          "label": "Auto-install VS Code Extension",
-          "helper": "Automatically install the Lucky Vibe Kanban extension when opening a project in VS Code or Cursor. This runs in the background and has no effect if the extension is already installed."
-        },
-        "availability": {
-          "checking": "Vérification de la disponibilité...",
-          "available": "Disponible",
-          "notFound": "Non trouvé dans le PATH"
-        }
-      },
       "github": {
         "title": "Intégration GitHub",
         "cliSetup": {
@@ -645,5 +610,21 @@
       "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
     },
     "help": "Permissions and limits"
+  },
+  "externalEditors": {
+    "title": "External editor integrations",
+    "description": "These settings are shared by this LVK server. Edit the URI if your PC uses a different SSH host or alias.",
+    "variables": "Use <lvk_workspace_dir> for the workspace/repository directory and <lvk_file_path> for a file. Placeholders are supported in URI paths and query values. Names must be unique (1–80 characters); templates up to 8192 bytes.",
+    "migration": "Previous IDE, command and SSH settings are no longer used. Configure a named URI here.",
+    "name": "Menu name",
+    "template": "URI template",
+    "up": "Move up",
+    "down": "Move down",
+    "remove": "Remove",
+    "add": "Add integration",
+    "open": "Open in external editor",
+    "delegate": "Select a link to hand it to your browser and OS. LVK cannot confirm that the editor opened or connected.",
+    "loading": "Resolving links…",
+    "empty": "No external editors configured. Add an integration in Settings."
   }
 }

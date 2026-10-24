@@ -33,7 +33,10 @@ export interface UserSystemContextType {
   previewProxyDomain?: string | null;
   config: Config | null;
   updateConfig: (updates: Partial<Config>) => void;
-  updateAndSaveConfig: (updates: Partial<Config>) => Promise<boolean>;
+  updateAndSaveConfig: (
+    updates: Partial<Config>,
+    onError?: (message: string) => void
+  ) => Promise<boolean>;
   saveConfig: () => Promise<boolean>;
 
   // System data access
