@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c8a77f9f092a4c4bfa0180e290409b09ef0a898958b9cc29d4f82d348808f55d",
+  "pageVersion": "sha256:ca9d69aba1942e8728cd1afa517c20ceaf61af6942e3668fbc3778e540a6f426",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -316,7 +316,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49",
-          "version": "repo-lines-v1:sha256:76d627c6083e324160c55c6da06c87fd1d9ac9740bbbf1d6bee7a4e0da740a97:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1YmRhNGQ0ZDJkMjJiYWIxZmUyOTdlNDhjYzEzYzRmMmU3ZTI1MzEyMGZmZGNhYzMwZTJkZjFmNTRjMzFlZWEifQ"
+          "version": "repo-lines-v1:sha256:23c3fbb358be85e0a376477a139995aacc5314444eeead42de87aef77fc85f0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1YmRhNGQ0ZDJkMjJiYWIxZmUyOTdlNDhjYzEzYzRmMmU3ZTI1MzEyMGZmZGNhYzMwZTJkZjFmNTRjMzFlZWEifQ"
         },
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L133",
@@ -451,6 +451,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T11:38:17.046Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }

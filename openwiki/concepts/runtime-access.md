@@ -28,6 +28,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-9e0cfce0846bb98d2dc47de0
+    resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-9f247c0205880588f54bff7e
     resource: repo://docs/development/runtime-access-review.md
   - id: openwiki-source-8f6f080ee7500026352930b6
@@ -36,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:23:36.861Z
+    at: 2026-10-24T14:40:59.450Z
 ---
 
 # 実行環境へのアクセス
@@ -106,11 +108,13 @@ cursor はpath、device/inode、metadata、offset、直前最大256 bytesのhash
 
 ## 開発 instance の専用自己再起動
 
-`self_restart` は既存の試験済み成果物への切替を、管理者が配置した独立 engine に渡す。通常の `run_process` の揮発出力・寿命 monitor では、呼出元 server 自身の終了を越える transaction を所有できないため別経路とする。切替 engine の保全・失敗・復旧契約は [開発用成果物切替](../operations/development.md#開発用成果物切替と復旧)にまとめる。[専用 handoff](../../crates/server/src/remote_mcp/environment_switch.rs#L1-L102)
+`self_restart` は外部で検証済みのbundleへの切替を、instanceへ配置した固定engineに渡す開発者専用経路である。通常利用者のimage更新や停止済みserverの復旧とは異なる。通常の `run_process` は呼出元serverの終了を越える切替を所有しない。bundle、起動設定、backup、失敗後の復旧は [開発用成果物切替](../operations/development.md#開発用成果物切替と復旧)を正本とする。[専用handoff](../../crates/server/src/remote_mcp/environment_switch.rs#L27-L134)
 
-既存 read/runtime:read と Project/grant 検証に加え、実行には runtime:execute、`allow_uncoordinated_execution`、非空 purpose、`no_new_work:true` が必要である。管理者設定の `LVK_SELF_RESTART_ENGINE`、`LVK_SELF_RESTART_CONFIG`、`LVK_INSTANCE_DIR` は絶対・canonical パスで、grant root は instance と完全一致、config は instance 直下でなければならない。tool 自体は権限や設定を作らない。[設定照合](../../crates/server/src/remote_mcp/environment_switch.rs#L36-L61)・[受付](../../crates/server/src/remote_mcp/environment_switch.rs#L104-L198)
+既存read/runtime:readとProject/grant検証に加え、実行にはruntime:execute、`allow_uncoordinated_execution`、非空purpose、`no_new_work:true`が必要である。grant rootは解決済みinstanceと完全一致し、`INSTANCE/switch/start_binary.py` と `INSTANCE/launch.json` はcanonicalでalias不可。旧 `LVK_SELF_RESTART_ENGINE/CONFIG` は不要で、toolは権限も起動設定も作らない。入力はregion、request_id、purpose、絶対bundle path、no_new_work。旧source/frontend等のfieldは暗黙変換せず拒否する。[設定・入力](../../crates/server/src/remote_mcp/environment_switch.rs#L13-L41)・[認可と受付](../../crates/server/src/remote_mcp/environment_switch.rs#L136-L219)
 
-`request_id` を保存し、再接続後は同じ region と ID で `get_self_restart_operation` を呼ぶ。engine の所有 identity は principal・grant ID・Project から作り、現在の認可も再確認する。一般の `get_operation` は受付監査にすぎず、`succeeded` でも切替成功を表さない。受付応答が不明なら新IDで再実行せず専用照会で結果を回復する。旧serverのreceiptが uncertain でも engine の永続結果は独立して取得できる。[receipt と結果](../../crates/server/src/remote_mcp/environment_switch.rs#L104-L198)・[履歴scope](../../crates/server/src/remote_mcp/issue_write.rs#L165-L197)
+稼働serverは実bind済みloopback listener、PID/start/boot/cwd、instance/data、current選択、実際に使った起動設定hashを非公開stdin pipeで渡す。これは永続起動設定ではなく停止対象のsnapshotで、workerが停止前に独立照合する。環境変数のportだけから対象を推定しない。[snapshot](../../crates/server/src/remote_mcp/environment_switch.rs#L43-L71)・[pipe](../../crates/server/src/remote_mcp/environment_switch.rs#L73-L115)・[停止前照合](../../deploy/developer/switch/start_binary.py#L358-L386)
+
+`request_id`を保存し、再接続後は同じregionとIDで `get_self_restart_operation` を呼ぶ。engineのownerはprincipal・grant ID・Projectから作り、結果取得にも現在の認可を要求する。一般の `get_operation` は受付監査で、succeededでも切替成功ではない。受付応答が不明なら新IDで再実行せず専用照会で回復する。旧serverのreceiptがuncertainでもengineの結果は独立して読める。[receiptと結果](../../crates/server/src/remote_mcp/environment_switch.rs#L136-L215)・[grant dispatch](../../crates/server/src/remote_mcp/environment.rs#L324-L378)
 
 ## 変更時の検証と残る範囲
 
@@ -119,3 +123,5 @@ cursor はpath、device/inode、metadata、offset、直前最大256 bytesのhash
 runtime設定migrationは `20261020200000` で、別機能の `20261020190000` との番号衝突を避けている。freshと両側からのupgrade fixtureはあるが、旧番号のruntime migrationを適用済みの実DBの移行手順は対象外で、履歴を書き換える根拠にならない。[migration試験](../../crates/server/src/remote_mcp/environment_settings_tests.rs#L434-L497)・[変更理由と限界](../../docs/development/runtime-access-review.md#b171f645-に対する追加修正2026-10-20)
 
 今回のSyncは統合済みsourceとテスト内容の静的照合で、製品テストを再実行していない。凍結入力の正式Integrationは明示的に検証省略であり、開発時成功報告と区別する。restart fixtureはmock認証のHTTP hostで、full serverのshutdown hook、本番Auth0/ChatGPT、実PID番号再利用、spawn→receipt確定間の各点のcrash、実Cargo/nvm/venv環境を保証しない。[検証限界の記録](../../docs/development/runtime-access-review.md#3-子が生存中のホスト終了再起動限定した実プロセス検証で成功)
+
+bundle切替には、production MCP routerのmock認証fixtureによる呼出元停止・再接続試験と、実server binaryのasync worker完走試験が別々にある。一体の実Auth0/ChatGPT E2Eではない。今回のSyncでも製品テストは再実行しておらず、開発時記録と正式Integrationの検証省略を区別する。[MCP回帰](../../crates/server/src/remote_mcp/environment_switch_tests.rs#L210-L289)・[実bundle検証と限界](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)

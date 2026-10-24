@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
+    resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
@@ -30,12 +32,16 @@ sources:
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-a764bf933c082e67ed4b6192
+    resource: repo://deploy/developer/switch/launcher.py
   - id: openwiki-source-417b2b5ecb26c89c1b06df88
     resource: repo://deploy/developer/switch/README.md
   - id: openwiki-source-9e0cfce0846bb98d2dc47de0
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-67b7631c2182dcc02247e199
     resource: repo://deploy/developer/switch/start_support.py
+  - id: openwiki-source-55186e23cd9f537c0d522a81
+    resource: repo://deploy/developer/switch/test_real_server.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-85c8f44da40d30a5a7a1f9c7
@@ -46,6 +52,8 @@ sources:
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
+  - id: openwiki-source-d95a345bb2e865055223b40f
+    resource: repo://docs/development/dev-switch-bundle-validation.md
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -82,10 +90,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-24T11:38:56.795Z" }
+generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:38:56.795Z
+    at: 2026-10-24T14:40:59.450Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -176,19 +184,39 @@ stagingの認証stateはstableと独立しており、同じ`LVK_INSTANCE_DIR`�
 
 ## 開発用成果物切替と復旧
 
-`deploy/developer/switch` は稼働中 Linux 開発 instance を外部で試験済みの binary・agent host・source・frontend へ切り替える operator 配置用 kit である。repository に存在することは live 導入を意味しない。Git操作・build・試験証拠の審査や migration SQL の実行はせず、新server自身が通常起動時に migration を行う。初回起動・supervisor配下の復旧とは別で、MCP側の権限と受付契約は [専用自己再起動](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を参照する。[利用契約](../../deploy/developer/switch/README.md)・[事前条件](../../deploy/developer/switch/start_binary.py#L311-L361)
+`deploy/developer/switch` は、稼働中Linux開発instanceを外部で試験済みのbundleへ切り替えるoperator配置用kitである。安定版Docker imageの更新や停止済みserverの復旧とは別の入口で、repositoryへの統合はlive導入を意味しない。engineはGit操作・build・migration互換性審査を行わず、migrationは新serverの通常起動に任せる。MCPの認可・受付・再接続は [専用自己再起動](../concepts/runtime-access.md#開発-instance-の専用自己再起動)、具体的な配置と移行操作は [kitの手順](../../deploy/developer/switch/README.md)を参照する。
 
-同期CLIと非同期workerは共通 `execute` を使う。同じrequest UUID・同じ入力なら既存結果を返し、入力違い・別要求の並行切替を拒否する。受付を原子的に保存してから worker へ lock FD を渡し、呼出元の終了を越えて処理する。workerが失われlockが解放された未完了要求は interrupted となり自動再実行しない。[受付](../../deploy/developer/switch/start_binary.py#L623-L712)・[結果回復](../../deploy/developer/switch/start_binary.py#L369-L405)
+### 起動設定とbundleの境界
 
-事前に作業・schedule・論理queueを調整し、実行には `--no-new-work` を渡す。dry-runはこの宣言不要だが物理使用を検査する。engineは過去Runの終端履歴を判定せず、現在のserver子孫、instance process、dataの使用者を拒否する。共有資源のsnapshotにholders/queueがあれば拒否し、未使用の登録だけでは拒否しない。ただし対象instance/DB自体が登録資源なら、この独立engineではなく [資源bundleの契約](../concepts/shared-resource-coordination.md)を使う必要がある。この前提をresourceの自由記述から自動判定する機構ではない。[物理guard](../../deploy/developer/switch/start_support.py#L137-L243)・[運用上の前提](../../deploy/developer/switch/README.md#競合backup失敗)
+`INSTANCE/launch.json` が唯一の永続起動設定で、portとenvironmentを持ちowner-onlyで保管する。必要なPATH・HOME・認証や暗号鍵の参照はoperatorが明示して保持し、環境や秘密をbundleへ丸ごと収集しない。`current.json` はinstanceの `releases/ID` とmanifestを選ぶ。固定 `switch/launcher.py` はinstanceをcwd、HOSTをloopback、agent hostを選択releaseの絶対path、PATHを同release優先にしてserverをexecする。実際に読んだ設定bytesのhashを渡すため、後の切替で設定差異を検出できる。[設定検証](../../deploy/developer/switch/start_binary.py#L27-L74)・[launcher](../../deploy/developer/switch/launcher.py#L10-L34)
 
-成果物hashとfrontend treeを確認し、新旧binary/host・回復用frontendをoperationへコピーする。新binaryは保存先から起動するが、debug frontendの絶対参照先・source/runtime依存は元の保持先を使う。外部cleanupや再buildでも必要な間は保持する。現行kitには旧 `DISABLE_WORKTREE_CLEANUP=1` を `run.py` と稼働環境の両方で要求するguardが残る。通常serverの自動cleanup撤去やinstance runnerの変数削除によって、このkitの条件まで消えたとは扱わない。保管先がbuilds外ならretain指定、管理worktree内ならDB登録も確認する。[保持検査](../../deploy/developer/switch/start_binary.py#L95-L151)・[稼働環境検査](../../deploy/developer/switch/start_binary.py#L280-L309)・[成果物保存](../../deploy/developer/switch/start_binary.py#L452-L527)
+bundleは `server`、`agent-process-host`、`vibe-kanban-mcp` と `bundle.json` のみ。manifestはformat 1、実行ファイルとassetのSHA256を持ち、symlink・欠落・余分なpayload・hashや権限不一致を拒否する。frontendをbuildし、3 binaryを `--features server/developer-runtime` 付きでbuildした後、`bundle.py`で既存成果物を梱包する。featureはdebugでもfrontend・sounds・scriptsを埋め込む。[作成手順](../../deploy/developer/switch/README.md#buildとbundle作成切替engineの外側)・[bundle検証](../../deploy/developer/switch/start_binary.py#L77-L137)・[埋込みprobe](../../crates/server/src/runtime_payload.rs#L9-L34)
 
-pidfdで起動時刻等のidentityを再照合してTERMを送り、60秒で終了未確認なら自動KILLせず止まる。停止後はdataと起動設定を保全し、SQLite backup APIでWALの確定分を含む単独DBを作る。integrity/FK・manifest・fsyncを確認し `backup-complete.json` を置く。worktree・target・node_modules・共有cache全体はbackup対象ではない。[停止](../../deploy/developer/switch/start_support.py#L222-L243)・[SQLite backup](../../deploy/developer/switch/start_support.py#L260-L296)・[完成marker](../../deploy/developer/switch/start_binary.py#L528-L566)
+実切替は稼働中にcandidateをreleaseへコピーし、コピー後の全binaryの `runtime-payload` と実asset bytesを検査してから停止する。manifestのembedded宣言だけは信用しない。それ以降はコピー先だけを参照し、元source・frontend・targetへのfallbackはない。明示 `VIBE_KANBAN_AGENT_PROCESS_HOST` は絶対の既存fileでなければ失敗し、別hostへfallbackしない。ただしOS libraries、Python、Git、provider CLIと認証は運用環境の依存として残る。[コピーと検査](../../deploy/developer/switch/start_binary.py#L101-L137)・[保存後の境界](../../deploy/developer/switch/start_binary.py#L217-L233)・[host解決](../../crates/local-deployment/src/agent_run_port.rs#L3638-L3650)・[外部依存](../../deploy/developer/switch/README.md#配置と正本)
 
-起動後はhealth、listener、exe/cwd、frontend entry、取得可能なbuild情報、DB整合性を照合する。結果の正本は `instance/switch-operations/UUID/result.json`。failed/interruptedではstageと実process、backup marker、保護ログを確認する。自動DB rollback・旧binary復帰・失敗データ削除は行わず、起動後失敗のserverが診断用に残る場合もある。health成功はAuth0/UI/MCPの実接続成功ではない。[起動検査と失敗](../../deploy/developer/switch/start_binary.py#L408-L620)
+### 受付から停止・起動まで
 
-検証入口はPython `test_switch.py`、Rust `environment_switch_tests.rs`、隔離した `test_real_server.py`。mock IdPによるMCP切断・再接続、PID差異・WAL・失敗・重複要求を扱うが、実Auth0/ChatGPT、live cutover、外部保持方針まで保証しない。今回のWiki保守は静的照合で、凍結入力の開発時成功報告と最終Integrationの明示的検証省略を区別する。[fixture](../../deploy/developer/switch/test_switch.py)・[HTTP handoff fixture](../../crates/server/src/remote_mcp/environment_switch_tests.rs)
+同期CLIと非同期MCPは同じengineを使う。CLIは配置されたswitchディレクトリの親をinstanceとし、`--bundle`、`--request-id`、`--no-new-work`で切替、同じIDの `--status` で結果を読む。`--dry-run` は停止・コピー・candidate実行をせず現在のhash・idle・容量見積りを確認するだけである。[CLI](../../deploy/developer/switch/start_binary.py#L552-L610)・[事前検査](../../deploy/developer/switch/start_binary.py#L182-L214)
+
+外側で新規作業・schedule・論理queueを調整する。engineは過去Runの終端履歴ではなく、現在のserver子孫、instance process、data使用者を検査する。resource snapshotのholders/queueがあれば拒否するが、未使用の登録だけでは拒否しない。対象instance/DB自体が登録資源なら、この独立engineではなく [共有資源bundle](../concepts/shared-resource-coordination.md)の契約が必要である。no_new_workは外部調整の宣言で、scheduler停止を代行する強制flagではない。[物理guard](../../deploy/developer/switch/start_support.py#L139-L249)・[適用前提](../../deploy/developer/switch/README.md#保持と失敗復旧)
+
+同じUUID・同じ入力は既存結果を返し、入力違いのID再利用・別要求の並行切替を拒否する。受付を原子的に保存し、独立session/I/Oのworkerへlock FDを渡す。workerは受付processの終了をpidfdで待ち、固定sleepや呼出元serverの生存に依存しない。lock FDは新serverへ渡さない。workerが失われlockが解放された未完了結果はinterruptedとなり自動再実行しない。[受付とworker](../../deploy/developer/switch/start_binary.py#L458-L600)・[結果回復](../../deploy/developer/switch/start_binary.py#L275-L309)
+
+停止前にsnapshot・listener・設定hash・新旧release・idleを再照合し、pidfdで対象identityを固定してTERMを送る。60秒で終了未確認なら自動KILLせず停止する。停止確認後にdataとlaunch/current・固定kitをbackupし、SQLite backup APIでWAL確定分を単独DBへ取り込む。integrity/FK・manifest・fsync確認後の `backup-complete.json` が完成証拠となる。runtime/worktree・target・node_modules・共有cache・HOME全体はbackupしない。[停止](../../deploy/developer/switch/start_support.py#L222-L249)・[SQLite backup](../../deploy/developer/switch/start_support.py#L260-L298)・[切替順序](../../deploy/developer/switch/start_binary.py#L361-L437)
+
+currentを原子的に切り替えて固定launcherを起動し、health、listener、exe/cwd、全release hash、配信index/JS/CSS hash、DB整合性を照合する。画像等は埋込みprobeの対象だが全URLのHTTP到達性を保証しない。成功時だけcurrent+previousの2世代と最新backup1セットへ整理し、小さなreceipt/logは保持する。途中はcandidateを含む3世代、backup2セット分の容量が必要になる。[health](../../deploy/developer/switch/start_binary.py#L312-L344)・[成功と保持](../../deploy/developer/switch/start_binary.py#L252-L265)・[完了](../../deploy/developer/switch/start_binary.py#L424-L447)
+
+### 失敗と旧契約からの移行
+
+結果の正本は `INSTANCE/switch-operations/UUID/result.json`。failed/interrupted/未完了のoperationは後続切替を拒否する。新IDによる自動retry、自動DB rollback、旧binary復帰、失敗data削除はしない。新serverが診断用に残る場合もあるため、stage、process/listener、migration後DB、backup marker、保護ログを調べてoperatorが回復方針を決める。復旧後の失敗operationは保護された回復記録へ移してfenceを解除するのであって、成功へ書き換えない。[失敗保存と受付fence](../../deploy/developer/switch/start_binary.py#L448-L509)・[回復手順](../../deploy/developer/switch/README.md#保持と失敗復旧)
+
+旧source/frontend/retain-worktree等のCLI・MCP入力、switch.json、run.pyのAST書換え、旧engine/config環境変数は新契約で使わない。初回legacy移行は外部terminalのoperator作業である。旧起動設定・backup・依存worktreeを保全し、承認済み停止と整合backup、固定kit/launch/currentへの移行、起動後の動作確認を行う。sourceを隠した隔離試験で独立性を確認してから旧保持例外を解消する。統合済みコードがあるだけで稼働版を移行済みとせず、[Workspace archiveの実参照検査](../concepts/workspace.md#archive削除期限-cleanup)も省略しない。[移行手順と廃止入力](../../deploy/developer/switch/README.md#旧契約からの移行)
+
+### 検証の限界
+
+Python `test_switch.py` はコピー後の元bundle不可視、manifest虚偽、停止前snapshot差異、backup/health失敗、worker中断、冪等性、保持世代を検査する。Rust `environment_switch_tests.rs` はproduction MCP routerとmock認証で呼出元停止・再接続後の同receipt取得を扱う。`test_real_server.py` は実binaryのruntime子にLandlockを適用し、source不可視でmigrationあり/なし、asset/API、host bootstrap、Workspace cwdからの同梱stdio MCP、async worker生存を検査する。engineはprocfs identity観測のため同じLandlock隔離に入れない。[Python回帰](../../deploy/developer/switch/test_switch.py#L210-L297)・[実runtime試験](../../deploy/developer/switch/test_real_server.py#L188-L250)
+
+今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、正式Integrationの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。[記録された試験結果・残る範囲](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
 
 ### ビルド情報の検証境界
 

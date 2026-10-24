@@ -92,10 +92,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/api.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-24T11:23:36.861Z" }
+generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:23:36.861Z
+    at: 2026-10-24T14:40:59.450Z
 ---
 
 # Workspace と Repository
@@ -208,7 +208,7 @@ Archive は、履歴・Git branch を残して managed worktree を解放する�
 
 確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
 
-実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の debug frontend 参照も観測する。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
+実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の通常 debug frontend 参照も観測する。`developer-runtime` featureで埋込み済みの場合はこの自己frontend参照の保護を省くが、exe/cwd/fd等の実参照検査は維持する。[bundleの独立性](../operations/development.md#開発用成果物切替と復旧)は既存worktreeの無条件削除許可ではない。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 
 削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L265-L290)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
 

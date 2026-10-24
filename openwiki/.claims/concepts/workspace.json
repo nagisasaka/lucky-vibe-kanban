@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8fed6e5ad259827c2281603a7edc2fb2ed7cf58559880b30f05cb169189df42e",
+  "pageVersion": "sha256:a7ca1cb62ac74509934a47a29453bc0e9e8c652a95739d818463a9fee73a9e68",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -460,11 +460,11 @@
     },
     {
       "id": "claim_ca6922cc1d2d4ee694384c8c4def6acf",
-      "statement": "archiveのLinux OS検査は観測できるexe/cwd/fd/maps/パス引数と自身のdebug frontendを保護するが、不可視参照や観測後の外部起動を排他せず、観測不能だけでは拒否しない。",
+      "statement": "archiveのLinux OS検査は観測できるexe/cwd/fd/maps/パス引数を保護し、自身のdebug frontend参照保護はdeveloper-runtime featureなしの場合に限る。不可視参照や観測後の外部起動を排他せず、観測不能だけでは拒否しない。",
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/workspaces/archive_processes.rs#L1-L218",
-          "version": "repo-lines-v1:sha256:9bb363a28d409647b1b057f2254fe38714ae29f367499a4e83c2036d8cdd2c5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiNTIzNjFhYTRhYTJkN2RjMzdmYmMyMzg5NTg4M2Y1NzExN2I0YTQyNjhiMjkwMGJiOTJiMGEzMjRjMTVhNmY0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkMmZlYzg3ZGMzMjY4MmRlODViZjIyN2VmYmE2ZDYyMDk0ZTk1ODlhMjY4ZjM2NmI1Y2E2YTBlN2E4ODk0OGVkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMmY3ZGIwZGFhN2FmNTEyOTMyNTk0YTlkMjBjMDMxYzhhOGRkOTI3YjkyMDhjOWIxNWY5YTE5YzJmMmFjNjg1In0"
+          "version": "repo-lines-v1:sha256:05c2533e9411336f3e90e224b7cd9d26fef388c1dc61e6e16075cc6014130f2b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiNTIzNjFhYTRhYTJkN2RjMzdmYmMyMzg5NTg4M2Y1NzExN2I0YTQyNjhiMjkwMGJiOTJiMGEzMjRjMTVhNmY0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkMmZlYzg3ZGMzMjY4MmRlODViZjIyN2VmYmE2ZDYyMDk0ZTk1ODlhMjY4ZjM2NmI1Y2E2YTBlN2E4ODk0OGVkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiMmY3ZGIwZGFhN2FmNTEyOTMyNTk0YTlkMjBjMDMxYzhhOGRkOTI3YjkyMDhjOWIxNWY5YTE5YzJmMmFjNjg1In0"
         }
       ]
     },
@@ -561,6 +561,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T11:23:36.861Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }

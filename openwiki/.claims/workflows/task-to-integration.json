@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8f4bb642dc29799fa0ae5ba3e9b40018d49d391a0305d1741d3ef2947df27200",
+  "pageVersion": "sha256:462eb6526ce44bff00ead9493f8caa88b63067a150ed2e6c15a0390794a984a6",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -218,7 +218,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/main.rs",
-          "version": "repo-file-v1:sha256:f4c5e71c11cc01fbdfa0a999dbbe7e9c90ffbc5d02ea1625f032c67164fdb59d"
+          "version": "repo-file-v1:sha256:6c3139fa1775c7edffbb40be0fb3347062d4f3e2e735c6245fb7c79f78b1b38f"
         },
         {
           "resource": "repo://crates/server/src/routes/workflows.rs",
@@ -447,6 +447,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T02:37:05.680Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }

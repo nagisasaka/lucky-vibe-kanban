@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b4eb09ce350ef876198db8d2d3be99aca7bd83815f823452a1ea3a653d7d0f95",
+  "pageVersion": "sha256:4dfd4ba4185626c906ba91016cfc1a3ea4b0c1eebee3c20af2d66c32b039c128",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -126,7 +126,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs",
-          "version": "repo-file-v1:sha256:d34feddf367fe70d27d452b8f64a8d8457e22dd752992e49193767ccc9e081e2"
+          "version": "repo-file-v1:sha256:fb4ee0c2f237f52f0c6f37c3b572a844c283ee41d5cbbfb2dcbc95c4942fc625"
         },
         {
           "resource": "repo://crates/mcp/src/task_server/mod.rs",
@@ -617,6 +617,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T11:23:36.861Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }

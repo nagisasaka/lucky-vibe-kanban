@@ -91,7 +91,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T15:33:24.249Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T11:23:36.861Z
+    at: 2026-10-24T14:40:59.450Z
 ---
 
 # Agent provider・設定・MCP・Skill

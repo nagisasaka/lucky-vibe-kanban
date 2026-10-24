@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c830f7ef3df29f1c9b527fe94481206c025010b761bd02c841d284b6c0c83555",
+  "pageVersion": "sha256:e6df993afe41df3c6fea8e8abcc49afd5bc3193bb857294e8c140f5a1f869fe5",
   "claims": [
     {
       "id": "claim_5f8fb54c2f6c4bad86021e17d9b3fbec",
@@ -26,7 +26,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs#L309-L403",
-          "version": "repo-lines-v1:sha256:9c0f1fb6db46e9915f3ca8fbe3f945ba515b73db195c4f4975675bdc25dc09e2:eyJzZWxlY3RlZExpbmVDb3VudCI6OTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NDdkZDYwOWI0ZmU2YjdjMWU2ZWFkNjE0NGEwNjYxMTM1Mzc0MzdiOTI5ZTUzOWM1YjRiMGU0MTIzMDM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MTM4MmFmNmVjMTMzZjQzNTI1MDg5OWFkMzE4OTBmNGY2NTdlNTQ0MmFiNzQ5OTU2MjMzOTExMzY1N2ZhMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkNmI1NWM2ODQyOGJkOWU4ZDZiNGU0Y2YwYmJmYmI4Mjc4MWEzMjU4NjEwYWU5ZTAxMjI3NzA0NjM1MGQwN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiYzRlNjg4MzgzOGI0NDA0ZDBjZGVhOWU5MWRhMjU4MDE4NjdmZTZkOGMzMzdjZmVjZjkyNTQ4OTIyOGRlNjcifQ"
+          "version": "repo-lines-v1:sha256:1500e2824afa3feb733d450b2c5bceadaf701788fb63768a4ae6aabe11a96440:eyJzZWxlY3RlZExpbmVDb3VudCI6OTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NDdkZDYwOWI0ZmU2YjdjMWU2ZWFkNjE0NGEwNjYxMTM1Mzc0MzdiOTI5ZTUzOWM1YjRiMGU0MTIzMDM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MTM4MmFmNmVjMTMzZjQzNTI1MDg5OWFkMzE4OTBmNGY2NTdlNTQ0MmFiNzQ5OTU2MjMzOTExMzY1N2ZhMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkNmI1NWM2ODQyOGJkOWU4ZDZiNGU0Y2YwYmJmYmI4Mjc4MWEzMjU4NjEwYWU5ZTAxMjI3NzA0NjM1MGQwN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiYzRlNjg4MzgzOGI0NDA0ZDBjZGVhOWU5MWRhMjU4MDE4NjdmZTZkOGMzMzdjZmVjZjkyNTQ4OTIyOGRlNjcifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs#L167-L240",
@@ -312,25 +312,39 @@
     },
     {
       "id": "claim_dd7bbe855b484a6b93f9111cf7f75744",
-      "statement": "専用self_restartはinstanceと完全一致するgrantと管理者配置engine/config、runtime実行権限・no_new_workを要求する。一般receiptは受付のみで、切替の結果は同じrequest_idとprincipal/grant/Project所有identityによるget_self_restart_operationで読む。",
+      "statement": "専用self_restartはinstanceと完全一致するgrant、固定switch/start_binary.pyとlaunch.json、runtime実行権限・no_new_workを要求し、絶対bundle pathを受け旧source/frontend等を拒否する。一般receiptは受付のみで、結果は同じrequest_idとprincipal/grant/Project所有identityによるget_self_restart_operationで読む。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L331-L379",
-          "version": "repo-lines-v1:sha256:df233472bbe83b89d6218592380eda28dcedf39f20e6a227fa0700620e5c35f1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NDdkZDYwOWI0ZmU2YjdjMWU2ZWFkNjE0NGEwNjYxMTM1Mzc0MzdiOTI5ZTUzOWM1YjRiMGU0MTIzMDM5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiM2VjYjljM2YwY2ZhNzZmMGZiZjcxN2QyYWUyYTNlMTFjZjNhOTE4YmU5NDE5ZGYzNGQ3YzU2NGYxNmFkNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkNmI1NWM2ODQyOGJkOWU4ZDZiNGU0Y2YwYmJmYmI4Mjc4MWEzMjU4NjEwYWU5ZTAxMjI3NzA0NjM1MGQwN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhZWQ0ZTNkZTQwM2E3YzM2MWRkOGM1ODJkMWIxYjg0ODNlNjMxZDczNzI1N2UzZDEzNTU0Njk2NGI1OTg3YjEifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L324-L378",
+          "version": "repo-lines-v1:sha256:d4ca2dc7a2ebad4e9eea119708160fd99d76f13083ae22af605390440276b8ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3OTA2YzRhMmJmYTk3OWMwNTllNmY3MzdiM2U1YTc2ZDhmMzM4ZTVhOGY0MThjNzNmMjQ4YWEwYjFlN2FhYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMmI1MGZiNzM0ZTdmZDBlNzc1OGNhYjAyMjVjYmFjOWNhNjc0OTI5NzMxNDRmMGFlNGRmOTc4ODEyODkwMmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4NjIxZDUyMDFmY2FjMmUxYzhiODkxZTY0NTY3YmIxYjk4NTllYjA3MWVkMDNjOTliNWNjYWJkNjIxZmY5ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiOGZiMzNjMDdjYWYyZjFkMjYyOTA5MDQxZjY3MDgwYjhhZjk0NWZkMDY1ZjBmOTBkNzMwYTZhYmJjN2JjYjEifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs#L104-L198",
-          "version": "repo-lines-v1:sha256:25eda15ab0919c1185fbcf657b439ef73dfd087876cf92f258aad2dc6952bb62:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MmI0NmNkMjg2NTRmZDFmNDhhYzUzZGU4MTdhZWFhZjNhNTFkYmQ4ZTZmMWE4NjQ0NzAyM2JjYzc0NmM4ZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2ZTMzNDU2Y2ZjOWFjOTg5ZGIyMDYxMzhjY2U5YWZiMjIyYzJiZmUzMzUxMDBjYzM3MDZmNTJhNTkxNTJkYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs#L13-L41",
+          "version": "repo-lines-v1:sha256:f7d7d0e19498b615f49e212789812a457ab0427949d5ef3327e225086c36fcfa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5NjAyMWJjNDgwOTk3YjUxZmViODlkYjA4YThiMzc2YWE4NjBlMWU2OWFjNGM5Y2Q1OTZkMDc3Yjg5MzM0ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5MTY3OTkzY2ViNWM2MzM2ZjJmYzM5MDY0YmE4NThmMGNhZjZlNzA4NzU1OTNmMjQ1YzkyMDVlMjc5ZjY3NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxZDc1YWM1ZjY2NmFhMGQ1NzE3YmEwZWRlNmE5YzkzYzg5NGYwMjQzNDBlYzlhZGU3MjE0OTU5MTIxOTczZGIifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs#L36-L61",
-          "version": "repo-lines-v1:sha256:aa702c251ca9d9b5d4e91f5f5ce053cc9fb39fde9b333ce91227339856b9a5bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3OWRmNGZmOWIwY2VkYTU2YmY3MWY5ZTg5ZjBhMDgwYjBjNjY3ZGM3NjcxZWM5NWVmZjQ0NDczZjczY2VkNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5ZmE4YzczYzBkNmRlYWQ4YWVhN2UzYWZlMDkzZTFmYmU1NjBhMjMwNTI2YmUxMTRiMzk5MjNkOTA1NDk2ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwMWNiZDYyOGRlMmVhMTcxMGUxZTdmZjQ3ODVmOWI3ZTljMGY0NWNmZjU4ZWRlZTFmYzNjOGIwM2RjMWIwMDQifQ"
+          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs#L136-L219",
+          "version": "repo-lines-v1:sha256:6b4a18f4cef7acd082c8283f2ce9f75f69a317416720b14729555d1b5c5e4c9a:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZGQyZTFlYTY4NzYwMjA0MmM5YzQ1OTE5OTAyYTQ2ZWJiMTgxN2FlMWM3NGM0YzI5MDE5NTg4MGRmMzlmNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3YTkzNDg5Y2RkOGMwZDZlYzc1MTM5OTY5Y2VjY2QzMzdiMDczYWM5YmM2MjIxYjUwNmM3MTMxNTQyN2JmNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e407f00d8526415daa040bd079dd8558",
+      "statement": "自己再起動では稼働serverの実loopback listener、process identity、instance/data、currentと起動設定hashをpipeで渡し、workerが停止前にsnapshotを独立照合する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs#L43-L115",
+          "version": "repo-lines-v1:sha256:a5054bd8eaec70d69899ff7d79db2f1341f4b0f475d428a5e17bda5afae59e73:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNGFjODMxOWZhMjc3YjMyMmYxOTk2OWJjODczMTFmYzBmMTRlMjY4YmY2NWNhYjE4ZDVhYzg4ZTE3M2MyNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMzUzODM0MWFlYjRjNzQ4MDZiZDZiY2UyYTI1YjNjNjUxMGFlZjg4YzI0YjRhNWFiNWU1MDI0YjlkNTljZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1ZGVjOTBiMTcyZDUyNjZmYWY2NGQxMjY0YjgwMGFmZWNiZTUyZjcxYmEyMTc3MDI0MGFlYWMyNDU0Mjk4NmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlOTEyNDBiZDkwNTkzNTNiMDBlYjY2ZWY5MzhmZGM1NzI1MmQ4NDQzMmZlNTkwMmNlMDczZDAwMDZiMGI1YjIifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/start_binary.py#L358-L386",
+          "version": "repo-lines-v1:sha256:601531811047b37d1f23b0a56fb29ba41efa3582480872a3c0443a482ca7941e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlNzM3Mjc4ODlhOGVhNTY3Y2JiMzBlMTM1MjcwNDMwMThmYTBhMDUxNjQ4N2Q4Y2YwZTdlM2U2ZGNhNjI5YTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4YjZlOTAyNzMwYWJiNzRmNzY0ZTgyYzUzZDc5MDY5NDkzM2M0NGZiMzQ2Y2VmNzk5Nzk3ZjI0N2RjMTcwNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmNjY5OWM2MjA3NTk4ZWExODI0NDJlY2I5ODg3ZDE2MDkyMzdmNWRiYTM5ZjY0ZjBlNmNhMzYwZDA1NGY1YjYifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T11:23:36.861Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }

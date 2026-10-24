@@ -14,6 +14,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
+  - id: openwiki-source-7b198a3d484dee341fe67f44
+    resource: repo://crates/server/Cargo.toml
   - id: openwiki-source-5b20a61dbf36c0c143a466eb
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
@@ -32,8 +34,12 @@ sources:
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
     resource: repo://crates/server/src/routes/web_push.rs
+  - id: openwiki-source-64c93a1aaf76831699f0fbf6
+    resource: repo://crates/server/src/runtime_payload.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
     resource: repo://crates/server/src/startup.rs
+  - id: openwiki-source-d6a1d8f43efecefbff88fc22
+    resource: repo://crates/utils/Cargo.toml
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -42,10 +48,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:27:43.655Z
+    at: 2026-10-24T14:40:59.450Z
 ---
 
 # システム境界と起動順序
@@ -93,8 +99,7 @@ standalone と embedded は共通の `Access` を組み立て、main router 全�
 
 ## 起動時は内側の所有者から回復する
 
-<!-- openwiki: broken internal link [../operations/development.md#ローカル開発の入口] heading anchor "ローカル開発の入口" does not exist in "../operations/development.md". Fix the href or restore the target, then delete this comment. -->
-standalone の `main.rs` と、ライブラリーとして残る `startup.rs` の両方に回復経路がある。Tauri shell は廃止済みであり、`startup` API の存在を現行 desktop 起動の証拠にしない。[公開 API](../../crates/server/src/lib.rs#L1-L9)・[廃止後の利用入口](../operations/development.md#ローカル開発の入口)
+standalone の `main.rs` と、ライブラリーとして残る `startup.rs` の両方に回復経路がある。Tauri shell は廃止済みであり、`startup` API の存在を現行 desktop 起動の証拠にしない。[公開 API](../../crates/server/src/lib.rs#L1-L9)・[廃止後の利用入口](../operations/development.md#開発環境と起動形態)
 
 1. Deployment を構築し、実際の provider host の所有・接続を回復する。
 2. 中断した bootstrap を fence してから、耐久化された direct command を再処理する。
@@ -106,7 +111,7 @@ standalone の `main.rs` と、ライブラリーとして残る `startup.rs` �
 
 Deployment の構築中には、DB 初期化後に既存の製品実行記録から [Workspace の用途](../concepts/workspace.md#操作用途と実行所有者)を backfill する。[呼出し](../../crates/local-deployment/src/lib.rs#L155-L156)。standalone は bootstrap fence に続いて中断した Integration preparation も fence し、OpenWiki monitor の次に [正式 Integration](../concepts/formal-integration.md) の monitor を開始する。一方、現行 embedded の対応箇所にはこの二つの Integration 呼出しがない。両起動経路で正式統合の自動進行が同じと仮定せず、startup API を再利用する際に確認する。[standalone の追加処理](../../crates/server/src/main.rs#L87-L137)、[embedded の現行配線](../../crates/server/src/startup.rs#L170-L225)
 
-standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使う。既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 接続の不一致を避ける理由が記録されている。[standalone listener](../../crates/server/src/main.rs#L146-L171)、[embedded listener](../../crates/server/src/startup.rs#L107-L142)
+standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使う。既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 接続の不一致を避ける理由が記録されている。[standalone listener](../../crates/server/src/main.rs#L168-L199)、[embedded listener](../../crates/server/src/startup.rs#L107-L142)
 
 Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L135)・[設定なしの維持処理](../../crates/server/src/routes/web_push.rs#L326-L342)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
 
@@ -117,3 +122,5 @@ API 型は Rust から TypeScript へ生成するため、Rust と Web の変更
 外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)へ切り替えられる。設計メモの本文・追記履歴は SQLite が正本で、UI REST と両 MCP は同じ保存状態へ異なる応答形式を提供する。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
 
 外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment.rs#L398-L510)
+
+`server runtime-payload` は通常の DB・認証・listener 初期化前に終了し、frontend・sounds・scripts の実埋込み bytes の hash を調べる専用 probe である。`developer-runtime` feature は debug でもそれらを埋め込む。これは通常起動の回復を実行するコマンドではなく、[開発bundle切替](../operations/development.md#開発用成果物切替と復旧)の停止前検査に使う。[早期分岐](../../crates/server/src/main.rs#L45-L52)・[payload検査](../../crates/server/src/runtime_payload.rs#L9-L34)・[feature](../../crates/server/Cargo.toml#L72-L76)

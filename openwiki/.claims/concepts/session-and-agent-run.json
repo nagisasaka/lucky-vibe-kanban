@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4dd613722d2a86155458fdf57419dcdae9f1ff35ef85bb5d3c7ab048590a2bcf",
+  "pageVersion": "sha256:7c9ba8edd3dafc8c84565c15d659d1518e6accfa762779b4ddb4ebdbdf68c6d4",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -50,7 +50,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:a9010053e7b0a9f528afed5efa57beeb0eede38792e547f5848012767b9dbdf3"
+          "version": "repo-file-v1:sha256:a5f98bd47731b6f8074a37a1f364bd23bf09b06ec7fbf38a18fc5ec1336a628d"
         }
       ]
     },
@@ -1003,6 +1003,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T01:51:44.796Z"
+    "at": "2026-10-24T14:40:59.450Z"
   }
 }
