@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f8fee9be92660b051d7e04cf2efedfbdb541374ba8c9540f458fd2d57baa5447",
+  "pageVersion": "sha256:68ed3b21feca8e6699117eef498a8f2e75d86b90eb02ddfc5d3b7665489b908b",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -198,7 +198,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/workspace_usage.rs",
-          "version": "repo-file-v1:sha256:90893887e34ff9ae317a0e66360d5bf56eba25e6d5494872e6ad8bb98d11d776"
+          "version": "repo-file-v1:sha256:06822fdece5ea3dc203f5c5f4f52de7416351f38091e82e389fd38c628b9a454"
         }
       ]
     },
@@ -214,11 +214,15 @@
     },
     {
       "id": "claim_a8cf7dc7f6a3491e9ce7149de727571a",
-      "statement": "終了予約解除はcleanup確認とowner JSON CASで行い、Integration blocked/recoveryや未解放予約は解除しない。Wiki Cardは一意Boardだけに作り、既存linkを保持する。",
+      "statement": "終了予約解除はcleanup確認とowner JSON CASで行い、Integration blocked/recoveryや未解放予約は解除しない。Wiki Cardは検証済み開始元Projectを優先し、未指定なら一意Boardだけに作り、既存linkを保持する。",
       "evidence": [
         {
+          "resource": "repo://crates/server/src/routes/openwiki/project_context.rs#L6-L43",
+          "version": "repo-lines-v1:sha256:d4d8e2ed991334385e48fe026b7dd190509f6446dfe26428ca718f8fcc92f9e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNmU4YjA0OWFhZDM5Njc3YWZjZTMyYWI0YzlmYTI2MmVmNTEwYmEyYTNkZGNjMDY3NzZmMGQyM2U5ZmQxODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0ZTZkZjI4NjUzYzRhM2NiZGNiNTZlZjJjYzY2Y2M4M2RjY2I2MWQ0MTUwNTZhMTZiZDFmNzk0NzYyNjkyM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
+        },
+        {
           "resource": "repo://crates/services/src/services/workspace_usage/lifecycle.rs",
-          "version": "repo-file-v1:sha256:93df23718ad07647693049a05fa5b9656cbb21e10c776355598db578d5dc3318"
+          "version": "repo-file-v1:sha256:d2da8e38dcaa3f923286b0474666e956da57d95d7df65b669b28bdb32a97cef3"
         }
       ]
     },
@@ -495,6 +499,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T02:37:05.680Z"
   }
 }

@@ -36,6 +36,8 @@ sources:
     resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
     resource: repo://crates/server/src/routes/openwiki/preparation.rs
+  - id: openwiki-source-a34361c91f1fbaa3ea42afc5
+    resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-9d283785aa68b40f3cd1ceb2
     resource: repo://crates/server/src/routes/workspaces/archive_processes.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
@@ -80,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/api.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T02:37:05.680Z
 ---
 
 # Workspace と Repository
@@ -125,7 +127,7 @@ script の例外は IntegrationValidation だけで、validating 状態・未取
 
 既存データの移行は名称から推測しない。Integration/Repository bootstrap の実行記録、または一致する maintenance の保存記録を根拠に分類し、証拠なしは interactive のままにする。過去 Sync の AgentRun が一つに定まらなければ run ID は不明のまま、複数の所有証拠が衝突すれば `conflicting_evidence` として閲覧専用にする。archive・Session・監査・Git 履歴を書き換える移行ではない。[証拠に基づく backfill](../../crates/services/src/services/workspace_usage.rs)
 
-終了後の解除は `cleanup_allowed` に加え、Integration が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は Repo 所属から Board が一意に決まる時だけ作り、既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
+終了後の解除は `cleanup_allowed` に加え、Integration が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は検証済みの開始元 Project を優先し、未指定なら Repo 所属から Board が一意に決まる時だけ作る。既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。Issue なしの保守を全面禁止する契約ではない。関連検証・表示 status・過去補完の詳しい条件は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)に集約する。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
 
 ## Workspace 累積トークン
 

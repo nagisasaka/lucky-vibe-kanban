@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
+  - id: openwiki-source-a34361c91f1fbaa3ea42afc5
+    resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
   - id: openwiki-source-da8c4a13aea0bac33b3f0a35
@@ -28,10 +30,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-24T00:34:47.934Z" }
+generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T00:34:47.934Z
+    at: 2026-10-24T02:37:05.680Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -55,6 +57,8 @@ Repository Memory は、将来の coding agent が設計境界・判断理由・
 初期生成も同じ repository shared storage を再利用する。機械抽出した文書索引は `persistent/knowledge/document-inventories/<run-id>/` の manifest と chunk、検証済み Review / Refine は `bootstrap-reports/<run-id>/review.json` / `refine.json` に保存する。前者は共通の探索入力、後者はその run の検証成果物であり、source の Change Manifest や公開 Wiki 本文に混ぜない。[保存と読取](../../crates/utils/src/repository_memory.rs)
 
 共有フォルダーに置いただけで OS レベルの不変性を得るわけではない。索引の identity と digest は host の Workflow 入力、report の identity と digest は検証済み node output に固定し、工程境界で照合する。通常 Workspace の未統合 Memory を Reviewer へ引き継ぐ仕組みでもない。具体的な読取・独立性・公開前の検証は [OpenWiki 保守](../operations/openwiki-maintenance.md)を参照する。[host 所有の入力](../../crates/server/src/workflow_runtime/bootstrap.rs#L177-L220)、[report の identity と digest](../../crates/services/src/services/openwiki/bootstrap/reports.rs)、[再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs)
+
+保守開始元の Project は、保守 Workspace をどの Board の Issue に結ぶかという文脈である。Wiki の設定・writer lock・source checkpoint は引き続き Repo 単位であり、Project ごとに別の正本を作るものではない。明示 Project の検証と未指定時の互換動作は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L266-L320)・[紐付けの境界](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)
 
 ## Change Manifest は変更理由を運ぶイベント
 

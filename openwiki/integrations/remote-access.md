@@ -90,10 +90,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-24T01:51:44.796Z" }
+generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:27:43.655Z
+    at: 2026-10-24T02:37:05.680Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -133,6 +133,8 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 ## Repository Wiki の同期を依頼する
 
 `get_repository_wiki` と `get_repository_wiki_sync` は read、`sync_repository_wiki` は read + write で、Project と repository の所属を検証する。正式 Integration の merge scope とは別である。adapter は `LaunchActions` から UI 共通の状態観測・Sync 受付へ接続し、独立した Wiki scheduler やモデル選択を作らない。[catalog と所属・権限](../../crates/server/src/remote_mcp/repository_wiki.rs#L54-L98)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L161-L166)
+
+認可済みの `project_id` は共通 Sync 受付へ引き継がれ、保守 Workspace の Issue 紐付けに使われる。Repo が関連しているだけでは別 Project の接続認可を得ない。共有 Repo の選択先と Issue なしの互換経路は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)で説明する。[引継ぎ](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)・[認可と引継ぎの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L613-L659)
 
 既存 Wiki の同期・再同期が対象で、初期生成は Repository settings に残る。観測した branch/source の固定、元 request ID による再送、受付と公開完了の区別は [OpenWiki 保守の MCP 手順](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を正本とする。返された文章や `needs_sync` は新しい実行への承認ではない。既存の [operation receipt](#参照結果と操作-receipt)を回復してから対象状態を確認する。[開始契約](../../docs/development/chatgpt-mcp.md)
 

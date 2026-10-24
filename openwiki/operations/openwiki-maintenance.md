@@ -16,18 +16,26 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
+  - id: openwiki-source-ecfa47de2e3842c785820c9b
+    resource: repo://crates/server/src/routes/integrations/mod.rs
+  - id: openwiki-source-1ffb01d1ba3953937e0771bf
+    resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
     resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
     resource: repo://crates/server/src/routes/openwiki/preparation.rs
+  - id: openwiki-source-a34361c91f1fbaa3ea42afc5
+    resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
     resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-251033c862e5156391353c53
     resource: repo://crates/server/src/workflow_runtime/bootstrap_tests.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
+  - id: openwiki-source-6f2595571056199f0f83415c
+    resource: repo://crates/server/src/workflow_runtime/runner.rs
   - id: openwiki-source-da8c4a13aea0bac33b3f0a35
     resource: repo://crates/services/src/services/openwiki.rs
   - id: openwiki-source-7277adee5c65e8d79143e722
@@ -42,16 +50,28 @@ sources:
     resource: repo://crates/services/src/services/openwiki/setup.rs
   - id: openwiki-source-8769f7f91e6dd954b9b6bf58
     resource: repo://crates/services/src/services/openwiki/sync_scope.rs
+  - id: openwiki-source-c128bdfa7a156621b004df06
+    resource: repo://crates/services/src/services/workspace_usage.rs
+  - id: openwiki-source-6043692809cbf72f253c5631
+    resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
     resource: repo://crates/workflow/src/templates.rs
   - id: openwiki-source-36cac436618e11757c666971
     resource: repo://docs/design/openwiki-bootstrap-implementation.md
   - id: openwiki-source-a3944588bb3b08c863d66298
     resource: repo://docs/workspaces/openwiki.mdx
-generated: { by: "codex", at: "2026-10-24T00:38:52.571Z" }
+  - id: openwiki-source-00110cdcfec890895b99690a
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
+  - id: openwiki-source-bee9097e5e4cc326bebf14ff
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.test.tsx
+  - id: openwiki-source-2fab4d75b959f83ee7aaf538
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
+  - id: openwiki-source-d6bd59c0727afcf22386a8f5
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
+generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T00:38:52.571Z
+    at: 2026-10-24T02:37:05.680Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -62,7 +82,7 @@ OpenWiki maintenance は、統合済みソースから canonical Wiki を更新�
 
 Repository settings で有効化し、統合先の **local branch** と出力言語を選ぶ。開始処理は未解決の source integration を拒否し、未処理 event の統合 commit が選択 branch に入っていることを確認する。remote branch 自体を公開先にはできない。必要な source が未取得なら model を開始せずエラーにする。[開始前の検証](../../crates/server/src/routes/openwiki.rs)
 
-初期生成かどうかは、固定した統合済み source commit に `openwiki/` の Git tree があるかで判定する。`index.md` が欠けた部分的な import も既存 Wiki として保持し、dirty checkout にだけあるファイルは判定に使わない。Repository settings の入口では tree 不在なら Bootstrap、存在すれば通常 Sync を選ぶ。外部 MCP の同期入口は tree 不在を拒否し、暗黙の Bootstrap を開始しない。通常 Sync は一つの Codex Session / AgentRun による reconciliation であり、Bootstrap の独立 Review を毎回実行するものではない。[存在判定](../../crates/services/src/services/openwiki.rs#L300-L303)・[部分importとdirty fileの回帰](../../crates/services/src/services/openwiki.rs#L517-L533)・[分岐](../../crates/server/src/routes/openwiki.rs#L290-L309)
+初期生成かどうかは、固定した統合済み source commit に `openwiki/` の Git tree があるかで判定する。`index.md` が欠けた部分的な import も既存 Wiki として保持し、dirty checkout にだけあるファイルは判定に使わない。Repository settings の入口では tree 不在なら Bootstrap、存在すれば通常 Sync を選ぶ。外部 MCP の同期入口は tree 不在を拒否し、暗黙の Bootstrap を開始しない。通常 Sync は一つの Codex Session / AgentRun による reconciliation であり、Bootstrap の独立 Review を毎回実行するものではない。[存在判定](../../crates/services/src/services/openwiki.rs#L300-L303)・[部分importとdirty fileの回帰](../../crates/services/src/services/openwiki.rs#L517-L533)・[分岐](../../crates/server/src/routes/openwiki.rs#L295-L320)
 
 開始時の存在判定と公開時の完成条件は異なる。公開候補には finalised `openwiki/index.md` が必要であり、部分importを既存Wikiとして受け入れることは、そのまま公開可能という意味ではない。[公開条件](../../crates/services/src/services/openwiki.rs#L333-L346)
 
@@ -80,7 +100,26 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 明示 Sync の対象は現在の統合ソース全体、または指定 SHA からの範囲である。SHA は選択 branch の祖先である必要があり、初期生成に開始 SHA は指定できない。範囲外 event の扱いと未確認領域は [Repository memory](../concepts/repository-memory.md) の契約に従う。[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs)
 
-準備 future は Workspace lifecycle barrier 内で archive 状態を再確認して RAII 予約を取得する。installer 待機など AgentRun/Workflow がまだない期間も [手動 archive の busy 判定](../concepts/workspace.md#archive削除期限-cleanup)で保護し、future の完了・error・cancelで解放する。AgentRun終端後も repository state の active_run_id/bootstrap が残る host finalizing は archive 不可である。単に usage ラベルが execution_only という理由で永久に拒否する方式ではない。[準備の寿命](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)・[呼出位置](../../crates/server/src/routes/openwiki.rs#L380-L408)・[未完了所有の照合](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)
+準備 future は Workspace lifecycle barrier 内で archive 状態を再確認して RAII 予約を取得する。installer 待機など AgentRun/Workflow がまだない期間も [手動 archive の busy 判定](../concepts/workspace.md#archive削除期限-cleanup)で保護し、future の完了・error・cancelで解放する。AgentRun終端後も repository state の active_run_id/bootstrap が残る host finalizing は archive 不可である。単に usage ラベルが execution_only という理由で永久に拒否する方式ではない。[準備の寿命](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)・[呼出位置](../../crates/server/src/routes/openwiki.rs#L384-L413)・[未完了所有の照合](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)
+
+## 開始元 Project と保守 Issue
+
+保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1471-L1482)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L73-L95)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)
+
+明示 Project は実在し、`project_creation_repository_ids` に対象 Repo が含まれる必要がある。この集合は明示 Repo binding・既存 Issue/Workspace の関連に、Git 方式の保存済み `ProjectRepoDefaults` を加える。したがって開発 Card がまだない Project でも Git 作業先の既定値で関連を証明できる。directory 方式の defaults に残った Repo 値や、削除済み Project の Scratch だけでは認めない。受付時に加え、repository lock や version 検査の待機中に設定が変わり得るため紐付け直前にも検証する。[存在と再検証](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)・[関連集合](../../crates/server/src/routes/local_remote.rs#L3390-L3413)・[既存関連](../../crates/server/src/routes/integrations/mod.rs#L130-L150)
+
+| 開始文脈 | 保守 Issue の扱い |
+| --- | --- |
+| 有効な明示 Project | その Project を選ぶ。共有 Repo の他候補へ推測で振り分けない |
+| Repo 単独設定・自動 Sync・旧 client の未指定 request | `project_repos` と既存 Issue/Workspace の Repo 関連から Board が一つだけなら作る。候補ゼロ・複数なら Issue なしで継続する |
+| 選ばれた Project に可視 status がない | Issue なしで継続する。可視 status があれば `sort_order,id` 順の先頭を使う |
+| Workspace に既存 link がある | 付け替えない |
+
+Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、その前後で既存 link を再確認する。過去 Workspace の起動時補完は明示 Project を持たない一意 Board の規則を保ち、定期 release monitor は利用者が解除した link を再生成しない。**すべての保守 Workspace に Issue があるという保証ではない**。これは Repo 単独・共有 Repo の既存利用を保つ互換契約として運用文書にも記録されている。[link と transaction](../../crates/services/src/services/workspace_usage/lifecycle.rs#L37-L127)・[過去補完](../../crates/services/src/services/workspace_usage.rs#L135-L149)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
+
+削除済み・無関連の明示 Project はエラーとなる。Project の存在と **Configure project working location** の保存済み Repo を確認する。Issue が必要なのに可視 status がない場合は、Project 設定で追加または表示してから後の実行を開始する。MCP はこれに加えて接続の Project 認可を保ち、共通受付後のエラーを安全な再実行と即断しない。[検証エラー](../../crates/server/src/routes/openwiki/project_context.rs#L6-L24)・[MCP の不確実な受付](#不確実な結果と検証の境界)
+
+変更時は [in-memory DB fixture](../../crates/server/src/routes/openwiki/project_context.rs#L45-L270)を入口に、Bootstrap/Sync の両 owner、defaults のみの関連、削除・無関係 Project、共有 Repo、指定なし、status なし、Session 作成までを確認する。[UI fixture](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.test.tsx#L86-L107)は Initialize/Sync の Project 伝播と未指定 request、[MCP fixture](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L659)は別 Project の認可拒否と引継ぎを扱う。これらは実モデル生成・Wiki 公開・実ブラウザーや外部認証の成功を証明しない。
 
 ## MCP から既存 Wiki を同期する
 
@@ -90,7 +129,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 2. `sync_repository_wiki` に同じ Project / repository、安定した `request_id`、観測した `target_branch` を `expected_target_branch`、40桁の `current_source_commit` を `expected_source_commit` として渡す。`from_commit` を省けば current_source、4–40桁の SHA を渡せば共通の祖先検証による since_commit となる。[入力](../../crates/server/src/remote_mcp/repository_wiki.rs#L94-L117)・[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs#L8-L45)
 3. 応答を失った場合は入力と元の request ID を保ち、`get_operation` または `get_repository_wiki_sync(project_id, repository_id, request_id)` で読み戻す。後者は検証済み principal の receipt を Project・operation・repository と照合する。別 actor や別 repository の request を流用しない。[結果読取](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L186)
 
-共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 Integration・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L214-L325)
+共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 Integration・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L219-L330)
 
 ### 受付・実行・公開・現在鮮度を分けて読む
 
@@ -106,11 +145,11 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 公開用診断は固定の error code と安全な message に制限し、private path、provider の生ログ、動的な内部エラー列を返さない。詳細は既存 maintenance execution の画面で確認する。読取 tool は結果を観測するだけで、publication や reconciliation を進めない。[診断境界](../../crates/server/src/remote_mcp/repository_wiki.rs#L234-L247)・[共通 message](../../crates/server/src/remote_mcp/errors.rs#L1-L8)
 
-変更時は [古い対象・Wiki 不在・active owner の拒否](../../crates/server/src/routes/openwiki.rs#L901-L927)、[権限・所属・同時再送・uncertainty保持・証拠欠落](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L718)、[Agent成功と公開 intent だけでは完了せず、再同期後も旧失敗を保持する fixture](../../crates/server/src/remote_mcp/repository_wiki.rs#L316-L415)、[HTTP write / merge scope の分離](../../crates/server/src/remote_mcp/tests.rs#L317-L342)を入口にする。Git 公開自体の回復・source drift・no-op は [既存サービスの試験](../../crates/services/src/services/openwiki.rs#L470-L564)で別に扱う。これらの fixture は実 Auth0 / ChatGPT や実モデルの Wiki 品質を証明しない。
+変更時は [古い対象・Wiki 不在・active owner の拒否](../../crates/server/src/routes/openwiki.rs#L901-L927)、[権限・所属・同時再送・uncertainty保持・証拠欠落](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L745)、[Agent成功と公開 intent だけでは完了せず、再同期後も旧失敗を保持する fixture](../../crates/server/src/remote_mcp/repository_wiki.rs#L316-L415)、[HTTP write / merge scope の分離](../../crates/server/src/remote_mcp/tests.rs#L317-L342)を入口にする。Git 公開自体の回復・source drift・no-op は [既存サービスの試験](../../crates/services/src/services/openwiki.rs#L470-L564)で別に扱う。これらの fixture は実 Auth0 / ChatGPT や実モデルの Wiki 品質を証明しない。
 
 ## Bootstrap の phase と所有権
 
-Bootstrap は repository scope の system Workflow で、Issue / WorkflowAttempt を作る通常実行と区別される。専用 Workspace と開始 source を共有し、phase ごとに新しい Session と AgentRun を使う。global template を書き換えず run の graph を予約する。[設計上の区別](../../docs/design/openwiki-bootstrap-implementation.md#compatibility-decisions)・[予約](../../crates/server/src/workflow_runtime/bootstrap.rs)・[fresh Session の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
+Bootstrap は repository scope の system Workflow で、Issue 専用 WorkflowAttempt と区別される。`workflow_runs.issue_id` / `attempt_id` を設定しない内部所有形式と、保守 Workspace に付く通常 Board Issue の link は別である。[予約の保存](../../crates/server/src/workflow_runtime/runner.rs#L1064-L1100)専用 Workspace と開始 source を共有し、phase ごとに新しい Session と AgentRun を使う。global template を書き換えず run の graph を予約する。[設計上の区別](../../docs/design/openwiki-bootstrap-implementation.md#compatibility-decisions)・[予約](../../crates/server/src/workflow_runtime/bootstrap.rs)・[fresh Session の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
 ```mermaid
 flowchart LR

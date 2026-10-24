@@ -34,6 +34,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-e2a1cc763db4a100d48eac0a
@@ -60,6 +62,8 @@ sources:
     resource: repo://crates/services/src/services/pr_monitor.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
+  - id: openwiki-source-6043692809cbf72f253c5631
+    resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
   - id: openwiki-source-a3944588bb3b08c863d66298
@@ -72,14 +76,16 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-bfe4f914c0604a66edc02213
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
+  - id: openwiki-source-2fab4d75b959f83ee7aaf538
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
+generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:16:46.128Z
+    at: 2026-10-24T02:37:05.680Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -185,6 +191,8 @@ Direct merge の成功、PR の merged 観測、正式 Integration の Card 完�
 [Repository memory](../concepts/repository-memory.md) が有効な場合、成功した coding run の semantic draft と Git 証拠から Change Manifest を作り、統合された event を maintenance の入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
 LVK 自身の手動 direct squash と正式 Integration はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
+
+Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。自動同期や Repo 単独の開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L210-L231)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
 
 生成物は [Wiki Viewer](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)で確認できる。ただし Viewer は選択 Workspace の現在のファイルを読むため、maintenance の未公開成果物も見える。Wiki 本文を開けたこと、Agent が完了を宣言したこと、Workflow と target branch への publication が成功したことを分けて確認する。[表示元の実装](../../crates/server/src/routes/workspaces/wiki.rs)、[publication の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 

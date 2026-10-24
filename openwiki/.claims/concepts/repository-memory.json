@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:33b5f91317330330f9406ac69700b6b39444560088e21886000cb4f811bdcbd8",
+  "pageVersion": "sha256:f53f67e88fd4cffdcfd22d98e3bd1ab692f9f46150a52b89d6bb67c1993f23ff",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -118,7 +118,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:81ff3f6b738fdcb7a1c8cbd020cc19c04b8fe0fbfc224c6baeb486f07089b2af"
+          "version": "repo-file-v1:sha256:4ceab57373b204570075e3ca250e1fb6ac12c06c72dc3c92fcd018b9a55f0e5b"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -239,10 +239,24 @@
           "version": "repo-lines-v1:sha256:e3ea7368862585cd53238255ee0a18e0692f796237b5169fe4586548a894c5b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzYmZkYmNjZDk1YmQwNTA4MTM1M2UzNjMyYjlkZTdmMTMwNTdhZGRkZTEzNTk5OWEwYTY0MDkxNzU4MmEyOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNDlmODhkMGEwNjJlYmJkN2M2YWFlMTEzYzQ0NmY0MTllOTA1OWM1YmUyZmRmMzU0NDFlMjNlMGE2MmU2YjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMWYwMjJkZjAwNDAxMWUwYjQ5MGEyYTZjOTRkNzg1ZWI1OTZkOTU0MzIxYzBmNWEwNGJkZGIzYzMzZDQ4NGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_40c9066615104200a9ad4c1f277e6921",
+      "statement": "開始元Projectは保守WorkspaceのBoard紐付け文脈であり、Wiki設定・writer lock・source checkpointは引き続きRepo単位で扱う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L266-L320",
+          "version": "repo-lines-v1:sha256:10586f67185930ea7a466e36dd919d1721e4e2bebdb426d62c4cea00e8b739c4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYWZhZGI4ODEwZGU1MzI5NmQ3ZWMwNWJkNzY4ZjU2YjZkZTc0YTQzZDFhM2M3ZTBmYzY0ZGY2M2QzODM3OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMjU5MTBiODgxMThkYjRlYTlkN2NiYzA2YTA3YzY0YmNhMTVlODZkNWZkMmFiMmZjOTI2Y2E3OWNlNGViMzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0ODgzMzRjNjBjMjdlYmQ3NGM5MWI4MjkyZWRhMjc0NWMxZTE2MTBlZGMxNjAxMjMzZDUxODM4OTZiNjFkODIifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/project_context.rs#L6-L43",
+          "version": "repo-lines-v1:sha256:d4d8e2ed991334385e48fe026b7dd190509f6446dfe26428ca718f8fcc92f9e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNmU4YjA0OWFhZDM5Njc3YWZjZTMyYWI0YzlmYTI2MmVmNTEwYmEyYTNkZGNjMDY3NzZmMGQyM2U5ZmQxODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0ZTZkZjI4NjUzYzRhM2NiZGNiNTZlZjJjYzY2Y2M4M2RjY2I2MWQ0MTUwNTZhMTZiZDFmNzk0NzYyNjkyM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T00:34:47.934Z"
+    "at": "2026-10-24T02:37:05.680Z"
   }
 }
