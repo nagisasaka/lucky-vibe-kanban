@@ -45,6 +45,10 @@ pub enum VibeKanbanError {
 
 #[tokio::main]
 async fn main() -> Result<(), VibeKanbanError> {
+    if std::env::args().nth(1).as_deref() == Some("runtime-payload") {
+        println!("{}", server::runtime_payload::inspect()?);
+        return Ok(());
+    }
     // Install rustls crypto provider before any TLS operations
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
@@ -188,6 +192,7 @@ async fn main() -> Result<(), VibeKanbanError> {
 
     let main_listener = tokio::net::TcpListener::bind(format!("{host}:{port}")).await?;
     let actual_main_port = main_listener.local_addr()?.port();
+    server::remote_mcp::record_local_listener(main_listener.local_addr()?);
 
     let proxy_listener = tokio::net::TcpListener::bind(format!("{host}:{proxy_port}")).await?;
     let actual_proxy_port = proxy_listener.local_addr()?.port();

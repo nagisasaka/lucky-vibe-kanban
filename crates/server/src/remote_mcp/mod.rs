@@ -284,6 +284,15 @@ fn router(remote: Remote, auth: Auth) -> Router {
         )
 }
 
+// The bound address is process identity, not an administrator supplied restart target.
+static LOCAL_LISTENER: std::sync::OnceLock<std::net::SocketAddr> = std::sync::OnceLock::new();
+
+pub fn record_local_listener(address: std::net::SocketAddr) {
+    LOCAL_LISTENER
+        .set(address)
+        .expect("local listener already recorded");
+}
+
 #[derive(Clone)]
 struct Remote {
     environment: Option<Arc<environment::Environment>>,

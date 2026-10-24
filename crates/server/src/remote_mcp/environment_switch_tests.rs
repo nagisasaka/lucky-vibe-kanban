@@ -10,6 +10,7 @@ use std::{
 };
 
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use super::{
@@ -53,25 +54,45 @@ fn engine() -> PathBuf {
 }
 fn host(root: &Path, fixture: &Value, restored: bool) -> Host {
     Host(
-        Command::new(std::env::current_exe().unwrap())
-            .args([
-                "--exact",
-                "remote_mcp::environment_switch_tests::switch_host",
-                "--ignored",
-                "--nocapture",
-            ])
-            .current_dir(Path::new(fixture["instance"].as_str().unwrap()).join("builds/1"))
-            .env("DISABLE_WORKTREE_CLEANUP", "1")
-            .env("LVK_SWITCH_STATUS_ONLY", if restored { "1" } else { "0" })
-            .env("LVK_SWITCH_HTTP_FIXTURE", root)
-            .env("LVK_INSTANCE_DIR", fixture["instance"].as_str().unwrap())
-            .env(
-                "LVK_SELF_RESTART_CONFIG",
-                fixture["config"].as_str().unwrap(),
-            )
-            .env("LVK_SELF_RESTART_ENGINE", engine())
-            .spawn()
-            .unwrap(),
+        Command::new(if restored {
+            std::env::current_exe().unwrap()
+        } else {
+            Path::new(fixture["instance"].as_str().unwrap()).join("releases/initial/server")
+        })
+        .args([
+            "--exact",
+            "remote_mcp::environment_switch_tests::switch_host",
+            "--ignored",
+            "--nocapture",
+        ])
+        .current_dir(fixture["instance"].as_str().unwrap())
+        .env("DISABLE_WORKTREE_CLEANUP", "1")
+        .env("LVK_SWITCH_STATUS_ONLY", if restored { "1" } else { "0" })
+        .env("LVK_SWITCH_HTTP_FIXTURE", root)
+        .env("LVK_INSTANCE_DIR", fixture["instance"].as_str().unwrap())
+        .env(
+            "LVK_LAUNCH_CONFIG_SHA256",
+            format!(
+                "{:x}",
+                Sha256::digest(
+                    std::fs::read(
+                        Path::new(fixture["instance"].as_str().unwrap()).join("launch.json")
+                    )
+                    .unwrap()
+                )
+            ),
+        )
+        .env(
+            "BACKEND_PORT",
+            fixture["port"].as_u64().unwrap().to_string(),
+        )
+        .env(
+            "VIBE_KANBAN_AGENT_PROCESS_HOST",
+            Path::new(fixture["instance"].as_str().unwrap())
+                .join("releases/initial/agent-process-host"),
+        )
+        .spawn()
+        .unwrap(),
     )
 }
 async fn wait_file(path: &Path) -> String {
@@ -136,11 +157,12 @@ async fn switch_host() {
         base
     } else {
         let config: Value =
-            serde_json::from_slice(&std::fs::read(instance.join("switch.json")).unwrap()).unwrap();
+            serde_json::from_slice(&std::fs::read(instance.join("launch.json")).unwrap()).unwrap();
         let listener =
             tokio::net::TcpListener::bind(("127.0.0.1", config["port"].as_u64().unwrap() as u16))
                 .await
                 .unwrap();
+        super::record_local_listener(listener.local_addr().unwrap());
         let base = format!("http://{}", listener.local_addr().unwrap());
         let app = super::router(remote, auth)
             .route(

@@ -76,10 +76,12 @@ def descendants(pid):
         if not p.name.isdigit():
             continue
         try:
-            rows[int(p.name)] = int(
-                (p / "stat").read_text().rsplit(")", 1)[1].split()[1]
-            )
-        except FileNotFoundError:
+            stat = (p / "stat").read_text().rsplit(")", 1)[1].split()
+            # A pidfd becomes readable at exit, before the parent necessarily
+            # reaps its zombie. Zombies cannot hold FDs or perform work.
+            if stat[0] != "Z":
+                rows[int(p.name)] = int(stat[1])
+        except (FileNotFoundError, ProcessLookupError):
             pass
     found = {pid}
     while True:

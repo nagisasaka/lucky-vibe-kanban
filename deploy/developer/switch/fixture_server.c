@@ -16,7 +16,17 @@ extern int sqlite3_exec(sqlite3 *, const char *, void *, void *, char **);
 #ifndef FRONTEND
 #define FRONTEND "/missing/frontend"
 #endif
-int main(void) {
+#ifndef PAYLOAD
+#define PAYLOAD "{}"
+#endif
+#ifndef HTML
+#define HTML "fixture"
+#endif
+int main(int argc, char **argv) {
+  if (argc == 2 && strcmp(argv[1], "runtime-payload") == 0) { const char *name = strrchr(argv[0], '/'); name = name ? name + 1 : argv[0];
+    if (strcmp(name, "server") == 0) puts(PAYLOAD);
+    else printf("{\"component\":\"%s\",\"protocol\":1}\n", name);
+    return 0; }
   if (getenv("FIXTURE_CHILD") && fork() == 0) {
     /* No data FD exists yet. A real server child must still prevent cutover. */
     sleep(30);
@@ -38,14 +48,11 @@ int main(void) {
     if (client < 0) return 6;
     char request[8192]={0};
     read(client, request, sizeof(request)-1);
-    char html[8192]={0};
     const char *body = "{\"success\":true}";
     if (strstr(request, "/api/info")) body="{\"success\":true,\"data\":{\"build_info\":{\"kind\":\"fixture\"}}}";
     else if (strstr(request, "/api/resource-coordination/snapshot")) body="{\"success\":true,\"data\":{\"resources\":[{\"id\":\"unused-fixture-device\",\"description\":\"Unused peripheral unrelated to this instance\"}],\"holders\":[],\"queue\":[]}}";
     else if (strstr(request, "GET /index.html ")) {
-      FILE *file=fopen(FRONTEND "/index.html","r");
-      if(file){fread(html,1,sizeof(html)-1,file);fclose(file);}
-      body=html;
+      body=HTML;
     }
     else if (strstr(request, "GET / ")) body=FRONTEND;
     else if (getenv("FIXTURE_BAD_HEALTH")) body="{\"success\":false}";
