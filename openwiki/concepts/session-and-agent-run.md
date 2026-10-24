@@ -36,6 +36,10 @@ sources:
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-5a8e26da42457b4b47bca3ee
     resource: repo://crates/local-deployment/src/process_host/approvals.rs
+  - id: openwiki-source-c2b406887bcde85e48eb07b0
+    resource: repo://crates/server/src/remote_mcp/goals.rs
+  - id: openwiki-source-0a439773e44e2649541571be
+    resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -90,6 +94,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
+  - id: openwiki-source-bd89dfb466ad2d85e09c4936
+    resource: repo://packages/web-core/src/features/workspace-chat/model/resumeGoal.ts
   - id: openwiki-source-e3ad3a00ca485cc7e1958008
     resource: repo://packages/web-core/src/features/workspace-chat/model/sessionDraft.ts
   - id: openwiki-source-cd106619cfd7af68eb9464fc
@@ -142,10 +148,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
+generated: { by: "codex", at: "2026-10-24T01:51:44.796Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-24T01:51:44.796Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -203,12 +209,12 @@ Session composer は executor に加え selected variant と Workspace / Session
 
 ## Follow-up と retry
 
-通常 follow-up 経路は Session に非終端の AgentRun があれば拒否し、queue の使用を案内する。別 Session の会話は分離できても、同じ Workspace のファイルは共有されるので、Session を増やすだけで作業ファイルは隔離されない。[起動 guard](../../crates/server/src/routes/sessions/mod.rs#L314-L348)、[共有の契約](../../docs/workspaces/sessions.mdx)
+通常 follow-up 経路は Session に非終端の AgentRun があれば拒否し、queue の使用を案内する。別 Session の会話は分離できても、同じ Workspace のファイルは共有されるので、Session を増やすだけで作業ファイルは隔離されない。[起動 guard](../../crates/server/src/routes/sessions/mod.rs#L367-L381)、[共有の契約](../../docs/workspaces/sessions.mdx)
 
-- **Follow-up** は同じ Session に新しい AgentRun を作る。保存された provider session があれば FollowUp intent、なければ Initial になる。明示的な native resume 指定は Resume mode、通常の続きは Launch mode でも provider session 参照を渡す。
+- **Follow-up** は同じ Session に新しい AgentRun を作る。保存された provider session があれば FollowUp intent、なければ通常は Initial になる。ただし保存 Goal の `/goal resume` は binding 不在を拒否する（[再開契約](#保存-goal-の再開)）。明示的な native resume 指定は Resume mode、通常の続きは Launch mode でも provider session 参照を渡す。
 - **Retry** は終端になった既存 AgentRun の同じ turn を維持し、新しい attempt ID と増加した試行番号で再起動する。mode は Resume または Restart。Resume は対応 capability と観測済み provider session を要求し、Restart はその参照を持ち越さない。
 
-[follow-up 選択](../../crates/server/src/routes/sessions/mod.rs#L392-L439)、[retry の契約](../../crates/local-deployment/src/agent_run_port.rs)
+[follow-up 選択](../../crates/server/src/routes/sessions/mod.rs#L438-L490)、[retry の契約](../../crates/local-deployment/src/agent_run_port.rs)
 
 Retry は前回の設定・capability snapshot・Skill を引き継ぐ。設定を変えて別の仕事を始める操作と混同しない。制御リクエストも command ID、冪等キー、相関 ID を持って永続 command service を経由する。[retry 固定値](../../crates/local-deployment/src/agent_run_port.rs)、[制御 API](../../crates/server/src/routes/agent_runs.rs#L348-L373)
 
@@ -355,6 +361,24 @@ Plan は native `collaborationMode` と Codex 内蔵 instructions を使い、pr
 Codex Goal の管理開始は対応 RPC の成功応答で確定する。再生された通知や別 thread の完了から、この run が Goal を開始・達成したと判定しない。管理中は active、paused、blocked、usageLimited、budgetLimited でも host を維持し、同じ thread の complete/cleared で維持を解除する。[Goal lifecycle](../../crates/executors/src/executors/codex/goal_lifecycle.rs#L36-L104)、[順序・別 thread テスト](../../crates/executors/src/executors/codex/goal_lifecycle.rs#L111-L142)
 
 Goal の subagent 上限は spawned agent の制約で、0 は無効化、未指定は Codex の既定値を使う。これは [Workflow](workflow-attempt.md) のノード並列数や、[Arena](arena.md) の候補数とは別の範囲である。[設定契約](../../crates/executors/src/profile.rs#L169-L175)、[Codex 設定テスト](../../crates/executors/src/executors/codex.rs#L1615-L1654)
+
+### 操作と達成を区別する
+
+Goal の pause / resume は状態更新であり、objective・budget・会計を置き換えない。pause は現在 turn の停止証拠ではなく、resume は blocked の原因や使用量・予算上限を解消する操作でもない。Cancel は AgentRun の取消、Clear Goal は Goal 管理の解除、`complete` は達成報告であり、それぞれ別の結果である。外部 MCP に `finish_goal` や自動承認は設けていない。曖昧な「終了」を達成宣言にしないという理由も[設計記録](../../docs/development/goal-mcp-controls.md#既存goalのmcp操作)に明記される。[command への対応](../../crates/server/src/remote_mcp/goals.rs#L47-L111)
+
+### 保存 Goal の再開
+
+終了済み Run の保存 Goal は、同じ Session の既存 follow-up 経路で新しい AgentRun を作って再開する。Retry による旧 Run の再試行ではない。UI と MCP は正確な `/goal resume` を渡し、Goal mode に変更し、PLAN 権限なら SUPERVISED へ移す。他の executor 設定は保持する。MCP は保存済み設定を読み、operation marker を prompt に付け足さない。provider は既存 thread の現在 Goal を改めて読み、欠落・complete を拒否し、objective や budget の置換なしで active を要求する。[UI の要求](../../packages/web-core/src/features/workspace-chat/model/resumeGoal.ts#L8-L21)・[MCP の共通経路](../../crates/server/src/remote_mcp/goals.rs#L193-L258)・[provider 側の再読取](../../crates/executors/src/executors/codex/client.rs#L667-L675)・[保持と拒否のテスト](../../crates/executors/src/executors/codex/client.rs#L2977-L3006)
+
+`/goal resume` の provider session binding がなければ、UI・MCP 共通の起動準備で Conflict にする。新規 provider thread へ暗黙に切り替えない。MCP adapter は Session lock 内で対象を検証した後、終了済み Run の再開では lock を解放して `follow_up_checked` に渡す。共通処理が同じ lock を取り直して queue、Project 所属、期待する最新終端 Run、活動中 Run の有無を再確認するため、異なる request ID の再開競合でも二重起動を防ぐ。[binding guard](../../crates/server/src/routes/sessions/mod.rs#L427-L451)・[lock の受渡し](../../crates/server/src/remote_mcp/goals.rs#L215-L249)・[共通受付](../../crates/server/src/routes/sessions/mod.rs#L265-L314)・[活動中の拒否](../../crates/server/src/routes/sessions/mod.rs#L367-L381)
+
+外部からは [MCP の固定対象・receipt・読戻し](../integrations/remote-access.md#既存-goal-を-mcp-から操作する)に従う。受付成功から provider の Goal 遷移や Run 終了を推定しない。
+
+### Goal 操作の検証境界
+
+[adapter fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L25-L227)は状態行列、再送、古い対象、再開競合、配送後の不確実な結果を確認する。[実共有経路の単独 fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L299-L406)は実 Deployment から binding 欠落の拒否まで進み、lock 再取得、新 Run・attempt・command・process 未生成、元 Goal の保持を検査する。instance-global 設定を使う opt-in 試験で、Codex を起動しない専用隔離環境が必要となる。実 provider 成功を証明するものではない。
+
+今回の Sync は凍結 source `044e94ff111f3594cbe864f5bb981f1b794a0602` の MCP、Session 共通受付、UI の要求生成、provider 再開と試験定義を静的に照合した。[開発時の試験記録](../../docs/development/goal-mcp-controls.md#候補1bの追検証2026-10-24-jst)と、検証省略の正式 Integration は別である。製品テストの再実行、実 Codex・Auth0 接続、無関係な既存説明全体の再検証は行っていない。
 
 ## Native subagent と旧実行モデル
 

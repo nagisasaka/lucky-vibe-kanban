@@ -26,6 +26,10 @@ sources:
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
+  - id: openwiki-source-c2b406887bcde85e48eb07b0
+    resource: repo://crates/server/src/remote_mcp/goals.rs
+  - id: openwiki-source-0a439773e44e2649541571be
+    resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
   - id: openwiki-source-33abd750e40bc0d544b210b5
@@ -54,6 +58,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/run_events.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-b8d968c49ef2f35fc1a18cce
+    resource: repo://crates/server/src/remote_mcp/runtime_write.rs
   - id: openwiki-source-43c18ae2d53a6d4bee6c33b2
     resource: repo://crates/server/src/remote_mcp/tests.rs
   - id: openwiki-source-47f0a8c78f8e76d48dfdd192
@@ -84,10 +90,10 @@ sources:
     resource: repo://docs/ai-mobile/tailscale-local-access.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-24T00:34:47.934Z" }
+generated: { by: "codex", at: "2026-10-24T01:51:44.796Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T00:34:47.934Z
+    at: 2026-10-24T01:51:44.796Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -225,6 +231,36 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 再送は [共通 receipt 契約](#参照結果と操作-receipt)に従い、同じ principal・request ID・元の入力全体を保つ。失敗 receipt も新しい証拠に使い回せない。副作用の後で DB エラーが発生し得るため、adapter は SQLx error や判断後の状態取得失敗を `uncertain` として返し、無条件の再実行を認めない。受付時の結果は後から terminal に更新される履歴ではなく、読戻し先を示す。現在の状態を照合した上で次の明示判断を行う。[操作と失敗分類](../../crates/server/src/remote_mcp/integration_write.rs#L112-L145)・[receipt の入力固定と再起動](../../crates/server/src/remote_mcp/operations.rs#L208-L245)
 
 [隔離 adapter/domain 試験と限界](../concepts/formal-integration.md#検証の入口と記録の限界)は、古い期待値と live target、権限・所属、同時再送、取消時の予約保持と終端後の読戻しを扱う。HTTP fixture は [catalog・scope 拒否](../../crates/server/src/remote_mcp/tests.rs#L315-L342)を確認するが、新 tool 成功の HTTP E2E、実 Auth0 / ChatGPT、実 AI の解消品質は別の未検証範囲である。[開発時記録](../../docs/development/integration-mcp-decisions.md#未検証範囲)。この Sync は固定 source と試験定義の照合であり、製品テストを再実行していない。
+
+## 既存 Goal を MCP から操作する
+
+HTTP MCP の `get_goal` と `pause_goal` / `resume_goal` / `cancel_goal` / `clear_goal` は、既存 Codex Goal を観測・制御する入口である。新規 objective の作成、達成の代理宣言、自動承認は提供しない。Goal と Run の寿命、Cancel と Clear の意味、保存 Goal の再開は [Session の Goal 契約](../concepts/session-and-agent-run.md#goal-の寿命)を正本とする。stdio の独立 catalog に同じ操作があると仮定しない。[公開契約](../../crates/server/src/remote_mcp/goals.rs#L75-L111)・[HTTP 登録](../../crates/server/src/remote_mcp/mod.rs#L374-L383)
+
+読取には `lvk:read`、四つの変更操作には追加で `lvk:write` が必要である。既存の Project 認可・Workspace 所属検査、HTTP scope・access audit、永続 Operations を通り、`RuntimeActions` が UI 共通の command / Session follow-up へ委譲する。独自 Goal scheduler や直接の projection 書換えは作らない。[scope](../../crates/server/src/remote_mcp/mod.rs#L180-L210)・[監査と dispatch](../../crates/server/src/remote_mcp/mod.rs#L429-L476)・[共通 runtime](../../crates/server/src/remote_mcp/runtime_write.rs#L109-L119)・[受付](../../crates/server/src/remote_mcp/goals.rs#L271-L311)
+
+### 対象と状態を固定する
+
+`list_workspace_runs` で対象を選び、Project / Workspace / Session / AgentRun の四つの ID で `get_goal` を読む。これは UI と同じ**保存 projection**の観測で、provider への live RPC ではない。Goal status・budget・使用 token/時間、Run status・終端かどうか、両 projection status、`is_current_run` と revision を返す。過去 Run も読めるが、変更には最新 Run が必要である。objective 本文は `get_execution(section="goal")` で有界取得する。[観測](../../crates/server/src/remote_mcp/goals.rs#L75-L79)・[保存値と revision](../../crates/server/src/remote_mcp/goals.rs#L123-L155)
+
+変更には同じ四 ID、UUID `request_id`、観測した `expected_revision` を渡す。revision は Run ID・Run の updated_at・投影 event sequence を結びつける。Codex かつ両 projection が `current`、Project・Workspace・Session の所属一致、最新 Run、非 archive の interactive Workspace を要求する。競合後に新 revision だけを差し替えず、対象状態を読み直して操作を判断する。[検証](../../crates/server/src/remote_mcp/goals.rs#L159-L190)・[共通 Run guard](../../crates/server/src/remote_mcp/runtime_write.rs#L242-L288)
+
+| 操作 | 受付可能な状態 |
+| --- | --- |
+| pause | 非終端 Run の `active` Goal |
+| resume | 非終端 Run では `paused` / `blocked` / `usageLimited` / `budgetLimited`。終端 Run では Goal が存在し `complete` でないこと |
+| cancel / clear | 非終端 Run で Goal が存在すること |
+
+上表に加え、共通 Run guard は非終端操作を pending / starting / running / awaiting_input / awaiting_approval に限定する。取消中を含むその他の状態を「非終端だから操作可能」と読み替えない。[状態行列](../../crates/server/src/remote_mcp/goals.rs#L159-L190)・[Run status の許可集合](../../crates/server/src/remote_mcp/runtime_write.rs#L265-L280)。終端 Run の resume が新 Run を開始するときの lock 受渡しと binding 欠落拒否は [保存 Goal の再開](../concepts/session-and-agent-run.md#保存-goal-の再開)に従う。
+
+### 受付・配送・遷移を読み分ける
+
+1. 元の JSON 入力と `request_id` を保持し、`get_operation` で receipt を回復する。同一 principal・request ID の同一入力は一度だけ dispatch し、異なる操作や入力への使い回しは拒否する。再送は [共通 receipt 契約](#参照結果と操作-receipt)に従う。
+2. 活動中 Run への操作は `result.command_id` を使って `get_goal` の `command_delivery_status` を読む。dispatch 後に結果が不明なら receipt の `operation_id` が command ID に対応する。配送状態と Goal 遷移・Run 終端は別に確認する。
+3. 終端 Run の再開は command 型の操作ではなく、新しい `result.agent_run_id` の状態を読む。`execution_accepted` は起動受付で、Goal 遷移の確認ではない。
+
+事前検証失敗は `failed` / `goal_state_conflict` となる。一方、runtime dispatch 呼出しがエラーになった場合は、副作用がないと断定できないため `uncertain` / `dispatch_outcome_unavailable` となる。配送済みかもしれない操作を新 ID で自動再実行せず、receipt と対象 Run を照合する。成功結果も `goal_transition_confirmed:false` を返し、command 経路の `termination_confirmed:false` と再開経路の `run_terminal:false` を終端証拠に置き換えない。[結果と失敗分類](../../crates/server/src/remote_mcp/goals.rs#L250-L311)・[command identity](../../crates/server/src/remote_mcp/runtime_write.rs#L99-L106)・[再送テスト](../../crates/server/src/remote_mcp/goals/tests.rs#L25-L54)・[uncertain の非再配送](../../crates/server/src/remote_mcp/goals/tests.rs#L189-L208)
+
+Goal が projection に存在しないという観測だけでは、provider の Goal 解除や process 終了は証明できない。[観測の限界](../../crates/server/src/remote_mcp/goals.rs#L145-L155)。変更時は [状態・所属・再送の fixture](../../crates/server/src/remote_mcp/goals/tests.rs)、[HTTP の四操作 write-scope 拒否](../../crates/server/src/remote_mcp/tests.rs#L315-L346)、[Session の実共有経路と検証限界](../concepts/session-and-agent-run.md#goal-操作の検証境界)を併せて確認する。今回の Sync は静的照合であり、実 Codex/Auth0 接続や製品試験の再実行を意味しない。
 
 ## 保存済み Codex 進捗の読取
 

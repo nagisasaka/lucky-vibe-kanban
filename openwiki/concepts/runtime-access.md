@@ -39,7 +39,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T00:34:47.934Z
+    at: 2026-10-24T01:51:44.796Z
 ---
 
 # 実行環境へのアクセス

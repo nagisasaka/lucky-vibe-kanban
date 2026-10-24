@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4ddd3f703682d64ac32d5e891672f61146ed9e59f6d634072b02bd25a54a23dc",
+  "pageVersion": "sha256:4dd613722d2a86155458fdf57419dcdae9f1ff35ef85bb5d3c7ab048590a2bcf",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -32,15 +32,15 @@
     },
     {
       "id": "claim_09cb2360b3ac4c38860199cb4046c380",
-      "statement": "通常 follow-up は活動中の同一 Session run を拒否し、provider session 有無から intent を選んで新しい AgentRun を作る。",
+      "statement": "通常follow-upは同一Sessionの活動中Runを拒否し、provider session有無からintentを選び新AgentRunを作る。ただし /goal resume はbinding不在をConflictとして拒否しfresh threadへ移行しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L334-L348",
-          "version": "repo-lines-v1:sha256:de65c94e33282c5b12db0c503b4764d55fc2795496d4fbfc2a28d0a1a3b58c0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3ZGI4YTBiZTRiODYwZmU5ZWE1ZDIyYjY4YWY0YmYzMDQyYjRkNjI2OGUxY2Y1MTIyNjA0NWZjMTZhOTkzMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YWM2ZTc4MmZjMDQ0NWE4ZTM3ODdjODZhYjU2MGVhMGNiZTU4MzQ4MTU2MTBiMGQ5OTE0YjBlZTYzN2QwZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5N2JkYWYxNTRlMDE1ZjY4ZjlkNDUzZDA4MzRhMTkyYTg1YzE1NWIwM2QwNjU0YzFmYjRjNzZjZDk0MTg2YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1ZmM4YTA4M2JmZDRmNjQ4NjU0NzMzNTg4N2MzMDFhMjViYzViOTgxOTFlMTZiMDhhMzkxNGVmODYyMWNiZDkifQ"
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L367-L381",
+          "version": "repo-lines-v1:sha256:0d5bdcf71f768ab23fd237ec9c2b35c49cf00484886f7386eeb2649d94c51972:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5YjVlNTZhODRmZTUzNzYxMWEwYjI3NmU5YWQ0ZjA2NWY4ZjdiYmM0NjVmMDJjMWNkMjIxZDExYzRiNzc1ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODljZWU4NDVlZmY5NWFmNGUyYWRiMzliOWM2MTM1ZWVhZmQ5NDRjZDcxZjg5NWM0ZjQ2NzhiODdiMGU3MTIifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L392-L439",
-          "version": "repo-lines-v1:sha256:a0b62b71e4b3fe892d061546774f389f72eef4df650835dd94f0bb0316774eb8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4NmNkZmZhNDhjMGZkMmM0YWRiYzNiYWI3MzUwOGJmYjMyZTFkYmIwMTAzM2NiZThiYzViZjAxZjRiNDdiMWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjI0MmE5ZDY5M2VhMTVkZmJiY2RkN2I3NmYxYmNhYzNjNGVlMGVlMWY4MWU5YWM2YmExODE5YTQ2ZDQxOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3NzBhMjNkZjk5ZTFmN2RlMDBmMjljMzUxMzFhZTczMjQxZDc4ODUzODUyNDZlMGU1ZGE4Zjk4ODljYWYwNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3MTUyY2U2ZDgwZjY3NDcyZDRmZTJjNWVhYzRlMDY1NDg0N2U0YjI1YzMxM2ZjYmNmZTExMDc4MTZlYmNjYjQifQ"
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L427-L490",
+          "version": "repo-lines-v1:sha256:9b494854f8bc613622ecb8767aa2e7b04fa0f9d5a5e12c478355fad7a3beeecf:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMTE3YzNiYTg2MmFmNzY4NGNiMmIwZGM2MmI5Mjk0MDdkY2NiMTM0NTI3YTcyYWUxYzBiNTlkZGEwNTQzYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjI0MmE5ZDY5M2VhMTVkZmJiY2RkN2I3NmYxYmNhYzNjNGVlMGVlMWY4MWU5YWM2YmExODE5YTQ2ZDQxOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4YmRlZThhZDk3OGI5MmIzZmViNjQzYjNmMTViMTg5YzA3ZmViYWQwMjdhOTJhNGVlODcwNjMxNmEzMzk5NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5NTU0ZDdmMmRmNWQ1M2M0Mjg0Y2M1NGU2MzQ3NzNhODgxOTI4NDEyYmNhOWVhZTM1NDBiZGEyYjNiYWMxMjAifQ"
         }
       ]
     },
@@ -216,7 +216,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/mod.rs",
-          "version": "repo-file-v1:sha256:e65197e9c7253dd4349045c625142196b2435be6a4b79cc3858a48ceedc0aade"
+          "version": "repo-file-v1:sha256:91de66e314483e372143743352c36cd8e435d5ee41222180243ee0911f173423"
         }
       ]
     },
@@ -935,10 +935,74 @@
           "version": "repo-lines-v1:sha256:d77f0cd6a1d8a6a605ad860bcd88ef53433d356a228b948af8bc0cda80761011:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IxMmYxNjJjNGViZTRiZTE2NWQ0NzAwMDFjOGJiYWI0YjFjMzgyYzJkMTNkOTVmMzg0OTk3ZGI0NTZiZGY2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDY0YTFlYzExNDk3Y2EyMTYyZDRmYjFiZmVjYzZmNzdkMTUzMGI5ZTI2Yzc2MjJjNzIyMTAzYWUzYWI0YzM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMzMDA5NmViNjcxY2M5ZjYzNmRlNDhiMTEwYTU2NGZkNWIxZWI0MTY5NjE2ODAxMWM1MWRlODMwYTk4YjA5OCJ9"
         }
       ]
+    },
+    {
+      "id": "claim_e48297d0f38c46a6bb197f9b8592d5fc",
+      "statement": "Goalのpause/resumeはobjective・budgetを置換しない状態更新、cancelはAgentRun取消、clearはGoal管理解除であり達成宣言ではない。外部MCPにfinish_goalや自動承認は設けない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L47-L111",
+          "version": "repo-lines-v1:sha256:4b274a1a9ad8113c6052bf745199cefb83533c013329bc36d9fb312b1dd09846:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyMzIwOTA4N2MyNmI2ZWYwZDFjMDA4YWJiOTQ5YmMzMTFkM2VkNTI0NTE4ZjRmM2ZiYmU1ODYwODAzYmI2OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0Mzg2NTQyODM4ZGZiZTdjMGVkM2FiMjFmZThiZmM4NDhmMjUxMDU1Y2ViOGU0M2E5NGJiOWVlMDBhNjM1OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNTNkN2Y0OWQzYWFiMTM3YTRhNWQ5NGY3OTJhZmRkNTM2ZWU2ZTA1YjExN2Q5NGY1MWZlNjZhZDhiN2UyNWEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/goals/tests.rs#L211-L227",
+          "version": "repo-lines-v1:sha256:6c8c5e81c1db1284000614b779d742f2e3f355f4b7adc1fe4f1f0b7a232397af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmNDViYTNhZjMzNDI4ZTc2YWNmYmM3OTdiYzRiMTA1YjBlOTRkZGVlZjExMTRjMjE4OTVkNDhmMDhlZTZjM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmOWFkNDYzYmU3MWM1ZjQyMDk0NmFmYmYwN2QwZmU5ZjVmMTFkYTgyZjFlOTQ5MDNjYzMzOTVkOGMxYTBiMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkZDJhOTUzZWZjNzFjZmFlODIwZGM2NGMxNTMyMjg3ZTAyYjUyYWU5N2Y3ZjU3NmQyNmU0YzYyYzA5YzgzOWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1dba0ef867a9472ab93c3aa22ede1119",
+      "statement": "保存Goal再開はUIとMCPで /goal resume とGoal modeを使用しPLANのみSUPERVISEDへ変更する。MCPは保存executor設定で同じSessionにfollow-upし、providerは既存Goalを再読取して欠落・completeを拒否しobjective/budgetを置換しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2977-L3006",
+          "version": "repo-lines-v1:sha256:05f5197409a01c8c773473ebf6089d7f4f25bada681ff44959157fb7e280e2d7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNzlhYTNlMjRhODlmMDdkYTkyZWJiOTQ2MjU2N2MyNDA5Y2E3M2MwZmQzMGFmODJkZTYyYmY3NDI1NDQ5OTUifQ"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L667-L675",
+          "version": "repo-lines-v1:sha256:12a4a3e8c3c9b3258a488ded31e4d17fef5d96ff00288d1f526877d9f48312f6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2M2YTMwN2FhMmQ1ZGI1MmQyODVmOGU0MzAyZDI1MTAyN2Q5MDE4ZDgxOGJjNzZlMjhjMGU1ZjI1NDQyNzhhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjA2MzE1ZTk2ZGU1OGQ4OGIzMWI1NmZhOTY1MjVlMDZhMGE4ZTBmN2EzOTFjYjU0ODY0MmYxZjA1NjcxNjVlMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIxM2RkOTdjZTQ0ZjRiNzMzMGM2ZjZjNzZlMDUxOWU5M2NlMDNmMDk5ZTRmYmEwZTFlYTJiMTJlYTVlNWI5YSJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L193-L258",
+          "version": "repo-lines-v1:sha256:f89ee031eb3a1104d708074cc74df7f7f2a2c7c23c408d61f5db6b3e60eb8e2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMzcwYzA1OWI4MjNiYzAxZDMwOWE2NjhkMWU5ZjRlZThjMGUzYjUwZGU0NGRlNDQ1MDIwOGM2Y2I4OWMxNjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODc1ODY1NjY5NDQyOTA5YTdjNDVkMDczZTljN2U5ODU1YmJjOWY5MWZhY2NkZjZkOTk3Y2Q3NjcwMDkxNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExNjY5MmQ4MjgyYThhNTFiNTc3Nzk5NDdmYTc3N2UwNTMxMzZmYzJkYjkxMTEwNTQ1ZDViYjA2ZmRkZTUyZDQifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/resumeGoal.ts#L8-L21",
+          "version": "repo-lines-v1:sha256:2af4b46aaa2a467938ca28bf976e3cafc080a96630044e84e0188f26564b6843:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NGJmMTNlNzBiM2QxMGZlZmU3NTAwMTg1OGNmZDY3MDBlMjU5YzJjODI3N2U0ZjFlMzliZTZiYjg1Yjk5YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4MzNlMWMxYzJjZGYwZjllZWZmOTM3ZjdhYzA3ZTk3NWNkYjNhNjcwN2I2MmY5YTlmYjIzMmVmMWZmMDgwMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_38440bc94eb3400dbab55d1243f3779f",
+      "statement": "MCPの終端RunからのGoal再開は検証用Session lockを解放後、follow_up_checkedが同じlockでqueue・Project所属・最新終端Runを再確認し、活動中Run guardと合わせ二重起動を防ぐ。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L215-L249",
+          "version": "repo-lines-v1:sha256:eb1379ba4e656dab2746ee80dddbdc3dc84347c88c1c961e8fcab32c93dee5e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwODg5NzI0YzI0MTEyZTM0Zjg1ODJjMDI2NTQ4OTY1MGUyM2QwZWJmMmQ1ODlkNGJhZDhiYjA5ZWU2ZWE1ZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0NzlkYWRlZjNhYTY2OGZmM2EwMzFkOTk1NTlkMjI5NjJjYzg2NDFlY2IxNjViODIxNWI4N2NiNTJlM2E4NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1MjRmMGZlZmVmMjZiYjg3ZDgzNmIzMTk3YjIwY2FiNjhmZjNhYTRhZmJlNTBhMTU3OTg3YjRjMzU5YzYxZTEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L265-L314",
+          "version": "repo-lines-v1:sha256:9960100a80501fdc5402f89837bdd4167d832c0cdd448c570d4727578f58a6c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjMGYwMzllNWYyMzNlZDRkZmZjMTY1MjJjZmRkMTYwYjBkZjE0NWJiNjdhODUxMzI4NjI2YzM1YmYxMTJmNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmMDgzZDdmZDg1MzY0NjEyNmUxYzY4MzkwMTEyOGI0MWIzODI3OWM3MzIzNzg4YzQ5NTQ4YWUyNGMyYWM4ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4NzlkMGJmNjI4YjZmN2I0MGQxMTQwMTkyYmY0MDA5YmZmNGYzOGQwNzgwNTI3OTcyNTBmOTA2MWZiNjYyN2YifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L367-L381",
+          "version": "repo-lines-v1:sha256:0d5bdcf71f768ab23fd237ec9c2b35c49cf00484886f7386eeb2649d94c51972:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5YjVlNTZhODRmZTUzNzYxMWEwYjI3NmU5YWQ0ZjA2NWY4ZjdiYmM0NjVmMDJjMWNkMjIxZDExYzRiNzc1ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODljZWU4NDVlZmY5NWFmNGUyYWRiMzliOWM2MTM1ZWVhZmQ5NDRjZDcxZjg5NWM0ZjQ2NzhiODdiMGU3MTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1edda0b57b5742e094d3288f684c7699",
+      "statement": "実DeploymentのGoal再開fixtureは専用隔離instanceでbinding欠落のConflictとlock再取得、副作用未生成・元Goal保持を検査するopt-in試験で、実Codex成功の検証ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/goals/tests.rs#L299-L406",
+          "version": "repo-lines-v1:sha256:1c211f9153fbe39a909b9309546bfc57f3182a70009090c50ca1db19e1540a4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiOTI1MDc4OTg2OGVmYWM2MGE2MzYzZjdmMGFkYzZiNGQ1OGIwYzU5OGE3MTE4ZGI2ZWNhNWU4ZDFlMTA5Yzg2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmNGNlYzVkYWMxZDJmZmIyMzY2ZTAyYzBjODNjODg1ODY1ZTJmNWVjNzJlMTVjOTRjNGYxM2U1MTc0MDY3MDgyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T22:40:49.979Z"
+    "at": "2026-10-24T01:51:44.796Z"
   }
 }
