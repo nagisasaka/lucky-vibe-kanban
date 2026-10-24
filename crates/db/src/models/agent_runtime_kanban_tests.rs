@@ -190,7 +190,7 @@ async fn kanban_manual_changes_custom_columns_and_done_survive_completion() {
         )
         .await;
         assert_eq!(board_status(&pool, issue).await, name);
-        if matches!(name, "Custom" | "Done") {
+        if name == "Custom" {
             let (request, attempt) = requests(session, workspace, "protected-start");
             AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
                 .await
@@ -572,4 +572,135 @@ async fn kanban_missing_start_evidence_does_not_substitute_event_arrival_time() 
     )
     .await;
     assert_eq!(board_status(&pool, issue).await, "Not Started");
+}
+
+#[tokio::test]
+async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
+    use crate::models::integration::{IntegrationRun, tests::fixture};
+
+    for host in [false, true] {
+        let (pool, mut integration, done) = fixture().await;
+        let issue = integration.payload.sources[0].selection.card_id;
+        let workspace = integration.payload.sources[0].selection.workspace_id;
+        let session = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'In Review','blue',300)")
+            .bind(Uuid::new_v4()).bind(integration.project_id).execute(&pool).await.unwrap();
+        // Model the previous Integration's settled workspace release.
+        sqlx::query("DELETE FROM integration_reservations WHERE run_id=?")
+            .bind(integration.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (old, old_attempt) = requests(session, workspace, "previous-implementation");
+        AgentRunRecord::persist_identity_before_launch(&pool, &old, &old_attempt)
+            .await
+            .unwrap();
+        lifecycle(&pool, &old, &old_attempt, 1, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &old,
+            &old_attempt,
+            2,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        integration.payload.published = true;
+        integration.save(&pool).await.unwrap();
+        IntegrationRun::complete_cards(&pool, integration.id)
+            .await
+            .unwrap();
+        assert_eq!(board_status(&pool, issue).await, "Done");
+
+        let (failed, failed_attempt) = requests(session, workspace, "prestart-failure");
+        AgentRunRecord::persist_identity_before_launch(&pool, &failed, &failed_attempt)
+            .await
+            .unwrap();
+        lifecycle(
+            &pool,
+            &failed,
+            &failed_attempt,
+            1,
+            AgentRunStatus::Failed,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "Done");
+
+        let (request, attempt) = requests(session, workspace, "done-followup");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        lifecycle(&pool, &request, &attempt, 1, AgentRunStatus::Starting, host).await;
+        assert_eq!(board_status(&pool, issue).await, "Done");
+        lifecycle(&pool, &request, &attempt, 2, AgentRunStatus::Running, host).await;
+        assert_eq!(board_status(&pool, issue).await, "In Progress");
+        lifecycle(&pool, &old, &old_attempt, 3, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &old,
+            &old_attempt,
+            4,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "In Progress");
+        // A past publication's repeated completion must not undo the new run.
+        IntegrationRun::complete_cards(&pool, integration.id)
+            .await
+            .unwrap();
+        assert_eq!(board_status(&pool, issue).await, "In Progress");
+        lifecycle(
+            &pool,
+            &request,
+            &attempt,
+            3,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "In Review");
+        IntegrationRun::complete_cards(&pool, integration.id)
+            .await
+            .unwrap();
+        assert_eq!(board_status(&pool, issue).await, "In Review");
+
+        // A new confirmed publication has its own receipt and completes the card.
+        let next_id = Uuid::new_v4();
+        integration.payload.sources[0].done_result = None;
+        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES(?,?,?,?, '/git/common','refs/heads/test','queued',?)")
+            .bind(next_id).bind(next_id.to_string()).bind(integration.project_id)
+            .bind(integration.repository_id).bind(&integration.payload).execute(&pool).await.unwrap();
+        let completed = IntegrationRun::complete_cards(&pool, next_id)
+            .await
+            .unwrap();
+        assert_eq!(
+            completed.payload.sources[0].done_result.as_deref(),
+            Some("done")
+        );
+        assert_eq!(board_status(&pool, issue).await, "Done");
+        // Even fresh event IDs from the old terminal attempt cannot reopen Done.
+        lifecycle(&pool, &request, &attempt, 4, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &request,
+            &attempt,
+            5,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "Done");
+        let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(status, done);
+    }
 }

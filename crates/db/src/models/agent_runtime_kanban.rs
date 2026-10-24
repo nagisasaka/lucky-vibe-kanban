@@ -73,7 +73,7 @@ pub(super) async fn sync_kanban_lifecycle(
             UPDATE local_issues SET status_id = ?, updated_at = strftime('%Y-%m-%d %H:%M:%f', MAX(julianday('now'), COALESCE(julianday(updated_at), 0) + 0.001 / 86400.0))
             WHERE id = ? AND status_id IN (
                 SELECT id FROM local_project_statuses WHERE project_id = ?
-                AND name IN ('Not Started', 'In Progress', 'In Review') AND hidden = 0
+                AND name IN ('Not Started', 'In Progress', 'In Review', 'Done') AND hidden = 0
             )
         "#,
         )
