@@ -1179,6 +1179,7 @@ pub(crate) async fn list_project_workspaces(
             i.project_id,
             ? AS owner_user_id,
             i.id AS issue_id,
+            i.simple_id AS issue_simple_id,
             w.id AS local_workspace_id,
             w.name,
             w.archived,
@@ -1210,6 +1211,7 @@ async fn list_user_workspaces(pool: &SqlitePool) -> Result<Vec<Workspace>, ApiEr
             i.project_id,
             ? AS owner_user_id,
             i.id AS issue_id,
+            i.simple_id AS issue_simple_id,
             w.id AS local_workspace_id,
             w.name,
             w.archived,
@@ -3887,6 +3889,94 @@ mod tests {
         assert_eq!(
             cleared, None,
             "explicit manual status wins even in the same column"
+        );
+    }
+
+    #[tokio::test]
+    async fn workspace_lists_return_issue_simple_ids() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut expected = Vec::new();
+        for project_index in 0..2 {
+            let project = super::create_local_project(
+                &pool,
+                CreateProjectRequest {
+                    id: None,
+                    organization_id: super::local_org_id(),
+                    name: format!("Project {project_index}"),
+                    color: "210 80% 52%".into(),
+                },
+            )
+            .await
+            .unwrap();
+            let statuses = super::ensure_default_statuses(&pool, project.id)
+                .await
+                .unwrap();
+            let issue_id = Uuid::new_v4();
+            sqlx::query("INSERT INTO local_issues (id, project_id, issue_number, simple_id, status_id, title, sort_order) VALUES (?, ?, 106, 'LOCAL-106', ?, 'Issue', 1)")
+                .bind(issue_id).bind(project.id).bind(statuses[0].id).execute(&pool).await.unwrap();
+            for archived in [false, true] {
+                let id = Uuid::new_v4();
+                sqlx::query("INSERT INTO workspaces (id, branch, name, archived) VALUES (?, 'feature/example', 'Example', ?)")
+                    .bind(id).bind(archived).execute(&pool).await.unwrap();
+                sqlx::query("INSERT INTO local_workspace_links (workspace_id, project_id, issue_id) VALUES (?, ?, ?)")
+                    .bind(id).bind(project.id).bind(issue_id).execute(&pool).await.unwrap();
+                expected.push((id, project.id, archived));
+            }
+            let rows = super::list_project_workspaces(&pool, project.id)
+                .await
+                .unwrap();
+            assert_eq!(rows.len(), 2);
+            for row in rows {
+                assert_eq!(row.project_id, project.id);
+                assert_eq!(row.issue_simple_id.as_deref(), Some("LOCAL-106"));
+                assert_eq!(
+                    serde_json::to_value(&row).unwrap()["issue_simple_id"],
+                    "LOCAL-106"
+                );
+            }
+        }
+        // Unlinked workspaces remain absent from related metadata lists.
+        sqlx::query("INSERT INTO workspaces (id, branch, name) VALUES (?, 'unlinked', 'Unlinked')")
+            .bind(Uuid::new_v4())
+            .execute(&pool)
+            .await
+            .unwrap();
+        let rows = super::list_user_workspaces(&pool).await.unwrap();
+        assert_eq!(rows.len(), 4);
+        for row in rows {
+            assert!(expected.contains(&(row.id, row.project_id, row.archived)));
+            assert_eq!(row.issue_simple_id.as_deref(), Some("LOCAL-106"));
+            assert_eq!(
+                serde_json::to_value(&row).unwrap()["issue_simple_id"],
+                "LOCAL-106"
+            );
+        }
+        // Both lists read current identifiers on the next ordinary fetch.
+        sqlx::query("UPDATE local_issues SET simple_id='LOCAL-107' WHERE project_id=?")
+            .bind(expected[0].1)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            super::list_project_workspaces(&pool, expected[0].1)
+                .await
+                .unwrap()
+                .iter()
+                .all(|row| row.issue_simple_id.as_deref() == Some("LOCAL-107"))
+        );
+        assert_eq!(
+            super::list_user_workspaces(&pool)
+                .await
+                .unwrap()
+                .iter()
+                .filter(|row| row.issue_simple_id.as_deref() == Some("LOCAL-107"))
+                .count(),
+            2
         );
     }
 

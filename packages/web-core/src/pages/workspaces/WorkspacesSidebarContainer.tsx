@@ -8,6 +8,7 @@ import { useAllOrganizationProjects } from '@/shared/hooks/useAllOrganizationPro
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
 import { ScratchType, type DraftWorkspaceData } from 'shared/types';
 import type { Project } from 'shared/remote-types';
+import { matchesWorkspaceSearch } from './workspaceSearch';
 import { splitMessageToTitleDescription } from '@/shared/lib/string';
 import { cn } from '@/shared/lib/utils';
 import { useIsMobile } from '@/shared/hooks/useIsMobile';
@@ -321,6 +322,16 @@ export function WorkspacesSidebarContainer({
     return map;
   }, [remoteWorkspaces]);
 
+  const issueSimpleIdByLocalId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const workspace of remoteWorkspaces) {
+      if (workspace.local_workspace_id && workspace.issue_simple_id) {
+        map.set(workspace.local_workspace_id, workspace.issue_simple_id);
+      }
+    }
+    return map;
+  }, [remoteWorkspaces]);
+
   // Build org name lookup
   const orgNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -394,8 +405,8 @@ export function WorkspacesSidebarContainer({
     setDisplayLimit(PAGE_SIZE);
   }, [searchQuery, showArchive, workspaceFilters, workspaceSort]);
 
-  const searchLower = searchQuery.toLowerCase();
-  const isSearching = searchQuery.length > 0;
+  const searchLower = searchQuery.trim().toLowerCase();
+  const isSearching = searchLower.length > 0;
 
   // Apply sidebar filters (project + PR), then search
   const filteredActiveWorkspaces = useMemo(() => {
@@ -424,15 +435,23 @@ export function WorkspacesSidebarContainer({
 
     // Search filter
     if (searchLower) {
-      result = result.filter(
-        (ws) =>
-          ws.name.toLowerCase().includes(searchLower) ||
-          ws.branch.toLowerCase().includes(searchLower)
+      result = result.filter((ws) =>
+        matchesWorkspaceSearch(
+          ws,
+          searchLower,
+          issueSimpleIdByLocalId.get(ws.id)
+        )
       );
     }
 
     return result;
-  }, [activeWorkspaces, workspaceFilters, remoteProjectByLocalId, searchLower]);
+  }, [
+    activeWorkspaces,
+    workspaceFilters,
+    remoteProjectByLocalId,
+    searchLower,
+    issueSimpleIdByLocalId,
+  ]);
 
   const filteredArchivedWorkspaces = useMemo(() => {
     let result = archivedWorkspaces;
@@ -457,16 +476,19 @@ export function WorkspacesSidebarContainer({
     }
 
     if (searchLower) {
-      result = result.filter(
-        (ws) =>
-          ws.name.toLowerCase().includes(searchLower) ||
-          ws.branch.toLowerCase().includes(searchLower)
+      result = result.filter((ws) =>
+        matchesWorkspaceSearch(
+          ws,
+          searchLower,
+          issueSimpleIdByLocalId.get(ws.id)
+        )
       );
     }
 
     return result;
   }, [
     archivedWorkspaces,
+    issueSimpleIdByLocalId,
     workspaceFilters,
     remoteProjectByLocalId,
     searchLower,

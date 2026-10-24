@@ -10,6 +10,7 @@ pub struct Workspace {
     pub project_id: Uuid,
     pub owner_user_id: Uuid,
     pub issue_id: Option<Uuid>,
+    pub issue_simple_id: Option<String>,
     pub local_workspace_id: Option<Uuid>,
     pub name: Option<String>,
     pub archived: bool,
