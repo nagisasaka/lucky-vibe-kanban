@@ -64,3 +64,6 @@ openssl = { version = "0.10", features = ["vendored"] }
 [features]
 default = []
 qa-mode = []
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+libc = "0.2"

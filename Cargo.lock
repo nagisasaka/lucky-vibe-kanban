@@ -2529,6 +2529,7 @@ dependencies = [
  "git",
  "json-patch",
  "jsonc-parser",
+ "libc",
  "lru 0.12.5",
  "openssl",
  "os_pipe",

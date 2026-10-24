@@ -832,12 +832,12 @@ impl Codex {
         task: F,
     ) -> Result<T, ExecutorError>
     where
-        F: FnOnce(Arc<AppServerClient>) -> Fut,
-        Fut: std::future::Future<Output = Result<T, ExecutorError>>,
+        T: Send + 'static,
+        F: FnOnce(Arc<AppServerClient>) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = Result<T, ExecutorError>> + Send + 'static,
     {
         let command_parts = self.build_command_builder()?.build_initial()?;
         let (program_path, args) = command_parts.into_resolved().await?;
-        let launch_context = self.launch_context(&program_path, &args, current_dir);
 
         let mut process = Command::new(&program_path);
         process
@@ -856,55 +856,90 @@ impl Codex {
             .with_profile(&self.cmd)
             .apply_to_command(&mut process);
 
-        let mut child = process.group_spawn_no_window().map_err(|err| {
-            ExecutorError::Io(std::io::Error::other(format!(
-                "failed to spawn Codex app-server for discovery: {err}\n\nCodex launch context:\n{}",
-                launch_context
-            )))
-        })?;
+        // The caller may be a timed discovery stream or a disconnected WebSocket.
+        // Dropping it requests cleanup; it must not drop the process owner task.
+        let caller_cancel = tokio_util::sync::CancellationToken::new();
+        let _cancel_on_drop = caller_cancel.clone().drop_guard();
+        let plan = self.plan;
+        tokio::spawn(async move {
+            let mut child = process.group_spawn_no_window().map_err(|err| {
+                ExecutorError::Io(std::io::Error::other(format!(
+                    "failed to spawn Codex app-server for discovery: {err}"
+                )))
+            })?;
 
-        let child_stdout = child.inner().stdout.take().ok_or_else(|| {
-            ExecutorError::Io(std::io::Error::other("Codex app server missing stdout"))
-        })?;
-        let child_stdin = child.inner().stdin.take().ok_or_else(|| {
-            ExecutorError::Io(std::io::Error::other("Codex app server missing stdin"))
-        })?;
+            let mut ownership = utils::process::OwnedProcessGroup::capture(&mut child, "codex-discovery")
+                .inspect_err(|error| { tracing::error!(purpose = "codex-discovery", %error, "could not establish process ownership"); })?;
+            let cancel = tokio_util::sync::CancellationToken::new();
+            let mut reader_task = None;
+            use futures::FutureExt;
+            let result = std::panic::AssertUnwindSafe(async {
+                let child_stdout = child.inner().stdout.take().ok_or_else(|| {
+                    ExecutorError::Io(std::io::Error::other("Codex app server missing stdout"))
+                })?;
+                let child_stdin = child.inner().stdin.take().ok_or_else(|| {
+                    ExecutorError::Io(std::io::Error::other("Codex app server missing stdin"))
+                })?;
 
-        let cancel = tokio_util::sync::CancellationToken::new();
-        let (exit_signal_tx, _exit_signal_rx) = tokio::sync::oneshot::channel();
-        let exit_signal_tx = ExitSignalSender::new(exit_signal_tx);
-        let client = AppServerClient::new(
-            LogWriter::new(tokio::io::sink()),
-            None,
-            false,
-            self.plan,
-            ExecutionMode::Code,
-            None,
-            None,
-            RepoContext::default(),
-            false,
-            String::new(),
-            cancel.clone(),
-        );
-        let rpc_peer = JsonRpcPeer::spawn(
-            child_stdin,
-            child_stdout,
-            client.clone(),
-            exit_signal_tx,
-            cancel.clone(),
-        );
-        client.connect(rpc_peer);
+                let (exit_signal_tx, _exit_signal_rx) = tokio::sync::oneshot::channel();
+                let exit_signal_tx = ExitSignalSender::new(exit_signal_tx);
+                let client = AppServerClient::new(
+                    LogWriter::new(tokio::io::sink()),
+                    None,
+                    false,
+                    plan,
+                    ExecutionMode::Code,
+                    None,
+                    None,
+                    RepoContext::default(),
+                    false,
+                    String::new(),
+                    cancel.clone(),
+                );
+                let (rpc_peer, reader) = JsonRpcPeer::spawn_tracked(
+                    child_stdin,
+                    child_stdout,
+                    client.clone(),
+                    exit_signal_tx,
+                    cancel.clone(),
+                );
+                reader_task = Some(reader);
+                client.connect(rpc_peer);
 
-        let result = async {
-            client.initialize().await?;
-            task(client).await
-        }
-        .await;
+                tokio::select! {
+                    _ = caller_cancel.cancelled() => Err(ExecutorError::Io(std::io::Error::new(
+                        std::io::ErrorKind::Interrupted, "Codex discovery caller disconnected"))),
+                    result = async { client.initialize().await?; task(client).await } => result,
+                }
+            }).catch_unwind().await.unwrap_or_else(|_| Err(ExecutorError::Io(
+                std::io::Error::other("Codex discovery task panicked"))));
 
-        cancel.cancel();
-        let _ = child.kill().await;
-
-        result
+            cancel.cancel();
+            let process_result = ownership.terminate(&mut child).await;
+            let rpc_result = async {
+                if let Some(mut reader) = reader_task {
+                    match tokio::time::timeout(std::time::Duration::from_secs(5), &mut reader).await {
+                        Ok(result) => result.map_err(std::io::Error::other)?,
+                        Err(_) => {
+                            reader.abort();
+                            let stopped = tokio::time::timeout(std::time::Duration::from_secs(1), reader).await
+                                .map_err(|_| std::io::Error::new(std::io::ErrorKind::TimedOut, "Codex RPC abort did not settle"))?;
+                            if let Err(error) = stopped && !error.is_cancelled() {
+                                return Err(std::io::Error::other(error));
+                            }
+                            return Err(std::io::Error::new(std::io::ErrorKind::TimedOut, "Codex discovery RPC cleanup timed out"));
+                        }
+                    }
+                }
+                Ok::<(), std::io::Error>(())
+            }.await;
+            if let Err(error) = &rpc_result {
+                tracing::error!(purpose = "codex-discovery", %error, "RPC cleanup failed");
+            }
+            process_result?;
+            rpc_result?;
+            result
+        }).await.map_err(|error| ExecutorError::Io(std::io::Error::other(error)))?
     }
 
     fn build_thread_start_params_with_resources(
@@ -1644,6 +1679,110 @@ mod tests {
 
     fn test_executor() -> Codex {
         serde_json::from_value(json!({})).expect("empty Codex config should deserialize")
+    }
+
+    // These exercise the actual discovery owner/RPC tasks without Codex or a provider.
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn discovery_cleanup_normal_timeout_drop_abort() {
+        use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+        struct FixtureProcess(OwnedFd);
+        impl FixtureProcess {
+            fn open(pid: u32) -> Self {
+                let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
+                assert!(fd >= 0);
+                Self(unsafe { OwnedFd::from_raw_fd(fd as i32) })
+            }
+            fn exited(&self) -> bool {
+                let mut poll = libc::pollfd {
+                    fd: self.0.as_raw_fd(),
+                    events: libc::POLLIN,
+                    revents: 0,
+                };
+                assert!(unsafe { libc::poll(&mut poll, 1, 0) } >= 0);
+                poll.revents & libc::POLLIN != 0
+            }
+        }
+        impl Drop for FixtureProcess {
+            fn drop(&mut self) {
+                // Failure cleanup uses only the fixture's pinned process identity.
+                unsafe {
+                    libc::syscall(
+                        libc::SYS_pidfd_send_signal,
+                        self.0.as_raw_fd(),
+                        libc::SIGKILL,
+                        std::ptr::null::<libc::siginfo_t>(),
+                        0,
+                    );
+                }
+            }
+        }
+        for mode in ["normal", "timeout", "stream-drop", "abort"] {
+            let root = tempfile::tempdir().unwrap();
+            let record = root.path().join("pids.json");
+            let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../tests/codex-process-cleanup/fake_app_server.py");
+            let mut agent = test_executor();
+            agent.cmd.base_command_override = Some(format!(
+                "python3 '{}' '{}' '{}'",
+                fixture.display(),
+                if mode == "normal" { "normal" } else { "stall" },
+                record.display()
+            ));
+            let cwd = root.path().to_path_buf();
+            let mut call = Box::pin(async move {
+                agent
+                    .with_discovery_app_server(&cwd, |_| async { Ok(()) })
+                    .await
+            });
+            let mut unrelated = tokio::process::Command::new("sleep")
+                .arg("60")
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            tokio::select! {
+                result = &mut call => panic!("discovery returned before fixture ready: {result:?}"),
+                result = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+                    while !record.exists() { tokio::time::sleep(std::time::Duration::from_millis(10)).await; }
+                }) => result.unwrap(),
+            }
+            let pids: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&record).unwrap()).unwrap();
+            let wrapper = FixtureProcess::open(pids["wrapper"].as_u64().unwrap() as u32);
+            let native = FixtureProcess::open(pids["native"].as_u64().unwrap() as u32);
+            match mode {
+                "normal" => call.await.unwrap(),
+                "timeout" => {
+                    assert!(
+                        tokio::time::timeout(std::time::Duration::from_millis(20), call)
+                            .await
+                            .is_err()
+                    );
+                }
+                "stream-drop" => drop(call),
+                "abort" => {
+                    let task = tokio::spawn(call);
+                    task.abort();
+                    assert!(task.await.unwrap_err().is_cancelled());
+                }
+                _ => unreachable!(),
+            }
+            let settled = tokio::time::timeout(std::time::Duration::from_secs(15), async {
+                // Kernel exit alone is not completion: wait for the owner's reap too.
+                while !wrapper.exited()
+                    || !native.exited()
+                    || std::path::Path::new(&format!("/proc/{}", pids["wrapper"].as_u64().unwrap()))
+                        .exists()
+                {
+                    tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                }
+            })
+            .await;
+            let unrelated_alive = unrelated.try_wait().unwrap().is_none();
+            unrelated.kill().await.unwrap();
+            settled.expect(mode);
+            assert!(unrelated_alive, "{mode}");
+        }
     }
 
     fn config_with_reasoning(reasoning_id: &str) -> ExecutorConfig {
