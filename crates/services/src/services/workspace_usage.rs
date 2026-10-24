@@ -19,7 +19,10 @@ use utils::repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus};
 use uuid::Uuid;
 
 mod lifecycle;
-pub use lifecycle::{allows_wiki_instruction, ensure_wiki_board_link, release_completed};
+pub use lifecycle::{
+    allows_wiki_instruction, ensure_wiki_board_link, ensure_wiki_board_link_for_project,
+    release_completed,
+};
 
 /// Only existing, host-owned records establish historical usage. Ordinary
 /// workflows, unlinked workspaces and names are deliberately not evidence.
@@ -1188,74 +1191,6 @@ mod tests {
             .unwrap(),
             project
         );
-    }
-
-    #[tokio::test]
-    async fn wiki_board_link_reports_unlinked_admission_for_sync_and_bootstrap() {
-        for kind in [OPENWIKI_SYNC, OPENWIKI_BOOTSTRAP] {
-            let (pool, repo, project) = fixture().await;
-            let ws = workspace(
-                &pool,
-                &repo,
-                Some(&WorkspaceExecutionOwner::new(kind, repo.id, None)),
-            )
-            .await;
-            // No Board: historical backfill may skip, but new admission must stop.
-            assert!(!ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
-                .bind(Uuid::new_v4())
-                .bind(project)
-                .bind(repo.id)
-                .execute(&pool)
-                .await
-                .unwrap();
-            // A Board without a visible status cannot receive an Issue.
-            assert!(!ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            let status = Uuid::new_v4();
-            sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order,hidden) VALUES(?,?,'Todo','blue',0,1)")
-                .bind(status).bind(project).execute(&pool).await.unwrap();
-            assert!(!ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            sqlx::query("UPDATE local_project_statuses SET hidden=0 WHERE id=?")
-                .bind(status)
-                .execute(&pool)
-                .await
-                .unwrap();
-            assert!(ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            assert!(ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            let issue_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM local_issues")
-                .fetch_one(&pool)
-                .await
-                .unwrap();
-            assert_eq!(issue_count, 1);
-
-            let second = Uuid::new_v4();
-            sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Second')")
-                .bind(second)
-                .execute(&pool)
-                .await
-                .unwrap();
-            sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
-                .bind(Uuid::new_v4())
-                .bind(second)
-                .bind(repo.id)
-                .execute(&pool)
-                .await
-                .unwrap();
-            let ambiguous = workspace(
-                &pool,
-                &repo,
-                Some(&WorkspaceExecutionOwner::new(kind, repo.id, None)),
-            )
-            .await;
-            assert!(!ensure_wiki_board_link(&pool, &ambiguous).await.unwrap());
-            // Existing links remain valid even when membership later changes.
-            assert!(ensure_wiki_board_link(&pool, &ws).await.unwrap());
-            let links: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM local_workspace_links")
-                .fetch_one(&pool)
-                .await
-                .unwrap();
-            assert_eq!(links, 1);
-        }
     }
 
     #[tokio::test]

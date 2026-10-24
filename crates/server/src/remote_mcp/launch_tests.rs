@@ -45,7 +45,7 @@ impl LaunchActions for FixtureLaunch {
         )
     }
     async fn wiki_sync(&self, request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
-        self.wiki_requests.lock().await.push(json!({"repository_id":request.repository_id,"source":request.expected_source_commit,"from_commit":request.from_commit}));
+        self.wiki_requests.lock().await.push(json!({"project_id":request.project_id,"repository_id":request.repository_id,"source":request.expected_source_commit,"from_commit":request.from_commit}));
         self.entered.notify_one();
         if self.pause {
             self.release.notified().await;
@@ -613,6 +613,29 @@ async fn wiki_admission_is_scoped_durable_and_never_replayed_after_failure() {
             .await
             .is_err()
     );
+    // Even a real association cannot grant access to another connection's Project.
+    let foreign_project = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Other Board')")
+        .bind(foreign_project)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+        .bind(Uuid::new_v4())
+        .bind(foreign_project)
+        .bind(repo)
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    let mut foreign = input.clone();
+    foreign["project_id"] = json!(foreign_project);
+    assert!(
+        call(&remote, &principal, "sync_repository_wiki", foreign)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("Project is not available")
+    );
     assert!(dispatch.wiki_requests.lock().await.is_empty());
     let read_args = json!({"project_id":target.project_id,"repository_id":repo});
     assert_eq!(
@@ -630,6 +653,10 @@ async fn wiki_admission_is_scoped_durable_and_never_replayed_after_failure() {
         .unwrap();
     assert_eq!(first["operation_id"], repeat["operation_id"]);
     assert_eq!(dispatch.wiki_requests.lock().await.len(), 1);
+    assert_eq!(
+        dispatch.wiki_requests.lock().await[0]["project_id"],
+        json!(target.project_id)
+    );
     let result_args =
         json!({"project_id":target.project_id,"repository_id":repo,"request_id":request});
     let pending = call(

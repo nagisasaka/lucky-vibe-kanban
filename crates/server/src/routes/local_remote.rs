@@ -314,7 +314,7 @@ fn empty_rows(table: &str) -> ResponseJson<Value> {
     ResponseJson(json!({ table: [] }))
 }
 
-async fn project_exists(pool: &SqlitePool, project_id: Uuid) -> Result<bool, ApiError> {
+pub(crate) async fn project_exists(pool: &SqlitePool, project_id: Uuid) -> Result<bool, ApiError> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM projects WHERE id = ?")
         .bind(project_id)
         .fetch_one(pool)

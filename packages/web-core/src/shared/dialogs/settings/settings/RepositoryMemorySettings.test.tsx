@@ -7,12 +7,31 @@ import type { MachineClient } from '@/shared/lib/machineClient';
 import { RepositoryMemorySettings } from './RepositoryMemorySettings';
 import { workspaceRepositoryWorkflowKey } from '@/shared/hooks/useWorkspaceRepositoryWorkflow';
 
+const { buttons, syncRepositoryMemory } = vi.hoisted(() => ({
+  buttons: new Map<string, { disabled?: boolean; onClick: () => void }>(),
+  syncRepositoryMemory: vi.fn().mockResolvedValue({}),
+}));
+vi.mock('@vibe/ui/components/PrimaryButton', async () => {
+  const { createElement } = await import('react');
+  return {
+    PrimaryButton: (props: {
+      value: string;
+      disabled?: boolean;
+      onClick: () => void;
+    }) => {
+      buttons.set(props.value, props);
+      return createElement('button', { disabled: props.disabled }, props.value);
+    },
+  };
+});
+
 function render(
   repoId: string,
   status: RepositoryMemoryState['status'],
   active = false,
   bootstrap = false,
-  overrides: Partial<RepositoryMemoryState> = {}
+  overrides: Partial<RepositoryMemoryState> = {},
+  projectId?: string
 ) {
   const query = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -20,7 +39,12 @@ function render(
   const client = {
     target: { id: 'local', kind: 'local', apiHostId: null, label: 'Local' },
     queryScopeKey: ['machine', 'local'],
-    getRepositoryMemory: vi.fn(),
+    getRepositoryMemory: vi
+      .fn()
+      .mockImplementation(async () =>
+        query.getQueryData(['machine', 'local', 'repository-memory', repoId])
+      ),
+    syncRepositoryMemory,
   } as unknown as MachineClient;
   if (bootstrap || status === 'error') {
     query.setQueryData(
@@ -52,6 +76,7 @@ function render(
       { client: query },
       createElement(RepositoryMemorySettings, {
         client,
+        projectId,
         repo: { id: repoId, default_target_branch: 'main' } as Repo,
       })
     )
@@ -59,6 +84,24 @@ function render(
 }
 
 describe('repository memory settings', () => {
+  it.each(['uninitialized', 'current'] as const)(
+    'carries the selected Project for %s and preserves repository-only requests',
+    (status) => {
+      const label =
+        status === 'uninitialized' ? 'Initialize Wiki' : 'Sync Wiki';
+      for (const projectId of ['selected-project', undefined]) {
+        syncRepositoryMemory.mockClear();
+        render('a', status, false, false, {}, projectId);
+        const button = buttons.get(label)!;
+        expect(button.disabled).toBe(false);
+        button.onClick();
+        expect(syncRepositoryMemory).toHaveBeenCalledWith('a', {
+          from_commit: null,
+          ...(projectId ? { project_id: projectId } : {}),
+        });
+      }
+    }
+  );
   it('adopts existing Wiki without requiring a local success receipt', () => {
     const markup = render('a', 'stale', false, false, { last_success: null });
     expect(markup).toContain('Adopt existing Wiki');

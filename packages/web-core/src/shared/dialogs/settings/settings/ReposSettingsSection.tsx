@@ -128,12 +128,14 @@ const RemoveRepoDialog = defineModal<RemoveRepoDialogProps, RemoveRepoResult>(
 
 // ── Main section ─────────────────────────────────────────────────────
 interface ReposSettingsSectionProps {
+  projectId?: string;
   initialState?: { repoId?: string };
   variant?: 'standalone' | 'project-workspace';
   onDirtyChange?: (dirty: boolean) => void;
 }
 
 export function ReposSettingsSection({
+  projectId,
   initialState,
   variant = 'standalone',
   onDirtyChange,
@@ -547,6 +549,7 @@ export function ReposSettingsSection({
           {machineClient && (
             <RepositoryMemorySettings
               key={`${machineClient.target.id}:${selectedRepo.id}`}
+              projectId={projectId}
               repo={selectedRepo}
               client={machineClient}
             />
