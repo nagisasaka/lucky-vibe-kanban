@@ -888,6 +888,7 @@ async fn monitor_process(
     mut notices: mpsc::Receiver<OutputNotice>,
     mut commands: mpsc::Receiver<ProcessCommand>,
 ) {
+    let mut ownership = utils::process::OwnedProcessGroup::capture(&mut child, "agent-run");
     let mut stdout_closed = false;
     let mut stderr_closed = false;
     let mut provider_error = None;
@@ -905,9 +906,13 @@ async fn monitor_process(
         >()),
     };
     let mut cause = loop {
+        let ownership = match ownership.as_mut() {
+            Ok(ownership) => ownership,
+            Err(error) => break ExitCause::WaitFailure(error.to_string()),
+        };
         tokio::select! {
             _ = host.journal_failed.notified() => break ExitCause::AuditFailure("Host journal flush failed".into()),
-            status = child.wait() => {
+            status = ownership.wait(&mut child) => {
                 break match status {
                     Ok(status) => ExitCause::Process {
                         success: status.success(),
@@ -1033,7 +1038,7 @@ async fn monitor_process(
                     // native grace + process cleanup + audit drain fit inside
                     // the cancellation protocol deadline.
                     let (kill_result, descendant_result) = tokio::join!(
-                        utils::process::kill_process_group(&mut child),
+                        ownership.terminate(&mut child),
                         async {
                             match descendants {
                                 Ok(descendants) => descendants.terminate().await,
@@ -1041,9 +1046,11 @@ async fn monitor_process(
                             }
                         }
                     );
-                    match kill_result.and(descendant_result) {
-                        Ok(()) => break ExitCause::Cancelled,
-                        Err(error) => break ExitCause::WaitFailure(error.to_string()),
+                    match (kill_result, descendant_result) {
+                        (Ok(()), Ok(())) => break ExitCause::Cancelled,
+                        (Err(group), Err(descendants)) => break ExitCause::WaitFailure(format!(
+                            "group cleanup failed: {group}; descendant cleanup failed: {descendants}")),
+                        (Err(error), _) | (_, Err(error)) => break ExitCause::WaitFailure(error.to_string()),
                     }
                 }
                 let _ = result.send(Ok(()));
@@ -1057,9 +1064,14 @@ async fn monitor_process(
         cancellation.cancel();
     }
 
+    // Only Linux wait retains an unreaped identity anchor. Preserve other
+    // platforms' natural-exit behavior; never introduce post-reap PGID signals.
+    let needs_group_cleanup = cfg!(target_os = "linux")
+        || !matches!(cause, ExitCause::Process { .. } | ExitCause::Cancelled);
     if !cancellation_requested
-        && !matches!(cause, ExitCause::Process { .. } | ExitCause::Cancelled)
-        && let Err(error) = utils::process::kill_process_group(&mut child).await
+        && needs_group_cleanup
+        && let Ok(ownership) = ownership.as_mut()
+        && let Err(error) = ownership.terminate(&mut child).await
     {
         cause = ExitCause::WaitFailure(error.to_string());
     }
@@ -1421,10 +1433,29 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn process_exit_before_terminal_output_preserves_provider_evidence() {
+        #[cfg(target_os = "linux")]
+        struct PinnedFixture(std::os::fd::OwnedFd);
+        #[cfg(target_os = "linux")]
+        impl Drop for PinnedFixture {
+            fn drop(&mut self) {
+                use std::os::fd::AsRawFd;
+                // Failure cleanup can only signal this fixture's pinned child.
+                unsafe {
+                    nix::libc::syscall(
+                        nix::libc::SYS_pidfd_send_signal,
+                        self.0.as_raw_fd(),
+                        nix::libc::SIGKILL,
+                        std::ptr::null::<nix::libc::siginfo_t>(),
+                        0,
+                    );
+                }
+            }
+        }
         for (exit_code, terminal, expected) in [
             (0, AgentRunStatus::Succeeded, AgentRunStatus::Succeeded),
             (0, AgentRunStatus::Failed, AgentRunStatus::Failed),
             (1, AgentRunStatus::Succeeded, AgentRunStatus::Failed),
+            (-1, AgentRunStatus::Cancelled, AgentRunStatus::Cancelled),
         ] {
             let root = tempfile::tempdir().unwrap();
             let host = test_host(&root.path().join("host.jsonl")).await;
@@ -1450,11 +1481,51 @@ mod tests {
                 .unwrap(),
             ));
             use utils::command_ext::GroupSpawnNoWindowExt;
-            let mut child = tokio::process::Command::new("/bin/sh")
-                .args(["-c", &format!("exit {exit_code}")])
+            let script = if cfg!(target_os = "linux") || exit_code < 0 {
+                format!(
+                    "sleep 60 & echo $! > child.pid; {}",
+                    if exit_code < 0 {
+                        "wait".to_string()
+                    } else {
+                        format!("exit {exit_code}")
+                    }
+                )
+            } else {
+                // Other platforms retain the original direct-exit test.
+                format!("echo 0 > child.pid; exit {exit_code}")
+            };
+            let child = tokio::process::Command::new("/bin/sh")
+                .args(["-c", &script])
+                .current_dir(root.path())
+                .kill_on_drop(true)
                 .group_spawn_no_window()
                 .unwrap();
-            child.wait().await.unwrap();
+            let mut unrelated = tokio::process::Command::new("sleep")
+                .arg("60")
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            let child_pid = tokio::time::timeout(Duration::from_secs(5), async {
+                loop {
+                    if let Ok(text) = tokio::fs::read_to_string(root.path().join("child.pid")).await
+                        && let Ok(pid) = text.trim().parse::<u32>()
+                    {
+                        break pid;
+                    }
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .unwrap();
+            #[cfg(target_os = "linux")]
+            let native = {
+                use std::os::fd::FromRawFd;
+                let fd = unsafe { nix::libc::syscall(nix::libc::SYS_pidfd_open, child_pid, 0) };
+                assert!(fd >= 0);
+                PinnedFixture(unsafe { std::os::fd::OwnedFd::from_raw_fd(fd as i32) })
+            };
+            #[cfg(not(target_os = "linux"))]
+            let _ = child_pid;
             let cancellation = CancellationToken::new();
             let after_exit = cancellation.clone();
             let (notices_tx, notices_rx) = mpsc::channel(8);
@@ -1469,7 +1540,19 @@ mod tests {
                 notices_tx.send(OutputNotice::StdoutClosed).await.unwrap();
                 notices_tx.send(OutputNotice::StderrClosed).await.unwrap();
             });
-            let (_commands_tx, commands_rx) = mpsc::channel(1);
+            let (commands_tx, commands_rx) = mpsc::channel(1);
+            let (result_tx, result_rx) = oneshot::channel();
+            if exit_code < 0 {
+                commands_tx
+                    .send(ProcessCommand::Control {
+                        bytes: Vec::new(),
+                        control: None,
+                        cancel: true,
+                        result: result_tx,
+                    })
+                    .await
+                    .unwrap();
+            }
             monitor_process(
                 host.clone(),
                 DirectProvider::ClaudeCode,
@@ -1485,6 +1568,27 @@ mod tests {
             )
             .await;
             producer.await.unwrap();
+            let unrelated_alive = unrelated.try_wait().unwrap().is_none();
+            unrelated.kill().await.unwrap();
+            assert!(unrelated_alive);
+            #[cfg(target_os = "linux")]
+            {
+                use std::os::fd::AsRawFd;
+                let mut poll = nix::libc::pollfd {
+                    fd: native.0.as_raw_fd(),
+                    events: nix::libc::POLLIN,
+                    revents: 0,
+                };
+                assert!(unsafe { nix::libc::poll(&mut poll, 1, 0) } >= 0);
+                assert_ne!(
+                    poll.revents & nix::libc::POLLIN,
+                    0,
+                    "owned child survived monitor cleanup"
+                );
+            }
+            if exit_code < 0 {
+                result_rx.await.unwrap().unwrap();
+            }
             let response = host.response_after(0).await.unwrap();
             assert!(
                 response.events.iter().any(|event| matches!(

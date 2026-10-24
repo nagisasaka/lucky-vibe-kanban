@@ -1,6 +1,8 @@
+mod owned_group;
 use std::{future::Future, time::Duration};
 
 use command_group::AsyncGroupChild;
+pub use owned_group::OwnedProcessGroup;
 
 const PROCESS_KILL_TIMEOUT: Duration = Duration::from_secs(5);
 const PROCESS_EXIT_WAIT_TIMEOUT: Duration = Duration::from_secs(5);

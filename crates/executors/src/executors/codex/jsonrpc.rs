@@ -78,6 +78,16 @@ impl JsonRpcPeer {
         exit_tx: ExitSignalSender,
         cancel: CancellationToken,
     ) -> Self {
+        Self::spawn_tracked(stdin, stdout, callbacks, exit_tx, cancel).0
+    }
+
+    pub fn spawn_tracked(
+        stdin: ChildStdin,
+        stdout: ChildStdout,
+        callbacks: Arc<dyn JsonRpcCallbacks>,
+        exit_tx: ExitSignalSender,
+        cancel: CancellationToken,
+    ) -> (Self, tokio::task::JoinHandle<()>) {
         let (exit_requests, mut exit_requests_rx) = mpsc::unbounded_channel();
         let peer = Self {
             stdin: Arc::new(Mutex::new(stdin)),
@@ -89,7 +99,7 @@ impl JsonRpcPeer {
         let reader_peer = peer.clone();
         let callbacks = callbacks.clone();
 
-        tokio::spawn(async move {
+        let reader_task = tokio::spawn(async move {
             let mut reader = BufReader::new(stdout);
             let mut buffer = Vec::new();
             let mut deferred_success = false;
@@ -202,7 +212,7 @@ impl JsonRpcPeer {
             exit_tx.send_exit_signal(exit_result).await;
         });
 
-        peer
+        (peer, reader_task)
     }
 
     pub fn next_request_id(&self) -> RequestId {
