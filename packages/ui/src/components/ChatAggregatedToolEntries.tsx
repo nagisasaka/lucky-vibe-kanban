@@ -45,7 +45,6 @@ interface ChatAggregatedToolEntriesProps {
   unit?: string;
   icon?: React.ElementType;
   className?: string;
-  forceCollapsible?: boolean;
   startedAt?: string | null;
   endedAt?: string | null;
 }
@@ -274,7 +273,6 @@ export function ChatAggregatedToolEntries({
   unit,
   icon: Icon = ListMagnifyingGlassIcon,
   className,
-  forceCollapsible = false,
   startedAt,
   endedAt,
 }: ChatAggregatedToolEntriesProps) {
@@ -286,10 +284,10 @@ export function ChatAggregatedToolEntries({
   const isRunning = entries.some(isEntryActive);
   const aggregateStatus = aggregateToolStatus(entries);
   const headerSummary =
-    summary ??
-    (entries.length === 1
+    entries.length === 1
       ? entries[0].summary
-      : getFallbackSummary({
+      : (summary ??
+        getFallbackSummary({
           entries,
           label,
           unit,
@@ -298,7 +296,7 @@ export function ChatAggregatedToolEntries({
           }),
         }));
 
-  if (entries.length === 1 && !forceCollapsible) {
+  if (entries.length === 1) {
     const entry = entries[0];
     const hasDetails = Boolean(getEntryDetails(entry));
     const entryExpanded = expanded;
@@ -416,16 +414,13 @@ export function ChatAggregatedToolEntries({
       </button>
 
       {!expanded &&
-        entries
-          .filter((entry) => entry.status?.status === 'failed')
-          .slice(0, 1)
-          .map((entry) => (
-            <ToolEntryPreview
-              key={entry.expansionKey}
-              entry={entry}
-              includeHeading
-            />
-          ))}
+        entries.map((entry) => (
+          <ToolEntryPreview
+            key={entry.expansionKey}
+            entry={entry}
+            includeHeading
+          />
+        ))}
 
       {expanded && (
         <div className="ml-6 mt-1 max-h-72 overflow-y-auto rounded-md border border-border bg-muted/10 p-half">

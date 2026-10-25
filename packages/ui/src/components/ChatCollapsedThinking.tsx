@@ -54,6 +54,8 @@ export function ChatCollapsedThinking({
   const { t } = useTranslation('common');
 
   if (entries.length === 0) return null;
+  const visibleEntries = entries.filter((entry) => entry.content.trim());
+  if (visibleEntries.length === 0) return null;
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -85,10 +87,26 @@ export function ChatCollapsedThinking({
         <ChatElapsedTime startedAt={startedAt} endedAt={endedAt} />
       </button>
 
+      {!expanded &&
+        visibleEntries.map((entry) => (
+          <div
+            key={entry.expansionKey}
+            className="ml-6 min-w-0 text-xs text-low"
+          >
+            <span className="font-medium">{entry.label}</span>
+            <p className="truncate">
+              {entry.content
+                .trim()
+                .split(/\r?\n/)
+                .find((line) => line.trim())}
+            </p>
+          </div>
+        ))}
+
       {/* Expanded content */}
       {expanded && (
         <div className="ml-6 mt-1 flex max-h-72 flex-col gap-base overflow-y-auto rounded-md border border-border bg-muted/10 p-base">
-          {entries.map((entry) => (
+          {visibleEntries.map((entry) => (
             <div key={entry.expansionKey} className="text-sm text-low">
               {entry.label && (
                 <div className="mb-half text-xs font-medium">

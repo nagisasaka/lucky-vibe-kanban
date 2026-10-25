@@ -37,6 +37,7 @@ export function ChatThinkingMessage({
   renderMarkdown,
 }: ChatThinkingMessageProps) {
   const { t } = useTranslation('common');
+  if (!content.trim()) return null;
 
   return (
     <div
@@ -66,6 +67,12 @@ export function ChatThinkingMessage({
               endedAt={endedAt}
               active={active}
             />
+          </span>
+          <span className="block truncate text-xs font-normal">
+            {content
+              .trim()
+              .split(/\r?\n/)
+              .find((line) => line.trim())}
           </span>
         </summary>
         {renderMarkdown({

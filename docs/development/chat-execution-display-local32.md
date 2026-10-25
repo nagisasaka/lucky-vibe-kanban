@@ -122,3 +122,14 @@ Issueコメント `1ed09b26-c30e-4526-9511-c074943c1c26` を全文確認した�
 後にユーザーが独立previewの表示と実Codex試行の成功を報告した。read-onlyでBasic有効・未認証API401を確認した。本担当は認証を設定せず、秘密の内容を読まず、試provider runも開始していない。ユーザー利用中のため公開previewの停止・再起動・artifact上書きは行わない。独立DBにはユーザー作成の実runがあるので、合成fixtureとして削除しない。差替えが必要ならrootから使用終了確認を得てから行う。
 
 DBと作業repoは独立しているが、serverのHOMEは `/home/appuser`、CODEX_HOMEは未指定で、既定の `~/.codex/auth.json` は存在する（存在のみ確認）。この構成はprovider資格情報の隔離ではない。executor機能は有効で、合成seedの作業先はこのinstance配下の独立Git repoであり、LVK本体repoを実作業する接続ではない。一般の同一OSユーザー権限からの隔離・sandbox保証もない。資格情報やユーザーの実run内容を追加で調べず、能力説明に必要な境界だけを記録する。
+
+
+## 認証済み実会話で確定した初期表示の再修正
+
+rootが実ユーザー会話の画面を直接確認し、初期tool_calls groupが一般ラベルと件数・時間だけになり、操作と結果を読むまでに二段階の展開が必要だと指摘した。前の単純component fixtureは集約処理を通しておらず、この要件未達を拾えていなかった。最終視覚合格ではない。toolbarは動かせるため今回修正しないというユーザーの最新決定に従い、headerとともに変更対象から除外した。
+
+ユーザーDBはread-onlyで最小限のイベントshapeだけを照合した。Shellの開始/成功は引数command/cwd/source/commandActionsと結果aggregatedOutput/exitCode/durationMsを持つ。durationMsは実際に0だった。公開summary本文は439文字あり、空ラベルに見える原因は未取得ではなく本文を初期表示しない描画だった。会話本文・コマンド・出力・認証の内容は証跡へコピーせず、回帰用本文は合成値へ置き換える。
+
+単一操作groupは操作見出しと結果プレビューを直接表示し、1回の展開で原文詳細に進む。複数操作の折り畳みでも各操作の短い見出しと結果数行を残す。説明・計画は原文の先頭行を初期表示し、空白のみの内容は表示しない。全体Run footerは既存の保持済み完了時刻を経過時間と併記し、不明な完了時刻を補わない。取得根拠のある1秒未満（provider報告0を含む）は切捨ての0sではなく<1sと表示する。詳細のprovider報告値は変更しない。
+
+新しい `tests/chat/execution-group.*` はcanonical投影→aggregateConsecutiveEntries→実AggregatedGroupEntryの経路を通す。受信shapeに基づく合成イベントで、初期command/README.md結果、外側の余分な展開がないこと、1回で詳細と原文コピー、Run footerの保持済み日時と13s、1180/375幅・両テーマを確認する。`test-results/local32-initial-group/` に画面・結果を保持する。公開稼働artifactは旧候補のまま維持し、ユーザーの利用終了とrootの差替承認前に停止・再起動・上書きしない。

@@ -17,6 +17,7 @@ function parseTime(value?: string | null) {
 }
 
 function formatElapsedMs(ms: number) {
+  if (ms >= 0 && ms < 1000) return '<1s';
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);

@@ -1315,7 +1315,7 @@ function ErrorMessageEntry({
 /**
  * Aggregated group entry for consecutive file_read, search, or web_fetch entries
  */
-function AggregatedGroupEntry({
+export function AggregatedGroupEntry({
   group,
   executionProcess,
 }: {
@@ -1549,7 +1549,6 @@ function AggregatedGroupEntry({
       summary={summary}
       detail={detail}
       icon={icon}
-      forceCollapsible={group.aggregationType === 'tool_calls'}
       startedAt={timing.startedAt}
       endedAt={timing.endedAt}
     />

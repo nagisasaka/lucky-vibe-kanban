@@ -23,8 +23,9 @@ describe('tool elapsed time evidence', () => {
   });
 
   it('uses provider duration even when start was not observed', () => {
+    expect(render({ durationMs: 45 })).toContain('&lt;1s');
     expect(render({ durationMs: 2500 })).toContain('2s');
-    expect(render({ durationMs: 0 })).toContain('0s');
+    expect(render({ durationMs: 0 })).toContain('&lt;1s');
     expect(
       render({
         startedAt: '2026-10-25T00:00:01Z',
