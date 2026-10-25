@@ -71,9 +71,10 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
         .unwrap();
     let project = Uuid::new_v4();
     let other_project = Uuid::new_v4();
-    for id in [project, other_project] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'archive remote fixture')")
+    for (index, id) in [project, other_project].into_iter().enumerate() {
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'archive remote fixture',?)")
             .bind(id)
+            .bind(format!("ARCH{index}"))
             .execute(&pool)
             .await
             .unwrap();

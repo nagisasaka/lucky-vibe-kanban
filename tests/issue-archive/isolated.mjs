@@ -95,6 +95,7 @@ try {
     await api('/api/local/v1/projects', 'POST', {
       organization_id: '00000000-0000-0000-0000-000000000002',
       name: 'Issue archive fixture',
+      key: 'ARCHIVE',
       color: '#6366f1',
     })
   ).data.id;
@@ -102,6 +103,7 @@ try {
     await api('/api/local/v1/projects', 'POST', {
       organization_id: '00000000-0000-0000-0000-000000000002',
       name: 'Reset target',
+      key: 'RESET',
       color: '#6366f1',
     })
   ).data.id;

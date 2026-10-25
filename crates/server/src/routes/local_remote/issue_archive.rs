@@ -433,7 +433,7 @@ mod tests {
 
     async fn issue(pool: &SqlitePool, status_index: usize) -> (Uuid, Uuid, Uuid) {
         let project = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Issue archive fixture')")
+        sqlx::query("INSERT INTO projects(id,name,key) SELECT ?,'Issue archive fixture','ARC'||(count(*)+1) FROM projects")
             .bind(project)
             .execute(pool)
             .await

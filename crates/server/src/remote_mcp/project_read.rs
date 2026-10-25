@@ -337,7 +337,7 @@ mod tests {
         let (remote, _, _, target, issue) = fixture().await;
         let project2 = Uuid::new_v4();
         let status2 = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Foreign')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Foreign','FOREIGN')")
             .bind(project2)
             .execute(&remote.pool)
             .await

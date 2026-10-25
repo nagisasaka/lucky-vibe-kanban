@@ -282,6 +282,20 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         let body: Value = response.json().await.unwrap();
         assert!(body.get("error").is_none(), "{body}");
         if request["id"] == 2 {
+            for name in [
+                "list_tags",
+                "list_issue_tags",
+                "add_issue_tag",
+                "remove_issue_tag",
+            ] {
+                assert!(
+                    body["result"]["tools"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|t| t["name"] == name)
+                );
+            }
             let integration = body["result"]["tools"]
                 .as_array()
                 .unwrap()
@@ -316,6 +330,8 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     }
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
+        ("add_issue_tag", "lvk:write"),
+        ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
         ("create_todo", "lvk:write"),
         ("write_design_note", "lvk:write"),
@@ -363,8 +379,9 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
     let project = Uuid::from_u128(1);
     let foreign_project = Uuid::from_u128(2);
     for id in [project, foreign_project] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Test project')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Test project',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -510,6 +527,17 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         .execute(&pool)
         .await
         .unwrap();
+    // Simulate a legacy NULL row to exercise both the shared medium fallback
+    // and the bounded SQL coalesce projection without changing any migration.
+    sqlx::query("DROP TRIGGER local_issue_priority_update")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE local_issues SET priority=NULL WHERE id=?")
+        .bind(Uuid::from_u128(1002))
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query("PRAGMA query_only=ON")
         .execute(&pool)
         .await
@@ -526,6 +554,12 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
     ] {
         for (mut filter, expected) in [
             (json!({}), (1001..1106).collect::<Vec<_>>()),
+            (
+                json!({"priority":"medium"}),
+                (1001..1106)
+                    .filter(|id| ![1050, 1100].contains(id))
+                    .collect::<Vec<_>>(),
+            ),
             (json!({"search":"nEeDlE"}), vec![1050, 1100]),
             (json!({"search":" NEEDLE"}), vec![1050, 1100]),
             (json!({"simple_id":"test-50"}), vec![1050]),
@@ -582,7 +616,16 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
                     .await
                     .unwrap();
                 for item in result["items"].as_array().unwrap() {
-                    actual.push(serde_json::from_value::<Uuid>(item["id"].clone()).unwrap());
+                    let id = serde_json::from_value::<Uuid>(item["id"].clone()).unwrap();
+                    actual.push(id);
+                    assert_eq!(
+                        item["priority"],
+                        if [1050, 1100].contains(&id.as_u128()) {
+                            "high"
+                        } else {
+                            "medium"
+                        }
+                    );
                     for key in [
                         "url",
                         "revision",
@@ -1207,8 +1250,9 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     let status = Uuid::new_v4();
     let foreign_status = Uuid::new_v4();
     for (id, status) in [(project, status), (foreign, foreign_status)] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'test')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'test',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -1280,6 +1324,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     )
     .await
     .unwrap();
+    assert_eq!(detail["simple_id"], "PR1-1");
     let revision = detail["revision"].clone();
     let key = Uuid::new_v4();
     let update = json!({"project_id":project,"issue_id":issue,"request_id":key,"expected_revision":revision,"title":"Revised task"});
@@ -1817,8 +1862,9 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
     let project = Uuid::from_u128(1);
     for id in [project, Uuid::from_u128(2)] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'note-test')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'note-test',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -2055,8 +2101,9 @@ async fn design_note_mcp_deleted_project_is_not_available() {
     let project = Uuid::from_u128(1);
     let other = Uuid::from_u128(2);
     for id in [project, other] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'fixture',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();

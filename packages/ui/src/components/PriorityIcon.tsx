@@ -24,8 +24,8 @@ const priorityConfig: Record<
 };
 
 export const PriorityIcon = ({ priority, className }: PriorityIconProps) => {
-  if (!priority) return null;
-  const { icon: IconComponent, colorClass } = priorityConfig[priority];
+  const { icon: IconComponent, colorClass } =
+    priorityConfig[priority ?? 'medium'];
   return (
     <IconComponent
       className={cn('size-icon-xs', colorClass, className)}
