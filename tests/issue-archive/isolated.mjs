@@ -392,6 +392,42 @@ try {
   await expect(list()).toHaveCount(4);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(output, 'active-list-mobile.png') });
+  // LOCAL-179 raw Markdown editing and LOCAL-180 client list search must coexist.
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const notePath = `/api/projects/${project}/design-notes`;
+  const note = (await api(notePath, 'POST', {
+    request_id: crypto.randomUUID(),
+    operation: { action: 'create', title: 'Needle design', body: 'Original searchable body' },
+  })).data.note;
+  await api(notePath, 'POST', {
+    request_id: crypto.randomUUID(),
+    operation: { action: 'create', title: 'Other design', body: 'Unrelated' },
+  });
+  await page.getByRole('button', { name: '設計メモ', exact: true }).click();
+  const panel = page.getByTestId('design-notes');
+  await expect(panel.locator('aside').getByRole('button', { name: /Needle design/ })).toBeVisible();
+  await panel.getByRole('searchbox').fill('  SEARCHABLE  ');
+  await expect(panel.locator('aside').getByRole('button', { name: /Other design/ })).toHaveCount(0);
+  await panel.locator('aside').getByRole('button', { name: /Needle design/ }).click();
+  await panel.getByRole('button', { name: '本文を編集', exact: true }).click();
+  const editor = panel.getByTestId('note-body-editor');
+  const raw = '## Literal Markdown\n\n- preserved draft\n日本語 😀';
+  await editor.locator('textarea').fill(raw);
+  await panel.getByRole('searchbox').fill('Other design');
+  await expect(panel.locator('aside').getByRole('button', { name: /Needle design/ })).toHaveCount(0);
+  await expect(editor.locator('textarea')).toHaveValue(raw);
+  await editor.getByRole('tab', { name: 'プレビュー', exact: true }).click();
+  await expect(editor.getByRole('heading', { name: 'Literal Markdown', exact: true })).toBeVisible();
+  assert.equal((await api(`${notePath}/${note.id}`)).data.note.body, 'Original searchable body');
+  await editor.getByRole('tab', { name: '編集', exact: true }).click();
+  await expect(editor.locator('textarea')).toHaveValue(raw);
+  await panel.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(panel.getByTestId('note-body').getByRole('heading', { name: 'Literal Markdown' })).toBeVisible();
+  assert.equal((await api(`${notePath}/${note.id}`)).data.note.body, raw);
+  await panel.getByRole('searchbox').fill('literal markdown');
+  await expect(panel.locator('aside').getByRole('button', { name: /Needle design/ })).toBeVisible();
+  await page.screenshot({ path: path.join(output, 'design-note-search-preview.png') });
+  evidence.push('PASS design-note raw Markdown edit/preview/save and body search coexist; hidden selection keeps draft; preview makes no write');
   assert.deepEqual(pageErrors, []);
   await writeFile(
     path.join(output, 'results.json'),
