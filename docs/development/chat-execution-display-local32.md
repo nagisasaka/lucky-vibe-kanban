@@ -140,3 +140,52 @@ rootが実ユーザー会話の画面を直接確認し、初期tool_calls group
 新frontendは `.build/local32-initial-app-dist` へ別buildし、公開distを変更せず生成に成功した。`LVK_CHAT_FRONTEND_DIR` を指定した実アプリE2Eでは、候補frontendをそのtest browserだけへ配信し、既存ビルドのAPI server（0b0263a3）と別一時DBを使用した。API/Rust変更がないためRust buildは繰り返していない。初期操作/結果、展開前のRun完了日時、原文コピー、stream中入力保持、両テーマ、長文とcleanupが成功した。`test-results/local32-initial-app/initial.png`、light/dark画像、isolated-e2e.jsonに異なるfrontend/backendの対象SHA・hash・試験範囲を明記する。公開認証済みpreviewへ修正を配信したという主張ではない。
 
 公開serverはAgentRunのCodex/agent-process-hostの子孫として起動している。Linuxの通常終了でも所有子孫を回収する実装であり、Goal/AgentRun終端後の保持を保証できない。保持方法をrootへ報告し、operatorによるAgentRun外の正規起動等を、ユーザー利用終了・切替承認後に調整する必要がある。nohup/setsid等の回収回避、現在の停止・再起動・二重起動、認証変更は行わない。公開DBは既にユーザー実runを含む保持データである。
+
+## ホストCodexへの引継ぎ：公開差替えとGoal終端後の保持（未実行）
+
+rootは修正後の実アプリinitial/dark画像を直接閲覧し、初期command/result、Run完了日時、dark contrastの主欠陥が画像上解消したと確認した。ただし公開URLは旧版のままであり、公開でのinteractive確認・最終レビューは未完である。
+
+### 凍結対象と検証の範囲
+
+| 対象 | 識別・証跡 |
+| --- | --- |
+| 引継ぎ時のclean source | `945c78a2986407b8d10b69257aacdf21c340b265`。本節を含む後続変更は文書のみ |
+| 新しい動作コード | `04acdbd3485f07bd8cb71296f9feaff86239d2d3`。945cまでのpackages/crates/shared差分なし |
+| 候補frontend | `.build/local32-initial-app-dist`。index.html SHA256 `7083012aaa7f5e95610650994a6bf0c859f7f1bcadd9f8a2c5bacf051d14888c` |
+| 検証済み既存API server | `target/debug/server`、0b0263a3、SHA256 `ff201915b30b2a11d23b0f97b3907ec43101f2195a9a3b862644f4073d092d1e` |
+| 検証済みagent host | `target/debug/agent-process-host`、SHA256 `0bdb526649d2f8025b8bb6cc8245359ef9aeacaab858d65eec390192650ae2d3` |
+| 説明・計画を含む回帰 | `test-results/local32-initial-app-notes/isolated-e2e.json`。frontend候補/API既存版/別一時DB、機能・cleanup成功。実行時9f7c+dirtyのtest変更は945cにcommit済み |
+| 画像 | 同dirのinitial.png/light.png/dark.png。初期操作・結果、説明/計画の原文先頭行、13sと保持済み完了日時を確認 |
+| 独立技術レビュー | `test-results/local32-initial-group/technical-review.md`、Issueコメント `f215851c-33a0-475c-8db7-f46a11fa2ec1`。追加findingなし |
+
+手順はこのtracked文書でレビューする。新規operator scriptは作成しておらず、private場所のdenied fileをコピーして実行する手順もない。検証を再現する場合はtrackedの `tests/chat/execution-group.test.mjs` と `tests/chat/syntax-isolated-e2e.mjs` を使う。
+
+### operatorが実行する前の条件
+
+1. rootからユーザー利用終了・公開差替えの許可を得る。それまでは公開server PID1642032/PTY21002、port18443、稼働assets、instanceを変更しない。
+2. 現serverはCodex/agent-process-hostの子孫であり、Linuxの通常終了時も回収され得る。operatorがこのAgentRun外の正規端末または既存サービス管理で起動を所有する。nohup/setsid等で回収を逃れない。保持方法の確認前にGoal/AgentRunを終端しない。
+3. workspace rootは `/var/tmp/lvk-instances/dev/runtime/worktrees/db20-/lucky-vibe-kanban`。instanceはその `.build/local32-user-preview`。ユーザー作成実runを含む保持データであり、古いfixture表記を根拠に削除・再seedしない。同じinstanceのDB、鍵、保存済みBasic設定をそのまま使い、秘密の閲覧・共有コピー・認証再設定はしない。
+4. resource coordinationの登録・ownerを再確認し、登録されていればcanonical identityの契約に従う。別利用を停止しない。LOCAL81とのheavy Rust協調も再開連絡までは維持する。
+
+### 差替え手順案
+
+この候補の変更はfrontendのみで、既存API/agent hostとの別DB検証は成功している。不要な重Rust再buildを前提にしない。現バイナリはdefault featuresのdebug buildで、`routes/frontend.rs` のRustEmbedは元checkoutの `packages/local-web/dist` を参照する。operatorはfeature/build/hashと参照元を再照合し、異なる場合はこのassetsのみの手順を適用せずrootへ報告する。
+
+- 許可後、ユーザーの実行が終了していることを確認し、現在のpreview所有プロセスだけを停止してport18443とinstance lockの解放を確認する。同じDB/portへ二重起動しない。
+- 元の `packages/local-web/dist` をtask所有の保持場所へ退避し、確認済み候補frontendを同じ参照先へ配置する。現在利用中には移動・上書きしない。旧assets・既存バイナリ・instanceは保持し、DBの移行や巻戻しは行わない。候補を再buildする場合もまず別outDirへ生成し、上記sourceとhashを記録する。
+- operatorのAgentRun外の正規実行環境から、以下のforeground起動設定を使う。これは未実行の案であり、この文書自体は切替承認ではない。通常の `instance:run NAME` は非staging名でlocal配置を設定するため、このpublic preview起動の代わりに無条件で使わない。
+
+```bash
+cd /var/tmp/lvk-instances/dev/runtime/worktrees/db20-/lucky-vibe-kanban
+LVK_INSTANCE_DIR="$PWD/.build/local32-user-preview" \
+LVK_ACCESS_DEPLOYMENT=public \
+LVK_PUBLIC_URL=https://preview1.luckyvibekanban.com \
+LVK_AUTH_MODE= \
+HOST=127.0.0.1 PORT= BACKEND_PORT=18443 PREVIEW_PROXY_PORT=0 \
+VK_ALLOWED_ORIGINS=https://preview1.luckyvibekanban.com \
+VK_PREVIEW_DOMAIN= DISABLE_WORKTREE_CLEANUP=1 BROWSER=true RUST_LOG=warn \
+VIBE_KANBAN_AGENT_PROCESS_HOST="$PWD/target/debug/agent-process-host" \
+./target/debug/server
+```
+
+起動後は未認証業務API401、本人のBasicログイン、既存会話の保持、初期操作/結果、説明/計画、展開/原文コピー、Run完了日時を公開URLで確認する。新しいprovider runや課金を確認手段にしない。rootのinteractive視覚レビューとユーザー最終確認へ進み、operator所有プロセスがGoalの子孫ではないことも確認する。TLS/nginx/DNS/main/devには変更しない。起動・認証・assets確認の失敗をガード緩和で解決せず、実状態を報告する。
