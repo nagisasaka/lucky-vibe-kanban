@@ -50,7 +50,19 @@
     "subagent": {
       "defaultType": "Subagente"
     },
-    "loadingEarlierMessages": "Cargando mensajes anteriores"
+    "loadingEarlierMessages": "Cargando mensajes anteriores",
+    "delivery": {
+      "sending": "Enviando…",
+      "accepted": "Aceptado · esperando el historial",
+      "failed": "Envío rechazado · borrador conservado",
+      "unconfirmed": "Recepción sin confirmar · borrador conservado"
+    },
+    "planStep": {
+      "pending": "Pendiente",
+      "inProgress": "En curso",
+      "completed": "Completado",
+      "empty": "No se proporcionaron pasos"
+    }
   },
   "language": {
     "browserDefault": "Predeterminado del navegador"

@@ -5,6 +5,7 @@ import { ChatToolSummary } from '@vibe/ui/components/ChatToolSummary';
 import { ChatAggregatedToolEntries } from '@vibe/ui/components/ChatAggregatedToolEntries';
 import { usePersistedExpanded } from '@/shared/stores/useUiPreferencesStore';
 import { useLogsPanelActions } from '@/shared/hooks/useLogsPanel';
+import type { PatchTypeWithKey } from '@/shared/hooks/useConversationHistory/types';
 
 export function ToolSummaryEntry({
   summary,
@@ -17,6 +18,8 @@ export function ToolSummaryEntry({
   actionType,
   startedAt,
   endedAt,
+  durationMs,
+  toolOutput,
 }: {
   summary: string;
   expansionKey: string;
@@ -28,6 +31,8 @@ export function ToolSummaryEntry({
   actionType: string;
   startedAt: string | null;
   endedAt: string | null;
+  durationMs?: number | null;
+  toolOutput?: PatchTypeWithKey['toolOutput'];
 }) {
   const [expanded, toggle] = usePersistedExpanded(
     `tool:${expansionKey}`,
@@ -51,7 +56,7 @@ export function ToolSummaryEntry({
     viewToolContentInPanel(toolName, content, command);
   }, [viewToolContentInPanel, toolName, content, command]);
 
-  if (command !== undefined) {
+  if (command !== undefined || toolOutput) {
     return (
       <ChatAggregatedToolEntries
         entries={[
@@ -64,12 +69,18 @@ export function ToolSummaryEntry({
             content,
             startedAt,
             endedAt,
+            durationMs,
+            outputState: toolOutput?.state,
+            exitCode: toolOutput?.exitCode,
+            cwd: toolOutput?.cwd,
+            language: toolOutput?.language ?? undefined,
+            input: toolOutput?.input ?? undefined,
           },
         ]}
         summary={summary}
         startedAt={startedAt}
         endedAt={endedAt}
-        icon={TerminalWindowIcon}
+        icon={command !== undefined ? TerminalWindowIcon : undefined}
         expanded={expanded}
         onToggle={toggle}
         isHovered={false}
@@ -92,6 +103,7 @@ export function ToolSummaryEntry({
       actionType={actionType}
       startedAt={startedAt}
       endedAt={endedAt}
+      durationMs={durationMs}
     />
   );
 }

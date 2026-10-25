@@ -61,7 +61,7 @@ test('chat syntax preserves streamed, unknown, plain and long text without movin
       document.querySelector('#code span[class]')
     );
     assert.equal(await page.locator('#code script').count(), 0);
-    await page.getByRole('button', { name: 'command', exact: true }).click();
+    await page.getByRole('button', { name: /^command/ }).click();
     assert.equal(
       await page.locator('pre').nth(1).textContent(),
       code,

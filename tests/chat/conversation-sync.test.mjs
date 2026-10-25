@@ -162,6 +162,22 @@ test("chat replay, scope cleanup, and scroll intent", async () => {
       await page.evaluate(() => document.getElementById("scroller").scrollTop),
       1000,
     );
+    // Terminal replacement shrinks then remeasures the tail; neither a clamp
+    // nor browser anchoring is an intentional upward scroll.
+    await page.evaluate(() => window.scroll.scrollToBottom("auto"));
+    await page.evaluate(() => { document.getElementById("content").style.height = "900px"; });
+    await page.waitForFunction(() => document.getElementById("scroller").scrollTop === 600);
+    await page.evaluate(() => { document.getElementById("content").style.height = "1800px"; });
+    await page.waitForFunction(() => document.getElementById("scroller").scrollTop === 1500);
+    await page.evaluate(() => {
+      const el = document.getElementById("scroller");
+      el.dispatchEvent(new WheelEvent("wheel", {deltaY:-300}));
+      el.scrollTop = 500;
+    });
+    await page.waitForTimeout(30);
+    await page.evaluate(() => { document.getElementById("content").style.height = "1600px"; });
+    await page.waitForTimeout(50);
+    assert.equal(await page.evaluate(() => document.getElementById("scroller").scrollTop),500,"manual history stays put at terminal");
     await page.evaluate(() => {
       window.processes = {
         ...window.processes,

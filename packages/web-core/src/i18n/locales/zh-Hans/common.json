@@ -194,7 +194,19 @@
     "subagent": {
       "defaultType": "子代理"
     },
-    "loadingEarlierMessages": "正在加载早期消息"
+    "loadingEarlierMessages": "正在加载早期消息",
+    "delivery": {
+      "sending": "正在发送…",
+      "accepted": "已受理 · 等待记录",
+      "failed": "发送被拒绝 · 草稿已保留",
+      "unconfirmed": "受理结果未确认 · 草稿已保留"
+    },
+    "planStep": {
+      "pending": "待处理",
+      "inProgress": "进行中",
+      "completed": "已完成",
+      "empty": "未提供计划项目"
+    }
   },
   "branchSelector": {
     "placeholder": "选择分支",

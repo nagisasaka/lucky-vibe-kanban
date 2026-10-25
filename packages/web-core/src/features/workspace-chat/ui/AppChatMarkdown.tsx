@@ -30,6 +30,7 @@ export function AppChatMarkdown({
           value={content}
           resolveLocalLink={resolveLocalLink}
           disabled
+          preserveCopySource
           className={className}
           workspaceId={workspaceId}
           sessionId={sessionId}

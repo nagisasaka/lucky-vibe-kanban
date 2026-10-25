@@ -15,6 +15,7 @@ import { ChatAggregatedToolEntries } from '../../packages/ui/src/components/Chat
 const api = window as any;
 const transformers = [CODE];
 function Harness() {
+  const [expanded, setExpanded] = useState(false);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState<string | undefined>('bash');
   const [markdown, setMarkdown] = useState(
@@ -39,9 +40,9 @@ function Harness() {
             content: 'plain output',
           },
         ]}
-        expanded={false}
+        expanded={expanded}
         isHovered={false}
-        onToggle={() => {}}
+        onToggle={() => setExpanded((value) => !value)}
         onHoverChange={() => {}}
       />
       <LexicalComposer

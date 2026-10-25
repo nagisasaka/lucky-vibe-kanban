@@ -24,7 +24,9 @@ export function ToolStatusDot({
     statusType === 'denied' ||
     statusType === 'timed_out';
   const isPending =
-    statusType === 'created' || statusType === 'pending_approval';
+    statusType === 'created' ||
+    statusType === 'pending_approval' ||
+    statusType === 'waiting_approval';
 
   return (
     <span className={cn('inline-flex', className)}>
@@ -33,7 +35,8 @@ export function ToolStatusDot({
           'size-1.5 rounded-full',
           isSuccess && 'bg-success',
           isError && 'bg-error',
-          isPending && 'bg-text-low'
+          isPending && 'bg-text-low',
+          !isSuccess && !isError && !isPending && 'bg-text-low'
         )}
       />
       {isPending && active && (

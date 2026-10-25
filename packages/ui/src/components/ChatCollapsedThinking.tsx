@@ -8,6 +8,9 @@ import { ChatElapsedTime } from './ChatElapsedTime';
 export interface ThinkingEntry {
   content: string;
   expansionKey: string;
+  label?: string;
+  provider?: string | null;
+  partial?: boolean;
   startedAt?: string | null;
   endedAt?: string | null;
 }
@@ -51,6 +54,8 @@ export function ChatCollapsedThinking({
   const { t } = useTranslation('common');
 
   if (entries.length === 0) return null;
+  const visibleEntries = entries.filter((entry) => entry.content.trim());
+  if (visibleEntries.length === 0) return null;
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -77,16 +82,40 @@ export function ChatCollapsedThinking({
           )}
         </span>
         <ActivityText active={false} className="min-w-0 flex-1 truncate">
-          {t('conversation.processed')}
+          {visibleEntries[0].content.split(/\r?\n/).find((line) => line.trim())}
         </ActivityText>
         <ChatElapsedTime startedAt={startedAt} endedAt={endedAt} />
       </button>
 
+      {!expanded &&
+        visibleEntries.slice(1).map((entry) => (
+          <div
+            key={entry.expansionKey}
+            className="ml-6 min-w-0 text-xs text-low"
+          >
+            <p className="truncate">
+              {entry.content
+                .trim()
+                .split(/\r?\n/)
+                .find((line) => line.trim())}
+            </p>
+          </div>
+        ))}
+
       {/* Expanded content */}
       {expanded && (
         <div className="ml-6 mt-1 flex max-h-72 flex-col gap-base overflow-y-auto rounded-md border border-border bg-muted/10 p-base">
-          {entries.map((entry) => (
+          {visibleEntries.map((entry) => (
             <div key={entry.expansionKey} className="text-sm text-low">
+              {entry.label && (
+                <div className="mb-half text-xs font-medium">
+                  {entry.label}
+                  {entry.provider
+                    ? ` · ${entry.provider === 'codex' ? 'Codex' : entry.provider === 'claude_code' ? 'Claude Code' : entry.provider}`
+                    : ''}
+                  {entry.partial ? ` · ${t('conversation.partial')}` : ''}
+                </div>
+              )}
               {renderMarkdown({
                 content: entry.content,
                 workspaceId: workspaceId,

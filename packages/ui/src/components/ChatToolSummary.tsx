@@ -24,6 +24,7 @@ interface ChatToolSummaryProps {
   actionType?: string;
   startedAt?: string | null;
   endedAt?: string | null;
+  durationMs?: number | null;
 }
 
 export const ChatToolSummary = forwardRef<
@@ -43,6 +44,7 @@ export const ChatToolSummary = forwardRef<
     actionType,
     startedAt,
     endedAt,
+    durationMs,
   },
   ref
 ) {
@@ -111,6 +113,7 @@ export const ChatToolSummary = forwardRef<
       <ChatElapsedTime
         startedAt={startedAt}
         endedAt={endedAt}
+        durationMs={durationMs}
         active={isActive}
       />
     </div>
