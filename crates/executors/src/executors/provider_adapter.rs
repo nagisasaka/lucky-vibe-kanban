@@ -331,7 +331,7 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v6",
+                mapper: "codex-mapper-v7",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
@@ -533,12 +533,22 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: if self == Self::Codex {
-                MapperSemantics::V6
+                MapperSemantics::V7
             } else if self == Self::ClaudeCode {
                 MapperSemantics::V4
             } else {
                 MapperSemantics::V3
             },
+            scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve replay before explicit turn-plan projection.
+    pub fn v6_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V6,
             scope: Default::default(),
             replay_sequence: Default::default(),
         }
@@ -930,6 +940,7 @@ enum MapperSemantics {
     V4,
     V5,
     V6,
+    V7,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -942,6 +953,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V4 => "v4",
             MapperSemantics::V5 => "v5",
             MapperSemantics::V6 => "v6",
+            MapperSemantics::V7 => "v7",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -982,13 +994,17 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V3
             | MapperSemantics::V4
             | MapperSemantics::V5
-            | MapperSemantics::V6 => {
+            | MapperSemantics::V6
+            | MapperSemantics::V7 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
                 }
                 if self.provider == DirectProvider::Codex {
-                    if matches!(self.semantics, MapperSemantics::V5 | MapperSemantics::V6) {
+                    if matches!(
+                        self.semantics,
+                        MapperSemantics::V5 | MapperSemantics::V6 | MapperSemantics::V7
+                    ) {
                         scope.apply(&mut decoded);
                     } else {
                         scope.apply_legacy(&mut decoded);
@@ -999,7 +1015,10 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                 if self.provider != DirectProvider::Codex
                     || matches!(
                         self.semantics,
-                        MapperSemantics::V4 | MapperSemantics::V5 | MapperSemantics::V6
+                        MapperSemantics::V4
+                            | MapperSemantics::V5
+                            | MapperSemantics::V6
+                            | MapperSemantics::V7
                     )
                 {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
@@ -2077,7 +2096,8 @@ fn project_typed_event(
     if provider == DirectProvider::Codex
         && (manifest.mapper_version.ends_with("-v4")
             || manifest.mapper_version.ends_with("-v5")
-            || manifest.mapper_version.ends_with("-v6"))
+            || (manifest.mapper_version.ends_with("-v6")
+                || manifest.mapper_version.ends_with("-v7")))
         && let TypedProviderEvent::Message {
             provider_message_id: Some(message_id),
             role: AgentRuntimeMessageRole::Assistant,
@@ -2267,7 +2287,8 @@ fn project_typed_event(
             provider_item_id: provider_item_id.clone(),
             delta: delta.clone(),
             summary_index: if provider == DirectProvider::Codex
-                && manifest.mapper_version.ends_with("-v6")
+                && (manifest.mapper_version.ends_with("-v6")
+                    || manifest.mapper_version.ends_with("-v7"))
             {
                 event
                     .raw
@@ -2323,6 +2344,62 @@ fn project_typed_event(
                 timestamp: event.raw.timestamp,
                 payload,
             }],
+        });
+    }
+
+    // A turn plan is a structured snapshot, not a reasoning summary or plan-mode text.
+    // Keep old audit replay unchanged and preserve only fields actually supplied.
+    let plan_update = if provider == DirectProvider::Codex
+        && manifest.mapper_version.ends_with("-v7")
+        && matches!(&event.typed, TypedProviderEvent::Unknown { .. })
+    {
+        event.raw.payload_json.as_ref().and_then(|raw| {
+            let method = raw.get("method")?.as_str()?;
+            if method != "turn/plan/updated" {
+                return None;
+            }
+            let params = raw.get("params")?;
+            let plan = params.get("plan")?.as_array()?;
+            if !plan.iter().all(|step| {
+                step.get("step").is_some_and(Value::is_string)
+                    && step.get("status").is_some_and(Value::is_string)
+            }) {
+                return None;
+            }
+            Some(AgentEventPayload::ProviderExtension {
+                provider_namespace: "codex".into(),
+                provider_event: "plan_update".into(),
+                payload: serde_json::json!({
+                    "steps": plan,
+                    "explanation": params.get("explanation"),
+                    "provider_turn_id": params.get("turnId"),
+                }),
+            })
+        })
+    } else {
+        None
+    };
+
+    if let Some(payload) = plan_update {
+        return Ok(ProviderEventProjection {
+            durable_events: vec![AgentEventEnvelope {
+                schema_version: AGENT_EVENT_SCHEMA_VERSION,
+                payload_version: AGENT_EVENT_PAYLOAD_VERSION,
+                event_id: event_id(manifest.run_attempt_id, event.raw.sequence),
+                session_id: manifest.session_id,
+                agent_run_id: manifest.agent_run_id,
+                turn_id: manifest.turn_id,
+                run_attempt_id: manifest.run_attempt_id,
+                run_attempt_number: manifest.run_attempt_number,
+                sequence: event.raw.sequence,
+                correlation_id: event.raw.correlation_id,
+                orchestration_run_id: None,
+                orchestration_node_execution_id: None,
+                timestamp: event.raw.timestamp,
+                native_refs: vec![event.raw.native_ref.clone()],
+                payload,
+            }],
+            live_events: Vec::new(),
         });
     }
 
@@ -2385,7 +2462,9 @@ fn project_typed_event(
         } => AgentEventPayload::ToolCall {
             tool_call_id: id.clone(),
             tool_name: name.clone(),
-            status: if provider == DirectProvider::Codex && manifest.mapper_version.ends_with("-v6")
+            status: if provider == DirectProvider::Codex
+                && (manifest.mapper_version.ends_with("-v6")
+                    || manifest.mapper_version.ends_with("-v7"))
             {
                 let item = event
                     .raw
@@ -2464,7 +2543,7 @@ fn project_typed_event(
         | TypedProviderEvent::Unknown { .. } => unreachable!("handled above"),
     };
     if provider == DirectProvider::Codex
-        && manifest.mapper_version.ends_with("-v6")
+        && (manifest.mapper_version.ends_with("-v6") || manifest.mapper_version.ends_with("-v7"))
         && let AgentEventPayload::Thinking { content } = &payload
         && let Some(item) = event
             .raw
@@ -2589,6 +2668,68 @@ pub fn memory_source_completion_allowed(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn codex_turn_plan_preserves_steps_and_scope_without_rewriting_v6() {
+        let provider = DirectProvider::Codex;
+        let manifest = fixture_manifest(provider);
+        let mut scope = ProviderStreamScope::new(provider);
+        let mut root = provider
+            .decode_native_frame(&frame_at(
+                provider,
+                1,
+                json!({"result":{"thread":{"id":"root"}}}),
+            ))
+            .unwrap();
+        scope.apply(&mut root);
+        let mut plan = provider.decode_native_frame(&frame_at(provider, 2, json!({
+            "method":"turn/plan/updated",
+            "params":{"threadId":"root", "turnId":"turn", "explanation":null,
+                "plan":[{"step":"日本語の項目", "status":"inProgress"},{"step":"Future status", "status":"unknownFuture"}]}
+        }))).unwrap();
+        scope.apply(&mut plan);
+        let projected = provider.project_provider_event(&plan, &manifest).unwrap();
+        assert!(matches!(&projected.durable_events[0].payload,
+            AgentEventPayload::ProviderExtension {provider_event, payload, ..}
+            if provider_event == "plan_update" && payload["steps"][0]["step"] == "日本語の項目"
+            && payload["steps"][0]["status"] == "inProgress"
+            && payload["steps"][1]["status"] == "unknownFuture" && payload["explanation"].is_null()));
+        let mut old = manifest.clone();
+        old.mapper_version = provider.v6_mapper().versions().mapper_version;
+        assert!(
+            provider
+                .project_provider_event(&plan, &old)
+                .unwrap()
+                .durable_events
+                .is_empty()
+        );
+        let mut child = provider.decode_native_frame(&frame_at(provider, 3, json!({
+            "method":"turn/plan/updated", "params":{"threadId":"child","turnId":"turn","plan":[]}
+        }))).unwrap();
+        scope.apply(&mut child);
+        assert!(
+            provider
+                .project_provider_event(&child, &manifest)
+                .unwrap()
+                .durable_events
+                .is_empty()
+        );
+        let mut empty = plan.clone();
+        empty.raw.payload_json.as_mut().unwrap()["params"]["plan"] = json!([]);
+        let projected = provider.project_provider_event(&empty, &manifest).unwrap();
+        assert!(
+            matches!(&projected.durable_events[0].payload, AgentEventPayload::ProviderExtension {payload,..} if payload["steps"] == json!([]))
+        );
+        empty.raw.payload_json.as_mut().unwrap()["params"]["plan"] =
+            json!([{"step":"missing status"}]);
+        assert!(
+            provider
+                .project_provider_event(&empty, &manifest)
+                .unwrap()
+                .durable_events
+                .is_empty()
+        );
+    }
+
     #[test]
     fn repository_memory_does_not_commit_on_compaction_review_or_control_commands() {
         for prompt in [
@@ -4231,10 +4372,17 @@ mod tests {
 
     #[test]
     fn mapper_versions_do_not_relabel_legacy_audit_bundles() {
+        assert!(
+            DirectProvider::Codex
+                .v6_mapper()
+                .versions()
+                .mapper_version
+                .ends_with("-v6")
+        );
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v6"
+                    "-v7"
                 } else if provider == DirectProvider::ClaudeCode {
                     "-v4"
                 } else {

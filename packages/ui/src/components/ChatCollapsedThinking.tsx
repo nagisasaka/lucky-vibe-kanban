@@ -82,18 +82,17 @@ export function ChatCollapsedThinking({
           )}
         </span>
         <ActivityText active={false} className="min-w-0 flex-1 truncate">
-          {t('conversation.providerNotes')}
+          {visibleEntries[0].content.split(/\r?\n/).find((line) => line.trim())}
         </ActivityText>
         <ChatElapsedTime startedAt={startedAt} endedAt={endedAt} />
       </button>
 
       {!expanded &&
-        visibleEntries.map((entry) => (
+        visibleEntries.slice(1).map((entry) => (
           <div
             key={entry.expansionKey}
             className="ml-6 min-w-0 text-xs text-low"
           >
-            <span className="font-medium">{entry.label}</span>
             <p className="truncate">
               {entry.content
                 .trim()

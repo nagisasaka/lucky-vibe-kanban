@@ -73,7 +73,19 @@
     "subagent": {
       "defaultType": "サブエージェント"
     },
-    "loadingEarlierMessages": "以前のメッセージを読み込み中"
+    "loadingEarlierMessages": "以前のメッセージを読み込み中",
+    "delivery": {
+      "sending": "送信中…",
+      "accepted": "受付済み・履歴を待っています",
+      "failed": "送信が拒否されました・下書き保持",
+      "unconfirmed": "受付結果を確認できません・下書き保持"
+    },
+    "planStep": {
+      "pending": "未着手",
+      "inProgress": "進行中",
+      "completed": "完了",
+      "empty": "計画項目なし"
+    }
   },
   "language": {
     "browserDefault": "ブラウザ設定"

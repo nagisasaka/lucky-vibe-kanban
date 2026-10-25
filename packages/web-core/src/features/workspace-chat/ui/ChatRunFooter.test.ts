@@ -6,16 +6,14 @@ import { initReactI18next } from 'react-i18next';
 import { ChatRunFooter } from '@vibe/ui/components/ChatRunFooter';
 import { ChatCollapsedThinking } from '@vibe/ui/components/ChatCollapsedThinking';
 import { ChatThinkingMessage } from '@vibe/ui/components/ChatThinkingMessage';
-void i18next
-  .use(initReactI18next)
-  .init({
-    lng: 'en',
-    initImmediate: false,
-    interpolation: { escapeValue: false },
-    resources: {
-      en: { tasks: { execution: { completedAt: 'Completed: {{time}}' } } },
-    },
-  });
+void i18next.use(initReactI18next).init({
+  lng: 'en',
+  initImmediate: false,
+  interpolation: { escapeValue: false },
+  resources: {
+    en: { tasks: { execution: { completedAt: 'Completed: {{time}}' } } },
+  },
+});
 const render = (props: Parameters<typeof ChatRunFooter>[0]) =>
   renderToStaticMarkup(createElement(ChatRunFooter, props));
 describe('observed run completion footer', () => {
@@ -87,7 +85,25 @@ describe('provider notes initially readable', () => {
       })
     );
     expect(markup).toContain('Inspect README.md');
-    expect(markup).toContain('Plan');
+    expect(markup).not.toContain('providerNotes');
     expect(markup).not.toContain('Then run tests');
   });
+});
+
+it('shows the received summary line as its heading and only animates active text', () => {
+  const props = {
+    content: 'Inspecting the workspace\nNext detail',
+    label: 'Reasoning summary',
+    renderMarkdown: ({ content }: { content: string }) =>
+      createElement('div', null, content),
+  };
+  const completed = renderToStaticMarkup(
+    createElement(ChatThinkingMessage, { ...props, active: false })
+  );
+  expect(completed).toContain('Inspecting the workspace');
+  expect(completed).not.toContain('vk-activity-text');
+  const active = renderToStaticMarkup(
+    createElement(ChatThinkingMessage, { ...props, active: true })
+  );
+  expect(active).toContain('vk-activity-text');
 });

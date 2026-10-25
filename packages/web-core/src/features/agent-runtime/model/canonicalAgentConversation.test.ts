@@ -1399,3 +1399,119 @@ it('uses the newest canonical revision for the clock during reconnect and retry'
     })
   ).toEqual({ startedAt: summary.created_at, endedAt: null, active: true });
 });
+
+it('keeps explicit plan snapshots, published summaries and commentary distinct', () => {
+  const ext = (provider_event: string, payload: object) => ({
+    type: 'provider_extension' as const,
+    data: { provider_namespace: 'codex', provider_event, payload },
+  });
+  const entries = projectRuns([
+    {
+      runId: 'run-1',
+      status: 'succeeded',
+      events: [
+        event(
+          'run-1',
+          1,
+          ext('reasoning_summary', {
+            provider_item_id: 'same',
+            content: 'Inspecting sources',
+          })
+        ),
+        event(
+          'run-1',
+          2,
+          ext('plan', {
+            provider_item_id: 'same',
+            content: 'A proposed plan-mode document',
+          })
+        ),
+        event(
+          'run-1',
+          3,
+          ext('plan_update', {
+            provider_turn_id: 'turn-1',
+            explanation: null,
+            steps: [{ step: 'Read source', status: 'inProgress' }],
+          })
+        ),
+        event('run-1', 4, {
+          type: 'message',
+          data: {
+            message: {
+              message_id: 'commentary',
+              role: 'assistant',
+              content: 'Checking the relevant files.',
+            },
+            final_output: false,
+          },
+        }),
+        event(
+          'run-1',
+          5,
+          ext('plan_update', {
+            provider_turn_id: 'turn-1',
+            explanation: 'Verified',
+            steps: [
+              { step: 'Read source', status: 'completed' },
+              { step: 'Unknown step', status: 'future-status' },
+            ],
+          })
+        ),
+      ],
+    },
+  ]).entries;
+  const notes = entries.filter(
+    (e) =>
+      e.type === 'NORMALIZED_ENTRY' && e.content.entry_type.type === 'thinking'
+  );
+  expect(notes).toHaveLength(3);
+  expect(notes.map((e) => e.providerText?.kind)).toEqual([
+    'summary',
+    'plan',
+    'plan',
+  ]);
+  expect(notes[2].providerText?.steps).toEqual([
+    { step: 'Read source', status: 'completed' },
+    { step: 'Unknown step', status: 'future-status' },
+  ]);
+  expect(
+    entries.filter(
+      (e) =>
+        e.type === 'NORMALIZED_ENTRY' &&
+        e.content.entry_type.type === 'assistant_message'
+    )
+  ).toHaveLength(1);
+});
+it('distinguishes a received empty plan snapshot from a missing or malformed plan', () => {
+  const entries = projectRuns([
+    {
+      runId: 'run-1',
+      status: 'succeeded',
+      events: [
+        event('run-1', 1, {
+          type: 'provider_extension',
+          data: {
+            provider_namespace: 'codex',
+            provider_event: 'plan_update',
+            payload: { steps: [], explanation: null },
+          },
+        }),
+        event('run-1', 2, {
+          type: 'provider_extension',
+          data: {
+            provider_namespace: 'codex',
+            provider_event: 'plan_update',
+            payload: { steps: [{ step: 'No supplied status' }] },
+          },
+        }),
+      ],
+    },
+  ]).entries;
+  expect(entries.filter((e) => e.providerText?.kind === 'plan')).toHaveLength(
+    1
+  );
+  expect(
+    entries.find((e) => e.providerText?.kind === 'plan')?.providerText?.steps
+  ).toEqual([]);
+});

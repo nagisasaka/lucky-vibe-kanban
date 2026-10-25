@@ -258,12 +258,14 @@ export function useConversationVirtualizer({
   }, [isBottomScrollCorrectionActive, scrollContainerRef]);
 
   const prevScrollTopRef = useRef(0);
+  const prevScrollHeightRef = useRef(0);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
 
     prevScrollTopRef.current = el.scrollTop;
+    prevScrollHeightRef.current = el.scrollHeight;
 
     const handleScroll = () => {
       const currentScrollTop = el.scrollTop;
@@ -276,6 +278,8 @@ export function useConversationVirtualizer({
       if (
         bottomLockedRef.current &&
         prevScrollTopRef.current - currentScrollTop > 5 &&
+        // Collapsing terminal rows can clamp scrollTop without user input.
+        el.scrollHeight === prevScrollHeightRef.current &&
         performance.now() > smoothScrollDeadlineRef.current &&
         !shouldSuppressSizeAdjustment?.()
       ) {
@@ -286,6 +290,7 @@ export function useConversationVirtualizer({
         bottomLockedRef.current = true;
       }
       prevScrollTopRef.current = currentScrollTop;
+      prevScrollHeightRef.current = el.scrollHeight;
       syncIsAtBottom();
     };
 
@@ -347,13 +352,7 @@ export function useConversationVirtualizer({
     if (maxScroll > 0 && Math.abs(maxScroll - el.scrollTop) > 1) {
       el.scrollTop = maxScroll;
     }
-  }, [
-    rows.length,
-    totalRowCount,
-    totalSize,
-    syncIsAtBottom,
-    scrollContainerRef,
-  ]);
+  }, [rows, totalRowCount, totalSize, syncIsAtBottom, scrollContainerRef]);
 
   // The tail is outside TanStack's measurements. Images, markdown and streamed
   // text can grow without changing row count or virtual head size.

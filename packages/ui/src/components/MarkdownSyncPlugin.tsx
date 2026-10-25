@@ -4,11 +4,17 @@ import {
   $convertToMarkdownString,
   $convertFromMarkdownString,
   type Transformer,
+  type TextMatchTransformer,
 } from '@lexical/markdown';
 import { $getRoot, type EditorState } from 'lexical';
+import { $getPlainText, $setPlainText } from '../lib/plainTextEditor';
+
+const NO_ATTACHMENTS: readonly TextMatchTransformer[] = [];
 
 type MarkdownSyncPluginProps = {
   value: string;
+  plainText?: boolean;
+  plainTextAttachments?: readonly TextMatchTransformer[];
   onChange?: (markdown: string) => void;
   onEditorStateChange?: (state: EditorState) => void;
   editable: boolean;
@@ -22,6 +28,8 @@ type MarkdownSyncPluginProps = {
  */
 export function MarkdownSyncPlugin({
   value,
+  plainText = false,
+  plainTextAttachments = NO_ATTACHMENTS,
   onChange,
   onEditorStateChange,
   editable,
@@ -53,7 +61,9 @@ export function MarkdownSyncPlugin({
     try {
       editor.update(
         () => {
-          if (value.trim() === '') {
+          if (plainText) {
+            $setPlainText(value, plainTextAttachments);
+          } else if (value.trim() === '') {
             $getRoot().clear();
           } else {
             $convertFromMarkdownString(value, transformers);
@@ -66,7 +76,8 @@ export function MarkdownSyncPlugin({
             const root = $getRoot();
             const lastNode = root.getLastChild();
             if (lastNode) {
-              lastNode.selectEnd();
+              const selection = lastNode.selectEnd();
+              if (plainText) selection.setFormat(0);
             }
           }
         },
@@ -75,7 +86,7 @@ export function MarkdownSyncPlugin({
     } catch (err) {
       console.error('Failed to parse markdown', err);
     }
-  }, [editor, value, transformers]);
+  }, [editor, value, transformers, plainText, plainTextAttachments]);
 
   // Handle editor changes (editor → external)
   useEffect(() => {
@@ -84,7 +95,9 @@ export function MarkdownSyncPlugin({
       if (!onChange) return;
 
       const markdown = editorState.read(() =>
-        $convertToMarkdownString(transformers)
+        plainText
+          ? $getPlainText(transformers)
+          : $convertToMarkdownString(transformers)
       );
 
       if (markdown === lastSerializedRef.current) return;
@@ -94,7 +107,7 @@ export function MarkdownSyncPlugin({
       // not a user edit and must not invalidate an in-flight send snapshot.
       if (!tags.has('markdown-sync')) onChange(markdown);
     });
-  }, [editor, onChange, onEditorStateChange, transformers]);
+  }, [editor, onChange, onEditorStateChange, transformers, plainText]);
 
   return null;
 }

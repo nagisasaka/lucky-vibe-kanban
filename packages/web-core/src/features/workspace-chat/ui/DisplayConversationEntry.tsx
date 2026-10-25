@@ -46,6 +46,7 @@ import { ChatApprovalCard } from '@vibe/ui/components/ChatApprovalCard';
 import { ChatUserMessage } from '@vibe/ui/components/ChatUserMessage';
 import { ChatAssistantMessage } from '@vibe/ui/components/ChatAssistantMessage';
 import { ChatSystemMessage } from '@vibe/ui/components/ChatSystemMessage';
+import { ChatProviderPlan } from '@vibe/ui/components/ChatProviderPlan';
 import { ChatThinkingMessage } from '@vibe/ui/components/ChatThinkingMessage';
 import { ChatErrorMessage } from '@vibe/ui/components/ChatErrorMessage';
 import { ChatScriptEntry } from '@vibe/ui/components/ChatScriptEntry';
@@ -83,6 +84,7 @@ type Props = {
   executionProcessId?: string;
   canonicalActive?: boolean;
   toolTiming?: PatchTypeWithKey['toolTiming'];
+  pendingDelivery?: PatchTypeWithKey['pendingDelivery'];
   providerText?: PatchTypeWithKey['providerText'];
   toolOutput?: PatchTypeWithKey['toolOutput'];
   workspaceWithSession: WorkspaceWithSession;
@@ -426,8 +428,8 @@ function renderToolUseEntry(
     );
   }
 
-  // Other tool uses - use ChatToolSummary
-  return (
+  // Other tool uses retain their tool status, input and result disclosure.
+  const toolSummary = (
     <ToolSummaryEntry
       summary={getToolSummary(entryType, t)}
       expansionKey={expansionKey}
@@ -462,6 +464,43 @@ function renderToolUseEntry(
       active={active}
     />
   );
+  if (
+    action_type.action === 'tool' &&
+    ['TodoWrite', 'todo_write'].includes(entryType.tool_name) &&
+    status.status === 'success'
+  ) {
+    const args = action_type.arguments;
+    const todos =
+      args && typeof args === 'object' && !Array.isArray(args)
+        ? args.todos
+        : null;
+    if (
+      Array.isArray(todos) &&
+      todos.every(
+        (todo) =>
+          todo &&
+          typeof todo === 'object' &&
+          !Array.isArray(todo) &&
+          typeof todo.content === 'string' &&
+          typeof todo.status === 'string'
+      )
+    ) {
+      return (
+        <>
+          <ChatProviderPlan
+            content=""
+            steps={todos.map((todo) => ({
+              step: (todo as { content: string }).content,
+              status: (todo as { status: string }).status,
+            }))}
+            renderMarkdown={() => null}
+          />
+          {toolSummary}
+        </>
+      );
+    }
+  }
+  return toolSummary;
 }
 
 function DisplayConversationEntry(props: Props) {
@@ -553,6 +592,26 @@ function DisplayConversationEntry(props: Props) {
       return renderToolUseEntry(entryType, entry, props, t, executionProcess);
 
     case 'user_message':
+      if (props.pendingDelivery)
+        return (
+          <div
+            className="px-base py-half"
+            data-pending-delivery={props.pendingDelivery.state}
+          >
+            <div className="text-xs text-low" role="status">
+              {t('tasks:conversation.you')} ·{' '}
+              {t(`conversation.delivery.${props.pendingDelivery.state}`)}
+            </div>
+            <div className="whitespace-pre-wrap break-words text-sm">
+              {entry.content}
+            </div>
+            {props.pendingDelivery.error && (
+              <div role="alert" className="text-xs text-error">
+                {props.pendingDelivery.error}
+              </div>
+            )}
+          </div>
+        );
       return (
         <UserMessageEntry
           content={entry.content}
@@ -585,16 +644,31 @@ function DisplayConversationEntry(props: Props) {
       );
 
     case 'thinking':
+      if (props.providerText?.kind === 'plan') {
+        return (
+          <ChatProviderPlan
+            content={entry.content}
+            steps={props.providerText.steps}
+            renderMarkdown={(content) => (
+              <AppChatMarkdown
+                content={content}
+                workspaceId={workspaceWithSession?.id}
+                sessionId={sessionId}
+                className={undefined}
+                maxWidth={undefined}
+              />
+            )}
+          />
+        );
+      }
       return (
         <ChatThinkingMessage
           content={entry.content}
           workspaceId={workspaceWithSession?.id}
           label={
-            props.providerText?.kind === 'plan'
-              ? t('conversation.plan')
-              : props.providerText?.kind === 'summary'
-                ? t('conversation.reasoningSummary')
-                : t('conversation.processed')
+            props.providerText?.kind === 'summary'
+              ? t('conversation.reasoningSummary')
+              : t('conversation.processed')
           }
           provider={props.providerText?.provider}
           partial={props.providerText?.partial}
@@ -606,7 +680,7 @@ function DisplayConversationEntry(props: Props) {
               ? executionProcess?.completed_at
               : null
           }
-          active={false}
+          active={Boolean(props.canonicalActive && props.providerText?.partial)}
           renderMarkdown={({ content, workspaceId, className }) => (
             <AppChatMarkdown
               content={content}

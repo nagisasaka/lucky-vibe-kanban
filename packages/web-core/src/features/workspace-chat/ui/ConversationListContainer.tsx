@@ -9,6 +9,12 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import {
+  appendPendingMessages,
+  chatMessageScope,
+  usePendingChatMessages,
+} from '../model/pendingChatMessages';
 import { SpinnerIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 
@@ -169,6 +175,7 @@ function renderRowContent(
         executionProcessId={entry.executionProcessId}
         canonicalActive={entry.canonical?.active}
         toolTiming={entry.toolTiming}
+        pendingDelivery={entry.pendingDelivery}
         providerText={entry.providerText}
         toolOutput={entry.toolOutput}
         workspaceWithSession={attempt}
@@ -190,6 +197,14 @@ const ScopedConversationList = forwardRef<
 ) {
   const { t } = useTranslation('common');
   const repos = reposProp;
+  const hostId = useHostId();
+  const pendingMessages = usePendingChatMessages((s) => s.messages);
+  const pendingScope = chatMessageScope(
+    hostId,
+    attempt.id,
+    sessionScopeId ?? attempt.session?.id
+  );
+  const latestSourceRef = useRef<ConversationTimelineSource | null>(null);
   const resetAction = useResetProcess(attempt.id, attempt.session?.id);
   const conversationScopeKey = `${attempt.id}:${sessionScopeId ?? attempt.session?.id ?? 'new'}`;
   const [filteredEntries, setFilteredEntries] = useState<DisplayEntry[]>([]);
@@ -399,7 +414,12 @@ const ScopedConversationList = forwardRef<
     setTokenUsageInfo(derivedEntries.latestTokenUsageInfo);
 
     const derivedTimeline = deriveConversationTimeline(
-      derivedEntries.entries,
+      appendPendingMessages(
+        derivedEntries.entries,
+        usePendingChatMessages
+          .getState()
+          .messages.filter((m) => m.scope === pendingScope)
+      ),
       pending.source,
       prevEntriesRef.current,
       prevRowsRef.current
@@ -442,6 +462,9 @@ const ScopedConversationList = forwardRef<
     setFilteredEntries(derivedTimeline.displayEntries);
     setDataVersion((current) => current + 1);
     setEntries(derivedEntries.entries);
+    usePendingChatMessages
+      .getState()
+      .reconcile(pendingScope, derivedEntries.entries);
 
     if (derivedTimeline.rows.length > 0) {
       scrollOnEntriesChangedRef.current?.(
@@ -461,6 +484,7 @@ const ScopedConversationList = forwardRef<
     addType: AddEntryType,
     newLoading: boolean
   ) => {
+    latestSourceRef.current = source;
     pendingUpdateRef.current = {
       source,
       addType,
@@ -471,6 +495,13 @@ const ScopedConversationList = forwardRef<
       rafIdRef.current = requestAnimationFrame(flushPendingUpdate);
     }
   };
+
+  useEffect(() => {
+    if (latestSourceRef.current)
+      onTimelineUpdated(latestSourceRef.current, 'running', false);
+    // Reuse the same derivation/scroll path for local send changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMessages, pendingScope]);
 
   const { isFirstTurn, isLoadingHistory } = useConversationHistory({
     attempt,

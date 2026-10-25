@@ -207,3 +207,31 @@ scriptは同じ保持instanceのDB/key/configured markerの存在、固定server
 準備完了をrootへ先に報告し、UI設定/Startと直列に調整する。rootの合図後に本担当が旧PTY21002を正常停止してsettleを確認し、凍結candidate assetsを配置・照合する。その後のStartはrootのUI担当に任せ、直接HTTP/APIでは起動しない。正規DevServerのcontainer ownerに属する独立ExecutionProcessとして、Goal終端の子孫回収から分離することを起動後に確認する。DB/鍵/Basic/実会話/public URLは全保持する。現時点では旧PIDを停止せず、public assetsも変更していない。
 
 このentrypointは別コンテキストでread-onlyの静的レビューも行い、事故につながる追加findingなし。script位置からのcwd固定、既存instance欠落時拒否、publicと保存済み認証の使用、固定hash/空port、単一foreground exec、DB作成・設定変更・停止・背景起動処理がないことを確認した。保存済み秘密の内容は読まず、script実行もしていない。
+
+## 独立preview後の追加改善（2026-10-25、検証中）
+
+初回Goalの再実行ではなく、Issue revision `2026-10-25 14:53:58.932` 末尾の有限な追加要件を対象とする。推論要約・明示計画・通常commentary、入力のプレーンテキスト、terminal遷移の最新追従、送信直後の本文表示を改善する。言語protocol調査は別担当の根拠共有を受け、翻訳処理や未確認のlocale設定を追加しない。
+
+providerの識別情報は既に残っていたが、summaryとplanをthinkingとして投影し、完了後の集約で同じ「説明・計画」へまとめていた。provider付きの行はまとめず、推論要約/thinkingは受信した先頭非空行を小さい開閉行へ、明示planは別の本文/項目表示へ渡す。assistant commentaryは通常のassistant_messageのまま保持する。Codexの `turn/plan/updated` は監査のみだったため、v7で実項目・status・説明をProviderExtensionへ保持する。v6以前の再生と子threadの除外は維持する。plan-mode本文はstructured turn planと混ぜず、未知statusや空の取得済みリストも創作で埋めない。Claudeの成功TodoWriteでは妥当な実todosだけを計画として添え、元のtool状態・入力・結果の詳細を残す。
+
+チャットcomposerはLexicalを維持し、plainText modeを明示する。通常のHTML・内部rich clipboard・Markdown shortcuts・format commandを入力装飾へ変換しない。文字列のMarkdown記号・コード・空白・改行をescape/stripせず送信前flushにも同じserializerを使う。アップロード済み内部添付は既存codecのpreview/removeを保ち、一般のMarkdownや外部画像リンクはノード化しない。read-onlyの過去メッセージや他の文書editorは変更しない。ファイルは既存capture/upload handler、IMEとshortcutは既存KeyboardCommandsPlugin、編集と下書きは既存経路を使う。
+
+最新追従は既存virtualizerのbottom lockを使う。terminalで高さが縮んだ結果のscrollTop clampを、手動の上スクロールと判定しない。行数が同じ置換にもlayout補正を適用する。wheel/touch/keyboardや手動履歴のanchorを尊重する。
+
+送信には既存の楽観表示がなかったため、同じsend/steering経路へ一時行を加える。ACK前は送信中、ACK後は受付済み・履歴待ち、4xx拒否は失敗、通信断/5xxは受付未確認と区別し、下書きは成功時だけ既存の条件付き処理で消す。host/workspace/session・送信前の履歴key・本文・取得済みrun IDで正規履歴と照合する。同文の複数送信は1イベントにつき1つを確認し、確認時に残pendingのbaselineを原子的に更新して、再描画で同じイベントを再利用しない。受付未確認を同文retryだけで破棄しない。
+
+独立レビュー初版は `test-results/local32-additional/technical-review.md`、修正再確認は `technical-recheck.md`。通信不明のfailed扱い、描画をまたぐ同イベント再利用、Rust version testの旧期待を指摘され、修正と軽量再確認を行った。添付codecの独立fixtureと実アプリ確認は区別する。LOCAL180のheavy終了連絡後に資源・プロセス・登録resourceを確認し、jobs2で局所Rust検証と別targetのcandidate buildを行った。公開previewの管理DevServer・DB・Basic・鍵・実会話・distは保持し、候補は別出力で準備する。差替え・再起動は未実行、main統合とdeployも未承認である。
+
+### 追加範囲の検証結果
+
+- frontendの型検査、UI lint、未使用i18nキー検査、対象Vitest 59件はpassed。plain-input、pending-send、conversation-sync、実ConversationListの仮想化layout、既存editor-displayのブラウザ回帰もpassed。native ClipboardEvent fixtureによるIME送信guardはOS入力の完全検証とは区別する。
+- `SQLX_OFFLINE=true cargo test --offline -p executors --lib provider_adapter::tests -j 2` は42件passed。v7の明示plan、v6再生維持、child scope、空/不正配列、原言語を確認した。`cargo clippy --offline -p executors --all-targets -j 2 -- -D warnings` もpassed。
+- `.build/local32-additional-target` は既存targetを一度複製した候補用cache。`cargo build --offline -p server -p local-deployment --bin server --bin agent-process-host -j 2` は4分2秒でpassed。最初のpackage指定ミスはcompile前に失敗し、正しい所属packageへ修正した。公開 `target/debug` の両binと `packages/local-web/dist` のhashは変更していない。
+- `.build/local32-additional-app-dist` のfrontend buildはpassed。index SHA256は `e29e03216868077bb3c8efcec3f790500aa7439751d5f9b7664ec97603b05c06`。build時HEADは9be140f9＋dirty差分であり、HEADだけを候補の識別子にはしない。
+- 実アプリ回帰は別の一時DBと合成イベントを使い、follow-up HTTPもprovider起動前にinterceptする。途中のDOM改行/複数ボタンselector/copy位置による失敗を `test-results/local32-additional-app/` に保持し、それぞれtest process終了・port閉鎖・一時DB削除を確認した。新候補での `candidate-3/isolated-e2e.json` は全項目passed、cleanupPassed=true。コピーの最終検査は対象assistant行へscroll/hoverして通常clickし、OS clipboardを待って原文一致を確認する。
+
+公開URLは引き続き旧candidateである。追加候補をdotへ画面資料として渡すことと、dotの視覚合格や公開でのinteractive確認は区別する。今回の追加範囲では実provider run、実ユーザーDBの試験、実Auth0、正式Integrationの全gateは行っていない。
+
+成功時の代表画像は `test-results/local32-additional-app/candidate-3/` の `initial.png`、`dark.png`、`input-rich-paste.png`、`input-attachment.png`、`pending-send.png`、`notes-active.png`、`narrow-notes.png`。ローカルの同pathと通常の画像表示で取得する。未認証の画像公開serviceは起動していない。撮影HEADは9be140f9＋dirty差分、server/agent-host/indexの実hashは同reportと `.build/local32-additional-artifacts/manifest.json` に記録する。
+
+候補binは `.build/local32-additional-artifacts/{server,agent-process-host}`、frontendは `.build/local32-additional-app-dist` に固定し、検証用に複製した28GBのtarget cacheは、固定binのhash一致と使用process不存在を確認して削除した。保持する候補binは合計約2.3GB、frontendは約77MBで、後続cutover用に残す。必要envは既存のpublic preview保持設定のままで、新たなsecretやprovider credentialを要求しない。今後のcutoverではrootの承認と直列調整が必要であり、現launcherの旧hash guardを勝手に変更して起動しない。公開previewは正規DevServerの既存ownerが保持し、Goal配下の候補test serverは終了している。

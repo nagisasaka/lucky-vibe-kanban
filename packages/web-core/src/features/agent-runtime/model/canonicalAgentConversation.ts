@@ -777,6 +777,7 @@ function appendRunEntries(
             payload.data.provider_namespace
           ) &&
           [
+            'plan_update',
             'plan',
             'reasoning_summary',
             'thinking',
@@ -784,19 +785,44 @@ function appendRunEntries(
           ].includes(payload.data.provider_event)
         ) {
           const data = jsonObject(payload.data.payload);
-          if (typeof data?.content !== 'string') break;
+          if (!data) break;
+          const isPlanUpdate = payload.data.provider_event === 'plan_update';
+          const steps =
+            isPlanUpdate && Array.isArray(data.steps)
+              ? data.steps.map(jsonObject)
+              : undefined;
+          if (
+            isPlanUpdate &&
+            (!steps ||
+              steps.some(
+                (step) =>
+                  typeof step?.step !== 'string' ||
+                  typeof step?.status !== 'string'
+              ))
+          )
+            break;
+          const suppliedContent = isPlanUpdate
+            ? typeof data.explanation === 'string'
+              ? data.explanation
+              : ''
+            : data.content;
+          if (typeof suppliedContent !== 'string') break;
           const partial =
             payload.data.provider_event === 'reasoning_summary_delta';
-          if (!partial && !data.content.trim()) break;
-          const itemId =
-            typeof data.provider_item_id === 'string'
+          if (!isPlanUpdate && !partial && !suppliedContent.trim()) break;
+          const itemId = isPlanUpdate
+            ? `turn-plan:${typeof data.provider_turn_id === 'string' ? data.provider_turn_id : 'current'}`
+            : typeof data.provider_item_id === 'string'
               ? data.provider_item_id
               : null;
-          const key = toolKey(event, itemId ?? event.event_id);
+          const key = toolKey(
+            event,
+            `${payload.data.provider_event === 'reasoning_summary_delta' ? 'reasoning_summary' : payload.data.provider_event}:${itemId ?? event.event_id}`
+          );
           const existingIndex = explanationIndexes.get(key);
           const previous =
             existingIndex === undefined ? undefined : output[existingIndex];
-          let content = data.content;
+          let content = suppliedContent;
           if (partial) {
             const partIndex =
               typeof data.summary_index === 'number' &&
@@ -813,14 +839,18 @@ function appendRunEntries(
               .map(([, text]) => text)
               .join('\n\n');
           }
-          const next = normalizedPatch(event, {
-            entry_type: { type: 'thinking' },
-            content,
-            timestamp: event.timestamp,
-          });
+          const next = normalizedPatch(
+            event,
+            {
+              entry_type: { type: 'thinking' },
+              content,
+              timestamp: event.timestamp,
+            },
+            partial && runActive
+          );
           next.providerText = {
             kind:
-              payload.data.provider_event === 'plan'
+              payload.data.provider_event === 'plan' || isPlanUpdate
                 ? 'plan'
                 : payload.data.provider_event === 'thinking'
                   ? 'thinking'
@@ -831,6 +861,14 @@ function appendRunEntries(
                 : payload.data.provider_namespace,
             itemId,
             partial,
+            ...(steps
+              ? {
+                  steps: steps.map((step) => ({
+                    step: step!.step as string,
+                    status: step!.status as string,
+                  })),
+                }
+              : {}),
           };
           if (existingIndex === undefined) {
             explanationIndexes.set(key, output.length);

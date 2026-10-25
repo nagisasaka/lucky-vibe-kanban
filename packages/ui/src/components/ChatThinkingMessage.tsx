@@ -47,8 +47,12 @@ export function ChatThinkingMessage({
       <details className="min-w-0 flex-1">
         <summary className="cursor-pointer rounded-sm focus-visible:outline-brand">
           <span className="inline-flex max-w-full items-center gap-base">
-            <ActivityText className="min-w-0 flex-1 truncate text-sm font-medium">
-              {label ?? t('conversation.processed')}
+            <ActivityText
+              active={active}
+              className="min-w-0 flex-1 truncate text-sm"
+              title={label}
+            >
+              {content.split(/\r?\n/).find((line) => line.trim())}
             </ActivityText>
             {provider && (
               <span className="text-xs">
@@ -67,12 +71,6 @@ export function ChatThinkingMessage({
               endedAt={endedAt}
               active={active}
             />
-          </span>
-          <span className="block truncate text-xs font-normal">
-            {content
-              .trim()
-              .split(/\r?\n/)
-              .find((line) => line.trim())}
           </span>
         </summary>
         {renderMarkdown({

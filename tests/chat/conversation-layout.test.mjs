@@ -6,11 +6,12 @@ import { fileURLToPath } from "node:url";
 
 test("conversation preserves prepend anchor and isolates workspace/session layout", async () => {
   const mocks = {
-    DisplayConversationEntry: `export default ({entry}) => <div style={{height: 120}}>{entry.content}</div>;`,
+    DisplayConversationEntry: `export default ({entry}) => <div style={{height: entry.content === "stream-long" ? 700 : entry.content === "terminal" ? 48 : 120}}>{entry.content}</div>;`,
     ApprovalForm: `export const ApprovalFormProvider = ({children}) => children;`,
     EntriesContext: `const reset = () => {}; const setEntries = () => {}; const setUsage = () => {}; export const useEntriesActions = () => ({reset, setEntries}); export const useSetTokenUsageInfo = () => setUsage;`,
     useResetProcess: `export const useResetProcess = () => ({});`,
-    useConversationHistory: `export const useConversationHistory = ({onTimelineUpdated}) => { window.publish = onTimelineUpdated; return {isFirstTurn: false, isLoadingHistory: false}; };`,
+    useConversationHistory: `import {useEffect} from "react"; export const useConversationHistory = ({onTimelineUpdated}) => { useEffect(()=>{window.publish = onTimelineUpdated},[onTimelineUpdated]); return {isFirstTurn: false, isLoadingHistory: false}; };`,
+    WorkspaceTokenSummary: `export const WorkspaceTokenSummary = () => <div style={{height:24}}>Workspace tokens</div>;`,
     ScriptFixerDialog: `export const ScriptFixerDialog = {};`,
   };
   const bundle = await build({
@@ -40,7 +41,7 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
           builder.onResolve(
             {
               filter:
-                /DisplayConversationEntry$|ApprovalForm$|EntriesContext$|useResetProcess$|hooks\/useConversationHistory$|ScriptFixerDialog$/,
+                /DisplayConversationEntry$|ApprovalForm$|EntriesContext$|useResetProcess$|hooks\/useConversationHistory$|ScriptFixerDialog$|WorkspaceTokenSummary$/,
             },
             (args) => ({
               path: args.path.split("/").at(-1),
@@ -70,7 +71,7 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
       `<style>html,body,#root{height:100%;margin:0}.h-full{height:100%}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}</style><div id="root"></div>`,
     );
     await page.addScriptTag({ content: bundle.outputFiles[0].text });
-    await page.waitForFunction(() => window.publish);
+    await page.waitForFunction(() => window.publish, null, {timeout:3000}).catch(e=>{throw new Error(errors.join("\n") || e.message)});
     await page.evaluate(
       () => (
         window.publish(window.source(80, 99), "initial", false),
@@ -78,8 +79,8 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
       ),
     );
     await page.waitForFunction(() =>
-      document.body.textContent.includes("a-99"),
-    );
+      document.body.textContent.includes("a-99"), null, {timeout:3000}
+    ).catch(e=>{throw new Error(errors.join("\n") || e.message)});
     await page.waitForFunction(() => {
       const el = document.querySelector(".overflow-y-auto");
       return Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) <= 2;
@@ -159,6 +160,31 @@ test("conversation preserves prepend anchor and isolates workspace/session layou
       Math.abs(lateTop - anchor.top) <= 2,
       `late initial replay moved anchor: ${anchor.top} -> ${lateTop}`,
     );
+    await page.evaluate(() => {
+      const source=window.source(0,120);
+      source.canonical.isRunning=true;
+      source.canonical.entries.at(-1).content.content='stream-long';
+      window.publish(source,'running',false);
+    });
+    await page.waitForTimeout(150);
+    await page.evaluate(() => { const el=document.querySelector('.overflow-y-auto');el.scrollTop=el.scrollHeight; });
+    await page.waitForTimeout(50);
+    await page.evaluate(() => {
+      const source=window.source(0,116);
+      source.canonical.entries.at(-1).content.content='terminal';
+      window.publish(source,'running',false);
+    });
+    await page.waitForTimeout(200);
+    assert.ok(await page.evaluate(() => {const el=document.querySelector('.overflow-y-auto');return Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop)<2}), 'terminal shrink and virtualization must retain latest');
+    await page.evaluate(() => {
+      const el=document.querySelector('.overflow-y-auto');
+      el.dispatchEvent(new WheelEvent('wheel',{deltaY:-500}));el.scrollTop-=500;
+    });
+    await page.waitForTimeout(80);
+    const readingTop=await page.evaluate(()=>document.querySelector('.overflow-y-auto').scrollTop);
+    await page.evaluate(() => {const source=window.source(0,116);source.canonical.entries.at(-1).content.content='stream-long';window.publish(source,'running',false)});
+    await page.waitForTimeout(150);
+    assert.ok(Math.abs(await page.evaluate(()=>document.querySelector('.overflow-y-auto').scrollTop)-readingTop)<2,'manual reading must survive terminal tail remeasure');
     await page.evaluate(() => {
       window.publish(window.source(0, 100), "running", false);
       window.setScope("b");

@@ -17,12 +17,17 @@ export interface CanonicalConversationIdentity {
 }
 
 export type PatchTypeWithKey = PatchType & {
+  pendingDelivery?: {
+    state: 'sending' | 'accepted' | 'failed' | 'unconfirmed';
+    error?: string;
+  };
   patchKey: string;
   providerText?: {
     kind: 'plan' | 'summary' | 'thinking';
     provider: string | null;
     itemId: string | null;
     partial: boolean;
+    steps?: { step: string; status: string }[];
   };
   toolTiming?: {
     startedAt: string | null;

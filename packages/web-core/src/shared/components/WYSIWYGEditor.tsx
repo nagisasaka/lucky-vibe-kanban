@@ -10,11 +10,18 @@ import {
   type ReactNode,
 } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
+import { PlainTextPastePlugin } from '@vibe/ui/components/PlainTextPastePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { LINK, TRANSFORMERS, type Transformer } from '@lexical/markdown';
+import {
+  LINK,
+  TRANSFORMERS,
+  type Transformer,
+  type TextMatchTransformer,
+} from '@lexical/markdown';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { CodeBlockEscapePlugin } from '@vibe/ui/components/CodeBlockEscapePlugin';
 import { InlineCodeBoundaryPlugin } from '@vibe/ui/components/InlineCodeBoundaryPlugin';
@@ -97,6 +104,8 @@ import type { BaseCodingAgent, SelectedSkill } from 'shared/types';
 export type SerializedEditorState = string;
 
 type WysiwygProps = {
+  /** Literal chat input; display-only Markdown consumers keep rich rendering. */
+  plainText?: boolean;
   placeholder?: string;
   /** Markdown string representing the editor content */
   value: SerializedEditorState;
@@ -280,6 +289,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
   function WYSIWYGEditor(
     {
       placeholder = '',
+      plainText = false,
       value,
       onChange,
       onEditorStateChange,
@@ -562,6 +572,25 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       [ATTACHMENT_TRANSFORMER, IMAGE_TRANSFORMER, enableLocalLinks]
     );
 
+    // Keep uploaded attachment controls; ordinary Markdown/image text stays literal.
+    const plainTextAttachments = useMemo<TextMatchTransformer[]>(
+      () => [
+        ...(IMAGE_TRANSFORMER.type === 'text-match'
+          ? [
+              {
+                ...IMAGE_TRANSFORMER,
+                importRegExp:
+                  /!\[([^\]]*)\]\((\.vibe-attachments\/[^)]+|attachment:\/\/[^)]+|pending-attachment:\/\/[^)]+)\)/,
+              },
+            ]
+          : []),
+        ...(ATTACHMENT_TRANSFORMER.type === 'text-match'
+          ? [ATTACHMENT_TRANSFORMER]
+          : []),
+      ],
+      [IMAGE_TRANSFORMER, ATTACHMENT_TRANSFORMER]
+    );
+
     // Memoized handlers for ContentEditable to prevent re-renders
     const handlePaste = useCallback(
       (event: React.ClipboardEvent) => {
@@ -606,6 +635,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       [placeholder, className]
     );
 
+    const TextPlugin = plainText ? PlainTextPlugin : RichTextPlugin;
     const editorContent = (
       <div className="wysiwyg text-base relative">
         <EditorWorkspaceContext.Provider value={workspaceId}>
@@ -618,12 +648,16 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                   onChange={handleEditorChange}
                   onEditorStateChange={onEditorStateChange}
                   editable={!disabled}
+                  plainText={plainText}
+                  plainTextAttachments={plainTextAttachments}
                   transformers={allTransformers}
                 />
-                {!disabled && !showStaticToolbar && <ToolbarPlugin />}
+                {!plainText && !disabled && !showStaticToolbar && (
+                  <ToolbarPlugin />
+                )}
 
                 <div className="relative">
-                  <RichTextPlugin
+                  <TextPlugin
                     contentEditable={
                       <ContentEditable
                         className={cn('outline-none', className)}
@@ -647,10 +681,12 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                   />
                 )}
 
-                <MarkdownShortcutPlugin transformers={allTransformers} />
+                {!plainText && (
+                  <MarkdownShortcutPlugin transformers={allTransformers} />
+                )}
                 <ListPlugin />
                 <TablePlugin />
-                <CodeHighlightPlugin readOnly={disabled} />
+                {!plainText && <CodeHighlightPlugin readOnly={disabled} />}
                 {/* Only include editing plugins when not in read-only mode */}
                 {!disabled && (
                   <>
@@ -658,9 +694,14 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                     <HistoryPlugin />
                     <CodeBlockEscapePlugin />
                     <InlineCodeBoundaryPlugin />
-                    <PasteMarkdownPlugin transformers={allTransformers} />
+                    {plainText ? (
+                      <PlainTextPastePlugin />
+                    ) : (
+                      <PasteMarkdownPlugin transformers={allTransformers} />
+                    )}
                     <TypeaheadOpenProvider>
                       <FileTagTypeaheadPlugin
+                        plainText={plainText}
                         repoIds={repoIds}
                         diffPaths={diffPaths}
                         preferredRepoId={preferredRepoId}
@@ -693,6 +734,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
                         onShiftCmdEnter={onShiftCmdEnter}
                         onChange={onChange}
                         transformers={allTransformers}
+                        plainText={plainText}
                         sendShortcut={sendShortcut}
                       />
                     </TypeaheadOpenProvider>
