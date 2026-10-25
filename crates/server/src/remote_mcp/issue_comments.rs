@@ -482,7 +482,7 @@ mod tests {
         let foreign_issue = Uuid::new_v4();
         let sibling = Uuid::new_v4();
         let foreign_comment = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'foreign')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'foreign','FOREIGN')")
             .bind(foreign_project)
             .execute(&remote.pool)
             .await

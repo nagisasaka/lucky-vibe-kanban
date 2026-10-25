@@ -8,6 +8,7 @@ use uuid::Uuid;
 pub struct Project {
     pub id: Uuid,
     pub name: String,
+    pub key: String,
     pub default_agent_working_dir: Option<String>,
     pub remote_project_id: Option<Uuid>,
     #[ts(type = "Date")]
@@ -22,6 +23,7 @@ impl Project {
             Project,
             r#"SELECT id as "id!: Uuid",
                       name,
+                      key,
                       default_agent_working_dir,
                       remote_project_id as "remote_project_id: Uuid",
                       created_at as "created_at!: DateTime<Utc>",

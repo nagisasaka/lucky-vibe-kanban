@@ -1,3 +1,8 @@
+import {
+  isValidProjectKey,
+  normalizeProjectKey,
+  suggestProjectKey,
+} from '@/shared/lib/projectKey';
 import { useState } from 'react';
 import { useAuth } from '@/shared/hooks/auth/useAuth';
 import { useUserOrganizations } from '@/shared/hooks/useUserOrganizations';
@@ -256,14 +261,29 @@ function ProjectsList({
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState('#3b82f6');
 
-  const handleCreate = () => {
-    if (!newProjectName.trim()) return;
-    insert({
-      organization_id: organizationId,
-      name: newProjectName.trim(),
-      color: newProjectColor,
-    });
-    setNewProjectName('');
+  const [newProjectKey, setNewProjectKey] = useState<string | null>(null);
+  const projectKey =
+    newProjectKey ??
+    suggestProjectKey(
+      newProjectName,
+      data.map((project) => project.key)
+    );
+
+  const handleCreate = async () => {
+    if (!newProjectName.trim() || !isValidProjectKey(projectKey)) return;
+    setNewProjectKey(projectKey);
+    try {
+      await insert({
+        organization_id: organizationId,
+        name: newProjectName.trim(),
+        key: normalizeProjectKey(projectKey),
+        color: newProjectColor,
+      }).persisted;
+      setNewProjectName('');
+      setNewProjectKey(null);
+    } catch {
+      // The shape error above displays the failure; retain the inputs for retry.
+    }
   };
 
   const handleUpdate = () => {
@@ -338,6 +358,26 @@ function ProjectsList({
               placeholder="Project name"
               className="px-base py-half text-sm border rounded-sm bg-primary text-normal focus:outline-none focus:ring-1 focus:ring-brand"
             />
+          </div>
+          <div>
+            <label
+              htmlFor="test-project-key"
+              className="block text-xs text-low mb-half"
+            >
+              Project key
+            </label>
+            <input
+              id="test-project-key"
+              value={projectKey}
+              onChange={(event) =>
+                setNewProjectKey(normalizeProjectKey(event.target.value))
+              }
+              className="px-base py-half text-sm border rounded-sm bg-primary text-normal"
+            />
+            <p className="text-xs text-low">
+              2–10 letters or digits, starting with a letter. Cannot be changed
+              later.
+            </p>
           </div>
           <div>
             <label className="block text-xs text-low mb-half">Color</label>

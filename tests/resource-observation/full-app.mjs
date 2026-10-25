@@ -319,6 +319,7 @@ try {
       "/api/local/v1/projects",
       "POST",
       {
+        key: "LOCAL",
         organization_id: org,
         name: "Resource acceptance",
         color: "210 80% 52%",

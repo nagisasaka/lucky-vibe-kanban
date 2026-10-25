@@ -363,8 +363,9 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
     let project = Uuid::from_u128(1);
     let foreign_project = Uuid::from_u128(2);
     for id in [project, foreign_project] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Test project')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Test project',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -969,8 +970,9 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     let status = Uuid::new_v4();
     let foreign_status = Uuid::new_v4();
     for (id, status) in [(project, status), (foreign, foreign_status)] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'test')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'test',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -1042,6 +1044,7 @@ async fn issue_writes_reuse_board_services_and_enforce_scope_retries_and_revisio
     )
     .await
     .unwrap();
+    assert_eq!(detail["simple_id"], "PR1-1");
     let revision = detail["revision"].clone();
     let key = Uuid::new_v4();
     let update = json!({"project_id":project,"issue_id":issue,"request_id":key,"expected_revision":revision,"title":"Revised task"});
@@ -1568,8 +1571,9 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
     let project = Uuid::from_u128(1);
     for id in [project, Uuid::from_u128(2)] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'note-test')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'note-test',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();
@@ -1786,8 +1790,9 @@ async fn design_note_mcp_deleted_project_is_not_available() {
     let project = Uuid::from_u128(1);
     let other = Uuid::from_u128(2);
     for id in [project, other] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'fixture')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'fixture',?)")
             .bind(id)
+            .bind(format!("PR{}", id.as_u128()))
             .execute(&pool)
             .await
             .unwrap();

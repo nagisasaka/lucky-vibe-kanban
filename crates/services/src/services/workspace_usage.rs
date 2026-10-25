@@ -1124,6 +1124,18 @@ mod tests {
         ensure_wiki_board_link(&pool, &ws).await.unwrap();
         ensure_wiki_board_link(&pool, &ws).await.unwrap();
         assert_eq!(
+            sqlx::query_scalar::<_, String>("SELECT simple_id FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            "LOCAL-1"
+        );
+        sqlx::query("UPDATE projects SET key='WIKI' WHERE id=?")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
                 .fetch_one(&pool)
                 .await
@@ -1143,6 +1155,15 @@ mod tests {
         .await;
         ensure_wiki_board_link(&pool, &linked_only).await.unwrap();
         assert_eq!(
+            sqlx::query_scalar::<_, String>(
+                "SELECT simple_id FROM local_issues WHERE issue_number=2"
+            )
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+            "WIKI-2"
+        );
+        assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
                 .fetch_one(&pool)
                 .await
@@ -1150,7 +1171,7 @@ mod tests {
             2
         );
         let second = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Second')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Second','SECOND')")
             .bind(second)
             .execute(&pool)
             .await

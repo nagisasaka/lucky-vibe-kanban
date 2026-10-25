@@ -366,6 +366,7 @@ fn project_from_row(row: &SqliteRow) -> Result<Project, sqlx::Error> {
         id: row.try_get("id")?,
         organization_id: row.try_get("organization_id")?,
         name: row.try_get("name")?,
+        key: row.try_get("key")?,
         color: row.try_get("color")?,
         sort_order: row.try_get("sort_order")?,
         created_at: row.try_get("created_at")?,
@@ -382,6 +383,7 @@ async fn list_local_projects(pool: &SqlitePool) -> Result<Vec<Project>, ApiError
             p.id,
             m.organization_id,
             p.name,
+            p.key,
             m.color,
             m.sort_order,
             p.created_at,
@@ -414,6 +416,7 @@ pub(crate) async fn get_local_project(
             p.id,
             m.organization_id,
             p.name,
+            p.key,
             m.color,
             m.sort_order,
             p.created_at,
@@ -435,17 +438,29 @@ async fn create_local_project(
     pool: &SqlitePool,
     request: CreateProjectRequest,
 ) -> Result<Project, ApiError> {
+    let key = api_types::normalize_project_key(&request.key)
+        .map_err(|message| ApiError::BadRequest(message.into()))?;
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let project_id = request.id.unwrap_or_else(Uuid::new_v4);
     let sort_order: i32 =
         sqlx::query_scalar("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM local_project_metadata")
-            .fetch_one(pool)
+            .fetch_one(&mut *tx)
             .await?;
 
-    sqlx::query("INSERT INTO projects (id, name) VALUES (?, ?)")
+    sqlx::query("INSERT INTO projects (id, name, key) VALUES (?, ?, ?)")
         .bind(project_id)
         .bind(request.name)
-        .execute(pool)
-        .await?;
+        .bind(key)
+        .execute(&mut *tx)
+        .await
+        .map_err(|error| match &error {
+            sqlx::Error::Database(db)
+                if db.is_unique_violation() && db.message().contains("projects.key") =>
+            {
+                ApiError::Conflict("Project key is already in use".into())
+            }
+            _ => ApiError::from(error),
+        })?;
 
     sqlx::query(
         r#"
@@ -458,11 +473,12 @@ async fn create_local_project(
     .bind(local_org_id())
     .bind(request.color)
     .bind(sort_order)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
-    ensure_default_statuses(pool, project_id).await?;
-    ensure_default_tags(pool, project_id).await?;
+    seed_default_statuses(&mut tx, project_id).await?;
+    seed_default_tags(&mut tx, project_id).await?;
+    tx.commit().await?;
     get_local_project(pool, project_id).await
 }
 
@@ -560,10 +576,19 @@ pub(crate) async fn ensure_default_statuses(
         return Ok(Vec::new());
     }
 
+    seed_default_statuses(&mut *pool.acquire().await?, project_id).await?;
+
+    list_project_statuses(pool, project_id).await
+}
+
+async fn seed_default_statuses(
+    connection: &mut sqlx::SqliteConnection,
+    project_id: Uuid,
+) -> Result<(), ApiError> {
     let count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM local_project_statuses WHERE project_id = ?")
             .bind(project_id)
-            .fetch_one(pool)
+            .fetch_one(&mut *connection)
             .await?;
 
     if count == 0 {
@@ -581,12 +606,12 @@ pub(crate) async fn ensure_default_statuses(
             .bind(color)
             .bind(sort_order)
             .bind(hidden)
-            .execute(pool)
+            .execute(&mut *connection)
             .await?;
         }
     }
 
-    list_project_statuses(pool, project_id).await
+    Ok(())
 }
 
 async fn create_local_status(
@@ -746,13 +771,9 @@ pub(crate) async fn create_local_issue(
     request: CreateIssueRequest,
 ) -> Result<Issue, ApiError> {
     let id = request.id.unwrap_or_else(Uuid::new_v4);
-    let issue_number: i32 = sqlx::query_scalar(
-        "SELECT COALESCE(MAX(issue_number), 0) + 1 FROM local_issues WHERE project_id = ?",
-    )
-    .bind(request.project_id)
-    .fetch_one(pool)
-    .await?;
-    let simple_id = format!("LOCAL-{issue_number}");
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    let (issue_number, simple_id) =
+        db::models::issue_number::next_issue_number(&mut tx, request.project_id).await?;
     let extension_metadata =
         serde_json::to_string(&request.extension_metadata).unwrap_or_else(|_| "null".to_string());
 
@@ -795,9 +816,10 @@ pub(crate) async fn create_local_issue(
     .bind(request.parent_issue_sort_order)
     .bind(extension_metadata)
     .bind(local_user_id())
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
+    tx.commit().await?;
     get_local_issue(pool, id).await
 }
 
@@ -900,11 +922,10 @@ async fn list_project_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<Ta
         .map_err(ApiError::from)
 }
 
-async fn ensure_default_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<Tag>, ApiError> {
-    if !project_exists(pool, project_id).await? {
-        return Ok(Vec::new());
-    }
-
+async fn seed_default_tags(
+    connection: &mut sqlx::SqliteConnection,
+    project_id: Uuid,
+) -> Result<(), ApiError> {
     for (name, color) in DEFAULT_TAGS {
         sqlx::query(
             r#"
@@ -922,11 +943,11 @@ async fn ensure_default_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<
         .bind(color)
         .bind(project_id)
         .bind(name)
-        .execute(pool)
+        .execute(&mut *connection)
         .await?;
     }
 
-    list_project_tags(pool, project_id).await
+    Ok(())
 }
 
 async fn get_local_tag(pool: &SqlitePool, tag_id: Uuid) -> Result<Tag, ApiError> {
@@ -3506,7 +3527,16 @@ mod tests {
         for table in tables {
             before.push(dump(&pool, table).await);
         }
-        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut retention = sqlx::migrate!("../db/migrations");
+        retention.migrations = std::borrow::Cow::Owned(
+            retention
+                .migrations
+                .into_owned()
+                .into_iter()
+                .filter(|m| m.version <= 20261023110000)
+                .collect(),
+        );
+        retention.run(&pool).await.unwrap();
         for (table, rows) in tables.iter().zip(&before) {
             assert_eq!(*rows, dump(&pool, table).await, "migration changed {table}");
         }
@@ -3633,6 +3663,7 @@ mod tests {
             CREATE TABLE projects (
                 id BLOB PRIMARY KEY,
                 name TEXT NOT NULL,
+                key TEXT NOT NULL DEFAULT 'LOCAL' UNIQUE,
                 created_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec'))
             )
@@ -3804,6 +3835,168 @@ mod tests {
         assert_eq!(latest.status, AgentRunStatus::Running);
     }
 
+    fn project_request(key: &str) -> CreateProjectRequest {
+        CreateProjectRequest {
+            id: None,
+            organization_id: super::local_org_id(),
+            name: "Project".into(),
+            key: key.into(),
+            color: "blue".into(),
+        }
+    }
+
+    fn issue_request(project_id: Uuid, status_id: Uuid) -> CreateIssueRequest {
+        CreateIssueRequest {
+            id: None,
+            project_id,
+            status_id,
+            title: "Issue".into(),
+            description: None,
+            priority: None,
+            start_date: None,
+            target_date: None,
+            completed_at: None,
+            sort_order: 0.0,
+            parent_issue_id: None,
+            parent_issue_sort_order: None,
+            extension_metadata: Value::Null,
+        }
+    }
+
+    #[tokio::test]
+    async fn project_keys_normalize_reject_duplicates_reuse_and_remain_immutable() {
+        let pool = setup_pool().await;
+        let project = super::create_local_project(&pool, project_request(" lvk "))
+            .await
+            .unwrap();
+        assert_eq!(project.key, "LVK");
+        let duplicate = super::create_local_project(&pool, project_request("lvk"))
+            .await
+            .unwrap_err();
+        assert!(matches!(duplicate, crate::error::ApiError::Conflict(_)));
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM projects")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            1
+        );
+        for key in ["", "A", "1AB", "A-B", "あい", "ABCDEFGHIJK"] {
+            assert!(
+                super::create_local_project(&pool, project_request(key))
+                    .await
+                    .is_err()
+            );
+        }
+        assert!(
+            serde_json::from_value::<CreateProjectRequest>(serde_json::json!({
+                "organization_id":super::local_org_id(),"name":"No key","color":"blue"
+            }))
+            .is_err()
+        );
+        let changes: api_types::UpdateProjectRequest =
+            serde_json::from_value(serde_json::json!({"name":"Renamed","key":"NEW"})).unwrap();
+        let updated = super::update_local_project(&pool, project.id, changes)
+            .await
+            .unwrap();
+        assert_eq!(updated.key, "LVK");
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let issue = super::create_local_issue(&pool, issue_request(project.id, status))
+            .await
+            .unwrap();
+        assert_eq!(issue.simple_id, "LVK-1");
+        // Use an empty Project for the supported typo-and-recreate workflow.
+        let empty = super::create_local_project(&pool, project_request("EMPTY"))
+            .await
+            .unwrap();
+        super::delete_project_preserving_design_history(&pool, empty.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            super::create_local_project(&pool, project_request("empty"))
+                .await
+                .unwrap()
+                .key,
+            "EMPTY"
+        );
+    }
+
+    #[tokio::test]
+    async fn project_creation_rolls_back_key_metadata_and_statuses_on_seed_failure() {
+        let pool = setup_pool().await;
+        sqlx::query("CREATE TRIGGER fail_tag BEFORE INSERT ON local_tags BEGIN SELECT RAISE(ABORT, 'seed failure'); END").execute(&pool).await.unwrap();
+        assert!(
+            super::create_local_project(&pool, project_request("ROLL"))
+                .await
+                .is_err()
+        );
+        for table in [
+            "projects",
+            "local_project_metadata",
+            "local_project_statuses",
+            "local_tags",
+        ] {
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap(),
+                0
+            );
+        }
+        sqlx::query("DROP TRIGGER fail_tag")
+            .execute(&pool)
+            .await
+            .unwrap();
+        super::create_local_project(&pool, project_request("ROLL"))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn project_key_issue_creation_serializes_concurrent_writers() {
+        let directory = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(4)
+            .connect_with(
+                sqlx::sqlite::SqliteConnectOptions::new()
+                    .filename(directory.path().join("concurrent.sqlite"))
+                    .create_if_missing(true)
+                    .busy_timeout(std::time::Duration::from_secs(10)),
+            )
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("CON"))
+            .await
+            .unwrap();
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let mut tasks = tokio::task::JoinSet::new();
+        for _ in 0..12 {
+            let pool = pool.clone();
+            tasks.spawn(async move {
+                super::create_local_issue(&pool, issue_request(project.id, status))
+                    .await
+                    .unwrap()
+            });
+        }
+        let mut numbers = Vec::new();
+        while let Some(result) = tasks.join_next().await {
+            let issue = result.unwrap();
+            assert_eq!(issue.simple_id, format!("CON-{}", issue.issue_number));
+            numbers.push(issue.issue_number);
+        }
+        numbers.sort();
+        assert_eq!(numbers, (1..=12).collect::<Vec<_>>());
+        pool.close().await;
+    }
+
     #[tokio::test]
     async fn local_issue_create_seeds_default_statuses_and_simple_id() {
         let pool = setup_pool().await;
@@ -3908,6 +4101,7 @@ mod tests {
                     id: None,
                     organization_id: super::local_org_id(),
                     name: format!("Project {project_index}"),
+                    key: format!("PR{project_index}"),
                     color: "210 80% 52%".into(),
                 },
             )
@@ -3990,6 +4184,7 @@ mod tests {
                 id: None,
                 organization_id: super::local_org_id(),
                 name: "Tagged Project".to_string(),
+                key: "TAG".into(),
                 color: "210 80% 52%".to_string(),
             },
         )

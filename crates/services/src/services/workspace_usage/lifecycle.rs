@@ -103,15 +103,11 @@ pub async fn ensure_wiki_board_link_for_project(
     let Some(status) = status else {
         return Ok(());
     };
-    let number: i64 = sqlx::query_scalar(
-        "SELECT COALESCE(MAX(issue_number),0)+1 FROM local_issues WHERE project_id=?",
-    )
-    .bind(project_id)
-    .fetch_one(&mut *tx)
-    .await?;
+    let (number, simple_id) =
+        db::models::issue_number::next_issue_number(&mut tx, *project_id).await?;
     let issue_id = Uuid::new_v4();
     sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,?,?,?,?,?,0)")
-        .bind(issue_id).bind(project_id).bind(number).bind(format!("LOCAL-{number}"))
+        .bind(issue_id).bind(project_id).bind(number).bind(simple_id)
         .bind(status).bind(workspace.name.as_deref().unwrap_or("OpenWiki"))
         .bind("OpenWiki repository maintenance. Execution history and operator instructions are available in the linked workspace.")
         .execute(&mut *tx).await?;

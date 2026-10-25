@@ -23,7 +23,7 @@ with sqlite3.connect(root / 'data/db.v2.sqlite') as db:
     else:
         assert sys.argv[2] == 'create'
         for n, name in [(101, 'Project One'), (102, 'Project Two')]:
-            db.execute('INSERT INTO projects(id,name) VALUES(?,?)', (uid(n), name))
+            db.execute('INSERT INTO projects(id,name,key) VALUES(?,?,?)', (uid(n), name, f'PR{n}'))
             db.execute('INSERT INTO local_project_metadata(project_id,organization_id) VALUES(?,?)', (uid(n), uid(2)))
             db.execute("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Ready','blue',1)", (uid(n+100), uid(n)))
         for n, project, number in [(1001,101,106),(1002,102,106),(1003,101,1060),(1004,101,107)]:

@@ -534,7 +534,7 @@ mod tests {
                 .is_err()
         );
         let project2 = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Other')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Other','FOREIGN')")
             .bind(project2)
             .execute(&remote.pool)
             .await
