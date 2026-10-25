@@ -194,6 +194,12 @@ describe('projectCanonicalAgentConversation', () => {
     expect(project()[0]).toMatchObject({
       content: { content: 'Inspect tests.\n\nSecond part' },
     });
+    timeline = mergeAgentLiveEvent(timeline, delta(5, ' ', 0));
+    timeline = mergeAgentLiveEvent(timeline, delta(6, '\n', 0));
+    timeline = mergeAgentLiveEvent(timeline, delta(7, 'More', 0));
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests. \nMore\n\nSecond part' },
+    });
     const completed = event(runId, 5, {
       type: 'provider_extension',
       data: {

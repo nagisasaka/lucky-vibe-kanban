@@ -784,9 +784,10 @@ function appendRunEntries(
           ].includes(payload.data.provider_event)
         ) {
           const data = jsonObject(payload.data.payload);
-          if (typeof data?.content !== 'string' || !data.content.trim()) break;
+          if (typeof data?.content !== 'string') break;
           const partial =
             payload.data.provider_event === 'reasoning_summary_delta';
+          if (!partial && !data.content.trim()) break;
           const itemId =
             typeof data.provider_item_id === 'string'
               ? data.provider_item_id
