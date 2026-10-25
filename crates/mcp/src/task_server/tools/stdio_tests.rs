@@ -39,6 +39,7 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
                     assert_eq!(line, format!("GET /api/board/projects?organization_id={organization} HTTP/1.1"));
                     ("200 OK", json!({"success":true,"data":{"projects":[{
                         "id":project,"organization_id":organization,"name":"Stdio fixture",
+                        "key":"STDIO",
                         "color":"blue","sort_order":0,"created_at":"2026-10-13T00:00:00Z",
                         "updated_at":"2026-10-13T00:00:00Z"
                     }]},"message":null}).to_string())
