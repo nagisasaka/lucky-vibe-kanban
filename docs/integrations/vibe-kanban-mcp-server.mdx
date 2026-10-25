@@ -6,11 +6,16 @@ description: "Configure the Vibe Kanban MCP server"
 Vibe Kanban exposes a local MCP (Model Context Protocol) server, allowing you to manage organisations, projects, issues, workspaces, and repositories from external MCP clients like Claude Desktop, Raycast, or even coding agents running within Vibe Kanban itself.
 
 <Note>
-This page covers connecting **external MCP clients** to Vibe Kanban's MCP server. For configuring MCP servers **within** Vibe Kanban for your coding agents, see the [MCP Server Configuration](/integrations/mcp-server-configuration) guide.
+  This page covers connecting **external MCP clients** to Vibe Kanban's MCP
+  server. For configuring MCP servers **within** Vibe Kanban for your coding
+  agents, see the [MCP Server
+  Configuration](/integrations/mcp-server-configuration) guide.
 </Note>
 
 <Info>
-Vibe Kanban's MCP server is **local-only** - it runs on your computer and can only be accessed by applications installed locally. It cannot be accessed via publicly accessible URLs.
+  Vibe Kanban's MCP server is **local-only** - it runs on your computer and can
+  only be accessed by applications installed locally. It cannot be accessed via
+  publicly accessible URLs.
 </Info>
 
 <video
@@ -30,7 +35,10 @@ This works if you're adding the Vibe Kanban MCP server to any [supported coding 
 3. Click the `Save Settings` button
 
 <Frame>
-<img src="/images/vk-mcp-server-config.png" alt="MCP Servers configuration page showing how to add Vibe Kanban MCP server" />
+  <img
+    src="/images/vk-mcp-server-config.png"
+    alt="MCP Servers configuration page showing how to add Vibe Kanban MCP server"
+  />
 </Frame>
 
 ### Option 2: Manual Configuration
@@ -57,99 +65,132 @@ The LVK Docker image includes `vibe-kanban-mcp` on `PATH`. This command starts t
 The Vibe Kanban MCP server provides tools for managing organisations, projects, issues, workspaces, and task execution.
 
 <Note>
-Many tools accept an optional `project_id` or `organization_id` parameter. When running inside a workspace linked to a remote project, these are inferred automatically from context and can be omitted. The exception is `list_projects`, which always requires an explicit `organization_id`.
+  Many tools accept an optional `project_id` or `organization_id` parameter.
+  When running inside a workspace linked to a remote project, these are inferred
+  automatically from context and can be omitted. The exception is
+  `list_projects`, which always requires an explicit `organization_id`.
 </Note>
 
 ### Context
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `get_context` | Get current workspace context (only available within an active workspace session) | None | None | Project, issue, and workspace metadata |
+| Tool          | Purpose                                                                           | Required Parameters | Optional Parameters | Returns                                |
+| ------------- | --------------------------------------------------------------------------------- | ------------------- | ------------------- | -------------------------------------- |
+| `get_context` | Get current workspace context (only available within an active workspace session) | None                | None                | Project, issue, and workspace metadata |
 
 ### Organisation Operations
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_organizations` | List all available organisations | None | None | List of organisations with IDs, names, and slugs |
-| `list_org_members` | List members of an organisation | None | `organization_id` | List of members with user IDs, roles, and profile info |
+| Tool                 | Purpose                          | Required Parameters | Optional Parameters | Returns                                                |
+| -------------------- | -------------------------------- | ------------------- | ------------------- | ------------------------------------------------------ |
+| `list_organizations` | List all available organisations | None                | None                | List of organisations with IDs, names, and slugs       |
+| `list_org_members`   | List members of an organisation  | None                | `organization_id`   | List of members with user IDs, roles, and profile info |
 
 ### Project Operations
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_projects` | List projects in an organisation | `organization_id` | None | List of projects with IDs and names |
+| Tool            | Purpose                          | Required Parameters | Optional Parameters | Returns                             |
+| --------------- | -------------------------------- | ------------------- | ------------------- | ----------------------------------- |
+| `list_projects` | List projects in an organisation | `organization_id`   | None                | List of projects with IDs and names |
 
 ### Issue Management
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_issues` | List issues in a project | None | `project_id`<br/>`status`<br/>`priority`<br/>`search`<br/>`simple_id`<br/>`parent_issue_id`<br/>`assignee_user_id`<br/>`tag_id`<br/>`tag_name`<br/>`limit`<br/>`offset` | Paginated list of issues with PR info |
-| `create_issue` | Create a new issue | `title` | `project_id`<br/>`description`<br/>`priority`<br/>`parent_issue_id` | Created issue ID |
-| `get_issue` | Get detailed issue information | `issue_id` | None | Full issue details with tags, relationships, sub-issues, and PRs |
-| `update_issue` | Update an existing issue | `issue_id` | `title`<br/>`description`<br/>`status`<br/>`priority`<br/>`parent_issue_id` | Updated issue details |
-| `delete_issue` | Delete an issue | `issue_id` | None | Deletion confirmation |
-| `list_issue_priorities` | List allowed priority values | None | None | List of priorities: urgent, high, medium, low |
+| Tool                    | Purpose                        | Required Parameters | Optional Parameters                                                                                                                                                     | Returns                                                          |
+| ----------------------- | ------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `list_issues`           | List issues in a project       | None                | `project_id`<br/>`status`<br/>`priority`<br/>`search`<br/>`simple_id`<br/>`parent_issue_id`<br/>`assignee_user_id`<br/>`tag_id`<br/>`tag_name`<br/>`limit`<br/>`offset` | Paginated list of issues with PR info                            |
+| `create_issue`          | Create a new issue             | `title`             | `project_id`<br/>`description`<br/>`priority`<br/>`parent_issue_id`                                                                                                     | Created issue ID                                                 |
+| `get_issue`             | Get detailed issue information | `issue_id`          | None                                                                                                                                                                    | Full issue details with tags, relationships, sub-issues, and PRs |
+| `update_issue`          | Update an existing issue       | `issue_id`          | `title`<br/>`description`<br/>`status`<br/>`priority`<br/>`parent_issue_id`                                                                                             | Updated issue details                                            |
+| `delete_issue`          | Delete an issue                | `issue_id`          | None                                                                                                                                                                    | Deletion confirmation                                            |
+| `list_issue_priorities` | List allowed priority values   | None                | None                                                                                                                                                                    | List of priorities: urgent, high, medium, low                    |
+
+`list_issues` defaults to unarchived Issues. Set `archived: true` for archived
+Issues or `archived: "all"` for both; `false` explicitly selects unarchived.
+UI hidden statuses do not exclude MCP results.
+
+`list_issues` applies all filters before sorting and offset pagination. `search`
+is a case-insensitive literal substring of the saved full title or description;
+it preserves surrounding whitespace and does not interpret wildcards or regular
+expressions. An empty string matches all issues. `simple_id` is an exact
+case-insensitive match. `status` accepts a status name or UUID; names and
+`tag_name` use case-insensitive exact matching. Different filters combine with
+AND. When `tag_id` and `tag_name` are both supplied, they must identify the same
+tag; an Issue having two different matching tags is insufficient. Missing
+status/tag names return an empty result. Listing reads existing statuses without creating defaults.
+
+The external HTTP MCP uses the same filter implementation and names, while
+retaining its own required Project ID, UUID cursor pagination and summary
+metadata. stdio retains sorting, offset pagination and `total_count`; keep the
+same filters throughout a multi-page listing.
+
+`list_todos(project_id, include_completed?, offset?, search?)` reads 100 notes
+per page and returns `items` with `next_offset`. Its optional `search` matches
+body or category using the same literal, case-insensitive substring rule.
+`list_design_notes` accepts optional `search` against title or saved Markdown
+body, excluding additions; it retains metadata-only results and UUID cursor
+pagination (up to 20 items). Both stdio and external MCP apply these searches
+before pagination. Omitting `search` preserves the previous listing behaviour.
 
 <Tip>
-For `update_issue`, the `parent_issue_id` field supports three states: omit it entirely to leave the parent unchanged, pass `null` to un-nest the issue from its parent, or pass a UUID to set a new parent.
+  For `update_issue`, the `parent_issue_id` field supports three states: omit it
+  entirely to leave the parent unchanged, pass `null` to un-nest the issue from
+  its parent, or pass a UUID to set a new parent.
 </Tip>
 
 ### Issue Assignees
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_issue_assignees` | List assignees for an issue | `issue_id` | None | List of assignees with user IDs |
-| `assign_issue` | Assign a user to an issue | `issue_id`<br/>`user_id` | None | Issue assignee ID |
-| `unassign_issue` | Remove an assignee from an issue | `issue_assignee_id` | None | Unassignment confirmation |
+| Tool                   | Purpose                          | Required Parameters      | Optional Parameters | Returns                         |
+| ---------------------- | -------------------------------- | ------------------------ | ------------------- | ------------------------------- |
+| `list_issue_assignees` | List assignees for an issue      | `issue_id`               | None                | List of assignees with user IDs |
+| `assign_issue`         | Assign a user to an issue        | `issue_id`<br/>`user_id` | None                | Issue assignee ID               |
+| `unassign_issue`       | Remove an assignee from an issue | `issue_assignee_id`      | None                | Unassignment confirmation       |
 
 ### Issue Tags
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_tags` | List tags for a project | None | `project_id` | List of tags with IDs, names, and colours |
-| `list_issue_tags` | List tags attached to an issue | `issue_id` | None | List of issue-tag relations |
-| `add_issue_tag` | Attach a tag to an issue | `issue_id`<br/>`tag_id` | None | Issue-tag relation ID |
-| `remove_issue_tag` | Remove a tag from an issue | `issue_tag_id` | None | Removal confirmation |
+| Tool               | Purpose                        | Required Parameters     | Optional Parameters | Returns                                   |
+| ------------------ | ------------------------------ | ----------------------- | ------------------- | ----------------------------------------- |
+| `list_tags`        | List tags for a project        | None                    | `project_id`        | List of tags with IDs, names, and colours |
+| `list_issue_tags`  | List tags attached to an issue | `issue_id`              | None                | List of issue-tag relations               |
+| `add_issue_tag`    | Attach a tag to an issue       | `issue_id`<br/>`tag_id` | None                | Issue-tag relation ID                     |
+| `remove_issue_tag` | Remove a tag from an issue     | `issue_tag_id`          | None                | Removal confirmation                      |
 
 ### Issue Relationships
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `create_issue_relationship` | Create a relationship between two issues | `issue_id`<br/>`related_issue_id`<br/>`relationship_type` | None | Relationship ID |
-| `delete_issue_relationship` | Delete a relationship between issues | `relationship_id` | None | Deletion confirmation |
+| Tool                        | Purpose                                  | Required Parameters                                       | Optional Parameters | Returns               |
+| --------------------------- | ---------------------------------------- | --------------------------------------------------------- | ------------------- | --------------------- |
+| `create_issue_relationship` | Create a relationship between two issues | `issue_id`<br/>`related_issue_id`<br/>`relationship_type` | None                | Relationship ID       |
+| `delete_issue_relationship` | Delete a relationship between issues     | `relationship_id`                                         | None                | Deletion confirmation |
 
 Supported relationship types: `blocking`, `related`, `has_duplicate`.
 
 ### Repository Management
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_repos` | List all repositories | None | None | List of repositories with IDs and names |
-| `get_repo` | Get repository details including scripts | `repo_id` | None | Repository info with setup, cleanup, and dev server scripts |
-| `update_setup_script` | Update a repository's setup script | `repo_id`<br/>`script` | None | Update confirmation |
-| `update_cleanup_script` | Update a repository's cleanup script | `repo_id`<br/>`script` | None | Update confirmation |
-| `update_dev_server_script` | Update a repository's dev server script | `repo_id`<br/>`script` | None | Update confirmation |
+| Tool                       | Purpose                                  | Required Parameters    | Optional Parameters | Returns                                                     |
+| -------------------------- | ---------------------------------------- | ---------------------- | ------------------- | ----------------------------------------------------------- |
+| `list_repos`               | List all repositories                    | None                   | None                | List of repositories with IDs and names                     |
+| `get_repo`                 | Get repository details including scripts | `repo_id`              | None                | Repository info with setup, cleanup, and dev server scripts |
+| `update_setup_script`      | Update a repository's setup script       | `repo_id`<br/>`script` | None                | Update confirmation                                         |
+| `update_cleanup_script`    | Update a repository's cleanup script     | `repo_id`<br/>`script` | None                | Update confirmation                                         |
+| `update_dev_server_script` | Update a repository's dev server script  | `repo_id`<br/>`script` | None                | Update confirmation                                         |
 
 ### Workspace Management
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `list_workspaces` | List local workspaces | None | `archived`<br/>`pinned`<br/>`branch`<br/>`name_search`<br/>`limit`<br/>`offset` | Paginated list of workspaces |
-| `update_workspace` | Update a workspace's properties; archive requires prepare then one user confirmation | None | `workspace_id`<br/>`archived`<br/>`pinned`<br/>`name`<br/>`confirmation_token` | Archive preflight token or updated workspace details, with deletion outcome |
-| `delete_workspace` | Delete a local workspace | None | `workspace_id`<br/>`delete_remote`<br/>`delete_branches` | Deletion confirmation |
-| `link_workspace_issue` | Link a workspace to a remote issue | `workspace_id`<br/>`issue_id` | None | Link confirmation |
+| Tool                   | Purpose                                                                              | Required Parameters           | Optional Parameters                                                             | Returns                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `list_workspaces`      | List local workspaces                                                                | None                          | `archived`<br/>`pinned`<br/>`branch`<br/>`name_search`<br/>`limit`<br/>`offset` | Paginated list of workspaces                                                |
+| `update_workspace`     | Update a workspace's properties; archive requires prepare then one user confirmation | None                          | `workspace_id`<br/>`archived`<br/>`pinned`<br/>`name`<br/>`confirmation_token`  | Archive preflight token or updated workspace details, with deletion outcome |
+| `delete_workspace`     | Delete a local workspace                                                             | None                          | `workspace_id`<br/>`delete_remote`<br/>`delete_branches`                        | Deletion confirmation                                                       |
+| `link_workspace_issue` | Link a workspace to a remote issue                                                   | `workspace_id`<br/>`issue_id` | None                                                                            | Link confirmation                                                           |
 
 ### Workspace Sessions
 
-| Tool | Purpose | Required Parameters | Optional Parameters | Returns |
-|------|---------|-------------------|-------------------|---------|
-| `start_workspace` | Create a workspace and start its first coding-agent session | `name`<br/>`executor`<br/>`repositories` | `prompt`<br/>`variant`<br/>`issue_id` | Workspace ID |
-| `create_session` | Create a session in an existing workspace | None | `workspace_id`<br/>`executor` | Session summary |
-| `list_sessions` | List sessions for a workspace | None | `workspace_id` | Session list |
-| `run_session_prompt` | Run a coding-agent prompt inside an existing session | `session_id`<br/>`prompt` | None | Execution details |
-| `get_execution` | Inspect execution status and final message | `execution_id` | None | Execution details |
+| Tool                 | Purpose                                                     | Required Parameters                      | Optional Parameters                   | Returns           |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------- | ------------------------------------- | ----------------- |
+| `start_workspace`    | Create a workspace and start its first coding-agent session | `name`<br/>`executor`<br/>`repositories` | `prompt`<br/>`variant`<br/>`issue_id` | Workspace ID      |
+| `create_session`     | Create a session in an existing workspace                   | None                                     | `workspace_id`<br/>`executor`         | Session summary   |
+| `list_sessions`      | List sessions for a workspace                               | None                                     | `workspace_id`                        | Session list      |
+| `run_session_prompt` | Run a coding-agent prompt inside an existing session        | `session_id`<br/>`prompt`                | None                                  | Execution details |
+| `get_execution`      | Inspect execution status and final message                  | `execution_id`                           | None                                  | Execution details |
 
 The `repositories` parameter is an array of objects with:
+
 - `repo_id`: The repository ID (UUID)
 - `branch`: The branch for this repository
 
@@ -199,6 +240,7 @@ Start working on the user registration issue using Claude Code on the main branc
 ```
 
 Your MCP client will use the `start_workspace` tool with parameters like:
+
 ```json
 {
   "name": "User registration with email validation",
@@ -254,6 +296,7 @@ For complete Raycast MCP configuration details, see the [official Raycast MCP do
 </Frame>
 
 Configure the Vibe Kanban MCP server in Raycast by adding the server details.
+
 </Tab>
 
 <Tab title="Step 2: Supply Command">
@@ -262,9 +305,11 @@ Configure the Vibe Kanban MCP server in Raycast by adding the server details.
 </Frame>
 
 Once configured, you'll see the Vibe Kanban MCP server listed and ready to use in Raycast.
+
 </Tab>
 </Tabs>
 
 <Note>
-Similar configuration steps apply to other MCP clients like Claude Desktop, VS Code with MCP extensions, or any custom MCP client implementations.
+  Similar configuration steps apply to other MCP clients like Claude Desktop, VS
+  Code with MCP extensions, or any custom MCP client implementations.
 </Note>

@@ -3,6 +3,7 @@ use axum::Router;
 use crate::DeploymentImpl;
 
 mod issue_assignees;
+pub(crate) mod issue_filter;
 mod issue_relationships;
 mod issue_tags;
 mod issues;
@@ -66,7 +67,7 @@ impl<'a> Store<'a> {
         id: Uuid,
     ) -> Result<ListProjectStatusesResponse, ApiError> {
         Ok(ListProjectStatusesResponse {
-            project_statuses: super::ensure_default_statuses(self.pool(), id).await?,
+            project_statuses: super::list_project_statuses(self.pool(), id).await?,
         })
     }
     async fn get_issue(&self, id: Uuid) -> Result<Issue, ApiError> {
@@ -234,7 +235,7 @@ impl<'a> Store<'a> {
         let tags = super::list_project_issue_tags(self.pool(), request.project_id).await?;
         let assignees =
             super::list_project_issue_assignees(self.pool(), request.project_id).await?;
-        let statuses = super::ensure_default_statuses(self.pool(), request.project_id).await?;
+        let statuses = super::list_project_statuses(self.pool(), request.project_id).await?;
         let status_order = statuses.into_iter().map(|s| (s.id, s.sort_order)).collect();
         Ok(search(issues, &tags, &assignees, &status_order, request))
     }
@@ -246,38 +247,7 @@ fn search(
     status_order: &std::collections::HashMap<Uuid, i32>,
     q: &SearchIssuesRequest,
 ) -> ListIssuesResponse {
-    issues.retain(|i| {
-        q.archived.is_none_or(|archived| i.archived == archived)
-            && q.status_id.is_none_or(|id| i.status_id == id)
-            && q.status_ids
-                .as_ref()
-                .is_none_or(|ids| ids.contains(&i.status_id))
-            && q.priority.is_none_or(|p| i.priority == Some(p))
-            && q.parent_issue_id
-                .is_none_or(|id| i.parent_issue_id == Some(id))
-            && q.search.as_ref().is_none_or(|s| {
-                i.title.to_lowercase().contains(&s.to_lowercase())
-                    || i.description
-                        .as_deref()
-                        .unwrap_or("")
-                        .to_lowercase()
-                        .contains(&s.to_lowercase())
-            })
-            && q.simple_id
-                .as_ref()
-                .is_none_or(|s| i.simple_id.eq_ignore_ascii_case(s))
-            && q.assignee_user_id.is_none_or(|id| {
-                assignees
-                    .iter()
-                    .any(|a| a.issue_id == i.id && a.user_id == id)
-            })
-            && q.tag_id
-                .is_none_or(|id| tags.iter().any(|t| t.issue_id == i.id && t.tag_id == id))
-            && q.tag_ids.as_ref().is_none_or(|ids| {
-                tags.iter()
-                    .any(|t| t.issue_id == i.id && ids.contains(&t.tag_id))
-            })
-    });
+    issues.retain(|i| issue_filter::matches(i, tags, assignees, q));
     let rank = |p| match p {
         Some(IssuePriority::Urgent) => 0,
         Some(IssuePriority::High) => 1,

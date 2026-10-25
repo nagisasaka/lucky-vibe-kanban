@@ -1,5 +1,6 @@
 //! Bounded MCP projection of the same canonical records used by the UI.
 //! Follows existing MCP metadata/keyset and Unicode character-page contracts.
+use futures::TryStreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -11,6 +12,8 @@ use super::design_note::DesignNoteError;
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct DesignNoteRead {
+    /// list_design_notes: literal case-insensitive substring of title or body.
+    pub search: Option<String>,
     pub project_id: Uuid,
     pub note_id: Option<Uuid>,
     pub addition_id: Option<Uuid>,
@@ -70,9 +73,30 @@ pub async fn read(
                 return Err(DesignNoteError::NotFound);
             }
         }
-        // No body allocation, and edits cannot reorder UUID keyset pages.
-        let rows = sqlx::query("SELECT id,title,revision,created_at,updated_at FROM design_notes WHERE project_id=? AND (? IS NULL OR id>?) ORDER BY id LIMIT ?")
-            .bind(a.project_id).bind(a.cursor).bind(a.cursor).bind(size+1).fetch_all(pool).await?;
+        // Keep the metadata-only fast path when search is omitted.
+        let rows = if let Some(search) = a.search.as_deref() {
+            let mut stream = sqlx::query("SELECT id,title,body,revision,created_at,updated_at FROM design_notes WHERE project_id=? AND (? IS NULL OR id>?) ORDER BY id")
+                .bind(a.project_id).bind(a.cursor).bind(a.cursor).fetch(pool);
+            let mut rows = Vec::new();
+            while let Some(row) = stream.try_next().await? {
+                if super::text_search::matches(
+                    Some(search),
+                    &[
+                        row.try_get::<&str, _>("title")?,
+                        row.try_get::<&str, _>("body")?,
+                    ],
+                ) {
+                    rows.push(row);
+                    if rows.len() > size as usize {
+                        break;
+                    }
+                }
+            }
+            rows
+        } else {
+            sqlx::query("SELECT id,title,revision,created_at,updated_at FROM design_notes WHERE project_id=? AND (? IS NULL OR id>?) ORDER BY id LIMIT ?")
+                .bind(a.project_id).bind(a.cursor).bind(a.cursor).bind(size+1).fetch_all(pool).await?
+        };
         let items = rows.iter().map(|r| Ok(json!({"id":r.try_get::<Uuid,_>("id")?,"title":r.try_get::<String,_>("title")?,"revision":r.try_get::<i32,_>("revision")?,"created_at":r.try_get::<String,_>("created_at")?,"updated_at":r.try_get::<String,_>("updated_at")?}))).collect::<Result<Vec<_>,sqlx::Error>>()?;
         return Ok(page(items, size, "id", "next_cursor"));
     }

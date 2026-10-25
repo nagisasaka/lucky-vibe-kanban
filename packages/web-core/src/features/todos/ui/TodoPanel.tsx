@@ -13,6 +13,7 @@ import {
 import type { Todo, UpdateTodo } from 'shared/types';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { cn } from '@/shared/lib/utils';
+import { matchesListSearch } from '@/shared/lib/listSearch';
 import { TodoBody } from './TodoBody';
 import { todoApi } from '../model/todoApi';
 import { useTodoViewStore } from '../model/todoViewStore';
@@ -36,6 +37,7 @@ export function TodoPanel({
     queryFn: () => todoApi.list(projectId),
     refetchInterval: 5000,
   });
+  const [search, setSearch] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const draft = useTodoViewStore((s) => s.drafts[projectId]);
@@ -81,12 +83,13 @@ export function TodoPanel({
     const grouped = new Map<string, Todo[]>();
     for (const item of query.data ?? []) {
       if (item.completed && !showCompleted) continue;
+      if (!matchesListSearch(search, item.body, item.category)) continue;
       const entries = grouped.get(item.category) ?? [];
       entries.push(item);
       grouped.set(item.category, entries);
     }
     return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [query.data, showCompleted]);
+  }, [query.data, showCompleted, search]);
   const categories = [
     ...new Set((query.data ?? []).map((item) => item.category).filter(Boolean)),
   ].sort();
@@ -170,6 +173,14 @@ export function TodoPanel({
             </Button>
           </div>
         </form>
+        <input
+          type="search"
+          aria-label={t('todo.search')}
+          placeholder={t('todo.search')}
+          className={field}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
         <label className="flex items-center gap-base text-sm">
           <input
             type="checkbox"

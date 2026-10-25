@@ -29,3 +29,5 @@ pub mod workspace_tokens;
 pub mod design_note;
 
 pub mod design_note_read;
+
+pub mod text_search;

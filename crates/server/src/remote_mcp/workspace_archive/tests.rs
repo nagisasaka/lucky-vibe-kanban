@@ -657,10 +657,15 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
     );
     assert!(read["result"]["structuredContent"]["url"].is_string());
     assert!(read["result"]["structuredContent"]["revision"].is_string());
-    for filter in [None, Some(true), Some(false)] {
+    for filter in [
+        None,
+        Some(json!(true)),
+        Some(json!(false)),
+        Some(json!("all")),
+    ] {
         let mut args = json!({"project_id":project});
-        if let Some(value) = filter {
-            args["archived"] = json!(value);
+        if let Some(value) = &filter {
+            args["archived"] = value.clone();
         }
         let listed: Value = request(&reader, tool("list_issues", args))
             .send()
@@ -674,7 +679,11 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
                 .as_array()
                 .unwrap()
                 .len(),
-            if filter == Some(false) { 0 } else { 1 },
+            if filter == Some(json!(true)) || filter == Some(json!("all")) {
+                1
+            } else {
+                0
+            },
             "{listed}"
         );
     }

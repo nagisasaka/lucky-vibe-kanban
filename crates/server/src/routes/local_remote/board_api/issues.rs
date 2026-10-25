@@ -8,6 +8,7 @@ use axum::{
     response::Json as ResponseJson,
     routing::{get, post},
 };
+use deployment::Deployment;
 use utils::response::ApiResponse;
 use uuid::Uuid;
 
@@ -18,6 +19,7 @@ pub(super) fn router() -> Router<DeploymentImpl> {
         .merge(super::super::issue_archive::router())
         .route("/issues", get(list_issues).post(create_issue))
         .route("/issues/search", post(search_issues))
+        .route("/issues/filter", post(filter_issues))
         .route(
             "/issues/{issue_id}",
             get(get_issue).patch(update_issue).delete(delete_issue),
@@ -82,4 +84,30 @@ async fn delete_issue(
     let client = super::Store::new(&deployment);
     client.delete_issue(issue_id).await?;
     Ok(ResponseJson(ApiResponse::success(())))
+}
+
+async fn filter_issues(
+    State(deployment): State<DeploymentImpl>,
+    Json(request): Json<api_types::FilterIssuesRequest>,
+) -> Result<ResponseJson<ApiResponse<ListIssuesResponse>>, ApiError> {
+    let pool = &deployment.db().pool;
+    let issues =
+        super::issue_filter::filter_project_issues(pool, request.project_id, &request.filters)
+            .await?;
+    let statuses = super::super::list_project_statuses(pool, request.project_id).await?;
+    let order = statuses.into_iter().map(|s| (s.id, s.sort_order)).collect();
+    let mut q: SearchIssuesRequest =
+        serde_json::from_value(serde_json::json!({"project_id":request.project_id}))
+            .expect("empty search");
+    q.sort_field = request.sort_field;
+    q.sort_direction = request.sort_direction;
+    q.limit = request.limit;
+    q.offset = request.offset;
+    Ok(ResponseJson(ApiResponse::success(super::search(
+        issues,
+        &[],
+        &[],
+        &order,
+        &q,
+    ))))
 }

@@ -1,6 +1,7 @@
 //! Bounded read projections over the existing local Board records. Reads do not
 //! initialise metadata, reconcile jobs, or invoke a model.
 use anyhow::{bail, ensure};
+use futures_util::TryStreamExt;
 use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -20,12 +21,12 @@ struct ProjectArgs {
 #[serde(deny_unknown_fields)]
 struct IssueListArgs {
     project_id: Uuid,
-    /// Omit for all Issues regardless of UI hidden statuses.
-    archived: Option<bool>,
     #[serde(default = "super::default_limit")]
     #[schemars(range(min = 1, max = 50))]
     limit: u32,
     cursor: Option<Uuid>,
+    #[serde(flatten)]
+    filters: api_types::IssueFilters,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -68,7 +69,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<IssueListArgs>(
             "list_issues",
-            "List up to 50 Issue summaries in one Project. Follow next_cursor; descriptions are available separately through get_issue.",
+            "List up to 50 Issue summaries in one Project. Archive selection: omitted/false means unarchived, true means archived, 'all' means both, independent of UI hidden statuses. Optional search (full title/description, case-insensitive substring, literal whitespace), simple_id (exact), status (name or UUID), priority, parent_issue_id, assignee_user_id, tag_id and tag_name use the same filters as stdio MCP. Filters combine with AND; tag_id and tag_name must identify the same tag. Keep identical filters while following next_cursor; UUID order and existing summaries are preserved. Descriptions are available through get_issue.",
         ),
         definition::<IssueArgs>(
             "get_issue",
@@ -177,8 +178,46 @@ impl Remote {
                 .await
                 .map_err(|_| anyhow::anyhow!("Stale or foreign cursor; restart Issue listing"))?;
         }
-        let rows = sqlx::query("SELECT i.id,i.archived,i.simple_id,substr(i.title,1,500) AS title,length(i.title)>500 AS title_truncated,i.status_id,substr(s.name,1,100) AS status_name,i.updated_at,(SELECT count(*) FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=i.id AND l.project_id=i.project_id) AS workspace_count FROM local_issues i LEFT JOIN local_project_statuses s ON s.id=i.status_id AND s.project_id=i.project_id WHERE i.project_id=? AND (? IS NULL OR i.archived=?) AND (? IS NULL OR i.id>?) ORDER BY i.id LIMIT ?")
-            .bind(args.project_id).bind(args.archived).bind(args.archived).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
+        // Archive-only requests retain the bounded SQL path. Its predicate uses
+        // the same shared archive selection as matches(); other filters run there
+        // before transport-specific cursor paging.
+        let matching_ids = if args.filters
+            == (api_types::IssueFilters {
+                archived: args.filters.archived,
+                ..Default::default()
+            }) {
+            None
+        } else {
+            Some(
+                crate::routes::local_remote::board_api::issue_filter::filter_project_issues(
+                    &self.pool,
+                    args.project_id,
+                    &args.filters,
+                )
+                .await?
+                .into_iter()
+                .map(|i| i.id)
+                .collect::<std::collections::HashSet<_>>(),
+            )
+        };
+        // Filtered requests already applied archive in shared matches(). Only the
+        // no-filter fast path needs the equivalent bounded SQL predicate.
+        let archived = matching_ids
+            .is_none()
+            .then(|| args.filters.archived.value())
+            .flatten();
+        let mut stream = sqlx::query("SELECT i.id,i.archived,i.simple_id,substr(i.title,1,500) AS title,length(i.title)>500 AS title_truncated,i.status_id,substr(s.name,1,100) AS status_name,i.updated_at,(SELECT count(*) FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=i.id AND l.project_id=i.project_id) AS workspace_count FROM local_issues i LEFT JOIN local_project_statuses s ON s.id=i.status_id AND s.project_id=i.project_id WHERE i.project_id=? AND (? IS NULL OR i.archived=?) AND (? IS NULL OR i.id>?) ORDER BY i.id LIMIT ?")
+            .bind(args.project_id).bind(archived).bind(archived).bind(args.cursor).bind(args.cursor).bind(if matching_ids.is_some() {i64::MAX} else {i64::from(args.limit)+1}).fetch(&self.pool);
+        let mut rows = Vec::new();
+        while let Some(row) = stream.try_next().await? {
+            let id: Uuid = row.try_get("id")?;
+            if matching_ids.as_ref().is_none_or(|ids| ids.contains(&id)) {
+                rows.push(row);
+                if rows.len() > args.limit as usize {
+                    break;
+                }
+            }
+        }
         let items = rows.into_iter().map(|row| -> anyhow::Result<Value> {
             let id: Uuid = row.try_get("id")?;
             Ok(json!({"id":id,"archived":row.try_get::<bool,_>("archived")?,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"status_name":row.try_get::<Option<String>,_>("status_name")?,"revision":row.try_get::<String,_>("updated_at")?,"workspace_count":row.try_get::<i64,_>("workspace_count")?,"url":self.config.issue_url(args.project_id,id)}))

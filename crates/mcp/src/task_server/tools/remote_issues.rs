@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use api_types::{
-    CreateIssueRequest, Issue, IssuePriority, IssueRelationshipType, IssueSortField,
-    ListIssueRelationshipsResponse, ListIssueTagsResponse, ListIssuesResponse,
-    ListPullRequestsResponse, ListTagsResponse, MutationResponse, PullRequestStatus,
-    SearchIssuesRequest, SortDirection, UpdateIssueRequest,
+    CreateIssueRequest, FilterIssuesRequest, Issue, IssueFilters, IssuePriority,
+    IssueRelationshipType, IssueSortField, ListIssueRelationshipsResponse, ListIssueTagsResponse,
+    ListIssuesResponse, ListPullRequestsResponse, ListTagsResponse, MutationResponse,
+    PullRequestStatus, SortDirection, UpdateIssueRequest,
 };
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
@@ -44,13 +44,14 @@ struct McpListIssuesRequest {
         description = "The ID of the project to list issues from. Optional if running inside a workspace linked to a remote project."
     )]
     project_id: Option<Uuid>,
-    /// Omit to list all Issues; independent of UI status visibility.
-    archived: Option<bool>,
+    /// false (default): unarchived, true: archived, "all": both. Independent of hidden statuses.
+    #[serde(default)]
+    archived: api_types::IssueArchiveFilter,
     #[schemars(description = "Maximum number of issues to return (default: 50)")]
     limit: Option<i32>,
     #[schemars(description = "Number of results to skip before returning rows (default: 0)")]
     offset: Option<i32>,
-    #[schemars(description = "Filter by status name (case-insensitive)")]
+    #[schemars(description = "Filter by status name (case-insensitive exact match) or UUID")]
     status: Option<String>,
     #[schemars(
         description = "Filter by priority. Allowed values: 'urgent', 'high', 'medium', 'low'."
@@ -58,7 +59,9 @@ struct McpListIssuesRequest {
     priority: Option<String>,
     #[schemars(description = "Filter by parent issue ID (subissues of this issue)")]
     parent_issue_id: Option<Uuid>,
-    #[schemars(description = "Case-insensitive substring match against title and description")]
+    #[schemars(
+        description = "Case-insensitive literal substring match against full title or description; surrounding whitespace is preserved"
+    )]
     search: Option<String>,
     #[schemars(description = "Filter by issue simple ID (case-insensitive exact match)")]
     simple_id: Option<String>,
@@ -66,7 +69,9 @@ struct McpListIssuesRequest {
     assignee_user_id: Option<Uuid>,
     #[schemars(description = "Filter to issues having this tag ID")]
     tag_id: Option<Uuid>,
-    #[schemars(description = "Filter to issues having a tag with this name (case-insensitive)")]
+    #[schemars(
+        description = "Filter by exact tag name (case-insensitive); when tag_id is also supplied, that same tag ID must have this name"
+    )]
     tag_name: Option<String>,
     #[schemars(
         description = "Field to sort by. Allowed values: 'sort_order', 'priority', 'created_at', 'updated_at', 'title'. Default: 'sort_order'."
@@ -415,7 +420,7 @@ impl McpServer {
     }
 
     #[tool(
-        description = "List all the issues in a project. `project_id` is optional if running inside a workspace linked to a remote project."
+        description = "List Issues in a project. archived omitted/false selects unarchived, true selects archived, and 'all' selects both. Filters combine with AND before offset paging. `project_id` is optional if running inside a workspace linked to a remote project."
     )]
     async fn list_issues(
         &self,
@@ -457,40 +462,6 @@ impl McpServer {
                 .collect::<HashMap<_, _>>()
         });
 
-        let (status_id, status_ids, missing_status_name_match) = match status.as_deref() {
-            Some(status) => match Uuid::parse_str(status) {
-                Ok(status_id) => (Some(status_id), None, false),
-                Err(_) => {
-                    let matching_status_ids = project_statuses
-                        .as_deref()
-                        .map(|statuses| {
-                            Self::matching_ids_by_name(
-                                statuses
-                                    .iter()
-                                    .map(|status| (status.id, status.name.as_str())),
-                                status,
-                            )
-                        })
-                        .unwrap_or_default();
-                    let missing_status_name_match = matching_status_ids.is_empty();
-                    (
-                        None,
-                        (!missing_status_name_match).then_some(matching_status_ids),
-                        missing_status_name_match,
-                    )
-                }
-            },
-            None => (None, None, false),
-        };
-
-        let priority = match priority {
-            Some(priority) => match Self::parse_issue_priority(&priority) {
-                Ok(priority) => Some(priority),
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            },
-            None => None,
-        };
-
         let sort_field = match Self::parse_issue_sort_field(sort_field.as_deref()) {
             Ok(value) => Some(value),
             Err(e) => return Ok(McpServer::tool_error(e)),
@@ -500,47 +471,30 @@ impl McpServer {
             Err(e) => return Ok(McpServer::tool_error(e)),
         };
 
-        let matching_tag_ids = match tag_name.as_deref() {
-            Some(tag_name) => match self.find_tag_ids_by_name(project_id, tag_name).await {
-                Ok(tag_ids) => Some(tag_ids),
-                Err(e) => return Ok(McpServer::tool_error(e)),
-            },
-            None => None,
-        };
-        let (tag_id, tag_ids, missing_tag_name_match) =
-            Self::resolve_tag_filters(tag_id, matching_tag_ids);
-
-        let response = if missing_status_name_match || missing_tag_name_match {
-            ListIssuesResponse {
-                issues: Vec::new(),
-                total_count: 0,
-                limit: limit.unwrap_or(50).max(0) as usize,
-                offset: offset.unwrap_or(0).max(0) as usize,
-            }
-        } else {
-            let query = SearchIssuesRequest {
-                project_id,
+        let query = FilterIssuesRequest {
+            project_id,
+            filters: IssueFilters {
                 archived,
-                status_id,
-                status_ids,
-                priority,
-                parent_issue_id,
                 search,
                 simple_id,
+                status,
+                priority,
+                parent_issue_id,
                 assignee_user_id,
                 tag_id,
-                tag_ids,
-                sort_field,
-                sort_direction,
-                limit: Some(limit.unwrap_or(50).max(0)),
-                offset: Some(offset.unwrap_or(0).max(0)),
-            };
-            let url = self.url("/api/board/issues/search");
+                tag_name,
+            },
+            sort_field,
+            sort_direction,
+            limit: Some(limit.unwrap_or(50).max(0)),
+            offset: Some(offset.unwrap_or(0).max(0)),
+        };
+        let url = self.url("/api/board/issues/filter");
+        let response: ListIssuesResponse =
             match self.send_json(self.client.post(&url).json(&query)).await {
                 Ok(r) => r,
                 Err(e) => return Ok(McpServer::tool_error(e)),
-            }
-        };
+            };
 
         let mut summaries = Vec::with_capacity(response.issues.len());
         for issue in &response.issues {
@@ -970,60 +924,93 @@ impl McpServer {
             IssuePriority::Low => "low",
         }
     }
-
-    async fn find_tag_ids_by_name(
-        &self,
-        project_id: Uuid,
-        tag_name: &str,
-    ) -> Result<Vec<Uuid>, ToolError> {
-        let url = self.url(&format!("/api/board/tags?project_id={}", project_id));
-        let tags: ListTagsResponse = self.send_json(self.client.get(&url)).await?;
-        Ok(Self::matching_ids_by_name(
-            tags.tags.iter().map(|tag| (tag.id, tag.name.as_str())),
-            tag_name,
-        ))
-    }
-
-    fn matching_ids_by_name<'a>(
-        items: impl IntoIterator<Item = (Uuid, &'a str)>,
-        name: &str,
-    ) -> Vec<Uuid> {
-        items
-            .into_iter()
-            .filter(|(_, item_name)| item_name.eq_ignore_ascii_case(name))
-            .map(|(id, _)| id)
-            .collect()
-    }
-
-    fn resolve_tag_filters(
-        tag_id: Option<Uuid>,
-        matching_tag_ids: Option<Vec<Uuid>>,
-    ) -> (Option<Uuid>, Option<Vec<Uuid>>, bool) {
-        match (tag_id, matching_tag_ids) {
-            (Some(tag_id), Some(matching_tag_ids)) => {
-                if matching_tag_ids.contains(&tag_id) {
-                    (Some(tag_id), None, false)
-                } else {
-                    (None, None, true)
-                }
-            }
-            (None, Some(matching_tag_ids)) => {
-                let missing_tag_name_match = matching_tag_ids.is_empty();
-                (
-                    None,
-                    (!missing_tag_name_match).then_some(matching_tag_ids),
-                    missing_tag_name_match,
-                )
-            }
-            (Some(tag_id), None) => (Some(tag_id), None, false),
-            (None, None) => (None, None, false),
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stdio_archive_filters_preserve_offset_count_contract() {
+        use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+        super::super::tests::install_rustls_provider();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let project = Uuid::new_v4();
+        let tag = Uuid::new_v4();
+        let backend = tokio::spawn(async move {
+            for archive in [
+                serde_json::json!(false),
+                serde_json::json!(true),
+                serde_json::json!("all"),
+            ] {
+                // Existing stdio status-name projection stays separate from the shared filter.
+                for path in [
+                    format!("GET /api/board/project-statuses?project_id={project}"),
+                    "POST /api/board/issues/filter".to_string(),
+                ] {
+                    let (socket, _) = listener.accept().await.unwrap();
+                    let mut socket = BufReader::new(socket);
+                    let mut first = String::new();
+                    socket.read_line(&mut first).await.unwrap();
+                    let mut length = 0;
+                    loop {
+                        let mut header = String::new();
+                        socket.read_line(&mut header).await.unwrap();
+                        if header == "\r\n" {
+                            break;
+                        }
+                        if let Some(value) = header.to_lowercase().strip_prefix("content-length:") {
+                            length = value.trim().parse::<usize>().unwrap();
+                        }
+                    }
+                    let mut bytes = vec![0; length];
+                    socket.read_exact(&mut bytes).await.unwrap();
+                    assert_eq!(first, format!("{path} HTTP/1.1\r\n"));
+                    let data = if path.starts_with("POST") {
+                        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+                        assert_eq!(body["project_id"], serde_json::json!(project));
+                        assert_eq!(body["archived"], archive);
+                        assert_eq!(body["search"], " Needle ");
+                        assert_eq!(body["tag_id"], serde_json::json!(tag));
+                        assert_eq!(body["tag_name"], "BuG");
+                        assert_eq!(body["limit"], 1);
+                        assert_eq!(body["offset"], 2);
+                        assert_eq!(body["sort_field"], "title");
+                        assert_eq!(body["sort_direction"], "desc");
+                        serde_json::json!({"issues":[],"total_count":2,"limit":1,"offset":2})
+                    } else {
+                        serde_json::json!({"project_statuses":[]})
+                    };
+                    let body = serde_json::json!({"success":true,"data":data}).to_string();
+                    socket.get_mut().write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).as_bytes()).await.unwrap();
+                }
+            }
+        });
+        let server = McpServer::new_global(&format!("http://{address}"));
+        for archive in [
+            None,
+            Some(serde_json::json!(true)),
+            Some(serde_json::json!("all")),
+        ] {
+            let mut input = serde_json::json!({"project_id":project,"search":" Needle ","tag_id":tag,"tag_name":"BuG","limit":1,"offset":2,"sort_field":"title","sort_direction":"desc"});
+            if let Some(archive) = archive {
+                input["archived"] = archive;
+            }
+            let result = server
+                .list_issues(Parameters(serde_json::from_value(input).unwrap()))
+                .await
+                .unwrap();
+            assert_ne!(result.is_error, Some(true), "{result:?}");
+            let text = result.content[0].as_text().unwrap();
+            let result: serde_json::Value = serde_json::from_str(&text.text).unwrap();
+            assert_eq!(result["total_count"], 2);
+            assert_eq!(result["returned_count"], 0);
+            assert_eq!(result["offset"], 2);
+            assert_eq!(result["limit"], 1);
+        }
+        backend.await.unwrap();
+    }
 
     #[tokio::test]
     async fn stdio_issue_archive_adapter_preserves_confirmation_and_receipt_requests() {
@@ -1129,59 +1116,5 @@ mod tests {
             Some(true)
         );
         backend.await.unwrap();
-    }
-
-    #[test]
-    fn collects_all_matching_status_ids_case_insensitively() {
-        let first_id = Uuid::new_v4();
-        let second_id = Uuid::new_v4();
-        let statuses = [
-            (first_id, "In Progress"),
-            (second_id, "in progress"),
-            (Uuid::new_v4(), "Todo"),
-        ];
-
-        assert_eq!(
-            McpServer::matching_ids_by_name(statuses, "IN PROGRESS"),
-            vec![first_id, second_id]
-        );
-    }
-
-    #[test]
-    fn collects_all_matching_tag_ids_case_insensitively() {
-        let first_id = Uuid::new_v4();
-        let second_id = Uuid::new_v4();
-        let tags = [
-            (first_id, "bug"),
-            (second_id, "Bug"),
-            (Uuid::new_v4(), "feature"),
-        ];
-
-        assert_eq!(
-            McpServer::matching_ids_by_name(tags, "BUG"),
-            vec![first_id, second_id]
-        );
-    }
-
-    #[test]
-    fn resolve_tag_filters_requires_explicit_tag_id_to_match_tag_name() {
-        let tag_id = Uuid::new_v4();
-        let other_tag_id = Uuid::new_v4();
-
-        assert_eq!(
-            McpServer::resolve_tag_filters(Some(tag_id), Some(vec![other_tag_id])),
-            (None, None, true)
-        );
-    }
-
-    #[test]
-    fn resolve_tag_filters_preserves_exact_tag_id_intersection() {
-        let tag_id = Uuid::new_v4();
-        let other_tag_id = Uuid::new_v4();
-
-        assert_eq!(
-            McpServer::resolve_tag_filters(Some(tag_id), Some(vec![other_tag_id, tag_id])),
-            (Some(tag_id), None, false)
-        );
     }
 }
