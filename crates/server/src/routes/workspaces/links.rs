@@ -64,6 +64,12 @@ pub(crate) async fn link_workspace_to_issue(
     issue_id: Uuid,
 ) -> Result<(), ApiError> {
     workspace.require_interactive()?;
+    crate::routes::local_remote::issue_archive::require_unarchived(
+        &deployment.db().pool,
+        project_id,
+        issue_id,
+    )
+    .await?;
     upsert_local_workspace_link(&deployment.db().pool, workspace.id, project_id, issue_id).await?;
 
     Ok(())

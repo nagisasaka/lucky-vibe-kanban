@@ -691,6 +691,8 @@ pub async fn create_issue_workflow_attempt_with_resources<W>(
 where
     W: WorkflowWorkspaceResolver,
 {
+    let _creation = super::local_remote::issue_archive::lock_issue(issue_id).await;
+    super::local_remote::issue_archive::require_unarchived(pool, project_id, issue_id).await?;
     let repo_overrides = workflow_workspace_repo_overrides(request.repos.as_deref().unwrap_or(&[]))
         .map_err(ApiError::BadRequest)?;
     let attempt = create_issue_workflow_attempt(pool, project_id, issue_id, request).await?;

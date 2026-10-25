@@ -576,7 +576,8 @@
     "subIssueIndicator": "↳",
     "viewTabs": {
       "active": "アクティブ",
-      "all": "すべて"
+      "all": "すべて",
+      "archived": "アーカイブ済"
     },
     "loginRequired": {},
     "team": "Team",
@@ -655,7 +656,9 @@
         "title": "Invite your team",
         "content": "We've automatically created a personal organization and initial project so you can get started with Lucky Vibe Kanban. Export your cloud data before shutdown."
       }
-    }
+    },
+    "switchToList": "一覧表示に切り替え",
+    "switchToKanban": "カンバン表示に切り替え"
   },
   "createMode": {
     "headings": {

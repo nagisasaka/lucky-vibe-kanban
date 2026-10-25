@@ -1,3 +1,5 @@
+import { useShape } from '@/shared/integrations/electric/hooks';
+import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BaseCodingAgent, type ExecutorConfig } from 'shared/types';
@@ -32,6 +34,11 @@ function executorConfigForWorkspace(
 
 export function ArenaPageActions({ group }: ArenaPageActionsProps) {
   const { t } = useTranslation('common');
+  const { data: issues } = useShape(PROJECT_ISSUES_SHAPE, {
+    project_id: group.project_id,
+  });
+  const issueArchived =
+    issues.find((issue) => issue.id === group.issue_id)?.archived ?? false;
   const [messageText, setMessageText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { message, startImplementation } = useArenaActions(
@@ -177,7 +184,12 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
             type="button"
             size="xs"
             variant="outline"
-            disabled={actionsDisabled || group.workspaces.length < 2}
+            disabled={
+              actionsDisabled || issueArchived || group.workspaces.length < 2
+            }
+            title={
+              issueArchived ? 'アーカイブ解除すると利用できます' : undefined
+            }
             onClick={() => void handleSynthesize()}
           >
             {t('arena.actions.synthesize')}

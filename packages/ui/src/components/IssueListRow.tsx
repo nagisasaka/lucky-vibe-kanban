@@ -3,7 +3,7 @@
 import type { MouseEvent } from 'react';
 import { cn } from '../lib/cn';
 import { Draggable } from '@hello-pangea/dnd';
-import { DotsSixVerticalIcon } from '@phosphor-icons/react';
+import { DotsSixVerticalIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { PriorityIcon, type PriorityLevel } from './PriorityIcon';
 import { StatusDot } from './StatusDot';
 import { KanbanBadge } from './KanbanBadge';
@@ -67,6 +67,7 @@ export interface IssueListRowProps {
   relationships?: IssueListRowRelationship[];
   assignees: KanbanAssigneeUser[];
   onClick: (e: MouseEvent) => void;
+  onMoreActions?: () => void;
   isSelected: boolean;
   isMultiSelectActive?: boolean;
   isChecked?: boolean;
@@ -82,6 +83,7 @@ export function IssueListRow({
   relationships = [],
   assignees,
   onClick,
+  onMoreActions,
   isSelected,
   isMultiSelectActive = false,
   isChecked = false,
@@ -97,6 +99,7 @@ export function IssueListRow({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
+          data-issue-list-row={issue.id}
           role="button"
           tabIndex={0}
           onClick={onClick}
@@ -115,6 +118,21 @@ export function IssueListRow({
             className
           )}
         >
+          {onMoreActions && (
+            <button
+              type="button"
+              aria-label="Issue actions"
+              title="Issue actions"
+              className="p-half rounded-sm text-low hover:text-normal"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoreActions();
+              }}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <DotsThreeIcon className="size-icon-xs" />
+            </button>
+          )}
           {/* Left side: Checkbox/Drag handle, Priority, ID, Status, Title */}
           <div className="flex items-center gap-double flex-1 min-w-0">
             <div className="relative shrink-0 w-4 flex items-center justify-center">

@@ -11,6 +11,7 @@ import {
 export interface IssueTaskAttemptsSectionProps {
   attempts: IssueTaskAttemptCardData[];
   isLoading?: boolean;
+  createDisabledReason?: string;
   actions?: SectionAction[];
   onOpenAttempt?: (attempt: IssueTaskAttemptCardData) => void;
   onRunAttempt?: (attempt: IssueTaskAttemptCardData) => void;
@@ -23,6 +24,7 @@ export interface IssueTaskAttemptsSectionProps {
 export function IssueTaskAttemptsSection({
   attempts,
   isLoading,
+  createDisabledReason,
   actions = [],
   onOpenAttempt,
   onRunAttempt,
@@ -42,6 +44,9 @@ export function IssueTaskAttemptsSection({
       defaultExpanded={true}
       actions={actions}
     >
+      {createDisabledReason && (
+        <p className="text-low px-base">{createDisabledReason}</p>
+      )}
       <div className="flex flex-col gap-base border-t p-base px-base">
         {isLoading ? (
           <p className="py-half text-low">
@@ -54,8 +59,10 @@ export function IssueTaskAttemptsSection({
                 {onCreateWorkflowAttempt && (
                   <button
                     type="button"
+                    disabled={!!createDisabledReason}
+                    title={createDisabledReason}
                     onClick={onCreateWorkflowAttempt}
-                    className="rounded-sm border border-brand/50 bg-brand/10 px-base py-half text-center text-xs font-medium text-high transition-colors hover:bg-brand/15 focus:outline-none focus:ring-1 focus:ring-brand"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed rounded-sm border border-brand/50 bg-brand/10 px-base py-half text-center text-xs font-medium text-high transition-colors hover:bg-brand/15 focus:outline-none focus:ring-1 focus:ring-brand"
                   >
                     {t('attempts.newWorkflow', 'New workflow attempt')}
                   </button>
@@ -63,8 +70,10 @@ export function IssueTaskAttemptsSection({
                 {onCreateSingleAgentAttempt && (
                   <button
                     type="button"
+                    disabled={!!createDisabledReason}
+                    title={createDisabledReason}
                     onClick={onCreateSingleAgentAttempt}
-                    className="rounded-sm border border-secondary bg-primary px-base py-half text-center text-xs font-medium text-normal transition-colors hover:border-border hover:text-high focus:outline-none focus:ring-1 focus:ring-border"
+                    className="disabled:opacity-50 disabled:cursor-not-allowed rounded-sm border border-secondary bg-primary px-base py-half text-center text-xs font-medium text-normal transition-colors hover:border-border hover:text-high focus:outline-none focus:ring-1 focus:ring-border"
                   >
                     {t('attempts.newSingleAgent', 'New single-agent attempt')}
                   </button>

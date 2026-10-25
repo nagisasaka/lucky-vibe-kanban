@@ -1178,7 +1178,8 @@
     "subIssueIndicator": "↳",
     "viewTabs": {
       "active": "Active",
-      "all": "All"
+      "all": "All",
+      "archived": "Archived"
     },
     "loginRequired": {},
     "team": "Team",
@@ -1257,7 +1258,9 @@
         "title": "Invite your team",
         "content": "We've automatically created a personal organization and initial project so you can get started with Lucky Vibe Kanban. Export your cloud data before shutdown."
       }
-    }
+    },
+    "switchToList": "Switch to list view",
+    "switchToKanban": "Switch to kanban view"
   },
   "createMode": {
     "headings": {

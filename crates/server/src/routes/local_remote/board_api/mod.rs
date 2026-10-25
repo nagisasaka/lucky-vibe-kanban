@@ -247,7 +247,8 @@ fn search(
     q: &SearchIssuesRequest,
 ) -> ListIssuesResponse {
     issues.retain(|i| {
-        q.status_id.is_none_or(|id| i.status_id == id)
+        q.archived.is_none_or(|archived| i.archived == archived)
+            && q.status_id.is_none_or(|id| i.status_id == id)
             && q.status_ids
                 .as_ref()
                 .is_none_or(|ids| ids.contains(&i.status_id))
@@ -400,6 +401,28 @@ mod tests {
         assert_eq!(result.total_count, 2);
     }
 
+    #[test]
+    fn archive_filter_is_explicit_and_does_not_apply_ui_hidden_status_rules() {
+        let active = issue(1, "Active", 0.0);
+        let mut archived = issue(2, "Archived", 1.0);
+        archived.archived = true;
+        let rows = vec![active, archived];
+        let mut q = query();
+        assert_eq!(
+            search(rows.clone(), &[], &[], &Default::default(), &q).total_count,
+            2
+        );
+        q.archived = Some(true);
+        assert_eq!(
+            search(rows.clone(), &[], &[], &Default::default(), &q).issues[0].title,
+            "Archived"
+        );
+        q.archived = Some(false);
+        assert_eq!(
+            search(rows, &[], &[], &Default::default(), &q).issues[0].title,
+            "Active"
+        );
+    }
     #[test]
     fn search_combines_tag_assignee_and_status_filters() {
         let mut q = query();

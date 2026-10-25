@@ -1,3 +1,4 @@
+import { useKanbanDisplayStore } from '@/shared/stores/useKanbanDisplayStore';
 import { KanbanGrid, KanbanGridCard, KanbanGridCards } from './KanbanGrid';
 import { KanbanCardDetails } from './KanbanCardDetails';
 import { DesignNotePanel } from '@/features/design-notes/ui/DesignNotePanel';
@@ -343,7 +344,11 @@ export function KanbanContainer() {
     return ids;
   }, [statuses]);
 
-  const { filteredIssues } = useKanbanFilters({
+  const archiveScope = useKanbanDisplayStore((s) =>
+    s.projectId === projectId ? s.scope : 'active'
+  );
+  const setArchiveScope = useKanbanDisplayStore((s) => s.setScope);
+  const { filteredIssues: matchingIssues } = useKanbanFilters({
     issues,
     issueAssignees,
     issueTags,
@@ -355,6 +360,19 @@ export function KanbanContainer() {
     hideBlocked,
     currentUserId: userId,
   });
+
+  const filteredIssues = useMemo(
+    () =>
+      matchingIssues.filter(
+        (issue) =>
+          statuses.some(
+            (status) => status.id === issue.status_id && !status.hidden
+          ) &&
+          (archiveScope === 'all' ||
+            issue.archived === (archiveScope === 'archived'))
+      ),
+    [matchingIssues, statuses, archiveScope]
+  );
 
   const setKanbanSearchQuery = useCallback(
     (searchQuery: string) => {
@@ -438,31 +456,11 @@ export function KanbanContainer() {
     },
     [projectId, setKanbanProjectView]
   );
-  const kanbanViewMode = useUiPreferencesStore((s) => s.kanbanViewMode);
-  const listViewStatusFilter = useUiPreferencesStore(
-    (s) => s.listViewStatusFilter
+  const kanbanViewMode = useKanbanDisplayStore((s) =>
+    s.projectId === projectId ? s.mode : 'kanban'
   );
-  const setKanbanViewMode = useUiPreferencesStore((s) => s.setKanbanViewMode);
-  const setListViewStatusFilter = useUiPreferencesStore(
-    (s) => s.setListViewStatusFilter
-  );
-  // Reset view mode when navigating projects
-  const prevProjectIdRef = useRef<string | null>(null);
-
-  // Track when drag-drop sync is in progress to prevent flicker
+  const toggleKanbanView = useKanbanDisplayStore((s) => s.toggleMode);
   const isSyncingRef = useRef(false);
-
-  useEffect(() => {
-    if (
-      prevProjectIdRef.current !== null &&
-      prevProjectIdRef.current !== projectId
-    ) {
-      setKanbanViewMode('kanban');
-      setListViewStatusFilter(null);
-    }
-
-    prevProjectIdRef.current = projectId;
-  }, [projectId, setKanbanViewMode, setListViewStatusFilter]);
 
   // Sort all statuses for display settings
   const sortedStatuses = useMemo(
@@ -485,20 +483,7 @@ export function KanbanContainer() {
     return map;
   }, [visibleStatuses]);
 
-  const hiddenStatuses = useMemo(
-    () => sortedStatuses.filter((s) => s.hidden),
-    [sortedStatuses]
-  );
-
-  const defaultCreateStatusId = useMemo(() => {
-    if (kanbanViewMode === 'kanban') {
-      return visibleStatuses[0]?.id;
-    }
-    if (listViewStatusFilter) {
-      return listViewStatusFilter;
-    }
-    return sortedStatuses[0]?.id;
-  }, [kanbanViewMode, visibleStatuses, listViewStatusFilter, sortedStatuses]);
+  const defaultCreateStatusId = visibleStatuses[0]?.id;
 
   // Update default create status for command bar based on current tab
   useEffect(() => {
@@ -526,13 +511,7 @@ export function KanbanContainer() {
     return [...assigneeIds];
   }, [kanbanFilters.assigneeIds, userId]);
 
-  // Get statuses to display in list view (all or filtered to one)
-  const listViewStatuses = useMemo(() => {
-    if (listViewStatusFilter) {
-      return sortedStatuses.filter((s) => s.id === listViewStatusFilter);
-    }
-    return sortedStatuses;
-  }, [sortedStatuses, listViewStatusFilter]);
+  const listViewStatuses = visibleStatuses;
 
   // Track items as arrays of IDs grouped by status
   const [items, setItems] = useState<Record<string, string[]>>({});
@@ -848,7 +827,22 @@ export function KanbanContainer() {
   // Keep the store's ordered IDs in sync
   useEffect(() => {
     setOrderedIssueIds(orderedIssueIds);
-  }, [orderedIssueIds, setOrderedIssueIds]);
+    if (
+      !projectLoading &&
+      selectedKanbanIssueId &&
+      !filteredIssues.some((issue) => issue.id === selectedKanbanIssueId)
+    ) {
+      appNavigation.goToProject(projectId);
+    }
+  }, [
+    orderedIssueIds,
+    setOrderedIssueIds,
+    selectedKanbanIssueId,
+    appNavigation,
+    projectId,
+    projectLoading,
+    filteredIssues,
+  ]);
 
   // Clear multi-selection when project or view mode changes
   useEffect(() => {
@@ -1081,15 +1075,14 @@ export function KanbanContainer() {
             )}
           >
             <ViewNavTabs
-              activeView={kanbanViewMode}
-              onViewChange={setKanbanViewMode}
-              hiddenStatuses={hiddenStatuses}
-              selectedStatusId={listViewStatusFilter}
-              onStatusSelect={setListViewStatusFilter}
+              scope={archiveScope}
+              onScopeChange={setArchiveScope}
               className={isMobile ? undefined : 'shrink-0'}
             />
             <KanbanFilterBar
               className={isMobile ? undefined : 'min-w-0 flex-1'}
+              viewMode={kanbanViewMode}
+              onToggleView={toggleKanbanView}
               isFiltersDialogOpen={isFiltersDialogOpen}
               onFiltersDialogOpenChange={setIsFiltersDialogOpen}
               tags={tags}
@@ -1345,6 +1338,7 @@ export function KanbanContainer() {
                 getResolvedRelationshipsForIssue
               }
               onIssueClick={handleCardClick}
+              onIssueMoreActions={handleCardMoreActionsClick}
               selectedIssueId={selectedKanbanIssueId}
               selectedIssueIds={selectedIssueIds}
               isMultiSelectActive={isMultiSelectActive}

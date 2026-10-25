@@ -15,6 +15,7 @@ use crate::{DeploymentImpl, error::ApiError};
 
 pub(super) fn router() -> Router<DeploymentImpl> {
     Router::new()
+        .merge(super::super::issue_archive::router())
         .route("/issues", get(list_issues).post(create_issue))
         .route("/issues/search", post(search_issues))
         .route(
@@ -28,7 +29,12 @@ async fn list_issues(
     Query(query): Query<ListIssuesQuery>,
 ) -> Result<ResponseJson<ApiResponse<ListIssuesResponse>>, ApiError> {
     let client = super::Store::new(&deployment);
-    let response = client.list_issues(query.project_id).await?;
+    let mut response = client.list_issues(query.project_id).await?;
+    if let Some(archived) = query.archived {
+        response.issues.retain(|issue| issue.archived == archived);
+        response.total_count = response.issues.len();
+        response.limit = response.total_count;
+    }
     Ok(ResponseJson(ApiResponse::success(response)))
 }
 

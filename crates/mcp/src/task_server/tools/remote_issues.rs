@@ -44,6 +44,8 @@ struct McpListIssuesRequest {
         description = "The ID of the project to list issues from. Optional if running inside a workspace linked to a remote project."
     )]
     project_id: Option<Uuid>,
+    /// Omit to list all Issues; independent of UI status visibility.
+    archived: Option<bool>,
     #[schemars(description = "Maximum number of issues to return (default: 50)")]
     limit: Option<i32>,
     #[schemars(description = "Number of results to skip before returning rows (default: 0)")]
@@ -84,6 +86,7 @@ struct IssueSummary {
     simple_id: String,
     #[schemars(description = "Current status of the issue")]
     status: String,
+    archived: bool,
     #[schemars(description = "Current priority of the issue")]
     priority: Option<String>,
     #[schemars(description = "Parent issue ID if this is a subissue")]
@@ -148,6 +151,7 @@ struct McpSubIssueSummary {
     title: String,
     #[schemars(description = "Current status of the sub-issue")]
     status: String,
+    archived: bool,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
@@ -164,6 +168,7 @@ struct IssueDetails {
     status: String,
     #[schemars(description = "The status ID (UUID)")]
     status_id: String,
+    archived: bool,
     #[schemars(description = "Current priority of the issue")]
     priority: Option<String>,
     #[schemars(description = "Parent issue ID if this is a subissue")]
@@ -250,8 +255,101 @@ struct McpListIssuePrioritiesResponse {
     priorities: Vec<String>,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct PrepareIssueArchiveRequest {
+    project_id: Uuid,
+    issue_id: Uuid,
+    /// true archives linked idle Workspaces and physically deletes their worktrees.
+    archive_workspaces: bool,
+}
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct ConfirmIssueArchiveRequest {
+    project_id: Uuid,
+    issue_id: Uuid,
+    confirmation_token: Uuid,
+    /// Reuse this ID after response loss. Never blindly prepare another deletion.
+    request_id: Uuid,
+}
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct UnarchiveIssueRequest {
+    project_id: Uuid,
+    issue_id: Uuid,
+    request_id: Uuid,
+}
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct IssueArchiveOperationRequest {
+    request_id: Uuid,
+}
+
 #[tool_router(router = remote_issues_tools_router, vis = "pub")]
 impl McpServer {
+    #[tool(
+        description = "Prepare Issue archive without mutation. Show the returned message and exact Workspace targets to the human once. After confirmation call confirm_issue_archive. The checkbox value and target set are bound; false leaves Workspaces unchanged. Busy child refuses the whole operation."
+    )]
+    async fn prepare_issue_archive(
+        &self,
+        Parameters(args): Parameters<PrepareIssueArchiveRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let url = self.url(&format!(
+            "/api/board/issues/{}/archive/prepare",
+            args.issue_id
+        ));
+        match self.send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({"project_id":args.project_id,"archive_workspaces":args.archive_workspaces}))).await {
+            Ok(value)=>Self::success(&value),Err(error)=>Ok(Self::tool_error(error))
+        }
+    }
+    #[tool(
+        description = "After human confirmation, archive the exact prepared Issue and optional Workspaces without changing status. Reuse request_id after response loss; inspect get_issue_archive_operation. Never automatically retry an uncertain outcome or regenerate deleted worktrees."
+    )]
+    async fn confirm_issue_archive(
+        &self,
+        Parameters(args): Parameters<ConfirmIssueArchiveRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let url = self.url(&format!(
+            "/api/board/issues/{}/archive/confirm",
+            args.issue_id
+        ));
+        match self.send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({"project_id":args.project_id,"confirmation_token":args.confirmation_token,"request_id":args.request_id}))).await {
+            Ok(value)=>Self::success(&value),Err(error)=>Ok(Self::tool_error(error))
+        }
+    }
+    #[tool(
+        description = "Unarchive only the Issue. Preserve status; do not unarchive Workspaces or regenerate worktrees. Reuse request_id for receipt recovery."
+    )]
+    async fn unarchive_issue(
+        &self,
+        Parameters(args): Parameters<UnarchiveIssueRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let url = self.url(&format!("/api/board/issues/{}/unarchive", args.issue_id));
+        match self
+            .send_json::<serde_json::Value>(self.client.post(url).json(
+                &serde_json::json!({"project_id":args.project_id,"request_id":args.request_id}),
+            ))
+            .await
+        {
+            Ok(value) => Self::success(&value),
+            Err(error) => Ok(Self::tool_error(error)),
+        }
+    }
+    #[tool(
+        description = "Read the original Issue archive/unarchive receipt after response loss. Unknown/uncertain outcomes must be inspected before any new request."
+    )]
+    async fn get_issue_archive_operation(
+        &self,
+        Parameters(args): Parameters<IssueArchiveOperationRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        let url = self.url(&format!(
+            "/api/board/issue-archive-operations/{}",
+            args.request_id
+        ));
+        match self
+            .send_json::<serde_json::Value>(self.client.get(url))
+            .await
+        {
+            Ok(value) => Self::success(&value),
+            Err(error) => Ok(Self::tool_error(error)),
+        }
+    }
     #[tool(
         description = "Create a new issue in a project. `project_id` is optional if running inside a workspace linked to a remote project."
     )]
@@ -323,6 +421,7 @@ impl McpServer {
         &self,
         Parameters(McpListIssuesRequest {
             project_id,
+            archived,
             limit,
             offset,
             status,
@@ -421,6 +520,7 @@ impl McpServer {
         } else {
             let query = SearchIssuesRequest {
                 project_id,
+                archived,
                 status_id,
                 status_ids,
                 priority,
@@ -632,6 +732,7 @@ impl McpServer {
             title: issue.title.clone(),
             simple_id: issue.simple_id.clone(),
             status,
+            archived: issue.archived,
             priority: issue
                 .priority
                 .map(Self::issue_priority_label)
@@ -671,6 +772,7 @@ impl McpServer {
             description: issue.description.clone(),
             status,
             status_id: issue.status_id.to_string(),
+            archived: issue.archived,
             priority: issue
                 .priority
                 .map(Self::issue_priority_label)
@@ -840,6 +942,7 @@ impl McpServer {
                     id: i.id.to_string(),
                     simple_id: i.simple_id.clone(),
                     title: i.title.clone(),
+                    archived: i.archived,
                     status,
                 }
             })
@@ -921,6 +1024,112 @@ impl McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stdio_issue_archive_adapter_preserves_confirmation_and_receipt_requests() {
+        use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+        super::super::tests::install_rustls_provider();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let project = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        let token = Uuid::new_v4();
+        let request = Uuid::new_v4();
+        let backend = tokio::spawn(async move {
+            for action in ["archive/prepare", "archive/confirm", "unarchive", "receipt"] {
+                let (socket, _) = listener.accept().await.unwrap();
+                let mut socket = BufReader::new(socket);
+                let mut first = String::new();
+                socket.read_line(&mut first).await.unwrap();
+                let mut length = 0;
+                loop {
+                    let mut header = String::new();
+                    socket.read_line(&mut header).await.unwrap();
+                    if header == "\r\n" {
+                        break;
+                    }
+                    if let Some(value) = header.to_lowercase().strip_prefix("content-length:") {
+                        length = value.trim().parse::<usize>().unwrap();
+                    }
+                }
+                let mut body = vec![0; length];
+                socket.read_exact(&mut body).await.unwrap();
+                if action == "receipt" {
+                    assert_eq!(
+                        first,
+                        format!("GET /api/board/issue-archive-operations/{request} HTTP/1.1\r\n")
+                    );
+                } else {
+                    assert_eq!(
+                        first,
+                        format!("POST /api/board/issues/{issue}/{action} HTTP/1.1\r\n")
+                    );
+                    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                    assert_eq!(body["project_id"], serde_json::json!(project));
+                    if action == "archive/prepare" {
+                        assert_eq!(body["archive_workspaces"], false);
+                        assert!(body.get("confirmation_token").is_none());
+                    } else {
+                        assert_eq!(body["request_id"], serde_json::json!(request));
+                        if action == "archive/confirm" {
+                            assert_eq!(body["confirmation_token"], serde_json::json!(token));
+                        }
+                    }
+                }
+                let body=serde_json::json!({"success":true,"data":{"request_id":request,"status":"succeeded"}}).to_string();
+                socket.get_mut().write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).as_bytes()).await.unwrap();
+            }
+        });
+        let server = McpServer::new_global(&format!("http://{address}"));
+        assert_ne!(
+            server
+                .prepare_issue_archive(Parameters(PrepareIssueArchiveRequest {
+                    project_id: project,
+                    issue_id: issue,
+                    archive_workspaces: false
+                }))
+                .await
+                .unwrap()
+                .is_error,
+            Some(true)
+        );
+        assert_ne!(
+            server
+                .confirm_issue_archive(Parameters(ConfirmIssueArchiveRequest {
+                    project_id: project,
+                    issue_id: issue,
+                    confirmation_token: token,
+                    request_id: request
+                }))
+                .await
+                .unwrap()
+                .is_error,
+            Some(true)
+        );
+        assert_ne!(
+            server
+                .unarchive_issue(Parameters(UnarchiveIssueRequest {
+                    project_id: project,
+                    issue_id: issue,
+                    request_id: request
+                }))
+                .await
+                .unwrap()
+                .is_error,
+            Some(true)
+        );
+        assert_ne!(
+            server
+                .get_issue_archive_operation(Parameters(IssueArchiveOperationRequest {
+                    request_id: request
+                }))
+                .await
+                .unwrap()
+                .is_error,
+            Some(true)
+        );
+        backend.await.unwrap();
+    }
 
     #[test]
     fn collects_all_matching_status_ids_case_insensitively() {

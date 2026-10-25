@@ -1,3 +1,9 @@
+import { IssueArchiveDialog } from '@/shared/dialogs/kanban/IssueArchiveDialog';
+import {
+  issueArchiveApi,
+  refreshIssueArchive,
+  receiptMessage,
+} from '@/shared/lib/issueArchiveApi';
 import { forwardRef, createElement } from 'react';
 import type { Icon, IconProps } from '@phosphor-icons/react';
 import type { ExecutorConfig, Merge, Workspace } from 'shared/types';
@@ -1408,11 +1414,45 @@ export const Actions = {
     icon: LinkIcon,
     shortcut: 'I W',
     requiresTarget: ActionTargetType.ISSUE,
+    isEnabled: (ctx) => !ctx.selectedIssueArchived,
+    getLabel: (ctx) =>
+      ctx.selectedIssueArchived
+        ? 'ワークスペースを紐付け（アーカイブ解除すると利用できます）'
+        : 'Link Workspace',
     isVisible: (ctx) =>
       ctx.layoutMode === 'kanban' && ctx.hasSelectedKanbanIssue,
     execute: async (ctx, projectId, issueIds) => {
       if (issueIds.length === 1) {
         await ctx.openWorkspaceSelection(projectId, issueIds[0]);
+      }
+    },
+  } satisfies IssueActionDefinition,
+
+  ArchiveIssue: {
+    id: 'archive-issue',
+    label: 'アーカイブ',
+    getLabel: (ctx) =>
+      ctx.selectedIssueArchived ? 'アーカイブ解除' : 'アーカイブ',
+    icon: ArchiveIcon,
+    requiresTarget: ActionTargetType.ISSUE,
+    isVisible: (ctx) =>
+      ctx.layoutMode === 'kanban' &&
+      ctx.hasSelectedKanbanIssue &&
+      (ctx.selectedIssueCount ?? 1) === 1,
+    execute: async (ctx, projectId, issueIds) => {
+      if (issueIds.length !== 1) return;
+      const issue = ctx.projectMutations?.getIssue(issueIds[0]);
+      if (issue?.archived) {
+        const receipt = await issueArchiveApi.restore(
+          projectId,
+          issueIds[0],
+          crypto.randomUUID()
+        );
+        refreshIssueArchive(projectId);
+        const message = receiptMessage(receipt);
+        if (message) throw new Error(message);
+      } else {
+        await IssueArchiveDialog.show({ projectId, issueId: issueIds[0] });
       }
     },
   } satisfies IssueActionDefinition,

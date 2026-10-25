@@ -24,6 +24,8 @@ pub struct Issue {
     pub issue_number: i32,
     pub simple_id: String,
     pub status_id: Uuid,
+    #[serde(default)]
+    pub archived: bool,
     pub title: String,
     pub description: Option<String>,
     pub priority: Option<IssuePriority>,
@@ -149,11 +151,16 @@ pub struct UpdateIssueRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ListIssuesQuery {
     pub project_id: Uuid,
+    #[ts(optional)]
+    pub archived: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchIssuesRequest {
     pub project_id: Uuid,
+    /// Omit for all Issues, irrespective of UI hidden statuses.
+    #[ts(optional)]
+    pub archived: Option<bool>,
     #[ts(optional)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_id: Option<Uuid>,

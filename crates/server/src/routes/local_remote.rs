@@ -1,4 +1,5 @@
 pub mod board_api;
+pub(crate) mod issue_archive;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
@@ -651,6 +652,7 @@ fn issue_from_row(row: &SqliteRow) -> Result<Issue, sqlx::Error> {
         issue_number: row.try_get("issue_number")?,
         simple_id: row.try_get("simple_id")?,
         status_id: row.try_get("status_id")?,
+        archived: row.try_get("archived")?,
         title: row.try_get("title")?,
         description: row.try_get("description")?,
         priority: priority_from_str(row.try_get("priority")?),
@@ -679,6 +681,7 @@ pub(crate) async fn list_project_issues(
             issue_number,
             simple_id,
             status_id,
+            archived,
             title,
             description,
             priority,
@@ -716,6 +719,7 @@ pub(crate) async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result
             issue_number,
             simple_id,
             status_id,
+            archived,
             title,
             description,
             priority,
@@ -2460,6 +2464,8 @@ async fn spawn_arena_attempt(
         )
     });
 
+    let _issue_creation_guard = issue_archive::lock_issue(issue_id).await;
+    issue_archive::require_unarchived(pool, project_id, issue_id).await?;
     let workspace = create_workspace_record(deployment, Some(display_name)).await?;
 
     let mut managed_workspace = deployment
@@ -2904,6 +2910,8 @@ async fn spawn_arena_synthesis_workspace(
         ARENA_SYNTHESIS_WORKSPACE_PREFIX,
         existing_synthesis_count + 1
     );
+    let _issue_creation_guard = issue_archive::lock_issue(group.issue_id).await;
+    issue_archive::require_unarchived(pool, group.project_id, group.issue_id).await?;
     let workspace = create_workspace_record(deployment, Some(display_name)).await?;
 
     let mut managed_workspace = deployment
@@ -3666,6 +3674,7 @@ mod tests {
                 simple_id TEXT NOT NULL,
                 status_id BLOB NOT NULL,
                 agent_status_owner BLOB,
+                archived INTEGER NOT NULL DEFAULT 0,
                 title TEXT NOT NULL,
                 description TEXT,
                 priority TEXT,

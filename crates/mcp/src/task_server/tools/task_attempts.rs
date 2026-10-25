@@ -213,15 +213,6 @@ impl McpServer {
             Err(e) => return Ok(Self::tool_error(e)),
         };
 
-        // Link workspace to remote issue if issue_id is provided
-        if let Some(issue_id) = issue_id
-            && let Err(e) = self
-                .link_workspace_to_issue(create_and_start_response.workspace.id, issue_id)
-                .await
-        {
-            return Ok(Self::tool_error(e));
-        }
-
         let response = StartWorkspaceResponse {
             workspace_id: create_and_start_response.workspace.id.to_string(),
         };

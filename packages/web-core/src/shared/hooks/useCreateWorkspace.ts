@@ -21,15 +21,17 @@ export function useCreateWorkspace() {
 
   const createWorkspace = useMutation({
     mutationFn: async ({ data, linkToIssue }: CreateWorkspaceParams) => {
-      const { workspace } = await workspacesApi.createAndStart(data);
-
-      if (linkToIssue && workspace && !data.linked_issue) {
-        await workspacesApi.linkToIssue(
-          workspace.id,
-          linkToIssue.remoteProjectId,
-          linkToIssue.issueId
-        );
-      }
+      const { workspace } = await workspacesApi.createAndStart({
+        ...data,
+        linked_issue:
+          data.linked_issue ??
+          (linkToIssue
+            ? {
+                remote_project_id: linkToIssue.remoteProjectId,
+                issue_id: linkToIssue.issueId,
+              }
+            : null),
+      });
 
       return { workspace };
     },

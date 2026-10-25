@@ -20,6 +20,8 @@ struct ProjectArgs {
 #[serde(deny_unknown_fields)]
 struct IssueListArgs {
     project_id: Uuid,
+    /// Omit for all Issues regardless of UI hidden statuses.
+    archived: Option<bool>,
     #[serde(default = "super::default_limit")]
     #[schemars(range(min = 1, max = 50))]
     limit: u32,
@@ -175,11 +177,11 @@ impl Remote {
                 .await
                 .map_err(|_| anyhow::anyhow!("Stale or foreign cursor; restart Issue listing"))?;
         }
-        let rows = sqlx::query("SELECT i.id,i.simple_id,substr(i.title,1,500) AS title,length(i.title)>500 AS title_truncated,i.status_id,substr(s.name,1,100) AS status_name,i.updated_at,(SELECT count(*) FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=i.id AND l.project_id=i.project_id) AS workspace_count FROM local_issues i LEFT JOIN local_project_statuses s ON s.id=i.status_id AND s.project_id=i.project_id WHERE i.project_id=? AND (? IS NULL OR i.id>?) ORDER BY i.id LIMIT ?")
-            .bind(args.project_id).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
+        let rows = sqlx::query("SELECT i.id,i.archived,i.simple_id,substr(i.title,1,500) AS title,length(i.title)>500 AS title_truncated,i.status_id,substr(s.name,1,100) AS status_name,i.updated_at,(SELECT count(*) FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=i.id AND l.project_id=i.project_id) AS workspace_count FROM local_issues i LEFT JOIN local_project_statuses s ON s.id=i.status_id AND s.project_id=i.project_id WHERE i.project_id=? AND (? IS NULL OR i.archived=?) AND (? IS NULL OR i.id>?) ORDER BY i.id LIMIT ?")
+            .bind(args.project_id).bind(args.archived).bind(args.archived).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
         let items = rows.into_iter().map(|row| -> anyhow::Result<Value> {
             let id: Uuid = row.try_get("id")?;
-            Ok(json!({"id":id,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"status_name":row.try_get::<Option<String>,_>("status_name")?,"revision":row.try_get::<String,_>("updated_at")?,"workspace_count":row.try_get::<i64,_>("workspace_count")?,"url":self.config.issue_url(args.project_id,id)}))
+            Ok(json!({"id":id,"archived":row.try_get::<bool,_>("archived")?,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"status_name":row.try_get::<Option<String>,_>("status_name")?,"revision":row.try_get::<String,_>("updated_at")?,"workspace_count":row.try_get::<i64,_>("workspace_count")?,"url":self.config.issue_url(args.project_id,id)}))
         }).collect::<anyhow::Result<Vec<_>>>()?;
         Ok(page(items, args.limit))
     }
@@ -194,7 +196,7 @@ impl Remote {
             args.offset == 0 || args.expected_revision.is_some(),
             "Supply expected_revision when reading another requirements page"
         );
-        let row = sqlx::query("SELECT substr(title,1,500) AS title,length(title)>500 AS title_truncated,simple_id,status_id,updated_at,substr(coalesce(description,''),?,?) AS content,length(coalesce(description,'')) AS total FROM local_issues WHERE id=? AND project_id=?")
+        let row = sqlx::query("SELECT substr(title,1,500) AS title,length(title)>500 AS title_truncated,simple_id,status_id,archived,updated_at,substr(coalesce(description,''),?,?) AS content,length(coalesce(description,'')) AS total FROM local_issues WHERE id=? AND project_id=?")
             .bind(i64::from(args.offset)+1).bind(args.limit).bind(args.issue_id).bind(args.project_id).fetch_one(&self.pool).await?;
         let revision: String = row.try_get("updated_at")?;
         ensure!(
@@ -210,7 +212,7 @@ impl Remote {
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
-            json!({"id":args.issue_id,"project_id":args.project_id,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"review_target":{"issue_id":args.issue_id,"revision":revision},"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
+            json!({"id":args.issue_id,"project_id":args.project_id,"archived":row.try_get::<bool,_>("archived")?,"simple_id":row.try_get::<String,_>("simple_id")?,"title":row.try_get::<String,_>("title")?,"title_truncated":row.try_get::<bool,_>("title_truncated")?,"status_id":row.try_get::<Uuid,_>("status_id")?,"revision":revision,"review_target":{"issue_id":args.issue_id,"revision":revision},"description_page":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"next_offset":if next<total {Some(next)} else {None},"has_more":next<total,"url":self.config.issue_url(args.project_id,args.issue_id)}),
         )
     }
 
