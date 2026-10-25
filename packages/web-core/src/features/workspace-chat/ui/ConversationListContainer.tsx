@@ -166,7 +166,8 @@ function renderRowContent(
   if (entry.type === 'NORMALIZED_ENTRY') {
     return (
       <DisplayConversationEntry
-        expansionKey={entry.patchKey}
+        expansionKey={entry.displayIdentity ?? entry.patchKey}
+        canonicalEntryKey={entry.patchKey}
         entry={entry.content}
         aggregatedGroup={null}
         aggregatedDiffGroup={null}
@@ -215,14 +216,17 @@ const ScopedConversationList = forwardRef<
   const [hasRunningProcess, setHasRunningProcess] = useState(false);
   const lastSettledTailStartIndexRef = useRef<number | null>(null);
   const visibleTailStartRef = useRef<number | null>(null);
-  const readerAtBottomRef = useRef(true);
+  const readerFollowingRef = useRef(true);
   const handleAtBottomChange = useCallback(
     (atBottom: boolean) => {
-      readerAtBottomRef.current = atBottom;
       onAtBottomChange?.(atBottom);
     },
     [onAtBottomChange]
   );
+  const handleFollowChange = useCallback((following: boolean) => {
+    readerFollowingRef.current = following;
+    if (following) historyAnchorRef.current = null;
+  }, []);
   const { setEntries, reset } = useEntriesActions();
   const setTokenUsageInfo = useSetTokenUsageInfo();
   const scriptOutputCacheRef = useRef<
@@ -307,7 +311,8 @@ const ScopedConversationList = forwardRef<
     setDataVersion(0);
     lastSettledTailStartIndexRef.current = null;
     visibleTailStartRef.current = null;
-    readerAtBottomRef.current = true;
+    readerFollowingRef.current = true;
+    initialScrollAppliedRef.current = false;
     reset();
   }, [conversationScopeKey, reset]);
 
@@ -418,7 +423,8 @@ const ScopedConversationList = forwardRef<
         derivedEntries.entries,
         usePendingChatMessages
           .getState()
-          .messages.filter((m) => m.scope === pendingScope)
+          .messages.filter((m) => m.scope === pendingScope),
+        usePendingChatMessages.getState().identities[pendingScope]
       ),
       pending.source,
       prevEntriesRef.current,
@@ -426,7 +432,7 @@ const ScopedConversationList = forwardRef<
     );
 
     const el = tanstackScrollRef.current;
-    if (el && !readerAtBottomRef.current && !historyAnchorRef.current) {
+    if (el && !readerFollowingRef.current && !historyAnchorRef.current) {
       const top = el.getBoundingClientRect().top;
       const node = Array.from(
         el.querySelectorAll<HTMLElement>('[data-semantic-key]')
@@ -576,7 +582,7 @@ const ScopedConversationList = forwardRef<
   const firstUnvirtualizedRowIndex = preserveVisibleTailStart(
     visibleTailStartRef.current,
     desiredTailStart,
-    readerAtBottomRef.current
+    readerFollowingRef.current
   );
   visibleTailStartRef.current = firstUnvirtualizedRowIndex;
 
@@ -605,13 +611,30 @@ const ScopedConversationList = forwardRef<
     return true;
   }, []);
 
+  const captureReadingPosition = useCallback(() => {
+    const el = tanstackScrollRef.current;
+    if (!el || readerFollowingRef.current) return;
+    const top = el.getBoundingClientRect().top;
+    const node = Array.from(
+      el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+    ).find((row) => row.getBoundingClientRect().bottom > top);
+    if (node?.dataset.semanticKey) {
+      historyAnchorRef.current = {
+        key: node.dataset.semanticKey,
+        top: node.getBoundingClientRect().top - top,
+      };
+    }
+  }, []);
+
   const conversationVirtualizer = useConversationVirtualizer({
     rows: virtualizedRows,
     contentRef,
     onContentResize: restoreHistoryAnchor,
+    onReadingPositionChange: captureReadingPosition,
     totalRowCount: conversationRows.length,
     scrollContainerRef: tanstackScrollRef,
     onAtBottomChange: handleAtBottomChange,
+    onFollowChange: handleFollowChange,
     shouldSuppressSizeAdjustment: shouldSuppressInteractionDrivenSizeAdjustment,
   });
 
@@ -700,6 +723,7 @@ const ScopedConversationList = forwardRef<
   const scrollToBottomAndClearSpacer = useCallback(
     (behavior?: 'auto' | 'smooth') => {
       historyAnchorRef.current = null;
+      pendingInteractionAnchorRef.current = null;
       if (planRevealSpacerRef.current) {
         planRevealSpacerRef.current.style.height = '0px';
       }

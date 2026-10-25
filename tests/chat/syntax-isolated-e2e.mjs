@@ -15,6 +15,7 @@ import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createServer, connect } from 'node:net';
 import { once } from 'node:events';
+import { verifyScrollFollow } from './scroll-follow-app.mjs';
 
 const root = process.cwd();
 const additional = process.env.LVK_CHAT_ADDITIONAL === '1';
@@ -39,6 +40,7 @@ let server, browser, page;
 const serverPids = [];
 let browserPids = [];
 const report = {
+  startedAt: new Date().toISOString(),
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   dirty:
     execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()
@@ -179,7 +181,10 @@ if p.exists():
       await route.fulfill({ body: readFileSync(asset), contentType });
     });
   }
-  page.on('pageerror', (e) => report.errors.push(e.message));
+  page.on('pageerror', (e) => {
+    report.errors.push(e.message);
+    (report.errorStacks ??= []).push(e.stack);
+  });
   const stamp = new Date().toISOString();
   const state = {
     state_schema_version: 1,
@@ -195,11 +200,13 @@ if p.exists():
     unknown_event_count: 0,
     updated_at: stamp,
   };
+  const extraRuns = [];
   await page.route(`**/api/agent-runs/session/${session}`, (route) =>
     route.fulfill({
       json: {
         success: true,
         data: [
+          ...extraRuns,
           {
             agent_run_id: run,
             session_id: session,
@@ -248,9 +255,16 @@ if p.exists():
       result: { aggregatedOutput: 'plain output: const x = 42;', exitCode: 0 },
     },
   };
-  await page.routeWebSocket(`**/api/agent-runs/${run}/events/ws`, (ws) => {
+  let initialReplay;
+  await page.routeWebSocket(`**/api/agent-runs/${run}/events/ws`, async (ws) => {
+    let closed = false;
+    ws.onClose(() => { closed = true; });
+    // Do not replay to an initial React subscription already disposed while opening.
+    await new Promise(resolve => setTimeout(resolve, 50));
+    if (closed) return;
     stream = ws;
-    for (const payload of [
+    const frames = initialReplay ??= [
+      ...(process.env.LVK_CHAT_SCROLL_ROOT ? Array.from({length:100},(_,i)=>({type:'message',data:{message:{message_id:`history-${i}`,role:i%2?'assistant':'user',content:`Synthetic history ${i}\nLine A\nLine B\nLine C`},final_output:false}})) : []),
       tool,
       ...(process.env.LVK_CHAT_FRONTEND_DIR
         ? [
@@ -341,13 +355,15 @@ if p.exists():
           ]
         : []),
       message('LOCAL32 code\n\n```bash\necho "$HOME'),
-    ])
-      ws.send(
-        JSON.stringify({
-          type: 'event',
-          data: { event: envelope(payload), replay: true },
-        })
-      );
+    ].map(payload => JSON.stringify({
+      type: 'event', data: {event: envelope(payload), replay: true},
+    }));
+    for (const frame of frames) {
+      if (closed) return;
+      ws.send(frame);
+      await new Promise(resolve => setTimeout(resolve, 2));
+    }
+    if (closed) return;
     ws.send(JSON.stringify({ type: 'ready', data: { state, cursor: null } }));
   });
   await page.goto(`${origin}/workspaces/${workspace}?session_id=${session}`);
@@ -358,6 +374,9 @@ if p.exists():
     'built app loaded real workspace/session and incomplete fixture Markdown'
   );
   await page.keyboard.press('Escape');
+  if (process.env.LVK_CHAT_SCROLL_ROOT) {
+    await verifyScrollFollow({page, session, extraRuns, evidence, report});
+  } else {
   if (process.env.LVK_CHAT_FRONTEND_DIR) {
     await expect(
       page.getByText('plain output: const x = 42;', { exact: true })
@@ -773,6 +792,7 @@ if p.exists():
       'live summary progress stops on completed authoritative summary and remains collapsible; narrow screen captured'
     );
   }
+  }
   expect(report.errors).toEqual([]);
   report.passed = true;
 } catch (error) {
@@ -852,6 +872,7 @@ if p.exists():
     report.remainingTestPids.length === 0 &&
     report.proxyPortsClosed.every((p) => p.closed);
   if (!report.cleanupPassed) process.exitCode = 1;
+  report.finishedAt = new Date().toISOString();
   writeFileSync(
     join(evidence, 'isolated-e2e.json'),
     JSON.stringify(report, null, 2)

@@ -49,6 +49,7 @@ export function matchesPendingMessage(
 }
 export const usePendingChatMessages = create<{
   messages: PendingChatMessage[];
+  identities: Record<string, Record<string, string>>;
   begin: (
     scope: string,
     content: string,
@@ -59,6 +60,7 @@ export const usePendingChatMessages = create<{
   reconcile: (scope: string, entries: PatchTypeWithKey[]) => void;
 }>((set) => ({
   messages: [],
+  identities: {},
   begin: (scope, content, entries) => {
     const id = crypto.randomUUID();
     set((s) => ({
@@ -103,7 +105,14 @@ export const usePendingChatMessages = create<{
             e.content.entry_type.type === 'user_message'
         )
         .map((e) => e.patchKey);
+      const identities = { ...s.identities[scope] };
+      for (const { message, entry } of pendingMatches(
+        entries,
+        s.messages.filter((m) => m.scope === scope)
+      ))
+        identities[entry.patchKey] = `local-user:${message.id}`;
       return {
+        identities: { ...s.identities, [scope]: identities },
         messages: s.messages
           .filter((m) => !confirmed.has(m.id))
           .map((m) =>
@@ -120,37 +129,55 @@ export const usePendingChatMessages = create<{
     set((s) => ({ messages: s.messages.filter((m) => !ids.includes(m.id)) })),
 }));
 
+function pendingMatches(
+  entries: PatchTypeWithKey[],
+  messages: PendingChatMessage[]
+) {
+  const used = new Set<string>();
+  const matches: { message: PendingChatMessage; entry: PatchTypeWithKey }[] =
+    [];
+  for (const message of messages) {
+    const entry = entries.find(
+      (e) => !used.has(e.patchKey) && matchesPendingMessage(message, e)
+    );
+    if (entry) {
+      used.add(entry.patchKey);
+      matches.push({ message, entry });
+    }
+  }
+  return matches;
+}
+
 export function confirmedPendingIds(
   entries: PatchTypeWithKey[],
   messages: PendingChatMessage[]
 ): string[] {
-  const used = new Set<string>();
-  return messages
-    .filter((message) => {
-      const match = entries.find(
-        (entry) =>
-          !used.has(entry.patchKey) && matchesPendingMessage(message, entry)
-      );
-      if (!match) return false;
-      used.add(match.patchKey);
-      return true;
-    })
-    .map((message) => message.id);
+  return pendingMatches(entries, messages).map(({ message }) => message.id);
 }
 
 export function appendPendingMessages(
   entries: PatchTypeWithKey[],
-  messages: PendingChatMessage[]
+  messages: PendingChatMessage[],
+  identities: Record<string, string> = {}
 ): PatchTypeWithKey[] {
-  const confirmed = new Set(confirmedPendingIds(entries, messages));
+  const matches = pendingMatches(entries, messages);
+  const confirmed = new Set(matches.map(({ message }) => message.id));
+  const displayIdentities = { ...identities };
+  for (const { message, entry } of matches)
+    displayIdentities[entry.patchKey] = `local-user:${message.id}`;
   return [
-    ...entries,
+    ...entries.map((entry) =>
+      displayIdentities[entry.patchKey]
+        ? { ...entry, displayIdentity: displayIdentities[entry.patchKey] }
+        : entry
+    ),
     ...messages
       .filter((m) => !confirmed.has(m.id))
       .map(
         (m): PatchTypeWithKey => ({
           type: 'NORMALIZED_ENTRY',
           patchKey: `pending-message:${m.id}`,
+          displayIdentity: `local-user:${m.id}`,
           content: {
             entry_type: { type: 'user_message' },
             content: m.content,

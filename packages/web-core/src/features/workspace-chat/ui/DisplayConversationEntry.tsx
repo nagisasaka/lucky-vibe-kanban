@@ -81,6 +81,7 @@ import {
 
 type Props = {
   expansionKey: string;
+  canonicalEntryKey?: string;
   executionProcessId?: string;
   canonicalActive?: boolean;
   toolTiming?: PatchTypeWithKey['toolTiming'];
@@ -592,28 +593,10 @@ function DisplayConversationEntry(props: Props) {
       return renderToolUseEntry(entryType, entry, props, t, executionProcess);
 
     case 'user_message':
-      if (props.pendingDelivery)
-        return (
-          <div
-            className="px-base py-half"
-            data-pending-delivery={props.pendingDelivery.state}
-          >
-            <div className="text-xs text-low" role="status">
-              {t('tasks:conversation.you')} ·{' '}
-              {t(`conversation.delivery.${props.pendingDelivery.state}`)}
-            </div>
-            <div className="whitespace-pre-wrap break-words text-sm">
-              {entry.content}
-            </div>
-            {props.pendingDelivery.error && (
-              <div role="alert" className="text-xs text-error">
-                {props.pendingDelivery.error}
-              </div>
-            )}
-          </div>
-        );
       return (
         <UserMessageEntry
+          pendingDelivery={props.pendingDelivery}
+          canonicalEntryKey={props.canonicalEntryKey ?? expansionKey}
           content={entry.content}
           expansionKey={expansionKey}
           workspaceId={workspaceWithSession?.id}
@@ -1007,7 +990,9 @@ function GenericToolApprovalEntry({
  * User message entry with expandable content
  */
 function UserMessageEntry({
+  canonicalEntryKey,
   content,
+  pendingDelivery,
   expansionKey,
   workspaceId,
   sessionId,
@@ -1016,6 +1001,8 @@ function UserMessageEntry({
   resetAction,
 }: {
   content: string;
+  pendingDelivery?: PatchTypeWithKey['pendingDelivery'];
+  canonicalEntryKey: string;
   expansionKey: string;
   workspaceId: string | undefined;
   sessionId: string | undefined;
@@ -1023,15 +1010,16 @@ function UserMessageEntry({
   executorCanFork: boolean;
   resetAction: UseResetProcessResult;
 }) {
+  const { t } = useTranslation('common');
   const [expanded, toggle] = usePersistedExpanded(`user:${expansionKey}`, true);
   const { startEdit, isEntryGreyed, isInEditMode } = useMessageEditContext();
   const { resetProcess, canResetProcess, isResetPending } = resetAction;
 
-  const isGreyed = isEntryGreyed(expansionKey);
+  const isGreyed = isEntryGreyed(canonicalEntryKey);
 
   const handleEdit = () => {
     if (executionProcessId) {
-      startEdit(expansionKey, executionProcessId, content);
+      startEdit(canonicalEntryKey, executionProcessId, content);
     }
   };
 
@@ -1052,24 +1040,33 @@ function UserMessageEntry({
   );
 
   return (
-    <ChatUserMessage
-      content={content}
-      expanded={expanded}
-      onToggle={toggle}
-      workspaceId={workspaceId}
-      onEdit={canEdit ? handleEdit : undefined}
-      onReset={canReset ? handleReset : undefined}
-      isGreyed={isGreyed}
-      renderMarkdown={({ content, workspaceId }) => (
-        <AppChatMarkdown
-          content={content}
-          workspaceId={workspaceId}
-          sessionId={sessionId}
-          className={undefined}
-          maxWidth={undefined}
-        />
-      )}
-    />
+    <div data-pending-delivery={pendingDelivery?.state}>
+      <ChatUserMessage
+        content={content}
+        expanded={expanded}
+        onToggle={toggle}
+        workspaceId={workspaceId}
+        onEdit={canEdit ? handleEdit : undefined}
+        onReset={canReset ? handleReset : undefined}
+        isGreyed={isGreyed}
+        renderMarkdown={({ content, workspaceId }) => (
+          <AppChatMarkdown
+            content={content}
+            workspaceId={workspaceId}
+            sessionId={sessionId}
+            className={undefined}
+            maxWidth={undefined}
+          />
+        )}
+      />
+      {pendingDelivery &&
+        ['failed', 'unconfirmed'].includes(pendingDelivery.state) && (
+          <div role="alert" className="px-double text-xs text-error">
+            {t(`conversation.delivery.${pendingDelivery.state}`)}
+            {pendingDelivery.error && `: ${pendingDelivery.error}`}
+          </div>
+        )}
+    </div>
   );
 }
 
@@ -1943,7 +1940,7 @@ function AggregatedDiffGroupEntry({
 
 const DisplayConversationEntrySpaced = (props: Props) => {
   const { isEntryGreyed } = useMessageEditContext();
-  const isGreyed = isEntryGreyed(props.expansionKey);
+  const isGreyed = isEntryGreyed(props.canonicalEntryKey ?? props.expansionKey);
 
   return (
     <div

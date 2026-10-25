@@ -37,7 +37,9 @@ const pending = (
   baseline: ['old'],
   ...extra,
 });
-beforeEach(() => usePendingChatMessages.setState({ messages: [] }));
+beforeEach(() =>
+  usePendingChatMessages.setState({ messages: [], identities: {} })
+);
 it('shows a local message before ACK, and retains it after ACK until the canonical event arrives', () => {
   const old = entry('old');
   const p = pending();
@@ -148,4 +150,28 @@ it('does not treat lost responses as rejection or discard their pending identity
   store.update(id, deliveryFailure(new TypeError('Failed to fetch')));
   store.begin('scope', 'Hello', []);
   expect(usePendingChatMessages.getState().messages).toHaveLength(2);
+});
+
+it('retains row identity and canonical patch key across ACK and repeated replay', () => {
+  const store = usePendingChatMessages.getState();
+  const id = store.begin('scope', 'Hello', [entry('old')]);
+  const local = appendPendingMessages(
+    [],
+    usePendingChatMessages.getState().messages
+  )[0];
+  store.update(id, { state: 'accepted', runId: 'run' });
+  const canonical = entry('new');
+  const matched = appendPendingMessages(
+    [canonical],
+    usePendingChatMessages.getState().messages
+  )[0];
+  expect(matched.displayIdentity).toBe(local.displayIdentity);
+  expect(matched.patchKey).toBe('new');
+  store.reconcile('scope', [canonical]);
+  const state = usePendingChatMessages.getState();
+  expect(state.messages).toHaveLength(0);
+  expect(
+    appendPendingMessages([canonical], [], state.identities.scope)[0]
+      .displayIdentity
+  ).toBe(local.displayIdentity);
 });

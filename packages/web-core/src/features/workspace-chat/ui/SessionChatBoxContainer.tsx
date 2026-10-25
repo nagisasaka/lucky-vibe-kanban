@@ -753,11 +753,8 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         reviewContext?.clearComments();
       }
       if (success.createdSessionId) onSelectSession?.(success.createdSessionId);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          onScrollToBottom('auto');
-        });
-      });
+      // Follow intent was enabled at submission. A delayed ACK must not
+      // override a subsequent deliberate scroll into history.
     }
   }, [
     onScrollToBottom,
