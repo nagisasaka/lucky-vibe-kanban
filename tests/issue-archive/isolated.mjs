@@ -145,6 +145,30 @@ try {
     ).data.status,
     'succeeded'
   );
+  // Real stdio-facing REST path: filter before offset/count, including hidden statuses.
+  for (const archived of [undefined, false, true, 'all']) {
+    const expected = issues.filter((_, i) =>
+      archived === 'all' || (i === 3) === (archived === true)
+    );
+    const ids = [];
+    for (let offset = 0; offset <= expected.length; offset++) {
+      const result = (await api('/api/board/issues/filter', 'POST', {
+        project_id: project, archived, search: 'ARCHIVE FIXTURE',
+        sort_field: 'title', sort_direction: 'asc', limit: 1, offset,
+      })).data;
+      assert.equal(result.total_count, expected.length);
+      assert.equal(result.offset, offset);
+      assert.equal(result.limit, 1);
+      ids.push(...result.issues.map((i) => i.id));
+    }
+    assert.deepEqual(ids, expected.map((i) => i.id));
+    const exact = (await api('/api/board/issues/filter', 'POST', {
+      project_id: project, archived, simple_id: issues[3].simple_id.toLowerCase(),
+      status: statuses[3].id, search: 'retained ISSUE body',
+    })).data;
+    assert.equal(exact.total_count, archived === true || archived === 'all' ? 1 : 0);
+  }
+  evidence.push('PASS shared MCP REST: archive default/false/true/all AND search/ID/status before offset/count; hidden included');
   process.env.BACKEND_PORT = new URL(base).port;
   process.chdir(path.join(root, 'packages/local-web'));
   vite = await createServer({
