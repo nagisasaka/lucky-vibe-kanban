@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AdditionContent,
@@ -8,6 +8,7 @@ import type {
   DesignNoteResult,
 } from 'shared/types';
 import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import { Textarea } from '@vibe/ui/components/Textarea';
 import { designNoteApi as api } from '../model/designNoteApi';
 
 const button =
@@ -23,6 +24,86 @@ const date = (value: string) => new Date(value).toLocaleString();
 function Markdown({ value }: { value: string }) {
   return (
     <WYSIWYGEditor value={value} disabled className="break-words p-base" />
+  );
+}
+function MarkdownInput({
+  value,
+  onChange,
+  busy,
+  label,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  busy: boolean;
+  label: string;
+  placeholder: string;
+  className: string;
+}) {
+  const id = useId();
+  const [tab, setTab] = useState('edit');
+  return (
+    <div className="space-y-base">
+      <div role="tablist" aria-label={label} className="flex gap-base">
+        {(['edit', 'preview'] as const).map((mode) => (
+          <button
+            key={mode}
+            id={`${id}-${mode}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === mode}
+            aria-controls={`${id}-${mode}-panel`}
+            tabIndex={tab === mode ? 0 : -1}
+            className={`${button} ${tab === mode ? 'bg-secondary text-high' : ''}`}
+            disabled={busy}
+            onClick={() => setTab(mode)}
+            onKeyDown={(e) => {
+              if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key))
+                return;
+              e.preventDefault();
+              const next =
+                e.key === 'Home'
+                  ? 'edit'
+                  : e.key === 'End'
+                    ? 'preview'
+                    : mode === 'edit'
+                      ? 'preview'
+                      : 'edit';
+              setTab(next);
+              document.getElementById(`${id}-${next}`)?.focus();
+            }}
+          >
+            {mode === 'edit' ? '編集' : 'プレビュー'}
+          </button>
+        ))}
+      </div>
+      <div
+        id={`${id}-edit-panel`}
+        role="tabpanel"
+        aria-labelledby={`${id}-edit`}
+        hidden={tab !== 'edit'}
+      >
+        <Textarea
+          aria-label={label}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={busy}
+          placeholder={placeholder}
+          className={`${input} ${className} resize-y font-ibm-plex-mono`}
+        />
+      </div>
+      <div
+        id={`${id}-preview-panel`}
+        role="tabpanel"
+        aria-labelledby={`${id}-preview`}
+        hidden={tab !== 'preview'}
+        tabIndex={0}
+        className="rounded-sm border border-border focus-visible:ring-1 focus-visible:ring-brand"
+      >
+        {tab === 'preview' && <Markdown value={value} />}
+      </div>
+    </div>
   );
 }
 type Write = (operation: DesignNoteAction) => Promise<DesignNoteResult>;
@@ -203,14 +284,12 @@ function BodyForm({
       </label>
       <div>
         <span>本文（Markdown）</span>
-        <div
-          data-testid="note-body-editor"
-          className="rounded-sm border border-border"
-        >
-          <WYSIWYGEditor
+        <div data-testid="note-body-editor">
+          <MarkdownInput
             value={body}
             onChange={setBody}
-            disabled={busy}
+            busy={busy}
+            label="本文（Markdown）"
             placeholder="何を作りたいか、なぜそう考えたか"
             className="min-h-40 p-base"
           />
@@ -660,11 +739,12 @@ function AdditionForm({
           ))}
         </select>
       </label>
-      <div data-testid="addition-editor" className="border border-border">
-        <WYSIWYGEditor
+      <div data-testid="addition-editor">
+        <MarkdownInput
           value={value.content}
           onChange={(content) => setValue({ ...value, content })}
-          disabled={busy}
+          busy={busy}
+          label="追記の内容（Markdown）"
           placeholder="重要な判断・提案・未決事項を短く記録"
           className="min-h-24 p-base"
         />
