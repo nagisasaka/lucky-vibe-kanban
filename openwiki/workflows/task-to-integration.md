@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
+generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-25T19:07:42.711Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -151,6 +151,8 @@ local Board の **Integrate / Auto Merge** では、Repo・local target と各 C
 Board の案内も現在は「順に取り込み、最後の候補を検証する」という流れを説明する。競合で止まったら実行 Workspace を開き、保存済みの解消説明と未検証・古い候補の表示を読み、必要に応じて詳細の差分を開く。説明が不十分なら承認せず確認する。固定候補のレビュー中に追加指示で修正する経路はなく、承認して続行するか Integration を中止する。[説明・操作条件の正本](../concepts/formal-integration.md#保存済み説明から候補をレビューする)・[Board の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1302-L1305)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
 
 承認後も Git の反映、Card の Done、Wiki の結果を別々に確認する。「反映結果の照合中」は未反映の確定ではないので、古い画面や status だけから再統合しない。[公開状態と回復](../concepts/formal-integration.md#公開donewiki-は別の結果)を確認する。実行の識別子や保存済み Session は [inspection の詳細](../operations/workspace-inspection.md#実行専用-workspace-の確認)から調べられる。
+
+競合 job の失敗で止まった場合は、実行 Workspace の停止と保存履歴を確認して明示 Resume する。次の競合 dispatch は同じ Workspace の index / edits を使うが、会話は新規 Session で開始する。通信再送や server restart では既存 dispatch を再利用し、同じ job のために新 Session を作らない。過去の degraded projection を消して成功扱いにする復旧ではない。[Session 分離・原子的保存・履歴の契約](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)を参照する。[Resume と退役](../../crates/server/src/routes/integrations/runtime.rs#L140-L207)・[dispatch 保存](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
 
 旧 run の通常 Resume 拒否は新規 engine の安全境界であり、任意の payload 書換えで回避しない。特定履歴を対象とする [checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)も、検査・adoption・正式 Resume が別の操作である。
 

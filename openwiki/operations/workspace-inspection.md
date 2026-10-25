@@ -4,6 +4,10 @@ title: ファイル・差分・プレビュー・端末の境界
 description: Workspace 内のファイル・Wiki 閲覧、添付、差分配信、dev server preview、PTY、editor 操作で異なるパス・ホスト・寿命の契約を説明する。
 tags: [workspace, files, wiki, diff, preview, terminal]
 sources:
+  - id: openwiki-source-bd15422ef1716eca23408f1f
+    resource: repo://crates/git/src/lib.rs
+  - id: openwiki-source-40ec9fc6ff784c4bb2d0c6e3
+    resource: repo://crates/git/tests/diff_stats.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-5aa384eaafe1283b1b8cc4a4
@@ -44,12 +48,16 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-5590f47e4cee001a35a42117
     resource: repo://crates/server/src/routes/workspaces/wiki.rs
+  - id: openwiki-source-42c7cffe07ec2d2c0ed4cc9d
+    resource: repo://crates/server/src/routes/workspaces/workspace_summary.rs
   - id: openwiki-source-66c6304230dff031e0d0b855
     resource: repo://crates/services/src/services/config/editor/mod.rs
   - id: openwiki-source-cd98b68683664db6e92e6010
     resource: repo://crates/services/src/services/config/versions/v7.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
+  - id: openwiki-source-81dd91cf7cbed81d1fcd4773
+    resource: repo://crates/services/src/services/diff_stats_tests.rs
   - id: openwiki-source-b04f793d57fd8b570d4984e3
     resource: repo://crates/services/src/services/diff_stream.rs
   - id: openwiki-source-ead147478bd848437cb020e7
@@ -62,6 +70,8 @@ sources:
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
   - id: openwiki-source-8c7998811f24db89c5190835
     resource: repo://docs/development/external-editor-uri-validation.md
+  - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
+    resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
   - id: openwiki-source-69854837467c3beec23ecb8d
@@ -106,6 +116,8 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-b30612082181a81aa92d89df
     resource: repo://packages/web-core/src/shared/hooks/useUserSystemController.ts
+  - id: openwiki-source-97cd8794805cef30e1c2f047
+    resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
@@ -126,10 +138,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
+generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:19:36.105Z
+    at: 2026-10-25T19:07:42.711Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -233,6 +245,23 @@ Git diff は専用の local WebSocket 経路を持つ。diff stream は現在の
 archive 済みで worktree が削除済みまたは存在しない場合は、保存された branch と base commit の差分を一度配信し、Ready を返す。watcher や worktree 再作成は行わない。これは削除前の未 commit ファイルの保存ではない。[snapshot の選択](../../crates/local-deployment/src/container.rs#L1836-L1849)・[branch snapshot](../../crates/services/src/services/diff_stream.rs#L169-L196)。履歴と branch を残す [手動 archive](../concepts/workspace.md#archive削除期限-cleanup)と、明示的な再開を区別する。
 
 stats-only と累積本文容量の上限により、diff の old/new content を省くことがある。本文がないことと変更がないことを同一視しない。追加・削除行数は可能なら省略前に計算して保持する。[省略の契約](../../crates/services/src/services/diff_stream.rs) レビュー後に変更を統合する手順は [Task から統合まで](../workflows/task-to-integration.md) に続く。
+
+### Workspace summary の差分集計
+
+Board の Workspace 差分は履歴レコードの既定値ではなく、既存 summary API の現在の Git 集計から取得する。各 Repo の Workspace branch と target_branch から base を解決し、その base と worktree の差分を合算する。commit 済み・未 commit・untracked を含むため、直前 commit だけの差分ではない。[集計](../../crates/services/src/services/diff_stream.rs#L66-L115)・[API への組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L140-L190)
+
+| 結果 | files / additions / deletions の意味 |
+| --- | --- |
+| 正常な clean 集計 | `0 / Some(0) / Some(0)`。既知のゼロ |
+| 差分取得成功、行数不明を含む | file 数は既知。追加・削除は各々、一件でも不明なら合計も `None` |
+| 任意の Repo で base 解決・diff 取得失敗 | 集計全体を `None`。成功 Repo の部分和を完全な合計として出さない |
+| container_ref 不在、Repo 関係の読取失敗 | 集計未取得として `None` |
+
+[Option の伝播](../../crates/services/src/services/diff_stream.rs#L35-L115)により、binary やサイズ省略がある場合も「行数ゼロ」と偽らない。Git の片側本文が欠けた場合、それを空の本文と見なせるのは実際の Added / Deleted だけである。Modified の読取欠損や text ↔ binary を全行追加・削除と誤認しない。[Git の判定](../../crates/git/src/lib.rs#L709-L726)
+
+API の `files_changed` / `lines_added` / `lines_removed` は独立した optional field で、内部集計の未知を保持する。互換用に残る旧公開 `DiffStats` 型の非 optional field から、この API の意味を推測しない。[API 型と内部集計の分離](../../crates/server/src/routes/workspaces/workspace_summary.rs#L27-L72)・[伝播](../../crates/server/src/routes/workspaces/workspace_summary.rs#L178-L190)。`useWorkspaces` は未知を undefined へ保ち、Kanban はその summary 値を Workspace カードへ渡す。カードは既知0も表示し、未知 file 数と行数を `—` で示す。[hook](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L83)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L279-L291)。時計の未知は別の [Run 時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
+
+[Git fixture](../../crates/git/tests/diff_stats.rs)は commit 済み・untracked・削除・text/binary 相互変換、[読取失敗 fixture](../../crates/git/src/lib.rs#L1878-L1903)は Modified の片側欠損、[service fixture](../../crates/services/src/services/diff_stats_tests.rs)は正常0・binary・複数 Repo の部分/全失敗を検査する。[実 API browser fixture](../../tests/kanban/isolated.mjs#L130-L170)は隔離 Git の `3 files / +3 / -1` と clean0を確認する。実 provider の状態や大量 untracked の性能を保証する試験ではなく、この文書保守では再実行していない。
 
 ### 差分の未取得・エラー・空を区別する
 
