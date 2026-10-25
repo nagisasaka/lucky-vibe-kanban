@@ -240,20 +240,6 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
       {/* Row 2: Title */}
       <span className="text-base text-normal truncate">{title}</span>
 
-      {/* Row 3: Description (optional, truncated) */}
-      {previewDescription && (
-        <p
-          className={cn(
-            'text-sm text-low m-0',
-            isMobile
-              ? 'leading-tight line-clamp-2'
-              : 'leading-relaxed line-clamp-4'
-          )}
-        >
-          {previewDescription}
-        </p>
-      )}
-
       {/* Row 4: Priority + Assignee */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-half min-w-0">
@@ -339,6 +325,14 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
             </span>
           )}
         </div>
+      )}
+      {previewDescription && (
+        <p
+          className="text-sm text-low m-0 leading-relaxed line-clamp-2 [overflow-wrap:anywhere]"
+          data-testid="issue-description-preview"
+        >
+          {previewDescription}
+        </p>
       )}
     </div>
   );

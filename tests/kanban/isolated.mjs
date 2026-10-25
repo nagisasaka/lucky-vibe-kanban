@@ -160,14 +160,20 @@ try {
     'Workspaces: 2'
   );
   await expect(
-    card(issues[0].id).getByText('Specification body', { exact: false })
-  ).not.toBeVisible();
+    card(issues[0].id).getByTestId('issue-description-preview')
+  ).toBeVisible();
+  await expect(
+    card(issues[0].id).getByText('Linked workspace 0', { exact: true })
+  ).toBeVisible();
   await card(issues[0].id).locator('summary').click();
   await expect(
     card(issues[0].id).getByText('Linked workspace 0', { exact: true })
   ).toBeVisible();
+  await expect(card(issues[0].id).locator('details p')).toContainText(
+    'Specification body'
+  );
   await expect(
-    card(issues[0].id).getByText('Specification body', { exact: false })
+    card(issues[0].id).getByTestId('issue-description-preview')
   ).toBeVisible();
   await page.screenshot({ path: path.join(output, 'expanded-2560.png') });
   await card(issues[0].id).locator('summary').click();

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceWithStats } from '@vibe/ui/components/IssueWorkspaceCard';
 
@@ -8,12 +7,10 @@ export function KanbanCardDetails({
   count,
   workspaces,
   description,
-  children,
 }: {
   count: number;
   workspaces: WorkspaceWithStats[];
   description?: string | null;
-  children: ReactNode;
 }) {
   const { t } = useTranslation('common');
   const flags = {
@@ -57,7 +54,6 @@ export function KanbanCardDetails({
             {description}
           </p>
         )}
-        {children}
       </details>
     </div>
   );
