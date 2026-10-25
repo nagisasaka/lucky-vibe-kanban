@@ -78,4 +78,47 @@ mod tests {
         );
         tx.rollback().await.unwrap();
     }
+    #[tokio::test]
+    async fn classification_migration_applies_after_existing_project_key_migration() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        let mut old = sqlx::migrate!("./migrations");
+        old.migrations = std::borrow::Cow::Owned(
+            old.migrations
+                .into_owned()
+                .into_iter()
+                .filter(|m| m.version != 20261025000000)
+                .collect(),
+        );
+        old.run(&pool).await.unwrap();
+        let project = Uuid::new_v4();
+        let status = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Already keyed','LVK')")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Ready','blue',0)").bind(status).bind(project).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,177,'LVK-177',?,'Old',0)").bind(issue).bind(project).bind(status).execute(&pool).await.unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        let row: (String, i32, String, String) = sqlx::query_as("SELECT p.key,i.issue_number,i.simple_id,i.priority FROM local_issues i JOIN projects p ON p.id=i.project_id WHERE i.id=?").bind(issue).fetch_one(&pool).await.unwrap();
+        assert_eq!(row, ("LVK".into(), 177, "LVK-177".into(), "medium".into()));
+        let tags: Vec<String> =
+            sqlx::query_scalar("SELECT name FROM local_tags WHERE project_id=? ORDER BY name")
+                .bind(project)
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+        assert_eq!(tags, vec!["bug", "feature", "survey", "system"]);
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+        assert_eq!(
+            next_issue_number(&mut tx, project).await.unwrap(),
+            (178, "LVK-178".into())
+        );
+        tx.rollback().await.unwrap();
+    }
 }

@@ -76,7 +76,7 @@ export function IssuePropertyRow({
         disabled={disabled}
       >
         <PriorityIcon priority={priority} />
-        {priority ? priorityLabels[priority] : 'No priority'}
+        {priorityLabels[priority ?? 'medium']}
       </PrimaryButton>
 
       <PrimaryButton

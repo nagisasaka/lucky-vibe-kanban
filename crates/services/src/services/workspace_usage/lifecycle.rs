@@ -119,6 +119,7 @@ pub async fn ensure_wiki_board_link_for_project(
     .bind(issue_id)
     .execute(&mut *tx)
     .await?;
+    db::models::board_tag::attach_system(&mut tx, *project_id, issue_id).await?;
     tx.commit().await?;
     Ok(())
 }

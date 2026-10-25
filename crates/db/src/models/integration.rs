@@ -301,6 +301,7 @@ impl IntegrationRun {
         };
         sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order,creator_user_id) VALUES(?,?,?,?,?,?,?,0,?)")
         .bind(card_id).bind(self.project_id).bind(number).bind(simple_id).bind(status).bind(name).bind(description).bind(Uuid::from_u128(1)).execute(&mut *tx).await?;
+        crate::models::board_tag::attach_system(&mut tx, self.project_id, card_id).await?;
         let owner = crate::models::workspace_usage::WorkspaceExecutionOwner::new(
             "integration",
             self.repository_id,
@@ -1617,6 +1618,15 @@ pub(crate) mod tests {
                 .unwrap(),
             "LVK-2"
         );
+        let labels: Vec<String> = sqlx::query_scalar("SELECT t.name FROM local_issue_tags it JOIN local_tags t ON t.id=it.tag_id WHERE it.issue_id=?")
+            .bind(linked).fetch_all(&pool).await.unwrap();
+        assert_eq!(labels, vec!["system"]);
+        let priority: String = sqlx::query_scalar("SELECT priority FROM local_issues WHERE id=?")
+            .bind(linked)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(priority, "medium");
         assert!(
             workspace_owner(&pool, original.payload.sources[0].selection.workspace_id)
                 .await
@@ -1684,6 +1694,22 @@ pub(crate) mod tests {
                 .await
                 .unwrap()
         );
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issue_tags WHERE issue_id=?")
+                .bind(failed.payload.card_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+        assert_eq!(
+            crate::models::issue_number::next_issue_number(&mut tx, run.project_id)
+                .await
+                .unwrap(),
+            (3, "LVK-3".into())
+        );
+        tx.rollback().await.unwrap();
     }
 
     #[tokio::test]

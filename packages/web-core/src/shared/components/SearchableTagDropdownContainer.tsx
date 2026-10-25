@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { VirtuosoHandle } from 'react-virtuoso';
+import { isSystemTag } from '@vibe/ui/lib/issue-classification';
 import type { Tag } from 'shared/remote-types';
 import {
   SearchableTagDropdown,
@@ -45,9 +46,10 @@ export function SearchableTagDropdownContainer({
 
   // Filter tags based on search term
   const filteredTags = useMemo(() => {
-    if (!searchTerm.trim()) return tags;
+    const editableTags = tags.filter((tag) => !isSystemTag(tag));
+    if (!searchTerm.trim()) return editableTags;
     const query = searchTerm.toLowerCase();
-    return tags.filter((tag) => tag.name.toLowerCase().includes(query));
+    return editableTags.filter((tag) => tag.name.toLowerCase().includes(query));
   }, [tags, searchTerm]);
 
   // Check if search term matches any existing tag exactly
@@ -58,7 +60,10 @@ export function SearchableTagDropdownContainer({
   }, [tags, searchTerm]);
 
   // Show create option when there's a search term and no exact match
-  const showCreateOption = searchTerm.trim().length > 0 && !hasExactMatch;
+  const showCreateOption =
+    searchTerm.trim().length > 0 &&
+    !hasExactMatch &&
+    !isSystemTag({ name: searchTerm });
 
   // Safe highlight index
   const safeHighlightedIndex = useMemo(() => {

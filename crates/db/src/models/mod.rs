@@ -31,3 +31,8 @@ pub mod design_note;
 pub mod design_note_read;
 
 pub mod issue_number;
+
+pub mod board_tag;
+
+#[cfg(test)]
+mod board_tag_tests;
