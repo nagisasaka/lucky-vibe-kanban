@@ -282,6 +282,20 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         let body: Value = response.json().await.unwrap();
         assert!(body.get("error").is_none(), "{body}");
         if request["id"] == 2 {
+            for name in [
+                "list_tags",
+                "list_issue_tags",
+                "add_issue_tag",
+                "remove_issue_tag",
+            ] {
+                assert!(
+                    body["result"]["tools"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|t| t["name"] == name)
+                );
+            }
             let integration = body["result"]["tools"]
                 .as_array()
                 .unwrap()
@@ -316,6 +330,8 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
     }
     for (tool, scope) in [
         ("create_issue", "lvk:write"),
+        ("add_issue_tag", "lvk:write"),
+        ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
         ("create_todo", "lvk:write"),
         ("write_design_note", "lvk:write"),
