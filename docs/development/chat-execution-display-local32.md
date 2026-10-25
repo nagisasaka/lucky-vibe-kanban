@@ -298,3 +298,15 @@ source HEADは00cc07d973964965f5dfb3b51889b96fce6bc045。41ファイルのsource
 - DB/WAL/SHM、access.key、保存Basic、実会話はそのまま保持する。今回の準備ではDB/秘密backupを新規コピーせず、rollbackでも古いDBへのrestore/reseed、実run削除、認証再初期化を行わない。切替後のユーザーデータを捨てるrollbackは禁止する。
 
 準備完了は切替の実行・公開版の視覚合格を意味しない。main merge/deploy、共有devや他previewの変更はこの手順に含まない。
+
+### 承認済み切替の実行結果（2026-10-26 JST）
+
+ユーザーがpreview1だけの切替を明示承認し、root/browserが01:11:33に正規DevServer UI Stopを実行、配置開始を指示した。旧PID2192789消失・listener解放・実run終端を再確認し、01:13:08に上記手順どおり配置を完了した。初回の素のbind probeはTIME_WAITで失敗したがlistenerはなく、通常のSO_REUSEADDR付きprobeでbind可能だった。serverはこのprobeでは起動していない。
+
+今回backupは.build/local32-cutover-00cc07d9/{previous-dist,previous-start.sh,previous-assets-manifest.json}。旧04acの全inventoryを保全し、新979 assetsを検証して配置した。launcherは合意した5行だけ変更し、実SHA256は1b294e5ac2389da8db139bd0db167952592c7667ff0f3a9378c8f6f0adc92df0、bash -n passed。旧target/debug binは保持。配置中のDB/key/configuredのinode/size/mtimeは不変で、秘密内容や会話本文を読み取らず、DB/authをコピー・初期化していない。
+
+root/browserは01:14:10に正規UI Startを1回実行し、01:14:23にStopボタンへ変化したと報告した。新PID207993のstart identity37258074、候補server exe、owner207993→156→init1、同instance/候補agent-host path/port18443を読取確認した。01:14:37のroot側502観測後、こちらの外向きindex/healthは01:14:40と01:16:01に200、未認証API401。rootは01:17に外向き認証済み既存WS1364f913会話表示、command/終了時刻保持、空composerがp+brでcode残滓なしを直接確認した。旧保存メッセージのinline-codeは未変更。rootは新しい送信/貼付試験を行っておらず、過去の隔離回帰と区別する。
+
+管理stdout/stderrはpipeで、取得可能な設定済みlog fileはなかった。502は現在解消しているが、起動に数分要した原因をlogで確定できたとはしない。再Start/rollbackは実行せず、差分表示の未判定問題にもscopeを広げない。新provider試行・追加build・旧Goal試験再実行なし。最終read-only証拠はtest-results/local32-additional/cutover-final-readonly.json、配置/直後/502後の証拠も同directoryに保持する。
+
+稼働中の.build/local32-additional-artifacts、packages/local-web/distと保持instance、今回rollback backupは削除しない。機械固有.lvk-preview/start.shは引き続き製品main統合対象外。今回の有限cutoverはroot認証済み外画面確認まで実施済みで、Goal終端後の生存はdot側が別途再確認する。main merge/deployは未実行。
