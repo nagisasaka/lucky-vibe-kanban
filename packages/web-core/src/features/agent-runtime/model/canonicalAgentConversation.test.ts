@@ -140,7 +140,7 @@ describe('projectCanonicalAgentConversation', () => {
       [],
       runState
     );
-    const delta = (sequence: number, text: string) => ({
+    const delta = (sequence: number, text: string, summaryIndex?: number) => ({
       schema_version: 1,
       event_id: `explanation-live-${sequence}`,
       session_id: SESSION_ID,
@@ -152,7 +152,11 @@ describe('projectCanonicalAgentConversation', () => {
       timestamp: `2026-08-14T00:00:0${sequence}Z`,
       payload: {
         type: 'thinking_delta' as const,
-        data: { provider_item_id: 'reason-1', delta: text },
+        data: {
+          provider_item_id: 'reason-1',
+          delta: text,
+          summary_index: summaryIndex,
+        },
       },
     });
     const project = () =>
@@ -185,15 +189,23 @@ describe('projectCanonicalAgentConversation', () => {
       content: { content: 'Inspect tests' },
       providerText: { kind: 'summary', partial: true },
     });
-    const completed = event(runId, 3, {
+    timeline = mergeAgentLiveEvent(timeline, delta(3, 'Second part', 1));
+    timeline = mergeAgentLiveEvent(timeline, delta(4, '.', 0));
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests.\n\nSecond part' },
+    });
+    const completed = event(runId, 5, {
       type: 'provider_extension',
       data: {
         provider_namespace: 'codex',
         provider_event: 'reasoning_summary',
-        payload: { provider_item_id: 'reason-1', content: 'Inspect tests.\n' },
+        payload: {
+          provider_item_id: 'reason-1',
+          content: 'Inspect tests.\n\nSecond part\n',
+        },
       },
     });
-    const plan = event(runId, 4, {
+    const plan = event(runId, 6, {
       type: 'provider_extension',
       data: {
         provider_namespace: 'codex',
@@ -206,7 +218,7 @@ describe('projectCanonicalAgentConversation', () => {
     expect(mergeAgentLiveEvent(timeline, delta(5, 'late'))).toBe(timeline);
     expect(project()).toMatchObject([
       {
-        content: { content: 'Inspect tests.\n' },
+        content: { content: 'Inspect tests.\n\nSecond part\n' },
         providerText: { kind: 'summary', provider: 'codex', partial: false },
       },
       {
@@ -942,7 +954,7 @@ describe('projectCanonicalAgentConversation', () => {
   });
 
   it.each([
-    ['Shell', { command: 'echo review-me' }],
+    ['Shell', { command: 'echo review-me', cwd: '/workspace' }],
     ['FileChange', { changes: [{ path: 'review.txt', diff: '+review me' }] }],
   ])('preserves %s details when approval is requested', (toolName, args) => {
     const runId = 'run-approval-details';
@@ -996,7 +1008,116 @@ describe('projectCanonicalAgentConversation', () => {
       approval_id: 'approval-1',
     });
     expect(tool.canonical?.eventIds).toHaveLength(2);
+    expect(tool.toolOutput?.input).toBe(JSON.stringify(args, null, 2));
+    expect(tool.toolOutput?.cwd).toBe(
+      toolName === 'Shell' ? '/workspace' : null
+    );
   });
+
+  it.each([true, false])(
+    'keeps input and cwd after approval resolves to %s',
+    (approved) => {
+      const runId = 'resolved-details';
+      const args = { command: 'pwd', cwd: '/workspace' };
+      const entries = projectRuns([
+        {
+          runId,
+          status: 'running',
+          events: [
+            event(runId, 1, {
+              type: 'tool_call',
+              data: {
+                tool_call_id: 't',
+                tool_name: 'Shell',
+                status: AgentRuntimeToolStatus.running,
+                arguments: args,
+                result: null,
+              },
+            }),
+            event(runId, 2, {
+              type: 'approval_requested',
+              data: { approval_id: 'a', tool_call_id: 't', tool_name: 'Shell' },
+            }),
+            event(runId, 3, {
+              type: 'approval_resolved',
+              data: { approval_id: 'a', approved, reason: null },
+            }),
+          ],
+        },
+      ]).entries;
+      expect(entries[0]).toMatchObject({
+        content: {
+          entry_type: { status: { status: approved ? 'approved' : 'denied' } },
+        },
+        toolOutput: {
+          input: JSON.stringify(args, null, 2),
+          cwd: '/workspace',
+          state: approved ? 'pending' : 'unavailable',
+        },
+      });
+    }
+  );
+
+  it.each([true, false])(
+    'converges approval-first work to one row, with an optional start (%s)',
+    (includeStart) => {
+      const runId = 'approval-first';
+      const args = { command: 'pwd', cwd: '/workspace' };
+      const events = [
+        event(runId, 1, {
+          type: 'approval_requested',
+          data: { approval_id: 'a', tool_call_id: 't', tool_name: 'Shell' },
+        }),
+        event(runId, 2, {
+          type: 'approval_resolved',
+          data: { approval_id: 'a', approved: true, reason: null },
+        }),
+        ...(includeStart
+          ? [
+              event(runId, 3, {
+                type: 'tool_call',
+                data: {
+                  tool_call_id: 't',
+                  tool_name: 'Shell',
+                  status: AgentRuntimeToolStatus.running,
+                  arguments: args,
+                  result: null,
+                },
+              }),
+            ]
+          : []),
+        event(runId, 4, {
+          type: 'tool_call',
+          data: {
+            tool_call_id: 't',
+            tool_name: 'Shell',
+            status: AgentRuntimeToolStatus.succeeded,
+            arguments: includeStart ? null : args,
+            result: { aggregatedOutput: '/workspace\n', exitCode: 0 },
+          },
+        }),
+      ];
+      for (const input of [events, [...events].reverse()]) {
+        const tools = projectRuns([
+          { runId, status: 'running', events: input },
+        ]).entries.filter(
+          (entry) =>
+            entry.type === 'NORMALIZED_ENTRY' &&
+            entry.content.entry_type.type === 'tool_use'
+        );
+        expect(tools).toHaveLength(1);
+        expect(tools[0]).toMatchObject({
+          content: { entry_type: { status: { status: 'success' } } },
+          toolOutput: {
+            input: JSON.stringify(args, null, 2),
+            cwd: '/workspace',
+            state: 'complete',
+          },
+        });
+        expect(tools[0].canonical?.eventIds).toHaveLength(events.length);
+      }
+    }
+  );
 
   it('resolves canonical approval and input controls in place', () => {
     const runId = 'run-control';

@@ -320,6 +320,7 @@ function appendRunEntries(
   >();
   const approvalIndexes = new Map<string, number>();
   const explanationIndexes = new Map<string, number>();
+  const explanationParts = new Map<string, Map<number, string>>();
   const inputIndexes = new Map<string, number>();
   let previousMessage:
     | { index: number; messageId: string; role: string }
@@ -553,6 +554,14 @@ function appendRunEntries(
         );
         if (existingIndex === undefined) {
           output.push(next);
+          if (payload.data.tool_call_id) {
+            const key = toolKey(event, payload.data.tool_call_id);
+            toolIndexes.set(key, output.length - 1);
+            toolDetails.set(key, {
+              name: payload.data.tool_name,
+              arguments: null,
+            });
+          }
           approvalIndexes.set(
             toolKey(event, payload.data.approval_id),
             output.length - 1
@@ -561,6 +570,7 @@ function appendRunEntries(
           const previous = output[existingIndex];
           next.patchKey = previous.patchKey;
           next.toolTiming = previous.toolTiming;
+          next.toolOutput = previous.toolOutput;
           if (
             previous.type === 'NORMALIZED_ENTRY' &&
             previous.content.entry_type.type === 'tool_use' &&
@@ -620,6 +630,15 @@ function appendRunEntries(
             };
             if (!payload.data.approved && previous.toolTiming) {
               previous.toolTiming.endedAt = event.timestamp;
+            }
+            if (
+              !payload.data.approved &&
+              previous.toolOutput?.state === 'pending'
+            ) {
+              previous.toolOutput = {
+                ...previous.toolOutput,
+                state: 'unavailable',
+              };
             }
             mergeEventIdentity(previous, event, false);
           }
@@ -776,10 +795,23 @@ function appendRunEntries(
           const existingIndex = explanationIndexes.get(key);
           const previous =
             existingIndex === undefined ? undefined : output[existingIndex];
-          const content =
-            partial && previous?.type === 'NORMALIZED_ENTRY'
-              ? previous.content.content + data.content
-              : data.content;
+          let content = data.content;
+          if (partial) {
+            const partIndex =
+              typeof data.summary_index === 'number' &&
+              Number.isInteger(data.summary_index) &&
+              data.summary_index >= 0
+                ? data.summary_index
+                : 0;
+            const parts =
+              explanationParts.get(key) ?? new Map<number, string>();
+            parts.set(partIndex, (parts.get(partIndex) ?? '') + content);
+            explanationParts.set(key, parts);
+            content = [...parts]
+              .sort(([a], [b]) => a - b)
+              .map(([, text]) => text)
+              .join('\n\n');
+          }
           const next = normalizedPatch(event, {
             entry_type: { type: 'thinking' },
             content,

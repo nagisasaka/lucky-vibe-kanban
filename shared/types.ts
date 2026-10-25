@@ -1453,7 +1453,7 @@ export type AgentEventEnvelope = { schema_version: number, payload_version: numb
 
 export type CumulativeTokenUsage = { provider_id: string, provider_session_id: string, total_tokens: bigint, reasoning_tokens: bigint | null, };
 
-export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": {
+export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, summary_index?: number | null, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": {
 /**
  * Verified provider semantics; absent on historical/unsupported snapshots.
  */

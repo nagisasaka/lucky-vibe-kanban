@@ -74,3 +74,16 @@ Claudeのnested stream_eventは監査に残るが、今回はその途中JSONや
 - `node --test tests/chat/execution-display.test.mjs`: 実CSSを使ったコンポーネントfixtureで成功。代表状態、展開、コピーAPIへ渡す原文、長文更新時の入力保持、ライト/ダーク、1280/375幅でページ横溢れなし。画面とreportは `test-results/local32-execution/`。provider実接続や実アプリ全体の検証とは区別する。
 
 初回Rust試験ではClaudeの親ブロック再展開による再帰と、旧mapperを参照するテストの版指定不足を検出した。再帰を除き、旧版検証は旧mapperを明示するよう修正して41件を再実行した。fixture画面のダークテーマは本体と同じdocument rootへ適用する。表示案・試験の成功だけでdotの視覚レビュー完了とは扱わない。
+
+## 独立技術レビューと修正
+
+一次候補 `65035ed726068c9e0028af999cac7620aac24745` を実装者とは別の新規コンテキストでレビューした。報告は `test-results/local32-execution/technical-review.md` とLOCAL-32コメント `76a7e3c4-76f1-4335-adcf-02618474723c` に原文保存した。指摘はP2が2件で、どちらも独立fixtureで再現した。
+
+- 開始後の承認要求でtoolOutputが置換され、詳細の入力・cwdが失われる。承認への遷移では既存の表示情報を保持し、拒否時だけ未取得出力の状態を更新するよう修正した。
+- 承認要求が操作開始より先の場合、後続の操作結果が別行になり、承認済み開始待ちが残る。承認のみの行もattempt/tool IDで登録し、開始・完了を同じ行へ収束させるよう修正した。開始を省略した完了、許可・拒否、逆順履歴再生の回帰試験を追加した。
+
+レビューの未確認リスクであった公開summaryの複数partについても、nativeのsummaryIndexを新mapperのlive payloadへ任意フィールドとして保持し、同一part内の差分を結合、異なるpartの区切りを保持する。旧mapperのlive payloadは変えない。複数partが交互に届くfixtureと完成summaryへの収束を試験した。
+
+一次候補では `node tests/chat/syntax-isolated-e2e.mjs` も成功した。実production frontend/server、独立一時SQLite DBで起動し、AgentRunの一覧とWebSocketのみをfixture化した。実OS clipboard経由でコマンドとコードの `\\_` を含むMarkdown原文一致、ストリーミング中の入力保持、未知/プレーン/長文、両テーマの実色を確認した。server/browserの終了・使用ポートの閉鎖・一時DB削除も成功。証跡は `test-results/local32/isolated-e2e.json` とlight/dark画像である。provider実接続をしたという意味ではない。
+
+修正途中の新しい画面証跡は `test-results/local32-execution-fix/` に分け、dotへ引き渡した一次候補の画像を上書きしない。既存nginxの `preview1.luckyvibekanban.com → 127.0.0.1:18443` が空いていることを確認し、設定変更なしで固定fixtureのforegroundプレビューを使用した。公開メタデータとPNGのHTTPS 200応答を確認済み。一次候補の公開プレビューはそのHEADで固定し、修正候補への切替時は別途明示する。最終候補の独立再確認・再ビルドと必要な全体UI再確認、dotの視覚レビューはまだ完了していない。

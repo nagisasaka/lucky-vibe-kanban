@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 test('execution previews disclose status, retain source and copy exact text across themes and widths', async () => {
   const root = fileURLToPath(new URL('../../', import.meta.url));
-  const evidence = root + 'test-results/local32-execution';
+  const evidence =
+    process.env.LVK_EXECUTION_EVIDENCE ??
+    root + 'test-results/local32-execution';
   mkdirSync(evidence, { recursive: true });
   const bundle = await build({
     entryPoints: [root + 'tests/chat/execution-display.fixture.tsx'],
@@ -43,7 +45,12 @@ test('execution previews disclose status, retain source and copy exact text acro
       encoding: 'utf8',
     }).trim(),
     source:
-      'dirty worktree; fixed component fixture, real theme CSS; no backend or provider connection',
+      'fixed component fixture, real theme CSS; no backend or provider connection',
+    dirty:
+      execFileSync('git', ['status', '--porcelain'], {
+        cwd: root,
+        encoding: 'utf8',
+      }).trim().length > 0,
     checks: [],
     errors: [],
   };
@@ -62,6 +69,8 @@ test('execution previews disclose status, retain source and copy exact text acro
     await expect(page.locator('#unknown')).toContainText('結果未確認');
     await expect(page.locator('#unknown')).not.toContainText('出力なし');
     await expect(page.locator('#denied')).toContainText('拒否');
+    await expect(page.locator('#approval')).toContainText('承認待ち');
+    await expect(page.locator('#approved')).toContainText('承認済み・開始待ち');
     await expect(page.locator('#running')).toContainText('途中まで受信');
     await expect(page.locator('#mixed')).toContainText('失敗 1');
     await expect(page.locator('#mixed')).toContainText('Error: regression');
@@ -104,6 +113,7 @@ test('execution previews disclose status, retain source and copy exact text acro
     await expect(page.locator('#failure')).toContainText(
       'provider報告: 1.25秒'
     );
+    await page.screenshot({ path: `${evidence}/details-desktop.png` });
     await page.locator('#failure > div > button').click();
     report.checks.push(
       'expanded original command/output, exact clipboard API arguments including spaces, tab and backslash, completion metadata'
@@ -125,6 +135,12 @@ test('execution previews disclose status, retain source and copy exact text acro
         if (theme === 'dark') await page.locator('#theme').click();
       }
     }
+    await page.locator('#mixed > div > button').click();
+    await page
+      .locator('#mixed')
+      .getByRole('button', { name: /失敗.*exit 1/ })
+      .click();
+    await page.screenshot({ path: `${evidence}/group-details-narrow.png` });
     const long = '  ' + '日本語\\_literal '.repeat(3000) + '\t\n';
     await page.locator('#composer').focus();
     await page.evaluate(
@@ -158,6 +174,7 @@ test('execution previews disclose status, retain source and copy exact text acro
       .getByRole('button', { name: '出力をコピー' })
       .click();
     assert.equal(await page.evaluate(() => window.copied.at(-1)), long);
+    await page.screenshot({ path: `${evidence}/stream-details-narrow.png` });
     report.checks.push(
       'desktop/narrow light/dark no horizontal page overflow; long streamed output preserves input focus/value and exact details/copy'
     );

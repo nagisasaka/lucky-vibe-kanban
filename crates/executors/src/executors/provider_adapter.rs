@@ -1621,9 +1621,8 @@ fn classify_codex_payload(
                 _ => Err(NativeAuditError::MalformedFrame(sequence)),
             })
         }
-        // Summary deltas remain in the lossless native audit. The completed
-        // reasoning item is authoritative, and mapping both would duplicate
-        // text because canonical Thinking does not carry a provider item ID.
+        // Summary deltas are live-only. The completed reasoning item is
+        // authoritative; v6 keeps the item and summary-part identity for UI replacement.
         "item/reasoning/summarytextdelta" | "item.reasoning.summary_text_delta" => {
             let item_id = params
                 .get("itemId")
@@ -2267,6 +2266,24 @@ fn project_typed_event(
         } => Some(AgentLiveEventPayload::ThinkingDelta {
             provider_item_id: provider_item_id.clone(),
             delta: delta.clone(),
+            summary_index: if provider == DirectProvider::Codex
+                && manifest.mapper_version.ends_with("-v6")
+            {
+                event
+                    .raw
+                    .payload_json
+                    .as_ref()
+                    .and_then(|raw| raw.get("params"))
+                    .and_then(|params| {
+                        params
+                            .get("summaryIndex")
+                            .or_else(|| params.get("summary_index"))
+                    })
+                    .and_then(Value::as_u64)
+                    .and_then(|index| u32::try_from(index).ok())
+            } else {
+                None
+            },
         }),
         TypedProviderEvent::ToolOutputDelta {
             provider_item_id,
@@ -3122,7 +3139,7 @@ mod tests {
             (
                 serde_json::json!({
                     "method": "item/reasoning/summaryTextDelta",
-                    "params": {"itemId": "reasoning-1", "delta": "summary"}
+                    "params": {"itemId": "reasoning-1", "delta": "summary", "summaryIndex": 2}
                 }),
                 "reasoning-1",
             ),
@@ -3141,6 +3158,27 @@ mod tests {
             let projection = provider
                 .project_provider_event(&decoded, &manifest)
                 .unwrap();
+            if expected_item_id == "reasoning-1" {
+                assert!(matches!(
+                    projection.live_events[0].payload,
+                    AgentLiveEventPayload::ThinkingDelta {
+                        summary_index: Some(2),
+                        ..
+                    }
+                ));
+                let mut old_manifest = manifest.clone();
+                old_manifest.mapper_version = provider.v5_mapper().versions().mapper_version;
+                let old = provider
+                    .project_provider_event(&decoded, &old_manifest)
+                    .unwrap();
+                assert!(matches!(
+                    old.live_events[0].payload,
+                    AgentLiveEventPayload::ThinkingDelta {
+                        summary_index: None,
+                        ..
+                    }
+                ));
+            }
             assert!(projection.durable_events.is_empty());
             assert!(matches!(
                 projection.live_events.as_slice(),

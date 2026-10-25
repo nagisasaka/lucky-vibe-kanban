@@ -339,6 +339,7 @@ export function mergeAgentLiveEvent(
             payload: {
               content: live.payload.data.delta,
               provider_item_id: live.payload.data.provider_item_id,
+              summary_index: live.payload.data.summary_index ?? null,
             },
           },
         }

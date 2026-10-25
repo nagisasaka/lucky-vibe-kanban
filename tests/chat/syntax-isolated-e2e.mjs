@@ -17,7 +17,9 @@ import { createServer, connect } from 'node:net';
 import { once } from 'node:events';
 
 const root = process.cwd();
-const evidence = resolve('test-results/local32');
+const evidence = resolve(
+  process.env.LVK_CHAT_EVIDENCE ?? 'test-results/local32'
+);
 mkdirSync(evidence, { recursive: true });
 mkdirSync('.build', { recursive: true });
 const instance = mkdtempSync(resolve('.build/local32-'));
@@ -33,6 +35,21 @@ let server, browser, page;
 const serverPids = [];
 let browserPids = [];
 const report = {
+  head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  dirty:
+    execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()
+      .length > 0,
+  artifacts: execFileSync(
+    'sha256sum',
+    [
+      'target/debug/server',
+      'target/debug/agent-process-host',
+      'packages/local-web/dist/index.html',
+    ],
+    { encoding: 'utf8' }
+  )
+    .trim()
+    .split('\n'),
   origin,
   instance,
   workspace,
@@ -92,6 +109,9 @@ async function startServer() {
 }
 try {
   await startServer();
+  report.serverBuild = (
+    await (await fetch(`${origin}/api/info`)).json()
+  ).data?.build_info;
   await stopServer();
   execFileSync('python3', [
     '-c',

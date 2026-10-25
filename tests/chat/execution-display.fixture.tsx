@@ -79,6 +79,18 @@ export const examples: Example[] = [
     entries: [make('denied', 'denied', '', 'unavailable')],
   },
   {
+    id: 'approval',
+    title: '承認待ち・未実行',
+    entries: [
+      { ...make('approval', 'waiting_approval', '', 'pending'), active: true },
+    ],
+  },
+  {
+    id: 'approved',
+    title: '承認済み・開始イベント待ち',
+    entries: [make('approved', 'approved', '', 'pending')],
+  },
+  {
     id: 'mixed',
     title: '集約に失敗を含む',
     entries: [
