@@ -706,21 +706,20 @@ impl GitService {
             change = DiffChangeKind::PermissionChange;
         }
 
-        // Compute line stats from available content
+        // An absent side is only a zero-length input for a real add/delete.
+        // Binary, unreadable or omitted content must not look like an add/delete.
         let (additions, deletions) = match (&old_content, &new_content) {
             (Some(old), Some(new)) => {
                 let (adds, dels) = compute_line_change_counts(old, new);
                 (Some(adds), Some(dels))
             }
-            (Some(old), None) => {
-                // File deleted - all lines are deletions
+            (Some(old), None) if matches!(change, DiffChangeKind::Deleted) => {
                 (Some(0), Some(old.lines().count()))
             }
-            (None, Some(new)) => {
-                // File added - all lines are additions
+            (None, Some(new)) if matches!(change, DiffChangeKind::Added) => {
                 (Some(new.lines().count()), Some(0))
             }
-            (None, None) => (None, None),
+            _ => (None, None),
         };
 
         Diff {
@@ -1873,5 +1872,32 @@ pub fn compute_line_change_counts(old: &str, new: &str) -> (usize, usize) {
             tracing::error!("git2 diff failed: {}", e);
             (0, 0)
         }
+    }
+}
+
+#[cfg(test)]
+mod summary_read_failure_tests {
+    use super::*;
+
+    #[test]
+    fn missing_modified_content_is_not_a_deletion() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let repo = Repository::init(temp.path()).unwrap();
+        let oid = repo.blob(b"retained\n").unwrap();
+        let mut builder = repo.treebuilder(None).unwrap();
+        builder.insert("missing.txt", oid, 0o100644).unwrap();
+        let tree = repo.find_tree(builder.write().unwrap()).unwrap();
+        let diff = GitService::status_entry_to_diff(
+            &repo,
+            &tree,
+            StatusDiffEntry {
+                change: ChangeType::Modified,
+                path: "missing.txt".into(),
+                old_path: None,
+            },
+        );
+        assert_eq!(diff.old_content.as_deref(), Some("retained\n"));
+        assert!(diff.new_content.is_none());
+        assert_eq!((diff.additions, diff.deletions), (None, None));
     }
 }

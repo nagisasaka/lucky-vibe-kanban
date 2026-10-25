@@ -34,4 +34,28 @@ describe('tool elapsed time evidence', () => {
       })
     ).toContain('2s');
   });
+
+  it('keeps the Kanban unknown label without inventing elapsed time', () => {
+    expect(render({ unknownLabel: '—' })).toContain('—');
+    expect(render({ durationMs: NaN, unknownLabel: '—' })).toContain('—');
+    expect(
+      render({
+        startedAt: '2026-10-25T00:00:04Z',
+        endedAt: '2026-10-25T00:00:01Z',
+        unknownLabel: '—',
+      })
+    ).toContain('—');
+  });
+
+  it('prefers measured duration or valid endpoints over the unknown label', () => {
+    expect(render({ durationMs: 2500, unknownLabel: '—' })).toContain('2s');
+    expect(
+      render({
+        startedAt: '2026-10-25T00:00:01Z',
+        endedAt: '2026-10-25T00:00:09Z',
+        active: true,
+        unknownLabel: '—',
+      })
+    ).toContain('8s');
+  });
 });

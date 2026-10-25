@@ -295,6 +295,7 @@
     "unlinkError": "ワークスペースのリンク解除に失敗しました",
     "deleteError": "ワークスペースの削除に失敗しました",
     "filesChanged": "{{count}}ファイル",
+    "filesChangedUnknown": "— ファイル",
     "deleteDialog": {
       "title": "ワークスペースを削除",
       "description": "このワークスペースを削除してもよろしいですか？この操作は元に戻せません。",

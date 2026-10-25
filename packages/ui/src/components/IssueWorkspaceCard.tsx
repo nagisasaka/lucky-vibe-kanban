@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import { UserAvatar, type UserAvatarUser } from './UserAvatar';
 import { RunningDots } from './RunningDots';
+import { Tooltip } from './Tooltip';
 import { ChatElapsedTime } from './ChatElapsedTime';
 import {
   DropdownMenu,
@@ -32,9 +33,9 @@ export interface WorkspaceWithStats {
   localWorkspaceId: string | null;
   name: string | null;
   archived: boolean;
-  filesChanged: number;
-  linesAdded: number;
-  linesRemoved: number;
+  filesChanged?: number;
+  linesAdded?: number;
+  linesRemoved?: number;
   prs: WorkspacePr[];
   owner: UserAvatarUser | null;
   updatedAt: string;
@@ -68,6 +69,7 @@ export interface IssueWorkspaceCreateCardProps {
 }
 
 interface IssueWorkspaceCardContainerProps {
+  highlightDevServer?: boolean;
   onClick?: () => void;
   className?: string;
   children: React.ReactNode;
@@ -77,12 +79,17 @@ function IssueWorkspaceCardContainer({
   onClick,
   className,
   children,
+  highlightDevServer = false,
 }: IssueWorkspaceCardContainerProps) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-half p-base bg-panel rounded-sm transition-all duration-150',
-        onClick && 'cursor-pointer hover:bg-secondary/70',
+        'flex flex-col gap-half p-base rounded-sm transition-all duration-150',
+        highlightDevServer ? 'bg-[hsl(var(--info)/0.12)]' : 'bg-panel',
+        onClick &&
+          (highlightDevServer
+            ? 'cursor-pointer hover:bg-[hsl(var(--info)/0.18)]'
+            : 'cursor-pointer hover:bg-secondary/70'),
         className
       )}
       onClick={
@@ -123,9 +130,6 @@ export function IssueWorkspaceCard({
   className,
 }: IssueWorkspaceCardProps) {
   const { t } = useTranslation('common');
-  const timeAgo = getTimeAgo(
-    workspace.latestProcessCompletedAt ?? workspace.updatedAt
-  );
   const isRunning = workspace.isRunning ?? false;
   const hasPendingApproval = workspace.hasPendingApproval ?? false;
   const hasRunningDevServer = workspace.hasRunningDevServer ?? false;
@@ -134,14 +138,13 @@ export function IssueWorkspaceCard({
     workspace.latestProcessStatus === 'failed' ||
     workspace.latestProcessStatus === 'crashed' ||
     workspace.latestProcessStatus === 'audit_failed';
-  const hasLiveStatusIndicator =
-    hasRunningDevServer ||
-    isFailed ||
-    isRunning ||
-    (hasUnseenActivity && !isRunning);
 
   return (
-    <IssueWorkspaceCardContainer onClick={onClick} className={className}>
+    <IssueWorkspaceCardContainer
+      onClick={onClick}
+      highlightDevServer={hasRunningDevServer}
+      className={className}
+    >
       {/* Row 1: Status badge + Name (left), Owner avatar + menu (right) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-half min-w-0">
@@ -216,14 +219,19 @@ export function IssueWorkspaceCard({
       </div>
 
       {/* Row 2: Live status + stats (left), PR buttons (right) */}
-      <div className="flex items-center justify-between gap-half min-w-0">
-        <div className="flex items-center flex-wrap sm:flex-nowrap gap-half text-sm text-low min-w-0 flex-1 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-half min-w-0">
+        <div className="flex items-center flex-wrap gap-half text-sm text-low min-w-0 flex-1">
           <div className="flex items-center gap-half shrink-0">
             {hasRunningDevServer && (
-              <PlayIcon
-                className="size-icon-xs text-brand shrink-0"
-                weight="fill"
-              />
+              <Tooltip content={t('kanban.compact.devServer')}>
+                <span role="img" aria-label={t('kanban.compact.devServer')}>
+                  <PlayIcon
+                    aria-hidden="true"
+                    className="size-icon-xs text-brand shrink-0"
+                    weight="fill"
+                  />
+                </span>
+              </Tooltip>
             )}
 
             {!isRunning && isFailed && (
@@ -250,6 +258,7 @@ export function IssueWorkspaceCard({
               />
             )}
             <ChatElapsedTime
+              unknownLabel="—"
               startedAt={workspace.latestProcessStartedAt}
               endedAt={workspace.latestProcessCompletedAt}
               active={
@@ -266,42 +275,20 @@ export function IssueWorkspaceCard({
             />
           </div>
 
-          {hasLiveStatusIndicator && !workspace.latestProcessStartedAt && (
-            <span className="text-low/50 shrink-0">·</span>
-          )}
-
-          {!workspace.latestProcessStartedAt && (
-            <span className="whitespace-nowrap shrink-0">{timeAgo}</span>
-          )}
-          {workspace.filesChanged > 0 && (
-            <>
-              <span className="text-low/50 shrink-0">·</span>
-              <span className="whitespace-nowrap shrink-0">
-                {t('workspaces.filesChanged', {
-                  count: workspace.filesChanged,
-                })}
-              </span>
-            </>
-          )}
-          {workspace.linesAdded > 0 && (
-            <>
-              <span className="text-low/50 shrink-0">·</span>
-              <span className="text-success whitespace-nowrap shrink-0">
-                +{workspace.linesAdded}
-              </span>
-            </>
-          )}
-          {workspace.linesRemoved > 0 && (
-            <>
-              <span className="text-low/50 shrink-0">·</span>
-              <span className="text-error whitespace-nowrap shrink-0">
-                -{workspace.linesRemoved}
-              </span>
-            </>
-          )}
+          <span className="whitespace-nowrap shrink-0">
+            {workspace.filesChanged == null
+              ? t('workspaces.filesChangedUnknown')
+              : t('workspaces.filesChanged', { count: workspace.filesChanged })}
+          </span>
+          <span className="text-success whitespace-nowrap shrink-0">
+            +{workspace.linesAdded ?? '—'}
+          </span>
+          <span className="text-error whitespace-nowrap shrink-0">
+            -{workspace.linesRemoved ?? '—'}
+          </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-half shrink-0">
+        <div className="hidden sm:flex flex-wrap items-center gap-half min-w-0">
           {workspace.prs.length > 0 ? (
             workspace.prs.map((pr) => (
               <a
@@ -371,20 +358,4 @@ export function IssueWorkspaceCreateCard({
       </div>
     </IssueWorkspaceCardContainer>
   );
-}
-
-function getTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffWeeks = Math.floor(diffDays / 7);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return `${diffWeeks}w ago`;
 }
