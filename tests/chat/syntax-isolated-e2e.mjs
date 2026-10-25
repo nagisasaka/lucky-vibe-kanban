@@ -320,6 +320,38 @@ if p.exists():
           .evaluate((el) => getComputedStyle(el).color)
       )
       .toBe(color);
+    report.contrast ??= [];
+    report.contrast.push({
+      theme,
+      samples: await page.evaluate(() => {
+        const rgb = (value) => value.match(/[\d.]+/g)?.map(Number) ?? [];
+        const luminance = (color) => {
+          const linear = color.slice(0, 3).map((v) => {
+            const n = v / 255;
+            return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4;
+          });
+          return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+        };
+        return [...document.querySelectorAll(
+          'code[data-language="bash"] [class*="syntax-string"], button .text-low, time, pre.text-low'
+        )].filter((el) => el.getBoundingClientRect().height > 0 && el.textContent?.trim()).slice(0, 20).map((el) => {
+          const foreground = getComputedStyle(el).color;
+          let background = 'rgb(255, 255, 255)';
+          for (let parent = el; parent; parent = parent.parentElement) {
+            const value = getComputedStyle(parent).backgroundColor;
+            const channels = rgb(value);
+            if (channels.length === 3 || channels[3] === 1) {
+              background = value;
+              break;
+            }
+          }
+          const a = luminance(rgb(foreground));
+          const b = luminance(rgb(background));
+          return { text: el.textContent?.slice(0, 60), foreground, background,
+            ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) };
+        });
+      }),
+    });
     await page.screenshot({
       path: join(evidence, `${theme}.png`),
       fullPage: true,

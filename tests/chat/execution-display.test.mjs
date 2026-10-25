@@ -110,6 +110,8 @@ test('execution previews disclose status, retain source and copy exact text acro
       await page.locator('#failure pre').last().textContent()
     );
     await expect(page.locator('#failure')).toContainText('終了を確認');
+    await expect(page.locator('#failure time')).not.toContainText('&#');
+    assert.match(await page.locator('#failure time').textContent(), /10\/25\/2026/);
     await expect(page.locator('#failure')).toContainText(
       'provider報告: 1.25秒'
     );
@@ -122,6 +124,12 @@ test('execution previews disclose status, retain source and copy exact text acro
       await page.setViewportSize({ width, height: 1000 });
       for (const theme of ['light', 'dark']) {
         if (theme === 'dark') await page.locator('#theme').click();
+        await expect(
+          page.locator('#failure [class*="syntax-string"]').first()
+        ).toHaveCSS(
+          'color',
+          theme === 'dark' ? 'rgb(165, 214, 255)' : 'rgb(3, 47, 98)'
+        );
         await page.locator('#history').evaluate((el) => {
           el.scrollTop = 0;
         });

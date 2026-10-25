@@ -203,6 +203,7 @@ void i18next
   .init({
     lng: 'ja',
     fallbackLng: 'en',
+    interpolation: { escapeValue: false }, // Match the application's React i18n setup.
     resources: {
       ja: { tasks: jaTasks, common: jaCommon },
       en: { tasks: enTasks, common: enCommon },

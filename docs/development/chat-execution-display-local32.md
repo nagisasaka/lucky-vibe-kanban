@@ -109,3 +109,16 @@ Claudeのnested stream_eventは監査に残るが、今回はその途中JSONや
 nginxの独立preview経路は認証を追加しないため、実アプリをpublic配置で起動した。外向きHTTPSで認証状態locked、未認証の業務API423、ブラウザ初期設定画面を確認した。独立DBには認証設定がなく、認証済UIとseed履歴のHTTP確認は未実施。管理者による独立previewの認証設定、または承認済みの専用設定経路が必要である。共有Auth0の秘密コピー、callback変更、認証無効化、nginx/TLS/DNS/本番設定変更は行っていない。キーも発行していない。認証の設定経路と現在のartifact情報は `test-results/local32-auth-preview/HANDOFF.md` にまとめた。
 
 LOCAL-81との資源協調により、追加の重Rust処理は再開連絡まで保留する。dotの視覚KISSレビュー、認証済み実アプリの確認、最後のユーザープレビューへの引渡しは未完である。provider実接続・PTY観測を行ったという主張はしない。mainマージ・デプロイ・稼働dev再起動は行わない。
+
+
+## dot中間レビューへの対応と利用中previewの保全
+
+Issueコメント `1ed09b26-c30e-4526-9511-c074943c1c26` を全文確認した。dotによる中間画像レビューであり、視覚レビュー完了ではない。
+
+完了日時の `&#x2F;` はcomponent fixtureのi18n設定が本体と異なることが原因だった。本体の `packages/web-core/src/i18n/config.ts` はReact向けに `interpolation.escapeValue=false` を設定済み。fixtureにも同じ設定を入れ、日時要素にentityが残らず通常の日付になることをbrowserで確認した。製品の日時・コマンド・出力処理は変更していない。テーマ切替後のfixture撮影は、本体と同じ文字列色へ遷移が完了したことを待つ。
+
+公開稼働artifactを変更せず、既存のビルド済み実アプリを別の独立一時DBで起動してdarkのcomputed色を確認した。文字列は `rgb(165,214,255)` と背景 `rgb(28,28,28)` の比が約11.09、補助状態文字は `rgb(143,143,143)` と背景 `rgb(33,33,33)` の比が約4.98だった。数値はsRGB相対輝度から算出し、測定範囲を `test-results/local32-dot-app/isolated-e2e.json` に保持する。全画面・全状態の視認性を保証するものではなく、公開認証済みブラウザの測定でもない。この範囲では製品色の変更は行わない。新しいfixture画面は `test-results/local32-dot-fix/`、実アプリローカル画面は `test-results/local32-dot-app/` に分け、既存資料を上書きしない。
+
+後にユーザーが独立previewの表示と実Codex試行の成功を報告した。read-onlyでBasic有効・未認証API401を確認した。本担当は認証を設定せず、秘密の内容を読まず、試provider runも開始していない。ユーザー利用中のため公開previewの停止・再起動・artifact上書きは行わない。独立DBにはユーザー作成の実runがあるので、合成fixtureとして削除しない。差替えが必要ならrootから使用終了確認を得てから行う。
+
+DBと作業repoは独立しているが、serverのHOMEは `/home/appuser`、CODEX_HOMEは未指定で、既定の `~/.codex/auth.json` は存在する（存在のみ確認）。この構成はprovider資格情報の隔離ではない。executor機能は有効で、合成seedの作業先はこのinstance配下の独立Git repoであり、LVK本体repoを実作業する接続ではない。一般の同一OSユーザー権限からの隔離・sandbox保証もない。資格情報やユーザーの実run内容を追加で調べず、能力説明に必要な境界だけを記録する。
