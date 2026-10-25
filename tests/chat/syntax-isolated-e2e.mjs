@@ -236,6 +236,10 @@ if p.exists():
     stream = ws;
     for (const payload of [
       tool,
+      ...(process.env.LVK_CHAT_FRONTEND_DIR ? [
+        { type: 'provider_extension', data: { provider_namespace: 'codex', provider_event: 'reasoning_summary', payload: { provider_item_id: 'summary-fixture', content: 'Inspect README.md\nKeep the original provider text.' } } },
+        { type: 'provider_extension', data: { provider_namespace: 'codex', provider_event: 'plan', payload: { provider_item_id: 'plan-fixture', content: 'Run focused tests\nCheck the result.' } } },
+      ] : []),
       message('LOCAL32 code\n\n```bash\necho "$HOME'),
     ])
       ws.send(
@@ -258,6 +262,8 @@ if p.exists():
     await expect(page.getByText('plain output: const x = 42;', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /ツール呼び出し完了/ })).toHaveCount(0);
     await expect(page.getByTestId('run-elapsed').locator('time')).toHaveAttribute('datetime', stamp);
+    await expect(page.getByText('Inspect README.md', { exact: true })).toBeVisible();
+    await expect(page.getByText('Run focused tests', { exact: true })).toBeVisible();
     report.checks.push('operation/result visible initially; retained run completion timestamp visible without expansion');
     await page.screenshot({ path: join(evidence, 'initial.png'), fullPage: true });
   }
