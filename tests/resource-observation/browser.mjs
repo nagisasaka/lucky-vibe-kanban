@@ -145,7 +145,7 @@ try {
       );
       const disk = values.disks[0].observation.value;
       await expect(page.getByTestId("resource-disk")).toHaveText(
-        `DISK ${Math.floor(disk.used_percent)}% (${Number((disk.used_bytes / 1e9).toFixed(2))}GB / 1000GB)`,
+        `DISK ${Math.floor(disk.used_percent)}% (${Math.round(disk.used_bytes / 1e9)}GB / 1000GB)`,
       );
     } else {
       await expect(page.getByTestId("resource-disk")).toHaveText(

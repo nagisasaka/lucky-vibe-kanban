@@ -479,7 +479,7 @@ try {
     assert.equal(d.observation.status, "known");
     assert.ok(liveText.includes("Worktree filesystem"));
     await expect(page.getByTestId("resource-disk")).toHaveText(
-      `DISK ${Math.floor(d.observation.value.used_percent)}% (${Number((d.observation.value.used_bytes / 1e9).toFixed(2))}GB / ${Number((d.observation.value.total_bytes / 1e9).toFixed(2))}GB)`,
+      `DISK ${Math.floor(d.observation.value.used_percent)}% (${Math.round(d.observation.value.used_bytes / 1e9)}GB / ${Math.round(d.observation.value.total_bytes / 1e9)}GB)`,
     );
   }
   results.diskWiring = {

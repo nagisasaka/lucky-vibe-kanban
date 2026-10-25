@@ -141,23 +141,17 @@ async fn intervene_inner(
         request.prompt.is_empty() || run.payload.result_commit.is_none(),
         "A frozen candidate cannot be changed by instructions; review it or cancel"
     );
-    let history = serde_json::json!({"operation":"resume", "request_id":request.request_id,
-        "previous_error":run.error,"previous_stop":run.payload.stop,"agent_run_id":run.agent_run_id,
-        "conflict_dispatch":run.payload.conflict_dispatch});
-    run.payload.history.push(history);
-    if run.payload.result_commit.is_none() {
-        if let Some(agent) = run.agent_run_id {
-            use executors::runtime::AgentRunPort;
-            let state = deployment.agent_run_port().query(agent).await?.state;
-            ensure!(
-                state.status.is_terminal(),
-                "Previous conflict job has not ended"
-            );
-        }
-        // Preserve edits/index; the next conflict job receives the complete current contract.
-        run.agent_run_id = None;
-        run.payload.conflict_dispatch = None;
+    if run.payload.result_commit.is_none()
+        && let Some(agent) = run.agent_run_id
+    {
+        use executors::runtime::AgentRunPort;
+        let state = deployment.agent_run_port().query(agent).await?.state;
+        ensure!(
+            state.status.is_terminal(),
+            "Previous conflict job has not ended"
+        );
     }
+    record_resume_dispatch(&mut run, request.request_id);
     run.payload.intervention = Some(db::models::integration::IntegrationIntervention {
         request_id: request.request_id,
         prompt: request.prompt,
@@ -196,6 +190,19 @@ async fn intervene_inner(
     let _ = root;
     run.save(pool).await?;
     Ok(())
+}
+
+// Called only after Resume admission and prior-job termination checks.
+fn record_resume_dispatch(run: &mut IntegrationRun, request_id: Uuid) {
+    let history = serde_json::json!({"operation":"resume", "request_id":request_id,
+        "previous_error":run.error,"previous_stop":run.payload.stop,"agent_run_id":run.agent_run_id,
+        "conflict_dispatch":run.payload.conflict_dispatch});
+    run.payload.history.push(history);
+    if run.payload.result_commit.is_none() {
+        // Preserve edits/index; the next job receives a fresh Session and the complete contract.
+        run.agent_run_id = None;
+        run.payload.conflict_dispatch = None;
+    }
 }
 
 pub(super) async fn decide_gate(
@@ -477,8 +484,72 @@ async fn advance(deployment: &DeploymentImpl, run: IntegrationRun) -> anyhow::Re
     }
 }
 
+fn conflict_resolution(
+    state: &executors::runtime::RunState,
+) -> anyhow::Result<super::mechanical::Resolution> {
+    use executors::runtime::ProjectionStatus;
+    ensure!(
+        state.status == AgentRunStatus::Succeeded
+            && state.projection_status == ProjectionStatus::Current,
+        "Conflict job did not finish with a trustworthy projection; inspect and resume explicitly"
+    );
+    let result = super::mechanical::resolution(
+        &state
+            .terminal_output
+            .as_ref()
+            .context("Missing resolution")?
+            .content,
+    )?;
+    ensure!(
+        result.outcome == "ready",
+        "Conflict needs clarification: {}",
+        result.summary
+    );
+    Ok(result)
+}
+
+// Each Initial/Launch owns a native conversation. Persist its Session and immutable
+// dispatch together, before provider side effects; restart/redelivery reuses both.
+async fn persist_conflict_dispatch(
+    pool: &SqlitePool,
+    run: &mut IntegrationRun,
+    workspace_path: String,
+    content: String,
+) -> anyhow::Result<()> {
+    if run.payload.conflict_dispatch.is_some() {
+        return Ok(());
+    }
+    let mut next = run.clone();
+    let workspace_id = next.workspace_id.context("Missing workspace")?;
+    let working_dir = Session::resolve_agent_working_dir(pool, workspace_id).await?;
+    let session_id = Uuid::new_v4();
+    next.session_id = Some(session_id);
+    let dispatch = super::mechanical::conflict_request(&next, workspace_path, content)?;
+    let executors::runtime::AgentRunPortCommand::Create { request, attempt } = &dispatch else {
+        unreachable!()
+    };
+    next.agent_run_id = Some(request.agent_run_id);
+    next.payload.conflict_dispatch = Some(serde_json::to_value(&dispatch)?);
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    Session::create_with_working_dir(
+        &mut tx,
+        &CreateSession {
+            executor: Some(attempt.executor_config.executor.to_string()),
+            name: Some("Formal Integration conflict".into()),
+        },
+        session_id,
+        workspace_id,
+        working_dir,
+    )
+    .await?;
+    next.save_on(&mut tx).await?;
+    tx.commit().await?;
+    *run = next;
+    Ok(())
+}
+
 async fn merge_step(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow::Result<()> {
-    use executors::runtime::{AgentRunPort, AgentRunPortCommand, ProjectionStatus};
+    use executors::runtime::{AgentRunPort, AgentRunPortCommand};
 
     use super::mechanical;
     let pool = &deployment.db().pool;
@@ -513,17 +584,14 @@ async fn merge_step(deployment: &DeploymentImpl, mut run: IntegrationRun) -> any
                     &repo.name, repo.id,
                 )?;
                 let memory = integration_memory(&run, store.as_ref())?;
-                let dispatch = mechanical::conflict_request(
-                    &run,
+                let content = prompt(&run, &repo, &root, &memory)?;
+                persist_conflict_dispatch(
+                    pool,
+                    &mut run,
                     ws.container_ref.clone().context("Missing workspace path")?,
-                    prompt(&run, &repo, &root, &memory)?,
-                )?;
-                let AgentRunPortCommand::Create { ref request, .. } = dispatch else {
-                    unreachable!()
-                };
-                run.agent_run_id = Some(request.agent_run_id);
-                run.payload.conflict_dispatch = Some(serde_json::to_value(dispatch)?);
-                run.save(pool).await?; // immutable identity and full instruction precede all provider side effects
+                    content,
+                )
+                .await?;
             }
             let AgentRunPortCommand::Create { request, attempt } =
                 serde_json::from_value(run.payload.conflict_dispatch.clone().unwrap())?
@@ -543,19 +611,7 @@ async fn merge_step(deployment: &DeploymentImpl, mut run: IntegrationRun) -> any
             if admission::idle(deployment, ws.id).await.is_err() {
                 return Ok(());
             }
-            ensure!(
-                state.status == AgentRunStatus::Succeeded
-                    && state.projection_status == ProjectionStatus::Current,
-                "Conflict job did not finish with a trustworthy projection; inspect and resume explicitly"
-            );
-            let result = mechanical::resolution(
-                &state.terminal_output.context("Missing resolution")?.content,
-            )?;
-            ensure!(
-                result.outcome == "ready",
-                "Conflict needs clarification: {}",
-                result.summary
-            );
+            let result = conflict_resolution(&state)?;
             run.payload.semantic_summary = Some(result.summary);
             mechanical::resolution_tree(&root, &before, &source)?
         } else {

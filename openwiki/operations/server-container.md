@@ -58,10 +58,10 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-24T11:38:17.046Z" }
+generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-25T19:13:40.123Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -75,6 +75,14 @@ server 配布は local LVK と coding agent を常時稼働サーバーへ置き
 root Dockerfile の最終 `server` target は prebuilt server・隣接 `agent-process-host`・MCP CLI と開発 toolchain を含む。稼働 binary は `/usr/local/bin` に置かれ、`/repos` の LVK checkout を編集・build しても、それを管理しているアプリを置換しない。小さい `runtime` target は別の起動入口を持ち、server target の認証付き ingress と同じではない。[target と起動入口](../../Dockerfile)
 
 Node 22、固定版 Codex/pnpm、repository の Rust toolchain などを image に置き、user の認証・cache は永続領域へ分ける。追加 SDK は派生 image の `/opt` や `/usr/local` に置くと、既存 home volume に隠されにくい。公開版・digest と対応する配布 kit を使い、文書の例の tag を公開済み成果物と推定しない。[image の構成](../../Dockerfile)、[派生 image の契約](../../docs/self-hosting/server-container.mdx)
+
+### Claude Code の同梱と認証
+
+`server-tools` は native Claude Code を version と SHA-256 で固定し、amd64 を確認して公式配布物を取得し、checksum 検証後に実行可能にする。配置先は `/usr/local/bin/claude` で、永続 home mount に隠れない。小型 runtime target への追加ではない。CLI の更新は image 更新と結び付く。[構成と検証順](../../Dockerfile#L162-L173)
+
+CLI 同梱はアカウント認証を含まない。利用者はコンテナー内で `claude --version` を確認し、`claude auth login` の browser 案内に従う。設定・認証情報は永続 home に保持する。LVK の Basic/Auth0 と provider 認証は別であり、[Claude profile の実行前診断](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)も CLI の存在だけでは成功しない。[利用手順](../../docs/self-hosting/server-container.mdx#start-and-sign-in)
+
+image smoke は通常 shell、login shell、永続 home を mount した稼働コンテナー内で `claude --version` を確認する。実アカウント login やモデル実行の検証ではない。この Sync は source と試験定義の照合であり、Docker build / run や Claude login は実施していない。[smoke 定義](../../deploy/server/smoke-image.sh#L24-L38)・[mount 後](../../deploy/server/smoke-image.sh#L64-L70)
 
 LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked dependencies・`--no-default-features` で導入し、`/usr/local/bin/sccache` に置く。local disk cache 用の executable 同梱であり、global Cargo wrapper・cache directory・incremental 設定を自動変更しない。home volume に隠されない配置と、各 repository が利用を設定する境界を維持する。[同梱と意図](../../Dockerfile#L173-L180)。実 image での利用可否と cache hit は別途の検証対象である。
 

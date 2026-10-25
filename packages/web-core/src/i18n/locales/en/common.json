@@ -286,6 +286,7 @@
     "deleteError": "Failed to delete workspace",
     "linkError": "Failed to link workspace",
     "filesChanged": "{{count}} files",
+    "filesChangedUnknown": "— files",
     "deleteDialog": {
       "title": "Delete Workspace",
       "description": "Are you sure you want to delete this workspace? This action cannot be undone.",

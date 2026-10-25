@@ -32,6 +32,8 @@ sources:
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
     resource: repo://crates/server/src/routes/workspaces/links.rs
+  - id: openwiki-source-ff91ec3e5a5f406a698e52e6
+    resource: repo://packages/ui/src/components/KanbanCardContent.tsx
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
   - id: openwiki-source-cae8a3c125596fe3e7ed7b37
@@ -46,10 +48,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
+generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-25T19:07:42.711Z
 ---
 
 # Project・Issue と実施の関係
@@ -136,11 +138,13 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 
 Kanban のカードは Issue を表し、内側の Workspace はその仕事の実施を表す。カードを小さくしても Issue と Workspace の 1:N 関係や [実行による列の同期](#kanban-と実行の同期契約)は変わらない。可視 Status ごとに列を描画し、その列の実幅が33.5rem以上なら内部のカードを二列、未満なら一列に置く。物理解像度や画面全体の幅で固定せず、三列や masonry にしない。標準 root 16px では閾値536 CSS pxで、二列時の16remカード二枚と gap・padding を確保する設計である。一列時のカード幅を常に16rem以上に制限する CSS ではない。[可視列](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L468-L476)・[幅と通常 grid](../../packages/web-core/src/features/kanban/ui/kanban-grid.css#L3-L21)。[開発時の判断記録](../../tests/kanban/VALIDATION.md#変更と判断)は、文字縮小や一次元 DnD の CSS だけの grid 化を避けた理由を記録している。
 
-Issue 番号と既存サイズ・省略表示のタイトル、未 archive の関連 Workspace 数を折り畳みの外に残す。native `details` を開くと本文と Workspace 一覧を読める。「Workspace 表示」設定は展開内の一覧に適用し、本文や重要状態を隠す設定ではない。WorkflowAttempt のカードと選択元 Card に対応する Integration の入口も展開の外にある。[タイトル](../../packages/ui/src/components/KanbanCardContent.tsx#L210-L241)・[展開](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L61)・[入口と一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1249-L1326)
+Issue 番号・省略表示のタイトル・未 archive の関連 Workspace 数に加え、本文プレビューをタグ群の後へ最大2視覚行で表示する。native `details` は本文全文を開くために残す。`showWorkspaces` が有効なら通常 Workspace 一覧を折り畳みの外に表示し、無効なら一覧を隠す。WorkflowAttempt カードは従来どおり別に描画する。カードごとの Integration 行は廃止し、正式 Integration は Navbar の Integrate / Auto Merge から開く。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L318-L329)・[全文](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L60)・[Workspace 一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1240-L1294)・[Integration 入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1015-L1032)
 
-件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、展開内の通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1283-L1326)。従って件数は展開後の通常 Workspace カード枚数を保証しない。
+タグは固定二件ではなく利用可能幅で可視数を決め、隠れた件数を `+N` で残す。長い先頭タグは省略して全文を title に保持し、既存のタグ編集操作を維持する。計測機構は [Web の描画責任](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
-承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
+件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1283-L1326)。従って件数は表示中の通常 Workspace カード枚数を保証しない。
+
+承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。Workspace 一覧 ON では開発サーバーの Issue 集約ラベルだけを抑え、該当 Workspace の淡青背景と Play icon の tooltip / accessible label で稼働を示す。他の重要状態は抑えない。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
 ## Issue の共同作業
 
