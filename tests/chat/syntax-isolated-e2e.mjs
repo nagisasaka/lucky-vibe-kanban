@@ -17,6 +17,7 @@ import { createServer, connect } from 'node:net';
 import { once } from 'node:events';
 
 const root = process.cwd();
+const frontendDir = resolve(process.env.LVK_CHAT_FRONTEND_DIR ?? 'packages/local-web/dist');
 const evidence = resolve(
   process.env.LVK_CHAT_EVIDENCE ?? 'test-results/local32'
 );
@@ -44,7 +45,7 @@ const report = {
     [
       'target/debug/server',
       'target/debug/agent-process-host',
-      'packages/local-web/dist/index.html',
+      join(frontendDir, 'index.html'),
     ],
     { encoding: 'utf8' }
   )
@@ -147,6 +148,21 @@ if p.exists():
     viewport: { width: 1440, height: 1100 },
   });
   page = await context.newPage();
+  if (process.env.LVK_CHAT_FRONTEND_DIR) {
+    // Serve an isolated candidate to this browser only. The running public
+    // server's asset directory and the temporary API server stay untouched.
+    report.frontendOverride = frontendDir;
+    await page.route(`${origin}/**`, async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.startsWith('/api/')) return route.fallback();
+      const file = resolve(frontendDir, '.' + path);
+      const asset = file.startsWith(frontendDir + '/') && existsSync(file) && path !== '/'
+        ? file : join(frontendDir, 'index.html');
+      const extension = asset.split('.').at(-1);
+      const contentType = { js: 'text/javascript', css: 'text/css', html: 'text/html', svg: 'image/svg+xml', woff2: 'font/woff2' }[extension];
+      await route.fulfill({ body: readFileSync(asset), contentType });
+    });
+  }
   page.on('pageerror', (e) => report.errors.push(e.message));
   const stamp = new Date().toISOString();
   const state = {
@@ -173,7 +189,8 @@ if p.exists():
             session_id: session,
             turn_id: run,
             state,
-            created_at: stamp,
+            created_at: new Date(Date.parse(stamp) - 13000).toISOString(),
+            completed_at: stamp,
             updated_at: stamp,
           },
         ],
@@ -237,6 +254,13 @@ if p.exists():
     'built app loaded real workspace/session and incomplete fixture Markdown'
   );
   await page.keyboard.press('Escape');
+  if (process.env.LVK_CHAT_FRONTEND_DIR) {
+    await expect(page.getByText('plain output: const x = 42;', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /ツール呼び出し完了/ })).toHaveCount(0);
+    await expect(page.getByTestId('run-elapsed').locator('time')).toHaveAttribute('datetime', stamp);
+    report.checks.push('operation/result visible initially; retained run completion timestamp visible without expansion');
+    await page.screenshot({ path: join(evidence, 'initial.png'), fullPage: true });
+  }
   const aggregate = page
     .getByRole('button', { name: /ツール呼び出し完了|件のコマンドを実行/ })
     .first();

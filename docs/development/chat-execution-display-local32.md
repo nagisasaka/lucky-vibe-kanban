@@ -133,3 +133,10 @@ rootが実ユーザー会話の画面を直接確認し、初期tool_calls group
 単一操作groupは操作見出しと結果プレビューを直接表示し、1回の展開で原文詳細に進む。複数操作の折り畳みでも各操作の短い見出しと結果数行を残す。説明・計画は原文の先頭行を初期表示し、空白のみの内容は表示しない。全体Run footerは既存の保持済み完了時刻を経過時間と併記し、不明な完了時刻を補わない。取得根拠のある1秒未満（provider報告0を含む）は切捨ての0sではなく<1sと表示する。詳細のprovider報告値は変更しない。
 
 新しい `tests/chat/execution-group.*` はcanonical投影→aggregateConsecutiveEntries→実AggregatedGroupEntryの経路を通す。受信shapeに基づく合成イベントで、初期command/README.md結果、外側の余分な展開がないこと、1回で詳細と原文コピー、Run footerの保持済み日時と13s、1180/375幅・両テーマを確認する。`test-results/local32-initial-group/` に画面・結果を保持する。公開稼働artifactは旧候補のまま維持し、ユーザーの利用終了とrootの差替承認前に停止・再起動・上書きしない。
+
+
+修正候補 `04acdbd3485f07bd8cb71296f9feaff86239d2d3` のfocused独立技術レビューは追加findingなし。独立SSR2件と既存時間/footer6件が成功し、`test-results/local32-initial-group/technical-review.md` に記録した。dot視覚レビューの代替ではない。
+
+新frontendは `.build/local32-initial-app-dist` へ別buildし、公開distを変更せず生成に成功した。`LVK_CHAT_FRONTEND_DIR` を指定した実アプリE2Eでは、候補frontendをそのtest browserだけへ配信し、既存ビルドのAPI server（0b0263a3）と別一時DBを使用した。API/Rust変更がないためRust buildは繰り返していない。初期操作/結果、展開前のRun完了日時、原文コピー、stream中入力保持、両テーマ、長文とcleanupが成功した。`test-results/local32-initial-app/initial.png`、light/dark画像、isolated-e2e.jsonに異なるfrontend/backendの対象SHA・hash・試験範囲を明記する。公開認証済みpreviewへ修正を配信したという主張ではない。
+
+公開serverはAgentRunのCodex/agent-process-hostの子孫として起動している。Linuxの通常終了でも所有子孫を回収する実装であり、Goal/AgentRun終端後の保持を保証できない。保持方法をrootへ報告し、operatorによるAgentRun外の正規起動等を、ユーザー利用終了・切替承認後に調整する必要がある。nohup/setsid等の回収回避、現在の停止・再起動・二重起動、認証変更は行わない。公開DBは既にユーザー実runを含む保持データである。
