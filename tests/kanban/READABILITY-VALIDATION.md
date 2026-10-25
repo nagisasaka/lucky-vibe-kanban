@@ -1,64 +1,91 @@
-# LOCAL-81 可読性・Workspace状況表示 / Change Manifest（ビルド前）
+# LOCAL-81 可読性・Workspace状況表示 / Change Manifest
 
-2026-10-25。実装・局所試験・commitは承認済み。main merge/deployは禁止。
-重ビルドは資源調整回答81a05adc-a6cc-47b4-8178-57ccc5333170により保留中。
-この記録は完了報告ではない。Rust検証、実API E2E、認証付き独立プレビュー、commit、上位AI独立レビューが残る。
+2026-10-25。実装・局所試験・commit承認済み。main merge/deployは実施していない。
+独立レビューは上位AI。プレビューBasic設定後の認証済み確認はユーザー操作待ち。
 
-## Revision
+## Revision・SHA照合
 
-- 開始HEAD: `455f42d2c77b3f512a8346be2c7b1a5294ea6d7e`、clean、作業ブランチ `vk/2f33-2`。
-- 初期main: `271aa60f14dd1ac94b2cf2a9fe0e1878bef3d2ce`。
-- `git merge --ff-only main`で作業ブランチのみ更新。試験対象はこのSHA + 未commit差分。
-- 最終commit SHA: 未作成。mainは更新していない。
-- `.build/kanban-readability/tested-source-hashes.json`に対象ソース/テストのSHA-256を記録。
+- 初期HEAD: `455f42d2c77b3f512a8346be2c7b1a5294ea6d7e`。作業ブランチだけを初期main `271aa60f14dd1ac94b2cf2a9fe0e1878bef3d2ce`へfast-forward。
+- 前回応答時点は未commitと報告したが、再開時のgit log/statusでは実装commit `21d9ff05b045249a0ff59d24530adec25a6b5644`、cleanを確認。これを今回のsource/test起点とする。
+- 前回UI fixture検証のソースSHA-256と21d9ff05の製品ソースは一致。
+- E2E後は検証記録更新とテストのPrettier整形のみ。整形後`node --check tests/kanban/isolated.mjs`成功。実行時test hashはそのまま保持し、製品ソースhashの一致を最終commitでも照合する。
+- 今回のRustテスト・serverは21d9ff05の製品ソース。実API E2Eは同SHA＋今回のテスト追加。server build_infoは21d9ff05、development、dirty=true（テスト変更あり）。製品ソース変更なし。
+- binary SHA-256: `45571b887be67d162960114b06627d57d1343052fe024422cfbf7cd3f6d907ae`。
+- 最終commit SHAは成果物のfinal-revision.jsonと最終応答に記録。tested-source-hashes.jsonで製品/試験ソースを照合する。SHA表示だけのための重複ビルドは行わない。
 
-## 変更範囲と判断
+## 変更内容
 
-- KanbanCardContent: 既存Markdownプレビュー整形を再利用し、タグ後に最大2視覚行。空本文は要素なし、長URLはanywhere折返し。展開とは独立。
-- KanbanContainer / KanbanCardDetails: showWorkspacesを尊重してWorkspace一覧をdetails外へ。既存非archive範囲・順序・Workflow除外を維持。本文全文はdetails内。4状態・最大2列・DnDロジックは無変更。
-- カードIntegration行、専用3秒polling、focus状態を削除。IntegrationPanelを維持しNavbar/store入口と同Panel固有queryは変更しない。実ブラウザで別入口の動作確認は残る。
-- Workspace数値をBoardの常時NULL列ではなく既存localWorkspace summaryへ接続。
-- IssueWorkspaceCard: 正常な0を表示、未知は—。時間はChatElapsedTimeを再利用しtimeAgo代用を削除。欠損/不正/逆転時刻は未知。statusと時刻の取得・15秒polling・canonical境界は無変更。狭幅で数値/PRを折返す。共有部品のため他のIssueWorkspaceCard利用画面にも適用される。
-- services diff stats: 任意repo失敗で全体None、binary/省略内容等で行数Noneを伝播、files数は維持。serverはこの内部集計型を直接使用し既存nullable WorkspaceSummaryへ渡す。公開API型/生成ファイル/SQLは変更なし。
-- Git: 実Added/Deleted以外は片側内容不明を追加・削除行数として数えない。既存merge-base/working tree/untracked取得を維持。
-- 新API・計算基盤・polling・設定・件数上限・masonryは追加しない。既存全Workspace並列集計/untracked走査性能の実測は未実施。
+- KanbanCardContentの既存Markdown整形を再利用し、タグ後に本文最大2視覚行。空本文は余白なし、長URL折返し。details開閉中もpreviewを維持。
+- Workspace一覧をdetails外へ移動。showWorkspaces・非archive範囲・順序・Workflow除外を維持。本文全文はdetails内。
+- カードIntegration行と専用3秒polling/focus状態を削除。Navbar/store経由のIntegrationPanel、同Panelのqueryと正式機能は維持。
+- BoardのNULL列ではなく既存localWorkspace summaryへ差分を配線。正常0とunknownを区別し、時間はChatElapsedTime、未知は—。既存canonical境界・15秒pollingは変更なし。
+- Workspace stats/PRは狭幅で折返し。共有IssueWorkspaceCardの他利用画面にも表示改善が適用される。
+- services内部DiffStatsの行数Optionを保ち、任意repo失敗で全体None。binary/内容省略はfilesへ数え、行数不明を伝播。既存nullable WorkspaceSummaryへ直接渡すためAPI/生成型/SQL変更なし。
+- Gitの片側内容不明を追加/削除と誤認しない（実Added/Deletedのみその側を0扱い）。merge-baseとworking tree差分の取得方法は維持。
+- 4状態、最大2列、文字サイズ、DnD/順序処理、新API/設定/件数上限/masonryは変更なし。大量Workspace時の高さ・隣の空白は合意どおり許容。
 
-## 実施済み
+## 検証コマンドと結果
+
+Rust共通環境: `CARGO_BUILD_JOBS=2`、`CARGO_TARGET_DIR=$PWD/target`、`RUSTC_WRAPPER=/usr/local/bin/sccache`、`SCCACHE_DIR=$(readlink -f .lvk-shared/cache)/sccache`。
+重コマンドは順次実行。共有target/cargo clean/無関係な全体check/lint/backend:testなし。
+sccache実際の保存先一致を前後確認。統計は共有利用者込みであり本試験だけのhit率とは扱わない。
 
 | コマンド | 結果 |
 | --- | --- |
-| `pnpm run web-core:check` | PASS（初回のoptional型/Integration props不一致を修正後） |
-| `pnpm run ui:check` | PASS |
-| `pnpm run local-web:check` | PASS |
-| `pnpm --dir packages/ui exec eslint src/components/ChatElapsedTime.tsx src/components/IssueWorkspaceCard.tsx src/components/KanbanCardContent.tsx --max-warnings 0` | PASS |
-| `pnpm --dir packages/local-web exec eslint --config .eslintrc.cjs ../web-core/src/features/kanban/ui/KanbanContainer.tsx ../web-core/src/features/kanban/ui/KanbanCardDetails.tsx --max-warnings 0` | PASS（初回config指定不足を修正） |
-| `node tests/kanban/readability.mjs` | PASS（fixture CSSのconfig directive除去、keyboard event待機を修正後） |
-| 対象ファイルのPrettier/rustfmt、`git diff --check` | PASS |
+| `pnpm run web-core:check` / `ui:check` / `local-web:check` | 前回PASS。製品ソースhash一致を今回確認 |
+| 変更UI3ファイル・Container/Details2ファイルのESLint | 前回PASS。同ソース |
+| `node tests/kanban/readability.mjs` | 前回PASS。同製品ソース・本部品fixture |
+| `cargo test -p git --test diff_stats` | PASS 1件。commit済み/未commit/untracked、text↔binary、削除 |
+| `cargo test -p git --lib summary_read_failure_tests` | PASS 1件。Modified読取欠損を削除扱いしない |
+| `cargo test -p services summary_diff_unknown_and_multi_repo_failure` | PASS 1件。隔離SQLite/2repo、0・正数・binary・部分/全repo失敗 |
+| `cargo build --bin server` | PASS。serverまでの消費側コンパイル確認 |
+| `pnpm --dir packages/local-web run build` | PASS。Browserslist古さとchunk-size警告あり |
+| `LVK_TEST_SERVER=$PWD/target/debug/server LVK_KEEP_TEST_INSTANCE=1 node tests/kanban/isolated.mjs` | 最終PASS。初回追加testは既存Dialogにないroleを参照して失敗、実際のheading参照へ修正 |
+| `python3 tests/kanban/seed-preview.py` | PASS。停止済みの自分のfixture DBへ0/1/4/12 Workspaceサンプルを追加 |
+| 外部HTTPSとChromium | PASS: root200、mode=locked、public、forced_mode=basic、業務API423、セットアップ画面。異なるoriginのloopbackアクセス403も確認 |
+| `git diff --check` | PASS |
 
-ブラウザ試験は本ソースの実部品をesbuild/Tailwindで処理して隔離Chromiumへ載せる**fixture**。
-実DB/API/認証/IntegrationPanelの試験ではない。
-2560×1440 CSS px、DPR1.5、ブラウザzoom100%（物理4K/OS150%相当）と1280/390幅、各状態列535/536/537/536/535px往復。
-本文空/Markdown/コード・添付ラベル/長URL、Workspace0/1/4/12、running/approval/failed/terminal/unknown、0/正数/未知を確認。
-詳細展開と閉じた状態でもpreview/Workspaceを維持、showWorkspaces OFFでも重要状態保持。
-summary再描画時のfocus、Workspace Enter操作、keyboard列間DnDとfocus、pointer空列移動を確認。
-スクリーンショットを目視確認。既存タイトル省略と文字サイズを維持。
-`.build/kanban-readability/`にwidth-2560.png/width-1280.png/width-390.png、results.json、browser.logを保持。
-ブラウザはfinallyで終了。外部サーバー/DBは使用せず、新規サーバーも起動していない。
+## 実APIとfixtureの区別
 
-## 準備済み・未実施
+実API E2Eは変更ソースserver＋ソースVite、新規SQLite、一時Git repos、隔離Chromiumを使用。
+実summary APIで3 files/+3/-1（commit済み＋未commit＋untracked）と0 files/+0/-0を取得し、実カードに配線されたことを確認。
+実APIでIssue/Workspace1:N、詳細、列間DnD・並べ替え保存、keyboard/focus、Navbar Integration入口、全4状態の配置を確認。
 
-- `cargo test -p git --test diff_stats`：commit済み+未commit+untracked、text↔binary、実削除。
-- `cargo test -p git --lib summary_read_failure_tests`：Modifiedの内容読取失敗を削除と誤認しない。
-- `cargo test -p services summary_diff_unknown_and_multi_repo_failure`：隔離SQLite/2repoで0、正数、binary、部分/全repo失敗。
-- 上記は**未コンパイル・未実行**。対象crate check/必要clippyも未実施。
-- serverビルドと`LVK_TEST_SERVER=... node tests/kanban/isolated.mjs`。旧本文非表示assertionは更新済み。実API配線、保存/DnD、Integration別入口の回帰確認を追加する。
-- 資源承認後、jobs<=2、sccache共有設定を確認し、workspace専用targetを使用。cargo clean禁止。重ビルド/全体check/lint/backend:testを開始していない。
+2560×1440 CSS px/DPR1.5/zoom100%（4K・OS150%相当）、1280×900、390×844、各列535/536/537/536/535px往復。
+カードタイトル16px・ellipsis維持、body2行、0/1/複数/多数Workspace、折返しと詳細全文は部品fixtureでも確認。
+実行中/承認・入力待ち/失敗等はsummary応答overlayと部品fixture。実AgentRun/モデル・認証遷移の実行証拠ではない。
+日本語lightと英語darkスクリーンショットを目視確認。
 
-## preview2準備・ブロッカー
+## preview2・operator手順
 
-- 稼働nginx `/tmp/lvk-server/nginx.conf:129`の既存TLS vhost `preview2.luckyvibekanban.com` → `127.0.0.1:18444`を確認。設定変更なし。
-- 18444は確認時listenなし。外部HTTPS `https://preview2.luckyvibekanban.com` は502（未起動）。利用可能なプレビューURLとは報告しない。
-- 同vhostは独立アプリが認証を所有する構成。新規fixture instanceには独立した認証準備が必要。live DB/認証DBはコピー・共有しない。
-- Auth0を使う場合はpreview2向けの既存許可済みcallback/credential/ログイン手段が必要。認証方式変更、Auth0/nginx/DNS変更、認証無効化は行わない。認証済み外部動作は未検証。
-- 起動前に再度資源snapshot/18444占有を確認する。LOCAL32の18443は使用しない。
-- 起動後は専用fixture DBに4状態・複数/多数Workspaceをseedし、人間確認まで専用プロセス/ソース/データを保持する。現在プレビューのserver/dataは未作成。後日cleanupは自身の所有分だけを対象とする。
+- URL: `https://preview2.luckyvibekanban.com`（現在locked、アプリ利用はBasic設定後）。
+- Project: `47ce1fc7-9795-4787-b616-9380733543de`。
+- PID: `1809660`、bind: `127.0.0.1:18444`。`/proc/PID/exe`とssで実binary/portを確認。
+- binary: `/var/tmp/lvk-instances/dev/runtime/worktrees/2f33-2/lucky-vibe-kanban/target/debug/server`。
+- instance: `/var/tmp/lvk-instances/dev/runtime/worktrees/2f33-2/lucky-vibe-kanban/.build/kanban-validation/instance-FTz2vi`。
+- DATA_DIR: 上記instanceの`data/`。SQLiteは`data/db.v2.sqlite`、共有/live DBや認証DBからのコピーなし。
+- `LVK_ACCESS_DEPLOYMENT=public`、`LVK_AUTH_MODE=basic`、`LVK_PUBLIC_URL=https://preview2.luckyvibekanban.com`。既存nginx/TLS/DNS/Auth0設定の変更なし。
+- 保持DBは4状態のIssue、Workspace0/1/4/12と実Git差分2workspaceを含む。AgentRunは作成しない。状態アニメーションは試験fixtureのスクリーンショットで確認する。
+
+ユーザー/operatorだけがterminalで次を実行する。出力tokenはブラウザへ直接入力し、チャット/ログへ貼らない（teeやログ保存を付けない）。この作業では発行していない。
+
+```sh
+LVK_INSTANCE_DIR=/var/tmp/lvk-instances/dev/runtime/worktrees/2f33-2/lucky-vibe-kanban/.build/kanban-validation/instance-FTz2vi \
+  /var/tmp/lvk-instances/dev/runtime/worktrees/2f33-2/lucky-vibe-kanban/target/debug/server setup-token
+```
+
+1. 上記URLを開き、発行tokenでセットアップを解錠する。
+2. Basicのユーザー名と12〜1024 bytesのpasswordをブラウザ内で設定し、ログインする。
+3. 認証済み状態でProjectを開き、カード表示を確認する。secretを渡さず、設定完了を上位AIへ知らせる。
+
+根拠: `crates/server/src/main.rs:58`のCLIは指定instanceのDB/鍵へ発行して終了し、serverを追加起動しない。
+`crates/utils/src/instance.rs:5`でinstanceを隔離解決。`crates/server-access/src/store.rs:105`の未設定publicはLocalにfallbackせず、`:217`で業務API423。
+`handlers.rs:79`でtoken交換、`:214`で管理sessionによるBasic保存、`store.rs:392`でpassword制約。Auth0変更は不要。
+
+## 保持・cleanup・未検証
+
+- 自分のE2E backend/Vite/browserは終了。公開確認browserも終了。preview serverのみユーザー確認まで保持。
+- 保持物: 専用instance約2.2MiB、生成frontend約77MiB、Workspace target約18GiB（再ビルドcacheと稼働binary）。削除/上書きしない。プレビュー完了後も自身のPID/exe/portを照合してから自分のserverだけ停止し、専用instanceを整理する。
+- スクリーンショット・logs・results/revision/hashを `.build/kanban-validation`、`.build/kanban-readability`、`.build/kanban-rust`、`.build/kanban-preview`とpersistent artifactsに保持。DB/認証鍵/tokenは成果物コピーに含めない。
+- Basic設定後の認証済み外部確認は未実施（ユーザー設定待ち）。実AgentRun/有料モデル、実機touch、Firefox/WebKit、全Workspace/untracked大量走査の性能実測、独立レビューは未実施。
+- Rust workspace全体試験/clippyはこの局所変更の検証に追加していない。Formal Integration/main merge/deployは未実施・未承認。

@@ -39,6 +39,7 @@ const server = spawn(binary, [], {
 server.stdout.pipe(createWriteStream(path.join(output, 'server.stdout.log')));
 server.stderr.pipe(createWriteStream(path.join(output, 'server.stderr.log')));
 let browser, page, vite, base;
+let passed = false;
 async function api(url, method = 'GET', body) {
   const response = await fetch(base + url, {
     method,
@@ -126,15 +127,45 @@ try {
         ).data
       );
   }
+  const workspaceIds = [];
   for (let i = 0; i < 2; i++) {
     const workspace = (
       await api('/api/workspaces', 'POST', { name: `Linked workspace ${i}` })
     ).data.id;
+    workspaceIds.push(workspace);
     await api(`/api/workspaces/${workspace}/links`, 'POST', {
       project_id: project,
       issue_id: issues[0].id,
     });
   }
+  execFileSync(
+    'python3',
+    [
+      'tests/kanban/seed-diff-fixture.py',
+      instance,
+      JSON.stringify(workspaceIds),
+    ],
+    { cwd: root }
+  );
+  const summaries = (
+    await api('/api/workspaces/summaries', 'POST', { archived: false })
+  ).data.summaries;
+  const changed = summaries.find((w) => w.workspace_id === workspaceIds[0]);
+  const clean = summaries.find((w) => w.workspace_id === workspaceIds[1]);
+  assert.deepEqual(
+    [changed.files_changed, changed.lines_added, changed.lines_removed],
+    [3, 3, 1]
+  );
+  assert.deepEqual(
+    [clean.files_changed, clean.lines_added, clean.lines_removed],
+    [0, 0, 0]
+  );
+  evidence.push({
+    label:
+      'Real summary API over isolated Git fixture: committed/uncommitted/untracked and clean',
+    changed,
+    clean,
+  });
   process.env.BACKEND_PORT = new URL(base).port;
   process.chdir(path.join(root, 'packages/local-web'));
   vite = await createServer({
@@ -156,6 +187,21 @@ try {
   await expect(columns).toHaveCount(4, { timeout: 90000 });
   const card = (id) => page.locator(`[data-kanban-card="${id}"]`);
   await expect(card(issues[0].id)).toBeVisible();
+  await expect(
+    card(issues[0].id).getByText('3 files', { exact: true })
+  ).toBeVisible();
+  await expect(
+    card(issues[0].id).getByText('0 files', { exact: true })
+  ).toBeVisible();
+  await expect(
+    card(issues[0].id).getByText('+3', { exact: true })
+  ).toBeVisible();
+  await expect(
+    card(issues[0].id).getByText('+0', { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-kanban-card]').getByText(/^Integration:/)
+  ).toHaveCount(0);
   await expect(card(issues[0].id).locator('summary')).toContainText(
     'Workspaces: 2'
   );
@@ -373,6 +419,23 @@ try {
     truncated: true,
   });
   evidence.push({ label: 'Title typography', typography });
+  await page
+    .getByRole('button', { name: 'Integrate / Auto Merge', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Auto Merge', exact: true })
+  ).toBeVisible();
+  await page.screenshot({
+    path: path.join(output, 'integration-navbar-entry.png'),
+  });
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('heading', { name: 'Auto Merge', exact: true })
+  ).toHaveCount(0);
+  evidence.push({
+    label:
+      'Navbar Integration entry opens and closes existing panel; no card Integration lines',
+  });
   // Fixture-only API response overlay: no agent/model execution. All other calls remain real.
   let phase = 0;
   await page.route('**/api/workspaces/summaries', async (route) => {
@@ -451,6 +514,7 @@ try {
     path.join(output, 'results.json'),
     JSON.stringify(evidence, null, 2)
   );
+  passed = true;
   console.log('PASS real API browser checks');
 } catch (error) {
   if (page)
@@ -468,9 +532,19 @@ try {
     await exited;
     clearTimeout(timer);
   }
-  await rm(instance, { recursive: true, force: true });
+  if (passed && process.env.LVK_KEEP_TEST_INSTANCE === '1') {
+    await writeFile(
+      path.join(output, 'retained-instance.txt'),
+      instance + '\n'
+    );
+    console.log(
+      'Retained isolated fixture instance for locked preview; no test process remains'
+    );
+  } else {
+    await rm(instance, { recursive: true, force: true });
+  }
   process.chdir(root);
   console.log(
-    'CLEANUP: browser, Vite, isolated backend stopped; temporary instance removed'
+    'CLEANUP: browser, Vite, isolated backend stopped; instance removed unless explicitly retained after PASS'
   );
 }
