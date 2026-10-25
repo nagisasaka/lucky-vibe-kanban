@@ -2,7 +2,7 @@
 //! expiring Orchestration dispatcher leases. No conversation/semantic database.
 use anyhow::{Context, ensure};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, SqlitePool};
+use sqlx::{FromRow, SqliteConnection, SqlitePool};
 use ts_rs::TS;
 use uuid::Uuid;
 
@@ -528,10 +528,14 @@ impl IntegrationRun {
             .await
     }
     pub async fn save(&self, pool: &SqlitePool) -> Result<(), sqlx::Error> {
+        self.save_on(&mut *pool.acquire().await?).await
+    }
+
+    pub async fn save_on(&self, connection: &mut SqliteConnection) -> Result<(), sqlx::Error> {
         // Cancellation is never overwritten by a worker's older observation.
         sqlx::query("UPDATE integration_runs SET status=?,workspace_id=?,session_id=?,agent_run_id=?,payload=?,error=?,updated_at=datetime('now','subsec') WHERE id=?")
             .bind(&self.status).bind(self.workspace_id).bind(self.session_id).bind(self.agent_run_id)
-            .bind(&self.payload).bind(&self.error).bind(self.id).execute(pool).await?;
+            .bind(&self.payload).bind(&self.error).bind(self.id).execute(connection).await?;
         Ok(())
     }
     /// Card effect and its durable receipt commit together. Reload under the

@@ -6,6 +6,7 @@ interface ChatElapsedTimeProps {
   endedAt?: string | null;
   active?: boolean;
   className?: string;
+  unknownLabel?: string;
 }
 
 function parseTime(value?: string | null) {
@@ -37,6 +38,7 @@ export function ChatElapsedTime({
   endedAt,
   active = false,
   className,
+  unknownLabel,
 }: ChatElapsedTimeProps) {
   const [now, setNow] = useState(() => Date.now());
   const startedAtMs = useMemo(() => parseTime(startedAt), [startedAt]);
@@ -50,13 +52,13 @@ export function ChatElapsedTime({
     return () => window.clearInterval(intervalId);
   }, [ticking, startedAtMs]);
 
-  if (startedAtMs == null) return null;
-
   // A recorded end always wins, including a temporarily stale active flag.
   // Missing terminal evidence is unknown, never the browser's mount time.
   const effectiveEnd = endedAtMs ?? (ticking ? now : null);
 
-  if (effectiveEnd == null) return null;
+  const known =
+    startedAtMs != null && effectiveEnd != null && effectiveEnd >= startedAtMs;
+  if (!known && !unknownLabel) return null;
 
   return (
     <span
@@ -66,7 +68,7 @@ export function ChatElapsedTime({
         className
       )}
     >
-      {formatElapsedMs(effectiveEnd - startedAtMs)}
+      {known ? formatElapsedMs(effectiveEnd! - startedAtMs!) : unknownLabel}
     </span>
   );
 }

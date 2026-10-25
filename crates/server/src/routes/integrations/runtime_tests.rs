@@ -1646,3 +1646,297 @@ fn mechanical_branch_guard_rejects_target_detached_and_unrelated_source_branches
     repo.git(&["checkout", "--detach"]);
     assert!(m::require_private_branch(repo.dir.path(), "integration", "refs/heads/main").is_err());
 }
+
+async fn conflict_session_fixture() -> (SqlitePool, IntegrationRun) {
+    use executors::{executors::BaseCodingAgent, profile::ExecutorConfig};
+    let (pool, mut run, _, _) = fixture().await;
+    run.status = "integrating".into();
+    run.payload.mechanical = true;
+    run.payload.result_commit = None;
+    run.payload.executor_config =
+        Some(serde_json::to_value(ExecutorConfig::new(BaseCodingAgent::Codex)).unwrap());
+    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'conflict sessions')")
+        .bind(run.project_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,session_id,payload) VALUES(?,?,?,?,?,?,'integrating',?,?,?)")
+        .bind(run.id).bind(&run.request_key).bind(run.project_id).bind(run.repository_id)
+        .bind(&run.storage_identity).bind(&run.target_ref).bind(run.workspace_id)
+        .bind(run.session_id).bind(&run.payload).execute(&pool).await.unwrap();
+    (pool, run)
+}
+
+#[tokio::test]
+async fn conflict_sessions_isolate_jobs_and_reuse_durable_dispatch_after_restart() {
+    use db::models::agent_runtime::{AgentEventRecord, AgentProviderSessionRecord, AgentRunRecord};
+    use executors::runtime::*;
+    let (pool, mut run) = conflict_session_fixture().await;
+    let original_session = run.session_id;
+    let mut identities = Vec::new();
+    for job in 0..3 {
+        // Job 1 is the next conflicting step; job 2 is an explicit Resume of
+        // that step. Both clear the dispatch, while retaining historical runs.
+        persist_conflict_dispatch(&pool, &mut run, "/test".into(), format!("job {job}"))
+            .await
+            .unwrap();
+        let saved = run.payload.conflict_dispatch.clone().unwrap();
+        let AgentRunPortCommand::Create { request, attempt } =
+            serde_json::from_value(saved.clone()).unwrap()
+        else {
+            unreachable!()
+        };
+        assert_ne!(Some(request.session_id), original_session);
+        assert_eq!(Some(request.session_id), run.session_id);
+        assert_eq!(attempt.session_id, request.session_id);
+        assert!(attempt.provider_session.is_none());
+        assert_eq!(request.intent, AgentRunIntent::Initial);
+        let session = Session::find_by_id(&pool, request.session_id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(session.workspace_id, run.workspace_id.unwrap());
+        assert_eq!(session.executor.as_deref(), Some("CODEX"));
+        assert!(!identities.contains(&request.session_id));
+        identities.push(request.session_id);
+
+        // Restart after dispatch commit but before provider Create; no new IDs.
+        run = IntegrationRun::find(&pool, run.id).await.unwrap();
+        persist_conflict_dispatch(&pool, &mut run, "/test".into(), "redelivery".into())
+            .await
+            .unwrap();
+        assert_eq!(run.payload.conflict_dispatch.as_ref(), Some(&saved));
+        for _ in 0..2 {
+            AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+                .await
+                .unwrap();
+        }
+        let native = ProviderSessionReference {
+            schema_version: PROVIDER_SESSION_REFERENCE_SCHEMA_VERSION,
+            provider_id: request.provider_id.clone(),
+            runtime_profile_id: request.runtime_profile_id.clone(),
+            provider_session_id: format!("native-job-{job}"),
+            observed_at: chrono::Utc::now(),
+            metadata: None,
+        };
+        let events: Vec<_> = [
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting,
+            },
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Running,
+            },
+            AgentEventPayload::SessionObserved {
+                provider_session: native.clone(),
+            },
+            AgentEventPayload::Message {
+                message: CanonicalMessage {
+                    message_id: Uuid::new_v4(),
+                    role: AgentRuntimeMessageRole::Assistant,
+                    content: r#"{"outcome":"ready","summary":"resolved"}"#.into(),
+                },
+                final_output: true,
+            },
+            AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Succeeded,
+            },
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(index, payload)| AgentEventEnvelope {
+            schema_version: AGENT_EVENT_SCHEMA_VERSION,
+            payload_version: AGENT_EVENT_PAYLOAD_VERSION,
+            event_id: Uuid::new_v4(),
+            session_id: request.session_id,
+            agent_run_id: request.agent_run_id,
+            turn_id: request.turn_id,
+            run_attempt_id: attempt.run_attempt_id,
+            run_attempt_number: 1,
+            sequence: index as u64 + 1,
+            correlation_id: run.id,
+            orchestration_run_id: None,
+            orchestration_node_execution_id: None,
+            timestamp: chrono::Utc::now(),
+            native_refs: vec![],
+            payload,
+        })
+        .collect();
+        AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            &events,
+            &[],
+            std::slice::from_ref(&native),
+            attempt.run_attempt_id,
+            7,
+        )
+        .await
+        .unwrap();
+        let state: sqlx::types::Json<RunState> =
+            sqlx::query_scalar("SELECT state_json FROM agent_run_state WHERE agent_run_id=?")
+                .bind(request.agent_run_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert!(conflict_resolution(&state.0).is_ok());
+        // Real identity mismatch remains an error, even after the fix.
+        let mut different = native.clone();
+        different.provider_session_id = "unrelated-native-session".into();
+        assert!(
+            AgentProviderSessionRecord::upsert(
+                &pool,
+                Uuid::new_v4(),
+                request.session_id,
+                &different
+            )
+            .await
+            .is_err()
+        );
+        if job == 1 {
+            AgentRunRecord::record_projection_failure_and_advance_cursor(
+                &pool,
+                request.agent_run_id,
+                attempt.run_attempt_id,
+                8,
+                "non_retryable_projection",
+                "retained identity conflict",
+            )
+            .await
+            .unwrap();
+        }
+        if job == 0 {
+            run.payload
+                .history
+                .push(json!({"operation":"conflict_resolved", "agent_run_id":run.agent_run_id}));
+            run.payload.step_index += 1;
+            run.agent_run_id = None;
+            run.payload.conflict_dispatch = None;
+        } else if job == 1 {
+            record_resume_dispatch(&mut run, Uuid::new_v4());
+            assert_eq!(
+                run.payload.history.last().unwrap()["conflict_dispatch"],
+                saved
+            );
+            assert!(run.agent_run_id.is_none());
+            assert!(run.payload.conflict_dispatch.is_none());
+        }
+        run.save(&pool).await.unwrap();
+    }
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM agent_runs")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        3
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM agent_provider_sessions")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        3
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM sessions")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        4
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>(
+            "SELECT count(*) FROM agent_runs WHERE projection_status='projection_degraded'"
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap(),
+        1
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, String>("SELECT reason FROM agent_projection_failures")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        "retained identity conflict"
+    );
+    assert_eq!(
+        IntegrationRun::find(&pool, run.id)
+            .await
+            .unwrap()
+            .payload
+            .history
+            .len(),
+        2
+    );
+}
+
+#[tokio::test]
+async fn conflict_sessions_rollback_session_and_dispatch_together() {
+    let (pool, mut run) = conflict_session_fixture().await;
+    let original_session = run.session_id;
+    sqlx::raw_sql("CREATE TRIGGER reject_dispatch BEFORE UPDATE ON integration_runs BEGIN SELECT RAISE(ABORT,'test dispatch failure'); END;")
+        .execute(&pool).await.unwrap();
+    assert!(
+        persist_conflict_dispatch(&pool, &mut run, "/test".into(), "resolve".into())
+            .await
+            .is_err()
+    );
+    assert_eq!(run.session_id, original_session);
+    assert!(run.payload.conflict_dispatch.is_none());
+    let saved = IntegrationRun::find(&pool, run.id).await.unwrap();
+    assert_eq!(saved.session_id, original_session);
+    assert!(saved.payload.conflict_dispatch.is_none());
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM sessions")
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+        1
+    );
+    sqlx::raw_sql("DROP TRIGGER reject_dispatch")
+        .execute(&pool)
+        .await
+        .unwrap();
+    persist_conflict_dispatch(&pool, &mut run, "/test".into(), "resolve".into())
+        .await
+        .unwrap();
+    assert_ne!(run.session_id, original_session);
+}
+
+#[tokio::test]
+async fn conflict_sessions_ready_output_still_requires_succeeded_current() {
+    use executors::runtime::*;
+    let (pool, mut run) = conflict_session_fixture().await;
+    persist_conflict_dispatch(&pool, &mut run, "/test".into(), "resolve".into())
+        .await
+        .unwrap();
+    let AgentRunPortCommand::Create { request, .. } =
+        serde_json::from_value(run.payload.conflict_dispatch.clone().unwrap()).unwrap()
+    else {
+        unreachable!()
+    };
+    let mut state = RunState::pending(&request);
+    state.terminal_output = Some(CanonicalMessage {
+        message_id: Uuid::new_v4(),
+        role: AgentRuntimeMessageRole::Assistant,
+        content: r#"{"outcome":"ready","summary":"resolved"}"#.into(),
+    });
+    state.status = AgentRunStatus::Succeeded;
+    assert!(conflict_resolution(&state).is_ok());
+    state.projection_status = ProjectionStatus::ProjectionDegraded;
+    assert!(
+        conflict_resolution(&state)
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("trustworthy projection")
+    );
+    state.projection_status = ProjectionStatus::Current;
+    for status in [
+        AgentRunStatus::Running,
+        AgentRunStatus::Failed,
+        AgentRunStatus::Cancelled,
+    ] {
+        state.status = status;
+        assert!(conflict_resolution(&state).is_err());
+    }
+}

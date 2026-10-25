@@ -11,6 +11,7 @@ use db::models::{
 use deployment::Deployment;
 use executors::runtime::AgentRunStatus;
 use serde::{Deserialize, Serialize};
+use services::services::diff_stream::DiffStats as WorkspaceDiffStats;
 use ts_rs::TS;
 use utils::response::ApiResponse;
 use uuid::Uuid;
@@ -160,9 +161,10 @@ pub async fn get_workspace_summaries(
         })
         .collect();
 
-    let diff_results: Vec<Option<(Uuid, DiffStats)>> =
+    let diff_results: Vec<Option<(Uuid, WorkspaceDiffStats)>> =
         futures_util::future::join_all(diff_futures).await;
-    let diff_stats: HashMap<Uuid, DiffStats> = diff_results.into_iter().flatten().collect();
+    let diff_stats: HashMap<Uuid, WorkspaceDiffStats> =
+        diff_results.into_iter().flatten().collect();
 
     // 8. Assemble response
     let summaries: Vec<WorkspaceSummary> = workspaces
@@ -178,8 +180,8 @@ pub async fn get_workspace_summaries(
                 latest_session_id: latest.map(|p| p.session_id),
                 has_pending_approval: pending_approval_workspaces.contains(&id),
                 files_changed: stats.map(|s| s.files_changed),
-                lines_added: stats.map(|s| s.lines_added),
-                lines_removed: stats.map(|s| s.lines_removed),
+                lines_added: stats.and_then(|s| s.lines_added),
+                lines_removed: stats.and_then(|s| s.lines_removed),
                 latest_process_started_at: latest.map(|p| p.created_at),
                 latest_process_completed_at: latest
                     .filter(|p| p.status.is_terminal())
@@ -203,17 +205,11 @@ pub async fn get_workspace_summaries(
 pub async fn compute_workspace_diff_stats(
     deployment: &DeploymentImpl,
     workspace: &Workspace,
-) -> Option<DiffStats> {
-    let stats = services::services::diff_stream::compute_diff_stats(
+) -> Option<WorkspaceDiffStats> {
+    services::services::diff_stream::compute_diff_stats(
         &deployment.db().pool,
         deployment.git(),
         workspace,
     )
-    .await?;
-
-    Some(DiffStats {
-        files_changed: stats.files_changed,
-        lines_added: stats.lines_added,
-        lines_removed: stats.lines_removed,
-    })
+    .await
 }

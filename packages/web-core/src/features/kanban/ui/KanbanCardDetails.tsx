@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceWithStats } from '@vibe/ui/components/IssueWorkspaceCard';
 
@@ -8,12 +7,12 @@ export function KanbanCardDetails({
   count,
   workspaces,
   description,
-  children,
+  showWorkspaces = false,
 }: {
+  showWorkspaces?: boolean;
   count: number;
   workspaces: WorkspaceWithStats[];
   description?: string | null;
-  children: ReactNode;
 }) {
   const { t } = useTranslation('common');
   const flags = {
@@ -29,7 +28,7 @@ export function KanbanCardDetails({
       )
     ),
     unseen: workspaces.some((w) => w.hasUnseenActivity),
-    devServer: workspaces.some((w) => w.hasRunningDevServer),
+    devServer: !showWorkspaces && workspaces.some((w) => w.hasRunningDevServer),
   };
   return (
     <div className="mt-half min-w-0">
@@ -57,7 +56,6 @@ export function KanbanCardDetails({
             {description}
           </p>
         )}
-        {children}
       </details>
     </div>
   );
