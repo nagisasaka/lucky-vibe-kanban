@@ -189,3 +189,11 @@ VIBE_KANBAN_AGENT_PROCESS_HOST="$PWD/target/debug/agent-process-host" \
 ```
 
 起動後は未認証業務API401、本人のBasicログイン、既存会話の保持、初期操作/結果、説明/計画、展開/原文コピー、Run完了日時を公開URLで確認する。新しいprovider runや課金を確認手段にしない。rootのinteractive視覚レビューとユーザー最終確認へ進み、operator所有プロセスがGoalの子孫ではないことも確認する。TLS/nginx/DNS/main/devには変更しない。起動・認証・assets確認の失敗をガード緩和で解決せず、実状態を報告する。
+
+### 再起動許可後の固定状態（持続owner経路の決定待ち）
+
+ユーザーから「32も再起動してもよい、今は見ていない」と明示許可を得た。rootの方針は旧版保持→新版反映の二段階ではなく、修正版assetsと正規持続ownerへの一回の切替である。LOCAL81が調査中の正規devserver設定経路の結果を待ち、rootがその設定案を確認するまでは現serverを停止しない。共有repo devscriptは変更せず、恒久operatorコードも追加しない。
+
+候補assetsは既存 `.build/local32-initial-app-dist` に固定した。979ファイル、78,040,738 bytes。相対path順に `path + NUL + sha256` を改行で結合したUTF-8文字列のSHA256は `68d93262603fd5e364f39eface0b617d283c3a4fcfc59f704fd0f90da8c8cb75`。全ファイルのhashは `test-results/local32-auth-preview/candidate-assets-manifest.json` に保持する。新しいbuildや公開assetsの変更は行っていない。
+
+上記public起動env、同instance/public URL、DB・鍵・保存済みBasic設定を使う。cloud browserの認証sessionと実会話を維持するため、再setup・秘密共有・データ再seedを行わない。経路決定後にroot確認済みの設定で切り替え、公開でのinteractive確認とGoal終端後の保持を検証する。nohup/setsid等による回収回避、現時点での停止・再起動は行わない。
