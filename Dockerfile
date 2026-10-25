@@ -159,6 +159,18 @@ RUN apt-get update \
  && npm install --global --omit=dev "@openai/codex@${CODEX_VERSION}" pnpm@10.13.1 \
  && codex --version
 
+# Pin the native Claude Code binary outside HOME so mounted user homes cannot
+# hide it. Verify the official release checksum before executing it.
+ARG CLAUDE_CODE_VERSION=2.1.308
+ARG CLAUDE_CODE_SHA256=356733f185fa988e6bf3aa9a555269fdd167982a2e2a80d3c8a78037bb92ad58
+RUN test "$(dpkg --print-architecture)" = amd64 \
+ && curl --fail --silent --show-error --location --retry 3 \
+    "https://downloads.claude.ai/claude-code-releases/${CLAUDE_CODE_VERSION}/linux-x64/claude" \
+    --output /usr/local/bin/claude \
+ && echo "${CLAUDE_CODE_SHA256}  /usr/local/bin/claude" | sha256sum --check --strict \
+ && chmod 755 /usr/local/bin/claude \
+ && claude --version
+
 # The toolchain stage already resolved the repository's pinned Rust toolchain.
 # Keep toolchains in the image, but registry/git/build caches in mounted storage.
 COPY --from=rust-toolchain /usr/local/rustup /opt/rustup

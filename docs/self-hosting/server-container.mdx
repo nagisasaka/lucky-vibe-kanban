@@ -20,7 +20,7 @@ This distribution runs the **local LVK application** remotely. It does not requi
 
 - Prebuilt LVK frontend, Rust server, sibling `agent-process-host` executable and `vibe-kanban-mcp` CLI.
 - nginx with HTTPS on host port **443**, backed by LVK authentication. The optional certificate companion uses port **80** only for certificate validation.
-- Codex CLI, OpenWiki, Node.js, pnpm, Git, Git LFS, GitHub CLI and Python.
+- Codex CLI, Claude Code CLI, OpenWiki, Node.js, pnpm, Git, Git LFS, GitHub CLI and Python.
 - The repository's pinned Rust toolchain, rustfmt, Clippy, cargo-watch, sccache (local disk caching), C/C++ compiler, CMake and native build dependencies for developing LVK itself.
 - A non-root runtime user, `appuser` (**UID/GID 10001**).
 
@@ -120,6 +120,19 @@ docker compose exec lvk git clone https://github.com/nagisasaka/lucky-vibe-kanba
 For private repositories, authenticate the bundled GitHub CLI or configure a repository-scoped deploy key inside the persistent home. Do not bake credentials into a derived image. A server-side folder picker cannot open your laptop's native file dialog; use the server path input instead. Configure SSH editor integration when opening server workspaces from your desktop.
 
 For LVK's MCP integration inside the container, you can configure the bundled `vibe-kanban-mcp --mode global` command instead of an npm download. It connects to the local backend. The image does not overwrite your agent's MCP configuration.
+
+Claude Code is also bundled as a version-pinned native binary in
+`/usr/local/bin/claude`, outside the mounted home. To authenticate it separately:
+
+```bash
+docker compose exec lvk claude --version
+docker compose exec lvk claude auth login
+```
+
+Follow the browser instructions from Claude Code. Its account settings and
+credentials remain in the persistent home volume. No Claude account is included
+with LVK; see the [Claude Code authentication guide](https://code.claude.com/docs/en/authentication).
+Updating the LVK image updates its bundled CLI version.
 
 Agent approval and sandbox settings remain under LVK/Codex control. Container hosts differ in their support for nested sandbox mechanisms. If a run reports a sandbox/namespace error, investigate the specific restriction; do not make the container privileged, mount the Docker socket or disable agent safeguards as a blanket workaround.
 

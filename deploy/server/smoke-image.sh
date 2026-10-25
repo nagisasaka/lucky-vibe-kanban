@@ -32,9 +32,9 @@ docker run --rm --entrypoint sh "$image" -ec '
   rustc --version; cargo --version; cargo watch --version
   sccache --version
   cargo clippy --version; cargo fmt --version
-  codex --version; openwiki --help >/dev/null
+  codex --version; claude --version; openwiki --help >/dev/null
   cc --version; cmake --version; python3 --version
-  bash -lc "cargo --version && rustc --version && sccache --version && pnpm --version && codex --version"
+  bash -lc "cargo --version && rustc --version && sccache --version && pnpm --version && codex --version && claude --version"
 '
 docker run --rm --entrypoint node \
   -e LVK_REQUIRE_NGINX_TEST=1 \
@@ -65,6 +65,7 @@ docker exec "$name" sh -ec '
   test "$(curl --cacert /run/lvk-secrets/tls/fullchain.pem -s -o /dev/null -w "%{http_code}" --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info -H "Host: lvk.example.test")" = 401
   curl --cacert /run/lvk-secrets/tls/fullchain.pem -fsS --user test:lvk-smoke-only --resolve lvk.example.test:8443:127.0.0.1 https://lvk.example.test:8443/api/info -H "Host: lvk.example.test" >/dev/null
   touch /home/appuser/smoke-persistence /repos/smoke-persistence /var/tmp/smoke-persistence
+  claude --version
   test -f /home/appuser/.local/share/vibe-kanban/db.v2.sqlite
 '
 # Exercise the resource protocol against this disposable database. Codex auth
