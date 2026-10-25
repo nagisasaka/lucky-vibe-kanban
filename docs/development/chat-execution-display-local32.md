@@ -235,3 +235,66 @@ providerの識別情報は既に残っていたが、summaryとplanをthinking�
 成功時の代表画像は `test-results/local32-additional-app/candidate-3/` の `initial.png`、`dark.png`、`input-rich-paste.png`、`input-attachment.png`、`pending-send.png`、`notes-active.png`、`narrow-notes.png`。ローカルの同pathと通常の画像表示で取得する。未認証の画像公開serviceは起動していない。撮影HEADは9be140f9＋dirty差分、server/agent-host/indexの実hashは同reportと `.build/local32-additional-artifacts/manifest.json` に記録する。
 
 候補binは `.build/local32-additional-artifacts/{server,agent-process-host}`、frontendは `.build/local32-additional-app-dist` に固定し、検証用に複製した28GBのtarget cacheは、固定binのhash一致と使用process不存在を確認して削除した。保持する候補binは合計約2.3GB、frontendは約77MBで、後続cutover用に残す。必要envは既存のpublic preview保持設定のままで、新たなsecretやprovider credentialを要求しない。今後のcutoverではrootの承認と直列調整が必要であり、現launcherの旧hash guardを勝手に変更して起動しない。公開previewは正規DevServerの既存ownerが保持し、Goal配下の候補test serverは終了している。
+
+## 00cc07d9候補の公開切替準備（未実行、2026-10-26 JST）
+
+この節は今回の切替準備を表し、前節の初回04ac切替手順を今回の手順として再実行しない。rootは追加候補のnarrow-notes/input-rich-paste/pending-send画像を直接閲覧し、範囲内の視覚blockerなしと報告した。公開URLでの新版interactive確認は未実施。LOCAL81復旧を優先し、rootの最終切替指示までは公開serverのStop/Start、assets/bin配置、launcher更新を行わない。今回作成するのはこの手順のみである。
+
+### 読取確認と候補identity
+
+2026-10-26 00:58:48 JSTの独立instance metadataではagent_runs/attempts/stateが各14件すべてsucceeded、execution_processesは0件、process registryは12件すべてexited、未退出registryなし。公開serverの子孫processも観測なし。公開PID2192789のstart_ticksは35634810、exeはこのWorkspaceのtarget/debug/server、cwdはこのrepository、ownerは2192789→container server156→init1。127.0.0.1:18443のlistenerも同PIDである。これは観測時の実run終端根拠であり、将来のidle保証には使わない。現在のhealth200、Basic/public/configuration_error=false、未認証workspaces401も確認した。秘密内容・会話本文・request_envelope・state_json・host_tokenは読んでいない。
+
+source HEADは00cc07d973964965f5dfb3b51889b96fce6bc045。41ファイルのsource hash、候補両bin、979 assetsを既存manifestと再照合して一致した。下表は今回の切替対象であり、このdoc-only追記による再buildは不要。
+
+| 対象 | 固定path（repository相対） | SHA256 |
+| --- | --- | --- |
+| 新server | .build/local32-additional-artifacts/server | 285cb1a4c249147fc8f3b2da35ca3c835f1153ec25eeecf0533bca66118686fe |
+| 新agent-host | .build/local32-additional-artifacts/agent-process-host | e9bb962e05c0c4e6754bb7770b1640e01085f5ad839362ec4885507ea9f6515e |
+| 新frontend index | .build/local32-additional-app-dist/index.html | e29e03216868077bb3c8efcec3f790500aa7439751d5f9b7664ec97603b05c06 |
+| 現server（保持） | target/debug/server | ff201915b30b2a11d23b0f97b3907ec43101f2195a9a3b862644f4073d092d1e |
+| 現agent-host（保持） | target/debug/agent-process-host | 0bdb526649d2f8025b8bb6cc8245359ef9aeacaab858d65eec390192650ae2d3 |
+| 現frontend index | packages/local-web/dist/index.html | 7083012aaa7f5e95610650994a6bf0c859f7f1bcadd9f8a2c5bacf051d14888c |
+
+今回のCodex turn/plan/updated→ProviderExtension plan_update投影はexecutorsのmapper v7で行う。frontendだけを入れ替えても旧backendで監査のみとなるイベントは届かないため、新serverと新agent-hostの組を使う。既存v6再生は維持されており、過去の実runの書換え・再投影・新provider runを切替試験として行わない。build metadataは9be140f9＋dirtyであり、後でその差分を00cc07d9へ収録した。候補の識別にはHEAD単独ではなく上の実hashとmanifestを使う。
+
+根拠はtest-results/local32-additional/{source-manifest,candidate-assets-manifest,cutover-preparation-state,cutover-launcher-proposal-check}.json、.build/local32-additional-artifacts/manifest.json、test-results/local32-additional-app/candidate-3/isolated-e2e.json。adapter42tests、局所Clippy、候補build、隔離実アプリpassed/cleanup=trueの記録を再読し、再実行していない。
+
+### launcherの最小変更案（まだ適用しない）
+
+現.lvk-preview/start.shのSHA256は81a7c4cafea7d2620256d3a5c1462db70c7b3793c9577b5886d13266b51163c5。現scriptはcwd固定、既存DB/key/configured markerの存在guard、両binとindexのhash guard、空port18443 guard、単一foreground execを持つ。背景起動・seed・認証変更・停止処理は含まない。
+
+公開binを上書きせず、既に固定した候補pathへ参照を変える5行だけの案とする。
+
+| 現在の行の役割 | 承認後の変更値 |
+| --- | --- |
+| server check_hash | pathを.build/local32-additional-artifacts/server、期待hashを上表の新server値へ |
+| agent-host check_hash | pathを.build/local32-additional-artifacts/agent-process-host、期待hashを上表の新agent-host値へ |
+| frontend check_hash | pathはpackages/local-web/dist/index.htmlのまま、期待hashを上表の新frontend値へ |
+| VIBE_KANBAN_AGENT_PROCESS_HOST export | "$preview_root/.build/local32-additional-artifacts/agent-process-host" |
+| 最後のexec | "$preview_root/.build/local32-additional-artifacts/server" |
+
+この5行だけをメモリ内で置換した案はbash -n stdinで構文確認済み。案のSHA256は1b294e5ac2389da8db139bd0db167952592c7667ff0f3a9378c8f6f0adc92df0。scriptファイルへの書込み・実行は行っていない。旧private operator fileからのコピーや、拒否されたfileの別経路への複製はない。
+
+その他のguardとenvは全て維持する。特にLVK_INSTANCE_DIR="$preview_root/.build/local32-user-preview"、public deployment、同じhttps://preview1.luckyvibekanban.com、空LVK_AUTH_MODE（保存済みBasicを使う）、HOST=127.0.0.1、空PORT、BACKEND_PORT=18443、PREVIEW_PROXY_PORT=0、同allowed origins、空VK_PREVIEW_DOMAIN、DISABLE_WORKTREE_CLEANUP=1、BROWSER=true、RUST_LOG=warnは変更しない。DB/key/configuredを新規作成しない。共通repo DevServer設定は既存exec bash .lvk-preview/start.shのまま。launcherは機械固有preview運用であり製品main統合対象外を維持する。
+
+### rootの最終指示後に行う順序（全て未実行）
+
+1. LOCAL81復旧優先が解除され、rootが32の切替を指示したことを確認する。root/browserが同Workspaceの正規Managed DevServer UI Stop/Startを担当する。直接API、子process、nohup/setsidでは起動しない。
+2. resource snapshotと現ownerを再確認する。独立DBはmode=ro/query_onlyでagent_runs/attempts/stateのstatus集計、execution_processesのrunning、registryの非exited/未退出とPID存在だけを見る。pending/starting/running/awaiting_input/awaiting_approval/cancelling、未知status、稼働host/provider、metadataとOSの矛盾があればStopせず報告する。UIで本人の使用終了もrootが確認する。preview server PIDの存在だけから作業idleとは判断しない。
+3. PID/start_ticks/exe/cwd、18443 listener、正規ownerを再照合する。2192789という古いPID値だけを停止対象にしない。候補manifestと全979 assets、現bin/index/launcher hash、同instanceのDB/key/configuredの存在を再確認する。必要な保持pathが欠けたら復旧のための自動seed/再setupはせず中止する。
+4. root/browserが正規UI Stopする。UI終端、対象PIDとその子孫の終了、18443 listener消失・bind可能、未終端registry/実runなしを確認してから配置へ進む。時間切れやowner不一致時は停止済みと見なさず中止する。稼働中のassets移動/launcher更新はしない。
+5. 未使用であることを確認して新しい.build/local32-cutover-00cc07d9/を切替記録・backup用に作る（準備時点では未作成）。現launcherをprevious-start.shとして保持しhashを記録する。現04ac distの全path/hashを記録する。新assetsを同directoryのstaged-distへコピーし、候補manifestと全979ファイルのpath/hash/個数を照合する。候補元は移動せず保持する。
+6. 現packages/local-web/distを同backup directoryのprevious-distへrenameし、検証済みstaged-distをpackages/local-web/distへrenameする。配置後も全manifestを照合する。binは上書きせず新候補の固定pathを使い、旧target/debugの両binを保持する。debug RustEmbedの参照先は元checkoutのpackages/local-web/distであり、候補frontendを置いただけの別directoryを自動参照するとは考えない。
+7. 上記5行だけを現launcherへ適用し、bash -n・予想script hash・両bin/index hash・保持instance・空portを副作用なしで確認する。違えばStartしない。DB、鍵、Basic、会話、HOME/CODEX_HOMEは変更しない。準備可をrootへ報告し、root/browserだけが正規UI Startを行う。
+8. root/browserのStart後、新server exeが固定候補pathであること、container owner/ExecutionProcessがGoal外であること、18443 listenerがそのPIDであることを記録する。health200、未認証API401、Basic構成正常、配信index hash一致を確認する。既存cloud browser認証session/実会話と初期command/result・終了日時、今回の推論/計画/入力をrootが確認する。新provider試行を自動実行しない。失敗時は次の手順へ進み、勝手にauthを緩和しない。
+
+### backupの区別と失敗時rollback（実行にはroot調整が必要）
+
+既存.build/local32-cutover-9be140f9/previous-distのindexは8fba707bbab2d7be0eef8d0dbf3d6834439eb069240dc64331eff61c268e0436で、初回04ac切替より前のassetsである。今回の即時rollback先には使わない。.build/local32-initial-app-distは現04acと同じindex7083012…を持つ保持候補だが、今回の正本backupは上記の切替直前に保存するprevious-distとする。既存backupも新旧候補も削除しない。
+
+- Start前の配置/検証失敗: 停止状態を維持し、失敗stageとhashを記録する。まだ現dist/launcherを変更していないstageならそのまま保持する。変更済みの場合だけ、存在とhashを確認した今回previous-distを元packages/local-web/distへ戻し、previous-start.shを現launcherへ戻す。backup未作成やhash不一致なら推測で復旧せず報告する。旧binは未変更なので再配置不要。旧3artifact/launcher hash、同instance、空portを再照合し、root/browserに旧版のUI Startを依頼する。
+- 新版Start後の失敗: rootへ状況を報告し、root/browserが新版を正規UI Stopしてprocess/port解放を確認する。新版distはfailed-dist等の一意な保持pathへ退避し、今回のprevious-distとprevious-start.shを戻す。使用中artifactは動かさず、二重起動しない。旧版でのhealth/認証/既存会話/index/owner確認までをrollback結果として記録する。
+- 0b0263a3→00cc07d9のcrates/db差分はなく、今回のschema migration変更はない。ただし「新schemaを旧binで開ける」と推測して自動rollbackしない。起動時に予想外のmigration状態・DB errorが出た場合、または切替後に新しいv7実runが作成された場合は、旧adapterでの再生互換性を含めrootが判断するまで停止状態を保ち、無条件で旧版をStartしない。
+- DB/WAL/SHM、access.key、保存Basic、実会話はそのまま保持する。今回の準備ではDB/秘密backupを新規コピーせず、rollbackでも古いDBへのrestore/reseed、実run削除、認証再初期化を行わない。切替後のユーザーデータを捨てるrollbackは禁止する。
+
+準備完了は切替の実行・公開版の視覚合格を意味しない。main merge/deploy、共有devや他previewの変更はこの手順に含まない。
