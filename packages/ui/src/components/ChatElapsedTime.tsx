@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { cn } from "../lib/cn";
+import { useEffect, useMemo, useState } from 'react';
+import { cn } from '../lib/cn';
 
 interface ChatElapsedTimeProps {
   startedAt?: string | null;
@@ -18,7 +18,7 @@ function parseTime(value?: string | null) {
 }
 
 function formatElapsedMs(ms: number) {
-  if (ms >= 0 && ms < 1000) return "<1s";
+  if (ms >= 0 && ms < 1000) return '<1s';
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -60,7 +60,7 @@ export function ChatElapsedTime({
   const effectiveEnd = endedAtMs ?? (ticking ? now : null);
 
   const measuredDuration =
-    typeof durationMs === "number" &&
+    typeof durationMs === 'number' &&
     Number.isFinite(durationMs) &&
     durationMs >= 0
       ? durationMs
@@ -75,9 +75,9 @@ export function ChatElapsedTime({
   return (
     <span
       className={cn(
-        "shrink-0 text-xs tabular-nums text-low",
-        ticking && "text-normal",
-        className,
+        'shrink-0 text-xs tabular-nums text-low',
+        ticking && 'text-normal',
+        className
       )}
     >
       {elapsed != null ? formatElapsedMs(elapsed) : unknownLabel}
