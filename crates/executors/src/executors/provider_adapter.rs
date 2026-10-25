@@ -331,14 +331,14 @@ impl DirectProvider {
                 runtime: None,
                 protocol: Some("rust-v0.144.1"),
                 adapter: "codex-adapter-v1",
-                mapper: "codex-mapper-v5",
+                mapper: "codex-mapper-v6",
             },
             Self::ClaudeCode => DirectAdapterVersions {
                 executable: "claude",
                 runtime: None,
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
-                mapper: "claude-code-mapper-v3",
+                mapper: "claude-code-mapper-v4",
             },
             Self::OhMyPi => DirectAdapterVersions {
                 executable: "omp",
@@ -533,10 +533,22 @@ impl DirectProvider {
         DirectProviderMapper {
             provider: self,
             semantics: if self == Self::Codex {
-                MapperSemantics::V5
+                MapperSemantics::V6
+            } else if self == Self::ClaudeCode {
+                MapperSemantics::V4
             } else {
                 MapperSemantics::V3
             },
+            scope: Default::default(),
+            replay_sequence: Default::default(),
+        }
+    }
+
+    /// Preserve replay before execution display metadata and cancellation states.
+    pub fn v5_mapper(self) -> DirectProviderMapper {
+        DirectProviderMapper {
+            provider: self,
+            semantics: MapperSemantics::V5,
             scope: Default::default(),
             replay_sequence: Default::default(),
         }
@@ -917,6 +929,7 @@ enum MapperSemantics {
     V3,
     V4,
     V5,
+    V6,
 }
 
 impl NativeAuditReplayMapper for DirectProviderMapper {
@@ -928,6 +941,7 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V3 => "v3",
             MapperSemantics::V4 => "v4",
             MapperSemantics::V5 => "v5",
+            MapperSemantics::V6 => "v6",
         };
         if let Some((prefix, _)) = versions.mapper_version.rsplit_once('-') {
             versions.mapper_version = format!("{prefix}-{suffix}");
@@ -947,12 +961,15 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
         event: &ProviderEvent,
         manifest: &NativeAuditManifest,
     ) -> Result<Vec<AgentEvent>, NativeAuditError> {
-        let typed =
-            if self.semantics != MapperSemantics::V3 && self.provider != DirectProvider::Codex {
-                classify_payload_legacy(self.provider, event)?
-            } else {
-                classify_payload(self.provider, event)?
-            };
+        let typed = if self.semantics != MapperSemantics::V3
+            && self.provider != DirectProvider::Codex
+            && !(self.provider == DirectProvider::ClaudeCode
+                && self.semantics == MapperSemantics::V4)
+        {
+            classify_payload_legacy(self.provider, event)?
+        } else {
+            classify_payload(self.provider, event)?
+        };
         let mut decoded = DecodedProviderEvent {
             raw: event.clone(),
             typed,
@@ -962,13 +979,16 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
             MapperSemantics::V2 => {
                 Ok(project_typed_event(self.provider, &decoded, manifest)?.durable_events)
             }
-            MapperSemantics::V3 | MapperSemantics::V4 | MapperSemantics::V5 => {
+            MapperSemantics::V3
+            | MapperSemantics::V4
+            | MapperSemantics::V5
+            | MapperSemantics::V6 => {
                 let mut scope = self.scope.lock().expect("replay scope lock");
                 if event.sequence == 1 {
                     *scope = Default::default();
                 }
                 if self.provider == DirectProvider::Codex {
-                    if self.semantics == MapperSemantics::V5 {
+                    if matches!(self.semantics, MapperSemantics::V5 | MapperSemantics::V6) {
                         scope.apply(&mut decoded);
                     } else {
                         scope.apply_legacy(&mut decoded);
@@ -977,7 +997,10 @@ impl NativeAuditReplayMapper for DirectProviderMapper {
                 let mut projected =
                     project_typed_event(self.provider, &decoded, manifest)?.durable_events;
                 if self.provider != DirectProvider::Codex
-                    || matches!(self.semantics, MapperSemantics::V4 | MapperSemantics::V5)
+                    || matches!(
+                        self.semantics,
+                        MapperSemantics::V4 | MapperSemantics::V5 | MapperSemantics::V6
+                    )
                 {
                     // Non-Codex v3 and Codex v4 frames can expand into several semantic
                     // events. Native references retain raw ordering; canonical
@@ -2053,7 +2076,9 @@ fn project_typed_event(
     // extension for clients which support the question inbox. Older audit
     // versions must replay exactly as before.
     if provider == DirectProvider::Codex
-        && (manifest.mapper_version.ends_with("-v4") || manifest.mapper_version.ends_with("-v5"))
+        && (manifest.mapper_version.ends_with("-v4")
+            || manifest.mapper_version.ends_with("-v5")
+            || manifest.mapper_version.ends_with("-v6"))
         && let TypedProviderEvent::Message {
             provider_message_id: Some(message_id),
             role: AgentRuntimeMessageRole::Assistant,
@@ -2108,7 +2133,7 @@ fn project_typed_event(
     // completed semantic blocks at the adapter boundary, with distinct stable
     // event IDs and the same native reference. Preserve historical v1/v2 replay.
     if provider == DirectProvider::ClaudeCode
-        && manifest.mapper_version.ends_with("-v3")
+        && (manifest.mapper_version.ends_with("-v3") || manifest.mapper_version.ends_with("-v4"))
         && matches!(event.typed, TypedProviderEvent::Message { .. })
         && let Some(blocks) = event
             .raw
@@ -2122,6 +2147,33 @@ fn project_typed_event(
             .enumerate()
             .filter_map(|(index, block)| {
                 let kind = block.get("type").and_then(Value::as_str)?;
+                if kind == "text" && manifest.mapper_version.ends_with("-v4") {
+                    return block
+                        .get("text")
+                        .and_then(Value::as_str)
+                        .filter(|content| !content.is_empty())
+                        .map(|content| {
+                            (
+                                index,
+                                TypedProviderEvent::Message {
+                                    provider_message_id: Some(format!(
+                                        "claude-text-block:{}:{index}",
+                                        event.raw.sequence
+                                    )),
+                                    role: AgentRuntimeMessageRole::Assistant,
+                                    content: content.into(),
+                                    final_output: false,
+                                },
+                            )
+                        });
+                }
+                if kind == "thinking" && manifest.mapper_version.ends_with("-v4") {
+                    return block
+                        .get("thinking")
+                        .and_then(Value::as_str)
+                        .filter(|content| !content.trim().is_empty())
+                        .map(|content| (index, TypedProviderEvent::Thinking(content.into())));
+                }
                 if !matches!(kind, "tool_use" | "tool_result") {
                     return None;
                 }
@@ -2161,22 +2213,37 @@ fn project_typed_event(
         if !tools.is_empty() {
             let mut text_event = event.clone();
             text_event.raw.payload_json = None; // prevent re-expanding this envelope
-            let mut projected = project_typed_event(provider, &text_event, manifest)?;
+            let mut projected = if manifest.mapper_version.ends_with("-v4") {
+                ProviderEventProjection {
+                    durable_events: Vec::new(),
+                    live_events: Vec::new(),
+                }
+            } else {
+                project_typed_event(provider, &text_event, manifest)?
+            };
             projected.durable_events.retain(|event| {
                 !matches!(&event.payload,
                 AgentEventPayload::Message { message, .. } if message.content.is_empty())
             });
             for (index, typed) in tools {
-                let decoded = DecodedProviderEvent {
-                    raw: event.raw.clone(),
-                    typed,
-                };
+                let mut raw = event.raw.clone();
+                raw.payload_json = None; // text blocks must not expand the parent envelope again
+                let decoded = DecodedProviderEvent { raw, typed };
                 let mut tool = project_typed_event(provider, &decoded, manifest)?;
                 for event in &mut tool.durable_events {
                     event.event_id = canonical_provider_message_id(
                         manifest.run_attempt_id,
                         &format!("claude-content-block:{}:{index}", decoded.raw.sequence),
                     );
+                    if manifest.mapper_version.ends_with("-v4")
+                        && let AgentEventPayload::Thinking { content } = &event.payload
+                    {
+                        event.payload = AgentEventPayload::ProviderExtension {
+                            provider_namespace: provider.id().into(),
+                            provider_event: "thinking".into(),
+                            payload: serde_json::json!({"content": content}),
+                        };
+                    }
                 }
                 projected.durable_events.extend(tool.durable_events);
             }
@@ -2254,7 +2321,7 @@ fn project_typed_event(
         });
     }
 
-    let payload = match &event.typed {
+    let mut payload = match &event.typed {
         TypedProviderEvent::AgentActivity(activity) => AgentEventPayload::AgentActivity {
             activity: activity.clone(),
         },
@@ -2301,7 +2368,40 @@ fn project_typed_event(
         } => AgentEventPayload::ToolCall {
             tool_call_id: id.clone(),
             tool_name: name.clone(),
-            status: *status,
+            status: if provider == DirectProvider::Codex && manifest.mapper_version.ends_with("-v6")
+            {
+                let item = event
+                    .raw
+                    .payload_json
+                    .as_ref()
+                    .and_then(|raw| raw.pointer("/params/item"));
+                match item
+                    .and_then(|item| item.get("status"))
+                    .and_then(Value::as_str)
+                    .map(|value| value.replace(['_', '-'], "").to_ascii_lowercase())
+                    .as_deref()
+                {
+                    Some("cancelled" | "canceled") => AgentRuntimeToolStatus::Cancelled,
+                    // Unknown terminal states must not look like an ongoing operation.
+                    Some(value)
+                        if matches!(status, AgentRuntimeToolStatus::Running)
+                            && !matches!(value, "inprogress" | "running") =>
+                    {
+                        AgentRuntimeToolStatus::Unknown
+                    }
+                    _ if *status == AgentRuntimeToolStatus::Succeeded
+                        && item
+                            .and_then(|item| item.get("exitCode"))
+                            .and_then(Value::as_i64)
+                            .is_some_and(|code| code != 0) =>
+                    {
+                        AgentRuntimeToolStatus::Failed
+                    }
+                    _ => *status,
+                }
+            } else {
+                *status
+            },
             arguments: arguments.clone(),
             result: result.clone(),
         },
@@ -2346,6 +2446,31 @@ fn project_typed_event(
         | TypedProviderEvent::AuditOnly { .. }
         | TypedProviderEvent::Unknown { .. } => unreachable!("handled above"),
     };
+    if provider == DirectProvider::Codex
+        && manifest.mapper_version.ends_with("-v6")
+        && let AgentEventPayload::Thinking { content } = &payload
+        && let Some(item) = event
+            .raw
+            .payload_json
+            .as_ref()
+            .and_then(|raw| raw.pointer("/params/item"))
+        && let Some(kind @ ("plan" | "reasoning")) = item.get("type").and_then(Value::as_str)
+    {
+        // Preserve the published text's meaning and identity; never project private content.
+        payload = AgentEventPayload::ProviderExtension {
+            provider_namespace: provider.id().into(),
+            provider_event: if kind == "plan" {
+                "plan"
+            } else {
+                "reasoning_summary"
+            }
+            .into(),
+            payload: serde_json::json!({
+                "content": content,
+                "provider_item_id": item.get("id").and_then(Value::as_str),
+            }),
+        };
+    }
     Ok(ProviderEventProjection {
         durable_events: vec![AgentEventEnvelope {
             schema_version: AGENT_EVENT_SCHEMA_VERSION,
@@ -3160,6 +3285,65 @@ mod tests {
                 if content == "Inspecting the project\n\nChecking the tests"
                     && !content.contains("provider-private")
         ));
+        let projected = DirectProvider::Codex
+            .project_provider_event(&event, &fixture_manifest(DirectProvider::Codex))
+            .unwrap();
+        assert!(matches!(&projected.durable_events[0].payload,
+            AgentEventPayload::ProviderExtension { provider_event, payload, .. }
+            if provider_event == "reasoning_summary" && payload["content"] == "Inspecting the project\n\nChecking the tests"
+                && payload["provider_item_id"] == "reasoning-1"));
+        let mut old_manifest = fixture_manifest(DirectProvider::Codex);
+        old_manifest.mapper_version = DirectProvider::Codex.v5_mapper().versions().mapper_version;
+        assert!(matches!(
+            DirectProvider::Codex
+                .project_provider_event(&event, &old_manifest)
+                .unwrap()
+                .durable_events[0]
+                .payload,
+            AgentEventPayload::Thinking { .. }
+        ));
+    }
+
+    #[test]
+    fn claude_completed_blocks_preserve_text_thinking_and_tool_order_without_signatures() {
+        let provider = DirectProvider::ClaudeCode;
+        let decoded = provider.decode_native_frame(&frame(provider, serde_json::json!({
+            "type": "assistant", "message": {"id": "m1", "content": [
+                {"type": "text", "text": "Before\n"},
+                {"type": "thinking", "thinking": "  Published thought\n", "signature": "not-displayable"},
+                {"type": "tool_use", "id": "t1", "name": "Bash", "input": {"command": "pwd"}},
+                {"type": "text", "text": "After\n"}
+            ]}
+        }))).unwrap();
+        let projected = provider
+            .project_provider_event(&decoded, &fixture_manifest(provider))
+            .unwrap();
+        assert_eq!(projected.durable_events.len(), 4);
+        assert!(
+            matches!(&projected.durable_events[0].payload, AgentEventPayload::Message {message, ..} if message.content == "Before\n")
+        );
+        assert!(
+            matches!(&projected.durable_events[1].payload, AgentEventPayload::ProviderExtension {provider_event, payload, ..} if provider_event == "thinking" && payload["content"] == "  Published thought\n")
+        );
+        assert!(
+            matches!(&projected.durable_events[2].payload, AgentEventPayload::ToolCall {tool_name, ..} if tool_name == "Bash")
+        );
+        assert!(
+            matches!(&projected.durable_events[3].payload, AgentEventPayload::Message {message, ..} if message.content == "After\n")
+        );
+        assert!(
+            !serde_json::to_string(&projected.durable_events)
+                .unwrap()
+                .contains("not-displayable")
+        );
+        let old_mapper = provider.v3_mapper();
+        let mut old_manifest = fixture_manifest(provider);
+        old_manifest.mapper_version = old_mapper.versions().mapper_version;
+        let old = old_mapper.map(&decoded.raw, &old_manifest).unwrap();
+        assert_eq!(old.len(), 2);
+        assert!(
+            matches!(&old[0].payload, AgentEventPayload::Message {message, ..} if message.content == "Before\nAfter\n")
+        );
     }
 
     #[test]
@@ -3956,11 +4140,65 @@ mod tests {
     }
 
     #[test]
+    fn execution_states_preserve_cancellation_unknown_and_failure_without_changing_v5_replay() {
+        let provider = DirectProvider::Codex;
+        for (status, exit_code, expected) in [
+            ("cancelled", None, AgentRuntimeToolStatus::Cancelled),
+            ("canceled", None, AgentRuntimeToolStatus::Cancelled),
+            ("CANCELLED", None, AgentRuntimeToolStatus::Cancelled),
+            ("denied", None, AgentRuntimeToolStatus::Denied),
+            ("newTerminalState", None, AgentRuntimeToolStatus::Unknown),
+            ("in_progress", None, AgentRuntimeToolStatus::Running),
+            ("completed", Some(1), AgentRuntimeToolStatus::Failed),
+            ("completed", Some(0), AgentRuntimeToolStatus::Succeeded),
+        ] {
+            let decoded = provider
+                .decode_native_frame(&frame(
+                    provider,
+                    serde_json::json!({
+                        "method": "item/completed", "params": {"item": {
+                            "type": "commandExecution", "id": "shell-1", "command": "example",
+                            "status": status, "exitCode": exit_code
+                        }}
+                    }),
+                ))
+                .unwrap();
+            let manifest = fixture_manifest(provider);
+            let projected = provider
+                .project_provider_event(&decoded, &manifest)
+                .unwrap();
+            assert!(matches!(&projected.durable_events[0].payload,
+                AgentEventPayload::ToolCall {status, ..} if *status == expected));
+            let old_mapper = provider.v5_mapper();
+            let mut old_manifest = manifest.clone();
+            old_manifest.mapper_version = old_mapper.versions().mapper_version;
+            let old = provider
+                .project_provider_event(&decoded, &old_manifest)
+                .unwrap()
+                .durable_events;
+            let old_status = if matches!(
+                status.to_ascii_lowercase().as_str(),
+                "cancelled" | "canceled" | "denied"
+            ) {
+                AgentRuntimeToolStatus::Denied
+            } else if status == "completed" {
+                AgentRuntimeToolStatus::Succeeded
+            } else {
+                AgentRuntimeToolStatus::Running
+            };
+            assert!(matches!(&old[0].payload,
+                AgentEventPayload::ToolCall {status, ..} if *status == old_status));
+        }
+    }
+
+    #[test]
     fn mapper_versions_do_not_relabel_legacy_audit_bundles() {
         for provider in DirectProvider::ALL {
             assert!(provider.mapper().versions().mapper_version.ends_with(
                 if provider == DirectProvider::Codex {
-                    "-v5"
+                    "-v6"
+                } else if provider == DirectProvider::ClaudeCode {
+                    "-v4"
                 } else {
                     "-v3"
                 }
@@ -4012,7 +4250,8 @@ mod tests {
         use serde_json::json;
         let provider = DirectProvider::ClaudeCode;
         let root = tempfile::tempdir().unwrap();
-        let manifest = fixture_manifest(provider);
+        let mut manifest = fixture_manifest(provider);
+        manifest.mapper_version = provider.v3_mapper().versions().mapper_version;
         let mut writer = crate::runtime::NativeAuditWriter::create_in(
             root.path(),
             crate::runtime::NativeAuditMetadata {
@@ -4065,7 +4304,7 @@ mod tests {
                 .unwrap(),
         )
         .unwrap();
-        let mapper = provider.mapper();
+        let mapper = provider.v3_mapper();
         let replay = bundle.replay(&mapper).unwrap();
         assert_eq!(replay.provider_events.len(), frames.len());
         assert!(

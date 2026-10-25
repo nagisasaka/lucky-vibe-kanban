@@ -58,6 +58,24 @@ function sequenceBigInt(sequence: number | bigint): bigint {
   return typeof sequence === 'bigint' ? sequence : BigInt(sequence);
 }
 
+function explanationItemId(event: AgentEventEnvelope): string | null {
+  if (event.payload.type !== 'provider_extension') return null;
+  const data = event.payload.data;
+  if (
+    !['reasoning_summary', 'reasoning_summary_delta'].includes(
+      data.provider_event
+    )
+  )
+    return null;
+  const value = data.payload;
+  return value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.provider_item_id === 'string'
+    ? value.provider_item_id
+    : null;
+}
+
 function eventSort(a: AgentEventEnvelope, b: AgentEventEnvelope): number {
   return (
     a.run_attempt_number - b.run_attempt_number ||
@@ -196,11 +214,19 @@ export function mergeCanonicalAgentTimeline(
         : []
     )
   );
-  const transientEvents = previous.transientEvents.filter(
-    (event) =>
-      event.payload.type !== 'message' ||
-      !completedMessageIds.has(event.payload.data.message.message_id)
-  );
+  const transientEvents = previous.transientEvents.filter((event) => {
+    if (event.payload.type === 'message')
+      return !completedMessageIds.has(event.payload.data.message.message_id);
+    const itemId = explanationItemId(event);
+    return (
+      itemId === null ||
+      !mergedEvents.some(
+        (completed) =>
+          completed.run_attempt_id === event.run_attempt_id &&
+          explanationItemId(completed) === itemId
+      )
+    );
+  });
   const mergedItems = mergedEvents.map(itemFromEvent);
   const latestEvent = mergedEvents.at(-1);
   const eventCursor = latestEvent
@@ -269,7 +295,17 @@ export function mergeAgentLiveEvent(
       return previous;
     }
   }
-  if (live.payload.type === 'thinking_delta') return previous;
+  if (live.payload.type === 'thinking_delta') {
+    const itemId = live.payload.data.provider_item_id;
+    if (
+      previous.events.some(
+        (event) =>
+          event.run_attempt_id === live.run_attempt_id &&
+          explanationItemId(event) === itemId
+      )
+    )
+      return previous;
+  }
   if (live.payload.type === 'tool_output_delta') {
     const itemId = live.payload.data.provider_item_id;
     if (
@@ -294,28 +330,40 @@ export function mergeAgentLiveEvent(
     };
   }
   const payload: AgentEventPayload =
-    live.payload.type === 'message_delta'
+    live.payload.type === 'thinking_delta'
       ? {
-          type: 'message',
+          type: 'provider_extension',
           data: {
-            message: {
-              message_id: live.payload.data.message_id,
-              role: live.payload.data.role,
+            provider_namespace: 'lvk_live',
+            provider_event: 'reasoning_summary_delta',
+            payload: {
               content: live.payload.data.delta,
+              provider_item_id: live.payload.data.provider_item_id,
             },
-            final_output: false,
           },
         }
-      : {
-          type: 'token_usage',
-          data: {
-            input_tokens: live.payload.data.input_tokens,
-            output_tokens: live.payload.data.output_tokens,
-            cached_input_tokens: live.payload.data.cached_input_tokens,
-            context_tokens: live.payload.data.context_tokens,
-            model_context_window: live.payload.data.model_context_window,
-          },
-        };
+      : live.payload.type === 'message_delta'
+        ? {
+            type: 'message',
+            data: {
+              message: {
+                message_id: live.payload.data.message_id,
+                role: live.payload.data.role,
+                content: live.payload.data.delta,
+              },
+              final_output: false,
+            },
+          }
+        : {
+            type: 'token_usage',
+            data: {
+              input_tokens: live.payload.data.input_tokens,
+              output_tokens: live.payload.data.output_tokens,
+              cached_input_tokens: live.payload.data.cached_input_tokens,
+              context_tokens: live.payload.data.context_tokens,
+              model_context_window: live.payload.data.model_context_window,
+            },
+          };
   const event: AgentEventEnvelope = {
     schema_version: 1,
     payload_version: 1,

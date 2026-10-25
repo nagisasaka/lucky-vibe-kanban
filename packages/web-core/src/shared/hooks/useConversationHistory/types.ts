@@ -18,6 +18,24 @@ export interface CanonicalConversationIdentity {
 
 export type PatchTypeWithKey = PatchType & {
   patchKey: string;
+  providerText?: {
+    kind: 'plan' | 'summary' | 'thinking';
+    provider: string | null;
+    itemId: string | null;
+    partial: boolean;
+  };
+  toolTiming?: {
+    startedAt: string | null;
+    endedAt: string | null;
+    durationMs: number | null;
+  };
+  toolOutput?: {
+    state: 'pending' | 'partial' | 'complete' | 'unavailable';
+    exitCode: number | null;
+    cwd: string | null;
+    language: 'json' | null;
+    input: string | null;
+  };
   runTiming?: { startedAt: string; endedAt: string | null; active: boolean };
   executionProcessId?: string;
   canonical?: CanonicalConversationIdentity;

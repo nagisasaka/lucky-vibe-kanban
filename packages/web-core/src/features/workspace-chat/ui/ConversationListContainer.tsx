@@ -168,6 +168,9 @@ function renderRowContent(
         aggregatedThinkingGroup={null}
         executionProcessId={entry.executionProcessId}
         canonicalActive={entry.canonical?.active}
+        toolTiming={entry.toolTiming}
+        providerText={entry.providerText}
+        toolOutput={entry.toolOutput}
         workspaceWithSession={attempt}
         resetAction={resetAction}
         repos={repos}

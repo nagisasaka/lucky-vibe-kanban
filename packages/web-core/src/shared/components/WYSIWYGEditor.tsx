@@ -139,6 +139,8 @@ type WysiwygProps = {
   onCodeClick?: (fullPath: string) => void;
   /** Hide the copy/edit/delete action buttons in read-only mode */
   hideActions?: boolean;
+  /** Copy provider-authored chat Markdown without rewriting code literals. */
+  preserveCopySource?: boolean;
   /** Show a static toolbar below the editor content */
   showStaticToolbar?: boolean;
   /** Save status indicator for static toolbar */
@@ -303,6 +305,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       findMatchingDiffPath,
       onCodeClick,
       hideActions = false,
+      preserveCopySource = false,
       showStaticToolbar = false,
       saveStatus,
       staticToolbarActions,
@@ -451,14 +454,16 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       if (!value) return;
       try {
         // Unescape markdown-escaped underscores for cleaner clipboard output
-        const unescaped = value.replace(/\\_/g, '_');
+        const unescaped = preserveCopySource
+          ? value
+          : value.replace(/\\_/g, '_');
         await writeClipboardViaBridge(unescaped);
         setCopied(true);
         window.setTimeout(() => setCopied(false), 400);
       } catch {
         // noop – bridge handles fallback
       }
-    }, [value]);
+    }, [value, preserveCopySource]);
     const imageNodeDefinition = useMemo(
       () =>
         createImageNode({

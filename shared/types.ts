@@ -1329,7 +1329,7 @@ value: JsonValue, };
 
 export type ToolResultValueType = { "type": "markdown" } | { "type": "json" };
 
-export type ToolStatus = { "status": "created" } | { "status": "success" } | { "status": "failed" } | { "status": "denied", reason: string | null, } | { "status": "pending_approval", approval_id: string, } | { "status": "timed_out" };
+export type ToolStatus = { "status": "created" } | { "status": "success" } | { "status": "failed" } | { "status": "denied", reason: string | null, } | { "status": "pending_approval", approval_id: string, } | { "status": "timed_out" } | { "status": "cancelled" } | { "status": "unknown" } | { "status": "approved" } | { "status": "waiting_approval" };
 
 export type PatchType = { "type": "NORMALIZED_ENTRY", "content": NormalizedEntry } | { "type": "STDOUT", "content": string } | { "type": "STDERR", "content": string } | { "type": "DIFF", "content": Diff };
 
@@ -1405,7 +1405,7 @@ export enum AgentRuntimeLaunchPhase { command_build = "command_build", process_s
 
 export enum AgentRuntimeMessageRole { user = "user", assistant = "assistant", system = "system" }
 
-export enum AgentRuntimeToolStatus { created = "created", running = "running", waiting_approval = "waiting_approval", approved = "approved", denied = "denied", succeeded = "succeeded", failed = "failed", timed_out = "timed_out" }
+export enum AgentRuntimeToolStatus { created = "created", running = "running", waiting_approval = "waiting_approval", approved = "approved", denied = "denied", cancelled = "cancelled", unknown = "unknown", succeeded = "succeeded", failed = "failed", timed_out = "timed_out" }
 
 export enum AgentRunIntent { initial = "initial", follow_up = "follow_up", review = "review" }
 

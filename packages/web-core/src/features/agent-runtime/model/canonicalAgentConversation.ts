@@ -119,14 +119,19 @@ function toolStatus(
   switch (status) {
     case AgentRuntimeToolStatus.created:
     case AgentRuntimeToolStatus.running:
-    case AgentRuntimeToolStatus.approved:
       return { status: 'created' };
+    case AgentRuntimeToolStatus.approved:
+      return { status: 'approved' };
     case AgentRuntimeToolStatus.waiting_approval:
       return approvalId
         ? { status: 'pending_approval', approval_id: approvalId }
-        : { status: 'created' };
+        : { status: 'waiting_approval' };
     case AgentRuntimeToolStatus.denied:
       return { status: 'denied', reason: null };
+    case AgentRuntimeToolStatus.cancelled:
+      return { status: 'cancelled' };
+    case AgentRuntimeToolStatus.unknown:
+      return { status: 'unknown' };
     case AgentRuntimeToolStatus.succeeded:
       return { status: 'success' };
     case AgentRuntimeToolStatus.failed:
@@ -173,7 +178,8 @@ function toolEntry(
   const args = jsonObject(argumentsValue);
   const shellResult = jsonObject(resultValue);
   const action: ActionType =
-    toolName === 'Shell' && typeof args?.command === 'string'
+    (toolName === 'Shell' || toolName === 'Bash') &&
+    typeof args?.command === 'string'
       ? {
           action: 'command_run',
           command: args.command,
@@ -184,7 +190,9 @@ function toolEntry(
                 ? resultValue
                 : typeof shellResult?.aggregatedOutput === 'string'
                   ? shellResult.aggregatedOutput
-                  : null,
+                  : toolName === 'Bash' && resultValue != null
+                    ? JSON.stringify(resultValue, null, 2)
+                    : null,
             exit_status:
               typeof shellResult?.exitCode === 'number'
                 ? { type: 'exit_code', code: shellResult.exitCode }
@@ -197,7 +205,7 @@ function toolEntry(
           arguments: argumentsValue ?? null,
           result,
         };
-  return normalizedPatch(
+  const patch = normalizedPatch(
     event,
     {
       entry_type: {
@@ -216,6 +224,50 @@ function toolEntry(
     },
     toolIsActive(status, runActive)
   );
+  const observedStart =
+    status === AgentRuntimeToolStatus.created ||
+    status === AgentRuntimeToolStatus.running;
+  const observedEnd = [
+    AgentRuntimeToolStatus.succeeded,
+    AgentRuntimeToolStatus.failed,
+    AgentRuntimeToolStatus.denied,
+    AgentRuntimeToolStatus.timed_out,
+    AgentRuntimeToolStatus.cancelled,
+  ].includes(status);
+  const duration = shellResult?.durationMs;
+  patch.toolTiming = {
+    startedAt: observedStart ? event.timestamp : null,
+    endedAt: observedEnd ? event.timestamp : null,
+    durationMs:
+      typeof duration === 'number' && Number.isFinite(duration) && duration >= 0
+        ? duration
+        : null,
+  };
+  const hasOutput =
+    action.action === 'command_run'
+      ? action.result?.output != null
+      : resultValue != null;
+  patch.toolOutput = {
+    input:
+      argumentsValue == null ? null : JSON.stringify(argumentsValue, null, 2),
+    state: hasOutput
+      ? observedEnd
+        ? 'complete'
+        : 'partial'
+      : observedEnd || !runActive
+        ? 'unavailable'
+        : 'pending',
+    exitCode:
+      typeof shellResult?.exitCode === 'number' ? shellResult.exitCode : null,
+    cwd: typeof args?.cwd === 'string' ? args.cwd : null,
+    language:
+      resultValue !== null &&
+      typeof resultValue === 'object' &&
+      (action.action === 'tool' || toolName === 'Bash')
+        ? 'json'
+        : null,
+  };
+  return patch;
 }
 
 function mergeEventIdentity(
@@ -247,6 +299,14 @@ function appendRunEntries(
   const runActive = isCanonicalRunActive(state);
 
   const toolIndexes = new Map<string, number>();
+  // Result frames may omit the name and arguments supplied at tool start.
+  // IDs are provider-local and may be reused by a later attempt.
+  const toolDetails = new Map<
+    string,
+    { name: string; arguments: JsonValue | null }
+  >();
+  const toolKey = (event: AgentEventEnvelope, id: string) =>
+    JSON.stringify([event.run_attempt_id, id]);
   const agentEntries = new Map<
     string,
     {
@@ -259,6 +319,7 @@ function appendRunEntries(
     }
   >();
   const approvalIndexes = new Map<string, number>();
+  const explanationIndexes = new Map<string, number>();
   const inputIndexes = new Map<string, number>();
   let previousMessage:
     | { index: number; messageId: string; role: string }
@@ -410,14 +471,25 @@ function appendRunEntries(
       case 'tool_call': {
         resetMessageMerge();
         const toolId = payload.data.tool_call_id ?? event.event_id;
-        const existingIndex = toolIndexes.get(toolId);
+        const key = toolKey(event, toolId);
+        const existingIndex = toolIndexes.get(key);
+        const previousDetails = toolDetails.get(key);
+        const details = {
+          name:
+            payload.data.tool_name === 'unknown_tool' && previousDetails
+              ? previousDetails.name
+              : payload.data.tool_name,
+          arguments:
+            payload.data.arguments ?? previousDetails?.arguments ?? null,
+        };
+        toolDetails.set(key, details);
         const next = toolEntry(
           event,
           payload.data.status,
-          payload.data.tool_name,
+          details.name,
           runActive,
           undefined,
-          payload.data.arguments,
+          details.arguments,
           payload.data.result ??
             (() => {
               const deltas = (run.timeline?.toolOutputDeltas ?? [])
@@ -445,9 +517,13 @@ function appendRunEntries(
         );
         if (existingIndex === undefined) {
           output.push(next);
-          toolIndexes.set(toolId, output.length - 1);
+          toolIndexes.set(key, output.length - 1);
         } else {
           const previous = output[existingIndex];
+          if (next.toolTiming) {
+            next.toolTiming.startedAt =
+              previous.toolTiming?.startedAt ?? next.toolTiming.startedAt;
+          }
           next.patchKey = previous.patchKey;
           next.canonical = identityFromEvents(
             [
@@ -466,7 +542,7 @@ function appendRunEntries(
       case 'approval_requested': {
         resetMessageMerge();
         const existingIndex = payload.data.tool_call_id
-          ? toolIndexes.get(payload.data.tool_call_id)
+          ? toolIndexes.get(toolKey(event, payload.data.tool_call_id))
           : undefined;
         const next = toolEntry(
           event,
@@ -477,10 +553,14 @@ function appendRunEntries(
         );
         if (existingIndex === undefined) {
           output.push(next);
-          approvalIndexes.set(payload.data.approval_id, output.length - 1);
+          approvalIndexes.set(
+            toolKey(event, payload.data.approval_id),
+            output.length - 1
+          );
         } else {
           const previous = output[existingIndex];
           next.patchKey = previous.patchKey;
+          next.toolTiming = previous.toolTiming;
           if (
             previous.type === 'NORMALIZED_ENTRY' &&
             previous.content.entry_type.type === 'tool_use' &&
@@ -510,13 +590,18 @@ function appendRunEntries(
           mergeEventIdentity(previous, event, runActive);
           next.canonical = previous.canonical;
           output[existingIndex] = next;
-          approvalIndexes.set(payload.data.approval_id, existingIndex);
+          approvalIndexes.set(
+            toolKey(event, payload.data.approval_id),
+            existingIndex
+          );
         }
         break;
       }
       case 'approval_resolved': {
         resetMessageMerge();
-        const index = approvalIndexes.get(payload.data.approval_id);
+        const index = approvalIndexes.get(
+          toolKey(event, payload.data.approval_id)
+        );
         if (index !== undefined) {
           const previous = output[index];
           if (
@@ -528,16 +613,15 @@ function appendRunEntries(
               entry_type: {
                 ...previous.content.entry_type,
                 status: payload.data.approved
-                  ? { status: 'created' }
+                  ? { status: 'approved' }
                   : { status: 'denied', reason: payload.data.reason ?? null },
               },
               timestamp: event.timestamp,
             };
-            mergeEventIdentity(
-              previous,
-              event,
-              payload.data.approved && runActive
-            );
+            if (!payload.data.approved && previous.toolTiming) {
+              previous.toolTiming.endedAt = event.timestamp;
+            }
+            mergeEventIdentity(previous, event, false);
           }
         }
         break;
@@ -667,8 +751,64 @@ function appendRunEntries(
           })
         );
         break;
-      case 'lifecycle_changed':
       case 'provider_extension':
+        resetMessageMerge();
+        if (
+          ['codex', 'claude_code', 'lvk_live'].includes(
+            payload.data.provider_namespace
+          ) &&
+          [
+            'plan',
+            'reasoning_summary',
+            'thinking',
+            'reasoning_summary_delta',
+          ].includes(payload.data.provider_event)
+        ) {
+          const data = jsonObject(payload.data.payload);
+          if (typeof data?.content !== 'string' || !data.content.trim()) break;
+          const partial =
+            payload.data.provider_event === 'reasoning_summary_delta';
+          const itemId =
+            typeof data.provider_item_id === 'string'
+              ? data.provider_item_id
+              : null;
+          const key = toolKey(event, itemId ?? event.event_id);
+          const existingIndex = explanationIndexes.get(key);
+          const previous =
+            existingIndex === undefined ? undefined : output[existingIndex];
+          const content =
+            partial && previous?.type === 'NORMALIZED_ENTRY'
+              ? previous.content.content + data.content
+              : data.content;
+          const next = normalizedPatch(event, {
+            entry_type: { type: 'thinking' },
+            content,
+            timestamp: event.timestamp,
+          });
+          next.providerText = {
+            kind:
+              payload.data.provider_event === 'plan'
+                ? 'plan'
+                : payload.data.provider_event === 'thinking'
+                  ? 'thinking'
+                  : 'summary',
+            provider:
+              payload.data.provider_namespace === 'lvk_live'
+                ? null
+                : payload.data.provider_namespace,
+            itemId,
+            partial,
+          };
+          if (existingIndex === undefined) {
+            explanationIndexes.set(key, output.length);
+            output.push(next);
+          } else {
+            next.patchKey = previous!.patchKey;
+            output[existingIndex] = next;
+          }
+        }
+        break;
+      case 'lifecycle_changed':
         resetMessageMerge();
         break;
       case 'goal_updated':
@@ -683,7 +823,9 @@ function appendRunEntries(
       entry.canonical?.agentRunId === run.summary.agent_run_id &&
       entry.type === 'NORMALIZED_ENTRY' &&
       entry.content.entry_type.type === 'tool_use' &&
-      entry.content.entry_type.status.status === 'pending_approval'
+      ['pending_approval', 'waiting_approval', 'approved'].includes(
+        entry.content.entry_type.status.status
+      )
   );
   if (runActive && !hasPendingControl) {
     const latestEvent = events.at(-1);

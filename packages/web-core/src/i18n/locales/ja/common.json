@@ -59,6 +59,9 @@
     "tool": "ツール",
     "thinking": "思考中",
     "processed": "思考内容",
+    "reasoningSummary": "提供された説明",
+    "providerNotes": "説明・計画",
+    "partial": "途中まで受信",
     "toolSummary": {
       "read": "{{path}} を読み込み",
       "searched": "「{{query}}」を検索",

@@ -4,6 +4,7 @@ import { cn } from '../lib/cn';
 interface ChatElapsedTimeProps {
   startedAt?: string | null;
   endedAt?: string | null;
+  durationMs?: number | null;
   active?: boolean;
   className?: string;
 }
@@ -35,6 +36,7 @@ function formatElapsedMs(ms: number) {
 export function ChatElapsedTime({
   startedAt,
   endedAt,
+  durationMs,
   active = false,
   className,
 }: ChatElapsedTimeProps) {
@@ -50,13 +52,22 @@ export function ChatElapsedTime({
     return () => window.clearInterval(intervalId);
   }, [ticking, startedAtMs]);
 
-  if (startedAtMs == null) return null;
-
   // A recorded end always wins, including a temporarily stale active flag.
   // Missing terminal evidence is unknown, never the browser's mount time.
   const effectiveEnd = endedAtMs ?? (ticking ? now : null);
 
-  if (effectiveEnd == null) return null;
+  const measuredDuration =
+    typeof durationMs === 'number' &&
+    Number.isFinite(durationMs) &&
+    durationMs >= 0
+      ? durationMs
+      : null;
+  const elapsed =
+    measuredDuration ??
+    (startedAtMs != null && effectiveEnd != null && effectiveEnd >= startedAtMs
+      ? effectiveEnd - startedAtMs
+      : null);
+  if (elapsed == null) return null;
 
   return (
     <span
@@ -66,7 +77,7 @@ export function ChatElapsedTime({
         className
       )}
     >
-      {formatElapsedMs(effectiveEnd - startedAtMs)}
+      {formatElapsedMs(elapsed)}
     </span>
   );
 }

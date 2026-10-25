@@ -249,7 +249,7 @@ if p.exists():
     'command expanded, highlighted, whitespace and clipboard exact'
   );
   const full =
-    'LOCAL32 code\n\n```bash\necho "$HOME"\n```\n\n```json\n{"ok": true}\n```\n\n```unknown-language\nconst untouched = 42;\n```\n\n```text\nconst plain = 42;\n```\n\n```\nconst unspecified = 42;\n```';
+    'LOCAL32 code\n\n```bash\necho "$HOME"\nprintf "a\\_b"\n```\n\n```json\n{"ok": true}\n```\n\n```unknown-language\nconst untouched = 42;\n```\n\n```text\nconst plain = 42;\n```\n\n```\nconst unspecified = 42;\n```';
   const composer = page.locator('[contenteditable="true"]').last();
   await composer.fill('入力を保持する');
   stream.send(

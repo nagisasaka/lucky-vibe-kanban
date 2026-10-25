@@ -207,6 +207,9 @@
     "tool": "Tool",
     "thinking": "Thinking",
     "processed": "Processed",
+    "reasoningSummary": "Provided explanation",
+    "providerNotes": "Explanations and plans",
+    "partial": "Received so far",
     "toolSummary": {
       "read": "Read {{path}}",
       "searched": "Searched for \"{{query}}\"",

@@ -97,6 +97,238 @@ function projectRuns(
 }
 
 describe('projectCanonicalAgentConversation', () => {
+  it.each([
+    [AgentRuntimeToolStatus.waiting_approval, 'waiting_approval'],
+    [AgentRuntimeToolStatus.approved, 'approved'],
+    [AgentRuntimeToolStatus.cancelled, 'cancelled'],
+    [AgentRuntimeToolStatus.unknown, 'unknown'],
+  ] as const)(
+    'retains %s without inventing execution or a successful result',
+    (status, normalized) => {
+      const projection = projectRuns([
+        {
+          runId: 'states',
+          status: 'running',
+          events: [
+            event('states', 1, {
+              type: 'tool_call',
+              data: {
+                tool_call_id: 'one',
+                tool_name: 'Shell',
+                status,
+                arguments: { command: 'true' },
+                result: null,
+              },
+            }),
+          ],
+        },
+      ]);
+      expect(projection.entries[0]).toMatchObject({
+        content: { entry_type: { status: { status: normalized } } },
+        toolTiming: { startedAt: null, durationMs: null },
+      });
+      if (status === AgentRuntimeToolStatus.approved)
+        expect(projection.entries[0].canonical?.active).toBe(false);
+    }
+  );
+
+  it('replaces ordered live explanation deltas with published text and keeps plans distinct on replay', () => {
+    const runId = 'explanation';
+    const runState = state(runId, 'running');
+    let timeline = mergeCanonicalAgentTimeline(
+      emptyCanonicalAgentTimeline(),
+      [],
+      runState
+    );
+    const delta = (sequence: number, text: string) => ({
+      schema_version: 1,
+      event_id: `explanation-live-${sequence}`,
+      session_id: SESSION_ID,
+      agent_run_id: runId,
+      turn_id: `turn-${runId}`,
+      run_attempt_id: `attempt-${runId}`,
+      run_attempt_number: 1,
+      native_sequence: sequence,
+      timestamp: `2026-08-14T00:00:0${sequence}Z`,
+      payload: {
+        type: 'thinking_delta' as const,
+        data: { provider_item_id: 'reason-1', delta: text },
+      },
+    });
+    const project = () =>
+      projectCanonicalAgentConversation(
+        buildCanonicalAgentSessionTimeline(
+          SESSION_ID,
+          [
+            {
+              agent_run_id: runId,
+              session_id: SESSION_ID,
+              turn_id: `turn-${runId}`,
+              state: runState,
+              created_at: runState.updated_at,
+              updated_at: runState.updated_at,
+            },
+          ],
+          new Map([[runId, timeline]])
+        )
+      ).entries.filter(
+        (entry) =>
+          entry.type === 'NORMALIZED_ENTRY' &&
+          entry.content.entry_type.type === 'thinking'
+      );
+    timeline = mergeAgentLiveEvent(timeline, delta(2, 'tests'));
+    timeline = mergeAgentLiveEvent(timeline, delta(1, 'Inspect '));
+    timeline = mergeAgentLiveEvent(timeline, delta(1, 'Inspect '));
+    expect(timeline.cursor).toBeNull();
+    expect(project()).toHaveLength(1);
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests' },
+      providerText: { kind: 'summary', partial: true },
+    });
+    const completed = event(runId, 3, {
+      type: 'provider_extension',
+      data: {
+        provider_namespace: 'codex',
+        provider_event: 'reasoning_summary',
+        payload: { provider_item_id: 'reason-1', content: 'Inspect tests.\n' },
+      },
+    });
+    const plan = event(runId, 4, {
+      type: 'provider_extension',
+      data: {
+        provider_namespace: 'codex',
+        provider_event: 'plan',
+        payload: { provider_item_id: 'plan-1', content: '1. Check\n2. Fix\n' },
+      },
+    });
+    timeline = mergeCanonicalAgentTimeline(timeline, [completed, plan]);
+    expect(timeline.transientEvents).toHaveLength(0);
+    expect(mergeAgentLiveEvent(timeline, delta(5, 'late'))).toBe(timeline);
+    expect(project()).toMatchObject([
+      {
+        content: { content: 'Inspect tests.\n' },
+        providerText: { kind: 'summary', provider: 'codex', partial: false },
+      },
+      {
+        content: { content: '1. Check\n2. Fix\n' },
+        providerText: { kind: 'plan', partial: false },
+      },
+    ]);
+    timeline = mergeCanonicalAgentTimeline(
+      emptyCanonicalAgentTimeline(),
+      [plan, completed],
+      runState
+    );
+    expect(project()).toHaveLength(2);
+    expect(project()[0].providerText?.partial).toBe(false);
+  });
+
+  it('uses observed tool endpoints and preserves a provider duration without inventing a start', () => {
+    const tool = (
+      sequence: number,
+      status: AgentRuntimeToolStatus,
+      durationMs?: number
+    ) =>
+      event('timing', sequence, {
+        type: 'tool_call',
+        data: {
+          tool_call_id: 'one',
+          tool_name: 'Shell',
+          status,
+          arguments: { command: 'true' },
+          result: durationMs === undefined ? null : { durationMs },
+        },
+      });
+    const start = tool(1, AgentRuntimeToolStatus.running);
+    const end = tool(4, AgentRuntimeToolStatus.succeeded, 1200);
+    const timing = (events: AgentEventEnvelope[]) =>
+      projectRuns([{ runId: 'timing', status: 'succeeded', events }]).entries[0]
+        .toolTiming;
+    expect(timing([start, end])).toEqual({
+      startedAt: start.timestamp,
+      endedAt: end.timestamp,
+      durationMs: 1200,
+    });
+    expect(timing([end])).toEqual({
+      startedAt: null,
+      endedAt: end.timestamp,
+      durationMs: 1200,
+    });
+    expect(timing([tool(4, AgentRuntimeToolStatus.failed)])).toMatchObject({
+      startedAt: null,
+      durationMs: null,
+    });
+    expect(timing([start])).toEqual({
+      startedAt: start.timestamp,
+      endedAt: null,
+      durationMs: null,
+    });
+    expect(
+      timing([tool(4, AgentRuntimeToolStatus.succeeded, -1)])?.durationMs
+    ).toBeNull();
+  });
+
+  it('retains tool start details on result replay without borrowing from another attempt', () => {
+    const start = event('tools', 1, {
+      type: 'tool_call',
+      data: {
+        tool_call_id: 'reused-id',
+        tool_name: 'Bash',
+        status: AgentRuntimeToolStatus.running,
+        arguments: { command: '  printf "a\\_b"\n' },
+        result: null,
+      },
+    });
+    const end = event('tools', 2, {
+      type: 'tool_call',
+      data: {
+        tool_call_id: 'reused-id',
+        tool_name: 'unknown_tool',
+        status: AgentRuntimeToolStatus.failed,
+        arguments: null,
+        result: 'failure\n',
+      },
+    });
+    const retry = {
+      ...end,
+      event_id: 'retry-result',
+      run_attempt_id: 'second-attempt',
+      run_attempt_number: 2,
+    };
+    for (const events of [
+      [start, end, retry],
+      [retry, end, start, end],
+    ]) {
+      const entries = projectRuns([
+        { runId: 'tools', status: 'failed', events },
+      ]).entries.filter((entry) => !entry.runTiming);
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toMatchObject({
+        canonical: { runAttemptId: 'attempt-tools', active: false },
+        content: {
+          entry_type: {
+            tool_name: 'Bash',
+            status: { status: 'failed' },
+            action_type: {
+              action: 'command_run',
+              command: '  printf "a\\_b"\n',
+              result: { output: 'failure\n' },
+            },
+          },
+        },
+      });
+      expect(entries[1]).toMatchObject({
+        canonical: { runAttemptId: 'second-attempt' },
+        content: {
+          entry_type: {
+            tool_name: 'unknown_tool',
+            action_type: { arguments: null },
+          },
+        },
+      });
+    }
+  });
+
   it('keeps persisted steering between provider messages across replay', () => {
     const message = (
       sequence: number,

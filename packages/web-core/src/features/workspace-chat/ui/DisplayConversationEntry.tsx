@@ -82,6 +82,9 @@ type Props = {
   expansionKey: string;
   executionProcessId?: string;
   canonicalActive?: boolean;
+  toolTiming?: PatchTypeWithKey['toolTiming'];
+  providerText?: PatchTypeWithKey['providerText'];
+  toolOutput?: PatchTypeWithKey['toolOutput'];
   workspaceWithSession: WorkspaceWithSession;
   resetAction: UseResetProcessResult;
   repos: RepoWithTargetBranch[];
@@ -147,6 +150,10 @@ function getPatchEntryTiming({
   isRunning: boolean;
   executionProcess: ExecutionProcess | null;
 }) {
+  if (entry.toolTiming) return entry.toolTiming;
+  if (entry.canonical) {
+    return { startedAt: null, endedAt: null, durationMs: null };
+  }
   const timestamp = getPatchEntryTimestamp(entry);
 
   return {
@@ -166,6 +173,19 @@ function getPatchGroupTiming({
   isRunning: boolean;
   executionProcess: ExecutionProcess | null;
 }) {
+  if (entries.some((entry) => entry.canonical)) {
+    const starts = entries.map((entry) => entry.toolTiming?.startedAt);
+    const ends = entries.map((entry) => entry.toolTiming?.endedAt);
+    return {
+      startedAt: starts.every((time): time is string => Boolean(time))
+        ? starts.reduce((a, b) => (Date.parse(a) < Date.parse(b) ? a : b))
+        : null,
+      endedAt:
+        !isRunning && ends.every((time): time is string => Boolean(time))
+          ? ends.reduce((a, b) => (Date.parse(a) > Date.parse(b) ? a : b))
+          : null,
+    };
+  }
   return {
     startedAt:
       getFirstPatchEntryTimestamp(entries) ??
@@ -206,6 +226,22 @@ function getToolSummary(
         operation: action_type.operation,
       });
     case 'tool':
+      {
+        const args = action_type.arguments;
+        if (args && typeof args === 'object' && !Array.isArray(args)) {
+          const target = [
+            'file_path',
+            'path',
+            'pattern',
+            'query',
+            'url',
+            'description',
+          ]
+            .map((key) => args[key])
+            .find((value) => typeof value === 'string' && value.length > 0);
+          if (typeof target === 'string') return `${tool_name} ${target}`;
+        }
+      }
       return tool_name || t('conversation.tool');
     default:
       return tool_name || t('conversation.tool');
@@ -396,14 +432,33 @@ function renderToolUseEntry(
       summary={getToolSummary(entryType, t)}
       expansionKey={expansionKey}
       status={status}
-      content={getToolOutput(entryType, entry.content)}
+      content={
+        props.toolOutput &&
+        ['pending', 'unavailable'].includes(props.toolOutput.state)
+          ? ''
+          : getToolOutput(entryType, entry.content)
+      }
       toolName={entryType.tool_name}
       command={getToolCommand(entryType)}
       actionType={action_type.action}
-      startedAt={entry.timestamp ?? getProcessStartedAt(executionProcess)}
-      endedAt={
-        active ? null : (entry.timestamp ?? getProcessEndedAt(executionProcess))
+      startedAt={
+        props.toolTiming
+          ? props.toolTiming.startedAt
+          : props.canonicalActive !== undefined
+            ? null
+            : (entry.timestamp ?? getProcessStartedAt(executionProcess))
       }
+      endedAt={
+        props.toolTiming
+          ? props.toolTiming.endedAt
+          : props.canonicalActive !== undefined
+            ? null
+            : active
+              ? null
+              : (entry.timestamp ?? getProcessEndedAt(executionProcess))
+      }
+      durationMs={props.toolTiming?.durationMs}
+      toolOutput={props.toolOutput}
       active={active}
     />
   );
@@ -534,9 +589,24 @@ function DisplayConversationEntry(props: Props) {
         <ChatThinkingMessage
           content={entry.content}
           workspaceId={workspaceWithSession?.id}
-          startedAt={entry.timestamp ?? getProcessStartedAt(executionProcess)}
-          endedAt={executionProcess?.completed_at ?? null}
-          active={isProcessRunning(executionProcess)}
+          label={
+            props.providerText?.kind === 'plan'
+              ? t('conversation.plan')
+              : props.providerText?.kind === 'summary'
+                ? t('conversation.reasoningSummary')
+                : t('conversation.processed')
+          }
+          provider={props.providerText?.provider}
+          partial={props.providerText?.partial}
+          startedAt={
+            props.canonicalActive === undefined ? entry.timestamp : null
+          }
+          endedAt={
+            props.canonicalActive === undefined
+              ? executionProcess?.completed_at
+              : null
+          }
+          active={false}
           renderMarkdown={({ content, workspaceId, className }) => (
             <AppChatMarkdown
               content={content}
@@ -1253,6 +1323,7 @@ function AggregatedGroupEntry({
   executionProcess: ExecutionProcess | null;
 }) {
   const { t } = useTranslation('tasks');
+  const { t: commonT } = useTranslation('common');
   const [expanded, toggle] = usePersistedExpanded(
     `tool:${group.patchKey}`,
     false
@@ -1308,8 +1379,12 @@ function AggregatedGroupEntry({
         isRunning: active,
         executionProcess,
       });
-      let summary = tool_name;
-      let content = patchEntry.content.content;
+      let summary = getToolSummary(entryType, commonT);
+      let content =
+        patchEntry.toolOutput &&
+        ['pending', 'unavailable'].includes(patchEntry.toolOutput.state)
+          ? ''
+          : getToolOutput(entryType, patchEntry.content.content);
       let command: string | undefined;
       if (action_type.action === 'file_read') {
         summary = action_type.path;
@@ -1331,10 +1406,15 @@ function AggregatedGroupEntry({
         content,
         toolName: tool_name,
         command,
+        outputState: patchEntry.toolOutput?.state,
+        exitCode: patchEntry.toolOutput?.exitCode,
+        cwd: patchEntry.toolOutput?.cwd,
+        language: patchEntry.toolOutput?.language ?? undefined,
+        input: patchEntry.toolOutput?.input ?? undefined,
         ...timing,
       };
     });
-  }, [executionProcess, group.entries]);
+  }, [executionProcess, group.entries, commonT]);
 
   const handleToggle = useCallback(() => {
     toggle();
@@ -1490,6 +1570,7 @@ function AggregatedThinkingGroupEntry({
   workspaceId: string | undefined;
   sessionId: string | undefined;
 }) {
+  const { t } = useTranslation('common');
   const [expanded, toggle] = usePersistedExpanded(
     `entry:${group.patchKey}`,
     false
@@ -1503,13 +1584,21 @@ function AggregatedThinkingGroupEntry({
       .map((entry) => ({
         content: entry.type === 'NORMALIZED_ENTRY' ? entry.content.content : '',
         expansionKey: entry.patchKey,
+        label:
+          entry.providerText?.kind === 'plan'
+            ? t('conversation.plan')
+            : entry.providerText?.kind === 'summary'
+              ? t('conversation.reasoningSummary')
+              : t('conversation.processed'),
+        provider: entry.providerText?.provider,
+        partial: entry.providerText?.partial,
         ...getPatchEntryTiming({
           entry,
           isRunning: false,
           executionProcess,
         }),
       }));
-  }, [executionProcess, group.entries]);
+  }, [executionProcess, group.entries, t]);
 
   const handleToggle = useCallback(() => {
     toggle();

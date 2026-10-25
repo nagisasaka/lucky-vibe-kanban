@@ -8,6 +8,9 @@ import { ChatElapsedTime } from './ChatElapsedTime';
 export interface ThinkingEntry {
   content: string;
   expansionKey: string;
+  label?: string;
+  provider?: string | null;
+  partial?: boolean;
   startedAt?: string | null;
   endedAt?: string | null;
 }
@@ -77,7 +80,7 @@ export function ChatCollapsedThinking({
           )}
         </span>
         <ActivityText active={false} className="min-w-0 flex-1 truncate">
-          {t('conversation.processed')}
+          {t('conversation.providerNotes')}
         </ActivityText>
         <ChatElapsedTime startedAt={startedAt} endedAt={endedAt} />
       </button>
@@ -87,6 +90,15 @@ export function ChatCollapsedThinking({
         <div className="ml-6 mt-1 flex max-h-72 flex-col gap-base overflow-y-auto rounded-md border border-border bg-muted/10 p-base">
           {entries.map((entry) => (
             <div key={entry.expansionKey} className="text-sm text-low">
+              {entry.label && (
+                <div className="mb-half text-xs font-medium">
+                  {entry.label}
+                  {entry.provider
+                    ? ` · ${entry.provider === 'codex' ? 'Codex' : entry.provider === 'claude_code' ? 'Claude Code' : entry.provider}`
+                    : ''}
+                  {entry.partial ? ` · ${t('conversation.partial')}` : ''}
+                </div>
+              )}
               {renderMarkdown({
                 content: entry.content,
                 workspaceId: workspaceId,
