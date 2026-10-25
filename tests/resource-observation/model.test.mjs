@@ -8,7 +8,7 @@ const bundle = await build({
   format: "esm",
   platform: "node",
 });
-const { resourceView, resourceTone, RESOURCE_STALE_MS } = await import(
+const { resourceView, resourceTone, RESOURCE_STALE_MS, formatDiskCapacity } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
 );
 const now = Date.now();
@@ -116,4 +116,21 @@ test("disk rejects missing, duplicate, inconsistent and invalid capacity without
     });
     assert.equal(resourceView(data, false, now).disk.percent, value);
   }
+});
+
+test("disk capacity rounds decimal GB for presentation only", () => {
+  for (const [bytes, text] of [
+    [900.25e9, "900GB"], [1053.49e9, "1053GB"],
+    [900499999999, "900GB"], [900500000000, "901GB"],
+    [900500000001, "901GB"], [0, "0GB"], [499999999, "0GB"],
+    [500000000, "1GB"], [null, "—"],
+  ]) assert.equal(formatDiskCapacity(bytes), text);
+  const data = fixture();
+  const used = 900.25e9, total = 1053.49e9;
+  data.disks[0].observation = known({used_bytes: used, total_bytes: total, used_percent: used / total * 100});
+  const view = resourceView(data, false, now);
+  assert.deepEqual(view.disk, {used, total, percent: used / total * 100});
+  assert.equal(formatDiskCapacity(view.disk.used), "900GB");
+  assert.equal(formatDiskCapacity(resourceView(data, true, now).disk.used), "—");
+  assert.equal(formatDiskCapacity(resourceView(undefined, false, now).disk.total), "—");
 });

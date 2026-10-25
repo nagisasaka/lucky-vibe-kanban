@@ -10,7 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
 import { PriorityIcon, type PriorityLevel } from './PriorityIcon';
-import { KanbanBadge } from './KanbanBadge';
+import { KanbanTags } from './KanbanTags';
 import { KanbanAssignee, type KanbanAssigneeUser } from './KanbanAssignee';
 import { RunningDots } from './RunningDots';
 import { PrBadge, type PrBadgeStatus } from './PrBadge';
@@ -178,12 +178,7 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
 
   const tagsDisplay = (
     <>
-      {tags.slice(0, 2).map((tag) => (
-        <KanbanBadge key={tag.id} name={tag.name} color={tag.color} />
-      ))}
-      {tags.length > 2 && (
-        <span className="text-sm text-low">+{tags.length - 2}</span>
-      )}
+      {tags.length > 0 && <KanbanTags tags={tags} />}
       {tagEditProps && tags.length === 0 && (
         <PlusIcon className="size-icon-xs text-low" weight="bold" />
       )}
@@ -193,7 +188,7 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
     <button
       type="button"
       onClick={(e) => e.stopPropagation()}
-      className="flex items-center gap-half cursor-pointer hover:bg-secondary rounded-sm transition-colors"
+      className="flex items-center gap-half min-w-0 w-full cursor-pointer hover:bg-secondary rounded-sm transition-colors"
     >
       {tagsDisplay}
     </button>
@@ -240,20 +235,6 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
       {/* Row 2: Title */}
       <span className="text-base text-normal truncate">{title}</span>
 
-      {/* Row 3: Description (optional, truncated) */}
-      {previewDescription && (
-        <p
-          className={cn(
-            'text-sm text-low m-0',
-            isMobile
-              ? 'leading-tight line-clamp-2'
-              : 'leading-relaxed line-clamp-4'
-          )}
-        >
-          {previewDescription}
-        </p>
-      )}
-
       {/* Row 4: Priority + Assignee */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-half min-w-0">
@@ -296,23 +277,20 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
         pullRequests.length > 0 ||
         relationships.length > 0) && (
         <div className="flex items-center gap-half flex-wrap min-w-0">
-          {tagEditProps ? (
-            (tagEditProps.renderTagEditor?.({
-              allTags: tagEditProps.allTags,
-              selectedTagIds: tagEditProps.selectedTagIds,
-              onTagToggle: tagEditProps.onTagToggle,
-              onCreateTag: tagEditProps.onCreateTag,
-              trigger: tagEditorTrigger,
-            }) ?? tagEditorTrigger)
-          ) : (
-            <>
-              {tags.slice(0, 2).map((tag) => (
-                <KanbanBadge key={tag.id} name={tag.name} color={tag.color} />
-              ))}
-              {tags.length > 2 && (
-                <span className="text-sm text-low">+{tags.length - 2}</span>
+          {(tags.length > 0 || tagEditProps) && (
+            <div className="min-w-0 w-full">
+              {tagEditProps ? (
+                (tagEditProps.renderTagEditor?.({
+                  allTags: tagEditProps.allTags,
+                  selectedTagIds: tagEditProps.selectedTagIds,
+                  onTagToggle: tagEditProps.onTagToggle,
+                  onCreateTag: tagEditProps.onCreateTag,
+                  trigger: tagEditorTrigger,
+                }) ?? tagEditorTrigger)
+              ) : (
+                <KanbanTags tags={tags} />
               )}
-            </>
+            </div>
           )}
           {pullRequests.slice(0, 2).map((pr) => (
             <PrBadge
@@ -339,6 +317,14 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
             </span>
           )}
         </div>
+      )}
+      {previewDescription && (
+        <p
+          className="text-sm text-low m-0 leading-relaxed line-clamp-2 [overflow-wrap:anywhere]"
+          data-testid="issue-description-preview"
+        >
+          {previewDescription}
+        </p>
       )}
     </div>
   );

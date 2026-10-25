@@ -1,12 +1,13 @@
-import { resourceTone, resourceView } from '../lib/resourceObservation';
+import {
+  resourceTone,
+  resourceView,
+  formatDiskCapacity as space,
+} from '../lib/resourceObservation';
 import { Tooltip } from './Tooltip';
 
 function percentage(value: number | null) {
   // Floor avoids displaying 70/80 in the preceding colour band.
   return value === null ? '—' : `${Math.floor(value)}%`;
-}
-function space(value: number | null) {
-  return value === null ? '—' : `${Number((value / 1e9).toFixed(2))}GB`;
 }
 
 export function ResourceSummary({
