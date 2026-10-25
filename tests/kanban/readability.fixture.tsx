@@ -8,6 +8,11 @@ import {
   IssueWorkspaceCard,
   type WorkspaceWithStats,
 } from '../../packages/ui/src/components/IssueWorkspaceCard';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '../../packages/ui/src/components/Popover';
 import { TooltipProvider } from '../../packages/ui/src/components/RadixTooltip';
 import { KanbanCardDetails } from '../../packages/web-core/src/features/kanban/ui/KanbanCardDetails';
 import {
@@ -48,6 +53,7 @@ const workspace = (n: number): WorkspaceWithStats => ({
           : 'failed',
   isRunning: n < 2,
   hasPendingApproval: n === 1,
+  hasRunningDevServer: n < 3,
 });
 function Fixture() {
   const [columns, setColumns] = useState([
@@ -59,10 +65,21 @@ function Fixture() {
   const [show, setShow] = useState(true);
   const [revision, update] = useState(0);
   const [opened, open] = useState('');
+  const [tagCount, setTagCount] = useState(3);
+  const [longTags, setLongTags] = useState(true);
+  const tags = Array.from({ length: tagCount }, (_, n) => ({
+    id: String(n),
+    name: n === 0 && longTags ? 'Long label '.repeat(12) : `Tag ${n}`,
+    color: '120 60% 40%',
+  }));
   return (
     <TooltipProvider>
       <button onClick={() => setShow(!show)}>Toggle workspaces</button>
       <button onClick={() => update(revision + 1)}>Summary update</button>
+      <button onClick={() => setTagCount((tagCount + 1) % 5)}>
+        Change tags
+      </button>
+      <button onClick={() => setLongTags(!longTags)}>Toggle long tags</button>
       <output>{opened}</output>
       <main className="bg-primary text-normal">
         <KanbanGrid
@@ -104,17 +121,24 @@ function Fixture() {
                         displayId={id}
                         title={'Long readable title '.repeat(9)}
                         description={id === 'c' ? '   ' : description}
-                        tags={[
-                          {
-                            id: 'tag',
-                            name: 'Tag before description',
-                            color: '#008800',
-                          },
-                        ]}
+                        tags={tags}
+                        tagEditProps={{
+                          allTags: tags,
+                          selectedTagIds: tags.map((t) => t.id),
+                          onTagToggle: () => {},
+                          onCreateTag: () => '',
+                          renderTagEditor: ({ trigger }) => (
+                            <Popover>
+                              <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+                              <PopoverContent>Tag editor</PopoverContent>
+                            </Popover>
+                          ),
+                        }}
                         priority={null}
                         assignees={[]}
                       />
                       <KanbanCardDetails
+                        showWorkspaces={show}
                         count={workspaces.length}
                         workspaces={workspaces}
                         description={id === 'c' ? '' : description}

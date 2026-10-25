@@ -3,6 +3,27 @@
 2026-10-25。実装・局所試験・commit承認済み。main merge/deployは実施していない。
 独立レビューは上位AI。プレビューBasic設定後の認証済み確認はユーザー操作待ち。
 
+
+## 2026-10-26 追加UI修正とVite切替準備（最新）
+
+- 作業開始00:37 JST、準備完了00:46 JST。base `98a697f5b6d863c5173192d2a65fba862acd57ed`。Issue読取revisionは `2026-10-25 15:37:42.863`（指定15:08より新しい。追加承認と即時反映承認を確認）。
+- 製品変更: タグはタグ変更・利用可能幅変更時のResizeObserverで先頭から表示可能数を決定し、残数+Nを確保。単独長タグはtruncate、既存popover triggerを維持。測定用要素はaria-hiddenかつ画面外へ溢れない枠内。新pollなし。
+- Workspace Dev Server背景は既存infoテーマ値の淡青、通常背景と排他的に設定。既存Playに翻訳済みtooltip/accessible label。AgentRun状態とは独立。showWorkspaces=trueのときIssue集約のdevServerだけ抑制。
+- 試験: `pnpm --dir packages/ui run check`、`pnpm --dir packages/web-core run check`、`pnpm --dir packages/local-web run check`成功。変更4UIファイルへのeslint成功。`node tests/kanban/readability.mjs`で220/300/600px往復、0/1/複数/長タグ/+N、light/dark、popover Enter/Escape/フォーカス、表示ON/OFF、DevServerとrunning/approval/failed共存、既存DnD/本文回帰成功。fixture経路であり実ユーザーDBの検証ではない。
+- 開発中に背景class競合をブラウザ試験で発見して修正。test locator修正とpopover focus待機も実施。最終成功を成果物へ保存。不要なRustビルド・全体試験なし。
+- プレビュー運用は製品変更と別: `.build/preview2-vite/` に専用Vite設定・foreground親runner・検証手順を保持。`.lvk-preview/start.sh`はrunnerをexecするだけ。共通repo設定・nginx/Compose/DNS・dev/stableには変更なし。運用launcher差分を製品mainへ取り込まないこと。
+- 実Vite 7.3.1。root/frontendソース/shared/depsだけfs.allowし、.build/.lvk-preview/.git/.env/DB/鍵/tokenをdeny。publicDir全ファイル名/種別を監査しsymlinkなし（画像/SVG/既存Service Worker/robots/manifest）。publicDirにはfs.denyが効かないため別監査。
+- Host許可はpreview2.luckyvibekanban.comのみを指定、loopback/strictPort、HMR wss/clientPort443。既存/api proxyのchangeOrigin:false/ws:trueを保持。Vite18444、backend18446、同じpublic/basic/public URLと既存instanceを指定。envは最小allowlistで渡し、秘密の読取・複製・token生成なし。
+- 隔離Vite18447から既存backend18444への非変更試験: root/health200、未認証API401、不正Origin403、未認証API WebSocket401、不許可Host403。非秘密canary /@fs と?rawは403。通常パスはSPA fallback200だがcanary内容なし。source内一時canaryの書換えでHMR before→afterをreloadなしで確認、削除済み。Basic login画面表示、JS pageerrorなし。local routingであり外部WSS確認ではない。
+- 現存DBはinstance-FTz2vi/data/db.v2.sqlite、inode31033808を保持。アプリ稼働/ユーザー操作でsize・mtimeは変わるためbyte不変とは主張しない。本作業はDB/認証/key/seedを変更・再作成・コピーしない。
+- **切替前ready（00:50 JST）**: launcher/configは準備済み。backendは127.0.0.1:18446（空きを確認）、Viteは127.0.0.1:18444/strictPort。既存preview2のDB/Basic/session設定を同一instanceから継続利用する。まだStop→Startは実施していない。
+- **停止方式**: 正規LVK DevServerがforegroundのPython親runnerを所有し、Rust/Viteはその直接子。親はSIGINT/SIGTERMまたは片側終了を検知するとfinallyで両子へterminate、各8秒で終了しなければkillしwaitする。バックグラウンドdetach/nohup/setsidなし。運用停止時の両port解放はUI切替後に別途実測する。
+- **rollback**: 正規UI Stopで両子停止を確認後、保存済み旧static launcherを元のWorkspace launcherへ戻し、正規UI Start。元の既存Rust binary/instance/18444を使う。DB/key/authの復元やコピーは不要。共有repo commandとhost/nginx設定は変えない。
+- UI担当に正規Stop→Startを依頼済み。切替完了までは旧server PID2143653/18444のまま。外部認証済みLOCAL-35追加タグ/実WSS/CSRF/session/Run終端後持続は切替後の上位AI確認待ち。秘密を要求しない。旧launcherは`.build/preview2-vite/start-static.rollback.sh`に保全、rollbackも正規UIで実施。
+- 成果物: `.build/kanban-readability/{results.json,additional.log,tags-devserver-light.png,tags-devserver-dark.png}`、`.build/preview2-vite/{validation.json,validation.log,local-vite.png}`。一時Vite/browser/canaryはfinallyで終了/除去。稼働previewと必要なruntime設定は保持。
+
+以下は前回実装時の履歴であり、旧PID/locked表記は現在状態ではない。
+
 ## Revision・SHA照合
 
 - 初期HEAD: `455f42d2c77b3f512a8346be2c7b1a5294ea6d7e`。作業ブランチだけを初期main `271aa60f14dd1ac94b2cf2a9fe0e1878bef3d2ce`へfast-forward。

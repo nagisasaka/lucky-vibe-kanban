@@ -1250,6 +1250,7 @@ export function KanbanContainer() {
                               />
                             ))}
                             <KanbanCardDetails
+                              showWorkspaces={showWorkspaces}
                               count={
                                 getWorkspacesForIssue(issue.id).filter(
                                   (workspace) => !workspace.archived

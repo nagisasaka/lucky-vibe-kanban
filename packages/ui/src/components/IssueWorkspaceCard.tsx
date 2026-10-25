@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import { UserAvatar, type UserAvatarUser } from './UserAvatar';
 import { RunningDots } from './RunningDots';
+import { Tooltip } from './Tooltip';
 import { ChatElapsedTime } from './ChatElapsedTime';
 import {
   DropdownMenu,
@@ -68,6 +69,7 @@ export interface IssueWorkspaceCreateCardProps {
 }
 
 interface IssueWorkspaceCardContainerProps {
+  highlightDevServer?: boolean;
   onClick?: () => void;
   className?: string;
   children: React.ReactNode;
@@ -77,12 +79,17 @@ function IssueWorkspaceCardContainer({
   onClick,
   className,
   children,
+  highlightDevServer = false,
 }: IssueWorkspaceCardContainerProps) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-half p-base bg-panel rounded-sm transition-all duration-150',
-        onClick && 'cursor-pointer hover:bg-secondary/70',
+        'flex flex-col gap-half p-base rounded-sm transition-all duration-150',
+        highlightDevServer ? 'bg-[hsl(var(--info)/0.12)]' : 'bg-panel',
+        onClick &&
+          (highlightDevServer
+            ? 'cursor-pointer hover:bg-[hsl(var(--info)/0.18)]'
+            : 'cursor-pointer hover:bg-secondary/70'),
         className
       )}
       onClick={
@@ -133,7 +140,11 @@ export function IssueWorkspaceCard({
     workspace.latestProcessStatus === 'audit_failed';
 
   return (
-    <IssueWorkspaceCardContainer onClick={onClick} className={className}>
+    <IssueWorkspaceCardContainer
+      onClick={onClick}
+      highlightDevServer={hasRunningDevServer}
+      className={className}
+    >
       {/* Row 1: Status badge + Name (left), Owner avatar + menu (right) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-half min-w-0">
@@ -212,10 +223,15 @@ export function IssueWorkspaceCard({
         <div className="flex items-center flex-wrap gap-half text-sm text-low min-w-0 flex-1">
           <div className="flex items-center gap-half shrink-0">
             {hasRunningDevServer && (
-              <PlayIcon
-                className="size-icon-xs text-brand shrink-0"
-                weight="fill"
-              />
+              <Tooltip content={t('kanban.compact.devServer')}>
+                <span role="img" aria-label={t('kanban.compact.devServer')}>
+                  <PlayIcon
+                    aria-hidden="true"
+                    className="size-icon-xs text-brand shrink-0"
+                    weight="fill"
+                  />
+                </span>
+              </Tooltip>
             )}
 
             {!isRunning && isFailed && (

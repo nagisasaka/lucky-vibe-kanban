@@ -150,6 +150,83 @@ try {
   await expect(preview).toBeVisible();
   await page.getByText('Toggle workspaces', { exact: true }).click();
   await expect(a.getByText('Workspace 0', { exact: true })).toBeVisible();
+  // Added LOCAL81 scope: tag geometry, keyboard editor, DevServer/Agent coexistence.
+  const tagRow = a.getByTestId('kanban-tags');
+  const tagTrigger = a.locator('button:has([data-testid="kanban-tags"])');
+  await tagTrigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Tag editor', { exact: true })).toBeVisible();
+  await page.waitForTimeout(150);
+  await page.keyboard.press('Escape');
+  await expect(tagTrigger).toBeFocused();
+  for (const dark of [false, true]) {
+    await page.evaluate(
+      (d) => document.documentElement.classList.toggle('dark', d),
+      dark
+    );
+    for (const width of [220, 300, 600, 220]) {
+      await a.evaluate((e, w) => (e.style.width = `${w}px`), width);
+      await page.waitForTimeout(80);
+      const geometry = await tagRow.evaluate((e) => {
+        const r = e.getBoundingClientRect();
+        return [...e.children]
+          .filter((n) => n.getAttribute('aria-hidden') !== 'true')
+          .map((n) => ({
+            right: n.getBoundingClientRect().right,
+            limit: r.right,
+            text: n.textContent,
+          }));
+      });
+      assert.ok(
+        geometry.every((g) => g.right <= g.limit + 1),
+        JSON.stringify(geometry)
+      );
+      assert.ok(geometry.some((g) => g.text === '+2'));
+    }
+    const running = a.getByRole('button', { name: /Workspace 0/ });
+    await expect(
+      running.getByRole('img', { name: 'Dev server running' })
+    ).toBeVisible();
+    const colors = await Promise.all(
+      [0, 3].map((n) =>
+        a
+          .getByRole('button', { name: new RegExp(`Workspace ${n}`) })
+          .evaluate((e) => getComputedStyle(e).backgroundColor)
+      )
+    );
+    assert.notEqual(colors[0], colors[1]);
+    await page.screenshot({
+      path: `${output}/tags-devserver-${dark ? 'dark' : 'light'}.png`,
+    });
+  }
+  await a.evaluate((e) => (e.style.width = '600px'));
+  await page.getByText('Toggle long tags', { exact: true }).click();
+  await expect(
+    tagRow.locator(':scope > span').filter({ hasText: /^\+2$/ })
+  ).toHaveCount(0);
+  for (let n = 0; n < 5; n++) {
+    await page.getByText('Change tags', { exact: true }).click();
+    await page.waitForTimeout(50);
+    if ((await tagRow.count()) === 0) {
+      await expect(a.locator('button[aria-haspopup="dialog"]')).toBeVisible();
+      continue;
+    }
+    assert.ok(
+      await tagRow.evaluate(
+        (e) =>
+          e.getBoundingClientRect().right <=
+          e.closest('button').getBoundingClientRect().right + 1
+      )
+    );
+  }
+  await expect(a.locator('[aria-live]')).not.toContainText(
+    'Dev server running'
+  );
+  await page.getByText('Toggle workspaces', { exact: true }).click();
+  await expect(a.locator('[aria-live]')).toContainText('Dev server running');
+  await expect(a.locator('[aria-live]')).toContainText('Approval required');
+  await page.getByText('Toggle workspaces', { exact: true }).click();
+  await a.evaluate((e) => (e.style.width = ''));
   // Existing keyboard DnD crosses columns; pointer drop reaches an empty column.
   await card('d').focus();
   await page.keyboard.press('Space', { delay: 100 });

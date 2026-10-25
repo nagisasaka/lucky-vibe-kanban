@@ -7,7 +7,9 @@ export function KanbanCardDetails({
   count,
   workspaces,
   description,
+  showWorkspaces = false,
 }: {
+  showWorkspaces?: boolean;
   count: number;
   workspaces: WorkspaceWithStats[];
   description?: string | null;
@@ -26,7 +28,7 @@ export function KanbanCardDetails({
       )
     ),
     unseen: workspaces.some((w) => w.hasUnseenActivity),
-    devServer: workspaces.some((w) => w.hasRunningDevServer),
+    devServer: !showWorkspaces && workspaces.some((w) => w.hasRunningDevServer),
   };
   return (
     <div className="mt-half min-w-0">
