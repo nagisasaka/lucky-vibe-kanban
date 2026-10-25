@@ -30,6 +30,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
+  - id: openwiki-source-ec7bbc48470f4ddafbe92723
+    resource: repo://crates/server/src/routes/integrations/runtime_tests.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-693f5c01a606eaeac0692368
@@ -60,10 +62,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
+generated: { by: "codex", at: "2026-10-25T19:14:17.380Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:16:46.128Z
+    at: 2026-10-25T19:14:17.380Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -88,7 +90,11 @@ B は受付時に観測した target commit と一致する preparation の base
 
 ### 競合だけを有限の Agent job にする
 
-競合時だけ、同じ Integration Workspace / Session に新しい AgentRun を作る。現在の step・base・source、受付時の公開 Memory、追加指示を含む完全な Create envelope を provider 起動前に保存し、再配送も同じ identity を使う。Integration 全体を一つの Orchestration node に重ねたり、古い AgentRun の Retry / Steer で次の source を渡したりしない。[保存から Create](../../crates/server/src/routes/integrations/runtime.rs#L500-L541)・[request](../../crates/server/src/routes/integrations/mechanical.rs#L271-L339)
+競合時だけ、同じ Integration Workspace 内に新しい Session と AgentRun を作る。現在の step・base・source、受付時の公開 Memory、追加指示を含む完全な Create envelope を provider 起動前に保存し、再配送も同じ identity を使う。Integration 全体を一つの Orchestration node に重ねたり、古い AgentRun の Retry / Steer で次の source を渡したりしない。[保存から Create](../../crates/server/src/routes/integrations/runtime.rs#L500-L541)・[request](../../crates/server/src/routes/integrations/mechanical.rs#L271-L339)
+
+新しい競合 dispatch は `Initial` / `Launch` で、前 job の native conversation を resume しない。Session ごとに provider identity を所有するため、連続する source の競合や明示 Resume で別の native session ID を同じ Session へ上書きしない。`persist_conflict_dispatch` は作業先と executor を引き継ぐ新規 Session、Integration の現在 Session / AgentRun ID、完全な immutable dispatch を一つの `BEGIN IMMEDIATE` transaction に保存し、commit 後にだけ provider Create へ進む。保存失敗時は新 Session も rollback し、呼出側の run を置き換えない。[保存境界](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)・[同一 connection の保存](../../crates/db/src/models/integration.rs#L534-L545)
+
+再起動・再配送で保存済み dispatch があれば、新しい Session や ID を作らず同じ envelope を再利用する。明示 Resume は前 job の終端確認後、旧 error / stop / AgentRun / dispatch を history に残し、候補未生成の場合だけ現在 dispatch と AgentRun を退役させる。次の monitor が新 Session を作るが、同じ Workspace の edits / index は引き継ぐ。過去の run、provider identity、degraded projection を修復・削除して成功扱いにはしない。[Resume の履歴](../../crates/server/src/routes/integrations/runtime.rs#L140-L207)・[再送と完了検査](../../crates/server/src/routes/integrations/runtime.rs#L593-L622)。一般の [Session と native conversation](session-and-agent-run.md#識別と固定するもの)とはこの所有関係で接続する。
 
 agent の責務は既存 index の競合解消と stage、および `ready` / `blocked` と理由を含む JSON 応答である。commit・branch 操作・検証計画・テスト実行・公開は host が担当する。host は成功かつ Current の投影と実 writer の収束を待ち、HEAD / MERGE_HEAD、未解消 index、unstaged / untracked file、canonical OpenWiki の変更を検査してから commit を作る。応答の ready だけで候補を採用しない。[依頼契約](../../crates/server/src/routes/integrations/runtime.rs#L349-L392)・[結果検査](../../crates/server/src/routes/integrations/runtime.rs#L541-L565)・[index 検査](../../crates/server/src/routes/integrations/mechanical.rs#L134-L171)
 
@@ -154,7 +160,7 @@ Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox �
 
 ## 中断・介入・回復
 
-公開前に blocked となった mechanical run は、保持した Workspace・固定 source・writer の停止・target B を確認して明示 Resume できる。候補が凍結済みなら非空の追加指示を拒否する。まだ候補がなければ前 conflict job の終端を確認し、index を保った新しい Create で解消を続ける。server restart 後の検証 command は自動 replay せず、明示 Resume から未完了の検証を再開する。既存の passed / candidate-bound exception は同じ候補の証拠として扱う。[介入](../../crates/server/src/routes/integrations/runtime.rs#L106-L206)・[中断検出](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)・[検証再開](../../crates/server/src/routes/integrations/runtime.rs#L817-L830)
+公開前に blocked となった mechanical run は、保持した Workspace・固定 source・writer の停止・target B を確認して明示 Resume できる。候補が凍結済みなら非空の追加指示を拒否する。まだ候補がなければ前 conflict job の終端を確認し、index を保ち、新規 Session の Create で解消を続ける。server restart 後の検証 command は自動 replay せず、明示 Resume から未完了の検証を再開する。既存の passed / candidate-bound exception は同じ候補の証拠として扱う。[介入](../../crates/server/src/routes/integrations/runtime.rs#L106-L206)・[中断検出](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)・[検証再開](../../crates/server/src/routes/integrations/runtime.rs#L817-L830)
 
 技術的 hold は conflict job を勝手に再起動・取消しない。writer が収束していなければ予約を保持する。明示 Cancel は受理済み identity の停止と script/host の idle を確認してから解放する。検証失敗や review 待ちでは候補の予約を維持し、技術的失敗が既に idle なら解放する。[hold](../../crates/server/src/routes/integrations/runtime.rs#L1154-L1200)・[取消](../../crates/server/src/routes/integrations/runtime.rs#L994-L1152)
 
@@ -191,3 +197,7 @@ MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scena
 [隔離 HTTP 試験](../../crates/server/src/routes/integrations/validation_settings_tests.rs#L21-L150)は一時 instance・Git・SQLite と loopback port 0、production Repo router と local Access/CSRF を使う。GET/PUT、403/400/409、非 root Unix の書込権限不足500、保存後の非実行と読戻しを確認し、commit した plan を既存 `ScriptRequest` の Bash 実行へつなぐ。正式 Integration の admission→container 監督→publication 全体を駆動する E2E ではない。[ブラウザ fixture](../../tests/integration-validation-settings/browser.mjs#L1-L198)は製品 component と mock API を使うため、下書き・修復・保存表示の検査と実サーバー保存の検査を区別する。
 
 今回の設定編集 Sync は凍結 source `8079c5159e3c7b0d4817487177be6bf319de451e` の UI、transport、保存 handler、Git lock、受付・実行器、試験定義を静的に照合した。[開発時記録](../../tests/integration-validation-settings/README.md#rust--実http接続の追加検証)では初回の Rust 未実行を後続の限定試験成功が補っているが、public Basic/Auth0、正式 Integration 全体、production frontend build の検証を意味しない。供給された正式 Integration は検証省略であり、この Wiki 保守でも製品試験を再実行していない。独立レビュー待ちという入力は完了証拠ではなく、無関係な過去の Wiki 内容の再検証も主張しない。
+
+### 競合 Session 分離の検証境界
+
+[回帰試験](../../crates/server/src/routes/integrations/runtime_tests.rs#L1670-L1942)は連続する競合 step と明示 Resume の Session 分離、保存後・Create 前の再起動と同一 dispatch 再送、実 SessionObserved 投影、異なる native identity の拒否、degraded 履歴の保持、transaction 失敗時の Session と dispatch の rollback を検査する。`ready` 本文があっても `Succeeded && Current` を満たさなければ採用しない。試験は永続化・投影境界の fixture であり、実 Codex や browser からの Resume、既存 blocked run の復旧、配備は未検証である。今回の文書保守では試験を再実行していない。
