@@ -10,7 +10,10 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { isolatedEnvironment } from '../server/fixtures/issue-comments-env.mjs';
 const root = process.cwd();
-const output = path.join(root, '.build/issue-archive-validation');
+const output = path.join(
+  root,
+  process.env.LVK_TEST_OUTPUT || '.build/issue-archive-validation'
+);
 await mkdir(output, { recursive: true });
 const instance = await mkdtemp(path.join(output, 'instance-'));
 const binary = path.join(root, 'target/debug/server');

@@ -59,17 +59,17 @@ provider/client login must be verified by the operator.
 
 ## Reused services and added boundaries
 
-| Capability                   | Implementation and reuse                                                                                                                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Board                        | `routes/local_remote.rs` normal Issue create/update, with checked revisions and shared repository selection; no new Issue kind or automatic start on creation                                    |
-| New execution                | `remote_mcp/launch.rs` calls `workspaces/create.rs::create_and_start_workspace_admitted`; native executor defaults, Goal mode/budget and setup-gated Session/AgentRun paths remain authoritative |
-| Continuation/steering        | Existing `sessions::follow_up_checked` and `agent_runs::dispatch_control`; exact Workspace/Session/current-run validation and saved executor configuration                                       |
-| Questions                    | Existing Session question reservations, locks and blocking-input guards; revisions bind exact event/attempt; direct answers and expired attempts invalidate old requests                         |
-| Formal Integration           | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, frozen validation, publication and Wiki handling; no MCP `git merge` path                            |
-| State/activity               | Existing Project/Issue/Workspace/Session/run/event/command records; reads observe direct UI/Codex changes without inference                                                                      |
-| Memory/Wiki/verification     | Read-only existing repository-memory store, bounded OpenWiki snapshot and immutable per-run Change Manifest; no provisioning, maintenance or other Workspace's private memory                    |
-| Code/diff/merge observations | Existing GitService plus libgit2 read helpers; no CLI staging, filters, hooks, fetch or target writes during reads                                                                               |
-| Links                        | Existing Project/Issue/Workspace routes and AppNavigation; validated public HTTPS base and authenticated prefix alias                                                                            |
+| Capability | Implementation and reuse |
+| --- | --- |
+| Board | `routes/local_remote.rs` normal Issue create/update, with checked revisions and shared repository selection; no new Issue kind or automatic start on creation |
+| New execution | `remote_mcp/launch.rs` calls `workspaces/create.rs::create_and_start_workspace_admitted`; native executor defaults, Goal mode/budget and setup-gated Session/AgentRun paths remain authoritative |
+| Continuation/steering | Existing `sessions::follow_up_checked` and `agent_runs::dispatch_control`; exact Workspace/Session/current-run validation and saved executor configuration |
+| Questions | Existing Session question reservations, locks and blocking-input guards; revisions bind exact event/attempt; direct answers and expired attempts invalidate old requests |
+| Formal Integration | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, frozen validation, publication and Wiki handling; no MCP `git merge` path |
+| State/activity | Existing Project/Issue/Workspace/Session/run/event/command records; reads observe direct UI/Codex changes without inference |
+| Memory/Wiki/verification | Read-only existing repository-memory store, bounded OpenWiki snapshot and immutable per-run Change Manifest; no provisioning, maintenance or other Workspace's private memory |
+| Code/diff/merge observations | Existing GitService plus libgit2 read helpers; no CLI staging, filters, hooks, fetch or target writes during reads |
+| Links | Existing Project/Issue/Workspace routes and AppNavigation; validated public HTTPS base and authenticated prefix alias |
 
 The remote boundary validates actual membership, not just the caller's parent
 IDs. Lists default to 20 and cap at 50; text pages default to 8,000 and cap at
@@ -118,30 +118,30 @@ last three rows add mutation scopes. Full input schemas come from `tools/list`;
 tool. No remote shell, arbitrary URL proxy, database editor or credential reader
 is exported.
 
-| Tools                                                                                                                                            | Target/input and result                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `get_connection`, `list_projects`                                                                                                                | Connection capabilities/scopes and allowed Project IDs/links; no global current Project                                                                                  |
-| `get_project`, `list_project_statuses`, `list_project_sessions`, `list_issues`                                                                   | Project ID; bounded status/counts, Issues and current Sessions/questions                                                                                                 |
-| `get_issue`, `list_issue_workspaces`                                                                                                             | Project/Issue IDs; paged requirements or distinct 1:N Workspace attempts                                                                                                 |
-| `get_workspace`, `list_workspace_runs`, `get_execution`                                                                                          | Project/Workspace and selected run/section; actual lifecycle, input/final response, Goal usage and evidence links                                                        |
-| `get_resource_observation`                                                                                                                       | No arguments; bounded on-demand Linux system-visible statistics and separate cgroup limits                                                                               |
-| `list_run_events`                                                                                                                                | Exact Project/Workspace/Session/Run; saved commentary and safe execution metadata, bounded cursor pages                                                                  |
-| `list_run_commands`, `get_run_command`                                                                                                           | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion                               |
-| `list_questions`, `get_question`                                                                                                                 | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK                                                      |
-| `list_project_repositories`, `list_repository_branches`, `get_execution_defaults`                                                                | Project and repository; eligible IDs/branches and current configured executor/native mode                                                                                |
-| `get_integration_candidate`, `list_integrations`, `get_integration`                                                                              | Project/repository/Workspace/target branch or Integration ID/section; observed heads, validation, publication and Wiki state                                             |
-| `list_project_merge_status`, `get_workspace_merge_status`                                                                                        | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations                                                                                  |
-| `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page`                                                                         | Project/Workspace/repository and selected page; read-only bounded evidence with revision                                                                                 |
-| `get_workspace_verification`, `get_workspace_verification_test`                                                                                  | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof                                                     |
-| `list_workspace_files`, `get_workspace_file`, `search_workspace_files`, `get_workspace_file_ranges`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads                                                                                    |
-| `get_repository_wiki`                                                                                                                            | Project/repository; saved target branch, current source HEAD, UI freshness and maintenance IDs, without starting work                                                    |
-| `sync_repository_wiki` (`lvk:write`)                                                                                                             | Project/repository/request, observed branch/source and optional `from_commit`; existing UI reconciliation admission, never implicit initial generation                   |
-| `get_repository_wiki_sync`                                                                                                                       | Project/repository/original request; durable admission, exact execution publication/reconciliation evidence and separate latest freshness                                |
-| `get_operation`                                                                                                                                  | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty                                                                             |
-| `create_issue`, `update_issue` (`lvk:write`)                                                                                                     | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution                                                                 |
-| `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`)                                                      | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs   |
-| `approve_integration`, `cancel_integration` (`lvk:merge`)                                                                                        | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
-| `start_integration` (`lvk:merge`)                                                                                                                | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt                                      |
+| Tools | Target/input and result |
+| --- | --- |
+| `get_connection`, `list_projects` | Connection capabilities/scopes and allowed Project IDs/links; no global current Project |
+| `get_project`, `list_project_statuses`, `list_project_sessions`, `list_issues` | Project ID; bounded status/counts, Issues and current Sessions/questions |
+| `get_issue`, `list_issue_workspaces` | Project/Issue IDs; paged requirements or distinct 1:N Workspace attempts |
+| `get_workspace`, `list_workspace_runs`, `get_execution` | Project/Workspace and selected run/section; actual lifecycle, input/final response, Goal usage and evidence links |
+| `get_resource_observation` | No arguments; bounded on-demand Linux system-visible statistics and separate cgroup limits |
+| `list_run_events` | Exact Project/Workspace/Session/Run; saved commentary and safe execution metadata, bounded cursor pages |
+| `list_run_commands`, `get_run_command` | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion |
+| `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK |
+| `list_project_repositories`, `list_repository_branches`, `get_execution_defaults` | Project and repository; eligible IDs/branches and current configured executor/native mode |
+| `get_integration_candidate`, `list_integrations`, `get_integration` | Project/repository/Workspace/target branch or Integration ID/section; observed heads, validation, publication and Wiki state |
+| `list_project_merge_status`, `get_workspace_merge_status` | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations |
+| `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page` | Project/Workspace/repository and selected page; read-only bounded evidence with revision |
+| `get_workspace_verification`, `get_workspace_verification_test` | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof |
+| `list_workspace_files`, `get_workspace_file`, `search_workspace_files`, `get_workspace_file_ranges`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads |
+| `get_repository_wiki` | Project/repository; saved target branch, current source HEAD, UI freshness and maintenance IDs, without starting work |
+| `sync_repository_wiki` (`lvk:write`) | Project/repository/request, observed branch/source and optional `from_commit`; existing UI reconciliation admission, never implicit initial generation |
+| `get_repository_wiki_sync` | Project/repository/original request; durable admission, exact execution publication/reconciliation evidence and separate latest freshness |
+| `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
+| `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
+| `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
+| `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
+| `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
 `list_issues` additionally accepts optional `search`, `simple_id`, `status`
 (name or UUID), `priority`, `parent_issue_id`, `assignee_user_id`, `tag_id` and
@@ -242,26 +242,26 @@ fixtures/mocks as required by specification §14.2. These are not claims of live
 ChatGPT login, paid Codex execution or production deployment. Test functions live
 under `crates/server/src/remote_mcp/` unless a different location is named.
 
-| ID  | Evidence inspected and verified                                                                                                                                                                                                                                                                                               |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T01 | `tests::http_discovery_authentication_and_tool_call_roundtrip` exercises HTTP initialise/list/call; `crates/mcp/.../stdio_tests.rs` exercises the existing byte-stream codec/list/API call and CLI argument tests pass                                                                                                        |
-| T02 | Configuration/claims/HTTP tests reject anonymous, expired, revoked, foreign-owner/audience/issuer and insufficient scopes; Board/runtime/launch tests reject mixed Project and child IDs; nginx tests preserve authentication outside exact MCP paths                                                                         |
-| T03 | Project/Board/evidence/merge tests assert unchanged work/run/chat/operation counts and no filesystem provisioning; read routing has no launch/runtime inference call                                                                                                                                                          |
-| T04 | `issue_writes_reuse_board_services_and_enforce_scope_retries_and_revision` checks normal Issue content, revision and no run; launch test separately checks agreed specification, native mode and returned identities; Skill uses the self-contained Issue template                                                            |
-| T05 | `disconnected_start_waiter_does_not_cancel_domain_admission` aborts the caller then observes one durable accepted run; launch result explicitly says implementation is incomplete; canonical creation dispatches server-owned immediate/setup-gated work                                                                      |
-| T06 | Board fixture has two attempts per Issue; `runtime_changes_pin_parent_ids_current_run_and_lifecycle` checks exact dispatch, stale run/session rejection and live-versus-terminal routes; native Session regression checks provider/resume guards                                                                              |
-| T07 | Question projection preserves options/free text and IDs; `question_answers_share_real_reservations_and_reject_direct_duplicates` races UI/MCP through real reservations, checks one delivery and rejects already answered/wrong event/attempt; write-scope checks apply before dispatch                                       |
-| T08 | Approval projection returns `requires_lvk` and a canonical link without private command details; answer schema/handler rejects approval kind                                                                                                                                                                                  |
-| T09 | Board and command fixtures change state through the canonical stored records and observe it on the next MCP read; command delivery is explicitly not implementation completion; direct answers disappear and new direct runs invalidate old targets                                                                           |
-| T10 | Runtime, verification, merge and Integration tests distinguish blocked/running/failed, test pass/fail/unavailable/skipped/unknown, dirty/unmerged/ambiguous Git, publication and recorded-versus-current Wiki evidence                                                                                                        |
-| T11 | Scoped-head launch test passes explicit selections to existing formal admission; canonical Integration regression checks target races, required validation/exceptions, exact publication, lost receipts and frozen Wiki inputs; no remote target-write mechanism exists                                                       |
-| T12 | Operations tests race duplicate admissions, reject changed input and disconnect during admission; runtime/question/launch tests check one dispatch and stable identity; lost post-delivery response stays uncertain without replay                                                                                            |
+| ID | Evidence inspected and verified |
+| --- | --- |
+| T01 | `tests::http_discovery_authentication_and_tool_call_roundtrip` exercises HTTP initialise/list/call; `crates/mcp/.../stdio_tests.rs` exercises the existing byte-stream codec/list/API call and CLI argument tests pass |
+| T02 | Configuration/claims/HTTP tests reject anonymous, expired, revoked, foreign-owner/audience/issuer and insufficient scopes; Board/runtime/launch tests reject mixed Project and child IDs; nginx tests preserve authentication outside exact MCP paths |
+| T03 | Project/Board/evidence/merge tests assert unchanged work/run/chat/operation counts and no filesystem provisioning; read routing has no launch/runtime inference call |
+| T04 | `issue_writes_reuse_board_services_and_enforce_scope_retries_and_revision` checks normal Issue content, revision and no run; launch test separately checks agreed specification, native mode and returned identities; Skill uses the self-contained Issue template |
+| T05 | `disconnected_start_waiter_does_not_cancel_domain_admission` aborts the caller then observes one durable accepted run; launch result explicitly says implementation is incomplete; canonical creation dispatches server-owned immediate/setup-gated work |
+| T06 | Board fixture has two attempts per Issue; `runtime_changes_pin_parent_ids_current_run_and_lifecycle` checks exact dispatch, stale run/session rejection and live-versus-terminal routes; native Session regression checks provider/resume guards |
+| T07 | Question projection preserves options/free text and IDs; `question_answers_share_real_reservations_and_reject_direct_duplicates` races UI/MCP through real reservations, checks one delivery and rejects already answered/wrong event/attempt; write-scope checks apply before dispatch |
+| T08 | Approval projection returns `requires_lvk` and a canonical link without private command details; answer schema/handler rejects approval kind |
+| T09 | Board and command fixtures change state through the canonical stored records and observe it on the next MCP read; command delivery is explicitly not implementation completion; direct answers disappear and new direct runs invalidate old targets |
+| T10 | Runtime, verification, merge and Integration tests distinguish blocked/running/failed, test pass/fail/unavailable/skipped/unknown, dirty/unmerged/ambiguous Git, publication and recorded-versus-current Wiki evidence |
+| T11 | Scoped-head launch test passes explicit selections to existing formal admission; canonical Integration regression checks target races, required validation/exceptions, exact publication, lost receipts and frozen Wiki inputs; no remote target-write mechanism exists |
+| T12 | Operations tests race duplicate admissions, reject changed input and disconnect during admission; runtime/question/launch tests check one dispatch and stable identity; lost post-delivery response stays uncertain without replay |
 | T13 | File-backed receipt test closes/reopens SQLite and changes process generation; `reopened_database_preserves_work_questions_and_uncertain_operation_identity` also reopens the full fixture DB and re-reads Workspace/run/question IDs, with no dispatcher or new work; this tests adapter recovery, not a live provider crash |
-| T14 | 105-item Project/Issue/command/branch/Integration/verification/code fixtures exercise bounded complete traversal; text tests verify character limits, next offsets and required revisions                                                                                                                                     |
-| T15 | Tests reject stale cursors/revisions, deleted/foreign Workspaces, invalid/missing evidence and provider outages; damaged terminal receipts return uncertainty without leaking raw data                                                                                                                                        |
-| T16 | Native nginx tests cover root/prefix and auth/header boundaries; Chromium loads the actual TanStack route tree/AppNavigation behind a disposable HTTPS Basic challenge, checks target IDs, prefix, navigation and reload; business-data rendering/live-account permissions remain in the operator checklist                   |
-| T17 | Full source diff preserves Astra UI/history/model/auth/settings and disabled monitor; only two helpers move to shared services. Astra's 29 related tests pass; remote fixtures assert no chat/run creation on reads and no upper-model call path                                                                              |
-| T18 | Official schema validation, 40 actual Rust tool input/scope examples, Skill/reference/dependency consistency and configured-package tests pass (both source and configured HTTPS/subpath distribution). Distribution contains no credentials; URL validation rejects credential/query/fragment shortcuts                      |
+| T14 | 105-item Project/Issue/command/branch/Integration/verification/code fixtures exercise bounded complete traversal; text tests verify character limits, next offsets and required revisions |
+| T15 | Tests reject stale cursors/revisions, deleted/foreign Workspaces, invalid/missing evidence and provider outages; damaged terminal receipts return uncertainty without leaking raw data |
+| T16 | Native nginx tests cover root/prefix and auth/header boundaries; Chromium loads the actual TanStack route tree/AppNavigation behind a disposable HTTPS Basic challenge, checks target IDs, prefix, navigation and reload; business-data rendering/live-account permissions remain in the operator checklist |
+| T17 | Full source diff preserves Astra UI/history/model/auth/settings and disabled monitor; only two helpers move to shared services. Astra's 29 related tests pass; remote fixtures assert no chat/run creation on reads and no upper-model call path |
+| T18 | Official schema validation, 40 actual Rust tool input/scope examples, Skill/reference/dependency consistency and configured-package tests pass (both source and configured HTTPS/subpath distribution). Distribution contains no credentials; URL validation rejects credential/query/fragment shortcuts |
 
 ## Final validation record
 
@@ -272,25 +272,25 @@ edit after the relevant successful check. Cargo uses
 `CARGO_TARGET_DIR=/var/tmp/lvk-target`; no feature runtime server binary was built
 or deployed. The full approximately 1,000-test suite was intentionally not run.
 
-| Check                                                                                                                         | Result / duration                                                        | Saved log                                                                  |
-| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `cargo test -p server --lib remote_mcp:: -- --nocapture`                                                                      | 32 passed, 16.77 s; build 49.92 s                                        | `/tmp/lvk-mcp-receipt-integrity.log`                                       |
-| Final Issue-write style recheck                                                                                               | 1 passed, 0.59 s                                                         | `/tmp/lvk-mcp-final-issue-recheck.log`                                     |
-| File-backed restart test                                                                                                      | 1 passed, 2.79 s; build 32.11 s                                          | `/tmp/lvk-mcp-final-restart.log`                                           |
-| `cargo test -p mcp --lib --bin vibe-kanban-mcp`                                                                               | 10 library + 2 CLI tests passed, 0.14 s + <0.01 s; build 4 min 08 s      | `/tmp/lvk-mcp-stdio.log`                                                   |
-| `cargo test -p server --lib routes::sessions::agent_run:: -- --nocapture`                                                     | 10 passed, 0.54 s                                                        | `/tmp/lvk-mcp-regression-native.log`                                       |
-| `cargo test -p server --lib routes::project_chat:: -- --nocapture`                                                            | 29 passed, 12.84 s                                                       | `/tmp/lvk-mcp-regression-astra.log`                                        |
-| `cargo test -p server --lib routes::integrations:: -- --nocapture`                                                            | 16 passed, 12.16 s                                                       | `/tmp/lvk-mcp-regression-formal.log`                                       |
-| `cargo test -p utils --lib reference_file:: -- --nocapture`                                                                   | 1 passed, <0.01 s                                                        | `/tmp/lvk-chatgpt-mcp-code-files.log`                                      |
-| `cargo clippy -p server -p mcp -p git -p utils --all-targets --features qa-mode -- -D warnings`                               | Passed; 2 min 55 s recheck                                               | `/tmp/lvk-mcp-final-clippy-recheck.log`                                    |
-| `LVK_TEST_NGINX=/usr/sbin/nginx LVK_REQUIRE_NGINX_TEST=1 node --test deploy/server/mcp.test.mjs deploy/server/nginx.test.mjs` | 6 passed, 10.18 s; no skips                                              | `/tmp/lvk-mcp-subpath-ingress.log`                                         |
-| `node --test deploy/server/server.test.mjs`                                                                                   | 13 passed, 1.95 s                                                        | `/tmp/lvk-mcp-ingress-server.log`                                          |
-| `node --test deploy/server/development.test.mjs deploy/server/instance.test.mjs`                                              | 4 passed, 0.78 s                                                         | `/tmp/lvk-mcp-ingress-regression.log`                                      |
-| `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node --test tests/server/mcp-links.test.mjs`                                      | 1 passed, 113.31 s                                                       | `/tmp/lvk-mcp-links-browser-final.log`                                     |
-| Local-web typecheck / changed-file ESLint                                                                                     | Passed                                                                   | `/tmp/lvk-mcp-subpath-types-final.log`, `/tmp/lvk-mcp-subpath-lint.log`    |
-| Actual Rust catalogue + package/schema/Skill validation                                                                       | 1 catalogue test, 40 valid tool inputs; 2 configuration tests in 0.009 s | `/tmp/lvk-mcp-final-package-catalog.log`, `/tmp/lvk-mcp-final-package.log` |
-| Final test-only `cargo clippy -p server --lib --tests --features qa-mode -- -D warnings`                                      | Passed, 3 min 57 s                                                       | `/tmp/lvk-mcp-audit-clippy.log`                                            |
-| `pnpm run format` and `git diff --check`                                                                                      | Passed; temporary dependency links removed                               | `/tmp/lvk-mcp-audit-format.log`                                            |
+| Check | Result / duration | Saved log |
+| --- | --- | --- |
+| `cargo test -p server --lib remote_mcp:: -- --nocapture` | 32 passed, 16.77 s; build 49.92 s | `/tmp/lvk-mcp-receipt-integrity.log` |
+| Final Issue-write style recheck | 1 passed, 0.59 s | `/tmp/lvk-mcp-final-issue-recheck.log` |
+| File-backed restart test | 1 passed, 2.79 s; build 32.11 s | `/tmp/lvk-mcp-final-restart.log` |
+| `cargo test -p mcp --lib --bin vibe-kanban-mcp` | 10 library + 2 CLI tests passed, 0.14 s + <0.01 s; build 4 min 08 s | `/tmp/lvk-mcp-stdio.log` |
+| `cargo test -p server --lib routes::sessions::agent_run:: -- --nocapture` | 10 passed, 0.54 s | `/tmp/lvk-mcp-regression-native.log` |
+| `cargo test -p server --lib routes::project_chat:: -- --nocapture` | 29 passed, 12.84 s | `/tmp/lvk-mcp-regression-astra.log` |
+| `cargo test -p server --lib routes::integrations:: -- --nocapture` | 16 passed, 12.16 s | `/tmp/lvk-mcp-regression-formal.log` |
+| `cargo test -p utils --lib reference_file:: -- --nocapture` | 1 passed, <0.01 s | `/tmp/lvk-chatgpt-mcp-code-files.log` |
+| `cargo clippy -p server -p mcp -p git -p utils --all-targets --features qa-mode -- -D warnings` | Passed; 2 min 55 s recheck | `/tmp/lvk-mcp-final-clippy-recheck.log` |
+| `LVK_TEST_NGINX=/usr/sbin/nginx LVK_REQUIRE_NGINX_TEST=1 node --test deploy/server/mcp.test.mjs deploy/server/nginx.test.mjs` | 6 passed, 10.18 s; no skips | `/tmp/lvk-mcp-subpath-ingress.log` |
+| `node --test deploy/server/server.test.mjs` | 13 passed, 1.95 s | `/tmp/lvk-mcp-ingress-server.log` |
+| `node --test deploy/server/development.test.mjs deploy/server/instance.test.mjs` | 4 passed, 0.78 s | `/tmp/lvk-mcp-ingress-regression.log` |
+| `PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node --test tests/server/mcp-links.test.mjs` | 1 passed, 113.31 s | `/tmp/lvk-mcp-links-browser-final.log` |
+| Local-web typecheck / changed-file ESLint | Passed | `/tmp/lvk-mcp-subpath-types-final.log`, `/tmp/lvk-mcp-subpath-lint.log` |
+| Actual Rust catalogue + package/schema/Skill validation | 1 catalogue test, 40 valid tool inputs; 2 configuration tests in 0.009 s | `/tmp/lvk-mcp-final-package-catalog.log`, `/tmp/lvk-mcp-final-package.log` |
+| Final test-only `cargo clippy -p server --lib --tests --features qa-mode -- -D warnings` | Passed, 3 min 57 s | `/tmp/lvk-mcp-audit-clippy.log` |
+| `pnpm run format` and `git diff --check` | Passed; temporary dependency links removed | `/tmp/lvk-mcp-audit-format.log` |
 
 Initial failures were corrected, not hidden: missing reqwest form support;
 flattened DTO unknown-field handling; seven new-code Clippy style findings;
@@ -390,6 +390,7 @@ secret classifier or a way to sanitise arbitrary file/tool output. It cannot
 prove that otherwise ordinary prose contains no sensitive information. The
 returned prose is untrusted reference data and never evidence of tests passing.
 Source logs, existing UI rendering and `get_execution` remain unchanged.
+
 
 ## Observe server resources on demand
 
@@ -506,14 +507,7 @@ membership, not file contents. The existing 20-item default/50-item maximum and
 Example tool arguments (replace the three identity placeholders with UUIDs):
 
 ```json
-{
-  "project_id": "<project>",
-  "workspace_id": "<workspace>",
-  "repository_id": "<repository>",
-  "directory_prefix": "crates/server/src",
-  "filename_contains": "code_",
-  "limit": 10
-}
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","directory_prefix":"crates/server/src","filename_contains":"code_","limit":10}
 ```
 
 `search_workspace_files` accepts the same filters plus `query` (1–1024 UTF-8
@@ -526,49 +520,13 @@ columns count Unicode scalar values, not bytes or grapheme clusters.
 `end_column_exclusive` excludes the end column.
 
 ```json
-{
-  "project_id": "<project>",
-  "workspace_id": "<workspace>",
-  "repository_id": "<repository>",
-  "directory_prefix": "src",
-  "query": "猫.*",
-  "max_matches": 5,
-  "context_lines": 1
-}
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","directory_prefix":"src","query":"猫.*","max_matches":5,"context_lines":1}
 ```
 
 Illustrative result fields, omitting the standard identity/link metadata:
 
 ```json
-{
-  "items": [
-    {
-      "path": "src/example.txt",
-      "line": 2,
-      "column": 1,
-      "end_column_exclusive": 4,
-      "matched": "猫.*",
-      "context_start_line": 1,
-      "context": ["前", "猫.*", "後"],
-      "context_ranges": [
-        { "line": 1, "start_column": 1, "end_column_exclusive": 2 },
-        { "line": 2, "start_column": 1, "end_column_exclusive": 4 },
-        { "line": 3, "start_column": 1, "end_column_exclusive": 2 }
-      ],
-      "context_truncated": false,
-      "revision": "<file-revision>"
-    }
-  ],
-  "exclusions": [],
-  "complete": true,
-  "stop_reason": null,
-  "candidate_files": 1,
-  "attempted_files": 1,
-  "scan_bytes_charged": 18,
-  "item_bytes": 300,
-  "source_head": "<commit>",
-  "snapshot": "per_file_observation"
-}
+{"items":[{"path":"src/example.txt","line":2,"column":1,"end_column_exclusive":4,"matched":"猫.*","context_start_line":1,"context":["前","猫.*","後"],"context_ranges":[{"line":1,"start_column":1,"end_column_exclusive":2},{"line":2,"start_column":1,"end_column_exclusive":4},{"line":3,"start_column":1,"end_column_exclusive":2}],"context_truncated":false,"revision":"<file-revision>"}],"exclusions":[],"complete":true,"stop_reason":null,"candidate_files":1,"attempted_files":1,"scan_bytes_charged":18,"item_bytes":300,"source_head":"<commit>","snapshot":"per_file_observation"}
 ```
 
 The byte counters above are illustrative. Limits are 1000 attempted files,
@@ -620,19 +578,7 @@ with at most 200 lines per entry. Missing endpoints are errors, not clipped
 ranges. The response contains `lines` arrays without line terminators.
 
 ```json
-{
-  "project_id": "<project>",
-  "workspace_id": "<workspace>",
-  "repository_id": "<repository>",
-  "ranges": [
-    {
-      "path": "src/example.txt",
-      "start_line": 1,
-      "end_line": 3,
-      "expected_revision": "<file-revision>"
-    }
-  ]
-}
+{"project_id":"<project>","workspace_id":"<workspace>","repository_id":"<repository>","ranges":[{"path":"src/example.txt","start_line":1,"end_line":3,"expected_revision":"<file-revision>"}]}
 ```
 
 Each result repeats the path/range and has `status:"text"` plus `lines` and
@@ -736,6 +682,7 @@ of similar opinions confer no authority. Return significant product decisions
 and unresolved safety/functionality trade-offs to the human. Re-review is a
 separate manual request.
 
+
 The isolated MCP/UI E2E runs with
 `node tests/server/run-issue-comments.mjs` after generating types, building
 this checkout's server and frontend, and compiling the server library tests.
@@ -743,7 +690,7 @@ It creates a unique `.build/issue-comments-instance-*` directory, loopback
 ephemeral ports and fixture data, then stops its processes and removes
 disposable state. Follow shared-resource coordination before execution when
 applicable. An environment allowlist excludes inherited live MCP, database,
-provider and authentication configuration.
+ provider and authentication configuration.
 
 A test-only bridge uses fixture JWTs with the real authentication middleware
 and MCP handlers against the UI server's isolated database. Reviews are posted
