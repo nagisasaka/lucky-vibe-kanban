@@ -86,4 +86,26 @@ Claudeのnested stream_eventは監査に残るが、今回はその途中JSONや
 
 一次候補では `node tests/chat/syntax-isolated-e2e.mjs` も成功した。実production frontend/server、独立一時SQLite DBで起動し、AgentRunの一覧とWebSocketのみをfixture化した。実OS clipboard経由でコマンドとコードの `\\_` を含むMarkdown原文一致、ストリーミング中の入力保持、未知/プレーン/長文、両テーマの実色を確認した。server/browserの終了・使用ポートの閉鎖・一時DB削除も成功。証跡は `test-results/local32/isolated-e2e.json` とlight/dark画像である。provider実接続をしたという意味ではない。
 
-修正途中の新しい画面証跡は `test-results/local32-execution-fix/` に分け、dotへ引き渡した一次候補の画像を上書きしない。既存nginxの `preview1.luckyvibekanban.com → 127.0.0.1:18443` が空いていることを確認し、設定変更なしで固定fixtureのforegroundプレビューを使用した。公開メタデータとPNGのHTTPS 200応答を確認済み。一次候補の公開プレビューはそのHEADで固定し、修正候補への切替時は別途明示する。最終候補の独立再確認・再ビルドと必要な全体UI再確認、dotの視覚レビューはまだ完了していない。
+修正途中の新しい画面証跡は `test-results/local32-execution-fix/` に分け、dotへ引き渡した一次候補の画像を上書きしない。既存nginxの `preview1.luckyvibekanban.com → 127.0.0.1:18443` が空いていることを確認し、設定変更なしで固定fixtureのforegroundプレビューを使用した。公開メタデータとPNGのHTTPS 200応答を確認済み。一次候補の公開プレビューはそのHEADで固定し、修正候補への切替時は別途明示する。この段落は一次候補公開時の記録である。公開static fixtureは後のユーザー指示で自身のPTYだけを停止した。現在の候補・実アプリプレビュー状態は以下に分けて記録する。
+
+
+## 修正後候補と独立実アプリプレビュー
+
+動作候補は `0b0263a315e955f676e05af74bd65e09a23681cb`（clean）。承認経路の2件は `c224ff45` で修正した。独立再確認で見つかった空白だけの公開summary delta欠落は `0b0263a3` で修正し、空白・改行・インデントの保持を独立fixtureでも再確認した。確定P2計3件は解消確認済み。原文は `test-results/local32-execution/technical-recheck.md` とIssueコメント `f1c1b042-87cb-45b8-bbb6-bd9ee222b4b8` に保持し、コメントの全文readbackも確認した。
+
+動作候補の検証は次の範囲である。文書のみの後続変更を理由に同じ重いbuildを繰り返さない。
+
+| 検証 | 結果・証跡 |
+| --- | --- |
+| executors clippy全target、warnings deny | 成功、5分56秒 |
+| server / agent-process-host build | 成功、38.72秒。最終候補の実バイナリSHA256は `test-results/local32-auth-preview/preview-manifest.json` |
+| local-web production build | 成功、1分2秒。既存のBrowserslist/Tailwind/chunk警告あり |
+| frontend関連5ファイル | 53件成功。最終空白修正後は変更箇所のcanonical conversation36件を再確認 |
+| 実CSSのcomponent browser | 成功。`test-results/local32-execution-final/` に現候補cleanのデスクトップ/狭幅・両テーマ・展開・stream画面 |
+| 実アプリ独立一時DB E2E | 表示・原文コピー・stream・両テーマ・長文は成功。終了直後にブラウザ子PID1件が残り、cleanup判定でコマンドexit1。後続PID消滅を別途確認。元結果 `test-results/local32-final/isolated-e2e.json` と `cleanup-recheck.json` を分けて保持し、全体成功とは記録しない |
+
+最終ユーザープレビューは、static component fixtureではなくWorkspace版の実serverとproduction frontendを使用する。既存の `preview1:18443` 枠を使い、`.build/local32-user-preview` の独立DBへCodex/Claudeの合成履歴をseedした。実providerやコマンドは起動していない。オフラインで実frontend投影処理へseedを通し、5操作の終端状態・空出力・原文コマンド、summary/plan/thinkingの区別を確認した（`test-results/local32-auth-preview/seed-projection.json`）。これはHTTP上の型復号や認証済UIの確認ではない。
+
+nginxの独立preview経路は認証を追加しないため、実アプリをpublic配置で起動した。外向きHTTPSで認証状態locked、未認証の業務API423、ブラウザ初期設定画面を確認した。独立DBには認証設定がなく、認証済UIとseed履歴のHTTP確認は未実施。管理者による独立previewの認証設定、または承認済みの専用設定経路が必要である。共有Auth0の秘密コピー、callback変更、認証無効化、nginx/TLS/DNS/本番設定変更は行っていない。キーも発行していない。認証の設定経路と現在のartifact情報は `test-results/local32-auth-preview/HANDOFF.md` にまとめた。
+
+LOCAL-81との資源協調により、追加の重Rust処理は再開連絡まで保留する。dotの視覚KISSレビュー、認証済み実アプリの確認、最後のユーザープレビューへの引渡しは未完である。provider実接続・PTY観測を行ったという主張はしない。mainマージ・デプロイ・稼働dev再起動は行わない。
