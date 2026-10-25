@@ -1296,6 +1296,7 @@
     "creationSourceHint": "作成時に使われた経路です。発案者や著作者を示すものではありません。",
     "title": "TODOリスト",
     "board": "カンバンボード",
+    "search": "TODOの本文・カテゴリを検索",
     "newBody": "気付いたことやTODOを追加…",
     "category": "カテゴリ",
     "uncategorized": "未分類",

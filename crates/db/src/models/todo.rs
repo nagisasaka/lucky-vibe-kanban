@@ -1,5 +1,6 @@
 //! Project-wide notes shared by the UI and both MCP transports.
 use chrono::Utc;
+use futures::TryStreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, SqlitePool};
@@ -59,6 +60,8 @@ pub struct UpdateTodo {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct TodoQuery {
+    /// Literal case-insensitive substring of body or category.
+    pub search: Option<String>,
     #[serde(default)]
     pub include_completed: bool,
     #[serde(default = "default_limit")]
@@ -146,8 +149,29 @@ impl Todo {
         if query.limit == 0 || query.limit > 200 || query.offset > 1_000_000 {
             return Err(TodoError::InvalidRequest);
         }
-        let mut items: Vec<Self> = sqlx::query_as("SELECT * FROM project_todos WHERE project_id=? AND (? OR completed=0) ORDER BY created_at DESC,id LIMIT ? OFFSET ?")
-            .bind(project).bind(query.include_completed).bind(query.limit + 1).bind(query.offset).fetch_all(pool).await?;
+        let mut items: Vec<Self> = if let Some(search) = query.search.as_deref() {
+            // Filter the entire eligible set before applying the matching-result offset.
+            let mut stream = sqlx::query_as::<_, Self>("SELECT * FROM project_todos WHERE project_id=? AND (? OR completed=0) ORDER BY created_at DESC,id")
+                .bind(project).bind(query.include_completed).fetch(pool);
+            let mut items = Vec::new();
+            let mut skipped = 0;
+            while let Some(item) = stream.try_next().await? {
+                if super::text_search::matches(Some(search), &[&item.body, &item.category]) {
+                    if skipped < query.offset {
+                        skipped += 1;
+                        continue;
+                    }
+                    items.push(item);
+                    if items.len() > query.limit as usize {
+                        break;
+                    }
+                }
+            }
+            items
+        } else {
+            sqlx::query_as("SELECT * FROM project_todos WHERE project_id=? AND (? OR completed=0) ORDER BY created_at DESC,id LIMIT ? OFFSET ?")
+                .bind(project).bind(query.include_completed).bind(query.limit + 1).bind(query.offset).fetch_all(pool).await?
+        };
         let next_offset =
             (items.len() > query.limit as usize).then_some(query.offset + query.limit);
         items.truncate(query.limit as usize);

@@ -430,6 +430,212 @@ async fn board_reads_use_real_schema_bound_pages_and_reject_mixed_targets() {
         cursor = Some(result["next_cursor"].clone());
     }
     assert_eq!(count, 105);
+    // Sparse matches beyond the first unfiltered page, including full title past 500.
+    sqlx::query("UPDATE local_issues SET title=?,description='needle body',priority='high' WHERE id IN (?,?)")
+        .bind(format!("{} NEEDLE", "x".repeat(600))).bind(Uuid::from_u128(1050)).bind(Uuid::from_u128(1100)).execute(&pool).await.unwrap();
+    let tag = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_tags(id,project_id,name,color) VALUES(?,?,'Bug','blue')")
+        .bind(tag)
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    for id in [1050, 1100] {
+        sqlx::query("INSERT INTO local_issue_tags(id,issue_id,tag_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(Uuid::from_u128(id))
+            .bind(tag)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let duplicate_status = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'todo','blue',2)").bind(duplicate_status).bind(project).execute(&pool).await.unwrap();
+    sqlx::query("UPDATE local_issues SET status_id=? WHERE id=?")
+        .bind(duplicate_status)
+        .bind(Uuid::from_u128(1100))
+        .execute(&pool)
+        .await
+        .unwrap();
+    let duplicate_tag = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_tags(id,project_id,name,color) VALUES(?,?,'bug','blue')")
+        .bind(duplicate_tag)
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE local_issue_tags SET tag_id=? WHERE issue_id=?")
+        .bind(duplicate_tag)
+        .bind(Uuid::from_u128(1100))
+        .execute(&pool)
+        .await
+        .unwrap();
+    let feature_tag = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_tags(id,project_id,name,color) VALUES(?,?,'feature','blue')")
+        .bind(feature_tag)
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO local_issue_tags(id,issue_id,tag_id) VALUES(?,?,?)")
+        .bind(Uuid::new_v4())
+        .bind(Uuid::from_u128(1050))
+        .bind(feature_tag)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let assignee = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_issue_assignees(id,issue_id,user_id) VALUES(?,?,?)")
+        .bind(Uuid::new_v4())
+        .bind(Uuid::from_u128(1050))
+        .bind(assignee)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE local_issues SET parent_issue_id=? WHERE id=?")
+        .bind(issue)
+        .bind(Uuid::from_u128(1050))
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("PRAGMA query_only=ON")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let before: i64 = sqlx::query_scalar("SELECT total_changes()")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    for (filter, expected) in [
+        (json!({"search":"nEeDlE"}), vec![1050, 1100]),
+        (json!({"search":" NEEDLE"}), vec![1050, 1100]),
+        (json!({"simple_id":"test-50"}), vec![1050]),
+        (
+            json!({"status":"tOdO","priority":" HIGH ","tag_name":"BUG"}),
+            vec![1050, 1100],
+        ),
+        (json!({"status":status,"tag_id":tag}), vec![1050]),
+        (json!({"tag_id":tag,"tag_name":"BUG"}), vec![1050]),
+        (json!({"tag_id":tag,"tag_name":"feature"}), vec![]),
+        (json!({"tag_id":feature_tag,"tag_name":"bug"}), vec![]),
+        (json!({"tag_id":Uuid::new_v4(),"tag_name":"bug"}), vec![]),
+        (json!({"status":"missing"}), vec![]),
+        (
+            json!({"assignee_user_id":assignee,"parent_issue_id":issue,"tag_name":"bug"}),
+            vec![1050],
+        ),
+        (json!({"assignee_user_id":Uuid::new_v4()}), vec![]),
+        (json!({"parent_issue_id":issue}), vec![1050]),
+        (json!({"search":"%_"}), vec![]),
+        (json!({"search":" needle "}), vec![]),
+    ] {
+        let filters: api_types::IssueFilters = serde_json::from_value(filter.clone()).unwrap();
+        let shared = crate::routes::local_remote::board_api::issue_filter::filter_project_issues(
+            &pool, project, &filters,
+        )
+        .await
+        .unwrap();
+        let mut shared_ids = shared.iter().map(|i| i.id).collect::<Vec<_>>();
+        shared_ids.sort();
+        let expected = expected
+            .into_iter()
+            .map(Uuid::from_u128)
+            .collect::<Vec<_>>();
+        assert_eq!(shared_ids, expected, "{filter}");
+        let mut args = filter;
+        args["project_id"] = json!(project);
+        args["limit"] = json!(1);
+        let mut actual = Vec::new();
+        loop {
+            let result = read::call(&remote, "list_issues", args.clone())
+                .await
+                .unwrap();
+            for item in result["items"].as_array().unwrap() {
+                actual.push(serde_json::from_value::<Uuid>(item["id"].clone()).unwrap());
+                for key in [
+                    "url",
+                    "revision",
+                    "workspace_count",
+                    "status_id",
+                    "status_name",
+                    "title_truncated",
+                ] {
+                    assert!(item.get(key).is_some(), "{key}");
+                }
+                assert!(item["title"].as_str().unwrap().chars().count() <= 500);
+            }
+            assert!(result.get("observed_at").is_some());
+            assert!(result.get("consistency").is_some());
+            if result["has_more"] == false {
+                assert_eq!(result["next_cursor"], Value::Null);
+                break;
+            }
+            args["cursor"] = result["next_cursor"].clone();
+        }
+        assert_eq!(actual, expected, "{args}");
+    }
+    read::call(
+        &remote,
+        "list_issues",
+        json!({"project_id":project,"search":"needle","cursor":issue}),
+    )
+    .await
+    .unwrap();
+    assert!(
+        read::call(
+            &remote,
+            "list_issues",
+            json!({"project_id":project,"priority":"invalid"})
+        )
+        .await
+        .is_err()
+    );
+    assert!(
+        read::call(
+            &remote,
+            "list_issues",
+            json!({"project_id":project,"search":"needle","cursor":Uuid::new_v4()})
+        )
+        .await
+        .is_err()
+    );
+    assert!(
+        read::call(
+            &remote,
+            "list_issues",
+            json!({"project_id":Uuid::from_u128(999),"search":"needle"})
+        )
+        .await
+        .is_err()
+    );
+    let after: i64 = sqlx::query_scalar("SELECT total_changes()")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(before, after);
+    // Empty projects must stay empty: no ensure_default_statuses on either list path.
+    let empty = crate::routes::local_remote::board_api::issue_filter::filter_project_issues(
+        &pool,
+        foreign_project,
+        &api_types::IssueFilters::default(),
+    )
+    .await
+    .unwrap();
+    assert!(empty.is_empty());
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>(
+            "SELECT count(*) FROM local_project_statuses WHERE project_id=?"
+        )
+        .bind(foreign_project)
+        .fetch_one(&pool)
+        .await
+        .unwrap(),
+        0
+    );
+    sqlx::query("PRAGMA query_only=OFF")
+        .execute(&pool)
+        .await
+        .unwrap();
     let first = read::call(
         &remote,
         "get_issue",
@@ -1377,6 +1583,17 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
     .unwrap();
     assert_eq!(list["items"].as_array().unwrap().len(), 1);
     assert_eq!(list["items"][0]["creation_source"], "mcp");
+    for (search, count) in [("ui", 1), ("修正", 1), (" UI ", 0), ("%_", 0), ("", 1)] {
+        let page = todos::call(
+            &remote,
+            &reader,
+            "list_todos",
+            json!({"project_id":project,"search":search}),
+        )
+        .await
+        .unwrap();
+        assert_eq!(page["items"].as_array().unwrap().len(), count);
+    }
     let update = Uuid::new_v4();
     todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":id,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
     let result = settled_operation(&remote, &writer, project, update).await;
@@ -1618,6 +1835,26 @@ async fn design_note_mcp_scope_receipts_history_and_project_boundaries() {
     let result = settled_operation(&remote, &writer, project, request).await;
     assert_eq!(result["status"], "succeeded", "{result}");
     let id = result["result"]["note"]["id"].clone();
+    for (search, count) in [
+        ("HUMAN", 1),
+        ("ORIGINAL", 1),
+        (" original ", 0),
+        ("%_", 0),
+        ("", 1),
+    ] {
+        let page = design_notes::call(
+            &remote,
+            &reader,
+            "list_design_notes",
+            json!({"project_id":project,"search":search}),
+        )
+        .await
+        .unwrap();
+        assert_eq!(page["items"].as_array().unwrap().len(), count);
+        for item in page["items"].as_array().unwrap() {
+            assert!(item.get("body").is_none());
+        }
+    }
     let append = Uuid::new_v4();
     let input = json!({"project_id":project,"input":{"request_id":append,"operation":{"action":"append","note_id":id,"addition":{"heading":"Suggestion","content":"Consider another tool","kind":"proposal","source":"message/1","speaker":"AI","referenced_body_revision":1}}}});
     design_notes::call(&remote, &writer, "write_design_note", input.clone())
@@ -1870,4 +2107,37 @@ async fn design_note_mcp_deleted_project_is_not_available() {
             .unwrap(),
         "intent"
     );
+}
+
+#[test]
+fn search_tool_schemas_preserve_external_paging() {
+    let tools = read::tools();
+    let tool = tools.iter().find(|t| t.name == "list_issues").unwrap();
+    let schema = serde_json::to_value(tool).unwrap();
+    let props = &schema["inputSchema"]["properties"];
+    for name in [
+        "project_id",
+        "limit",
+        "cursor",
+        "search",
+        "simple_id",
+        "status",
+        "priority",
+        "parent_issue_id",
+        "assignee_user_id",
+        "tag_id",
+        "tag_name",
+    ] {
+        assert!(props.get(name).is_some(), "{name}: {schema}");
+    }
+    assert!(props.get("offset").is_none());
+    assert!(props.get("sort_field").is_none());
+    assert_eq!(props["limit"]["default"], 20);
+    assert_eq!(props["limit"]["maximum"], 50);
+    assert_eq!(schema["inputSchema"]["required"], json!(["project_id"]));
+    for tools in [todos::tools(), design_notes::tools()] {
+        let tool = tools.iter().find(|t| t.name.starts_with("list_")).unwrap();
+        let schema = serde_json::to_value(tool).unwrap();
+        assert!(schema["inputSchema"]["properties"].get("search").is_some());
+    }
 }
