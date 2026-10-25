@@ -98,10 +98,10 @@ fn host(root: &Path, fixture: &Value, restored: bool) -> Host {
 async fn wait_file(path: &Path) -> String {
     tokio::time::timeout(Duration::from_secs(20), async {
         loop {
-            if let Ok(value) = std::fs::read_to_string(path) {
-                if !value.is_empty() {
-                    break value;
-                }
+            if let Ok(value) = std::fs::read_to_string(path)
+                && !value.is_empty()
+            {
+                break value;
             }
             tokio::time::sleep(Duration::from_millis(20)).await;
         }

@@ -26,7 +26,9 @@ export const KanbanBadge = ({ name, color, className }: KanbanBadgeProps) => {
           style={{ backgroundColor: `hsl(${color})` }}
         />
       )}
-      {name}
+      <span className="truncate min-w-0" title={name}>
+        {name}
+      </span>
     </span>
   );
 };

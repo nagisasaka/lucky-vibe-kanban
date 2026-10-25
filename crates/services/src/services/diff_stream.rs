@@ -32,11 +32,35 @@ use crate::services::filesystem_watcher::{self, FilesystemWatcherError};
 
 type SentFileStats = Arc<std::sync::RwLock<HashMap<String, (SystemTime, u64)>>>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct DiffStats {
     pub files_changed: usize,
-    pub lines_added: usize,
-    pub lines_removed: usize,
+    pub lines_added: Option<usize>,
+    pub lines_removed: Option<usize>,
+}
+
+impl Default for DiffStats {
+    fn default() -> Self {
+        Self {
+            files_changed: 0,
+            lines_added: Some(0),
+            lines_removed: Some(0),
+        }
+    }
+}
+
+impl DiffStats {
+    fn include(&mut self, diff: &Diff) {
+        self.files_changed += 1;
+        self.lines_added = self
+            .lines_added
+            .zip(diff.additions)
+            .map(|(total, n)| total + n);
+        self.lines_removed = self
+            .lines_removed
+            .zip(diff.deletions)
+            .map(|(total, n)| total + n);
+    }
 }
 
 /// Computes diff stats for a workspace by comparing against target branches.
@@ -69,7 +93,7 @@ pub async fn compute_diff_stats(
 
         let base_commit = match base_commit_result {
             Ok(Ok(commit)) => commit,
-            _ => continue,
+            _ => return None,
         };
 
         let diffs_result = tokio::task::spawn_blocking({
@@ -79,12 +103,10 @@ pub async fn compute_diff_stats(
         })
         .await;
 
-        if let Ok(Ok(diffs)) = diffs_result {
-            for diff in diffs {
-                stats.files_changed += 1;
-                stats.lines_added += diff.additions.unwrap_or(0);
-                stats.lines_removed += diff.deletions.unwrap_or(0);
-            }
+        // Never present a partial multi-repository sum as a complete result.
+        let diffs = diffs_result.ok()?.ok()?;
+        for diff in diffs {
+            stats.include(&diff);
         }
     }
 
@@ -866,3 +888,7 @@ fn setup_git_watcher(
 
     Some((debouncer, rx))
 }
+
+#[cfg(test)]
+#[path = "diff_stats_tests.rs"]
+mod diff_stats_tests;

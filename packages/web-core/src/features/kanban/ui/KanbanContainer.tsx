@@ -12,8 +12,6 @@ import {
   type MouseEvent,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { integrationApi } from '@/shared/lib/integrationApi';
 import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { IntegrationPanel } from './IntegrationPanel';
@@ -197,16 +195,6 @@ export function KanbanContainer() {
     (s) => s.projectViews[projectId] ?? 'kanban'
   );
   const setProjectView = useTodoViewStore((s) => s.setProjectView);
-  const [focusedIntegration, setFocusedIntegration] = useState<string | null>(
-    null
-  );
-  const integrations = useQuery({
-    queryKey: ['integrations', projectId],
-    queryFn: () => integrationApi.list(projectId),
-    enabled: isLocalRemoteApiEnabled() && !routeState.hostId,
-    refetchInterval: 3000,
-  });
-
   // Get project name by finding the project matching current projectId
   const projectName = projects.find((p) => p.id === projectId)?.name ?? '';
 
@@ -686,9 +674,9 @@ export function KanbanContainer() {
             localWorkspaceId: workspace.local_workspace_id,
             name: workspace.name,
             archived: workspace.archived,
-            filesChanged: workspace.files_changed ?? 0,
-            linesAdded: workspace.lines_added ?? 0,
-            linesRemoved: workspace.lines_removed ?? 0,
+            filesChanged: localWorkspace?.filesChanged,
+            linesAdded: localWorkspace?.linesAdded,
+            linesRemoved: localWorkspace?.linesRemoved,
             prs: prsByWorkspaceId.get(workspace.id) ?? [],
             owner: membersWithProfilesById.get(workspace.owner_user_id) ?? null,
             updatedAt: workspace.updated_at,
@@ -1035,8 +1023,8 @@ export function KanbanContainer() {
           {isLocalRemoteApiEnabled() && !routeState.hostId && (
             <IntegrationPanel
               key={projectId}
-              focusedRunId={focusedIntegration}
-              onClearFocus={() => setFocusedIntegration(null)}
+              focusedRunId={null}
+              onClearFocus={() => {}}
             />
           )}
           <DropdownMenu>
@@ -1202,6 +1190,7 @@ export function KanbanContainer() {
                             <KanbanCardContent
                               displayId={issue.simple_id}
                               title={issue.title}
+                              description={issue.description}
                               priority={issue.priority}
                               tags={getTagObjectsForIssue(issue.id)}
                               assignees={issueAssigneesMap[issue.id] ?? []}
@@ -1251,27 +1240,6 @@ export function KanbanContainer() {
                                 ),
                               }}
                             />
-                            {integrations.data
-                              ?.filter((run) =>
-                                run.payload.sources.some(
-                                  (source) =>
-                                    source.selection.card_id === issue.id
-                                )
-                              )
-                              .map((run) => (
-                                <button
-                                  key={run.id}
-                                  type="button"
-                                  className="block text-brand text-sm mt-half"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setFocusedIntegration(run.id);
-                                  }}
-                                >
-                                  Integration: {run.status} ·{' '}
-                                  {run.target_ref.replace('refs/heads/', '')}
-                                </button>
-                              ))}
                             {issueWorkflowAttempts.map((attempt) => (
                               <IssueWorkflowAttemptCard
                                 key={attempt.id}
@@ -1282,6 +1250,7 @@ export function KanbanContainer() {
                               />
                             ))}
                             <KanbanCardDetails
+                              showWorkspaces={showWorkspaces}
                               count={
                                 getWorkspacesForIssue(issue.id).filter(
                                   (workspace) => !workspace.archived
@@ -1289,39 +1258,36 @@ export function KanbanContainer() {
                               }
                               workspaces={issueWorkspaces}
                               description={issue.description}
-                            >
-                              {showWorkspaces &&
-                                (issueWorkflowAttempts.length > 0 ||
-                                  issueWorkspaces.length > 0) && (
-                                  <div className="mt-base flex flex-col gap-half">
-                                    {issueWorkspaces
-                                      .filter(
-                                        (workspace) =>
-                                          !workflowWorkspaceIds.has(
-                                            workspace.id
-                                          )
-                                      )
-                                      .map((workspace) => (
-                                        <IssueWorkspaceCard
-                                          key={workspace.id}
-                                          workspace={workspace}
-                                          onClick={
-                                            workspace.localWorkspaceId
-                                              ? () =>
-                                                  openIssueWorkspace(
-                                                    issue.id,
-                                                    workspace.localWorkspaceId!
-                                                  )
-                                              : undefined
-                                          }
-                                          showOwner={false}
-                                          showStatusBadge={false}
-                                          showNoPrText={false}
-                                        />
-                                      ))}
-                                  </div>
-                                )}
-                            </KanbanCardDetails>
+                            />
+                            {showWorkspaces &&
+                              (issueWorkflowAttempts.length > 0 ||
+                                issueWorkspaces.length > 0) && (
+                                <div className="mt-base flex flex-col gap-half">
+                                  {issueWorkspaces
+                                    .filter(
+                                      (workspace) =>
+                                        !workflowWorkspaceIds.has(workspace.id)
+                                    )
+                                    .map((workspace) => (
+                                      <IssueWorkspaceCard
+                                        key={workspace.id}
+                                        workspace={workspace}
+                                        onClick={
+                                          workspace.localWorkspaceId
+                                            ? () =>
+                                                openIssueWorkspace(
+                                                  issue.id,
+                                                  workspace.localWorkspaceId!
+                                                )
+                                            : undefined
+                                        }
+                                        showOwner={false}
+                                        showStatusBadge={false}
+                                        showNoPrText={false}
+                                      />
+                                    ))}
+                                </div>
+                              )}
                           </KanbanGridCard>
                         );
                       })}
