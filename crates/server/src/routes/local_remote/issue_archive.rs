@@ -31,8 +31,9 @@ use crate::{
     },
 };
 
-// Creation holds this guard only until the initial link is persisted, before
-// container/Agent admission. Archive order: MUTATIONS -> Issue -> sorted WS -> DB.
+// New creation holds this guard through initial run/setup admission, or the
+// workflow run/ready bind. Existing Workspace continuation does not take it.
+// Archive order: MUTATIONS -> Issue -> sorted WS -> DB.
 static ISSUE_LOCKS: LazyLock<std::sync::Mutex<HashMap<Uuid, std::sync::Weak<Mutex<()>>>>> =
     LazyLock::new(std::sync::Mutex::default);
 pub(crate) async fn lock_issue(issue: Uuid) -> tokio::sync::OwnedMutexGuard<()> {
