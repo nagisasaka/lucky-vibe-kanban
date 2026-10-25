@@ -25,7 +25,7 @@ done
 
 check_hash .build/local32-additional-artifacts/server 285cb1a4c249147fc8f3b2da35ca3c835f1153ec25eeecf0533bca66118686fe
 check_hash .build/local32-additional-artifacts/agent-process-host e9bb962e05c0c4e6754bb7770b1640e01085f5ad839362ec4885507ea9f6515e
-check_hash packages/local-web/dist/index.html e29e03216868077bb3c8efcec3f790500aa7439751d5f9b7664ec97603b05c06
+check_hash packages/local-web/dist/index.html 5f0361695f832bc86a33ea90f719fbd5915d0cd9b82da0cc4661860cdd929ce0
 if [[ -n "$(ss -H -ltn 'sport = :18443')" ]]; then
   printf 'LOCAL-32 preview port 18443 is occupied; root must coordinate the cutover.\n' >&2
   exit 1
