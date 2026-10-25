@@ -60,6 +60,7 @@ async fn setup_workflow_pool() -> SqlitePool {
             id BLOB PRIMARY KEY,
             project_id BLOB NOT NULL,
             title TEXT NOT NULL,
+            archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1)),
             created_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec'))
         )

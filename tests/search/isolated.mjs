@@ -102,6 +102,7 @@ try {
     await api("/api/local/v1/projects", "POST", {
       organization_id: "00000000-0000-0000-0000-000000000002",
       name: "LOCAL-180 isolated search",
+      key: "SEARCH",
       color: "#6366f1",
     })
   ).data.id;
@@ -439,12 +440,12 @@ try {
   await panel.getByRole("button", { name: "本文を編集" }).click();
   const editor = panel
     .getByTestId("note-body-editor")
-    .locator("[contenteditable=true]");
+    .locator("textarea");
   await editor.fill("unsaved input retained");
   await panel.getByRole("searchbox").fill("no matches");
-  await expect(editor).toContainText("unsaved input retained");
+  await expect(editor).toHaveValue("unsaved input retained");
   await panel.getByRole("searchbox").fill("");
-  await expect(editor).toContainText("unsaved input retained");
+  await expect(editor).toHaveValue("unsaved input retained");
   await page.screenshot({ path: path.join(output, "design-note-draft.png") });
   evidence.push(
     "Design-note browser full Markdown/title search and selected detail/unsaved draft retained when filtered out",
