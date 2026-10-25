@@ -4,6 +4,15 @@
 独立レビューは上位AI。プレビューBasic設定後の認証済み確認はユーザー操作待ち。
 
 
+## 2026-10-26 DISK整数表示・runtime復旧準備（最新追記）
+
+- 開始00:55 JST。Issue実読取revision `2026-10-25 15:55:11.822` の末尾にDISK整数丸め承認を確認（指定15:54:28より新しい）。base `0249fc27477498ed4c6f3df0d2621231d75ec90d`。
+- ResourceSummaryの容量formatterのみ整数GBへ変更。直接試験するため既存resourceObservation libへformatDiskCapacityを移し、`Math.round(bytes / 1e9)`を使用。900.25GB→900GB、1053.49GB→1053GB。nullは既存の—。内部bytes/使用率/floor%/色閾値/unknown判定に変更なし。
+- `node --test tests/resource-observation/model.test.mjs`: 6/6成功。丸め直前/丁度/直後、0、小容量、null、欠落/stale、raw bytes/percent不変、既存70/80閾値を確認。変更formatter/componentへの局所eslint成功。既存browser/full-appの期待文字列だけ更新、node --check成功。Rust/再build/全体E2Eは未実施（不要）。
+- UI担当より00:54:59 Stop→00:55:12 Start後に失敗したとの報告。00:56時点で18444/18446 listenerなし、runner構文/実パス/既存DB存在は正常。実ログのエラーはUI担当の共有待ち。
+- runtime事前bind probeはTIME_WAITだけでerrno98になり得ることを一時loopbackポートで再現。00:57にLISTEN-onlyのss判定へ局所修正、最終bind競合は各serverが自然失敗。構文確認成功、実ポートは空き。起動API/独自daemonなし。再Start1回を正規UI担当へ依頼済み。DB/認証/keys/seedを変更しない。
+- 切替後の外部WSS/API認証/HMR/認証済みLOCAL35タグ/Run終了後持続は未検証のまま。旧launchへの正規UI rollback手順は下記を維持。
+
 ## 2026-10-26 追加UI修正とVite切替準備（最新）
 
 - 作業開始00:37 JST、準備完了00:46 JST。base `98a697f5b6d863c5173192d2a65fba862acd57ed`。Issue読取revisionは `2026-10-25 15:37:42.863`（指定15:08より新しい。追加承認と即時反映承認を確認）。
