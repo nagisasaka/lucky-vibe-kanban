@@ -125,6 +125,7 @@ function Harness() {
   const [draft, setDraft] = useState("");
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
+  const [singleExpanded, setSingleExpanded] = useState(false);
   const [shortcut, setShortcut] = useState("Enter");
   api.setLog = setLog;
   api.setDraft = setDraft;
@@ -164,8 +165,8 @@ function Harness() {
         ]}
       />
       <ChatAggregatedToolEntries
-        expanded={false}
-        onToggle={() => {}}
+        expanded={singleExpanded}
+        onToggle={() => setSingleExpanded(value => !value)}
         isHovered={false}
         onHoverChange={() => {}}
         summary="単独コマンド"

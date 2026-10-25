@@ -34,7 +34,7 @@ export function useCreateSession() {
       executorConfig,
       resumeSessionId,
       resumeScopePath,
-    }: CreateSessionParams): Promise<Session> => {
+    }: CreateSessionParams): Promise<Session & { acceptedRunId: string }> => {
       const session = await sessionsApi.create(
         {
           workspace_id: workspaceId,
@@ -49,9 +49,9 @@ export function useCreateSession() {
         resume_session_id: resumeSessionId || undefined,
         resume_scope_path: resumeScopePath || undefined,
       };
-      await sessionsApi.followUp(session.id, body, hostId);
+      const accepted = await sessionsApi.followUp(session.id, body, hostId);
 
-      return session;
+      return { ...session, acceptedRunId: accepted.agent_run_id };
     },
     onSuccess: (session, { hostId }) => {
       // Invalidate session queries to refresh the list

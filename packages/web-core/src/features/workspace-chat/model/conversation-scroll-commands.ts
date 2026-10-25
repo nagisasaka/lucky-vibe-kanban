@@ -109,24 +109,12 @@ export function createInitialScrollState(): ScrollState {
  * Map a data update to the scroll intent that should be applied next.
  */
 export function resolveScrollIntent(
-  addType: AddEntryType,
+  _addType: AddEntryType,
   isInitialLoad: boolean,
   isAtBottom: boolean
 ): ScrollIntent {
   if (isInitialLoad) {
     return { type: 'initial-bottom', purgeEstimatedSizes: true };
-  }
-
-  if (addType === 'plan') {
-    return isAtBottom
-      ? { type: 'plan-reveal', align: 'start' }
-      : { type: 'preserve-anchor' };
-  }
-
-  if (addType === 'running') {
-    return isAtBottom
-      ? { type: 'follow-bottom', behavior: 'auto' }
-      : { type: 'preserve-anchor' };
   }
 
   return isAtBottom
@@ -143,10 +131,9 @@ export function resolveScrollIntent(
  */
 export function shouldAutoFollow(
   state: ScrollState,
-  addType: AddEntryType
+  _addType: AddEntryType
 ): boolean {
   if (!state.isAtBottom) return false;
-  if (addType === 'plan') return false;
   return true;
 }
 

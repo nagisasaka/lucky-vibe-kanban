@@ -1,4 +1,30 @@
 {
+  "execution": {
+    "status": {
+      "success": "Completed",
+      "failed": "Failed",
+      "denied": "Denied",
+      "timed_out": "Timed out",
+      "cancelled": "Cancelled",
+      "running": "Running",
+      "pending_approval": "Awaiting approval",
+      "approved": "Approved · awaiting execution",
+      "unknown": "Result unconfirmed"
+    },
+    "noOutput": "No output",
+    "waitingOutput": "Waiting for the result",
+    "outputUnavailable": "Output was not received",
+    "partial": "Output received so far",
+    "preview": "Output preview · open details for retained content",
+    "retainedDetails": "Received and retained content",
+    "input": "Operation input",
+    "copyCommand": "Copy command",
+    "copyOutput": "Copy output",
+    "copied": "Copied",
+    "copyFailed": "Copy failed",
+    "completedAt": "Completion observed: {{time}}",
+    "providerDuration": "Provider reported: {{seconds}}s"
+  },
   "dropzone": {
     "dropImagesHere": "Drop images here",
     "supportedFormats": "PNG, JPG, GIF, WebP, SVG supported"

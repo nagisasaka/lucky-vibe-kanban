@@ -158,12 +158,12 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
       "確認した内容",
       "単独の出力",
     ]) {
-      assert.equal(await page.getByText(text, { exact: true }).count(), 0);
+      assert.equal(await page.getByText(text, { exact: true }).count(), ["検索結果", "確認した内容"].includes(text) ? 1 : 0, text);
     }
     const tools = page.getByRole("button", { name: "ツール呼び出し完了" });
     assert.equal(await tools.getAttribute("aria-expanded"), "false");
     await tools.click();
-    const search = page.getByRole("button", { name: "検索", exact: true });
+    const search = page.getByRole("button", { name: /検索/ }).filter({hasText:"検索"}).last();
     await search.click();
     assert.equal(
       await page.getByText("rg needle", { exact: true }).isVisible(),
@@ -174,8 +174,8 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
       true,
     );
     await search.click();
-    assert.equal(await page.getByText("検索結果", { exact: true }).count(), 0);
-    await page.getByRole("button", { name: "読み込み", exact: true }).click();
+    assert.equal(await page.getByText("検索結果", { exact: true }).count(), 1);
+    await page.getByRole("button", { name: /読み込み/ }).click();
     assert.equal(
       await page.getByText("ファイルの内容", { exact: true }).isVisible(),
       true,
@@ -185,16 +185,16 @@ test("collapsed activity, editor focus during updates, and IME submission", asyn
       await page.getByText("ファイルの内容", { exact: true }).count(),
       0,
     );
-    const thinking = page.getByRole("button", { name: "思考内容" });
+    const thinking = page.getByRole("button", { name: "確認した内容" });
     await thinking.click();
     assert.equal(
-      await page.getByText("確認した内容", { exact: true }).isVisible(),
+      await page.getByText("確認した内容", { exact: true }).last().isVisible(),
       true,
     );
     await thinking.click();
     assert.equal(
       await page.getByText("確認した内容", { exact: true }).count(),
-      0,
+      1,
     );
     const single = page.getByRole("button", { name: "単独コマンド" });
     await single.click();

@@ -137,6 +137,10 @@ pub enum ToolStatus {
         approval_id: String,
     },
     TimedOut,
+    Cancelled,
+    Unknown,
+    Approved,
+    WaitingApproval,
 }
 
 impl ToolStatus {

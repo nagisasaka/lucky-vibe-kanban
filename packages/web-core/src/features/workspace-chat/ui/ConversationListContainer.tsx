@@ -9,6 +9,12 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
+import { useHostId } from '@/shared/providers/HostIdProvider';
+import {
+  appendPendingMessages,
+  chatMessageScope,
+  usePendingChatMessages,
+} from '../model/pendingChatMessages';
 import { SpinnerIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 
@@ -45,7 +51,7 @@ import { useConversationHistory } from '../model/hooks/useConversationHistory';
 import { useSetTokenUsageInfo } from '../model/contexts/EntriesContext';
 import type { WorkspaceWithSession } from '@/shared/types/attempt';
 import type { RepoWithTargetBranch } from 'shared/types';
-import { ChatElapsedTime } from '@vibe/ui/components/ChatElapsedTime';
+import { ChatRunFooter } from '@vibe/ui/components/ChatRunFooter';
 import { ChatEmptyState } from '@vibe/ui/components/ChatEmptyState';
 import { ChatScriptPlaceholder } from '@vibe/ui/components/ChatScriptPlaceholder';
 import { ScriptFixerDialog } from '@/shared/dialogs/scripts/ScriptFixerDialog';
@@ -78,7 +84,7 @@ function renderRowContent(
   if ('runTiming' in entry && entry.runTiming) {
     return (
       <div className="px-base py-half" data-testid="run-elapsed">
-        <ChatElapsedTime {...entry.runTiming} />
+        <ChatRunFooter {...entry.runTiming} />
       </div>
     );
   }
@@ -160,7 +166,8 @@ function renderRowContent(
   if (entry.type === 'NORMALIZED_ENTRY') {
     return (
       <DisplayConversationEntry
-        expansionKey={entry.patchKey}
+        expansionKey={entry.displayIdentity ?? entry.patchKey}
+        canonicalEntryKey={entry.patchKey}
         entry={entry.content}
         aggregatedGroup={null}
         aggregatedDiffGroup={null}
@@ -168,6 +175,10 @@ function renderRowContent(
         aggregatedThinkingGroup={null}
         executionProcessId={entry.executionProcessId}
         canonicalActive={entry.canonical?.active}
+        toolTiming={entry.toolTiming}
+        pendingDelivery={entry.pendingDelivery}
+        providerText={entry.providerText}
+        toolOutput={entry.toolOutput}
         workspaceWithSession={attempt}
         resetAction={resetAction}
         repos={repos}
@@ -187,6 +198,14 @@ const ScopedConversationList = forwardRef<
 ) {
   const { t } = useTranslation('common');
   const repos = reposProp;
+  const hostId = useHostId();
+  const pendingMessages = usePendingChatMessages((s) => s.messages);
+  const pendingScope = chatMessageScope(
+    hostId,
+    attempt.id,
+    sessionScopeId ?? attempt.session?.id
+  );
+  const latestSourceRef = useRef<ConversationTimelineSource | null>(null);
   const resetAction = useResetProcess(attempt.id, attempt.session?.id);
   const conversationScopeKey = `${attempt.id}:${sessionScopeId ?? attempt.session?.id ?? 'new'}`;
   const [filteredEntries, setFilteredEntries] = useState<DisplayEntry[]>([]);
@@ -197,14 +216,17 @@ const ScopedConversationList = forwardRef<
   const [hasRunningProcess, setHasRunningProcess] = useState(false);
   const lastSettledTailStartIndexRef = useRef<number | null>(null);
   const visibleTailStartRef = useRef<number | null>(null);
-  const readerAtBottomRef = useRef(true);
+  const readerFollowingRef = useRef(true);
   const handleAtBottomChange = useCallback(
     (atBottom: boolean) => {
-      readerAtBottomRef.current = atBottom;
       onAtBottomChange?.(atBottom);
     },
     [onAtBottomChange]
   );
+  const handleFollowChange = useCallback((following: boolean) => {
+    readerFollowingRef.current = following;
+    if (following) historyAnchorRef.current = null;
+  }, []);
   const { setEntries, reset } = useEntriesActions();
   const setTokenUsageInfo = useSetTokenUsageInfo();
   const scriptOutputCacheRef = useRef<
@@ -289,7 +311,8 @@ const ScopedConversationList = forwardRef<
     setDataVersion(0);
     lastSettledTailStartIndexRef.current = null;
     visibleTailStartRef.current = null;
-    readerAtBottomRef.current = true;
+    readerFollowingRef.current = true;
+    initialScrollAppliedRef.current = false;
     reset();
   }, [conversationScopeKey, reset]);
 
@@ -396,14 +419,20 @@ const ScopedConversationList = forwardRef<
     setTokenUsageInfo(derivedEntries.latestTokenUsageInfo);
 
     const derivedTimeline = deriveConversationTimeline(
-      derivedEntries.entries,
+      appendPendingMessages(
+        derivedEntries.entries,
+        usePendingChatMessages
+          .getState()
+          .messages.filter((m) => m.scope === pendingScope),
+        usePendingChatMessages.getState().identities[pendingScope]
+      ),
       pending.source,
       prevEntriesRef.current,
       prevRowsRef.current
     );
 
     const el = tanstackScrollRef.current;
-    if (el && !readerAtBottomRef.current && !historyAnchorRef.current) {
+    if (el && !readerFollowingRef.current && !historyAnchorRef.current) {
       const top = el.getBoundingClientRect().top;
       const node = Array.from(
         el.querySelectorAll<HTMLElement>('[data-semantic-key]')
@@ -439,6 +468,9 @@ const ScopedConversationList = forwardRef<
     setFilteredEntries(derivedTimeline.displayEntries);
     setDataVersion((current) => current + 1);
     setEntries(derivedEntries.entries);
+    usePendingChatMessages
+      .getState()
+      .reconcile(pendingScope, derivedEntries.entries);
 
     if (derivedTimeline.rows.length > 0) {
       scrollOnEntriesChangedRef.current?.(
@@ -458,6 +490,7 @@ const ScopedConversationList = forwardRef<
     addType: AddEntryType,
     newLoading: boolean
   ) => {
+    latestSourceRef.current = source;
     pendingUpdateRef.current = {
       source,
       addType,
@@ -468,6 +501,13 @@ const ScopedConversationList = forwardRef<
       rafIdRef.current = requestAnimationFrame(flushPendingUpdate);
     }
   };
+
+  useEffect(() => {
+    if (latestSourceRef.current)
+      onTimelineUpdated(latestSourceRef.current, 'running', false);
+    // Reuse the same derivation/scroll path for local send changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMessages, pendingScope]);
 
   const { isFirstTurn, isLoadingHistory } = useConversationHistory({
     attempt,
@@ -542,7 +582,7 @@ const ScopedConversationList = forwardRef<
   const firstUnvirtualizedRowIndex = preserveVisibleTailStart(
     visibleTailStartRef.current,
     desiredTailStart,
-    readerAtBottomRef.current
+    readerFollowingRef.current
   );
   visibleTailStartRef.current = firstUnvirtualizedRowIndex;
 
@@ -571,13 +611,30 @@ const ScopedConversationList = forwardRef<
     return true;
   }, []);
 
+  const captureReadingPosition = useCallback(() => {
+    const el = tanstackScrollRef.current;
+    if (!el || readerFollowingRef.current) return;
+    const top = el.getBoundingClientRect().top;
+    const node = Array.from(
+      el.querySelectorAll<HTMLElement>('[data-semantic-key]')
+    ).find((row) => row.getBoundingClientRect().bottom > top);
+    if (node?.dataset.semanticKey) {
+      historyAnchorRef.current = {
+        key: node.dataset.semanticKey,
+        top: node.getBoundingClientRect().top - top,
+      };
+    }
+  }, []);
+
   const conversationVirtualizer = useConversationVirtualizer({
     rows: virtualizedRows,
     contentRef,
     onContentResize: restoreHistoryAnchor,
+    onReadingPositionChange: captureReadingPosition,
     totalRowCount: conversationRows.length,
     scrollContainerRef: tanstackScrollRef,
     onAtBottomChange: handleAtBottomChange,
+    onFollowChange: handleFollowChange,
     shouldSuppressSizeAdjustment: shouldSuppressInteractionDrivenSizeAdjustment,
   });
 
@@ -666,6 +723,7 @@ const ScopedConversationList = forwardRef<
   const scrollToBottomAndClearSpacer = useCallback(
     (behavior?: 'auto' | 'smooth') => {
       historyAnchorRef.current = null;
+      pendingInteractionAnchorRef.current = null;
       if (planRevealSpacerRef.current) {
         planRevealSpacerRef.current.style.height = '0px';
       }

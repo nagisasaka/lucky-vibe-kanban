@@ -72,6 +72,7 @@ type SearchArgs = {
 };
 
 type FileTagTypeaheadPluginProps = {
+  plainText?: boolean;
   repoIds?: string[];
   diffPaths?: Set<string>;
   preferredRepoId?: string | null;
@@ -130,6 +131,7 @@ function getRepoDisplayName(repo: RepoLike): string {
 }
 
 export function FileTagTypeaheadPlugin({
+  plainText = false,
   repoIds,
   diffPaths,
   preferredRepoId,
@@ -406,7 +408,7 @@ export function FileTagTypeaheadPlugin({
             const fullPath = option.item.file.path ?? '';
 
             const fileNameNode = $createTextNode(fileName);
-            fileNameNode.toggleFormat('code');
+            if (!plainText) fileNameNode.toggleFormat('code');
             nodeToReplace.replace(fileNameNode);
 
             const spaceNode = $createTextNode(' ');
@@ -437,7 +439,7 @@ export function FileTagTypeaheadPlugin({
             if (!pathAlreadyExists && fullPath) {
               const pathParagraph = $createParagraphNode();
               const pathNode = $createTextNode(fullPath);
-              pathNode.toggleFormat('code');
+              if (!plainText) pathNode.toggleFormat('code');
               pathParagraph.append(pathNode);
 
               const trailingSpace = $createTextNode(' ');

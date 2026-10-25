@@ -18,6 +18,8 @@ import { $convertToMarkdownString, type Transformer } from '@lexical/markdown';
 import { $isListItemNode } from '@lexical/list';
 import { useTypeaheadOpen } from './TypeaheadOpenContext';
 
+import { $getPlainText } from '../lib/plainTextEditor';
+
 type SendMessageShortcut = 'ModifierEnter' | 'Enter';
 
 type Props = {
@@ -25,6 +27,7 @@ type Props = {
   onShiftCmdEnter?: () => void;
   onChange?: (markdown: string) => void;
   transformers?: Transformer[];
+  plainText?: boolean;
   sendShortcut?: SendMessageShortcut;
 };
 
@@ -33,6 +36,7 @@ export function KeyboardCommandsPlugin({
   onShiftCmdEnter,
   onChange,
   transformers,
+  plainText = false,
   sendShortcut = 'ModifierEnter',
 }: Props) {
   const [editor] = useLexicalComposerContext();
@@ -152,7 +156,11 @@ export function KeyboardCommandsPlugin({
       if (onChange && transformers) {
         const markdown = editor
           .getEditorState()
-          .read(() => $convertToMarkdownString(transformers));
+          .read(() =>
+            plainText
+              ? $getPlainText(transformers)
+              : $convertToMarkdownString(transformers)
+          );
         flushSync(() => {
           onChange(markdown);
         });
@@ -247,6 +255,7 @@ export function KeyboardCommandsPlugin({
     onShiftCmdEnter,
     onChange,
     transformers,
+    plainText,
     sendShortcut,
     isTypeaheadOpen,
   ]);

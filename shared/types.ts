@@ -1329,7 +1329,7 @@ value: JsonValue, };
 
 export type ToolResultValueType = { "type": "markdown" } | { "type": "json" };
 
-export type ToolStatus = { "status": "created" } | { "status": "success" } | { "status": "failed" } | { "status": "denied", reason: string | null, } | { "status": "pending_approval", approval_id: string, } | { "status": "timed_out" };
+export type ToolStatus = { "status": "created" } | { "status": "success" } | { "status": "failed" } | { "status": "denied", reason: string | null, } | { "status": "pending_approval", approval_id: string, } | { "status": "timed_out" } | { "status": "cancelled" } | { "status": "unknown" } | { "status": "approved" } | { "status": "waiting_approval" };
 
 export type PatchType = { "type": "NORMALIZED_ENTRY", "content": NormalizedEntry } | { "type": "STDOUT", "content": string } | { "type": "STDERR", "content": string } | { "type": "DIFF", "content": Diff };
 
@@ -1405,7 +1405,7 @@ export enum AgentRuntimeLaunchPhase { command_build = "command_build", process_s
 
 export enum AgentRuntimeMessageRole { user = "user", assistant = "assistant", system = "system" }
 
-export enum AgentRuntimeToolStatus { created = "created", running = "running", waiting_approval = "waiting_approval", approved = "approved", denied = "denied", succeeded = "succeeded", failed = "failed", timed_out = "timed_out" }
+export enum AgentRuntimeToolStatus { created = "created", running = "running", waiting_approval = "waiting_approval", approved = "approved", denied = "denied", cancelled = "cancelled", unknown = "unknown", succeeded = "succeeded", failed = "failed", timed_out = "timed_out" }
 
 export enum AgentRunIntent { initial = "initial", follow_up = "follow_up", review = "review" }
 
@@ -1453,7 +1453,7 @@ export type AgentEventEnvelope = { schema_version: number, payload_version: numb
 
 export type CumulativeTokenUsage = { provider_id: string, provider_session_id: string, total_tokens: bigint, reasoning_tokens: bigint | null, };
 
-export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": {
+export type AgentLiveEventPayload = { "type": "message_delta", "data": { message_id: string, provider_item_id: string, role: AgentRuntimeMessageRole, delta: string, } } | { "type": "thinking_delta", "data": { provider_item_id: string, delta: string, summary_index?: number | null, } } | { "type": "tool_output_delta", "data": { provider_item_id: string, delta: string, } } | { "type": "token_usage_snapshot", "data": {
 /**
  * Verified provider semantics; absent on historical/unsupported snapshots.
  */

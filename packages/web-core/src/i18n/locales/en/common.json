@@ -207,6 +207,9 @@
     "tool": "Tool",
     "thinking": "Thinking",
     "processed": "Processed",
+    "reasoningSummary": "Provided explanation",
+    "providerNotes": "Explanations and plans",
+    "partial": "Received so far",
     "toolSummary": {
       "read": "Read {{path}}",
       "searched": "Searched for \"{{query}}\"",
@@ -218,7 +221,19 @@
     "subagent": {
       "defaultType": "Subagent"
     },
-    "loadingEarlierMessages": "Loading earlier messages"
+    "loadingEarlierMessages": "Loading earlier messages",
+    "delivery": {
+      "sending": "Sending…",
+      "accepted": "Accepted · waiting for history",
+      "failed": "Submission rejected · draft retained",
+      "unconfirmed": "Acceptance unconfirmed · draft retained"
+    },
+    "planStep": {
+      "pending": "Pending",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "empty": "No plan items provided"
+    }
   },
   "branchSelector": {
     "placeholder": "Select a branch",

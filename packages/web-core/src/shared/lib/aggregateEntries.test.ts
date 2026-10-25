@@ -271,3 +271,26 @@ describe('aggregateConsecutiveEntries', () => {
     }
   });
 });
+
+it('keeps provider summaries and explicit plans individually readable after completion', () => {
+  const summary = {
+    ...thinkingEntry('summary'),
+    providerText: {
+      kind: 'summary' as const,
+      provider: 'codex',
+      itemId: 'reason',
+      partial: false,
+    },
+  };
+  const plan = {
+    ...thinkingEntry('plan'),
+    providerText: {
+      kind: 'plan' as const,
+      provider: 'codex',
+      itemId: 'plan',
+      partial: false,
+    },
+  };
+  const rows = aggregateConsecutiveEntries([summary, plan]);
+  expect(rows).toEqual([summary, plan]);
+});

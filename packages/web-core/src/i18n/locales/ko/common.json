@@ -50,7 +50,19 @@
     "subagent": {
       "defaultType": "서브에이전트"
     },
-    "loadingEarlierMessages": "이전 메시지 불러오는 중"
+    "loadingEarlierMessages": "이전 메시지 불러오는 중",
+    "delivery": {
+      "sending": "전송 중…",
+      "accepted": "접수됨 · 기록 대기 중",
+      "failed": "전송 거부됨 · 초안 유지",
+      "unconfirmed": "접수 여부 미확인 · 초안 유지"
+    },
+    "planStep": {
+      "pending": "대기",
+      "inProgress": "진행 중",
+      "completed": "완료",
+      "empty": "제공된 계획 항목 없음"
+    }
   },
   "language": {
     "browserDefault": "브라우저 기본값"
