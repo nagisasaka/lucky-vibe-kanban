@@ -197,3 +197,13 @@ VIBE_KANBAN_AGENT_PROCESS_HOST="$PWD/target/debug/agent-process-host" \
 候補assetsは既存 `.build/local32-initial-app-dist` に固定した。979ファイル、78,040,738 bytes。相対path順に `path + NUL + sha256` を改行で結合したUTF-8文字列のSHA256は `68d93262603fd5e364f39eface0b617d283c3a4fcfc59f704fd0f90da8c8cb75`。全ファイルのhashは `test-results/local32-auth-preview/candidate-assets-manifest.json` に保持する。新しいbuildや公開assetsの変更は行っていない。
 
 上記public起動env、同instance/public URL、DB・鍵・保存済みBasic設定を使う。cloud browserの認証sessionと実会話を維持するため、再setup・秘密共有・データ再seedを行わない。経路決定後にroot確認済みの設定で切り替え、公開でのinteractive確認とGoal終端後の保持を検証する。nohup/setsid等による回収回避、現時点での停止・再起動は行わない。
+
+### 合意済み正規DevServer entrypointの準備
+
+ユーザーとrootは正規DevServer設定変更と32/81の起動を承認した。共通repo devscriptはrootのUI担当が `exec bash .lvk-preview/start.sh` に設定する。各Workspaceの相対cwdで、trackedの[`.lvk-preview/start.sh`](../../.lvk-preview/start.sh)を実行する方式である。32のscriptは今回の合意から新規作成し、private operator fileをコピーしていない。
+
+scriptは同じ保持instanceのDB/key/configured markerの存在、固定server/agent-host/index hash、空port18443を確認し、public配置・同public URL・同instance・既存Basicを維持するenvでserverへforeground `exec` する。background/nohup/setsid、認証設定、seed、データ削除、assets配置はscriptに含めない。`bash -n .lvk-preview/start.sh` と静的検査・artifact hash照合に成功した。scriptはまだ実行していない。現在は旧indexが配置され、port18443も使用中なので、そのままStartすれば安全側に拒否する。
+
+準備完了をrootへ先に報告し、UI設定/Startと直列に調整する。rootの合図後に本担当が旧PTY21002を正常停止してsettleを確認し、凍結candidate assetsを配置・照合する。その後のStartはrootのUI担当に任せ、直接HTTP/APIでは起動しない。正規DevServerのcontainer ownerに属する独立ExecutionProcessとして、Goal終端の子孫回収から分離することを起動後に確認する。DB/鍵/Basic/実会話/public URLは全保持する。現時点では旧PIDを停止せず、public assetsも変更していない。
+
+このentrypointは別コンテキストでread-onlyの静的レビューも行い、事故につながる追加findingなし。script位置からのcwd固定、既存instance欠落時拒否、publicと保存済み認証の使用、固定hash/空port、単一foreground exec、DB作成・設定変更・停止・背景起動処理がないことを確認した。保存済み秘密の内容は読まず、script実行もしていない。
