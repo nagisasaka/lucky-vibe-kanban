@@ -42,6 +42,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-864e2ae97802aa9a00527c40
+    resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
@@ -72,6 +74,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
+  - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
+    resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-5ac2756548e33cbcc86886e2
     resource: repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
@@ -148,10 +152,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-24T01:51:44.796Z" }
+generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-25T19:13:40.123Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -171,6 +175,8 @@ verified:
 [Session モデル](../../crates/db/src/models/session.rs#L22-L37)、[依頼 envelope](../../crates/executors/src/runtime/contracts.rs#L222-L237)、[試行 envelope](../../crates/executors/src/runtime/contracts.rs#L267-L292)
 
 Attempt 検証は run/turn/Session/correlation の一致だけでなく、provider、profile、Workspace、設定と capability snapshot の整合性を要求する。Review に selected Skills を付けることや、FollowUp 以外への reset 指定も拒否する。[契約検証](../../crates/executors/src/runtime/contracts.rs#L294-L351)。これらを永続化してから起動する機構と監査の詳細は [Agent Runtime](../architecture/agent-runtime.md) に置く。
+
+正式 Integration の新しい競合 job は、同じ Workspace 内でも専用の新規 Session を使う。通常の Follow-up による native conversation 継続とは異なり、完全な frozen instruction を渡す `Initial` / `Launch` である。再配送で Session を増やさず、明示 Resume では過去の identity / degraded 履歴を保持する。保存の原子性と再開の詳細は [競合 job の Session 所有](formal-integration.md#競合だけを有限の-agent-job-にする)に集約する。[生成と再利用](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
 
 ## 実行設定の復元と DEFAULT identity
 
@@ -230,7 +236,7 @@ Board の最新 Run とチャットの各 Run footer の経過時間は、AgentR
 
 チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
 
-共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。終了根拠がない非活動 Run や開始時刻が不正な Run は時間を表示せず、ブラウザーの mount 時刻で補わない。再マウント時も timestamp 差から再計算し、ローカル加算 counter を復元しない。活動中はブラウザーの時計を使い、負の差は0へ丸めるため、精密な provider 稼働時間の測定ではない。[表示と時計](../../packages/ui/src/components/ChatElapsedTime.tsx#L11-L69)
+共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。開始不明・非活動で終了不明・終了が開始より前の場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L35-L73)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
 
 ### Goal の時間は別の値
 

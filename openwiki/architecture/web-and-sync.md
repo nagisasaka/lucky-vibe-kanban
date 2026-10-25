@@ -50,6 +50,8 @@ sources:
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
+  - id: openwiki-source-9ac09945bdd807003978190a
+    resource: repo://packages/ui/src/components/KanbanTags.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
   - id: openwiki-source-c97c0bce06c35a57f7816f78
@@ -196,8 +198,6 @@ sources:
     resource: repo://tests/integration-skip/history.spec.ts
   - id: openwiki-source-249425b2ca74a9cd2211b712
     resource: repo://tests/kanban/isolated.mjs
-  - id: openwiki-source-62d93277f2c37df9b3fcebae
-    resource: repo://tests/kanban/README.md
   - id: openwiki-source-2651e132dfea3c98790877f6
     resource: repo://tests/resource-observation/model.test.mjs
   - id: openwiki-source-b1f4325353088fa9d003b939
@@ -208,10 +208,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
+generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:19:36.105Z
+    at: 2026-10-25T19:13:40.123Z
 ---
 
 # Web の実行環境と同期
@@ -258,7 +258,7 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 
 NavbarContainer は `useResourceObservation` の値を UI の ResourceSummary に渡す。認証付き `GET /api/resource-observation` は [MCP と共通の collector](../integrations/remote-access.md#オンデマンド資源観測)を使い、別の CPU sampler や監視 daemon を作らない。HTTP は `no-store`、collector の失敗は503になる。[HTTP](../../crates/server/src/routes/resource_observation.rs#L9-L25)・[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L297-L302)
 
-query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は worktree filesystem 一つを `DISK 90% (900GB / 1000GB)` の形で示す。容量は10進 GB（1 GB = 1,000,000,000 bytes）で小数第2位まで丸め、不要な末尾ゼロを省く。tooltip は対象・使用量/物理総容量という意味・単位・観測時刻を説明する。[観測対象と分母の契約](../integrations/remote-access.md#disk-の対象と読み取り専用の解決)を正本とする。70%以上を橙、80%以上を赤にし、表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L77)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L68)
+query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は worktree filesystem 一つを `DISK 90% (900GB / 1000GB)` の形で示す。容量は10進 GB（1 GB = 1,000,000,000 bytes）を `Math.round(bytes / 1e9)` で整数 GB に丸める。内部 bytes・percent・閾値計算は変えない。tooltip は対象・使用量/物理総容量という意味・単位・観測時刻を説明する。[観測対象と分母の契約](../integrations/remote-access.md#disk-の対象と読み取り専用の解決)を正本とする。70%以上を橙、80%以上を赤にし、使用率の表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L77)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L68)
 
 表示モデルは `worktree_base` がちょうど一件で known、total が正、used が0以上total以下、percent が0〜100、かつ `used / total * 100` との差が `0.000001` 未満の場合だけ DISK の三つの値を採用する。欠落・重複・不正・古い値ではまとめて灰色の `DISK — (— / —)` にし、正常な CPU/RAM は保持する。schema番号自体による分岐ではなく表示する数値を検査するため、旧分母の値も不整合なら未知になる。[整合性検査](../../packages/ui/src/lib/resourceObservation.ts#L43-L77)・[欠落・重複・旧分母・0/100の回帰](../../tests/resource-observation/model.test.mjs#L80-L119)
 
@@ -326,15 +326,17 @@ pointer collision はカードを優先し、空列も drop 対象にする。ke
 
 保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。先に画面の配列を更新し、影響する列の順序と移動先 status を bulk mutation へ渡す。失敗時は console に記録し、この handler 自身には明示 rollback がない。完了後500msで同期抑止を解除するので、drag の見た目だけを保存成功と扱わず、上記の REST snapshot 収束と合わせて調べる。[既存 handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L723-L823)
 
+カードの本文プレビューはタグ群の後で最大2視覚行に制限し、全文は既存 details に残す。`KanbanTags` はタグ変更と ResizeObserver による幅変更で可視数と `+N` を計測し、最初の長いタグは省略する。新しいカード polling は作らない。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L277-L329)・[タグ計測](../../packages/ui/src/components/KanbanTags.tsx#L1-L72)。Workspace 一覧は `showWorkspaces` が有効なら details の外へ描画し、Workflow 所有 Workspace の重複を避ける。概念上の表示契約は [Project・Issue](../concepts/project-and-issue.md#コンパクトカードの表示契約)、差分ゼロと未知の契約は [Workspace 差分集計](../operations/workspace-inspection.md#workspace-summary-の差分集計)に置く。
+
 重要状態の入力は既存 `useWorkspaces` の summary と Project の Workflow query を使う。Workspace 表示設定を off にしても Workflow query を無効にしない。summary の取得失敗・不正応答は空 map に戻り、summary がないと running は一覧 stream に fallback、承認等の追加 field は undefined になる。このため重要状態のラベルがないことは、待機や失敗が存在しない証明ではない。[常時取得](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L299-L308)・[summary の合成と失敗](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L134)。取得周期と最新 Run の時計との差は [時間表示の同期](#run-の時間表示を同期状態から分ける)を参照する。
 
 ### コンパクト Kanban の検証範囲
 
-再実行は [隔離試験の手順](../../tests/kanban/README.md)に従い、互換性を確認した既存 backend を `LVK_TEST_SERVER` に指定して `node tests/kanban/isolated.mjs` を使う。一時 instance / SQLite・動的 loopback port と、この checkout の Vite を接続し、frontend の Git 状態と backend build identity を記録する。互換性の確認は呼出側の前提であり、記録だけで schema 一致を証明しない。finally は browser / Vite を閉じ、backend の終了を待ち、一時 instance を削除する。[起動と識別](../../tests/kanban/isolated.mjs#L10-L86)・[Vite](../../tests/kanban/isolated.mjs#L134-L151)・[cleanup](../../tests/kanban/isolated.mjs#L451-L470)
+再実行は [隔離試験の手順](../../tests/kanban/README.md)に従い、互換性を確認した既存 backend を `LVK_TEST_SERVER` に指定して `node tests/kanban/isolated.mjs` を使う。一時 instance / SQLite・動的 loopback port と、この checkout の Vite を接続し、frontend の Git 状態と backend build identity を記録する。互換性の確認は呼出側の前提であり、記録だけで schema 一致を証明しない。finally は browser / Vite を閉じ、backend の終了を待つ。既定では一時 instance を削除し、成功時に `LVK_KEEP_TEST_INSTANCE=1` を明示した場合だけ保存先を記録して保持する。[起動と識別](../../tests/kanban/isolated.mjs#L10-L86)・[Vite](../../tests/kanban/isolated.mjs#L170-L187)・[cleanup](../../tests/kanban/isolated.mjs#L520-L550)
 
-実 API の経路は Issue と 1:N Workspace link、展開、空列への移動、保存順序、reload、keyboard の横・次段・列間移動と取消を検査する。geometry は CSS 幅2560/1280/390と列幅535/536px境界の往復を扱う。一方、承認・入力・失敗・未確認更新・dev server の表示は summary 応答の overlay fixture であり、実 agent / Workflow の状態遷移を検証しない。[実 API と配置](../../tests/kanban/isolated.mjs#L97-L244)・[移動と保存](../../tests/kanban/isolated.mjs#L245-L355)・[fixture](../../tests/kanban/isolated.mjs#L371-L443)
+実 API の経路は Issue と 1:N Workspace link、展開、空列への移動、保存順序、reload、keyboard の横・次段・列間移動と取消を検査する。geometry は CSS 幅2560/1280/390と列幅535/536px境界の往復を扱う。実 Git fixture の commit 済み・未 commit・untracked を summary API からカードまで照合し、正常ゼロも確認する。Navbar の Integrate / Auto Merge 入口は残し、カード専用 Integration 行と3秒 polling は除去されている。一方、承認・入力・失敗・未確認更新・dev server の表示は summary 応答の overlay fixture であり、実 agent / Workflow の状態遷移を検証しない。[実 API と配置](../../tests/kanban/isolated.mjs#L97-L244)・[移動と保存](../../tests/kanban/isolated.mjs#L245-L355)・[fixture](../../tests/kanban/isolated.mjs#L441-L514)
 
-この Sync は凍結 source `291992a606a9ac386e3ee6f56e7d587bf91eb33e` の描画、操作、保存 handler、summary hook、独立した試験定義を静的に照合した。[開発時記録](../../tests/kanban/VALIDATION.md)の成功報告と、入力にある正式 Integration の明示的な検証省略は別である。この文書保守では製品テストを再実行していない。実機 touch、実 model / Workflow、Firefox / WebKit、production bundle は開発時記録でも未検証であり、無関係な過去の Wiki の再検証も主張しない。
+今回の照合は凍結 source `c8ccba168fdc2c06dae69f0b92a1cb70f1d80267` の変更部分と関連 hook・API・Git 集計・独立した試験定義を対象とする。追加の実部品 fixture は2行本文、タグの幅追従と残数、Workspace 表示 ON/OFF、状態と時刻欠損を検査する。[fixture の試験](../../tests/kanban/readability.mjs)・[実 API 試験](../../tests/kanban/isolated.mjs)。供給された正式 Integration の check / lint / backend:test は成功記録があるが、この文書保守では製品試験を再実行していない。実 provider、実機 touch、Firefox / WebKit、外部 preview の認証済み操作を検証したとはしない。無関係な過去の説明全体も再検証していない。
 
 ## ドラフト・表示設定・通知の保存境界
 
