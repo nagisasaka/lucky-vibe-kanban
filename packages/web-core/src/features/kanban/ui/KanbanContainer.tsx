@@ -1135,19 +1135,26 @@ export function KanbanContainer() {
                   <KanbanBoard key={status.id}>
                     <KanbanHeader>
                       <div className="border-t sticky border-b top-0 z-20 flex shrink-0 items-center justify-between gap-2 p-base bg-secondary">
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <div
                             className="h-2 w-2 rounded-full shrink-0"
                             style={{
                               backgroundColor: `hsl(${status.color})`,
                             }}
                           />
-                          <p className="m-0 text-sm">{status.name}</p>
+                          <p className="m-0 flex min-w-0 items-center gap-1 text-sm">
+                            <span className="truncate" title={status.name}>
+                              {status.name}
+                            </span>
+                            <span className="shrink-0">
+                              ({issueIds.length})
+                            </span>
+                          </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleAddTask(status.id)}
-                          className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
+                          className="shrink-0 p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
                           aria-label="Add task"
                         >
                           <PlusIcon className="size-icon-xs" weight="bold" />
