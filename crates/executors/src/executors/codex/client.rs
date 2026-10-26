@@ -18,17 +18,17 @@ use codex_app_server_protocol::{
     FileChangeRequestApprovalResponse, GetAccountParams, GetAccountRateLimitsResponse,
     GetAccountResponse, InitializeCapabilities, InitializeParams, InitializeResponse,
     ItemCompletedNotification, JSONRPCError, JSONRPCNotification, JSONRPCRequest, JSONRPCResponse,
-    ListMcpServerStatusParams, ListMcpServerStatusResponse, McpServerElicitationAction,
-    McpServerElicitationRequestResponse, McpServerStatusDetail, ModelListParams, ModelListResponse,
-    RequestId, ReviewStartParams, ReviewStartResponse, ReviewTarget, ServerRequest,
-    SkillsListParams, SkillsListResponse, ThreadCompactStartParams, ThreadCompactStartResponse,
-    ThreadGoalClearParams, ThreadGoalClearResponse, ThreadGoalGetParams, ThreadGoalGetResponse,
-    ThreadGoalSetParams, ThreadGoalSetResponse, ThreadGoalStatus, ThreadInjectItemsParams,
-    ThreadInjectItemsResponse, ThreadItem, ThreadReadParams, ThreadReadResponse,
-    ThreadResumeParams, ThreadSettingsUpdateParams, ThreadSettingsUpdateResponse,
-    ThreadStartParams, ThreadStartResponse, ToolRequestUserInputAnswer,
-    ToolRequestUserInputQuestion, ToolRequestUserInputResponse, TurnInterruptParams,
-    TurnStartParams, TurnStartResponse, TurnStatus, TurnSteerParams, TurnSteerResponse, UserInput,
+    ListMcpServerStatusParams, ListMcpServerStatusResponse, McpServerStatusDetail, ModelListParams,
+    ModelListResponse, RequestId, ReviewStartParams, ReviewStartResponse, ReviewTarget,
+    ServerRequest, SkillsListParams, SkillsListResponse, ThreadCompactStartParams,
+    ThreadCompactStartResponse, ThreadGoalClearParams, ThreadGoalClearResponse,
+    ThreadGoalGetParams, ThreadGoalGetResponse, ThreadGoalSetParams, ThreadGoalSetResponse,
+    ThreadGoalStatus, ThreadInjectItemsParams, ThreadInjectItemsResponse, ThreadItem,
+    ThreadReadParams, ThreadReadResponse, ThreadResumeParams, ThreadSettingsUpdateParams,
+    ThreadSettingsUpdateResponse, ThreadStartParams, ThreadStartResponse,
+    ToolRequestUserInputAnswer, ToolRequestUserInputQuestion, ToolRequestUserInputResponse,
+    TurnInterruptParams, TurnStartParams, TurnStartResponse, TurnStatus, TurnSteerParams,
+    TurnSteerResponse, UserInput,
 };
 use codex_protocol::{
     config_types::{CollaborationMode, ModeKind, Settings},
@@ -58,6 +58,7 @@ use crate::{
     profile::ExecutionMode,
 };
 
+mod mcp_approval;
 pub(super) mod openwiki;
 
 struct PendingPlan {
@@ -102,6 +103,7 @@ pub struct AppServerClient {
     pending_feedback: Mutex<VecDeque<String>>,
     pending_tool_approvals: Mutex<usize>,
     child_completion: StdMutex<HashMap<String, (Option<String>, bool)>>,
+    mcp_approvals: StdMutex<mcp_approval::State>,
     auto_approve: bool,
     plan_mode: AtomicBool,
     execution_mode: ExecutionMode,
@@ -165,6 +167,7 @@ impl AppServerClient {
             pending_feedback: Mutex::new(VecDeque::new()),
             pending_tool_approvals: Mutex::new(0),
             child_completion: StdMutex::new(HashMap::new()),
+            mcp_approvals: StdMutex::new(Default::default()),
             repo_context,
             commit_reminder,
             commit_reminder_prompt,
@@ -914,20 +917,7 @@ impl AppServerClient {
                 .await
             }
             ServerRequest::McpServerElicitationRequest { request_id, params } => {
-                tracing::warn!(
-                    server = %params.server_name,
-                    "MCP elicitation UI is unavailable; cancelling the request"
-                );
-                send_server_response(
-                    peer,
-                    request_id,
-                    McpServerElicitationRequestResponse {
-                        action: McpServerElicitationAction::Cancel,
-                        content: None,
-                        meta: None,
-                    },
-                )
-                .await
+                self.handle_mcp_approval(peer, request_id, params).await
             }
             ServerRequest::DynamicToolCall { request_id, params } => {
                 tracing::warn!(
@@ -1552,6 +1542,10 @@ impl JsonRpcCallbacks for AppServerClient {
                 Ok(())
             }
             Err(err) => {
+                if request.method == "mcpServer/elicitation/request" {
+                    // Invalid schema/unknown mode cannot reach a permission UI.
+                    return self.cancel_invalid_mcp(peer, request.id).await;
+                }
                 tracing::debug!("Unhandled server request `{}`: {err}", request.method);
                 let response = JSONRPCResponse {
                     id: request.id,
@@ -1635,6 +1629,7 @@ impl AppServerClient {
         notification: JSONRPCNotification,
     ) -> Result<JsonRpcControlFlow, ExecutorError> {
         self.observe_child_completion(&notification).await;
+        self.observe_mcp_approval_item(&notification).await;
         let flow = self.process_notification_inner(raw, notification).await?;
         match flow {
             JsonRpcControlFlow::Exit(ExecutorExitResult::Success) => {

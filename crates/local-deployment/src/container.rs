@@ -1251,11 +1251,26 @@ fn build_queued_agent_run_requests(
 
 #[async_trait]
 impl ContainerService for LocalContainerService {
+    async fn script_running(&self, execution: Uuid) -> Result<Option<bool>, ContainerError> {
+        use crate::agent_process_registry::RegisteredProcessPresence;
+        Ok(
+            match self
+                .agent_process_registry
+                .observe_runtime(execution)
+                .await?
+            {
+                Some(RegisteredProcessPresence::Alive) => Some(true),
+                Some(RegisteredProcessPresence::Exited) => Some(false),
+                Some(RegisteredProcessPresence::Unreachable) | None => None,
+            },
+        )
+    }
+
     async fn script_settled(&self, execution: Uuid) -> Result<bool, ContainerError> {
         Ok(self.get_child_from_store(&execution).await.is_none()
             && self
                 .agent_process_registry
-                .query_runtime(execution)
+                .peek_runtime(execution)
                 .await?
                 .is_none())
     }

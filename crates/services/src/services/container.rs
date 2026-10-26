@@ -87,6 +87,10 @@ pub trait ContainerService {
     async fn scripts_settled(&self, _workspace: Uuid) -> Result<bool, ContainerError> {
         Ok(false)
     }
+    /// Read-only registered OS process presence observation. None means presence is unconfirmed.
+    async fn script_running(&self, _execution: Uuid) -> Result<Option<bool>, ContainerError> {
+        Ok(None)
+    }
     async fn script_settled(&self, _execution: Uuid) -> Result<bool, ContainerError> {
         Ok(false)
     }

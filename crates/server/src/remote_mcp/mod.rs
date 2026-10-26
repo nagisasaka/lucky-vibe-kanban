@@ -5,6 +5,9 @@ mod auth;
 mod code_read;
 mod config;
 mod design_notes;
+mod dev_server;
+#[cfg(test)]
+mod dev_server_tests;
 pub mod environment;
 #[cfg(target_os = "linux")]
 mod environment_files;
@@ -182,8 +185,10 @@ fn transport_router(remote: Remote) -> Router {
 
 fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
-        "run_process" | "stop_process" | "self_restart" => Some("lvk:runtime:execute"),
-        "get_runtime_access"
+        "run_process" | "stop_process" | "self_restart" | "start_dev_server"
+        | "stop_dev_server" => Some("lvk:runtime:execute"),
+        "get_dev_server_status"
+        | "get_runtime_access"
         | "list_runtime_files"
         | "read_runtime_file"
         | "list_processes"
@@ -219,7 +224,10 @@ fn operation_scope(name: &str) -> Option<&'static str> {
 }
 
 fn scope_hint(name: &str, missing: &str) -> String {
-    if matches!(name, "run_process" | "stop_process" | "self_restart") {
+    if matches!(
+        name,
+        "run_process" | "stop_process" | "self_restart" | "start_dev_server" | "stop_dev_server"
+    ) {
         "lvk:read lvk:runtime:read lvk:runtime:execute".into()
     } else {
         format!("lvk:read {missing}")
@@ -398,6 +406,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(run_events::tools());
     tools.extend(resource_observation::tools());
     tools.extend(runtime_write::tools());
+    tools.extend(dev_server::tools());
     tools.extend(goals::tools());
     tools.extend(workspace_archive::tools());
     tools.extend(issue_archive::tools());
@@ -499,6 +508,9 @@ impl Remote {
             }
             name if goals::tools().iter().any(|tool| tool.name == name) => {
                 goals::call(self, principal, name, args).await
+            }
+            "start_dev_server" | "stop_dev_server" | "get_dev_server_status" => {
+                dev_server::call(self, principal, request.name.as_ref(), args).await
             }
             "get_resource_observation" => resource_observation::call(args).await,
             "list_run_events" => run_events::call(self, args).await,

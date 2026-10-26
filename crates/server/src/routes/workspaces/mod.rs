@@ -4,6 +4,7 @@ pub mod attachments;
 pub mod codex_setup;
 pub mod core;
 pub mod create;
+pub(crate) mod dev_server;
 pub mod execution;
 pub mod files;
 pub mod gh_cli_setup;
@@ -41,6 +42,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/tokens", get(usage::tokens))
         .nest("/git", git::router())
         .nest("/execution", execution::router())
+        .nest("/managed-dev-server", dev_server::router())
         .nest("/integration", integration::router())
         .nest("/repos", repos::router())
         .nest("/pull-requests", pr::router())

@@ -198,7 +198,7 @@ pub(super) async fn fixture() -> (Remote, Arc<FixtureRuntime>, Principal, Target
 pub(super) async fn fixture_with_pool(
     pool: SqlitePool,
 ) -> (Remote, Arc<FixtureRuntime>, Principal, Target, Uuid) {
-    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    db::run_migrations(&pool).await.unwrap();
     let project = Uuid::from_u128(1);
     let issue = Uuid::new_v4();
     let status = Uuid::new_v4();
