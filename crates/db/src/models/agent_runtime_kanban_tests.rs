@@ -745,3 +745,125 @@ async fn issue_archive_does_not_freeze_automatic_status_transitions_or_clear_arc
         );
     }
 }
+
+#[tokio::test]
+async fn kanban_activity_terminal_promotes_once_on_both_paths() {
+    for host in [false, true] {
+        for status in [
+            AgentRunStatus::Succeeded,
+            AgentRunStatus::Failed,
+            AgentRunStatus::Cancelled,
+            AgentRunStatus::Crashed,
+            AgentRunStatus::AuditFailed,
+        ] {
+            let pool = setup_pool().await;
+            let (session, workspace) = insert_anchors(&pool).await;
+            let issue = board_fixture(&pool, workspace).await;
+            let (request, attempt) = requests(session, workspace, "activity");
+            AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+                .await
+                .unwrap();
+            lifecycle(&pool, &request, &attempt, 1, AgentRunStatus::Running, host).await;
+            let before: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert_eq!(before, 0.0, "running is not an activity promotion");
+            let mut log = event(&request, &attempt, 2);
+            log.payload = AgentEventPayload::Message {
+                message: CanonicalMessage {
+                    message_id: Uuid::new_v4(),
+                    role: AgentRuntimeMessageRole::Assistant,
+                    content: "stream chunk".into(),
+                },
+                final_output: false,
+            };
+            if host {
+                AgentEventRecord::append_and_project_host_batch(
+                    &pool,
+                    &[log],
+                    &[],
+                    &[],
+                    attempt.run_attempt_id,
+                    2,
+                )
+                .await
+                .unwrap();
+            } else {
+                AgentEventRecord::append_and_project(&pool, &log)
+                    .await
+                    .unwrap();
+            }
+            let unchanged: f64 =
+                sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                    .bind(issue)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(unchanged, before, "streaming is not an activity promotion");
+            lifecycle(&pool, &request, &attempt, 3, status, host).await;
+            let rank: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert!(rank < before);
+            // A later terminal event for the same run cannot undo a manual order.
+            sqlx::query("UPDATE local_issues SET sort_order=42 WHERE id=?")
+                .bind(issue)
+                .execute(&pool)
+                .await
+                .unwrap();
+            lifecycle(&pool, &request, &attempt, 4, status, host).await;
+            let rank: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert_eq!(rank, 42.0);
+        }
+    }
+}
+
+#[tokio::test]
+async fn kanban_activity_terminal_stops_under_explicit_sort() {
+    for host in [false, true] {
+        let pool = setup_pool().await;
+        let (session, workspace) = insert_anchors(&pool).await;
+        let issue = board_fixture(&pool, workspace).await;
+        let project: Uuid = sqlx::query_scalar("SELECT project_id FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let preferences = serde_json::json!({"data":{"kanban_project_view_preferences":{project.to_string():{"team":{"filters":{"sortField":"title"}}}}}});
+        sqlx::query("INSERT INTO scratch(id,scratch_type,payload) VALUES(?,'UI_PREFERENCES',?)")
+            .bind(Uuid::from_u128(1))
+            .bind(preferences.to_string())
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (request, attempt) = requests(session, workspace, "sorted-activity");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        lifecycle(&pool, &request, &attempt, 1, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &request,
+            &attempt,
+            2,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        let rank: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(rank, 0.0);
+        assert_eq!(board_status(&pool, issue).await, "In Review");
+    }
+}

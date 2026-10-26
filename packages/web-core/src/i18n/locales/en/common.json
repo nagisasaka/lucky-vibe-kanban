@@ -1141,6 +1141,7 @@
       "input": "Input required",
       "running": "Running",
       "failed": "Failed",
+      "read": "Read",
       "unseen": "Unseen activity",
       "devServer": "Dev server running"
     },

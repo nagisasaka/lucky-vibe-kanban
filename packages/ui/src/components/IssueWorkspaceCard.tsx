@@ -131,7 +131,10 @@ export function IssueWorkspaceCard({
 }: IssueWorkspaceCardProps) {
   const { t } = useTranslation('common');
   const isRunning = workspace.isRunning ?? false;
-  const hasPendingApproval = workspace.hasPendingApproval ?? false;
+  const hasPendingApproval =
+    workspace.hasPendingApproval ||
+    workspace.latestProcessStatus === 'awaiting_approval';
+  const needsInput = workspace.latestProcessStatus === 'awaiting_input';
   const hasRunningDevServer = workspace.hasRunningDevServer ?? false;
   const hasUnseenActivity = workspace.hasUnseenActivity ?? false;
   const isFailed =
@@ -139,6 +142,23 @@ export function IssueWorkspaceCard({
     workspace.latestProcessStatus === 'crashed' ||
     workspace.latestProcessStatus === 'audit_failed';
 
+  const activity = hasPendingApproval
+    ? 'approval'
+    : needsInput
+      ? 'input'
+      : isRunning
+        ? 'running'
+        : isFailed
+          ? 'failed'
+          : null;
+  const showReadState =
+    !isRunning &&
+    !hasPendingApproval &&
+    !needsInput &&
+    (hasUnseenActivity ||
+      isFailed ||
+      workspace.latestProcessStatus === 'succeeded' ||
+      workspace.latestProcessStatus === 'cancelled');
   return (
     <IssueWorkspaceCardContainer
       onClick={onClick}
@@ -234,28 +254,46 @@ export function IssueWorkspaceCard({
               </Tooltip>
             )}
 
-            {!isRunning && isFailed && (
-              <TriangleIcon
-                className="size-icon-xs text-error shrink-0"
-                weight="fill"
-              />
+            {activity && (
+              <Tooltip content={t(`kanban.compact.${activity}`)}>
+                <span role="img" aria-label={t(`kanban.compact.${activity}`)}>
+                  {hasPendingApproval || needsInput ? (
+                    <HandIcon
+                      aria-hidden="true"
+                      className="size-icon-xs text-brand shrink-0"
+                      weight="fill"
+                    />
+                  ) : isRunning ? (
+                    <RunningDots />
+                  ) : (
+                    <TriangleIcon
+                      aria-hidden="true"
+                      className="size-icon-xs text-error shrink-0"
+                      weight="fill"
+                    />
+                  )}
+                </span>
+              </Tooltip>
             )}
-
-            {isRunning &&
-              (hasPendingApproval ? (
-                <HandIcon
-                  className="size-icon-xs text-brand shrink-0"
-                  weight="fill"
-                />
-              ) : (
-                <RunningDots />
-              ))}
-
-            {hasUnseenActivity && !isRunning && !isFailed && (
-              <CircleIcon
-                className="size-icon-xs text-brand shrink-0"
-                weight="fill"
-              />
+            {showReadState && (
+              <Tooltip
+                content={t(
+                  `kanban.compact.${hasUnseenActivity ? 'unseen' : 'read'}`
+                )}
+              >
+                <span
+                  role="img"
+                  aria-label={t(
+                    `kanban.compact.${hasUnseenActivity ? 'unseen' : 'read'}`
+                  )}
+                >
+                  <CircleIcon
+                    aria-hidden="true"
+                    className="size-icon-xs text-brand shrink-0"
+                    weight={hasUnseenActivity ? 'fill' : 'regular'}
+                  />
+                </span>
+              </Tooltip>
             )}
             <ChatElapsedTime
               unknownLabel="—"

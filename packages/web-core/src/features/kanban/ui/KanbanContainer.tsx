@@ -1,3 +1,4 @@
+import { dropRankAfterActivity } from './kanbanOrder';
 import { useKanbanDisplayStore } from '@/shared/stores/useKanbanDisplayStore';
 import { KanbanGrid, KanbanGridCard, KanbanGridCards } from './KanbanGrid';
 import { KanbanCardDetails } from './KanbanCardDetails';
@@ -449,6 +450,9 @@ export function KanbanContainer() {
   );
   const toggleKanbanView = useKanbanDisplayStore((s) => s.toggleMode);
   const isSyncingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [orderSyncRevision, setOrderSyncRevision] = useState(0);
+  const dragStartOrders = useRef<Record<string, number>>({});
 
   // Sort all statuses for display settings
   const sortedStatuses = useMemo(
@@ -461,15 +465,6 @@ export function KanbanContainer() {
     () => sortedStatuses.filter((s) => !s.hidden),
     [sortedStatuses]
   );
-
-  // Map status ID to 1-based column index for sort_order calculation
-  const statusColumnIndexMap = useMemo(() => {
-    const map = new Map<string, number>();
-    visibleStatuses.forEach((status, index) => {
-      map.set(status.id, index + 1);
-    });
-    return map;
-  }, [visibleStatuses]);
 
   const defaultCreateStatusId = visibleStatuses[0]?.id;
 
@@ -508,7 +503,7 @@ export function KanbanContainer() {
   // Sync items from filtered issues when they change
   useEffect(() => {
     // Skip rebuild during drag-drop sync to prevent flicker
-    if (isSyncingRef.current) {
+    if (isSyncingRef.current || isDragging) {
       return;
     }
 
@@ -553,7 +548,7 @@ export function KanbanContainer() {
       grouped[status.id] = statusIssues.map((i) => i.id);
     }
     setItems(grouped);
-  }, [filteredIssues, statuses, kanbanFilters]);
+  }, [filteredIssues, statuses, kanbanFilters, isDragging, orderSyncRevision]);
 
   // Create a lookup map for issue data
   const issueMap = useMemo(() => {
@@ -687,16 +682,6 @@ export function KanbanContainer() {
     userId,
   ]);
 
-  // Calculate sort_order based on column index and issue position
-  // Formula: 1000 * [COLUMN_INDEX] + [ISSUE_INDEX] (both 1-based)
-  const calculateSortOrder = useCallback(
-    (statusId: string, issueIndex: number): number => {
-      const columnIndex = statusColumnIndexMap.get(statusId) ?? 1;
-      return 1000 * columnIndex + (issueIndex + 1);
-    },
-    [statusColumnIndexMap]
-  );
-
   // Simple onDragEnd handler - the library handles all visual movement
   const handleDragEnd = useCallback(
     (result: DropResult) => {
@@ -725,56 +710,40 @@ export function KanbanContainer() {
       const destId = destination.droppableId;
       const isCrossColumn = sourceId !== destId;
 
-      // Update local state and capture new items for bulk update
-      let newItems: Record<string, string[]> = {};
-      setItems((prev) => {
-        const sourceItems = [...(prev[sourceId] ?? [])];
-        const [moved] = sourceItems.splice(source.index, 1);
-
-        if (!isCrossColumn) {
-          // Within-column reorder
-          sourceItems.splice(destination.index, 0, moved);
-          newItems = { ...prev, [sourceId]: sourceItems };
-        } else {
-          // Cross-column move
-          const destItems = [...(prev[destId] ?? [])];
-          destItems.splice(destination.index, 0, moved);
-          newItems = {
-            ...prev,
-            [sourceId]: sourceItems,
-            [destId]: destItems,
-          };
-        }
-        return newItems;
+      // Keep the frozen drag layout, but persist only the dragged card. A
+      // concurrent activity promotion must not be overwritten by renumbering
+      // every card in either column.
+      const sourceItems = [...(items[sourceId] ?? [])];
+      const [moved] = sourceItems.splice(source.index, 1);
+      if (!moved || !issueMap[moved]) return;
+      const destItems = isCrossColumn
+        ? [...(items[destId] ?? [])]
+        : sourceItems;
+      destItems.splice(destination.index, 0, moved);
+      setItems({ ...items, [sourceId]: sourceItems, [destId]: destItems });
+      const rank = dropRankAfterActivity({
+        ids: destItems,
+        index: destination.index,
+        moved,
+        startOrders: dragStartOrders.current,
+        currentOrders: Object.fromEntries(
+          issues
+            .filter((issue) => issue.status_id === destId || issue.id === moved)
+            .map((issue) => [issue.id, issue.sort_order])
+        ),
+        descending: kanbanFilters.sortDirection === 'desc',
+        manual: isManualSort,
       });
-
-      // Build bulk updates for all issues in affected columns
-      const updates: BulkUpdateIssueItem[] = [];
-
-      // Always update destination column
-      const destIssueIds = newItems[destId] ?? [];
-      destIssueIds.forEach((issueId, index) => {
-        updates.push({
-          id: issueId,
+      const updates: BulkUpdateIssueItem[] = [
+        {
+          id: moved,
+          expected_sort_order: dragStartOrders.current[moved],
           changes: {
-            status_id: destId,
-            sort_order: calculateSortOrder(destId, index),
+            ...(isCrossColumn ? { status_id: destId } : {}),
+            sort_order: rank,
           },
-        });
-      });
-
-      // Update source column if cross-column move
-      if (isCrossColumn) {
-        const sourceIssueIds = newItems[sourceId] ?? [];
-        sourceIssueIds.forEach((issueId, index) => {
-          updates.push({
-            id: issueId,
-            changes: {
-              sort_order: calculateSortOrder(sourceId, index),
-            },
-          });
-        });
-      }
+        },
+      ];
 
       // Perform bulk update
       isSyncingRef.current = true;
@@ -786,10 +755,17 @@ export function KanbanContainer() {
           // Delay clearing flag to let Electric sync complete
           setTimeout(() => {
             isSyncingRef.current = false;
+            setOrderSyncRevision((revision) => revision + 1);
           }, 500);
         });
     },
-    [kanbanFilters.sortField, calculateSortOrder]
+    [
+      kanbanFilters.sortField,
+      kanbanFilters.sortDirection,
+      items,
+      issueMap,
+      issues,
+    ]
   );
 
   // Multi-select support
@@ -1120,7 +1096,16 @@ export function KanbanContainer() {
           </div>
         ) : (
           <div className="flex-1 overflow-x-auto px-double">
-            <KanbanGrid onDragEnd={handleDragEnd}>
+            <KanbanGrid
+              onDragEnd={handleDragEnd}
+              onDraggingChange={(dragging) => {
+                if (dragging)
+                  dragStartOrders.current = Object.fromEntries(
+                    issues.map((issue) => [issue.id, issue.sort_order])
+                  );
+                setIsDragging(dragging);
+              }}
+            >
               {visibleStatuses.map((status) => {
                 const issueIds = items[status.id] ?? [];
 
@@ -1250,13 +1235,11 @@ export function KanbanContainer() {
                               />
                             ))}
                             <KanbanCardDetails
-                              showWorkspaces={showWorkspaces}
                               count={
                                 getWorkspacesForIssue(issue.id).filter(
                                   (workspace) => !workspace.archived
                                 ).length
                               }
-                              workspaces={issueWorkspaces}
                               description={issue.description}
                             />
                             {showWorkspaces &&

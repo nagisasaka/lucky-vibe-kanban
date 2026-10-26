@@ -10,6 +10,24 @@ pub(super) async fn sync_kanban_lifecycle(
     event: &AgentEventEnvelope,
     previous: &(AgentRunStatus, Option<Uuid>),
 ) -> Result<(), sqlx::Error> {
+    sync_status(tx, event, previous).await?;
+    if matches!(event.payload, AgentEventPayload::LifecycleChanged { status } if status.is_terminal() && (!previous.0.is_terminal() || previous.1 != Some(event.run_attempt_id)))
+    {
+        let issue_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT l.issue_id FROM local_workspace_links l JOIN agent_runs r ON r.workspace_id = l.workspace_id WHERE r.id = ?",
+        ).bind(event.agent_run_id).fetch_optional(&mut **tx).await?;
+        if let Some(issue_id) = issue_id {
+            super::super::issue_order::promote(tx, issue_id).await?;
+        }
+    }
+    Ok(())
+}
+
+async fn sync_status(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    event: &AgentEventEnvelope,
+    previous: &(AgentRunStatus, Option<Uuid>),
+) -> Result<(), sqlx::Error> {
     let AgentEventPayload::LifecycleChanged { status } = event.payload else {
         return Ok(());
     };

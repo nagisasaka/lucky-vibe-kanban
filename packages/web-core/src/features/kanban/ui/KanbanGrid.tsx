@@ -1,6 +1,8 @@
-import { useRef, type ReactNode, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { useState, useRef, type ReactNode, type MouseEvent } from 'react';
 import {
   DndContext,
+  DragOverlay,
   MouseSensor,
   TouchSensor,
   KeyboardSensor,
@@ -16,7 +18,6 @@ import {
   useSortable,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import type { DropResult } from '@vibe/ui/components/KanbanBoard';
 import { cn } from '@/shared/lib/utils';
 import './kanban-grid.css';
@@ -45,10 +46,17 @@ const collisionDetection: CollisionDetection = (args) => {
 export function KanbanGrid({
   children,
   onDragEnd,
+  onDraggingChange,
 }: {
   children: ReactNode;
   onDragEnd: (result: DropResult) => void;
+  onDraggingChange?: (dragging: boolean) => void;
 }) {
+  const [overlay, setOverlay] = useState<ReactNode>(null);
+  const finish = () => {
+    setOverlay(null);
+    onDraggingChange?.(false);
+  };
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
@@ -60,7 +68,13 @@ export function KanbanGrid({
     <DndContext
       sensors={sensors}
       collisionDetection={collisionDetection}
+      onDragStart={({ active }) => {
+        setOverlay(active.data.current?.overlay ?? null);
+        onDraggingChange?.(true);
+      }}
+      onDragCancel={finish}
       onDragEnd={({ active, over, activatorEvent }) => {
+        finish();
         const source = active.data.current?.sortable;
         if (!source || !over) return;
         const destination = over.data.current?.sortable;
@@ -90,6 +104,21 @@ export function KanbanGrid({
       <div className="inline-grid grid-flow-col auto-cols-[minmax(260px,1fr)] divide-x border-x items-stretch min-h-full min-w-full">
         {children}
       </div>
+      {createPortal(
+        <DragOverlay dropAnimation={null}>
+          {overlay && (
+            <div
+              data-kanban-ghost
+              aria-hidden="true"
+              ref={(node) => node?.setAttribute('inert', '')}
+              className="group min-w-0 border bg-primary p-base rounded-sm shadow-lg pointer-events-none"
+            >
+              {overlay}
+            </div>
+          )}
+        </DragOverlay>,
+        document.body
+      )}
     </DndContext>
   );
 }
@@ -142,8 +171,11 @@ export function KanbanGridCard({
   isSelected?: boolean;
   dragDisabled?: boolean;
 }) {
-  const { setNodeRef, attributes, listeners, transform, isDragging } =
-    useSortable({ id, disabled: dragDisabled });
+  const { setNodeRef, attributes, listeners, isDragging } = useSortable({
+    id,
+    disabled: dragDisabled,
+    data: { overlay: children },
+  });
   const dragged = useRef(false);
   if (isDragging) dragged.current = true;
   return (
@@ -151,7 +183,7 @@ export function KanbanGridCard({
       ref={setNodeRef}
       data-kanban-card={id}
       style={{
-        transform: isDragging ? CSS.Translate.toString(transform) : undefined,
+        opacity: isDragging ? 0 : undefined,
       }}
       className={cn(
         'group min-w-0 self-start border bg-primary p-base rounded-sm focus-visible:ring-2 focus-visible:ring-brand outline-none',

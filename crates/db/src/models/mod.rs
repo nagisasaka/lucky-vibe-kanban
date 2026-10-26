@@ -37,3 +37,5 @@ pub mod board_tag;
 
 #[cfg(test)]
 mod board_tag_tests;
+
+pub mod issue_order;

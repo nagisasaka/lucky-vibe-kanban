@@ -119,3 +119,86 @@ LVK_INSTANCE_DIR=/var/tmp/lvk-instances/dev/runtime/worktrees/2f33-2/lucky-vibe-
 - スクリーンショット・logs・results/revision/hashを `.build/kanban-validation`、`.build/kanban-readability`、`.build/kanban-rust`、`.build/kanban-preview`とpersistent artifactsに保持。DB/認証鍵/tokenは成果物コピーに含めない。
 - Basic設定後の認証済み外部確認は未実施（ユーザー設定待ち）。実AgentRun/有料モデル、実機touch、Firefox/WebKit、全Workspace/untracked大量走査の性能実測、独立レビューは未実施。
 - Rust workspace全体試験/clippyはこの局所変更の検証に追加していない。Formal Integration/main merge/deployは未実施・未承認。
+
+## 2026-10-27 追加4項目（LOCAL-81 / Change Manifest）
+
+### 範囲・参照
+
+- authoritative: Issue最新revision `2026-10-26 17:48:24.917`（追加4項目の元revision `2026-10-26 15:44:15.913`）と当run中の確定回答（明示ソート中は裏側の永続順序更新も停止）。追加4項目の実装・局所試験・commitのみ。main merge/deploy/DevServer操作なし。
+- 開始HEAD `c456e1062e94d87dc4142722ff9e013ef0b03f64`。cleanを確認し、local main `45fdda98d586940ef45411ac6fcd2872e9143fad` を通常merge。取り込みcommit `63ff87ae98b32599bf3776aed9040e72bef8cd83`（競合なし）。件数表示を保持。main refは操作していない。
+- 試験対象は取り込みcommit上の今回の変更ツリー。最終source SHAと時刻は完了報告およびpersistent evidenceのrevision.jsonに記録する。
+
+### 実装とtrigger棚卸し
+
+1. `db::models::issue_order::promote` は当該Issueの現在のproject/status列内の先頭rankを1件だけ更新する。全件再整列なし。既存UI_PREFERENCES scratch（固定ID末尾1）のproject別選択view/filtersを同じtransactionで読む。team既定は手動、personal既定はpriority。title/priority/created_at/updated_at等の非手動sortではUPDATEを行わない。後追いイベント再生もない。手動descendingでは最大rank+1、ascendingでは最小rank-1。新API/設定項目/migration/pollingなし。設定は既存共通scratchの保存済み値が基準であり、ブラウザセッション間でも既存共有設定に従う。
+2. UIの本文更新→local_remote::update_local_issue(_checked)。board API/stdio MCPは既存local API client経由、remote MCP issue_writeもchecked関数経由。descriptionフィールドが含まれる保存（同一本文、nullクリアを含む）だけを対象とし、title/priority/tagのみは対象外。保存と順位更新はtransaction内、status同時変更後にpromote。変更されないstatus/orderを古い読み取り値で上書きしない。
+3. 新規コメントはUI local_remote::create_issue_comment と remote_mcp::issue_comments::add_issue_comment のINSERTと同じtransaction内でpromote。編集・削除・reactionは対象外。actorによる除外なし。remoteの同request_id再送は既存receiptを再利用しINSERT/promoteを重複させない。順位だけの更新はupdated_atを変更せず、既存の本文review revision契約を保持する。
+4. Agent terminalはappend_and_project / append_and_project_host_batch双方が通るsync_kanban_lifecycleで、ReducerApply::AppliedのLifecycleChanged初回終端のみ。succeeded/failed/cancelled/crashed/audit_failedの全5状態、executorによる除外なし。新attemptの初回終端も対象。既存status集約処理は変更せず、その後同transactionで現在列にpromoteするため、開始証拠なしの失敗やcustom列も順序対象となる。重複イベントと同attemptの終端再通知はreducer/previous状態で除外。Message等stream更新、projection再構築、Runの単なるログ更新は対象外。
+5. 描画配列の再同期をドラッグ中は保留。ドロップは対象1カードのrankのみ保存し、他カードを一括renumberしない。ドラッグ中に受信した対象カードのpromotionはdrop先で先頭rankにする。キャンセル時は既存位置に戻して保留した同期を再開。既存同期待ち完了時にも再同期する。他カードの昇格でfrozen隣接境界が反転する場合は昇格済みカードを境界から除き、昇格prefixの後ろで残る手動順序への挿入位置を計算する。既存bulk更新に任意expected_sort_orderを添え、transaction内の読取で差異があれば古いrankを上書きしない。列間移動時の差異は新しい列へpromoteする。新endpoint/永続項目なし。explicit sortの選択/view切替は既存scratch保存をdebounceせず即時送信（その他の設定は従来どおり）。
+6. DnDはdnd-kit DragOverlayをdocument.bodyへportal。元カードはレイアウト位置を維持して透明にし、列のcontainer containmentにghostが切られない。overlayはaria-hidden/inert、実カード操作とkeyboard focusを維持。
+7. Priority/担当者は既存部品をLOCAL-ID行右端へ移動。独立行を削除。IDのみtruncate/title補助、font/列幅は不変。既存操作に明示的なaria-labelを追加。
+
+### 集約文字行の全候補・全経路
+
+削除対象は `KanbanCardDetails` のflags→Object.entries/filter/map→aria-live行のrender全体。候補は `approval`（pending flag/awaiting_approval）、`input`（awaiting_input）、`running`（isRunning）、`failed`（failed/crashed/audit_failed）、`unseen`（hasUnseenActivity）、`devServer`（旧showWorkspaces OFF分岐）の6種。実画面の呼び出しはKanbanContainer、fixture呼び出しはreadability.fixture。両呼び出しからworkspaces/showWorkspaces propも削除し、ON/OFFとも行・空余白を残さない。本文全文detailsとWorkspace数は保持。Workflowカード等の別表示は対象外。
+
+Workspaceでは既存淡青背景とPlay（DevServer）を維持し、状態領域で独立表示。Agentは承認→入力→実行中の既存注意状態を優先し、失敗はTriangle。終端の既読/未読は別Circleで失敗表示とも共存。未知のRunを既読とみなさない。全アイコンにtooltip/aria-labelを用意、文字行は追加しない。
+
+### 局所検証・証拠・限界
+
+- UI: `pnpm run web-core:check`, `pnpm run ui:check`, `pnpm run local-web:check` 成功。UI変更2ファイルのESLint成功。局所Prettier/rustfmt/diff checkを使用。
+- `node --test tests/kanban/order.test.mjs`: 最終4件成功（前/中/後/空/降順、ドラッグ中の本人/他カード/複数promotion、隣接境界反転、昇格prefix、別列からの昇格、他カードrank不変）。
+- `node tests/kanban/readability.mjs`: 独立Chromium component fixture成功。2560×1440 CSS/DPR1.5（4K150%相当）、1280/390、列535↔536境界、カード幅240/260/340、長ID、Priority/担当者keyboard操作、既存タグpopover、ON/OFF集約行なし、light/dark、Run/approval/input/failed/unseen/read/DevServer同時表示、ghost列間連続・drop・Escape・focusを確認。ブラウザはfinallyで終了、HTTPサーバー不要。
+- `node scripts/dev-cargo.mjs test -p db kanban_ --lib -j 4`: 最終14件成功。全5terminal/両保存経路、stream非対象、重複終端、明示sort中のrank不変と通常status遷移を確認。
+- `node scripts/dev-cargo.mjs test -p server --lib issue_activity_body_only_and_destination_order -j 4`: 初回1件成功、最終の下記server8件にも含めて再確認。
+- CargoはLOCAL-197入口・既存target/共有sccacheを使用。共有build-dirの正規ロック待ちは尊重。観測available RAM約12GB/pressureほぼ0、jobs4で1重commandずつ。clean/共有cache削除なし。
+- スクリーンショット: `.build/kanban-readability/tags-devserver-light.png`, `tags-devserver-dark.png`, `cross-column-ghost.png`。component fixtureの証拠であり、実認証previewや実API E2Eの証拠ではない。保持コピーは `persistent/artifacts/59276488-93fa-4092-bdd2-33a86739203c/local81-additional/`。
+- preview2は今回起動/停止/変更していない。両port18444/18446待受なし。DB/Basic/session/keys/ユーザータグ/runtime launcher未操作。実previewでの確認、外部認証・HMR・実API E2E、全体check/lint/backend:testは今回未実施。
+- 件数表示の実装はc456e106を維持。今回のcomponent fixtureの見出しは実KanbanContainerではないため、実アプリの件数/検索/アーカイブ操作のブラウザ再検証は未実施。
+- 同時操作はDB transactionの確定順と既存scratchの保存成功時点が基準。複数ブラウザの異なるsort選択、通信失敗中の設定変更は実ブラウザで未検証。drop計算後の本人promotionは期待rank照合で保護し、DB確定の両順序を局所試験する（実ネットワーク遅延下の同時browser試験は未実施）。SQLiteの同時read→write昇格競合では更新失敗となり得るが、古いrankで成功扱いに上書きしない。新しい分散順序/ロック機構は追加していない。
+
+- 実行分担更新: ユーザーは上位ownerへ統合・配備build・sccache停止・DEV再起動も承認したが、このrunは局所実装/試験/commitまで。専任ownerの操作を代行しない。
+
+- `node scripts/dev-cargo.mjs test -p db --lib models::issue_order::tests -j 4`: 最終2件成功。初回にSQL CASE追加時のbind不足を検出し修正、再試験で正常0件更新を防止した。明示4sort停止・personal既定・manual降順・他Issue順序不変・rollbackを確認。
+
+- 独立確認で指摘されたA0/B1/C2/D3→B=-1中のD挿入は再現して修正。B/A/D/Cとなること、AとBの複数昇格、降順、先頭挿入を純粋rank試験で確認。drop APIの既存readもtransaction内へ寄せ、古い本文などを同時dropで書き戻さない。
+
+- 最終server再検証で一度E0433（ローカルに存在・公開されDB試験済みのissue_orderを依存DBから解決できない）が発生。直前の他Workspaceと共有build-dir利用後にDB compileが省略されていたため中間成果物の取り違えを疑い、自Workspaceのmodels/mod.rsのmtimeだけを更新して依存再評価を要求。cache削除/clean/他Workspace操作は行わない。再試験結果は以下へ記録。
+
+- 同じE0433がmtime再評価後も再現したため再試行を停止。この時点のDnD競合server回帰は未完了として区別し、下記の限定例外で完了。上位調整AIから今回限定のlocal build-dir例外を許可済み（question answer af1942b1-03ae-4dec-88de-839f95f63762）。LOCAL197入口はconfig/target overrideを明示拒否するため、入口本体変更を避け、下記一時コピーでrootとbuild-dirだけを置換して同じprofile/sccache wrapperと検査を維持。
+
+- 例外実行: `node .build/local81-local-cargo/dev-cargo.mjs test -p server --lib -j 4 -- issue_activity_ remote_mcp::issue_comments::tests`。既存LOCAL197入口の一時コピーはroot解決をこのrepoに固定し、build.build-dirだけ `target/local81-validation-59276488` に変更。入口本体/AGENTS/default/共有cacheは未変更、profile/検査/既存sccache wrapperを維持。2行の差分と入口SHAをpersistent証拠へ保存。開始前available RAM約10GB、disk598GB、memory pressure avg10=0、swap out=0を観測してjobs4。server lib局所試験のみ、本体server buildなし。
+
+### 今回の変更パス
+
+- `crates/db/src/models/agent_runtime.rs`
+- `crates/db/src/models/agent_runtime_kanban.rs`
+- `crates/db/src/models/agent_runtime_kanban_tests.rs`
+- `crates/db/src/models/issue_order.rs`
+- `crates/db/src/models/mod.rs`
+- `crates/server/src/remote_mcp/issue_comments.rs`
+- `crates/server/src/routes/local_remote.rs`
+- `packages/ui/src/components/IssueWorkspaceCard.tsx`
+- `packages/ui/src/components/KanbanCardContent.tsx`
+- `packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx`
+- `packages/web-core/src/features/kanban/ui/KanbanContainer.tsx`
+- `packages/web-core/src/features/kanban/ui/KanbanGrid.tsx`
+- `packages/web-core/src/features/kanban/ui/kanbanOrder.ts`
+- `packages/web-core/src/i18n/locales/en/common.json`
+- `packages/web-core/src/i18n/locales/ja/common.json`
+- `packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts`
+- `packages/web-core/src/shared/lib/remoteApi.ts`
+- `tests/kanban/READABILITY-VALIDATION.md`
+- `tests/kanban/isolated.mjs`
+- `tests/kanban/order.test.mjs`
+- `tests/kanban/readability.fixture.tsx`
+- `tests/kanban/readability.mjs`
+
+### 最終結果（2026-10-27 03:25 JST時点）
+
+- 限定local build-dir例外の上記server局所コマンド: **8 passed / 0 failed**、ビルド7分04秒・試験11.46秒。本文/コメントのexplicit sort中rank不変、comment再送/認可/review revision、遅延promotion→dropとdrop→promotionの両確定順序、移動先top/隣カードrank不変、bulk期待rankのdeserializeを確認。E0433はこの出力先で解消。依存記録にはissue_order.rsを確認。
+- DB: issue_order 2件 + kanban_ 14件成功。frontend rank 4件成功。最終web-core型成功、UI/local-web型とUI2ファイルlint成功、Chromium component fixture成功。局所format/diff check成功。
+- Rust Clippy/全体check/lint/backend:test、実API E2E、認証済みpreview操作、実ネットワーク遅延での同時DnDは未実施。正式検証と統合/配備は専任ownerへ引継ぎ。
+- 実行中の自分のCargo/Chromium/fixtureサーバーなし。通常targetと今回の専用中間出力4.8GiBは、共有build-dir不整合時の追加局所再検証用として保持。一時入口/ログは48KiB、製品Git対象外。共有cache・sccacheサーバー・他Workspaceを変更/削除/停止しない。
+- preview2は両port待受なしの状態を維持し、起動/停止なし。launcher inode31273405/size178/mtime1792943153、独立DB inode31033808/size2002944/mtime1792972348は開始時と一致。秘密・タグ・session・DB内容は未操作。
+- 新規/変更22パスは上記一覧。ソースcommit後のexact SHA・各source hash・base/取り込みSHA・時刻はpersistent evidence `revision.json`/`source-hashes.json`に記録。スクリーンショットはcomponent fixtureであり実previewの証拠へ読み替えない。
