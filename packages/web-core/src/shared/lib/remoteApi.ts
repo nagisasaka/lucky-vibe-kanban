@@ -24,6 +24,7 @@ export const makeRequest = (
 
 export interface BulkUpdateIssueItem {
   id: string;
+  expected_sort_order?: number;
   changes: Partial<UpdateIssueRequest>;
 }
 
@@ -53,7 +54,11 @@ export async function bulkUpdateIssues(
   const response = await makeRequest('/v1/issues/bulk', {
     method: 'POST',
     body: JSON.stringify({
-      updates: updates.map((u) => ({ id: u.id, ...u.changes })),
+      updates: updates.map((u) => ({
+        id: u.id,
+        expected_sort_order: u.expected_sort_order,
+        ...u.changes,
+      })),
     }),
   });
   if (!response.ok) {

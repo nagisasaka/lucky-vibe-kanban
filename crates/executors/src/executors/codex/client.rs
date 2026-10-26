@@ -18,17 +18,17 @@ use codex_app_server_protocol::{
     FileChangeRequestApprovalResponse, GetAccountParams, GetAccountRateLimitsResponse,
     GetAccountResponse, InitializeCapabilities, InitializeParams, InitializeResponse,
     ItemCompletedNotification, JSONRPCError, JSONRPCNotification, JSONRPCRequest, JSONRPCResponse,
-    ListMcpServerStatusParams, ListMcpServerStatusResponse, McpServerElicitationAction,
-    McpServerElicitationRequestResponse, McpServerStatusDetail, ModelListParams, ModelListResponse,
-    RequestId, ReviewStartParams, ReviewStartResponse, ReviewTarget, ServerRequest,
-    SkillsListParams, SkillsListResponse, ThreadCompactStartParams, ThreadCompactStartResponse,
-    ThreadGoalClearParams, ThreadGoalClearResponse, ThreadGoalGetParams, ThreadGoalGetResponse,
-    ThreadGoalSetParams, ThreadGoalSetResponse, ThreadGoalStatus, ThreadInjectItemsParams,
-    ThreadInjectItemsResponse, ThreadItem, ThreadReadParams, ThreadReadResponse,
-    ThreadResumeParams, ThreadSettingsUpdateParams, ThreadSettingsUpdateResponse,
-    ThreadStartParams, ThreadStartResponse, ToolRequestUserInputAnswer,
-    ToolRequestUserInputQuestion, ToolRequestUserInputResponse, TurnInterruptParams,
-    TurnStartParams, TurnStartResponse, TurnStatus, TurnSteerParams, TurnSteerResponse, UserInput,
+    ListMcpServerStatusParams, ListMcpServerStatusResponse, McpServerStatusDetail, ModelListParams,
+    ModelListResponse, RequestId, ReviewStartParams, ReviewStartResponse, ReviewTarget,
+    ServerRequest, SkillsListParams, SkillsListResponse, ThreadCompactStartParams,
+    ThreadCompactStartResponse, ThreadGoalClearParams, ThreadGoalClearResponse,
+    ThreadGoalGetParams, ThreadGoalGetResponse, ThreadGoalSetParams, ThreadGoalSetResponse,
+    ThreadGoalStatus, ThreadInjectItemsParams, ThreadInjectItemsResponse, ThreadItem,
+    ThreadReadParams, ThreadReadResponse, ThreadResumeParams, ThreadSettingsUpdateParams,
+    ThreadSettingsUpdateResponse, ThreadStartParams, ThreadStartResponse,
+    ToolRequestUserInputAnswer, ToolRequestUserInputQuestion, ToolRequestUserInputResponse,
+    TurnInterruptParams, TurnStartParams, TurnStartResponse, TurnStatus, TurnSteerParams,
+    TurnSteerResponse, UserInput,
 };
 use codex_protocol::{
     config_types::{CollaborationMode, ModeKind, Settings},
@@ -58,7 +58,9 @@ use crate::{
     profile::ExecutionMode,
 };
 
+mod mcp_approval;
 pub(super) mod openwiki;
+mod resume_instructions;
 
 struct PendingPlan {
     item_id: String,
@@ -78,6 +80,8 @@ pub struct ResumedThread {
 #[derive(Debug, Deserialize)]
 pub struct ResumedThreadIdentity {
     pub id: String,
+    #[serde(default)]
+    pub path: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -102,6 +106,7 @@ pub struct AppServerClient {
     pending_feedback: Mutex<VecDeque<String>>,
     pending_tool_approvals: Mutex<usize>,
     child_completion: StdMutex<HashMap<String, (Option<String>, bool)>>,
+    mcp_approvals: StdMutex<mcp_approval::State>,
     auto_approve: bool,
     plan_mode: AtomicBool,
     execution_mode: ExecutionMode,
@@ -109,6 +114,7 @@ pub struct AppServerClient {
     goal_lifecycle: StdMutex<GoalLifecycle>,
     self_ref: Weak<AppServerClient>,
     resolved_model: OnceLock<String>,
+    runtime_user_agent: OnceLock<String>,
     reasoning_effort: StdMutex<Option<ProtocolReasoningEffort>>,
     pending_plan: Mutex<Option<PendingPlan>>,
     repo_context: RepoContext,
@@ -158,6 +164,7 @@ impl AppServerClient {
             goal_lifecycle: StdMutex::new(GoalLifecycle::default()),
             self_ref: weak.clone(),
             resolved_model: OnceLock::new(),
+            runtime_user_agent: OnceLock::new(),
             reasoning_effort: StdMutex::new(reasoning_effort),
             pending_plan: Mutex::new(None),
             thread_id: Mutex::new(None),
@@ -165,6 +172,7 @@ impl AppServerClient {
             pending_feedback: Mutex::new(VecDeque::new()),
             pending_tool_approvals: Mutex::new(0),
             child_completion: StdMutex::new(HashMap::new()),
+            mcp_approvals: StdMutex::new(Default::default()),
             repo_context,
             commit_reminder,
             commit_reminder_prompt,
@@ -229,6 +237,14 @@ impl AppServerClient {
     }
 
     pub async fn initialize(&self) -> Result<(), ExecutorError> {
+        self.initialize_inner(true).await
+    }
+
+    pub(super) async fn initialize_passive(&self) -> Result<(), ExecutorError> {
+        self.initialize_inner(false).await
+    }
+
+    async fn initialize_inner(&self, observe_version: bool) -> Result<(), ExecutorError> {
         let request = ClientRequest::Initialize {
             request_id: self.next_request_id(),
             params: InitializeParams {
@@ -251,7 +267,10 @@ impl AppServerClient {
         // reported in the initialize response is useful audit information,
         // but it is not a compatibility gate. Runtime compatibility is
         // established by the handshake and the methods/capabilities we use.
-        observe_codex_version(&response.user_agent);
+        if observe_version {
+            observe_codex_version(&response.user_agent);
+            let _ = self.runtime_user_agent.set(response.user_agent.clone());
+        }
         self.send_message(&ClientNotification::Initialized).await
     }
 
@@ -276,6 +295,54 @@ impl AppServerClient {
         // `thread/fork` would create another CLI-visible thread on every turn.
         let requested_thread_id = params.thread_id.clone();
         let developer_instructions = params.developer_instructions.clone();
+        // Only the first load in this owned app-server can use durable replay
+        // evidence. Later in-process resume/reset may have unflushed state.
+        let first_load = self.thread_id.lock().await.is_none();
+        let evidence = if first_load
+            && params.history.is_none()
+            && params.path.is_none()
+            && let Some(instructions) = developer_instructions.as_deref()
+            && resume_instructions::eligible(
+                instructions,
+                self.runtime_user_agent.get().map(String::as_str),
+            ) {
+            // Metadata-only public RPC; no display history or extra model turn.
+            // Failure/unknown path disables reduction, not ordinary resume.
+            let request = ClientRequest::ThreadRead {
+                request_id: self.next_request_id(),
+                params: ThreadReadParams {
+                    thread_id: requested_thread_id.clone(),
+                    include_turns: false,
+                },
+            };
+            match self
+                .rpc()
+                .request_with_raw_timeout::<Value, _>(
+                    request_id(&request),
+                    &request,
+                    "thread/read",
+                    self.cancel.clone(),
+                    Duration::from_secs(2),
+                )
+                .await
+            {
+                Ok((metadata, _)) if metadata["thread"]["id"] == requested_thread_id => {
+                    if let Some(path) = metadata["thread"]["path"].as_str() {
+                        resume_instructions::prepare(
+                            instructions,
+                            &requested_thread_id,
+                            std::path::Path::new(path),
+                        )
+                        .await
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+        } else {
+            None
+        };
         *self.thread_id.lock().await = Some(requested_thread_id.clone());
         let request = ClientRequest::ThreadResume {
             request_id: self.next_request_id(),
@@ -284,13 +351,26 @@ impl AppServerClient {
         let response: ResumedThread = self.send_request(request, "thread/resume").await?;
         ensure_resumed_thread_id(&requested_thread_id, &response.thread.id)?;
         self.adopt_thread_settings(response.model.clone(), response.reasoning_effort.clone());
-        // Resume updates configuration, but Codex's incremental context does
-        // not necessarily replay changed developer instructions into history.
-        // Make this host's current run identity visible before chat/Goal/review
-        // or compaction starts. Keep the same instructions in resume config for
-        // later full-context reconstruction; do not inflate the Goal objective
-        // or start a synthetic user turn. A failed injection stops continuation.
+        // Keep full instructions in config for reconstruction. Only omit fixed
+        // text from the history append when this thread's durable history proves
+        // it is still present. Identity is always refreshed, even in the same run.
+        // Missing/changed/compacted history falls back to the full append; a
+        // failed injection still stops continuation before any model turn.
         if let Some(instructions) = developer_instructions.filter(|text| !text.trim().is_empty()) {
+            let instructions = match evidence {
+                Some(evidence) => evidence
+                    .after_resume(
+                        response
+                            .thread
+                            .path
+                            .as_ref()
+                            .and_then(Value::as_str)
+                            .map(std::path::Path::new),
+                    )
+                    .await
+                    .unwrap_or(instructions),
+                None => instructions,
+            };
             let request = ClientRequest::ThreadInjectItems {
                 request_id: self.next_request_id(),
                 params: ThreadInjectItemsParams {
@@ -786,6 +866,35 @@ impl AppServerClient {
         self.send_request(request, "account/rateLimits/read").await
     }
 
+    /// Minimal compatibility bridge for newer account RPCs. Typed response
+    /// projections live in account_read; ordinary executor RPCs remain pinned.
+    pub(super) async fn account_read_rpc<R>(
+        &self,
+        method: &'static str,
+        params: Value,
+    ) -> Result<R, ExecutorError>
+    where
+        R: DeserializeOwned + std::fmt::Debug,
+    {
+        let id = self.next_request_id();
+        let request = JSONRPCRequest {
+            id: id.clone(),
+            trace: None,
+            method: method.into(),
+            params: Some(params),
+        };
+        self.rpc()
+            .request_with_raw_timeout(
+                id,
+                &request,
+                method,
+                self.cancel.clone(),
+                Duration::from_secs(5),
+            )
+            .await
+            .map(|(response, _)| response)
+    }
+
     async fn handle_server_request(
         &self,
         peer: &JsonRpcPeer,
@@ -914,20 +1023,7 @@ impl AppServerClient {
                 .await
             }
             ServerRequest::McpServerElicitationRequest { request_id, params } => {
-                tracing::warn!(
-                    server = %params.server_name,
-                    "MCP elicitation UI is unavailable; cancelling the request"
-                );
-                send_server_response(
-                    peer,
-                    request_id,
-                    McpServerElicitationRequestResponse {
-                        action: McpServerElicitationAction::Cancel,
-                        content: None,
-                        meta: None,
-                    },
-                )
-                .await
+                self.handle_mcp_approval(peer, request_id, params).await
             }
             ServerRequest::DynamicToolCall { request_id, params } => {
                 tracing::warn!(
@@ -1552,6 +1648,10 @@ impl JsonRpcCallbacks for AppServerClient {
                 Ok(())
             }
             Err(err) => {
+                if request.method == "mcpServer/elicitation/request" {
+                    // Invalid schema/unknown mode cannot reach a permission UI.
+                    return self.cancel_invalid_mcp(peer, request.id).await;
+                }
                 tracing::debug!("Unhandled server request `{}`: {err}", request.method);
                 let response = JSONRPCResponse {
                     id: request.id,
@@ -1635,6 +1735,7 @@ impl AppServerClient {
         notification: JSONRPCNotification,
     ) -> Result<JsonRpcControlFlow, ExecutorError> {
         self.observe_child_completion(&notification).await;
+        self.observe_mcp_approval_item(&notification).await;
         let flow = self.process_notification_inner(raw, notification).await?;
         match flow {
             JsonRpcControlFlow::Exit(ExecutorExitResult::Success) => {
@@ -2128,6 +2229,86 @@ mod version_check_tests {
         }
     }
 
+    #[test]
+    #[ignore = "subprocess fixture, invoked by initialize boundary test"]
+    fn merged_initialize_stdio_fixture() {
+        use std::io::{BufRead, Write};
+        let mut input = std::io::stdin().lock().lines();
+        let request: Value = serde_json::from_str(&input.next().unwrap().unwrap()).unwrap();
+        assert_eq!(request["method"], "initialize");
+        println!(
+            "{}",
+            serde_json::json!({"id":request["id"],"result":{"userAgent":"fixture/0.163.0","codexHome":"/unused-fixture","platformFamily":"unix","platformOs":"linux"}})
+        );
+        std::io::stdout().flush().unwrap();
+        let initialized: Value = serde_json::from_str(&input.next().unwrap().unwrap()).unwrap();
+        assert_eq!(initialized["method"], "initialized");
+        // No thread/read/start/resume or model RPC is valid on this connection.
+        assert!(input.next().is_none(), "unexpected additional RPC");
+    }
+
+    #[tokio::test]
+    async fn merged_initialize_keeps_normal_version_evidence_out_of_passive_reads() {
+        use std::{sync::Arc, time::Duration};
+
+        use super::super::jsonrpc::{ExitSignalSender, JsonRpcCallbacks, JsonRpcPeer};
+        for passive in [false, true] {
+            let cancel = CancellationToken::new();
+            let client = AppServerClient::new(
+                LogWriter::new(tokio::io::sink()),
+                None,
+                false,
+                false,
+                ExecutionMode::Code,
+                None,
+                None,
+                Default::default(),
+                false,
+                String::new(),
+                cancel.clone(),
+            );
+            let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact","executors::codex::client::version_check_tests::merged_initialize_stdio_fixture","--ignored","--nocapture"])
+                .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).kill_on_drop(true).spawn().unwrap();
+            let callbacks: Arc<dyn JsonRpcCallbacks> = if passive {
+                Arc::new(super::super::account_read::PassiveCallbacks)
+            } else {
+                client.clone()
+            };
+            let (exit_tx, _) = tokio::sync::oneshot::channel();
+            client.connect(JsonRpcPeer::spawn(
+                child.stdin.take().unwrap(),
+                child.stdout.take().unwrap(),
+                callbacks,
+                ExitSignalSender::new(exit_tx),
+                cancel.clone(),
+            ));
+            tokio::time::timeout(Duration::from_secs(5), async {
+                if passive {
+                    client.initialize_passive().await
+                } else {
+                    client.initialize().await
+                }
+            })
+            .await
+            .unwrap()
+            .unwrap();
+            assert_eq!(
+                client.runtime_user_agent.get().map(String::as_str),
+                if passive {
+                    None
+                } else {
+                    Some("fixture/0.163.0")
+                }
+            );
+            assert!(client.thread_id.lock().await.is_none());
+            assert_eq!(*client.pending_tool_approvals.lock().await, 0);
+            cancel.cancel();
+            child.kill().await.unwrap();
+            child.wait().await.unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn retired_plan_goal_draft_control_returns_actionable_error() {
         let client = AppServerClient::new(
@@ -2519,17 +2700,47 @@ mod version_check_tests {
         client
     }
 
+    const RESUME_FIXTURE_INSTRUCTIONS: &str = concat!(
+        "LVK repository memory (CURRENT host identity JSON): ",
+        "{\"run_id\":\"current-run\",\"draft_path\":\"drafts/current-run.json\"}\n",
+        "Keep fixed repository safety and draft rules."
+    );
+
     #[test]
     #[ignore = "stdio fixture launched by resumed_host_context_is_visible_before_any_new_turn"]
     fn resumed_host_context_stdio_fixture() {
         use std::io::{BufRead, Write};
         let mut lines = std::io::stdin().lock().lines();
-        let resume: serde_json::Value =
+        let mut resume: serde_json::Value =
             serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap();
+        let rollout = std::env::var("LVK_TEST_RESUME_ROLLOUT").ok();
+        if resume["method"] == "thread/read" {
+            assert!(rollout.is_some());
+            assert_ne!(resume["params"]["includeTurns"], true);
+            let result = if std::env::var_os("LVK_TEST_READ_REJECT").is_some() {
+                json!({"id":resume["id"],"error":{"code":-32601,"message":"unsupported fixture metadata"}})
+            } else {
+                json!({"id":resume["id"],"result":{"thread":{"id":"resumed","path":rollout}}})
+            };
+            println!("{}", result);
+            std::io::stdout().flush().unwrap();
+            resume = serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap();
+        }
         assert_eq!(resume["method"], "thread/resume");
+        assert_eq!(
+            resume["params"]["developerInstructions"],
+            RESUME_FIXTURE_INSTRUCTIONS
+        );
+        if let Some(path) = &rollout {
+            use std::io::Write;
+            // Match reviewed Codex startup: resume appends only a settings
+            // receipt before returning, without another model turn.
+            let mut file = std::fs::OpenOptions::new().append(true).open(path).unwrap();
+            writeln!(file, "{}", json!({"type":"event_msg","payload":{"type":"thread_settings_applied","turn_id":null}})).unwrap();
+        }
         println!(
             "{}",
-            json!({"id":resume["id"],"result":{"thread":{"id":"resumed"},"model":"fixture","reasoningEffort":"high"}})
+            json!({"id":resume["id"],"result":{"thread":{"id":"resumed","path":rollout},"model":"fixture","reasoningEffort":"high"}})
         );
         std::io::stdout().flush().unwrap();
         let injection: serde_json::Value =
@@ -2544,6 +2755,13 @@ mod version_check_tests {
                 .unwrap()
                 .contains("drafts/current-run.json")
         );
+        assert_eq!(
+            item["content"][0]["text"]
+                .as_str()
+                .unwrap()
+                .contains("Keep fixed repository safety"),
+            rollout.is_none() || std::env::var_os("LVK_TEST_READ_REJECT").is_some()
+        );
         let _: codex_protocol::models::ResponseItem = serde_json::from_value(item.clone()).unwrap();
         let response = if std::env::var_os("LVK_TEST_REJECT_INJECTION").is_some() {
             json!({"id":injection["id"],"error":{"code":-32601,"message":"unsupported fixture injection"}})
@@ -2557,13 +2775,19 @@ mod version_check_tests {
     #[tokio::test]
     async fn resumed_host_context_is_visible_before_any_new_turn() {
         use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
-        for (mode, reject) in [
-            (ExecutionMode::Code, false),
-            (ExecutionMode::Plan, false),
-            (ExecutionMode::Goal, false),
-            (ExecutionMode::PlanWithGoal, false),
-            (ExecutionMode::Code, true),
+        for (mode, reject, reduced, read_reject) in [
+            (ExecutionMode::Code, false, false, false),
+            (ExecutionMode::Plan, false, false, false),
+            (ExecutionMode::Goal, false, false, false),
+            (ExecutionMode::PlanWithGoal, false, false, false),
+            (ExecutionMode::Code, true, false, false),
+            (ExecutionMode::Code, false, true, false),
+            (ExecutionMode::Code, true, true, false),
+            (ExecutionMode::Code, false, true, true),
         ] {
+            if reduced && !cfg!(unix) {
+                continue;
+            }
             let cancel = CancellationToken::new();
             let client = AppServerClient::new(
                 LogWriter::new(tokio::io::sink()),
@@ -2584,6 +2808,27 @@ mod version_check_tests {
             if reject {
                 command.env("LVK_TEST_REJECT_INJECTION", "1");
             }
+            if read_reject {
+                command.env("LVK_TEST_READ_REJECT", "1");
+            }
+            let fixture_dir = tempfile::tempdir().unwrap();
+            if reduced {
+                // Synthetic history only; never read real Codex session files.
+                let path = fixture_dir
+                    .path()
+                    .canonicalize()
+                    .unwrap()
+                    .join("rollout.jsonl");
+                let previous = RESUME_FIXTURE_INSTRUCTIONS.replace("current-run", "previous-run");
+                let meta = json!({"type":"session_meta","payload":{"id":"resumed","cli_version":"0.163.0"}});
+                let message = json!({"type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"input_text","text":previous}]}});
+                std::fs::write(&path, format!("{meta}\n{message}\n")).unwrap();
+                command.env("LVK_TEST_RESUME_ROLLOUT", &path);
+                client
+                    .runtime_user_agent
+                    .set("fixture/0.163.0".into())
+                    .unwrap();
+            }
             let mut child = command.spawn().unwrap();
             let (exit_tx, _exit_rx) = tokio::sync::oneshot::channel();
             client.connect(JsonRpcPeer::spawn(
@@ -2597,9 +2842,7 @@ mod version_check_tests {
                 let result = client
                     .thread_resume(codex_app_server_protocol::ThreadResumeParams {
                         thread_id: "resumed".into(),
-                        developer_instructions: Some(
-                            "Current LVK run: drafts/current-run.json".into(),
-                        ),
+                        developer_instructions: Some(RESUME_FIXTURE_INSTRUCTIONS.into()),
                         ..Default::default()
                     })
                     .await;

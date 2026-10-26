@@ -50,10 +50,11 @@ const workspace = (n: number): WorkspaceWithStats => ({
         ? 'awaiting_approval'
         : n === 3
           ? 'succeeded'
-          : 'failed',
-  isRunning: n < 2,
+          : n === 4 ? 'awaiting_input' : 'failed',
+  isRunning: n < 2 || n === 4,
   hasPendingApproval: n === 1,
-  hasRunningDevServer: n < 3,
+  hasUnseenActivity: n === 2,
+  hasRunningDevServer: n < 3 || n === 4,
 });
 function Fixture() {
   const [columns, setColumns] = useState([
@@ -118,7 +119,7 @@ function Fixture() {
                       onClick={() => open(`Issue ${id}`)}
                     >
                       <KanbanCardContent
-                        displayId={id}
+                        displayId={id === 'a' ? 'LOCAL-VERY-LONG-PROJECT-ID-123456789' : id}
                         title={'Long readable title '.repeat(9)}
                         description={id === 'c' ? '   ' : description}
                         tags={tags}
@@ -134,13 +135,13 @@ function Fixture() {
                             </Popover>
                           ),
                         }}
-                        priority={null}
-                        assignees={[]}
+                        priority="high"
+                        onPriorityClick={(event) => { event.stopPropagation(); open('Priority'); }}
+                        onAssigneeClick={(event) => { event.stopPropagation(); open('Assignees'); }}
+                        assignees={[{user_id:'one', username:'Alice'}, {user_id:'two', username:'Bob'}, {user_id:'three', username:'Carol'}]}
                       />
                       <KanbanCardDetails
-                        showWorkspaces={show}
                         count={workspaces.length}
-                        workspaces={workspaces}
                         description={id === 'c' ? '' : description}
                       />
                       {show && (
@@ -164,6 +165,13 @@ function Fixture() {
             </section>
           ))}
         </KanbanGrid>
+        <section id="preparing-cases">
+          {(['pending', 'starting'] as const).map((status) => (
+            <div key={status} id={`preparing-${status}`}>
+              <IssueWorkspaceCard workspace={{...workspace(0), name: `Preparing ${status}`, latestProcessStatus: status, hasPendingApproval: false}} showStatusBadge={false} />
+            </div>
+          ))}
+        </section>
       </main>
     </TooltipProvider>
   );

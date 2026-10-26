@@ -304,14 +304,29 @@ export function useUiPreferencesScratch() {
 
   // Subscribe to store changes and save to server
   useEffect(() => {
-    const unsubscribe = useUiPreferencesStore.subscribe(() => {
+    const unsubscribe = useUiPreferencesStore.subscribe((state, previous) => {
       if (!isApplyingServerDataRef.current && hasInitializedRef.current) {
-        debouncedSave();
+        const sortState = (value: typeof state) =>
+          JSON.stringify({
+            selections: value.kanbanProjectViewSelections,
+            sorts: Object.entries(value.kanbanProjectViewPreferences).map(
+              ([project, views]) => [
+                project,
+                Object.entries(views).map(([view, preferences]) => [
+                  view,
+                  preferences.filters.sortField,
+                  preferences.filters.sortDirection,
+                ]),
+              ]
+            ),
+          });
+        if (sortState(state) !== sortState(previous)) void saveToServer();
+        else debouncedSave();
       }
     });
 
     return unsubscribe;
-  }, [debouncedSave]);
+  }, [debouncedSave, saveToServer]);
 
   return {
     isLoading,

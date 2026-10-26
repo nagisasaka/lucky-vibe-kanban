@@ -131,14 +131,38 @@ export function IssueWorkspaceCard({
 }: IssueWorkspaceCardProps) {
   const { t } = useTranslation('common');
   const isRunning = workspace.isRunning ?? false;
-  const hasPendingApproval = workspace.hasPendingApproval ?? false;
+  const hasPendingApproval =
+    workspace.hasPendingApproval ||
+    workspace.latestProcessStatus === 'awaiting_approval';
+  const needsInput = workspace.latestProcessStatus === 'awaiting_input';
   const hasRunningDevServer = workspace.hasRunningDevServer ?? false;
   const hasUnseenActivity = workspace.hasUnseenActivity ?? false;
+  const isPreparing = ['pending', 'starting'].includes(
+    workspace.latestProcessStatus ?? ''
+  );
   const isFailed =
     workspace.latestProcessStatus === 'failed' ||
     workspace.latestProcessStatus === 'crashed' ||
     workspace.latestProcessStatus === 'audit_failed';
 
+  const activity = hasPendingApproval
+    ? 'approval'
+    : needsInput
+      ? 'input'
+      : isRunning && !isPreparing
+        ? 'running'
+        : isFailed
+          ? 'failed'
+          : null;
+  const showReadState =
+    !isPreparing &&
+    !isRunning &&
+    !hasPendingApproval &&
+    !needsInput &&
+    (hasUnseenActivity ||
+      isFailed ||
+      workspace.latestProcessStatus === 'succeeded' ||
+      workspace.latestProcessStatus === 'cancelled');
   return (
     <IssueWorkspaceCardContainer
       onClick={onClick}
@@ -234,45 +258,64 @@ export function IssueWorkspaceCard({
               </Tooltip>
             )}
 
-            {!isRunning && isFailed && (
-              <TriangleIcon
-                className="size-icon-xs text-error shrink-0"
-                weight="fill"
+            {activity && (
+              <Tooltip content={t(`kanban.compact.${activity}`)}>
+                <span role="img" aria-label={t(`kanban.compact.${activity}`)}>
+                  {hasPendingApproval || needsInput ? (
+                    <HandIcon
+                      aria-hidden="true"
+                      className="size-icon-xs text-brand shrink-0"
+                      weight="fill"
+                    />
+                  ) : isRunning ? (
+                    <RunningDots />
+                  ) : (
+                    <TriangleIcon
+                      aria-hidden="true"
+                      className="size-icon-xs text-error shrink-0"
+                      weight="fill"
+                    />
+                  )}
+                </span>
+              </Tooltip>
+            )}
+            {isPreparing && <span className="text-low">Preparing…</span>}
+            {showReadState && (
+              <Tooltip
+                content={t(
+                  `kanban.compact.${hasUnseenActivity ? 'unseen' : 'read'}`
+                )}
+              >
+                <span
+                  role="img"
+                  aria-label={t(
+                    `kanban.compact.${hasUnseenActivity ? 'unseen' : 'read'}`
+                  )}
+                >
+                  <CircleIcon
+                    aria-hidden="true"
+                    className="size-icon-xs text-brand shrink-0"
+                    weight={hasUnseenActivity ? 'fill' : 'regular'}
+                  />
+                </span>
+              </Tooltip>
+            )}
+            {!isPreparing && (
+              <ChatElapsedTime
+                unknownLabel="—"
+                startedAt={workspace.latestProcessStartedAt}
+                endedAt={workspace.latestProcessCompletedAt}
+                active={
+                  !!workspace.latestProcessStatus &&
+                  [
+                    'running',
+                    'awaiting_input',
+                    'awaiting_approval',
+                    'cancelling',
+                  ].includes(workspace.latestProcessStatus)
+                }
               />
             )}
-
-            {isRunning &&
-              (hasPendingApproval ? (
-                <HandIcon
-                  className="size-icon-xs text-brand shrink-0"
-                  weight="fill"
-                />
-              ) : (
-                <RunningDots />
-              ))}
-
-            {hasUnseenActivity && !isRunning && !isFailed && (
-              <CircleIcon
-                className="size-icon-xs text-brand shrink-0"
-                weight="fill"
-              />
-            )}
-            <ChatElapsedTime
-              unknownLabel="—"
-              startedAt={workspace.latestProcessStartedAt}
-              endedAt={workspace.latestProcessCompletedAt}
-              active={
-                !!workspace.latestProcessStatus &&
-                [
-                  'pending',
-                  'starting',
-                  'running',
-                  'awaiting_input',
-                  'awaiting_approval',
-                  'cancelling',
-                ].includes(workspace.latestProcessStatus)
-              }
-            />
           </div>
 
           <span className="whitespace-nowrap shrink-0">

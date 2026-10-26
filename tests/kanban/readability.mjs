@@ -70,6 +70,13 @@ try {
   await expect(card('c').getByTestId('issue-description-preview')).toHaveCount(
     0
   );
+  for (const status of ['pending', 'starting']) {
+    const preparing=page.locator(`#preparing-${status}`);
+    await expect(preparing).toContainText('Preparing…');
+    await expect(preparing.getByRole('img', {name:'Dev server running', exact:true})).toBeVisible();
+    await expect(preparing.getByRole('img', {name:'Running', exact:true})).toHaveCount(0);
+    await expect(preparing).not.toContainText(/1m|65s/);
+  }
   await expect(a.getByText('Workspace 0', { exact: true })).toBeVisible();
   await expect(a.getByText('0 files', { exact: true })).toBeVisible();
   await expect(a.getByText('+0', { exact: true })).toBeVisible();
@@ -146,10 +153,25 @@ try {
     .evaluateAll((els) => els.forEach((e) => (e.style.width = '')));
   await page.getByText('Toggle workspaces', { exact: true }).click();
   await expect(a.getByText('Workspace 0', { exact: true })).toHaveCount(0);
-  await expect(a.getByText('Approval required', { exact: true })).toBeVisible();
+  await expect(a.locator('[aria-live]')).toHaveCount(0);
   await expect(preview).toBeVisible();
   await page.getByText('Toggle workspaces', { exact: true }).click();
   await expect(a.getByText('Workspace 0', { exact: true })).toBeVisible();
+  for (const width of [240, 260, 340]) {
+    await a.evaluate((e, width) => (e.style.width = `${width}px`), width);
+    const id = a.locator('[title="LOCAL-VERY-LONG-PROJECT-ID-123456789"]');
+    const priority = a.getByRole('button', { name: 'Priority', exact: true });
+    const assignee = a.getByRole('button', { name: 'Assignee', exact: true });
+    const [idBox, priorityBox, assigneeBox, cardBox] = await Promise.all([id,priority,assignee,a].map((e) => e.boundingBox()));
+    assert(idBox.x + idBox.width <= priorityBox.x + 1);
+    assert(assigneeBox.x + assigneeBox.width <= cardBox.x + cardBox.width);
+    assert(Math.abs(idBox.y - priorityBox.y) < 8);
+    await priority.focus(); await page.keyboard.press('Enter');
+    await expect(page.locator('output')).toHaveText('Priority');
+    await assignee.focus(); await page.keyboard.press('Enter');
+    await expect(page.locator('output')).toHaveText('Assignees');
+  }
+  await a.evaluate((e) => (e.style.width = ''));
   // Added LOCAL81 scope: tag geometry, keyboard editor, DevServer/Agent coexistence.
   const tagRow = a.getByTestId('kanban-tags');
   const tagTrigger = a.locator('button:has([data-testid="kanban-tags"])');
@@ -187,6 +209,17 @@ try {
     await expect(
       running.getByRole('img', { name: 'Dev server running' })
     ).toBeVisible();
+    await expect(running.getByRole('img', { name: 'Running', exact: true })).toBeVisible();
+    await expect(a.getByRole('button', {name: /Workspace 1/}).getByRole('img', {name: 'Approval required', exact: true})).toBeVisible();
+    const failed = a.getByRole('button', { name: /Workspace 2/ });
+    for (const name of ['Failed', 'Unseen activity', 'Dev server running']) {
+      await expect(failed.getByRole('img', { name, exact: true })).toBeVisible();
+    }
+    await expect(a.getByRole('button', { name: /Workspace 3/ }).getByRole('img', { name: 'Read', exact: true })).toBeVisible();
+    const input = card('b').getByRole('button', { name: /Workspace 4/ });
+    for (const name of ['Input required', 'Dev server running']) {
+      await expect(input.getByRole('img', { name, exact: true })).toBeVisible();
+    }
     const colors = await Promise.all(
       [0, 3].map((n) =>
         a
@@ -219,12 +252,9 @@ try {
       )
     );
   }
-  await expect(a.locator('[aria-live]')).not.toContainText(
-    'Dev server running'
-  );
+  await expect(a.locator('[aria-live]')).toHaveCount(0);
   await page.getByText('Toggle workspaces', { exact: true }).click();
-  await expect(a.locator('[aria-live]')).toContainText('Dev server running');
-  await expect(a.locator('[aria-live]')).toContainText('Approval required');
+  await expect(a.locator('[aria-live]')).toHaveCount(0);
   await page.getByText('Toggle workspaces', { exact: true }).click();
   await a.evaluate((e) => (e.style.width = ''));
   // Existing keyboard DnD crosses columns; pointer drop reaches an empty column.
@@ -242,10 +272,23 @@ try {
   await page.mouse.down();
   await page.mouse.move(from.x + 24, from.y + 12, { steps: 4 });
   await page.mouse.move(to.x + 40, to.y + 50, { steps: 20 });
+  const ghost = page.locator('[data-kanban-ghost]');
+  await expect(ghost).toBeVisible();
+  const ghostBounds = await ghost.boundingBox();
+  assert(ghostBounds.x > to.x - 50, 'ghost follows pointer into destination');
+  await page.screenshot({ path: `${output}/cross-column-ghost.png` });
   await page.mouse.up();
+  await expect(ghost).toHaveCount(0);
   await expect(
     page.locator('[data-kanban-column="3"] [data-kanban-card="c"]')
   ).toHaveCount(1);
+  // Escape cancels without moving the source card.
+  await card('e').focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('[data-kanban-ghost]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-kanban-ghost]')).toHaveCount(0);
+  await expect(page.locator('[data-kanban-column="2"] [data-kanban-card="e"]')).toHaveCount(1);
   assert.deepEqual(errors, []);
   await writeFile(
     `${output}/results.json`,

@@ -170,3 +170,29 @@ describe('task attempt view model', () => {
     ]);
   });
 });
+
+it.each([AgentRunStatus.pending, AgentRunStatus.starting])(
+  'shows %s as preparing without claiming a concurrency wait',
+  (status) => {
+    const [attempt] = buildTaskAttempts({
+      workspaceAttempts: [
+        {
+          id: 'reserved',
+          localWorkspaceId: 'local',
+          name: 'Agent',
+          archived: false,
+          updatedAt: '2026-10-26T00:00:00Z',
+          latestProcessStatus: status,
+          prs: [],
+          owner: null,
+          isOwnedByCurrentUser: true,
+        },
+      ],
+      workflowAttempts: [],
+    });
+    expect(attempt).toMatchObject({
+      statusLabel: 'Preparing',
+      statusTone: 'waiting',
+    });
+  }
+);

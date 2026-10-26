@@ -247,6 +247,37 @@ impl AgentProcessRegistry {
             .find(|entry| entry.runtime_id == runtime_id))
     }
 
+    /// Strict read-only lookup for status and cleanup verification. Damaged or
+    /// ambiguous evidence is not proof that a process is absent.
+    pub(crate) async fn peek_runtime(
+        &self,
+        runtime: Uuid,
+    ) -> io::Result<Option<RegisteredAgentProcess>> {
+        let _guard = self.lock.lock().await;
+        let registry = self.load_registry_locked().await?;
+        if registry.needs_rewrite {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Process registry observation is unconfirmed",
+            ));
+        }
+        Ok(registry
+            .processes
+            .into_iter()
+            .find(|entry| entry.runtime_id == runtime))
+    }
+
+    /// Observe only this runtime's registered OS identity without cleanup.
+    pub(crate) async fn observe_runtime(
+        &self,
+        runtime: Uuid,
+    ) -> io::Result<Option<RegisteredProcessPresence>> {
+        match self.peek_runtime(runtime).await? {
+            Some(process) => observe_os_process(&process).await.map(Some),
+            None => Ok(None),
+        }
+    }
+
     /// Observe all persisted processes after a service restart. This operation
     /// intentionally has no cleanup side effects. Callers may attach a live
     /// process to a watcher, observe an exited process, or leave an
@@ -823,6 +854,42 @@ mod tests {
 
     fn registry_in_temp_dir(temp_dir: &TempDir) -> AgentProcessRegistry {
         AgentProcessRegistry::new(temp_dir.path().join("runtime").join(REGISTRY_FILE_NAME))
+    }
+
+    #[tokio::test]
+    async fn dev_server_presence_does_not_repair_damaged_evidence() {
+        let temp = TempDir::new().unwrap();
+        let registry = registry_in_temp_dir(&temp);
+        tokio::fs::create_dir_all(registry.path.parent().unwrap())
+            .await
+            .unwrap();
+        tokio::fs::write(registry.path.as_ref(), b"corrupt")
+            .await
+            .unwrap();
+        assert!(registry.observe_runtime(Uuid::new_v4()).await.is_err());
+        assert_eq!(
+            tokio::fs::read(registry.path.as_ref()).await.unwrap(),
+            b"corrupt"
+        );
+    }
+
+    #[tokio::test]
+    async fn dev_server_presence_observation_preserves_registry() {
+        let temp = TempDir::new().unwrap();
+        let registry = registry_in_temp_dir(&temp);
+        let missing = Uuid::new_v4();
+        assert_eq!(registry.observe_runtime(missing).await.unwrap(), None);
+        let mut process = sample_process(std::process::id());
+        process.process_group_id = None;
+        registry.register(process.clone()).await.unwrap();
+        assert_eq!(
+            registry.observe_runtime(process.runtime_id).await.unwrap(),
+            Some(RegisteredProcessPresence::Alive)
+        );
+        assert_eq!(
+            registry.query_runtime(process.runtime_id).await.unwrap(),
+            Some(process)
+        );
     }
 
     #[tokio::test]

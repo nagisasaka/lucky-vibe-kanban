@@ -9,3 +9,5 @@ pub mod workflow_runtime;
 pub type DeploymentImpl = local_deployment::LocalDeployment;
 
 pub mod runtime_payload;
+
+pub(crate) mod provider_usage;

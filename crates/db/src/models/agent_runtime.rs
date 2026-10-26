@@ -67,6 +67,7 @@ pub struct AgentRunRecord {
 #[derive(Debug, Clone, FromRow)]
 pub struct AgentRunWorkspaceSummaryRecord {
     pub created_at: DateTime<Utc>,
+    pub started_at: Option<DateTime<Utc>>,
     pub completed_at: Option<DateTime<Utc>>,
     pub agent_run_id: Uuid,
     pub workspace_id: Uuid,
@@ -333,6 +334,9 @@ impl AgentRunRecord {
                        state.status,
                        state.updated_at,
                        ar.created_at,
+                       (SELECT MIN(p.process_started_at) FROM agent_run_attempts a
+                        JOIN agent_process_registry p ON p.run_attempt_id=a.id
+                        WHERE a.agent_run_id=ar.id) AS started_at,
                        attempt.finished_at AS completed_at,
                        ROW_NUMBER() OVER (
                            PARTITION BY ar.workspace_id
@@ -344,7 +348,7 @@ impl AgentRunRecord {
                 JOIN workspaces workspace ON workspace.id = ar.workspace_id
                 WHERE workspace.archived = ?
             )
-            SELECT agent_run_id, workspace_id, session_id, status, updated_at, created_at, completed_at
+            SELECT agent_run_id, workspace_id, session_id, status, updated_at, created_at, started_at, completed_at
             FROM ranked_runs
             WHERE row_number = 1
             "#,
@@ -818,7 +822,14 @@ impl AgentRunRecord {
             UPDATE agent_process_registry
             SET host_endpoint = ?, host_token = ?, host_instance_id = ?, updated_at = ?
             WHERE run_attempt_id = ? AND registry_status = 'reserved'
+              AND starting_failure_pending=0
               AND host_endpoint IS NULL AND host_token IS NULL
+              AND EXISTS (
+                  SELECT 1 FROM agent_run_attempts a
+                  JOIN agent_run_state s ON s.agent_run_id=a.agent_run_id
+                  WHERE a.id=agent_process_registry.run_attempt_id
+                    AND s.last_run_attempt_id=a.id AND s.status='starting'
+              )
             "#,
         )
         .bind(endpoint)
@@ -936,6 +947,17 @@ impl AgentRunRecord {
         pool: &SqlitePool,
         request: &AgentRunRequestEnvelope,
         attempt: &RunAttemptRequest,
+    ) -> Result<PersistedAgentRunIdentity, AgentRuntimePersistenceError> {
+        Self::persist_identity_with_launch(pool, request, attempt, false).await
+    }
+
+    /// Immediate creates must durably record launch eligibility with acceptance.
+    /// Setup reservations remain ineligible until their existing gate releases them.
+    pub async fn persist_identity_with_launch(
+        pool: &SqlitePool,
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+        launch_requested: bool,
     ) -> Result<PersistedAgentRunIdentity, AgentRuntimePersistenceError> {
         attempt.validate_for_run(request)?;
         if attempt.attempt_number != 1 {
@@ -1059,13 +1081,14 @@ impl AgentRunRecord {
 
         sqlx::query(
             r#"
-            INSERT INTO agent_process_registry (id, run_attempt_id, registry_status, updated_at)
-            VALUES (?, ?, 'reserved', ?)
+            INSERT INTO agent_process_registry (id, run_attempt_id, registry_status, updated_at, launch_requested)
+            VALUES (?, ?, 'reserved', ?, ?)
             "#,
         )
         .bind(process_registry_id)
         .bind(attempt.run_attempt_id)
         .bind(Utc::now())
+        .bind(launch_requested)
         .execute(&mut *transaction)
         .await?;
 
@@ -1190,7 +1213,7 @@ impl AgentRunRecord {
         .await?;
 
         sqlx::query(
-            "INSERT INTO agent_process_registry (id, run_attempt_id, registry_status, updated_at) VALUES (?, ?, 'reserved', ?)",
+            "INSERT INTO agent_process_registry (id, run_attempt_id, registry_status, updated_at, launch_requested) VALUES (?, ?, 'reserved', ?, 1)",
         )
         .bind(process_registry_id)
         .bind(attempt.run_attempt_id)
@@ -2070,6 +2093,38 @@ impl AgentEventRecord {
                     event.agent_run_id,
                 ))?;
         let mut state = state_json.0;
+        if matches!(
+            event.payload,
+            executors::runtime::AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting
+            }
+        ) && state.last_run_attempt_number >= event.run_attempt_number
+            && !matches!(
+                state.status,
+                AgentRunStatus::Pending | AgentRunStatus::Starting
+            )
+        {
+            return Err(AgentRuntimePersistenceError::IdentityConflict {
+                entity: "Starting after cancellation or completion",
+                key: event.run_attempt_id.to_string(),
+            });
+        }
+        if matches!(
+            event.payload,
+            executors::runtime::AgentEventPayload::LifecycleChanged {
+                status: AgentRunStatus::Starting
+            }
+        ) {
+            let failure_pending: bool = sqlx::query_scalar(
+                "SELECT starting_failure_pending FROM agent_process_registry WHERE run_attempt_id=?")
+                .bind(event.run_attempt_id).fetch_one(&mut *transaction).await?;
+            if failure_pending {
+                return Err(AgentRuntimePersistenceError::IdentityConflict {
+                    entity: "Starting after prelaunch failure fence",
+                    key: event.run_attempt_id.to_string(),
+                });
+            }
+        }
         let previous = (state.status, state.last_run_attempt_id);
         let applied = reduce_agent_event(&mut state, event)?;
         if applied == ReducerApply::Applied {
@@ -2266,6 +2321,12 @@ mod tests {
         .await
         .expect("create runtime schema");
         sqlx::raw_sql(include_str!(
+            "../../migrations/20261026180000_agent_starting_recovery.sql"
+        ))
+        .execute(pool)
+        .await
+        .unwrap();
+        sqlx::raw_sql(include_str!(
             "../../migrations/20260909000000_agent_projection_failures.sql"
         ))
         .execute(pool)
@@ -2278,8 +2339,9 @@ mod tests {
         .await
         .unwrap();
         sqlx::raw_sql(r#"
+            CREATE TABLE scratch (id BLOB, scratch_type TEXT, payload TEXT);
             CREATE TABLE local_project_statuses (id BLOB PRIMARY KEY, project_id BLOB, name TEXT, color TEXT, sort_order INTEGER, hidden INTEGER);
-            CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT);
+            CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT, sort_order REAL NOT NULL DEFAULT 0);
             CREATE TABLE local_workspace_links (workspace_id BLOB, issue_id BLOB);
         "#).execute(pool).await.unwrap();
         sqlx::raw_sql(include_str!(
@@ -2474,6 +2536,127 @@ mod tests {
             AgentProviderSessionRecord::upsert(&pool, Uuid::new_v4(), session_id, &incoming)
                 .await
                 .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn starting_recovery_migration_preserves_legacy_rows_without_launching_them() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        // Apply the real old schema, not a hand-written replacement for the migration.
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20260811000000_agent_runtime_v1.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        // The old migration enables FK enforcement itself. These synthetic
+        // registry-only legacy rows isolate the additive migration's effects;
+        // valid complete identities are covered by the full-chain fixtures.
+        sqlx::query("PRAGMA foreign_keys=OFF")
+            .execute(&pool)
+            .await
+            .unwrap();
+        for status in ["reserved", "running", "exited"] {
+            sqlx::query("INSERT INTO agent_process_registry(id,run_attempt_id,registry_status,pid,process_started_at,observed_exited_at,exit_code) VALUES(?,?,?,?,?,?,?)")
+                .bind(Uuid::new_v4()).bind(Uuid::new_v4()).bind(status)
+                .bind((status != "reserved").then_some(123_i64))
+                .bind((status != "reserved").then(Utc::now))
+                .bind((status == "exited").then(Utc::now))
+                .bind((status == "exited").then_some(0_i64))
+                .execute(&pool).await.unwrap();
+        }
+        let before: Vec<(Uuid, Uuid, String, Option<String>)> = sqlx::query_as(
+            "SELECT id,run_attempt_id,registry_status,host_endpoint FROM agent_process_registry ORDER BY id")
+            .fetch_all(&pool).await.unwrap();
+        let tables_before: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20261026180000_agent_starting_recovery.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let after: Vec<(Uuid, Uuid, String, Option<String>)> = sqlx::query_as(
+            "SELECT id,run_attempt_id,registry_status,host_endpoint FROM agent_process_registry ORDER BY id")
+            .fetch_all(&pool).await.unwrap();
+        assert_eq!(before, after);
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            tables_before
+        );
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM agent_process_registry WHERE launch_requested=0 AND starting_write_attempts=0 AND starting_failure_pending=0")
+            .fetch_one(&pool).await.unwrap(), 3);
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_agent_process_registry_prelaunch_recovery'")
+            .fetch_one(&pool).await.unwrap(), 1);
+        pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn launch_receipt_is_atomic_with_admission_and_does_not_activate_setup() {
+        let pool = setup_pool().await;
+        let (session_id, workspace_id) = insert_anchors(&pool).await;
+        let (request, attempt) = requests(session_id, workspace_id, "launch-receipt");
+        sqlx::raw_sql("CREATE TRIGGER reject_receipt BEFORE INSERT ON agent_process_registry WHEN NEW.launch_requested=1 BEGIN SELECT RAISE(ABORT,'receipt unavailable'); END;")
+            .execute(&pool).await.unwrap();
+        assert!(
+            AgentRunRecord::persist_identity_with_launch(&pool, &request, &attempt, true)
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM agent_runs")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        sqlx::raw_sql("DROP TRIGGER reject_receipt")
+            .execute(&pool)
+            .await
+            .unwrap();
+        AgentRunRecord::persist_identity_with_launch(&pool, &request, &attempt, true)
+            .await
+            .unwrap();
+        AgentRunRecord::persist_identity_with_launch(&pool, &request, &attempt, true)
+            .await
+            .unwrap();
+        let receipt: (bool, i64) = sqlx::query_as("SELECT launch_requested,starting_write_attempts FROM agent_process_registry WHERE run_attempt_id=?")
+            .bind(attempt.run_attempt_id).fetch_one(&pool).await.unwrap();
+        assert_eq!(receipt, (true, 0));
+        assert!(
+            AgentRunRecord::reserve_process_host(
+                &pool,
+                attempt.run_attempt_id,
+                "127.0.0.1:1",
+                "fixture",
+                Uuid::new_v4()
+            )
+            .await
+            .is_err(),
+            "a receipt alone cannot authorise host launch without durable Starting"
+        );
+        let (setup, setup_attempt) = requests(session_id, workspace_id, "setup-reservation");
+        AgentRunRecord::persist_identity_before_launch(&pool, &setup, &setup_attempt)
+            .await
+            .unwrap();
+        assert!(
+            !sqlx::query_scalar::<_, bool>(
+                "SELECT launch_requested FROM agent_process_registry WHERE run_attempt_id=?"
+            )
+            .bind(setup_attempt.run_attempt_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap()
         );
     }
 

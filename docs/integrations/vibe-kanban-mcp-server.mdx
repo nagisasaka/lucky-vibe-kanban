@@ -10,7 +10,7 @@ This page covers connecting **external MCP clients** to Vibe Kanban's MCP server
 </Note>
 
 <Info>
-Vibe Kanban's MCP server is **local-only** - it runs on your computer and can only be accessed by applications installed locally. It cannot be accessed via publicly accessible URLs.
+The stdio transport runs locally alongside LVK. Authenticated remote MCP is a separate server endpoint; configure its authentication and delegated permissions before connecting remotely. See [Authentication](/self-hosting/authentication).
 </Info>
 
 <video
@@ -59,6 +59,36 @@ The Vibe Kanban MCP server provides tools for managing organisations, projects, 
 <Note>
 Many tools accept an optional `project_id` or `organization_id` parameter. When running inside a workspace linked to a remote project, these are inferred automatically from context and can be omitted. The exception is `list_projects`, which always requires an explicit `organization_id`.
 </Note>
+
+### Managed Workspace DevServers
+
+`start_dev_server`, `stop_dev_server`, and `get_dev_server_status` require explicit
+`project_id` and `workspace_id`. They are exposed in both global and scoped stdio
+catalogues and the authenticated remote MCP catalogue. An orchestrator-scoped stdio connection
+rejects a different Workspace. Configure the LVK MCP preset for your implementation
+agent as described above; defining a tool alone does not connect an agent to it.
+
+These tools use the UI's managed script execution. Starting an already running
+DevServer returns its existing process identities without restarting it. Concurrent
+starts share admission; stopping an already stopped DevServer is a no-op. Only
+DevServer processes in the selected Workspace are stopped. Archived, deleted,
+execution-only or Integration-reserved Workspaces reject mutations. Missing scripts
+and execution failures are reported without substituting a shell launch.
+
+Remote status requires `lvk:read` and `lvk:runtime:read`; start/stop also require
+`lvk:runtime:execute` and a stable `request_id`. A returned operation receipt is
+acceptance, not proof of a running server. Read `get_operation` using the same
+Project and request ID for its result, then refresh `get_dev_server_status`.
+Stdio start/stop return the manager result directly, including `accepted` and
+`failure_reason` alongside the observation.
+
+Observations include Project/Workspace IDs, `observed_at`, managed process and
+Session IDs, process statuses and exit codes. `running` means a running management record and observed live registered OS process presence;
+application readiness and HTTP health are not tested. Unconfirmed OS presence is
+`running_unconfirmed`. Terminal DB
+rows whose process tracking has not settled report `stopping_or_unconfirmed`, and
+new starts fail until cleanup settles. Status does not launch, stop or reconcile
+processes. A failed request is not permission to use a different execution route.
 
 ### Context
 

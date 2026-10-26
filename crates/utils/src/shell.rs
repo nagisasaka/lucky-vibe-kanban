@@ -89,6 +89,38 @@ pub async fn resolve_executable_path(executable: &str) -> Option<PathBuf> {
         .flatten()
 }
 
+/// Passive diagnostics must never start a login shell or source startup files
+/// merely because a CLI is missing from PATH. Preserve explicit paths and the
+/// ordinary per-user executable search, using filesystem lookups only.
+pub async fn resolve_executable_path_without_refresh(executable: &str) -> Option<PathBuf> {
+    if executable.trim().is_empty() {
+        return None;
+    }
+    if let Some(found) = which(executable).await {
+        return Some(found);
+    }
+    let path = Path::new(executable);
+    if path.is_absolute()
+        || path.components().count() != 1
+        || executable.contains(std::path::MAIN_SEPARATOR)
+    {
+        return None;
+    }
+    let directories = user_executable_directories(
+        dirs::home_dir().as_deref(),
+        std::env::var_os("APPDATA").as_deref(),
+        std::env::var_os("NPM_CONFIG_PREFIX")
+            .or_else(|| std::env::var_os("npm_config_prefix"))
+            .as_deref(),
+        std::env::var_os("BUN_INSTALL").as_deref(),
+    );
+    let executable = executable.to_owned();
+    tokio::task::spawn_blocking(move || find_user_executable(&executable, directories))
+        .await
+        .ok()
+        .flatten()
+}
+
 fn find_user_executable(executable: &str, directories: Vec<PathBuf>) -> Option<PathBuf> {
     let fallback = join_paths(directories.into_iter().filter(|p| p.is_dir())).ok()?;
     which::which_in_global(executable, Some(fallback))
@@ -501,4 +533,26 @@ fn get_fresh_path_blocking() -> Option<String> {
         .map(OsString::from)
         .reduce(|a, b| merge_paths(&a, &b))
         .map(|merged| merged.to_string_lossy().into_owned())
+}
+
+#[cfg(test)]
+mod passive_resolution_tests {
+    #[tokio::test]
+    async fn passive_executable_resolution_uses_filesystem_only() {
+        let before = std::env::var_os("PATH");
+        let executable = std::env::current_exe().unwrap();
+        assert_eq!(
+            super::resolve_executable_path_without_refresh(executable.to_str().unwrap()).await,
+            Some(executable)
+        );
+        assert!(
+            super::resolve_executable_path_without_refresh(&format!(
+                "lvk-missing-{}",
+                uuid::Uuid::new_v4()
+            ))
+            .await
+            .is_none()
+        );
+        assert_eq!(std::env::var_os("PATH"), before);
+    }
 }

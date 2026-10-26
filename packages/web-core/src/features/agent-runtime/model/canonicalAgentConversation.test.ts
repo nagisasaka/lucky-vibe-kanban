@@ -1515,3 +1515,36 @@ it('distinguishes a received empty plan snapshot from a missing or malformed pla
     entries.find((e) => e.providerText?.kind === 'plan')?.providerText?.steps
   ).toEqual([]);
 });
+
+it.each(['pending', 'starting'] as const)(
+  'does not start the execution clock for %s',
+  (status) => {
+    const projection = projectRuns([
+      { runId: 'prelaunch', status, events: [] },
+    ]);
+    expect(projection.entries.some((entry) => entry.runTiming)).toBe(false);
+    expect(projection.entries.at(-1)?.content).toMatchObject({
+      content: 'Preparing agent run…',
+    });
+  }
+);
+
+it('starts elapsed time from durable Running evidence rather than acceptance', () => {
+  const projection = projectRuns([
+    {
+      runId: 'launched',
+      status: 'running',
+      events: [
+        event('launched', 4, {
+          type: 'lifecycle_changed',
+          data: { status: 'running' },
+        }),
+      ],
+    },
+  ]);
+  expect(projection.entries.at(-1)?.runTiming).toEqual({
+    startedAt: '2026-08-14T00:00:04Z',
+    endedAt: null,
+    active: true,
+  });
+});

@@ -160,6 +160,7 @@ impl Deployment for LocalDeployment {
         .await;
         container.spawn_agent_run_terminal_monitor();
         agent_run_port.reconcile_process_hosts().await;
+        agent_run_port.spawn_prelaunch_reconciliation(_shutdown.clone());
 
         let events = EventService::new(db.clone(), events_msg_store, events_entry_count);
 

@@ -64,6 +64,19 @@ pub(super) enum Change {
 
 #[async_trait]
 pub(super) trait RuntimeActions: Send + Sync {
+    async fn dev_server_status(&self, _project: Uuid, _workspace: Uuid) -> Result<Value, ApiError> {
+        Err(ApiError::Conflict("DevServer runtime unavailable".into()))
+    }
+
+    async fn dev_server(
+        &self,
+        _project: Uuid,
+        _workspace: Uuid,
+        _start: bool,
+    ) -> Result<Value, ApiError> {
+        Err(ApiError::Conflict("DevServer runtime unavailable".into()))
+    }
+
     async fn archive_scripts_settled(&self, _workspace: Uuid) -> Result<bool, ApiError> {
         Err(ApiError::Conflict("Archive runtime unavailable".into()))
     }
@@ -111,6 +124,19 @@ pub(super) fn identity(operation: Uuid, key: String) -> agent_runs::AgentRunCont
 
 #[async_trait]
 impl RuntimeActions for ExistingRuntime {
+    async fn dev_server_status(&self, project: Uuid, workspace: Uuid) -> Result<Value, ApiError> {
+        crate::routes::workspaces::dev_server::status(&self.0, project, workspace).await
+    }
+
+    async fn dev_server(
+        &self,
+        project: Uuid,
+        workspace: Uuid,
+        start: bool,
+    ) -> Result<Value, ApiError> {
+        crate::routes::workspaces::dev_server::change(&self.0, project, workspace, start).await
+    }
+
     async fn archive_scripts_settled(&self, workspace: Uuid) -> Result<bool, ApiError> {
         use services::services::container::ContainerService;
         Ok(self.0.container().scripts_settled(workspace).await?)

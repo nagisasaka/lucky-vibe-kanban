@@ -1632,6 +1632,12 @@ mod tests {
         .execute(&pool)
         .await
         .expect("create runtime schema");
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20261026180000_agent_starting_recovery.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
         pool
     }
 

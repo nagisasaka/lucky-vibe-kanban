@@ -31,6 +31,20 @@ impl<'a> ClaudeCodeCommandAdapter<'a> {
         }
     }
 
+    /// Official non-model control lane. Do not inherit Project settings,
+    /// hooks, MCP servers or persistence. --bare is unsuitable for OAuth.
+    pub(super) fn build_passive_usage(&self) -> Result<CommandBuilder, CommandBuildError> {
+        let builder=CommandBuilder::new(base_command(false)).params([
+            "-p", "--verbose", "--input-format=stream-json", "--output-format=stream-json",
+            "--no-session-persistence", "--setting-sources", "user",
+            "--strict-mcp-config", "--mcp-config", "{\"mcpServers\":{}}",
+            "--tools", "", "--settings", if self.agent.require_subscription_login.unwrap_or(false) {
+                "{\"disableAllHooks\":true,\"forceLoginMethod\":\"claudeai\",\"env\":{\"ANTHROPIC_CUSTOM_HEADERS\":\"\"}}"
+            } else { "{\"disableAllHooks\":true}" },
+        ]);
+        apply_overrides(builder, &self.agent.cmd)
+    }
+
     pub fn build_runtime(
         &self,
         supports_effort: bool,

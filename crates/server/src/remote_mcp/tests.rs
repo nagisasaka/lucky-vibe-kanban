@@ -333,6 +333,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         ("add_issue_tag", "lvk:write"),
         ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
+        ("edit_issue_comment", "lvk:write"),
         ("create_todo", "lvk:write"),
         ("write_design_note", "lvk:write"),
         ("update_todo", "lvk:write"),
@@ -1423,6 +1424,18 @@ fn plugin_tool_catalog() {
     let tools = super::tools();
     let names: BTreeSet<_> = tools.iter().map(|tool| &tool.name).collect();
     assert_eq!(names.len(), tools.len(), "Tool names must be unique");
+    for name in [
+        "read_provider_usage",
+        "start_dev_server",
+        "stop_dev_server",
+        "get_dev_server_status",
+        "edit_issue_comment",
+    ] {
+        assert!(
+            names.iter().any(|actual| actual.as_ref() == name),
+            "Missing merged tool {name}"
+        );
+    }
     if let Some(path) = std::env::var_os("LVK_MCP_TOOL_CATALOG") {
         std::fs::write(path, serde_json::to_vec_pretty(&tools).unwrap()).unwrap();
     }

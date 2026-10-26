@@ -41,6 +41,20 @@ pub enum CommandBuildError {
     QuoteError(#[from] shlex::QuoteError),
 }
 
+/// Passive diagnostics can select an installed CLI path but cannot carry a
+/// prompt, resume flag, shell wrapper arguments or extra execution switches.
+pub fn supports_passive_launcher(overrides: &CmdOverrides) -> bool {
+    overrides
+        .additional_params
+        .as_ref()
+        .is_none_or(Vec::is_empty)
+        && overrides.base_command_override.as_ref().is_none_or(|base| {
+            CommandBuilder::new(base)
+                .build_initial()
+                .is_ok_and(|parts| parts.args.is_empty())
+        })
+}
+
 #[derive(Debug, Clone)]
 pub struct CommandParts {
     program: String,
@@ -50,6 +64,23 @@ pub struct CommandParts {
 impl CommandParts {
     pub fn new(program: String, args: Vec<String>) -> Self {
         Self { program, args }
+    }
+
+    pub async fn into_resolved_passive(self) -> Result<(PathBuf, Vec<String>), ExecutorError> {
+        let CommandParts { program, args } = self;
+        let executable = tokio::time::timeout(
+            std::time::Duration::from_secs(2),
+            workspace_utils::shell::resolve_executable_path_without_refresh(&program),
+        )
+        .await
+        .map_err(|_| {
+            ExecutorError::Io(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "Passive CLI resolution timed out",
+            ))
+        })?
+        .ok_or(ExecutorError::ExecutableNotFound { program })?;
+        Ok((executable, args))
     }
 
     pub async fn into_resolved(self) -> Result<(PathBuf, Vec<String>), ExecutorError> {

@@ -38,10 +38,12 @@ impl ToolError {
 
 mod context;
 mod design_notes;
+mod dev_server;
 mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
 mod organizations;
+mod provider_usage;
 mod remote_issues;
 mod remote_projects;
 mod repos;
@@ -54,7 +56,9 @@ mod workspaces;
 impl McpServer {
     pub fn global_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         Self::context_tools_router()
+            + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
+            + Self::dev_server_tools_router()
             + Self::workspaces_tools_router()
             + Self::organizations_tools_router()
             + Self::repos_tools_router()
@@ -71,7 +75,9 @@ impl McpServer {
 
     pub fn orchestrator_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         let mut router = Self::context_tools_router()
+            + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
+            + Self::dev_server_tools_router()
             + Self::workspaces_tools_router()
             + Self::session_tools_router();
         router.remove_route("list_workspaces");
@@ -402,11 +408,10 @@ mod tests {
     }
 
     fn tool_names(router: rmcp::handler::server::tool::ToolRouter<McpServer>) -> BTreeSet<String> {
-        router
-            .list_all()
-            .into_iter()
-            .map(|tool| tool.name.to_string())
-            .collect()
+        let tools = router.list_all();
+        let names: BTreeSet<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
+        assert_eq!(names.len(), tools.len(), "Tool names must be unique");
+        names
     }
 
     #[test]
@@ -418,6 +423,10 @@ mod tests {
             "get_context".to_string(),
             "get_execution".to_string(),
             "get_workspace_tokens".to_string(),
+            "read_provider_usage".to_string(),
+            "start_dev_server".to_string(),
+            "stop_dev_server".to_string(),
+            "get_dev_server_status".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "run_resource_operation".to_string(),
@@ -434,6 +443,14 @@ mod tests {
     fn global_mode_keeps_workspace_admin_and_discovery_tools() {
         let actual = tool_names(McpServer::global_mode_router());
 
+        for name in [
+            "read_provider_usage",
+            "start_dev_server",
+            "stop_dev_server",
+            "get_dev_server_status",
+        ] {
+            assert!(actual.contains(name));
+        }
         assert!(actual.contains("list_workspaces"));
         assert!(actual.contains("delete_workspace"));
         assert!(actual.contains("run_resource_operation"));

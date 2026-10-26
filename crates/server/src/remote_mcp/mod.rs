@@ -5,6 +5,9 @@ mod auth;
 mod code_read;
 mod config;
 mod design_notes;
+mod dev_server;
+#[cfg(test)]
+mod dev_server_tests;
 pub mod environment;
 #[cfg(target_os = "linux")]
 mod environment_files;
@@ -31,6 +34,7 @@ mod launch;
 mod merge_read;
 pub(crate) mod operations;
 mod project_read;
+mod provider_usage;
 mod questions;
 mod read;
 mod repository_wiki;
@@ -182,8 +186,10 @@ fn transport_router(remote: Remote) -> Router {
 
 fn operation_scope(name: &str) -> Option<&'static str> {
     match name {
-        "run_process" | "stop_process" | "self_restart" => Some("lvk:runtime:execute"),
-        "get_runtime_access"
+        "run_process" | "stop_process" | "self_restart" | "start_dev_server"
+        | "stop_dev_server" => Some("lvk:runtime:execute"),
+        "get_dev_server_status"
+        | "get_runtime_access"
         | "list_runtime_files"
         | "read_runtime_file"
         | "list_processes"
@@ -191,7 +197,8 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "read_process_output"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
         "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
-        "add_issue_comment"
+        "edit_issue_comment"
+        | "add_issue_comment"
         | "write_design_note"
         | "create_todo"
         | "update_todo"
@@ -219,7 +226,10 @@ fn operation_scope(name: &str) -> Option<&'static str> {
 }
 
 fn scope_hint(name: &str, missing: &str) -> String {
-    if matches!(name, "run_process" | "stop_process" | "self_restart") {
+    if matches!(
+        name,
+        "run_process" | "stop_process" | "self_restart" | "start_dev_server" | "stop_dev_server"
+    ) {
         "lvk:read lvk:runtime:read lvk:runtime:execute".into()
     } else {
         format!("lvk:read {missing}")
@@ -379,6 +389,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(environment::tools());
     tools.extend(read::tools());
     tools.extend(project_read::tools());
+    tools.extend(provider_usage::tools());
     tools.extend(merge_read::tools());
     tools.extend(evidence_read::tools());
     tools.extend(verification_read::tools());
@@ -398,6 +409,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(run_events::tools());
     tools.extend(resource_observation::tools());
     tools.extend(runtime_write::tools());
+    tools.extend(dev_server::tools());
     tools.extend(goals::tools());
     tools.extend(workspace_archive::tools());
     tools.extend(issue_archive::tools());
@@ -500,6 +512,9 @@ impl Remote {
             name if goals::tools().iter().any(|tool| tool.name == name) => {
                 goals::call(self, principal, name, args).await
             }
+            "start_dev_server" | "stop_dev_server" | "get_dev_server_status" => {
+                dev_server::call(self, principal, request.name.as_ref(), args).await
+            }
             "get_resource_observation" => resource_observation::call(args).await,
             "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
@@ -551,6 +566,7 @@ impl Remote {
             name if evidence_read::tools().iter().any(|tool| tool.name == name) => {
                 evidence_read::call(self, name, args).await
             }
+            "read_provider_usage" => provider_usage::call(self, args).await,
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
             }

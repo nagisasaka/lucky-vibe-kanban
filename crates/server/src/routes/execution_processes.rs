@@ -220,6 +220,20 @@ async fn stop_execution_process(
         super::workspaces::usage::stop(&deployment, &workspace).await?;
         return Ok(ResponseJson(ApiResponse::success(())));
     }
+    // DevServer UI stop participates in the same admission/Workspace ordering
+    // as managed MCP start/stop. Other execution controls retain their contract.
+    let _dev_server_guard = if execution_process.run_reason
+        == db::models::execution_process::ExecutionProcessRunReason::DevServer
+    {
+        let admission = services::services::integration_admission::MUTATIONS
+            .lock()
+            .await;
+        let guard = super::workspaces::dev_server::lock(workspace.id).await;
+        super::workspaces::dev_server::validate(&deployment, workspace.id).await?;
+        Some((admission, guard))
+    } else {
+        None
+    };
     deployment
         .container()
         .stop_execution(&execution_process, ExecutionProcessStatus::Killed)

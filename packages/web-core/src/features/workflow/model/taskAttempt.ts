@@ -160,6 +160,7 @@ function workspaceStatusLabel(workspace: WorkspaceWithStats): string {
   switch (workspace.latestProcessStatus) {
     case 'pending':
     case 'starting':
+      return 'Preparing';
     case 'running':
       return 'Running';
     case 'awaiting_input':
@@ -188,6 +189,7 @@ function workspaceStatusTone(
   switch (workspace.latestProcessStatus) {
     case 'pending':
     case 'starting':
+      return 'waiting';
     case 'running':
       return 'running';
     case 'awaiting_input':
