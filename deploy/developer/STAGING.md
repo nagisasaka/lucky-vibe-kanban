@@ -15,6 +15,12 @@ is required. The standard server still runs the image's installed binary.
 - Queue that immutable image digest for stable HTTPS 443 through `client.py`.
   End the requesting agent run so the host can observe an idle system.
 
+Preview builds use `node scripts/dev-cargo.mjs build`: opt-level=0,
+line-tables-only, strip=none, split-debuginfo=off and incremental=false.
+Final targets are source-checkout-local; intermediates share the official Cargo
+build-dir only when that checkout has `.lvk-shared/cache`. Missing shared storage
+or sccache uses the entry's reported fallback.
+
 Staging describes an environment, not a Cargo profile. This kit uses debug
 binaries with built frontend assets. Release images use the existing optimized
 CI build and image smoke tests. Both binaries honor `LVK_INSTANCE_DIR`.

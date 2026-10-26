@@ -74,7 +74,10 @@ FROM chef AS dependencies
 COPY --from=planner /app/recipe.json recipe.json
 # These artifacts must be regular layer contents, not cache mounts: registry
 # cache exports need to carry them to fresh GitHub Actions runners.
-RUN cargo chef cook --locked --release --recipe-path recipe.json \
+# Stable distribution: scoped to compilation, never runtime/Project environment.
+RUN CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_STRIP=symbols \
+    CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off CARGO_PROFILE_RELEASE_OPT_LEVEL=3 \
+    CARGO_PROFILE_RELEASE_INCREMENTAL=false cargo chef cook --locked --release --recipe-path recipe.json \
     --bin server --bin agent-process-host --bin vibe-kanban-mcp
 
 FROM dependencies AS builder
@@ -95,7 +98,9 @@ COPY crates/ crates/
 COPY assets/ assets/
 COPY --from=fe-builder /app/packages/local-web/dist packages/local-web/dist
 
-RUN cargo build --locked --release --bin server --bin agent-process-host --bin vibe-kanban-mcp \
+RUN CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_PROFILE_RELEASE_STRIP=symbols \
+    CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off CARGO_PROFILE_RELEASE_OPT_LEVEL=3 \
+    CARGO_PROFILE_RELEASE_INCREMENTAL=false cargo build --locked --release --bin server --bin agent-process-host --bin vibe-kanban-mcp \
  && cp /app/target/release/server /usr/local/bin/server \
  && cp /app/target/release/agent-process-host /usr/local/bin/agent-process-host \
  && cp /app/target/release/vibe-kanban-mcp /usr/local/bin/vibe-kanban-mcp

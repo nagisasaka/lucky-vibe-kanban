@@ -157,9 +157,6 @@ async function main() {
       LVK_BUILD_KIND: "development",
       LVK_BUILD_RELEASE_TAG: "",
       LVK_BUILD_DIRTY: String(dirty),
-      CARGO_TARGET_DIR: join(config.root, "target"),
-      CARGO_PROFILE_DEV_DEBUG: "0",
-      CARGO_INCREMENTAL: "0",
       CARGO_BUILD_JOBS: process.env.CARGO_BUILD_JOBS || "2",
     };
     // Build UI first: RustEmbed serves it in both debug and release profiles.
@@ -168,13 +165,21 @@ async function main() {
       env,
     });
     await run(
-      "cargo",
-      ["build", "--locked", "--bin", "server", "--bin", "agent-process-host"],
+      process.execPath,
+      [
+        join(source, "scripts/dev-cargo.mjs"),
+        "build",
+        "--locked",
+        "--bin",
+        "server",
+        "--bin",
+        "agent-process-host",
+      ],
       { cwd: source, env },
     );
     for (const binary of ["server", "agent-process-host"]) {
       await copyFile(
-        join(env.CARGO_TARGET_DIR, "debug", binary),
+        join(source, "target", "debug", binary),
         join(build, binary),
       );
     }
