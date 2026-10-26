@@ -191,6 +191,9 @@ impl Message {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "subtype", rename_all = "snake_case")]
 pub enum SDKControlRequestType {
+    GetUsage {
+        skip_behaviors: bool,
+    },
     SetPermissionMode {
         mode: PermissionMode,
     },

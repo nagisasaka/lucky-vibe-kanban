@@ -237,6 +237,14 @@ impl AppServerClient {
     }
 
     pub async fn initialize(&self) -> Result<(), ExecutorError> {
+        self.initialize_inner(true).await
+    }
+
+    pub(super) async fn initialize_passive(&self) -> Result<(), ExecutorError> {
+        self.initialize_inner(false).await
+    }
+
+    async fn initialize_inner(&self, observe_version: bool) -> Result<(), ExecutorError> {
         let request = ClientRequest::Initialize {
             request_id: self.next_request_id(),
             params: InitializeParams {
@@ -259,8 +267,10 @@ impl AppServerClient {
         // reported in the initialize response is useful audit information,
         // but it is not a compatibility gate. Runtime compatibility is
         // established by the handshake and the methods/capabilities we use.
-        observe_codex_version(&response.user_agent);
-        let _ = self.runtime_user_agent.set(response.user_agent.clone());
+        if observe_version {
+            observe_codex_version(&response.user_agent);
+            let _ = self.runtime_user_agent.set(response.user_agent.clone());
+        }
         self.send_message(&ClientNotification::Initialized).await
     }
 
@@ -854,6 +864,35 @@ impl AppServerClient {
             params: None,
         };
         self.send_request(request, "account/rateLimits/read").await
+    }
+
+    /// Minimal compatibility bridge for newer account RPCs. Typed response
+    /// projections live in account_read; ordinary executor RPCs remain pinned.
+    pub(super) async fn account_read_rpc<R>(
+        &self,
+        method: &'static str,
+        params: Value,
+    ) -> Result<R, ExecutorError>
+    where
+        R: DeserializeOwned + std::fmt::Debug,
+    {
+        let id = self.next_request_id();
+        let request = JSONRPCRequest {
+            id: id.clone(),
+            trace: None,
+            method: method.into(),
+            params: Some(params),
+        };
+        self.rpc()
+            .request_with_raw_timeout(
+                id,
+                &request,
+                method,
+                self.cancel.clone(),
+                Duration::from_secs(5),
+            )
+            .await
+            .map(|(response, _)| response)
     }
 
     async fn handle_server_request(
