@@ -204,11 +204,51 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
               {t('kanban.subIssueIndicator')}
             </span>
           )}
-          <span className="font-ibm-plex-mono text-sm text-low truncate">
+          <span
+            className="font-ibm-plex-mono text-sm text-low truncate"
+            title={displayId}
+          >
             {displayId}
           </span>
           {isLoading && <RunningDots />}
         </div>
+        <div className="ml-auto flex shrink-0 items-center gap-half">
+          <div className="flex items-center gap-half min-w-0">
+            {onPriorityClick ? (
+              <button
+                type="button"
+                onClick={onPriorityClick}
+                aria-label={t('kanban.priority')}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="flex items-center cursor-pointer hover:bg-secondary rounded-sm transition-colors"
+              >
+                <PriorityIcon priority={priority} />
+                {!priority && (
+                  <CircleDashedIcon
+                    className="size-icon-xs text-low"
+                    weight="bold"
+                  />
+                )}
+              </button>
+            ) : (
+              <PriorityIcon priority={priority} />
+            )}
+          </div>
+          {onAssigneeClick ? (
+            <button
+              type="button"
+              onClick={onAssigneeClick}
+              aria-label={t('kanban.assignee')}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="cursor-pointer hover:bg-secondary rounded-sm transition-colors"
+            >
+              <KanbanAssignee assignees={assignees} />
+            </button>
+          ) : (
+            <KanbanAssignee assignees={assignees} />
+          )}
+        </div>
+
         {onMoreActionsClick && (
           <button
             type="button"
@@ -234,42 +274,6 @@ export function KanbanCardContent<TTag extends KanbanTag = KanbanTag>({
 
       {/* Row 2: Title */}
       <span className="text-base text-normal truncate">{title}</span>
-
-      {/* Row 4: Priority + Assignee */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-half min-w-0">
-          {onPriorityClick ? (
-            <button
-              type="button"
-              onClick={onPriorityClick}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="flex items-center cursor-pointer hover:bg-secondary rounded-sm transition-colors"
-            >
-              <PriorityIcon priority={priority} />
-              {!priority && (
-                <CircleDashedIcon
-                  className="size-icon-xs text-low"
-                  weight="bold"
-                />
-              )}
-            </button>
-          ) : (
-            <PriorityIcon priority={priority} />
-          )}
-        </div>
-        {onAssigneeClick ? (
-          <button
-            type="button"
-            onClick={onAssigneeClick}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="cursor-pointer hover:bg-secondary rounded-sm transition-colors"
-          >
-            <KanbanAssignee assignees={assignees} />
-          </button>
-        ) : (
-          <KanbanAssignee assignees={assignees} />
-        )}
-      </div>
 
       {/* Row 5: Tags, PRs, Relationships (own row to prevent overflow) */}
       {(tags.length > 0 ||

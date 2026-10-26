@@ -140,10 +140,18 @@ pub(super) async fn call(
                 let target_revision = args.review_target.map(|target| target.revision);
                 // Single INSERT ... SELECT rechecks membership at the write boundary.
                 // Receipt ID is also the comment ID; concurrent requests append distinct rows.
+                let result: Result<_, sqlx::Error> = async {
+                let mut tx = owned.pool.begin().await?;
                 let result = sqlx::query("INSERT INTO local_issue_comments(id,issue_id,author_id,message,reviewer_label,target_revision,recorded_principal) SELECT ?,id,?,?,?,?,? FROM local_issues WHERE id=? AND project_id=?")
                     .bind(id).bind(server_access::actor_id()).bind(args.message).bind(args.reviewer_label)
                     .bind(&target_revision).bind(recorded_principal).bind(args.issue_id).bind(args.project_id)
-                    .execute(&owned.pool).await;
+                    .execute(&mut *tx).await?;
+                if result.rows_affected() == 1 {
+                    db::models::issue_order::promote(&mut tx, args.issue_id).await?;
+                }
+                tx.commit().await?;
+                Ok(result)
+                }.await;
                 match result {
                     Ok(result) if result.rows_affected() == 1 => ("succeeded", json!({"comment_id":id,"issue_id":args.issue_id,"target_revision":target_revision,"implementation_started":false})),
                     Ok(_) => ("failed", json!({"code":"target_validation_failed"})),
@@ -295,8 +303,39 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn issue_activity_comments_stop_under_explicit_sort() {
+        let (remote, _, principal, target, issue) = fixture().await;
+        let before: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+        let preferences = json!({"type":"UI_PREFERENCES","data":{"kanban_project_view_preferences":{target.project_id.to_string():{"team":{"filters":{"sortField":"priority"}}}}}});
+        sqlx::query("INSERT INTO scratch(id,scratch_type,payload) VALUES(?,'UI_PREFERENCES',?)")
+            .bind(Uuid::from_u128(1))
+            .bind(preferences.to_string())
+            .execute(&remote.pool)
+            .await
+            .unwrap();
+        let receipt = call(&remote, &principal, "add_issue_comment", json!({"project_id":target.project_id,"issue_id":issue,"request_id":Uuid::new_v4(),"message":"comment while sorted"})).await.unwrap();
+        assert_eq!(receipt["status"], "succeeded");
+        let after: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+        assert_eq!(before, after);
+    }
+
+    #[tokio::test]
     async fn independent_reviews_retry_paging_and_stale_targets_preserve_issue_and_runs() {
         let (remote, _, principal, target, issue) = fixture().await;
+        let initial_order: f64 =
+            sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&remote.pool)
+                .await
+                .unwrap();
         let rev = revision(&remote, issue).await;
         let make_input = |label: &str| json!({"project_id":target.project_id,"issue_id":issue,"request_id":Uuid::new_v4(),"message":"## Review\nIndependent opinion","reviewer_label":label,"review_target":{"issue_id":issue,"revision":rev}});
         let a = make_input("ChatGPT");
@@ -307,10 +346,23 @@ mod tests {
         );
         assert_eq!(first.unwrap()["status"], "succeeded");
         assert_eq!(second.unwrap()["status"], "succeeded");
+        let promoted: f64 = sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+            .bind(issue)
+            .fetch_one(&remote.pool)
+            .await
+            .unwrap();
+        assert_eq!(promoted, initial_order - 2.0);
         let retried = call(&remote, &principal, "add_issue_comment", a.clone())
             .await
             .unwrap();
         assert_eq!(retried["status"], "succeeded");
+        let replay_order: f64 =
+            sqlx::query_scalar("SELECT sort_order FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&remote.pool)
+                .await
+                .unwrap();
+        assert_eq!(replay_order, promoted);
         let mut changed = a.clone();
         changed["review_target"]["revision"] = json!("2020-01-01 00:00:00");
         assert!(

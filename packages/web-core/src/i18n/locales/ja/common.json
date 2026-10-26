@@ -539,6 +539,7 @@
       "input": "入力待ち",
       "running": "実行中",
       "failed": "失敗",
+      "read": "既読",
       "unseen": "未確認の更新",
       "devServer": "開発サーバー実行中"
     },

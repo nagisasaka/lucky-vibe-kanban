@@ -2339,8 +2339,9 @@ mod tests {
         .await
         .unwrap();
         sqlx::raw_sql(r#"
+            CREATE TABLE scratch (id BLOB, scratch_type TEXT, payload TEXT);
             CREATE TABLE local_project_statuses (id BLOB PRIMARY KEY, project_id BLOB, name TEXT, color TEXT, sort_order INTEGER, hidden INTEGER);
-            CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT);
+            CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT, sort_order REAL NOT NULL DEFAULT 0);
             CREATE TABLE local_workspace_links (workspace_id BLOB, issue_id BLOB);
         "#).execute(pool).await.unwrap();
         sqlx::raw_sql(include_str!(

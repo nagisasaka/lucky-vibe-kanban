@@ -461,12 +461,13 @@ try {
   });
   await page.reload();
   const statusCard = card(issues[0].id);
+  await expect(statusCard.locator('[aria-live]')).toHaveCount(0);
   await expect(
-    statusCard.getByText('Approval required', { exact: true })
+    statusCard.getByRole('img', { name: 'Approval required', exact: true }).first()
   ).toBeVisible();
-  await expect(statusCard.getByText('Running', { exact: true })).toBeVisible();
+  await expect(statusCard.getByRole('img', { name: 'Running', exact: true }).first()).toBeVisible();
   await expect(
-    statusCard.getByText('Dev server running', { exact: true })
+    statusCard.getByRole('img', { name: 'Dev server running', exact: true }).first()
   ).toBeVisible();
   await statusCard.locator('summary').focus();
   await page.screenshot({
@@ -475,11 +476,11 @@ try {
   const before = await statusCard.boundingBox();
   phase = 1;
   await expect(
-    statusCard.getByText('Input required', { exact: true })
+    statusCard.getByRole('img', { name: 'Input required', exact: true }).first()
   ).toBeVisible({ timeout: 30000 });
-  await expect(statusCard.getByText('Failed', { exact: true })).toBeVisible();
+  await expect(statusCard.getByRole('img', { name: 'Failed', exact: true }).first()).toBeVisible();
   await expect(
-    statusCard.getByText('Unseen activity', { exact: true })
+    statusCard.getByRole('img', { name: 'Unseen activity', exact: true }).first()
   ).toBeVisible();
   await expect(statusCard.locator('summary')).toBeFocused();
   const after = await statusCard.boundingBox();
@@ -492,10 +493,10 @@ try {
   });
   await page.setViewportSize({ width: 1280, height: 900 });
   await expect(
-    statusCard.getByText('Approval required', { exact: true })
+    statusCard.getByRole('img', { name: 'Approval required', exact: true }).first()
   ).toBeVisible();
   await expect(
-    statusCard.getByText('Input required', { exact: true })
+    statusCard.getByRole('img', { name: 'Input required', exact: true }).first()
   ).toBeVisible();
   await page.screenshot({
     path: path.join(output, 'fixture-attention-1280.png'),

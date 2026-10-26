@@ -112,6 +112,7 @@ struct BulkUpdateProjectStatusesRequest {
 #[derive(Debug, Deserialize)]
 struct BulkUpdateIssueItem {
     id: Uuid,
+    expected_sort_order: Option<f64>,
     #[serde(flatten)]
     changes: UpdateIssueRequest,
 }
@@ -736,6 +737,13 @@ pub(crate) async fn list_project_issues(
 }
 
 pub(crate) async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result<Issue, ApiError> {
+    get_local_issue_on(pool, issue_id).await
+}
+
+async fn get_local_issue_on<'e>(
+    executor: impl sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    issue_id: Uuid,
+) -> Result<Issue, ApiError> {
     let row = sqlx::query(
         r#"
         SELECT
@@ -763,7 +771,7 @@ pub(crate) async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result
         "#,
     )
     .bind(issue_id)
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?
     .ok_or_else(|| ApiError::BadRequest("Issue not found".to_string()))?;
 
@@ -865,18 +873,39 @@ pub(crate) async fn update_local_issue_checked(
     changes: UpdateIssueRequest,
     expected_updated_at: Option<DateTime<Utc>>,
 ) -> Result<Issue, ApiError> {
-    let existing = get_local_issue(pool, issue_id).await?;
+    update_local_issue_with_order_guard(pool, issue_id, changes, expected_updated_at, None).await
+}
+
+async fn update_local_issue_with_order_guard(
+    pool: &SqlitePool,
+    issue_id: Uuid,
+    mut changes: UpdateIssueRequest,
+    expected_updated_at: Option<DateTime<Utc>>,
+    expected_sort_order: Option<f64>,
+) -> Result<Issue, ApiError> {
+    let body_saved = changes.description.is_some();
+    let mut tx = pool.begin().await?;
+    let existing = get_local_issue_on(&mut *tx, issue_id).await?;
     let extension_metadata = changes
         .extension_metadata
         .unwrap_or(existing.extension_metadata);
     let extension_metadata =
         serde_json::to_string(&extension_metadata).unwrap_or_else(|_| "null".to_string());
 
+    // Recheck the drag's observed rank inside the write transaction. If an
+    // activity committed after the browser calculated its drop, retain that
+    // newer order; a simultaneous status move carries it to the new head.
+    let order_conflict =
+        expected_sort_order.is_some_and(|expected| existing.sort_order != expected);
+    let carry_activity = order_conflict && changes.status_id.is_some();
+    if order_conflict {
+        changes.sort_order = None;
+    }
     let updated = sqlx::query(
         r#"
         UPDATE local_issues
         SET
-            status_id = ?,
+            status_id = COALESCE(?, status_id),
             agent_status_owner = CASE WHEN ? THEN NULL ELSE agent_status_owner END,
             title = ?,
             description = ?,
@@ -884,7 +913,7 @@ pub(crate) async fn update_local_issue_checked(
             start_date = ?,
             target_date = ?,
             completed_at = ?,
-            sort_order = ?,
+            sort_order = COALESCE(?, sort_order),
             parent_issue_id = ?,
             parent_issue_sort_order = ?,
             extension_metadata = ?,
@@ -892,7 +921,7 @@ pub(crate) async fn update_local_issue_checked(
         WHERE id = ? AND (? IS NULL OR julianday(updated_at) = julianday(?))
         "#,
     )
-    .bind(changes.status_id.unwrap_or(existing.status_id))
+    .bind(changes.status_id)
     .bind(changes.status_id.is_some())
     .bind(changes.title.unwrap_or(existing.title))
     .bind(changes.description.unwrap_or(existing.description))
@@ -906,7 +935,7 @@ pub(crate) async fn update_local_issue_checked(
     .bind(changes.start_date.unwrap_or(existing.start_date))
     .bind(changes.target_date.unwrap_or(existing.target_date))
     .bind(changes.completed_at.unwrap_or(existing.completed_at))
-    .bind(changes.sort_order.unwrap_or(existing.sort_order))
+    .bind(changes.sort_order)
     .bind(changes.parent_issue_id.unwrap_or(existing.parent_issue_id))
     .bind(
         changes
@@ -917,7 +946,7 @@ pub(crate) async fn update_local_issue_checked(
     .bind(issue_id)
     .bind(expected_updated_at)
     .bind(expected_updated_at)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
     if updated.rows_affected() == 0 {
@@ -925,6 +954,10 @@ pub(crate) async fn update_local_issue_checked(
             "Issue changed while the update was being submitted".into(),
         ));
     }
+    if body_saved || carry_activity {
+        db::models::issue_order::promote(&mut tx, issue_id).await?;
+    }
+    tx.commit().await?;
     get_local_issue(pool, issue_id).await
 }
 
@@ -1721,7 +1754,14 @@ async fn bulk_update_issues(
     Json(request): Json<BulkUpdateIssuesRequest>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
     for update in request.updates {
-        update_local_issue(&deployment.db().pool, update.id, update.changes).await?;
+        update_local_issue_with_order_guard(
+            &deployment.db().pool,
+            update.id,
+            update.changes,
+            None,
+            update.expected_sort_order,
+        )
+        .await?;
     }
 
     Ok(ResponseJson(DeleteResponse { txid: txid() }))
@@ -1956,6 +1996,7 @@ async fn create_issue_comment(
     Json(request): Json<CreateIssueCommentRequest>,
 ) -> Result<ResponseJson<MutationResponse<IssueComment>>, ApiError> {
     let id = request.id.unwrap_or_else(Uuid::new_v4);
+    let mut tx = deployment.db().pool.begin().await?;
     sqlx::query(
         r#"
         INSERT INTO local_issue_comments
@@ -1968,9 +2009,11 @@ async fn create_issue_comment(
     .bind(local_user_id())
     .bind(request.parent_id)
     .bind(request.message)
-    .execute(&deployment.db().pool)
+    .execute(&mut *tx)
     .await?;
 
+    db::models::issue_order::promote(&mut tx, request.issue_id).await?;
+    tx.commit().await?;
     let data = get_issue_comment(&deployment.db().pool, id).await?;
     Ok(ResponseJson(MutationResponse { data, txid: txid() }))
 }
@@ -3506,6 +3549,179 @@ mod tests {
     use serde_json::Value;
     use sqlx::{SqlitePool, sqlite::SqlitePoolOptions, types::Json};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn issue_activity_body_only_and_destination_order() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("ACT"))
+            .await
+            .unwrap();
+        let statuses = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap();
+        let first = super::create_local_issue(&pool, issue_request(project.id, statuses[0].id))
+            .await
+            .unwrap();
+        let second = super::create_local_issue(&pool, issue_request(project.id, statuses[0].id))
+            .await
+            .unwrap();
+        let third = super::create_local_issue(&pool, issue_request(project.id, statuses[1].id))
+            .await
+            .unwrap();
+        let update = |v| serde_json::from_value::<UpdateIssueRequest>(v).unwrap();
+        let title_only = super::update_local_issue_checked(
+            &pool,
+            second.id,
+            update(serde_json::json!({"title":"title only", "priority":"high"})),
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(title_only.sort_order, second.sort_order);
+        let body = super::update_local_issue_checked(
+            &pool,
+            second.id,
+            update(serde_json::json!({"description":"saved"})),
+            None,
+        )
+        .await
+        .unwrap();
+        assert!(body.sort_order < first.sort_order);
+        let other = super::get_local_issue(&pool, first.id).await.unwrap();
+        assert_eq!(other.sort_order, first.sort_order);
+        let same_body = super::update_local_issue_checked(
+            &pool,
+            second.id,
+            update(serde_json::json!({"description":"saved", "status_id":statuses[1].id})),
+            None,
+        )
+        .await
+        .unwrap();
+        assert!(same_body.sort_order < third.sort_order);
+        assert_eq!(same_body.status_id, statuses[1].id);
+        let manual = super::update_local_issue_checked(
+            &pool,
+            second.id,
+            update(serde_json::json!({"sort_order":42})),
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(manual.sort_order, 42.0);
+        let preferences = serde_json::json!({"type":"UI_PREFERENCES","data":{"kanban_project_view_preferences":{project.id.to_string():{"team":{"filters":{"sortField":"updated_at"}}}}}});
+        sqlx::query("INSERT INTO scratch(id,scratch_type,payload) VALUES(?,'UI_PREFERENCES',?)")
+            .bind(Uuid::from_u128(1))
+            .bind(preferences.to_string())
+            .execute(&pool)
+            .await
+            .unwrap();
+        let sorted_body = super::update_local_issue_checked(
+            &pool,
+            second.id,
+            update(serde_json::json!({"description":"saved during explicit sort"})),
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(sorted_body.sort_order, 42.0);
+    }
+
+    #[tokio::test]
+    async fn issue_activity_drop_guard_preserves_late_promotion_and_destination() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("DRAG"))
+            .await
+            .unwrap();
+        let statuses = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap();
+        let dragged = super::create_local_issue(&pool, issue_request(project.id, statuses[0].id))
+            .await
+            .unwrap();
+        let neighbour = super::create_local_issue(&pool, issue_request(project.id, statuses[1].id))
+            .await
+            .unwrap();
+        let change = |v| serde_json::from_value::<UpdateIssueRequest>(v).unwrap();
+        let request: super::BulkUpdateIssuesRequest = serde_json::from_value(serde_json::json!({
+            "updates":[{"id":dragged.id,"expected_sort_order":dragged.sort_order,"sort_order":99}]
+        }))
+        .unwrap();
+        assert_eq!(
+            request.updates[0].expected_sort_order,
+            Some(dragged.sort_order)
+        );
+        assert_eq!(request.updates[0].changes.sort_order, Some(99.0));
+        // The request was calculated first, then a body/comment/terminal's
+        // shared promotion committed before that request reached the server.
+        let mut conn = pool.acquire().await.unwrap();
+        db::models::issue_order::promote(&mut conn, dragged.id)
+            .await
+            .unwrap();
+        drop(conn);
+        let promoted = super::get_local_issue(&pool, dragged.id).await.unwrap();
+        let same_column = super::update_local_issue_with_order_guard(
+            &pool,
+            dragged.id,
+            change(serde_json::json!({"sort_order":99})),
+            None,
+            Some(dragged.sort_order),
+        )
+        .await
+        .unwrap();
+        assert_eq!(same_column.sort_order, promoted.sort_order);
+        let destination = super::update_local_issue_with_order_guard(
+            &pool,
+            dragged.id,
+            change(serde_json::json!({"status_id":statuses[1].id,"sort_order":99})),
+            None,
+            Some(dragged.sort_order),
+        )
+        .await
+        .unwrap();
+        assert_eq!(destination.status_id, statuses[1].id);
+        assert!(destination.sort_order < neighbour.sort_order);
+        assert_eq!(
+            super::get_local_issue(&pool, neighbour.id)
+                .await
+                .unwrap()
+                .sort_order,
+            neighbour.sort_order
+        );
+        // The opposite serialization (drop first, event second) promotes in
+        // the destination, using the same existing event transaction helper.
+        let moved = super::update_local_issue_with_order_guard(
+            &pool,
+            dragged.id,
+            change(serde_json::json!({"sort_order":99})),
+            None,
+            Some(destination.sort_order),
+        )
+        .await
+        .unwrap();
+        assert_eq!(moved.sort_order, 99.0);
+        let mut conn = pool.acquire().await.unwrap();
+        db::models::issue_order::promote(&mut conn, dragged.id)
+            .await
+            .unwrap();
+        drop(conn);
+        assert!(
+            super::get_local_issue(&pool, dragged.id)
+                .await
+                .unwrap()
+                .sort_order
+                < neighbour.sort_order
+        );
+    }
 
     #[tokio::test]
     async fn project_delete_retains_design_history_atomically() {
