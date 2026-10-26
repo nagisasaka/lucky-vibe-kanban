@@ -894,10 +894,19 @@ pub fn spawn_recovery_monitor(deployment: DeploymentImpl) {
                     tracing::warn!(repository_id = %repo.id, %error, "OpenWiki recovery deferred");
                 }
             }
-            if let Err(error) =
-                services::services::workspace_usage::release_completed(&deployment.db().pool).await
+            match services::services::workspace_usage::release_completed(&deployment.db().pool)
+                .await
             {
-                tracing::warn!(%error, "Completed workspace release deferred");
+                Ok(released) => {
+                    for workspace in released {
+                        super::local_remote::issue_archive::archive_generated(
+                            &deployment,
+                            workspace,
+                        )
+                        .await;
+                    }
+                }
+                Err(error) => tracing::warn!(%error, "Completed workspace release deferred"),
             }
         }
     });

@@ -404,6 +404,8 @@ pub enum AgentLiveEventPayload {
     ThinkingDelta {
         provider_item_id: String,
         delta: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        summary_index: Option<u32>,
     },
     ToolOutputDelta {
         provider_item_id: String,

@@ -1,4 +1,30 @@
 {
+  "execution": {
+    "status": {
+      "success": "完了",
+      "failed": "失敗",
+      "denied": "拒否",
+      "timed_out": "タイムアウト",
+      "cancelled": "キャンセル",
+      "running": "実行中",
+      "pending_approval": "承認待ち",
+      "approved": "承認済み・開始待ち",
+      "unknown": "結果未確認"
+    },
+    "noOutput": "出力なし",
+    "waitingOutput": "結果を待っています",
+    "outputUnavailable": "出力は取得されていません",
+    "partial": "途中まで受信した出力",
+    "preview": "出力の一部を表示・詳細で保持済みの内容を確認",
+    "retainedDetails": "受信・保持された内容",
+    "input": "操作の入力",
+    "copyCommand": "コマンドをコピー",
+    "copyOutput": "出力をコピー",
+    "copied": "コピーしました",
+    "copyFailed": "コピーできませんでした",
+    "completedAt": "終了を確認: {{time}}",
+    "providerDuration": "provider報告: {{seconds}}秒"
+  },
   "dropzone": {
     "dropImagesHere": "画像をここにドロップ",
     "supportedFormats": "PNG、JPG、GIF、WebP、SVG に対応"

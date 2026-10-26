@@ -81,6 +81,9 @@ export function useActionVisibilityContext(
     return !!selectedIssue?.parent_issue_id;
   }, [shouldResolveSelectedIssueParent, projectIssues, effectiveIssueIds]);
 
+  const selectedIssueArchived =
+    projectIssues.find((issue) => issue.id === effectiveIssueIds[0])
+      ?.archived ?? false;
   // Derive layoutMode from current route instead of persisted state
   const layoutMode: LayoutMode = isProjectDestination(destination)
     ? 'kanban'
@@ -144,6 +147,8 @@ export function useActionVisibilityContext(
       logsPanelContent,
       hasSelectedKanbanIssue,
       hasSelectedKanbanIssueParent,
+      selectedIssueArchived,
+      selectedIssueCount: effectiveIssueIds.length,
       isCreatingIssue: kanbanCreateMode,
       isSignedIn,
     };
@@ -168,6 +173,8 @@ export function useActionVisibilityContext(
     logsPanelContent,
     hasSelectedKanbanIssue,
     hasSelectedKanbanIssueParent,
+    selectedIssueArchived,
+    effectiveIssueIds.length,
     kanbanCreateMode,
     isSignedIn,
   ]);

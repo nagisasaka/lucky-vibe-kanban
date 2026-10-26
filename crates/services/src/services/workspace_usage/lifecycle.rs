@@ -103,15 +103,11 @@ pub async fn ensure_wiki_board_link_for_project(
     let Some(status) = status else {
         return Ok(());
     };
-    let number: i64 = sqlx::query_scalar(
-        "SELECT COALESCE(MAX(issue_number),0)+1 FROM local_issues WHERE project_id=?",
-    )
-    .bind(project_id)
-    .fetch_one(&mut *tx)
-    .await?;
+    let (number, simple_id) =
+        db::models::issue_number::next_issue_number(&mut tx, *project_id).await?;
     let issue_id = Uuid::new_v4();
     sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order) VALUES(?,?,?,?,?,?,?,0)")
-        .bind(issue_id).bind(project_id).bind(number).bind(format!("LOCAL-{number}"))
+        .bind(issue_id).bind(project_id).bind(number).bind(simple_id)
         .bind(status).bind(workspace.name.as_deref().unwrap_or("OpenWiki"))
         .bind("OpenWiki repository maintenance. Execution history and operator instructions are available in the linked workspace.")
         .execute(&mut *tx).await?;
@@ -123,13 +119,22 @@ pub async fn ensure_wiki_board_link_for_project(
     .bind(issue_id)
     .execute(&mut *tx)
     .await?;
+    // Startup backfill can create links for historical bound owners. Only a
+    // newly prepared, unbound Wiki owner opts into completion cleanup.
+    if owner.run_id.is_none() {
+        sqlx::query("INSERT INTO generated_issue_workspaces(workspace_id,issue_id,project_id,owner_kind,repository_id,owner_run_id) VALUES(?,?,?,?,?,?)")
+        .bind(workspace.id).bind(issue_id).bind(project_id).bind(&owner.kind).bind(repo_id).bind(owner.run_id.map(|id| id.to_string()))
+        .execute(&mut *tx).await?;
+    }
+    db::models::board_tag::attach_system(&mut tx, *project_id, issue_id).await?;
     tx.commit().await?;
     Ok(())
 }
 
 /// Release completed reservations only after all processes and product cleanup
 /// have settled. Keep historical ownership/results for inspection and attribution.
-pub async fn release_completed(pool: &SqlitePool) -> anyhow::Result<()> {
+pub async fn release_completed(pool: &SqlitePool) -> anyhow::Result<Vec<Workspace>> {
+    let mut released = Vec::new();
     // Compare the persisted JSON bytes, not a re-serialized struct: older
     // records may omit optional fields or use a different property order.
     let rows: Vec<(Uuid, String)> = sqlx::query_as(
@@ -162,8 +167,11 @@ pub async fn release_completed(pool: &SqlitePool) -> anyhow::Result<()> {
                 continue;
             }
         }
-        sqlx::query("UPDATE workspaces SET usage='interactive',updated_at=datetime('now','subsec') WHERE id=? AND usage='execution_only' AND execution_owner=?")
+        let changed = sqlx::query("UPDATE workspaces SET usage='interactive',updated_at=datetime('now','subsec') WHERE id=? AND usage='execution_only' AND execution_owner=?")
             .bind(id).bind(expected_owner).execute(pool).await?;
+        if changed.rows_affected() == 1 {
+            released.push(workspace);
+        }
     }
-    Ok(())
+    Ok(released)
 }

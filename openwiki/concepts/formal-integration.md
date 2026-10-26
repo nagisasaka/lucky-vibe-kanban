@@ -6,6 +6,8 @@ tags: [integration, git, validation, lifecycle, recovery]
 sources:
   - id: openwiki-source-60b1754d1fc954c43279f888
     resource: repo://.lvk/integration-validation.json
+  - id: openwiki-source-11bd8cfafd506215798951a6
+    resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
@@ -30,6 +32,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
+  - id: openwiki-source-ec7bbc48470f4ddafbe92723
+    resource: repo://crates/server/src/routes/integrations/runtime_tests.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-693f5c01a606eaeac0692368
@@ -38,8 +42,12 @@ sources:
     resource: repo://crates/server/src/routes/integrations/steps.rs
   - id: openwiki-source-3254b00661fe378ce617d822
     resource: repo://crates/server/src/routes/integrations/validation_settings_tests.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
+  - id: openwiki-source-6043692809cbf72f253c5631
+    resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
     resource: repo://docs/development/integration-mcp-decisions.md
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -60,10 +68,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T02:16:46.128Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -88,7 +96,11 @@ B は受付時に観測した target commit と一致する preparation の base
 
 ### 競合だけを有限の Agent job にする
 
-競合時だけ、同じ Integration Workspace / Session に新しい AgentRun を作る。現在の step・base・source、受付時の公開 Memory、追加指示を含む完全な Create envelope を provider 起動前に保存し、再配送も同じ identity を使う。Integration 全体を一つの Orchestration node に重ねたり、古い AgentRun の Retry / Steer で次の source を渡したりしない。[保存から Create](../../crates/server/src/routes/integrations/runtime.rs#L500-L541)・[request](../../crates/server/src/routes/integrations/mechanical.rs#L271-L339)
+競合時だけ、同じ Integration Workspace 内に新しい Session と AgentRun を作る。現在の step・base・source、受付時の公開 Memory、追加指示を含む完全な Create envelope を provider 起動前に保存し、再配送も同じ identity を使う。Integration 全体を一つの Orchestration node に重ねたり、古い AgentRun の Retry / Steer で次の source を渡したりしない。[保存から Create](../../crates/server/src/routes/integrations/runtime.rs#L500-L541)・[request](../../crates/server/src/routes/integrations/mechanical.rs#L271-L339)
+
+新しい競合 dispatch は `Initial` / `Launch` で、前 job の native conversation を resume しない。Session ごとに provider identity を所有するため、連続する source の競合や明示 Resume で別の native session ID を同じ Session へ上書きしない。`persist_conflict_dispatch` は作業先と executor を引き継ぐ新規 Session、Integration の現在 Session / AgentRun ID、完全な immutable dispatch を一つの `BEGIN IMMEDIATE` transaction に保存し、commit 後にだけ provider Create へ進む。保存失敗時は新 Session も rollback し、呼出側の run を置き換えない。[保存境界](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)・[同一 connection の保存](../../crates/db/src/models/integration.rs#L534-L545)
+
+再起動・再配送で保存済み dispatch があれば、新しい Session や ID を作らず同じ envelope を再利用する。明示 Resume は前 job の終端確認後、旧 error / stop / AgentRun / dispatch を history に残し、候補未生成の場合だけ現在 dispatch と AgentRun を退役させる。次の monitor が新 Session を作るが、同じ Workspace の edits / index は引き継ぐ。過去の run、provider identity、degraded projection を修復・削除して成功扱いにはしない。[Resume の履歴](../../crates/server/src/routes/integrations/runtime.rs#L140-L207)・[再送と完了検査](../../crates/server/src/routes/integrations/runtime.rs#L593-L622)。一般の [Session と native conversation](session-and-agent-run.md#識別と固定するもの)とはこの所有関係で接続する。
 
 agent の責務は既存 index の競合解消と stage、および `ready` / `blocked` と理由を含む JSON 応答である。commit・branch 操作・検証計画・テスト実行・公開は host が担当する。host は成功かつ Current の投影と実 writer の収束を待ち、HEAD / MERGE_HEAD、未解消 index、unstaged / untracked file、canonical OpenWiki の変更を検査してから commit を作る。応答の ready だけで候補を採用しない。[依頼契約](../../crates/server/src/routes/integrations/runtime.rs#L349-L392)・[結果検査](../../crates/server/src/routes/integrations/runtime.rs#L541-L565)・[index 検査](../../crates/server/src/routes/integrations/mechanical.rs#L134-L171)
 
@@ -126,7 +138,7 @@ UI は順序付きの複数行入力と追加・削除、raw JSON の修復欄�
 
 ### 保存 API の競合と失敗
 
-`GET /api/repos/{repo_id}/integration-validation` は登録 Repo の checkout から `branch`・`head`・`revision`・`content` を返す。`PUT` は `expected_revision` と `content` を受け取る。commit を持つ local branch が必要で、detached HEAD は対象外。`.lvk` と設定ファイルの symlink・非通常型を拒否し、内容は最大1 MiBの UTF-8 に制限する。[route](../../crates/server/src/routes/repo.rs#L408-L412)・[読取](../../crates/server/src/routes/integration_validation.rs#L61-L130)
+`GET /api/repos/{repo_id}/integration-validation` は登録 Repo の checkout から `branch`・`head`・`revision`・`content` を返す。`PUT` は `expected_revision` と `content` を受け取る。commit を持つ local branch が必要で、detached HEAD は対象外。`.lvk` と設定ファイルの symlink・非通常型を拒否し、内容は最大1 MiBの UTF-8 に制限する。[route](../../crates/server/src/routes/repo.rs#L377-L383)・[読取](../../crates/server/src/routes/integration_validation.rs#L61-L130)
 
 revision は branch・HEAD・ファイルの存在と正確な内容の組から計算する SHA-256 であり、整形だけの変更も競合になる。PUT は Git common directory 単位の既存 publication guard を使うので、別 Repo ID でも同じ storage の保存を同時に通せない。guard を取れない場合や revision 不一致は409となる。検証後、同じ `.lvk` 内の一時ファイルへ書き、既存 permission を引き継ぎ、sync・再照合して原子的に置換し、読戻す。外部 editor や任意の Git 操作はこの lock に参加しないため、最後の比較以降の外部更新まで完全に排他する契約ではない。保存中は外部編集・branch 切替を避ける。[保存順序](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[storage lock](../../crates/git/src/publication.rs#L134-L161)
 
@@ -154,7 +166,7 @@ Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox �
 
 ## 中断・介入・回復
 
-公開前に blocked となった mechanical run は、保持した Workspace・固定 source・writer の停止・target B を確認して明示 Resume できる。候補が凍結済みなら非空の追加指示を拒否する。まだ候補がなければ前 conflict job の終端を確認し、index を保った新しい Create で解消を続ける。server restart 後の検証 command は自動 replay せず、明示 Resume から未完了の検証を再開する。既存の passed / candidate-bound exception は同じ候補の証拠として扱う。[介入](../../crates/server/src/routes/integrations/runtime.rs#L106-L206)・[中断検出](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)・[検証再開](../../crates/server/src/routes/integrations/runtime.rs#L817-L830)
+公開前に blocked となった mechanical run は、保持した Workspace・固定 source・writer の停止・target B を確認して明示 Resume できる。候補が凍結済みなら非空の追加指示を拒否する。まだ候補がなければ前 conflict job の終端を確認し、index を保ち、新規 Session の Create で解消を続ける。server restart 後の検証 command は自動 replay せず、明示 Resume から未完了の検証を再開する。既存の passed / candidate-bound exception は同じ候補の証拠として扱う。[介入](../../crates/server/src/routes/integrations/runtime.rs#L106-L206)・[中断検出](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)・[検証再開](../../crates/server/src/routes/integrations/runtime.rs#L817-L830)
 
 技術的 hold は conflict job を勝手に再起動・取消しない。writer が収束していなければ予約を保持する。明示 Cancel は受理済み identity の停止と script/host の idle を確認してから解放する。検証失敗や review 待ちでは候補の予約を維持し、技術的失敗が既に idle なら解放する。[hold](../../crates/server/src/routes/integrations/runtime.rs#L1154-L1200)・[取消](../../crates/server/src/routes/integrations/runtime.rs#L994-L1152)
 
@@ -178,7 +190,7 @@ standalone と embedded の monitor 配線差は [起動順序](../architecture/
 
 [調査・回復記録](../../docs/development/integration-dispatch-recovery.md)は設計判断と過去の検証結果を残す。旧 per-step handoff の撤去後も、一般 Workflow の配送受理と SQLite writer 予約、一般 Retry の回復は依存先がある。記録中の instance 固定 cutover 手順や live 未実行の記述を、現在の配置状態として扱わない。この Sync は統合 source を調査したもので、過去の binary、live adoption、公表済みテスト成功を再確認したものではない。
 
-[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L342-L356)
+[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L322-L341)
 
 公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された正式 Integration は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。
 
@@ -191,3 +203,15 @@ MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scena
 [隔離 HTTP 試験](../../crates/server/src/routes/integrations/validation_settings_tests.rs#L21-L150)は一時 instance・Git・SQLite と loopback port 0、production Repo router と local Access/CSRF を使う。GET/PUT、403/400/409、非 root Unix の書込権限不足500、保存後の非実行と読戻しを確認し、commit した plan を既存 `ScriptRequest` の Bash 実行へつなぐ。正式 Integration の admission→container 監督→publication 全体を駆動する E2E ではない。[ブラウザ fixture](../../tests/integration-validation-settings/browser.mjs#L1-L198)は製品 component と mock API を使うため、下書き・修復・保存表示の検査と実サーバー保存の検査を区別する。
 
 今回の設定編集 Sync は凍結 source `8079c5159e3c7b0d4817487177be6bf319de451e` の UI、transport、保存 handler、Git lock、受付・実行器、試験定義を静的に照合した。[開発時記録](../../tests/integration-validation-settings/README.md#rust--実http接続の追加検証)では初回の Rust 未実行を後続の限定試験成功が補っているが、public Basic/Auth0、正式 Integration 全体、production frontend build の検証を意味しない。供給された正式 Integration は検証省略であり、この Wiki 保守でも製品試験を再実行していない。独立レビュー待ちという入力は完了証拠ではなく、無関係な過去の Wiki 内容の再検証も主張しない。
+
+### 競合 Session 分離の検証境界
+
+[回帰試験](../../crates/server/src/routes/integrations/runtime_tests.rs#L1670-L1942)は連続する競合 step と明示 Resume の Session 分離、保存後・Create 前の再起動と同一 dispatch 再送、実 SessionObserved 投影、異なる native identity の拒否、degraded 履歴の保持、transaction 失敗時の Session と dispatch の rollback を検査する。`ready` 本文があっても `Succeeded && Current` を満たさなければ採用しない。試験は永続化・投影境界の fixture であり、実 Codex や browser からの Resume、既存 blocked run の復旧、配備は未検証である。今回の文書保守では試験を再実行していない。
+
+受付で生成する Integration Card も保存済み Project key で採番し、同じ transaction で system を付ける。priority は共通の medium 既定に従う。分類は execution owner や承認の代替ではない。[識別と分類](project-and-issue.md#仕事の識別と分類)・[生成](../../crates/db/src/models/integration.rs#L279-L305)。
+
+## 成功後の専用作業領域
+
+新規の正式 Integration は専用 Card・Workspace の作成 transaction で生成元を記録する。公開成功を保存し予約を解放した後、既存 monitor が owner を解除できた回だけ、その専用 Workspace の自動 archive を試す。mechanical run は AgentRun がなくても対象であり、採用元の Workspace は対象にしない。詳細な一度限りの資格、介入検出、物理削除の失敗条件は [生成された専用 Workspace の自動 archive](workspace.md#生成された専用-workspace-の自動-archive)を参照する。[生成記録](../../crates/db/src/models/integration.rs#L326-L335)・[成功と予約解放](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1553)・[成功照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L515)
+
+semantic outbox が失敗しても Integration の成功から分離し、後続 Wiki 完了を待たず後処理できる。成功後の Recover は登録 Repo と凍結 payload・Memory store から記録を再構成し、専用 worktree の存続に依存しない。archive の拒否・不明・削除失敗は Git 公開や Card 完了を巻き戻さない。[outbox と回復](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1618)・[archive の警告](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)

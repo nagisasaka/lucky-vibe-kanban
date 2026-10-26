@@ -1,3 +1,5 @@
+import { useShape } from '@/shared/integrations/electric/hooks';
+import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -106,6 +108,11 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
     maxAttempts: maxAttemptsProp,
   }) => {
     const modal = useModal();
+    const { data: issues } = useShape(PROJECT_ISSUES_SHAPE, {
+      project_id: projectId,
+    });
+    const issueArchived =
+      issues.find((issue) => issue.id === issueId)?.archived ?? false;
     const { t } = useTranslation('common');
     const queryClient = useQueryClient();
     const maxAttempts = Math.max(
@@ -706,7 +713,10 @@ const CreateArenaDialogImpl = create<CreateArenaDialogProps>(
             <Button
               type="button"
               onClick={() => void handleSubmit()}
-              disabled={submitting || !!validationError}
+              disabled={submitting || issueArchived || !!validationError}
+              title={
+                issueArchived ? 'アーカイブ解除すると利用できます' : undefined
+              }
             >
               {submitting
                 ? t('arena.actions.starting')

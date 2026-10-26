@@ -6,8 +6,12 @@ tags: [architecture, deployment, startup, database]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-4169d2cd1d27a6243e90c06d
+    resource: repo://crates/db/src/bin/migrate_compat.rs
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-7b783ec1a704bf9dadb9c003
+    resource: repo://crates/db/src/migration_compat.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
@@ -48,10 +52,14 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
+  - id: openwiki-source-8ea6c46d63953a7104f5dd97
+    resource: repo://scripts/dev-cargo.mjs
+  - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
+    resource: repo://scripts/dev-rustc-cache.mjs
+generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-26T16:20:39.259Z
 ---
 
 # システム境界と起動順序
@@ -89,6 +97,8 @@ flowchart LR
 
 ローカル DB は asset directory の `db.v2.sqlite` を開き、SQLx migration を適用する。通常 pool は DELETE journal と 5 秒の busy timeout を使う。[DB 初期化](../../crates/db/src/lib.rs#L254-L268)、[timeout の理由](../../crates/db/src/lib.rs#L12-L15)
 
+起動と明示 migration tool は `db::run_migrations` を共有する。Project key の既知版だけ履歴 checksum に合う SQL を選ぶ互換 source を通し、SQLx 実行成功後に Agent Runtime schema guard を行う。未知の対象 checksum は起動を失敗させる。[共通入口](../../crates/db/src/lib.rs#L18-L34)・[履歴選択](../../crates/db/src/migration_compat.rs#L103-L133)。対応範囲と復旧上の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。
+
 Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L44-L86) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
 
 Git の作業木、Native Audit、Repository Memory は SQLite と別の永続状態を持つ。復旧で DB の状態だけを正しいと決めず、[実行ホスト](agent-runtime.md)や [記憶の統合状態](../concepts/repository-memory.md)の証拠も確認する。
@@ -116,6 +126,8 @@ standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`
 Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L135)・[設定なしの維持処理](../../crates/server/src/routes/web_push.rs#L326-L342)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
 
 ## 境界を変更するとき
+
+backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。これは contributor 用のビルド入口であり、server や子 Project の runtime 環境へ compiler 設定を追加するものではない。共有中間物、watch の二段階 build/run、競合時の失敗は [開発用 Cargo の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json#L31-L39)・[実行境界](../../scripts/dev-cargo.mjs#L19-L29)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L7-L10)
 
 API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。Tauri crate は workspace から撤去され、現行の backend 検証は残る Rust workspace 全体を対象にする。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
 

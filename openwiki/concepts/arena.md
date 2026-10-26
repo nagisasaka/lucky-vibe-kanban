@@ -12,10 +12,10 @@ sources:
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-13bc408495036974093d65eb
     resource: repo://crates/server/src/workflow_runtime/arena.rs
-generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T22:40:49.979Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Arena による比較と選択
@@ -62,3 +62,5 @@ Close は Open group を Closed にする。Dissolve は未 promote group の候
 [Workflow](workflow-attempt.md) の Arena node は Implementation group を作る。winner 選択では candidate と主 Workspace の Repository を対応させ、candidate の base からの patch を主作業木へ適用する。通常 Arena の Promote と異なりコード反映を伴う。複数 Repository は順に適用し、途中の失敗時にはそれ以前の反映を一括 rollback する transaction はこのループにない。[winner 反映](../../crates/server/src/workflow_runtime/arena.rs#L712-L793)
 
 Workflow 側の winner 確定・失敗 cleanup も通常の Workspace を自動 archive しない。候補の選択状態と保存領域の解放を独立して扱う。[Workflow の状態更新](../../crates/server/src/workflow_runtime/arena.rs#L910-L929)
+
+Issue archive は Arena の選択状態とも独立する。ただし候補を新設する作成・Retry は archive 済み Issue を拒否する。既存候補の継続操作を一律禁止する flag ではない。[Issue archive](project-and-issue.md#issue-のアーカイブ)・[候補作成](../../crates/server/src/routes/local_remote.rs#L2536-L2547)・[Retry guard](../../crates/server/src/routes/local_remote.rs#L2985-L2993)。

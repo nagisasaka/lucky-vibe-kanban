@@ -211,6 +211,12 @@ impl WorkflowWorkspaceResolver for DeploymentWorkflowWorkspaceResolver {
             ));
         }
 
+        crate::routes::local_remote::issue_archive::require_unarchived(
+            pool,
+            project_id,
+            request.issue_id,
+        )
+        .await?;
         let workspace_id = Uuid::new_v4();
         let workspace = Workspace::create(
             pool,

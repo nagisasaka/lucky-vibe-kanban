@@ -10,6 +10,7 @@ import { once } from "node:events";
 import { createInterface } from "node:readline";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { checkMarkdownEditing } from "./markdown-editing.mjs";
 
 const root = process.cwd();
 const output = path.join(root, ".build/design-notes/retention-e2e");
@@ -108,6 +109,7 @@ try {
   });
   const project = (
     await api("/api/local/v1/projects", "POST", {
+      key: "LOCAL",
       organization_id: "00000000-0000-0000-0000-000000000002",
       name: "設計メモ検証",
       color: "#6366f1",
@@ -172,7 +174,7 @@ try {
   const panel = page.getByTestId('design-notes');
   await panel.getByRole('button',{name:'新しい設計メモ'}).click();
   await panel.getByLabel('タイトル',{exact:true}).fill('最初の理想');
-  await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('人間の本文。目的を問い直す。');
+  await panel.getByTestId('note-body-editor').locator('textarea').fill('人間の本文。目的を問い直す。');
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByTestId('note-body')).toContainText('人間の本文');
   let notes = (await api(notePath)).data;
@@ -181,7 +183,7 @@ try {
   assert.equal(notes[0].revision,1);
   const original = notes[0].body;
   await panel.getByRole('button',{name:'本文を編集'}).click();
-  await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('更新した人間の本文。');
+  await panel.getByTestId('note-body-editor').locator('textarea').fill('更新した人間の本文。');
   await panel.getByLabel('変更理由（任意）').fill('目的を明確化');
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByTestId('note-body')).toContainText('更新した人間の本文');
@@ -198,11 +200,14 @@ try {
   assert.notEqual(detail.additions[0].recorder,detail.additions[0].speaker);
   // UI/MCP concurrent edit: retain old input and reject it even after background refresh.
   await panel.getByRole('button',{name:'本文を編集'}).click();
-  await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('古い画面の入力は消さない');
+  await panel.getByTestId('note-body-editor').locator('textarea').fill('古い画面の入力は消さない');
+  await panel.getByTestId('note-body-editor').getByRole('tab',{name:'プレビュー',exact:true}).click();
   await tool('write_design_note',{project_id:project,input:{request_id:randomUUID(),operation:{action:'update',note_id:id,expected_revision:2,title:'最初の理想',body:'MCPから明示的に更新した本文'}}});
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByRole('alert')).toContainText('入力は保持');
-  await expect(panel.getByTestId('note-body-editor')).toContainText('古い画面の入力は消さない');
+  await expect(panel.getByTestId('note-body-editor').getByRole('tabpanel')).toContainText('古い画面の入力は消さない');
+  await panel.getByTestId('note-body-editor').getByRole('tab',{name:'編集',exact:true}).click();
+  await expect(panel.getByTestId('note-body-editor').locator('textarea')).toHaveValue('古い画面の入力は消さない');
   assert.equal((await api(`${notePath}/${id}`)).data.note.body,'MCPから明示的に更新した本文');
   await panel.getByRole('button',{name:'キャンセル',exact:true}).click();
   // First version is reachable and restore appends a new version.
@@ -236,7 +241,7 @@ try {
   let entry = panel.getByTestId('note-addition');
   await entry.getByRole('button',{name:'追記を訂正'}).click();
   await entry.getByLabel('出典（会話・発言の参照）').fill('2026-10-23/message-2');
-  await entry.getByTestId('addition-editor').locator('[contenteditable=true]').fill('ユーザーが補足した判断。');
+  await entry.getByTestId('addition-editor').locator('textarea').fill('ユーザーが補足した判断。');
   await entry.getByRole('button',{name:'追記を保存'}).click();
   await expect(entry).toContainText('2026-10-23/message-2');
   await entry.getByRole('button',{name:'非表示にする'}).click();
@@ -262,16 +267,16 @@ try {
   await second.getByRole('button',{name:'設計メモ',exact:true}).click();
   await second.getByTestId('design-notes').getByRole('button',{name:/最初の理想/}).click();
   await second.getByRole('button',{name:'本文を編集'}).click();
-  await second.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('二つ目の画面の未保存本文');
+  await second.getByTestId('note-body-editor').locator('textarea').fill('二つ目の画面の未保存本文');
   await panel.getByRole('button',{name:'本文を編集'}).click();
-  await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('一つ目の画面で保存した本文');
+  await panel.getByTestId('note-body-editor').locator('textarea').fill('一つ目の画面で保存した本文');
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByTestId('note-body')).toContainText('一つ目の画面で保存した本文');
   await second.getByRole('button',{name:'保存',exact:true}).click();
   await expect(second.getByRole('alert')).toContainText('入力は保持');
-  await expect(second.getByTestId('note-body-editor')).toContainText('二つ目の画面の未保存本文');
+  await expect(second.getByTestId('note-body-editor').locator('textarea')).toHaveValue('二つ目の画面の未保存本文');
   await expect(second.getByTestId('body-conflict-current')).toContainText('一つ目の画面で保存した本文');
-  await second.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('一つ目の画面で保存した本文');
+  await second.getByTestId('note-body-editor').locator('textarea').fill('一つ目の画面で保存した本文');
   await second.getByRole('button',{name:'現在版を確認したので本文の下書きを再適用'}).click();
   await second.getByRole('button',{name:'保存',exact:true}).click();
   await expect(second.getByTestId('note-body')).toContainText('一つ目の画面で保存した本文');
@@ -280,12 +285,15 @@ try {
   entry = panel.getByTestId('note-addition');
   await entry.getByRole('button',{name:'追記を訂正'}).click();
   await expect(entry.getByRole('button',{name:'追記を訂正'})).toBeDisabled();
-  await entry.getByTestId('addition-editor').locator('[contenteditable=true]').fill('保持した追記の下書き');
+  await entry.getByTestId('addition-editor').locator('textarea').fill('保持した追記の下書き');
+  await entry.getByTestId('addition-editor').getByRole('tab',{name:'プレビュー',exact:true}).click();
   const beforeCorrection = (await api(`${notePath}/${id}`)).data.additions[0];
   await tool('write_design_note',{project_id:project,input:{request_id:randomUUID(),operation:{action:'correct_addition',note_id:id,addition_id:beforeCorrection.id,expected_revision:beforeCorrection.revision,addition:{...addition,source:'message/concurrent',content:'別の画面からの訂正'}}}});
   await entry.getByRole('button',{name:'追記を保存'}).click();
   await expect(panel.getByRole('alert')).toContainText('入力は保持');
-  await expect(entry.getByTestId('addition-editor')).toContainText('保持した追記の下書き');
+  await expect(entry.getByTestId('addition-editor').getByRole('tabpanel')).toContainText('保持した追記の下書き');
+  await entry.getByTestId('addition-editor').getByRole('tab',{name:'編集',exact:true}).click();
+  await expect(entry.getByTestId('addition-editor').locator('textarea')).toHaveValue('保持した追記の下書き');
   await expect(entry).toContainText('message/concurrent');
   await entry.getByRole('button',{name:'現在版を確認したので追記の下書きを再適用'}).click();
   await entry.getByRole('button',{name:'追記を保存'}).click();
@@ -295,11 +303,11 @@ try {
   await panel.getByLabel('非表示の追記も表示').uncheck();
   await entry.getByRole('button',{name:'追記を訂正'}).click();
   await expect(entry.getByRole('button',{name:'非表示にする'})).toBeDisabled();
-  await entry.getByTestId('addition-editor').locator('[contenteditable=true]').fill('非表示になっても保持する下書き');
+  await entry.getByTestId('addition-editor').locator('textarea').fill('非表示になっても保持する下書き');
   const beforeHide = (await api(`${notePath}/${id}`)).data.additions[0];
   await tool('write_design_note',{project_id:project,input:{request_id:randomUUID(),operation:{action:'set_addition_hidden',note_id:id,addition_id:beforeHide.id,expected_revision:beforeHide.revision,hidden:true}}});
   await expect(entry).toContainText('（非表示）');
-  await expect(entry.getByTestId('addition-editor')).toContainText('非表示になっても保持する下書き');
+  await expect(entry.getByTestId('addition-editor').locator('textarea')).toHaveValue('非表示になっても保持する下書き');
   await entry.getByRole('button',{name:'追記を保存'}).click();
   await expect(panel.getByRole('alert')).toContainText('入力は保持');
   await entry.getByRole('button',{name:'現在版を確認したので追記の下書きを再適用'}).click();
@@ -314,7 +322,7 @@ try {
   const once = (await api(notePath,'POST',updateInput)).data;
   assert.equal((await api(notePath,'POST',updateInput)).data.note.revision,once.note.revision);
   await api(notePath,'POST',{...updateInput,operation:{...updateInput.operation,body:'same key changed payload'}},409);
-  const foreign = (await api('/api/local/v1/projects','POST',{organization_id:'00000000-0000-0000-0000-000000000002',name:'別Project',color:'#6366f1'})).data.id;
+  const foreign = (await api('/api/local/v1/projects','POST',{key: "FOREIGN",organization_id:'00000000-0000-0000-0000-000000000002',name:'別Project',color:'#6366f1'})).data.id;
   await api(`/api/projects/${foreign}/design-notes/${id}`,'GET',undefined,404);
   await api(`/api/projects/${foreign}/design-notes`,'POST',{request_id:randomUUID(),operation:{action:'restore',note_id:id,expected_revision:once.note.revision,revision:1}},404);
   await tool('get_design_note',{project_id:foreign,note_id:id},true);
@@ -324,7 +332,7 @@ try {
   await write({action:'append',note_id:id,addition:{...addition,heading:'未決事項',kind:'open_question',speaker:'ユーザー',content:'保持期限は未合意'}});
   await panel.getByRole('button',{name:'新しい設計メモ'}).click();
   await panel.getByLabel('タイトル',{exact:true}).fill('別の設計メモ');
-  await panel.getByTestId('note-body-editor').locator('[contenteditable=true]').fill('別の本文');
+  await panel.getByTestId('note-body-editor').locator('textarea').fill('別の本文');
   await panel.getByRole('button',{name:'保存',exact:true}).click();
   await expect(panel.getByTestId('note-body')).toContainText('別の本文');
   assert.equal((await tool('list_design_notes',{project_id:project})).items.length,2);
@@ -333,6 +341,8 @@ try {
   await expect(panel.getByTestId('note-addition').filter({hasText:'保持期限は未合意'})).toContainText('未決事項');
   assert.equal(await page.evaluate(()=>window.__noteXss),undefined);
   assert.equal(await panel.locator('a[href^="javascript:"]').count(),0);
+  await checkMarkdownEditing({ page, panel, api, notePath, write, tool, project, output });
+  await panel.getByRole('button',{name:/最初の理想/}).click();
   const listBounds = await panel.locator('aside').boundingBox();
   const mainBounds = await panel.locator('main').boundingBox();
   assert.ok(listBounds.x + listBounds.width <= mainBounds.x + 1, 'desktop list and detail must be side by side');
@@ -359,6 +369,19 @@ try {
   await panel.getByRole('button',{name:/最初の理想/}).click();
   await expect(page.locator('html')).toHaveClass(/light/);
   await expect(panel.getByTestId('note-body')).toContainText('一つ目の画面で保存した本文');
+  await panel.getByRole('button',{name:'本文を編集',exact:true}).click();
+  const lightEditor = panel.getByTestId('note-body-editor');
+  const lightDraft = '## 表示確認\n\n- ライトテーマ';
+  await lightEditor.locator('textarea').fill(lightDraft);
+  await page.screenshot({path:path.join(output,'screenshots/plain-edit-light.png')});
+  await lightEditor.getByRole('tab',{name:'プレビュー',exact:true}).click();
+  await expect(lightEditor.getByRole('heading',{name:'表示確認',exact:true})).toBeVisible();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.screenshot({path:path.join(output,'screenshots/plain-preview-light.png')});
+  await lightEditor.getByRole('tab',{name:'編集',exact:true}).click();
+  await expect(lightEditor.locator('textarea')).toHaveValue(lightDraft);
+  await panel.getByRole('button',{name:'キャンセル',exact:true}).click();
+  assert.equal((await api(`${notePath}/${id}`)).data.note.body,'一つ目の画面で保存した本文');
   await page.screenshot({path:path.join(output,'screenshots/mobile-light.png')});
   await page.reload();
   await page.getByRole('button',{name:'設計メモ',exact:true}).click();
@@ -427,7 +450,7 @@ try {
   console.log(JSON.stringify({sqlRetention:{before:preserved,after:retained}},null,2));
   await page.screenshot({path:path.join(output,'screenshots/delete-retained.png')});
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload','bounded Unicode/pinned read','bounded stdio write/retry','200 deletion UI, SQL history retention, closed deleted scope and repeated deletion'],ports:new URL(base).port},null,2));
+  console.log(JSON.stringify({result:'passed',commit:testedCommit,dirty:dirtySource,serverBuild:info.build_info,chromium:browser.version(),checks:['plain Markdown typing/paste in all four forms','preview without writes and retained inputs','legacy exact roundtrip','validation and lost-response retry','UI create/edit/multiple notes','MCP append and identical retry','UI/MCP conflict','UI/UI conflict','initial/history/restore','correction/hiding/attribution history','explicit integration','API retry and project boundary','MCP project boundary','safe Markdown','desktop/mobile 390/320','reload','bounded Unicode/pinned read','bounded stdio write/retry','200 deletion UI, SQL history retention, closed deleted scope and repeated deletion'],ports:new URL(base).port},null,2));
 } catch(error) {
   if(page) await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});
   throw error;

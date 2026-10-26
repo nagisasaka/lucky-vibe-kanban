@@ -4,7 +4,7 @@
 // Local board row types
 export type JsonValue = number | string | boolean | Array<JsonValue> | { [key in string]?: JsonValue } | null;
 
-export type Project = { id: string, organization_id: string, name: string, color: string, sort_order: number, created_at: string, updated_at: string, };
+export type Project = { id: string, organization_id: string, name: string, key: string, color: string, sort_order: number, created_at: string, updated_at: string, };
 
 export type Notification = { id: string, organization_id: string, user_id: string, notification_type: NotificationType, payload: NotificationPayload, issue_id: string | null, comment_id: string | null, seen: boolean, dismissed_at: string | null, created_at: string, };
 
@@ -20,7 +20,7 @@ export type ProjectStatus = { id: string, project_id: string, name: string, colo
 
 export type Tag = { id: string, project_id: string, name: string, color: string, };
 
-export type Issue = { id: string, project_id: string, issue_number: number, simple_id: string, status_id: string, title: string, description: string | null, priority: IssuePriority | null, start_date: string | null, target_date: string | null, completed_at: string | null, sort_order: number, parent_issue_id: string | null, parent_issue_sort_order: number | null, extension_metadata: JsonValue, creator_user_id: string | null, created_at: string, updated_at: string, };
+export type Issue = { id: string, project_id: string, issue_number: number, simple_id: string, status_id: string, archived: boolean, title: string, description: string | null, priority: IssuePriority | null, start_date: string | null, target_date: string | null, completed_at: string | null, sort_order: number, parent_issue_id: string | null, parent_issue_sort_order: number | null, extension_metadata: JsonValue, creator_user_id: string | null, created_at: string, updated_at: string, };
 
 export type IssueAssignee = { id: string, issue_id: string, user_id: string, assigned_at: string, };
 
@@ -48,9 +48,13 @@ export type IssuePriority = "urgent" | "high" | "medium" | "low";
 
 export type IssueSortField = "sort_order" | "priority" | "created_at" | "updated_at" | "title";
 
-export type ListIssuesQuery = { project_id: string, };
+export type ListIssuesQuery = { project_id: string, archived?: boolean, };
 
-export type SearchIssuesRequest = { project_id: string, status_id?: string, status_ids?: Array<string>, priority?: IssuePriority, parent_issue_id?: string, search?: string, simple_id?: string, assignee_user_id?: string, tag_id?: string, tag_ids?: Array<string>, sort_field?: IssueSortField, sort_direction?: SortDirection, limit?: number, offset?: number, };
+export type SearchIssuesRequest = { project_id: string,
+/**
+ * Omit for all Issues, irrespective of UI hidden statuses.
+ */
+archived?: boolean, status_id?: string, status_ids?: Array<string>, priority?: IssuePriority, parent_issue_id?: string, search?: string, simple_id?: string, assignee_user_id?: string, tag_id?: string, tag_ids?: Array<string>, sort_field?: IssueSortField, sort_direction?: SortDirection, limit?: number, offset?: number, };
 
 export type ListIssuesResponse = { issues: Array<Issue>, total_count: number, limit: number, offset: number, };
 
@@ -75,7 +79,7 @@ export type CreateProjectRequest = {
  * Optional client-generated ID. If not provided, server generates one.
  * Using client-generated IDs enables stable optimistic updates.
  */
-id?: string, organization_id: string, name: string, color: string, };
+id?: string, organization_id: string, name: string, key: string, color: string, };
 
 export type UpdateProjectRequest = { name: string | null, color: string | null, sort_order: number | null, };
 

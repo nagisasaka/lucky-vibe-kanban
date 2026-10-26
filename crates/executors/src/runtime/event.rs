@@ -85,6 +85,8 @@ pub enum AgentRuntimeToolStatus {
     WaitingApproval,
     Approved,
     Denied,
+    Cancelled,
+    Unknown,
     Succeeded,
     Failed,
     TimedOut,

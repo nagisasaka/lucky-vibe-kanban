@@ -28,10 +28,10 @@ sources:
     resource: repo://packages/web-core/src/features/workflow/model/useWorkflowEditorDraft.ts
   - id: openwiki-source-49c27e78a2601ac597269802
     resource: repo://packages/web-core/src/features/workflow/model/workflowEditorDraft.ts
-generated: { by: "codex", at: "2026-10-20T17:40:06.172Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-20T17:40:06.172Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Workflow Attempt とグラフの契約
@@ -110,3 +110,5 @@ Run/Attempt の Canceled と NodeExecution の Cancelled はシリアライズ�
 現在の validation は循環を受け付けない。記録から将来の loop 支援時期や、現行 fan-in を全入力待ちへ変更する意図は確定できない。グラフやテンプレートの変更では、README の図だけでなく planner・validation のテストを判断基準にする。
 
 Repository scope の System Workflow は Issue を持たず、[OpenWiki bootstrap](../operations/openwiki-maintenance.md) の所有・終了検証に使われる。一般の Issue Workflow の操作権限や自動回復をそのまま適用しない。
+
+資源付きAttemptの新規作成と新規主Workspaceのbindは、Issueがarchive済みなら拒否する。既存Workspaceでの継続実行とは区別する。[Issue archive](project-and-issue.md#issue-のアーカイブ)・[受付guard](../../crates/server/src/routes/workflows.rs#L691-L697)・[新規bind](../../crates/server/src/workflow_runtime/runner.rs#L1015-L1043)。

@@ -20,14 +20,16 @@ mod integration_read;
 mod integration_write;
 #[cfg(test)]
 pub(crate) mod integration_write_tests;
+mod issue_archive;
 mod issue_comment_text;
 mod issue_comments;
 #[cfg(all(test, unix))]
 mod issue_comments_browser;
+mod issue_tags;
 mod issue_write;
 mod launch;
 mod merge_read;
-mod operations;
+pub(crate) mod operations;
 mod project_read;
 mod questions;
 mod read;
@@ -147,7 +149,7 @@ fn access_router(
         ),
     )
 }
-static PROCESS_INSTANCE: std::sync::OnceLock<Uuid> = std::sync::OnceLock::new();
+pub(crate) static PROCESS_INSTANCE: std::sync::OnceLock<Uuid> = std::sync::OnceLock::new();
 
 fn bind_access_principal(request: &mut axum::extract::Request) {
     if let Some(principal) = request.extensions().get::<server_access::Principal>() {
@@ -196,6 +198,8 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "delete_todo"
         | "create_issue"
         | "update_issue"
+        | "add_issue_tag"
+        | "remove_issue_tag"
         | "steer_execution"
         | "pause_goal"
         | "resume_goal"
@@ -205,6 +209,9 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "answer_question"
         | "start_workspace"
         | "sync_repository_wiki"
+        | "prepare_issue_archive"
+        | "confirm_issue_archive"
+        | "unarchive_issue"
         | "prepare_workspace_archive"
         | "confirm_workspace_archive" => Some("lvk:write"),
         _ => None,
@@ -377,6 +384,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
     tools.extend(issue_write::tools());
+    tools.extend(issue_tags::tools());
     tools.extend(issue_comments::tools());
     tools.extend(todos::tools());
     tools.extend(design_notes::tools());
@@ -392,6 +400,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(runtime_write::tools());
     tools.extend(goals::tools());
     tools.extend(workspace_archive::tools());
+    tools.extend(issue_archive::tools());
     tools
 }
 
@@ -482,6 +491,9 @@ impl Remote {
         };
         let args = Value::Object(request.arguments.unwrap_or_default());
         let result = match request.name.as_ref() {
+            "prepare_issue_archive" | "confirm_issue_archive" | "unarchive_issue" => {
+                issue_archive::call(self, principal, request.name.as_ref(), args).await
+            }
             "prepare_workspace_archive" | "confirm_workspace_archive" => {
                 workspace_archive::call(self, principal, request.name.as_ref(), args).await
             }
@@ -508,6 +520,9 @@ impl Remote {
             }
             name if issue_comments::tools().iter().any(|tool| tool.name == name) => {
                 issue_comments::call(self, principal, name, args).await
+            }
+            name if issue_tags::tools().iter().any(|tool| tool.name == name) => {
+                issue_tags::call(self, principal, name, args).await
             }
             name if issue_write::tools().iter().any(|tool| tool.name == name) => {
                 issue_write::call(self, principal, name, args).await

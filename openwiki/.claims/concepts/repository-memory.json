@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f53f67e88fd4cffdcfd22d98e3bd1ab692f9f46150a52b89d6bb67c1993f23ff",
+  "pageVersion": "sha256:7303994e9c91345295e00551ed73653b11c4a84846cbe730face3a5c906ecce0",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -118,7 +118,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:4ceab57373b204570075e3ca250e1fb6ac12c06c72dc3c92fcd018b9a55f0e5b"
+          "version": "repo-file-v1:sha256:e82c619910bae70641dd671bfc9c89420803471a517e45e80255ba238f58b1ee"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -174,7 +174,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:e02c0e26e8c1c6bef95b43176b5d95c46accb82b33fd347daa19ece5e6403f16"
+          "version": "repo-file-v1:sha256:0becb918d6207a1f5163133a1a21109d996827521c867a907d47ed28fac3bc08"
         }
       ]
     },
@@ -253,10 +253,28 @@
           "version": "repo-lines-v1:sha256:d4d8e2ed991334385e48fe026b7dd190509f6446dfe26428ca718f8fcc92f9e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiNmU4YjA0OWFhZDM5Njc3YWZjZTMyYWI0YzlmYTI2MmVmNTEwYmEyYTNkZGNjMDY3NzZmMGQyM2U5ZmQxODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0ZTZkZjI4NjUzYzRhM2NiZGNiNTZlZjJjYzY2Y2M4M2RjY2I2MWQ0MTUwNTZhMTZiZDFmNzk0NzYyNjkyM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_e3d984b322aa4ffeb3bbd461d8b68238",
+      "statement": "Syncは公開結果とno-opをowner結果に保存しrepository active ownerを解除する。生成Workspaceのowner解除後archiveは成功receiptやcanonical memoryの寿命と独立し、失敗で製品成功を取り消さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/issue_archive.rs#L429-L437",
+          "version": "repo-lines-v1:sha256:9977413b33f2c4c8dc45c9ec7ae0521d69f395ab29aaa39f8b929e659e4301e8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGRjMzMzYWM5YzExYWQyMjQ5M2UwNWRlZjgyNjg0NTRmOWE2MjMyYTM0ZmQwZGEyNTAyODdlMjE4MzE4OGIzMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDUxMjY1ZTBhYTdiYTA2ODhjNWMwYjY4NjUwNWI4M2EwODAzMTMyOTkyY2Y3MDkzY2NkYmY0M2RhYmY0NzkyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzU1Y2VhNDBmOWE5NjFlY2VkMTFjNDc5NjljM2M1YjU5YzVmZDc3MjAzYTdhMDNjZjk5YjQ2OGViMDVjYWEzZCJ9"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L600-L705",
+          "version": "repo-lines-v1:sha256:128db1b2c9f851100bb74ca31e30dc982f91226c582d389cff2ea288c1d1fb32:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmMTlkMGExZjk1OTU3MDE0MWFjMjVkOTk5NzM3ODNlYzNlMGNmMjcwMjQxMjE5Zjg1ODA4MzI3MTFiOTJiMjM0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzOTc4N2M1YWMyN2E2YWVkN2U0Y2E0OTI0ODkxZjdjZDVlOWQ1NDk1ZDVkZDdkNWNjZDgzOTc4OTY0MjFmY2RkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2ZGFhNzhjZTdhZmU1ZGY5YzllYmM5ZGE3Njc4YWUzY2EyYzA3MWZjY2YwZWJkNmE2M2VmNTg0OGRkN2NlZjk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlMzA3NWIwMjZlYjI2YWJmM2M2MmQ2NGUyNmZhMmUxZTM1NGY2MTZhOTFiMDAyM2YyMDhjOTc1MDQ4ZTc2OGNiIn0"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L894-L911",
+          "version": "repo-lines-v1:sha256:255a0f4b7fd9bc3d6281e670ee849e01140a874123294551b9ac369ffddca862:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0OTVjYzg1MWYzYzNlZmY3NTI4NjZiOGRhYTdiOGEzNjIxNjMzM2UxNDIxYmRiNTdkY2Q3MmJhNDZlODExODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2YzFhNGYzNjFhMGU2NGQyOTcwMTliMmYwMmI1MGExMDc0MmQ1MDc1YTNkYzcxMTFkYTIxMzM0Y2VlNGU0YjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmYWI3MTBkZGY3ODU5ZTU3NTc2NGE5MTNhMDAyYzc0NTg1ZmZhNzAwMTUxMGNiODgxMWRhODNkMmNmNzRiMzQifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T02:37:05.680Z"
+    "at": "2026-10-26T10:15:30.599Z"
   }
 }

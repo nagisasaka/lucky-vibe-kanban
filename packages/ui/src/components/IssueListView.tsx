@@ -23,6 +23,7 @@ export interface IssueListViewProps {
     issueId: string
   ) => IssueListRowRelationship[];
   onIssueClick: (issueId: string, e: MouseEvent) => void;
+  onIssueMoreActions?: (issueId: string) => void;
   selectedIssueId: string | null;
   selectedIssueIds?: Set<string>;
   isMultiSelectActive?: boolean;
@@ -38,6 +39,7 @@ export function IssueListView({
   getTagObjectsForIssue,
   getResolvedRelationshipsForIssue,
   onIssueClick,
+  onIssueMoreActions,
   selectedIssueId,
   selectedIssueIds,
   isMultiSelectActive,
@@ -56,6 +58,7 @@ export function IssueListView({
           getTagObjectsForIssue={getTagObjectsForIssue}
           getResolvedRelationshipsForIssue={getResolvedRelationshipsForIssue}
           onIssueClick={onIssueClick}
+          onIssueMoreActions={onIssueMoreActions}
           selectedIssueId={selectedIssueId}
           selectedIssueIds={selectedIssueIds}
           isMultiSelectActive={isMultiSelectActive}

@@ -1,3 +1,4 @@
+import { isSystemTag } from '@vibe/ui/lib/issue-classification';
 import {
   useState,
   useCallback,
@@ -124,7 +125,8 @@ export function KanbanIssuePanelContainer({
   const kanbanCreateMode = issueComposer !== null;
   const createComposerInitial = issueComposer?.initial ?? null;
   const kanbanCreateDefaultStatusId = createComposerInitial?.statusId ?? null;
-  const kanbanCreateDefaultPriority = createComposerInitial?.priority ?? null;
+  const kanbanCreateDefaultPriority =
+    createComposerInitial?.priority ?? 'medium';
   const kanbanCreateDefaultAssigneeIds =
     createComposerInitial?.assigneeIds ?? null;
   const kanbanCreateDefaultParentIssueId =
@@ -272,7 +274,7 @@ export function KanbanIssuePanelContainer({
       title: '',
       description: null,
       statusId: defaultStatusId,
-      priority: kanbanCreateDefaultPriority ?? null,
+      priority: kanbanCreateDefaultPriority ?? 'medium',
       assigneeIds: [...(kanbanCreateDefaultAssigneeIds ?? [])],
       tagIds: [],
       createDraftWorkspace: createDraftWorkspaceByDefault,
@@ -448,7 +450,7 @@ export function KanbanIssuePanelContainer({
           description: composerDraft.description ?? null,
           statusId: composerDraft.statusId ?? createModeDefaults.statusId,
           priority:
-            composerDraft.priority === undefined
+            composerDraft.priority == null
               ? createModeDefaults.priority
               : composerDraft.priority,
           assigneeIds:
@@ -610,14 +612,20 @@ export function KanbanIssuePanelContainer({
 
         // Remove tags that are no longer selected
         for (const issueTag of currentIssueTags) {
-          if (!newTagIdSet.has(issueTag.tag_id)) {
+          if (
+            !newTagIdSet.has(issueTag.tag_id) &&
+            !tags.some((tag) => tag.id === issueTag.tag_id && isSystemTag(tag))
+          ) {
             removeIssueTag(issueTag.id);
           }
         }
 
         // Add newly selected tags
         for (const tagId of newTagIds) {
-          if (!currentTagIdSet.has(tagId)) {
+          if (
+            !currentTagIdSet.has(tagId) &&
+            !tags.some((tag) => tag.id === tagId && isSystemTag(tag))
+          ) {
             insertIssueTag({
               issue_id: selectedKanbanIssueId,
               tag_id: tagId,
@@ -640,6 +648,7 @@ export function KanbanIssuePanelContainer({
       updateIssueComposerDraft,
       setCreateDraftWorkspaceByDefault,
       issueTags,
+      tags,
       insertIssueTag,
       removeIssueTag,
     ]

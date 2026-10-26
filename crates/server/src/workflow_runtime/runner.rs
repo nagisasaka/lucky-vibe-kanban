@@ -1012,6 +1012,11 @@ where
     let project_id = workflow
         .project_id
         .or(resolve_issue_project_id(pool, trigger.issue_id).await?);
+    let issue_creation_guard = if trigger.workspace_id.is_none() {
+        Some(crate::routes::local_remote::issue_archive::lock_issue(trigger.issue_id).await)
+    } else {
+        None
+    };
     let workspace_id = workspace_resolver
         .create_or_bind_main_workspace(WorkflowWorkspaceRequest {
             issue_id: trigger.issue_id,
@@ -1035,6 +1040,7 @@ where
         &graph,
     )
     .await?;
+    drop(issue_creation_guard);
     let orchestration_run_id =
         start_workflow_orchestration(pool, run_id, workflow_id, workspace_id, &graph).await?;
     sqlx::query("UPDATE workflow_runs SET orchestration_run_id = ? WHERE id = ?")

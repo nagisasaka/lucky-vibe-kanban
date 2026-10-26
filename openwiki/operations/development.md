@@ -8,8 +8,16 @@ sources:
     resource: repo://Cargo.toml
   - id: openwiki-source-b41a0c4c19395b75cde58592
     resource: repo://CONTRIBUTORS.md
+  - id: openwiki-source-0afb1e125b616abe2a64c15f
+    resource: repo://crates/db/migration_compat/project_keys_multi.sql
+  - id: openwiki-source-32853d735a8ae91f8c088286
+    resource: repo://crates/db/migration_compat/README.md
+  - id: openwiki-source-4169d2cd1d27a6243e90c06d
+    resource: repo://crates/db/src/bin/migrate_compat.rs
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-7b783ec1a704bf9dadb9c003
+    resource: repo://crates/db/src/migration_compat.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -38,6 +46,8 @@ sources:
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-bf1c49e27a5579a9fdbab2e9
+    resource: repo://deploy/developer/switch/bundle.py
   - id: openwiki-source-a764bf933c082e67ed4b6192
     resource: repo://deploy/developer/switch/launcher.py
   - id: openwiki-source-417b2b5ecb26c89c1b06df88
@@ -58,6 +68,10 @@ sources:
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+  - id: openwiki-source-fd4e5484aac03297c6295350
+    resource: repo://docs/development/cargo-cache.md
   - id: openwiki-source-d95a345bb2e865055223b40f
     resource: repo://docs/development/dev-switch-bundle-validation.md
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -68,10 +82,18 @@ sources:
     resource: repo://packages/web-core/package.json
   - id: openwiki-source-b7793decf9d7c9ba48e57e0f
     resource: repo://rust-toolchain.toml
+  - id: openwiki-source-8ea6c46d63953a7104f5dd97
+    resource: repo://scripts/dev-cargo.mjs
+  - id: openwiki-source-934f1cc67f10f765aeed70ed
+    resource: repo://scripts/dev-cargo.test.mjs
+  - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
+    resource: repo://scripts/dev-rustc-cache.mjs
   - id: openwiki-source-d90097af5777425ac57c25b3
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-6d88df283621a548f8021464
+    resource: repo://skills/lvk-orchestration/SKILL.md
   - id: openwiki-source-29176c627ccc31a24d3d6ab2
     resource: repo://tests/build-info/component.test.mjs
   - id: openwiki-source-3b8e596f6d78967bbf29a877
@@ -80,6 +102,8 @@ sources:
     resource: repo://tests/chat/external-editors.test.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
+  - id: openwiki-source-e023073a2ead0d2a5b8304d5
+    resource: repo://tests/project-keys/migration_compat.py
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
     resource: repo://tests/server/run-workspace-tokens.mjs
   - id: openwiki-source-f7bef772fe7a00d12c00a997
@@ -98,10 +122,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
+generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:19:36.105Z
+    at: 2026-10-26T16:20:39.259Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -127,7 +151,59 @@ Tauri shell、native frontend bridge、desktop packaging/updater scripts と `ta
 
 旧 Cloud / relay の起動scriptと別Cargo workspaceは撤去された。local Board API と外部MCP / Runnerの検証は現行serverを対象にする。
 
+## LVK 開発用 Cargo と共有キャッシュ
+
+LVK 自身の POSIX source 開発は checkout 内から `node scripts/dev-cargo.mjs check --workspace` のように実行する。backend の check/lint/test/format、型生成と watch の pnpm script もこの入口を共有する。入口は `cargo locate-project --workspace` の実パスで自分の checkout を確認し、crate サブディレクトリからも利用できる。build/check/test/clippy/run/fmt/metadata/watch が対象で、config・manifest・target・toolchain の上書きは raw Cargo で別の方針として実行する。[呼出元](../../package.json)・[対象と scope 検査](../../scripts/dev-cargo.mjs#L30-L41)
+
+### 用途と profile の選択
+
+`--purpose` は subcommand の前に置く。既定は `preview`。`dev` と `stable` は fmt / metadata 以外に `--release` を追加し、呼出側の `--release` / `-r` / `--profile` は拒否する。通常の Cargo.toml は release の debug=1 を保持するが、この入口は dev / test / release の各 profile を用途に応じて引数で上書きする。[選択と設定](../../scripts/dev-cargo.mjs#L10-L20)・[profile 制御](../../scripts/dev-cargo.mjs#L40-L84)・[通常 Cargo](../../Cargo.toml)
+
+| 用途 | build の入口と出力 | 最適化・debug・strip |
+| --- | --- | --- |
+| preview | `node scripts/dev-cargo.mjs build --locked --bin server --bin agent-process-host` → checkout の `target/debug/` | opt-level=0、line-tables-only、strip=none |
+| 常用 dev | `node scripts/dev-cargo.mjs --purpose dev build --locked -p server -p local-deployment -p mcp --bin server --bin agent-process-host --bin vibe-kanban-mcp --features server/developer-runtime` → checkout の `target/release/` | opt-level=3、line-tables-only、strip=none |
+| stable | 配布は root Dockerfile の `server` target。ローカルの `--purpose stable build` は同じ profile の確認入口 | opt-level=3、debug=0、strip=symbols |
+
+全用途で incremental=false、split-debuginfo=off。preview / dev は行情報を実行ファイル内に残し、コピーした bundle に debug sidecar を追加しないという判断が記録されている。stable は chef cook と server build の両 command に同じ release 環境値を限定し、image 全体の ENV や製品 runtime へ適用しない。[記録された理由](../../docs/development/cargo-cache.md#server-purposes)・[Docker の適用箇所](../../Dockerfile#L73-L107)
+
+instance / bundle 作成前に frontend を build する。常用 dev bundle は上表の developer-runtime 付き build と [成果物切替](#開発用成果物切替と復旧)を組み合わせる。`instance:build` と `staging:build` は frontend の後に既定 preview の入口で server / process-host を作り、source の `target/debug/` から候補へコピーする。staging は環境名であり常用 dev の用途名ではない。[instance の結線](../../deploy/developer/instance.mjs#L130-L183)・[bundle 作成手順](../../deploy/developer/switch/README.md#buildとbundle作成切替engineの外側)
+
+### 保存先と runtime の境界
+
+[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)は保存先を提供し、利用設定はこの入口が明示的に所有する。global / auto-loaded Cargo 設定や Project setup へこの方針を導入しないという判断が記録されている。[適用境界の記録](../../docs/development/cargo-cache.md)
+
+| 保存・設定 | 契約 |
+| --- | --- |
+| 最終 target | 当該 source checkout の `target/` |
+| Cargo 中間物 | `.lvk-shared/cache` があれば canonical path 配下の単一 `lvk-dev-cargo-build`。Workspace ごとの hash を挟まない |
+| 共有リンクなし | 中間物も checkout の `target/` に置き、警告する。instance の source snapshot も同じ規則 |
+| compiler cache | PATH に sccache があれば rustc wrapper を使う。共有リンクありなら compiler 子プロセス内で canonical `cache/sccache` を設定する。なければ継承設定を維持する |
+
+[保存先と wrapper 選択](../../scripts/dev-cargo.mjs#L85-L124)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
+
+Cargo や `cargo run` の binary、そこから起動した子 Project へ、この入口が追加の compiler 環境変数を export することはない。ただし無関係な既存の継承環境を洗い流す仕組みでもない。watch は `cargo watch -w crates -s` から選択用途を付けて入口を二度呼び、まず server と agent-process-host を build し、成功後に server を run する。外部 cargo-watch が Cargo の global 引数を伝播することには依存しない。[watch の結線](../../scripts/dev-cargo.mjs#L19-L29)・[runtime と子 repository の fixture](../../scripts/dev-cargo.test.mjs#L87-L104)
+
+### 競合・失敗・削除の扱い
+
+継承した `CARGO_INCREMENTAL` は未設定または `0` が必要で、dev/test/release の opt/debug/strip/split/incremental profile 競合値、target/build-dir 環境変数、別の rustc / workspace wrapper は明示エラーとなる。環境と Cargo build/target 設定の Rust flags も調べ、これらの codegen 方針を上書きする値を拒否する。設定検査自体に失敗しても停止する。競合を解除して opt in するか raw Cargo を使う。[拒否条件](../../scripts/dev-cargo.mjs#L37-L79)・[wrapper の検査](../../scripts/dev-cargo.mjs#L96-L111)
+
+sccache が未導入なら警告して直接 rustc を使う。導入済みでも stats 取得に失敗すれば停止する。既存 server の cache location が期待値と違う場合は警告だけであり、その server の停止・再設定・統計 reset はしない。希望する `SCCACHE_DIR` を指定しただけで稼働 server の実保存先が一致したと判断しない。[診断と fallback](../../scripts/dev-cargo.mjs#L112-L123)
+
+中間物の競合は Cargo 自身の build lock が扱うため、最終 target が異なる Workspace 間でも待機し得る。独自 lock や deps symlink で回避しない。入口は `clean` を拒否する。raw clean は共有中間物も削除でき、他 checkout の最終 binary が残っていても cache の保持を意味しない。[拒否](../../scripts/dev-cargo.mjs#L30-L32)・[実 Cargo の lock / clean fixture](../../scripts/dev-cargo.test.mjs#L106-L119)
+
+SQLx prepare は raw Cargo の専用手順を維持する。一方、instance build は上述の preview 入口へ接続済みである。配布 image は raw Cargo の command-local stable 設定を使うため、この開発入口の存在だけで全 build の設定が変わるわけではない。[SQLx](../../scripts/prepare-db.js#L15-L41)・[instance](../../deploy/developer/instance.mjs#L153-L183)・[配布 build](../../Dockerfile#L73-L107)
+
+### 検証で確かめる範囲
+
+`node --test scripts/dev-cargo.test.mjs` の主 fixture は pinned Cargo / rustc と依存不要の一時 repository を使い、三用途の compiler flags、ELF 行情報とコピー後の dev/stable binary、Docker の両 command にある同じ設定値、共有中間物と分離 target、fallback、競合拒否、run の環境、lock と clean の影響を検査する。sccache transport と watch command の観測は fake を使うため、実 watcher の寿命や実 cache hit 率の証拠ではない。`LVK_TEST_REAL_SCCACHE=1` は既存 server を再設定せず、実 sccache で小さな library を compile する追加 smoke を有効にする。[主 fixture](../../scripts/dev-cargo.test.mjs#L15-L120)・[追加 smoke](../../scripts/dev-cargo.test.mjs#L122-L136)
+
+[LOCAL-197 の開発時記録](../../docs/development/cargo-cache.md#local-197-local-verification-2026-10-26)は局所4件成功・実 sccache smoke 省略を記録する。実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定、実 LVK/watch/managed child-Project 受入と、配置後の行番号解決・payload・build identity・health は未検証として残る。[測定計画](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `dbd79d52a75b16e340a438f4777440e54e624965` の pnpm caller、Cargo 入口、compiler wrapper、instance、Docker と独立した試験定義を静的照合した。製品 build や fixture は再実行していない。正式 Integration の入力は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
+
 ## 検証の対象を取り違えない
+
+<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L118-L124] heading anchor "L118-L124" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [正式 Integration の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#L118-L124)
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |
@@ -299,7 +375,29 @@ local API の生成元は Rust の generate_types binary であり、shared/type
 
 prepare-db は一時 SQLite を作り、migration を適用してから cargo sqlx prepare を実行し、finally で一時 DB を削除する。--check でも一時 DB の作成と migration は行うため、単なる読み取り専用の型検査ではない。[SQLite 準備](../../scripts/prepare-db.js)。
 
-本番 DB の migration checksum 不一致は、debug build と非 Windows ではエラーになる。Windows release は記録済み checksum を更新して再試行する分岐を持ち、その根拠として改行等の platform 差を code comment が挙げる。これは任意の schema 不一致を修復する保証ではない。起動時の schema guard は [システムの永続化境界](../architecture/system.md) を参照する。[platform 分岐と記録された理由](../../crates/db/src/lib.rs#L29-L73)
+### Project key migration の互換運用
+
+version `20261025120000` の元 SQL は、全既存 Project に `LOCAL` を付けてから unique index を作るため、複数 Project の旧 DB では失敗する。後続 migration だけでは先行失敗を越えられない。元 SQL を保持し、この一版だけ二つの固定 SQL と各 LF/CRLF の既知 checksum を選ぶ `MigrationSource` を使う。[元 SQL](../../crates/db/migrations/20261025120000_project_keys.sql)・[対応方針と理由](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。Project と過去 Issue の識別子の関係は [仕事の識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)を参照する。
+
+| 対象版の保存履歴 | 選択と失敗の契約 |
+| --- | --- |
+| 未適用 | checkout の互換 SQL を実行する |
+| 元 SQL / 互換 SQL の既知 LF・CRLF checksum | 保存 checksum に一致する実 SQL bytes を選び、通常の SQLx 検証を行う |
+| 未知 checksum、または改変された元・互換 artifact | エラーにし、履歴を書き換えない |
+
+adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new` を使う。まず両 artifact が既知であることを検証し、その後で固定 LF/CRLF 候補を選ぶため、任意 SQL を改行正規化して受け入れる仕組みではない。他版の検証を緩和する一般的な履歴変換でもない。[選択と構築](../../crates/db/src/migration_compat.rs#L40-L133)。互換層は適用済み receipt を更新せず、実行時は SQLx が実 SQL の checksum を記録する。[履歴保持の設計](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。
+
+互換 SQL は Project UUID 順で `LOCAL`、`LOCAL2`〜`LOCAL99999` を割り当てる。既存 Issue 行は更新せず、列 default は `LOCAL` のまま。100000件目は10文字 CHECK を超えて migration 全体が rollback し、切詰めや再利用はしない。[割当と制約](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)。
+
+起動と明示 tool の共通入口は `db::run_migrations`。明示実行では認可済みの既存 DB を `DATABASE_URL` に指定し、`SQLX_OFFLINE=true cargo run -p db --bin migrate_compat` を使う。tool は DB の既定接続先を持たず、終了時に pool を閉じる。prepare-db も同 binary を `SQLX_OFFLINE=true` で build/実行してから、一時 DB に対する SQLx prepare を行う。[tool](../../crates/db/src/bin/migrate_compat.rs#L1-L10)・[prepare の順序](../../scripts/prepare-db.js#L15-L50)。
+
+互換版適用後に raw `cargo sqlx migrate run` を使うと、directory 内の元 SQL しか知らず checksum 不一致になる。旧 server binary も互換 checksum を扱えず、この変更は downgrade を提供しない。`_sqlx_migrations` の手修正で回避しない。[対応する入口と制限](../../crates/db/migration_compat/README.md)。
+
+対象版の未知 checksum は Windows release の既存 fallback より前に拒否する。他版については debug / 非 Windows で不一致を失敗させ、Windows release では保存 checksum を更新して一度ずつ再試行する従来分岐が残る。comment は platform 改行差等を理由に挙げるが、任意の schema 不一致を修復する保証ではない。[版別 guard と fallback](../../crates/db/src/lib.rs#L18-L80)。実行成功後の schema guard は [起動境界](../architecture/system.md#永続化は一つではない)を参照する。
+
+変更時は `cargo test -p db --lib migration_compat::tests` の実 SQLx fixture を確認する。fresh、旧0/1件 receipt、旧複数件の失敗から再開、互換 CRLF receipt の再起動、checkout 改行と履歴の組合せ、未知 checksum・改変 artifact の拒否を検査する。[Rust 試験](../../crates/db/src/migration_compat.rs#L135-L408)。`python3 -B tests/project-keys/migration_compat.py` は Issue 値保持、99999件境界、100000件の反復 rollback 等の軽量 SQL/checksum model であり、Rust selector や全履歴を実行しない。raw `sqlx::migrate!` を使う空 DB 試験も互換 selector の証拠とは別である。[軽量試験](../../tests/project-keys/migration_compat.py#L1-L153)・[試験の区別](../../crates/db/migration_compat/README.md)。
+
+今回の Sync は凍結 source `cc39e6f25eb0f2ae1fc15df8712befb16fed4509` を起動 caller、共通入口、selector、SQL、allocator、tool、prepare と独立した試験定義から静的照合した。凍結入力には局所 Rust / Clippy / prepare と正式 Integration の check / lint / backend:test 成功報告があるが、この文書保守では再実行していない。native Windows、全 CRLF checkout 全履歴、実 server 起動や稼働 DB の検証を追加で立証したものではなく、無関係な過去の説明も再検証していない。
 
 ## 外部エディター URI 連携の検証
 

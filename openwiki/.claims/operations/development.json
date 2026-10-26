@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:18f450872793b5ffb784722ae6ca37232451acf459a5bbf22fe6494775510801",
+  "pageVersion": "sha256:fd1acb6866f4e5ef9431418bfdd474b552681032beca7b8b5ed7a56dfa509ca9",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:c796586dcd4d111a1eda0144265d7dbeecc8b41d30b67b2327ccb84b4db75f19"
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         },
         {
           "resource": "repo://rust-toolchain.toml",
@@ -21,8 +21,12 @@
       "statement": "dev は port 解決後に Web/backend を並行起動し、watch は server と process host を build する。旧 cleanup 無効化変数を設定せず、Tauri 開発 script は撤去済みである。",
       "evidence": [
         {
-          "resource": "repo://package.json#L12-L45",
-          "version": "repo-lines-v1:sha256:775a94d5633299fceea4a2bfb27c0d12641b3f7f8c14a45d9659a513720e2c1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMTIwMjUyZjYyZmY4OWU2YzdjNGRjMzU1NGM0N2Y4MjdmNjllZWM0NjczNjZiY2E5ODljMWI2N2RiMTlhMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMTY4MDc0NWFkZWVjYjE3M2VmNDI2Y2RlMGQ2YzMzNzYzYzk2MTc3ZDYzMWQ3NDhmMDIwY2M3OGExNzVkODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
+          "resource": "repo://package.json",
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L19-L29",
+          "version": "repo-lines-v1:sha256:bb675126a939c6e5b045faae9a0ba5e6733dc6423c3d3df24c9bdc55bf7ec734:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzMTUwMDJiYmVlN2VmZGJhYTNlODA2NDllMTVkZjVjMjY4MGMwY2FmYzViOGRkMzIwN2ZjMDE5OTE5ZGRkOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNzg3OGFlZjg5Mjc5YjU4MWY3ZTZjMjdmOTJmMzA4ZWQ0ZjcwMzk4ZTg5OWMyOTllOTQ4YTFmZDZlNDkyMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOTA1ODA0YjZiNGU2OGNmYjk1NTA5Njk4Y2U3NzgwMmM4NDQ1MzMxODQxY2VmZTQ2MGI0YjRmYzAxYTFkOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3OTkwNmQyNGU2Y2JlYmY0NjUwMDQ2YWFkNzhhNzgyZmU2Y2U5NGI5YjhlZThmOGMzYTgzMDIwOTAyZTc5ZmIifQ"
         }
       ]
     },
@@ -35,12 +39,8 @@
           "version": "repo-lines-v1:sha256:97baa5c3cda0cd61f97c5bcc30e9863edbea1564458e1d1f71ca1679d96e2fe3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzNGUxMDJjODYxZjk5NGQyYWFjZTkxMTRkMzkyZGJjMTYyMTkwZTAwYmU4ZmUzNTdkNDcyMTUwY2E0Mzk2MTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkMDg4NmM0YzZkNzIwZWJiOGEyMWQ5NGY2MjYzZDcwN2IyZDY1OGM5YTE2YWI0NTk0ODk3ZTUwYWFiYWU0ODUifQ"
         },
         {
-          "resource": "repo://package.json#L30-L36",
-          "version": "repo-lines-v1:sha256:70ff80cd8fd6ffecabbf7af30f86f5db25d1e29d59945a3f1c12e2bad2c1e191:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU0ZTUxMGM1ZjAxZGVlMWQ3NGJkMmU5MDgyZWE1MTZmMGM0Y2E3ZjQ3Nzc3MTM2YWZkZDAwZGU1MTU5NGIxZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODE2ODI3YmRhMWNiN2U3YTdkNjY3MWZkNTdkZTY4MTAxYTU3NzRmY2ZmNTgzODM0ZWM1ZTljMTVkNTNmYjZmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2E1ODFkNDI2NWVjZDgyZDYzZmQ2MmNjMjAwYzUzNzQ5ZjZmMjdhYWJkMTI4M2MxYjdlOThlNzM0OTRkNDkzZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2Y4ZjM5ZmYyNmUxYTU4MDY2N2UzYmIwNjQ2NWZjOTRiOTI4MDVhODM4YzNhNGJlMzc2NjNlODcwZTQ4ODFhYiJ9"
-        },
-        {
-          "resource": "repo://package.json#L6-L8",
-          "version": "repo-lines-v1:sha256:26e7c1040837dbc5c362085f116f99c6ac4b83fbe524dbf26378faf2d7df6710:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzcwMTJlZWRjNDdiNDAyZGIyYjRkMGM0ZDRlMDA0MWU3NDkyYmYyZTA1ZDRmZTRkYzU2MzY0ZDg2MTljNWNiZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDkwM2ExN2M2YTFjY2I1NjUyYWIyNGQ2YzI5ZmIwNWNjZjk3ODBkMWJiZmM5ODczZTg3MTBlMGE4YWJmNGNjMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlhODkxMTRhNDhiMDE2YmQzZjQyNTZjYTExOGZiZjY0Yjg2NmMwOTgzN2NhYTJlNGMxNjdiOGY5NTJhYzUwYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWIxNjgwNzQ1YWRlZWNiMTczZWY0MjZjZGUwZDZjMzM3NjNjOTYxNzdkNjMxZDc0OGYwMjBjYzc4YTE3NWQ4NCJ9"
+          "resource": "repo://package.json",
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         }
       ]
     },
@@ -84,17 +84,17 @@
       "evidence": [
         {
           "resource": "repo://scripts/prepare-db.js",
-          "version": "repo-file-v1:sha256:d7eb8c6e3dab9bbf494f0746c802035786d595d1d6248b11b33b55b7bb1613c4"
+          "version": "repo-file-v1:sha256:200dc0137fe752db9722790ee260d616738b65719515eb0366e83bc0f4dae815"
         }
       ]
     },
     {
       "id": "claim_36a0afb413ec454e963c0efa35e90d63",
-      "statement": "migration checksum不一致はdebug/非Windowsでは失敗、Windows releaseは記録checksumを更新して再試行し、commentにplatform改行差の理由が記録される。",
+      "statement": "Project key既知版は未知checksumをWindows release fallbackより前に拒否する。他版の不一致はdebug/非Windowsで失敗し、Windows releaseにはchecksum更新再試行の従来分岐が残る。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/lib.rs#L29-L73",
-          "version": "repo-lines-v1:sha256:17a3633ea0c1b70686c010fa85e213de2598714fcc618110d5975dc87a7dc8df:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5YjUwZjIwNmU0MWM5Nzk2ZTliMTRhZjYyNmNhMzAxMjRmY2U0ZDA2M2RmNzJkODNlMzY1ZGNkZDVlNGFmYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyYWE4ZmQ0ZjhlMjJjMzJhMzgxOWY2YjAxNmNlMGU5NGRhMDNjODJhMzcyODMwNTY3NTBlZmI0M2Y1YjQ4YWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZTI2NzBjNGE0ZTU5ZGNlMmRjODdmNjMyY2VkMmIxZjVlODAxNzYzOGJkODZhOTliMmIxMmY4NmM3YWE4YjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkifQ"
+          "resource": "repo://crates/db/src/lib.rs#L18-L80",
+          "version": "repo-lines-v1:sha256:c5250c280a8fbe3b5942dcded7b98c997825004c0ea6943280abda36801895ea:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNTlkZmNiZjRmMzRjNzg5ZmZiMzBjM2I3NWU4ZTkyYjIzNDA4OWI3MGM2NDgwMTg2OTJlOWNiNGFhZDMyOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4Njg0ZDFjYzFkNjkzNmMxZjc3OTg3OWVlOWJjZGJhMDY4YTIxMjI5ZTVkMTY4NmMxZTE4NzEzNmM0NjQzNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhYTk3MGU0MWM5NjJiOWYwNzkyYzQ4NmNkMDU4Y2UwMWM5OGJjMjJkMDNiZDk5OGFlOTFhZjRlZDQwZTZkZWQifQ"
         }
       ]
     },
@@ -122,7 +122,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:c796586dcd4d111a1eda0144265d7dbeecc8b41d30b67b2327ccb84b4db75f19"
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         }
       ]
     },
@@ -160,7 +160,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/instance.mjs",
-          "version": "repo-file-v1:sha256:bc519f985dbf6734b5b19dd0554cff59eb47ec449a41f60ada1ee42718f360ae"
+          "version": "repo-file-v1:sha256:a740d282b308ef4843f27031e9c6e074b909af242e0053e631cbcfa661367b05"
         }
       ]
     },
@@ -284,7 +284,7 @@
       "evidence": [
         {
           "resource": "repo://deploy/developer/instance.mjs#L131-L195",
-          "version": "repo-lines-v1:sha256:43a3b303c3abf0e85bb4bb34dfe323a12ac576729cfaad0afd7700946695c527:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZGQ2YjE5NmYzNGNmNDYxYjE1ZmIyMTUxMzVlMWUyNWQwYTY3NDc1YTdkMzRhYWQ2MDBhN2JhNDI3MjVhYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NTQxNmU5NWI1OTlkYWY3ODNhZTA4OWI4OTIzMzgzZGQ2NjNiZDdiYzBmNWZhZmNjOGE5YTgxNTgwNmM1MjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhYWIxYmVjNmUzMzRhMjUxOWEwOGViNDE3NTNkYWI5N2RlODNkNzJhMjhhMDczZTc0NzViMjk1Zjc3ZGY2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ODJlYTMzYWEzNjYzZTY3YmZmNzY0MDIwYjQxNWNjNDY3Njk3MzZjNDRhNThiOTkzNmE5MTQ1MDlhOWRkYzkifQ"
+          "version": "repo-lines-v1:sha256:6a4a978f7cc74606e09819afab7697f61f56e994ecf2089a81318e1a6d40e088:eyJzZWxlY3RlZExpbmVDb3VudCI6NzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZGQ2YjE5NmYzNGNmNDYxYjE1ZmIyMTUxMzVlMWUyNWQwYTY3NDc1YTdkMzRhYWQ2MDBhN2JhNDI3MjVhYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NTQxNmU5NWI1OTlkYWY3ODNhZTA4OWI4OTIzMzgzZGQ2NjNiZDdiYzBmNWZhZmNjOGE5YTgxNTgwNmM1MjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhYWIxYmVjNmUzMzRhMjUxOWEwOGViNDE3NTNkYWI5N2RlODNkNzJhMjhhMDczZTc0NzViMjk1Zjc3ZGY2OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1ODJlYTMzYWEzNjYzZTY3YmZmNzY0MDIwYjQxNWNjNDY3Njk3MzZjNDRhNThiOTkzNmE5MTQ1MDlhOWRkYzkifQ"
         }
       ]
     },
@@ -389,12 +389,12 @@
       "statement": "旧 npx-cli/local-build.sh と npm 用 scripts に続いて Tauri shell と tauri:* コマンドも撤去され、ブラウザーと Docker server または source Web 開発を使う。既存 desktop data の自動削除・移行はしない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
-          "version": "repo-lines-v1:sha256:0d71dd015a7a8f0cc54a910d0f85d6eb853e2526634da43477a3c4edfc034302:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
+          "resource": "repo://docs/self-hosting/server-container.mdx#L350-L375",
+          "version": "repo-lines-v1:sha256:53421a0098843b1f725a5d5e4f59f2321253b4ca0f181821520f7fb271894a23:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiZjZlOGM5NzE2NjVkYTY2NDBkMjgyMmUzNjlmNGQ5N2ExOTVhNmQ5MTBiMjU4YTk0MzczZDRkYWQ1YTE2MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlYjBiMzliZmI3Y2ExMTEwYjQwM2NjYjY0N2Y0MmNhNDg5YTY2MTRlYjk5YWJiOTlmM2M4NmM3M2UwNmYxYTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4YTVlMjJhZjhjOWUwYjRhYTg4Y2U2ZGIzZDYwODEzMDFkMDllOWE5ODMzMjM5NWE1OTEyM2E1NDUzN2E0NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYwZjY0MGFlNjE1Y2E3YzAxNGI0ZDFlNWNmNWIwM2M4ZmVjMGEzY2ZhOWQxY2M2NTU0NDNlYmMwYmQwMjcyYTQifQ"
         },
         {
-          "resource": "repo://package.json#L1-L45",
-          "version": "repo-lines-v1:sha256:c44a2eba2c2c61dc8a6b7e2c035c3d06a33274dd41d5a05c34e45ee076f79cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
+          "resource": "repo://package.json",
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         }
       ]
     },
@@ -631,10 +631,212 @@
           "version": "repo-lines-v1:sha256:95f2bf238b5cb457fd7ba874f81a38e85f7c2f665531a2c4de528af3ebe11bd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDZiYTc0MDgyYjhhNTVhZTY1ZjQ3MDEzMGJkNmY4NDZkYTQ1ZWFmMzI4OTQ4YTZhZTBiOWJiNGZjNTE4NWEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_89004c5f04654b4da954f420c199b33a",
+      "statement": "version 20261025120000のみ元・互換SQL各LF/CRLFの既知artifactを検証し、未適用ならcheckout互換SQL、適用済みなら保存checksumに合う実SQLを選ぶ。未知履歴や改変artifactは拒否し履歴を更新しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/migration_compat.rs#L40-L133",
+          "version": "repo-lines-v1:sha256:cb2960805f60ff2d168286c1937e013e183b9eda2d462592e53b1b5e5f8afa7b:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZmI4NWMwMTIzOTA4NWQ2YThmYmY2MzM0N2I1ZjUzNTVmN2JlNGRkNTAzYWY4ZmE4MzBhZTA4YjVhMjczZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNTU4YWM0NzExYmEzNDRlN2ZlNjgwMTQ3MGU2NTRkMGU3M2RhNDVlZDA3YWRjYzc5N2VjNmRhMmY4ZDNhYzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmY2YzOThmYWM2YzdiN2ViNjYyODc4MzZlMTczMDlmMzJiNTE4OGRlYTIzMGM2NDdiNGUzZjQzM2JiZGIzNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiYmUwNDY0YmE5YzFjMzNmNWFmNzBjNTg4OGJhOThlMzBiM2NiMjRiYzFmY2FjYjEwY2Q1YWMzZjdjYjliOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ce70176f68943b589c956f7b0765ec6",
+      "statement": "互換Project key SQLはUUID順LOCAL・LOCAL2〜LOCAL99999を割り当て、既存Issueを更新せず、100000件では長さCHECK違反でrollbackする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migration_compat/project_keys_multi.sql#L1-L21",
+          "version": "repo-lines-v1:sha256:c0d68cd0f2d1e640d6317c054f913ee3eaecde15fada89a14e42efb443793aae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3NGY3MDYzZDU1MDkxNzNmMzJhZTZlNzU0NjA2NjJkNjdhZjk3ODNjNDEzMTgyOTE2MThkNmU4OGNkMmQwMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZDg0YjYxNTNjMWNhZDA2MmRlMGFiYmJlODljYzNkMGNjYTQyY2QzNTViYmQ5OWMxMzgxZDA1MGNlODM2NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/project-keys/migration_compat.py#L138-L149",
+          "version": "repo-lines-v1:sha256:aa38c39cc6ae588dfbc13780bbeaeba3e95e89c6f45f560b4b7465e5495ebf96:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViNGUwZWI2NzU0NTRlZTg1NzFmMzViN2E1ZDI2NWMxZTY4NjRmY2E1ZDc3ZDFmNWNmMTE2ZjM3ZGY5MTIwNDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNjZlZTEzYjcwNjBjODQ0YjRmMmQyZGNhYzRjNzJlMWMwYjQwOTIxYzlkM2QyYTgwMmNkM2FlYjAwN2JhMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef63c8a6b1744bec9df6acbbe85d2703",
+      "statement": "明示migrate_compat toolはDATABASE_URLを必須として共通run_migrationsを使い、prepare-dbもSQLX_OFFLINE=trueで同toolを実行してからSQLx prepareを行う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/bin/migrate_compat.rs#L1-L10",
+          "version": "repo-lines-v1:sha256:2017db588c7b59f68f51d7bf154900f423d0d652344f8074a425c19079412198:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NDE3YWNhYzg1MjgyZmE0MWRlOWM4ZDBiMThmYjJhZmU5YWU4YzU1NTZjMDE4OGNmMjA1Njc5MmNhYTgzYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://scripts/prepare-db.js#L15-L50",
+          "version": "repo-lines-v1:sha256:113e5532caaf89101448b7108a602803a486848c1e1a4089ed5fa49229721cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhY2FkNTE2NTRhNDk4MDc0ZjA0MDkxNzdkMDU4YjAzNzFjNzgyYjU2Y2Y3MmUxYjFiODA1ODE0NjFlMzM0NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZjU2NzllODQ2NTc1Y2E1NzNhMmFiNjRlMjE5MDQzMDI2MGZmN2UyYjUzMzdkYzBlMDE1NTMyMDM2YzI2ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0f0873610b9042f8860f994217682859",
+      "statement": "raw SQLx directory CLIと旧server binaryは互換checksumを扱えず、この変更はdowngradeを提供しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migration_compat/README.md#L26-L34",
+          "version": "repo-lines-v1:sha256:b375314780f6170008f69bea669d273bc9aa34a40056e2ba289773856a278fd3:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWU1ZjZhODQwNDI2MmFjZTBkYjNjZDhmN2ViMDZhOTEyNWY2NWE4MmFiOWU2ZGQ2ZmMyOTdlM2UxOGM3NmJkZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDVkODJjMDdiYmRiMThhYzU3ZjQzMzhhNTBlYWU1NzFlMTJjYmYzMjg1YmU2MTYzMTBiOTM4ZTZkZTcyNzA3NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzdjZTY0MmU2ODJjYTgyYWViNWMyNDgzZmJmNjMyMzQxNTFkYWFlYTE1N2E4NjkzOTRkOGRiZWM3NjA0MThhMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5654b8bcb8484700ad0bbb509ac5c45a",
+      "statement": "Rust migration_compat testsは実SQLxで履歴保持・旧複数Project失敗からの再開・LF/CRLF選択・未知や改変の拒否を検査し、Python試験は全履歴やRustを動かさない軽量modelである。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/migration_compat.rs#L135-L408",
+          "version": "repo-lines-v1:sha256:edab0f2e6d88527e85ed0e569aa0b0ecb16bb9eeb5216f07e02b39642b80f50b:eyJzZWxlY3RlZExpbmVDb3VudCI6Mjc0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMDdkOTM2ZjU4YzMxODVmNTM1NTVkNjFiMWJjN2RkNGQyODg1NDdjMWFlZmI3ZjcxZDYxMzViNWViOGIwZTJiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ODE2M2I3NzVmN2M1ZGU5MTZlNzM4MjUyZTFmNTgyYzllMDA4ZWI4M2EyODAyNzJiZTdlYjY4NThkNWJjYjQ3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://tests/project-keys/migration_compat.py#L1-L59",
+          "version": "repo-lines-v1:sha256:9c9ae6f9eac7d8e64f87ca37306cc778d086aed1579764b5c4f6df6364095750:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxMGQxYzQwYmZlNjA3MGJiZGI5MDFhNzAyOTMwNjViNjk1YzdiNzEzOTc3MmViZjAyY2I5NGY2NDdlMGMxN2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNjNkNjM5YzJjZWIxYzA4YzFiM2JiNmU3YzcwZWM1OGUyMjc5NjE4NDBjNzFkMzVlZDZhNGI0MzkwZjU2ZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlYTkxY2YyYzUwMDBlZTI4YmVlZWIzYjQxN2QxNjg0NzU1MTE1MzBjODkzMDA3Y2Q3MzM2ZDU1MmFmMWFlNjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef662bdb91924f6d923f6d180e4054ee",
+      "statement": "開発 Cargo の最終 target は checkout ごとに分離し、中間物は cache リンクの canonical path の単一 lvk-dev-cargo-build に共有する。リンクなしなら警告して local target を使う。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L55-L65",
+          "version": "repo-lines-v1:sha256:37e2c0e49b01e0630c4275b580f6782839a0f13197729f73b83e6b1ba0ef7cf6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGYyYTkzN2RkNThiM2E4Mzg5ODNhYjMyN2I1N2M1Y2M1YzRlYmUwZDVjZGJkZjg0NzZhMDBmZGMzNzEyMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1NTA2YjZlZjQwMGMxOWEzMTYwMTUxODc1Mzc5M2ZlZGFmMTYzYjdmY2ZhNWYzOTk3MjIxYzFhNzU5YzE3MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxNmU2ZDI0MWUwYzY2YTViOGZhNGViMDVhNWY1YjAxZTM1NzM2YzdiZjk3NGQ0NGQ5YTczNjUzMGU0MGJhMDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_eab488c8caa54d1d842070e6ca0d8517",
+      "statement": "追加 SCCACHE_DIR は compiler wrapper 内に限定し、cargo run の runtime 環境へ export しない。watch は入口を build/run にそれぞれ呼ぶ。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L19-L29",
+          "version": "repo-lines-v1:sha256:bb675126a939c6e5b045faae9a0ba5e6733dc6423c3d3df24c9bdc55bf7ec734:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzMTUwMDJiYmVlN2VmZGJhYTNlODA2NDllMTVkZjVjMjY4MGMwY2FmYzViOGRkMzIwN2ZjMDE5OTE5ZGRkOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNzg3OGFlZjg5Mjc5YjU4MWY3ZTZjMjdmOTJmMzA4ZWQ0ZjcwMzk4ZTg5OWMyOTllOTQ4YTFmZDZlNDkyMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOTA1ODA0YjZiNGU2OGNmYjk1NTA5Njk4Y2U3NzgwMmM4NDQ1MzMxODQxY2VmZTQ2MGI0YjRmYzAxYTFkOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3OTkwNmQyNGU2Y2JlYmY0NjUwMDQ2YWFkNzhhNzgyZmU2Y2U5NGI5YjhlZThmOGMzYTgzMDIwOTAyZTc5ZmIifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.test.mjs#L87-L104",
+          "version": "repo-lines-v1:sha256:4d0386ea37d58176f44d69645bee1d9d25f0463f12f5eeb114c49f82fd97665e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwZTBmYTk2MTI5NDlkZmJjM2U1NWI5OTRhNGZiZDA5ZDI2MGMzMzQ3ZmMyNmQyNDg0MGQ1NWQ3OWJhNDU3NWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZWY5ZjM2YWViNzBlOTMxNjE2MDhlZjU0YjM3NzliMzc2MmQ3NjY2OGUzNWE2OWU4MTBhMzBmMGUwMzAwYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0OTcxMmU0MDg5NjEwYTQ3N2EyZDJhNWZkNDY4MDAwYTE3MmE3MTdjODYzMjJhMmFmN2EwYmJhYzliZWY5ZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjZGEzODYzYTdjMmQ0ZGY0MDM1ZTVhMzZlYTI3ZThiZWVkMGY3OTE3Y2IwMWE0NzZhOWI0MTRiMmFlZjBkZTMifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-rustc-cache.mjs#L1-L12",
+          "version": "repo-lines-v1:sha256:1f96468d66875494ddb88cb86d4e1e1e24538327b89670c96880b5a8fb2e179c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1OWM0Nzg3MmI3MWYxMjU4OTk0Mjg5MjQ2NGU3NjRjMGRiMzUwYzIwYjcyMjI4NjQ1NjE1Y2MzNmUwYTA3MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiZDQyZjc3ZTYxMGYwMmI1NDUyOGJjZjRjMjQxOGM0ZDZhZDY0Mjk2MTFlNmNmNmU1OTY1NDM3NGExMzAwYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1a995d3d2c2e43e0a5594dbc819a8759",
+      "statement": "開発入口は dev/test/release profile、target、opt/debug/strip/split/incremental Rust flags と別 compiler wrapper の競合を拒否し、sccache 不在なら rustc に fallback、stats 失敗は停止、cache location 不一致は警告して既存 server を変更しない。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L37-L123",
+          "version": "repo-lines-v1:sha256:b9b9cfb7271a47e0f2f277b78788e586e0899c560af8ed3c05ca3d16d3904b91:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmZTUxMjExYmZiNjBkYTA2ZWYxODljZDZiZTJhMjllZjAzMzlkOTA1ZWY3NjZiZWU4Mjk0NThlZmU3ZjI1MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5ZTAyMmI2YjNlNzBlZWFiNGRhYmZjMGI0N2M4NDY4ZjQwZGM2NzAyYmNkNWQ5YWE5YzhiODg3OWJkNzQ3MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5OTU5NTllNTdmOWFmZWUwZjFjODEwZGFjOWE5ZjUzZWM5Mzk4MjMwNjM1NDhmNGEwMmFmNTVhMTAxNGJlMjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2OTk5OGM0YjhmMzExMjdlMzlmOTZiNmY3Mjg2NTdhYTcwNTU1ZmZmODMzYjlhYjQ0Y2Q5ZGQ4N2Q2Yjg3MjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_07f2d0cb70e845969c5778fe8f5127fc",
+      "statement": "共有中間物の lock は Cargo が所有し、別 target の build も待ち得る。入口は clean を拒否し、raw clean により他 checkout の最終 binary を残したまま共有中間物を消せる。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L30-L32",
+          "version": "repo-lines-v1:sha256:279906d24e6cbebf4650046aad78a782fe6ce94b9b8ee8f8c3a83020902e79fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2UwNjNkOTZjMzRhYjc4NGFhNDMyYjc3ODJhOThjNTk3YzA5ODdjNjY3M2Y2ZTJlYTBiYWQxZGU2M2JiYjA2YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQwOTkzOTExNjM2YTVjNTg4ZjE5ZjgwZWIwNDg5NDhkMWI1ZDQxYTM2ZWE1ZjNjMzk3YWI5YTU0ZDUzOWViYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTFjOTliNzA3OTQ0ZGI2ODI5NTNhYWI2MmEzMTc4NDI0YTViZjA4YmU3YzRlMTFjMjRkODc4MDNhZjY1ZDlkZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTIxYjhmZTg1OWE4Y2MyMzVmOGY4NmYxMTAxNzkwMGM4ZjZkMjkzZmViNmUxMDIzNzU2OWU0YzY1OTU3ZjI4NSJ9"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.test.mjs#L106-L119",
+          "version": "repo-lines-v1:sha256:740633957c51a08dbdd3c270e990bc173e67fd2b07c00eac711ab6dd6983346b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YTY5YzAyNGFlYzg2YzY5Yzg5MWZmOGViYzdmYjUyM2NjNWE2NGFmNzRjMzEyMjViZDBiZWRmYjljZjAwOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyMWM0YTE0ODE5OWNlNmI0ZjY0MDJmYmIxODliNDVjOGY0M2IwMDI1MjRhNGU1NTlmNDJlMjEyM2RlM2VhNWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiZDAyY2Y5ZTNkODY4NzZlYThhZjQ1OWVjNTJiOWMxY2UxMjEyYmUzNTc0NmVhNmE3NDc1NGJlMTI1NTFlODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2OThhZjllNTkzZTM4ZjhjYmRiODA5ZDhhOTYyMjg0MDE3ZDgyN2RkZWUwYTY4OWU4MDdkMTQyNTZkZWU3YzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5413654750a3426a923d3c602e70828a",
+      "statement": "Cargo の依存不要 fixture と optional real sccache smoke は存在するが、開発記録は実 LVK の性能測定と実 LVK/watch/managed child-Project 受入を未検証として区別する。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/cargo-cache.md#L41-L107",
+          "version": "repo-lines-v1:sha256:cb2c5189bfc6ec1655ad2530fa73cd7a456eeeb2bc397c45c23b2d5519d735e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNjMzNTIwZTQwMmZmMWQzZTc5OGMyMGNkZjBhYTkxZGQ0ZmZjNjg0NTFhZDMzMzMxZDY4NTQ3NTU2MDI3NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2Mzk4ZDkyNGY2MjI0NmMwNWRmNTZkNmNiYzY4ZGNlN2Y0YmY4MTk0Y2VlOGY3NWI2ZWMyMmQ0MTk4NTFhYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.test.mjs#L15-L136",
+          "version": "repo-lines-v1:sha256:29ee6fd8bbaaa227cd82c50f3f507c8bcfdda6c068902921b041eadd31e0c864:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MmMxNTAyZjZkMzQ3NDc5ZjIxMThmNWY5M2Y4NTFkYzA2NGM5OTVhZGQ1NDg0MjQ3YjE3NzRiOWZkMGYxOWFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YjRlMjdlNjEzMGRmOGNkN2Y5MTlkODRhN2NiZTk1ODM2ODBkNzgzOWQ2YjQ1ZDAyMzVhMTIwODk1NzFiZDNjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d1fbe8ae6e74ccaaadf03a89197a3e6",
+      "statement": "repository orchestration Skill は既存検証証拠が十分な場合の省略と完了後の理由・残るリスク報告を記録し、公開前の必須試験と候補証拠を区別する周辺方針を保持する。",
+      "evidence": [
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L118-L124",
+          "version": "repo-lines-v1:sha256:a3acc939109e09dd3d66a722697c5b7f1eba2435196d5525dd326d2a469b82db:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTlmZjViMjBmMWRhMThmNjFmZWQzNDQ2YzQ1ZjU5OGYzZjRjZmJkN2FjNmU1ZWU3ODRmZTQxMDhiNDQzZWQ1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhiYjgyYWQwNzVhY2NhMGY3YTFhODVkMmNlOTdkNzA0Y2RiZDFhYzY2MWFjYjIyMGEwMmYyMWRkNWE5MDIyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjI2ZWVlOGQ2ZDllZGE5NzZiMDBkMjZkZTBhNDk1YjM1NWYyMWNiMmUzYWM0MTI3NjQzOGIzZTA3NDMzNWNhNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e6189b7e415040e1bec3854635242e2f",
+      "statement": "LVK 開発 Cargo 入口は自 checkout を検証し、既定 preview は opt=0 の dev profile、--purpose dev/stable は opt=3 の release profile を選ぶ。三 profile を引数で設定し、preview/dev は line-tables-only・strip=none、stable は debug=0・strip=symbols、全用途で incremental=false・split-debuginfo=off に固定する。明示 release/profile 上書きは拒否する。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L10-L20",
+          "version": "repo-lines-v1:sha256:45c8197028de99ec4bd88d7021ef6d1264b8f0a1479b477669fed5de02a68db4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkNjRkZmRjNzRmMzI4NDNiNzhhYzFjMDkzNDZhYWE4ZDRhODdlYTU2MmYwNWUzNTE0OWQxYzU5MTY3NmU5MjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkOGU5MGFiNzViYjJjZmQzNTYyNWZmNWE2ODhmNTI3YWRmYTY3ZDMwM2Q2ZmExYWViZjUwMThhNWRiM2NlNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc1NzdiNDFjNmQ4YTgzNDliOGU5MDE1YzI4NWEyMmVhZGY0NDk5YTkyMGE3Mzk0MjZlYWMyZGRkZmRlYWVjOTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiMDc5MzViMzg0YTI2OWQ5MWU1MTcwYjBlMDQxMWNkNTUyNDViMjllOTNiNmMwYzg1ZjBmNzk1YmVjNWQxMjYifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L30-L84",
+          "version": "repo-lines-v1:sha256:8d9cc81c11f8f2d7af8e4653548263062c1cd800ffb3effffd8f6083325feb38:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlMDYzZDk2YzM0YWI3ODRhYTQzMmI3NzgyYTk4YzU5N2MwOTg3YzY2NzNmNmUyZWEwYmFkMWRlNjNiYmIwNmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYmQwMGY2OGY5NzVlNmRkNDUxMWQ2YTk2YjBkMzVkNzJlOGRkN2FhOWJkYjdjNzM1MGQxYzFmYThhMTc5YzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxYzk5YjcwNzk0NGRiNjgyOTUzYWFiNjJhMzE3ODQyNGE1YmYwOGJlN2M0ZTExYzI0ZDg3ODAzYWY2NWQ5ZGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5Y2Y1ZmIwNzg1NDJmZTk0M2RiODkxNjNhYmVkYzI5NjU2MTRlOTAyZGVlZGFhMzhmMWRiOTY2YWExMWVmZTcifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-cargo.test.mjs#L36-L72",
+          "version": "repo-lines-v1:sha256:360410183aca2fc9b80ccf6eb3ef1bdec74932d37bdd2f735d896885920aaac2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlM2VlM2UwOWEyMjEzODhlZDk4OTVkNmFkYWI1ZmE5YzQ4ZGVjMzAyNjY4ZDIxNWI5NWUyMTdjNThkODU3YWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1YjQ3MDkxYWM0M2VlZTAwMGIxMjZiYzM2ZDk0MGFkNzRiZDRhNDNjYTVjMTI0NTYyZGE4OGM5MDAxODg2YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNmMyYjM3MTE0NjFlYzM2Y2M0NDMxOWRlNGNiODgzMmMyNDNkY2M4ZjIxNTBiYmYyNTc0OWUwOGZlMmNiODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYmI5YTc0YTE5M2JmODQ4MDhmNzk0NjQ0NmEzMjI3MTU1NzQzMWJmNzE2NzM0MDg0MzcyNzQxNTFjOWI2ZTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b423666991b34c2484bb606c494a0551",
+      "statement": "instance build は frontend の後に既定 preview の dev-cargo 入口で server/process-host を作り source checkout の target/debug から候補へコピーする。SQLx prepare は raw Cargo、Docker 配布は chef cook と server build に同じ command-local stable release 設定を使う。",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile#L73-L107",
+          "version": "repo-lines-v1:sha256:60177fa20ee6d1d03e2331c41dc01d5e594ecaf1c0d59880f205b9eedcfcd842:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNWVkODg0OWE4NjM1NjhhNTQ0YzcxMjRjYThlOWY1YWFmNWFlNDQ3OTY5MGIwNjFhYjdkMDVjM2M5NDczZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ZDU5NzQwZWJhOGRiYTM2MWQxN2QxYjY0ZTE5NmIxMmFiNWE5Njk2MGVhOWE5YmI2NjZkMTRmYTA3N2ViOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MmVlOTZhM2U4YmMyNTNlNmZiYmU0MjJkMTIxNTZjMjViOTBjNjY3NzJhMjBmYzhhOTM0ZmQzMzNkYzJkOTIifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/instance.mjs#L153-L183",
+          "version": "repo-lines-v1:sha256:c1cc9f9efdcad53547e205bd681487bf3d6cd97b71e1452e7e9fa1e61f4b878f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMDI5YTc0OWEwY2U2N2ZlZWZiNTVlOTBiN2U4OTRhMDVlZTRmOTFhNzYzYjllOGIxMDEyNTc5ZDI2YTY1ZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViYzYxNDRkMzBhMDU4ZmYzMDY1OGQ5ZTQ2YzYyM2JkNjI3NjAwZWMxNmYzNmNlY2UzN2Q2MTU2Mzk4OTYyZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2NjJiZmJiYWRjMGE2MDgwZTdhZjI0N2E2OTI5YTY1YmRmNjgyYmIxYmFjNzQ3YjY5Mjc1MDA2MTY3ZWNmYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczNmZhMWYxNTc4Y2NiYTIzYTg3OGZmNmM5MDRhMzkxNzUzNjIzMjhlNzYxMjIyMDQxNDY0Nzc5MDBiNDFkN2YifQ"
+        },
+        {
+          "resource": "repo://scripts/prepare-db.js#L15-L41",
+          "version": "repo-lines-v1:sha256:278906131441acca09d3b4028e6e3dccb085e970ef7254efe951fd654af5a818:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhY2FkNTE2NTRhNDk4MDc0ZjA0MDkxNzdkMDU4YjAzNzFjNzgyYjU2Y2Y3MmUxYjFiODA1ODE0NjFlMzM0NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZjU2NzllODQ2NTc1Y2E1NzNhMmFiNjRlMjE5MDQzMDI2MGZmN2UyYjUzMzdkYzBlMDE1NTMyMDM2YzI2ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmNzNhN2E5NGNjOWJkOTE5Nzc3OGE0YmU5MjE3MDIwMmI5MmU1NTU1ZjIyZGJlOWQ4ZmI2YzJmODQ4MWQxOTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_384af79a011d4365ad31e89d3ca0b058",
+      "statement": "preview/dev の strip=none と split-debuginfo=off はコピー済み bundle に行情報を残して debug sidecar を不要にするための記録された判断であり、常用 dev bundle は frontend と developer-runtime 付きの三 binary を target/release から梱包する。",
+      "evidence": [
+        {
+          "resource": "repo://deploy/developer/switch/README.md#L45-L64",
+          "version": "repo-lines-v1:sha256:d9461dbe562fd4bcc8aca7f07b7cfaa11e7a8fe8eea1ac75da58d28bffc83f78:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwZGM3NDAzMjMxMWQxNjIzYzI1YzE1YTEwMmM3YzUwMzQwYzM1YTY4ODgzYjViMDIxMzFiNzdjZTk2OTFhNTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhYTJhMzI0ZjcyYTFkNWNhYjA0MWM1Y2MzMzU2ZTEwYmYzNWRkYTMwYTNkMzM4MzI0YjYwNTEwMjJhMDY1ZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIyMzJjNGQ1MWUxMzc2OTY2M2Y3ZTBlMzE1Y2UzOTUyZTg1ZDA4MzEzZWFhOTFmNTAyNzMwM2IzYzM1YzFhODMifQ"
+        },
+        {
+          "resource": "repo://deploy/developer/switch/bundle.py#L11-L43",
+          "version": "repo-lines-v1:sha256:04454e7d72db06203a9958baf05aed99aa6ebf041ce53afa5caf3aebccf7ffe9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkN2ZhNWI1MDVlYTNlNWFiMTc0YjU4MDg2M2FkODlmYWNkYzIyMTM4NGY2NTBjZmZlNmJmMTFiOWM5MDI5ZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwMWNhMzAzNWJjYWFlOGY3MWUzZWJmZWVkNzRlODI2YTA1MDU0MTk0NzI1OTQ3MTBhNzY0NDllOTE1ZGQzYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://docs/development/cargo-cache.md#L17-L35",
+          "version": "repo-lines-v1:sha256:0de873cc0ff4b4604e83fee1d7e979afeb5d6f7cf7b5f90c60f3147839b4665d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0NjkxMWI2ZWVhZjYwODNiODdlNzBhODUzNWU0N2IzZWZjNDU3ZTZlNmQ4ZTI4MzQzYmNlODE4ZjA5MGI2NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhZjY4M2E0YjYzNjZkZTVkN2JlMTk0Mjg5ZGNkZTc2NmEyOThlYjgzM2E2NmU5ZmJhOGE3MTA1MTU3MjAxZTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwNTU3MmE4MTk1MzNmODNmMDZmMGM3NTliNmQ1NWZkMmFmNzAwZDQyMzQ3ZWRjMDU2NWQ2ZjI0YjVjM2M4NTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5YjlhZjVmOWIwODMyYWE2NjA3ZGU1NzRiODdhNzVjMmM5ZjM5ZGExZWVjM2Q4YzA1M2U3ZGUwYTJiMjZkM2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c0a87302f7ee48a8b4dfa2555ad4ce6b",
+      "statement": "LOCAL-197 の開発記録は局所4件成功と real-sccache smoke の省略を記録するが、実 LVK 性能測定と配置後の行番号解決・payload・build identity・health の受入は未検証として残す。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/cargo-cache.md#L61-L107",
+          "version": "repo-lines-v1:sha256:f4337663f973b9e324869e606c44f1de14413481a2f4db780fa620a00d7aad2d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYjM5ODI4ZTBlNjU5ZDI1MTVkNWYzMjAyZDAxY2EzNDQ5ZTZmZmY3ZGMxYzg4Y2E2MzFkYjI1NTY4ZWU3YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNjMzNTIwZTQwMmZmMWQzZTc5OGMyMGNkZjBhYTkxZGQ0ZmZjNjg0NTFhZDMzMzMxZDY4NTQ3NTU2MDI3NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2MzcyMDIzNjAyYTQ2YTg4ZTFjYTExNWU2NTQwZTY1ZjVmNjViM2VjMDUzMmE5NjhmZWFkZDIxNzI1M2EzZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T17:19:36.105Z"
+    "at": "2026-10-26T16:20:39.259Z"
   }
 }

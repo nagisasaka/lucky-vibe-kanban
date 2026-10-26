@@ -17,7 +17,32 @@ export interface CanonicalConversationIdentity {
 }
 
 export type PatchTypeWithKey = PatchType & {
+  /** Stable local row identity retained when a sent message is acknowledged. */
+  displayIdentity?: string;
+  pendingDelivery?: {
+    state: 'sending' | 'accepted' | 'failed' | 'unconfirmed';
+    error?: string;
+  };
   patchKey: string;
+  providerText?: {
+    kind: 'plan' | 'summary' | 'thinking';
+    provider: string | null;
+    itemId: string | null;
+    partial: boolean;
+    steps?: { step: string; status: string }[];
+  };
+  toolTiming?: {
+    startedAt: string | null;
+    endedAt: string | null;
+    durationMs: number | null;
+  };
+  toolOutput?: {
+    state: 'pending' | 'partial' | 'complete' | 'unavailable';
+    exitCode: number | null;
+    cwd: string | null;
+    language: 'json' | null;
+    input: string | null;
+  };
   runTiming?: { startedAt: string; endedAt: string | null; active: boolean };
   executionProcessId?: string;
   canonical?: CanonicalConversationIdentity;

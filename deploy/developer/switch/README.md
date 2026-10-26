@@ -48,15 +48,17 @@ provider CLIやユーザー認証をbundleへ無差別に収集しません。
 ```bash
 pnpm install --frozen-lockfile
 pnpm --dir packages/local-web run build
-CARGO_BUILD_JOBS=2 cargo build -p server -p local-deployment -p mcp \
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs --purpose dev build -p server -p local-deployment -p mcp \
   --bin server --bin agent-process-host --bin vibe-kanban-mcp \
   --features server/developer-runtime
 python3 deploy/developer/switch/bundle.py \
-  --server /absolute/target/debug/server \
-  --agent-host /absolute/target/debug/agent-process-host \
-  --mcp /absolute/target/debug/vibe-kanban-mcp \
+  --server /absolute/checkout/target/release/server \
+  --agent-host /absolute/checkout/target/release/agent-process-host \
+  --mcp /absolute/checkout/target/release/vibe-kanban-mcp \
   --output /absolute/new-bundle
 ```
+
+常用devはrelease最適化＋line-tables-only、strip=none / split-debuginfo=offで行情報を実行ファイルに保持します。bundleはdebug sidecarを必要としません。previewは専用instance入口から未最適化devを使います。
 
 `developer-runtime`はdebug profileでもfrontendとutilsのSoundAssets/ScriptAssetsの
 RustEmbed `debug-embed`を有効にします。通常の開発時外部frontend参照と区別します。

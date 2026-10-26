@@ -96,7 +96,7 @@ function commentsFixture(run) {
   try {
     for (const name of migrations) apply(db, name);
     db.exec(`
-      INSERT INTO projects(id,name) VALUES(x'01','one'),(x'11','two');
+      INSERT INTO projects(id,name,key) VALUES(x'01','one','ONE'),(x'11','two','TWO');
       INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(x'02',x'01','Todo','blue',0),(x'12',x'11','Todo','blue',0);
       INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES
         (x'03',x'01',1,'ONE-1',x'02','one',0),(x'04',x'01',2,'ONE-2',x'02','sibling',0),(x'13',x'11',1,'TWO-1',x'12','foreign',0);

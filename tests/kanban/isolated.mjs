@@ -99,6 +99,7 @@ try {
   });
   const project = (
     await api('/api/local/v1/projects', 'POST', {
+      key: "LOCAL",
       organization_id: '00000000-0000-0000-0000-000000000002',
       name: 'Compact Kanban E2E',
       color: '#6366f1',

@@ -66,11 +66,15 @@ export interface ConversationVirtualizerOptions {
    * the scroll-to-bottom affordance.
    */
   onAtBottomChange?: (atBottom: boolean) => void;
+  /** User intent, independent of transient measured geometry. */
+  onFollowChange?: (following: boolean) => void;
 
   shouldSuppressSizeAdjustment?: () => boolean;
   contentRef?: RefObject<HTMLDivElement | null>;
   /** Preserve an existing reading anchor when tail DOM resizes without React. */
   onContentResize?: () => void;
+  /** Capture the viewport after an explicit user scrolling gesture. */
+  onReadingPositionChange?: () => void;
 }
 
 export interface ConversationVirtualizerResult {
@@ -115,7 +119,7 @@ export interface ConversationVirtualizerResult {
    */
   isAtBottom: boolean;
 
-  /** Point-in-time check (non-reactive). Reads DOM directly. */
+  /** Follow intent for data updates; geometry alone must not resume reading. */
   checkIsAtBottom: () => boolean;
 
   /**
@@ -153,17 +157,22 @@ export function useConversationVirtualizer({
   totalRowCount,
   scrollContainerRef,
   onAtBottomChange,
+  onFollowChange,
   shouldSuppressSizeAdjustment,
   contentRef,
   onContentResize,
+  onReadingPositionChange,
 }: ConversationVirtualizerOptions): ConversationVirtualizerResult {
-  const bottomLockedRef = useRef(false);
-  const smoothScrollDeadlineRef = useRef(0);
-
-  const isBottomScrollCorrectionActive = useCallback(
-    () => bottomLockedRef.current,
-    []
-  );
+  const readingPositionCallbackRef = useRef(onReadingPositionChange);
+  readingPositionCallbackRef.current = onReadingPositionChange;
+  const followingRef = useRef(true);
+  const onFollowChangeRef = useRef(onFollowChange);
+  onFollowChangeRef.current = onFollowChange;
+  const setFollowing = useCallback((following: boolean) => {
+    if (followingRef.current === following) return;
+    followingRef.current = following;
+    onFollowChangeRef.current?.(following);
+  }, []);
 
   // -------------------------------------------------------------------------
   // Virtualizer instance
@@ -212,7 +221,7 @@ export function useConversationVirtualizer({
       const remainingDistance =
         totalScrollableSize - (scrollOffset + viewportHeight);
       const isItemFullyAboveViewport = item.end <= scrollOffset;
-      const isBottomLocked = bottomLockedRef.current;
+      const isBottomLocked = followingRef.current;
 
       const shouldAdjust =
         !isBottomLocked &&
@@ -239,11 +248,9 @@ export function useConversationVirtualizer({
 
   const syncIsAtBottom = useCallback(() => {
     const el = scrollContainerRef.current;
-    const nextValue = isBottomScrollCorrectionActive()
-      ? true
-      : el
-        ? isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)
-        : true;
+    const nextValue = el
+      ? isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)
+      : true;
 
     if (nextValue !== lastAtBottomRef.current) {
       lastAtBottomRef.current = nextValue;
@@ -255,77 +262,111 @@ export function useConversationVirtualizer({
     setIsAtBottomState((current) =>
       current === nextValue ? current : nextValue
     );
-  }, [isBottomScrollCorrectionActive, scrollContainerRef]);
-
-  const prevScrollTopRef = useRef(0);
+  }, [scrollContainerRef]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
-
-    prevScrollTopRef.current = el.scrollTop;
-
+    let userScrollPending = false;
+    let gestureEndTimer: ReturnType<typeof setTimeout> | undefined;
+    const markUserScroll = () => {
+      userScrollPending = true;
+      clearTimeout(gestureEndTimer);
+      // Retain the gesture through touch momentum / smooth keyboard scrolling.
+      gestureEndTimer = setTimeout(() => {
+        userScrollPending = false;
+      }, 180);
+    };
+    let towardBottom = false;
+    let scrollbarDrag = false;
+    let previousTop = el.scrollTop;
+    let touchY: number | null = null;
     const handleScroll = () => {
-      const currentScrollTop = el.scrollTop;
-
-      // Release bottom lock on any user-initiated upward scroll.
-      // Guards prevent false positives from programmatic scroll sources:
-      // - smoothScrollDeadlineRef: set during scrollToBottom('smooth')
-      // - shouldSuppressSizeAdjustment: set during interaction anchor corrections
-      // - 5px threshold: filters input-resize micro-adjustments
-      if (
-        bottomLockedRef.current &&
-        prevScrollTopRef.current - currentScrollTop > 5 &&
-        performance.now() > smoothScrollDeadlineRef.current &&
-        !shouldSuppressSizeAdjustment?.()
-      ) {
-        bottomLockedRef.current = false;
+      // Scroll events also come from virtual measurements, browser clamping,
+      // and anchor restoration. They cannot by themselves revoke user intent.
+      if (scrollbarDrag && el.scrollTop < previousTop) setFollowing(false);
+      if (towardBottom && el.scrollHeight - el.clientHeight - el.scrollTop <= 2)
+        setFollowing(true);
+      if (!followingRef.current && (userScrollPending || scrollbarDrag)) {
+        readingPositionCallbackRef.current?.();
+        markUserScroll();
       }
-
-      if (isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)) {
-        bottomLockedRef.current = true;
-      }
-      prevScrollTopRef.current = currentScrollTop;
+      previousTop = el.scrollTop;
       syncIsAtBottom();
     };
-
-    // Release before ResizeObserver/layout corrections can undo the user's
-    // input. A scroll event can arrive after a streaming render has run.
-    const releaseForInput = () => {
-      bottomLockedRef.current = false;
-      smoothScrollDeadlineRef.current = 0;
+    const up = () => {
+      markUserScroll();
+      towardBottom = false;
+      setFollowing(false);
+      readingPositionCallbackRef.current?.();
     };
     const handleWheel = (event: WheelEvent) => {
-      if (event.deltaY < 0) releaseForInput();
+      if (event.deltaY < 0) up();
+      else if (event.deltaY > 0) {
+        markUserScroll();
+        towardBottom = true;
+      }
     };
-    let touchY: number | null = null;
     const handleTouchStart = (event: TouchEvent) => {
       touchY = event.touches[0]?.clientY ?? null;
     };
     const handleTouchMove = (event: TouchEvent) => {
-      const nextY = event.touches[0]?.clientY ?? null;
-      if (touchY !== null && nextY !== null && nextY > touchY)
-        releaseForInput();
-      touchY = nextY;
+      const next = event.touches[0]?.clientY ?? null;
+      if (touchY !== null && next !== null) {
+        if (next > touchY) up();
+        else if (next < touchY) {
+          markUserScroll();
+          towardBottom = true;
+        }
+      }
+      touchY = next;
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) releaseForInput();
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('input,textarea,[contenteditable="true"]')
+      )
+        return;
+      if (
+        ['ArrowUp', 'PageUp', 'Home'].includes(event.key) ||
+        (event.key === ' ' && event.shiftKey)
+      )
+        up();
+      else if (['ArrowDown', 'PageDown', 'End', ' '].includes(event.key)) {
+        markUserScroll();
+        towardBottom = true;
+      }
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      // Native scrollbar events target the scroll container, not its rows.
+      scrollbarDrag = event.target === el;
+      previousTop = el.scrollTop;
+    };
+    const handlePointerUp = () => {
+      scrollbarDrag = false;
     };
     el.addEventListener('wheel', handleWheel, { passive: true });
     el.addEventListener('touchstart', handleTouchStart, { passive: true });
     el.addEventListener('touchmove', handleTouchMove, { passive: true });
     el.addEventListener('keydown', handleKeyDown);
+    el.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
     el.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-
     return () => {
-      el.removeEventListener('scroll', handleScroll);
+      clearTimeout(gestureEndTimer);
       el.removeEventListener('wheel', handleWheel);
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchmove', handleTouchMove);
       el.removeEventListener('keydown', handleKeyDown);
+      el.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+      el.removeEventListener('scroll', handleScroll);
     };
-  }, [scrollContainerRef, shouldSuppressSizeAdjustment, syncIsAtBottom]);
+  }, [scrollContainerRef, setFollowing, syncIsAtBottom]);
 
   // -------------------------------------------------------------------------
   // Derived state
@@ -335,10 +376,10 @@ export function useConversationVirtualizer({
   const totalSize = virtualizer.getTotalSize();
 
   useLayoutEffect(() => {
-    syncIsAtBottom();
-
-    if (!bottomLockedRef.current) return;
-    if (performance.now() < smoothScrollDeadlineRef.current) return;
+    if (!followingRef.current) {
+      syncIsAtBottom();
+      return;
+    }
 
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -347,13 +388,8 @@ export function useConversationVirtualizer({
     if (maxScroll > 0 && Math.abs(maxScroll - el.scrollTop) > 1) {
       el.scrollTop = maxScroll;
     }
-  }, [
-    rows.length,
-    totalRowCount,
-    totalSize,
-    syncIsAtBottom,
-    scrollContainerRef,
-  ]);
+    syncIsAtBottom();
+  }, [rows, totalRowCount, totalSize, syncIsAtBottom, scrollContainerRef]);
 
   // The tail is outside TanStack's measurements. Images, markdown and streamed
   // text can grow without changing row count or virtual head size.
@@ -361,18 +397,28 @@ export function useConversationVirtualizer({
     const content = contentRef?.current;
     const el = scrollContainerRef.current;
     if (!content || !el) return;
-    const observer = new ResizeObserver(() => {
-      if (
-        bottomLockedRef.current &&
-        performance.now() >= smoothScrollDeadlineRef.current
-      ) {
+    let frame: number | null = null;
+    const correct = () => {
+      if (followingRef.current) {
         el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
-      }
-      if (!bottomLockedRef.current) onContentResize?.();
+      } else onContentResize?.();
       syncIsAtBottom();
+    };
+    const observer = new ResizeObserver(() => {
+      correct();
+      // Virtual head measurements can commit after this observer delivery.
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        correct();
+      });
     });
     observer.observe(content);
-    return () => observer.disconnect();
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, [contentRef, scrollContainerRef, syncIsAtBottom, onContentResize]);
 
   // -------------------------------------------------------------------------
@@ -380,21 +426,16 @@ export function useConversationVirtualizer({
   // -------------------------------------------------------------------------
 
   const scrollToBottom = useCallback(
-    (behavior: ScrollToOptionsBehavior = 'smooth') => {
+    (_behavior: ScrollToOptionsBehavior = 'auto') => {
       const el = scrollContainerRef.current;
       if (!el) return;
-
-      bottomLockedRef.current = true;
-
-      if (behavior === 'smooth') {
-        smoothScrollDeadlineRef.current = performance.now() + 500;
-        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-      } else {
-        smoothScrollDeadlineRef.current = 0;
-        el.scrollTop = el.scrollHeight - el.clientHeight;
-      }
+      // A jump establishes intent synchronously, before the send's rAF update.
+      // Native smooth targets become stale under streaming/virtual resizing.
+      setFollowing(true);
+      el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      syncIsAtBottom();
     },
-    [scrollContainerRef]
+    [scrollContainerRef, setFollowing, syncIsAtBottom]
   );
 
   const scrollToIndex = useCallback(
@@ -405,16 +446,13 @@ export function useConversationVirtualizer({
         behavior?: ScrollToOptionsBehavior;
       }
     ) => {
-      if (bottomLockedRef.current) {
-        bottomLockedRef.current = false;
-      }
-
+      setFollowing(false);
       virtualizer.scrollToIndex(index, {
         align: options?.align ?? 'start',
         behavior: options?.behavior ?? 'smooth',
       });
     },
-    [virtualizer]
+    [setFollowing, virtualizer]
   );
 
   const scrollToPreviousUserMessage = useCallback((): boolean => {
@@ -429,26 +467,19 @@ export function useConversationVirtualizer({
 
     if (targetIndex < 0) return false;
 
+    setFollowing(false);
     virtualizer.scrollToIndex(targetIndex, {
       align: 'start',
       behavior: 'smooth',
     });
     return true;
-  }, [scrollContainerRef, virtualizer, rows]);
+  }, [scrollContainerRef, setFollowing, virtualizer, rows]);
 
-  const checkIsAtBottom = useCallback((): boolean => {
-    const el = scrollContainerRef.current;
-    if (!el) return true;
-    return (
-      bottomLockedRef.current ||
-      isNearBottom(el.scrollTop, el.clientHeight, el.scrollHeight)
-    );
-  }, [scrollContainerRef]);
+  const checkIsAtBottom = useCallback((): boolean => followingRef.current, []);
 
   const releaseBottomLock = useCallback(() => {
-    if (!bottomLockedRef.current) return;
-    bottomLockedRef.current = false;
-  }, []);
+    setFollowing(false);
+  }, [setFollowing]);
 
   // -------------------------------------------------------------------------
   // Row ↔ VirtualItem mapping

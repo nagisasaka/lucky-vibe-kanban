@@ -11,12 +11,13 @@ use uuid::Uuid;
 
 use super::{admission, project_repository_ids};
 
-async fn project(pool: &SqlitePool) -> (Uuid, Uuid) {
+async fn project(pool: &SqlitePool, key: &str) -> (Uuid, Uuid) {
     let id = Uuid::new_v4();
     let status = Uuid::new_v4();
     let card = Uuid::new_v4();
-    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'local Board')")
+    sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'local Board',?)")
         .bind(id)
+        .bind(key)
         .execute(pool)
         .await
         .unwrap();
@@ -35,8 +36,8 @@ async fn local_board_repository_candidates_follow_real_workspace_links_without_l
         .await
         .unwrap();
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    let (project_a, card_a) = project(&pool).await;
-    let (project_b, card_b) = project(&pool).await;
+    let (project_a, card_a) = project(&pool, "BOARD1").await;
+    let (project_b, card_b) = project(&pool, "BOARD2").await;
     let repo = Repo::find_or_create(&pool, Path::new("/local-board-repo"), "repo")
         .await
         .unwrap();
@@ -143,7 +144,7 @@ async fn target_queue_uses_storage_identity_and_keeps_recovery_reservations() {
         .await
         .unwrap();
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    let (project, _) = project(&pool).await;
+    let (project, _) = project(&pool, "BOARD").await;
     let mut runs = Vec::new();
     for (index, storage) in ["/git/shared", "/git/shared", "/git/independent"]
         .iter()
@@ -247,7 +248,7 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         .await
         .unwrap();
     sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    let (project_id, card_id) = project(&pool).await;
+    let (project_id, card_id) = project(&pool, "BOARD").await;
     let repo = Repo::find_or_create(&pool, Path::new("/reconciliation-fixture"), "repo")
         .await
         .unwrap();

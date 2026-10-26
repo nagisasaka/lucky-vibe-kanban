@@ -4,6 +4,12 @@ import type { ExecutorConfig, SelectedSkill } from 'shared/types';
 import { sessionsApi } from '@/shared/lib/api';
 import { useCreateSession } from './useCreateSession';
 import { goalPromptError } from '../goalValidation';
+import { useEntries } from '../contexts/EntriesContext';
+import {
+  chatMessageScope,
+  deliveryFailure,
+  usePendingChatMessages,
+} from '../pendingChatMessages';
 import { useHostId } from '@/shared/providers/HostIdProvider';
 
 interface UseSessionSendOptions {
@@ -54,6 +60,9 @@ export function useSessionSend({
   executorConfig,
 }: UseSessionSendOptions): UseSessionSendResult {
   const hostId = useHostId();
+  const { entries } = useEntries();
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
   const queryClient = useQueryClient();
   const scope = JSON.stringify([
     hostId,
@@ -99,10 +108,24 @@ export function useSessionSend({
 
       if (inFlight.current.has(scope)) return null;
       inFlight.current.add(scope);
+      const pending = usePendingChatMessages.getState();
+      const pendingId = pending.begin(
+        chatMessageScope(
+          hostId,
+          workspaceId,
+          isNewSessionMode ? undefined : sessionId
+        ),
+        trimmed,
+        entriesRef.current
+      );
       try {
         if (isNewSessionMode) {
           // New session flow
           if (!workspaceId) {
+            pending.update(pendingId, {
+              state: 'failed',
+              error: 'No workspace selected',
+            });
             setError('No workspace selected');
             return null;
           }
@@ -116,21 +139,30 @@ export function useSessionSend({
               resumeSessionId: options.resumeSessionId,
               resumeScopePath: options.resumeScopePath,
             });
+            pending.update(pendingId, {
+              state: 'accepted',
+              runId: session.acceptedRunId,
+              scope: chatMessageScope(hostId, workspaceId, session.id),
+            });
             return { createdSessionId: session.id };
           } catch (e: unknown) {
             const err = e as { message?: string };
+            pending.update(pendingId, deliveryFailure(e));
             if (currentScope.current === scope)
               setError(
-                `Failed to create session: ${err.message ?? 'Unknown error'}`
+                `Session submission error: ${err.message ?? 'Unknown error'}`
               );
             return null;
           }
         } else {
           // Existing session flow
-          if (!sessionId) return null;
+          if (!sessionId) {
+            pending.remove([pendingId]);
+            return null;
+          }
           setIsSendingFollowUp(true);
           try {
-            await sessionsApi.followUp(
+            const accepted = await sessionsApi.followUp(
               sessionId,
               {
                 prompt: trimmed,
@@ -141,14 +173,19 @@ export function useSessionSend({
               },
               hostId
             );
+            pending.update(pendingId, {
+              state: 'accepted',
+              runId: accepted.agent_run_id,
+            });
             void queryClient.invalidateQueries({
               queryKey: ['session-executor-config', hostId, sessionId],
             });
             return {};
           } catch (e: unknown) {
             const err = e as { message?: string };
+            pending.update(pendingId, deliveryFailure(e));
             if (currentScope.current === scope)
-              setError(`Failed to send: ${err.message ?? 'Unknown error'}`);
+              setError(`Submission error: ${err.message ?? 'Unknown error'}`);
             return null;
           } finally {
             setIsSendingFollowUp(false);

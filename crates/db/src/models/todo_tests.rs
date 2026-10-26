@@ -45,6 +45,7 @@ fn changes(value: serde_json::Value) -> UpdateTodo {
 }
 fn page(completed: bool, offset: u32) -> TodoQuery {
     TodoQuery {
+        search: None,
         include_completed: completed,
         limit: 1,
         offset,
@@ -320,6 +321,7 @@ async fn creation_source_migration_preserves_all_existing_columns_and_order() {
         &pool,
         p,
         TodoQuery {
+            search: None,
             include_completed: true,
             limit: 100,
             offset: 0,
@@ -333,4 +335,61 @@ async fn creation_source_migration_preserves_all_existing_columns_and_order() {
             .iter()
             .all(|t| t.creation_source == TodoCreationSource::Unknown)
     );
+}
+
+#[tokio::test]
+async fn search_filters_full_notes_before_offset_and_completion() {
+    let (pool, p, other) = fixture().await;
+    for (n, body, category, completed) in [
+        (1, "unrelated", "other", false),
+        (2, "Ä body hit", "other", false),
+        (3, "different", "Ä CATEGORY", false),
+        (4, "ä completed", "other", true),
+    ] {
+        let mut input = note(body);
+        input.id = Uuid::from_u128(n);
+        input.category = category.into();
+        let todo = Todo::create(&pool, p, input).await.unwrap();
+        sqlx::query("UPDATE project_todos SET created_at=?,completed=? WHERE id=?")
+            .bind(format!("2026-01-0{n}"))
+            .bind(completed)
+            .bind(todo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    Todo::create(&pool, other, note("ä foreign")).await.unwrap();
+    let q = |offset, completed, search: &str| TodoQuery {
+        search: Some(search.into()),
+        include_completed: completed,
+        limit: 1,
+        offset,
+    };
+    let first = Todo::list(&pool, p, q(0, false, "ä")).await.unwrap();
+    assert_eq!(first.items[0].id, Uuid::from_u128(3));
+    assert_eq!(first.next_offset, Some(1));
+    let last = Todo::list(&pool, p, q(1, false, "Ä")).await.unwrap();
+    assert_eq!(last.items[0].id, Uuid::from_u128(2));
+    assert_eq!(last.next_offset, None);
+    assert_eq!(
+        Todo::list(&pool, p, q(0, true, "ä")).await.unwrap().items[0].id,
+        Uuid::from_u128(4)
+    );
+    assert!(
+        Todo::list(&pool, p, q(0, true, " Ä "))
+            .await
+            .unwrap()
+            .items
+            .is_empty()
+    );
+    assert!(
+        Todo::list(&pool, p, q(0, true, "%_"))
+            .await
+            .unwrap()
+            .items
+            .is_empty()
+    );
+    let mut all = q(0, true, "");
+    all.limit = 100;
+    assert_eq!(Todo::list(&pool, p, all).await.unwrap().items.len(), 4);
 }

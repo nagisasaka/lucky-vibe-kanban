@@ -26,6 +26,7 @@ export type SectionAction = {
   icon: Icon;
   onClick: () => void;
   isActive?: boolean;
+  disabled?: boolean;
   label?: string;
   title?: string;
 };
@@ -103,13 +104,20 @@ export function CollapsibleSectionHeader({
             <span
               key={index}
               role="button"
-              tabIndex={0}
+              tabIndex={action.disabled ? -1 : 0}
+              aria-disabled={action.disabled}
               aria-label={actionLabel}
               title={action.title ?? action.label}
-              onClick={(e) => handleActionClick(e, action.onClick)}
-              onKeyDown={(e) => handleActionKeyDown(e, action.onClick)}
+              onClick={(e) =>
+                !action.disabled && handleActionClick(e, action.onClick)
+              }
+              onKeyDown={(e) =>
+                !action.disabled && handleActionKeyDown(e, action.onClick)
+              }
               className={cn(
-                'cursor-pointer hover:text-normal',
+                action.disabled
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'cursor-pointer hover:text-normal',
                 action.isActive ? 'text-brand' : 'text-low'
               )}
             >

@@ -71,9 +71,10 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
         .unwrap();
     let project = Uuid::new_v4();
     let other_project = Uuid::new_v4();
-    for id in [project, other_project] {
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'archive remote fixture')")
+    for (index, id) in [project, other_project].into_iter().enumerate() {
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'archive remote fixture',?)")
             .bind(id)
+            .bind(format!("ARCH{index}"))
             .execute(&pool)
             .await
             .unwrap();
@@ -564,6 +565,166 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
         .unwrap();
     assert!(saved.archived && !saved.worktree_deleted);
     assert!(invalid.exists());
+    // Issue archive uses the same authenticated transport and receipt store.
+    // Existing child Workspaces are archived already; they must stay untouched.
+    for name in [
+        "prepare_issue_archive",
+        "confirm_issue_archive",
+        "unarchive_issue",
+    ] {
+        assert_eq!(
+            request(
+                &reader,
+                tool(name, json!({"project_id":project,"issue_id":issue}))
+            )
+            .send()
+            .await
+            .unwrap()
+            .status(),
+            403
+        );
+    }
+    let prepared: Value = request(
+        &writer,
+        tool(
+            "prepare_issue_archive",
+            json!({"project_id":project,"issue_id":issue,"archive_workspaces":true}),
+        ),
+    )
+    .send()
+    .await
+    .unwrap()
+    .json()
+    .await
+    .unwrap();
+    let token = &prepared["result"]["structuredContent"]["confirmation_token"];
+    assert!(token.is_string(), "{prepared}");
+    let issue_request = Uuid::new_v4();
+    let confirm_args = json!({"project_id":project,"issue_id":issue,"confirmation_token":token,"request_id":issue_request});
+    let refused: Value = request(
+        &foreign,
+        tool("confirm_issue_archive", confirm_args.clone()),
+    )
+    .send()
+    .await
+    .unwrap()
+    .json()
+    .await
+    .unwrap();
+    assert_eq!(
+        refused["result"]["structuredContent"]["status"], "failed",
+        "{refused}"
+    );
+    let confirmed: Value = request(&writer, tool("confirm_issue_archive", confirm_args.clone()))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        confirmed["result"]["structuredContent"]["status"], "succeeded",
+        "{confirmed}"
+    );
+    assert_eq!(
+        confirmed["result"]["structuredContent"]["result"]["workspaces"],
+        json!([])
+    );
+    let repeated: Value = request(&writer, tool("confirm_issue_archive", confirm_args))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        repeated["result"]["structuredContent"]["operation_id"],
+        confirmed["result"]["structuredContent"]["operation_id"]
+    );
+    let read: Value = request(
+        &reader,
+        tool("get_issue", json!({"project_id":project,"issue_id":issue})),
+    )
+    .send()
+    .await
+    .unwrap()
+    .json()
+    .await
+    .unwrap();
+    assert_eq!(read["result"]["structuredContent"]["archived"], true);
+    assert_eq!(
+        read["result"]["structuredContent"]["status_id"],
+        json!(status)
+    );
+    assert!(read["result"]["structuredContent"]["url"].is_string());
+    assert!(read["result"]["structuredContent"]["revision"].is_string());
+    for filter in [
+        None,
+        Some(json!(true)),
+        Some(json!(false)),
+        Some(json!("all")),
+    ] {
+        let mut args = json!({"project_id":project});
+        if let Some(value) = &filter {
+            args["archived"] = value.clone();
+        }
+        let listed: Value = request(&reader, tool("list_issues", args))
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(
+            listed["result"]["structuredContent"]["items"]
+                .as_array()
+                .unwrap()
+                .len(),
+            if filter == Some(json!(true)) || filter == Some(json!("all")) {
+                1
+            } else {
+                0
+            },
+            "{listed}"
+        );
+    }
+    let restored: Value = request(
+        &writer,
+        tool(
+            "unarchive_issue",
+            json!({"project_id":project,"issue_id":issue,"request_id":Uuid::new_v4()}),
+        ),
+    )
+    .send()
+    .await
+    .unwrap()
+    .json()
+    .await
+    .unwrap();
+    assert_eq!(
+        restored["result"]["structuredContent"]["status"], "succeeded",
+        "{restored}"
+    );
+    assert!(
+        Workspace::find_by_id(&pool, ws.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .archived
+    );
+    assert!(
+        Workspace::find_by_id(&pool, other.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .archived
+    );
+    assert!(
+        !crate::routes::local_remote::get_local_issue(&pool, issue)
+            .await
+            .unwrap()
+            .archived
+    );
     println!(
         "remote archive evidence: signed JWT -> Access -> POST /mcp -> tools/list + tools/call -> common archive; catalog/auth/scope/project/subject/target/local-token/expiry/replay/busy/race/failure/history/branch/receipt PASS"
     );

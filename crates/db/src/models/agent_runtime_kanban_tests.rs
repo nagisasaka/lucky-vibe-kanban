@@ -704,3 +704,44 @@ async fn kanban_done_followup_and_integration_receipts_use_shared_lifecycle() {
         assert_eq!(status, done);
     }
 }
+
+#[tokio::test]
+async fn issue_archive_does_not_freeze_automatic_status_transitions_or_clear_archive() {
+    for host in [false, true] {
+        let pool = setup_pool().await;
+        sqlx::query("ALTER TABLE local_issues ADD COLUMN archived INTEGER NOT NULL DEFAULT 0")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (session, workspace) = insert_anchors(&pool).await;
+        let issue = board_fixture(&pool, workspace).await;
+        sqlx::query("UPDATE local_issues SET archived=1 WHERE id=?")
+            .bind(issue)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (request, attempt) = requests(session, workspace, "archived-followup");
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        lifecycle(&pool, &request, &attempt, 1, AgentRunStatus::Running, host).await;
+        assert_eq!(board_status(&pool, issue).await, "In Progress");
+        lifecycle(
+            &pool,
+            &request,
+            &attempt,
+            2,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "In Review");
+        assert!(
+            sqlx::query_scalar::<_, bool>("SELECT archived FROM local_issues WHERE id=?")
+                .bind(issue)
+                .fetch_one(&pool)
+                .await
+                .unwrap()
+        );
+    }
+}

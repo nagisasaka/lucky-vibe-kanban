@@ -6,6 +6,8 @@ const workspace = { name: 'Alpha task', branch: 'feature/branch' };
 describe('workspace sidebar search', () => {
   it.each([
     ['106', 'LOCAL-106', true],
+    ['lvk-106', 'LVK-106', true],
+    ['106', 'LVK-106', true],
     ['106', 'LOCAL-1060', true],
     ['local-106', 'LOCAL-106', true],
     ['local-106', 'LOCAL-1060', true],

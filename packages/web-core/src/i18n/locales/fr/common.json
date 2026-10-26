@@ -193,7 +193,19 @@
     "subagent": {
       "defaultType": "Sous-agent"
     },
-    "loadingEarlierMessages": "Chargement des messages précédents"
+    "loadingEarlierMessages": "Chargement des messages précédents",
+    "delivery": {
+      "sending": "Envoi…",
+      "accepted": "Accepté · en attente de l’historique",
+      "failed": "Envoi refusé · brouillon conservé",
+      "unconfirmed": "Réception non confirmée · brouillon conservé"
+    },
+    "planStep": {
+      "pending": "À faire",
+      "inProgress": "En cours",
+      "completed": "Terminé",
+      "empty": "Aucune étape fournie"
+    }
   },
   "branchSelector": {
     "placeholder": "Sélectionner une branche",
@@ -540,7 +552,8 @@
     "subIssueIndicator": "↳",
     "viewTabs": {
       "active": "Actif",
-      "all": "Tout"
+      "all": "Tout",
+      "archived": "Archived"
     },
     "loginRequired": {},
     "team": "Team",
@@ -619,7 +632,9 @@
         "title": "Invite your team",
         "content": "We've automatically created a personal organization and initial project so you can get started with Lucky Vibe Kanban. Export your cloud data before shutdown."
       }
-    }
+    },
+    "switchToList": "Switch to list view",
+    "switchToKanban": "Switch to kanban view"
   },
   "createMode": {
     "headings": {

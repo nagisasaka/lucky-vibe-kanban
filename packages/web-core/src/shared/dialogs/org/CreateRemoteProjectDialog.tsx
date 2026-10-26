@@ -21,6 +21,11 @@ import {
   type Project,
 } from 'shared/remote-types';
 import { getRandomPresetColor, PRESET_COLORS } from '@/shared/lib/colors';
+import {
+  isValidProjectKey,
+  normalizeProjectKey,
+  suggestProjectKey,
+} from '@/shared/lib/projectKey';
 import { ColorPicker } from '@/shared/components/ui-new/containers/ColorPickerContainer';
 
 export type CreateRemoteProjectDialogProps = {
@@ -37,6 +42,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
     const modal = useModal();
     const { t } = useTranslation('projects');
     const [name, setName] = useState('');
+    const [keyInput, setKeyInput] = useState<string | null>(null);
     const [color, setColor] = useState<string>(() => getRandomPresetColor());
     const [error, setError] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -46,14 +52,26 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
       [organizationId]
     );
 
-    const { insert, error: syncError } = useShape(PROJECTS_SHAPE, params, {
+    const {
+      data: projects,
+      insert,
+      error: syncError,
+    } = useShape(PROJECTS_SHAPE, params, {
       mutation: PROJECT_MUTATION,
     });
+
+    const key =
+      keyInput ??
+      suggestProjectKey(
+        name,
+        projects.map((project) => project.key)
+      );
 
     useEffect(() => {
       // Reset form when dialog opens
       if (modal.visible) {
         setName('');
+        setKeyInput(null);
         setColor(getRandomPresetColor());
         setError(null);
         setIsCreating(false);
@@ -84,6 +102,17 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         return;
       }
 
+      if (!isValidProjectKey(key)) {
+        setError(t('createProjectDialog.keyInvalid'));
+        return;
+      }
+      if (
+        projects.some((project) => project.key === normalizeProjectKey(key))
+      ) {
+        setError(t('createProjectDialog.keyDuplicate'));
+        return;
+      }
+      setKeyInput(key);
       setError(null);
       setIsCreating(true);
 
@@ -91,6 +120,7 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
         const { data: project, persisted } = insert({
           organization_id: organizationId,
           name: name.trim(),
+          key: normalizeProjectKey(key),
           color: color,
         });
 
@@ -187,6 +217,26 @@ const CreateRemoteProjectDialogImpl = create<CreateRemoteProjectDialogProps>(
                   />
                 </ColorPicker>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project-key">
+                {t('createProjectDialog.keyLabel')}
+              </Label>
+              <Input
+                id="project-key"
+                value={key}
+                onChange={(event) => {
+                  setKeyInput(normalizeProjectKey(event.target.value));
+                  setError(null);
+                }}
+                onKeyDown={handleKeyDown}
+                disabled={isCreating}
+                aria-describedby="project-key-hint"
+              />
+              <p id="project-key-hint" className="text-sm text-low">
+                {t('createProjectDialog.keyHint')}
+              </p>
             </div>
 
             {error && (

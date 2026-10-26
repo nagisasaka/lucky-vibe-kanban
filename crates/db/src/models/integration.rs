@@ -2,7 +2,7 @@
 //! expiring Orchestration dispatcher leases. No conversation/semantic database.
 use anyhow::{Context, ensure};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, SqlitePool};
+use sqlx::{FromRow, SqliteConnection, SqlitePool};
 use ts_rs::TS;
 use uuid::Uuid;
 
@@ -279,12 +279,8 @@ impl IntegrationRun {
         let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
         let status: Uuid = sqlx::query_scalar("SELECT id FROM local_project_statuses WHERE project_id=? AND hidden=0 ORDER BY (lower(name)='in progress') DESC,sort_order,id LIMIT 1")
         .bind(self.project_id).fetch_one(&mut *tx).await?;
-        let number: i64 = sqlx::query_scalar(
-            "SELECT COALESCE(MAX(issue_number),0)+1 FROM local_issues WHERE project_id=?",
-        )
-        .bind(self.project_id)
-        .fetch_one(&mut *tx)
-        .await?;
+        let (number, simple_id) =
+            crate::models::issue_number::next_issue_number(&mut tx, self.project_id).await?;
         let description = self
             .payload
             .sources
@@ -304,7 +300,8 @@ impl IntegrationRun {
             description
         };
         sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,description,sort_order,creator_user_id) VALUES(?,?,?,?,?,?,?,0,?)")
-        .bind(card_id).bind(self.project_id).bind(number).bind(format!("LOCAL-{number}")).bind(status).bind(name).bind(description).bind(Uuid::from_u128(1)).execute(&mut *tx).await?;
+        .bind(card_id).bind(self.project_id).bind(number).bind(simple_id).bind(status).bind(name).bind(description).bind(Uuid::from_u128(1)).execute(&mut *tx).await?;
+        crate::models::board_tag::attach_system(&mut tx, self.project_id, card_id).await?;
         let owner = crate::models::workspace_usage::WorkspaceExecutionOwner::new(
             "integration",
             self.repository_id,
@@ -329,6 +326,9 @@ impl IntegrationRun {
         .bind(card_id)
         .execute(&mut *tx)
         .await?;
+        sqlx::query("INSERT INTO generated_issue_workspaces(workspace_id,issue_id,project_id,owner_kind,repository_id,owner_run_id) VALUES(?,?,?,'integration',?,?)")
+            .bind(workspace_id).bind(card_id).bind(self.project_id).bind(self.repository_id).bind(self.id.to_string())
+            .execute(&mut *tx).await?;
         sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,payload) VALUES(?,?,?,?,?,?,'queued',?,?)")
         .bind(self.id).bind(&self.request_key).bind(self.project_id).bind(self.repository_id).bind(&self.storage_identity).bind(&self.target_ref).bind(workspace_id).bind(&self.payload).execute(&mut *tx).await?;
         tx.commit().await?;
@@ -532,10 +532,14 @@ impl IntegrationRun {
             .await
     }
     pub async fn save(&self, pool: &SqlitePool) -> Result<(), sqlx::Error> {
+        self.save_on(&mut *pool.acquire().await?).await
+    }
+
+    pub async fn save_on(&self, connection: &mut SqliteConnection) -> Result<(), sqlx::Error> {
         // Cancellation is never overwritten by a worker's older observation.
         sqlx::query("UPDATE integration_runs SET status=?,workspace_id=?,session_id=?,agent_run_id=?,payload=?,error=?,updated_at=datetime('now','subsec') WHERE id=?")
             .bind(&self.status).bind(self.workspace_id).bind(self.session_id).bind(self.agent_run_id)
-            .bind(&self.payload).bind(&self.error).bind(self.id).execute(pool).await?;
+            .bind(&self.payload).bind(&self.error).bind(self.id).execute(connection).await?;
         Ok(())
     }
     /// Card effect and its durable receipt commit together. Reload under the
@@ -1524,6 +1528,10 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn skipped_validation_survives_storage_and_is_visible_on_the_integration_card() {
         let (pool, mut run, _) = fixture().await;
+        sqlx::query("DELETE FROM integration_reservations")
+            .execute(&pool)
+            .await
+            .unwrap();
         run.id = Uuid::new_v4();
         run.request_key = run.id.to_string();
         run.workspace_id = Some(Uuid::new_v4());
@@ -1556,8 +1564,34 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    async fn admission_keeps_existing_project_local_prefix() {
+        let (pool, mut run, _) = fixture().await;
+        run.id = Uuid::new_v4();
+        run.request_key = run.id.to_string();
+        run.workspace_id = Some(Uuid::new_v4());
+        run.session_id = None;
+        run.payload.card_id = Some(Uuid::new_v4());
+        run.create_with_card(&pool, "legacy", "Legacy integration")
+            .await
+            .unwrap();
+        assert_eq!(
+            sqlx::query_scalar::<_, String>("SELECT simple_id FROM local_issues WHERE id=?")
+                .bind(run.payload.card_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            "LOCAL-2"
+        );
+    }
+
+    #[tokio::test]
     async fn admission_creates_card_workspace_and_link_atomically_without_source_reservations() {
         let (pool, original, done) = fixture().await;
+        sqlx::query("UPDATE projects SET key='LVK' WHERE id=?")
+            .bind(original.project_id)
+            .execute(&pool)
+            .await
+            .unwrap();
         sqlx::query("DELETE FROM integration_reservations")
             .execute(&pool)
             .await
@@ -1579,6 +1613,23 @@ pub(crate) mod tests {
                 .await
                 .unwrap();
         assert_eq!(Some(linked), run.payload.card_id);
+        assert_eq!(
+            sqlx::query_scalar::<_, String>("SELECT simple_id FROM local_issues WHERE id=?")
+                .bind(linked)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            "LVK-2"
+        );
+        let labels: Vec<String> = sqlx::query_scalar("SELECT t.name FROM local_issue_tags it JOIN local_tags t ON t.id=it.tag_id WHERE it.issue_id=?")
+            .bind(linked).fetch_all(&pool).await.unwrap();
+        assert_eq!(labels, vec!["system"]);
+        let priority: String = sqlx::query_scalar("SELECT priority FROM local_issues WHERE id=?")
+            .bind(linked)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(priority, "medium");
         assert!(
             workspace_owner(&pool, original.payload.sources[0].selection.workspace_id)
                 .await
@@ -1646,6 +1697,22 @@ pub(crate) mod tests {
                 .await
                 .unwrap()
         );
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issue_tags WHERE issue_id=?")
+                .bind(failed.payload.card_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+        assert_eq!(
+            crate::models::issue_number::next_issue_number(&mut tx, run.project_id)
+                .await
+                .unwrap(),
+            (3, "LVK-3".into())
+        );
+        tx.rollback().await.unwrap();
     }
 
     #[tokio::test]

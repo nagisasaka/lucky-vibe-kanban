@@ -6,20 +6,34 @@ tags: [project, issue, kanban, task]
 sources:
   - id: openwiki-source-11356f66af906ebb06f3ef2e
     resource: repo://crates/api-types/src/issue.rs
+  - id: openwiki-source-98b2b381d94f0ceabce67262
+    resource: repo://crates/api-types/src/project.rs
+  - id: openwiki-source-0afb1e125b616abe2a64c15f
+    resource: repo://crates/db/migration_compat/project_keys_multi.sql
   - id: openwiki-source-e4c80fe5a2af8a4abd8a8684
     resource: repo://crates/db/migrations/20260427000000_local_kanban.sql
   - id: openwiki-source-5c1907109b5a72a746e85a0c
     resource: repo://crates/db/migrations/20261020190000_kanban_lifecycle.sql
   - id: openwiki-source-c2fc034438311f3aa02f5ee5
     resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
+  - id: openwiki-source-11bd8cfafd506215798951a6
+    resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
+  - id: openwiki-source-84bf5b13c3c1bf55a6f0a317
+    resource: repo://crates/db/migrations/20261025150000_issue_archive.sql
+  - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
+    resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
     resource: repo://crates/db/src/models/agent_runtime_kanban.rs
+  - id: openwiki-source-672c8da0d18c56b60df745a2
+    resource: repo://crates/db/src/models/board_tag.rs
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-6fe5fbd6df406f973641b771
+    resource: repo://crates/db/src/models/issue_number.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
   - id: openwiki-source-a43253b5be9686da077b8067
@@ -28,10 +42,14 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
     resource: repo://crates/server/src/routes/workspaces/links.rs
+  - id: openwiki-source-ff91ec3e5a5f406a698e52e6
+    resource: repo://packages/ui/src/components/KanbanCardContent.tsx
   - id: openwiki-source-36bc16e51274306c238a63a2
     resource: repo://packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts
   - id: openwiki-source-cae8a3c125596fe3e7ed7b37
@@ -44,12 +62,14 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx
   - id: openwiki-source-b885bc17dfe85c4ca45223e9
     resource: repo://packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts
+  - id: openwiki-source-44d596f923fda7620210296d
+    resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-24T02:16:46.128Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # Project・Issue と実施の関係
@@ -64,7 +84,13 @@ Project には Issue と独立した [Todo 共有メモ](project-todos.md)もあ
 
 ## 仕事の識別と分類
 
-Issue の主キーは UUID。表示用 `simple_id` と番号、Project、Status、本文、任意の優先度・期限・完了日時、親 Issue、拡張メタデータを持つ。ローカル作成は Project ごとの最大番号から `LOCAL-N` を採番する。DB の番号・simple ID の一意性も Project 内なので、複数 Project を横断する処理で表示文字列だけをグローバル ID と扱わない。[型](../../crates/api-types/src/issue.rs#L20-L40)、[採番](../../crates/server/src/routes/local_remote.rs)、[一意制約](../../crates/db/migrations/20260427000000_local_kanban.sql#L45-L69)
+Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key と Project 内の `MAX(issue_number)+1` から作る。Project 作成時の key は必須で、前後空白除去・ASCII大文字化後に英字先頭の英数字2〜10文字、現存 Project 間で一意である。API 更新では変更できない。UI の名前由来候補は編集可能で、非ASCII語はローマ字化せず空候補とする。重複はサーバーで409となり、UI候補は予約ではない。[作成](../../crates/server/src/routes/local_remote.rs#L440-L489)・[正規化](../../crates/api-types/src/project.rs#L70-L83)・[候補](../../packages/web-core/src/shared/lib/projectKey.ts)。
+
+Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・Integration Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、最大番号の削除後には番号が再利用され得る。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L1-L24)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
+
+priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L894-L925)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
+
+Tag は Project 内の分類であり、system はLVK管理の予約名である。通常のrename・削除・手動付与/解除を拒否するがcolor変更は許す。新規Projectと一度限りのmigrationで不足する system / survey / bug / feature を用意し、読取は削除済み通常Tagを再作成しない。既存同名定義は残し、自動 system 関連は最小IDを選ぶ。Integration/OpenWikiの生成transactionと、記録されたownerのstartup補完がsystemを付ける。ラベルはownerの証拠や承認に代わらない。[初期化と既存owner](../../crates/db/migrations/20261025000000_issue_classification.sql#L13-L39)・[同一Projectと予約名](../../crates/db/src/models/board_tag.rs#L14-L72)。外部MCPのadd/removeは独立した一件の変更で、他のTagを置換しない。[MCP](../integrations/remote-access.md)。
 
 Status は Project の列を参照する ID であり、エージェントのプロセス状態ではない。ローカルの初期列は Not Started / In Progress / In Review / Done / Cancelled で、Cancelled は初期状態で非表示。更新 API は `status_id` と `completed_at` を別々の入力として保持するため、列を Done に変えるだけで完了日時が自動計算されるとは読めない。[初期列](../../crates/server/src/routes/local_remote.rs)、[更新](../../crates/server/src/routes/local_remote.rs)
 
@@ -80,7 +106,7 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 
 この関係を [Workflow の制御エッジ](workflow-attempt.md) と同じ依存グラフとして扱う根拠はない。表の保存契約は [スキーマ](../../crates/db/migrations/20260427000000_local_kanban.sql#L125-L179) と [親参照](../../crates/db/migrations/20260427000000_local_kanban.sql#L58-L68) を参照。
 
-部分更新では「送らなかった」と「null に消した」を区別する。たとえば description や priority は二重 Option であり、未指定なら既存値を保持し、明示 null ならクリアする。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
+部分更新では「送らなかった」と「null に消した」を区別する。description などは二重 Option であり、未指定なら保持し、明示 null ならクリアする。priority の明示 null は上記の medium 正規化が例外となる。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
 
 ## Kanban と実行の同期契約
 
@@ -136,11 +162,25 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 
 Kanban のカードは Issue を表し、内側の Workspace はその仕事の実施を表す。カードを小さくしても Issue と Workspace の 1:N 関係や [実行による列の同期](#kanban-と実行の同期契約)は変わらない。可視 Status ごとに列を描画し、その列の実幅が33.5rem以上なら内部のカードを二列、未満なら一列に置く。物理解像度や画面全体の幅で固定せず、三列や masonry にしない。標準 root 16px では閾値536 CSS pxで、二列時の16remカード二枚と gap・padding を確保する設計である。一列時のカード幅を常に16rem以上に制限する CSS ではない。[可視列](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L468-L476)・[幅と通常 grid](../../packages/web-core/src/features/kanban/ui/kanban-grid.css#L3-L21)。[開発時の判断記録](../../tests/kanban/VALIDATION.md#変更と判断)は、文字縮小や一次元 DnD の CSS だけの grid 化を避けた理由を記録している。
 
-Issue 番号と既存サイズ・省略表示のタイトル、未 archive の関連 Workspace 数を折り畳みの外に残す。native `details` を開くと本文と Workspace 一覧を読める。「Workspace 表示」設定は展開内の一覧に適用し、本文や重要状態を隠す設定ではない。WorkflowAttempt のカードと選択元 Card に対応する Integration の入口も展開の外にある。[タイトル](../../packages/ui/src/components/KanbanCardContent.tsx#L210-L241)・[展開](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L61)・[入口と一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1249-L1326)
+Issue 番号・省略表示のタイトル・未 archive の関連 Workspace 数に加え、本文プレビューをタグ群の後へ最大2視覚行で表示する。native `details` は本文全文を開くために残す。`showWorkspaces` が有効なら通常 Workspace 一覧を折り畳みの外に表示し、無効なら一覧を隠す。WorkflowAttempt カードは従来どおり別に描画する。カードごとの Integration 行は廃止し、正式 Integration は Navbar の Integrate / Auto Merge から開く。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L318-L329)・[全文](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L60)・[Workspace 一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1240-L1294)・[Integration 入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1015-L1032)
 
-件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、展開内の通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1283-L1326)。従って件数は展開後の通常 Workspace カード枚数を保証しない。
+タグは固定二件ではなく利用可能幅で可視数を決め、隠れた件数を `+N` で残す。長い先頭タグは省略して全文を title に保持し、既存のタグ編集操作を維持する。計測機構は [Web の描画責任](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
-承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
+件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1317)。従って件数は表示中の通常 Workspace カード枚数を保証しない。
+
+承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。Workspace 一覧 ON では開発サーバーの Issue 集約ラベルだけを抑え、該当 Workspace の淡青背景と Play icon の tooltip / accessible label で稼働を示す。他の重要状態は抑えない。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
+
+## Issue のアーカイブ
+
+`archived` は仕事を通常の表示対象から外す属性で、Status・Workspace archive・Arenaの候補状態とは独立する。archive/解除は status を変えず、既存関連 Workspace の実行と通常のKanban自動同期も継続する。新規 Workspace・候補・Workflow主Workspaceの作成および新しいlinkは拒否し、解除後に再び可能となる。APIのguardに加えDB triggerで全writerを保護する。[schemaとリンク境界](../../crates/db/migrations/20261025150000_issue_archive.sql)・[既存実施との境界](../../crates/server/src/routes/workspaces/create.rs#L234-L248)。
+
+UIのActive / Archived / AllとKanban / Listは独立した表示軸である。hidden StatusのIssueは両形式とも表示せず、検索・filter・選択も同じ表示集合に従う。対象tabと形式は非永続storeにあり、Issue詳細のroute remountを越えて保持するが、Projectを離れる・切り替える・reloadで既定Active/Kanbanへ戻る。Team/PersonalのScratch設定とは寿命が違う。[集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L335-L364)・[画面state](../../packages/web-core/src/shared/stores/useKanbanDisplayStore.ts)。MCP一覧は省略/falseが未archive、trueがarchive済み、`"all"` が両方であり、UIのhiddenとは別条件である。[共通入力](../../crates/api-types/src/issue_filter.rs#L7-L56)。
+
+一回の確認でIssueと全リンク集合、Workspaceのpath/branch/archive状態、checkboxを固定する。checkboxは毎回ONを既定にし、ONなら未archiveの配下Workspaceも既存の[手動archive](workspace.md#archive削除期限-cleanup)で処理する。OFFとIssueの解除はWorkspace・process・fileを変更しない。tokenはcaller/targetに束縛された10分の一回用で、リンクrevisionも比較するためunlink/relinkのABAも再確認となる。[prepare](../../crates/server/src/routes/local_remote/issue_archive.rs#L170-L223)・[リンクrevision](../../crates/db/migrations/20261025150000_issue_archive.sql#L16-L25)。
+
+実行順はMUTATIONS → Issue作成guard → UUID順のWorkspace lifecycle lock → SQLiteのBEGIN IMMEDIATE。全対象のscript・DB idle・実processの再確認が済む前には論理/物理変更しない。その後にIssue flagとWorkspace archiveを更新する。DB履歴とGit branchは保持するがworktreeは削除対象となる。普通の削除失敗はWorkspaceごとのdeletion_errorとして返し、物理変更後のDB/commit失敗はrollbackでファイルが戻ったと証明できないため `uncertain` とする。[確認と結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L223-L318)。
+
+UI/stdio/外部HTTPは共通primitiveと耐久receiptを使う。応答喪失・再起動・uncertainでは同じrequest_idの結果と現在値を読み、別IDで盲目的に再実行しない。UIは結果確認を提供する。[UI回復](../../packages/web-core/src/shared/dialogs/kanban/IssueArchiveDialog.tsx#L65-L113)・[receipt入口](../../crates/server/src/routes/local_remote/issue_archive.rs#L349-L436)。変更時は `tests/issue-archive/migration.py`、serverの全対象busy/ABA/DB fault fixture、DB自動status同期、両MCPと `tests/issue-archive/isolated.mjs` を照合する。今回の保守は試験定義の静的照合であり、稼働DBや物理削除の再実行ではない。
 
 ## Issue の共同作業
 
@@ -179,3 +219,9 @@ Workspace link は現在ローカル表への upsert、unlink はその削除だ
 `tasks` と固定 enum の `TaskStatus` はソースに残る。ローカル Kanban 導入 migration は Task ID を保って `local_issues` へコピーし、旧 `workspaces.task_id` からリンク表を初期化した。現在のボード取得はリンク表と `local_issues` を join する。このため、旧 Task の状態や `task_id` だけを追って現行 Issue の挙動を説明すると境界を見失う。[移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L75-L123)、[リンク移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L225-L231)、[現行取得](../../crates/server/src/routes/local_remote.rs)
 
 Repo はパス、対象ブランチ既定値、setup/cleanup/dev script などの実行資源を持つ。[Workspace](workspace.md) がそれを選択して作業環境を構成するので、Project を Git リポジトリ一個と同一視しない。[Repo の責任](../../crates/db/src/models/repo.rs#L36-L54)
+
+### 内部生成 Card の成功後 archive
+
+新規の OpenWiki Bootstrap / Sync と正式 Integration が生成した専用 Card は、生成元と最初の owner run の保存記録を根拠に、成功・owner 解放後の専用 Workspace archive に伴って非表示になり得る。同じ Issue に未 archive の別 Workspace があれば Issue は残し、その別 Workspace は変更しない。Status・本文・履歴・Git branch は保持する。system Tag や名称だけでは資格にならず、過去の生成 Card を一括回収する仕組みでもない。[自動 archive の資格と失敗契約](workspace.md#生成された専用-workspace-の自動-archive)・[生成元記録](../../crates/db/migrations/20261026010000_generated_archive.sql#L1-L11)・[Issue の条件付き更新](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L513)
+
+手動 archive / unarchive は自動後処理の資格も消費するため、解除した Card を古い完了通知が再び archive しない。人間の確認 token / Operations receipt と内部生成元の一度限りの結果は別の記録である。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L24)・[内部 attempt](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L470)

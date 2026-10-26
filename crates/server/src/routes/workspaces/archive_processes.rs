@@ -6,7 +6,7 @@ use crate::error::ApiError;
 
 /// Policy A: reject observed use, not unrelated inaccessible processes. This
 /// snapshot cannot see other PID namespaces or prevent later external starts.
-pub(super) async fn check(root: Option<&str>) -> Result<(), ApiError> {
+pub(crate) async fn check(root: Option<&str>) -> Result<(), ApiError> {
     let Some(root) = root else {
         return Ok(());
     };
