@@ -34,6 +34,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-e2a1cc763db4a100d48eac0a
@@ -80,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -182,9 +184,11 @@ PR の状態観測と archive の契約は [GitHub と PR](../integrations/githu
 
 正式 Integration は Git 公開を確認してから、選択 Card と Integration Card の完了結果を保存する。現在は受付時の title/revision 一致を Done の条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進める。他 run の予約等で更新できなかった結果も記録する。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
 
-Direct merge の成功、PR の merged 観測、正式 Integration の Card 完了は、Workspace を自動 archive しない。PR monitor は状態と merge commit を記録し、open PR が0になった場合の analytics を更新する。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
+Direct merge の成功と PR の merged 観測では、通常の作業 Workspace を自動 archive しない。PR monitor は状態と merge commit を記録し、open PR が0になった場合の analytics を更新する。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
 
 作業領域を解放する場合は [手動 archive の確認と失敗条件](../concepts/workspace.md#archive削除期限-cleanup)へ進む。未 commit の作業も削除対象になるため、統合成功だけで削除可否を推定しない。Card の Done、履歴の保持、物理 worktree の削除は別の結果である。
+
+新規の正式 Integration は、公開成功と予約解放、process 収束後の owner 解除時に、内部生成された専用 Workspace だけを一度 archive 試行する。採用元 Workspace は保持し、専用 Issue も他の未 archive Workspace がある間は残す。成功・Done・物理削除は別の結果なので、archive 拒否や削除失敗を再統合の理由にしない。[一度限りの資格と観測](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[Integration の成功と後処理](../concepts/formal-integration.md#成功後の専用作業領域)
 
 ## 7. 統合後に canonical memory を更新する
 
@@ -193,6 +197,8 @@ Direct merge の成功、PR の merged 観測、正式 Integration の Card 完�
 LVK 自身の手動 direct squash と正式 Integration はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
 
 Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。自動同期や Repo 単独の開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L210-L231)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
+
+成功した新規内部生成 Wiki 保守環境も、公開・owner 解放後に専用 Workspace と条件を満たす専用 Issue が archive され得る。未公開・失敗・取消の残存や手動で復元した環境は自動再試行で消さない。[保守環境の解放](../operations/openwiki-maintenance.md#成功後の保守環境の解放)を参照し、canonical branch と実行履歴で成果を確認する。
 
 生成物は [Wiki Viewer](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)で確認できる。ただし Viewer は選択 Workspace の現在のファイルを読むため、maintenance の未公開成果物も見える。Wiki 本文を開けたこと、Agent が完了を宣言したこと、Workflow と target branch への publication が成功したことを分けて確認する。[表示元の実装](../../crates/server/src/routes/workspaces/wiki.rs)、[publication の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 

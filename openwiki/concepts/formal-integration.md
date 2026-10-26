@@ -42,8 +42,12 @@ sources:
     resource: repo://crates/server/src/routes/integrations/steps.rs
   - id: openwiki-source-3254b00661fe378ce617d822
     resource: repo://crates/server/src/routes/integrations/validation_settings_tests.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
+  - id: openwiki-source-6043692809cbf72f253c5631
+    resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
     resource: repo://docs/development/integration-mcp-decisions.md
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -64,10 +68,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -205,3 +209,9 @@ MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scena
 [回帰試験](../../crates/server/src/routes/integrations/runtime_tests.rs#L1670-L1942)は連続する競合 step と明示 Resume の Session 分離、保存後・Create 前の再起動と同一 dispatch 再送、実 SessionObserved 投影、異なる native identity の拒否、degraded 履歴の保持、transaction 失敗時の Session と dispatch の rollback を検査する。`ready` 本文があっても `Succeeded && Current` を満たさなければ採用しない。試験は永続化・投影境界の fixture であり、実 Codex や browser からの Resume、既存 blocked run の復旧、配備は未検証である。今回の文書保守では試験を再実行していない。
 
 受付で生成する Integration Card も保存済み Project key で採番し、同じ transaction で system を付ける。priority は共通の medium 既定に従う。分類は execution owner や承認の代替ではない。[識別と分類](project-and-issue.md#仕事の識別と分類)・[生成](../../crates/db/src/models/integration.rs#L279-L305)。
+
+## 成功後の専用作業領域
+
+新規の正式 Integration は専用 Card・Workspace の作成 transaction で生成元を記録する。公開成功を保存し予約を解放した後、既存 monitor が owner を解除できた回だけ、その専用 Workspace の自動 archive を試す。mechanical run は AgentRun がなくても対象であり、採用元の Workspace は対象にしない。詳細な一度限りの資格、介入検出、物理削除の失敗条件は [生成された専用 Workspace の自動 archive](workspace.md#生成された専用-workspace-の自動-archive)を参照する。[生成記録](../../crates/db/src/models/integration.rs#L326-L335)・[成功と予約解放](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1553)・[成功照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L515)
+
+semantic outbox が失敗しても Integration の成功から分離し、後続 Wiki 完了を待たず後処理できる。成功後の Recover は登録 Repo と凍結 payload・Memory store から記録を再構成し、専用 worktree の存続に依存しない。archive の拒否・不明・削除失敗は Git 公開や Card 完了を巻き戻さない。[outbox と回復](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1618)・[archive の警告](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)

@@ -10,8 +10,12 @@ sources:
     resource: repo://crates/db/migrations/20260921000000_workspace_usage.sql
   - id: openwiki-source-f9386b5537a5146f7ac841ae
     resource: repo://crates/db/migrations/20261021173000_workspace_tokens.sql
+  - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
+    resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-c01fa644be961cb7ee12d2b5
+    resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
   - id: openwiki-source-d76d1a64a0c116ad812aa678
@@ -46,6 +50,10 @@ sources:
     resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-9d283785aa68b40f3cd1ceb2
@@ -102,10 +110,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # Workspace と Repository
@@ -230,13 +238,41 @@ provision lock は配置処理を守る。利用者の共有ファイルへの�
 
 ## Archive、削除、期限 cleanup
 
-Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI・stdio MCP・外部 HTTP MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L178)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
+手動 Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI・stdio MCP・外部 HTTP MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L178)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
 
 確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
 
 実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の通常 debug frontend 参照も観測する。`developer-runtime` featureで埋込み済みの場合はこの自己frontend参照の保護を省くが、exe/cwd/fd等の実参照検査は維持する。[bundleの独立性](../operations/development.md#開発用成果物切替と復旧)は既存worktreeの無条件削除許可ではない。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 
 削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L265-L290)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
+
+### 生成された専用 Workspace の自動 archive
+
+新規の内部生成 OpenWiki Bootstrap / Sync と正式 Integration の専用 Workspace は、成功後に一度だけ archive を試す。通常開発・採用元 Workspace、手動 merge、PR 観測、Arena 選択はこの対象にならない。名前や system Tag で推定せず、専用 Issue 作成時の `generated_issue_workspaces` に保存した Repo・Project・Issue・owner kind と最初の run ID で資格を判定する。Wiki は未 bind の新規 owner で専用 Issue を作れた場合だけ登録し、過去 owner の startup link 補完は除外する。Integration は受付 transaction で run ID とともに登録する。[Wiki の登録](../../crates/services/src/services/workspace_usage/lifecycle.rs#L97-L131)・[Integration の登録](../../crates/db/src/models/integration.rs#L326-L335)・[最初の owner bind](../../crates/db/migrations/20261026010000_generated_archive.sql#L26-L32)
+
+**入口は既存 monitor の owner 解放である。** 5秒 tick の末尾で `release_completed` が process / cleanup と製品 owner の終了を確認し、保存済み owner JSON の CAS により `execution_only → interactive` を更新できた Workspace だけを返す。その回だけ archive を呼び、過去 interactive 環境の走査、新 timer、再試行 queue は追加しない。用途解除できても、失敗・取消の成果や成功に合う run がなければ自動 archive を拒否する。[monitor](../../crates/server/src/routes/openwiki.rs#L878-L913)・[解除](../../crates/services/src/services/workspace_usage/lifecycle.rs#L136-L177)
+
+| owner | archive 時に再照合する成果 |
+| --- | --- |
+| Bootstrap | 同じ Repo / Workspace の bootstrap Workflow が succeeded |
+| Sync | 同じ Workspace の AgentRun が succeeded、かつ owner 固有の公開結果も Succeeded。検証済み no-op も含む |
+| Integration | 同じ Repo / Project / Workspace / Card の run が succeeded かつ published。mechanical 経路は AgentRun 不要で、後続 Wiki 完了を待たない |
+
+成果だけで削除しない。現在 owner・path・branch・単一 Repo membership と物理 path/name、未 archive Issue の link、既存 DB idle・script settled・OS process guard も再確認する。[最終検査](../../crates/server/src/routes/local_remote/issue_archive.rs#L466-L506)。公開と owner 解放の詳細は [Wiki 保守](../operations/openwiki-maintenance.md#成功後の保守環境の解放)と [Integration の後処理](formal-integration.md#成功後の専用作業領域)へ分ける。
+
+#### 一度限りの intent と介入の検出
+
+lock 順序は MUTATIONS → Issue → 当該 Workspace。その後、未試行かつ読取時と同じ `eligibility_revision` の場合だけ、filesystem 操作前に started intent を永続化する。script の収束待ち中は SQLite writer を保持しない。最終 `BEGIN IMMEDIATE` で revision と identity・成果・idle を再検査し、物理削除と commit まで writer 排他を保持する。[claim と transaction](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L513)
+
+手動 archive / unarchive、対象 link の変更は未試行資格も消費する。owner/path/branch の変更や別 Workspace の同じ Issue への link 変更も revision を進め、claim 中の試行を失効させる。値を元へ戻す ABA でも履歴が消えないため、最終値の一致だけに依存しない。別 Workspace の link 変更は、将来始める未試行の専用 Workspace まで一律に失格にはしない。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L39)。設計記録は、Issue の unarchive が Issue mutex を取らないため、mutex だけでは全 DB writer と ABA を防げないと説明する。[記録された理由](../../docs/development/generated-workspace-archive.md#claim後の介入と削除前の境界)
+
+#### 結果と回復の限界
+
+既存 `archive_checked` を使い、Managed worktree の削除と archived 更新を行う。別の未 archive Workspace が同じ Issue にあれば、その環境と Issue を残す。なければ専用 Issue も archive する。Status・本文・履歴・Git branch を変える操作ではない。通常の物理削除失敗でも archive を確定し `deletion_error` を残す一方、filesystem 操作後の DB/commit 失敗では結果が不明になり得る。[共通削除](../../crates/server/src/routes/workspaces/archive.rs#L285-L331)・[Issue と結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L530)
+
+内部 `attempt_result` は人間の確認 token や Operations receipt とは別で、専用 UI / GET API を持たない。通常 UI/API の archive flags と `worktree_deleted`、Workspace/Issue ID を含む server log を照合する。正常成功は INFO、拒否・不明・削除未完了は WARN。started のまま中断した場合も含め、自動 replay はせず残存を許す。archive 失敗で Wiki / Integration の成功を取り消さない。[記録とログ](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)・[試行結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L514-L530)
+
+検証入口は [SQL trigger の隔離試験](../../tests/generated-archive/test_migration.py)と [server 回帰](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)。owner 解放時だけの実行、mechanical、Sync の no-op、busy・owner 不一致・手動復元・再送、claim 後の5種の介入と別 Workspace 保持を扱う。SQL の二接続試験は最終 write transaction の排他を確認する。これらの fixture 定義は実 Bootstrap/Sync の公開から実 process/cwd 参照までの E2E や実ユーザー環境での削除を証明しない。今回の文書保守では製品試験を再実行していない。
 
 ### 外部 MCP の確認と結果の回復
 

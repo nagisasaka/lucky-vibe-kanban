@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:477ab415d7a9e1d852ef063c9fb1d95fcbc1fa9be36402a3655f6666f51cd4d4",
+  "pageVersion": "sha256:b6d230e35d98318d26a2adaab0e1029398565a1e1e1c5b49a79d44e067e4a7d1",
   "claims": [
     {
       "id": "claim_71e4432fe19d42fca4c3a1ae5f546775",
@@ -104,7 +104,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L1-L84",
-          "version": "repo-lines-v1:sha256:b2a348d0ca82d0d11d69bee12c723bc31f63208f24a262080e3ed5848f83bec0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMWE5OWIzNWY3MDY4MDYwODZjZmI1Y2U4MDljNjQ5NWQzNzNiMDVhODQwYWIxNjFjMGYwZmVmYTVkYmZjZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyY2ZlNWZjMjUyMjQyMWM0NDg2ZDEyMDJlODU5Y2YwYjM2MWM0NDYyNjliYmEyNzllMTY4MzU5Mjc2Yzg0NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkZGVmMzJmNjBjM2YzNDY1NDAwYWU2NjljZjdiNzI5ZDlmNGVjOGIyOGViZDYyOTRhY2YwZDU4OGRiMzZlMjYifQ"
+          "version": "repo-lines-v1:sha256:d7cf95d060efef799fe942dc4b7cdbfd619e9f7f60b0de0f1c24cd3af9b9fb98:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhMDFhOTliMzVmNzA2ODA2MDg2Y2ZiNWNlODA5YzY0OTVkMzczYjA1YTg0MGFiMTYxYzBmMGZlZmE1ZGJmY2U4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzMmNmZTVmYzI1MjI0MjFjNDQ4NmQxMjAyZTg1OWNmMGIzNjFjNDQ2MjY5YmJhMjc5ZTE2ODM1OTI3NmM4NDQ3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0ZGRlZjMyZjYwYzNmMzQ2NTQwMGFlNjY5Y2Y3YjcyOWQ5ZjRlYzhiMjhlYmQ2Mjk0YWNmMGQ1ODhkYjM2ZTI2In0"
         }
       ]
     },
@@ -113,22 +113,22 @@
       "statement": "list_run_eventsはattempt/sequence順の1–50走査件数と128KiB item予算で有界化し、除外recordでもevent UUID cursorを進め末尾でも維持する。byte上限の未読record前で停止する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L74-L114",
-          "version": "repo-lines-v1:sha256:c02ce5d30b97bad1d98ff2e7d46b348e249428883a6c05cc77b0703c00d9b964:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0YjYxZTg3ZDkxMTVkZjdmZDFlZjUzODFmMGYzMmNjOWY1NmIyMGQ3YzhmOTViMmFlYWFjYmVlZGVhMTU1ZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlYTRlYzBmZDg4Y2Y0MDJlMDcwYzViMTc3MDg2NTJmMmFhMWRlYzMyNGM4MzdkYzk0OTc2YzdiMzc4OGZiMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZkNTAxN2U4ZmRiZmZjMDk1NGFhOWRmNjk5MzhlYmIxMjBlZjVmNWY0YzllMTliY2ZiNGMwMzE2MzhjZjU4Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwODdmN2E3NjQzMTA1OGVmMTM1ZjJjN2IyMDg4NzU3YzEzZWM3YTBhMDc1ODcyMjkzYjliNDExNDg5Yjk1YTAifQ"
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L85-L123",
+          "version": "repo-lines-v1:sha256:ad65a991aaea0290af0fab1d052bb04b5f5720738ab5604aed68534f344c2987:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0ZjVhOWVkMzg4NTg5YjY1YWUwMzMzODhhNWJiNGQ2Mzc0MGY0ZWRlNGFkYWM0NzQzNzEwODFmZGNlOTRkZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1OTY5MTc3ZDYxZGYxMDhmOGNmMmY0YmE5NTVlMTlkOTBlMDk5OTIxNDNmZTI5ZWI2Nzk4ZWUzNDIwMDk0OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA2NmY4M2MzMjJiZWViODZjZjcyYjk2MzhkYWJlNTI0MWE5ZTEwNTg0NTNiYjA4YWFjYTM3ZGJkNjBlOWFhNjMifQ"
         }
       ]
     },
     {
       "id": "claim_c7067c2d0b0143cdb00ea48372ef63cf",
-      "statement": "進捗公開はcommentaryとallowlist metadataのみ。全Thinking・final/user/system・承認/回答・tool payload・native参照を除外し、不正/未知version/過大envelopeを省略、4096byte超や疑わしいcommentary全体をwithheldにする。一般的秘密除去保証ではない。",
+      "statement": "進捗公開はcommentaryとallowlist metadataだけで、Thinking・final/user/system・承認/回答・tool payload/call ID・native参照を除外する。不正/未知version/32KiB超envelopeを省略し、commentaryは全文credential/control検査後にUTF-8境界で4096byteへ短縮し、検出時は全文withheldとする。一般的秘密除去保証ではない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L117-L239",
-          "version": "repo-lines-v1:sha256:d9513526591b186391f454073ef0b67c3601e17d8d42b7f870221c9de0199289:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1NTAzMmU5NjRkMDkzMjM1MWU1ZDE4NTI2OTI4MWIxNzFhM2EwOWIwOGIyODZlNjYxZWE0NzAzMjNjODJlYjRkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0NWMwNzExZWFhZDNkNjk1Mjc0NzkxMjJhNGE2M2I1YjZmZGU5Zjg5NjJhNjRlOTNmYmU5ODUyNzg0Mjc1MTM5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2OGJmYjgzYTM4ZmVlMWRjNWNlYjBjZjMwMGRmMWIxY2Y3OTc1NThlM2Q1ZTY0ODU0ZDczOGUzMjRjYWExYzE1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhNTIxNjA0YjM1ZmM0MGFmMDBjYmE0ZWVhMmZkNWUyYzNhZjE4NjNiMzkxMTg1ZDdiZjRiYjA5ZTcyZDBjOGIzIn0"
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L126-L270",
+          "version": "repo-lines-v1:sha256:ea4aee2cf3b38f389d172c6ac0c7c09da2cca1ef036eb1620820bb5e2148738d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyZjEyNmFjYTQ3MjQ2MTljMDI5OGJhZTM1NmE1MmNmZmEzODkwZGVmOTIwZTMxZGUxMzE4YjczZGNiZDE0MzMwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlOTZmOGNiMDgzZmE4MDBhNGRjZDI5Njk3MjJkN2I5MjY4NmFkZDllYmUzNjU1NDkyZmE2NzJiMWE3Y2VkMjQyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3YmM5OGQ2YjBkYzQ5MmM1MDE2ZGYxMDgwNWEzYTU0ZWI5YzE4NGE1YTYxMzdlN2Y0YmVjZmEwYzIyMDU1MGQwIn0"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L80-L84",
-          "version": "repo-lines-v1:sha256:d48c068e5622affc6d01fe13d12e531de47a7180e4ff29947d07b0e0988c075b:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDIwMDMzYmMwN2E5NmY1ZmZjODBiNzE1ZDU4NWRjYzJhM2NiMTBkZjM4YThlZjQ4YzNjNzk2NmFkOWQwOTdlYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJjZmU1ZmMyNTIyNDIxYzQ0ODZkMTIwMmU4NTljZjBiMzYxYzQ0NjI2OWJiYTI3OWUxNjgzNTkyNzZjODQ0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmQyZjBhNTY3YzhlMGJmMTRjMWQ1ZGUyM2M3N2ExOWIwZDg4YTNjNThiYzA2ZWExM2YzNmE5MWU0YjI3OGFkOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGRkZWYzMmY2MGMzZjM0NjU0MDBhZTY2OWNmN2I3MjlkOWY0ZWM4YjI4ZWJkNjI5NGFjZjBkNTg4ZGIzNmUyNiJ9"
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L85-L100",
+          "version": "repo-lines-v1:sha256:930555d8f65e8daebf542be5605465227c1ae4da2f868554c765ac8db639373b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0ZjVhOWVkMzg4NTg5YjY1YWUwMzMzODhhNWJiNGQ2Mzc0MGY0ZWRlNGFkYWM0NzQzNzEwODFmZGNlOTRkZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxMDljZTdiNTkzZWRlMzNkODlhOTBiYzBhNzgwM2UyNzIyZmIwOGUzZjk1MmE0NzdhMjA4MzhlNGY2YWMzNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1OTY5MTc3ZDYxZGYxMDhmOGNmMmY0YmE5NTVlMTlkOTBlMDk5OTIxNDNmZTI5ZWI2Nzk4ZWUzNDIwMDk0OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1ZmVkZjlhOWRlNzVjYTIxOWI3MzkzNzEyZTdhMDBkZTY1ODI0MjliOGIxMjhkZWMxYTYwMzJjMzgyOTE1MjgifQ"
         }
       ]
     },
@@ -137,12 +137,12 @@
       "statement": "list_run_eventsにはfiltered空page、foreign cursor、attempt順序、byte上限、DB reopenとHTTP read scope/reconnectの回帰テストがある。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L328-L564",
-          "version": "repo-lines-v1:sha256:a6ee0ae97dfd6645bd5f6131a2bb35c0177761d5a8f8a927bd87c25bea7658dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjM3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlOWU2N2UyYmM4NGU1MGVhZTlkNmFkOTg0MTBkMmVkMGJhYjgyYzRhMzMwYTdiOGE1MGRmYTc1ZGM5YWJkYjhkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5MmI1ZWRmNTk0OWNmZWE2NzgyMmNmNjkxMTMyMzYzZDY4ZDZmMWUxNjlmNWUwZDRmN2MxNGU1ZmExZTZkNGU1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlMzA1ZjVlMWM5NjAyYzE2MWEzOGUzNjAzMjIxY2Y0YTc1ZGQ3MzkwNmQzZGQ3ZWU1MjJiMTMwNDViMWY5MGYxIn0"
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L594-L847",
+          "version": "repo-lines-v1:sha256:360a5671d3c983cc26a622f91e5eb6d12e65a888ebd2ecde402156a6021c1119:eyJzZWxlY3RlZExpbmVDb3VudCI6MjU0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlOWU2N2UyYmM4NGU1MGVhZTlkNmFkOTg0MTBkMmVkMGJhYjgyYzRhMzMwYTdiOGE1MGRmYTc1ZGM5YWJkYjhkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3Yzg4YWVjMGU0MmZlNGZiNTRmOTc4MjJjNmQ2OGFmM2UzNTM5YjNhNDVjZjQ4YjM2MmY0ZDAyYjI4ZGQwZmJjIn0"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/tests.rs#L1720-L1800",
-          "version": "repo-lines-v1:sha256:d11ccd5df63dc1cd216e7feb017d4d761f0fa6085d78e068bb31c09cd29600fc:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2ODc4NzMyOTU2OTE3NTU2N2EyZWFjYTgwYTlkNDA3MmI3Y2IzODc4MmI5NzkzNDc0OWNiYzdiYjQ4NjFiYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYzAyNmIyYmZjZjVhMDE5M2U2ZGM4MTljN2ZmYmM5ODE2ZjQwY2ZiMzg2YWJjNDM1YmE3NDQ1YTU0YWJjYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiMGYzNDdlODU4YmNjZmRkMGUyM2YxNzRjYjA1YzZkNWM0NzAzMGRiNGRiOTcyNzllMTIyZTg0MDRjOTY0ZjUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/tests.rs#L1720-L1790",
+          "version": "repo-lines-v1:sha256:d9b428a8a86df08d0f1a901c5094eb6732381ff3cf16201c7070a86ca8677cd5:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2ODc4NzMyOTU2OTE3NTU2N2EyZWFjYTgwYTlkNDA3MmI3Y2IzODc4MmI5NzkzNDc0OWNiYzdiYjQ4NjFiYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0N2M0MDExMGVkMDg0NmFlYTE1NzEyYzk5NWU0M2U0MzMyMWZjNWNiZDM0Njk1MjE5YWE1ZWJiYjVmMmQzMjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc3NzJlOTI3NWNiNmEyNGZmYTg5NTJjY2E3N2U2YTRhNWEyYWRlNjNjZWQ0MzUxYzZiYzU4NjBhYWZlNTIyZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmNGU2MWRkMjhlYTIxZDQwOGEwNDAyZDU2Mzg0NDdmMzdjYWVhNGMzY2EyZDA0MDc5NTkzMGEzMTVhZWVhNWQifQ"
         }
       ]
     },
@@ -889,10 +889,38 @@
           "version": "repo-lines-v1:sha256:62d323e0fd327d11e1d86061e542e9739c3b73c89177f3b5af6ed28779304e05:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3NGQyYTAyMzJlYjIxMzA2YjFiODVmMmJkOTA0YjI0OGViNjExOGZhNzMxNjIyNTkzY2YwN2E0ZWM1NGUzZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MmI0NmNkMjg2NTRmZDFmNDhhYzUzZGU4MTdhZWFhZjNhNTFkYmQ4ZTZmMWE4NjQ0NzAyM2JjYzc0NmM4ZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MmY5MjIwNDlkNWVjMWI3NmQzMWJhODFkZGIwNmJkMzFjM2U4MjYyOGUxZGQxNDY0OTZjZmFlYzA4M2RiZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4ZDE0MjMzMzY4ZTMzYjI4NjU3YjY1MjI4NjAyMTc0MzZhNDhjMDc1YjJkOGEwZWQzODMyMDQ2NjdhODhhZjgifQ"
         }
       ]
+    },
+    {
+      "id": "claim_322ca48736564bf3adad4d35449e7521",
+      "statement": "startはbeginning既定、null/省略cursorのlatestは同じsnapshotの末尾limit canonical recordsを投影前に選んで昇順で返す。非null cursorを優先し、飛ばした過去だけでhas_moreを立てない。初回空latestでcursorがnullなら次をbeginningにしないと到着を飛ばし得る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L16-L48",
+          "version": "repo-lines-v1:sha256:888f42a9486146d7c3c0fa0fa9fbc83201831272efd735f0aa87d9622dae60a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2ZGIyYmYxNWIwNzIzNjVkNmFkMjUzZTIyNjcyNTZmNDcxNDQ2YTUwNmZlZjA3MDUzZGZkMDUwODYxMWUyMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjMTliNjZjYjdkYWE2ZDFlZjUyYWUzODY1YjQ3ZjM2OGZjNDE2ZjI0NTViZDJlMDkxZTQ3ZDU0ZTUxMGU4NWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0NThiZDY3NGUwYWRlMDJlMjQ3ZGQ4YjRhYmYxMTAyYjNiYjY4MjgyOTE4OTZjYzFjMTJhNGQyZDE1NWYwMGYifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L454-L510",
+          "version": "repo-lines-v1:sha256:3683908c002491812dfe4cae8a64e242bea8c36ce315259cafb6904db6e1d61e:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxZDBhZmI0OTk3YjMxNzk1MDA4MjY2ZTIwODdjZDMzZGM4ZGE3YWNlODZiZTZhMGUyNTFkYmE3NTgyYzliMGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5ZTJjNmRlMjFhYjI5M2MzODEwMzc0YWRlOGExZThmN2Q0NzQ5NWFmYWU4NmE4NGJiN2EzMDRkYjYzZGIwODMifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L85-L123",
+          "version": "repo-lines-v1:sha256:ad65a991aaea0290af0fab1d052bb04b5f5720738ab5604aed68534f344c2987:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0ZjVhOWVkMzg4NTg5YjY1YWUwMzMzODhhNWJiNGQ2Mzc0MGY0ZWRlNGFkYWM0NzQzNzEwODFmZGNlOTRkZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ1OTY5MTc3ZDYxZGYxMDhmOGNmMmY0YmE5NTVlMTlkOTBlMDk5OTIxNDNmZTI5ZWI2Nzk4ZWUzNDIwMDk0OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA2NmY4M2MzMjJiZWViODZjZjcyYjk2MzhkYWJlNTI0MWE5ZTEwNTg0NTNiYjA4YWFjYTM3ZGJkNjBlOWFhNjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_31ad6be2c32e4e2894177b67e3d2166c",
+      "statement": "commentary credential検査は通常path/symbol/長いASCII IDを許し、境界付きsk-/ghp_/github_pat_のbody20/36/50文字、Bearer token20文字、JWT様header12/payload8/signature16、PEM PRIVATE KEY labelを認識する。改行/tab以外の制御文字も全文withheldとする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/run_events.rs#L199-L270",
+          "version": "repo-lines-v1:sha256:1cfee1ef93e2fa7386ef01ff0b8e34ad5bcbf5ebd7b609646c56756c3d818db7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmZDUwNDU2NGFlMDkzZTlkMjBmZTBlNjJiYmEyNzAxMjg3Y2QxNTc2MTBkNjE1MmUzOTUzOTQyNTU4M2QxODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkYjJmOGUzZDBmM2I4MGQ0NzQ2ZmVmZDJlYjQ3MzYxNGI4MjFhYThlMmQxM2YyYmQxZmUzMmRhZjIxNTFiNTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYzk4ZDZiMGRjNDkyYzUwMTZkZjEwODA1YTNhNTRlYjljMTg0YTVhNjEzN2U3ZjRiZWNmYTBjMjIwNTUwZDAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T01:28:30.262Z"
+    "at": "2026-10-26T10:15:30.599Z"
   }
 }

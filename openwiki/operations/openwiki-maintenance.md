@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
@@ -68,10 +70,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -236,6 +238,14 @@ Sync の cleanup も所有 identity と全 attempt の実終了を先に確認�
 Sync の確定結果は Workspace owner に保存してから repository の最新 pointer と receipt を更新する。後続保守で repository state が変わっても、その実行の成功・取消・失敗、no-op、Wiki commit を履歴として確認できる。[結果保存の順序](../../crates/server/src/routes/openwiki.rs)
 
 既に durable publication checkpoint がある場合は、その Git 公開と receipt だけを回復する。途中の model phase を再実行して別成果物を重ねる回復ではない。ユーザー向けの状況確認は Repository settings と View Workflow の Canvas / Dashboard、失敗修正後は新しい Bootstrap が入口となる。[運用手順](../../docs/workspaces/openwiki.mdx)・[checkpoint 回復](../../docs/workspaces/openwiki.mdx)
+
+## 成功後の保守環境の解放
+
+公開・receipt 確定と process 終了後、既存 recovery monitor は owner を解除できた Workspace だけを自動 archive へ渡す。新規の未 bind Wiki owner が専用 Issue とともに登録された場合が対象で、startup の過去 link 補完には自動削除資格を付けない。Issue なしの保守を全面禁止する変更でもない。[登録と解除](../../crates/services/src/services/workspace_usage/lifecycle.rs#L119-L177)・[monitor](../../crates/server/src/routes/openwiki.rs#L878-L913)
+
+Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の成功と owner に保存した公開成功を照合する。検証済み no-op も成功に含み、AgentRun の終端だけで削除しない。手動介入・busy・所有不一致での拒否、一度限りの intent、削除失敗と観測の詳細は [生成された専用 Workspace の自動 archive](../concepts/workspace.md#生成された専用-workspace-の自動-archive)に集約する。失敗・取消・不確かな残存を自動 retry で消す経路はなく、archive の失敗は Wiki 公開成功を巻き戻さない。[成果の再照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L530)
+
+変更時は [owner解放・Sync no-op・介入・別Workspace保持のserver fixture](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)、[SQL triggerとwriter排他](../../tests/generated-archive/test_migration.py)、[Integrationの凍結eventだけを使うoutbox回帰](../../crates/server/src/routes/integrations/runtime_tests.rs)を確認する。開発記録の「Rust未実行」はその時点の履歴である。今回供給された後続Change Manifestはfixture修復後の限定試験と最終統合候補のinstall / frontend build / check / lint / backend:test成功を記録するが、今回のWiki保守はそれらを再実行していない。実 Bootstrap / Sync の公開からprocess/cwd参照までのE2E、稼働DBや実ユーザーWorkspaceの削除は確認していない。
 
 ## 設計文書の読み方
 

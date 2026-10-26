@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-24838d7108e2888a7fdc2714
+    resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-231241ac3c842dcd67525890
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
@@ -30,10 +32,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:07:42.711Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -118,6 +120,10 @@ receipt の結果は Updated / NoOp / Failed。Failed はイベントを acknowl
 Current は単なる「ファイルがある」ではない。有効化、Wiki 存在、成功履歴、pending の有無、source の一致を踏まえて判定する。Error/Stale などの状態は保持されるため、古い snapshot を読んだ agent が常に最新とみなす根拠にはならない。[派生状態](../../crates/utils/src/repository_memory.rs)
 
 外部 MCP でも、その request の受付、その実行の確定結果、現在の repository 鮮度を別々に観測する。過去の実行が `wiki_complete:true` でも、その後に source が進めば現在の Wiki は stale になり得る。MCP operation receipt と、この節の event 単位の reconciliation receipt は別物である。開始・再送・読戻しは [MCP から既存 Wiki を同期する](../operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)を参照する。[応答の分離](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L211)・[実行結果の判定](../../crates/server/src/remote_mcp/repository_wiki.rs#L286-L305)
+
+## 成果の寿命と保守 Workspace の寿命
+
+Wiki の成功 receipt・canonical branch と、生成された保守 Workspace の存続は別の契約である。Sync は公開判定から owner 固有の成功結果（no-op を含む）を保存し、repository の active owner を解除する。process が収束し用途を解除できた新規内部生成 Workspace は、[一度限りの自動 archive](workspace.md#生成された専用-workspace-の自動-archive)の対象になり得る。archive の拒否や削除失敗で成功 receipt を取り消さず、archive 済みであることから Current や公開成功を逆算しない。[結果と state](../../crates/server/src/routes/openwiki.rs#L600-L705)・[解除と後処理](../../crates/server/src/routes/openwiki.rs#L894-L911)
 
 ## 変更を検討する際の一次資料
 

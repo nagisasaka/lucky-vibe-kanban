@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
   - id: openwiki-source-84bf5b13c3c1bf55a6f0a317
     resource: repo://crates/db/migrations/20261025150000_issue_archive.sql
+  - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
+    resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
@@ -64,10 +66,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-26T02:48:51.947Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T02:48:51.947Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # Project・Issue と実施の関係
@@ -217,3 +219,9 @@ Workspace link は現在ローカル表への upsert、unlink はその削除だ
 `tasks` と固定 enum の `TaskStatus` はソースに残る。ローカル Kanban 導入 migration は Task ID を保って `local_issues` へコピーし、旧 `workspaces.task_id` からリンク表を初期化した。現在のボード取得はリンク表と `local_issues` を join する。このため、旧 Task の状態や `task_id` だけを追って現行 Issue の挙動を説明すると境界を見失う。[移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L75-L123)、[リンク移行](../../crates/db/migrations/20260427000000_local_kanban.sql#L225-L231)、[現行取得](../../crates/server/src/routes/local_remote.rs)
 
 Repo はパス、対象ブランチ既定値、setup/cleanup/dev script などの実行資源を持つ。[Workspace](workspace.md) がそれを選択して作業環境を構成するので、Project を Git リポジトリ一個と同一視しない。[Repo の責任](../../crates/db/src/models/repo.rs#L36-L54)
+
+### 内部生成 Card の成功後 archive
+
+新規の OpenWiki Bootstrap / Sync と正式 Integration が生成した専用 Card は、生成元と最初の owner run の保存記録を根拠に、成功・owner 解放後の専用 Workspace archive に伴って非表示になり得る。同じ Issue に未 archive の別 Workspace があれば Issue は残し、その別 Workspace は変更しない。Status・本文・履歴・Git branch は保持する。system Tag や名称だけでは資格にならず、過去の生成 Card を一括回収する仕組みでもない。[自動 archive の資格と失敗契約](workspace.md#生成された専用-workspace-の自動-archive)・[生成元記録](../../crates/db/migrations/20261026010000_generated_archive.sql#L1-L11)・[Issue の条件付き更新](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L513)
+
+手動 archive / unarchive は自動後処理の資格も消費するため、解除した Card を古い完了通知が再び archive しない。人間の確認 token / Operations receipt と内部生成元の一度限りの結果は別の記録である。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L24)・[内部 attempt](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L470)

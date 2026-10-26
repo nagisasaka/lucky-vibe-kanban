@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:72b9b170f2783bf4f14684bca350abecc0c62dbc110bea41d5810f2e4769bfb9",
+  "pageVersion": "sha256:6dbe93876794b49bfaa26f744b25ec1d2355300ab35a6bc7b7e1e394078f0b95",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -110,7 +110,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/integration.rs",
-          "version": "repo-file-v1:sha256:3c8a5a5499820b4a859fa54bd5998d85f08bc9894f93c0ccb3a789c087ced456"
+          "version": "repo-file-v1:sha256:b713769961fc208cbd0cefd35eac831470f30cc6a8bae29191a5aa7735af5004"
         }
       ]
     },
@@ -154,7 +154,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/integration.rs",
-          "version": "repo-file-v1:sha256:3c8a5a5499820b4a859fa54bd5998d85f08bc9894f93c0ccb3a789c087ced456"
+          "version": "repo-file-v1:sha256:b713769961fc208cbd0cefd35eac831470f30cc6a8bae29191a5aa7735af5004"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -661,10 +661,42 @@
           "version": "repo-lines-v1:sha256:974f5f076c8c26db199cd0160633b52468c05442fdef88e405811b6026b3d221:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNGI2OGIyMjM4MGZkYjFhZTlmOWY1M2I5ZDE3MGJiYTRlOTI5NTliMjE4NWRlYjMwOTBlNGU4NmM0YWJiYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiMzY0NzM3Y2I5NmZjM2FlNmM2MmE5MDUxYzU3YTM3ZjdkZTI3ZTRhYTFlNmM1OTAzOWRlZjY1ZTA2M2Q4NWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA2Nzk3N2IzYjg1MWFlYWQ5NjJkN2NmYTEwY2IxYzdiMWFjYTg0NDU3NDllOWE2NDFkZjliNTdjYTUxYmM1MWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0MGIxZGVmYWZjYmU4ODEzNTQ3MTM0OTgyNjU4YmM2MTMzMjNiNDlhODBiYjg0Y2JiNDk3NjE1Nzc0ODg3YWIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_53e5e34f1ea1437caea770750a14b3c6",
+      "statement": "新規正式Integrationは生成元を専用Card/Workspaceと同時に記録し、公開成功と予約解放後のowner解除時だけ専用Workspaceを一度archive試行する。mechanical runにAgentRunを要求せず採用元Workspaceは対象にしない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/integration.rs#L326-L335",
+          "version": "repo-lines-v1:sha256:5be2a34c35aec1dc0aedcaf408e0acf709253fe21abe3cde4af8de39d206748f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxMGJmZWI2ZGJmNDRjYjY4ZGIwOTY1NWE2ODg1YTIzODVjMjZkZTA3MTIyYzQ1NDg1Y2IxNjVkYzFiOTFiMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNzFjNmU5MjJkNjRlM2MyZDEyZDFiNDAwODRjMzFjYzRlNzgwN2ZiNDJlN2Y3MjI5Y2M4ODYwNWU3ZmM4YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMWE5ZDFiNmQyOTljMzhlNzFlYzg2NmJjYmNlNGI4M2RkNDVlZTAwYjA2OWYxOWFlMGQ1MGIzYzdlOTI4NWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwZjJiYzM2Y2UyMTQxNzZhM2M4OTAwMTA5MjkzYjlhOTQ2MTgwMTAzMjJlNjQwMWNlZmMxYjBhZWZlZGFmNzQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/issue_archive.rs#L429-L530",
+          "version": "repo-lines-v1:sha256:a287fccb20c207c16983cab63117b379a9a46831962fe1157f598a992d0d03ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZGMzMzNhYzljMTFhZDIyNDkzZTA1ZGVmODI2ODQ1NGY5YTYyMzJhMzRmZDBkYTI1MDI4N2UyMTgzMTg4YjMxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1ZmI5Yzc0ODIwNzBiNGJkMzE2MWYzMDk1OTQxZDQ4MjFlZThiYzE2MzZhMDM2YmJlN2EyMDNlMzg2NTFmOTdhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwNTEyNjVlMGFhN2JhMDY4OGM1YzBiNjg2NTA1YjgzYTA4MDMxMzI5OTJjZjcwOTNjY2RiZjQzZGFiZjQ3OTI4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4YWJmMzQxNWY5ZGQ4ZGQ5OTNmMjZiMDZkZjJiMjY1OWM1ZTljZTE0NTU1YTE3ZWJmYTdkMjI5MjVjZjMxNjM2In0"
+        },
+        {
+          "resource": "repo://crates/services/src/services/workspace_usage/lifecycle.rs#L136-L177",
+          "version": "repo-lines-v1:sha256:8eccba149b56569fb89356e41bd352f07932f2cb023b60330dc89966a46029a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5NTlmYjc2Y2Y1YmE4NzkxMGYwNGM0YjIyMDk4M2Y2Njc1ZjZhMzZkMzU5N2Q2NjM3MDQ5MzRlNDQzYmIyMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ODM2YjE5MzI3MThkYWY4M2QwYmU5YmZmY2Y4YWU4NDVjNWM1OTQ4ZDU4MTIzYzdhYmM4NWM1ZDczY2NmMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_52a1391ee2be4df3ad6974f6abbbb90e",
+      "statement": "Integration成功後のsemantic記録再試行は登録Repo・凍結payload・Memory storeを使い専用worktreeに依存しない。outboxやarchive失敗は製品成功を巻き戻さない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1533-L1618",
+          "version": "repo-lines-v1:sha256:5fbda9c00a42131b222342d0a97ef2058dd152453712fd7a2bde9cc348edaccb:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5Njc2NDA1ODNlNWMxZGNhMjEzM2NhNDk1ZWFiZWQ5ZmNlNzU3NzliMTEzNWY5Y2ZiNzNmZTE2YTk2Y2U2ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNTk1ZjY3Y2Y0MmJjMmUwNWE1ZWNjMTU5NmY4YWUxNjAxNDQzNTM2NmJhYjJjNTJiNGUyYmNhYThkNGEzMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzMjYxZGFhMDRlZjY1OTE2NjQ3N2ZjNzUyMWQzZDBiYTRlMzRiYzFiZTdmYmIxMmY2YTY0YTJhMTcwMTQxOGEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote/issue_archive.rs#L429-L437",
+          "version": "repo-lines-v1:sha256:9977413b33f2c4c8dc45c9ec7ae0521d69f395ab29aaa39f8b929e659e4301e8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGRjMzMzYWM5YzExYWQyMjQ5M2UwNWRlZjgyNjg0NTRmOWE2MjMyYTM0ZmQwZGEyNTAyODdlMjE4MzE4OGIzMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDUxMjY1ZTBhYTdiYTA2ODhjNWMwYjY4NjUwNWI4M2EwODAzMTMyOTkyY2Y3MDkzY2NkYmY0M2RhYmY0NzkyOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzU1Y2VhNDBmOWE5NjFlY2VkMTFjNDc5NjljM2M1YjU5YzVmZDc3MjAzYTdhMDNjZjk5YjQ2OGViMDVjYWEzZCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T01:28:30.262Z"
+    "at": "2026-10-26T10:15:30.599Z"
   }
 }

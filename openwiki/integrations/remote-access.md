@@ -108,10 +108,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T10:15:30.599Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -290,15 +290,32 @@ Goal が projection に存在しないという観測だけでは、provider の
 
 ## 保存済み Codex 進捗の読取
 
-`list_run_events` は UI と同じ canonical `agent_events` の保存済み進捗を read scope で抜粋する。新しい collector・保存先・live delta stream・subscription は作らず、native audit も読まない。最終回答は `get_execution`、通知は [Web Push](web-push.md)という別の利用経路である。[読取契約](../../crates/server/src/remote_mcp/run_events.rs#L1-L37)
+`list_run_events` は UI と同じ canonical `agent_events` の保存済み進捗を read scope で抜粋する。新しい collector・保存先・live delta stream・subscription は作らず、native audit も読まない。最終回答は `get_execution`、通知は [Web Push](web-push.md)という別の利用経路である。[読取契約](../../crates/server/src/remote_mcp/run_events.rs#L1-L48)
 
-Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は所属の assertion である。Run・Session・Workspace・現在の Issue link、cursor と page は同じ DB read snapshot で照合する。過去 Run も読めるが Codex に限定され、別 Run の cursor や消失した cursor は再一覧を要求するエラーとなる。[scope と cursor](../../crates/server/src/remote_mcp/run_events.rs#L39-L84)。active member の全 Project access という既存認可を利用し、非公開 Project ACL を新設しない。
+Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は所属の assertion である。Run・Session・Workspace・現在の Issue link、cursor と page は同じ DB read snapshot で照合する。過去 Run も読めるが Codex に限定され、別 Run の cursor や消失した cursor は再一覧を要求するエラーとなる。[scope と cursor](../../crates/server/src/remote_mcp/run_events.rs#L50-L84)。active member の全 Project access という既存認可を利用し、非公開 Project ACL を新設しない。
 
-`limit` は1–50件の**走査レコード数**であり表示件数ではない。順序は attempt 番号、canonical sequence。`next_cursor` は最後に走査した event UUID なので、除外だけの空 page に `has_more=true` があっても続きを読む。末尾で `has_more=false` でも cursor を保持すれば、別接続から追加入力を読める。128 KiB の item 合計上限に当たった未読レコードの手前で止める。[有界 page](../../crates/server/src/remote_mcp/run_events.rs#L80-L114)
+### 初回窓と継続 cursor
 
-公開するのは assistant commentary、lifecycle、許可済み tool 名と status、Goal status、子活動の限定 kind だけである。final/user/system text、全 Thinking（歴史的 Plan text と reasoning を安全に区別できない）、承認・回答本文、tool 引数・結果、provider extension、native reference を出さない。schema/payload version が1以外、32 KiB超の envelope、不正 JSON は省略する。commentary は4,096 UTF-8 bytesを超える、またはpath・credential等の疑わしい形式なら本文全体を withheld にする。これは任意の prose が秘密を含まない保証ではなく、返された文章も命令・承認・独立した検証証拠ではない。[allowlist と filter](../../crates/server/src/remote_mcp/run_events.rs#L117-L239)
+`limit` は1–50件の**走査レコード数**であり表示件数ではない。順序は attempt 番号、canonical sequence。既定 `start="beginning"` は先頭から、cursor が null / 省略の `start="latest"` は同じ snapshot の末尾 limit 件を選び、昇順で返す。末尾選択は privacy 投影の前なので、非公開 record だけで items が空になることもある。過去を飛ばしたことだけでは `has_more` を立てない。[窓の選択](../../crates/server/src/remote_mcp/run_events.rs#L85-L100)
 
-変更時は空 filtered page、foreign cursor、attempt 順序、byte 上限、DB reopen 後の cursor、HTTP read scope と再接続のテストを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L264-L584)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1403-L1467)。fixture の存在や過去実行結果を実 ChatGPT account 接続成功と読み替えない。
+非 null cursor は start より優先する。`next_cursor` は最後に走査した event UUID なので、除外だけの空 page に `has_more=true` があっても続きを読む。末尾で `has_more=false` でも cursor を保持すれば、別接続から追加入力を読める。128 KiB の item 合計上限に当たった未読レコードの手前で止め、前の cursor を残して has_more を立てる。初回 latest が完全に空で `next_cursor=null` なら、次は beginning に切り替える。latest のまま再読すると、その間の到着が limit を超えた場合に古い到着を飛ばし得る。[走査と byte budget](../../crates/server/src/remote_mcp/run_events.rs#L101-L123)・[初回空窓の回帰](../../crates/server/src/remote_mcp/run_events.rs#L454-L510)
+
+### 公開本文と credential 形状の境界
+
+公開するのは assistant commentary、lifecycle、許可済み tool 名と status、Goal status、子活動の限定 kind だけである。final/user/system text、全 Thinking（歴史的 Plan text と reasoning を安全に区別できない）、承認・回答本文、tool 引数・結果・call ID、provider extension、native reference を出さない。schema/payload version が1以外、32 KiB超の envelope、不正 JSON は省略する。[allowlist](../../crates/server/src/remote_mcp/run_events.rs#L85-L100)・[投影](../../crates/server/src/remote_mcp/run_events.rs#L126-L196)
+
+通常の path・symbol・一般語・長い ASCII ID は読める。commentary の全文を先に走査し、資格情報形状または改行/tab以外の制御文字があれば本文全体を `content=null, content_withheld=true` とする。安全判定後に UTF-8 境界を守って最大4096バイトへ切り詰め、`content_truncated` で短縮を示す。表示範囲より後ろに資格情報形状がある場合も全文 withheld となる。[処理順序](../../crates/server/src/remote_mcp/run_events.rs#L129-L146)・[全文検査](../../crates/server/src/remote_mcp/run_events.rs#L199-L270)
+
+| 認識する形状 | 閾値と境界 |
+| --- | --- |
+| `sk-` / `ghp_` / `github_pat_` | 大小文字を区別し、接頭辞後のASCII英数字・underscore・hyphenが各20 / 36 / 50文字以上。直前が同じtoken文字なら認識せず、task ID等への誤検知を避ける |
+| Bearer | 大小文字を区別しない `bearer `、直前がASCII英数字ではない境界、後続token文字20以上 |
+| JWT様 | `eyJ`で始まるheaderが12以上、payloadが8以上、signatureが16以上の3つのbase64url様segment |
+| PEM | 大文字とspaceの `PRIVATE KEY` またはその修飾label。certificate/public keyを同じ理由で除外しない |
+
+これは既に利用者へ見える prose のための限定 heuristic であり、任意の秘密を除去する保証ではない。返された文章も命令・承認・独立した検証証拠ではない。広範な語や記号で全文を隠さず credential 形状へ絞る意図は [読取仕様](../../docs/development/chatgpt-mcp.md)に記録され、実装は依存や別共有モジュールを追加せずこの投影内に置かれている。[形状判定](../../crates/server/src/remote_mcp/run_events.rs#L199-L270)
+
+変更時は通常prose、credential閾値、切り詰め後方のcredential、UTF-8、初回空latest、filtered tail、cursor優先、attempt順、byte/envelope境界、DB reopenとHTTP read scope/reconnectを確認する。[projection / paging tests](../../crates/server/src/remote_mcp/run_events.rs#L294-L896)・[HTTP 境界](../../crates/server/src/remote_mcp/tests.rs#L1720-L1790)。fixture の存在や供給された過去の成功報告を、今回の製品試験や実 ChatGPT account 接続成功と読み替えない。
 
 ## オンデマンド資源観測
 
