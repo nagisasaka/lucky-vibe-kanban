@@ -25,9 +25,11 @@ try {
 
   // Run migrations
   console.log('Running migrations...');
-  execSync('cargo sqlx migrate run', {
+  execSync('cargo run --package db --bin migrate_compat', {
     stdio: 'inherit',
-    env: { ...process.env, DATABASE_URL: databaseUrl }
+    // Compile the migration tool from committed metadata, before this empty
+    // database has a schema. The subsequent prepare still checks the real DB.
+    env: { ...process.env, DATABASE_URL: databaseUrl, SQLX_OFFLINE: 'true' }
   });
 
   // Prepare queries
