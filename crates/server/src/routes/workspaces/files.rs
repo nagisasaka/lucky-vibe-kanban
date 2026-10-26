@@ -269,23 +269,31 @@ pub async fn serve_workspace_file_raw(
         return Err(ApiError::BadRequest("Path is a directory".to_string()));
     }
 
-    let mime_type = mime_type_for_path(&target.display_path)
-        .unwrap_or_else(|| "application/octet-stream".to_string());
+    workspace_file_raw_response(file, &target.display_path, &metadata)
+}
+
+fn workspace_file_raw_response(
+    file: tokio::fs::File,
+    display_path: &str,
+    metadata: &std::fs::Metadata,
+) -> Result<Response, ApiError> {
+    let mime_type =
+        mime_type_for_path(display_path).unwrap_or_else(|| "application/octet-stream".to_string());
     let (content_type, content_disposition) =
         workspace_raw_content_type_and_disposition(&mime_type);
+    let filename = file_name_from_display_path(display_path, "download");
+    let disposition =
+        workspace_raw_content_disposition(content_disposition.unwrap_or("inline"), &filename);
 
     let stream = ReaderStream::new(file);
     let body = Body::from_stream(stream);
-    let mut response = Response::builder()
+    let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, content_type)
         .header(header::CONTENT_LENGTH, metadata.len())
         .header(header::CACHE_CONTROL, "no-store")
-        .header(header::X_CONTENT_TYPE_OPTIONS, "nosniff");
-
-    if let Some(content_disposition) = content_disposition {
-        response = response.header(header::CONTENT_DISPOSITION, content_disposition);
-    }
+        .header(header::X_CONTENT_TYPE_OPTIONS, "nosniff")
+        .header(header::CONTENT_DISPOSITION, disposition);
 
     response
         .body(body)
@@ -653,6 +661,23 @@ fn workspace_raw_content_type_and_disposition(mime_type: &str) -> (&str, Option<
     }
 }
 
+// Keep the fallback ASCII and quoted-string safe. filename* carries the exact UTF-8
+// name (RFC 8187); form encoding's space and asterisk need explicit escaping.
+fn workspace_raw_content_disposition(disposition: &str, filename: &str) -> String {
+    let fallback: String = filename
+        .chars()
+        .map(|c| match c {
+            ' '..='~' if !matches!(c, '"' | '\\' | '%') => c,
+            _ => '_',
+        })
+        .collect();
+    let encoded = url::form_urlencoded::byte_serialize(filename.as_bytes())
+        .collect::<String>()
+        .replace('+', "%20")
+        .replace('*', "%2A");
+    format!("{disposition}; filename=\"{fallback}\"; filename*=UTF-8''{encoded}")
+}
+
 fn is_safe_inline_workspace_image_mime_type(mime_type: &str) -> bool {
     matches!(
         mime_type,
@@ -891,6 +916,167 @@ mod tests {
         assert_eq!(content.mime_type.as_deref(), Some("image/png"));
         assert_eq!(content.content, None);
         assert!(content.raw_url.is_some());
+    }
+
+    #[test]
+    fn raw_filename_headers_preserve_names_and_prevent_injection() {
+        for (name, encoded) in [
+            ("readme.txt", "readme.txt"),
+            ("SKILL.md", "SKILL.md"),
+            ("my file.md", "my%20file.md"),
+            ("日本語.md", "%E6%97%A5%E6%9C%AC%E8%AA%9E.md"),
+            ("100%+'*\"\r\n.md", "100%25%2B%27%2A%22%0D%0A.md"),
+        ] {
+            let value = workspace_raw_content_disposition("attachment", name);
+            assert!(
+                value.ends_with(&format!("filename*=UTF-8''{encoded}")),
+                "{value}"
+            );
+            assert!(value.is_ascii());
+            assert!(!value.contains(['\r', '\n']));
+            assert!(axum::http::HeaderValue::from_str(&value).is_ok());
+            if name.is_ascii() && !name.contains(['%', '"', '\r', '\n']) {
+                assert!(value.contains(&format!("filename=\"{name}\"")));
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn raw_download_requires_authenticated_web_session() {
+        use axum::{http::Request, routing::get};
+        use tower::ServiceExt;
+
+        let temp = tempfile::tempdir().unwrap();
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        let access = server_access::test_support::access(
+            pool,
+            temp.path().to_path_buf(),
+            serde_json::json!({"keys": []}),
+        )
+        .await;
+        let cookie = server_access::test_support::web_session(&access).await;
+        // The production router applies the same Access layer outside /api.
+        let path = temp.path().join("SKILL.md");
+        fs::write(&path, b"protected file bytes\r\n").unwrap();
+        let app = access.layer(Router::new().route(
+            "/api/workspaces/{id}/files/raw",
+            get(move || {
+                let path = path.clone();
+                async move {
+                    let file = tokio::fs::File::open(path).await.unwrap();
+                    let metadata = file.metadata().await.unwrap();
+                    workspace_file_raw_response(file, "SKILL.md", &metadata)
+                }
+            }),
+        ));
+        for (cookie, expected) in [
+            (None, StatusCode::UNAUTHORIZED),
+            (Some("lvk_session=invalid"), StatusCode::UNAUTHORIZED),
+            (Some(cookie.as_str()), StatusCode::OK),
+        ] {
+            let mut request = Request::builder()
+                .uri(format!(
+                    "/api/workspaces/{}/files/raw?repo_id={}&path=SKILL.md",
+                    Uuid::new_v4(),
+                    Uuid::new_v4()
+                ))
+                .header("host", "203.0.113.7:8443");
+            if let Some(cookie) = cookie {
+                request = request.header("cookie", cookie);
+            }
+            let response = app
+                .clone()
+                .oneshot(request.body(Body::empty()).unwrap())
+                .await
+                .unwrap();
+            assert_eq!(response.status(), expected);
+            if expected == StatusCode::OK {
+                assert_eq!(
+                    response.headers()[header::CONTENT_DISPOSITION],
+                    "attachment; filename=\"SKILL.md\"; filename*=UTF-8''SKILL.md"
+                );
+                let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+                    .await
+                    .unwrap();
+                assert_eq!(bytes.as_ref(), b"protected file bytes\r\n");
+            } else {
+                let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+                    .await
+                    .unwrap();
+                assert!(!String::from_utf8_lossy(&bytes).contains("protected file bytes"));
+            }
+        }
+    }
+
+    #[test]
+    fn raw_filename_uses_normalized_basename_without_changing_case() {
+        let target = normalize_relative_path(Some("dir\\nested//./SKILL.md")).unwrap();
+        assert_eq!(
+            file_name_from_display_path(&target.display_path, "download"),
+            "SKILL.md"
+        );
+        assert!(normalize_relative_path(Some("bad\0name.md")).is_err());
+    }
+
+    #[tokio::test]
+    async fn raw_response_preserves_all_bytes_and_names() {
+        let temp = tempfile::tempdir().unwrap();
+        // Include invalid UTF-8, NUL, CRLF and more than the preview limit.
+        let bytes: Vec<u8> = (0..TEXT_CONTENT_LIMIT_BYTES + 1024)
+            .map(|i| (i % 256) as u8)
+            .collect();
+        for name in [
+            "readme.txt",
+            "SKILL.md",
+            "日本語 空白.md",
+            "my file.bin",
+            "image.png",
+            "unsafe.svg",
+            "page.html",
+        ] {
+            let path = temp.path().join(name);
+            fs::write(&path, &bytes).unwrap();
+            let file = tokio::fs::File::open(&path).await.unwrap();
+            let metadata = file.metadata().await.unwrap();
+            let response = workspace_file_raw_response(file, name, &metadata).unwrap();
+            let disposition = response.headers()[header::CONTENT_DISPOSITION]
+                .to_str()
+                .unwrap();
+            let expected = if name == "image.png" {
+                "inline"
+            } else {
+                "attachment"
+            };
+            assert_eq!(
+                disposition,
+                workspace_raw_content_disposition(expected, name)
+            );
+            assert_eq!(
+                response.headers()[header::CONTENT_TYPE],
+                if name == "image.png" {
+                    "image/png"
+                } else {
+                    "application/octet-stream"
+                }
+            );
+            assert_eq!(
+                response.headers()[header::CONTENT_LENGTH],
+                bytes.len().to_string()
+            );
+            assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+            assert_eq!(
+                response.headers()[header::X_CONTENT_TYPE_OPTIONS],
+                "nosniff"
+            );
+            let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            assert_eq!(body.as_ref(), bytes);
+        }
     }
 
     #[test]

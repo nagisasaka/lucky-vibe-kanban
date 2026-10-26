@@ -82,6 +82,7 @@ async fn public_workspace_and_session_routes_reject_before_handler_side_effects(
         "/links",
         "/wiki/language",
         "/files/content",
+        "/files/raw",
     ];
     let mut workspace_routes = Router::new();
     for suffix in workspace_paths.into_iter().chain([
