@@ -46,6 +46,8 @@ sources:
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
+  - id: openwiki-source-bf1c49e27a5579a9fdbab2e9
+    resource: repo://deploy/developer/switch/bundle.py
   - id: openwiki-source-a764bf933c082e67ed4b6192
     resource: repo://deploy/developer/switch/launcher.py
   - id: openwiki-source-417b2b5ecb26c89c1b06df88
@@ -120,10 +122,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
+generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:44:52.166Z
+    at: 2026-10-26T16:20:39.259Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -151,38 +153,52 @@ Tauri shell、native frontend bridge、desktop packaging/updater scripts と `ta
 
 ## LVK 開発用 Cargo と共有キャッシュ
 
-LVK 自身の POSIX source 開発は checkout 内から `node scripts/dev-cargo.mjs check --workspace` のように実行する。backend の check/lint/test/format、型生成と watch の pnpm script もこの入口を共有する。入口は `cargo locate-project --workspace` の実パスで自分の checkout を確認し、crate サブディレクトリからも利用できる。build/check/test/clippy/run/fmt/metadata/watch が対象で、config・manifest・target・toolchain の上書きや他の subcommand は raw Cargo を明示して別の方針として実行する。[呼出元](../../package.json)・[対象と scope 検査](../../scripts/dev-cargo.mjs#L27-L48)
+LVK 自身の POSIX source 開発は checkout 内から `node scripts/dev-cargo.mjs check --workspace` のように実行する。backend の check/lint/test/format、型生成と watch の pnpm script もこの入口を共有する。入口は `cargo locate-project --workspace` の実パスで自分の checkout を確認し、crate サブディレクトリからも利用できる。build/check/test/clippy/run/fmt/metadata/watch が対象で、config・manifest・target・toolchain の上書きは raw Cargo で別の方針として実行する。[呼出元](../../package.json)・[対象と scope 検査](../../scripts/dev-cargo.mjs#L30-L41)
 
-<!-- openwiki: broken internal link [../../docs/development/cargo-cache.md#L1-L20] heading anchor "L1-L20" does not exist in "../../docs/development/cargo-cache.md". Fix the href or restore the target, then delete this comment. -->
-目的は軽量な debug 情報と非 incremental compilation を LVK contributor に限定し、[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)を明示的に利用することである。設定は Cargo の `--config` 引数として渡し、global / auto-loaded Cargo 設定や Project setup へ導入しないという判断が記録されている。[適用境界の記録](../../docs/development/cargo-cache.md#L1-L20)
+### 用途と profile の選択
+
+`--purpose` は subcommand の前に置く。既定は `preview`。`dev` と `stable` は fmt / metadata 以外に `--release` を追加し、呼出側の `--release` / `-r` / `--profile` は拒否する。通常の Cargo.toml は release の debug=1 を保持するが、この入口は dev / test / release の各 profile を用途に応じて引数で上書きする。[選択と設定](../../scripts/dev-cargo.mjs#L10-L20)・[profile 制御](../../scripts/dev-cargo.mjs#L40-L84)・[通常 Cargo](../../Cargo.toml)
+
+| 用途 | build の入口と出力 | 最適化・debug・strip |
+| --- | --- | --- |
+| preview | `node scripts/dev-cargo.mjs build --locked --bin server --bin agent-process-host` → checkout の `target/debug/` | opt-level=0、line-tables-only、strip=none |
+| 常用 dev | `node scripts/dev-cargo.mjs --purpose dev build --locked -p server -p local-deployment -p mcp --bin server --bin agent-process-host --bin vibe-kanban-mcp --features server/developer-runtime` → checkout の `target/release/` | opt-level=3、line-tables-only、strip=none |
+| stable | 配布は root Dockerfile の `server` target。ローカルの `--purpose stable build` は同じ profile の確認入口 | opt-level=3、debug=0、strip=symbols |
+
+全用途で incremental=false、split-debuginfo=off。preview / dev は行情報を実行ファイル内に残し、コピーした bundle に debug sidecar を追加しないという判断が記録されている。stable は chef cook と server build の両 command に同じ release 環境値を限定し、image 全体の ENV や製品 runtime へ適用しない。[記録された理由](../../docs/development/cargo-cache.md#server-purposes)・[Docker の適用箇所](../../Dockerfile#L73-L107)
+
+instance / bundle 作成前に frontend を build する。常用 dev bundle は上表の developer-runtime 付き build と [成果物切替](#開発用成果物切替と復旧)を組み合わせる。`instance:build` と `staging:build` は frontend の後に既定 preview の入口で server / process-host を作り、source の `target/debug/` から候補へコピーする。staging は環境名であり常用 dev の用途名ではない。[instance の結線](../../deploy/developer/instance.mjs#L130-L183)・[bundle 作成手順](../../deploy/developer/switch/README.md#buildとbundle作成切替engineの外側)
+
+### 保存先と runtime の境界
+
+[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)は保存先を提供し、利用設定はこの入口が明示的に所有する。global / auto-loaded Cargo 設定や Project setup へこの方針を導入しないという判断が記録されている。[適用境界の記録](../../docs/development/cargo-cache.md)
 
 | 保存・設定 | 契約 |
 | --- | --- |
-| dev / test profile | debug は `line-tables-only`、incremental は false。release profile の値は上書きしない |
-| 最終 target | 常に当該 checkout の `target/` |
+| 最終 target | 当該 source checkout の `target/` |
 | Cargo 中間物 | `.lvk-shared/cache` があれば canonical path 配下の単一 `lvk-dev-cargo-build`。Workspace ごとの hash を挟まない |
-| 共有リンクなし | 中間物も checkout の `target/` に置き、警告する |
+| 共有リンクなし | 中間物も checkout の `target/` に置き、警告する。instance の source snapshot も同じ規則 |
 | compiler cache | PATH に sccache があれば rustc wrapper を使う。共有リンクありなら compiler 子プロセス内で canonical `cache/sccache` を設定する。なければ継承設定を維持する |
 
-[設定の組立て](../../scripts/dev-cargo.mjs#L49-L65)・[wrapper 選択](../../scripts/dev-cargo.mjs#L82-L94)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
+[保存先と wrapper 選択](../../scripts/dev-cargo.mjs#L85-L124)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
 
-Cargo や `cargo run` の binary、そこから起動した子 Project へ、この入口が追加の compiler 環境変数を export することはない。ただし無関係な既存の継承環境を洗い流す仕組みでもない。watch は `cargo watch -w crates -s` から入口を二度呼び、まず server と agent-process-host を build し、成功後に server を run する。外部 cargo-watch が Cargo の global 引数を伝播することには依存しない。[watch の結線](../../scripts/dev-cargo.mjs#L16-L25)・[runtime と子 repository の fixture](../../scripts/dev-cargo.test.mjs#L53-L68)
+Cargo や `cargo run` の binary、そこから起動した子 Project へ、この入口が追加の compiler 環境変数を export することはない。ただし無関係な既存の継承環境を洗い流す仕組みでもない。watch は `cargo watch -w crates -s` から選択用途を付けて入口を二度呼び、まず server と agent-process-host を build し、成功後に server を run する。外部 cargo-watch が Cargo の global 引数を伝播することには依存しない。[watch の結線](../../scripts/dev-cargo.mjs#L19-L29)・[runtime と子 repository の fixture](../../scripts/dev-cargo.test.mjs#L87-L104)
 
 ### 競合・失敗・削除の扱い
 
-継承した `CARGO_INCREMENTAL` は未設定または `0` が必要で、dev/test profile の競合値、target/build-dir 環境変数、debug Rust flags、別の rustc / workspace wrapper は明示エラーとなる。既存設定を黙って置換せず、競合を解除して opt in するか raw Cargo を使う。[拒否条件](../../scripts/dev-cargo.mjs#L33-L81)
+継承した `CARGO_INCREMENTAL` は未設定または `0` が必要で、dev/test/release の opt/debug/strip/split/incremental profile 競合値、target/build-dir 環境変数、別の rustc / workspace wrapper は明示エラーとなる。環境と Cargo build/target 設定の Rust flags も調べ、これらの codegen 方針を上書きする値を拒否する。設定検査自体に失敗しても停止する。競合を解除して opt in するか raw Cargo を使う。[拒否条件](../../scripts/dev-cargo.mjs#L37-L79)・[wrapper の検査](../../scripts/dev-cargo.mjs#L96-L111)
 
-sccache が未導入なら警告して直接 rustc を使う。導入済みでも stats 取得に失敗すれば停止する。既存 server の cache location が期待値と違う場合は警告だけであり、その server の停止・再設定・統計 reset はしない。希望する `SCCACHE_DIR` を指定しただけで稼働 server の実保存先が一致したと判断しない。[診断と fallback](../../scripts/dev-cargo.mjs#L82-L93)
+sccache が未導入なら警告して直接 rustc を使う。導入済みでも stats 取得に失敗すれば停止する。既存 server の cache location が期待値と違う場合は警告だけであり、その server の停止・再設定・統計 reset はしない。希望する `SCCACHE_DIR` を指定しただけで稼働 server の実保存先が一致したと判断しない。[診断と fallback](../../scripts/dev-cargo.mjs#L112-L123)
 
-中間物の競合は Cargo 自身の build lock が扱うため、最終 target が異なる Workspace 間でも待機し得る。独自 lock や deps symlink で回避しない。入口は `clean` を拒否する。raw clean は共有中間物も削除でき、他 checkout の最終 binary が残っていても cache の保持を意味しない。[実 Cargo の lock / clean fixture](../../scripts/dev-cargo.test.mjs#L70-L83)
+中間物の競合は Cargo 自身の build lock が扱うため、最終 target が異なる Workspace 間でも待機し得る。独自 lock や deps symlink で回避しない。入口は `clean` を拒否する。raw clean は共有中間物も削除でき、他 checkout の最終 binary が残っていても cache の保持を意味しない。[拒否](../../scripts/dev-cargo.mjs#L30-L32)・[実 Cargo の lock / clean fixture](../../scripts/dev-cargo.test.mjs#L106-L119)
 
-SQLx prepare、独立 instance build、配布 image の build はそれぞれ raw Cargo と固有の前提を維持する。たとえば instance build は専用 target と debug=0 を使い、この入口の profile と混同しない。[SQLx](../../scripts/prepare-db.js#L15-L41)・[instance](../../deploy/developer/instance.mjs#L153-L174)・[配布 build](../../Dockerfile#L77-L100)
+SQLx prepare は raw Cargo の専用手順を維持する。一方、instance build は上述の preview 入口へ接続済みである。配布 image は raw Cargo の command-local stable 設定を使うため、この開発入口の存在だけで全 build の設定が変わるわけではない。[SQLx](../../scripts/prepare-db.js#L15-L41)・[instance](../../deploy/developer/instance.mjs#L153-L183)・[配布 build](../../Dockerfile#L73-L107)
 
 ### 検証で確かめる範囲
 
-`node --test scripts/dev-cargo.test.mjs` の主 fixture は pinned Cargo / rustc と依存不要の一時 repository 二つを使い、debug/test・release、共有中間物と分離 target、fallback、競合拒否、run の環境、lock と clean の影響を検査する。sccache transport と watch command の観測は fake を使うため、実 watcher の寿命や実 cache hit 率の証拠ではない。`LVK_TEST_REAL_SCCACHE=1` は既存 server を再設定せず、実 sccache で小さな library を compile する追加 smoke を有効にする。[主 fixture](../../scripts/dev-cargo.test.mjs#L15-L83)・[追加 smoke](../../scripts/dev-cargo.test.mjs#L86-L100)
+`node --test scripts/dev-cargo.test.mjs` の主 fixture は pinned Cargo / rustc と依存不要の一時 repository を使い、三用途の compiler flags、ELF 行情報とコピー後の dev/stable binary、Docker の両 command にある同じ設定値、共有中間物と分離 target、fallback、競合拒否、run の環境、lock と clean の影響を検査する。sccache transport と watch command の観測は fake を使うため、実 watcher の寿命や実 cache hit 率の証拠ではない。`LVK_TEST_REAL_SCCACHE=1` は既存 server を再設定せず、実 sccache で小さな library を compile する追加 smoke を有効にする。[主 fixture](../../scripts/dev-cargo.test.mjs#L15-L120)・[追加 smoke](../../scripts/dev-cargo.test.mjs#L122-L136)
 
-[開発時記録](../../docs/development/cargo-cache.md#scoped-verification)は fixture 成功を記録するが、実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定と、実 LVK/watch/managed child-Project の受入は未完了である。[測定計画と未検証範囲](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `069bc57081eb5d6e573bde8fe789fe7090f9d42f` の pnpm 呼出元、Cargo 入口、compiler wrapper、特殊 tooling と独立した試験定義を静的照合した。製品 build や fixture の再実行はしていない。凍結入力の正式 Integration は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
+[LOCAL-197 の開発時記録](../../docs/development/cargo-cache.md#local-197-local-verification-2026-10-26)は局所4件成功・実 sccache smoke 省略を記録する。実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定、実 LVK/watch/managed child-Project 受入と、配置後の行番号解決・payload・build identity・health は未検証として残る。[測定計画](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `dbd79d52a75b16e340a438f4777440e54e624965` の pnpm caller、Cargo 入口、compiler wrapper、instance、Docker と独立した試験定義を静的照合した。製品 build や fixture は再実行していない。正式 Integration の入力は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
 
 ## 検証の対象を取り違えない
 

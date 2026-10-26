@@ -56,10 +56,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
     resource: repo://scripts/dev-rustc-cache.mjs
-generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
+generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:44:52.166Z
+    at: 2026-10-26T16:20:39.259Z
 ---
 
 # システム境界と起動順序
@@ -127,7 +127,7 @@ Web Push の worker は共通 router の組立て時に起動し、SQLite outbox
 
 ## 境界を変更するとき
 
-backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。これは contributor 用のビルド入口であり、server や子 Project の runtime 環境へ compiler 設定を追加するものではない。共有中間物、watch の二段階 build/run、競合時の失敗は [開発用 Cargo の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json#L31-L39)・[実行境界](../../scripts/dev-cargo.mjs#L16-L27)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L7-L10)
+backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。これは contributor 用のビルド入口であり、server や子 Project の runtime 環境へ compiler 設定を追加するものではない。共有中間物、watch の二段階 build/run、競合時の失敗は [開発用 Cargo の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json#L31-L39)・[実行境界](../../scripts/dev-cargo.mjs#L19-L29)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L7-L10)
 
 API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。Tauri crate は workspace から撤去され、現行の backend 検証は残る Rust workspace 全体を対象にする。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
 

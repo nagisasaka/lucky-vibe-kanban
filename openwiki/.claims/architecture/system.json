@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8947527e43b077c02a5719fee2bf336d3f71b2990f289ec9182aa7163373524b",
+  "pageVersion": "sha256:873c824d9a2869850e877bc170e9d94d2c6a94e5ec73f715f98ec5f95b5367b1",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -277,8 +277,8 @@
           "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         },
         {
-          "resource": "repo://scripts/dev-cargo.mjs#L16-L27",
-          "version": "repo-lines-v1:sha256:0116e81bf5462b4e188361302a59915aa80a5a96f35633179bed2c4c3ba818b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZjMzOTkyZDYxODA1YWFlZjVjMDg1ZjQxYzYzYjA3YzFlMWExMDMyMTNhZmZmMzAzYWY4MzU4YzAwOWIzOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkYWY5ZDAxNDQ2MzgyODcwZTc2YjFiNDdjYmI5MzkzOTkyZjNkZTUxNmM5ZTQ4NzYyNjdkYjc0YzE2MWQ3ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkZWQxOGU4OGFkODFkMDVkOGM1YmI4YjVjNTc3NWVlNGQzN2I3YjQwNjI4OGIyODZmNzI3ZjZhYzYwY2JjM2UifQ"
+          "resource": "repo://scripts/dev-cargo.mjs#L19-L29",
+          "version": "repo-lines-v1:sha256:bb675126a939c6e5b045faae9a0ba5e6733dc6423c3d3df24c9bdc55bf7ec734:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzMTUwMDJiYmVlN2VmZGJhYTNlODA2NDllMTVkZjVjMjY4MGMwY2FmYzViOGRkMzIwN2ZjMDE5OTE5ZGRkOWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNzg3OGFlZjg5Mjc5YjU4MWY3ZTZjMjdmOTJmMzA4ZWQ0ZjcwMzk4ZTg5OWMyOTllOTQ4YTFmZDZlNDkyMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOTA1ODA0YjZiNGU2OGNmYjk1NTA5Njk4Y2U3NzgwMmM4NDQ1MzMxODQxY2VmZTQ2MGI0YjRmYzAxYTFkOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3OTkwNmQyNGU2Y2JlYmY0NjUwMDQ2YWFkNzhhNzgyZmU2Y2U5NGI5YjhlZThmOGMzYTgzMDIwOTAyZTc5ZmIifQ"
         },
         {
           "resource": "repo://scripts/dev-rustc-cache.mjs#L7-L10",
@@ -289,6 +289,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T10:44:52.166Z"
+    "at": "2026-10-26T16:20:39.259Z"
   }
 }

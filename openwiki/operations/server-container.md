@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/server/build.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-a854af1812d166ff4c31b521
+    resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
     resource: repo://deploy/developer/STAGING.md
   - id: openwiki-source-45785e038b483538ab5c9894
@@ -62,10 +64,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
     resource: repo://scripts/dev-rustc-cache.mjs
-generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
+generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:44:52.166Z
+    at: 2026-10-26T16:20:39.259Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -79,6 +81,8 @@ server 配布は local LVK と coding agent を常時稼働サーバーへ置き
 root Dockerfile の最終 `server` target は prebuilt server・隣接 `agent-process-host`・MCP CLI と開発 toolchain を含む。稼働 binary は `/usr/local/bin` に置かれ、`/repos` の LVK checkout を編集・build しても、それを管理しているアプリを置換しない。小さい `runtime` target は別の起動入口を持ち、server target の認証付き ingress と同じではない。[target と起動入口](../../Dockerfile)
 
 Node 22、固定版 Codex/pnpm、repository の Rust toolchain などを image に置き、user の認証・cache は永続領域へ分ける。追加 SDK は派生 image の `/opt` や `/usr/local` に置くと、既存 home volume に隠されにくい。公開版・digest と対応する配布 kit を使い、文書の例の tag を公開済み成果物と推定しない。[image の構成](../../Dockerfile)、[派生 image の契約](../../docs/self-hosting/server-container.mdx)
+
+配布用 Rust compile は chef cook と server build の両方で command-local の stable release 設定を使う。これにより依存と最終 binary の設定を揃え、runtime や子 Project へ profile 環境を追加しない。値と preview / 常用 dev との違いは [用途と profile の選択](development.md#用途と-profile-の選択)を参照する。[両 compile command](../../Dockerfile#L73-L107)
 
 ### Claude Code の同梱と認証
 
@@ -94,7 +98,7 @@ LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked depe
 
 image smoke は UID 10001 のコンテナー内で `less --version` と、非 TTY の pipe 入力が同じ文字列として出力されることを検査し、失敗すれば `sh -ec` により検査を止める。この検査は対話端末でのページ操作を扱わない。[実行条件と検査](../../deploy/server/smoke-image.sh#L24-L38)。[配布 kit の静的・native 検証](development.md#サーバー配布-kit-の検証)と image の実行確認は別である。この Sync では検査定義をソースで確認しており、Docker build/run や `less` の実行成功は確認していない。
 
-LVK 自身の source 開発では、同梱された executable を明示的な `dev-cargo.mjs` が選び、compiler 専用 wrapper から利用する。image に sccache があるだけでは、この方針を任意の子 Project へ適用しない。[開発用 Cargo の共有中間物・環境・fallback](development.md#lvk-開発用-cargo-と共有キャッシュ)で設定の所有者と検証限界を確認する。[明示的な選択](../../scripts/dev-cargo.mjs#L82-L94)・[compiler 環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
+LVK 自身の source 開発では、同梱された executable を明示的な `dev-cargo.mjs` が選び、compiler 専用 wrapper から利用する。image に sccache があるだけでは、この方針を任意の子 Project へ適用しない。[開発用 Cargo の共有中間物・環境・fallback](development.md#lvk-開発用-cargo-と共有キャッシュ)で設定の所有者と検証限界を確認する。[明示的な選択](../../scripts/dev-cargo.mjs#L112-L124)・[compiler 環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
 
 ### 旧 npx ランチャーの撤去と移行
 
@@ -128,7 +132,7 @@ Tauri 撤去も既存 desktop data や download 済み application を削除・�
 
 直接 Cargo build は、存在しない refresh path を `rerun-if-changed` に指定して毎回 Git 状態を再評価する。HEAD / index の監視だけでは未追跡変更と dirty → clean を見落とす、という理由がコードに記録されている。明示注入では環境変数の変更を監視する。metadata の解決は root `.env` の読込より前なので、この build script の dotenv 読込に `LVK_BUILD_*` の注入を期待しない。[再評価と読込順](../../crates/server/build.rs#L5-L36)
 
-instance runner は `build.json` と同じ revision / dirty を注入する。既存の image 配布経路は source SHA と release tag を build 引数へ渡し、tag build を release、それ以外を development、dirty を false とする契約である。Docker builder の引数既定は空なので、注入しないローカル image に Git fallback や sidebar identity を期待しない。これらはビルド入力であり runtime 設定ではない。[instance の注入](../../deploy/developer/instance.mjs#L131-L195)・[Docker builder](../../Dockerfile#L80-L100)・[配布引数の静的回帰検査](../../deploy/server/release.test.mjs#L37-L58)・[運用契約](../../deploy/developer/STAGING.md#isolated-state)
+instance runner は `build.json` と同じ revision / dirty を注入する。既存の image 配布経路は source SHA と release tag を build 引数へ渡し、tag build を release、それ以外を development、dirty を false とする契約である。Docker builder の引数既定は空なので、注入しないローカル image に Git fallback や sidebar identity を期待しない。これらはビルド入力であり runtime 設定ではない。[instance の注入](../../deploy/developer/instance.mjs#L131-L195)・[Docker builder](../../Dockerfile#L83-L107)・[配布引数の静的回帰検査](../../deploy/server/release.test.mjs#L37-L58)・[運用契約](../../deploy/developer/STAGING.md#isolated-state)
 
 UI はこの optional 情報を使い、短い SHA のボタンから詳細を開く。欠落時の非表示、Update との優先関係、mobile drawer の寿命は [共有 shell の表示契約](../architecture/web-and-sync.md#稼働バイナリのビルド情報を表示する)に置く。source identity の表示だけで公開済み image・実配布・validation 成功を保証しない。実 Git、API、SSR、keyboard / touch と release fixture の検証範囲および今回の静的調査の限界は [ビルド情報の検証境界](development.md#ビルド情報の検証境界)を参照する。
 
@@ -225,7 +229,7 @@ forkだけに制限した書込み認証を別途設定する。repository専用
 
 LVK の画面から行う Git/PR には [リポジトリ別 PAT](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)も利用できる。agent terminal の push やホスト updater の認証とは適用範囲が異なるため、画面で token を保存したことを任意 shell の認証済み状態とみなさない。[適用範囲](../../docs/integrations/github-integration.mdx#repository-scoped-fine-grained-tokens)
 
-ホストは許可 repository・source SHA・digest・公開 workflow 成功を照合して候補を検査する。現在の自己開発手順は card ごとの独立 instance → main の固定 staging 候補 → release → stable 更新である。staging は built frontend と debug binary を使い、source watcher を走らせない。標準 updater の対象は stable の lvk のみで、旧 development サービスは互換オプションとなる。詳しい操作と一度限りのホスト移行は [STAGING.md](../../deploy/developer/STAGING.md)、独立状態の契約は [開発と検証](development.md) を参照する。
+ホストは許可 repository・source SHA・digest・公開 workflow 成功を照合して候補を検査する。現在の自己開発手順は card ごとの独立 instance → main の固定 staging 候補 → release → stable 更新である。staging は built frontend と既定 preview 用途の debug binary を使い、source watcher を走らせない。preview は `instance.mjs` から専用 Cargo 入口を呼び、source checkout の target から候補へコピーする。常用 dev bundle の release 最適化とは別であり、共有 cache の有無と fallback を含む [build 契約](development.md#用途と-profile-の選択)を参照する。標準 updater の対象は stable の lvk のみで、旧 development サービスは互換オプションとなる。詳しい操作と一度限りのホスト移行は [STAGING.md](../../deploy/developer/STAGING.md)、独立状態の契約は [開発と検証](development.md) を参照する。
 
 host updater の活動 blocker は管理対象 DB の `agent_runs`、`agent_run_attempts`、`agent_process_registry` に限定される。run / attempt が終端、registry が exited であることを要求し、null・未知状態や読めない DB / schema は idle と扱わない。旧構成で development も管理する場合は両方の DB が対象になる。[判定](../../deploy/developer/updater.py#L28-L37)、[DB 読取](../../deploy/developer/updater.py#L98-L111)
 
