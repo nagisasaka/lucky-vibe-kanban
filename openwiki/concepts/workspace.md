@@ -108,12 +108,14 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
+  - id: openwiki-source-8ea6c46d63953a7104f5dd97
+    resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:15:30.599Z
+    at: 2026-10-26T10:44:52.166Z
 ---
 
 # Workspace と Repository
@@ -235,6 +237,8 @@ managed Git Workspace の各 Repo にある `.lvk-shared/persistent/` と `.lvk-
 provisioner は tracked な `.lvk-shared`、既存の通常ファイル、異なる宛先のリンクを拒否し、全リンクを検査してから作成する。Git のローカル `info/exclude` に追加し、利用者のパスを上書きしない。Windows のリンク作成には Developer Mode または symlink 権限が必要で、作成失敗は明示エラーになる。[検証・配置](../../crates/workspace-manager/src/shared_resources.rs)、[Windows](../../crates/workspace-manager/src/shared_resources.rs)
 
 provision lock は配置処理を守る。利用者の共有ファイルへの同時書き込みまで直列化するものではない。共有内容を使うツール側が競合を扱う必要がある。[配置 lock](../../crates/workspace-manager/src/shared_resources.rs)、[共有利用時の指示](../../packages/web-core/src/features/pipeline/model/cardContext.ts#L15-L23)
+
+LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が cache リンクの canonical path を選び、Cargo の中間物を共有する。これは Workspace provisioner に一般の Cargo 設定を追加する変更ではない。最終成果物は checkout ごとの `target/` に置く。[開発用 Cargo の設定・排他・削除の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[明示的な選択](../../scripts/dev-cargo.mjs#L49-L65)
 
 ## Archive、削除、期限 cleanup
 

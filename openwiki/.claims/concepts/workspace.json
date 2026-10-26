@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ce16aa70b5de73eb0e69b4b00c6d1f419656ba0f0abdc149526738402bf80d27",
+  "pageVersion": "sha256:c2c2ebf5fd7e6114b09c0e53e5a391a0ec2860a56e4906c9f3510ff36d197b6b",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -727,10 +727,20 @@
           "version": "repo-lines-v1:sha256:018e3a602075a85cc7b58d4892066a2d4027ef72501ca416e2bbdffb0257052b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4OTNiMTdjOTA5MGViNThiYmViNmY3NjIxMWQ3NTllZDVmZGMyYmQyODc4YmZkZjcxZThlMjYyNWJlOWI1YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxYWUzMDVlMWRmYjRhMzY5OWE2ZGQ2OWI1NThkYjc4NDcwZDY3Yjc2Mzc0Y2QxYzJlZTdiY2U5ZmE2N2YzY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE1MjE2MDRiMzVmYzQwYWYwMGNiYTRlZWEyZmQ1ZTJjM2FmMTg2M2IzOTExODVkN2JmNGJiMDllNzJkMGM4YjMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_9df97f4bf73c4223afb8506be7e094b1",
+      "statement": "LVK contributor 用 dev-cargo.mjs は明示実行時に cache リンクの canonical path の lvk-dev-cargo-build を中間物の保存先とし、最終 target は checkout 内に分離する。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L49-L65",
+          "version": "repo-lines-v1:sha256:ae0659210cbd8478f8d5932c0b659d920a7289a5063d1102dca20d404e893894:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNDIxNDk3OTQzNjIzMjZmZDU2MGQ1ZTg0OTBjMzQ2MGViNjQ3MTJhMTRkYTg5OWYwNmFhYTUxZGRiMGExMGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkxMmRlNzExMGEzYWRmYWFkNzI0Y2RhYjYxMjA4ZWQ1MzJkMzJmZDNkOWM5YjQyNmQwMzk1YzZlZTY0YzczY2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxNmU2ZDI0MWUwYzY2YTViOGZhNGViMDVhNWY1YjAxZTM1NzM2YzdiZjk3NGQ0NGQ5YTczNjUzMGU0MGJhMDkifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T10:15:30.599Z"
+    "at": "2026-10-26T10:44:52.166Z"
   }
 }

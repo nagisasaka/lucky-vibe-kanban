@@ -66,6 +66,10 @@ sources:
     resource: repo://deploy/server/release.test.mjs
   - id: openwiki-source-229e22cb29e176ae1fe594e1
     resource: repo://deploy/server/server.test.mjs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+  - id: openwiki-source-fd4e5484aac03297c6295350
+    resource: repo://docs/development/cargo-cache.md
   - id: openwiki-source-d95a345bb2e865055223b40f
     resource: repo://docs/development/dev-switch-bundle-validation.md
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -76,10 +80,18 @@ sources:
     resource: repo://packages/web-core/package.json
   - id: openwiki-source-b7793decf9d7c9ba48e57e0f
     resource: repo://rust-toolchain.toml
+  - id: openwiki-source-8ea6c46d63953a7104f5dd97
+    resource: repo://scripts/dev-cargo.mjs
+  - id: openwiki-source-934f1cc67f10f765aeed70ed
+    resource: repo://scripts/dev-cargo.test.mjs
+  - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
+    resource: repo://scripts/dev-rustc-cache.mjs
   - id: openwiki-source-d90097af5777425ac57c25b3
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-6d88df283621a548f8021464
+    resource: repo://skills/lvk-orchestration/SKILL.md
   - id: openwiki-source-29176c627ccc31a24d3d6ab2
     resource: repo://tests/build-info/component.test.mjs
   - id: openwiki-source-3b8e596f6d78967bbf29a877
@@ -108,10 +120,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-26T02:48:51.947Z" }
+generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T02:48:51.947Z
+    at: 2026-10-26T10:44:52.166Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -137,7 +149,45 @@ Tauri shell、native frontend bridge、desktop packaging/updater scripts と `ta
 
 旧 Cloud / relay の起動scriptと別Cargo workspaceは撤去された。local Board API と外部MCP / Runnerの検証は現行serverを対象にする。
 
+## LVK 開発用 Cargo と共有キャッシュ
+
+LVK 自身の POSIX source 開発は checkout 内から `node scripts/dev-cargo.mjs check --workspace` のように実行する。backend の check/lint/test/format、型生成と watch の pnpm script もこの入口を共有する。入口は `cargo locate-project --workspace` の実パスで自分の checkout を確認し、crate サブディレクトリからも利用できる。build/check/test/clippy/run/fmt/metadata/watch が対象で、config・manifest・target・toolchain の上書きや他の subcommand は raw Cargo を明示して別の方針として実行する。[呼出元](../../package.json)・[対象と scope 検査](../../scripts/dev-cargo.mjs#L27-L48)
+
+<!-- openwiki: broken internal link [../../docs/development/cargo-cache.md#L1-L20] heading anchor "L1-L20" does not exist in "../../docs/development/cargo-cache.md". Fix the href or restore the target, then delete this comment. -->
+目的は軽量な debug 情報と非 incremental compilation を LVK contributor に限定し、[Workspace の cache リンク](../concepts/workspace.md#共有ディレクトリの意味)を明示的に利用することである。設定は Cargo の `--config` 引数として渡し、global / auto-loaded Cargo 設定や Project setup へ導入しないという判断が記録されている。[適用境界の記録](../../docs/development/cargo-cache.md#L1-L20)
+
+| 保存・設定 | 契約 |
+| --- | --- |
+| dev / test profile | debug は `line-tables-only`、incremental は false。release profile の値は上書きしない |
+| 最終 target | 常に当該 checkout の `target/` |
+| Cargo 中間物 | `.lvk-shared/cache` があれば canonical path 配下の単一 `lvk-dev-cargo-build`。Workspace ごとの hash を挟まない |
+| 共有リンクなし | 中間物も checkout の `target/` に置き、警告する |
+| compiler cache | PATH に sccache があれば rustc wrapper を使う。共有リンクありなら compiler 子プロセス内で canonical `cache/sccache` を設定する。なければ継承設定を維持する |
+
+[設定の組立て](../../scripts/dev-cargo.mjs#L49-L65)・[wrapper 選択](../../scripts/dev-cargo.mjs#L82-L94)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
+
+Cargo や `cargo run` の binary、そこから起動した子 Project へ、この入口が追加の compiler 環境変数を export することはない。ただし無関係な既存の継承環境を洗い流す仕組みでもない。watch は `cargo watch -w crates -s` から入口を二度呼び、まず server と agent-process-host を build し、成功後に server を run する。外部 cargo-watch が Cargo の global 引数を伝播することには依存しない。[watch の結線](../../scripts/dev-cargo.mjs#L16-L25)・[runtime と子 repository の fixture](../../scripts/dev-cargo.test.mjs#L53-L68)
+
+### 競合・失敗・削除の扱い
+
+継承した `CARGO_INCREMENTAL` は未設定または `0` が必要で、dev/test profile の競合値、target/build-dir 環境変数、debug Rust flags、別の rustc / workspace wrapper は明示エラーとなる。既存設定を黙って置換せず、競合を解除して opt in するか raw Cargo を使う。[拒否条件](../../scripts/dev-cargo.mjs#L33-L81)
+
+sccache が未導入なら警告して直接 rustc を使う。導入済みでも stats 取得に失敗すれば停止する。既存 server の cache location が期待値と違う場合は警告だけであり、その server の停止・再設定・統計 reset はしない。希望する `SCCACHE_DIR` を指定しただけで稼働 server の実保存先が一致したと判断しない。[診断と fallback](../../scripts/dev-cargo.mjs#L82-L93)
+
+中間物の競合は Cargo 自身の build lock が扱うため、最終 target が異なる Workspace 間でも待機し得る。独自 lock や deps symlink で回避しない。入口は `clean` を拒否する。raw clean は共有中間物も削除でき、他 checkout の最終 binary が残っていても cache の保持を意味しない。[実 Cargo の lock / clean fixture](../../scripts/dev-cargo.test.mjs#L70-L83)
+
+SQLx prepare、独立 instance build、配布 image の build はそれぞれ raw Cargo と固有の前提を維持する。たとえば instance build は専用 target と debug=0 を使い、この入口の profile と混同しない。[SQLx](../../scripts/prepare-db.js#L15-L41)・[instance](../../deploy/developer/instance.mjs#L153-L174)・[配布 build](../../Dockerfile#L77-L100)
+
+### 検証で確かめる範囲
+
+`node --test scripts/dev-cargo.test.mjs` の主 fixture は pinned Cargo / rustc と依存不要の一時 repository 二つを使い、debug/test・release、共有中間物と分離 target、fallback、競合拒否、run の環境、lock と clean の影響を検査する。sccache transport と watch command の観測は fake を使うため、実 watcher の寿命や実 cache hit 率の証拠ではない。`LVK_TEST_REAL_SCCACHE=1` は既存 server を再設定せず、実 sccache で小さな library を compile する追加 smoke を有効にする。[主 fixture](../../scripts/dev-cargo.test.mjs#L15-L83)・[追加 smoke](../../scripts/dev-cargo.test.mjs#L86-L100)
+
+[開発時記録](../../docs/development/cargo-cache.md#scoped-verification)は fixture 成功を記録するが、実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定と、実 LVK/watch/managed child-Project の受入は未完了である。[測定計画と未検証範囲](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `069bc57081eb5d6e573bde8fe789fe7090f9d42f` の pnpm 呼出元、Cargo 入口、compiler wrapper、特殊 tooling と独立した試験定義を静的照合した。製品 build や fixture の再実行はしていない。凍結入力の正式 Integration は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
+
 ## 検証の対象を取り違えない
+
+<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L118-L124] heading anchor "L118-L124" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [正式 Integration の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#L118-L124)
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |

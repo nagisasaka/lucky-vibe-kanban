@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cdf0118e8f3e25f09b4f40f94c4e4f7a0829641f754ef99f960d77329667bc7e",
+  "pageVersion": "sha256:b4236098b87ee8e899f9beede19bb39640e73349ffa110260a0245abc9497706",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -301,12 +301,12 @@
       "statement": "旧 LVK npx launcher と Tauri shell/build コマンドは撤去され、server/desktop は Docker または source Web をブラウザーで利用し、MCP は直接 binary または認証付き外部 HTTP を使う。既存 desktop data/application は自動削除・移行しない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L309-L330",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L377-L398",
           "version": "repo-lines-v1:sha256:0d71dd015a7a8f0cc54a910d0f85d6eb853e2526634da43477a3c4edfc034302:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
         },
         {
-          "resource": "repo://package.json#L1-L45",
-          "version": "repo-lines-v1:sha256:c44a2eba2c2c61dc8a6b7e2c035c3d06a33274dd41d5a05c34e45ee076f79cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjY1NGQxZjA2ZTBjNWVjNTY4Y2RjZWFkNzBkNTE3YWE5ODUyN2ExYmMzZmI4MTJmNDc3OWE4MTUwNmZkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMDI5YTJiMjAyODc3NTRhN2RiZDkzM2Q1YjZjYWEwYTVkMzc0YzU4ODljNzEzMGExMjA4NmIzZmQzZTBkMTMifQ"
+          "resource": "repo://package.json",
+          "version": "repo-file-v1:sha256:252427d11010ab8985aac969f83edd9dd93f7daf648e0bba4c8a6b3052c1cd1e"
         }
       ]
     },
@@ -475,10 +475,24 @@
           "version": "repo-lines-v1:sha256:02da8195b57acaf88a40ed2ee2ac13d121f4ec621c00889509cb35633cdd8dbd:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZkODBkN2E0YzZiMzA5ODUxOWI3NmYyY2M2NzY1MDcyMzMzNzk5MGEwNzcxNDM4ZTg4OTIzYzg4MGMyMGY1MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTZhYjI1M2M1Zjk2MDE3ZWE2ZTU4OGRiNTExYzIzZDYxMDI0OGFlN2E0MTFkMjUzMmJhY2IyMjAwY2JhNTcyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWYzNzAyZTIxNDAzOTc1YzI0NWRiNzA3NjkxODYxMmM1OGZhODk4YWI5OGE4MDJlMzA3YjNkMWQ0MjE4NDQ0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGZlNzg0NmY1OTMxNTEzNTc0OTc0MWI0ZDI0OTUwOWU3OGNhNzcyODA5NTgzOTYwY2Q5Mjc3NDhmZDAzYzgyZSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_098f844e4ebb484094bb25beb70b4064",
+      "statement": "同梱 sccache の LVK source 開発利用は dev-cargo.mjs の明示選択と compiler 専用 wrapper を通り、wrapper 内で共有 cache 環境を設定する。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/dev-cargo.mjs#L82-L94",
+          "version": "repo-lines-v1:sha256:2c91ea1d64854a9f513d2e2084f5b9cdff0eeff1772d31fd6dd2dc222f2e8219:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwMWIyMzRlYTUxODE1NDU2ZWM2ZjNlNTY3MDAwZmEzNGIxNjNmNTQ3YjQxM2RhOTQxMzY0NjMzYWE3ZDI0ZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2NjVmODhlMTBmYzA4N2ZkZTBlNzVhYmE1YjNjZjEyYzY2OTFiYWE5NzI1MTlkMjY2ZjU4YzQ5Y2ExZmU3MTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2NDU3ODljMWY1MTU5MTc3YzE4OTU5ZTQyOTY5ZGQzYTE1MzA5YjUyODVmNWVhZmMyNmQyMTMyNGI4YzY5YzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxYzk5YjcwNzk0NGRiNjgyOTUzYWFiNjJhMzE3ODQyNGE1YmYwOGJlN2M0ZTExYzI0ZDg3ODAzYWY2NWQ5ZGYifQ"
+        },
+        {
+          "resource": "repo://scripts/dev-rustc-cache.mjs#L1-L12",
+          "version": "repo-lines-v1:sha256:1f96468d66875494ddb88cb86d4e1e1e24538327b89670c96880b5a8fb2e179c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1OWM0Nzg3MmI3MWYxMjU4OTk0Mjg5MjQ2NGU3NjRjMGRiMzUwYzIwYjcyMjI4NjQ1NjE1Y2MzNmUwYTA3MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiZDQyZjc3ZTYxMGYwMmI1NDUyOGJjZjRjMjQxOGM0ZDZhZDY0Mjk2MTFlNmNmNmU1OTY1NDM3NGExMzAwYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-25T19:13:40.123Z"
+    "at": "2026-10-26T10:44:52.166Z"
   }
 }

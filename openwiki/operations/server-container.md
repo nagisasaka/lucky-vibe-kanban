@@ -58,10 +58,14 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-e4b6c8db09a6d8887192b13e
     resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
-generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
+  - id: openwiki-source-8ea6c46d63953a7104f5dd97
+    resource: repo://scripts/dev-cargo.mjs
+  - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
+    resource: repo://scripts/dev-rustc-cache.mjs
+generated: { by: "codex", at: "2026-10-26T10:44:52.166Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:13:40.123Z
+    at: 2026-10-26T10:44:52.166Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -89,6 +93,8 @@ LVK 自身の開発向けに、`server-tools` は sccache 0.18.0 を locked depe
 `less` は `server-tools` の apt package として導入され、`server-browser` を経て最終 `server` image に継承される。小型 `runtime` は `runtime-base` から分岐するため、この開発 toolchain の追加を継承しない。[stage の境界](../../Dockerfile#L136-L156)、[server への継承](../../Dockerfile#L182-L201)。任意の旧 development Compose も `LVK_IMAGE` を参照するため、利用できる toolchain は選択した image に依存する。checkout の変更だけで稼働中 image に追加されるわけではない。[開発 Compose の image 選択](../../deploy/server/compose.development.yaml#L1-L8)
 
 image smoke は UID 10001 のコンテナー内で `less --version` と、非 TTY の pipe 入力が同じ文字列として出力されることを検査し、失敗すれば `sh -ec` により検査を止める。この検査は対話端末でのページ操作を扱わない。[実行条件と検査](../../deploy/server/smoke-image.sh#L24-L38)。[配布 kit の静的・native 検証](development.md#サーバー配布-kit-の検証)と image の実行確認は別である。この Sync では検査定義をソースで確認しており、Docker build/run や `less` の実行成功は確認していない。
+
+LVK 自身の source 開発では、同梱された executable を明示的な `dev-cargo.mjs` が選び、compiler 専用 wrapper から利用する。image に sccache があるだけでは、この方針を任意の子 Project へ適用しない。[開発用 Cargo の共有中間物・環境・fallback](development.md#lvk-開発用-cargo-と共有キャッシュ)で設定の所有者と検証限界を確認する。[明示的な選択](../../scripts/dev-cargo.mjs#L82-L94)・[compiler 環境](../../scripts/dev-rustc-cache.mjs#L1-L12)
 
 ### 旧 npx ランチャーの撤去と移行
 
