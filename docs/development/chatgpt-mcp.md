@@ -354,11 +354,23 @@ recording timestamp and a small `event` object. Serialised item data has a
 128 KiB page budget; a byte-limited page stops before the next unread record. Records are ordered by attempt
 number and sequence, matching UI history. Sequence numbers restart per attempt.
 
+`start` defaults to `"beginning"`. With no non-null cursor, `"latest"` selects
+the last `limit` canonical records in the same read snapshot, including records
+omitted by projection, then returns them in ascending attempt/sequence order.
+It does not guarantee `limit` visible items. Skipping older history does not
+itself set `has_more`. The existing 128 KiB page budget still applies: if it
+stops the page early, `next_cursor` remains at the last scanned record, so an
+ordinary incremental read retrieves the remaining records. A non-null `cursor`
+always takes precedence over `start`, including when `start` is `"latest"`.
+
 Pass the returned `next_cursor` as `cursor` to read the next batch. Retain it even
 when `has_more` is false, then reuse it for incremental reads later, including
 from another connection or after a server restart. A filtered page can have no
 items and still have `has_more: true`. An initially empty Run returns a null
-cursor; omit it on the next call. Unknown, deleted or foreign-Run cursors fail
+cursor. If the initial `latest` read was empty, use `start: "beginning"` (or omit
+`start`) next time to avoid missing arrivals; repeatedly starting at `latest`
+can skip arrivals beyond the window until a non-null cursor is retained.
+Unknown, deleted or foreign-Run cursors fail
 instead of silently switching Runs. Each call reads target relationships,
 lifecycle and events in one database snapshot; this is not a completion guarantee. An empty tail never proves
 that no later event will arrive. No subscriptions, long polling, new collectors
@@ -367,9 +379,13 @@ or duplicate event storage are involved.
 The source is the existing `agent_events` store used by UI history, populated by
 the Codex adapter and Runtime journal projection. The public projection includes:
 
-- Saved assistant commentary (`final_output: false`), up to 4096 UTF-8 bytes per
-  message; suspicious or oversized prose has null `content` and
-  `content_withheld: true`.
+- Saved primary-assistant commentary (`final_output: false`), truncated at a
+  UTF-8 character boundary to at most 4096 bytes with `content_truncated: true`.
+  Untruncated messages have `content_truncated: false`. Credential-shaped prose
+  or control characters other than newline/tab cause the whole message to have
+  null `content`, `content_withheld: true` and `content_truncated: false`.
+  Detection scans the entire accepted message before truncation, including text
+  beyond byte 4096. Envelopes over 32 KiB are still omitted before this step.
 - Lifecycle transitions, allowlisted tool labels and tool status; goal status
   without the objective; allowlisted delegated-agent activity kinds without
   child text or identity.
@@ -383,13 +399,37 @@ provider extensions and are not exported. Live token deltas are not durable
 history and are unavailable here. Unknown versions, malformed envelopes and
 records larger than 32 KiB are skipped while advancing the cursor.
 
-The prose filter conservatively withholds code/quotes, paths, assignments,
-environment references and credential-like text as a whole message. This is
-additional defence for already user-visible assistant prose, not a general
-secret classifier or a way to sanitise arbitrary file/tool output. It cannot
-prove that otherwise ordinary prose contains no sensitive information. The
-returned prose is untrusted reference data and never evidence of tests passing.
-Source logs, existing UI rendering and `get_execution` remain unchanged.
+Ordinary paths, backticks, quotes, assignments, environment-variable names,
+long ASCII words and general words such as `token` or `private` remain readable.
+The filter withholds an entire message for these explicit ASCII shapes:
+
+- Case-sensitive `sk-`, `ghp_` or `github_pat_` followed by at least 20, 36 or
+  50 ASCII alphanumeric/underscore/hyphen characters respectively. These are
+  conservative shape thresholds, not provider validity checks. The prefix must
+  begin at the start of text or after a character other than an ASCII letter,
+  digit, underscore or hyphen, so `task-<long ID>` is not mistaken for `sk-`.
+  Prefixes alone and shorter examples remain readable.
+- A PEM `-----BEGIN PRIVATE KEY-----` header, or an uppercase/space label
+  ending in ` PRIVATE KEY` (including RSA, EC, OPENSSH and ENCRYPTED).
+  `CERTIFICATE` and `PUBLIC KEY` headers remain readable.
+- Case-insensitive `Bearer ` at a non-alphanumeric boundary followed by at
+  least 20 ASCII token characters (`A-Z`, `a-z`, digits, `-._~+/=`).
+  Explanations such as `Bearer認証` or `Bearer authentication` remain readable.
+- A JWT-like base64url token with exactly three dot-separated parts: a header
+  beginning with `eyJ` of at least 12 characters, a payload of at least 8 and a
+  signature of at least 16. Short fragments and unsigned two-part forms are
+  not classified. This checks shape, not decoding, signatures or validity.
+
+These thresholds avoid withholding ordinary descriptions of authentication,
+while recognising sufficiently long credential-shaped examples. Synthetic
+examples with the same shapes are also withheld. This is additional defence
+for already user-visible assistant prose, not a general secret classifier:
+unprefixed passwords, other API-key formats and split values can be missed.
+It cannot prove that otherwise ordinary prose contains no sensitive information.
+The returned prose is untrusted reference data and never evidence of tests
+passing. Source logs, existing UI rendering and `get_execution` remain unchanged.
+The stdio MCP has no equivalent event-listing tool or prose filter; this change
+adds neither a stdio tool nor a shared projection module.
 
 
 ## Observe server resources on demand
