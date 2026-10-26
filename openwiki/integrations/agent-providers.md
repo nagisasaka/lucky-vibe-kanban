@@ -8,12 +8,16 @@ sources:
     resource: repo://crates/executors/Cargo.toml
   - id: openwiki-source-a7d7b5cf722fd5837c4eb16e
     resource: repo://crates/executors/default_profiles.json
+  - id: openwiki-source-bf917104d7be997e2a2e1a7b
+    resource: repo://crates/executors/src/account_usage.rs
   - id: openwiki-source-a5b446edff482bd8a00e1a92
     resource: repo://crates/executors/src/agent_settings/public_api.rs
   - id: openwiki-source-ff0c687c0ecdbf94f91da913
     resource: repo://crates/executors/src/agent_tools.rs
   - id: openwiki-source-9ad3b97da67cba82e9d5ffc0
     resource: repo://crates/executors/src/agent_tools/public_api.rs
+  - id: openwiki-source-43a564588ddd816c6fc257af
+    resource: repo://crates/executors/src/command.rs
   - id: openwiki-source-7fd554effd70be44f98fe686
     resource: repo://crates/executors/src/config_write.rs
   - id: openwiki-source-bfcf08b9feacd16360e862a4
@@ -22,14 +26,22 @@ sources:
     resource: repo://crates/executors/src/executors/claude/auth.rs
   - id: openwiki-source-b352d709d360d1bf77a8f1d5
     resource: repo://crates/executors/src/executors/claude/command_adapter.rs
+  - id: openwiki-source-b15b24f9113eb215c902d4b4
+    resource: repo://crates/executors/src/executors/claude/protocol.rs
   - id: openwiki-source-7c91fae76fb68d8e144a3d4f
     resource: repo://crates/executors/src/executors/claude/slash_commands.rs
+  - id: openwiki-source-f615018b2948c78d0299828c
+    resource: repo://crates/executors/src/executors/claude/usage.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
+  - id: openwiki-source-bed79949b71c669dbb3a86f0
+    resource: repo://crates/executors/src/executors/codex/account_read.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
   - id: openwiki-source-38fc795b99b30483be700b71
     resource: repo://crates/executors/src/executors/codex/client/openwiki.rs
+  - id: openwiki-source-f44bd32fb5e7cb5ee909f5c6
+    resource: repo://crates/executors/src/executors/codex/client/resume_instructions.rs
   - id: openwiki-source-680ceb819b2bbd9dbba3a8d4
     resource: repo://crates/executors/src/executors/codex/jsonrpc.rs
   - id: openwiki-source-1222b138c478c7fe70625991
@@ -54,12 +66,18 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
   - id: openwiki-source-9994439c3151f599f949bf7f
     resource: repo://crates/mcp/src/task_server/tools/workspaces.rs
+  - id: openwiki-source-e1757d002aa325145a915b38
+    resource: repo://crates/server/src/provider_usage.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
+  - id: openwiki-source-202693827acda4283453b799
+    resource: repo://crates/server/src/remote_mcp/provider_usage.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-964398afc466561a57ac7d34
+    resource: repo://crates/server/src/routes/provider_usage.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
@@ -92,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -121,7 +139,7 @@ Unknown は能力が解決されていない状態であり、「上流に機能
 
 Approval が Native という capability snapshot と、host に人の応答を待つサービスが接続されていることは別である。[Codex の command/file 待機と Plan・質問の境界](../concepts/session-and-agent-run.md#承認質問と現在の接続状態) を合わせて確認する。Codex host は command/file 用 waiter を持つが、他 provider の注入は Noop のままであり、capability 名だけから全 provider の対話承認を保証しない。[host の分岐](../../crates/local-deployment/src/process_host.rs#L348-L366)
 
-Codex の Supervised override は、approval policy が未指定または Never の場合に UnlessTrusted へ変更し、別の明示 policy は保持する。sandbox 自体はこの override で変更しない。client の自動承認は DangerFullAccess と未指定/Never の組合せだけに限定する。[override と自動承認条件](../../crates/executors/src/executors/codex.rs#L628-L680)・[回帰テスト](../../crates/executors/src/executors/codex.rs#L1755-L1776)
+Codex の Supervised override は、approval policy が未指定または Never の場合に UnlessTrusted へ変更し、別の明示 policy は保持する。sandbox 自体はこの override で変更しない。command/file の client 自動承認は DangerFullAccess と未指定/Never の組合せだけに限定する。[override と自動承認条件](../../crates/executors/src/executors/codex.rs#L628-L680)・[回帰テスト](../../crates/executors/src/executors/codex.rs#L1755-L1776)
 
 起動時には provider と profile の一致を検証する。Initial は native session を持てず、FollowUp / Resume は native session を必要とする。reset_to_message_id を伴う会話の巻き戻しは ClaudeCode の FollowUp / Resume に限定される。native session ID は UUID と仮定せず、空白・制御文字や provider ごとの option 解釈の危険を拒否する。[起動の検証](../../crates/executors/src/executors/provider_adapter.rs)
 
@@ -130,6 +148,14 @@ Codex の Supervised override は、approval policy が未指定または Never 
 LVK の profile/実行 override が空でも、app-server は利用者・project 設定から model と reasoning effort を解決できる。client は `thread/start` / `thread/resume` の応答を採用してから collaboration mode と turn を構築する。したがって依頼の JSON の `reasoning_effort: null` だけで「設定ファイルの effort が無視された」と結論しない。逆に provider が返した `None` も解決結果として採用し、前回の明示値を残さない。[採用処理](../../crates/executors/src/executors/codex/client.rs#L183-L190)、[start/resume と turn](../../crates/executors/src/executors/codex/client.rs#L257-L322)
 
 実際の値を診断するときは、依頼 override と native の thread 応答・後続 turn の設定を分けて確認する。継承の回帰テストは [reasoning_tests](../../crates/executors/src/executors/codex/client/reasoning_tests.rs#L67-L205) にある。LVK の型が値を表現できることを、任意の provider/model がその値に対応する保証とは扱わない。
+
+### Codex resume の固定指示と現在 identity
+
+resume は同一 native thread を使い、start / resume config には完全な developer instructions を渡す。履歴への inject では、repository-memory の現在 run/draft identity と parallel context の JSON 行だけを分離できる場合がある。それ以外の固定文は空白まで完全一致で比較する。必要指示の保持を証明できないときは従来の全文 append に戻り、inject 失敗なら次の実行を開始しない。[順序と fallback](../../crates/executors/src/executors/codex/client.rs#L290-L388)・[分離と一致](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L1-L157)
+
+縮小を許すのは、owned app-server の初回 load、通常履歴、Unix、確認対象 version metadata（0.144.1 / 0.163.0）の条件が揃う場合だけである。metadata-only `thread/read(include_turns=false)` で当該 thread の path を得て、resume 前後の同じ canonical regular JSONL を各最大16 MiB・2秒で読む。directory 走査や他の履歴・sidecar は使わず、symlink・非通常ファイル・部分行・identity不一致・未知形式・compaction・rollback・fork/history_base があれば全文へ戻す。prefix と inode の連続性を照合し、resume が追加する既知の settings / warning event だけを suffix に許す。[履歴判定](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L47-L157)・[有界読取と前後照合](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L159-L290)
+
+通常 initialize だけが user_agent を保存し、後述の passive initialize は版観測・resume state に入らない。未知版や非Unixでも通常 resume を拒否せず、指示縮小だけを無効にする。sidecarの過去ACKでは compaction 後の保持を証明できないという判断が実装に記録される。これは履歴追加の削減であって、Memory checkpoint/restore の追加 turn や Workflow を変更するものではない。[initialize の分離](../../crates/executors/src/executors/codex/client.rs#L239-L275)・[記録された判断と合成試験](../../docs/development/codex-resume-instructions.md)。実binaryの厳密Git revision、effective prompt、token/cache/課金削減量は未測定である。
 
 ### Discovery と手動 override の境界
 
@@ -150,6 +176,8 @@ Codex discovery は model/Skill の候補を取得する一時 app-server であ
 group の識別子再利用防止、自然終了時の orphan 回収、別 session の子孫 snapshot と失敗時の限界は [Runtime の owned process group](../architecture/agent-runtime.md#linux-の-owned-process-group)を正本とする。この owner は外部 supervisor ではなく、Tokio runtime 全体の破棄や OS kill を越えて回収する保証はない。
 
 Linux の `discovery_cleanup_normal_timeout_drop_abort` は fake app-server を使い、通常・timeout・future drop・caller abort の4ケースで wrapper/native の終了、leader reap、無関係なプロセスの生存を確認する。future drop は実 WebSocket router の切断試験ではなく、公式 CLI・実 provider/model・非 Linux の動作確認でもない。[実 Rust fixture](../../crates/executors/src/executors/codex.rs#L1684-L1798)・[試験結果と限界](../../tests/codex-process-cleanup/README.md#executed-rust-validation-2026-10-25-jst)。今回の静的照合と正式 Integration の検証省略は [cleanup の検証範囲](../architecture/agent-runtime.md#codex-cleanup-の検証範囲)に記録した。
+
+MCP tool の一回限り権限要求はこの自動承認とは別で、常に明示回答と一意な tool 相関を要求する。[承認の正本](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)を参照する。
 
 ## Claude のサブスクリプション専用 profile
 
@@ -217,6 +245,28 @@ adapter は provider の nested message / tool block も解釈するが、raw fr
 配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。[互換性の判断記録](../../docs/development/codex-compatibility.md#wire-types-and-upgrade-boundary)は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
 
 保持 fixture を Rust 型へ decode するテストと Docker pin / fixture version の一致検査がある。実 CLI を使う offline smoke は一時 Codex home と local mock Responses で Plan/Default、resume、steering、Goal を検査する。[wire test](../../crates/executors/src/executors/codex/client.rs#L2013-L2039)・[pin test](../../deploy/server/release.test.mjs#L78-L95)・[smoke](../../scripts/test-codex-app-server.py)。これらは使用 RPC の互換確認であり、live model 品質・browser・配布済み実行環境の更新を証明しない。操作手順と過去の検証結果は [互換記録](../../docs/development/codex-compatibility.md)を参照する。v5 の context / 子観測と v4 replay の維持は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)で説明する。
+
+## 受動的な account quota/usage 参照
+
+`read_provider_usage` は Codex / Claude Code の公式CLI control接続から必要時に quota と任意の usage snapshot を読む。モデル turn、Issue・Workspace・Session・AgentRun を新規作成せず、thread開始/再開、slash command、rollout/transcript走査で欠損を補わない。Workspace の [報告済み累積トークン](../concepts/workspace.md#workspace-累積トークン)とは別の値で、そこへ加算しない。認証は既存公式CLIに任せ、独自 credential 取得・新loginを行わない。[共通read境界](../../crates/server/src/provider_usage.rs#L1-L43)・[provider契約](../../docs/development/provider-usage.md)
+
+### Account context と既存 Session の境界
+
+必須の `provider` は codex / claude_code、`account_context` は server_default。サーバーの DEFAULT launcher / 認証を選ぶ値であり、呼出元 Project や Workspace の環境を借りる指定ではない。account scope には Workspace が不要で、外部 HTTP MCP は administrator と read scope、stdio の内部経路は認証済み internal capability と read scope を検査する。両 stdio mode と外部 MCP は共通 server read を使う。[入力](../../crates/executors/src/account_usage.rs)・[外部認可](../../crates/server/src/remote_mcp/provider_usage.rs#L1-L40)・[内部認可](../../crates/server/src/routes/provider_usage.rs#L10-L34)
+
+既存 Session の usage を求めるときだけ Project / Workspace / Session の全IDと `include_usage=true` が必要である。所属、provider、保存runtime profileとDEFAULTの一致を確認して保存済み native ID を解決する。任意native IDは入力できず、profile名一致だけで過去と現在のaccount同一性を証明しない。Claude には生存handleへの安全なread中継がないため既存Session usageは unsupported。短命接続自身の値は information_connection_session_only で、Workspace usageに転用しない。[解決と制約](../../crates/server/src/provider_usage.rs#L45-L89)・[Claude scope](../../crates/executors/src/executors/claude/usage.rs#L238-L251)
+
+### 短命接続の所有と失敗
+
+Codex は専用の空管理directoryと分離した passive callbacks を使い、initialize、account/rateLimits/read、任意のaccount/usage/readのみを行う。Rust依存全体をupgradeせず、新account契約の小さな型付きprojectionを使う。Claude は request_id を相関させる ProtocolPeer でinitialize後に get_usage(skip_behaviors=true)を送り、behaviors=nullを確認する。hook・MCP・tools・session永続化を無効にし、Project/local設定を読まずuser設定を使う。同じlauncherのowned version probeが2.1.308と確認したときだけ実験APIを送り、未知版は unsupported とする。[Codex read](../../crates/executors/src/executors/codex/account_read.rs#L142-L245)・[Claude request](../../crates/executors/src/executors/claude/protocol.rs#L135-L204)・[起動flags](../../crates/executors/src/executors/claude/command_adapter.rs#L34-L47)・[version検査](../../crates/executors/src/executors/claude/usage.rs#L259-L330)
+
+base command引数・additional_params等は拒否し、passiveのCLI探索は2秒のfilesystem-onlyでlogin shellを起動しない。各providerで同時1接続・開始間隔5秒を制限し、重複は待機列を増やさず unavailable。起動からCodex15秒、Claudeはversion probeを含め20秒、受信各2 MiBとbucket/group件数の上限を持つ。終了回収までadmissionを保持し、自分の接続だけをcancel/回収する。回収不確実なら新規readを閉じ、既存実行handleを停止して回復しない。[launcher](../../crates/executors/src/command.rs#L46-L85)・[Codex owner](../../crates/executors/src/executors/codex.rs#L848-L1004)・[Claude owner](../../crates/executors/src/executors/claude/usage.rs#L119-L251)
+
+quota/usageは別々に fresh / partial / unsupported / unavailable 等の理由を返し、未報告nullを0や無制限にしない。observedAtは観測時刻でprovider計上時刻ではない。Codexのbucket/windowは分数とUnix秒を保ち、固定の5時間/週間へ決め打ちしない。usageのaccount summaryとthread breakdown、input/cache/outputの包含を保ち、親子threadやworker quotaを合算しない。estimated credits/USD microsは100万分の1でsubscription実請求額ではない。既知fieldのみを投影し、生response・秘密情報・promptを返さない。[型と投影](../../crates/executors/src/executors/codex/account_read.rs#L33-L140)・[共通意味](../../crates/server/src/provider_usage.rs#L23-L42)・[Claude型](../../crates/executors/src/executors/claude/usage.rs#L31-L116)
+
+### 参照機能の検証限界
+
+[passive fixture](../../crates/executors/src/account_usage_tests.rs)は非モデルRPC、timeout/cancel・子process回収、単位/null/未知field除外を検査し、[server fixture](../../crates/server/src/remote_mcp/provider_usage.rs#L42-L123)は認可・所属・DEFAULT mismatchを検査する。供給された開発記録にはCodex account quota/summaryのfresh、Claude get_usage成功でもquota partialがある。Claude subscription枠、Codex既存thread usage、稼働MCP経由live、account切替や親子包含は未確認で、今回も製品試験を再実行していない。参照成功から認証種別やモデル実行品質を推定しない。
 
 ## MCP の二つの方向
 

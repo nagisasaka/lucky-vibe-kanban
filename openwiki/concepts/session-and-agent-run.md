@@ -16,6 +16,8 @@ sources:
     resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-c88a7c6fabdac15166554032
     resource: repo://crates/executors/src/executors/codex/client.rs
+  - id: openwiki-source-8e029d986a18115c8763ce0c
+    resource: repo://crates/executors/src/executors/codex/client/mcp_approval.rs
   - id: openwiki-source-35b6fb5835c638575801a2b6
     resource: repo://crates/executors/src/executors/codex/goal_lifecycle.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -56,20 +58,14 @@ sources:
     resource: repo://crates/server/src/routes/sessions/mod.rs
   - id: openwiki-source-4d617b0e2fa188c6ad63ae56
     resource: repo://crates/server/src/routes/sessions/questions.rs
-  - id: openwiki-source-7151ac14cb4570c5c04781dd
-    resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-7d8384e54754a811ab7ab92e
     resource: repo://crates/services/src/services/approvals.rs
   - id: openwiki-source-024bbfcff36a8b1f88b9bcf3
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
   - id: openwiki-source-9c5d335ecd1178e88c47c0a8
     resource: repo://crates/services/src/services/queued_message.rs
-  - id: openwiki-source-28f588bd26222b42bea70c77
-    resource: repo://docs/development/codex-execution-observations.md
   - id: openwiki-source-a1d892c714d0a8077eb963fd
     resource: repo://docs/development/supervised-approval-change-manifest.md
-  - id: openwiki-source-23db569cee004f42315c9f61
-    resource: repo://docs/workspaces/sessions.mdx
   - id: openwiki-source-e4d0ff0d72ea9774e1af777c
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
@@ -84,8 +80,6 @@ sources:
     resource: repo://packages/ui/src/components/SessionChatBox.tsx
   - id: openwiki-source-ac028c59eb7a9a6091191607
     resource: repo://packages/ui/src/lib/plainTextEditor.ts
-  - id: openwiki-source-a46d1ceab41257b518aa5a4a
-    resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts
   - id: openwiki-source-6f68befb805cadf03e4b569b
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
@@ -156,10 +150,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -232,13 +226,15 @@ Starting の保存は provider 起動の前提であり、保存失敗時は pro
 
 ## Run の経過時間と Goal 会計
 
-Board の最新 Run とチャットの各 Run footer の経過時間は、AgentRun の `created_at` から現在 attempt の保存済み `finished_at` までの壁時計時間である。活動中は現在時刻との差を表示する。実プロセスの開始時刻や CPU 使用時間ではなく、Pending、入力・承認待ち、Cancelling、同じ Run の retry を含む。Retry では起点をリセットせず、新しい Follow-up の Run とは合算しない。API と画面への経路は [Web の時間表示](../architecture/web-and-sync.md#run-の時間表示を同期状態から分ける)を参照する。[時刻の取得](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[Run ごとの計算](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)
+Pending / Starting は Preparing を表示し、経過時計を出さない。Board は作成順で選んだ最新 Run の全 attempt にある最初の実 process 開始時刻を使い、未起動は null とする。チャットは最初の永続 Running event を起点にし、履歴に Running がなければ互換 fallback として `created_at` を使う。両経路の根拠は異なり、CPU 時間や精密な provider 稼働時間を示す値ではない。[Board の選択](../../crates/db/src/models/agent_runtime.rs#L324-L359)・[会話の準備と時計](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973)
+
+開始後の入力・承認待ち、Cancelling、同じ Run の retry は壁時計の範囲に含み、別 Follow-up Run とは合算しない。Retry の Preparing 中も時計は抑止し、実行へ進んだ後は最初の Running 起点へ戻る。Workspace の `is_running` 集計を変更したものではない。[Web の時間表示](../architecture/web-and-sync.md#run-の時間表示を同期状態から分ける)・[準備と実開始の回帰](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)。Starting が保存できない場合の有限予算・DB回復・host予約の不確実性は [Runtime の耐久回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)に集約する。
 
 ### 終了の証拠と再接続
 
 永続化では attempt の `finished_at` が未設定のとき、終端 state の時刻を一度だけ保存する。後続イベントが projection の `updated_at` を進めても終了時刻を更新しない。したがって `updated_at` を終了時刻へ流用すると、完了済み Run の表示時間が増える。[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1775-L1794)・[単一 event 保存](../../crates/db/src/models/agent_runtime.rs#L2099-L2119)・[遅延 event の回帰テスト](../../crates/db/src/models/agent_runtime.rs#L3210-L3267)
 
-チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
+チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
 
 共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。有効な非負の実測 `durationMs` があれば端点より優先し、それがなければ端点差を使う。0〜999msの根拠があれば `<1s` と表示する。両方に根拠がない場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L35-L73)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
 
@@ -291,6 +287,14 @@ Codex host は `ProcessHostApprovals` を注入し、command/file 要求は既�
 UI の `approvalId` は host waiter の識別子であり、native JSON-RPC request ID ではない。Approve は waiter を解決し、元 request handler が元の数値または文字列 ID で応答する。未知・重複・完了後の回答はエラーとなり、別の native 応答を生成しない。待機中の操作内容は [承認カードの詳細保持](../architecture/web-and-sync.md#承認カードの操作内容を保持する)、所有者と canonical 件数の投影は [runtime の承認経路](../architecture/agent-runtime.md#codex-の承認待機を所有する場所)を参照する。[制御](../../crates/executors/src/executors/codex/client.rs#L441-L465)・[元 ID の応答](../../crates/executors/src/executors/codex/client.rs#L971-L994)・[回答照合](../../crates/services/src/services/approvals.rs#L142-L178)
 
 command/file の明示承認は native `accept`、理由なし拒否と timeout は `decline`、非空の拒否理由は `cancel` と feedback queue への追加になる。全許可では `acceptForSession` を返す。service 不在・異常・取消を Approved に変換しない。取消済み token と準備済み回答が競合すると bridge は取消を優先する。[応答への変換](../../crates/executors/src/executors/codex/client.rs#L1282-L1342)・[待機と取消](../../crates/services/src/services/approvals/executor_approvals.rs#L123-L148)・[protocol 試験](../../crates/executors/src/executors/codex/client.rs#L3522-L3677)
+
+### Codex の一回限り MCP tool 承認
+
+Codex の空 form schema を使う単一 MCP tool-call 権限要求は、既存の正式承認 UI / host waiter へ接続する。現在の thread / turn、active tool item、server、引数が一意に対応することを要求し、tool 名が metadata にあれば一致も検査する。表示名は元 active item から作り、自由記述の elicitation 文を権限の根拠にしない。一般 form、URL、資格情報入力、曖昧・不一致・再送済み要求は Cancel とする。[相関と制限](../../crates/executors/src/executors/codex/client/mcp_approval.rs#L1-L205)
+
+service が発行した approval ID を待ち、元 native request ID へ一度だけ回答する。`auto_approve` や Noop は承認を代行せず、明示 Approved でも現在の call が変わった／取消済みなら Accept しない。拒否は Decline、timeout・service不在等は Cancel。返却 content/meta は常に None で session / always grant を保存しない。[応答](../../crates/executors/src/executors/codex/client/mcp_approval.rs#L136-L205)・[待機](../../crates/executors/src/executors/codex/client/mcp_approval.rs#L238-L305)
+
+approval requested/resolved に加え pending 件数を通知し、canonical AwaitingApproval と既存 UI 操作を成立させる。これは [managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)を含む MCP 呼出しの一回の判断で、tool の scope・対象認可や実行成功を置き換えない。[protocol fixture](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)・[offline UI fixture](../../tests/chat/mcp-approval.mjs)。開発時には実 Codex が承認待ちへ到達して取消された記録があるが、人の承認後の実 tool 成功と live Auth0 / ChatGPT は未検証である。[検証の境界](../../docs/development/managed-dev-server-mcp.md)
 
 ### Plan・一般質問との境界
 

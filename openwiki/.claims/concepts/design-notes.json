@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9f82c17b714dd32dc236a9726d2550ed4c983f3bb85c0c4aabe551698d56a5d3",
+  "pageVersion": "sha256:765e29d9c1c1043d0a463b0920ea9af0ae860dd5efe7fc6c7adeb6b58d7d496d",
   "claims": [
     {
       "id": "claim_4e9b35333650431290516aff5f98065c",
@@ -105,8 +105,8 @@
       "statement": "設計メモはstdio global routerに含まれorchestrator routerには含まれず、外部HTTP書込はreadとwrite scopeおよびProject照合を必要とする。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L49-L79",
-          "version": "repo-lines-v1:sha256:daad8411437bb4803ae28082b11f76fc1d45dc907618e38026c946e5d271c2ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyNTM5ZDg1Mzg2YTI5NDIzZjUzNWFiYjQ2Y2M4NjgwNzI3ODdhOGI4ZDJkMzhjY2QxY2ZkZGRiYjNjMGFmOTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NTc2OWQ1MDFmYTZhMmJkMzc4ZWZmMTk3MDRmYWE2MTBkZmJjMmZmNGE5OTMzNDYzZWY1ZDBkZDAyOTcwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2ZmQwMTkzOWNhY2ZhMDg3MDNiNDY2ZDUxM2RlNTYzODk4Zjk3ZThlMGQwZjNlNjcwZDYyOGYzM2Y5YzM5MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
+          "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L56-L91",
+          "version": "repo-lines-v1:sha256:0bbca9696158bfd887006c57fab37548050c0d4e9174249a2e44161c6bdce0be:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMzI2MzJiNGFlMTJmOTRiNTFjOWQyMGQ3ODE0MTY0NTViMGUwN2MxNTlhMDdjZWEwN2MyYWJjOTJlYmFkZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMDMzYzY1MDc3NGIyNDc2Zjc5MDA0YWMxMTJkOWIwY2Q4Mzg2YTdiNTk3MDM4M2E3MjYwODMwMjExNjlkY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjNmExYWM5ZDc4YmZhYTI3NTNjYWQwYzk0ODYxNGNmMTc2YjAxNTZkYmEzYjc2MjFkMTE0NjFkZGQwZmUwMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljN2EwMjg3MTkzZjllOGE1OGJmMTNhNWMxOWFkNjI3YzdjNTZkM2U3YWNjMmFkYTZlN2Q3Njg3Yzc5NDM4ZGIifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/design_notes.rs#L50-L94",
@@ -239,6 +239,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T01:28:30.262Z"
+    "at": "2026-10-26T19:37:05.139Z"
   }
 }

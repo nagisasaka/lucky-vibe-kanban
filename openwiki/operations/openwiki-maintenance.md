@@ -73,7 +73,7 @@ sources:
 generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:15:30.599Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # OpenWiki の初期生成・同期・回復

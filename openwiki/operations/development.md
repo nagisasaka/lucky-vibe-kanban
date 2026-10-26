@@ -20,6 +20,10 @@ sources:
     resource: repo://crates/db/src/migration_compat.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
+  - id: openwiki-source-8856c7b6451960c4ee31ae56
+    resource: repo://crates/executors/src/account_usage_tests.rs
+  - id: openwiki-source-f44bd32fb5e7cb5ee909f5c6
+    resource: repo://crates/executors/src/executors/codex/client/resume_instructions.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
@@ -74,6 +78,8 @@ sources:
     resource: repo://docs/development/cargo-cache.md
   - id: openwiki-source-d95a345bb2e865055223b40f
     resource: repo://docs/development/dev-switch-bundle-validation.md
+  - id: openwiki-source-e654c61365add1d192b8b7b8
+    resource: repo://docs/development/seven-source-candidate.md
   - id: openwiki-source-2e1d91f21691cd271afffb6f
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
@@ -100,10 +106,14 @@ sources:
     resource: repo://tests/build-info/isolated.mjs
   - id: openwiki-source-492bc994297fdb3fa913fe0c
     resource: repo://tests/chat/external-editors.test.mjs
+  - id: openwiki-source-0f4dd03aa48c30d7b96247f8
+    resource: repo://tests/chat/mcp-approval.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-e023073a2ead0d2a5b8304d5
     resource: repo://tests/project-keys/migration_compat.py
+  - id: openwiki-source-27c3f21856d770e96494e465
+    resource: repo://tests/server/run-managed-dev-server.mjs
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
     resource: repo://tests/server/run-workspace-tokens.mjs
   - id: openwiki-source-f7bef772fe7a00d12c00a997
@@ -122,10 +132,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
+generated: { by: "codex", at: "2026-10-26T19:50:12.086Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T16:20:39.259Z
+    at: 2026-10-26T19:50:12.086Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -202,8 +212,7 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 
 ## 検証の対象を取り違えない
 
-<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L118-L124] heading anchor "L118-L124" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
-repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [正式 Integration の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#L118-L124)
+repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [正式 Integration の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-formal-integration-validation)
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |
@@ -419,3 +428,19 @@ server の `routes::workspaces::integration::editor_tests` は一時ディレク
 この Wiki は実装理解のための派生知識であり、試験成績そのものではない。初期生成時の静的調査と、その後の選別移植で行った自動検証・MCP受入を区別する。再検証するときは上記の実装記録と現行コマンドを参照し、未実行や既存 skip を合格に数えない。
 
 認証の回帰検証は `crates/server-access/src/tests.rs`、公開MCPのJWT-to-tool検証、nginx ingress fixture、`tests/server-access/`のブラウザー経路を分けて読む。実Auth0/ChatGPTの受入はこれらと別である。[検証境界の記録](../../docs/development/server-access.md)、[配布の認証境界test](../../deploy/server/access.test.mjs)。
+
+## 起動回復・受動参照・MCP 操作を変更するとき
+
+[Starting 回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)では、`agent_run_port::tests` の SQLite busy、再起動越し予算、部分終端保存、Stop/重複要求、setup除外、ACK不確実性を分けて確認する。DBのmigration fixtureは旧行の既定値・保持・部分indexと、Starting/host予約フェンスを検査する。画面のPreparingと実開始時計はcanonical conversation / taskAttemptモデル試験が対象であり、実providerが一度だけ起動したことのE2E保証ではない。[port試験](../../crates/local-deployment/src/agent_run_port.rs#L4448-L4800)・[migration試験](../../crates/db/src/models/agent_runtime.rs#L2560-L2659)・[表示試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)
+
+[Codex resume指示](../integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)は合成JSONL/RPCで固定文変更、同じ/新しいrun、compaction・rollback・fork・未知形式、有界file・symlink・変更中file、inject拒否を確認する。実利用者の履歴を読む試験ではなく、effective promptやtoken/課金効果は未測定である。`merged_initialize_keeps_normal_version_evidence_out_of_passive_reads` は通常initializeとpassiveの分離を検査する。[履歴fixture](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L300-L569)・[共有initialize fixture](../../crates/executors/src/executors/codex/client.rs#L2251-L2310)
+
+[受動quota/usage](../integrations/agent-providers.md#受動的な-account-quotausage-参照)のfixtureは非モデルRPCだけを許し、成功・失敗・timeout・cancelと子process回収、admission制限、未知CLI版、単位/null/秘密field除外、所属/provider/profile不一致を検査する。ignored live試験は通常suiteと別であり、実行しなければlive成功とは扱わない。[executor fixture](../../crates/executors/src/account_usage_tests.rs)・[server認可](../../crates/server/src/remote_mcp/provider_usage.rs#L42-L123)
+
+[DevServer](workspace-inspection.md#preview-と開発サーバー)はregistryの観測/settlement、UI manager、stdio scope、外部HTTP receipt/再送/並行startを横断して確認する。`tests/server/run-managed-dev-server.mjs` は隔離instanceと対応するMCP/host binaryを使い、終了確認後だけ成功instanceを削除する。実agent modeは明示的な追加実行であり、通常fixtureから推論しない。一回限り承認のprotocol fixtureとoffline `tests/chat/mcp-approval.mjs` は別の境界である。後者はnetwork/API/providerへ接続せず、ボタンはmock stateのみを変更する。[runner](../../tests/server/run-managed-dev-server.mjs)・[remote試験](../../crates/server/src/remote_mcp/dev_server_tests.rs)・[protocol試験](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)・[offline UI](../../tests/chat/mcp-approval.mjs)
+
+[カンバンactivity順序](../concepts/project-and-issue.md#activity-による手動順序の更新)は全5終端・両canonical保存経路・明示sort停止、本文/コメントtransaction、遅延昇格とdrop両順序を確認する。rank helperとChromium部品fixtureはghost/drop/cancel/focusと表示ON/OFFを扱うが、実ネットワーク競合や実provider状態の証拠ではない。[DB回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L750-L865)・[rank試験](../../tests/kanban/order.test.mjs)・[部品fixture](../../tests/kanban/readability.mjs)
+
+コメント本人編集はowner/revision/receiptとWAL競合、raw配信はUTF-8 filename・header injection・全binary bytes・認証とpath containmentを確認する。[コメント試験](../../crates/server/src/remote_mcp/issue_comments.rs#L370-L558)・[file試験](../../crates/server/src/routes/workspaces/files.rs)。詳細契約は [コメント編集](../concepts/issue-collaboration.md#自分の既存コメント本文を編集する)と [Workspace file viewer](workspace-inspection.md#repo-内ファイルを読む)に置く。
+
+凍結入力の候補合成記録は局所Rust・Clippy・型・モデル/部品試験の成功を報告するが、最終統合 `b9fd2194154bfff52fe362eb9253037521f91963` は明示的に正式検証を省略した。初期失敗と修復後の成功、実agentが承認待ちへ到達して取消された証拠、人の承認後のtool成功を区別する。実Auth0/ChatGPT、全本番DB移行、Windows、配布artifactの保証は残る未確認範囲である。[候補合成と限界](../../docs/development/seven-source-candidate.md)。今回の文書保守はソース・試験定義・差分・リンクとOpenWiki lifecycleの検証で、製品試験は再実行していない。

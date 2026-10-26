@@ -76,10 +76,14 @@ sources:
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts
   - id: openwiki-source-fe9d810dccb0b777dfcb7ae4
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts
+  - id: openwiki-source-b39952c69795059582eecfdf
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-0c16a411788f6c8651e3028e
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx
+  - id: openwiki-source-33701702cd7715b9892ea2f1
+    resource: repo://packages/web-core/src/features/kanban/ui/kanbanOrder.ts
   - id: openwiki-source-f6872c1e7e07221eda6db545
     resource: repo://packages/web-core/src/features/onboarding/ui/LandingPage.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
@@ -202,10 +206,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # Web の実行環境と同期
@@ -320,11 +324,15 @@ mutation は REST 成功後に cache を破棄し、進行中の古い取得を�
 
 pointer collision はカードを優先し、空列も drop 対象にする。keyboard は sortable の座標を使い、drop 後に同じ Issue ID のカードへ focus を戻す。内側の button・link・summary 等から mouse/touch drag を開始せず、子要素の key 操作もカード側で横取りしない。カード自身の Enter は詳細を開き、drag 後の click は抑止する。複数選択中は sortable を無効にする。[sensor と focus](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L52-L87)・[操作の分離](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L128-L190)・[複数選択の接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1200)
 
-保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。先に画面の配列を更新し、影響する列の順序と移動先 status を bulk mutation へ渡す。失敗時は console に記録し、この handler 自身には明示 rollback がない。完了後500msで同期抑止を解除するので、drag の見た目だけを保存成功と扱わず、上記の REST snapshot 収束と合わせて調べる。[既存 handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L723-L823)
+保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。先に画面の配列を更新し、drag 対象1件の rank と移動先 status、drag 開始時の `expected_sort_order` を既存 bulk mutation へ渡す。兄弟カードを renumber しない。失敗時は console に記録し、この handler 自身には明示 rollback がない。完了後500msで同期抑止を解除するので、drag の見た目だけを保存成功と扱わず、上記の REST snapshot 収束と合わせて調べる。[既存 handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L684-L780)
+
+drag 中は snapshot による配列同期を保留し、drop 計算は開始時の rank と現在の rank を比較する。activity で先頭へ昇格した peer を挿入境界から除き、残る安定カードの前へ挿入するときも昇格 prefix の後へ置く。DB 側の期待 rank 照合は未受信の昇格を古い drop で上書きするのを防ぐ。順位更新のイベントと明示 sort の意味は [Issue の activity 順序](../concepts/project-and-issue.md#activity-による手動順序の更新)を参照する。[同期抑止](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L500-L560)・[rank 計算](../../packages/web-core/src/features/kanban/ui/kanbanOrder.ts#L1-L79)
+
+列間の ghost は `document.body` の DragOverlay portal で描画し、元カードを透明化する。ghost は inert / aria-hidden で操作対象にせず、drop / cancel で除去する。列見出しの件数は描画用 `issueIds.length` で、filter 後の表示件数と0件を示す。[overlay の寿命](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L46-L119)・[見出し](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1107-L1135)
 
 カードの本文プレビューはタグ群の後で最大2視覚行に制限し、全文は既存 details に残す。`KanbanTags` はタグ変更と ResizeObserver による幅変更で可視数と `+N` を計測し、最初の長いタグは省略する。新しいカード polling は作らない。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L277-L329)・[タグ計測](../../packages/ui/src/components/KanbanTags.tsx#L1-L72)。Workspace 一覧は `showWorkspaces` が有効なら details の外へ描画し、Workflow 所有 Workspace の重複を避ける。概念上の表示契約は [Project・Issue](../concepts/project-and-issue.md#コンパクトカードの表示契約)、差分ゼロと未知の契約は [Workspace 差分集計](../operations/workspace-inspection.md#workspace-summary-の差分集計)に置く。
 
-重要状態の入力は既存 `useWorkspaces` の summary と Project の Workflow query を使う。Workspace 表示設定を off にしても Workflow query を無効にしない。summary の取得失敗・不正応答は空 map に戻り、summary がないと running は一覧 stream に fallback、承認等の追加 field は undefined になる。このため重要状態のラベルがないことは、待機や失敗が存在しない証明ではない。[常時取得](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L299-L308)・[summary の合成と失敗](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L134)。取得周期と最新 Run の時計との差は [時間表示の同期](#run-の時間表示を同期状態から分ける)を参照する。
+Issue 集約の承認・入力・running・失敗・未確認・DevServer 文字行は表示設定 ON/OFF とも描画しない。個々の Workspace は注意状態・既読未読・DevServer を独立アイコンで示す。重要状態の入力は既存 `useWorkspaces` の summary と Project の Workflow query を使う。Workspace 表示設定を off にしても Workflow query を無効にしない。summary の取得失敗・不正応答は空 map に戻り、summary がないと running は一覧 stream に fallback、承認等の追加 field は undefined になる。このためアイコンがないことや Workspace 非表示は、待機や失敗が存在しない証明ではない。[常時取得](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L299-L308)・[summary の合成と失敗](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L134)。取得周期と最新 Run の時計との差は [時間表示の同期](#run-の時間表示を同期状態から分ける)を参照する。
 
 ### コンパクト Kanban の検証範囲
 
@@ -370,9 +378,9 @@ Live delta はまず整列済みの永続列へ挿入位置を求める。同じ
 
 ### Run の時間表示を同期状態から分ける
 
-Board の Workspace summary は、Workspace ごとに作成日時と ID の降順で選んだ最新 AgentRun の `created_at` を `latest_process_started_at` に返す。`latest_process_completed_at` はその Run が終端のときだけ現在 attempt の保存済み `finished_at` を返す。`latest_process_*` という互換名は旧 ExecutionProcess の時計を意味しない。[最新 Run の選択](../../crates/db/src/models/agent_runtime.rs#L323-L357)・[API の組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192)
+Board の Workspace summary は、Workspace ごとに作成日時と ID の降順で選んだ最新 AgentRun について、その全 attempt の registry にある最初の実 process 開始時刻を `latest_process_started_at` に返す。未起動なら null であり、受理時刻 `created_at` で補わない。`latest_process_completed_at` はその Run が終端のときだけ現在 attempt の保存済み `finished_at` を返す。`latest_process_*` という互換名は旧 ExecutionProcess の時計を意味しない。[最新 Run の選択](../../crates/db/src/models/agent_runtime.rs#L324-L359)・[API の組立て](../../crates/server/src/routes/workspaces/workspace_summary.rs#L170-L192)
 
-`useWorkspaces` は一覧 stream に summary を重ね、初期化後に15秒周期でも再取得する。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
+`useWorkspaces` は一覧 stream に summary を重ね、初期化後に15秒周期でも再取得する。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。pending / starting は Preparing を表示し実行時計を出さない。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
 
 Session 側は Run 一覧の `completed_at` を受け、会話 projection が Run ごとに一つの `runTiming` footer を生成し、`ConversationListContainer` が `ChatRunFooter` を描画する。footer は共通 `ChatElapsedTime` と、保存済みの有効な終了日時を表示する。Goal 専用表示に依存しない。[Run 一覧](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[footer](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[描画](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82)。待機・retry、終了根拠の欠損、再接続時の新旧比較、Goal 会計との違いは [Run の経過時間](../concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)を正本とする。表示のための新旧比較を、stream cursor や実行制御の変更と混同しない。
 

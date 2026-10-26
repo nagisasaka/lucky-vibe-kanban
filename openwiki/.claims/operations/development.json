@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fd1acb6866f4e5ef9431418bfdd474b552681032beca7b8b5ed7a56dfa509ca9",
+  "pageVersion": "sha256:b4c73095434bb9ed3a419df07f4ac26c0865eb1b6e64682096bd3ae45221fd36",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -833,10 +833,46 @@
           "version": "repo-lines-v1:sha256:f4337663f973b9e324869e606c44f1de14413481a2f4db780fa620a00d7aad2d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYjM5ODI4ZTBlNjU5ZDI1MTVkNWYzMjAyZDAxY2EzNDQ5ZTZmZmY3ZGMxYzg4Y2E2MzFkYjI1NTY4ZWU3YTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNjMzNTIwZTQwMmZmMWQzZTc5OGMyMGNkZjBhYTkxZGQ0ZmZjNjg0NTFhZDMzMzMxZDY4NTQ3NTU2MDI3NDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ2MzcyMDIzNjAyYTQ2YTg4ZTFjYTExNWU2NTQwZTY1ZjVmNjViM2VjMDUzMmE5NjhmZWFkZDIxNzI1M2EzZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8573602101134381ae64478beb019f08",
+      "statement": "新しい境界の検証はStartingのDB/port回復、resume合成履歴とnormal/passive initialize、受動readの非モデルRPC/回収、DevServerの共通manager/receipt、MCP一回承認protocolとoffline UIを分ける。offline UIはAPI/providerへ接続せずmock stateのみを変える。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/account_usage_tests.rs",
+          "version": "repo-file-v1:sha256:9ab55c2d7b32fa4f75d9fcb0fd6d722da6a2b8eb0e9220c026e05df481b3460a"
+        },
+        {
+          "resource": "repo://crates/executors/src/executors/codex/client/resume_instructions.rs#L300-L569",
+          "version": "repo-lines-v1:sha256:67dbaeecb68a775fd3088d8eb129136ba5f4783c84766a9102f7fcadcd7bf1ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkYWI0ZjdkODQxMDgxOWU3MDM1Yzg1NmMzZmNjNTIyNzQ4YjYwODRlMjA5Y2RjN2EwYjkwOTg2ODgxMGU2NDUxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3YmM5OGQ2YjBkYzQ5MmM1MDE2ZGYxMDgwNWEzYTU0ZWI5YzE4NGE1YTYxMzdlN2Y0YmVjZmEwYzIyMDU1MGQwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L4448-L4800",
+          "version": "repo-lines-v1:sha256:9a857d92b9f08e0ba7c40c7c58b123b9cffe1647bbe1884378a74e67352778db:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4N2RmYTJlM2YyMzJhOTU4MmE5NWZiY2VlM2ZiMjVhNDg2MmZmZGMwMjY3ODEzNDMzZjAwZGU2YzlhODk0MGJhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5MWNjNDA2ODdkMjQ0ZTlkYWY5MWNlZDQ2NTIzMjY1NjlhNGZiNmRmYzgxZDAzZmJlNzIzYTVlYTNjY2JlOWRmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxN2E1ODAwNzBmNTU1YzRhOTViODNhNmUwNDU5NTc1ZDg4NTRkNWMxMzg0NTBiZDQzMGYxOTZjNjc3MDU3MmE5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4MzEwZDMzMjQ3ZjJjZmIwODlkM2M2ODIyYzkwZWVhYzYwYTg1OWE3NzFlZjdmODMzOWZmYjJhMGZkMDBlMjA4In0"
+        },
+        {
+          "resource": "repo://tests/chat/mcp-approval.mjs",
+          "version": "repo-file-v1:sha256:48b025dffe2c8a44eaeefd47ecb9d7d1ae1ecac22791fc025b9a536ce816ad37"
+        },
+        {
+          "resource": "repo://tests/server/run-managed-dev-server.mjs",
+          "version": "repo-file-v1:sha256:c1765240c251a060d47e123f21ee2981fda287703e8639e6923f1868780520d3"
+        }
+      ]
+    },
+    {
+      "id": "claim_ca10cb93eb5c45cea676f97dd31b04cf",
+      "statement": "7source候補の開発記録は局所検証成功と未実施のfull formal suite/live認証・人間承認後実tool実行・本番DB/Windows/配布artifactの境界を分けている。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/seven-source-candidate.md#L35-L76",
+          "version": "repo-lines-v1:sha256:20923dccdb3cb5059a7bdc776cc4ce41fe0badb2af7899a0000dd3e810301bf0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1YjkxZDMxYWFhZWE0MzIyMDM5YWZhMjdjNzZiMTBiMDZmZWI2MzlmZmU2ZWJjM2I4MTBlZDk5ZjJjYWNjMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjZTVlNTA2YWM4ZmMzMGJlMjUwYmU2M2E0M2FmOWY4ZDJmNDI2MzIwMTRiYjEwYzkwOTliOGVhM2VkY2IwMGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlODBmOTUzZGU5MTEwMTVjZGRiMjE1NTZlZTMyNzNiMjk5MjBlYzExNzM2ODliOWNlODJhYTkyMmRiM2FkYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T16:20:39.259Z"
+    "at": "2026-10-26T19:50:12.086Z"
   }
 }

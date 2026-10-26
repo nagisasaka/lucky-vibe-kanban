@@ -16,18 +16,24 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-d83dfc60bdfadf451d836df3
     resource: repo://crates/git/src/reference.rs
+  - id: openwiki-source-c1a99ab3d402970b84e3cc23
+    resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-d9fe6f50a365b8b34a14b1e4
     resource: repo://crates/server-access/src/provider.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
     resource: repo://crates/server/src/middleware/origin.rs
+  - id: openwiki-source-e1757d002aa325145a915b38
+    resource: repo://crates/server/src/provider_usage.rs
   - id: openwiki-source-53c04d549d6401053afe5fc4
     resource: repo://crates/server/src/remote_mcp/code_query.rs
   - id: openwiki-source-0009a6c83972b5e5975ba606
     resource: repo://crates/server/src/remote_mcp/code_read.rs
   - id: openwiki-source-2a0ddba6878eea1524264906
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
+  - id: openwiki-source-87ddf3d108f228e9ef8f8964
+    resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
@@ -56,6 +62,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-202693827acda4283453b799
+    resource: repo://crates/server/src/remote_mcp/provider_usage.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-ccbefbdb32b7223afc06bb2b
@@ -108,10 +116,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:15:30.599Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -144,9 +152,25 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 
 ## Issue のレビューを共有する
 
-外部 HTTP MCP は `list_issue_comments` / `get_issue_comment` を read scope、`add_issue_comment` を read + write scope で公開し、Project と Issue の所属を確認する。通常の operation receipt による追記なので、モデルの起動・要求変更・承認を兼ねない。内部 stdio の catalog は別である。[登録と dispatch](../../crates/server/src/remote_mcp/mod.rs#L343-L350)・[handler の認可](../../crates/server/src/remote_mcp/issue_comments.rs#L85-L153)
+外部 HTTP MCP は `list_issue_comments` / `get_issue_comment` を read scope、`add_issue_comment` / `edit_issue_comment` を read + write scope で公開し、Project と Issue の所属を確認する。通常の operation receipt による追記なので、モデルの起動・要求変更・承認を兼ねない。内部 stdio の catalog は別である。[登録と dispatch](../../crates/server/src/remote_mcp/mod.rs#L343-L350)・[handler の認可](../../crates/server/src/remote_mcp/issue_comments.rs#L85-L153)
 
 利用時は `get_issue` の `review_target` を保持してレビューを投稿し、他の client は一覧プレビューから必要な全文を読む。レビュー対象の Issue revision と、本文の編集混在を防ぐ comment revision は別の値である。上限・再送・編集後の来歴・古い対象の意味は [Issue の共有レビュー](../concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を正本とする。特に全文はプレビューと連結せず、[revision を固定した分割取得](../concepts/issue-collaboration.md#長文を編集混在なく読む)を使う。[公開 tool 契約](../../crates/server/src/remote_mcp/issue_comments.rs#L65-L82)
+
+本人の本文編集は、全文読取から得た `expected_comment_revision` と同じ issuer/subject の保存来歴を要求する。自己申告 label や legacy の著者名で所有権を代用しない。応答不明時は同じ request/input と元 operation を使い、要求や実行を変える操作へ拡張しない。[本人編集の正本](../concepts/issue-collaboration.md#自分の既存コメント本文を編集する)・[編集 handler](../../crates/server/src/remote_mcp/issue_comments.rs#L188-L239)
+
+## Managed DevServer を操作する
+
+`start_dev_server` / `stop_dev_server` / `get_dev_server_status` は明示 Project / Workspace を要求し、stdio の両 mode と外部 HTTP から同じ UI manager を使う。外部の観測には read + runtime:read、開始停止にはさらに runtime:execute が必要で、一般 write や [Runtime Access の region grant](../concepts/runtime-access.md)で代用しない。Orchestrator stdio は別 Workspace を拒否する。[外部 scope](../../crates/server/src/remote_mcp/dev_server.rs#L13-L108)・[stdio adapter](../../crates/mcp/src/task_server/tools/dev_server.rs#L11-L79)
+
+外部の開始停止は `request_id` を持つ耐久receiptを返す。同じID/入力で再送し、`get_operation` と現在statusを読み分ける。succeededはmanager受付の結果で、アプリreadinessの証明ではない。副作用後の観測失敗は uncertain となり、新IDで盲目的に再起動しない。重複startの再利用、停止後のsettlement、複数Repoの部分失敗と観測状態は [DevServer運用の正本](../operations/workspace-inspection.md#preview-と開発サーバー)に集約する。[receipt と失敗](../../crates/server/src/remote_mcp/dev_server.rs#L51-L108)
+
+Codexが第三者toolの一回限り権限を求める場合は [Session の正式承認](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)へ進む。tool認可を緩めたりOpenWikiのallowlistを転用したりしない。
+
+## Provider account の利用枠を参照する
+
+`read_provider_usage` は read scopeに加えて外部 administrator を必要とし、`provider` と `account_context=server_default` を明示する。account scopeはWorkspaceなしで利用できる。既存Session usageは全所属IDを要求し、native IDを直接渡さない。受動接続はAgentRunを作らず、MCP runtime実行scopeや操作receiptとは別のreadである。[外部認可](../../crates/server/src/remote_mcp/provider_usage.rs#L1-L40)・[共通read](../../crates/server/src/provider_usage.rs#L1-L89)
+
+quota、account summary、既存threadのusage、Workspace累積tokensは交換できない。未知・partial・未対応、provider別の短命接続・終了回収・単位・検証限界は [provider参照の正本](agent-providers.md#受動的な-account-quotausage-参照)を読む。外部MCP成功を実モデル実行やsubscription請求の証明としない。
 
 ## Repository Wiki の同期を依頼する
 

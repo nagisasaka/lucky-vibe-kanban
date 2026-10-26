@@ -34,6 +34,8 @@ sources:
     resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-6fe5fbd6df406f973641b771
     resource: repo://crates/db/src/models/issue_number.rs
+  - id: openwiki-source-0f48367503e71396b298f71a
+    resource: repo://crates/db/src/models/issue_order.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
   - id: openwiki-source-a43253b5be9686da077b8067
@@ -48,6 +50,8 @@ sources:
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
     resource: repo://crates/server/src/routes/workspaces/links.rs
+  - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
+    resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-ff91ec3e5a5f406a698e52e6
     resource: repo://packages/ui/src/components/KanbanCardContent.tsx
   - id: openwiki-source-36bc16e51274306c238a63a2
@@ -66,10 +70,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:15:30.599Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # Project・Issue と実施の関係
@@ -88,7 +92,7 @@ Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key �
 
 Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・Integration Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、最大番号の削除後には番号が再利用され得る。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L1-L24)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
 
-priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L894-L925)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
+priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L879-L963)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
 
 Tag は Project 内の分類であり、system はLVK管理の予約名である。通常のrename・削除・手動付与/解除を拒否するがcolor変更は許す。新規Projectと一度限りのmigrationで不足する system / survey / bug / feature を用意し、読取は削除済み通常Tagを再作成しない。既存同名定義は残し、自動 system 関連は最小IDを選ぶ。Integration/OpenWikiの生成transactionと、記録されたownerのstartup補完がsystemを付ける。ラベルはownerの証拠や承認に代わらない。[初期化と既存owner](../../crates/db/migrations/20261025000000_issue_classification.sql#L13-L39)・[同一Projectと予約名](../../crates/db/src/models/board_tag.rs#L14-L72)。外部MCPのadd/removeは独立した一件の変更で、他のTagを置換しない。[MCP](../integrations/remote-access.md)。
 
@@ -149,10 +153,10 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 | --- | --- |
 | 検索、優先度・担当者・Tag の filter、表示 sort | view の設定。元 Issue を変更しない |
 | 同じ列での手動並べ替え | 影響する Issue の共有 `sort_order`。Manual 以外では拒否 |
-| 列をまたぐカード移動 | 移動先 Issue 群の `status_id` / `sort_order`、移動元の順序 |
+| 列をまたぐカード移動 | 移動した1件の `status_id` / `sort_order`。他 Issue の rank は維持 |
 | Status の並べ替え・非表示設定 | Project Status の `sort_order` / `hidden`。下記の blocked 判定にも影響 |
 
-[絞り込み](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L74-L169)・[カードの mutation](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L712-L806)・[Status の保存](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L821-L880)
+[絞り込み](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L74-L169)・[カードの mutation](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L684-L770)・[Status の保存](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L821-L880)
 
 `hideBlocked` は blocking 関係の元 Issue を blocker として調べる。blocker が **最後の可視 Status（sort_order 順）または任意の hidden Status** にあれば解決済みとして扱い、それ以外なら被ブロック Issue を隠す。参照先 blocker が手元の集合に存在しなければ、ブロック中と判定しない。名前が Done か、`completed_at` が埋まっているかという判定ではない。列の順序・非表示化は見た目だけでなく、この依存表示の意味を変える。[解決済み Status 集合](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L311-L325)・[blocking の向きと判定](../../packages/web-core/src/features/kanban/model/hooks/useKanbanFilters.ts#L149-L169)
 
@@ -166,9 +170,17 @@ Issue 番号・省略表示のタイトル・未 archive の関連 Workspace 数
 
 タグは固定二件ではなく利用可能幅で可視数を決め、隠れた件数を `+N` で残す。長い先頭タグは省略して全文を title に保持し、既存のタグ編集操作を維持する。計測機構は [Web の描画責任](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
-件数と状態集約は母集団が同じとは限らない。件数は未 archive の関連 Workspace 全体、状態は `local_workspace_id` があり、active Workspace 一覧にも存在するものから作る。Workflow 所属 Workspace も状態集約に含むが、通常 Workspace 一覧からは除き、WorkflowAttempt の表示と重複させない。[集約対象](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L649-L721)・[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1317)。従って件数は表示中の通常 Workspace カード枚数を保証しない。
+件数は未 archive の関連 Workspace 全体で、通常一覧は Workflow 所属 Workspace を除くため、表示枚数と一致を保証しない。列見出しの括弧件数は別の値で、filter 後の描画用 Issue ID 数を0も含めて示す。[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1270)・[列見出し](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1107-L1135)
 
-承認待ち、入力待ち、実行中、失敗、未確認更新、開発サーバーはそれぞれ独立したフラグとして集約する。別 Workspace が実行中でも承認待ちを隠さない。承認は `hasPendingApproval` または最新 status の `awaiting_approval`、入力は `awaiting_input`、失敗は `failed` / `crashed` / `audit_failed` を見る。実行中・未確認更新・開発サーバーは対応する summary field を使う。Workspace 一覧 ON では開発サーバーの Issue 集約ラベルだけを抑え、該当 Workspace の淡青背景と Play icon の tooltip / accessible label で稼働を示す。他の重要状態は抑えない。これは Issue の Status を再計算する処理ではなく、過去の全 Run の失敗履歴を網羅する表示でもない。[独立した判定](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L5-L49)。取得失敗時の限界、キーボード・drag と既存保存処理の接続、および実 API と fixture の検証範囲は [Web の操作と保存の境界](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
+Issue 集約の承認・入力・実行・失敗・未確認・DevServer 文字行は、Workspace 表示 ON/OFF とも描画しない。Priority と担当者は LOCAL-ID 行に置き、Workspace ごとの注意状態、読取状態、DevServer をアイコンで示す。注意状態は承認、入力、実行、失敗の順に選び、既読/未読は準備中・実行中等には出さず、DevServer の Play は独立する。pending / starting は Preparing とし実行時計を抑止する。非表示は状態がない証明ではなく、過去の全失敗を網羅する表示でもない。[details の責任](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx)・[Workspace 判定](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L125-L170)・[描画](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L250-L320)。操作と snapshot の収束、ghost、fixture の限界は [Web の操作と保存](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
+
+### Activity による手動順序の更新
+
+本文保存、新規コメント、canonical の Succeeded / Failed / Cancelled / Crashed / AuditFailed の初回終端は、対象 Issue だけを現在列の先頭へ移す。stream の文字追加、単なる Running、同じ終端の再送では順位を変えない。全カードを更新日時で並べ替えたり、他カードを renumber したりしない。列の status 同期とは独立で、失敗・取消でも activity rank は更新できる。[共通順位処理](../../crates/db/src/models/issue_order.rs#L1-L83)・[本文保存](../../crates/server/src/routes/local_remote.rs#L879-L963)・[全終端の条件](../../crates/db/src/models/agent_runtime_kanban.rs#L7-L23)・[両保存経路の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L750-L865)
+
+共通の global UI_PREFERENCES Scratch に保存された Project / active view / sort をイベントの transaction 内で読む。Manual (`sort_order`) のときだけ rank を変え、降順では最大側を先頭にする。title / priority / created_at / updated_at の明示 sort 中は、裏の手動 rank も更新しない。Board 非表示中も保存済み値が基準となり、複数 browser の違う選択や設定保存失敗時には、各画面の未保存の意図まで保証しない。[保存済み sort の解釈](../../crates/db/src/models/issue_order.rs#L5-L83)
+
+順位だけの promotion は Issue `updated_at` を変えず、コメントの review target を順位更新だけで古くしない。本文・新規コメントや canonical event の transaction と一緒に commit / rollback する。drag 中の昇格は [Web の rank 計算](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)で扱い、DB は `expected_sort_order` と現在値が違えば古い drop rank を捨てる。列間移動は新しい activity を移動先の先頭へ持ち越す。これも明示 sort 中には promotion を停止する。[書込境界](../../crates/server/src/routes/local_remote.rs#L879-L963)・[遅延昇格の回帰](../../crates/server/src/routes/local_remote.rs#L3630-L3730)
 
 ## Issue のアーカイブ
 

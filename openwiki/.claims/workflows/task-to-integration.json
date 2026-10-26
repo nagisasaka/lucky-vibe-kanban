@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:94dc371ac9f44d9b11626c1a28a45e108099a72d2b02d025a8ff6655cc51edf4",
+  "pageVersion": "sha256:7aab056be5ec99deef06b4e3895919744636e6cb1fd254759826f4099b1e25d2",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -328,7 +328,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:a604e796416e9b932a9f0715e8dcd5a42256094f9bca22632d0e9c4fa3af23fd"
+          "version": "repo-file-v1:sha256:0d8ce233954abae9463469a82e1c1777f314f71fdd133b32bd1c2d5d2a059bc9"
         }
       ]
     },
@@ -467,6 +467,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T10:15:30.599Z"
+    "at": "2026-10-26T19:37:05.139Z"
   }
 }

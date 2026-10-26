@@ -24,6 +24,8 @@ sources:
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
+  - id: openwiki-source-e1757d002aa325145a915b38
+    resource: repo://crates/server/src/provider_usage.rs
   - id: openwiki-source-2a0ddba6878eea1524264906
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-076036ed7bdac82d628d39d1
@@ -38,6 +40,8 @@ sources:
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
     resource: repo://crates/server/src/routes/web_push.rs
+  - id: openwiki-source-d13a9ab0f87dbc81d0cfe1b4
+    resource: repo://crates/server/src/routes/workspaces/dev_server.rs
   - id: openwiki-source-64c93a1aaf76831699f0fbf6
     resource: repo://crates/server/src/runtime_payload.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
@@ -56,10 +60,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
     resource: repo://scripts/dev-rustc-cache.mjs
-generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T16:20:39.259Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # システム境界と起動順序
@@ -124,6 +128,8 @@ Deployment の構築中には、DB 初期化後に既存の製品実行記録か
 standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使う。既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 接続の不一致を避ける理由が記録されている。[standalone listener](../../crates/server/src/main.rs#L168-L199)、[embedded listener](../../crates/server/src/startup.rs#L107-L142)
 
 Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L135)・[設定なしの維持処理](../../crates/server/src/routes/web_push.rs#L326-L342)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
+
+Deployment は host 再照合後に [Starting receipt の回復](agent-runtime.md#starting-保存失敗と未起動の回復)を開始する。これは受理済み起動の再照合であり、[managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)の script tracking や [受動的な provider 使用量参照](../integrations/agent-providers.md#受動的な-account-quotausage-参照)とは別の所有境界である。[起動の結線](../../crates/local-deployment/src/lib.rs#L145-L163)
 
 ## 境界を変更するとき
 

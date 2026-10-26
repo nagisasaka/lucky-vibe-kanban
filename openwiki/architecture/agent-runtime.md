@@ -5,8 +5,10 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T19:37:05.139Z
 sources:
+  - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
+    resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
@@ -55,7 +57,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -64,11 +66,21 @@ Agent Runtime は、[Session 内の AgentRun](../concepts/session-and-agent-run.
 
 ## 起動と所有者
 
-`LocalAgentRunPort::reserve` は Workspace の lifecycle lock を保持して request と attempt の整合性、Workspace を検証し、実行 ID を DB に保存する。Setup の完了待ちなどでは、予約と起動を分けられる。archive 済み・worktree 削除済みなら明示再開前の起動を拒否し、[手動 archive](../concepts/workspace.md#archive削除期限-cleanup)と予約の競合を防ぐ。[Workspace 検証](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)`launch_reserved` は既に Pending でなくなった実行を重複起動せず、現在の状態を返す。[起動境界](../../crates/local-deployment/src/agent_run_port.rs#L306-L344)
+`LocalAgentRunPort::reserve` は Workspace の lifecycle lock を保持して request と attempt の整合性、Workspace を検証し、実行 ID を DB に保存する。Setup の完了待ちなどでは、予約と起動を分けられる。archive 済み・worktree 削除済みなら明示再開前の起動を拒否し、[手動 archive](../concepts/workspace.md#archive削除期限-cleanup)と予約の競合を防ぐ。[Workspace 検証](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)`launch_reserved` は既に Pending でなくなった実行を重複起動せず、現在の状態を返す。[起動境界](../../crates/local-deployment/src/agent_run_port.rs#L308-L366)
 
 `agent-process-host` は一つの provider process と Native Audit を所有する独立ホストである。アプリ側は認証付き loopback endpoint に再接続し、保存済み host-event cursor の後から観測を取り込む。このため、サーバーとの接続断をそのまま provider の終了と扱ってはいけない。[ホストの契約](../../crates/local-deployment/src/process_host.rs#L1-L5)
 
-Starting の canonical event 保存は provider launch の前提であり、書込失敗時は起動せずに戻る。同一 attempt の再配送では event ID と保存済み時刻を再利用する。初回 input event ID は従来互換を保ち、Retry の input event ID は attempt と message から生成するため、同じ本文でも別 attempt と衝突しない。[起動前の保存](../../crates/local-deployment/src/agent_run_port.rs#L2563-L2616)・[input identity](../../crates/local-deployment/src/agent_run_port.rs#L585-L605)
+Starting の canonical event 保存は provider launch の前提であり、書込失敗時は起動せず、下記の耐久 receipt から回復する。同一 attempt の再配送では event ID と保存済み時刻を再利用する。初回 input event ID は従来互換を保ち、Retry の input event ID は attempt と message から生成するため、同じ本文でも別 attempt と衝突しない。[起動前の保存](../../crates/local-deployment/src/agent_run_port.rs#L2647-L2870)・[input identity](../../crates/local-deployment/src/agent_run_port.rs#L585-L605)
+
+### Starting 保存失敗と未起動の回復
+
+通常 create は受理 identity と同じ DB transaction に `launch_requested` を保存する。setup 待ちの reserve は対象外で、`launch_reserved` が配送された後だけ起動対象となる。Starting の各保存前に永続 counter を消費し、同じ attempt では最大3回とする。再起動しても予算をリセットせず、同じ Starting event ID と保存済み時刻を使う。[受理と配送](../../crates/local-deployment/src/agent_run_port.rs#L308-L366)・[永続予算](../../crates/local-deployment/src/agent_run_port.rs#L2647-L2724)
+
+上限後、host identity・PID・process group・開始時刻・host cursor・Native Audit・Starting event がないことを照合して `starting_failure_pending` を立てる。このフェンスは遅延 Starting と host 予約を拒否する。Failed lifecycle、StartupFailed 診断、receipt 完了の順に冪等保存し、部分保存は既存 supervisor の1秒ごとの再照合で続ける。Failed を先に保存するのは、新 Retry が前 attempt の終端状態を Error 経由で継承しないためである。[フェンスと保存順](../../crates/local-deployment/src/agent_run_port.rs#L2725-L2828)・[host 予約条件](../../crates/db/src/models/agent_runtime.rs#L813-L835)
+
+PID が NULL というだけでは未起動と証明できない。host endpoint などが予約済みなら Launch の ACK 喪失があり得るため、既存 attach / observer へ戻し、置換 provider を起動しない。共通 Cancel も完全な未起動証拠がある場合だけ Audit writer なしで Cancelled にでき、実開始の証拠がある監査障害は audit_failed のまま扱う。[未起動条件](../../crates/local-deployment/src/agent_run_port.rs#L2628-L2680)・[取消境界](../../crates/local-deployment/src/agent_run_port.rs#L2980-L3015)
+
+migration は既存 registry へ既定0の3列と部分 index を追加するだけで、旧 pending の backfill や再起動をしない。DB が永続的に書けなければ、有限 retry があっても耐久終端を保証できない。今回の故障の原因を特定する機能でもない。[前方 migration](../../crates/db/migrations/20261026180000_agent_starting_recovery.sql)・[busy / restart / setup / ACK 不確実性の回帰](../../crates/local-deployment/src/agent_run_port.rs#L4448-L4800)。画面の Preparing と実行時計は [Session の時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
 
 ## Codex の承認待機を所有する場所
 

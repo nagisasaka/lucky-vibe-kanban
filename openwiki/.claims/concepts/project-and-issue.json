@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:acbd3061595536a4a4af8b9db3f09e6d539ce411326e40597347379c231e7b24",
+  "pageVersion": "sha256:0306b79233e60c94483162e7341661c0d313c3b8ece7f19d4482ccd09f5cff22",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -36,7 +36,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:828389e96aa3883efa48f377247082744494b9659d2d34b76e1955654b3f0bfd"
+          "version": "repo-file-v1:sha256:e657089eb2d907a8e99f36658d0a8cfd830761b450268e144f0abdd5482b9c6e"
         }
       ]
     },
@@ -59,8 +59,8 @@
       "statement": "Issue部分更新はnullable属性の省略保持と明示nullを区別するが、priorityの明示nullはmediumへ正規化する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/local_remote.rs#L894-L925",
-          "version": "repo-lines-v1:sha256:c910a8f28236e69a99f68c127220527a9342004e4546fc8d82aedf64854f8e4a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzNTk5NjcxMzI5NzcwODYwODMwZDk1YjRjZDQzNGU3ZGE1NDNjZTEwODQ2ZTM5ODRjY2M2Y2EyNDE5NjM1N2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3NDliNmVkMzYwMjExY2NmN2YwZjlmZjFhMjBkNTg3YTllOTkwNGFjNTExYmIxYmY4MTljYTc2NmU0NGZkNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1MTE1NGVlMzUxOGFiMmZhOWE3Y2VkZTcwMWFhNGYxYzg1NjFiOTEwMzIwNTZjMjdlMzRjZGE1M2U1MzQzYWYifQ"
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L879-L963",
+          "version": "repo-lines-v1:sha256:6e5725f75fee3229d8bb1a974d7620ac09ab2d54ac0dd0b2a1804c7c80cd555f:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNTNiYTQwNGJlN2RkOWI5MzNlZjJkYjRiNDk5NjEyNGY2YzQ3MWI5MDYxNWQwZTc3YjMyNTVkMGY5OWJiMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjY2Q3ZDcxYzRjMTc2M2Q4NTUyZjE3ZmMyY2Y0MTBkOGVlNzI4MzhkMzY0YmYxYzM5NTE3ZGYzNWY0NmZjMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3ZjJjMDU2OWQyNTc3Y2Q1ZjZmNzk2Y2E3NzUzNmY2ODY2OGI4M2E3MTUyOGY5MGQxMzYxN2M0NDJkMDcwZDIifQ"
         }
       ]
     },
@@ -154,7 +154,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L712-L806",
-          "version": "repo-lines-v1:sha256:07dd3e290097cf030adfad04ad579c2ecab1b4bd9f1e8f2e254e4ac545e189de:eyJzZWxlY3RlZExpbmVDb3VudCI6OTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkOWNlNTY4NTJlMTk3MGQ5ODBkMjM5ZDM4MzEwNzAzZDY5M2UzMmQyYzkwN2E3NGRkOTdkNzVhNDQ1ZThkMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzYmUzMDNmZjk5NzI3NzU0MDBkMjNmNTY3MjVjMTI0MDZmYjExNjU0YmFmM2ViMDNmNDE4MGExYjhlZDQ4OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMzU3YjE3ZmQwY2U3MjlhYTliOTE2NzgzNGZkMGU1MDkwOWU0NzUxMDI5NWIyOWJjMGYxMTFhMThkNTY3MDAifQ"
+          "version": "repo-lines-v1:sha256:dfc174d8f73217f7eb9406ff6921fa2e15cf87ebb0d0a267d6fa2b32853558e9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZDFhOTUzNTJjNTgzNWQ5MDNjMzdlNThhYWY3MTM2ODhhNDllN2MxNTJjOTBkMDNjNGU2MTYxYTk0ZWRhMjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzYmUzMDNmZjk5NzI3NzU0MDBkMjNmNTY3MjVjMTI0MDZmYjExNjU0YmFmM2ViMDNmNDE4MGExYjhlZDQ4OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxMzU3YjE3ZmQwY2U3MjlhYTliOTE2NzgzNGZkMGU1MDkwOWU0NzUxMDI5NWIyOWJjMGYxMTFhMThkNTY3MDAifQ"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L821-L880",
@@ -290,7 +290,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs#L807-L859",
-          "version": "repo-lines-v1:sha256:9599c4ac062b6f91d57f00a0ca57689af5c19ad1cea77baa4765632066ff3eea:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyMTgyNzE1YmMwMWYxOWNlMjBjNzljMzAwNTQ1Nzc1YTQ5NDUxYTU3MzcyNTJkYzIyZDgzOWM1YzI0MDI0NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiNWRhOTczYzRhYWRhZDdjOGFiNTVjMDI2ZDU0OWE1ZDhmMmUwMWQ1OWFhNjI0NmZkZmZhMzUxNDQ5OWU5NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMTM2Zjc3OTViYTIzODE4Njg2MjE1Y2ZhNzg0OTczOWFkMDkyYWZhMTRkNjRlOWQyOTZkMzAxZmE2OTBlMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1NWJiY2NhYzYxOGM0Y2JlMGM5MTA4MjA1ZmE4NzhhMGZiNTkzYjliMGNhNzNhYzc3OTlmOTc2NWZjYWMxMTIifQ"
+          "version": "repo-lines-v1:sha256:fbc4438c39c0c08d5fb01a0c89a793a672cf2fa67b133065d90542f0ae7daad6:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyMTgyNzE1YmMwMWYxOWNlMjBjNzljMzAwNTQ1Nzc1YTQ5NDUxYTU3MzcyNTJkYzIyZDgzOWM1YzI0MDI0NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiNWRhOTczYzRhYWRhZDdjOGFiNTVjMDI2ZDU0OWE1ZDhmMmUwMWQ1OWFhNjI0NmZkZmZhMzUxNDQ5OWU5NzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjMTM2Zjc3OTViYTIzODE4Njg2MjE1Y2ZhNzg0OTczOWFkMDkyYWZhMTRkNjRlOWQyOTZkMzAxZmE2OTBlMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1NWJiY2NhYzYxOGM0Y2JlMGM5MTA4MjA1ZmE4NzhhMGZiNTkzYjliMGNhNzNhYzc3OTlmOTc2NWZjYWMxMTIifQ"
         }
       ]
     },
@@ -300,7 +300,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_comments.rs#L135-L153",
-          "version": "repo-lines-v1:sha256:5e7ae998da02993fcfaf19a66e881b7d5014615a5cf0ed613da399ad1fec24b0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5NmU1MWNjOTk2NDhkNDhjZGFjN2IyYzFhMWZjZmIzMzQwZDNkNDBjODZkZTEzZGZkOTg3MDhiMzIyMTAyYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYmM0NWU2Njg0NWJjZjllMmI2YTc1MDUyY2YxZmNhNTc5ZGNjYzMzYjQ2OWE3NWU1ZTQ2YjU2MzIxY2U5ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyN2Y5ZTQwYWNiNDFmMTlmMjNhZGU4NGRkODljMGNlNGU3N2M3YjFjNmRlNGE3NDg3NjY5OWU2NWNkMWVjMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1ZjgwOGM0M2U3M2UwYjY1MDM0YmIxN2I1NjQ3YzdkMTc4MDBhZmE0NzE4NGNlM2IyNmI5NDZlZTE5MDU0YjYifQ"
+          "version": "repo-lines-v1:sha256:399194915114c9ab616a23aed666f9da0c6e5df34bf26bf9bb4a555e0da46927:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5NmU1MWNjOTk2NDhkNDhjZGFjN2IyYzFhMWZjZmIzMzQwZDNkNDBjODZkZTEzZGZkOTg3MDhiMzIyMTAyYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYmM0NWU2Njg0NWJjZjllMmI2YTc1MDUyY2YxZmNhNTc5ZGNjYzMzYjQ2OWE3NWU1ZTQ2YjU2MzIxY2U5ZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyN2Y5ZTQwYWNiNDFmMTlmMjNhZGU4NGRkODljMGNlNGU3N2M3YjFjNmRlNGE3NDg3NjY5OWU2NWNkMWVjMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1ZjgwOGM0M2U3M2UwYjY1MDM0YmIxN2I1NjQ3YzdkMTc4MDBhZmE0NzE4NGNlM2IyNmI5NDZlZTE5MDU0YjYifQ"
         }
       ]
     },
@@ -346,31 +346,11 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
-          "version": "repo-file-v1:sha256:f4d955edb7104ec4150d09fc3c65d837619b7b6fc47000e0ec59913a293eda14"
+          "version": "repo-file-v1:sha256:470fe2ae6ff169c887978f0181654d792a584b5f26cc1afb503e5a105f6496c3"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1240-L1294",
-          "version": "repo-lines-v1:sha256:ecbb29dea6954c41d8e837b0bec4a4d63e7c34cfc360628cf6f3cc0a3b8838a9:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzYzM4YmU1NDE5ZTE1ZWFlZTFiMDc5NmMwYTc5OTg4M2IyNDZmY2QxMjExOWZkZjExMTFkYzY1NmJhNWNhNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmYzgxNWUxNDJhMTJkYmQxZGNkYmY3NDFmODI2OTk2NTFjZmUwYjI5NGMxMDdjMjBiMTMyYjYxZTI5NWY3ZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhNGY0NWVhZmEyYjg5MjBlNGE0MGNkN2IxZWFjZWJjZjEzMmI3MzNmMzJmYzQ2YjJkMjhlMDY5Y2EwMDAzYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxODAzNGUxNDlkNDkxMTMyNDE5YzkzOGQ5ZTUyMWFmMmM3YTQ1MWM0MTIxMDAyNzIwOTAzNWI1ZTY4NzA3NzIifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_bbb3f3e8ed6c4f46b08475b5686c1d17",
-      "statement": "カードの件数は未archiveの関連Workspace全体だが、状態集約はlocal_workspace_idがありactive一覧に存在するWorkspaceを使う。Workflow Workspaceは状態集約に含め通常一覧から除外するため、件数と通常一覧枚数は一致を保証しない。",
-      "evidence": [
-        {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:71324576ed7a942400320d66086e620c9a85c2eb1fc1a3af37fc4c549747056b"
-        }
-      ]
-    },
-    {
-      "id": "claim_36c0b61d947c4f25a85b016a0c5089b0",
-      "statement": "コンパクトカードは承認・入力・実行・失敗・未確認更新・dev serverのフラグを独立に集約する。承認はhasPendingApprovalまたはawaiting_approval、入力はawaiting_input、失敗は最新statusのfailed/crashed/audit_failedを調べる。 Workspace表示ONではdev serverのIssue集約だけを抑え、Workspace側の背景とPlayで示す。",
-      "evidence": [
-        {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
-          "version": "repo-file-v1:sha256:f4d955edb7104ec4150d09fc3c65d837619b7b6fc47000e0ec59913a293eda14"
+          "version": "repo-lines-v1:sha256:110a03dbf1914b3c1c4b6f2536391eba2dcc83172ca53cea4439cd1a0f2ae241:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzYzM4YmU1NDE5ZTE1ZWFlZTFiMDc5NmMwYTc5OTg4M2IyNDZmY2QxMjExOWZkZjExMTFkYzY1NmJhNWNhNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmYzgxNWUxNDJhMTJkYmQxZGNkYmY3NDFmODI2OTk2NTFjZmUwYjI5NGMxMDdjMjBiMTMyYjYxZTI5NWY3ZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhNGY0NWVhZmEyYjg5MjBlNGE0MGNkN2IxZWFjZWJjZjEzMmI3MzNmMzJmYzQ2YjJkMjhlMDY5Y2EwMDAzYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxODAzNGUxNDlkNDkxMTMyNDE5YzkzOGQ5ZTUyMWFmMmM3YTQ1MWM0MTIxMDAyNzIwOTAzNWI1ZTY4NzA3NzIifQ"
         }
       ]
     },
@@ -499,10 +479,88 @@
           "version": "repo-lines-v1:sha256:0aca68da69e9d4e2a2ff750a9fec63dbcea0ef01e237bf4027575cd0bfd8389a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1NWNiYjk1YTdlNzdlZDNhNjYyYTBjZDAzOGViN2JjOGZjZDg0M2ViZWIzNWMwZjI3NTAxM2U2ZjI2ODgzNmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwMWY1OGUxMGJkM2FmMjFjYTM1NWE4ZDU2YzM4ZjY0MTEzZDk1ZGQ1NTM3ZDVhN2MyN2FhZjNhMWExM2E1MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwNWUxMmE3ODk0N2U3ZjAzYTM5OWNmYTVkZjBjZTEzOTI0MTQwMWRlZWMwN2VhZTg2YzJmYjE5MjcwZDhmZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4MjIzYjRhOTM2Y2YzNzg4MWQwZmFmOWY0NjkzN2RlZDFmODU4Njc2M2EyYjY4NTBhNjgxMzlkMjUwMzIzZWQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_ad789b7db0d54500a5907f59c8fedaab",
+      "statement": "KanbanのWorkspace件数は未archiveの関連全体で、Workflow所属を除く通常表示枚数と一致しない。列見出しはfilter後の描画Issue数を0も含め表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1107-L1135",
+          "version": "repo-lines-v1:sha256:0bc8d9ee183299d3bfd966ee170f06613451c7b863e85d3a0bf4601974f5b1c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4MzA4YzQ5NmY4Mzg1MzNhMWEwMTM3ZmZlMThlMjQ2Yjc0NzZjOTBhMWJjOTZlNjQzZjY1MjY4MmZiZjQzZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNTBiZGU0MzA1MWY0MDM5ZjBlMWM0YjIwNzQ5NDJhZmEyMzA0ODljZjYwNmY4N2QyMjZmZDUxOTAxZDlhNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmYjg5YzJlM2E2OWYxNzhiNzM3ODMyZjViOThjZDMwMWM4YTE5MTgzMDY1YzQ2YWM3MzA4Njg3Nzk0YmM3ZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkZDFhNWMzODIxYWI3OTkzMjkzM2FhMDY3ZjAzNDI1NWZiYTE5MmQ2NjdkODY2ZjZmOTNlNmRkZWE5YzZlZTIifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1270",
+          "version": "repo-lines-v1:sha256:f4fc4da9954e7c660b6357671ca046a7b312eb2c790f65c92f0ea26805a66b4b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjMzRhN2I4ZmViYmUyZTViZWJjYTI3MGJiODZhZTVkMDRiMGNmMGMxYzc3NDQyM2JlOGQwMDA0ZTY2Y2UzMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1Yjc1YTdhZDYyNjZhNmIwMGNhMzU0MWQ2ODJhYjc4M2RhMDEwMTAxZWJlMTY2ZDVjNTZiMjgyYTg1MDExYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczN2I0NGMxYzZlNGJhMTc2MzQwODQ1ZTY0NTJkNzJkOWM2YTBmNjU4OGEyZTczMTU5MDJlYzkxYWExY2ZhYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwZmUyMGZlYmNhM2ZkNDY2ZTg0YWRhZDI4NmZiMjMwYTc3ZTU5ZDMyOWE0MTIzYzIwM2ExMzJiYTVkZjU1ODYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_17987e00d9c048a69a6dba2e3c602a9b",
+      "statement": "Issue集約の6状態文字行はWorkspace表示ON/OFFとも描画しない。Workspaceの注意状態は承認・入力・実行・失敗の優先順、読取状態は準備/実行中等には抑止し、DevServerのPlayを独立表示する。Priorityと担当者はID行に置く。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/IssueWorkspaceCard.tsx#L125-L170",
+          "version": "repo-lines-v1:sha256:70764858dc0668757cdf5fc4a887c248755b2bd604c6e83d7e75512befadb7e1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NDM2M2ZlZjFlNjM3YjAxNmIwNTljNTA5NTE2ZjA3NTdmNmI4NjExZTEwY2JiYmM0NjFjMDFjZDQzNTBhOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNDFlZTA5MGY0Zjc1YTAzZWYyMTllYTkwOTRmYzE5NDI1NjBmNDFiNmUwNzdhM2MyMTNkMjRiNGI0Mjk5YTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjYmJkNzA3NGM2MWVhY2U5NDEyOTA2NTg2MjcxMDViZDM4MjZjOTM2MTVhODk3NmM3YmE3YWMwMTRiZGNjMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzYjA1ZThlNWYwNmQ5ODA0NDA3MjEyNmVhZmU3YjY0OTNkYjMwZDU5ZmMzYmY3N2FlMDc3ZGE5YmNiYmQyYTMifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/IssueWorkspaceCard.tsx#L250-L320",
+          "version": "repo-lines-v1:sha256:4c98439da06f1aabb6495aa5b5348b8e9334622993591864bbf0498c3447049a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MWEyNDRiM2RkNjAwNGU1NzBmMDY5N2JmM2I3YzA4YWZhN2IzYmMyYTI1ZjAxNWViYzMwODQ2YWMwMTQ0ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTc4OGE4Yjk1MDI4OWRkZGI3M2FmMGFmMDdiMTgyN2UwZjQxMmY1YmZjNDg2ZmYyMGIzNWMyMzgyNjg4OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwYjVlOGM5MDgxN2UwOWQ2NjAzYTViYjUwMjk1ZWVjMmY2NzZjN2UyM2U4NDM3ZmM4MDVhODVkM2YxZGU2MDgifQ"
+        },
+        {
+          "resource": "repo://packages/ui/src/components/KanbanCardContent.tsx#L185-L255",
+          "version": "repo-lines-v1:sha256:5f6627eb03bde0a3c57a2329f74e9068d9a35d55a22ed7e9d935050056b2a94b:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3MzY5NTY4MzljNjM1YmFkNzRmZTM3NmY5ODhmM2Y1ZWNiOTAyMmRmZmY3MzUyZTg4MzZkMTA3N2Q1MmUyN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MTJhNjg0ZGQ5Y2NjOWEyOGQ5YjhhOWU4NDZhMThiYzAyZTMwZmZlZDNjZWNjNDU5YzQ1YjMwODgyODllYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlNmUyZTJkMDNiOGQ3NTc5ZDhmMGI0OGZmMTQyN2Q5ODg4ZTFmYjIyYTVmNGExZTNmNjEyOGJjMjIzNmJmYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwZDE0Mzk2NzFjNjEyYzliMGM2MWZiYmQyM2JkMWZlYjIwZTc2NjUxYTU0ZjMzYWZhMTc1MGUyY2Q4ZjIyYjEifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
+          "version": "repo-file-v1:sha256:470fe2ae6ff169c887978f0181654d792a584b5f26cc1afb503e5a105f6496c3"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f12dc6579714c0bba06eb654e73941b",
+      "statement": "本文保存・新規コメント・全5種類の初回canonical終端は対象Issueだけを現在列の先頭へpromoteする。単なるRunningやstream、同終端再送では更新しない。順位更新自体はupdated_atを変えず元イベントと同じtransactionに入る。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/agent_runtime_kanban.rs#L7-L23",
+          "version": "repo-lines-v1:sha256:3a9bd06fd5ddf88f4d0ab9083cab72ad52b912b347c7c05eb7542a3271f481fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0YzM2MjdjY2NjMmE3MGUzYzY5NWY3M2IzOTgzYzBjYTU0NTlkZTFmZTM0N2QwMjY5YzMzMDFmMjAzYzUwMzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlYTA4N2VlODZlYjI4ZDhlOTE1ZTA5MGRhMTRhOTdjNTM2MDhmZTE2MjI0MjQyN2U4NjhlZjRjNzkwMGVhZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExMWNkYWQ2YmJjYzgyYTdjMGJmZDRkMWFlNmY2ZGY4NTI1ODNjYWEzMzM1MGNkNTJmMWVkM2JlNGU3NWQ2MGIifQ"
+        },
+        {
+          "resource": "repo://crates/db/src/models/issue_order.rs#L1-L83",
+          "version": "repo-lines-v1:sha256:c3813fae7b2649e9dec969abdbc319581a2e4fa37e4cded3e7b1b864d7d4dac3:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZDUwNzRiMTBiNTEzZjc0ZDYyNWIxY2I1Zjg2ZDY2MDYwNWU2OGRhZDEyNzM2NWU3YTVlN2RkYjkwOTM5ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3MGI0NDUxMzg1YTI4MWRhYjYwYTMxZGQyNjFhYWI3MDAyNTdjZjQ0MTIzYmU3OTU5ODI3M2VlNTc1YjI1N2YifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/issue_comments.rs#L162-L184",
+          "version": "repo-lines-v1:sha256:e6da43b04ad1d939ffe5f4c82df6f6a61250f5e19087db16784be8c12cd67fc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ZDAzMWQ5OGM5YTlhYzgyMDg2ZGIzZDU5YzBlNjhiMTlmNDE2ZjU3MzMzNTI3YmI0NGUzYmYwYWU5NDA3NWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0MGVmZWI5MjJjNjNjODViNmJmZjE2MDVlMTIxMTZiYzE1NDhjNDNhY2E2ODY2NjYxNTExZWFkZjcxZjM3MDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3YzM0ZjUxNTljMTgzMmQ2ZDllYzMzYWE5YzlkZjk1MzU5ZWRhMmY2YTliMTJiY2UxM2M1ZmViODc0OGJkOTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L879-L963",
+          "version": "repo-lines-v1:sha256:6e5725f75fee3229d8bb1a974d7620ac09ab2d54ac0dd0b2a1804c7c80cd555f:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNTNiYTQwNGJlN2RkOWI5MzNlZjJkYjRiNDk5NjEyNGY2YzQ3MWI5MDYxNWQwZTc3YjMyNTVkMGY5OWJiMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjY2Q3ZDcxYzRjMTc2M2Q4NTUyZjE3ZmMyY2Y0MTBkOGVlNzI4MzhkMzY0YmYxYzM5NTE3ZGYzNWY0NmZjMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3ZjJjMDU2OWQyNTc3Y2Q1ZjZmNzk2Y2E3NzUzNmY2ODY2OGI4M2E3MTUyOGY5MGQxMzYxN2M0NDJkMDcwZDIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_33b4fd0b53924b2d891cfa215205d5ea",
+      "statement": "Activity promotionはglobal UI_PREFERENCESの保存済みProject/view/sortをtransaction内で参照し、Manualだけに適用する。明示sort中は裏rankも変えず、降順は最大側を先頭とする。未保存のbrowserごとの意図までは保証しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/models/issue_order.rs#L1-L83",
+          "version": "repo-lines-v1:sha256:c3813fae7b2649e9dec969abdbc319581a2e4fa37e4cded3e7b1b864d7d4dac3:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZDUwNzRiMTBiNTEzZjc0ZDYyNWIxY2I1Zjg2ZDY2MDYwNWU2OGRhZDEyNzM2NWU3YTVlN2RkYjkwOTM5ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3MGI0NDUxMzg1YTI4MWRhYjYwYTMxZGQyNjFhYWI3MDAyNTdjZjQ0MTIzYmU3OTU5ODI3M2VlNTc1YjI1N2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_962ad57ae8144c7e9437aa5d30146336",
+      "statement": "Bulk Issue更新はexpected_sort_order不一致なら古いdrop rankを捨て、status移動を伴えばactivityを移動先へpromoteする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/local_remote.rs#L879-L963",
+          "version": "repo-lines-v1:sha256:6e5725f75fee3229d8bb1a974d7620ac09ab2d54ac0dd0b2a1804c7c80cd555f:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyNTNiYTQwNGJlN2RkOWI5MzNlZjJkYjRiNDk5NjEyNGY2YzQ3MWI5MDYxNWQwZTc3YjMyNTVkMGY5OWJiMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjY2Q3ZDcxYzRjMTc2M2Q4NTUyZjE3ZmMyY2Y0MTBkOGVlNzI4MzhkMzY0YmYxYzM5NTE3ZGYzNWY0NmZjMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3ZjJjMDU2OWQyNTc3Y2Q1ZjZmNzk2Y2E3NzUzNmY2ODY2OGI4M2E3MTUyOGY5MGQxMzYxN2M0NDJkMDcwZDIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T10:15:30.599Z"
+    "at": "2026-10-26T19:37:05.139Z"
   }
 }

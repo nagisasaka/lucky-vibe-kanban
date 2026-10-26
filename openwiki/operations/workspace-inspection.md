@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/git/src/lib.rs
   - id: openwiki-source-40ec9fc6ff784c4bb2d0c6e3
     resource: repo://crates/git/tests/diff_stats.rs
+  - id: openwiki-source-a12b66a13b2ce47a85d54985
+    resource: repo://crates/local-deployment/src/agent_process_registry.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-5aa384eaafe1283b1b8cc4a4
@@ -20,6 +22,8 @@ sources:
     resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
+  - id: openwiki-source-87ddf3d108f228e9ef8f8964
+    resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -34,8 +38,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/attachments.rs
   - id: openwiki-source-bdb4dae5722fe76ec5e44001
     resource: repo://crates/server/src/routes/workspaces/create.rs
-  - id: openwiki-source-babbae011de25ca5bb9ba725
-    resource: repo://crates/server/src/routes/workspaces/execution.rs
+  - id: openwiki-source-d13a9ab0f87dbc81d0cfe1b4
+    resource: repo://crates/server/src/routes/workspaces/dev_server.rs
   - id: openwiki-source-37945a97e2b18bbb762fafc9
     resource: repo://crates/server/src/routes/workspaces/files.rs
   - id: openwiki-source-303d74f74def684d4690dea9
@@ -138,10 +142,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -180,6 +184,8 @@ React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を5秒�
 
 Workspace の Todo panel は作業木内のファイルではなく、現在の Card link が示す Project の共有メモを読む。未関連なら Project を選ぶ。[所属・保存・更新競合](../concepts/project-todos.md)を確認し、メモの完了を実行終了や Card Done と取り違えない。チャットを残した panel 切替の配置は [Web の状態管理](../architecture/web-and-sync.md)を参照する。
 
+<a id="workspace-のファイル閲覧"></a>
+
 ## Repo 内ファイルを読む
 
 files API は tree / directory / content / raw の GET を公開する。repo_id は WorkspaceRepo membership で解決し、その Workspace の container_ref/repo.name を root とする。任意の filesystem path を読む API ではない。[router](../../crates/server/src/routes/workspaces/files.rs)・[root の解決](../../crates/server/src/routes/workspaces/files.rs)
@@ -189,6 +195,10 @@ files API は tree / directory / content / raw の GET を公開する。repo_id
 directory は最大2,000 entries、text preview は512 KiBまでで truncated を返す。content は Text / Image / Binary / Unsupported に分かれ、NUL や不正 UTF-8 も binary 判定に使う。先頭だけの preview を file 全体と解釈しない。[上限](../../crates/server/src/routes/workspaces/files.rs)・[content 分類と読み取り](../../crates/server/src/routes/workspaces/files.rs)
 
 raw は streaming 応答で no-store と nosniff を付ける。明示された raster image MIME のみ inline とし、それ以外は application/octet-stream / attachment で返す。HTML や SVG を raw URL で main UI の実行 content に変えない。[raw 応答](../../crates/server/src/routes/workspaces/files.rs)・[MIME policy](../../crates/server/src/routes/workspaces/files.rs)
+
+Content-Disposition は inline 画像にも attachment にも、正規化された basename の ASCII `filename` fallback と正確な UTF-8 `filename*` を付ける。大文字小文字・拡張子・日本語・空白をURL末尾の raw に置き換えず保存名へ伝える。fallbackでは非ASCII・quote・backslash・percent等を安全な文字に置換し、UTF-8側はspaceを%20、asteriskを%2Aにencodeする。stream本体とMIME/認証/所属/path境界は変えない。[応答の組立て](../../crates/server/src/routes/workspaces/files.rs#L247-L301)・[header生成](../../crates/server/src/routes/workspaces/files.rs#L656-L679)
+
+実file fixtureはpreview上限超のbinary bytes、NUL/CRLF、不正UTF-8、画像/HTML/SVGとheader injection、認証・symlinkを検査する。browserの保存ダイアログや元の報告再現は未確認で、headerの正しさを実browser測定と混同しない。[raw回帰](../../crates/server/src/routes/workspaces/files.rs#L922-L1080)・[調査記録](../../docs/development/workspace-file-download.md)
 
 raw URL は local のものをそのまま使い、退役した remote host ID または host-scoped URL は拒否する。host ID なしの外部 URL は保持する。[URL test](../../packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts)
 
@@ -271,7 +281,15 @@ API の `files_changed` / `lines_added` / `lines_removed` は独立した option
 
 ## Preview と開発サーバー
 
-Dev server の開始は Workspace 内で既存 dev server の停止を試み、script のある各 Repo を Bash の ScriptRequest / DevServer として起動する。script が一つもなければ API error。途中の起動に失敗した場合、それ以前の起動を全件 rollback する構造ではない。[起動処理](../../crates/server/src/routes/workspaces/execution.rs)
+DevServer は Workspace の Repo に登録された dev_server_script を、各 Repo の cwd で Bash ScriptRequest / DevServer として管理する。coding AgentRunや任意shell常駐とは別のExecutionProcessである。UI・stdio両mode・外部HTTP MCPは共通 manager を使い、同じWorkspaceのlockで開始/停止を順序付ける。新規開始・停止はinteractive、未archive、worktree未削除、Integration未予約を検査し、MCPは明示Project所属も確認する。[共通開始](../../crates/server/src/routes/workspaces/dev_server.rs#L32-L131)・[対象検査](../../crates/server/src/routes/workspaces/dev_server.rs#L144-L184)・[UI入口](../../crates/server/src/routes/workspaces/execution.rs#L20-L40)
+
+既存running processがあれば重複startは再利用し、暗黙restartしない。古いrecordのcleanupが未確認なら新しい開始を拒否する。scriptが一つもない場合は失敗し、複数Repoの逐次起動途中の失敗はそれ以前の起動を全件rollbackしない。stopはこのWorkspaceのDevServerだけを対象にし、停止・settled済みはno-op、未確認cleanupは再照合対象として残す。[開始の再利用とsettlement](../../crates/server/src/routes/workspaces/dev_server.rs#L32-L131)・[停止と結果](../../crates/server/src/routes/workspaces/dev_server.rs#L234-L305)
+
+statusは観測のみで、各Repo scriptの最新recordに古いrunningを加えて返し、部分起動失敗を隠さない。DBのrunningをOS identityで確認したときだけ running、確認できなければ running_unconfirmed、非runningでもcleanup不明なら stopping_or_unconfirmed、settledなら stopped となる。registry破損を修復して空/停止へ変えず、厳密read失敗を返す。process runningはアプリreadiness、外部URL到達、TLS・認証の成功ではない。[観測と状態](../../crates/server/src/routes/workspaces/dev_server.rs#L186-L232)・[非修復registry読取](../../crates/local-deployment/src/agent_process_registry.rs#L250-L280)
+
+応答の accepted / requested_action / target_state_observed と現在statusを読み分ける。外部MCPの耐久receipt成功だけで起動完了とせず、応答喪失やuncertainでは元operationと現在statusを確認する。stdioは同じmanagerへの直接HTTP adapterで、外部のrequest_id receiptと同じ形ではない。[外部MCPの認可・回復](../integrations/remote-access.md#managed-devserver-を操作する)・[応答](../../crates/server/src/routes/workspaces/dev_server.rs#L299-L305)・[stdio](../../crates/mcp/src/task_server/tools/dev_server.rs#L50-L79)
+
+変更時はregistry非修復、並行/重複start、無関係process保全、両transportの認可/receiptとUI共有状態を確認する。[隔離fixtureと実承認待ちの限界](../../docs/development/managed-dev-server-mcp.md)は、実agentの承認待ち到達・取消と、人の承認後のtool成功を区別する。[検証入口](development.md#起動回復受動参照mcp-操作を変更するとき)を参照する。
 
 Dev server の稼働だけではチャット送信をブロックしない。専用停止と他 script の活動判定は [Session の入力契約](../concepts/session-and-agent-run.md#会話表示と入力)を参照する。
 

@@ -76,10 +76,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-26T19:50:12.086Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T10:15:30.599Z
+    at: 2026-10-26T19:50:12.086Z
 ---
 
 # クイックスタートと調査案内
@@ -127,6 +127,12 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 起動、DB、standalone と残存 startup API の差 | [システム境界と起動順](architecture/system.md) → [開発・検証](operations/development.md) |
 | Agent が止まった、表示と監査が合わない、再接続したい | [Session の状態](concepts/session-and-agent-run.md) → [Agent Runtime の監査・投影・回復](architecture/agent-runtime.md) |
 | Workspace の累積トークン、内訳、不明・一部のみの意味 | [Workspace 累積トークン](concepts/workspace.md#workspace-累積トークン) → [画面で確認](operations/workspace-inspection.md#累積トークンを確認する)。context gauge・各 run 時間との違い、thread 単位の保持、MCP の同じ集計を確認する |
+| Starting のまま進まない、準備中なのに時計が動く | [Starting の耐久回復](architecture/agent-runtime.md#starting-保存失敗と未起動の回復) → [Preparing と実開始時計](concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)。有限保存予算・失敗フェンス、setup除外とhost ACK不確実性を確認する |
+| account 利用枠や provider usage をモデルを動かさず読みたい | [受動quota/usageの正本](integrations/agent-providers.md#受動的な-account-quotausage-参照) → [外部MCPの認可](integrations/remote-access.md#provider-account-の利用枠を参照する)。server_default・DEFAULT所属・未知値とWorkspace tokensの違いを読む |
+| Codex resume の固定指示が重複する | [履歴保持の証拠と全文fallback](integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)。現在identityは毎回更新し、未知版・compaction等で固定文を省かない |
+| DevServer を開始・停止・観測したい | [共通managerの運用](operations/workspace-inspection.md#preview-と開発サーバー) → [MCPのscopeとreceipt](integrations/remote-access.md#managed-devserver-を操作する)。再利用、部分起動、cleanup不確実性、readinessの違いを確認する |
+| MCP tool 一回だけの権限要求が届いた | [Codexの正式承認](concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)。元toolとの一意相関・明示回答・取消・永続grantなしの境界を確認する |
+| コメント本人編集、activity順序、raw保存名を直したい | [本人編集](concepts/issue-collaboration.md#自分の既存コメント本文を編集する)、[手動rankと明示sort](concepts/project-and-issue.md#activity-による手動順序の更新)、[file配信](operations/workspace-inspection.md#repo-内ファイルを読む)へ進む。要求revision、順位、配信bytesを別に扱う |
 | provider や model 設定、MCP、Skill の追加 | [Provider integration](integrations/agent-providers.md)。effort override と解決済み値、外部 MCP を使う方向と LVK MCP を公開する方向を分ける |
 | Workflow の分岐、取消、outbox、再起動回復 | [Graph の契約](concepts/workflow-attempt.md) → [Workflow Runtime](architecture/workflow-runtime.md) |
 | 定期的に作業を実行したい | [ScheduledTask の起動・skip 条件](workflows/task-to-integration.md#定時に-workflow-を起動する) |
@@ -273,3 +279,11 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 保存進捗は外部 MCP のcatalog・read scope、所属とcursorのsnapshot、canonical末尾選択、privacy投影・全文形状検査、pagingとHTTP再接続の回帰定義を照合した。[最新窓とcommentaryの契約](integrations/remote-access.md#保存済み-codex-進捗の読取)を参照する。既存共有ファイルでstale/unresolvedとなったClaimsは該当契約を再確認したが、無関係な過去のWiki全体を再検証したものではない。取り込まれたProject-key互換処理は前回までの説明と最終source差分を確認し、変更のない契約を再生成していない。
 
 凍結Change Manifestには初期の重検証保留、fixture修復後の限定試験・lint/backend検証成功、最終凍結候補のinstall / frontend build / check / lint / backend:test成功が記録されている。これらは供給された履歴であり今回の試験実行結果ではない。今回の検証はsource・試験定義・文書差分・リンクとOpenWiki lifecycleの照合で、製品suite、実Auth0/ChatGPT、実モデルのBootstrap/Syncからprocess/cwd参照までのE2E、稼働DB移行、実ユーザーWorkspaceの削除は再実行していない。開発文書の古い「未実行」記録を現在の失敗とせず、Workspace Memoryの未統合運用状態も製品契約へ昇格させていない。
+
+### 起動回復・provider参照・MCP操作のSync
+
+今回の通常Syncは凍結manifestと全17チャンクのSHA-256を照合し、統合source `b9fd2194154bfff52fe362eb9253037521f91963` のpending changesを対象とした。独立入口として、server起動/registryとmigration、create/Starting/Cancelとhost予約、canonical reducer/summaryとUI、本文/コメント/終端のtransaction、DnD helperとDB競合、stdio/HTTPのcatalog・認可・receipt、公式CLIの受動transport、resume前後履歴証拠、raw stream/headerと認証middleware、focused fixture定義を照合した。無関係な過去のWiki全体を再検証したとは扱わない。
+
+詳細契約は上の調査導線の正本に置き、横断説明は同じ契約へリンクする。新たなschedulerやproviderを導入せず、Starting回復、DevServer script所有、MCP一回承認、quota snapshotと実行token累積を区別した。変更時の検証入口と残る範囲は [開発・検証](operations/development.md#起動回復受動参照mcp-操作を変更するとき)を参照する。[共有起動](../crates/local-deployment/src/lib.rs#L145-L163)・[MCP登録](../crates/mcp/src/task_server/tools/mod.rs#L56-L91)・[外部dispatch](../crates/server/src/remote_mcp/mod.rs#L187-L241)
+
+供給された開発/候補合成記録には局所検証の成功と修復履歴があるが、最終正式Integrationは明示的に検証省略だった。実agentの承認待ち到達と取消は人の承認後の実tool成功ではなく、offline UI fixtureも実API/認証ではない。この保守はソース・試験定義・差分・リンクとOpenWiki lifecycleを検証し、製品suite、実Auth0/ChatGPT、実モデル、稼働DB移行、配布・restartを再実行していない。[候補の検証限界](../docs/development/seven-source-candidate.md#root-cloud-qaと残る確認)

@@ -12,8 +12,6 @@ sources:
     resource: repo://crates/api-types/src/issue_comment.rs
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
-  - id: openwiki-source-f4ac386b1f40f295bc54fb75
-    resource: repo://crates/db/migrations/20261023100000_issue_comment_reviews.sql
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
     resource: repo://crates/mcp/src/task_server/tools/mod.rs
   - id: openwiki-source-e523a92ffbbd6f3773531def
@@ -34,8 +32,6 @@ sources:
     resource: repo://crates/services/src/services/container.rs
   - id: openwiki-source-4251300987fd63068dbcfd5d
     resource: repo://crates/services/src/services/notification.rs
-  - id: openwiki-source-a6728d75b2bdf1a00440e8fa
-    resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-937b9a0a3ac3b33029304371
     resource: repo://packages/ui/src/components/IssueCommentsSection.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
@@ -46,10 +42,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T19:37:05.139Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -64,9 +60,9 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 ## 共有レビューは通常コメントとして残す
 
-外部の複数 AI client は同じ Issue に独立した意見を追記し、Web の既存コメント欄で人と共有できる。専用の AI 会話・投票・承認・自動再レビュー機構ではない。投稿は Issue の要求、status、revision を更新せず、Workspace / AgentRun の開始や AI 通知も行わない。採用する要求の変更は別の `update_issue` で revision を照合する。[投稿と不変条件のテスト](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[要求変更との分離](../../crates/server/src/remote_mcp/issue_comments.rs#L297-L400)
+外部の複数 AI client は同じ Issue に独立した意見を追記し、Web の既存コメント欄で人と共有できる。専用の AI 会話・投票・承認・自動再レビュー機構ではない。投稿は Issue の要求、status、revision を更新せず、手動順序の activity rank のみ条件付きで変え、Workspace / AgentRun の開始や AI 通知も行わない。採用する要求の変更は別の `update_issue` で revision を照合する。[投稿と不変条件のテスト](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[要求変更との分離](../../crates/server/src/remote_mcp/issue_comments.rs#L297-L400)
 
-保存先は既存 `local_issue_comments` で、migration が nullable な reviewer label・target revision・recorded principal と一覧用 index を加える。過去の通常コメントはそのまま読める。外部 HTTP MCP に読取・追記を公開するが、内部 stdio catalog は別のままである。[migration](../../crates/db/migrations/20261023100000_issue_comment_reviews.sql)・[外部接続の入口](../integrations/remote-access.md#issue-のレビューを共有する)・[stdio router](../../crates/mcp/src/task_server/tools/mod.rs#L49-L79)
+保存先は既存 `local_issue_comments` で、migration が nullable な reviewer label・target revision・recorded principal と一覧用 index を加える。過去の通常コメントはそのまま読める。外部 HTTP MCP に読取・追記・本人の本文編集を公開するが、内部 stdio catalog は別のままである。[migration](../../crates/db/migrations/20261023100000_issue_comment_reviews.sql)・[外部接続の入口](../integrations/remote-access.md#issue-のレビューを共有する)・[stdio router](../../crates/mcp/src/task_server/tools/mod.rs#L56-L91)
 
 ### 来歴と二つの revision
 
@@ -87,13 +83,23 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 同じ principal と `request_id` は同じ入力だけで再送し、応答喪失時は既存 `get_operation` と comment を確認する。receipt ID が comment ID になり、SQL の失敗で結果を断定できなければ `uncertain`、書込対象が消えれば `failed` を返す。receipt の非同期 task は検証済み actor を引き継ぐため、HTTP request 終了で投稿者を失わない。受付成功と書込成功を分ける一般契約は [操作 receipt](../integrations/remote-access.md#参照結果と操作-receipt)を参照する。[投稿結果](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[actor 継承](../../crates/server/src/remote_mcp/operations.rs#L134-L206)・[再送照合](../../crates/server/src/remote_mcp/operations.rs#L210-L246)
 
+### 自分の既存コメント本文を編集する
+
+外部 HTTP の `edit_issue_comment` は read/write scope と Project/Issue/comment の所属に加え、保存された `recorded_principal` と現在の issuer/subject の完全一致を要求する。同じ認証主体を共有する AI client は同じ所有者となる。label や `author_id` だけで所有権を代用せず、来歴のない legacy comment も引き取れない。stdio へ同じ編集機能を追加したものではない。[catalog と境界](../../crates/server/src/remote_mcp/issue_comments.rs#L78-L119)・[所有者照合](../../crates/server/src/remote_mcp/issue_comments.rs#L188-L239)
+
+まず全文読取の `comment_revision` を得て `expected_comment_revision` に指定する。`BEGIN IMMEDIATE` 内で所有者と全文 hash を照合してから message / updated_at だけを更新するため、同時 Web/API 編集との間に古い本文を上書きしない。本文は追記と同じ非空・16,000 scalar 上限で、author・principal・parent・reviewer label・review target は保持する。通常 Web PATCH は parent も編集でき、この所有者/revision guard を持たないため、別の契約である。[編集 transaction](../../crates/server/src/remote_mcp/issue_comments.rs#L188-L239)・[Web 編集](../../crates/server/src/routes/local_remote.rs#L2025-L2075)
+
+同じ request ID と同じ入力の再送は元の結果を返し、入力変更は conflict。所有者不一致や revision 競合は failed、DB 等で結果が不明なら uncertain で、元 operation と現在 comment を確認してから判断する。編集は Issue の要求・status・revision・Workspace・Run を変えず、通知や再レビューを開始しない。新規コメントの追加だけは [手動順序の activity 更新](project-and-issue.md#activity-による手動順序の更新)を同じ transaction で行うが、Issue `updated_at` は変えない。[編集結果](../../crates/server/src/remote_mcp/issue_comments.rs#L221-L245)・[追加時の順位](../../crates/server/src/remote_mcp/issue_comments.rs#L162-L184)・[再送](../../crates/server/src/remote_mcp/operations.rs#L210-L246)
+
+所有者・scope・不変来歴・WAL 同時編集・再送の回帰は [編集試験](../../crates/server/src/remote_mcp/issue_comments.rs#L370-L558)を入口にする。実 Auth0 / ChatGPT や browser で人が編集する操作の検証とは区別する。
+
 ### 長文を編集混在なく読む
 
 読取は `lvk:read` を要する。`list_issue_comments` は `(created_at, id)` 順で1–50件、本文は各256 scalar までの `message_preview` と `message_truncated` を返す。本文プレビュー合計は12,800 scalar 以下だが、JSON escaping と metadata の bytes は別である。`next_cursor` を追い、cursor が削除されたら一覧を最初から読む。一覧全体を複数 request にまたがる固定 snapshot とみなさない。[一覧と cursor](../../crates/server/src/remote_mcp/issue_comments.rs#L159-L220)・[SQL](../../crates/server/src/remote_mcp/sql/comment_previews.sql)
 
-全文は `get_issue_comment` の offset 0 から取得し、`next_offset` と初回の `comment_revision` を次回の `expected_comment_revision` に渡す。limit は1–16,000、既定8,000。offset は UTF-8 bytes、UTF-16 units、書記素ではなく Unicode scalar 数で、結合文字も別に数える。プレビューを全文ページへ前置しない。revision 不一致ならその応答の本文を得ず、0から読み直す。終端と同じ offset は空ページ、終端超過はエラーで、保存済み空本文も読める。[取得契約](../../crates/server/src/remote_mcp/issue_comments.rs#L223-L279)・[decoder と境界テスト](../../crates/server/src/remote_mcp/issue_comment_text.rs#L16-L116)
+全文は `get_issue_comment` の offset 0 から取得し、`next_offset` と初回の `comment_revision` を次回の `expected_comment_revision` に渡す。limit は1–16,000、既定8,000。offset は UTF-8 bytes、UTF-16 units、書記素ではなく Unicode scalar 数で、結合文字も別に数える。プレビューを全文ページへ前置しない。revision 不一致ならその応答の本文を得ず、0から読み直す。終端と同じ offset は空ページ、終端超過はエラーで、保存済み空本文も読める。[取得契約](../../crates/server/src/remote_mcp/issue_comments.rs#L296-L375)・[decoder と境界テスト](../../crates/server/src/remote_mcp/issue_comment_text.rs#L16-L116)
 
-各本文 request は一つの read transaction 内で全本文を16 KiBの BLOB chunk として走査し、Issue/comment ID・編集時刻・全本文から SHA-256 を計算する。SQLite の text 関数が NUL で切れるため byte chunk を使い、同時刻・同じ長さの編集も検出する。保持メモリと返却本文量は制限されるが、各ページの仕事量は全文サイズに比例する。旧来の長い UI コメントを拒否したり、新しい全文履歴を作ったりはしない。[走査と hash](../../crates/server/src/remote_mcp/issue_comments.rs#L232-L278)・[記録された設計理由](../../docs/development/chatgpt-mcp.md#share-issue-specification-reviews)
+各本文 request は一つの read transaction 内で全本文を16 KiBの BLOB chunk として走査し、Issue/comment ID・編集時刻・全本文から SHA-256 を計算する。SQLite の text 関数が NUL で切れるため byte chunk を使い、同時刻・同じ長さの編集も検出する。保持メモリと返却本文量は制限されるが、各ページの仕事量は全文サイズに比例する。旧来の長い UI コメントを拒否したり、新しい全文履歴を作ったりはしない。[走査と hash](../../crates/server/src/remote_mcp/issue_comments.rs#L315-L375)・[記録された設計理由](../../docs/development/chatgpt-mcp.md#share-issue-specification-reviews)
 
 ### 変更時の検証入口
 
