@@ -24,13 +24,14 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
       mkdirSync(join(cwd, 'scripts'));
       for (const file of ['dev-cargo.mjs', 'dev-rustc-cache.mjs']) cpSync(join(scripts, file), join(cwd, 'scripts', file));
       if (share) { mkdirSync(join(cwd, '.lvk-shared')); symlinkSync(shared, join(cwd, '.lvk-shared/cache')); }
-      writeFileSync(join(cwd, 'Cargo.toml'), '[package]\nname="probe"\nversion="0.1.0"\nedition="2021"\n[profile.release]\ndebug=1\n');
+      writeFileSync(join(cwd, 'Cargo.toml'), '[package]\nname="probe"\nversion="0.1.0"\nedition="2021"\n[profile.release]\ndebug=1\nstrip=true\nsplit-debuginfo="packed"\n');
       writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
       return cwd;
     };
     const a = fixture('a'), b = fixture('b'), plain = fixture('plain', false);
     const first = run(a, ['build', '--offline', '-v'], env); ok(first);
     assert.match(first.stderr, /debuginfo=line-tables-only/); assert.doesNotMatch(first.stderr, /-C incremental=/);
+    assert.doesNotMatch(first.stderr, /opt-level=|strip=|split-debuginfo=packed/);
     assert.match(first.stderr, /sccache unavailable/);
     const build = join(shared, 'lvk-dev-cargo-build');
     assert.ok(existsSync(join(build, 'debug/.cargo-lock')));
@@ -39,14 +40,47 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     assert.ok(!existsSync(join(a, 'target/debug/deps')));
     const foreign = spawnSync(process.execPath, [join(a, 'scripts/dev-cargo.mjs'), 'check'], { cwd: b, env, encoding: 'utf8' });
     assert.equal(foreign.status, 2); assert.match(foreign.stderr, /own LVK checkout/);
-    const release = run(a, ['build', '--release', '--offline', '-v'], env); ok(release);
-    assert.match(release.stderr, /debuginfo=1/); assert.doesNotMatch(release.stderr, /line-tables-only/);
+    const lines = (path) => spawnSync('readelf', ['--debug-dump=decodedline', path], { encoding: 'utf8' }).stdout;
+    assert.match(lines(join(a, 'target/debug/probe')), /main.rs/);
+    for (const purpose of ['dev', 'stable']) {
+      const release = run(a, ['--purpose', purpose, 'build', '--offline', '-v'], env); ok(release);
+      assert.match(release.stderr, /opt-level=3/);
+      assert.doesNotMatch(release.stderr, /-C incremental=/);
+      if (purpose === 'dev') {
+        assert.match(release.stderr, /debuginfo=line-tables-only/);
+        assert.doesNotMatch(release.stderr, /strip=|split-debuginfo=packed/);
+        const placed = join(dir, 'packaged-dev');
+        cpSync(join(a, 'target/release/probe'), placed);
+        assert.match(lines(placed), /main.rs/);
+      } else {
+        assert.doesNotMatch(release.stderr, /debuginfo=(?:1|2|line-tables-only)/);
+        assert.match(release.stderr, /strip=symbols/);
+        assert.doesNotMatch(lines(join(a, 'target/release/probe')), /main.rs/);
+      }
+    }
+    assert.equal(run(a, ['build', '--release'], env).status, 2);
+    // Exercise the exact command-local stable profile used by both Docker stages.
+    const docker = readFileSync(join(scripts, '../Dockerfile'), 'utf8');
+    const prefixes = [...docker.matchAll(/RUN (CARGO_PROFILE_RELEASE_DEBUG=0[\s\S]*?) cargo (?:chef cook|build) --locked --release/g)];
+    assert.equal(prefixes.length, 2);
+    assert.equal(prefixes[0][1], prefixes[1][1]);
+    const stableEnv = { ...env };
+    for (const match of prefixes[0][1].matchAll(/(CARGO_PROFILE_\w+)=(\w+)/g)) stableEnv[match[1]] = match[2];
+    ok(spawnSync(cargo, ['build', '--release', '--offline', '-v'], { cwd: plain, env: stableEnv, encoding: 'utf8' }));
+    const packaged = join(dir, 'packaged-stable');
+    cpSync(join(plain, 'target/release/probe'), packaged);
+    assert.doesNotMatch(lines(packaged), /main.rs/);
+
     const tested = run(a, ['test', '--offline', '-v'], env); ok(tested);
     assert.match(tested.stderr, /debuginfo=line-tables-only/); assert.doesNotMatch(tested.stderr, /-C incremental=/);
     const local = run(plain, ['build', '--offline'], env); ok(local); assert.match(local.stderr, /intermediates stay/);
     assert.ok(existsSync(join(plain, 'target/debug/deps')));
-    for (const vars of [{ CARGO_INCREMENTAL: '1' }, { RUSTC_WRAPPER: '/bin/false' }, { RUSTC_WRAPPER: '' }, { CARGO_BUILD_RUSTC_WRAPPER: '/bin/false' }, { CARGO_PROFILE_DEV_DEBUG: '2' }])
+    for (const vars of [{ CARGO_INCREMENTAL: '1' }, { RUSTC_WRAPPER: '/bin/false' }, { RUSTC_WRAPPER: '' }, { CARGO_BUILD_RUSTC_WRAPPER: '/bin/false' }, { CARGO_PROFILE_DEV_DEBUG: '2' }, { CARGO_PROFILE_DEV_OPT_LEVEL: '1' }, { CARGO_PROFILE_RELEASE_STRIP: 'true' }, { CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO: 'packed' }, { RUSTFLAGS: '-Copt-level=2' }, { CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: '-Cstrip=symbols' }])
       assert.equal(run(a, ['check'], { ...env, ...vars }).status, 2);
+    mkdirSync(join(a, '.cargo'));
+    writeFileSync(join(a, '.cargo/config.toml'), '[build]\nrustflags=["-C", "strip=symbols"]\n');
+    assert.equal(run(a, ['check'], env).status, 2);
+    rmSync(join(a, '.cargo'), { recursive: true });
     assert.equal(run(a, ['clean'], env).status, 2);
     assert.equal(run(a, ['check', '--manifest-path', join(b, 'Cargo.toml')], env).status, 2);
 
@@ -57,6 +91,8 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     const runtime = run(a, ['run', '--offline', '--quiet', '--', plain], cachedEnv); ok(runtime);
     assert.match(runtime.stderr, /cache mismatch/);
     assert.equal(runtime.stdout.trim(), 'SCCACHE_DIR=\nCARGO_BUILD_BUILD_DIR=\nCARGO_PROFILE_DEV_DEBUG=\nRUSTC_WRAPPER=\nchild-config=false');
+    const devRuntime = run(a, ['--purpose', 'dev', 'run', '--offline', '--quiet', '--', plain], cachedEnv); ok(devRuntime);
+    assert.equal(devRuntime.stdout, runtime.stdout);
     assert.ok(readFileSync(join(dir, 'compiler-env'), 'utf8').includes(join(shared, 'sccache')));
 
     writeFileSync(join(bin, 'cargo'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(join(dir, 'watch-args'))}, JSON.stringify({args:process.argv.slice(2), cache:process.env.SCCACHE_DIR}));`, { mode: 0o755 });
@@ -64,7 +100,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     const watched = JSON.parse(readFileSync(join(dir, 'watch-args'), 'utf8'));
     assert.equal(watched.args.length, 5);
     assert.deepEqual(watched.args.slice(0, 4), ['watch', '-w', 'crates', '-s']);
-    assert.match(watched.args[4], /dev-cargo.mjs.*build --bin server --bin agent-process-host && .*dev-cargo.mjs.*run --bin server/);
+    assert.match(watched.args[4], /dev-cargo.mjs.*--purpose preview build --bin server --bin agent-process-host && .*dev-cargo.mjs.*run --bin server/);
     assert.equal(watched.cache, undefined);
 
     // Cargo owns locking: a sleeping build script holds the shared build lock.

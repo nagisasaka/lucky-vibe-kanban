@@ -12,18 +12,37 @@ expecting external cargo-watch to propagate Cargo global configuration arguments
 Inherited user environment remains the user's responsibility; the entry does not
 sanitise unrelated existing environment or add product environment filters.
 
-Release profile values in Cargo.toml remain authoritative. Raw Cargo continues
-to serve distribution and specialised tooling (SQLx prepare and instance builds
-have their own requirements). Do not infer unpublished Project setup/environment
-settings: these were not fetched for this task. Repository setup-action code was
-read, but no Project or server configuration was changed.
+## Server purposes
+
+| Purpose | Command (repository root) | Final binaries | Profile |
+| --- | --- | --- | --- |
+| Preview | `node scripts/dev-cargo.mjs build --locked --bin server --bin agent-process-host` | `target/debug/{server,agent-process-host}` | dev, opt-level=0, line-tables-only |
+| Shared development | `node scripts/dev-cargo.mjs --purpose dev build --locked -p server -p local-deployment -p mcp --bin server --bin agent-process-host --bin vibe-kanban-mcp --features server/developer-runtime` | `target/release/{server,agent-process-host,vibe-kanban-mcp}` | release, opt-level=3, line-tables-only |
+| Stable container | `docker build --target server .` (GitHub distribution) | `/usr/local/bin/{server,agent-process-host,vibe-kanban-mcp}` in image | release, opt-level=3, debug=0 |
+
+Preview/dev explicitly use strip=none and split-debuginfo=off: line tables stay
+in the final binary, so copying/bundling needs no debug sidecar. Stable chef cook
+and server build both explicitly set debug=0, strip=symbols, split-debuginfo=off
+and incremental=false in command-local environment (never image ENV). The local
+`--purpose stable build` entry exercises the same profile without a container.
+Ordinary Cargo and Cargo.toml defaults remain unchanged for other consumers.
+
+Build the frontend first for instance/bundle creation; shared dev also needs the
+existing developer-runtime feature. No extra compiler environment is required.
+CARGO_BUILD_JOBS may limit concurrency. Inherited CARGO_INCREMENTAL must be absent
+or 0; conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
+wrappers and target overrides are rejected with an explanation. The build entry
+does not inject these variables into run/watch or managed child Projects.
+Instance source snapshots use their own target directories. If a snapshot has no
+`.lvk-shared/cache`, the documented local fallback applies; it does not reach into
+another checkout to discover shared storage.
 
 ## Scoped verification
 
 The self-contained offline fixture uses the installed pinned toolchain, no
 registry dependencies, two source workspaces, one temporary shared build-dir and
 independent targets. It verifies debug/test flags, nonincremental compilation,
-release debug preservation, fallback without shared storage/sccache, wrapper and
+all three purpose profiles and final ELF line tables, fallback without shared storage/sccache, wrapper and
 environment conflicts, run's environment, Cargo lock contention and raw clean's
 impact. A fake sccache transport forwards to real rustc to test environment scope
 without changing the shared server. This is not a real sccache hit-rate benchmark.
@@ -41,8 +60,11 @@ Actual LVK builds and real cache performance remain unverified.
 
 ## Deferred measurement (requires capacity/execution-slot approval)
 
-LOCAL-178/182 formal Integration takes priority. Do not run full Rust builds,
-full pnpm validation, installs or a cold-cache experiment until authorised.
+The previous LOCAL-178/182 execution-slot wait is historical and ended. For
+LOCAL-197 the CODE run is limited to implementation and small local fixtures.
+The integration owner handles the single heavy dev artifact build after commit;
+full validation is explicitly skipped at Integration admission. Cold/warm
+benchmarks still require separate capacity/execution approval.
 
 1. Record candidate SHA, toolchain, command/features, free disk, selected target
    usage, expected/actual sccache location and `sccache --show-stats`. Coordinate
@@ -64,3 +86,22 @@ full pnpm validation, installs or a cold-cache experiment until authorised.
 These cold/warm/edit/second-workspace timings and capacity savings have **not**
 been measured. Retain results with the candidate SHA and command; do not report
 fixture success as a completed LVK benchmark or formal Integration.
+
+## LOCAL-197 local verification (2026-10-26)
+
+Base HEAD/main: `0d73e1ad8eb1790ac896eb958b2757d090ac2cea` plus this change.
+Cargo 1.93.0-nightly (bd979347d), rustc 1.93.0-nightly (83e49b75e).
+`node --test scripts/dev-cargo.test.mjs deploy/server/instance.test.mjs` passed
+4 tests; the opt-in real-sccache smoke was skipped. The fixture verified real
+compiler flags and ELF decoded line tables for all three purposes, including
+copied dev/stable binaries and Docker's exact command-local profile variables.
+It also covered profile/Rust flag/wrapper conflicts, target isolation/shared
+intermediates, lock waiting, disposable clean impact and preview/dev run plus
+watch environment boundaries. Instance tests used disposable local state.
+`node --check deploy/developer/instance.mjs`, `node --check scripts/dev-cargo.mjs`
+and `git diff --check` passed. Task-owned fixture directories were removed.
+
+No LVK full build, full pnpm validation, container build, running deployment,
+real sccache smoke/benchmark, merge or restart was performed in this CODE run.
+Final deployed binaries, embedded payload, build identity, backtrace line
+resolution and health remain the integration owner's acceptance responsibility.

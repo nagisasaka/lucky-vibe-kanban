@@ -48,7 +48,12 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - The entry passes Cargo `--config` arguments: dev/test debug is
   `line-tables-only`, incremental is false. This trades incremental reuse for
   smaller intermediates and sccache eligibility. It does not set RUSTFLAGS or
-  change release profiles; distribution builds continue to use raw Cargo.
+  change ordinary Cargo invocations. Use `--purpose dev build` for the optimised
+  development server; `--purpose stable build` models stable distribution.
+  Preview (default) uses opt-level=0; dev/stable use release opt-level=3.
+  Preview/dev retain line tables inside binaries (strip=none, split-debuginfo=off);
+  stable uses debug=0, strip=symbols, split-debuginfo=off. All are nonincremental.
+  `--release`/`--profile` overrides are rejected; select the purpose explicitly.
 - `CARGO_INCREMENTAL` takes precedence even over profile config. The entry
   rejects inherited values other than `0`, conflicting profile/target env and
   debug Rust flags, and explicit compiler wrappers. Unset conflicts to opt in;
@@ -73,7 +78,9 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - Do not add this policy to auto-loaded `.cargo/config.toml`, global Cargo home,
   shell startup, server parent environment or other Projects. Existing platform
   linker configuration remains separate. SQLx prepare and isolated instance/
-  distribution tooling retain their explicit specialised Cargo policy.
+  distribution tooling retain their explicit specialised Cargo policy. Preview
+  instance builds use this entry; Docker chef and server builds explicitly apply
+  the stable profile only to their compile commands.
 - **Never use `cargo clean` as shared-cache cleanup.** Cargo clean also removes
   the configured build-dir and invalidates other workspaces' intermediates;
   the entry rejects clean. Shared retention needs coordinated maintenance.
