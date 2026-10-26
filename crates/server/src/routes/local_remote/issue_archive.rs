@@ -424,6 +424,113 @@ pub(crate) fn router() -> Router<DeploymentImpl> {
         .route("/issue-archive-operations/{request_id}", get(receipt))
 }
 
+/// One best-effort attempt at the existing owner-release boundary. This is an
+/// internal authority, independent of the human confirmation-token protocol.
+pub(crate) async fn archive_generated(deployment: &DeploymentImpl, released: Workspace) {
+    let pool = &deployment.db().pool;
+    let result = archive_generated_for_pool(pool, &released, || async {
+        Ok(deployment.container().scripts_settled(released.id).await?)
+    })
+    .await;
+    if let Err(error) = result {
+        tracing::warn!(workspace_id=%released.id, %error, "Generated archive deferred; product success retained");
+    }
+}
+
+async fn archive_generated_for_pool<F, Fut>(
+    pool: &SqlitePool,
+    released: &Workspace,
+    settled: F,
+) -> Result<(), ApiError>
+where
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<bool, ApiError>>,
+{
+    let Some((issue, project, kind, repo, run_id, revision)) = sqlx::query_as::<_, (Uuid, Uuid, String, Uuid, Option<String>, i64)>(
+        "SELECT issue_id,project_id,owner_kind,repository_id,owner_run_id,eligibility_revision FROM generated_issue_workspaces WHERE workspace_id=? AND attempt_result IS NULL"
+    ).bind(released.id).fetch_optional(pool).await? else { return Ok(()); };
+    let _admission = services::services::integration_admission::MUTATIONS
+        .lock()
+        .await;
+    let _issue = lock_issue(issue).await;
+    let _workspace = services::services::workspace_lifecycle::lock(released.id).await;
+    // Persist before touching the filesystem. Interrupted or uncertain outcomes
+    // are deliberately never retried by a duplicate completion event.
+    let claimed = sqlx::query("UPDATE generated_issue_workspaces SET attempt_result='attempt started; outcome may be uncertain' WHERE workspace_id=? AND attempt_result IS NULL AND eligibility_revision=?")
+        .bind(released.id).bind(revision).execute(pool).await?;
+    if claimed.rows_affected() == 0 {
+        return Ok(());
+    }
+    let result = async {
+        if !settled().await? { return Err(failure("Workspace scripts still active")); }
+        // BEGIN IMMEDIATE excludes concurrent DB writers until all final
+        // eligibility/owner/link checks and physical mutation have finished.
+        let repos = WorkspaceRepo::find_repos_for_workspace(pool, released.id).await?;
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+        let eligible: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM generated_issue_workspaces WHERE workspace_id=? AND eligibility_revision=? AND attempt_result='attempt started; outcome may be uncertain')")
+            .bind(released.id).bind(revision).fetch_one(&mut *tx).await?;
+        if !eligible { return Err(failure("Generated archive eligibility invalidated after claim")); }
+        let ws = sqlx::query_as::<_, Workspace>("SELECT * FROM workspaces WHERE id=?")
+            .bind(released.id).fetch_optional(&mut *tx).await?.ok_or_else(|| failure("Workspace missing"))?;
+        if ws.archived || ws.is_execution_only() || ws.execution_owner != released.execution_owner
+            || ws.container_ref != released.container_ref || ws.branch != released.branch {
+            return Err(failure("Released Workspace changed"));
+        }
+        let owner = ws.execution_owner.as_ref().ok_or_else(|| failure("Owner missing"))?;
+        if owner.kind != kind || owner.repository_id != Some(repo) || owner.run_id.is_none() || owner.run_id.map(|id| id.to_string()) != run_id {
+            return Err(failure("Generated owner mismatch"));
+        }
+        let current_repos: Vec<(Uuid, String, String)> = sqlx::query_as("SELECT r.id,r.path,r.name FROM repos r JOIN workspace_repos wr ON wr.repo_id=r.id WHERE wr.workspace_id=?")
+            .bind(ws.id).fetch_all(&mut *tx).await?;
+        if repos.len() != 1 || repos[0].id != repo || current_repos.len() != 1
+            || current_repos[0].0 != repo || current_repos[0].1.as_str() != repos[0].path.to_string_lossy().as_ref()
+            || current_repos[0].2 != repos[0].name { return Err(failure("Generated repository mismatch")); }
+        let linked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.issue_id=? AND l.project_id=? AND i.archived=0)")
+            .bind(ws.id).bind(issue).bind(project).fetch_one(&mut *tx).await?;
+        if !linked { return Err(failure("Generated Issue link changed")); }
+        use db::models::workspace_usage::{INTEGRATION, OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC, WorkspaceExecutionTerminalStatus};
+        let successful: bool = match kind.as_str() {
+            INTEGRATION => sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE id=? AND workspace_id=? AND repository_id=? AND project_id=? AND status='succeeded' AND json_extract(payload,'$.published')=1 AND json_extract(payload,'$.card_id')=?)")
+                .bind(owner.run_id).bind(ws.id).bind(repo).bind(project).bind(issue.to_string()).fetch_one(&mut *tx).await?,
+            OPENWIKI_SYNC => {
+                let run_matches: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE id=? AND workspace_id=? AND status='succeeded')")
+                    .bind(owner.run_id).bind(ws.id).fetch_one(&mut *tx).await?;
+                run_matches && owner.result.as_ref().is_some_and(|r| r.status == WorkspaceExecutionTerminalStatus::Succeeded)
+            }
+            OPENWIKI_BOOTSTRAP => sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workflow_runs WHERE id=? AND workspace_id=? AND repository_id=? AND trigger_source='openwiki_bootstrap' AND status='succeeded')")
+                .bind(owner.run_id).bind(ws.id).bind(repo).fetch_one(&mut *tx).await?,
+            _ => false,
+        };
+        if !successful { return Err(failure("Generated product has no matching success")); }
+        archive::check_idle(&mut tx, ws.id).await?;
+        archive_processes::check(ws.container_ref.as_deref()).await?;
+        let deletion_error = archive::archive_checked(&mut tx, &ws, &repos).await?;
+        // Other linked Workspaces are never archived by this completion event.
+        let issue_archived = sqlx::query("UPDATE local_issues SET archived=1,updated_at=datetime('now','subsec') WHERE id=? AND project_id=? AND NOT EXISTS(SELECT 1 FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=? AND w.archived=0)")
+            .bind(issue).bind(project).bind(issue).execute(&mut *tx).await?.rows_affected() == 1;
+        tx.commit().await?;
+        Ok::<_, ApiError>(json!({"workspace_id":ws.id,"archived":true,"worktree_deleted":ws.can_delete_container_path() && deletion_error.is_none(),"issue_id":issue,"issue_archived":issue_archived,"deletion_error":deletion_error}))
+    }.await;
+    let detail = match &result {
+        Ok(value) => value.to_string(),
+        Err(error) => format!("archive refused or uncertain: {error}"),
+    };
+    match &result {
+        Ok(value) if value["deletion_error"].is_null() => {
+            tracing::info!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive attempt finished")
+        }
+        _ => {
+            tracing::warn!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive refused, uncertain or deletion incomplete")
+        }
+    }
+    sqlx::query("UPDATE generated_issue_workspaces SET attempt_result=? WHERE workspace_id=?")
+        .bind(detail)
+        .bind(released.id)
+        .execute(pool)
+        .await?;
+    result.map(|_| ())
+}
+
 #[cfg(test)]
 mod tests {
     use db::models::workspace::CreateWorkspace;
@@ -1095,111 +1202,4 @@ mod tests {
                 .unwrap();
         assert_eq!(row.get::<i64, _>("n"), 1);
     }
-}
-
-/// One best-effort attempt at the existing owner-release boundary. This is an
-/// internal authority, independent of the human confirmation-token protocol.
-pub(crate) async fn archive_generated(deployment: &DeploymentImpl, released: Workspace) {
-    let pool = &deployment.db().pool;
-    let result = archive_generated_for_pool(pool, &released, || async {
-        Ok(deployment.container().scripts_settled(released.id).await?)
-    })
-    .await;
-    if let Err(error) = result {
-        tracing::warn!(workspace_id=%released.id, %error, "Generated archive deferred; product success retained");
-    }
-}
-
-async fn archive_generated_for_pool<F, Fut>(
-    pool: &SqlitePool,
-    released: &Workspace,
-    settled: F,
-) -> Result<(), ApiError>
-where
-    F: FnOnce() -> Fut,
-    Fut: std::future::Future<Output = Result<bool, ApiError>>,
-{
-    let Some((issue, project, kind, repo, run_id, revision)) = sqlx::query_as::<_, (Uuid, Uuid, String, Uuid, Option<String>, i64)>(
-        "SELECT issue_id,project_id,owner_kind,repository_id,owner_run_id,eligibility_revision FROM generated_issue_workspaces WHERE workspace_id=? AND attempt_result IS NULL"
-    ).bind(released.id).fetch_optional(pool).await? else { return Ok(()); };
-    let _admission = services::services::integration_admission::MUTATIONS
-        .lock()
-        .await;
-    let _issue = lock_issue(issue).await;
-    let _workspace = services::services::workspace_lifecycle::lock(released.id).await;
-    // Persist before touching the filesystem. Interrupted or uncertain outcomes
-    // are deliberately never retried by a duplicate completion event.
-    let claimed = sqlx::query("UPDATE generated_issue_workspaces SET attempt_result='attempt started; outcome may be uncertain' WHERE workspace_id=? AND attempt_result IS NULL AND eligibility_revision=?")
-        .bind(released.id).bind(revision).execute(pool).await?;
-    if claimed.rows_affected() == 0 {
-        return Ok(());
-    }
-    let result = async {
-        if !settled().await? { return Err(failure("Workspace scripts still active")); }
-        // BEGIN IMMEDIATE excludes concurrent DB writers until all final
-        // eligibility/owner/link checks and physical mutation have finished.
-        let repos = WorkspaceRepo::find_repos_for_workspace(pool, released.id).await?;
-        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
-        let eligible: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM generated_issue_workspaces WHERE workspace_id=? AND eligibility_revision=? AND attempt_result='attempt started; outcome may be uncertain')")
-            .bind(released.id).bind(revision).fetch_one(&mut *tx).await?;
-        if !eligible { return Err(failure("Generated archive eligibility invalidated after claim")); }
-        let ws = sqlx::query_as::<_, Workspace>("SELECT * FROM workspaces WHERE id=?")
-            .bind(released.id).fetch_optional(&mut *tx).await?.ok_or_else(|| failure("Workspace missing"))?;
-        if ws.archived || ws.is_execution_only() || ws.execution_owner != released.execution_owner
-            || ws.container_ref != released.container_ref || ws.branch != released.branch {
-            return Err(failure("Released Workspace changed"));
-        }
-        let owner = ws.execution_owner.as_ref().ok_or_else(|| failure("Owner missing"))?;
-        if owner.kind != kind || owner.repository_id != Some(repo) || owner.run_id.is_none() || owner.run_id.map(|id| id.to_string()) != run_id {
-            return Err(failure("Generated owner mismatch"));
-        }
-        let current_repos: Vec<(Uuid, String, String)> = sqlx::query_as("SELECT r.id,r.path,r.name FROM repos r JOIN workspace_repos wr ON wr.repo_id=r.id WHERE wr.workspace_id=?")
-            .bind(ws.id).fetch_all(&mut *tx).await?;
-        if repos.len() != 1 || repos[0].id != repo || current_repos.len() != 1
-            || current_repos[0].0 != repo || current_repos[0].1.as_str() != repos[0].path.to_string_lossy().as_ref()
-            || current_repos[0].2 != repos[0].name { return Err(failure("Generated repository mismatch")); }
-        let linked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.issue_id=? AND l.project_id=? AND i.archived=0)")
-            .bind(ws.id).bind(issue).bind(project).fetch_one(&mut *tx).await?;
-        if !linked { return Err(failure("Generated Issue link changed")); }
-        use db::models::workspace_usage::{INTEGRATION, OPENWIKI_BOOTSTRAP, OPENWIKI_SYNC, WorkspaceExecutionTerminalStatus};
-        let successful: bool = match kind.as_str() {
-            INTEGRATION => sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE id=? AND workspace_id=? AND repository_id=? AND project_id=? AND status='succeeded' AND json_extract(payload,'$.published')=1 AND json_extract(payload,'$.card_id')=?)")
-                .bind(owner.run_id).bind(ws.id).bind(repo).bind(project).bind(issue.to_string()).fetch_one(&mut *tx).await?,
-            OPENWIKI_SYNC => {
-                let run_matches: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE id=? AND workspace_id=? AND status='succeeded')")
-                    .bind(owner.run_id).bind(ws.id).fetch_one(&mut *tx).await?;
-                run_matches && owner.result.as_ref().is_some_and(|r| r.status == WorkspaceExecutionTerminalStatus::Succeeded)
-            }
-            OPENWIKI_BOOTSTRAP => sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM workflow_runs WHERE id=? AND workspace_id=? AND repository_id=? AND trigger_source='openwiki_bootstrap' AND status='succeeded')")
-                .bind(owner.run_id).bind(ws.id).bind(repo).fetch_one(&mut *tx).await?,
-            _ => false,
-        };
-        if !successful { return Err(failure("Generated product has no matching success")); }
-        archive::check_idle(&mut tx, ws.id).await?;
-        archive_processes::check(ws.container_ref.as_deref()).await?;
-        let deletion_error = archive::archive_checked(&mut tx, &ws, &repos).await?;
-        // Other linked Workspaces are never archived by this completion event.
-        let issue_archived = sqlx::query("UPDATE local_issues SET archived=1,updated_at=datetime('now','subsec') WHERE id=? AND project_id=? AND NOT EXISTS(SELECT 1 FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=? AND w.archived=0)")
-            .bind(issue).bind(project).bind(issue).execute(&mut *tx).await?.rows_affected() == 1;
-        tx.commit().await?;
-        Ok::<_, ApiError>(json!({"workspace_id":ws.id,"archived":true,"worktree_deleted":ws.can_delete_container_path() && deletion_error.is_none(),"issue_id":issue,"issue_archived":issue_archived,"deletion_error":deletion_error}))
-    }.await;
-    let detail = match &result {
-        Ok(value) => value.to_string(),
-        Err(error) => format!("archive refused or uncertain: {error}"),
-    };
-    match &result {
-        Ok(value) if value["deletion_error"].is_null() => {
-            tracing::info!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive attempt finished")
-        }
-        _ => {
-            tracing::warn!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive refused, uncertain or deletion incomplete")
-        }
-    }
-    sqlx::query("UPDATE generated_issue_workspaces SET attempt_result=? WHERE workspace_id=?")
-        .bind(detail)
-        .bind(released.id)
-        .execute(pool)
-        .await?;
-    result.map(|_| ())
 }
