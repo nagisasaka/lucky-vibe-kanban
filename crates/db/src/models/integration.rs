@@ -326,6 +326,9 @@ impl IntegrationRun {
         .bind(card_id)
         .execute(&mut *tx)
         .await?;
+        sqlx::query("INSERT INTO generated_issue_workspaces(workspace_id,issue_id,project_id,owner_kind,repository_id,owner_run_id) VALUES(?,?,?,'integration',?,?)")
+            .bind(workspace_id).bind(card_id).bind(self.project_id).bind(self.repository_id).bind(self.id.to_string())
+            .execute(&mut *tx).await?;
         sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,workspace_id,payload) VALUES(?,?,?,?,?,?,'queued',?,?)")
         .bind(self.id).bind(&self.request_key).bind(self.project_id).bind(self.repository_id).bind(&self.storage_identity).bind(&self.target_ref).bind(workspace_id).bind(&self.payload).execute(&mut *tx).await?;
         tx.commit().await?;
