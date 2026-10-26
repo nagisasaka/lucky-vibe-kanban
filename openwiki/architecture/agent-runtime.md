@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:12:45.140Z
+    at: 2026-10-26T01:28:30.262Z
 sources:
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
@@ -55,7 +55,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-24T17:12:45.140Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -97,7 +97,7 @@ Codex のメッセージ差分と完成メッセージは別の経路を通る�
 
 Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。context 用の専用 table や canonical token 履歴は増やさない。Workspace 累積トークンは別の thread 単位集計として保存する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1632-L1658)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
 
-現行 Codex mapper は v5 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。旧 v4 mapper は旧 collaboration 投影の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L553)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
+現行 Codex mapper は v7 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
 ## Host の再送記録と有界配信
 
@@ -143,7 +143,7 @@ Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions
 
 読取は Complete / Recovered の manifest、連番、frame 数、checksum を検査し、open・不完全な bundle を拒否する。replay は audit schema / runtime / adapter / protocol / mapper の version を照合し、不一致をエラーにする。既存の bundle replay は、下記の将来作業である「製品 DB の完全再投影」と同じ操作ではない。[version 契約](../../crates/executors/src/runtime/native_audit.rs#L945-L964)・[比較](../../crates/executors/src/runtime/native_audit.rs#L1103-L1142)・[不一致テスト](../../crates/executors/src/runtime/native_audit.rs#L1317-L1345)
 
-[Runtime 計画の「周期 cleanup を追加しない」という保存方針](../../docs/future/agent-runtime/README.md#已确认的产品边界)と、利用者の明示削除は分ける。[Workspace 削除](../concepts/workspace.md#archive削除期限-cleanup)では Session ID 群を取得し、DB 削除後の background cleanup が各 Session の Native Audit と process log を削除する。External の作業ディレクトリ保護も、この別保存先の永久保持を意味しない。必要な監査は削除前に保全する。cleanup 失敗はログに残るため、削除 API の受付だけで消去完了とも判定しない。[削除 context](../../crates/workspace-manager/src/workspace_manager.rs#L174-L205)・[cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L436-L515)・[削除と再実行のテスト](../../crates/workspace-manager/src/workspace_manager.rs#L1463-L1492)
+[Runtime 計画の「周期 cleanup を追加しない」という保存方針](../../docs/future/agent-runtime/README.md#已确认的产品边界)と、利用者の明示削除は分ける。[Workspace 削除](../concepts/workspace.md#archive削除期限-cleanup)では Session ID 群を取得し、DB 削除後の background cleanup が各 Session の Native Audit と process log を削除する。External の作業ディレクトリ保護も、この別保存先の永久保持を意味しない。必要な監査は削除前に保全する。cleanup 失敗はログに残るため、削除 API の受付だけで消去完了とも判定しない。[削除 context](../../crates/workspace-manager/src/workspace_manager.rs#L174-L205)・[cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L436-L515)・[削除と再実行のテスト](../../crates/workspace-manager/src/workspace_manager.rs#L1368-L1397)
 
 ## DB の原子性と冪等性
 

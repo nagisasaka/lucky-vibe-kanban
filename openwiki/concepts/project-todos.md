@@ -10,6 +10,8 @@ sources:
     resource: repo://crates/db/migrations/20261024000000_todo_creation_source.sql
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
+  - id: openwiki-source-5cc18853b4052cffae9ca81e
+    resource: repo://crates/db/src/models/text_search.rs
   - id: openwiki-source-ae51e85800dd9a5a8db8d6c2
     resource: repo://crates/db/src/models/todo_tests.rs
   - id: openwiki-source-77fa2216e4e605d16556c5db
@@ -50,10 +52,10 @@ sources:
     resource: repo://tests/todos/layout.mjs
   - id: openwiki-source-39e16c61b69c47aba760577d
     resource: repo://tests/todos/README.md
-generated: { by: "codex", at: "2026-10-23T19:31:31.371Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:31:31.371Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # Project Todo の共有メモ
@@ -158,3 +160,9 @@ Project の Todos 表示は複数列を許す `grid` を指定し、Workspace �
 今回の Sync は全3チャンクと凍結 source `efc95458bd297b2b202cf11ec3352f4795d3f33f` を照合し、本文表示、編集と API 呼出し、保存 DTO、カテゴリーの高さ測定、翻訳ラベル、独立したブラウザー試験と harness を確認した。[開発時記録](../../tests/todos/body-expansion-validation.md)は型検査・対象 lint・Chromium E2E の成功と初期 harness 失敗、未実施の Firefox / WebKit / 実機等を区別している。供給された正式 Integration 記録は明示的な検証省略であり、本 Sync でも製品テストは再実行していない。無関係な過去の説明全体、統合後のブラウザー動作、任意の混在 binary 互換性を再検証したとは扱わない。
 
 設計の意図・本文の版履歴・出典付きの独立追記を残す場合は、同じ Project 表示切替から [設計メモ](design-notes.md)を使う。Todo の完了・削除とは異なる履歴保持の契約を持つ。
+
+## 一覧を検索する
+
+Project と Workspace のTodo検索は、取得済み本文/カテゴリーを trim・小文字化した部分一致で絞り、完了表示とANDで適用する。追加draftを検索条件で消さず、カテゴリーの並びと各項目の取得順を保つ。両MCPの `list_todos.search` も本文/カテゴリーを検索するが空白はliteralで、`%`や`_`をwildcardにしない。検索は完了条件に合う全候補へ適用してからmatching-result offsetを数えるため、取得した一ページだけを検索する処理ではない。検索なしの有界SQL経路を保ち、検索ありでは行を順に読み合致ページ分だけを保持する。[画面](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L40-L100)・[DB](../../crates/db/src/models/todo.rs#L140-L177)・[共有検索](../../crates/db/src/models/text_search.rs#L1-L10)。
+
+ブラウザーとMCPでtrimの意味が異なる点と、検索後paginationは `tests/search/isolated.mjs`、DBの検索回帰、`listSearch.test.ts` が変更時の入口となる。このSyncでは試験定義を照合し、製品試験を再実行していない。

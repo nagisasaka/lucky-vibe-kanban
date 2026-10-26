@@ -7,6 +7,7 @@ use sqlx::{
 };
 use utils::assets::asset_dir;
 
+mod migration_compat;
 pub mod models;
 
 /// Long enough to absorb ordinary short writer overlap without making a UI
@@ -14,10 +15,11 @@ pub mod models;
 /// primary contention controls; this is only a bounded final defense.
 const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
-async fn run_migrations(pool: &Pool<Sqlite>) -> Result<(), Error> {
+/// Supported migration entry point for both startup and migration tooling.
+pub async fn run_migrations(pool: &Pool<Sqlite>) -> Result<(), Error> {
     use std::collections::HashSet;
 
-    let migrator = sqlx::migrate!("./migrations");
+    let migrator = migration_compat::migrator(pool).await?;
     let mut processed_versions: HashSet<i64> = HashSet::new();
 
     loop {
@@ -27,6 +29,9 @@ async fn run_migrations(pool: &Pool<Sqlite>) -> Result<(), Error> {
                 return Ok(());
             }
             Err(MigrateError::VersionMismatch(version)) => {
+                if version == migration_compat::PROJECT_KEYS_VERSION {
+                    return Err(MigrateError::VersionMismatch(version).into());
+                }
                 if cfg!(debug_assertions) {
                     // return the error in debug mode to catch migration issues early
                     return Err(sqlx::Error::Migrate(Box::new(

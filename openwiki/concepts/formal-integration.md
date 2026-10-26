@@ -6,6 +6,8 @@ tags: [integration, git, validation, lifecycle, recovery]
 sources:
   - id: openwiki-source-60b1754d1fc954c43279f888
     resource: repo://.lvk/integration-validation.json
+  - id: openwiki-source-11bd8cfafd506215798951a6
+    resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
@@ -62,10 +64,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-25T19:14:17.380Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:14:17.380Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # 正式 Integration の選択・検証・公開
@@ -132,7 +134,7 @@ UI は順序付きの複数行入力と追加・削除、raw JSON の修復欄�
 
 ### 保存 API の競合と失敗
 
-`GET /api/repos/{repo_id}/integration-validation` は登録 Repo の checkout から `branch`・`head`・`revision`・`content` を返す。`PUT` は `expected_revision` と `content` を受け取る。commit を持つ local branch が必要で、detached HEAD は対象外。`.lvk` と設定ファイルの symlink・非通常型を拒否し、内容は最大1 MiBの UTF-8 に制限する。[route](../../crates/server/src/routes/repo.rs#L408-L412)・[読取](../../crates/server/src/routes/integration_validation.rs#L61-L130)
+`GET /api/repos/{repo_id}/integration-validation` は登録 Repo の checkout から `branch`・`head`・`revision`・`content` を返す。`PUT` は `expected_revision` と `content` を受け取る。commit を持つ local branch が必要で、detached HEAD は対象外。`.lvk` と設定ファイルの symlink・非通常型を拒否し、内容は最大1 MiBの UTF-8 に制限する。[route](../../crates/server/src/routes/repo.rs#L377-L383)・[読取](../../crates/server/src/routes/integration_validation.rs#L61-L130)
 
 revision は branch・HEAD・ファイルの存在と正確な内容の組から計算する SHA-256 であり、整形だけの変更も競合になる。PUT は Git common directory 単位の既存 publication guard を使うので、別 Repo ID でも同じ storage の保存を同時に通せない。guard を取れない場合や revision 不一致は409となる。検証後、同じ `.lvk` 内の一時ファイルへ書き、既存 permission を引き継ぎ、sync・再照合して原子的に置換し、読戻す。外部 editor や任意の Git 操作はこの lock に参加しないため、最後の比較以降の外部更新まで完全に排他する契約ではない。保存中は外部編集・branch 切替を避ける。[保存順序](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[storage lock](../../crates/git/src/publication.rs#L134-L161)
 
@@ -184,7 +186,7 @@ standalone と embedded の monitor 配線差は [起動順序](../architecture/
 
 [調査・回復記録](../../docs/development/integration-dispatch-recovery.md)は設計判断と過去の検証結果を残す。旧 per-step handoff の撤去後も、一般 Workflow の配送受理と SQLite writer 予約、一般 Retry の回復は依存先がある。記録中の instance 固定 cutover 手順や live 未実行の記述を、現在の配置状態として扱わない。この Sync は統合 source を調査したもので、過去の binary、live adoption、公表済みテスト成功を再確認したものではない。
 
-[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L342-L356)
+[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L322-L341)
 
 公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された正式 Integration は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。
 
@@ -201,3 +203,5 @@ MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scena
 ### 競合 Session 分離の検証境界
 
 [回帰試験](../../crates/server/src/routes/integrations/runtime_tests.rs#L1670-L1942)は連続する競合 step と明示 Resume の Session 分離、保存後・Create 前の再起動と同一 dispatch 再送、実 SessionObserved 投影、異なる native identity の拒否、degraded 履歴の保持、transaction 失敗時の Session と dispatch の rollback を検査する。`ready` 本文があっても `Succeeded && Current` を満たさなければ採用しない。試験は永続化・投影境界の fixture であり、実 Codex や browser からの Resume、既存 blocked run の復旧、配備は未検証である。今回の文書保守では試験を再実行していない。
+
+受付で生成する Integration Card も保存済み Project key で採番し、同じ transaction で system を付ける。priority は共通の medium 既定に従う。分類は execution owner や承認の代替ではない。[識別と分類](project-and-issue.md#仕事の識別と分類)・[生成](../../crates/db/src/models/integration.rs#L279-L305)。

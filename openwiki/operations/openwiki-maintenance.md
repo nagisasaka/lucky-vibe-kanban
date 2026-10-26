@@ -68,10 +68,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-24T02:37:05.680Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:12:45.140Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -242,3 +242,5 @@ Sync の確定結果は Workspace owner に保存してから repository の最�
 [Bootstrap v2](../../docs/design/openwiki-bootstrap-workflow-v2.md) が基本の設計、[implementation record](../../docs/design/openwiki-bootstrap-implementation.md) が phase completion の一部を明示的に更新した記録である。後者は「最後の mode だけで判断」「Refine は必ず操作する」という旧前提を置き換える。source の PhaseCompletionProof と対応して読む。
 
 回帰検証の入口は、[全 attempt の audit を検査する test](../../crates/server/src/routes/openwiki/completion.rs) と、[Generate self-correction / 操作なし Refine の test](../../crates/server/src/routes/openwiki/completion.rs)。これらは model 呼び出しなしの protocol fixture であり、意味的 coverage の保証と混同しない。
+
+保守Issueの採番は保存済みProject keyを使い、systemの付与とlinkを同じtransactionで確定する。priorityはmediumが既定。起動時にownerが過去記録から回復されたIssueにもsystemを補完するが、通常のBoard読取や定期releaseはこの補完を行わない。[分類と識別の正本](../concepts/project-and-issue.md#仕事の識別と分類)・[生成](../../crates/services/src/services/workspace_usage/lifecycle.rs#L103-L125)・[回復後の補完](../../crates/services/src/services/workspace_usage.rs#L148-L162)。

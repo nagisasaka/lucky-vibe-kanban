@@ -42,10 +42,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatAggregatedToolEntries.tsx
   - id: openwiki-source-9fa3c3bb81a61c7549d33839
     resource: repo://packages/ui/src/components/ChatCode.tsx
-  - id: openwiki-source-7178b2bafadec69965c4e1cd
-    resource: repo://packages/ui/src/components/ChatScriptEntry.tsx
-  - id: openwiki-source-8fc81a64a6927ed4ae184ab7
-    resource: repo://packages/ui/src/components/ChatUserMessage.tsx
+  - id: openwiki-source-415636b44e23058beab18db4
+    resource: repo://packages/ui/src/components/ChatRunFooter.tsx
   - id: openwiki-source-d89c4480040eee7fa41a6000
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
@@ -90,8 +88,6 @@ sources:
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
   - id: openwiki-source-b58899ddf6c6173903fabe61
     resource: repo://packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx
-  - id: openwiki-source-3e72be92e5674f5611856ac3
-    resource: repo://packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts
   - id: openwiki-source-952ab4470659b6dc518fab38
     resource: repo://packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts
   - id: openwiki-source-d32b3d54fb9362eee85118ce
@@ -184,8 +180,6 @@ sources:
     resource: repo://tests/chat/isolated.spec.ts
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
-  - id: openwiki-source-ea2ab447e65950eeb4c72491
-    resource: repo://tests/chat/syntax-highlight.fixture.tsx
   - id: openwiki-source-0a43f232c5a84b7f94378d02
     resource: repo://tests/chat/syntax-highlight.test.mjs
   - id: openwiki-source-7c49efe20c19a1848e432191
@@ -208,10 +202,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:13:40.123Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # Web の実行環境と同期
@@ -228,11 +222,13 @@ Tauri shell の廃止後も Local Web を Docker server または source 開発 
 
 ### Markdown・HTML・raw の貼り付け
 
-共有 `PasteMarkdownPlugin` はブラウザーの `ClipboardEvent` を受け取り、clipboard-read API や native IPC を要求しない。Ctrl/Cmd+Shift+V の raw 指定は HTML より優先され、plain text をそのまま挿入する。通常 paste で HTML があれば Lexical の既定処理へ委譲し、plain text だけなら Markdown を変換する。ClipboardEvent・clipboard data・対象 text がない場合は処理を引き取らない。[入力と優先順位](../../packages/ui/src/components/PasteMarkdownPlugin.tsx#L32-L79)
+通常の rich-text 入力で使う共有 `PasteMarkdownPlugin` はブラウザーの `ClipboardEvent` を受け取り、clipboard-read API や native IPC を要求しない。Ctrl/Cmd+Shift+V の raw 指定は HTML より優先され、plain text をそのまま挿入する。通常 paste で HTML があれば Lexical の既定処理へ委譲し、plain text だけなら Markdown を変換する。ClipboardEvent・clipboard data・対象 text がない場合は処理を引き取らない。[入力と優先順位](../../packages/ui/src/components/PasteMarkdownPlugin.tsx#L32-L79)
 
 Markdown 変換は selection を変更するため、変換前に clone し挿入前に復元する。空の変換結果または例外では元の text を raw で挿入する。listener と Lexical command は unmount 時に解除する。[selection と fallback](../../packages/ui/src/components/PasteMarkdownPlugin.tsx#L81-L123)。この入力処理は [保存済みドラフト](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)の永続化とは別の責任である。
 
 `tests/chat/paste-markdown.test.mjs` は実 plugin の Chromium fixture に ClipboardEvent を送って Markdown、HTML、HTML 付き raw を検査する。OS clipboard 自体や全ブラウザーの shortcut を検証するものではない。[fixture](../../tests/chat/paste-markdown.fixture.tsx)・[試験](../../tests/chat/paste-markdown.test.mjs)
+
+チャット composer は専用の plain-text mode を使うため、上記の Markdown/HTML 変換を適用しない。既存 Lexical の IME・添付・shortcut と送信 snapshot の契約は [Session の入力](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)を参照する。
 
 ### 通知・音・エディターの接続先
 
@@ -296,7 +292,7 @@ Workspace 一覧の検索は、ローカル一覧に `UserProvider` の既存関
 
 ## 認証が製品画面より先に確定する
 
-Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L79-L99)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
+Bootstrap は `installAccessFetch` を登録し、`ServerAccessGate` 内に App を置く。gate が access status を取得して本人IDを設定してから製品の providers を mount する。認証不成立や初期設定中は製品画面を表示しない。[初期化順](../../packages/local-web/src/app/entry/Bootstrap.tsx#L45-L68)、[gate](../../packages/local-web/src/app/auth/ServerAccessGate.tsx#L88-L148)
 
 fetch wrapper は同じ origin の `/api/` への変更要求だけに CSRF を補う。業務APIの401/423では状態再取得イベントを送り、外部URLへCSRFを転送しない。これはWebの接続補助で、backendが最終認証を行う。セッション・失効・配置の詳細は [共通認証](../concepts/server-access.md)、歴史的ownerと現在actorの区別は [メンバー](../concepts/organization-and-membership.md)を参照する。[wrapper](../../packages/local-web/src/app/auth/serverAccess.ts#L17-L74)
 
@@ -320,7 +316,7 @@ mutation は REST 成功後に cache を破棄し、進行中の古い取得を�
 
 ### コンパクト Kanban の操作と保存の境界
 
-グリッド表示は web-core の `KanbanGrid` が dnd-kit を使い、リスト表示は UI package の hello-pangea `KanbanProvider` を使う。両方とも同じ `handleDragEnd` に接続する。グリッドは測定したカードまたは列の drop 先を、列 ID と配列 index を持つ既存 `DropResult` に変換するため、表示を二列にしても別の保存モデルは作らない。[変換](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L24-L95)・[二つの接続先](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1137-L1353)。列内の配置・展開・重要状態の意味は [コンパクトカードの表示契約](../concepts/project-and-issue.md#コンパクトカードの表示契約)を正本とする。
+グリッド表示は web-core の `KanbanGrid` が dnd-kit を使い、リスト表示は UI package の hello-pangea `KanbanProvider` を使う。両方とも同じ `handleDragEnd` に接続する。グリッドは測定したカードまたは列の drop 先を、列 ID と配列 index を持つ既存 `DropResult` に変換するため、表示を二列にしても別の保存モデルは作らない。[変換](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L24-L95)・[二つの接続先](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1120-L1316)。列内の配置・展開・重要状態の意味は [コンパクトカードの表示契約](../concepts/project-and-issue.md#コンパクトカードの表示契約)を正本とする。
 
 pointer collision はカードを優先し、空列も drop 対象にする。keyboard は sortable の座標を使い、drop 後に同じ Issue ID のカードへ focus を戻す。内側の button・link・summary 等から mouse/touch drag を開始せず、子要素の key 操作もカード側で横取りしない。カード自身の Enter は詳細を開き、drag 後の click は抑止する。複数選択中は sortable を無効にする。[sensor と focus](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L52-L87)・[操作の分離](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L128-L190)・[複数選択の接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1200)
 
@@ -368,7 +364,7 @@ Live delta はまず整列済みの永続列へ挿入位置を求める。同じ
 
 ### 承認カードの操作内容を保持する
 
-`approval_requested` が既存 `tool_call_id` に対応するとき、会話 projection は元の tool 名・action と表示 identity を保ち、status を pending approval に更新する。command の本文、汎用 tool の引数（file change の diff を含む）は JSON 本文として残し、判断対象を承認名だけで置き換えない。元 tool がなければ独立した承認 entry を作る。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L464-L515)・[command/file の回帰テスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L701-L756)
+`approval_requested` が既存 `tool_call_id` に対応するとき、会話 projection は元の tool 名・action と表示 identity を保ち、status を pending approval に更新する。command の本文、汎用 tool の引数（file change の diff を含む）は JSON 本文として残し、判断対象を承認名だけで置き換えない。元 tool がなければ承認 entry を作り tool ID を登録するため、後着の開始・結果も同じ操作へ収束する。input・cwd・取得済み出力も承認遷移で保持する。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L464-L515)・[command/file の回帰テスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L701-L756)
 
 `pending_approval` の tool entry は tool/file-change group を flush して単独表示し、折り畳み集約に隠さない。この表示規則が承認待機を実装するわけではない。判断・拒否・取消の意味は [Session の承認契約](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)、待機状態の正本は [host の結果と件数の投影](agent-runtime.md#codex-の承認待機を所有する場所)に従う。[集約境界](../../packages/web-core/src/shared/lib/aggregateEntries.ts#L274-L285)・[単独表示のテスト](../../packages/web-core/src/shared/lib/aggregateEntries.test.ts#L62-L75)
 
@@ -378,7 +374,7 @@ Board の Workspace summary は、Workspace ごとに作成日時と ID の降�
 
 `useWorkspaces` は一覧 stream に summary を重ね、初期化後に15秒周期でも再取得する。Kanban と Issue の Workspace / task-attempt 一覧は同じ時刻を `IssueWorkspaceCard` へ渡す。時計の active 判定は最新 Run の status を使い、Workspace 全体の `is_running` 集計とは別である。別 Run・script・Integration が活動中でも、最新 Run の時計が止まっている場合がある。時計は summary の到着に依存するため、Board と chat の確定表示が同時に切り替わる保証ではない。[summary の合成と poll](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L56-L89)・[周期取得](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L168-L194)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L249-L275)
 
-Session 側は Run 一覧の `completed_at` を受け、会話 projection が Run ごとに一つの `runTiming` footer を生成し、`ConversationListContainer` が共通の `ChatElapsedTime` を描画する。Goal 専用表示に依存しない。[Run 一覧](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[footer](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[描画](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82)。待機・retry、終了根拠の欠損、再接続時の新旧比較、Goal 会計との違いは [Run の経過時間](../concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)を正本とする。表示のための新旧比較を、stream cursor や実行制御の変更と混同しない。
+Session 側は Run 一覧の `completed_at` を受け、会話 projection が Run ごとに一つの `runTiming` footer を生成し、`ConversationListContainer` が `ChatRunFooter` を描画する。footer は共通 `ChatElapsedTime` と、保存済みの有効な終了日時を表示する。Goal 専用表示に依存しない。[Run 一覧](../../crates/services/src/services/agent_runtime.rs#L201-L237)・[footer](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[描画](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L76-L82)。待機・retry、終了根拠の欠損、再接続時の新旧比較、Goal 会計との違いは [Run の経過時間](../concepts/session-and-agent-run.md#run-の経過時間と-goal-会計)を正本とする。表示のための新旧比較を、stream cursor や実行制御の変更と混同しない。
 
 ### 最近の会話を先に表示する
 
@@ -390,11 +386,13 @@ Project Todo は Board collection や会話 stream とは別の REST query を�
 
 購読の段階化と、画面上の位置保持は別の責任を持つ。`ConversationList` は Workspace ID と Session scope を React key にし、保留中の rAF・測定値・初回表示状態を会話ごとに分離する。通知を rAF でまとめても、最初に非空の行を適用した一回だけ初回スクロールを行う。遅れて来た `initial` 通知を再度の初回ジャンプと扱わない。[scope と cleanup](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L273-L302)・[非空の初回適用](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L379-L469)・[key](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1052-L1065)
 
-リストは仮想化された前方と、通常 DOM として描画する末尾を組み合わせる。末尾付近の判定は64pxで、末尾 lock 中は内容領域の `ResizeObserver` でも追従する。画像・Markdown・streamed text の高さだけが変わり、行数や仮想領域の測定サイズが変わらない場合にも必要な補正である。上向き wheel・touch・キー入力などで lock を解放し、末尾付近へ戻れば再取得する。smooth scroll の猶予中は即時補正を抑える。[閾値](../../packages/web-core/src/features/workspace-chat/model/conversation-scroll-commands.ts#L11-L17)・[入力と実寸補正](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L259-L378)
+リストは仮想化された前方と通常 DOM の末尾を組み合わせる。末尾付近の幾何判定は64pxだが、追従の意図は別の ref で保持する。測定・clamp・anchor 復元が発生させた scroll event だけでは追従を解除しない。上向き wheel・touch 移動・閲覧キー・scrollbar の上移動で解除し、下向き操作で実末尾から2px以内へ到達するか、末尾ボタン・送信時の明示 jump で再開する。送信 ACK の遅着は新しい jump の理由にしない。[入力と意図](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L263-L369)・[明示 jump](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L429-L462)。
+
+追従中は layout と content/container ResizeObserver で実末尾へ即時補正し、次の rAF でも再測定する。smooth target は stream や仮想測定で古くなるため末尾 jump は即時である。履歴閲覧中は Run 完了に伴う末尾 DOM の仮想領域への移動を延期し、測定値への一括置換で読書位置を動かさない。[補正](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L375-L441)・[末尾境界](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L565-L597)。
 
 過去を読んでいる間に行を更新すると、最初の可視行の semantic key と viewport 内の相対位置を記憶する。prepend 後は同じ行の位置差で scrollTop を補正し、DOM にまだなければ virtualizer でその行へ移動する。行が消えたら anchor を破棄する。末尾の非仮想化境界も数値 index を固定せず、以前の境界行の key から再解決するため、prepend のたびに非仮想 DOM 範囲が広がらない。[anchor と境界の捕捉](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L404-L436)・[復元](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L558-L601)
 
-anchor は React 更新後だけでなく、末尾 lock がないときの同じ content ResizeObserver からも復元する。prepend 後に viewport より上の非仮想行が DOM だけで遅れて伸びる場合を取りこぼさないためである。anchor 保持中は virtualizer 側のサイズ補正を抑えて二重補正を避ける。wheel / touchstart / pointerdown / keydown や明示 jump は anchor を解放し、利用者の次の閲覧操作を固定し続けない。[補正の調停](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L315-L329)・[resize](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L360-L378)・[操作による解除](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L901-L920)
+anchor は React 更新後だけでなく、末尾 lock がないときの同じ content ResizeObserver からも復元する。prepend 後に viewport より上の非仮想行が DOM だけで遅れて伸びる場合を取りこぼさないためである。anchor 保持中は virtualizer 側のサイズ補正を抑えて二重補正を避ける。利用者の閲覧操作で現在の可視行を取り直し、明示 jump で anchor を解放する。[補正の調停](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L315-L329)・[resize](../../packages/web-core/src/features/workspace-chat/model/useConversationVirtualizer.ts#L360-L378)・[操作による解除](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L901-L920)
 
 ### チャット表示の検証境界
 
@@ -408,13 +406,13 @@ built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制�
 
 コードの色付けには二つの表示経路がある。command と script は UI の `ChatCode` が Prism token を React の文字列と span に変換し、Markdown fence は `AppChatMarkdown` → disabled の `WYSIWYGEditor` → Lexical `CodeHighlightPlugin` を通る。両方が既存の `CODE_HIGHLIGHT_CLASSES` と syntax CSS 変数を使う。UI package は Prism を直接依存に持ち、共有 helper が bash / JSON grammar を登録するため、command 側だけでなく Lexical 側の対応言語にも関わる。[文字列の描画](../../packages/ui/src/components/ChatCode.tsx#L1-L31)・[grammar と上限](../../packages/ui/src/lib/chat-code-highlighting.ts#L1-L23)・[Markdown の接続](../../packages/web-core/src/features/workspace-chat/ui/AppChatMarkdown.tsx#L22-L39)・[共通テーマ](../../packages/ui/src/lib/code-highlight-theme.ts#L1-L36)
 
-ツールの見出しは実 command と表示 summary が等しい場合だけ装飾し、説明文を shell code として扱わない。展開詳細は空白だけの command を除外する判定に trim を使うが、描画には前後空白を含む元の文字列を渡す。script の command も同じ描画部品を使い、ツール出力本文は別の plain pre に残る。ここでの `language="bash"` は表示側が固定した字句装飾であり、provider が実際に選んだ shell を証明しない。[見出しと詳細](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L46-L77)・[単一見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L153-L163)・[集約内の見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L264-L279)・[script](../../packages/ui/src/components/ChatScriptEntry.tsx#L78-L89)。実行と event の責任は [Agent Runtime](agent-runtime.md)にあり、色付けから実行分類を逆算しない。
+ツールの見出しは実 command と表示 summary が等しい場合だけ装飾し、説明文を shell code として扱わない。展開詳細は空白だけの command を除外する判定に trim を使うが、描画には前後空白を含む元の文字列を渡す。script の command も同じ描画部品を使い、ツール出力本文は保持された language があれば同じ ChatCode で装飾する。ここでの `language="bash"` は表示側が固定した字句装飾であり、provider が実際に選んだ shell を証明しない。[見出しと詳細](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L46-L77)・[単一見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L153-L163)・[集約内の見出し](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L264-L279)・[script](../../packages/ui/src/components/ChatScriptEntry.tsx#L78-L89)。実行と event の責任は [Agent Runtime](agent-runtime.md)にあり、色付けから実行分類を逆算しない。
 
 同期 tokenization は文字列の `length` が16,384以下で、指定言語が登録済みの場合に限る。これは UTF-16 code unit 数の上限であり、byte 数や表示上の文字数ではない。長文・未指定・未対応言語、tokenizer の例外では全文を plain 表示し、切り捨てない。read-only Lexical は既定言語を `text` にし、fallback 時も改行・tab node を作り直す。editable editor は従来の tokenizer を使うため、この上限を composer 全体の入力制限と解釈しない。コードコメントは streaming 中の同期処理を有界にする目的を記録している。[guard と fallback](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)・[read-only tokenizer](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L11-L46)・[disabled の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L641-L650)
 
 保存済み Markdown の初回表示では、`CodeHighlightPlugin` が `useLayoutEffect` で変換を登録し、その後 `MarkdownSyncPlugin` の `useEffect` が本文を取り込む。この順序が逆になると、初期履歴のコードが次の stream 更新まで plain のまま残り得る。登録は editor / readOnly に依存し、返された解除処理を effect cleanup に渡す。[登録順序](../../packages/ui/src/components/CodeHighlightPlugin.tsx#L31-L48)・[初期本文の同期](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L47-L78)。回帰 fixture は最初から JSON と未知言語の fence を渡し、更新前に JSON の装飾と未知言語の前後空白の保持を確認する。stream 更新後だけの検査ではこの初期化不具合を検出できない。[初期 fixture](../../tests/chat/syntax-highlight.fixture.tsx#L17-L23)・[更新前の assertion](../../tests/chat/syntax-highlight.test.mjs#L29-L44)。
 
-`ChatCode` は装飾のみを所有し、コピー、空白のレイアウト、折返しは呼出側の責任である。Markdown コピーは装飾 DOM を読み戻さず editor の `value` から行う。ただし既存処理として escaped underscore を unescape するため、全入力について byte 単位の同一性を保証する説明は誤りになる。[装飾の責任](../../packages/ui/src/components/ChatCode.tsx#L18-L31)・[Markdown コピー](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L447-L459)。入力の保存・送信は [Session の composer 契約](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、高さ変化への追従は本ページの[履歴の閲覧位置](#履歴の閲覧位置と末尾追従)を参照する。
+`ChatCode` は装飾のみを所有し、コピー、空白のレイアウト、折返しは呼出側の責任である。Markdown コピーは装飾 DOM を読み戻さず editor の `value` から行う。チャットは `preserveCopySource` を指定して escaped underscore を含む元の value をコピーする。他の editor の既定は従来の unescape を保つ。[装飾の責任](../../packages/ui/src/components/ChatCode.tsx#L18-L31)・[Markdown コピー](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L447-L459)。入力の保存・送信は [Session の composer 契約](../concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、高さ変化への追従は本ページの[履歴の閲覧位置](#履歴の閲覧位置と末尾追従)を参照する。
 
 検証の入口は `syntax-highlight.test.mjs` の Chromium fixture と `syntax-isolated-e2e.mjs` の built-app 試験である。前者は部分文字列・未閉鎖 fence、bash/sh/JSON などの装飾、未知・未指定・長文の fallback、文字列と focus の保持を検査する。後者は build 済み frontend/server と一時 SQLite の Workspace / Session を使い、AgentRun 一覧と WebSocket event を fixture に置き換えて command コピー、Markdown コピー、入力保持、light/dark、長文を検査する。provider の生成そのものを検証する試験ではない。終了時には browser/server、残存 PID、port、一時DBの cleanup を確認する。[component 試験](../../tests/chat/syntax-highlight.test.mjs#L7-L108)・[隔離条件](../../tests/chat/syntax-isolated-e2e.mjs#L1-L81)・[fixture と操作](../../tests/chat/syntax-isolated-e2e.mjs#L146-L325)・[cleanup](../../tests/chat/syntax-isolated-e2e.mjs#L350-L414)。再実行の環境準備は [開発と検証](../operations/development.md)を参照する。今回のコード装飾 Sync は凍結 source `777488ca3a430b56d19e2df9437de5f848dc00e2` と試験定義を静的に照合したもので、製品試験を再実行していない。供給された正式 Integration の記録も validation skipped であり、開発時の成功報告を統合後の検証成功へ読み替えない。
 
@@ -426,7 +424,7 @@ built-app の隔離試験は、実 backend と合成履歴、実 Scratch と制�
 
 リンク DOM の `href` は無効化・sanitization 済みの場合があるため、plugin は Lexical node の元 URL から再評価する。resolver が変わると既存 node も処理し直すので、後から Workspace metadata が到着した場合にも有効状態を更新できる。ローカルリンクは DOM の href を除去し、click / Enter で callback を呼ぶ。HTTPS は通常の新規タブと `noopener noreferrer` を保つ。[DOM 更新と再評価](../../packages/ui/src/components/ReadOnlyLinkPlugin.tsx#L15-L77)
 
-通常 layout の bridge は解決済み target を `openTarget` へ渡し、right main panel を `FILES` へ切り替える。これにより会話からも既存の file selection / viewer を使う。ファイル名の形式、行指定、曖昧さと拒否、backend の最終検査は [チャットから Repo 内ファイルを開く契約](../operations/workspace-inspection.md#チャットから-repo-内ファイルを開く)を正本とする。[panel への接続](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L650-L677)
+通常 layout の bridge は解決済み target を `openTarget` へ渡し、right main panel を `FILES` へ切り替える。これにより会話からも既存の file selection / viewer を使う。ファイル名の形式、行指定、曖昧さと拒否、backend の最終検査は [チャットから Repo 内ファイルを開く契約](../operations/workspace-inspection.md#チャットから-repo-内ファイルを開く)を正本とする。[panel への接続](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L629-L656)
 
 ## State と履歴を同期させる際の注意
 
@@ -471,3 +469,9 @@ Session 一覧の再取得では利用者が選んだ古いログや new-session
 モバイル shell は `visualViewport.height` を CSS 変数 `--app-vh` に反映する。キーボード表示時の composer 隠れを避け、重い shell を viewport のたびに React render しない意図がコードに記録されている。[実装と理由](../../packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts#L3-L50)
 
 [モバイル設計](../../docs/ai-mobile/design.md)は draft、[390px 監査](../../docs/ai-mobile/audit-2026-07-07.md)は過去時点のギャップ調査である。QR、PWA、native shell の構想を現行保証へ置き換えず、実画面・hooks・transport の実装を確認する。画布の見た目や操作設計は [Workflow UI 設計](../../docs/future/ai-workflow/spec-ui.md)に委ね、実行順序の意味は [Workflow Attempt](../concepts/workflow-attempt.md)で確認する。
+
+### 操作のプレビューと provider の説明
+
+単一操作は実見出しと結果プレビューを最初から表示し、一回の展開で保持詳細へ進む。複数操作の折り畳みでも個々の操作・結果を残す。出力なしの完了、待機、部分取得、取得不能を区別し、details の copy は保持原文を使う。[表示部品](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L94-L242)・[単一操作](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L302-L369)。公開 reasoning summary、明示 plan と通常 commentary は別の内容として表示する。summary の native part ごとに空白だけの delta も保持し、完成時は同じ item の永続内容へ収束する。private reasoning を推定して補わない。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L775-L868)・[一時内容の収束](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L215-L232)。
+
+今回の表示更新の検証入口は canonical projection、tool lifecycle/output preview、pending message、layout/sync と execution-group の各 fixture、および `syntax-isolated-e2e.mjs` である。合成 event と制御した HTTP/WS を使う試験を実 provider 生成と扱わない。凍結入力は closed-client WebSocket の timing failure と、別途の実画面での受入報告を両方保持している。今回の保守は source と試験定義の静的照合で、実機 touch/IME・実 provider・外部認証の再試験ではない。

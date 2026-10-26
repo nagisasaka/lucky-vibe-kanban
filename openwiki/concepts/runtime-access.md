@@ -38,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # 実行環境へのアクセス
@@ -124,4 +124,4 @@ runtime設定migrationは `20261020200000` で、別機能の `20261020190000` �
 
 今回のSyncは統合済みsourceとテスト内容の静的照合で、製品テストを再実行していない。凍結入力の正式Integrationは明示的に検証省略であり、開発時成功報告と区別する。restart fixtureはmock認証のHTTP hostで、full serverのshutdown hook、本番Auth0/ChatGPT、実PID番号再利用、spawn→receipt確定間の各点のcrash、実Cargo/nvm/venv環境を保証しない。[検証限界の記録](../../docs/development/runtime-access-review.md#3-子が生存中のホスト終了再起動限定した実プロセス検証で成功)
 
-bundle切替には、production MCP routerのmock認証fixtureによる呼出元停止・再接続試験と、実server binaryのasync worker完走試験が別々にある。一体の実Auth0/ChatGPT E2Eではない。今回のSyncでも製品テストは再実行しておらず、開発時記録と正式Integrationの検証省略を区別する。[MCP回帰](../../crates/server/src/remote_mcp/environment_switch_tests.rs#L210-L289)・[実bundle検証と限界](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
+bundle切替には、production MCP routerのmock認証fixtureによる呼出元停止・再接続試験と、実server binaryのasync worker完走試験が別々にある。一体の実Auth0/ChatGPT E2Eではない。今回のSyncでも製品テストは再実行しておらず、開発時記録と正式Integrationの検証省略を区別する。[MCP回帰](../../crates/server/src/remote_mcp/environment_switch_tests.rs#L210-L283)・[実bundle検証と限界](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
