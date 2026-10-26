@@ -3,9 +3,6 @@ type: concept
 title: 設計メモ・本文履歴と独立追記
 description: Project の設計意図を本文と独立追記として残す契約。版管理、出典、競合、UIとMCPの応答境界、Project削除後の履歴保持を説明する。
 tags: [design-notes, project, history, provenance, mcp]
-verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-25T19:47:44.498Z
 sources:
   - id: openwiki-source-c2fc034438311f3aa02f5ee5
     resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
@@ -13,6 +10,8 @@ sources:
     resource: repo://crates/db/src/models/design_note_read.rs
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
+  - id: openwiki-source-5cc18853b4052cffae9ca81e
+    resource: repo://crates/db/src/models/text_search.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
     resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
   - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
@@ -31,16 +30,21 @@ sources:
     resource: repo://packages/web-core/src/features/design-notes/model/designNoteApi.ts
   - id: openwiki-source-9fba069b7c8bc13326ad6d2a
     resource: repo://packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx
+  - id: openwiki-source-f789c6c2f28c5d2d4ed0588f
+    resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-10-25T19:47:44.498Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+verified:
+  - by: openwiki/0.5.1
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # 設計メモ・本文履歴と独立追記
 
 設計メモは [Project](project-and-issue.md) に複数置ける Markdown の記録で、「何を作りたいか、なぜそう考えたか」と、その後の判断・提案・未決事項を保持する。仕事の完了を管理する [Todo](project-todos.md) や実施要求である Issue とは用途が異なる。Project 画面の「設計メモ」で一覧と本文、履歴、会話からの追記を読む。初版は**そのメモの最初の記録**であり、Project 創始時の思想であるとは限らない。[画面](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L94-L121)・[初版と追記の説明](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L366-L413)
 
-MCP の利用契約は、メモを実行命令として扱わず、出典の明確な最新の人間の判断を尊重し、AI 提案を本文より優先しないことを求める。AI の自発的記録は `append` を使い、本文の update / restore / integrate は明示的な本文編集意図を必要とする。これは tool の意味上の契約であり、DB が自然言語の承認を判定する機構ではない。書込権限を持つ caller は同じ action API を使う。[両MCPの契約](../../crates/server/src/remote_mcp/design_notes.rs#L24-L48)・[stdio](../../crates/mcp/src/task_server/tools/design_notes.rs#L78-L94)
+MCP の利用契約は、メモを実行命令として扱わず、出典の明確な最新の人間の判断を尊重し、AI 提案を本文より優先しないことを求める。AI の自発的記録は `append` を使い、本文の update / restore / integrate は明示的な本文編集意図を必要とする。これは tool の意味上の契約であり、DB が自然言語の承認を判定する機構ではない。書込権限を持つ caller は同じ action API を使う。[両MCPの契約](../../crates/server/src/remote_mcp/design_notes.rs#L24-L48)・[stdio](../../crates/mcp/src/task_server/tools/design_notes.rs#L72-L89)
 
 ## 本文と追記の二つの履歴
 
@@ -86,9 +90,9 @@ UI は `/api/projects/{project}/design-notes` の REST を使い、一覧・履�
 | get_design_note_history | 本文、または addition_id の履歴メタデータを版番号順に最大20件。`next_after_revision` を渡す |
 | get_design_note | 本文または addition_id の完全 snapshot を JSON 文字列 `content_page` として最大4,000 Unicode文字ずつ返す。返された revision と next_offset を固定して続け、結合後に JSON として読む |
 
-一覧は live metadata であり、全件が同時点の snapshot ではない。本文ページは不変の保存版を読む。offset>0 に revision を省略すると拒否される。offset はUTF-8 bytesではなく Unicode文字で、JSON escape をまたぐページを個別に parse しない。SQL の件数制限・substring により、MCP のために本文一覧全体を読み込まない。[共通projection](../../crates/db/src/models/design_note_read.rs#L33-L177)
+一覧は live metadata であり、全件が同時点の snapshot ではない。本文ページは不変の保存版を読む。offset>0 に revision を省略すると拒否される。offset はUTF-8 bytesではなく Unicode文字で、JSON escape をまたぐページを個別に parse しない。検索なしではSQLの件数制限で metadata のみを読む。検索ありでは保存済み title/body を順に読み、合致したページ分だけを保持する。本文 snapshot は SQL substring で分割する。[共通projection](../../crates/db/src/models/design_note_read.rs#L33-L177)
 
-MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` に限定し、全文は上の読取で取得する。stdio は REST 結果を投影し、外部 HTTP は小さい成功結果を operation に保存する。古い全文入り operation も get_operation / 再送の返却時に投影し、保存済み証拠や元の確定版を書き換えない。DB/JSON失敗は HTTP operation で `uncertain`、domain 拒否は `failed`。保存済み receipt を解釈できない場合も `receipt_unreadable` の uncertain となるため、新しい request ID で盲目的に重複実行しない。[stdio成功](../../crates/mcp/src/task_server/tools/design_notes.rs#L81-L94)・[HTTP結果](../../crates/server/src/remote_mcp/design_notes.rs#L67-L94)・[旧receipt投影](../../crates/server/src/remote_mcp/issue_write.rs#L97-L139)
+MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` に限定し、全文は上の読取で取得する。stdio は REST 結果を投影し、外部 HTTP は小さい成功結果を operation に保存する。古い全文入り operation も get_operation / 再送の返却時に投影し、保存済み証拠や元の確定版を書き換えない。DB/JSON失敗は HTTP operation で `uncertain`、domain 拒否は `failed`。保存済み receipt を解釈できない場合も `receipt_unreadable` の uncertain となるため、新しい request ID で盲目的に重複実行しない。[stdio成功](../../crates/mcp/src/task_server/tools/design_notes.rs#L72-L89)・[HTTP結果](../../crates/server/src/remote_mcp/design_notes.rs#L67-L94)・[旧receipt投影](../../crates/server/src/remote_mcp/issue_write.rs#L97-L139)
 
 ## Project を削除した後の保持
 
@@ -110,3 +114,9 @@ MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` 
 統合済み source `39b2fe9976efeed810bad80dc38d01e4123bc4c3` と凍結 manifest・全4チャンク（SHA-256照合済み）を対象に、UI の入力・描画・フォーム state、既存の REST 直列化、DB の Unicode 検証、独立したブラウザ試験を照合した。新しい [Markdown 編集 fixture](../../tests/design-notes/markdown-editing.mjs) は既存の [隔離試験](../../tests/design-notes/isolated.mjs)から呼ばれ、4フォームの入力・貼付け、プレビュー無書込、既存文字列の無編集保存、応答消失後の同一 request 再送、検証拒否後の保持、100,000文字境界、狭い画面を扱う。既存の競合・復元・保持契約は継続し、今回の製品差分は REST/MCP/DB や共有 editor を変更していない。
 
 凍結 Change Manifest は開発時の隔離E2E成功、後続の軽量同期でのスタブ smoke と実E2E未再実行、最後の正式 Integration の install / frontend build / check / lint / backend:test 成功をそれぞれ記録している。Workspace Memory の統合前の状態を現在の統合結果へ読み替えない。この保守で行ったのはソース・試験定義・文書差分・リンクの静的照合と OpenWiki lifecycle の検証であり、製品試験、実 Auth0/ChatGPT、実機モバイルを再実行した結果ではない。無関係な過去の Wiki 全体を再検証したとは扱わない。
+
+## 一覧検索と下書きの関係
+
+ブラウザー一覧は取得済みの title/body を trim・小文字化した部分一致で絞る。検索で選択中メモが一覧から消えても、detail と未保存入力を解除しない。追記本文を検索対象へ含める処理ではない。両 MCP の `list_design_notes.search` は同じ保存済み title/body を検索するが、空白は literal に保持し、Unicode 小文字化後の部分一致で `%` や `_` を wildcard にしない。検索条件を固定して UUID cursor を進める。[画面](../../packages/web-core/src/features/design-notes/ui/DesignNotePanel.tsx#L119-L200)・[ブラウザー述語](../../packages/web-core/src/shared/lib/listSearch.ts#L1-L8)・[MCP検索](../../crates/db/src/models/design_note_read.rs#L80-L108)・[共有述語](../../crates/db/src/models/text_search.rs#L1-L10)。
+
+変更時は DB の search fixture と `tests/search/isolated.mjs` の選択・下書き保持を確認する。今回の統合では旧 contenteditable を textarea へ追従させた fixture も含まれ、製品の保存・版管理契約を緩和した変更ではない。

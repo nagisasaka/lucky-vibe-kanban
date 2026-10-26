@@ -92,10 +92,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-24T17:12:45.140Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:12:45.140Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -143,7 +143,7 @@ model discovery が返す reasoning 候補は表示用メタデータであり�
 
 Codex discovery は model/Skill の候補を取得する一時 app-server であり、会話 turn を実行する AgentRun とは別の寿命を持つ。選択 profile と Session/Workspace/Repo の scope を解決した WebSocket stream が model probe、必要なら Skill probe を順に進める。model の失敗・空結果・timeout は fallback 候補を維持し、Skill の失敗・timeout は Skill load error を返す。候補の表示や loaded flag は process cleanup 完了の証拠ではない。[stream と probe](../../crates/executors/src/executors/codex.rs#L475-L566)・[共通 scope](../../crates/services/src/services/container.rs#L196-L235)
 
-`with_discovery_app_server` は caller の future に cancellation guard を置き、spawn・initialize・probe・cleanup を別の Tokio owner task に所有させる。caller の timeout、future drop、task abort は cancellation を通知するが、owner task 自体を drop しない。WebSocket handler の切断も stream を破棄する入口となる。通常呼出しは owner の終了まで await する一方、timeout や切断が返った時点では cleanup がまだ進行し得る。[owner と guard](../../crates/executors/src/executors/codex.rs#L829-L943)・[WebSocket の終了](../../crates/server/src/routes/config.rs#L909-L940)
+`with_discovery_app_server` は caller の future に cancellation guard を置き、spawn・initialize・probe・cleanup を別の Tokio owner task に所有させる。caller の timeout、future drop、task abort は cancellation を通知するが、owner task 自体を drop しない。WebSocket handler の切断も stream を破棄する入口となる。通常呼出しは owner の終了まで await する一方、timeout や切断が返った時点では cleanup がまだ進行し得る。[owner と guard](../../crates/executors/src/executors/codex.rs#L829-L943)・[WebSocket の終了](../../crates/server/src/routes/config.rs#L875-L919)
 
 所有権の確立後は initialize/probe の error や捕捉した panic でも transport cancellation、owned process cleanup、追跡した JSON-RPC reader の待機へ進む。reader は最大5秒待ち、timeout なら abort 後に最大1秒で停止を確認する。process cleanup と reader cleanup の結果を両方観測し、cleanup が失敗すれば成功した probe の結果を返さない。spawn/所有権確立自体の失敗はこの後段 cleanup 保証とは別である。[cleanup と失敗](../../crates/executors/src/executors/codex.rs#L865-L943)・[reader の追跡と終了](../../crates/executors/src/executors/codex/jsonrpc.rs#L72-L102)・[transport shutdown](../../crates/executors/src/executors/codex/jsonrpc.rs#L209-L215)
 
@@ -212,7 +212,7 @@ Host を切り替えた後に古い応答を反映しないことも、この機
 
 実行可否の確認と実 launch は同じ executable 解決を使う。絶対パス指定は別の PATH 候補へ置き換えず、通常名は PATH、有限時間の login-shell refresh、利用者の一般的な bin 配置を調べる。検出のために CLI を自動インストールしない。[共通 resolver](../../crates/utils/src/shell.rs#L55-L90)、[command builder](../../crates/executors/src/command.rs)
 
-adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v5、他 provider の mixed-content mapper は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
+adapter は provider の nested message / tool block も解釈するが、raw frame は引き続き Audit に残す。現行 Codex mapper は v7、Claude の mixed-content mapper は v4、その他は v3 である。補正を古い Audit replay へ遡及適用せず、選んだ version の意味で再生する。Claude の一つの envelope 内の text/tool の展開も adapter 内で行い、UI に provider 固有解析を持ち込まない。[version 選択](../../crates/executors/src/executors/provider_adapter.rs)、[mixed content](../../crates/executors/src/executors/provider_adapter.rs)
 
 配布 image の CLI pin は `0.163.0`、Rust の `codex-protocol` / `codex-app-server-protocol` は `rust-v0.144.1` のままである。CLI version と消費する wire 型の version は一致を要求しない。[Docker pin](../../Dockerfile#L147-L150)・[依存](../../crates/executors/Cargo.toml#L42-L43)。[互換性の判断記録](../../docs/development/codex-compatibility.md#wire-types-and-upgrade-boundary)は、より新しい protocol crate の rollout/otel/state と SQLite link 依存の衝突を理由に wire subset を維持したと説明する。これは記録された判断であり、この Sync で依存 upgrade を再実験した結果ではない。
 
@@ -251,3 +251,5 @@ loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`a
 Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)の操作も含む。設計メモの有界読取・確定版receipt・本文と独立追記の利用契約はリンク先を参照する。限定 Orchestrator router には含めない。Todo の REST / 外部 MCP の再送契約を、同じ tool 名だけで交換可能とみなさない。[router の分離](../../crates/mcp/src/task_server/tools/mod.rs#L49-L75)
 
 Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の管理設定](../concepts/runtime-access.md#管理設定の保存適用取消)であり、上記のcoding agent向けnative MCP config editorとは別の入口である。直接アプリケーションを動かす権限・環境・停止の契約は同ページを参照する。[設定registry](../../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143)
+
+現行はCodex v7 / Claude v4のmapperを使い、旧v6・v5等のreplay入口を保持する。Codexの公開summaryはv6以降、明示 `turn/plan/updated` はv7で独立extensionへ投影する。private contentを推論して表示せず、旧mapper出力を新仕様に遡及変更しない。[mapper選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[plan](../../crates/executors/src/executors/provider_adapter.rs#L2350-L2399)・[公開summary](../../crates/executors/src/executors/provider_adapter.rs#L2540-L2580)。表示の収束と操作プレビューは [Webの会話表示](../architecture/web-and-sync.md#操作のプレビューと-provider-の説明)に集約する。

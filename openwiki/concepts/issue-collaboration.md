@@ -49,7 +49,7 @@ sources:
 generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Issue のコメント・レビュー・添付・通知

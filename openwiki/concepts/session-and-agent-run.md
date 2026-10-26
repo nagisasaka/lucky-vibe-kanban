@@ -74,14 +74,16 @@ sources:
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
-  - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
-    resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-5ac2756548e33cbcc86886e2
     resource: repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
+  - id: openwiki-source-dfdca011334c3674ab6a3fa9
+    resource: repo://packages/ui/src/components/PlainTextPastePlugin.tsx
   - id: openwiki-source-583a89a619287948ed95b211
     resource: repo://packages/ui/src/components/SessionChatBox.tsx
+  - id: openwiki-source-ac028c59eb7a9a6091191607
+    resource: repo://packages/ui/src/lib/plainTextEditor.ts
   - id: openwiki-source-a46d1ceab41257b518aa5a4a
     resource: repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts
   - id: openwiki-source-6f68befb805cadf03e4b569b
@@ -96,6 +98,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
   - id: openwiki-source-08c30c5f079994cddbe25a3b
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts
+  - id: openwiki-source-dc254983076aa5adc98bb6b6
+    resource: repo://packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingSessionDraft.ts
   - id: openwiki-source-bd89dfb466ad2d85e09c4936
@@ -104,6 +108,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/sessionDraft.ts
   - id: openwiki-source-cd106619cfd7af68eb9464fc
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
+  - id: openwiki-source-7ffa3a3051962e891da8067e
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx
   - id: openwiki-source-c294940cc86e5328c123d83c
     resource: repo://packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx
   - id: openwiki-source-f0616990372eebb94bc69e6f
@@ -116,8 +122,6 @@ sources:
     resource: repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
-  - id: openwiki-source-6d0dfae3c1582e1af83405d4
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-5c0f3d6c25953013a1112676
     resource: repo://packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts
   - id: openwiki-source-8e74802914b6f2f7c720c935
@@ -152,10 +156,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-25T19:13:40.123Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:13:40.123Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -236,7 +240,7 @@ Board の最新 Run とチャットの各 Run footer の経過時間は、AgentR
 
 チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L648-L679)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
 
-共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。開始不明・非活動で終了不明・終了が開始より前の場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L35-L73)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
+共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。有効な非負の実測 `durationMs` があれば端点より優先し、それがなければ端点差を使う。0〜999msの根拠があれば `<1s` と表示する。両方に根拠がない場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L35-L73)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
 
 ### Goal の時間は別の値
 
@@ -336,13 +340,21 @@ queue 済みでも Scratch は別の編集状態として作成・更新でき�
 
 Markdown editor への外部値読み込みは、末尾改行などを正規化しても新規ユーザー編集ではない。`MarkdownSyncPlugin` はその更新に `markdown-sync` tag を付け、serialization の追跡は更新するが親の `onChange` へ返さない。外部値と直近 serialization を別々に追跡し、transformer の変更時には両方をリセットして再解析する。editor hook も同一本文の通知では revision を増やさない。この二つの区別が、送信中の正規化通知だけで ACK の一致条件が崩れることを防ぐ。[外部値と編集通知](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L30-L97)・[同値通知](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L73-L86)
 
-キー送信は editor の最新 Markdown を `flushSync` で親へ反映した後、ref に保持した現在の送信 callback を呼ぶ。flush 前の closure では更新前 snapshot を送信対象にし得るためである。IME 中の Enter / Ctrl+Enter 抑制は維持する。[flush 後の callback](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L150-L171)。これらは表示・draft ACK の変更であり、[永続 steering の保存と表示順](../architecture/web-and-sync.md#永続会話と-live-の順序)とは別の責任を持つ。
+キー送信は editor の最新文字列（plain-text modeではliteral text）を `flushSync` で親へ反映した後、ref に保持した現在の送信 callback を呼ぶ。flush 前の closure では更新前 snapshot を送信対象にし得るためである。IME 中の Enter / Ctrl+Enter 抑制は維持する。[flush 後の callback](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L150-L171)。これらは表示・draft ACK の変更であり、[永続 steering の保存と表示順](../architecture/web-and-sync.md#永続会話と-live-の順序)とは別の責任を持つ。
 
 変更時の editor fixture は、末尾改行付き外部値の読み込みと送信成功、同値のキー flush、失敗時入力、送信中の追加入力、focus と IME を確認する。built-app 試験でも実 Scratch と制御した follow-up 応答を使うため、実 provider の通常 follow-up 成功を証明するものではない。[editor 試験](../../tests/chat/editor-display.test.mjs#L75-L141)・[built-app 入力試験](../../tests/chat/isolated.spec.ts#L295-L372)。今回の静的照合と開発時の実行記録の区別は [チャット検証境界](../architecture/web-and-sync.md#チャット表示の検証境界)を参照する。
 
+チャット本文は既存 Lexical の plain-text mode で入力する。Markdown shortcutやHTML paste変換を使わず、貼付けはtext/plainを優先し、書式をresetする。IME・shortcut・file/image添付は既存経路に残し、保存済みattachment codecだけを専用transformerで復元する。通常Markdownを添付と推測して変換しない。保存済みメッセージの表示は読み取り専用Markdownのままである。[入力部品](../../packages/ui/src/components/PlainTextPastePlugin.tsx)・[literal直列化と添付復元](../../packages/ui/src/lib/plainTextEditor.ts)・[composer指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1335-L1355)。
+
+### 送信直後の表示と正規履歴
+
+送信開始でhost/Workspace/Session（新規はnew）に属するメモリ内pending行を作り、通常のuser message描画で即時表示する。sending、accepted、failed、unconfirmedは送信の観測であり、provider実行成功ではない。4xxの拒否（408を除く）はfailed、通信/5xx/408は未受理を断定できないunconfirmedとする。[送信](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L113-L205)・[失敗分類](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L14-L31)。
+
+正規user messageとの照合は送信前baselineにないkey、同じ本文、判明したrun IDを使い、一つの正規行を複数pendingへ使わない。照合とbaseline更新を一回のstore更新にし、再renderで同じeventを再消費しない。正規行へdisplayIdentityを引き継ぎ、React行を保つが編集・forkはcanonical keyを使う。ACK前eventも処理し、遅いACKで新しい手動閲覧を末尾へ戻さない。これは耐久queueやサーバー側idempotencyではなく、reloadでの復元保証はない。[照合](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L38-L190)・[編集key](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L1018-L1044)・[ACK後](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L750-L759)。追従とanchorの実装は [Webの位置保持](../architecture/web-and-sync.md#履歴の閲覧位置と末尾追従)を参照する。
+
 ### Enter 操作と重複送信の境界
 
-既存・新規 Session の composer と新規 Workspace の入力は `sendShortcut="Enter"` を明示するため、保存済み `send_message_shortcut` が `ModifierEnter` でも Enter 送信になる。General Settings は選択 UI を持たず、Enter で送信・Ctrl+Enter で改行という案内を表示する。共通 keyboard plugin 自体は `ModifierEnter` を引き続き扱うので、アプリの指定と共通部品の既定値を混同しない。[Session の指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)・[Workspace 作成の指定](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596)・[設定表示](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L772-L782)・[共通部品の既定値](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42)
+既存・新規 Session の composer と新規 Workspace の入力は `sendShortcut="Enter"` を明示するため、保存済み `send_message_shortcut` が `ModifierEnter` でも Enter 送信になる。General Settings は選択 UI を持たず、Enter で送信・Ctrl+Enter で改行という案内を表示する。共通 keyboard plugin 自体は `ModifierEnter` を引き続き扱うので、アプリの指定と共通部品の既定値を混同しない。[Session の指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)・[Workspace 作成の指定](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596)・[設定表示](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L664-L677)・[共通部品の既定値](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42)
 
 Enter mode は Ctrl+Enter を明示的な line break に変換する。IME composition・keyCode 229・typeahead 表示中は送信処理を譲り、修飾キーなしの Enter の repeat は消費するだけで送信しない。Ctrl のない Shift / Meta / Alt 付き Enter はこの送信処理の対象外である。flush 後の callback は現在の画面状態に従い、通常送信だけでなく実行中の queue や質問回答などへ分岐するため、Enter が常に新しい AgentRun を作るわけではない。[キーの分岐](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236)・[状態別操作](../../packages/ui/src/components/SessionChatBox.tsx#L495-L520)。[Todo 追加](project-todos.md#追加-ui-の入力契約)も Enter / Ctrl+Enter を使うが、カテゴリ検査や pending 中の編集禁止は Todo 側の責任である。
 

@@ -38,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T02:27:43.655Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:40:59.450Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -59,6 +59,8 @@ run は開始時のグラフを保持する。復旧時も snapshot を優先し
 Workspace の DB row と実 worktree の準備完了は同義ではない。通常 Workflow の Agent dispatch は、指定 Session が当該 Workspace に属することを確認した後、Integration の予約 guard を通して既存 container 準備を呼ぶ。これにより、作成時にはまだ物理作業木を持たない通常 Workflow も開始できる。画面の閲覧や graph 編集を worktree 作成の契機にしない。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L722-L748)
 
 `execution_only` は owner が準備済みの環境を `inspection_root` で取得するだけであり、欠落時に通常 container 準備で再作成しない。OpenWiki setup の再実行や固定 source のすり替えを避けるため、通常 Workspace の lazy preparation と内部実行の前提を分けている。[用途別の解決](../../crates/server/src/workflow_runtime/workspace.rs#L14-L32)
+
+Issue が archive 済みなら新規の主 Workspace 作成を拒否する。既存 Workspace の継続は別であり、作成 guard は新規 bind と run の保存まで保持する。[Issue archive の契約](../concepts/project-and-issue.md#issue-のアーカイブ)・[guard](../../crates/server/src/workflow_runtime/runner.rs#L1015-L1043)。
 
 ## durable orchestration が保証するもの
 
