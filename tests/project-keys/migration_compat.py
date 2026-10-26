@@ -11,6 +11,9 @@ ORIGINAL = (ROOT / "crates/db/migrations/20261025120000_project_keys.sql").read_
 COMPAT = (ROOT / "crates/db/migration_compat/project_keys_multi.sql").read_bytes()
 OLD_HASH = hashlib.sha384(ORIGINAL).digest()
 NEW_HASH = hashlib.sha384(COMPAT).digest()
+ORIGINAL_CRLF = ORIGINAL.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+COMPAT_CRLF = COMPAT.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+KNOWN_SQL = {hashlib.sha384(sql).digest(): sql for sql in (ORIGINAL, ORIGINAL_CRLF, COMPAT, COMPAT_CRLF)}
 VERSION = 20261025120000
 
 
@@ -52,14 +55,14 @@ def resume(db):
     receipt = db.execute("SELECT checksum FROM _sqlx_migrations WHERE version=?", (VERSION,)).fetchone()
     if receipt is None:
         apply(db, COMPAT)
-    elif receipt[0] not in (OLD_HASH, NEW_HASH):
+    elif receipt[0] not in KNOWN_SQL:
         raise ValueError("unknown checksum")
 
 
 class CompatibilityTests(unittest.TestCase):
     def test_checksums_match_frozen_rust_constants(self):
         source = (ROOT / "crates/db/src/migration_compat.rs").read_text()
-        for name, checksum in [("ORIGINAL_CHECKSUM", OLD_HASH), ("COMPAT_CHECKSUM", NEW_HASH)]:
+        for name, checksum in [("ORIGINAL_CHECKSUM", OLD_HASH), ("COMPAT_CHECKSUM", NEW_HASH), ("ORIGINAL_CRLF_CHECKSUM", hashlib.sha384(ORIGINAL_CRLF).digest()), ("COMPAT_CRLF_CHECKSUM", hashlib.sha384(COMPAT_CRLF).digest())]:
             body = re.search(r"const " + name + r": \[u8; 48\] = \[(.*?)\];", source, re.S)[1]
             self.assertEqual(bytes(map(int, re.findall(r"\d+", body))), checksum)
 
@@ -106,6 +109,22 @@ class CompatibilityTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown checksum"):
                 resume(db)
             self.assertEqual(db.execute("SELECT checksum FROM _sqlx_migrations").fetchone()[0], b"\x01\x02")
+
+    def test_known_lf_crlf_receipts_and_unknown_rejection(self):
+        for sql in (ORIGINAL, ORIGINAL_CRLF, COMPAT, COMPAT_CRLF):
+            with self.subTest(checksum=hashlib.sha384(sql).hexdigest()), fixture(1) as db:
+                apply(db, sql)
+                before = db.execute("SELECT * FROM _sqlx_migrations").fetchall()
+                resume(db)
+                self.assertEqual(before, db.execute("SELECT * FROM _sqlx_migrations").fetchall())
+        for sql in (COMPAT, COMPAT_CRLF):
+            with fixture(3) as db:
+                apply(db, sql)
+                before = db.execute("SELECT * FROM _sqlx_migrations").fetchall()
+                resume(db)
+                self.assertEqual(before, db.execute("SELECT * FROM _sqlx_migrations").fetchall())
+        self.assertEqual(len(KNOWN_SQL), 4)
+        self.assertNotIn(hashlib.sha384(COMPAT + b"-- changed").digest(), KNOWN_SQL)
 
     def test_default_uniqueness_and_ten_character_limit(self):
         with fixture(0) as db:

@@ -21,6 +21,18 @@ const COMPAT_CHECKSUM: [u8; 48] = [
     221, 133, 203, 227, 100, 141,
 ];
 
+const ORIGINAL_CRLF_CHECKSUM: [u8; 48] = [
+    41, 45, 58, 142, 185, 97, 153, 87, 37, 85, 30, 130, 39, 242, 71, 52, 185, 94, 32, 9, 25, 232,
+    178, 241, 251, 197, 132, 46, 151, 67, 254, 237, 112, 116, 157, 95, 148, 94, 29, 194, 143, 251,
+    223, 85, 26, 44, 194, 71,
+];
+
+const COMPAT_CRLF_CHECKSUM: [u8; 48] = [
+    94, 209, 180, 150, 19, 93, 185, 115, 219, 118, 49, 39, 201, 234, 252, 72, 105, 28, 85, 196,
+    134, 46, 25, 105, 8, 22, 169, 170, 146, 187, 117, 204, 181, 84, 55, 199, 88, 230, 40, 222, 29,
+    206, 41, 248, 116, 58, 51, 154,
+];
+
 #[derive(Debug)]
 struct ResolvedMigrations(Vec<Migration>);
 
@@ -34,6 +46,49 @@ fn mismatch() -> Error {
     MigrateError::VersionMismatch(PROJECT_KEYS_VERSION).into()
 }
 
+fn with_sql(template: &Migration, sql: String) -> Migration {
+    Migration::new(
+        template.version,
+        template.description.clone(),
+        template.migration_type,
+        Cow::Owned(sql),
+        template.no_tx,
+    )
+}
+
+fn select_project_keys(
+    original: &Migration,
+    compatible_sql: &str,
+    applied: Option<&[u8]>,
+) -> Result<Migration, Error> {
+    // Only these exact LF/CRLF artifacts are supported. Do not normalize
+    // arbitrary modified SQL into an accepted migration.
+    if original.checksum.as_ref() != ORIGINAL_CHECKSUM
+        && original.checksum.as_ref() != ORIGINAL_CRLF_CHECKSUM
+    {
+        return Err(mismatch());
+    }
+    let compatible = with_sql(original, compatible_sql.to_owned());
+    if compatible.checksum.as_ref() != COMPAT_CHECKSUM
+        && compatible.checksum.as_ref() != COMPAT_CRLF_CHECKSUM
+    {
+        return Err(mismatch());
+    }
+    // New receipts describe the actual checkout's compatible SQL. Existing
+    // receipts instead select the exact historical bytes, across checkouts.
+    let wanted = applied.unwrap_or(compatible.checksum.as_ref());
+    for template in [original, &compatible] {
+        let lf = template.sql.replace("\r\n", "\n");
+        for sql in [lf.clone(), lf.replace('\n', "\r\n")] {
+            let variant = with_sql(template, sql);
+            if variant.checksum.as_ref() == wanted {
+                return Ok(variant);
+            }
+        }
+    }
+    Err(mismatch())
+}
+
 pub(crate) async fn migrator(pool: &SqlitePool) -> Result<Migrator, Error> {
     let embedded = sqlx::migrate!("./migrations");
     let mut migrations: Vec<_> = embedded.iter().cloned().collect();
@@ -41,20 +96,6 @@ pub(crate) async fn migrator(pool: &SqlitePool) -> Result<Migrator, Error> {
         .iter_mut()
         .find(|m| m.version == PROJECT_KEYS_VERSION)
         .ok_or_else(mismatch)?;
-    // Freeze both variants: accidental edits are not silently new variants.
-    if original.checksum.as_ref() != ORIGINAL_CHECKSUM {
-        return Err(mismatch());
-    }
-    let compatible = Migration::new(
-        original.version,
-        original.description.clone(),
-        original.migration_type,
-        Cow::Borrowed(include_str!("../migration_compat/project_keys_multi.sql")),
-        original.no_tx,
-    );
-    if compatible.checksum.as_ref() != COMPAT_CHECKSUM {
-        return Err(mismatch());
-    }
     let history_exists: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='_sqlx_migrations')",
     )
@@ -68,14 +109,11 @@ pub(crate) async fn migrator(pool: &SqlitePool) -> Result<Migrator, Error> {
     } else {
         None
     };
-    match applied.as_deref() {
-        Some(checksum) if checksum == ORIGINAL_CHECKSUM => {}
-        None => *original = compatible,
-        Some(checksum) if checksum == COMPAT_CHECKSUM => *original = compatible,
-        // Fail here even on Windows release, before the legacy generic
-        // checksum-rewrite fallback. Never change an applied history receipt.
-        Some(_) => return Err(mismatch()),
-    }
+    *original = select_project_keys(
+        original,
+        include_str!("../migration_compat/project_keys_multi.sql"),
+        applied.as_deref(),
+    )?;
     Ok(Migrator::new(ResolvedMigrations(migrations)).await?)
 }
 
@@ -150,32 +188,148 @@ mod tests {
         );
     }
 
+    async fn apply_target_sql(pool: &SqlitePool, sql: String) {
+        let embedded = sqlx::migrate!("./migrations");
+        let migrations = embedded
+            .iter()
+            .map(|m| {
+                if m.version == PROJECT_KEYS_VERSION {
+                    with_sql(m, sql.clone())
+                } else {
+                    m.clone()
+                }
+            })
+            .collect();
+        Migrator::new(ResolvedMigrations(migrations))
+            .await
+            .unwrap()
+            .run(pool)
+            .await
+            .unwrap();
+    }
+
     #[tokio::test]
     async fn original_receipt_and_key_survive_restart_without_checksum_changes() {
         for count in [0, 1] {
-            let pool = old_pool(count).await;
-            sqlx::migrate!("./migrations").run(&pool).await.unwrap();
-            let before: Vec<u8> =
-                sqlx::query_scalar("SELECT checksum FROM _sqlx_migrations WHERE version=?")
-                    .bind(PROJECT_KEYS_VERSION)
-                    .fetch_one(&pool)
-                    .await
-                    .unwrap();
-            super::super::run_migrations(&pool).await.unwrap();
-            let after: Vec<u8> =
-                sqlx::query_scalar("SELECT checksum FROM _sqlx_migrations WHERE version=?")
-                    .bind(PROJECT_KEYS_VERSION)
-                    .fetch_one(&pool)
-                    .await
-                    .unwrap();
-            assert_eq!(before, ORIGINAL_CHECKSUM);
-            assert_eq!(before, after);
-            let keys: Vec<String> = sqlx::query_scalar("SELECT key FROM projects")
+            for crlf in [false, true] {
+                let pool = old_pool(count).await;
+                let lf = include_str!("../migrations/20261025120000_project_keys.sql")
+                    .replace("\r\n", "\n");
+                apply_target_sql(&pool, if crlf { lf.replace('\n', "\r\n") } else { lf }).await;
+                let before: Vec<(i64, Vec<u8>)> = sqlx::query_as(
+                    "SELECT version,checksum FROM _sqlx_migrations ORDER BY version",
+                )
                 .fetch_all(&pool)
                 .await
                 .unwrap();
-            assert_eq!(keys, vec!["LOCAL".to_owned(); count as usize]);
+                super::super::run_migrations(&pool).await.unwrap();
+                let after: Vec<(i64, Vec<u8>)> = sqlx::query_as(
+                    "SELECT version,checksum FROM _sqlx_migrations ORDER BY version",
+                )
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+                assert_eq!(before, after);
+                let checksum = &after
+                    .iter()
+                    .find(|(version, _)| *version == PROJECT_KEYS_VERSION)
+                    .unwrap()
+                    .1;
+                assert_eq!(
+                    checksum.as_slice(),
+                    if crlf {
+                        &ORIGINAL_CRLF_CHECKSUM
+                    } else {
+                        &ORIGINAL_CHECKSUM
+                    }
+                );
+                let keys: Vec<String> = sqlx::query_scalar("SELECT key FROM projects")
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap();
+                assert_eq!(keys, vec!["LOCAL".to_owned(); count as usize]);
+            }
         }
+    }
+
+    #[tokio::test]
+    async fn compatible_crlf_receipt_is_validated_without_rewriting_history() {
+        let pool = old_pool(3).await;
+        let crlf = include_str!("../migration_compat/project_keys_multi.sql")
+            .replace("\r\n", "\n")
+            .replace('\n', "\r\n");
+        apply_target_sql(&pool, crlf).await;
+        let before: Vec<(i64, Vec<u8>)> =
+            sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+        super::super::run_migrations(&pool).await.unwrap();
+        super::super::run_migrations(&pool).await.unwrap();
+        let after: Vec<(i64, Vec<u8>)> =
+            sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+        assert_eq!(before, after);
+        assert_eq!(
+            after
+                .iter()
+                .find(|(version, _)| *version == PROJECT_KEYS_VERSION)
+                .unwrap()
+                .1,
+            COMPAT_CRLF_CHECKSUM
+        );
+    }
+
+    #[test]
+    fn known_line_endings_select_exact_historical_bytes_across_artifacts() {
+        let embedded = sqlx::migrate!("./migrations");
+        let template = embedded
+            .iter()
+            .find(|m| m.version == PROJECT_KEYS_VERSION)
+            .unwrap();
+        let old_lf = template.sql.replace("\r\n", "\n");
+        let new_lf =
+            include_str!("../migration_compat/project_keys_multi.sql").replace("\r\n", "\n");
+        let originals = [old_lf.clone(), old_lf.replace('\n', "\r\n")];
+        let compatibles = [new_lf.clone(), new_lf.replace('\n', "\r\n")];
+        for old in &originals {
+            for new in &compatibles {
+                let original = with_sql(template, old.clone());
+                assert_eq!(
+                    select_project_keys(&original, new, None)
+                        .unwrap()
+                        .sql
+                        .as_ref(),
+                    new
+                );
+                for historical in originals.iter().chain(compatibles.iter()) {
+                    let applied = with_sql(template, historical.clone());
+                    let selected =
+                        select_project_keys(&original, new, Some(applied.checksum.as_ref()))
+                            .unwrap();
+                    assert_eq!(selected.checksum, applied.checksum);
+                    assert_eq!(selected.sql.as_ref(), historical.as_str());
+                }
+                assert!(select_project_keys(&original, new, Some(&[1, 2])).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn modified_artifacts_are_rejected_instead_of_normalized_into_known_sql() {
+        let embedded = sqlx::migrate!("./migrations");
+        let original = embedded
+            .iter()
+            .find(|m| m.version == PROJECT_KEYS_VERSION)
+            .unwrap();
+        let new = include_str!("../migration_compat/project_keys_multi.sql");
+        let altered = with_sql(original, format!("{}-- unrecognised edit", original.sql));
+        assert!(select_project_keys(&altered, new, None).is_err());
+        assert!(
+            select_project_keys(original, &format!("{new}-- unrecognised edit"), None).is_err()
+        );
     }
 
     #[tokio::test]

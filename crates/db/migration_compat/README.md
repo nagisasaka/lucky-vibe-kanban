@@ -4,13 +4,17 @@ Version `20261025120000` originally assigned every existing Project `LOCAL`
 before creating its unique index. It succeeds for zero/one Project and rolls
 back for multiple Projects. Its original SQL remains byte-for-byte immutable.
 
-`src/migration_compat.rs` resolves exactly two immutable variants through SQLx's
-public `MigrationSource` / `Migrator::new` APIs. If the original checksum was
+`src/migration_compat.rs` resolves two immutable SQL variants, each with explicit
+LF/CRLF checksums, through SQLx's public `MigrationSource` / `Migrator::new` APIs. If the original checksum was
 applied, the original SQL is selected for normal SQLx validation. Otherwise only
 an absent receipt or the exact compatible checksum selects the compatible SQL.
-Unknown checksums fail before the legacy Windows checksum fallback. Neither
+Historical LF/CRLF receipts select their exact SQL bytes even across checkout line
+endings. Unknown checksums and modified source artifacts fail before the legacy
+Windows checksum fallback. Neither
 applied checksum nor history receipt is updated by this compatibility layer.
 SQLx records the checksum of the SQL it actually executes, in the same transaction.
+Line-ending compatibility is limited to this one version. Validation of all other
+migration versions is unchanged; this is not a general cross-platform history converter.
 
 Compatible assignment sorts by Project UUID, preserving `LOCAL` for the first
 and assigning `LOCAL2` through `LOCAL99999` to the others. Existing Issue rows,
@@ -31,6 +35,6 @@ reject the new checksum; downgrading is not supported by this change.
 `tests/project-keys/migration_compat.py` is a lightweight SQL/checksum model using
 disposable in-memory fixtures; it does not execute the Rust selector or the full
 historical migration chain. Rust tests in `migration_compat.rs` exercise the real
-SQLx/startup path and need a separately authorised Cargo test run. Existing tests
+SQLx/startup path (`cargo test -p db --lib migration_compat::tests`). Existing tests
 using raw `sqlx::migrate!` on empty databases still exercise the original variant;
 they are not coverage of the compatibility selector.
