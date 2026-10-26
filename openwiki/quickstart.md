@@ -76,10 +76,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:07:42.711Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # クイックスタートと調査案内
@@ -254,3 +254,13 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 今回の Sync は frozen manifest と全11チャンクの SHA-256、統合 source `c8ccba168fdc2c06dae69f0b92a1cb70f1d80267` を照合した。カードの呼出側・部品・summary hook・API・Git 集計・独立した service/Git/browser fixture、Integration の admission / immutable request / transaction / native session projection の回帰試験を別の入口として調べた。配布側の変更は Dockerfile、運用文書と image smoke 定義で確認した。説明の正本は上記の概念・操作ページに置き、共有参照で stale となったページは必要箇所だけを再確認した。
 
 供給された最終 Integration event は install・frontend build・check・lint・backend:test の成功を記録する。この保守自体は静的な source・試験定義・リンク・OpenWiki lifecycle の検証であり、製品試験、実 Codex / Claude、browser からの実 Resume、Docker image の実行、外部 preview 認証を再実行していない。意味 draft が欠けた launcher checkpoint の意図は不明のままとし、統合ツリーにない machine 固有 launcher や Workspace Memory の運用状態を製品契約へ昇格させていない。無関係な歴史的説明全体を再検証したとはしない。
+
+### Issue分類・archive・検索と会話表示のSync
+
+今回の通常Syncは凍結manifestと全23チャンクのSHA-256を照合し、統合source `c8d79127e02da3eee425b4963febcbfb28bf0ea6` のpending changesを対象にした。入口はProject作成APIと採番/移行、Tag共通CRUDとowner補完、Issue archiveの確認/DB trigger/Workspace cleanup、両MCPのscope/filter/paging、Todo/設計メモのUIとDB検索、provider adapterとcanonical/live投影、composer/送信store/仮想リスト、独立したDB/HTTP/stdio/browser試験定義である。無関係な歴史的Wiki内容全体を再検証したとは扱わない。
+
+- Project key・priority・system Tagは [仕事の識別と分類](concepts/project-and-issue.md#仕事の識別と分類)、Statusと別の属性・全対象確認・不確実な削除は [Issue archive](concepts/project-and-issue.md#issue-のアーカイブ)を読む。
+- 両MCPの検索はfilter解釈を共有し応答/pagingは別である。[MCPの検索と操作](integrations/remote-access.md#issueの分類検索archiveを操作する)、[Todo検索](concepts/project-todos.md#一覧を検索する)、[設計メモ検索](concepts/design-notes.md#一覧検索と下書きの関係)が説明先となる。
+- literal入力・送信直後のpendingとACK/event照合は [Sessionの入力](concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、公開summary/plan・操作結果・追従意図と読書anchorは [Webの会話同期](architecture/web-and-sync.md#履歴の閲覧位置と末尾追従)を読む。
+
+凍結入力には開発中の保留・失敗・修復と、最終Integrationのinstall / frontend build / check / lint / backend:test成功が記録される。これらは供給された実行履歴であり、この文書保守の再実行結果ではない。未統合Workspace Memoryの運用指示やmachine固有preview launcherは製品契約へ昇格させていない。今回の検証はソース・試験定義・差分・リンクとOpenWiki lifecycleであり、製品suite、実Auth0/ChatGPT・Codex/Claude接続、稼働DB移行、preview切替は再実行していない。

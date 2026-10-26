@@ -32,8 +32,6 @@ sources:
     resource: repo://crates/local-deployment/src/container.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
-  - id: openwiki-source-9e15762bf7a432b7605f8466
-    resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
@@ -48,8 +46,6 @@ sources:
     resource: repo://crates/server/src/routes/github_credentials.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
-  - id: openwiki-source-0f6f4d2990a4bfa7aca81dbe
-    resource: repo://crates/server/src/routes/openwiki/preparation.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
   - id: openwiki-source-9d283785aa68b40f3cd1ceb2
@@ -104,14 +100,12 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
-  - id: openwiki-source-fa8e70f692a61e2ed2f1fa2a
-    resource: repo://tests/server/run-workspace-search.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-24T14:58:13.588Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:58:13.588Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Workspace と Repository
@@ -269,3 +263,7 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 利用手順は [Multi-Repo & Sessions](../../docs/workspaces/multi-repo-sessions.mdx)、レビュー・ファイル操作の境界は [Workspace の確認と実行](../operations/workspace-inspection.md)、Git 統合までの順序は [依頼から統合まで](../workflows/task-to-integration.md) を参照。
 
 外部 MCP の回帰 fixture は署名 JWT → Access → HTTP `/mcp` → 共通 archive を通し、scope・member 失効・Project allowlist、呼出元／対象／Local token の取り違え、期限、確認後 busy、branch 変化、同一要求の回復、物理削除失敗と履歴保持を検査する。script-store の liveness は fixture port なので実 script の収束や実 Auth0/ChatGPT 接続を証明しない。この Sync では定義を静的に照合し、製品テストを再実行していない。[HTTP 回帰](../../crates/server/src/remote_mcp/workspace_archive/tests.rs#L1-L611)
+
+### Issue単位の一括archiveとの関係
+
+[Issue archive](project-and-issue.md#issue-のアーカイブ)は別属性で、ONの一回確認だけが全リンク集合の未archive Workspaceへこのprimitiveを適用する。全対象のbusy確認を済ませてから `archive_checked` を呼び、物理変更後のDB失敗をuncertainとする。Issueのみのarchiveと解除はWorkspaceを変更しない。新規作成/linkの拒否と、既存Workspace継続は別境界である。[共通primitive](../../crates/server/src/routes/workspaces/archive.rs#L279-L313)・[全対象の順序](../../crates/server/src/routes/local_remote/issue_archive.rs#L244-L318)。

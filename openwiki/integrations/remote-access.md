@@ -6,6 +6,10 @@ tags: [remote, authentication, relay, mobile, self-hosting]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-1e7d6f37595b8480ddaf530e
+    resource: repo://crates/api-types/src/issue_filter.rs
+  - id: openwiki-source-672c8da0d18c56b60df745a2
+    resource: repo://crates/db/src/models/board_tag.rs
   - id: openwiki-source-27eb1d689068b93b5282d2b6
     resource: repo://crates/db/src/models/design_note_read.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
@@ -36,8 +40,12 @@ sources:
     resource: repo://crates/server/src/remote_mcp/integration_write_tests.rs
   - id: openwiki-source-1083b3cf6ec502f1c6eb3811
     resource: repo://crates/server/src/remote_mcp/integration_write.rs
+  - id: openwiki-source-baadfd16fa9d31d06a1e6eb1
+    resource: repo://crates/server/src/remote_mcp/issue_archive.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
+  - id: openwiki-source-a6a66833efdc90f958755f54
+    resource: repo://crates/server/src/remote_mcp/issue_tags.rs
   - id: openwiki-source-9e15762bf7a432b7605f8466
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
@@ -50,6 +58,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/operations.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-ccbefbdb32b7223afc06bb2b
+    resource: repo://crates/server/src/remote_mcp/read.rs
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-3ef7bc8590ef87216eade432
@@ -78,6 +88,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-2274afe258c46dce0acaf5f1
     resource: repo://crates/server/src/routes/integrations/tests.rs
+  - id: openwiki-source-2100c29dd665b0f698970419
+    resource: repo://crates/server/src/routes/local_remote/board_api/issue_filter.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
   - id: openwiki-source-d8c782d4a4246db71e503283
@@ -96,10 +108,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-24T14:51:11.908Z" }
+generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T14:51:11.908Z
+    at: 2026-10-26T01:28:30.262Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -330,3 +342,15 @@ Windows Runnerはexecution slot等のcanonical Resourceをclaimし、immutable s
 [AI Mobile Design](../../docs/ai-mobile/design.md)はv0.1 draftである。web/PWA中心という意図は読めるが、記載されたremote-web / relay baselineやQR pairing案は現行実装の証拠にならない。現在のスマートフォンからの入口は直接local-webであり、UI確認には [built preview](../operations/development.md)を使う。外部IdP、HTTPS経路、Windows hardwareの実接続はこの静的source照合では試験していない。
 
 自己再起動は通常 run_process と別の [専用 handoff と結果照会](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を使う。一般 operation receipt の成功は切替成功を証明しない。
+
+## Issueの分類・検索・archiveを操作する
+
+外部HTTPのIssue get/list/create/updateはpriorityとarchive状態を共有Boardへ接続する。`list_tags` / `list_issue_tags` は最大50件のcursorページ、`add_issue_tag` / `remove_issue_tag` はread+writeとstable request_idのreceiptで一件だけ変更する。createのtag_idsはIssue採番・INSERTと同じtransactionに入り、失敗は全部rollbackする。systemは手動変更できず、分類に実行承認の意味を与えない。[分類の正本](../concepts/project-and-issue.md#仕事の識別と分類)・[tool契約](../../crates/server/src/remote_mcp/issue_tags.rs#L44-L77)・[原子的作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
+
+両MCPのIssue一覧はarchived省略/falseで未archive、trueでarchive済み、`"all"`で両方を選ぶ。searchはtitle/description全文の小文字化部分一致で空白をtrimしない。simple_idは大小無視の完全一致、statusは名前またはUUID、priority/parent/assignee/Tag条件はANDとなる。tag_idとtag_nameは同じTagを指す必要があり、別Tagを両方持つIssueでも不一致は0件である。既存Statusを読むだけで初期列を追加しない。[共通入力](../../crates/api-types/src/issue_filter.rs#L7-L67)・[read-only解決](../../crates/server/src/routes/local_remote/board_api/issue_filter.rs#L9-L74)。
+
+共有するのはfilter解釈で、応答とpagingは統一しない。stdioはsort/offset/countを保持し、外部HTTPはUUID cursorと既存revision/url/metadataを保つ。filterを適用してからページ化し、同じ条件でcursorを進める。HTTPのarchive-only SQL fast pathにも同じarchive predicateを適用する。MCPのarchived条件はUIのhidden Status filterではない。[外部ページ化](../../crates/server/src/remote_mcp/read.rs#L178-L228)・[stdio用filter API](../../crates/server/src/routes/local_remote/board_api/issues.rs#L89-L113)。Todo/設計メモのbrowser検索はtrimするため、MCP検索と同じ入力正規化と扱わない。[Todo検索](../concepts/project-todos.md#一覧を検索する)・[設計メモ検索](../concepts/design-notes.md#一覧検索と下書きの関係)。
+
+Issue単位のarchiveは `prepare_issue_archive` でcheckboxと全対象を一度示し、人の確認後 `confirm_issue_archive` をstable request_idで送る。両段階にread+writeと所属確認が必要で、tokenはLocal/UI/stdioと交換できない。`unarchive_issue` はIssueだけを復帰させる。busy・ABA・削除結果・uncertainの詳細は [Issue archiveの正本](../concepts/project-and-issue.md#issue-のアーカイブ)に従い、結果不明時はget_operationと現在値を照合する。[adapter](../../crates/server/src/remote_mcp/issue_archive.rs#L41-L140)。
+
+変更時はshared filterとHTTP cursor matrix、stdio adapter/codec、Tag receipt/atomic create、archiveの署名JWT fixtureを別々に確認する。mock peerやisolated browserの成功は実Auth0/ChatGPT接続の成功とは別である。

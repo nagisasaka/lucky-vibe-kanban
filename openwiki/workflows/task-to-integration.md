@@ -34,8 +34,6 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
-  - id: openwiki-source-231241ac3c842dcd67525890
-    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-e2a1cc763db4a100d48eac0a
@@ -82,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-25T19:07:42.711Z" }
+generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-25T19:07:42.711Z
+    at: 2026-10-26T01:15:35.501Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -209,3 +207,9 @@ ScheduledTask は既存 Workflow template を日次・週次で起動する設�
 時刻計算は IANA timezone を用い、daily/weekly と DST の focused tests がある。server のローカル timezone や固定 UTC offset だけで schedule を再実装しない。[tests](../../crates/server/src/routes/scheduled_tasks.rs)
 
 定時 task の起動と、その後に Agent 完了を検知して graph を進めることも別である。この checkout では completion watcher は embedded backend の startup で登録され、standalone main には登録がない。GET/SSE は reconciliation を行い、UI は active run を既定 4 秒で poll する。無人の standalone 運用で予定通り起動したことだけを根拠に、後続段階まで自動進行すると判断しない。[起動形態と前進の契機](../architecture/workflow-runtime.md#起動形態と前進の契機) に登録箇所・read 側の処理・文書の自動連鎖という意図との差をまとめる。[embedded 登録](../../crates/server/src/startup.rs)、[standalone 入口](../../crates/server/src/main.rs)、[poll](../../packages/web-core/src/shared/hooks/useWorkflowRun.ts)
+
+## 仕事をarchiveし、必要なら再開する
+
+IssueのActive/Archived/Allで仕事を探し、Kanban/Listは独立して選ぶ。Issueをarchiveする際、配下Workspaceも解放するなら既定ONの確認で全対象を確認する。使用中の対象があれば全体を拒否するので、停止・cleanupが収束してから準備し直すか、checkboxをOFFにしてIssueだけをarchiveする。Issue解除はWorkspaceを復元せず、Workspaceの明示再開とは別操作である。archive中に既存実施は継続できるが、新しい実施を作るには先にIssueを解除する。[属性と失敗時の正本](../concepts/project-and-issue.md#issue-のアーカイブ)・[Workspaceの解放](../concepts/workspace.md#archive削除期限-cleanup)。
+
+Issueの表示番号は作成時に固定したProject keyを使い、priority/tagは仕事の分類として設定する。systemはLVK生成Cardの分類であり、採用・実行・公開を承認するものではない。[識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)。
