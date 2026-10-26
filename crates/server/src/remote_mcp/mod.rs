@@ -31,6 +31,7 @@ mod launch;
 mod merge_read;
 pub(crate) mod operations;
 mod project_read;
+mod provider_usage;
 mod questions;
 mod read;
 mod repository_wiki;
@@ -379,6 +380,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(environment::tools());
     tools.extend(read::tools());
     tools.extend(project_read::tools());
+    tools.extend(provider_usage::tools());
     tools.extend(merge_read::tools());
     tools.extend(evidence_read::tools());
     tools.extend(verification_read::tools());
@@ -551,6 +553,7 @@ impl Remote {
             name if evidence_read::tools().iter().any(|tool| tool.name == name) => {
                 evidence_read::call(self, name, args).await
             }
+            "read_provider_usage" => provider_usage::call(self, args).await,
             name if read::tools().iter().any(|tool| tool.name == name) => {
                 read::call(self, name, args).await
             }

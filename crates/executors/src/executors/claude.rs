@@ -5,6 +5,7 @@ pub mod command_adapter;
 pub mod protocol;
 pub mod slash_commands;
 pub mod types;
+pub mod usage;
 
 use std::{
     collections::HashMap,

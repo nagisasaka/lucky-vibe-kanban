@@ -1,3 +1,4 @@
+pub mod account_read;
 pub mod client;
 pub const GOAL_OBJECTIVE_MAX_CHARS: usize = 4000;
 
@@ -836,8 +837,33 @@ impl Codex {
         F: FnOnce(Arc<AppServerClient>) -> Fut + Send + 'static,
         Fut: std::future::Future<Output = Result<T, ExecutorError>> + Send + 'static,
     {
+        self.with_information_app_server(current_dir, task, None)
+            .await
+    }
+
+    pub(super) async fn with_information_app_server<T, F, Fut>(
+        &self,
+        current_dir: &Path,
+        task: F,
+        passive_permit: Option<(
+            tokio::sync::OwnedSemaphorePermit,
+            tempfile::TempDir,
+            tokio::time::Instant,
+        )>,
+    ) -> Result<T, ExecutorError>
+    where
+        T: Send + 'static,
+        F: FnOnce(Arc<AppServerClient>) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = Result<T, ExecutorError>> + Send + 'static,
+    {
+        let passive = passive_permit.is_some();
+        let deadline = passive_permit.as_ref().map(|(_, _, deadline)| *deadline);
         let command_parts = self.build_command_builder()?.build_initial()?;
-        let (program_path, args) = command_parts.into_resolved().await?;
+        let (program_path, args) = if passive {
+            command_parts.into_resolved_passive().await?
+        } else {
+            command_parts.into_resolved().await?
+        };
 
         let mut process = Command::new(&program_path);
         process
@@ -862,14 +888,29 @@ impl Codex {
         let _cancel_on_drop = caller_cancel.clone().drop_guard();
         let plan = self.plan;
         tokio::spawn(async move {
+            // Keep admission until the owned process and RPC reader are reaped,
+            // including when the HTTP caller disconnects.
+            let _permit = passive_permit;
+            if caller_cancel.is_cancelled() || deadline.is_some_and(|deadline|deadline<=tokio::time::Instant::now()) {
+                return Err(ExecutorError::Io(std::io::Error::new(std::io::ErrorKind::Interrupted,"Account startup cancelled or timed out")));
+            }
             let mut child = process.group_spawn_no_window().map_err(|err| {
                 ExecutorError::Io(std::io::Error::other(format!(
                     "failed to spawn Codex app-server for discovery: {err}"
                 )))
             })?;
 
-            let mut ownership = workspace_utils::process::OwnedProcessGroup::capture(&mut child, "codex-discovery")
-                .inspect_err(|error| { tracing::error!(purpose = "codex-discovery", %error, "could not establish process ownership"); })?;
+            let mut ownership = match workspace_utils::process::OwnedProcessGroup::capture(&mut child, "codex-discovery") {
+                Ok(owner)=>owner,
+                Err(error)=> {
+                    if passive { account_read::poison_admission(); }
+                    // The group leader is still owned and unreaped. Attempt
+                    // bounded cleanup, but never reopen passive admission when
+                    // verified ownership could not be established.
+                    let _=workspace_utils::process::kill_process_group(&mut child).await;
+                    return Err(ExecutorError::Io(error));
+                }
+            };
             let cancel = tokio_util::sync::CancellationToken::new();
             let mut reader_task = None;
             use futures::FutureExt;
@@ -896,12 +937,18 @@ impl Codex {
                     String::new(),
                     cancel.clone(),
                 );
-                let (rpc_peer, reader) = JsonRpcPeer::spawn_tracked(
+                let callbacks: Arc<dyn jsonrpc::JsonRpcCallbacks> = if passive {
+                    Arc::new(account_read::PassiveCallbacks)
+                } else {
+                    client.clone()
+                };
+                let (rpc_peer, reader) = JsonRpcPeer::spawn_tracked_with_limit(
                     child_stdin,
                     child_stdout,
-                    client.clone(),
+                    callbacks,
                     exit_signal_tx,
                     cancel.clone(),
+                    if passive {2*1024*1024} else {u64::MAX},
                 );
                 reader_task = Some(reader);
                 client.connect(rpc_peer);
@@ -909,7 +956,18 @@ impl Codex {
                 tokio::select! {
                     _ = caller_cancel.cancelled() => Err(ExecutorError::Io(std::io::Error::new(
                         std::io::ErrorKind::Interrupted, "Codex discovery caller disconnected"))),
-                    result = async { client.initialize().await?; task(client).await } => result,
+                    result = async {
+                        if passive {
+                            tokio::time::timeout_at(deadline.expect("passive deadline"), async {
+                                client.initialize_passive().await?;
+                                task(client).await
+                            }).await.map_err(|_| ExecutorError::Io(std::io::Error::new(
+                                std::io::ErrorKind::TimedOut, "Account initialization/read timed out")))?
+                        } else {
+                            client.initialize().await?;
+                            task(client).await
+                        }
+                    } => result,
                 }
             }).catch_unwind().await.unwrap_or_else(|_| Err(ExecutorError::Io(
                 std::io::Error::other("Codex discovery task panicked"))));
@@ -935,6 +993,9 @@ impl Codex {
             }.await;
             if let Err(error) = &rpc_result {
                 tracing::error!(purpose = "codex-discovery", %error, "RPC cleanup failed");
+            }
+            if passive && (process_result.is_err() || rpc_result.is_err()) {
+                account_read::poison_admission();
             }
             process_result?;
             rpc_result?;

@@ -22,7 +22,7 @@ use codex_app_server_protocol::{
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     process::{ChildStdin, ChildStdout},
     sync::{Mutex, mpsc, oneshot},
 };
@@ -88,6 +88,17 @@ impl JsonRpcPeer {
         exit_tx: ExitSignalSender,
         cancel: CancellationToken,
     ) -> (Self, tokio::task::JoinHandle<()>) {
+        Self::spawn_tracked_with_limit(stdin, stdout, callbacks, exit_tx, cancel, u64::MAX)
+    }
+
+    pub(super) fn spawn_tracked_with_limit(
+        stdin: ChildStdin,
+        stdout: ChildStdout,
+        callbacks: Arc<dyn JsonRpcCallbacks>,
+        exit_tx: ExitSignalSender,
+        cancel: CancellationToken,
+        max_bytes: u64,
+    ) -> (Self, tokio::task::JoinHandle<()>) {
         let (exit_requests, mut exit_requests_rx) = mpsc::unbounded_channel();
         let peer = Self {
             stdin: Arc::new(Mutex::new(stdin)),
@@ -100,7 +111,7 @@ impl JsonRpcPeer {
         let callbacks = callbacks.clone();
 
         let reader_task = tokio::spawn(async move {
-            let mut reader = BufReader::new(stdout);
+            let mut reader = BufReader::new(stdout.take(max_bytes));
             let mut buffer = Vec::new();
             let mut deferred_success = false;
 
@@ -372,10 +383,14 @@ where
                 "failed to decode {label} response: {err}",
             )))
         }),
-        Ok(PendingResponse::Error(error)) => Err(ExecutorError::Io(io::Error::other(format!(
-            "{label} request failed: {}",
-            error.error.message
-        )))),
+        Ok(PendingResponse::Error(error)) => Err(ExecutorError::Io(io::Error::new(
+            if error.error.code == -32601 {
+                io::ErrorKind::Unsupported
+            } else {
+                io::ErrorKind::Other
+            },
+            format!("{label} request failed: {}", error.error.message),
+        ))),
         Ok(PendingResponse::Shutdown) => Err(ExecutorError::Io(io::Error::other(format!(
             "server was shutdown while waiting for {label} response",
         )))),

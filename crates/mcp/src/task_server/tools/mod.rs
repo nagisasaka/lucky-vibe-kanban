@@ -42,6 +42,7 @@ mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
 mod organizations;
+mod provider_usage;
 mod remote_issues;
 mod remote_projects;
 mod repos;
@@ -54,6 +55,7 @@ mod workspaces;
 impl McpServer {
     pub fn global_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         Self::context_tools_router()
+            + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
             + Self::workspaces_tools_router()
             + Self::organizations_tools_router()
@@ -71,6 +73,7 @@ impl McpServer {
 
     pub fn orchestrator_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         let mut router = Self::context_tools_router()
+            + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
             + Self::workspaces_tools_router()
             + Self::session_tools_router();
@@ -418,6 +421,7 @@ mod tests {
             "get_context".to_string(),
             "get_execution".to_string(),
             "get_workspace_tokens".to_string(),
+            "read_provider_usage".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "run_resource_operation".to_string(),
