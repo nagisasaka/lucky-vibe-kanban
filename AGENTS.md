@@ -40,30 +40,46 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 
 ### Rust build cache
 
-- Use sccache for Cargo compilation when it is installed. Set
-  `RUSTC_WRAPPER` to its absolute executable path, preserving any
-  explicitly configured alternative wrapper.
-- When `.lvk-shared/cache` exists, set `SCCACHE_DIR` to the canonical
-  absolute path of `.lvk-shared/cache/sccache` before invoking sccache.
-  If the shared directory is unavailable, keep the existing cache setup.
-- Reuse the default sccache server (`127.0.0.1:4226`) and its automatic
-  startup. Do not create workspace-specific server ports or sockets.
-  Preserve an explicitly configured shared endpoint.
-- An existing server retains its cache configuration. Check the actual
-  cache location with `sccache --show-stats`; report a mismatch rather
-  than stopping or reconfiguring a shared server.
-- Keep Cargo target directories isolated per workspace. Do not place
-  a common target directory in the shared cache.
-- Preserve `CARGO_INCREMENTAL` and profile settings. Incrementally
-  compiled crates are not cached by sccache; other eligible
-  compilations can still benefit.
-- Observe cache hits, misses and non-cacheable compilations with
-  `sccache --show-stats` around relevant builds. Statistics are shared
-  across clients; do not reset them or clear the shared cache.
-- Do not set `SCCACHE_BASEDIRS` or change compiler flags routinely.
-  Investigate path-related misses only when measurements justify it.
-- If sccache is unavailable, use normal Cargo compilation and report
-  that compiler caching was unavailable.
+- For LVK source development, use `node scripts/dev-cargo.mjs <command>`
+  from this checkout (including crate subdirectories). The pnpm backend
+  check/lint/test/format, type generation and backend watch entries use it.
+  Supported commands: build/check/test/clippy/run/fmt/metadata/watch.
+  This is a POSIX contributor entry, not LVK runtime or Project setup policy.
+- The entry passes Cargo `--config` arguments: dev/test debug is
+  `line-tables-only`, incremental is false. This trades incremental reuse for
+  smaller intermediates and sccache eligibility. It does not set RUSTFLAGS or
+  change release profiles; distribution builds continue to use raw Cargo.
+- `CARGO_INCREMENTAL` takes precedence even over profile config. The entry
+  rejects inherited values other than `0`, conflicting profile/target env and
+  debug Rust flags, and explicit compiler wrappers. Unset conflicts to opt in;
+  use raw Cargo deliberately to preserve an alternative wrapper/policy.
+- Final `target/` artifacts remain checkout-local. If `.lvk-shared/cache` exists,
+  its canonical path supplies one `lvk-dev-cargo-build` directory for Cargo's
+  official `build.build-dir` across LVK workspaces (no workspace-path-hash).
+  Otherwise intermediates remain in checkout-local `target/`, with a warning.
+  The pinned Cargo 1.93.0-nightly supports this setting without `-Z`.
+- Cargo locks both output directories; concurrent builds sharing an intermediate
+  directory may wait on its normal build lock. Waiting is expected and does not
+  require a separate locking service. Do not symlink deps or share final targets.
+- If sccache is installed, a rustc-only wrapper sets `SCCACHE_DIR` to canonical
+  `.lvk-shared/cache/sccache`. Without shared storage it preserves the inherited
+  cache setup; without sccache it reports normal compilation. The launcher adds
+  no compiler environment variables to Cargo, watch, the server or its child
+  Projects. Watch invokes the same entry separately for build and run.
+- Reuse the existing sccache server/explicit endpoint. The entry checks
+  `sccache --show-stats` and warns if the actual cache location differs; it never
+  stops/reconfigures the server, resets statistics, clears cache or sets
+  `SCCACHE_BASEDIRS`. Statistics are shared, so deltas are approximate under load.
+- Do not add this policy to auto-loaded `.cargo/config.toml`, global Cargo home,
+  shell startup, server parent environment or other Projects. Existing platform
+  linker configuration remains separate. SQLx prepare and isolated instance/
+  distribution tooling retain their explicit specialised Cargo policy.
+- **Never use `cargo clean` as shared-cache cleanup.** Cargo clean also removes
+  the configured build-dir and invalidates other workspaces' intermediates;
+  the entry rejects clean. Shared retention needs coordinated maintenance.
+- Small regression fixtures: `node --test scripts/dev-cargo.test.mjs`.
+  The deferred full-workspace measurement plan is in
+  [the development cache notes](docs/development/cargo-cache.md).
 
 ### Disk usage and temporary artifacts
 
@@ -113,7 +129,7 @@ Choose validation for the changed behaviour and affected consumers. The broad co
 | Change | Validation to select |
 | --- | --- |
 | Documentation or instructions only | Check accuracy, paths, links and command names; review the diff and run `git diff --check`. No application build or test suite is needed. |
-| Local Rust change | Target the affected crate with `cargo check -p <crate>`, `cargo clippy -p <crate> --all-targets -- -D warnings`, and relevant `cargo test -p <crate> <filter>` tests as appropriate. Include affected features and consuming crates for shared/API changes. |
+| Local Rust change | Target the affected crate with `node scripts/dev-cargo.mjs check -p <crate>`, `node scripts/dev-cargo.mjs clippy -p <crate> --all-targets -- -D warnings`, and relevant `node scripts/dev-cargo.mjs test -p <crate> <filter>` tests as appropriate. Include affected features and consuming crates for shared/API changes. |
 | Web or UI | Run the affected package's type check, available lint and relevant existing tests; include consumers when shared components/types change. Frontend-only changes do not require Rust workspace checks. |
 | Generated API types or SQL | Run the relevant generation/check commands above and tests for changed API behaviour, queries or migrations. |
 | Routing, authentication or execution boundaries | Include regression tests across the affected boundary and relevant integration/E2E coverage. |
