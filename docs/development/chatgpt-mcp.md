@@ -651,7 +651,7 @@ the historical 85 calls / roughly 420,000 characters entirely to API overhead.
 
 ### Share Issue specification reviews
 
-External HTTP MCP clients can use `list_issue_comments`, `get_issue_comment` and `add_issue_comment`
+External HTTP MCP clients can use `list_issue_comments`, `get_issue_comment`, `add_issue_comment` and `edit_issue_comment`
 to share independent opinions on the existing Board comments. This does not
 add an AI orchestrator or extend the internal stdio tool catalogue.
 
@@ -680,6 +680,29 @@ add an AI orchestrator or extend the internal stdio tool catalogue.
    grapheme clusters; combining marks count separately. Do not prepend the
    list preview to body pages.
 
+To correct your own comment, call `edit_issue_comment` with `project_id`,
+`issue_id`, `comment_id`, a stable UUID `request_id`, `message` (1–16,000
+Unicode scalars, nonblank), and `expected_comment_revision` copied from
+`get_issue_comment`. This replaces only the body and updates the edit timestamp.
+It retains the original author, recorded principal, label, parent and review
+target. A stale revision returns a failed receipt with
+`comment_revision_conflict`; read again before deciding on a new edit.
+
+Ownership requires exact equality with the stored verified issuer/subject pair.
+Different AI clients sharing that principal are the same owner. A display name,
+model name, reviewer label or body claiming ownership grants no permission.
+Legacy comments without a recorded principal cannot be claimed, including by
+matching `author_id`; the existing Web/internal API is a separate editing
+boundary. Its current PATCH supports message/parent without this MCP ownership
+or revision contract, so invoking it directly would not safely implement this
+feature. MCP reuses the bounded comment revision reader inside a single SQLite
+`BEGIN IMMEDIATE` transaction (the existing Board mutation pattern) and the
+existing operation receipts. Other Web/API writers cannot intervene between
+revision verification and the update. A database failure returns `uncertain`
+and requires receipt/current-comment inspection.
+The stdio catalogue has no comment add/read tools or equivalent remote principal
+contract and is not expanded by this change.
+
 The comment edit revision is a content identity (SHA-256 of the scoped identity,
 edit timestamp and body), distinct from the reviewed Issue revision. An edit
 between pages causes a revision mismatch with no body returned; restart at zero.
@@ -707,11 +730,11 @@ exposes `updated_at`; the UI shows the last edit separately. Normal comment
 requests cannot set review provenance fields. These remain editable comments,
 not immutable or tamper-proof audit records.
 
-Appending requires `lvk:read` and `lvk:write` plus existing Project access.
+Appending and editing require `lvk:read` and `lvk:write` plus existing Project access.
 Reading requires `lvk:read`. The existing durable operation receipt handles
 retries: reuse the original request ID and input; after uncertainty inspect
 `get_operation` and the comment before any new request. Independent posts are
-separate rows. Posting does not update the Issue, Workspace or Run, send an AI
+separate rows. Posting and editing do not update the Issue, Workspace or Run, send an AI
 notification, or start another review. Changing agreed requirements remains a
 separate `update_issue` operation with optimistic revision checking.
 
