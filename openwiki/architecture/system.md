@@ -6,8 +6,12 @@ tags: [architecture, deployment, startup, database]
 sources:
   - id: openwiki-source-651d1fb6c9e49916a916ab51
     resource: repo://Cargo.toml
+  - id: openwiki-source-4169d2cd1d27a6243e90c06d
+    resource: repo://crates/db/src/bin/migrate_compat.rs
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-7b783ec1a704bf9dadb9c003
+    resource: repo://crates/db/src/migration_compat.rs
   - id: openwiki-source-190ea4aff3773f72dcf4935b
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
@@ -48,10 +52,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-24T14:40:59.450Z" }
+generated: { by: "codex", at: "2026-10-26T02:48:51.947Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-26T02:48:51.947Z
 ---
 
 # システム境界と起動順序
@@ -88,6 +92,8 @@ flowchart LR
 ## 永続化は一つではない
 
 ローカル DB は asset directory の `db.v2.sqlite` を開き、SQLx migration を適用する。通常 pool は DELETE journal と 5 秒の busy timeout を使う。[DB 初期化](../../crates/db/src/lib.rs#L254-L268)、[timeout の理由](../../crates/db/src/lib.rs#L12-L15)
+
+起動と明示 migration tool は `db::run_migrations` を共有する。Project key の既知版だけ履歴 checksum に合う SQL を選ぶ互換 source を通し、SQLx 実行成功後に Agent Runtime schema guard を行う。未知の対象 checksum は起動を失敗させる。[共通入口](../../crates/db/src/lib.rs#L18-L34)・[履歴選択](../../crates/db/src/migration_compat.rs#L103-L133)。対応範囲と復旧上の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。
 
 Board の Web は `/api/local`、stdio MCP は `/api/board` を使い、同じローカルデータを読む。旧名 `local_remote` や `remote-types.ts` は Cloud backend の存在を意味しない。[router](../../crates/server/src/routes/mod.rs#L44-L86) と [Web と同期](web-and-sync.md)で応答・再取得の契約を確認する。
 

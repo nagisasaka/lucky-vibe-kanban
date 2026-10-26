@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:18f450872793b5ffb784722ae6ca37232451acf459a5bbf22fe6494775510801",
+  "pageVersion": "sha256:d4a9708ded8a70a2c46d10a0bb46a8cefb486e2439a668ff03ade7b59c260e14",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -84,17 +84,17 @@
       "evidence": [
         {
           "resource": "repo://scripts/prepare-db.js",
-          "version": "repo-file-v1:sha256:d7eb8c6e3dab9bbf494f0746c802035786d595d1d6248b11b33b55b7bb1613c4"
+          "version": "repo-file-v1:sha256:200dc0137fe752db9722790ee260d616738b65719515eb0366e83bc0f4dae815"
         }
       ]
     },
     {
       "id": "claim_36a0afb413ec454e963c0efa35e90d63",
-      "statement": "migration checksum不一致はdebug/非Windowsでは失敗、Windows releaseは記録checksumを更新して再試行し、commentにplatform改行差の理由が記録される。",
+      "statement": "Project key既知版は未知checksumをWindows release fallbackより前に拒否する。他版の不一致はdebug/非Windowsで失敗し、Windows releaseにはchecksum更新再試行の従来分岐が残る。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/lib.rs#L29-L73",
-          "version": "repo-lines-v1:sha256:17a3633ea0c1b70686c010fa85e213de2598714fcc618110d5975dc87a7dc8df:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5YjUwZjIwNmU0MWM5Nzk2ZTliMTRhZjYyNmNhMzAxMjRmY2U0ZDA2M2RmNzJkODNlMzY1ZGNkZDVlNGFmYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyYWE4ZmQ0ZjhlMjJjMzJhMzgxOWY2YjAxNmNlMGU5NGRhMDNjODJhMzcyODMwNTY3NTBlZmI0M2Y1YjQ4YWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjZTI2NzBjNGE0ZTU5ZGNlMmRjODdmNjMyY2VkMmIxZjVlODAxNzYzOGJkODZhOTliMmIxMmY4NmM3YWE4YjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkifQ"
+          "resource": "repo://crates/db/src/lib.rs#L18-L80",
+          "version": "repo-lines-v1:sha256:c5250c280a8fbe3b5942dcded7b98c997825004c0ea6943280abda36801895ea:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNTlkZmNiZjRmMzRjNzg5ZmZiMzBjM2I3NWU4ZTkyYjIzNDA4OWI3MGM2NDgwMTg2OTJlOWNiNGFhZDMyOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4Njg0ZDFjYzFkNjkzNmMxZjc3OTg3OWVlOWJjZGJhMDY4YTIxMjI5ZTVkMTY4NmMxZTE4NzEzNmM0NjQzNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhYTk3MGU0MWM5NjJiOWYwNzkyYzQ4NmNkMDU4Y2UwMWM5OGJjMjJkMDNiZDk5OGFlOTFhZjRlZDQwZTZkZWQifQ"
         }
       ]
     },
@@ -631,10 +631,72 @@
           "version": "repo-lines-v1:sha256:95f2bf238b5cb457fd7ba874f81a38e85f7c2f665531a2c4de528af3ebe11bd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDZiYTc0MDgyYjhhNTVhZTY1ZjQ3MDEzMGJkNmY4NDZkYTQ1ZWFmMzI4OTQ4YTZhZTBiOWJiNGZjNTE4NWEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_89004c5f04654b4da954f420c199b33a",
+      "statement": "version 20261025120000のみ元・互換SQL各LF/CRLFの既知artifactを検証し、未適用ならcheckout互換SQL、適用済みなら保存checksumに合う実SQLを選ぶ。未知履歴や改変artifactは拒否し履歴を更新しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/migration_compat.rs#L40-L133",
+          "version": "repo-lines-v1:sha256:cb2960805f60ff2d168286c1937e013e183b9eda2d462592e53b1b5e5f8afa7b:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZmI4NWMwMTIzOTA4NWQ2YThmYmY2MzM0N2I1ZjUzNTVmN2JlNGRkNTAzYWY4ZmE4MzBhZTA4YjVhMjczZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNTU4YWM0NzExYmEzNDRlN2ZlNjgwMTQ3MGU2NTRkMGU3M2RhNDVlZDA3YWRjYzc5N2VjNmRhMmY4ZDNhYzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVmY2YzOThmYWM2YzdiN2ViNjYyODc4MzZlMTczMDlmMzJiNTE4OGRlYTIzMGM2NDdiNGUzZjQzM2JiZGIzNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiYmUwNDY0YmE5YzFjMzNmNWFmNzBjNTg4OGJhOThlMzBiM2NiMjRiYzFmY2FjYjEwY2Q1YWMzZjdjYjliOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ce70176f68943b589c956f7b0765ec6",
+      "statement": "互換Project key SQLはUUID順LOCAL・LOCAL2〜LOCAL99999を割り当て、既存Issueを更新せず、100000件では長さCHECK違反でrollbackする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migration_compat/project_keys_multi.sql#L1-L21",
+          "version": "repo-lines-v1:sha256:c0d68cd0f2d1e640d6317c054f913ee3eaecde15fada89a14e42efb443793aae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3NGY3MDYzZDU1MDkxNzNmMzJhZTZlNzU0NjA2NjJkNjdhZjk3ODNjNDEzMTgyOTE2MThkNmU4OGNkMmQwMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZDg0YjYxNTNjMWNhZDA2MmRlMGFiYmJlODljYzNkMGNjYTQyY2QzNTViYmQ5OWMxMzgxZDA1MGNlODM2NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/project-keys/migration_compat.py#L138-L149",
+          "version": "repo-lines-v1:sha256:aa38c39cc6ae588dfbc13780bbeaeba3e95e89c6f45f560b4b7465e5495ebf96:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViNGUwZWI2NzU0NTRlZTg1NzFmMzViN2E1ZDI2NWMxZTY4NjRmY2E1ZDc3ZDFmNWNmMTE2ZjM3ZGY5MTIwNDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNjZlZTEzYjcwNjBjODQ0YjRmMmQyZGNhYzRjNzJlMWMwYjQwOTIxYzlkM2QyYTgwMmNkM2FlYjAwN2JhMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef63c8a6b1744bec9df6acbbe85d2703",
+      "statement": "明示migrate_compat toolはDATABASE_URLを必須として共通run_migrationsを使い、prepare-dbもSQLX_OFFLINE=trueで同toolを実行してからSQLx prepareを行う。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/bin/migrate_compat.rs#L1-L10",
+          "version": "repo-lines-v1:sha256:2017db588c7b59f68f51d7bf154900f423d0d652344f8074a425c19079412198:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NDE3YWNhYzg1MjgyZmE0MWRlOWM4ZDBiMThmYjJhZmU5YWU4YzU1NTZjMDE4OGNmMjA1Njc5MmNhYTgzYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://scripts/prepare-db.js#L15-L50",
+          "version": "repo-lines-v1:sha256:113e5532caaf89101448b7108a602803a486848c1e1a4089ed5fa49229721cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhY2FkNTE2NTRhNDk4MDc0ZjA0MDkxNzdkMDU4YjAzNzFjNzgyYjU2Y2Y3MmUxYjFiODA1ODE0NjFlMzM0NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZjU2NzllODQ2NTc1Y2E1NzNhMmFiNjRlMjE5MDQzMDI2MGZmN2UyYjUzMzdkYzBlMDE1NTMyMDM2YzI2ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0f0873610b9042f8860f994217682859",
+      "statement": "raw SQLx directory CLIと旧server binaryは互換checksumを扱えず、この変更はdowngradeを提供しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migration_compat/README.md#L26-L34",
+          "version": "repo-lines-v1:sha256:b375314780f6170008f69bea669d273bc9aa34a40056e2ba289773856a278fd3:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWU1ZjZhODQwNDI2MmFjZTBkYjNjZDhmN2ViMDZhOTEyNWY2NWE4MmFiOWU2ZGQ2ZmMyOTdlM2UxOGM3NmJkZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDVkODJjMDdiYmRiMThhYzU3ZjQzMzhhNTBlYWU1NzFlMTJjYmYzMjg1YmU2MTYzMTBiOTM4ZTZkZTcyNzA3NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzdjZTY0MmU2ODJjYTgyYWViNWMyNDgzZmJmNjMyMzQxNTFkYWFlYTE1N2E4NjkzOTRkOGRiZWM3NjA0MThhMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5654b8bcb8484700ad0bbb509ac5c45a",
+      "statement": "Rust migration_compat testsは実SQLxで履歴保持・旧複数Project失敗からの再開・LF/CRLF選択・未知や改変の拒否を検査し、Python試験は全履歴やRustを動かさない軽量modelである。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/src/migration_compat.rs#L135-L408",
+          "version": "repo-lines-v1:sha256:edab0f2e6d88527e85ed0e569aa0b0ecb16bb9eeb5216f07e02b39642b80f50b:eyJzZWxlY3RlZExpbmVDb3VudCI6Mjc0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMDdkOTM2ZjU4YzMxODVmNTM1NTVkNjFiMWJjN2RkNGQyODg1NDdjMWFlZmI3ZjcxZDYxMzViNWViOGIwZTJiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ODE2M2I3NzVmN2M1ZGU5MTZlNzM4MjUyZTFmNTgyYzllMDA4ZWI4M2EyODAyNzJiZTdlYjY4NThkNWJjYjQ3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://tests/project-keys/migration_compat.py#L1-L59",
+          "version": "repo-lines-v1:sha256:9c9ae6f9eac7d8e64f87ca37306cc778d086aed1579764b5c4f6df6364095750:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxMGQxYzQwYmZlNjA3MGJiZGI5MDFhNzAyOTMwNjViNjk1YzdiNzEzOTc3MmViZjAyY2I5NGY2NDdlMGMxN2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNjNkNjM5YzJjZWIxYzA4YzFiM2JiNmU3YzcwZWM1OGUyMjc5NjE4NDBjNzFkMzVlZDZhNGI0MzkwZjU2ZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlYTkxY2YyYzUwMDBlZTI4YmVlZWIzYjQxN2QxNjg0NzU1MTE1MzBjODkzMDA3Y2Q3MzM2ZDU1MmFmMWFlNjAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-24T17:19:36.105Z"
+    "at": "2026-10-26T02:48:51.947Z"
   }
 }

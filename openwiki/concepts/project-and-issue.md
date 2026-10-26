@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/api-types/src/issue.rs
   - id: openwiki-source-98b2b381d94f0ceabce67262
     resource: repo://crates/api-types/src/project.rs
+  - id: openwiki-source-0afb1e125b616abe2a64c15f
+    resource: repo://crates/db/migration_compat/project_keys_multi.sql
   - id: openwiki-source-e4c80fe5a2af8a4abd8a8684
     resource: repo://crates/db/migrations/20260427000000_local_kanban.sql
   - id: openwiki-source-5c1907109b5a72a746e85a0c
@@ -16,8 +18,6 @@ sources:
     resource: repo://crates/db/migrations/20261023110000_retain_design_notes_on_project_delete.sql
   - id: openwiki-source-11bd8cfafd506215798951a6
     resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
-  - id: openwiki-source-136892a98eb944f12d88c47a
-    resource: repo://crates/db/migrations/20261025120000_project_keys.sql
   - id: openwiki-source-84bf5b13c3c1bf55a6f0a317
     resource: repo://crates/db/migrations/20261025150000_issue_archive.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
@@ -64,10 +64,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-26T02:48:51.947Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-26T02:48:51.947Z
 ---
 
 # Project・Issue と実施の関係
@@ -84,7 +84,7 @@ Project には Issue と独立した [Todo 共有メモ](project-todos.md)もあ
 
 Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key と Project 内の `MAX(issue_number)+1` から作る。Project 作成時の key は必須で、前後空白除去・ASCII大文字化後に英字先頭の英数字2〜10文字、現存 Project 間で一意である。API 更新では変更できない。UI の名前由来候補は編集可能で、非ASCII語はローマ字化せず空候補とする。重複はサーバーで409となり、UI候補は予約ではない。[作成](../../crates/server/src/routes/local_remote.rs#L440-L489)・[正規化](../../crates/api-types/src/project.rs#L70-L83)・[候補](../../packages/web-core/src/shared/lib/projectKey.ts)。
 
-既存 Project の key は migration で LOCAL になり、既存 Issue UUID・番号・simple_id は変更しない。通常 Issue・Integration Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、最大番号の削除後には番号が再利用され得る。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L1-L24)・[migration](../../crates/db/migrations/20261025120000_project_keys.sql)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
+Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・Integration Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、最大番号の削除後には番号が再利用され得る。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L1-L24)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
 
 priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L894-L925)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
 

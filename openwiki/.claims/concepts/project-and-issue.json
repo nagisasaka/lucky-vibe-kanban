@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8f616ee5ca466b6200933114cdb615833941fb9dacf8e35ec5475a4195f9f4b4",
+  "pageVersion": "sha256:1e29e0986f18b19333ea6da0d8fb229be569f10364db006dc4a2df3d35dbf369",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -18,11 +18,11 @@
     },
     {
       "id": "claim_2abfc0644b354d4fbc407e53ef0f85e4",
-      "statement": "Issue表示IDは保存済みProject keyとProject内MAX番号+1をcallerのBEGIN IMMEDIATE transactionで採番する。既存ProjectはLOCALへ移行し既存Issue値を保持する。",
+      "statement": "Issue表示IDは保存済みProject keyとProject内MAX番号+1をcallerのBEGIN IMMEDIATE transactionで採番する。未適用の既存Projectは互換migrationでUUID順LOCAL・LOCAL2以降へ割り当て、既存Issue値は保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/migrations/20261025120000_project_keys.sql",
-          "version": "repo-file-v1:sha256:0daa91c9bd4cde67ac9d368b043a398f9f5e66df2db2f8b1002c477af7e3c6a0"
+          "resource": "repo://crates/db/migration_compat/project_keys_multi.sql#L1-L21",
+          "version": "repo-lines-v1:sha256:c0d68cd0f2d1e640d6317c054f913ee3eaecde15fada89a14e42efb443793aae:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3NGY3MDYzZDU1MDkxNzNmMzJhZTZlNzU0NjA2NjJkNjdhZjk3ODNjNDEzMTgyOTE2MThkNmU4OGNkMmQwMTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZDg0YjYxNTNjMWNhZDA2MmRlMGFiYmJlODljYzNkMGNjYTQyY2QzNTViYmQ5OWMxMzgxZDA1MGNlODM2NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://crates/db/src/models/issue_number.rs#L1-L24",
@@ -489,6 +489,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T01:28:30.262Z"
+    "at": "2026-10-26T02:48:51.947Z"
   }
 }

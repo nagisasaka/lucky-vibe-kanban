@@ -8,8 +8,16 @@ sources:
     resource: repo://Cargo.toml
   - id: openwiki-source-b41a0c4c19395b75cde58592
     resource: repo://CONTRIBUTORS.md
+  - id: openwiki-source-0afb1e125b616abe2a64c15f
+    resource: repo://crates/db/migration_compat/project_keys_multi.sql
+  - id: openwiki-source-32853d735a8ae91f8c088286
+    resource: repo://crates/db/migration_compat/README.md
+  - id: openwiki-source-4169d2cd1d27a6243e90c06d
+    resource: repo://crates/db/src/bin/migrate_compat.rs
   - id: openwiki-source-5c2565a649f8be059d306209
     resource: repo://crates/db/src/lib.rs
+  - id: openwiki-source-7b783ec1a704bf9dadb9c003
+    resource: repo://crates/db/src/migration_compat.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -80,6 +88,8 @@ sources:
     resource: repo://tests/chat/external-editors.test.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
+  - id: openwiki-source-e023073a2ead0d2a5b8304d5
+    resource: repo://tests/project-keys/migration_compat.py
   - id: openwiki-source-a1c202ba8b2becaa93218bc0
     resource: repo://tests/server/run-workspace-tokens.mjs
   - id: openwiki-source-f7bef772fe7a00d12c00a997
@@ -98,10 +108,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-24T17:19:36.105Z" }
+generated: { by: "codex", at: "2026-10-26T02:48:51.947Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-24T17:19:36.105Z
+    at: 2026-10-26T02:48:51.947Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -299,7 +309,29 @@ local API の生成元は Rust の generate_types binary であり、shared/type
 
 prepare-db は一時 SQLite を作り、migration を適用してから cargo sqlx prepare を実行し、finally で一時 DB を削除する。--check でも一時 DB の作成と migration は行うため、単なる読み取り専用の型検査ではない。[SQLite 準備](../../scripts/prepare-db.js)。
 
-本番 DB の migration checksum 不一致は、debug build と非 Windows ではエラーになる。Windows release は記録済み checksum を更新して再試行する分岐を持ち、その根拠として改行等の platform 差を code comment が挙げる。これは任意の schema 不一致を修復する保証ではない。起動時の schema guard は [システムの永続化境界](../architecture/system.md) を参照する。[platform 分岐と記録された理由](../../crates/db/src/lib.rs#L29-L73)
+### Project key migration の互換運用
+
+version `20261025120000` の元 SQL は、全既存 Project に `LOCAL` を付けてから unique index を作るため、複数 Project の旧 DB では失敗する。後続 migration だけでは先行失敗を越えられない。元 SQL を保持し、この一版だけ二つの固定 SQL と各 LF/CRLF の既知 checksum を選ぶ `MigrationSource` を使う。[元 SQL](../../crates/db/migrations/20261025120000_project_keys.sql)・[対応方針と理由](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。Project と過去 Issue の識別子の関係は [仕事の識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)を参照する。
+
+| 対象版の保存履歴 | 選択と失敗の契約 |
+| --- | --- |
+| 未適用 | checkout の互換 SQL を実行する |
+| 元 SQL / 互換 SQL の既知 LF・CRLF checksum | 保存 checksum に一致する実 SQL bytes を選び、通常の SQLx 検証を行う |
+| 未知 checksum、または改変された元・互換 artifact | エラーにし、履歴を書き換えない |
+
+adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new` を使う。まず両 artifact が既知であることを検証し、その後で固定 LF/CRLF 候補を選ぶため、任意 SQL を改行正規化して受け入れる仕組みではない。他版の検証を緩和する一般的な履歴変換でもない。[選択と構築](../../crates/db/src/migration_compat.rs#L40-L133)。互換層は適用済み receipt を更新せず、実行時は SQLx が実 SQL の checksum を記録する。[履歴保持の設計](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。
+
+互換 SQL は Project UUID 順で `LOCAL`、`LOCAL2`〜`LOCAL99999` を割り当てる。既存 Issue 行は更新せず、列 default は `LOCAL` のまま。100000件目は10文字 CHECK を超えて migration 全体が rollback し、切詰めや再利用はしない。[割当と制約](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)。
+
+起動と明示 tool の共通入口は `db::run_migrations`。明示実行では認可済みの既存 DB を `DATABASE_URL` に指定し、`SQLX_OFFLINE=true cargo run -p db --bin migrate_compat` を使う。tool は DB の既定接続先を持たず、終了時に pool を閉じる。prepare-db も同 binary を `SQLX_OFFLINE=true` で build/実行してから、一時 DB に対する SQLx prepare を行う。[tool](../../crates/db/src/bin/migrate_compat.rs#L1-L10)・[prepare の順序](../../scripts/prepare-db.js#L15-L50)。
+
+互換版適用後に raw `cargo sqlx migrate run` を使うと、directory 内の元 SQL しか知らず checksum 不一致になる。旧 server binary も互換 checksum を扱えず、この変更は downgrade を提供しない。`_sqlx_migrations` の手修正で回避しない。[対応する入口と制限](../../crates/db/migration_compat/README.md)。
+
+対象版の未知 checksum は Windows release の既存 fallback より前に拒否する。他版については debug / 非 Windows で不一致を失敗させ、Windows release では保存 checksum を更新して一度ずつ再試行する従来分岐が残る。comment は platform 改行差等を理由に挙げるが、任意の schema 不一致を修復する保証ではない。[版別 guard と fallback](../../crates/db/src/lib.rs#L18-L80)。実行成功後の schema guard は [起動境界](../architecture/system.md#永続化は一つではない)を参照する。
+
+変更時は `cargo test -p db --lib migration_compat::tests` の実 SQLx fixture を確認する。fresh、旧0/1件 receipt、旧複数件の失敗から再開、互換 CRLF receipt の再起動、checkout 改行と履歴の組合せ、未知 checksum・改変 artifact の拒否を検査する。[Rust 試験](../../crates/db/src/migration_compat.rs#L135-L408)。`python3 -B tests/project-keys/migration_compat.py` は Issue 値保持、99999件境界、100000件の反復 rollback 等の軽量 SQL/checksum model であり、Rust selector や全履歴を実行しない。raw `sqlx::migrate!` を使う空 DB 試験も互換 selector の証拠とは別である。[軽量試験](../../tests/project-keys/migration_compat.py#L1-L153)・[試験の区別](../../crates/db/migration_compat/README.md)。
+
+今回の Sync は凍結 source `cc39e6f25eb0f2ae1fc15df8712befb16fed4509` を起動 caller、共通入口、selector、SQL、allocator、tool、prepare と独立した試験定義から静的照合した。凍結入力には局所 Rust / Clippy / prepare と正式 Integration の check / lint / backend:test 成功報告があるが、この文書保守では再実行していない。native Windows、全 CRLF checkout 全履歴、実 server 起動や稼働 DB の検証を追加で立証したものではなく、無関係な過去の説明も再検証していない。
 
 ## 外部エディター URI 連携の検証
 
