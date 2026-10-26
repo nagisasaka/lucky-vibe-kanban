@@ -88,8 +88,15 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   The deferred full-workspace measurement plan is in
   [the development cache notes](docs/development/cargo-cache.md).
 
-### Disk usage and temporary artifacts
+### Build resources, disk usage and temporary artifacts
 
+- Choose build and test parallelism with concurrent workloads and peak memory
+  usage in mind. Use CPU capacity actively; do not reduce parallelism solely
+  because CPU utilisation is high or fix jobs=1 or jobs=2 without evidence.
+- Keep enough memory headroom for running services and compiler/linker peaks to
+  avoid thrashing and out-of-memory failures. Adjust parallelism using available
+  memory, swap I/O and memory pressure as well as CPU utilisation; swap space
+  already in use alone is not evidence of danger.
 - Reuse the workspace's normal build output directory across commands. Avoid
   creating a new target directory, checkout copy or dependency installation for
   every retry. When isolation is needed, track the temporary paths you create.
