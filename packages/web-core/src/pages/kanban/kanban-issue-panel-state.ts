@@ -62,7 +62,7 @@ export function createBlankCreateFormData(
     title: '',
     description: null,
     statusId: defaultStatusId,
-    priority: null,
+    priority: 'medium',
     assigneeIds: [],
     tagIds: [],
     createDraftWorkspace: createDraftWorkspaceByDefault,
@@ -185,7 +185,7 @@ export function selectDisplayData({
       ? state.editTextState.description
       : (selectedIssue?.description ?? null),
     statusId: selectedIssue?.status_id ?? '',
-    priority: selectedIssue?.priority ?? null,
+    priority: selectedIssue?.priority ?? 'medium',
     assigneeIds: currentAssigneeIds,
     tagIds: currentTagIds,
     createDraftWorkspace: false,

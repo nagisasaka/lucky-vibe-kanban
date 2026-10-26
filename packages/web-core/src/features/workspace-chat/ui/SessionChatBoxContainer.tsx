@@ -37,6 +37,11 @@ import { useTodos } from '../model/hooks/useTodos';
 import { useExecutorConfig } from '@/shared/hooks/useExecutorConfig';
 import { useSessionMessageEditor } from '../model/hooks/useSessionMessageEditor';
 import { useSessionQueueInteraction } from '../model/hooks/useSessionQueueInteraction';
+import {
+  chatMessageScope,
+  deliveryFailure,
+  usePendingChatMessages,
+} from '../model/pendingChatMessages';
 import { useSessionSend } from '../model/hooks/useSessionSend';
 import { resumeGoalRequest } from '../model/resumeGoal';
 import {
@@ -748,11 +753,8 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         reviewContext?.clearComments();
       }
       if (success.createdSessionId) onSelectSession?.(success.createdSessionId);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          onScrollToBottom('auto');
-        });
-      });
+      // Follow intent was enabled at submission. A delayed ACK must not
+      // override a subsequent deliberate scroll into history.
     }
   }, [
     onScrollToBottom,
@@ -812,12 +814,24 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       void saveToScratch(localMessage, executorConfig);
 
       if (steer && activeAgentRun) {
+        const pending = usePendingChatMessages.getState();
+        const pendingId = pending.begin(
+          chatMessageScope(hostId, workspaceId, sessionId),
+          prompt,
+          entries
+        );
+        onScrollToBottom('auto');
         try {
           await steerMutation.mutateAsync({
             agentRunId: activeAgentRun.summary.agent_run_id,
             content: prompt,
           });
-        } catch {
+          pending.update(pendingId, {
+            state: 'accepted',
+            runId: activeAgentRun.summary.agent_run_id,
+          });
+        } catch (error) {
+          pending.update(pendingId, deliveryFailure(error));
           return;
         }
         if (!isCurrentSubmission(submission)) return;
@@ -872,6 +886,11 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       reviewContext,
       activeAgentRun,
       steerMutation,
+      hostId,
+      workspaceId,
+      sessionId,
+      entries,
+      onScrollToBottom,
     ]
   );
 
@@ -1322,6 +1341,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       localAttachments,
     }: SessionChatBoxEditorRenderProps<BaseCodingAgent>) => (
       <WYSIWYGEditor
+        plainText
         key={focusKey}
         placeholder={placeholder}
         value={value}

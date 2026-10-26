@@ -53,7 +53,7 @@ pub struct ArchiveResult {
 // The same predicate runs before presenting confirmation and under the final
 // admission barrier. Persisted unfinished host work also counts as busy after
 // its AgentRun ends; usage alone never determines whether work is active.
-async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiError> {
+pub(crate) async fn check_idle(conn: &mut SqliteConnection, id: Uuid) -> Result<(), ApiError> {
     check_idle_with_memory(
         conn,
         id,
@@ -223,6 +223,18 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<bool, ApiError>>,
 {
+    // Initial creation holds the linked Issue guard through first-run admission.
+    // Join it before the Workspace guard, so archive cannot race that admission.
+    let issue_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT issue_id FROM local_workspace_links WHERE workspace_id=?")
+            .bind(id)
+            .fetch_optional(pool)
+            .await?;
+    let _issue = if let Some(issue) = issue_id {
+        Some(crate::routes::local_remote::issue_archive::lock_issue(issue).await)
+    } else {
+        None
+    };
     let _lifecycle = services::services::workspace_lifecycle::lock(id).await;
     let confirmation = {
         let mut confirmations = CONFIRMATIONS.lock().await;
@@ -258,13 +270,31 @@ where
     check_project(&mut tx, id, &scope).await?;
     check_idle(&mut tx, id).await?;
     super::archive_processes::check(workspace.container_ref.as_deref()).await?;
+    let deletion_error = archive_checked(&mut tx, &workspace, &repos).await?;
+    tx.commit().await?;
+    Ok(ArchiveResult {
+        workspace: Workspace::find_by_id(pool, id)
+            .await?
+            .ok_or_else(|| ApiError::BadRequest("Workspace missing".into()))?,
+        deletion_error,
+    })
+}
+
+/// Called only after *all* targets passed the common admission checks, with
+/// lifecycle guards and the SQLite write transaction held by the caller.
+pub(crate) async fn archive_checked(
+    conn: &mut SqliteConnection,
+    workspace: &Workspace,
+    repos: &[db::models::repo::Repo],
+) -> Result<Option<String>, ApiError> {
+    let id = workspace.id;
     sqlx::query("UPDATE workspaces SET archived=1, updated_at=datetime('now','subsec') WHERE id=?")
         .bind(id)
-        .execute(&mut *tx)
+        .execute(&mut *conn)
         .await?;
     let deletion = if workspace.can_delete_container_path() {
         if let Some(path) = workspace.container_ref.as_deref() {
-            WorkspaceManager::cleanup_workspace_strict(std::path::Path::new(path), &repos).await
+            WorkspaceManager::cleanup_workspace_strict(std::path::Path::new(path), repos).await
         } else {
             Ok(())
         }
@@ -278,16 +308,10 @@ where
         sqlx::query("UPDATE workspaces SET worktree_deleted=? WHERE id=?")
             .bind(deletion_error.is_none())
             .bind(id)
-            .execute(&mut *tx)
+            .execute(&mut *conn)
             .await?;
     }
-    tx.commit().await?;
-    Ok(ArchiveResult {
-        workspace: Workspace::find_by_id(pool, id)
-            .await?
-            .ok_or_else(|| ApiError::BadRequest("Workspace missing".into()))?,
-        deletion_error,
-    })
+    Ok(deletion_error)
 }
 
 async fn check_project(

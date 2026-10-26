@@ -36,7 +36,9 @@ export type DevServerState = 'stopped' | 'starting' | 'running' | 'stopping';
 export interface ProjectMutations {
   removeIssue: (id: string) => void;
   duplicateIssue: (issueId: string) => void;
-  getIssue: (issueId: string) => { simple_id: string } | undefined;
+  getIssue: (
+    issueId: string
+  ) => { simple_id: string; archived?: boolean } | undefined;
   getAssigneesForIssue: (issueId: string) => { user_id: string }[];
 }
 
@@ -139,6 +141,8 @@ export interface ActionVisibilityContext {
   // Kanban state
   hasSelectedKanbanIssue: boolean;
   hasSelectedKanbanIssueParent: boolean;
+  selectedIssueArchived?: boolean;
+  selectedIssueCount?: number;
   isCreatingIssue: boolean;
 
   // Auth state

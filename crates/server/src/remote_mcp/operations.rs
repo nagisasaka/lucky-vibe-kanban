@@ -7,13 +7,13 @@ use sqlx::{FromRow, SqlitePool};
 use uuid::Uuid;
 
 #[derive(Clone)]
-pub(super) struct Operations {
+pub(crate) struct Operations {
     pub pool: SqlitePool,
     pub process_instance: Uuid,
 }
 
 #[derive(FromRow, Serialize)]
-pub(super) struct Receipt {
+pub(crate) struct Receipt {
     pub id: Uuid,
     pub request_id: Uuid,
     pub project_id: Uuid,

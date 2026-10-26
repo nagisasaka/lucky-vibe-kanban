@@ -145,6 +145,20 @@ pub async fn backfill(pool: &SqlitePool) -> anyhow::Result<()> {
             tracing::warn!(workspace_id=%id, %error, "Historical Wiki Board link unavailable");
         }
     }
+    // Migration can only see owners already stored at that time. Reuse the
+    // startup reconciliation's recovered evidence for older linked Issues too.
+    // This never runs from Board reads and does not recreate normal tags.
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    let links: Vec<(Uuid, Uuid)> = sqlx::query_as(
+        "SELECT DISTINCT i.project_id,i.id FROM workspaces w
+         JOIN local_workspace_links l ON l.workspace_id=w.id
+         JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id
+         WHERE json_extract(w.execution_owner,'$.kind') IN ('openwiki_bootstrap','openwiki_sync','integration')"
+    ).fetch_all(&mut *tx).await?;
+    for (project, issue) in links {
+        db::models::board_tag::attach_system(&mut tx, project, issue).await?;
+    }
+    tx.commit().await?;
     Ok(())
 }
 
@@ -701,6 +715,40 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn classification_backfill_includes_owners_recovered_after_migration() {
+        let (pool, repo, project) = fixture().await;
+        let internal = workspace(&pool, &repo, None).await;
+        let status = Uuid::new_v4();
+        let issue = Uuid::new_v4();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',0)").bind(status).bind(project).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,1,'TEST-1',?,'ordinary title',0)").bind(issue).bind(project).bind(status).execute(&pool).await.unwrap();
+        sqlx::query(
+            "INSERT INTO local_workspace_links(workspace_id,project_id,issue_id) VALUES(?,?,?)",
+        )
+        .bind(internal.id)
+        .bind(project)
+        .bind(issue)
+        .execute(&pool)
+        .await
+        .unwrap();
+        integration(
+            &pool,
+            &repo,
+            project,
+            internal.id,
+            Uuid::new_v4(),
+            None,
+            "succeeded",
+        )
+        .await;
+        backfill(&pool).await.unwrap();
+        backfill(&pool).await.unwrap();
+        let labels: Vec<String> = sqlx::query_scalar("SELECT t.name FROM local_issue_tags it JOIN local_tags t ON t.id=it.tag_id WHERE it.issue_id=?")
+            .bind(issue).fetch_all(&pool).await.unwrap();
+        assert_eq!(labels, vec!["system"]);
+    }
+
+    #[tokio::test]
     async fn backfill_uses_evidence_not_names_and_does_not_reclassify_reserved_sources() {
         let (pool, repo, project) = fixture().await;
         let source = workspace(&pool, &repo, None).await;
@@ -1124,12 +1172,32 @@ mod tests {
         ensure_wiki_board_link(&pool, &ws).await.unwrap();
         ensure_wiki_board_link(&pool, &ws).await.unwrap();
         assert_eq!(
+            sqlx::query_scalar::<_, String>("SELECT simple_id FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            "LOCAL-1"
+        );
+        sqlx::query("UPDATE projects SET key='WIKI' WHERE id=?")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
                 .fetch_one(&pool)
                 .await
                 .unwrap(),
             1
         );
+        let labels: Vec<String> = sqlx::query_scalar("SELECT t.name FROM local_issue_tags it JOIN local_tags t ON t.id=it.tag_id JOIN local_workspace_links l ON l.issue_id=it.issue_id WHERE l.workspace_id=?")
+            .bind(ws.id).fetch_all(&pool).await.unwrap();
+        assert_eq!(labels, vec!["system"]);
+        let priority: String = sqlx::query_scalar("SELECT priority FROM local_issues LIMIT 1")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(priority, "medium");
         sqlx::query("DELETE FROM project_repos WHERE repo_id=?")
             .bind(repo.id)
             .execute(&pool)
@@ -1143,6 +1211,18 @@ mod tests {
         .await;
         ensure_wiki_board_link(&pool, &linked_only).await.unwrap();
         assert_eq!(
+            sqlx::query_scalar::<_, String>(
+                "SELECT simple_id FROM local_issues WHERE issue_number=2"
+            )
+            .fetch_one(&pool)
+            .await
+            .unwrap(),
+            "WIKI-2"
+        );
+        let classification: (String, String) = sqlx::query_as("SELECT t.name,i.priority FROM local_issues i JOIN local_issue_tags it ON it.issue_id=i.id JOIN local_tags t ON t.id=it.tag_id WHERE i.project_id=? AND i.issue_number=2").bind(project).fetch_one(&pool).await.unwrap();
+        assert_eq!(classification, ("system".into(), "medium".into()));
+
+        assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues")
                 .fetch_one(&pool)
                 .await
@@ -1150,7 +1230,7 @@ mod tests {
             2
         );
         let second = Uuid::new_v4();
-        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Second')")
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Second','SECOND')")
             .bind(second)
             .execute(&pool)
             .await
@@ -1191,6 +1271,54 @@ mod tests {
             .unwrap(),
             project
         );
+    }
+
+    #[tokio::test]
+    async fn wiki_board_link_rolls_back_keyed_card_when_system_attachment_fails() {
+        let (pool, repo, project) = fixture().await;
+        sqlx::query("UPDATE projects SET key='WIKI' WHERE id=?")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(project)
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Ready','blue',0)").bind(Uuid::new_v4()).bind(project).execute(&pool).await.unwrap();
+        let ws = workspace(
+            &pool,
+            &repo,
+            Some(&WorkspaceExecutionOwner::new(OPENWIKI_SYNC, repo.id, None)),
+        )
+        .await;
+        sqlx::query("CREATE TRIGGER reject_system_relation BEFORE INSERT ON local_issue_tags BEGIN SELECT RAISE(ABORT,'system attachment failure'); END").execute(&pool).await.unwrap();
+        assert!(ensure_wiki_board_link(&pool, &ws).await.is_err());
+        for table in [
+            "local_issues",
+            "local_workspace_links",
+            "local_issue_tags",
+            "local_tags",
+        ] {
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap(),
+                0,
+                "rollback {table}"
+            );
+        }
+        sqlx::query("DROP TRIGGER reject_system_relation")
+            .execute(&pool)
+            .await
+            .unwrap();
+        ensure_wiki_board_link(&pool, &ws).await.unwrap();
+        let row: (String, String, String) = sqlx::query_as("SELECT i.simple_id,i.priority,t.name FROM local_issues i JOIN local_issue_tags it ON it.issue_id=i.id JOIN local_tags t ON t.id=it.tag_id").fetch_one(&pool).await.unwrap();
+        assert_eq!(row, ("WIKI-1".into(), "medium".into(), "system".into()));
     }
 
     #[tokio::test]

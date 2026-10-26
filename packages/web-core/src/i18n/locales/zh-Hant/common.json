@@ -194,7 +194,19 @@
     "subagent": {
       "defaultType": "子代理"
     },
-    "loadingEarlierMessages": "正在載入先前的訊息"
+    "loadingEarlierMessages": "正在載入先前的訊息",
+    "delivery": {
+      "sending": "傳送中…",
+      "accepted": "已受理 · 等待記錄",
+      "failed": "傳送遭拒 · 草稿已保留",
+      "unconfirmed": "受理結果未確認 · 草稿已保留"
+    },
+    "planStep": {
+      "pending": "待處理",
+      "inProgress": "進行中",
+      "completed": "已完成",
+      "empty": "未提供計畫項目"
+    }
   },
   "branchSelector": {
     "placeholder": "選擇分支",
@@ -1018,7 +1030,8 @@
     "subIssueIndicator": "↳",
     "viewTabs": {
       "active": "活動",
-      "all": "全部"
+      "all": "全部",
+      "archived": "Archived"
     },
     "loginRequired": {},
     "team": "團隊",
@@ -1097,7 +1110,9 @@
         "title": "邀請你的團隊",
         "content": "我們已自動建立個人組織和初始專案，方便你開始使用 Lucky Vibe Kanban。關閉前請匯出雲端資料。"
       }
-    }
+    },
+    "switchToList": "Switch to list view",
+    "switchToKanban": "Switch to kanban view"
   },
   "createMode": {
     "headings": {

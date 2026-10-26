@@ -8,6 +8,7 @@ import type {
   DesignNoteResult,
 } from 'shared/types';
 import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
+import { matchesListSearch } from '@/shared/lib/listSearch';
 import { Textarea } from '@vibe/ui/components/Textarea';
 import { designNoteApi as api } from '../model/designNoteApi';
 
@@ -109,6 +110,7 @@ function MarkdownInput({
 type Write = (operation: DesignNoteAction) => Promise<DesignNoteResult>;
 export function DesignNotePanel({ projectId }: { projectId: string }) {
   const client = useQueryClient();
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -175,6 +177,14 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
         >
           新しい設計メモ
         </button>
+        <input
+          type="search"
+          aria-label="設計メモを検索"
+          placeholder="タイトル・本文を検索"
+          className={`${input} mt-base`}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
         {list.error && <p role="alert">{String(list.error)}</p>}
         {list.isLoading && <p>読み込み中…</p>}
         {list.data?.length === 0 && (
@@ -182,22 +192,24 @@ export function DesignNotePanel({ projectId }: { projectId: string }) {
             最初の考えと、その後の判断を残せます。
           </p>
         )}
-        {list.data?.map((n) => (
-          <button
-            key={n.id}
-            className={`${button} mt-base w-full text-left break-words`}
-            aria-pressed={selected === n.id}
-            disabled={busy}
-            onClick={() => {
-              setSelected(n.id);
-              setCreating(false);
-              setError('');
-            }}
-          >
-            <span className="block">{n.title}</span>
-            <time className="text-xs text-low">{date(n.updated_at)}</time>
-          </button>
-        ))}
+        {list.data
+          ?.filter((n) => matchesListSearch(search, n.title, n.body))
+          .map((n) => (
+            <button
+              key={n.id}
+              className={`${button} mt-base w-full text-left break-words`}
+              aria-pressed={selected === n.id}
+              disabled={busy}
+              onClick={() => {
+                setSelected(n.id);
+                setCreating(false);
+                setError('');
+              }}
+            >
+              <span className="block">{n.title}</span>
+              <time className="text-xs text-low">{date(n.updated_at)}</time>
+            </button>
+          ))}
       </aside>
       <main
         className={`${!selected && !creating ? 'hidden md:block' : ''} min-w-0 flex-1 overflow-y-auto p-double`}

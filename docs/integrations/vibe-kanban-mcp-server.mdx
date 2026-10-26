@@ -90,6 +90,33 @@ Many tools accept an optional `project_id` or `organization_id` parameter. When 
 | `delete_issue` | Delete an issue | `issue_id` | None | Deletion confirmation |
 | `list_issue_priorities` | List allowed priority values | None | None | List of priorities: urgent, high, medium, low |
 
+`list_issues` defaults to unarchived Issues. Set `archived: true` for archived
+Issues or `archived: "all"` for both; `false` explicitly selects unarchived.
+UI hidden statuses do not exclude MCP results.
+
+`list_issues` applies all filters before sorting and offset pagination. `search`
+is a case-insensitive literal substring of the saved full title or description;
+it preserves surrounding whitespace and does not interpret wildcards or regular
+expressions. An empty string matches all issues. `simple_id` is an exact
+case-insensitive match. `status` accepts a status name or UUID; names and
+`tag_name` use case-insensitive exact matching. Different filters combine with
+AND. When `tag_id` and `tag_name` are both supplied, they must identify the same
+tag; an Issue having two different matching tags is insufficient. Missing
+status/tag names return an empty result. Listing reads existing statuses without creating defaults.
+
+The external HTTP MCP uses the same filter implementation and names, while
+retaining its own required Project ID, UUID cursor pagination and summary
+metadata. stdio retains sorting, offset pagination and `total_count`; keep the
+same filters throughout a multi-page listing.
+
+`list_todos(project_id, include_completed?, offset?, search?)` reads 100 notes
+per page and returns `items` with `next_offset`. Its optional `search` matches
+body or category using the same literal, case-insensitive substring rule.
+`list_design_notes` accepts optional `search` against title or saved Markdown
+body, excluding additions; it retains metadata-only results and UUID cursor
+pagination (up to 20 items). Both stdio and external MCP apply these searches
+before pagination. Omitting `search` preserves the previous listing behaviour.
+
 <Tip>
 For `update_issue`, the `parent_issue_id` field supports three states: omit it entirely to leave the parent unchanged, pass `null` to un-nest the issue from its parent, or pass a UUID to set a new parent.
 </Tip>

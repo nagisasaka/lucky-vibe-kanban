@@ -231,6 +231,20 @@ pub(crate) async fn create_and_start_workspace_admitted(
         .filter(|path| !path.is_empty())
         .map(ToOwned::to_owned);
 
+    let _issue_creation_guard = if let Some(link) = &linked_issue {
+        Some(crate::routes::local_remote::issue_archive::lock_issue(link.issue_id).await)
+    } else {
+        None
+    };
+    if let Some(link) = &linked_issue {
+        crate::routes::local_remote::issue_archive::require_unarchived(
+            &deployment.db().pool,
+            link.remote_project_id,
+            link.issue_id,
+        )
+        .await?;
+    }
+
     let managed_workspace = match mode {
         CreateWorkspaceMode::Worktree => {
             if repos.is_empty() {

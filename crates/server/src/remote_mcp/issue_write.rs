@@ -27,6 +27,11 @@ struct CreateArgs {
     /// Self-contained agreed requirements and acceptance criteria. No execution starts.
     #[schemars(length(min = 1, max = 64000))]
     description: String,
+    /// Defaults to medium, including legacy explicit null.
+    priority: Option<api_types::IssuePriority>,
+    #[serde(default)]
+    #[schemars(length(max = 50))]
+    tag_ids: Vec<Uuid>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -41,6 +46,9 @@ struct UpdateArgs {
     #[schemars(length(max = 64000))]
     description: Option<String>,
     status_id: Option<Uuid>,
+    /// Omit to preserve; explicit null resets to medium.
+    #[serde(default, deserialize_with = "api_types::some_if_present")]
+    priority: Option<Option<api_types::IssuePriority>>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -57,7 +65,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<UpdateArgs>(
             "update_issue",
-            "Apply explicitly requested Issue changes against the revision from get_issue. Does not steer existing runs or start implementation. Omitted fields stay unchanged.",
+            "Apply Issue changes, including conversation-based priority classification, against the revision from get_issue. Does not steer existing runs or start implementation. Omitted fields stay unchanged.",
         ),
     ];
     for tool in &mut tools {
@@ -201,14 +209,18 @@ pub(super) async fn call(
     let receipt = match name {
         "create_issue" => {
             let args: CreateArgs = arguments(input.clone())?;
+            ensure!(
+                args.tag_ids.len() <= 50,
+                "At most 50 tags per Issue creation"
+            );
             validate_text(&args.title, 500, true)?;
             validate_text(&args.description, 64000, true)?;
             remote.require_project(args.project_id).await?;
             remote.operations().submit(key, args.request_id, args.project_id, name.into(), input, json!({"project_id":args.project_id,"status_id":args.status_id}), move |id| async move {
                 if let Err(error) = owned.require_status(args.project_id, args.status_id).await { return validation_failure(error); }
                 // The receipt ID is also the domain's client-generated Issue ID.
-                let request: CreateIssueRequest = serde_json::from_value(json!({"id":id,"project_id":args.project_id,"status_id":args.status_id,"title":args.title,"description":args.description,"sort_order":0.0,"extension_metadata":null})).expect("Issue request fields");
-                match local_remote::create_local_issue(&owned.pool, request).await {
+                let request: CreateIssueRequest = serde_json::from_value(json!({"id":id,"project_id":args.project_id,"status_id":args.status_id,"title":args.title,"description":args.description,"priority":args.priority,"sort_order":0.0,"extension_metadata":null})).expect("Issue request fields");
+                match local_remote::create_local_issue_with_tags(&owned.pool, request, &args.tag_ids).await {
                     Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),
                     Err(error) => domain_failure(error),
                 }
@@ -223,7 +235,10 @@ pub(super) async fn call(
                 validate_text(description, 64000, false)?;
             }
             ensure!(
-                args.title.is_some() || args.description.is_some() || args.status_id.is_some(),
+                args.title.is_some()
+                    || args.description.is_some()
+                    || args.status_id.is_some()
+                    || args.priority.is_some(),
                 "No Issue changes supplied"
             );
             let revision = args
@@ -246,6 +261,7 @@ pub(super) async fn call(
                 if let Some(title) = args.title { changes["title"] = json!(title); }
                 if let Some(description) = args.description { changes["description"] = json!(description); }
                 if let Some(status) = args.status_id { changes["status_id"] = json!(status); }
+                if let Some(priority) = args.priority { changes["priority"] = json!(priority); }
                 let request: UpdateIssueRequest = serde_json::from_value(changes).expect("Issue update fields");
                 match local_remote::update_local_issue_checked(&owned.pool, args.issue_id, request, Some(revision)).await {
                     Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),

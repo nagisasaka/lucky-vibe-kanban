@@ -30,6 +30,7 @@ export interface IssueListSectionProps {
     issueId: string
   ) => IssueListRowRelationship[];
   onIssueClick: (issueId: string, e: MouseEvent) => void;
+  onIssueMoreActions?: (issueId: string) => void;
   selectedIssueId: string | null;
   selectedIssueIds?: Set<string>;
   isMultiSelectActive?: boolean;
@@ -45,6 +46,7 @@ export function IssueListSection({
   getTagObjectsForIssue,
   getResolvedRelationshipsForIssue,
   onIssueClick,
+  onIssueMoreActions,
   selectedIssueId,
   selectedIssueIds,
   isMultiSelectActive,
@@ -117,6 +119,11 @@ export function IssueListSection({
                     tags={getTagObjectsForIssue(issue.id)}
                     relationships={getResolvedRelationshipsForIssue?.(issue.id)}
                     assignees={issueAssigneesMap[issue.id] ?? []}
+                    onMoreActions={
+                      onIssueMoreActions
+                        ? () => onIssueMoreActions(issueId)
+                        : undefined
+                    }
                     onClick={(e) => onIssueClick(issue.id, e)}
                     isSelected={selectedIssueId === issue.id}
                     isMultiSelectActive={isMultiSelectActive}

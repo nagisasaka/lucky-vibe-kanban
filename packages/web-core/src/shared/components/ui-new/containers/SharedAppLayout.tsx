@@ -1,3 +1,4 @@
+import { useKanbanDisplayStore } from '@/shared/stores/useKanbanDisplayStore';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { Outlet, useNavigate } from '@tanstack/react-router';
@@ -48,6 +49,14 @@ import { WorkspacesSidebarReopenTag } from '@vibe/ui/components/WorkspacesSideba
 export function SharedAppLayout() {
   const appNavigation = useAppNavigation();
   const currentDestination = useCurrentAppDestination();
+  const boardProjectId =
+    currentDestination && 'projectId' in currentDestination
+      ? currentDestination.projectId
+      : null;
+  useEffect(() => {
+    useKanbanDisplayStore.getState().enterProject(boardProjectId);
+  }, [boardProjectId]);
+
   const isMobile = useIsMobile();
   // Keep the mobile shell height tracking the visual viewport so the composer
   // and approval bar stay above the on-screen keyboard.

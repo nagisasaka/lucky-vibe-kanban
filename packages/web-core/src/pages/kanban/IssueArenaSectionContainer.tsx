@@ -1,3 +1,4 @@
+import { useProjectContext } from '@/shared/hooks/useProjectContext';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,8 @@ export function IssueArenaSectionContainer({
   const queryClient = useQueryClient();
   const { t } = useTranslation('common');
   const routeState = useCurrentKanbanRouteState();
+  const { getIssue } = useProjectContext();
+  const issueArchived = getIssue(issueId)?.archived ?? false;
 
   const {
     data: activeArena,
@@ -124,8 +127,10 @@ export function IssueArenaSectionContainer({
     <div className="my-half">
       <button
         type="button"
+        disabled={issueArchived}
+        title={issueArchived ? 'アーカイブ解除すると利用できます' : undefined}
         onClick={() => void handleStart()}
-        className="group flex w-full items-center gap-base rounded-sm border border-brand/25 bg-secondary/60 px-base py-half text-left text-sm transition-colors hover:border-brand/40 hover:bg-brand/5"
+        className="disabled:opacity-50 disabled:cursor-not-allowed group flex w-full items-center gap-base rounded-sm border border-brand/25 bg-secondary/60 px-base py-half text-left text-sm transition-colors hover:border-brand/40 hover:bg-brand/5"
         aria-label={t('arena.aria.startArena')}
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand/10 text-brand">

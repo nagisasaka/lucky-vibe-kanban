@@ -393,25 +393,38 @@ export function IssueTaskAttemptsSectionContainer({
     ]
   );
 
+  const issueArchived = getIssue(issueId)?.archived ?? false;
   const actions: SectionAction[] = useMemo(
     () => [
       {
+        disabled: issueArchived,
+        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
         icon: GitBranchIcon,
         onClick: handleCreateWorkflowAttempt,
         label: t('attempts.newWorkflow', 'New workflow attempt'),
       },
       {
+        disabled: issueArchived,
+        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
         icon: PlusIcon,
         onClick: handleAddWorkspace,
         label: t('attempts.newSingleAgent', 'New single-agent attempt'),
       },
       {
+        disabled: issueArchived,
+        title: issueArchived ? 'アーカイブ解除すると利用できます' : undefined,
         icon: LinkIcon,
         onClick: handleLinkWorkspace,
         label: t('kanban.linkWorkspace', 'Link workspace'),
       },
     ],
-    [handleCreateWorkflowAttempt, handleAddWorkspace, handleLinkWorkspace, t]
+    [
+      handleCreateWorkflowAttempt,
+      handleAddWorkspace,
+      handleLinkWorkspace,
+      t,
+      issueArchived,
+    ]
   );
 
   return (
@@ -423,6 +436,9 @@ export function IssueTaskAttemptsSectionContainer({
         onOpenAttempt={handleOpenAttempt}
         onUnlinkAttempt={handleUnlinkAttempt}
         onDeleteAttempt={handleDeleteAttempt}
+        createDisabledReason={
+          issueArchived ? 'アーカイブ解除すると利用できます' : undefined
+        }
         onCreateWorkflowAttempt={handleCreateWorkflowAttempt}
         onCreateSingleAgentAttempt={handleAddWorkspace}
       />

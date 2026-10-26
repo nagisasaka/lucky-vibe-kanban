@@ -278,6 +278,7 @@ test("Issue to Workspace selects subscription and sends through the real UI", as
   const orgs = await api("/api/board/organizations");
   const org = orgs.organizations[0];
   const project = await api("/api/local/v1/projects", {
+    key: "LOCAL",
     organization_id: org.id,
     name: "Claude subscription UI",
     color: "210 80% 52%",

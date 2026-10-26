@@ -328,7 +328,7 @@ export function semanticKeyForEntry(entry: DisplayEntry): string {
   // The patchKey already contains the aggregation prefix
   // (e.g., `agg:`, `agg-diff:`, `agg-thinking:`) for aggregated groups.
   // We just need to add the `conv-` prefix.
-  return `conv-${entry.patchKey}`;
+  return `conv-${entry.type === 'NORMALIZED_ENTRY' ? (entry.displayIdentity ?? entry.patchKey) : entry.patchKey}`;
 }
 
 // ---------------------------------------------------------------------------

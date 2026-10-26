@@ -194,7 +194,19 @@
     "subagent": {
       "defaultType": "子代理"
     },
-    "loadingEarlierMessages": "正在加载早期消息"
+    "loadingEarlierMessages": "正在加载早期消息",
+    "delivery": {
+      "sending": "正在发送…",
+      "accepted": "已受理 · 等待记录",
+      "failed": "发送被拒绝 · 草稿已保留",
+      "unconfirmed": "受理结果未确认 · 草稿已保留"
+    },
+    "planStep": {
+      "pending": "待处理",
+      "inProgress": "进行中",
+      "completed": "已完成",
+      "empty": "未提供计划项目"
+    }
   },
   "branchSelector": {
     "placeholder": "选择分支",
@@ -1108,7 +1120,8 @@
     "subIssueIndicator": "↳",
     "viewTabs": {
       "active": "活动",
-      "all": "全部"
+      "all": "全部",
+      "archived": "Archived"
     },
     "loginRequired": {},
     "team": "团队",
@@ -1187,7 +1200,9 @@
         "title": "邀请你的团队",
         "content": "我们已自动创建个人组织和初始项目，方便你开始使用 Lucky Vibe Kanban。关闭前请导出云端数据。"
       }
-    }
+    },
+    "switchToList": "Switch to list view",
+    "switchToKanban": "Switch to kanban view"
   },
   "createMode": {
     "headings": {

@@ -143,6 +143,16 @@ is exported.
 | `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
+`list_issues` additionally accepts optional `search`, `simple_id`, `status`
+(name or UUID), `priority`, `parent_issue_id`, `assignee_user_id`, `tag_id` and
+`tag_name`. These share stdio's read-only filter implementation. Search examines
+full saved title/description before truncation and pagination; whitespace is
+literal, matching is case-insensitive, and independent filters combine with
+AND. Keep filters unchanged while following the existing UUID `next_cursor`.
+The default 20 / maximum 50 items and all existing summary fields remain intact.
+`list_todos` and `list_design_notes` accept optional `search` for body/category
+and title/body respectively, preserving their existing paging and result shapes.
+
 For Repository Wiki recovery, discover current Project/repository IDs, then read
 `get_repository_wiki`. Pass its `target_branch` as `expected_target_branch` and
 `current_source_commit` as `expected_source_commit` to `sync_repository_wiki`.
@@ -691,3 +701,9 @@ proves the fixture MCP-to-UI path, not real Auth0/ChatGPT interoperability.
 Further scope, revision conflict and cross-Project/Issue/comment regressions
 are covered by `remote_mcp::issue_comments` Rust tests. The runner saves a
 representative screenshot at `.build/local88/issue-comments-final.png`.
+
+Issue `list_issues` on both transports defaults to unarchived records.
+`archived: false` selects unarchived, `true` selects archived, and `"all"`
+selects both. This condition combines with all search filters before paging;
+UI hidden-status settings do not filter MCP reads. HTTP keeps UUID cursor
+semantics, while stdio keeps its sort/offset/count response.

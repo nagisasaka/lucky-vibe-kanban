@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeftIcon,
   FunnelIcon,
+  ListIcon,
+  KanbanIcon,
   MagnifyingGlassIcon,
   PlusIcon,
   XIcon,
@@ -79,6 +81,8 @@ interface KanbanFilterBarProps<
   onFiltersDialogOpenChange: (open: boolean) => void;
   tags: TTag[];
   users: TUser[];
+  viewMode?: 'kanban' | 'list';
+  onToggleView?: () => void;
   activeViewId: string;
   onViewChange: (viewId: string) => void;
   viewIds?: KanbanProjectViewIds;
@@ -116,6 +120,8 @@ export function KanbanFilterBar<
   onFiltersDialogOpenChange,
   tags,
   users,
+  viewMode,
+  onToggleView,
   activeViewId,
   onViewChange,
   viewIds = DEFAULT_KANBAN_PROJECT_VIEW_IDS,
@@ -244,6 +250,29 @@ export function KanbanFilterBar<
             >
               <FunnelIcon className="size-icon-sm" weight="bold" />
             </button>
+            {onToggleView && (
+              <button
+                type="button"
+                onClick={onToggleView}
+                className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary"
+                aria-label={t(
+                  viewMode === 'kanban'
+                    ? 'kanban.switchToList'
+                    : 'kanban.switchToKanban'
+                )}
+                title={t(
+                  viewMode === 'kanban'
+                    ? 'kanban.switchToList'
+                    : 'kanban.switchToKanban'
+                )}
+              >
+                {viewMode === 'kanban' ? (
+                  <ListIcon className="size-icon-sm" />
+                ) : (
+                  <KanbanIcon className="size-icon-sm" />
+                )}
+              </button>
+            )}
 
             {hasActiveFilters && (
               <PrimaryButton

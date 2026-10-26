@@ -20,7 +20,9 @@ function isUserMessage(entry: PatchTypeWithKey): boolean {
  */
 function isThinkingEntry(entry: PatchTypeWithKey): boolean {
   if (entry.type !== 'NORMALIZED_ENTRY') return false;
-  return entry.content.entry_type.type === 'thinking';
+  // Provider notes have their own disclosure and semantic kind. Never merge
+  // an explicit plan into reasoning, or hide commentary inside a notes group.
+  return entry.content.entry_type.type === 'thinking' && !entry.providerText;
 }
 
 /**

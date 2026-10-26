@@ -4,6 +4,7 @@ import { cn } from '../lib/cn';
 interface ChatElapsedTimeProps {
   startedAt?: string | null;
   endedAt?: string | null;
+  durationMs?: number | null;
   active?: boolean;
   className?: string;
   unknownLabel?: string;
@@ -17,6 +18,7 @@ function parseTime(value?: string | null) {
 }
 
 function formatElapsedMs(ms: number) {
+  if (ms >= 0 && ms < 1000) return '<1s';
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -36,6 +38,7 @@ function formatElapsedMs(ms: number) {
 export function ChatElapsedTime({
   startedAt,
   endedAt,
+  durationMs,
   active = false,
   className,
   unknownLabel,
@@ -56,9 +59,18 @@ export function ChatElapsedTime({
   // Missing terminal evidence is unknown, never the browser's mount time.
   const effectiveEnd = endedAtMs ?? (ticking ? now : null);
 
-  const known =
-    startedAtMs != null && effectiveEnd != null && effectiveEnd >= startedAtMs;
-  if (!known && !unknownLabel) return null;
+  const measuredDuration =
+    typeof durationMs === 'number' &&
+    Number.isFinite(durationMs) &&
+    durationMs >= 0
+      ? durationMs
+      : null;
+  const elapsed =
+    measuredDuration ??
+    (startedAtMs != null && effectiveEnd != null && effectiveEnd >= startedAtMs
+      ? effectiveEnd - startedAtMs
+      : null);
+  if (elapsed == null && !unknownLabel) return null;
 
   return (
     <span
@@ -68,7 +80,7 @@ export function ChatElapsedTime({
         className
       )}
     >
-      {known ? formatElapsedMs(effectiveEnd! - startedAtMs!) : unknownLabel}
+      {elapsed != null ? formatElapsedMs(elapsed) : unknownLabel}
     </span>
   );
 }

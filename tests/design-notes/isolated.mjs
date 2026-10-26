@@ -109,6 +109,7 @@ try {
   });
   const project = (
     await api("/api/local/v1/projects", "POST", {
+      key: "LOCAL",
       organization_id: "00000000-0000-0000-0000-000000000002",
       name: "設計メモ検証",
       color: "#6366f1",
@@ -321,7 +322,7 @@ try {
   const once = (await api(notePath,'POST',updateInput)).data;
   assert.equal((await api(notePath,'POST',updateInput)).data.note.revision,once.note.revision);
   await api(notePath,'POST',{...updateInput,operation:{...updateInput.operation,body:'same key changed payload'}},409);
-  const foreign = (await api('/api/local/v1/projects','POST',{organization_id:'00000000-0000-0000-0000-000000000002',name:'別Project',color:'#6366f1'})).data.id;
+  const foreign = (await api('/api/local/v1/projects','POST',{key: "FOREIGN",organization_id:'00000000-0000-0000-0000-000000000002',name:'別Project',color:'#6366f1'})).data.id;
   await api(`/api/projects/${foreign}/design-notes/${id}`,'GET',undefined,404);
   await api(`/api/projects/${foreign}/design-notes`,'POST',{request_id:randomUUID(),operation:{action:'restore',note_id:id,expected_revision:once.note.revision,revision:1}},404);
   await tool('get_design_note',{project_id:foreign,note_id:id},true);

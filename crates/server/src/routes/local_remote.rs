@@ -1,4 +1,5 @@
 pub mod board_api;
+pub(crate) mod issue_archive;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
@@ -58,8 +59,8 @@ const DEFAULT_STATUSES: [(&str, &str, i32, bool); 5] = [
 const DEFAULT_TAGS: [(&str, &str); 4] = [
     ("bug", "355 65% 53%"),
     ("feature", "124 82% 30%"),
-    ("documentation", "205 100% 40%"),
-    ("enhancement", "181 72% 78%"),
+    ("survey", "205 100% 40%"),
+    ("system", "0 0% 50%"),
 ];
 
 const ARENA_SYNTHESIS_WORKSPACE_PREFIX: &str = "Arena Synthesis";
@@ -290,7 +291,7 @@ fn priority_from_str(value: Option<String>) -> Option<IssuePriority> {
         Some("high") => Some(IssuePriority::High),
         Some("medium") => Some(IssuePriority::Medium),
         Some("low") => Some(IssuePriority::Low),
-        _ => None,
+        _ => Some(IssuePriority::Medium),
     }
 }
 
@@ -366,6 +367,7 @@ fn project_from_row(row: &SqliteRow) -> Result<Project, sqlx::Error> {
         id: row.try_get("id")?,
         organization_id: row.try_get("organization_id")?,
         name: row.try_get("name")?,
+        key: row.try_get("key")?,
         color: row.try_get("color")?,
         sort_order: row.try_get("sort_order")?,
         created_at: row.try_get("created_at")?,
@@ -382,6 +384,7 @@ async fn list_local_projects(pool: &SqlitePool) -> Result<Vec<Project>, ApiError
             p.id,
             m.organization_id,
             p.name,
+            p.key,
             m.color,
             m.sort_order,
             p.created_at,
@@ -414,6 +417,7 @@ pub(crate) async fn get_local_project(
             p.id,
             m.organization_id,
             p.name,
+            p.key,
             m.color,
             m.sort_order,
             p.created_at,
@@ -435,17 +439,29 @@ async fn create_local_project(
     pool: &SqlitePool,
     request: CreateProjectRequest,
 ) -> Result<Project, ApiError> {
+    let key = api_types::normalize_project_key(&request.key)
+        .map_err(|message| ApiError::BadRequest(message.into()))?;
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let project_id = request.id.unwrap_or_else(Uuid::new_v4);
     let sort_order: i32 =
         sqlx::query_scalar("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM local_project_metadata")
-            .fetch_one(pool)
+            .fetch_one(&mut *tx)
             .await?;
 
-    sqlx::query("INSERT INTO projects (id, name) VALUES (?, ?)")
+    sqlx::query("INSERT INTO projects (id, name, key) VALUES (?, ?, ?)")
         .bind(project_id)
         .bind(request.name)
-        .execute(pool)
-        .await?;
+        .bind(key)
+        .execute(&mut *tx)
+        .await
+        .map_err(|error| match &error {
+            sqlx::Error::Database(db)
+                if db.is_unique_violation() && db.message().contains("projects.key") =>
+            {
+                ApiError::Conflict("Project key is already in use".into())
+            }
+            _ => ApiError::from(error),
+        })?;
 
     sqlx::query(
         r#"
@@ -458,11 +474,12 @@ async fn create_local_project(
     .bind(local_org_id())
     .bind(request.color)
     .bind(sort_order)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
-    ensure_default_statuses(pool, project_id).await?;
-    ensure_default_tags(pool, project_id).await?;
+    seed_default_statuses(&mut tx, project_id).await?;
+    seed_default_tags(&mut tx, project_id).await?;
+    tx.commit().await?;
     get_local_project(pool, project_id).await
 }
 
@@ -560,10 +577,19 @@ pub(crate) async fn ensure_default_statuses(
         return Ok(Vec::new());
     }
 
+    seed_default_statuses(&mut *pool.acquire().await?, project_id).await?;
+
+    list_project_statuses(pool, project_id).await
+}
+
+async fn seed_default_statuses(
+    connection: &mut sqlx::SqliteConnection,
+    project_id: Uuid,
+) -> Result<(), ApiError> {
     let count: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM local_project_statuses WHERE project_id = ?")
             .bind(project_id)
-            .fetch_one(pool)
+            .fetch_one(&mut *connection)
             .await?;
 
     if count == 0 {
@@ -581,12 +607,12 @@ pub(crate) async fn ensure_default_statuses(
             .bind(color)
             .bind(sort_order)
             .bind(hidden)
-            .execute(pool)
+            .execute(&mut *connection)
             .await?;
         }
     }
 
-    list_project_statuses(pool, project_id).await
+    Ok(())
 }
 
 async fn create_local_status(
@@ -651,6 +677,7 @@ fn issue_from_row(row: &SqliteRow) -> Result<Issue, sqlx::Error> {
         issue_number: row.try_get("issue_number")?,
         simple_id: row.try_get("simple_id")?,
         status_id: row.try_get("status_id")?,
+        archived: row.try_get("archived")?,
         title: row.try_get("title")?,
         description: row.try_get("description")?,
         priority: priority_from_str(row.try_get("priority")?),
@@ -679,6 +706,7 @@ pub(crate) async fn list_project_issues(
             issue_number,
             simple_id,
             status_id,
+            archived,
             title,
             description,
             priority,
@@ -716,6 +744,7 @@ pub(crate) async fn get_local_issue(pool: &SqlitePool, issue_id: Uuid) -> Result
             issue_number,
             simple_id,
             status_id,
+            archived,
             title,
             description,
             priority,
@@ -745,14 +774,27 @@ pub(crate) async fn create_local_issue(
     pool: &SqlitePool,
     request: CreateIssueRequest,
 ) -> Result<Issue, ApiError> {
+    create_local_issue_with_tags(pool, request, &[]).await
+}
+
+pub(crate) fn board_tag_error(error: db::models::board_tag::TagError) -> ApiError {
+    match error {
+        db::models::board_tag::TagError::Validation(message) => {
+            ApiError::BadRequest(message.into())
+        }
+        db::models::board_tag::TagError::Database(error) => ApiError::from(error),
+    }
+}
+
+pub(crate) async fn create_local_issue_with_tags(
+    pool: &SqlitePool,
+    request: CreateIssueRequest,
+    tag_ids: &[Uuid],
+) -> Result<Issue, ApiError> {
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let id = request.id.unwrap_or_else(Uuid::new_v4);
-    let issue_number: i32 = sqlx::query_scalar(
-        "SELECT COALESCE(MAX(issue_number), 0) + 1 FROM local_issues WHERE project_id = ?",
-    )
-    .bind(request.project_id)
-    .fetch_one(pool)
-    .await?;
-    let simple_id = format!("LOCAL-{issue_number}");
+    let (issue_number, simple_id) =
+        db::models::issue_number::next_issue_number(&mut tx, request.project_id).await?;
     let extension_metadata =
         serde_json::to_string(&request.extension_metadata).unwrap_or_else(|_| "null".to_string());
 
@@ -786,7 +828,9 @@ pub(crate) async fn create_local_issue(
     .bind(request.status_id)
     .bind(request.title)
     .bind(request.description)
-    .bind(request.priority.map(priority_to_str))
+    .bind(priority_to_str(
+        request.priority.unwrap_or(IssuePriority::Medium),
+    ))
     .bind(request.start_date)
     .bind(request.target_date)
     .bind(request.completed_at)
@@ -795,9 +839,15 @@ pub(crate) async fn create_local_issue(
     .bind(request.parent_issue_sort_order)
     .bind(extension_metadata)
     .bind(local_user_id())
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
+    for tag in tag_ids {
+        db::models::board_tag::add(&mut tx, id, *tag, None)
+            .await
+            .map_err(board_tag_error)?;
+    }
+    tx.commit().await?;
     get_local_issue(pool, id).await
 }
 
@@ -850,6 +900,7 @@ pub(crate) async fn update_local_issue_checked(
         changes
             .priority
             .unwrap_or(existing.priority)
+            .or(Some(IssuePriority::Medium))
             .map(priority_to_str),
     )
     .bind(changes.start_date.unwrap_or(existing.start_date))
@@ -900,11 +951,10 @@ async fn list_project_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<Ta
         .map_err(ApiError::from)
 }
 
-async fn ensure_default_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<Tag>, ApiError> {
-    if !project_exists(pool, project_id).await? {
-        return Ok(Vec::new());
-    }
-
+async fn seed_default_tags(
+    connection: &mut sqlx::SqliteConnection,
+    project_id: Uuid,
+) -> Result<(), ApiError> {
     for (name, color) in DEFAULT_TAGS {
         sqlx::query(
             r#"
@@ -922,11 +972,11 @@ async fn ensure_default_tags(pool: &SqlitePool, project_id: Uuid) -> Result<Vec<
         .bind(color)
         .bind(project_id)
         .bind(name)
-        .execute(pool)
+        .execute(&mut *connection)
         .await?;
     }
 
-    list_project_tags(pool, project_id).await
+    Ok(())
 }
 
 async fn get_local_tag(pool: &SqlitePool, tag_id: Uuid) -> Result<Tag, ApiError> {
@@ -1693,16 +1743,25 @@ async fn create_tag(
     State(deployment): State<DeploymentImpl>,
     Json(request): Json<CreateTagRequest>,
 ) -> Result<ResponseJson<MutationResponse<Tag>>, ApiError> {
+    let data = create_local_tag(&deployment.db().pool, request).await?;
+    Ok(ResponseJson(MutationResponse { data, txid: txid() }))
+}
+
+async fn create_local_tag(pool: &SqlitePool, request: CreateTagRequest) -> Result<Tag, ApiError> {
+    if db::models::board_tag::is_system(&request.name) {
+        return Err(ApiError::BadRequest(
+            "System tags are managed by LVK".into(),
+        ));
+    }
     let id = request.id.unwrap_or_else(Uuid::new_v4);
     sqlx::query("INSERT INTO local_tags (id, project_id, name, color) VALUES (?, ?, ?, ?)")
         .bind(id)
         .bind(request.project_id)
         .bind(request.name)
         .bind(request.color)
-        .execute(&deployment.db().pool)
+        .execute(pool)
         .await?;
-    let data = get_local_tag(&deployment.db().pool, id).await?;
-    Ok(ResponseJson(MutationResponse { data, txid: txid() }))
+    get_local_tag(pool, id).await
 }
 
 async fn update_tag(
@@ -1710,39 +1769,61 @@ async fn update_tag(
     Path(tag_id): Path<Uuid>,
     Json(changes): Json<UpdateTagRequest>,
 ) -> Result<ResponseJson<MutationResponse<Tag>>, ApiError> {
-    let existing = get_local_tag(&deployment.db().pool, tag_id).await?;
+    let data = update_local_tag(&deployment.db().pool, tag_id, changes).await?;
+    Ok(ResponseJson(MutationResponse { data, txid: txid() }))
+}
+
+async fn update_local_tag(
+    pool: &SqlitePool,
+    tag_id: Uuid,
+    changes: UpdateTagRequest,
+) -> Result<Tag, ApiError> {
+    let existing = get_local_tag(pool, tag_id).await?;
+    if changes.name.as_ref().is_some_and(|name| {
+        (db::models::board_tag::is_system(&existing.name) && name != &existing.name)
+            || (!db::models::board_tag::is_system(&existing.name)
+                && db::models::board_tag::is_system(name))
+    }) {
+        return Err(ApiError::BadRequest("System tags cannot be renamed".into()));
+    }
     sqlx::query("UPDATE local_tags SET name = ?, color = ? WHERE id = ?")
         .bind(changes.name.unwrap_or(existing.name))
         .bind(changes.color.unwrap_or(existing.color))
         .bind(tag_id)
-        .execute(&deployment.db().pool)
+        .execute(pool)
         .await?;
-    let data = get_local_tag(&deployment.db().pool, tag_id).await?;
-    Ok(ResponseJson(MutationResponse { data, txid: txid() }))
+    get_local_tag(pool, tag_id).await
 }
 
 async fn delete_tag(
     State(deployment): State<DeploymentImpl>,
     Path(tag_id): Path<Uuid>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
+    delete_local_tag(&deployment.db().pool, tag_id).await?;
+    Ok(ResponseJson(DeleteResponse { txid: txid() }))
+}
+
+async fn delete_local_tag(pool: &SqlitePool, tag_id: Uuid) -> Result<(), ApiError> {
+    let tag = get_local_tag(pool, tag_id).await?;
+    if db::models::board_tag::is_system(&tag.name) {
+        return Err(ApiError::BadRequest("System tags cannot be deleted".into()));
+    }
     sqlx::query("DELETE FROM local_tags WHERE id = ?")
         .bind(tag_id)
-        .execute(&deployment.db().pool)
+        .execute(pool)
         .await?;
-    Ok(ResponseJson(DeleteResponse { txid: txid() }))
+    Ok(())
 }
 
 async fn create_issue_tag(
     State(deployment): State<DeploymentImpl>,
     Json(request): Json<CreateIssueTagRequest>,
 ) -> Result<ResponseJson<MutationResponse<IssueTag>>, ApiError> {
-    let id = request.id.unwrap_or_else(Uuid::new_v4);
-    sqlx::query("INSERT OR IGNORE INTO local_issue_tags (id, issue_id, tag_id) VALUES (?, ?, ?)")
-        .bind(id)
-        .bind(request.issue_id)
-        .bind(request.tag_id)
-        .execute(&deployment.db().pool)
-        .await?;
+    let mut tx = deployment.db().pool.begin_with("BEGIN IMMEDIATE").await?;
+    let id = db::models::board_tag::add(&mut tx, request.issue_id, request.tag_id, request.id)
+        .await
+        .map_err(board_tag_error)?;
+    tx.commit().await?;
     let data = IssueTag {
         id,
         issue_id: request.issue_id,
@@ -1755,10 +1836,11 @@ async fn delete_issue_tag(
     State(deployment): State<DeploymentImpl>,
     Path(issue_tag_id): Path<Uuid>,
 ) -> Result<ResponseJson<DeleteResponse>, ApiError> {
-    sqlx::query("DELETE FROM local_issue_tags WHERE id = ?")
-        .bind(issue_tag_id)
-        .execute(&deployment.db().pool)
-        .await?;
+    let mut tx = deployment.db().pool.begin_with("BEGIN IMMEDIATE").await?;
+    db::models::board_tag::remove(&mut tx, issue_tag_id)
+        .await
+        .map_err(board_tag_error)?;
+    tx.commit().await?;
     Ok(ResponseJson(DeleteResponse { txid: txid() }))
 }
 
@@ -2460,6 +2542,8 @@ async fn spawn_arena_attempt(
         )
     });
 
+    let _issue_creation_guard = issue_archive::lock_issue(issue_id).await;
+    issue_archive::require_unarchived(pool, project_id, issue_id).await?;
     let workspace = create_workspace_record(deployment, Some(display_name)).await?;
 
     let mut managed_workspace = deployment
@@ -2904,6 +2988,8 @@ async fn spawn_arena_synthesis_workspace(
         ARENA_SYNTHESIS_WORKSPACE_PREFIX,
         existing_synthesis_count + 1
     );
+    let _issue_creation_guard = issue_archive::lock_issue(group.issue_id).await;
+    issue_archive::require_unarchived(pool, group.project_id, group.issue_id).await?;
     let workspace = create_workspace_record(deployment, Some(display_name)).await?;
 
     let mut managed_workspace = deployment
@@ -3506,7 +3592,16 @@ mod tests {
         for table in tables {
             before.push(dump(&pool, table).await);
         }
-        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let mut retention = sqlx::migrate!("../db/migrations");
+        retention.migrations = std::borrow::Cow::Owned(
+            retention
+                .migrations
+                .into_owned()
+                .into_iter()
+                .filter(|m| m.version <= 20261023110000)
+                .collect(),
+        );
+        retention.run(&pool).await.unwrap();
         for (table, rows) in tables.iter().zip(&before) {
             assert_eq!(*rows, dump(&pool, table).await, "migration changed {table}");
         }
@@ -3633,6 +3728,7 @@ mod tests {
             CREATE TABLE projects (
                 id BLOB PRIMARY KEY,
                 name TEXT NOT NULL,
+                key TEXT NOT NULL DEFAULT 'LOCAL' UNIQUE,
                 created_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now', 'subsec'))
             )
@@ -3666,6 +3762,7 @@ mod tests {
                 simple_id TEXT NOT NULL,
                 status_id BLOB NOT NULL,
                 agent_status_owner BLOB,
+                archived INTEGER NOT NULL DEFAULT 0,
                 title TEXT NOT NULL,
                 description TEXT,
                 priority TEXT,
@@ -3804,6 +3901,248 @@ mod tests {
         assert_eq!(latest.status, AgentRunStatus::Running);
     }
 
+    fn project_request(key: &str) -> CreateProjectRequest {
+        CreateProjectRequest {
+            id: None,
+            organization_id: super::local_org_id(),
+            name: "Project".into(),
+            key: key.into(),
+            color: "blue".into(),
+        }
+    }
+
+    fn issue_request(project_id: Uuid, status_id: Uuid) -> CreateIssueRequest {
+        CreateIssueRequest {
+            id: None,
+            project_id,
+            status_id,
+            title: "Issue".into(),
+            description: None,
+            priority: None,
+            start_date: None,
+            target_date: None,
+            completed_at: None,
+            sort_order: 0.0,
+            parent_issue_id: None,
+            parent_issue_sort_order: None,
+            extension_metadata: Value::Null,
+        }
+    }
+
+    #[tokio::test]
+    async fn project_keys_normalize_reject_duplicates_reuse_and_remain_immutable() {
+        let pool = setup_pool().await;
+        let project = super::create_local_project(&pool, project_request(" lvk "))
+            .await
+            .unwrap();
+        assert_eq!(project.key, "LVK");
+        let duplicate = super::create_local_project(&pool, project_request("lvk"))
+            .await
+            .unwrap_err();
+        assert!(matches!(duplicate, crate::error::ApiError::Conflict(_)));
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM projects")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            1
+        );
+        for key in ["", "A", "1AB", "A-B", "あい", "ABCDEFGHIJK"] {
+            assert!(
+                super::create_local_project(&pool, project_request(key))
+                    .await
+                    .is_err()
+            );
+        }
+        assert!(
+            serde_json::from_value::<CreateProjectRequest>(serde_json::json!({
+                "organization_id":super::local_org_id(),"name":"No key","color":"blue"
+            }))
+            .is_err()
+        );
+        let changes: api_types::UpdateProjectRequest =
+            serde_json::from_value(serde_json::json!({"name":"Renamed","key":"NEW"})).unwrap();
+        let updated = super::update_local_project(&pool, project.id, changes)
+            .await
+            .unwrap();
+        assert_eq!(updated.key, "LVK");
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let issue = super::create_local_issue(&pool, issue_request(project.id, status))
+            .await
+            .unwrap();
+        assert_eq!(issue.simple_id, "LVK-1");
+        // Use an empty Project for the supported typo-and-recreate workflow.
+        let empty = super::create_local_project(&pool, project_request("EMPTY"))
+            .await
+            .unwrap();
+        super::delete_project_preserving_design_history(&pool, empty.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            super::create_local_project(&pool, project_request("empty"))
+                .await
+                .unwrap()
+                .key,
+            "EMPTY"
+        );
+    }
+
+    #[tokio::test]
+    async fn project_creation_rolls_back_key_metadata_and_statuses_on_seed_failure() {
+        let pool = setup_pool().await;
+        sqlx::query("CREATE TRIGGER fail_tag BEFORE INSERT ON local_tags BEGIN SELECT RAISE(ABORT, 'seed failure'); END").execute(&pool).await.unwrap();
+        assert!(
+            super::create_local_project(&pool, project_request("ROLL"))
+                .await
+                .is_err()
+        );
+        for table in [
+            "projects",
+            "local_project_metadata",
+            "local_project_statuses",
+            "local_tags",
+        ] {
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>(&format!("SELECT count(*) FROM {table}"))
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap(),
+                0
+            );
+        }
+        sqlx::query("DROP TRIGGER fail_tag")
+            .execute(&pool)
+            .await
+            .unwrap();
+        super::create_local_project(&pool, project_request("ROLL"))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn project_key_tagged_create_rolls_back_issue_tags_and_number_together() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("MIX"))
+            .await
+            .unwrap();
+        let other = super::create_local_project(&pool, project_request("OTHER"))
+            .await
+            .unwrap();
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let tags = super::list_project_tags(&pool, project.id).await.unwrap();
+        assert_eq!(
+            tags.iter().map(|tag| tag.name.as_str()).collect::<Vec<_>>(),
+            vec!["bug", "feature", "survey", "system"]
+        );
+        let tag = |name: &str| tags.iter().find(|tag| tag.name == name).unwrap().id;
+        let foreign = super::list_project_tags(&pool, other.id).await.unwrap()[0].id;
+        let first = super::create_local_issue_with_tags(
+            &pool,
+            issue_request(project.id, status),
+            &[tag("bug"), tag("survey")],
+        )
+        .await
+        .unwrap();
+        assert_eq!(first.simple_id, "MIX-1");
+        assert_eq!(first.priority, Some(IssuePriority::Medium));
+        for invalid_tag in [tag("system"), foreign, Uuid::new_v4()] {
+            let mut request = issue_request(project.id, status);
+            let failed = Uuid::new_v4();
+            request.id = Some(failed);
+            assert!(
+                super::create_local_issue_with_tags(&pool, request, &[tag("bug"), invalid_tag])
+                    .await
+                    .is_err()
+            );
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issues WHERE id=?")
+                    .bind(failed)
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap(),
+                0
+            );
+            assert_eq!(
+                sqlx::query_scalar::<_, i64>(
+                    "SELECT count(*) FROM local_issue_tags WHERE issue_id=?"
+                )
+                .bind(failed)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+                0
+            );
+        }
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issue_tags WHERE issue_id=?")
+                .bind(first.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            2
+        );
+        let next = super::create_local_issue_with_tags(
+            &pool,
+            issue_request(project.id, status),
+            &[tag("bug")],
+        )
+        .await
+        .unwrap();
+        assert_eq!(next.simple_id, "MIX-2");
+    }
+
+    #[tokio::test]
+    async fn project_key_issue_creation_serializes_concurrent_writers() {
+        let directory = tempfile::tempdir().unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(4)
+            .connect_with(
+                sqlx::sqlite::SqliteConnectOptions::new()
+                    .filename(directory.path().join("concurrent.sqlite"))
+                    .create_if_missing(true)
+                    .busy_timeout(std::time::Duration::from_secs(10)),
+            )
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("CON"))
+            .await
+            .unwrap();
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let mut tasks = tokio::task::JoinSet::new();
+        for _ in 0..12 {
+            let pool = pool.clone();
+            tasks.spawn(async move {
+                super::create_local_issue(&pool, issue_request(project.id, status))
+                    .await
+                    .unwrap()
+            });
+        }
+        let mut numbers = Vec::new();
+        while let Some(result) = tasks.join_next().await {
+            let issue = result.unwrap();
+            assert_eq!(issue.simple_id, format!("CON-{}", issue.issue_number));
+            numbers.push(issue.issue_number);
+        }
+        numbers.sort();
+        assert_eq!(numbers, (1..=12).collect::<Vec<_>>());
+        pool.close().await;
+    }
+
     #[tokio::test]
     async fn local_issue_create_seeds_default_statuses_and_simple_id() {
         let pool = setup_pool().await;
@@ -3908,6 +4247,7 @@ mod tests {
                     id: None,
                     organization_id: super::local_org_id(),
                     name: format!("Project {project_index}"),
+                    key: format!("PR{project_index}"),
                     color: "210 80% 52%".into(),
                 },
             )
@@ -3990,6 +4330,7 @@ mod tests {
                 id: None,
                 organization_id: super::local_org_id(),
                 name: "Tagged Project".to_string(),
+                key: "TAG".into(),
                 color: "210 80% 52%".to_string(),
             },
         )
@@ -4001,9 +4342,115 @@ mod tests {
             .expect("list default tags");
 
         let tag_names: Vec<_> = tags.iter().map(|tag| tag.name.as_str()).collect();
-        assert_eq!(
-            tag_names,
-            vec!["bug", "documentation", "enhancement", "feature"]
+        assert_eq!(tag_names, vec!["bug", "feature", "survey", "system"]);
+    }
+
+    #[tokio::test]
+    async fn classification_defaults_null_updates_and_system_definition_guards() {
+        let pool = setup_pool().await;
+        let project = super::create_local_project(
+            &pool,
+            CreateProjectRequest {
+                id: None,
+                organization_id: super::local_org_id(),
+                name: "classification".into(),
+                key: "CLASS".into(),
+                color: "blue".into(),
+            },
+        )
+        .await
+        .unwrap();
+        let status: Uuid =
+            sqlx::query_scalar("SELECT id FROM local_project_statuses WHERE project_id=? LIMIT 1")
+                .bind(project.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        let request = serde_json::from_value(serde_json::json!({"project_id":project.id,"status_id":status,"title":"normal","priority":null,"sort_order":0,"extension_metadata":null})).unwrap();
+        let issue = super::create_local_issue(&pool, request).await.unwrap();
+        assert_eq!(issue.priority, Some(IssuePriority::Medium));
+        let change = |value| serde_json::from_value(value).unwrap();
+        let high = super::update_local_issue(
+            &pool,
+            issue.id,
+            change(serde_json::json!({"priority":"high"})),
+        )
+        .await
+        .unwrap();
+        let retained = super::update_local_issue(
+            &pool,
+            issue.id,
+            change(serde_json::json!({"title":"renamed"})),
+        )
+        .await
+        .unwrap();
+        assert_eq!(retained.priority, Some(IssuePriority::High));
+        assert!(
+            super::update_local_issue_checked(
+                &pool,
+                issue.id,
+                change(serde_json::json!({"priority":"low"})),
+                Some(high.updated_at)
+            )
+            .await
+            .is_err()
+        );
+        let normalized = super::update_local_issue(
+            &pool,
+            issue.id,
+            change(serde_json::json!({"priority":null})),
+        )
+        .await
+        .unwrap();
+        assert_eq!(normalized.priority, Some(IssuePriority::Medium));
+        let tags = super::list_project_tags(&pool, project.id).await.unwrap();
+        let system = tags.iter().find(|t| t.name == "system").unwrap();
+        let bug = tags.iter().find(|t| t.name == "bug").unwrap();
+        assert!(super::delete_local_tag(&pool, system.id).await.is_err());
+        assert!(
+            super::update_local_tag(
+                &pool,
+                system.id,
+                serde_json::from_value(serde_json::json!({"name":"normal"})).unwrap()
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            super::update_local_tag(
+                &pool,
+                bug.id,
+                serde_json::from_value(serde_json::json!({"name":"system"})).unwrap()
+            )
+            .await
+            .is_err()
+        );
+        let colored = super::update_local_tag(
+            &pool,
+            system.id,
+            serde_json::from_value(serde_json::json!({"color":"new color"})).unwrap(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(colored.color, "new color");
+        assert!(
+            super::create_local_tag(
+                &pool,
+                serde_json::from_value(
+                    serde_json::json!({"project_id":project.id,"name":" System ","color":"blue"})
+                )
+                .unwrap()
+            )
+            .await
+            .is_err()
+        );
+        super::delete_local_tag(&pool, bug.id).await.unwrap();
+        assert!(
+            !super::list_project_tags(&pool, project.id)
+                .await
+                .unwrap()
+                .iter()
+                .any(|t| t.name == "bug")
         );
     }
 

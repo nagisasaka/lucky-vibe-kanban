@@ -74,9 +74,14 @@ mod tests {
         let selected = Uuid::new_v4();
         let other = Uuid::new_v4();
         let unrelated = Uuid::new_v4();
-        for project in [selected, other, unrelated] {
-            sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Fixture')")
+        for (project, key) in [
+            (selected, "SELECTED"),
+            (other, "OTHER"),
+            (unrelated, "UNRELATED"),
+        ] {
+            sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Fixture',?)")
                 .bind(project)
+                .bind(key)
                 .execute(&pool)
                 .await
                 .unwrap();

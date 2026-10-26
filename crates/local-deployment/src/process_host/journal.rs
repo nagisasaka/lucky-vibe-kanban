@@ -516,6 +516,7 @@ mod tests {
                 timestamp: chrono::Utc::now(),
                 payload: AgentLiveEventPayload::ThinkingDelta {
                     provider_item_id: "item".into(),
+                    summary_index: None,
                     delta: content.into(),
                 },
             });

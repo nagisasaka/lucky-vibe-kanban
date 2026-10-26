@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isSystemTag } from '../lib/issue-classification';
 import { PlusIcon, HashIcon, GitPullRequest } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
 import { PRESET_COLORS } from './ColorPicker';
@@ -70,6 +71,8 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
   );
 
   const handleTagToggle = (tagId: string) => {
+    if (availableTags.some((tag) => tag.id === tagId && isSystemTag(tag)))
+      return;
     if (selectedTagIds.includes(tagId)) {
       onTagsChange(selectedTagIds.filter((id) => id !== tagId));
     } else {
@@ -100,7 +103,8 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
           key={tag.id}
           type="button"
           onClick={() => handleTagToggle(tag.id)}
-          disabled={disabled}
+          disabled={disabled || isSystemTag(tag)}
+          title={isSystemTag(tag) ? 'Managed by LVK' : undefined}
           className={cn(
             'inline-flex items-center justify-center',
             'h-5 px-base gap-half',
@@ -109,8 +113,9 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
             'whitespace-nowrap',
             'transition-colors',
             !disabled &&
+              !isSystemTag(tag) &&
               'hover:bg-error/20 hover:text-error hover:line-through cursor-pointer',
-            disabled && 'cursor-default'
+            (disabled || isSystemTag(tag)) && 'cursor-default'
           )}
         >
           <span
@@ -160,7 +165,7 @@ export function IssueTagsRow<TTag extends IssueTagBase>({
       {/* Add Tag Dropdown */}
       {onCreateTag &&
         (renderAddTagControl?.({
-          tags: availableTags,
+          tags: availableTags.filter((tag) => !isSystemTag(tag)),
           selectedTagIds,
           onTagToggle: handleTagToggle,
           onCreateTag: handleCreateTag,

@@ -97,6 +97,256 @@ function projectRuns(
 }
 
 describe('projectCanonicalAgentConversation', () => {
+  it.each([
+    [AgentRuntimeToolStatus.waiting_approval, 'waiting_approval'],
+    [AgentRuntimeToolStatus.approved, 'approved'],
+    [AgentRuntimeToolStatus.cancelled, 'cancelled'],
+    [AgentRuntimeToolStatus.unknown, 'unknown'],
+  ] as const)(
+    'retains %s without inventing execution or a successful result',
+    (status, normalized) => {
+      const projection = projectRuns([
+        {
+          runId: 'states',
+          status: 'running',
+          events: [
+            event('states', 1, {
+              type: 'tool_call',
+              data: {
+                tool_call_id: 'one',
+                tool_name: 'Shell',
+                status,
+                arguments: { command: 'true' },
+                result: null,
+              },
+            }),
+          ],
+        },
+      ]);
+      expect(projection.entries[0]).toMatchObject({
+        content: { entry_type: { status: { status: normalized } } },
+        toolTiming: { startedAt: null, durationMs: null },
+      });
+      if (status === AgentRuntimeToolStatus.approved)
+        expect(projection.entries[0].canonical?.active).toBe(false);
+    }
+  );
+
+  it('replaces ordered live explanation deltas with published text and keeps plans distinct on replay', () => {
+    const runId = 'explanation';
+    const runState = state(runId, 'running');
+    let timeline = mergeCanonicalAgentTimeline(
+      emptyCanonicalAgentTimeline(),
+      [],
+      runState
+    );
+    const delta = (sequence: number, text: string, summaryIndex?: number) => ({
+      schema_version: 1,
+      event_id: `explanation-live-${sequence}`,
+      session_id: SESSION_ID,
+      agent_run_id: runId,
+      turn_id: `turn-${runId}`,
+      run_attempt_id: `attempt-${runId}`,
+      run_attempt_number: 1,
+      native_sequence: sequence,
+      timestamp: `2026-08-14T00:00:0${sequence}Z`,
+      payload: {
+        type: 'thinking_delta' as const,
+        data: {
+          provider_item_id: 'reason-1',
+          delta: text,
+          summary_index: summaryIndex,
+        },
+      },
+    });
+    const project = () =>
+      projectCanonicalAgentConversation(
+        buildCanonicalAgentSessionTimeline(
+          SESSION_ID,
+          [
+            {
+              agent_run_id: runId,
+              session_id: SESSION_ID,
+              turn_id: `turn-${runId}`,
+              state: runState,
+              created_at: runState.updated_at,
+              updated_at: runState.updated_at,
+            },
+          ],
+          new Map([[runId, timeline]])
+        )
+      ).entries.filter(
+        (entry) =>
+          entry.type === 'NORMALIZED_ENTRY' &&
+          entry.content.entry_type.type === 'thinking'
+      );
+    timeline = mergeAgentLiveEvent(timeline, delta(2, 'tests'));
+    timeline = mergeAgentLiveEvent(timeline, delta(1, 'Inspect '));
+    timeline = mergeAgentLiveEvent(timeline, delta(1, 'Inspect '));
+    expect(timeline.cursor).toBeNull();
+    expect(project()).toHaveLength(1);
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests' },
+      providerText: { kind: 'summary', partial: true },
+    });
+    timeline = mergeAgentLiveEvent(timeline, delta(3, 'Second part', 1));
+    timeline = mergeAgentLiveEvent(timeline, delta(4, '.', 0));
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests.\n\nSecond part' },
+    });
+    timeline = mergeAgentLiveEvent(timeline, delta(5, ' ', 0));
+    timeline = mergeAgentLiveEvent(timeline, delta(6, '\n', 0));
+    timeline = mergeAgentLiveEvent(timeline, delta(7, 'More', 0));
+    expect(project()[0]).toMatchObject({
+      content: { content: 'Inspect tests. \nMore\n\nSecond part' },
+    });
+    const completed = event(runId, 5, {
+      type: 'provider_extension',
+      data: {
+        provider_namespace: 'codex',
+        provider_event: 'reasoning_summary',
+        payload: {
+          provider_item_id: 'reason-1',
+          content: 'Inspect tests.\n\nSecond part\n',
+        },
+      },
+    });
+    const plan = event(runId, 6, {
+      type: 'provider_extension',
+      data: {
+        provider_namespace: 'codex',
+        provider_event: 'plan',
+        payload: { provider_item_id: 'plan-1', content: '1. Check\n2. Fix\n' },
+      },
+    });
+    timeline = mergeCanonicalAgentTimeline(timeline, [completed, plan]);
+    expect(timeline.transientEvents).toHaveLength(0);
+    expect(mergeAgentLiveEvent(timeline, delta(5, 'late'))).toBe(timeline);
+    expect(project()).toMatchObject([
+      {
+        content: { content: 'Inspect tests.\n\nSecond part\n' },
+        providerText: { kind: 'summary', provider: 'codex', partial: false },
+      },
+      {
+        content: { content: '1. Check\n2. Fix\n' },
+        providerText: { kind: 'plan', partial: false },
+      },
+    ]);
+    timeline = mergeCanonicalAgentTimeline(
+      emptyCanonicalAgentTimeline(),
+      [plan, completed],
+      runState
+    );
+    expect(project()).toHaveLength(2);
+    expect(project()[0].providerText?.partial).toBe(false);
+  });
+
+  it('uses observed tool endpoints and preserves a provider duration without inventing a start', () => {
+    const tool = (
+      sequence: number,
+      status: AgentRuntimeToolStatus,
+      durationMs?: number
+    ) =>
+      event('timing', sequence, {
+        type: 'tool_call',
+        data: {
+          tool_call_id: 'one',
+          tool_name: 'Shell',
+          status,
+          arguments: { command: 'true' },
+          result: durationMs === undefined ? null : { durationMs },
+        },
+      });
+    const start = tool(1, AgentRuntimeToolStatus.running);
+    const end = tool(4, AgentRuntimeToolStatus.succeeded, 1200);
+    const timing = (events: AgentEventEnvelope[]) =>
+      projectRuns([{ runId: 'timing', status: 'succeeded', events }]).entries[0]
+        .toolTiming;
+    expect(timing([start, end])).toEqual({
+      startedAt: start.timestamp,
+      endedAt: end.timestamp,
+      durationMs: 1200,
+    });
+    expect(timing([end])).toEqual({
+      startedAt: null,
+      endedAt: end.timestamp,
+      durationMs: 1200,
+    });
+    expect(timing([tool(4, AgentRuntimeToolStatus.failed)])).toMatchObject({
+      startedAt: null,
+      durationMs: null,
+    });
+    expect(timing([start])).toEqual({
+      startedAt: start.timestamp,
+      endedAt: null,
+      durationMs: null,
+    });
+    expect(
+      timing([tool(4, AgentRuntimeToolStatus.succeeded, -1)])?.durationMs
+    ).toBeNull();
+  });
+
+  it('retains tool start details on result replay without borrowing from another attempt', () => {
+    const start = event('tools', 1, {
+      type: 'tool_call',
+      data: {
+        tool_call_id: 'reused-id',
+        tool_name: 'Bash',
+        status: AgentRuntimeToolStatus.running,
+        arguments: { command: '  printf "a\\_b"\n' },
+        result: null,
+      },
+    });
+    const end = event('tools', 2, {
+      type: 'tool_call',
+      data: {
+        tool_call_id: 'reused-id',
+        tool_name: 'unknown_tool',
+        status: AgentRuntimeToolStatus.failed,
+        arguments: null,
+        result: 'failure\n',
+      },
+    });
+    const retry = {
+      ...end,
+      event_id: 'retry-result',
+      run_attempt_id: 'second-attempt',
+      run_attempt_number: 2,
+    };
+    for (const events of [
+      [start, end, retry],
+      [retry, end, start, end],
+    ]) {
+      const entries = projectRuns([
+        { runId: 'tools', status: 'failed', events },
+      ]).entries.filter((entry) => !entry.runTiming);
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toMatchObject({
+        canonical: { runAttemptId: 'attempt-tools', active: false },
+        content: {
+          entry_type: {
+            tool_name: 'Bash',
+            status: { status: 'failed' },
+            action_type: {
+              action: 'command_run',
+              command: '  printf "a\\_b"\n',
+              result: { output: 'failure\n' },
+            },
+          },
+        },
+      });
+      expect(entries[1]).toMatchObject({
+        canonical: { runAttemptId: 'second-attempt' },
+        content: {
+          entry_type: {
+            tool_name: 'unknown_tool',
+            action_type: { arguments: null },
+          },
+        },
+      });
+    }
+  });
+
   it('keeps persisted steering between provider messages across replay', () => {
     const message = (
       sequence: number,
@@ -710,7 +960,7 @@ describe('projectCanonicalAgentConversation', () => {
   });
 
   it.each([
-    ['Shell', { command: 'echo review-me' }],
+    ['Shell', { command: 'echo review-me', cwd: '/workspace' }],
     ['FileChange', { changes: [{ path: 'review.txt', diff: '+review me' }] }],
   ])('preserves %s details when approval is requested', (toolName, args) => {
     const runId = 'run-approval-details';
@@ -764,7 +1014,116 @@ describe('projectCanonicalAgentConversation', () => {
       approval_id: 'approval-1',
     });
     expect(tool.canonical?.eventIds).toHaveLength(2);
+    expect(tool.toolOutput?.input).toBe(JSON.stringify(args, null, 2));
+    expect(tool.toolOutput?.cwd).toBe(
+      toolName === 'Shell' ? '/workspace' : null
+    );
   });
+
+  it.each([true, false])(
+    'keeps input and cwd after approval resolves to %s',
+    (approved) => {
+      const runId = 'resolved-details';
+      const args = { command: 'pwd', cwd: '/workspace' };
+      const entries = projectRuns([
+        {
+          runId,
+          status: 'running',
+          events: [
+            event(runId, 1, {
+              type: 'tool_call',
+              data: {
+                tool_call_id: 't',
+                tool_name: 'Shell',
+                status: AgentRuntimeToolStatus.running,
+                arguments: args,
+                result: null,
+              },
+            }),
+            event(runId, 2, {
+              type: 'approval_requested',
+              data: { approval_id: 'a', tool_call_id: 't', tool_name: 'Shell' },
+            }),
+            event(runId, 3, {
+              type: 'approval_resolved',
+              data: { approval_id: 'a', approved, reason: null },
+            }),
+          ],
+        },
+      ]).entries;
+      expect(entries[0]).toMatchObject({
+        content: {
+          entry_type: { status: { status: approved ? 'approved' : 'denied' } },
+        },
+        toolOutput: {
+          input: JSON.stringify(args, null, 2),
+          cwd: '/workspace',
+          state: approved ? 'pending' : 'unavailable',
+        },
+      });
+    }
+  );
+
+  it.each([true, false])(
+    'converges approval-first work to one row, with an optional start (%s)',
+    (includeStart) => {
+      const runId = 'approval-first';
+      const args = { command: 'pwd', cwd: '/workspace' };
+      const events = [
+        event(runId, 1, {
+          type: 'approval_requested',
+          data: { approval_id: 'a', tool_call_id: 't', tool_name: 'Shell' },
+        }),
+        event(runId, 2, {
+          type: 'approval_resolved',
+          data: { approval_id: 'a', approved: true, reason: null },
+        }),
+        ...(includeStart
+          ? [
+              event(runId, 3, {
+                type: 'tool_call',
+                data: {
+                  tool_call_id: 't',
+                  tool_name: 'Shell',
+                  status: AgentRuntimeToolStatus.running,
+                  arguments: args,
+                  result: null,
+                },
+              }),
+            ]
+          : []),
+        event(runId, 4, {
+          type: 'tool_call',
+          data: {
+            tool_call_id: 't',
+            tool_name: 'Shell',
+            status: AgentRuntimeToolStatus.succeeded,
+            arguments: includeStart ? null : args,
+            result: { aggregatedOutput: '/workspace\n', exitCode: 0 },
+          },
+        }),
+      ];
+      for (const input of [events, [...events].reverse()]) {
+        const tools = projectRuns([
+          { runId, status: 'running', events: input },
+        ]).entries.filter(
+          (entry) =>
+            entry.type === 'NORMALIZED_ENTRY' &&
+            entry.content.entry_type.type === 'tool_use'
+        );
+        expect(tools).toHaveLength(1);
+        expect(tools[0]).toMatchObject({
+          content: { entry_type: { status: { status: 'success' } } },
+          toolOutput: {
+            input: JSON.stringify(args, null, 2),
+            cwd: '/workspace',
+            state: 'complete',
+          },
+        });
+        expect(tools[0].canonical?.eventIds).toHaveLength(events.length);
+      }
+    }
+  );
 
   it('resolves canonical approval and input controls in place', () => {
     const runId = 'run-control';
@@ -1039,4 +1398,120 @@ it('uses the newest canonical revision for the clock during reconnect and retry'
       last_run_attempt_id: 'retry',
     })
   ).toEqual({ startedAt: summary.created_at, endedAt: null, active: true });
+});
+
+it('keeps explicit plan snapshots, published summaries and commentary distinct', () => {
+  const ext = (provider_event: string, payload: object) => ({
+    type: 'provider_extension' as const,
+    data: { provider_namespace: 'codex', provider_event, payload },
+  });
+  const entries = projectRuns([
+    {
+      runId: 'run-1',
+      status: 'succeeded',
+      events: [
+        event(
+          'run-1',
+          1,
+          ext('reasoning_summary', {
+            provider_item_id: 'same',
+            content: 'Inspecting sources',
+          })
+        ),
+        event(
+          'run-1',
+          2,
+          ext('plan', {
+            provider_item_id: 'same',
+            content: 'A proposed plan-mode document',
+          })
+        ),
+        event(
+          'run-1',
+          3,
+          ext('plan_update', {
+            provider_turn_id: 'turn-1',
+            explanation: null,
+            steps: [{ step: 'Read source', status: 'inProgress' }],
+          })
+        ),
+        event('run-1', 4, {
+          type: 'message',
+          data: {
+            message: {
+              message_id: 'commentary',
+              role: 'assistant',
+              content: 'Checking the relevant files.',
+            },
+            final_output: false,
+          },
+        }),
+        event(
+          'run-1',
+          5,
+          ext('plan_update', {
+            provider_turn_id: 'turn-1',
+            explanation: 'Verified',
+            steps: [
+              { step: 'Read source', status: 'completed' },
+              { step: 'Unknown step', status: 'future-status' },
+            ],
+          })
+        ),
+      ],
+    },
+  ]).entries;
+  const notes = entries.filter(
+    (e) =>
+      e.type === 'NORMALIZED_ENTRY' && e.content.entry_type.type === 'thinking'
+  );
+  expect(notes).toHaveLength(3);
+  expect(notes.map((e) => e.providerText?.kind)).toEqual([
+    'summary',
+    'plan',
+    'plan',
+  ]);
+  expect(notes[2].providerText?.steps).toEqual([
+    { step: 'Read source', status: 'completed' },
+    { step: 'Unknown step', status: 'future-status' },
+  ]);
+  expect(
+    entries.filter(
+      (e) =>
+        e.type === 'NORMALIZED_ENTRY' &&
+        e.content.entry_type.type === 'assistant_message'
+    )
+  ).toHaveLength(1);
+});
+it('distinguishes a received empty plan snapshot from a missing or malformed plan', () => {
+  const entries = projectRuns([
+    {
+      runId: 'run-1',
+      status: 'succeeded',
+      events: [
+        event('run-1', 1, {
+          type: 'provider_extension',
+          data: {
+            provider_namespace: 'codex',
+            provider_event: 'plan_update',
+            payload: { steps: [], explanation: null },
+          },
+        }),
+        event('run-1', 2, {
+          type: 'provider_extension',
+          data: {
+            provider_namespace: 'codex',
+            provider_event: 'plan_update',
+            payload: { steps: [{ step: 'No supplied status' }] },
+          },
+        }),
+      ],
+    },
+  ]).entries;
+  expect(entries.filter((e) => e.providerText?.kind === 'plan')).toHaveLength(
+    1
+  );
+  expect(
+    entries.find((e) => e.providerText?.kind === 'plan')?.providerText?.steps
+  ).toEqual([]);
 });

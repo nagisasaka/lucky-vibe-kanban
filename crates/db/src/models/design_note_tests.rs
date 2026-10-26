@@ -600,3 +600,87 @@ async fn mcp_write_receipt_is_small_and_replays_committed_versions() {
         long
     );
 }
+
+#[tokio::test]
+async fn search_metadata_filters_full_current_body_before_cursor_without_additions() {
+    use super::super::design_note_read::read;
+    let (pool, p, other) = fixture().await;
+    let mut ids = Vec::new();
+    for (title, body) in [
+        ("Ä title", "plain"),
+        ("plain", "long body ä match"),
+        ("unrelated", "none"),
+    ] {
+        let n = DesignNote::write(
+            &pool,
+            p,
+            "human",
+            write(json!({"action":"create","title":title,"body":body})),
+        )
+        .await
+        .unwrap()
+        .note;
+        ids.push(n.id);
+    }
+    DesignNote::write(
+        &pool,
+        other,
+        "human",
+        write(json!({"action":"create","title":"ä foreign","body":"ä"})),
+    )
+    .await
+    .unwrap();
+    DesignNote::write(&pool,p,"human",write(json!({"action":"append","note_id":ids[2],"addition":{"heading":"ä addition","content":"ä","kind":"proposal","source":"test","speaker":"test","referenced_body_revision":1,"short_quote":null}}))).await.unwrap();
+    let first = read(
+        &pool,
+        "list_design_notes",
+        serde_json::from_value(json!({"project_id":p,"search":"ä","page_size":1})).unwrap(),
+    )
+    .await
+    .unwrap();
+    let mut expected = ids[..2].to_vec();
+    expected.sort();
+    assert_eq!(first["items"][0]["id"], json!(expected[0]));
+    assert_eq!(first["has_more"], true);
+    assert!(first["items"][0].get("body").is_none());
+    let last = read(
+        &pool,
+        "list_design_notes",
+        serde_json::from_value(
+            json!({"project_id":p,"search":"Ä","cursor":first["next_cursor"],"page_size":1}),
+        )
+        .unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(last["items"][0]["id"], json!(expected[1]));
+    assert_eq!(last["next_cursor"], Value::Null);
+    // A cursor need only belong to the Project, not match the filter.
+    read(
+        &pool,
+        "list_design_notes",
+        serde_json::from_value(json!({"project_id":p,"search":"ä","cursor":ids[2]})).unwrap(),
+    )
+    .await
+    .unwrap();
+    for (search, count) in [(" Ä ", 1), (" Ä TITLE ", 0), ("%_", 0)] {
+        let page = read(
+            &pool,
+            "list_design_notes",
+            serde_json::from_value(json!({"project_id":p,"search":search})).unwrap(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(page["items"].as_array().unwrap().len(), count);
+    }
+    for search in [Value::Null, json!("")] {
+        let page = read(
+            &pool,
+            "list_design_notes",
+            serde_json::from_value(json!({"project_id":p,"search":search})).unwrap(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(page["items"].as_array().unwrap().len(), 3);
+    }
+}

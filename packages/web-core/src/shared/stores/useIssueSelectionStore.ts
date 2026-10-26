@@ -163,7 +163,20 @@ export const useIssueSelectionStore = create<IssueSelectionState>(
     },
 
     setOrderedIssueIds: (ids: string[]) => {
-      set({ orderedIssueIds: ids });
+      set((state) => ({
+        orderedIssueIds: ids,
+        selectedIssueIds: new Set(
+          [...state.selectedIssueIds].filter((id) => ids.includes(id))
+        ),
+        anchorIssueId:
+          state.anchorIssueId && ids.includes(state.anchorIssueId)
+            ? state.anchorIssueId
+            : null,
+        cursorIssueId:
+          state.cursorIssueId && ids.includes(state.cursorIssueId)
+            ? state.cursorIssueId
+            : null,
+      }));
     },
   })
 );

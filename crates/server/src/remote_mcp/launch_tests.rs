@@ -615,7 +615,7 @@ async fn wiki_admission_is_scoped_durable_and_never_replayed_after_failure() {
     );
     // Even a real association cannot grant access to another connection's Project.
     let foreign_project = Uuid::new_v4();
-    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Other Board')")
+    sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Other Board','FOREIGN')")
         .bind(foreign_project)
         .execute(&remote.pool)
         .await

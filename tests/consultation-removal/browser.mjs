@@ -189,6 +189,7 @@ try {
   result.ports = { ...ports, frontend: Number(new URL(frontend).port) };
   const project = (
     await api("/api/local/v1/projects", "POST", {
+      key: "LOCAL",
       organization_id: "00000000-0000-0000-0000-000000000002",
       name: "Consultation removal",
       color: "#6366f1",

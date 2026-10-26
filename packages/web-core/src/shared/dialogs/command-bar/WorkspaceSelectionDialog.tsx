@@ -78,6 +78,7 @@ function WorkspaceSelectionContent({
 
   // Get issue data from ProjectContext (issues are project-scoped)
   const { getIssue } = useProjectContext();
+  const issueArchived = getIssue(issueId)?.archived ?? false;
 
   const [search, setSearch] = useState('');
   const [isLinking, setIsLinking] = useState(false);
@@ -139,7 +140,7 @@ function WorkspaceSelectionContent({
 
   const handleLinkWorkspace = useCallback(
     async (workspaceId: string) => {
-      if (isLinking) return;
+      if (isLinking || issueArchived) return;
 
       setIsLinking(true);
       try {
@@ -160,11 +161,11 @@ function WorkspaceSelectionContent({
         setIsLinking(false);
       }
     },
-    [projectId, issueId, isLinking, modal, t]
+    [projectId, issueId, isLinking, issueArchived, modal, t]
   );
 
   const handleCreateNewWorkspace = useCallback(async () => {
-    if (isLinking) return;
+    if (isLinking || issueArchived) return;
     setIsLinking(true);
 
     try {
@@ -221,6 +222,7 @@ function WorkspaceSelectionContent({
     hostId,
     workspaces,
     isLinking,
+    issueArchived,
     activeWorkspaces,
     archivedWorkspaces,
     t,
@@ -259,6 +261,9 @@ function WorkspaceSelectionContent({
             onValueChange={setSearch}
           />
         </div>
+        {issueArchived && (
+          <p className="px-base text-low">アーカイブ解除すると利用できます</p>
+        )}
         <CommandList className="min-h-[200px]">
           <CommandEmpty>
             {t('commandBar.noResults', 'No results found')}
@@ -269,7 +274,7 @@ function WorkspaceSelectionContent({
             <CommandItem
               value="__create_new__"
               onSelect={handleCreateNewWorkspace}
-              disabled={isLinking}
+              disabled={isLinking || issueArchived}
             >
               <PlusIcon className="h-4 w-4" weight="bold" />
               <span>
@@ -286,7 +291,7 @@ function WorkspaceSelectionContent({
                   key={workspace.id}
                   value={`${workspace.id} ${workspace.name} ${workspace.branch}${workspace.isArchived ? ' archived' : ''}`}
                   onSelect={() => handleLinkWorkspace(workspace.id)}
-                  disabled={isLinking}
+                  disabled={isLinking || issueArchived}
                 >
                   <GitBranchIcon
                     className={`h-4 w-4 shrink-0 ${workspace.isArchived ? 'text-low' : ''}`}
