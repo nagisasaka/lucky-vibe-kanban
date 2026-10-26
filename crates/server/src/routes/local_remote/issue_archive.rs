@@ -562,6 +562,13 @@ mod tests {
     async fn generated_wiki_success_and_noop_require_matching_run() {
         for no_op in [false, true] {
             let (_root, pool, ws, _, id, status) = generated_fixture().await;
+            // The shared setup creates a mechanical Integration. A Sync
+            // fixture must not retain that unrelated dispatch authority.
+            sqlx::query("DELETE FROM integration_runs WHERE workspace_id=?")
+                .bind(ws.id)
+                .execute(&pool)
+                .await
+                .unwrap();
             let mut owner = ws.execution_owner.clone().unwrap();
             owner.kind = "openwiki_sync".into();
             owner.result = Some(db::models::workspace_usage::WorkspaceExecutionResult {
