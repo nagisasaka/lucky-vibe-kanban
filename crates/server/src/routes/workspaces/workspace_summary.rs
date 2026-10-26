@@ -182,7 +182,7 @@ pub async fn get_workspace_summaries(
                 files_changed: stats.map(|s| s.files_changed),
                 lines_added: stats.and_then(|s| s.lines_added),
                 lines_removed: stats.and_then(|s| s.lines_removed),
-                latest_process_started_at: latest.map(|p| p.created_at),
+                latest_process_started_at: latest.and_then(|p| p.started_at),
                 latest_process_completed_at: latest
                     .filter(|p| p.status.is_terminal())
                     .and_then(|p| p.completed_at),

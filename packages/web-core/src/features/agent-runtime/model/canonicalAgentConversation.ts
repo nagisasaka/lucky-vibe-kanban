@@ -923,6 +923,18 @@ function appendRunEntries(
     run.timeline?.state ?? null
   )!;
   const terminal = isCanonicalRunTerminal(timingState);
+  if (['pending', 'starting'].includes(timingState.status)) {
+    output.push({
+      type: 'NORMALIZED_ENTRY',
+      content: {
+        entry_type: { type: 'system_message' },
+        content: 'Preparing agent run…',
+        timestamp: timingState.updated_at,
+      },
+      patchKey: `agent-run:${run.summary.agent_run_id}:preparing`,
+    });
+    return;
+  }
   const terminalEvent = events.find(
     (event) =>
       event.run_attempt_id === timingState.last_run_attempt_id &&
@@ -942,7 +954,12 @@ function appendRunEntries(
     },
     patchKey: `agent-run:${run.summary.agent_run_id}:elapsed`,
     runTiming: {
-      startedAt: run.summary.created_at,
+      startedAt:
+        events.find(
+          (event) =>
+            event.payload.type === 'lifecycle_changed' &&
+            event.payload.data.status === 'running'
+        )?.timestamp ?? run.summary.created_at,
       endedAt: terminal
         ? (completedAt ?? terminalEvent?.timestamp ?? null)
         : null,

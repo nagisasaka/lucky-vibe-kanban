@@ -134,6 +134,9 @@ export function IssueWorkspaceCard({
   const hasPendingApproval = workspace.hasPendingApproval ?? false;
   const hasRunningDevServer = workspace.hasRunningDevServer ?? false;
   const hasUnseenActivity = workspace.hasUnseenActivity ?? false;
+  const isPreparing = ['pending', 'starting'].includes(
+    workspace.latestProcessStatus ?? ''
+  );
   const isFailed =
     workspace.latestProcessStatus === 'failed' ||
     workspace.latestProcessStatus === 'crashed' ||
@@ -241,7 +244,9 @@ export function IssueWorkspaceCard({
               />
             )}
 
+            {isPreparing && <span className="text-low">Preparing…</span>}
             {isRunning &&
+              !isPreparing &&
               (hasPendingApproval ? (
                 <HandIcon
                   className="size-icon-xs text-brand shrink-0"
@@ -257,22 +262,22 @@ export function IssueWorkspaceCard({
                 weight="fill"
               />
             )}
-            <ChatElapsedTime
-              unknownLabel="—"
-              startedAt={workspace.latestProcessStartedAt}
-              endedAt={workspace.latestProcessCompletedAt}
-              active={
-                !!workspace.latestProcessStatus &&
-                [
-                  'pending',
-                  'starting',
-                  'running',
-                  'awaiting_input',
-                  'awaiting_approval',
-                  'cancelling',
-                ].includes(workspace.latestProcessStatus)
-              }
-            />
+            {!isPreparing && (
+              <ChatElapsedTime
+                unknownLabel="—"
+                startedAt={workspace.latestProcessStartedAt}
+                endedAt={workspace.latestProcessCompletedAt}
+                active={
+                  !!workspace.latestProcessStatus &&
+                  [
+                    'running',
+                    'awaiting_input',
+                    'awaiting_approval',
+                    'cancelling',
+                  ].includes(workspace.latestProcessStatus)
+                }
+              />
+            )}
           </div>
 
           <span className="whitespace-nowrap shrink-0">
