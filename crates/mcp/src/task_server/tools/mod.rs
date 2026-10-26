@@ -408,11 +408,10 @@ mod tests {
     }
 
     fn tool_names(router: rmcp::handler::server::tool::ToolRouter<McpServer>) -> BTreeSet<String> {
-        router
-            .list_all()
-            .into_iter()
-            .map(|tool| tool.name.to_string())
-            .collect()
+        let tools = router.list_all();
+        let names: BTreeSet<_> = tools.iter().map(|tool| tool.name.to_string()).collect();
+        assert_eq!(names.len(), tools.len(), "Tool names must be unique");
+        names
     }
 
     #[test]
@@ -425,6 +424,9 @@ mod tests {
             "get_execution".to_string(),
             "get_workspace_tokens".to_string(),
             "read_provider_usage".to_string(),
+            "start_dev_server".to_string(),
+            "stop_dev_server".to_string(),
+            "get_dev_server_status".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "run_resource_operation".to_string(),
@@ -441,6 +443,14 @@ mod tests {
     fn global_mode_keeps_workspace_admin_and_discovery_tools() {
         let actual = tool_names(McpServer::global_mode_router());
 
+        for name in [
+            "read_provider_usage",
+            "start_dev_server",
+            "stop_dev_server",
+            "get_dev_server_status",
+        ] {
+            assert!(actual.contains(name));
+        }
         assert!(actual.contains("list_workspaces"));
         assert!(actual.contains("delete_workspace"));
         assert!(actual.contains("run_resource_operation"));

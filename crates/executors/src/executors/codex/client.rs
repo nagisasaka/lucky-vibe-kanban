@@ -2229,6 +2229,86 @@ mod version_check_tests {
         }
     }
 
+    #[test]
+    #[ignore = "subprocess fixture, invoked by initialize boundary test"]
+    fn merged_initialize_stdio_fixture() {
+        use std::io::{BufRead, Write};
+        let mut input = std::io::stdin().lock().lines();
+        let request: Value = serde_json::from_str(&input.next().unwrap().unwrap()).unwrap();
+        assert_eq!(request["method"], "initialize");
+        println!(
+            "{}",
+            serde_json::json!({"id":request["id"],"result":{"userAgent":"fixture/0.163.0","codexHome":"/unused-fixture","platformFamily":"unix","platformOs":"linux"}})
+        );
+        std::io::stdout().flush().unwrap();
+        let initialized: Value = serde_json::from_str(&input.next().unwrap().unwrap()).unwrap();
+        assert_eq!(initialized["method"], "initialized");
+        // No thread/read/start/resume or model RPC is valid on this connection.
+        assert!(input.next().is_none(), "unexpected additional RPC");
+    }
+
+    #[tokio::test]
+    async fn merged_initialize_keeps_normal_version_evidence_out_of_passive_reads() {
+        use std::{sync::Arc, time::Duration};
+
+        use super::super::jsonrpc::{ExitSignalSender, JsonRpcCallbacks, JsonRpcPeer};
+        for passive in [false, true] {
+            let cancel = CancellationToken::new();
+            let client = AppServerClient::new(
+                LogWriter::new(tokio::io::sink()),
+                None,
+                false,
+                false,
+                ExecutionMode::Code,
+                None,
+                None,
+                Default::default(),
+                false,
+                String::new(),
+                cancel.clone(),
+            );
+            let mut child = tokio::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact","executors::codex::client::version_check_tests::merged_initialize_stdio_fixture","--ignored","--nocapture"])
+                .stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).kill_on_drop(true).spawn().unwrap();
+            let callbacks: Arc<dyn JsonRpcCallbacks> = if passive {
+                Arc::new(super::super::account_read::PassiveCallbacks)
+            } else {
+                client.clone()
+            };
+            let (exit_tx, _) = tokio::sync::oneshot::channel();
+            client.connect(JsonRpcPeer::spawn(
+                child.stdin.take().unwrap(),
+                child.stdout.take().unwrap(),
+                callbacks,
+                ExitSignalSender::new(exit_tx),
+                cancel.clone(),
+            ));
+            tokio::time::timeout(Duration::from_secs(5), async {
+                if passive {
+                    client.initialize_passive().await
+                } else {
+                    client.initialize().await
+                }
+            })
+            .await
+            .unwrap()
+            .unwrap();
+            assert_eq!(
+                client.runtime_user_agent.get().map(String::as_str),
+                if passive {
+                    None
+                } else {
+                    Some("fixture/0.163.0")
+                }
+            );
+            assert!(client.thread_id.lock().await.is_none());
+            assert_eq!(*client.pending_tool_approvals.lock().await, 0);
+            cancel.cancel();
+            child.kill().await.unwrap();
+            child.wait().await.unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn retired_plan_goal_draft_control_returns_actionable_error() {
         let client = AppServerClient::new(

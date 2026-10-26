@@ -70,6 +70,13 @@ try {
   await expect(card('c').getByTestId('issue-description-preview')).toHaveCount(
     0
   );
+  for (const status of ['pending', 'starting']) {
+    const preparing=page.locator(`#preparing-${status}`);
+    await expect(preparing).toContainText('Preparing…');
+    await expect(preparing.getByRole('img', {name:'Dev server running', exact:true})).toBeVisible();
+    await expect(preparing.getByRole('img', {name:'Running', exact:true})).toHaveCount(0);
+    await expect(preparing).not.toContainText(/1m|65s/);
+  }
   await expect(a.getByText('Workspace 0', { exact: true })).toBeVisible();
   await expect(a.getByText('0 files', { exact: true })).toBeVisible();
   await expect(a.getByText('+0', { exact: true })).toBeVisible();

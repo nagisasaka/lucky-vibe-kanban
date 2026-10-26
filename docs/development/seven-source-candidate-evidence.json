@@ -1,0 +1,1460 @@
+{
+  "captured_at_utc": "2026-10-26T19:26:34.697142+00:00",
+  "workspace_id": "e131bcdc-3b0f-4d4a-9f8f-aca87d15ed33",
+  "run_id": "fdf7c33f-a806-4232-8371-9b04161f4877",
+  "base_main": "45fdda98d586940ef45411ac6fcd2872e9143fad",
+  "workspace_start": "901bdf9e5e44373c3557608d95e1431a93939e8a",
+  "merge_head_before_qa_commit": "157697fdaa7211557c5c44b4556bccf6be8d3959",
+  "sources": [
+    {
+      "issue": "81",
+      "commit": "dbf47c47bfa92f62e344407868e514bf957111ae",
+      "workspace_id": "2f33322d-1002-4f67-88ea-6cf4890c0c92",
+      "issue_id": "b25ec364-1537-4cfc-806b-b69ab1c57e1a",
+      "refs": [
+        "refs/heads/vk/2f33-2"
+      ],
+      "parents": [
+        "63ff87ae98b32599bf3776aed9040e72bef8cd83"
+      ],
+      "tree": "114961ccb3476f9627851dc67b8264d98445b5e3",
+      "commits_since_base": [
+        "dbf47c47bfa92f62e344407868e514bf957111ae feat(kanban): preserve activity order and simplify card metadata",
+        "63ff87ae98b32599bf3776aed9040e72bef8cd83 Merge commit '45fdda98d586940ef45411ac6fcd2872e9143fad' into vk/2f33-2",
+        "c456e1062e94d87dc4142722ff9e013ef0b03f64 カンバン列見出しに表示中のIssue件数を追加する"
+      ],
+      "paths": [
+        "crates/db/src/models/agent_runtime.rs",
+        "crates/db/src/models/agent_runtime_kanban.rs",
+        "crates/db/src/models/agent_runtime_kanban_tests.rs",
+        "crates/db/src/models/issue_order.rs",
+        "crates/db/src/models/mod.rs",
+        "crates/server/src/remote_mcp/issue_comments.rs",
+        "crates/server/src/routes/local_remote.rs",
+        "packages/ui/src/components/IssueWorkspaceCard.tsx",
+        "packages/ui/src/components/KanbanCardContent.tsx",
+        "packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
+        "packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
+        "packages/web-core/src/features/kanban/ui/KanbanGrid.tsx",
+        "packages/web-core/src/features/kanban/ui/kanbanOrder.ts",
+        "packages/web-core/src/i18n/locales/en/common.json",
+        "packages/web-core/src/i18n/locales/ja/common.json",
+        "packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts",
+        "packages/web-core/src/shared/lib/remoteApi.ts",
+        "tests/kanban/READABILITY-VALIDATION.md",
+        "tests/kanban/isolated.mjs",
+        "tests/kanban/order.test.mjs",
+        "tests/kanban/readability.fixture.tsx",
+        "tests/kanban/readability.mjs"
+      ]
+    },
+    {
+      "issue": "183",
+      "commit": "1de0603c5e045b2e10f998a27c466fa38e1f1633",
+      "workspace_id": "9b9b5c69-789d-4ac6-b6a7-53a37e9b8119",
+      "issue_id": "92b6f55d-9e41-4f92-acd5-e8c76234a812",
+      "refs": [
+        "refs/heads/vk/9b9b-starting-db-run"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "0d9e82de4d819086441031bd54087ccd5e318be2",
+      "commits_since_base": [
+        "1de0603c5e045b2e10f998a27c466fa38e1f1633 Recover accepted agent runs after Starting persistence failures"
+      ],
+      "paths": [
+        "crates/db/migrations/20261026180000_agent_starting_recovery.sql",
+        "crates/db/src/models/agent_runtime.rs",
+        "crates/db/src/models/orchestration.rs",
+        "crates/local-deployment/src/agent_run_port.rs",
+        "crates/local-deployment/src/lib.rs",
+        "crates/server/src/routes/workspaces/workspace_summary.rs",
+        "docs/development/starting-recovery-local-183.md",
+        "packages/ui/src/components/IssueWorkspaceCard.tsx",
+        "packages/ui/src/components/WorkspaceSummary.tsx",
+        "packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts",
+        "packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts",
+        "packages/web-core/src/features/workflow/model/taskAttempt.test.ts",
+        "packages/web-core/src/features/workflow/model/taskAttempt.ts"
+      ]
+    },
+    {
+      "issue": "203",
+      "commit": "ca059584a696fef6016de05ce6e75ecaf470fef6",
+      "workspace_id": "756a9c7e-52f3-41b0-b15d-216a6e8901f5",
+      "issue_id": "14c922f6-e633-44a9-b652-22534f8d6ba1",
+      "refs": [
+        "refs/heads/vk/756a-codex-developer"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "607375d2fed58b1ca984aa407096589616bbaf4e",
+      "commits_since_base": [
+        "ca059584a696fef6016de05ce6e75ecaf470fef6 Reduce duplicate fixed Codex resume instructions safely"
+      ],
+      "paths": [
+        "crates/executors/Cargo.toml",
+        "crates/executors/src/executors/codex/client.rs",
+        "crates/executors/src/executors/codex/client/resume_instructions.rs",
+        "docs/development/codex-resume-instructions.md"
+      ]
+    },
+    {
+      "issue": "204",
+      "commit": "648409726dddae62f8494065c83253fb50ff156c",
+      "workspace_id": "b3a05fbc-55e9-4b0e-83bd-08aff82a81c8",
+      "issue_id": "987409f4-efa2-4144-bbc1-4ee97ee7482a",
+      "refs": [
+        "refs/heads/vk/b3a0-codex-claude-cod"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "00d0bdad3f2bbd24cf65c8660180d212003a03ca",
+      "commits_since_base": [
+        "648409726dddae62f8494065c83253fb50ff156c feat: expose passive provider quota and usage reads via MCP"
+      ],
+      "paths": [
+        "crates/executors/src/account_usage.rs",
+        "crates/executors/src/account_usage_tests.rs",
+        "crates/executors/src/command.rs",
+        "crates/executors/src/executors/claude.rs",
+        "crates/executors/src/executors/claude/command_adapter.rs",
+        "crates/executors/src/executors/claude/protocol.rs",
+        "crates/executors/src/executors/claude/types.rs",
+        "crates/executors/src/executors/claude/usage.rs",
+        "crates/executors/src/executors/codex.rs",
+        "crates/executors/src/executors/codex/account_read.rs",
+        "crates/executors/src/executors/codex/client.rs",
+        "crates/executors/src/executors/codex/jsonrpc.rs",
+        "crates/executors/src/lib.rs",
+        "crates/executors/tests/fixtures/passive_usage.py",
+        "crates/mcp/src/task_server/tools/mod.rs",
+        "crates/mcp/src/task_server/tools/provider_usage.rs",
+        "crates/server/src/lib.rs",
+        "crates/server/src/provider_usage.rs",
+        "crates/server/src/remote_mcp/mod.rs",
+        "crates/server/src/remote_mcp/provider_usage.rs",
+        "crates/server/src/routes/mod.rs",
+        "crates/server/src/routes/provider_usage.rs",
+        "crates/utils/src/shell.rs",
+        "docs/development/provider-usage.md"
+      ]
+    },
+    {
+      "issue": "206",
+      "commit": "901bdf9e5e44373c3557608d95e1431a93939e8a",
+      "workspace_id": "e131bcdc-3b0f-4d4a-9f8f-aca87d15ed33",
+      "issue_id": "7b36a330-66de-4360-8746-55fc5baed885",
+      "refs": [
+        "refs/heads/vk/e131-devserver-start"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "b76f546ecc6849e35f239831a0951197daa98a37",
+      "commits_since_base": [
+        "901bdf9e5e44373c3557608d95e1431a93939e8a Expose managed DevServer MCP controls with one-call Codex approval"
+      ],
+      "paths": [
+        "crates/executors/src/executors/codex/client.rs",
+        "crates/executors/src/executors/codex/client/mcp_approval.rs",
+        "crates/executors/src/executors/codex/client/mcp_approval/tests.rs",
+        "crates/local-deployment/src/agent_process_registry.rs",
+        "crates/local-deployment/src/container.rs",
+        "crates/mcp/src/task_server/tools/dev_server.rs",
+        "crates/mcp/src/task_server/tools/mod.rs",
+        "crates/mcp/src/task_server/tools/stdio_tests.rs",
+        "crates/server/src/middleware/model_loaders_tests.rs",
+        "crates/server/src/remote_mcp/dev_server.rs",
+        "crates/server/src/remote_mcp/dev_server_tests.rs",
+        "crates/server/src/remote_mcp/mod.rs",
+        "crates/server/src/remote_mcp/runtime_write.rs",
+        "crates/server/src/remote_mcp/runtime_write_tests.rs",
+        "crates/server/src/routes/execution_processes.rs",
+        "crates/server/src/routes/workspaces/dev_server.rs",
+        "crates/server/src/routes/workspaces/execution.rs",
+        "crates/server/src/routes/workspaces/mod.rs",
+        "crates/services/src/services/container.rs",
+        "docs/development/managed-dev-server-mcp-evidence.json",
+        "docs/development/managed-dev-server-mcp.md",
+        "docs/integrations/vibe-kanban-mcp-server.mdx",
+        "tests/server/run-managed-dev-server.mjs"
+      ]
+    },
+    {
+      "issue": "214",
+      "commit": "7325d70f6566d823821ff5f65a6b3b9f5614ea60",
+      "workspace_id": "8a6dfd7a-3051-46e9-b73e-21cc3c2750f9",
+      "issue_id": "984af3ce-e600-475a-b279-a6c1782b31fc",
+      "refs": [
+        "refs/heads/vk/8a6d-raw"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "047d56b05d3b3bb1a8eef281a8fc24d251c87fd0",
+      "commits_since_base": [
+        "7325d70f6566d823821ff5f65a6b3b9f5614ea60 fix(server): preserve workspace raw download filenames"
+      ],
+      "paths": [
+        "crates/server/src/middleware/model_loaders_tests.rs",
+        "crates/server/src/routes/workspaces/files.rs",
+        "docs/development/workspace-file-download.md"
+      ]
+    },
+    {
+      "issue": "215",
+      "commit": "7bf29de7109edcffed606e738d172e3676038ccf",
+      "workspace_id": "e3bf0a4a-deec-43f3-ad94-1e39e7e672e7",
+      "issue_id": "69432a0e-e50b-448e-9102-83f6ffd51722",
+      "refs": [
+        "refs/heads/vk/e3bf-issue-remote-mcp"
+      ],
+      "parents": [
+        "45fdda98d586940ef45411ac6fcd2872e9143fad"
+      ],
+      "tree": "421a2804b40c236a80bbd2c6554aed7fa16ddef6",
+      "commits_since_base": [
+        "7bf29de7109edcffed606e738d172e3676038ccf feat(mcp): allow principals to edit their own issue comments"
+      ],
+      "paths": [
+        "crates/server/src/remote_mcp/issue_comments.rs",
+        "crates/server/src/remote_mcp/mod.rs",
+        "crates/server/src/remote_mcp/tests.rs",
+        "docs/development/chatgpt-mcp.md"
+      ]
+    }
+  ],
+  "merge_parents": [
+    {
+      "commit": "157697fdaa7211557c5c44b4556bccf6be8d3959",
+      "tree": "447527b58c709a5a3e14656531c0a5224342cd1b",
+      "parents": [
+        "34d1e44c45fcf36cd2dc0e7a8db869cef13d17aa",
+        "7bf29de7109edcffed606e738d172e3676038ccf"
+      ],
+      "committed_at_utc": "2026-10-26T19:07:29+00:00",
+      "subject": "Merge LOCAL-215 frozen implementation into seven-source candidate"
+    },
+    {
+      "commit": "34d1e44c45fcf36cd2dc0e7a8db869cef13d17aa",
+      "tree": "7eab8799637a0e2c290c2d1ed4a8e0cfc5ff2a12",
+      "parents": [
+        "c320062b0c6a5145e06fbca023585364217f68e7",
+        "7325d70f6566d823821ff5f65a6b3b9f5614ea60"
+      ],
+      "committed_at_utc": "2026-10-26T19:07:29+00:00",
+      "subject": "Merge LOCAL-214 frozen implementation into seven-source candidate"
+    },
+    {
+      "commit": "c320062b0c6a5145e06fbca023585364217f68e7",
+      "tree": "5ab5ec4eabb42298a588fbfa3768ad64ecf7f109",
+      "parents": [
+        "00528fe296c16d2fe75a5029e0f2d799fe289fae",
+        "dbf47c47bfa92f62e344407868e514bf957111ae"
+      ],
+      "committed_at_utc": "2026-10-26T19:07:29+00:00",
+      "subject": "Merge LOCAL-81 frozen implementation into seven-source candidate"
+    },
+    {
+      "commit": "00528fe296c16d2fe75a5029e0f2d799fe289fae",
+      "tree": "a6e519606d5522d21dd3da56aa9ed876fcd447d9",
+      "parents": [
+        "ff55b507f7dfccee51d035ba0f87278566df100d",
+        "1de0603c5e045b2e10f998a27c466fa38e1f1633"
+      ],
+      "committed_at_utc": "2026-10-26T19:06:36+00:00",
+      "subject": "Merge LOCAL-183 frozen implementation into seven-source candidate"
+    },
+    {
+      "commit": "ff55b507f7dfccee51d035ba0f87278566df100d",
+      "tree": "b5080cb97c232231d04aebb2b8483a4abd2c9a0b",
+      "parents": [
+        "54c37f367937db332b3e81d53093776ae518ecae",
+        "648409726dddae62f8494065c83253fb50ff156c"
+      ],
+      "committed_at_utc": "2026-10-26T19:06:35+00:00",
+      "subject": "Merge LOCAL-204 frozen implementation into seven-source candidate"
+    },
+    {
+      "commit": "54c37f367937db332b3e81d53093776ae518ecae",
+      "tree": "3a9497571ed5b6d7dffbdfcaf1515d7e2f8f8678",
+      "parents": [
+        "901bdf9e5e44373c3557608d95e1431a93939e8a",
+        "ca059584a696fef6016de05ce6e75ecaf470fef6"
+      ],
+      "committed_at_utc": "2026-10-26T19:06:05+00:00",
+      "subject": "Merge LOCAL-203 frozen implementation into seven-source candidate"
+    }
+  ],
+  "conflict_resolutions": [
+    {
+      "source": "204",
+      "path": "crates/executors/src/executors/codex/client.rs",
+      "reason": "Normal initialize_inner(true) observes version and saves user_agent for evidence-based resume. Passive(false) does neither and keeps separate PassiveCallbacks; no resume optimization flows into passive account reads."
+    },
+    {
+      "source": "81",
+      "path": "packages/ui/src/components/IssueWorkspaceCard.tsx",
+      "reason": "Retain 81 accessible compact activity/read/devserver indicators and 183 Preparing label/clock suppression. Suppress RunningDots during Preparing; avoid duplicate old activity block. Keep aggregated isRunning unchanged."
+    }
+  ],
+  "ancestry": {
+    "head": "157697fdaa7211557c5c44b4556bccf6be8d3959",
+    "proof": [
+      {
+        "issue": "81",
+        "source": "dbf47c47bfa92f62e344407868e514bf957111ae",
+        "is_ancestor": true
+      },
+      {
+        "issue": "183",
+        "source": "1de0603c5e045b2e10f998a27c466fa38e1f1633",
+        "is_ancestor": true
+      },
+      {
+        "issue": "203",
+        "source": "ca059584a696fef6016de05ce6e75ecaf470fef6",
+        "is_ancestor": true
+      },
+      {
+        "issue": "204",
+        "source": "648409726dddae62f8494065c83253fb50ff156c",
+        "is_ancestor": true
+      },
+      {
+        "issue": "206",
+        "source": "901bdf9e5e44373c3557608d95e1431a93939e8a",
+        "is_ancestor": true
+      },
+      {
+        "issue": "214",
+        "source": "7325d70f6566d823821ff5f65a6b3b9f5614ea60",
+        "is_ancestor": true
+      },
+      {
+        "issue": "215",
+        "source": "7bf29de7109edcffed606e738d172e3676038ccf",
+        "is_ancestor": true
+      }
+    ],
+    "only_frozen_source_histories_and_our_merges": true
+  },
+  "validation_runs": [
+    {
+      "command": [
+        "node",
+        "scripts/dev-cargo.mjs",
+        "clippy",
+        "-p",
+        "utils",
+        "-p",
+        "db",
+        "-p",
+        "executors",
+        "-p",
+        "services",
+        "-p",
+        "local-deployment",
+        "-p",
+        "mcp",
+        "-p",
+        "server",
+        "--all-targets",
+        "--features",
+        "server/qa-mode",
+        "-j",
+        "6",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "started_at": "2026-10-26T19:18:12.438724+00:00",
+      "ended_at": "2026-10-26T19:19:43.297719+00:00",
+      "elapsed_seconds": 90.859,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/changed-crates-clippy-r2.log",
+      "log_sha256": "d2e5dbfd8d53181d12a69beef46e9c5eb9c08ec812271ddc773f44654bc8688e",
+      "peak_process_tree_rss_bytes": 4678209536,
+      "min_host_mem_available_bytes": 10944262144,
+      "first_resource_sample": {
+        "tree_rss": 288026624,
+        "available": 14389805056,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368301716",
+        "io_pressure": "some avg10=0.00 avg60=0.14 avg300=0.23 total=1279271390"
+      },
+      "last_resource_sample": {
+        "tree_rss": 3031846912,
+        "available": 11956252672,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368304974",
+        "io_pressure": "some avg10=0.01 avg60=0.04 avg300=0.17 total=1279339694"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "scripts/dev-cargo.mjs",
+        "clippy",
+        "-p",
+        "utils",
+        "-p",
+        "db",
+        "-p",
+        "executors",
+        "-p",
+        "services",
+        "-p",
+        "local-deployment",
+        "-p",
+        "mcp",
+        "-p",
+        "server",
+        "--all-targets",
+        "--features",
+        "server/qa-mode",
+        "-j",
+        "6",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "started_at": "2026-10-26T19:16:25.380795+00:00",
+      "ended_at": "2026-10-26T19:17:09.840019+00:00",
+      "elapsed_seconds": 44.459,
+      "exit_code": 101,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/changed-crates-clippy.log",
+      "log_sha256": "029b5bea5a9e9d65924e290dc250f2457bf0e7e315822db0e66649d67f8cc20e",
+      "peak_process_tree_rss_bytes": 3201552384,
+      "min_host_mem_available_bytes": 12279173120,
+      "first_resource_sample": {
+        "tree_rss": 219480064,
+        "available": 14526476288,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368292191",
+        "io_pressure": "some avg10=0.00 avg60=0.11 avg300=0.19 total=1278890844"
+      },
+      "last_resource_sample": {
+        "tree_rss": 1539137536,
+        "available": 13367226368,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368294144",
+        "io_pressure": "some avg10=0.06 avg60=0.43 avg300=0.30 total=1279217650"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import subprocess; subprocess.run(['node','scripts/dev-cargo.mjs','fmt','--all','--','--check'],check=True); subprocess.run(['pnpm','--dir','packages/local-web','exec','prettier','--config','.prettierrc.json','--check','../../tests/chat/mcp-approval.fixture.tsx','../../tests/chat/mcp-approval.mjs','../ui/src/components/IssueWorkspaceCard.tsx'],check=True); subprocess.run(['git','diff','--check'],check=True)"
+      ],
+      "started_at": "2026-10-26T19:29:02.547118+00:00",
+      "ended_at": "2026-10-26T19:29:05.988511+00:00",
+      "elapsed_seconds": 3.441,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/final-format.log",
+      "log_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "peak_process_tree_rss_bytes": 164728832,
+      "min_host_mem_available_bytes": 14550515712,
+      "first_resource_sample": {
+        "tree_rss": 138260480,
+        "available": 14573772800,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360757",
+        "io_pressure": "some avg10=0.00 avg60=0.00 avg300=0.06 total=1280331859"
+      },
+      "last_resource_sample": {
+        "tree_rss": 90038272,
+        "available": 14558941184,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360757",
+        "io_pressure": "some avg10=0.00 avg60=0.00 avg300=0.06 total=1280335258"
+      }
+    },
+    {
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile",
+        "--store-dir",
+        ".build/seven-source-candidate-fdf7c33f/pnpm-store"
+      ],
+      "started_at": "2026-10-26T19:08:19.312523+00:00",
+      "ended_at": "2026-10-26T19:08:27.587577+00:00",
+      "elapsed_seconds": 8.275,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/frontend-install.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "peak_process_tree_rss_bytes": 1236877312,
+      "min_host_mem_available_bytes": 13037314048,
+      "first_resource_sample": {
+        "tree_rss": 368066560,
+        "available": 13845680128,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=367823607",
+        "io_pressure": "some avg10=0.00 avg60=0.12 avg300=0.12 total=1276898957"
+      },
+      "last_resource_sample": {
+        "tree_rss": 1236877312,
+        "available": 13422362624,
+        "memory_pressure": "some avg10=0.14 avg60=0.03 avg300=0.00 total=367863285",
+        "io_pressure": "some avg10=0.29 avg60=0.17 avg300=0.13 total=1276974778"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        ".build/seven-source-candidate-fdf7c33f/lint_frontend.py"
+      ],
+      "started_at": "2026-10-26T19:14:53.554941+00:00",
+      "ended_at": "2026-10-26T19:15:04.510899+00:00",
+      "elapsed_seconds": 10.956,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/frontend-lint.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "peak_process_tree_rss_bytes": 864702464,
+      "min_host_mem_available_bytes": 13673201664,
+      "first_resource_sample": {
+        "tree_rss": 273506304,
+        "available": 14320381952,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.03 total=368289801",
+        "io_pressure": "some avg10=0.21 avg60=0.30 avg300=0.22 total=1278507627"
+      },
+      "last_resource_sample": {
+        "tree_rss": 864702464,
+        "available": 13673201664,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.02 total=368289821",
+        "io_pressure": "some avg10=0.72 avg60=0.41 avg300=0.25 total=1278673692"
+      }
+    },
+    {
+      "command": [
+        "pnpm",
+        "--dir",
+        "packages/web-core",
+        "exec",
+        "vitest",
+        "run",
+        "src/features/agent-runtime/model/canonicalAgentActions.test.ts",
+        "src/features/agent-runtime/model/canonicalAgentConversation.test.ts",
+        "src/features/workflow/model/taskAttempt.test.ts",
+        "--maxWorkers=4"
+      ],
+      "started_at": "2026-10-26T19:11:07.724081+00:00",
+      "ended_at": "2026-10-26T19:11:08.812800+00:00",
+      "elapsed_seconds": 1.089,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/frontend-model.log",
+      "log_sha256": "1e22023f7a02d093024d8792769292583f30f6e2489d10124581cc58a6afe969",
+      "peak_process_tree_rss_bytes": 435523584,
+      "min_host_mem_available_bytes": 14422384640,
+      "first_resource_sample": {
+        "tree_rss": 435523584,
+        "available": 14422384640,
+        "memory_pressure": "some avg10=0.13 avg60=0.09 avg300=0.02 total=367990850",
+        "io_pressure": "some avg10=0.03 avg60=0.30 avg300=0.18 total=1277538384"
+      },
+      "last_resource_sample": {
+        "tree_rss": 435523584,
+        "available": 14422384640,
+        "memory_pressure": "some avg10=0.13 avg60=0.09 avg300=0.02 total=367990850",
+        "io_pressure": "some avg10=0.03 avg60=0.30 avg300=0.18 total=1277538384"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "tests/kanban/order.test.mjs"
+      ],
+      "started_at": "2026-10-26T19:12:52.890687+00:00",
+      "ended_at": "2026-10-26T19:12:53.043486+00:00",
+      "elapsed_seconds": 0.153,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/frontend-rank.log",
+      "log_sha256": "c979f0d9566dd56f9089171760ba21f2cd7f1b014f929c2592a4519ddc977e23",
+      "peak_process_tree_rss_bytes": 0,
+      "min_host_mem_available_bytes": 0,
+      "first_resource_sample": null,
+      "last_resource_sample": null
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import subprocess; [subprocess.run(['pnpm','run',p+':check'],check=True) for p in ['ui','web-core','local-web']]"
+      ],
+      "started_at": "2026-10-26T19:12:40.902149+00:00",
+      "ended_at": "2026-10-26T19:13:30.446883+00:00",
+      "elapsed_seconds": 49.545,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/frontend-types.log",
+      "log_sha256": "81500e18d16a96281fcf979b63d4b8f31612f2a2a2fccb4ec051eab9ae67b7f3",
+      "peak_process_tree_rss_bytes": 1515937792,
+      "min_host_mem_available_bytes": 10081349632,
+      "first_resource_sample": {
+        "tree_rss": 347750400,
+        "available": 12712292352,
+        "memory_pressure": "some avg10=0.00 avg60=0.12 avg300=0.06 total=368282252",
+        "io_pressure": "some avg10=0.06 avg60=0.14 avg300=0.15 total=1277774556"
+      },
+      "last_resource_sample": {
+        "tree_rss": 1515937792,
+        "available": 10081349632,
+        "memory_pressure": "some avg10=0.00 avg60=0.05 avg300=0.05 total=368282579",
+        "io_pressure": "some avg10=0.05 avg60=0.29 avg300=0.21 total=1278174456"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "scripts/dev-cargo.mjs",
+        "test",
+        "-p",
+        "executors",
+        "--lib",
+        "merged_initialize_keeps_normal_version_evidence_out_of_passive_reads",
+        "-j",
+        "6",
+        "--",
+        "--test-threads=2"
+      ],
+      "started_at": "2026-10-26T19:20:53.919943+00:00",
+      "ended_at": "2026-10-26T19:21:25.812241+00:00",
+      "elapsed_seconds": 31.892,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/initialize-final.log",
+      "log_sha256": "f020078e6cb688bf8e2cbe8b61b1a68934529039597d1c41193d26c752de0b0a",
+      "peak_process_tree_rss_bytes": 2785243136,
+      "min_host_mem_available_bytes": 12337102848,
+      "first_resource_sample": {
+        "tree_rss": 195854336,
+        "available": 14456610816,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368307599",
+        "io_pressure": "some avg10=0.54 avg60=0.10 avg300=0.14 total=1279572411"
+      },
+      "last_resource_sample": {
+        "tree_rss": 2785243136,
+        "available": 12920029184,
+        "memory_pressure": "some avg10=0.01 avg60=0.02 avg300=0.00 total=368356848",
+        "io_pressure": "some avg10=0.35 avg60=0.36 avg300=0.21 total=1279784855"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "tests/kanban/readability.mjs"
+      ],
+      "started_at": "2026-10-26T19:14:16.176138+00:00",
+      "ended_at": "2026-10-26T19:14:24.471546+00:00",
+      "elapsed_seconds": 8.295,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/kanban-components.log",
+      "log_sha256": "8fbb067d37cf3d84eda2f02a84e602d4801ea694bb41abccc490392e0d9ab1bc",
+      "peak_process_tree_rss_bytes": 1205387264,
+      "min_host_mem_available_bytes": 13721686016,
+      "first_resource_sample": {
+        "tree_rss": 426999808,
+        "available": 13980258304,
+        "memory_pressure": "some avg10=0.00 avg60=0.02 avg300=0.04 total=368289800",
+        "io_pressure": "some avg10=1.47 avg60=0.47 avg300=0.25 total=1278428522"
+      },
+      "last_resource_sample": {
+        "tree_rss": 1205387264,
+        "available": 13721686016,
+        "memory_pressure": "some avg10=0.00 avg60=0.01 avg300=0.03 total=368289800",
+        "io_pressure": "some avg10=0.95 avg60=0.45 avg300=0.25 total=1278455809"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "tests/chat/mcp-approval.mjs"
+      ],
+      "started_at": "2026-10-26T19:22:19.516208+00:00",
+      "ended_at": "2026-10-26T19:22:24.379571+00:00",
+      "elapsed_seconds": 4.863,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/mcp-approval-components-final.log",
+      "log_sha256": "db9b42a8df5aec875dfd93fcb73aa6a1994380246ed3b1b77a490f9aab68c761",
+      "peak_process_tree_rss_bytes": 807772160,
+      "min_host_mem_available_bytes": 14048227328,
+      "first_resource_sample": {
+        "tree_rss": 449835008,
+        "available": 14309289984,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360053",
+        "io_pressure": "some avg10=0.02 avg60=0.16 avg300=0.18 total=1279925878"
+      },
+      "last_resource_sample": {
+        "tree_rss": 807772160,
+        "available": 14048227328,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360053",
+        "io_pressure": "some avg10=1.66 avg60=0.47 avg300=0.25 total=1280059681"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "tests/chat/mcp-approval.mjs"
+      ],
+      "started_at": "2026-10-26T19:14:11.125666+00:00",
+      "ended_at": "2026-10-26T19:14:16.138592+00:00",
+      "elapsed_seconds": 5.013,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/mcp-approval-components-r2.log",
+      "log_sha256": "17874c340b4d9e8df1062b5fb725b987c3f240f623804a21a657e577547d9610",
+      "peak_process_tree_rss_bytes": 772485120,
+      "min_host_mem_available_bytes": 13913452544,
+      "first_resource_sample": {
+        "tree_rss": 388612096,
+        "available": 14142906368,
+        "memory_pressure": "some avg10=0.00 avg60=0.02 avg300=0.04 total=368289800",
+        "io_pressure": "some avg10=0.00 avg60=0.14 avg300=0.18 total=1278291381"
+      },
+      "last_resource_sample": {
+        "tree_rss": 67141632,
+        "available": 13945516032,
+        "memory_pressure": "some avg10=0.00 avg60=0.02 avg300=0.04 total=368289800",
+        "io_pressure": "some avg10=1.79 avg60=0.48 avg300=0.25 total=1278427489"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "tests/chat/mcp-approval.mjs"
+      ],
+      "started_at": "2026-10-26T19:12:53.078817+00:00",
+      "ended_at": "2026-10-26T19:13:03.114476+00:00",
+      "elapsed_seconds": 10.036,
+      "exit_code": 1,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/mcp-approval-components.log",
+      "log_sha256": "93e823c17feafde0e5f5ded788f03bb684a9348d9f40657107b11beffa940f9b",
+      "peak_process_tree_rss_bytes": 888901632,
+      "min_host_mem_available_bytes": 10241757184,
+      "first_resource_sample": {
+        "tree_rss": 335499264,
+        "available": 11318538240,
+        "memory_pressure": "some avg10=0.00 avg60=0.10 avg300=0.06 total=368282313",
+        "io_pressure": "some avg10=1.28 avg60=0.44 avg300=0.22 total=1278092638"
+      },
+      "last_resource_sample": {
+        "tree_rss": 427094016,
+        "available": 10241757184,
+        "memory_pressure": "some avg10=0.00 avg60=0.08 avg300=0.05 total=368282579",
+        "io_pressure": "some avg10=0.71 avg60=0.46 avg300=0.23 total=1278149166"
+      }
+    },
+    {
+      "command": [
+        "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/server-7c925e0f73449ee2",
+        "--test-threads=2",
+        "remote_mcp::tests::http_discovery_authentication_and_tool_call_roundtrip",
+        "remote_mcp::tests::auth0_jwt_access_layer_reaches_real_mcp_tools"
+      ],
+      "started_at": "2026-10-26T19:25:20.169830+00:00",
+      "ended_at": "2026-10-26T19:25:25.375856+00:00",
+      "elapsed_seconds": 5.206,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/remote-http-catalog-auth.log",
+      "log_sha256": "0e632583ed874e0700118326a82c521008fee8415ed835e2d58ef852b5b9659d",
+      "peak_process_tree_rss_bytes": 78053376,
+      "min_host_mem_available_bytes": 14626025472,
+      "first_resource_sample": {
+        "tree_rss": 75964416,
+        "available": 14626025472,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360757",
+        "io_pressure": "some avg10=0.00 avg60=0.09 avg300=0.17 total=1280298507"
+      },
+      "last_resource_sample": {
+        "tree_rss": 78053376,
+        "available": 14630051840,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368360757",
+        "io_pressure": "some avg10=0.00 avg60=0.08 avg300=0.16 total=1280298720"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "scripts/dev-cargo.mjs",
+        "test",
+        "-p",
+        "executors",
+        "-p",
+        "db",
+        "-p",
+        "local-deployment",
+        "-p",
+        "server",
+        "-p",
+        "mcp",
+        "--lib",
+        "-j",
+        "6",
+        "--",
+        "executors::codex::",
+        "account_usage_tests::",
+        "passive",
+        "provider_usage",
+        "task_server::",
+        "models::agent_runtime::tests",
+        "models::agent_runtime_kanban",
+        "models::issue_order::tests",
+        "agent_run_port::tests",
+        "agent_process_registry::tests::dev_server",
+        "remote_mcp::dev_server_tests",
+        "remote_mcp::runtime_write_tests",
+        "remote_mcp::issue_comments::tests",
+        "routes::workspaces::files::tests",
+        "issue_activity_",
+        "plugin_tool_catalog",
+        "public_workspace_and_session_routes_reject_before_handler_side_effects",
+        "--test-threads=2"
+      ],
+      "started_at": "2026-10-26T19:11:09.397777+00:00",
+      "ended_at": "2026-10-26T19:15:05.119402+00:00",
+      "elapsed_seconds": 235.722,
+      "exit_code": 0,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/rust-boundaries-r2.log",
+      "log_sha256": "15ee9db8681efec3f9decae958119b47792c6d50f4e45405fb77bd33fcb726ea",
+      "peak_process_tree_rss_bytes": 5043326976,
+      "min_host_mem_available_bytes": 10059857920,
+      "first_resource_sample": {
+        "tree_rss": 230850560,
+        "available": 14292791296,
+        "memory_pressure": "some avg10=0.11 avg60=0.09 avg300=0.02 total=368004025",
+        "io_pressure": "some avg10=0.39 avg60=0.36 avg300=0.19 total=1277605515"
+      },
+      "last_resource_sample": {
+        "tree_rss": 341581824,
+        "available": 14183038976,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.02 total=368289821",
+        "io_pressure": "some avg10=0.95 avg60=0.46 avg300=0.27 total=1278680530"
+      }
+    },
+    {
+      "command": [
+        "node",
+        "scripts/dev-cargo.mjs",
+        "test",
+        "-p",
+        "executors",
+        "-p",
+        "db",
+        "-p",
+        "local-deployment",
+        "-p",
+        "server",
+        "-p",
+        "mcp",
+        "--lib",
+        "-j",
+        "6",
+        "--",
+        "executors::codex::",
+        "account_usage_tests::",
+        "passive",
+        "provider_usage",
+        "task_server::",
+        "models::agent_runtime::tests",
+        "models::agent_runtime_kanban",
+        "models::issue_order::tests",
+        "agent_run_port::tests",
+        "agent_process_registry::tests::dev_server",
+        "remote_mcp::dev_server_tests",
+        "remote_mcp::runtime_write_tests",
+        "remote_mcp::issue_comments::tests",
+        "routes::workspaces::files::tests",
+        "issue_activity_",
+        "plugin_tool_catalog",
+        "public_workspace_and_session_routes_reject_before_handler_side_effects",
+        "--test-threads=2"
+      ],
+      "started_at": "2026-10-26T19:10:20.944984+00:00",
+      "ended_at": "2026-10-26T19:10:51.931114+00:00",
+      "elapsed_seconds": 30.986,
+      "exit_code": 101,
+      "log": "/var/tmp/lvk-instances/dev/runtime/worktrees/e131-devserver-start/lucky-vibe-kanban/.build/seven-source-candidate-fdf7c33f/rust-boundaries.log",
+      "log_sha256": "da65ad473dcc078a61a106eb6b51e05be921729447b04fd732ce77e582b9c2dd",
+      "peak_process_tree_rss_bytes": 1712730112,
+      "min_host_mem_available_bytes": 12585066496,
+      "first_resource_sample": {
+        "tree_rss": 217329664,
+        "available": 14494752768,
+        "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=367872857",
+        "io_pressure": "some avg10=0.00 avg60=0.02 avg300=0.08 total=1277153896"
+      },
+      "last_resource_sample": {
+        "tree_rss": 301907968,
+        "available": 13363924992,
+        "memory_pressure": "some avg10=0.18 avg60=0.03 avg300=0.00 total=367939736",
+        "io_pressure": "some avg10=0.24 avg60=0.41 avg300=0.19 total=1277515215"
+      }
+    }
+  ],
+  "migration_immutability_evidence": {
+    "path": ".build/seven-source-candidate-fdf7c33f/migration-immutability.json",
+    "sha256": "f97b1e5cfc77c856e86d21a14067e78a77de6fe772d5c66953527106bca7681e",
+    "bytes": 19057
+  },
+  "migration_immutability_summary": {
+    "old_migrations_unchanged": 119,
+    "only_added": "20261026180000_agent_starting_recovery.sql",
+    "legacy_and_full_chain": "Candidate Rust tests passed: starting_recovery_migration_preserves_legacy_rows_without_launching_them and full-schema agent_run_port fixtures. Thin legacy registry fixture is not a full production DB copy."
+  },
+  "resource_snapshot": {
+    "success": true,
+    "data": {
+      "resources": [],
+      "holders": [],
+      "queue": []
+    },
+    "error_data": null,
+    "message": null
+  },
+  "resource_during_final_gates": {
+    "online_cpu_count": 8,
+    "cgroup_cpu_max": "max 100000",
+    "start": {
+      "at": "2026-10-26T19:18:56.440159+00:00",
+      "pswpin": 19763450,
+      "pswpout": 33933860,
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368301863\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=288913110\n",
+      "io_pressure": "some avg10=0.00 avg60=0.06 avg300=0.20 total=1279281466\nfull avg10=0.00 avg60=0.06 avg300=0.18 total=1056863641\n",
+      "cpu_pressure": "some avg10=0.00 avg60=0.00 avg300=0.31 total=15228964801\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+    },
+    "end": {
+      "at": "2026-10-26T19:18:58.440708+00:00",
+      "pswpin": 19763450,
+      "pswpout": 33933860,
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=368302277\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=288913524\n",
+      "io_pressure": "some avg10=0.00 avg60=0.06 avg300=0.19 total=1279284518\nfull avg10=0.00 avg60=0.06 avg300=0.18 total=1056866014\n",
+      "cpu_pressure": "some avg10=0.00 avg60=0.00 avg300=0.30 total=15228987662\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+    },
+    "swap_in_pages_delta": 0,
+    "swap_out_pages_delta": 0
+  },
+  "artifacts": [
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/db-6da2fd612182f90c",
+      "sha256": "48ce1b10d5a7653b9c9faa23133e7697ba591b8e66d44e346e54c32307dc93a4",
+      "bytes": 224151712
+    },
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/executors-5183ad52e33aeee0",
+      "sha256": "bd47ee16e60d8406b7d57e02e38b736c9951b31c86604a28f4f9e546bd024f50",
+      "bytes": 268525808
+    },
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/executors-c2428df56bab719d",
+      "sha256": "58b089a25c1b8e4a87a3b023de15cee5dc14a612f968bd020879219d6a689f17",
+      "bytes": 266603592
+    },
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/local_deployment-b97935ffe8889fc2",
+      "sha256": "b1eb2e012a700b6505c5923616bffc9f81638195258d3696d9ba1ff43b2c85bd",
+      "bytes": 299883352
+    },
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/mcp-978609ff73c64b1d",
+      "sha256": "c29fe0f96f55572411573b6cf022ec6d7d0bdc753403a9eee0214160256bb56f",
+      "bytes": 241904352
+    },
+    {
+      "path": "/var/tmp/lvk-instances/dev/runtime/shared/lucky-vibe-kanban-40384b04-3346-4f93-a96e-8b42696b0aaa/cache/lvk-dev-cargo-build/debug/deps/server-7c925e0f73449ee2",
+      "sha256": "39820ea79b1e379186a7d803c2fb63b843c163a2be37c6b190e83da7519c24e7",
+      "bytes": 550967128
+    },
+    {
+      "path": ".build/seven-source-candidate-fdf7c33f/mcp-approval/fixture.html",
+      "sha256": "097bf3cb35c4859dd7839a669085af1fcfe64ff5bfe394a9adbaa03b81b03ced",
+      "bytes": 1925172
+    },
+    {
+      "path": ".build/seven-source-candidate-fdf7c33f/mcp-approval/desktop-light.png",
+      "sha256": "faaa256519cb1a35e4c14988d0203f0fb594fce8873321e4fdc652f9de253dab",
+      "bytes": 48796
+    },
+    {
+      "path": ".build/seven-source-candidate-fdf7c33f/mcp-approval/mobile-dark.png",
+      "sha256": "4eb5ff2735d654fce53ffc1c39d9aaaf8306628f3b3b830bdc9252f8a66a472b",
+      "bytes": 38664
+    },
+    {
+      "path": ".build/kanban-readability/width-1280.png",
+      "sha256": "4d3fbd4c67e43be73b5a3b4cde6593b9792b8760cacfbbd8ae5bebf40970774d",
+      "bytes": 248753
+    },
+    {
+      "path": ".build/kanban-readability/cross-column-ghost.png",
+      "sha256": "9c8df03c04cf29f7d401b627df7a65b20b52e7dd3630b1c1a870d34f6a827e54",
+      "bytes": 245421
+    },
+    {
+      "path": ".build/kanban-readability/width-2560.png",
+      "sha256": "5a3e8a686f8a649ca74ca532df2d0d3f27ec4604cc6113a4f102c49d9595b34a",
+      "bytes": 258136
+    },
+    {
+      "path": ".build/kanban-readability/width-390.png",
+      "sha256": "3e1d9b3909bffa6ca640e2bca4cb1c96f246d174214be16412dc03725168b325",
+      "bytes": 182594
+    },
+    {
+      "path": ".build/kanban-readability/tags-devserver-dark.png",
+      "sha256": "a4b9861553baa99e69015f1227c05cbdf593d38d3dade41748a6fc19138cc82f",
+      "bytes": 256603
+    },
+    {
+      "path": ".build/kanban-readability/tags-devserver-light.png",
+      "sha256": "6706ccfaa623e595710978b0eb4f3440917a0f10e79395d6ffaf6010cc22af32",
+      "bytes": 261948
+    }
+  ],
+  "validated_source_hashes": [
+    {
+      "path": "crates/db/migrations/20261026180000_agent_starting_recovery.sql",
+      "sha256": "1a0685285a092fab60430ba77836f36c85a38bb20216e68c674ce1bb62f00409",
+      "bytes": 948
+    },
+    {
+      "path": "crates/db/src/models/agent_runtime.rs",
+      "sha256": "039e8da1814dbb5b7d179d7bedc8e3674ac0fbec9f3f3ca3ca2172f9cf0e389b",
+      "bytes": 151394
+    },
+    {
+      "path": "crates/db/src/models/agent_runtime_kanban.rs",
+      "sha256": "0dde25562230367e10b8d830f62d0274512a90bed1a8c16f7c463a93afc42fe0",
+      "bytes": 6027
+    },
+    {
+      "path": "crates/db/src/models/agent_runtime_kanban_tests.rs",
+      "sha256": "8c912fb6959ee03f24b5b689013a8bcc43bedd3b02f575741ffb31372109b73f",
+      "bytes": 33138
+    },
+    {
+      "path": "crates/db/src/models/issue_order.rs",
+      "sha256": "faa8235a9c1725ec64c7a330605a62af60789d21fa85af56a34fd78ba7ee37e4",
+      "bytes": 6389
+    },
+    {
+      "path": "crates/db/src/models/mod.rs",
+      "sha256": "9cedf1267bca0b45b93a977c2fd9c578836e9768c1616cf48a43ffcc18fc6b9b",
+      "bytes": 727
+    },
+    {
+      "path": "crates/db/src/models/orchestration.rs",
+      "sha256": "a9847b21bf6abce9eab0bd75420631b13676c8d0cb5bd9a8f4a42e22d9f6a1a1",
+      "bytes": 91761
+    },
+    {
+      "path": "crates/executors/Cargo.toml",
+      "sha256": "ea89da6bedaa23ec753b3c2af7117221e8d9bce1d1c9b3cb7f0ea7b2eb9b441a",
+      "bytes": 2200
+    },
+    {
+      "path": "crates/executors/src/account_usage.rs",
+      "sha256": "dfa5a0506bd768118cda2a34a3a4fbfde4e6cff30e1b7e6158593142bd671ca7",
+      "bytes": 1033
+    },
+    {
+      "path": "crates/executors/src/account_usage_tests.rs",
+      "sha256": "9ab55c2d7b32fa4f75d9fcb0fd6d722da6a2b8eb0e9220c026e05df481b3460a",
+      "bytes": 11517
+    },
+    {
+      "path": "crates/executors/src/command.rs",
+      "sha256": "593943d10ccf233b7fb65eae0d4992133c110f667e169c7a4e86fa6935a6edff",
+      "bytes": 15218
+    },
+    {
+      "path": "crates/executors/src/executors/claude.rs",
+      "sha256": "744be8b2ba8e76ded2e8a96e678ac99481b7f7797f9fd9373c6d51bfcd991ded",
+      "bytes": 140047
+    },
+    {
+      "path": "crates/executors/src/executors/claude/command_adapter.rs",
+      "sha256": "4df02ce566f920a27fc00743025af7bfb444b717fced57f61188bd3bee11b109",
+      "bytes": 11237
+    },
+    {
+      "path": "crates/executors/src/executors/claude/protocol.rs",
+      "sha256": "332141eb188ac10d4f386099965b533233ebe270dee2aafd96a98ddc14c6263a",
+      "bytes": 16488
+    },
+    {
+      "path": "crates/executors/src/executors/claude/types.rs",
+      "sha256": "de1f748c10ebf102fb51c7c100329fc248e8953366266a191ab55e71d172cb3a",
+      "bytes": 6380
+    },
+    {
+      "path": "crates/executors/src/executors/claude/usage.rs",
+      "sha256": "b91442156bd8f3e39104ec91cb8a4a86deb5f3040950234b350b9a91ea8118d8",
+      "bytes": 14494
+    },
+    {
+      "path": "crates/executors/src/executors/codex.rs",
+      "sha256": "111ecaac8601f86f61f667636d2a8ca0844ee277dc2b6366410dbddbd51cfd20",
+      "bytes": 95969
+    },
+    {
+      "path": "crates/executors/src/executors/codex/account_read.rs",
+      "sha256": "ef85f19c6be9d75aa89c4230fdb7361affbdd3b255cbef56b3a735243c2b248f",
+      "bytes": 12132
+    },
+    {
+      "path": "crates/executors/src/executors/codex/client.rs",
+      "sha256": "d975f4a4b307dcf761a2248a2f123d108d3aff9fed73c5e354c0f11cd266edae",
+      "bytes": 151938
+    },
+    {
+      "path": "crates/executors/src/executors/codex/client/mcp_approval.rs",
+      "sha256": "b120d85b606a14c83490d26f9ae8f151b8c79e8b33ac0aa87834989fe8af2dc6",
+      "bytes": 10848
+    },
+    {
+      "path": "crates/executors/src/executors/codex/client/mcp_approval/tests.rs",
+      "sha256": "f97415a6370e893898a2f3b7fbbeef3cfd130dd676462d501731964666e59464",
+      "bytes": 12702
+    },
+    {
+      "path": "crates/executors/src/executors/codex/client/resume_instructions.rs",
+      "sha256": "f96b4cc29b817153e5d1fdfc362b893974f9d0df0e48a9d9e3f6b8b3e57931f1",
+      "bytes": 21940
+    },
+    {
+      "path": "crates/executors/src/executors/codex/jsonrpc.rs",
+      "sha256": "1ef7e480e45a5185a78be4875c8afb40f0c1882d66ba83e6e4e2cea9ba01d289",
+      "bytes": 17198
+    },
+    {
+      "path": "crates/executors/src/lib.rs",
+      "sha256": "56132631d526846460044b2fc83af9dcfe9f4df532158c5ed543073db794e5b6",
+      "bytes": 427
+    },
+    {
+      "path": "crates/executors/tests/fixtures/passive_usage.py",
+      "sha256": "62a5f489c5224a6f1b38e24f9465e322c323f1fc9a92ac7792cb3aca84967ef9",
+      "bytes": 3487
+    },
+    {
+      "path": "crates/local-deployment/src/agent_process_registry.rs",
+      "sha256": "f300ae2cccf586bc8ba0d6c31e8c5cd5862dc47024c4c6b6d6a1827bd71f0f98",
+      "bytes": 37981
+    },
+    {
+      "path": "crates/local-deployment/src/agent_run_port.rs",
+      "sha256": "cb0507370d1f42c2036099b4ee81c465f00c24bcf92e47488ac2dc37ba69a7cd",
+      "bytes": 247958
+    },
+    {
+      "path": "crates/local-deployment/src/container.rs",
+      "sha256": "4db3f41b8eefecd7f612dcb603b9a7aeaa7c4028f931505daed851f9b41b5dc5",
+      "bytes": 87033
+    },
+    {
+      "path": "crates/local-deployment/src/lib.rs",
+      "sha256": "59cfa3bcbda8b8b220c24f55a2dc165cff43b81023636d023b6ceea5de33f066",
+      "bytes": 8741
+    },
+    {
+      "path": "crates/mcp/src/task_server/tools/dev_server.rs",
+      "sha256": "fbd0243c4ca31521446e8138e1e37bd25e3248f8cb1719002db8499da1765fd0",
+      "bytes": 4148
+    },
+    {
+      "path": "crates/mcp/src/task_server/tools/mod.rs",
+      "sha256": "d75b10500b4c8e31b6e7036c11d06efe8aaee89206a32418ff8eeed84a8620cf",
+      "bytes": 18008
+    },
+    {
+      "path": "crates/mcp/src/task_server/tools/provider_usage.rs",
+      "sha256": "72a403162a6636524157269c5fcd53611064ccbfe3617dd7d60c087e75b6bead",
+      "bytes": 1588
+    },
+    {
+      "path": "crates/mcp/src/task_server/tools/stdio_tests.rs",
+      "sha256": "cb035e0c792a97d964761482a8a36e086f514f4d77cff23cdef2e0c821dd63ff",
+      "bytes": 5329
+    },
+    {
+      "path": "crates/server/src/lib.rs",
+      "sha256": "df4e30fd413f28633902f5354b6fd03edc24404a98345b3862adc3a24efee8df",
+      "bytes": 260
+    },
+    {
+      "path": "crates/server/src/middleware/model_loaders_tests.rs",
+      "sha256": "b156dba36a3954612ac07d066c61a180d2bbd6bf9037589253ce1bf673654674",
+      "bytes": 6660
+    },
+    {
+      "path": "crates/server/src/provider_usage.rs",
+      "sha256": "fc42911c721e519120e5dbb2d0e25f375104a33e61c586162bbe1ad9d8f128bf",
+      "bytes": 4544
+    },
+    {
+      "path": "crates/server/src/remote_mcp/dev_server.rs",
+      "sha256": "f100bff03e0cf192768784004a25557182e2e90ae315698350ba6f3df2e25c6a",
+      "bytes": 4328
+    },
+    {
+      "path": "crates/server/src/remote_mcp/dev_server_tests.rs",
+      "sha256": "8085e6851f154d5874732b6e4cf0cce9dc871bbb47c882d133cfd4a37dded6da",
+      "bytes": 22873
+    },
+    {
+      "path": "crates/server/src/remote_mcp/issue_comments.rs",
+      "sha256": "7f652bd962a66b97644d2423ce3b2773b0dd4f80ec75b3f361e68bf817d9e798",
+      "bytes": 48926
+    },
+    {
+      "path": "crates/server/src/remote_mcp/mod.rs",
+      "sha256": "420ffc7ab9b58ac9e1b6fc7b5a38c4dcc60f75e9102076b02a98a2d9fcdbcca3",
+      "bytes": 25463
+    },
+    {
+      "path": "crates/server/src/remote_mcp/provider_usage.rs",
+      "sha256": "a2943483082eaa811e5624db866049dbe9c8e0e75e70aa418646fe7b03819529",
+      "bytes": 5217
+    },
+    {
+      "path": "crates/server/src/remote_mcp/runtime_write.rs",
+      "sha256": "31d7082e41ae121ff058be0e84fc660e404f2f57d3fc27143316d236bc6115cb",
+      "bytes": 18201
+    },
+    {
+      "path": "crates/server/src/remote_mcp/runtime_write_tests.rs",
+      "sha256": "1dc6298b0b61e47b441f2c44672364c3e756dda62d84bac5174e2486a865dde8",
+      "bytes": 24126
+    },
+    {
+      "path": "crates/server/src/remote_mcp/tests.rs",
+      "sha256": "254550120faf4d8f8c8e8824e287b8cf01973b46216a87615fa6266ba6b7b1ed",
+      "bytes": 83810
+    },
+    {
+      "path": "crates/server/src/routes/execution_processes.rs",
+      "sha256": "4d052f45e6599c107283784c03428ba4400e07223292632b463790c532fa59da",
+      "bytes": 11581
+    },
+    {
+      "path": "crates/server/src/routes/local_remote.rs",
+      "sha256": "e657089eb2d907a8e99f36658d0a8cfd830761b450268e144f0abdd5482b9c6e",
+      "bytes": 159685
+    },
+    {
+      "path": "crates/server/src/routes/mod.rs",
+      "sha256": "6404aebdb3805faad8cf27639fb77c49b6712e57c067d6925a01dd066471d446",
+      "bytes": 3258
+    },
+    {
+      "path": "crates/server/src/routes/provider_usage.rs",
+      "sha256": "cc153b11188ec0de9505ea8b9f78aa61b22dc116495616c8eb4fda3147fbe5bd",
+      "bytes": 1143
+    },
+    {
+      "path": "crates/server/src/routes/workspaces/dev_server.rs",
+      "sha256": "69392b07d478f5f5db249fd1468472afc7c4bc04c1efd6751334bb94859ddab3",
+      "bytes": 13319
+    },
+    {
+      "path": "crates/server/src/routes/workspaces/execution.rs",
+      "sha256": "b68bc0f4447819da7834004d2e106bcd6c70f2e4d121fb856b99552110f64008",
+      "bytes": 6046
+    },
+    {
+      "path": "crates/server/src/routes/workspaces/files.rs",
+      "sha256": "09fc849b4284f4878c651225adb7d4e8066b60bb3b2be53c367290b95caf7a67",
+      "bytes": 35443
+    },
+    {
+      "path": "crates/server/src/routes/workspaces/mod.rs",
+      "sha256": "fcf2616b04657557bdf833f1e38f1d06913db572492595909919e3e479aea208",
+      "bytes": 2366
+    },
+    {
+      "path": "crates/server/src/routes/workspaces/workspace_summary.rs",
+      "sha256": "abc53876be604328016f95be2ac26570124783268bc812b685b6252ca6640222",
+      "bytes": 8412
+    },
+    {
+      "path": "crates/services/src/services/container.rs",
+      "sha256": "6210d5e1a49944df93cc41a3147f32e86ddca9b1e6231466e736717f3a2aff9a",
+      "bytes": 38582
+    },
+    {
+      "path": "crates/utils/src/shell.rs",
+      "sha256": "3ff1c5542dd571a661170d143e680468c9791502a59f13df49d3ce5d79e6f50d",
+      "bytes": 18171
+    },
+    {
+      "path": "docs/development/chatgpt-mcp.md",
+      "sha256": "15086ef14b3ead2dccea24884b068dfc1c395c1ff4ebee9aa08a5f88af6c799e",
+      "bytes": 57851
+    },
+    {
+      "path": "docs/development/codex-resume-instructions.md",
+      "sha256": "8f95e7d658f430b76f9bccdbb6b5da89224e880aea8a7aee2a8e40c60c3c27a3",
+      "bytes": 10808
+    },
+    {
+      "path": "docs/development/managed-dev-server-mcp-evidence.json",
+      "sha256": "7d27e373e0922cd3855e9ebf797d77f2ded213eb02e8884e7c1afd3ab207898e",
+      "bytes": 10452
+    },
+    {
+      "path": "docs/development/managed-dev-server-mcp.md",
+      "sha256": "18bc002753dc3eb9da3571c36c8f62c6f1908a99e54c4e8d2a73934524ce6cf2",
+      "bytes": 19603
+    },
+    {
+      "path": "docs/development/provider-usage.md",
+      "sha256": "9c7b0a2c95212feca41d5ea68e1c5e3dda8fbef7a0fdb485ceca99d058986fd7",
+      "bytes": 7310
+    },
+    {
+      "path": "docs/development/starting-recovery-local-183.md",
+      "sha256": "cc95188263107871bbd62d108c317877c09dbfcd8da0c1c0e0b47b92f6ee7c97",
+      "bytes": 11385
+    },
+    {
+      "path": "docs/development/workspace-file-download.md",
+      "sha256": "684244b5c8441f3d0853f0d7ca477dea514bea790a9275e84ceffc8dcfc3ec43",
+      "bytes": 5371
+    },
+    {
+      "path": "docs/integrations/vibe-kanban-mcp-server.mdx",
+      "sha256": "f53f3009ccf2af7a7f991a1d609e3550b6db81f3170f1cc2a48ca97188c78921",
+      "bytes": 17506
+    },
+    {
+      "path": "packages/ui/src/components/IssueWorkspaceCard.tsx",
+      "sha256": "20aabeaa45372a9bc2620b5697d234e5eda2942930f9452f7297c57b300506d6",
+      "bytes": 13099
+    },
+    {
+      "path": "packages/ui/src/components/KanbanCardContent.tsx",
+      "sha256": "add9d4402fb1edcf40c7c400d221a3c2f8e6863980f72b6d1c52b54f91bf18a4",
+      "bytes": 10389
+    },
+    {
+      "path": "packages/ui/src/components/WorkspaceSummary.tsx",
+      "sha256": "f212eba5c13081ce1b57a3ac76a60d8fe9c983702f68620cdea01a61eaeb0d98",
+      "bytes": 7937
+    },
+    {
+      "path": "packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts",
+      "sha256": "042e881fe1aad20eba2f3f79490add5dd4c7513e3dba0d74759ae81723ce649d",
+      "bytes": 46787
+    },
+    {
+      "path": "packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts",
+      "sha256": "81aa563bdd5bb7f09a303e90d97224b2196b7472521b914633dc798da510b61d",
+      "bytes": 33943
+    },
+    {
+      "path": "packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
+      "sha256": "470fe2ae6ff169c887978f0181654d792a584b5f26cc1afb503e5a105f6496c3",
+      "bytes": 641
+    },
+    {
+      "path": "packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
+      "sha256": "05837438319df5017e54afa79ee8125a2572023b1fcee97e9f6d41ed0bc6592e",
+      "bytes": 46227
+    },
+    {
+      "path": "packages/web-core/src/features/kanban/ui/KanbanGrid.tsx",
+      "sha256": "bb17d92aa15448ae72f3f9657560d6cb4a6fa3c05eaa899759478b62a2b2acd6",
+      "bytes": 6549
+    },
+    {
+      "path": "packages/web-core/src/features/kanban/ui/kanbanOrder.ts",
+      "sha256": "b10505c428c97f33e6bc042ffde369c8340c819bf4f8ee44170c44a47839b22f",
+      "bytes": 2283
+    },
+    {
+      "path": "packages/web-core/src/features/workflow/model/taskAttempt.test.ts",
+      "sha256": "8be5a3c857854e2720bf22d11319b0e3b424632c2f4265ee1b9dc64fd0066aea",
+      "bytes": 5795
+    },
+    {
+      "path": "packages/web-core/src/features/workflow/model/taskAttempt.ts",
+      "sha256": "564ed6b53583b812b16ba7b1cd22dcb9b3ea760dd51286901a98a90224f192e6",
+      "bytes": 5609
+    },
+    {
+      "path": "packages/web-core/src/i18n/locales/en/common.json",
+      "sha256": "ae5d7264e1914a34c221b76495547948ec3e5f71582814a18d806b0775d61a32",
+      "bytes": 61937
+    },
+    {
+      "path": "packages/web-core/src/i18n/locales/ja/common.json",
+      "sha256": "0d8ce233954abae9463469a82e1c1777f314f71fdd133b32bd1c2d5d2a059bc9",
+      "bytes": 64418
+    },
+    {
+      "path": "packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts",
+      "sha256": "350cea90b681ac6faf734b83bc9fde4a713b81e39d9ce00df4418d7d294566ae",
+      "bytes": 12985
+    },
+    {
+      "path": "packages/web-core/src/shared/lib/remoteApi.ts",
+      "sha256": "3cff2628608643165cb9a9a41dbdecd79d9a2f926a7013f35a9ef05f20d11835",
+      "bytes": 2339
+    },
+    {
+      "path": "tests/chat/mcp-approval.fixture.tsx",
+      "sha256": "55c7ac830af6cc54fc46827699e153450b1e421d8ad96365e51b701573b70750",
+      "bytes": 4526
+    },
+    {
+      "path": "tests/chat/mcp-approval.mjs",
+      "sha256": "48b025dffe2c8a44eaeefd47ecb9d7d1ae1ecac22791fc025b9a536ce816ad37",
+      "bytes": 3385
+    },
+    {
+      "path": "tests/kanban/READABILITY-VALIDATION.md",
+      "sha256": "60b1625b0e8bf456ea9ade2b4b6662c8558fcd2909e39e2bb73b64cc7403e18c",
+      "bytes": 29487
+    },
+    {
+      "path": "tests/kanban/isolated.mjs",
+      "sha256": "1f67314d789b0dca03c9e5ff3c1aab9a08c38b21ef18bcc7d9d7d875ffa03acb",
+      "bytes": 20002
+    },
+    {
+      "path": "tests/kanban/order.test.mjs",
+      "sha256": "7c74ebcaf7269e2aa57d62b4e7af1ba0485bc3a5bbe9dec2a0a78ed826a70803",
+      "bytes": 2556
+    },
+    {
+      "path": "tests/kanban/readability.fixture.tsx",
+      "sha256": "7b4f647aa7c750c2489e7bed3f9b27b7be8c9fa99d0eabd64e744e9785e05a30",
+      "bytes": 7163
+    },
+    {
+      "path": "tests/kanban/readability.mjs",
+      "sha256": "766e08ad864808f82fe898c2b15da7b8718c6cb83e1395fccc6206de81ff6e5e",
+      "bytes": 12881
+    },
+    {
+      "path": "tests/server/run-managed-dev-server.mjs",
+      "sha256": "c1765240c251a060d47e123f21ee2981fda287703e8639e6923f1868780520d3",
+      "bytes": 2729
+    }
+  ],
+  "limits": [
+    "Candidate source, test binaries and component HTML only; no deployment server/release binary was built.",
+    "Only test-only never-loop assertion changed after 251-pass aggregate; final focused initialize regression and all-target Clippy rechecked it.",
+    "Full backend/formal Integration gates were not run; owner chooses the formal validation/skip contract.",
+    "No new real provider/account reads/agent/human approval or live DB/preview operations. Original LOCAL-206 actual-agent approval-wait evidence is reused, not rerun.",
+    "Mock UI uses pre-redacted synthetic arguments and explicit mock action policy; it does not prove redaction transformations or actual authenticated UI/control API.",
+    "Exact final commit/tree/main are stored after the QA commit in the retained final-revision.json and final response, to avoid recursive commit metadata."
+  ],
+  "cleanup": {
+    "observed_at": "2026-10-26T19:29:48.561740+00:00",
+    "active_owned_fixture_processes": [],
+    "owned_nonexecuting_zombies": [],
+    "build_writers": []
+  },
+  "administrative_checks": [
+    "Final process-scan helper syntax and self-shell substring false-positive corrected; corrected exact-argv/environment scan found no fixtures/build writers. No process signals or stops were used during this task.",
+    "Final formatting and whitespace check passed; no global/other-Workspace node_modules/store changes."
+  ]
+}

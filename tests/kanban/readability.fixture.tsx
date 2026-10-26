@@ -165,6 +165,13 @@ function Fixture() {
             </section>
           ))}
         </KanbanGrid>
+        <section id="preparing-cases">
+          {(['pending', 'starting'] as const).map((status) => (
+            <div key={status} id={`preparing-${status}`}>
+              <IssueWorkspaceCard workspace={{...workspace(0), name: `Preparing ${status}`, latestProcessStatus: status, hasPendingApproval: false}} showStatusBadge={false} />
+            </div>
+          ))}
+        </section>
       </main>
     </TooltipProvider>
   );
