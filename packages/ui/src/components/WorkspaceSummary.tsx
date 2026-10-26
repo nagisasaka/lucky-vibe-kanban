@@ -74,6 +74,9 @@ export function WorkspaceSummary({
 }: WorkspaceSummaryProps) {
   const { t } = useTranslation('common');
   const hasChanges = filesChanged !== undefined && filesChanged > 0;
+  const isPreparing = ['pending', 'starting'].includes(
+    latestProcessStatus ?? ''
+  );
   const isFailed =
     latestProcessStatus === 'failed' ||
     latestProcessStatus === 'crashed' ||
@@ -142,7 +145,9 @@ export function WorkspaceSummary({
             )}
 
             {/* Running dots OR hand icon for pending approval */}
+            {isPreparing && <span className="text-low">Preparing…</span>}
             {isRunning &&
+              !isPreparing &&
               (hasPendingApproval ? (
                 <HandIcon
                   className="size-icon-xs text-brand shrink-0"
