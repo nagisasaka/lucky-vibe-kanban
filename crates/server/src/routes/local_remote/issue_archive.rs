@@ -684,6 +684,94 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn generated_archive_invalidates_intervention_after_claim_before_deletion() {
+        for intervention in [
+            "unarchive",
+            "archive_unarchive",
+            "link_aba",
+            "owner_aba",
+            "path_aba",
+        ] {
+            let (_root, pool, ws, project, id, status) = generated_fixture().await;
+            let result = archive_generated_for_pool(&pool, &ws, || async {
+                let started: String = sqlx::query_scalar(
+                    "SELECT attempt_result FROM generated_issue_workspaces WHERE workspace_id=?",
+                )
+                .bind(ws.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+                assert_eq!(started, "attempt started; outcome may be uncertain");
+                match intervention {
+                    "unarchive" => {
+                        unarchive(&pool, project, id).await.unwrap();
+                    }
+                    "archive_unarchive" => {
+                        sqlx::query("UPDATE local_issues SET archived=1 WHERE id=?")
+                            .bind(id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                        unarchive(&pool, project, id).await.unwrap();
+                    }
+                    "link_aba" => {
+                        sqlx::query("DELETE FROM local_workspace_links WHERE workspace_id=?")
+                            .bind(ws.id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                        link(&pool, ws.id, project, id).await;
+                    }
+                    "owner_aba" => {
+                        sqlx::query("UPDATE workspaces SET execution_owner=NULL WHERE id=?")
+                            .bind(ws.id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                        sqlx::query("UPDATE workspaces SET execution_owner=? WHERE id=?")
+                            .bind(ws.execution_owner.clone())
+                            .bind(ws.id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                    }
+                    "path_aba" => {
+                        sqlx::query("UPDATE workspaces SET container_ref=NULL WHERE id=?")
+                            .bind(ws.id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                        sqlx::query("UPDATE workspaces SET container_ref=? WHERE id=?")
+                            .bind(&ws.container_ref)
+                            .bind(ws.id)
+                            .execute(&pool)
+                            .await
+                            .unwrap();
+                    }
+                    _ => unreachable!(),
+                }
+                Ok(true)
+            })
+            .await;
+            assert!(result.is_err(), "{intervention}");
+            assert_issue(&pool, id, status, false).await;
+            assert!(
+                !Workspace::find_by_id(&pool, ws.id)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .archived
+            );
+            assert!(std::path::Path::new(ws.container_ref.as_ref().unwrap()).exists());
+            archive_generated_for_pool(&pool, &ws, || async {
+                panic!("invalidated attempt must not replay")
+            })
+            .await
+            .unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn generated_archive_preserves_other_workspace_and_issue_status() {
         let (_root, pool, ws, project, id, status) = generated_fixture().await;
         let other = Workspace::create(
@@ -1024,8 +1112,8 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<bool, ApiError>>,
 {
-    let Some((issue, project, kind, repo, run_id)) = sqlx::query_as::<_, (Uuid, Uuid, String, Uuid, Option<String>)>(
-        "SELECT issue_id,project_id,owner_kind,repository_id,owner_run_id FROM generated_issue_workspaces WHERE workspace_id=? AND attempt_result IS NULL"
+    let Some((issue, project, kind, repo, run_id, revision)) = sqlx::query_as::<_, (Uuid, Uuid, String, Uuid, Option<String>, i64)>(
+        "SELECT issue_id,project_id,owner_kind,repository_id,owner_run_id,eligibility_revision FROM generated_issue_workspaces WHERE workspace_id=? AND attempt_result IS NULL"
     ).bind(released.id).fetch_optional(pool).await? else { return Ok(()); };
     let _admission = services::services::integration_admission::MUTATIONS
         .lock()
@@ -1034,14 +1122,22 @@ where
     let _workspace = services::services::workspace_lifecycle::lock(released.id).await;
     // Persist before touching the filesystem. Interrupted or uncertain outcomes
     // are deliberately never retried by a duplicate completion event.
-    let claimed = sqlx::query("UPDATE generated_issue_workspaces SET attempt_result='attempt started; outcome may be uncertain' WHERE workspace_id=? AND attempt_result IS NULL")
-        .bind(released.id).execute(pool).await?;
+    let claimed = sqlx::query("UPDATE generated_issue_workspaces SET attempt_result='attempt started; outcome may be uncertain' WHERE workspace_id=? AND attempt_result IS NULL AND eligibility_revision=?")
+        .bind(released.id).bind(revision).execute(pool).await?;
     if claimed.rows_affected() == 0 {
         return Ok(());
     }
     let result = async {
         if !settled().await? { return Err(failure("Workspace scripts still active")); }
-        let ws = Workspace::find_by_id(pool, released.id).await?.ok_or_else(|| failure("Workspace missing"))?;
+        // BEGIN IMMEDIATE excludes concurrent DB writers until all final
+        // eligibility/owner/link checks and physical mutation have finished.
+        let repos = WorkspaceRepo::find_repos_for_workspace(pool, released.id).await?;
+        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+        let eligible: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM generated_issue_workspaces WHERE workspace_id=? AND eligibility_revision=? AND attempt_result='attempt started; outcome may be uncertain')")
+            .bind(released.id).bind(revision).fetch_one(&mut *tx).await?;
+        if !eligible { return Err(failure("Generated archive eligibility invalidated after claim")); }
+        let ws = sqlx::query_as::<_, Workspace>("SELECT * FROM workspaces WHERE id=?")
+            .bind(released.id).fetch_optional(&mut *tx).await?.ok_or_else(|| failure("Workspace missing"))?;
         if ws.archived || ws.is_execution_only() || ws.execution_owner != released.execution_owner
             || ws.container_ref != released.container_ref || ws.branch != released.branch {
             return Err(failure("Released Workspace changed"));
@@ -1050,9 +1146,11 @@ where
         if owner.kind != kind || owner.repository_id != Some(repo) || owner.run_id.is_none() || owner.run_id.map(|id| id.to_string()) != run_id {
             return Err(failure("Generated owner mismatch"));
         }
-        let repos = WorkspaceRepo::find_repos_for_workspace(pool, ws.id).await?;
-        if repos.len() != 1 || repos[0].id != repo { return Err(failure("Generated repository mismatch")); }
-        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+        let current_repos: Vec<(Uuid, String, String)> = sqlx::query_as("SELECT r.id,r.path,r.name FROM repos r JOIN workspace_repos wr ON wr.repo_id=r.id WHERE wr.workspace_id=?")
+            .bind(ws.id).fetch_all(&mut *tx).await?;
+        if repos.len() != 1 || repos[0].id != repo || current_repos.len() != 1
+            || current_repos[0].0 != repo || current_repos[0].1.as_str() != repos[0].path.to_string_lossy().as_ref()
+            || current_repos[0].2 != repos[0].name { return Err(failure("Generated repository mismatch")); }
         let linked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id AND i.project_id=l.project_id WHERE l.workspace_id=? AND l.issue_id=? AND l.project_id=? AND i.archived=0)")
             .bind(ws.id).bind(issue).bind(project).fetch_one(&mut *tx).await?;
         if !linked { return Err(failure("Generated Issue link changed")); }
@@ -1074,15 +1172,23 @@ where
         archive_processes::check(ws.container_ref.as_deref()).await?;
         let deletion_error = archive::archive_checked(&mut tx, &ws, &repos).await?;
         // Other linked Workspaces are never archived by this completion event.
-        sqlx::query("UPDATE local_issues SET archived=1,updated_at=datetime('now','subsec') WHERE id=? AND project_id=? AND NOT EXISTS(SELECT 1 FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=? AND w.archived=0)")
-            .bind(issue).bind(project).bind(issue).execute(&mut *tx).await?;
+        let issue_archived = sqlx::query("UPDATE local_issues SET archived=1,updated_at=datetime('now','subsec') WHERE id=? AND project_id=? AND NOT EXISTS(SELECT 1 FROM local_workspace_links l JOIN workspaces w ON w.id=l.workspace_id WHERE l.issue_id=? AND w.archived=0)")
+            .bind(issue).bind(project).bind(issue).execute(&mut *tx).await?.rows_affected() == 1;
         tx.commit().await?;
-        Ok::<_, ApiError>(json!({"workspace_id":ws.id,"archived":true,"deletion_error":deletion_error}))
+        Ok::<_, ApiError>(json!({"workspace_id":ws.id,"archived":true,"worktree_deleted":ws.can_delete_container_path() && deletion_error.is_none(),"issue_id":issue,"issue_archived":issue_archived,"deletion_error":deletion_error}))
     }.await;
     let detail = match &result {
         Ok(value) => value.to_string(),
         Err(error) => format!("archive refused or uncertain: {error}"),
     };
+    match &result {
+        Ok(value) if value["deletion_error"].is_null() => {
+            tracing::info!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive attempt finished")
+        }
+        _ => {
+            tracing::warn!(workspace_id=%released.id, issue_id=%issue, result=%detail, "Generated archive refused, uncertain or deletion incomplete")
+        }
+    }
     sqlx::query("UPDATE generated_issue_workspaces SET attempt_result=? WHERE workspace_id=?")
         .bind(detail)
         .bind(released.id)
