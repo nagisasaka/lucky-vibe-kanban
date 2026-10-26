@@ -333,6 +333,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
         ("add_issue_tag", "lvk:write"),
         ("remove_issue_tag", "lvk:write"),
         ("add_issue_comment", "lvk:write"),
+        ("edit_issue_comment", "lvk:write"),
         ("create_todo", "lvk:write"),
         ("write_design_note", "lvk:write"),
         ("update_todo", "lvk:write"),
