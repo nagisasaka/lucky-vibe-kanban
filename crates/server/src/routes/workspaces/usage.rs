@@ -91,7 +91,7 @@ pub async fn describe(
             if run.workspace_id != Some(workspace.id)
                 || Some(run.repository_id) != owner.repository_id
             {
-                return Err(error("Integration workspace ownership mismatch"));
+                return Err(error("Auto-merge workspace ownership mismatch"));
             }
             view.status = run.status;
             view.terminal = matches!(

@@ -202,14 +202,14 @@ pub async fn validate_agent_owner(
     );
     match owner.kind.as_str() {
         INTEGRATION => {
-            let run_id = owner.run_id.context("Integration owner is unbound")?;
+            let run_id = owner.run_id.context("Auto-merge owner is unbound")?;
             ensure!(
                 request.correlation_id == run_id,
-                "Integration correlation does not match execution owner"
+                "Auto-merge correlation does not match execution owner"
             );
             let owned: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE id=? AND repository_id=? AND workspace_id=? AND session_id=?)")
                 .bind(run_id).bind(repo_id).bind(workspace.id).bind(request.session_id).fetch_one(pool).await?;
-            ensure!(owned, "Integration execution identity mismatch");
+            ensure!(owned, "Auto-merge execution identity mismatch");
             db::models::integration::guard_agent_dispatch(
                 pool,
                 workspace.id,
@@ -333,7 +333,7 @@ pub async fn validate_script_owner(
             && run.status == "validating"
             && !run.cancel_requested
             && db::models::integration::workspace_owner(pool, workspace_id).await? == Some(run.id),
-        "Integration validation ownership mismatch"
+        "Auto-merge validation ownership mismatch"
     );
     let ExecutorActionType::ScriptRequest(script) = action.typ();
     ensure!(

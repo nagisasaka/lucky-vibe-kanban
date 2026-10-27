@@ -125,7 +125,7 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   for local disk relief or put disposable scratch outputs in persistent
   storage. Shared-cache retention and capacity changes require coordinated
   maintenance, separate from ordinary task cleanup.
-- Preserve LVK-managed worktrees, Integration/preview snapshots, instance
+- Preserve LVK-managed worktrees, Auto-merge/preview snapshots, instance
   builds, databases, backups and audit logs according to their lifecycle.
   In particular, retained staging source trees can supply frontend assets to
   running binaries. Leave managed cleanup to the owning workflow/operator;
@@ -155,9 +155,9 @@ Choose validation for the changed behaviour and affected consumers. The broad co
 - Format changed files or the affected package using its existing configuration. Avoid unrelated formatting changes and do not run the whole-repository formatter as a routine completion step.
 - Review the final diff and run `git diff --check`. Report the selected validation, why it covers the change, results, and anything skipped or unavailable. Missing prerequisites and skipped checks are not passes. Repeat or broaden expensive checks only after new changes, failures or unresolved concerns justify it.
 
-### Formal Integration
+### Auto-merge
 
-By default, formal server/container Integration must validate the frozen candidate with `pnpm run check`, `pnpm run lint`, and `pnpm run backend:test`, plus relevant boundary tests. The frontend prerequisite above applies. This contract is separate from scoped development checks: missing prerequisites are failures; fix the plan/environment and create a new Integration instead of bypassing validation. The explicit run-level “Skip all integration validation (unverified)” option is the supported exception: new runs inherit the saved server preference unless the request explicitly overrides it; when selected at admission, do not run acceptance checks or prepare their plan, and record the integrated candidate as unverified. This choice does not waive clean-candidate/ancestry checks, conflict-resolution review, target consistency, cancellation or publication protections. It cannot be enabled retroactively through agent instructions.
+By default, server/container Auto-merge must validate the frozen candidate with `pnpm run check`, `pnpm run lint`, and `pnpm run backend:test`, plus relevant boundary tests. The frontend prerequisite above applies. This contract is separate from scoped development checks: missing prerequisites are failures; fix the plan/environment and create a new Auto-merge instead of bypassing validation. The explicit run-level “Skip all Auto-merge validation (unverified)” option is the supported exception: new runs inherit the saved server preference unless the request explicitly overrides it; when selected at admission, do not run acceptance checks or prepare their plan, and record the integrated candidate as unverified. This choice does not waive clean-candidate/ancestry checks, conflict-resolution review, target consistency, cancellation or publication protections. It cannot be enabled retroactively through agent instructions.
 
 ## Release and Deployment
 

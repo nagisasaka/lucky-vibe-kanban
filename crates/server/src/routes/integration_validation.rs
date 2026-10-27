@@ -88,7 +88,7 @@ fn regular_path(path: &Path, directory: bool) -> Result<(), ApiError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(e) => Err(e.into()),
         _ => Err(ApiError::BadRequest(
-            "Integration settings must be a regular file in a regular .lvk directory (no symlinks)"
+            "Auto-merge settings must be a regular file in a regular .lvk directory (no symlinks)"
                 .into(),
         )),
     }
@@ -144,7 +144,7 @@ pub(crate) fn save_settings(
     let before = read_settings(root)?;
     if before.revision != request.expected_revision {
         return Err(ApiError::Conflict(
-            "Integration settings or branch changed; reload before saving".into(),
+            "Auto-merge settings or branch changed; reload before saving".into(),
         ));
     }
     fs::create_dir_all(root.join(".lvk"))?;
@@ -157,7 +157,7 @@ pub(crate) fn save_settings(
     // Detect external edits made while preparing the replacement as well.
     if read_settings(root)?.revision != before.revision {
         return Err(ApiError::Conflict(
-            "Integration settings or branch changed; reload before saving".into(),
+            "Auto-merge settings or branch changed; reload before saving".into(),
         ));
     }
     temp.persist(root.join(CONFIG))

@@ -115,6 +115,10 @@ Builds default to a 4 GiB Node heap, matching the Docker build; an existing
 `NODE_OPTIONS` value overrides this default. This is a development preview;
 use the server image for production deployment.
 
+## Auto-merge
+
+Auto-merge validates changes, uses AI to resolve conflicts when needed, and applies them to the target branch. It can merge mechanically without AI and pauses for required decisions or approvals. Code merge and subsequent OpenWiki updates are separate outcomes; a Wiki-only failure does not undo merged code.
+
 ## Workspaces and repository memory
 
 Each registered repository can share local files through `.lvk-shared/persistent`
@@ -123,7 +127,7 @@ configure language-specific caches explicitly and back up important local files.
 
 [OpenWiki](docs/workspaces/openwiki.mdx) is configured per repository. Coding
 agents contribute change manifests; repository memory is reconciled after source
-integration. See the [integration operation guide](docs/design/parallel-integration-implementation.md#operation-and-recovery)
+integration. See the [Auto-merge operation guide](docs/design/parallel-integration-implementation.md#operation-and-recovery)
 for source reservations, validation, publication and recovery.
 
 ## Naming

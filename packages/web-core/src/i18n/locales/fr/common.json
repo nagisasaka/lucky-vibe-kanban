@@ -1185,9 +1185,9 @@
     "acknowledge": "Je comprends le risque pour ce candidat et cette vérification.",
     "retry": "Corriger l’environnement et réessayer",
     "continue": "Continuer avec cette exception",
-    "cancel": "Annuler Integration",
-    "instructionBoundary": "Les instructions n’approuvent ni les exceptions de validation ni les outils. La reprise conserve cette Integration et cette Session et valide à nouveau le candidat.",
-    "instruction": "Instruction pour Integration",
+    "cancel": "Annuler Fusion automatique",
+    "instructionBoundary": "Les instructions n’approuvent ni les exceptions de validation ni les outils. La reprise conserve cette Fusion automatique et cette Session et valide à nouveau le candidat.",
+    "instruction": "Instruction pour Fusion automatique",
     "send": "Envoyer une instruction",
     "resume": "Reprendre après réparation / envoyer une instruction",
     "history": "Historique de reprise"
@@ -1237,6 +1237,6 @@
     "confirmDelete": "Delete this TODO?",
     "project": "Project",
     "chooseProject": "Choose a Project",
-    "integration": "Integrate / Auto Merge"
+    "integration": "Fusion automatique"
   }
 }
