@@ -204,3 +204,142 @@ async fn reservation_release_failure_rolls_back_terminal_event_and_projection() 
         .unwrap();
     assert_eq!(status, "not_started");
 }
+
+#[tokio::test]
+async fn reservation_first_terminal_host_batch_preserves_evidence_and_replays() {
+    for status in [
+        AgentRunStatus::Failed,
+        AgentRunStatus::Cancelled,
+        AgentRunStatus::Crashed,
+        AgentRunStatus::AuditFailed,
+    ] {
+        let (pool, request, attempt) = reservation_fixture().await;
+        upgrade_reservations(&pool).await;
+        let mut terminal = event(&request, &attempt, 1);
+        terminal.payload = AgentEventPayload::LifecycleChanged { status };
+        let inserted = AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            std::slice::from_ref(&terminal),
+            &[],
+            &[],
+            attempt.run_attempt_id,
+            1,
+        )
+        .await
+        .unwrap();
+        assert_eq!(inserted.len(), 1);
+        let row: (String, i64, Option<i64>) = sqlx::query_as(
+            "SELECT registry_status,last_host_event_sequence,pid FROM agent_process_registry",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(row, ("reserved".into(), 1, None), "{status:?}");
+        assert!(
+            AgentEventRecord::append_and_project_host_batch(
+                &pool,
+                &[terminal],
+                &[],
+                &[],
+                attempt.run_attempt_id,
+                1
+            )
+            .await
+            .unwrap()
+            .is_empty()
+        );
+        let row_after: (String, i64, Option<i64>) = sqlx::query_as(
+            "SELECT registry_status,last_host_event_sequence,pid FROM agent_process_registry",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(row, row_after);
+    }
+}
+
+#[tokio::test]
+async fn reservation_host_cursor_rejects_foreign_identity_and_rolls_back_failures() {
+    let (pool, request, attempt) = reservation_fixture().await;
+    upgrade_reservations(&pool).await;
+    let mut terminal = event(&request, &attempt, 1);
+    terminal.payload = AgentEventPayload::LifecycleChanged {
+        status: AgentRunStatus::Failed,
+    };
+    for foreign_session in [false, true] {
+        let mut foreign = terminal.clone();
+        if foreign_session {
+            foreign.session_id = Uuid::new_v4();
+        } else {
+            foreign.agent_run_id = Uuid::new_v4();
+        }
+        assert!(matches!(
+            AgentEventRecord::append_and_project_host_batch(
+                &pool,
+                &[foreign],
+                &[],
+                &[],
+                attempt.run_attempt_id,
+                1
+            )
+            .await,
+            Err(AgentRuntimePersistenceError::IdentityConflict { .. })
+        ));
+    }
+    sqlx::raw_sql("CREATE TRIGGER reject_host_terminal BEFORE INSERT ON agent_events BEGIN SELECT RAISE(ABORT,'fixture terminal storage failure'); END;")
+        .execute(&pool).await.unwrap();
+    assert!(
+        AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            std::slice::from_ref(&terminal),
+            &[],
+            &[],
+            attempt.run_attempt_id,
+            1
+        )
+        .await
+        .is_err()
+    );
+    let unchanged: (String, i64, String, i64) = sqlx::query_as(
+        "SELECT p.registry_status,p.last_host_event_sequence,a.status,(SELECT COUNT(*) FROM agent_events) FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id")
+        .fetch_one(&pool).await.unwrap();
+    assert_eq!(unchanged, ("reserved".into(), 0, "pending".into(), 0));
+    sqlx::raw_sql("DROP TRIGGER reject_host_terminal")
+        .execute(&pool)
+        .await
+        .unwrap();
+    AgentEventRecord::append_and_project_host_batch(
+        &pool,
+        std::slice::from_ref(&terminal),
+        &[],
+        &[],
+        attempt.run_attempt_id,
+        1,
+    )
+    .await
+    .unwrap();
+    terminal.payload = AgentEventPayload::LifecycleChanged {
+        status: AgentRunStatus::Cancelled,
+    };
+    assert!(matches!(
+        AgentEventRecord::append_and_project_host_batch(
+            &pool,
+            &[terminal],
+            &[],
+            &[],
+            attempt.run_attempt_id,
+            2
+        )
+        .await,
+        Err(AgentRuntimePersistenceError::IdempotencyConflict { .. })
+    ));
+    let cursor: i64 =
+        sqlx::query_scalar("SELECT last_host_event_sequence FROM agent_process_registry")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        cursor, 1,
+        "conflicting replay must roll back its newer cursor"
+    );
+}

@@ -4852,12 +4852,22 @@ mod tests {
         });
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
-                let count: i64 = sqlx::query_scalar(
+                // busy_timeout=0 deliberately exposes contention to the writer
+                // under test. Its independent observer may race the receipt's
+                // commit too; keep observing within the existing bounded wait.
+                let count = match sqlx::query_scalar::<_, i64>(
                     "SELECT starting_write_attempts FROM agent_process_registry",
                 )
                 .fetch_one(&port.db.pool)
                 .await
-                .unwrap();
+                {
+                    Ok(count) => count,
+                    Err(sqlx::Error::Database(error)) if error.code().as_deref() == Some("5") => {
+                        tokio::time::sleep(Duration::from_millis(5)).await;
+                        continue;
+                    }
+                    Err(error) => panic!("budget observation failed: {error}"),
+                };
                 if count == 1 {
                     break;
                 }
