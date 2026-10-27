@@ -1236,7 +1236,7 @@ pub(crate) mod tests {
                 .done_result
                 .as_ref()
                 .unwrap()
-                .contains("another Integration")
+                .contains("another Auto-merge")
         );
         let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
             .bind(run.payload.sources[0].selection.card_id)

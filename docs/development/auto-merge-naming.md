@@ -46,3 +46,16 @@
 - 変更したRustファイルはrustfmtで整形。文字列・説明を除くRustコード、機械的文字列キー・状態・ツール名が旧版と同じことを比較検証。
 
 実ブラウザの日英画面・通知配送、実AIによる競合解消、稼働DB、外部認証、配布・デプロイは未検証。表示文言・翻訳解決と既存component/API/domain fixtureの検証を選択し、新しい状態機械や実行フローを導入していない。mainへのマージ・公開・再起動は実施しない。
+
+## 219のDB期待値修正（2026-10-27）
+
+初回の通常検証付き自動マージ `1a3ef297-5239-49d4-8631-a9032b1a5123` は、source `b8c32bd808b803cc54356fd23d56cb12330fd7dc` と同じtreeのcandidate `bac118e4be65ff52bd4a2e3f8eadec94fd8d33bc` で、DB単体試験が129成功・1失敗となった。保存process `9a3d7755-9fbe-46db-8250-c5fba472f5f8` のJSONL 168行目は `old_publication_never_completes_a_card_reserved_by_a_new_run` の旧文言期待値によるassert失敗を示す。初回のserver crateに限定した検証では、このDB crateの単体試験を含めていなかった。旧失敗ログは保持し、成功へ書き換えていない。
+
+予約解放後、期待値だけを `.contains("another Auto-merge")` に追随させた。新しい実行が予約したカードを過去の実行でDoneへ変更しない状態assert、fixture、製品ロジック、migrationは変更しない。同種の期待値を局所検索し、残る3件の `reserved by formal Integration` は未変更の既存migrationによる内部DB診断を検証するため維持した。
+
+今回の検証は次の順序で実行し、どちらも成功した。
+
+1. `node scripts/dev-cargo.mjs test -p db --lib models::integration::tests::old_publication_never_completes_a_card_reserved_by_a_new_run -- --exact`: 1成功、失敗・ignoredなし。
+2. `node scripts/dev-cargo.mjs test -p db --lib`: 130成功、失敗・ignoredなし。
+
+各段階で別々の新規一時 `LVK_INSTANCE_DIR` と `TMPDIR` を使用し、継承した `DATABASE_URL` を除外した。DB fixtureはメモリDBまたは一時ファイルを使用し、実DB・監査を共有しない。一時環境は実行終了後に削除済み。変更ファイルのrustfmtと `git diff --check` も成功した。workspace全体の通常検証は上位AIが新しい修正SHAで開始する自動マージへ委ね、このWorkspaceではmainマージ・実DB更新・deploy・restart・archiveを行わない。
