@@ -246,6 +246,17 @@ test("browser child environment excludes live credentials and service settings",
   assert.equal(child.LVK_INSTANCE_DIR, "/isolated");
   assert.equal(child.LVK_AUTH_MODE, "local");
   assert.equal(child.CARGO_BUILD_JOBS, "2");
+  assert.equal(child.RUSTC_WRAPPER, undefined);
+  assert.equal(child.SCCACHE_DIR, undefined);
+  assert.equal(child.SCCACHE_SERVER_PORT, undefined);
+  assert.equal(
+    isolatedEnvironment(
+      { RUSTC_WRAPPER: "/explicit/wrapper" },
+      "/isolated",
+      "/workspace",
+    ).RUSTC_WRAPPER,
+    "/explicit/wrapper",
+  );
   assert.equal(child.HOST, "127.0.0.1");
   for (const key of [
     "LVK_MCP_CONFIG",

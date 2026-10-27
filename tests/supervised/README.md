@@ -14,12 +14,12 @@ and discards inherited LVK/VK/process-host overrides. It preserves HOME and uses
 a disposable CODEX_HOME.
 
 ```bash
-# Use the repository's sccache configuration when available.
-CARGO_BUILD_JOBS=2 cargo test -p executors executors::codex
-CARGO_BUILD_JOBS=2 cargo test -p local-deployment process_host
-CARGO_BUILD_JOBS=2 cargo test -p services services::approvals
+# Use node scripts/dev-cargo.mjs for the repository development policy.
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs test -p executors executors::codex
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs test -p local-deployment process_host
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs test -p services services::approvals
 pnpm install --frozen-lockfile
-CARGO_BUILD_JOBS=2 cargo build --bin server --bin agent-process-host
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs build --bin server --bin agent-process-host
 python3 tests/supervised/run_isolated.py
 ```
 

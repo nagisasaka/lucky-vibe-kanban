@@ -20,7 +20,7 @@ values.
 ## Integrated checks
 
 Check free space/inodes first. Reuse this workspace's target and the canonical
-sccache configuration from AGENTS.md; never clear another workspace's cache.
+development Cargo entry from AGENTS.md; never clear another workspace's cache.
 Use Cargo jobs at most 2 and browser workers=1. With dependencies installed:
 
 ```bash

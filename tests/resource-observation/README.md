@@ -6,13 +6,13 @@ lockfile. Run heavy commands serially and respect the current resource allocatio
 ```sh
 node --test tests/resource-observation/model.test.mjs
 node tests/resource-observation/browser.mjs
-CARGO_BUILD_JOBS=1 cargo test -p server resource_observation --lib -- --test-threads=1
-CARGO_BUILD_JOBS=1 cargo test -p utils instance::tests --lib -- --test-threads=1
-CARGO_BUILD_JOBS=1 cargo test -p server resource_observation::tests::live_smoke --lib -- --ignored --exact --test-threads=1 --nocapture
-CARGO_BUILD_JOBS=1 cargo clippy -p server --all-targets -- -D warnings
+CARGO_BUILD_JOBS=1 node scripts/dev-cargo.mjs test -p server resource_observation --lib -- --test-threads=1
+CARGO_BUILD_JOBS=1 node scripts/dev-cargo.mjs test -p utils instance::tests --lib -- --test-threads=1
+CARGO_BUILD_JOBS=1 node scripts/dev-cargo.mjs test -p server resource_observation::tests::live_smoke --lib -- --ignored --exact --test-threads=1 --nocapture
+CARGO_BUILD_JOBS=1 node scripts/dev-cargo.mjs clippy -p server --all-targets -- -D warnings
 ```
 
-Use the repository's sccache configuration for Cargo commands. The smoke test is
+Use `node scripts/dev-cargo.mjs` for Cargo commands. The smoke test is
 a single small read of the current Linux environment; do not add load, OOM tests,
 mounts or host configuration changes. The ordinary HTTP access regression also
 performs one small read through the shared collector with a disposable auth DB.
@@ -44,11 +44,11 @@ review is a separate step managed by the coordinating AI.
 `full-app.mjs` supplements the component fixtures with the actual built app,
 `NavbarContainer`, production CSS, full server router and local Basic login. Build
 only if the existing artifacts are missing or stale, serially with the repository's
-sccache settings and one Cargo job:
+development Cargo entry and a resource-appropriate job count:
 
 ```sh
 GOMAXPROCS=1 UV_THREADPOOL_SIZE=1 NODE_OPTIONS=--max-old-space-size=4096 pnpm --dir packages/local-web run build
-CARGO_BUILD_JOBS=1 cargo build -p server --bin server
+CARGO_BUILD_JOBS=1 node scripts/dev-cargo.mjs build -p server --bin server
 node tests/resource-observation/full-app.mjs
 ```
 

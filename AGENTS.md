@@ -46,16 +46,16 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   Supported commands: build/check/test/clippy/run/fmt/metadata/watch.
   This is a POSIX contributor entry, not LVK runtime or Project setup policy.
 - The entry passes Cargo `--config` arguments: dev/test debug is
-  `line-tables-only`, incremental is false. This trades incremental reuse for
-  smaller intermediates and sccache eligibility. It does not set RUSTFLAGS or
+  `line-tables-only`, incremental is true for preview dev/test reuse.
+  Release incremental remains false. It does not set RUSTFLAGS or
   change ordinary Cargo invocations. Use `--purpose dev build` for the optimised
   development server; `--purpose stable build` models stable distribution.
   Preview (default) uses opt-level=0; dev/stable use release opt-level=3.
   Preview/dev retain line tables inside binaries (strip=none, split-debuginfo=off);
-  stable uses debug=0, strip=symbols, split-debuginfo=off. All are nonincremental.
+  stable uses debug=0, strip=symbols, split-debuginfo=off.
   `--release`/`--profile` overrides are rejected; select the purpose explicitly.
 - `CARGO_INCREMENTAL` takes precedence even over profile config. The entry
-  rejects inherited values other than `0`, conflicting profile/target env and
+  rejects any inherited value (including `0`/`1`), conflicting profile/target env and
   debug Rust flags, and explicit compiler wrappers. Unset conflicts to opt in;
   use raw Cargo deliberately to preserve an alternative wrapper/policy.
 - Final `target/` artifacts remain checkout-local. If `.lvk-shared/cache` exists,
@@ -66,15 +66,12 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
 - Cargo locks both output directories; concurrent builds sharing an intermediate
   directory may wait on its normal build lock. Waiting is expected and does not
   require a separate locking service. Do not symlink deps or share final targets.
-- If sccache is installed, a rustc-only wrapper sets `SCCACHE_DIR` to canonical
-  `.lvk-shared/cache/sccache`. Without shared storage it preserves the inherited
-  cache setup; without sccache it reports normal compilation. The launcher adds
-  no compiler environment variables to Cargo, watch, the server or its child
-  Projects. Watch invokes the same entry separately for build and run.
-- Reuse the existing sccache server/explicit endpoint. The entry checks
-  `sccache --show-stats` and warns if the actual cache location differs; it never
-  stops/reconfigures the server, resets statistics, clears cache or sets
-  `SCCACHE_BASEDIRS`. Statistics are shared, so deltas are approximate under load.
+- The entry uses rustc directly: it does not discover or invoke sccache, inspect
+  daemon statistics or inject compiler-cache environment. Watch invokes the same
+  entry separately for build and run. Explicit compiler wrappers are rejected
+  with a diagnostic rather than overwritten; use raw Cargo deliberately for an
+  alternative wrapper policy. Existing daemon processes and cache data are left
+  untouched; do not stop them or delete their cache as part of this policy.
 - Do not add this policy to auto-loaded `.cargo/config.toml`, global Cargo home,
   shell startup, server parent environment or other Projects. Existing platform
   linker configuration remains separate. SQLx prepare and isolated instance/

@@ -21,12 +21,12 @@ CLI/TOMLの読込方針、モデルの対応能力、backendの実行設定解�
 ## 検証方法
 
 重いコマンドはすべて逐次実行する。backend buildはこのWorkspace固有の`target/`と
-既存sccacheを使い、コマンド単位で`CARGO_BUILD_JOBS=2`とする。
+専用Cargo入口を使い、同時処理と利用可能メモリを見て並列度を選ぶ。
 
 ```sh
 pnpm --dir packages/local-web run build
-# 既存のsccache設定を使い、このWorkspaceから実行
-CARGO_BUILD_JOBS=2 cargo build --bin server --bin agent-process-host
+# 専用Cargo入口を使い、このWorkspaceから実行
+CARGO_BUILD_JOBS=2 node scripts/dev-cargo.mjs build --bin server --bin agent-process-host
 node tests/server/run-reasoning-override.mjs
 ```
 

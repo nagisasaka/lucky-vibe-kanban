@@ -1,5 +1,3 @@
-import { existsSync, realpathSync } from "node:fs";
-
 // Explicit allowlist: do not propagate live LVK/MCP/DB/provider credentials.
 export function isolatedEnvironment(parent, instance, root) {
   const env = {};
@@ -16,11 +14,9 @@ export function isolatedEnvironment(parent, instance, root) {
     "PLAYWRIGHT_BROWSERS_PATH",
     "CARGO_INCREMENTAL",
     "RUSTC_WRAPPER",
-    "SCCACHE_SERVER_PORT",
   ]) {
     if (parent[name] !== undefined) env[name] = parent[name];
   }
-  const cache = `${root}/.lvk-shared/cache/sccache`;
   return {
     ...env,
     LVK_INSTANCE_DIR: instance,
@@ -35,11 +31,5 @@ export function isolatedEnvironment(parent, instance, root) {
     RUST_LOG: "info",
     CARGO_BUILD_JOBS: "2",
     CARGO_TARGET_DIR: `${root}/target`,
-    RUSTC_WRAPPER: parent.RUSTC_WRAPPER ?? "/usr/local/bin/sccache",
-    ...(existsSync(cache)
-      ? { SCCACHE_DIR: realpathSync(cache) }
-      : parent.SCCACHE_DIR
-        ? { SCCACHE_DIR: parent.SCCACHE_DIR }
-        : {}),
   };
 }

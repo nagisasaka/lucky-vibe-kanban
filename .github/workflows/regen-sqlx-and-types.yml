@@ -24,9 +24,6 @@ env:
 jobs:
   regenerate:
     runs-on: ubuntu-24.04
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v6
         with:

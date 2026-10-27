@@ -22,19 +22,20 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     const fixture = (name, share = true) => {
       const cwd = join(dir, name); mkdirSync(join(cwd, 'src'), { recursive: true });
       mkdirSync(join(cwd, 'scripts'));
-      for (const file of ['dev-cargo.mjs', 'dev-rustc-cache.mjs']) cpSync(join(scripts, file), join(cwd, 'scripts', file));
+      cpSync(join(scripts, 'dev-cargo.mjs'), join(cwd, 'scripts/dev-cargo.mjs'));
       if (share) { mkdirSync(join(cwd, '.lvk-shared')); symlinkSync(shared, join(cwd, '.lvk-shared/cache')); }
       writeFileSync(join(cwd, 'Cargo.toml'), '[package]\nname="probe"\nversion="0.1.0"\nedition="2021"\n[profile.release]\ndebug=1\nstrip=true\nsplit-debuginfo="packed"\n');
-      writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
+      writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "CARGO_INCREMENTAL", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
       return cwd;
     };
     const a = fixture('a'), b = fixture('b'), plain = fixture('plain', false);
     const first = run(a, ['build', '--offline', '-v'], env); ok(first);
-    assert.match(first.stderr, /debuginfo=line-tables-only/); assert.doesNotMatch(first.stderr, /-C incremental=/);
+    assert.match(first.stderr, /debuginfo=line-tables-only/); assert.match(first.stderr, /-C incremental=/);
     assert.doesNotMatch(first.stderr, /opt-level=|strip=|split-debuginfo=packed/);
-    assert.match(first.stderr, /sccache unavailable/);
+    assert.doesNotMatch(first.stderr, /sccache|dev-rustc-cache/);
     const build = join(shared, 'lvk-dev-cargo-build');
     assert.ok(existsSync(join(build, 'debug/.cargo-lock')));
+    assert.ok(existsSync(join(build, 'debug/incremental')));
     ok(run(b, ['build', '--offline'], env));
     for (const cwd of [a, b]) assert.ok(existsSync(join(cwd, 'target/debug/probe')));
     assert.ok(!existsSync(join(a, 'target/debug/deps')));
@@ -72,28 +73,46 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     assert.doesNotMatch(lines(packaged), /main.rs/);
 
     const tested = run(a, ['test', '--offline', '-v'], env); ok(tested);
-    assert.match(tested.stderr, /debuginfo=line-tables-only/); assert.doesNotMatch(tested.stderr, /-C incremental=/);
+    assert.match(tested.stderr, /debuginfo=line-tables-only/); assert.match(tested.stderr, /-C incremental=/);
     const local = run(plain, ['build', '--offline'], env); ok(local); assert.match(local.stderr, /intermediates stay/);
     assert.ok(existsSync(join(plain, 'target/debug/deps')));
-    for (const vars of [{ CARGO_INCREMENTAL: '1' }, { RUSTC_WRAPPER: '/bin/false' }, { RUSTC_WRAPPER: '' }, { CARGO_BUILD_RUSTC_WRAPPER: '/bin/false' }, { CARGO_PROFILE_DEV_DEBUG: '2' }, { CARGO_PROFILE_DEV_OPT_LEVEL: '1' }, { CARGO_PROFILE_RELEASE_STRIP: 'true' }, { CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO: 'packed' }, { RUSTFLAGS: '-Copt-level=2' }, { CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: '-Cstrip=symbols' }])
+    for (const vars of [{ CARGO_INCREMENTAL: '1' }, { CARGO_INCREMENTAL: '0' }, { CARGO_PROFILE_DEV_INCREMENTAL: 'false' }, { CARGO_PROFILE_TEST_INCREMENTAL: 'false' }, { CARGO_PROFILE_RELEASE_INCREMENTAL: 'true' }, { RUSTC_WRAPPER: '/bin/false' }, { RUSTC_WRAPPER: '' }, { CARGO_BUILD_RUSTC_WRAPPER: '/bin/false' }, { CARGO_PROFILE_DEV_DEBUG: '2' }, { CARGO_PROFILE_DEV_OPT_LEVEL: '1' }, { CARGO_PROFILE_RELEASE_STRIP: 'true' }, { CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO: 'packed' }, { RUSTFLAGS: '-Copt-level=2' }, { CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: '-Cstrip=symbols' }])
       assert.equal(run(a, ['check'], { ...env, ...vars }).status, 2);
+    for (const value of ['0', '1']) {
+      for (const purpose of ['preview', 'dev', 'stable']) {
+        const conflict = run(a, ['--purpose', purpose, 'check'], { ...env, CARGO_INCREMENTAL: value });
+        assert.equal(conflict.status, 2); assert.match(conflict.stderr, /CARGO_INCREMENTAL.*overrides/);
+      }
+    }
     mkdirSync(join(a, '.cargo'));
     writeFileSync(join(a, '.cargo/config.toml'), '[build]\nrustflags=["-C", "strip=symbols"]\n');
     assert.equal(run(a, ['check'], env).status, 2);
+    const wrapperCalls = join(dir, 'wrapper-called');
+    const explicitWrapper = join(dir, 'explicit-wrapper');
+    writeFileSync(explicitWrapper, `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(wrapperCalls)}, 'called'); process.exit(98);`, { mode: 0o755 });
+    for (const key of ['rustc-wrapper', 'rustc-workspace-wrapper']) {
+      writeFileSync(join(a, '.cargo/config.toml'), `[build]\n${key}=${JSON.stringify(explicitWrapper)}\n`);
+      const conflict = run(a, ['check'], env);
+      assert.equal(conflict.status, 2); assert.match(conflict.stderr, /wrapper/);
+      assert.ok(!existsSync(wrapperCalls));
+      assert.ok(readFileSync(join(a, '.cargo/config.toml'), 'utf8').includes(explicitWrapper));
+    }
     rmSync(join(a, '.cargo'), { recursive: true });
     assert.equal(run(a, ['clean'], env).status, 2);
     assert.equal(run(a, ['check', '--manifest-path', join(b, 'Cargo.toml')], env).status, 2);
 
-    // Fake only sccache transport; real rustc/Cargo still compile the fixture.
+    // A poisoned executable catches even stats/probe calls; never contact a daemon.
     const bin = join(dir, 'bin'); mkdirSync(bin);
-    writeFileSync(join(bin, 'sccache'), `#!${process.execPath}\nconst {spawnSync}=require('node:child_process'); const fs=require('node:fs'); if(process.argv[2]==='--show-stats') { console.log('Cache location Local disk: "mismatch"'); } else { fs.appendFileSync(${JSON.stringify(join(dir, 'compiler-env'))}, process.env.SCCACHE_DIR+'\\n'); const r=spawnSync(process.argv[2],process.argv.slice(3),{stdio:'inherit'}); process.exit(r.status??1); }`, { mode: 0o755 });
+    const cacheCalls = join(dir, 'sccache-called');
+    writeFileSync(join(bin, 'sccache'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(cacheCalls)}, 'called'); process.exit(99);`, { mode: 0o755 });
     const cachedEnv = { ...env, PATH: `${bin}${delimiter}${env.PATH}` };
+    // Force new real compilation with sccache installed on PATH.
+    ok(run(a, ['check', '--offline'], cachedEnv));
     const runtime = run(a, ['run', '--offline', '--quiet', '--', plain], cachedEnv); ok(runtime);
-    assert.match(runtime.stderr, /cache mismatch/);
-    assert.equal(runtime.stdout.trim(), 'SCCACHE_DIR=\nCARGO_BUILD_BUILD_DIR=\nCARGO_PROFILE_DEV_DEBUG=\nRUSTC_WRAPPER=\nchild-config=false');
+    assert.equal(runtime.stdout.trim(), 'SCCACHE_DIR=\nCARGO_BUILD_BUILD_DIR=\nCARGO_PROFILE_DEV_DEBUG=\nCARGO_INCREMENTAL=\nRUSTC_WRAPPER=\nchild-config=false');
     const devRuntime = run(a, ['--purpose', 'dev', 'run', '--offline', '--quiet', '--', plain], cachedEnv); ok(devRuntime);
     assert.equal(devRuntime.stdout, runtime.stdout);
-    assert.ok(readFileSync(join(dir, 'compiler-env'), 'utf8').includes(join(shared, 'sccache')));
+    assert.ok(!existsSync(cacheCalls));
 
     writeFileSync(join(bin, 'cargo'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(join(dir, 'watch-args'))}, JSON.stringify({args:process.argv.slice(2), cache:process.env.SCCACHE_DIR}));`, { mode: 0o755 });
     ok(run(a, ['watch'], cachedEnv));
@@ -102,6 +121,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     assert.deepEqual(watched.args.slice(0, 4), ['watch', '-w', 'crates', '-s']);
     assert.match(watched.args[4], /dev-cargo.mjs.*--purpose preview build --bin server --bin agent-process-host && .*dev-cargo.mjs.*run --bin server/);
     assert.equal(watched.cache, undefined);
+    assert.ok(!existsSync(cacheCalls));
 
     // Cargo owns locking: a sleeping build script holds the shared build lock.
     writeFileSync(join(a, 'build.rs'), 'fn main(){ std::thread::sleep(std::time::Duration::from_secs(2)); }');
@@ -119,18 +139,25 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('optional real installed sccache smoke (no server reconfiguration)', { skip: process.env.LVK_TEST_REAL_SCCACHE !== '1', timeout: 30000 }, () => {
-  const dir = mkdtempSync(join(tmpdir(), 'lvk-real-sccache-'));
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) if (/^(CARGO_|RUSTC_|RUSTFLAGS$|SCCACHE_DIR$)/.test(key)) delete env[key];
+test('specialised validation runner does not auto-configure a compiler cache or replace explicit wrappers', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'lvk-no-compiler-cache-'));
   try {
-    mkdirSync(join(dir, 'scripts')); mkdirSync(join(dir, 'src'));
-    for (const file of ['dev-cargo.mjs', 'dev-rustc-cache.mjs']) cpSync(join(scripts, file), join(dir, 'scripts', file));
-    writeFileSync(join(dir, 'Cargo.toml'), '[package]\nname="lvk_cache_smoke"\nversion="0.1.0"\nedition="2021"\n');
-    writeFileSync(join(dir, 'src/lib.rs'), 'pub fn value() -> u8 { 42 }\n');
-    const result = run(dir, ['build', '--offline', '-v'], env); ok(result);
-    assert.doesNotMatch(result.stderr, /sccache unavailable/);
-    assert.match(result.stderr, /Running `.*dev-rustc-cache.mjs/);
-    assert.match(result.stderr, /debuginfo=line-tables-only/);
+    const fixture = join(dir, 'tests/integration-validation-settings');
+    mkdirSync(fixture, { recursive: true });
+    const runner = join(fixture, 'run-rust.py');
+    cpSync(join(scripts, '../tests/integration-validation-settings/run-rust.py'), runner);
+    const called = join(dir, 'sccache-called');
+    writeFileSync(join(dir, 'sccache'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(called)}, 'called'); process.exit(99);`, { mode: 0o755 });
+    // Reproduce the old shared-cache discovery precondition without real shared data.
+    mkdirSync(join(dir, '.lvk-shared/cache'), { recursive: true });
+    const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
+    for (const key of Object.keys(env)) if (/^(RUSTC_WRAPPER|SCCACHE_)/.test(key)) delete env[key];
+    const inspect = (extra) => {
+      const result = spawnSync('python3', ['-c', 'import runpy,json,sys; e=runpy.run_path(sys.argv[1])["ENV"]; print(json.dumps({k:e[k] for k in ("RUSTC_WRAPPER","SCCACHE_DIR") if k in e}))', runner], { env: { ...env, ...extra }, encoding: 'utf8' });
+      ok(result); return JSON.parse(result.stdout);
+    };
+    assert.deepEqual(inspect({}), {});
+    assert.deepEqual(inspect({ RUSTC_WRAPPER: '/explicit/wrapper' }), { RUSTC_WRAPPER: '/explicit/wrapper' });
+    assert.ok(!existsSync(called));
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

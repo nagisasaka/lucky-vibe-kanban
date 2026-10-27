@@ -30,11 +30,10 @@ docker run --rm --entrypoint sh "$image" -ec '
   less --version
   test "$(printf "lvk-less-smoke\n" | less)" = "lvk-less-smoke"
   rustc --version; cargo --version; cargo watch --version
-  sccache --version
   cargo clippy --version; cargo fmt --version
   codex --version; claude --version; openwiki --help >/dev/null
   cc --version; cmake --version; python3 --version
-  bash -lc "cargo --version && rustc --version && sccache --version && pnpm --version && codex --version && claude --version"
+  bash -lc "cargo --version && rustc --version && pnpm --version && codex --version && claude --version"
 '
 docker run --rm --entrypoint node \
   -e LVK_REQUIRE_NGINX_TEST=1 \

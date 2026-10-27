@@ -20,7 +20,7 @@ Workspace: `3700477f-ac8e-4aec-a3ef-220c43cbf3af`
 ## 再現コマンド（リポジトリroot、必ず逐次）
 
 ```sh
-RUSTC_WRAPPER=/usr/local/bin/sccache SCCACHE_DIR=$(realpath .lvk-shared/cache/sccache) cargo build -j 2 --bin server --bin agent-process-host
+node scripts/dev-cargo.mjs build -j 2 --bin server --bin agent-process-host
 pnpm --dir packages/local-web run build
 pnpm run web-core:check
 pnpm run ui:check

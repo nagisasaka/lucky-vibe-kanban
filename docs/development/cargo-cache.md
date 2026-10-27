@@ -2,8 +2,8 @@
 
 The contributor entry is `node scripts/dev-cargo.mjs check --workspace` (or the
 existing pnpm backend scripts). It is scoped to the checkout containing the
-script. Cargo settings are command arguments; only rustc's sccache subprocess
-receives the additional cache environment. No product runtime, DB/API, Project
+script. Cargo settings are command arguments; no compiler-cache wrapper or
+additional compiler-cache environment is installed. No product runtime, DB/API, Project
 setup script or global Cargo configuration changes are involved.
 
 `cargo run` receives the same settings without exporting them to its binary.
@@ -30,64 +30,59 @@ Ordinary Cargo and Cargo.toml defaults remain unchanged for other consumers.
 Build the frontend first for instance/bundle creation; shared dev also needs the
 existing developer-runtime feature. No extra compiler environment is required.
 CARGO_BUILD_JOBS may limit concurrency. Inherited CARGO_INCREMENTAL must be absent
-or 0; conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
+(including an inherited 0 or 1, which would override the per-profile policy);
+conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
 wrappers and target overrides are rejected with an explanation. The build entry
 does not inject these variables into run/watch or managed child Projects.
 Instance source snapshots use their own target directories. If a snapshot has no
 `.lvk-shared/cache`, the documented local fallback applies; it does not reach into
 another checkout to discover shared storage.
 
+## Compiler cache retirement (2026-10-27)
+
+The development entry no longer discovers, invokes or configures sccache. It
+uses rustc directly and rejects explicit inherited/configured compiler wrappers
+with an explanation, leaving the user's configuration intact. Use raw Cargo
+intentionally for a different wrapper policy. Validation helpers no longer add
+sccache automatically; CI no longer installs its action or sets its wrapper,
+and the container source no longer installs or requires it.
+This does not uninstall host tools, stop existing daemons, clear caches or delete
+shared build-dir/target data. No global Cargo, shell or server-parent environment
+changes are involved.
+
+Official Cargo `build.build-dir` sharing, checkout-local final targets, all three
+server opt/debug/strip/split profiles remain in place. Preview dev/test now use
+incremental=true; common dev/stable release remain incremental=false. These are
+Cargo profile settings, never a global CARGO_INCREMENTAL=1 injection. Cargo owns
+the shared incremental directory and its existing build lock; no independent
+incremental-sharing or locking mechanism is added. Cargo's normal lock may
+make builds wait; never use `cargo clean` to maintain the shared build-dir.
+Without `.lvk-shared/cache`, intermediates stay in checkout-local `target/`.
+
+This is a KISS decision, not a claim that sccache never hits. The isolated
+v0.18.0 investigation reproduced same-condition Rust hits and separate misses
+from cwd, absolute input arguments and CARGO_MANIFEST_DIR differences.
+SCCACHE_BASEDIRS did not remove Rust cwd sensitivity. The actual server build's
+8 misses and historical incremental benefit were not individually attributed.
+No replacement compiler-cache framework is introduced.
+
 ## Scoped verification
 
-The self-contained offline fixture uses the installed pinned toolchain, no
-registry dependencies, two source workspaces, one temporary shared build-dir and
-independent targets. It verifies debug/test flags, nonincremental compilation,
-all three purpose profiles and final ELF line tables, fallback without shared storage/sccache, wrapper and
-environment conflicts, run's environment, Cargo lock contention and raw clean's
-impact. A fake sccache transport forwards to real rustc to test environment scope
-without changing the shared server. This is not a real sccache hit-rate benchmark.
-`LVK_TEST_REAL_SCCACHE=1 node --test scripts/dev-cargo.test.mjs` also compiles a
-dependency-free library through the installed real sccache; both tests passed
-on the pinned toolchain. It uses the existing server without reconfiguration.
-The fixture's clean only touches its own disposable cache. Cargo's shared build
-lock serialises builds even when their final target directories differ. A raw
-clean removes shared intermediates but leaves the other target's final binary;
-that binary's existence does not mean its intermediate cache survived.
+`node --test scripts/dev-cargo.test.mjs` uses the pinned real Cargo/rustc with
+small offline fixtures and disposable shared intermediates. It checks the three
+profiles, ELF line tables, dev/test incremental=true and release=false,
+separate final targets,
+shared build-dir/normal lock waiting, local fallback, clean protection, wrapper
+conflicts and run/watch environment boundaries. A poisoned sccache executable
+on PATH must never be called, including for statistics/probes. No cache daemon
+is used. Raw clean is exercised only against the fixture's disposable build-dir.
 
-The existing server's observed cache location matched canonical
-`.lvk-shared/cache/sccache`; its configuration and statistics were not reset.
-Actual LVK builds and real cache performance remain unverified.
+The previous LOCAL-178/182 execution-slot wait and compiler-cache measurement
+plan are historical. Future full build/capacity measurements need their own
+execution authorisation; fixture results are not performance benchmarks or live
+acceptance. Preserve existing shared caches and running build processes.
 
-## Deferred measurement (requires capacity/execution-slot approval)
-
-The previous LOCAL-178/182 execution-slot wait is historical and ended. For
-LOCAL-197 the CODE run is limited to implementation and small local fixtures.
-The integration owner handles the single heavy dev artifact build after commit;
-full validation is explicitly skipped at Integration admission. Cold/warm
-benchmarks still require separate capacity/execution approval.
-
-1. Record candidate SHA, toolchain, command/features, free disk, selected target
-   usage, expected/actual sccache location and `sccache --show-stats`. Coordinate
-   the full resource bundle before any registered shared-resource use.
-2. With an approved task-owned empty cache/build-dir fixture or coordinated
-   maintenance window, measure a cold LVK debug build. Never clear or restart the
-   existing shared sccache server to manufacture a cold baseline. Document the
-   distinction between cold Cargo artifacts and a warm shared compiler cache.
-3. Repeat the identical command warm, then make a small reversible Rust edit and
-   rebuild, then build from a second independent worktree sharing intermediates.
-   Keep final targets separate and restore the edit. Compare against a separately
-   authorised incremental baseline if a policy comparison is required.
-4. For each case record elapsed time, target and intermediate byte deltas, and
-   hits/misses/non-cacheable reason deltas. Shared sccache counters include other
-   clients; record concurrent activity and avoid attributing all deltas to LVK.
-5. Verify actual runtime/managed child-Project environment and watch lifecycle in
-   an authorised isolated LVK instance. Fixture evidence is not live acceptance.
-
-These cold/warm/edit/second-workspace timings and capacity savings have **not**
-been measured. Retain results with the candidate SHA and command; do not report
-fixture success as a completed LVK benchmark or formal Integration.
-
-## LOCAL-197 local verification (2026-10-26)
+## Historical LOCAL-197 local verification (2026-10-26)
 
 Base HEAD/main: `0d73e1ad8eb1790ac896eb958b2757d090ac2cea` plus this change.
 Cargo 1.93.0-nightly (bd979347d), rustc 1.93.0-nightly (83e49b75e).
@@ -105,3 +100,23 @@ No LVK full build, full pnpm validation, container build, running deployment,
 real sccache smoke/benchmark, merge or restart was performed in this CODE run.
 Final deployed binaries, embedded payload, build identity, backtrace line
 resolution and health remain the integration owner's acceptance responsibility.
+
+## Retirement verification (2026-10-27)
+
+Base: `a3247dadd5b4385e07a7848fd0009aa07d8ffa71` plus this change.
+`node --test scripts/dev-cargo.test.mjs tests/server/issue-comment-reviews.test.mjs`
+passed all 7 tests (no skips), including the poisoned executable, explicit wrapper
+preservation/rejection, isolated helper defaults, real Cargo profiles/ELF line
+checks, build-dir sharing/target isolation, lock/clean and runtime boundaries.
+The subsequent incremental decision is verified by dev/test compiler incremental
+flags, release absence of those flags and rejecting inherited CARGO_INCREMENTAL
+0/1 for all three purposes, plus conflicting per-profile environment overrides.
+Node syntax checks, Python AST parsing, shell syntax and `git diff --check` passed.
+
+`node --test deploy/server/release.test.mjs` could not load the missing `yaml`
+package (ERR_MODULE_NOT_FOUND); it did not exercise release assertions. No package
+installation was performed for this check. Docker/CI builds, full LVK Rust/pnpm
+validation, live deployment and restart were not run. The source removal of the
+image tool/smoke dependency and CI wrapper setup still needs independent review
+and eventual normal CI/image validation. Existing host tools/cache data were
+not uninstalled or removed, and no daemon command was executed.
