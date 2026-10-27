@@ -1669,6 +1669,28 @@ impl AgentEventRecord {
                 key: run_attempt_id.to_string(),
             });
         }
+        // Persist host receipt evidence before terminal projection can release
+        // a provably unstarted reservation. Keep this in the same
+        // transaction: any later identity/replay/projection failure rolls back
+        // the cursor together with canonical events and provider bindings.
+        let cursor_update = sqlx::query(
+            r#"
+            UPDATE agent_process_registry
+            SET last_host_event_sequence = MAX(last_host_event_sequence, ?), updated_at = ?
+            WHERE run_attempt_id = ?
+            "#,
+        )
+        .bind(host_sequence)
+        .bind(Utc::now())
+        .bind(run_attempt_id)
+        .execute(&mut *transaction)
+        .await?;
+        if cursor_update.rows_affected() != 1 {
+            return Err(AgentRuntimePersistenceError::IdentityConflict {
+                entity: "host cursor run attempt",
+                key: run_attempt_id.to_string(),
+            });
+        }
         for provider_session in provider_sessions {
             AgentProviderSessionRecord::upsert_on(
                 &mut transaction,
@@ -1930,24 +1952,6 @@ impl AgentEventRecord {
             .await?;
         }
 
-        let cursor_update = sqlx::query(
-            r#"
-            UPDATE agent_process_registry
-            SET last_host_event_sequence = MAX(last_host_event_sequence, ?), updated_at = ?
-            WHERE run_attempt_id = ?
-            "#,
-        )
-        .bind(host_sequence)
-        .bind(Utc::now())
-        .bind(run_attempt_id)
-        .execute(&mut *transaction)
-        .await?;
-        if cursor_update.rows_affected() != 1 {
-            return Err(AgentRuntimePersistenceError::IdentityConflict {
-                entity: "host cursor run attempt",
-                key: run_attempt_id.to_string(),
-            });
-        }
         transaction.commit().await?;
         if !inserted.is_empty() {
             notify_agent_event_change(persisted_run_id);
@@ -2272,6 +2276,7 @@ mod tests {
     use super::*;
 
     include!("agent_runtime_kanban_tests.rs");
+    include!("agent_runtime_reservation_tests.rs");
 
     async fn setup_pool() -> SqlitePool {
         let pool = SqlitePoolOptions::new()

@@ -124,6 +124,49 @@ mod tests {
 
     use super::*;
 
+    #[tokio::test]
+    async fn reservation_terminal_migration_supports_fresh_and_previous_main_upgrade() {
+        for upgrade in [false, true] {
+            let pool = SqlitePoolOptions::new()
+                .max_connections(1)
+                .connect("sqlite::memory:")
+                .await
+                .unwrap();
+            if upgrade {
+                let embedded = sqlx::migrate!("./migrations");
+                Migrator::new(ResolvedMigrations(
+                    embedded
+                        .iter()
+                        .filter(|m| m.version < 20261027010000)
+                        .cloned()
+                        .collect(),
+                ))
+                .await
+                .unwrap()
+                .run(&pool)
+                .await
+                .unwrap();
+            }
+            super::super::run_migrations(&pool).await.unwrap();
+            super::super::run_migrations(&pool).await.unwrap();
+            let triggers: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name='release_unstarted_agent_reservation'")
+                .fetch_one(&pool).await.unwrap();
+            assert_eq!(triggers, 1);
+            let indexes: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND tbl_name='agent_process_registry' AND name LIKE 'idx_agent_process_registry_%'")
+                .fetch_one(&pool).await.unwrap();
+            assert_eq!(indexes, 3);
+            assert!(
+                sqlx::query("PRAGMA foreign_key_check")
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+
     async fn old_pool(count: u128) -> SqlitePool {
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
