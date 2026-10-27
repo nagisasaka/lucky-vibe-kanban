@@ -20,7 +20,7 @@ pub enum Content {
     Unsupported,
 }
 
-fn content(bytes: &[u8]) -> Content {
+pub(crate) fn content(bytes: &[u8]) -> Content {
     if bytes.len() > MAX_REFERENCE_BYTES {
         return Content::TooLarge;
     }
@@ -229,12 +229,8 @@ impl GitService {
                 if entry.kind() == Some(ObjectType::Blob)
                     && matches!(entry.filemode(), 0o100644 | 0o100755) =>
             {
-                let blob = repo.find_blob(entry.id())?;
-                if blob.size() > MAX_REFERENCE_BYTES {
-                    Content::TooLarge
-                } else {
-                    content(blob.content())
-                }
+                crate::snapshot::read_regular_blob(&repo, entry.id(), MAX_REFERENCE_BYTES, content)?
+                    .unwrap_or(Content::TooLarge)
             }
             Ok(_) => Content::Unsupported,
             Err(error) if error.code() == git2::ErrorCode::NotFound => Content::Missing,
@@ -243,7 +239,7 @@ impl GitService {
         Ok((old, worktree_content(root, path)?))
     }
 }
-fn worktree_content(root: &Path, path: &str) -> Result<Content, GitServiceError> {
+pub(crate) fn worktree_content(root: &Path, path: &str) -> Result<Content, GitServiceError> {
     Ok(
         match utils::reference_file::read(root, Path::new(path), MAX_REFERENCE_BYTES)? {
             Some(bytes) => content(&bytes),

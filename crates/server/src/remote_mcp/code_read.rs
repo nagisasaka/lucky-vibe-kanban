@@ -256,7 +256,7 @@ fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value>
 }
 
 #[cfg(all(test, unix))]
-mod tests {
+pub(super) mod tests {
     use std::{fs, path::Path, process::Command};
 
     use db::models::{
@@ -281,7 +281,7 @@ mod tests {
             String::from_utf8_lossy(&output.stderr)
         );
     }
-    pub(super) async fn fixture() -> (tempfile::TempDir, Remote, Value) {
+    pub(in crate::remote_mcp) async fn fixture() -> (tempfile::TempDir, Remote, Value) {
         let (remote, _, _, run, _) = super::super::runtime_write_tests::fixture().await;
         let temp = tempfile::tempdir().unwrap();
         let repo = Repo::find_or_create(&remote.pool, temp.path(), "code-fixture")

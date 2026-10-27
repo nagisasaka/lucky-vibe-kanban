@@ -6,6 +6,10 @@ all requirements or tests passed.
 
 Use `get_workspace_memory` for the selected repository and Workspace's recorded
 context. Treat it as agent-authored evidence, not an independent success receipt.
+For an independent re-review, use `query_repository` with explicit reviewed/new
+full SHAs and `comparison:"direct"` to exclude current dirty changes. Use
+`comparison:"merge_base"` only when intended; merge commits require explicit
+parent selection when no base is provided. Follow cursors and check exclusions.
 `list_workspace_diff` and `get_workspace_diff` expose current per-path changes;
 `list_workspace_files` and `get_workspace_file` expose tracked reference code.
 Binary, oversized or unreadable content is not an empty diff. Renames are shown

@@ -37,6 +37,7 @@ mod project_read;
 mod provider_usage;
 mod questions;
 mod read;
+mod repository_read;
 mod repository_wiki;
 mod resource_observation;
 mod run_events;
@@ -394,6 +395,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(evidence_read::tools());
     tools.extend(verification_read::tools());
     tools.extend(code_read::tools());
+    tools.extend(repository_read::tools());
     tools.extend(issue_write::tools());
     tools.extend(issue_tags::tools());
     tools.extend(issue_comments::tools());
@@ -516,6 +518,7 @@ impl Remote {
                 dev_server::call(self, principal, request.name.as_ref(), args).await
             }
             "get_resource_observation" => resource_observation::call(args).await,
+            "query_repository" => repository_read::call(self, args).await,
             "list_run_events" => run_events::call(self, args).await,
             "get_connection" if args.as_object().is_some_and(|args| args.is_empty()) => Ok(
                 json!({"server":"LVK", "permissions":principal.scopes, "automatic_notifications":false, "monitoring":false}),

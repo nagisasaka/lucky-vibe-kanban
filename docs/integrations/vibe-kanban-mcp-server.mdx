@@ -60,6 +60,33 @@ The Vibe Kanban MCP server provides tools for managing organisations, projects, 
 Many tools accept an optional `project_id` or `organization_id` parameter. When running inside a workspace linked to a remote project, these are inferred automatically from context and can be omitted. The exception is `list_projects`, which always requires an explicit `organization_id`.
 </Note>
 
+### Read a repository at a fixed revision
+
+`query_repository` is available in stdio and authenticated remote MCP with the
+same read service and boundaries. Supply explicit `project_id`, `repository_id`,
+`target` and `operation`. A commit target such as
+`{"mode":"commit","ref":"main"}` needs no main Workspace and returns its full
+SHA. Supported typed operations are `list` (including glob), `grep` (literal or
+regex with case selection, content/files/count), line `read`, fixed-head `log`
+and two-ended `diff` with explicit direct or merge-base comparison.
+
+The first line read needs no preliminary revision request. Repeat original
+arguments plus `next_cursor` as `cursor` for further pages, and check `complete`,
+`search_complete`, exclusions and `stop_reason`. Cursors pin the resolved SHA
+and query; a server restart expires them. Use full SHAs to reproduce evidence.
+Workspace mode explicitly selects live HEAD/index/worktree/untracked state;
+it is not atomic, and changed revisions require restarting the read. Private
+paths, symlinks, submodules, binary and oversized content stay protected.
+
+```json
+{"project_id":"<project UUID>","repository_id":"<repository UUID>","target":{"mode":"commit","ref":"main"},"operation":{"kind":"read","path":"README.md","start_line":1,"end_line":10}}
+```
+
+The service performs no shell execution or model calls. Trace imports and actual
+usage with grep/read before deciding which component is active. See the tool's
+live schema for operation parameters and returned budgets. Existing Workspace
+read/diff tools retain their defaults.
+
 ### Managed Workspace DevServers
 
 `start_dev_server`, `stop_dev_server`, and `get_dev_server_status` require explicit

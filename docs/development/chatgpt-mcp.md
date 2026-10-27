@@ -133,6 +133,7 @@ is exported.
 | `list_project_merge_status`, `get_workspace_merge_status` | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations |
 | `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page` | Project/Workspace/repository and selected page; read-only bounded evidence with revision |
 | `get_workspace_verification`, `get_workspace_verification_test` | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof |
+| `query_repository` | Project/repository plus explicit commit or Workspace target; common stdio/remote repo/ref exploration |
 | `list_workspace_files`, `get_workspace_file`, `search_workspace_files`, `get_workspace_file_ranges`, `list_workspace_diff`, `get_workspace_diff` | Project/Workspace/repository and selected relative path; bounded safe code/diff reads |
 | `get_repository_wiki` | Project/repository; saved target branch, current source HEAD, UI freshness and maintenance IDs, without starting work |
 | `sync_repository_wiki` (`lvk:write`) | Project/repository/request, observed branch/source and optional `from_commit`; existing UI reconciliation admission, never implicit initial generation |
@@ -527,6 +528,135 @@ ignored `resource_observation::tests::live_smoke` test is an explicit small live
 read, without stress or environment changes. Live Auth0/ChatGPT connectivity and
 other operating systems are separate from fixture coverage.
 
+## Repository/ref exploration (stdio and remote MCP)
+
+Use `query_repository` with explicit `project_id`, `repository_id`, `target` and
+`operation`. It is exposed in global/scoped stdio and authenticated remote MCP.
+Both adapters call the same read-only service; stdio uses `/api/repository/read`
+with its existing internal authentication, remote requires `lvk:read`. Project
+repository membership is checked before and after I/O. Arbitrary host paths,
+URLs, fetching, checkout and worktree creation are not accepted operations.
+
+A commit target resolves a local branch/tag, `HEAD` or full commit SHA at the first
+call. Git revision expressions, reflogs, ranges and message-regex selectors are
+not accepted; use returned parent SHAs/log instead. Short names select local
+branches, then remote-tracking refs, then tags; use full `refs/...` names when
+ambiguous. No Workspace for that branch is needed. Dirty/index/untracked changes are
+excluded. Pin `source_head` as the next request's `ref` to reproduce evidence.
+For continuation, **repeat the original arguments**, including the original ref,
+operation and limit, and add `next_cursor` as `cursor`. Cursors bind identities,
+query, resolved head/base/end, revision and position with a process-local HMAC.
+Branch movement does not change a continuation. A server restart expires cursors;
+restart at a recorded full SHA. Cursor strings are opaque, not editable offsets.
+
+```json
+{"project_id":"<project>","repository_id":"<repository>","target":{"mode":"commit","ref":"main"},"operation":{"kind":"read","path":"packages/local-web/src/routes/_app.projects.$projectId.tsx","start_line":1,"end_line":8}}
+```
+
+Line reads require no preliminary revision call. Lines are 1-based, inclusive,
+at most 200 per request, with no out-of-range clipping. A range exceeding the
+64 KiB item budget fails explicitly; request a smaller range (an individual
+line exceeding that budget cannot be returned by the line reader). `expected_revision` is
+optional initially; use the returned revision to require the same observed
+point on subsequent read/list/grep calls at the same target. A commit SHA is the
+strong fixed point. A Workspace target instead uses
+`{"mode":"workspace","workspace_id":"<workspace>"}` and observes only that
+Workspace's HEAD/index/worktree/non-ignored untracked paths. For live file/diff
+evidence, `source_head` is the checkout HEAD, `end_commit:null` and
+`end_kind:"workspace_observation"`; `revision` identifies the observation, not
+a new commit. It accepts no past
+ref overlay. It is a live **metadata observation, not an atomic snapshot**:
+index bytes and path/file metadata (including Unix inode/ctime) are checked
+before/after and on continuation. Detected changes fail the whole call; restart
+from the first page. Concurrent edits, especially on filesystems with coarse
+metadata, cannot provide atomicity guarantees. Use commit mode for reproducible
+review evidence. Scoped stdio rejects foreign Workspace/Project context.
+
+Operations:
+
+- `list`: `filter` accepts `directory_prefix`, `filename_contains`, and a
+  repository-relative `glob`. All are case-sensitive; glob `*` stays within a
+  path component and `**` crosses directories. Filters combine with AND.
+- `grep`: explicitly choose `syntax:"literal"` or `"regex"`, `case_sensitive`,
+  and `output:"content"`, `"files"` or `"count"`. Files returns each matching path once; count returns one item
+  per matching path with its occurrence count. Regex uses Rust's bounded-size,
+  non-backtracking regex engine. A nonempty query may match empty strings;
+  empty matches advance at Unicode scalar boundaries. LF/CRLF delimit lines;
+  trailing newline adds no empty line. Columns count Unicode scalars, starting
+  at 1; end columns are exclusive. Content returns exact locations and optional
+  `context_lines` (0–2 on each side). Excerpts are prefixes of at most 512 scalars
+  per line and matches at most 1024 scalars; truncation flags are explicit.
+  Read the exact range when a long-line excerpt omits the match.
+- `log`: fixed `source_head`, topological/time order and optional `base` hide
+  that base's reachable history. Continuation uses position plus fixed OIDs,
+  never timestamps alone. Equal timestamps do not lose commits. Summaries are capped at 2000 scalars;
+  parent lists at 64, with explicit truncation flags and total parent count.
+- `diff`: specify `base` and `end` for a closed historical interval, including
+  unrelated commits in the same repository. `comparison:"direct"` compares
+  the two trees; `"merge_base"` explicitly substitutes their merge base (and
+  fails when none exists). No implicit ancestry restriction or fallback.
+  Omit `base` to compare `end` to its parent; root uses an empty tree, merge
+  commits require a 1-based `parent`. `base` and `parent` are mutually exclusive.
+  Omitted `end` means the target's fixed SHA. `path:null`/omission lists paths;
+  `path` reads that path's unified patch in 8000-character pages. Renames expose
+  deletion/addition paths. Binary/type/mode changes require checking statuses
+  and reviewing separately; an empty text patch is not proof of equality.
+  Workspace diffs require `comparison:"worktree"`, reject `end`/`parent`, and
+  compare explicit base (default HEAD) to index/worktree/untracked state.
+  The old Workspace diff tools keep their target merge-base default.
+
+```json
+{"project_id":"<project>","repository_id":"<repository>","target":{"mode":"commit","ref":"<reviewed-full-sha>"},"operation":{"kind":"diff","base":"<reviewed-full-sha>","end":"<new-full-sha>","comparison":"direct"}}
+```
+
+To trace the Kanban entry to actual components, list likely routes, grep for
+an entry/import, read its lines, then grep/read the imported component and its
+usage. Search hits alone do not establish which component runs. For example:
+
+```json
+{"project_id":"<project>","repository_id":"<repository>","target":{"mode":"commit","ref":"main"},"operation":{"kind":"grep","query":"Kanban","syntax":"literal","case_sensitive":true,"output":"content","context_lines":1,"filter":{"directory_prefix":"packages"}},"limit":20}
+```
+
+Use the returned `source_head` on further calls and follow `next_cursor` until
+`complete:true`. `complete` means traversal finished; `search_complete` additionally
+requires no skipped files, including exclusions in earlier pages. Check
+`exclusions`, `exclusions_total` and `stop_reason` before asserting absence.
+Skipped binary/oversized/unsafe files are explicit and cannot be text-searched.
+No model, semantic index, LSP or hidden investigation agent is called.
+
+Budgets are returned: default 20/max 50 items, 64 KiB serialised item/exclusion
+bytes (JSON escaping included), 512 KiB per source side, 16 MiB charged source
+bytes, 1000 attempted files, 100,000 regex match visits, and a two-second
+cooperative scan deadline per call. Count mode carries partial counts in its
+cursor until a file is finished; regex resumes at the last match end rather
+than scanning earlier matches again.
+Text is charged at actual size; non-text/failed reads conservatively at the
+source maximum. A full possible read is reserved before opening. Enumeration,
+index/status/metadata loading, revwalk skipping and individual OS/libgit2 reads
+are bounded by repository limits but cannot be forcibly interrupted: this is
+not a hard wall-clock guarantee. The scan clock starts after bounded enumeration,
+query setup and history cursor reconstruction so preparation cannot repeatedly
+consume the entire continuation budget. `elapsed_ms` includes preparation and
+verification; `scan_elapsed_ms` reports scan time.
+Listing/search tree walks and diff path sets above 100,000 entries fail
+explicitly. A direct commit line read/log does not enumerate its entire tree. Cursor history positions are limited to 100,000 commits. Output,
+item, scan-byte, file, match-scan and time limits return `stop_reason` and a
+continuation; excluded scope never becomes a false “not found”. Responses repeat
+mode, full head/base/end SHA, `revision` for the observed target and
+`page_revision` for the query/base/end identity, plus budgets. Private-path exclusions
+are the same as the old reference reader, also for historical blobs; Git symlinks
+and submodules are never followed, nor are runtime symlinks. Oversized historical blobs are rejected from their object header before loading
+the body. No hooks, textconv,
+clean/smudge filters, external diff or object/index writes run.
+
+The legacy Workspace tools below retain their original names, defaults and
+revision contracts. Their literal search still has its historical terminal
+limits; use `query_repository` for resumable searches. Both searches reuse a
+single repository/index open per scan.
+
+Scoped fixture results, measured data volume/time and unmeasured transport costs
+are recorded in [Repository/ref read validation](repository-ref-read-validation.md).
+
 ## Focused Workspace code reads
 
 All tools below require `project_id`, `workspace_id` and `repository_id` and use
@@ -615,8 +745,8 @@ hit does not fit, the scan stops with `output_byte_limit` and `complete:false`.
 The existing standard response/link metadata remains outside the item budget.
 
 `get_workspace_file_ranges` accepts 1–8 `ranges`. Each entry requires `path`,
-`start_line`, `end_line` and `expected_revision` from search or
-`get_workspace_file`. Lines are **1-based with both endpoints inclusive**,
+`start_line` and `end_line`. `expected_revision` from search or
+`get_workspace_file` is optional on the first read; supply it for consistency. Lines are **1-based with both endpoints inclusive**,
 with at most 200 lines per entry. Missing endpoints are errors, not clipped
 ranges. The response contains `lines` arrays without line terminators.
 
