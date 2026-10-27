@@ -54,8 +54,9 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   Preview/dev retain line tables inside binaries (strip=none, split-debuginfo=off);
   stable uses debug=0, strip=symbols, split-debuginfo=off.
   `--release`/`--profile` overrides are rejected; select the purpose explicitly.
-- `CARGO_INCREMENTAL` takes precedence even over profile config. The entry
-  rejects any inherited value (including `0`/`1`), conflicting profile/target env and
+- `CARGO_INCREMENTAL`, `CARGO_BUILD_INCREMENTAL` and configured
+  `build.incremental` take precedence over profile settings. The entry rejects
+  any such override (including false/0), conflicting profile/target env and
   debug Rust flags, and explicit compiler wrappers. Unset conflicts to opt in;
   use raw Cargo deliberately to preserve an alternative wrapper/policy.
 - Final `target/` artifacts remain checkout-local. If `.lvk-shared/cache` exists,

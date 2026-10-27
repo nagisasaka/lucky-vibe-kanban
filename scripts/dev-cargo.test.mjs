@@ -84,7 +84,23 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
         assert.equal(conflict.status, 2); assert.match(conflict.stderr, /CARGO_INCREMENTAL.*overrides/);
       }
     }
+    for (const value of ['true', 'false']) {
+      for (const purpose of ['preview', 'dev', 'stable']) {
+        const conflict = run(a, ['--purpose', purpose, 'check'], { ...env, CARGO_BUILD_INCREMENTAL: value });
+        assert.equal(conflict.status, 2); assert.match(conflict.stderr, /CARGO_BUILD_INCREMENTAL.*overrides/);
+      }
+    }
     mkdirSync(join(a, '.cargo'));
+    for (const value of ['true', 'false']) {
+      const contents = `[build]\nincremental=${value}\n`;
+      writeFileSync(join(a, '.cargo/config.toml'), contents);
+      for (const purpose of ['preview', 'dev', 'stable']) {
+        const conflict = run(a, ['--purpose', purpose, 'check'], env);
+        assert.equal(conflict.status, 2); assert.match(conflict.stderr, /configured build.incremental.*overrides/);
+        assert.equal(readFileSync(join(a, '.cargo/config.toml'), 'utf8'), contents);
+      }
+    }
+
     writeFileSync(join(a, '.cargo/config.toml'), '[build]\nrustflags=["-C", "strip=symbols"]\n');
     assert.equal(run(a, ['check'], env).status, 2);
     const wrapperCalls = join(dir, 'wrapper-called');

@@ -141,6 +141,8 @@ jobs:
     if: always() && (needs.changes.outputs.backend == 'true' || needs.changes.result == 'skipped')
     runs-on: *runner_label
     env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
       CARGO_BUILD_JOBS: "2"
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_PROFILE_TEST_DEBUG: "0"
@@ -178,6 +180,9 @@ jobs:
     needs: changes
     if: always() && (needs.changes.outputs.backend == 'true' || needs.changes.result == 'skipped')
     runs-on: *runner_label
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v6
 
@@ -199,6 +204,9 @@ jobs:
     needs: changes
     if: always() && (needs.changes.outputs.backend == 'true' || needs.changes.result == 'skipped')
     runs-on: *runner_label
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v6
 

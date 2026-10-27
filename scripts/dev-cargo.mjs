@@ -37,6 +37,13 @@ if (args[0] === 'watch') {
     fail('select --purpose preview/dev/stable instead of release/profile overrides.');
   if (process.env.CARGO_INCREMENTAL !== undefined)
     fail('CARGO_INCREMENTAL overrides both dev/test and release profile.incremental; unset it to keep dev/test=true and release=false.');
+  if (process.env.CARGO_BUILD_INCREMENTAL !== undefined)
+    fail('CARGO_BUILD_INCREMENTAL overrides dev/test and release profile.incremental; unset it.');
+  const buildIncremental = spawnSync('cargo', ['-Z', 'unstable-options', 'config', 'get', 'build.incremental', '--format', 'json'], { encoding: 'utf8' });
+  if (buildIncremental.status !== 0 && !buildIncremental.stderr?.includes('is not set'))
+    fail('unable to inspect build.incremental configuration.');
+  if (buildIncremental.status === 0 && JSON.parse(buildIncremental.stdout).build?.incremental !== undefined)
+    fail('configured build.incremental overrides dev/test and release profile.incremental; remove it or use raw cargo deliberately.');
   const profiles = Object.fromEntries(['dev', 'test', 'release'].map((profile) => [profile, {
     debug: purpose === 'stable' ? 0 : 'line-tables-only',
     incremental: profile !== 'release',

@@ -30,8 +30,11 @@ Ordinary Cargo and Cargo.toml defaults remain unchanged for other consumers.
 Build the frontend first for instance/bundle creation; shared dev also needs the
 existing developer-runtime feature. No extra compiler environment is required.
 CARGO_BUILD_JOBS may limit concurrency. Inherited CARGO_INCREMENTAL must be absent
-(including an inherited 0 or 1, which would override the per-profile policy);
-conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
+(including an inherited 0 or 1, which would override the per-profile policy).
+`CARGO_BUILD_INCREMENTAL` and configured `build.incremental` also override the
+profiles, so both true and false are rejected with a diagnostic. Remove the
+override or use raw Cargo deliberately; the entry never edits user config.
+Other conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
 wrappers and target overrides are rejected with an explanation. The build entry
 does not inject these variables into run/watch or managed child Projects.
 Instance source snapshots use their own target directories. If a snapshot has no
@@ -44,8 +47,9 @@ The development entry no longer discovers, invokes or configures sccache. It
 uses rustc directly and rejects explicit inherited/configured compiler wrappers
 with an explanation, leaving the user's configuration intact. Use raw Cargo
 intentionally for a different wrapper policy. Validation helpers no longer add
-sccache automatically; CI no longer installs its action or sets its wrapper,
-and the container source no longer installs or requires it.
+sccache automatically. General CI setup and the stable container
+continue to include sccache for their existing consumers; they are outside this
+development-entry policy and are unchanged from the base revision.
 This does not uninstall host tools, stop existing daemons, clear caches or delete
 shared build-dir/target data. No global Cargo, shell or server-parent environment
 changes are involved.
@@ -113,10 +117,19 @@ flags, release absence of those flags and rejecting inherited CARGO_INCREMENTAL
 0/1 for all three purposes, plus conflicting per-profile environment overrides.
 Node syntax checks, Python AST parsing, shell syntax and `git diff --check` passed.
 
-`node --test deploy/server/release.test.mjs` could not load the missing `yaml`
-package (ERR_MODULE_NOT_FOUND); it did not exercise release assertions. No package
-installation was performed for this check. Docker/CI builds, full LVK Rust/pnpm
-validation, live deployment and restart were not run. The source removal of the
-image tool/smoke dependency and CI wrapper setup still needs independent review
-and eventual normal CI/image validation. Existing host tools/cache data were
-not uninstalled or removed, and no daemon command was executed.
+The original retirement run could not load `release.test.mjs` because `yaml`
+was missing. The review correction restored Dockerfile, smoke checks, tool docs
+and three CI files byte-for-byte from base; no deleted development wrapper is
+referenced there, so no exception was needed. A filtered root pnpm install with
+the frozen lockfile, ignored scripts and a workspace-local store supplied the
+existing yaml dependency without manifest/lockfile changes. The release tests
+then passed all 3 cases.
+
+The same review reproduced `CARGO_BUILD_INCREMENTAL=true` and configured
+`build.incremental=true` enabling release incremental, and false disabling preview
+incremental, on the pinned actual Cargo. The entry now rejects both override
+sources and values. Regression cases preserve the config file and check all
+three purposes; normal real dev/test compiles still enable incremental while
+release compiles do not. General CI and stable-tool availability are preserved.
+Full LVK Rust/pnpm validation, container builds, deployment and restart were not
+run. No real daemon command or shared-cache operation was performed.

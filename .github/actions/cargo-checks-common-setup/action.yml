@@ -28,6 +28,9 @@ runs:
       if: ${{ inputs.setup-node == 'true' }}
       uses: ./.github/actions/setup-node
 
+    - name: Setup sccache
+      uses: BloopAI/sccache-action@main
+
     - name: Install Rust toolchain
       if: ${{ inputs.components == '' }}
       uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
