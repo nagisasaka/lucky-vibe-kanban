@@ -1045,6 +1045,15 @@ mod tests {
         .await
         .unwrap();
         let root = _temp.path().join("reused-source");
+        std::fs::create_dir_all(&root).unwrap();
+        let fixture_git = git::GitCli::new();
+        fixture_git.git(&root, ["init"]).unwrap();
+        fixture_git
+            .git(&root, ["config", "user.name", "Fixture"])
+            .unwrap();
+        fixture_git
+            .git(&root, ["config", "user.email", "fixture@example.invalid"])
+            .unwrap();
         git::GitService::new()
             .initialize_repo_with_main_branch(&root)
             .unwrap();

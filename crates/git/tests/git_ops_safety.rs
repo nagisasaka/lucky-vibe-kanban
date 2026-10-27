@@ -1,9 +1,11 @@
+mod common;
 use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
 };
 
+use common::FixtureIdentity;
 use git::{GitCli, GitCliError, GitService};
 use git2::{PushOptions, Repository, build::CheckoutBuilder};
 use tempfile::TempDir;
@@ -64,7 +66,7 @@ fn configure_user(repo: &Repository) {
 fn temporary_diff_includes_new_files_without_staging_excluded_resources() {
     let tmp = TempDir::new().unwrap();
     let svc = GitService::new();
-    svc.initialize_repo_with_main_branch(tmp.path()).unwrap();
+    svc.initialize_fixture(tmp.path()).unwrap();
     let repo = Repository::open(tmp.path()).unwrap();
     configure_user(&repo);
     let head = svc.get_head_info(tmp.path()).unwrap().oid.parse().unwrap();
@@ -114,9 +116,7 @@ fn setup_repo_with_worktree(root: &TempDir) -> (PathBuf, PathBuf) {
     let worktree_path = root.path().join("wt-feature");
 
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
 
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
@@ -156,9 +156,7 @@ fn setup_conflict_repo_with_worktree(root: &TempDir) -> (PathBuf, PathBuf) {
     let worktree_path = root.path().join("wt-feature");
 
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
 
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
@@ -200,9 +198,7 @@ fn setup_no_unique_feature_repo(root: &TempDir) -> (PathBuf, PathBuf) {
     let worktree_path = root.path().join("wt-feature");
 
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
 
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
@@ -236,9 +232,7 @@ fn setup_direct_conflict_repo(root: &TempDir) -> (PathBuf, PathBuf) {
     let worktree_path = root.path().join("wt-feature");
 
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
 
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
@@ -275,7 +269,7 @@ fn push_reports_non_fast_forward() {
     let seed_path = temp_dir.path().join("seed");
     let service = GitService::new();
     service
-        .initialize_repo_with_main_branch(&seed_path)
+        .initialize_fixture(&seed_path)
         .expect("init seed repo");
     let seed_repo = Repository::open(&seed_path).expect("open seed repo");
     configure_user(&seed_repo);
@@ -335,7 +329,7 @@ fn fetch_with_missing_ref_returns_error() {
     let seed_path = temp_dir.path().join("seed");
     let service = GitService::new();
     service
-        .initialize_repo_with_main_branch(&seed_path)
+        .initialize_fixture(&seed_path)
         .expect("init seed repo");
     let seed_repo = Repository::open(&seed_path).expect("open seed repo");
     configure_user(&seed_repo);
@@ -375,7 +369,7 @@ fn push_and_fetch_roundtrip_updates_tracking_branch() {
     let seed_path = temp_dir.path().join("seed");
     let service = GitService::new();
     service
-        .initialize_repo_with_main_branch(&seed_path)
+        .initialize_fixture(&seed_path)
         .expect("init seed repo");
     let seed_repo = Repository::open(&seed_path).expect("open seed repo");
     configure_user(&seed_repo);
@@ -949,7 +943,7 @@ fn merge_refreshes_main_worktree_when_on_base() {
     // Initialize repo and ensure main is checked out
     let repo_path = td.path().join("repo_refresh");
     let s = GitService::new();
-    s.initialize_repo_with_main_branch(&repo_path).unwrap();
+    s.initialize_fixture(&repo_path).unwrap();
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
     checkout_branch(&repo, "main");
@@ -982,7 +976,7 @@ fn sparse_checkout_respected_in_worktree_diffs_and_commit() {
     let td = TempDir::new().unwrap();
     let repo_path = td.path().join("repo_sparse");
     let s = GitService::new();
-    s.initialize_repo_with_main_branch(&repo_path).unwrap();
+    s.initialize_fixture(&repo_path).unwrap();
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
     checkout_branch(&repo, "main");
@@ -1030,7 +1024,7 @@ fn worktree_diff_ignores_commits_where_base_branch_is_ahead() {
     let td = TempDir::new().unwrap();
     let repo_path = td.path().join("repo_base_ahead");
     let s = GitService::new();
-    s.initialize_repo_with_main_branch(&repo_path).unwrap();
+    s.initialize_fixture(&repo_path).unwrap();
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
     checkout_branch(&repo, "main");
@@ -1065,7 +1059,7 @@ fn worktree_diff_ignores_commits_where_base_branch_is_ahead() {
 fn init_repo_only_service(root: &TempDir) -> PathBuf {
     let repo_path = root.path().join("repo_svc");
     let s = GitService::new();
-    s.initialize_repo_with_main_branch(&repo_path).unwrap();
+    s.initialize_fixture(&repo_path).unwrap();
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
     checkout_branch(&repo, "main");
@@ -1204,9 +1198,7 @@ fn worktree_to_worktree_merge_leaves_no_staged_changes() {
 
     // Setup: Initialize repo with main branch
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
 
@@ -1336,9 +1328,7 @@ fn merge_base_ahead_of_task_should_error() {
 
     // Setup: Initialize repo with main branch
     let service = GitService::new();
-    service
-        .initialize_repo_with_main_branch(&repo_path)
-        .expect("init repo");
+    service.initialize_fixture(&repo_path).expect("init repo");
     let repo = Repository::open(&repo_path).unwrap();
     configure_user(&repo);
 
@@ -1391,7 +1381,7 @@ fn push_uses_configured_push_url_without_changing_fetch_url() {
     let fetch = Repository::init_bare(&fetch_path).unwrap();
     let push = Repository::init_bare(&push_path).unwrap();
     let svc = GitService::new();
-    svc.initialize_repo_with_main_branch(&source).unwrap();
+    svc.initialize_fixture(&source).unwrap();
     let repo = Repository::open(&source).unwrap();
     configure_user(&repo);
     write_file(&source, "example.txt", "test");

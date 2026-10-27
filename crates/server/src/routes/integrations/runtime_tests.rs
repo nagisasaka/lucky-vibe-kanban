@@ -488,6 +488,8 @@ async fn git_publication_survives_receipt_failure_without_a_second_merge() {
         String::from_utf8(out.stdout).unwrap().trim().to_owned()
     };
     cmd(&["init", "-b", "main"]);
+    cmd(&["config", "--local", "user.name", "Test"]);
+    cmd(&["config", "--local", "user.email", "test@example.invalid"]);
     std::fs::write(root.join("source.txt"), "base").unwrap();
     cmd(&["add", "source.txt"]);
     cmd(&[
@@ -543,10 +545,12 @@ async fn git_publication_survives_receipt_failure_without_a_second_merge() {
         .unwrap();
     let git = git::GitService::new();
     let targets = vec![root.to_path_buf()];
+    let error = publish_candidate(&git, &pool, &repo, &mut run, &targets)
+        .await
+        .unwrap_err();
     assert!(
-        publish_candidate(&git, &pool, &repo, &mut run, &targets)
-            .await
-            .is_err()
+        format!("{error:#}").contains("simulated crash before receipt"),
+        "unexpected publication error: {error:#}"
     );
     assert_eq!(cmd(&["rev-parse", "main"]), result);
     assert_eq!(
@@ -844,6 +848,8 @@ async fn approved_failed_check_uses_exact_git_publication_and_rejects_target_rac
             String::from_utf8(output.stdout).unwrap().trim().to_owned()
         };
         git_cmd(&["init", "-b", "main"]);
+        git_cmd(&["config", "--local", "user.name", "Test"]);
+        git_cmd(&["config", "--local", "user.email", "test@example.invalid"]);
         let commit = |message: &str| {
             git_cmd(&[
                 "-c",

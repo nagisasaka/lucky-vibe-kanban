@@ -1,5 +1,7 @@
+mod common;
 use std::{fs, path::Path};
 
+use common::FixtureIdentity;
 use git::{GitCli, GitService};
 use tempfile::TempDir;
 
@@ -12,7 +14,7 @@ fn summary_diff_counts_committed_uncommitted_untracked_and_unknown_binary() {
     let temp = TempDir::new().unwrap();
     let path = temp.path().join("repo");
     let git = GitService::new();
-    git.initialize_repo_with_main_branch(&path).unwrap();
+    git.initialize_fixture(&path).unwrap();
     command(&path, &["config", "user.name", "Fixture"]);
     command(&path, &["config", "user.email", "fixture@example.invalid"]);
     fs::write(path.join("text-to-binary"), "before\n").unwrap();

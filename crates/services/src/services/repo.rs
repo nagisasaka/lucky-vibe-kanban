@@ -118,7 +118,11 @@ impl RepoService {
         }
 
         let repo_path = normalized_parent.join(folder_name);
-        if repo_path.exists() {
+        if repo_path.exists()
+            && !git
+                .pending_initial_identity_setup(&repo_path)
+                .unwrap_or(false)
+        {
             return Err(RepoError::DirectoryAlreadyExists(repo_path));
         }
 
