@@ -3,14 +3,16 @@ import { chromium, expect } from '@playwright/test';
 import { createServer } from 'vite';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
-import { createWriteStream } from 'node:fs';
+import { createWriteStream, createReadStream } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { once } from 'node:events';
 import path from 'node:path';
 const root = process.cwd();
-const output = path.join(root, '.build/kanban-validation');
+const output = path.join(root, process.env.LVK_DND_BASELINE === '1' ? '.build/kanban-drop-baseline' : process.env.LVK_DND_REGRESSION === '1' ? '.build/kanban-drop-validation' : '.build/kanban-validation');
 await mkdir(output, { recursive: true });
-const instance = await mkdtemp(path.join(output, 'instance-'));
+await mkdir(path.join(root, '.build/kanban-validation'), { recursive: true });
+const instance = await mkdtemp(path.join(root, '.build/kanban-validation/instance-'));
 const binary = process.env.LVK_TEST_SERVER;
 assert.ok(binary, 'Set LVK_TEST_SERVER to a compatible prebuilt backend');
 const env = {
@@ -80,12 +82,28 @@ try {
           encoding: 'utf8',
         }),
         binary,
+        kanbanContainerOverride: process.env.LVK_DND_BASELINE === '1' ? 'a3247dadd5b4385e07a7848fd0009aa07d8ffa71' : null,
         build: info.build_info,
       },
       null,
       2
     )
   );
+  if (process.env.LVK_DND_REGRESSION === '1') {
+    const hashes = {};
+    for (const file of [
+      binary,
+      'crates/server/src/routes/local_remote.rs',
+      'packages/web-core/src/features/kanban/ui/KanbanContainer.tsx',
+      'packages/web-core/src/features/kanban/ui/kanbanDropSync.ts',
+      'packages/web-core/src/shared/lib/remoteApi.ts',
+    ]) {
+      const hash = createHash('sha256');
+      for await (const chunk of createReadStream(path.resolve(root, file))) hash.update(chunk);
+      hashes[file] = hash.digest('hex');
+    }
+    await writeFile(path.join(output, 'tested-source-hashes.json'), JSON.stringify(hashes, null, 2));
+  }
   await api('/api/config', 'PUT', {
     ...info.config,
     language: 'EN',
@@ -171,6 +189,13 @@ try {
   process.chdir(path.join(root, 'packages/local-web'));
   vite = await createServer({
     configFile: path.join(root, 'packages/local-web/vite.config.ts'),
+    plugins: process.env.LVK_DND_BASELINE === '1' ? [{
+      name: 'original-kanban-drop-reproduction', enforce: 'pre',
+      load(id) {
+        if (id === path.join(root, 'packages/web-core/src/features/kanban/ui/KanbanContainer.tsx'))
+          return execFileSync('git', ['show', 'a3247dadd5b4385e07a7848fd0009aa07d8ffa71:packages/web-core/src/features/kanban/ui/KanbanContainer.tsx'], { cwd: root, encoding: 'utf8' });
+      },
+    }] : [],
     server: { port: 0, host: '127.0.0.1', open: false },
   });
   await vite.listen();
@@ -188,6 +213,10 @@ try {
   await expect(columns).toHaveCount(4, { timeout: 90000 });
   const card = (id) => page.locator(`[data-kanban-card="${id}"]`);
   await expect(card(issues[0].id)).toBeVisible();
+  if (process.env.LVK_DND_REGRESSION === '1') {
+    const { runDropRegression } = await import('./drop-regression.mjs');
+    await runDropRegression({ page, columns, card, api, project, statuses, issues, output, evidence });
+  } else {
   await expect(
     card(issues[0].id).getByText('3 files', { exact: true })
   ).toBeVisible();
@@ -512,6 +541,7 @@ try {
   await expect(columns).toHaveCount(4);
   await expect(statusCard.getByText('承認待ち', { exact: true })).toBeVisible();
   await page.screenshot({ path: path.join(output, 'light-ja-2560.png') });
+  }
   await writeFile(
     path.join(output, 'results.json'),
     JSON.stringify(evidence, null, 2)

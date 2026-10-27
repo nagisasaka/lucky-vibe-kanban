@@ -1277,7 +1277,14 @@
       }
     },
     "switchToList": "Switch to list view",
-    "switchToKanban": "Switch to kanban view"
+    "switchToKanban": "Switch to kanban view",
+    "drop": {
+      "save": "Could not save the move. The board is being refreshed; check its position before trying again.",
+      "sync": "The move was submitted, but synchronization could not be confirmed. Refresh to check the saved position.",
+      "conflict": "Newer activity changed this card. Its saved position takes priority over the dropped position.",
+      "retry": "Refresh board",
+      "dismiss": "Dismiss"
+    }
   },
   "createMode": {
     "headings": {
