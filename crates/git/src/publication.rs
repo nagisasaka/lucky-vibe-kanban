@@ -251,6 +251,7 @@ impl GitService {
                 "Verified R does not contain B".into(),
             ));
         }
+        let publication_signature = self.commit_signatures(root, true)?.1;
         // Lock the one ref, then compare B. An earlier ff-only preflight is not
         // a CAS. The transaction never creates an unvalidated merge commit.
         let mut transaction = repo.transaction()?;
@@ -304,7 +305,7 @@ impl GitService {
         transaction.set_target(
             target_ref,
             result,
-            Some(&self.signature_with_fallback(&repo)?),
+            Some(&publication_signature),
             &format!("LVK Integration {run_id}: verified exact result"),
         )?;
         transaction.commit()?;

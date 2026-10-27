@@ -162,13 +162,10 @@ pub(super) fn candidate(
     if git(root, &["merge-base", before, source])? == source {
         return Ok(before.into());
     }
+    git::GitService::new().require_commit_identity(root, false)?;
     git(
         root,
         &[
-            "-c",
-            "user.name=LVK Integration",
-            "-c",
-            "user.email=integration@localhost",
             "commit-tree",
             tree,
             "-p",
@@ -338,4 +335,97 @@ pub(super) fn resolution(text: &str) -> anyhow::Result<Resolution> {
         "Invalid resolution response"
     );
     Ok(result)
+}
+
+#[cfg(test)]
+mod identity_tests {
+    use super::*;
+
+    fn fixture() -> tempfile::TempDir {
+        let temp = tempfile::TempDir::new().unwrap();
+        git(temp.path(), &["init", "-b", "main"]).unwrap();
+        git(temp.path(), &["config", "user.name", "Fixture"]).unwrap();
+        git(
+            temp.path(),
+            &["config", "user.email", "fixture@example.invalid"],
+        )
+        .unwrap();
+        git::GitService::new()
+            .initialize_repo_with_main_branch(temp.path())
+            .unwrap();
+        temp
+    }
+
+    #[test]
+    fn candidate_identity_after_conflict_preserves_source_author_and_parents() {
+        let temp = fixture();
+        let root = temp.path();
+        std::fs::write(root.join("file"), "base").unwrap();
+        git::GitService::new().commit(root, "base").unwrap();
+        git(root, &["checkout", "-b", "source"]).unwrap();
+        std::fs::write(root.join("file"), "source").unwrap();
+        git(root, &["add", "file"]).unwrap();
+        git(
+            root,
+            &[
+                "commit",
+                "--author=Upstream <upstream@example.invalid>",
+                "-m",
+                "source",
+            ],
+        )
+        .unwrap();
+        let source = git(root, &["rev-parse", "HEAD"]).unwrap();
+        git(root, &["checkout", "main"]).unwrap();
+        std::fs::write(root.join("file"), "target").unwrap();
+        git::GitService::new().commit(root, "target").unwrap();
+        let before = git(root, &["rev-parse", "HEAD"]).unwrap();
+        prepare_conflict(root, &before, &source).unwrap();
+        std::fs::write(root.join("file"), "resolved").unwrap();
+        git(root, &["add", "file"]).unwrap();
+        let tree = resolution_tree(root, &before, &source).unwrap();
+        let result = candidate(root, &before, &source, &tree, Uuid::new_v4(), 0).unwrap();
+        assert_eq!(
+            git(
+                root,
+                &["show", "-s", "--format=%an <%ae>|%cn <%ce>", &result]
+            )
+            .unwrap(),
+            "Fixture <fixture@example.invalid>|Fixture <fixture@example.invalid>"
+        );
+        assert_eq!(
+            git(root, &["show", "-s", "--format=%P", &result]).unwrap(),
+            format!("{before} {source}")
+        );
+        assert_eq!(
+            git(root, &["show", "-s", "--format=%an", &source]).unwrap(),
+            "Upstream"
+        );
+        install(root, &before, &source, &result, true).unwrap();
+        assert_eq!(git(root, &["rev-parse", "HEAD"]).unwrap(), result);
+    }
+
+    #[test]
+    fn candidate_rechecks_identity_after_setup_before_resume() {
+        let temp = fixture();
+        let root = temp.path();
+        let before = git(root, &["rev-parse", "HEAD"]).unwrap();
+        git(root, &["commit", "--allow-empty", "-m", "source"]).unwrap();
+        let source = git(root, &["rev-parse", "HEAD"]).unwrap();
+        let tree = git(root, &["rev-parse", "HEAD^{tree}"]).unwrap();
+        git(root, &["config", "user.email", ""]).unwrap();
+        assert!(candidate(root, &before, &source, &tree, Uuid::new_v4(), 0).is_err());
+        assert_eq!(git(root, &["rev-parse", "HEAD"]).unwrap(), source);
+        git(root, &["config", "user.name", "Selected After Queue"]).unwrap();
+        git(root, &["config", "user.email", "selected@example.invalid"]).unwrap();
+        let result = candidate(root, &before, &source, &tree, Uuid::new_v4(), 0).unwrap();
+        assert_eq!(
+            git(
+                root,
+                &["show", "-s", "--format=%an <%ae>|%cn <%ce>", &result]
+            )
+            .unwrap(),
+            "Selected After Queue <selected@example.invalid>|Selected After Queue <selected@example.invalid>"
+        );
+    }
 }

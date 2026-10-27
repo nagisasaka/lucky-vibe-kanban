@@ -280,6 +280,9 @@ impl IntoResponse for ApiError {
             }
             ApiError::ExecutionProcess(_) => ErrorInfo::internal("ExecutionProcessError"),
 
+            ApiError::GitService(GitServiceError::CommitIdentity(message)) => {
+                ErrorInfo::conflict("GitServiceError", message.clone())
+            }
             ApiError::GitService(GitServiceError::MergeConflicts { message, .. }) => {
                 ErrorInfo::conflict("GitServiceError", message.clone())
             }

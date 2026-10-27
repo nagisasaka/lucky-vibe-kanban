@@ -857,6 +857,12 @@ impl LocalAgentRunPort {
                 &request.input.content,
             );
         for repo in &repos {
+            let root = PathBuf::from(&request.workspace.path).join(&repo.name);
+            memory_instructions.push(
+                git::GitService::new()
+                    .commit_identity_instructions(&root)
+                    .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?,
+            );
             if !workspace.is_execution_only() {
                 workspace_manager::shared_resources::ensure_repository_memory(repo)
                     .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
@@ -927,7 +933,6 @@ impl LocalAgentRunPort {
                     })?;
                 }
             }
-            let root = Path::new(&request.workspace.path).join(&repo.name);
             if !openwiki_maintenance
                 && !openwiki_reviewer
                 && let Some(policy) = &parallel_policy

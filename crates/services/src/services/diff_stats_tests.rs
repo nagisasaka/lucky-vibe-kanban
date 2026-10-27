@@ -26,6 +26,15 @@ async fn summary_diff_unknown_and_multi_repo_failure() {
     workspace.container_ref = Some(temp.path().to_string_lossy().into());
     for name in ["a", "b"] {
         let path = temp.path().join(name);
+        std::fs::create_dir_all(&path).unwrap();
+        let fixture_git = git::GitCli::new();
+        fixture_git.git(&path, ["init"]).unwrap();
+        fixture_git
+            .git(&path, ["config", "user.name", "Fixture"])
+            .unwrap();
+        fixture_git
+            .git(&path, ["config", "user.email", "fixture@example.invalid"])
+            .unwrap();
         git.initialize_repo_with_main_branch(&path).unwrap();
         let cli = git::GitCli::new();
         cli.git(&path, ["config", "user.name", "Fixture"]).unwrap();

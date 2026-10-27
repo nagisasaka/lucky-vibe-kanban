@@ -636,6 +636,18 @@ async fn create_worktree_when_repo_path_is_a_worktree() {
 
     let repo_path = td.path().join("repo");
     let git_service = GitService::new();
+    std::fs::create_dir_all(&repo_path).unwrap();
+    let fixture_git = git::GitCli::new();
+    fixture_git.git(&repo_path, ["init"]).unwrap();
+    fixture_git
+        .git(&repo_path, ["config", "user.name", "Fixture"])
+        .unwrap();
+    fixture_git
+        .git(
+            &repo_path,
+            ["config", "user.email", "fixture@example.invalid"],
+        )
+        .unwrap();
     git_service
         .initialize_repo_with_main_branch(&repo_path)
         .unwrap();

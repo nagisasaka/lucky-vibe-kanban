@@ -11,6 +11,7 @@ use ts_rs::TS;
 use utils::diff::{Diff, DiffChangeKind};
 
 mod cli;
+mod identity;
 pub mod publication;
 pub mod reference;
 pub mod snapshot;
@@ -34,6 +35,8 @@ pub struct FileStat {
 
 #[derive(Debug, Error)]
 pub enum GitServiceError {
+    #[error("{0}")]
+    CommitIdentity(String),
     #[error(transparent)]
     Git(#[from] GitError),
     #[error(transparent)]
@@ -214,33 +217,6 @@ impl GitService {
         Ok(())
     }
 
-    /// Ensure local (repo-scoped) identity exists for CLI commits.
-    /// Sets user.name/email only if missing in the repo config.
-    fn ensure_cli_commit_identity(&self, repo_path: &Path) -> Result<(), GitServiceError> {
-        let repo = self.open_repo(repo_path)?;
-        let cfg = repo.config()?;
-        let has_name = cfg.get_string("user.name").is_ok();
-        let has_email = cfg.get_string("user.email").is_ok();
-        if !(has_name && has_email) {
-            let mut cfg = repo.config()?;
-            cfg.set_str("user.name", "Vibe Kanban")?;
-            cfg.set_str("user.email", "noreply@vibekanban.com")?;
-        }
-        Ok(())
-    }
-
-    /// Get a signature for libgit2 commits with a safe fallback identity.
-    fn signature_with_fallback<'a>(
-        &self,
-        repo: &'a Repository,
-    ) -> Result<git2::Signature<'a>, GitServiceError> {
-        match repo.signature() {
-            Ok(sig) => Ok(sig),
-            Err(_) => git2::Signature::now("Vibe Kanban", "noreply@vibekanban.com")
-                .map_err(GitServiceError::from),
-        }
-    }
-
     fn default_remote(
         &self,
         repo: &Repository,
@@ -290,7 +266,9 @@ impl GitService {
     }
 
     fn create_initial_commit(&self, repo: &Repository) -> Result<(), GitServiceError> {
-        let signature = self.signature_with_fallback(repo)?;
+        let root = repo.workdir().unwrap_or_else(|| repo.path());
+        let (author, committer) = self.commit_signatures(root, false)?;
+        let author = author.expect("new commits require an author");
 
         let tree_id = {
             let tree_builder = repo.treebuilder(None)?;
@@ -301,8 +279,8 @@ impl GitService {
         // Create initial commit on main branch
         let _commit_id = repo.commit(
             Some("refs/heads/main"),
-            &signature,
-            &signature,
+            &author,
+            &committer,
             "Initial commit",
             &tree,
             &[],
@@ -325,10 +303,9 @@ impl GitService {
             return Ok(false);
         }
 
+        self.require_commit_identity(path, false)?;
         git.add_all(path)
             .map_err(|e| GitServiceError::InvalidRepository(format!("git add failed: {e}")))?;
-        // Only ensure identity once we know we're about to commit
-        self.ensure_cli_commit_identity(path)?;
         git.commit(path, message)
             .map_err(|e| GitServiceError::InvalidRepository(format!("git commit failed: {e}")))?;
         Ok(true)
@@ -358,7 +335,7 @@ impl GitService {
                 "Source publication snapshot changed; no commit was made".into(),
             ));
         }
-        self.ensure_cli_commit_identity(path)?;
+        self.require_commit_identity(path, false)?;
         git.commit(path, message)?;
         Ok(())
     }
@@ -383,7 +360,7 @@ impl GitService {
                 "Invalid commit path".into(),
             ));
         }
-        self.ensure_cli_commit_identity(path)?;
+        self.require_commit_identity(path, false)?;
         for args in [
             vec!["add", "--"],
             vec!["commit", "--only", "-m", message, "--"],
@@ -803,7 +780,7 @@ impl GitService {
                 }
 
                 // Use CLI merge in base context
-                self.ensure_cli_commit_identity(&base_checkout_path)?;
+                self.require_commit_identity(&base_checkout_path, false)?;
                 let sha = git_cli
                     .merge_squash_commit(
                         &base_checkout_path,
@@ -835,12 +812,13 @@ impl GitService {
                 let task_commit = task_branch.get().peel_to_commit()?;
 
                 // Create the squash commit in-memory (no checkout) and update the base branch ref
-                let signature = self.signature_with_fallback(&task_repo)?;
+                let (author, committer) = self.commit_signatures(task_worktree_path, false)?;
+                let author = author.expect("new commits require an author");
                 let squash_commit_id = self.perform_squash_merge(
                     &task_repo,
                     &base_commit,
                     &task_commit,
-                    &signature,
+                    (&author, &committer),
                     commit_message,
                     base_branch_name,
                 )?;
@@ -1284,7 +1262,7 @@ impl GitService {
         repo: &Repository,
         base_commit: &git2::Commit,
         task_commit: &git2::Commit,
-        signature: &git2::Signature,
+        signatures: (&git2::Signature, &git2::Signature),
         commit_message: &str,
         base_branch_name: &str,
     ) -> Result<git2::Oid, GitServiceError> {
@@ -1311,8 +1289,8 @@ impl GitService {
         // Create a squash commit: use merged tree with base_commit as sole parent
         let squash_commit_id = repo.commit(
             None,           // Don't update any reference yet
-            signature,      // Author
-            signature,      // Committer
+            signatures.0,   // Author
+            signatures.1,   // Committer
             commit_message, // Custom message
             &tree,          // Merged tree content
             &[base_commit], // Single parent: base branch commit
@@ -1357,7 +1335,7 @@ impl GitService {
         }
 
         // Ensure identity for any commits produced by rebase
-        self.ensure_cli_commit_identity(worktree_path)?;
+        self.require_commit_identity(worktree_path, true)?;
         // Use git CLI rebase to carry out the operation safely
         match git.rebase_onto(worktree_path, new_base_branch, old_base_branch, task_branch) {
             Ok(()) => {}
