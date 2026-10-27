@@ -28,6 +28,8 @@ sources:
     resource: repo://crates/db/src/models/workspace_usage.rs
   - id: openwiki-source-5f083da2f629bcd57e386ad4
     resource: repo://crates/db/src/models/workspace.rs
+  - id: openwiki-source-4f59e07f8850eb04105d5cb8
+    resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
     resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
@@ -124,10 +126,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:04:01.883Z
+    at: 2026-10-27T11:11:50.589Z
 ---
 
 # Workspace と Repository
@@ -300,6 +302,8 @@ AgentRun が終端でも registry が `reserved` / `spawned` / `running` / `unre
 | 自動マージ | 同じ Repo / Project / Workspace / Card の run が succeeded かつ published。mechanical 経路は AgentRun 不要で、後続 Wiki 完了を待たない |
 
 成果だけで削除しない。現在 owner・path・branch・単一 Repo membership と物理 path/name、未 archive Issue の link、既存 DB idle・script settled・OS process guard も再確認する。[最終検査](../../crates/server/src/routes/local_remote/issue_archive.rs#L466-L506)。公開と owner 解放の詳細は [Wiki 保守](../operations/openwiki-maintenance.md#成功後の保守環境の解放)と [自動マージ の後処理](formal-integration.md#成功後の専用作業領域)へ分ける。
+
+専用 Issue の状態は [生成 Issue の状態契約](project-and-issue.md#生成-issue-の状態契約)に従い、公開結果から Done を投影する。archive の最終検査では Issue 全体の Cancelled / Canceled を拒否し、状態 receipt のある対象では `projected_status=done` と現在列 Done の両方を要求する。人が公開後に In Review 等へ戻した Issue は、専用 Workspace ごと保持する。手動 archive 属性だけでは product 状態を凍結しないため、状態変化と物理環境の解放を混同しない。[追加 guard](../../crates/server/src/routes/local_remote/issue_archive.rs#L505-L514)・[取消・再オープンを保つ回帰](../../crates/server/src/routes/local_remote/issue_archive.rs#L624-L669)・[archive 中の状態投影](../../crates/db/tests/generated_issue_status.rs#L403-L419)
 
 #### 一度限りの intent と介入の検出
 

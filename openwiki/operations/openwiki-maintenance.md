@@ -4,6 +4,10 @@ title: OpenWiki の初期生成・同期・回復
 description: Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
 tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
+  - id: openwiki-source-4f59e07f8850eb04105d5cb8
+    resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-38fc795b99b30483be700b71
@@ -70,10 +74,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-27T11:11:50.589Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -122,6 +126,10 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 削除済み・無関連の明示 Project はエラーとなる。Project の存在と **Configure project working location** の保存済み Repo を確認する。Issue が必要なのに可視 status がない場合は、Project 設定で追加または表示してから後の実行を開始する。MCP はこれに加えて接続の Project 認可を保ち、共通受付後のエラーを安全な再実行と即断しない。[検証エラー](../../crates/server/src/routes/openwiki/project_context.rs#L6-L24)・[MCP の不確実な受付](#不確実な結果と検証の境界)
 
 変更時は [in-memory DB fixture](../../crates/server/src/routes/openwiki/project_context.rs#L45-L270)を入口に、Bootstrap/Sync の両 owner、defaults のみの関連、削除・無関係 Project、共有 Repo、指定なし、status なし、Session 作成までを確認する。[UI fixture](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.test.tsx#L86-L107)は Initialize/Sync の Project 伝播と未指定 request、[MCP fixture](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L659)は別 Project の認可拒否と引継ぎを扱う。これらは実モデル生成・Wiki 公開・実ブラウザーや外部認証の成功を証明しない。
+
+新規生成 provenance と状態 receipt を持つ保守 Issue は、作成時の列選択の後、現在の product owner を根拠に状態を投影する。進行・再開は In Progress、停止・取消・判断待ちは In Review、Bootstrap は publication End を通った Workflow succeeded、Sync は owner の公開成功結果で Done とする。Sync の Agent Succeeded だけでは Done にならず、検証済み no-op は公開成功に含む。必要な可視列がなければ末尾列で代替しない。詳細な identity・再送・upgrade・手動 Cancelled の保護は [生成 Issue の状態契約](../concepts/project-and-issue.md#生成-issue-の状態契約)に集約する。[投影](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)・[Bootstrap の公開後状態](../../crates/server/src/workflow_runtime/bootstrap_tests.rs#L963-L985)・[Sync no-op](../../crates/db/tests/generated_issue_status.rs#L389-L400)
+
+保守 Card も [Project UUID ごとの永続採番](../concepts/project-and-issue.md#採番の寿命と移行の限界)を共有する。最高 Card の削除後も次番号へ進み、関連付与失敗時は番号予約とともに rollback する。移行前の削除済み番号を復元する機能ではない。[共通 caller](../../crates/services/src/services/workspace_usage/lifecycle.rs#L73-L131)・[system Card 削除後の回帰](../../crates/services/src/services/workspace_usage.rs#L1285-L1321)
 
 ## MCP から既存 Wiki を同期する
 
@@ -244,6 +252,8 @@ Sync の確定結果は Workspace owner に保存してから repository の最�
 公開・receipt 確定と process 終了後、既存 recovery monitor は owner を解除できた Workspace だけを自動 archive へ渡す。新規の未 bind Wiki owner が専用 Issue とともに登録された場合が対象で、startup の過去 link 補完には自動削除資格を付けない。Issue なしの保守を全面禁止する変更でもない。[登録と解除](../../crates/services/src/services/workspace_usage/lifecycle.rs#L119-L177)・[monitor](../../crates/server/src/routes/openwiki.rs#L878-L913)
 
 Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の成功と owner に保存した公開成功を照合する。検証済み no-op も成功に含み、AgentRun の終端だけで削除しない。手動介入・busy・所有不一致での拒否、一度限りの intent、削除失敗と観測の詳細は [生成された専用 Workspace の自動 archive](../concepts/workspace.md#生成された専用-workspace-の自動-archive)に集約する。失敗・取消・不確かな残存を自動 retry で消す経路はなく、archive の失敗は Wiki 公開成功を巻き戻さない。[成果の再照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L530)
+
+公開成功でも、専用 Issue が Cancelled、または状態 receipt / 現在列が Done でなければ自動 archive を拒否する。公開後に手動で再オープンした Issue を遅延成功通知で Done に戻したり、その Workspace を自動削除したりしない。Issue archive 属性自体は状態投影の停止条件ではない。[Workspace 側の最終 guard](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[取消と再オープンの回帰](../../crates/server/src/routes/local_remote/issue_archive.rs#L624-L669)
 
 変更時は [owner解放・Sync no-op・介入・別Workspace保持のserver fixture](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)、[SQL triggerとwriter排他](../../tests/generated-archive/test_migration.py)、[自動マージの凍結eventだけを使うoutbox回帰](../../crates/server/src/routes/integrations/runtime_tests.rs)を確認する。開発記録の「Rust未実行」はその時点の履歴である。今回供給された後続Change Manifestはfixture修復後の限定試験と最終統合候補のinstall / frontend build / check / lint / backend:test成功を記録するが、今回のWiki保守はそれらを再実行していない。実 Bootstrap / Sync の公開からprocess/cwd参照までのE2E、稼働DBや実ユーザーWorkspaceの削除は確認していない。
 

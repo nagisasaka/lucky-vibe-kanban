@@ -22,6 +22,10 @@ sources:
     resource: repo://crates/db/migrations/20261025150000_issue_archive.sql
   - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
     resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
+  - id: openwiki-source-4fe58481730f861df4628448
+    resource: repo://crates/db/migrations/20261027090100_issue_number_high_water.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
@@ -32,12 +36,16 @@ sources:
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-2e4f4c7654ac4a8e4d26283a
+    resource: repo://crates/db/src/models/issue_number_tests.rs
   - id: openwiki-source-6fe5fbd6df406f973641b771
     resource: repo://crates/db/src/models/issue_number.rs
   - id: openwiki-source-0f48367503e71396b298f71a
     resource: repo://crates/db/src/models/issue_order.rs
   - id: openwiki-source-ccd357b1781e6e90e56fd858
     resource: repo://crates/db/src/models/repo.rs
+  - id: openwiki-source-4f59e07f8850eb04105d5cb8
+    resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -50,6 +58,10 @@ sources:
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-38de6ae4b89edddb12325c18
     resource: repo://crates/server/src/routes/workspaces/links.rs
+  - id: openwiki-source-04d5adb51b5929dacce999bc
+    resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
+  - id: openwiki-source-15dea6acc3c44eb46d7d11d9
+    resource: repo://docs/development/issue-numbering.md
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-ff91ec3e5a5f406a698e52e6
@@ -70,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T11:19:07.381Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T11:19:07.381Z
 ---
 
 # Project・Issue と実施の関係
@@ -88,9 +100,9 @@ Project には Issue と独立した [Todo 共有メモ](project-todos.md)もあ
 
 ## 仕事の識別と分類
 
-Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key と Project 内の `MAX(issue_number)+1` から作る。Project 作成時の key は必須で、前後空白除去・ASCII大文字化後に英字先頭の英数字2〜10文字、現存 Project 間で一意である。API 更新では変更できない。UI の名前由来候補は編集可能で、非ASCII語はローマ字化せず空候補とする。重複はサーバーで409となり、UI候補は予約ではない。[作成](../../crates/server/src/routes/local_remote.rs#L440-L489)・[正規化](../../crates/api-types/src/project.rs#L70-L83)・[候補](../../packages/web-core/src/shared/lib/projectKey.ts)。
+Issue の主キーは UUID。表示用 `simple_id` は保存済み Project key と Project UUID ごとの永続高水位 `issue_number_high_water` の次番号から作る。Project 作成時の key は必須で、前後空白除去・ASCII大文字化後に英字先頭の英数字2〜10文字、現存 Project 間で一意である。API 更新では変更できない。UI の名前由来候補は編集可能で、非ASCII語はローマ字化せず空候補とする。重複はサーバーで409となり、UI候補は予約ではない。[作成](../../crates/server/src/routes/local_remote.rs#L440-L489)・[正規化](../../crates/api-types/src/project.rs#L70-L83)・[候補](../../packages/web-core/src/shared/lib/projectKey.ts)。
 
-Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・自動マージ Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、最大番号の削除後には番号が再利用され得る。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L1-L24)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
+Project key 未適用の既存 DB は、互換 migration が Project UUID 順で先頭を `LOCAL`、以降を `LOCAL2`〜`LOCAL99999` にする。既存 Issue UUID・番号・simple_id は変更しないため、過去の表示接頭辞と現在の Project key が異なる場合がある。新規 Issue は現在の key を使う。履歴選択・上限失敗・旧 tool の制約は [Project key migration の互換運用](../operations/development.md#project-key-migration-の互換運用)を参照する。通常 Issue・自動マージ Card・OpenWiki保守Cardは同じ allocator に caller の `BEGIN IMMEDIATE` transaction を渡し、Issue と関連 Tag を一緒に commit/rollback する。番号・simple_id のDB一意制約はProject内であり、高水位導入後に commit した番号は最高行・全行を削除しても再利用しない。Project削除後のkey再利用も禁止する履歴予約はない。永続参照はUUIDを使う。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[互換 SQL](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)・[通常作成](../../crates/server/src/routes/local_remote.rs#L789-L855)。
 
 priority は urgent / high / medium / low の四値で、作成時省略と legacy の明示 null は medium に正規化する。更新時の省略は保持するが明示 null は medium になる。nullable wire型は旧client互換のため残り、migration と trigger は直接生成・旧行の NULL も補正する。優先度は実行の許可や順序を変更する仕組みではない。[共有更新](../../crates/server/src/routes/local_remote.rs#L879-L963)・[NULL補正](../../crates/db/migrations/20261025000000_issue_classification.sql#L1-L11)。
 
@@ -112,9 +124,17 @@ Issue の分類と関係はそれぞれ別の意味を持つ。
 
 部分更新では「送らなかった」と「null に消した」を区別する。description などは二重 Option であり、未指定なら保持し、明示 null ならクリアする。priority の明示 null は上記の medium 正規化が例外となる。フォームや API クライアントの変更でこの違いを失うと、無関係な編集で情報を消し得る。[更新リクエスト](../../crates/api-types/src/issue.rs#L79-L146)、[適用](../../crates/server/src/routes/local_remote.rs)
 
+### 採番の寿命と移行の限界
+
+高水位は表示 key や Issue 行ではなく Project UUID に所属する。archive / unarchive、key の変更、DB 接続の再生成でも低下せず、Project 自体の削除でその寿命を終える。通常 API は key 更新を公開していないが、DB 上の key が変わっても既存 Issue の UUID・番号・simple_id は変えない。直接 INSERT や番号 / Project の更新も trigger が高水位へ記録し、高水位の低下は拒否する。ただし直接 SQL による過去番号の指定まで禁止する allocator ではない。[前方 migration](../../crates/db/migrations/20261027090100_issue_number_high_water.sql#L1-L26)・[削除・再接続・key の回帰](../../crates/db/src/models/issue_number_tests.rs#L63-L123)
+
+allocator は caller の `BEGIN IMMEDIATE` 内で `UPDATE … RETURNING` し、Issue INSERT・Tag 等と一緒に commit する。予約だけを commit したり、未 commit 番号を外部公開したりしない。失敗時は transaction 全体を rollback するので、未公開予約は次の作成で使用できる。上限は i32::MAX であり、到達後は明示エラーとなる。通常作成 API は BadRequest、DB-only caller は既存 SQLx エラー境界へ変換し、wrap や現存 MAX への fallback はしない。[予約とエラー](../../crates/db/src/models/issue_number.rs#L4-L46)・[通常作成の変換](../../crates/server/src/routes/local_remote.rs#L797-L817)・[並列・rollback・上限の回帰](../../crates/db/src/models/issue_number_tests.rs#L126-L173)
+
+migration は archive を含む現存最大値（空なら0）を初期値にし、既存 Issue の識別子を変更しない。導入前に削除済みの最大番号は、番号を持たない remote create receipt や不完全な audit から復元できないため、過去全体の非再利用は保証しない。導入時は Project UUID と対応する信頼できる保持履歴を確認し、必要なら確認済み最大値以上の floor を計画する。履歴不足なら初期値・根拠・保証不能期間を記録する。今回の実装は live DB 修復や既存番号の付替えを行わない。[運用上の根拠と未解決条件](../../docs/development/issue-numbering.md#migration-と過去履歴の限界)・[履歴不足を含む移行回帰](../../crates/db/src/models/issue_number_tests.rs#L176-L222)
+
 ## Kanban と実行の同期契約
 
-Not Started は未着手、In Progress は着手済み・未完了、In Review は自動同期上のレビュー待ちを表す。In Progress だけから「今も実行中」と判断せず、[AgentRun の状態](session-and-agent-run.md#状態停止送信待ち)を見る。Workspace 作成や Starting だけでは列を動かさず、開始の証拠を持つ Running で移動する。成功でも Done にはせず、[自動マージ の公開後完了](#正式統合と-card-の完了)と分ける。[同期処理](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)
+以下は通常の Issue に対する一般 Agent 同期である。[生成専用 Issue](#生成-issue-の状態契約)は別の product 投影に従う。Not Started は未着手、In Progress は着手済み・未完了、In Review は自動同期上のレビュー待ちを表す。In Progress だけから「今も実行中」と判断せず、[AgentRun の状態](session-and-agent-run.md#状態停止送信待ち)を見る。Workspace 作成や Starting だけでは列を動かさず、開始の証拠を持つ Running で移動する。成功でも Done にはせず、[自動マージ の公開後完了](#正式統合と-card-の完了)と分ける。[同期処理](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)
 
 | 観測と条件 | 自動同期の結果 |
 | --- | --- |
@@ -142,6 +162,24 @@ Done からの再着手は既存の Running 同期で扱い、別の再開処理
 ### 既存 Todo 列の移行
 
 migration は名前 Todo、色 `210 80% 52%`、sort_order 100、hidden 0 がすべて一致する列だけを Not Started に改名する。列 ID と Issue の参照は保ち、カスタマイズ済み列は残す。これは既定属性一致による判定であり、生成元を証明する仕組みではない。[移行](../../crates/db/migrations/20261020190000_kanban_lifecycle.sql#L1-L3)・[ID とカスタム列の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L247-L285)。独立した [Project Todo](project-todos.md) と旧 TaskStatus の API 表現は改名の対象ではない。
+
+## 生成 Issue の状態契約
+
+自動マージ・OpenWiki Bootstrap / Sync が内部生成した専用 Issue は、製品実行の進行と結果を表す。`system` Tag や名前による判別ではなく、`generated_issue_workspaces` の生成時 provenance と `generated_issue_status` の永続 receipt を使う。現在の Workspace owner kind / run / repository、Issue / Project link と製品 run の対応を検査して投影する。一般 Agent 同期は receipt のある生成 Issue を除外し、無関係な Agent の終了で専用 Card を戻さない。[投影の identity](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L1-L55)・[一般経路の除外](../../crates/db/src/models/agent_runtime_kanban.rs#L41-L54)
+
+| 製品 | In Progress / In Review の根拠 | Done の根拠 |
+| --- | --- | --- |
+| 自動マージ | 通常進行・再開は In Progress。blocked / failed / cancelled / recovery_required と未公開 succeeded は In Review。integrating 中のみ現在の競合 Agent の待機・失敗も反映 | payload の `published=true`。後続 Wiki や後着 Agent の失敗とは分離 |
+| Bootstrap | Workflow の awaiting_human / awaiting_arena / failed / canceled、または実行中 node の child Agent の入力・承認待ちは In Review。それ以外の進行は In Progress | host の publication End を通った Workflow succeeded |
+| Sync | 現在の Agent の入力・承認待ちや失敗・取消・crash・audit_failed、owner result の failed / cancelled は In Review。再開は In Progress | 対応 Agent が存在し、owner result が succeeded。公開検証済み no-op も含む |
+
+Agent Succeeded 単独では公開成功としない。自動マージの validating 以降は古い競合 Agent に引き戻されず、Done receipt は後着・重複の成功 / 失敗で再消費しない。DB の product 状態・owner・Agent / node 更新に伴う trigger で同じ transaction 内に列と完了日時を反映し、過去 AgentRun の監査・失敗記録は書き換えない。[状態と更新](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L183)・[製品別の回帰](../../crates/db/tests/generated_issue_status.rs#L144-L261)
+
+移動先は同じ Project の可視列を名前の小文字値で照合し、sort_order / ID 順で選ぶ。必要な列がない場合は無関係な末尾列へ代替しない。Issue 全体の Cancelled / Canceled は operator の判断として保ち、公開後の手動再オープンも Done receipt の再送で消さない。一方、公開前の通常の手動列変更を永久 freeze する契約ではない。archive 属性は独立し、手動 archive 中でも対象の product 状態は投影される。[適用条件と receipt](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L52-L103)・[取消・再オープン・列欠落・archive の回帰](../../crates/db/tests/generated_issue_status.rs#L264-L419)
+
+upgrade はまだ有効な execution-only owner だけを登録し、Issue 行を一括更新しない。公開済みの継続 owner は done receipt のみ引き継いで手動再オープンを守り、解放済みの過去残留は登録・修復しない。次の通常イベントから現在の製品状態を反映する。[upgrade 条件](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L57-L76)・[継続と履歴保持の回帰](../../crates/db/tests/generated_issue_status.rs#L422-L454)
+
+公開成功・Issue の Done・[専用 Workspace の安全 archive](workspace.md#生成された専用-workspace-の自動-archive)は別の結果である。自動 archive は Cancelled を拒否し、状態 receipt がある対象は receipt と現在列の両方が Done であることを要する。停止や取消だけでは archive せず、process / cwd / lease、owner 解放、他 Workspace の既存 guard も維持する。[最終 guard](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L522)
 
 ## ボード表示と共有状態
 
@@ -214,7 +252,7 @@ WorkflowAttempt は Project と Issue の所属を検証し、通常のテンプ
 
 ### 正式統合と Card の完了
 
-local Board の [自動マージ](formal-integration.md)は採用 commit を固定し、一件ずつ merge と必要な review を行い、最終候補を受付時の検証方針に従って処理する。Git 公開後に選択 Card と 自動マージ Card を完了列へ動かす。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
+local Board の [自動マージ](formal-integration.md)は採用 commit を固定し、一件ずつ merge と必要な review を行い、最終候補を受付時の検証方針に従って処理する。Git 公開後に採用元の選択 Card を完了列へ動かし、専用 自動マージ Card は [生成状態投影](#生成-issue-の状態契約)で Done を記録する。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
 
 通常の link / unlink は interactive 用途を要求し、既存 Workspace の unlink は 自動マージ guard も確認する。execution-only の間は通常作業への付け替えを拒否するが、終了・cleanup 後の用途解除は可能である。[link/unlink](../../crates/server/src/routes/workspaces/links.rs)、[用途と所有者](workspace.md#操作用途と実行所有者)。内部製品が自身の Card を付ける処理と、通常ユーザーの link API は区別する。
 
@@ -234,6 +272,8 @@ Repo はパス、対象ブランチ既定値、setup/cleanup/dev script など�
 
 ### 内部生成 Card の成功後 archive
 
-新規の OpenWiki Bootstrap / Sync と自動マージ が生成した専用 Card は、生成元と最初の owner run の保存記録を根拠に、成功・owner 解放後の専用 Workspace archive に伴って非表示になり得る。同じ Issue に未 archive の別 Workspace があれば Issue は残し、その別 Workspace は変更しない。Status・本文・履歴・Git branch は保持する。system Tag や名称だけでは資格にならず、過去の生成 Card を一括回収する仕組みでもない。[自動 archive の資格と失敗契約](workspace.md#生成された専用-workspace-の自動-archive)・[生成元記録](../../crates/db/migrations/20261026010000_generated_archive.sql#L1-L11)・[Issue の条件付き更新](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L513)
+新規の OpenWiki Bootstrap / Sync と自動マージ が生成した専用 Card は、生成元と最初の owner run の保存記録を根拠に、成功・owner 解放後の専用 Workspace archive に伴って非表示になり得る。Cancelled や公開後に再オープンした生成 Issue は自動 archive しない。同じ Issue に未 archive の別 Workspace があれば Issue は残し、その別 Workspace は変更しない。archive 自体は Status・本文・履歴・Git branch を保持する。生成状態の投影は別に継続する。system Tag や名称だけでは資格にならず、過去の生成 Card を一括回収する仕組みでもない。[自動 archive の資格と失敗契約](workspace.md#生成された専用-workspace-の自動-archive)・[生成元記録](../../crates/db/migrations/20261026010000_generated_archive.sql#L1-L11)・[Issue の条件付き更新](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L513)
 
 手動 archive / unarchive は自動後処理の資格も消費するため、解除した Card を古い完了通知が再び archive しない。人間の確認 token / Operations receipt と内部生成元の一度限りの結果は別の記録である。[失効 trigger](../../crates/db/migrations/20261026010000_generated_archive.sql#L12-L24)・[内部 attempt](../../crates/server/src/routes/local_remote/issue_archive.rs#L450-L470)
+
+今回の採番・生成状態の Sync は凍結 source `7d3bd3e637580c18d5311ec7a5b7466d203683ef` の migration、通常 / system 作成 caller、canonical 同期、公開後処理、archive guard と独立した回帰定義を静的照合した。供給 Manifest の最終候補検証成功は過去の実行証拠であり、この保守で製品 suite や live DB 操作を再実行していない。無関係な既存内容全体の再検証は主張しない。

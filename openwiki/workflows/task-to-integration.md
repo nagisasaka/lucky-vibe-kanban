@@ -4,12 +4,16 @@ title: Issue から実行・レビュー・統合まで
 description: 通常作業をまたぐ作成、Setup gate、会話、レビュー、Git/PR、Issue 状態と repository memory の更新順序を説明する。
 tags: [workflow, setup, review, git, pull-requests, scheduling]
 sources:
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-5c693a62e6ccf09ccb60592f
     resource: repo://crates/db/src/models/agent_runtime_kanban.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-6fe5fbd6df406f973641b771
+    resource: repo://crates/db/src/models/issue_number.rs
   - id: openwiki-source-29ff4fcd8f66b24767de429c
     resource: repo://crates/git-host/src/lib.rs
   - id: openwiki-source-bd15422ef1716eca23408f1f
@@ -66,6 +70,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-08b3f4dcb1a91c97b6d127f8
     resource: repo://crates/worktree-manager/src/worktree_manager.rs
+  - id: openwiki-source-15dea6acc3c44eb46d7d11d9
+    resource: repo://docs/development/issue-numbering.md
   - id: openwiki-source-a3944588bb3b08c863d66298
     resource: repo://docs/workspaces/openwiki.mdx
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -82,10 +88,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:29:50.767Z
+    at: 2026-10-27T11:11:50.589Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -126,7 +132,9 @@ completion event を取りこぼした watcher は DB の gate から追いつ�
 
 Agent の review API は Workspace 内に active AgentRun があれば拒否する。use_all_workspace_commits は Repo ごとの fork point を review context に使い、intent=Review、selected_skills なしで起動する。OpenWiki の independent Review と同じ隔離プロトコルではない。[review の起動](../../crates/server/src/routes/sessions/review.rs)
 
-関連 Card は Workspace 作成・予約だけでは現在列を変えず、確認された新しい実開始で対象の標準列から In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。In Review や Done の Card も追加実行の実開始で再び In Progress へ戻る。Starting や開始前の失敗だけでは Done を戻さない。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、自動マージ の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
+通常の作業 Card は Workspace 作成・予約だけでは現在列を変えず、確認された新しい実開始で対象の標準列から In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。In Review や Done の Card も追加実行の実開始で再び In Progress へ戻る。Starting や開始前の失敗だけでは Done を戻さない。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、自動マージ の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
+
+生成された自動マージ・Wiki 保守 Card は製品実行の状態を表すため、通常 Card の開始順同期から除外する。実行・再開は In Progress、停止・取消・判断待ちは In Review、公開確認後は Done となる。Agent の正常終了だけで公開完了と判断せず、[生成 Issue の状態契約](../concepts/project-and-issue.md#生成-issue-の状態契約)で各製品の根拠と手動介入の保護を確認する。[状態投影](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)
 
 ## 並列変更を試してから正式統合する
 
@@ -184,13 +192,13 @@ PR の状態観測と archive の契約は [GitHub と PR](../integrations/githu
 
 ## 6. Issue の完了と Workspace archive
 
-自動マージ は Git 公開を確認してから、選択 Card と 自動マージ Card の完了結果を保存する。現在は受付時の title/revision 一致を Done の条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進める。他 run の予約等で更新できなかった結果も記録する。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
+自動マージ は Git 公開を確認してから完了結果を保存する。採用元の選択 Card は受付時の title/revision 一致を条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進め、他 run の予約等の未更新理由も記録する。新規専用 自動マージ Card は公開結果の投影で可視 Done を要求し、列欠落時は代替しない。後処理は専用 Card の Cancelled や公開後の手動再オープンを上書きしない。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
 
 Direct merge の成功と PR の merged 観測では、通常の作業 Workspace を自動 archive しない。PR monitor は状態と merge commit を記録し、open PR が0になった場合の analytics を更新する。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
 
 作業領域を解放する場合は [手動 archive の確認と失敗条件](../concepts/workspace.md#archive削除期限-cleanup)へ進む。未 commit の作業も削除対象になるため、統合成功だけで削除可否を推定しない。Card の Done、履歴の保持、物理 worktree の削除は別の結果である。
 
-新規の自動マージ は、公開成功と予約解放、process 収束後の owner 解除時に、内部生成された専用 Workspace だけを一度 archive 試行する。採用元 Workspace は保持し、専用 Issue も他の未 archive Workspace がある間は残す。成功・Done・物理削除は別の結果なので、archive 拒否や削除失敗を再統合の理由にしない。[一度限りの資格と観測](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[自動マージ の成功と後処理](../concepts/formal-integration.md#成功後の専用作業領域)
+新規の自動マージ は、公開成功と予約解放、process 収束後の owner 解除時に、内部生成された専用 Workspace だけを一度 archive 試行する。採用元 Workspace は保持し、専用 Issue も他の未 archive Workspace がある間は残す。Cancelled や公開後に手動再オープンした生成 Issue は自動 archive を拒否する。成功・Done・物理削除は別の結果なので、archive 拒否や削除失敗を再統合の理由にしない。[一度限りの資格と観測](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[自動マージ の成功と後処理](../concepts/formal-integration.md#成功後の専用作業領域)
 
 ## 7. 統合後に canonical memory を更新する
 
@@ -200,7 +208,7 @@ LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な
 
 Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。自動同期や Repo 単独の開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L210-L231)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
 
-成功した新規内部生成 Wiki 保守環境も、公開・owner 解放後に専用 Workspace と条件を満たす専用 Issue が archive され得る。未公開・失敗・取消の残存や手動で復元した環境は自動再試行で消さない。[保守環境の解放](../operations/openwiki-maintenance.md#成功後の保守環境の解放)を参照し、canonical branch と実行履歴で成果を確認する。
+Wiki 保守 Card も Agent 終了と host 公開を分けて読み、検証済み no-op を含む公開成功で Done になる。成功した新規内部生成 Wiki 保守環境も、公開・owner 解放後に専用 Workspace と条件を満たす専用 Issue が archive され得る。未公開・失敗・取消の残存や手動で復元した環境は自動再試行で消さない。[保守環境の解放](../operations/openwiki-maintenance.md#成功後の保守環境の解放)を参照し、canonical branch と実行履歴で成果を確認する。
 
 生成物は [Wiki Viewer](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)で確認できる。ただし Viewer は選択 Workspace の現在のファイルを読むため、maintenance の未公開成果物も見える。Wiki 本文を開けたこと、Agent が完了を宣言したこと、Workflow と target branch への publication が成功したことを分けて確認する。[表示元の実装](../../crates/server/src/routes/workspaces/wiki.rs)、[publication の検証](../../crates/server/src/workflow_runtime/bootstrap.rs)
 
@@ -221,3 +229,5 @@ ScheduledTask は既存 Workflow template を日次・週次で起動する設�
 IssueのActive/Archived/Allで仕事を探し、Kanban/Listは独立して選ぶ。Issueをarchiveする際、配下Workspaceも解放するなら既定ONの確認で全対象を確認する。使用中の対象があれば全体を拒否するので、停止・cleanupが収束してから準備し直すか、checkboxをOFFにしてIssueだけをarchiveする。Issue解除はWorkspaceを復元せず、Workspaceの明示再開とは別操作である。archive中に既存実施は継続できるが、新しい実施を作るには先にIssueを解除する。[属性と失敗時の正本](../concepts/project-and-issue.md#issue-のアーカイブ)・[Workspaceの解放](../concepts/workspace.md#archive削除期限-cleanup)。
 
 Issueの表示番号は作成時に固定したProject keyを使い、priority/tagは仕事の分類として設定する。systemはLVK生成Cardの分類であり、採用・実行・公開を承認するものではない。[識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)。
+
+通常作成と生成 Card は Project UUID ごとの永続高水位を共有し、commit 済み番号を削除後に再利用しない。移行前に消えた番号の履歴は自動復元せず、初期 floor の確認と rollback 可能な未公開予約の区別は [採番の寿命と移行の限界](../concepts/project-and-issue.md#採番の寿命と移行の限界)を参照する。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[導入契約](../../docs/development/issue-numbering.md)

@@ -5,14 +5,18 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-27T11:11:50.589Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
   - id: openwiki-source-cf8b58730bbd6b4986a47c09
     resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
+  - id: openwiki-source-5c693a62e6ccf09ccb60592f
+    resource: repo://crates/db/src/models/agent_runtime_kanban.rs
   - id: openwiki-source-706d3e4ab2b931252207b0e2
     resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
@@ -63,7 +67,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -192,6 +196,8 @@ DB はこの情報を再検証し、`workspace_token_usage` の thread 単位最
 Kanban 同期は単一 event と host batch の両保存経路で、reducer が `Applied` を返したときにだけ同じ transaction 内で呼ぶ。event・投影・Board 更新（host batch では cursor も）は一緒に commit / rollback する。projection rebuild や OS exit に別の列更新を足すと、この境界と再送保護を壊す。[単一保存](../../crates/db/src/models/agent_runtime.rs#L2037-L2042)・[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1699-L1705)・[rollback / replay 回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L325-L381)
 
 開始の入力根拠は provider spawn 後の Host Started。port はその timestamp を process registry に保存してから、同じ時刻の canonical Running を作る。registry 保存と canonical batch は別段階なので、両者全体を単一 transaction と説明しない。回復テストは再送後も開始時刻を保持することを確認する。[Started の生成](../../crates/local-deployment/src/process_host.rs#L436-L455)・[取り込み](../../crates/local-deployment/src/agent_run_port.rs#L2065-L2122)・[回復の検証](../../crates/local-deployment/src/agent_run_port.rs#L4509-L4537)。列の意味、開始時刻による競合判定、手動変更優先は [Kanban と実行の同期契約](../concepts/project-and-issue.md#kanban-と実行の同期契約)に集約する。
+
+生成された自動マージ・OpenWiki 専用 Issue は一般 Agent の列同期から除外する。生成時 provenance と状態 receipt を持つ対象では、現在の product owner と公開結果を読む DB 投影が列を所有する。Agent の Succeeded だけで Done にせず、過去通知でも公開済み状態を戻さない。詳細は [生成 Issue の状態契約](../concepts/project-and-issue.md#生成-issue-の状態契約)を参照する。[一般同期の除外](../../crates/db/src/models/agent_runtime_kanban.rs#L41-L54)・[product 投影](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)・[両保存経路の回帰](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L872-L928)
 
 ## 障害を区別する
 

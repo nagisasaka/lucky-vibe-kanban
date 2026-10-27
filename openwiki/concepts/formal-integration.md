@@ -8,10 +8,14 @@ sources:
     resource: repo://.lvk/integration-validation.json
   - id: openwiki-source-11bd8cfafd506215798951a6
     resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
     resource: repo://crates/db/src/models/integration.rs
+  - id: openwiki-source-4f59e07f8850eb04105d5cb8
+    resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
     resource: repo://crates/git/src/publication.rs
   - id: openwiki-source-33abd750e40bc0d544b210b5
@@ -72,10 +76,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:29:50.767Z
+    at: 2026-10-27T11:11:50.589Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -167,9 +171,11 @@ required check が通らない場合は blocked とし、失敗証拠とリス�
 
 Board 一覧と Workspace の専用介入欄は、完全な IntegrationRun の `published` を優先し、true なら反映済み、false かつ `publication_intent` があれば「反映結果の照合中」、どちらもなければ未反映と表示する。status 名だけで未反映と推測しない。Git 更新後の receipt 保存が失敗し得るため、intent が残る `blocked` / `recovery_required` でも未反映と断定できない。これは再実行の指示ではなく、下記の Recover による証拠照合を必要とする状態である。[Board の表示](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L530-L540)・[Workspace の表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L82-L92)・[Git と DB の引渡し](../../crates/server/src/routes/integrations/runtime.rs#L1383-L1406)
 
-Git publication 確認後、選択 Card と 自動マージ Card を Done に移す。可視列では名称 Done を優先し、なければ最後の列を選ぶ。Card の title・description・revision やリンクが途中で変わったことは現在の Done 不適格条件ではない。別 自動マージ の予約、Card / 移動先不在なら理由を記録して変更しない。Card 更新と receipt は同一 transaction で、一度記録した結果は再適用しない。[Done の実装](../../crates/db/src/models/integration.rs#L540-L610)、[変更後の Card を扱うテスト](../../crates/db/src/models/integration.rs#L1251-L1412)。
+Git publication 確認後、採用元の選択 Card は Done 優先の可視最終列へ進める。title・description・revision やリンク変更は現在の不適格条件ではなく、別 run の予約、Card / 移動先不在なら理由を保存する。更新と receipt は同じ transaction で、一度記録した結果は再適用しない。一方、新規の専用 自動マージ Card は `published=true` を読む [生成 Issue の状態投影](project-and-issue.md#生成-issue-の状態契約)が Done を所有し、可視 Done がなければ他の列へ代替しない。後処理の `card_done_result` は観測結果を保存し、手動 Cancelled や公開後の再オープンを上書きしない。旧専用 Card の互換経路にも Cancelled 保護がある。[採用元と専用 Card の分岐](../../crates/db/src/models/integration.rs#L545-L627)・[手動介入の回帰](../../crates/db/tests/generated_issue_status.rs#L360-L386)
 
-Done は作業の再開を禁止する状態ではない。[新しい実開始による再着手](project-and-issue.md#kanban-と実行の同期契約)で In Progress に戻った後も、過去の 自動マージ の記録済み receipt は再適用されず、新しい作業を Done に戻さない。次の公開は別 自動マージ の receipt で完了を記録する。[両保存経路を通る回帰テスト](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706)は Done → In Progress → In Review → 新しい 自動マージ の Done と、旧 receipt・旧終端 attempt の再送保護を扱う。これは DB fixture であり、実 provider 起動や Git 公開の検証を代替しない。
+専用 Card は queued を含む通常進行・再開で In Progress、blocked / failed / cancelled / recovery_required および未公開 succeeded では In Review となる。競合 Agent の待機・失敗は integrating 中だけ反映し、host の validating へ進んだ後は古い Agent 通知で戻さない。公開が確定すれば後続 Wiki 失敗でも Done を保持する。これは採用元 Card の一般 Agent 同期とは別の契約である。[状態の正本](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)・[再開と後着通知](../../crates/db/tests/generated_issue_status.rs#L179-L233)
+
+採用元の通常 Card では、Done は作業の再開を禁止する状態ではない。[新しい実開始による再着手](project-and-issue.md#kanban-と実行の同期契約)で In Progress に戻った後も、過去の 自動マージ の記録済み receipt は再適用されず、新しい作業を Done に戻さない。次の公開は別 自動マージ の receipt で完了を記録する。[両保存経路を通る回帰テスト](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706)は Done → In Progress → In Review → 新しい 自動マージ の Done と、旧 receipt・旧終端 attempt の再送保護を扱う。これは DB fixture であり、実 provider 起動や Git 公開の検証を代替しない。
 
 Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox へ結ぶ。Memory 無効なら記録を新設しない。semantic outbox や後続 Wiki の失敗は成功した Git / Done を取り消さず、自動マージ succeeded は Wiki 完了の証明ではない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L1465-L1582)。記録の寿命と acknowledgement は [Repository Memory](repository-memory.md)に説明する。
 
@@ -221,7 +227,7 @@ MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scena
 
 ## 成功後の専用作業領域
 
-新規の自動マージ は専用 Card・Workspace の作成 transaction で生成元を記録する。公開成功を保存し予約を解放した後、既存 monitor が owner を解除できた回だけ、その専用 Workspace の自動 archive を試す。mechanical run は AgentRun がなくても対象であり、採用元の Workspace は対象にしない。詳細な一度限りの資格、介入検出、物理削除の失敗条件は [生成された専用 Workspace の自動 archive](workspace.md#生成された専用-workspace-の自動-archive)を参照する。[生成記録](../../crates/db/src/models/integration.rs#L326-L335)・[成功と予約解放](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1553)・[成功照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L515)
+新規の自動マージ は専用 Card・Workspace の作成 transaction で生成元を記録する。公開成功を保存し予約を解放した後、既存 monitor が owner を解除できた回だけ、その専用 Workspace の自動 archive を試す。mechanical run は AgentRun がなくても対象であり、採用元の Workspace は対象にしない。専用 Issue が Cancelled、または生成状態 receipt / 現在列が Done でなければ自動 archive を拒否する。公開後に人が再オープンした Issue も保持する。詳細な一度限りの資格、介入検出、物理削除の失敗条件は [生成された専用 Workspace の自動 archive](workspace.md#生成された専用-workspace-の自動-archive)を参照する。[生成記録](../../crates/db/src/models/integration.rs#L326-L335)・[成功と予約解放](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1553)・[成功照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L515)
 
 semantic outbox が失敗しても 自動マージ の成功から分離し、後続 Wiki 完了を待たず後処理できる。成功後の Recover は登録 Repo と凍結 payload・Memory store から記録を再構成し、専用 worktree の存続に依存しない。archive の拒否・不明・削除失敗は Git 公開や Card 完了を巻き戻さない。[outbox と回復](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1618)・[archive の警告](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)
 
@@ -238,3 +244,5 @@ semantic outbox が失敗しても 自動マージ の成功から分離し、�
 [DB 回帰試験](../../crates/db/src/models/integration.rs#L1220-L1249)は、別 run に Card の予約を移した後、旧公開の完了処理が元の列を変えないことを検査する。期待する診断文は `another Auto-merge` に追随したが、状態の assert は維持される。migration 由来の旧診断文を扱う試験は別の互換契約として残る。[修正理由と過去の失敗記録](../../docs/development/auto-merge-naming.md#219のdb期待値修正2026-10-27)
 
 この Sync は凍結 source `e4a2dc3ca101233becb63b355f7020f5396da415` の名称差分、受付・実行・MCP・DB の処理と試験定義を静的に照合した。凍結入力には初回の期待値失敗、修正後の DB 試験成功、最終候補の install / frontend build / check / lint / backend:test 成功が記録される。これらは供給された実行履歴であり、この保守で製品 suite、実モデル、実 Auth0 / ChatGPT、稼働 DB や通知配送を再実行した結果ではない。無関係な過去の説明全体の再検証も主張しない。
+
+今回の生成 Issue 状態の更新は統合 source `7d3bd3e637580c18d5311ec7a5b7466d203683ef` の migration、Card 完了分岐、owner 解放、archive guard と独立した DB / host scenario 定義を静的照合した。凍結入力は最終候補の install・frontend build・check・lint・backend:test 成功を報告するが、この Wiki 保守で再実行した結果ではない。供給された fixture follow-up の qa-mode Clippy 失敗も、単体の通常 Clippy 成功と区別する。実 provider / browser / live 環境や無関係な既存契約全体の再検証は行っていない。

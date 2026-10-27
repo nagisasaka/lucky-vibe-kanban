@@ -6,12 +6,16 @@ tags: [session, agent-run, run-attempt, goal, lifecycle]
 sources:
   - id: openwiki-source-cf8b58730bbd6b4986a47c09
     resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
+  - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
+    resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
     resource: repo://crates/db/src/models/session.rs
   - id: openwiki-source-c30cc36c4bbe315c59b8e38f
     resource: repo://crates/db/src/models/workspace_tokens.rs
+  - id: openwiki-source-4f59e07f8850eb04105d5cb8
+    resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-22b82518475034ade38104e6
     resource: repo://crates/executors/src/executors/codex.rs
   - id: openwiki-source-d0244e39b6cb88790907b9b2
@@ -156,10 +160,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
+generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:04:01.883Z
+    at: 2026-10-27T11:11:50.589Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -283,6 +287,8 @@ resume は active run 不在・maintenance / 自動マージ guard を確認し�
 Cancel の応答は実プロセスの停止確認と監査の永続化を伴う。子プロセスの猶予・停止失敗の扱いは [Agent Runtime の取消](../architecture/agent-runtime.md#取消と実プロセスの終了)を参照する。
 
 Board の列は AgentRun の状態表示と別である。In Progress は着手済み・未完了を示し、失敗や取消後にも残る。開始・成功を列へ反映する条件と複数 Workspace の競合は [Kanban と実行の同期契約](project-and-issue.md#kanban-と実行の同期契約)を参照する。OS の exit 0 だけを成功と扱わず、provider の成功根拠がない正常終了は Crashed にする。[終了判定](../../crates/local-deployment/src/process_host.rs#L1192-L1268)・[回帰テスト](../../crates/local-deployment/src/process_host.rs#L1535-L1562)
+
+生成された自動マージ・OpenWiki 専用 Issue は、上記の通常 Issue の一般 Agent 同期とは異なる。現在の product owner による進行・停止・公開結果を投影し、Agent の成功だけで Done にしない。専用 Card が In Review でも過去 AgentRun の失敗履歴を成功へ直したという意味ではない。[生成 Issue の状態契約](project-and-issue.md#生成-issue-の状態契約)を参照する。[product 投影](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)・[監査状態を保持する回帰](../../crates/db/tests/generated_issue_status.rs#L144-L176)
 
 ## 承認・質問と現在の接続状態
 
