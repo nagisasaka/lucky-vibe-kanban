@@ -116,6 +116,10 @@ async fn merge_scenario(
         .await?;
     sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Done','blue',0)")
         .bind(status).bind(project).execute(pool).await?;
+    for (name, order) in [("In Progress", 200), ("In Review", 300)] {
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,?,'blue',?)")
+            .bind(Uuid::new_v4()).bind(project).bind(name).bind(order).execute(pool).await?;
+    }
     let mut sources = vec![];
     for (index, (file, text)) in [
         ("feature", "A\n"),
@@ -185,6 +189,7 @@ async fn merge_scenario(
     };
     run.create_with_card(pool, "scenario-integration", "Isolated scenario")
         .await?;
+    assert_generated_card_status(pool, &run, "In Progress").await?;
     ensure!(admission::target_right(pool, &run).await?);
     advance(deployment, run.clone()).await?;
     let real = browser.is_none()
@@ -331,6 +336,7 @@ async fn merge_scenario(
                 continue;
             }
             if let Some(mode) = mcp {
+                assert_generated_card_status(pool, &run, "In Review").await?;
                 crate::remote_mcp::integration_write_tests::exercise(
                     deployment,
                     &run,
@@ -341,6 +347,7 @@ async fn merge_scenario(
                     let current = IntegrationRun::find(pool, id).await?;
                     cancel(deployment, current).await?;
                     let terminal = IntegrationRun::find(pool, id).await?;
+                    assert_generated_card_status(pool, &terminal, "In Review").await?;
                     crate::remote_mcp::integration_write_tests::terminal(
                         deployment, &terminal, true,
                     )
@@ -406,6 +413,7 @@ async fn merge_scenario(
         bail!("Scenario timed out; test conflict cancellation requested");
     }
     ensure!(approved && run.payload.published && run.payload.steps.len() == 4);
+    assert_generated_card_status(pool, &run, "Done").await?;
     let final_commit = run.payload.result_commit.clone().unwrap();
     ensure!(git(&["rev-parse", "main"])? == final_commit);
     for source in &run.payload.sources {
@@ -733,6 +741,20 @@ async fn isolated_retained_checkpoint_adoption() -> anyhow::Result<()> {
     );
     println!(
         "Retained checkpoint dry-run/adoption/replay/Resume passed; only step 4 applied, old degraded audit preserved"
+    );
+    Ok(())
+}
+
+async fn assert_generated_card_status(
+    pool: &SqlitePool,
+    run: &IntegrationRun,
+    expected: &str,
+) -> anyhow::Result<()> {
+    let (status, archived): (String, bool) = sqlx::query_as("SELECT s.name,i.archived FROM local_issues i JOIN local_project_statuses s ON s.id=i.status_id WHERE i.id=?")
+        .bind(run.payload.card_id).fetch_one(pool).await?;
+    ensure!(
+        status == expected && !archived,
+        "Expected {expected} before archive, got {status} (archived={archived})"
     );
     Ok(())
 }

@@ -502,6 +502,12 @@ where
             _ => false,
         };
         if !successful { return Err(failure("Generated product has no matching success")); }
+        let cancelled: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_issues i JOIN local_project_statuses s ON s.id=i.status_id WHERE i.id=? AND lower(s.name) IN ('cancelled','canceled'))")
+            .bind(issue).fetch_one(&mut *tx).await?;
+        if cancelled { return Err(failure("Issue was cancelled by operator; automatic archive refused")); }
+        let status_pending: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM generated_issue_status t JOIN local_issues i ON i.id=? JOIN local_project_statuses s ON s.id=i.status_id WHERE t.workspace_id=? AND (t.projected_status IS NOT 'done' OR lower(s.name)!='done'))")
+            .bind(issue).bind(ws.id).fetch_one(&mut *tx).await?;
+        if status_pending { return Err(failure("Generated Issue has not reached Done; automatic archive refused")); }
         archive::check_idle(&mut tx, ws.id).await?;
         archive_processes::check(ws.container_ref.as_deref()).await?;
         let deletion_error = archive::archive_checked(&mut tx, &ws, &repos).await?;
@@ -591,7 +597,7 @@ mod tests {
     }
     async fn generated_fixture() -> (tempfile::TempDir, SqlitePool, Workspace, Uuid, Uuid, Uuid) {
         let (root, pool, ws, repo, _) = fixture().await;
-        let (project, id, status) = issue(&pool, 0).await;
+        let (project, id, _) = issue(&pool, 0).await;
         link(&pool, ws.id, project, id).await;
         let run = Uuid::new_v4();
         let owner = db::models::workspace_usage::WorkspaceExecutionOwner::new(
@@ -610,8 +616,56 @@ mod tests {
             .bind(serde_json::to_string(&db::models::integration::IntegrationPayload { published: true, card_id: Some(id), ..Default::default() }).unwrap()).execute(&pool).await.unwrap();
         sqlx::query("INSERT INTO generated_issue_workspaces(workspace_id,issue_id,project_id,owner_kind,repository_id,owner_run_id) VALUES(?,?,?,'integration',?,?)")
             .bind(ws.id).bind(id).bind(project).bind(repo.id).bind(run.to_string()).execute(&pool).await.unwrap();
+        let status: Uuid = sqlx::query_scalar("SELECT i.status_id FROM local_issues i JOIN local_project_statuses s ON s.id=i.status_id WHERE i.id=? AND s.name='Done'")
+            .bind(id).fetch_one(&pool).await.unwrap();
         let released = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
         (root, pool, released, project, id, status)
+    }
+
+    #[tokio::test]
+    async fn generated_archive_preserves_operator_cancelled_or_reopened_issue() {
+        for name in ["Cancelled", "In Review"] {
+            let (_root, pool, ws, project, id, _) = generated_fixture().await;
+            let status: Uuid = sqlx::query_scalar(
+                "SELECT id FROM local_project_statuses WHERE project_id=? AND name=?",
+            )
+            .bind(project)
+            .bind(name)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+            sqlx::query("UPDATE local_issues SET status_id=? WHERE id=?")
+                .bind(status)
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert!(
+                archive_generated_for_pool(&pool, &ws, || async { Ok(true) })
+                    .await
+                    .is_err()
+            );
+            assert_issue(&pool, id, status, false).await;
+            assert!(
+                !Workspace::find_by_id(&pool, ws.id)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .archived
+            );
+            let result: String = sqlx::query_scalar(
+                "SELECT attempt_result FROM generated_issue_workspaces WHERE workspace_id=?",
+            )
+            .bind(ws.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+            assert!(result.contains(if name == "Cancelled" {
+                "cancelled by operator"
+            } else {
+                "has not reached Done"
+            }));
+        }
     }
 
     #[tokio::test]
@@ -663,6 +717,40 @@ mod tests {
                 .unwrap()
                 .archived
         );
+    }
+
+    #[tokio::test]
+    async fn generated_bootstrap_archive_requires_matching_successful_workflow() {
+        for successful in [false, true] {
+            let (_root, pool, ws, _, id, status) = generated_fixture().await;
+            sqlx::query("DELETE FROM integration_runs WHERE workspace_id=?")
+                .bind(ws.id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            let mut owner = ws.execution_owner.clone().unwrap();
+            owner.kind = "openwiki_bootstrap".into();
+            sqlx::query("UPDATE generated_issue_workspaces SET owner_kind='openwiki_bootstrap'")
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("UPDATE workspaces SET execution_owner=? WHERE id=?")
+                .bind(sqlx::types::Json(&owner))
+                .bind(ws.id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            let workflow = Uuid::new_v4();
+            sqlx::query("INSERT INTO workflows(id,name,source,graph_json) VALUES(?,'fixture','system','{}')")
+                .bind(workflow).execute(&pool).await.unwrap();
+            sqlx::query("INSERT INTO workflow_runs(id,workflow_id,repository_id,workspace_id,trigger_source,input_text,status) VALUES(?,?,?,?,'openwiki_bootstrap','',?)")
+                .bind(owner.run_id).bind(workflow).bind(owner.repository_id).bind(ws.id)
+                .bind(if successful { "succeeded" } else { "failed" }).execute(&pool).await.unwrap();
+            let released = Workspace::find_by_id(&pool, ws.id).await.unwrap().unwrap();
+            let result = archive_generated_for_pool(&pool, &released, || async { Ok(true) }).await;
+            assert_eq!(result.is_ok(), successful);
+            assert_issue(&pool, id, status, successful).await;
+        }
     }
 
     #[tokio::test]
