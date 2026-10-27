@@ -2272,6 +2272,7 @@ mod tests {
     use super::*;
 
     include!("agent_runtime_kanban_tests.rs");
+    include!("agent_runtime_reservation_tests.rs");
 
     async fn setup_pool() -> SqlitePool {
         let pool = SqlitePoolOptions::new()

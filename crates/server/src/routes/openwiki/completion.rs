@@ -48,7 +48,7 @@ pub(crate) async fn ensure_processes_exited(
             // on a failed terminal attempt means no spawn, or confirmed startup
             // cleanup. This is cleanup evidence only, never successful proof.
             let unspawned = attempt.status != AgentRunStatus::Succeeded
-                && process.registry_status == "reserved"
+                && matches!(process.registry_status.as_str(), "reserved" | "not_started")
                 && process.host_endpoint.is_none()
                 && process.host_token.is_none()
                 && process.host_pid.is_none()
@@ -457,12 +457,13 @@ mod tests {
             "still_running",
             "missing_process",
             "unspawned",
+            "not_started",
             "overlap",
             "corrupt",
         ] {
             let mut f = Fixture::new().await;
             let frames = match earlier {
-                "missing" => None,
+                "missing" | "not_started" => None,
                 "unfinished" => Some(f.operations(&["init"], false)),
                 _ => Some(vec![]),
             };
@@ -497,6 +498,21 @@ mod tests {
                         .unwrap()
                         .unwrap();
                     // Safe to restore instructions, insufficient to publish Wiki.
+                    ensure_processes_exited(&f.pool, &run).await.unwrap();
+                }
+                "not_started" => {
+                    sqlx::query("UPDATE agent_run_attempts SET status='cancelled' WHERE id=?")
+                        .bind(first)
+                        .execute(&f.pool)
+                        .await
+                        .unwrap();
+                    sqlx::query("UPDATE agent_process_registry SET registry_status='not_started',pid=NULL,process_started_at=NULL,observed_exited_at=NULL,exit_code=NULL WHERE run_attempt_id=?")
+                        .bind(first).execute(&f.pool).await.unwrap();
+                    let run = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                        .await
+                        .unwrap()
+                        .unwrap();
+                    // Cleanup may proceed, but unstarted is never successful Wiki proof.
                     ensure_processes_exited(&f.pool, &run).await.unwrap();
                 }
                 "overlap" => {
