@@ -1283,6 +1283,44 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn wiki_board_link_does_not_reuse_deleted_system_issue_number() {
+        let (pool, repo, project) = fixture().await;
+        sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(project)
+            .bind(repo.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Ready','blue',0)")
+            .bind(Uuid::new_v4()).bind(project).execute(&pool).await.unwrap();
+        for expected in [1, 2] {
+            let ws = workspace(
+                &pool,
+                &repo,
+                Some(&WorkspaceExecutionOwner::new(OPENWIKI_SYNC, repo.id, None)),
+            )
+            .await;
+            ensure_wiki_board_link(&pool, &ws).await.unwrap();
+            let number: i32 = sqlx::query_scalar("SELECT issue_number FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert_eq!(number, expected);
+            sqlx::query("DELETE FROM local_workspace_links WHERE workspace_id=?")
+                .bind(ws.id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("DELETE FROM local_issues WHERE project_id=?")
+                .bind(project)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn wiki_board_link_rolls_back_keyed_card_when_system_attachment_fails() {
         let (pool, repo, project) = fixture().await;
         sqlx::query("UPDATE projects SET key='WIKI' WHERE id=?")
