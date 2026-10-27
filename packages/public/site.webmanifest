@@ -3,20 +3,21 @@
   "short_name": "LVK",
   "icons": [
     {
-      "src": "/favicon-vk-light.svg",
-      "sizes": "any",
+      "src": "/lvk-icon-192.png",
+      "sizes": "192x192",
       "purpose": "any",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "/favicon-vk-light-maskable.svg",
-      "sizes": "any",
+      "src": "/lvk-icon-512.png",
+      "sizes": "512x512",
+      "purpose": "any",
+      "type": "image/png"
+    },
+    {
+      "src": "/lvk-icon-maskable-512.png",
+      "sizes": "512x512",
       "purpose": "maskable",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
       "type": "image/png"
     }
   ],
