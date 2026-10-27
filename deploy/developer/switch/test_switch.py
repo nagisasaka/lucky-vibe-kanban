@@ -20,6 +20,7 @@ from unittest.mock import patch
 
 import start_binary as engine
 import start_support as support
+import terminal_drain
 
 HERE = Path(__file__).resolve().parent
 
@@ -574,10 +575,69 @@ class SwitchTest(unittest.TestCase):
             stderr=subprocess.DEVNULL,
         )
         self.wait_port()
+        with self.assertRaisesRegex(support.Refuse, "child processes"):
+            support.stop(engine.observation(), support.digest(self.instance / "releases/initial/server"))
+        self.assertIsNone(self.old.poll())
         result = self.run_cli(self.cli())
         self.assertEqual(result["status"], "failed", result)
         self.assertIn("child processes", result["reason"])
         self.assertIsNone(self.old.poll())
+
+    def test_managed_pty_command_drained_before_existing_switch_guards(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_PTY": "command"})
+        self.old = subprocess.Popen(
+            [sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        self.wait_port()
+        deadline = time.monotonic() + 5
+        while len(support.descendants(self.old.pid)) < 2:
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(.01)
+        children = support.descendants(self.old.pid)
+        before = support.tree_manifest(self.instance / "data")
+        dry = self.run_cli(self.cli() + ["--dry-run"])
+        self.assertEqual(dry["status"], "refused", dry)
+        self.assertIn("child processes", dry["reason"])
+        self.assertTrue(children <= terminal_drain.processes().keys())
+        self.assertEqual(support.tree_manifest(self.instance / "data"), before)
+        self.assertFalse((self.instance / "switch-operations").exists())
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "succeeded", result)
+        self.assertFalse(children & terminal_drain.processes().keys())
+        self.assertTrue((Path(result["result_path"]).parent / "terminal-drain.json").exists())
+
+    def test_terminal_respawn_is_refused_by_existing_child_guard(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_PTY": "shell", "FIXTURE_RESPAWN": "1"})
+        self.old = subprocess.Popen(
+            [sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        self.wait_port()
+        original = support.descendants(self.old.pid)
+        result = self.run_cli(self.cli())
+        self.assertEqual(result["status"], "failed", result)
+        self.assertIn("child processes", result["reason"])
+        self.assertIsNone(self.old.poll())
+        self.assertFalse(any(terminal_drain.processes().get(p, {}).get("state", "Z") != "Z" for p in original))
+        # The one-pass drain must leave the regenerated terminal alone.
+        new = support.descendants(self.old.pid)
+        self.assertTrue(new)
+        self.assertFalse(new & original)
+        for child in new:
+            fd = os.pidfd_open(child)
+            try:
+                signal.pidfd_send_signal(fd, signal.SIGHUP)
+            finally:
+                os.close(fd)
+        deadline = time.monotonic() + 3
+        while support.descendants(self.old.pid):
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(.01)
 
     def test_dry_run_without_attestation_and_real_switch_still_requires_it(self):
         self.add_stale_history()
@@ -588,6 +648,7 @@ class SwitchTest(unittest.TestCase):
         self.assertIn("backup", result)
         self.assertFalse((self.instance / "switch-operations").exists())
         self.assertFalse((self.instance / "start.lock").exists())
+        self.assertFalse((self.instance / "terminal-admission.lock").exists())
         self.assertEqual((self.instance / "current.json").read_bytes(), before)
         self.assertIsNone(self.old.poll())
         result = self.run_cli(command)

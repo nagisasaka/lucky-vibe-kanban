@@ -17,6 +17,7 @@ INSTANCE/
     start.sh
     start_binary.py
     start_support.py
+    terminal_drain.py
   releases/RELEASE_ID/         # 通常current + previous、切替中のみcandidate追加
     server
     agent-process-host
@@ -106,6 +107,32 @@ currentと起動設定hashを非公開pipeで渡します。operation snapshot�
 対象instanceと完全一致する既存runtime grant、Project、scope、principal ownershipを維持します。
 汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。
 
+実切替の開始時に、対象serverが所有する内蔵PTYとそのcommandを一度だけ終了し、
+その後に従来のidle/identity/listener/data-FD/resource guardを実行します。
+`--no-new-work` の外部調整には、対象DEVへのTerminal接続停止（再接続するUIを閉じる等）も含めます。
+終了後にPTYが再生成された場合は既存child guardで安全拒否します。成功するまで繰り返しkillしません。
+Rust変更・新しい受付lock・追加protocol・一般UI変更は不要で、既存binaryでも初回から利用できます。
+通常利用者の安定版image更新にこの運用は追加しません。
+
+終了対象は、対象serverの直接の子、同UID、session/group leader、serverが保持するPTY masterと
+対応するcontrolling TTY・stdin、`VIBE_KANBAN_TERMINAL=1` と同一 `LVK_INSTANCE_DIR` が
+揃う内蔵PTYと、その境界内の子孫だけです。cwdやshell名で判定しません。
+PID/startと親・session・group・TTY・UIDをpidfd取得後も照合し、別sessionへのdetachや所属変化は拒否します。
+commandへTERMを送り終了確認後、通常TERMを無視する対話shellへHUPを送ります。
+管理PTY内の実行中commandも終了対象です。Terminalをguardから除外しません。
+旧serverはshellを明示的にwaitしないためzombieが残る場合があります。pidfdでexitを確認し、
+実行・FDを持たないzombieは既存guardの既存規則に従います。全子孫のwait回収を追加保証するものではありません。
+
+TERM・logoutのtimeoutではKILLへ進まず、残ったprocessと失敗記録を診断用に保持します。
+`terminal-drain.json` にはsignal前に確認したprocessの所属・start等を保存します。
+失敗fenceとDB/log保全は従来どおりです。`--dry-run` はPTY停止を行わず、
+PTYがある場合は従来のchild guardで非破壊に拒否します。
+
+初回も、外部調整と対象同定後に新しい固定kitを配置し、外部terminalから新kitを使うか、
+旧serverの既存 `self_restart` から同じ固定kitを呼び出せます。新binaryの先行起動は不要です。
+過去のfailed operationは以下の復旧手順で記録を保全してfenceを解消してから、新しいrequest IDを使います。
+稼働binaryのSHAと固定kit各scriptのSHAは別々に記録します。kitの更新をbinary更新成功と扱いません。
+
 受付processの終了はpidfdで待ち、新session・独立I/Oのworkerが切替lockを保持します。
 固定sleepや呼出元の生存には依存しません。新serverへlock FDは渡しません。
 復帰後は`get_self_restart_operation`へ同じregion/request_idを指定します。
@@ -158,6 +185,7 @@ resource snapshotのholders/queueは停止前に拒否します。未使用resou
 
 ```bash
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
+python3 -m unittest discover -s deploy/developer/switch -p test_terminal_drain.py -v
 CARGO_BUILD_JOBS=2 cargo test -p server --features developer-runtime --lib remote_mcp::environment -- --test-threads=2
 ```
 

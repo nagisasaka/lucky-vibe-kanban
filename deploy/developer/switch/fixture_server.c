@@ -10,6 +10,11 @@ extern int sqlite3_exec(sqlite3 *, const char *, void *, void *, char **);
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+extern int forkpty(int *, char *, const void *, const void *);
+static volatile sig_atomic_t terminal_exited = 0;
+static void reap(int signo) { (void)signo; while (waitpid(-1, NULL, WNOHANG) > 0) terminal_exited = 1; }
 #ifndef REVISION
 #define REVISION 1
 #endif
@@ -27,6 +32,21 @@ int main(int argc, char **argv) {
     if (strcmp(name, "server") == 0) puts(PAYLOAD);
     else printf("{\"component\":\"%s\",\"protocol\":1}\n", name);
     return 0; }
+  int master = -1;
+  if (getenv("FIXTURE_PTY")) {
+    signal(SIGCHLD, reap);
+    int child = forkpty(&master, NULL, NULL, NULL);
+    if (child < 0) return 8;
+    if (child == 0) {
+      setenv("VIBE_KANBAN_TERMINAL", "1", 1);
+      execl("/bin/sh", "/bin/sh", NULL);
+      _exit(9);
+    }
+    if (strcmp(getenv("FIXTURE_PTY"), "command") == 0) {
+      const char *cmd = "sleep 120\n";
+      if (write(master, cmd, strlen(cmd)) < 0) return 10;
+    }
+  }
   if (getenv("FIXTURE_CHILD") && fork() == 0) {
     /* No data FD exists yet. A real server child must still prevent cutover. */
     sleep(30);
@@ -48,6 +68,15 @@ int main(int argc, char **argv) {
     if (client < 0) return 6;
     char request[8192]={0};
     read(client, request, sizeof(request)-1);
+    if (getenv("FIXTURE_RESPAWN") && terminal_exited) {
+      terminal_exited = 0;
+      close(master);
+      if (forkpty(&master, NULL, NULL, NULL) == 0) {
+        setenv("VIBE_KANBAN_TERMINAL", "1", 1);
+        execl("/bin/sh", "/bin/sh", NULL);
+        _exit(9);
+      }
+    }
     const char *body = "{\"success\":true}";
     if (strstr(request, "/api/info")) body="{\"success\":true,\"data\":{\"build_info\":{\"kind\":\"fixture\"}}}";
     else if (strstr(request, "/api/resource-coordination/snapshot")) body="{\"success\":true,\"data\":{\"resources\":[{\"id\":\"unused-fixture-device\",\"description\":\"Unused peripheral unrelated to this instance\"}],\"holders\":[],\"queue\":[]}}";
