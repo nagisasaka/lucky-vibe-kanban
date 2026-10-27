@@ -533,7 +533,7 @@ requires a separate trial, never an in-place temporary merge/reset.
 
 ### Promote an explicit selection
 
-1. Open the local Board's **Integrate / Auto Merge** panel. Select the repository,
+1. Open the local Board's **Auto-merge** panel. Select the repository,
    target branch, Agent execution settings (Code mode), Cards and adopted
    Workspaces. Multiple candidates require an explicit choice. The observed full
    source OID is retained when activity polling refreshes; a changed choice must
@@ -547,7 +547,7 @@ requires a separate trial, never an in-place temporary merge/reset.
    queued run obtains its turn. Reservations cover all Workspaces of the selected
    Cards. Mutations that would invalidate the selection are rejected until safe
    release; reading logs remains available.
-4. Follow the Run from any selected Card or the panel. **Open integration
+4. Follow the Run from any selected Card or the panel. **Open Auto-merge
    Workspace** opens its single Agent Session. The Agent's proposal is explicitly
    labelled as preceding host validation. Expand **Host validation evidence**
    for command, cwd, result, exit code, evidence and process ID.
@@ -556,7 +556,7 @@ requires a separate trial, never an in-place temporary merge/reset.
    promotion. Already-integrated input can succeed with R=B, but still requires
    validation and conditional completion. It does not create an empty commit.
 
-Unselected development can continue in separate Workspaces. Integration uses a
+Unselected development can continue in separate Workspaces. Auto-merge uses a
 storage-scoped FIFO and a short publication lock shared with manual merge and
 Wiki publication; it does not hold that lock during model execution. A legitimate
 concurrent target change still invalidates the old B: start a new selection and
@@ -571,7 +571,7 @@ or deleted, and existing manual merge and PR routes remain available.
   undone through Cancel.
 - A held/failed/cancelled unpublished run leaves the target unchanged. Read its
   reason and Agent/log evidence, resolve the source, requirements or environment,
-  then make a new explicit Integration. Do not quietly remove a selected Card.
+  then make a new explicit Auto-merge. Do not quietly remove a selected Card.
 - **Reconcile publication** is for the recorded run after an interrupted
   publication/post-processing boundary. It compares durable B/R/intent with actual
   ref, index and checkout state. It never repeats a merge or repairs by reset.
@@ -582,10 +582,10 @@ or deleted, and existing manual merge and PR routes remain available.
   this; replay cannot mark a reopened Card Done or undo later source changes.
 - Wiki errors do not undo source promotion or Done. Use the existing OpenWiki
   status/Sync controls after resolving the error; pending semantic events remain
-  retryable. Integration into a different branch is not reported as updating the
+  retryable. Auto-merge into a different branch is not reported as updating the
   repository's configured Wiki target.
 
-This version supports one local Board repository/target per Integration and one
+This version supports one local Board repository/target per Auto-merge and one
 LVK service. It does not provide remote Board automation, cross-repository atomic
 completion, Delegation or protection against arbitrary external/full-access Agent
 writes. Required recovery/audit records are retained by existing foreign keys and
@@ -811,7 +811,7 @@ the separately identified LIVE evidence, not replaced by these static checks.
 
 ## Intervention and recovery update
 
-See [Recovering a stopped formal Integration](integration-intervention.md) for
+See [Recovering a stopped Auto-merge](integration-intervention.md) for
 candidate-bound validation exceptions, dedicated Workspace instructions and
 recovery of the existing dispatch identity. Historical acceptance results above
 remain historical; they do not validate this later change.

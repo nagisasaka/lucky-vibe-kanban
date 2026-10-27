@@ -70,10 +70,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -96,7 +96,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 修復は native settings lock 下で symlink・hardlink・2 MiB超の非通常入力を拒否し、permission を維持した一時ファイルの同期後、元内容が変わっていないことを再確認して置換する。これは LVK が maintenance 起動前に行う準備であり、writer が設定ファイルを直接修正する手順ではない。[ファイル境界](../../crates/services/src/services/openwiki/codex_config.rs#L50-L92)、[再現・冪等性・拒否テスト](../../crates/services/src/services/openwiki/codex_config.rs#L95-L156)
 
-開始時は同じ Git storage の正式統合が publishing / post_processing / recovery_required にあれば拒否する。source が見えていても、その公開結果や semantic outbox が未確定の間に Wiki を先へ進めない。[正式統合との境界](../../crates/server/src/routes/openwiki.rs)
+開始時は同じ Git storage の自動マージが publishing / post_processing / recovery_required にあれば拒否する。source が見えていても、その公開結果や semantic outbox が未確定の間に Wiki を先へ進めない。[自動マージとの境界](../../crates/server/src/routes/openwiki.rs)
 
 両経路とも [実行専用 Workspace](../concepts/workspace.md#操作用途と実行所有者)を作り、起動前に owner を保存する。通常 Sync は選択 event と Memory の凍結入力を作り、その digest/source/event 集合を host state に保存してから AgentRun を予約・所有者へ bind する。[準備と起動の順序](../../crates/server/src/routes/openwiki.rs)、[Sync の入力と予約](../../crates/server/src/routes/openwiki.rs)。全 manifest/chunk の読取、未統合 Memory の権威、空入力の意味は [凍結入力の契約](../concepts/repository-memory.md#sync-の入力は統合済み-source-に結び付く凍結-snapshot)を参照する。
 
@@ -131,7 +131,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 2. `sync_repository_wiki` に同じ Project / repository、安定した `request_id`、観測した `target_branch` を `expected_target_branch`、40桁の `current_source_commit` を `expected_source_commit` として渡す。`from_commit` を省けば current_source、4–40桁の SHA を渡せば共通の祖先検証による since_commit となる。[入力](../../crates/server/src/remote_mcp/repository_wiki.rs#L94-L117)・[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs#L8-L45)
 3. 応答を失った場合は入力と元の request ID を保ち、`get_operation` または `get_repository_wiki_sync(project_id, repository_id, request_id)` で読み戻す。後者は検証済み principal の receipt を Project・operation・repository と照合する。別 actor や別 repository の request を流用しない。[結果読取](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L186)
 
-共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 Integration・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L219-L330)
+共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 自動マージ・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L219-L330)
 
 ### 受付・実行・公開・現在鮮度を分けて読む
 
@@ -233,7 +233,7 @@ agent phase は source HEAD を動かさない。LVK は phase 境界で setup j
 
 失敗・取消・server 再起動のとき、Bootstrap は CleaningUp に入り、新しい有料 phase を自動再開しない。通常の監査付き Cancel を送信し、残存 active run がなく、全 child の全 attempt の実終了を確認してから instructions を復元する。利用者の取消なら Workflow を Canceled、それ以外の失敗なら Failed にして owner を解放する。Stop 要求を送っただけで所有権を消してはいけない。[cleanup](../../crates/server/src/workflow_runtime/bootstrap.rs)・[再起動時の fence](../../crates/server/src/workflow_runtime/bootstrap.rs)・[未終了 child を保持する test](../../crates/server/src/workflow_runtime/bootstrap_tests.rs)
 
-Sync の cleanup も所有 identity と全 attempt の実終了を先に確認する。失敗した terminal attempt が reserved のままで endpoint/token/host PID/provider PID を一切持たない場合は、未 spawn または開始失敗後の cleanup として復元だけを許すが、成功証明には使わない。missing registry、unreachable、古い未終了 attempt、復元失敗は `MaintenanceFenced` とし、Error 診断と active owner を残す。最新終了記録の短い待機だけは `CompletionPending` として再観測する。[終了と fence](../../crates/server/src/routes/openwiki/completion.rs)、[所有を保った回復](../../crates/server/src/routes/openwiki.rs)
+Sync の cleanup は所有 identity と全 attempt の終了または未起動の証拠を先に確認する。非成功の terminal attempt が `reserved` または `not_started` で endpoint/token/host PID/provider PID を一切持たない場合は、未 spawn または開始失敗後の cleanup として instructions の復元を許す。`not_started` への遷移・履歴予約の扱いは [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)に従う。これは成功 writer の証明ではなく、publication の proof は全 attempt に `exited`・終了時刻・整合する Native Audit と操作証明を引き続き要求する。missing registry、unreachable、古い未終了 attempt、復元失敗は `MaintenanceFenced` とし、Error 診断と active owner を残す。最新終了記録の短い待機だけは `CompletionPending` として再観測する。[終了と fence](../../crates/server/src/routes/openwiki/completion.rs)、[所有を保った回復](../../crates/server/src/routes/openwiki.rs)
 
 Sync の確定結果は Workspace owner に保存してから repository の最新 pointer と receipt を更新する。後続保守で repository state が変わっても、その実行の成功・取消・失敗、no-op、Wiki commit を履歴として確認できる。[結果保存の順序](../../crates/server/src/routes/openwiki.rs)
 
@@ -245,7 +245,7 @@ Sync の確定結果は Workspace owner に保存してから repository の最�
 
 Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の成功と owner に保存した公開成功を照合する。検証済み no-op も成功に含み、AgentRun の終端だけで削除しない。手動介入・busy・所有不一致での拒否、一度限りの intent、削除失敗と観測の詳細は [生成された専用 Workspace の自動 archive](../concepts/workspace.md#生成された専用-workspace-の自動-archive)に集約する。失敗・取消・不確かな残存を自動 retry で消す経路はなく、archive の失敗は Wiki 公開成功を巻き戻さない。[成果の再照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L530)
 
-変更時は [owner解放・Sync no-op・介入・別Workspace保持のserver fixture](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)、[SQL triggerとwriter排他](../../tests/generated-archive/test_migration.py)、[Integrationの凍結eventだけを使うoutbox回帰](../../crates/server/src/routes/integrations/runtime_tests.rs)を確認する。開発記録の「Rust未実行」はその時点の履歴である。今回供給された後続Change Manifestはfixture修復後の限定試験と最終統合候補のinstall / frontend build / check / lint / backend:test成功を記録するが、今回のWiki保守はそれらを再実行していない。実 Bootstrap / Sync の公開からprocess/cwd参照までのE2E、稼働DBや実ユーザーWorkspaceの削除は確認していない。
+変更時は [owner解放・Sync no-op・介入・別Workspace保持のserver fixture](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)、[SQL triggerとwriter排他](../../tests/generated-archive/test_migration.py)、[自動マージの凍結eventだけを使うoutbox回帰](../../crates/server/src/routes/integrations/runtime_tests.rs)を確認する。開発記録の「Rust未実行」はその時点の履歴である。今回供給された後続Change Manifestはfixture修復後の限定試験と最終統合候補のinstall / frontend build / check / lint / backend:test成功を記録するが、今回のWiki保守はそれらを再実行していない。実 Bootstrap / Sync の公開からprocess/cwd参照までのE2E、稼働DBや実ユーザーWorkspaceの削除は確認していない。
 
 ## 設計文書の読み方
 

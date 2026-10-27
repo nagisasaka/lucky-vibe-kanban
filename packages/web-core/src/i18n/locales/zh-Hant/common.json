@@ -1191,9 +1191,9 @@
     "acknowledge": "我理解此候選提交與檢查的風險。",
     "retry": "修復環境後重試",
     "continue": "允許此次例外並繼續",
-    "cancel": "取消 Integration",
-    "instructionBoundary": "附加指示不會核准驗證例外或工具執行。恢復將保留同一 Integration 與 Session，並重新驗證候選提交。",
-    "instruction": "Integration 附加指示",
+    "cancel": "取消 自動合併",
+    "instructionBoundary": "附加指示不會核准驗證例外或工具執行。恢復將保留同一 自動合併 與 Session，並重新驗證候選提交。",
+    "instruction": "自動合併 附加指示",
     "send": "傳送指示",
     "resume": "修復後恢復／傳送指示",
     "history": "恢復歷程"
@@ -1243,6 +1243,6 @@
     "confirmDelete": "Delete this TODO?",
     "project": "Project",
     "chooseProject": "Choose a Project",
-    "integration": "Integrate / Auto Merge"
+    "integration": "自動合併"
   }
 }

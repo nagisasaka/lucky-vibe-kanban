@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/migrations/20261021173000_workspace_tokens.sql
   - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
     resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
+  - id: openwiki-source-cf8b58730bbd6b4986a47c09
+    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
@@ -112,10 +114,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-26T16:20:39.259Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T16:20:39.259Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # Workspace と Repository
@@ -145,19 +147,19 @@ Worktree の保管先を変更すると、指定先の `.vibe-kanban-workspaces`
 
 ## 操作用途と実行所有者
 
-`usage` は Workspace で人が行える操作の契約で、物理的な kind/ownership、archive、実行中の一時予約とは独立する。既定の `interactive` は通常の開発用、`execution_only` は [正式統合](formal-integration.md)や [OpenWiki 保守](../operations/openwiki-maintenance.md)のために所有者が作った実行環境である。execution-only は実行中の一時予約であり、所有者の終了と process / cleanup の収束後は interactive に戻せる。履歴・execution_owner・結果は保持する。[用途モデル](../../crates/db/src/models/workspace_usage.rs#L1-L53)、[永続列](../../crates/db/migrations/20260921000000_workspace_usage.sql)
+`usage` は Workspace で人が行える操作の契約で、物理的な kind/ownership、archive、実行中の一時予約とは独立する。既定の `interactive` は通常の開発用、`execution_only` は [自動マージ](formal-integration.md)や [OpenWiki 保守](../operations/openwiki-maintenance.md)のために所有者が作った実行環境である。execution-only は実行中の一時予約であり、所有者の終了と process / cleanup の収束後は interactive に戻せる。履歴・execution_owner・結果は保持する。[用途モデル](../../crates/db/src/models/workspace_usage.rs#L1-L53)、[永続列](../../crates/db/migrations/20260921000000_workspace_usage.sql)
 
 `execution_owner` は kind・run ID・Repo ID により製品の実行記録を指す。準備中は run ID が未確定でもよいが、dispatch 前に所有者へ結び付け、別 run に付け替えて過去の環境を再利用しない。Sync など製品側に残らない結果は、同じ所有者へ succeeded/failed/cancelled、Wiki commit、no-op、診断を保存する。AgentRun の成功だけでは公開結果を推定しない。[一度だけの結付けと結果保存](../../crates/db/src/models/workspace_usage.rs#L81-L131)
 
 実行専用環境でも Session と監査ログは残り、ファイルが現存すれば閲覧できる。予約中の汎用 chat・Session 作成・retry・Git・terminal・script・ファイル変更等は通常の開発入口では許可しない。現在委任中の Wiki AgentRun への追加指示だけは owner identity と非終端・非取消を確認する専用例外がある。Workspace middleware は read と seen を残し、停止は所有者専用入口へ渡す。手動 archive の prepare/confirm だけは usage による拒否の例外で、実際の使用中判定を必須にする。unarchive・再利用・他の mutation の権限は緩めない。旧 editor tunnel は現行構成から削除されている。[共通境界](../../crates/server/src/middleware/model_loaders.rs)。表示と停止の導線は [実行履歴の確認](../operations/workspace-inspection.md#実行専用-workspace-の確認)を参照する。
 
-所有者ラベル自体は起動権限ではない。各 dispatch で Repo membership と未完了の所有を確認し、Integration は保存済み Workspace/Session/correlation と予約を、Bootstrap は Workflow と現在の delegated child を、Sync は maintenance state と起動前に固定した AgentRun ID を照合する。不明 kind や欠けた owner は閲覧対象のままにし、任意の実行権限を与えない。[agent の検証](../../crates/services/src/services/workspace_usage.rs)
+所有者ラベル自体は起動権限ではない。各 dispatch で Repo membership と未完了の所有を確認し、自動マージ は保存済み Workspace/Session/correlation と予約を、Bootstrap は Workflow と現在の delegated child を、Sync は maintenance state と起動前に固定した AgentRun ID を照合する。不明 kind や欠けた owner は閲覧対象のままにし、任意の実行権限を与えない。[agent の検証](../../crates/services/src/services/workspace_usage.rs)
 
-script の例外は IntegrationValidation だけで、validating 状態・未取消・同じ予約・Session/Repo・保存済み未完了検証項目の command/cwd を要求する。`next_action` による別の起動も許可しない。検証計画の意味と結果 commit の固定は [正式統合の host 検証](formal-integration.md)で説明する。[script の検証](../../crates/services/src/services/workspace_usage.rs)
+script の例外は IntegrationValidation だけで、validating 状態・未取消・同じ予約・Session/Repo・保存済み未完了検証項目の command/cwd を要求する。`next_action` による別の起動も許可しない。検証計画の意味と結果 commit の固定は [自動マージの host 検証](formal-integration.md)で説明する。[script の検証](../../crates/services/src/services/workspace_usage.rs)
 
-既存データの移行は名称から推測しない。Integration/Repository bootstrap の実行記録、または一致する maintenance の保存記録を根拠に分類し、証拠なしは interactive のままにする。過去 Sync の AgentRun が一つに定まらなければ run ID は不明のまま、複数の所有証拠が衝突すれば `conflicting_evidence` として閲覧専用にする。archive・Session・監査・Git 履歴を書き換える移行ではない。[証拠に基づく backfill](../../crates/services/src/services/workspace_usage.rs)
+既存データの移行は名称から推測しない。自動マージ/Repository bootstrap の実行記録、または一致する maintenance の保存記録を根拠に分類し、証拠なしは interactive のままにする。過去 Sync の AgentRun が一つに定まらなければ run ID は不明のまま、複数の所有証拠が衝突すれば `conflicting_evidence` として閲覧専用にする。archive・Session・監査・Git 履歴を書き換える移行ではない。[証拠に基づく backfill](../../crates/services/src/services/workspace_usage.rs)
 
-終了後の解除は `cleanup_allowed` に加え、Integration が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は検証済みの開始元 Project を優先し、未指定なら Repo 所属から Board が一意に決まる時だけ作る。既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。Issue なしの保守を全面禁止する契約ではない。関連検証・表示 status・過去補完の詳しい条件は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)に集約する。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
+終了後の解除は `cleanup_allowed` に加え、自動マージ が succeeded / failed / cancelled で Workspace 予約も消えていることを要求する。blocked や recovery_required を通常編集へ解放しない。保存済み owner JSON を compare-and-swap して用途だけを変更する。Wiki の Card link は検証済みの開始元 Project を優先し、未指定なら Repo 所属から Board が一意に決まる時だけ作る。既存 link を上書きせず、定期 monitor で利用者の解除を復元しない。Issue なしの保守を全面禁止する契約ではない。関連検証・表示 status・過去補完の詳しい条件は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)に集約する。[解除と link](../../crates/services/src/services/workspace_usage/lifecycle.rs)。
 
 ## Workspace 累積トークン
 
@@ -197,7 +199,7 @@ Project / PR filter を先に適用し、Active / Archived の区分を保った
 
 比較の回帰は [workspaceSearch.test.ts](../../packages/web-core/src/pages/workspaces/workspaceSearch.test.ts)、両 API の JOIN・複数 Project / Workspace・archive・未リンク除外・再取得は [Rust fixture](../../crates/server/src/routes/local_remote.rs#L3895-L3981)が扱う。[隔離 runner](../../tests/server/run-workspace-search.mjs)は build 済み server と専用一時 instance を使い、終了待機後に instance を削除する。[Chromium spec](../../tests/server/specs/workspace-search.spec.ts)は実画面と API、取得失敗から通常 polling による回復、trim・大文字小文字、50件境界、filter、識別子変更を検査する。provider 起動を fixture で抑止しており、実 Agent や外部認証を検証する試験ではない。
 
-今回の通常 Sync は凍結 manifest と全3チャンクの hash、および統合済み source `8158d0da2af13e20dc9aa2cc62116a9a938e9afb` を照合した。独立した入口として sidebar と比較関数、既存 provider / snapshot、API 型と生成型、SQL と handler、Rust・unit・browser fixture を確認した。凍結入力の開発試験成功は過去の報告であり、正式 Integration は検証を明示的に省略している。この保守で製品試験を再実行したとは扱わず、無関係な過去の Wiki 全体の再検証も主張しない。
+今回の通常 Sync は凍結 manifest と全3チャンクの hash、および統合済み source `8158d0da2af13e20dc9aa2cc62116a9a938e9afb` を照合した。独立した入口として sidebar と比較関数、既存 provider / snapshot、API 型と生成型、SQL と handler、Rust・unit・browser fixture を確認した。凍結入力の開発試験成功は過去の報告であり、自動マージ は検証を明示的に省略している。この保守で製品試験を再実行したとは扱わず、無関係な過去の Wiki 全体の再検証も主張しない。
 
 ## 一覧から作成先を選ぶ
 
@@ -244,7 +246,9 @@ LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が 
 
 手動 Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI・stdio MCP・外部 HTTP MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L178)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
 
-確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、Integration 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
+確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、自動マージ 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
+
+AgentRun が終端でも registry が `reserved` / `spawned` / `running` / `unreachable` なら busy のままである。起動していないことを厳密に確認できる失敗・取消系予約は、終端投影時に `not_started` へ解放される。条件と移行時に過去予約を自動修復しない理由は [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)を参照する。この状態だけで他の busy 検査や archive 確認を省略できない。[registry の検査](../../crates/server/src/routes/workspaces/archive.rs#L77-L96)
 
 実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の通常 debug frontend 参照も観測する。`developer-runtime` featureで埋込み済みの場合はこの自己frontend参照の保護を省くが、exe/cwd/fd等の実参照検査は維持する。[bundleの独立性](../operations/development.md#開発用成果物切替と復旧)は既存worktreeの無条件削除許可ではない。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 
@@ -252,7 +256,7 @@ LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が 
 
 ### 生成された専用 Workspace の自動 archive
 
-新規の内部生成 OpenWiki Bootstrap / Sync と正式 Integration の専用 Workspace は、成功後に一度だけ archive を試す。通常開発・採用元 Workspace、手動 merge、PR 観測、Arena 選択はこの対象にならない。名前や system Tag で推定せず、専用 Issue 作成時の `generated_issue_workspaces` に保存した Repo・Project・Issue・owner kind と最初の run ID で資格を判定する。Wiki は未 bind の新規 owner で専用 Issue を作れた場合だけ登録し、過去 owner の startup link 補完は除外する。Integration は受付 transaction で run ID とともに登録する。[Wiki の登録](../../crates/services/src/services/workspace_usage/lifecycle.rs#L97-L131)・[Integration の登録](../../crates/db/src/models/integration.rs#L326-L335)・[最初の owner bind](../../crates/db/migrations/20261026010000_generated_archive.sql#L26-L32)
+新規の内部生成 OpenWiki Bootstrap / Sync と自動マージ の専用 Workspace は、成功後に一度だけ archive を試す。通常開発・採用元 Workspace、手動 merge、PR 観測、Arena 選択はこの対象にならない。名前や system Tag で推定せず、専用 Issue 作成時の `generated_issue_workspaces` に保存した Repo・Project・Issue・owner kind と最初の run ID で資格を判定する。Wiki は未 bind の新規 owner で専用 Issue を作れた場合だけ登録し、過去 owner の startup link 補完は除外する。自動マージ は受付 transaction で run ID とともに登録する。[Wiki の登録](../../crates/services/src/services/workspace_usage/lifecycle.rs#L97-L131)・[自動マージ の登録](../../crates/db/src/models/integration.rs#L326-L335)・[最初の owner bind](../../crates/db/migrations/20261026010000_generated_archive.sql#L26-L32)
 
 **入口は既存 monitor の owner 解放である。** 5秒 tick の末尾で `release_completed` が process / cleanup と製品 owner の終了を確認し、保存済み owner JSON の CAS により `execution_only → interactive` を更新できた Workspace だけを返す。その回だけ archive を呼び、過去 interactive 環境の走査、新 timer、再試行 queue は追加しない。用途解除できても、失敗・取消の成果や成功に合う run がなければ自動 archive を拒否する。[monitor](../../crates/server/src/routes/openwiki.rs#L878-L913)・[解除](../../crates/services/src/services/workspace_usage/lifecycle.rs#L136-L177)
 
@@ -260,9 +264,9 @@ LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が 
 | --- | --- |
 | Bootstrap | 同じ Repo / Workspace の bootstrap Workflow が succeeded |
 | Sync | 同じ Workspace の AgentRun が succeeded、かつ owner 固有の公開結果も Succeeded。検証済み no-op も含む |
-| Integration | 同じ Repo / Project / Workspace / Card の run が succeeded かつ published。mechanical 経路は AgentRun 不要で、後続 Wiki 完了を待たない |
+| 自動マージ | 同じ Repo / Project / Workspace / Card の run が succeeded かつ published。mechanical 経路は AgentRun 不要で、後続 Wiki 完了を待たない |
 
-成果だけで削除しない。現在 owner・path・branch・単一 Repo membership と物理 path/name、未 archive Issue の link、既存 DB idle・script settled・OS process guard も再確認する。[最終検査](../../crates/server/src/routes/local_remote/issue_archive.rs#L466-L506)。公開と owner 解放の詳細は [Wiki 保守](../operations/openwiki-maintenance.md#成功後の保守環境の解放)と [Integration の後処理](formal-integration.md#成功後の専用作業領域)へ分ける。
+成果だけで削除しない。現在 owner・path・branch・単一 Repo membership と物理 path/name、未 archive Issue の link、既存 DB idle・script settled・OS process guard も再確認する。[最終検査](../../crates/server/src/routes/local_remote/issue_archive.rs#L466-L506)。公開と owner 解放の詳細は [Wiki 保守](../operations/openwiki-maintenance.md#成功後の保守環境の解放)と [自動マージ の後処理](formal-integration.md#成功後の専用作業領域)へ分ける。
 
 #### 一度限りの intent と介入の検出
 
@@ -274,7 +278,7 @@ lock 順序は MUTATIONS → Issue → 当該 Workspace。その後、未試行�
 
 既存 `archive_checked` を使い、Managed worktree の削除と archived 更新を行う。別の未 archive Workspace が同じ Issue にあれば、その環境と Issue を残す。なければ専用 Issue も archive する。Status・本文・履歴・Git branch を変える操作ではない。通常の物理削除失敗でも archive を確定し `deletion_error` を残す一方、filesystem 操作後の DB/commit 失敗では結果が不明になり得る。[共通削除](../../crates/server/src/routes/workspaces/archive.rs#L285-L331)・[Issue と結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L506-L530)
 
-内部 `attempt_result` は人間の確認 token や Operations receipt とは別で、専用 UI / GET API を持たない。通常 UI/API の archive flags と `worktree_deleted`、Workspace/Issue ID を含む server log を照合する。正常成功は INFO、拒否・不明・削除未完了は WARN。started のまま中断した場合も含め、自動 replay はせず残存を許す。archive 失敗で Wiki / Integration の成功を取り消さない。[記録とログ](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)・[試行結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L514-L530)
+内部 `attempt_result` は人間の確認 token や Operations receipt とは別で、専用 UI / GET API を持たない。通常 UI/API の archive flags と `worktree_deleted`、Workspace/Issue ID を含む server log を照合する。正常成功は INFO、拒否・不明・削除未完了は WARN。started のまま中断した場合も含め、自動 replay はせず残存を許す。archive 失敗で Wiki / 自動マージ の成功を取り消さない。[記録とログ](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)・[試行結果](../../crates/server/src/routes/local_remote/issue_archive.rs#L514-L530)
 
 検証入口は [SQL trigger の隔離試験](../../tests/generated-archive/test_migration.py)と [server 回帰](../../crates/server/src/routes/local_remote/issue_archive.rs#L618-L916)。owner 解放時だけの実行、mechanical、Sync の no-op、busy・owner 不一致・手動復元・再送、claim 後の5種の介入と別 Workspace 保持を扱う。SQL の二接続試験は最終 write transaction の排他を確認する。これらの fixture 定義は実 Bootstrap/Sync の公開から実 process/cwd 参照までの E2E や実ユーザー環境での削除を証明しない。今回の文書保守では製品試験を再実行していない。
 

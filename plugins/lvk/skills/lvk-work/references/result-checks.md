@@ -24,7 +24,7 @@ local target refs without fetching. `included` records target-history evidence
 for the observed source with no observed worktree changes; it is not proof of
 tests, remote publication or Wiki completion. Unknown is not a clean result.
 
-Use `list_integrations` and `get_integration` for formal results. Read the
+Use `list_integrations` and `get_integration` for Auto-merge results. Read the
 `summary`, `sources` or `validation` section as needed. Separate execution
 status, verification outcomes/exceptions, target publication and current Wiki
 receipts. Missing, skipped, incomplete or unknown checks are not passes. A

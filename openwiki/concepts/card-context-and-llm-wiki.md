@@ -42,10 +42,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-10-23T23:13:08.630Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:13:08.630Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # Card context と並列作業の参照
@@ -78,7 +78,7 @@ parser は backtick / tilde の fenced code 内の marker を無視する。引�
 
 `node --test tests/chat/prompt-context.test.mjs` は Chromium の隔離 component fixture で、通常文・fence・引用・不完全／不一致 marker の fallback、CRLF を含む再結合、入れ子 preset、反復ブロック、開閉とキーボード、全文コピーの成功／失敗、編集 callback、案内 ON/OFF の復元を検査する。390 / 1280px と light / dark の実 theme CSS で横 overflow も検査する。[入力と操作の assertion](../../tests/chat/prompt-context.test.mjs#L65-L179)。clipboard と Markdown renderer は置換されており、OS clipboard、実 Markdown の全描画、保存 API や実 provider の統合試験ではない。[fixture の renderer と編集 callback](../../tests/chat/prompt-context.fixture.tsx#L23-L47)・[clipboard の置換](../../tests/chat/prompt-context.test.mjs#L53-L62)。初回要求・明示 OFF・旧文脈の保持は別の [Card context model の回帰](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L43-L128)で確認する。
 
-この Sync は凍結入力全3チャンクと source `ba8519ab44f29d2493412b2f3d21f38d55fe07fd` を対象に、設定と保存 model、会話の呼出側、表示 parser、backend の注入境界、独立した試験定義を静的に照合した。入力には開発時の成功報告と、正式 Integration の明示的な検証省略が別々に記録されている。本 Sync では製品テストを再実行しておらず、無関係な過去の説明全体を再検証したとは扱わない。
+この Sync は凍結入力全3チャンクと source `ba8519ab44f29d2493412b2f3d21f38d55fe07fd` を対象に、設定と保存 model、会話の呼出側、表示 parser、backend の注入境界、独立した試験定義を静的に照合した。入力には開発時の成功報告と、自動マージ の明示的な検証省略が別々に記録されている。本 Sync では製品テストを再実行しておらず、無関係な過去の説明全体を再検証したとは扱わない。
 
 ## 並列活動と固定したソースを読む
 
@@ -101,3 +101,5 @@ Pipeline loader は現在同梱定義を持たず、残存する `wikillm.toml` 
 ## 閲覧と更新権限
 
 Workspace Wiki はその checkout の `openwiki/` を読む。通常 coding は正本を編集せず、統合後の専用 maintenance が生成・更新する。Viewer の repository 解決、OKF・path・容量制限は [Workspace inspection](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)、初期生成と Sync は [OpenWiki maintenance](../operations/openwiki-maintenance.md)が一次説明先である。[現在の reader](../../crates/server/src/routes/workspaces/wiki.rs#L148-L168)
+
+並列参照の案内は、試験用 preview と [自動マージによる正式な公開](formal-integration.md)を区別する。名称の変更は preset を再保存する移行ではなく、既存 Card の保存済み文面を保持する契約も変えない。[現在の案内と保存処理](../../packages/web-core/src/features/pipeline/model/cardContext.ts#L18-L72)

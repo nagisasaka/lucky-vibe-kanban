@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:baad6b823e5e178969222bd4366e1f1322b66d49f9781c1280a6be69304cb0d0",
+  "pageVersion": "sha256:96a2e30657d30ce7585ee7cf60e642abef64836ca97d79b3813bd899d1f7e3c0",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -46,7 +46,7 @@
         },
         {
           "resource": "repo://crates/services/src/services/parallel_context.rs#L134-L198",
-          "version": "repo-lines-v1:sha256:c8614edafb2f07c04b1c3f7f1468f4331ac3eb46ee51661abd5abae7c6211a9c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNzVmM2Q5NjlmYzZmMDdlOTkwM2YxZTA3NmMzOGE4ZDY3ZWU2MzA1MGRmMzlmMGZlZWYyN2RmNmQxZWM4MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkM2I5OTc1NGEzOTI5NDM0MzE5MmM0OWMyYjdlOGJhNzc3ZGQ5OTQxZGMxMzlkMWJhM2QxZTg5NDQyMzQ1OWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhOTU0M2ZlMDc3MzMxMzY0NTcyZGNhYmI1MDc4YzFlM2IyNzI5ZmU0NTUzNTExOTRiNGUwMmM5NTc5MzM3ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIifQ"
+          "version": "repo-lines-v1:sha256:b0ec263c7a39a3ba12dc6c202d169798e0f47fe59a91646c71cbdf3154561b31:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkNzVmM2Q5NjlmYzZmMDdlOTkwM2YxZTA3NmMzOGE4ZDY3ZWU2MzA1MGRmMzlmMGZlZWYyN2RmNmQxZWM4MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YzYyZDhhZTM5MTdlOGM3MjM3YWRmNjljMGRhMzcxMzAzYWU2Zjg2YjE5NGYxZDE4YmQwNWVjMzAxYjNhODMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhOTU0M2ZlMDc3MzMxMzY0NTcyZGNhYmI1MDc4YzFlM2IyNzI5ZmU0NTUzNTExOTRiNGUwMmM5NTc5MzM3ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.test.ts#L65-L74",
@@ -84,7 +84,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:0462c14b327632e9f59d82208f1850bebe83a9337a2a040616ec8d07ee3ec265"
+          "version": "repo-file-v1:sha256:b033f815e7d1e5eda59eeeda2544c8830a7227752777e1bc029b6a8c34a09ff7"
         }
       ]
     },
@@ -213,6 +213,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T23:13:08.630Z"
+    "at": "2026-10-27T03:10:58.678Z"
   }
 }

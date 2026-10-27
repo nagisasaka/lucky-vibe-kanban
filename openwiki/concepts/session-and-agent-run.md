@@ -4,6 +4,8 @@ title: Session・AgentRun・RunAttempt
 description: 会話・依頼・実行試行の識別、継続と retry、provider binding、Goal と停止の契約。
 tags: [session, agent-run, run-attempt, goal, lifecycle]
 sources:
+  - id: openwiki-source-cf8b58730bbd6b4986a47c09
+    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
@@ -48,6 +50,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-79cca50cc03fbe39bcd5a22c
+    resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
     resource: repo://crates/server/src/routes/scratch.rs
   - id: openwiki-source-406c792263884bbf462d666c
@@ -150,10 +154,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -174,7 +178,7 @@ verified:
 
 Attempt 検証は run/turn/Session/correlation の一致だけでなく、provider、profile、Workspace、設定と capability snapshot の整合性を要求する。Review に selected Skills を付けることや、FollowUp 以外への reset 指定も拒否する。[契約検証](../../crates/executors/src/runtime/contracts.rs#L294-L351)。これらを永続化してから起動する機構と監査の詳細は [Agent Runtime](../architecture/agent-runtime.md) に置く。
 
-正式 Integration の新しい競合 job は、同じ Workspace 内でも専用の新規 Session を使う。通常の Follow-up による native conversation 継続とは異なり、完全な frozen instruction を渡す `Initial` / `Launch` である。再配送で Session を増やさず、明示 Resume では過去の identity / degraded 履歴を保持する。保存の原子性と再開の詳細は [競合 job の Session 所有](formal-integration.md#競合だけを有限の-agent-job-にする)に集約する。[生成と再利用](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
+自動マージ の新しい競合 job は、同じ Workspace 内でも専用の新規 Session を使う。通常の Follow-up による native conversation 継続とは異なり、完全な frozen instruction を渡す `Initial` / `Launch` である。再配送で Session を増やさず、明示 Resume では過去の identity / degraded 履歴を保持する。保存の原子性と再開の詳細は [競合 job の Session 所有](formal-integration.md#競合だけを有限の-agent-job-にする)に集約する。[生成と再利用](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
 
 ## 実行設定の復元と DEFAULT identity
 
@@ -203,7 +207,7 @@ Rust の `ExecutorConfig` は `Option::None` を JSON から省略するため�
 
 [解決・保存の unit tests](../../packages/web-core/src/shared/lib/executorOverrides.test.ts)は、identity-only preset、None の省略、明示値、同一/別モデル選択を検査する。[Chromium hook 試験](../../tests/chat/executor-config.test.mjs#L7-L134)は controlled / uncontrolled の両経路を使うが preset と保存先は fixture である。[アプリ E2E](../../tests/server/specs/reasoning-override.spec.ts#L125-L158)も discovery・最新 launch・follow-up 応答を mock するため、実 provider の回答や TOML 解決の証拠ではない。
 
-[開発記録](../../tests/server/reasoning-override.md)は `527f9c36` までの実 backend E2E と、その後の P2 修正に対する限定試験を分けている。後者で全面 build / 実アプリ E2E は再実施していない。今回の Sync は凍結 source `5ccbd3f5a11e63e9d336cf0e325c2f96818aab8a` を、selector・hook・Session composer・Rust の保存型・試験という独立した入口から静的に照合した。凍結入力の正式 Integration は明示的な検証省略であり、今回も製品テストを再実行していない。無関係な既存説明の再検証や live provider 成功を主張しない。
+[開発記録](../../tests/server/reasoning-override.md)は `527f9c36` までの実 backend E2E と、その後の P2 修正に対する限定試験を分けている。後者で全面 build / 実アプリ E2E は再実施していない。今回の Sync は凍結 source `5ccbd3f5a11e63e9d336cf0e325c2f96818aab8a` を、selector・hook・Session composer・Rust の保存型・試験という独立した入口から静的に照合した。凍結入力の自動マージ は明示的な検証省略であり、今回も製品テストを再実行していない。無関係な既存説明の再検証や live provider 成功を主張しない。
 
 ### 選択した Claude profile の readiness
 
@@ -222,7 +226,7 @@ Session composer は executor に加え selected variant と Workspace / Session
 
 Retry は前回の設定・capability snapshot・Skill を引き継ぐ。設定を変えて別の仕事を始める操作と混同しない。制御リクエストも command ID、冪等キー、相関 ID を持って永続 command service を経由する。[retry 固定値](../../crates/local-deployment/src/agent_run_port.rs)、[制御 API](../../crates/server/src/routes/agent_runs.rs#L348-L373)
 
-Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[正式 Integration](formal-integration.md#競合だけを有限の-agent-job-にする) の競合処理は source ごとの新規 Create を使い、一般 Retry で次の source を実行する仕組みではない。
+Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[自動マージ](formal-integration.md#競合だけを有限の-agent-job-にする) の競合処理は source ごとの新規 Create を使い、一般 Retry で次の source を実行する仕組みではない。
 
 ## Run の経過時間と Goal 会計
 
@@ -231,6 +235,8 @@ Pending / Starting は Preparing を表示し、経過時計を出さない。Bo
 開始後の入力・承認待ち、Cancelling、同じ Run の retry は壁時計の範囲に含み、別 Follow-up Run とは合算しない。Retry の Preparing 中も時計は抑止し、実行へ進んだ後は最初の Running 起点へ戻る。Workspace の `is_running` 集計を変更したものではない。[Web の時間表示](../architecture/web-and-sync.md#run-の時間表示を同期状態から分ける)・[準備と実開始の回帰](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)。Starting が保存できない場合の有限予算・DB回復・host予約の不確実性は [Runtime の耐久回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)に集約する。
 
 ### 終了の証拠と再接続
+
+Run / attempt の終端と、実プロセスの終了証拠は別である。起動前に失敗・取消が確定した予約は、厳密な証拠条件の下で registry の `not_started` となり、実 PID・開始・終了時刻を持つ `exited` とは区別する。未起動の確認は成功した実行の証明でもない。条件・原子的な解放・Starting 診断の中断回復は [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)にまとめる。
 
 永続化では attempt の `finished_at` が未設定のとき、終端 state の時刻を一度だけ保存する。後続イベントが projection の `updated_at` を進めても終了時刻を更新しない。したがって `updated_at` を終了時刻へ流用すると、完了済み Run の表示時間が増える。[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1775-L1794)・[単一 event 保存](../../crates/db/src/models/agent_runtime.rs#L2099-L2119)・[遅延 event の回帰テスト](../../crates/db/src/models/agent_runtime.rs#L3210-L3267)
 
@@ -246,7 +252,7 @@ Goal の `time_used_seconds` は provider 報告値であり、Run footer の壁
 
 変更時は、DB の遅延イベントテスト、[canonical projection の時間テスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L769-L904)、[制御時計を使う browser component テスト](../../tests/chat/run-elapsed.test.mjs)、[隔離 API・SQLite・WebSocket・画面のテスト](../../tests/run-elapsed/isolated.mjs)を別の境界として読む。隔離テストも provider 記録は合成であり、実モデルの時間精度を証明しない。再現手順は [run-elapsed README](../../tests/run-elapsed/README.md)に置く。
 
-[開発時の検証記録](../../tests/run-elapsed/VALIDATION.md)は成功した試験と、`cargo sqlx` 未導入で metadata 検査前に失敗した `prepare-db:check` を区別している。今回の Sync は凍結 source `2b95298fc4efba657c676644a57bafa620b9e017` の実装・テスト内容を静的に照合したもので、製品テストは再実行していない。凍結入力では正式 Integration の検証は明示的に省略されており、開発時の成功記録を統合候補の検証成功と扱わない。無関係な過去の説明全体を再検証したという意味でもない。
+[開発時の検証記録](../../tests/run-elapsed/VALIDATION.md)は成功した試験と、`cargo sqlx` 未導入で metadata 検査前に失敗した `prepare-db:check` を区別している。今回の Sync は凍結 source `2b95298fc4efba657c676644a57bafa620b9e017` の実装・テスト内容を静的に照合したもので、製品テストは再実行していない。凍結入力では自動マージ の検証は明示的に省略されており、開発時の成功記録を統合候補の検証成功と扱わない。無関係な過去の説明全体を再検証したという意味でもない。
 
 ## Provider session の継続と取り込み
 
@@ -266,7 +272,7 @@ Cancel は終端 run には無操作で、活動中なら Cancelling を保存�
 
 通常 interactive Workspace の送信待ち queue は **Session ごとのメモリ内 FIFO**。各項目は ID・本文・設定を持ち、本文編集、個別削除、全 ID の正確な並べ替えを Session lock 下で行う。受理済み項目と composer の新しい draft は別物である。成功した最新 run の [Repository Memory](repository-memory.md)完了後に先頭を起動する。元 run の失敗・取消、memory 完了失敗では queue を保持して pause し、次の起動失敗では先頭へ戻して pause する。古い terminal 通知は最新 run の queue を消費しない。[保存](../../crates/services/src/services/queued_message.rs)、[終端処理](../../crates/local-deployment/src/container.rs)。
 
-resume は active run 不在・maintenance / Integration guard を確認して先頭から再開する。古い cancel endpoint は全 queue を消すので、個別 remove と区別する。server restart では失われ、[Workflow outbox](../architecture/workflow-runtime.md)の耐久性は持たない。[queue API](../../crates/server/src/routes/sessions/queue.rs)。
+resume は active run 不在・maintenance / 自動マージ guard を確認して先頭から再開する。古い cancel endpoint は全 queue を消すので、個別 remove と区別する。server restart では失われ、[Workflow outbox](../architecture/workflow-runtime.md)の耐久性は持たない。[queue API](../../crates/server/src/routes/sessions/queue.rs)。
 
 実行専用 Workspace の終端通知では、上記の通常 source 完了・queue 消費を行わない。所有する統合・Wiki 保守が結果を確定し、一般の follow-up や retry を許可するかも [操作用途と実行所有者](workspace.md#操作用途と実行所有者)で検証する。[通常終端処理からの除外](../../crates/local-deployment/src/container.rs)
 
@@ -308,7 +314,7 @@ Plan と一般質問はこの command/file 修正の対象外である。wrapper
 
 [隔離 browser 試験](../../tests/supervised/approval.spec.ts)は実 backend/host/API/WebSocket/UI と Python protocol peer をつなぎ、待機中 reload、並行2要求の残件、操作詳細、元 native ID、監査参照/checksum を検査する。runner はこの checkout の server と agent-process-host を明示固定し、継承した host override による別 binary の混入を避ける。[実行手順と限界](../../tests/supervised/README.md)・[隔離 runner](../../tests/supervised/run_isolated.py)
 
-[開発時の検証記録](../../docs/development/supervised-approval-change-manifest.md)には初期失敗と最終成功があるが、実モデル・native sandbox 判定、Windows、サーバー再起動越し回復は未検証である。今回の通常 Sync は凍結 source `456fb0215c06e4c1a403275c83f7f69170cb5434` の host/client/bridge、UI 投影・集約、試験定義を静的に照合した。製品テストは再実行しておらず、凍結入力の正式 Integration も検証省略である。過去の成功記録を統合候補の合格や無関係な Wiki 全体の再検証へ読み替えない。
+[開発時の検証記録](../../docs/development/supervised-approval-change-manifest.md)には初期失敗と最終成功があるが、実モデル・native sandbox 判定、Windows、サーバー再起動越し回復は未検証である。今回の通常 Sync は凍結 source `456fb0215c06e4c1a403275c83f7f69170cb5434` の host/client/bridge、UI 投影・集約、試験定義を静的に照合した。製品テストは再実行しておらず、凍結入力の自動マージ も検証省略である。過去の成功記録を統合候補の合格や無関係な Wiki 全体の再検証へ読み替えない。
 
 ## 非同期質問への回答と配送証拠
 
@@ -370,7 +376,7 @@ Enter mode は Ctrl+Enter を明示的な line break に変換する。IME compo
 
 以前記録した二つの試験期待の不一致は、凍結 source `0cae202fc7b1048b9787e73607fa1a3e2706afcd` で解消されている。`input-operations.isolated.mjs` は送信保留中も `contenteditable=true` とし、続く5回の Enter で要求が1件のままであることを確認する。編集可能と重複送信可能を同一視しない。[送信保留中の検査](../../tests/chat/input-operations.isolated.mjs#L310-L340)。`isolated.spec.ts` は保存済み ModifierEnter 設定を復元した後も Ctrl+Enter では送らず、追加入力後の Enter で正確な複数行 prompt が送られることを検査する。[改行と payload](../../tests/chat/isolated.spec.ts#L356-L383)。
 
-今回の照合は変更された試験と既存 editor・Session composer・keyboard の契約を対象とした。[開発時の検証記録](../../tests/integrated-main/VALIDATION.md#minimal-corrections)には初期失敗と修正後の結果が記録されるが、今回の正式 Integration は検証省略であり、Wiki Sync でも製品テストを再実行していない。実 provider・OS IME・実端末の確認や無関係な過去の説明全体の再検証は主張しない。
+今回の照合は変更された試験と既存 editor・Session composer・keyboard の契約を対象とした。[開発時の検証記録](../../tests/integrated-main/VALIDATION.md#minimal-corrections)には初期失敗と修正後の結果が記録されるが、今回の自動マージ は検証省略であり、Wiki Sync でも製品テストを再実行していない。実 provider・OS IME・実端末の確認や無関係な過去の説明全体の再検証は主張しない。
 
 ## Plan の遷移
 
@@ -400,7 +406,7 @@ Goal の pause / resume は状態更新であり、objective・budget・会計�
 
 [adapter fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L25-L227)は状態行列、再送、古い対象、再開競合、配送後の不確実な結果を確認する。[実共有経路の単独 fixture](../../crates/server/src/remote_mcp/goals/tests.rs#L299-L406)は実 Deployment から binding 欠落の拒否まで進み、lock 再取得、新 Run・attempt・command・process 未生成、元 Goal の保持を検査する。instance-global 設定を使う opt-in 試験で、Codex を起動しない専用隔離環境が必要となる。実 provider 成功を証明するものではない。
 
-今回の Sync は凍結 source `044e94ff111f3594cbe864f5bb981f1b794a0602` の MCP、Session 共通受付、UI の要求生成、provider 再開と試験定義を静的に照合した。[開発時の試験記録](../../docs/development/goal-mcp-controls.md#候補1bの追検証2026-10-24-jst)と、検証省略の正式 Integration は別である。製品テストの再実行、実 Codex・Auth0 接続、無関係な既存説明全体の再検証は行っていない。
+今回の Sync は凍結 source `044e94ff111f3594cbe864f5bb981f1b794a0602` の MCP、Session 共通受付、UI の要求生成、provider 再開と試験定義を静的に照合した。[開発時の試験記録](../../docs/development/goal-mcp-controls.md#候補1bの追検証2026-10-24-jst)と、検証省略の自動マージ は別である。製品テストの再実行、実 Codex・Auth0 接続、無関係な既存説明全体の再検証は行っていない。
 
 ## Native subagent と旧実行モデル
 
@@ -408,7 +414,7 @@ Provider が内部で起動する子 agent の活動は AgentActivity として�
 
 Codex の spawn 観測だけが直接の親子関係を確定し、send/wait 等の相互作用から親を推測しない。観測された子はその Run の折り畳み task card に現れ、利用可能な prompt / message と lifecycle を別に保持する。tool 完了や interrupt 要求は子の終端証拠ではなく、状態のない再開・入力送信は以前の完了を unknown に戻す。親終了後の未完了観測も active 表示を続けず、最後に観測した状態付き unknown になる。[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L58-L178)・[表示](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L240-L310)。永続イベントから再構成するため、観測のなかった古い Run に子を補完しない。mapper 互換性は [runtime 投影](../architecture/agent-runtime.md#context-と子観測の投影)を参照する。
 
-親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[記録された設計と限界](../../docs/development/codex-execution-observations.md#completion-and-integration)。これは [正式 Integration](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
+親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[記録された設計と限界](../../docs/development/codex-execution-observations.md#completion-and-integration)。これは [自動マージ](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
 
 旧 ExecutionProcess は script 実行などに残るが、coding-agent action は明示的に拒否される。現行 coding agent の活動判定・停止・履歴の正本は AgentRun を追う。[旧入口の拒否](../../crates/local-deployment/src/container.rs)、[活動判定のテスト](../../crates/server/src/routes/sessions/agent_run.rs#L873-L910)
 

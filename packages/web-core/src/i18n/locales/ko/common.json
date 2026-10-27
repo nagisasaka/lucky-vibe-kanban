@@ -1185,9 +1185,9 @@
     "acknowledge": "이 후보와 검증에 한정된 위험을 이해했습니다.",
     "retry": "환경 수정 후 재시도",
     "continue": "이 예외를 승인하고 계속",
-    "cancel": "Integration 취소",
-    "instructionBoundary": "추가 지시는 검증 예외나 도구 실행을 승인하지 않습니다. 재개 시 같은 Integration과 Session을 유지하고 후보를 다시 검증합니다.",
-    "instruction": "Integration 추가 지시",
+    "cancel": "자동 병합 취소",
+    "instructionBoundary": "추가 지시는 검증 예외나 도구 실행을 승인하지 않습니다. 재개 시 같은 자동 병합과 Session을 유지하고 후보를 다시 검증합니다.",
+    "instruction": "자동 병합 추가 지시",
     "send": "추가 지시 보내기",
     "resume": "복구 후 재개 / 추가 지시",
     "history": "복구 기록"
@@ -1237,6 +1237,6 @@
     "confirmDelete": "Delete this TODO?",
     "project": "Project",
     "chooseProject": "Choose a Project",
-    "integration": "Integrate / Auto Merge"
+    "integration": "자동 병합"
   }
 }

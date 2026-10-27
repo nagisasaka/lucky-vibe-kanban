@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b509104960b640aa4da8a09789e5c710cb9254d05a2d267b38212b8f79af3955",
+  "pageVersion": "sha256:4fe9967da8bfed7c9d623a4912b2e0e9ee76c9c1f11e210d71e71520037ca3d1",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -150,7 +150,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1548-L1577",
-          "version": "repo-lines-v1:sha256:8f7b2b07216c76be1f61d68623845473a03bacdc44d924797d85d4b01914f0f8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNjVkYTM5NzQ2NjJmZmMyY2ZjYTAwZGE0MjAwYmEzNzBiNmQ2OTFmNmI2N2ZhMzcyYjYxMzMwMDRiNzk5MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMDFiZWM4MjA0NjlhYjM1N2JiMzhmZjE5MjhjMzA4Y2Q0NDM0OGEzMDBiYWUwY2E5YTE1Yzk1OTZjMzhjODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkZTgwOWUxNGI1MTlkOTgwYWYyMDIwYjIyYWU4Yzg3NTdkMTgwMmI0NDkzNmI2ZGRhYWQ2ZTg1YmIzY2I0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYTVkZWZmYjllZmRlZWQyYTc1MjM3MTcwNzZkOTE3NzlkYmQxZTg5ZWY5Zjk4NzIzZjQxOGI3YTZjY2E4NzgifQ"
+          "version": "repo-lines-v1:sha256:39ca1391bf29c7ee7131b5951ab71a0011f629058819d0ff046e08e2d024be6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmNjVkYTM5NzQ2NjJmZmMyY2ZjYTAwZGE0MjAwYmEzNzBiNmQ2OTFmNmI2N2ZhMzcyYjYxMzMwMDRiNzk5MjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzMDFiZWM4MjA0NjlhYjM1N2JiMzhmZjE5MjhjMzA4Y2Q0NDM0OGEzMDBiYWUwY2E5YTE1Yzk1OTZjMzhjODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkZTgwOWUxNGI1MTlkOTgwYWYyMDIwYjIyYWU4Yzg3NTdkMTgwMmI0NDkzNmI2ZGRhYWQ2ZTg1YmIzY2I0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYTVkZWZmYjllZmRlZWQyYTc1MjM3MTcwNzZkOTE3NzlkYmQxZTg5ZWY5Zjk4NzIzZjQxOGI3YTZjY2E4NzgifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L313-L318",
@@ -219,6 +219,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-23T19:04:53.809Z"
+    "at": "2026-10-27T03:10:58.678Z"
   }
 }

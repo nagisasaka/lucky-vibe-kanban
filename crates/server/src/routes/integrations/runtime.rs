@@ -41,14 +41,14 @@ impl Drop for IntegrationActionGuard {
     fn drop(&mut self) {
         IN_FLIGHT
             .lock()
-            .expect("Integration task set")
+            .expect("Auto-merge task set")
             .remove(&self.0);
     }
 }
 pub(crate) fn reserve_intervention(id: Uuid) -> anyhow::Result<IntegrationActionGuard> {
     ensure!(
-        IN_FLIGHT.lock().expect("Integration task set").insert(id),
-        "Integration is busy; retry after the current operation settles"
+        IN_FLIGHT.lock().expect("Auto-merge task set").insert(id),
+        "Auto-merge is busy; retry after the current operation settles"
     );
     Ok(IntegrationActionGuard(id))
 }
@@ -68,9 +68,9 @@ pub(super) async fn request_recovery(
     ensure!(
         IN_FLIGHT
             .lock()
-            .expect("Integration task set")
+            .expect("Auto-merge task set")
             .insert(run.id),
-        "This Integration is already being reconciled"
+        "This Auto-merge is already being reconciled"
     );
     let id = run.id;
     let result = async {
@@ -89,7 +89,7 @@ pub(super) async fn request_recovery(
         }
     }
     .await;
-    IN_FLIGHT.lock().expect("Integration task set").remove(&id);
+    IN_FLIGHT.lock().expect("Auto-merge task set").remove(&id);
     result
 }
 
@@ -123,7 +123,7 @@ async fn intervene_inner(
     }
     ensure!(
         run.status == "blocked" && !run.payload.publication_intent && !run.cancel_requested,
-        "Only a blocked unpublished Integration can resume"
+        "Only a blocked unpublished Auto-merge can resume"
     );
     let (repo, ws, _, root) = context(deployment, &run).await?;
     admission::idle(deployment, ws.id).await?;
@@ -183,7 +183,7 @@ async fn intervene_inner(
         .bind(&key)
         .fetch_one(&mut *tx)
         .await?;
-        ensure!(owner == run.id, "Another Integration owns the resource");
+        ensure!(owner == run.id, "Another Auto-merge owns the resource");
     }
     tx.commit().await?;
     // Git is only inspected here; dispatch and mutation happen on the monitor after this save.
@@ -242,11 +242,8 @@ pub(crate) async fn decide_gate_checked(
             return Ok(());
         }
         ensure!(
-            !IN_FLIGHT
-                .lock()
-                .expect("Integration task set")
-                .contains(&id),
-            "Integration is still settling"
+            !IN_FLIGHT.lock().expect("Auto-merge task set").contains(&id),
+            "Auto-merge is still settling"
         );
         if request.decision != "cancel" {
             let (repo, workspace, _, root) = context(deployment, &run).await?;
@@ -288,18 +285,15 @@ pub(crate) async fn decide_gate_checked(
     }
     ensure!(
         run.status == "blocked" && !run.payload.publication_intent && !run.cancel_requested,
-        "Integration no longer awaits this decision"
+        "Auto-merge no longer awaits this decision"
     );
     ensure!(
         gate.decision.is_none() && gate.scope == run.validation_scope(),
         "Stale confirmation"
     );
     ensure!(
-        !IN_FLIGHT
-            .lock()
-            .expect("Integration task set")
-            .contains(&id),
-        "Integration is still settling; retry shortly"
+        !IN_FLIGHT.lock().expect("Auto-merge task set").contains(&id),
+        "Auto-merge is still settling; retry shortly"
     );
     if request.decision != "cancel" {
         admission::verify_sources(deployment, &run).await?;
@@ -378,8 +372,8 @@ fn prompt(
         .get(run.payload.step_index)
         .context("Missing conflict source")?;
     Ok(format!(
-        r#"このIntegrationのコンフリクト解消だけを行ってください。説明と質問は日本語で返してください。
-Integration: {}; repository: {}; root: {}.
+        r#"この自動マージのコンフリクト解消だけを行ってください。説明と質問は日本語で返してください。
+Auto-merge: {}; repository: {}; root: {}.
 Step {}/{}: base {}; source {}. HEADとMERGE_HEADはホストが管理します。
 既存のmerge indexの未解消箇所を解消し、変更をstageしてください。commit、merge、reset、branch操作、main更新、次のsourceの適用は禁止です。
 関連するコード・要件・下記の公開メモリを読み、変更意図を保ってください。必要な関連修正は理由を説明してください。
@@ -422,7 +416,7 @@ pub fn spawn_monitor(deployment: DeploymentImpl) {
                     for run in runs {
                         if !IN_FLIGHT
                             .lock()
-                            .expect("Integration task set")
+                            .expect("Auto-merge task set")
                             .insert(run.id)
                         {
                             continue;
@@ -431,18 +425,18 @@ pub fn spawn_monitor(deployment: DeploymentImpl) {
                         tokio::spawn(async move {
                             let id = run.id;
                             if let Err(error) = advance(&deployment, run).await {
-                                tracing::warn!(run_id=%id,%error,"Formal Integration held");
+                                tracing::warn!(run_id=%id,%error,"Auto-merge held");
                                 if let Err(error) =
                                     hold(&deployment, id, format!("{error:#}")).await
                                 {
-                                    tracing::error!(run_id=%id,%error,"Integration recovery required; reservations retained");
+                                    tracing::error!(run_id=%id,%error,"Auto-merge recovery required; reservations retained");
                                 }
                             }
-                            IN_FLIGHT.lock().expect("Integration task set").remove(&id);
+                            IN_FLIGHT.lock().expect("Auto-merge task set").remove(&id);
                         });
                     }
                 }
-                Err(error) => tracing::warn!(%error,"Integration monitor unavailable"),
+                Err(error) => tracing::warn!(%error,"Auto-merge monitor unavailable"),
             }
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
@@ -535,7 +529,7 @@ async fn persist_conflict_dispatch(
         &mut tx,
         &CreateSession {
             executor: Some(attempt.executor_config.executor.to_string()),
-            name: Some("Formal Integration conflict".into()),
+            name: Some("Auto-merge conflict".into()),
         },
         session_id,
         workspace_id,
@@ -673,7 +667,7 @@ async fn merge_step(deployment: &DeploymentImpl, mut run: IntegrationRun) -> any
             .notification_service()
             .notify(
                 "Merge resolution needs review",
-                "Review the candidate in the Integration Workspace.",
+                "Review the candidate in the Auto-merge Workspace.",
                 run.workspace_id,
             )
             .await;
@@ -709,7 +703,7 @@ async fn merge_step(deployment: &DeploymentImpl, mut run: IntegrationRun) -> any
             vec![utils::repository_memory::MemoryTest {
                 command: None,
                 result: utils::repository_memory::MemoryTestResult::NotRun,
-                summary: Some("Integration validation explicitly skipped".into()),
+                summary: Some("Auto-merge validation explicitly skipped".into()),
             }]
         } else {
             vec![]
@@ -770,11 +764,11 @@ async fn prepare(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     let workspace = if let Some(id) = run.workspace_id {
         Workspace::find_by_id(pool, id)
             .await?
-            .context("Integration Workspace missing")?
+            .context("Auto-merge Workspace missing")?
     } else {
         let workspace = crate::routes::workspaces::create::create_workspace_record_with_owner(
             deployment,
-            Some(format!("Integration: {}", repo.display_name)),
+            Some(format!("Auto-merge: {}", repo.display_name)),
             Some(&db::models::workspace_usage::WorkspaceExecutionOwner::new(
                 db::models::workspace_usage::INTEGRATION,
                 repo.id,
@@ -818,13 +812,13 @@ async fn prepare(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     let session = if let Some(id) = run.session_id {
         Session::find_by_id(pool, id)
             .await?
-            .context("Integration Session missing")?
+            .context("Auto-merge Session missing")?
     } else {
         Session::create(
             pool,
             &CreateSession {
                 executor: Some(config.executor.to_string()),
-                name: Some("Formal Integration".into()),
+                name: Some("Auto-merge".into()),
             },
             Uuid::new_v4(),
             workspace.id,
@@ -853,11 +847,11 @@ pub(super) async fn context(
         .context("Repository missing")?;
     let workspace = Workspace::find_by_id(
         pool,
-        run.workspace_id.context("Integration Workspace missing")?,
+        run.workspace_id.context("Auto-merge Workspace missing")?,
     )
     .await?
     .context("Workspace missing")?;
-    let session = Session::find_by_id(pool, run.session_id.context("Integration Session missing")?)
+    let session = Session::find_by_id(pool, run.session_id.context("Auto-merge Session missing")?)
         .await?
         .context("Session missing")?;
     let root = PathBuf::from(
@@ -998,7 +992,7 @@ async fn validate(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyho
                 Some("failed") | Some("unavailable") => utils::repository_memory::MemoryTestResult::Failed,
                 _ => utils::repository_memory::MemoryTestResult::NotRun,
             },
-            summary: Some("Host execution on the frozen final candidate; any exception remains in Integration gates".into()),
+            summary: Some("Host execution on the frozen final candidate; any exception remains in Auto-merge gates".into()),
         }).collect::<Vec<_>>();
         if let Some(semantics) = &mut run.payload.semantics {
             semantics.tests = evidence.clone();
@@ -1035,7 +1029,7 @@ async fn await_validation_decision(
     // Retain ownership of the candidate and target while awaiting a decision.
     run.save(&deployment.db().pool).await?;
     deployment.container().notification_service().notify(
-        "Integration needs a decision", "A required check did not pass. Review the candidate and risk in its Integration Workspace.", run.workspace_id,
+        "Auto-merge needs a decision", "A required check did not pass. Review the candidate and risk in its Auto-merge Workspace.", run.workspace_id,
     ).await;
     Ok(())
 }
@@ -1176,7 +1170,7 @@ async fn cancel(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
                 correlation_id: run.id,
                 created_at: accepted.request_envelope.created_at,
                 command: executors::runtime::AgentRunPortCommand::Cancel {
-                    reason: "Integration stopped before dispatch link was recorded".into(),
+                    reason: "Auto-merge stopped before dispatch link was recorded".into(),
                 },
             })
             .await?;
@@ -1233,7 +1227,7 @@ async fn hold(deployment: &DeploymentImpl, id: Uuid, error: String) -> anyhow::R
         next_action: if run.payload.publication_intent {
             "Reconcile publication before any further execution. Never replay Git publication blindly."
         } else {
-            "Inspect the saved error and execution logs. Repair storage, permissions or the execution environment, then resume this Integration. If source or target changed, cancel and explicitly reselect. Technical failures cannot be waived."
+            "Inspect the saved error and execution logs. Repair storage, permissions or the execution environment, then resume this Auto-merge. If source or target changed, cancel and explicitly reselect. Technical failures cannot be waived."
         }.into(),
     });
     run.error = Some(error);
@@ -1416,7 +1410,7 @@ async fn publish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
             .git()
             .get_branch_oid(&repo.path, short_target(&run))?
             == base,
-        "TARGET_CHANGED: target advanced; start a new Integration against it"
+        "TARGET_CHANGED: target advanced; start a new Auto-merge against it"
     );
     if run.payload.sequential {
         ensure!(
@@ -1435,7 +1429,7 @@ async fn publish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
         let owner:Uuid=sqlx::query_scalar("SELECT run_id FROM integration_reservations WHERE resource_kind='workspace' AND resource_key=?").bind(resource_key(ws)).fetch_one(&mut *tx).await?;
         ensure!(
             owner == run.id,
-            "Target Workspace reserved by another Integration"
+            "Target Workspace reserved by another Auto-merge"
         );
         let busy:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')) OR EXISTS(SELECT 1 FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=? AND p.status='running')")
             .bind(ws).bind(ws).fetch_one(&mut *tx).await?;
@@ -1498,7 +1492,7 @@ pub(super) async fn recover_publication(
         deployment.git().require_clean_source(&root, result)?;
         admission::idle(
             deployment,
-            run.workspace_id.context("Missing integration Workspace")?,
+            run.workspace_id.context("Missing Auto-merge Workspace")?,
         )
         .await?;
         for ws in writers {
@@ -1516,7 +1510,7 @@ pub(super) async fn recover_publication(
         git::publication::ExactPublicationState::Applied => {}
         git::publication::ExactPublicationState::NotApplied => {
             run.status = "blocked".into();
-            run.error=Some("Publication did not apply: target ref, index and files still match B. No Git writes were replayed; start a new Integration after inspection.".into());
+            run.error=Some("Publication did not apply: target ref, index and files still match B. No Git writes were replayed; start a new Auto-merge after inspection.".into());
             run.save(&deployment.db().pool).await?;
             complete_product(deployment, &run, OrchestrationNodeStatus::Failed).await?;
             admission::release(&deployment.db().pool, run.id).await?;
@@ -1631,7 +1625,7 @@ fn record_memory_integration_at(
                 && existing.target_branch == integration.target_branch
                 && existing.before_commit == integration.before_commit
                 && existing.integrated_commit == integration.integrated_commit,
-            "Immutable Integration input changed; refusing to replace its semantic event binding"
+            "Immutable Auto-merge input changed; refusing to replace its semantic event binding"
         );
     } else {
         store.save_integration(&integration)?;

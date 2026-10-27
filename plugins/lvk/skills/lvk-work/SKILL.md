@@ -1,7 +1,11 @@
 ---
 name: lvk-work
-description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work, answer specification questions, and inspect or request formal Integration. Use for work on a connected LVK server.
+description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work, answer specification questions, and inspect or request Auto-merge. Use for work on a connected LVK server.
 ---
+
+## User-facing feature name
+
+Use **自動マージ** in Japanese and **Auto-merge** in English in normal explanations, start confirmations, progress updates, result reports and agent handoffs. Use the same meaning in other languages. Keep machine identifiers such as `start_integration`, `get_integration`, API paths, DB/type names, stored fields and necessary historical quotations unchanged; do not present those identifiers as the feature name. Auto-merge may merge mechanically without AI and pauses for required decisions or approvals; do not promise unattended success. Report code merge/target publication and subsequent Wiki updates separately. A Wiki-only failure does not mean the code merge failed.
 
 Use live LVK state to carry the user's requested work through the existing Issue,
 Workspace and execution workflow. Explicit user instructions take precedence
@@ -35,12 +39,12 @@ within the permissions enforced by LVK and the conversation host.
   command delivery does not mean implementation is complete. Retrieve progress
   when the user asks; do not start a polling loop or promise automatic notices.
 - For results, consult `get_execution` and the selected memory, code/diff or
-  Integration evidence described in [Result checks](references/result-checks.md).
+  Auto-merge evidence described in [Result checks](references/result-checks.md).
   Distinguish agent completion, verification, publication and Wiki state.
 - Merge only when requested. Read current candidates with
   `get_integration_candidate`, select one adopted Workspace per Issue, then call
   `start_integration` with explicit source/target heads. “All” means the selected
-  Project's reviewed candidates, not every attempt. Existing formal validation
+  Project's reviewed candidates, not every attempt. Existing Auto-merge validation
   and publication rules still apply; an implementation request is not permission
   to merge or deploy.
 
@@ -95,7 +99,7 @@ Unreadable unrelated processes do not by themselves prevent archive. Non-Linux
 hosts do not have this procfs observation; managed DB/registry checks still apply.
 
 The execution-only usage label alone does not prevent manual archive. Active
-runs, processes, Integrations and reservations still do. Archiving does not
+runs, processes, Auto-merge runs and reservations still do. Archiving does not
 change that label or grant permission to reuse the workspace.
 
 If `deletion_error` is returned, archive has still completed. Show the returned

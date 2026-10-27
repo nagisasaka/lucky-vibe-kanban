@@ -2658,8 +2658,8 @@ impl LocalAgentRunPort {
         attempt: &RunAttemptRequest,
     ) -> Result<bool, AgentRunPortError> {
         let state = self.query(request.agent_run_id).await?.state;
-        let failure_pending: bool = sqlx::query_scalar(
-            "SELECT starting_failure_pending FROM agent_process_registry WHERE run_attempt_id=?",
+        let (failure_pending, not_started): (bool, bool) = sqlx::query_as(
+            "SELECT starting_failure_pending,registry_status='not_started' FROM agent_process_registry WHERE run_attempt_id=?",
         )
         .bind(attempt.run_attempt_id)
         .fetch_one(&self.db.pool)
@@ -2673,6 +2673,11 @@ impl LocalAgentRunPort {
             && !(state.status == AgentRunStatus::Failed && failure_pending)
         {
             return Ok(false);
+        }
+        // Terminal projection releases an unstarted reservation atomically.
+        // Its bounded-failure diagnostic may still need replay after a crash.
+        if not_started && failure_pending {
+            return self.finish_starting_failure(request, attempt).await;
         }
         if !self.confirmed_prelaunch(attempt).await? {
             // A host reservation may have accepted Launch with its ACK lost.
@@ -2743,6 +2748,14 @@ impl LocalAgentRunPort {
         if fenced.rows_affected() == 0 {
             return Ok(false);
         }
+        self.finish_starting_failure(request, attempt).await
+    }
+
+    async fn finish_starting_failure(
+        &self,
+        request: &AgentRunRequestEnvelope,
+        attempt: &RunAttemptRequest,
+    ) -> Result<bool, AgentRunPortError> {
         // Persist the terminal lifecycle first: a new retry attempt must not
         // inherit its predecessor's terminal status through an Error event.
         // Keep the receipt until the diagnostic event is also durable.
@@ -2772,7 +2785,7 @@ impl LocalAgentRunPort {
             error: AgentRuntimeError::new(AgentRuntimeErrorKind::StartupFailed,
                 "Starting could not be durably saved within the bounded launch budget; provider was not launched")
         }, vec![], timestamp, Some(failure_id)).await?;
-        sqlx::query("UPDATE agent_process_registry SET launch_requested=0 WHERE run_attempt_id=?")
+        sqlx::query("UPDATE agent_process_registry SET launch_requested=0, starting_failure_pending=0 WHERE run_attempt_id=? AND registry_status='not_started'")
             .bind(attempt.run_attempt_id)
             .execute(&self.db.pool)
             .await
@@ -2806,7 +2819,8 @@ impl LocalAgentRunPort {
         let runs: Vec<Uuid> = sqlx::query_scalar(
             "SELECT a.agent_run_id FROM agent_process_registry p \
              JOIN agent_run_attempts a ON a.id=p.run_attempt_id \
-             WHERE p.launch_requested=1 AND p.registry_status='reserved' AND p.host_endpoint IS NULL \
+             WHERE ((p.launch_requested=1 AND p.registry_status='reserved') \
+             OR (p.registry_status='not_started' AND p.starting_failure_pending=1)) AND p.host_endpoint IS NULL \
              AND NOT EXISTS(SELECT 1 FROM agent_run_attempts newer WHERE newer.agent_run_id=a.agent_run_id AND newer.attempt_number>a.attempt_number) \
              AND (a.status IN ('pending','starting') OR (a.status='failed' AND p.starting_failure_pending=1))")
             .fetch_all(&self.db.pool).await.map_err(port_database)?;
@@ -4051,6 +4065,12 @@ mod tests {
         .execute(&pool)
         .await
         .expect("host replay identity migration");
+        sqlx::raw_sql(include_str!(
+            "../../db/migrations/20261027010000_unstarted_reservation_terminal.sql"
+        ))
+        .execute(&pool)
+        .await
+        .expect("unstarted reservation terminal migration");
         sqlx::raw_sql(r#"
             CREATE TABLE local_project_statuses (id BLOB PRIMARY KEY, project_id BLOB, name TEXT, color TEXT, sort_order INTEGER, hidden INTEGER);
             CREATE TABLE local_issues (id BLOB PRIMARY KEY, project_id BLOB, status_id BLOB, updated_at TEXT);
@@ -4500,7 +4520,22 @@ mod tests {
             port.record_starting(&request, &attempt).await.is_err(),
             "a late Starting write must not reopen a cancelled attempt"
         );
+        assert_unstarted_reservation_released(&port, &attempt).await;
         assert!(port.children.read().await.is_empty());
+    }
+
+    async fn assert_unstarted_reservation_released(
+        port: &LocalAgentRunPort,
+        attempt: &RunAttemptRequest,
+    ) {
+        let row: (String, Option<i64>, Option<String>, Option<String>, bool) = sqlx::query_as(
+            "SELECT registry_status,pid,process_started_at,observed_exited_at,launch_requested FROM agent_process_registry WHERE run_attempt_id=?")
+            .bind(attempt.run_attempt_id).fetch_one(&port.db.pool).await.unwrap();
+        assert_eq!(row, ("not_started".into(), None, None, None, false));
+        let busy: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id WHERE a.agent_run_id=? AND p.registry_status IN ('reserved','spawned','running','unreachable'))")
+            .bind(attempt.agent_run_id).fetch_one(&port.db.pool).await.unwrap();
+        assert!(!busy);
     }
 
     async fn request_fixture_launch(port: &LocalAgentRunPort, attempt: &RunAttemptRequest) {
@@ -4616,7 +4651,66 @@ mod tests {
                 .message
                 .contains("provider was not launched")
         );
+        assert_unstarted_reservation_released(&recovered, &attempt).await;
         assert!(recovered.children.read().await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn prelaunch_released_failure_diagnostic_survives_database_reopen() {
+        let root = tempfile::tempdir().unwrap();
+        let options = sqlx::sqlite::SqliteConnectOptions::new()
+            .filename(root.path().join("fixture.sqlite"))
+            .create_if_missing(true);
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(options.clone())
+            .await
+            .unwrap();
+        let port = LocalAgentRunPort::new(setup_runtime_pool(pool).await);
+        let (request, attempt) = persisted_codex_run(&port.db).await;
+        request_fixture_launch(&port, &attempt).await;
+        sqlx::query("UPDATE agent_process_registry SET starting_write_attempts=?")
+            .bind(STARTING_WRITE_LIMIT)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        sqlx::raw_sql("CREATE TRIGGER reject_diagnostic BEFORE INSERT ON agent_events WHEN json_extract(NEW.event_envelope,'$.payload.type')='error' BEGIN SELECT RAISE(ABORT,'fixture diagnostic failure'); END;")
+            .execute(&port.db.pool).await.unwrap();
+        port.reconcile_prelaunch().await.unwrap();
+        assert_unstarted_reservation_released(&port, &attempt).await;
+        assert_eq!(
+            port.query(request.agent_run_id)
+                .await
+                .unwrap()
+                .state
+                .last_event_sequence,
+            1
+        );
+        sqlx::raw_sql("DROP TRIGGER reject_diagnostic")
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        port.db.pool.close().await;
+        drop(port);
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(options)
+            .await
+            .unwrap();
+        let recovered = LocalAgentRunPort::new(DBService { pool });
+        recovered.reconcile_prelaunch().await.unwrap();
+        recovered.reconcile_prelaunch().await.unwrap();
+        assert_unstarted_reservation_released(&recovered, &attempt).await;
+        let state = recovered.query(request.agent_run_id).await.unwrap().state;
+        assert_eq!(state.status, AgentRunStatus::Failed);
+        assert_eq!(state.last_event_sequence, 2);
+        let pending: bool =
+            sqlx::query_scalar("SELECT starting_failure_pending FROM agent_process_registry")
+                .fetch_one(&recovered.db.pool)
+                .await
+                .unwrap();
+        assert!(!pending);
+        recovered.db.pool.close().await;
     }
 
     #[tokio::test]
@@ -4763,12 +4857,22 @@ mod tests {
         });
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
-                let count: i64 = sqlx::query_scalar(
+                // busy_timeout=0 deliberately exposes contention to the writer
+                // under test. Its independent observer may race the receipt's
+                // commit too; keep observing within the existing bounded wait.
+                let count = match sqlx::query_scalar::<_, i64>(
                     "SELECT starting_write_attempts FROM agent_process_registry",
                 )
                 .fetch_one(&port.db.pool)
                 .await
-                .unwrap();
+                {
+                    Ok(count) => count,
+                    Err(sqlx::Error::Database(error)) if error.code().as_deref() == Some("5") => {
+                        tokio::time::sleep(Duration::from_millis(5)).await;
+                        continue;
+                    }
+                    Err(error) => panic!("budget observation failed: {error}"),
+                };
                 if count == 1 {
                     break;
                 }

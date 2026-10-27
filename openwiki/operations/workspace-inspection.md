@@ -142,10 +142,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -160,15 +160,15 @@ Workspace 一覧の検索欄には名前・branch のほか `106` や `LOCAL-106
 
 ## 実行専用 Workspace の確認
 
-実行中の inspection は [用途が execution_only の Workspace](../concepts/workspace.md#操作用途と実行所有者)を表示する。通常 chat composer の代わりに、owner kind/run、状態、公開結果、ファイルの有無、保存済み Session の選択、所有者の Stop を示す。新規 chat・Session・queue・executor 選択は作らず、現在の所有者が出している承認・質問への応答を残す。Wiki 実行中には追加指示を steer でき、Integration には専用介入 UI がある。実行と cleanup 完了後は通常 composer に戻り、所有者の履歴は残る。[inspection UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx)
+実行中の inspection は [用途が execution_only の Workspace](../concepts/workspace.md#操作用途と実行所有者)を表示する。通常 chat composer の代わりに、owner kind/run、状態、公開結果、ファイルの有無、保存済み Session の選択、所有者の Stop を示す。新規 chat・Session・queue・executor 選択は作らず、現在の所有者が出している承認・質問への応答を残す。Wiki 実行中には追加指示を steer でき、自動マージ には専用介入 UI がある。実行と cleanup 完了後は通常 composer に戻り、所有者の履歴は残る。[inspection UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx)
 
-Integration では owner/run の識別子、状態、保存済み Session 選択を「実行の詳細」に折り畳み、解消説明と判断を主表示する。公開結果は `publication_intent` を持たない `WorkspaceExecutionView` から重複表示せず、owner の run ID を使って完全な IntegrationRun を取得する専用介入欄へ委ねる。詳細を開くことは新規 Session の作成ではない。[配置と委譲](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L75-L188)・[owner view の型](../../crates/server/src/routes/workspaces/usage.rs#L24-L36)・[run の取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L24-L30)
+自動マージ では owner/run の識別子、状態、保存済み Session 選択を「実行の詳細」に折り畳み、解消説明と判断を主表示する。公開結果は `publication_intent` を持たない `WorkspaceExecutionView` から重複表示せず、owner の run ID を使って完全な IntegrationRun を取得する専用介入欄へ委ねる。詳細を開くことは新規 Session の作成ではない。[配置と委譲](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L75-L188)・[owner view の型](../../crates/server/src/routes/workspaces/usage.rs#L24-L36)・[run の取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L24-L30)
 
 保存説明、解消差分、検証記録を確認して承認または中止する際は [保存済み説明から候補をレビューする](../concepts/formal-integration.md#保存済み説明から候補をレビューする)を参照する。公開の「照合中」は未反映の確定ではない。[公開・Done・Wiki の読み分け](../concepts/formal-integration.md#公開donewiki-は別の結果)に判定と回復の契約をまとめる。
 
-`GET /api/workspaces/<id>/usage` と executions 一覧は既存 owner 記録から状態を投影する。Integration の Git 公開、Bootstrap の Workflow 完了、Sync の保存済み結果はそれぞれの正本から読み、Generator や AgentRun の成功を公開済みと推測しない。Sync の AgentRun が終端でも repository owner が残る間は `finalizing` である。成功 no-op は新しい Wiki commit がない成功として表示する。[状態の由来](../../crates/server/src/routes/workspaces/usage.rs)
+`GET /api/workspaces/<id>/usage` と executions 一覧は既存 owner 記録から状態を投影する。自動マージ の Git 公開、Bootstrap の Workflow 完了、Sync の保存済み結果はそれぞれの正本から読み、Generator や AgentRun の成功を公開済みと推測しない。Sync の AgentRun が終端でも repository owner が残る間は `finalizing` である。成功 no-op は新しい Wiki commit がない成功として表示する。[状態の由来](../../crates/server/src/routes/workspaces/usage.rs)
 
-Stop は Integration の cancel、Bootstrap の所有フロー、Sync の監査付き Cancel へ委譲する。停止可能 phase を再検証し、Wiki publication 開始後は取り消さず結果の確定を待つ。終端または停止要求済みなら重複 Stop は無操作となる。[停止の境界](../../crates/server/src/routes/workspaces/usage.rs)。失敗・回復待ちの意味は [正式統合](../concepts/formal-integration.md)と [Wiki 保守](openwiki-maintenance.md)に置く。
+Stop は 自動マージ の cancel、Bootstrap の所有フロー、Sync の監査付き Cancel へ委譲する。停止可能 phase を再検証し、Wiki publication 開始後は取り消さず結果の確定を待つ。終端または停止要求済みなら重複 Stop は無操作となる。[停止の境界](../../crates/server/src/routes/workspaces/usage.rs)。失敗・回復待ちの意味は [自動マージ](../concepts/formal-integration.md)と [Wiki 保守](openwiki-maintenance.md)に置く。
 
 ファイル・Wiki・添付などの読取は `container_for_inspection` を経由する。lifecycle lock 内で状態を再読込し、execution_only または archived なら既存パスだけを使い、cleanup 済みや未準備の worktree を再作成しない。未 archive の interactive 環境は ensure 経路を保持する。表示に伴う復元や script 起動を追加する変更は、この用途の違いを守る必要がある。[共通の読取入口](../../crates/services/src/services/container.rs)
 
@@ -222,7 +222,7 @@ text/code viewer は選択行に `aria-current=location` を付けて中央へ�
 
 [resolver の unit test](../../packages/web-core/src/features/workspace-files/model/chatFileLink.test.ts)は相対・現在 root・Windows・行 suffix・decode・曖昧な Repo・拒否入力を扱う。[component と実 backend の E2E](../../tests/chat/file-links.e2e.mjs)は合成会話を使い、内容表示、Enter、空白・日本語、Markdown source、欠落・symlink、content/raw の拒否を検査する。これだけでは通常 layout の切替を保証しないため、`--native` は seed した保存済み会話を通常 Workspace route で開き、リンククリックから実 content API、native panel、120 行目の選択と viewport 内への scroll まで確認する。[native 試験](../../tests/chat/file-links.native.mjs#L5-L81)
 
-[実装時の検証記録](../../tests/chat/file-links.md)には開発時の成功と失敗・修正の記録がある。今回の Sync は凍結 source `271f62441d4a7ecb7f43ff0cd77e02f0371c762f` について renderer、layout、resolver、viewer、backend と試験定義を静的に照合した。正式 Integration は明示的な検証省略と凍結入力に記録されており、この Sync で製品テストを再実行したことや過去の無関係な説明を再検証したことを意味しない。agent による会話生成、実 Basic/Auth0 login、モバイル layout はこの native 試験の検証範囲外である。
+[実装時の検証記録](../../tests/chat/file-links.md)には開発時の成功と失敗・修正の記録がある。今回の Sync は凍結 source `271f62441d4a7ecb7f43ff0cd77e02f0371c762f` について renderer、layout、resolver、viewer、backend と試験定義を静的に照合した。自動マージ は明示的な検証省略と凍結入力に記録されており、この Sync で製品テストを再実行したことや過去の無関係な説明を再検証したことを意味しない。agent による会話生成、実 Basic/Auth0 login、モバイル layout はこの native 試験の検証範囲外である。
 
 ## Wiki の本文・ツリーと表示元を確認する
 
@@ -281,7 +281,7 @@ API の `files_changed` / `lines_added` / `lines_removed` は独立した option
 
 ## Preview と開発サーバー
 
-DevServer は Workspace の Repo に登録された dev_server_script を、各 Repo の cwd で Bash ScriptRequest / DevServer として管理する。coding AgentRunや任意shell常駐とは別のExecutionProcessである。UI・stdio両mode・外部HTTP MCPは共通 manager を使い、同じWorkspaceのlockで開始/停止を順序付ける。新規開始・停止はinteractive、未archive、worktree未削除、Integration未予約を検査し、MCPは明示Project所属も確認する。[共通開始](../../crates/server/src/routes/workspaces/dev_server.rs#L32-L131)・[対象検査](../../crates/server/src/routes/workspaces/dev_server.rs#L144-L184)・[UI入口](../../crates/server/src/routes/workspaces/execution.rs#L20-L40)
+DevServer は Workspace の Repo に登録された dev_server_script を、各 Repo の cwd で Bash ScriptRequest / DevServer として管理する。coding AgentRunや任意shell常駐とは別のExecutionProcessである。UI・stdio両mode・外部HTTP MCPは共通 manager を使い、同じWorkspaceのlockで開始/停止を順序付ける。新規開始・停止はinteractive、未archive、worktree未削除、自動マージ未予約を検査し、MCPは明示Project所属も確認する。[共通開始](../../crates/server/src/routes/workspaces/dev_server.rs#L32-L131)・[対象検査](../../crates/server/src/routes/workspaces/dev_server.rs#L144-L184)・[UI入口](../../crates/server/src/routes/workspaces/execution.rs#L20-L40)
 
 既存running processがあれば重複startは再利用し、暗黙restartしない。古いrecordのcleanupが未確認なら新しい開始を拒否する。scriptが一つもない場合は失敗し、複数Repoの逐次起動途中の失敗はそれ以前の起動を全件rollbackしない。stopはこのWorkspaceのDevServerだけを対象にし、停止・settled済みはno-op、未確認cleanupは再照合対象として残す。[開始の再利用とsettlement](../../crates/server/src/routes/workspaces/dev_server.rs#L32-L131)・[停止と結果](../../crates/server/src/routes/workspaces/dev_server.rs#L234-L305)
 
@@ -346,7 +346,7 @@ Workspace API は `inspection_root` を使い、削除済み・未準備・不�
 
 ファイル指定は Repo が一つでも `repo_id` を必須とし、file viewer の相対パス正規化・canonical-root 検査を再利用する。絶対パス、drive、親参照、NUL、欠落、Repo 外へ解決される symlink を拒否し、最終 target が通常ファイルでなければ失敗する。[ファイルの検査](../../crates/server/src/routes/workspaces/integration.rs#L131-L143)・[共通境界](../../crates/server/src/routes/workspaces/files.rs#L324-L394)。diff のパスは Repo 名 prefix を持つため UI で最初の prefix を外して送る。preview は元から Repo 相対であり、同じ除去を二度適用してはいけない。[diff の変換](../../packages/web-core/src/shared/lib/externalEditors.ts#L19-L23)・[呼出元](../../packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx#L437-L442)・[preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx#L64-L66)
 
-現在の Workspace 入口は `POST /editor/open` である。リンク生成のみでも、execution_only や Integration 予約中の Workspace では共通 mutation guard が拒否する。旧 editor path GET や SSH tunnel を開設する権限の説明を現行 API に持ち込まない。旧 remote host の SSH tunnel / editor relay は現行 router に存在しない。[route](../../crates/server/src/routes/workspaces/integration.rs#L40-L46)・[予約 guard](../../crates/server/src/middleware/model_loaders.rs#L65-L103)
+現在の Workspace 入口は `POST /editor/open` である。リンク生成のみでも、execution_only や 自動マージ 予約中の Workspace では共通 mutation guard が拒否する。旧 editor path GET や SSH tunnel を開設する権限の説明を現行 API に持ち込まない。旧 remote host の SSH tunnel / editor relay は現行 router に存在しない。[route](../../crates/server/src/routes/workspaces/integration.rs#L40-L46)・[予約 guard](../../crates/server/src/middleware/model_loaders.rs#L65-L103)
 
 ### URI 展開と失敗の意味
 
@@ -360,7 +360,7 @@ Workspace API は `inspection_root` を使い、削除済み・未準備・不�
 
 旧 editor type / custom command / SSH 欄は deserialize 時に無視し、実行や URI への自動変換をしない。entries がなければ上記の通常初期化へ進む。ただし全体 Config の v7 移行入口は v6 を直接 deserialize するため、v5 以前から現行版への全設定移行まで保証しない。この既存制限を editor schema の互換読込と混同しない。[旧値の扱い](../../crates/services/src/services/config/editor/mod.rs#L18-L25)・[全体移行入口](../../crates/services/src/services/config/versions/v7.rs#L58-L69)・[記録された制限](../../docs/development/external-editor-uri-validation.md#途中で判明した制限)
 
-変更時は [URI・パス・browser fixture の検証境界](development.md#外部エディター-uri-連携の検証)を参照する。実 IDE / WSL / SSH 認証、Docker Attach、ネストした Dev Containers URI は未検証である。この Sync はソースと試験定義の照合であり、実機接続や正式 Integration の検証成功を意味しない。
+変更時は [URI・パス・browser fixture の検証境界](development.md#外部エディター-uri-連携の検証)を参照する。実 IDE / WSL / SSH 認証、Docker Attach、ネストした Dev Containers URI は未検証である。この Sync はソースと試験定義の照合であり、実機接続や自動マージ の検証成功を意味しない。
 
 ## 実行履歴を調査・保全する
 
