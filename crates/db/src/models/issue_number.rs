@@ -1,22 +1,45 @@
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
+#[derive(Debug, thiserror::Error)]
+pub enum IssueNumberError {
+    #[error("Issue number exhausted: project high water reached i32::MAX")]
+    Exhausted,
+    #[error(transparent)]
+    Database(#[from] sqlx::Error),
+}
+
+// Database-only system callers retain their existing error boundary.
+impl From<IssueNumberError> for sqlx::Error {
+    fn from(error: IssueNumberError) -> Self {
+        match error {
+            IssueNumberError::Database(error) => error,
+            error @ IssueNumberError::Exhausted => Self::Protocol(error.to_string()),
+        }
+    }
+}
+
 /// Allocate within the caller's BEGIN IMMEDIATE transaction. The caller must
 /// insert the Issue before committing, so all creation paths serialize writers.
+/// Rollback releases an unpublished reservation; a committed number is never
+/// released by Issue deletion. Never publish a reservation before commit.
 pub async fn next_issue_number(
     tx: &mut Transaction<'_, Sqlite>,
     project_id: Uuid,
-) -> Result<(i32, String), sqlx::Error> {
+) -> Result<(i32, String), IssueNumberError> {
     let key: String = sqlx::query_scalar("SELECT key FROM projects WHERE id=?")
         .bind(project_id)
         .fetch_one(&mut **tx)
         .await?;
-    let number: i32 = sqlx::query_scalar(
-        "SELECT COALESCE(MAX(issue_number),0)+1 FROM local_issues WHERE project_id=?",
+    let number: Option<i32> = sqlx::query_scalar(
+        "UPDATE projects SET issue_number_high_water=issue_number_high_water+1 \
+         WHERE id=? AND issue_number_high_water < 2147483647 \
+         RETURNING issue_number_high_water",
     )
     .bind(project_id)
-    .fetch_one(&mut **tx)
+    .fetch_optional(&mut **tx)
     .await?;
+    let number = number.ok_or(IssueNumberError::Exhausted)?;
     Ok((number, format!("{key}-{number}")))
 }
 

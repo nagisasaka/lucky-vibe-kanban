@@ -802,7 +802,16 @@ pub(crate) async fn create_local_issue_with_tags(
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let id = request.id.unwrap_or_else(Uuid::new_v4);
     let (issue_number, simple_id) =
-        db::models::issue_number::next_issue_number(&mut tx, request.project_id).await?;
+        db::models::issue_number::next_issue_number(&mut tx, request.project_id)
+            .await
+            .map_err(|error| match error {
+                db::models::issue_number::IssueNumberError::Database(error) => {
+                    ApiError::Database(error)
+                }
+                error @ db::models::issue_number::IssueNumberError::Exhausted => {
+                    ApiError::BadRequest(error.to_string())
+                }
+            })?;
     let extension_metadata =
         serde_json::to_string(&request.extension_metadata).unwrap_or_else(|_| "null".to_string());
 
@@ -4009,6 +4018,12 @@ mod tests {
                 .expect("create test schema");
         }
 
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261027090100_issue_number_high_water.sql"
+        ))
+        .execute(&pool)
+        .await
+        .expect("install numbering schema");
         pool
     }
 
@@ -4357,6 +4372,48 @@ mod tests {
         numbers.sort();
         assert_eq!(numbers, (1..=12).collect::<Vec<_>>());
         pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn local_issue_creation_never_reuses_deleted_highest_number() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("DEL"))
+            .await
+            .unwrap();
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        let first = super::create_local_issue(&pool, issue_request(project.id, status))
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM local_issues WHERE id=?")
+            .bind(first.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let second = super::create_local_issue(&pool, issue_request(project.id, status))
+            .await
+            .unwrap();
+        assert_eq!(first.simple_id, "DEL-1");
+        assert_eq!(second.simple_id, "DEL-2");
+        assert_ne!(first.id, second.id);
+        sqlx::query("UPDATE projects SET issue_number_high_water=2147483647 WHERE id=?")
+            .bind(project.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let error = super::create_local_issue(&pool, issue_request(project.id, status))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(error, crate::error::ApiError::BadRequest(ref message) if message.contains("exhausted"))
+        );
     }
 
     #[tokio::test]

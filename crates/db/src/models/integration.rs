@@ -1566,6 +1566,15 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn admission_keeps_existing_project_local_prefix() {
         let (pool, mut run, _) = fixture().await;
+        // A deleted highest Issue must also stay retired for system cards.
+        let deleted = Uuid::new_v4();
+        sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) SELECT ?,project_id,205,'LOCAL-205',status_id,'deleted highest',0 FROM local_issues LIMIT 1")
+            .bind(deleted).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM local_issues WHERE id=?")
+            .bind(deleted)
+            .execute(&pool)
+            .await
+            .unwrap();
         run.id = Uuid::new_v4();
         run.request_key = run.id.to_string();
         run.workspace_id = Some(Uuid::new_v4());
@@ -1580,7 +1589,7 @@ pub(crate) mod tests {
                 .fetch_one(&pool)
                 .await
                 .unwrap(),
-            "LOCAL-2"
+            "LOCAL-206"
         );
     }
 
