@@ -22,6 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { DropResult } from '@vibe/ui/components/KanbanBoard';
 import { cn } from '@/shared/lib/utils';
+import { useTouchClickGuard } from './useTouchClickGuard';
 import './kanban-grid.css';
 
 // Keep sortable displacement and overlay landing in sync. Override only in the
@@ -203,6 +204,7 @@ export function KanbanGridCard({
     transition: KANBAN_MOTION,
     data: { overlay: children },
   });
+  const touchClickGuard = useTouchClickGuard();
   const dragged = useRef(false);
   if (isDragging) dragged.current = true;
   return (
@@ -222,6 +224,7 @@ export function KanbanGridCard({
       )}
       {...attributes}
       {...listeners}
+      {...touchClickGuard}
       aria-label={name}
       onMouseDown={(event) => {
         dragged.current = false;

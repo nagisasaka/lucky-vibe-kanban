@@ -91,7 +91,23 @@ export function SearchableTagDropdown({
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+      <DropdownMenuTrigger
+        asChild
+        disabled={disabled}
+        onPointerDown={(event) => {
+          // Radix opens on pointerdown, before touch scrolling can be detected.
+          // Cancel only that default; the browser still handles native panning.
+          if (event.pointerType === 'touch') event.preventDefault();
+        }}
+        onClick={(event) => {
+          if (
+            !disabled &&
+            (event.nativeEvent as PointerEvent).pointerType === 'touch'
+          ) {
+            onOpenChange(!open);
+          }
+        }}
+      >
         {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent
