@@ -17,12 +17,11 @@ usage() {
         '  PORT                Base/frontend port (default: 4020)' \
         '  FRONTEND_PORT       Vite port; overrides PORT' \
         '  BACKEND_PORT        API port (default: FRONTEND_PORT + 1)' \
-        '  PREVIEW_PROXY_PORT  Preview proxy port (default: FRONTEND_PORT + 2)' \
         '  FRONTEND_MODE       dev (hot reload) or preview (built assets); default: dev' \
         '  HOST                Bind address (default: 0.0.0.0)' \
         '  VK_ALLOWED_ORIGINS  Comma-separated browser origins' \
         '' \
-        'Publish FRONTEND_PORT and PREVIEW_PROXY_PORT from Docker, then open:' \
+        'Publish FRONTEND_PORT from Docker, then open:' \
         '  http://localhost:<FRONTEND_PORT>'
 }
 
@@ -62,14 +61,10 @@ frontend_port="${FRONTEND_PORT:-${PORT:-4020}}"
 require_port FRONTEND_PORT "$frontend_port"
 
 backend_port="${BACKEND_PORT:-$((10#$frontend_port + 1))}"
-preview_proxy_port="${PREVIEW_PROXY_PORT:-$((10#$frontend_port + 2))}"
 require_port BACKEND_PORT "$backend_port"
-require_port PREVIEW_PROXY_PORT "$preview_proxy_port"
 
-if [[ "$frontend_port" == "$backend_port" || \
-      "$frontend_port" == "$preview_proxy_port" || \
-      "$backend_port" == "$preview_proxy_port" ]]; then
-    printf '%s\n' 'FRONTEND_PORT, BACKEND_PORT, and PREVIEW_PROXY_PORT must be distinct.' >&2
+if [[ "$frontend_port" == "$backend_port" ]]; then
+    printf '%s\n' 'FRONTEND_PORT and BACKEND_PORT must be distinct.' >&2
     exit 2
 fi
 
@@ -90,7 +85,6 @@ fi
 
 export FRONTEND_PORT="$frontend_port"
 export BACKEND_PORT="$backend_port"
-export PREVIEW_PROXY_PORT="$preview_proxy_port"
 export HOST="${HOST:-0.0.0.0}"
 export VK_ALLOWED_ORIGINS="${VK_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT}}"
 
@@ -98,10 +92,9 @@ printf '%s\n' \
     'Starting lucky-vibe-kanban for Docker access:' \
     "  Frontend:       http://localhost:${FRONTEND_PORT} (${frontend_mode})" \
     "  Backend API:    ${HOST}:${BACKEND_PORT} (proxied through the frontend)" \
-    "  Preview proxy:  ${HOST}:${PREVIEW_PROXY_PORT}" \
     "  Allowed origin: ${VK_ALLOWED_ORIGINS}" \
     '' \
-    'Docker must publish the frontend and preview proxy ports.' \
+    'Docker must publish the frontend port. Forward application ports separately when needed.' \
     'Press Ctrl+C to stop both processes.'
 
 cd -- "$REPO_ROOT"

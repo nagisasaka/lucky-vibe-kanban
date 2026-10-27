@@ -4,7 +4,6 @@ use std::{net::SocketAddr, sync::OnceLock};
 #[derive(Clone)]
 pub struct ClientInfo {
     server_addr: OnceLock<SocketAddr>,
-    preview_proxy_port: OnceLock<u16>,
 }
 
 impl Default for ClientInfo {
@@ -17,7 +16,6 @@ impl ClientInfo {
     pub fn new() -> Self {
         Self {
             server_addr: OnceLock::new(),
-            preview_proxy_port: OnceLock::new(),
         }
     }
 
@@ -29,15 +27,5 @@ impl ClientInfo {
 
     pub fn get_server_addr(&self) -> Option<SocketAddr> {
         self.server_addr.get().copied()
-    }
-
-    pub fn set_preview_proxy_port(&self, port: u16) -> Result<(), String> {
-        self.preview_proxy_port
-            .set(port)
-            .map_err(|_| "preview proxy port already set".to_string())
-    }
-
-    pub fn get_preview_proxy_port(&self) -> Option<u16> {
-        self.preview_proxy_port.get().copied()
     }
 }

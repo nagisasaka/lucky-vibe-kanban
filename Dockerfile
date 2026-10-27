@@ -226,7 +226,6 @@ ENV HOST=127.0.0.1
 # Do not force every project/dev script to use the control plane's PORT.
 ENV PORT=""
 ENV BACKEND_PORT=3000
-ENV PREVIEW_PROXY_PORT=3001
 EXPOSE 8443
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD ["node", "/opt/lvk-server/healthcheck.mjs"]

@@ -124,10 +124,6 @@ pub struct UserSystemInfo {
     pub environment: Environment,
     /// Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })
     pub capabilities: HashMap<String, Vec<BaseAgentCapability>>,
-    pub preview_proxy_port: Option<u16>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub preview_proxy_domain: Option<String>,
 }
 
 // TODO: update frontend, BE schema has changed, this replaces GET /config and /config/constants
@@ -163,17 +159,6 @@ async fn get_user_system_info(
             }
             caps
         },
-        // An explicitly empty public domain disables server previews. Without
-        // this environment variable, desktop/local behaviour is unchanged.
-        preview_proxy_port: if std::env::var("VK_PREVIEW_DOMAIN").as_deref() == Ok("") {
-            None
-        } else {
-            deployment.client_info().get_preview_proxy_port()
-        },
-        preview_proxy_domain: deployment
-            .preview_proxy()
-            .public_domain()
-            .map(str::to_owned),
     };
 
     ResponseJson(ApiResponse::success(user_system_info))

@@ -44,9 +44,7 @@ export function environment(config, build, env = process.env) {
     HOST: "127.0.0.1",
     PORT: "",
     BACKEND_PORT: String(config.port),
-    PREVIEW_PROXY_PORT: "0",
     VK_ALLOWED_ORIGINS: origin,
-    VK_PREVIEW_DOMAIN: "",
     VIBE_KANBAN_AGENT_PROCESS_HOST: join(build, "agent-process-host"),
     TMPDIR: join(config.root, "tmp"),
     BROWSER: "true",
@@ -140,7 +138,9 @@ async function main() {
       `${argument || (config.staging ? "main" : "HEAD")}^{commit}`,
     );
     const dirty =
-      !config.staging && !argument && git(repo, "status", "--porcelain").length > 0;
+      !config.staging &&
+      !argument &&
+      git(repo, "status", "--porcelain").length > 0;
     if (config.staging || argument) {
       source = join(build, "source");
       await run("git", ["worktree", "add", "--detach", source, revision], {

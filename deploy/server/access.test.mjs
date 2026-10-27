@@ -79,7 +79,7 @@ test("local and public compose boundaries and verified HTTPS probes", async () =
   }
 });
 
-test("managed preview uses its own backend admission instead of LVK Basic credentials", () => {
+test("retired preview settings never create a listener or public wildcard", () => {
   const settings = serverSettings({
     LVK_HOST: "203.0.113.7",
     LVK_PREVIEW_DOMAIN: "preview.example.test",
@@ -87,9 +87,6 @@ test("managed preview uses its own backend admission instead of LVK Basic creden
     LVK_PROXY_AUTH: "backend",
   });
   const rendered = renderNginx(template, settings);
-  assert.match(
-    rendered,
-    /auth_basic off;\s*location \/ \{ proxy_pass http:\/\/127\.0\.0\.1:3001; \}/,
-  );
+  assert.doesNotMatch(rendered, /proxy_pass http:\/\/127\.0\.0\.1:3001/);
   assert.match(rendered, /location ~ \^\/api\/.*return 403/);
 });

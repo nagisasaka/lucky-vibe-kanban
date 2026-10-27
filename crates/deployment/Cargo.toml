@@ -14,7 +14,6 @@ async-trait = { workspace = true }
 thiserror = { workspace = true } 
 anyhow = { workspace = true }
 client-info = { path = "../client-info" }
-preview-proxy = { path = "../preview-proxy" }
 tokio = { workspace = true }
 sqlx = "0.8.6"
 serde_json = { workspace = true }

@@ -32,9 +32,7 @@ export function developmentEnvironment(env, settings) {
     PORT: "",
     FRONTEND_PORT: "4020",
     BACKEND_PORT: "4021",
-    PREVIEW_PROXY_PORT: "4022",
     VK_ALLOWED_ORIGINS: `https://${authority(settings.app)}:${port}`,
-    VK_PREVIEW_DOMAIN: "",
     BROWSER: "true",
     CARGO_BUILD_JOBS: env.CARGO_BUILD_JOBS || "2",
     CARGO_PROFILE_DEV_DEBUG: "0",
@@ -56,7 +54,6 @@ async function main() {
   const settings = await withMcpIngress(
     {
       ...serverSettings({ ...process.env, LVK_ACCESS_DEPLOYMENT: "public" }),
-      preview: null,
     },
     process.env,
   );

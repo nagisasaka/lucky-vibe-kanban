@@ -36,9 +36,7 @@
     "startingReview": "리뷰 시작 중..."
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "개발 서버 시작"
-    }
+    "actions": {}
   },
   "resolveConflicts": {
     "dialog": {
@@ -205,43 +203,6 @@
     }
   },
   "loading": "작업 로딩 중...",
-  "preview": {
-    "logs": {
-      "label": "로그",
-      "viewFull": "전체 로그 보기"
-    },
-    "noServer": {
-      "setupTitle": "미리보기 기능을 사용하려면 개발 서버 스크립트를 설정해야 합니다",
-      "setupPrompt": "라이브 미리보기 및 클릭하여 편집을 사용하려면 이 프로젝트에 개발 서버 스크립트를 추가하세요.",
-      "title": "실행 중인 개발 서버 없음",
-      "editDevScript": "개발 서버 스크립트 편집",
-      "learnMore": "애플리케이션 테스트에 대해 자세히 알아보기"
-    },
-    "toolbar": {
-      "copyUrl": "URL 복사",
-      "openInTab": "새 탭에서 열기",
-      "refresh": "미리보기 새로고침",
-      "stopDevServer": "개발 서버 중지",
-      "resetUrl": "감지된 URL로 재설정",
-      "clearUrlOverride": "URL 오버라이드 지우기",
-      "desktopView": "데스크탑 보기",
-      "mobileView": "모바일 보기 (390x844)",
-      "responsiveView": "반응형 보기 (크기 조절 가능)",
-      "startDevServer": "개발 서버 시작",
-      "submitUrl": "URL 제출",
-      "toggleDevTools": "DevTools 전환"
-    },
-    "loading": {
-      "startingServer": "개발 서버 시작 중...",
-      "waitingForServer": "서버 대기 중...",
-      "loadingPreview": "미리보기 로딩 중...",
-      "manualUrlHint": "아직 URL이 감지되지 않았습니다. 위의 도구 모음에서 URL을 수동으로 입력할 수 있습니다."
-    },
-    "browser": {
-      "title": "개발 서버 미리보기",
-      "devServerFallback": "개발 서버"
-    }
-  },
   "processes": {
     "noLogsAvailable": "로그가 없습니다",
     "backToList": "Back to list",
@@ -561,5 +522,21 @@
   "linkPrToIssue": {
     "status": {},
     "errors": {}
+  },
+  "devServer": {
+    "title": "Dev server",
+    "starting": "Starting…",
+    "stopping": "Stopping…",
+    "running": "Running",
+    "stopped": "Stopped",
+    "start": "Start",
+    "stop": "Stop",
+    "editScript": "Edit dev server script",
+    "logs": "Dev server logs",
+    "url": "Application URL",
+    "copyUrl": "Copy URL",
+    "openBrowser": "Open in browser",
+    "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
+    "failed": "Failed"
   }
 }

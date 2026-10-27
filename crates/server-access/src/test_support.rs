@@ -26,7 +26,6 @@ pub async fn access(pool: SqlitePool, directory: PathBuf, jwks: serde_json::Valu
     store::ensure_key(&key_path).unwrap();
     let access = Access(Arc::new(Inner {
         pool,
-        preview_domain: Some("preview.example".into()),
         public: true,
         public_url: Some("https://203.0.113.7:8443".into()),
         forced_mode: None,

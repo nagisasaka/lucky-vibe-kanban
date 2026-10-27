@@ -1,12 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::{self, Error as AnyhowError};
-use axum::Router;
 use deployment::{Deployment, DeploymentError};
 use server::{
-    DeploymentImpl,
-    middleware::origin::validate_origin,
-    routes,
+    DeploymentImpl, routes,
     routes::{
         scheduled_tasks::spawn_scheduled_task_loop,
         sessions::setup_gate::{reconcile_setup_launch_gates, spawn_setup_launch_gate_watcher},
@@ -23,11 +20,10 @@ use sqlx::Error as SqlxError;
 use strip_ansi_escapes::strip;
 use thiserror::Error;
 use tokio_util::sync::CancellationToken;
-use tower_http::validate_request::ValidateRequestHeaderLayer;
 use tracing_subscriber::{EnvFilter, prelude::*};
 use utils::{
     assets::asset_dir,
-    port_file::write_port_file_with_proxy,
+    port_file::write_port_file,
     sentry::{self as sentry_utils, SentrySource, sentry_layer},
 };
 
@@ -183,10 +179,7 @@ async fn main() -> Result<(), VibeKanbanError> {
             0
         }); // Use 0 to find free port if no specific port provided
 
-    let proxy_port = std::env::var("PREVIEW_PROXY_PORT")
-        .ok()
-        .and_then(|s| s.trim().parse::<u16>().ok())
-        .unwrap_or(0);
+    server::startup::warn_retired_preview_settings();
 
     let host = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
 
@@ -194,27 +187,15 @@ async fn main() -> Result<(), VibeKanbanError> {
     let actual_main_port = main_listener.local_addr()?.port();
     server::remote_mcp::record_local_listener(main_listener.local_addr()?);
 
-    let proxy_listener = tokio::net::TcpListener::bind(format!("{host}:{proxy_port}")).await?;
-    let actual_proxy_port = proxy_listener.local_addr()?.port();
-
-    if let Err(e) = write_port_file_with_proxy(actual_main_port, Some(actual_proxy_port)).await {
+    if let Err(e) = write_port_file(actual_main_port).await {
         tracing::warn!("Failed to write port file: {}", e);
     }
-
-    tracing::info!(
-        "Main server on :{}, Preview proxy on :{}",
-        actual_main_port,
-        actual_proxy_port
-    );
+    tracing::info!("Main server on :{}", actual_main_port);
 
     deployment
         .client_info()
         .set_server_addr(main_listener.local_addr()?)
         .expect("client server address already set");
-    deployment
-        .client_info()
-        .set_preview_proxy_port(actual_proxy_port)
-        .expect("client preview proxy port already set");
 
     let access = server_access::Access::from_env(deployment.db().pool.clone(), asset_dir())?;
     let app_router = routes::router(deployment.clone(), access.clone());
@@ -236,27 +217,14 @@ async fn main() -> Result<(), VibeKanbanError> {
         });
     }
 
-    let proxy_router: Router = access.preview_layer(
-        routes::preview::subdomain_router(deployment.clone())
-            .layer(ValidateRequestHeaderLayer::custom(validate_origin)),
-    );
-
     let main_shutdown = shutdown_token.clone();
-    let proxy_shutdown = shutdown_token.clone();
 
     let main_server = axum::serve(main_listener, app_router)
         .with_graceful_shutdown(async move { main_shutdown.cancelled().await });
-    let proxy_server = axum::serve(proxy_listener, proxy_router)
-        .with_graceful_shutdown(async move { proxy_shutdown.cancelled().await });
 
-    let main_handle = tokio::spawn(async move {
+    let mut main_handle = tokio::spawn(async move {
         if let Err(e) = main_server.await {
             tracing::error!("Main server error: {}", e);
-        }
-    });
-    let proxy_handle = tokio::spawn(async move {
-        if let Err(e) = proxy_server.await {
-            tracing::error!("Preview proxy error: {}", e);
         }
     });
 
@@ -264,11 +232,13 @@ async fn main() -> Result<(), VibeKanbanError> {
         _ = shutdown_signal() => {
             tracing::info!("Shutdown signal received");
         }
-        _ = main_handle => {}
-        _ = proxy_handle => {}
+        _ = &mut main_handle => {}
     }
 
     shutdown_token.cancel();
+    if !main_handle.is_finished() {
+        let _ = main_handle.await;
+    }
 
     perform_cleanup_actions(&deployment).await;
 

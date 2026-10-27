@@ -10,10 +10,10 @@ description: "公開IPのHTTPSを維持した初期設定、Webログイン、Ch
 nginx、home/repos/workボリュームを引き続き使用します。
 [公開IPの証明書と配置](/self-hosting/server-container)の手順を先に確認してください。
 
-| 配置 | Compose | 初期状態 |
-| --- | --- | --- |
-| 個人のPC/WSL | `deploy/server/compose.local.yaml` | Local。ホストの127.0.0.1:3000だけへ公開 |
-| 公開IP＋HTTPS | `deploy/server/compose.yaml` | セットアップ未完了。業務APIはロック |
+| 配置          | Compose                            | 初期状態                                |
+| ------------- | ---------------------------------- | --------------------------------------- |
+| 個人のPC/WSL  | `deploy/server/compose.local.yaml` | Local。ホストの127.0.0.1:3000だけへ公開 |
+| 公開IP＋HTTPS | `deploy/server/compose.yaml`       | セットアップ未完了。業務APIはロック     |
 
 公開用はnginxのHTTPSポートだけをホストへ公開します。Rust本体のポートを
 追加で公開しないでください。`LVK_ACCESS_DEPLOYMENT=public` と正規の
@@ -138,11 +138,11 @@ Freeで使う設定だけにしてください。Organizations、Auth0 Role Mana
 
 ### 混同しない3つの接続
 
-| 接続 | アプリ／資格情報 | コールバックの登録先 |
-| --- | --- | --- |
-| Google/GitHub → Auth0 | 管理者が作るGoogle OAuth Client / GitHub OAuth App | Auth0のソーシャル接続画面に表示されるCallback URL |
-| LVK Web → Auth0 | LVK専用Regular Web ApplicationのIDとSecret | LVK設定画面に表示される `/api/access/callback` |
-| ChatGPT → Auth0 → LVK MCP | Web用とは別の事前登録クライアント | **現在のChatGPT管理画面で表示される正確なURL** |
+| 接続                      | アプリ／資格情報                                   | コールバックの登録先                              |
+| ------------------------- | -------------------------------------------------- | ------------------------------------------------- |
+| Google/GitHub → Auth0     | 管理者が作るGoogle OAuth Client / GitHub OAuth App | Auth0のソーシャル接続画面に表示されるCallback URL |
+| LVK Web → Auth0           | LVK専用Regular Web ApplicationのIDとSecret         | LVK設定画面に表示される `/api/access/callback`    |
+| ChatGPT → Auth0 → LVK MCP | Web用とは別の事前登録クライアント                  | **現在のChatGPT管理画面で表示される正確なURL**    |
 
 [Google接続](https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google)と
 [GitHub接続](https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/github)
@@ -217,13 +217,13 @@ Refresh Token grant/rotation、有効期限を設定し、ChatGPTからoffline_a
 Google/GitHubユーザーをLVKが自動統合することもありません。全有効メンバーが全プロジェクトを
 使います。最後の有効な管理者は無効化・降格できません。
 
-| 操作 | 効果 |
-| --- | --- |
-| LVKログアウト | そのWebセッションを削除。ChatGPT委任は別 |
-| ChatGPTの接続解除 | ChatGPT側の接続を解除。発行済みJWTの署名は変わらない |
-| Auth0で委任／更新トークン取消 | 更新を止める。既発行JWTは期限まで検証可能な場合がある |
-| LVKメンバー無効化 | 次のWeb/MCP操作を拒否し、Webセッションを削除。継続接続は2秒以内に再判定 |
-| アクセストークン期限切れ | MCPで401。必要に応じChatGPTがAuth0で更新 |
+| 操作                          | 効果                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| LVKログアウト                 | そのWebセッションを削除。ChatGPT委任は別                                |
+| ChatGPTの接続解除             | ChatGPT側の接続を解除。発行済みJWTの署名は変わらない                    |
+| Auth0で委任／更新トークン取消 | 更新を止める。既発行JWTは期限まで検証可能な場合がある                   |
+| LVKメンバー無効化             | 次のWeb/MCP操作を拒否し、Webセッションを削除。継続接続は2秒以内に再判定 |
+| アクセストークン期限切れ      | MCPで401。必要に応じChatGPTがAuth0で更新                                |
 
 [Auth0の更新トークン取消手順](https://auth0.com/docs/secure/tokens/refresh-tokens/revoke-refresh-tokens)
 で対象の委任を取り消せます。LVKに接続単位の即時JWT失効機能はありません。
@@ -265,16 +265,13 @@ DBと`access.key`、`access.configured`、既存設定・証明書・home/repos/
 
 IP URLでAuth0またはChatGPT側が拒否する場合は、そのエラーを記録してください。
 独自ドメイン必須への変更、TLS無効化、HTTPへのSecret送信、トークン検証緩和は行いません。
-公開用の別オリジンproject previewは、既存の任意設定 `LVK_PREVIEW_DOMAIN` がある場合に
-専用のブラウザ認可を使用します。ドメイン追加は必須ではなく、公開IPだけの構成はそのままです。
-プレビューの案内からLVKへ移動し、ログイン済みの本人が許可してプレビューへ戻ります。
-受け渡しは60秒・一度限り・開始ブラウザと対象origin限定で、URLに秘密を入れません。
-専用のSecure/HttpOnly/host-only Cookieだけをプレビュー側に置き、LVKのCookieや
-Authorizationをプロジェクトのサーバーへ渡しません。LVKログアウト、無効化、セッション
-期限切れ、認証設定変更で利用権限も失効します。第三者Cookieを拒否するブラウザでは、
-プレビューを独立タブで開いて認可・表示してください。
-IPだけの既存公開構成の同一オリジンpreview禁止は維持し、ローカルpreviewは維持します。
-詳しい検証範囲は`docs/development/server-access.md`に記録しています。
+旧iframe用の認証付きwildcard proxyとブラウザ認可・専用Cookieは廃止しました。
+既存のLVKログインと適用済みDB migrationは保持します。旧`LVK_PREVIEW_DOMAIN`等は
+廃止警告とともに無視され、その残存だけで起動を拒否しません。
+`LVK_PREVIEW_ROUTES`の独立アプリ公開は従来どおりアプリ自身が認証を担い、LVKの
+ログインやBasic認証を引き継ぎません。旧経路を自動で公開経路へ変換しません。
+非公開アプリには外部ブラウザとSSHトンネル等を使用してください。
+[外部ブラウザでの確認手順](/browser-testing)を参照してください。
 
 ## 実行環境へのアクセス権限
 

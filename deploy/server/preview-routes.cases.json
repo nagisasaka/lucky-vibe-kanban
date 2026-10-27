@@ -365,7 +365,13 @@
       "LVK_PREVIEW_ROUTES": "a.test:1024",
       "LVK_PREVIEW_DOMAIN": "preview.test"
     },
-    "valid": false
+    "valid": true,
+    "routes": [
+      {
+        "host": "a.test",
+        "port": 1024
+      }
+    ]
   },
   {
     "env": {

@@ -62,9 +62,7 @@
     "startingReview": "レビューを開始中..."
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "開発サーバーを開始"
-    }
+    "actions": {}
   },
   "resolveConflicts": {
     "dialog": {
@@ -232,43 +230,6 @@
     }
   },
   "loading": "タスクを読み込み中...",
-  "preview": {
-    "logs": {
-      "label": "ログ",
-      "viewFull": "完全なログを表示"
-    },
-    "browser": {
-      "title": "開発サーバープレビュー",
-      "devServerFallback": "開発サーバー"
-    },
-    "noServer": {
-      "setupTitle": "プレビュー機能を使用するには、開発サーバースクリプトを設定する必要があります",
-      "setupPrompt": "ライブプレビューとクリックして編集機能を使用するには、このプロジェクトに開発サーバースクリプトを追加してください。",
-      "title": "開発サーバーが実行されていません",
-      "editDevScript": "開発サーバースクリプトを編集",
-      "learnMore": "アプリケーションのテストについてもっと詳しく"
-    },
-    "toolbar": {
-      "copyUrl": "URLをコピー",
-      "openInTab": "新しいタブで開く",
-      "refresh": "プレビューを更新",
-      "stopDevServer": "開発サーバーを停止",
-      "resetUrl": "検出されたURLにリセット",
-      "clearUrlOverride": "URL オーバーライドをクリア",
-      "desktopView": "デスクトップ表示",
-      "mobileView": "モバイル表示 (390x844)",
-      "responsiveView": "レスポンシブ表示（リサイズ可能）",
-      "startDevServer": "開発サーバーを開始",
-      "submitUrl": "URLを送信",
-      "toggleDevTools": "DevTools を切り替え"
-    },
-    "loading": {
-      "startingServer": "開発サーバーを起動中...",
-      "waitingForServer": "サーバーを待機中...",
-      "loadingPreview": "プレビューを読み込み中...",
-      "manualUrlHint": "URLがまだ検出されていません。上部のツールバーでURLを手動で入力できます。"
-    }
-  },
   "processes": {
     "noLogsAvailable": "ログがありません",
     "backToList": "Back to list",
@@ -608,5 +569,21 @@
     "remove": "削除",
     "moveUp": "予約 {{position}} を上へ",
     "moveDown": "予約 {{position}} を下へ"
+  },
+  "devServer": {
+    "title": "開発サーバー",
+    "starting": "起動中…",
+    "stopping": "停止中…",
+    "running": "実行中",
+    "stopped": "停止",
+    "start": "起動",
+    "stop": "停止",
+    "editScript": "開発サーバースクリプトを編集",
+    "logs": "開発サーバーログ",
+    "url": "アプリのURL",
+    "copyUrl": "URLをコピー",
+    "openBrowser": "ブラウザで開く",
+    "addressHint": "サーバー側のアドレスです。リモート環境やWSLでは到達可能なアプリURLまたはSSHトンネル等のポート転送を使ってください。実行中はアプリの準備完了を意味しません。",
+    "failed": "失敗"
   }
 }

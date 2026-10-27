@@ -29,7 +29,6 @@ pub mod local_remote;
 pub mod openwiki;
 pub mod parallel_context;
 pub mod pipelines;
-pub mod preview;
 pub mod releases;
 pub mod repo;
 pub mod resource_coordination;
@@ -76,7 +75,6 @@ pub fn router(
         .merge(approvals::router())
         .merge(scratch::router(&deployment))
         .merge(search::router(&deployment))
-        .merge(preview::api_router())
         .merge(releases::router())
         .merge(sessions::router(&deployment))
         .merge(terminal::router())

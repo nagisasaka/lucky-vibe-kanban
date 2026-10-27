@@ -44,7 +44,6 @@ import {
 import { WorkspaceWikiProvider } from '@/features/wiki/ui/WorkspaceWikiProvider';
 import { ChangesPanelContainer } from './ChangesPanelContainer';
 import { CreateChatBoxContainer } from '@/shared/components/CreateChatBoxContainer';
-import { PreviewBrowserContainer } from './PreviewBrowserContainer';
 import { WorkspaceFilesSurfaceContainer } from './WorkspaceFilesSurfaceContainer';
 import { WorkspacesGuideDialog } from '@/shared/dialogs/shared/WorkspacesGuideDialog';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
@@ -416,21 +415,6 @@ export function WorkspacesLayout() {
                   <LogsContentContainer className="" />
                 </div>
 
-                {/* Preview tab */}
-                <div
-                  className={cn(
-                    'flex-1 min-h-0 overflow-hidden',
-                    mobileTab !== 'preview' && 'hidden'
-                  )}
-                >
-                  {selectedWorkspace?.id && (
-                    <PreviewBrowserContainer
-                      workspaceId={selectedWorkspace.id}
-                      className=""
-                    />
-                  )}
-                </div>
-
                 {/* Git tab */}
                 <div
                   className={cn(
@@ -568,13 +552,6 @@ export function WorkspacesLayout() {
                   {rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS && (
                     <LogsContentContainer className="" />
                   )}
-                  {rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.PREVIEW &&
-                    selectedWorkspace?.id && (
-                      <PreviewBrowserContainer
-                        workspaceId={selectedWorkspace.id}
-                        className=""
-                      />
-                    )}
                 </Panel>
               </Group>
 

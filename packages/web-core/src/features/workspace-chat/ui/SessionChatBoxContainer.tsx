@@ -75,7 +75,6 @@ import {
   useWorkspacePanelState,
   RIGHT_MAIN_PANEL_MODES,
 } from '@/shared/stores/useUiPreferencesStore';
-import { useInspectModeStore } from '../model/store/useInspectModeStore';
 import { Actions } from '@/shared/actions';
 import {
   isSpecialIcon,
@@ -558,25 +557,6 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
     },
     [setLocalMessage]
   );
-
-  // Auto-paste component context from inspect mode
-  const pendingComponentMarkdown = useInspectModeStore(
-    (s) => s.pendingComponentMarkdown
-  );
-  const clearPendingComponentMarkdown = useInspectModeStore(
-    (s) => s.clearPendingComponentMarkdown
-  );
-
-  useEffect(() => {
-    if (pendingComponentMarkdown) {
-      handleInsertMarkdown(pendingComponentMarkdown);
-      clearPendingComponentMarkdown();
-    }
-  }, [
-    pendingComponentMarkdown,
-    handleInsertMarkdown,
-    clearPendingComponentMarkdown,
-  ]);
 
   const { uploadFiles, localAttachments, clearUploadedAttachments } =
     useSessionAttachments(workspaceId, sessionId, handleInsertMarkdown);

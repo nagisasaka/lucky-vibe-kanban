@@ -6,7 +6,6 @@ use db::DBService;
 use deployment::{Deployment, DeploymentError};
 use executors::profile::ExecutorConfigs;
 use git::GitService;
-use preview_proxy::PreviewProxyService;
 use services::services::{
     analytics::{AnalyticsConfig, AnalyticsContext, AnalyticsService, generate_user_id},
     approvals::Approvals,
@@ -56,7 +55,6 @@ pub struct LocalDeployment {
     approvals: Approvals,
     queued_message_service: QueuedMessageService,
     client_info: ClientInfo,
-    preview_proxy: PreviewProxyService,
     pty: PtyService,
     pr_sync_notify: Arc<Notify>,
 }
@@ -136,7 +134,6 @@ impl Deployment for LocalDeployment {
         let queued_message_service = QueuedMessageService::new();
 
         let client_info = ClientInfo::new();
-        let preview_proxy = PreviewProxyService::new();
 
         // We need to make analytics accessible to the ContainerService
         // TODO: Handle this more gracefully
@@ -195,7 +192,6 @@ impl Deployment for LocalDeployment {
             approvals,
             queued_message_service,
             client_info,
-            preview_proxy,
             pty,
             pr_sync_notify,
         };
@@ -257,10 +253,6 @@ impl Deployment for LocalDeployment {
 
     fn client_info(&self) -> &ClientInfo {
         &self.client_info
-    }
-
-    fn preview_proxy(&self) -> &PreviewProxyService {
-        &self.preview_proxy
     }
 }
 

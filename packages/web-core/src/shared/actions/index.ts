@@ -719,30 +719,6 @@ export const Actions = {
     },
   },
 
-  TogglePreviewMode: {
-    id: 'toggle-preview-mode',
-    label: 'Toggle Preview Panel',
-    icon: DesktopIcon,
-    shortcut: 'V P',
-    requiresTarget: ActionTargetType.NONE,
-    isVisible: (ctx) => !ctx.isCreateMode && ctx.layoutMode === 'workspaces',
-    isActive: (ctx) =>
-      ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.PREVIEW,
-    isEnabled: (ctx) => !ctx.isCreateMode,
-    getLabel: (ctx) =>
-      ctx.rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.PREVIEW
-        ? 'Hide Preview Panel'
-        : 'Show Preview Panel',
-    execute: (ctx) => {
-      useUiPreferencesStore
-        .getState()
-        .toggleRightMainPanelMode(
-          RIGHT_MAIN_PANEL_MODES.PREVIEW,
-          ctx.currentWorkspaceId ?? undefined
-        );
-    },
-  },
-
   // === Diff Actions for Navbar ===
   ToggleAllDiffs: {
     id: 'toggle-all-diffs',
@@ -858,11 +834,11 @@ export const Actions = {
         ctx.stopDevServer();
       } else {
         ctx.startDevServer();
-        // Auto-open preview mode when starting dev server
+        // Managed development servers open their logs, never an embedded browser.
         useUiPreferencesStore
           .getState()
           .setRightMainPanelMode(
-            RIGHT_MAIN_PANEL_MODES.PREVIEW,
+            RIGHT_MAIN_PANEL_MODES.LOGS,
             ctx.currentWorkspaceId ?? undefined
           );
       }
@@ -1593,7 +1569,6 @@ export const NavbarActionGroups = {
     Actions.ToggleTodosMode,
     Actions.ToggleWikiMode,
     Actions.ToggleLogsMode,
-    Actions.TogglePreviewMode,
     Actions.ToggleRightSidebar,
     NavbarDivider,
     Actions.OpenCommandBar,
@@ -1608,7 +1583,6 @@ export const ContextBarActionGroups = {
   primary: [Actions.OpenInIDE, Actions.CopyWorkspacePath] as ActionDefinition[],
   secondary: [
     Actions.ToggleDevServer,
-    Actions.TogglePreviewMode,
     Actions.ToggleFilesMode,
     Actions.ToggleChangesMode,
   ] as ActionDefinition[],

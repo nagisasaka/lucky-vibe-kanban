@@ -59,7 +59,6 @@ impl Fixture {
         let access = Access(Arc::new(Inner {
             pool,
             public,
-            preview_domain: Some("preview.example".into()),
             public_url: public.then(|| "https://203.0.113.7:8443".into()),
             forced_mode: None,
             key_path: dir.path().join("access.key"),
@@ -432,7 +431,6 @@ async fn session_expiry_restart_secret_loss_and_basic_mcp_disabled() {
     );
     let restarted = Access(Arc::new(Inner {
         pool: f.access.pool().clone(),
-        preview_domain: f.access.0.preview_domain.clone(),
         public: true,
         public_url: f.access.0.public_url.clone(),
         forced_mode: None,
@@ -1542,7 +1540,6 @@ async fn persisted_authentication_child_process() {
         .unwrap();
     let access = Access(Arc::new(Inner {
         pool,
-        preview_domain: Some("preview.example".into()),
         public: true,
         public_url: Some("https://203.0.113.7:8443".into()),
         forced_mode: None,
@@ -1608,196 +1605,6 @@ async fn authentication_transition_survives_process_restart() {
     f.access.pool().close().await;
     probe("auth0", Some(&new));
 }
-
-#[tokio::test]
-async fn preview_handoff_is_browser_origin_bound_and_revocable() {
-    let f = Fixture::new(true).await;
-    let (web, csrf) = f.basic().await;
-    let origin = "https://5173.preview.example:8443";
-    let preview = f
-        .access
-        .preview_layer(Router::new().fallback(|headers: HeaderMap| async move {
-            assert!(!headers.contains_key(header::AUTHORIZATION));
-            assert!(
-                !headers
-                    .get(header::COOKIE)
-                    .and_then(|v| v.to_str().ok())
-                    .unwrap_or("")
-                    .contains("lvk_")
-            );
-            "project content"
-        }));
-    let request = |path: &str, cookie: &str, method: &str, body: String| {
-        http::Request::builder()
-            .uri(path)
-            .method(method)
-            .header("host", "5173.preview.example:8443")
-            .header("cookie", cookie)
-            .header("origin", "https://203.0.113.7:8443")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .body(Body::from(body))
-            .unwrap()
-    };
-    let landing = preview
-        .clone()
-        .oneshot(
-            http::Request::builder()
-                .uri("/")
-                .header("host", "5173.preview.example:8443")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    let browser = response_cookie(&landing, "__Host-lvk_preview_browser");
-    let browser_hash = store::hash(browser.split_once('=').unwrap().1);
-    let values = [
-        ("origin", origin),
-        ("browser", browser_hash.as_str()),
-        ("csrf", csrf.as_str()),
-    ];
-    let encoded = url::form_urlencoded::Serializer::new(String::new())
-        .extend_pairs(values)
-        .finish();
-    let response = f
-        .app()
-        .oneshot(
-            http::Request::builder()
-                .uri("/api/access/preview/authorize")
-                .method("POST")
-                .header("host", "203.0.113.7:8443")
-                .header("origin", "https://203.0.113.7:8443")
-                .header("cookie", &web)
-                .header("content-type", "application/x-www-form-urlencoded")
-                .body(Body::from(encoded))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(response.status(), StatusCode::OK);
-    let html = String::from_utf8(
-        response
-            .into_body()
-            .collect()
-            .await
-            .unwrap()
-            .to_bytes()
-            .to_vec(),
-    )
-    .unwrap();
-    let grant = html
-        .split("name=grant value=\"")
-        .nth(1)
-        .unwrap()
-        .split('"')
-        .next()
-        .unwrap();
-    let encoded = format!("grant={grant}");
-    let denied = preview
-        .clone()
-        .oneshot(request(
-            "/.lvk-preview/exchange",
-            "__Host-lvk_preview_browser=other",
-            "POST",
-            encoded.clone(),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
-    let accepted = preview
-        .clone()
-        .oneshot(request(
-            "/.lvk-preview/exchange",
-            &browser,
-            "POST",
-            encoded.clone(),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(accepted.status(), StatusCode::SEE_OTHER);
-    let credential = response_cookie(&accepted, "__Host-lvk_preview");
-    assert_eq!(
-        preview
-            .clone()
-            .oneshot(request("/.lvk-preview/exchange", &browser, "POST", encoded))
-            .await
-            .unwrap()
-            .status(),
-        StatusCode::UNAUTHORIZED
-    );
-    // Preview capability cannot authenticate the business API.
-    assert_eq!(
-        f.call(
-            "GET",
-            "/api/projects",
-            &[("cookie", &credential)],
-            Value::Null
-        )
-        .await
-        .status(),
-        StatusCode::UNAUTHORIZED
-    );
-    let project_request = || {
-        http::Request::builder()
-            .uri("/")
-            .header("host", "5173.preview.example:8443")
-            .header("cookie", format!("{credential}; {web}"))
-            .header("authorization", "Basic must-not-reach-project")
-            .body(Body::empty())
-            .unwrap()
-    };
-    let response = preview.clone().oneshot(project_request()).await.unwrap();
-    assert_eq!(
-        response.into_body().collect().await.unwrap().to_bytes(),
-        "project content"
-    );
-    let foreign = preview
-        .clone()
-        .oneshot(
-            http::Request::builder()
-                .uri("/")
-                .header("host", "5174.preview.example:8443")
-                .header("cookie", &credential)
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    let content = String::from_utf8(
-        foreign
-            .into_body()
-            .collect()
-            .await
-            .unwrap()
-            .to_bytes()
-            .to_vec(),
-    )
-    .unwrap();
-    assert!(content.contains("authorise this preview"));
-    f.call(
-        "POST",
-        "/api/access/logout",
-        &[("cookie", &web), ("x-lvk-csrf", &csrf)],
-        Value::Null,
-    )
-    .await;
-    let response = preview.oneshot(project_request()).await.unwrap();
-    let content = String::from_utf8(
-        response
-            .into_body()
-            .collect()
-            .await
-            .unwrap()
-            .to_bytes()
-            .to_vec(),
-    )
-    .unwrap();
-    assert!(content.contains("authorise this preview"));
-}
-
-mod provisioning;
-
-mod chatgpt;
 
 #[tokio::test]
 async fn push_consent_is_encrypted_owner_bound_and_survives_idle_but_not_revocation() {

@@ -15,7 +15,6 @@ const TOPIC_IDS = [
   'sidebar',
   'multiRepo',
   'sessions',
-  'preview',
   'diffs',
 ] as const;
 
@@ -26,7 +25,6 @@ const TOPIC_IMAGES: Record<(typeof TOPIC_IDS)[number], string> = {
   sidebar: '/guide-images/sidebar.png',
   multiRepo: '/guide-images/multi-repo.png',
   sessions: '/guide-images/sessions.png',
-  preview: '/guide-images/preview.png',
   diffs: '/guide-images/diffs.png',
 };
 

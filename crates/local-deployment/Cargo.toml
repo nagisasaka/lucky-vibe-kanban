@@ -9,7 +9,6 @@ db = { path = "../db" }
 executors = { path="../executors" }
 deployment = { path = "../deployment" }
 client-info = { path = "../client-info" }
-preview-proxy = { path = "../preview-proxy" }
 services = { path = "../services" }
 worktree-manager = { path = "../worktree-manager" }
 workspace-manager = { path = "../workspace-manager" }

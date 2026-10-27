@@ -398,10 +398,6 @@
       "title": "Sessions multiples",
       "content": "Créez plusieurs sessions de conversation d'agent au sein d'un même espace de travail, y compris des sessions avec différents agents. Cela vous aide à contourner les limites de conversation ou à lancer des agents de révision dans des fils séparés."
     },
-    "preview": {
-      "title": "Prévisualiser les modifications",
-      "content": "Prévisualisez votre travail dans un navigateur intégré sans changer de contexte. Testez sur ordinateur, mobile et des tailles de viewport personnalisées."
-    },
     "diffs": {
       "title": "Diffs et commentaires",
       "content": "Le panneau de diffs repensé inclut une arborescence de vos modifications. Commentez directement sur les diffs pour donner des retours à l'agent, et visualisez les commentaires GitHub lorsque votre espace de travail est lié à une PR."

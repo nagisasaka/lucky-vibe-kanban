@@ -76,15 +76,7 @@ for (const {
             "Set-Cookie",
             "app_session=response; Secure; HttpOnly; SameSite=Lax",
           );
-        if (
-          managed &&
-          req.headers.host?.startsWith("5173.preview.example.test") &&
-          req.headers.cookie !== "__Host-lvk_preview=fixture"
-        ) {
-          // This fixture represents preview admission, not project content.
-          res.writeHead(401);
-          res.end("preview admission required");
-        } else if (req.url === "/mcp") {
+        if (req.url === "/mcp") {
           res.setHeader("Content-Type", "application/json");
           if (req.headers.authorization !== "Bearer fixture-token") {
             res.writeHead(401, {
@@ -220,7 +212,6 @@ for (const {
         .replace("/run/lvk-maintenance/active", join(dir, "maintenance"))
         .replaceAll("listen 8443", `listen ${port}`)
         .replaceAll("127.0.0.1:3000", `127.0.0.1:${backendPort}`)
-        .replaceAll("127.0.0.1:3001", `127.0.0.1:${backendPort}`)
         .replaceAll("127.0.0.1:4021", `127.0.0.1:${backendPort}`);
       const configPath = join(dir, "nginx.conf");
       await writeFile(configPath, config);
@@ -408,26 +399,6 @@ for (const {
           ).status,
           200,
         );
-        assert.equal(
-          (await request("/", "5173.preview.example.test")).status,
-          401,
-        );
-        assert.equal(
-          (
-            await request("/", "5173.preview.example.test", {
-              Cookie: "lvk_session=main-cookie",
-            })
-          ).status,
-          401,
-        );
-        assert.equal(
-          (
-            await request("/", "5173.preview.example.test", {
-              Cookie: "__Host-lvk_preview=fixture",
-            })
-          ).status,
-          200,
-        );
         return;
       }
       for (const path of ["/", "/api/info", "/api/events", "/stream"])
@@ -506,14 +477,6 @@ for (const {
           assert.equal(rejected.status, 401, path);
           assert.match(rejected.headers["www-authenticate"], /^Basic /);
         }
-        assert.equal(
-          (
-            await request(endpoint, "5173.preview.example.test", {
-              Authorization: "Bearer fixture-token",
-            })
-          ).status,
-          401,
-        );
         if (prefix) {
           const path = `${prefix}/projects/fixture/issues/issue/workspaces/workspace`;
           const locked = await request(path);
@@ -596,27 +559,6 @@ for (const {
             .status,
           403,
         );
-      assert.equal(
-        (await request("/", "5173.preview.example.test")).status,
-        401,
-      );
-      assert.equal(
-        (
-          await request("/", "5173.preview.example.test", {
-            Authorization: authorization,
-          })
-        ).status,
-        200,
-      );
-      for (const target of [3000, 3001, 8443])
-        assert.equal(
-          (
-            await request("/", `${target}.preview.example.test`, {
-              Authorization: authorization,
-            })
-          ).status,
-          403,
-        );
       const wsHeaders = {
         Upgrade: "websocket",
         Connection: "Upgrade",
@@ -626,15 +568,6 @@ for (const {
       assert.equal(
         (
           await request("/ws", settings.app, {
-            ...wsHeaders,
-            Authorization: authorization,
-          })
-        ).status,
-        101,
-      );
-      assert.equal(
-        (
-          await request("/ws", "5173.preview.example.test", {
             ...wsHeaders,
             Authorization: authorization,
           })

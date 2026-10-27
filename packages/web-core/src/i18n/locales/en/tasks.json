@@ -70,43 +70,6 @@
       "empty": "No repositories available"
     }
   },
-  "preview": {
-    "noServer": {
-      "title": "No dev server running",
-      "setupTitle": "You must set up a dev server script to use the preview feature",
-      "setupPrompt": "To use the live preview and click-to-edit, please add a dev server script to this project.",
-      "editDevScript": "Edit Dev Server Script",
-      "learnMore": "Learn more about testing applications"
-    },
-    "logs": {
-      "label": "Logs",
-      "viewFull": "View full logs"
-    },
-    "toolbar": {
-      "refresh": "Refresh preview",
-      "copyUrl": "Copy URL",
-      "openInTab": "Open in new tab",
-      "stopDevServer": "Stop dev server",
-      "resetUrl": "Reset to detected URL",
-      "clearUrlOverride": "Clear URL override",
-      "desktopView": "Desktop view",
-      "mobileView": "Mobile view (390x844)",
-      "responsiveView": "Responsive view (resizable)",
-      "startDevServer": "Start dev server",
-      "submitUrl": "Submit URL",
-      "toggleDevTools": "Toggle DevTools"
-    },
-    "loading": {
-      "startingServer": "Starting dev server...",
-      "waitingForServer": "Waiting for server...",
-      "loadingPreview": "Loading preview...",
-      "manualUrlHint": "No URL detected yet. You can manually enter a URL in the toolbar above."
-    },
-    "browser": {
-      "title": "Dev Server Preview",
-      "devServerFallback": "Dev Server"
-    }
-  },
   "diff": {
     "unavailable": "Changes unavailable",
     "filesChanged_one": "{{count}} file changed",
@@ -286,9 +249,7 @@
     }
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "Start dev server"
-    }
+    "actions": {}
   },
   "git": {
     "labels": {
@@ -608,5 +569,21 @@
     "remove": "Delete",
     "moveUp": "Move queued message {{position}} up",
     "moveDown": "Move queued message {{position}} down"
+  },
+  "devServer": {
+    "title": "Dev server",
+    "starting": "Starting…",
+    "stopping": "Stopping…",
+    "running": "Running",
+    "stopped": "Stopped",
+    "start": "Start",
+    "stop": "Stop",
+    "editScript": "Edit dev server script",
+    "logs": "Dev server logs",
+    "url": "Application URL",
+    "copyUrl": "Copy URL",
+    "openBrowser": "Open in browser",
+    "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
+    "failed": "Failed"
   }
 }

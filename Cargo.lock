@@ -1915,7 +1915,6 @@ dependencies = [
  "executors",
  "futures",
  "git",
- "preview-proxy",
  "serde_json",
  "services",
  "sqlx",
@@ -4217,7 +4216,6 @@ dependencies = [
  "globwalk",
  "nix 0.29.0",
  "portable-pty",
- "preview-proxy",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -5570,23 +5568,6 @@ checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
 dependencies = [
  "proc-macro2",
  "syn 2.0.117",
-]
-
-[[package]]
-name = "preview-proxy"
-version = "0.1.44"
-dependencies = [
- "axum",
- "futures-util",
- "http 1.4.0",
- "reqwest 0.13.2",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite 0.26.2",
- "tracing",
- "utils",
- "uuid",
- "ws-bridge",
 ]
 
 [[package]]
@@ -7253,7 +7234,6 @@ dependencies = [
  "local-deployment",
  "mime_guess",
  "os_info",
- "preview-proxy",
  "rand 0.8.5",
  "reqwest 0.13.2",
  "rfd",

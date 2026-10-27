@@ -398,10 +398,6 @@
       "title": "Múltiples sesiones",
       "content": "Crea múltiples sesiones de conversación con agentes dentro de un solo espacio de trabajo, incluyendo sesiones con diferentes agentes. Esto te ayuda a superar los límites de conversación o iniciar agentes de revisión en hilos separados."
     },
-    "preview": {
-      "title": "Vista previa de cambios",
-      "content": "Previsualiza tu trabajo en un navegador integrado sin cambiar de contexto. Prueba en escritorio, móvil y tamaños de ventana personalizados."
-    },
     "diffs": {
       "title": "Diferencias y comentarios",
       "content": "El panel de diferencias rediseñado incluye un árbol de archivos con tus cambios. Comenta directamente en las diferencias para dar retroalimentación al agente, y ve los comentarios de GitHub cuando tu espacio de trabajo está vinculado a un PR."

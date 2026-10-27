@@ -47,43 +47,6 @@
   "repoBranchSelector": {
     "label": "基础分支"
   },
-  "preview": {
-    "noServer": {
-      "title": "没有运行开发服务器",
-      "setupTitle": "必须设置开发服务器脚本才能使用预览功能",
-      "setupPrompt": "要使用实时预览和点击编辑，请为此项目添加开发服务器脚本。",
-      "editDevScript": "编辑开发服务器脚本",
-      "learnMore": "了解更多关于测试应用程序的信息"
-    },
-    "logs": {
-      "label": "日志",
-      "viewFull": "查看完整日志"
-    },
-    "browser": {
-      "title": "开发服务器预览",
-      "devServerFallback": "开发服务器"
-    },
-    "toolbar": {
-      "refresh": "刷新预览",
-      "copyUrl": "复制 URL",
-      "openInTab": "在新标签页中打开",
-      "stopDevServer": "停止开发服务器",
-      "resetUrl": "重置为检测到的 URL",
-      "clearUrlOverride": "清除 URL 覆盖",
-      "desktopView": "桌面视图",
-      "mobileView": "移动视图 (390x844)",
-      "responsiveView": "响应式视图（可调整大小）",
-      "startDevServer": "启动开发服务器",
-      "submitUrl": "提交 URL",
-      "toggleDevTools": "切换 DevTools"
-    },
-    "loading": {
-      "startingServer": "正在启动开发服务器...",
-      "waitingForServer": "正在等待服务器...",
-      "loadingPreview": "正在加载预览...",
-      "manualUrlHint": "尚未检测到 URL。您可以在上方工具栏中手动输入 URL。"
-    }
-  },
   "diff": {
     "filesChanged_one": "{{count}} 个文件已更改",
     "filesChanged_other": "{{count}} 个文件已更改"
@@ -117,9 +80,7 @@
     "noTasks": "暂无任务"
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "启动开发服务器"
-    }
+    "actions": {}
   },
   "git": {
     "labels": {
@@ -561,5 +522,21 @@
   "linkPrToIssue": {
     "status": {},
     "errors": {}
+  },
+  "devServer": {
+    "title": "Dev server",
+    "starting": "Starting…",
+    "stopping": "Stopping…",
+    "running": "Running",
+    "stopped": "Stopped",
+    "start": "Start",
+    "stop": "Stop",
+    "editScript": "Edit dev server script",
+    "logs": "Dev server logs",
+    "url": "Application URL",
+    "copyUrl": "Copy URL",
+    "openBrowser": "Open in browser",
+    "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
+    "failed": "Failed"
   }
 }

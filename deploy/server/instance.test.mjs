@@ -23,7 +23,7 @@ test("instance environment isolates state and overrides stable server settings",
   assert.equal(env.LVK_AUTH_MODE, "auth0");
   assert.equal(env.HOST, "127.0.0.1");
   assert.equal(env.VK_ALLOWED_ORIGINS, "https://test.example:8443");
-  assert.equal(env.PREVIEW_PROXY_PORT, "0");
+  assert.equal(env.PREVIEW_PROXY_PORT, "3001");
   assert.equal(
     env.VIBE_KANBAN_AGENT_PROCESS_HOST,
     "/builds/one/agent-process-host",

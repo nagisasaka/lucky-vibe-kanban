@@ -36,9 +36,7 @@
     "startingReview": "Iniciando revisión..."
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "Iniciar servidor de desarrollo"
-    }
+    "actions": {}
   },
   "resolveConflicts": {
     "dialog": {
@@ -205,43 +203,6 @@
     }
   },
   "loading": "Cargando tareas...",
-  "preview": {
-    "logs": {
-      "label": "Registros",
-      "viewFull": "Ver registros completos"
-    },
-    "browser": {
-      "title": "Vista previa del servidor de desarrollo",
-      "devServerFallback": "Servidor de desarrollo"
-    },
-    "noServer": {
-      "setupTitle": "Debes configurar un script de servidor de desarrollo para usar la función de vista previa",
-      "setupPrompt": "Para usar la vista previa en vivo y la función de hacer clic y editar, por favor agrega un script de servidor de desarrollo a este proyecto.",
-      "title": "No hay servidor de desarrollo en ejecución",
-      "editDevScript": "Editar Script de Servidor de Desarrollo",
-      "learnMore": "Más información sobre cómo probar aplicaciones"
-    },
-    "toolbar": {
-      "copyUrl": "Copiar URL",
-      "openInTab": "Abrir en nueva pestaña",
-      "refresh": "Actualizar vista previa",
-      "stopDevServer": "Detener servidor de desarrollo",
-      "resetUrl": "Restablecer a URL detectada",
-      "clearUrlOverride": "Limpiar anulación de URL",
-      "desktopView": "Vista de escritorio",
-      "mobileView": "Vista móvil (390x844)",
-      "responsiveView": "Vista adaptable (redimensionable)",
-      "startDevServer": "Iniciar servidor de desarrollo",
-      "submitUrl": "Enviar URL",
-      "toggleDevTools": "Alternar DevTools"
-    },
-    "loading": {
-      "startingServer": "Iniciando servidor de desarrollo...",
-      "waitingForServer": "Esperando servidor...",
-      "loadingPreview": "Cargando vista previa...",
-      "manualUrlHint": "No se detectó ninguna URL aún. Puedes ingresar una URL manualmente en la barra de herramientas de arriba."
-    }
-  },
   "processes": {
     "noLogsAvailable": "No hay registros disponibles",
     "backToList": "Back to list",
@@ -561,5 +522,21 @@
   "linkPrToIssue": {
     "status": {},
     "errors": {}
+  },
+  "devServer": {
+    "title": "Dev server",
+    "starting": "Starting…",
+    "stopping": "Stopping…",
+    "running": "Running",
+    "stopped": "Stopped",
+    "start": "Start",
+    "stop": "Stop",
+    "editScript": "Edit dev server script",
+    "logs": "Dev server logs",
+    "url": "Application URL",
+    "copyUrl": "Copy URL",
+    "openBrowser": "Open in browser",
+    "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
+    "failed": "Failed"
   }
 }

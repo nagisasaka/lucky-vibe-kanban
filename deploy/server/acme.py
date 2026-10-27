@@ -25,8 +25,6 @@ PRODUCTION = "https://acme-v02.api.letsencrypt.org/directory"
 def preview_routes(env, app):
     """Same grammar as server.mjs, checked with preview-routes.cases.json."""
     csv = env.get("LVK_PREVIEW_ROUTES", "")
-    if csv and env.get("LVK_PREVIEW_DOMAIN"):
-        raise ValueError("LVK_PREVIEW_ROUTES and LVK_PREVIEW_DOMAIN are mutually exclusive")
     if not csv:
         return []
     routes, seen = [], set()
@@ -77,10 +75,7 @@ def certbot_command(env):
             "Read the Let's Encrypt subscriber agreement and set LVK_ACME_AGREE_TOS=yes"
         )
     if env.get("LVK_PREVIEW_DOMAIN"):
-        raise ValueError(
-            "Automatic certificates cover the app only; leave LVK_PREVIEW_DOMAIN "
-            "empty or use externally managed wildcard TLS"
-        )
+        print("LVK_PREVIEW_DOMAIN is retired and ignored; only LVK_HOST and LVK_PREVIEW_ROUTES receive certificates", file=sys.stderr)
     command = [
         "certbot", "certonly", "--non-interactive", "--agree-tos",
         "--standalone", "--preferred-challenges", "http",

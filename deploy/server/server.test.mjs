@@ -41,21 +41,15 @@ test("configuration rejects missing/unsafe hosts and same-origin preview collisi
   ]) {
     assert.throws(() => serverSettings({ LVK_HOST: value }));
   }
-  assert.throws(() =>
+  assert.deepEqual(
     serverSettings({
-      LVK_HOST: "5173.preview.example.test",
-      LVK_PREVIEW_DOMAIN: "preview.example.test",
+      LVK_HOST: "lvk.example.test",
+      LVK_PREVIEW_DOMAIN: "bad old value",
     }),
-  );
-  assert.throws(() =>
-    serverSettings({
-      LVK_HOST: "preview.example.test",
-      LVK_PREVIEW_DOMAIN: "preview.example.test",
-    }),
+    { app: "lvk.example.test" },
   );
   assert.deepEqual(serverSettings({ LVK_HOST: "lvk.example.test" }), {
     app: "lvk.example.test",
-    preview: null,
   });
 });
 
@@ -74,30 +68,9 @@ test("all proxy routes inherit Basic auth and strip credentials; previews stay s
   assert.match(config, /proxy_set_header Upgrade \$http_upgrade/);
   assert.match(config, /preview\(\?:\/\|\$\).*return 403/);
   assert.match(config, /server_name lvk.example.test/);
-  const pattern = config
-    .match(/server_name "~\^(.*?)\$";/)[1]
-    .replace("(?<preview_target>", "(");
-  const hostPattern = new RegExp(`^${pattern}$`);
-  for (let port = 0; port <= 65536; port++) {
-    assert.equal(
-      hostPattern.test(`${port}.preview.example.test`),
-      port >= 1024 && port <= 65535,
-      String(port),
-    );
-  }
-  for (const host of [
-    "1023.preview.example.test",
-    "65536.preview.example.test",
-    "0.preview.example.test",
-    "5173.previewXexample.test",
-    "5173.other.test",
-  ]) {
-    assert(!hostPattern.test(host), host);
-  }
-  assert(
-    !renderNginx(template, { app: settings.app, preview: null }).includes(
-      "preview_target",
-    ),
+  assert.doesNotMatch(
+    config,
+    /preview_target|proxy_pass http:\/\/127\.0\.0\.1:3001/,
   );
 });
 
@@ -109,9 +82,9 @@ test("backend stays on loopback with only the app origin allowed", () => {
   assert.equal(env.HOST, "127.0.0.1");
   assert.equal(env.PORT, "");
   assert.equal(env.BACKEND_PORT, "3000");
-  assert.equal(env.PREVIEW_PROXY_PORT, "3001");
+  assert.equal(env.PREVIEW_PROXY_PORT, undefined);
   assert.equal(env.VK_ALLOWED_ORIGINS, "https://lvk.example.test");
-  assert.equal(env.VK_PREVIEW_DOMAIN, "preview.example.test");
+  assert.equal(env.VK_PREVIEW_DOMAIN, undefined);
 });
 
 test("IP hosts use IP SANs and correctly formatted origins", async (t) => {
@@ -266,14 +239,6 @@ test("certificate and password preflight fails closed", async (t) => {
   );
   assert.throws(
     () => validateSecrets(cert, key, hash, { app: "other.test" }),
-    /does not cover/,
-  );
-  assert.throws(
-    () =>
-      validateSecrets(cert, key, hash, {
-        app: settings.app,
-        preview: "other.test",
-      }),
     /does not cover/,
   );
   for (const passwords of [

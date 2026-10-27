@@ -26,8 +26,7 @@ class Certificates(unittest.TestCase):
                 acme.certbot_command({**env, "LVK_HOST": host})
         with self.assertRaises(ValueError):
             acme.certbot_command({**env, "LVK_ACME_AGREE_TOS": ""})
-        with self.assertRaises(ValueError):
-            acme.certbot_command({**env, "LVK_PREVIEW_DOMAIN": "preview.example.com"})
+        self.assertEqual(acme.certbot_command(env), acme.certbot_command({**env, "LVK_PREVIEW_DOMAIN": "preview.example.com"}))
 
     def test_shared_route_grammar(self):
         cases = json.loads(Path(__file__).with_name("preview-routes.cases.json").read_text())
