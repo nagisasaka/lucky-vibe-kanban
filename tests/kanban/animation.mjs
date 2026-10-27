@@ -1,3 +1,5 @@
+import { isolatedEnvironment } from '../server/fixtures/issue-comments-env.mjs';
+import { verifyBackendIdentity } from './backend-identity.mjs';
 // Fresh SQLite and real API; source frontend via Vite. No production data/model calls.
 import { chromium, expect } from '@playwright/test';
 import { createServer } from 'vite';
@@ -18,24 +20,12 @@ const binary = process.env.LVK_TEST_SERVER;
 assert.ok(binary, 'Set LVK_TEST_SERVER to a compatible prebuilt backend');
 await mkdir(output, { recursive: true });
 const instance = await mkdtemp(path.join(output, 'instance-'));
-const env = {
-  ...process.env,
-  LVK_INSTANCE_DIR: instance,
-  HOST: '127.0.0.1',
-  BACKEND_PORT: '0',
-  PREVIEW_PROXY_PORT: '0',
-  LVK_ACCESS_DEPLOYMENT: 'local',
-  LVK_AUTH_MODE: 'local',
-  DISABLE_WORKTREE_CLEANUP: '1',
-  RUST_LOG: 'warn',
-};
-for (const key of [
-  'LVK_PUBLIC_URL',
-  'LVK_MCP_CONFIG',
-  'VIBE_BACKEND_URL',
-  'VK_ALLOWED_ORIGINS',
-])
-  delete env[key];
+const env = isolatedEnvironment(process.env, instance, root);
+const fixtureBin = path.join(instance, 'bin');
+await mkdir(fixtureBin);
+for (const name of ['codex', 'claude'])
+  await writeFile(path.join(fixtureBin, name), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+env.PATH = `${fixtureBin}:${env.PATH}`;
 const server = spawn(binary, [], {
   cwd: root,
   env,
@@ -72,6 +62,7 @@ try {
   }
   assert.ok(base, 'backend did not start');
   const info = (await api('/api/info')).data;
+  const verifiedBackend = await verifyBackendIdentity(binary, info, root);
   await writeFile(
     path.join(output, 'revision.json'),
     JSON.stringify(
@@ -84,6 +75,7 @@ try {
           cwd: root,
           encoding: 'utf8',
         }),
+        ...verifiedBackend,
         binary,
         build: info.build_info,
       },

@@ -1,3 +1,4 @@
+import { verifyBackendIdentity } from './backend-identity.mjs';
 import { isolatedEnvironment } from '../server/fixtures/issue-comments-env.mjs';
 import { createServer as createNetServer } from 'node:net';
 import { touchChecks } from './touch-checks.mjs';
@@ -77,27 +78,7 @@ try {
   }
   assert.ok(base, 'backend did not start');
   const info = (await api('/api/info')).data;
-  assert.ok(
-    info.build_info?.revision && !info.build_info.dirty,
-    'Use a clean backend build with a verifiable source revision'
-  );
-  execFileSync(
-    'git',
-    [
-      'diff',
-      '--exit-code',
-      info.build_info.revision,
-      'HEAD',
-      '--',
-      'crates',
-      'Cargo.toml',
-      'Cargo.lock',
-      'shared/remote-types.ts',
-      'shared/types.ts',
-    ],
-    { cwd: root, stdio: 'pipe' }
-  );
-
+  const verifiedBackend = await verifyBackendIdentity(binary, info, root);
   await writeFile(
     path.join(output, 'revision.json'),
     JSON.stringify(
@@ -110,6 +91,7 @@ try {
           cwd: root,
           encoding: 'utf8',
         }),
+        ...verifiedBackend,
         binary,
         executedBinary,
         binarySha256,

@@ -1,3 +1,5 @@
+import { isolatedEnvironment } from '../server/fixtures/issue-comments-env.mjs';
+import { verifyBackendIdentity } from './backend-identity.mjs';
 // Fresh SQLite and real API; source frontend via Vite. No production data/model calls.
 import { chromium, expect } from '@playwright/test';
 import { createServer } from 'vite';
@@ -15,24 +17,12 @@ await mkdir(path.join(root, '.build/kanban-validation'), { recursive: true });
 const instance = await mkdtemp(path.join(root, '.build/kanban-validation/instance-'));
 const binary = process.env.LVK_TEST_SERVER;
 assert.ok(binary, 'Set LVK_TEST_SERVER to a compatible prebuilt backend');
-const env = {
-  ...process.env,
-  LVK_INSTANCE_DIR: instance,
-  HOST: '127.0.0.1',
-  BACKEND_PORT: '0',
-  PREVIEW_PROXY_PORT: '0',
-  LVK_ACCESS_DEPLOYMENT: 'local',
-  LVK_AUTH_MODE: 'local',
-  DISABLE_WORKTREE_CLEANUP: '1',
-  RUST_LOG: 'warn',
-};
-for (const key of [
-  'LVK_PUBLIC_URL',
-  'LVK_MCP_CONFIG',
-  'VIBE_BACKEND_URL',
-  'VK_ALLOWED_ORIGINS',
-])
-  delete env[key];
+const env = isolatedEnvironment(process.env, instance, root);
+const fixtureBin = path.join(instance, 'bin');
+await mkdir(fixtureBin);
+for (const name of ['codex', 'claude'])
+  await writeFile(path.join(fixtureBin, name), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+env.PATH = `${fixtureBin}:${env.PATH}`;
 const server = spawn(binary, [], {
   cwd: root,
   env,
@@ -69,6 +59,7 @@ try {
   }
   assert.ok(base, 'backend did not start');
   const info = (await api('/api/info')).data;
+  const verifiedBackend = await verifyBackendIdentity(binary, info, root);
   await writeFile(
     path.join(output, 'revision.json'),
     JSON.stringify(
@@ -81,6 +72,7 @@ try {
           cwd: root,
           encoding: 'utf8',
         }),
+        ...verifiedBackend,
         binary,
         kanbanContainerOverride: process.env.LVK_DND_BASELINE === '1' ? 'a3247dadd5b4385e07a7848fd0009aa07d8ffa71' : null,
         build: info.build_info,
@@ -204,7 +196,10 @@ try {
   const context = await browser.newContext({
     viewport: { width: 2560, height: 1440 },
     deviceScaleFactor: 1.5,
+    hasTouch: true,
   });
+  if (process.env.LVK_UI4_CONTINUOUS === '1')
+    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
   page = await context.newPage();
   page.setDefaultTimeout(20000);
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
@@ -555,6 +550,8 @@ try {
       .catch(() => {});
   throw error;
 } finally {
+  if (process.env.LVK_UI4_CONTINUOUS === '1' && page)
+    await page.context().tracing.stop({ path: path.join(output, 'trace.zip') });
   await browser?.close();
   await vite?.close();
   if (server.exitCode === null && server.signalCode === null) {

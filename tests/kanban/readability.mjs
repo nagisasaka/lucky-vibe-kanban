@@ -13,6 +13,7 @@ const bundle = await build({
   bundle: true,
   write: false,
   format: 'iife',
+  define: { 'import.meta.env.VITE_KANBAN_MOTION': JSON.stringify(process.env.VITE_KANBAN_MOTION || 'crisp') },
   jsx: 'automatic',
   alias: { '@': `${root}/packages/web-core/src` },
   nodePaths: [`${root}/packages/web-core/node_modules`],
@@ -284,9 +285,10 @@ try {
   ).toHaveCount(1);
   // Escape cancels without moving the source card.
   await card('e').focus();
-  await page.keyboard.press('Space');
+  await page.keyboard.press('Space', { delay: 100 });
+  await expect(card('e')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-kanban-ghost]')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape', { delay: 100 });
   await expect(page.locator('[data-kanban-ghost]')).toHaveCount(0);
   await expect(page.locator('[data-kanban-column="2"] [data-kanban-card="e"]')).toHaveCount(1);
   assert.deepEqual(errors, []);

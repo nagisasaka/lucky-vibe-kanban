@@ -11,8 +11,14 @@ const root = process.cwd();
 const report = resolve(".build/clover-review");
 await mkdir(report, { recursive: true });
 const instance = await mkdtemp(resolve(".build/clover-instance-"));
+const env = isolatedEnvironment(process.env, instance, root);
+const fixtureBin = resolve(instance, "bin");
+await mkdir(fixtureBin);
+for (const name of ["codex", "claude"])
+  await writeFile(resolve(fixtureBin, name), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+env.PATH = `${fixtureBin}:${env.PATH}`;
 const server = spawn(resolve("target/debug/server"), [], {
-  env: isolatedEnvironment(process.env, instance, root),
+  env,
   stdio: ["ignore", "pipe", "pipe"],
 });
 let logs = "";

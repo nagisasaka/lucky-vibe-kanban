@@ -69,6 +69,10 @@ export async function runDropRegression({
         "Running workspace summary fixture displayed during real browser drag; no provider execution",
     });
   }
+  if (process.env.LVK_UI4_CONTINUOUS === "1") {
+    const { continuousTouchPrefix } = await import('./ui4-continuous.mjs');
+    await continuousTouchPrefix({ page, card, columns, issues, api, project, output, evidence });
+  }
   let order = await ids();
   const moved = order[0];
   if (process.env.LVK_DND_BASELINE === "1") {
