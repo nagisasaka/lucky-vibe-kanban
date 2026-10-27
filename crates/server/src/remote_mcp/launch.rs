@@ -68,7 +68,8 @@ struct MergeArgs {
     expected_target_commit: String,
     #[schemars(length(min = 1, max = 100))]
     selections: Vec<Selection>,
-    /// true skips additional Auto-merge validation (unverified); false runs it.
+    /// true skips the configured additional auto-merge validation; false runs it.
+    /// This flag does not indicate whether validation evidence already exists.
     /// Omit or null to inherit the server integration_skip_validation preference.
     skip_validation: Option<bool>,
 }

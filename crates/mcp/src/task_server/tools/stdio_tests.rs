@@ -77,7 +77,7 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
                     for name in ["start_dev_server","stop_dev_server","get_dev_server_status","list_projects","list_workspaces","delete_workspace","run_resource_operation","prepare_issue_archive","confirm_issue_archive","unarchive_issue","get_issue_archive_operation"] {
                         assert!(tools.iter().any(|tool| tool["name"]==name), "missing {name}");
                     }
-                    for name in ["get_context","get_connection"] {
+                    for name in ["get_context","get_connection","start_integration"] {
                         assert!(!tools.iter().any(|tool| tool["name"]==name), "unexpected {name}");
                     }
                 }

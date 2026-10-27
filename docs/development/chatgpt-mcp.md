@@ -173,9 +173,12 @@ reconciliation. An `uncertain` admission may have reserved a writer: inspect the
 latest maintenance identities before requesting another run. Public error codes
 omit private diagnostics; retained details remain in the existing execution UI.
 
-`start_integration` accepts optional `skip_validation`: `true` skips additional
-Auto-merge validation (unverified), `false` runs it, and omission or `null`
+`start_integration` accepts optional `skip_validation`: `true` skips the configured
+additional auto-merge validation, `false` runs it, and omission or `null`
 inherits the server's `integration_skip_validation` preference at admission.
+This flag does not indicate whether validation evidence already exists. Assess
+existing evidence against the tested SHA, candidate delta, conflict resolutions
+and newly unverified scope; required checks and execution denials still apply.
 The start receipt's `result.skip_validation` and every `get_integration` section's
 `skip_validation` report the saved, resolved boolean, even after the preference
 changes. Skipping is not a validation pass and does not bypass admission, Git,

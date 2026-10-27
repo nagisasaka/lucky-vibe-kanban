@@ -24,13 +24,26 @@
 
 ## 配布側Skillとの整合（LOCAL165）
 
-上位AIから現ChatGPT Plugin v1.0.32で呼称更新済みとの連携を受領。外部PluginはこのWorkspaceから変更しない。同梱2つのSkillには名称統一の差分だけを適用し、承認・調査mode・並列・検証方針や既存の配布側との差分を全文上書きしない。
+LOCAL-219実装時の同期範囲として、上位AIから現ChatGPT Plugin v1.0.32で呼称更新済みとの連携を受領。外部PluginはこのWorkspaceから変更しない。同梱2つのSkillには名称統一の差分だけを適用し、承認・調査mode・並列・検証方針や既存の配布側との差分を全文上書きしない。
 
 共通の推奨文言:
 
 > 利用者向けの説明・開始確認・進捗・結果報告・ハンドオフでは、日本語「自動マージ」、英語「Auto-merge」を使う。内部ラベルを別名として提示しない。技術的なtool/API/DB/type/pathと必要な過去原文引用は保持する。AIを使わない機械マージもあり、必要な判断・承認では停止する。コードのマージ結果と後続Wiki更新結果を区別し、Wikiだけの失敗をコードのマージ失敗と報告しない。
 
 同期元は上記の同梱Skillと `plugins/lvk/skills/lvk-work/references/result-checks.md`。公開・外部Plugin配布の操作はLOCAL165の担当に委ねる。
+
+## LOCAL-224による全文同期（2026-10-27）
+
+最新の明示指示により、LOCAL-224の当初の「指定5段落のみ」という一時制約を更新し、`skills/lvk-orchestration/SKILL.md` をdev plugin v1.0.33（release `pluginrel_6ae0124bc238819183fd1cf81c0f1950`）の全文に同期した。上記LOCAL-219時点の限定同期は履歴であり、現在の同期範囲を制限しない。同期基準は149行・UTF-8 37,074 bytes、SHA256 `31f972a6a93ecbf6919740e6fd712b870b70a437f91f39a8612d103b6dadfb0e`。正本とのbyte一致のため、末尾の空行も保持する。
+
+同梱Skillは次の2種類。Claude専用のorchestration配布コピーはなく、ルートとdocsの `CLAUDE.md` は開発規約である。
+
+- `skills/lvk-orchestration/SKILL.md`: 対話・設計・調査・実行調整のSkill。全文同期対象。
+- `plugins/lvk/skills/lvk-work/SKILL.md`: 配布pluginの作業操作Skill。別の責務を持つため全文上書きせず、LOCAL-219の名称整備を保持する。`references/result-checks.md` と `agents/openai.yaml` も同Skillの補助資料・接続定義であり、orchestration本文のコピーではない。
+
+LOCAL-219公開commit `e4a2dc3ca101233becb63b355f7020f5396da415` を独立Workspaceへ取り込み、自動マージ / Auto-mergeの利用者向け名称と機械識別子を保持した。LOCAL-224のMCP説明・契約テストも保持し、調査scope、最新許可、既存検証証拠と追加検証の省略を明確化する。実行挙動・権限・承認境界は変更しない。この同期はmainへのマージ、push、配備、再起動、外部plugin更新を含まない。
+
+以下の検証記録はLOCAL-219当時の結果であり、全文同期時の再実行結果ではない。
 
 ## 検証
 
