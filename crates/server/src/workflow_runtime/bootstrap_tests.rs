@@ -116,6 +116,39 @@ impl Fixture {
         }
     }
 
+    async fn link_generated_issue(&self) {
+        let project = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Bootstrap status fixture')")
+            .bind(project)
+            .execute(&self.pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO project_repos(id,project_id,repo_id) VALUES(?,?,?)")
+            .bind(Uuid::new_v4())
+            .bind(project)
+            .bind(self.repository_id)
+            .execute(&self.pool)
+            .await
+            .unwrap();
+        for name in ["In Progress", "In Review", "Done"] {
+            sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,?,'blue',0)")
+                .bind(Uuid::new_v4()).bind(project).bind(name).execute(&self.pool).await.unwrap();
+        }
+        let workspace = Workspace::find_by_id(&self.pool, self.workspace_id)
+            .await
+            .unwrap()
+            .unwrap();
+        services::services::workspace_usage::ensure_wiki_board_link(&self.pool, &workspace)
+            .await
+            .unwrap();
+    }
+
+    async fn assert_issue_status(&self, expected: &str) {
+        let status: String = sqlx::query_scalar("SELECT s.name FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id JOIN local_project_statuses s ON s.id=i.status_id WHERE l.workspace_id=? AND i.archived=0")
+            .bind(self.workspace_id).fetch_one(&self.pool).await.unwrap();
+        assert_eq!(status, expected);
+    }
+
     async fn reserve(&self) -> Uuid {
         let id = Uuid::new_v4();
         Workspace::bind_execution_owner(
@@ -930,7 +963,9 @@ async fn bootstrap_scope_migration_preserves_existing_issue_runs_and_references(
 async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
     for (refine, refute) in [(false, false), (true, false), (true, true)] {
         let f = Fixture::new().await;
+        f.link_generated_issue().await;
         let run_id = f.reserve().await;
+        f.assert_issue_status("In Progress").await;
         let executor = FakeBootstrap {
             fixture: &f,
             refine,
@@ -944,6 +979,7 @@ async fn bootstrap_pass_and_refine_use_existing_runner_and_publish_once() {
             .unwrap();
         let run = get_workflow_run_response(&f.pool, run_id).await.unwrap();
         assert_eq!(run.status, WorkflowRunStatus::Succeeded);
+        f.assert_issue_status("Done").await;
         assert_eq!(run.issue_id, None);
         assert_eq!(run.attempt_id, None);
         assert_eq!(run.repository_id, Some(f.repository_id));

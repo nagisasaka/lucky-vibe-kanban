@@ -47,6 +47,11 @@ async fn sync_status(
         JOIN agent_runs r ON r.workspace_id = l.workspace_id
         JOIN agent_run_attempts a ON a.agent_run_id = r.id
         WHERE a.id = ?
+          AND NOT EXISTS (
+              SELECT 1 FROM generated_issue_workspaces g
+              JOIN generated_issue_status s ON s.workspace_id=g.workspace_id
+              WHERE g.issue_id=i.id
+          )
         "#,
     )
     .bind(event.run_attempt_id)

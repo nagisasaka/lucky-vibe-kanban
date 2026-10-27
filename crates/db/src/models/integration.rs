@@ -588,8 +588,16 @@ impl IntegrationRun {
         if let Some(card) = run.payload.card_id
             && run.payload.card_done_result.is_none()
         {
-            let count = if let Some(done) = done {
-                sqlx::query("UPDATE local_issues SET status_id=?,completed_at=datetime('now','subsec'),updated_at=datetime('now','subsec') WHERE id=? AND project_id=?")
+            // New dedicated Issues have a publication-driven projection and
+            // receipt. Replaying post-processing must not re-Done an operator's
+            // reopened/cancelled Issue. Historical cards keep their old path.
+            let projected: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM generated_issue_status s JOIN generated_issue_workspaces g ON g.workspace_id=s.workspace_id WHERE g.issue_id=? AND g.owner_run_id=?)")
+                .bind(card).bind(id.to_string()).fetch_one(&mut *tx).await?;
+            let count = if projected {
+                sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM local_issues i JOIN local_project_statuses s ON s.id=i.status_id WHERE i.id=? AND lower(s.name)='done'")
+                    .bind(card).fetch_one(&mut *tx).await? as u64
+            } else if let Some(done) = done {
+                sqlx::query("UPDATE local_issues SET status_id=?,completed_at=datetime('now','subsec'),updated_at=datetime('now','subsec') WHERE id=? AND project_id=? AND status_id NOT IN (SELECT id FROM local_project_statuses WHERE lower(name) IN ('cancelled','canceled'))")
                     .bind(done).bind(card).bind(run.project_id).execute(&mut *tx).await?.rows_affected()
             } else {
                 0
@@ -597,6 +605,8 @@ impl IntegrationRun {
             run.payload.card_done_result = Some(
                 if count == 1 {
                     "done"
+                } else if projected {
+                    "managed by generated Issue publication status"
                 } else {
                     "Card or destination column is unavailable"
                 }

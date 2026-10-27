@@ -867,3 +867,62 @@ async fn kanban_activity_terminal_stops_under_explicit_sort() {
         assert_eq!(board_status(&pool, issue).await, "In Review");
     }
 }
+
+#[tokio::test]
+async fn kanban_generated_issue_uses_product_publication_on_both_event_paths() {
+    for host in [false, true] {
+        let (pool, integration, _) = super::super::integration::tests::fixture().await;
+        let issue = integration.payload.sources[0].selection.card_id;
+        let workspace = integration.payload.sources[0].selection.workspace_id;
+        let session = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM integration_reservations")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let (request, attempt) = requests(session, workspace, "generated-writer");
+        sqlx::query("UPDATE workspaces SET execution_owner=? WHERE id=?")
+            .bind(serde_json::json!({"kind":"openwiki_sync","run_id":request.agent_run_id,"repository_id":integration.repository_id}).to_string())
+            .bind(workspace).execute(&pool).await.unwrap();
+        AgentRunRecord::persist_identity_before_launch(&pool, &request, &attempt)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO generated_issue_workspaces(workspace_id,issue_id,project_id,owner_kind,repository_id,owner_run_id) VALUES(?,?,?,'openwiki_sync',?,?)")
+            .bind(workspace).bind(issue).bind(integration.project_id).bind(integration.repository_id)
+            .bind(request.agent_run_id.to_string()).execute(&pool).await.unwrap();
+        lifecycle(&pool, &request, &attempt, 1, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &request,
+            &attempt,
+            2,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "In Progress");
+        sqlx::query("UPDATE workspaces SET execution_owner=json_set(execution_owner,'$.result',json('{\"status\":\"succeeded\"}')) WHERE id=?")
+            .bind(workspace).execute(&pool).await.unwrap();
+        assert_eq!(board_status(&pool, issue).await, "Done");
+        // A later unrelated Agent in the same linked Workspace cannot reopen
+        // the dedicated product Issue via the generic Agent lifecycle.
+        let (new, new_attempt) = requests(session, workspace, "unrelated");
+        AgentRunRecord::persist_identity_before_launch(&pool, &new, &new_attempt)
+            .await
+            .unwrap();
+        lifecycle(&pool, &new, &new_attempt, 1, AgentRunStatus::Running, host).await;
+        lifecycle(
+            &pool,
+            &new,
+            &new_attempt,
+            2,
+            AgentRunStatus::Succeeded,
+            host,
+        )
+        .await;
+        assert_eq!(board_status(&pool, issue).await, "Done");
+    }
+}
