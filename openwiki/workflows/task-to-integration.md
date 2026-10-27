@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T07:04:01.883Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -163,6 +163,8 @@ Git 操作は Repo 単位で target_branch を持つ。Rebase API は新 branch 
 Git safety tests は通常の untracked file の保存、tracked dirty change の拒否、base に上書きされる untracked file の保存を検証する。conflict を「とりあえず reset」で消すことを前提にしない。[Rebase tests](../../crates/git/tests/git_ops_safety.rs)
 
 手動 Direct merge は自動マージ とは別の入口で、その Repo に open PR がある場合と、target が remote branch の場合に拒否する。実際の統合は squash であり、base が先行していれば拒否する。base が別 checkout にあればその場所で CLI merge、checkout がなければ libgit2 の ref 操作を使う。統合後は task branch ref も新 squash commit へ更新し、続きの作業をそこから行えるようにする。[API の制約](../../crates/server/src/routes/workspaces/git.rs)・[Git の統合](../../crates/git/src/lib.rs)
+
+新しい squash commit の identity は、CLI 経路では base checkout、libgit2 経路では task worktree から解決する。rebase は元 author を保持して committer を解決する。identity エラー時は利用者が設定してから再試行し、agent が名前やメールを推測しない。[Repo の設定・legacy 承認・再試行](../concepts/workspace.md#git-commit-identity)・[両 squash 経路](../../crates/git/src/lib.rs#L780-L830)・[rebase guard](../../crates/git/src/lib.rs#L1338-L1343)
 
 checkout 済み base の staged changes は拒否する。専用 test は staged file を残したまま merge が失敗することを検証する。[test](../../crates/git/tests/git_ops_safety.rs)
 

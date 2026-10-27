@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a2c91e901f4fb7b4f53bdb05b3112a2a2ed6492e1956851c6d15c54fd6e13443",
+  "pageVersion": "sha256:bcf3618bd597bbf009f9bc51f686a68905c83590eec85e3975b724d09ee4725a",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -56,7 +56,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/mechanical.rs",
-          "version": "repo-file-v1:sha256:ad8a24be8f9d9b7264a28550475033ab67fcca0c54657783250264fe10ce5e08"
+          "version": "repo-file-v1:sha256:d0998a36ad77550a9e8ab109398fbb2415ff73061e6efa5162d277f5219a4143"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -100,7 +100,7 @@
       "evidence": [
         {
           "resource": "repo://crates/git/src/publication.rs",
-          "version": "repo-file-v1:sha256:ededf4de85df71231b1dd3d94d99dae79c03ca41175312394f94ce2e12317c53"
+          "version": "repo-file-v1:sha256:0869dcf331f08d10f94bb9d1fcaf77fb64d7350b4463096b0189d905fd7a9ead"
         }
       ]
     },
@@ -140,7 +140,7 @@
       "evidence": [
         {
           "resource": "repo://crates/git/src/publication.rs",
-          "version": "repo-file-v1:sha256:ededf4de85df71231b1dd3d94d99dae79c03ca41175312394f94ce2e12317c53"
+          "version": "repo-file-v1:sha256:0869dcf331f08d10f94bb9d1fcaf77fb64d7350b4463096b0189d905fd7a9ead"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -230,7 +230,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/mechanical.rs",
-          "version": "repo-file-v1:sha256:ad8a24be8f9d9b7264a28550475033ab67fcca0c54657783250264fe10ce5e08"
+          "version": "repo-file-v1:sha256:d0998a36ad77550a9e8ab109398fbb2415ff73061e6efa5162d277f5219a4143"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -711,10 +711,28 @@
           "version": "repo-lines-v1:sha256:a6a1cb93d9f82946b03883391060d4e5822dbdf40ca3bbb7a2db2d95e8f7be0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZWEyNGI1M2NmMDZjYjNlMjliODllMzJkNWY5NzNjNDc5MjNjMWMxOGEzMjA5ZDlkOGE2OGVjMjJjMjM2MTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OTVhNzUwNDJiMDU1MjYzZjU1N2VjNGNkODFlY2ZkY2ZjMTVkYWZkM2E2YTQ5MmQ0MGMyNDc3ZDU0ZDM5ODQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhYzEwYTVlOTMxNDM4YWY5NTQ1ZWQzZTM1MWM4YmMxMjhiOTUzNjEzYWRiNGU2NDhmNmU4MTcyOTgyNzEzYWMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_89c48110e6654ddd847b910ca9f47d4a",
+      "statement": "自動マージの新候補は作成時に有効なGit identityを再確認し固定LVK identityを使わず、exact publicationはcommitterをref更新署名に使う。既存source commitの著者を変更しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/publication.rs#L254-L317",
+          "version": "repo-lines-v1:sha256:17def5acea7b5a42f50bc288badcd60ead2580a9a34ad5917591ce26a4ab827e:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0OGFiMTJhOTlhNmU4NzllNjIzNWEzOWI4MzU3ODRjMGViYWYzNTVmYTNlNWFiMjVhZTE3ZDIzZmVkM2MyNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMDk0ZWMwZWQxODkzNmUwZWY5NGUzOWVmMmY4YjIyYWU1MTZlNjRkNDA4ODQ0MzkwNzljNmYxYzQ2NTlhMzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc0NzViZjU3MTVkM2NiN2I0MmViYzE4ZTk1ZDY4YjAzZmNlZDM2NTgyMjdiODRkMTFiY2U3Yzg1MGI1OWEyOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwMzExM2FiNGQyNTcxYWM5YTRlZmEyYjkxN2JjYTFjZjFmNDcyNTEwOWVlMWQwMDE3NGVlMDExNzYyOWQ1NGUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/mechanical.rs#L152-L183",
+          "version": "repo-lines-v1:sha256:fd36e2e5d1cdd5561f0355c3a5aff34e969dbd1ab78ce0d611ba106b63ac84df:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwOWZkYmEzOGI2OGQwMWRiNmYzNGM3MTFlMmU3NWZiMDBlNGU0ZmMyMDY4YTU2ZDI3NGQ1ZjkyMjczN2ZhN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1ZDQwZWIwNjI5ODE1YjVjZGVhNmIyMDg4MjlmMDUzZTA4Y2YwNWZjZjQ2NGZjZmNjM2QzNjE0ZGU4MDgxNzQifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/integrations/mechanical.rs#L368-L428",
+          "version": "repo-lines-v1:sha256:98197028721ef3d9080d1ed0ad5f62c7f3a68292088be265f1a0d3e936547ce6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3OTEzY2MwMzhkYWZmYzBmNjMzMjMyM2VlYTAzMmRhMjBmYWM4Y2MzNjQ5YTc0ODlmMDdmYTAzYTczZGQzZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwZDIwNzZmMTYyNzBmMjg4ZWU2ODcxMGZiN2I4ODQwZjc3ZTNiMTlmNGI1NjRkOTk0NzM0MGU5MDU5Zjg5MzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2ZTJhN2Q0YTIxOGY1NGUwYWIwMjI1NzU2MzIzZjgwNGY3YjkwYjhiNWRjNWFmNDM2NjIzMTg2YmM0NWNiODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxNmNlNjA0ZjQzYTQxZWJlMzE2NDZjNjYzOTk5OTZjN2NmM2IyNmM0NWZlZGFhNTE2OTc1YWJhNTgwZDQ3ZTAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:10:58.678Z"
+    "at": "2026-10-27T07:04:01.883Z"
   }
 }

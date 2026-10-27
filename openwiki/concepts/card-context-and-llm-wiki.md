@@ -42,10 +42,10 @@ sources:
     resource: repo://tests/chat/prompt-context.fixture.tsx
   - id: openwiki-source-7cc1d248ce00f0c5ef61c76e
     resource: repo://tests/chat/prompt-context.test.mjs
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T07:04:01.883Z
 ---
 
 # Card context と並列作業の参照
@@ -61,6 +61,8 @@ Card context は [Issue](project-and-issue.md) の依頼本文と一緒に保存
 初回 Workspace リクエストは保存済み context を含む。既存 Workspace に作る fresh Session にも、現在関連する local Card の **保存済み Shared directories 部分**をそのまま渡す。Card が未関連のときだけ initial prompt に戻り、関連 Card の空 description は旧 Card の指示を復活させない。continuation には保存指示を繰り返さず、現在の identity と参照案内を渡す。[初回リクエストのテスト](../../packages/web-core/src/features/pipeline/model/cardContext.test.ts#L65-L74)、[保存方針の取得](../../crates/services/src/services/parallel_context.rs#L134-L157)、[fresh / continuation](../../crates/services/src/services/parallel_context.rs#L160-L198)
 
 実際の launch は選択された Repo ごとに policy を読み、存在するときだけ並列参照 context を追加する。provider の再開と現在 run の identity は [Session](session-and-agent-run.md) および [Codex 接続](../integrations/agent-providers.md)が扱う。[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L758-L775)、[追加条件](../../crates/local-deployment/src/agent_run_port.rs#L848-L865)
+
+Repo ごとの Git commit identity 案内は Shared directories policy の有無と独立して launch に追加される。ここでいう repository-memory の現在 identity は Git の著者情報ではない。commit の設定・停止条件は [Repo の Git identity](workspace.md#git-commit-identity)を参照する。[独立した注入](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
 
 ## チャットの補助情報と元の全文
 

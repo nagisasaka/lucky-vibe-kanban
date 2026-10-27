@@ -32,6 +32,8 @@ sources:
     resource: repo://crates/executors/src/runtime/contracts.rs
   - id: openwiki-source-6e93b2f0738ee5fe4379942f
     resource: repo://crates/executors/src/runtime/reducer.rs
+  - id: openwiki-source-e05c2bc674d361049478983e
+    resource: repo://crates/git/src/identity.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
@@ -154,15 +156,17 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
+generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-27T07:04:01.883Z
 ---
 
 # Session・AgentRun・RunAttempt
 
 **Session** は [Workspace](workspace.md) 内の会話単位である。同じ Workspace の Session はファイルを共有する一方、会話履歴は別である。**AgentRun** は一つの実行依頼の正本、**RunAttempt** はその依頼を provider で実行する一回の試行を表す。Session 自体を OS プロセスの寿命と同一視しない。[Session の意図](../../docs/workspaces/sessions.mdx)、[保存モデル](../../crates/db/src/models/agent_runtime.rs#L47-L108)
+
+Git commit の著者・committer は Session / provider の identity と別である。launch は Repo ごとの Git identity 案内を追加する。不足時は調査・編集を続けられるが、agent が本人に代わって設定や旧 identity の承認を行わない。[設定と host の停止契約](workspace.md#git-commit-identity)・[launch の結線](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)・[案内](../../crates/git/src/identity.rs#L109-L119)
 
 ## 識別と固定するもの
 

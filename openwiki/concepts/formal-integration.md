@@ -70,10 +70,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T07:04:01.883Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -95,6 +95,8 @@ B は受付時に観測した target commit と一致する preparation の base
 新規 run は `mechanical=true` の host-owned engine を使う。host が前 step の結果と現在の固定 source を `merge-tree` で評価し、競合しなければ AgentRun を作らず commit tree を生成する。commit の親は前結果と source で、source が既に祖先なら前結果をそのまま使う。R=B も許され、空 commit は不要である。host は clean R と前結果・source の祖先関係を再確認し、逐次履歴として B と採用済み source を保持する。[merge loop](../../crates/server/src/routes/integrations/runtime.rs#L467-L629)・[候補生成](../../crates/server/src/routes/integrations/mechanical.rs#L173-L208)
 
 候補 OID を DB に保存してから private branch へ適用する。適用済みの同じ clean HEAD は再適用せず、既知の conflict merge metadata だけを片付ける。未知の dirty tree、移動した HEAD、別の MERGE_HEAD を推測で reset しない。これは branch 更新と DB 保存の間の中断を識別する仕組みである。[private branch と install](../../crates/server/src/routes/integrations/mechanical.rs#L29-L40)・[適用](../../crates/server/src/routes/integrations/mechanical.rs#L210-L269)
+
+新しい候補 commit は [Repo の Git identity](workspace.md#git-commit-identity)に従い、固定の LVK 著者を使わない。候補生成時に現在の設定を再確認するため、queue 待ちや停止中に設定した identity を次の試行で使える。既存 source commit の著者と履歴は保持する。exact publication も更新前に有効な committer を解決し、ref/reflog の署名に使うが、新しい merge commit は作らない。[候補の guard](../../crates/server/src/routes/integrations/mechanical.rs#L152-L183)・[公開の署名](../../crates/git/src/publication.rs#L254-L317)
 
 ### 競合だけを有限の Agent job にする
 

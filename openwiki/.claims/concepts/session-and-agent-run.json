@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:05b3b1ea5edf5154aeeafa98d738083b6ad26885057ca7cfbc2be090267b152a",
+  "pageVersion": "sha256:3e722429e75e53b2273717000381958786dab2e8b6242dc119cc442291f1e0de",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs",
-          "version": "repo-file-v1:sha256:958dc09a6770be47d4b5362ff371f2ef20aea48f205ded2e6758abb120a7258f"
+          "version": "repo-file-v1:sha256:307f9292c6a8f0dd20e3c253d62a4371fd3906caeb726d46d2e8c1ad898cf8d6"
         }
       ]
     },
@@ -1055,10 +1055,24 @@
           "version": "repo-lines-v1:sha256:aad0c5eef16b2cf2566b1ec16f4b3d126208b12ce324ff666cb7174507982908:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNTZhMjNlNDcwNWFlOWFiNWEzYjUyM2E2OGY0NGVkMjcwYzU5MGQwMmE5MTQ5YjhkYThmZDdjZGIwOWJlNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2MDljMDMwNDUwYTQ5ZGZjY2I4MDlkZmFlNDI0MjI5MmM3Yjk1ZDAzODczZDcyMTg3YjA5NjBmYTZhNjcyNjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNzg1ZWJhNGU2MTU1YzI0ZmRkNmUzNmI3Zjk3NzY2YmQ5ZDg0N2U1OTJhZGZjYTU5YzU2YTM2YjY1MzI5MzcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_fe5d4a2262714b82bcf79269e933b633",
+      "statement": "launchはRepoごとにGit identity案内を追加し、不足時にはagentに設定・旧identity承認の代行を禁じ、commitをせず調査・編集するよう案内する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/identity.rs#L109-L119",
+          "version": "repo-lines-v1:sha256:fc967c37005a5190690f07fcbcf944616345ad3e1c13b71522745d8fcb70917e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjYzYyNzBlN2M5YmUyNWFhZGEwZGE5MWJmMzYzYTJkYzRhMTQxZGU0Mjc4YWU2NzMzODk3YTA2YjRlYTc2MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmZGY1MjFmMjgzNWFiZTdiZjk1NmE1YmQ4MDhiYTRmN2M5YzA4ZmVkNzBlOGQwNDcxODY2NmYxZGNmZjAwMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYWEzNDIwNGQ1NTQ2ZGRiNDdkYWI0YmU1YzI2NGMxY2EzYzlmZDA3YmQ4YTVhMjBlZGRhZTQ2MDI0OWFjOWUifQ"
+        },
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L859-L865",
+          "version": "repo-lines-v1:sha256:6b7872c419243160d1c4955ff60b451a031d633a9928a9b543f0bc99e0138c73:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDZjMTIxNjYxN2U0ZjcxYzdiNDIzODU1ZGMxZDRlNmZhN2U3NWUyYjllNjc3ZTNhYTdkOWFkMmU3ZWE3MTQxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTNiMDU5Nzg5NjIxYzRiMmFhOTY1OTdkYmQ1NDQxZjUyMTA2ZTQ5ZjViZmI3YWJmNWU3N2M4OWE0NDQzZWMwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTdkN2ZlYjQ5NTYxNzg1MTBkOTNkMWIxZWQ3ZWZhY2VlNTM4NTBmNDU4ZmIyYjIwZjA0MGE2NmRlMjZhYWU3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjQ5YzEzMGMwY2M3MjQxMTY2ZmRjYTNlZWFiYzBkY2EyZGMzNGVhZTI5NWZiZjEwM2VmYzE3ZTUwODhjZDQ1OCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:39:07.736Z"
+    "at": "2026-10-27T07:04:01.883Z"
   }
 }

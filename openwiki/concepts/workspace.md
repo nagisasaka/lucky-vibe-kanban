@@ -32,10 +32,18 @@ sources:
     resource: repo://crates/executors/src/executors/codex/agent_scope.rs
   - id: openwiki-source-f4e0f9b2ce513d3f8b8b070e
     resource: repo://crates/executors/src/executors/provider_adapter.rs
+  - id: openwiki-source-e05c2bc674d361049478983e
+    resource: repo://crates/git/src/identity.rs
+  - id: openwiki-source-bd15422ef1716eca23408f1f
+    resource: repo://crates/git/src/lib.rs
+  - id: openwiki-source-612974e3f77a1889321a5f82
+    resource: repo://crates/git/tests/identity.rs
   - id: openwiki-source-788fa2f6f1a3d449a1a9efe4
     resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
+  - id: openwiki-source-c5d6e6a902edc200facbef8b
+    resource: repo://crates/server/src/error.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
@@ -74,6 +82,8 @@ sources:
     resource: repo://crates/services/src/services/filesystem.rs
   - id: openwiki-source-72948db7f01925b4b2ff17af
     resource: repo://crates/services/src/services/pr_monitor.rs
+  - id: openwiki-source-b0780c07a7ef9f6fc3b5886b
+    resource: repo://crates/services/src/services/repo.rs
   - id: openwiki-source-c128bdfa7a156621b004df06
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-6043692809cbf72f253c5631
@@ -114,10 +124,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
+generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-27T07:04:01.883Z
 ---
 
 # Workspace と Repository
@@ -131,6 +141,29 @@ Workspace は、エージェントの [Session](session-and-agent-run.md)、作�
 通常の追加は Repo 存在、target branch 存在、重複 attachment を検証する。managed Workspace のルート直下に Repo 名ごとの Git worktree を作り、共通の作業 branch 名を各 Repo で使用する。各 Repo の Git 履歴・target branch は独立しているため、一つの Workspace が複数 Repo をまとめていても Git の一括 transaction にはならない。[追加検証](../../crates/workspace-manager/src/workspace_manager.rs#L133-L162)、[worktree 作成](../../crates/workspace-manager/src/workspace_manager.rs#L528-L571)、[複数 Repo の利用契約](../../docs/workspaces/multi-repo-sessions.mdx)
 
 GitHub 認証の設定入口は Repo にあるが、token の保存 identity は Repo UUID や Workspace ではなく、instance 内の正規化した GitHub `owner/repository` である。同じ remote を使う Workspace は資格情報を共有する。対象は登録 Repo の remotes と既定 push URL から選ぶ。[PAT の管理・適用範囲](../integrations/github-review.md#リポジトリ別-pat-の所有と管理)に保存・削除・失敗時の契約を集約する。[対象の解決](../../crates/server/src/routes/github_credentials.rs#L32-L63)・[保存キー](../../crates/utils/src/github_credentials.rs#L147-L177)
+
+## Git commit identity
+
+Git の author / committer は新しい commit の帰属であり、LVK の認証 actor、provider session、push 資格情報とは別である。host は CLI・libgit2 の両経路で `git -c user.useConfigOnly=true var GIT_AUTHOR_IDENT` / `GIT_COMMITTER_IDENT` を使い、OS からの推測を止める。Git 自身に設定・worktree・明示環境変数と日付の解決を任せ、ブランド名の fallback や設定の自動書換えを行わない。[共通 resolver](../../crates/git/src/identity.rs#L22-L80)
+
+不足・不正な identity は `CommitIdentity` で停止する。API はこれを conflict として返す。利用者が対象 Repo 内で次を設定してから再試行する。既に有効な設定があれば変更は不要であり、LVK がログイン名や過去の commit から値を選ばない。[案内](../../crates/git/src/identity.rs#L8-L8)・[API error](../../crates/server/src/error.rs#L283-L285)
+
+```sh
+git config --local user.name "YOUR NAME"
+git config --local user.email "YOUR COMMIT EMAIL"
+```
+
+旧自動 identity の完全一致ペア `Vibe Kanban <noreply@vibekanban.com>` と `LVK Integration <integration@localhost>` も停止対象になる。意図的に続用する利用者だけが `git config --local lvk.allowLegacyIdentity true` で承認できる。この opt-in は name/email を変更せず、global の同名設定では承認しない。判定は保存された文字列だけでなく、現在解決された author / committer に適用する。[legacy guard](../../crates/git/src/identity.rs#L60-L80)
+
+初回の詳しい案内は common Git directory の `lvk-identity-guidance` を `create_new` で原子的に作って一度だけ出す。これは identity 設定そのものではなく、linked worktree と再起動をまたぐ案内状態である。後続も失敗理由を返し、設定後の再試行を許す。通常の repo-local 設定は linked worktree で共有し、worktree 固有設定や明示 override は Git の優先順位に従う。[案内の永続化](../../crates/git/src/identity.rs#L83-L106)・[worktree 回帰](../../crates/git/tests/identity.rs#L222-L250)
+
+最初の commit が停止した場合、初期化済みの空 Repo は残る。新規 Repo 作成 API の既存ディレクトリ拒否には、空で、workdir が要求 root と一致し、この案内 marker がある場合だけ再試行の例外がある。任意の既存フォルダーを上書きする許可ではない。[狭い再試行条件](../../crates/git/src/identity.rs#L11-L20)・[作成から登録まで](../../crates/services/src/services/repo.rs#L97-L135)
+
+初期 commit、通常 commit、source checkpoint、Wiki の指定 path commit、手動 squash と自動マージの新候補は同じ方針を使う。rebase は元 author を保持するため committer のみを要求し、agent の通常 Git コマンドによる明示 `--author` と cherry-pick の元 author を上書きしない。既存履歴の書換えや過去の自動 identity の移行は行わない。[Git 操作](../../crates/git/src/lib.rs#L268-L373)・[squash](../../crates/git/src/lib.rs#L780-L830)・[rebase](../../crates/git/src/lib.rs#L1338-L1343)。[自動マージ](formal-integration.md#b-から一件ずつ-r-を検証する)は候補作成時に再確認し、exact publication でも committer を使う。
+
+agent には Repo ごとの案内を渡し、不足時は commit をせず調査・編集を許す。利用者に代わる設定・旧 identity 承認は禁止する。これは一律の `GIT_AUTHOR_*` / `GIT_COMMITTER_*` 注入ではない。[案内生成](../../crates/git/src/identity.rs#L109-L117)・[launch](../../crates/local-deployment/src/agent_run_port.rs#L859-L865)
+
+変更時は [隔離 identity fixture](../../crates/git/tests/identity.rs)で missing / partial、legacy、global、author/committer 設定・環境・日付、worktree の優先順位と設定非変更を確認する。これらは一時 Repo の回帰定義であり、実ユーザー設定や配備済み binary の状態を証明しない。今回の Sync は凍結入力全4チャンクの hash と統合 source `cb418129919fe10bbfa15889f222330135ba65bd` を照合し、resolver、呼出側、API error、作成再試行、自動マージと focused tests を静的に確認した。供給された検証成功は実行履歴であり、この保守で製品 suite や実 agent・稼働環境を再実行した結果ではない。無関係な過去の Wiki 全体を再検証したとは扱わない。
 
 ## 二つの環境と所有権
 

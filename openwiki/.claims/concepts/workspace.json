@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:73b1b106a834f881ef47a354662611cbff5a5920bbaa3f564622ddcff6aae77a",
+  "pageVersion": "sha256:8c46842fe6dd47b867afa755c259f0b7ea63a95acfff5ac5d75f54f8c4cb11b1",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -202,7 +202,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/workspace_usage.rs",
-          "version": "repo-file-v1:sha256:61678d62df39711645aff082506cf8332e0a76b26e4465c3d9080609a7e2f2d2"
+          "version": "repo-file-v1:sha256:efcb729a41d7e041537f55909a0cb38fdf83b4164ed8a7277c65f5d1aa975758"
         }
       ]
     },
@@ -751,10 +751,80 @@
           "version": "repo-lines-v1:sha256:e0c6eb662f15c74c93e181cb5fc0ce0f3884ceb5919c9a75139934f2a5e26508:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZThkNjhlZDQyYWRlNGI4NmQzYWU2NDAxYTE0MTg2YWQ3YzI0MGQzOTViYWZiYTNkNDhmY2FiZGI2YWM4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ZDc0Zjg5NDZlMzZhYzAwMGZiMjcyYTI2MWI5NDhkZTdkYWYxYmI0NTFmYTJiMmEzOGUyN2U5ODU5OTkxMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MjUxMTUxOWMyNTZhYmYzNmMzN2VlYzgxMTliNjdkZjBjZGFlMDAzZTBjMzE3MTBmYmM5NzM1N2M4YjhhZjkifQ"
         }
       ]
+    },
+    {
+      "id": "claim_b2a9b8450e3a4c548672d6b1b3e16cfb",
+      "statement": "CLIとlibgit2のhost commit identityはGit varにuseConfigOnly=trueを指定して解決し、author/committerと明示日付を尊重しOS推測やブランドfallbackを使わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/identity.rs#L120-L139",
+          "version": "repo-lines-v1:sha256:a4b134eba62aca07eb41b11e7f9f6c683137b78cf52836c8581fbded8c73313a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjM2MzMmJmYzI4ZTgwYzVmZjlhOWY2NTYwNzk4ODA4MGYxZjBjZGNjYzdhYzExMzk3OTRmODJiZmU1YzIzM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/git/src/identity.rs#L22-L59",
+          "version": "repo-lines-v1:sha256:e3aadb5c16e56f2d519904fe70c426038e6dfd1dd7a2266271bd1b503c2ea06e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3YjhmMzMyYzE1OGZlNjcyNTc4ZDk4ZDAyODk1OTZkM2UxMTQ3ZmYwYWUxMTEyN2U4ZjAwOTQ0YmNkNDZiYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhlNjNjM2JiZWE1NTcwNGUyMzA1YjM0MzhiODczOWRlZmViN2U4ZDIyYjYxNjMyNGZmNDNiYWI1NzAxMTZiMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3MTNlOWRlMzY2NGQ1NjJhYzNhM2MxNDBlYjMzMWI5NTg0M2I4ODA4ZGFiOTgzODQzMWFiZTE4YWUwNjgzNGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViZjAxNGZiNGI5Nzg5NWE1M2M3ZTZiYmQ2OTQwYTFmNjdiMzQwYzNjYTA0ZjM1NTMwMjllZjk0MzZlMzMyNTMifQ"
+        },
+        {
+          "resource": "repo://crates/git/src/lib.rs#L268-L307",
+          "version": "repo-lines-v1:sha256:9bf8848742c1ae66f76eb893b1027b312c28cebe69f53af74471e3be0633b944:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExOThhNWZlZmE2NzJiYzAxOGNmZDhmNjY3YzQ3YmI1NzFhZTdkM2ZlMjIwYmJmNjE5NDRiMjM0Mjg1Mzk0NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliN2NkNzQ5ZjUwY2Q4ZDM5YmEzNGY1OWQzMzg3MWRkOGU1NmFhNTE0ZTgyNGE4YmFkM2VjYjUzYmM3MWNkNmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2MmVlNTdlNDFhOGMyMGFlMDE2NGRmMjYxNDM5ZGNjNDk5ZDM1MjA4MzQxNTE1MTZkMDQ3ZThkZWFlOGE0NjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMWVlNTViMDYxZjI0M2IxMmFmYTY3NmZkMjAwMGFhNDI4NTQ3NTI4OTYzOThkMWViNTc1ZjNlODBjOTQ2MDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7768bf8619e642408ab677d0be8fa8f6",
+      "statement": "不足・不正なidentityと未承認の旧完全一致identityはCommitIdentityで停止し、旧identityの承認はrepo-local lvk.allowLegacyIdentityだけを認める。APIはCommitIdentityをconflictとして返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/identity.rs#L51-L80",
+          "version": "repo-lines-v1:sha256:1adf8603f7512718818f78dd7bced3ea51f4fa326312de329c89abba8dd572d8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3N2NmZWEwYTZlM2RkYWVlOWZhNjgwNDFhOWM2NjM5NmU5NmY0MWM4NDc1OTkzZDY0NDgyNjBiMTA0NGJmNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2ODllNjdlOTMyMGFlOTI0ZWRmMjVhNzkwMGFjODg3MTRiMjI5NmU1Nzg0NjJhMmE4ZWZiMzE5NGE4N2RkYTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2MjFhMDAyYjY4ODkyNzdhZDkwM2UzNDg5ZTRmN2JkMGI5MWNlNjRhNjIyNjRiNjc4MTRkZmFlZDZiNzMwZDEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/error.rs#L283-L285",
+          "version": "repo-lines-v1:sha256:dcb719abb6914bee492bf405a3bb7ff159f878c2d54f6ce6059fd6e083007fa0:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjA0ZjExZDIyOWE2ZmM5MzUzZDVmMmVmMmYxNWM2Mzk5ZjFiOTk4NDdmZDIxOTYwYjk5YzQ1YzdhZmQyYTk3NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTUyMmM0MmNkMTljNmQwM2Q4MDhjNDUyNzIwNTUyODI1YjdlYTFjNWI0OTFiMjE4NTExY2FjNzQxNWNmOWQ5YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWEzZTc5ZWZhZTY2ZTIwZTI1NmViNzQwNGI3M2U5NjJmMDgyMGY0YTQ1YzMwYWEyMDZmMzdjZGZjMGNmZWEzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjc5NGQxNzM4MDdkMTJhNzBhMDkwMDM1ZDYyZThmMmQ1OWRhNTJjY2I1ODVjOTVhNTA4N2ZlMjc2MThkYjY5MCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_141897c4800b4fde8a802fc1702913b8",
+      "statement": "identityの詳しい案内はcommon Git directoryのlvk-identity-guidanceを原子的に作って一度だけ出し、後続も失敗理由と設定後再試行の案内を返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/identity.rs#L83-L106",
+          "version": "repo-lines-v1:sha256:4b731f3404a60db5cc6cb78af26a32f582705d7759d21751adb88ee21ea420be:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlNzZjNGI3MGM2ZTM5Y2ViMTY4MmQ5NDA1ODRjYmNlOWMyOTBmOWFiMzBkY2FlYzZlYWQ5MDJjZTljYmJkZWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA2MDYyMWJmZDcxMWMzMWY1OTE2ZjgyNjc0MDUyYjI3ZGEwYjk0MWYwMTUxMjM4NDQ0ODk2MzIwMjI1ZTg2OTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5ZThiMWZhNmEwZWEzOGExZjZmMzZmMjM0MGNhODVkZGU5ZDAxNzkzZmJkZGUwYWNkZjI4MDk2ZWYyNWYyY2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a15cab76cadc45eeaa60cc750192e9db",
+      "statement": "Repo新規作成の既存パス例外は空Repo・要求rootと同じworkdir・identity案内markerがある場合だけで、初期commit失敗後の再試行を可能にする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/identity.rs#L11-L20",
+          "version": "repo-lines-v1:sha256:9f4a9e22df004b74e537d6f4a0ea6acbc98ea0654358f2b9008644dd6ee0a5b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjYTczMjc2YTNmY2ZiMmViYzBhNjNmOTA4NjU3ZjAzZTA0ZmJmOWY5NmQwNjhkYmJkN2U1MmIxMWY2ODU5ODQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyNzcwMmJlZmNlYzY3ZDJkZjZiYzgwYTk1ZTg3M2FjMTI5ZjgwMjdlYTVmNmQ2NTc5NTEwMjI0MTJkYWQ5YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhZTlmODEwNWEzN2VhMjc4N2Q3ODMwNWI2MmVkZmQ5NGNiZmFjNTg2YmRkYTQ0NGE3YjlmZTIxNTFhMWYxNWUifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/repo.rs#L118-L135",
+          "version": "repo-lines-v1:sha256:3db4f499ce54a19afe5d86791fa5151d6cf9cb4abfdb7a572cfcd72e971ccc89:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwOWM0MTcwZTEyZDgxMjgwNTgyODA3OTk5Y2JkODI2MGY0NWYwN2UzNWNmNTM3ODdjYTIyNGMyMDc3ZTU3MWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlYTJhMWZkZGFhZTVkMjNlOWQzM2FmZTc5ODA0MGIxYTI4YmFiNTAzNzJmZTNiMWJkNzVmN2JiNmY5OWU0ZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1051065d932447abcb7f07d02417957",
+      "statement": "host rebaseはcommitterだけを要求して元authorを保持し、隔離fixtureは明示author・cherry-pick・worktree設定・環境と日付の優先順位を検査する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/git/src/lib.rs#L1338-L1343",
+          "version": "repo-lines-v1:sha256:3be5c5453d73f7d379a43de46f50aa1e402c33847e605d812e7a15e4bf42ea60:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzI1NjYwNjNlZGJjZjI4MTc2N2JiYzI5ZjFjZTMyNTEzMGEyNTBmYWNjZTNjZDcxMTJkODdmNTE1M2QyOTYwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDdjNjFkMGY2MDI3ZGQ3MzkzMmI3YjI1YmVkYWMwY2U5YTI2YzExNDBmMmQwMzcyNWIwYjBlNDk3Zjk5OWU2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjhiZWMzYjQyOWRhYzI5YmExNjE4ZDRjYmY3YjJiYjlhYTVkN2FlYzFmZjNjMWQ2ZDk1ZmEzOWYxMGYwMjJlMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmZjZjE1NTNiZDQxMWM1YmE1YTYyZTc3ODk0YzM2YWZjZGZjNzQxYWFiZmRjMWJmNzE3NjIzNGI1Mjc0YzNhZCJ9"
+        },
+        {
+          "resource": "repo://crates/git/tests/identity.rs#L174-L289",
+          "version": "repo-lines-v1:sha256:63fb60ba9bea6bc732d790afdd352ab6d977746d40382309792b40b66fc7011f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1MjEzYzZiOWU0ODBkNTVhNGEzMGJkMjg5ZTVhYzkwNGQ3NGNlOTI3NmVjYjJmMWRhZGIzZjg1ZDYxYWQyYTU3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NDBlMjkzNWIxYTYyMzE3YzhkZjczZTMwNGVhZDU1ZmZjYmZhN2M1MGViNTU3MjI3YTk3Y2JjZWNjNTkzMTQzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:39:07.736Z"
+    "at": "2026-10-27T07:04:01.883Z"
   }
 }

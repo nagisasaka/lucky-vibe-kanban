@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:96a2e30657d30ce7585ee7cf60e642abef64836ca97d79b3813bd899d1f7e3c0",
+  "pageVersion": "sha256:4586c36cf51ae55a23f93df06e0cdcf116780604eb39285a14906789fd9421e6",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -42,7 +42,7 @@
       "evidence": [
         {
           "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L851-L863",
-          "version": "repo-lines-v1:sha256:2852e7d9bb216ff113d25bb6339c4c55965a830e78621a0b31fddcb444cb2942:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxNTg3MWZjMWYyZDJmOTk4NjkzNDIyYzAzODY5NTU0YWUwMTFkMTM2OTgyNmU1OTU2YzQzYWM1Y2ZlMTAyN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNGE0NWY4ZThlMzMzY2M2NzUyZTMxY2ZlNjczNjU5MmQ4NjEyODhhMjdmZTg2YzlkMTRlNmJlYTA1NjBjZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZTA2ZGY2ZTQxZjE3YzE2ZjQ2ZjYxMWU3OTYzMDI4MzVlNmM3OWJmNjIwNWU2ZWQwN2U5OTU3YjBmYmE3ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMTA4NjFiMmI1MzFkZTAwNDRhYzM1NDY1MGEyNzE4MTAxMGI1YTEyMTRiMDMyZWQ1YTIxNmM4ZGU2ZjQ2ZDkifQ"
+          "version": "repo-lines-v1:sha256:d34b4ce42dabc88b87cbb3de077175c9511b6781803580d99a46b64d62a92abe:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwNzUwYzcyNzYxNWViMDYzY2RmYzA1OTAzNTJhOTQ0YzNiMTY2MzUxMjVmNDBlZDI5NmE4N2RhNmY5YmMzYTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNGE0NWY4ZThlMzMzY2M2NzUyZTMxY2ZlNjczNjU5MmQ4NjEyODhhMjdmZTg2YzlkMTRlNmJlYTA1NjBjZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzZTA2ZGY2ZTQxZjE3YzE2ZjQ2ZjYxMWU3OTYzMDI4MzVlNmM3OWJmNjIwNWU2ZWQwN2U5OTU3YjBmYmE3ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMTA4NjFiMmI1MzFkZTAwNDRhYzM1NDY1MGEyNzE4MTAxMGI1YTEyMTRiMDMyZWQ1YTIxNmM4ZGU2ZjQ2ZDkifQ"
         },
         {
           "resource": "repo://crates/services/src/services/parallel_context.rs#L134-L198",
@@ -209,10 +209,20 @@
           "version": "repo-lines-v1:sha256:37fe97b16a16add08c81efabdd962966e71193104a28243992ce7d8bc14e3bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMmIwNzVkY2JhYzZiM2ZmMjFlOWRiZjUxZWY5YzgzMzU4YmYyM2YyZjE1ZGIzN2Q5NzM2MGI1M2RlNmI4ZWUzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZTc1YzcwZDk0NjM2MjVlMTA3OWZkOGZjOGVlNjJhZDJlOTJjNDJiZWFhYmZkODViNzhkOGUwYTQ5NzliOTRhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YzA0ZTQwODk3MjRiMGViNjNlNjk0ZDA1MzA5ZmYzYWVmMjJmMDU0OTNiOTM3MjM4NzIyYzYyN2VmZjc1NjFjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjNGEzOWFiMjc1OTFkMzZmOTM3M2E1MGE1YWQ1MDJmYTM1NWU2YjBkZWNhYzg0NjRlZjBmMDgyYTNjMTg3OTg3In0"
         }
       ]
+    },
+    {
+      "id": "claim_98eaf3af5d4642af9dad6cb7ed253747",
+      "statement": "RepoごとのGit commit identity案内は保存済みShared directories policyの有無と独立してlaunchへ追加される。",
+      "evidence": [
+        {
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L838-L865",
+          "version": "repo-lines-v1:sha256:9911bd0e685e290615993eb9df71e5ba1c2c772ebd37dbb2f8ce47e81f9fbdaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MGJkMWQwODk4MjIxNjEzZjMwZmMxNWE1MWM0ODY2ZjVhYTliNmUwMWNhZjExMTIzYmJkODM5YTQ3YmZmNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjA1OTc4OTYyMWM0YjJhYTk2NTk3ZGJkNTQ0MWY1MjEwNmU0OWY1YmZiN2FiZjVlNzdjODlhNDQ0M2VjMDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5YTUyYTVkYTliNDZjNmFmZjNiMDhjZjUwYzFlNjExMmY5YTczODlhMTU0YzMwNGFlOGZjMWQ1OWEyNzVkZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0OWMxMzBjMGNjNzI0MTE2NmZkY2EzZWVhYmMwZGNhMmRjMzRlYWUyOTVmYmYxMDNlZmMxN2U1MDg4Y2Q0NTgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:10:58.678Z"
+    "at": "2026-10-27T07:04:01.883Z"
   }
 }
