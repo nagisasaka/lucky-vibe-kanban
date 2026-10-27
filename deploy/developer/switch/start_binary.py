@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 import start_support as s
+import terminal_drain
 
 DEV = P(__file__).resolve().parent.parent
 TERMINAL = {"succeeded", "failed", "interrupted"}
@@ -52,7 +53,7 @@ def configure(instance):
         ),
         "Invalid launch environment",
     )
-    for name in ["launcher.py", "start_binary.py", "start_support.py", "start.sh"]:
+    for name in ["launcher.py", "start_binary.py", "start_support.py", "terminal_drain.py", "start.sh"]:
         helper = DEV / "switch" / name
         s.need(
             helper.is_file()
@@ -359,6 +360,13 @@ def execute(op, request, config_path):
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGINT, interrupted)
     try:
+        stage("preflight")
+        s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
+        inspect(a)
+        expected = request.get("snapshot")
+        s.need(snapshot() == expected, "Running instance changed after admission")
+        stage("terminal-drain")
+        terminal_drain.terminate(expected["identity"], op)
         stage("preflight")
         selected = preflight(a)
         expected = request.get("snapshot")
