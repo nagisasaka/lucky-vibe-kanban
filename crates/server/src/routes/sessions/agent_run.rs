@@ -209,8 +209,6 @@ pub(super) fn validate_native_resume_identity(
     provider_session_id: &str,
     scope_path: &Path,
 ) -> Result<(), ApiError> {
-    let provider_uses_authoritative_resume =
-        matches!(provider, DirectProvider::Gemini | DirectProvider::OhMyPi);
     let provider_session_id = provider_session_id.trim();
     executors::executors::provider_adapter::validate_native_session_id(
         provider,
@@ -231,13 +229,6 @@ pub(super) fn validate_native_resume_identity(
         false,
     );
     if preview.is_none() {
-        if provider_uses_authoritative_resume {
-            // Gemini and Oh My Pi can resume an explicit native id even when
-            // their local history directory is unavailable to VK. The native
-            // adapter/CLI is authoritative for whether that id exists; do not
-            // reject it or silently substitute VK history here.
-            return Ok(());
-        }
         return Err(ApiError::BadRequest(format!(
             "Native session {provider_session_id:?} was not found in the selected {} working directory",
             provider.id()
@@ -606,12 +597,10 @@ mod tests {
     }
 
     #[test]
-    fn direct_provider_mapping_covers_the_four_v1_runtimes() {
+    fn direct_provider_mapping_covers_both_native_runtimes() {
         let cases = [
-            (BaseCodingAgent::Gemini, DirectProvider::Gemini),
             (BaseCodingAgent::Codex, DirectProvider::Codex),
             (BaseCodingAgent::ClaudeCode, DirectProvider::ClaudeCode),
-            (BaseCodingAgent::OhMyPi, DirectProvider::OhMyPi),
         ];
         for (agent, expected) in cases {
             assert_eq!(
@@ -837,21 +826,6 @@ mod tests {
     fn canonical_initial_and_resume_modes_remain_distinct() {
         assert_ne!(AgentRunIntent::Initial, AgentRunIntent::FollowUp);
         assert_ne!(RunAttemptMode::Launch, RunAttemptMode::Resume);
-    }
-
-    #[test]
-    fn explicit_gemini_and_omp_resume_ids_remain_provider_authoritative() {
-        let scope = std::path::Path::new("C:/native-source");
-        for provider in [DirectProvider::Gemini, DirectProvider::OhMyPi] {
-            assert!(
-                validate_native_resume_identity(
-                    provider,
-                    "provider-owned-id-that-is-not-locally-readable",
-                    scope,
-                )
-                .is_ok()
-            );
-        }
     }
 
     #[test]

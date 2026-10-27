@@ -62,7 +62,6 @@ impl Config {
             "claude-code-router" => {
                 ProfileVariantLabel::with_variant("claude-code".to_string(), "router".to_string())
             }
-            "gemini" => ProfileVariantLabel::default("gemini".to_string()),
             "codex" => ProfileVariantLabel::default("codex".to_string()),
             _ => {
                 onboarding_acknowledged = false; // Reset the user's onboarding if executor is not supported

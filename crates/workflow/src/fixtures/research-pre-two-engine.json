@@ -1,0 +1,178 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "data": {
+        "display_name": "Start"
+      },
+      "position": {
+        "x": 40.0,
+        "y": 340.0
+      }
+    },
+    {
+      "id": "frame",
+      "type": "agent",
+      "data": {
+        "display_name": "Frame Topic",
+        "role_template_id": "researcher",
+        "prompt_template": "Turn the research input from the issue into a well-scoped topic with a clear outline of the questions to answer.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 280.0,
+        "y": 300.0
+      }
+    },
+    {
+      "id": "draft-a",
+      "type": "agent",
+      "data": {
+        "display_name": "Draft: Pragmatic",
+        "role_template_id": "custom",
+        "prompt_template": "Write an independent design document for the framed topic from a pragmatic perspective: the most direct solution under current constraints.",
+        "executor_config": {
+          "executor": "CODEX"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 600.0,
+        "y": 80.0
+      }
+    },
+    {
+      "id": "draft-b",
+      "type": "agent",
+      "data": {
+        "display_name": "Draft: Exploratory",
+        "role_template_id": "custom",
+        "prompt_template": "Write an independent design document for the framed topic from an exploratory perspective: alternative approaches and novel ideas.",
+        "executor_config": {
+          "executor": "GEMINI"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 600.0,
+        "y": 300.0
+      }
+    },
+    {
+      "id": "draft-c",
+      "type": "agent",
+      "data": {
+        "display_name": "Draft: Risk & Trade-offs",
+        "role_template_id": "custom",
+        "prompt_template": "Write an independent design document for the framed topic from a risk perspective: costs, risks, and long-term maintainability trade-offs.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 600.0,
+        "y": 520.0
+      }
+    },
+    {
+      "id": "synthesize",
+      "type": "agent",
+      "data": {
+        "display_name": "Synthesize",
+        "role_template_id": "custom",
+        "prompt_template": "Compare the three perspective documents, reconcile their differences, and write the final conclusions and recommendation.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 920.0,
+        "y": 300.0
+      }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "data": {
+        "display_name": "End"
+      },
+      "position": {
+        "x": 1240.0,
+        "y": 340.0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "source_handle": "output-right",
+      "target": "frame",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e2",
+      "source": "frame",
+      "source_handle": "output-right",
+      "target": "draft-a",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e3",
+      "source": "frame",
+      "source_handle": "output-right",
+      "target": "draft-b",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e4",
+      "source": "frame",
+      "source_handle": "output-right",
+      "target": "draft-c",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e5",
+      "source": "draft-a",
+      "source_handle": "output-right",
+      "target": "synthesize",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e6",
+      "source": "draft-b",
+      "source_handle": "output-right",
+      "target": "synthesize",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e7",
+      "source": "draft-c",
+      "source_handle": "output-right",
+      "target": "synthesize",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e8",
+      "source": "synthesize",
+      "source_handle": "output-right",
+      "target": "end",
+      "target_handle": "input-left",
+      "type": "default"
+    }
+  ]
+}

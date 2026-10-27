@@ -1,8 +1,4 @@
-import {
-  GoogleLogoIcon,
-  HardDriveIcon,
-  SparkleIcon,
-} from '@phosphor-icons/react';
+import { HardDriveIcon, SparkleIcon } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
 
 interface ModelProviderIconProps {
@@ -36,10 +32,6 @@ export function ModelProviderIcon({
         className={className}
       />
     );
-  }
-
-  if (id.includes('google') || id.includes('gemini')) {
-    return <GoogleLogoIcon className={className} />;
   }
 
   if (

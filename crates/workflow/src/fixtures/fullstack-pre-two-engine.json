@@ -1,0 +1,170 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "data": {
+        "display_name": "Start"
+      },
+      "position": {
+        "x": 40.0,
+        "y": 300.0
+      }
+    },
+    {
+      "id": "plan",
+      "type": "agent",
+      "data": {
+        "display_name": "Plan & Split",
+        "role_template_id": "architect",
+        "prompt_template": "Analyze the issue and produce an implementation plan that splits the work into independent frontend and backend tracks.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 280.0,
+        "y": 260.0
+      }
+    },
+    {
+      "id": "frontend",
+      "type": "agent",
+      "data": {
+        "display_name": "Frontend",
+        "role_template_id": "implementer",
+        "prompt_template": "Implement the frontend track of the plan.",
+        "executor_config": {
+          "executor": "GEMINI"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 600.0,
+        "y": 110.0
+      }
+    },
+    {
+      "id": "backend",
+      "type": "agent",
+      "data": {
+        "display_name": "Backend",
+        "role_template_id": "implementer",
+        "prompt_template": "Implement the backend track of the plan.",
+        "executor_config": {
+          "executor": "CODEX"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 600.0,
+        "y": 410.0
+      }
+    },
+    {
+      "id": "review",
+      "type": "agent",
+      "data": {
+        "display_name": "Review & Test",
+        "role_template_id": "reviewer",
+        "prompt_template": "Review the combined frontend and backend changes and run the test suite.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 920.0,
+        "y": 260.0
+      }
+    },
+    {
+      "id": "finalize",
+      "type": "agent",
+      "data": {
+        "display_name": "Finalize",
+        "role_template_id": "implementer",
+        "prompt_template": "Commit the changes with a clear message and update the project documentation.",
+        "executor_config": {
+          "executor": "CLAUDE_CODE"
+        },
+        "output_capture": "last_message"
+      },
+      "position": {
+        "x": 1240.0,
+        "y": 260.0
+      }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "data": {
+        "display_name": "End"
+      },
+      "position": {
+        "x": 1560.0,
+        "y": 300.0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "start",
+      "source_handle": "output-right",
+      "target": "plan",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e2",
+      "source": "plan",
+      "source_handle": "output-right",
+      "target": "frontend",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e3",
+      "source": "plan",
+      "source_handle": "output-right",
+      "target": "backend",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e4",
+      "source": "frontend",
+      "source_handle": "output-right",
+      "target": "review",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e5",
+      "source": "backend",
+      "source_handle": "output-right",
+      "target": "review",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e6",
+      "source": "review",
+      "source_handle": "output-right",
+      "target": "finalize",
+      "target_handle": "input-left",
+      "type": "default"
+    },
+    {
+      "id": "e7",
+      "source": "finalize",
+      "source_handle": "output-right",
+      "target": "end",
+      "target_handle": "input-left",
+      "type": "default"
+    }
+  ]
+}

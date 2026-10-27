@@ -729,10 +729,8 @@ impl LocalAgentRunPort {
 
     fn provider(&self, provider_id: &str) -> Result<DirectProvider, AgentRunPortError> {
         match provider_id.replace('-', "_").to_ascii_lowercase().as_str() {
-            "gemini" => Ok(DirectProvider::Gemini),
             "codex" => Ok(DirectProvider::Codex),
             "claude_code" | "claude" => Ok(DirectProvider::ClaudeCode),
-            "oh_my_pi" | "omp" => Ok(DirectProvider::OhMyPi),
             _ => Err(AgentRunPortError::Rejected(format!(
                 "unsupported provider {provider_id}"
             ))),

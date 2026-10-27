@@ -246,56 +246,9 @@ fn attach_meta(mut obj: ServerMap, meta: Option<Value>) -> Value {
     Value::Object(obj)
 }
 
-fn ensure_header(headers: &mut Map<String, Value>, key: &str, val: &str) {
-    match headers.get_mut(key) {
-        Some(Value::String(_)) => {}
-        _ => {
-            headers.insert(key.to_string(), Value::String(val.to_string()));
-        }
-    }
-}
-
-fn transform_http_servers<F>(mut servers: ServerMap, mut f: F) -> ServerMap
-where
-    F: FnMut(Map<String, Value>) -> Map<String, Value>,
-{
-    for (_k, v) in servers.iter_mut() {
-        if let Value::Object(s) = v
-            && is_http_server(s)
-        {
-            let taken = std::mem::take(s);
-            *s = f(taken);
-        }
-    }
-    servers
-}
-
 // --- Adapters ---------------------------------------------------------------
 
 fn adapt_passthrough(servers: ServerMap, meta: Option<Value>) -> Value {
-    attach_meta(servers, meta)
-}
-
-fn adapt_gemini(servers: ServerMap, meta: Option<Value>) -> Value {
-    let servers = transform_http_servers(servers, |mut s| {
-        let url = s
-            .remove("url")
-            .unwrap_or_else(|| Value::String(String::new()));
-        let mut headers = s
-            .remove("headers")
-            .and_then(|v| v.as_object().cloned())
-            .unwrap_or_default();
-
-        ensure_header(
-            &mut headers,
-            "Accept",
-            "application/json, text/event-stream",
-        );
-        Map::from_iter([
-            ("httpUrl".to_string(), url),
-            ("headers".to_string(), Value::Object(headers)),
-        ])
-    });
     attach_meta(servers, meta)
 }
 
@@ -338,8 +291,6 @@ fn adapt_codex(mut servers: ServerMap, mut meta: Option<Value>) -> Value {
 
 enum Adapter {
     Passthrough,
-    OhMyPi,
-    Gemini,
     Codex,
 }
 
@@ -351,8 +302,6 @@ fn apply_adapter(adapter: Adapter, canonical: Value) -> Value {
 
     match adapter {
         Adapter::Passthrough => adapt_passthrough(servers_only, meta),
-        Adapter::OhMyPi => adapt_passthrough(servers_only, meta),
-        Adapter::Gemini => adapt_gemini(servers_only, meta),
         Adapter::Codex => adapt_codex(servers_only, meta),
     }
 }
@@ -363,8 +312,6 @@ impl CodingAgent {
 
         let adapter = match self {
             CodingAgent::ClaudeCode(_) => Passthrough,
-            CodingAgent::OhMyPi(_) => OhMyPi,
-            CodingAgent::Gemini(_) => Gemini,
             CodingAgent::Codex(_) => Codex,
             #[cfg(feature = "qa-mode")]
             CodingAgent::QaMock(_) => Passthrough, // QA mock doesn't need MCP
@@ -378,18 +325,6 @@ impl CodingAgent {
 /// MCP configuration for direct runtime adapters.
 pub fn direct_provider_mcp_config(provider: DirectProvider) -> McpConfig {
     match provider {
-        DirectProvider::OhMyPi => McpConfig::new(
-            vec!["mcpServers".to_string()],
-            serde_json::json!({ "mcpServers": {} }),
-            apply_adapter(Adapter::OhMyPi, PRECONFIGURED_MCP_SERVERS.clone()),
-            false,
-        ),
-        DirectProvider::Gemini => McpConfig::new(
-            vec!["mcpServers".to_string()],
-            serde_json::json!({ "mcpServers": {} }),
-            apply_adapter(Adapter::Gemini, PRECONFIGURED_MCP_SERVERS.clone()),
-            false,
-        ),
         DirectProvider::Codex => McpConfig::new(
             vec!["mcp_servers".to_string()],
             serde_json::json!({ "mcp_servers": {} }),
@@ -410,7 +345,6 @@ mod tests {
     use serde_json::json;
 
     use super::{Adapter, apply_adapter};
-    use crate::executors::{CodingAgent, oh_my_pi::OhMyPi};
 
     #[tokio::test]
     async fn advanced_mcp_write_is_revision_checked_atomic_and_preserves_unknown_fields() {
@@ -526,14 +460,5 @@ mod tests {
                 "http_headers": {"source": "native"}
             })
         );
-    }
-
-    #[test]
-    fn oh_my_pi_uses_its_native_mcp_settings_shape() {
-        let config = CodingAgent::OhMyPi(OhMyPi::default()).get_mcp_config();
-
-        assert_eq!(config.servers_path, vec!["mcpServers"]);
-        assert_eq!(config.template, json!({ "mcpServers": {} }));
-        assert!(!config.is_toml_config);
     }
 }

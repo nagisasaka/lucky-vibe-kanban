@@ -1396,10 +1396,8 @@ async fn canonical_node_identity(
 
 fn direct_provider_for_agent(agent: BaseCodingAgent) -> Result<DirectProvider, ApiError> {
     match agent {
-        BaseCodingAgent::Gemini => Ok(DirectProvider::Gemini),
         BaseCodingAgent::Codex => Ok(DirectProvider::Codex),
         BaseCodingAgent::ClaudeCode => Ok(DirectProvider::ClaudeCode),
-        BaseCodingAgent::OhMyPi => Ok(DirectProvider::OhMyPi),
         #[cfg(feature = "qa-mode")]
         BaseCodingAgent::QaMock => Err(ApiError::BadRequest(
             "QA mock is not a production Agent Runtime provider".to_string(),

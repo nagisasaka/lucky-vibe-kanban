@@ -619,12 +619,6 @@ html {
   .node-identity-codex {
     --node-color-rgb: 20, 184, 166;
   } /* Codex Green/Teal */
-  .node-identity-gemini {
-    --node-color-rgb: 139, 92, 246;
-  } /* Gemini Blue-Violet */
-  .node-identity-oh-my-pi {
-    --node-color-rgb: 14, 165, 233;
-  } /* Oh My Pi Sky */
   .node-identity-default {
     --node-color-rgb: 14, 165, 233;
   } /* Default Sky */

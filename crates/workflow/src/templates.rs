@@ -34,6 +34,22 @@ pub fn built_in_templates() -> Vec<WorkflowTemplate> {
     ]
 }
 
+/// Frozen pre-retirement definitions for the two explicitly approved system
+/// template upgrades. Compare raw JSON so retired executor values never need a
+/// runtime executor parser, and preserve every user edit (including unknown keys).
+pub fn previous_two_engine_template_graph(id: &str) -> Option<serde_json::Value> {
+    let source = match id {
+        PLAN_PARALLEL_FULLSTACK_REVIEW_FINALIZE_ID => {
+            include_str!("fixtures/fullstack-pre-two-engine.json")
+        }
+        RESEARCH_MULTI_PERSPECTIVE_SYNTHESIZE_ID => {
+            include_str!("fixtures/research-pre-two-engine.json")
+        }
+        _ => return None,
+    };
+    Some(serde_json::from_str(source).expect("frozen system template JSON"))
+}
+
 /// Internal repository-owned template. It is not an Issue Workflow preset.
 /// Per-run roots, language, skills and fresh session bindings are frozen by the
 /// server without modifying this shared definition.
@@ -197,7 +213,7 @@ fn plan_parallel_fullstack_review_finalize() -> WorkflowTemplate {
                         "Frontend",
                         "implementer",
                         "Implement the frontend track of the plan.",
-                        "GEMINI",
+                        "CLAUDE_CODE",
                     ),
                     600.0,
                     110.0,
@@ -307,7 +323,7 @@ fn research_multi_perspective_synthesize() -> WorkflowTemplate {
                         "Draft: Exploratory",
                         "custom",
                         "Write an independent design document for the framed topic from an exploratory perspective: alternative approaches and novel ideas.",
-                        "GEMINI",
+                        "CLAUDE_CODE",
                     ),
                     600.0,
                     300.0,
@@ -410,6 +426,28 @@ mod tests {
     use crate::validation::validate_graph;
 
     #[test]
+    fn frozen_old_templates_differ_only_in_approved_node_executor() {
+        for (template, node_id) in [
+            (plan_parallel_fullstack_review_finalize(), "frontend"),
+            (research_multi_perspective_synthesize(), "draft-b"),
+        ] {
+            let mut previous = previous_two_engine_template_graph(template.id).unwrap();
+            let node = previous["nodes"]
+                .as_array_mut()
+                .unwrap()
+                .iter_mut()
+                .find(|node| node["id"] == node_id)
+                .unwrap();
+            assert_eq!(
+                node["data"]["executor_config"],
+                json!({"executor":"GEMINI"})
+            );
+            node["data"]["executor_config"] = json!({"executor":"CLAUDE_CODE"});
+            assert_eq!(previous, serde_json::to_value(template.graph).unwrap());
+        }
+    }
+
+    #[test]
     fn built_in_templates_are_valid() {
         for template in built_in_templates() {
             validate_graph(&template.graph).expect(template.name);
@@ -448,7 +486,7 @@ mod tests {
         };
 
         assert_eq!(executor_for("plan"), Some("CLAUDE_CODE"));
-        assert_eq!(executor_for("frontend"), Some("GEMINI"));
+        assert_eq!(executor_for("frontend"), Some("CLAUDE_CODE"));
         assert_eq!(executor_for("backend"), Some("CODEX"));
         assert_eq!(executor_for("review"), Some("CLAUDE_CODE"));
         assert_eq!(executor_for("finalize"), Some("CLAUDE_CODE"));

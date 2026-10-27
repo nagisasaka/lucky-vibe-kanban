@@ -957,7 +957,7 @@ export type SelectedSkill = { name: string, path: string, };
 
 export type McpConfig = { servers: { [key in string]?: JsonValue }, servers_path: Array<string>, template: JsonValue, preconfigured: JsonValue, is_toml_config: boolean, };
 
-export enum AgentSettingsProvider { codex = "codex", claude_code = "claude_code", gemini = "gemini", oh_my_pi = "oh_my_pi" }
+export enum AgentSettingsProvider { codex = "codex", claude_code = "claude_code" }
 
 export enum SettingScope { user = "user", project = "project" }
 
@@ -969,7 +969,7 @@ export enum SettingControl { text = "text", textarea = "textarea", toggle = "tog
 
 export enum SettingActivation { immediate = "immediate", next_session = "next_session", explicit_restart = "explicit_restart" }
 
-export enum NativeConfigFormat { toml = "toml", json = "json", jsonc = "jsonc", yaml = "yaml", dotenv = "dotenv", text = "text", opaque = "opaque" }
+export enum NativeConfigFormat { toml = "toml", json = "json", jsonc = "jsonc", dotenv = "dotenv", text = "text", opaque = "opaque" }
 
 export enum NativeParseStatus { missing = "missing", parsed = "parsed", invalid = "invalid", unsupported = "unsupported" }
 
@@ -1068,7 +1068,7 @@ export type AgentSettingsDiscoveryQuery = { provider: AgentSettingsProvider | nu
 
 export type AgentSettingsProfilesQuery = { provider: AgentSettingsProvider | null, };
 
-export type AgentToolProvider = "codex" | "claude_code" | "gemini" | "oh_my_pi";
+export type AgentToolProvider = "codex" | "claude_code";
 
 export type AgentToolKind = "mcp_server" | "skill";
 
@@ -1146,7 +1146,7 @@ export type ExecutorActionType = { "type": "ScriptRequest" } & ScriptRequest;
 
 export type ExecutorConfig = {
 /**
- * The executor type (e.g., CLAUDE_CODE, GEMINI)
+ * The executor type (e.g., CLAUDE_CODE, CODEX)
  */
 executor: BaseCodingAgent,
 /**
@@ -1197,9 +1197,9 @@ working_dir: string | null, };
 
 export type ScriptRequestLanguage = "Bash";
 
-export enum BaseCodingAgent { CLAUDE_CODE = "CLAUDE_CODE", GEMINI = "GEMINI", CODEX = "CODEX", OH_MY_PI = "OH_MY_PI" }
+export enum BaseCodingAgent { CLAUDE_CODE = "CLAUDE_CODE", CODEX = "CODEX" }
 
-export type CodingAgent = { "CLAUDE_CODE": ClaudeCode } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OH_MY_PI": OhMyPi };
+export type CodingAgent = { "CLAUDE_CODE": ClaudeCode } | { "CODEX": Codex };
 
 export type SlashCommandSource = "builtin" | "skill" | "plugin" | "custom" | "fallback";
 
@@ -1215,7 +1215,7 @@ export type AvailabilityInfo = { "type": "LOGIN_DETECTED", last_auth_timestamp: 
 
 export type CommandBuilder = {
 /**
- * Base executable command (e.g., "claude", "codex", or "omp")
+ * Base executable command (e.g., "claude" or "codex")
  */
 base: string,
 /**
@@ -1225,7 +1225,7 @@ params: Array<string> | null, };
 
 export type ExecutorProfileId = {
 /**
- * The executor type (e.g., "CLAUDE_CODE", "GEMINI")
+ * The executor type (e.g., "CLAUDE_CODE", "CODEX")
  */
 executor: BaseCodingAgent,
 /**
@@ -1243,7 +1243,7 @@ models?: Array<string>,
  */
 reasoning_by_model?: { [key in string]?: string }, };
 
-export type ExecutorProfile = { recently_used_models?: ExecutorRecentModels | null, } & ({ [key in string]?: { "CLAUDE_CODE": ClaudeCode } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OH_MY_PI": OhMyPi } });
+export type ExecutorProfile = { recently_used_models?: ExecutorRecentModels | null, } & ({ [key in string]?: { "CLAUDE_CODE": ClaudeCode } | { "CODEX": Codex } });
 
 export type ExecutorConfigs = { executors: { [key in BaseCodingAgent]?: ExecutorProfile }, };
 
@@ -1266,10 +1266,6 @@ export type ClaudeCode = { append_prompt: AppendPrompt, claude_code_router?: boo
  * Require the official CLI to report a first-party Claude subscription login.
  */
 require_subscription_login?: boolean | null, base_command_override?: string | null, additional_params?: Array<string> | null, env?: { [key in string]?: string } | null, };
-
-export type Gemini = { append_prompt: AppendPrompt, model?: string | null, yolo?: boolean | null, base_command_override?: string | null, additional_params?: Array<string> | null, env?: { [key in string]?: string } | null, };
-
-export type OhMyPi = { append_prompt: AppendPrompt, model?: string | null, base_command_override?: string | null, additional_params?: Array<string> | null, env?: { [key in string]?: string } | null, };
 
 export type Codex = { append_prompt: AppendPrompt, sandbox?: SandboxMode | null, ask_for_approval?: AskForApproval | null, oss?: boolean | null, model?: string | null, model_reasoning_effort?: ReasoningEffort | null, model_reasoning_summary?: ReasoningSummary | null, model_reasoning_summary_format?: ReasoningSummaryFormat | null, profile?: string | null, base_instructions?: string | null, include_apply_patch_tool?: boolean | null, model_provider?: string | null, compact_prompt?: string | null, developer_instructions?: string | null, plan: boolean, execution_mode: ExecutionMode, goal_token_budget?: number | null, goal_max_concurrent_agents?: number | null, base_command_override?: string | null, additional_params?: Array<string> | null, env?: { [key in string]?: string } | null, };
 
@@ -1435,7 +1431,7 @@ export type CanonicalMessage = { message_id: string, role: AgentRuntimeMessageRo
 
 export type AgentRunRequestEnvelope = { schema_version: number, payload_version: number, request_id: string, idempotency_key: string, session_id: string, agent_run_id: string, turn_id: string, correlation_id: string, intent: AgentRunIntent, runtime_profile_id: string, provider_id: string, workspace: WorkspaceReference, input: CanonicalMessage, created_at: string, };
 
-export enum AgentTransportKind { stdio_cli = "stdio_cli", stdio_rpc = "stdio_rpc", acp = "acp", app_server_jsonrpc = "app_server_jsonrpc", http_sidecar = "http_sidecar", in_process = "in_process" }
+export enum AgentTransportKind { stdio_cli = "stdio_cli", stdio_rpc = "stdio_rpc", app_server_jsonrpc = "app_server_jsonrpc", http_sidecar = "http_sidecar", in_process = "in_process" }
 
 export type RunAttemptRequest = { schema_version: number, payload_version: number, request_id: string, idempotency_key: string, session_id: string, agent_run_id: string, turn_id: string, run_attempt_id: string, attempt_number: number, correlation_id: string, mode: RunAttemptMode, transport: AgentTransportKind, runtime_profile_id: string, provider_id: string, workspace: WorkspaceReference, capability_snapshot: CapabilitySnapshot, executor_config: ExecutorConfig, selected_skills?: Array<SelectedSkill> | null, reset_to_message_id?: string | null, provider_session?: ProviderSessionReference | null, created_at: string, };
 

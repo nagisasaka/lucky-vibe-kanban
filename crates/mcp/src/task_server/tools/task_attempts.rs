@@ -28,9 +28,7 @@ struct StartWorkspaceRequest {
         description = "Optional prompt for the first workspace session. If omitted/empty, the linked issue title/description is used."
     )]
     prompt: Option<String>,
-    #[schemars(
-        description = "The coding agent executor to run ('CLAUDE_CODE', 'GEMINI', 'CODEX', 'OH_MY_PI')"
-    )]
+    #[schemars(description = "The coding agent executor to run ('CLAUDE_CODE', 'CODEX')")]
     executor: String,
     #[schemars(description = "Optional executor variant, if needed")]
     variant: Option<String>,

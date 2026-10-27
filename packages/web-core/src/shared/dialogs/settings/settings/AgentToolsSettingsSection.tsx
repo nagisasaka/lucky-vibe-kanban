@@ -33,18 +33,11 @@ import {
   useSettingsMachineClient,
 } from './SettingsHostContext';
 
-const PROVIDERS: AgentToolProvider[] = [
-  'codex',
-  'claude_code',
-  'gemini',
-  'oh_my_pi',
-];
+const PROVIDERS: AgentToolProvider[] = ['codex', 'claude_code'];
 
 const PROVIDER_LABELS: Record<AgentToolProvider, string> = {
   codex: 'Codex',
   claude_code: 'Claude Code',
-  gemini: 'Gemini',
-  oh_my_pi: 'Oh My Pi',
 };
 
 function encodeUtf8(value: string): string {

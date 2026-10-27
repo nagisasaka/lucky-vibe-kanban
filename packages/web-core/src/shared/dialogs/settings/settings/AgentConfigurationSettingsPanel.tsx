@@ -77,10 +77,6 @@ function executorForProvider(provider: AgentSettingsProvider): BaseCodingAgent {
   switch (provider) {
     case AgentSettingsProvider.claude_code:
       return BaseCodingAgent.CLAUDE_CODE;
-    case AgentSettingsProvider.gemini:
-      return BaseCodingAgent.GEMINI;
-    case AgentSettingsProvider.oh_my_pi:
-      return BaseCodingAgent.OH_MY_PI;
     default:
       return BaseCodingAgent.CODEX;
   }
@@ -598,7 +594,7 @@ function AgentConfigurationSettingsContent({
   const previewProfileCopy = async (profile: ConfigProfile) => {
     if (!machineClient) return;
     const target = window.prompt(
-      'Target provider (codex, claude_code, gemini, oh_my_pi)',
+      'Target provider (codex, claude_code)',
       'codex'
     );
     if (

@@ -13,12 +13,8 @@ export function getAgentName(
   switch (agent) {
     case BaseCodingAgent.CLAUDE_CODE:
       return 'Claude Code';
-    case BaseCodingAgent.GEMINI:
-      return 'Gemini';
     case BaseCodingAgent.CODEX:
       return 'Codex';
-    case BaseCodingAgent.OH_MY_PI:
-      return 'Oh My Pi';
   }
 }
 
@@ -39,14 +35,8 @@ export function AgentIcon({ agent, className = 'h-4 w-4' }: AgentIconProps) {
     case BaseCodingAgent.CLAUDE_CODE:
       iconPath = `/agents/claude${suffix}.svg`;
       break;
-    case BaseCodingAgent.GEMINI:
-      iconPath = `/agents/gemini${suffix}.svg`;
-      break;
     case BaseCodingAgent.CODEX:
       iconPath = `/agents/codex${suffix}.svg`;
-      break;
-    case BaseCodingAgent.OH_MY_PI:
-      iconPath = `/agents/oh-my-pi${suffix}.svg`;
       break;
     default:
       return null;

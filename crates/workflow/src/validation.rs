@@ -122,6 +122,29 @@ pub fn validate_graph(graph: &WorkflowGraph) -> Result<ValidatedGraph, Validatio
 pub fn validate_graph_for_run(graph: &WorkflowGraph) -> Result<ValidatedGraph, ValidationError> {
     let validated = validate_graph(graph)?;
     validate_condition_routing_for_run(graph)?;
+    for config in graph
+        .nodes
+        .iter()
+        .flat_map(|node| {
+            node.data.executor_config.iter().chain(
+                node.data
+                    .attempts
+                    .iter()
+                    .flatten()
+                    .filter_map(|attempt| attempt.executor_config.as_ref()),
+            )
+        })
+        .chain(graph.router_executor_config.iter())
+    {
+        if let Some(executor) = config.get("executor").and_then(serde_json::Value::as_str)
+            && !is_known_executor(executor)
+        {
+            return Err(ValidationError::new(format!(
+                "unsupported workflow executor `{executor}`; supported engines are CODEX and CLAUDE_CODE"
+            )));
+        }
+    }
+
     Ok(validated)
 }
 
@@ -258,10 +281,7 @@ fn router_executor_config_has_executor(config: &serde_json::Value) -> bool {
 
 fn is_known_executor(executor: &str) -> bool {
     let normalized = executor.trim().replace('-', "_").to_ascii_uppercase();
-    matches!(
-        normalized.as_str(),
-        "CLAUDE_CODE" | "GEMINI" | "CODEX" | "OH_MY_PI"
-    )
+    matches!(normalized.as_str(), "CLAUDE_CODE" | "CODEX")
 }
 
 fn reject_cycles(
@@ -378,6 +398,17 @@ mod tests {
             edges,
             router_executor_config: None,
             canvas: None,
+        }
+    }
+
+    #[test]
+    fn run_validation_rejects_retired_engines_without_fallback() {
+        for executor in ["GEMINI", "OH_MY_PI"] {
+            let mut graph = crate::templates::built_in_templates().remove(0).graph;
+            graph.nodes[1].data.executor_config = Some(serde_json::json!({"executor": executor}));
+            let err = validate_graph_for_run(&graph).unwrap_err();
+            assert!(err.to_string().contains(executor));
+            assert!(err.to_string().contains("unsupported workflow executor"));
         }
     }
 

@@ -61,11 +61,6 @@ pub async fn run_agent_setup(
         CodingAgent::Codex(codex) => {
             codex_setup::run_codex_setup(&deployment, &workspace, &codex).await?;
         }
-        // Oh My Pi does not expose a VK setup helper; callers must install and
-        // authenticate the native `omp` runtime independently.
-        CodingAgent::OhMyPi(_) => {
-            return Err(ApiError::Executor(ExecutorError::SetupHelperNotSupported));
-        }
         _ => return Err(ApiError::Executor(ExecutorError::SetupHelperNotSupported)),
     }
 

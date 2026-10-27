@@ -1,4 +1,4 @@
-//! Provider-neutral entry points for the four direct V1 runtime adapters.
+//! Provider-neutral entry points for the two direct V1 runtime adapters.
 //!
 //! Legacy product paths may still use `StandardCodingAgentExecutor`, while the
 //! V1 runtime launches the same concrete providers through the narrow API in
@@ -67,19 +67,6 @@ pub async fn launch_direct_provider(
     }
 
     match &mut agent {
-        CodingAgent::Gemini(agent) => {
-            agent.apply_direct_overrides(request.executor_config);
-            agent.use_direct_approvals(request.approvals);
-            agent
-                .launch_direct(
-                    request.intent,
-                    request.current_dir,
-                    request.prompt,
-                    provider_session_id(request.provider_session),
-                    request.env,
-                )
-                .await
-        }
         CodingAgent::Codex(agent) => {
             agent.apply_direct_overrides(request.executor_config);
             agent.use_direct_approvals(request.approvals);
@@ -104,18 +91,6 @@ pub async fn launch_direct_provider(
                     request.prompt,
                     provider_session_id(request.provider_session),
                     request.reset_to_message_id,
-                    request.env,
-                )
-                .await
-        }
-        CodingAgent::OhMyPi(agent) => {
-            agent.apply_direct_overrides(request.executor_config);
-            agent
-                .launch_direct(
-                    request.intent,
-                    request.current_dir,
-                    request.prompt,
-                    provider_session_id(request.provider_session),
                     request.env,
                 )
                 .await
@@ -217,7 +192,7 @@ fn profile_provider_mismatch(
 /// option-like values would be ambiguous on the wire or alter CLI parsing.
 /// Provider adapters remain authoritative for the actual existence check.
 pub fn validate_native_session_id(
-    provider: DirectProvider,
+    _provider: DirectProvider,
     session_id: &str,
 ) -> Result<(), String> {
     let trimmed = session_id.trim();
@@ -231,14 +206,6 @@ pub fn validate_native_session_id(
     if session_id.chars().any(char::is_control) {
         return Err("native session id contains control characters".to_string());
     }
-    if matches!(provider, DirectProvider::Gemini | DirectProvider::OhMyPi)
-        && session_id.starts_with('-')
-    {
-        return Err(format!(
-            "{} native session id cannot start with '-'",
-            provider.id()
-        ));
-    }
     Ok(())
 }
 
@@ -246,21 +213,17 @@ pub fn validate_native_session_id(
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DirectProvider {
-    Gemini,
     Codex,
     ClaudeCode,
-    OhMyPi,
 }
 
 impl DirectProvider {
-    pub const ALL: [Self; 4] = [Self::Gemini, Self::Codex, Self::ClaudeCode, Self::OhMyPi];
+    pub const ALL: [Self; 2] = [Self::Codex, Self::ClaudeCode];
 
     pub const fn id(self) -> &'static str {
         match self {
-            Self::Gemini => "gemini",
             Self::Codex => "codex",
             Self::ClaudeCode => "claude_code",
-            Self::OhMyPi => "oh_my_pi",
         }
     }
 
@@ -293,10 +256,8 @@ impl DirectProvider {
 
     pub const fn from_base_agent(agent: crate::executors::BaseCodingAgent) -> Option<Self> {
         match agent {
-            crate::executors::BaseCodingAgent::Gemini => Some(Self::Gemini),
             crate::executors::BaseCodingAgent::Codex => Some(Self::Codex),
             crate::executors::BaseCodingAgent::ClaudeCode => Some(Self::ClaudeCode),
-            crate::executors::BaseCodingAgent::OhMyPi => Some(Self::OhMyPi),
             #[cfg(feature = "qa-mode")]
             crate::executors::BaseCodingAgent::QaMock => None,
         }
@@ -308,22 +269,13 @@ impl DirectProvider {
 
     pub const fn transport(self) -> AgentTransportKind {
         match self {
-            Self::Gemini => AgentTransportKind::Acp,
             Self::Codex => AgentTransportKind::AppServerJsonrpc,
             Self::ClaudeCode => AgentTransportKind::StdioRpc,
-            Self::OhMyPi => AgentTransportKind::StdioRpc,
         }
     }
 
     pub const fn versions(self) -> DirectAdapterVersions {
         match self {
-            Self::Gemini => DirectAdapterVersions {
-                executable: "gemini",
-                runtime: None,
-                protocol: Some("acp-0.8"),
-                adapter: "gemini-adapter-v1",
-                mapper: "gemini-mapper-v3",
-            },
             Self::Codex => DirectAdapterVersions {
                 executable: "codex",
                 // The runtime version is reported by app-server initialize;
@@ -339,13 +291,6 @@ impl DirectProvider {
                 protocol: Some("stream-json-v1"),
                 adapter: "claude-code-adapter-v1",
                 mapper: "claude-code-mapper-v4",
-            },
-            Self::OhMyPi => DirectAdapterVersions {
-                executable: "omp",
-                runtime: None,
-                protocol: Some("stdio-rpc-ndjson-v1"),
-                adapter: "oh-my-pi-adapter-v1",
-                mapper: "oh-my-pi-mapper-v3",
             },
         }
     }
@@ -364,44 +309,6 @@ impl DirectProvider {
     pub fn capabilities(self, runtime_profile_id: impl Into<String>) -> CapabilitySnapshot {
         let versions = self.versions();
         let states = match self {
-            Self::Gemini => capability_states(&[
-                (
-                    crate::runtime::AgentCapability::SessionResume,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Steering,
-                    CapabilityState::Unsupported,
-                ),
-                (
-                    crate::runtime::AgentCapability::Approval,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Images,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Review,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Mcp,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Subagents,
-                    CapabilityState::Unknown,
-                ),
-                (
-                    crate::runtime::AgentCapability::TokenUsage,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Goal,
-                    CapabilityState::Unsupported,
-                ),
-            ]),
             Self::Codex => capability_states(&[
                 (
                     crate::runtime::AgentCapability::SessionResume,
@@ -478,44 +385,6 @@ impl DirectProvider {
                     CapabilityState::Unsupported,
                 ),
             ]),
-            Self::OhMyPi => capability_states(&[
-                (
-                    crate::runtime::AgentCapability::SessionResume,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Steering,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Approval,
-                    CapabilityState::Unsupported,
-                ),
-                (
-                    crate::runtime::AgentCapability::Images,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Review,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Mcp,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Subagents,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::TokenUsage,
-                    CapabilityState::Native,
-                ),
-                (
-                    crate::runtime::AgentCapability::Goal,
-                    CapabilityState::Unsupported,
-                ),
-            ]),
         };
         CapabilitySnapshot {
             schema_version: crate::runtime::CAPABILITY_SNAPSHOT_SCHEMA_VERSION,
@@ -532,12 +401,9 @@ impl DirectProvider {
     pub fn mapper(self) -> DirectProviderMapper {
         DirectProviderMapper {
             provider: self,
-            semantics: if self == Self::Codex {
-                MapperSemantics::V7
-            } else if self == Self::ClaudeCode {
-                MapperSemantics::V4
-            } else {
-                MapperSemantics::V3
+            semantics: match self {
+                Self::Codex => MapperSemantics::V7,
+                Self::ClaudeCode => MapperSemantics::V4,
             },
             scope: Default::default(),
             replay_sequence: Default::default(),
@@ -678,10 +544,8 @@ pub fn encode_control(
         require_capability(provider, snapshot, capability, false)?;
     }
     match provider {
-        DirectProvider::Gemini => super::gemini::command_adapter::encode_control(control),
         DirectProvider::Codex => super::codex::command_adapter::encode_control(control),
         DirectProvider::ClaudeCode => super::claude::command_adapter::encode_control(control),
-        DirectProvider::OhMyPi => super::oh_my_pi::command_adapter::encode_control(control),
     }
     .map_err(DirectControlError::Json)
 }
@@ -2862,15 +2726,15 @@ mod tests {
     }
 
     #[test]
-    fn all_four_versions_use_local_executables() {
+    fn both_versions_use_local_executables() {
         let versions = DirectProvider::ALL.map(DirectProvider::versions);
 
         assert_eq!(
             versions.map(|version| version.executable),
-            ["gemini", "codex", "claude", "omp"]
+            ["codex", "claude"]
         );
         assert!(versions.iter().all(|version| version.runtime.is_none()));
-        assert_eq!(versions[1].protocol, Some("rust-v0.144.1"));
+        assert_eq!(versions[0].protocol, Some("rust-v0.144.1"));
         assert!(
             versions
                 .windows(2)
@@ -2879,12 +2743,10 @@ mod tests {
     }
 
     #[test]
-    fn all_four_profile_identities_map_to_their_direct_provider() {
+    fn both_profile_identities_map_to_their_direct_provider() {
         let mappings = [
-            (BaseCodingAgent::Gemini, DirectProvider::Gemini),
             (BaseCodingAgent::Codex, DirectProvider::Codex),
             (BaseCodingAgent::ClaudeCode, DirectProvider::ClaudeCode),
-            (BaseCodingAgent::OhMyPi, DirectProvider::OhMyPi),
         ];
 
         for (agent, provider) in mappings {
@@ -2897,7 +2759,7 @@ mod tests {
     #[test]
     fn profile_provider_mismatch_is_rejected_before_spawn() {
         let error = validate_launch(
-            DirectProvider::Gemini,
+            DirectProvider::ClaudeCode,
             &ExecutorConfig::new(BaseCodingAgent::Codex),
             DirectIntent::Initial,
             None,
@@ -2965,19 +2827,18 @@ mod tests {
     }
 
     #[test]
-    fn native_session_ids_reject_ambiguous_whitespace_and_option_values() {
-        assert!(validate_native_session_id(DirectProvider::Gemini, " session ").is_err());
-        assert!(validate_native_session_id(DirectProvider::OhMyPi, "-resume").is_err());
+    fn native_session_ids_reject_ambiguous_whitespace() {
+        assert!(validate_native_session_id(DirectProvider::ClaudeCode, " session ").is_err());
         assert!(validate_native_session_id(DirectProvider::Codex, "thread-1").is_ok());
     }
 
     #[test]
     fn initial_launch_rejects_an_attached_provider_session() {
-        let config = ExecutorConfig::new(BaseCodingAgent::Gemini);
-        let session = provider_session(DirectProvider::Gemini, &config);
+        let config = ExecutorConfig::new(BaseCodingAgent::ClaudeCode);
+        let session = provider_session(DirectProvider::ClaudeCode, &config);
 
         let error = validate_launch(
-            DirectProvider::Gemini,
+            DirectProvider::ClaudeCode,
             &config,
             DirectIntent::Initial,
             Some(&session),
@@ -2990,32 +2851,21 @@ mod tests {
 
     #[test]
     fn reset_is_only_allowed_for_claude_follow_up_or_resume() {
-        for provider in [
-            DirectProvider::Gemini,
-            DirectProvider::Codex,
-            DirectProvider::OhMyPi,
-        ] {
-            let agent = match provider {
-                DirectProvider::Gemini => BaseCodingAgent::Gemini,
-                DirectProvider::Codex => BaseCodingAgent::Codex,
-                DirectProvider::OhMyPi => BaseCodingAgent::OhMyPi,
-                DirectProvider::ClaudeCode => unreachable!(),
-            };
-            let config = ExecutorConfig::new(agent);
-            let session = provider_session(provider, &config);
-            let error = validate_launch(
-                provider,
-                &config,
-                DirectIntent::FollowUp,
-                Some(&session),
-                Some("message-id"),
-            )
-            .expect_err("unsupported reset must not silently downgrade");
-            assert!(matches!(
-                error,
-                ExecutorError::ResetToMessageNotSupported(_)
-            ));
-        }
+        let provider = DirectProvider::Codex;
+        let config = ExecutorConfig::new(BaseCodingAgent::Codex);
+        let session = provider_session(provider, &config);
+        let error = validate_launch(
+            provider,
+            &config,
+            DirectIntent::FollowUp,
+            Some(&session),
+            Some("message-id"),
+        )
+        .expect_err("unsupported reset must not silently downgrade");
+        assert!(matches!(
+            error,
+            ExecutorError::ResetToMessageNotSupported(_)
+        ));
 
         let config = ExecutorConfig::new(BaseCodingAgent::ClaudeCode);
         let session = provider_session(DirectProvider::ClaudeCode, &config);
@@ -3148,18 +2998,18 @@ mod tests {
 
     #[test]
     fn unknown_and_terminal_frames_fail_closed() {
-        let unknown = DirectProvider::Gemini
+        let unknown = DirectProvider::ClaudeCode
             .decode_native_frame(&frame(
-                DirectProvider::Gemini,
+                DirectProvider::ClaudeCode,
                 serde_json::json!({"type":"future_event"}),
             ))
             .unwrap();
         assert!(matches!(unknown.typed, TypedProviderEvent::Unknown { .. }));
         assert_eq!(unknown.typed.class(), ProviderEventClass::AuditOnly);
         assert!(
-            DirectProvider::Gemini
+            DirectProvider::ClaudeCode
                 .decode_native_frame(&frame(
-                    DirectProvider::Gemini,
+                    DirectProvider::ClaudeCode,
                     serde_json::json!({"type":"eof"})
                 ))
                 .is_err()
@@ -3981,13 +3831,13 @@ mod tests {
             turn_id: Uuid::from_u128(3),
             run_attempt_id: Uuid::from_u128(4),
             run_attempt_number: 1,
-            provider_id: "gemini".to_string(),
+            provider_id: "claude_code".to_string(),
             runtime_profile_id: "default".to_string(),
             workspace_path: ".".to_string(),
             runtime_version: None,
-            protocol_version: Some("acp-0.8".to_string()),
-            adapter_version: "gemini-adapter-v1".to_string(),
-            mapper_version: "gemini-mapper-v1".to_string(),
+            protocol_version: Some("stream-json-v1".to_string()),
+            adapter_version: "claude-code-adapter-v1".to_string(),
+            mapper_version: "claude-code-mapper-v4".to_string(),
             frame_count: 1,
             first_sequence: Some(1),
             last_sequence: Some(1),
@@ -3999,13 +3849,13 @@ mod tests {
             frames_relative_path: "frames.jsonl".to_string(),
             raw_content_trusted: true,
         };
-        let event = DirectProvider::Gemini
+        let event = DirectProvider::ClaudeCode
             .decode_native_frame(&frame(
-                DirectProvider::Gemini,
+                DirectProvider::ClaudeCode,
                 serde_json::json!({"type":"approval_requested","approval_id":"a1","tool_name":"shell"}),
             ))
             .unwrap();
-        let mapped = DirectProvider::Gemini
+        let mapped = DirectProvider::ClaudeCode
             .map_provider_event(&event, &manifest)
             .unwrap();
         assert!(matches!(
@@ -4015,69 +3865,30 @@ mod tests {
     }
 
     #[test]
-    fn omp_rpc_is_ndjson_and_external() {
-        let request = super::super::oh_my_pi::command_adapter::session_request("hello", None);
-        let bytes = encode_stdio_rpc(&request).unwrap();
-        assert_eq!(bytes.last(), Some(&b'\n'));
-        assert!(
-            String::from_utf8(bytes)
-                .unwrap()
-                .contains("\"type\":\"prompt\"")
-        );
-        assert_eq!(DirectProvider::OhMyPi.versions().executable, "omp");
-    }
-
-    #[test]
-    fn controls_are_provider_native_and_fail_closed_on_unknown_capability() {
-        let snapshot = DirectProvider::Gemini.capabilities("default");
-        assert_eq!(
-            snapshot.resolve(crate::runtime::AgentCapability::Approval),
-            CapabilityState::Native
-        );
-        let error = encode_control(
-            DirectProvider::Gemini,
-            &snapshot,
-            DirectControl::Approve {
-                request_id: "a1".to_string(),
-                approved: true,
-                reason: None,
-            },
-        )
-        .expect_err("ACP approvals must be routed through the active connection");
-        assert!(matches!(error, DirectControlError::Json(_)));
-
-        let mut unknown = DirectProvider::Gemini.capabilities("default");
-        unknown
+    fn controls_fail_closed_on_unknown_or_unsupported_capability() {
+        let mut snapshot = DirectProvider::Codex.capabilities("CODEX");
+        snapshot
             .capabilities
             .retain(|entry| entry.capability != crate::runtime::AgentCapability::Steering);
         let error = encode_control(
-            DirectProvider::Gemini,
-            &unknown,
+            DirectProvider::Codex,
+            &snapshot,
             DirectControl::Steer {
-                text: "stop".to_string(),
+                text: "stop".into(),
             },
         )
-        .expect_err("missing steering capability must not silently fall back");
+        .unwrap_err();
         assert!(matches!(
             error,
             DirectControlError::Capability(CapabilityGateError::Unresolved { .. })
         ));
-
-        let omp_snapshot = DirectProvider::OhMyPi.capabilities("default");
-        assert_eq!(
-            omp_snapshot.resolve(crate::runtime::AgentCapability::Approval),
-            CapabilityState::Unsupported
-        );
+        let snapshot = DirectProvider::ClaudeCode.capabilities("CLAUDE_CODE");
         let error = encode_control(
-            DirectProvider::OhMyPi,
-            &omp_snapshot,
-            DirectControl::Approve {
-                request_id: "a1".to_string(),
-                approved: true,
-                reason: None,
-            },
+            DirectProvider::ClaudeCode,
+            &snapshot,
+            DirectControl::GoalClear,
         )
-        .expect_err("Oh My Pi approval is not exposed by its RPC adapter");
+        .unwrap_err();
         assert!(matches!(
             error,
             DirectControlError::Capability(CapabilityGateError::Unsupported { .. })
@@ -4563,33 +4374,28 @@ mod tests {
     #[test]
     fn provider_native_nested_text_errors_and_tool_results_stay_at_adapter_boundary() {
         use serde_json::json;
-        for provider in [
-            DirectProvider::ClaudeCode,
-            DirectProvider::Gemini,
-            DirectProvider::OhMyPi,
-        ] {
-            let text = provider
-                .decode_native_frame(&frame(
-                    provider,
-                    json!({"type":"assistant","content":[{"text":"first"},{"text":"second"}]}),
-                ))
-                .unwrap();
-            assert!(
-                matches!(text.typed, TypedProviderEvent::Message { content, .. } if content == "firstsecond")
-            );
-            let failed = provider.decode_native_frame(&frame(provider, json!({"type":"tool_result","tool_use_id":"tool-id","is_error":true,"content":[{"text":"details"}]}))).unwrap();
-            assert!(
-                matches!(failed.typed, TypedProviderEvent::ToolCall { id: Some(id), status: AgentRuntimeToolStatus::Failed, result: Some(Value::Array(_)), .. } if id == "tool-id")
-            );
-            let error = provider
-                .decode_native_frame(&frame(
-                    provider,
-                    json!({"type":"protocol_error","error":{"message":"wire failed"}}),
-                ))
-                .unwrap();
-            assert!(
-                matches!(error.typed, TypedProviderEvent::Error(error) if error.kind == AgentRuntimeErrorKind::ProtocolFailed && error.message == "wire failed")
-            );
-        }
+        let provider = DirectProvider::ClaudeCode;
+        let text = provider
+            .decode_native_frame(&frame(
+                provider,
+                json!({"type":"assistant","content":[{"text":"first"},{"text":"second"}]}),
+            ))
+            .unwrap();
+        assert!(
+            matches!(text.typed, TypedProviderEvent::Message { content, .. } if content == "firstsecond")
+        );
+        let failed = provider.decode_native_frame(&frame(provider, json!({"type":"tool_result","tool_use_id":"tool-id","is_error":true,"content":[{"text":"details"}]}))).unwrap();
+        assert!(
+            matches!(failed.typed, TypedProviderEvent::ToolCall { id: Some(id), status: AgentRuntimeToolStatus::Failed, result: Some(Value::Array(_)), .. } if id == "tool-id")
+        );
+        let error = provider
+            .decode_native_frame(&frame(
+                provider,
+                json!({"type":"protocol_error","error":{"message":"wire failed"}}),
+            ))
+            .unwrap();
+        assert!(
+            matches!(error.typed, TypedProviderEvent::Error(error) if error.kind == AgentRuntimeErrorKind::ProtocolFailed && error.message == "wire failed")
+        );
     }
 }

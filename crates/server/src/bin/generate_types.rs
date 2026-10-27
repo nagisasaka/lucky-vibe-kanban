@@ -452,8 +452,6 @@ fn generate_types_content() -> String {
         executors::provider_policy::AgentProviderReadiness::decl(),
         executors::executors::claude::ClaudeEffort::decl(),
         executors::executors::claude::ClaudeCode::decl(),
-        executors::executors::gemini::Gemini::decl(),
-        executors::executors::oh_my_pi::OhMyPi::decl(),
         executors::executors::codex::Codex::decl(),
         executors::executors::codex::SandboxMode::decl(),
         executors::executors::codex::AskForApproval::decl(),
@@ -606,14 +604,6 @@ fn generate_schemas() -> Result<HashMap<&'static str, String>, serde_json::Error
         (
             "claude_code",
             generate_json_schema::<executors::executors::claude::ClaudeCode>()?,
-        ),
-        (
-            "gemini",
-            generate_json_schema::<executors::executors::gemini::Gemini>()?,
-        ),
-        (
-            "oh_my_pi",
-            generate_json_schema::<executors::executors::oh_my_pi::OhMyPi>()?,
         ),
         (
             "codex",
