@@ -104,7 +104,7 @@ async fn inspect_source(
             let page = match store.discover_events(repo.id, after.as_deref(), 100) {
                 Ok(page) => page,
                 Err(error) => {
-                    tracing::warn!(%error, "Integration memory discovery unavailable");
+                    tracing::warn!(%error, "Auto-merge memory discovery unavailable");
                     break;
                 }
             };
@@ -178,7 +178,7 @@ pub(super) async fn submit_with_expected_target(
         ensure!(
             config.execution_mode.unwrap_or_default() == ExecutionMode::Code
                 && config.permission_policy != Some(PermissionPolicy::Plan),
-            "Formal Integration requires Code mode; independent Goal/Plan continuations cannot publish a host-validated result"
+            "Auto-merge requires Code mode; independent Goal/Plan continuations cannot publish a host-validated result"
         );
     }
     let cards: HashSet<_> = request.selections.iter().map(|s| s.card_id).collect();
@@ -227,7 +227,7 @@ pub(super) async fn submit_with_expected_target(
     let card_id = Uuid::new_v4();
     let workspace_id = Uuid::new_v4();
     let name = format!(
-        "Auto merge: {} → {}",
+        "Auto-merge: {} → {}",
         sources
             .iter()
             .map(|s| s.title.as_str())
@@ -404,12 +404,12 @@ pub(super) async fn reconcile_failed_admission(
         {
             (
                 "source_dirty",
-                "Source has uncommitted changes; finish the work before Integration",
+                "Source has uncommitted changes; finish the work before Auto-merge",
             )
         }
         None => (
             "integration_not_admitted",
-            "Formal Integration was not admitted; inspect source readiness, writer state and the selected target before a new request",
+            "Auto-merge was not admitted; inspect source readiness, writer state and the selected target before a new request",
         ),
     };
     Err(AdmissionFailure::Rejected { code, message })

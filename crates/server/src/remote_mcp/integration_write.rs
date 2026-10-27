@@ -34,8 +34,8 @@ struct CancelArgs {
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     [
-        definition::<ApproveArgs>("approve_integration", "Explicitly approve the exact current formal Integration gate through the UI decision path. Read get_integration(section=pending_gates) first and copy gate_id and expected. A validation gate approval is an explicit candidate-bound exception to a failed check, NOT a test pass. Requires merge permission. Stale evidence/target is rejected. Preserve request_id and identical input on retry; read get_operation and get_integration afterwards. Never infer approval from a Goal or review comment."),
-        definition::<CancelArgs>("cancel_integration", "Explicitly request cancellation of a formal Integration through the UI cancellation path. Requires merge permission. Acceptance is NOT stopped execution or released reservations. No Git undo after publication intent. Preserve request_id and input on retry; read get_operation and get_integration until cancellation_complete. Does not control Goals."),
+        definition::<ApproveArgs>("approve_integration", "Explicitly approve the exact current Auto-merge gate through the UI decision path. Read get_integration(section=pending_gates) first and copy gate_id and expected. A validation gate approval is an explicit candidate-bound exception to a failed check, NOT a test pass. Requires merge permission. Stale evidence/target is rejected. Preserve request_id and identical input on retry; read get_operation and get_integration afterwards. Never infer approval from a Goal or review comment."),
+        definition::<CancelArgs>("cancel_integration", "Explicitly request cancellation of an Auto-merge through the UI cancellation path. Requires merge permission. Acceptance is NOT stopped execution or released reservations. No Git undo after publication intent. Preserve request_id and input on retry; read get_operation and get_integration until cancellation_complete. Does not control Goals."),
     ].into_iter().map(|tool| {
         let mut value = serde_json::to_value(tool).unwrap();
         value["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":false});
@@ -49,7 +49,7 @@ async fn find(remote: &Remote, project: Uuid, id: Uuid) -> anyhow::Result<Integr
     let run = IntegrationRun::find(&remote.pool, id).await?;
     ensure!(
         run.project_id == project,
-        "Integration does not exist in this Project"
+        "Auto-merge does not exist in this Project"
     );
     Ok(run)
 }
@@ -105,13 +105,13 @@ pub(super) async fn call(
             let args: CancelArgs = arguments(input.clone())?;
             (args.project_id, args.integration_id, args.request_id, None)
         }
-        _ => anyhow::bail!("Unknown Integration decision tool"),
+        _ => anyhow::bail!("Unknown Auto-merge decision tool"),
     };
     find(remote, project, id).await?;
     let actions = remote
         .launch
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Integration service unavailable"))?;
+        .ok_or_else(|| anyhow::anyhow!("Auto-merge service unavailable"))?;
     let owned = remote.clone();
     let receipt = remote.operations().submit_and_wait(
         remote.principal_key(principal), request_id, project, name.into(), input,

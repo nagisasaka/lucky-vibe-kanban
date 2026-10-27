@@ -36,8 +36,8 @@ A maintained external OAuth authorisation server performs login, PKCE, client
 registration and revocation. LVK performs RFC 7662 introspection over HTTPS on
 every request, without a positive token cache. It checks active Bearer type,
 exact issuer and owner subject, resource audience, expiry/not-before and scopes.
-`lvk:read` is always required; mutations additionally need `lvk:write`, and formal
-Integration needs `lvk:merge`. An operator Project allowlist applies to every
+`lvk:read` is always required; mutations additionally need `lvk:write`, and
+Auto-merge needs `lvk:merge`. An operator Project allowlist applies to every
 target. Model-supplied identity is never authentication. Invalid tokens return
 401, missing read scope 403, and provider failure 503. Tokens/provider bodies
 are not logged or exported; dynamic SQL/IO diagnostics are sanitised.
@@ -65,7 +65,7 @@ provider/client login must be verified by the operator.
 | New execution | `remote_mcp/launch.rs` calls `workspaces/create.rs::create_and_start_workspace_admitted`; native executor defaults, Goal mode/budget and setup-gated Session/AgentRun paths remain authoritative |
 | Continuation/steering | Existing `sessions::follow_up_checked` and `agent_runs::dispatch_control`; exact Workspace/Session/current-run validation and saved executor configuration |
 | Questions | Existing Session question reservations, locks and blocking-input guards; revisions bind exact event/attempt; direct answers and expired attempts invalidate old requests |
-| Formal Integration | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, frozen validation, publication and Wiki handling; no MCP `git merge` path |
+| Auto-merge | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, frozen validation, publication and Wiki handling; no MCP `git merge` path |
 | State/activity | Existing Project/Issue/Workspace/Session/run/event/command records; reads observe direct UI/Codex changes without inference |
 | Memory/Wiki/verification | Read-only existing repository-memory store, bounded OpenWiki snapshot and immutable per-run Change Manifest; no provisioning, maintenance or other Workspace's private memory |
 | Code/diff/merge observations | Existing GitService plus libgit2 read helpers; no CLI staging, filters, hooks, fetch or target writes during reads |
@@ -85,12 +85,12 @@ cannot serve this boundary without creating unwanted chat state. The new unique
 `(verified issuer + subject, request_id)` identity, canonical input hash and CAS
 admission prevent identical retries from owning the action twice. Different
 input under the same key conflicts. Receipts store safe target IDs, timestamps
-and results; existing domain command/question/Integration records remain the
+and results; existing domain command/question/Auto-merge records remain the
 execution authorities, not a second task ledger.
 
 An owned task is created before asynchronous admission so losing the MCP caller
 does not cancel accepted work. Start calls wait only for native admission and
-return the receipt plus Workspace/Session/run or Integration identity and links.
+return the receipt plus Workspace/Session/run or Auto-merge identity and links.
 Unknown outcomes are never blindly replayed. Previous-process unfinished
 receipts and unreadable terminal evidence return `uncertain`. A formal admission
 error is reconciled under the canonical lock: an exact durable record establishes
@@ -129,7 +129,7 @@ is exported.
 | `list_run_commands`, `get_run_command` | Exact Project/Workspace/run and optional command ID; delivery state and paged direct instructions, never implied implementation completion |
 | `list_questions`, `get_question` | Project/Workspace/Session, then run/question/kind; exact question/options/revision; execution approvals link to LVK |
 | `list_project_repositories`, `list_repository_branches`, `get_execution_defaults` | Project and repository; eligible IDs/branches and current configured executor/native mode |
-| `get_integration_candidate`, `list_integrations`, `get_integration` | Project/repository/Workspace/target branch or Integration ID/section; observed heads, validation, publication and Wiki state |
+| `get_integration_candidate`, `list_integrations`, `get_integration` | Project/repository/Workspace/target branch or Auto-merge ID/section; observed heads, validation, publication and Wiki state |
 | `list_project_merge_status`, `get_workspace_merge_status` | Project or Project/Workspace/repository; bounded included/unmerged/unknown observations |
 | `get_workspace_memory`, `list_workspace_wiki`, `get_workspace_wiki_page` | Project/Workspace/repository and selected page; read-only bounded evidence with revision |
 | `get_workspace_verification`, `get_workspace_verification_test` | Project/Workspace/repository/run and optional test index; manifest-scoped counts/details, not current-worktree proof |
@@ -140,7 +140,7 @@ is exported.
 | `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
 | `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
-| `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Integration/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
+| `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Auto-merge/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
 `list_issues` additionally accepts optional `search`, `simple_id`, `status`
@@ -157,7 +157,7 @@ For Repository Wiki recovery, discover current Project/repository IDs, then read
 `get_repository_wiki`. Pass its `target_branch` as `expected_target_branch` and
 `current_source_commit` as `expected_source_commit` to `sync_repository_wiki`.
 The saved target and source are checked under the existing maintenance lock;
-active writers, unresolved Integration, branch and publication guards remain in
+active writers, unresolved Auto-merge, branch and publication guards remain in
 the UI's common path. Omit `from_commit` for current-source reconciliation, or
 pass a SHA for the UI's since-commit scope. Missing Wiki requires explicit
 initialisation in Repository settings; this tool cannot start Bootstrap.
@@ -174,7 +174,7 @@ latest maintenance identities before requesting another run. Public error codes
 omit private diagnostics; retained details remain in the existing execution UI.
 
 `start_integration` accepts optional `skip_validation`: `true` skips additional
-Integration validation (unverified), `false` runs it, and omission or `null`
+Auto-merge validation (unverified), `false` runs it, and omission or `null`
 inherits the server's `integration_skip_validation` preference at admission.
 The start receipt's `result.skip_validation` and every `get_integration` section's
 `skip_validation` report the saved, resolved boolean, even after the preference
@@ -183,7 +183,7 @@ conflict approval, writer settlement, publication or Wiki requirements.
 Retry with the same `request_id` and identical payload; changing the flag,
 including adding or removing it, follows the existing payload mismatch rule.
 
-## Explicit Integration approval and cancellation
+## Explicit Auto-merge approval and cancellation
 
 Read `get_integration` with `section: "pending_gates"` for the existing saved UI
 resolution review or validation gate. The current contract uses `integration_id`,
@@ -203,7 +203,7 @@ An old gate, changed revision/candidate/source scope, or moved target is rejecte
 `resolution_review` approves the saved conflict resolution; `validation_exception`
 explicitly accepts that check's candidate-bound risk and **does not** mark it passed.
 Review text is untrusted evidence. If any text is truncated, inspect the complete
-review in the Integration UI before deciding. This is not automatic approval or
+review in the Auto-merge UI before deciding. This is not automatic approval or
 Goal control. The existing UI read model supplies the evidence; no new gate store
 or independent approval engine is introduced.
 
@@ -217,13 +217,13 @@ stays failed even if the target later moves back; inspect fresh evidence before 
 new explicit decision. Never replay an uncertain operation under a new key.
 
 A receipt's `status: "succeeded"` describes completion of the tool call, not the
-Integration. `decision_accepted` identifies approval; `cancellation_requested`
+Auto-merge. `decision_accepted` identifies approval; `cancellation_requested`
 identifies accepted/already requested cancellation. A late cancellation after
 publication can return false. Read `get_integration(section: "summary")` for the
 current `lifecycle` snapshot: `cancel_requested`, `terminal`, `publication_intent`,
 `published`, `reservations_released`, and `cancellation_complete`. Cancellation is
 complete only when status is `cancelled` **and** the engine has released all
-Integration reservations. The lifecycle snapshot carries its own revision and
+Auto-merge reservations. The lifecycle snapshot carries its own revision and
 can be newer than other summary evidence. No polling drives or releases the engine.
 
 Targeted validation lives in `remote_mcp::integration_write_tests`, the HTTP
@@ -323,7 +323,7 @@ The operator must still configure a real HTTPS/provider/client and owner/Project
 allowlist, perform an authorised rollout, install the connection plus Skill in
 ChatGPT Web and execute the guide's disposable-Project checklist. Record date,
 plan/conversation mode, installation path, read/write/consent results, link
-return, safe Integration and personal-memory settings/observation. No personal
+return, safe Auto-merge and personal-memory settings/observation. No personal
 memory content belongs in fixtures. Web availability, OAuth login and actual
 conversation-mode memory behaviour are explicitly unverified.
 

@@ -326,7 +326,7 @@ impl DecisionExpectation {
                 && Some(self.base_commit.as_str()) == run.payload.base_commit.as_deref()
                 && Some(self.candidate_commit.as_str()) == run.payload.result_commit.as_deref()
                 && self.scope_digest == scope_digest(run),
-            "STALE_CANDIDATE: read the current Integration and pending gate again"
+            "STALE_CANDIDATE: read the current Auto-merge and pending gate again"
         );
         Ok(())
     }

@@ -1575,7 +1575,7 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
         <p className="text-sm text-low">
           通知対象Run: {notifiedRun.summary.agent_run_id} —{' '}
           {(notifiedRun.timeline?.state ?? notifiedRun.summary.state)?.status}
-          。テスト・Integration・公開の結果は別途確認してください。
+          。テスト・自動マージ・公開の結果は別途確認してください。
         </p>
       )}
       {goalProgressNode}

@@ -1,18 +1,18 @@
 ---
-title: "Automatic merge and human review"
-description: "Merge selected commits in order, test each cumulative result, and review AI resolutions in a visible Integration Workspace."
+title: "Auto-merge and human review"
+description: "Merge selected commits in order, test each cumulative result, and review AI resolutions in a visible Auto-merge Workspace."
 ---
 
 ## Start from the Board
 
 Select one Workspace per Card, the observed source commits, their merge order,
 and the local target branch. Starting creates one ordinary Board Card named
-`Auto merge: … → target`, with a linked Integration Workspace. The Card,
+`Auto-merge: … → target`, with a linked Auto-merge Workspace. The Card,
 Workspace, link and request are saved together. Repeated delivery of that request
 returns the same execution. Queued work is visible before the agent starts.
 
-The Integration Workspace appears in the normal Workspace list and beneath its
-Card on the Board. Open it there or use **Open integration Workspace** in the
+The Auto-merge Workspace appears in the normal Workspace list and beneath its
+Card on the Board. Open it there or use **Open Auto-merge Workspace** in the
 start dialog. Conversation, file differences, test results, resolution review,
 additional instructions and cancellation are available in that Workspace.
 Existing provider questions and tool approvals remain available too.
@@ -25,7 +25,7 @@ reselected; after admission the selected commit stays fixed.
 
 ## Merge and test each source
 
-The target HEAD at preparation is base B. The Integration merges the first source
+The target HEAD at preparation is base B. The Auto-merge merges the first source
 on its own branch and submits a committed candidate. LVK runs the applicable
 validation commands on that candidate. After validation and any required human
 review, it moves to the next source in the same Workspace and Session.
@@ -50,7 +50,7 @@ candidate. Completed steps retain their original results.
 Failed and unexecuted development checks remain part of the evidence. The agent
 must distinguish a documented successful retry from an unresolved obligation;
 it cannot discard a check just because it failed or is unavailable. If records
-do not establish an equivalent command or justify its removal, the Integration
+do not establish an equivalent command or justify its removal, the Auto-merge
 pauses with a concrete question. Use additional instructions in the Workspace
 to clarify it. The Workspace shows the proposed commands, development evidence,
 prerequisites and exclusions. The host requires an explanation when a previous
@@ -77,7 +77,7 @@ diff is also available for the full change.
 - Enter instructions and choose **Request revision** to reject the current
   proposal and ask for another resolution. Earlier proposals remain in history;
   the new candidate is tested and reviewed again.
-- **Cancel Integration** stops the operation before publication.
+- **Cancel Auto-merge** stops the operation before publication.
 
 Approval is an explicit UI decision, not text in a prompt. The agent cannot
 approve its own result. Changing the candidate or validation plan invalidates
@@ -103,7 +103,7 @@ can ask the agent to repair code and submit a freshly tested candidate.
 
 Storage errors, an unconfirmed writer, a dirty candidate checkout and target
 advancement are execution problems. Repair the environment and resume the same
-Integration where possible. Preparation retries reuse the existing Card and
+Auto-merge where possible. Preparation retries reuse the existing Card and
 Workspace. If the target advanced, make a new explicit selection against it.
 Cancellation never rolls back an already published target.
 
@@ -113,7 +113,7 @@ LVK advances the local target to the exact final tested and approved commit,
 provided the target still equals B. It does not create another merge commit at
 publication. No push, PR or deployment is implied.
 
-Successful publication moves the originally selected Cards and the auto-merge
+Successful publication moves the originally selected Cards and the Auto-merge
 Card to Done. There is no separate requirements-completion assessment: Card
 text, source links and other work in progress do not disqualify a selected Card.
 The column update and its receipt commit together, so a retry does not move a
@@ -128,7 +128,7 @@ retry pending semantic bookkeeping without merging again.
 
 ## Compatibility and scope
 
-Existing non-sequential Integration runs retain their saved validation flow.
+Existing non-sequential Auto-merge runs retain their saved validation flow.
 The sequential contract applies to newly admitted runs. The underlying ownership
 record still routes agent commands, cancellation and publication; visibility does
 not grant a second concurrent writer access to a candidate under validation.

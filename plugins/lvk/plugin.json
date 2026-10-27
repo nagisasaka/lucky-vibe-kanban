@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lvk",
   "version": "0.1.0",
-  "description": "Turn agreed work into LVK Issues and existing agent executions, and inspect questions, changes and formal Integration results.",
+  "description": "Turn agreed work into LVK Issues and existing agent executions, and inspect questions, changes and Auto-merge results.",
   "extensions": {
     "com.openai": {
       "interface": {

@@ -223,7 +223,7 @@ pub async fn workspace_owner(pool: &SqlitePool, id: Uuid) -> Result<Option<Uuid>
 pub async fn guard_workspace(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
     if let Some(run) = workspace_owner(pool, id).await? {
         return Err(sqlx::Error::Protocol(format!(
-            "Workspace reserved by Integration {run}; inspect /api/integrations/{run}"
+            "Workspace reserved by Auto-merge {run}; inspect /api/integrations/{run}"
         )));
     }
     Ok(())
@@ -250,12 +250,12 @@ pub async fn guard_agent_dispatch(
             || !matches!(status.as_str(), "preparing" | "integrating")
         {
             return Err(sqlx::Error::Protocol(format!(
-                "Integration {id} does not permit new Agent dispatch in phase {status}; use Board progress/Cancel or a new explicit Integration"
+                "Auto-merge {id} does not permit new Agent dispatch in phase {status}; use Board progress/Cancel or a new explicit Auto-merge"
             )));
         }
     } else if let Some(owner) = owner {
         return Err(sqlx::Error::Protocol(format!(
-            "Source Workspace reserved by Integration {owner}"
+            "Source Workspace reserved by Auto-merge {owner}"
         )));
     }
     Ok(())
@@ -270,8 +270,8 @@ impl IntegrationRun {
     ) -> anyhow::Result<()> {
         // The request, Card and linked Workspace are one admission transaction.
         // Retries return the same run, including while it is waiting for the target.
-        let card_id = self.payload.card_id.context("Missing Integration Card")?;
-        let workspace_id = self.workspace_id.context("Missing Integration Workspace")?;
+        let card_id = self.payload.card_id.context("Missing Auto-merge Card")?;
+        let workspace_id = self.workspace_id.context("Missing Auto-merge Workspace")?;
         let target = self
             .target_ref
             .strip_prefix("refs/heads/")
@@ -372,7 +372,7 @@ impl IntegrationRun {
             current.status == "blocked"
                 && !current.cancel_requested
                 && !current.payload.publication_intent,
-            "Integration no longer awaits this decision"
+            "Auto-merge no longer awaits this decision"
         );
         ensure!(
             current.payload.gates[index].decision.is_none()
@@ -497,7 +497,7 @@ impl IntegrationRun {
     /// half-prepared product must never start a new child just because its
     /// dispatcher lease disappeared. Keep reservations until stop confirmation.
     pub async fn fence_interrupted_preparations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE integration_runs SET status='cancelling',error='Preparation interrupted by service restart; confirm the accepted execution has stopped, inspect the retained Workspace, then resume this Integration',updated_at=datetime('now','subsec') WHERE status='preparing'")
+        sqlx::query("UPDATE integration_runs SET status='cancelling',error='Preparation interrupted by service restart; confirm the accepted execution has stopped, inspect the retained Workspace, then resume this Auto-merge',updated_at=datetime('now','subsec') WHERE status='preparing'")
             .execute(pool).await?;
         Ok(())
     }
@@ -565,7 +565,7 @@ impl IntegrationRun {
                 .bind(resource_key(source.selection.card_id)).fetch_optional(&mut *tx).await?;
             if owner.is_some_and(|owner| owner != id) {
                 source.done_result =
-                    Some("not changed: Card reserved by another Integration".into());
+                    Some("not changed: Card reserved by another Auto-merge".into());
                 continue;
             }
             sqlx::query("DELETE FROM integration_reservations WHERE run_id=? AND resource_kind='card' AND resource_key=?")
@@ -1236,7 +1236,7 @@ pub(crate) mod tests {
                 .done_result
                 .as_ref()
                 .unwrap()
-                .contains("another Integration")
+                .contains("another Auto-merge")
         );
         let status: Uuid = sqlx::query_scalar("SELECT status_id FROM local_issues WHERE id=?")
             .bind(run.payload.sources[0].selection.card_id)

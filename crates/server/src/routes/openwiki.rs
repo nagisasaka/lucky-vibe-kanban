@@ -282,7 +282,7 @@ async fn start_reconciliation_request(
         .bind(storage).fetch_one(&deployment.db().pool).await?;
     if pending {
         bail!(
-            "Formal Integration publication/semantic outbox is still being reconciled; source is retained"
+            "Auto-merge publication/semantic outbox is still being reconciled; source is retained"
         );
     }
     let store = RepositoryMemoryStore::for_repository(&repo.name, id)?;

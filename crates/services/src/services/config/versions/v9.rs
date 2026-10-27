@@ -60,7 +60,7 @@ pub struct Config {
     pub send_message_shortcut: SendMessageShortcut,
     #[serde(default = "default_hidden_agents")]
     pub hidden_agents: Vec<BaseCodingAgent>,
-    /// Default for new formal Integrations, including chat/MCP submissions.
+    /// Default for new Auto-merge runs, including chat/MCP submissions.
     #[serde(default)]
     pub integration_skip_validation: bool,
 }
