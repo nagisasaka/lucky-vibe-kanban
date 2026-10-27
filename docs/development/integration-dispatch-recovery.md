@@ -1,12 +1,12 @@
-# Formal Integration dispatch recovery
+# Auto-merge dispatch recovery
 
 ## Current source: host-owned merge engine (2026-10-20)
 
-New Integrations use Git for every ordinary merge. AI is created only when
+New Auto-merge runs use Git for every ordinary merge. AI is created only when
 `merge-tree` reports a conflict. The full conflict instruction and immutable
-Create identity are saved before dispatch; there is no Integration-wide
+Create identity are saved before dispatch; there is no Auto-merge-wide
 Orchestration node, reused AgentRun, or Retry/Steer step hand-off. Each conflict
-job gets a fresh AgentRun in the same Integration Workspace/Session. It stages
+job gets a fresh AgentRun in the same Auto-merge Workspace/Session. It stages
 resolutions; the host verifies the merge identity/index, creates the merge commit,
 records its OID before moving the private branch, and requests candidate-bound
 human review. Approval continues the Git loop without another agent.

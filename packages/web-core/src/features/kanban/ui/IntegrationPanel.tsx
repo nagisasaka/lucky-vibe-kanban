@@ -479,7 +479,7 @@ export function IntegrationPanel({
                 <section
                   key={run.id}
                   className="border bg-panel p-base space-y-half"
-                  aria-label={`Integration ${run.id}`}
+                  aria-label={`${t('integrationPanel.title')} ${run.id}`}
                 >
                   <div className="flex flex-wrap items-center gap-base">
                     <strong>

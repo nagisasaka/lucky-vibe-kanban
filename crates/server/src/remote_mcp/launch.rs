@@ -115,10 +115,10 @@ pub(super) trait LaunchActions: Send + Sync {
         _request: integrations::GateDecisionRequest,
         _expected: integrations::DecisionExpectation,
     ) -> anyhow::Result<()> {
-        anyhow::bail!("Integration decision service unavailable")
+        anyhow::bail!("Auto-merge decision service unavailable")
     }
     async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
-        anyhow::bail!("Integration cancellation service unavailable")
+        anyhow::bail!("Auto-merge cancellation service unavailable")
     }
 
     async fn wiki_status(&self, _repository: Uuid) -> anyhow::Result<Value> {
@@ -223,7 +223,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
-    let mut merge=serde_json::to_value(definition::<MergeArgs>("start_integration","Start existing formal Integration for an explicitly frozen selection and target HEAD. Requires merge permission; preserves existing validation, writer settlement, publication and Wiki rules. Does not directly merge branches or mark Issues Done.")).unwrap();
+    let mut merge=serde_json::to_value(definition::<MergeArgs>("start_integration","Start Auto-merge for an explicitly frozen selection and target HEAD. Call this feature 自動マージ in Japanese and Auto-merge in English in explanations, start confirmations, progress and result reports. Requires merge permission; preserves existing validation, writer settlement, publication and Wiki rules. Mechanical merges may not use AI; required decisions or approvals pause execution. Code merge and subsequent Wiki updates are separate outcomes. Does not directly merge branches or mark Issues Done.")).unwrap();
     merge["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     merge["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:merge"]}]});
@@ -232,7 +232,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         serde_json::from_value(merge).unwrap(),
         definition::<RepositoriesArgs>(
             "list_project_repositories",
-            "List current Project repository IDs and default branches in bounded pages, including configured Worktree defaults. Host paths are omitted. Integration membership may be narrower than creation defaults.",
+            "List current Project repository IDs and default branches in bounded pages, including configured Worktree defaults. Host paths are omitted. Auto-merge membership may be narrower than creation defaults.",
         ),
         definition::<BranchArgs>(
             "list_repository_branches",
@@ -540,7 +540,7 @@ pub(super) async fn call(
                 match launch.integration(request,args.expected_target_commit).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
                     Err(integrations::AdmissionFailure::Rejected {code,message})=>("failed",json!({"code":code,"message":message,"integration_request_id":operation,"integration_accepted":false,"url":url})),
-                    Err(integrations::AdmissionFailure::Uncertain)=>("uncertain",json!({"integration_request_id":operation,"url":url,"message":"Inspect Integration records before any new request; admission may have completed"})),
+                    Err(integrations::AdmissionFailure::Uncertain)=>("uncertain",json!({"integration_request_id":operation,"url":url,"message":"Inspect Auto-merge records before any new request; admission may have completed"})),
                 }
             }).await?
         }

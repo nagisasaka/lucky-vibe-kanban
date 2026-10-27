@@ -34,7 +34,7 @@ pub(super) fn require_private_branch(
     let expected = format!("refs/heads/{branch}");
     ensure!(
         expected != target && git(root, &["symbolic-ref", "HEAD"])? == expected,
-        "Integration worktree is not on its private branch; refusing a Git mutation"
+        "Auto-merge worktree is not on its private branch; refusing a Git mutation"
     );
     Ok(())
 }
@@ -121,7 +121,7 @@ pub(super) fn prepare_conflict(root: &Path, before: &str, source: &str) -> anyho
 pub(super) fn resolution_tree(root: &Path, before: &str, source: &str) -> anyhow::Result<String> {
     ensure!(
         git(root, &["rev-parse", "HEAD"])? == before,
-        "Agent changed the integration branch"
+        "Agent changed the Auto-merge branch"
     );
     ensure!(
         git(root, &["rev-parse", "MERGE_HEAD"])? == source,
@@ -177,7 +177,7 @@ pub(super) fn candidate(
             source,
             "-m",
             &format!(
-                "Integrate source {} (Integration {id}, step {})",
+                "Integrate source {} (Auto-merge {id}, step {})",
                 source,
                 step + 1
             ),
