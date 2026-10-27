@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:700f1a7ff3e875036925942220cf37820c21d5096b375816b75fa667659f0279",
+  "pageVersion": "sha256:68baa9b67443dba61134a44d6674c58c1260c4f33b50923b380793d52a64085d",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -765,8 +765,8 @@
       "statement": "repository orchestration Skill は既存検証証拠が十分な場合の省略と完了後の理由・残るリスク報告を記録し、公開前の必須試験と候補証拠を区別する周辺方針を保持する。",
       "evidence": [
         {
-          "resource": "repo://skills/lvk-orchestration/SKILL.md#L120-L126",
-          "version": "repo-lines-v1:sha256:484a2b44c929dac370898c00a5637a4d929eccd48a3889cf80d55f7f75c81164:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTBkOWI1ZGM1YjNjYzIxZGU1OTAxMGRkYjRhMDU1ODczNjY2OGE4YjFhY2M3MTI3ZDRhMTI4ZTFlNzU0OTZlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIzM2Q1Njg4NWUwMTkwZTg3MWEyZWVmZDMyNDJlMmQzMTYxZGVjY2M4M2NjNDA2YzQ0NDRkMTZhZGUyYjA4OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDUwMmYxNzJmNTQ4MjE1NTM2NjQ0NTIwMjQ1MmU3YTg0Yzc1OTRmZDkxNzZiYjBmODdlMzdkMGM4ZWU0ODU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmQyNjIzMDYyNGVkOTBmNDM3NDJmZjM4NzU0YWQwODk5ZTUxOGRhYjhlYTU5ZjBlYzk1N2UzY2QzNGE1ZjBmYiJ9"
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L134-L139",
+          "version": "repo-lines-v1:sha256:525cdecacb35cb6b7088365d5db10c3569b4055eec1e8b76e2f7876b7e89c7df:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJjNTk1M2RiMGVkYjM3ZDc4YmExMTdjMDQ4OTdlYThkMGFkNDhkYmUxNGMzNjc2YThiOWMzZmRiZmM5MTVkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzMzZmU1MDcxNGFjNzI5YWI0YTMzNWM0Nzg1OWU3OWVmMjNiYzQ4ZTk0MWM3ZjRhOWQ1NTIyMGNjZjgxMjUyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhiYjgyYWQwNzVhY2NhMGY3YTFhODVkMmNlOTdkNzA0Y2RiZDFhYzY2MWFjYjIyMGEwMmYyMWRkNWE5MDIyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2RlM2M4OWRkNTJjODFlZTYxMzZlY2E2MjE2ZDA5NWI3MmU5YzY4OGYwMGM1YjAwZWE2OTMzOWNhZTc0MjU5MiJ9"
         }
       ]
     },
@@ -897,10 +897,48 @@
           "version": "repo-lines-v1:sha256:431beda9573b2f34cdb2503c3f631c27d217a7447fbbeb74c7802703dfc77406:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViOTZhZjIxMzllYWRmNGJkYWU2NDc2NDlmMGZmNzIxYWMzZmMzNGVmNTlmNzcwODAyODI1Mjk5ZGRlMjljMjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTU4MDA3MGY1NTVjNGE5NWI4M2E2ZTA0NTk1NzVkODg1NGQ1YzEzODQ1MGJkNDMwZjE5NmM2NzcwNTcyYTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNWVlOTlhNWQyZTYwYTlmNDZhOGJjNDVjY2JjZmZhOTJjZmY1OTE4MGE4MjE1YjM3NzY4N2JiMDA2NzA5YTcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_9975eee0b2464e368e6a1c5525ca528d",
+      "statement": "orchestration Skillの証拠評価はtested SHA、候補差分、競合解消、新たな未検証範囲を対象とし、AIの限定試験計画とLVKの設定済み追加検証セットの実行・省略を区別する。",
+      "evidence": [
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L134-L139",
+          "version": "repo-lines-v1:sha256:525cdecacb35cb6b7088365d5db10c3569b4055eec1e8b76e2f7876b7e89c7df:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJjNTk1M2RiMGVkYjM3ZDc4YmExMTdjMDQ4OTdlYThkMGFkNDhkYmUxNGMzNjc2YThiOWMzZmRiZmM5MTVkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzMzZmU1MDcxNGFjNzI5YWI0YTMzNWM0Nzg1OWU3OWVmMjNiYzQ4ZTk0MWM3ZjRhOWQ1NTIyMGNjZjgxMjUyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhiYjgyYWQwNzVhY2NhMGY3YTFhODVkMmNlOTdkNzA0Y2RiZDFhYzY2MWFjYjIyMGEwMmYyMWRkNWE5MDIyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2RlM2M4OWRkNTJjODFlZTYxMzZlY2E2MjE2ZDA5NWI3MmU5YzY4OGYwMGM1YjAwZWE2OTMzOWNhZTc0MjU5MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3694cd797d144a5bbb54cdae565a93e9",
+      "statement": "LOCAL-224の記録ではorchestration Skillをdev plugin v1.0.33へ全文同期し、以前の限定同期を履歴として扱う。lvk-workは別責務の操作Skillで全文置換対象ではない。",
+      "evidence": [
+        {
+          "resource": "repo://docs/development/auto-merge-naming.md#L25-L46",
+          "version": "repo-lines-v1:sha256:4a8f3b9fc0cb4d2327201a8efa6287e59f1604fba2446054319c648c95a654e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxODNiM2VkNzAxY2Q2MzUyNTYzOGY0ZjEwYjczODVjMmZiNTA1M2IwNTkzM2YwMmIyMzJmZjI5YTU5NWZkYzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhODE4YjUzYzNhZmI5MTM2MTU2OTU1ODJiYWY1NDQ3MGYwYTI3N2E3MzdhNmYzMGJhZjdhNjAyZDhmODU5YzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiZGQ1MDNhMTFjNDBiYTZlODdlZTE0OGI0MDliZThkNjdlNTI4Y2VmNjBmYmVkNzUwYTcxMzc0YTk4ZDYwN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5YjZkMTkwMDg5YTYwYTY0ODc1OTZlZjQ5MWRjODNmYTY1ZmQ5ZWM2YmU0ZDNiZDFiNjM0NmMyZGViYWUzNGQifQ"
+        },
+        {
+          "resource": "repo://plugins/lvk/skills/lvk-work/SKILL.md#L1-L29",
+          "version": "repo-lines-v1:sha256:5b8a21a10dd2701db8814dbc4f0270b588f421950d7e8d11d6de3bb37c7607fd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjYmZkNjVjMTE3YTNjY2NhYmM3Y2YzNmFjOTdiN2M1NzBmM2JhMTc1Y2Q0ZDY2NDc2ODdkZDg1NWRkMTUzMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1ZjgyYzYzNDU0NjZhOWUyZDlhNWEzM2UxNDFlYmM3MWE5MTkwOTBmNjc2NTA4Y2RkNDc2NjMyMTA0Y2RkYjgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0132aad6047d42a6934cca29b745dd69",
+      "statement": "orchestrationの運用指針は明示調査にWorkspace内の必要な再現・fixture・testを含める一方、製品変更採用・公開・共有live状態変更を許可とみなさず、最新許可と過去制約を区別しても実行拒否を回避しない。独立worktreeだけでDBや外部serviceは隔離されない。",
+      "evidence": [
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L119-L124",
+          "version": "repo-lines-v1:sha256:c344efc59e78588908923a754c58bbfef3f9d37d555bca5934489b8408c2fcdd:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWI1ZDkxZWY3N2FiOTFiNWQ4NjBlZDkxNzZiNmNiMDgwY2I3YzA3ZTRkYmExMjcyYmZlYTBkNjhiMzE1ZWYwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdiNGJkZTIwYjkwYzFiOGYyNDM1MDFiMDlkOGZjZDhiMjEyNjBjYzMzMDA1MmVmYWUyZmRiZWM3OWE0YTkzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzNiMzAxZGQyYzYwOWZiNTJkMjM5NTgyNmY0OGJkZmMzODVhNTQzZTY2NTQxZTg2MzkyNWYwNmJkNmM3OWJhNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzVjMTk2YTNhZjIyZDY0NTg3OGNmODVhNzdlYjkxYjE1Mjg2NGZjODE3ZjY5NmFkYjdiOWU0ZDhkZTQxNTMxMSJ9"
+        },
+        {
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L22-L26",
+          "version": "repo-lines-v1:sha256:a9005bcca40d0686c95690b31951bb3e7bac36d0bf93f7ea29a73c5c35bc9684:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDM1ODE1NTE4MWM1MDk1MzA2MWRmM2MzZGM5NGQ4ZTBiMjdiMGYxZjg5MzJhZjA1YzM0MjViZjI2YjAzZjg4YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWRlN2QwMTU3MmRmNzMyZjkzYmVkNTUwNTIzNDIyMTE1MDAwM2RhNjUzNDRiZTYwNzhkNTIwM2VhMzgzMzk0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTk4ODdlYmJhZWQ1MWEyOWViNzE1ZmRmZDI5MmMyM2IzOTkzYjg3MTRjYmUwOWU1OTRlYjYxMjg0MTI4NjBiYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2ZkYWVlNWU0ZmE4NDlmOTZjY2ZhZGNlYjJlNDU5ZTE2ODk2MTZhYTg2ODgxY2UzYmU0NjVjOGQyYWYzNjU5ZiJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:39:07.736Z"
+    "at": "2026-10-27T07:29:50.767Z"
   }
 }

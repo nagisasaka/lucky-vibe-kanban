@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/git/src/reference.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
+  - id: openwiki-source-28437ab4b181623345af79bc
+    resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-d9fe6f50a365b8b34a14b1e4
@@ -116,10 +118,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T07:29:50.767Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -250,15 +252,15 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 画面と対話では「自動マージ / Auto-merge」を使う。以下の tool 名・JSON key は互換識別子として保持される。[名称と互換境界の正本](../concepts/formal-integration.md#名称と互換境界)を参照する。
 
-`start_integration` は既存の自動マージ 受付に、任意の `skip_validation` を渡す。`true` は追加の受入検証を省略する未検証 run、`false` は検証必須、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L468-L502)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
+`start_integration` は既存の自動マージ 受付に、任意の `skip_validation` を渡す。`true` は設定済みの追加自動マージ検証を省略し、`false` はその検証を実行する選択、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。この flag は既存検証証拠の有無を示さない。証拠評価と保存上の NotRun の区別は [検証方針の正本](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L513-L543)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
 
 受付成功 receipt の `result.skip_validation` と、`get_integration` の全 section（`summary` / `sources` / `validation` / `pending_gates`）の `skip_validation` は保存済みの解決済み boolean を返す。後から server preference が変わっても、再接続時に現在の設定から推測し直す必要はない。この値は検証件数と独立しており、ゼロ件を「省略」や「合格」と読み替えない。起動 receipt の `integration_accepted` は受付結果であり、自動マージ の完了、`published`、Wiki の確認結果は別に読む。[起動結果](../../crates/server/src/remote_mcp/launch.rs#L177-L189)・[保存値と検証件数の読取](../../crates/server/src/remote_mcp/integration_read.rs#L107-L175)
 
-再送は同じ `request_id` と元の JSON 入力を保持する。比較するのは解決後の boolean ではなく、key 順を正規化した**元の入力全体**の hash である。そのため、同じ既定値へ解決される場合でも、省略から `null` への変更、flag の追加・削除・値変更は既存 receipt の入力不一致となる。domain 受付単独の省略再送規則と、MCP receipt の規則を混同しない。[fingerprint](../../crates/server/src/remote_mcp/operations.rs#L31-L45)・[入力照合](../../crates/server/src/remote_mcp/operations.rs#L210-L228)・[省略/null の再送テスト](../../crates/server/src/remote_mcp/launch_tests.rs#L420-L490)
+再送は同じ `request_id` と元の JSON 入力を保持する。比較するのは解決後の boolean ではなく、key 順を正規化した**元の入力全体**の hash である。そのため、同じ既定値へ解決される場合でも、省略から `null` への変更、flag の追加・削除・値変更は既存 receipt の入力不一致となる。domain 受付単独の省略再送規則と、MCP receipt の規則を混同しない。[fingerprint](../../crates/server/src/remote_mcp/operations.rs#L31-L45)・[入力照合](../../crates/server/src/remote_mcp/operations.rs#L210-L228)・[省略/null の再送テスト](../../crates/server/src/remote_mcp/launch_tests.rs#L444-L514)
 
 この選択でも `lvk:read` と `lvk:merge`、Project / Repo / Issue / Workspace の関係、expected target / source commit の照合を通る。省略が変えるのは追加検証の方針であり、clean candidate、競合承認、writer の収束、target 一致、公開と取消の排他、Wiki receipt は引き続き別の条件である。全体の lifecycle と未検証結果の意味は [自動マージ の検証・公開契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を正本とする。[MCP の認可と関係検証](../../crates/server/src/remote_mcp/launch.rs#L423-L502)・[公開 guard](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1381)
 
-変更時には [schema の optional boolean/null](../../crates/server/src/remote_mcp/tests.rs#L281-L298)、[既定値二通り・四種の指定・再接続・全 section・不正型](../../crates/server/src/remote_mcp/launch_tests.rs#L420-L490)、[HTTP 経由の起動と read-only 取得](../../crates/server/src/remote_mcp/launch_tests.rs#L493-L569)、[domain の既定値解決](../../crates/server/src/routes/integrations/tests.rs#L357-L385)を確認する。これらは fixture による契約テストであり、実 ChatGPT/Auth0 接続の証拠ではない。この Sync では source とテスト内容を照合し、テストの再実行や live 接続確認は行っていない。
+変更時には [schema の optional boolean/null](../../crates/server/src/remote_mcp/tests.rs#L299-L319)、[既定値二通り・四種の指定・再接続・全 section・不正型](../../crates/server/src/remote_mcp/launch_tests.rs#L444-L514)、[HTTP 経由の起動と read-only 取得](../../crates/server/src/remote_mcp/launch_tests.rs#L517-L588)、[domain の既定値解決](../../crates/server/src/routes/integrations/tests.rs#L357-L385)を確認する。HTTP discovery の試験は生成 schema の「追加検証」と既存証拠を区別する説明文も固定する。内部 stdio の [catalog fixture](../../crates/mcp/src/task_server/tools/stdio_tests.rs#L75-L83) は `start_integration` を公開しないことを確認するため、HTTP tool と stdio tool の可用性を同一視しない。これらは fixture による契約テストであり、実 ChatGPT/Auth0 接続の証拠ではない。この Sync では source とテスト内容を照合し、テストの再実行や live 接続確認は行っていない。
 
 ## MCP から Integration を承認・取消する
 

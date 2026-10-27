@@ -85,7 +85,7 @@ sources:
 generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:04:01.883Z
+    at: 2026-10-27T07:29:50.767Z
 ---
 
 # Issue から実行・レビュー・統合まで

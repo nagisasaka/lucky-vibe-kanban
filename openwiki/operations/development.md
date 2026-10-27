@@ -76,6 +76,8 @@ sources:
     resource: repo://deploy/server/server.test.mjs
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
+  - id: openwiki-source-9e44bb74d3697078482d577d
+    resource: repo://docs/development/auto-merge-naming.md
   - id: openwiki-source-fd4e5484aac03297c6295350
     resource: repo://docs/development/cargo-cache.md
   - id: openwiki-source-d95a345bb2e865055223b40f
@@ -88,6 +90,8 @@ sources:
     resource: repo://package.json
   - id: openwiki-source-96cd4c94fb57fb4764608e3d
     resource: repo://packages/web-core/package.json
+  - id: openwiki-source-a6112f33b0e8d6ebc86d6702
+    resource: repo://plugins/lvk/skills/lvk-work/SKILL.md
   - id: openwiki-source-b7793decf9d7c9ba48e57e0f
     resource: repo://rust-toolchain.toml
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
@@ -134,10 +138,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
+generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-27T07:29:50.767Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -215,6 +219,19 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 ## 検証の対象を取り違えない
 
 repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [自動マージ の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-auto-merge-validation)
+
+<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L134-L139] heading anchor "L134-L139" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+既存証拠を十分と判断する際は、tested SHA、完了済み checks、候補との差分、競合解消、新たに未検証となる範囲を確認する。AI は必要な限定試験を計画し、LVK は repository に設定された追加検証セットを実行または省略する。「全セット」は設定された一覧であり、あらゆる試験や任意の部分選択を意味しない。省略判断は公開前の必須試験や実際の実行拒否を免除せず、成果物作成の build と重複試験も区別する。[証拠評価と責務](../../skills/lvk-orchestration/SKILL.md#L134-L139)。
+
+### 同梱 Skill の責務と調査範囲
+
+<!-- openwiki: broken internal link [../../docs/development/auto-merge-naming.md#L25-L46] heading anchor "L25-L46" does not exist in "../../docs/development/auto-merge-naming.md". Fix the href or restore the target, then delete this comment. -->
+<!-- openwiki: broken internal link [../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29] heading anchor "L1-L29" does not exist in "../../plugins/lvk/skills/lvk-work/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+`skills/lvk-orchestration/SKILL.md` は対話・設計・調査・実行調整の指針である。LOCAL-224 の記録は dev plugin v1.0.33 への全文同期を示し、以前の「名称差分のみ」「指定5段落のみ」は当時の限定範囲として残す。`plugins/lvk/skills/lvk-work/SKILL.md` は接続済み LVK の作業操作を担う別 Skill で、orchestration の配布コピーではない。[同期範囲の記録](../../docs/development/auto-merge-naming.md#L25-L46)・[作業操作の責務](../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29)。この区別を保ち、一方の同期を理由に他方を全文置換しない。
+
+<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L22-L26] heading anchor "L22-L26" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L119-L124] heading anchor "L119-L124" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
+orchestration の記録では、明示された調査には必要な独立 Workspace と、その中の再現コード・script・fixture・test が含まれる。一方、製品変更の採用、merge、公開、配備、共有環境・live data の変更はその調査許可に含まれない。最新の明示指示が過去の一時制約を更新したかを引継ぎ時に区別するが、実際の実行拒否は回避しない。独立 worktree は DB・資格情報・background process・外部 service の隔離を保証しない。[意図と許可の区別](../../skills/lvk-orchestration/SKILL.md#L22-L26)・[副作用の境界](../../skills/lvk-orchestration/SKILL.md#L119-L124)。これらは AI の運用指針であり、新しい API 権限や実行 engine ではない。
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |

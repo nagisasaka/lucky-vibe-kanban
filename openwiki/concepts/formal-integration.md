@@ -50,6 +50,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-9e44bb74d3697078482d577d
     resource: repo://docs/development/auto-merge-naming.md
+  - id: openwiki-source-a6728d75b2bdf1a00440e8fa
+    resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
     resource: repo://docs/development/integration-mcp-decisions.md
   - id: openwiki-source-db035046d01e3f24722812c8
@@ -70,10 +72,10 @@ sources:
     resource: repo://tests/integration-validation-settings/browser.mjs
   - id: openwiki-source-55dc8812ccee9a0d59fffb13
     resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-27T07:04:01.883Z" }
+generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:04:01.883Z
+    at: 2026-10-27T07:29:50.767Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -129,6 +131,9 @@ agent の責務は既存 index の競合解消と stage、および `ready` / `b
 この repository の設定は、`pnpm install --frozen-lockfile` → 実 frontend build → `pnpm run check` → `pnpm run lint` → `pnpm run backend:test` の順である。依存の準備も固定 plan に含めるため、source が設定を書き換えても当該 run の plan は変わらない。[設定](../../.lvk/integration-validation.json)
 
 省略 run は設定自体を読まず、検証を実行せず、summary と Manifest tests に unverified / NotRun、step に `validation_skipped` を保存する。省略 run と検証実行証拠・gate の混在、必須 run と省略済み step の混在は拒否する。clean・祖先・source 順序・target 一致・review・取消と公開の排他は維持する。[省略の検査](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1283)・[Manifest](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)。これは failed check の候補限定例外とは別で、成功した 自動マージ でも受入検証済みとは限らない。UI は次回用 preference と未検証表示を持つ。[UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+
+<!-- openwiki: broken internal link [../../docs/development/chatgpt-mcp.md#L176-L187] heading anchor "L176-L187" does not exist in "../../docs/development/chatgpt-mcp.md". Fix the href or restore the target, then delete this comment. -->
+`skip_validation` が表すのは、設定された追加の自動マージ検証を今回実行するかどうかであり、既存の検証証拠の有無ではない。既存証拠は tested SHA、候補との差分、競合解消、新たな未検証範囲に対応付けて評価する。省略 run の保存上の unverified / NotRun を過去の試験失敗や証拠不存在と同一視せず、逆に過去の成功を今回の追加検証成功にも読み替えない。[公開 MCP 契約](../../docs/development/chatgpt-mcp.md#L176-L187)・[実行時の省略記録](../../crates/server/src/routes/integrations/runtime.rs#L694-L709)。必要な検証を選ぶ AI の運用指針は [開発時の証拠評価](../operations/development.md#検証の対象を取り違えない)を参照する。
 
 ## 検証コマンドの編集と反映
 
