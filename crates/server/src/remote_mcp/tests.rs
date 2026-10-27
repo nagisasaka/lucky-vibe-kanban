@@ -304,6 +304,10 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
                 .unwrap();
             let schema = &integration["inputSchema"];
             assert_eq!(
+                schema["properties"]["skip_validation"]["description"],
+                "true skips the configured additional auto-merge validation; false runs it.\nThis flag does not indicate whether validation evidence already exists.\nOmit or null to inherit the server integration_skip_validation preference."
+            );
+            assert_eq!(
                 schema["properties"]["skip_validation"]["type"],
                 json!(["boolean", "null"])
             );
