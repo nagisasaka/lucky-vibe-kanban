@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-26T10:15:30.599Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -102,7 +102,7 @@ Session に渡す local File と作業先のコピーは [Workspace の添付](.
 
 ## 2. Setup の依存を満たす
 
-通常 Workflow では Attempt の row や graph が作られた時点で、実 worktree まで準備済みとは限らない。Agent dispatch で既存 container 準備を行い、Session の所属と Integration 予約を検査する。実行専用の内部環境は owner が準備した root を使い、閲覧や dispatch で勝手に再作成しない。[Workflow の準備境界](../architecture/workflow-runtime.md#作業場所の準備は実-dispatch-の責任)
+通常 Workflow では Attempt の row や graph が作られた時点で、実 worktree まで準備済みとは限らない。Agent dispatch で既存 container 準備を行い、Session の所属と 自動マージ 予約を検査する。実行専用の内部環境は owner が準備した root を使い、閲覧や dispatch で勝手に再作成しない。[Workflow の準備境界](../architecture/workflow-runtime.md#作業場所の準備は実-dispatch-の責任)
 
 Repo setup script の扱いは三つに分かれる。
 
@@ -126,7 +126,7 @@ completion event を取りこぼした watcher は DB の gate から追いつ�
 
 Agent の review API は Workspace 内に active AgentRun があれば拒否する。use_all_workspace_commits は Repo ごとの fork point を review context に使い、intent=Review、selected_skills なしで起動する。OpenWiki の independent Review と同じ隔離プロトコルではない。[review の起動](../../crates/server/src/routes/sessions/review.rs)
 
-関連 Card は Workspace 作成・予約だけでは現在列を変えず、確認された新しい実開始で対象の標準列から In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。In Review や Done の Card も追加実行の実開始で再び In Progress へ戻る。Starting や開始前の失敗だけでは Done を戻さない。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、正式 Integration の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
+関連 Card は Workspace 作成・予約だけでは現在列を変えず、確認された新しい実開始で対象の標準列から In Progress へ進む。成功後も関連 run が活動中なら待ち、条件が揃えば In Review になる。In Review や Done の Card も追加実行の実開始で再び In Progress へ戻る。Starting や開始前の失敗だけでは Done を戻さない。列が進まない場合は [開始根拠・手動優先・複数 Workspace の同期条件](../concepts/project-and-issue.md#kanban-と実行の同期契約)と AgentRun の失敗表示を確認する。In Review は成果物の検証や Git 公開の証拠ではなく、自動マージ の公開後 Done は別段階である。[列同期](../../crates/db/src/models/agent_runtime_kanban.rs#L13-L109)・[公開後の Done](../../crates/db/src/models/integration.rs#L541-L610)
 
 ## 並列変更を試してから正式統合する
 
@@ -134,13 +134,13 @@ Agent の review API は Workspace 内に active AgentRun があれば拒否す�
 
 組合せ試験には `POST /api/workspaces/<id>/integration/preview` がある。自分の base commit と peer の commit を明示し、Repo membership、各 commit がその Workspace branch に帰属する祖先であること、自分の checkout が指定 base に一致して clean なことを確認する。古い固定 commit は許すが、自動的に新 HEAD へ追従しない。自分を含む source は最大100件である。[preview の受付](../../crates/server/src/routes/parallel_context.rs)
 
-API が作るのは base からの detached worktree と固定 peer 一覧であり、peer の merge や tests を自動実行する API ではない。返す指示に従ってその試行先で組み合わせを検証し、元 Workspace の reset/stash、peer の修正、target/Card 更新、Wiki 執筆を持ち込まない。試行は通常 Workspace cleanup の外側の sibling directory に残し、調査後に明示的な worktree cleanup を行う。正式統合成功の証拠にはならない。[試行の用途](../../crates/server/src/routes/parallel_context.rs)、[保持と source ref 不変の test](../../crates/worktree-manager/src/worktree_manager.rs)
+API が作るのは base からの detached worktree と固定 peer 一覧であり、peer の merge や tests を自動実行する API ではない。返す指示に従ってその試行先で組み合わせを検証し、元 Workspace の reset/stash、peer の修正、target/Card 更新、Wiki 執筆を持ち込まない。試行は通常 Workspace cleanup の外側の sibling directory に残し、調査後に明示的な worktree cleanup を行う。自動マージ成功の証拠にはならない。[試行の用途](../../crates/server/src/routes/parallel_context.rs)、[保持と source ref 不変の test](../../crates/worktree-manager/src/worktree_manager.rs)
 
-検証コマンドを変更する場合は、先に Settings → Repositories の「正式Integrationの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 Integration を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
+検証コマンドを変更する場合は、先に Settings → Repositories の「自動マージの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 自動マージ を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
 
-local Board の **Integrate / Auto Merge** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source と観測 target は受付時に固定する。queue 先頭で preparation を始めるときも同じ target であることを要求し、前進していれば停止する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+local Board の **自動マージ** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source と観測 target は受付時に固定する。queue 先頭で preparation を始めるときも同じ target であることを要求し、前進していれば停止する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
 
-この [正式 Integration](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
+この [自動マージ](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
 
 外部会話からは `start_integration` の `skip_validation` で同じ検証方針を選び、受付 receipt と `get_integration` で保存済みの選択を確認できる。再接続時の入力一致と結果の読み分けは [MCP の検証方針・再送契約](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
 
@@ -148,7 +148,7 @@ local Board の **Integrate / Auto Merge** では、Repo・local target と各 C
 
 新規 run の通常 merge は host が進める。競合したときだけ有限の Agent job が index を解消し、利用者は保存された候補の解決差分を承認する。その後に次の source へ進み、全 source 完了後の最終候補で凍結 validation plan を実行する。失敗した required check は retry / 候補限定例外 / cancel の判断を待つ。[競合と承認](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[最終検証](../concepts/formal-integration.md#開発検証と-human-gate)
 
-Board の案内も現在は「順に取り込み、最後の候補を検証する」という流れを説明する。競合で止まったら実行 Workspace を開き、保存済みの解消説明と未検証・古い候補の表示を読み、必要に応じて詳細の差分を開く。説明が不十分なら承認せず確認する。固定候補のレビュー中に追加指示で修正する経路はなく、承認して続行するか Integration を中止する。[説明・操作条件の正本](../concepts/formal-integration.md#保存済み説明から候補をレビューする)・[Board の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1302-L1305)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
+Board の案内は変更の検証、必要な AI 競合解消、対象 branch への反映と判断・承認時の停止を説明する。競合で止まったら実行 Workspace を開き、保存済みの解消説明と未検証・古い候補の表示を読み、必要に応じて詳細の差分を開く。説明が不十分なら承認せず確認する。固定候補のレビュー中に追加指示で修正する経路はなく、承認して続行するか 自動マージ を中止する。[説明・操作条件の正本](../concepts/formal-integration.md#保存済み説明から候補をレビューする)・[Board の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1349-L1352)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
 
 承認後も Git の反映、Card の Done、Wiki の結果を別々に確認する。「反映結果の照合中」は未反映の確定ではないので、古い画面や status だけから再統合しない。[公開状態と回復](../concepts/formal-integration.md#公開donewiki-は別の結果)を確認する。実行の識別子や保存済み Session は [inspection の詳細](../operations/workspace-inspection.md#実行専用-workspace-の確認)から調べられる。
 
@@ -162,7 +162,7 @@ Git 操作は Repo 単位で target_branch を持つ。Rebase API は新 branch 
 
 Git safety tests は通常の untracked file の保存、tracked dirty change の拒否、base に上書きされる untracked file の保存を検証する。conflict を「とりあえず reset」で消すことを前提にしない。[Rebase tests](../../crates/git/tests/git_ops_safety.rs)
 
-手動 Direct merge は正式 Integration とは別の入口で、その Repo に open PR がある場合と、target が remote branch の場合に拒否する。実際の統合は squash であり、base が先行していれば拒否する。base が別 checkout にあればその場所で CLI merge、checkout がなければ libgit2 の ref 操作を使う。統合後は task branch ref も新 squash commit へ更新し、続きの作業をそこから行えるようにする。[API の制約](../../crates/server/src/routes/workspaces/git.rs)・[Git の統合](../../crates/git/src/lib.rs)
+手動 Direct merge は自動マージ とは別の入口で、その Repo に open PR がある場合と、target が remote branch の場合に拒否する。実際の統合は squash であり、base が先行していれば拒否する。base が別 checkout にあればその場所で CLI merge、checkout がなければ libgit2 の ref 操作を使う。統合後は task branch ref も新 squash commit へ更新し、続きの作業をそこから行えるようにする。[API の制約](../../crates/server/src/routes/workspaces/git.rs)・[Git の統合](../../crates/git/src/lib.rs)
 
 checkout 済み base の staged changes は拒否する。専用 test は staged file を残したまま merge が失敗することを検証する。[test](../../crates/git/tests/git_ops_safety.rs)
 
@@ -182,19 +182,19 @@ PR の状態観測と archive の契約は [GitHub と PR](../integrations/githu
 
 ## 6. Issue の完了と Workspace archive
 
-正式 Integration は Git 公開を確認してから、選択 Card と Integration Card の完了結果を保存する。現在は受付時の title/revision 一致を Done の条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進める。他 run の予約等で更新できなかった結果も記録する。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
+自動マージ は Git 公開を確認してから、選択 Card と 自動マージ Card の完了結果を保存する。現在は受付時の title/revision 一致を Done の条件にせず、利用可能な可視列（Done 優先、なければ末尾）へ進める。他 run の予約等で更新できなかった結果も記録する。詳細は [Git・Done・Wiki の独立した結果](../concepts/formal-integration.md)を参照する。
 
 Direct merge の成功と PR の merged 観測では、通常の作業 Workspace を自動 archive しない。PR monitor は状態と merge commit を記録し、open PR が0になった場合の analytics を更新する。[Direct merge 後](../../crates/server/src/routes/workspaces/git.rs)・[PR 観測](../../crates/services/src/services/pr_monitor.rs)
 
 作業領域を解放する場合は [手動 archive の確認と失敗条件](../concepts/workspace.md#archive削除期限-cleanup)へ進む。未 commit の作業も削除対象になるため、統合成功だけで削除可否を推定しない。Card の Done、履歴の保持、物理 worktree の削除は別の結果である。
 
-新規の正式 Integration は、公開成功と予約解放、process 収束後の owner 解除時に、内部生成された専用 Workspace だけを一度 archive 試行する。採用元 Workspace は保持し、専用 Issue も他の未 archive Workspace がある間は残す。成功・Done・物理削除は別の結果なので、archive 拒否や削除失敗を再統合の理由にしない。[一度限りの資格と観測](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[Integration の成功と後処理](../concepts/formal-integration.md#成功後の専用作業領域)
+新規の自動マージ は、公開成功と予約解放、process 収束後の owner 解除時に、内部生成された専用 Workspace だけを一度 archive 試行する。採用元 Workspace は保持し、専用 Issue も他の未 archive Workspace がある間は残す。成功・Done・物理削除は別の結果なので、archive 拒否や削除失敗を再統合の理由にしない。[一度限りの資格と観測](../concepts/workspace.md#生成された専用-workspace-の自動-archive)・[自動マージ の成功と後処理](../concepts/formal-integration.md#成功後の専用作業領域)
 
 ## 7. 統合後に canonical memory を更新する
 
 [Repository memory](../concepts/repository-memory.md) が有効な場合、成功した coding run の semantic draft と Git 証拠から Change Manifest を作り、統合された event を maintenance の入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
-LVK 自身の手動 direct squash と正式 Integration はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
+LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
 
 Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。自動同期や Repo 単独の開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L210-L231)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
 

@@ -38,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -56,7 +56,7 @@ run は開始時のグラフを保持する。復旧時も snapshot を優先し
 
 ## 作業場所の準備は実 dispatch の責任
 
-Workspace の DB row と実 worktree の準備完了は同義ではない。通常 Workflow の Agent dispatch は、指定 Session が当該 Workspace に属することを確認した後、Integration の予約 guard を通して既存 container 準備を呼ぶ。これにより、作成時にはまだ物理作業木を持たない通常 Workflow も開始できる。画面の閲覧や graph 編集を worktree 作成の契機にしない。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L722-L748)
+Workspace の DB row と実 worktree の準備完了は同義ではない。通常 Workflow の Agent dispatch は、指定 Session が当該 Workspace に属することを確認した後、自動マージ の予約 guard を通して既存 container 準備を呼ぶ。これにより、作成時にはまだ物理作業木を持たない通常 Workflow も開始できる。画面の閲覧や graph 編集を worktree 作成の契機にしない。[dispatch](../../crates/server/src/workflow_runtime/runner.rs#L722-L748)
 
 `execution_only` は owner が準備済みの環境を `inspection_root` で取得するだけであり、欠落時に通常 container 準備で再作成しない。OpenWiki setup の再実行や固定 source のすり替えを避けるため、通常 Workspace の lazy preparation と内部実行の前提を分けている。[用途別の解決](../../crates/server/src/workflow_runtime/workspace.rs#L14-L32)
 
@@ -75,7 +75,7 @@ Issue が archive 済みなら新規の主 Workspace 作成を拒否する。既
 
 watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1044-L1075)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
 
-製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。旧 Integration の製品 node 回復もこの経路を持つが、新規の [host-owned Integration](../concepts/formal-integration.md) は専用 orchestration node を作らず、adoption 後も旧 terminal audit を書き換えない。
+製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。旧 自動マージ の製品 node 回復もこの経路を持つが、新規の [host-owned 自動マージ](../concepts/formal-integration.md) は専用 orchestration node を作らず、adoption 後も旧 terminal audit を書き換えない。
 
 ### Create の配送と受理を区別する
 
@@ -124,7 +124,7 @@ Repository scope の Workflow は maintenance owner だけが駆動できる。�
 
 Bootstrap は専用 Workspace の `execution_owner` を Workflow run に結び付けてから graph と子を予約する。通常の node Session 作成は interactive を要求し、system 用は一致する repository owner 専用の経路を使う。phase dispatch ごとに maintenance Session と child AgentRun を記録するため、単に同じ Workspace にいることは起動権限ではない。[親の束縛](../../crates/server/src/workflow_runtime/bootstrap.rs#L96-L124)、[Session 境界](../../crates/server/src/routes/workflows.rs#L750-L794)、[子の委任](../../crates/server/src/workflow_runtime/bootstrap.rs#L360-L380)。用途は [Workspace の操作契約](../concepts/workspace.md#操作用途と実行所有者)を参照する。
 
-[正式 Integration](../concepts/formal-integration.md)にも製品固有の検証と monitor があり、通常 Workflow の completion watcher や Bootstrap の phase と同一視しない。起動形態による monitor の差は [システムの起動順](system.md#起動時は内側の所有者から回復する)に記す。
+[自動マージ](../concepts/formal-integration.md)にも製品固有の検証と monitor があり、通常 Workflow の completion watcher や Bootstrap の phase と同一視しない。起動形態による monitor の差は [システムの起動順](system.md#起動時は内側の所有者から回復する)に記す。
 
 ### Bootstrap の成果物参照は通常の上流本文と分ける
 

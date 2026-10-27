@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:30f35a1c0e304ab878ab7ce620d9e27f076b16a0250e4dbf7df7382dfa3003fc",
+  "pageVersion": "sha256:121727b3dec6609302f19ddd5a0bb4f208b09c482d46a67428c0b5cf2bbdfb07",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -202,7 +202,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/workspace_usage.rs",
-          "version": "repo-file-v1:sha256:1dc5fe50b047d3990bba4915133b9e31302df01b91edba846177c7310f478dda"
+          "version": "repo-file-v1:sha256:61678d62df39711645aff082506cf8332e0a76b26e4465c3d9080609a7e2f2d2"
         }
       ]
     },
@@ -482,7 +482,7 @@
         },
         {
           "resource": "repo://docs/workspaces/managing-workspaces.mdx",
-          "version": "repo-file-v1:sha256:5db438b0898fd04eeaec30bb3ac4cdb75ff5cb60369edb463edc19e1928b9a67"
+          "version": "repo-file-v1:sha256:cbf2f47ff563ab3463ba53f35b7d79cdf720b7c2984aa55ea982a1129c4f609f"
         }
       ]
     },
@@ -524,7 +524,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L80-L90",
-          "version": "repo-lines-v1:sha256:273f7884877849aa6998ca2bfdd85946e8b112d3457b2390d9271d07972d6d48:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiY2Q4YzI5MTVlMzg2MzdhNjU1ZmNlNDY2MzQzYzc1ZTIxNDdhMjY5ZWZjMThjZGJjZDg3NTM3NThlZDU4NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjOWU0MWEzMDUyMDIzNDkwNDI2ZGZhNmI3ODM5NWVjMmNiOWE0ODFlMmRjZjRkNmMwMWFiNGNjZGViZjNhZTUifQ"
+          "version": "repo-lines-v1:sha256:1e0cc5219c6eb70903e104f2c302393814b310b2108254358fce6d4681f542c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiY2Q4YzI5MTVlMzg2MzdhNjU1ZmNlNDY2MzQzYzc1ZTIxNDdhMjY5ZWZjMThjZGJjZDg3NTM3NThlZDU4NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjOWU0MWEzMDUyMDIzNDkwNDI2ZGZhNmI3ODM5NWVjMmNiOWE0ODFlMmRjZjRkNmMwMWFiNGNjZGViZjNhZTUifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/workspace_archive.rs#L88-L117",
@@ -741,6 +741,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T16:20:39.259Z"
+    "at": "2026-10-27T03:10:58.678Z"
   }
 }

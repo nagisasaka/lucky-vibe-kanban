@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b4c73095434bb9ed3a419df07f4ac26c0865eb1b6e64682096bd3ae45221fd36",
+  "pageVersion": "sha256:e3ef2c37de541bdfe74bdd9e66492a40e3d13c98ea3aba5d2abe4a37a04337d5",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -765,8 +765,8 @@
       "statement": "repository orchestration Skill は既存検証証拠が十分な場合の省略と完了後の理由・残るリスク報告を記録し、公開前の必須試験と候補証拠を区別する周辺方針を保持する。",
       "evidence": [
         {
-          "resource": "repo://skills/lvk-orchestration/SKILL.md#L118-L124",
-          "version": "repo-lines-v1:sha256:a3acc939109e09dd3d66a722697c5b7f1eba2435196d5525dd326d2a469b82db:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTlmZjViMjBmMWRhMThmNjFmZWQzNDQ2YzQ1ZjU5OGYzZjRjZmJkN2FjNmU1ZWU3ODRmZTQxMDhiNDQzZWQ1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhiYjgyYWQwNzVhY2NhMGY3YTFhODVkMmNlOTdkNzA0Y2RiZDFhYzY2MWFjYjIyMGEwMmYyMWRkNWE5MDIyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjI2ZWVlOGQ2ZDllZGE5NzZiMDBkMjZkZTBhNDk1YjM1NWYyMWNiMmUzYWM0MTI3NjQzOGIzZTA3NDMzNWNhNiJ9"
+          "resource": "repo://skills/lvk-orchestration/SKILL.md#L120-L126",
+          "version": "repo-lines-v1:sha256:484a2b44c929dac370898c00a5637a4d929eccd48a3889cf80d55f7f75c81164:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTBkOWI1ZGM1YjNjYzIxZGU1OTAxMGRkYjRhMDU1ODczNjY2OGE4YjFhY2M3MTI3ZDRhMTI4ZTFlNzU0OTZlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIzM2Q1Njg4NWUwMTkwZTg3MWEyZWVmZDMyNDJlMmQzMTYxZGVjY2M4M2NjNDA2YzQ0NDRkMTZhZGUyYjA4OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDUwMmYxNzJmNTQ4MjE1NTM2NjQ0NTIwMjQ1MmU3YTg0Yzc1OTRmZDkxNzZiYjBmODdlMzdkMGM4ZWU0ODU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmQyNjIzMDYyNGVkOTBmNDM3NDJmZjM4NzU0YWQwODk5ZTUxOGRhYjhlYTU5ZjBlYzk1N2UzY2QzNGE1ZjBmYiJ9"
         }
       ]
     },
@@ -873,6 +873,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T19:50:12.086Z"
+    "at": "2026-10-27T03:10:58.678Z"
   }
 }

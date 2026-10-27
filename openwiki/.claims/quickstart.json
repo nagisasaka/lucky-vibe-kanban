@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cb150df754644ccdee25b47c7c6b0b92927365cb4d33cfd62ed33144aeefffc5",
+  "pageVersion": "sha256:502e4518313de01c9acfc83ea1a55254e4073e9841c98d575bf573f63f97123c",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:34070375d49ea56476ba8533e373938b8ffecda04c90630ed9ba57721d76461c"
+          "version": "repo-file-v1:sha256:cfc7f3e7555ca95e48121d631dda20e1f27d520757cd007e204809951009e92e"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:34070375d49ea56476ba8533e373938b8ffecda04c90630ed9ba57721d76461c"
+          "version": "repo-file-v1:sha256:cfc7f3e7555ca95e48121d631dda20e1f27d520757cd007e204809951009e92e"
         }
       ]
     },
@@ -86,11 +86,11 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:0becb918d6207a1f5163133a1a21109d996827521c867a907d47ed28fac3bc08"
+          "version": "repo-file-v1:sha256:bceae613b9c6860a23bb8a2b4b2499fe5d1f3910bcc39c21c41ef10e29d5e157"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx",
-          "version": "repo-file-v1:sha256:afb7f8323dd332285062826a9f4adcafaaecba1ff4cbd88885aa8314b885c779"
+          "version": "repo-file-v1:sha256:a5964fe7699ae7c37fb2317ff5e670c1e7455c741e9ff22ce0e497ca3e2b45bc"
         }
       ]
     },
@@ -108,7 +108,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
-          "version": "repo-file-v1:sha256:0462c14b327632e9f59d82208f1850bebe83a9337a2a040616ec8d07ee3ec265"
+          "version": "repo-file-v1:sha256:b033f815e7d1e5eda59eeeda2544c8830a7227752777e1bc029b6a8c34a09ff7"
         }
       ]
     },
@@ -277,6 +277,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T19:50:12.086Z"
+    "at": "2026-10-27T03:10:58.678Z"
   }
 }

@@ -132,10 +132,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-26T19:50:12.086Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:50:12.086Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -208,11 +208,11 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 
 `node --test scripts/dev-cargo.test.mjs` の主 fixture は pinned Cargo / rustc と依存不要の一時 repository を使い、三用途の compiler flags、ELF 行情報とコピー後の dev/stable binary、Docker の両 command にある同じ設定値、共有中間物と分離 target、fallback、競合拒否、run の環境、lock と clean の影響を検査する。sccache transport と watch command の観測は fake を使うため、実 watcher の寿命や実 cache hit 率の証拠ではない。`LVK_TEST_REAL_SCCACHE=1` は既存 server を再設定せず、実 sccache で小さな library を compile する追加 smoke を有効にする。[主 fixture](../../scripts/dev-cargo.test.mjs#L15-L120)・[追加 smoke](../../scripts/dev-cargo.test.mjs#L122-L136)
 
-[LOCAL-197 の開発時記録](../../docs/development/cargo-cache.md#local-197-local-verification-2026-10-26)は局所4件成功・実 sccache smoke 省略を記録する。実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定、実 LVK/watch/managed child-Project 受入と、配置後の行番号解決・payload・build identity・health は未検証として残る。[測定計画](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `dbd79d52a75b16e340a438f4777440e54e624965` の pnpm caller、Cargo 入口、compiler wrapper、instance、Docker と独立した試験定義を静的照合した。製品 build や fixture は再実行していない。正式 Integration の入力は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
+[LOCAL-197 の開発時記録](../../docs/development/cargo-cache.md#local-197-local-verification-2026-10-26)は局所4件成功・実 sccache smoke 省略を記録する。実 LVK の cold/warm/edit/second-workspace の時間・容量・hit率測定、実 LVK/watch/managed child-Project 受入と、配置後の行番号解決・payload・build identity・health は未検証として残る。[測定計画](../../docs/development/cargo-cache.md#deferred-measurement-requires-capacityexecution-slot-approval)。この Sync は凍結 source `dbd79d52a75b16e340a438f4777440e54e624965` の pnpm caller、Cargo 入口、compiler wrapper、instance、Docker と独立した試験定義を静的照合した。製品 build や fixture は再実行していない。自動マージ の入力は明示的な検証省略であり、開発時の成功を統合後の合格へ読み替えない。無関係な既存 Wiki 全体の再検証も主張しない。
 
 ## 検証の対象を取り違えない
 
-repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [正式 Integration の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-formal-integration-validation)
+repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [自動マージ の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-auto-merge-validation)
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |
@@ -235,7 +235,7 @@ Workflow の Playwright は1 workerで専用 fixture を立ち上げる。fixtur
 
 `node --test tests/chat/paste-markdown.test.mjs` は esbuild と Playwright/Chromium を使い、共有 plugin を直接描画する。Markdown、HTML、HTML 付き raw paste の結果を検査し、browser を finally で閉じる。入力の優先順位・selection 復元・fallback は [貼り付け契約](../architecture/web-and-sync.md#markdownhtmlraw-の貼り付け)を正本とする。[試験定義](../../tests/chat/paste-markdown.test.mjs)
 
-この fixture は OS clipboard を操作せず ClipboardEvent を生成するため、実 OS の clipboard、Firefox/WebKit、live Web Push 配送の保証にはならない。今回の Sync は凍結 source `749367be4937b0ed8338a72995aa84109b3ab0aa` を manifest、browser entry、共有 plugin、notification service、server startup と独立した試験定義から静的照合した。供給された開発時検証報告、より新しい Workspace Memory の compile 報告、正式 Integration の明示的な検証省略は別の証拠であり、この Wiki 保守では製品テスト・Rust build・live 配送を再実行していない。変更に無関係な過去の内容全体を再検証したものではない。
+この fixture は OS clipboard を操作せず ClipboardEvent を生成するため、実 OS の clipboard、Firefox/WebKit、live Web Push 配送の保証にはならない。今回の Sync は凍結 source `749367be4937b0ed8338a72995aa84109b3ab0aa` を manifest、browser entry、共有 plugin、notification service、server startup と独立した試験定義から静的照合した。供給された開発時検証報告、より新しい Workspace Memory の compile 報告、自動マージ の明示的な検証省略は別の証拠であり、この Wiki 保守では製品テスト・Rust build・live 配送を再実行していない。変更に無関係な過去の内容全体を再検証したものではない。
 
 ## Terminal から次操作までの回帰試験
 
@@ -257,7 +257,7 @@ runner は終了時に自身の instance に属する process の停止を確認
 
 ブラウザー fixture は保存行を投入し、unknown → 120 → 200、partial、内訳の 1/2 thread、5秒再取得、日英表示、390px 幅、reload と server restart、API と実 stdio MCP の JSON 一致、削除済み attempt 数 field の不在を確認する。provider は起動しないため、通知からの保存は上記 Rust fixture と組み合わせて確認する。[試験本体](../../tests/server/specs/workspace-tokens.spec.ts#L7-L191)
 
-[開発時記録](../../docs/development/workspace-token-usage.md#検証記録)の成功報告は今回の Sync の再実行結果ではない。凍結された統合 source `066b2b4bd93d06d046865d66ae16bf1537e8b184` を adapter、schema/保存、API/MCP、UI、独立した試験定義から静的に照合した。入力にある正式 Integration は明示的な検証省略であり、今回も製品テストや有料モデル run は実行していない。実アカウント精度・実 Auth0 経由・全 provider・子 thread 独立計測・counter reset 後の差分の保証はない。無関係な過去の説明全体を再検証したものでもない。
+[開発時記録](../../docs/development/workspace-token-usage.md#検証記録)の成功報告は今回の Sync の再実行結果ではない。凍結された統合 source `066b2b4bd93d06d046865d66ae16bf1537e8b184` を adapter、schema/保存、API/MCP、UI、独立した試験定義から静的に照合した。入力にある自動マージ は明示的な検証省略であり、今回も製品テストや有料モデル run は実行していない。実アカウント精度・実 Auth0 経由・全 provider・子 thread 独立計測・counter reset 後の差分の保証はない。無関係な過去の説明全体を再検証したものでもない。
 
 ## モバイル向け built preview
 
@@ -309,7 +309,7 @@ currentを原子的に切り替えて固定launcherを起動し、health、liste
 
 Python `test_switch.py` はコピー後の元bundle不可視、manifest虚偽、停止前snapshot差異、backup/health失敗、worker中断、冪等性、保持世代を検査する。Rust `environment_switch_tests.rs` はproduction MCP routerとmock認証で呼出元停止・再接続後の同receipt取得を扱う。`test_real_server.py` は実binaryのruntime子にLandlockを適用し、source不可視でmigrationあり/なし、asset/API、host bootstrap、Workspace cwdからの同梱stdio MCP、async worker生存を検査する。engineはprocfs identity観測のため同じLandlock隔離に入れない。[Python回帰](../../deploy/developer/switch/test_switch.py#L210-L297)・[実runtime試験](../../deploy/developer/switch/test_real_server.py#L188-L250)
 
-今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、正式Integrationの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。[記録された試験結果・残る範囲](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
+今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、自動マージの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。[記録された試験結果・残る範囲](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
 
 ### ビルド情報の検証境界
 
@@ -321,7 +321,7 @@ instance runner は `build.json` と同じ revision / dirty を build 環境へ�
 
 ブラウザー試験は Tab / Enter / Space、Escape / Close、focus 復帰、390px / 320px の touch 操作と画面内収容を検査する。release・unknown・legacy 欠落のケースは `/api/info` の metadata だけを置き換える fixture であり、公開済み release image の試験ではない。mobile の実値ケースは dirty 表示を固定で期待するため、clean checkout では前提が一致しない点にも注意する。touch は Pixel 7 の Chromium emulation であり実 Android や screen reader 音声の保証ではない。[metadata 置換と操作](../../tests/build-info/isolated.mjs#L183-L309)・[ケースの区別](../../tests/build-info/isolated.mjs#L332-L417)。表示の責任分割は [共有 shell のビルド情報](../architecture/web-and-sync.md#稼働バイナリのビルド情報を表示する)を参照する。
 
-終了処理は browser を閉じ、server 終了を待ち、PID・port・一時 instance の除去を記録する。証跡先は既定 `test-results/build-info`、`LVK_BUILD_INFO_EVIDENCE` で変更できる。[cleanup](../../tests/build-info/isolated.mjs#L434-L473)。今回の Sync は凍結 source `393670802114ed09b421a52d6dd186a6da5dc2f5` を build resolver、instance、API、context、UI と独立した試験定義から静的に照合した。凍結入力の開発時成功報告と正式 Integration の明示的な検証省略は別であり、この文書保守では製品テスト・Docker build・実機試験を再実行していない。無関係な過去の説明全体の再検証も意味しない。
+終了処理は browser を閉じ、server 終了を待ち、PID・port・一時 instance の除去を記録する。証跡先は既定 `test-results/build-info`、`LVK_BUILD_INFO_EVIDENCE` で変更できる。[cleanup](../../tests/build-info/isolated.mjs#L434-L473)。今回の Sync は凍結 source `393670802114ed09b421a52d6dd186a6da5dc2f5` を build resolver、instance、API、context、UI と独立した試験定義から静的に照合した。凍結入力の開発時成功報告と自動マージ の明示的な検証省略は別であり、この文書保守では製品テスト・Docker build・実機試験を再実行していない。無関係な過去の説明全体の再検証も意味しない。
 
 ## Docker 配布と同梱 binary
 
@@ -366,7 +366,7 @@ npm から別バージョンを取得しない。
 
 native nginx fixture は自己署名証明書と loopback の模擬 upstream を使い、LVK の Basic 保護と独立経路への匿名到達の併存、Authorization/Cookie/Host/forwarded 情報、独自認証ヘッダー、Set-Cookie、WebSocket upgrade/subprotocol、各 route の証明書名不足を検査する。253文字の DNS 名も含む。parser が受理するだけでは nginx の設定読込成功を保証しないため、長い名前の回帰はこの層で扱う。[fixture と長い名前](../../deploy/server/nginx.test.mjs#L23-L66)・[到達と認証の検査](../../deploy/server/nginx.test.mjs#L314-L377)
 
-[開発時の検証記録](../../docs/development/preview-routes-validation.md)には native nginx を含む39件成功・Compose CLI 1件省略と、期待値補強後の局所18件成功が記録されている。実 ACME/DNS/VPS/アプリ・配布 image は未確認であり、凍結された正式 Integration の入力も検証の明示省略を記録する。今回の Wiki 保守は source と試験定義の静的照合で、これらの成功を再実行したものではない。
+[開発時の検証記録](../../docs/development/preview-routes-validation.md)には native nginx を含む39件成功・Compose CLI 1件省略と、期待値補強後の局所18件成功が記録されている。実 ACME/DNS/VPS/アプリ・配布 image は未確認であり、凍結された自動マージ の入力も検証の明示省略を記録する。今回の Wiki 保守は source と試験定義の静的照合で、これらの成功を再実行したものではない。
 
 ## 版番号の検証と選別移植の追跡
 
@@ -406,7 +406,7 @@ adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new
 
 変更時は `cargo test -p db --lib migration_compat::tests` の実 SQLx fixture を確認する。fresh、旧0/1件 receipt、旧複数件の失敗から再開、互換 CRLF receipt の再起動、checkout 改行と履歴の組合せ、未知 checksum・改変 artifact の拒否を検査する。[Rust 試験](../../crates/db/src/migration_compat.rs#L135-L408)。`python3 -B tests/project-keys/migration_compat.py` は Issue 値保持、99999件境界、100000件の反復 rollback 等の軽量 SQL/checksum model であり、Rust selector や全履歴を実行しない。raw `sqlx::migrate!` を使う空 DB 試験も互換 selector の証拠とは別である。[軽量試験](../../tests/project-keys/migration_compat.py#L1-L153)・[試験の区別](../../crates/db/migration_compat/README.md)。
 
-今回の Sync は凍結 source `cc39e6f25eb0f2ae1fc15df8712befb16fed4509` を起動 caller、共通入口、selector、SQL、allocator、tool、prepare と独立した試験定義から静的照合した。凍結入力には局所 Rust / Clippy / prepare と正式 Integration の check / lint / backend:test 成功報告があるが、この文書保守では再実行していない。native Windows、全 CRLF checkout 全履歴、実 server 起動や稼働 DB の検証を追加で立証したものではなく、無関係な過去の説明も再検証していない。
+今回の Sync は凍結 source `cc39e6f25eb0f2ae1fc15df8712befb16fed4509` を起動 caller、共通入口、selector、SQL、allocator、tool、prepare と独立した試験定義から静的照合した。凍結入力には局所 Rust / Clippy / prepare と自動マージ の check / lint / backend:test 成功報告があるが、この文書保守では再実行していない。native Windows、全 CRLF checkout 全履歴、実 server 起動や稼働 DB の検証を追加で立証したものではなく、無関係な過去の説明も再検証していない。
 
 ## 外部エディター URI 連携の検証
 
@@ -416,7 +416,7 @@ server の `routes::workspaces::integration::editor_tests` は一時ディレク
 
 `node --test tests/chat/external-editors.test.mjs` は実設定 UI・Config controller・選択 dialog を Chromium に載せ、API を fixture に置換する。初期値保存、並べ替え、全削除保存、空一覧保持、対象別 request、古い候補の非表示、リンクの明示クリックと opener 分離を検査する。[fixture 境界](../../tests/chat/external-editors.test.mjs#L16-L66)・[操作検査](../../tests/chat/external-editors.test.mjs#L120-L285)。小さな helper の回帰は [初期値と diff path の Vitest](../../packages/web-core/src/shared/lib/externalEditors.test.ts)にある。
 
-この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。[開発時の検証記録](../../docs/development/external-editor-uri-validation.md)と、凍結入力に記録された正式 Integration の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
+この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。[開発時の検証記録](../../docs/development/external-editor-uri-validation.md)と、凍結入力に記録された自動マージ の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
 
 ## 文書の適用範囲
 

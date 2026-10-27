@@ -116,10 +116,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -138,7 +138,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、正式Integrationの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、自動マージの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
 transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
@@ -174,7 +174,7 @@ quota、account summary、既存threadのusage、Workspace累積tokensは交換�
 
 ## Repository Wiki の同期を依頼する
 
-`get_repository_wiki` と `get_repository_wiki_sync` は read、`sync_repository_wiki` は read + write で、Project と repository の所属を検証する。正式 Integration の merge scope とは別である。adapter は `LaunchActions` から UI 共通の状態観測・Sync 受付へ接続し、独立した Wiki scheduler やモデル選択を作らない。[catalog と所属・権限](../../crates/server/src/remote_mcp/repository_wiki.rs#L54-L98)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L161-L166)
+`get_repository_wiki` と `get_repository_wiki_sync` は read、`sync_repository_wiki` は read + write で、Project と repository の所属を検証する。自動マージ の merge scope とは別である。adapter は `LaunchActions` から UI 共通の状態観測・Sync 受付へ接続し、独立した Wiki scheduler やモデル選択を作らない。[catalog と所属・権限](../../crates/server/src/remote_mcp/repository_wiki.rs#L54-L98)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L161-L166)
 
 認可済みの `project_id` は共通 Sync 受付へ引き継がれ、保守 Workspace の Issue 紐付けに使われる。Repo が関連しているだけでは別 Project の接続認可を得ない。共有 Repo の選択先と Issue なしの互換経路は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)で説明する。[引継ぎ](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)・[認可と引継ぎの回帰](../../crates/server/src/remote_mcp/launch_tests.rs#L613-L659)
 
@@ -194,7 +194,7 @@ prepare の対象・branch と正確なメッセージ「ワークツリーが�
 
 ## 参照結果と操作 receipt
 
-返すコード・diff・Wiki・Memoryは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[Integration read](../../crates/server/src/remote_mcp/integration_read.rs)、[verification read](../../crates/server/src/remote_mcp/verification_read.rs)。
+返すコード・diff・Wiki・Memoryは参照データであり、命令や承認ではない。参照はページ上限とrevisionを持ち、コードは許可されたregular fileに限定し、private path・symlink・submodule等を除外する。binary / oversized / unavailableを空の成功diffとして扱わない。[code read](../../crates/server/src/remote_mcp/code_read.rs)。実行状態・検証・公開・Wiki receiptは別の証拠として返す。[自動マージ read](../../crates/server/src/remote_mcp/integration_read.rs)、[verification read](../../crates/server/src/remote_mcp/verification_read.rs)。
 
 mutation は principal + request ID と入力hashを固定した永続 receipt を作る。同じkeyで異なる入力は拒否し、再送は保存済み結果を参照する。MCP client切断は受理済み操作を取り消さず、domain受付を待つ経路もcoding完了を待たない。server再起動後の旧accepted/runningはuncertainとして見せ、自動replayしない。結果不明時に新request IDで同じ副作用を重ねず、既存receiptと対象状態を照合する。[操作寿命](../../crates/server/src/remote_mcp/operations.rs)、[lost responseのテスト](../../crates/server/src/remote_mcp/runtime_write_tests.rs#L479-L502)。
 
@@ -244,23 +244,25 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 検索用索引や snapshot 基盤を増やさず要求時の有界読取と既存 revision を再利用する構成は、[公開された利用契約](../../docs/development/chatgpt-mcp.md#focused-workspace-code-reads)と一致する。転送削減の fixture は小さな特定ケースの比較であり、一般の調査時間・削減率を保証しない。
 
-回帰の入口は [filterとpaging、Unicodeとdirty revision](../../crates/server/src/remote_mcp/code_query.rs#L408-L581)、[除外・期限・出力予算・認可とsymlink](../../crates/server/src/remote_mcp/code_query.rs#L583-L711)、[巨大文脈・実表示範囲・JSON escaping・最小item境界・schema](../../crates/server/src/remote_mcp/code_query.rs#L812-L944)である。今回の Sync は凍結 source の MCP 登録・共通認可、Git reader、OS読取境界、これらのテスト内容から照合した。テスト再実行や実 ChatGPT / Auth0 接続は行っておらず、凍結入力で検証省略とされた Integration を合格扱いにはしない。無関係な既存節全体の再検証を意味しない。
+回帰の入口は [filterとpaging、Unicodeとdirty revision](../../crates/server/src/remote_mcp/code_query.rs#L408-L581)、[除外・期限・出力予算・認可とsymlink](../../crates/server/src/remote_mcp/code_query.rs#L583-L711)、[巨大文脈・実表示範囲・JSON escaping・最小item境界・schema](../../crates/server/src/remote_mcp/code_query.rs#L812-L944)である。今回の Sync は凍結 source の MCP 登録・共通認可、Git reader、OS読取境界、これらのテスト内容から照合した。テスト再実行や実 ChatGPT / Auth0 接続は行っておらず、凍結入力で検証省略とされた 自動マージ を合格扱いにはしない。無関係な既存節全体の再検証を意味しない。
 
 ## MCP から Integration の検証方針を選ぶ
 
-`start_integration` は既存の正式 Integration 受付に、任意の `skip_validation` を渡す。`true` は追加の受入検証を省略する未検証 run、`false` は検証必須、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L468-L502)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
+画面と対話では「自動マージ / Auto-merge」を使う。以下の tool 名・JSON key は互換識別子として保持される。[名称と互換境界の正本](../concepts/formal-integration.md#名称と互換境界)を参照する。
 
-受付成功 receipt の `result.skip_validation` と、`get_integration` の全 section（`summary` / `sources` / `validation` / `pending_gates`）の `skip_validation` は保存済みの解決済み boolean を返す。後から server preference が変わっても、再接続時に現在の設定から推測し直す必要はない。この値は検証件数と独立しており、ゼロ件を「省略」や「合格」と読み替えない。起動 receipt の `integration_accepted` は受付結果であり、Integration の完了、`published`、Wiki の確認結果は別に読む。[起動結果](../../crates/server/src/remote_mcp/launch.rs#L177-L189)・[保存値と検証件数の読取](../../crates/server/src/remote_mcp/integration_read.rs#L107-L175)
+`start_integration` は既存の自動マージ 受付に、任意の `skip_validation` を渡す。`true` は追加の受入検証を省略する未検証 run、`false` は検証必須、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L468-L502)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
+
+受付成功 receipt の `result.skip_validation` と、`get_integration` の全 section（`summary` / `sources` / `validation` / `pending_gates`）の `skip_validation` は保存済みの解決済み boolean を返す。後から server preference が変わっても、再接続時に現在の設定から推測し直す必要はない。この値は検証件数と独立しており、ゼロ件を「省略」や「合格」と読み替えない。起動 receipt の `integration_accepted` は受付結果であり、自動マージ の完了、`published`、Wiki の確認結果は別に読む。[起動結果](../../crates/server/src/remote_mcp/launch.rs#L177-L189)・[保存値と検証件数の読取](../../crates/server/src/remote_mcp/integration_read.rs#L107-L175)
 
 再送は同じ `request_id` と元の JSON 入力を保持する。比較するのは解決後の boolean ではなく、key 順を正規化した**元の入力全体**の hash である。そのため、同じ既定値へ解決される場合でも、省略から `null` への変更、flag の追加・削除・値変更は既存 receipt の入力不一致となる。domain 受付単独の省略再送規則と、MCP receipt の規則を混同しない。[fingerprint](../../crates/server/src/remote_mcp/operations.rs#L31-L45)・[入力照合](../../crates/server/src/remote_mcp/operations.rs#L210-L228)・[省略/null の再送テスト](../../crates/server/src/remote_mcp/launch_tests.rs#L420-L490)
 
-この選択でも `lvk:read` と `lvk:merge`、Project / Repo / Issue / Workspace の関係、expected target / source commit の照合を通る。省略が変えるのは追加検証の方針であり、clean candidate、競合承認、writer の収束、target 一致、公開と取消の排他、Wiki receipt は引き続き別の条件である。全体の lifecycle と未検証結果の意味は [正式 Integration の検証・公開契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を正本とする。[MCP の認可と関係検証](../../crates/server/src/remote_mcp/launch.rs#L423-L502)・[公開 guard](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1381)
+この選択でも `lvk:read` と `lvk:merge`、Project / Repo / Issue / Workspace の関係、expected target / source commit の照合を通る。省略が変えるのは追加検証の方針であり、clean candidate、競合承認、writer の収束、target 一致、公開と取消の排他、Wiki receipt は引き続き別の条件である。全体の lifecycle と未検証結果の意味は [自動マージ の検証・公開契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を正本とする。[MCP の認可と関係検証](../../crates/server/src/remote_mcp/launch.rs#L423-L502)・[公開 guard](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1381)
 
 変更時には [schema の optional boolean/null](../../crates/server/src/remote_mcp/tests.rs#L281-L298)、[既定値二通り・四種の指定・再接続・全 section・不正型](../../crates/server/src/remote_mcp/launch_tests.rs#L420-L490)、[HTTP 経由の起動と read-only 取得](../../crates/server/src/remote_mcp/launch_tests.rs#L493-L569)、[domain の既定値解決](../../crates/server/src/routes/integrations/tests.rs#L357-L385)を確認する。これらは fixture による契約テストであり、実 ChatGPT/Auth0 接続の証拠ではない。この Sync では source とテスト内容を照合し、テストの再実行や live 接続確認は行っていない。
 
 ## MCP から Integration を承認・取消する
 
-`approve_integration` と `cancel_integration` は、外部 HTTP MCP から既存の正式 Integration に明示判断を送る入口である。どちらも `lvk:read` と `lvk:merge` を要し、`lvk:write` だけでは足りない。Project 利用可否と run の所属を確認し、UI 共通の判断・取消処理へ委譲する。MCP adapter は Integration の状態を直接書き換えず、Goal やレビューコメントから承認を導かない。[tool の契約と認可](../../crates/server/src/remote_mcp/integration_write.rs#L17-L112)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L135-L154)。候補・検証例外・公開境界そのものは [正式 Integration](../concepts/formal-integration.md#開発検証と-human-gate)を正本とする。
+`approve_integration` と `cancel_integration` は、外部 HTTP MCP から既存の自動マージ に明示判断を送る入口である。どちらも `lvk:read` と `lvk:merge` を要し、`lvk:write` だけでは足りない。Project 利用可否と run の所属を確認し、UI 共通の判断・取消処理へ委譲する。MCP adapter は 自動マージ の状態を直接書き換えず、Goal やレビューコメントから承認を導かない。[tool の契約と認可](../../crates/server/src/remote_mcp/integration_write.rs#L17-L112)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L135-L154)。候補・検証例外・公開境界そのものは [自動マージ](../concepts/formal-integration.md#開発検証と-human-gate)を正本とする。
 
 ### 保存済み gate と固定証拠を読む
 
@@ -374,7 +376,7 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 server process ごとに専用 worker thread は最大2本で、待機 queue はなく、満杯なら retry を促す tool error となる。収集応答の deadline は2秒、各 file の受入上限は64 KiB（超過検出用に1 byte追加読取）、観測 JSON は8 KiB上限である。sampling は Tokio 共通 blocking executor を占有しない。permit は worker 自身が所有し、呼出側の切断・timeout 後も thread が終了するまで保持する。この設計は stuck kernel read による無制限の thread 増加を防ぐが、サーバー自体が停止すれば応答できない。生ファイル、process inventory、command line、任意 path は結果に出さない。[上限](../../crates/server/src/resource_observation.rs#L10-L31)・[worker 所有権](../../crates/server/src/resource_observation.rs#L197-L220)
 
-変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L220-L361)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1493-L1560)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。`live_smoke` は明示実行用の ignored test である。[開発時の検証記録](../../tests/resource-observation/VALIDATION.md)には単一 DISK の対象試験と smoke の成功、full-app harness の更新と構文確認が記録されているが、新仕様の full-app E2E は再実行されていない。今回の Sync は固定 source `8ea251d0bc234497e69e20588420900d011fddf3` とテスト定義の静的照合であり、供給された正式 Integration は明示的な検証省略だった。テスト再実行、実 Auth0 / ChatGPT 接続、実際に異なる mount、他 OS の検証は行っておらず、無関係な既存節の再検証も意味しない。
+変更時には [parser の異常値・mount・CPU差分テスト](../../crates/server/src/resource_observation/linux.rs#L164-L232)、[部分値・timeout・permit保持・JSON上限・catalog テスト](../../crates/server/src/resource_observation.rs#L220-L361)、[HTTP read scope と入力境界](../../crates/server/src/remote_mcp/tests.rs#L1493-L1560)を照合する。限定 layout と可視性を保守的に扱う理由は [運用契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)にも記録されている。`live_smoke` は明示実行用の ignored test である。[開発時の検証記録](../../tests/resource-observation/VALIDATION.md)には単一 DISK の対象試験と smoke の成功、full-app harness の更新と構文確認が記録されているが、新仕様の full-app E2E は再実行されていない。今回の Sync は固定 source `8ea251d0bc234497e69e20588420900d011fddf3` とテスト定義の静的照合であり、供給された自動マージ は明示的な検証省略だった。テスト再実行、実 Auth0 / ChatGPT 接続、実際に異なる mount、他 OS の検証は行っておらず、無関係な既存節の再検証も意味しない。
 
 ## 外部実行とモバイル設計
 

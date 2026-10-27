@@ -76,10 +76,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-26T19:50:12.086Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:50:12.086Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # クイックスタートと調査案内
@@ -90,7 +90,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 
 1. [サーバーコンテナー](operations/server-container.md)の手順で LVK の Docker image を起動し、公開配置では [LVKの初回認証設定](concepts/server-access.md#初回設定と方式変更)、続いて実行環境内で coding agent の認証を済ませる。LVK は npm パッケージを公開しない。ソースから開発する場合は [開発環境と検証範囲](operations/development.md) を参照する。[配布版の案内](../README.md)
 2. [Project / Issue](concepts/project-and-issue.md) と、変更先の [Repo / Workspace](concepts/workspace.md) を確認する。仕事の分類と、実ファイルを置く場所は別の設定である。
-3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [正式 Integration](concepts/formal-integration.md)を使う。専用環境で通常 merge は host、競合解消は有限の Agent job が担当し、review 後の最終候補を受付時の検証方針に従って処理する。local target の公開と条件付き Done を扱う。検証省略の NotRun は成功したテストを意味しない。
+3. 通常 Session、[WorkflowAttempt](concepts/workflow-attempt.md)、または [Arena](concepts/arena.md) を選び、[Setup → 実行 → レビュー → 統合](workflows/task-to-integration.md) を進める。local Board で複数 Card の採用成果を統合する場合は [自動マージ](concepts/formal-integration.md)を使う。専用環境で通常 merge は host、競合解消は有限の Agent job が担当し、review 後の最終候補を受付時の検証方針に従って処理する。local target の公開と条件付き Done を扱う。検証省略の NotRun は成功したテストを意味しない。
 4. canonical repository memory は [OpenWiki 初期生成・Sync](operations/openwiki-maintenance.md)を Repo ごとに設定する。新規 Card の既定 [Shared directories context](concepts/card-context-and-llm-wiki.md)とは独立しており、旧 LLM Wiki の自動生成は終了している。成果物は [OpenWiki Viewer の表示元](operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を確認し、閲覧可能と publication 成功を区別する。
 
 サーバーに常駐させる場合は [単一サーバーコンテナー](operations/server-container.md)を参照する。信頼された一チーム向けHTTPS配布であり、データ永続化と実行プロセスの継続を区別する。旧 Cloud / relay は退役している。
@@ -117,8 +117,10 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 複数段階の仕事をどう定義して動かすか | [WorkflowAttempt](concepts/workflow-attempt.md)。template と Run、分岐・合流、人の判断待ち |
 | 候補をどう比較し、採用後の実装へ移るか | [Arena](concepts/arena.md)。Design / Implementation、候補、promotion と Workflow 内の選択 |
 | prompt の再利用文脈と並列 source をどう扱うか | [Card context・Shared dirs・旧 LLM Wiki](concepts/card-context-and-llm-wiki.md)。fresh 会話への保存文脈、固定 snapshot と移行境界 |
-| 採用した並列成果を安全に local target へ反映するには | [正式 Integration](concepts/formal-integration.md)。受付予約、host merge・競合 review・最終検証、公開と取消、限定 checkpoint adoption |
+| 採用した並列成果を安全に local target へ反映するには | [自動マージ](concepts/formal-integration.md)。受付予約、host merge・競合 review・最終検証、公開と取消、限定 checkpoint adoption |
 | 並列作業の知識を統合済み repository にどう反映するか | [Repository memory](concepts/repository-memory.md)。canonical Wiki、Change Manifest、Workspace Memory、source checkpoint と receipt |
+
+名称だけを確認する場合は [自動マージの名称と互換境界](concepts/formal-integration.md#名称と互換境界)を読む。API・tool の識別子と画面名を区別し、マージ済みコードと後続 Wiki の結果を別々に確認する。
 
 ## 変更内容から調査する
 
@@ -136,9 +138,9 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | provider や model 設定、MCP、Skill の追加 | [Provider integration](integrations/agent-providers.md)。effort override と解決済み値、外部 MCP を使う方向と LVK MCP を公開する方向を分ける |
 | Workflow の分岐、取消、outbox、再起動回復 | [Graph の契約](concepts/workflow-attempt.md) → [Workflow Runtime](architecture/workflow-runtime.md) |
 | 定期的に作業を実行したい | [ScheduledTask の起動・skip 条件](workflows/task-to-integration.md#定時に-workflow-を起動する) |
-| Card の列が動かない、失敗後も In Progress、追加実行で戻る | [Kanban と実行の同期契約](concepts/project-and-issue.md#kanban-と実行の同期契約)。実開始時刻、手動変更優先、他 run の待機と正式 Integration の Done の違い |
+| Card の列が動かない、失敗後も In Progress、追加実行で戻る | [Kanban と実行の同期契約](concepts/project-and-issue.md#kanban-と実行の同期契約)。実開始時刻、手動変更優先、他 run の待機と自動マージ の Done の違い |
 | カード本文・タグ・Workspace 状況の見え方、差分の0と不明 | [コンパクトカードの契約](concepts/project-and-issue.md#コンパクトカードの表示契約) → [summary の差分集計](operations/workspace-inspection.md#workspace-summary-の差分集計)。描画設定・本文全文・正常0・部分取得失敗を区別する |
-| 連続する Integration 競合や明示 Resume の Session identity | [競合 job の Session 分離](concepts/formal-integration.md#競合だけを有限の-agent-job-にする)。同じ Workspace のファイルを保持し、新規 dispatch と再送で会話の寿命を分ける |
+| 連続する 自動マージ 競合や明示 Resume の Session identity | [競合 job の Session 分離](concepts/formal-integration.md#競合だけを有限の-agent-job-にする)。同じ Workspace のファイルを保持し、新規 dispatch と再送で会話の寿命を分ける |
 | image の Claude Code と認証の準備 | [同梱 CLI と永続 home](operations/server-container.md#claude-code-の同梱と認証) → [Subscription profile の確認](integrations/agent-providers.md#claude-のサブスクリプション専用-profile)。実行ファイルの存在と account readiness を分ける |
 | frontend、local Board の取得と更新 | [Web と同期](architecture/web-and-sync.md) → [外部 MCP と認証](integrations/remote-access.md) |
 | ファイル、Session 添付、diff、preview、terminal、editor | [Workspace inspection](operations/workspace-inspection.md)。Board の参照は [Issue の共同作業](concepts/issue-collaboration.md) |
@@ -151,7 +153,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | サーバーの CPU・RAM・DISK と制限を読む | [画面の共通観測](architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)と [外部 MCP](integrations/remote-access.md#オンデマンド資源観測)は同じ collector を使う。system-visible と cgroup、保存先の filesystem、unknown・部分失敗を区別する。資源予約の代わりにはならない |
 | 開発 instance の成果物を切り替える、失敗後に復旧する | [切替 engine の運用](operations/development.md#開発用成果物切替と復旧)。専用 MCP の [自己再起動](concepts/runtime-access.md#開発-instance-の専用自己再起動)からの受付、排他、backup、停止証拠、durable 結果を区別する |
 | 終了した Workspace のディスクを解放する | [手動 archive](concepts/workspace.md#archive削除期限-cleanup)。busy 検査、一度の確認、削除失敗と履歴保持。外部会話からは [MCP の準備・確認と結果読戻し](integrations/remote-access.md#workspace-を外部-mcp-から-archive-する)へ進む。通常の merge・PR・Arena の終了だけでは自動 archive しない |
-| Wiki / Integration の専用環境が成功後に消えた、または残っている | [生成 Workspace の自動 archive](concepts/workspace.md#生成された専用-workspace-の自動-archive)。生成元とowner解放、一度限りの試行、手動介入・削除失敗、専用Issueと採用元の保持を確認する |
+| Wiki / 自動マージ の専用環境が成功後に消えた、または残っている | [生成 Workspace の自動 archive](concepts/workspace.md#生成された専用-workspace-の自動-archive)。生成元とowner解放、一度限りの試行、手動介入・削除失敗、専用Issueと採用元の保持を確認する |
 | 外部マシンの実行を予約・回復する | [共有資源と Execution Bridge](concepts/shared-resource-coordination.md)。snapshot、Runner、settlement と operator 回復 |
 | 実行の元データを保全したい | [Native Audit の保存・エクスポート・削除](architecture/agent-runtime.md#native-audit-の保全エクスポート寿命) |
 | Merge / Rebase / PR 後の状態が合わない | [統合までの順序と部分失敗](workflows/task-to-integration.md) → [memory の統合契約](concepts/repository-memory.md) |
@@ -159,8 +161,8 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 外部会話から既存 Wiki を同期・再同期する | [MCP Sync の固定対象・再送・結果読戻し](operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)。受付成功、公開・照合完了、現在の鮮度を分け、初期生成は Repository settings で行う |
 | Wiki 保守の Card がない、紐付け先 Project が違う | [開始元 Project と保守 Issue](operations/openwiki-maintenance.md#開始元-project-と保守-issue)。Project 設定/MCP の引継ぎ、関連検証と未指定時の互換動作を確認する |
 | Wiki が stale/error、Bootstrap が途中で止まる | [OpenWiki の phase・共通索引・レポート・完了証拠・回復](operations/openwiki-maintenance.md)。MCP 起動前確認と公開条件を分けて診断する |
-| Integration の説明不足、古い候補、反映結果の照合中 | [保存済み解消説明と承認条件](concepts/formal-integration.md#保存済み説明から候補をレビューする) → [公開・Done・Wiki の区別](concepts/formal-integration.md#公開donewiki-は別の結果)。操作は [統合までの手順](workflows/task-to-integration.md#並列変更を試してから正式統合する) |
-| 外部会話から Integration の承認・取消を進める | [MCP の固定 gate・期待値・操作 receipt](integrations/remote-access.md#mcp-から-integration-を承認取消する)。候補の失効、検証例外、取消受付と予約解放の違いを確認する |
+| 自動マージ の説明不足、古い候補、反映結果の照合中 | [保存済み解消説明と承認条件](concepts/formal-integration.md#保存済み説明から候補をレビューする) → [公開・Done・Wiki の区別](concepts/formal-integration.md#公開donewiki-は別の結果)。操作は [統合までの手順](workflows/task-to-integration.md#並列変更を試してから正式統合する) |
+| 外部会話から 自動マージ の承認・取消を進める | [MCP の固定 gate・期待値・操作 receipt](integrations/remote-access.md#mcp-から-integration-を承認取消する)。候補の失効、検証例外、取消受付と予約解放の違いを確認する |
 | 統合・Wiki 実行のログを見る、所有者を止める | [Execution の閲覧と停止](operations/workspace-inspection.md#実行専用-workspace-の確認)。通常開発用 Workspace と操作入口を分ける |
 | local LVK を常駐サーバーへ置く | [単一サーバーコンテナー](operations/server-container.md)。HTTPSとbackend認証、preview handoff、volume、停止と rollback |
 | 同じコンテナーの独立アプリを DNS 名ごとに公開する | [独立アプリの CSV ルート](operations/server-container.md#独立アプリの-csv-ルート)。アプリ自身の認証、legacy preview との排他、証明書と再作成の順序を確認する |
@@ -210,16 +212,16 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 
 前回の通常 Sync は凍結された pending changes と統合済み source `e378eb281dde23cd9283c96e6db3cfae3379518b` を対象とし、[Runtime Access](concepts/runtime-access.md) の grant 簡素化を照合した。外部HTTPのscope入口、dispatchとProject照合、設定のDB/legacy読取とrevision付き保存、Linux process registryと再起動receipt、設定UI・生成型・日本語ヘルプ、HTTP/設定/exec/restartの各fixtureを独立した入口として確認した。subject／実行ファイル許可リストの撤去と、残る所有者・cwd・Workspace境界を正本ページへ反映した。関連する外部MCP・システム構成の説明も照合し、無関係な過去の内容全体を再検証したとは扱わない。[現行grantとdispatch](../crates/server/src/remote_mcp/environment.rs#L309-L403)・[exec遷移の回帰](../crates/server/src/remote_mcp/environment_process.rs#L640-L700)・[設定互換性の回帰](../crates/server/src/remote_mcp/environment_settings_tests.rs#L496-L507)
 
-前回の Runtime Access の凍結入力は、開発時のテスト成功報告と正式 Integration の検証省略を区別していた。これはその対象範囲の履歴であり、後続 Integration の検証結果を示すものではない。
+前回の Runtime Access の凍結入力は、開発時のテスト成功報告と自動マージ の検証省略を区別していた。これはその対象範囲の履歴であり、後続 自動マージ の検証結果を示すものではない。
 
 
 ### 共有レビュー Sync の照合範囲
 
 統合済み source `be97e258698174883272eadcd325ae743d30b7d8` と凍結された pending changes を対象に、[Issue の共有レビュー](concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を照合した。独立した入口として外部 HTTP の認証・catalog・dispatch、投稿 receipt と actor 継承、migration と通常 Web 編集、Rust API 型・生成型・Web 表示、Unicode decoder・SQL・handler 回帰、隔離 JWT bridge と Chromium spec を確認した。対象 Issue revision と本文 revision、追記と要求変更、来歴と監査証明を分けて正本へ反映した。[投稿・読取の根拠](../crates/server/src/remote_mcp/issue_comments.rs#L85-L279)・[UI の根拠](../packages/ui/src/components/IssueCommentsSection.tsx#L327-L373)・[検証入口](concepts/issue-collaboration.md#変更時の検証入口)
 
-同じ範囲で、[正式 Integration の固定検証 plan](concepts/formal-integration.md#検証方針は受付時に固定する)に依存準備 `pnpm install --frozen-lockfile` が先頭追加されたことを確認した。[設定](../.lvk/integration-validation.json)
+同じ範囲で、[自動マージ の固定検証 plan](concepts/formal-integration.md#検証方針は受付時に固定する)に依存準備 `pnpm install --frozen-lockfile` が先頭追加されたことを確認した。[設定](../.lvk/integration-validation.json)
 
-凍結入力には、初回の型生成・Rust/browser 検証の保留、その後の開発検証成功、最後の正式 Integration の install / frontend build / check / lint / backend:test 成功が順に記録されている。これらは供給された過去の実行記録であり、今回の文書保守による再実行結果ではない。今回行ったのは source・テスト内容・文書差分の静的照合で、実 Auth0/ChatGPT、配布サーバー、実DB移行は確認していない。無関係な過去の Wiki 内容全体を再検証したとは扱わない。
+凍結入力には、初回の型生成・Rust/browser 検証の保留、その後の開発検証成功、最後の自動マージ の install / frontend build / check / lint / backend:test 成功が順に記録されている。これらは供給された過去の実行記録であり、今回の文書保守による再実行結果ではない。今回行ったのは source・テスト内容・文書差分の静的照合で、実 Auth0/ChatGPT、配布サーバー、実DB移行は確認していない。無関係な過去の Wiki 内容全体を再検証したとは扱わない。
 
 
 ### 今回の設計メモ Sync の照合範囲
@@ -228,25 +230,25 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 
 途中のProject削除409方針は撤回済みで、最終実装は履歴を保持し既存アクセスを閉じる。保持後の閲覧・持出し・再関連付け・期限は未決である。[現行保持契約](concepts/design-notes.md#project-を削除した後の保持)。メモの記録を実行承認とせず、独立追記と本文への明示統合を区別する。
 
-凍結入力は開発検証の保留・後続成功と、最終Integrationの install / frontend build / check / lint / backend:test 成功を記録している。欠落したsemantic draftのcheckpointから動機は推定していない。これらは供給された過去の実行記録であり、今回の文書保守によるテスト再実行ではない。今回の検証はソース・テスト内容・リンク・文書差分とOpenWiki lifecycleの検証で、実Auth0/ChatGPTや稼働DBへのmigration適用は含まない。[変更時の検証入口](concepts/design-notes.md#変更時の検証入口)
+凍結入力は開発検証の保留・後続成功と、最終自動マージの install / frontend build / check / lint / backend:test 成功を記録している。欠落したsemantic draftのcheckpointから動機は推定していない。これらは供給された過去の実行記録であり、今回の文書保守によるテスト再実行ではない。今回の検証はソース・テスト内容・リンク・文書差分とOpenWiki lifecycleの検証で、実Auth0/ChatGPTや稼働DBへのmigration適用は含まない。[変更時の検証入口](concepts/design-notes.md#変更時の検証入口)
 
 ### Repository Wiki MCP 同期の照合範囲
 
 今回の通常 Sync は凍結 manifest と全4チャンク（SHA-256照合済み）、統合済み source `de20c156dc28ead686f5f1322ae787b1abd6ff42` の pending changes を対象とした。UI設定からRESTへの入口、外部MCPのcatalog・scope・adapter、共通maintenance受付とscope解決、operation receipt、Workspace owner結果保存、Git公開と回復、独立した対象拒否・再送・公開判定・HTTP scopeのfixtureを照合した。詳細契約は [OpenWiki保守](operations/openwiki-maintenance.md#mcp-から既存-wiki-を同期する)、権限境界は [外部MCP](integrations/remote-access.md#repository-wiki-の同期を依頼する)、鮮度の意味は [Repository Memory](concepts/repository-memory.md#並行性receipt失敗)に置く。無関係な過去の説明全体を再検証したとは扱わない。
 
-凍結Change Manifestでは開発時の型検査成功と実行試験の保留、正式Integrationの明示的な検証省略が記録されている。付随するWorkspace Memoryは後続の限定試験成功も報告するが、これは供給された履歴であり、今回の実行結果ではない。今回の検証は統合source・試験定義・リンク・文書差分とOpenWiki lifecycleの照合で、製品試験、実Auth0 / ChatGPT接続、実モデルによる同期は再実行していない。[試験と限界の入口](operations/openwiki-maintenance.md#不確実な結果と検証の境界)
+凍結Change Manifestでは開発時の型検査成功と実行試験の保留、自動マージの明示的な検証省略が記録されている。付随するWorkspace Memoryは後続の限定試験成功も報告するが、これは供給された履歴であり、今回の実行結果ではない。今回の検証は統合source・試験定義・リンク・文書差分とOpenWiki lifecycleの照合で、製品試験、実Auth0 / ChatGPT接続、実モデルによる同期は再実行していない。[試験と限界の入口](operations/openwiki-maintenance.md#不確実な結果と検証の境界)
 
 ### 保守開始元 Project の照合範囲
 
 今回の Sync は、凍結 manifest・全4チャンクの SHA-256 と source `7297e1148324cb8a2b0c03c29b23d4a74dd4092d` を照合した。Project 設定 UI、MCP の認可・adapter、共通受付、ProjectRepoDefaults を含む関連集合、Issue 作成 transaction、過去補完、repository Workflow の所有形式と各 fixture から、[開始元 Project と保守 Issue](operations/openwiki-maintenance.md#開始元-project-と保守-issue)の契約を更新した。共有ファイルの変更で stale となった既存 Claims も該当部分を確認したが、無関係な過去の Wiki 全体を再検証したものではない。
 
-凍結入力の最初の checkpoint には意味 draft がなく、意図・理由・試験結果は不明である。後続 Manifest の開発試験成功は履歴として扱い、正式 Integration の検証省略を合格へ読み替えない。この保守で行ったのは source・試験定義・文書差分・リンク・OpenWiki lifecycle の検証であり、製品試験、実モデルによる製品の同期処理、実DB・外部認証は再実行していない。
+凍結入力の最初の checkpoint には意味 draft がなく、意図・理由・試験結果は不明である。後続 Manifest の開発試験成功は履歴として扱い、自動マージ の検証省略を合格へ読み替えない。この保守で行ったのは source・試験定義・文書差分・リンク・OpenWiki lifecycle の検証であり、製品試験、実モデルによる製品の同期処理、実DB・外部認証は再実行していない。
 
 ### 外部 MCP archive の照合範囲
 
 今回の Sync は凍結 manifest と全1チャンクの SHA-256、統合済み source `505b8f9cac53b26c9609068672fa18a87b7b58a8` を照合した。HTTP 認証・catalog・scope、外部 adapter、UI/stdio の共通 archive、DB 所属・busy 検査、strict cleanup、operation receipt と現在値の読取、署名 JWT を使う HTTP fixture を独立した入口として確認した。詳細は [Workspace の確認と回復](concepts/workspace.md#外部-mcp-の確認と結果の回復)、利用導線は [外部 MCP](integrations/remote-access.md#workspace-を外部-mcp-から-archive-する)に集約した。共有入口に関係する既存 Claims は再確認したが、無関係な過去の説明全体を再検証したものではない。
 
-凍結 Change Manifest は正式 Integration の検証を明示的に省略したと記録し、意味的な変更理由や開発テスト結果は供給していない。この保守は実装・試験定義・文書差分の静的照合であり、製品テストや実 Auth0/ChatGPT 接続の再実行ではない。fixture の script liveness と実環境の検証範囲も区別する。
+凍結 Change Manifest は自動マージ の検証を明示的に省略したと記録し、意味的な変更理由や開発テスト結果は供給していない。この保守は実装・試験定義・文書差分の静的照合であり、製品テストや実 Auth0/ChatGPT 接続の再実行ではない。fixture の script liveness と実環境の検証範囲も区別する。
 
 ### 独立アプリ経路の照合範囲
 
@@ -254,13 +256,13 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 
 CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、LVK login/handoff による保護を追加しない。既存の wildcard preview とは認証責任が異なるため、アプリ自身の認証と cookie の運用を確認する。[転送と資格情報](../deploy/server/server.mjs#L248-L276)
 
-凍結 Change Manifest は開発時の局所・native 試験成功と正式 Integration の検証省略を区別している。[開発記録](../docs/development/preview-routes-validation.md)も実 ACME・DNS・VPS・アプリ・配布 image を未確認としている。今回の検証は統合 source・試験定義・文書差分・リンクと OpenWiki lifecycle の静的照合であり、製品試験や証明書発行の再実行ではない。
+凍結 Change Manifest は開発時の局所・native 試験成功と自動マージ の検証省略を区別している。[開発記録](../docs/development/preview-routes-validation.md)も実 ACME・DNS・VPS・アプリ・配布 image を未確認としている。今回の検証は統合 source・試験定義・文書差分・リンクと OpenWiki lifecycle の静的照合であり、製品試験や証明書発行の再実行ではない。
 
 ### カンバン・差分・競合 Session の照合範囲
 
-今回の Sync は frozen manifest と全11チャンクの SHA-256、統合 source `c8ccba168fdc2c06dae69f0b92a1cb70f1d80267` を照合した。カードの呼出側・部品・summary hook・API・Git 集計・独立した service/Git/browser fixture、Integration の admission / immutable request / transaction / native session projection の回帰試験を別の入口として調べた。配布側の変更は Dockerfile、運用文書と image smoke 定義で確認した。説明の正本は上記の概念・操作ページに置き、共有参照で stale となったページは必要箇所だけを再確認した。
+今回の Sync は frozen manifest と全11チャンクの SHA-256、統合 source `c8ccba168fdc2c06dae69f0b92a1cb70f1d80267` を照合した。カードの呼出側・部品・summary hook・API・Git 集計・独立した service/Git/browser fixture、自動マージ の admission / immutable request / transaction / native session projection の回帰試験を別の入口として調べた。配布側の変更は Dockerfile、運用文書と image smoke 定義で確認した。説明の正本は上記の概念・操作ページに置き、共有参照で stale となったページは必要箇所だけを再確認した。
 
-供給された最終 Integration event は install・frontend build・check・lint・backend:test の成功を記録する。この保守自体は静的な source・試験定義・リンク・OpenWiki lifecycle の検証であり、製品試験、実 Codex / Claude、browser からの実 Resume、Docker image の実行、外部 preview 認証を再実行していない。意味 draft が欠けた launcher checkpoint の意図は不明のままとし、統合ツリーにない machine 固有 launcher や Workspace Memory の運用状態を製品契約へ昇格させていない。無関係な歴史的説明全体を再検証したとはしない。
+供給された最終 自動マージ event は install・frontend build・check・lint・backend:test の成功を記録する。この保守自体は静的な source・試験定義・リンク・OpenWiki lifecycle の検証であり、製品試験、実 Codex / Claude、browser からの実 Resume、Docker image の実行、外部 preview 認証を再実行していない。意味 draft が欠けた launcher checkpoint の意図は不明のままとし、統合ツリーにない machine 固有 launcher や Workspace Memory の運用状態を製品契約へ昇格させていない。無関係な歴史的説明全体を再検証したとはしない。
 
 ### Issue分類・archive・検索と会話表示のSync
 
@@ -270,11 +272,11 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 - 両MCPの検索はfilter解釈を共有し応答/pagingは別である。[MCPの検索と操作](integrations/remote-access.md#issueの分類検索archiveを操作する)、[Todo検索](concepts/project-todos.md#一覧を検索する)、[設計メモ検索](concepts/design-notes.md#一覧検索と下書きの関係)が説明先となる。
 - literal入力・送信直後のpendingとACK/event照合は [Sessionの入力](concepts/session-and-agent-run.md#送信中の編集と-markdown-正規化)、公開summary/plan・操作結果・追従意図と読書anchorは [Webの会話同期](architecture/web-and-sync.md#履歴の閲覧位置と末尾追従)を読む。
 
-凍結入力には開発中の保留・失敗・修復と、最終Integrationのinstall / frontend build / check / lint / backend:test成功が記録される。これらは供給された実行履歴であり、この文書保守の再実行結果ではない。未統合Workspace Memoryの運用指示やmachine固有preview launcherは製品契約へ昇格させていない。今回の検証はソース・試験定義・差分・リンクとOpenWiki lifecycleであり、製品suite、実Auth0/ChatGPT・Codex/Claude接続、稼働DB移行、preview切替は再実行していない。
+凍結入力には開発中の保留・失敗・修復と、最終自動マージのinstall / frontend build / check / lint / backend:test成功が記録される。これらは供給された実行履歴であり、この文書保守の再実行結果ではない。未統合Workspace Memoryの運用指示やmachine固有preview launcherは製品契約へ昇格させていない。今回の検証はソース・試験定義・差分・リンクとOpenWiki lifecycleであり、製品suite、実Auth0/ChatGPT・Codex/Claude接続、稼働DB移行、preview切替は再実行していない。
 
 ### 生成環境の成功後 archive と保存進捗の Sync
 
-今回の通常 Sync は凍結 manifest と全10チャンクの SHA-256、統合済み source `c4d2f6b730900dfc0ba05f213fa795a135ce33db` の pending changes を対象に照合した。生成元登録の transaction / migration trigger、owner 解放の caller と cleanup predicate、archive の最終 write transaction・共通削除・server/SQL fixture、Integration の成功と semantic outbox 回復を独立した入口から確認した。説明の正本は [Workspace の生成archive契約](concepts/workspace.md#生成された専用-workspace-の自動-archive)に置き、[保守の解放](operations/openwiki-maintenance.md#成功後の保守環境の解放)と [統合後の作業領域](concepts/formal-integration.md#成功後の専用作業領域)、Issue・Memory・横断workflowの関係を整合した。
+今回の通常 Sync は凍結 manifest と全10チャンクの SHA-256、統合済み source `c4d2f6b730900dfc0ba05f213fa795a135ce33db` の pending changes を対象に照合した。生成元登録の transaction / migration trigger、owner 解放の caller と cleanup predicate、archive の最終 write transaction・共通削除・server/SQL fixture、自動マージ の成功と semantic outbox 回復を独立した入口から確認した。説明の正本は [Workspace の生成archive契約](concepts/workspace.md#生成された専用-workspace-の自動-archive)に置き、[保守の解放](operations/openwiki-maintenance.md#成功後の保守環境の解放)と [統合後の作業領域](concepts/formal-integration.md#成功後の専用作業領域)、Issue・Memory・横断workflowの関係を整合した。
 
 保存進捗は外部 MCP のcatalog・read scope、所属とcursorのsnapshot、canonical末尾選択、privacy投影・全文形状検査、pagingとHTTP再接続の回帰定義を照合した。[最新窓とcommentaryの契約](integrations/remote-access.md#保存済み-codex-進捗の読取)を参照する。既存共有ファイルでstale/unresolvedとなったClaimsは該当契約を再確認したが、無関係な過去のWiki全体を再検証したものではない。取り込まれたProject-key互換処理は前回までの説明と最終source差分を確認し、変更のない契約を再生成していない。
 
@@ -286,4 +288,10 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 
 詳細契約は上の調査導線の正本に置き、横断説明は同じ契約へリンクする。新たなschedulerやproviderを導入せず、Starting回復、DevServer script所有、MCP一回承認、quota snapshotと実行token累積を区別した。変更時の検証入口と残る範囲は [開発・検証](operations/development.md#起動回復受動参照mcp-操作を変更するとき)を参照する。[共有起動](../crates/local-deployment/src/lib.rs#L145-L163)・[MCP登録](../crates/mcp/src/task_server/tools/mod.rs#L56-L91)・[外部dispatch](../crates/server/src/remote_mcp/mod.rs#L187-L241)
 
-供給された開発/候補合成記録には局所検証の成功と修復履歴があるが、最終正式Integrationは明示的に検証省略だった。実agentの承認待ち到達と取消は人の承認後の実tool成功ではなく、offline UI fixtureも実API/認証ではない。この保守はソース・試験定義・差分・リンクとOpenWiki lifecycleを検証し、製品suite、実Auth0/ChatGPT、実モデル、稼働DB移行、配布・restartを再実行していない。[候補の検証限界](../docs/development/seven-source-candidate.md#root-cloud-qaと残る確認)
+供給された開発/候補合成記録には局所検証の成功と修復履歴があるが、最終自動マージは明示的に検証省略だった。実agentの承認待ち到達と取消は人の承認後の実tool成功ではなく、offline UI fixtureも実API/認証ではない。この保守はソース・試験定義・差分・リンクとOpenWiki lifecycleを検証し、製品suite、実Auth0/ChatGPT、実モデル、稼働DB移行、配布・restartを再実行していない。[候補の検証限界](../docs/development/seven-source-candidate.md#root-cloud-qaと残る確認)
+
+### 自動マージ名称 Sync の照合範囲
+
+凍結入力の manifest と全4チャンクの SHA-256、統合 source `e4a2dc3ca101233becb63b355f7020f5396da415` を照合した。UI/i18n、MCP の catalog・受付・読取・判断、host の merge/validation/publication、DB の予約・Done receipt と回帰試験、Wiki 開始 guard を独立した入口から確認した。名称と互換性の詳細は [自動マージの正本](concepts/formal-integration.md#名称と互換境界)、実際の順序は [並列成果を公開する手順](workflows/task-to-integration.md#並列変更を試してから正式統合する)に置く。
+
+変更は利用者向け名称と DB 試験期待値への追随で、既存の機械識別子・承認・保存形式を維持する。最終候補の検証成功は供給された Manifest の記録であり、この Wiki 保守はソース・試験定義・差分・リンクの静的照合を行った。製品 suite、実モデル・Auth0 / ChatGPT、稼働 DB・通知配送・配布を再実行しておらず、無関係な歴史的内容全体を再検証したとは扱わない。

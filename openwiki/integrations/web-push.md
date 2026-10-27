@@ -22,15 +22,15 @@ sources:
     resource: repo://tests/consultation-removal/browser.mjs
   - id: openwiki-source-f4d5c774a441b4c38cace035
     resource: repo://tests/consultation-removal/README.md
-generated: { by: "codex", at: "2026-10-23T19:04:53.809Z" }
+generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T19:04:53.809Z
+    at: 2026-10-27T03:10:58.678Z
 ---
 
 # Web Push・通知同意・会話への復帰
 
-Web Push は、認証された利用者が Project ごとに browser を登録し、Codex の blocking question / execution approval / Run 終端へ戻るための任意機能である。[Issue Follower や OS notifier](../concepts/issue-collaboration.md)とは別で、タブの会話 stream が通知の生成主体ではない。状態の正本は [AgentRun](../concepts/session-and-agent-run.md)にあり、通知到達は人の回答・承認・テスト・Integration・公開の成功を意味しない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[固定通知本文](../../crates/server/src/routes/web_push.rs#L292-L302)
+Web Push は、認証された利用者が Project ごとに browser を登録し、Codex の blocking question / execution approval / Run 終端へ戻るための任意機能である。[Issue Follower や OS notifier](../concepts/issue-collaboration.md)とは別で、タブの会話 stream が通知の生成主体ではない。状態の正本は [AgentRun](../concepts/session-and-agent-run.md)にあり、通知到達は人の回答・承認・テスト・自動マージ・公開の成功を意味しない。[trigger](../../crates/db/migrations/20261018180000_web_push.sql)・[固定通知本文](../../crates/server/src/routes/web_push.rs#L292-L302)
 
 ## 通知同意と所有権
 
@@ -44,7 +44,7 @@ OFF は owner の登録と cascade で配送待ちを消し、一回の有界 se
 
 ## Canonical 状態から配送待ちへ
 
-SQLite trigger は canonical `input_requested` / `approval_requested` の INSERT と、Codex AgentRun の succeeded / failed / cancelled / crashed / audit_failed への状態変化を同じ transaction 内で outbox に入れる。Workspace が登録 Project に link されている browser ごとに配送を作り、登録前の履歴を一括再送しない。async_questions、assistant prose、provider turn 完了、script/test、Integration/publication は trigger ではない。[admission](../../crates/db/migrations/20261018180000_web_push.sql#L26-L49)
+SQLite trigger は canonical `input_requested` / `approval_requested` の INSERT と、Codex AgentRun の succeeded / failed / cancelled / crashed / audit_failed への状態変化を同じ transaction 内で outbox に入れる。Workspace が登録 Project に link されている browser ごとに配送を作り、登録前の履歴を一括再送しない。async_questions、assistant prose、provider turn 完了、script/test、自動マージ/publication は trigger ではない。[admission](../../crates/db/migrations/20261018180000_web_push.sql#L26-L49)
 
 control は attempt・種別・reference、terminal は Run・attempt と browser 登録で重複排除する。worker は送信前に共通 `pending_blocking` と照合し、回答済み・期限切れ・再試行で古くなった待機を捨てる。terminal も現在 status と最新 attempt を照合する。通知用に新しい質問 resolver や approval control を作らない。[actionable 判定](../../crates/server/src/routes/web_push.rs#L273-L291)。[Codex の承認と質問の接続状態](../concepts/session-and-agent-run.md#承認質問と現在の接続状態)は別契約であり、この通知機能が回答・承認の接続制限を解消したと解釈しない。
 
@@ -93,4 +93,4 @@ server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（
 
 この fixture は backend revision `aa59ab58` を明示照合するため、変更 frontend と旧 backend の組合せを検査する。専用 API の削除後の実動作や変更後 Rust のコンパイルを証明しない。[revision 検査](../../tests/consultation-removal/browser.mjs#L140-L146)。[開発時の記録](../../tests/consultation-removal/VALIDATION.md)に型検査・lint・既存33試験・ブラウザ13項目の成功があるが、実 MCP 回答、provider への回答・承認送信、実 OS 通知は未検証である。
 
-今回の Sync は統合済み source `926a03acc100a4f13675b99d1eced595e9a29349` と凍結入力４チャンクを対象に、router / worker、DB trigger、composer、MCP 質問入口、回帰 fixture を静的に照合した。製品テストは再実行していない。凍結入力の正式 Integration は検証省略であり、開発時の成功記録を統合候補の合格と扱わない。無関係な既存 Wiki 全体を再検証したという意味でもない。
+今回の Sync は統合済み source `926a03acc100a4f13675b99d1eced595e9a29349` と凍結入力４チャンクを対象に、router / worker、DB trigger、composer、MCP 質問入口、回帰 fixture を静的に照合した。製品テストは再実行していない。凍結入力の自動マージ は検証省略であり、開発時の成功記録を統合候補の合格と扱わない。無関係な既存 Wiki 全体を再検証したという意味でもない。
