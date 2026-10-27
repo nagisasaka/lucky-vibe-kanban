@@ -62,8 +62,12 @@ sources:
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-67b7631c2182dcc02247e199
     resource: repo://deploy/developer/switch/start_support.py
+  - id: openwiki-source-806f8b5e786c99d89742d21f
+    resource: repo://deploy/developer/switch/terminal_drain.py
   - id: openwiki-source-55186e23cd9f537c0d522a81
     resource: repo://deploy/developer/switch/test_real_server.py
+  - id: openwiki-source-e7008c7df8e6a266da0f493b
+    resource: repo://deploy/developer/switch/test_switch.py
   - id: openwiki-source-353b77936aed6c3d486f5cb9
     resource: repo://deploy/developer/updater.py
   - id: openwiki-source-85c8f44da40d30a5a7a1f9c7
@@ -138,10 +142,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
+generated: { by: "codex", at: "2026-10-27T12:44:42.838Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:29:50.767Z
+    at: 2026-10-27T12:44:42.838Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -318,6 +322,17 @@ bundleは `server`、`agent-process-host`、`vibe-kanban-mcp` と `bundle.json` 
 
 currentを原子的に切り替えて固定launcherを起動し、health、listener、exe/cwd、全release hash、配信index/JS/CSS hash、DB整合性を照合する。画像等は埋込みprobeの対象だが全URLのHTTP到達性を保証しない。成功時だけcurrent+previousの2世代と最新backup1セットへ整理し、小さなreceipt/logは保持する。途中はcandidateを含む3世代、backup2セット分の容量が必要になる。[health](../../deploy/developer/switch/start_binary.py#L312-L344)・[成功と保持](../../deploy/developer/switch/start_binary.py#L252-L265)・[完了](../../deploy/developer/switch/start_binary.py#L424-L447)
 
+### 管理PTYを一度だけ終了する
+
+実切替ではbundleの検査と受付snapshotの一致確認後、`terminal-drain` を一度実行し、従来のpreflightと停止直前guardへ進む。`--no-new-work` の外部調整にはTerminal接続の停止も含み、再接続するUIを閉じる等の調整が必要である。再生成したPTYは既存child guardで拒否し、繰返しkillして成功を強制しない。dry-runはdrainせず、PTYがあれば非破壊に拒否する。[順序](../../deploy/developer/switch/start_binary.py#L362-L390)・[dry-run回帰](../../deploy/developer/switch/test_switch.py#L586-L609)
+
+対象はserverの直接の子で、同UID、session/group leader、server保有PTY masterに対応するcontrolling TTYとstdin、`VIBE_KANBAN_TERMINAL=1`、同じ `LVK_INSTANCE_DIR` が揃うshellと境界内の子孫である。cwdやshell名だけでは同定しない。pidfd取得後もPID/start・親・session・group・TTY・UIDを再照合し、detach、境界外group所属、既に停止中のprocess等は拒否する。[所有判定](../../deploy/developer/switch/terminal_drain.py#L26-L107)。製品側のPTY生成はUnix shellにTerminal環境を設定し、masterとchildを保持する。[生成元](../../crates/local-deployment/src/pty.rs#L57-L104)
+
+signal前に `terminal-drain.json` へserverと対象processの所属・start情報を保存する。子孫commandへ深い順にTERMを送り、pidfdで終了確認後にshellへHUPを送る。既定10秒の共通期限でTERM/logoutを確認できなければKILLせず失敗し、診断資料を保持する。旧serverがshellをwaitせずzombieを残しても、pidfdによるexitと非稼働を確認し、既存guardのzombie除外規則に従う。全子孫のwait回収を追加保証するものではない。[signalと終了](../../deploy/developer/switch/terminal_drain.py#L109-L135)・[既存guard](../../deploy/developer/switch/start_support.py#L73-L89)
+
+<!-- openwiki: broken internal link [../../deploy/developer/switch/README.md#L110-L134] heading anchor "L110-L134" does not exist in "../../deploy/developer/switch/README.md". Fix the href or restore the target, then delete this comment. -->
+このdrainの初回導入は、新binaryを先に起動する必要がない。既存固定kit契約を持つ旧serverには、外部調整・対象同定後に `terminal_drain.py` を含む完全な新kitを配置し、外部CLIまたは旧serverの既存 `self_restart` で呼び出せる。過去の失敗fenceは下記の復旧手順で保全・解消してから新IDを使う。稼働binary SHAと配置script SHAを別々に記録する。Rustの新受付lock/protocolを必要としない開発専用経路で、安定版image更新や、次節の旧起動形式からの移行を置き換えない。[初回導入の契約](../../deploy/developer/switch/README.md#L110-L134)・[kit検査](../../deploy/developer/switch/start_binary.py#L53-L62)
+
 ### 失敗と旧契約からの移行
 
 結果の正本は `INSTANCE/switch-operations/UUID/result.json`。failed/interrupted/未完了のoperationは後続切替を拒否する。新IDによる自動retry、自動DB rollback、旧binary復帰、失敗data削除はしない。新serverが診断用に残る場合もあるため、stage、process/listener、migration後DB、backup marker、保護ログを調べてoperatorが回復方針を決める。復旧後の失敗operationは保護された回復記録へ移してfenceを解除するのであって、成功へ書き換えない。[失敗保存と受付fence](../../deploy/developer/switch/start_binary.py#L448-L509)・[回復手順](../../deploy/developer/switch/README.md#保持と失敗復旧)
@@ -329,6 +344,10 @@ currentを原子的に切り替えて固定launcherを起動し、health、liste
 Python `test_switch.py` はコピー後の元bundle不可視、manifest虚偽、停止前snapshot差異、backup/health失敗、worker中断、冪等性、保持世代を検査する。Rust `environment_switch_tests.rs` はproduction MCP routerとmock認証で呼出元停止・再接続後の同receipt取得を扱う。`test_real_server.py` は実binaryのruntime子にLandlockを適用し、source不可視でmigrationあり/なし、asset/API、host bootstrap、Workspace cwdからの同梱stdio MCP、async worker生存を検査する。engineはprocfs identity観測のため同じLandlock隔離に入れない。[Python回帰](../../deploy/developer/switch/test_switch.py#L210-L297)・[実runtime試験](../../deploy/developer/switch/test_real_server.py#L188-L250)
 
 今回のSyncは凍結source `93913677602eaa8f975911641dcd2e81acb91f66` の実装・呼出元・設定・試験定義の静的照合で、製品テストやlive切替は実施していない。開発時の成功記録と、自動マージの明示的検証省略は別の証拠である。実Auth0/ChatGPTの一体E2E、実provider/model、browser操作、live移行は未確認。既存 `/mcp/*` 画像URLの一部404も残る。無関係な過去のWiki全体を再検証したものではない。[記録された試験結果・残る範囲](../../docs/development/dev-switch-bundle-validation.md#検証境界と観測)
+
+今回のPTY変更のSyncでは、凍結入力全3チャンクとSHA-256、統合source `647ceb8512b717fc42b6de29d7b78270669b3a71` を照合した。独立入口としてMCP handoff、固定kitの実行順序、製品PTY生成、procfs/pidfd所有判定、既存停止guard、Python/C fixtureと回帰定義を確認した。`test_terminal_drain.py` は別parent/instance・非管理PTYの保全、nested command、TERM無視、所属/PID変化、旧親のwaitなしを扱い、`test_switch.py` はdry-run非破壊、drain後の切替、再生成拒否を扱う。[drain回帰](../../deploy/developer/switch/test_terminal_drain.py)・[切替回帰](../../deploy/developer/switch/test_switch.py#L586-L637)
+
+供給Manifestは局所13件・29件成功、途中の全Python探索失敗（pysqlite3不足等）、最終自動マージのinstall / frontend build / check / lint / backend:test成功を記録する。これは供給された履歴で、この保守の再実行結果ではない。今回の検証はソース・試験定義・差分・リンクとOpenWiki lifecycleの静的照合であり、実bundle、browser再接続、実認証/モデル、live切替は未実行。無関係な過去の説明全体は再検証していない。
 
 ### ビルド情報の検証境界
 

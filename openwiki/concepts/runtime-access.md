@@ -28,6 +28,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-417b2b5ecb26c89c1b06df88
+    resource: repo://deploy/developer/switch/README.md
   - id: openwiki-source-9e0cfce0846bb98d2dc47de0
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-9f247c0205880588f54bff7e
@@ -38,10 +40,10 @@ sources:
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-10-27T12:44:42.838Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T12:44:42.838Z
 ---
 
 # 実行環境へのアクセス
@@ -113,6 +115,8 @@ cursor はpath、device/inode、metadata、offset、直前最大256 bytesのhash
 既存read/runtime:readとProject/grant検証に加え、実行にはruntime:execute、`allow_uncoordinated_execution`、非空purpose、`no_new_work:true`が必要である。grant rootは解決済みinstanceと完全一致し、`INSTANCE/switch/start_binary.py` と `INSTANCE/launch.json` はcanonicalでalias不可。旧 `LVK_SELF_RESTART_ENGINE/CONFIG` は不要で、toolは権限も起動設定も作らない。入力はregion、request_id、purpose、絶対bundle path、no_new_work。旧source/frontend等のfieldは暗黙変換せず拒否する。[設定・入力](../../crates/server/src/remote_mcp/environment_switch.rs#L13-L41)・[認可と受付](../../crates/server/src/remote_mcp/environment_switch.rs#L136-L219)
 
 稼働serverは実bind済みloopback listener、PID/start/boot/cwd、instance/data、current選択、実際に使った起動設定hashを非公開stdin pipeで渡す。これは永続起動設定ではなく停止対象のsnapshotで、workerが停止前に独立照合する。環境変数のportだけから対象を推定しない。[snapshot](../../crates/server/src/remote_mcp/environment_switch.rs#L43-L71)・[pipe](../../crates/server/src/remote_mcp/environment_switch.rs#L73-L115)・[停止前照合](../../deploy/developer/switch/start_binary.py#L358-L386)
+
+固定kitの実切替はsnapshot照合後、対象instance所有の管理PTYとcommandを一度だけ終了してから既存の安全guardへ進む。`no_new_work` の外部調整にはTerminal再接続の停止も含む。再生成したPTYはguardで拒否し、成功まで終了処理を繰り返さない。対象同定・signal・timeout・初回導入の詳細は [管理PTYの終了契約](../operations/development.md#管理ptyを一度だけ終了する)を参照する。[実行順序](../../deploy/developer/switch/start_binary.py#L362-L390)
 
 `request_id`を保存し、再接続後は同じregionとIDで `get_self_restart_operation` を呼ぶ。engineのownerはprincipal・grant ID・Projectから作り、結果取得にも現在の認可を要求する。一般の `get_operation` は受付監査で、succeededでも切替成功ではない。受付応答が不明なら新IDで再実行せず専用照会で回復する。旧serverのreceiptがuncertainでもengineの結果は独立して読める。[receiptと結果](../../crates/server/src/remote_mcp/environment_switch.rs#L136-L215)・[grant dispatch](../../crates/server/src/remote_mcp/environment.rs#L324-L378)
 
