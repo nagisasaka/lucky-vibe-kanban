@@ -8,6 +8,7 @@ use server::{
         scheduled_tasks::spawn_scheduled_task_loop,
         sessions::setup_gate::{reconcile_setup_launch_gates, spawn_setup_launch_gate_watcher},
     },
+    startup::finish_http_shutdown,
     workflow_runtime::runner::{
         DeploymentAgentRunReconciliationBoundary, recover_stale_workflow_runs_with_boundary,
     },
@@ -236,9 +237,7 @@ async fn main() -> Result<(), VibeKanbanError> {
     }
 
     shutdown_token.cancel();
-    if !main_handle.is_finished() {
-        let _ = main_handle.await;
-    }
+    finish_http_shutdown(&mut main_handle).await;
 
     perform_cleanup_actions(&deployment).await;
 

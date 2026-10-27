@@ -3,6 +3,7 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
     sync::Arc,
+    time::Duration,
 };
 
 use deployment::{Deployment, DeploymentError};
@@ -61,21 +62,44 @@ impl ServerHandle {
         let main_server = axum::serve(self.main_listener, app_router)
             .with_graceful_shutdown(async move { main_shutdown.cancelled().await });
 
-        let main_handle = tokio::spawn(async move {
+        let mut main_handle = tokio::spawn(async move {
             if let Err(e) = main_server.await {
                 tracing::error!("Main server error: {}", e);
             }
         });
 
-        main_handle.await?;
+        let result = tokio::select! {
+            _ = self.shutdown_token.cancelled() => Ok(()),
+            result = &mut main_handle => result,
+        };
+        self.shutdown_token.cancel();
+        finish_http_shutdown(&mut main_handle).await;
 
         perform_cleanup_actions(&self.deployment).await;
+        result?;
         Ok(())
     }
 
     /// Return a clone of the shutdown token. Cancel it to stop `serve()`.
     pub fn shutdown_token(&self) -> CancellationToken {
         self.shutdown_token.clone()
+    }
+}
+
+/// Call after cancellation: long-lived SSE/WebSocket connections must not keep
+/// execution process cleanup waiting indefinitely. This bounds HTTP draining,
+/// not the separate process cleanup. Runtime teardown closes remaining connections.
+pub async fn finish_http_shutdown(handle: &mut tokio::task::JoinHandle<()>) {
+    if !handle.is_finished()
+        && tokio::time::timeout(Duration::from_secs(5), &mut *handle)
+            .await
+            .is_err()
+    {
+        tracing::warn!(
+            "HTTP shutdown grace period elapsed; continuing with execution process cleanup"
+        );
+        handle.abort();
+        let _ = handle.await;
     }
 }
 

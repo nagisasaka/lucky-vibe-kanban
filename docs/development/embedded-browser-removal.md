@@ -36,3 +36,39 @@
 | `python3 tests/embedded-browser-removal/lifecycle.py`                                                       | 成功。新規専用instanceの起動停止2回、所有socketがmainだけ、旧設定の無害化、旧API不在、port/info JSON、旧ScratchのAPI取得/list、migration checksum/session保持、実built frontendとCDPを確認。instanceは終了後に削除 |
 
 `CARGO_BUILD_JOBS=4 LVK_DEV_SERVER_REAL_AGENT=0 node tests/server/run-managed-dev-server.mjs` は成功。実stdio catalog/start/status/stop、remote HTTPのscope/target/receipt/concurrent-start、UIと共通の管理状態、2回のcold start、process cleanupのsettlementを確認し、fixtureを削除した。`CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs clippy -p server -p mcp -p server-access -p db -p utils --all-targets -- -D warnings` も成功した。初回の `items_after_test_module` 指摘は関数の定義位置だけを修正し再検証した。通常ignoreされた残りの別用途E2Eや、実有料agent、実Auth0、実DNS/ACME、実VPS/WSL/SSH接続、実アプリのHMR再接続、Docker image/Compose実行は本検証の成功に含めない。稼働DBを複製・参照しての試験ではなく、新規DBに旧形式を投入して再起動した互換fixtureである。
+
+
+## 独立レビュー追補: SSEを保持した通常停止
+
+`2d0f2044fe7b76fe08be305fa3da38970cfecb20` の停止処理には回帰があった。実有効な `/api/events`（末尾slashの `/api/events/` は404）で200・`text/event-stream`・本文を確認し、接続を閉じずSIGTERMを送ると、mainは12秒後も終了せず、`kill_all_running_processes` に到達しなかった。`startup::ServerHandle::serve` でも同じ条件で終了tokenをcancelすると12秒超過した。これは無期限停止を理論だけで断定したものではなく、12秒の監視上限まで停止しない実測である。従来の `lifecycle.py` はブラウザ/HTTP接続を先に閉じていたため、この条件を網羅していなかった。
+
+両経路のHTTP drainに5秒の上限を設けた。猶予を超えると警告してserve待機taskをabortし、既存の実行プロセスcleanupへ進む。cleanup自体を途中で打ち切る処理や、新たなproxy・設定・接続管理基盤は追加していない。残存HTTP接続の最終切断はruntime終了時に行われる。ライブラリ呼出し側がruntimeを維持する場合、`serve()`復帰が全接続の強制切断を保証するわけではない。
+
+Unix隔離回帰は次の手順で実行する。通常のCargo共有build-dirを使い、別targetや稼働instanceを指定しない。
+
+```bash
+CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs test -p server --test shutdown --no-run
+# 上の出力にある Executable tests/shutdown.rs の絶対パスを指定する。
+python3 tests/embedded-browser-removal/shutdown.py --mode both --library-test-binary /path/from/cargo/shutdown-HASH
+# 接続を先に閉じる対照ケース。
+python3 tests/embedded-browser-removal/shutdown.py --mode both --library-test-binary /path/from/cargo/shutdown-HASH --close-sse-before-stop
+```
+
+`shutdown.py` は毎回専用一時instance/DBを作り、mainのSIGTERMと、SIGTERMを終了tokenへ変換するライブラリfixtureの両方を検査する。cleanup到達とexit code 0、ライブラリでは`serve()`復帰も確認する。空の新規DB（実行プロセス0件）での試験であり、実行中agentの全停止ケースをこの試験だけで保証しない。修正前の再現確認に限り `--expect-hang` を指定できる。監視上限超過時も自分の子processだけをkill/waitしてから一時instanceを削除する。
+
+
+追補の実測（2026-10-27 UTC、SSEのSIGTERM送信から監視結果まで）:
+
+| 条件 | main | ライブラリ `serve()` | cleanup |
+| --- | --- | --- | --- |
+| 修正前・SSE保持 | 15:28:30開始、12秒超過 | 15:28:58開始、12秒超過 | 両方未到達、自分の子processを強制終了 |
+| 修正後・SSE保持 | 15:32:31開始、5.025秒、exit 0 | 15:32:52開始、5.029秒、exit 0 | 両方到達・完了 |
+| 修正後・SSEを先にclose | 15:33:13開始、0.010秒、exit 0 | 15:33:29開始、0.015秒、exit 0 | 両方完了、猶予超過warningなし |
+
+追補時の `python3 tests/embedded-browser-removal/lifecycle.py` も成功し、旧Scratch/migration/session保持、単一listener、通常起動停止2回、同梱Chromium/CDPを再確認した。新テストのJSONL（時刻・cleanupログ・exit code）と実binaryのSHA-256はworktreeの `.build/local247/shutdown-*.json*` に保持する。修正前後とも新規一時DBだけを使い、稼働dev/stable/previewや実DBには操作していない。
+
+追補の `CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs clippy -p server --all-targets -- -D warnings` は成功。別の `check` はClippyとtest buildが関連targetのコンパイルを行うため重複実行しない。フロントエンド/API型/DB schema/公開設定には追補差分がなく、既存の全体テストを一律には再実行していない。
+
+追補の `CARGO_BUILD_JOBS=4 LVK_DEV_SERVER_REAL_AGENT=0 node tests/server/run-managed-dev-server.mjs` は1件成功（10.70秒）。実stdio/remote MCP、共通状態、2回のcold start、計2件の管理processとcleanup settlementを確認し、専用instanceを削除した。有料実agentとSSEの同時停止は未実施。
+
+試験準備中の失敗も区別する。初回fixture buildは、ソースに存在する `write_port_file` の未解決importで失敗した。該当ソースのmtimeだけを刷新して再buildすると同じソース内容で成功したため、共有中間成果物の鮮度不整合が疑われるが根本原因は未調査。キャッシュ削除や設定変更は行っていない。初回SSE harnessは末尾slashの404を使ってstartup待ち上限に達したため、有効経路に訂正してから修正前後を実測した。これらを正常停止の成功試験として数えていない。
