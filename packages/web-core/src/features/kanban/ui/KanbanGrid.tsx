@@ -3,6 +3,7 @@ import { useState, useRef, type ReactNode, type MouseEvent } from 'react';
 import {
   DndContext,
   DragOverlay,
+  defaultDropAnimationSideEffects,
   MouseSensor,
   TouchSensor,
   KeyboardSensor,
@@ -18,9 +19,27 @@ import {
   useSortable,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { DropResult } from '@vibe/ui/components/KanbanBoard';
 import { cn } from '@/shared/lib/utils';
 import './kanban-grid.css';
+
+// Keep sortable displacement and overlay landing in sync. Override only in the
+// Workspace's Vite environment to compare candidates before choosing the final feel.
+const KANBAN_MOTION_PRESETS = {
+  crisp: { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+  bouncy: { duration: 200, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+} as const;
+const KANBAN_MOTION =
+  KANBAN_MOTION_PRESETS[
+    import.meta.env.VITE_KANBAN_MOTION === 'bouncy' ? 'bouncy' : 'crisp'
+  ];
+const DROP_ANIMATION = {
+  ...KANBAN_MOTION,
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0' } },
+  }),
+};
 
 // Prefer the card under the pointer, then the column (including an empty one).
 // Keyboard dragging uses the same measured card rectangles in row-major order.
@@ -105,7 +124,7 @@ export function KanbanGrid({
         {children}
       </div>
       {createPortal(
-        <DragOverlay dropAnimation={null}>
+        <DragOverlay dropAnimation={DROP_ANIMATION}>
           {overlay && (
             <div
               data-kanban-ghost
@@ -171,9 +190,17 @@ export function KanbanGridCard({
   isSelected?: boolean;
   dragDisabled?: boolean;
 }) {
-  const { setNodeRef, attributes, listeners, isDragging } = useSortable({
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+    transform,
+    transition,
+  } = useSortable({
     id,
     disabled: dragDisabled,
+    transition: KANBAN_MOTION,
     data: { overlay: children },
   });
   const dragged = useRef(false);
@@ -183,6 +210,8 @@ export function KanbanGridCard({
       ref={setNodeRef}
       data-kanban-card={id}
       style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
         opacity: isDragging ? 0 : undefined,
       }}
       className={cn(
