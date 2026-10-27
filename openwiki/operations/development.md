@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/db/src/lib.rs
   - id: openwiki-source-7b783ec1a704bf9dadb9c003
     resource: repo://crates/db/src/migration_compat.rs
+  - id: openwiki-source-706d3e4ab2b931252207b0e2
+    resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-8856c7b6451960c4ee31ae56
@@ -132,10 +134,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -394,7 +396,7 @@ version `20261025120000` の元 SQL は、全既存 Project に `LOCAL` を付�
 | 元 SQL / 互換 SQL の既知 LF・CRLF checksum | 保存 checksum に一致する実 SQL bytes を選び、通常の SQLx 検証を行う |
 | 未知 checksum、または改変された元・互換 artifact | エラーにし、履歴を書き換えない |
 
-adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new` を使う。まず両 artifact が既知であることを検証し、その後で固定 LF/CRLF 候補を選ぶため、任意 SQL を改行正規化して受け入れる仕組みではない。他版の検証を緩和する一般的な履歴変換でもない。[選択と構築](../../crates/db/src/migration_compat.rs#L40-L133)。互換層は適用済み receipt を更新せず、実行時は SQLx が実 SQL の checksum を記録する。[履歴保持の設計](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。
+adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new` を使う。まず両 artifact が既知であることを検証し、その後で固定 LF/CRLF 候補を選ぶため、任意 SQL を改行正規化して受け入れる仕組みではない。他版の検証を緩和する一般的な履歴変換でもない。[選択と構築](../../crates/db/src/migration_compat.rs#L40-L118)。互換層は適用済み receipt を更新せず、実行時は SQLx が実 SQL の checksum を記録する。[履歴保持の設計](../../crates/db/migration_compat/README.md#project-key-migration-compatibility)。
 
 互換 SQL は Project UUID 順で `LOCAL`、`LOCAL2`〜`LOCAL99999` を割り当てる。既存 Issue 行は更新せず、列 default は `LOCAL` のまま。100000件目は10文字 CHECK を超えて migration 全体が rollback し、切詰めや再利用はしない。[割当と制約](../../crates/db/migration_compat/project_keys_multi.sql#L1-L21)。
 
@@ -429,9 +431,19 @@ server の `routes::workspaces::integration::editor_tests` は一時ディレク
 
 認証の回帰検証は `crates/server-access/src/tests.rs`、公開MCPのJWT-to-tool検証、nginx ingress fixture、`tests/server-access/`のブラウザー経路を分けて読む。実Auth0/ChatGPTの受入はこれらと別である。[検証境界の記録](../../docs/development/server-access.md)、[配布の認証境界test](../../deploy/server/access.test.mjs)。
 
+## 未起動予約と host receipt の回帰検証
+
+[未起動予約の終端契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)を変更する場合、DB の `agent_runtime_reservation_tests.rs` で旧 terminal 行・active host identity の保持、未起動だけの解放、失敗時の event / projection rollback、再送と制約を確認する。初回 host batch が Failed / Cancelled / Crashed / AuditFailed の各場合も、cursor を先に保存して未起動へ誤解放しないこと、foreign Run / Session・保存失敗・conflicting replay で cursor が進まないことを検査する。[予約・batch 試験](../../crates/db/src/models/agent_runtime_reservation_tests.rs#L1-L345)
+
+`reservation_terminal_migration_supports_fresh_and_previous_main_upgrade` は共通 migration 入口で fresh と直前 schema からの upgrade、再実行、trigger / 3 index と foreign key を確認する。port の `prelaunch_released_failure_diagnostic_survives_database_reopen` は Failed 保存後の診断エラーを作り、DB を閉じて再 open しても `not_started` の診断を一度だけ完了できることを確認する。[移行 fixture](../../crates/db/src/migration_compat.rs#L126-L166)・[中断回復 fixture](../../crates/local-deployment/src/agent_run_port.rs#L4654-L4710)
+
+busy_timeout=0 の port fixture では、独立した監視 SELECT の SQLITE_BUSY（code 5）だけを既存2秒 timeout 内で再観測する。writer の失敗・予算・identity の assertion を弱めたり、製品に retry を追加したりする変更ではない。[監視と writer の検査](../../crates/local-deployment/src/agent_run_port.rs#L4815-L4903)
+
+今回の Sync は source `31b6fcf2927a1c7de502753dc7f248da8643b06e` と凍結 manifest / 全4 chunk を照合した。供給 Change Manifest は局所 DB / port / completion 試験と compiler / SQLx check、および最終統合候補の install・frontend build・check・lint・backend:test 成功を記録する。局所 port 試験の初回監視 read 競合と、fixture 修正後の成功は別の結果である。本保守では試験を再実行せず、稼働 DB の履歴予約修復、deployment / restart、実ユーザー Workspace の archive を検証したものでもない。過去の別機能の検証記録はその当時の範囲として保持する。
+
 ## 起動回復・受動参照・MCP 操作を変更するとき
 
-[Starting 回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)では、`agent_run_port::tests` の SQLite busy、再起動越し予算、部分終端保存、Stop/重複要求、setup除外、ACK不確実性を分けて確認する。DBのmigration fixtureは旧行の既定値・保持・部分indexと、Starting/host予約フェンスを検査する。画面のPreparingと実開始時計はcanonical conversation / taskAttemptモデル試験が対象であり、実providerが一度だけ起動したことのE2E保証ではない。[port試験](../../crates/local-deployment/src/agent_run_port.rs#L4448-L4800)・[migration試験](../../crates/db/src/models/agent_runtime.rs#L2560-L2659)・[表示試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)
+[Starting 回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)では、`agent_run_port::tests` の SQLite busy、再起動越し予算、部分終端保存、Stop/重複要求、setup除外、ACK不確実性を分けて確認する。DBのmigration fixtureは旧行の既定値・保持・部分indexと、Starting/host予約フェンスを検査する。画面のPreparingと実開始時計はcanonical conversation / taskAttemptモデル試験が対象であり、実providerが一度だけ起動したことのE2E保証ではない。[port試験](../../crates/local-deployment/src/agent_run_port.rs#L4468-L4903)・[migration試験](../../crates/db/src/models/agent_runtime.rs#L2560-L2659)・[表示試験](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)
 
 [Codex resume指示](../integrations/agent-providers.md#codex-resume-の固定指示と現在-identity)は合成JSONL/RPCで固定文変更、同じ/新しいrun、compaction・rollback・fork・未知形式、有界file・symlink・変更中file、inject拒否を確認する。実利用者の履歴を読む試験ではなく、effective promptやtoken/課金効果は未測定である。`merged_initialize_keeps_normal_version_evidence_out_of_passive_reads` は通常initializeとpassiveの分離を検査する。[履歴fixture](../../crates/executors/src/executors/codex/client/resume_instructions.rs#L300-L569)・[共有initialize fixture](../../crates/executors/src/executors/codex/client.rs#L2251-L2310)
 

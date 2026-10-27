@@ -4,6 +4,8 @@ title: Session・AgentRun・RunAttempt
 description: 会話・依頼・実行試行の識別、継続と retry、provider binding、Goal と停止の契約。
 tags: [session, agent-run, run-attempt, goal, lifecycle]
 sources:
+  - id: openwiki-source-cf8b58730bbd6b4986a47c09
+    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-3e5425718d87b437a12edd60
@@ -48,6 +50,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/mechanical.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-79cca50cc03fbe39bcd5a22c
+    resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
     resource: repo://crates/server/src/routes/scratch.rs
   - id: openwiki-source-406c792263884bbf462d666c
@@ -150,10 +154,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -231,6 +235,8 @@ Pending / Starting は Preparing を表示し、経過時計を出さない。Bo
 開始後の入力・承認待ち、Cancelling、同じ Run の retry は壁時計の範囲に含み、別 Follow-up Run とは合算しない。Retry の Preparing 中も時計は抑止し、実行へ進んだ後は最初の Running 起点へ戻る。Workspace の `is_running` 集計を変更したものではない。[Web の時間表示](../architecture/web-and-sync.md#run-の時間表示を同期状態から分ける)・[準備と実開始の回帰](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L1505-L1550)。Starting が保存できない場合の有限予算・DB回復・host予約の不確実性は [Runtime の耐久回復](../architecture/agent-runtime.md#starting-保存失敗と未起動の回復)に集約する。
 
 ### 終了の証拠と再接続
+
+Run / attempt の終端と、実プロセスの終了証拠は別である。起動前に失敗・取消が確定した予約は、厳密な証拠条件の下で registry の `not_started` となり、実 PID・開始・終了時刻を持つ `exited` とは区別する。未起動の確認は成功した実行の証明でもない。条件・原子的な解放・Starting 診断の中断回復は [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)にまとめる。
 
 永続化では attempt の `finished_at` が未設定のとき、終端 state の時刻を一度だけ保存する。後続イベントが projection の `updated_at` を進めても終了時刻を更新しない。したがって `updated_at` を終了時刻へ流用すると、完了済み Run の表示時間が増える。[batch 保存](../../crates/db/src/models/agent_runtime.rs#L1775-L1794)・[単一 event 保存](../../crates/db/src/models/agent_runtime.rs#L2099-L2119)・[遅延 event の回帰テスト](../../crates/db/src/models/agent_runtime.rs#L3210-L3267)
 

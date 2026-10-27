@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/db/migrations/20261021173000_workspace_tokens.sql
   - id: openwiki-source-bac2c1bba2c5a35274ebfe6b
     resource: repo://crates/db/migrations/20261026010000_generated_archive.sql
+  - id: openwiki-source-cf8b58730bbd6b4986a47c09
+    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-c01fa644be961cb7ee12d2b5
@@ -112,10 +114,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-27T03:39:07.736Z
 ---
 
 # Workspace と Repository
@@ -245,6 +247,8 @@ LVK repository 自身の開発では、明示的な `scripts/dev-cargo.mjs` が 
 手動 Archive は、履歴・Git branch を残して managed worktree を解放する明示操作である。UI・stdio MCP・外部 HTTP MCP は共通の prepare → 一回確認「ワークツリーが削除されます」→ confirm を使う。prepare は状態を変更せず、Workspace ID・container path・branch に結びついた10分有効の token を返す。取消は token を送らないことで成立する。confirm は token を消費し、期限切れ・再利用・対象変化を拒否する。通常 update の `archived:true` はこの経路を要求して拒否する。[受付と確認](../../crates/server/src/routes/workspaces/archive.rs#L126-L178)・[通常更新](../../crates/server/src/routes/workspaces/core.rs#L40-L79)
 
 確認前と削除直前に、非終端 AgentRun・process registry・script とその cleanup、自動マージ 予約と未完了 run、Workflow、資源 operation/mediation を検査する。Wiki は AgentRun が終端でも active maintenance/bootstrap 所有を検査し、host の installer 待ちなど実際の準備 future は RAII 予約で保護する。`execution_only` というラベルだけでは拒否しない。[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)・[準備予約](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)
+
+AgentRun が終端でも registry が `reserved` / `spawned` / `running` / `unreachable` なら busy のままである。起動していないことを厳密に確認できる失敗・取消系予約は、終端投影時に `not_started` へ解放される。条件と移行時に過去予約を自動修復しない理由は [Runtime の未起動予約の契約](../architecture/agent-runtime.md#未起動予約の終端と-not_started)を参照する。この状態だけで他の busy 検査や archive 確認を省略できない。[registry の検査](../../crates/server/src/routes/workspaces/archive.rs#L77-L96)
 
 実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の通常 debug frontend 参照も観測する。`developer-runtime` featureで埋込み済みの場合はこの自己frontend参照の保護を省くが、exe/cwd/fd等の実参照検査は維持する。[bundleの独立性](../operations/development.md#開発用成果物切替と復旧)は既存worktreeの無条件削除許可ではない。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 

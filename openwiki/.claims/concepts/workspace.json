@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:121727b3dec6609302f19ddd5a0bb4f208b09c482d46a67428c0b5cf2bbdfb07",
+  "pageVersion": "sha256:73b1b106a834f881ef47a354662611cbff5a5920bbaa3f564622ddcff6aae77a",
   "claims": [
     {
       "id": "claim_94623b4df5d444f5b2804c9e2c2025c7",
@@ -737,10 +737,24 @@
           "version": "repo-lines-v1:sha256:e5bf854cb18ccb799e5a0328e0fefd56e88bb0f9af28898f232d0e350ef9c3d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGYyYTkzN2RkNThiM2E4Mzg5ODNhYjMyN2I1N2M1Y2M1YzRlYmUwZDVjZGJkZjg0NzZhMDBmZGMzNzEyMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZDYwNGZlN2RhODllYmUxYTdlMzE1MjU1YzRlMzE4MGRjYWNlNzA3NmJjNjZkNDIxMGZjZjU3NjRjYmQ4ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlNzgzM2QwMDY0YTRmNjIwYmQ1YTYwMjViMjMxOGVjY2YyODkxYTkyMmJhZDNlNDA0YmEwOWNiNDkyNTI5ZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmNjg1YzZhOTFiZjhkN2I5ZTJhYWMwNzJlZDdmMjY1MWEzZmVjYzU0YmM4ZWEzMDlkMTBiMzM3ZjkyMTlhODEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_aae2ffb4adea4b2e9658d9e3e12a9d4c",
+      "statement": "archiveのbusy判定はRun終端でもreserved/spawned/running/unreachableのregistryを保護する。証明済み未起動予約のnot_startedへの解放はこの項を外すが、他のbusy条件や確認を省略しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql#L87-L111",
+          "version": "repo-lines-v1:sha256:49ceb2537e3444070984895fb9748e4788f8fefeb73e31f1afea05d21f0f4d58:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2Y2IwOWEwZDE4NTIwZWIxYTM1NjVjYzJiNWE5ZTllMWNiNjVlM2E2NDk3MGJhOTk3Y2VhYjMwZGNhYmNiNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNzgyZTQ4MGQ0NDNlMzM5ODk3NzljNjJjOTQ4Njg0OTliYTU2MmRhYTI5NzdiNWQ4ZWJkMmE0N2JmOGM0MDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlOTdkZDhlMDYyNjQ1NTY0YjFlNzhlMmMyNTk4OTczNTQwNmIyMzgwMjJkN2IwMmRiNGFmN2Q1MDllMTVhZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/workspaces/archive.rs#L53-L124",
+          "version": "repo-lines-v1:sha256:e0c6eb662f15c74c93e181cb5fc0ce0f3884ceb5919c9a75139934f2a5e26508:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZThkNjhlZDQyYWRlNGI4NmQzYWU2NDAxYTE0MTg2YWQ3YzI0MGQzOTViYWZiYTNkNDhmY2FiZGI2YWM4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ZDc0Zjg5NDZlMzZhYzAwMGZiMjcyYTI2MWI5NDhkZTdkYWYxYmI0NTFmYTJiMmEzOGUyN2U5ODU5OTkxMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MjUxMTUxOWMyNTZhYmYzNmMzN2VlYzgxMTliNjdkZjBjZGFlMDAzZTBjMzE3MTBmYmM5NzM1N2M4YjhhZjkifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:10:58.678Z"
+    "at": "2026-10-27T03:39:07.736Z"
   }
 }

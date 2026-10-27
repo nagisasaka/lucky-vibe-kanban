@@ -5,12 +5,16 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-27T03:39:07.736Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
+  - id: openwiki-source-cf8b58730bbd6b4986a47c09
+    resource: repo://crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql
   - id: openwiki-source-9bc71fe4f6cbbaa6fa9168e1
     resource: repo://crates/db/src/models/agent_runtime_kanban_tests.rs
+  - id: openwiki-source-706d3e4ab2b931252207b0e2
+    resource: repo://crates/db/src/models/agent_runtime_reservation_tests.rs
   - id: openwiki-source-d20a82e2192a07c687b838cb
     resource: repo://crates/db/src/models/agent_runtime.rs
   - id: openwiki-source-22b82518475034ade38104e6
@@ -33,6 +37,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
+  - id: openwiki-source-15fe6957ffd50a6292794c19
+    resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
     resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-024bbfcff36a8b1f88b9bcf3
@@ -57,7 +63,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-27T03:39:07.736Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -80,7 +86,17 @@ Starting の canonical event 保存は provider launch の前提であり、書�
 
 PID が NULL というだけでは未起動と証明できない。host endpoint などが予約済みなら Launch の ACK 喪失があり得るため、既存 attach / observer へ戻し、置換 provider を起動しない。共通 Cancel も完全な未起動証拠がある場合だけ Audit writer なしで Cancelled にでき、実開始の証拠がある監査障害は audit_failed のまま扱う。[未起動条件](../../crates/local-deployment/src/agent_run_port.rs#L2628-L2680)・[取消境界](../../crates/local-deployment/src/agent_run_port.rs#L2980-L3015)
 
-migration は既存 registry へ既定0の3列と部分 index を追加するだけで、旧 pending の backfill や再起動をしない。DB が永続的に書けなければ、有限 retry があっても耐久終端を保証できない。今回の故障の原因を特定する機能でもない。[前方 migration](../../crates/db/migrations/20261026180000_agent_starting_recovery.sql)・[busy / restart / setup / ACK 不確実性の回帰](../../crates/local-deployment/src/agent_run_port.rs#L4448-L4800)。画面の Preparing と実行時計は [Session の時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
+Starting recovery の migration は既存 registry へ既定0の3列と部分 index を追加し、旧 pending の backfill や再起動をしない。DB が永続的に書けなければ、有限 retry があっても耐久終端を保証できない。今回の故障の原因を特定する機能でもない。[前方 migration](../../crates/db/migrations/20261026180000_agent_starting_recovery.sql)・[busy / restart / setup / ACK 不確実性の回帰](../../crates/local-deployment/src/agent_run_port.rs#L4448-L4800)。画面の Preparing と実行時計は [Session の時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
+
+### 未起動予約の終端と `not_started`
+
+`agent_process_registry` の `not_started` は、provider を起動していないと確認できた予約の終端であり、実 PID・開始・終了時刻を必要とする `exited` とは別である。予約行と identity、再送用履歴を削除したり、架空 PID で終了を表したりしない。[状態の制約](../../crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql#L1-L69)
+
+`release_unstarted_agent_reservation` trigger は attempt が非終端から Failed / Cancelled / Crashed / AuditFailed へ変わる際、`reserved` で host endpoint/token/instance/PID/protocol/start identity、provider PID/group/開始・終了、exit code、executable/fingerprint、supervisor、lease がなく、host cursor が0で Native Audit stream もない予約だけを `not_started` にし、`launch_requested` を0にする。Succeeded や既に終端の attempt は対象外である。終端投影と解放は同じ transaction に属し、解放失敗なら canonical event と投影も rollback する。[trigger](../../crates/db/migrations/20261027010000_unstarted_reservation_terminal.sql#L87-L111)・[rollback の回帰](../../crates/db/src/models/agent_runtime_reservation_tests.rs#L163-L203)
+
+Starting 失敗では Failed の保存時にこの解放が先に成立する。その後の診断保存が中断しても、最新 attempt の `not_started` + `starting_failure_pending=1` を既存 prelaunch 再照合が拾い、同じ terminal / 診断 ID で完了し、pending flag を消す。解放済み予約を新規起動へ戻す経路ではない。[回復分岐と完了](../../crates/local-deployment/src/agent_run_port.rs#L2655-L2788)・[対象の選別](../../crates/local-deployment/src/agent_run_port.rs#L2813-L2842)・[DB 再 open の回帰](../../crates/local-deployment/src/agent_run_port.rs#L4654-L4712)
+
+この前方 migration は全既存行をコピーし、制約と3つの index を再構成するが、過去の terminal + reserved 行を修復しない。履歴予約の解放には別途の証拠確認が必要で、upgrade 自体はその証明にならない。`reserved` / `spawned` / `running` / `unreachable` は引き続き [Workspace の busy 検査](../concepts/workspace.md#archive削除期限-cleanup)で保護され、`not_started` だけで Workspace 全体の idle や archive 許可が成立するわけでもない。[移行と履歴保持の試験](../../crates/db/src/models/agent_runtime_reservation_tests.rs#L17-L76)・[共通 busy 判定](../../crates/server/src/routes/workspaces/archive.rs#L53-L124)。OpenWiki での未起動証拠は [cleanup と成功証明の境界](../operations/openwiki-maintenance.md#公開復元失敗回復)を参照する。
 
 ## Codex の承認待機を所有する場所
 
@@ -159,7 +175,9 @@ Audit の本体は SQLite の外、`<asset_dir>/runtime/native-audit/v1/sessions
 
 ## DB の原子性と冪等性
 
-一つの host response の永続イベント、provider session 観測、投影、usage snapshot、cursor 更新を同じ transaction に収める。canonical sequence は密な連番を割り当て、生フレームや host の sequence とは区別する。cursor だけ先へ進めると再接続時に未反映データを失う。[batch の入口](../../crates/db/src/models/agent_runtime.rs#L1479-L1554)、[cursor と commit](../../crates/db/src/models/agent_runtime.rs#L1772-L1793)
+一つの host response の永続イベント、provider session 観測、投影、usage snapshot、cursor 更新を同じ transaction に収める。canonical sequence は密な連番を割り当て、生フレームや host の sequence とは区別する。cursor だけ先へ進めると再接続時に未反映データを失う。[batch の入口](../../crates/db/src/models/agent_runtime.rs#L1479-L1554)、[cursor の先行保存](../../crates/db/src/models/agent_runtime.rs#L1644-L1702)・[commit](../../crates/db/src/models/agent_runtime.rs#L1955-L1959)
+
+host batch は保存済み Run / Session / attempt identity を照合してから、host cursor を終端投影より先に同じ transaction 内で更新する。これにより初回受信が失敗・取消などの terminal だけでも、host receipt を未起動と誤認しない。先行保存は単独 commit ではなく、その後の event 保存・provider binding・投影・冪等再送の失敗で cursor も rollback する。foreign identity は cursor 更新前に拒否する。[順序と identity](../../crates/db/src/models/agent_runtime.rs#L1644-L1734)・[初回 terminal 4状態と rollback / replay](../../crates/db/src/models/agent_runtime_reservation_tests.rs#L205-L345)
 
 RunAttempt の usage snapshot は RunAttempt ごとに native sequence が新しい場合だけ置き換える。同じ sequence に異なる内容が来ると冪等性の衝突として拒否し、古い通知は無視する。[usage 更新](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)
 
@@ -167,7 +185,7 @@ RunAttempt の usage snapshot は RunAttempt ごとに native sequence が新し
 
 `TokenUsageSnapshot.cumulative_usage` は、Codex native 通知の thread identity と total の整合性を adapter が確認できた場合だけ付く任意 field である。旧 snapshot は欠落したまま deserialize でき、汎用 usage を累積と推定しない。[適合判定](../../crates/executors/src/executors/provider_adapter.rs#L1969-L2025)・[互換 field](../../crates/executors/src/runtime/contracts.rs#L411-L440)
 
-DB はこの情報を再検証し、`workspace_token_usage` の thread 単位最大値を既存 snapshot と host cursor と同一 transaction で保存する。snapshot の同一 sequence 内容衝突や cursor identity 不一致なら commit しない。thread の total 比較と RunAttempt snapshot の sequence 比較は別の更新条件であり、後者の最新値を全 attempt 分加算してはならない。[保存・衝突・commit](../../crates/db/src/models/agent_runtime.rs#L1797-L1928)。集計の意味、欠損内訳・取消・reset の扱いは [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)を正本とする。
+DB はこの情報を再検証し、`workspace_token_usage` の thread 単位最大値を既存 snapshot と host cursor と同一 transaction で保存する。snapshot の同一 sequence 内容衝突や cursor identity 不一致なら commit しない。thread の total 比較と RunAttempt snapshot の sequence 比較は別の更新条件であり、後者の最新値を全 attempt 分加算してはならない。[保存・衝突・commit](../../crates/db/src/models/agent_runtime.rs#L1875-L1959)。集計の意味、欠損内訳・取消・reset の扱いは [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)を正本とする。
 
 ### Canonical event から Board への副作用
 
