@@ -51,3 +51,30 @@ instance in public mode with its exact HTTPS origin and required authentication,
 verify locked/423 first, and let the operator configure it. Do not issue or log
 setup tokens as part of the test or seed scripts. Keep the instance, source and
 built frontend until the user finishes reviewing it.
+
+## Touch activation regression
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/touch-guard.mjs
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers LVK_TEST_SERVER=/absolute/path/to/compatible/prebuilt/server node tests/kanban/touch.mjs
+```
+
+The first command renders only the production click guard in Chromium. It checks
+small tap jitter, an excursion beyond 5px followed by a return, cancellation,
+multiple fingers, nested controls, and subsequent keyboard/mouse/touch activation.
+It is a component fixture, not an application E2E.
+
+The second command uses the existing isolated backend/Vite approach with a fresh
+SQLite instance and dynamically assigned loopback ports. The backend executable
+is copied into that disposable instance and hash-verified before execution.
+It drives the actual
+Kanban page with Chromium mobile emulation (390×844, touch enabled) and trusted
+CDP touch events. It records native scrolling and event sequences, checks detail
+and tag activation, and exercises long-press, mouse and keyboard DnD against the
+real API. No API responses are mocked. `.build/touch-validation/` retains the
+results, source/backend revision, screenshots and cleanup receipt; the disposable
+instance is removed after stopping the browser, Vite and backend. This does not
+verify the feel of a physical smartphone or Safari.
+
+See [the touch validation record](TOUCH-VALIDATION.md) for results, event order,
+commands, and the separate live DnD projection limitation.

@@ -110,11 +110,32 @@ struct BulkUpdateProjectStatusesRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(try_from = "Value")]
 struct BulkUpdateIssueItem {
     id: Uuid,
     expected_sort_order: Option<f64>,
-    #[serde(flatten)]
     changes: UpdateIssueRequest,
+}
+
+impl TryFrom<Value> for BulkUpdateIssueItem {
+    type Error = serde_json::Error;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        #[derive(Deserialize)]
+        struct Header {
+            id: Uuid,
+            expected_sort_order: Option<f64>,
+        }
+        // serde flatten buffers decimal JSON numbers as maps when
+        // arbitrary_precision is enabled. Deserialize the original JSON Value
+        // directly so fractional DnD ranks retain their existing f64 contract.
+        let header: Header = serde_json::from_value(value.clone())?;
+        Ok(Self {
+            id: header.id,
+            expected_sort_order: header.expected_sort_order,
+            changes: serde_json::from_value(value)?,
+        })
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -3558,6 +3579,23 @@ mod tests {
     use serde_json::Value;
     use sqlx::{SqlitePool, sqlite::SqlitePoolOptions, types::Json};
     use uuid::Uuid;
+
+    #[test]
+    fn bulk_issue_decimal_ranks_deserialize_from_http_json() {
+        let id = Uuid::new_v4();
+        for (rank, expected) in [(1.5, 0.25), (-0.125, -1.75), (99.0, 0.0)] {
+            let json = format!(
+                r#"{{"updates":[{{"id":"{id}","expected_sort_order":{expected},"sort_order":{rank}}}]}}"#
+            );
+            let request: super::BulkUpdateIssuesRequest = serde_json::from_str(&json).unwrap();
+            assert_eq!(request.updates[0].id, id);
+            assert_eq!(request.updates[0].expected_sort_order, Some(expected));
+            assert_eq!(request.updates[0].changes.sort_order, Some(rank));
+            assert_eq!(request.updates[0].changes.status_id, None);
+        }
+        let invalid = format!(r#"{{"updates":[{{"id":"{id}","sort_order":"1.5"}}]}}"#);
+        assert!(serde_json::from_str::<super::BulkUpdateIssuesRequest>(&invalid).is_err());
+    }
 
     #[tokio::test]
     async fn issue_activity_body_only_and_destination_order() {

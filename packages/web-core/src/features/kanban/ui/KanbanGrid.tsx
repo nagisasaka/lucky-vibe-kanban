@@ -1,8 +1,16 @@
 import { createPortal } from 'react-dom';
-import { useState, useRef, type ReactNode, type MouseEvent } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  type ReactNode,
+  type MouseEvent,
+} from 'react';
 import {
   DndContext,
   DragOverlay,
+  defaultDropAnimationSideEffects,
   MouseSensor,
   TouchSensor,
   KeyboardSensor,
@@ -12,15 +20,40 @@ import {
   pointerWithin,
   closestCenter,
   type CollisionDetection,
+  type DragMoveEvent,
+  type DragOverEvent,
+  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   useSortable,
   sortableKeyboardCoordinates,
+  defaultAnimateLayoutChanges,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { kanbanInsertionIndex } from './kanbanProjection';
 import type { DropResult } from '@vibe/ui/components/KanbanBoard';
 import { cn } from '@/shared/lib/utils';
+import { useTouchClickGuard } from './useTouchClickGuard';
 import './kanban-grid.css';
+
+// Keep sortable displacement and overlay landing in sync. Override only in the
+// Workspace's Vite environment to compare candidates before choosing the final feel.
+const KANBAN_MOTION_PRESETS = {
+  crisp: { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+  bouncy: { duration: 200, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+} as const;
+const KANBAN_MOTION =
+  KANBAN_MOTION_PRESETS[
+    import.meta.env.VITE_KANBAN_MOTION === 'bouncy' ? 'bouncy' : 'crisp'
+  ];
+const CrossColumnMotionContext = createContext(false);
+const DROP_ANIMATION = {
+  ...KANBAN_MOTION,
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0' } },
+  }),
+};
 
 // Prefer the card under the pointer, then the column (including an empty one).
 // Keyboard dragging uses the same measured card rectangles in row-major order.
@@ -47,13 +80,108 @@ export function KanbanGrid({
   children,
   onDragEnd,
   onDraggingChange,
+  onDragPreview,
 }: {
   children: ReactNode;
   onDragEnd: (result: DropResult) => void;
   onDraggingChange?: (dragging: boolean) => void;
+  onDragPreview?: (result: DropResult | null) => void;
 }) {
   const [overlay, setOverlay] = useState<ReactNode>(null);
+  const origin = useRef<{ droppableId: string; index: number } | null>(null);
+  const preview = useRef<DropResult | null>(null);
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const layout = useRef(
+    new Map<
+      string,
+      {
+        ids: string[];
+        rects: Map<string, DOMRect>;
+        columns: number;
+        scroll: { x: number; y: number };
+      }
+    >()
+  );
+  const scrollPosition = (element: HTMLElement) => {
+    let x = 0,
+      y = 0;
+    for (
+      let node: HTMLElement | null = element;
+      node;
+      node = node.parentElement
+    ) {
+      x += node.scrollLeft;
+      y += node.scrollTop;
+    }
+    return { x, y };
+  };
+  const updatePreview = (
+    event: DragMoveEvent | DragOverEvent | DragEndEvent
+  ) => {
+    const { active, over } = event;
+    if (!onDragPreview || !origin.current || !over) return null;
+    // Sensor pointer coordinates exclude scroll/layout corrections in delta.
+    const point = pointer.current;
+    // Keyboard coordinates can land on the projected active card itself.
+    if (!point && over.id === active.id) return preview.current;
+    const sortable = over.data.current?.sortable;
+    const pointedColumn = point
+      ? document
+          .elementFromPoint(point.x, point.y)
+          ?.closest<HTMLElement>('[data-kanban-column]')?.dataset.kanbanColumn
+      : undefined;
+    const column = pointedColumn ?? String(sortable?.containerId ?? over.id);
+    if (column === origin.current.droppableId && !preview.current) return null;
+    const element = document.querySelector<HTMLElement>(
+      `[data-kanban-column="${window.CSS.escape(column)}"]`
+    );
+    if (!element) return null;
+    const frozen = layout.current.get(column);
+    if (!frozen) return null;
+    const scroll = scrollPosition(element);
+    const rects = new Map(
+      [...frozen.rects].map(([id, rect]) => [
+        id,
+        {
+          left: rect.left - scroll.x + frozen.scroll.x,
+          top: rect.top - scroll.y + frozen.scroll.y,
+          width: rect.width,
+          height: rect.height,
+        },
+      ])
+    );
+    const index = kanbanInsertionIndex({
+      ids: frozen.ids.filter((id) => id !== String(active.id)),
+      // Use frozen geometry for pointer slots: projected reflow must not move
+      // the hit targets and oscillate the gap under a stationary pointer.
+      overId: point ? column : String(over.id),
+      point,
+      rects,
+      columns: frozen.columns,
+    });
+    const result: DropResult = {
+      draggableId: String(active.id),
+      type: 'DEFAULT',
+      reason: 'DROP',
+      mode: 'FLUID',
+      combine: null,
+      source: origin.current,
+      destination: { droppableId: column, index },
+    };
+    if (
+      preview.current?.destination?.droppableId !== column ||
+      preview.current.destination.index !== index
+    ) {
+      preview.current = result;
+      onDragPreview(result);
+    }
+    return result;
+  };
   const finish = () => {
+    origin.current = null;
+    preview.current = null;
+    layout.current.clear();
+    onDragPreview?.(null);
     setOverlay(null);
     onDraggingChange?.(false);
   };
@@ -67,29 +195,73 @@ export function KanbanGrid({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={collisionDetection}
+      collisionDetection={(args) => {
+        pointer.current = args.pointerCoordinates;
+        return collisionDetection(args);
+      }}
+      onDragMove={updatePreview}
+      onDragOver={updatePreview}
       onDragStart={({ active }) => {
+        layout.current.clear();
+        document
+          .querySelectorAll<HTMLElement>('[data-kanban-column]')
+          .forEach((element) => {
+            const nodes = [
+              ...element.querySelectorAll<HTMLElement>('[data-kanban-card]'),
+            ];
+            layout.current.set(element.dataset.kanbanColumn!, {
+              ids: nodes.map((node) => node.dataset.kanbanCard!),
+              rects: new Map(
+                nodes.map((node) => [
+                  node.dataset.kanbanCard!,
+                  node.getBoundingClientRect(),
+                ])
+              ),
+              columns:
+                getComputedStyle(element).gridTemplateColumns.split(' ').length,
+              scroll: scrollPosition(element),
+            });
+          });
+        const sortable = active.data.current?.sortable;
+        origin.current = sortable
+          ? { droppableId: String(sortable.containerId), index: sortable.index }
+          : null;
         setOverlay(active.data.current?.overlay ?? null);
         onDraggingChange?.(true);
       }}
-      onDragCancel={finish}
-      onDragEnd={({ active, over, activatorEvent }) => {
+      onDragCancel={({ active, activatorEvent }) => {
         finish();
-        const source = active.data.current?.sortable;
+        if (activatorEvent instanceof KeyboardEvent) {
+          requestAnimationFrame(() =>
+            document
+              .querySelector<HTMLElement>(
+                `[data-kanban-card="${window.CSS.escape(String(active.id))}"]`
+              )
+              ?.focus()
+          );
+        }
+      }}
+      onDragEnd={(event) => {
+        const { active, over, activatorEvent } = event;
+        const projected = updatePreview(event);
+        const source = origin.current;
+        finish();
         if (!source || !over) return;
         const destination = over.data.current?.sortable;
-        onDragEnd({
-          draggableId: String(active.id),
-          type: 'DEFAULT',
-          reason: 'DROP',
-          mode: 'FLUID',
-          combine: null,
-          source: { droppableId: source.containerId, index: source.index },
-          destination: {
-            droppableId: destination?.containerId ?? String(over.id),
-            index: destination?.index ?? over.data.current?.count ?? 0,
-          },
-        });
+        onDragEnd(
+          projected ?? {
+            draggableId: String(active.id),
+            type: 'DEFAULT',
+            reason: 'DROP',
+            mode: 'FLUID',
+            combine: null,
+            source,
+            destination: {
+              droppableId: destination?.containerId ?? String(over.id),
+              index: destination?.index ?? over.data.current?.count ?? 0,
+            },
+          }
+        );
         if (activatorEvent instanceof KeyboardEvent) {
           requestAnimationFrame(() =>
             document
@@ -101,11 +273,16 @@ export function KanbanGrid({
         }
       }}
     >
-      <div className="inline-grid grid-flow-col auto-cols-[minmax(260px,1fr)] divide-x border-x items-stretch min-h-full min-w-full">
-        {children}
-      </div>
+      <CrossColumnMotionContext.Provider value={preview.current !== null}>
+        <div className="inline-grid grid-flow-col auto-cols-[minmax(260px,1fr)] divide-x border-x items-stretch min-h-full min-w-full">
+          {children}
+        </div>
+      </CrossColumnMotionContext.Provider>
       {createPortal(
-        <DragOverlay dropAnimation={null}>
+        <DragOverlay
+          dropAnimation={DROP_ANIMATION}
+          style={{ pointerEvents: 'none' }}
+        >
           {overlay && (
             <div
               data-kanban-ghost
@@ -171,11 +348,24 @@ export function KanbanGridCard({
   isSelected?: boolean;
   dragDisabled?: boolean;
 }) {
-  const { setNodeRef, attributes, listeners, isDragging } = useSortable({
+  const crossColumnMotion = useContext(CrossColumnMotionContext);
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+    transform,
+    transition,
+  } = useSortable({
     id,
     disabled: dragDisabled,
+    transition: KANBAN_MOTION,
+    animateLayoutChanges: (args) =>
+      (crossColumnMotion && args.isSorting) ||
+      defaultAnimateLayoutChanges(args),
     data: { overlay: children },
   });
+  const touchClickGuard = useTouchClickGuard();
   const dragged = useRef(false);
   if (isDragging) dragged.current = true;
   return (
@@ -183,6 +373,8 @@ export function KanbanGridCard({
       ref={setNodeRef}
       data-kanban-card={id}
       style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
         opacity: isDragging ? 0 : undefined,
       }}
       className={cn(
@@ -193,6 +385,7 @@ export function KanbanGridCard({
       )}
       {...attributes}
       {...listeners}
+      {...touchClickGuard}
       aria-label={name}
       onMouseDown={(event) => {
         dragged.current = false;

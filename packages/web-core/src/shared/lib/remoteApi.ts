@@ -49,10 +49,12 @@ export async function bulkUpdateProjects(
 }
 
 export async function bulkUpdateIssues(
-  updates: BulkUpdateIssueItem[]
+  updates: BulkUpdateIssueItem[],
+  signal?: AbortSignal
 ): Promise<void> {
   const response = await makeRequest('/v1/issues/bulk', {
     method: 'POST',
+    signal,
     body: JSON.stringify({
       updates: updates.map((u) => ({
         id: u.id,
