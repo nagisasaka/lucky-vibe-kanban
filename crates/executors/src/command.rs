@@ -10,10 +10,8 @@ use crate::executors::ExecutorError;
 
 /// V1 direct runtime command names.  These resolve from PATH and are never
 /// rewritten to an npm `latest` selector.
-pub const GEMINI_DEFAULT_BASE_COMMAND: &str = "gemini";
 pub const CODEX_DEFAULT_BASE_COMMAND: &str = "codex";
 pub const CLAUDE_DEFAULT_BASE_COMMAND: &str = "claude";
-pub const OH_MY_PI_DEFAULT_BASE_COMMAND: &str = "omp";
 
 /// Resolve exactly the command launch will parse, without running the CLI or
 /// mistaking an auth/config file for an installed executable.
@@ -116,7 +114,7 @@ pub struct CmdOverrides {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS, JsonSchema)]
 pub struct CommandBuilder {
-    /// Base executable command (e.g., "claude", "codex", or "omp")
+    /// Base executable command (e.g., "claude" or "codex")
     pub base: String,
     /// Optional parameters to append to the base command
     pub params: Option<Vec<String>>,
@@ -293,15 +291,10 @@ mod tests {
             let codex: crate::executors::codex::Codex =
                 serde_json::from_value(config.clone()).unwrap();
             let claude: crate::executors::claude::ClaudeCode =
-                serde_json::from_value(config.clone()).unwrap();
-            let gemini: crate::executors::gemini::Gemini =
-                serde_json::from_value(config.clone()).unwrap();
-            let omp: crate::executors::oh_my_pi::OhMyPi = serde_json::from_value(config).unwrap();
+                serde_json::from_value(config).unwrap();
             for availability in [
                 codex.get_availability_info(),
                 claude.get_availability_info(),
-                gemini.get_availability_info(),
-                omp.get_availability_info(),
             ] {
                 assert_eq!(!matches!(availability, AvailabilityInfo::NotFound), found);
             }
@@ -352,12 +345,8 @@ mod tests {
 
     #[test]
     fn parses_builtin_local_executor_commands() {
-        let cases: [(&str, &str, Vec<&str>); 4] = [
-            ("claude", "claude", vec![]),
-            ("codex", "codex", vec![]),
-            ("gemini", "gemini", vec![]),
-            ("omp", "omp", vec![]),
-        ];
+        let cases: [(&str, &str, Vec<&str>); 2] =
+            [("claude", "claude", vec![]), ("codex", "codex", vec![])];
 
         for (command, expected_program, expected_args) in cases {
             let parts = CommandBuilder::new(command)
@@ -400,10 +389,10 @@ mod tests {
 
     #[test]
     fn base_command_override_preserves_custom_base_and_params() {
-        let builder = CommandBuilder::new("gemini").extend_params(["--experimental-acp"]);
+        let builder = CommandBuilder::new("claude").extend_params(["--verbose"]);
         let overrides = CmdOverrides {
             base_command_override: Some(
-                r#""C:\Program Files\Google Gemini\gemini.cmd""#.to_string(),
+                r#""C:\Program Files\Anthropic Claude\claude.cmd""#.to_string(),
             ),
             ..Default::default()
         };
@@ -415,16 +404,18 @@ mod tests {
 
         assert_eq!(
             parts.program,
-            r#"C:\Program Files\Google Gemini\gemini.cmd"#
+            r#"C:\Program Files\Anthropic Claude\claude.cmd"#
         );
-        assert_eq!(parts.args, vec!["--experimental-acp"]);
+        assert_eq!(parts.args, vec!["--verbose"]);
     }
 
     #[test]
     fn base_command_override_preserves_explicit_npm_command_and_params() {
-        let builder = CommandBuilder::new("gemini").extend_params(["--experimental-acp"]);
+        let builder = CommandBuilder::new("claude").extend_params(["--verbose"]);
         let overrides = CmdOverrides {
-            base_command_override: Some("npx -y --package @google/gemini-cli gemini".to_string()),
+            base_command_override: Some(
+                "npx -y --package @anthropic-ai/claude-code claude".to_string(),
+            ),
             ..Default::default()
         };
 
@@ -439,9 +430,9 @@ mod tests {
             vec![
                 "-y",
                 "--package",
-                "@google/gemini-cli",
-                "gemini",
-                "--experimental-acp"
+                "@anthropic-ai/claude-code",
+                "claude",
+                "--verbose"
             ]
         );
     }

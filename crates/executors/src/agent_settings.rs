@@ -37,19 +37,15 @@ pub mod public_api;
 pub enum AgentSettingsProvider {
     Codex,
     ClaudeCode,
-    Gemini,
-    OhMyPi,
 }
 
 impl AgentSettingsProvider {
-    pub const ALL: [Self; 4] = [Self::Codex, Self::ClaudeCode, Self::Gemini, Self::OhMyPi];
+    pub const ALL: [Self; 2] = [Self::Codex, Self::ClaudeCode];
 
     pub const fn id(self) -> &'static str {
         match self {
             Self::Codex => "codex",
             Self::ClaudeCode => "claude_code",
-            Self::Gemini => "gemini",
-            Self::OhMyPi => "oh_my_pi",
         }
     }
 
@@ -57,8 +53,6 @@ impl AgentSettingsProvider {
         match self {
             Self::Codex => "codex",
             Self::ClaudeCode => "claude",
-            Self::Gemini => "gemini",
-            Self::OhMyPi => "omp",
         }
     }
 }
@@ -68,8 +62,6 @@ impl From<DirectProvider> for AgentSettingsProvider {
         match value {
             DirectProvider::Codex => Self::Codex,
             DirectProvider::ClaudeCode => Self::ClaudeCode,
-            DirectProvider::Gemini => Self::Gemini,
-            DirectProvider::OhMyPi => Self::OhMyPi,
         }
     }
 }
@@ -79,8 +71,6 @@ impl From<AgentSettingsProvider> for DirectProvider {
         match value {
             AgentSettingsProvider::Codex => Self::Codex,
             AgentSettingsProvider::ClaudeCode => Self::ClaudeCode,
-            AgentSettingsProvider::Gemini => Self::Gemini,
-            AgentSettingsProvider::OhMyPi => Self::OhMyPi,
         }
     }
 }
@@ -155,7 +145,6 @@ pub enum NativeConfigFormat {
     Toml,
     Json,
     Jsonc,
-    Yaml,
     Dotenv,
     Text,
     Opaque,
@@ -1026,18 +1015,6 @@ impl ProviderSettingsManager {
                 NativeConfigFormat::Json,
                 SettingScope::User,
             )],
-            AgentSettingsProvider::Gemini => vec![file_spec(
-                "user_settings",
-                self.home_dir.join(".gemini/settings.json"),
-                NativeConfigFormat::Json,
-                SettingScope::User,
-            )],
-            AgentSettingsProvider::OhMyPi => vec![file_spec(
-                "user_config",
-                self.home_dir.join(".omp/agent/config.yml"),
-                NativeConfigFormat::Yaml,
-                SettingScope::User,
-            )],
         };
         if let Some(project_path) = &self.project_path {
             let spec = match self.provider {
@@ -1053,26 +1030,6 @@ impl ProviderSettingsManager {
                     NativeConfigFormat::Json,
                     SettingScope::Project,
                 ),
-                AgentSettingsProvider::Gemini => file_spec(
-                    "project_settings",
-                    project_path.join(".gemini/settings.json"),
-                    NativeConfigFormat::Json,
-                    SettingScope::Project,
-                ),
-                AgentSettingsProvider::OhMyPi => {
-                    let mut spec = file_spec(
-                        "project_config",
-                        project_path.join(".omp/config.yml"),
-                        NativeConfigFormat::Yaml,
-                        SettingScope::Project,
-                    );
-                    // Current OMP project settings support is deliberately
-                    // discovery-only until a versioned native setting mapping
-                    // is available beyond project model roles.
-                    spec.writable = false;
-                    spec.raw_editable = false;
-                    spec
-                }
             };
             files.push(spec);
         }
@@ -1466,8 +1423,6 @@ impl ProviderSettingsManager {
         match self.provider {
             AgentSettingsProvider::Codex => self.home_dir.join(".codex"),
             AgentSettingsProvider::ClaudeCode => self.home_dir.join(".claude"),
-            AgentSettingsProvider::Gemini => self.home_dir.join(".gemini"),
-            AgentSettingsProvider::OhMyPi => self.home_dir.join(".omp"),
         }
     }
 }
@@ -1492,8 +1447,6 @@ fn provider_descriptors(provider: AgentSettingsProvider) -> Vec<SettingDescripto
     match provider {
         AgentSettingsProvider::Codex => codex_descriptors(),
         AgentSettingsProvider::ClaudeCode => claude_descriptors(),
-        AgentSettingsProvider::Gemini => gemini_descriptors(),
-        AgentSettingsProvider::OhMyPi => oh_my_pi_descriptors(),
     }
 }
 
@@ -1754,125 +1707,6 @@ fn claude_descriptors() -> Vec<SettingDescriptor> {
     ]
 }
 
-fn gemini_descriptors() -> Vec<SettingDescriptor> {
-    vec![
-        descriptor(
-            SettingKey::new("common", "model"),
-            SettingSection::General,
-            "Model",
-            "Default model used by new Gemini sessions.",
-            (SettingValueType::String, SettingControl::Text),
-            &common_settings_locations(&["model", "name"]),
-            true,
-        ),
-        descriptor(
-            SettingKey::new("common", "sandbox_enabled"),
-            SettingSection::PermissionsSandbox,
-            "Sandbox",
-            "Run Gemini tools in its native sandbox.",
-            (SettingValueType::Boolean, SettingControl::Toggle),
-            &common_settings_locations(&["tools", "sandbox"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("gemini", "allowed_tools"),
-            SettingSection::PermissionsSandbox,
-            "Allowed tools",
-            "Native Gemini tool allow policy.",
-            (SettingValueType::StringList, SettingControl::StringList),
-            &common_settings_locations(&["tools", "allowed"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("gemini", "excluded_tools"),
-            SettingSection::PermissionsSandbox,
-            "Excluded tools",
-            "Native Gemini tool exclusion policy.",
-            (SettingValueType::StringList, SettingControl::StringList),
-            &common_settings_locations(&["tools", "exclude"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("gemini", "checkpointing"),
-            SettingSection::ProviderSettings,
-            "Checkpointing",
-            "Enable Gemini checkpointing when supported.",
-            (SettingValueType::Boolean, SettingControl::Toggle),
-            &common_settings_locations(&["general", "checkpointing", "enabled"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("gemini", "telemetry"),
-            SettingSection::ProviderSettings,
-            "Telemetry",
-            "Enable Gemini CLI telemetry.",
-            (SettingValueType::Boolean, SettingControl::Toggle),
-            &common_settings_locations(&["telemetry", "enabled"]),
-            false,
-        ),
-    ]
-}
-
-fn oh_my_pi_descriptors() -> Vec<SettingDescriptor> {
-    let user = |path: &'static [&'static str]| [("user_config", SettingScope::User, path)];
-    vec![
-        descriptor(
-            SettingKey::new("oh_my_pi", "extensions"),
-            SettingSection::ProviderSettings,
-            "Extensions",
-            "OMP extension packages loaded by the canonical agent profile.",
-            (SettingValueType::StringList, SettingControl::StringList),
-            &user(&["extensions"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("oh_my_pi", "disabled_extensions"),
-            SettingSection::ProviderSettings,
-            "Disabled extensions",
-            "OMP extensions retained but disabled.",
-            (SettingValueType::StringList, SettingControl::StringList),
-            &user(&["disabledExtensions"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("oh_my_pi", "dark_theme"),
-            SettingSection::ProviderSettings,
-            "Dark theme",
-            "OMP dark-mode theme identifier.",
-            (SettingValueType::String, SettingControl::Text),
-            &user(&["theme", "dark"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("oh_my_pi", "light_theme"),
-            SettingSection::ProviderSettings,
-            "Light theme",
-            "OMP light-mode theme identifier.",
-            (SettingValueType::String, SettingControl::Text),
-            &user(&["theme", "light"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("oh_my_pi", "compaction_enabled"),
-            SettingSection::ProviderSettings,
-            "Compaction",
-            "Enable OMP context compaction.",
-            (SettingValueType::Boolean, SettingControl::Toggle),
-            &user(&["compaction", "enabled"]),
-            false,
-        ),
-        descriptor(
-            SettingKey::new("oh_my_pi", "startup_quiet"),
-            SettingSection::General,
-            "Quiet startup",
-            "Reduce OMP startup output.",
-            (SettingValueType::Boolean, SettingControl::Toggle),
-            &user(&["startup", "quiet"]),
-            false,
-        ),
-    ]
-}
-
 fn provider_limitations(provider: AgentSettingsProvider) -> Vec<String> {
     match provider {
         AgentSettingsProvider::Codex => vec![
@@ -1880,13 +1714,6 @@ fn provider_limitations(provider: AgentSettingsProvider) -> Vec<String> {
         ],
         AgentSettingsProvider::ClaudeCode => vec![
             "Managed settings use ~/.claude/settings.json and project .claude/settings.json; ~/.claude.json authentication and MCP state is not edited here.".to_string(),
-        ],
-        AgentSettingsProvider::Gemini => vec![
-            "Extensions and version-dependent policy nodes remain native-only and are preserved by targeted writes.".to_string(),
-        ],
-        AgentSettingsProvider::OhMyPi => vec![
-            "Management targets the canonical ~/.omp/agent/config.yml profile; project config and alternate profiles are discovery-only.".to_string(),
-            "Model registry and prompt-template files are reported as native extensions rather than guessed into config.yml fields.".to_string(),
         ],
     }
 }
@@ -1959,14 +1786,6 @@ fn parse_document(format: NativeConfigFormat, content: &str) -> Result<Value, Ag
                     AgentSettingError::InvalidConfiguration("empty JSONC document".to_string())
                 })
         }
-        NativeConfigFormat::Yaml => {
-            let value: serde_yaml::Value = serde_yaml::from_str(content).map_err(|error| {
-                AgentSettingError::InvalidConfiguration(format!("YAML syntax: {error}"))
-            })?;
-            serde_json::to_value(value).map_err(|error| {
-                AgentSettingError::InvalidConfiguration(format!("YAML conversion: {error}"))
-            })
-        }
         NativeConfigFormat::Dotenv => parse_dotenv(content),
         NativeConfigFormat::Text => Ok(Value::String(content.to_string())),
         NativeConfigFormat::Opaque => Err(AgentSettingError::Unsupported(
@@ -2017,16 +1836,6 @@ fn render_document(
                     AgentSettingError::InvalidConfiguration(format!("JSON serialization: {error}"))
                 })
             }
-        }
-        NativeConfigFormat::Yaml => {
-            let mut value = parse_document(format, current)?;
-            ensure_object_root(&mut value)?;
-            for (path, replacement) in &operations {
-                update_json_path(&mut value, path, replacement.clone())?;
-            }
-            serde_yaml::to_string(&json_to_yaml(&value)?).map_err(|error| {
-                AgentSettingError::InvalidConfiguration(format!("YAML serialization: {error}"))
-            })
         }
         NativeConfigFormat::Dotenv => {
             let mut value = parse_dotenv(current)?;
@@ -2121,42 +1930,6 @@ fn render_toml(
     Ok(rendered)
 }
 
-fn json_to_yaml(value: &Value) -> Result<serde_yaml::Value, AgentSettingError> {
-    Ok(match value {
-        Value::Null => serde_yaml::Value::Null,
-        Value::Bool(value) => serde_yaml::Value::Bool(*value),
-        Value::Number(value) => {
-            let number = if let Some(value) = value.as_i64() {
-                serde_yaml::Number::from(value)
-            } else if let Some(value) = value.as_u64() {
-                serde_yaml::Number::from(value)
-            } else if let Some(value) = value.as_f64() {
-                serde_yaml::Number::from(value)
-            } else {
-                return Err(AgentSettingError::ValidationFailed(
-                    "number cannot be represented in YAML".to_string(),
-                ));
-            };
-            serde_yaml::Value::Number(number)
-        }
-        Value::String(value) => serde_yaml::Value::String(value.clone()),
-        Value::Array(values) => serde_yaml::Value::Sequence(
-            values
-                .iter()
-                .map(json_to_yaml)
-                .collect::<Result<Vec<_>, _>>()?,
-        ),
-        Value::Object(object) => serde_yaml::Value::Mapping(
-            object
-                .iter()
-                .map(|(key, value)| {
-                    Ok((serde_yaml::Value::String(key.clone()), json_to_yaml(value)?))
-                })
-                .collect::<Result<serde_yaml::Mapping, AgentSettingError>>()?,
-        ),
-    })
-}
-
 fn ensure_object_root(value: &mut Value) -> Result<(), AgentSettingError> {
     if value.is_null() {
         *value = Value::Object(Map::new());
@@ -2240,8 +2013,8 @@ fn effective_setting(
         }
     }
     // Location order is provider-owned and intentionally encodes effective
-    // precedence. Current Codex/Claude/Gemini descriptors list user then
-    // project; OMP exposes only verified user-writable settings.
+    // precedence. Current Codex/Claude descriptors list user then
+    // project.
     let effective = sources.last();
     EffectiveSetting {
         key: descriptor.key.clone(),
@@ -2555,57 +2328,28 @@ mod tests {
     }
 
     #[test]
-    fn four_provider_discovery_is_read_only_and_isolates_malformed_files() {
+    fn two_provider_discovery_is_read_only_and_isolates_malformed_files() {
         let harness = harness();
         let codex = harness.home.join(".codex/config.toml");
         let claude = harness.home.join(".claude/settings.json");
-        let gemini = harness.home.join(".gemini/settings.json");
-        let omp = harness.home.join(".omp/agent/config.yml");
         write(&codex, "# keep me\nmodel = \"gpt-5\"\nunknown = 7\n");
-        write(&claude, r#"{"model":"sonnet","unknown":{"keep":true}}"#);
-        write(&gemini, "{ malformed");
-        write(
-            &omp,
-            "theme:\n  dark: titanium\ncompaction:\n  enabled: true\nunknown: preserved\n",
-        );
-        let before = [
-            fs::read(&codex).unwrap(),
-            fs::read(&claude).unwrap(),
-            fs::read(&gemini).unwrap(),
-            fs::read(&omp).unwrap(),
-        ];
-
+        write(&claude, "{ malformed");
+        let before = [fs::read(&codex).unwrap(), fs::read(&claude).unwrap()];
         let inventory = harness.service.discover(None, Some(&harness.project));
-
-        assert_eq!(inventory.providers.len(), 4);
-        assert_eq!(
+        assert_eq!(inventory.providers.len(), 2);
+        assert!(
             snapshot(&inventory, AgentSettingsProvider::Codex)
                 .errors
-                .len(),
-            0
+                .is_empty()
         );
         assert_eq!(
             snapshot(&inventory, AgentSettingsProvider::ClaudeCode)
                 .errors
                 .len(),
-            0
-        );
-        assert_eq!(
-            snapshot(&inventory, AgentSettingsProvider::Gemini)
-                .errors
-                .len(),
             1
-        );
-        assert_eq!(
-            snapshot(&inventory, AgentSettingsProvider::OhMyPi)
-                .errors
-                .len(),
-            0
         );
         assert_eq!(before[0], fs::read(&codex).unwrap());
         assert_eq!(before[1], fs::read(&claude).unwrap());
-        assert_eq!(before[2], fs::read(&gemini).unwrap());
-        assert_eq!(before[3], fs::read(&omp).unwrap());
         assert!(
             snapshot(&inventory, AgentSettingsProvider::Codex)
                 .unknown_native_nodes
@@ -2692,62 +2436,6 @@ mod tests {
     }
 
     #[test]
-    fn json_and_yaml_writes_preserve_unknown_native_nodes() {
-        let harness = harness();
-        let gemini = harness.home.join(".gemini/settings.json");
-        let omp = harness.home.join(".omp/agent/config.yml");
-        write(&gemini, r#"{"model":{"name":"old"},"unknown":{"x":1}}"#);
-        write(&omp, "theme:\n  dark: old\nunknown:\n  x: 1\n");
-        for (provider, file_id, key, value) in [
-            (
-                AgentSettingsProvider::Gemini,
-                "user_settings",
-                SettingKey::new("common", "model"),
-                json!("new-model"),
-            ),
-            (
-                AgentSettingsProvider::OhMyPi,
-                "user_config",
-                SettingKey::new("oh_my_pi", "dark_theme"),
-                json!("new-theme"),
-            ),
-        ] {
-            let manager = harness.service.manager(provider, Some(&harness.project));
-            let snapshot = manager.discover().unwrap();
-            let revision = snapshot
-                .native_files
-                .iter()
-                .find(|file| file.id == file_id)
-                .unwrap()
-                .revision
-                .clone()
-                .unwrap();
-            manager
-                .apply(&SettingsPatch {
-                    provider,
-                    project_path: Some(harness.project.display().to_string()),
-                    expected_file_revisions: BTreeMap::from([(file_id.into(), revision)]),
-                    operations: vec![SettingOperation::Set {
-                        key,
-                        scope: SettingScope::User,
-                        value,
-                    }],
-                })
-                .unwrap();
-        }
-        assert_eq!(
-            serde_json::from_str::<Value>(&fs::read_to_string(gemini).unwrap()).unwrap()["unknown"]
-                ["x"],
-            json!(1)
-        );
-        assert_eq!(
-            parse_document(NativeConfigFormat::Yaml, &fs::read_to_string(omp).unwrap()).unwrap()["unknown"]
-                ["x"],
-            json!(1)
-        );
-    }
-
-    #[test]
     fn profile_crud_copy_and_apply_preview_use_common_slots_only() {
         let harness = harness();
         let codex = harness.home.join(".codex/config.toml");
@@ -2817,17 +2505,17 @@ mod tests {
     #[test]
     fn raw_edit_requires_current_revision_and_valid_syntax() {
         let harness = harness();
-        let path = harness.home.join(".gemini/settings.json");
+        let path = harness.home.join(".claude/settings.json");
         write(&path, r#"{"telemetry":{"enabled":false}}"#);
         let manager = harness
             .service
-            .manager(AgentSettingsProvider::Gemini, Some(&harness.project));
+            .manager(AgentSettingsProvider::ClaudeCode, Some(&harness.project));
         let revision = manager.discover().unwrap().native_files[0]
             .revision
             .clone()
             .unwrap();
         let invalid = NativeFilePatch {
-            provider: AgentSettingsProvider::Gemini,
+            provider: AgentSettingsProvider::ClaudeCode,
             project_path: Some(harness.project.display().to_string()),
             file_id: "user_settings".into(),
             expected_revision: revision.clone(),

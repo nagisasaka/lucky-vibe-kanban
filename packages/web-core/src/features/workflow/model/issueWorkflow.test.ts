@@ -99,7 +99,7 @@ describe('issue workflow helpers', () => {
             data: {
               display_name: 'Frontend',
               session_id: 'old-session',
-              executor_config: { executor: 'GEMINI' },
+              executor_config: { executor: 'CLAUDE_CODE' },
             },
           },
           {
@@ -134,7 +134,7 @@ describe('issue workflow helpers', () => {
     ]);
     expect(graph.nodes[1].data.session_id).toBeUndefined();
     expect(graph.nodes[1].data.executor_config).toEqual({
-      executor: 'GEMINI',
+      executor: 'CLAUDE_CODE',
     });
   });
 });

@@ -183,10 +183,6 @@ export function getWorkflowNodeIdentityClass(
         return 'node-identity-claude';
       case 'CODEX':
         return 'node-identity-codex';
-      case 'GEMINI':
-        return 'node-identity-gemini';
-      case 'OH_MY_PI':
-        return 'node-identity-oh-my-pi';
       default:
         return 'node-identity-default';
     }

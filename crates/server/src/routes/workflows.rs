@@ -1399,6 +1399,36 @@ async fn ensure_system_workflows(pool: &SqlitePool) -> Result<(), ApiError> {
             ApiError::BadRequest(format!("Invalid built-in workflow graph JSON: {err}"))
         })?;
 
+        if let Some(previous_graph) =
+            workflow::templates::previous_two_engine_template_graph(template.id)
+        {
+            // Insert new databases directly with supported engines. Existing
+            // definitions are updated only after checking identity and the entire
+            // frozen old content; the final predicate also guards concurrent edits.
+            sqlx::query("INSERT INTO workflows (id, source, project_id, name, description, graph_json) VALUES (?, 'system', NULL, ?, ?, ?) ON CONFLICT(id) DO NOTHING")
+                .bind(workflow_id).bind(template.name).bind(template.description)
+                .bind(&graph_json).execute(pool).await?;
+            type StoredTemplate = (String, Option<Uuid>, String, Option<String>, String);
+            let existing: Option<StoredTemplate> =
+                sqlx::query_as("SELECT source, project_id, name, description, graph_json FROM workflows WHERE id = ?")
+                    .bind(workflow_id).fetch_optional(pool).await?;
+            if let Some((source, project_id, name, description, old_graph_json)) = existing
+                && source == "system"
+                && project_id.is_none()
+                && name == template.name
+                && description.as_deref() == Some(template.description)
+                && serde_json::from_str::<serde_json::Value>(&old_graph_json)
+                    .ok()
+                    .as_ref()
+                    == Some(&previous_graph)
+            {
+                sqlx::query("UPDATE workflows SET graph_json = ?, revision = revision + 1, updated_at = datetime('now', 'subsec') WHERE id = ? AND source = 'system' AND project_id IS NULL AND name = ? AND description = ? AND graph_json = ?")
+                    .bind(&graph_json).bind(workflow_id).bind(template.name)
+                    .bind(template.description).bind(old_graph_json).execute(pool).await?;
+            }
+            continue;
+        }
+
         sqlx::query(
             r#"
             INSERT INTO workflows (id, source, project_id, name, description, graph_json)
@@ -2294,6 +2324,132 @@ fn workflow_event_to_sse_event(event: workflow::WorkflowEvent) -> Event {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn two_engine_system_template_upgrade_preserves_edits_and_is_idempotent() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        db::run_migrations(&pool).await.unwrap();
+        // A fresh database contains only supported executor values.
+        ensure_system_workflows(&pool).await.unwrap();
+        let templates: Vec<_> = built_in_templates()
+            .into_iter()
+            .filter(|template| {
+                workflow::templates::previous_two_engine_template_graph(template.id).is_some()
+            })
+            .collect();
+        for template in &templates {
+            let id = parse_system_template_id(template.id).unwrap();
+            let graph: String = sqlx::query_scalar("SELECT graph_json FROM workflows WHERE id = ?")
+                .bind(id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            assert_eq!(graph, serde_json::to_string(&template.graph).unwrap());
+        }
+        // Both known old definitions upgrade, with their stable IDs retained.
+        for template in &templates {
+            let old = workflow::templates::previous_two_engine_template_graph(template.id).unwrap();
+            sqlx::query("UPDATE workflows SET graph_json = ?, revision = 0 WHERE id = ?")
+                .bind(serde_json::to_string_pretty(&old).unwrap())
+                .bind(parse_system_template_id(template.id).unwrap())
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        ensure_system_workflows(&pool).await.unwrap();
+        ensure_system_workflows(&pool).await.unwrap();
+        for template in &templates {
+            let row: (String, i64) =
+                sqlx::query_as("SELECT graph_json, revision FROM workflows WHERE id = ?")
+                    .bind(parse_system_template_id(template.id).unwrap())
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(row, (serde_json::to_string(&template.graph).unwrap(), 1));
+        }
+        // A project-owned definition is never overwritten even if it uses a
+        // known system ID, name and the complete old system graph.
+        let project_id = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects (id, name) VALUES (?, 'Template fixture')")
+            .bind(project_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        for id in [
+            parse_system_template_id(templates[0].id).unwrap(),
+            Uuid::new_v4(),
+        ] {
+            let template = &templates[0];
+            let graph = serde_json::to_string(
+                &workflow::templates::previous_two_engine_template_graph(template.id).unwrap(),
+            )
+            .unwrap();
+            sqlx::query("INSERT INTO workflows (id, source, project_id, name, description, graph_json, revision) VALUES (?, 'project', ?, ?, ?, ?, 3) ON CONFLICT(id) DO UPDATE SET source = 'project', project_id = excluded.project_id, name = excluded.name, description = excluded.description, graph_json = excluded.graph_json, revision = 3")
+                .bind(id).bind(project_id).bind(template.name).bind(template.description).bind(&graph)
+                .execute(&pool).await.unwrap();
+            ensure_system_workflows(&pool).await.unwrap();
+            let row: (String, Option<Uuid>, String, i64) = sqlx::query_as(
+                "SELECT source, project_id, graph_json, revision FROM workflows WHERE id = ?",
+            )
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+            assert_eq!(row, ("project".into(), Some(project_id), graph, 3));
+        }
+        sqlx::query("UPDATE workflows SET source = 'system', project_id = NULL WHERE id = ?")
+            .bind(parse_system_template_id(templates[0].id).unwrap())
+            .execute(&pool)
+            .await
+            .unwrap();
+        // Any graph edit, including a provider/model override or an unknown key,
+        // is user content. Names and descriptions also participate in matching.
+        for template in &templates {
+            for edit in ["prompt", "model", "unknown", "name", "description"] {
+                let id = parse_system_template_id(template.id).unwrap();
+                let mut old =
+                    workflow::templates::previous_two_engine_template_graph(template.id).unwrap();
+                match edit {
+                    "prompt" => {
+                        old["nodes"][1]["data"]["prompt_template"] =
+                            serde_json::json!("User prompt")
+                    }
+                    "model" => {
+                        old["nodes"][2]["data"]["executor_config"]["model"] =
+                            serde_json::json!("user-model")
+                    }
+                    "unknown" => old["custom"] = serde_json::json!(true),
+                    _ => (),
+                }
+                let graph = serde_json::to_string(&old).unwrap();
+                let name = if edit == "name" {
+                    "User name"
+                } else {
+                    template.name
+                };
+                let description = if edit == "description" {
+                    "User description"
+                } else {
+                    template.description
+                };
+                let source = "system";
+                sqlx::query("UPDATE workflows SET source = ?, name = ?, description = ?, graph_json = ?, revision = 7 WHERE id = ?")
+                    .bind(source).bind(name).bind(description).bind(&graph).bind(id).execute(&pool).await.unwrap();
+                ensure_system_workflows(&pool).await.unwrap();
+                let row: (String, String, String, String, i64) = sqlx::query_as("SELECT source, name, description, graph_json, revision FROM workflows WHERE id = ?")
+                    .bind(id).fetch_one(&pool).await.unwrap();
+                assert_eq!(
+                    row,
+                    (source.into(), name.into(), description.into(), graph, 7),
+                    "{edit}"
+                );
+            }
+        }
+    }
 
     #[tokio::test]
     async fn repository_workflow_lookup_retains_terminal_runs_and_isolates_workspaces() {

@@ -255,8 +255,6 @@ mod tests {
 
         assert!(!hidden_agents.contains(&BaseCodingAgent::ClaudeCode));
         assert!(!hidden_agents.contains(&BaseCodingAgent::Codex));
-        assert!(!hidden_agents.contains(&BaseCodingAgent::Gemini));
-        assert!(!hidden_agents.contains(&BaseCodingAgent::OhMyPi));
         #[cfg(feature = "qa-mode")]
         assert_eq!(hidden_agents, vec![BaseCodingAgent::QaMock]);
         #[cfg(not(feature = "qa-mode"))]

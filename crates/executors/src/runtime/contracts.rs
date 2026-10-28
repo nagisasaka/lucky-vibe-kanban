@@ -257,7 +257,6 @@ impl AgentRunRequestEnvelope {
 pub enum AgentTransportKind {
     StdioCli,
     StdioRpc,
-    Acp,
     AppServerJsonrpc,
     HttpSidecar,
     InProcess,
@@ -907,7 +906,7 @@ mod tests {
     #[test]
     fn run_attempt_rejects_launch_spec_drift() {
         let (request, mut attempt) = run_attempt_requests(AgentRunIntent::Initial);
-        attempt.executor_config.executor = BaseCodingAgent::Gemini;
+        attempt.executor_config.executor = BaseCodingAgent::ClaudeCode;
 
         assert!(matches!(
             attempt.validate_for_run(&request),

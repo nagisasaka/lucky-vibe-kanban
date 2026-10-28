@@ -31,7 +31,8 @@ pub async fn read(pool: &SqlitePool, request: Request, authorized: bool) -> anyh
                 .read_account_usage(native_id.is_some(), request.include_usage)
                 .await
         }
-        _ => anyhow::bail!("Provider profile mismatch"),
+        #[cfg(feature = "qa-mode")]
+        CodingAgent::QaMock(_) => anyhow::bail!("Provider profile mismatch"),
     };
     Ok(
         json!({"provider":request.provider,"account_context":"server_default","scope":scope,"source":"official_cli_control","result":result,"semantics":{"observedAt":"time observed, not provider accounting time or immediate posting guarantee","quota":"account scope; never summed across workers","usage":"cumulative provider snapshot, not added to Workspace tokens; parent/child inclusion unknown","money":"provider estimates; micros are millionths; not subscription invoice amounts","remaining":"if displayed, derived as 100 minus matching usedPercent"}}),

@@ -204,10 +204,7 @@ fn capabilities_for_agent(agent: &CodingAgent) -> Vec<AgentProviderCapability> {
     }
 
     match agent {
-        CodingAgent::ClaudeCode(_)
-        | CodingAgent::Codex(_)
-        | CodingAgent::Gemini(_)
-        | CodingAgent::OhMyPi(_) => {
+        CodingAgent::ClaudeCode(_) | CodingAgent::Codex(_) => {
             push_unique(&mut capabilities, AgentProviderCapability::ToolPermissions);
         }
         #[cfg(feature = "qa-mode")]
@@ -215,10 +212,7 @@ fn capabilities_for_agent(agent: &CodingAgent) -> Vec<AgentProviderCapability> {
     }
 
     match agent {
-        CodingAgent::ClaudeCode(_)
-        | CodingAgent::Codex(_)
-        | CodingAgent::Gemini(_)
-        | CodingAgent::OhMyPi(_) => {
+        CodingAgent::ClaudeCode(_) | CodingAgent::Codex(_) => {
             push_unique(&mut capabilities, AgentProviderCapability::ModelSelector);
         }
         #[cfg(feature = "qa-mode")]
@@ -229,7 +223,8 @@ fn capabilities_for_agent(agent: &CodingAgent) -> Vec<AgentProviderCapability> {
         CodingAgent::ClaudeCode(_) | CodingAgent::Codex(_) => {
             push_unique(&mut capabilities, AgentProviderCapability::TeamSlot);
         }
-        _ => {}
+        #[cfg(feature = "qa-mode")]
+        CodingAgent::QaMock(_) => {}
     }
 
     capabilities
@@ -240,13 +235,7 @@ fn agent_supports_follow_up(_agent: &CodingAgent) -> bool {
 }
 
 fn agent_supports_graceful_cancel(agent: &CodingAgent) -> bool {
-    matches!(
-        agent,
-        CodingAgent::ClaudeCode(_)
-            | CodingAgent::Codex(_)
-            | CodingAgent::Gemini(_)
-            | CodingAgent::OhMyPi(_)
-    )
+    matches!(agent, CodingAgent::ClaudeCode(_) | CodingAgent::Codex(_))
 }
 
 fn agent_supports_observed_config(agent: &CodingAgent) -> bool {
@@ -277,7 +266,6 @@ fn push_unique<T: PartialEq>(items: &mut Vec<T>, item: T) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::executors::oh_my_pi::OhMyPi;
 
     fn codex_agent() -> CodingAgent {
         CodingAgent::Codex(
@@ -470,49 +458,6 @@ mod tests {
             policy
                 .capabilities
                 .contains(&AgentProviderCapability::ObservedConfig)
-        );
-    }
-
-    #[test]
-    fn oh_my_pi_policy_uses_registered_native_capabilities() {
-        let agent = CodingAgent::OhMyPi(OhMyPi::default());
-
-        let policy = AgentProviderPolicy::for_agent(
-            BaseCodingAgent::OhMyPi,
-            &agent,
-            AvailabilityInfo::InstallationFound,
-        );
-
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::InitialRun)
-        );
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::FollowUp)
-        );
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::SessionResume)
-        );
-        assert!(policy.capabilities.contains(&AgentProviderCapability::Mcp));
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::ToolPermissions)
-        );
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::GracefulCancel)
-        );
-        assert!(
-            policy
-                .capabilities
-                .contains(&AgentProviderCapability::ContextUsage)
         );
     }
 }

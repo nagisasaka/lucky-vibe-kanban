@@ -6,32 +6,20 @@ describe('agent visibility', () => {
   it('filters hidden agents from new selection lists', () => {
     expect(
       filterVisibleAgents({
-        agents: [
-          BaseCodingAgent.CLAUDE_CODE,
-          BaseCodingAgent.CODEX,
-          BaseCodingAgent.GEMINI,
-        ],
+        agents: [BaseCodingAgent.CLAUDE_CODE, BaseCodingAgent.CODEX],
         hiddenAgents: [BaseCodingAgent.CODEX],
       })
-    ).toEqual([BaseCodingAgent.CLAUDE_CODE, BaseCodingAgent.GEMINI]);
+    ).toEqual([BaseCodingAgent.CLAUDE_CODE]);
   });
 
   it('preserves a selected hidden agent in its original order', () => {
     expect(
       filterVisibleAgents({
-        agents: [
-          BaseCodingAgent.CLAUDE_CODE,
-          BaseCodingAgent.CODEX,
-          BaseCodingAgent.GEMINI,
-        ],
+        agents: [BaseCodingAgent.CLAUDE_CODE, BaseCodingAgent.CODEX],
         hiddenAgents: [BaseCodingAgent.CODEX],
         preserveAgents: [BaseCodingAgent.CODEX],
       })
-    ).toEqual([
-      BaseCodingAgent.CLAUDE_CODE,
-      BaseCodingAgent.CODEX,
-      BaseCodingAgent.GEMINI,
-    ]);
+    ).toEqual([BaseCodingAgent.CLAUDE_CODE, BaseCodingAgent.CODEX]);
   });
 
   it('appends preserved agents missing from the source list', () => {
@@ -62,6 +50,6 @@ describe('agent visibility', () => {
       true
     );
     expect(isAgentHidden(null, [BaseCodingAgent.CODEX])).toBe(false);
-    expect(isAgentHidden(BaseCodingAgent.GEMINI, null)).toBe(false);
+    expect(isAgentHidden(BaseCodingAgent.CLAUDE_CODE, null)).toBe(false);
   });
 });

@@ -21,17 +21,14 @@ use crate::{
     approvals::ExecutorApprovalService,
     command::CommandBuildError,
     env::ExecutionEnv,
-    executors::{claude::ClaudeCode, codex::Codex, gemini::Gemini, oh_my_pi::OhMyPi},
+    executors::{claude::ClaudeCode, codex::Codex},
     logs::utils::patch,
     mcp_config::McpConfig,
     profile::ExecutorConfig,
 };
 
-pub mod acp;
 pub mod claude;
 pub mod codex;
-pub mod gemini;
-pub mod oh_my_pi;
 pub mod provider_adapter;
 #[cfg(feature = "qa-mode")]
 pub mod qa_mock;
@@ -129,9 +126,7 @@ pub enum ExecutorError {
 )]
 pub enum CodingAgent {
     ClaudeCode,
-    Gemini,
     Codex,
-    OhMyPi,
     #[cfg(feature = "qa-mode")]
     QaMock(QaMockExecutor),
 }
@@ -146,14 +141,6 @@ impl CodingAgent {
                 }),
                 self.preconfigured_mcp(),
                 true,
-            ),
-            Self::OhMyPi(_) => McpConfig::new(
-                vec!["mcpServers".to_string()],
-                serde_json::json!({
-                    "mcpServers": {}
-                }),
-                self.preconfigured_mcp(),
-                false,
             ),
             _ => McpConfig::new(
                 vec!["mcpServers".to_string()],
@@ -181,8 +168,6 @@ impl CodingAgent {
                 BaseAgentCapability::SetupHelper,
                 BaseAgentCapability::ContextUsage,
             ],
-            Self::OhMyPi(_) => vec![BaseAgentCapability::ContextUsage],
-            Self::Gemini(_) => vec![BaseAgentCapability::SessionFork],
             #[cfg(feature = "qa-mode")]
             Self::QaMock(_) => vec![], // QA mock doesn't need special capabilities
         }
@@ -423,13 +408,32 @@ mod tests {
 
     #[test]
     fn v1_registry_contains_only_supported_products() {
-        let names = [
-            BaseCodingAgent::ClaudeCode,
-            BaseCodingAgent::Gemini,
-            BaseCodingAgent::Codex,
-            BaseCodingAgent::OhMyPi,
-        ]
-        .map(|agent| agent.to_string());
-        assert_eq!(names, ["CLAUDE_CODE", "GEMINI", "CODEX", "OH_MY_PI"]);
+        let names =
+            [BaseCodingAgent::ClaudeCode, BaseCodingAgent::Codex].map(|agent| agent.to_string());
+        assert_eq!(names, ["CLAUDE_CODE", "CODEX"]);
+    }
+
+    #[test]
+    fn retired_engines_are_rejected_at_request_and_settings_boundaries() {
+        use crate::{
+            agent_settings::AgentSettingsProvider, agent_tools::AgentToolProvider,
+            executors::provider_adapter::DirectProvider, profile::ExecutorProfileId,
+        };
+        for name in ["GEMINI", "OH_MY_PI"] {
+            let json = serde_json::json!(name);
+            let err = serde_json::from_value::<BaseCodingAgent>(json).unwrap_err();
+            assert!(err.to_string().contains(name));
+            assert!(serde_json::from_value::<CodingAgent>(serde_json::json!({name: {}})).is_err());
+            let err =
+                serde_json::from_value::<ExecutorProfileId>(serde_json::json!({"executor": name}))
+                    .unwrap_err();
+            assert!(err.to_string().contains(name));
+        }
+        for name in ["gemini", "oh_my_pi", "omp"] {
+            let value = serde_json::json!(name);
+            assert!(serde_json::from_value::<DirectProvider>(value.clone()).is_err());
+            assert!(serde_json::from_value::<AgentSettingsProvider>(value.clone()).is_err());
+            assert!(serde_json::from_value::<AgentToolProvider>(value).is_err());
+        }
     }
 }

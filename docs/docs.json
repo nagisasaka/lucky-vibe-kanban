@@ -34,9 +34,7 @@
             "pages": [
               "supported-coding-agents",
               "agents/claude-code",
-              "agents/openai-codex",
-              "agents/gemini-cli",
-              "agents/oh-my-pi"
+              "agents/openai-codex"
             ]
           }
         ]

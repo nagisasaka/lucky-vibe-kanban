@@ -255,8 +255,6 @@ pub(super) fn conflict_request(
     let provider = match config.executor {
         BaseCodingAgent::Codex => DirectProvider::Codex,
         BaseCodingAgent::ClaudeCode => DirectProvider::ClaudeCode,
-        BaseCodingAgent::Gemini => DirectProvider::Gemini,
-        BaseCodingAgent::OhMyPi => DirectProvider::OhMyPi,
         #[cfg(feature = "qa-mode")]
         _ => anyhow::bail!("Unsupported conflict executor"),
     };

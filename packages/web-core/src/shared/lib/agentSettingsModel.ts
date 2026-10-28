@@ -37,15 +37,11 @@ export type AgentSettingsDraft = Record<string, AgentSettingsDraftEntry>;
 export const PROVIDER_LABELS: Record<AgentSettingsProvider, string> = {
   [AgentSettingsProvider.codex]: 'Codex',
   [AgentSettingsProvider.claude_code]: 'Claude Code',
-  [AgentSettingsProvider.gemini]: 'Gemini',
-  [AgentSettingsProvider.oh_my_pi]: 'Oh My Pi',
 };
 
 export const PROVIDER_BY_EXECUTOR: Record<string, AgentSettingsProvider> = {
   CODEX: AgentSettingsProvider.codex,
   CLAUDE_CODE: AgentSettingsProvider.claude_code,
-  GEMINI: AgentSettingsProvider.gemini,
-  OH_MY_PI: AgentSettingsProvider.oh_my_pi,
 };
 
 const SECTION_LABELS: Record<AgentSettingsSectionId, string> = {

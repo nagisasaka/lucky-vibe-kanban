@@ -23,7 +23,6 @@ pub(super) enum ExecutorConfig {
     Claude,
     ClaudePlan,
     Amp,
-    Gemini,
     #[serde(alias = "setup_script")]
     SetupScript {
         script: String,

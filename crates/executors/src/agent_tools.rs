@@ -38,19 +38,15 @@ pub mod public_api;
 pub enum AgentToolProvider {
     Codex,
     ClaudeCode,
-    Gemini,
-    OhMyPi,
 }
 
 impl AgentToolProvider {
-    pub const ALL: [Self; 4] = [Self::Codex, Self::ClaudeCode, Self::Gemini, Self::OhMyPi];
+    pub const ALL: [Self; 2] = [Self::Codex, Self::ClaudeCode];
 
     pub const fn id(self) -> &'static str {
         match self {
             Self::Codex => "codex",
             Self::ClaudeCode => "claude_code",
-            Self::Gemini => "gemini",
-            Self::OhMyPi => "oh_my_pi",
         }
     }
 
@@ -58,8 +54,6 @@ impl AgentToolProvider {
         match self {
             Self::Codex => "codex",
             Self::ClaudeCode => "claude",
-            Self::Gemini => "gemini",
-            Self::OhMyPi => "omp",
         }
     }
 }
@@ -69,8 +63,6 @@ impl From<DirectProvider> for AgentToolProvider {
         match value {
             DirectProvider::Codex => Self::Codex,
             DirectProvider::ClaudeCode => Self::ClaudeCode,
-            DirectProvider::Gemini => Self::Gemini,
-            DirectProvider::OhMyPi => Self::OhMyPi,
         }
     }
 }
@@ -80,8 +72,6 @@ impl From<AgentToolProvider> for DirectProvider {
         match value {
             AgentToolProvider::Codex => Self::Codex,
             AgentToolProvider::ClaudeCode => Self::ClaudeCode,
-            AgentToolProvider::Gemini => Self::Gemini,
-            AgentToolProvider::OhMyPi => Self::OhMyPi,
         }
     }
 }
@@ -760,26 +750,6 @@ impl ProviderToolManager {
             return Ok(current);
         }
 
-        if current.kind == AgentToolKind::McpServer && self.provider == AgentToolProvider::OhMyPi {
-            let AgentToolDefinition::McpServer(mut definition) = current.definition else {
-                unreachable!("MCP item has MCP definition")
-            };
-            let mut source = definition
-                .source_metadata
-                .as_object()
-                .cloned()
-                .unwrap_or_default();
-            source.insert("enabled".into(), Value::Bool(request.enabled));
-            definition.source_metadata = Value::Object(source);
-            self.write_mcp_entry(
-                Path::new(&current.native_path),
-                &request.target.name,
-                Some(&definition),
-                Some(&current.revision),
-            )?;
-            return self.find(&request.target);
-        }
-
         if request.enabled {
             self.restore_from_disabled(&request.target, &current)?;
         } else {
@@ -796,8 +766,6 @@ impl ProviderToolManager {
         match self.provider {
             AgentToolProvider::Codex => self.home_dir.join(".codex"),
             AgentToolProvider::ClaudeCode => self.home_dir.join(".claude"),
-            AgentToolProvider::Gemini => self.home_dir.join(".gemini"),
-            AgentToolProvider::OhMyPi => self.home_dir.join(".omp"),
         }
     }
 
@@ -834,20 +802,6 @@ impl ProviderToolManager {
             (AgentToolProvider::ClaudeCode, AgentToolScope::Project) => {
                 vec![project()?.join(".mcp.json")]
             }
-            (AgentToolProvider::Gemini, AgentToolScope::User) => {
-                vec![self.home_dir.join(".gemini/settings.json")]
-            }
-            (AgentToolProvider::Gemini, AgentToolScope::Project) => {
-                vec![project()?.join(".gemini/settings.json")]
-            }
-            (AgentToolProvider::OhMyPi, AgentToolScope::User) => vec![
-                self.home_dir.join(".omp/agent/mcp.json"),
-                self.home_dir.join(".omp/agent/.mcp.json"),
-            ],
-            (AgentToolProvider::OhMyPi, AgentToolScope::Project) => vec![
-                project()?.join(".omp/mcp.json"),
-                project()?.join(".omp/.mcp.json"),
-            ],
         })
     }
 
@@ -866,18 +820,6 @@ impl ProviderToolManager {
             }
             (AgentToolProvider::ClaudeCode, AgentToolScope::Project) => {
                 self.project_root()?.join(".claude/skills")
-            }
-            (AgentToolProvider::Gemini, AgentToolScope::User) => {
-                self.home_dir.join(".gemini/skills")
-            }
-            (AgentToolProvider::Gemini, AgentToolScope::Project) => {
-                self.project_root()?.join(".gemini/skills")
-            }
-            (AgentToolProvider::OhMyPi, AgentToolScope::User) => {
-                self.home_dir.join(".omp/agent/skills")
-            }
-            (AgentToolProvider::OhMyPi, AgentToolScope::Project) => {
-                self.project_root()?.join(".omp/skills")
             }
         };
         ensure_no_symlink_components(boundary, &root)?;
@@ -1072,8 +1014,6 @@ impl ProviderToolManager {
             let root = match self.provider {
                 AgentToolProvider::Codex => ancestor.join(".agents/skills"),
                 AgentToolProvider::ClaudeCode => ancestor.join(".claude/skills"),
-                AgentToolProvider::Gemini => ancestor.join(".gemini/skills"),
-                AgentToolProvider::OhMyPi => ancestor.join(".omp/skills"),
             };
             ensure_no_symlink_components(ancestor, &root)?;
             if !roots.contains(&root) {
@@ -1393,14 +1333,8 @@ fn validate_locator(locator: &AgentToolLocator) -> Result<(), AgentToolError> {
     Ok(())
 }
 
-fn provider_limitations(provider: AgentToolProvider) -> Vec<String> {
-    match provider {
-        AgentToolProvider::OhMyPi => vec![
-            "Oh My Pi management targets the canonical agent profile at ~/.omp/agent; alternate OMP profiles are not managed."
-                .to_string(),
-        ],
-        _ => Vec::new(),
-    }
+fn provider_limitations(_provider: AgentToolProvider) -> Vec<String> {
+    Vec::new()
 }
 
 fn validate_name(name: &str) -> Result<(), AgentToolError> {
@@ -1430,9 +1364,7 @@ fn ensure_revision(current: &str, expected: &str) -> Result<(), AgentToolError> 
 fn mcp_servers_key(provider: AgentToolProvider) -> &'static str {
     match provider {
         AgentToolProvider::Codex => "mcp_servers",
-        AgentToolProvider::ClaudeCode | AgentToolProvider::Gemini | AgentToolProvider::OhMyPi => {
-            "mcpServers"
-        }
+        AgentToolProvider::ClaudeCode => "mcpServers",
     }
 }
 
@@ -1504,13 +1436,7 @@ fn normalize_mcp(
     let object = native.as_object().ok_or_else(|| {
         AgentToolError::InvalidConfiguration("MCP server entry must be an object".into())
     })?;
-    let remote_url = optional_string(
-        match provider {
-            AgentToolProvider::Gemini => object.get("httpUrl").or_else(|| object.get("url")),
-            _ => object.get("url"),
-        },
-        "url",
-    )?;
+    let remote_url = optional_string(object.get("url"), "url")?;
     let command = optional_string(object.get("command"), "command")?;
     let transport = if remote_url.is_some() {
         McpTransport::Http
@@ -1532,20 +1458,7 @@ fn normalize_mcp(
         },
         "headers",
     )?;
-    let enabled = if provider == AgentToolProvider::OhMyPi {
-        !matches!(object.get("enabled"), Some(Value::Bool(false)))
-            && !object
-                .get("enabled")
-                .and_then(Value::as_str)
-                .is_some_and(|value| {
-                    matches!(
-                        value.to_ascii_lowercase().as_str(),
-                        "0" | "false" | "disabled" | "off"
-                    )
-                })
-    } else {
-        true
-    };
+    let enabled = true;
     Ok((
         McpServerDefinition {
             transport,
@@ -1692,13 +1605,10 @@ fn render_mcp(
         McpTransport::Http => {
             let url = Value::String(definition.url.clone().unwrap_or_default());
             match provider {
-                AgentToolProvider::Gemini => {
-                    object.insert("httpUrl".into(), url);
-                }
                 AgentToolProvider::Codex => {
                     object.insert("url".into(), url);
                 }
-                AgentToolProvider::ClaudeCode | AgentToolProvider::OhMyPi => {
+                AgentToolProvider::ClaudeCode => {
                     object.insert("type".into(), Value::String("http".into()));
                     object.insert("url".into(), url);
                 }
@@ -1711,24 +1621,7 @@ fn render_mcp(
                 };
                 object.insert(key.into(), serde_json::json!(definition.headers));
             }
-            if provider == AgentToolProvider::Gemini {
-                let headers = object
-                    .entry("headers")
-                    .or_insert_with(|| Value::Object(Map::new()))
-                    .as_object_mut()
-                    .ok_or_else(|| {
-                        AgentToolError::InvalidConfiguration(
-                            "Gemini MCP headers must be an object".into(),
-                        )
-                    })?;
-                headers
-                    .entry("Accept")
-                    .or_insert_with(|| Value::String("application/json, text/event-stream".into()));
-            }
         }
-    }
-    if provider == AgentToolProvider::OhMyPi && !object.contains_key("enabled") {
-        object.insert("enabled".into(), Value::Bool(true));
     }
     Ok(Value::Object(object))
 }
@@ -2076,7 +1969,7 @@ mod tests {
             home.clone(),
             root.path().join("assets/agent-tools/disabled/v1"),
         );
-        for provider_root in [".codex", ".claude", ".gemini", ".omp"] {
+        for provider_root in [".codex", ".claude"] {
             fs::create_dir_all(home.join(provider_root)).unwrap();
         }
         (root, service)
@@ -2133,19 +2026,10 @@ mod tests {
     }
 
     #[test]
-    fn provider_inventory_pins_correct_omp_and_codex_skill_paths() {
+    fn provider_inventory_pins_correct_codex_skill_paths() {
         let (_root, service) = harness();
         let project = service.home_dir.join("project");
         fs::create_dir_all(&project).unwrap();
-        let omp = service.manager(AgentToolProvider::OhMyPi, Some(&project));
-        assert_eq!(
-            omp.mcp_candidates(AgentToolScope::User).unwrap()[0],
-            service.home_dir.join(".omp/agent/mcp.json")
-        );
-        assert_eq!(
-            omp.skill_root(AgentToolScope::User).unwrap(),
-            service.home_dir.join(".omp/agent/skills")
-        );
         let codex = service.manager(AgentToolProvider::Codex, Some(&project));
         assert_eq!(
             codex.skill_root(AgentToolScope::Project).unwrap(),
@@ -2197,8 +2081,8 @@ mod tests {
     #[test]
     fn jsonc_targeted_write_preserves_comments_and_unrelated_fields() {
         let (_root, service) = harness();
-        let manager = service.manager(AgentToolProvider::Gemini, None);
-        let path = service.home_dir.join(".gemini/settings.jsonc");
+        let manager = service.manager(AgentToolProvider::ClaudeCode, None);
+        let path = service.home_dir.join(".claude/settings.jsonc");
         fs::write(
             &path,
             "{\n  // keep me\n  \"theme\": \"dark\",\n  \"mcpServers\": {\n    \"existing\": { \"command\": \"old\" }\n  }\n}\n",
@@ -2236,11 +2120,6 @@ mod tests {
         )
         .unwrap();
         fs::write(
-            service.home_dir.join(".gemini/settings.json"),
-            r#"{"mcpServers": []}"#,
-        )
-        .unwrap();
-        fs::write(
             service.home_dir.join(".claude.json"),
             r#"{"mcpServers":{"broken":{"command":"server","args":[1]}}}"#,
         )
@@ -2253,18 +2132,6 @@ mod tests {
             .find(|provider| provider.provider == AgentToolProvider::Codex)
             .unwrap();
         assert!(codex.items.iter().any(|item| item.name == "healthy"));
-        let gemini = inventory
-            .providers
-            .iter()
-            .find(|provider| provider.provider == AgentToolProvider::Gemini)
-            .unwrap();
-        assert_eq!(gemini.items.len(), 0);
-        assert!(
-            gemini
-                .errors
-                .iter()
-                .any(|error| error.contains("must be an object"))
-        );
         let claude = inventory
             .providers
             .iter()
@@ -2284,7 +2151,11 @@ mod tests {
         let (_root, service) = harness();
         let created = service
             .create(CreateAgentToolRequest {
-                target: locator(AgentToolProvider::Gemini, AgentToolKind::Skill, "binary"),
+                target: locator(
+                    AgentToolProvider::ClaudeCode,
+                    AgentToolKind::Skill,
+                    "binary",
+                ),
                 definition: skill_with_binary(),
                 replace: false,
                 expected_revision: None,
@@ -2296,7 +2167,11 @@ mod tests {
         );
 
         let invalid = service.create(CreateAgentToolRequest {
-            target: locator(AgentToolProvider::Gemini, AgentToolKind::Skill, "escape"),
+            target: locator(
+                AgentToolProvider::ClaudeCode,
+                AgentToolKind::Skill,
+                "escape",
+            ),
             definition: AgentToolDefinition::Skill(SkillDefinition {
                 description: None,
                 files: vec![SkillFile {
@@ -2448,7 +2323,7 @@ mod tests {
         let target = service
             .create(CreateAgentToolRequest {
                 target: locator(
-                    AgentToolProvider::Gemini,
+                    AgentToolProvider::ClaudeCode,
                     AgentToolKind::McpServer,
                     "replace",
                 ),
@@ -2465,7 +2340,7 @@ mod tests {
                     "replace",
                 ),
                 expected_revision: source.revision.clone(),
-                target_provider: AgentToolProvider::Gemini,
+                target_provider: AgentToolProvider::ClaudeCode,
                 target_scope: AgentToolScope::User,
                 target_project_path: None,
                 target_name: None,
@@ -2555,39 +2430,5 @@ mod tests {
                 );
             }
         }
-    }
-
-    #[test]
-    fn omp_uses_native_enabled_field() {
-        let (_root, service) = harness();
-        let created = service
-            .create(CreateAgentToolRequest {
-                target: locator(
-                    AgentToolProvider::OhMyPi,
-                    AgentToolKind::McpServer,
-                    "native-toggle",
-                ),
-                definition: stdio("server"),
-                replace: false,
-                expected_revision: None,
-            })
-            .unwrap();
-        let disabled = service
-            .set_enabled(ToggleAgentToolRequest {
-                target: locator(
-                    AgentToolProvider::OhMyPi,
-                    AgentToolKind::McpServer,
-                    "native-toggle",
-                ),
-                expected_revision: created.revision,
-                enabled: false,
-            })
-            .unwrap();
-        assert_eq!(disabled.state, AgentToolState::Disabled);
-        let native: Value = serde_json::from_slice(
-            &fs::read(service.home_dir.join(".omp/agent/mcp.json")).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(native["mcpServers"]["native-toggle"]["enabled"], false);
     }
 }

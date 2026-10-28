@@ -924,7 +924,7 @@ mod tests {
     #[test]
     fn canonical_profile_resolution_rejects_inconsistent_context() {
         let mut context = canonical_profile_context(ExecutorConfig::new(BaseCodingAgent::Codex));
-        context.attempt_request_envelope.0.provider_id = "gemini".to_string();
+        context.attempt_request_envelope.0.provider_id = "claude_code".to_string();
 
         let error = resolve_canonical_executor_config(context, &ExecutorConfigs::from_defaults())
             .unwrap_err();

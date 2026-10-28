@@ -78,8 +78,6 @@ const SOUND_OPTIONS: SoundOption[] = [
 const AGENT_PRIORITY: BaseCodingAgent[] = [
   BaseCodingAgent.CLAUDE_CODE,
   BaseCodingAgent.CODEX,
-  BaseCodingAgent.GEMINI,
-  BaseCodingAgent.OH_MY_PI,
 ];
 
 const SOCIAL_LINKS = [

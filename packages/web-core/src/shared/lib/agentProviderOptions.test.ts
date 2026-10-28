@@ -109,16 +109,16 @@ describe('agent provider options', () => {
   it('uses fallback executors only before garage data is available', () => {
     const fallbackOptions = deriveAgentProviderOptions({
       garage: undefined,
-      fallbackExecutors: [BaseCodingAgent.CODEX, BaseCodingAgent.GEMINI],
+      fallbackExecutors: [BaseCodingAgent.CODEX, BaseCodingAgent.CLAUDE_CODE],
     });
     const garageOptions = deriveAgentProviderOptions({
       garage: [makeGarageEntry(BaseCodingAgent.CLAUDE_CODE)],
-      fallbackExecutors: [BaseCodingAgent.CODEX, BaseCodingAgent.GEMINI],
+      fallbackExecutors: [BaseCodingAgent.CODEX, BaseCodingAgent.CLAUDE_CODE],
     });
 
     expect(fallbackOptions.map((option) => option.executor)).toEqual([
       BaseCodingAgent.CODEX,
-      BaseCodingAgent.GEMINI,
+      BaseCodingAgent.CLAUDE_CODE,
     ]);
     expect(garageOptions.map((option) => option.executor)).toEqual([
       BaseCodingAgent.CLAUDE_CODE,
@@ -127,7 +127,7 @@ describe('agent provider options', () => {
 
   it('preserves explicit executor order when provided', () => {
     const options = deriveAgentProviderOptions({
-      executors: [BaseCodingAgent.GEMINI, BaseCodingAgent.CODEX],
+      executors: [BaseCodingAgent.CLAUDE_CODE, BaseCodingAgent.CODEX],
       garage: [
         makeGarageEntry(
           BaseCodingAgent.CODEX,
@@ -138,7 +138,7 @@ describe('agent provider options', () => {
     });
 
     expect(options.map((option) => option.executor)).toEqual([
-      BaseCodingAgent.GEMINI,
+      BaseCodingAgent.CLAUDE_CODE,
       BaseCodingAgent.CODEX,
     ]);
     expect(options[0].policy).toBeNull();

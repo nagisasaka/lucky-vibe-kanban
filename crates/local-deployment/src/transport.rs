@@ -12,10 +12,9 @@ use async_trait::async_trait;
 pub(crate) use executors::runtime::AgentTransportKind as TransportKind;
 
 #[cfg(test)]
-pub(crate) const SUPPORTED_TRANSPORTS: [TransportKind; 6] = [
+pub(crate) const SUPPORTED_TRANSPORTS: [TransportKind; 5] = [
     TransportKind::StdioCli,
     TransportKind::StdioRpc,
-    TransportKind::Acp,
     TransportKind::AppServerJsonrpc,
     TransportKind::HttpSidecar,
     TransportKind::InProcess,
@@ -271,7 +270,7 @@ mod tests {
 
     #[test]
     fn transport_catalog_keeps_process_policy_outside_transport() {
-        assert_eq!(SUPPORTED_TRANSPORTS.len(), 6);
+        assert_eq!(SUPPORTED_TRANSPORTS.len(), 5);
         assert!(TransportDescriptor::new(TransportKind::StdioCli).is_process_bound());
         assert!(!TransportDescriptor::new(TransportKind::InProcess).is_process_bound());
     }
