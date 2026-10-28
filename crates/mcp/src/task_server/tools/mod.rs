@@ -432,6 +432,7 @@ mod tests {
             "get_dev_server_status".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
+            "query_repository".to_string(),
             "run_resource_operation".to_string(),
             "run_session_prompt".to_string(),
             "update_session".to_string(),
