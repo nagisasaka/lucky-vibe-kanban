@@ -32,7 +32,7 @@ node scripts/check-unused-i18n-keys.mjs
 git diff --check
 ```
 
-Rust実行枠が空いた後、通常のworkspace targetと既存sccacheを利用して順次実行する。
+Rust実行枠が空いた後、通常のworkspace targetを利用して順次実行する。現在のrunnerはsccacheを自動設定しない。
 事前に共有資源snapshot・cargo/rustc・空き容量を確認し、AGENTS.mdのキャッシュ設定に従う。
 
 ```sh

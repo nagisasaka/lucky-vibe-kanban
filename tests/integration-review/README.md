@@ -5,8 +5,7 @@
 ```sh
 pnpm install --frozen-lockfile
 pnpm --dir packages/local-web run build
-# AGENTS.mdに従い、利用可能ならRUSTC_WRAPPERとSCCACHE_DIRを設定
-cargo build --bin agent-process-host
+node scripts/dev-cargo.mjs build --bin agent-process-host
 # Chromiumが未導入なら、Workspace内の専用PLAYWRIGHT_BROWSERS_PATHにインストール
 # 既存Chromiumを使う場合はLVK_E2E_CHROMIUMで実行ファイルを指定
 python3 tests/integration-review/run.py

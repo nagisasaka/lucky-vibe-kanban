@@ -2,8 +2,8 @@
 
 The contributor entry is `node scripts/dev-cargo.mjs check --workspace` (or the
 existing pnpm backend scripts). It is scoped to the checkout containing the
-script. Cargo settings are command arguments; only rustc's sccache subprocess
-receives the additional cache environment. No product runtime, DB/API, Project
+script. Cargo settings are command arguments; no compiler-cache wrapper or
+additional compiler-cache environment is installed. No product runtime, DB/API, Project
 setup script or global Cargo configuration changes are involved.
 
 `cargo run` receives the same settings without exporting them to its binary.
@@ -30,64 +30,63 @@ Ordinary Cargo and Cargo.toml defaults remain unchanged for other consumers.
 Build the frontend first for instance/bundle creation; shared dev also needs the
 existing developer-runtime feature. No extra compiler environment is required.
 CARGO_BUILD_JOBS may limit concurrency. Inherited CARGO_INCREMENTAL must be absent
-or 0; conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
+(including an inherited 0 or 1, which would override the per-profile policy).
+`CARGO_BUILD_INCREMENTAL` and configured `build.incremental` also override the
+profiles, so both true and false are rejected with a diagnostic. Remove the
+override or use raw Cargo deliberately; the entry never edits user config.
+Other conflicting opt/debug/strip/split/incremental profile variables, Rust flags,
 wrappers and target overrides are rejected with an explanation. The build entry
 does not inject these variables into run/watch or managed child Projects.
 Instance source snapshots use their own target directories. If a snapshot has no
 `.lvk-shared/cache`, the documented local fallback applies; it does not reach into
 another checkout to discover shared storage.
 
+## Compiler cache retirement (2026-10-27)
+
+The development entry no longer discovers, invokes or configures sccache. It
+uses rustc directly and rejects explicit inherited/configured compiler wrappers
+with an explanation, leaving the user's configuration intact. Use raw Cargo
+intentionally for a different wrapper policy. Validation helpers no longer add
+sccache automatically. General CI setup and the stable container
+continue to include sccache for their existing consumers; they are outside this
+development-entry policy and are unchanged from the base revision.
+This does not uninstall host tools, stop existing daemons, clear caches or delete
+shared build-dir/target data. No global Cargo, shell or server-parent environment
+changes are involved.
+
+Official Cargo `build.build-dir` sharing, checkout-local final targets, all three
+server opt/debug/strip/split profiles remain in place. Preview dev/test now use
+incremental=true; common dev/stable release remain incremental=false. These are
+Cargo profile settings, never a global CARGO_INCREMENTAL=1 injection. Cargo owns
+the shared incremental directory and its existing build lock; no independent
+incremental-sharing or locking mechanism is added. Cargo's normal lock may
+make builds wait; never use `cargo clean` to maintain the shared build-dir.
+Without `.lvk-shared/cache`, intermediates stay in checkout-local `target/`.
+
+This is a KISS decision, not a claim that sccache never hits. The isolated
+v0.18.0 investigation reproduced same-condition Rust hits and separate misses
+from cwd, absolute input arguments and CARGO_MANIFEST_DIR differences.
+SCCACHE_BASEDIRS did not remove Rust cwd sensitivity. The actual server build's
+8 misses and historical incremental benefit were not individually attributed.
+No replacement compiler-cache framework is introduced.
+
 ## Scoped verification
 
-The self-contained offline fixture uses the installed pinned toolchain, no
-registry dependencies, two source workspaces, one temporary shared build-dir and
-independent targets. It verifies debug/test flags, nonincremental compilation,
-all three purpose profiles and final ELF line tables, fallback without shared storage/sccache, wrapper and
-environment conflicts, run's environment, Cargo lock contention and raw clean's
-impact. A fake sccache transport forwards to real rustc to test environment scope
-without changing the shared server. This is not a real sccache hit-rate benchmark.
-`LVK_TEST_REAL_SCCACHE=1 node --test scripts/dev-cargo.test.mjs` also compiles a
-dependency-free library through the installed real sccache; both tests passed
-on the pinned toolchain. It uses the existing server without reconfiguration.
-The fixture's clean only touches its own disposable cache. Cargo's shared build
-lock serialises builds even when their final target directories differ. A raw
-clean removes shared intermediates but leaves the other target's final binary;
-that binary's existence does not mean its intermediate cache survived.
+`node --test scripts/dev-cargo.test.mjs` uses the pinned real Cargo/rustc with
+small offline fixtures and disposable shared intermediates. It checks the three
+profiles, ELF line tables, dev/test incremental=true and release=false,
+separate final targets,
+shared build-dir/normal lock waiting, local fallback, clean protection, wrapper
+conflicts and run/watch environment boundaries. A poisoned sccache executable
+on PATH must never be called, including for statistics/probes. No cache daemon
+is used. Raw clean is exercised only against the fixture's disposable build-dir.
 
-The existing server's observed cache location matched canonical
-`.lvk-shared/cache/sccache`; its configuration and statistics were not reset.
-Actual LVK builds and real cache performance remain unverified.
+The previous LOCAL-178/182 execution-slot wait and compiler-cache measurement
+plan are historical. Future full build/capacity measurements need their own
+execution authorisation; fixture results are not performance benchmarks or live
+acceptance. Preserve existing shared caches and running build processes.
 
-## Deferred measurement (requires capacity/execution-slot approval)
-
-The previous LOCAL-178/182 execution-slot wait is historical and ended. For
-LOCAL-197 the CODE run is limited to implementation and small local fixtures.
-The integration owner handles the single heavy dev artifact build after commit;
-full validation is explicitly skipped at Integration admission. Cold/warm
-benchmarks still require separate capacity/execution approval.
-
-1. Record candidate SHA, toolchain, command/features, free disk, selected target
-   usage, expected/actual sccache location and `sccache --show-stats`. Coordinate
-   the full resource bundle before any registered shared-resource use.
-2. With an approved task-owned empty cache/build-dir fixture or coordinated
-   maintenance window, measure a cold LVK debug build. Never clear or restart the
-   existing shared sccache server to manufacture a cold baseline. Document the
-   distinction between cold Cargo artifacts and a warm shared compiler cache.
-3. Repeat the identical command warm, then make a small reversible Rust edit and
-   rebuild, then build from a second independent worktree sharing intermediates.
-   Keep final targets separate and restore the edit. Compare against a separately
-   authorised incremental baseline if a policy comparison is required.
-4. For each case record elapsed time, target and intermediate byte deltas, and
-   hits/misses/non-cacheable reason deltas. Shared sccache counters include other
-   clients; record concurrent activity and avoid attributing all deltas to LVK.
-5. Verify actual runtime/managed child-Project environment and watch lifecycle in
-   an authorised isolated LVK instance. Fixture evidence is not live acceptance.
-
-These cold/warm/edit/second-workspace timings and capacity savings have **not**
-been measured. Retain results with the candidate SHA and command; do not report
-fixture success as a completed LVK benchmark or formal Integration.
-
-## LOCAL-197 local verification (2026-10-26)
+## Historical LOCAL-197 local verification (2026-10-26)
 
 Base HEAD/main: `0d73e1ad8eb1790ac896eb958b2757d090ac2cea` plus this change.
 Cargo 1.93.0-nightly (bd979347d), rustc 1.93.0-nightly (83e49b75e).
@@ -105,3 +104,94 @@ No LVK full build, full pnpm validation, container build, running deployment,
 real sccache smoke/benchmark, merge or restart was performed in this CODE run.
 Final deployed binaries, embedded payload, build identity, backtrace line
 resolution and health remain the integration owner's acceptance responsibility.
+
+## Retirement verification (2026-10-27)
+
+Base: `a3247dadd5b4385e07a7848fd0009aa07d8ffa71` plus this change.
+`node --test scripts/dev-cargo.test.mjs tests/server/issue-comment-reviews.test.mjs`
+passed all 7 tests (no skips), including the poisoned executable, explicit wrapper
+preservation/rejection, isolated helper defaults, real Cargo profiles/ELF line
+checks, build-dir sharing/target isolation, lock/clean and runtime boundaries.
+The subsequent incremental decision is verified by dev/test compiler incremental
+flags, release absence of those flags and rejecting inherited CARGO_INCREMENTAL
+0/1 for all three purposes, plus conflicting per-profile environment overrides.
+Node syntax checks, Python AST parsing, shell syntax and `git diff --check` passed.
+
+The original retirement run could not load `release.test.mjs` because `yaml`
+was missing. The review correction restored Dockerfile, smoke checks, tool docs
+and three CI files byte-for-byte from base; no deleted development wrapper is
+referenced there, so no exception was needed. A filtered root pnpm install with
+the frozen lockfile, ignored scripts and a workspace-local store supplied the
+existing yaml dependency without manifest/lockfile changes. The release tests
+then passed all 3 cases.
+
+The same review reproduced `CARGO_BUILD_INCREMENTAL=true` and configured
+`build.incremental=true` enabling release incremental, and false disabling preview
+incremental, on the pinned actual Cargo. The entry now rejects both override
+sources and values. Regression cases preserve the config file and check all
+three purposes; normal real dev/test compiles still enable incremental while
+release compiles do not. General CI and stable-tool availability are preserved.
+Full LVK Rust/pnpm validation, container builds, deployment and restart were not
+run. No real daemon command or shared-cache operation was performed.
+
+## Freshness guardrails (LOCAL-250 follow-up, 2026-10-28)
+
+The development entry now passes `-Z checksum-freshness` for build/check/test/
+clippy/run only. The pinned nightly advertises this option; an unsupported Cargo
+fails with an explanation. No checksum setting is added to global configuration,
+ordinary Cargo, CI, stable Docker or runtime environment. Watch invokes the same
+entry for each build/run. Explicit `-Z`/config overrides are rejected, and an
+inherited `CARGO_UNSTABLE_CHECKSUM_FRESHNESS` other than `true` is diagnosed.
+The command-line flag takes precedence over configured unstable defaults.
+
+This reduces incorrect Fresh reuse of equal-mtime, different-content Rust inputs
+when intermediate outputs are shared. It is not a separate content-addressed
+artifact store: A/B switching can still rebuild mutable crates, checksum scans
+add reads, and Cargo's shared lock can still make another Workspace wait.
+
+Checksum freshness does not cover build-script file input mtimes. The narrowly
+scoped mitigation is to re-evaluate the repository's single build script,
+`crates/server/build.rs`, on each Cargo invocation using its existing missing-file
+sentinel, including when build identity is injected explicitly. This refreshes
+metadata and `.env` inputs even after equal-mtime edits or deletion. It may also
+rebuild the server consumers even when inputs have not changed. No source touch,
+new input manifest, custom cache/lock/GC or dependency-wide invalidation is added.
+External dependency build scripts and undeclared inputs remain outside this fix.
+
+The server build script now reads `CARGO_MANIFEST_DIR` from its execution
+environment, not from the compiled build-script binary. This is a build-time
+Cargo requirement only: launching the server needs no Cargo variables. Metadata,
+`.env` and dummy frontend creation use that root.
+
+Compile-time asset paths are retained intentionally: RustEmbed's debug frontend
+fallback uses its compiled source path, and archive process observation must
+protect that same path even after the executable is copied and holds no asset
+file descriptor. Changing only the deletion guard to cwd/runtime Cargo variables
+would protect a different directory. Similarly the utils debug `dev_assets`
+default supports launches outside the source cwd; replacing its root with cwd
+would silently move data. Explicit `LVK_INSTANCE_DIR` remains available. Neither
+fallback nor deletion protection is removed. Cross-checkout reuse of these
+compile-time paths is a known remaining risk, not a verified portable artifact.
+Use retained source/runtime paths and verify final artifact identity/assets
+before placement; this change is not safety certification for all dependencies.
+
+Regression: `node --test scripts/dev-cargo-freshness.test.mjs scripts/dev-cargo.test.mjs`.
+The offline, private-cache fixtures use the actual entry, pinned Cargo and real
+server build script/metadata resolver (only the dotenv dependency is a small
+fixture shim). They cover A→B→A content and metadata SHA/root, same-size source
+edits with preserved mtime, explicit SHA plus preserved-mtime `.env` edits and
+removal, profiles, checksum conflict diagnostics and run/watch non-leakage.
+They do not compile the full server or prove RustEmbed cross-checkout portability,
+registry build-script safety or real-world capacity/performance improvements.
+
+Local verification of this follow-up passed 11 tests:
+`node --test scripts/dev-cargo-freshness.test.mjs scripts/dev-cargo.test.mjs deploy/server/release.test.mjs tests/server/issue-comment-reviews.test.mjs`.
+The B-root identity assertion also checks that Cargo reuses the already compiled
+build-script executable, so the changed root is obtained at script execution,
+not by recompiling a different embedded root. Configured checksum=false is
+explicitly overridden by the entry flag; an inherited false env override is
+rejected. Tiny Clippy/test/build checks exercise the pinned nightly path.
+`rustfmt --check --config skip_children=true crates/server/build.rs`,
+`node --check scripts/dev-cargo.mjs` and `git diff --check` passed.
+No full LVK build, asset/archive E2E, real shared-cache experiment, CI/container
+build or deployment was performed. The existing asset/archive source is unchanged.

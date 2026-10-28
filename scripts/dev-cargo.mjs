@@ -1,21 +1,17 @@
 #!/usr/bin/env node
 // LVK contributor entry point. Never export compiler settings into the server.
 import { existsSync, realpathSync, mkdirSync } from 'node:fs';
-import { dirname, join, resolve, delimiter } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync, spawn } from 'node:child_process';
 
 const root = realpathSync(join(dirname(fileURLToPath(import.meta.url)), '..'));
-const wrapper = join(root, 'scripts/dev-rustc-cache.mjs');
 const args = process.argv.slice(2);
 let purpose = 'preview';
 if (args[0] === '--purpose') { args.shift(); purpose = args.shift(); }
 const fail = (message) => { console.error(`dev-cargo: ${message}`); process.exit(2); };
 const warn = (message) => console.error(`dev-cargo: ${message}`);
 const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
-const executable = (name) => (process.env.PATH || '').split(delimiter)
-  .map((dir) => join(dir, name)).find((path) => existsSync(path));
-
 if (!['preview', 'dev', 'stable'].includes(purpose)) fail('purpose must be preview/dev/stable.');
 const release = purpose !== 'preview';
 if (args[0] === 'watch') {
@@ -35,15 +31,22 @@ if (args[0] === 'watch') {
   if (location.status !== 0 || realpathSync(dirname(location.stdout.trim())) !== root)
     fail('invoke this entry only inside its own LVK checkout.');
   const compileArgs = args.slice(0, args.indexOf('--') < 0 ? args.length : args.indexOf('--'));
-  if (compileArgs.some((arg) => /^(--config|--manifest-path|--target-dir)(=|$)/.test(arg) || arg.startsWith('+') || arg === '-C' || arg.startsWith('-C')))
+  if (compileArgs.some((arg) => /^(--config|--manifest-path|--target-dir)(=|$)/.test(arg) || arg.startsWith('+') || arg.startsWith('-Z') || arg === '-C' || arg.startsWith('-C')))
     fail('config/manifest/target/toolchain overrides require raw cargo outside this development policy.');
   if (compileArgs.some((arg) => /^(--release|--profile)(=|$)/.test(arg) || arg === '-r'))
     fail('select --purpose preview/dev/stable instead of release/profile overrides.');
-  if (process.env.CARGO_INCREMENTAL !== undefined && process.env.CARGO_INCREMENTAL !== '0')
-    fail('CARGO_INCREMENTAL overrides profile.incremental; unset it or set 0 explicitly.');
+  if (process.env.CARGO_INCREMENTAL !== undefined)
+    fail('CARGO_INCREMENTAL overrides both dev/test and release profile.incremental; unset it to keep dev/test=true and release=false.');
+  if (process.env.CARGO_BUILD_INCREMENTAL !== undefined)
+    fail('CARGO_BUILD_INCREMENTAL overrides dev/test and release profile.incremental; unset it.');
+  const buildIncremental = spawnSync('cargo', ['-Z', 'unstable-options', 'config', 'get', 'build.incremental', '--format', 'json'], { encoding: 'utf8' });
+  if (buildIncremental.status !== 0 && !buildIncremental.stderr?.includes('is not set'))
+    fail('unable to inspect build.incremental configuration.');
+  if (buildIncremental.status === 0 && JSON.parse(buildIncremental.stdout).build?.incremental !== undefined)
+    fail('configured build.incremental overrides dev/test and release profile.incremental; remove it or use raw cargo deliberately.');
   const profiles = Object.fromEntries(['dev', 'test', 'release'].map((profile) => [profile, {
     debug: purpose === 'stable' ? 0 : 'line-tables-only',
-    incremental: false,
+    incremental: profile !== 'release',
     'opt-level': profile === 'release' ? 3 : 0,
     strip: purpose === 'stable' ? 'symbols' : 'none',
     'split-debuginfo': 'off',
@@ -77,7 +80,15 @@ if (args[0] === 'watch') {
   }
   if (flagValues.some((value) => conflictingFlags.test(value)))
     fail('inherited Rust flags override opt/debug/strip/split/incremental policy; remove that override.');
-  const config = [];
+  const freshness = !['fmt', 'metadata'].includes(args[0]);
+  if (freshness) {
+    if (process.env.CARGO_UNSTABLE_CHECKSUM_FRESHNESS !== undefined && process.env.CARGO_UNSTABLE_CHECKSUM_FRESHNESS !== 'true')
+      fail('CARGO_UNSTABLE_CHECKSUM_FRESHNESS conflicts with checksum-freshness; unset it.');
+    const supported = spawnSync('cargo', ['-Z', 'help'], { encoding: 'utf8' });
+    if (supported.status !== 0 || !supported.stdout.includes('checksum-freshness'))
+      fail('this development entry requires a nightly Cargo with checksum-freshness support.');
+  }
+  const config = freshness ? ['-Z', 'checksum-freshness'] : [];
   const set = (key, value) => config.push('--config', `${key}=${JSON.stringify(value)}`);
   for (const [profile, values] of Object.entries(profiles))
     for (const [key, value] of Object.entries(values)) set(`profile.${profile}.${key}`, value);
@@ -93,14 +104,14 @@ if (args[0] === 'watch') {
     set('build.build-dir', join(root, 'target'));
     warn('no .lvk-shared/cache: intermediates stay in this checkout target/.');
   }
-  if (process.env.RUSTC_WRAPPER !== undefined && resolve(process.env.RUSTC_WRAPPER) !== wrapper)
-    fail('explicit RUSTC_WRAPPER: preserve it with raw cargo or unset it to opt into shared sccache.');
+  if (process.env.RUSTC_WRAPPER !== undefined)
+    fail('explicit RUSTC_WRAPPER: preserve it with raw cargo or unset it to use this entry without a compiler wrapper.');
   const existing = spawnSync('cargo', ['-Z', 'unstable-options', 'config', 'get', 'build.rustc-wrapper', '--format', 'json'], { encoding: 'utf8' });
   if (existing.error) fail(existing.error.message);
   if (existing.status !== 0 && !existing.stderr.includes('is not set')) fail(existing.stderr.trim());
   if (existing.status === 0) {
     const value = JSON.parse(existing.stdout).build?.['rustc-wrapper'];
-    if (value && resolve(value) !== wrapper) fail('an explicit build.rustc-wrapper/RUSTC_WRAPPER is configured; preserve it with raw cargo or unset it to opt into shared sccache.');
+    if (value) fail('an explicit build.rustc-wrapper/RUSTC_WRAPPER is configured; preserve it with raw cargo or unset it to use this entry without a compiler wrapper.');
   }
   const workspaceWrapper = spawnSync('cargo', ['-Z', 'unstable-options', 'config', 'get', 'build.rustc-workspace-wrapper', '--format', 'json'], { encoding: 'utf8' });
   if (workspaceWrapper.status !== 0 && !workspaceWrapper.stderr?.includes('is not set'))
@@ -109,18 +120,6 @@ if (args[0] === 'watch') {
     fail('explicit configured workspace rustc wrapper: use raw cargo or unset it.');
   if (process.env.RUSTC_WORKSPACE_WRAPPER || process.env.CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER)
     fail('explicit workspace rustc wrapper: use raw cargo or unset it to opt in.');
-  if (executable('sccache')) {
-    const expected = existsSync(shared) ? join(realpathSync(shared), 'sccache') : process.env.SCCACHE_DIR;
-    const stats = spawnSync('sccache', ['--show-stats'], {
-      encoding: 'utf8',
-      env: expected ? { ...process.env, SCCACHE_DIR: expected } : process.env,
-    });
-    if (stats.status !== 0) fail(`sccache stats unavailable: ${stats.stderr}`);
-    const location = stats.stdout.split('\n').find((line) => line.startsWith('Cache location'));
-    if (expected && !location?.includes(`"${expected}"`))
-      warn(`shared server cache mismatch: expected ${expected}; ${location || 'location unknown'}. Server is left unchanged.`);
-    set('build.rustc-wrapper', wrapper);
-  } else warn('sccache unavailable: using rustc directly.');
   const child = spawn('cargo', [...config, ...args], { stdio: 'inherit' });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
   child.on('error', (error) => fail(error.message));

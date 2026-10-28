@@ -5,7 +5,6 @@ Coordinate the Rust slot before invoking this script. Never points at live state
 import json
 import os
 from pathlib import Path
-import shutil
 import signal
 import subprocess
 import tempfile
@@ -15,10 +14,6 @@ ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / 'test-results' / 'integration-validation-settings' / 'rust'
 OUTPUT.mkdir(parents=True, exist_ok=True)
 ENV = dict(os.environ, CARGO_BUILD_JOBS='2')
-if not ENV.get('RUSTC_WRAPPER') and shutil.which('sccache'):
-    ENV['RUSTC_WRAPPER'] = shutil.which('sccache')
-if (ROOT / '.lvk-shared/cache').exists():
-    ENV['SCCACHE_DIR'] = str((ROOT / '.lvk-shared/cache/sccache').resolve())
 STAGES = {
     'check': ['cargo', 'check', '-p', 'server'],
     'unit': ['cargo', 'test', '-p', 'server', '--lib', 'routes::integration_validation::tests'],
