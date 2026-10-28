@@ -14,6 +14,7 @@ mod cli;
 mod identity;
 pub mod publication;
 pub mod reference;
+pub mod repository_read;
 pub mod snapshot;
 mod validation;
 

@@ -107,8 +107,8 @@ struct Range {
     /// 1-based inclusive; must exist (no silent clipping).
     #[schemars(range(min = 1))]
     end_line: usize,
-    /// Required revision from search or get_workspace_file, including dirty content.
-    expected_revision: String,
+    /// Optional for first read; pass a revision from search/read to require matching content.
+    expected_revision: Option<String>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -127,7 +127,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<RangesArgs>(
             "get_workspace_file_ranges",
-            "Read 1–8 inclusive 1-based line ranges (at most 200 lines each), requiring each file's expected_revision from search/get_workspace_file. At most 64 KiB serialised item bytes. Per-item failures and budget omissions are explicit. Reference data, not execution authority.",
+            "Read 1–8 inclusive 1-based line ranges (at most 200 lines each), optionally checking each file's expected_revision from search/get_workspace_file; first reads need no prior round trip. At most 64 KiB serialised item bytes. Per-item failures and budget omissions are explicit. Reference data, not execution authority.",
         ),
     ]
 }
@@ -259,12 +259,13 @@ fn verify_head(source: &Source, root: &std::path::Path, head: &str) -> anyhow::R
 fn search(source: &Source, args: &SearchArgs, duration: Duration) -> anyhow::Result<Value> {
     let started = Instant::now();
     let root = source.root()?;
-    let (git, head) = heads(source, &root)?;
-    let paths: Vec<_> = git
-        .reference_files(&root)
-        .map_err(unavailable)?
-        .into_iter()
+    let (_, head) = heads(source, &root)?;
+    let reader = git::repository_read::WorkspaceReader::open(&root)?;
+    let paths: Vec<_> = reader
+        .tracked_paths()
+        .iter()
         .filter(|p| args.filter.matches(p))
+        .cloned()
         .collect();
     let mut items = Vec::new();
     let mut exclusions = Vec::new();
@@ -286,7 +287,7 @@ fn search(source: &Source, args: &SearchArgs, duration: Duration) -> anyhow::Res
             break;
         }
         scanned += 1;
-        let content = git.reference_file(&root, path);
+        let content = reader.read_tracked(path);
         let body = match content {
             Ok(Content::Text(body)) => {
                 scan_bytes += body.len();
@@ -368,7 +369,11 @@ fn ranges(source: &Source, args: &RangesArgs) -> anyhow::Result<Value> {
             Ok(Content::Text(body)) => {
                 let current = file_revision(&args.target, &range.path, &head, &body)?;
                 item["revision"] = json!(current);
-                if current != range.expected_revision {
+                if range
+                    .expected_revision
+                    .as_ref()
+                    .is_some_and(|expected| *expected != current)
+                {
                     item["status"] = json!("revision_mismatch");
                 } else {
                     let lines: Vec<_> = body.lines().collect();
@@ -913,6 +918,23 @@ mod tests {
         let bytes: usize = items.iter().map(|i| i.to_string().len() + 1).sum();
         assert_eq!(found["item_bytes"], bytes);
         assert!(bytes <= MAX_OUTPUT_BYTES);
+    }
+
+    #[tokio::test]
+    async fn initial_line_ranges_need_no_revision_but_return_one_for_followups() {
+        let (temp, remote, mut args) = fixture().await;
+        args["ranges"] = json!([{"path":"src/000.txt","start_line":1,"end_line":1}]);
+        let first = call(&remote, "get_workspace_file_ranges", args.clone())
+            .await
+            .unwrap();
+        assert_eq!(first["items"][0]["status"], "text");
+        args["ranges"][0]["expected_revision"] = first["items"][0]["revision"].clone();
+        fs::write(temp.path().join("src/000.txt"), "changed\n").unwrap();
+        let changed = call(&remote, "get_workspace_file_ranges", args)
+            .await
+            .unwrap();
+        assert_eq!(changed["items"][0]["status"], "revision_mismatch");
+        assert!(changed["items"][0].get("lines").is_none());
     }
 
     #[test]

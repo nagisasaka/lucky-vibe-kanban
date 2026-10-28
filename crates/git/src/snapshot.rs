@@ -94,17 +94,28 @@ impl SnapshotReader {
             ));
         }
         let oid = Oid::from_str(&entry.oid)?;
-        let (size, kind) = self.repo.odb()?.read_header(oid)?;
-        if kind != ObjectType::Blob {
-            return Err(GitServiceError::InvalidRepository(
-                "Snapshot entry is not a blob".into(),
-            ));
-        }
-        if size > limit {
-            return Ok(None);
-        }
-        Ok(Some(self.repo.find_blob(oid)?.content().to_vec()))
+        read_regular_blob(&self.repo, oid, limit, |bytes| bytes.to_vec())
     }
+}
+
+/// Shared header-first bound for historical readers. Never materialise an
+/// oversized blob merely to discover its size; no filters or subprocesses.
+pub(crate) fn read_regular_blob<T>(
+    repo: &Repository,
+    oid: Oid,
+    limit: usize,
+    read: impl FnOnce(&[u8]) -> T,
+) -> Result<Option<T>, GitServiceError> {
+    let (size, kind) = repo.odb()?.read_header(oid)?;
+    if kind != ObjectType::Blob {
+        return Err(GitServiceError::InvalidRepository(
+            "Regular-file entry is not a blob".into(),
+        ));
+    }
+    if size > limit {
+        return Ok(None);
+    }
+    Ok(Some(read(repo.find_blob(oid)?.content())))
 }
 
 #[cfg(test)]

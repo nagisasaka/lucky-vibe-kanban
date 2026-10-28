@@ -47,6 +47,7 @@ mod provider_usage;
 mod remote_issues;
 mod remote_projects;
 mod repos;
+mod repository_read;
 mod resources;
 mod sessions;
 mod task_attempts;
@@ -58,6 +59,7 @@ impl McpServer {
         Self::context_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
+            + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()
             + Self::workspaces_tools_router()
             + Self::organizations_tools_router()
@@ -77,6 +79,7 @@ impl McpServer {
         let mut router = Self::context_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
+            + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()
             + Self::workspaces_tools_router()
             + Self::session_tools_router();
@@ -429,6 +432,7 @@ mod tests {
             "get_dev_server_status".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
+            "query_repository".to_string(),
             "run_resource_operation".to_string(),
             "run_session_prompt".to_string(),
             "update_session".to_string(),

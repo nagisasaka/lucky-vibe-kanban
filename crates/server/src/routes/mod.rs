@@ -15,6 +15,7 @@ pub mod config;
 pub mod containers;
 pub mod filesystem;
 mod provider_usage;
+mod repository_read;
 // pub mod github;
 pub mod attachments;
 pub mod design_notes;
@@ -57,6 +58,7 @@ pub fn router(
         .merge(web_push::router(&deployment, access.clone()))
         .merge(agent_settings::router())
         .merge(provider_usage::router())
+        .merge(repository_read::router(&deployment))
         .merge(agent_tools::router())
         .merge(containers::router(&deployment))
         .merge(workspaces::router(&deployment))

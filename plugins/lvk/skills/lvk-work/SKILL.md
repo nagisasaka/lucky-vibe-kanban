@@ -3,6 +3,20 @@ name: lvk-work
 description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work, answer specification questions, and inspect or request Auto-merge. Use for work on a connected LVK server.
 ---
 
+## Direct repository evidence
+
+For source exploration, prefer `query_repository` when exposed. Use explicit
+Project/repository IDs and a commit target (`ref:"main"` needs no main Workspace).
+Pin the returned full `source_head` for further list/glob, literal/regex grep,
+line read, log and direct/merge-base diff requests. First line reads need no
+preliminary revision. Repeat original arguments with `next_cursor` as `cursor`
+until traversal is complete; check `search_complete`, exclusions and stop reasons
+before asserting absence. Cursors expire on server restart. Workspace mode is
+an explicit live, non-atomic observation; changed revisions require a restart.
+Trace entrypoints, imports and actual use with grep/read; hits alone do not prove
+which component is active. stdio and remote share the service. These are typed
+read-only operations, not a shell or a request to start an investigation agent.
+
 ## User-facing feature name
 
 Use **自動マージ** in Japanese and **Auto-merge** in English in normal explanations, start confirmations, progress updates, result reports and agent handoffs. Use the same meaning in other languages. Keep machine identifiers such as `start_integration`, `get_integration`, API paths, DB/type names, stored fields and necessary historical quotations unchanged; do not present those identifiers as the feature name. Auto-merge may merge mechanically without AI and pauses for required decisions or approvals; do not promise unattended success. Report code merge/target publication and subsequent Wiki updates separately. A Wiki-only failure does not mean the code merge failed.
