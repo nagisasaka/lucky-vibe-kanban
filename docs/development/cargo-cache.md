@@ -133,3 +133,65 @@ three purposes; normal real dev/test compiles still enable incremental while
 release compiles do not. General CI and stable-tool availability are preserved.
 Full LVK Rust/pnpm validation, container builds, deployment and restart were not
 run. No real daemon command or shared-cache operation was performed.
+
+## Freshness guardrails (LOCAL-250 follow-up, 2026-10-28)
+
+The development entry now passes `-Z checksum-freshness` for build/check/test/
+clippy/run only. The pinned nightly advertises this option; an unsupported Cargo
+fails with an explanation. No checksum setting is added to global configuration,
+ordinary Cargo, CI, stable Docker or runtime environment. Watch invokes the same
+entry for each build/run. Explicit `-Z`/config overrides are rejected, and an
+inherited `CARGO_UNSTABLE_CHECKSUM_FRESHNESS` other than `true` is diagnosed.
+The command-line flag takes precedence over configured unstable defaults.
+
+This reduces incorrect Fresh reuse of equal-mtime, different-content Rust inputs
+when intermediate outputs are shared. It is not a separate content-addressed
+artifact store: A/B switching can still rebuild mutable crates, checksum scans
+add reads, and Cargo's shared lock can still make another Workspace wait.
+
+Checksum freshness does not cover build-script file input mtimes. The narrowly
+scoped mitigation is to re-evaluate the repository's single build script,
+`crates/server/build.rs`, on each Cargo invocation using its existing missing-file
+sentinel, including when build identity is injected explicitly. This refreshes
+metadata and `.env` inputs even after equal-mtime edits or deletion. It may also
+rebuild the server consumers even when inputs have not changed. No source touch,
+new input manifest, custom cache/lock/GC or dependency-wide invalidation is added.
+External dependency build scripts and undeclared inputs remain outside this fix.
+
+The server build script now reads `CARGO_MANIFEST_DIR` from its execution
+environment, not from the compiled build-script binary. This is a build-time
+Cargo requirement only: launching the server needs no Cargo variables. Metadata,
+`.env` and dummy frontend creation use that root.
+
+Compile-time asset paths are retained intentionally: RustEmbed's debug frontend
+fallback uses its compiled source path, and archive process observation must
+protect that same path even after the executable is copied and holds no asset
+file descriptor. Changing only the deletion guard to cwd/runtime Cargo variables
+would protect a different directory. Similarly the utils debug `dev_assets`
+default supports launches outside the source cwd; replacing its root with cwd
+would silently move data. Explicit `LVK_INSTANCE_DIR` remains available. Neither
+fallback nor deletion protection is removed. Cross-checkout reuse of these
+compile-time paths is a known remaining risk, not a verified portable artifact.
+Use retained source/runtime paths and verify final artifact identity/assets
+before placement; this change is not safety certification for all dependencies.
+
+Regression: `node --test scripts/dev-cargo-freshness.test.mjs scripts/dev-cargo.test.mjs`.
+The offline, private-cache fixtures use the actual entry, pinned Cargo and real
+server build script/metadata resolver (only the dotenv dependency is a small
+fixture shim). They cover A→B→A content and metadata SHA/root, same-size source
+edits with preserved mtime, explicit SHA plus preserved-mtime `.env` edits and
+removal, profiles, checksum conflict diagnostics and run/watch non-leakage.
+They do not compile the full server or prove RustEmbed cross-checkout portability,
+registry build-script safety or real-world capacity/performance improvements.
+
+Local verification of this follow-up passed 11 tests:
+`node --test scripts/dev-cargo-freshness.test.mjs scripts/dev-cargo.test.mjs deploy/server/release.test.mjs tests/server/issue-comment-reviews.test.mjs`.
+The B-root identity assertion also checks that Cargo reuses the already compiled
+build-script executable, so the changed root is obtained at script execution,
+not by recompiling a different embedded root. Configured checksum=false is
+explicitly overridden by the entry flag; an inherited false env override is
+rejected. Tiny Clippy/test/build checks exercise the pinned nightly path.
+`rustfmt --check --config skip_children=true crates/server/build.rs`,
+`node --check scripts/dev-cargo.mjs` and `git diff --check` passed.
+No full LVK build, asset/archive E2E, real shared-cache experiment, CI/container
+build or deployment was performed. The existing asset/archive source is unchanged.

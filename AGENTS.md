@@ -64,6 +64,14 @@ Run commands from the repository root. Use the toolchain in `rust-toolchain.toml
   official `build.build-dir` across LVK workspaces (no workspace-path-hash).
   Otherwise intermediates remain in checkout-local `target/`, with a warning.
   The pinned Cargo 1.93.0-nightly supports this setting without `-Z`.
+- The development entry uses nightly `-Z checksum-freshness` for compilation
+  commands to detect equal-mtime content changes across checkouts. Cargo still
+  uses mtimes for build-script file inputs: the server's small build script is
+  deliberately re-evaluated each invocation, including explicit-identity builds.
+  Expect extra checksum reads and possible server rebuilds. This is not a safety
+  guarantee for external build scripts or compile-time source/asset paths; retain
+  debug asset source paths and their archive deletion protection. See the
+  [freshness guardrails](docs/development/cargo-cache.md#freshness-guardrails-local-250-follow-up-2026-10-28).
 - Cargo locks both output directories; concurrent builds sharing an intermediate
   directory may wait on its normal build lock. Waiting is expected and does not
   require a separate locking service. Do not symlink deps or share final targets.

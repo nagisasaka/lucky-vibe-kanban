@@ -31,7 +31,7 @@ if (args[0] === 'watch') {
   if (location.status !== 0 || realpathSync(dirname(location.stdout.trim())) !== root)
     fail('invoke this entry only inside its own LVK checkout.');
   const compileArgs = args.slice(0, args.indexOf('--') < 0 ? args.length : args.indexOf('--'));
-  if (compileArgs.some((arg) => /^(--config|--manifest-path|--target-dir)(=|$)/.test(arg) || arg.startsWith('+') || arg === '-C' || arg.startsWith('-C')))
+  if (compileArgs.some((arg) => /^(--config|--manifest-path|--target-dir)(=|$)/.test(arg) || arg.startsWith('+') || arg.startsWith('-Z') || arg === '-C' || arg.startsWith('-C')))
     fail('config/manifest/target/toolchain overrides require raw cargo outside this development policy.');
   if (compileArgs.some((arg) => /^(--release|--profile)(=|$)/.test(arg) || arg === '-r'))
     fail('select --purpose preview/dev/stable instead of release/profile overrides.');
@@ -80,7 +80,15 @@ if (args[0] === 'watch') {
   }
   if (flagValues.some((value) => conflictingFlags.test(value)))
     fail('inherited Rust flags override opt/debug/strip/split/incremental policy; remove that override.');
-  const config = [];
+  const freshness = !['fmt', 'metadata'].includes(args[0]);
+  if (freshness) {
+    if (process.env.CARGO_UNSTABLE_CHECKSUM_FRESHNESS !== undefined && process.env.CARGO_UNSTABLE_CHECKSUM_FRESHNESS !== 'true')
+      fail('CARGO_UNSTABLE_CHECKSUM_FRESHNESS conflicts with checksum-freshness; unset it.');
+    const supported = spawnSync('cargo', ['-Z', 'help'], { encoding: 'utf8' });
+    if (supported.status !== 0 || !supported.stdout.includes('checksum-freshness'))
+      fail('this development entry requires a nightly Cargo with checksum-freshness support.');
+  }
+  const config = freshness ? ['-Z', 'checksum-freshness'] : [];
   const set = (key, value) => config.push('--config', `${key}=${JSON.stringify(value)}`);
   for (const [profile, values] of Object.entries(profiles))
     for (const [key, value] of Object.entries(values)) set(`profile.${profile}.${key}`, value);

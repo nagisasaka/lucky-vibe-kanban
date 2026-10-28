@@ -25,7 +25,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
       cpSync(join(scripts, 'dev-cargo.mjs'), join(cwd, 'scripts/dev-cargo.mjs'));
       if (share) { mkdirSync(join(cwd, '.lvk-shared')); symlinkSync(shared, join(cwd, '.lvk-shared/cache')); }
       writeFileSync(join(cwd, 'Cargo.toml'), '[package]\nname="probe"\nversion="0.1.0"\nedition="2021"\n[profile.release]\ndebug=1\nstrip=true\nsplit-debuginfo="packed"\n');
-      writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "CARGO_INCREMENTAL", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
+      writeFileSync(join(cwd, 'src/main.rs'), `fn main() { for key in ["SCCACHE_DIR", "CARGO_BUILD_BUILD_DIR", "CARGO_PROFILE_DEV_DEBUG", "CARGO_INCREMENTAL", "CARGO_UNSTABLE_CHECKSUM_FRESHNESS", "RUSTC_WRAPPER"] { println!("{}={}", key, std::env::var(key).unwrap_or_default()); } if let Some(path) = std::env::args().nth(1) { let child = std::process::Command::new("cargo").args(["-Z", "unstable-options", "config", "get", "build.build-dir"]).current_dir(path).output().unwrap(); println!("child-config={}", child.status.success()); } }`);
       return cwd;
     };
     const a = fixture('a'), b = fixture('b'), plain = fixture('plain', false);
@@ -72,6 +72,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     cpSync(join(plain, 'target/release/probe'), packaged);
     assert.doesNotMatch(lines(packaged), /main.rs/);
 
+    ok(run(a, ['clippy', '--offline'], env));
     const tested = run(a, ['test', '--offline', '-v'], env); ok(tested);
     assert.match(tested.stderr, /debuginfo=line-tables-only/); assert.match(tested.stderr, /-C incremental=/);
     const local = run(plain, ['build', '--offline'], env); ok(local); assert.match(local.stderr, /intermediates stay/);
@@ -125,7 +126,7 @@ test('development policy, shared intermediates, runtime boundary, lock and clean
     // Force new real compilation with sccache installed on PATH.
     ok(run(a, ['check', '--offline'], cachedEnv));
     const runtime = run(a, ['run', '--offline', '--quiet', '--', plain], cachedEnv); ok(runtime);
-    assert.equal(runtime.stdout.trim(), 'SCCACHE_DIR=\nCARGO_BUILD_BUILD_DIR=\nCARGO_PROFILE_DEV_DEBUG=\nCARGO_INCREMENTAL=\nRUSTC_WRAPPER=\nchild-config=false');
+    assert.equal(runtime.stdout.trim(), 'SCCACHE_DIR=\nCARGO_BUILD_BUILD_DIR=\nCARGO_PROFILE_DEV_DEBUG=\nCARGO_INCREMENTAL=\nCARGO_UNSTABLE_CHECKSUM_FRESHNESS=\nRUSTC_WRAPPER=\nchild-config=false');
     const devRuntime = run(a, ['--purpose', 'dev', 'run', '--offline', '--quiet', '--', plain], cachedEnv); ok(devRuntime);
     assert.equal(devRuntime.stdout, runtime.stdout);
     assert.ok(!existsSync(cacheCalls));

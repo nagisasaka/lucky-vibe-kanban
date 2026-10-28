@@ -1,18 +1,22 @@
 mod build_metadata;
 
-use std::{fs, path::Path};
+use std::{fs, path::PathBuf};
 
 fn main() {
     // Load .env from the workspace root
-    let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    // Refresh on every Cargo invocation: Git HEAD/index watches alone miss
-    // untracked edits and dirty -> clean transitions. This file never exists.
-    if std::env::var_os("LVK_BUILD_REVISION").is_none() {
-        println!(
-            "cargo:rerun-if-changed={}/lvk-build-identity-refresh",
-            std::env::var("OUT_DIR").unwrap()
-        );
-    }
+    let workspace_root = PathBuf::from(
+        std::env::var_os("CARGO_MANIFEST_DIR")
+            .expect("Cargo must supply the build script manifest root"),
+    )
+    .join("../..");
+    // Cargo checksum freshness does not cover build-script input mtimes.
+    // Re-evaluate this small script even with explicit build identity, so .env
+    // edits/removal and checkout switches cannot reuse another root's output.
+    // This sentinel is never created; Cargo owns the normal build-dir lock.
+    println!(
+        "cargo:rerun-if-changed={}/lvk-build-identity-refresh",
+        std::env::var("OUT_DIR").unwrap()
+    );
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=build_metadata.rs");
     for name in [
@@ -51,10 +55,10 @@ fn main() {
     }
 
     // Create packages/local-web/dist directory if it doesn't exist
-    let dist_path = Path::new("../../packages/local-web/dist");
+    let dist_path = workspace_root.join("packages/local-web/dist");
     if !dist_path.exists() {
         println!("cargo:warning=Creating dummy packages/local-web/dist directory for compilation");
-        fs::create_dir_all(dist_path).unwrap();
+        fs::create_dir_all(&dist_path).unwrap();
 
         // Create a dummy index.html
         let dummy_html = r#"<!DOCTYPE html>
