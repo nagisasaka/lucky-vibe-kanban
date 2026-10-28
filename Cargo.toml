@@ -18,7 +18,6 @@ members = [
     "crates/git-host",
     "crates/local-deployment",
     "crates/deployment",
-    "crates/preview-proxy",
 ]
 
 [workspace.dependencies]

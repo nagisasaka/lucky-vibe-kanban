@@ -2,7 +2,6 @@
 //! this crate owns membership, browser sessions and setup, never OAuth grants.
 mod chatgpt;
 mod handlers;
-mod preview;
 mod provider;
 mod provisioning;
 mod store;
@@ -87,7 +86,6 @@ struct Inner {
     pool: SqlitePool,
     public_url: Option<String>,
     public: bool,
-    preview_domain: Option<String>,
     forced_mode: Option<String>,
     key_path: PathBuf,
     internal_token: String,
@@ -295,9 +293,6 @@ impl Access {
             pool,
             public_url,
             public,
-            preview_domain: std::env::var("VK_PREVIEW_DOMAIN")
-                .ok()
-                .filter(|s| !s.is_empty()),
             forced_mode,
             internal_token,
             key_path: data_dir.join("access.key"),

@@ -3,6 +3,7 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
     sync::Arc,
+    time::Duration,
 };
 
 use deployment::{Deployment, DeploymentError};
@@ -11,12 +12,10 @@ use services::services::{
     orchestration::OrchestrationService,
 };
 use tokio_util::sync::CancellationToken;
-use tower_http::validate_request::ValidateRequestHeaderLayer;
 use utils::assets::asset_dir;
 
 use crate::{
     DeploymentImpl,
-    middleware::origin::validate_origin,
     routes::{
         self,
         scheduled_tasks::spawn_scheduled_task_loop,
@@ -32,11 +31,9 @@ use crate::{
 /// to run the server until the shutdown token is cancelled.
 pub struct ServerHandle {
     pub port: u16,
-    pub proxy_port: u16,
     pub deployment: DeploymentImpl,
     shutdown_token: CancellationToken,
     main_listener: tokio::net::TcpListener,
-    proxy_listener: tokio::net::TcpListener,
 }
 
 impl ServerHandle {
@@ -50,57 +47,59 @@ impl ServerHandle {
         format!("http://localhost:{}", self.port)
     }
 
-    /// Run both the main and proxy servers until the shutdown token is cancelled.
+    /// Run the main server until the shutdown token is cancelled.
     pub async fn serve(self) -> anyhow::Result<()> {
-        // Publish the bound addresses for local client and preview connections.
+        // Publish the bound addresses for local client connections.
         self.deployment
             .client_info()
             .set_server_addr(self.main_listener.local_addr()?)
             .expect("client server address already set");
-        self.deployment
-            .client_info()
-            .set_preview_proxy_port(self.proxy_port)
-            .expect("client preview proxy port already set");
-
         let access =
             server_access::Access::from_env(self.deployment.db().pool.clone(), asset_dir())?;
         let app_router = routes::router(self.deployment.clone(), access.clone());
-        let proxy_router: axum::Router = access.preview_layer(
-            routes::preview::subdomain_router(self.deployment.clone())
-                .layer(ValidateRequestHeaderLayer::custom(validate_origin)),
-        );
-
         let main_shutdown = self.shutdown_token.clone();
-        let proxy_shutdown = self.shutdown_token.clone();
 
         let main_server = axum::serve(self.main_listener, app_router)
             .with_graceful_shutdown(async move { main_shutdown.cancelled().await });
-        let proxy_server = axum::serve(self.proxy_listener, proxy_router)
-            .with_graceful_shutdown(async move { proxy_shutdown.cancelled().await });
 
-        let main_handle = tokio::spawn(async move {
+        let mut main_handle = tokio::spawn(async move {
             if let Err(e) = main_server.await {
                 tracing::error!("Main server error: {}", e);
             }
         });
-        let proxy_handle = tokio::spawn(async move {
-            if let Err(e) = proxy_server.await {
-                tracing::error!("Preview proxy error: {}", e);
-            }
-        });
 
-        tokio::select! {
-            _ = main_handle => {}
-            _ = proxy_handle => {}
-        }
+        let result = tokio::select! {
+            _ = self.shutdown_token.cancelled() => Ok(()),
+            result = &mut main_handle => result,
+        };
+        self.shutdown_token.cancel();
+        finish_http_shutdown(&mut main_handle).await;
 
         perform_cleanup_actions(&self.deployment).await;
+        result?;
         Ok(())
     }
 
     /// Return a clone of the shutdown token. Cancel it to stop `serve()`.
     pub fn shutdown_token(&self) -> CancellationToken {
         self.shutdown_token.clone()
+    }
+}
+
+/// Call after cancellation: long-lived SSE/WebSocket connections must not keep
+/// execution process cleanup waiting indefinitely. This bounds HTTP draining,
+/// not the separate process cleanup. Runtime teardown closes remaining connections.
+pub async fn finish_http_shutdown(handle: &mut tokio::task::JoinHandle<()>) {
+    if !handle.is_finished()
+        && tokio::time::timeout(Duration::from_secs(5), &mut *handle)
+            .await
+            .is_err()
+    {
+        tracing::warn!(
+            "HTTP shutdown grace period elapsed; continuing with execution process cleanup"
+        );
+        handle.abort();
+        let _ = handle.await;
     }
 }
 
@@ -112,14 +111,12 @@ impl ServerHandle {
 /// resolves to `::1` (IPv6) first — binding to `127.0.0.1` (IPv4) while
 /// the browser connects via `::1` causes "connection refused".
 pub async fn start() -> anyhow::Result<ServerHandle> {
-    start_with_bind("localhost:0", "localhost:0", CancellationToken::new()).await
+    start_with_bind("localhost:0", CancellationToken::new()).await
 }
 
-/// Like [`start`], but lets the caller specify the bind addresses for the main
-/// server and the preview proxy (e.g. `"0.0.0.0:8080"`).
+/// Like [`start`], but lets the caller specify the main bind address.
 pub async fn start_with_bind(
     main_addr: &str,
-    proxy_addr: &str,
     shutdown_token: CancellationToken,
 ) -> anyhow::Result<ServerHandle> {
     let deployment = initialize_deployment(shutdown_token.clone()).await?;
@@ -127,19 +124,32 @@ pub async fn start_with_bind(
     let listener = tokio::net::TcpListener::bind(main_addr).await?;
     let port = listener.local_addr()?.port();
 
-    let proxy_listener = tokio::net::TcpListener::bind(proxy_addr).await?;
-    let proxy_port = proxy_listener.local_addr()?.port();
-
-    tracing::info!("Server on :{port}, Preview proxy on :{proxy_port}");
+    warn_retired_preview_settings();
+    tracing::info!("Server on :{port}");
 
     Ok(ServerHandle {
         port,
-        proxy_port,
         deployment,
         shutdown_token,
         main_listener: listener,
-        proxy_listener,
     })
+}
+
+/// Retired settings are inert; old installations must still start safely.
+pub fn warn_retired_preview_settings() {
+    for key in [
+        "PREVIEW_PROXY_PORT",
+        "VK_PREVIEW_DOMAIN",
+        "LVK_PREVIEW_DOMAIN",
+        "VK_PREVIEW_DISABLE_NAV_SCRIPT",
+    ] {
+        if std::env::var_os(key).is_some_and(|value| !value.is_empty()) {
+            tracing::warn!(
+                "{} is retired and ignored; use an external browser or SSH tunnel. LVK_PREVIEW_ROUTES remains supported",
+                key
+            );
+        }
+    }
 }
 
 /// Initialize the deployment: create asset directory, run migrations, backfill data,

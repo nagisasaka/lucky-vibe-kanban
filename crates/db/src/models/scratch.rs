@@ -27,7 +27,7 @@ pub struct DraftFollowUpData {
     pub selected_skills: Option<Vec<executors::actions::SelectedSkill>>,
 }
 
-/// Data for preview settings scratch (URL override and screen size)
+/// Read-only compatibility for settings saved by the retired embedded browser.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PreviewSettingsData {
     pub url: String,
@@ -296,6 +296,21 @@ impl Scratch {
 #[cfg(test)]
 mod tests {
     use super::{ProjectRepoDefaultsData, ScratchPayload};
+
+    #[test]
+    fn retired_preview_scratch_remains_readable() {
+        let payload: ScratchPayload = serde_json::from_str(r#"{"type":"PREVIEW_SETTINGS","data":{"url":"http://localhost:5173","screen_size":"mobile","responsive_width":390,"responsive_height":844}}"#).unwrap();
+        let ScratchPayload::PreviewSettings(data) = payload else {
+            panic!("historical preview settings");
+        };
+        assert_eq!(data.url, "http://localhost:5173");
+        assert_eq!(data.screen_size.as_deref(), Some("mobile"));
+        let legacy: ScratchPayload = serde_json::from_str(
+            r#"{"type":"PREVIEW_SETTINGS","data":{"url":"http://localhost:5173"}}"#,
+        )
+        .unwrap();
+        assert!(matches!(legacy, ScratchPayload::PreviewSettings(_)));
+    }
 
     #[test]
     fn project_workspace_defaults_read_legacy_git_payloads() {

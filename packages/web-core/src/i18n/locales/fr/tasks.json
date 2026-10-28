@@ -44,43 +44,6 @@
       "empty": "Aucun dépôt disponible"
     }
   },
-  "preview": {
-    "noServer": {
-      "title": "Aucun serveur de développement en cours d'exécution",
-      "setupTitle": "Vous devez configurer un script de serveur de développement pour utiliser la fonction d'aperçu",
-      "setupPrompt": "Pour utiliser l'aperçu en direct et le clic-pour-éditer, veuillez ajouter un script de serveur de développement à ce projet.",
-      "editDevScript": "Modifier le script du serveur de développement",
-      "learnMore": "En savoir plus sur le test des applications"
-    },
-    "logs": {
-      "label": "Logs",
-      "viewFull": "Voir tous les logs"
-    },
-    "toolbar": {
-      "refresh": "Actualiser l'aperçu",
-      "copyUrl": "Copier l'URL",
-      "openInTab": "Ouvrir dans un nouvel onglet",
-      "stopDevServer": "Arrêter le serveur de développement",
-      "resetUrl": "Réinitialiser à l'URL détectée",
-      "clearUrlOverride": "Effacer le remplacement d'URL",
-      "desktopView": "Vue bureau",
-      "mobileView": "Vue mobile (390x844)",
-      "responsiveView": "Vue responsive (redimensionnable)",
-      "startDevServer": "Démarrer le serveur de développement",
-      "submitUrl": "Valider l'URL",
-      "toggleDevTools": "Basculer DevTools"
-    },
-    "loading": {
-      "startingServer": "Démarrage du serveur de développement...",
-      "waitingForServer": "En attente du serveur...",
-      "loadingPreview": "Chargement de l'aperçu...",
-      "manualUrlHint": "Aucune URL détectée pour l'instant. Vous pouvez saisir une URL manuellement dans la barre d'outils ci-dessus."
-    },
-    "browser": {
-      "title": "Aperçu du serveur de développement",
-      "devServerFallback": "Serveur de développement"
-    }
-  },
   "diff": {
     "filesChanged_one": "{{count}} fichier modifié",
     "filesChanged_other": "{{count}} fichiers modifiés"
@@ -252,9 +215,7 @@
     }
   },
   "attempt": {
-    "actions": {
-      "startDevServer": "Démarrer le serveur de développement"
-    }
+    "actions": {}
   },
   "git": {
     "labels": {
@@ -561,5 +522,21 @@
   "linkPrToIssue": {
     "status": {},
     "errors": {}
+  },
+  "devServer": {
+    "title": "Dev server",
+    "starting": "Starting…",
+    "stopping": "Stopping…",
+    "running": "Running",
+    "stopped": "Stopped",
+    "start": "Start",
+    "stop": "Stop",
+    "editScript": "Edit dev server script",
+    "logs": "Dev server logs",
+    "url": "Application URL",
+    "copyUrl": "Copy URL",
+    "openBrowser": "Open in browser",
+    "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
+    "failed": "Failed"
   }
 }

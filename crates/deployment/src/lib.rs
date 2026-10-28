@@ -8,7 +8,6 @@ use db::{DBService, models::workspace::WorkspaceError};
 use executors::executors::ExecutorError;
 use futures::{StreamExt, TryStreamExt};
 use git::{GitService, GitServiceError};
-use preview_proxy::PreviewProxyService;
 use serde_json::Value;
 use services::services::{
     analytics::AnalyticsService,
@@ -91,8 +90,6 @@ pub trait Deployment: Clone + Send + Sync + 'static {
     fn queued_message_service(&self) -> &QueuedMessageService;
 
     fn client_info(&self) -> &ClientInfo;
-
-    fn preview_proxy(&self) -> &PreviewProxyService;
 
     async fn update_sentry_scope(&self) -> Result<(), DeploymentError> {
         let user_id = self.user_id();

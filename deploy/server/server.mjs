@@ -36,10 +36,6 @@ export function domain(value, name) {
 // Keep this grammar aligned with acme.py; shared fixtures exercise both parsers.
 export function previewRoutes(env, app) {
   const csv = env.LVK_PREVIEW_ROUTES ?? "";
-  if (csv && env.LVK_PREVIEW_DOMAIN)
-    throw new Error(
-      "LVK_PREVIEW_ROUTES and LVK_PREVIEW_DOMAIN are mutually exclusive",
-    );
   if (!csv) return [];
   const seen = new Set();
   return csv.split(",").map((entry) => {
@@ -77,16 +73,13 @@ export function serverSettings(env) {
       : version === 4
         ? value
         : domain(value, "LVK_HOST");
-  const preview = env.LVK_PREVIEW_DOMAIN
-    ? domain(env.LVK_PREVIEW_DOMAIN, "LVK_PREVIEW_DOMAIN")
-    : null;
-  if (preview && (app === preview || app.endsWith(`.${preview}`))) {
-    throw new Error("LVK_HOST must be outside the preview wildcard domain");
-  }
+  if (env.LVK_PREVIEW_DOMAIN)
+    console.warn(
+      "LVK_PREVIEW_DOMAIN is retired and ignored; use an external browser or SSH tunnel. LVK_PREVIEW_ROUTES remains supported.",
+    );
   const routes = previewRoutes(env, app);
   return {
     app,
-    preview,
     ...(routes.length ? { routes } : {}),
     ...(env.LVK_ACCESS_DEPLOYMENT === "public"
       ? { managedAccess: true, legacyBasic: env.LVK_PROXY_AUTH !== "backend" }
@@ -211,18 +204,6 @@ function prefixedAppLocation(settings) {
 export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
   if (![3000, 4021].includes(mcpBackend))
     throw new Error("Invalid MCP backend");
-  const preview = settings.preview;
-  const previewServer = preview
-    ? `server {
-        listen 8443 ssl;
-        server_name "~^(?<preview_target>102[4-9]|10[3-9][0-9]|1[1-9][0-9]{2}|[2-9][0-9]{3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[.]${preview.replaceAll(".", "[.]")}$";
-        # Only unprivileged development ports, excluding LVK and nginx ports.
-        if ($preview_target ~ "^(3000|3001|8443${settings.staging ? "|8444" : ""})$") { return 403; }
-        # Project content cannot use LVK authentication cookies or credentials.
-        ${settings.managedAccess ? "auth_basic off;" : ""}
-        location / { proxy_pass http://127.0.0.1:3001; }
-    }`
-    : "";
   return template
     .replace(
       'auth_basic "LVK private development server";',
@@ -246,11 +227,10 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
     .replace("@@MCP_LOCATIONS@@", mcpLocations(settings, mcpBackend))
     .replace("@@PREFIXED_APP@@", prefixedAppLocation(settings))
     .replace(
-      "@@PREVIEW_SERVER@@",
-      previewServer +
-        (settings.routes ?? [])
-          .map(
-            ({ host, port }) => `
+      "@@APPLICATION_SERVERS@@",
+      (settings.routes ?? [])
+        .map(
+          ({ host, port }) => `
     server {
         listen 8443 ssl;
         server_name ${host};
@@ -269,8 +249,8 @@ export function renderNginx(template, settings, { mcpBackend = 3000 } = {}) {
         proxy_set_header Connection $connection_upgrade;
         location / { proxy_pass http://127.0.0.1:${port}; }
     }`,
-          )
-          .join("\n"),
+        )
+        .join("\n"),
     )
     .replace(
       "@@STAGING_SERVER@@",
@@ -309,7 +289,6 @@ export function validateSecrets(
   for (const host of [
     settings.app,
     ...(settings.routes ?? []).map(({ host }) => host),
-    ...(settings.preview ? [`3000.${settings.preview}`] : []),
   ]) {
     if (!(isIP(host) ? cert.checkIP(host) : cert.checkHost(host)))
       throw new Error(`TLS certificate does not cover ${host}`);
@@ -342,9 +321,7 @@ export function backendEnvironment(env, settings) {
     HOST: "127.0.0.1",
     PORT: "",
     BACKEND_PORT: "3000",
-    PREVIEW_PROXY_PORT: "3001",
     VK_ALLOWED_ORIGINS: `https://${authority(settings.app)}`,
-    VK_PREVIEW_DOMAIN: settings.preview ?? "",
     BROWSER: "true",
   };
 }

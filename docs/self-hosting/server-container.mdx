@@ -8,10 +8,10 @@ Run LVK and its agents on an always-on server, then use LVK in your laptop's bro
 This distribution runs the **local LVK application** remotely. It does not require PostgreSQL, ElectricSQL, upstream billing access or a relay service.
 
 <Warning>
-  This is one trusted team's development environment, not an isolated multi-tenant
-  service. The Basic owner or approved Auth0 members can operate agents and access
-  all repositories. Agents share the same Linux user as LVK and
-  nginx. Read-only secret mounts prevent overwriting, not reading. Use a
+  This is one trusted team's development environment, not an isolated
+  multi-tenant service. The Basic owner or approved Auth0 members can operate
+  agents and access all repositories. Agents share the same Linux user as LVK
+  and nginx. Read-only secret mounts prevent overwriting, not reading. Use a
   dedicated server, restrict ingress to your IP/VPN where possible, and do not
   mount the Docker socket, your host home or cloud administrator credentials.
 </Warning>
@@ -45,7 +45,6 @@ LVK_HOST=203.0.113.10
 COMPOSE_FILE=compose.yaml:compose.acme.yaml
 LVK_ACME_AGREE_TOS=yes
 LVK_ACME_EMAIL=
-LVK_PREVIEW_DOMAIN=
 ```
 
 Read the [Let's Encrypt subscriber agreement](https://letsencrypt.org/repository/) before setting `LVK_ACME_AGREE_TOS=yes`. The contact email is optional. Keep the Compose project name (`lvk-server`) stable: changing it selects different named volumes. For IPv6, set `LVK_HOST` without brackets and use brackets in the browser URL, for example `https://[2001:db8::10]`.
@@ -75,7 +74,7 @@ The companion exports matching certificate/key pairs through an atomic directory
 
 For an optional domain, set `LVK_HOST=lvk.example.com` and point its DNS at the server. The automatic companion supports a single app hostname as well as an IP address.
 
-Public project preview origins are currently denied by the Auth0 access boundary; local preview is retained. See the authentication guide for this limitation.
+The embedded project browser and authenticated wildcard preview proxy are retired. Use an external browser and a private tunnel, or the independent application routes below. See [Browser Testing](/browser-testing).
 
 If you already manage TLS, set `COMPOSE_FILE=compose.yaml` to omit the certificate companion. Provide these files yourself; symlinks must resolve within the mounted `secrets` directory:
 
@@ -87,7 +86,7 @@ secrets/
     └── privkey.pem
 ```
 
-Set certificate ownership to UID/GID 10001, directory modes to 750 and file modes to 640. The certificate must cover the app IP/DNS name, every `LVK_PREVIEW_ROUTES` hostname and, when enabled, `*.LVK_PREVIEW_DOMAIN`. Wildcard certificates usually require DNS-01 validation. The automatic companion intentionally rejects a non-empty `LVK_PREVIEW_DOMAIN`; it cannot obtain wildcard certificates using its IP/HTTP validation flow. In this externally managed mode only port 443 is published.
+Set certificate ownership to UID/GID 10001, directory modes to 750 and file modes to 640. The certificate must cover the app IP/DNS name and every `LVK_PREVIEW_ROUTES` hostname. The retired `LVK_PREVIEW_DOMAIN` is ignored; no wildcard certificate is requested or required. In this externally managed mode only port 443 is published.
 
 ## Start and sign in
 
@@ -167,7 +166,6 @@ Set one CSV variable in the deployment `.env`:
 
 ```dotenv
 LVK_PREVIEW_ROUTES=dev.example.com:4020,preview1.example.com:18443
-LVK_PREVIEW_DOMAIN=
 ```
 
 Each DNS hostname forwards external HTTPS on port 443 through nginx to an HTTP
@@ -184,7 +182,7 @@ zeroes are accepted); 3000, 3001, 4021, 4022, 8443 and 8444 are reserved for the
 LVK backends/legacy proxies and nginx listeners, including optional development
 and staging configurations. Port 4020 is allowed. Different hostnames may share
 a port. Empty/unset disables these routes; whitespace alone is invalid.
-`LVK_PREVIEW_DOMAIN` and a non-empty CSV are mutually exclusive and fail startup.
+`LVK_PREVIEW_DOMAIN` is retired: its presence produces a warning, without rejecting a valid CSV or recreating the old route.
 
 HTTP and WebSocket requests preserve the original Host, application Authorization,
 Cookie, Origin and WebSocket headers. nginx supplies HTTPS forwarded information.
@@ -216,18 +214,21 @@ certificate reload validate every configured hostname. Certificate-only renewal
 keeps the existing route configuration and reloads nginx within the existing
 30-second polling cycle without restarting agents.
 
-## Legacy project previews
+## Retired embedded previews
 
-The domain-free setup runs the application and agents, but does not provide wildcard browser previews. You can use SSH port forwarding to reach project development servers, or opt into the separate preview domain with externally managed TLS. Project HTML must remain on a separate origin from LVK.
+The iframe browser, click-to-component, Eruda injection, wildcard port proxy and
+its dedicated authorisation cookies have been removed. `LVK_PREVIEW_DOMAIN`,
+`VK_PREVIEW_DOMAIN`, `PREVIEW_PROXY_PORT` and `VK_PREVIEW_DISABLE_NAV_SCRIPT` are
+ignored with a retirement warning. Their presence alone does not prevent startup;
+remove them from old configuration. No wildcard hostname is routed automatically.
 
-With previews enabled, a development server on port 5173 is reached as `https://5173.preview.example.com`, not your laptop's `localhost`. LVK exposes this domain through its system-info API and uses it in the preview pane. HTTP redirects, Next.js redirect headers, streaming and WebSocket/HMR requests use the proxy.
-
-- Start development servers inside the LVK container; loopback listeners are sufficient.
-- Use unprivileged ports 1024–65535 except **3000, 3001 and 8443**, which are reserved for LVK/nginx.
-- With backend authentication, authorise each preview origin from an authenticated LVK session. Preview cookies are separate from the LVK session and cannot access its APIs. Open previews in a separate tab when third-party cookies are blocked. Legacy proxy Basic can remain as an additional restriction.
-- LVK session cookies and credentials are removed before forwarding to a project server. The managed application ingress forwards Web credentials to LVK, which performs authentication.
-- Project-controlled HTML is never served through `/api/preview` on the main LVK origin. The public proxy is single-host; remote relay previews are not supported by this distribution.
-- External assets or absolute `localhost` URLs hard-coded in a project's HTML/JavaScript are not automatically rewritten. Configure that application's public URL/HMR options where needed.
+Use Workspace **Logs** for managed DevServer controls, logs and the external
+browser URL. For private remote applications, use an existing VPN or SSH port
+forwarding rather than making the application public. See [Browser Testing](/browser-testing)
+for a tunnel example and WSL/container address boundaries. `LVK_PREVIEW_ROUTES`
+continues to route independent applications and does not inherit LVK authentication.
+Do not convert an authenticated old preview into a public application without
+providing application authentication. The built-asset Vite `preview` mode is unrelated.
 
 ## Persistent storage and build caches
 
@@ -378,12 +379,12 @@ The first build after this change populates the cache and can still take a long 
 
 The legacy LVK npx launcher and its npm packaging, download, extraction and cache-management code have been removed. LVK publishes Docker images only; there is no replacement npm package or compatibility launcher.
 
-| Retired entrypoint | Supported route |
-| --- | --- |
-| `npx lucky-vibe-kanban` (default server/browser launch) | Use the Docker setup on this page, or `pnpm run dev` for source development. |
-| `lucky-vibe-kanban mcp` and `lucky-vibe-kanban --mcp` | Use the directly built `vibe-kanban-mcp --mode global` stdio binary, or the [authenticated external MCP endpoint](/self-hosting/authentication). Pass `--mode orchestrator` explicitly when required. |
-| `lucky-vibe-kanban --desktop` | Open the Docker server in your browser (or use the source web development environment). The Tauri desktop shell and its build commands are retired. |
-| `build:npx`, `build:npx-cli`, `check:npx-cli`, `prepack`, `test:npm` and `local-build.sh` (including `--desktop` / `--all`) | Use the source commands below or the Docker release workflow. npm archives are no longer built or tested. |
+| Retired entrypoint                                                                                                          | Supported route                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npx lucky-vibe-kanban` (default server/browser launch)                                                                     | Use the Docker setup on this page, or `pnpm run dev` for source development.                                                                                                                          |
+| `lucky-vibe-kanban mcp` and `lucky-vibe-kanban --mcp`                                                                       | Use the directly built `vibe-kanban-mcp --mode global` stdio binary, or the [authenticated external MCP endpoint](/self-hosting/authentication). Pass `--mode orchestrator` explicitly when required. |
+| `lucky-vibe-kanban --desktop`                                                                                               | Open the Docker server in your browser (or use the source web development environment). The Tauri desktop shell and its build commands are retired.                                                   |
+| `build:npx`, `build:npx-cli`, `check:npx-cli`, `prepack`, `test:npm` and `local-build.sh` (including `--desktop` / `--all`) | Use the source commands below or the Docker release workflow. npm archives are no longer built or tested.                                                                                             |
 
 From a source checkout with the repository's Node, pnpm and Rust toolchains, you can build the server and stdio MCP binaries directly:
 
@@ -399,12 +400,12 @@ This removal does not delete existing application data, downloaded binaries or c
 
 ## Validation boundaries
 
-The kit includes Docker-free Node/Python tests for settings, IP certificate validation, atomic certificate export, reload retries, supervision, Compose/workflow structure and shell syntax; native nginx integration tests exercise TLS, Basic authentication, WebSockets, SSE and preview isolation. Rust and TypeScript tests cover public preview URLs and redirects.
+The kit includes Docker-free Node/Python tests for settings, IP certificate validation, atomic certificate export, reload retries, supervision, Compose/workflow structure and shell syntax; native nginx integration tests exercise TLS, Basic authentication, WebSockets, SSE and preview isolation. Rust and browser tests cover retained data compatibility, managed DevServer operations, external URLs and Chromium/CDP.
 
 ```bash
 pnpm run server:check
-pnpm --filter @vibe/web-core exec vitest run src/shared/lib/previewProxyUrl.test.ts
-cargo test -p preview-proxy
+node --test tests/embedded-browser-removal/controls.test.mjs
+python3 tests/embedded-browser-removal/lifecycle.py
 ```
 
 If nginx is not installed, the native test reports a skip. Use `LVK_TEST_NGINX=/path/to/nginx LVK_REQUIRE_NGINX_TEST=1 pnpm run server:check` to require it. The PR configuration workflow installs nginx and requires this test. The release workflow additionally tests the built image's tools, real LVK health/authentication, IP HTTPS, certificate reload without recreating LVK, and persistence across container recreation before pushing it.

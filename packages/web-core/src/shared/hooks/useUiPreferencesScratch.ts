@@ -11,7 +11,7 @@ import {
 import {
   useUiPreferencesStore,
   DEFAULT_CREATE_DRAFT_WORKSPACE_BY_DEFAULT,
-  type RightMainPanelMode,
+  restoreRightMainPanelMode,
   type ContextBarPosition,
   type WorkspacePanelState,
   type WorkspaceFilterState,
@@ -123,8 +123,9 @@ function scratchDataToStore(data: UiPreferencesData): {
     for (const [key, value] of Object.entries(data.workspace_panel_states)) {
       if (value) {
         workspacePanelStates[key] = {
-          rightMainPanelMode:
-            (value.right_main_panel_mode as RightMainPanelMode) ?? null,
+          rightMainPanelMode: restoreRightMainPanelMode(
+            value.right_main_panel_mode
+          ),
           isLeftMainPanelVisible: value.is_left_main_panel_visible ?? true,
         };
       }

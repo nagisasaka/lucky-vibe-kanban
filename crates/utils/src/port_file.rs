@@ -6,22 +6,14 @@ use tokio::fs;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PortInfo {
     pub main_port: u16,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub preview_proxy_port: Option<u16>,
 }
 
-pub async fn write_port_file_with_proxy(
-    main_port: u16,
-    preview_proxy_port: Option<u16>,
-) -> std::io::Result<PathBuf> {
+pub async fn write_port_file(main_port: u16) -> std::io::Result<PathBuf> {
     let dir = crate::instance::instance_dir()
         .map(|root| root.join("ports"))
         .unwrap_or_else(|| env::temp_dir().join("vibe-kanban"));
     let path = dir.join("vibe-kanban.port");
-    let port_info = PortInfo {
-        main_port,
-        preview_proxy_port,
-    };
+    let port_info = PortInfo { main_port };
     let content = serde_json::to_string(&port_info)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
     tracing::debug!("Writing ports {:?} to {:?}", port_info, path);
@@ -52,8 +44,20 @@ pub async fn read_port_info(app_name: &str) -> std::io::Result<PortInfo> {
         .parse()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
-    Ok(PortInfo {
-        main_port: port,
-        preview_proxy_port: None,
-    })
+    Ok(PortInfo { main_port: port })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn retired_proxy_port_does_not_break_port_discovery() {
+        let old: PortInfo =
+            serde_json::from_str(r#"{"main_port":4021,"preview_proxy_port":4022}"#).unwrap();
+        assert_eq!(old.main_port, 4021);
+        assert_eq!(
+            serde_json::to_value(old).unwrap(),
+            serde_json::json!({"main_port":4021})
+        );
+    }
 }

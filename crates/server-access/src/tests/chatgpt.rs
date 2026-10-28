@@ -34,7 +34,6 @@ async fn chatgpt_secret_survives_activation_and_restart_with_admin_only_access()
     // Recreate all process-local auth state, keeping only the database and key.
     f.access = Access(Arc::new(Inner {
         pool: f.access.pool().clone(),
-        preview_domain: f.access.0.preview_domain.clone(),
         public: true,
         public_url: f.access.0.public_url.clone(),
         forced_mode: None,

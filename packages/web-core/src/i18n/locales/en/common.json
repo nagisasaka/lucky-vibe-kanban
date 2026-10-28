@@ -1025,10 +1025,6 @@
       "title": "Multiple Sessions",
       "content": "Create multiple agent conversation sessions within a single workspace, including sessions with different agents. This helps you work around conversation limits or spin up review agents in separate threads."
     },
-    "preview": {
-      "title": "Preview Changes",
-      "content": "Preview your work in a built-in browser without switching contexts. Test across desktop, mobile, and custom viewport sizes."
-    },
     "diffs": {
       "title": "Diffs and Comments",
       "content": "The redesigned diffs panel includes a file tree of your changes. Comment directly on diffs to give feedback to the agent, and view GitHub comments when your workspace is linked to a PR."

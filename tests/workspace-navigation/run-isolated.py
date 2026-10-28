@@ -94,7 +94,7 @@ with tempfile.TemporaryDirectory(prefix='lvk-local31-', dir='/tmp') as temporary
             else:
                 raise TimeoutError('試験サーバー起動タイムアウト')
             port_info = json.loads((instance / 'ports/vibe-kanban.port').read_text())
-            ports = [port_info['main_port'], port_info['preview_proxy_port']]
+            ports = [port_info['main_port']]
             (EVIDENCE / 'instance.json').write_text(json.dumps({
                 'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'instance': str(instance), 'ports': port_info,

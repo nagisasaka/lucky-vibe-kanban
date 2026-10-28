@@ -2,6 +2,8 @@
 title: "LVK server authentication implementation and verification"
 description: "Auth0 Web login, OAuth MCP, locked setup, route boundaries and evidence."
 ---
+> LOCAL-247: the embedded browser, wildcard preview proxy and dedicated handoff were retired. Preview-specific implementation and test results below are historical; current operation is documented in `docs/browser-testing.mdx`. General LVK authentication and independent CSV routes remain.
+
 
 ## Investigation (2026-10-15)
 

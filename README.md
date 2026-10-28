@@ -42,7 +42,7 @@ LVK, nginx, Codex CLI, Git, Node.js, pnpm and a Rust development toolchain.
 - A server or container restart stops running processes; persistence does not
   promise automatic resumption of interrupted agent work.
 
-This is for one trusted user. Wildcard project previews require additional setup.
+This is for one trusted user. Open applications in an external browser; use SSH port forwarding for private remote applications.
 The upstream Cloud and relay Remote Access services are retired. Access LVK at
 your server URL. External Runner execution remains available through Execution Bridge.
 

@@ -2,7 +2,6 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileTreeContainer } from './FileTreeContainer';
 import { ProcessListContainer } from './ProcessListContainer';
-import { PreviewControlsContainer } from './PreviewControlsContainer';
 import { GitPanelContainer } from './GitPanelContainer';
 import { TerminalPanelContainer } from '@/shared/components/TerminalPanelContainer';
 import { WorkspaceNotesContainer } from './WorkspaceNotesContainer';
@@ -70,10 +69,6 @@ export const RightSidebar = memo(function RightSidebar({
     PERSIST_KEYS.processesSection,
     true
   );
-  const [devServerExpanded] = usePersistedExpanded(
-    PERSIST_KEYS.devServerSection,
-    true
-  );
   const [gitExpanded] = usePersistedExpanded(
     PERSIST_KEYS.gitPanelRepositories,
     true
@@ -90,8 +85,7 @@ export const RightSidebar = memo(function RightSidebar({
   const hasUpperContent =
     rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES ||
     rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.FILES ||
-    rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS ||
-    rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.PREVIEW;
+    rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS;
 
   const upperExpanded = (() => {
     if (rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.CHANGES)
@@ -100,8 +94,6 @@ export const RightSidebar = memo(function RightSidebar({
       return filesExpanded;
     if (rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.LOGS)
       return processesExpanded;
-    if (rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.PREVIEW)
-      return devServerExpanded;
     return false;
   })();
 
@@ -198,24 +190,8 @@ export const RightSidebar = memo(function RightSidebar({
           actions: [],
         });
         break;
-      case RIGHT_MAIN_PANEL_MODES.PREVIEW:
-        if (selectedWorkspace) {
-          result.unshift({
-            title: 'Preview',
-            persistKey: PERSIST_KEYS.rightPanelPreview,
-            visible: hasUpperContent,
-            expanded: upperExpanded,
-            content: (
-              <PreviewControlsContainer
-                workspaceId={selectedWorkspace.id}
-                className=""
-              />
-            ),
-            actions: [],
-          });
-        }
-        break;
       case RIGHT_MAIN_PANEL_MODES.WIKI:
+      case RIGHT_MAIN_PANEL_MODES.TODOS:
       case null:
         break;
     }

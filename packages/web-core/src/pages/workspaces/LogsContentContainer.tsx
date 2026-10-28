@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { DevServerControlsContainer } from './DevServerControlsContainer';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -24,7 +25,18 @@ interface LogsContentContainerProps {
   className: string;
 }
 
-export function LogsContentContainer({ className }: LogsContentContainerProps) {
+export function LogsContentContainer(props: LogsContentContainerProps) {
+  return (
+    <div className="h-full min-h-0 flex flex-col">
+      <DevServerControlsContainer />
+      <div className="flex-1 min-h-0">
+        <ProcessLogsContent {...props} />
+      </div>
+    </div>
+  );
+}
+
+function ProcessLogsContent({ className }: LogsContentContainerProps) {
   const {
     logsPanelContent: content,
     logSearchQuery: searchQuery,
