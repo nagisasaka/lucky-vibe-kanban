@@ -24,7 +24,6 @@ beforeEach(() => {
   fixture.run = {
     target_ref: 'refs/heads/main',
     payload: {
-      conversational: true,
       result_commit: 'R2',
       evidence: [
         {
@@ -76,16 +75,17 @@ it('uses the host publication receipt, distinguishing intent and Wiki commit', (
   expect(html).toContain('WIKI');
   expect(html).not.toContain('integrationFacts.reconciling');
 });
-it('does not reinterpret retained legacy execution history', () => {
-  fixture.run!.payload.conversational = false;
-  expect(render()).toBe('');
-});
 
-it('shows pending writer settlement without treating request acceptance as publication', () => {
-  fixture.run!.payload.publication_request = {
-    candidate_commit: 'R2',
-    code_commit: 'R2',
-  } as IntegrationRun['payload']['publication_request'];
-  expect(render()).toContain('integrationFacts.pendingSettlement');
-  expect(render()).not.toContain('integrationFacts.published');
+it('shows the stopped next action and exposes raw error only in details', () => {
+  fixture.run!.error = 'raw execution failure';
+  fixture.run!.payload.stop = {
+    stage: 'conversation',
+    category: 'unpublished',
+    next_action: 'Continue in this conversation',
+  };
+  const html = render();
+  expect(html).toContain('Continue in this conversation');
+  expect(html).toContain('<details>');
+  expect(html).toContain('raw execution failure');
+  expect(html).not.toContain('integrationFacts.published');
 });

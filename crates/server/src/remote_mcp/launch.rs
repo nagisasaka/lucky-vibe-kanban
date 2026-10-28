@@ -110,14 +110,6 @@ struct DefaultsArgs {
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
-    async fn decide_integration(
-        &self,
-        _id: Uuid,
-        _request: integrations::GateDecisionRequest,
-        _expected: integrations::DecisionExpectation,
-    ) -> anyhow::Result<()> {
-        anyhow::bail!("Auto-merge decision service unavailable")
-    }
     async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
         anyhow::bail!("Auto-merge cancellation service unavailable")
     }
@@ -143,14 +135,6 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
-    async fn decide_integration(
-        &self,
-        id: Uuid,
-        request: integrations::GateDecisionRequest,
-        expected: integrations::DecisionExpectation,
-    ) -> anyhow::Result<()> {
-        integrations::decide_gate_checked(&self.0, id, request, Some(expected)).await
-    }
     async fn cancel_integration(&self, id: Uuid) -> anyhow::Result<()> {
         let _ = integrations::cancel(
             axum::extract::State(self.0.clone()),
@@ -199,7 +183,7 @@ impl LaunchActions for ExistingLaunch {
     }
 }
 pub(super) fn integration_result(run: &IntegrationRun) -> Value {
-    json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"wiki":"not_verified","issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id,"conversational":run.payload.conversational})
+    json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"wiki":"not_verified","issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id})
 }
 
 fn branch(value: &str) -> anyhow::Result<()> {

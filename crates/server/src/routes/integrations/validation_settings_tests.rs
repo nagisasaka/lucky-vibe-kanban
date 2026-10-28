@@ -15,7 +15,7 @@ use executors::{
 };
 use serde_json::{Value, json};
 
-use super::mechanical;
+use super::support;
 use crate::DeploymentImpl;
 
 #[tokio::test]
@@ -41,7 +41,7 @@ async fn isolated_validation_settings_http_and_executor() -> anyhow::Result<()> 
     ensure!(utils::assets::asset_dir().starts_with(&instance));
     let root = instance.join("fixture-repository");
     std::fs::create_dir(&root)?;
-    let git = |args: &[&str]| mechanical::git(&root, args);
+    let git = |args: &[&str]| support::git(&root, args);
     git(&["init", "-b", "main"])?;
     git(&["config", "user.name", "Validation fixture"])?;
     git(&["config", "user.email", "fixture@example.test"])?;
@@ -89,7 +89,7 @@ async fn isolated_validation_settings_http_and_executor() -> anyhow::Result<()> 
         let readback: Value = client.get(&url).send().await?.error_for_status()?.json().await?;
         ensure!(saved == readback);
         ensure!(client.put(&url).header("x-lvk-csrf", "local").json(&request).send().await?.status() == reqwest::StatusCode::CONFLICT);
-        ensure!(mechanical::validation_plan(&root, &base, false).is_err(), "Uncommitted settings must not affect admission");
+        ensure!(support::validation_suggestions(&root, &base).is_err(), "Uncommitted settings must not affect admission");
         let revision = saved["data"]["revision"].as_str().unwrap();
         {
             let guard = deployment.git().try_publication_guard(&root)?;
@@ -113,13 +113,12 @@ async fn isolated_validation_settings_http_and_executor() -> anyhow::Result<()> 
         git(&["add", ".lvk/integration-validation.json"])?;
         git(&["commit", "-m", "validation settings"])?;
         let frozen = git(&["rev-parse", "HEAD"])?;
-        let plan = mechanical::validation_plan(&root, &frozen, false)?;
-        ensure!(plan.len() == 1 && plan[0].command == command && plan[0].required);
+        let plan = support::validation_suggestions(&root, &frozen)?;
+        ensure!(plan.len() == 1 && plan[0].command == command);
         ensure!(plan[0].cwd == "." && plan[0].evidence.starts_with(&frozen));
         // A later working-copy edit must not alter this run's frozen plan.
         std::fs::write(root.join(".lvk/integration-validation.json"), "invalid working copy")?;
-        ensure!(mechanical::validation_plan(&root, &frozen, false)?[0].command == command);
-        ensure!(mechanical::validation_plan(&root, "invalid", true)?.is_empty());
+        ensure!(support::validation_suggestions(&root, &frozen)?[0].command == command);
         std::fs::write(root.join(".lvk/integration-validation.json"), &content)?;
         let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
         env.insert("LVK_VALIDATION_MARKER", marker.to_string_lossy());

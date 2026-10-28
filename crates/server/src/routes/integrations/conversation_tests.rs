@@ -19,6 +19,18 @@ async fn isolated_conversation_repair_publication_drift_and_idempotence() -> any
     ensure!(!instance.join("data/db.v2.sqlite").exists());
     let shutdown = tokio_util::sync::CancellationToken::new();
     let deployment = DeploymentImpl::new(shutdown.clone()).await?;
+    use tower::ServiceExt;
+    for route in ["adopt-checkpoint", "decision", "intervene"] {
+        let response = super::super::router()
+            .with_state(deployment.clone())
+            .oneshot(
+                axum::http::Request::post(format!("/integrations/{}/{route}", Uuid::new_v4()))
+                    .header("content-type", "application/json")
+                    .body(axum::body::Body::from("{}"))?,
+            )
+            .await?;
+        ensure!(response.status() == axum::http::StatusCode::NOT_FOUND);
+    }
     let result = exercise(&deployment, &instance).await;
     shutdown.cancel();
     result
@@ -43,7 +55,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         let pool = &deployment.db().pool;
         let root = instance.join(mode);
         std::fs::create_dir_all(&root)?;
-        let git = |a: &[&str]| mechanical::git(&root, a);
+        let git = |a: &[&str]| support::git(&root, a);
         git(&["init", "-b", "main"])?;
         git(&["config", "user.name", "Fixture"])?;
         git(&["config", "user.email", "fixture@example.invalid"])?;
@@ -89,8 +101,6 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             session_id: None,
             agent_run_id: None,
             payload: sqlx::types::Json(IntegrationPayload {
-                mechanical: true,
-                conversational: true,
                 observed_target: base.clone(),
                 base_commit: Some(base.clone()),
                 card_id: Some(Uuid::new_v4()),
@@ -142,7 +152,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         run.status = "integrating".into();
         run.save(pool).await?;
         let AgentRunPortCommand::Create { request, attempt } =
-            mechanical::conflict_request(&run, container, "fixture only; never launched".into())?
+            support::worker_request(&run, container, "fixture only; never launched".into())?
         else {
             unreachable!()
         };
@@ -153,7 +163,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             .await?;
         run.agent_run_id = Some(agent);
         run.save(pool).await?;
-        mechanical::git(&checkout, &["merge", "--ff-only", &source])?;
+        support::git(&checkout, &["merge", "--ff-only", &source])?;
         let call = |request_id, action: &str, sha: &str, command: Option<&str>| WorkerRequest {
             workspace_id: workspace,
             agent_run_id: agent,
@@ -171,9 +181,9 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         action(deployment, failed).await?;
         ensure!(IntegrationRun::find(pool, id).await?.payload.evidence[0].result == "failed");
         std::fs::write(checkout.join("repaired"), "repair")?;
-        mechanical::git(&checkout, &["add", "."])?;
-        mechanical::git(&checkout, &["commit", "-m", "repair"])?;
-        let candidate = mechanical::git(&checkout, &["rev-parse", "HEAD"])?;
+        support::git(&checkout, &["add", "."])?;
+        support::git(&checkout, &["commit", "-m", "repair"])?;
+        let candidate = support::git(&checkout, &["rev-parse", "HEAD"])?;
         let passed = call(
             Uuid::new_v4(),
             "verify",
@@ -204,12 +214,12 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         let candidate = if wiki_error {
             std::fs::create_dir_all(checkout.join("openwiki"))?;
             std::fs::write(checkout.join("openwiki/index.md"), "fixture Wiki")?;
-            mechanical::git(&checkout, &["add", "openwiki"])?;
-            mechanical::git(&checkout, &["commit", "-m", "Wiki only"])?;
+            support::git(&checkout, &["add", "openwiki"])?;
+            support::git(&checkout, &["commit", "-m", "Wiki only"])?;
             let mut configured = IntegrationRun::find(pool, id).await?;
             configured.payload.wiki_enabled = true;
             configured.save(pool).await?;
-            mechanical::git(&checkout, &["rev-parse", "HEAD"])?
+            support::git(&checkout, &["rev-parse", "HEAD"])?
         } else {
             candidate
         };
@@ -222,7 +232,11 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         action(deployment, publish).await?;
         ensure!(git(&["rev-parse", "main"])? != candidate); // acceptance never publishes while worker lives
         if cancel {
-            IntegrationRun::request_cancel(pool, id).await?;
+            crate::remote_mcp::integration_write_tests::exercise_cancel(
+                deployment,
+                &IntegrationRun::find(pool, id).await?,
+            )
+            .await?;
         }
         use executors::runtime::*;
         for (index, status) in [

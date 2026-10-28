@@ -499,21 +499,14 @@ export function IntegrationPanel({
                 >
                   <div className="flex flex-wrap items-center gap-base">
                     <strong>
-                      {t(`integrationReview.status.${run.status}`, {
+                      {t(`integrationPanel.status.${run.status}`, {
                         defaultValue: run.status,
                       })}
-                      {!run.payload.conversational &&
-                        run.payload.skip_validation &&
-                        ` · ${t('integrationPanel.unverified')}`}
                     </strong>
                     <code>{run.target_ref}</code>
                     <span className="text-low">{run.created_at}</span>
                   </div>
                   <p className="text-low break-all">Run {run.id}</p>
-                  {!run.payload.conversational &&
-                    run.payload.skip_validation && (
-                      <p>{t('integrationPanel.skipped')}</p>
-                    )}
                   {run.error && (
                     <p role="alert" className="text-error whitespace-pre-wrap">
                       {run.error}
@@ -528,15 +521,13 @@ export function IntegrationPanel({
                   {run.payload.semantic_summary && (
                     <div>
                       <p className="text-low">
-                        {run.payload.skip_validation
-                          ? t('integrationPanel.proposal')
-                          : t('integrationPanel.candidate')}
+                        {t('integrationPanel.candidate')}
                       </p>
                       <p>{run.payload.semantic_summary}</p>
                     </div>
                   )}
                   <details>
-                    <summary>{t('integrationReview.candidate')}</summary>
+                    <summary>{t('integrationPanel.candidateDetails')}</summary>
                     <p className="break-all">
                       B:{' '}
                       {run.payload.base_commit ?? t('integrationPanel.waiting')}{' '}
@@ -574,27 +565,6 @@ export function IntegrationPanel({
                       </li>
                     ))}
                   </ul>
-                  {!run.payload.conversational &&
-                    run.payload.validation.length > 0 && (
-                      <details>
-                        <summary>{t('integrationPanel.validation')}</summary>
-                        <ul>
-                          {run.payload.validation.map((v, i) => (
-                            <li key={i} className="break-all">
-                              {v.command} ({v.cwd}) —{' '}
-                              {v.required
-                                ? t('integrationPanel.required')
-                                : t('integrationPanel.optional')}
-                              : {v.result ?? t('integrationPanel.notExecuted')},
-                              exit{' '}
-                              {v.exit_code == null ? '—' : String(v.exit_code)},
-                              process {v.execution_process_id ?? '—'};{' '}
-                              {v.evidence}
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                    )}
                   <div className="flex gap-base">
                     {run.workspace_id && (
                       <Button

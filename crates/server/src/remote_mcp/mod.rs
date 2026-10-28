@@ -197,7 +197,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "inspect_process"
         | "read_process_output"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
-        "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
+        "start_integration" | "cancel_integration" => Some("lvk:merge"),
         "edit_issue_comment"
         | "add_issue_comment"
         | "write_design_note"

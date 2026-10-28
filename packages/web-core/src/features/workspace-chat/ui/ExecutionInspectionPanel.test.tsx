@@ -8,11 +8,6 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('./IntegrationInterventionPanel', () => ({
-  IntegrationInterventionPanel: () =>
-    createElement('div', null, 'Integration intervention'),
-}));
-
 const fixture = vi.hoisted(() => ({
   data: undefined as WorkspaceExecutionView | undefined,
   pending: null as unknown,
@@ -146,12 +141,12 @@ describe('active execution controls', () => {
   });
 });
 
-it('permits the dedicated intervention UI only for an identified Integration owner', () => {
+it('does not expose removed integration review controls', () => {
   fixture.data = {
     status: 'blocked',
     owner: { kind: 'integration', run_id: 'integration' },
   } as WorkspaceExecutionView;
-  expect(render()).toContain('Integration intervention');
+  expect(render()).not.toContain('Integration intervention');
   fixture.data = {
     status: 'blocked',
     owner: { kind: 'openwiki_sync', run_id: 'wiki' },
@@ -176,12 +171,9 @@ it.each(['publishing', 'recovery_required'])(
         files_available: true,
       } as WorkspaceExecutionView;
       const html = render();
-      expect(html).toContain('Integration intervention');
-      expect(html).not.toContain('integrationReview.notPublished');
-      expect(html).not.toContain('integrationReview.published');
-      expect(html).toMatch(
-        /<button[^>]*disabled=""[^>]*>integrationReview.stopExecution/
-      );
+      expect(html).not.toContain('Integration intervention');
+      expect(html).not.toContain('Approve conflict resolution');
+      expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Stop execution/);
     } finally {
       workspace.execution_owner = originalOwner;
     }

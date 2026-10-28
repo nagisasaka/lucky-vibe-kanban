@@ -848,8 +848,12 @@ impl LocalAgentRunPort {
                 request.session_id,
             ));
         }
-        let integration: Option<db::models::integration::IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
-            .bind(workspace.id).fetch_optional(&self.db.pool).await.map_err(port_database)?;
+        let integration: Option<db::models::integration::IntegrationRun> =
+            sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+                .bind(workspace.id)
+                .fetch_optional(&self.db.pool)
+                .await
+                .map_err(port_database)?;
         if let Some(product) = &integration {
             memory_instructions.push(format!("自動マージ担当: {}。同一Sessionで作業を継続し、integration_actionで候補・検証/省略・公開要求を記録する。公開要求後はRunを終了しhostの収束確認に引き渡す。通常codingの自動commitやread-only Wiki指示はこの専用担当には適用しない。Wiki有効: {}。", product.id, product.payload.wiki_enabled));
             if product.payload.wiki_enabled {
@@ -3410,28 +3414,7 @@ impl AgentRunPort for LocalAgentRunPort {
                 .await
                 .map_err(port_database)?
                 .ok_or(AgentRunPortError::NotFound(request.workspace.workspace_id))?;
-            let current_product_intervention =
-                if command.orchestration_run_id.is_some() && workspace.is_execution_only() {
-                    let product: Option<db::models::integration::IntegrationRun> =
-                        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
-                            .bind(workspace.id)
-                            .fetch_optional(&self.db.pool)
-                            .await
-                            .map_err(port_database)?;
-                    product.as_ref().is_some_and(|run| {
-                        run.payload.intervention.as_ref().is_some_and(|action| {
-                            action.pending
-                                && serde_json::to_value(&command).ok().is_some_and(|value| {
-                                    action.retry_command.as_ref() == Some(&value)
-                                        || action.instruction_command.as_ref() == Some(&value)
-                                })
-                        })
-                    })
-                } else {
-                    false
-                };
-            let integration_instruction = (command.orchestration_run_id.is_none()
-                || current_product_intervention)
+            let integration_instruction = command.orchestration_run_id.is_none()
                 && matches!(&command.command, AgentRunPortCommand::Steer { .. })
                 && db::models::integration::IntegrationRun::allows_instruction(
                     &self.db.pool,
@@ -3442,17 +3425,6 @@ impl AgentRunPort for LocalAgentRunPort {
                 .await
                 .map_err(port_database)?;
             if workspace.is_execution_only() {
-                let integration_retry = current_product_intervention
-                    && matches!(&command.command, AgentRunPortCommand::Retry { .. })
-                    && command.orchestration_run_id == Some(request.correlation_id)
-                    && db::models::integration::IntegrationRun::allows_instruction(
-                        &self.db.pool,
-                        workspace.id,
-                        request.session_id,
-                        command.agent_run_id,
-                    )
-                    .await
-                    .map_err(port_database)?;
                 let wiki_instruction =
                     matches!(&command.command, AgentRunPortCommand::Steer { .. })
                         && services::services::workspace_usage::allows_wiki_instruction(
@@ -3462,9 +3434,7 @@ impl AgentRunPort for LocalAgentRunPort {
                         )
                         .await
                         .map_err(|error| AgentRunPortError::Rejected(error.to_string()))?;
-                if !integration_instruction
-                    && !wiki_instruction
-                    && !integration_retry
+                if !wiki_instruction
                     && !matches!(
                         &command.command,
                         AgentRunPortCommand::Create { .. }

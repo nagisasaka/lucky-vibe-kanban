@@ -102,7 +102,7 @@ async fn enqueue(service: &OrchestrationService<TestPort>) -> (Uuid, Uuid, Uuid)
         plan_id: run,
         source_definition_id: run,
         source_definition_version: "test".into(),
-        product_kind: OrchestrationProductKind::Integration,
+        product_kind: OrchestrationProductKind::Workflow,
         workspace_mode: WorkspaceMode::IsolatedWorktree,
         created_at: Utc::now(),
         nodes: vec![OrchestrationPlanNode {
@@ -376,52 +376,30 @@ async fn cancellation_during_create_does_not_report_started() {
 }
 
 #[tokio::test]
-async fn explicit_integration_resume_reuses_discarded_create_and_skip_policy() {
+async fn retired_product_is_not_reconciled_or_dispatched_and_does_not_block_current_work() {
     let (service, port) = fixture(false, false).await;
-    let (run, outbox, agent) = enqueue(&service).await;
-    let node = stable_node_execution_id(run, "integrate", 0);
-    service
-        .complete_product_node(run, node, OrchestrationNodeStatus::Failed)
-        .await
-        .unwrap();
-    service.deliver_next().await.unwrap();
+    let (retired, outbox, _) = enqueue(&service).await;
+    sqlx::query("UPDATE orchestration_runs SET product_kind='integration',plan_snapshot=json_set(plan_snapshot,'$.product_kind','integration'),status='running' WHERE id=?").bind(retired).execute(&service.pool).await.unwrap();
+    sqlx::query("UPDATE orchestration_outbox SET delivery_status='delivering',updated_at='2000-01-01T00:00:00Z' WHERE id=?").bind(outbox).execute(&service.pool).await.unwrap();
+    let before:(String,String,i64)=sqlx::query_as("SELECT r.status,o.delivery_status,o.delivery_attempts FROM orchestration_runs r JOIN orchestration_outbox o ON o.orchestration_run_id=r.id WHERE r.id=?").bind(retired).fetch_one(&service.pool).await.unwrap();
+    let report = service.reconcile_startup().await.unwrap();
+    assert_eq!(report.reconciled_runs, 0);
     assert_eq!(port.calls.load(Ordering::SeqCst), 0);
-    let project = Uuid::new_v4();
-    sqlx::query("INSERT INTO projects(id,name) VALUES (?,'resume test')")
-        .bind(project)
-        .execute(&service.pool)
-        .await
-        .unwrap();
-    let repo = db::models::repo::Repo::find_or_create(
-        &service.pool,
-        std::path::Path::new("/resume-test"),
-        "resume-test",
-    )
-    .await
-    .unwrap();
-    // The formal intervention transaction records operator authority before
-    // the orchestration can reopen a failed run. No global preference change.
-    sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload) VALUES (?,?,?,?,?,'refs/heads/main','integrating',?)")
-        .bind(run).bind(run.to_string()).bind(project).bind(repo.id).bind("/resume-test/.git")
-        .bind(r#"{"publication_intent":false,"intervention":{"pending":true},"skip_validation":true}"#)
-        .execute(&service.pool).await.unwrap();
-    service.resume_integration(run, node).await.unwrap();
-    sqlx::query(
-        "UPDATE orchestration_outbox SET delivery_status='pending',available_at=? WHERE id=?",
-    )
-    .bind(Utc::now())
-    .bind(outbox)
-    .execute(&service.pool)
-    .await
-    .unwrap();
-    service.deliver_create(outbox, agent).await.unwrap();
+    assert!(
+        OrchestrationOutboxRecord::claim_by_id(&service.pool, outbox, Utc::now())
+            .await
+            .unwrap()
+            .is_none()
+    );
+    let after:(String,String,i64)=sqlx::query_as("SELECT r.status,o.delivery_status,o.delivery_attempts FROM orchestration_runs r JOIN orchestration_outbox o ON o.orchestration_run_id=r.id WHERE r.id=?").bind(retired).fetch_one(&service.pool).await.unwrap();
+    assert_eq!(before, after);
+    let (_, _, agent) = enqueue(&service).await;
+    assert!(service.deliver_next().await.unwrap());
+    assert!(
+        AgentRunRecord::find(&service.pool, agent)
+            .await
+            .unwrap()
+            .is_some()
+    );
     assert_eq!(port.calls.load(Ordering::SeqCst), 1);
-    let skip: bool = sqlx::query_scalar(
-        "SELECT json_extract(payload,'$.skip_validation') FROM integration_runs WHERE id=?",
-    )
-    .bind(run)
-    .fetch_one(&service.pool)
-    .await
-    .unwrap();
-    assert!(skip);
 }

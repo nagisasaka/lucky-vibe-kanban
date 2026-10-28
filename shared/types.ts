@@ -189,37 +189,21 @@ export type IntegrationSelection = { card_id: string, workspace_id: string, expe
 
 export type IntegrationSource = { selection: IntegrationSelection, branch: string, commit: string, title: string, description: string | null, status_id: string, requirements_revision: bigint, event_ids: Array<string>, related_workspaces: Array<string>, done_result: string | null, };
 
-export type IntegrationValidation = { command: string, cwd: string, required: boolean, evidence: string, environment_requirements: string, execution_process_id: string | null, exit_code: bigint | null, result: string | null, };
+export type IntegrationValidationSuggestion = { command: string, cwd: string, evidence: string, environment_requirements: string, };
 
 export type IntegrationEvidence = { request_id: string, agent_run_id: string, code_commit: string, command: string | null, process_id: string | null, result: string, actor: string, reason: string, remaining_risk: string, };
 
 export type IntegrationPublicationRequest = { request_id: string, agent_run_id: string, code_commit: string, wiki_commit: string | null, candidate_commit: string, };
 
-export type IntegrationPayload = {
+export type IntegrationPayload = { wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
 /**
- * Conversation-owned integration. Missing on retained historical runs.
+ * Immutable initial worker Create envelope for restart/redelivery.
  */
-conversational: boolean, wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
+worker_dispatch: JsonValue | null,
 /**
- * Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
+ * Initial user instruction to omit validation; actual decisions are recorded in evidence.
  */
-mechanical: boolean,
-/**
- * Immutable Create envelope for the current conflict job; no Retry/Steer hand-off.
- */
-conflict_dispatch: JsonValue | null,
-/**
- * Frozen at admission; omitted in old records means validation is required.
- */
-skip_validation: boolean, card_id: string | null, card_done_result: string | null, sequential: boolean, step_index: number, step_base: string | null, merge_tree: string | null, merge_conflicted: boolean, next_step: boolean, reviews: Array<IntegrationReview>, steps: Array<IntegrationStep>, gates: Array<IntegrationGate>, resume_validation: boolean, intervention: IntegrationIntervention | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation: Array<IntegrationValidation>, exclusions: Array<string>, semantic_summary: string | null, semantics: SemanticChanges | null, integration_manifest: ChangeManifest | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
-
-export type IntegrationGate = { id: string, validation_index: number, scope: string, risk: string, evidence: IntegrationValidation, decision: string | null, actor: string | null, decided_at: string | null, request_id: string | null, };
-
-export type IntegrationReview = { id: string, scope: string, step_index: number, candidate: string, diff: string, explanation: string, decision: string | null, request_id: string | null, actor: string | null, decided_at: string | null, };
-
-export type IntegrationStep = { validation_skipped: boolean, source_commit: string, result_commit: string, validation: Array<IntegrationValidation>, gates: Array<IntegrationGate>, summary: string, };
-
-export type IntegrationIntervention = { request_id: string, prompt: string, created_at: string, pending: boolean, retry_command: JsonValue | null, instruction_command: JsonValue | null, };
+skip_validation: boolean, card_id: string | null, card_done_result: string | null, stop: IntegrationStop | null, history: Array<JsonValue>, sources: Array<IntegrationSource>, observed_target: string, base_commit: string | null, result_commit: string | null, validation_suggestions: Array<IntegrationValidationSuggestion>, semantic_summary: string | null, publication_intent: boolean, published: boolean, wiki_result: string | null, executor_config: JsonValue | null, };
 
 export type IntegrationStop = { stage: string, category: string, next_action: string, };
 
@@ -1507,7 +1491,7 @@ export type UpdateAgentRunGoalRequest = { objective?: string, status?: AgentGoal
 
 export type UpdatePlanGoalDraftRequest = { objective: string, command_id: string, idempotency_key: string, correlation_id: string, created_at: string, };
 
-export enum OrchestrationProductKind { workflow = "workflow", arena = "arena", integration = "integration", resource_mediation = "resource_mediation" }
+export enum OrchestrationProductKind { workflow = "workflow", arena = "arena", resource_mediation = "resource_mediation" }
 
 export enum OrchestrationFailurePolicy { fail_fast = "fail_fast", allow_partial = "allow_partial" }
 
@@ -1537,7 +1521,7 @@ export enum OrchestrationRunStatus { pending = "pending", running = "running", w
 
 export enum OrchestrationNodeStatus { pending = "pending", ready = "ready", running = "running", awaiting_input = "awaiting_input", awaiting_approval = "awaiting_approval", cancelling = "cancelling", succeeded = "succeeded", failed = "failed", cancelled = "cancelled" }
 
-export type OrchestrationEventPayload = { "type": "integration_resumed", "data": { node_execution_id: string, } } | { "type": "lifecycle_changed", "data": { status: OrchestrationRunStatus, } } | { "type": "node_status_changed", "data": { node_execution_id: string, status: OrchestrationNodeStatus, } } | { "type": "agent_run_linked", "data": { node_execution_id: string, agent_run_id: string, } } | { "type": "join_decided", "data": { node_execution_id: string, policy: OrchestrationJoinPolicy, consumed_source_execution_ids: Array<string>, } } | { "type": "command_queued", "data": { command_id: string, idempotency_key: string, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
+export type OrchestrationEventPayload = { "type": "lifecycle_changed", "data": { status: OrchestrationRunStatus, } } | { "type": "node_status_changed", "data": { node_execution_id: string, status: OrchestrationNodeStatus, } } | { "type": "agent_run_linked", "data": { node_execution_id: string, agent_run_id: string, } } | { "type": "join_decided", "data": { node_execution_id: string, policy: OrchestrationJoinPolicy, consumed_source_execution_ids: Array<string>, } } | { "type": "command_queued", "data": { command_id: string, idempotency_key: string, } } | { "type": "projection_degraded", "data": { reason: string, } } | { "type": "unknown", "data": { event_type: string, payload: JsonValue, } };
 
 export type OrchestrationEventEnvelope = { schema_version: number, payload_version: number, event_id: string, orchestration_run_id: string, sequence: bigint, correlation_id: string, timestamp: string, payload: OrchestrationEventPayload, };
 

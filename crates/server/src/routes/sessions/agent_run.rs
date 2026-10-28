@@ -404,8 +404,11 @@ pub(super) async fn create_agent_run(
     let agent_run_id = Uuid::new_v4();
     let turn_id = Uuid::new_v4();
     let run_attempt_id = Uuid::new_v4();
-    let product: Option<db::models::integration::IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
-        .bind(workspace.id).fetch_optional(&deployment.db().pool).await?;
+    let product: Option<db::models::integration::IntegrationRun> =
+        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+            .bind(workspace.id)
+            .fetch_optional(&deployment.db().pool)
+            .await?;
     let correlation_id = if let Some(mut product) = product {
         db::models::integration::guard_agent_dispatch(
             &deployment.db().pool,

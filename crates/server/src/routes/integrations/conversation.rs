@@ -24,7 +24,7 @@ use services::services::container::ContainerService;
 use utils::{repository_memory::RepositoryMemoryStore, response::ApiResponse};
 use uuid::Uuid;
 
-use super::{admission, mechanical, runtime};
+use super::{admission, runtime, support};
 use crate::{DeploymentImpl, error::ApiError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,9 +63,12 @@ pub(crate) async fn action(
     request: WorkerRequest,
 ) -> anyhow::Result<serde_json::Value> {
     let pool = &deployment.db().pool;
-    let mut run: IntegrationRun = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
-        .bind(request.workspace_id).fetch_one(pool).await?;
-    let _operation = runtime::reserve_intervention(run.id)?;
+    let mut run: IntegrationRun =
+        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+            .bind(request.workspace_id)
+            .fetch_one(pool)
+            .await?;
+    let _operation = runtime::reserve_action(run.id)?;
     let agent = AgentRunRecord::find(pool, request.agent_run_id)
         .await?
         .context("Worker missing")?;
@@ -180,7 +183,7 @@ pub(crate) async fn action(
         "Integration is not accepting worker operations"
     );
     let (repo, workspace, session, root) = runtime::context(deployment, &run).await?;
-    mechanical::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
+    support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
     if request.action == "inspect" {
         return Ok(
             serde_json::json!({"integration_id":run.id,"sources":run.payload.sources,"base_commit":run.payload.observed_target,"candidate_commit":run.payload.result_commit,"evidence":run.payload.evidence,"wiki_enabled":run.payload.wiki_enabled,"history":run.payload.history.iter().map(|entry|serde_json::json!({"request_id":entry["request_id"],"state":entry["state"],"process_id":entry["process_id"],"candidate_commit":entry["candidate_commit"],"event":entry["event"]})).collect::<Vec<_>>(),"publication":run.payload.publication_request}),
@@ -370,7 +373,7 @@ pub(crate) async fn action(
                 // Part of the existing publication identity check, not a new
                 // Wiki validation stage: never relabel a repaired code tree as
                 // the Wiki continuation of an earlier tested code SHA.
-                let paths = mechanical::git(
+                let paths = support::git(
                     &root,
                     &["diff", "--no-renames", "--name-only", "-z", &code, expected],
                 )?;
@@ -486,7 +489,7 @@ pub(super) async fn advance(
             .await?
             .context("Repository missing")?;
         let root = PathBuf::from(&container).join(&repo.name);
-        mechanical::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
+        support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
         deployment
             .git()
             .require_clean_source(&root, &run.payload.observed_target)?;
@@ -504,19 +507,19 @@ pub(super) async fn advance(
             run.payload.observed_target,
             run.payload.instructions,
             run.payload.skip_validation,
-            serde_json::to_string(&run.payload.validation)?,
+            serde_json::to_string(&run.payload.validation_suggestions)?,
             run.payload.wiki_enabled,
             memory
         );
-        let dispatch = mechanical::conflict_request(&run, container, content)?;
+        let dispatch = support::worker_request(&run, container, content)?;
         let AgentRunPortCommand::Create { request, .. } = &dispatch else {
             unreachable!()
         };
         run.agent_run_id = Some(request.agent_run_id);
-        run.payload.conflict_dispatch = Some(serde_json::to_value(dispatch)?);
+        run.payload.worker_dispatch = Some(serde_json::to_value(dispatch)?);
         run.save(pool).await?;
     }
-    if let Some(dispatch) = &run.payload.conflict_dispatch {
+    if let Some(dispatch) = &run.payload.worker_dispatch {
         let AgentRunPortCommand::Create { request, attempt } =
             serde_json::from_value(dispatch.clone())?
         else {
@@ -640,9 +643,9 @@ pub(crate) async fn resume(
     if matches!(run.status.as_str(), "blocked" | "cancelled") {
         admission::idle(deployment, run.workspace_id.unwrap()).await?;
         let (_, workspace, _, root) = runtime::context(deployment, run).await?;
-        mechanical::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
+        support::require_private_branch(&root, &workspace.branch, &run.target_ref)?;
         // Inspect, never reset retained edits/index or reuse old pass on a new SHA.
-        mechanical::git(&root, &["status", "--porcelain"])?;
+        support::git(&root, &["status", "--porcelain"])?;
         let previous_status = run.status.clone();
         if run.cancel_requested {
             sqlx::query(

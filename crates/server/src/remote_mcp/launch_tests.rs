@@ -478,7 +478,8 @@ async fn integration_validation_choice_survives_retry_and_reconnection() {
                 let read = super::integration_read::call(&reconnected, "get_integration", json!({"project_id":target.project_id,"integration_id":first["result"]["integration_id"],"section":section})).await.unwrap();
                 assert_eq!(read["skip_validation"], expected);
                 if section == "summary" {
-                    assert_eq!(read["validation"]["passed"], 0);
+                    assert_eq!(read["validation"]["recorded"], 0);
+                    assert!(read["validation"].get("passed").is_none());
                 }
             }
             let mut mismatch = input.clone();

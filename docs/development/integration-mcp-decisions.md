@@ -1,3 +1,5 @@
+> Historical implementation record. LOCAL-257 removed the gate approval API and the scenario commands below. Current operation and verification: [conversation-owned Auto-merge](conversation-auto-merge.md). Cancellation and its merge scope remain supported.
+
 # Integration承認・取消MCPの実装検証
 
 対象は元TODO `7816687d-13f4-4e96-bb96-7528f0b99a39`、Workspace

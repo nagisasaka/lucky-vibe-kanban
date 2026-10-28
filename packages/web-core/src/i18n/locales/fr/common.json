@@ -1174,37 +1174,6 @@
       "rawRouterOutput": "Raw router output"
     }
   },
-  "integrationGate": {
-    "check": "Vérification obligatoire",
-    "notRun": "Non exécutée",
-    "excepted": "Exception approuvée (vérification non réussie)",
-    "acknowledge": "Je comprends le risque pour ce candidat et cette vérification.",
-    "retry": "Corriger l’environnement et réessayer",
-    "continue": "Continuer avec cette exception",
-    "cancel": "Annuler Fusion automatique",
-    "instructionBoundary": "Les instructions n’approuvent ni les exceptions de validation ni les outils. La reprise conserve cette Fusion automatique et cette Session et valide à nouveau le candidat.",
-    "instruction": "Instruction pour Fusion automatique",
-    "send": "Envoyer une instruction",
-    "resume": "Reprendre après réparation / envoyer une instruction",
-    "history": "Historique de reprise"
-  },
-  "integrationReview": {
-    "title": "Review merge resolution",
-    "diff": "Resolution diff",
-    "diffHelp": "Changes from Git’s automatic merge result, including conflict markers and additional AI edits.",
-    "emptyDiff": "No textual difference. Review the explanation and the complete Workspace diff.",
-    "approved": "Approved",
-    "rejected": "Revised or cancelled",
-    "approve": "Approve and continue",
-    "rejectHelp": "To request a different resolution, enter instructions below and select “Request revision”.",
-    "revise": "Request revision",
-    "tests": "Completed merge steps and tests",
-    "progress": "Merge step {{current}} / {{total}}",
-    "validationPlan": "Vérifications de développement à répéter",
-    "evidence": "Historique de développement / justification",
-    "prerequisites": "Prérequis et vérifications de l’environnement",
-    "exclusions": "Remplacements et exclusions"
-  },
   "todo": {
     "expandBody": "Voir plus",
     "collapseBody": "Voir moins",
@@ -1234,5 +1203,6 @@
     "project": "Project",
     "chooseProject": "Choose a Project",
     "integration": "Fusion automatique"
-  }
+  },
+  "integrationPanel": {}
 }

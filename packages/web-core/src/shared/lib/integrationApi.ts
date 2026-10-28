@@ -27,27 +27,6 @@ export const integrationApi = {
       body: JSON.stringify(body),
     }),
   get: (id: string) => request<IntegrationRun>(`/api/integrations/${id}`),
-  intervene: (
-    id: string,
-    body: { project_id: string; request_id: string; prompt: string }
-  ) =>
-    request<IntegrationRun>(`/api/integrations/${id}/intervene`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
-  decide: (
-    id: string,
-    body: {
-      project_id: string;
-      gate_id: string;
-      request_id: string;
-      decision: 'continue' | 'retry' | 'cancel';
-    }
-  ) =>
-    request<IntegrationRun>(`/api/integrations/${id}/decision`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
   repositories: (projectId: string) =>
     request<Repo[]>(
       `/api/integrations/repositories?project_id=${encodeURIComponent(projectId)}`
@@ -89,9 +68,7 @@ export function integrationCanCancel(
 ): boolean {
   return (
     !publicationIntent &&
-    ['queued', 'preparing', 'integrating', 'validating', 'blocked'].includes(
-      status
-    )
+    ['queued', 'integrating', 'validating', 'blocked'].includes(status)
   );
 }
 

@@ -125,8 +125,11 @@ async fn inspect_source(
         }
     }
     let mut description: Option<String> = row.try_get("description")?;
-    let previous: Option<IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
-        .bind(selected.workspace_id).fetch_optional(pool).await?;
+    let previous: Option<IntegrationRun> =
+        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+            .bind(selected.workspace_id)
+            .fetch_optional(pool)
+            .await?;
     if let Some(previous) = previous {
         // Carry intent/repair attribution, never blindly apply a second candidate.
         description = Some(format!(
@@ -266,12 +269,10 @@ pub(super) async fn submit_with_expected_target(
         .git_branch_from_workspace(&workspace_id, &name)
         .await;
     let mut payload = IntegrationPayload {
-        mechanical: true,
-        conversational: true,
         sources,
         observed_target,
         card_id: Some(card_id),
-        sequential: false,
+
         skip_validation: request
             .resolved_skip_validation(deployment.config().read().await.integration_skip_validation),
         executor_config: Some(serde_json::to_value(
@@ -283,12 +284,9 @@ pub(super) async fn submit_with_expected_target(
         ..Default::default()
     };
     // Suggested commands are context, not a host-owned mandatory workflow.
-    payload.validation =
-        super::mechanical::validation_plan(&repo.path, &payload.observed_target, false)
+    payload.validation_suggestions =
+        super::support::validation_suggestions(&repo.path, &payload.observed_target)
             .unwrap_or_default();
-    for check in &mut payload.validation {
-        check.required = false;
-    }
     payload.instructions = request.instructions.clone().unwrap_or_default();
     payload.wiki_enabled =
         RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
@@ -340,20 +338,6 @@ pub(super) async fn release(pool: &SqlitePool, id: Uuid) -> anyhow::Result<()> {
         .execute(pool)
         .await?;
     Ok(())
-}
-
-pub(super) async fn target_right(pool: &SqlitePool, run: &IntegrationRun) -> anyhow::Result<bool> {
-    // Conservative repository-wide serialisation, keyed by canonical Git
-    // storage, even when the repository is registered under another ID.
-    let first:Option<Uuid>=sqlx::query_scalar("SELECT id FROM integration_runs WHERE storage_identity=? AND status IN ('queued','preparing','integrating','validating','publishing','post_processing','cancelling','recovery_required') ORDER BY created_at,id LIMIT 1")
-        .bind(&run.storage_identity).fetch_optional(pool).await?;
-    if first != Some(run.id) {
-        return Ok(false);
-    }
-    sqlx::query("INSERT INTO integration_reservations(resource_kind,resource_key,run_id) VALUES('target',?,?) ON CONFLICT(resource_kind,resource_key) DO NOTHING")
-        .bind(&run.storage_identity).bind(run.id).execute(pool).await?;
-    let owner:Uuid=sqlx::query_scalar("SELECT run_id FROM integration_reservations WHERE resource_kind='target' AND resource_key=?").bind(&run.storage_identity).fetch_one(pool).await?;
-    Ok(owner == run.id)
 }
 
 fn matches_request(

@@ -16,7 +16,7 @@ export function IntegrationFacts({ workspace }: { workspace: Workspace }) {
     enabled: !!id,
     refetchInterval: 2000,
   });
-  if (!run?.payload.conversational) return null;
+  if (!run) return null;
   return (
     <div className="my-base px-double text-sm" aria-live="polite">
       <p>
