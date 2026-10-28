@@ -13,6 +13,8 @@ use utils::repository_memory::{
 };
 use uuid::Uuid;
 
+pub mod verification;
+
 pub fn begin_coding_run(
     repo: &Repo,
     workspace: &Workspace,
@@ -69,6 +71,10 @@ pub fn begin_coding_run(
         finalize_source,
     };
     store.save_run(&run)?;
+    // Missing start evidence fails closed without changing ordinary source completion.
+    if let Err(error) = verification::capture_start(&store, &run) {
+        tracing::warn!(run_id=%run.run_id, %error, "No-change verification start unavailable");
+    }
     Ok(Some(run))
 }
 

@@ -2391,20 +2391,7 @@ impl LocalAgentRunPort {
                 let Some(event) = inserted_by_id.remove(&staged.event_id) else {
                     continue;
                 };
-                let terminal_event = match &event.payload {
-                    AgentEventPayload::LifecycleChanged { status } if status.is_terminal() => {
-                        Some(AgentRunTerminalEvent {
-                            agent_run_id: request.agent_run_id,
-                            session_id: request.session_id,
-                            status: *status,
-                        })
-                    }
-                    _ => None,
-                };
                 let _ = sender.send(event);
-                if let Some(terminal_event) = terminal_event {
-                    let _ = self.terminal_event_sender.send(terminal_event);
-                }
             }
             for staged in group_live {
                 if let Some(event) = live_by_id.remove(&staged.event_id) {
@@ -2453,6 +2440,25 @@ impl LocalAgentRunPort {
                 },
             )
             .await;
+        }
+        // This also runs on terminal journal replay after the canonical batch
+        // already committed. Subscribers never race a still-running registry.
+        if terminal_ack.is_some() {
+            let settled: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_run_state s ON s.agent_run_id=a.agent_run_id WHERE p.run_attempt_id=? AND s.last_run_attempt_id=a.id AND s.projection_status='current' AND a.projection_status='current' AND NOT EXISTS(SELECT 1 FROM agent_run_attempts later WHERE later.agent_run_id=a.agent_run_id AND later.attempt_number>a.attempt_number) AND ((p.registry_status='exited' AND p.observed_exited_at IS NOT NULL) OR (p.registry_status='reserved' AND p.pid IS NULL)))")
+                .bind(attempt.run_attempt_id).fetch_one(&self.db.pool).await.map_err(port_database)?;
+            if settled
+                && let Some(run) = AgentRunRecord::find(&self.db.pool, attempt.agent_run_id)
+                    .await
+                    .map_err(port_database)?
+                && run.status.is_terminal()
+                && run.projection_status == ProjectionStatus::Current
+            {
+                let _ = self.terminal_event_sender.send(AgentRunTerminalEvent {
+                    agent_run_id: run.id,
+                    session_id: run.session_id,
+                    status: run.status,
+                });
+            }
         }
         Ok(())
     }
@@ -5412,6 +5418,69 @@ mod tests {
                 status: AgentRunStatus::Succeeded
             }
         ));
+    }
+
+    #[tokio::test]
+    async fn no_change_terminal_notification_observes_exit_and_replays_without_new_events() {
+        let root = TempDir::new().unwrap();
+        let mut port = LocalAgentRunPort::new(setup_runtime_db().await);
+        port.process_registry = AgentProcessRegistry::new(root.path().join("registry.json"));
+        let (request, attempt) = persisted_codex_run(&port.db).await;
+        let mut terminal = port.terminal_event_sender.subscribe();
+        let (_, _, events) =
+            replay_fixture(root.path(), &request, &attempt, i32::MAX as u32, 0, true).await;
+        port.apply_host_events(&request, &attempt, vec![events[0].clone()])
+            .await
+            .unwrap();
+        assert!(terminal.try_recv().is_err());
+        port.apply_host_events(&request, &attempt, events[1..].to_vec())
+            .await
+            .unwrap();
+        let notification = terminal.try_recv().unwrap();
+        assert_eq!(notification.status, AgentRunStatus::Succeeded);
+        let status: String = sqlx::query_scalar(
+            "SELECT registry_status FROM agent_process_registry WHERE run_attempt_id=?",
+        )
+        .bind(attempt.run_attempt_id)
+        .fetch_one(&port.db.pool)
+        .await
+        .unwrap();
+        assert_eq!(status, "exited");
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM agent_events WHERE agent_run_id=?")
+                .bind(request.agent_run_id)
+                .fetch_one(&port.db.pool)
+                .await
+                .unwrap();
+        port.apply_host_events(&request, &attempt, events[1..].to_vec())
+            .await
+            .unwrap();
+        assert_eq!(
+            terminal.try_recv().unwrap().agent_run_id,
+            request.agent_run_id
+        );
+        let after: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM agent_events WHERE agent_run_id=?")
+                .bind(request.agent_run_id)
+                .fetch_one(&port.db.pool)
+                .await
+                .unwrap();
+        assert_eq!(count, after);
+        // A late ACK for this attempt cannot borrow a newer attempt's success
+        // while the newer process still has no durable exit observation.
+        let newer = Uuid::new_v4();
+        sqlx::query("INSERT INTO agent_run_attempts(id,agent_run_id,turn_id,request_id,idempotency_key,attempt_number,mode,transport,schema_version,payload_version,capability_snapshot,request_envelope,status,projection_status) SELECT ?,agent_run_id,turn_id,?,?,2,mode,transport,schema_version,payload_version,capability_snapshot,request_envelope,'succeeded',projection_status FROM agent_run_attempts WHERE id=?")
+            .bind(newer).bind(Uuid::new_v4()).bind(newer.to_string()).bind(attempt.run_attempt_id).execute(&port.db.pool).await.unwrap();
+        sqlx::query("UPDATE agent_run_state SET last_run_attempt_id=? WHERE agent_run_id=?")
+            .bind(newer)
+            .bind(request.agent_run_id)
+            .execute(&port.db.pool)
+            .await
+            .unwrap();
+        port.apply_host_events(&request, &attempt, events[1..].to_vec())
+            .await
+            .unwrap();
+        assert!(terminal.try_recv().is_err());
     }
 
     #[cfg(target_os = "linux")]

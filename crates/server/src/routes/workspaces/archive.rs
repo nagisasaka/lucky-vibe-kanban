@@ -72,19 +72,7 @@ async fn check_idle_with_memory(
             "使用中のWorkspaceはarchiveできません。".into(),
         ));
     }
-    let busy: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed'))
-        OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=?1 AND p.registry_status IN ('reserved','spawned','running','unreachable'))
-        OR EXISTS(SELECT 1 FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=?1 AND p.status='running')
-        OR EXISTS(SELECT 1 FROM integration_reservations WHERE resource_kind='workspace' AND resource_key=?2)
-        OR EXISTS(SELECT 1 FROM resource_operations WHERE workspace_id=?1 AND status IN ('queued','blocked','launching','running','recovery_required'))
-        OR EXISTS(SELECT 1 FROM resource_mediations WHERE workspace_id=?1 AND status IN ('pending','preparing','running'))
-        OR EXISTS(SELECT 1 FROM workflow_runs w WHERE w.status NOT IN ('succeeded','failed','canceled') AND (
-            w.workspace_id=?1
-            OR EXISTS(SELECT 1 FROM workflow_attempts a WHERE a.id=w.attempt_id AND a.workspace_id=?1)
-            OR EXISTS(SELECT 1 FROM node_executions n JOIN agent_runs r ON r.id=n.agent_run_id WHERE n.run_id=w.id AND r.workspace_id=?1)))
-        OR EXISTS(SELECT 1 FROM integration_runs WHERE workspace_id=?1 AND status NOT IN ('succeeded','failed','cancelled'))"
-    ).bind(id).bind(db::models::integration::resource_key(id)).fetch_one(&mut *conn).await?;
+    let busy = services::services::workspace_lifecycle::has_active_writers(conn, id).await?;
     if busy {
         return Err(ApiError::Conflict(
             "使用中のWorkspaceはarchiveできません。".into(),

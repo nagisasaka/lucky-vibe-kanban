@@ -461,22 +461,33 @@ impl LocalContainerService {
         }
         let repos =
             WorkspaceRepo::find_repos_for_workspace(&self.db.pool, session.workspace_id).await?;
-        tokio::task::spawn_blocking(move || {
-            for repo in repos {
-                let Some(store) =
-                    utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
-                        &repo.name, repo.id,
-                    )?
-                else {
-                    continue;
-                };
-                if let Some(run) = store.run(run_id)? {
-                    services::services::repository_memory::complete_coding_run(&store, &run)?;
+        for repo in repos {
+            let Some(store) =
+                utils::repository_memory::RepositoryMemoryStore::existing_for_repository(
+                    &repo.name, repo.id,
+                )?
+            else {
+                continue;
+            };
+            if let Some(run) = store.run(run_id)? {
+                let (owned_store, owned_run) = (store.clone(), run.clone());
+                let source = tokio::task::spawn_blocking(move || {
+                    services::services::repository_memory::complete_coding_run(
+                        &owned_store,
+                        &owned_run,
+                    )
+                })
+                .await??;
+                if source.is_none() && self.scripts_settled_inner(session.workspace_id).await? {
+                    services::services::repository_memory::verification::complete(
+                        &self.db.pool,
+                        &store,
+                        &run,
+                    )
+                    .await.map_err(|error| anyhow!("No-change verification recording failed; source completion was preserved: {error:#}"))?;
                 }
             }
-            anyhow::Ok(())
-        })
-        .await??;
+        }
         Ok(())
     }
 
