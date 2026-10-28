@@ -1,5 +1,7 @@
 pub mod board_api;
 pub(crate) mod issue_archive;
+#[cfg(test)]
+mod issue_update_tests;
 use api_types::{
     CreateIssueAssigneeRequest, CreateIssueCommentReactionRequest, CreateIssueCommentRequest,
     CreateIssueFollowerRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
@@ -914,7 +916,10 @@ async fn update_local_issue_with_order_guard(
     expected_sort_order: Option<f64>,
 ) -> Result<Issue, ApiError> {
     let body_saved = changes.description.is_some();
-    let mut tx = pool.begin().await?;
+    // Reserve the writer before reading: a DEFERRED read transaction can fail
+    // its write upgrade immediately despite busy_timeout when another writer
+    // is reserved. Keep revision/rank checks on the snapshot acquired here.
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let existing = get_local_issue_on(&mut *tx, issue_id).await?;
     let extension_metadata = changes
         .extension_metadata
