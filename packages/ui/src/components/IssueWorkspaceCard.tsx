@@ -323,12 +323,16 @@ export function IssueWorkspaceCard({
               ? t('workspaces.filesChangedUnknown')
               : t('workspaces.filesChanged', { count: workspace.filesChanged })}
           </span>
-          <span className="text-success whitespace-nowrap shrink-0">
-            +{workspace.linesAdded ?? '—'}
-          </span>
-          <span className="text-error whitespace-nowrap shrink-0">
-            -{workspace.linesRemoved ?? '—'}
-          </span>
+          <Tooltip content={t('workspaces.textLineCounts')}>
+            <span className="flex items-center gap-base" tabIndex={0}>
+              <span className="text-success whitespace-nowrap shrink-0">
+                +{workspace.linesAdded ?? '—'}
+              </span>
+              <span className="text-error whitespace-nowrap shrink-0">
+                -{workspace.linesRemoved ?? '—'}
+              </span>
+            </span>
+          </Tooltip>
         </div>
 
         <div className="hidden sm:flex flex-wrap items-center gap-half min-w-0">

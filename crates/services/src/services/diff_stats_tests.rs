@@ -74,12 +74,107 @@ async fn summary_diff_unknown_and_multi_repo_failure() {
             binary.lines_added,
             binary.lines_removed
         ),
-        (2, None, None)
+        (2, Some(1), Some(0))
     );
+    std::fs::remove_file(temp.path().join("a/new.txt")).unwrap();
+    let binary_only = compute_diff_stats(&pool, &git, &workspace).await.unwrap();
+    assert_eq!(
+        (
+            binary_only.files_changed,
+            binary_only.lines_added,
+            binary_only.lines_removed
+        ),
+        (1, Some(0), Some(0))
+    );
+    std::fs::write(temp.path().join("a/new.txt"), "new\n").unwrap();
+    // Omitted text must poison text totals even alongside a confirmed binary.
+    std::fs::write(
+        temp.path().join("a/large.txt"),
+        vec![b'a'; 2 * 1024 * 1024 + 1],
+    )
+    .unwrap();
+    let unknown_text = compute_diff_stats(&pool, &git, &workspace).await.unwrap();
+    assert_eq!(
+        (
+            unknown_text.files_changed,
+            unknown_text.lines_added,
+            unknown_text.lines_removed
+        ),
+        (3, None, None)
+    );
+    std::fs::remove_file(temp.path().join("a/large.txt")).unwrap();
+    // Base lookup uses the original repo; a missing worktree fails diff acquisition.
+    workspace.container_ref = Some(temp.path().join("missing").to_string_lossy().into());
+    assert!(compute_diff_stats(&pool, &git, &workspace).await.is_none());
+    workspace.container_ref = Some(temp.path().to_string_lossy().into());
+    // A valid repo with an invalid base must also invalidate the subtotal.
+    git::GitCli::new()
+        .git(&temp.path().join("b"), ["branch", "-D", "main"])
+        .unwrap();
+    assert!(compute_diff_stats(&pool, &git, &workspace).await.is_none());
+    git::GitCli::new()
+        .git(&temp.path().join("b"), ["branch", "main"])
+        .unwrap();
     // One failed repository must invalidate even a nonzero successful subtotal.
     std::fs::remove_dir_all(temp.path().join("b/.git")).unwrap();
     assert!(compute_diff_stats(&pool, &git, &workspace).await.is_none());
     std::fs::remove_dir_all(temp.path().join("a/.git")).unwrap();
     assert!(compute_diff_stats(&pool, &git, &workspace).await.is_none());
     pool.close().await;
+}
+
+#[test]
+fn text_totals_skip_binary_in_either_order_but_preserve_unknown_text() {
+    let text = Diff {
+        change: utils::diff::DiffChangeKind::Modified,
+        old_path: Some("text".into()),
+        new_path: Some("text".into()),
+        old_content: None,
+        new_content: None,
+        content_omitted: true,
+        additions: Some(3),
+        deletions: Some(2),
+        repo_id: None,
+    };
+    let unknown = Diff {
+        additions: None,
+        deletions: None,
+        ..text.clone()
+    };
+    for binary_first in [false, true] {
+        let mut stats = DiffStats::default();
+        let entries = if binary_first {
+            [(&unknown, true), (&text, false)]
+        } else {
+            [(&text, false), (&unknown, true)]
+        };
+        for (diff, binary) in entries {
+            stats.include(diff, binary);
+        }
+        assert_eq!(
+            (stats.files_changed, stats.lines_added, stats.lines_removed),
+            (2, Some(3), Some(2))
+        );
+        stats.include(&text, false);
+        assert_eq!((stats.lines_added, stats.lines_removed), (Some(6), Some(4)));
+        stats.include(&unknown, false);
+        stats.include(&text, false);
+        stats.include(&unknown, true);
+        assert_eq!(
+            (stats.files_changed, stats.lines_added, stats.lines_removed),
+            (6, None, None)
+        );
+    }
+    let mut partial = DiffStats::default();
+    partial.include(
+        &Diff {
+            additions: None,
+            ..text
+        },
+        false,
+    );
+    assert_eq!(
+        (partial.lines_added, partial.lines_removed),
+        (None, Some(2))
+    );
 }

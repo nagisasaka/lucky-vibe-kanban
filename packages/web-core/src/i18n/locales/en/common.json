@@ -302,6 +302,7 @@
     "linkError": "Failed to link workspace",
     "filesChanged": "{{count}} files",
     "filesChangedUnknown": "— files",
+    "textLineCounts": "Text lines added/removed; binary files are excluded from line counts.",
     "deleteDialog": {
       "title": "Delete Workspace",
       "description": "Are you sure you want to delete this workspace? This action cannot be undone.",

@@ -296,6 +296,7 @@
     "deleteError": "ワークスペースの削除に失敗しました",
     "filesChanged": "{{count}}ファイル",
     "filesChangedUnknown": "— ファイル",
+    "textLineCounts": "テキストの追加・削除行数です。バイナリファイルは行数に含みません。",
     "deleteDialog": {
       "title": "ワークスペースを削除",
       "description": "このワークスペースを削除してもよろしいですか？この操作は元に戻せません。",
