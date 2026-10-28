@@ -1,4 +1,5 @@
 import { dropRankAfterActivity } from './kanbanOrder';
+import { projectKanbanItems, type KanbanItems } from './kanbanProjection';
 import { refreshShapeFallback } from '@/shared/lib/electric/collections';
 import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import { KanbanDropSync, type DropRow } from './kanbanDropSync';
@@ -549,6 +550,17 @@ export function KanbanContainer() {
 
   // Track items as arrays of IDs grouped by status
   const [items, setItems] = useState<Record<string, string[]>>({});
+  const [dragPreview, setDragPreview] = useState<KanbanItems | null>(null);
+  const handleDragPreview = useCallback(
+    (result: DropResult | null) => {
+      setDragPreview(
+        result?.destination
+          ? projectKanbanItems(items, result.draggableId, result.destination)
+          : null
+      );
+    },
+    [items]
+  );
   const [isFiltersDialogOpen, setIsFiltersDialogOpen] = useState(false);
 
   // Sync items from filtered issues when they change
@@ -1178,6 +1190,11 @@ export function KanbanContainer() {
           <div className="flex-1 overflow-x-auto px-double">
             <KanbanGrid
               onDragEnd={handleDragEnd}
+              onDragPreview={
+                kanbanFilters.sortField === 'sort_order'
+                  ? handleDragPreview
+                  : undefined
+              }
               onDraggingChange={(dragging) => {
                 if (dragging)
                   dragStartOrders.current = Object.fromEntries(
@@ -1191,7 +1208,7 @@ export function KanbanContainer() {
               }}
             >
               {visibleStatuses.map((status) => {
-                const issueIds = items[status.id] ?? [];
+                const issueIds = (dragPreview ?? items)[status.id] ?? [];
 
                 return (
                   <KanbanBoard key={status.id}>
