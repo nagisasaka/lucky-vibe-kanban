@@ -78,3 +78,46 @@ verify the feel of a physical smartphone or Safari.
 
 See [the touch validation record](TOUCH-VALIDATION.md) for results, event order,
 commands, and the separate live DnD projection limitation.
+
+## Server-driven placement motion (LOCAL-259)
+
+Install the workspace's locked dependencies first (`pnpm install --frozen-lockfile`).
+Run the small gate/order/synchronisation regressions and the production motion
+component in Chromium:
+
+```sh
+node --test tests/kanban/snapshot-motion.test.mjs tests/kanban/order.test.mjs tests/kanban/projection.test.mjs tests/kanban/drop-sync.test.mjs
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers node tests/kanban/server-motion.mjs
+```
+
+Run the real API path with a compatible prebuilt backend, using the same isolated
+instance/port/cleanup contract described above:
+
+```sh
+PLAYWRIGHT_BROWSERS_PATH=/opt/lvk-browsers LVK_TEST_SERVER=/absolute/path/to/compatible/server LVK_SERVER_MOTION_E2E=1 node tests/kanban/isolated.mjs
+```
+
+The API test changes rank/status through the private server and refreshes the
+existing collection explicitly from the test; it adds no application polling.
+It samples intermediate positions of moved and displaced cards, checks 400ms
+non-bouncing easing, canonical rank/status, counts, focus, explicit-sort promotion
+suppression, reload, a transport failure/recovery and an update during keyboard
+cancellation. Visibility boundaries are injected browser events, not proof of
+physical tab suspension. The component fixture also covers a cached generation
+with a fresh request pending, rapid retargeting, simultaneous reparentings,
+535/536px layout boundaries, real scrolling, column resizing, reduced motion,
+offscreen targets and nested focus. Fixtures do not exercise real AgentRuns.
+
+Evidence is written under `.build/server-motion-api/` (position samples and
+screenshots) and `.build/server-motion-component/`. Keep these outputs out of
+Git. Re-run the existing `LVK_DND_REGRESSION=1` isolated suite and `touch.mjs`
+when changing the DnD wrapper or input handling. Freeze source files during
+browser runs: HMR invalidates persistence/focus observations.
+
+Motion only presents accepted placements. The first fresh snapshot after cache,
+visibility or connection recovery is a quiet baseline. A target with either end
+outside the viewport is shown at its final location without a long flight;
+visible displaced peers can still animate. Column crossings use an inert,
+aria-hidden visual copy, clipped below board headers; the real card retains
+focus and the copy does not contribute to column counts. Scroll, resize, input,
+reduced motion and unmount synchronously remove automatic animation effects.

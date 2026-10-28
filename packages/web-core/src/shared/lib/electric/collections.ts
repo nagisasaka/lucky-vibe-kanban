@@ -1,4 +1,5 @@
 import { createCollection } from '@tanstack/react-db';
+import { snapshotActivity } from './snapshotActivity';
 
 import { makeRequest } from '@/shared/lib/remoteApi';
 import type { MutationDefinition, ShapeDefinition } from 'shared/remote-types';
@@ -132,7 +133,10 @@ function buildCollectionId(
   return hasMutations ? `${base}-mut` : base;
 }
 
-function buildSourceKey(table: string, params: Record<string, string>): string {
+export function buildSourceKey(
+  table: string,
+  params: Record<string, string>
+): string {
   const sortedEntries = Object.entries(params).sort(([a], [b]) =>
     a.localeCompare(b)
   );
@@ -285,6 +289,8 @@ function createFallbackSync(args: {
         return refreshPromise;
       }
 
+      const startedAt = performance.now();
+      snapshotActivity(args.sourceKey).begin();
       refreshPromise = (async () => {
         try {
           const response = await makeRequest(
@@ -305,6 +311,7 @@ function createFallbackSync(args: {
           fallbackSnapshotCache.set(args.sourceKey, rows);
 
           if (!isCleanedUp) {
+            snapshotActivity(args.sourceKey).report(startedAt, true);
             applySnapshot(syncParams, rows);
           }
         } catch (error) {
@@ -312,6 +319,8 @@ function createFallbackSync(args: {
 
           const message =
             error instanceof Error ? error.message : 'Fallback fetch failed';
+          if (!isCleanedUp)
+            snapshotActivity(args.sourceKey).report(startedAt, false);
           args.reportError({ message });
 
           if (!isCleanedUp && !syncParams.collection.isReady()) {
