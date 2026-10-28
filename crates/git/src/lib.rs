@@ -389,6 +389,21 @@ impl GitService {
         base_commit: &Commit,
         path_filter: Option<&[&str]>,
     ) -> Result<Vec<Diff>, GitServiceError> {
+        Ok(self
+            .get_diffs_with_binary_flags(worktree_path, base_commit, path_filter)?
+            .into_iter()
+            .map(|(diff, _)| diff)
+            .collect())
+    }
+
+    /// Diff entries with an explicit binary classification for text-only totals.
+    /// Missing counts alone do not imply binary: text may be unreadable or omitted.
+    pub fn get_diffs_with_binary_flags(
+        &self,
+        worktree_path: &Path,
+        base_commit: &Commit,
+        path_filter: Option<&[&str]>,
+    ) -> Result<Vec<(Diff, bool)>, GitServiceError> {
         // Use Git CLI to compute diff vs base to avoid sparse false deletions
         let repo = Repository::open(worktree_path)?;
         let base_tree = repo
@@ -407,8 +422,37 @@ impl GitService {
             .map_err(|e| GitServiceError::InvalidRepository(format!("git diff failed: {e}")))?;
         Ok(entries
             .into_iter()
-            .map(|e| Self::status_entry_to_diff(&repo, &base_tree, e))
+            .map(|e| {
+                let diff = Self::status_entry_to_diff(&repo, &base_tree, e);
+                let binary = (diff.additions.is_none() || diff.deletions.is_none())
+                    && Self::diff_is_binary(&repo, &base_tree, &diff);
+                (diff, binary)
+            })
             .collect())
+    }
+
+    fn diff_is_binary(repo: &Repository, base_tree: &git2::Tree, diff: &Diff) -> bool {
+        use std::io::Read;
+
+        let old_binary = diff.old_path.as_ref().is_some_and(|path| {
+            base_tree
+                .get_path(Path::new(path))
+                .ok()
+                .and_then(|entry| repo.find_blob(entry.id()).ok())
+                .is_some_and(|blob| blob.is_binary())
+        });
+        let new_binary = diff.new_path.as_ref().is_some_and(|path| {
+            let Some(workdir) = repo.workdir() else {
+                return false;
+            };
+            // Match Git's binary probe without loading large omitted text files.
+            let Ok(file) = std::fs::File::open(workdir.join(path)) else {
+                return false;
+            };
+            let mut prefix = Vec::new();
+            file.take(8000).read_to_end(&mut prefix).is_ok() && prefix.contains(&0)
+        });
+        old_binary || new_binary
     }
 
     /// Read committed branch differences without checking out a worktree.
@@ -1878,5 +1922,6 @@ mod summary_read_failure_tests {
         assert_eq!(diff.old_content.as_deref(), Some("retained\n"));
         assert!(diff.new_content.is_none());
         assert_eq!((diff.additions, diff.deletions), (None, None));
+        assert!(!GitService::diff_is_binary(&repo, &tree, &diff));
     }
 }

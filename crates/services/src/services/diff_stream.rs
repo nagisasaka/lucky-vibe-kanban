@@ -50,8 +50,12 @@ impl Default for DiffStats {
 }
 
 impl DiffStats {
-    fn include(&mut self, diff: &Diff) {
+    fn include(&mut self, diff: &Diff, binary: bool) {
         self.files_changed += 1;
+        // Binary files still count as changed files, but have no text lines.
+        if binary {
+            return;
+        }
         self.lines_added = self
             .lines_added
             .zip(diff.additions)
@@ -99,14 +103,14 @@ pub async fn compute_diff_stats(
         let diffs_result = tokio::task::spawn_blocking({
             let git = git.clone();
             let worktree = worktree_path.clone();
-            move || git.get_diffs(&worktree, &base_commit, None)
+            move || git.get_diffs_with_binary_flags(&worktree, &base_commit, None)
         })
         .await;
 
         // Never present a partial multi-repository sum as a complete result.
         let diffs = diffs_result.ok()?.ok()?;
-        for diff in diffs {
-            stats.include(&diff);
+        for (diff, binary) in diffs {
+            stats.include(&diff, binary);
         }
     }
 
