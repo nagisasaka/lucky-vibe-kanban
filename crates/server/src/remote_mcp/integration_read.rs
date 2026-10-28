@@ -157,6 +157,9 @@ impl Remote {
             result["next_offset"] = json!(if end < gates.len() { Some(end) } else { None });
             return Ok(result);
         }
+        if run.payload.conversational {
+            result["conversation"] = json!({"issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id,"candidate_commit":run.payload.result_commit,"evidence_count":run.payload.evidence.len(),"publication_request":run.payload.publication_request,"wiki_enabled":run.payload.wiki_enabled,"stop":run.payload.stop});
+        }
         if matches!(args.section, Section::Summary) {
             ensure!(args.offset == 0, "Summary has no further pages");
             let observed =
@@ -170,7 +173,28 @@ impl Remote {
             result["result_commit"] = json!(run.payload.result_commit);
             result["error_present"] = json!(run.error.is_some());
             result["wiki"] = wiki_state(run.payload.wiki_result.as_deref(), observed);
+            if run.payload.conversational {
+                result["validation"] = json!({"recorded":run.payload.evidence.len(),"details_tool":"get_integration(section=validation)","scope":"code_commit on each evidence; never final Wiki SHA"});
+                return Ok(result);
+            }
             result["validation"] = json!({"total":checks.len(),"passed":checks.iter().filter(|v|v.result.as_deref()==Some("passed")).count(),"failed":checks.iter().filter(|v|v.result.as_deref()==Some("failed")).count(),"unavailable":checks.iter().filter(|v|v.result.as_deref()==Some("unavailable")).count(),"not_completed":checks.iter().filter(|v|v.result.as_deref()==Some("not_completed")).count(),"skipped":checks.iter().filter(|v|v.result.as_deref()==Some("skipped")).count(),"unknown_or_unrun":checks.iter().filter(|v|!matches!(v.result.as_deref(),Some("passed"|"failed"|"unavailable"|"not_completed"|"skipped"))).count(),"exceptions":(0..checks.len()).filter(|i|run.validation_excepted(*i)).count(),"details_tool":"get_integration(section=validation)"});
+            return Ok(result);
+        }
+        if run.payload.conversational && matches!(args.section, Section::Validation) {
+            let start = args.offset as usize;
+            ensure!(
+                start <= run.payload.evidence.len(),
+                "Evidence offset out of range"
+            );
+            let end = (start + args.limit as usize).min(run.payload.evidence.len());
+            result["items"] = json!(&run.payload.evidence[start..end]);
+            result["offset"] = json!(start);
+            result["has_more"] = json!(end < run.payload.evidence.len());
+            result["next_offset"] = json!(if end < run.payload.evidence.len() {
+                Some(end)
+            } else {
+                None
+            });
             return Ok(result);
         }
         let total = match args.section {

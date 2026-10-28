@@ -20,6 +20,7 @@ import { ModelSelectorContainer } from '@/shared/components/ModelSelectorContain
 import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import {
   AgentProviderCapability,
+  BaseCodingAgent,
   ExecutionMode,
   PermissionPolicy,
 } from 'shared/types';
@@ -53,6 +54,7 @@ export function IntegrationPanel({
     panelOpen || focusedRunId !== null || requestedProject === projectId;
   const [repositoryId, setRepositoryId] = useState('');
   const [target, setTarget] = useState('');
+  const [instructions, setInstructions] = useState('');
   const [selected, setSelected] = useState<
     Record<string, IntegrationSelection>
   >({});
@@ -73,14 +75,16 @@ export function IntegrationPanel({
   const agent = useExecutorConfig({
     profiles,
     lastUsedConfig: null,
-    configExecutorProfile: config?.executor_profile,
+    configExecutorProfile: { executor: BaseCodingAgent.CODEX, variant: null },
     hiddenAgents: config?.hidden_agents,
     onPersist: () => {
       pendingRequest.current = null;
     },
   });
   const { options: providerOptions } = useAgentProviderOptions({
-    executors: agent.executorOptions,
+    executors: agent.executorOptions.filter(
+      (executor) => executor === BaseCodingAgent.CODEX
+    ),
     preserveExecutors: [agent.effectiveExecutor],
     requiredCapabilities: [
       AgentProviderCapability.INITIAL_RUN,
@@ -151,6 +155,7 @@ export function IntegrationPanel({
       selections: Object.values(selected),
       executor_config: agent.executorConfig,
       skip_validation: skipValidation,
+      instructions,
     };
     pendingRequest.current = request;
     create.mutate(request);
@@ -383,6 +388,17 @@ export function IntegrationPanel({
                 );
               })}
             </fieldset>
+            <label className="flex flex-col gap-half">
+              {t('integrationFacts.instructions')}
+              <textarea
+                value={instructions}
+                onChange={(event) => {
+                  setInstructions(event.target.value);
+                  resetRequest();
+                }}
+                className="rounded border border-border bg-primary p-base"
+              />
+            </label>
             <ol
               className="space-y-half"
               aria-label={t('integrationPanel.order')}
@@ -486,16 +502,18 @@ export function IntegrationPanel({
                       {t(`integrationReview.status.${run.status}`, {
                         defaultValue: run.status,
                       })}
-                      {run.payload.skip_validation &&
+                      {!run.payload.conversational &&
+                        run.payload.skip_validation &&
                         ` · ${t('integrationPanel.unverified')}`}
                     </strong>
                     <code>{run.target_ref}</code>
                     <span className="text-low">{run.created_at}</span>
                   </div>
                   <p className="text-low break-all">Run {run.id}</p>
-                  {run.payload.skip_validation && (
-                    <p>{t('integrationPanel.skipped')}</p>
-                  )}
+                  {!run.payload.conversational &&
+                    run.payload.skip_validation && (
+                      <p>{t('integrationPanel.skipped')}</p>
+                    )}
                   {run.error && (
                     <p role="alert" className="text-error whitespace-pre-wrap">
                       {run.error}
@@ -556,26 +574,27 @@ export function IntegrationPanel({
                       </li>
                     ))}
                   </ul>
-                  {run.payload.validation.length > 0 && (
-                    <details>
-                      <summary>{t('integrationPanel.validation')}</summary>
-                      <ul>
-                        {run.payload.validation.map((v, i) => (
-                          <li key={i} className="break-all">
-                            {v.command} ({v.cwd}) —{' '}
-                            {v.required
-                              ? t('integrationPanel.required')
-                              : t('integrationPanel.optional')}
-                            : {v.result ?? t('integrationPanel.notExecuted')},
-                            exit{' '}
-                            {v.exit_code == null ? '—' : String(v.exit_code)},
-                            process {v.execution_process_id ?? '—'};{' '}
-                            {v.evidence}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
+                  {!run.payload.conversational &&
+                    run.payload.validation.length > 0 && (
+                      <details>
+                        <summary>{t('integrationPanel.validation')}</summary>
+                        <ul>
+                          {run.payload.validation.map((v, i) => (
+                            <li key={i} className="break-all">
+                              {v.command} ({v.cwd}) —{' '}
+                              {v.required
+                                ? t('integrationPanel.required')
+                                : t('integrationPanel.optional')}
+                              : {v.result ?? t('integrationPanel.notExecuted')},
+                              exit{' '}
+                              {v.exit_code == null ? '—' : String(v.exit_code)},
+                              process {v.execution_process_id ?? '—'};{' '}
+                              {v.evidence}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   <div className="flex gap-base">
                     {run.workspace_id && (
                       <Button

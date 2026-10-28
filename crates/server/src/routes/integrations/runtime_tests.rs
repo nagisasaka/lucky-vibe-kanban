@@ -1946,3 +1946,146 @@ async fn conflict_sessions_ready_output_still_requires_succeeded_current() {
         assert!(conflict_resolution(&state).is_err());
     }
 }
+
+#[tokio::test]
+async fn conversation_evidence_keeps_code_sha_across_wiki_and_rejects_stale_or_forged_success() {
+    use db::models::integration::{IntegrationEvidence, IntegrationPublicationRequest};
+    let (pool, mut run, process, _) = fixture().await;
+    let code = run.payload.result_commit.clone().unwrap();
+    run.payload.conversational = true;
+    run.payload.result_commit = Some("b".repeat(40)); // Wiki-only final commit: tests remain on code.
+    run.payload.publication_request = Some(IntegrationPublicationRequest {
+        request_id: Uuid::new_v4(),
+        agent_run_id: Uuid::new_v4(),
+        code_commit: code.clone(),
+        wiki_commit: run.payload.result_commit.clone(),
+        candidate_commit: "b".repeat(40),
+    });
+    run.payload.evidence.push(IntegrationEvidence {
+        request_id: Uuid::new_v4(),
+        agent_run_id: Uuid::new_v4(),
+        code_commit: code.clone(),
+        command: Some("node --test".into()),
+        process_id: Some(process.id),
+        result: "passed".into(),
+        actor: "host_execution".into(),
+        reason: "risk-based code check".into(),
+        remaining_risk: String::new(),
+    });
+    assert!(verify_validation(&pool, &run).await.is_err()); // after SHA not yet recorded
+    ExecutionProcessRepoState::update_after_head_commit(
+        &pool,
+        process.id,
+        run.repository_id,
+        &code,
+    )
+    .await
+    .unwrap();
+    verify_validation(&pool, &run).await.unwrap();
+    run.payload
+        .publication_request
+        .as_mut()
+        .unwrap()
+        .code_commit = "c".repeat(40);
+    assert!(verify_validation(&pool, &run).await.is_err()); // repaired candidate cannot reuse old pass
+    run.payload
+        .publication_request
+        .as_mut()
+        .unwrap()
+        .code_commit = code;
+    run.payload.evidence[0].command = Some("different test".into());
+    assert!(verify_validation(&pool, &run).await.is_err());
+    run.payload.evidence[0].command = Some("node --test".into());
+    run.payload.evidence[0].actor = "agent".into();
+    assert!(verify_validation(&pool, &run).await.is_err()); // an agent claim is not a host test event
+}
+
+#[tokio::test]
+async fn conversation_skip_is_candidate_bound_with_actor_reason_and_risk_without_required_test_plan()
+ {
+    use db::models::integration::{IntegrationEvidence, IntegrationPublicationRequest};
+    let (pool, mut run, _, _) = fixture().await;
+    run.payload.conversational = true;
+    run.payload.validation.clear();
+    let code = run.payload.result_commit.clone().unwrap();
+    run.payload.publication_request = Some(IntegrationPublicationRequest {
+        request_id: Uuid::new_v4(),
+        agent_run_id: Uuid::new_v4(),
+        code_commit: code.clone(),
+        wiki_commit: None,
+        candidate_commit: code.clone(),
+    });
+    for actor in ["agent", "user"] {
+        run.payload.evidence = vec![IntegrationEvidence {
+            request_id: Uuid::new_v4(),
+            agent_run_id: Uuid::new_v4(),
+            code_commit: code.clone(),
+            command: None,
+            process_id: None,
+            result: "skipped".into(),
+            actor: actor.into(),
+            reason: "Existing tested source is adopted without a code delta".into(),
+            remaining_risk: "No fresh environment verification".into(),
+        }];
+        verify_validation(&pool, &run).await.unwrap();
+        run.payload.evidence[0].remaining_risk.clear();
+        assert!(verify_validation(&pool, &run).await.is_err());
+        run.payload.evidence[0].remaining_risk = "risk".into();
+        run.payload.evidence[0].code_commit = "d".repeat(40);
+        assert!(verify_validation(&pool, &run).await.is_err());
+    }
+}
+
+#[tokio::test]
+async fn conversation_failure_is_preserved_and_requires_repair_or_recorded_skip() {
+    use db::models::integration::{IntegrationEvidence, IntegrationPublicationRequest};
+    let (pool, mut run, process, _) = fixture().await;
+    let code = run.payload.result_commit.clone().unwrap();
+    run.payload.conversational = true;
+    run.payload.publication_request = Some(IntegrationPublicationRequest {
+        request_id: Uuid::new_v4(),
+        agent_run_id: Uuid::new_v4(),
+        code_commit: code.clone(),
+        wiki_commit: None,
+        candidate_commit: code.clone(),
+    });
+    ExecutionProcessRepoState::update_after_head_commit(
+        &pool,
+        process.id,
+        run.repository_id,
+        &code,
+    )
+    .await
+    .unwrap();
+    ExecutionProcess::update_completion(&pool, process.id, ExecutionProcessStatus::Failed, Some(1))
+        .await
+        .unwrap();
+    run.payload.evidence.push(IntegrationEvidence {
+        request_id: Uuid::new_v4(),
+        agent_run_id: Uuid::new_v4(),
+        code_commit: code.clone(),
+        command: Some("node --test".into()),
+        process_id: Some(process.id),
+        result: "failed".into(),
+        actor: "host_execution".into(),
+        reason: "run test".into(),
+        remaining_risk: "failure".into(),
+    });
+    assert!(verify_validation(&pool, &run).await.is_err());
+    let mut skip = run.payload.evidence[0].clone();
+    skip.request_id = Uuid::new_v4();
+    skip.process_id = None;
+    skip.result = "skipped".into();
+    skip.actor = "user".into();
+    skip.reason = "Explicit instruction to omit rerunning this check".into();
+    run.payload.evidence.push(skip);
+    verify_validation(&pool, &run).await.unwrap();
+    run.payload.evidence[1].command = None; // explicit all-validation omission
+    verify_validation(&pool, &run).await.unwrap();
+    assert_eq!(run.payload.evidence[0].result, "failed");
+    let p = ExecutionProcess::find_by_id(&pool, process.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(p.exit_code, Some(1));
+}

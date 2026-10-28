@@ -92,7 +92,7 @@ pub(crate) async fn should_disable_default_commit_for_workspace(
     use db::models::arena_group::{ArenaLifecycleStatus, ArenaMode};
 
     if sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM workspaces WHERE id=? AND usage='execution_only')",
+        "SELECT EXISTS(SELECT 1 FROM workspaces w LEFT JOIN integration_runs i ON i.workspace_id=w.id WHERE w.id=? AND (w.usage='execution_only' OR json_extract(i.payload,'$.conversational')=1))",
     )
     .bind(workspace_id)
     .fetch_one(pool)
@@ -1983,7 +1983,7 @@ mod tests {
             .expect("connect sqlite");
 
         for statement in [
-            "CREATE TABLE integration_runs (workspace_id BLOB)",
+            "CREATE TABLE integration_runs (workspace_id BLOB,payload TEXT NOT NULL DEFAULT '{}')",
             r#"
             CREATE TABLE arena_groups (
                 id BLOB PRIMARY KEY,
@@ -2219,6 +2219,28 @@ mod tests {
             .expect("policy lookup");
 
         assert!(!disabled);
+    }
+
+    #[tokio::test]
+    async fn conversation_worker_never_gets_a_terminal_automatic_commit() {
+        let pool = setup_container_policy_pool().await;
+        let workspace = insert_workspace_in_arena(
+            &pool,
+            ArenaMode::Design,
+            ArenaLifecycleStatus::ImplementationStarted,
+        )
+        .await;
+        sqlx::query("INSERT INTO integration_runs(workspace_id,payload) VALUES(?,?)")
+            .bind(workspace)
+            .bind(r#"{"conversational":true}"#)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            should_disable_default_commit_for_workspace(&pool, workspace)
+                .await
+                .unwrap()
+        );
     }
 
     #[tokio::test]

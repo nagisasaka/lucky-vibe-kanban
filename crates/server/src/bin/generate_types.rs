@@ -70,6 +70,8 @@ fn generate_types_content() -> String {
         db::models::integration::IntegrationSelection::decl(),
         db::models::integration::IntegrationSource::decl(),
         db::models::integration::IntegrationValidation::decl(),
+        db::models::integration::IntegrationEvidence::decl(),
+        db::models::integration::IntegrationPublicationRequest::decl(),
         db::models::integration::IntegrationPayload::decl(),
         db::models::integration::IntegrationGate::decl(),
         db::models::integration::IntegrationReview::decl(),

@@ -305,7 +305,7 @@ async fn http_discovery_authentication_and_tool_call_roundtrip() {
             let schema = &integration["inputSchema"];
             assert_eq!(
                 schema["properties"]["skip_validation"]["description"],
-                "true skips the configured additional auto-merge validation; false runs it.\nThis flag does not indicate whether validation evidence already exists.\nOmit or null to inherit the server integration_skip_validation preference."
+                "Optional user instruction to omit additional validation. The assigned agent records actual executions/skips and risk.\nThis flag does not indicate whether validation evidence already exists.\nOmit or null to inherit the server integration_skip_validation preference."
             );
             assert_eq!(
                 schema["properties"]["skip_validation"]["type"],
@@ -1205,6 +1205,38 @@ async fn integration_reads_separate_validation_publication_and_current_wiki_evid
     assert_eq!(published["published"], true);
     assert_eq!(published["wiki"]["state"], "unknown");
     assert_eq!(published["wiki"]["current_receipts_observed"], false);
+    // New conversations expose actual, paged code-SHA evidence, not the old
+    // suggested host plan or a pass attributed to the later Wiki commit.
+    let evidence = vec![
+        json!({"request_id":Uuid::new_v4(),"agent_run_id":Uuid::new_v4(),"code_commit":"R1","command":"test","process_id":null,"result":"failed","actor":"host_execution","reason":"failed check","remaining_risk":"failure retained"}),
+        json!({"request_id":Uuid::new_v4(),"agent_run_id":Uuid::new_v4(),"code_commit":"R2","command":null,"process_id":null,"result":"skipped","actor":"agent","reason":"existing evidence","remaining_risk":"no rerun"}),
+    ];
+    sqlx::query("UPDATE integration_runs SET payload=json_set(payload,'$.conversational',json('true'),'$.evidence',json(?),'$.result_commit','WIKI') WHERE id=?")
+        .bind(serde_json::to_string(&evidence).unwrap()).bind(id).execute(&pool).await.unwrap();
+    let conversation = integration_read::call(
+        &remote,
+        "get_integration",
+        json!({"project_id":project,"integration_id":id,"section":"summary"}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(conversation["conversation"]["candidate_commit"], "WIKI");
+    assert_eq!(conversation["validation"]["recorded"], 2);
+    let first = integration_read::call(
+        &remote,
+        "get_integration",
+        json!({"project_id":project,"integration_id":id,"section":"validation","limit":1}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(first["items"][0]["code_commit"], "R1");
+    assert_eq!(first["items"][0]["result"], "failed");
+    assert_eq!(first["next_offset"], 1);
+    let second=integration_read::call(&remote,"get_integration",json!({"project_id":project,"integration_id":id,"section":"validation","limit":1,"offset":1,"expected_revision":first["revision"]})).await.unwrap();
+    assert_eq!(second["items"][0]["code_commit"], "R2");
+    assert_eq!(second["items"][0]["result"], "skipped");
+    assert_eq!(second["has_more"], false);
+
     assert!(
         integration_read::call(
             &remote,

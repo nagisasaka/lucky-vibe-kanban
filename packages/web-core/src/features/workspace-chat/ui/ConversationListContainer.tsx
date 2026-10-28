@@ -1,3 +1,4 @@
+import { IntegrationFacts } from './IntegrationFacts';
 import {
   forwardRef,
   useCallback,
@@ -977,6 +978,7 @@ const ScopedConversationList = forwardRef<
           }}
         >
           <div ref={contentRef}>
+            <IntegrationFacts workspace={attempt} />
             <div className="pt-2">
               {showSetupPlaceholder && (
                 <div className="my-base px-double">

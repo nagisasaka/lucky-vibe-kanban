@@ -263,6 +263,7 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         repository_id: repo.id,
         target_branch: "main".into(),
         selections: vec![selection.clone()],
+        instructions: None,
         executor_config: None,
         skip_validation: Some(false),
     };

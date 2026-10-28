@@ -191,7 +191,15 @@ export type IntegrationSource = { selection: IntegrationSelection, branch: strin
 
 export type IntegrationValidation = { command: string, cwd: string, required: boolean, evidence: string, environment_requirements: string, execution_process_id: string | null, exit_code: bigint | null, result: string | null, };
 
+export type IntegrationEvidence = { request_id: string, agent_run_id: string, code_commit: string, command: string | null, process_id: string | null, result: string, actor: string, reason: string, remaining_risk: string, };
+
+export type IntegrationPublicationRequest = { request_id: string, agent_run_id: string, code_commit: string, wiki_commit: string | null, candidate_commit: string, };
+
 export type IntegrationPayload = {
+/**
+ * Conversation-owned integration. Missing on retained historical runs.
+ */
+conversational: boolean, wiki_enabled: boolean, evidence: Array<IntegrationEvidence>, publication_request: IntegrationPublicationRequest | null, instructions: string,
 /**
  * Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
  */
@@ -217,7 +225,7 @@ export type IntegrationStop = { stage: string, category: string, next_action: st
 
 export type IntegrationRun = { id: string, request_key: string, project_id: string, repository_id: string, storage_identity: string, target_ref: string, status: string, workspace_id: string | null, session_id: string | null, agent_run_id: string | null, payload: IntegrationPayload, cancel_requested: boolean, error: string | null, created_at: string, updated_at: string, };
 
-export type CreateIntegrationRequest = { request_id: string, project_id: string, repository_id: string, target_branch: string, selections: Array<IntegrationSelection>, executor_config: ExecutorConfig | null, skip_validation?: boolean, };
+export type CreateIntegrationRequest = { request_id: string, project_id: string, repository_id: string, target_branch: string, selections: Array<IntegrationSelection>, executor_config: ExecutorConfig | null, skip_validation?: boolean, instructions?: string, };
 
 export type PendingAgentQuestion = { id: string, session_id: string, agent_run_id: string, workspace_id: string, title: string, options: Array<string>, delivery_status: string | null, };
 

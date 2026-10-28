@@ -98,8 +98,43 @@ pub struct IntegrationReview {
     pub decided_at: Option<String>,
 }
 
+/// One immutable observation/decision on a code candidate. Results on earlier
+/// candidates remain history, never a pass on a later repaired candidate.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct IntegrationEvidence {
+    pub request_id: Uuid,
+    pub agent_run_id: Uuid,
+    pub code_commit: String,
+    pub command: Option<String>,
+    pub process_id: Option<Uuid>,
+    pub result: String,
+    pub actor: String,
+    pub reason: String,
+    pub remaining_risk: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct IntegrationPublicationRequest {
+    pub request_id: Uuid,
+    pub agent_run_id: Uuid,
+    pub code_commit: String,
+    pub wiki_commit: Option<String>,
+    pub candidate_commit: String,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct IntegrationPayload {
+    /// Conversation-owned integration. Missing on retained historical runs.
+    #[serde(default)]
+    pub conversational: bool,
+    #[serde(default)]
+    pub wiki_enabled: bool,
+    #[serde(default)]
+    pub evidence: Vec<IntegrationEvidence>,
+    #[serde(default)]
+    pub publication_request: Option<IntegrationPublicationRequest>,
+    #[serde(default)]
+    pub instructions: String,
     /// Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
     #[serde(default)]
     pub mechanical: bool,
@@ -222,6 +257,14 @@ pub async fn workspace_owner(pool: &SqlitePool, id: Uuid) -> Result<Option<Uuid>
 
 pub async fn guard_workspace(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
     if let Some(run) = workspace_owner(pool, id).await? {
+        let product = IntegrationRun::find(pool, run).await?;
+        if product.payload.conversational
+            && !product.cancel_requested
+            && product.status == "integrating"
+            && product.payload.publication_request.is_none()
+        {
+            return Ok(());
+        }
         return Err(sqlx::Error::Protocol(format!(
             "Workspace reserved by Auto-merge {run}; inspect /api/integrations/{run}"
         )));
@@ -235,6 +278,32 @@ pub async fn guard_agent_dispatch(
     session: Uuid,
     correlation: Uuid,
 ) -> Result<(), sqlx::Error> {
+    let conversation: Option<IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
+        .bind(workspace).fetch_optional(pool).await?;
+    if let Some(run) = conversation {
+        if correlation != run.id {
+            return Err(sqlx::Error::Protocol(
+                "Auto-merge correlation mismatch".into(),
+            ));
+        }
+        if run.session_id == Some(session)
+            && (run.payload.published
+                || (run.status == "cancelled" && !run.payload.publication_intent))
+        {
+            return Ok(()); // an explicit normal follow-up may reopen settled work
+        }
+        if run.session_id == Some(session)
+            && !run.cancel_requested
+            && !run.payload.publication_intent
+            && run.payload.publication_request.is_none()
+            && matches!(run.status.as_str(), "integrating" | "blocked")
+        {
+            return Ok(());
+        }
+        return Err(sqlx::Error::Protocol(
+            "Auto-merge owner is not accepting execution".into(),
+        ));
+    }
     let product: Option<(Uuid, Option<Uuid>, String, bool)> = sqlx::query_as(
         "SELECT id,session_id,status,cancel_requested FROM integration_runs WHERE workspace_id=?",
     )
@@ -307,8 +376,20 @@ impl IntegrationRun {
             self.repository_id,
             Some(self.id),
         );
-        sqlx::query("INSERT INTO workspaces(id,branch,name,usage,execution_owner) VALUES(?,?,?,'execution_only',?)")
-        .bind(workspace_id).bind(branch).bind(name).bind(serde_json::to_string(&owner)?).execute(&mut *tx).await?;
+        sqlx::query(
+            "INSERT INTO workspaces(id,branch,name,usage,execution_owner) VALUES(?,?,?,?,?)",
+        )
+        .bind(workspace_id)
+        .bind(branch)
+        .bind(name)
+        .bind(if self.payload.conversational {
+            "interactive"
+        } else {
+            "execution_only"
+        })
+        .bind(serde_json::to_string(&owner)?)
+        .execute(&mut *tx)
+        .await?;
         sqlx::query(
             "INSERT INTO workspace_repos(id,workspace_id,repo_id,target_branch) VALUES(?,?,?,?)",
         )
@@ -1812,6 +1893,87 @@ pub(crate) mod tests {
             )
             .await
             .is_err()
+        );
+    }
+}
+
+#[cfg(test)]
+mod conversation_tests {
+    use super::*;
+    #[tokio::test]
+    async fn conversation_owner_allows_same_session_repairs_and_fences_publication() {
+        let (pool, mut run, _) = super::tests::fixture().await;
+        let workspace = run.payload.sources[0].selection.workspace_id;
+        let session: Uuid = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        run.workspace_id = Some(workspace);
+        run.session_id = Some(session);
+        run.payload.conversational = true;
+        run.status = "integrating".into();
+        run.save(&pool).await.unwrap();
+        guard_agent_dispatch(&pool, workspace, session, run.id)
+            .await
+            .unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, session, Uuid::new_v4())
+                .await
+                .is_err()
+        );
+        guard_workspace(&pool, workspace).await.unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, Uuid::new_v4(), run.id)
+                .await
+                .is_err()
+        );
+        run.payload.publication_request = Some(IntegrationPublicationRequest {
+            request_id: Uuid::new_v4(),
+            agent_run_id: Uuid::new_v4(),
+            code_commit: "a".repeat(40),
+            wiki_commit: None,
+            candidate_commit: "a".repeat(40),
+        });
+        run.save(&pool).await.unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, session, run.id)
+                .await
+                .is_err()
+        );
+        assert!(guard_workspace(&pool, workspace).await.is_err());
+        let event = serde_json::json!({"event":"publication_not_applied","request":run.payload.publication_request.clone()});
+        run.payload.history.push(event);
+        run.payload.publication_request = None;
+        run.status = "blocked".into();
+        run.save(&pool).await.unwrap();
+        sqlx::query("DELETE FROM integration_reservations WHERE run_id=?")
+            .bind(run.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        guard_agent_dispatch(&pool, workspace, session, run.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            IntegrationRun::find(&pool, run.id)
+                .await
+                .unwrap()
+                .payload
+                .history
+                .len(),
+            1
+        );
+        run.cancel_requested = true;
+        sqlx::query("UPDATE integration_runs SET cancel_requested=1 WHERE id=?")
+            .bind(run.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, session, run.id)
+                .await
+                .is_err()
         );
     }
 }

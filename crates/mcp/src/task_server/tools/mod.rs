@@ -39,6 +39,7 @@ impl ToolError {
 mod context;
 mod design_notes;
 mod dev_server;
+mod integration;
 mod issue_assignees;
 mod issue_relationships;
 mod issue_tags;
@@ -57,6 +58,7 @@ mod workspaces;
 impl McpServer {
     pub fn global_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         Self::context_tools_router()
+            + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
             + Self::repository_read_tools_router()
@@ -77,6 +79,7 @@ impl McpServer {
 
     pub fn orchestrator_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         let mut router = Self::context_tools_router()
+            + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
             + Self::repository_read_tools_router()
@@ -424,6 +427,7 @@ mod tests {
             "cancel_resource_operation".to_string(),
             "create_session".to_string(),
             "get_context".to_string(),
+            "integration_action".to_string(),
             "get_execution".to_string(),
             "get_workspace_tokens".to_string(),
             "read_provider_usage".to_string(),

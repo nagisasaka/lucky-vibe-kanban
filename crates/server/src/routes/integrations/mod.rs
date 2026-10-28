@@ -2,6 +2,7 @@
 //! The product owns source reservations, host validation and publication, not
 //! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
 mod admission;
+pub(crate) mod conversation;
 mod legacy_checkpoint;
 mod mechanical;
 mod runtime;
@@ -54,6 +55,9 @@ pub struct CreateIntegrationRequest {
     #[serde(default)]
     #[ts(optional)]
     pub skip_validation: Option<bool>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub instructions: Option<String>,
 }
 
 impl CreateIntegrationRequest {
@@ -171,7 +175,7 @@ pub(crate) async fn observe_wiki_from_pool(
     pool: &sqlx::SqlitePool,
     run: &mut IntegrationRun,
 ) -> bool {
-    if !run.payload.published {
+    if run.payload.conversational || !run.payload.published {
         return false;
     }
     let result: anyhow::Result<Option<String>> = async {
@@ -345,6 +349,7 @@ async fn decide_gate(
 
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
+        .route("/integrations/worker", post(conversation::worker))
         .route("/integrations", get(list).post(create))
         .route("/integrations/repositories", get(repositories))
         .route("/integrations/{id}", get(status))

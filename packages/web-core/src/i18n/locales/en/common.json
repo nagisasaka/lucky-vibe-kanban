@@ -1461,7 +1461,7 @@
   "integrationPanel": {
     "title": "Auto-merge",
     "description": "Select one Workspace per Card. Auto-merge validates changes, uses AI to resolve conflicts when needed, and applies them to the target branch. It pauses when a decision or approval is required.",
-    "help": "The selected commits are fixed when you start. Review conflict resolutions, respond to failed tests, and send additional instructions in the Auto-merge Workspace. Code merge and subsequent Wiki updates are reported separately. A Wiki-only failure does not undo merged code.",
+    "help": "Freeze the selected commits and target base, then work with the assigned Codex in one normal Workspace conversation. The same agent prepares, repairs and verifies the candidate, including enabled Wiki updates before combined publication.",
     "repository": "Repository",
     "repositoryLabel": "Auto-merge repository",
     "selectRepository": "Select repository",
@@ -1475,8 +1475,8 @@
     "selectWorkspace": "Choose Workspace",
     "selectionChanged": "Selected commit changed; reselect the Workspace.",
     "order": "Merge order",
-    "skip": "Skip all Auto-merge validation (unverified)",
-    "skipHelp": "Skips tests, type checks, lint and other acceptance checks for new runs, including chat submissions. This preference is saved on the server. Conflict review and Git safety checks still apply. The result will be recorded as unverified.",
+    "skip": "Instruct the assigned Codex to omit all validation",
+    "skipHelp": "Save this instruction for future Auto-merges. Use the instructions field for partial omissions. The agent can also omit redundant checks based on evidence, changes and risk; the decision actor, reason and remaining risk are recorded. Git identity and permission checks remain required.",
     "reserving": "Reserving…",
     "start": "Start Auto-merge",
     "runs": "Auto-merge runs",
@@ -1521,5 +1521,21 @@
     "scope": "Reported cumulative totals of Codex parent threads. Child-thread usage not included in the parent is unknown, as are unreported usage, unsupported providers and unmeasured history. Not cost or context occupancy.",
     "updated": "Last update",
     "breakdownCoverage": "Threads reporting breakdown: {{observed}} / {{total}}"
+  },
+  "integrationFacts": {
+    "target": "Target",
+    "candidate": "Candidate created",
+    "passed": "Validation passed",
+    "failed": "Validation failed",
+    "skipped": "Validation skipped",
+    "validation": "Validation",
+    "wiki": "Wiki completion commit",
+    "published": "Target publication complete",
+    "reconciling": "Reconciling publication",
+    "unpublished": "Target not published",
+    "instructions": "Instructions for the assigned Codex (including partial validation skips)",
+    "stopped": "Work stopped. Candidate and evidence are retained; continue with another instruction in this conversation.",
+    "details": "Details",
+    "pendingSettlement": "Publication requested; waiting for the assigned Run and its children to settle."
   }
 }

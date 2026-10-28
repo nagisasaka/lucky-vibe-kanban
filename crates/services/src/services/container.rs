@@ -954,7 +954,10 @@ pub trait ContainerService {
             .write()
             .await
             .insert(execution_process.id, msg_store.clone());
+        // Starting a managed verification is not an operator unarchive. Avoid
+        // consuming generated-archive eligibility with a no-op archived=false write.
         if *run_reason != ExecutionProcessRunReason::ArchiveScript
+            && workspace.archived
             && let Err(e) = Workspace::set_archived(&self.db().pool, workspace.id, false).await
         {
             self.msg_stores()

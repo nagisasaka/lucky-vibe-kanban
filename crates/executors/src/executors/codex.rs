@@ -1097,6 +1097,25 @@ impl Codex {
                 None => crate::legacy_wiki::RETIREMENT_NOTICE.into(),
             });
         }
+        if env.get("LVK_INTEGRATION_WORKER").is_some_and(|v| v == "1")
+            && let Some(agent) = env.get("VK_AGENT_RUN_ID")
+        {
+            let config = params.config.get_or_insert_with(HashMap::new);
+            config.insert("mcp_servers.vibe_kanban.enabled".into(), Value::Bool(true));
+            config.insert("mcp_servers.vibe_kanban.required".into(), Value::Bool(true));
+            config.insert(
+                "mcp_servers.vibe_kanban.command".into(),
+                Value::String("vibe-kanban-mcp".into()),
+            );
+            config.insert(
+                "mcp_servers.vibe_kanban.env.VK_AGENT_RUN_ID".into(),
+                Value::String(agent.clone()),
+            );
+            config.insert(
+                "mcp_servers.vibe_kanban.tools.integration_action.approval_mode".into(),
+                Value::String("approve".into()),
+            );
+        }
         if let Some(memory) = env
             .get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")
             .filter(|_| !reviewer)
@@ -2481,5 +2500,37 @@ mod goal_skill_tests {
         let mut none = ThreadStartParams::default();
         add_goal_skill_context(&mut none, &[]);
         assert!(none.developer_instructions.is_none());
+    }
+}
+
+#[cfg(test)]
+mod integration_worker_tests {
+    use super::*;
+    #[test]
+    fn worker_stdio_binding_is_thread_scoped_and_retained_on_resume() {
+        let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
+        let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
+        env.insert("VK_AGENT_RUN_ID", "worker");
+        let normal = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
+        assert!(
+            normal
+                .config
+                .as_ref()
+                .is_none_or(|c| !c.contains_key("mcp_servers.vibe_kanban.required"))
+        );
+        env.insert("LVK_INTEGRATION_WORKER", "1");
+        let worker = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
+        assert_eq!(
+            worker.config.as_ref().unwrap()["mcp_servers.vibe_kanban.env.VK_AGENT_RUN_ID"],
+            "worker"
+        );
+        assert_eq!(
+            worker.config.as_ref().unwrap()["mcp_servers.vibe_kanban.required"],
+            true
+        );
+        assert_eq!(
+            resume_params_from("same-native-session".into(), worker.clone()).config,
+            worker.config
+        );
     }
 }

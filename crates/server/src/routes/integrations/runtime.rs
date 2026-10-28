@@ -74,6 +74,9 @@ pub(super) async fn request_recovery(
     );
     let id = run.id;
     let result = async {
+        if run.payload.conversational && run.payload.published {
+            return finish(deployment, run).await;
+        }
         if run.status == "succeeded" && run.payload.published {
             complete_product(deployment, &run, OrchestrationNodeStatus::Succeeded).await?;
             // Git and Card receipts are already final. Retrying memory must not
@@ -329,7 +332,7 @@ pub(crate) async fn decide_gate_checked(
 
 // Admission freezes event IDs after checking source ancestry. Resolve only those
 // immutable public records, never another Workspace's private memory or history.
-fn integration_memory(
+pub(super) fn integration_memory(
     run: &IntegrationRun,
     store: Option<&RepositoryMemoryStore>,
 ) -> anyhow::Result<serde_json::Value> {
@@ -444,6 +447,9 @@ pub fn spawn_monitor(deployment: DeploymentImpl) {
 }
 
 async fn advance(deployment: &DeploymentImpl, run: IntegrationRun) -> anyhow::Result<()> {
+    if run.payload.conversational {
+        return super::conversation::advance(deployment, run).await;
+    }
     if run.cancel_requested && !run.payload.publication_intent {
         return cancel(deployment, run).await;
     }
@@ -1058,6 +1064,24 @@ async fn accepted_agent_identity(
     pool: &SqlitePool,
     run: &IntegrationRun,
 ) -> anyhow::Result<Option<Uuid>> {
+    if run.payload.conversational {
+        let agent: Option<db::models::agent_runtime::AgentRunRecord> = sqlx::query_as(
+            "SELECT * FROM agent_runs WHERE session_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
+        )
+        .bind(run.session_id)
+        .fetch_optional(pool)
+        .await?;
+        if let Some(agent) = agent {
+            ensure!(
+                Some(agent.workspace_id) == run.workspace_id
+                    && Some(agent.session_id) == run.session_id
+                    && agent.correlation_id == run.id,
+                "Worker identity mismatch"
+            );
+            return Ok(Some(agent.id));
+        }
+        return Ok(None);
+    }
     if run.payload.mechanical {
         if let Some(agent) = run.agent_run_id {
             let accepted = db::models::agent_runtime::AgentRunRecord::find(pool, agent).await?;
@@ -1139,7 +1163,10 @@ async fn cancellation_agent(
     Ok(None)
 }
 
-async fn cancel(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow::Result<()> {
+pub(super) async fn cancel(
+    deployment: &DeploymentImpl,
+    mut run: IntegrationRun,
+) -> anyhow::Result<()> {
     ensure!(
         !run.payload.publication_intent,
         "Publication boundary passed; cancellation cannot undo Git"
@@ -1215,6 +1242,30 @@ async fn cancel(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
 }
 
 async fn hold(deployment: &DeploymentImpl, id: Uuid, error: String) -> anyhow::Result<()> {
+    let mut conversation = IntegrationRun::find(&deployment.db().pool, id).await?;
+    if conversation.payload.conversational {
+        if conversation.payload.publication_intent {
+            conversation
+                .payload
+                .history
+                .push(serde_json::json!({"event":"publication_error","message":error}));
+            conversation.save(&deployment.db().pool).await?;
+            return match recover_publication(deployment, conversation.clone()).await {
+                Ok(()) => Ok(()),
+                Err(recovery) => {
+                    conversation.status = "recovery_required".into();
+                    conversation.error = Some(format!(
+                        "公開結果の照合が必要です。未公開とは判定できないため、Gitの再実行や予約解放は行いません。{recovery:#}"
+                    ));
+                    let event = serde_json::json!({"event":"publication_recovery_required","operation_error":error,"reconciliation_error":format!("{recovery:#}")});
+                    conversation.payload.history.push(event);
+                    conversation.save(&deployment.db().pool).await?;
+                    Ok(())
+                }
+            };
+        }
+        return super::conversation::stop(deployment, conversation, error).await;
+    }
     let mut run = IntegrationRun::find(&deployment.db().pool, id).await?;
     if !run.payload.mechanical && !run.payload.publication_intent {
         run.status = "blocked".into();
@@ -1319,6 +1370,9 @@ async fn managed_targets(
 }
 
 async fn verify_validation(pool: &SqlitePool, run: &IntegrationRun) -> anyhow::Result<()> {
+    if run.payload.conversational {
+        return super::conversation::verify_evidence(pool, run).await;
+    }
     let repo = Repo::find_by_id(pool, run.repository_id)
         .await?
         .context("Validation repository missing")?;
@@ -1389,7 +1443,10 @@ async fn verify_validation(pool: &SqlitePool, run: &IntegrationRun) -> anyhow::R
     Ok(())
 }
 
-async fn publish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow::Result<()> {
+pub(super) async fn publish(
+    deployment: &DeploymentImpl,
+    mut run: IntegrationRun,
+) -> anyhow::Result<()> {
     let admission_guard = services::services::integration_admission::MUTATIONS
         .lock()
         .await;
@@ -1398,6 +1455,25 @@ async fn publish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     admission::verify_sources(deployment, &run).await?;
     admission::idle(deployment, run.workspace_id.unwrap()).await?;
     verify_validation(pool, &run).await?;
+    if run.payload.conversational {
+        let current = deployment
+            .git()
+            .get_branch_oid(&repo.path, short_target(&run))?;
+        if !deployment.git().is_ancestor(
+            &repo.path,
+            &current,
+            run.payload
+                .result_commit
+                .as_deref()
+                .context("Missing candidate")?,
+        )? {
+            run.payload.stop=Some(db::models::integration::IntegrationStop {stage:"publication".into(),category:"target_changed".into(),next_action:"main更新により未反映です。候補と検証記録を保持しました。新たな指示でまとめ直すか、同じ会話を再開できます。".into()});
+            run.save(pool).await?;
+            bail!("main更新により未反映。候補を保存しました。");
+        }
+        // Publish the unchanged candidate using CAS against the observed current target.
+        run.payload.base_commit = Some(current);
+    }
     let base = run.payload.base_commit.clone().context("Missing B")?;
     let result = run.payload.result_commit.clone().context("Missing R")?;
     deployment.git().require_clean_source(&root, &result)?;
@@ -1423,6 +1499,16 @@ async fn publish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow
     run.status = "publishing".into();
     // Atomic cancellation boundary. This durable intent precedes any Git write.
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+    if run.payload.conversational {
+        sqlx::query("INSERT INTO integration_reservations VALUES('target',?,?) ON CONFLICT(resource_kind,resource_key) DO NOTHING")
+            .bind(&run.storage_identity).bind(run.id).execute(&mut *tx).await?;
+        let owner: Uuid=sqlx::query_scalar("SELECT run_id FROM integration_reservations WHERE resource_kind='target' AND resource_key=?")
+            .bind(&run.storage_identity).fetch_one(&mut *tx).await?;
+        ensure!(
+            owner == run.id,
+            "Target is owned by an unsettled integration"
+        );
+    }
     for ws in target_writers {
         sqlx::query("INSERT INTO integration_reservations VALUES('workspace',?,?) ON CONFLICT(resource_kind,resource_key) DO NOTHING")
             .bind(resource_key(ws)).bind(run.id).execute(&mut *tx).await?;
@@ -1465,6 +1551,10 @@ async fn publish_candidate(
     )?;
     run.payload.published = true;
     run.status = "post_processing".into();
+    if run.payload.conversational {
+        let event = serde_json::json!({"event":"target_published","id":run.id,"candidate_commit":run.payload.result_commit});
+        run.payload.history.push(event);
+    }
     run.save(pool).await?;
     Ok(())
 }
@@ -1509,6 +1599,19 @@ pub(super) async fn recover_publication(
     )? {
         git::publication::ExactPublicationState::Applied => {}
         git::publication::ExactPublicationState::NotApplied => {
+            if run.payload.conversational {
+                let request = run.payload.publication_request.clone();
+                let event = serde_json::json!({"event":"publication_not_applied","request":request,"base":base,"candidate":result});
+                run.payload.history.push(event);
+                run.payload.publication_intent = false;
+                run.payload.publication_request = None;
+                return Box::pin(super::conversation::stop(
+                    deployment,
+                    run,
+                    "公開は未適用です。公開intentと実Gitの照合結果を保持しました。同じ会話へ次の指示を送ってください。".into(),
+                ))
+                .await;
+            }
             run.status = "blocked".into();
             run.error=Some("Publication did not apply: target ref, index and files still match B. No Git writes were replayed; start a new Auto-merge after inspection.".into());
             run.save(&deployment.db().pool).await?;
@@ -1534,7 +1637,14 @@ async fn finish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
     // Card effects are independently retryable from semantic outbox/Wiki. They
     // must not be undone or indefinitely reserved when a Wiki file is damaged.
     run = complete_cards(deployment, run).await?;
-    let wiki_result = record_memory_integration(deployment, &run).await;
+    let wiki_result = if run.payload.conversational {
+        let repo = Repo::find_by_id(pool, run.repository_id)
+            .await?
+            .context("Repository missing")?;
+        super::conversation::record_wiki_result(&repo, &run)
+    } else {
+        record_memory_integration(deployment, &run).await
+    };
     run.payload.wiki_result = Some(match wiki_result {
         Ok(result) => result,
         Err(error) => format!("semantic outbox pending: {error:#}"),
@@ -1544,6 +1654,11 @@ async fn finish(deployment: &DeploymentImpl, mut run: IntegrationRun) -> anyhow:
     run.status = "succeeded".into();
     run.save(pool).await?;
     admission::release(pool, run.id).await?;
+    if run.payload.conversational
+        && let Some(workspace) = Workspace::find_by_id(pool, run.workspace_id.unwrap()).await?
+    {
+        crate::routes::local_remote::issue_archive::archive_generated(deployment, workspace).await;
+    }
     Ok(())
 }
 

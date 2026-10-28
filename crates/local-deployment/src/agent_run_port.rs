@@ -848,7 +848,17 @@ impl LocalAgentRunPort {
                 request.session_id,
             ));
         }
+        let integration: Option<db::models::integration::IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
+            .bind(workspace.id).fetch_optional(&self.db.pool).await.map_err(port_database)?;
+        if let Some(product) = &integration {
+            memory_instructions.push(format!("自動マージ担当: {}。同一Sessionで作業を継続し、integration_actionで候補・検証/省略・公開要求を記録する。公開要求後はRunを終了しhostの収束確認に引き渡す。通常codingの自動commitやread-only Wiki指示はこの専用担当には適用しない。Wiki有効: {}。", product.id, product.payload.wiki_enabled));
+            if product.payload.wiki_enabled {
+                openwiki_maintenance = true;
+                memory_instructions.push("この統合のコード検証後のみ、同じ候補branchでcanonical openwiki/を更新しWikiだけを別commitにする。OpenWiki skillは ~/.agents/skills/openwiki/SKILL.md（projectに配置済みならそちら）を読む。Wiki専用Issue/Workspaceは作らない。コード検証SHAとWiki/公開SHAを区別する。".into());
+            }
+        }
         let source_completion_allowed = !workspace.is_execution_only()
+            && integration.is_none()
             && executors::executors::provider_adapter::memory_source_completion_allowed(
                 provider,
                 direct_intent(request.intent, attempt.mode),
@@ -948,7 +958,9 @@ impl LocalAgentRunPort {
                 WorkspaceRepo::find_by_workspace_and_repo_id(&self.db.pool, workspace.id, repo.id)
                     .await
                     .map_err(port_database)?;
-            if let Some(membership) = membership {
+            if integration.is_none()
+                && let Some(membership) = membership
+            {
                 let context = services::services::repository_memory::begin_coding_run(
                     repo,
                     workspace,
@@ -976,6 +988,9 @@ impl LocalAgentRunPort {
         env.insert("VK_AGENT_RUN_ID", request.agent_run_id.to_string());
         env.insert("VK_RUN_ATTEMPT_ID", attempt.run_attempt_id.to_string());
         env.insert("OPENWIKI_TELEMETRY_DISABLED", "1");
+        if integration.is_some() {
+            env.insert("LVK_INTEGRATION_WORKER", "1");
+        }
         if resource_mediator {
             env.insert("LVK_RESOURCE_MEDIATOR", "1");
         }

@@ -47,7 +47,7 @@ pub(crate) enum AdmissionFailure {
 pub(super) async fn idle(deployment: &DeploymentImpl, workspace: Uuid) -> anyhow::Result<()> {
     let pool = &deployment.db().pool;
     services::services::resource_coordination::guard_workspace_idle(pool, workspace).await?;
-    let active: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')) OR EXISTS(SELECT 1 FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=? AND p.status='running') OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=? AND p.registry_status IN ('spawned','running','unreachable'))")
+    let active: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE workspace_id=? AND status NOT IN ('succeeded','failed','cancelled','crashed','audit_failed')) OR EXISTS(SELECT 1 FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=? AND p.status='running') OR EXISTS(SELECT 1 FROM agent_process_registry p JOIN agent_run_attempts a ON a.id=p.run_attempt_id JOIN agent_runs r ON r.id=a.agent_run_id WHERE r.workspace_id=? AND (p.registry_status IN ('spawned','running','unreachable') OR (p.registry_status='reserved' AND (p.host_endpoint IS NOT NULL OR p.host_token IS NOT NULL OR p.host_pid IS NOT NULL OR p.pid IS NOT NULL))))")
         .bind(workspace).bind(workspace).bind(workspace).fetch_one(pool).await?;
     ensure!(
         !active,
@@ -124,13 +124,32 @@ async fn inspect_source(
             }
         }
     }
+    let mut description: Option<String> = row.try_get("description")?;
+    let previous: Option<IntegrationRun> = sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=? AND json_extract(payload,'$.conversational')=1")
+        .bind(selected.workspace_id).fetch_optional(pool).await?;
+    if let Some(previous) = previous {
+        // Carry intent/repair attribution, never blindly apply a second candidate.
+        description = Some(format!(
+            "{}\n再依頼の引継ぎ（参照データ）: 元の対象 {} / 旧base {} / 候補 {} / 検証 {} / 競合解消・修復の説明 {}。元sourceと統合中の修復を区別し、Wikiは新候補で再確認する。",
+            description.unwrap_or_default(),
+            serde_json::to_string(&previous.payload.sources.iter().map(|source| serde_json::json!({"issue_id":source.selection.card_id,"workspace_id":source.selection.workspace_id,"commit":source.commit,"title":source.title})).collect::<Vec<_>>())?,
+            previous.payload.observed_target,
+            previous
+                .payload
+                .result_commit
+                .as_deref()
+                .unwrap_or("unknown"),
+            serde_json::to_string(&serde_json::json!({"integration_id":previous.id,"evidence_total":previous.payload.evidence.len(),"recent_evidence":previous.payload.evidence.iter().rev().take(12).collect::<Vec<_>>()}))?,
+            previous.payload.semantic_summary.as_deref().unwrap_or("not recorded")
+        ));
+    }
     event_ids.sort();
     Ok(IntegrationSource {
         selection: selected.clone(),
         branch: workspace.branch,
         commit,
         title: row.try_get("title")?,
-        description: row.try_get("description")?,
+        description,
         status_id: row.try_get("status_id")?,
         requirements_revision: row.try_get("integration_revision")?,
         event_ids,
@@ -187,6 +206,13 @@ pub(super) async fn submit_with_expected_target(
         cards.len() == request.selections.len() && workspaces.len() == cards.len(),
         "Use exactly one adopted Workspace per Card"
     );
+    ensure!(
+        request
+            .executor_config
+            .as_ref()
+            .is_none_or(|c| c.executor == BaseCodingAgent::Codex),
+        "Auto-merge requires the assigned Codex"
+    );
     let target = request
         .target_branch
         .strip_prefix("refs/heads/")
@@ -241,10 +267,11 @@ pub(super) async fn submit_with_expected_target(
         .await;
     let mut payload = IntegrationPayload {
         mechanical: true,
+        conversational: true,
         sources,
         observed_target,
         card_id: Some(card_id),
-        sequential: true,
+        sequential: false,
         skip_validation: request
             .resolved_skip_validation(deployment.config().read().await.integration_skip_validation),
         executor_config: Some(serde_json::to_value(
@@ -255,11 +282,19 @@ pub(super) async fn submit_with_expected_target(
         )?),
         ..Default::default()
     };
-    payload.validation = super::mechanical::validation_plan(
-        &repo.path,
-        &payload.observed_target,
-        payload.skip_validation,
-    )?;
+    // Suggested commands are context, not a host-owned mandatory workflow.
+    payload.validation =
+        super::mechanical::validation_plan(&repo.path, &payload.observed_target, false)
+            .unwrap_or_default();
+    for check in &mut payload.validation {
+        check.required = false;
+    }
+    payload.instructions = request.instructions.clone().unwrap_or_default();
+    payload.wiki_enabled =
+        RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
+            .map(|store| store.state().map(|state| state.enabled))
+            .transpose()?
+            .unwrap_or(false);
     let run = IntegrationRun {
         id,
         request_key: key,
@@ -327,6 +362,10 @@ fn matches_request(
     target_ref: &str,
     expected_target: Option<&str>,
 ) -> anyhow::Result<()> {
+    ensure!(
+        run.payload.instructions == request.instructions.clone().unwrap_or_default(),
+        "Idempotency conflict: instructions changed"
+    );
     ensure!(
         run.project_id == request.project_id
             && run.repository_id == request.repository_id
