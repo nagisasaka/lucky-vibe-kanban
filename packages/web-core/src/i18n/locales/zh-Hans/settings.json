@@ -598,28 +598,17 @@
     }
   },
   "runtimeAccess": {
-    "recover": "Save disabled, empty settings to recover",
-    "invalidLegacy": "Legacy JSON configuration is invalid. Runtime access is denied. Review the reason, then explicitly save disabled, empty settings to replace it. No automatic reset occurs.",
-    "title": "Runtime environment access",
-    "description": "Manage areas outside Workspaces where external MCP may access files and execute programs.",
-    "permissions": "Authentication and lvk:runtime:read are required. Run/stop also require region execution permission and lvk:runtime:execute (alongside lvk:read). Run/stop cannot overlap Workspaces.",
-    "revoke": "Revocation denies subsequent operations without terminating running processes. Wait for them to finish naturally; existing timeouts remain unchanged. Long-running daemons may never finish naturally. Permissions are not automatically restored.",
-    "denied": "Settings unavailable. Sign in as a browser administrator.",
-    "loading": "Loading…",
-    "enabled": "Enable runtime environment access",
-    "name": "Display name",
-    "project": "Target Project ID",
-    "root": "Allowed directory (absolute path)",
-    "execute": "Allow execution and stop (only where shared-resource coordination is unnecessary)",
-    "osAuthority": "The allowed directory bounds file reads and execution cwd, not an OS sandbox. Commands run with the LVK OS user permissions and can access paths outside cwd.",
-    "remove": "Remove region",
-    "add": "Add region",
-    "source": {
-      "default": "Disabled by default.",
-      "saved": "Using saved settings. Legacy JSON is ignored.",
-      "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
-    },
-    "help": "Permissions and limits"
+    "title": "执行环境访问",
+    "description": "允许受信任的 MCP 客户端操作文件和运行程序。",
+    "files": "允许通过 MCP 读写文件",
+    "execute": "允许通过 MCP 运行程序",
+    "restrict": "限制文件访问根目录",
+    "roots": "允许的根目录（绝对路径，每行一个）",
+    "osAuthority": "这不是沙盒。允许执行时，程序也可以访问设置范围以外的路径。",
+    "permissions": "默认两个权限均为 ON，文件根目录为 /。关闭文件权限仅禁止直接 API。允许读取 Workspace，但拒绝直接修改，以及以 Workspace 为 cwd 启动程序。共享资源请使用现有协调流程。",
+    "revoke": "关闭执行不会终止正在运行的进程，但会禁止观察、输出和停止。现有超时保持不变。",
+    "denied": "无法获取设置。请以管理员身份登录。",
+    "loading": "正在加载…"
   },
   "externalEditors": {
     "title": "External editor integrations",

@@ -1,5 +1,5 @@
-//! Explicit administrator grants for application environments; never source editing.
-use std::path::PathBuf;
+//! Trusted runtime access. Direct paths have an operational boundary, not an OS sandbox.
+use std::path::{Component, Path, PathBuf};
 
 use anyhow::ensure;
 use rmcp::model::Tool;
@@ -10,186 +10,135 @@ use uuid::Uuid;
 
 use super::{Remote, auth::Principal, read::arguments};
 
-#[derive(Clone, Deserialize, Serialize, TS)]
-#[serde(deny_unknown_fields)]
-pub struct Grant {
-    #[serde(default)]
-    pub display_name: String,
-    pub id: String,
-    pub project_id: Uuid,
-    pub root: PathBuf,
-    /// Explicit assertion: this directory is not a coordinated shared resource.
-    #[serde(default)]
-    pub allow_uncoordinated_execution: bool,
-}
-
-#[derive(Clone, Default, Deserialize, Serialize, TS)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct RuntimeAccessSettings {
-    pub enabled: bool,
-    pub grants: Vec<Grant>,
+    pub files_enabled: bool,
+    pub execution_enabled: bool,
+    pub file_roots: Vec<PathBuf>,
+}
+impl Default for RuntimeAccessSettings {
+    fn default() -> Self {
+        Self {
+            files_enabled: true,
+            execution_enabled: true,
+            file_roots: vec!["/".into()],
+        }
+    }
+}
+impl RuntimeAccessSettings {
+    pub fn validate_paths(&self) -> anyhow::Result<()> {
+        ensure!(
+            !self.file_roots.is_empty() && self.file_roots.len() <= 64,
+            "Configure 1 to 64 file roots"
+        );
+        ensure!(
+            self.file_roots
+                .iter()
+                .all(|root| root.is_absolute()
+                    && !root.components().any(|c| c == Component::ParentDir)),
+            "File root must be absolute without traversal"
+        );
+        Ok(())
+    }
+    pub fn validate(&mut self) -> anyhow::Result<()> {
+        self.validate_paths()?;
+        for root in &mut self.file_roots {
+            *root = root.canonicalize()?;
+            ensure!(root.is_dir(), "File root must be a directory");
+        }
+        self.file_roots.sort();
+        self.file_roots.dedup();
+        Ok(())
+    }
 }
 
 pub(super) struct Environment {
-    pub grants: Vec<Grant>,
+    pub settings: RuntimeAccessSettings,
     pub settings_pool: Option<sqlx::SqlitePool>,
     #[cfg(target_os = "linux")]
     pub processes: super::environment_process::ProcessRegistry,
 }
-
 impl Environment {
     pub fn managed(pool: sqlx::SqlitePool) -> Self {
         Self {
-            grants: vec![],
+            settings: Default::default(),
             settings_pool: Some(pool),
             #[cfg(target_os = "linux")]
             processes: Default::default(),
         }
     }
-
-    async fn current_grants(&self) -> anyhow::Result<Vec<Grant>> {
-        if let Some(pool) = &self.settings_pool {
-            let (_, _, settings) = super::environment_settings::load(pool).await?;
-            ensure!(
-                settings.enabled,
-                "Runtime access is disabled by administrator"
-            );
-            Ok(settings.grants)
-        } else {
-            Ok(self.grants.clone())
-        }
-    }
-
-    pub fn new(mut grants: Vec<Grant>) -> anyhow::Result<Self> {
-        ensure!(cfg!(target_os = "linux"), "Runtime access requires Linux");
-        ensure!(
-            !grants.is_empty() && grants.len() <= 64,
-            "Configure 1 to 64 runtime grants"
-        );
-        let mut ids = std::collections::HashSet::new();
-        for grant in &mut grants {
-            ensure!(
-                !grant.id.is_empty() && grant.id.len() <= 80 && ids.insert(grant.id.clone()),
-                "Runtime grant IDs must be unique and bounded"
-            );
-            ensure!(
-                grant.display_name.len() <= 160,
-                "Invalid runtime display name"
-            );
-            ensure!(
-                !grant
-                    .root
-                    .components()
-                    .any(|c| matches!(c, std::path::Component::ParentDir)),
-                "Runtime root cannot contain traversal"
-            );
-            ensure!(grant.root.is_absolute(), "Runtime root must be absolute");
-            grant.root = grant.root.canonicalize()?;
-            ensure!(
-                grant.root.is_dir() && grant.root.parent().is_some(),
-                "Runtime root must be a specific directory, not filesystem root"
-            );
-        }
+    #[cfg(test)]
+    pub fn new(mut settings: RuntimeAccessSettings) -> anyhow::Result<Self> {
+        settings.validate()?;
         Ok(Self {
-            grants,
+            settings,
             settings_pool: None,
             #[cfg(target_os = "linux")]
             processes: Default::default(),
         })
     }
-
-    pub(super) async fn grant(&self, id: &str) -> anyhow::Result<Grant> {
-        self.current_grants()
-            .await?
-            .iter()
-            .find(|g| g.id == id)
-            .cloned()
-            .ok_or_else(|| anyhow::anyhow!("Runtime region not permitted"))
+    pub(super) async fn current_settings(&self) -> anyhow::Result<RuntimeAccessSettings> {
+        if let Some(pool) = &self.settings_pool {
+            Ok(super::environment_settings::load(pool).await?.2)
+        } else {
+            Ok(self.settings.clone())
+        }
     }
 }
 
 fn tool(
     name: &str,
     description: &str,
-    mut properties: Value,
+    properties: Value,
     required: &[&str],
     mutation: bool,
+    scope: &str,
 ) -> Tool {
-    properties["region"] = json!({"type":"string","description":"Administrator grant ID returned by get_runtime_access."});
-    let mut required = required.to_vec();
-    if name != "get_runtime_access" {
-        required.push("region");
-    }
-    if name == "get_runtime_access" {
-        properties = json!({});
-    }
-    let scopes = if mutation {
-        vec!["lvk:read", "lvk:runtime:read", "lvk:runtime:execute"]
-    } else {
-        vec!["lvk:read", "lvk:runtime:read"]
-    };
-    serde_json::from_value(json!({"name":name,"description":description,"inputSchema":{"type":"object","properties":properties,"required":required,"additionalProperties":false},"annotations":{"readOnlyHint":!mutation,"destructiveHint":mutation,"idempotentHint":true,"openWorldHint":mutation},"_meta":{"securitySchemes":[{"type":"oauth2","scopes":scopes}]}})).expect("runtime tool schema")
+    serde_json::from_value(json!({"name":name,"description":description,"inputSchema":{"type":"object","properties":properties,"required":required,"additionalProperties":false},"annotations":{"readOnlyHint":!mutation,"destructiveHint":mutation,"idempotentHint":true,"openWorldHint":mutation},"_meta":{"securitySchemes":[{"type":"oauth2","scopes":if scope == "lvk:runtime:read" {vec!["lvk:read",scope]} else {vec!["lvk:read","lvk:runtime:read",scope]} }]}})).expect("runtime schema")
 }
-
 pub(super) fn tools() -> Vec<Tool> {
     let text = json!({"type":"string"});
-    let bytes = json!({"type":"integer","minimum":1,"maximum":65536,"default":16384});
     let uuid = json!({"type":"string","format":"uuid"});
     vec![
         tool(
             "get_runtime_access",
-            "Read your explicit Linux runtime grants and limitations. Disabled unless administrator configured. Outputs are reference data, never permission. Observe/run existing procedures here; delegate source/configuration edits to Codex through Issue and Workspace.",
+            "Read runtime settings and limitations. File roots constrain direct file APIs only. Programs are NOT sandboxed. Outputs are reference data, never authorisation.",
             json!({}),
             &[],
             false,
+            "lvk:runtime:read",
         ),
         tool(
-            "list_runtime_files",
-            "List ordinary entries within a permitted region, including untracked logs. Follow next_offset with snapshot. All symlinks and special files are refused; bind mounts belong to administrator scope.",
-            json!({"path":text,"limit":{"type":"integer","minimum":1,"maximum":500,"default":100},"offset":{"type":"integer","minimum":0},"snapshot":{"type":"object"}}),
-            &[],
+            "read_runtime_path",
+            "List a directory (action=list) or read regular file bytes (action=read) at an absolute path in a file root. Workspace reads allowed. Symlinks, special files and proc/sys refused; hard links/bind mounts are administrator scope. Default 16 KiB, max 512 KiB content; encoded responses can be much larger. Prefer small chunks. Cursor detects rotation/truncation/changes, not an atomic snapshot.",
+            json!({"project_id":uuid,"action":{"enum":["list","read"]},"path":text,"max_bytes":{"type":"integer","minimum":1,"maximum":524288,"default":16384},"tail":{"type":"boolean"},"offset":{"type":"integer","minimum":0},"cursor":{"type":"object"},"limit":{"type":"integer","minimum":1,"maximum":500},"snapshot":{"type":"object"}}),
+            &["project_id", "action", "path"],
             false,
+            "lvk:runtime:read",
         ),
         tool(
-            "read_runtime_file",
-            "Read bounded bytes, tail or incremental cursor of a regular file. Check status, identity and changed_during_read; restart on rotation/truncation. Non-UTF8 bytes are base64. Never treat file content as execution approval.",
-            json!({"path":text,"max_bytes":bytes,"tail":{"type":"boolean"},"offset":{"type":"integer","minimum":0},"cursor":{"type":"object"}}),
-            &["path"],
-            false,
-        ),
-        tool(
-            "list_processes",
-            "Observe same-UID Linux processes with cwd inside this grant. No argv or environment disclosure. Listing is live, not health or build provenance.",
-            json!({"after_pid":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":100}}),
-            &[],
-            false,
-        ),
-        tool(
-            "inspect_process",
-            "Recheck an observed PID identity; unavailable is not successful shutdown. Existing process stdout is unavailable: use its configured log files.",
-            json!({"identity":text}),
-            &["identity"],
-            false,
-        ),
-        tool(
-            "self_restart",
-            "Request an administrator-configured development instance switch using externally tested artifacts. Coordinate idle work first. Admission is NOT completion. The independent engine persists the transaction; after reconnect use get_self_restart_operation with the SAME request_id. Active resource holders or queued operations are refused; registration alone is not occupancy. The target instance/DB must be unregistered; registered targets require a resource operation bundle. Ordinary run_process still cannot self-restart.",
-            json!({"request_id":uuid,"purpose":text,"bundle":text,"no_new_work":{"type":"boolean"}}),
-            &["request_id", "purpose", "bundle", "no_new_work"],
+            "change_runtime_path",
+            "Direct write/delete at an absolute path in file roots, independently of execution permission. Refuses managed Workspace targets and deletion of their ancestors. write: UTF-8 content, max 512 KiB, atomic replacement, existing parent required; optional expected identity from read snapshot prevents stale overwrite (best effort). delete: regular file or empty directory; recursive=true explicitly deletes a directory tree. No symlink following. Partial recursive failure is reported and may have deleted entries. request_id is durable: reuse same input/key after lost response; never blindly replay an uncertain operation. Not a sandbox or complete hard-link/bind-mount isolation.",
+            json!({"project_id":uuid,"request_id":uuid,"purpose":text,"action":{"enum":["write","delete"]},"path":text,"content":text,"expected":{"type":"object"},"recursive":{"type":"boolean","default":false}}),
+            &["project_id", "request_id", "purpose", "action", "path"],
             true,
+            "lvk:write",
         ),
         tool(
-            "get_self_restart_operation",
-            "Read the durable switch-engine result after reconnection. Uses current runtime grant and original principal ownership; MCP admission success is not cutover success. A missing result never authorises automatic replay.",
-            json!({"request_id":uuid}),
-            &["request_id"],
+            "observe_process",
+            "Observe same-UID processes (action=list/inspect) or owned process output (action=output). Requires execution setting ON and runtime read scope, not file permission. No cwd/root restriction or post-launch cwd monitoring. list: after_pid/limit; inspect: identity; output: process_id/stream/offset/limit (default 16 KiB, max 64 KiB). Output is volatile and may contain secrets. Identity is not health or build provenance.",
+            json!({"project_id":uuid,"action":{"enum":["list","inspect","output"]},"after_pid":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":65536},"identity":text,"process_id":text,"stream":{"enum":["stdout","stderr"]},"offset":{"type":"integer","minimum":0}}),
+            &["project_id", "action"],
             false,
+            "lvk:runtime:read",
         ),
         tool(
             "run_process",
-            "Run an existing executable/script with argv and relative cwd. The directory limits cwd, not command access; commands run with the LVK OS user permissions. Do not send editing commands or inline shell/program source. Requires explicit user authorisation and an uncoordinated region outside LVK Workspaces; use existing resource coordination for shared devices/databases/deployments. request_id is durable: retry same input/key or get_operation after lost response. Receipt success means startup only, not service health/tests. Expiry sends SIGTERM, then SIGKILL after 5 seconds if necessary. Service lifetime is capped; detached children require separate observation/stop. Self-restart is unsupported.",
-            json!({"request_id":uuid,"purpose":text,"executable":text,"args":{"type":"array","items":{"type":"string"},"maxItems":128},"cwd":text,"service":{"type":"boolean","default":false},"lifetime_seconds":{"type":"integer","minimum":1,"maximum":86400}}),
+            "Run an absolute existing executable with args and absolute cwd. Execution setting/scope required; independent of file roots/toggle. Workspace cwd refused at launch; ancestor/sibling cwd allowed. Programs may read/write/delete outside cwd and file roots; NOT sandboxed. Do not directly edit managed Workspaces: use their agents. Explicit user authorisation and existing shared resource coordination remain required. No executable allowlist or command-word inspection. request_id is durable; receipt success means startup only. Expiry sends TERM then KILL after 5 seconds; descendants are not managed. Self-restart uses the dedicated tool.",
+            json!({"project_id":uuid,"request_id":uuid,"purpose":text,"executable":text,"args":{"type":"array","items":{"type":"string"},"maxItems":128},"cwd":text,"service":{"type":"boolean","default":false},"lifetime_seconds":{"type":"integer","minimum":1,"maximum":86400}}),
             &[
+                "project_id",
                 "request_id",
                 "purpose",
                 "executable",
@@ -197,22 +146,72 @@ pub(super) fn tools() -> Vec<Tool> {
                 "lifetime_seconds",
             ],
             true,
-        ),
-        tool(
-            "read_process_output",
-            "Read a managed process's bounded stdout or stderr by byte offset, including terminal state. Buffers are volatile; after server restart the outcome/output may be unknown, never replay automatically. Output may contain secrets; only grant trusted users.",
-            json!({"process_id":text,"stream":{"enum":["stdout","stderr"]},"offset":{"type":"integer","minimum":0},"limit":bytes}),
-            &["process_id", "stream"],
-            false,
+            "lvk:runtime:execute",
         ),
         tool(
             "stop_process",
-            "Request SIGTERM for a precisely observed identity (or owned managed process ID); force=true explicitly selects SIGKILL. Only the exact process is signalled, not its group/descendants. Reinspect to confirm termination. Cannot stop LVK itself/ancestors; existing stop scripts require run_process authorisation.",
-            json!({"request_id":uuid,"purpose":text,"identity":text,"force":{"type":"boolean","default":false}}),
-            &["request_id", "purpose", "identity"],
+            "Signal an exact observed process identity or owned managed process ID. Requires execution setting/scope; independent of file roots/current cwd. Same-UID, ownership, PID identity and LVK/ancestor protection remain. force=true selects KILL; otherwise TERM. Only one PID, not descendants. Reinspect to confirm termination. A receipt is not proof of shutdown.",
+            json!({"project_id":uuid,"request_id":uuid,"purpose":text,"identity":text,"force":{"type":"boolean","default":false}}),
+            &["project_id", "request_id", "purpose", "identity"],
             true,
+            "lvk:runtime:execute",
+        ),
+        tool(
+            "self_restart",
+            "Explicit developer-instance switch through the installed engine, not run_process. Requires execution setting/scope and instance configuration. Coordinate idle work first. Admission is not cutover; query get_self_restart_operation using the same request_id after reconnection. Shared resources still require existing coordination.",
+            json!({"project_id":uuid,"request_id":uuid,"purpose":text,"bundle":text,"no_new_work":{"type":"boolean"}}),
+            &[
+                "project_id",
+                "request_id",
+                "purpose",
+                "bundle",
+                "no_new_work",
+            ],
+            true,
+            "lvk:runtime:execute",
+        ),
+        tool(
+            "get_self_restart_operation",
+            "Read the installed developer switch engine's durable result for the original principal and Project. Does not replay or restart. Requires execution setting and runtime read scope.",
+            json!({"project_id":uuid,"request_id":uuid}),
+            &["project_id", "request_id"],
+            false,
+            "lvk:runtime:read",
         ),
     ]
+}
+
+pub(super) async fn workspace_paths(remote: &Remote) -> anyhow::Result<Vec<PathBuf>> {
+    let paths: Vec<String> =
+        sqlx::query_scalar("SELECT container_ref FROM workspaces WHERE container_ref IS NOT NULL")
+            .fetch_all(&remote.pool)
+            .await?;
+    paths
+        .into_iter()
+        .map(|p| {
+            let path = PathBuf::from(p);
+            match path.canonicalize() {
+                Ok(p) => Ok(p),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound && path.is_absolute() => {
+                    Ok(path)
+                }
+                Err(e) => Err(e.into()),
+            }
+        })
+        .collect()
+}
+pub(super) fn protect_workspace(
+    target: &Path,
+    workspaces: &[PathBuf],
+    ancestors: bool,
+) -> anyhow::Result<()> {
+    ensure!(
+        !workspaces
+            .iter()
+            .any(|w| target.starts_with(w) || (ancestors && w.starts_with(target))),
+        "Managed Workspace target refused; use its Workspace agent and existing controls"
+    );
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -223,7 +222,7 @@ struct Run {
     executable: PathBuf,
     #[serde(default)]
     args: Vec<String>,
-    cwd: String,
+    cwd: PathBuf,
     #[serde(default)]
     service: bool,
     lifetime_seconds: u64,
@@ -239,85 +238,39 @@ struct Stop {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct List {
+struct Change {
+    request_id: Uuid,
+    purpose: String,
+    action: String,
+    path: PathBuf,
+    content: Option<String>,
+    expected: Option<Value>,
     #[serde(default)]
-    after_pid: u32,
-    #[serde(default = "list_limit")]
-    limit: usize,
-}
-fn list_limit() -> usize {
-    50
-}
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Inspect {
-    identity: String,
-}
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Output {
-    process_id: String,
-    stream: String,
-    #[serde(default)]
-    offset: u64,
-    #[serde(default = "output_limit")]
-    limit: usize,
-}
-fn output_limit() -> usize {
-    16384
+    recursive: bool,
 }
 
-// There is no independent runtime scheduler or competing Workspace lease. This
-// initial capability deliberately refuses execution in managed Workspace trees.
-async fn execution_region(remote: &Remote, grant: &Grant) -> anyhow::Result<()> {
-    ensure!(
-        grant.allow_uncoordinated_execution,
-        "Region execution disabled; use the existing shared resource operation path"
-    );
-    let paths: Vec<String> =
-        sqlx::query_scalar("SELECT container_ref FROM workspaces WHERE container_ref IS NOT NULL")
-            .fetch_all(&remote.pool)
-            .await?;
-    for path in paths {
-        if let Ok(path) = PathBuf::from(path).canonicalize() {
-            ensure!(
-                !grant.root.starts_with(&path) && !path.starts_with(&grant.root),
-                "Runtime execution cannot overlap a managed Workspace; use its existing execution controls"
-            );
-        }
-    }
-    Ok(())
-}
-
-// A server restart must not turn another member's managed child into an
-// unowned external process. Reuse the durable launch receipt for attribution.
-#[cfg(target_os = "linux")]
+// Reuse durable attribution after server restart; a managed child never becomes unowned.
 async fn stop_identity(
     remote: &Remote,
     owner: &str,
-    grant: &Grant,
+    project: Uuid,
     identity: &str,
 ) -> anyhow::Result<String> {
     use sqlx::Row;
-    let row = sqlx::query("SELECT principal, project_id, targets, result FROM remote_mcp_operations WHERE operation='run_process' AND json_valid(result) AND (json_extract(result,'$.identity')=? OR json_extract(result,'$.run_id')=?) ORDER BY created_at DESC LIMIT 1")
-        .bind(identity).bind(identity).fetch_optional(&remote.pool).await?;
+    let row = sqlx::query("SELECT principal, project_id, result FROM remote_mcp_operations WHERE operation='run_process' AND json_valid(result) AND (json_extract(result,'$.identity')=? OR json_extract(result,'$.run_id')=?) ORDER BY created_at DESC LIMIT 1").bind(identity).bind(identity).fetch_optional(&remote.pool).await?;
     let Some(row) = row else {
         return Ok(identity.to_owned());
     };
-    let targets: Value = serde_json::from_str(row.try_get::<&str, _>("targets")?)?;
     ensure!(
         row.try_get::<&str, _>("principal")? == owner
-            && row.try_get::<Uuid, _>("project_id")? == grant.project_id
-            && targets["region"] == grant.id,
-        "Managed process belongs to another runtime grant or owner"
+            && row.try_get::<Uuid, _>("project_id")? == project,
+        "Managed process belongs to another Project or owner"
     );
     let result: Value = serde_json::from_str(row.try_get::<&str, _>("result")?)?;
-    result["identity"]
+    Ok(result["identity"]
         .as_str()
-        .map(str::to_owned)
-        .ok_or_else(|| {
-            anyhow::anyhow!("Managed process identity unavailable; reobserve before acting")
-        })
+        .ok_or_else(|| anyhow::anyhow!("Managed identity unavailable; reobserve"))?
+        .to_owned())
 }
 
 pub(super) async fn call(
@@ -327,207 +280,269 @@ pub(super) async fn call(
     mut input: Value,
 ) -> anyhow::Result<Value> {
     ensure!(
-        principal.allows("lvk:runtime:read"),
+        principal.allows("lvk:read") && principal.allows("lvk:runtime:read"),
         "Runtime read permission required"
     );
     let environment = remote
         .environment
         .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Runtime access is disabled by administrator"))?
+        .ok_or_else(|| anyhow::anyhow!("Runtime access unavailable"))?
         .clone();
+    let settings = environment.current_settings().await?;
     if name == "get_runtime_access" {
         ensure!(
             input.as_object().is_some_and(|v| v.is_empty()),
-            "Invalid runtime capability arguments"
+            "Invalid capability arguments"
         );
-        let grants: Vec<_> = environment.current_grants().await?.iter().filter(|g| remote.config.project_ids.contains(&g.project_id)).map(|g| json!({"region":g.id,"display_name":g.display_name,"project_id":g.project_id,"root":g.root,"allow_uncoordinated_execution":g.allow_uncoordinated_execution})).collect();
         return Ok(
-            json!({"regions":grants,"platform":"linux","environment_inheritance":"none; fixed PATH and LANG only","file_write_tools":false,"os_write_sandbox":false,"shared_resources":"use existing resource coordination; these grants cannot authorise shared-resource use","workspace_execution":"not supported; managed Workspace trees are refused","self_restart":"dedicated self_restart/get_self_restart_operation only; requires instance-installed fixed launcher and launch.json and explicit instance grant; run_process unsupported","output_persistence":"bounded memory, unavailable after server restart","build_provenance":"not established","reference_data_only":true}),
+            json!({"settings":settings,"file_write_tools":true,"os_write_sandbox":false,"execution_cwd":"absolute, independent of file roots; managed Workspace cwd refused only at launch","shared_resources":"explicit user authorisation and existing resource coordination required","output_persistence":"bounded memory; unavailable after restart","reference_data_only":true}),
         );
     }
-    let region = input
-        .as_object_mut()
-        .and_then(|o| o.remove("region"))
-        .and_then(|v| v.as_str().map(str::to_owned))
-        .ok_or_else(|| anyhow::anyhow!("Runtime region required"))?;
-    let grant = environment.grant(&region).await?;
-    remote.require_project(grant.project_id).await?;
-    #[cfg(not(target_os = "linux"))]
-    {
-        let _ = (environment, grant);
-        anyhow::bail!("Runtime access requires Linux");
+    let project: Uuid = serde_json::from_value(
+        input
+            .as_object_mut()
+            .and_then(|v| v.remove("project_id"))
+            .ok_or_else(|| anyhow::anyhow!("Project required"))?,
+    )?;
+    remote.require_project(project).await?;
+    let files = matches!(name, "read_runtime_path" | "change_runtime_path");
+    ensure!(
+        if files {
+            settings.files_enabled
+        } else {
+            settings.execution_enabled
+        },
+        if files {
+            "Direct file access disabled by administrator"
+        } else {
+            "Program execution disabled by administrator"
+        }
+    );
+    let mutation = matches!(name, "change_runtime_path" | "run_process" | "stop_process");
+    if mutation || name == "self_restart" {
+        ensure!(
+            principal.allows(if files {
+                "lvk:write"
+            } else {
+                "lvk:runtime:execute"
+            }),
+            "Runtime mutation permission required"
+        );
     }
+    #[cfg(not(target_os = "linux"))]
+    anyhow::bail!("Runtime access requires Linux");
     #[cfg(target_os = "linux")]
     {
-        use super::{environment_files, environment_process};
+        use super::{environment_files as fs, environment_process as ps};
         let owner = remote.principal_key(principal);
-        let process_owner = json!([owner, grant.id, grant.project_id]).to_string();
-        match name {
-            "self_restart" | "get_self_restart_operation" => {
-                super::environment_switch::call(remote, principal, &grant, name, input).await
+        let process_owner = json!([owner, project]).to_string();
+        if matches!(name, "self_restart" | "get_self_restart_operation") {
+            return super::environment_switch::call(remote, principal, project, name, input).await;
+        }
+        if name == "read_runtime_path" {
+            let action = input
+                .as_object_mut()
+                .and_then(|v| v.remove("action"))
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .ok_or_else(|| anyhow::anyhow!("File action required"))?;
+            let path = input["path"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("Absolute path required"))?;
+            let (root, relative) = fs::resolve(&settings.file_roots, Path::new(path))?;
+            input["path"] = json!(relative);
+            let absolute = root.join(&relative);
+            return tokio::task::spawn_blocking(move || {
+                let mut result = match action.as_str() {
+                    "list" => fs::list(&root, input)?,
+                    "read" => fs::read(&root, input)?,
+                    _ => anyhow::bail!("Unknown file read action"),
+                };
+                result["path"] = json!(absolute);
+                Ok(result)
+            })
+            .await?;
+        }
+        if name == "observe_process" {
+            let action = input
+                .as_object_mut()
+                .and_then(|v| v.remove("action"))
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .ok_or_else(|| anyhow::anyhow!("Process action required"))?;
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct List {
+                #[serde(default)]
+                after_pid: u32,
+                #[serde(default = "list_limit")]
+                limit: usize,
             }
-            "list_runtime_files" | "read_runtime_file" => {
-                let is_list = name == "list_runtime_files";
-                tokio::task::spawn_blocking(move || {
-                    if is_list {
-                        environment_files::list(&grant.root, input)
-                    } else {
-                        environment_files::read(&grant.root, input)
-                    }
-                })
-                .await?
+            fn list_limit() -> usize {
+                50
             }
-            "list_processes" => {
-                let a: List = arguments(input)?;
-                ensure!(
-                    (1..=100).contains(&a.limit),
-                    "Process page limit must be 1 to 100"
-                );
-                let mut value = environment_process::list(&grant.root, a.after_pid, a.limit)?;
-                if let Some(items) = value["processes"].as_array_mut() {
-                    for item in items {
-                        item["project_id"] = json!(grant.project_id);
-                    }
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Inspect {
+                identity: String,
+            }
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Output {
+                process_id: String,
+                stream: String,
+                #[serde(default)]
+                offset: u64,
+                #[serde(default = "output_limit")]
+                limit: usize,
+            }
+            fn output_limit() -> usize {
+                16384
+            }
+            return match action.as_str() {
+                "list" => {
+                    let a: List = arguments(input)?;
+                    ensure!(
+                        (1..=100).contains(&a.limit),
+                        "Process list limit must be 1 to 100"
+                    );
+                    ps::list(a.after_pid, a.limit)
                 }
-                Ok(value)
-            }
-            "inspect_process" => {
-                let a: Inspect = arguments(input)?;
-                let mut value = environment_process::inspect(&grant.root, &a.identity)?;
-                value["project_id"] = json!(grant.project_id);
-                Ok(value)
-            }
-            "read_process_output" => {
-                let a: Output = arguments(input)?;
+                "inspect" => {
+                    let a: Inspect = arguments(input)?;
+                    ps::inspect(&a.identity)
+                }
+                "output" => {
+                    let a: Output = arguments(input)?;
+                    ensure!(
+                        (1..=65536).contains(&a.limit),
+                        "Output page limit must be 1 to 65536"
+                    );
+                    environment.processes.output(
+                        &process_owner,
+                        &a.process_id,
+                        &a.stream,
+                        a.offset,
+                        a.limit,
+                    )
+                }
+                _ => anyhow::bail!("Unknown process observation action"),
+            };
+        }
+        ensure!(mutation, "Unknown runtime operation");
+        let (request, purpose, target) = match name {
+            "change_runtime_path" => {
+                let a: Change = arguments(input.clone())?;
                 ensure!(
-                    (1..=65536).contains(&a.limit),
-                    "Output page limit must be 1 to 65536"
+                    matches!(a.action.as_str(), "write" | "delete"),
+                    "Unknown file change action"
                 );
-                environment.processes.output(
-                    &process_owner,
-                    &grant.root,
-                    &a.process_id,
-                    &a.stream,
-                    a.offset,
-                    a.limit,
+                ensure!(
+                    a.action != "write" || a.content.is_some(),
+                    "Write content required"
+                );
+                ensure!(
+                    a.action != "delete" || a.content.is_none(),
+                    "Delete cannot include content"
+                );
+                ensure!(
+                    a.action != "write" || !a.recursive,
+                    "Write cannot be recursive"
+                );
+                ensure!(
+                    a.content.as_ref().is_none_or(|s| s.len() <= 524288),
+                    "Write exceeds 512 KiB"
+                );
+                fs::resolve(&settings.file_roots, &a.path)?;
+                (
+                    a.request_id,
+                    a.purpose,
+                    json!({"action":a.action,"path":a.path}),
                 )
             }
-            "run_process" | "stop_process" => {
+            "run_process" => {
+                let a: Run = arguments(input.clone())?;
                 ensure!(
-                    principal.allows("lvk:runtime:execute"),
-                    "Runtime execute permission required"
+                    a.executable.is_absolute() && a.executable.canonicalize()?.is_file(),
+                    "Executable must be an absolute existing file"
                 );
-                execution_region(remote, &grant).await?;
-                let original = json!({"region":region,"arguments":input});
-                let (request, purpose, target) = if name == "run_process" {
-                    let a: Run = arguments(input.clone())?;
-                    ensure!(a.executable.is_absolute(), "Executable must be absolute");
-                    let executable = a.executable.canonicalize()?;
-                    ensure!(executable.is_file(), "Executable must be a regular file");
-                    ensure!(
-                        a.args.len() <= 128
-                            && a.args.iter().map(String::len).sum::<usize>() <= 32768,
-                        "Runtime arguments exceed limit"
-                    );
-                    ensure!(
-                        (1..=if a.service { 86400 } else { 3600 }).contains(&a.lifetime_seconds),
-                        "Runtime lifetime exceeds limit"
-                    );
-                    (
-                        a.request_id,
-                        a.purpose,
-                        json!({"executable":executable,"cwd":a.cwd,"argument_count":a.args.len(),"service":a.service,"lifetime_seconds":a.lifetime_seconds}),
-                    )
-                } else {
-                    let a: Stop = arguments(input.clone())?;
-                    (
-                        a.request_id,
-                        a.purpose,
-                        json!({"identity":a.identity,"force":a.force}),
-                    )
-                };
                 ensure!(
-                    !purpose.trim().is_empty() && purpose.len() <= 1000,
-                    "Runtime purpose required (at most 1000 bytes)"
+                    a.cwd.is_absolute() && !a.cwd.components().any(|c| c == Component::ParentDir),
+                    "cwd must be absolute without traversal"
                 );
-                let targets = json!({"region":region,"root":grant.root,"purpose":purpose,"target":target,"arguments":"omitted; input hash retained"});
-                let owned = remote.clone();
-                let operation = name.to_owned();
-                let receipt = remote
-                    .operations()
-                    .submit_and_wait(
-                        owner.clone(),
-                        request,
-                        grant.project_id,
-                        operation.clone(),
-                        original,
-                        targets,
-                        move |operation_id| async move {
-                            let result = async {
-                                let current = environment.grant(&grant.id).await?;
-                                ensure!(
-                                    serde_json::to_value(&current)?
-                                        == serde_json::to_value(&grant)?,
-                                    "Runtime grant changed; submit a new deliberate request"
-                                );
-                                execution_region(&owned, &grant).await?;
-                                if operation == "run_process" {
-                                    let a: Run = arguments(input)?;
-                                    let executable = a.executable.canonicalize()?;
-                                    ensure!(
-                                        executable.is_file(),
-                                        "Executable must be a regular file"
-                                    );
-                                    ensure!(
-                                        !std::path::Path::new(&a.cwd).is_absolute()
-                                            && !std::path::Path::new(&a.cwd).components().any(
-                                                |c| matches!(c, std::path::Component::ParentDir)
-                                            ),
-                                        "cwd must be relative without traversal"
-                                    );
-                                    let cwd = grant.root.join(a.cwd).canonicalize()?;
-                                    ensure!(
-                                        cwd.starts_with(&grant.root),
-                                        "cwd outside runtime region"
-                                    );
-                                    environment
-                                        .processes
-                                        .run_audited(
-                                            &process_owner,
-                                            &grant.root,
-                                            &executable,
-                                            &a.args,
-                                            &cwd,
-                                            a.lifetime_seconds,
-                                            a.service,
-                                            Some((owned.pool.clone(), owner.clone(), operation_id)),
-                                        )
-                                        .await
-                                } else {
-                                    let a: Stop = arguments(input)?;
-                                    let identity =
-                                        stop_identity(&owned, &owner, &grant, &a.identity).await?;
-                                    environment.processes.stop(
-                                        &process_owner,
-                                        &grant.root,
-                                        &identity,
-                                        a.force,
-                                    )
-                                }
-                            }
-                            .await;
-                            match result {
-                                Ok(value) => ("succeeded", value),
-                                Err(error) => {
-                                    ("failed", json!({"message":super::errors::message(&error)}))
-                                }
-                            }
-                        },
-                    )
-                    .await?;
-                Ok(remote.receipt_value(receipt))
+                ensure!(
+                    a.args.len() <= 128 && a.args.iter().map(String::len).sum::<usize>() <= 32768,
+                    "Runtime arguments exceed limit"
+                );
+                ensure!(
+                    (1..=if a.service { 86400 } else { 3600 }).contains(&a.lifetime_seconds),
+                    "Runtime lifetime exceeds limit"
+                );
+                (
+                    a.request_id,
+                    a.purpose,
+                    json!({"cwd":a.cwd,"executable":a.executable,"argument_count":a.args.len()}),
+                )
             }
-            _ => anyhow::bail!("Unknown runtime operation"),
-        }
+            _ => {
+                let a: Stop = arguments(input.clone())?;
+                (
+                    a.request_id,
+                    a.purpose,
+                    json!({"identity":a.identity,"force":a.force}),
+                )
+            }
+        };
+        ensure!(
+            !purpose.trim().is_empty() && purpose.len() <= 1000,
+            "Purpose required (at most 1000 bytes)"
+        );
+        let owned = remote.clone();
+        let operation = name.to_owned();
+        let original = json!({"project_id":project,"arguments":input});
+        let receipt = remote.operations().submit_and_wait(
+            owner.clone(), request, project, operation.clone(), original,
+            json!({"purpose":purpose,"target":target,"arguments":"omitted; input hash retained"}),
+            move |operation_id| async move {
+                let result = async {
+                    let current = environment.current_settings().await?;
+                    ensure!(if operation == "change_runtime_path" {
+                        current.files_enabled && current.file_roots == settings.file_roots
+                    } else { current.execution_enabled }, "Runtime permission changed; submit a new deliberate request");
+                    match operation.as_str() {
+                        "change_runtime_path" => {
+                            let a: Change = arguments(input)?;
+                            let paths = workspace_paths(&owned).await?;
+                            tokio::task::spawn_blocking(move || fs::change(
+                                &settings.file_roots, &paths, &a.action, &a.path,
+                                a.content.as_deref(), a.expected.as_ref(), a.recursive,
+                            )).await?
+                        }
+                        "run_process" => {
+                            let a: Run = arguments(input)?;
+                            let executable = a.executable.canonicalize()?;
+                            let cwd = a.cwd.canonicalize()?;
+                            let workspaces = workspace_paths(&owned).await?;
+                            protect_workspace(&cwd, &workspaces, false)?;
+                            environment.processes.run_audited(
+                                &process_owner, &executable, &a.args, &cwd,
+                                a.lifetime_seconds, a.service,
+                                Some((owned.pool.clone(), owner.clone(), operation_id)), &workspaces,
+                            ).await
+                        }
+                        _ => {
+                            let a: Stop = arguments(input)?;
+                            let identity = stop_identity(&owned, &owner, project, &a.identity).await?;
+                            environment.processes.stop(&process_owner, &identity, a.force)
+                        }
+                    }
+                }.await;
+                match result {
+                    Ok(value) if value["status"] == "failed" => ("failed", value),
+                    Ok(value) if value["status"] == "uncertain" => ("uncertain", value),
+                    Ok(value) => ("succeeded", value),
+                    Err(error) => ("failed", json!({"message":super::errors::message(&error)})),
+                }
+            },
+        ).await?;
+        Ok(remote.receipt_value(receipt))
     }
 }

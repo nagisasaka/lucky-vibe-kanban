@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 use super::{
     environment::Environment,
-    environment_tests::{Http, grant, serve},
+    environment_tests::{Http, serve, settings},
     tests,
 };
 
@@ -146,10 +146,12 @@ async fn switch_host() {
         .await
         .unwrap();
     let instance = PathBuf::from(std::env::var_os("LVK_INSTANCE_DIR").unwrap());
-    let first = grant(&instance);
-    let mut second = first.clone();
-    second.id = "other-grant".into();
-    remote.environment = Some(Arc::new(Environment::new(vec![first, second]).unwrap()));
+    sqlx::query("INSERT OR IGNORE INTO projects(id,name,key) VALUES(?,'Other fixture','OTHER')")
+        .bind(Uuid::from_u128(2))
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    remote.environment = Some(Arc::new(Environment::new(settings(&instance)).unwrap()));
     let base = if std::env::var("LVK_SWITCH_STATUS_ONLY").unwrap() == "1" {
         let http = serve(remote, auth).await;
         let base = http.base.clone();
@@ -203,7 +205,7 @@ async fn environment_switch_http_disconnect_and_reconnect() {
     let id = Uuid::new_v4();
     let mut input = fixture["selection"].clone();
     input["request_id"] = json!(id);
-    input["region"] = json!("example-api");
+    input["project_id"] = json!(Uuid::from_u128(1));
     input["purpose"] = json!("Isolated restart disconnect test");
     input["no_new_work"] = json!(true);
     let receipt = http.value("self_restart", input.clone()).await;
@@ -247,7 +249,7 @@ async fn environment_switch_http_disconnect_and_reconnect() {
     let outcome = restored
         .value(
             "get_self_restart_operation",
-            json!({"region":"example-api","request_id":id}),
+            json!({"project_id":Uuid::from_u128(1),"request_id":id}),
         )
         .await;
     assert_eq!(outcome["status"], "succeeded", "{outcome}");
@@ -257,7 +259,7 @@ async fn environment_switch_http_disconnect_and_reconnect() {
     let other = restored
         .value(
             "get_self_restart_operation",
-            json!({"region":"other-grant","request_id":id}),
+            json!({"project_id":Uuid::from_u128(2),"request_id":id}),
         )
         .await;
     assert_eq!(other["status"], "refused");

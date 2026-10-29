@@ -191,14 +191,12 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "stop_dev_server" => Some("lvk:runtime:execute"),
         "get_dev_server_status"
         | "get_runtime_access"
-        | "list_runtime_files"
-        | "read_runtime_file"
-        | "list_processes"
-        | "inspect_process"
-        | "read_process_output"
+        | "read_runtime_path"
+        | "observe_process"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
         "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
-        "edit_issue_comment"
+        "change_runtime_path"
+        | "edit_issue_comment"
         | "add_issue_comment"
         | "write_design_note"
         | "create_todo"
@@ -232,6 +230,8 @@ fn scope_hint(name: &str, missing: &str) -> String {
         "run_process" | "stop_process" | "self_restart" | "start_dev_server" | "stop_dev_server"
     ) {
         "lvk:read lvk:runtime:read lvk:runtime:execute".into()
+    } else if name == "change_runtime_path" {
+        "lvk:read lvk:runtime:read lvk:write".into()
     } else {
         format!("lvk:read {missing}")
     }
@@ -255,7 +255,7 @@ async fn require_operation_scope(
         return next.run(request).await;
     }
     let (parts, body) = request.into_parts();
-    let bytes = match to_bytes(body, 2 * 1024 * 1024).await {
+    let bytes = match to_bytes(body, 4 * 1024 * 1024).await {
         Ok(bytes) => bytes,
         Err(_) => return StatusCode::PAYLOAD_TOO_LARGE.into_response(),
     };
@@ -265,7 +265,9 @@ async fn require_operation_scope(
             let primary = operation_scope(name)?;
             if !principal.allows(primary) {
                 Some(primary)
-            } else if primary == "lvk:runtime:execute" && !principal.allows("lvk:runtime:read") {
+            } else if (primary == "lvk:runtime:execute" || name == "change_runtime_path")
+                && !principal.allows("lvk:runtime:read")
+            {
                 Some("lvk:runtime:read")
             } else {
                 None
