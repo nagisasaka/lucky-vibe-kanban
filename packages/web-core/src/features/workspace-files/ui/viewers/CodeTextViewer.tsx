@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { CODE_HIGHLIGHT_CLASSES } from '@vibe/ui/lib/code-highlight-theme';
+import { codeHighlightLines } from '../../model/codeHighlightLines';
 import { cn } from '@/shared/lib/utils';
 
 interface CodeTextViewerProps {
@@ -18,7 +20,10 @@ export function CodeTextViewer({
   useEffect(() => {
     selectedRef.current?.scrollIntoView({ block: 'center' });
   }, [content, selectedLine]);
-  const lines = content.length === 0 ? [''] : content.split(/\r\n|\r|\n/);
+  const lines = useMemo(
+    () => codeHighlightLines(content, language),
+    [content, language]
+  );
   const lineNumberWidth = Math.max(2, String(lines.length).length);
 
   return (
@@ -45,7 +50,22 @@ export function CodeTextViewer({
             >
               {index + 1}
             </span>
-            <code className="whitespace-pre px-base text-normal">{line}</code>
+            <code className="whitespace-pre px-base text-normal">
+              {typeof line === 'string'
+                ? line
+                : line.map((segment, segmentIndex) => (
+                    <Fragment key={segmentIndex}>
+                      {segment.types.reduceRight<ReactNode>(
+                        (children, type) => (
+                          <span className={CODE_HIGHLIGHT_CLASSES[type]}>
+                            {children}
+                          </span>
+                        ),
+                        segment.text
+                      )}
+                    </Fragment>
+                  ))}
+            </code>
           </div>
         ))}
       </div>

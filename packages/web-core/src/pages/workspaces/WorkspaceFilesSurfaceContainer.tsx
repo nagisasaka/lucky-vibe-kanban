@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { WorkspaceFilePreviewTarget } from '@/features/workspace-files';
 import { ArrowLeft, GitCompare } from 'lucide-react';
 import { Button } from '@vibe/ui/components/Button';
 import { cn } from '@/shared/lib/utils';
@@ -23,9 +24,10 @@ export function WorkspaceFilesSurfaceContainer({
   const { target, openTarget, clearTarget } =
     useWorkspaceFilesSelection(workspaceId);
   const { findMatchingDiffPath, viewFileInChanges } = useChangesViewActions();
-  const [mobileView, setMobileView] = useState<'browser' | 'preview'>(
-    'browser'
-  );
+  // Dismiss only the current selection. A new open request (including the
+  // same file from chat) must reveal the preview again.
+  const [dismissedTarget, setDismissedTarget] =
+    useState<WorkspaceFilePreviewTarget | null>(null);
 
   const matchingDiffPath = useMemo(() => {
     if (!target) return null;
@@ -38,7 +40,7 @@ export function WorkspaceFilesSurfaceContainer({
   };
 
   if (mobile) {
-    const showPreview = mobileView === 'preview' && target;
+    const showPreview = target && target !== dismissedTarget;
 
     return (
       <div className={cn('flex h-full min-h-0 flex-col bg-primary', className)}>
@@ -49,7 +51,7 @@ export function WorkspaceFilesSurfaceContainer({
                 type="button"
                 size="xs"
                 variant="secondary"
-                onClick={() => setMobileView('browser')}
+                onClick={() => setDismissedTarget(target)}
               >
                 <ArrowLeft className="mr-half size-3" />
                 Files
@@ -74,7 +76,7 @@ export function WorkspaceFilesSurfaceContainer({
               className="min-h-0 flex-1"
               onClearTarget={() => {
                 clearTarget();
-                setMobileView('browser');
+                setDismissedTarget(target);
               }}
             />
           </>
@@ -85,7 +87,6 @@ export function WorkspaceFilesSurfaceContainer({
             source="file-tree"
             onSelectFile={(nextTarget) => {
               openTarget(nextTarget);
-              setMobileView('preview');
             }}
             className="border-r-0"
           />

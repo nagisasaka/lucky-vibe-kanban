@@ -18,7 +18,8 @@ import { randomUUID } from 'node:crypto';
 
 // Run after building this checkout's server and local-web. Own instance, DB,
 // runtime, kernel-assigned loopback ports, browser context and foreground child.
-const nativeLayout = process.argv.includes('--native');
+const mobileNavigation = process.argv.includes('--mobile-navigation');
+const nativeLayout = process.argv.includes('--native') || mobileNavigation;
 const scratch = await mkdtemp(join(tmpdir(), 'lvk-chat-files-'));
 const instance = join(scratch, 'instance');
 const workspace = join(scratch, 'workspace');
@@ -185,6 +186,9 @@ c.commit()
     });
     page.on('pageerror', (error) => errors.push(error.message));
     const { verifyNativeFileLink } = await import('./file-links.native.mjs');
+    const { verifyMobileNavigation } = await import(
+      './mobile-navigation.native.mjs'
+    );
     try {
       await verifyNativeFileLink(
         page,
@@ -193,6 +197,7 @@ c.commit()
         repoId,
         seed.session_id
       );
+      if (mobileNavigation) await verifyMobileNavigation(page, base);
       assert.deepEqual(errors, []);
     } catch (error) {
       console.error('Native page:', await page.locator('body').innerText());

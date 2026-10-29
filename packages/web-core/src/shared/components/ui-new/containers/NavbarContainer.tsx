@@ -3,7 +3,7 @@ import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
 import { GitMergeIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useActions } from '@/shared/hooks/useActions';
@@ -144,34 +144,17 @@ export function NavbarContainer({
     projectDestination !== null && projectDestination.kind !== 'project';
   const [mobileActiveTab, setMobileActiveTab] = useMobileActiveTab();
 
-  // Keep the simplified mobile navigation, adding only the Wiki reader.
-  // Do not reset a valid Wiki selection on workspace/session rerenders.
+  // Only data availability restricts tabs; mobile has the same workspace tools.
   const mobileWorkspaceTabs = useMemo(
     () =>
       MOBILE_TABS.filter(
         (tab) =>
+          tab.id === 'workspaces' ||
           tab.id === 'chat' ||
-          ((tab.id === 'wiki' || tab.id === 'todos') &&
-            !isCreateMode &&
-            Boolean(selectedWorkspace))
+          (!isCreateMode && Boolean(selectedWorkspace))
       ),
     [isCreateMode, selectedWorkspace]
   );
-  useEffect(() => {
-    if (
-      mobileMode &&
-      !isOnProjectPage &&
-      !mobileWorkspaceTabs.some((tab) => tab.id === mobileActiveTab)
-    ) {
-      setMobileActiveTab('chat');
-    }
-  }, [
-    mobileMode,
-    isOnProjectPage,
-    mobileActiveTab,
-    mobileWorkspaceTabs,
-    setMobileActiveTab,
-  ]);
 
   const handleMobileTabChange = useCallback(
     (tab: MobileTabId) => {
