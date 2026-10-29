@@ -42,6 +42,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         "safe-drift",
         "drift",
         "wiki-error",
+        "wiki-resume",
         "cancel",
         "intent-crash",
         "receipt-crash",
@@ -51,6 +52,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
     {
         let drift = mode == "drift";
         let wiki_error = mode == "wiki-error";
+        let wiki_resume = mode == "wiki-resume";
         let cancel = mode == "cancel";
         let pool = &deployment.db().pool;
         let root = instance.join(mode);
@@ -211,7 +213,7 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             git(&["merge", "--ff-only", &source])?;
         }
         let code_candidate = candidate.clone();
-        let candidate = if wiki_error {
+        let candidate = if wiki_error || wiki_resume {
             std::fs::create_dir_all(checkout.join("openwiki"))?;
             std::fs::write(checkout.join("openwiki/index.md"), "fixture Wiki")?;
             support::git(&checkout, &["add", "openwiki"])?;
@@ -225,11 +227,13 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         };
         let mut publish = call(Uuid::new_v4(), "publish", &candidate, None);
         publish.code_commit = Some(code_candidate.clone());
-        if wiki_error {
+        if wiki_error || wiki_resume {
             publish.wiki_commit = Some(candidate.clone());
         }
-        action(deployment, publish.clone()).await?;
-        action(deployment, publish).await?;
+        if !wiki_resume {
+            action(deployment, publish.clone()).await?;
+            action(deployment, publish).await?;
+        }
         ensure!(git(&["rev-parse", "main"])? != candidate); // acceptance never publishes while worker lives
         if cancel {
             crate::remote_mcp::integration_write_tests::exercise_cancel(
@@ -274,6 +278,48 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
             .await?;
         }
         sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id IN (SELECT id FROM agent_run_attempts WHERE agent_run_id=?)").bind(agent).execute(pool).await?;
+        if wiki_resume {
+            let wiki_id = Uuid::new_v4();
+            record_wiki_audit(pool, &request, &attempt, &checkout, wiki_id, false).await?;
+            advance(deployment, IntegrationRun::find(pool, id).await?).await?;
+            let mut stopped = IntegrationRun::find(pool, id).await?;
+            ensure!(stopped.status == "blocked" && !stopped.payload.published);
+            resume(deployment, &mut stopped).await?;
+            // A later successful Run in the same conversation owns the finish.
+            let mut followup = request.clone();
+            followup.agent_run_id = Uuid::new_v4();
+            followup.request_id = Uuid::new_v4();
+            followup.turn_id = Uuid::new_v4();
+            followup.idempotency_key = Uuid::new_v4().to_string();
+            followup.intent = AgentRunIntent::FollowUp;
+            followup.created_at = chrono::Utc::now();
+            let mut followup_attempt = attempt.clone();
+            followup_attempt.agent_run_id = followup.agent_run_id;
+            followup_attempt.turn_id = followup.turn_id;
+            followup_attempt.run_attempt_id = Uuid::new_v4();
+            followup_attempt.request_id = Uuid::new_v4();
+            followup_attempt.idempotency_key = Uuid::new_v4().to_string();
+            followup_attempt.created_at = followup.created_at;
+            deployment
+                .agent_run_port()
+                .reserve(followup.clone(), followup_attempt.clone())
+                .await?;
+            let mut publish = call(Uuid::new_v4(), "publish", &candidate, None);
+            publish.agent_run_id = followup.agent_run_id;
+            publish.code_commit = Some(code_candidate.clone());
+            publish.wiki_commit = Some(candidate.clone());
+            action(deployment, publish).await?;
+            sqlx::query("UPDATE agent_runs SET status='succeeded' WHERE id=?")
+                .bind(followup.agent_run_id)
+                .execute(pool)
+                .await?;
+            sqlx::query("UPDATE agent_run_attempts SET status='succeeded' WHERE id=?")
+                .bind(followup_attempt.run_attempt_id)
+                .execute(pool)
+                .await?;
+            sqlx::query("UPDATE agent_process_registry SET registry_status='exited',pid=999999997,process_started_at=datetime('now','subsec'),observed_exited_at=datetime('now','subsec') WHERE run_attempt_id=?").bind(followup_attempt.run_attempt_id).execute(pool).await?;
+            record_wiki_audit(pool, &followup, &followup_attempt, &checkout, wiki_id, true).await?;
+        }
         let mut next = IntegrationRun::find(pool, id).await?;
         if mode == "intent-crash" {
             next.status = "validating".into();
@@ -369,4 +415,73 @@ async fn exercise(deployment: &DeploymentImpl, instance: &std::path::Path) -> an
         }
     }
     anyhow::Ok(())
+}
+
+/// Audits belong to the isolated instance and are removed with that instance.
+async fn record_wiki_audit(
+    pool: &sqlx::SqlitePool,
+    request: &executors::runtime::AgentRunRequestEnvelope,
+    attempt: &executors::runtime::RunAttemptRequest,
+    root: &std::path::Path,
+    wiki_id: Uuid,
+    resumed: bool,
+) -> anyhow::Result<()> {
+    use executors::runtime::*;
+    use serde_json::json;
+    let mut writer = NativeAuditWriter::create_in(
+        utils::assets::asset_dir(),
+        NativeAuditMetadata {
+            session_id: request.session_id,
+            agent_run_id: request.agent_run_id,
+            turn_id: request.turn_id,
+            run_attempt_id: attempt.run_attempt_id,
+            run_attempt_number: attempt.attempt_number,
+            provider_id: "codex".into(),
+            runtime_profile_id: request.runtime_profile_id.clone(),
+            workspace_path: request.workspace.path.clone(),
+            runtime_version: None,
+            protocol_version: None,
+            adapter_version: "fixture".into(),
+            mapper_version: "fixture".into(),
+            created_at: chrono::Utc::now(),
+        },
+    )?;
+    let mut frames =
+        vec![json!({"id":3,"result":{"thread":{"id":"root"},"cwd":request.workspace.path}})];
+    let mut calls = vec![(
+        "openwiki_begin",
+        json!({"root":root,"mode":"update"}),
+        json!({"root":root,"mode":"update","runId":wiki_id,"status":"active","resumed":resumed}),
+    )];
+    if resumed {
+        calls.push((
+            "openwiki_finish",
+            json!({"runId":wiki_id}),
+            json!({"status":"complete"}),
+        ));
+    }
+    for (tool, args, result) in calls {
+        let call_id = Uuid::new_v4();
+        for method in ["item/started", "item/completed"] {
+            frames.push(json!({"method":method,"params":{"threadId":"root","item":{
+                "id":call_id,"type":"mcpToolCall","server":"openwiki","tool":tool,"arguments":args,
+                "result":{"structuredContent":result},"error":null,"status":"completed"
+            }}}));
+        }
+    }
+    for frame in frames {
+        writer.append_bytes(
+            NativeAuditDirection::Output,
+            NativeAuditChannel::Stdout,
+            "application/json",
+            Uuid::new_v4(),
+            &serde_json::to_vec(&frame)?,
+            None,
+        )?;
+    }
+    let manifest = writer.close()?;
+    sqlx::query("INSERT INTO native_audit_streams (id,session_id,agent_run_id,run_attempt_id,audit_schema_version,adapter_version,mapper_version,manifest_relative_path,frames_relative_path,integrity_status) VALUES(?,?,?,?,1,'fixture','fixture',?,?,'complete')")
+        .bind(attempt.run_attempt_id).bind(request.session_id).bind(request.agent_run_id).bind(attempt.run_attempt_id)
+        .bind(manifest.manifest_relative_path).bind(manifest.frames_relative_path).execute(pool).await?;
+    Ok(())
 }

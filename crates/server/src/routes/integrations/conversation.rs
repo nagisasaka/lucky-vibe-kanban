@@ -565,21 +565,17 @@ pub(super) async fn advance(
             )
             .await;
         }
-        let attempts =
-            crate::routes::openwiki::completion::ensure_processes_exited(pool, &agent).await?;
+        crate::routes::openwiki::completion::ensure_processes_exited(pool, &agent).await?;
         if run.payload.wiki_enabled {
             let (_, _, _, root) = runtime::context(deployment, &run).await?;
-            crate::routes::openwiki::completion::writer_completion_proof(
+            crate::routes::openwiki::completion::conversation_completion_proof(
                 pool,
                 &agent,
-                &attempts,
+                run.id,
                 run.workspace_id.unwrap(),
-                std::path::Path::new(&agent.workspace_path),
                 &root,
-                services::services::openwiki::completion::WriterPhase::Sync,
             )
-            .await?
-            .validate()?;
+            .await?;
         }
         run.status = "validating".into(); // publication hand-off, not a host validation plan
         run.save(pool).await?;
