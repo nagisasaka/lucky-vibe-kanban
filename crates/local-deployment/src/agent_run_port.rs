@@ -993,7 +993,17 @@ impl LocalAgentRunPort {
         env.insert("VK_RUN_ATTEMPT_ID", attempt.run_attempt_id.to_string());
         env.insert("OPENWIKI_TELEMETRY_DISABLED", "1");
         if integration.is_some() {
+            let mcp = integration_mcp_executable(&resolve_process_host_executable()?)?;
             env.insert("LVK_INTEGRATION_WORKER", "1");
+            env.insert("LVK_INTEGRATION_MCP_COMMAND", mcp.to_string_lossy());
+            if let Some(instance) = utils::instance::instance_dir() {
+                env.insert("LVK_INSTANCE_DIR", instance.to_string_lossy());
+            }
+            let port = local_api_port.ok_or_else(|| {
+                AgentRunPortError::Unavailable("Integration MCP backend port unavailable".into())
+            })?;
+            env.insert("MCP_HOST", "127.0.0.1");
+            env.insert("MCP_PORT", port.to_string());
         }
         if resource_mediator {
             env.insert("LVK_RESOURCE_MEDIATOR", "1");
@@ -3876,6 +3886,45 @@ impl AgentRunPort for LocalAgentRunPort {
         Ok(stream::iter(history.into_iter().map(|event| event.0))
             .chain(live)
             .boxed())
+    }
+}
+
+// Pair the worker MCP with the selected process-host distribution, never PATH.
+fn integration_mcp_executable(host: &Path) -> Result<PathBuf, AgentRunPortError> {
+    let name = if cfg!(windows) {
+        "vibe-kanban-mcp.exe"
+    } else {
+        "vibe-kanban-mcp"
+    };
+    let mcp = host.with_file_name(name);
+    if mcp.is_absolute() && mcp.is_file() {
+        Ok(mcp)
+    } else {
+        Err(AgentRunPortError::Unavailable(format!(
+            "Integration MCP executable missing next to process host: {}",
+            mcp.display()
+        )))
+    }
+}
+
+#[cfg(test)]
+mod integration_mcp_tests {
+    use super::*;
+
+    #[test]
+    fn uses_paired_runtime_binary_and_refuses_missing_binary() {
+        let root = tempfile::tempdir().unwrap();
+        let host = root.path().join("agent-process-host");
+        assert!(integration_mcp_executable(&host).is_err());
+        let name = if cfg!(windows) {
+            "vibe-kanban-mcp.exe"
+        } else {
+            "vibe-kanban-mcp"
+        };
+        let mcp = root.path().join(name);
+        std::fs::write(&mcp, b"fixture").unwrap();
+        assert_eq!(integration_mcp_executable(&host).unwrap(), mcp);
+        assert!(integration_mcp_executable(Path::new("relative/agent-process-host")).is_err());
     }
 }
 
