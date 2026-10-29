@@ -185,6 +185,31 @@ def snapshot():
     }
 
 
+def stdio_guard(a):
+    """Existing local-UID trust, plus authoritative runtime/project scope reads.
+
+    OAuth principals stay in remote MCP. No token, claimed owner or permissions
+    are accepted from stdio tool input, and operator CLI policy is unchanged.
+    """
+    project = getattr(a, "stdio_project", None)
+    if project is None:
+        return
+    project_id = uuid.UUID(project)
+    s.need(getattr(a, "stdio_port", None) == CONFIG["port"], "Stdio instance/port mismatch")
+    with s.ro(DEV / "data/db.v2.sqlite") as db:
+        row = db.execute("SELECT settings FROM runtime_access_settings WHERE id=1").fetchone()
+        settings = json.loads(row[0]) if row else {}
+        s.need(settings.get("execution_enabled") is True, "Program execution disabled")
+        s.need(db.execute("SELECT 1 FROM projects WHERE id=?", (project_id.bytes,)).fetchone(), "Unknown stdio project")
+        workspace = getattr(a, "stdio_workspace", None)
+        if workspace is not None:
+            s.need(db.execute("SELECT 1 FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id WHERE l.workspace_id=? AND i.project_id=?", (uuid.UUID(workspace).bytes, project_id.bytes)).fetchone(), "Workspace is outside stdio project")
+
+
+def stdio_owner(project):
+    return "stdio-" + hashlib.sha256(json.dumps([os.getuid(), str(uuid.UUID(project))]).encode()).hexdigest()
+
+
 BUSY_RECHECK_SECONDS = 30
 
 
@@ -196,6 +221,7 @@ def preflight(a, *, dry_run=False, expected=None):
         not (DEV / "run/supervisor.sock").exists(),
         "Supervisor ownership requires operator recovery",
     )
+    stdio_guard(a)
     selected = inspect(a)
     selected["snapshot"] = snapshot()
     if expected is not None:
@@ -383,6 +409,7 @@ def execute(op, request, config_path):
     try:
         stage("preflight")
         s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
+        stdio_guard(a)
         inspect(a)
         expected = request.get("snapshot")
         s.need(snapshot() == expected, "Running instance changed after admission")
@@ -406,6 +433,7 @@ def execute(op, request, config_path):
         s.need(snapshot() == expected, "Launch settings or running identity changed")
         verify_release(selected)
         verify_release(previous)
+        stdio_guard(a)
         s.resources()
         s.idle(expected["identity"]["pid"])
         s.stop(expected["identity"], previous["manifest"]["files"]["server"])
@@ -496,6 +524,7 @@ def submit(a, config_path):
             "lock_fd",
             "admission_fd",
         ]
+        and not (k in ["stdio_project", "stdio_workspace", "stdio_port", "purpose"] and v is None)
     }
     request = {"owner": a.owner, "arguments": args}
     root = DEV / "switch-operations"
@@ -602,6 +631,10 @@ def main():
     p.add_argument("--request-id")
     p.add_argument("--owner", default="operator")
     p.add_argument("--async", dest="asynchronous", action="store_true")
+    p.add_argument("--stdio-project", help=argparse.SUPPRESS)
+    p.add_argument("--stdio-workspace", help=argparse.SUPPRESS)
+    p.add_argument("--stdio-port", type=int, help=argparse.SUPPRESS)
+    p.add_argument("--purpose", help=argparse.SUPPRESS)
     p.add_argument("--status", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--snapshot-stdin", action="store_true", help=argparse.SUPPRESS)
@@ -611,6 +644,14 @@ def main():
     a = p.parse_args()
     os.umask(0o077)
     config = configure(a.instance)
+    if a.stdio_project is not None:
+        s.need(a.owner == "operator" and not a.worker and not a.snapshot_stdin and not a.dry_run, "Invalid stdio invocation")
+        stdio_guard(a)
+        a.owner = stdio_owner(a.stdio_project)
+        if not a.status:
+            s.need(a.asynchronous and a.no_new_work and a.purpose and 0 < len(a.purpose.strip()) <= 1000, "Explicit stdio purpose and no-new-work required")
+    else:
+        s.need(a.stdio_workspace is None and a.stdio_port is None, "Missing stdio project")
     if a.worker:
         s.need(
             a.lock_fd is not None

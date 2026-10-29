@@ -79,19 +79,15 @@ pub fn configured_router(
     let environment = Arc::new(environment::Environment::managed(
         deployment.db().pool.clone(),
     ));
-    let pool = deployment.db().pool.clone();
-    let settings = environment_settings::router(pool.clone());
-    let router = access_router(
+    let settings = environment_settings::router(deployment.db().pool.clone());
+    Ok(access_router(
         deployment.db().pool.clone(),
         Some(Arc::new(runtime_write::ExistingRuntime(deployment.clone()))),
         Some(Arc::new(launch::ExistingLaunch(deployment))),
         access,
         Some(environment),
     )
-    .merge(settings);
-    #[cfg(target_os = "linux")]
-    let router = router.merge(environment_switch::stdio_router(pool));
-    Ok(router)
+    .merge(settings))
 }
 
 // Production HTTP entry, shared with the JWT-to-tool integration fixture.

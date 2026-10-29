@@ -1,4 +1,4 @@
-//! Thin stdio delegation to the same authenticated, durable remote MCP operation.
+//! Thin local stdio delegation to the existing durable switch engine.
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
     tool_router,
@@ -28,13 +28,13 @@ struct Status {
 #[tool_router(router = self_restart_tools_router, vis = "pub")]
 impl McpServer {
     #[tool(
-        description = "Explicit developer-instance self restart through the existing authenticated durable engine. Requires user authorisation, no_new_work coordination and enabled runtime execution. After durable admission end this Codex Run so its children/writers can settle; admission is not restart success. The engine waits 30 seconds and rechecks once only if its initial preflight is busy. Query get_self_restart_operation with the same request_id after reconnecting. Never substitute run_process or kill."
+        description = "Explicit developer-instance self restart through the installed common engine using local UID/instance trust, not an OAuth principal. Requires user authorisation, no_new_work coordination and enabled runtime execution. After durable admission end this Codex Run so its children/writers can settle; admission is not restart success. The engine waits 30 seconds and rechecks once only if its initial preflight is busy. Query get_self_restart_operation with the same request_id after reconnecting. Never substitute run_process or kill."
     )]
     async fn self_restart(
         &self,
         Parameters(a): Parameters<Restart>,
     ) -> Result<CallToolResult, ErrorData> {
-        self.restart_rpc("self_restart", json!(a)).await
+        self.restart_via_engine("self_restart", json!(a)).await
     }
     #[tool(
         description = "Read the existing durable self restart receipt/result using the original project_id and request_id. Does not restart, retry or approve anything; admission is separate from successful cutover."
@@ -43,104 +43,155 @@ impl McpServer {
         &self,
         Parameters(a): Parameters<Status>,
     ) -> Result<CallToolResult, ErrorData> {
-        self.restart_rpc("get_self_restart_operation", json!(a))
+        self.restart_via_engine("get_self_restart_operation", json!(a))
             .await
     }
 }
 impl McpServer {
-    async fn restart_rpc(&self, name: &str, arguments: Value) -> Result<CallToolResult, ErrorData> {
-        // Server access verifies the existing loopback capability. The adapter
-        // delegates to the remote restart implementation, with no stdio sleep.
-        match self
-            .send_json::<Value>(
-                self.client
-                    .post(self.url(&format!("/api/self-restart/{name}")))
-                    .timeout(std::time::Duration::from_secs(20))
-                    .json(&arguments),
-            )
-            .await
-        {
+    async fn restart_via_engine(
+        &self,
+        name: &str,
+        input: Value,
+    ) -> Result<CallToolResult, ErrorData> {
+        let result = self.invoke_restart(name, input).await;
+        match result {
+            Ok(value)
+                if matches!(
+                    value["status"].as_str(),
+                    Some("refused" | "failed" | "interrupted")
+                ) =>
+            {
+                Ok(CallToolResult::error(vec![rmcp::model::Content::text(
+                    value.to_string(),
+                )]))
+            }
             Ok(value) => Self::success(&value),
             Err(_) => Self::err(
-                "Self restart response unavailable; query the same request_id before retrying",
+                "Self restart unavailable; inspect the same request_id before retrying",
                 None,
             ),
         }
+    }
+
+    async fn invoke_restart(&self, name: &str, input: Value) -> anyhow::Result<Value> {
+        use anyhow::{Context, ensure};
+        let project: Uuid = serde_json::from_value(input["project_id"].clone())?;
+        if let Some(bound) = self.context.as_ref().and_then(|c| c.project_id) {
+            ensure!(project == bound, "Project is outside stdio context");
+        }
+        let backend = reqwest::Url::parse(&self.base_url)?;
+        ensure!(
+            backend.scheme() == "http"
+                && backend.username().is_empty()
+                && backend.password().is_none()
+                && backend.query().is_none()
+                && backend.fragment().is_none()
+                && matches!(
+                    backend.host_str(),
+                    Some("127.0.0.1" | "localhost" | "[::1]")
+                ),
+            "Local stdio instance required"
+        );
+        let instance =
+            utils::instance::instance_dir_read_only()?.context("Developer instance required")?;
+        let engine = instance.join("switch/start_binary.py");
+        ensure!(
+            engine.canonicalize()? == engine,
+            "Fixed engine cannot be aliased"
+        );
+        let request: Uuid = serde_json::from_value(input["request_id"].clone())?;
+        let mut command = tokio::process::Command::new("/usr/bin/python3");
+        command
+            .arg(engine)
+            .arg("--instance")
+            .arg(instance)
+            .arg("--stdio-project")
+            .arg(project.to_string())
+            .arg("--stdio-port")
+            .arg(
+                backend
+                    .port_or_known_default()
+                    .context("Backend port missing")?
+                    .to_string(),
+            )
+            .arg("--request-id")
+            .arg(request.to_string());
+        if let Some(context) = &self.context {
+            command
+                .arg("--stdio-workspace")
+                .arg(context.workspace_id.to_string());
+        }
+        match name {
+            "self_restart" => {
+                let a: Restart = serde_json::from_value(input)?;
+                ensure!(
+                    a.no_new_work
+                        && !a.purpose.trim().is_empty()
+                        && a.purpose.len() <= 1000
+                        && std::path::Path::new(&a.bundle).is_absolute(),
+                    "Explicit purpose, bundle and coordination required"
+                );
+                command.args([
+                    "--async",
+                    "--no-new-work",
+                    "--purpose",
+                    &a.purpose,
+                    "--bundle",
+                    &a.bundle,
+                ]);
+            }
+            "get_self_restart_operation" => {
+                let _: Status = serde_json::from_value(input)?;
+                command.arg("--status");
+            }
+            _ => anyhow::bail!("Unsupported restart action"),
+        }
+        command
+            .env_clear()
+            .env("PATH", "/usr/local/bin:/usr/bin:/bin")
+            .env("LANG", "C.UTF-8")
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null())
+            .kill_on_drop(true);
+        // Only admission/status is awaited. The existing detached worker owns the
+        // durable lock and waits for this caller's writers to settle independently.
+        let output =
+            tokio::time::timeout(std::time::Duration::from_secs(15), command.output()).await??;
+        ensure!(output.stdout.len() <= 65536, "Engine response too large");
+        let value: Value = serde_json::from_slice(&output.stdout)?;
+        ensure!(
+            value.is_object()
+                && (output.status.success()
+                    || matches!(
+                        value["status"].as_str(),
+                        Some("refused" | "failed" | "interrupted")
+                    )),
+            "Engine response unavailable"
+        );
+        Ok(value)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
     use super::*;
-
-    #[tokio::test]
-    async fn delegates_same_request_to_formal_route_and_preserves_admission_and_errors() {
-        crate::task_server::tools::tests::install_rustls_provider();
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let server = McpServer::new_global(&format!("http://{}", listener.local_addr().unwrap()));
-        let args = json!({"project_id":Uuid::new_v4(),"request_id":Uuid::new_v4(),"purpose":"fixture","bundle":"/fixture","no_new_work":true});
-        let expected = args.clone();
-        let backend = tokio::spawn(async move {
-            for name in ["self_restart", "self_restart", "get_self_restart_operation"] {
-                let (mut socket, _) = listener.accept().await.unwrap();
-                let mut head = Vec::new();
-                while !head.ends_with(b"\r\n\r\n") {
-                    head.push(socket.read_u8().await.unwrap());
-                }
-                let head = String::from_utf8(head).unwrap();
-                assert!(head.starts_with(&format!("POST /api/self-restart/{name} HTTP/1.1")));
-                let size: usize = head
-                    .lines()
-                    .find_map(|l| {
-                        l.to_lowercase()
-                            .strip_prefix("content-length: ")
-                            .map(str::to_owned)
-                    })
-                    .unwrap()
-                    .parse()
-                    .unwrap();
-                let mut body = vec![0; size];
-                socket.read_exact(&mut body).await.unwrap();
-                let rpc: Value = serde_json::from_slice(&body).unwrap();
-
-                assert_eq!(rpc["request_id"], expected["request_id"]);
-                let value = if name == "self_restart" {
-                    assert_eq!(rpc, expected);
-                    json!({"success":true,"data":{"admission":"durable accepted","cutover_success":false}})
-                } else {
-                    json!({"success":false,"message":"owner denied"})
-                };
-                let body = value.to_string();
-                socket.write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{}",body.len(),body).as_bytes()).await.unwrap();
-            }
-        });
-        for _ in 0..2 {
-            assert_ne!(
-                server
-                    .restart_rpc("self_restart", args.clone())
-                    .await
-                    .unwrap()
-                    .is_error,
-                Some(true)
-            );
+    #[test]
+    fn stdio_cannot_override_local_authority_or_owner() {
+        let request = json!({"project_id":Uuid::new_v4(),"request_id":Uuid::new_v4(),"purpose":"fixture","bundle":"/bundle","no_new_work":true});
+        assert!(serde_json::from_value::<Restart>(request.clone()).is_ok());
+        for field in [
+            "instance",
+            "owner",
+            "engine",
+            "stdio_project",
+            "stdio_workspace",
+            "snapshot",
+        ] {
+            let mut invalid = request.clone();
+            invalid[field] = json!("override");
+            assert!(serde_json::from_value::<Restart>(invalid).is_err());
         }
-        assert_eq!(
-            server
-                .restart_rpc(
-                    "get_self_restart_operation",
-                    json!({"project_id":args["project_id"],"request_id":args["request_id"]})
-                )
-                .await
-                .unwrap()
-                .is_error,
-            Some(true)
-        );
-        backend.await.unwrap();
-        let mut invalid = args;
-        invalid["instance"] = json!("/other");
-        assert!(serde_json::from_value::<Restart>(invalid).is_err());
         for router in [
             McpServer::global_mode_router(),
             McpServer::orchestrator_mode_router(),

@@ -148,27 +148,39 @@ CLIでMCP所有operationを見る場合だけ、保護されたrequestのowner�
 
 ### 初回導入とstdio委任
 
-bundleは3binaryとmanifestだけで、instanceの固定`switch/` kitを更新しません。
-旧kitに新bundleを渡しただけでは30秒のbusy再確認は有効になりません。
-通常のレビュー・main統合・新bundleのbuild/隔離検証後、別途承認されたoperator作業で、
-対象instanceと進行中operationがないことを確認し、現kitを復旧用に保持した上で、
-同じrevisionの`launcher.py`、`start_binary.py`、`start_support.py`、`terminal_drain.py`、`start.sh`を
-固定kitへ整合して導入してください。稼働中workerのkitを置き換えたり、source symlinkで代用したりしません。
-launch/current/dataや認証情報を新規作成・上書きする手順ではありません。
+bundleは3binaryとmanifestだけで、固定`switch/` kitは自動更新しません。
+30秒再確認とstdio直接受付を使うには、レビュー・main統合・新bundleの隔離検証後に、
+別途承認されたoperator作業で、対象instanceと進行中operationがないことを確認してください。
+現kitを復旧用に保持し、同じrevisionの`launcher.py`、`start_binary.py`、`start_support.py`、
+`terminal_drain.py`、`start.sh`を整合して配置します。実行中workerのkitは置換せず、
+source symlinkで代用しません。launch/current/dataや既存認証情報を上書き・コピーする手順ではありません。
 
-30秒再確認はengine内の変更で、remote受付の引数・snapshot・owner・永続receipt契約は変更しません。
-同契約を持つ旧serverの既存remote受付から新kitを呼べます。一方、新stdioは新serverの
-internal認証専用`/api/self-restart/{action}` adapterへ委任するので、旧serverとは非互換です。
-固定kitだけ更新しても新stdio受付は導入されません。新stdio binaryを旧serverへ接続したり、
-OAuth専用`/mcp`へinternal tokenを送ったりしてこの依存を回避しません。
-新serverと新stdioが導入済みで、既存loopback internal認証・runtime execution設定・対象instanceの
-固定kit/launchが有効であることがstdio委任の前提です。adapterは再起動と結果読取だけを受け付け、
-同じremote処理関数のproject/scope/設定/instance/owner検査と永続engineを使います。
-stdio内部principalのreceiptはその所有者に紐付き、別のremote principalへ移譲されません。
-「初回も上位AIのMCPを使わずCodexの新stdioだけで試す」という条件がある場合、旧serverのままでは
-満たせません。初回server導入方法について相談し、既存認証の迂回や無断のkit/server置換は行いません。
-受付後は担当Runを終了して子孫/writerを収束させ、同じprincipal/project/request IDで結果を読みます。
-busyが30秒後も残れば未切替で停止し、operator判断なしの再送・再実行はしません。
+261のstdioにはself_restartがありません。新しいstdio binaryを明示するMCP起動設定で
+Codex側stdio processを起動し直す必要がありますが、LVK serverの先行再起動は不要です。
+instanceは既存の`LVK_INSTANCE_DIR`、接続先は`MCP_HOST`/`MCP_PORT`（既存port discoveryも可）を使い、
+設定済みloopback/portとkitのlaunch設定が一致する必要があります。tool引数でinstance/engine/ownerは変更できません。
+既存stdio同様、これは同一OSユーザーの信頼するローカル実行です。OAuth principalやBearer scopeを
+持つと偽装せず、OAuth専用/mcpを迂回するHTTP adapterも追加しません。
+stdioは共通engineの正式CLIへ`--async`で委任し、永続受付だけを返します。
+engineは既存runtime設定の`execution_enabled`、projectの存在、Workspace contextがある場合は
+そのProjectリンクを既存DBから読取確認します。contextにprojectがあればstdio側でも一致を確認します。
+global stdioでcontextがない場合は、既存global discovery同様に明示projectを使います。
+operator CLIの既存権限モデルは変更せず、remoteは従来のOAuth scope・project許可と設定確認を維持します。
+stdio結果のownerはOS UIDとprojectから決まるinstance内namespaceです。remoteのissuer/subject由来ownerとは
+区別し、別channelのreceiptを自分の成功として読んだり、そのrequest IDを流用したりしません。
+
+初回も、旧261serverを動かしたまま新kitと新stdioを正規導入した後、Codexへ明示承認済みbundleの
+`self_restart`を依頼できます。上位AIの新remote MCPによる再起動を前提にしません。
+受付後は担当Codex Runを終了して子孫/writerを収束させ、復帰後に同じproject/request IDの
+`get_self_restart_operation`を使います。stdio processだけを終了しても担当Runやhostが残ればbusyは解消しません。
+30秒後もbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
+Codexの既存MCP設定では`mcp_servers.vibe_kanban.command`を、保持した検証済み新bundleの
+`vibe-kanban-mcp`絶対pathにします。旧serverが設定したPATHは旧releaseを先頭にするので、
+単にcommandをbasenameのままにして新bundleを置くだけでは切り替わりません。
+既存の同一UID・instance/loopback/portを使い、認証情報やHOMEを別場所へコピーしません。
+新しい通常Codex Runでstdioを再生成し、まずtools/listでself_restartと結果取得toolの露出を確認します。
+新stdioのMCPクライアントへの配置・設定再読込/stdio process再生成と、LVK serverの再起動は別操作です。
+この導入自体にも別途承認が必要で、source変更やbundle buildだけで稼働環境へ反映されたとは扱いません。
 
 ### 旧契約からの移行
 
@@ -216,7 +228,8 @@ resource snapshotのholders/queueは停止前に拒否します。未使用resou
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
 python3 -m unittest discover -s deploy/developer/switch -p test_terminal_drain.py -v
 python3 -m unittest discover -s deploy/developer/switch -p test_busy_recheck.py -v
-CARGO_BUILD_JOBS=2 cargo test -p server --features developer-runtime --lib remote_mcp::environment -- --test-threads=2
+CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs test -p server --features developer-runtime --lib remote_mcp::environment
+LVK_TEST_MCP_BINARY=/absolute/checkout/target/debug/vibe-kanban-mcp python3 -m unittest discover -s deploy/developer/switch -p test_stdio_restart.py -v
 ```
 
 C/SQLite fixtureはlive DB・実認証・実モデルを使いません。production MCP routerの隔離testは
