@@ -17,6 +17,15 @@ class Refuse(Exception):
     pass
 
 
+class Busy(Refuse):
+    """Transient physical occupancy; never an authorization or integrity failure."""
+
+
+def need_idle(ok, why):
+    if not ok:
+        raise Busy(why)
+
+
 def need(ok, why):
     if not ok:
         raise Refuse(why)
@@ -139,7 +148,7 @@ def get(path):
 def resources():
     j = get("/api/resource-coordination/snapshot")
     need(j.get("success"), "Resource snapshot failed")
-    need(
+    need_idle(
         not any(j["data"][k] for k in ["holders", "queue"]),
         "Resource holders or queued operations remain; coordinate before switching",
     )
@@ -159,7 +168,7 @@ def idle(server_pid):
     and attests --no-new-work; current children, instance processes and data users
     remain hard guards, rechecked inside the pidfd-bound stop.
     """
-    need(not descendants(server_pid), "Dev has child processes; finish them first")
+    need_idle(not descendants(server_pid), "Dev has child processes; finish them first")
     pre_stop_writers(server_pid)
 
 
@@ -211,11 +220,11 @@ def pre_stop_writers(allowed_pid):
         if not p.name.isdigit() or int(p.name) in [os.getpid(), allowed_pid]:
             continue
         env, targets = process_files(p)
-        need(
+        need_idle(
             env.get(b"LVK_INSTANCE_DIR") != str(DEV).encode(),
             f"Other instance process remains: PID {p.name}",
         )
-        need(
+        need_idle(
             not any(t.startswith(str(DEV / "data") + "/") for t in targets),
             f"Other instance data reader/writer: PID {p.name}",
         )

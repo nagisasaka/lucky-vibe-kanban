@@ -164,6 +164,7 @@ pub(super) async fn call(
         "--request-id".into(),
         a.request_id.to_string(),
         "--no-new-work".into(),
+        "--require-execution-enabled".into(),
     ];
     ensure!(a.bundle.is_absolute(), "Bundle path must be absolute");
     args.extend([

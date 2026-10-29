@@ -158,7 +158,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         tool(
             "self_restart",
-            "Explicit developer-instance switch through the installed engine, not run_process. Requires execution setting/scope and instance configuration. Coordinate idle work first. Admission is not cutover; query get_self_restart_operation using the same request_id after reconnection. Shared resources still require existing coordination.",
+            "Explicit developer-instance switch through the installed engine, not run_process. Requires execution setting/scope and instance configuration. Coordinate idle work first. Initial busy preflight waits 30 seconds and rechecks once; other failures are not retried. Admission is not cutover; query get_self_restart_operation using the same request_id after reconnection. Shared resources still require existing coordination.",
             json!({"project_id":uuid,"request_id":uuid,"purpose":text,"bundle":text,"no_new_work":{"type":"boolean"}}),
             &[
                 "project_id",

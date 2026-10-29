@@ -100,11 +100,16 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 }
 ```
 
-専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
+remote MCPの専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
+terminal drainは1回だけ実施し、その後の初回preflightが子孫・instance利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。
+identity/hash/config/権限等の拒否、停止直前の新しいbusy、SIGTERM以降の失敗は再試行しません。待機と理由は永続receiptのstageとbusy-recheck.jsonへ記録します。
+stdioの`self_restart`は既存のローカルOS UID/instance所有者の信頼境界で独立engineへ直接委任し、永続受付を返します。HTTP経路やOAuth principalは使いません。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
-プログラム実行設定のON、Project認可、runtime read/execute scope、principal ownershipを確認します。
+remote MCPはプログラム実行設定のON、Project認可、runtime read/execute scope、OAuth principal ownershipを確認します。
+新remote入口はengineにも実行設定の再確認を要求します。stdioはengineで実行設定とproject/Workspace bindingを確認し、OS UIDとprojectでownerを分けます。両channelとも待機後と停止直前に実行設定を再確認します。既存operator CLIの条件は変更しません。
+旧serverのremote入口にはこの再確認要求がないため、新kitのみで旧remote入口が同じ安全契約になるとは扱いません。下記の旧serverからの初回導入では新stdio入口を使います。
 region/grant形式は廃止され、読書rootは自己再起動の許可条件には使いません。
 対象は実行中の開発instanceとその固定kit/configurationに限定します。
 汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。
@@ -142,6 +147,42 @@ PTYがある場合は従来のchild guardで非破壊に拒否します。
 同一ID・同一入力は既存結果、入力違いID再利用・別ID並行要求は拒否します。
 現在の実行設定/Project/read scopeと元principal所有を結果取得時にも確認します。
 CLIでMCP所有operationを見る場合だけ、保護されたrequestのownerを`--owner`で指定します。
+
+### 初回導入とstdio委任
+
+bundleは3binaryとmanifestだけで、固定`switch/` kitは自動更新しません。
+30秒再確認とstdio直接受付を使うには、レビュー・main統合・新bundleの隔離検証後に、
+別途承認されたoperator作業で、対象instanceと進行中operationがないことを確認してください。
+現kitを復旧用に保持し、同じrevisionの`launcher.py`、`start_binary.py`、`start_support.py`、
+`terminal_drain.py`、`start.sh`を整合して配置します。実行中workerのkitは置換せず、
+source symlinkで代用しません。launch/current/dataや既存認証情報を上書き・コピーする手順ではありません。
+
+261のstdioにはself_restartがありません。新しいstdio binaryを明示するMCP起動設定で
+Codex側stdio processを起動し直す必要がありますが、LVK serverの先行再起動は不要です。
+instanceは既存の`LVK_INSTANCE_DIR`、接続先は`MCP_HOST`/`MCP_PORT`（既存port discoveryも可）を使い、
+設定済みloopback/portとkitのlaunch設定が一致する必要があります。tool引数でinstance/engine/ownerは変更できません。
+既存stdio同様、これは同一OSユーザーの信頼するローカル実行です。OAuth principalやBearer scopeを
+持つと偽装せず、OAuth専用/mcpを迂回するHTTP adapterも追加しません。
+stdioは共通engineの正式CLIへ`--async`で委任し、永続受付だけを返します。
+engineは既存runtime設定の`execution_enabled`、projectの存在、Workspace contextがある場合は
+そのProjectリンクを既存DBから読取確認します。contextにprojectがあればstdio側でも一致を確認します。
+global stdioでcontextがない場合は、既存global discovery同様に明示projectを使います。
+operator CLIの既存権限モデルは変更せず、remoteは従来のOAuth scope・project許可と設定確認を維持します。
+stdio結果のownerはOS UIDとprojectから決まるinstance内namespaceです。remoteのissuer/subject由来ownerとは
+区別し、別channelのreceiptを自分の成功として読んだり、そのrequest IDを流用したりしません。
+
+初回も、旧261serverを動かしたまま新kitと新stdioを正規導入した後、Codexへ明示承認済みbundleの
+`self_restart`を依頼できます。上位AIの新remote MCPによる再起動を前提にしません。
+受付後は担当Codex Runを終了して子孫/writerを収束させ、復帰後に同じproject/request IDの
+`get_self_restart_operation`を使います。stdio processだけを終了しても担当Runやhostが残ればbusyは解消しません。
+30秒後もbusyなら未切替で停止します。設定失効、unknown結果、権限拒否を成功と扱わず、自動再送もしません。
+Codexの既存MCP設定では`mcp_servers.vibe_kanban.command`を、保持した検証済み新bundleの
+`vibe-kanban-mcp`絶対pathにします。旧serverが設定したPATHは旧releaseを先頭にするので、
+単にcommandをbasenameのままにして新bundleを置くだけでは切り替わりません。
+既存の同一UID・instance/loopback/portを使い、認証情報やHOMEを別場所へコピーしません。
+新しい通常Codex Runでstdioを再生成し、まずtools/listでself_restartと結果取得toolの露出を確認します。
+新stdioのMCPクライアントへの配置・設定再読込/stdio process再生成と、LVK serverの再起動は別操作です。
+この導入自体にも別途承認が必要で、source変更やbundle buildだけで稼働環境へ反映されたとは扱いません。
 
 ### 旧契約からの移行
 
@@ -188,7 +229,9 @@ resource snapshotのholders/queueは停止前に拒否します。未使用resou
 ```bash
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
 python3 -m unittest discover -s deploy/developer/switch -p test_terminal_drain.py -v
-CARGO_BUILD_JOBS=2 cargo test -p server --features developer-runtime --lib remote_mcp::environment -- --test-threads=2
+python3 -m unittest discover -s deploy/developer/switch -p test_busy_recheck.py -v
+CARGO_BUILD_JOBS=4 node scripts/dev-cargo.mjs test -p server --features developer-runtime --lib remote_mcp::environment
+LVK_TEST_MCP_BINARY=/absolute/checkout/target/debug/vibe-kanban-mcp python3 -m unittest discover -s deploy/developer/switch -p test_stdio_restart.py -v
 ```
 
 C/SQLite fixtureはlive DB・実認証・実モデルを使いません。production MCP routerの隔離testは
