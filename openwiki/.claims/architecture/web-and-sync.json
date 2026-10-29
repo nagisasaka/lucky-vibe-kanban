@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:92fd2ef36c7c527745098bd1bfc779db38a6b37e80239860d8976b73cbd749db",
+  "pageVersion": "sha256:9d23d067fddecdef3b6fb2c497b8f8bf9315606c2d4ab0a29dd6a30844b4cbb1",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -689,8 +689,8 @@
           "version": "repo-lines-v1:sha256:65a344791993513d5667c33556576b8ce24240a4de4390171df7244ba3b41844:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2Y2VlYmI0ZjkxOTk3NjcyZWVmMmMzNmNkMGFhNDY1NzM2ZGVjZDg4YTY0ODFhYmRhYWJiMzhiOWFmMmVlNTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2YTkwMzFhYzE2YTQ0MWU0MzU2ZmM4MTc3OTQxMWU1MDJmYWRlNGVkMDFhY2FhYjM3ZGYxZGIyZGM4ODIyM2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZhNDFkNzNjNDUyMmJlYTM5ZmY4MTVlMjRiY2YxMzExODUzMWQ2NzFlYjNjZjUzMTIxODg1ZTExYTFjNDcyNGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkNTAxYTc5YzU4NDFlMjQwNWU2ZGRkY2ZlM2Y1MDJkMjZjNzM3MTljY2UxY2EyMjgwYjEyZGY5MjIxYTcyNWMifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5",
-          "version": "repo-lines-v1:sha256:aaec5fae199693da886ebd5fbb208ec2fca87d5d68e72ceae4044c5a46da264f:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmZjNDA2MmYwOGExNzE3MjY2ZmEzZDk1NTJjNzlhYTEwNmEzYjhmMjkyMjM1NmY5MzY1MGIyZmU2NzA5Y2RjOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L15",
+          "version": "repo-lines-v1:sha256:5e84ee785f98873ad7743fb0301919dbdd2f185812c02ab8d390b91382bdc1ec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4ZmFiYmFlYjU2MTRiZDRkOTBhODljMWVmMzJiNTgyODc4ZjljNTA0OGYwZDMzN2NjNGIzNzBlN2QzMjJkMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -1012,7 +1012,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useResourceObservation.ts",
-          "version": "repo-file-v1:sha256:70c3031883c27391a35794169caef91a3a95e5751a2a3ecb862302da5e3457fa"
+          "version": "repo-file-v1:sha256:a4a2cd2dfc373613076a117fd70c86395a77d6a30c0938fbdbeaff5f512e0cb8"
         }
       ]
     },
@@ -1273,10 +1273,72 @@
           "version": "repo-lines-v1:sha256:08feb755d27709837ee22124543de380b380586de594fcb8f10d97a89c6f8232:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMDZmYzIwNGFjOTdiNzg3NWExZWY4OTI3YmI3ZWY0OTU2YzkxMGFjZDhmYzdiNzNhZjNmZTYzYTU1NjIyZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxYTZiZjIxZTQwMGI4Yjg2NWZkZDFiMjY1NzMyYThmMzM0MDdmNzNiMWM3ZDg4YzE3ODMzMjI1NTYxMTMyNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5YjRhYTA3ZDNmNzYwMGNmZGJhMjE5MGQxMzQ5MzM4N2UyMjY5MDg4MDJkOTFlOWM3NjRiMjllZDMwZDFiNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5YmRhYzA3OTA0MGI4Y2ExMmMyN2QxMmRiN2JjYTI3ZDM5MjYyZGFkMGM1MjU0MzA4ZmUyNGM3OWFkMDIxMDcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_fea7d0f8eba24b97b4c5715b1ec840ff",
+      "statement": "一覧入口のmount時にmobileActiveTabをworkspacesへ戻し、詳細から一覧に戻る時も一覧を表示する。詳細内のタブ選択やresizeごとの初期化ではない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L5-L15",
+          "version": "repo-lines-v1:sha256:85b198ee3f719f9ccdccee2ee3a8cc1f681e8afc1d03c4d3af680d7b8b1ad9fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyNjRmNzNjNDMzNDg4NDFhZTM0YTZlYjNkOWM3YmViNjAzYjA4YmZmNGMyZTdhMjJhM2E2YjkxMjcyNGRiMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2MmE2MzNlODAzNDZiZjQxZDIxOTY0ZWQyMjcyM2ZlNmJlZWZhNWM1Mjg4MWNiYjA0YjU1MWYwMWJkODkxZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/workspace-navigation/mobile-list.mjs#L80-L180",
+          "version": "repo-lines-v1:sha256:a8e4f114fd25e7538e8c642f75ebaaf2d006c8aa81ab38625a67ab2412c71132:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMjcxZTY3YTQ3MTM4Zjk0M2MzMzY4ZWJhNTg1MGY1MjhlOWFiODRkMzgzMzc3M2VjZmU5OWVkMDg0NDRjOTNkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyN2U1Nzg4ZDVkOWQ3M2QyNGE4MWRiYzBhNWE3NGJmYTgyYzljM2IzYWY5OWU1MmFmNzk2ZTkwYjQ2OGE4YTNkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YWMzYmNkYTdiMGE3ZWIzMWRmMjA1ZWMyZWIwZjg2YWYzYTFkZDgyMGU3YzZmMWE5ZGVkMjdiYzMzZjc2MmIwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5ZGQyZTQ0NWY3ZDM2MzRlODFiNjFiMTAxMjNiYmY0M2Q1MGYxZDc4ZGY5YjI4ODg2ODJlNDA2MGVkZjhlZGU0In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a86236b1762b4154b6dc2b0f54707b3c",
+      "statement": "PC・モバイルの資源表示の隣でCodex通常利用枠の残率をpopover詳細とともに表示し、Workspace消費量/context残量とは区別する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/CodexQuota.tsx",
+          "version": "repo-file-v1:sha256:83107b29c4ba10454daf7858c46e6257a69bc1a9564d4fd55a16d78558e0e56c"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L300-L315",
+          "version": "repo-lines-v1:sha256:c383d88fcdfc4647512eacb0d4e1c225b5e3df7a1c4e9df98c0300f3dd4dc2b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzMmY4OGRmMTdlMjFmYTIzODQ5ZjNkMDNkOWFmZGUyMTM5ZWIyMmVkY2FkYjZmYzNlZTA0Yzk2NzgzMWVjZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwYWIwNWQ5OGYwMTQ1MTIxMzg1ZWI5NWMxZDRlYmI5ZmE2OTMyNGU0N2UzMmYzZTYwYWUxMTkzNzM1ZWU4ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmNzZiZWQxYWVkYzkyN2JmMzc5ZjU1NmQwMzRlZWVmYTQ1YTM2ZGU0MjNhMGY5MmVhNzE5NGNkZmU2YzRlMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkODA4NjE4Y2YyNDcwZDIyYTU1OGNhMDBlOTczYTljODNjZjNhZDE4ZGY2NzFkYjg2Mzc0NTE1NTk1Mjk1NzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c828c2f806d47569c7e776c627c7534",
+      "statement": "Codex quotaは既存provider-usage受動APIを共通query keyでvisible時5分周期・20秒timeout・retryなしで参照し、手動更新を取得中と最終成功/失敗から30秒以内に抑制する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts#L5-L44",
+          "version": "repo-lines-v1:sha256:2cb0460140e8d9c75c309f31f69aa9d96d3303f91730ee62b63fdd5b00ca7314:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YmMzN2UyZjUwOTY0MDAzZWM4YzgxOTFkMDg4MDJmY2I1ZmIzZjhhY2E5YWEyMGFiMzljNjc0OTgyZmM0YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3ZDNjMDczZGMwODY1NTg5MzE1YTM3MTJhYjMzYzIwMTcyY2NlNTBiNzBiMjQ4MzVhYjNhNDk3NjQ5ZDVjNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ded9364d5eb4dbfac8a52214a2aa764",
+      "statement": "Codex代表残率はAPI既定bucketの存在windowがすべて既知なら最小残率を採用し、追加bucketを合算せずlimitIdを重複除外する。欠損・不正・10分以上古い観測・reset経過は未知とし、期間は実分数から変換しunlimited creditsを分離する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/lib/codexQuota.ts",
+          "version": "repo-file-v1:sha256:756d840ad6f1735df6f821eeaa56d7a245893abcc26ebb0dd8f65b17b7afcdf3"
+        }
+      ]
+    },
+    {
+      "id": "claim_7315be85f23e409690cdf92a90b579b4",
+      "statement": "mobile-listとcodex-quotaのChromium回帰はsynthetic data/navigationやAPI fixtureを使うcomponent試験で、実認証/API/アカウントや物理スマホを検証するものではない。",
+      "evidence": [
+        {
+          "resource": "repo://tests/codex-quota/browser.mjs",
+          "version": "repo-file-v1:sha256:5b952f71d1d62cb6fafd89d8146c31e9a1ff3dce07a96c362fe879fec5300eab"
+        },
+        {
+          "resource": "repo://tests/workspace-navigation/mobile-list.mjs",
+          "version": "repo-file-v1:sha256:86a10768d6c683237a36eb90c54869838e385fb179ae23508333ad1f67b7b050"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T11:40:14.219Z"
+    "at": "2026-10-29T16:21:09.593Z"
   }
 }

@@ -46,6 +46,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatRunFooter.tsx
   - id: openwiki-source-d89c4480040eee7fa41a6000
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
+  - id: openwiki-source-b7a60463de39ca04d32fcf32
+    resource: repo://packages/ui/src/components/CodexQuota.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-9ac09945bdd807003978190a
@@ -66,6 +68,8 @@ sources:
     resource: repo://packages/ui/src/components/ResourceSummary.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
     resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
+  - id: openwiki-source-2c0d6b926239bcee46352b0f
+    resource: repo://packages/ui/src/lib/codexQuota.ts
   - id: openwiki-source-2a1a06abf88738697abb7c30
     resource: repo://packages/ui/src/lib/repository.ts
   - id: openwiki-source-536269ea917b55a30e54f617
@@ -142,6 +146,8 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
   - id: openwiki-source-a1a870cf32aedb317f9ea946
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx
+  - id: openwiki-source-105b6ca30cbd5902f4097ad0
+    resource: repo://packages/web-core/src/shared/hooks/useCodexQuota.ts
   - id: openwiki-source-5cead200f725b8a7ed11e3cd
     resource: repo://packages/web-core/src/shared/hooks/useGitHubStars.ts
   - id: openwiki-source-70a9c5225d8ef0472482d401
@@ -198,6 +204,8 @@ sources:
     resource: repo://tests/chat/syntax-highlight.test.mjs
   - id: openwiki-source-7c49efe20c19a1848e432191
     resource: repo://tests/chat/syntax-isolated-e2e.mjs
+  - id: openwiki-source-b5c9cf5314ef18b4f7b580ec
+    resource: repo://tests/codex-quota/browser.mjs
   - id: openwiki-source-b8dd26804205bb3bb293d01e
     resource: repo://tests/header/isolated.mjs
   - id: openwiki-source-21c2ff0d1558af038f1aaa2e
@@ -210,16 +218,18 @@ sources:
     resource: repo://tests/resource-observation/model.test.mjs
   - id: openwiki-source-b1f4325353088fa9d003b939
     resource: repo://tests/server-access/workspace-wiki.mjs
+  - id: openwiki-source-c821011946e2c94bd74e7110
+    resource: repo://tests/workspace-navigation/mobile-list.mjs
   - id: openwiki-source-4bfe8064f685e5073ef06513
     resource: repo://tests/workspace-navigation/playwright.config.ts
   - id: openwiki-source-f6a73bd9a093b3a0004194f2
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
+generated: { by: "codex", at: "2026-10-29T16:21:09.593Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T11:40:14.219Z
+    at: 2026-10-29T16:21:09.593Z
 ---
 
 # Web の実行環境と同期
@@ -274,6 +284,16 @@ query key を共有し、document が visible の間だけ15秒周期で取得�
 
 モバイルは資源表示と icon/user group を折り返して狭幅に収める。観測対象と unknown の意味は collector の正本で確認し、LOAD・SWAP をこのヘッダーへ読み替えない。回帰入口は `tests/resource-observation/model.test.mjs`、component fixture、実 NavbarContainer と認証 router を通す `full-app.mjs`。実 Auth0、別 mount、OS による tab backgrounding は別の検証である。[配置](../../packages/ui/src/components/Navbar.tsx#L350-L390)・[試験](../../tests/resource-observation/README.md)
 
+### Codex の利用枠を資源表示の隣に置く
+
+`NavbarContainer` は PC・モバイル共通の resource slot に `CodexQuota` を併置し、狭幅では折り返す。表示するのは絶対的な残トークン数ではなくアカウントの通常利用枠の残率で、Workspace 消費量や context 残量とは別である。タップ・キーボードで開ける popover に観測時刻、各 window の期間・残率・reset、bucket の区別を示す。[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx)・[表示](../../packages/ui/src/components/CodexQuota.tsx)
+
+`useCodexQuota` は既存の認可付き `POST /api/provider-usage/read` を `provider: codex`、`account_context: server_default`、`include_usage: false` で受動参照する。QueryClient 内の共通 key で共有し、visible の間だけ5分周期、20秒 timeout・retryなし。手動更新は取得中と最終成功/失敗から30秒以内を抑制する。資源の秒単位の表示時計を再利用して古さを評価するが、秒ごとに Codex を取得しない。[hook](../../packages/web-core/src/shared/hooks/useCodexQuota.ts)・[可視性と時計](../../packages/web-core/src/shared/hooks/useResourceObservation.ts)・[既存認可](../../crates/server/src/routes/provider_usage.rs)
+
+代表は API が返す既定 bucket のみで、追加 bucket を合算せず同じ limitId を除外する。既定 bucket がなければ代表値は不明。健全な usedPercent から `100 − usedPercent` を計算し、既定 bucket の存在する window がすべて既知の場合だけその最小値を代表にする。期間は実際の分数を分・時間・日に変換し、5時間/週に固定しない。欠損、不正値、取得失敗、非対応、10分以上古い観測、reset 経過は0/100%に補完せず未知表示となる。unlimited credits は通常枠と分ける。[表示モデル](../../packages/ui/src/lib/codexQuota.ts)
+
+`tests/codex-quota/model.test.mjs` は境界値を、`browser.mjs` は320/390/768/1280px、popover の操作、bucket、英日、dark、非表示時抑制・手動更新・5分周期を検証する。これらは隔離 component/API fixture であり、実認証・実アカウント・物理スマホの互換性証明ではない。[試験](../../tests/codex-quota/browser.mjs)・[fixture の境界](../../tests/codex-quota/README.md)
+
 ### 稼働バイナリのビルド情報を表示する
 
 `useUserSystemController` は `/api/info` の任意 `build_info` を `buildInfo` として context に渡し、従来の `version` / `appVersion` は別に保持する。`SharedAppLayout` が desktop の AppBar と mobile drawer へ同じ値を渡す。表示するのは Workspace の HEAD ではなく server binary の識別情報であり、生成・注入・不明値の契約は [ビルド時ソース識別](../operations/server-container.md#ビルド時ソース識別と-api-の契約)を正本とする。[context の接続](../../packages/web-core/src/shared/hooks/useUserSystemController.ts#L40-L46)・[desktop](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L260-L290)
@@ -290,7 +310,11 @@ local shell の ConfigProvider は onboarding を acknowledged として公開�
 
 ## Workspace の一覧遷移と作成要求
 
-`/workspaces` の `WorkspacesLanding` は `Workspaces` → `WorkspacesLayout` を描画する。通常の Workspace 入口は一覧を開き、作成 route への転送や最後の Workspace の自動選択を行わない。一方、`/` の `RootRedirectPage` は別の入口で、Project を解決できない場合などに作成 route へ進む。両者の挙動を一括して変更しない。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[root の分岐](../../packages/web-core/src/pages/root/RootRedirectPage.tsx#L18-L50)
+`/workspaces` の `WorkspacesLanding` は `Workspaces` → `WorkspacesLayout` を描画する。通常の Workspace 入口は一覧を開き、作成 route への転送や最後の Workspace の自動選択を行わない。一方、`/` の `RootRedirectPage` は別の入口で、Project を解決できない場合などに作成 route へ進む。両者の挙動を一括して変更しない。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L15)・[root の分岐](../../packages/web-core/src/pages/root/RootRedirectPage.tsx#L18-L50)
+
+一覧入口の mount 時には `mobileActiveTab` を `workspaces` に戻す。選択 Workspace がない一覧で Chat/tools タブが残ると、データがあっても一覧が隠れて空白に見えるためである。詳細内のタブ操作や resize のたびに初期化する処理ではない。詳細から一覧へ戻った場合も一覧を見せる。[入口の effect](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L5-L15)
+
+`tests/workspace-navigation/mobile-list.mjs` は実コンポーネントに synthetic data/navigation と inert tools を組み合わせ、390px light・360px dark・1440px、40行の表示/スクロール、詳細 URL への選択、drawer からの復帰、幅変更、詳細ツールタブ維持と空一覧を検証する。実 router/API/DB/auth への接続や物理端末の検証とは区別する。[Chromium fixture](../../tests/workspace-navigation/mobile-list.mjs)
 
 sidebar の「＋」は `navigateToCreate` を呼ぶ。この処理は route 遷移に加えて provider の `workspaceTargetRequest` を増やすため、既に create route にいる場合も新しい選択要求を伝えられる。layout の desktop / mobile 両方が同じ値を composer へ渡す。composer は draft と既定値の準備を待ち、最後に扱った request と異なる場合に chooser を開く。dialog-open ref は重複表示を防ぐ。これは作成回数や Workspace ID ではなく UI 内の再選択要求である。[要求の発行](../../packages/web-core/src/shared/providers/WorkspaceProvider.tsx#L244-L251)・[mobile](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L338-L350)・[desktop](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L522-L531)・[受信](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L284-L300)
 
