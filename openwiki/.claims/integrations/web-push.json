@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4fe9967da8bfed7c9d623a4912b2e0e9ee76c9c1f11e210d71e71520037ca3d1",
+  "pageVersion": "sha256:9aa7f4d8e05bf0a18d04fb3ae27141b88721e8f2d81b208565efcd052f2a5ec6",
   "claims": [
     {
       "id": "claim_12d9a2cd77a84b53a677021c3e9d8057",
@@ -140,7 +140,7 @@
       "evidence": [
         {
           "resource": "repo://packages/public/lvk-push-sw.js",
-          "version": "repo-file-v1:sha256:20b0ad5733e4b00e35c0b2ac2e07730d8e3a145aecb2b7869d1e92dfef39cf8d"
+          "version": "repo-file-v1:sha256:e547262cf2e8c394211dfb0edf1045f0097762eff838f9d1047368386eeb258c"
         }
       ]
     },
@@ -215,10 +215,42 @@
           "version": "repo-lines-v1:sha256:836e36b82bfddd9ffe17f2b251ee72849a6cbee4e59250c31214a0f651a27594:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwZTcxZWJjZmUyYjY3NjUxMmU2MTNmOGJhZGU5NTEyYTZjZDA5NDhmMDIyZWRmNzAyNTU2ZjVjNjlhMGJkNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2ZGQ5NzgwYWZiODJkN2UyN2I0M2VlMjY4YTFhMmZkZmUzMjFiNmU3MTAxMzQ1MTgzYjE0ZGI0ZTM3ZjFhNDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0NGIzZGUzMGE3MzFmYTZkMGM0NGZiNTUyYzMwMWQwMDgzNGJjNzY1Y2ZiMzcxZWEyOWRlZWFlOWY1ZGE2NzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkODcxNzZiNGEyODI0N2RhMGY1YTQxZWJlM2VjNjY4YWE0YzAwZWI5MWE5MzQ2YmEwZjQ4OTI5OTY4NWJkNzcifQ"
         }
       ]
+    },
+    {
+      "id": "claim_c4e200b8f41747349932c96b48739da5",
+      "statement": "favicon・Apple touch・manifest通常/maskable・MCPカタログとWeb Pushのアイコンは白背景主版を使い、PNG参照はv=white-1で旧主版と区別する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/default_mcp.json",
+          "version": "repo-file-v1:sha256:ce52b7ebf919bca87c41a34b2ceb430495881599076e4a1f69cb3fe2f9d9582b"
+        },
+        {
+          "resource": "repo://packages/local-web/index.html#L6-L14",
+          "version": "repo-lines-v1:sha256:a04b06cb21b801c3637ee1706c896d0b6da78398046c031d07b0ac7a6eabfdf2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWMwZDhkNThjY2U5MDM5MDE0ZGJiMjljODIwZDgyMzY1ZjAxNDFmMTUyMzRkMmQ2YWFmMmQ0ZTRiNGNkZWU1NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjlmOWJhOGJiNDVmOTcxMjIzNDdmY2JlNzkwY2ZkOTk0OTQ5YTJhMjViNjgyZDdiYTE2NWI5ZjhmYTEzNjNjYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjI4M2FhZjliNmU1OTg3YWYwMDc5MzE0MDgzZDFjZTdkMjEyYmY4Zjg0MDU5MGJhMDJjYzI2ZDE4NGVmNTRjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWQwMjEyMDA2ZTVhYjMzZGFkZjQyZGU3ZmZiNWMwYmY5YzQxYjA5YjFhNjdjZWJhN2QyMDE3YzU0NTc5MjUyYSJ9"
+        },
+        {
+          "resource": "repo://packages/public/lvk-push-sw.js",
+          "version": "repo-file-v1:sha256:e547262cf2e8c394211dfb0edf1045f0097762eff838f9d1047368386eeb258c"
+        },
+        {
+          "resource": "repo://packages/public/site.webmanifest",
+          "version": "repo-file-v1:sha256:35c8a4ef1fc3becdfafeb5456cb2ee77fdfe37e70528671826fe15bf49328384"
+        }
+      ]
+    },
+    {
+      "id": "claim_1c2a7649006e4eb6ba69e25e0f901e55",
+      "statement": "アイコン生成はA/B正本SHAを検査しB背景fillだけを白にした派生と深緑版を生成する。Apple/maskableは四葉を動かさず背景を延長し、--checkで両版をバイト比較する。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/generate-clover-icons.mjs#L6-L76",
+          "version": "repo-lines-v1:sha256:c285e154ab0488bd81dfea9a1873589284520db574d17271d69dffb8b648147d:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNzFhNGZkNGFlNjJiMDdiYWNiNDA5ZDViZjBlMmZhMDYzODAwNTc1NTQ4ZjI1OGJjMzljNTVlZjY3ZTA0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNWU2Y2Y1ZmUxYzc5M2I2ZTE0NjEzMTc5ZTIwZjA0M2RkN2EyMzJjMGVkYTlmZTA2YmY2ZGFlNWQ1OGM0MTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM2MTc0MDNmNjFiMzIzYTBlNmE1NTdmNjBiNTE5NGQzNTI3ZDViYTQyYzFlY2VhMGM4YjUxZjQ3YjZhMDFhZjgifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:10:58.678Z"
+    "at": "2026-10-29T11:40:14.219Z"
   }
 }

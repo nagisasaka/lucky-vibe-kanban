@@ -6,26 +6,34 @@ tags: [web-push, notifications, consent, codex, lifecycle, authentication]
 sources:
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
+  - id: openwiki-source-b50585f67dac89cd8eecc75d
+    resource: repo://crates/executors/default_mcp.json
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
     resource: repo://crates/server/src/routes/web_push.rs
   - id: openwiki-source-67674da85aa6dbcd2c2a493d
     resource: repo://docs/development/web-push.md
+  - id: openwiki-source-64f4b24262714ff553327284
+    resource: repo://packages/local-web/index.html
   - id: openwiki-source-555aad5cd76b2126b533c7d0
     resource: repo://packages/public/lvk-push-sw.js
+  - id: openwiki-source-dd212fc02c32e80af3ca3436
+    resource: repo://packages/public/site.webmanifest
   - id: openwiki-source-f0616990372eebb94bc69e6f
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-9cea28cc3d20cd3fcde94697
     resource: repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx
+  - id: openwiki-source-7d81cfa1ca176b1860c23b29
+    resource: repo://scripts/generate-clover-icons.mjs
   - id: openwiki-source-8e4d600376d97a1b981b2d12
     resource: repo://tests/consultation-removal/browser.mjs
   - id: openwiki-source-f4d5c774a441b4c38cace035
     resource: repo://tests/consultation-removal/README.md
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-29T11:40:14.219Z
 ---
 
 # Web Push・通知同意・会話への復帰
@@ -80,6 +88,14 @@ Session の「ChatGPTに相談 — 依頼文をコピー」「ChatGPTを開く�
 相談専用コピーの削除は共通 clipboard の廃止ではない。既存の Copy as Markdown は残り、回帰 fixture も実 clipboard の内容を検査する。[共通 helper](../../packages/web-core/src/shared/lib/clipboard.ts#L1-L23)・[Markdown コピーの検査](../../tests/consultation-removal/browser.mjs#L316-L330)
 
 ## 設定と検証限界
+
+### 通知とホーム画面のアイコン
+
+通知の `icon` は `/apple-touch-icon.png?v=white-1` を参照する。HTMLのfaviconはlight/dark共通の `lvk-app-icon-white.svg`、Apple touchとmanifestの通常192/512px・maskable 512pxは白背景主版で、MCPカタログのアイコンも白版SVGを使う。manifestの名前・起動URL・scopeや画面内テーマを切り替える変更ではない。[worker](../../packages/public/lvk-push-sw.js)・[HTML](../../packages/local-web/index.html#L6-L14)・[manifest](../../packages/public/site.webmanifest)・[MCPカタログ](../../crates/executors/default_mcp.json)
+
+Aの背景なし四葉とBの深緑角丸背景SVGはSHA-256を照合する不変の正本である。白SVGはBの背景fillだけを置換し、四葉の形状・隙間・色・配置を保持する。Apple touchとmaskableは四葉を動かさず背景を全面へ延長する。深緑PNGも別バリエーションとして残し、`generate-clover-icons.mjs --check` で両版の再生成一致を検査できる。[生成契約](../../scripts/generate-clover-icons.mjs#L6-L76)・[運用説明](../../docs/development/clover-icons.md)
+
+新しいSVG URLとPNGの `v=white-1` は旧主版キャッシュと区別するが、インストール済みホーム画面のOSキャッシュ更新までは保証しない。[Chromium試験](../../tests/server/run-clover-icons.mjs)はHTTP/MIME・素材SHA・背景以外の四葉一致・16/32pxのlight/dark・丸形とmaskable安全域を確認する。実機の追加・切り抜き・通知配送、人間の小サイズ視認性は別途確認が必要である。承認色の緑/白の低コントラストを独断で変えない。[キャッシュと限界](../../docs/development/clover-icons.md#キャッシュ更新)
 
 server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（mailto または HTTPS）から VAPID を構成する。欠損・不正設定では登録が unavailable になり、配送を行わない。公開鍵だけを browser へ渡し、秘密鍵を restart 後も維持する。key rotation 後は browser で再登録する。[設定読取](../../crates/server/src/routes/web_push.rs#L68-L81)・[運用手順](../../docs/development/web-push.md#server-configuration)
 

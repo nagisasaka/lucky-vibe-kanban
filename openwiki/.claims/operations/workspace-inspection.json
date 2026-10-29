@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1298c03c028fc5e499f5b19dba1e1ad6a065d48e567596d70603509c02cc9b00",
+  "pageVersion": "sha256:952108118ec883e0b5c98d59353061fec917c4666fa3ecdc37685ed70d0df9e6",
   "claims": [
     {
       "id": "claim_ef965d37641846bda42842bf4788c8cc",
@@ -350,7 +350,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L17-L48",
-          "version": "repo-lines-v1:sha256:f326fb70672f1375eda8d075153b398574608d9f90a9503719feb265a42942c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYjcxMWZkYmM4MDdjMjU3Yjc4OTRjMTllMDMwYzJmMGExYTVkYTZiZTFmY2NkNTJkYTEyYTM4YmE4ODI3ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlMGJiM2E4OTIxMzFjMzc1NzkzMTlkYzgxZGRiZmE4MTZjNDA4ZGYwMzc2ZDRjODdjMjg3YzI4ZjQwNjA5NTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjMzViZjYzYzRiMzc0NmNiNWNjODU3YWYyNjFlOTBiZjg0N2MxMTRmMzNlODdkY2E0YWM1ZDdjNjQ0NzdiN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3ZWYxYzljZTc1NzQzZjRjMGQwN2JlOWMyZDRkYjRiNjM2YTVjODhmY2RhN2Y2NzU2ZGZhMTg0MDYzMTUyMDAifQ"
+          "version": "repo-lines-v1:sha256:8a54335c51a520ac1c058663752adfc32e406fedb9a2d69e1694a4f866bee85a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwYjcxMWZkYmM4MDdjMjU3Yjc4OTRjMTllMDMwYzJmMGExYTVkYTZiZTFmY2NkNTJkYTEyYTM4YmE4ODI3ZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NTQxZmNkZTQ5Y2I0N2ZlMWVlODQ2NWQ4N2Q4YjY1YmU5NTQyYWNjMWY4MTI0NjY1N2I1YTBmOGE0NGJhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjMzViZjYzYzRiMzc0NmNiNWNjODU3YWYyNjFlOTBiZjg0N2MxMTRmMzNlODdkY2E0YWM1ZDdjNjQ0NzdiN2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3ZWYxYzljZTc1NzQzZjRjMGQwN2JlOWMyZDRkYjRiNjM2YTVjODhmY2RhN2Y2NzU2ZGZhMTg0MDYzMTUyMDAifQ"
         }
       ]
     },
@@ -709,10 +709,52 @@
           "version": "repo-lines-v1:sha256:ba4ae74f9d95ded085383868672b5631e9b7318b17d55163ac825baa91eb4cc2:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDcyNmYzNDZmOTlmNjRhMWIyNTA5YTQyYjQ5YjBjMjU5Y2Y0NjQ3ODE1NTU3YzM2YTZmNDVkNzRmMjVkYTQwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTFmMmQxYzNmNzNjN2FiMGJiNjdhZTM0NmE0ZjliODkwY2RkNGZhYjFlN2ExNWVjMjJmNWFmMGNmNDc2NzM4MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDA5NWJmOWZiZjYzZDM2NTU1MWE4YzE2M2MxZTFiOGZhYjQ2NWQwZGY3Y2ExNmYyY2I5OTcwMTI2NDA4NWE1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_c65d6604e5a449fab71c28d76c10539f",
+      "statement": "モバイルFilesは戻る操作で現在targetの同一性だけをdismissし、新しい選択要求で同じファイルを再度開いてもpreviewを表示する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx#L23-L95",
+          "version": "repo-lines-v1:sha256:226b1802ab2b66986b22eb2322ba70a6700139017ccfca27ecf7c2e3f6b0d7ad:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYmU0NjVkOGYxODQxZmYzODQxYWE3NGI3N2Q3NjMyMzFmNWRlYzU0YzQ1YjQ4ZGQ2YTg4NTE2MTZmMTY5ODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZTQyMDhjZDZmZmI4YzRhMzU0N2IyZjU0YWRhMTk5NzhjM2YzNjVlNzhmOTUwMmVmNTE0NWNkZDJhYTg1NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExMzAyMTQ0M2Y3YzVlZjA3Mzc1YzY2MWQ3ODA4MTdmOGQ4YTk5Yjg5MjI4NTk4YjEzNzMyY2E1ZmRiNTUyOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMzAyZmI5NDExYzU4NGVlMGUwMDA3MDlhNzYzMDYzNTk0M2RmOGExYzM4MjYzMGFkNjI1Mzk4YTAyNGJjOTQifQ"
+        },
+        {
+          "resource": "repo://tests/chat/mobile-navigation.native.mjs",
+          "version": "repo-file-v1:sha256:aac564e27829fe6702d9d70ba80c5ad11fb09fd95f64387f846ab5d195fa5be7"
+        }
+      ]
+    },
+    {
+      "id": "claim_3df971e824ab40b29857a14a069b3c11",
+      "statement": "読み取り専用CodeTextViewerは共有Prismで改行正規化した全文をtokenize後に行へ分割し、React text/spanと共有テーマで安全に描画する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts#L17-L69",
+          "version": "repo-lines-v1:sha256:43496b9204f4ede64c37d39a29fafeba127d6cfc4fddd821dfe8da19c6e1bc41:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYjc0NTBiY2RhOTlkYjUxMTg4MGYwZmE1MmYwNjEyYWE1ZmMwYWI5MDllMWFkNjk1MjY1Y2M3OTg1M2Q4NTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ZDE0ZmI5ZTVmY2IyYmE3MDViODM5NTllMTExZWRjNDRlNjFhNGI4NDc4MTkzNjU3M2Q4YTI0ZWRiYWJlYzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L14-L74",
+          "version": "repo-lines-v1:sha256:7c4506d32c0ef8768456cc53547ed6069969b29cb984a13d19ff1bc52627c6e6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0OWIzNTk2OTkyYTQ1ZmY2ODBkMDZhNDE5NjQ0YWJlNmJhNjIyYzY1OTRkODI5M2MzNmNjNTdhNWM2ZThkZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhZDk4MmU2MGE3M2VmZTA3MWRjY2JlZjdmMzI4NDhkOTRiMzU5Mzg0NDY2ZjhiMzlmYWFmZmU0ZTlkZmIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_bd1088c6ac044cd3b3ea02a4179e9efa",
+      "statement": "ファイルの色分けは未対応grammar・NUL・共有16,384文字上限・4,096文字超の行・4,096token/segment予算・深さ32超過・tokenizer失敗時に受け取った全文のplain表示へfallbackする。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/lib/chat-code-highlighting.ts#L5-L23",
+          "version": "repo-lines-v1:sha256:2b46ea72e84c28ee8d15a55e17a91609a734c86e9a10e686a1c624b3b64bf2ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlOWNkZGVlYTY4ZWNiMDMzYjRhZjM5M2E0ZGI0YmQ3MjU2N2Q2ZTYwZWFjZDMzZjA0MjA0YjFkZjViMzRhMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZmVlN2VhNzM1NTMyNDczMjQ2MTMwYTFlYjBhMWVhYWU1ZTg5YTQ4OWU1ZTNkYzFkODQ5ZDZmMzA1M2ZlZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts#L11-L69",
+          "version": "repo-lines-v1:sha256:1d0bb9b5e88c0d2d23810052e0cc949ad24a05477c9e8be01128b2664a096318:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0OWY1ZGIyNjhjYjkzM2Y0NDViMzUyMTZlNzZhYmRjMjU0YWI0NmRhN2UxMDM4OTI4YmVmMzM4M2FmOTk1YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0NTM1NWU4NjQyOTFjMTZmMDkzOTAwNGRmMjQ2YzNhMjZjNmFmYmU1MzAzOGNjZDQ1MDRiODUwNDkyZGE1NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "at": "2026-10-29T11:40:14.219Z"
   }
 }

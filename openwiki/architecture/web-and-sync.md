@@ -52,6 +52,8 @@ sources:
     resource: repo://packages/ui/src/components/KanbanTags.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
     resource: repo://packages/ui/src/components/MarkdownSyncPlugin.tsx
+  - id: openwiki-source-05854b6bc56b95355f9e2f59
+    resource: repo://packages/ui/src/components/Navbar.tsx
   - id: openwiki-source-c97c0bce06c35a57f7816f78
     resource: repo://packages/ui/src/components/PasteMarkdownPlugin.tsx
   - id: openwiki-source-b5c65c61c678426ad814529a
@@ -188,6 +190,8 @@ sources:
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
+  - id: openwiki-source-d70e2f551bdb141bf2cd79a6
+    resource: repo://tests/chat/mobile-navigation.native.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-0a43f232c5a84b7f94378d02
@@ -212,10 +216,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T11:40:14.219Z
 ---
 
 # Web の実行環境と同期
@@ -479,6 +483,10 @@ Workspace 一覧は execution_only を恒久的な別カテゴリへ分離しな
 Session 一覧の再取得では利用者が選んだ古いログや new-session draft を維持する。host / Workspace または明示 Session link の変更時だけ選択を再解決し、入口に使った URL がその後の手動選択を奪わない。[選択規則](../../packages/web-core/src/shared/hooks/workspaceSessionSelection.ts#L3-L25)、[scope の更新](../../packages/web-core/src/shared/hooks/useWorkspaceSessions.ts#L51-L87)、[回帰テスト](../../packages/web-core/src/shared/hooks/workspaceSessionSelection.test.ts#L4-L36)
 
 ## モバイルと文書の適用範囲
+
+既存 Workspace のモバイルナビゲーションは Wksps / Chat / Files / Wiki / TODO / Diff / Logs / Git を公開する。画面幅を理由に Chat・Wiki・TODO へ絞らず、選択した他タブを Chat へ強制的に戻す effect も持たない。作成中または Workspace 未選択時は、実データを要するタブを隠し Wksps / Chat のみを残す。タブ列は画面内の横スクロールに収め、ボタンを縮めない。[到達条件](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L145-L168)・[タブ列](../../packages/ui/src/components/Navbar.tsx#L281-L332)
+
+[実アプリ回帰](../../tests/chat/mobile-navigation.native.mjs)は320 / 390 / 600pxで全8タブの表示と選択維持、ページ横溢れ、Files の往復・会話リンク、短いviewportでのcomposer、作成時制約と1440pxへの復帰を検査する。モバイルFilesの状態と読み取り専用表示は [Workspace の検査](../operations/workspace-inspection.md)を参照する。実機キーボードやOSのホーム画面動作まで保証する試験ではない。
 
 モバイル shell は `visualViewport.height` を CSS 変数 `--app-vh` に反映する。キーボード表示時の composer 隠れを避け、重い shell を viewport のたびに React render しない意図がコードに記録されている。[実装と理由](../../packages/web-core/src/shared/hooks/useVisualViewportHeightVar.ts#L3-L50)
 

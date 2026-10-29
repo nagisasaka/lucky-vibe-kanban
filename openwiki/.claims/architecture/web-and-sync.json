@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:521f88f359f3d1985069f9a75e472544deb550d49e365cc3c237b664ee7ccf1a",
+  "pageVersion": "sha256:92fd2ef36c7c527745098bd1bfc779db38a6b37e80239860d8976b73cbd749db",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -1249,10 +1249,34 @@
           "version": "repo-file-v1:sha256:e2c8daa868195f74b658acf6108a81c0345e3aed30c51ebc9a379e9c10e90e5e"
         }
       ]
+    },
+    {
+      "id": "claim_391b8ba6338542e6b1c4b5af0277eadd",
+      "statement": "モバイルのWorkspaceタブは作成中/未選択のデータ制約だけで絞り込み、既存Workspaceの全現行タブを公開し、選択をChatへ強制リセットしない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L145-L168",
+          "version": "repo-lines-v1:sha256:715899f7ee1237e3301c5681d19e74c4b0465ceb7c8157e300f204072285a1a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2Nzg4OWU0MjY1ZWE2ZjU5YWUyMjc0MTc3YmNlZmU5YmQ0ZWU5MDc0ZjMwNTQ1Y2JjMWQ1MzFkZTIwNjZlYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkYjE4MTYwYzJmNzE1OGMzNTRmNzM1MDU0MmExZTNiNDJiOWVjM2U4MjU1OWVkNjU1M2Y1MjA2MTNiM2U3MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlM2M3MDE0NWQyMDQxZGE1MGNjZDEyNjE1ODZjZTJkYjBjMWJkNTJlNTc2MDdiYjkwNzUzYzZjODFmOGQ5NjMifQ"
+        },
+        {
+          "resource": "repo://tests/chat/mobile-navigation.native.mjs",
+          "version": "repo-file-v1:sha256:aac564e27829fe6702d9d70ba80c5ad11fb09fd95f64387f846ab5d195fa5be7"
+        }
+      ]
+    },
+    {
+      "id": "claim_3a769553cf85482e888daa319bb35152",
+      "statement": "モバイルのタブ列は横スクロールを画面幅に制約し、各タブボタンを縮小しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/ui/src/components/Navbar.tsx#L281-L332",
+          "version": "repo-lines-v1:sha256:08feb755d27709837ee22124543de380b380586de594fcb8f10d97a89c6f8232:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwMDZmYzIwNGFjOTdiNzg3NWExZWY4OTI3YmI3ZWY0OTU2YzkxMGFjZDhmYzdiNzNhZjNmZTYzYTU1NjIyZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxYTZiZjIxZTQwMGI4Yjg2NWZkZDFiMjY1NzMyYThmMzM0MDdmNzNiMWM3ZDg4YzE3ODMzMjI1NTYxMTMyNjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5YjRhYTA3ZDNmNzYwMGNmZGJhMjE5MGQxMzQ5MzM4N2UyMjY5MDg4MDJkOTFlOWM3NjRiMjllZDMwZDFiNWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5YmRhYzA3OTA0MGI4Y2ExMmMyN2QxMmRiN2JjYTI3ZDM5MjYyZGFkMGM1MjU0MzA4ZmUyNGM3OWFkMDIxMDcifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "at": "2026-10-29T11:40:14.219Z"
   }
 }

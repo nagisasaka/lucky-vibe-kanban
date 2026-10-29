@@ -72,6 +72,8 @@ sources:
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
+  - id: openwiki-source-1383d6dc4e3d9d2ea475e735
+    resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
   - id: openwiki-source-69854837467c3beec23ecb8d
     resource: repo://packages/web-core/src/features/wiki/model/wikiNavigation.ts
   - id: openwiki-source-0cd94f38cc1a16e284fe2b1c
@@ -84,6 +86,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-714cddfb6b8044e60077cdf6
     resource: repo://packages/web-core/src/features/workspace-files/model/chatFileLink.ts
+  - id: openwiki-source-10a02a3880ad701da1e4c49f
+    resource: repo://packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
     resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
   - id: openwiki-source-18dc5170d4dade4bcfbc64d8
@@ -100,6 +104,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
+  - id: openwiki-source-39d390b46b89f38f831e363e
+    resource: repo://packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-9231a80ee56432d71077b70c
@@ -124,16 +130,18 @@ sources:
     resource: repo://tests/chat/file-links.md
   - id: openwiki-source-ba7e6a69f93643706f63da9e
     resource: repo://tests/chat/file-links.native.mjs
+  - id: openwiki-source-d70e2f551bdb141bf2cd79a6
+    resource: repo://tests/chat/mobile-navigation.native.mjs
   - id: openwiki-source-be2dcdcefb33abee0a49e75a
     resource: repo://tests/server-access/preview-static.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T11:40:14.219Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -189,6 +197,18 @@ Content-Disposition は inline 画像にも attachment にも、正規化され�
 raw URL は local のものをそのまま使い、退役した remote host ID または host-scoped URL は拒否する。host ID なしの外部 URL は保持する。[URL test](../../packages/web-core/src/features/workspace-files/model/workspaceFileRawUrl.test.ts)
 
 ## チャットから Repo 内ファイルを開く
+
+### モバイルのツリーとpreviewの往復
+
+Files surface は選択targetのオブジェクト同一性で戻る操作を管理する。Filesへ戻ると現在のtargetだけを dismissed として保持し、別のopen要求で新しいtargetが来ればpreviewを再表示する。このため同じファイルへの会話リンクを再度開いても表示でき、無関係な再renderだけでツリーからpreviewへ戻らない。desktopの左右並列表示は同じ選択を使う。[surface](../../packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx#L23-L95)・[実アプリ回帰](../../tests/chat/mobile-navigation.native.mjs)
+
+### 読み取り専用コードの色分け
+
+`CodeTextViewer` は共有chat用Prism grammarとテーマclassを再利用する。文書全体の改行を正規化してtokenizeしてから行へ分割し、複数行コメント・templateと入れ子tokenの意味を保つ。Reactのtext/spanとして描画し、入力HTMLを実行せず、editorや編集機能を追加しない。行番号・選択行の中央scroll・横スクロールは既存viewerの責務のままである。[tokenの行変換](../../packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts#L17-L69)・[描画](../../packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L14-L74)
+
+未対応grammar、NUL、共有上限16,384文字超、4,096文字超の行、token/segment予算4,096または深さ32の超過、tokenizer失敗では受け取った本文全体をplain行で返す。色分けの予算はbackendの512 KiB preview上限とは別で、色分けを諦めても本文を切り詰めない。content/language単位でmemoizeし、chat側の共有実装は変更しない。[fallback](../../packages/web-core/src/features/workspace-files/model/codeHighlightLines.ts#L11-L69)・[共有上限](../../packages/ui/src/lib/chat-code-highlighting.ts#L5-L23)
+
+[model/component単体](../../packages/web-core/src/features/workspace-files/model/codeHighlightLines.test.ts)と[Chromium回帰](../../tests/file-viewer/syntax.test.mjs)は複数行grammar、安全なHTML風文字列、plain fallback、390/1440pxのlight/dark、行120へのjumpと縦横scrollを確認する。Chromium fixtureは実componentに合成本文を渡す試験であり、認証済みWorkspaceからの実API取得試験とは区別する。
 
 <!-- openwiki: broken internal link [src/example.ts:120] file "src/example.ts:120" does not exist. Fix the href or restore the target, then delete this comment. -->
 チャットの Markdown file link は、現在の Workspace / Repo に属するファイルを既存 preview で読むための参照である。`[source](src/example.ts:120)` を開くと file panel が選択される。リンクを別の Workspace の会話に移したときも、解決基準は表示先の Workspace である。本文 renderer から panel までの責務は [Web の接続構造](../architecture/web-and-sync.md#チャットのファイルリンクを既存-panel-へ渡す)にまとめる。[resolver の入力](../../packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L23)
