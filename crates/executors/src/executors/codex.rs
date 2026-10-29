@@ -1105,8 +1105,22 @@ impl Codex {
             config.insert("mcp_servers.vibe_kanban.required".into(), Value::Bool(true));
             config.insert(
                 "mcp_servers.vibe_kanban.command".into(),
-                Value::String("vibe-kanban-mcp".into()),
+                Value::String(
+                    env.get("LVK_INTEGRATION_MCP_COMMAND")
+                        .cloned()
+                        .unwrap_or_else(|| "vibe-kanban-mcp".into()),
+                ),
             );
+            // MCP stdio has its own environment allowlist: inherited host bindings
+            // must be explicit, without replacing user env_vars or other servers.
+            for key in ["LVK_INSTANCE_DIR", "MCP_HOST", "MCP_PORT"] {
+                if let Some(value) = env.get(key) {
+                    config.insert(
+                        format!("mcp_servers.vibe_kanban.env.{key}"),
+                        Value::String(value.clone()),
+                    );
+                }
+            }
             config.insert(
                 "mcp_servers.vibe_kanban.env.VK_AGENT_RUN_ID".into(),
                 Value::String(agent.clone()),
@@ -2518,6 +2532,16 @@ mod integration_worker_tests {
                 .as_ref()
                 .is_none_or(|c| !c.contains_key("mcp_servers.vibe_kanban.required"))
         );
+        env.insert(
+            "LVK_INTEGRATION_MCP_COMMAND",
+            "/runtime release/vibe-kanban-mcp",
+        );
+        env.insert("LVK_INSTANCE_DIR", "/instance");
+        env.insert("MCP_HOST", "127.0.0.1");
+        env.insert("MCP_PORT", "4020");
+        let still_normal =
+            codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
+        assert_eq!(normal.config, still_normal.config);
         env.insert("LVK_INTEGRATION_WORKER", "1");
         let worker = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
         assert_eq!(
@@ -2528,6 +2552,19 @@ mod integration_worker_tests {
             worker.config.as_ref().unwrap()["mcp_servers.vibe_kanban.required"],
             true
         );
+        let config = worker.config.as_ref().unwrap();
+        assert_eq!(
+            config["mcp_servers.vibe_kanban.command"],
+            "/runtime release/vibe-kanban-mcp"
+        );
+        assert_eq!(
+            config["mcp_servers.vibe_kanban.env.LVK_INSTANCE_DIR"],
+            "/instance"
+        );
+        assert_eq!(config["mcp_servers.vibe_kanban.env.MCP_HOST"], "127.0.0.1");
+        assert_eq!(config["mcp_servers.vibe_kanban.env.MCP_PORT"], "4020");
+        assert!(!config.contains_key("mcp_servers.vibe_kanban.env_vars"));
+        assert!(!config.contains_key("mcp_servers.other.command"));
         assert_eq!(
             resume_params_from("same-native-session".into(), worker.clone()).config,
             worker.config
