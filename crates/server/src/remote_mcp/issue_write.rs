@@ -191,7 +191,7 @@ pub(super) async fn call(
         );
         if matches!(
             receipt.operation.as_str(),
-            "run_process" | "stop_process" | "self_restart"
+            "run_process" | "stop_process" | "change_runtime_path" | "self_restart"
         ) {
             ensure!(
                 principal.allows("lvk:runtime:read"),

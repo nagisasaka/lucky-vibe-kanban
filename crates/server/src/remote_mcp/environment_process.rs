@@ -23,7 +23,6 @@ pub struct ProcessRegistry {
 }
 struct Record {
     owner: String,
-    root: PathBuf,
     identity: String,
     stdout: Buffer,
     stderr: Buffer,
@@ -128,10 +127,10 @@ fn protected(pid: u32) -> bool {
     }
     pid <= 1
 }
-fn scoped(root: &Path, pid: u32) -> Result<Observation> {
+fn safe_observation(pid: u32) -> Result<Observation> {
     let observation = observe(pid)?;
-    if protected(pid) || !observation.cwd.starts_with(root) {
-        bail!("process_scope_denied");
+    if protected(pid) {
+        bail!("process_protected");
     }
     Ok(observation)
 }
@@ -147,7 +146,7 @@ fn metadata(o: &Observation) -> Value {
     json!({"observed_at":chrono::Utc::now(),"identity":o.identity,"pid":o.pid,"parent_pid":o.ppid,"start_ticks":o.ticks,"state":o.state,"cwd":o.cwd,"executable":o.executable,"argv":"withheld","environment":"withheld","project_id":null,"workspace_id":null,"build_commit":"unknown","stdout_availability":"managed runs only; otherwise read configured log files"})
 }
 
-pub fn list(root: &Path, after_pid: u32, limit: usize) -> Result<Value> {
+pub fn list(after_pid: u32, limit: usize) -> Result<Value> {
     let mut ids: Vec<u32> = std::fs::read_dir("/proc")?
         .filter_map(|e| e.ok()?.file_name().to_str()?.parse().ok())
         .filter(|p| *p > after_pid)
@@ -157,7 +156,7 @@ pub fn list(root: &Path, after_pid: u32, limit: usize) -> Result<Value> {
     let mut items = Vec::new();
     let mut next = None;
     for pid in ids {
-        if let Ok(o) = scoped(root, pid) {
+        if let Ok(o) = safe_observation(pid) {
             if items.len() == limit {
                 next = items.last().and_then(|v: &Value| v["pid"].as_u64());
                 break;
@@ -167,8 +166,8 @@ pub fn list(root: &Path, after_pid: u32, limit: usize) -> Result<Value> {
     }
     Ok(json!({"processes":items,"next_after_pid":next,"snapshot":false}))
 }
-pub fn inspect(root: &Path, identity: &str) -> Result<Value> {
-    let o = scoped(root, pid_from(identity)?)?;
+pub fn inspect(identity: &str) -> Result<Value> {
+    let o = safe_observation(pid_from(identity)?)?;
     if o.identity != identity {
         bail!("process_identity_changed");
     }
@@ -238,7 +237,6 @@ impl ProcessRegistry {
     pub async fn run(
         &self,
         owner: &str,
-        root: &Path,
         executable: &Path,
         args: &[String],
         cwd: &Path,
@@ -247,13 +245,13 @@ impl ProcessRegistry {
     ) -> Result<Value> {
         self.run_audited(
             owner,
-            root,
             executable,
             args,
             cwd,
             lifetime_seconds,
             service,
             None,
+            &[],
         )
         .await
     }
@@ -261,15 +259,15 @@ impl ProcessRegistry {
     pub async fn run_audited(
         &self,
         owner: &str,
-        root: &Path,
         executable: &Path,
         args: &[String],
         cwd: &Path,
         lifetime_seconds: u64,
         service: bool,
         audit: Option<(sqlx::SqlitePool, String, Uuid)>,
+        workspaces: &[PathBuf],
     ) -> Result<Value> {
-        if !cwd.starts_with(root)
+        if !cwd.is_absolute()
             || lifetime_seconds == 0
             || lifetime_seconds > 604800
             || (!service && lifetime_seconds > 3600)
@@ -298,14 +296,20 @@ impl ProcessRegistry {
         }
         use std::os::fd::AsRawFd;
         let relative = cwd
-            .strip_prefix(root)
-            .map_err(|_| anyhow!("process_cwd_outside_region"))?;
+            .strip_prefix("/")
+            .map_err(|_| anyhow!("process_cwd_must_be_absolute"))?;
         let directory = super::environment_files::open_directory(
-            root,
+            Path::new("/"),
             relative
                 .to_str()
                 .ok_or_else(|| anyhow!("process_cwd_not_utf8"))?,
         )?;
+        // Check the fd we actually use, not only the pre-open pathname.
+        let pinned_cwd = std::fs::read_link(format!("/proc/self/fd/{}", directory.as_raw_fd()))?;
+        if pinned_cwd != cwd {
+            bail!("process_cwd_changed; reobserve before launching");
+        }
+        super::environment::protect_workspace(&pinned_cwd, workspaces, false)?;
         let mut command = Command::new(executable);
         command
             .args(args)
@@ -338,7 +342,6 @@ impl ProcessRegistry {
         let id = Uuid::new_v4().to_string();
         let record = Arc::new(Mutex::new(Record {
             owner: owner.into(),
-            root: root.into(),
             identity: identity.clone(),
             stdout: Buffer::default(),
             stderr: Buffer::default(),
@@ -429,7 +432,6 @@ impl ProcessRegistry {
     pub fn output(
         &self,
         owner: &str,
-        root: &Path,
         id: &str,
         stream: &str,
         offset: u64,
@@ -441,7 +443,7 @@ impl ProcessRegistry {
             .ok_or_else(|| anyhow!("process_output_unavailable_after_restart_or_eviction"))?
             .lock()
             .unwrap();
-        if r.owner != owner || r.root != root {
+        if r.owner != owner {
             bail!("process_owner_denied");
         }
         let buffer = match stream {
@@ -453,13 +455,13 @@ impl ProcessRegistry {
             json!({"observed_at":chrono::Utc::now(),"run_id":id,"identity":r.identity,"state":r.state,"exit_code":r.exit_code,"signal":r.signal,"stream":stream,"output":buffer.page(offset,limit)}),
         )
     }
-    pub fn stop(&self, owner: &str, root: &Path, identity: &str, force: bool) -> Result<Value> {
+    pub fn stop(&self, owner: &str, identity: &str, force: bool) -> Result<Value> {
         let mut selected_identity = identity.to_owned();
         for (id, record) in self.records.lock().unwrap().iter() {
             let r = record.lock().unwrap();
             if r.identity == identity || id == identity {
                 selected_identity = r.identity.clone();
-                if r.owner != owner || r.root != root {
+                if r.owner != owner {
                     bail!("process_owner_denied");
                 }
                 if r.state == "unknown" && id == identity {
@@ -475,7 +477,7 @@ impl ProcessRegistry {
             }
         }
         let identity = selected_identity.as_str();
-        let o = scoped(root, pid_from(identity)?)?;
+        let o = safe_observation(pid_from(identity)?)?;
         if o.identity != identity {
             bail!("process_identity_changed");
         }
@@ -564,7 +566,7 @@ mod tests {
     fn self_is_protected_and_identity_mismatch_is_rejected() {
         let o = observe(std::process::id()).unwrap();
         assert!(protected(o.pid));
-        assert!(inspect(Path::new("/"), &o.identity).is_err());
+        assert!(inspect(&o.identity).is_err());
         assert!(signal_identity(&format!("wrong:{}:{}", o.pid, o.ticks), 0).is_err());
     }
     #[tokio::test]
@@ -582,7 +584,6 @@ mod tests {
         let run = registry
             .run(
                 "alice",
-                &root,
                 &shell,
                 &[script.to_string_lossy().into()],
                 &root,
@@ -594,15 +595,10 @@ mod tests {
         let id = run["run_id"].as_str().unwrap();
         let identity = run["identity"].as_str().unwrap();
         let _cleanup = TestProcessCleanup::new(identity).unwrap();
-        assert!(registry.output("bob", &root, id, "stdout", 0, 100).is_err());
+        assert!(registry.output("bob", id, "stdout", 0, 100).is_err());
         for _ in 0..100 {
-            if registry
-                .output("alice", &root, id, "stdout", 0, 100)
-                .unwrap()["output"]["text"]
-                == "ready"
-                && registry
-                    .output("alice", &root, id, "stderr", 0, 100)
-                    .unwrap()["output"]["text"]
+            if registry.output("alice", id, "stdout", 0, 100).unwrap()["output"]["text"] == "ready"
+                && registry.output("alice", id, "stderr", 0, 100).unwrap()["output"]["text"]
                     == "error"
             {
                 break;
@@ -610,30 +606,24 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         assert_eq!(
-            registry
-                .output("alice", &root, id, "stderr", 0, 100)
-                .unwrap()["output"]["text"],
+            registry.output("alice", id, "stderr", 0, 100).unwrap()["output"]["text"],
             "error"
         );
-        assert!(registry.stop("bob", &root, identity, false).is_err());
-        registry.stop("alice", &root, identity, false).unwrap();
+        assert!(registry.stop("bob", identity, false).is_err());
+        registry.stop("alice", identity, false).unwrap();
         for _ in 0..100 {
-            if registry
-                .output("alice", &root, id, "stdout", 0, 100)
-                .unwrap()["state"]
-                != "running"
-            {
+            if registry.output("alice", id, "stdout", 0, 100).unwrap()["state"] != "running" {
                 break;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
         assert_eq!(
-            registry.stop("alice", &root, identity, false).unwrap()["stopped"],
+            registry.stop("alice", identity, false).unwrap()["stopped"],
             true
         );
         assert!(
             ProcessRegistry::default()
-                .output("alice", &root, id, "stdout", 0, 100)
+                .output("alice", id, "stdout", 0, 100)
                 .is_err()
         );
     }
@@ -650,7 +640,6 @@ mod tests {
         let run = registry
             .run(
                 "alice",
-                &root,
                 &shell,
                 &[script.to_string_lossy().into()],
                 &root,
@@ -674,19 +663,17 @@ mod tests {
         .await
         .unwrap();
         assert!(
-            list(&root, 0, 200).unwrap()["processes"]
+            list(0, 200).unwrap()["processes"]
                 .as_array()
                 .unwrap()
                 .iter()
                 .any(|p| p["identity"] == identity)
         );
-        assert_eq!(inspect(&root, identity).unwrap()["identity"], identity);
-        assert!(registry.stop("bob", &root, id, false).is_err());
+        assert_eq!(inspect(identity).unwrap()["identity"], identity);
+        assert!(registry.stop("bob", id, false).is_err());
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                let text = registry
-                    .output("alice", &root, id, "stdout", 0, 1024)
-                    .unwrap();
+                let text = registry.output("alice", id, "stdout", 0, 1024).unwrap();
                 if text["output"]["text"]
                     == "/usr/local/bin:/usr/bin:/bin|C.UTF-8|unset|unset|unset|unset"
                 {
@@ -697,7 +684,7 @@ mod tests {
         })
         .await
         .unwrap();
-        registry.stop("alice", &root, id, false).unwrap();
+        registry.stop("alice", id, false).unwrap();
     }
 
     #[tokio::test]
@@ -717,7 +704,6 @@ mod tests {
         let run = registry
             .run(
                 "alice",
-                &root,
                 &shell,
                 &[script.to_string_lossy().into()],
                 &root,
@@ -730,9 +716,7 @@ mod tests {
         let id = run["run_id"].as_str().unwrap();
         let output = tokio::time::timeout(Duration::from_secs(5), async {
             loop {
-                let output = registry
-                    .output("alice", &root, id, "stdout", 0, 4096)
-                    .unwrap();
+                let output = registry.output("alice", id, "stdout", 0, 4096).unwrap();
                 if output["state"] == "exited" {
                     break output;
                 }
@@ -758,45 +742,36 @@ mod tests {
         let registry = ProcessRegistry::default();
         let sleep = Path::new("/bin/sleep").canonicalize().unwrap();
         let run = registry
-            .run("alice", &root, &sleep, &["30".into()], &root, 1, false)
+            .run("alice", &sleep, &["30".into()], &root, 1, false)
             .await
             .unwrap();
         let _cleanup = TestProcessCleanup::new(run["identity"].as_str().unwrap()).unwrap();
         let id = run["run_id"].as_str().unwrap();
-        assert!(inspect(&root, run["identity"].as_str().unwrap()).is_ok());
-        assert!(inspect(Path::new("/unrelated"), run["identity"].as_str().unwrap()).is_err());
+        assert!(inspect(run["identity"].as_str().unwrap()).is_ok());
         tokio::time::sleep(Duration::from_millis(1300)).await;
         assert_eq!(
-            registry
-                .output("alice", &root, id, "stdout", 0, 100)
-                .unwrap()["state"],
+            registry.output("alice", id, "stdout", 0, 100).unwrap()["state"],
             "timed_out"
         );
         let echo = Path::new("/bin/echo").canonicalize().unwrap();
         let run = registry
-            .run("alice", &root, &echo, &["done".into()], &root, 10, false)
+            .run("alice", &echo, &["done".into()], &root, 10, false)
             .await
             .unwrap();
         let _echo_cleanup = TestProcessCleanup::new(run["identity"].as_str().unwrap()).unwrap();
         let id = run["run_id"].as_str().unwrap();
         for _ in 0..100 {
-            if registry
-                .output("alice", &root, id, "stdout", 0, 100)
-                .unwrap()["state"]
-                == "exited"
-            {
+            if registry.output("alice", id, "stdout", 0, 100).unwrap()["state"] == "exited" {
                 break;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
-        let output = registry
-            .output("alice", &root, id, "stdout", 0, 100)
-            .unwrap();
+        let output = registry.output("alice", id, "stdout", 0, 100).unwrap();
         assert_eq!(output["exit_code"], 0);
         assert_eq!(output["output"]["text"], "done\n");
         assert!(
             registry
-                .run("alice", &root, &echo, &[], &root, 3601, false)
+                .run("alice", &echo, &[], &root, 3601, false)
                 .await
                 .is_err()
         );

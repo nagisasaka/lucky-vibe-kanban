@@ -4,19 +4,9 @@
 
 // If you are an AI, and you absolutely have to edit this file, please confirm with the user first.
 
-export type Grant = { display_name: string, id: string, project_id: string, root: string,
-/**
- * Explicit assertion: this directory is not a coordinated shared resource.
- */
-allow_uncoordinated_execution: boolean, };
+export type RuntimeAccessSettings = { files_enabled: boolean, execution_enabled: boolean, file_roots: Array<string>, };
 
-export type RuntimeAccessSettings = { enabled: boolean, grants: Array<Grant>, };
-
-export type RuntimeAccessView = { projects: Array<RuntimeAccessProject>, revision: number, source: string, legacy_error: InvalidLegacy | null, settings: RuntimeAccessSettings, };
-
-export type InvalidLegacy = { "kind": "unreadable", "reason": string } | { "kind": "invalid_json", "reason": string } | { "kind": "invalid_grant", "reason": string };
-
-export type RuntimeAccessProject = { id: string, name: string, };
+export type RuntimeAccessView = { revision: number, source: string, settings: RuntimeAccessSettings, };
 
 export type SaveRuntimeAccess = { revision: number, settings: RuntimeAccessSettings, };
 

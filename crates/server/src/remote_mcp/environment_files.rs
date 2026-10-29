@@ -236,13 +236,17 @@ fn anchor(file: &mut File, offset: u64) -> Result<String> {
 }
 
 pub(super) fn read(root: &Path, args: Value) -> Result<Value> {
+    read_observed(root, args, || {})
+}
+
+fn read_observed(root: &Path, args: Value, after_read: impl FnOnce()) -> Result<Value> {
     validate(&args, &["path", "max_bytes", "tail", "offset", "cursor"])?;
     ensure!(args.get("path").is_some(), "runtime file path required");
     let path = path(&args)?;
     let mut file = open(root, path, false)?;
     let before = stamp(&file.metadata().map_err(io_error)?);
     let size = before["size"].as_u64().unwrap();
-    let max_bytes = number(&args, "max_bytes", 16_384, 65_536)?;
+    let max_bytes = number(&args, "max_bytes", 16_384, 524_288)?;
     ensure!(max_bytes > 0, "max_bytes must be positive");
     let tail = match args.get("tail") {
         Some(v) => v.as_bool().context("tail must be a boolean")?,
@@ -301,11 +305,143 @@ pub(super) fn read(root: &Path, args: Value) -> Result<Value> {
         _ => ("base64", STANDARD.encode(&bytes)),
     };
     let cursor_anchor = anchor(&mut file, next)?;
+    after_read();
     let after = stamp(&file.metadata().map_err(io_error)?);
     let changed = before != after;
     Ok(
         json!({"path":path,"observed_at":chrono::Utc::now().to_rfc3339(),"encoding":encoding,"content":content,"offset":offset,"bytes":bytes.len(),"snapshot":before,"changed_during_read":changed,"eof_at_snapshot":next >= size,"cursor":if changed {Value::Null} else {json!({"path":path,"snapshot":before,"offset":next,"anchor":cursor_anchor})},"evidence":"observed runtime bytes; not execution authorization; UTF-8 boundary fragments use base64"}),
     )
+}
+
+/// Absolute direct paths use the most specific configured root. Symlinks are
+/// rejected by the common fd walk, rather than canonicalised into permission.
+pub(super) fn resolve(
+    roots: &[std::path::PathBuf],
+    path: &Path,
+) -> Result<(std::path::PathBuf, String)> {
+    ensure!(
+        path.is_absolute() && !path.components().any(|c| c == Component::ParentDir),
+        "path must be absolute without traversal"
+    );
+    let root = roots
+        .iter()
+        .filter(|root| path.starts_with(root))
+        .max_by_key(|root| root.components().count())
+        .ok_or_else(|| anyhow::anyhow!("path outside file roots"))?;
+    Ok((
+        root.clone(),
+        path.strip_prefix(root)?
+            .to_str()
+            .context("path must be UTF-8")?
+            .to_owned(),
+    ))
+}
+
+/// Pin the parent, reject special/aliased targets, then change its directory entry.
+/// This is a trusted operational boundary, not isolation from concurrent OS writers.
+#[cfg(target_os = "linux")]
+pub(super) fn change(
+    roots: &[std::path::PathBuf],
+    workspaces: &[std::path::PathBuf],
+    action: &str,
+    target: &Path,
+    content: Option<&str>,
+    expected: Option<&Value>,
+    recursive: bool,
+) -> Result<Value> {
+    use std::{io::Write, os::fd::AsRawFd};
+    resolve(roots, target)?;
+    ensure!(
+        matches!(action, "write" | "delete"),
+        "Unknown file change action"
+    );
+    super::environment::protect_workspace(target, workspaces, action == "delete")?;
+    let parent = target.parent().context("Cannot change filesystem root")?;
+    let name = target
+        .file_name()
+        .context("Cannot change filesystem root")?;
+    // Walking from / validates even configured ancestors; root itself may be a target.
+    let directory = open_directory(
+        Path::new("/"),
+        parent
+            .strip_prefix("/")?
+            .to_str()
+            .context("path must be UTF-8")?,
+    )?;
+    let pinned_parent =
+        std::path::PathBuf::from(format!("/proc/self/fd/{}", directory.as_raw_fd()));
+    let actual = fs::read_link(&pinned_parent).map_err(io_error)?.join(name);
+    ensure!(
+        actual == target,
+        "path changed during resolution; reobserve"
+    );
+    resolve(roots, &actual)?;
+    super::environment::protect_workspace(&actual, workspaces, action == "delete")?;
+    let entry = pinned_parent.join(name);
+    let before = match fs::symlink_metadata(&entry) {
+        Ok(meta) => {
+            ensure!(
+                meta.is_file() || meta.is_dir(),
+                "only regular files/directories are supported"
+            );
+            Some(meta)
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(e) => return Err(io_error(e)),
+    };
+    if let Some(expected) = expected {
+        ensure!(
+            before.as_ref().is_some_and(|m| stamp(m) == *expected),
+            "target_conflict: identity changed; reobserve"
+        );
+    }
+    if action == "write" {
+        ensure!(
+            before.as_ref().is_none_or(|m| m.is_file()),
+            "write target must be a regular file"
+        );
+        let content = content.context("Write content required")?;
+        ensure!(content.len() <= 524288, "Write exceeds 512 KiB");
+        let mut temp = tempfile::NamedTempFile::new_in(&pinned_parent)?;
+        if let Some(meta) = &before {
+            temp.as_file().set_permissions(meta.permissions())?;
+        }
+        temp.write_all(content.as_bytes())?;
+        temp.as_file().sync_all()?;
+        // Catch normal concurrent replacement; this is not a compare-and-swap syscall.
+        let current = fs::symlink_metadata(&entry).ok();
+        ensure!(
+            current.as_ref().map(stamp) == before.as_ref().map(stamp),
+            "target_conflict: changed before replacement"
+        );
+        temp.persist(&entry).map_err(|e| e.error)?;
+        return Ok(match fs::metadata(entry) {
+            Ok(meta) => {
+                json!({"path":target,"status":"written","bytes":content.len(),"snapshot":stamp(&meta)})
+            }
+            Err(_) => {
+                json!({"path":target,"status":"uncertain","message":"Replacement completed but final observation unavailable; reobserve before retrying"})
+            }
+        });
+    }
+    let Some(meta) = before else {
+        return Ok(json!({"path":target,"status":"not_found","deleted":false}));
+    };
+    let result = if meta.is_dir() {
+        if recursive {
+            fs::remove_dir_all(&entry)
+        } else {
+            fs::remove_dir(&entry)
+        }
+    } else {
+        fs::remove_file(&entry)
+    };
+    match result {
+        Ok(()) => Ok(json!({"path":target,"status":"deleted","deleted":true})),
+        Err(e) => Ok(
+            json!({"path":target,"status":"failed","deleted":false,"partial_possible":meta.is_dir()&&recursive,"message":io_error(e).to_string()}),
+        ),
+    }
 }
 
 #[cfg(test)]
@@ -445,7 +581,7 @@ mod tests {
         assert_eq!(next["entries"][0]["name"], "z");
         fs::write(dir.path().join("c"), b"").unwrap();
         assert!(list(dir.path(), json!({"snapshot":page["snapshot"]})).is_err());
-        assert!(read(dir.path(), json!({"path":"a","max_bytes":65537})).is_err());
+        assert!(read(dir.path(), json!({"path":"a","max_bytes":524289})).is_err());
         assert!(list(dir.path(), json!({"limit":0})).is_err());
     }
     #[cfg(target_os = "linux")]
@@ -489,6 +625,59 @@ mod tests {
         if unsafe { libc::geteuid() } != 0 {
             assert!(read(dir.path(), json!({"path":"denied"})).is_err());
         }
+    }
+
+    #[test]
+    #[ignore = "allocation measurement; run alone to exclude other fixture RSS"]
+    fn runtime_response_allocation_is_bounded() {
+        fn rss() -> usize {
+            fs::read_to_string("/proc/self/status")
+                .unwrap()
+                .lines()
+                .find_map(|line| line.strip_prefix("VmRSS:"))
+                .unwrap()
+                .split_whitespace()
+                .next()
+                .unwrap()
+                .parse::<usize>()
+                .unwrap()
+                * 1024
+        }
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("log"), vec![1; 524288]).unwrap();
+        let before = rss();
+        let read = read(dir.path(), json!({"path":"log","max_bytes":524288})).unwrap();
+        let response = rmcp::model::CallToolResult::structured(read);
+        let serialized = serde_json::to_vec(&response).unwrap();
+        let after = rss();
+        eprintln!(
+            "512 KiB escaped response: {} JSON bytes; retained RSS delta {} bytes",
+            serialized.len(),
+            after.saturating_sub(before)
+        );
+        assert!(serialized.len() < 8 * 1024 * 1024);
+        assert!(after.saturating_sub(before) < 64 * 1024 * 1024);
+    }
+
+    #[test]
+    fn changed_during_read_invalidates_cursor_and_utf8_fragments_are_binary() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("log");
+        fs::write(&path, "あいう").unwrap();
+        let fragment = read(dir.path(), json!({"path":"log","max_bytes":1})).unwrap();
+        assert_eq!(fragment["encoding"], "base64");
+        assert_eq!(fragment["bytes"], 1);
+        let changed = read_observed(dir.path(), json!({"path":"log"}), || {
+            fs::OpenOptions::new()
+                .append(true)
+                .open(&path)
+                .unwrap()
+                .write_all(b"appended")
+                .unwrap();
+        })
+        .unwrap();
+        assert_eq!(changed["changed_during_read"], true);
+        assert!(changed["cursor"].is_null());
     }
 
     #[test]

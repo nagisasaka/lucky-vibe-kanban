@@ -588,28 +588,17 @@
     }
   },
   "runtimeAccess": {
-    "recover": "Save disabled, empty settings to recover",
-    "invalidLegacy": "Legacy JSON configuration is invalid. Runtime access is denied. Review the reason, then explicitly save disabled, empty settings to replace it. No automatic reset occurs.",
-    "title": "Runtime environment access",
-    "description": "Manage areas outside Workspaces where external MCP may access files and execute programs.",
-    "permissions": "Authentication and lvk:runtime:read are required. Run/stop also require region execution permission and lvk:runtime:execute (alongside lvk:read). Run/stop cannot overlap Workspaces.",
-    "revoke": "Revocation denies subsequent operations without terminating running processes. Wait for them to finish naturally; existing timeouts remain unchanged. Long-running daemons may never finish naturally. Permissions are not automatically restored.",
-    "denied": "Settings unavailable. Sign in as a browser administrator.",
-    "loading": "Loading…",
-    "enabled": "Enable runtime environment access",
-    "name": "Display name",
-    "project": "Target Project ID",
-    "root": "Allowed directory (absolute path)",
-    "execute": "Allow execution and stop (only where shared-resource coordination is unnecessary)",
-    "osAuthority": "The allowed directory bounds file reads and execution cwd, not an OS sandbox. Commands run with the LVK OS user permissions and can access paths outside cwd.",
-    "remove": "Remove region",
-    "add": "Add region",
-    "source": {
-      "default": "Disabled by default.",
-      "saved": "Using saved settings. Legacy JSON is ignored.",
-      "legacy_file": "Loaded legacy JSON. Saving makes saved settings the sole source."
-    },
-    "help": "Permissions and limits"
+    "title": "Accès à l’environnement d’exécution",
+    "description": "Autorisez les clients MCP de confiance à manipuler des fichiers et à exécuter des programmes.",
+    "files": "Autoriser la lecture et l’écriture de fichiers via MCP",
+    "execute": "Autoriser l’exécution de programmes via MCP",
+    "restrict": "Restreindre les racines d’accès aux fichiers",
+    "roots": "Racines autorisées (chemins absolus, un par ligne)",
+    "osAuthority": "Ce n’est pas un bac à sable. Lorsque l’exécution est autorisée, les programmes peuvent accéder en dehors de ces racines.",
+    "permissions": "Les deux permissions sont activées initialement ; la racine des fichiers est /. Désactiver les fichiers bloque uniquement les API directes. La lecture des Workspace reste possible, mais les modifications directes et leur utilisation comme cwd au lancement sont refusées. Utilisez la coordination existante pour les ressources partagées.",
+    "revoke": "Désactiver l’exécution ne termine pas les processus actifs ; leur observation, sortie et arrêt sont alors indisponibles. Les délais existants restent en vigueur.",
+    "denied": "Configuration indisponible. Connectez-vous en tant qu’administrateur.",
+    "loading": "Chargement…"
   },
   "externalEditors": {
     "title": "External editor integrations",

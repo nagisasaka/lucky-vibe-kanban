@@ -10,7 +10,14 @@ describe('runtime access settings', () => {
     await expect(runtimeAccessSettings()).rejects.toThrow(
       'Administrator required'
     );
-    const input = { revision: 7, settings: { enabled: false, grants: [] } };
+    const input = {
+      revision: 7,
+      settings: {
+        files_enabled: false,
+        execution_enabled: true,
+        file_roots: ['/'],
+      },
+    };
     vi.mocked(makeLocalApiRequest).mockResolvedValueOnce(
       Response.json({ ...input, revision: 8, source: 'saved' })
     );

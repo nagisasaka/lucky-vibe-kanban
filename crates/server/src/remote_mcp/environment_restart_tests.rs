@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use super::{
     environment::Environment,
-    environment_tests::{Http, grant, serve},
+    environment_tests::{Http, serve, settings},
     tests,
 };
 
@@ -92,10 +92,14 @@ async fn restart_host() {
         .execute(&remote.pool)
         .await
         .unwrap();
-    let region = grant(&root.join("app"));
-    let mut other = region.clone();
-    other.id = "other-grant".into();
-    remote.environment = Some(Arc::new(Environment::new(vec![region, other]).unwrap()));
+    sqlx::query("INSERT OR IGNORE INTO projects(id,name,key) VALUES(?,'Other fixture','OTHER')")
+        .bind(Uuid::from_u128(2))
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    remote.environment = Some(Arc::new(
+        Environment::new(settings(&root.join("app"))).unwrap(),
+    ));
     let http = serve(remote, auth).await;
     std::fs::write(root.join("ready"), &http.base).unwrap();
     std::future::pending::<()>().await;
@@ -118,7 +122,7 @@ async fn restart_controller() {
     .unwrap();
     let (mut host, http) = start_host(&root).await;
     let request = Uuid::new_v4();
-    let input = json!({"region":"example-api","request_id":request,"purpose":"Isolated crash test","executable":"/bin/sh","args":["start.sh"],"cwd":".","service":true,"lifetime_seconds":60});
+    let input = json!({"project_id":Uuid::from_u128(1),"request_id":request,"purpose":"Isolated crash test","executable":"/bin/sh","args":["start.sh"],"cwd":root.join("app"),"service":true,"lifetime_seconds":60});
     http.value("run_process", input.clone()).await;
     let before = http.settle(request).await;
     assert_eq!(before["status"], "succeeded", "{before}");
@@ -131,8 +135,8 @@ async fn restart_controller() {
         loop {
             let observed = http
                 .value(
-                    "inspect_process",
-                    json!({"region":"example-api","identity":identity}),
+                    "observe_process",
+                    json!({"action":"inspect","project_id":Uuid::from_u128(1),"identity":identity}),
                 )
                 .await;
             if observed["executable"] == json!(sleep) {
@@ -149,8 +153,8 @@ async fn restart_controller() {
     let (_new_host, restored) = start_host(&root).await;
     let observed = restored
         .value(
-            "inspect_process",
-            json!({"region":"example-api","identity":identity}),
+            "observe_process",
+            json!({"action":"inspect","project_id":Uuid::from_u128(1),"identity":identity}),
         )
         .await;
     assert_eq!(observed["identity"], identity);
@@ -168,32 +172,35 @@ async fn restart_controller() {
         restored
             .call(
                 "runtime",
-                "read_process_output",
-                json!({"region":"example-api","process_id":id,"stream":"stdout"})
+                "observe_process",
+                json!({"action":"output","project_id":Uuid::from_u128(1),"process_id":id,"stream":"stdout"})
             )
             .await["isError"],
         true
     );
     let wrong_identity = format!("{}:0", identity.rsplit_once(':').unwrap().0);
-    for (region, selected) in [
-        ("other-grant", identity),
-        ("example-api", wrong_identity.as_str()),
+    for (project, selected) in [
+        (Uuid::from_u128(2), identity),
+        (Uuid::from_u128(1), wrong_identity.as_str()),
     ] {
         let req = Uuid::new_v4();
-        restored.value("stop_process", json!({"region":region,"identity":selected,"request_id":req,"purpose":"Verify identity and durable ownership"})).await;
-        assert_eq!(restored.settle(req).await["status"], "failed");
+        restored.value("stop_process", json!({"project_id":project,"identity":selected,"request_id":req,"purpose":"Verify identity and durable ownership"})).await;
+        assert_eq!(
+            restored.settle_project(project, req).await["status"],
+            "failed"
+        );
         assert_eq!(
             restored
                 .value(
-                    "inspect_process",
-                    json!({"region":"example-api","identity":identity})
+                    "observe_process",
+                    json!({"action":"inspect","project_id":Uuid::from_u128(1),"identity":identity})
                 )
                 .await["identity"],
             identity
         );
     }
     let stop = Uuid::new_v4();
-    restored.value("stop_process", json!({"region":"example-api","identity":id,"request_id":stop,"purpose":"Stop verified surviving child"})).await;
+    restored.value("stop_process", json!({"project_id":Uuid::from_u128(1),"identity":id,"request_id":stop,"purpose":"Stop verified surviving child"})).await;
     let stopped = restored.settle(stop).await;
     assert_eq!(stopped["status"], "succeeded", "{stopped}");
     assert_eq!(stopped["result"]["stop_requested"], true);
@@ -218,8 +225,8 @@ async fn restart_controller() {
         restored
             .call(
                 "runtime",
-                "inspect_process",
-                json!({"region":"example-api","identity":identity})
+                "observe_process",
+                json!({"action":"inspect","project_id":Uuid::from_u128(1),"identity":identity})
             )
             .await["isError"],
         true
@@ -228,14 +235,14 @@ async fn restart_controller() {
         restored
             .call(
                 "runtime",
-                "read_process_output",
-                json!({"region":"example-api","process_id":id,"stream":"stderr"})
+                "observe_process",
+                json!({"action":"output","project_id":Uuid::from_u128(1),"process_id":id,"stream":"stderr"})
             )
             .await["isError"],
         true
     );
     let again = Uuid::new_v4();
-    restored.value("stop_process", json!({"region":"example-api","identity":id,"request_id":again,"purpose":"Do not pretend an unavailable old identity is live"})).await;
+    restored.value("stop_process", json!({"project_id":Uuid::from_u128(1),"identity":id,"request_id":again,"purpose":"Do not pretend an unavailable old identity is live"})).await;
     assert_eq!(restored.settle(again).await["status"], "failed");
 }
 async fn start_host(root: &Path) -> (Host, Http) {

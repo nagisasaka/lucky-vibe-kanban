@@ -104,7 +104,10 @@ async fn fake_introspection(
     match form["token"].as_str() {
         "valid" => {}
         "merge" => result["scope"] = json!("lvk:read lvk:merge"),
-        "runtime" => result["scope"] = json!("lvk:read lvk:runtime:read lvk:runtime:execute"),
+        "runtime" => {
+            result["scope"] = json!("lvk:read lvk:write lvk:runtime:read lvk:runtime:execute")
+        }
+        "runtime-files" => result["scope"] = json!("lvk:read lvk:write lvk:runtime:read"),
         "runtime-read" => result["scope"] = json!("lvk:read lvk:runtime:read"),
         "read-only" => result["scope"] = json!("lvk:read"),
         "expired" => result["exp"] = json!(1),
@@ -1529,7 +1532,7 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
     // Production Access middleware must require runtime scopes in addition to lvk:read.
     for tool in [
         "get_runtime_access",
-        "read_runtime_file",
+        "read_runtime_path",
         "run_process",
         "stop_process",
     ] {

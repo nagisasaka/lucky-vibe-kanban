@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::{
-    environment::{Environment, Grant},
+    environment::{Environment, RuntimeAccessSettings},
     *,
 };
 
@@ -61,12 +61,15 @@ impl Http {
         result["structuredContent"].clone()
     }
     pub(super) async fn settle(&self, request: Uuid) -> Value {
+        self.settle_project(Uuid::from_u128(1), request).await
+    }
+    pub(super) async fn settle_project(&self, project: Uuid, request: Uuid) -> Value {
         tokio::time::timeout(Duration::from_secs(5), async {
             loop {
                 let value = self
                     .value(
                         "get_operation",
-                        json!({"project_id":Uuid::from_u128(1),"request_id":request}),
+                        json!({"project_id":project,"request_id":request}),
                     )
                     .await;
                 if !matches!(value["status"].as_str(), Some("accepted" | "running")) {
@@ -79,401 +82,393 @@ impl Http {
         .unwrap()
     }
 }
-pub(super) fn grant(root: &Path) -> Grant {
-    Grant {
-        display_name: "Example API".into(),
-        id: "example-api".into(),
-        project_id: Uuid::from_u128(1),
-        root: root.into(),
-        allow_uncoordinated_execution: true,
+pub(super) fn settings(root: &Path) -> RuntimeAccessSettings {
+    RuntimeAccessSettings {
+        file_roots: vec![root.into()],
+        ..Default::default()
     }
 }
-
-#[tokio::test]
-async fn environment_http_catalog_and_authorization_are_explicit() {
+pub(super) async fn runtime_fixture() -> (Remote, Auth, tokio::task::JoinHandle<()>) {
     let (mut remote, auth, provider) = tests::fixture().await;
-    let dir = tempfile::tempdir().unwrap();
-    let region = grant(dir.path());
-    remote.environment = Some(Arc::new(Environment::new(vec![region]).unwrap()));
-    let http = serve(remote.clone(), auth.clone()).await;
-    let (status, catalog) = http.rpc("runtime", "tools/list", json!({})).await;
-    assert_eq!(status, 200);
-    let tools = catalog["result"]["tools"].as_array().unwrap();
-    for name in [
-        "get_runtime_access",
-        "list_runtime_files",
-        "read_runtime_file",
-        "list_processes",
-        "inspect_process",
-        "run_process",
-        "read_process_output",
-        "stop_process",
-        "self_restart",
-        "get_self_restart_operation",
-    ] {
-        let tool = tools.iter().find(|t| t["name"] == name).unwrap();
-        let mutation = matches!(name, "run_process" | "stop_process" | "self_restart");
-        assert_eq!(tool["annotations"]["readOnlyHint"], !mutation);
-        assert_eq!(tool["annotations"]["destructiveHint"], mutation);
-        assert_eq!(tool["inputSchema"]["additionalProperties"], false);
-        assert!(
-            tool["_meta"]["securitySchemes"][0]["scopes"]
-                .as_array()
-                .unwrap()
-                .contains(&json!("lvk:runtime:read"))
-        );
-        if mutation {
-            assert!(tool["inputSchema"]["properties"]["request_id"].is_object());
-        }
-    }
-    for (token, name, status) in [
-        ("revoked", "get_runtime_access", 401),
-        ("read-only", "get_runtime_access", 403),
-        ("runtime-read", "run_process", 403),
-        ("runtime-read", "stop_process", 403),
-        ("runtime-read", "self_restart", 403),
-        ("read-only", "get_self_restart_operation", 403),
-    ] {
-        assert_eq!(
-            http.rpc(token, "tools/call", json!({"name":name,"arguments":{}}))
-                .await
-                .0,
-            status
-        );
-    }
-    assert_eq!(
-        http.value("get_runtime_access", json!({})).await["regions"]
-            .as_array()
-            .unwrap()
-            .len(),
-        1
-    );
-    assert_eq!(
-        http.call(
-            "runtime",
-            "read_runtime_file",
-            json!({"region":"example-api","path":"log"})
-        )
-        .await["isError"],
-        true
-    );
-    assert_eq!(
-        http.call(
-            "runtime",
-            "read_runtime_file",
-            json!({"region":"missing","path":"log"})
-        )
-        .await["isError"],
-        true
-    );
-    remote.environment = None;
-    let disabled = serve(remote, auth).await;
-    assert_eq!(
-        disabled
-            .call("runtime", "get_runtime_access", json!({}))
-            .await["isError"],
-        true
-    );
-    provider.abort();
-}
-
-#[tokio::test]
-async fn environment_http_api_lifecycle_receipts_and_restart() {
-    let (mut remote, auth, provider) = tests::fixture().await;
-    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+    remote.pool = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(1)
         .connect("sqlite::memory:")
         .await
         .unwrap();
-    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Example API')")
-        .bind(Uuid::from_u128(1))
-        .execute(&pool)
+    sqlx::migrate!("../db/migrations")
+        .run(&remote.pool)
         .await
         .unwrap();
-    remote.pool = pool;
+    for id in [1, 2] {
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Runtime fixture',?)")
+            .bind(Uuid::from_u128(id))
+            .bind(format!("TEST{id}"))
+            .execute(&remote.pool)
+            .await
+            .unwrap();
+    }
+    (remote, auth, provider)
+}
+fn project(mut input: Value) -> Value {
+    input["project_id"] = json!(Uuid::from_u128(1));
+    input
+}
+async fn change(http: &Http, action: &str, path: &Path, extra: Value) -> Value {
+    let id = Uuid::new_v4();
+    let mut a = project(
+        json!({"action":action,"path":path,"request_id":id,"purpose":"isolated file operation"}),
+    );
+    a.as_object_mut()
+        .unwrap()
+        .extend(extra.as_object().unwrap().clone());
+    http.value("change_runtime_path", a.clone()).await;
+    let result = http.settle(id).await;
+    let repeated = http.value("change_runtime_path", a).await;
+    assert_eq!(repeated["operation_id"], result["operation_id"]);
+    result
+}
+
+#[tokio::test]
+async fn environment_http_catalog_scopes_projects_and_toggle_matrix() {
     let dir = tempfile::tempdir().unwrap();
-    let python = Path::new("/usr/bin/python3")
-        .canonicalize()
-        .expect("Python 3 fixture prerequisite");
-    std::fs::write(
-        dir.path().join("application.log"),
-        "untracked application log\n",
-    )
-    .unwrap();
-    std::fs::write(
-        dir.path().join("api.py"),
-        r#"from http.server import HTTPServer, BaseHTTPRequestHandler
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'example-api')
-server = HTTPServer(('127.0.0.1', 0), Handler)
-print(server.server_port, flush=True)
-server.serve_forever()
-"#,
-    )
-    .unwrap();
-    let region = grant(dir.path());
-    let mut second_region = region.clone();
-    second_region.id = "same-directory-other-grant".into();
-    remote.environment = Some(Arc::new(
-        Environment::new(vec![region.clone(), second_region.clone()]).unwrap(),
-    ));
-    let http = serve(remote.clone(), auth.clone()).await;
-    let read = http
+    std::fs::write(dir.path().join("log"), "hello").unwrap();
+    for files_enabled in [false, true] {
+        for execution_enabled in [false, true] {
+            let (mut remote, auth, provider) = runtime_fixture().await;
+            let s = RuntimeAccessSettings {
+                files_enabled,
+                execution_enabled,
+                ..settings(dir.path())
+            };
+            remote.environment = Some(Arc::new(Environment::new(s).unwrap()));
+            let http = serve(remote, auth).await;
+            let (_, catalog) = http.rpc("runtime", "tools/list", json!({})).await;
+            let tools = catalog["result"]["tools"].as_array().unwrap();
+            for obsolete in [
+                "read_runtime_file",
+                "list_runtime_files",
+                "list_processes",
+                "inspect_process",
+                "read_process_output",
+            ] {
+                assert!(!tools.iter().any(|t| t["name"] == obsolete));
+            }
+            let read = tools
+                .iter()
+                .find(|t| t["name"] == "read_runtime_path")
+                .unwrap();
+            assert_eq!(
+                read["inputSchema"]["properties"]["max_bytes"]["maximum"],
+                524288
+            );
+            assert_eq!(
+                read["inputSchema"]["properties"]["max_bytes"]["default"],
+                16384
+            );
+            assert_eq!(
+                http.value("get_runtime_access", json!({})).await["settings"]["files_enabled"],
+                files_enabled
+            );
+            for (token, name, expected) in [
+                ("revoked", "get_runtime_access", 401),
+                ("read-only", "get_runtime_access", 403),
+                ("runtime-read", "run_process", 403),
+                ("runtime-read", "change_runtime_path", 403),
+                ("valid", "change_runtime_path", 403),
+                ("runtime-files", "run_process", 403),
+            ] {
+                assert_eq!(
+                    http.rpc(token, "tools/call", json!({"name":name,"arguments":{}}))
+                        .await
+                        .0,
+                    expected
+                );
+            }
+            let read = project(json!({"action":"read","path":dir.path().join("log")}));
+            assert_eq!(
+                http.call("runtime", "read_runtime_path", read.clone())
+                    .await["isError"]
+                    == true,
+                !files_enabled
+            );
+            let mut denied = read;
+            denied["project_id"] = json!(Uuid::from_u128(106));
+            assert_eq!(
+                http.call("runtime", "read_runtime_path", denied).await["isError"],
+                true
+            );
+            if files_enabled {
+                http.value(
+                    "read_runtime_path",
+                    project(json!({"action":"list","path":dir.path()})),
+                )
+                .await;
+                let path = dir.path().join("written");
+                let file_scope = project(
+                    json!({"request_id":Uuid::new_v4(),"purpose":"write scope without execute scope","action":"write","path":path,"content":"scope"}),
+                );
+                assert_ne!(
+                    http.call("runtime-files", "change_runtime_path", file_scope)
+                        .await["isError"],
+                    true
+                );
+                assert_eq!(
+                    change(&http, "write", &path, json!({"content":"new"})).await["result"]["status"],
+                    "written"
+                );
+                assert_eq!(
+                    change(&http, "delete", &path, json!({})).await["result"]["status"],
+                    "deleted"
+                );
+            } else {
+                assert_eq!(http.call("runtime","change_runtime_path",project(json!({"request_id":Uuid::new_v4(),"purpose":"denied","action":"write","path":dir.path().join("denied"),"content":"x"}))).await["isError"],true);
+            }
+            let req = Uuid::new_v4();
+            let launch = project(
+                json!({"request_id":req,"purpose":"matrix","executable":"/bin/echo","args":["hello"],"cwd":dir.path(),"lifetime_seconds":5}),
+            );
+            let result = http.call("runtime", "run_process", launch).await;
+            if execution_enabled {
+                assert_ne!(result["isError"], true, "{result}");
+                assert_eq!(http.settle(req).await["status"], "succeeded");
+            } else {
+                assert_eq!(result["isError"], true);
+            }
+            assert_eq!(
+                http.call(
+                    "runtime",
+                    "observe_process",
+                    project(json!({"action":"list"}))
+                )
+                .await["isError"]
+                    == true,
+                !execution_enabled
+            );
+            provider.abort();
+        }
+    }
+}
+
+#[tokio::test]
+async fn environment_http_workspace_paths_file_changes_and_launch() {
+    let (mut remote, auth, provider) = runtime_fixture().await;
+    let dir = tempfile::tempdir().unwrap();
+    let workspace = dir.path().join("workspace");
+    let sibling = dir.path().join("sibling");
+    std::fs::create_dir(&workspace).unwrap();
+    std::fs::create_dir(&sibling).unwrap();
+    std::fs::write(workspace.join("source"), "source").unwrap();
+    sqlx::query("INSERT INTO workspaces(id,branch,container_ref) VALUES(?,'fixture',?)")
+        .bind(Uuid::new_v4())
+        .bind(workspace.to_str().unwrap())
+        .execute(&remote.pool)
+        .await
+        .unwrap();
+    remote.environment = Some(Arc::new(Environment::new(settings(dir.path())).unwrap()));
+    let http = serve(remote, auth).await;
+    let content = http
         .value(
-            "read_runtime_file",
-            json!({"region":"example-api","path":"application.log"}),
+            "read_runtime_path",
+            project(json!({"action":"read","path":workspace.join("source")})),
         )
         .await;
-    assert!(
-        read.to_string().contains("untracked application log"),
-        "{read}"
-    );
-    for bad in [
-        json!({"region":"example-api","path":"../escape"}),
-        json!({"region":"example-api","path":"application.log","unexpected":true}),
+    assert_eq!(content["content"], "source");
+    for (action, path, extra) in [
+        ("write", workspace.join("source"), json!({"content":"bad"})),
+        ("write", workspace.join("new"), json!({"content":"bad"})),
+        ("delete", workspace.clone(), json!({"recursive":true})),
+        ("delete", dir.path().into(), json!({"recursive":true})),
     ] {
         assert_eq!(
-            http.call("runtime", "read_runtime_file", bad).await["isError"],
+            change(&http, action, &path, extra).await["status"],
+            "failed"
+        );
+    }
+    let file = sibling.join("data");
+    assert_eq!(
+        change(&http, "write", &file, json!({"content":"original"})).await["status"],
+        "succeeded"
+    );
+    let snapshot = http
+        .value(
+            "read_runtime_path",
+            project(json!({"action":"read","path":file})),
+        )
+        .await["snapshot"]
+        .clone();
+    std::fs::write(&file, "changed").unwrap();
+    assert_eq!(
+        change(
+            &http,
+            "write",
+            &file,
+            json!({"content":"stale","expected":snapshot})
+        )
+        .await["status"],
+        "failed"
+    );
+    assert_eq!(
+        change(&http, "delete", &sibling.join("missing"), json!({})).await["result"]["status"],
+        "not_found"
+    );
+    std::os::unix::fs::symlink(&workspace, sibling.join("alias")).unwrap();
+    assert_eq!(
+        http.call(
+            "runtime",
+            "read_runtime_path",
+            project(json!({"action":"read","path":sibling.join("alias/source")}))
+        )
+        .await["isError"],
+        true
+    );
+    assert_eq!(
+        change(
+            &http,
+            "write",
+            &sibling.join("alias/source"),
+            json!({"content":"bad"})
+        )
+        .await["status"],
+        "failed"
+    );
+    for path in [
+        PathBuf::from("relative"),
+        dir.path().join("../outside"),
+        PathBuf::from("/outside-file-roots"),
+    ] {
+        assert_eq!(
+            http.call(
+                "runtime",
+                "read_runtime_path",
+                project(json!({"action":"read","path":path}))
+            )
+            .await["isError"],
             true
         );
     }
+    for (cwd, success) in [
+        (sibling.as_path(), true),
+        (dir.path(), true),
+        (workspace.as_path(), false),
+        (sibling.join("alias").as_path(), false),
+    ] {
+        let id = Uuid::new_v4();
+        http.value("run_process",project(json!({"request_id":id,"purpose":"Workspace boundary","executable":"/bin/echo","cwd":cwd,"lifetime_seconds":5}))).await;
+        assert_eq!(http.settle(id).await["status"] == "succeeded", success);
+    }
     let request = Uuid::new_v4();
-    let input = json!({"region":"example-api","request_id":request,"purpose":"Test isolated example API","executable":python,"args":["api.py"],"cwd":".","service":true,"lifetime_seconds":30});
-    http.value("run_process", input.clone()).await;
-    let receipt = http.settle(request).await;
-    assert_eq!(receipt["status"], "succeeded", "{receipt}");
-    let run = receipt["result"].clone();
-    let id = run["run_id"].as_str().unwrap();
-    let identity = run["identity"].as_str().unwrap();
-    let _cleanup = super::environment_process::TestProcessCleanup::new(identity).unwrap();
-    assert_eq!(
-        http.call(
-            "runtime",
-            "read_process_output",
-            json!({"region":"same-directory-other-grant","process_id":id,"stream":"stdout"})
-        )
-        .await["isError"],
-        true
-    );
-    let cross_stop = Uuid::new_v4();
-    http.value("stop_process", json!({"region":"same-directory-other-grant","request_id":cross_stop,"purpose":"Verify grant isolation","identity":id})).await;
-    assert_eq!(http.settle(cross_stop).await["status"], "failed");
-    let repeat = http.value("run_process", input.clone()).await;
-    assert_eq!(repeat["operation_id"], receipt["operation_id"]);
-    assert_eq!(repeat["result"]["run_id"], id);
-    let mut different = input;
-    different["args"] = json!(["different.py"]);
-    assert_eq!(
-        http.call("runtime", "run_process", different).await["isError"],
-        true
-    );
-    let port = tokio::time::timeout(Duration::from_secs(5), async {
-        loop {
-            let output = http
-                .value(
-                    "read_process_output",
-                    json!({"region":"example-api","process_id":id,"stream":"stdout"}),
-                )
-                .await;
-            if let Some(port) = output["output"]["text"]
-                .as_str()
-                .and_then(|t| t.trim().parse::<u16>().ok())
-            {
-                break port;
-            }
-            tokio::time::sleep(Duration::from_millis(20)).await;
+    // Execution file writes are allowed, including inline source. File-root controls do not sandbox them.
+    http.value("run_process",project(json!({"request_id":request,"purpose":"permitted command side effect","executable":"/bin/sh","args":["-c","printf command > command-file"],"cwd":&sibling,"lifetime_seconds":5}))).await;
+    assert_eq!(http.settle(request).await["status"], "succeeded");
+    tokio::time::timeout(Duration::from_secs(3), async {
+        while !sibling.join("command-file").exists() {
+            tokio::task::yield_now().await;
         }
     })
     .await
     .unwrap();
-    assert_eq!(
-        reqwest::get(format!("http://127.0.0.1:{port}/"))
-            .await
-            .unwrap()
-            .text()
-            .await
-            .unwrap(),
-        "example-api"
-    );
-    assert_eq!(
-        http.value(
-            "inspect_process",
-            json!({"region":"example-api","identity":identity})
-        )
-        .await["identity"],
-        identity
-    );
-    let processes = http
-        .value("list_processes", json!({"region":"example-api","limit":1}))
-        .await;
-    assert!(
-        processes["processes"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|p| p["identity"] == identity)
-    );
-    let stop = Uuid::new_v4();
-    http.value("stop_process",json!({"region":"example-api","request_id":stop,"purpose":"End isolated test","identity":id})).await;
-    assert_eq!(http.settle(stop).await["status"], "succeeded");
-    tokio::time::timeout(Duration::from_secs(5), async {
+    let moving = Uuid::new_v4();
+    http.value("run_process",project(json!({"request_id":moving,"purpose":"post-launch cwd is not monitored","executable":"/bin/sh","args":["-c","cd \"$1\"; exec /bin/sleep 30","fixture",workspace.to_str().unwrap()],"cwd":sibling,"lifetime_seconds":35}))).await;
+    let moving = http.settle(moving).await["result"].clone();
+    let identity = moving["identity"].as_str().unwrap();
+    let _cleanup = environment_process::TestProcessCleanup::new(identity).unwrap();
+    tokio::time::timeout(Duration::from_secs(3), async {
         loop {
-            let output = http
+            let observed = http
                 .value(
-                    "read_process_output",
-                    json!({"region":"example-api","process_id":id,"stream":"stderr"}),
+                    "observe_process",
+                    project(json!({"action":"inspect","identity":identity})),
                 )
                 .await;
-            if output["state"] == "exited" {
+            if observed["cwd"] == json!(workspace) {
                 break;
             }
-            tokio::time::sleep(Duration::from_millis(20)).await;
+            tokio::task::yield_now().await;
         }
     })
     .await
     .unwrap();
-    tokio::time::timeout(Duration::from_secs(5), async {
-        loop {
-            let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM access_audit WHERE action='runtime_process_exit' AND target=?")
-                .bind(receipt["operation_id"].as_str().unwrap()).fetch_one(&remote.pool).await.unwrap();
-            if count == 1 { break; }
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    }).await.unwrap();
-    // New MCP server instance retains durable receipt, but does not invent volatile output.
-    drop(http);
-    remote.process_instance = Uuid::new_v4();
-    remote.environment = Some(Arc::new(
-        Environment::new(vec![region, second_region]).unwrap(),
-    ));
-    let restored = serve(remote, auth).await;
-    let persisted = restored.settle(request).await;
-    assert_eq!(persisted["operation_id"], receipt["operation_id"]);
-    assert_eq!(persisted["result"]["run_id"], id);
-    let restored_cross_stop = Uuid::new_v4();
-    restored.value("stop_process", json!({"region":"same-directory-other-grant","request_id":restored_cross_stop,"purpose":"Verify durable grant isolation","identity":identity})).await;
-    let denied = restored.settle(restored_cross_stop).await;
-    assert_eq!(denied["status"], "failed");
+    let stopping = Uuid::new_v4();
+    http.value(
+        "stop_process",
+        project(json!({"request_id":stopping,"purpose":"stop after chdir","identity":identity})),
+    )
+    .await;
+    assert_eq!(http.settle(stopping).await["status"], "succeeded");
     assert_eq!(
-        denied["result"]["message"],
-        "Managed process belongs to another runtime grant or owner"
+        std::fs::read_to_string(workspace.join("source")).unwrap(),
+        "source"
     );
     assert_eq!(
-        restored
-            .call(
-                "runtime",
-                "read_process_output",
-                json!({"region":"example-api","process_id":id,"stream":"stdout"})
-            )
-            .await["isError"],
-        true
+        change(&http, "delete", &sibling, json!({"recursive":true})).await["result"]["status"],
+        "deleted"
     );
+    assert!(workspace.exists());
     provider.abort();
 }
 
-#[test]
-fn environment_configuration_refuses_root_and_duplicate_grants() {
-    let directory = tempfile::tempdir().unwrap();
-    let region = grant(directory.path());
-    assert!(Environment::new(vec![region.clone(), region.clone()]).is_err());
-    for root in [
-        PathBuf::from("/"),
-        PathBuf::from("relative"),
-        directory.path().join("../outside"),
-        directory.path().join("missing"),
-    ] {
-        let mut invalid = region.clone();
-        invalid.root = root;
-        assert!(Environment::new(vec![invalid]).is_err());
-    }
-    assert_eq!(
-        Environment::new(vec![region]).unwrap().grants[0].root,
-        directory.path().canonicalize().unwrap()
-    );
-}
-
 #[tokio::test]
-async fn environment_http_launch_boundaries_and_failures() {
-    let (mut remote, auth, provider) = tests::fixture().await;
-    let pool = sqlx::sqlite::SqlitePoolOptions::new()
-        .max_connections(1)
-        .connect("sqlite::memory:")
-        .await
-        .unwrap();
-    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    sqlx::query("INSERT INTO projects(id,name) VALUES(?,'Launch boundaries')")
-        .bind(Uuid::from_u128(1))
-        .execute(&pool)
-        .await
-        .unwrap();
-    remote.pool = pool.clone();
-    let directory = tempfile::tempdir().unwrap();
-    let echo = Path::new("/bin/echo").canonicalize().unwrap();
-    let invalid_program = directory.path().join("not-executable");
-    std::fs::write(&invalid_program, "ordinary file, not executable").unwrap();
-    let region = grant(directory.path());
-    remote.environment = Some(Arc::new(Environment::new(vec![region]).unwrap()));
+async fn environment_http_large_file_and_process_output_limits() {
+    let (mut remote, auth, provider) = runtime_fixture().await;
+    let dir = tempfile::tempdir().unwrap();
+    remote.environment = Some(Arc::new(Environment::new(settings(dir.path())).unwrap()));
     let http = serve(remote, auth).await;
-    let input = |request: Uuid, executable: &Path, cwd: &str| json!({"region":"example-api","request_id":request,"purpose":"Verify launch boundary","executable":executable,"args":[],"cwd":cwd,"lifetime_seconds":10});
-    assert_eq!(
-        http.call(
-            "runtime",
-            "run_process",
-            input(Uuid::new_v4(), Path::new("relative-program"), ".")
-        )
-        .await["isError"],
-        true
-    );
-    for cwd in ["../", "/", "missing-directory"] {
-        let request = Uuid::new_v4();
-        http.value("run_process", input(request, &echo, cwd)).await;
-        let result = http.settle(request).await;
-        assert_eq!(result["status"], "failed", "{result}");
-        assert!(result["result"]["run_id"].is_null());
+    for (bytes, encoding) in [
+        (vec![b'x'; 524288], "utf-8"),
+        (vec![255; 524288], "base64"),
+        (vec![1; 524288], "utf-8"),
+    ] {
+        std::fs::write(dir.path().join("large"), bytes).unwrap();
+        let args = project(json!({"action":"read","path":dir.path().join("large")}));
+        assert_eq!(
+            http.value("read_runtime_path", args.clone()).await["bytes"],
+            16384
+        );
+        let mut args = args;
+        args["max_bytes"] = json!(524288);
+        let response = http
+            .call("runtime", "read_runtime_path", args.clone())
+            .await;
+        assert_ne!(response["isError"], true, "{response}");
+        let response_bytes = serde_json::to_vec(&response).unwrap().len();
+        eprintln!("512 KiB {encoding} MCP response: {response_bytes} JSON bytes");
+        assert!(response_bytes < 8 * 1024 * 1024);
+        let read = &response["structuredContent"];
+        assert_eq!(read["bytes"], 524288);
+        assert_eq!(read["encoding"], encoding);
+        if encoding == "base64" {
+            assert_eq!(read["content"].as_str().unwrap().len(), 699052);
+        }
+        assert!(serde_json::to_vec(&read).unwrap().len() < 3200000);
+        args["max_bytes"] = json!(524289);
+        assert_eq!(
+            http.call("runtime", "read_runtime_path", args).await["isError"],
+            true
+        );
     }
-    let request = Uuid::new_v4();
-    http.value("run_process", input(request, &invalid_program, "."))
-        .await;
-    let failure = http.settle(request).await;
-    assert_eq!(failure["status"], "failed", "{failure}");
-    let repeated = http
-        .value("run_process", input(request, &invalid_program, "."))
-        .await;
-    assert_eq!(repeated["operation_id"], failure["operation_id"]);
-    assert_eq!(repeated["status"], "failed");
-    // A workspace at this root prevents even an otherwise allowed executable.
-    sqlx::query("INSERT INTO workspaces(id,branch,container_ref) VALUES(?,'test',?)")
-        .bind(Uuid::new_v4())
-        .bind(directory.path().to_str().unwrap())
-        .execute(&pool)
-        .await
-        .unwrap();
+    let id = Uuid::new_v4();
+    http.value("run_process",project(json!({"request_id":id,"purpose":"output limit","executable":"/usr/bin/head","args":["-c","70000","/dev/zero"],"cwd":dir.path(),"lifetime_seconds":5}))).await;
+    let run = http.settle(id).await["result"].clone();
+    let args = project(
+        json!({"action":"output","process_id":run["run_id"],"stream":"stdout","limit":65536}),
+    );
+    tokio::time::timeout(Duration::from_secs(5), async {
+        loop {
+            let out = http.value("observe_process", args.clone()).await;
+            if out["state"] != "running" {
+                assert_eq!(out["output"]["text"].as_str().unwrap().len(), 65536);
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    let mut args = args;
+    args["limit"] = json!(65537);
     assert_eq!(
-        http.call("runtime", "run_process", input(Uuid::new_v4(), &echo, "."))
-            .await["isError"],
+        http.call("runtime", "observe_process", args).await["isError"],
         true
     );
-    // No AgentRun exists, and archival does not change this current restriction.
-    sqlx::query("UPDATE workspaces SET archived=1")
-        .execute(&pool)
-        .await
-        .unwrap();
-    assert_eq!(
-        http.call("runtime", "run_process", input(Uuid::new_v4(), &echo, "."))
-            .await["isError"],
-        true
-    );
-    assert_eq!(http.call("runtime", "stop_process", json!({"region":"example-api","request_id":Uuid::new_v4(),"identity":"unselected","purpose":"Verify overlap admission"})).await["isError"], true);
-    let read = http
-        .value(
-            "read_runtime_file",
-            json!({"region":"example-api","path":"not-executable"}),
-        )
-        .await;
-    assert!(read.to_string().contains("ordinary file, not executable"));
     provider.abort();
 }
