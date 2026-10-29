@@ -91,6 +91,10 @@ class StdioRestartTest(unittest.TestCase):
             if status["status"] in engine.TERMINAL: break
             self.assertLess(time.monotonic(),deadline); time.sleep(.05)
         self.assertEqual(status["status"],"succeeded",status)
+        # Read the real completed engine result with the legitimate unsaved state.
+        import sqlite3
+        with contextlib.closing(sqlite3.connect(self.fixture.db)) as db, db:
+            db.execute("DELETE FROM runtime_access_settings")
         read=self.tool("get_self_restart_operation",{k:args[k] for k in ["project_id","request_id"]})
         self.assertEqual(self.value(read)["status"],"succeeded")
         changed={**args,"purpose":"different"}
@@ -128,6 +132,31 @@ class StdioRestartTest(unittest.TestCase):
         args["no_new_work"]=True
         self.assertTrue(self.tool("self_restart",args)["isError"])
         self.assertFalse((self.fixture.instance/"switch-operations").exists())
+
+    def test_unsaved_runtime_status_reads_receipt_without_saving_defaults(self):
+        import sqlite3
+        with contextlib.closing(sqlite3.connect(self.fixture.db)) as db, db:
+            db.execute("DELETE FROM runtime_access_settings")
+        args = self.args()
+        status = {key: args[key] for key in ["project_id", "request_id"]}
+        # Unknown remains refused, but must reach status lookup rather than the guard.
+        unknown = self.tool("get_self_restart_operation", status)
+        self.assertTrue(unknown["isError"], unknown)
+        self.assertNotIn("Program execution disabled", json.dumps(unknown))
+        self.assertFalse((self.fixture.instance / "switch-operations").exists())
+        op = self.fixture.instance / "switch-operations" / args["request_id"]
+        op.mkdir(parents=True)
+        owner = engine.stdio_owner(str(self.project))
+        (op / "request.json").write_text(json.dumps({"owner": owner, "arguments": {}}))
+        receipt = {"operation_id": args["request_id"], "status": "succeeded", "stage": "complete"}
+        (op / "result.json").write_text(json.dumps(receipt))
+        reply = self.tool("get_self_restart_operation", status)
+        self.assertNotEqual(reply.get("isError"), True, reply)
+        value = json.loads(reply["content"][0]["text"])
+        self.assertEqual(value, receipt)
+        with contextlib.closing(sqlite3.connect(self.fixture.db)) as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM runtime_access_settings").fetchone()[0], 0)
+        self.assertIsNone(self.fixture.old.poll())
 
     def test_unknown_result_and_other_owner_are_never_success(self):
         args=self.args(); status={k:args[k] for k in ["project_id","request_id"]}
