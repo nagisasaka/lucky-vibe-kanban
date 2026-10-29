@@ -84,6 +84,12 @@ fn item(id: &str) -> JSONRPCNotification {
 
 #[tokio::test]
 async fn mcp_approval_protocol_binds_once_and_fails_closed() {
+    for mode in [ExecutionMode::Code, ExecutionMode::Review] {
+        run_mcp_approval_scenarios(mode).await;
+    }
+}
+
+async fn run_mcp_approval_scenarios(mode: ExecutionMode) {
     for scenario in [
         "approved",
         "denied",
@@ -122,7 +128,7 @@ async fn mcp_approval_protocol_binds_once_and_fails_closed() {
             service,
             scenario == "auto-approve",
             false,
-            ExecutionMode::Code,
+            mode,
             None,
             None,
             Default::default(),

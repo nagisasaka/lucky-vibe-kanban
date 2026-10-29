@@ -2,7 +2,7 @@ use db::models::requests::{
     CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, LinkedIssueInfo,
     WorkspaceRepoInput,
 };
-use executors::profile::ExecutorConfig;
+use executors::profile::{ExecutionMode, ExecutorConfig};
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
     tool_router,
@@ -32,6 +32,10 @@ struct StartWorkspaceRequest {
     executor: String,
     #[schemars(description = "Optional executor variant, if needed")]
     variant: Option<String>,
+    #[schemars(
+        description = "Optional Codex execution mode. review uses Code execution for bounded review/investigation: report in conversation and stop; product implementation requires separate explicit instructions. Include target, scope and expected findings in prompt. Existing permissions still apply."
+    )]
+    execution_mode: Option<ExecutionMode>,
     #[schemars(description = "Repository selection for the workspace")]
     repositories: Vec<McpWorkspaceRepoInput>,
     #[schemars(
@@ -97,6 +101,7 @@ impl McpServer {
             prompt,
             executor,
             variant,
+            execution_mode,
             repositories,
             issue_id,
         }): Parameters<StartWorkspaceRequest>,
@@ -128,6 +133,12 @@ impl McpServer {
                 );
             }
         };
+
+        if execution_mode == Some(ExecutionMode::Review)
+            && base_executor != executors::executors::BaseCodingAgent::Codex
+        {
+            return Self::err("REVIEW execution mode requires CODEX", None::<&str>);
+        }
 
         let variant = variant.and_then(|v| {
             let trimmed = v.trim();
@@ -187,7 +198,7 @@ impl McpServer {
                 agent_id: None,
                 reasoning_id: None,
                 permission_policy: None,
-                execution_mode: None,
+                execution_mode,
                 goal_token_budget: None,
                 goal_max_concurrent_agents: None,
             },
@@ -237,5 +248,19 @@ impl McpServer {
             workspace_id: workspace_id.to_string(),
             issue_id: issue_id.to_string(),
         })
+    }
+}
+
+#[cfg(test)]
+mod review_tests {
+    use super::*;
+
+    #[test]
+    fn start_workspace_accepts_review_and_advertises_its_scope() {
+        let request: StartWorkspaceRequest = serde_json::from_value(serde_json::json!({"name":"Review","executor":"CODEX","execution_mode":"review","repositories":[]})).unwrap();
+        assert_eq!(request.execution_mode, Some(ExecutionMode::Review));
+        let schema = serde_json::to_string(&schemars::schema_for!(StartWorkspaceRequest)).unwrap();
+        assert!(schema.contains("review"));
+        assert!(schema.contains("product implementation requires separate explicit instructions"));
     }
 }

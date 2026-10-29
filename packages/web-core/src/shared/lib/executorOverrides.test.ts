@@ -128,9 +128,10 @@ describe('retired execution mode restoration', () => {
     });
     expect(saved.execution_mode).toBe(ExecutionMode.plan_with_goal);
   });
-  it('preserves Code, Plan and Goal settings', () => {
+  it('preserves Code, Review, Plan and Goal settings', () => {
     for (const execution_mode of [
       ExecutionMode.code,
+      ExecutionMode.review,
       ExecutionMode.plan,
       ExecutionMode.goal,
     ]) {

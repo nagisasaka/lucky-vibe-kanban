@@ -1,3 +1,13 @@
+const REVIEW_INSTRUCTIONS: &str = concat!(
+    "LVK REVIEW mode: review and investigate the requested target and scope, using the user's requested report content. ",
+    "If essential scope is missing, clarify it. Return findings, evidence, risks and verification limits in the normal conversation, then stop. ",
+    "Do not automatically implement findings or enter PLAN approval-to-implementation or Goal continuation. Product implementation requires a separate explicit instruction. ",
+    "Workspace-local reproduction code, scripts, fixtures and tests are allowed when needed for the investigation; distinguish temporary investigation artifacts from proposed product changes. ",
+    "REVIEW alone does not authorize adopting, merging or publishing product changes, or changing shared environments or live data. ",
+    "Preserve existing permissions and approval boundaries; REVIEW does not bypass or guarantee external approval. ",
+    "Do not automatically post results to Issue comments or require a new report artifact."
+);
+
 pub mod account_read;
 pub mod client;
 pub const GOAL_OBJECTIVE_MAX_CHARS: usize = 4000;
@@ -460,11 +470,13 @@ impl StandardCodingAgentExecutor for Codex {
                 .as_ref()
                 .map(|e| e.as_str().to_string()),
             permission_policy: Some(permission_policy),
-            execution_mode: Some(if self.plan {
-                ExecutionMode::Plan
-            } else {
-                self.execution_mode
-            }),
+            execution_mode: Some(
+                if self.plan && self.execution_mode != ExecutionMode::Review {
+                    ExecutionMode::Plan
+                } else {
+                    self.execution_mode
+                },
+            ),
             goal_token_budget: self.goal_token_budget,
             goal_max_concurrent_agents: self.goal_max_concurrent_agents,
         }
@@ -1202,7 +1214,14 @@ impl Codex {
             config,
             base_instructions: self.base_instructions.clone(),
             model_provider: self.model_provider.clone(),
-            developer_instructions: self.developer_instructions.clone(),
+            developer_instructions: if self.effective_execution_mode() == ExecutionMode::Review {
+                Some(match &self.developer_instructions {
+                    Some(existing) => format!("{existing}\n\n{REVIEW_INSTRUCTIONS}"),
+                    None => REVIEW_INSTRUCTIONS.into(),
+                })
+            } else {
+                self.developer_instructions.clone()
+            },
             service_tier,
             ..Default::default()
         }
@@ -2030,6 +2049,59 @@ mod tests {
             config.execution_mode = Some(ExecutionMode::Code);
             executor.apply_direct_overrides(&config);
             assert_eq!(executor.effective_execution_mode(), ExecutionMode::Code);
+        }
+    }
+
+    #[test]
+    fn review_preserves_code_permissions_and_instructions_on_start_and_resume() {
+        for sandbox in [
+            super::SandboxMode::WorkspaceWrite,
+            super::SandboxMode::DangerFullAccess,
+            super::SandboxMode::ReadOnly,
+        ] {
+            for approval in [
+                AskForApproval::OnRequest,
+                AskForApproval::UnlessTrusted,
+                AskForApproval::Never,
+            ] {
+                let mut executor = test_executor();
+                executor.sandbox = Some(sandbox.clone());
+                executor.ask_for_approval = Some(approval.clone());
+                executor.developer_instructions = Some("Existing project instructions".into());
+                let code = executor.build_thread_start_params(Path::new("/workspace"));
+                let auto_approve = executor.auto_approve_tool_requests();
+                // Explicit Review overrides a legacy Plan preset without changing permissions.
+                executor.plan = true;
+                let mut config = ExecutorConfig::new(BaseCodingAgent::Codex);
+                config.execution_mode = Some(ExecutionMode::Review);
+                executor.apply_direct_overrides(&config);
+                assert!(!executor.plan);
+                assert_eq!(
+                    executor.get_preset_options().execution_mode,
+                    Some(ExecutionMode::Review)
+                );
+                assert_eq!(executor.auto_approve_tool_requests(), auto_approve);
+                let review = executor.build_thread_start_params(Path::new("/workspace"));
+                assert_eq!(review.sandbox, code.sandbox);
+                assert_eq!(review.approval_policy, code.approval_policy);
+                assert_eq!(review.config, code.config);
+                let instructions = review.developer_instructions.clone().unwrap();
+                assert!(instructions.starts_with("Existing project instructions"));
+                assert!(instructions.contains(super::REVIEW_INSTRUCTIONS));
+                let resumed = super::resume_params_from("thread-1".into(), review);
+                assert_eq!(
+                    resumed.developer_instructions.as_deref(),
+                    Some(instructions.as_str())
+                );
+                config.execution_mode = Some(ExecutionMode::Code);
+                executor.apply_direct_overrides(&config);
+                assert_eq!(
+                    executor
+                        .build_thread_start_params(Path::new("/workspace"))
+                        .developer_instructions,
+                    code.developer_instructions
+                );
+            }
         }
     }
 

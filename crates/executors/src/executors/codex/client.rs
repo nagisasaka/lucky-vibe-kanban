@@ -174,7 +174,7 @@ impl AppServerClient {
             child_completion: StdMutex::new(HashMap::new()),
             mcp_approvals: StdMutex::new(Default::default()),
             repo_context,
-            commit_reminder,
+            commit_reminder: commit_reminder && execution_mode != ExecutionMode::Review,
             commit_reminder_prompt,
             commit_reminder_sent: AtomicBool::new(false),
             memory_compaction_thread: Mutex::new(None),
@@ -2777,6 +2777,7 @@ mod version_check_tests {
         use super::super::jsonrpc::{ExitSignalSender, JsonRpcPeer};
         for (mode, reject, reduced, read_reject) in [
             (ExecutionMode::Code, false, false, false),
+            (ExecutionMode::Review, false, false, false),
             (ExecutionMode::Plan, false, false, false),
             (ExecutionMode::Goal, false, false, false),
             (ExecutionMode::PlanWithGoal, false, false, false),
@@ -3293,8 +3294,12 @@ mod version_check_tests {
     }
 
     #[test]
-    fn code_and_plan_ignore_goal_state_replayed_during_thread_resume() {
-        for mode in [ExecutionMode::Code, ExecutionMode::Plan] {
+    fn code_review_and_plan_ignore_goal_state_replayed_during_thread_resume() {
+        for mode in [
+            ExecutionMode::Code,
+            ExecutionMode::Review,
+            ExecutionMode::Plan,
+        ] {
             let client = AppServerClient::new(
                 LogWriter::new(tokio::io::sink()),
                 None,
@@ -3313,6 +3318,52 @@ mod version_check_tests {
             assert!(!client.goal_keeps_run_alive());
             assert!(client.observe_goal_updated("thread-1", "cleared").is_none());
         }
+    }
+
+    #[tokio::test]
+    async fn review_reports_and_exits_without_plan_goal_or_commit_continuation() {
+        let client = AppServerClient::new(
+            LogWriter::new(tokio::io::sink()),
+            None,
+            false,
+            false,
+            ExecutionMode::Review,
+            None,
+            None,
+            Default::default(),
+            true,
+            "Commit your changes".into(),
+            CancellationToken::new(),
+        );
+        client.set_resolved_model("test-model".into());
+        assert_eq!(
+            client.initial_collaboration_mode().unwrap().mode,
+            ModeKind::Default
+        );
+        assert!(!client.commit_reminder);
+        *client.thread_id.lock().await = Some("thread-1".into());
+        *client.turn_id.lock().await = Some("turn-1".into());
+        // A plan item emitted as review content must not enter the approval transition.
+        let params = json!({"threadId":"thread-1", "turnId":"turn-1", "item":{"type":"plan","id":"plan-1","text":"Findings"}});
+        let notification = json!({"method":"item/completed", "params":params});
+        let raw = notification.to_string();
+        client
+            .process_notification(&raw, serde_json::from_value(notification).unwrap())
+            .await
+            .unwrap();
+        assert!(client.pending_plan.lock().await.is_none());
+        assert!(client.observe_goal_updated("thread-1", "active").is_none());
+        assert!(!client.goal_keeps_run_alive());
+        let notification = json!({"method":"turn/completed", "params":{"threadId":"thread-1", "turn":{"id":"turn-1","status":"completed","items":[],"error":null}}});
+        let raw = notification.to_string();
+        let result = client
+            .process_notification(&raw, serde_json::from_value(notification).unwrap())
+            .await
+            .unwrap();
+        assert!(matches!(
+            result,
+            JsonRpcControlFlow::Exit(ExecutorExitResult::Success)
+        ));
     }
 
     #[test]

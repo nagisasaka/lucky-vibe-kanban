@@ -46,7 +46,7 @@ struct StartArgs {
     expected_revision: String,
     #[schemars(length(min = 1, max = 10))]
     repositories: Vec<RepositorySelection>,
-    /// Omit to preserve the normal default execution mode. Goal uses native controls.
+    /// Omit to preserve the default mode. Codex review uses Code execution for bounded review/investigation: include target, scope and expected findings in the Issue. Report in conversation and stop; implementation requires a separate explicit instruction. Existing permissions still apply. Goal uses native controls.
     execution_mode: Option<ExecutionMode>,
     #[schemars(range(min = 1))]
     goal_token_budget: Option<u32>,
@@ -204,7 +204,7 @@ fn commit(value: &str) -> anyhow::Result<()> {
 }
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
-    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile. Pin the Issue revision and explicit repositories/branches. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
+    let mut start=serde_json::to_value(definition::<StartArgs>("start_workspace","Start agreed Issue requirements in a new Worktree Workspace using the configured default executor profile. Pin the Issue revision and explicit repositories/branches. Review uses the Code path to investigate the Issue scope, report in conversation and stop; separate explicit instructions are required for product implementation and existing permissions still apply. Goal uses native execution_mode. Returns existing execution admission IDs, not completion; use the original request_id after disconnection.")).unwrap();
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
@@ -285,6 +285,12 @@ async fn prepare_start(
         })
         .await?
         .map_err(|_| anyhow::anyhow!("Target branch unavailable in selected repository"))?;
+    }
+    if args.execution_mode == Some(ExecutionMode::Review) {
+        ensure!(
+            executor.executor == executors::executors::BaseCodingAgent::Codex,
+            "REVIEW execution mode requires CODEX"
+        );
     }
     if let Some(mode) = args.execution_mode {
         executor.execution_mode = Some(mode);

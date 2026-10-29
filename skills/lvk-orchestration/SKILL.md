@@ -1,6 +1,6 @@
 ---
 name: lvk-orchestration
-description: Use when discussing Lucky Vibe Kanban (LVK), including its product philosophy, UX, architecture, specifications, implementation, code investigation, or development progress. Collaborate on design in depth and use LVK MCP to delegate coding work to agents when appropriate.
+description: Use when discussing Lucky Vibe Kanban (LVK), including its product philosophy, UX, architecture, specifications, implementation, code investigation, or development progress. Collaborate on design in depth and use LVK MCP to delegate coding work to agents when appropriate, using REVIEW for bounded review and investigation.
 ---
 
 # Lucky Vibe Kanban: design collaboration and execution orchestration
@@ -20,7 +20,7 @@ Help the developer stay immersed in **one evolving project** without their creat
 - Selectively recommend actual goal execution when it fits, explaining why and bundling the intended outcome, stopping conditions, constraints, and decisions reserved for the user into any needed start confirmation. Do not reconfirm already explicit authorization. Verify the currently supported execution mode before offering to start it; distinguish a real goal-execution capability from an ordinary agent prompt asking for ongoing coordination.
 
 ## Understand intent and data models
-- Distinguish brainstorming, direct factual/status questions, investigation, implementation, and auto-merge/publication instructions. **Discussion or speculation alone is not authorization to create Issues, start agents, or change code.** When an explicit implementation request contains a settled subtask, do not add an unnecessary approval step. An explicit request to investigate authorizes creating or reusing the necessary LVK Issue, Workspace, and Session and starting a bounded coding-agent investigation in an independent Workspace without separate permission; prefer suitable existing records. Ordinary CODE mode may be used; Plan mode is not required. Unless the user specifies otherwise, necessary investigation scripts, reproduction code, fixtures, and tests within that Workspace are part of the investigation. This does not authorize adopting product changes, merging, publishing, deploying, or changing shared environments or live data.
+- Distinguish brainstorming, direct factual/status questions, investigation, implementation, and auto-merge/publication instructions. **Discussion or speculation alone is not authorization to create Issues, start agents, or change code.** When an explicit implementation request contains a settled subtask, do not add an unnecessary approval step. An explicit request to investigate authorizes creating or reusing the necessary LVK Issue, Workspace, and Session and starting a bounded coding-agent investigation in an independent Workspace without separate permission; prefer suitable existing records. Prefer REVIEW mode when supported; ordinary CODE is a fallback on servers without REVIEW. Plan mode is not required. Unless the user specifies otherwise, necessary investigation scripts, reproduction code, fixtures, and tests within that Workspace are part of the investigation. This does not authorize adopting product changes, merging, publishing, deploying, or changing shared environments or live data.
 - LVK's **Todo list items** are distinct from **Kanban Issues in the Todo status**. Choose the corresponding tools and never treat one as the other.
 - Select the actual user-accessible project and use live IDs, revisions, repositories, and current tool capabilities, not guessed identities or stale chat context. Ask only for indispensable missing information.
 - Before starting or resuming work, reconcile its current scope with the latest explicit user instruction. When that instruction clearly supersedes an earlier temporary restriction such as investigation-only or not-yet-started, distinguish the historical restriction from the current authorization in agent handoffs. Do not treat stale Issue wording or recalled older Skill wording as a permanent prohibition, and do not ask again for permission already given. Clarify genuinely unresolved conflicts. Updated task authorization does not itself invalidate an actual execution denial; respect the denial and the supported approval process.
@@ -147,3 +147,21 @@ Help the developer stay immersed in **one evolving project** without their creat
 
 The goal is not to make the conversation efficient at the expense of insight. It is to preserve creative immersion while delegating execution friction to LVK.
 
+
+## REVIEW execution
+
+When the user requests bounded review or investigation, prefer Codex
+`execution_mode: "review"` where the connected server supports it. Verify tool
+capabilities before requesting it. REVIEW reuses CODE's Issue → Workspace →
+Session execution and existing permissions. Include the review target, scope,
+expected report and instruction to report in the normal conversation and stop.
+It does not use PLAN's approval-to-implementation transition or automatically
+post Issue comments. Product implementation requires a separate explicit user
+instruction; do not automatically continue from review findings into implementation.
+
+Necessary Workspace-local reproduction code, scripts, fixtures and tests are
+allowed. Distinguish temporary investigation artifacts from proposed product
+changes. REVIEW alone does not authorize adopting, merging or publishing product
+changes, or changing shared environments or live data. Preserve existing approval
+boundaries. Do not promise better external approval or use REVIEW to bypass it;
+distinguish observed execution/approval behaviour from unverified expectations.

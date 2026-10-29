@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   CheckIcon,
   FastForwardIcon,
+  MagnifyingGlassIcon,
   GearIcon,
   HandIcon,
   ListBulletsIcon,
@@ -432,6 +433,7 @@ export function ModelSelectorContainer({
   const parallelAgentLimit = executorConfig?.goal_max_concurrent_agents ?? 0;
   const executionModeOptions = [
     { value: ExecutionMode.code, label: 'Code' },
+    { value: ExecutionMode.review, label: 'Review' },
     { value: ExecutionMode.plan, label: 'Plan' },
     { value: ExecutionMode.goal, label: 'Goal' },
   ];
@@ -525,13 +527,20 @@ export function ModelSelectorContainer({
       {isCodex && (
         <DropdownMenu>
           <DropdownMenuTriggerButton
+            title={
+              executionMode === ExecutionMode.review
+                ? 'Review and investigate; report findings and stop. Implementation requires a separate instruction.'
+                : undefined
+            }
             size="sm"
             icon={
               isGoalMode
                 ? TargetIcon
-                : executionMode === ExecutionMode.plan
-                  ? ListBulletsIcon
-                  : FastForwardIcon
+                : executionMode === ExecutionMode.review
+                  ? MagnifyingGlassIcon
+                  : executionMode === ExecutionMode.plan
+                    ? ListBulletsIcon
+                    : FastForwardIcon
             }
             label={
               executionModeOptions.find(({ value }) => value === executionMode)

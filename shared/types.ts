@@ -1166,7 +1166,7 @@ goal_token_budget?: number | null,
  */
 goal_max_concurrent_agents?: number | null, };
 
-export enum ExecutionMode { code = "code", plan = "plan", goal = "goal", plan_with_goal = "plan_with_goal" }
+export enum ExecutionMode { code = "code", review = "review", plan = "plan", goal = "goal", plan_with_goal = "plan_with_goal" }
 
 export type ScriptContext = "SetupScript" | "CleanupScript" | "ArchiveScript" | "DevServer" | "ToolInstallScript" | "IntegrationValidation" | "ResourceCommand";
 

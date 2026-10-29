@@ -171,7 +171,7 @@ mod tests {
             agent_id: Some("plan".into()),
             reasoning_id: Some("high".into()),
             permission_policy: Some(executors::model_selector::PermissionPolicy::Supervised),
-            execution_mode: Some(executors::profile::ExecutionMode::PlanWithGoal),
+            execution_mode: Some(executors::profile::ExecutionMode::Review),
             goal_token_budget: Some(123456),
             goal_max_concurrent_agents: Some(0),
             ..ExecutorConfig::new(BaseCodingAgent::Codex)

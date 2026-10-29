@@ -129,6 +129,7 @@
       "type": "string",
       "enum": [
         "code",
+        "review",
         "plan",
         "goal",
         "plan_with_goal"

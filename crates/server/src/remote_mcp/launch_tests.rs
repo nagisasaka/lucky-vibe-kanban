@@ -223,6 +223,43 @@ async fn start_args(remote: &Remote, target: &Target, issue: Uuid, repo: Uuid) -
 }
 
 #[tokio::test]
+async fn review_launch_preserves_intent_and_permissions_without_goal_budget() {
+    let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
+    let mut input = start_args(&remote, &target, issue, repo).await;
+    input["execution_mode"] = json!("review");
+    input.as_object_mut().unwrap().remove("goal_token_budget");
+    let result = launch::call(&remote, &principal, "start_workspace", input.clone())
+        .await
+        .unwrap();
+    assert_eq!(result["status"], "succeeded");
+    let starts = dispatch.starts.lock().await;
+    assert_eq!(starts.len(), 1);
+    assert_eq!(starts[0]["executor_config"]["execution_mode"], "review");
+    assert!(
+        starts[0]["executor_config"]
+            .get("permission_policy")
+            .is_none()
+    );
+    assert!(
+        starts[0]["executor_config"]
+            .get("goal_token_budget")
+            .is_none()
+    );
+    assert!(
+        starts[0]["prompt"]
+            .as_str()
+            .unwrap()
+            .contains("Agreed behavior and acceptance criteria")
+    );
+    drop(starts);
+    let again = launch::call(&remote, &principal, "start_workspace", input)
+        .await
+        .unwrap();
+    assert_eq!(again["operation_id"], result["operation_id"]);
+    assert_eq!(dispatch.starts.lock().await.len(), 1);
+}
+
+#[tokio::test]
 async fn launch_uses_agreed_revision_native_goal_and_stable_admission_identity() {
     let (_directory, remote, dispatch, principal, target, issue, repo) = fixture(false).await;
     let input = start_args(&remote, &target, issue, repo).await;
