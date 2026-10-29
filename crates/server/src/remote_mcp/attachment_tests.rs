@@ -290,7 +290,9 @@ async fn isolated_attachment_remote_stdio_e2e() -> anyhow::Result<()> {
                 axum::routing::get(
                     |axum::extract::State(d): axum::extract::State<DeploymentImpl>,
                      axum::extract::Path(id): axum::extract::Path<Uuid>| async move {
-                        axum::Json(utils::response::ApiResponse::success(
+                        axum::Json(utils::response::ApiResponse::<
+                            Option<executors::profile::ExecutorConfig>,
+                        >::success(
                             crate::routes::sessions::executor_config::read_executor_config(
                                 &d.db().pool,
                                 id,
