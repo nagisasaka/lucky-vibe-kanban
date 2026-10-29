@@ -36,6 +36,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
+  - id: openwiki-source-231241ac3c842dcd67525890
+    resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-391f34050223d13f679b3793
     resource: repo://crates/server/src/routes/parallel_context.rs
   - id: openwiki-source-e2a1cc763db4a100d48eac0a
@@ -80,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T12:38:00.042Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -188,11 +190,13 @@ Direct merge の成功と PR の merged 観測では、通常の作業 Workspace
 
 ## 7. 統合後に canonical memory を更新する
 
+自動マージでは同じ担当がコード検証後の候補でWikiを更新し、Wikiだけを別commitにして公開要求する。公開後イベントやbacklogから別Wiki Workspace/Agentは起動しない。mainを直接変更した場合も自動同期せず、必要に応じて手動更新・再同期を明示的に開始する。再起動と定期回復は保存済みownerを回収する。[受付と回復の境界](../operations/openwiki-maintenance.md#開始条件と通常-sync)・[現行運用](../../docs/workspaces/openwiki.mdx#manifest-guided-updates)
+
 [Repository memory](../concepts/repository-memory.md) が有効な場合、成功した coding run の semantic draft と Git 証拠から Change Manifest を作り、統合された event を maintenance の入力にする。source merge の成功と Wiki 更新の成功は別であり、Wiki 失敗は source を巻き戻さない。
 
 LVK 自身の手動 direct squash と自動マージ はそれぞれ明示的な event ID を記録できる。外部 PR の squash/rebase は元 commit の ancestry を証明できない場合があり、Workspace ID や時刻だけで event を消費しない。統合先 local branch を準備し、必要なら [Sync Wiki](../operations/openwiki-maintenance.md) で実 source を再確認する。[記録された運用契約](../../docs/workspaces/openwiki.mdx)・[外部 PR の制約](../../docs/workspaces/openwiki.mdx)
 
-Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。自動同期や Repo 単独の開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L210-L231)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
+Project 設定から手動同期すると、開始元 Project が保守 Issue の紐付け先として渡される。Repo 単独設定からの明示開始では Issue なしの互換経路もあるため、Card の有無だけで起動失敗と判断せず maintenance の状態を確認する。選択先の検証と status 不在時の対処は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[運用契約](../../docs/workspaces/openwiki.mdx#understand-initial-generation)
 
 Wiki 保守 Card も Agent 終了と host 公開を分けて読み、検証済み no-op を含む公開成功で Done になる。成功した新規内部生成 Wiki 保守環境も、公開・owner 解放後に専用 Workspace と条件を満たす専用 Issue が archive され得る。未公開・失敗・取消の残存や手動で復元した環境は自動再試行で消さない。[保守環境の解放](../operations/openwiki-maintenance.md#成功後の保守環境の解放)を参照し、canonical branch と実行履歴で成果を確認する。
 

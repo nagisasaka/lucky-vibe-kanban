@@ -40,6 +40,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki/preparation.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
+  - id: openwiki-source-16c3e7d25cc14f30f21d7d5a
+    resource: repo://crates/server/src/routes/openwiki/recovery_tests.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
     resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-251033c862e5156391353c53
@@ -80,10 +82,12 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+  - id: openwiki-source-7fd9452d5e666180c50f8cb7
+    resource: repo://tests/openwiki/recovery.sh
+generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T12:38:00.042Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -92,9 +96,13 @@ OpenWiki maintenance は、統合済みソースから canonical Wiki を更新�
 
 ## 開始条件と通常 Sync
 
+単独保守の新規受付は、UIまたは認可済みMCPからの明示要求に限定する。公開イベント、新規pending、既存backlog、main直接変更、再起動・定期回復から別のWiki Workspace/Agentを自動生成しない。自動マージはコード検証後の同じ候補内で更新する。[受付](../../crates/server/src/routes/openwiki.rs#L170-L202)・[回復](../../crates/server/src/routes/openwiki.rs#L522-L550)
+
+5秒monitorは保存済みBootstrap/AgentRunの回収、公開・失敗cleanupのために残る。未処理イベントを強制ackして隠す処理はなく、Manifest・Memory・凍結入力は明示保守と既存ownerのために保持する。[monitor](../../crates/server/src/routes/openwiki.rs#L826-L843)
+
 Repository settings で有効化し、統合先の **local branch** と出力言語を選ぶ。開始処理は未解決の source integration を拒否し、未処理 event の統合 commit が選択 branch に入っていることを確認する。remote branch 自体を公開先にはできない。必要な source が未取得なら model を開始せずエラーにする。[開始前の検証](../../crates/server/src/routes/openwiki.rs)
 
-初期生成かどうかは、固定した統合済み source commit に `openwiki/` の Git tree があるかで判定する。`index.md` が欠けた部分的な import も既存 Wiki として保持し、dirty checkout にだけあるファイルは判定に使わない。Repository settings の入口では tree 不在なら Bootstrap、存在すれば通常 Sync を選ぶ。外部 MCP の同期入口は tree 不在を拒否し、暗黙の Bootstrap を開始しない。通常 Sync は一つの Codex Session / AgentRun による reconciliation であり、Bootstrap の独立 Review を毎回実行するものではない。[存在判定](../../crates/services/src/services/openwiki.rs#L300-L303)・[部分importとdirty fileの回帰](../../crates/services/src/services/openwiki.rs#L517-L533)・[分岐](../../crates/server/src/routes/openwiki.rs#L295-L320)
+初期生成かどうかは、固定した統合済み source commit に `openwiki/` の Git tree があるかで判定する。`index.md` が欠けた部分的な import も既存 Wiki として保持し、dirty checkout にだけあるファイルは判定に使わない。Repository settings の入口では tree 不在なら Bootstrap、存在すれば通常 Sync を選ぶ。外部 MCP の同期入口は tree 不在を拒否し、暗黙の Bootstrap を開始しない。通常 Sync は一つの Codex Session / AgentRun による reconciliation であり、Bootstrap の独立 Review を毎回実行するものではない。[存在判定](../../crates/services/src/services/openwiki.rs#L300-L303)・[部分importとdirty fileの回帰](../../crates/services/src/services/openwiki.rs#L517-L533)・[分岐](../../crates/server/src/routes/openwiki.rs#L268-L285)
 
 開始時の存在判定と公開時の完成条件は異なる。公開候補には finalised `openwiki/index.md` が必要であり、部分importを既存Wikiとして受け入れることは、そのまま公開可能という意味ではない。[公開条件](../../crates/services/src/services/openwiki.rs#L333-L346)
 
@@ -129,7 +137,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 | 開始文脈 | 保守 Issue の扱い |
 | --- | --- |
 | 有効な明示 Project | その Project を選ぶ。共有 Repo の他候補へ推測で振り分けない |
-| Repo 単独設定・自動 Sync・旧 client の未指定 request | `project_repos` と既存 Issue/Workspace の Repo 関連から Board が一つだけなら作る。候補ゼロ・複数なら Issue なしで継続する |
+| Repo 単独設定・旧 client の明示 request（Project未指定） | `project_repos` と既存 Issue/Workspace の Repo 関連から Board が一つだけなら作る。候補ゼロ・複数なら Issue なしで継続する |
 | 選ばれた Project に可視 status がない | Issue なしで継続する。可視 status があれば `sort_order,id` 順の先頭を使う |
 | Workspace に既存 link がある | 付け替えない |
 
@@ -151,7 +159,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 2. `sync_repository_wiki` に同じ Project / repository、安定した `request_id`、観測した `target_branch` を `expected_target_branch`、40桁の `current_source_commit` を `expected_source_commit` として渡す。`from_commit` を省けば current_source、4–40桁の SHA を渡せば共通の祖先検証による since_commit となる。[入力](../../crates/server/src/remote_mcp/repository_wiki.rs#L94-L117)・[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs#L8-L45)
 3. 応答を失った場合は入力と元の request ID を保ち、`get_operation` または `get_repository_wiki_sync(project_id, repository_id, request_id)` で読み戻す。後者は検証済み principal の receipt を Project・operation・repository と照合する。別 actor や別 repository の request を流用しない。[結果読取](../../crates/server/src/remote_mcp/repository_wiki.rs#L135-L186)
 
-共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 自動マージ・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L219-L330)
+共通 maintenance lock の下で、保存 branch と現在 source が期待値に一致すること、有効化済み、active AgentRun / Bootstrap がないことを確認する。未解決 自動マージ・local branch・公開の guard も UI と共通である。古い対象なら現在状態を再確認して新しい判断を行う。Wiki がない場合は Repository settings で明示初期化する。無効化や active owner を回避する別起動経路ではない。[受付と対象検査](../../crates/server/src/routes/openwiki.rs#L235-L295)
 
 ### 受付・実行・公開・現在鮮度を分けて読む
 
@@ -225,7 +233,7 @@ Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。
 
 最新 attempt の terminal 投影と process-exit 登録が競合する場合だけ、spawned/running の登録を最大10秒未満の pending として再観測する。古い未終了 attempt や unreachable host にはこの猶予を与えない。[終了待ち](../../crates/server/src/routes/openwiki/completion.rs)・[focused test](../../crates/server/src/routes/openwiki/completion.rs)
 
-自動起動の pending_changes Sync は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。noop で先行の未完了 run を隠すことや、別 attempt に未閉鎖操作を持ち越すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
+保存済みownerが持つ旧 pending_changes Sync の完了検査は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。noop で先行の未完了 run を隠すことや、別 attempt に未閉鎖操作を持ち越すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
 
 成功した Sync は共通の操作証明に続いて凍結入力の identity/digest を検証し、instructions を復元してから Wiki 公開へ進む。AgentRun の終端投影や Markdown が存在することだけでは成功しない。[終了処理の順序](../../crates/server/src/routes/openwiki.rs)
 
@@ -276,3 +284,7 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 回帰検証の入口は、[全 attempt の audit を検査する test](../../crates/server/src/routes/openwiki/completion.rs) と、[Generate self-correction / 操作なし Refine の test](../../crates/server/src/routes/openwiki/completion.rs)。これらは model 呼び出しなしの protocol fixture であり、意味的 coverage の保証と混同しない。
 
 保守Issueの採番は保存済みProject keyを使い、systemの付与とlinkを同じtransactionで確定する。priorityはmediumが既定。起動時にownerが過去記録から回復されたIssueにもsystemを補完するが、通常のBoard読取や定期releaseはこの補完を行わない。[分類と識別の正本](../concepts/project-and-issue.md#仕事の識別と分類)・[生成](../../crates/services/src/services/workspace_usage/lifecycle.rs#L103-L125)・[回復後の補完](../../crates/services/src/services/workspace_usage.rs#L148-L162)。
+
+## イベントからの新規受付禁止を検証する
+
+`node --test tests/openwiki/admission.test.mjs` は起動元と明示request必須を静的検査する。`bash tests/openwiki/recovery.sh` は一時instanceの実Git/SQLiteで公開済みイベント＋無関係backlog、新規pending、古いbacklog、main直接変更の4状態を各3回回復させる。新規Workspace・Session・AgentRun・Workflowがゼロ、保存状態と未ackイベントが不変であることを検証し、CLI trapで誤ったモデル起動を防ぐ。試験用instanceはforeground試験終了後に削除する。実サーバー再起動・実モデル・認証のE2Eは対象外である。[試験入口と残る起動元](../../tests/openwiki/README.md)・[隔離fixture](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)

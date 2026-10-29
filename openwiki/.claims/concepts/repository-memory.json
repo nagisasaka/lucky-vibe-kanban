@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d82b9b80e3a68def6e23ec35d0a7e384348df74e8d8847cff1e71da1775549b1",
+  "pageVersion": "sha256:bbf6cce94eb33565dfeedf1a317035f8eeec05d6f23e65d3cd8bdc33adabf58b",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -118,7 +118,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/openwiki.rs",
-          "version": "repo-file-v1:sha256:ae2e2a007807d8380074ed5c8e0e94db646643419b0bec8f29bbeacd8edea95b"
+          "version": "repo-file-v1:sha256:fdc5de2437d957bb6487994b682e9fd6532991599f6642a24e320de3de190a9e"
         },
         {
           "resource": "repo://crates/services/src/services/openwiki.rs",
@@ -227,8 +227,8 @@
       "statement": "開始元Projectは保守WorkspaceのBoard紐付け文脈であり、Wiki設定・writer lock・source checkpointは引き続きRepo単位で扱う。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/openwiki.rs#L264-L320",
-          "version": "repo-lines-v1:sha256:83bd8ae96fe54a79d9e17eb2a11c7347b3ca5999c0556b8af2c67e9100ca9aee:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMjU5MTBiODgxMThkYjRlYTlkN2NiYzA2YTA3YzY0YmNhMTVlODZkNWZkMmFiMmZjOTI2Y2E3OWNlNGViMzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ODkzZDEzNTExOWM2NzAwYzM3MmVkY2U3NTdiYTFmMTA4ZGYzZjkwNmNlYmEwZjk5ODUxZjAyZDU5NzE2NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU0ODgzMzRjNjBjMjdlYmQ3NGM5MWI4MjkyZWRhMjc0NWMxZTE2MTBlZGMxNjAxMjMzZDUxODM4OTZiNjFkODIifQ"
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L235-L282",
+          "version": "repo-lines-v1:sha256:80c1b666595493cd9ead71cb30ad067fbaf5bd970b79fcff26b65372a38796cd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYWZhZGI4ODEwZGU1MzI5NmQ3ZWMwNWJkNzY4ZjU2YjZkZTc0YTQzZDFhM2M3ZTBmYzY0ZGY2M2QzODM3OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NTg0MjU2MWI3OWI5ZjdjZGU3ZTdjYWUxMjRjYzk5OGYxYmY0NzNjYzg2ZjliZmM5ZmI5NmUzYWMzN2VkZDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1ZjZmNDY2ZTU5Y2ZjMzA3MDNjNDVmNzJhZjY1ZGU1NGFjMzYzZDM1NGNjMWEzMzMwMzUwYWNkNDUyNDM0YzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjYTE4ZGQzOTU4NzUyZjE2YTYyZjRhY2EzNThhYzJiZTE1ZjU0YjlkNDgzNjhjMDRlNzk2ZWM1NmRmYTZlNWIifQ"
         },
         {
           "resource": "repo://crates/server/src/routes/openwiki/project_context.rs#L6-L43",
@@ -287,10 +287,28 @@
           "version": "repo-file-v1:sha256:4e717e545d88bb06bd31388007609bb0b501ff234f46a399573a95c766b1d9a1"
         }
       ]
+    },
+    {
+      "id": "claim_85051c61993d4848b9bea58baa3cfeca",
+      "statement": "公開イベント・pending・backlog・main直接変更は新規Wiki保守を自動起動せず、回復は保存済みownerに限定され、単独の新規保守は明示UIまたは認可済みMCP要求から開始する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L170-L202",
+          "version": "repo-lines-v1:sha256:a842cbcffe06a39e2ed58a10f6718f7dcc29adab296e19e077ec547ca29af593:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhNmY3ZjIwMmQzMTc1NGRkYjY4ZjY5NDBhYzllODUxOThjN2U2Mjk0MjBkMGZlYmUxM2VjNTlkMGIwYzViZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhhMTRhMTc1YjE0YWQ5OTk4OGJlYjkyNzJlNjQ0NjZlNzE4MGU3MGVlMGExYTZiMDc2NTUyNjAxZGYwM2NjZWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2YTI5Njg5ZmZmNTEwY2RiMzcxOTNhZWI0MTQ4MThjMzIyN2EyMTliNTYwYjIxYmFmNThkNWZmNTg5YjJhNzAifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L522-L550",
+          "version": "repo-lines-v1:sha256:fc7dd01199dfd7bc8e346e6c07a654540715987b702e243df92e3d399e6aeef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMGJhYjgxZTljY2NlYTczOTk3ZTM1NzFlODgxMjgxZTBmODE3ZTY2MzU2OGRhYWQ3YTI0MzU0NzlkNDZiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjhlMWNlZDQyODAyMWIzZWI4OWY2MThjNzBlODJlY2ZiMzUxYjZiMjVmOWU2YTZiZTdmNGMxMTM4ZjQ1YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMDkxODE0YjA5ZTE2NzQ0ZTQwNjRmN2M5YmZhNjY0OTBmZTAyZjEyZTJlMWNkMzFkMDUxNzM3ZTdmNGNlMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODBiMjY5ZTk3N2JjYzNiNWFjMGRkZTkwNTY5NTk2MWExNWJkYWZiMTc5MTc4NTcxZTMzNTkyMTFkM2UxMWEifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160",
+          "version": "repo-lines-v1:sha256:d5984305d8510bcae1c65e7e52212b80a4eae2db9310b7e8833cae6e36f2f06c:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNzU5ZjQ2YzYwMGUzZTdlNmFkYjVkMDI4NzljNTZkN2QzYzA2NGJhOTNjYzQwYTY2ZmZkZGQwMzA3YTU3YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiYzk5MTk1MWIyNTEwZjEyNWZhZjhmYmRkNTE3MmQxNGNiMGZkM2ViYjg2NzkwNmFlN2EzMGIzZTUwMzRkY2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "at": "2026-10-29T12:38:00.042Z"
   }
 }

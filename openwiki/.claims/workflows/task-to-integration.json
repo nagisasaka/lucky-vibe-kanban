@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:20da75fae679d02e528c050f67df18dbfc17a7be26631121c8ad467c4a11b874",
+  "pageVersion": "sha256:bd21c90e9794a97d958866f3146aa9807ffebba97b1d0abb12b01f96898d2905",
   "claims": [
     {
       "id": "claim_62fc79a5c9fd478cbd529ca6222d3af2",
@@ -162,7 +162,7 @@
       "evidence": [
         {
           "resource": "repo://docs/workspaces/openwiki.mdx",
-          "version": "repo-file-v1:sha256:6101dad908a5cbf2bdb8db4f6a6a533e77c864488c675d9e7f0046bb442f45ea"
+          "version": "repo-file-v1:sha256:533fc1b7ec321e3f843537542678d48911e18e068c277824b8cd3160129c9dac"
         }
       ]
     },
@@ -366,7 +366,7 @@
     },
     {
       "id": "claim_5e576499483849f2b6b0422139240109",
-      "statement": "Project設定の手動Wiki同期は開始元Projectを保守Issueの紐付けに渡すが、自動同期・Repo単独ではIssueなしでも保守が継続し得る。",
+      "statement": "Project設定の手動Wiki同期は開始元Projectを保守Issueの紐付けに渡すが、Repo単独設定からの明示開始ではIssueなしでも保守が継続し得る。",
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/workspace_usage/lifecycle.rs#L79-L109",
@@ -447,10 +447,24 @@
           "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
         }
       ]
+    },
+    {
+      "id": "claim_bc3fce5053fe43d2af1d7d743a472d26",
+      "statement": "自動マージは同じ候補でWikiを更新し、公開イベントやbacklog、直接main変更から別Wiki Workspace/Agentは自動起動しない。必要な単独保守は明示要求で開始する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki.rs#L522-L550",
+          "version": "repo-lines-v1:sha256:fc7dd01199dfd7bc8e346e6c07a654540715987b702e243df92e3d399e6aeef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMGJhYjgxZTljY2NlYTczOTk3ZTM1NzFlODgxMjgxZTBmODE3ZTY2MzU2OGRhYWQ3YTI0MzU0NzlkNDZiOTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZjhlMWNlZDQyODAyMWIzZWI4OWY2MThjNzBlODJlY2ZiMzUxYjZiMjVmOWU2YTZiZTdmNGMxMTM4ZjQ1YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlMDkxODE0YjA5ZTE2NzQ0ZTQwNjRmN2M5YmZhNjY0OTBmZTAyZjEyZTJlMWNkMzFkMDUxNzM3ZTdmNGNlMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODBiMjY5ZTk3N2JjYzNiNWFjMGRkZTkwNTY5NTk2MWExNWJkYWZiMTc5MTc4NTcxZTMzNTkyMTFkM2UxMWEifQ"
+        },
+        {
+          "resource": "repo://docs/workspaces/openwiki.mdx#L254-L262",
+          "version": "repo-lines-v1:sha256:08362542a2019d977a3ba703a9678e2a44d4743bae4718f819f7402091a12efb:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZiZjVmZTI5NDFkZDg2ZjYyN2QzZDQ3ZWZjYjk4M2FjZjAwNGM4NWEwNzNiZjIwYjllNjgwZDBkZDhmOTFlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTM0ZDQxZDg5NDU0ZDMxZmVmNDM5ODA3MmUwYWFiMGYwM2M3ZDA0NDc1ZDVlZDRkMmMxOTIzYzYyZGYzNzMxYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjM0OTllYmY1ZGFmMjMwYmM5OGE2Zjk3MjVkYjg4NjY0NDAxYjY2MDk5ZWNlNTMzNjA0MDY4ZjI3MTg4NmQ4NiJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "at": "2026-10-29T12:38:00.042Z"
   }
 }

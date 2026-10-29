@@ -18,6 +18,8 @@ sources:
     resource: repo://crates/server/src/routes/openwiki.rs
   - id: openwiki-source-a34361c91f1fbaa3ea42afc5
     resource: repo://crates/server/src/routes/openwiki/project_context.rs
+  - id: openwiki-source-16c3e7d25cc14f30f21d7d5a
+    resource: repo://crates/server/src/routes/openwiki/recovery_tests.rs
   - id: openwiki-source-04d5adb51b5929dacce999bc
     resource: repo://crates/server/src/workflow_runtime/bootstrap.rs
   - id: openwiki-source-da8c4a13aea0bac33b3f0a35
@@ -38,10 +40,10 @@ sources:
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T12:38:00.042Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -66,7 +68,7 @@ Repository Memory は、将来の coding agent が設計境界・判断理由・
 
 共有フォルダーに置いただけで OS レベルの不変性を得るわけではない。索引の identity と digest は host の Workflow 入力、report の identity と digest は検証済み node output に固定し、工程境界で照合する。通常 Workspace の未統合 Memory を Reviewer へ引き継ぐ仕組みでもない。具体的な読取・独立性・公開前の検証は [OpenWiki 保守](../operations/openwiki-maintenance.md)を参照する。[host 所有の入力](../../crates/server/src/workflow_runtime/bootstrap.rs#L177-L220)、[report の identity と digest](../../crates/services/src/services/openwiki/bootstrap/reports.rs)、[再検証](../../crates/services/src/services/openwiki/bootstrap/reports.rs)
 
-保守開始元の Project は、保守 Workspace をどの Board の Issue に結ぶかという文脈である。Wiki の設定・writer lock・source checkpoint は引き続き Repo 単位であり、Project ごとに別の正本を作るものではない。明示 Project の検証と未指定時の互換動作は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L266-L320)・[紐付けの境界](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)
+保守開始元の Project は、保守 Workspace をどの Board の Issue に結ぶかという文脈である。Wiki の設定・writer lock・source checkpoint は引き続き Repo 単位であり、Project ごとに別の正本を作るものではない。明示 Project の検証と未指定時の互換動作は [開始元 Project と保守 Issue](../operations/openwiki-maintenance.md#開始元-project-と保守-issue)を参照する。[共通受付](../../crates/server/src/routes/openwiki.rs#L235-L282)・[紐付けの境界](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)
 
 ## Change Manifest は変更理由を運ぶイベント
 
@@ -98,6 +100,8 @@ flowchart LR
 [自動マージ](formal-integration.md)は、同じ専用会話でコード候補と有効なWiki更新を作り、code SHA・Wiki SHA・完成候補を別々に固定してhostへ公開要求する。検証実行と省略はcode SHAへ記録し、失敗をpassへ変換しない。公開後に選択source eventへのreceiptを既存Memory storeへ保存し、後処理の失敗は適用済みGit/Doneを巻き戻さない。旧step summaryからの統合Manifest生成や後続Wiki agentを前提にしない。[現行契約](../../crates/server/src/routes/integrations/conversation.rs)・[後処理](../../crates/server/src/routes/integrations/runtime.rs)
 
 専用会話へ渡すMemoryは、受付時にsource祖先関係を確認した固定event IDsの公開記録だけを解決する。Repo/Workspace所属を検査し、不在はunavailableとして伝える。他Workspaceのprivate memoryや後着eventを混ぜない。[公開Memory解決](../../crates/server/src/routes/integrations/runtime.rs#L73-L104)
+
+公開イベント・新規pending・古いbacklog・main直接変更は、別のWiki WorkspaceやAgentを自動起動しない。起動時と5秒周期の回復は、保存済みBootstrapまたは予約済みAgentRunの所有者を回収する。自動マージでは同じ候補内でWikiを更新し、それ以外の更新・再同期・初回生成はUIまたは認可済みMCPの明示要求から開始する。未処理イベントは強制ackせず、明示保守の入力として保持する。[受付と回復](../../crates/server/src/routes/openwiki.rs#L170-L202)・[新規受付なしの回復](../../crates/server/src/routes/openwiki.rs#L522-L550)・[隔離回帰](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)
 
 ## Sync の入力は統合済み source に結び付く凍結 snapshot
 
