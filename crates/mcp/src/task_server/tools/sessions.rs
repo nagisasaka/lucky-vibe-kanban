@@ -509,6 +509,9 @@ mod review_tests {
         let result = McpServer::new_global(&url)
             .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
                 session_id: session.id,
+                project_id: None,
+                request_id: None,
+                attachment_ids: Vec::new(),
                 prompt: "Investigate and report".into(),
             }))
             .await
