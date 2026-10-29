@@ -627,6 +627,84 @@ class SwitchTest(unittest.TestCase):
             )
         self.assertIsNone(self.old.poll())
 
+    def test_missing_status_has_no_filesystem_side_effects(self):
+        request = str(uuid.uuid4())
+        expected = {"operation_id": request, "status": "not_found", "accepted": False}
+        self.assertEqual(engine.status(request, "operator"), expected)
+        self.assertFalse((self.instance / "switch-operations").exists())
+        self.assertFalse((self.instance / "start.lock").exists())
+        root = self.instance / "switch-operations"
+        root.mkdir()
+        self.assertEqual(engine.status(request, "operator"), expected)
+        self.assertEqual(list(root.iterdir()), [])
+        self.assertFalse((self.instance / "start.lock").exists())
+
+    def test_existing_damaged_status_is_never_not_found(self):
+        root = self.instance / "switch-operations"
+        root.mkdir()
+        for damage in ("empty", "corrupt", "file", "dangling"):
+            with self.subTest(damage=damage):
+                request = str(uuid.uuid4())
+                op = root / request
+                if damage == "file":
+                    op.write_text("not a directory")
+                elif damage == "dangling":
+                    op.symlink_to(self.root / "missing-target", target_is_directory=True)
+                else:
+                    op.mkdir()
+                    if damage == "corrupt":
+                        (op / "request.json").write_text("{bad json")
+                with self.assertRaises((support.Refuse, ValueError)):
+                    engine.status(request, "operator")
+                self.assertFalse((self.instance / "start.lock").exists())
+                if op.is_dir():
+                    self.assertFalse((op / "result.json").exists())
+
+    def test_status_permission_or_io_failure_is_not_not_found(self):
+        request = str(uuid.uuid4())
+        for error in (PermissionError("inspection denied"), OSError("inspection failed")):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(Path, "lstat", side_effect=error):
+                    with self.assertRaises(type(error)):
+                        engine.status(request, "operator")
+                self.assertFalse((self.instance / "switch-operations").exists())
+                self.assertFalse((self.instance / "start.lock").exists())
+
+    def test_status_receipts_owner_and_corruption_are_read_only(self):
+        request = str(uuid.uuid4())
+        op = self.instance / "switch-operations" / request
+        op.mkdir(parents=True)
+        request_file = op / "request.json"
+        result_file = op / "result.json"
+        request_file.write_text(json.dumps({"owner": "operator", "arguments": {}}))
+        terminal = {"operation_id": request, "status": "failed", "stage": "fixture"}
+        result_file.write_text(json.dumps(terminal))
+        before = (request_file.read_bytes(), result_file.read_bytes())
+        with self.assertRaises(support.Refuse):
+            engine.status(request, "other-owner")
+        self.assertEqual(engine.status(request, "operator"), terminal)
+        self.assertEqual((request_file.read_bytes(), result_file.read_bytes()), before)
+        self.assertFalse((self.instance / "start.lock").exists())
+        result_file.write_text("{bad json")
+        try:
+            with self.assertRaises(ValueError):
+                engine.status(request, "operator")
+            self.assertEqual(result_file.read_text(), "{bad json")
+            self.assertFalse((self.instance / "start.lock").exists())
+        finally:
+            result_file.write_text(json.dumps(terminal))
+        # A genuine held admission remains accepted and its receipt is untouched.
+        with (self.instance / "start.lock").open("a") as lock:
+            support.fcntl.flock(lock, support.fcntl.LOCK_EX | support.fcntl.LOCK_NB)
+            accepted = {"operation_id": request, "status": "accepted", "stage": "admission"}
+            result_file.write_text(json.dumps(accepted))
+            before = (request_file.read_bytes(), result_file.read_bytes())
+            try:
+                self.assertEqual(engine.status(request, "operator"), accepted)
+                self.assertEqual((request_file.read_bytes(), result_file.read_bytes()), before)
+            finally:
+                result_file.write_text(json.dumps(terminal))
+
     def test_incomplete_admission_is_not_replayed(self):
         request = str(uuid.uuid4())
         op = self.instance / "switch-operations" / request

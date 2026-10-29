@@ -328,6 +328,11 @@ def write_state(op, state):
 
 def status(request_id, owner):
     op = DEV / "switch-operations" / str(uuid.UUID(request_id))
+    try:
+        # lstat preserves permission/I/O failures and existing dangling symlinks.
+        op.lstat()
+    except FileNotFoundError:
+        return {"operation_id": op.name, "status": "not_found", "accepted": False}
     s.need(
         (op / "request.json").is_file(),
         "Incomplete operation admission; operator inspection required",
