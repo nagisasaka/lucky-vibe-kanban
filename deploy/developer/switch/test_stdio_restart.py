@@ -131,6 +131,9 @@ class StdioRestartTest(unittest.TestCase):
             db.execute("UPDATE runtime_access_settings SET settings=?", (json.dumps({"execution_enabled":False}),))
         args["no_new_work"]=True
         self.assertTrue(self.tool("self_restart",args)["isError"])
+        denied = self.tool("get_self_restart_operation", {key: args[key] for key in ["project_id", "request_id"]})
+        self.assertTrue(denied["isError"], denied)
+        self.assertIn("Program execution disabled", json.dumps(denied))
         self.assertFalse((self.fixture.instance/"switch-operations").exists())
 
     def test_unsaved_runtime_status_reads_receipt_without_saving_defaults(self):
@@ -139,10 +142,10 @@ class StdioRestartTest(unittest.TestCase):
             db.execute("DELETE FROM runtime_access_settings")
         args = self.args()
         status = {key: args[key] for key in ["project_id", "request_id"]}
-        # Unknown remains refused, but must reach status lookup rather than the guard.
+        # A missing ID is a normal read result, never an accepted/successful restart.
         unknown = self.tool("get_self_restart_operation", status)
-        self.assertTrue(unknown["isError"], unknown)
-        self.assertNotIn("Program execution disabled", json.dumps(unknown))
+        self.assertNotEqual(unknown.get("isError"), True, unknown)
+        self.assertEqual(self.value(unknown), {"operation_id": args["request_id"], "status": "not_found", "accepted": False})
         self.assertFalse((self.fixture.instance / "switch-operations").exists())
         op = self.fixture.instance / "switch-operations" / args["request_id"]
         op.mkdir(parents=True)
@@ -160,8 +163,16 @@ class StdioRestartTest(unittest.TestCase):
 
     def test_unknown_result_and_other_owner_are_never_success(self):
         args=self.args(); status={k:args[k] for k in ["project_id","request_id"]}
-        self.assertTrue(self.tool("get_self_restart_operation",status)["isError"])
+        missing = self.tool("get_self_restart_operation", status)
+        self.assertNotEqual(missing.get("isError"), True, missing)
+        self.assertEqual(self.value(missing)["status"], "not_found")
+        self.assertFalse(self.value(missing)["accepted"])
+        self.assertFalse((self.fixture.instance / "start.lock").exists())
         op=self.fixture.instance/"switch-operations"/args["request_id"]; op.mkdir(parents=True)
+        incomplete = self.tool("get_self_restart_operation", status)
+        self.assertTrue(incomplete["isError"], incomplete)
+        self.assertIn("Incomplete operation admission", json.dumps(incomplete))
+        self.assertEqual(list(op.iterdir()), [])
         (op/"request.json").write_text(json.dumps({"owner":"remote-oauth-owner","arguments":{}}))
         (op/"result.json").write_text(json.dumps({"status":"failed","stage":"fixture"}))
         self.assertTrue(self.tool("get_self_restart_operation",status)["isError"])
