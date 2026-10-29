@@ -41,5 +41,10 @@ export function useResourceObservation() {
     refetchOnWindowFocus: false,
     retry: false,
   });
-  return { data: query.data, unavailable: query.isError || !visible, now };
+  return {
+    data: query.data,
+    unavailable: query.isError || !visible,
+    now,
+    visible,
+  };
 }

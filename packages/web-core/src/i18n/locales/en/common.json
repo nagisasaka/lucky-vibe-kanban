@@ -1483,5 +1483,39 @@
     "stopped": "Work stopped. Candidate and evidence are retained; continue with another instruction in this conversation.",
     "details": "Details",
     "pendingSettlement": "Publication requested; waiting for the assigned Run and its children to settle."
+  },
+  "codexQuota": {
+    "title": "Codex allowance",
+    "remaining": "Codex left {{value}}",
+    "detailsLabel": "Codex left {{value}} · allowance details",
+    "statusLabel": "Codex allowance: {{status}}",
+    "observed": "Observed: {{time}}",
+    "scope": "Server default account allowance, separate from remaining tokens, Workspace usage and context.",
+    "selection": "Summary: lowest remaining percentage across default-bucket windows. Without a default bucket it is unknown. Independent buckets are never added. Unknown: —.",
+    "defaultBucket": "Default bucket (summary)",
+    "additionalBucket": "Additional bucket {{index}}",
+    "window": "{{kind}} · {{period}}: {{value}} left / Reset: {{reset}}",
+    "unknownTime": "Unknown",
+    "unknownPeriod": "Unknown period",
+    "unlimitedCredits": "Credits: unlimited (separate from ordinary allowance)",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "cooldown": "Refresh (30s interval)",
+    "status": {
+      "error": "Unavailable or unauthorized",
+      "pending": "Not fetched",
+      "unsupported": "Unsupported",
+      "stale": "Unknown or stale",
+      "unknown": "Unknown or reset elapsed",
+      "fresh": "Fetched"
+    },
+    "period": {
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes"
+    }
   }
 }

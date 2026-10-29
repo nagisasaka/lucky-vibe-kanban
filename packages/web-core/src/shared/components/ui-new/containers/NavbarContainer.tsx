@@ -1,3 +1,5 @@
+import { CodexQuota } from '@vibe/ui/components/CodexQuota';
+import { useCodexQuota } from '@/shared/hooks/useCodexQuota';
 import { ResourceSummary } from '@vibe/ui/components/ResourceSummary';
 import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
 import { GitMergeIcon } from '@phosphor-icons/react';
@@ -278,10 +280,16 @@ export function NavbarContainer({
   }, [syncErrorContext?.errors]);
 
   const resources = useResourceObservation();
+  const quota = useCodexQuota(resources.visible);
 
   return (
     <Navbar
-      resourceSlot={<ResourceSummary {...resources} />}
+      resourceSlot={
+        <div className="flex min-w-0 flex-wrap xl:max-w-none xl:shrink-0 xl:flex-nowrap items-center gap-base">
+          <ResourceSummary {...resources} />
+          <CodexQuota {...quota} now={resources.now} />
+        </div>
+      }
       workspaceTitle={navbarTitle}
       breadcrumbs={workspaceContext}
       leftItems={leftItems}
