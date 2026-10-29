@@ -362,7 +362,7 @@ mod tests {
     async fn owned_group_reproduces_direct_drop_native_survivor() {
         let root = tempfile::tempdir().unwrap();
         let record = root.path().join("pids.json");
-        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        let fixture = std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap())
             .join("../../tests/codex-process-cleanup/fake_app_server.py");
         let mut unrelated = tokio::process::Command::new("sleep")
             .arg("60")
@@ -425,7 +425,7 @@ mod tests {
     async fn owned_group_cleans_orphan_after_wrapper_exit_and_preserves_unrelated() {
         let root = tempfile::tempdir().unwrap();
         let record = root.path().join("pids.json");
-        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        let fixture = std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap())
             .join("../../tests/codex-process-cleanup/fake_app_server.py");
         let mut unrelated = tokio::process::Command::new("sleep")
             .arg("60")
