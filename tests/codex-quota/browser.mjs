@@ -1,0 +1,314 @@
+// Isolated component/API fixtures only: never connects to a running LVK server.
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { chromium, expect } from '@playwright/test';
+import { createServer } from 'node:http';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+const root = process.cwd();
+const output = path.resolve(
+  process.env.RESOURCE_EVIDENCE_DIR || 'test-results/codex-quota'
+);
+await mkdir(output, { recursive: true });
+const scratch = await mkdtemp(path.join(tmpdir(), 'lvk-resources-'));
+let browser, server;
+const results = { cases: [], errors: [] };
+const known = (value) => ({ status: 'known', value });
+const fixture = (cpu = 42, ram = 42, disk = 42) => ({
+  timestamp: new Date().toISOString(),
+  system_visible: {
+    memory_total_bytes: known(1000),
+    memory_available_bytes: known(1000 - ram * 10),
+    cpu_usage: { percent: known(cpu), sampling_duration_ms: 501 },
+  },
+  disks: [
+    {
+      target: 'worktree_base',
+      observation: known({
+        used_percent: disk,
+        total_bytes: 1000e9,
+        used_bytes: disk * 10e9,
+        available_bytes: (100 - disk) * 5e9,
+        filesystem_id: '202',
+      }),
+    },
+  ],
+});
+try {
+  const js = await build({
+    entryPoints: ['tests/codex-quota/browser.fixture.tsx'],
+    bundle: true,
+    write: false,
+    format: 'iife',
+    jsx: 'automatic',
+    alias: { '@': path.join(root, 'packages/web-core/src') },
+    nodePaths: [path.join(root, 'packages/web-core/node_modules')],
+  });
+  execFileSync(
+    path.join(root, 'packages/local-web/node_modules/.bin/tailwindcss'),
+    [
+      '-c',
+      'tailwind.new.config.js',
+      '-i',
+      '../web-core/src/app/styles/new/index.css',
+      '-o',
+      path.join(scratch, 'style.css'),
+    ],
+    { cwd: path.join(root, 'packages/local-web'), stdio: 'pipe' }
+  );
+  const css = await readFile(path.join(scratch, 'style.css'));
+  server = createServer((req, res) => {
+    if (req.url === '/app.js') {
+      res.setHeader('Content-Type', 'text/javascript');
+      res.end(js.outputFiles[0].text);
+    } else if (req.url === '/style.css') {
+      res.setHeader('Content-Type', 'text/css');
+      res.end(css);
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(
+        '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><div id="root"></div><script src="/app.js"></script></body></html>'
+      );
+    }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({
+    viewport: { width: 1024, height: 360 },
+  });
+  page.on('pageerror', (e) => results.errors.push(e.message));
+  let requests = 0;
+  let mode = 'fresh';
+  await page.route('**/api/**', async (route) => {
+    if (route.request().url().endsWith('/api/resource-observation'))
+      return route.fulfill({ json: { success: true, data: fixture() } });
+    requests++;
+    assert.equal(route.request().method(), 'POST');
+    assert.deepEqual(route.request().postDataJSON(), {
+      provider: 'codex',
+      account_context: 'server_default',
+      include_usage: false,
+    });
+    const observedNow = await page.evaluate(() => Date.now());
+    const result =
+      mode === 'unsupported'
+        ? { status: 'unsupported' }
+        : {
+            quota: {
+              status: 'fresh',
+              observedAt: new Date(
+                mode === 'stale' ? observedNow - 700000 : observedNow
+              ).toISOString(),
+              data: {
+                rateLimits: {
+                  primary: {
+                    usedPercent: 17,
+                    windowDurationMins: mode === 'readable' ? 300 : 73,
+                    resetsAt:
+                      Math.floor(observedNow / 1000) +
+                      (mode === 'expired' ? -1 : 600),
+                  },
+                  secondary: { usedPercent: 40, windowDurationMins: 10000 },
+                },
+              },
+            },
+          };
+    if (mode === 'buckets') {
+      result.quota.data.rateLimits.limitId = 'standard';
+      result.quota.data.rateLimitsByLimitId = {
+        standard: { limitId: 'standard', primary: { usedPercent: 99 } },
+        other: {
+          limitId: 'other',
+          limitName: 'Public <model>',
+          primary: { usedPercent: 25 },
+        },
+      };
+    }
+    if (mode === 'no-default') {
+      result.quota.data.rateLimitsByLimitId = {
+        other: {
+          limitId: 'other',
+          limitName: 'Public <model>',
+          primary: { usedPercent: 25 },
+        },
+      };
+      result.quota.data.rateLimits = null;
+    }
+    await route.fulfill({
+      status: mode === 'error' ? 503 : 200,
+      json: { success: true, data: { result } },
+    });
+  });
+  for (const width of [320, 390, 768, 1280]) {
+    requests = 0;
+    mode = 'fresh';
+    await page.setViewportSize({ width, height: 720 });
+    await page.goto(base);
+    const trigger = page.getByTestId('codex-quota');
+    await expect(trigger).toHaveText('Codex残り 60%');
+    assert.equal(requests, 1, 'duplicate subscribers share one request');
+    if (width >= 1280) {
+      const resourceBox = await page
+        .getByTestId('resource-summary')
+        .boundingBox();
+      const quotaBox = await trigger.boundingBox();
+      assert.ok(
+        Math.abs(
+          resourceBox.y +
+            resourceBox.height / 2 -
+            quotaBox.y -
+            quotaBox.height / 2
+        ) < 5 && quotaBox.x >= resourceBox.x + resourceBox.width,
+        'desktop resources and quota share one row'
+      );
+    }
+    const quotaBounds = await trigger.boundingBox();
+    for (const button of await page.locator('nav button').all()) {
+      if ((await button.getAttribute('data-testid')) === 'codex-quota')
+        continue;
+      const b = await button.boundingBox();
+      if (b)
+        assert.ok(
+          b.x + b.width <= quotaBounds.x ||
+            b.x >= quotaBounds.x + quotaBounds.width ||
+            b.y + b.height <= quotaBounds.y ||
+            b.y >= quotaBounds.y + quotaBounds.height,
+          'quota must not overlap navbar controls'
+        );
+    }
+    await page.screenshot({ path: path.join(output, `summary-${width}.png`) });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(
+      page.getByText('primary・73分', { exact: false })
+    ).toBeVisible();
+    await expect(
+      page.getByText('secondary・10000分', { exact: false })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '更新（30秒間隔）', exact: true })
+    ).toBeDisabled();
+    assert.equal(requests, 1, 'manual refresh cooldown');
+    await page.getByRole('dialog').focus();
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(page.getByText('Codex利用枠：取得済み')).toBeVisible();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth
+      ),
+      true
+    );
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(output, `width-${width}.png`) });
+    results.cases.push(`layout, keyboard, tap, dedup ${width}`);
+  }
+  await page.evaluate(() => document.documentElement.classList.add('dark'));
+  await page.getByTestId('codex-quota').click();
+  await page.getByTestId('codex-quota').click();
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: path.join(output, 'dark-details.png') });
+  results.cases.push('dark details');
+  for (const state of ['unsupported', 'stale', 'expired', 'error']) {
+    mode = state;
+    await page.goto(base);
+    await expect(page.getByTestId('codex-quota')).toHaveText('Codex残り —');
+    await page.getByTestId('codex-quota').click();
+    await expect(
+      page.getByText('Codex利用枠：', { exact: false })
+    ).toContainText(
+      state === 'unsupported'
+        ? '非対応'
+        : state === 'error'
+          ? '取得失敗'
+          : state === 'stale'
+            ? '期限切れ'
+            : 'リセット経過'
+    );
+    results.cases.push(state);
+  }
+  for (const state of ['buckets', 'no-default']) {
+    mode = state;
+    await page.goto(base);
+    await expect(page.getByTestId('codex-quota')).toHaveText(
+      state === 'buckets' ? 'Codex残り 60%' : 'Codex残り —'
+    );
+    await page.getByTestId('codex-quota').click();
+    await expect(
+      page.getByText('Public <model>', { exact: false })
+    ).toBeVisible();
+    assert.equal(await page.locator('[role="dialog"] model').count(), 0);
+    if (state === 'buckets')
+      await expect(page.getByText('(standard)', { exact: false })).toHaveCount(
+        1
+      );
+    results.cases.push(state);
+  }
+  for (const [lang, title, duration] of [
+    ['en', 'Codex left 60%', 'primary · 5 hours'],
+    ['ja', 'Codex残り 60%', 'primary・5時間'],
+  ]) {
+    mode = 'readable';
+    await page.goto(base + '/?lang=' + lang);
+    await expect(page.getByTestId('codex-quota')).toHaveText(title);
+    await page.getByTestId('codex-quota').click();
+    await expect(page.getByText(duration, { exact: false })).toBeVisible();
+    results.cases.push(`i18n ${lang}`);
+  }
+  mode = 'fresh';
+  await page.goto(base);
+  await expect(page.getByTestId('codex-quota')).toHaveText('Codex残り 60%');
+  await page.clock.install();
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'hidden',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  const before = requests;
+  await page.clock.fastForward(600001);
+  assert.equal(requests, before);
+  results.cases.push('hidden suppresses polling');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.clock.runFor(1000);
+  await expect.poll(() => requests).toBe(before + 1);
+  await expect(page.getByTestId('codex-quota')).toHaveText('Codex残り 60%');
+  await page.clock.runFor(31_000);
+  await page.getByTestId('codex-quota').click();
+  await page.getByRole('button', { name: '更新', exact: true }).click();
+  await expect.poll(() => requests).toBe(before + 2);
+  await expect(
+    page.getByRole('button', { name: '更新（30秒間隔）', exact: true })
+  ).toBeDisabled();
+  await page.waitForTimeout(200);
+  await page.clock.runFor(301_000);
+  await expect.poll(() => requests).toBe(before + 3);
+  results.cases.push('visible resume, manual refresh, five minute polling');
+  assert.deepEqual(results.errors, []);
+  results.status = 'passed';
+} catch (error) {
+  results.status = 'failed';
+  results.error = error.stack;
+  throw error;
+} finally {
+  await browser?.close();
+  if (server) await new Promise((resolve) => server.close(resolve));
+  await rm(scratch, { recursive: true, force: true });
+  await writeFile(
+    path.join(output, 'results.json'),
+    JSON.stringify(results, null, 2)
+  );
+  console.log(JSON.stringify(results, null, 2));
+}

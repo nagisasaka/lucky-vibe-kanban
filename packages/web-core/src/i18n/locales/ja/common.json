@@ -1376,5 +1376,36 @@
     "stopped": "処理を停止しました。候補と証拠を保持しています。同じ会話で次の指示を送れます。",
     "details": "詳細",
     "pendingSettlement": "公開要求を保存しました。担当Runと子プロセスの終了を待っています。"
+  },
+  "codexQuota": {
+    "title": "Codex利用枠",
+    "remaining": "Codex残り {{value}}",
+    "detailsLabel": "Codex残り {{value}}・利用枠詳細",
+    "statusLabel": "Codex利用枠：{{status}}",
+    "observed": "観測：{{time}}",
+    "scope": "サーバー既定アカウントの利用枠。残トークン数・Workspace消費・context残量とは別です。",
+    "selection": "代表は既定枠の期間別残率の最小値。既定枠がなければ不明。各枠は合算しません。不明は —。",
+    "defaultBucket": "既定枠（代表）",
+    "additionalBucket": "追加枠 {{index}}",
+    "window": "{{kind}}・{{period}}：残り {{value}} / リセット：{{reset}}",
+    "unknownTime": "不明",
+    "unknownPeriod": "期間不明",
+    "unlimitedCredits": "credits：無制限（通常利用枠とは別）",
+    "refresh": "更新",
+    "refreshing": "更新中…",
+    "cooldown": "更新（30秒間隔）",
+    "status": {
+      "error": "取得失敗・権限なし",
+      "pending": "未取得",
+      "unsupported": "非対応",
+      "stale": "不明・期限切れ",
+      "unknown": "不明・リセット経過",
+      "fresh": "取得済み"
+    },
+    "period": {
+      "days": "{{count}}日",
+      "hours": "{{count}}時間",
+      "minutes": "{{count}}分"
+    }
   }
 }
