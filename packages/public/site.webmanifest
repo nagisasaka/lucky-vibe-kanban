@@ -3,19 +3,19 @@
   "short_name": "LVK",
   "icons": [
     {
-      "src": "/lvk-icon-192.png",
+      "src": "/lvk-icon-192.png?v=white-1",
       "sizes": "192x192",
       "purpose": "any",
       "type": "image/png"
     },
     {
-      "src": "/lvk-icon-512.png",
+      "src": "/lvk-icon-512.png?v=white-1",
       "sizes": "512x512",
       "purpose": "any",
       "type": "image/png"
     },
     {
-      "src": "/lvk-icon-maskable-512.png",
+      "src": "/lvk-icon-maskable-512.png?v=white-1",
       "sizes": "512x512",
       "purpose": "maskable",
       "type": "image/png"

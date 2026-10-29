@@ -5,37 +5,67 @@ import { mkdir, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium } from "@playwright/test";
+import { preview } from "vite";
 import { isolatedEnvironment } from "./fixtures/issue-comments-env.mjs";
 
+const startedAt = new Date().toISOString();
 const root = process.cwd();
-const report = resolve(".build/clover-review");
+const original = await readFile("packages/public/lvk-app-icon.svg", "utf8");
+assert.equal(
+  createHash("sha256").update(original).digest("hex"),
+  "4cd6e93f81f1cb2da075ce2754f2c1f038c2d0338b2b2968adc2d414455a340c",
+);
+assert.equal(
+  createHash("sha256")
+    .update(await readFile("packages/public/lvk-clover.svg"))
+    .digest("hex"),
+  "3b42c7b08d0a25af7533ab4511f3782fb318eccb05ccc474ddfae7fae8d43de7",
+);
+assert.equal(
+  await readFile("packages/public/lvk-app-icon-white.svg", "utf8"),
+  original.replace('fill="#18251E"', 'fill="#FFFFFF"'),
+);
+const report = resolve(".build/clover-white-review");
+const staticMode = process.argv.includes("--static");
+const web = staticMode
+  ? await preview({
+      root: resolve("packages/local-web"),
+      preview: { host: "127.0.0.1", port: 0, open: false, proxy: {} },
+    })
+  : null;
 await mkdir(report, { recursive: true });
 const instance = await mkdtemp(resolve(".build/clover-instance-"));
 const env = isolatedEnvironment(process.env, instance, root);
 const fixtureBin = resolve(instance, "bin");
 await mkdir(fixtureBin);
 for (const name of ["codex", "claude"])
-  await writeFile(resolve(fixtureBin, name), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  await writeFile(resolve(fixtureBin, name), "#!/bin/sh\nexit 1\n", {
+    mode: 0o755,
+  });
 env.PATH = `${fixtureBin}:${env.PATH}`;
-const server = spawn(resolve("target/debug/server"), [], {
-  env,
-  stdio: ["ignore", "pipe", "pipe"],
-});
+const server = staticMode
+  ? null
+  : spawn(resolve("target/debug/server"), [], {
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 let logs = "";
-server.stdout.on("data", (b) => {
+server?.stdout.on("data", (b) => {
   logs += b;
 });
-server.stderr.on("data", (b) => {
+server?.stderr.on("data", (b) => {
   logs += b;
 });
-const stopped = new Promise((resolve, reject) => {
-  server.once("close", resolve);
-  server.once("error", reject);
-});
+const stopped = server
+  ? new Promise((resolve, reject) => {
+      server.once("close", resolve);
+      server.once("error", reject);
+    })
+  : Promise.resolve();
 let browser;
 try {
-  let base;
-  for (let i = 0; i < 120; i++) {
+  let base = web?.resolvedUrls.local[0]?.replace(/\/$/, "");
+  for (let i = 0; !base && i < 120; i++) {
     if (server.exitCode !== null) throw Error(`Server exited: ${logs}`);
     try {
       const ports = JSON.parse(
@@ -73,7 +103,7 @@ try {
   }))
     assert.equal(manifest[key], value);
   const mcp = await readFile("crates/executors/default_mcp.json", "utf8");
-  assert.ok(mcp.includes('"icon": "lvk-app-icon.svg"'));
+  assert.ok(mcp.includes('"icon": "lvk-app-icon-white.svg"'));
   assert.ok(!mcp.includes("favicon-vk-"));
   const checks = [];
   for (const scheme of ["light", "dark"]) {
@@ -83,7 +113,7 @@ try {
     assert.match(response.headers()["content-type"], /text\/html/);
     assert.equal(
       await page.locator('link[rel="icon"]').getAttribute("href"),
-      "/lvk-app-icon.svg",
+      "/lvk-app-icon-white.svg",
     );
     assert.equal(
       await page.locator('link[rel="manifest"]').getAttribute("href"),
@@ -97,8 +127,16 @@ try {
       .locator('link[rel="apple-touch-icon"]')
       .getAttribute("href");
     const assets = [
-      "/lvk-clover.svg",
       "/lvk-app-icon.svg",
+      ...[
+        "favicon.png",
+        "apple-touch-icon.png",
+        "lvk-icon-192.png",
+        "lvk-icon-512.png",
+        "lvk-icon-maskable-512.png",
+      ].map((name) => "/icon-variants/dark-green/" + name),
+      "/lvk-clover.svg",
+      "/lvk-app-icon-white.svg",
       "/favicon.png",
       apple,
       ...manifest.icons.map((i) => i.src),
@@ -130,14 +168,40 @@ try {
           ctx.drawImage(img, 0, 0, size, size);
           return { img, c, data: ctx.getImageData(0, 0, size, size).data };
         }
+        // Background compositing changes antialiased edge colours. Compare the
+        // leaf-only rasters instead, preserving every path and transform.
+        const leafRasters = [];
+        for (const src of ["/lvk-app-icon.svg", "/lvk-app-icon-white.svg"]) {
+          const svg = (await (await fetch(src)).text()).replace(
+            /<rect[^>]*\/>/,
+            "",
+          );
+          const url = URL.createObjectURL(
+            new Blob([svg], { type: "image/svg+xml" }),
+          );
+          try {
+            leafRasters.push((await render(url, 512)).data);
+          } finally {
+            URL.revokeObjectURL(url);
+          }
+        }
+        const leafRasterDifferences = leafRasters[0].reduce(
+          (count, byte, i) => count + (byte !== leafRasters[1][i] ? 1 : 0),
+          0,
+        );
         const small = [];
         for (const size of [16, 32]) {
-          const { data } = await render("/lvk-app-icon.svg", size);
+          const { data } = await render("/lvk-app-icon-white.svg", size);
           const quadrants = [0, 0, 0, 0];
           for (let y = 0; y < size; y++)
             for (let x = 0; x < size; x++) {
               const i = (y * size + x) * 4;
-              if (data[i + 1] > 150 && data[i] > 70 && data[i + 3] > 128)
+              if (
+                data[i + 1] > 150 &&
+                data[i + 1] > data[i] + 40 &&
+                data[i + 1] > data[i + 2] + 40 &&
+                data[i + 3] > 128
+              )
                 quadrants[(y >= size / 2 ? 2 : 0) + (x >= size / 2 ? 1 : 0)]++;
             }
           small.push({ size, quadrants });
@@ -154,7 +218,12 @@ try {
             for (let x = 0; x < size; x++) {
               const i = (y * size + x) * 4;
               if (data[i + 3] !== 255) transparent++;
-              if (data[i + 1] > 150 && data[i] > 70 && data[i + 3] > 128) {
+              if (
+                data[i + 1] > 150 &&
+                data[i + 1] > data[i] + 40 &&
+                data[i + 1] > data[i + 2] + 40 &&
+                data[i + 3] > 128
+              ) {
                 green++;
                 const r =
                   Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) / size;
@@ -162,7 +231,11 @@ try {
                 if (r > 0.4) outside++;
               }
             }
+          const center =
+            (Math.floor(size / 2) * size + Math.floor(size / 2)) * 4;
+          const centerBackground = [...data.slice(center, center + 4)];
           dimensions.push({
+            centerBackground,
             src: icon.src,
             width: img.naturalWidth,
             height: img.naturalHeight,
@@ -190,8 +263,8 @@ try {
             size === 180
               ? apple
               : size === 192
-                ? "/lvk-icon-192.png"
-                : "/lvk-app-icon.svg";
+                ? icons.find((i) => i.sizes === "192x192").src
+                : "/lvk-app-icon-white.svg";
           await img.decode();
           row.append(img);
           document.body.append(row);
@@ -201,10 +274,11 @@ try {
         await mask.decode();
         mask.style.borderRadius = "50%";
         document.body.append(mask);
-        return { small, dimensions };
+        return { small, dimensions, leafRasterDifferences };
       },
       { scheme, icons: manifest.icons, apple },
     );
+    assert.equal(pixels.leafRasterDifferences, 0);
     for (const item of pixels.small)
       assert.ok(
         item.quadrants.every((n) => n >= 4),
@@ -214,6 +288,7 @@ try {
       assert.equal(item.width, item.size);
       assert.equal(item.height, item.size);
       assert.ok(item.green > 100);
+      assert.deepEqual(item.centerBackground, [255, 255, 255, 255]);
       if (item.src.includes("maskable") || item.src === apple) {
         assert.equal(item.transparent, 0);
         assert.equal(item.outside, 0);
@@ -268,8 +343,13 @@ try {
   const hash = (path) =>
     readFile(path).then((b) => createHash("sha256").update(b).digest("hex"));
   const result = {
+    started_at: startedAt,
+    finished_at: new Date().toISOString(),
     checks,
-    server_sha256: await hash("target/debug/server"),
+    server_mode: staticMode
+      ? "vite-preview-built-frontend"
+      : "isolated-rust-server",
+    server_sha256: staticMode ? null : await hash("target/debug/server"),
     html_sha256: await hash("packages/local-web/dist/index.html"),
     browser: browser.version(),
     instance_isolated: true,
@@ -281,9 +361,13 @@ try {
   console.log(JSON.stringify(result, null, 2));
 } finally {
   await browser?.close();
-  server.kill("SIGTERM");
-  const timer = setTimeout(() => server.kill("SIGKILL"), 10000);
+  server?.kill("SIGTERM");
+  const timer = setTimeout(() => server?.kill("SIGKILL"), 10000);
   await stopped;
   clearTimeout(timer);
+  if (web)
+    await new Promise((resolve, reject) =>
+      web.httpServer.close((error) => (error ? reject(error) : resolve())),
+    );
   await rm(instance, { recursive: true, force: true });
 }
