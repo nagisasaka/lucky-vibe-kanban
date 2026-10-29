@@ -866,6 +866,7 @@ impl LocalAgentRunPort {
             && executors::executors::provider_adapter::memory_source_completion_allowed(
                 provider,
                 direct_intent(request.intent, attempt.mode),
+                &attempt.executor_config,
                 &request.input.content,
             );
         for repo in &repos {

@@ -2512,9 +2512,21 @@ pub fn prompt_with_repository_memory(
 pub fn memory_source_completion_allowed(
     provider: DirectProvider,
     intent: DirectIntent,
+    executor_config: &ExecutorConfig,
     prompt: &str,
 ) -> bool {
-    if intent == DirectIntent::Review {
+    let execution_mode = executor_config.execution_mode.or_else(|| {
+        match ExecutorConfigs::get_cached().get_coding_agent(&executor_config.profile_id()) {
+            Some(CodingAgent::Codex(mut agent)) => {
+                agent.apply_direct_overrides(executor_config);
+                Some(agent.effective_execution_mode())
+            }
+            _ => None,
+        }
+    });
+    if intent == DirectIntent::Review
+        || execution_mode == Some(crate::profile::ExecutionMode::Review)
+    {
         return false;
     }
     if provider == DirectProvider::Codex {
@@ -2608,6 +2620,7 @@ mod tests {
                 !memory_source_completion_allowed(
                     DirectProvider::Codex,
                     DirectIntent::FollowUp,
+                    &ExecutorConfig::new(crate::executors::BaseCodingAgent::Codex),
                     prompt
                 ),
                 "{prompt}"
@@ -2623,6 +2636,7 @@ mod tests {
                 memory_source_completion_allowed(
                     DirectProvider::Codex,
                     DirectIntent::FollowUp,
+                    &ExecutorConfig::new(crate::executors::BaseCodingAgent::Codex),
                     prompt
                 ),
                 "{prompt}"
@@ -2631,8 +2645,35 @@ mod tests {
         assert!(!memory_source_completion_allowed(
             DirectProvider::Codex,
             DirectIntent::Review,
+            &ExecutorConfig::new(crate::executors::BaseCodingAgent::Codex),
             "review code"
         ));
+    }
+
+    #[test]
+    fn review_mode_does_not_finalize_investigation_source() {
+        use crate::profile::ExecutionMode;
+        for intent in [DirectIntent::Initial, DirectIntent::FollowUp] {
+            for mode in [
+                ExecutionMode::Code,
+                ExecutionMode::Review,
+                ExecutionMode::Plan,
+                ExecutionMode::Goal,
+            ] {
+                assert_eq!(
+                    memory_source_completion_allowed(
+                        DirectProvider::Codex,
+                        intent,
+                        &ExecutorConfig {
+                            execution_mode: Some(mode),
+                            ..ExecutorConfig::new(crate::executors::BaseCodingAgent::Codex)
+                        },
+                        "Investigate failure"
+                    ),
+                    mode != ExecutionMode::Review
+                );
+            }
+        }
     }
 
     #[test]

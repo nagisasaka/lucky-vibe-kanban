@@ -67,6 +67,7 @@ fn reasoning_stdio_fixture() {
 async fn resolved_reasoning_survives_start_resume_and_mode_selection() {
     for mode in [
         ExecutionMode::Code,
+        ExecutionMode::Review,
         ExecutionMode::Plan,
         ExecutionMode::PlanWithGoal,
         ExecutionMode::Goal,

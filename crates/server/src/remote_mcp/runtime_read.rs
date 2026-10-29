@@ -63,7 +63,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
         ),
         definition::<ExecutionArgs>(
             "get_execution",
-            "Read one run's final response, initial instruction or Goal objective in bounded character pages. Returns canonical lifecycle separately from the text. An agent claim is not independent test evidence.",
+            "Read one run's execution_mode (latest attempt), final response, initial instruction or Goal objective in bounded character pages. Returns canonical lifecycle separately from the text. An agent claim is not independent test evidence.",
         ),
     ]
 }
@@ -139,7 +139,7 @@ impl Remote {
         };
         // Only the closed enum selects a SQL expression; caller text is bound.
         let sql = format!(
-            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
+            "SELECT r.id,r.session_id,r.status,r.projection_status,r.updated_at,s.last_event_sequence,(SELECT json_extract(a.request_envelope,'$.executor_config.execution_mode') FROM agent_run_attempts a WHERE a.agent_run_id=r.id ORDER BY julianday(a.created_at) DESC,a.rowid DESC LIMIT 1) AS execution_mode,NOT EXISTS (SELECT 1 FROM agent_runs newer WHERE newer.session_id=r.session_id AND (newer.created_at>r.created_at OR (newer.created_at=r.created_at AND newer.rowid>r.rowid))) AS is_current_run,json_extract(s.state_json,'$.goal.status') AS goal_status,json_extract(s.state_json,'$.goal.token_budget') AS goal_token_budget,json_extract(s.state_json,'$.goal.tokens_used') AS goal_tokens_used,json_extract(s.state_json,'$.goal.time_used_seconds') AS goal_time_used_seconds,json_extract(s.state_json,'$.last_error.code') AS error_code,substr(coalesce({expression},''),?,?) AS content,length(coalesce({expression},'')) AS total FROM agent_runs r LEFT JOIN agent_run_state s ON s.agent_run_id=r.id WHERE r.id=? AND r.workspace_id=?"
         );
         let row = sqlx::query(&sql)
             .bind(i64::from(args.offset) + 1)
@@ -172,7 +172,7 @@ impl Remote {
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
-            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"projection_available":sequence.is_some(),"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"goal_usage":{"token_budget":row.try_get::<Option<i64>,_>("goal_token_budget")?,"tokens_used":row.try_get::<Option<i64>,_>("goal_tokens_used")?,"time_used_seconds":row.try_get::<Option<i64>,_>("goal_time_used_seconds")?},"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
+            json!({"agent_run_id":args.agent_run_id,"session_id":row.try_get::<Uuid,_>("session_id")?,"workspace_id":args.workspace_id,"status":row.try_get::<String,_>("status")?,"projection_status":row.try_get::<String,_>("projection_status")?,"is_current_run":row.try_get::<bool,_>("is_current_run")?,"projection_available":sequence.is_some(),"execution_mode":row.try_get::<Option<String>,_>("execution_mode")?,"goal_status":row.try_get::<Option<String>,_>("goal_status")?,"goal_usage":{"token_budget":row.try_get::<Option<i64>,_>("goal_token_budget")?,"tokens_used":row.try_get::<Option<i64>,_>("goal_tokens_used")?,"time_used_seconds":row.try_get::<Option<i64>,_>("goal_time_used_seconds")?},"error_code":row.try_get::<Option<String>,_>("error_code")?,"revision":revision,"content":row.try_get::<String,_>("content")?,"offset":args.offset,"total_characters":total,"has_more":next<total,"next_offset":if next<total {Some(next)} else {None},"url":self.config.workspace_url(args.project_id,issue,args.workspace_id),"verification":{"status":"unknown","reason":"Output is an agent report, not independent verification evidence"}}),
         )
     }
 }
@@ -184,6 +184,26 @@ mod tests {
         runtime_write,
         runtime_write_tests::{fixture, insert_run},
     };
+
+    #[tokio::test]
+    async fn review_execution_mode_is_read_from_the_requested_runs_attempt() {
+        let (remote, _, _, target, _) = fixture().await;
+        crate::remote_mcp::runtime_write_tests::emit_questions(&remote.pool, &target).await;
+        sqlx::query("UPDATE agent_run_attempts SET request_envelope=? WHERE agent_run_id=?")
+            .bind(json!({"executor_config":{"executor":"CODEX","execution_mode":"review","permission_policy":"SUPERVISED"}}).to_string())
+            .bind(target.agent_run_id).execute(&remote.pool).await.unwrap();
+        // Later sessions/runs cannot overwrite the observed run's review intent.
+        insert_run(
+            &remote.pool,
+            target.session_id,
+            target.workspace_id,
+            Uuid::new_v4(),
+        )
+        .await;
+        let detail = call(&remote, "get_execution", json!({"project_id":target.project_id,"workspace_id":target.workspace_id,"agent_run_id":target.agent_run_id,"section":"input"})).await.unwrap();
+        assert_eq!(detail["execution_mode"], "review");
+        assert_eq!(detail["is_current_run"], false);
+    }
 
     #[tokio::test]
     async fn current_runs_follow_session_admission_order_across_equal_timestamp_pages() {

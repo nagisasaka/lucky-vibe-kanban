@@ -1,6 +1,6 @@
 ---
 name: lvk-work
-description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work, answer specification questions, and inspect or request Auto-merge. Use for work on a connected LVK server.
+description: Read an LVK Project, turn agreed requirements into normal Issues, start or steer existing agent work including bounded REVIEW investigations, answer specification questions, and inspect or request Auto-merge. Use for work on a connected LVK server.
 ---
 
 ## Direct repository evidence
@@ -121,3 +121,21 @@ error verbatim; do not claim physical deletion succeeded or retry deletion
 silently. Viewing archived cards/history/diffs does not recreate their worktree.
 Unarchive or explicitly resume work to recreate it. Existing archived Workspaces
 and orphan directories are never bulk-deleted by this change.
+
+## REVIEW execution
+
+When the user requests bounded review or investigation, prefer Codex
+`execution_mode: "review"` where the connected server supports it. Verify tool
+capabilities before requesting it. REVIEW reuses CODE's Issue → Workspace →
+Session execution and existing permissions. Include the review target, scope,
+expected report and instruction to report in the normal conversation and stop.
+It does not use PLAN's approval-to-implementation transition or automatically
+post Issue comments. Product implementation requires a separate explicit user
+instruction; do not automatically continue from review findings into implementation.
+
+Necessary Workspace-local reproduction code, scripts, fixtures and tests are
+allowed. Distinguish temporary investigation artifacts from proposed product
+changes. REVIEW alone does not authorize adopting, merging or publishing product
+changes, or changing shared environments or live data. Preserve existing approval
+boundaries. Do not promise better external approval or use REVIEW to bypass it;
+distinguish observed execution/approval behaviour from unverified expectations.

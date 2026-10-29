@@ -1,5 +1,8 @@
 use db::models::session::Session;
-use executors::runtime::{AgentRunPortSnapshot, AgentRunStatus, RunState};
+use executors::{
+    profile::ExecutorConfig,
+    runtime::{AgentRunPortSnapshot, AgentRunStatus, RunState},
+};
 use rmcp::{
     ErrorData, handler::server::wrapper::Parameters, model::CallToolResult, schemars, tool,
     tool_router,
@@ -78,17 +81,7 @@ struct RunCodingAgentInSessionRequest {
 #[derive(Debug, Serialize)]
 struct FollowUpPayload {
     prompt: String,
-    executor_config: ExecutorConfigPayload,
-}
-
-#[derive(Debug, Serialize)]
-struct ExecutorConfigPayload {
-    executor: String,
-    variant: Option<String>,
-    model_id: Option<String>,
-    agent_id: Option<String>,
-    reasoning_id: Option<String>,
-    permission_policy: Option<String>,
+    executor_config: ExecutorConfig,
 }
 
 #[derive(Debug, Serialize, schemars::JsonSchema)]
@@ -133,6 +126,11 @@ struct GetExecutionResponse {
     status: String,
     is_finished: bool,
     execution: serde_json::Value,
+    #[schemars(
+        description = "Latest immutable launch configuration for this session, including execution_mode; may differ from an older requested run."
+    )]
+    #[schemars(with = "Option<serde_json::Value>")]
+    session_executor_config: Option<ExecutorConfig>,
     #[schemars(description = "Final assistant message/summary when execution has finished")]
     final_message: Option<String>,
 }
@@ -281,8 +279,17 @@ impl McpServer {
             );
         }
 
-        let executor_config = match Self::executor_config_payload_for_session(&session) {
-            Ok(config) => config,
+        let executor_config = match self.executor_config_for_session(&session).await {
+            Ok(Some(config)) => config,
+            Ok(None) => {
+                let executor = match Self::normalize_executor_name(session.executor.as_deref())
+                    .and_then(|name| Self::parse_executor_agent(&name))
+                {
+                    Ok(executor) => executor,
+                    Err(error_result) => return Ok(Self::tool_error(error_result)),
+                };
+                ExecutorConfig::new(executor)
+            }
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
 
@@ -328,12 +335,18 @@ impl McpServer {
             return Ok(Self::tool_error(error_result));
         }
 
+        let session_executor_config = match self.executor_config_for_session(&session).await {
+            Ok(config) => config,
+            Err(error_result) => return Ok(Self::tool_error(error_result)),
+        };
+
         Self::success(&GetExecutionResponse {
             execution_id: state.agent_run_id.to_string(),
             session_id: state.session_id.to_string(),
             status: Self::agent_run_status_label(state.status).to_string(),
             is_finished: state.status.is_terminal(),
             execution: serde_json::to_value(&state).unwrap_or(serde_json::Value::Null),
+            session_executor_config,
             final_message: state
                 .terminal_output
                 .as_ref()
@@ -343,16 +356,42 @@ impl McpServer {
 }
 
 impl McpServer {
-    fn executor_config_payload_for_session(
+    async fn executor_config_for_session(
+        &self,
         session: &Session,
-    ) -> Result<ExecutorConfigPayload, super::ToolError> {
-        Ok(ExecutorConfigPayload {
-            executor: Self::normalize_executor_name(session.executor.as_deref())?,
-            variant: None,
-            model_id: None,
-            agent_id: None,
-            reasoning_id: None,
-            permission_policy: None,
+    ) -> Result<Option<ExecutorConfig>, super::ToolError> {
+        let url = self.url(&format!("/api/sessions/{}/executor-config", session.id));
+        // A successful new Session returns data:null. The generic send_json
+        // helper treats null as a missing payload, so decode this nullable API
+        // explicitly and reject missing/malformed data rather than losing REVIEW.
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .and_then(reqwest::Response::error_for_status)
+            .map_err(|error| {
+                super::ToolError::message(format!(
+                    "Failed to read Session executor config: {error}"
+                ))
+            })?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(|error| {
+                super::ToolError::message(format!(
+                    "Invalid Session executor config response: {error}"
+                ))
+            })?;
+        if response["success"] != true {
+            return Err(super::ToolError::message(
+                "Failed to read Session executor config",
+            ));
+        }
+        let data = response.get("data").ok_or_else(|| {
+            super::ToolError::message("Session executor config response missing data")
+        })?;
+        serde_json::from_value(data.clone()).map_err(|error| {
+            super::ToolError::message(format!("Invalid Session executor config: {error}"))
         })
     }
 
@@ -382,6 +421,110 @@ impl McpServer {
             AgentRunStatus::Cancelled => "cancelled",
             AgentRunStatus::Crashed => "crashed",
             AgentRunStatus::AuditFailed => "audit_failed",
+        }
+    }
+}
+
+#[cfg(test)]
+mod review_tests {
+    use serde_json::json;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    use super::*;
+
+    async fn api_fixture(
+        responses: Vec<(u16, serde_json::Value)>,
+    ) -> (String, tokio::task::JoinHandle<Vec<String>>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let task = tokio::spawn(async move {
+            let mut requests = Vec::new();
+            for (status, body) in responses {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut request = Vec::new();
+                loop {
+                    let mut bytes = [0; 4096];
+                    let n = socket.read(&mut bytes).await.unwrap();
+                    assert!(n > 0);
+                    request.extend_from_slice(&bytes[..n]);
+                    let text = String::from_utf8_lossy(&request);
+                    if let Some(end) = text.find("\r\n\r\n") {
+                        let length = text[..end]
+                            .lines()
+                            .find_map(|line| {
+                                line.to_lowercase()
+                                    .strip_prefix("content-length:")
+                                    .map(|n| n.trim().parse::<usize>().unwrap())
+                            })
+                            .unwrap_or(0);
+                        if request.len() >= end + 4 + length {
+                            break;
+                        }
+                    }
+                }
+                requests.push(String::from_utf8(request).unwrap());
+                let body = body.to_string();
+                socket.write_all(format!("HTTP/1.1 {status} Fixture\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
+            }
+            requests
+        });
+        (url, task)
+    }
+
+    fn session() -> Session {
+        serde_json::from_value(json!({"id":Uuid::new_v4(),"workspace_id":Uuid::new_v4(),"name":null,"executor":"CODEX","created_at":"2026-10-29T00:00:00Z","updated_at":"2026-10-29T00:00:00Z"})).unwrap()
+    }
+
+    #[tokio::test]
+    async fn review_followup_reads_and_preserves_saved_configuration() {
+        let session = session();
+        let config = json!({"executor":"CODEX","execution_mode":"review","permission_policy":"SUPERVISED","variant":"DEFAULT","model_id":"fixture-model"});
+        // Deliberately reject after the POST: no real provider is started.
+        let (url, task) = api_fixture(vec![
+            (200, json!({"success":true,"data":session})),
+            (200, json!({"success":true,"data":config})),
+            (409, json!({})),
+        ])
+        .await;
+        let result = McpServer::new_global(&url)
+            .run_session_prompt(Parameters(RunCodingAgentInSessionRequest {
+                session_id: session.id,
+                prompt: "Investigate and report".into(),
+            }))
+            .await
+            .unwrap();
+        assert_eq!(result.is_error, Some(true));
+        let requests = task.await.unwrap();
+        assert!(requests[1].starts_with(&format!(
+            "GET /api/sessions/{}/executor-config ",
+            session.id
+        )));
+        assert!(requests[2].starts_with(&format!("POST /api/sessions/{}/follow-up ", session.id)));
+        let posted: serde_json::Value =
+            serde_json::from_str(requests[2].split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(posted["executor_config"], config);
+    }
+
+    #[tokio::test]
+    async fn nullable_config_allows_new_sessions_but_rejects_missing_or_invalid_snapshots() {
+        for (data, valid) in [
+            (json!({"success":true,"data":null}), true),
+            (json!({"success":true}), false),
+            (
+                json!({"success":true,"data":{"executor":"CODEX","execution_mode":"unknown"}}),
+                false,
+            ),
+            (json!({"success":false,"data":null}), false),
+        ] {
+            let (url, task) = api_fixture(vec![(200, data)]).await;
+            let result = McpServer::new_global(&url)
+                .executor_config_for_session(&session())
+                .await;
+            assert_eq!(result.is_ok(), valid);
+            if valid {
+                assert!(result.unwrap().is_none());
+            }
+            task.await.unwrap();
         }
     }
 }

@@ -31,6 +31,8 @@ pub use runtime_identity::runtime_profile_ids_match;
 pub enum ExecutionMode {
     #[default]
     Code,
+    // Review/investigate using the Code execution path; report and stop.
+    Review,
     Plan,
     Goal,
     PlanWithGoal,

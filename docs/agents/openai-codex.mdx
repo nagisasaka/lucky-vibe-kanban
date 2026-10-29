@@ -52,6 +52,32 @@ This is useful for:
 - Separating work and personal configurations
 - Custom automation setups
 
+## Review and investigation mode
+
+Choose **Review** in the composer's execution-mode menu for a bounded review or
+investigation. Specify the target, scope and expected findings in your request.
+REVIEW uses the same ordinary conversation path as Code and returns its report
+there, then stops. It does not enter Plan's approval-to-implementation transition,
+start Goal continuation or automatically post an Issue comment. Moving to product
+implementation requires a separate explicit instruction.
+
+Workspace-local reproduction code, scripts, fixtures and tests are permitted when
+needed. Keep temporary investigation artifacts distinct from proposed product
+changes. REVIEW does not authorise adopting, merging or publishing product
+changes, or changing shared environments or live data. The host does not
+automatically commit REVIEW's investigation changes.
+
+The execution mode is independent of sandbox and permission settings. Existing
+approval boundaries apply; selecting Review does not guarantee fewer external
+approval requests or bypass them.
+
+MCP callers can select `execution_mode: "review"` in `start_workspace` for Codex.
+The remote MCP `get_execution` returns the requested run's latest-attempt
+`execution_mode`; stdio MCP `get_execution` returns the session's latest immutable
+launch configuration as `session_executor_config`. This session configuration may
+differ from an older run being inspected. Additional stdio Session requests
+preserve the saved configuration, including REVIEW and permissions.
+
 ## Reasoning effort
 
 Leave the LVK reasoning override unset to use the configuration resolved by your
@@ -65,8 +91,8 @@ model_reasoning_effort = "max"
 Use an effort supported by the selected model and installed Codex version. LVK
 uses Codex's model list for available choices. An explicit LVK reasoning choice
 overrides the inherited configuration. New sessions and resumed sessions retain
-the reasoning effort returned by Codex when LVK selects Code or Plan mode; mode
-selection must not reset an inherited value to `null`.
+the reasoning effort returned by Codex when LVK selects Code, Review, Plan or
+Goal mode; mode selection must not reset an inherited value to `null`.
 
 For OpenWiki Bootstrap, start a new run after changing the configuration so each
 fresh Generate, Review and Refine session resolves the new setting. Configuration
