@@ -179,6 +179,71 @@ class SwitchTest(unittest.TestCase):
             time.sleep(0.02)
         self.fail("fixture did not listen")
 
+    def remote_execution_setting(self, enabled, *, create=False):
+        with contextlib.closing(sqlite3.connect(self.db)) as db, db:
+            if create:
+                db.execute("CREATE TABLE runtime_access_settings(id INTEGER PRIMARY KEY,settings TEXT)")
+                db.execute("INSERT INTO runtime_access_settings VALUES(1,'{}')")
+            db.execute("UPDATE runtime_access_settings SET settings=? WHERE id=1", (json.dumps({"execution_enabled": enabled}),))
+
+    def test_remote_execution_disabled_is_not_busy(self):
+        self.remote_execution_setting(False, create=True)
+        a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
+        with patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate") as drain, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["reason"], "Program execution disabled")
+        self.assertFalse(any(call.args == (30,) for call in sleep.call_args_list))
+        drain.assert_not_called()
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
+    def test_remote_execution_revoked_during_busy_wait(self):
+        self.remote_execution_setting(True, create=True)
+        a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
+        real_idle = support.idle
+        calls = 0
+        def idle(pid):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise support.Busy("requesting Run settling")
+            return real_idle(pid)
+        real_sleep = time.sleep
+        def wait(seconds):
+            if seconds == 30:
+                self.remote_execution_setting(False)
+            else:
+                real_sleep(seconds)
+        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep", side_effect=wait) as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["stage"], "preflight", result)
+        self.assertEqual(result["reason"], "Program execution disabled")
+        self.assertEqual(sum(call.args == (30,) for call in sleep.call_args_list), 1)
+        drain.assert_called_once()
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+        request = json.loads((Path(result["result_path"]).parent / "request.json").read_text())
+        self.assertTrue(request["arguments"]["require_execution_enabled"])
+
+    def test_remote_execution_revoked_immediately_before_stop(self):
+        self.remote_execution_setting(True, create=True)
+        a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
+        real_preserve = engine.preserve
+        def preserve(*args):
+            selected = real_preserve(*args)
+            self.remote_execution_setting(False)
+            return selected
+        with patch.object(engine, "preserve", side_effect=preserve), patch.object(engine.time, "sleep") as sleep, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["stage"], "stopping", result)
+        self.assertEqual(result["reason"], "Program execution disabled")
+        self.assertFalse(any(call.args == (30,) for call in sleep.call_args_list))
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
     def test_busy_recheck_drains_once_and_does_not_retry_later_failure(self):
         a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
         real_preflight = engine.preflight

@@ -185,21 +185,24 @@ def snapshot():
     }
 
 
-def stdio_guard(a):
-    """Existing local-UID trust, plus authoritative runtime/project scope reads.
+def channel_guard(a):
+    """Revalidate runtime settings and, for stdio, local project binding.
 
+    Remote admission also requests runtime-setting revalidation here.
     OAuth principals stay in remote MCP. No token, claimed owner or permissions
     are accepted from stdio tool input, and operator CLI policy is unchanged.
     """
     project = getattr(a, "stdio_project", None)
-    if project is None:
+    if project is None and not getattr(a, "require_execution_enabled", False):
         return
-    project_id = uuid.UUID(project)
-    s.need(getattr(a, "stdio_port", None) == CONFIG["port"], "Stdio instance/port mismatch")
     with s.ro(DEV / "data/db.v2.sqlite") as db:
         row = db.execute("SELECT settings FROM runtime_access_settings WHERE id=1").fetchone()
         settings = json.loads(row[0]) if row else {}
         s.need(settings.get("execution_enabled") is True, "Program execution disabled")
+        if project is None:
+            return
+        project_id = uuid.UUID(project)
+        s.need(getattr(a, "stdio_port", None) == CONFIG["port"], "Stdio instance/port mismatch")
         s.need(db.execute("SELECT 1 FROM projects WHERE id=?", (project_id.bytes,)).fetchone(), "Unknown stdio project")
         workspace = getattr(a, "stdio_workspace", None)
         if workspace is not None:
@@ -221,7 +224,7 @@ def preflight(a, *, dry_run=False, expected=None):
         not (DEV / "run/supervisor.sock").exists(),
         "Supervisor ownership requires operator recovery",
     )
-    stdio_guard(a)
+    channel_guard(a)
     selected = inspect(a)
     selected["snapshot"] = snapshot()
     if expected is not None:
@@ -409,7 +412,7 @@ def execute(op, request, config_path):
     try:
         stage("preflight")
         s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
-        stdio_guard(a)
+        channel_guard(a)
         inspect(a)
         expected = request.get("snapshot")
         s.need(snapshot() == expected, "Running instance changed after admission")
@@ -433,7 +436,7 @@ def execute(op, request, config_path):
         s.need(snapshot() == expected, "Launch settings or running identity changed")
         verify_release(selected)
         verify_release(previous)
-        stdio_guard(a)
+        channel_guard(a)
         s.resources()
         s.idle(expected["identity"]["pid"])
         s.stop(expected["identity"], previous["manifest"]["files"]["server"])
@@ -524,6 +527,7 @@ def submit(a, config_path):
             "lock_fd",
             "admission_fd",
         ]
+        and not (k == "require_execution_enabled" and not v)
         and not (k in ["stdio_project", "stdio_workspace", "stdio_port", "purpose"] and v is None)
     }
     request = {"owner": a.owner, "arguments": args}
@@ -631,6 +635,7 @@ def main():
     p.add_argument("--request-id")
     p.add_argument("--owner", default="operator")
     p.add_argument("--async", dest="asynchronous", action="store_true")
+    p.add_argument("--require-execution-enabled", action="store_true", help=argparse.SUPPRESS)
     p.add_argument("--stdio-project", help=argparse.SUPPRESS)
     p.add_argument("--stdio-workspace", help=argparse.SUPPRESS)
     p.add_argument("--stdio-port", type=int, help=argparse.SUPPRESS)
@@ -646,7 +651,7 @@ def main():
     config = configure(a.instance)
     if a.stdio_project is not None:
         s.need(a.owner == "operator" and not a.worker and not a.snapshot_stdin and not a.dry_run, "Invalid stdio invocation")
-        stdio_guard(a)
+        channel_guard(a)
         a.owner = stdio_owner(a.stdio_project)
         if not a.status:
             s.need(a.asynchronous and a.no_new_work and a.purpose and 0 < len(a.purpose.strip()) <= 1000, "Explicit stdio purpose and no-new-work required")

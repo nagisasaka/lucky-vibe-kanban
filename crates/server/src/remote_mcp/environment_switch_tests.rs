@@ -245,6 +245,11 @@ async fn environment_switch_http_disconnect_and_reconnect() {
     })
     .await
     .unwrap();
+    let request: Value = serde_json::from_str(
+        &std::fs::read_to_string(result_file.with_file_name("request.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(request["arguments"]["require_execution_enabled"], true);
     let (new, restored) = start(root.path(), &fixture, true).await;
     let outcome = restored
         .value(

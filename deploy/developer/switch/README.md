@@ -100,14 +100,16 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 }
 ```
 
-専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
+remote MCPの専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
 terminal drainは1回だけ実施し、その後の初回preflightが子孫・instance利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。
 identity/hash/config/権限等の拒否、停止直前の新しいbusy、SIGTERM以降の失敗は再試行しません。待機と理由は永続receiptのstageとbusy-recheck.jsonへ記録します。
-stdioの`self_restart`も同じ認証付き専用MCP経路へ委任し、永続受付を返します。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
+stdioの`self_restart`は既存のローカルOS UID/instance所有者の信頼境界で独立engineへ直接委任し、永続受付を返します。HTTP経路やOAuth principalは使いません。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
-プログラム実行設定のON、Project認可、runtime read/execute scope、principal ownershipを確認します。
+remote MCPはプログラム実行設定のON、Project認可、runtime read/execute scope、OAuth principal ownershipを確認します。
+新remote入口はengineにも実行設定の再確認を要求します。stdioはengineで実行設定とproject/Workspace bindingを確認し、OS UIDとprojectでownerを分けます。両channelとも待機後と停止直前に実行設定を再確認します。既存operator CLIの条件は変更しません。
+旧serverのremote入口にはこの再確認要求がないため、新kitのみで旧remote入口が同じ安全契約になるとは扱いません。下記の旧serverからの初回導入では新stdio入口を使います。
 region/grant形式は廃止され、読書rootは自己再起動の許可条件には使いません。
 対象は実行中の開発instanceとその固定kit/configurationに限定します。
 汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。

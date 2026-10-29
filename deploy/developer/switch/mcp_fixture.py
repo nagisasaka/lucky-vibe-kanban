@@ -2,6 +2,8 @@
 
 import json
 import shutil
+import sqlite3
+from contextlib import closing
 import start_support
 import signal
 import sys
@@ -12,6 +14,11 @@ from test_switch import SwitchTest
 
 fixture = SwitchTest()
 fixture.setUp()
+# The real instance DB holds this setting; the HTTP host has a separate receipt DB.
+with closing(sqlite3.connect(fixture.instance / "data/db.v2.sqlite")) as db:
+    db.execute("CREATE TABLE runtime_access_settings (id INTEGER PRIMARY KEY, settings TEXT)")
+    db.execute("INSERT INTO runtime_access_settings VALUES (1, ?)", (json.dumps({"execution_enabled": True}),))
+    db.commit()
 if len(sys.argv) > 2:
     fixture.old.terminate()
     fixture.old.wait(timeout=5)
