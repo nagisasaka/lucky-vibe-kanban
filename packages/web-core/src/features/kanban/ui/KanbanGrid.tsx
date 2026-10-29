@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { ServerMotionContext } from './KanbanServerMotion';
 import {
   createContext,
   useContext,
@@ -87,6 +88,7 @@ export function KanbanGrid({
   onDraggingChange?: (dragging: boolean) => void;
   onDragPreview?: (result: DropResult | null) => void;
 }) {
+  const serverMotion = useContext(ServerMotionContext);
   const [overlay, setOverlay] = useState<ReactNode>(null);
   const origin = useRef<{ droppableId: string; index: number } | null>(null);
   const preview = useRef<DropResult | null>(null);
@@ -202,6 +204,7 @@ export function KanbanGrid({
       onDragMove={updatePreview}
       onDragOver={updatePreview}
       onDragStart={({ active }) => {
+        serverMotion.stop();
         layout.current.clear();
         document
           .querySelectorAll<HTMLElement>('[data-kanban-column]')
@@ -369,52 +372,54 @@ export function KanbanGridCard({
   const dragged = useRef(false);
   if (isDragging) dragged.current = true;
   return (
-    <div
-      ref={setNodeRef}
-      data-kanban-card={id}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        transition,
-        opacity: isDragging ? 0 : undefined,
-      }}
-      className={cn(
-        'group min-w-0 self-start border bg-primary p-base rounded-sm focus-visible:ring-2 focus-visible:ring-brand outline-none',
-        isDragging && 'relative z-30 shadow-lg',
-        isSelected && 'ring-2 ring-accent ring-inset',
-        isOpen && 'ring-2 ring-secondary-foreground ring-inset'
-      )}
-      {...attributes}
-      {...listeners}
-      {...touchClickGuard}
-      aria-label={name}
-      onMouseDown={(event) => {
-        dragged.current = false;
-        const control = (event.target as HTMLElement).closest(
-          'button, a, input, textarea, summary, [role="button"]'
-        );
-        if (control && control !== event.currentTarget) return;
-        listeners?.onMouseDown?.(event);
-      }}
-      onTouchStart={(event) => {
-        dragged.current = false;
-        const control = (event.target as HTMLElement).closest(
-          'button, a, input, textarea, summary, [role="button"]'
-        );
-        if (control && control !== event.currentTarget) return;
-        listeners?.onTouchStart?.(event);
-      }}
-      onClick={(event) => {
-        if (!dragged.current) onClick(event);
-      }}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === 'Enter' && !isDragging) {
-          event.preventDefault();
-          onClick(event as unknown as MouseEvent<HTMLDivElement>);
-        } else listeners?.onKeyDown?.(event);
-      }}
-    >
-      {children}
+    <div data-kanban-motion={id} className="min-w-0 self-start">
+      <div
+        ref={setNodeRef}
+        data-kanban-card={id}
+        style={{
+          transform: CSS.Translate.toString(transform),
+          transition,
+          opacity: isDragging ? 0 : undefined,
+        }}
+        className={cn(
+          'group min-w-0 self-start border bg-primary p-base rounded-sm focus-visible:ring-2 focus-visible:ring-brand outline-none',
+          isDragging && 'relative z-30 shadow-lg',
+          isSelected && 'ring-2 ring-accent ring-inset',
+          isOpen && 'ring-2 ring-secondary-foreground ring-inset'
+        )}
+        {...attributes}
+        {...listeners}
+        {...touchClickGuard}
+        aria-label={name}
+        onMouseDown={(event) => {
+          dragged.current = false;
+          const control = (event.target as HTMLElement).closest(
+            'button, a, input, textarea, summary, [role="button"]'
+          );
+          if (control && control !== event.currentTarget) return;
+          listeners?.onMouseDown?.(event);
+        }}
+        onTouchStart={(event) => {
+          dragged.current = false;
+          const control = (event.target as HTMLElement).closest(
+            'button, a, input, textarea, summary, [role="button"]'
+          );
+          if (control && control !== event.currentTarget) return;
+          listeners?.onTouchStart?.(event);
+        }}
+        onClick={(event) => {
+          if (!dragged.current) onClick(event);
+        }}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'Enter' && !isDragging) {
+            event.preventDefault();
+            onClick(event as unknown as MouseEvent<HTMLDivElement>);
+          } else listeners?.onKeyDown?.(event);
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

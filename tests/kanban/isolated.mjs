@@ -11,7 +11,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { once } from 'node:events';
 import path from 'node:path';
 const root = process.cwd();
-const output = path.join(root, process.env.LVK_CROSS_COLUMN_E2E === '1' ? `.build/cross-column-api-${process.env.VITE_KANBAN_MOTION || 'crisp'}` : process.env.LVK_DND_BASELINE === '1' ? '.build/kanban-drop-baseline' : process.env.LVK_DND_REGRESSION === '1' ? '.build/kanban-drop-validation' : '.build/kanban-validation');
+const output = path.join(root, process.env.LVK_SERVER_MOTION_E2E === '1' ? '.build/server-motion-api' : process.env.LVK_CROSS_COLUMN_E2E === '1' ? `.build/cross-column-api-${process.env.VITE_KANBAN_MOTION || 'crisp'}` : process.env.LVK_DND_BASELINE === '1' ? '.build/kanban-drop-baseline' : process.env.LVK_DND_REGRESSION === '1' ? '.build/kanban-drop-validation' : '.build/kanban-validation');
 await mkdir(output, { recursive: true });
 await mkdir(path.join(root, '.build/kanban-validation'), { recursive: true });
 const instance = await mkdtemp(path.join(root, '.build/kanban-validation/instance-'));
@@ -208,7 +208,10 @@ try {
   await expect(columns).toHaveCount(4, { timeout: 90000 });
   const card = (id) => page.locator(`[data-kanban-card="${id}"]`);
   await expect(card(issues[0].id)).toBeVisible();
-  if (process.env.LVK_CROSS_COLUMN_E2E === '1') {
+  if (process.env.LVK_SERVER_MOTION_E2E === '1') {
+    const { runServerMotionApi } = await import('./server-motion-api.mjs');
+    await runServerMotionApi({ page, columns, card, api, project, statuses, issues, output, evidence, root });
+  } else if (process.env.LVK_CROSS_COLUMN_E2E === '1') {
     const { runCrossColumnApi } = await import('./cross-column-api.mjs');
     await runCrossColumnApi({ page, columns, card, api, project, statuses, issues, output, evidence });
   } else if (process.env.LVK_DND_REGRESSION === '1') {

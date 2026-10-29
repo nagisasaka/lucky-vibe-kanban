@@ -1,6 +1,11 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type { MutationDefinition, ShapeDefinition } from 'shared/remote-types';
-import { createShapeCollection, refreshShapeFallback } from './collections';
+import {
+  buildSourceKey,
+  createShapeCollection,
+  refreshShapeFallback,
+} from './collections';
+import { snapshotActivity } from './snapshotActivity';
 
 const request = vi.hoisted(() => vi.fn());
 vi.mock('@/shared/lib/remoteApi', () => ({ makeRequest: request }));
@@ -59,4 +64,46 @@ it('keeps optimistic edits until a snapshot started after the mutation confirms 
   resolveFresh(response('After'));
   await transaction.isPersisted.promise;
   expect(collection.get('issue')?.title).toBe('After');
+});
+
+it('reports actual request freshness and failures independently of row changes', async () => {
+  const shape = {
+    table: 'issues',
+    params: [],
+    fallbackUrl: '/v1/fallback/issues',
+  } as ShapeDefinition<Row>;
+  const params = { project_id: 'motion-freshness' };
+  const activity = snapshotActivity(buildSourceKey(shape.table, params));
+  let resolve!: (response: Response) => void;
+  request.mockImplementation(
+    () =>
+      new Promise<Response>((done) => {
+        resolve = done;
+      })
+  );
+  const collection = createShapeCollection(shape, params);
+  collections.push(collection);
+  const loaded = collection.preload();
+  await vi.waitFor(() => expect(activity.pending).toBe(true));
+  expect(activity.state.sequence).toBe(0);
+  resolve(Response.json({ issues: [{ id: 'a', title: 'unchanged' }] }));
+  await loaded;
+  expect(activity.pending).toBe(false);
+  expect(activity.state).toMatchObject({ sequence: 1, healthy: true });
+  const startedAt = activity.state.startedAt;
+  refreshShapeFallback(shape, params);
+  await vi.waitFor(() => expect(activity.pending).toBe(true));
+  expect(activity.state.sequence).toBe(1);
+  resolve(Response.json({ message: 'offline' }, { status: 503 }));
+  await vi.waitFor(() =>
+    expect(activity.state).toMatchObject({ sequence: 2, healthy: false })
+  );
+  expect(activity.state.startedAt).toBeGreaterThanOrEqual(startedAt);
+  refreshShapeFallback(shape, params);
+  await vi.waitFor(() => expect(activity.pending).toBe(true));
+  resolve(Response.json({ issues: [{ id: 'a', title: 'unchanged' }] }));
+  await vi.waitFor(() =>
+    expect(activity.state).toMatchObject({ sequence: 3, healthy: true })
+  );
+  expect(collection.get('a')?.title).toBe('unchanged');
 });
