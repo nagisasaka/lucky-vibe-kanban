@@ -50,6 +50,8 @@ struct StartArgs {
     execution_mode: Option<ExecutionMode>,
     #[schemars(range(min = 1))]
     goal_token_budget: Option<u32>,
+    #[serde(default)]
+    attachment_ids: Vec<Uuid>,
 }
 #[derive(Clone, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -110,6 +112,20 @@ struct DefaultsArgs {
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
+    async fn attachment_transfer(
+        &self,
+        _name: &str,
+        _input: Value,
+        _actor: String,
+    ) -> anyhow::Result<Value> {
+        anyhow::bail!("Attachment service unavailable")
+    }
+    async fn place_for_execution(
+        &self,
+        _args: crate::routes::attachment_transfer::Place,
+    ) -> anyhow::Result<Value> {
+        anyhow::bail!("Attachment service unavailable")
+    }
     async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
         anyhow::bail!("Auto-merge cancellation service unavailable")
     }
@@ -135,6 +151,38 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
+    async fn attachment_transfer(
+        &self,
+        name: &str,
+        input: Value,
+        actor: String,
+    ) -> anyhow::Result<Value> {
+        match name {
+            "upload_attachment" => {
+                crate::routes::attachment_transfer::upload(
+                    self.0.clone(),
+                    serde_json::from_value(input)?,
+                    actor,
+                )
+                .await
+            }
+            "place_attachments" => {
+                crate::routes::attachment_transfer::place(
+                    self.0.clone(),
+                    serde_json::from_value(input)?,
+                    actor,
+                )
+                .await
+            }
+            _ => anyhow::bail!("Unknown attachment operation"),
+        }
+    }
+    async fn place_for_execution(
+        &self,
+        args: crate::routes::attachment_transfer::Place,
+    ) -> anyhow::Result<Value> {
+        crate::routes::attachment_transfer::place_now(&self.0, &args).await
+    }
     async fn cancel_integration(&self, id: Uuid) -> anyhow::Result<()> {
         let _ = integrations::cancel(
             axum::extract::State(self.0.clone()),
@@ -306,6 +354,19 @@ async fn prepare_start(
         );
         executor.goal_token_budget = Some(budget);
     }
+    let mut prompt = format!(
+        "{}\n\n{}\n\nLVK MCP operation: {workspace_id}",
+        issue.title, description
+    );
+    for id in &args.attachment_ids {
+        let file = db::models::file::File::find_by_id(pool, *id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("Attachment not found"))?;
+        prompt.push_str(&format!(
+            "\n\nAttachment: `.vibe-attachments/{}`",
+            file.file_path
+        ));
+    }
     Ok(CreateAndStartWorkspaceRequest {
         mode: CreateWorkspaceMode::Worktree,
         name: Some(issue.title.clone()),
@@ -323,14 +384,11 @@ async fn prepare_start(
             issue_id: args.issue_id,
         }),
         executor_config: executor,
-        prompt: format!(
-            "{}\n\n{}\n\nLVK MCP operation: {workspace_id}",
-            issue.title, description
-        ),
+        prompt,
         selected_skills: None,
         resume_session_id: None,
         resume_scope_path: None,
-        attachment_ids: None,
+        attachment_ids: (!args.attachment_ids.is_empty()).then(|| args.attachment_ids.clone()),
     })
 }
 
@@ -492,6 +550,12 @@ pub(super) async fn call(
         "start_workspace" => {
             let args: StartArgs = arguments(input.clone())?;
             remote.require_issue(args.project_id, args.issue_id).await?;
+            crate::routes::attachment_transfer::validate_ids(
+                &remote.pool,
+                args.project_id,
+                &args.attachment_ids,
+            )
+            .await?;
             remote.operations().submit_and_wait(actor,args.request_id,args.project_id,name.into(),input,json!({"issue_id":args.issue_id}),move|operation|async move {
                 let request=match prepare_start(&owned.pool,&args,launch.defaults().await,operation).await {Ok(request)=>request,Err(error)=>return validation_error(error)};
                 let url=owned.config.workspace_url(args.project_id,args.issue_id,operation);

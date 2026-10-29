@@ -1,6 +1,9 @@
 //! Opt-in, authenticated MCP transport. This module never invokes an internal
 //! conversational model or creates a model session. Existing stdio MCP stays independent.
 mod activity;
+#[cfg(test)]
+mod attachment_tests;
+mod attachments;
 mod auth;
 mod code_read;
 mod config;
@@ -214,6 +217,8 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "continue_execution"
         | "answer_question"
         | "start_workspace"
+        | "upload_attachment"
+        | "place_attachments"
         | "sync_repository_wiki"
         | "prepare_issue_archive"
         | "confirm_issue_archive"
@@ -404,6 +409,7 @@ fn tools() -> Vec<Tool> {
     tools.extend(todos::tools());
     tools.extend(design_notes::tools());
     tools.extend(launch::tools());
+    tools.extend(attachments::tools());
     tools.extend(repository_wiki::tools());
     tools.extend(activity::tools());
     tools.extend(integration_read::tools());
@@ -552,6 +558,9 @@ impl Remote {
                 .any(|tool| tool.name == name) =>
             {
                 repository_wiki::call(self, principal, name, args).await
+            }
+            "upload_attachment" | "place_attachments" => {
+                attachments::call(self, principal, request.name.as_ref(), args).await
             }
             name if launch::tools().iter().any(|tool| tool.name == name) => {
                 launch::call(self, principal, name, args).await

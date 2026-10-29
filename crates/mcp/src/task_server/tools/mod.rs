@@ -36,6 +36,7 @@ impl ToolError {
     }
 }
 
+mod attachments;
 mod context;
 mod design_notes;
 mod dev_server;
@@ -59,6 +60,7 @@ mod workspaces;
 impl McpServer {
     pub fn global_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         Self::context_tools_router()
+            + Self::attachment_tools_router()
             + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
@@ -81,6 +83,7 @@ impl McpServer {
 
     pub fn orchestrator_mode_router() -> rmcp::handler::server::tool::ToolRouter<Self> {
         let mut router = Self::context_tools_router()
+            + Self::attachment_tools_router()
             + Self::integration_tools_router()
             + Self::provider_usage_tools_router()
             + Self::resource_tools_router()
@@ -439,6 +442,9 @@ mod tests {
             "get_dev_server_status".to_string(),
             "self_restart".to_string(),
             "get_self_restart_operation".to_string(),
+            "upload_attachment".to_string(),
+            "place_attachments".to_string(),
+            "get_attachment_operation".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "query_repository".to_string(),

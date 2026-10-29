@@ -96,7 +96,7 @@ with the same Project/Workspace, returned `confirmation_token` and a stable
 `request_id`. Both calls require `lvk:read` and `lvk:write` and current Project
 access. Tokens expire after ten minutes and bind the authenticated issuer/subject,
 Project, Workspace and prepared target. Never transfer tokens between remote
-callers or between remote and UI/stdio. Remote does not expose `update_workspace`.
+callers or between remote and UI/stdio. Remote uses the prepare/confirm operations above.
 After response loss, read `get_operation(project_id, request_id)` or repeat the
 exact original confirm request with the same request ID. Never silently retry
 with a new request ID. The durable result separates `archived`, `worktree_deleted`
@@ -139,3 +139,39 @@ changes. REVIEW alone does not authorize adopting, merging or publishing product
 changes, or changing shared environments or live data. Preserve existing approval
 boundaries. Do not promise better external approval or use REVIEW to bypass it;
 distinguish observed execution/approval behaviour from unverified expectations.
+
+## Send material files
+
+Use `upload_attachment` to save bytes in an authorised Project. Prefer its host
+`file` input when ChatGPT can supply it; never substitute a Library ID or a
+sandbox/local path for file bytes. A file input contains `download_url` and
+`file_id`, with optional `mime_type` and `file_name`. The server fetches only
+operator-enabled HTTPS hosts and limits decoded host files to 20MiB. A host
+reference is not evidence that this connection can deliver the file.
+
+For clients that hold exact bytes, `data_base64` accepts standard base64 with a
+2MiB decoded limit. Supply exactly one source and an `original_name`, optionally
+`expected_sha256`. Reuse the original `request_id` for the same content/name;
+a different input with that ID conflicts. Temporary download URLs are excluded
+from content identity. Signed URLs and credentials must not be copied into Issues.
+
+Saving returns attachment metadata, not proof of Session readability. Use
+`place_attachments` with explicit Project/Workspace/Session and attachment IDs;
+inspect `status`, `result.all_verified` and every per-file result. Files are
+Workspace-shared, not Session-private. Saving and placing never start a run,
+including while an agent is running. Partial failure must block execution.
+
+Pass `attachment_ids` to `start_workspace`, `continue_execution` or
+`steer_execution` only when that explicit execution action is authorised. New
+starts verify placement before execution; continuation/steering verifies the
+selected Session directory. Successful upload replay may still fail when its signed URL is no longer usable.
+Use `get_operation` with the original request_id to recover the saved Remote receipt
+without supplying a URL or bytes; do this before asking for another upload.
+Unplaced Project attachments are retained indefinitely while the Project reference
+exists; no TTL or total storage quota is provided. Use `get_operation` for uncertain Remote receipts.
+Internal stdio uses run_session_prompt for continuation and
+get_attachment_operation for attachment receipts; its attached start/continue
+requires a stable `request_id` (and continuation requires `project_id`).
+
+Real ChatGPT/Library delivery is a separate post-publication gate. Server-side
+or mocked-agent success does not establish host transport success.

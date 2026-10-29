@@ -215,6 +215,16 @@ pub(crate) async fn create_and_start_workspace_admitted(
         attachment_ids,
     } = payload;
 
+    if let Some(ids) = attachment_ids.as_ref() {
+        for id in ids {
+            if db::models::file::File::find_by_id(&deployment.db().pool, *id)
+                .await?
+                .is_none()
+            {
+                return Err(ApiError::BadRequest("Attachment not found".into()));
+            }
+        }
+    }
     let workspace_prompt = normalize_prompt(&prompt).ok_or_else(|| {
         ApiError::BadRequest(
             "A workspace prompt is required. Provide a non-empty `prompt`.".to_string(),

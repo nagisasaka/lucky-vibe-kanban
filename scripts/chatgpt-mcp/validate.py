@@ -29,7 +29,7 @@ def validate(plugin: Path, catalog: Path, schemas: Path) -> int:
     mentioned = set()
     for path in skill.rglob("*.md"):
         text = path.read_text()
-        mentioned.update(re.findall(r"`((?:get|list|create|update|start|steer|continue|answer)_[a-z_]+)`", text))
+        mentioned.update(re.findall(r"`((?:get|list|create|update|start|steer|continue|answer|upload|place)_[a-z_]+)`", text))
         for link in re.findall(r"\]\(([^)]+)\)", text):
             assert not link.startswith("/"), f"Host path in skill: {link}"
             resolved = (path.parent / link).resolve()

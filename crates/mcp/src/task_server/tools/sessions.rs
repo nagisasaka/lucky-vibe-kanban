@@ -72,6 +72,10 @@ struct ListSessionsResponse {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct RunCodingAgentInSessionRequest {
+    project_id: Option<Uuid>,
+    request_id: Option<Uuid>,
+    #[serde(default)]
+    attachment_ids: Vec<Uuid>,
     #[schemars(description = "Session ID to run the coding agent in")]
     session_id: Uuid,
     #[schemars(description = "Prompt for the coding agent")]
@@ -252,9 +256,13 @@ impl McpServer {
     )]
     async fn run_session_prompt(
         &self,
-        Parameters(RunCodingAgentInSessionRequest { session_id, prompt }): Parameters<
-            RunCodingAgentInSessionRequest,
-        >,
+        Parameters(RunCodingAgentInSessionRequest {
+            session_id,
+            prompt,
+            project_id,
+            request_id,
+            attachment_ids,
+        }): Parameters<RunCodingAgentInSessionRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let prompt = prompt.trim();
         if prompt.is_empty() {
@@ -293,6 +301,18 @@ impl McpServer {
             Err(error_result) => return Ok(Self::tool_error(error_result)),
         };
 
+        if !attachment_ids.is_empty() {
+            let (Some(project_id), Some(request_id)) = (project_id, request_id) else {
+                return Self::err(
+                    "Attachments require project_id and request_id",
+                    None::<&str>,
+                );
+            };
+            let url = self.url("/api/attachment-transfer/continue");
+            return match self.send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({"project_id":project_id,"request_id":request_id,"workspace_id":session.workspace_id,"session_id":session_id,"attachment_ids":attachment_ids,"prompt":prompt}))).await {
+                Ok(value)=>Self::success(&value),Err(error)=>Ok(Self::tool_error(error)),
+            };
+        }
         let payload = FollowUpPayload {
             prompt: prompt.to_string(),
             executor_config,

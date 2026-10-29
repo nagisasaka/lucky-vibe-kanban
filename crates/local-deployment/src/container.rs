@@ -989,17 +989,14 @@ impl LocalContainerService {
             .await?
             .and_then(|session| session.agent_working_dir);
 
-        if let Err(e) = self
-            .file_service
+        self.file_service
             .copy_files_by_workspace_to_worktree(
                 workspace_dir,
                 workspace.id,
                 agent_working_dir.as_deref(),
             )
             .await
-        {
-            tracing::warn!("Failed to copy workspace files to workspace: {}", e);
-        }
+            .map_err(|e| ContainerError::Other(e.into()))?;
 
         Ok(())
     }

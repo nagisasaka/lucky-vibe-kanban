@@ -42,6 +42,8 @@ struct ChangeArgs {
     request_id: Uuid,
     #[schemars(length(min = 1, max = 32000))]
     prompt: String,
+    #[serde(default)]
+    attachment_ids: Vec<Uuid>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -440,7 +442,20 @@ pub(super) async fn call(
         remote.operations().submit(actor,args.request_id,args.target.project_id,name.into(),input,json!({"workspace_id":args.target.workspace_id,"session_id":args.target.session_id,"agent_run_id":args.target.agent_run_id}),move |operation| async move {
             if let Err(error)=validate_run(&owned.pool,&args.target,matches!(kind,Change::Continue)).await {return failure(error);}
             let url=owned.config.workspace_url(args.target.project_id,issue,args.target.workspace_id);
-            match dispatch.change(args.target,operation,args.prompt,kind).await {
+            let mut prompt=args.prompt;
+            if !args.attachment_ids.is_empty() {
+                let Some(launch)=owned.launch.as_ref() else {return ("failed",json!({"code":"attachment_service_unavailable"}));};
+                let placement=launch.place_for_execution(crate::routes::attachment_transfer::Place {project_id:args.target.project_id,workspace_id:args.target.workspace_id,session_id:args.target.session_id,request_id:operation,attachment_ids:args.attachment_ids}).await;
+                match placement {
+                    Ok(v) if v["all_verified"]==true => {
+                        for r in v["results"].as_array().into_iter().flatten() {
+                            if let Some(path)=r["attachment"]["file_path"].as_str() { prompt.push_str(&format!("\n\nAttachment: `{path}`")); }
+                        }
+                    },
+                    _=>return ("failed",json!({"code":"attachments_not_verified","execution_accepted":false})),
+                }
+            }
+            match dispatch.change(args.target,operation,prompt,kind).await {
                 Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},
                 Err(_error)=>dispatch_failure(),
             }
