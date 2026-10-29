@@ -197,7 +197,9 @@ def channel_guard(a):
         return
     with s.ro(DEV / "data/db.v2.sqlite") as db:
         row = db.execute("SELECT settings FROM runtime_access_settings WHERE id=1").fetchone()
-        settings = json.loads(row[0]) if row else {}
+        # Match Rust RuntimeAccessSettings::default only when no row is saved.
+        # Saved OFF/malformed values and DB errors must never use this fallback.
+        settings = json.loads(row[0]) if row is not None else {"execution_enabled": True}
         s.need(settings.get("execution_enabled") is True, "Program execution disabled")
         if project is None:
             return

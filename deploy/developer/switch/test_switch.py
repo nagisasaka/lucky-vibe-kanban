@@ -186,6 +186,47 @@ class SwitchTest(unittest.TestCase):
                 db.execute("INSERT INTO runtime_access_settings VALUES(1,'{}')")
             db.execute("UPDATE runtime_access_settings SET settings=? WHERE id=1", (json.dumps({"execution_enabled": enabled}),))
 
+    def test_runtime_guard_unsaved_and_saved_values(self):
+        self.remote_execution_setting(True, create=True)
+        a = self.args(require_execution_enabled=True)
+        cases = [
+            (None, True),
+            ('{"execution_enabled":true}', True),
+            ('{"execution_enabled":false}', False),
+            ('{}', False),
+            ('{"execution_enabled":"true"}', False),
+            ('{"execution_enabled":1}', False),
+            ('{"execution_enabled":null}', False),
+            ('{bad json', False),
+            ('null', False),
+            ('[]', False),
+        ]
+        for saved, allowed in cases:
+            with self.subTest(saved=saved):
+                with contextlib.closing(sqlite3.connect(self.db)) as db, db:
+                    db.execute("DELETE FROM runtime_access_settings")
+                    if saved is not None:
+                        db.execute("INSERT INTO runtime_access_settings VALUES(1,?)", (saved,))
+                if allowed:
+                    engine.channel_guard(a)
+                else:
+                    with self.assertRaises((support.Refuse, ValueError, AttributeError)):
+                        engine.channel_guard(a)
+                with contextlib.closing(sqlite3.connect(self.db)) as db:
+                    self.assertEqual(db.execute("SELECT settings FROM runtime_access_settings").fetchall(), [] if saved is None else [(saved,)])
+
+    def test_runtime_settings_read_failure_prevents_stop_without_retry(self):
+        # No settings table: an actual SQLite read error must not become default ON.
+        a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
+        with patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate") as drain, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["reason"], "OperationalError")
+        self.assertFalse(any(call.args == (30,) for call in sleep.call_args_list))
+        drain.assert_not_called()
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
     def test_remote_execution_disabled_is_not_busy(self):
         self.remote_execution_setting(False, create=True)
         a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
@@ -199,7 +240,16 @@ class SwitchTest(unittest.TestCase):
         self.assertIsNone(self.old.poll())
 
     def test_remote_execution_revoked_during_busy_wait(self):
+        self.check_runtime_revocation_during_busy_wait(unsaved=False)
+
+    def test_unsaved_runtime_revoked_during_busy_wait(self):
+        self.check_runtime_revocation_during_busy_wait(unsaved=True)
+
+    def check_runtime_revocation_during_busy_wait(self, *, unsaved):
         self.remote_execution_setting(True, create=True)
+        if unsaved:
+            with contextlib.closing(sqlite3.connect(self.db)) as db, db:
+                db.execute("DELETE FROM runtime_access_settings")
         a = self.args(request_id=str(uuid.uuid4()), owner="remote-owner", asynchronous=False, require_execution_enabled=True)
         real_idle = support.idle
         calls = 0
@@ -212,7 +262,11 @@ class SwitchTest(unittest.TestCase):
         real_sleep = time.sleep
         def wait(seconds):
             if seconds == 30:
-                self.remote_execution_setting(False)
+                if unsaved:
+                    with contextlib.closing(sqlite3.connect(self.db)) as db, db:
+                        db.execute("INSERT INTO runtime_access_settings VALUES(1,?)", ('{"execution_enabled":false}',))
+                else:
+                    self.remote_execution_setting(False)
             else:
                 real_sleep(seconds)
         with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep", side_effect=wait) as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop") as stop:
