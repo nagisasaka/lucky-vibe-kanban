@@ -53,7 +53,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     vec![
         definition::<ListArgs>(
             "get_workspace_verification",
-            "Read recorded test counts and up to 50 test previews from the selected run's immutable Change Manifest. These are agent-recorded claims for source_commit, not independent validation of the current worktree. Missing records and head mismatches are explicit.",
+            "Read recorded test counts and up to 50 test previews from the selected run's immutable Change Manifest. These are agent-recorded claims for source_commit, not independent validation of the current worktree. Missing records and head mismatches are explicit. New no-change verification is labelled separately; host command exits do not turn agent claims into independent validation.",
         ),
         definition::<DetailArgs>(
             "get_workspace_verification_test",
@@ -87,8 +87,10 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
             RepositoryMemoryStore::read_only_for_repository(&source.repo.name, source.repo.id)
                 .map_err(|_| anyhow::anyhow!("Verification storage unavailable or unsafe"))?;
         let head = current_head(&source);
-        let manifest = load(store.as_ref(), &run)?;
-        let result = if let Some(args) = list {
+        let loaded = load_record(store.as_ref(), &run)?;
+        let manifest = &loaded.manifest;
+        let selected_index = detail.as_ref().map(|a| a.test_index as usize);
+        let mut result = if let Some(args) = list {
             listing(manifest.as_ref(), head.as_deref(), &args)
         } else {
             test_detail(
@@ -97,6 +99,7 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
                 &detail.expect("selected detail"),
             )
         }?;
+        attach_record_metadata(&mut result, &loaded, selected_index);
         ensure!(
             current_head(&source) == head,
             "Workspace head changed; refresh verification evidence"
@@ -107,6 +110,69 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
     .map_err(|_| anyhow::anyhow!("Verification read interrupted; retry this read"))??;
     remote.evidence_link(&target, &mut result).await?;
     Ok(result)
+}
+struct LoadedRecord {
+    manifest: Option<ChangeManifest>,
+    outcome: Option<utils::repository_memory::verification::VerificationOutcome>,
+    normal: bool,
+}
+fn load_record(
+    store: Option<&RepositoryMemoryStore>,
+    run: &RunTarget,
+) -> anyhow::Result<LoadedRecord> {
+    let normal = load(store, run)?;
+    let outcome = if normal.is_none() {
+        store
+            .map(|s| s.verification(run.agent_run_id))
+            .transpose()
+            .map_err(|_| anyhow::anyhow!("Verification storage unavailable or unsafe"))?
+            .flatten()
+    } else {
+        None
+    };
+    let record = outcome.as_ref().and_then(|o| o.record.as_ref());
+    if let Some(record) = record {
+        ensure!(
+            record.manifest.repository_id == run.repository_id
+                && record.manifest.workspace_id == run.workspace_id,
+            "Verification record does not belong to this Workspace/repository"
+        );
+    }
+    Ok(LoadedRecord {
+        normal: normal.is_some(),
+        manifest: normal.or_else(|| record.map(|r| r.manifest.clone())),
+        outcome,
+    })
+}
+fn attach_record_metadata(
+    result: &mut Value,
+    loaded: &LoadedRecord,
+    selected_index: Option<usize>,
+) {
+    let record = loaded.outcome.as_ref().and_then(|o| o.record.as_ref());
+    result["record_origin"] = json!(if loaded.normal {
+        "change_manifest"
+    } else if record.is_some() {
+        "no_change_verification"
+    } else {
+        "missing"
+    });
+    result["verification_decline_reason"] = json!(
+        loaded
+            .outcome
+            .as_ref()
+            .and_then(|o| o.reason.as_ref())
+            .map(|reason| reason.chars().take(200).collect::<String>())
+    );
+    result["no_change_verification"] = record.map(|record| {
+            let mut facts = json!({"start":record.start.source,"end":record.end,"command_exit_count":record.command_exits.len(),"command_evidence":"host_observed_command_exits","continuous_source_immutability":"not_established"});
+            if let Some(test) = selected_index.and_then(|i| record.manifest.semantics.tests.get(i)) {
+                let matches: Vec<_> = record.command_exits.iter().filter(|e| test.command.as_deref() == Some(e.command.as_str())).collect();
+                facts["command_exit_match_count"] = json!(matches.len());
+                facts["command_exit_references"] = json!(matches.iter().take(5).map(|e| json!({"event_id":e.event_id,"run_attempt_id":e.run_attempt_id,"exit_code":e.exit_code})).collect::<Vec<_>>());
+            }
+            facts
+        }).unwrap_or(Value::Null);
 }
 fn current_head(source: &Source) -> Option<String> {
     let head = git::GitService::new()
@@ -249,6 +315,88 @@ mod tests {
             },
         }
     }
+    #[test]
+    fn no_change_read_keeps_claims_distinct_and_prefers_source_manifest_without_writes() {
+        use utils::repository_memory::verification::{
+            CommandExit, NoChangeVerification, VerificationOutcome, VerificationSource,
+            VerificationStart,
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let run = run();
+        assert!(load_record(None, &run).unwrap().manifest.is_none());
+        assert!(!temp.path().join("knowledge").exists());
+        let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
+        let mut snapshot = manifest(&run);
+        snapshot.base_commit = snapshot.source_commit.clone();
+        snapshot.changed_paths.clear();
+        let source = VerificationSource {
+            source_commit: snapshot.source_commit.clone(),
+            branch: "fixture".into(),
+            clean: true,
+            observed_at: chrono::Utc::now(),
+        };
+        let record = NoChangeVerification {
+            manifest: snapshot.clone(),
+            start: VerificationStart {
+                run_id: run.agent_run_id,
+                repository_id: run.repository_id,
+                workspace_id: run.workspace_id,
+                source: source.clone(),
+            },
+            end: source,
+            command_exits: vec![CommandExit {
+                event_id: Uuid::new_v4(),
+                run_attempt_id: Uuid::new_v4(),
+                command: snapshot.semantics.tests[0].command.clone().unwrap(),
+                cwd: "/fixture".into(),
+                exit_code: 0,
+            }],
+        };
+        store
+            .publish_verification(
+                run.agent_run_id,
+                &VerificationOutcome {
+                    record: Some(record),
+                    reason: None,
+                },
+            )
+            .unwrap();
+        let loaded = load_record(Some(&store), &run).unwrap();
+        let args = ListArgs {
+            run: run.clone(),
+            offset: 0,
+            limit: 50,
+            expected_revision: None,
+        };
+        let mut result = listing(
+            loaded.manifest.as_ref(),
+            Some(&snapshot.source_commit),
+            &args,
+        )
+        .unwrap();
+        attach_record_metadata(&mut result, &loaded, Some(0));
+        assert_eq!(result["record_origin"], "no_change_verification");
+        assert_eq!(result["evidence"], "agent_recorded_test_claims");
+        assert_eq!(result["current_worktree_verification"], "not_established");
+        assert_eq!(
+            result["no_change_verification"]["command_exit_references"][0]["exit_code"],
+            0
+        );
+        let mut wrong = run.clone();
+        wrong.repository_id = Uuid::new_v4();
+        assert!(load_record(Some(&store), &wrong).is_err());
+        store.publish_event(&snapshot).unwrap();
+        std::fs::write(
+            temp.path()
+                .join(format!("knowledge/verifications/{}.json", run.agent_run_id)),
+            "invalid",
+        )
+        .unwrap();
+        let normal = load_record(Some(&store), &run).unwrap();
+        assert!(normal.normal);
+        assert!(normal.outcome.is_none());
+    }
+
     #[test]
     fn recorded_verification_is_bounded_pinned_and_never_implies_current_worktree_success() {
         let temp = tempfile::tempdir().unwrap();

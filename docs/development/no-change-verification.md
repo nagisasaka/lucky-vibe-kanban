@@ -1,0 +1,29 @@
+# 成果を変更せず、新しい検証結果を残す
+
+Repository Memoryが有効な通常CODE Workspaceで、cleanな既存コミットを対象に検証を再実行する。成果のsourceを変更せず、新Runのsemantic draftへ今回のtest command・result・summaryを記録する。正常終了した新Runを指定し、既存の`get_workspace_verification` / `get_workspace_verification_test`で結果を読む。新しい書込MCP、空commit、過去Runの回復操作は不要である。
+
+## 記録の条件
+
+hostは新Runの起動準備時に、HEAD・branch・`git status --porcelain=v1 --untracked-files=all --ignore-submodules=none`によるclean状態と時刻を不変保存する。通常の成功Run終端後、同じclean SHA/branchを再確認する。既存の正常終端・子agent終了判定は変更しない。process exitと完全なNative Auditの閉鎖、currentな投影、Workspace/Repo/Run対応を確認する。既存のwriter idle判定とscript containment判定を再利用する。終端専用通知はprocess exitの保存後に行い、terminal ACKの再送でも通知できる。
+
+当初の開始記録を持たない過去Runへは後付けしない。旧failed Run、元draft、既存成功Manifest、過去のno-change markerを変更しない。新しいモデル実行を作らず、実際に動いた新Runのidentityで記録する。
+
+- 開始dirty・終了dirty・SHA/branch変更は検証専用記録を作らず、理由を不変保存する。
+- 今回のdraft/test claimが無い場合や、今回の構造化command exitが無い場合も記録を作らない。単なる会話のno-change成功をtest passにしない。
+- active writer/process、未終了またはunknown child、閉鎖不明のAudit、不明な投影は記録を拒否または延期する。実行失敗したRunから新記録を作らない。
+- 当初対応する実行事実はCodexのcanonical `Shell` ToolCallにあるcommand/cwdと整数exitCode。command構文のallowlistはない。root Repositoryのcwdで完了した実行だけを受け入れる。rawログの文章や「成功」と書かれたsummaryからexitを推定しない。その他providerや構造化exitを持たないtoolは未確認扱いとなる。
+- test claimのcommandは実行時のshell wrapperも含め、今回の実commandと完全一致させる。今回の一致するexitが一件だけで、passed/failedとexit=0/非0が一致するclaimを保存する。曖昧な繰返し・不一致・証拠不足はsnapshot上で`not-run`へ限定する。元draftはそのまま保持する。未実施claimをpassへ変更しない。
+
+## 信頼モデルと読取
+
+`evidence=agent_recorded_test_claims`と`current_worktree_verification=not_established`の意味は通常Manifestと同じである。hostが観測したcommand exitと、agentが述べるtest scope・件数・意味は別であり、command exit=0だけでsuite内の全testや現在のworktreeの独立検証を証明しない。通常の開発command/自動マージと同じ信頼モデルを使い、実行中ずっとsourceが不変だったことや、悪意あるcommand内部の変更・検証・復元を排除したことは保証しない。
+
+検証専用記録では`record_origin=no_change_verification`と`no_change_verification`を返す。ここには前後の観測、実command exit数を示す。test detailには対応するcanonical event/attempt/exitの参照を最大5件返す。通常の変更Manifestは`record_origin=change_manifest`で、常に優先する。読取はファイルを作成・更新しない。Project/Workspace/Repository/Runの既存所属・認可、文字数paging/revision契約は維持する。
+
+`verification-starts/`と`verifications/`は既存のrepository-scoped persistent knowledge配下へ保存し、Gitには置かない。completion lock、SQLiteのwriter/admission transaction、既存のatomic・no-clobber保存を使う。結果と根拠を一つの128KiB上限ファイルに保存し、同一Runの再送・並行処理で上書きしない。拒否理由も不変なので、後からdraftを編集して過去のno-changeをpassへ補完しない。
+
+これらは`events/`のChange Manifestやsource publicationではない。source commit・統合Manifest・Wiki入力に自動採用せず、検証だけの記録から自動マージ許可やWiki更新成功を推測しない。通常CODEが実際にsourceを変更した場合の既存source completion経路は維持する。
+
+不正・過大draftは元ファイルを保全して`invalid_current_draft`としてdeclineする。canonical eventは最大1000件まで、snapshot全体は128KiBまでとし、超過は検証専用の不変declineにする。既存sidecarの破損や本当のI/O障害は検証操作・読取でエラーを返す。source reconciliationは検証専用sidecarを読まず、検証の失敗をdirect merge/push/PR等のsource準備エラーへ伝播させない。検証専用保存の再試行は新Runのterminal ACK再送で扱い、過去source reconciliationから新しい検証記録を後付けしない。
+
+非zero command exitも実行事実として保持する。Codexの旧mapperはnative `completed`をexitとは独立に`Succeeded`とするため、tool statusをexit=0の代用にしない。実exitと一致するfailed claimはfailedを保持し、非zero exitに対するpassed claimはnot-runになる。真のI/O障害・identity不整合は検証のエラーとしてqueueをpauseし、根拠の不整合を無視して次のRunへ進めない。通常のdeclineは正常に返り、会話継続を阻害しない。
