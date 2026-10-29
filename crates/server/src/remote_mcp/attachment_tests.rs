@@ -285,6 +285,22 @@ async fn isolated_attachment_remote_stdio_e2e() -> anyhow::Result<()> {
                     },
                 ),
             )
+            .route(
+                "/api/sessions/{id}/executor-config",
+                axum::routing::get(
+                    |axum::extract::State(d): axum::extract::State<DeploymentImpl>,
+                     axum::extract::Path(id): axum::extract::Path<Uuid>| async move {
+                        axum::Json(utils::response::ApiResponse::success(
+                            crate::routes::sessions::executor_config::read_executor_config(
+                                &d.db().pool,
+                                id,
+                            )
+                            .await
+                            .unwrap(),
+                        ))
+                    },
+                ),
+            )
             .nest(
                 "/api/board",
                 crate::routes::local_remote::board_api::router(),
