@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:863fd8026ca6a1ecebdced3516aa669d2787566c5a5982dfb12cb6b086f5b495",
+  "pageVersion": "sha256:d82b9b80e3a68def6e23ec35d0a7e384348df74e8d8847cff1e71da1775549b1",
   "claims": [
     {
       "id": "claim_a548debefc244e29b9dab1fe86f05219",
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://crates/utils/src/repository_memory.rs",
-          "version": "repo-file-v1:sha256:5d8c1f6a9f4f5ec545cdd475e620cddb47419eeb4e0f30abc3e82d877a2f05ae"
+          "version": "repo-file-v1:sha256:b15a1bb897530bf4d12cd079a27b2be2295061af25b0ce66c3e8ef95fd1cd47b"
         }
       ]
     },
@@ -38,7 +38,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -48,7 +48,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -58,7 +58,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -88,7 +88,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -98,7 +98,7 @@
       "evidence": [
         {
           "resource": "repo://crates/services/src/services/repository_memory.rs",
-          "version": "repo-file-v1:sha256:633ca3233ecaa4b3b63c83b5c1af3cd019fce1fe946a25c2aedab5caf19db935"
+          "version": "repo-file-v1:sha256:927ec950a04a64d29dc61fa2e2e2adbb31f411575cc1db8bab1030f4fb4f15da"
         }
       ]
     },
@@ -132,7 +132,7 @@
       "evidence": [
         {
           "resource": "repo://crates/utils/src/repository_memory.rs",
-          "version": "repo-file-v1:sha256:5d8c1f6a9f4f5ec545cdd475e620cddb47419eeb4e0f30abc3e82d877a2f05ae"
+          "version": "repo-file-v1:sha256:b15a1bb897530bf4d12cd079a27b2be2295061af25b0ce66c3e8ef95fd1cd47b"
         }
       ]
     },
@@ -150,7 +150,7 @@
         },
         {
           "resource": "repo://crates/utils/src/repository_memory.rs",
-          "version": "repo-file-v1:sha256:5d8c1f6a9f4f5ec545cdd475e620cddb47419eeb4e0f30abc3e82d877a2f05ae"
+          "version": "repo-file-v1:sha256:b15a1bb897530bf4d12cd079a27b2be2295061af25b0ce66c3e8ef95fd1cd47b"
         }
       ]
     },
@@ -166,15 +166,15 @@
     },
     {
       "id": "claim_d6325f65519f419491e770d6d36c762f",
-      "statement": "正式統合は Memory が有効なときだけ固定した source event と統合固有 event を明示的統合記録へ結び付け、Wiki receipt は Git/Done と独立する。",
+      "statement": "自動マージは同じ専用会話でcodeとWikiのSHAを固定して公開し、公開後に選択source eventのWiki receiptを既存Memory storeへ保存する。後処理失敗は適用済みGit/Doneを戻さない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/mod.rs",
-          "version": "repo-file-v1:sha256:126803df431d1e87e4911bb2a02ea6743a2360ae255f70f57874d5842f912748"
+          "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
+          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
-          "version": "repo-file-v1:sha256:bceae613b9c6860a23bb8a2b4b2499fe5d1f3910bcc39c21c41ef10e29d5e157"
+          "version": "repo-file-v1:sha256:8f1749902f3f28211d6b4f3a8c656a10a125e86d7927907ff7ff886333aed86a"
         }
       ]
     },
@@ -194,35 +194,17 @@
       "evidence": [
         {
           "resource": "repo://crates/utils/src/repository_memory.rs",
-          "version": "repo-file-v1:sha256:5d8c1f6a9f4f5ec545cdd475e620cddb47419eeb4e0f30abc3e82d877a2f05ae"
-        }
-      ]
-    },
-    {
-      "id": "claim_d82bf859fdae483ea4d670c0c5e38e2a",
-      "statement": "新規IntegrationのManifestはhostがstep summaryとGit差分/base/resultから生成し、最終候補の検証結果をtestsへ反映する。agent proposalを必須とせず例外continueも失敗を合格にしない。",
-      "evidence": [
-        {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L630-L670",
-          "version": "repo-lines-v1:sha256:341fd39a19981894a17d63f492c1483c6f2c2e4cc47997e9af0a23817fc5ca7c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmZGM5NGUzMzkyYjFhNTk0ZjQzZDE3N2JlYTlkMzU1ZWZkNTVkYzk1NGJjYTY4ZTMzOThiMGY2M2Q4NDYzYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhM2U5MzViZDgxZTNjNzVjZmQ4MTU1ZjYyMjExYTBjMWI2YTk1M2UwMmYwYTZjNzRkZjhhM2E4NzIyM2RhNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjZhNDc1ODNiMjEyMGQ2M2ZjZTJjZDlkOTlmZDYxMTczZGI5NzY1Y2JjOThkNWRjZTY0M2U5YjMzMzc1ODgifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L924-L940",
-          "version": "repo-lines-v1:sha256:52333af197e45df1584e479217a4455b96ba5b811debcc04f13e6033ff2e7cf0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNWQyN2Y1ZGI4OWQxMDFmZmJmOTUyNzk2NGI0MjUxMjc5OGFkZmU0NDAxZmZhNDMyMzRmYmJiYWY4YWRlNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjFiNjg3YjhjYjBkYWJjZTZlM2E0MzY5OWVjMDYxMzJmYThmNDUwYzEzOTU0OGNjZTQ1MTIxOTI0MTEyYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1MWYxZTMzZGI5NWFjZjg1MzUyMzNhYWQ3NjMxNGI3NWFkOWNkOTcxY2QzODg5ZWFhZWIyMTU0MTIwYjNmMjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkZjdjYjIxYmFjMWJlZGVhMWY0YjU4MTU1YzhmNmIxOTNhZjQyNzQ2YTNhOTE3ZmNlMzEzMWU3NGNmNjQ3YjYifQ"
+          "version": "repo-file-v1:sha256:b15a1bb897530bf4d12cd079a27b2be2295061af25b0ce66c3e8ef95fd1cd47b"
         }
       ]
     },
     {
       "id": "claim_978d47f6190148899917dcbc0fa0963c",
-      "statement": "競合jobのMemoryは凍結済み公開eventだけを解決し不在をunavailableとして渡すが、Memory有効時の公開後処理は不在・所属・祖先不一致をエラーとしてGit/Doneを戻さず残す。",
+      "statement": "自動マージ会話へのMemoryは固定した公開eventだけを解決しRepo/Workspace所属を検査し、不在をunavailableとして伝える。private memoryや後着eventを追加しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L1534-L1630",
-          "version": "repo-lines-v1:sha256:92ae8a348a02305a2eacadecabacefd31a578567f605e776e574126d2a05c949:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjOGYyYTNmNGE4YmFlNzI0Y2EzNTMxZmE3YWNmNDAxOGM2ZjNjNmE4NmZmNWQzOWMzN2I1ZGU2NDJkZmZiNzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2YjQwOWMxYTE2YWY3ZDU0NWQzMzdmYzJkMmQ3ZmFmZThlZWY0MWIzMzIwNWVlNTVkOGVlODY5NGI4ZjY5ODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5YzI1MGM3MmQ5NTRjZDdjMDQ2ZGY5NzExZWE4ZWM4ZmI0NTRmMDNhZmE3MzdhZjFkNTJjYzcwMDFiYjFkNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1N2ZjMTM4MTI3Y2RiNDZkMDk0ZWNlNWY2Y2NiODhiODU3ODRmN2NhNGFhMTFmZjFlM2M5ZTY5ZDQxMDI0MjkifQ"
-        },
-        {
-          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L329-L362",
-          "version": "repo-lines-v1:sha256:13d79028810fdb77bfc8a18555b01e5d12142f446487a03bdb64f137982ad6cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhOTMyNWVmNGFhNjM2NWJmNDM4ZDEyMDdiMjE2MjA5Zjk2NzEwNDk5NzlhNDgwMjgwZTc0YjY1N2MwNzUzNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAxODBiY2U3MTU1NGIwZjEyMDM5ZDM1YjE2OWE3NTI4ZWQzY2U3MTA3Y2M4ZTRmOTUxNjViZGZmMWEwODBkZTIifQ"
+          "resource": "repo://crates/server/src/routes/integrations/runtime.rs#L73-L104",
+          "version": "repo-lines-v1:sha256:cf68d15e947f2832874ef35daa92213a8da596cf6ce09a3511007049b601d9ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzZjY3ZjgxOTg3NmFkODc4ZjJjYzNmMmIyZjg4OGEzYTA0Y2NkZGU0Yjk2Mjk2YTM5NTE1M2MwMmRkYTk0NTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAzYTEwMzdmMDcxOTYxZmIzYjEzYTdkYWZmNjlhY2MyYmFiODEwZmU4YmRhMTZhMmIyMjcxNTU0MzcxNGNjNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzNTk1YzA2MGJjYjNhZGY1NjhiZjQ0Y2IxYzRmYTZmYzgwNDAzYTQ1ZDdkZGFlNTNlYTZkMWZkMzFjMTlkYjkifQ"
         }
       ]
     },
@@ -271,10 +253,44 @@
           "version": "repo-lines-v1:sha256:255a0f4b7fd9bc3d6281e670ee849e01140a874123294551b9ac369ffddca862:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0OTVjYzg1MWYzYzNlZmY3NTI4NjZiOGRhYTdiOGEzNjIxNjMzM2UxNDIxYmRiNTdkY2Q3MmJhNDZlODExODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2YzFhNGYzNjFhMGU2NGQyOTcwMTliMmYwMmI1MGExMDc0MmQ1MDc1YTNkYzcxMTFkYTIxMzM0Y2VlNGU0YjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmYWI3MTBkZGY3ODU5ZTU3NTc2NGE5MTNhMDAyYzc0NTg1ZmZhNzAwMTUxMGNiODgxMWRhODNkMmNmNzRiMzQifQ"
         }
       ]
+    },
+    {
+      "id": "claim_3ccbe02e2cd64dc2a7a6445cd86d04d5",
+      "statement": "source無変更の新しい成功CODE Runは開始終了の同じclean SHA/branchと正常終端・audit・writer/child収束を確認して新Run固有の検証記録を保存し、旧履歴を改変しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/repository_memory/verification.rs",
+          "version": "repo-file-v1:sha256:f01c4bda9419f67884562d5bd7b424cd028142ad94c55f3e325724406647e1d7"
+        }
+      ]
+    },
+    {
+      "id": "claim_d8d681873f774c64a08494ab0f609d8c",
+      "statement": "検証専用記録はCodex canonical Shellの構造化command/cwd/整数exitとdraft claimを一意照合し、不整合claimをnot-runへ限定する。前後同SHAは継続不変性の完全証明ではない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/repository_memory/verification.rs",
+          "version": "repo-file-v1:sha256:f01c4bda9419f67884562d5bd7b424cd028142ad94c55f3e325724406647e1d7"
+        }
+      ]
+    },
+    {
+      "id": "claim_0e547ae11ec64a849aef4c98361b2bc4",
+      "statement": "verification専用保存はsource events・統合Manifest・Wiki入力から独立し、既存read-only読取は通常Manifest優先とrecord_originの区別を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/verification_read.rs",
+          "version": "repo-file-v1:sha256:6a03993d509fb5eb0202ade8e6a0d12679a4e36b5c1c6ff923c5128ed93c6d2b"
+        },
+        {
+          "resource": "repo://crates/utils/src/repository_memory/verification.rs",
+          "version": "repo-file-v1:sha256:4e717e545d88bb06bd31388007609bb0b501ff234f46a399573a95c766b1d9a1"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T03:10:58.678Z"
+    "at": "2026-10-29T08:49:34.152Z"
   }
 }

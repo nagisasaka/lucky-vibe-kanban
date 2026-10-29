@@ -12,24 +12,16 @@ sources:
     resource: repo://crates/local-deployment/src/agent_process_registry.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
-  - id: openwiki-source-5aa384eaafe1283b1b8cc4a4
-    resource: repo://crates/preview-proxy/src/api.rs
-  - id: openwiki-source-0099d841c439c1dde012669e
-    resource: repo://crates/preview-proxy/src/lib.rs
-  - id: openwiki-source-c16d91d3eae6ee7bafc2593e
-    resource: repo://crates/server-access/src/preview.rs
-  - id: openwiki-source-a6cad3d930b299ebbbd793a3
-    resource: repo://crates/server-access/src/tests.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
   - id: openwiki-source-87ddf3d108f228e9ef8f8964
     resource: repo://crates/server/src/remote_mcp/dev_server.rs
   - id: openwiki-source-a9b6d4be264787a78357c9d6
     resource: repo://crates/server/src/routes/config.rs
+  - id: openwiki-source-b393e75029374eaf9cba5f7d
+    resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
-  - id: openwiki-source-875a0d6590ed93103083efa6
-    resource: repo://crates/server/src/routes/preview.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-7c1b10f112cb99ba82426b5a
@@ -72,6 +64,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage.rs
   - id: openwiki-source-965b490de6f8364cb7695944
     resource: repo://crates/workspace-manager/src/workspace_manager.rs
+  - id: openwiki-source-e8e69428539ea9d66bf7633a
+    resource: repo://docs/browser-testing.mdx
   - id: openwiki-source-8c7998811f24db89c5190835
     resource: repo://docs/development/external-editor-uri-validation.md
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
@@ -86,8 +80,6 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx
   - id: openwiki-source-a045ed78b54878edd07211c7
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
-  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
-    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
   - id: openwiki-source-3f4f76b473cff31732d54424
     resource: repo://packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx
   - id: openwiki-source-714cddfb6b8044e60077cdf6
@@ -106,8 +98,6 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
-  - id: openwiki-source-06868af84d952b8087cf3ebb
-    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
   - id: openwiki-source-0894249b732085a9800940bd
@@ -124,8 +114,6 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
-  - id: openwiki-source-e4b6c8db09a6d8887192b13e
-    resource: repo://packages/web-core/src/shared/lib/previewProxyUrl.ts
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
@@ -142,10 +130,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -160,11 +148,9 @@ Workspace 一覧の検索欄には名前・branch のほか `106` や `LOCAL-106
 
 ## 実行専用 Workspace の確認
 
-実行中の inspection は [用途が execution_only の Workspace](../concepts/workspace.md#操作用途と実行所有者)を表示する。通常 chat composer の代わりに、owner kind/run、状態、公開結果、ファイルの有無、保存済み Session の選択、所有者の Stop を示す。新規 chat・Session・queue・executor 選択は作らず、現在の所有者が出している承認・質問への応答を残す。Wiki 実行中には追加指示を steer でき、自動マージ には専用介入 UI がある。実行と cleanup 完了後は通常 composer に戻り、所有者の履歴は残る。[inspection UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx)
+実行中の inspection は [用途が execution_only の Workspace](../concepts/workspace.md#操作用途と実行所有者)を表示する。通常 chat composer の代わりに、owner kind/run、状態、公開結果、ファイルの有無、保存済み Session の選択、所有者の Stop を示す。新規 chat・Session・queue・executor 選択は作らず、現在の所有者が出している承認・質問への応答を残す。Wiki実行中には追加指示をsteerできる。自動マージは通常会話の専用担当が進める。実行と cleanup 完了後は通常 composer に戻り、所有者の履歴は残る。[inspection UI](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx)
 
-自動マージ では owner/run の識別子、状態、保存済み Session 選択を「実行の詳細」に折り畳み、解消説明と判断を主表示する。公開結果は `publication_intent` を持たない `WorkspaceExecutionView` から重複表示せず、owner の run ID を使って完全な IntegrationRun を取得する専用介入欄へ委ねる。詳細を開くことは新規 Session の作成ではない。[配置と委譲](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx#L75-L188)・[owner view の型](../../crates/server/src/routes/workspaces/usage.rs#L24-L36)・[run の取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L24-L30)
-
-保存説明、解消差分、検証記録を確認して承認または中止する際は [保存済み説明から候補をレビューする](../concepts/formal-integration.md#保存済み説明から候補をレビューする)を参照する。公開の「照合中」は未反映の確定ではない。[公開・Done・Wiki の読み分け](../concepts/formal-integration.md#公開donewiki-は別の結果)に判定と回復の契約をまとめる。
+現行の自動マージは同じ割当Sessionの通常会話で候補・検証・Wiki・公開要求を進める。旧専用介入欄やgate承認ではなく、その会話へ質問や追加指示を送る。公開要求の受付とhostによるmain反映は別に確認する。[自動マージの正本](../concepts/formal-integration.md)。
 
 `GET /api/workspaces/<id>/usage` と executions 一覧は既存 owner 記録から状態を投影する。自動マージ の Git 公開、Bootstrap の Workflow 完了、Sync の保存済み結果はそれぞれの正本から読み、Generator や AgentRun の成功を公開済みと推測しない。Sync の AgentRun が終端でも repository owner が残る間は `finalizing` である。成功 no-op は新しい Wiki commit がない成功として表示する。[状態の由来](../../crates/server/src/routes/workspaces/usage.rs)
 
@@ -267,7 +253,7 @@ Board の Workspace 差分は履歴レコードの既定値ではなく、既存
 | 任意の Repo で base 解決・diff 取得失敗 | 集計全体を `None`。成功 Repo の部分和を完全な合計として出さない |
 | container_ref 不在、Repo 関係の読取失敗 | 集計未取得として `None` |
 
-[Option の伝播](../../crates/services/src/services/diff_stream.rs#L35-L115)により、binary やサイズ省略がある場合も「行数ゼロ」と偽らない。Git の片側本文が欠けた場合、それを空の本文と見なせるのは実際の Added / Deleted だけである。Modified の読取欠損や text ↔ binary を全行追加・削除と誤認しない。[Git の判定](../../crates/git/src/lib.rs#L709-L726)
+[集計](../../crates/services/src/services/diff_stream.rs#L35-L115)は確認済みbinaryを変更ファイル数へ含め、text行数には加算しない。text読取欠損やサイズ省略の未知は各方向の合計へ伝播する。Git の片側本文が欠けた場合、それを空の本文と見なせるのは実際の Added / Deleted だけである。Modified の読取欠損や text ↔ binary を全行追加・削除と誤認しない。[Git の判定](../../crates/git/src/lib.rs#L709-L726)
 
 API の `files_changed` / `lines_added` / `lines_removed` は独立した optional field で、内部集計の未知を保持する。互換用に残る旧公開 `DiffStats` 型の非 optional field から、この API の意味を推測しない。[API 型と内部集計の分離](../../crates/server/src/routes/workspaces/workspace_summary.rs#L27-L72)・[伝播](../../crates/server/src/routes/workspaces/workspace_summary.rs#L178-L190)。`useWorkspaces` は未知を undefined へ保ち、Kanban はその summary 値を Workspace カードへ渡す。カードは既知0も表示し、未知 file 数と行数を `—` で示す。[hook](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L83)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L279-L291)。時計の未知は別の [Run 時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
 
@@ -295,27 +281,9 @@ Dev server の稼働だけではチャット送信をブロックしない。専
 
 この script 実行は [coding AgentRun](../concepts/session-and-agent-run.md) とは別の ExecutionProcess 経路である。通常の設定とログ上の URL 検出の説明は [Browser Testing](../../docs/browser-testing.mdx) を参照する。
 
-Preview proxy は main app とは別 port で iframe content を提供し、{port}.localhost から localhost の指定 port へ転送する。旧 remote host UUID 入り label は拒否する。[host 解決と回帰テスト](../../crates/preview-proxy/src/lib.rs)
+旧subdomain/API preview proxy、HTML検査script/Eruda注入、公開handoffと専用cookieは撤去済みである。外部ブラウザーとprivate tunnel、またはアプリ自身の認証を備えた独立CSVルートを使う。旧preview設定は警告して無視する。[移行手順](../../docs/browser-testing.mdx)・[公開配置の廃止契約](../../docs/self-hosting/server-container.mdx#retired-embedded-previews)。
 
-サーバー配布では `VK_PREVIEW_DOMAIN` を backend の system info から UI へ渡し、HTTPS の `<port>.<domain>` を使う。proxy の loopback redirect も同じ公開 origin へ読み替える。公開port・HTTPS ingress・main origin禁止の詳細は [サーバーコンテナーの preview](server-container.md#preview-は別-origin)に置く。[domain の取得](../../crates/preview-proxy/src/lib.rs)、[公開 redirect の test](../../crates/preview-proxy/src/lib.rs)
-
-この target は port と host の routing 情報である。Repo membership を検証する file API とは異なり、preview route は target_port を受け取る。アクセス制御を追加するときは、見えている Workspace の識別子だけで proxy の許可が決まると仮定しない。[preview route](../../crates/server/src/routes/preview.rs)
-
-subdomain proxy は HTML を読み替え、head に React 検査用 bundle、body に DevTools / click-to-component 等を挿入する。CSP、X-Frame-Options などの header も除外する。Eruda の読み込みには CDN 依存がある。これは開発 preview の加工経路であり、file raw の MIME policy と同じ規則ではない。[header policy](../../crates/preview-proxy/src/lib.rs)・[HTML 加工](../../crates/preview-proxy/src/lib.rs)
-
-一方 /api/preview/{port} の HTTP 転送は localhost upstream を呼び、失敗時は BadGateway、応答は streaming で返す。subdomain 側の injection と同じ責務を重ねない。loopback redirect の公開 URL への変換には focused test がある。[API 転送](../../crates/preview-proxy/src/api.rs)・[応答](../../crates/preview-proxy/src/api.rs)・[redirect test](../../crates/preview-proxy/src/lib.rs)
-
-### 公開 preview への認可委譲
-
-公開Basic/Auth0配置ではpreview listenerの専用認証層を通す。未認証GETはprojectへ転送せず認可案内を返す。利用者はmain LVKでログインし、対象preview originと開始ブラウザーに結び付いたgrantを承認する。grantは60秒・一度限りで、URLではなくform POSTで`/.lvk-preview/exchange`へ送る。交換はbrowser cookie・送信Origin・対象origin・親Web sessionを照合する。[認可と交換](../../crates/server-access/src/preview.rs#L97-L186)、[一度だけの消費](../../crates/server-access/src/preview.rs#L326-L361)
-
-preview側にはSecure / HttpOnly / SameSite=None、Domainなしの`__Host-lvk_preview`を発行する。このcookieはLVK業務APIの認証には使えず、別のport subdomainにも流用できない。親Web session・active member・設定revisionに依存し、logoutや無効化、期限、設定変更で効力を失う。projectへ送る前にAuthorization、内部token、LVK/preview認証cookieを除去する。[cookie](../../crates/server-access/src/preview.rs#L87-L96)、[親の照合](../../crates/server-access/src/preview.rs#L187-L215)、[転送前の除去](../../crates/server-access/src/preview.rs#L279-L305)
-
-対象は設定preview domainの正規化された数値port subdomainに限定する。1024未満と3000・3001・4020・4021・8443・8444を拒否し、main originと同じURL portを要求する。main hostをpreview domain内へ置けない。これはWorkspace/Repo所属の認可ではなく、信頼チーム内の開発portへの委譲である。UIのURL生成やnginxの除外集合はこのbackend検査の代わりにならない。[対象検査](../../crates/server-access/src/preview.rs#L28-L58)
-
-SSEは親sessionのleaseで止まり、WebSocketはserverからproxyへ`ConnectionLease`を渡して失効時に転送taskを終了する。Localモードではこの公開handoffを要求しない。第三者cookieが拒否される場合は独立タブで認可・表示する。[専用gate](../../crates/server-access/src/preview.rs#L216-L324)、[WS配線](../../crates/server/src/routes/preview.rs#L112-L128)、[proxyの終了](../../crates/preview-proxy/src/lib.rs#L431-L440)
-
-[handoff回帰テスト](../../crates/server-access/src/tests.rs#L1554-L1737)は別ブラウザー・再利用・別origin・業務APIへの流用を拒否し、logout後の拒否を確認する。実socketのlease終了は [proxy test](../../crates/preview-proxy/src/lib.rs#L1304-L1379)を参照する。別の [静的配信fixture](../../tests/server-access/preview-static.mjs)は、ビルド済みVite previewの`/@fs`・`/@vite/client`から非公開ファイルや開発用endpointが露出しないことをHTTP fetchで検査する。このfixtureはブラウザーでのhandoffや実Auth0接続を検証しない。
+ビルド済みVite previewを起動する[静的配信fixture](../../tests/server-access/preview-static.mjs)は、`/@fs` と `/@vite/client` で非公開ファイルや開発endpointが露出しないことをHTTP fetchで検査する。これは撤去済みhandoffや実Auth0接続の成功を意味しない。
 
 ## Terminal と editor
 

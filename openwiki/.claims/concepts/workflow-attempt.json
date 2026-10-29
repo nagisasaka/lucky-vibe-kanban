@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9f446c6a10ead5b6dad1b84dd36e002ffba947c2e56724a68e46e1bb12ed022a",
+  "pageVersion": "sha256:eb33f1da9159b3932cf5bfa5963f5f80fa540fa86e4e3057647695bf43714716",
   "claims": [
     {
       "id": "claim_6831267bb1984baabffe65be3d6b8400",
@@ -60,7 +60,7 @@
       "evidence": [
         {
           "resource": "repo://crates/workflow/src/validation.rs#L43-L125",
-          "version": "repo-lines-v1:sha256:a32ec9602f0f8888590cf165578f22759567988d0ff2e04146045bee27b06190:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwODM0MDI3MzVjZGVhMzE5MGI4OWQxMWY1MWM3YjdhNjVhMGI0MzJlNDAzMTRkOGM2ZWYxNGY1Njk4NzI3ZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmZWE0YzljZTY4MzA3NWE2MTRmNDJhNWExOTBjZjljMWY0YjlhNDhiMjE2YzdmOWMzMWM4N2I3YmMwMjNkZWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg0MWU1N2Q1NWY5MmFmMDQzZGJhM2ZkNzVlNTE1MTI5MDA0MDk4ZmQyZjYwMTE4YWY5NWVkYWIzYWJlMjY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5YTgzNmE5YjUwNDlmNzM3ZDk5YTQzNGMwMWYxOGEzZDk4MjhjYjJlODE1MTM1ZDUwNzRjMzVhZjA2ZDY3OTUifQ"
+          "version": "repo-lines-v1:sha256:3428337db56ff1040fd3b8d9f4279c63daf55bdfa5dbef4793b402952dbfdefa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MDgzNDAyNzM1Y2RlYTMxOTBiODlkMTFmNTFjN2I3YTY1YTBiNDMyZTQwMzE0ZDhjNmVmMTRmNTY5ODcyN2ViIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiZmVhNGM5Y2U2ODMwNzVhNjE0ZjQyYTVhMTkwY2Y5YzFmNGI5YTQ4YjIxNmM3ZjljMzFjODdiN2JjMDIzZGVkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4NDFlNTdkNTVmOTJhZjA0M2RiYTNmZDc1ZTUxNTEyOTAwNDA5OGZkMmY2MDExOGFmOTVlZGFiM2FiZTI2OTg3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiOWE4MzZhOWI1MDQ5ZjczN2Q5OWE0MzRjMDFmMThhM2Q5ODI4Y2IyZTgxNTEzNWQ1MDc0YzM1YWYwNmQ2Nzk1In0"
         }
       ]
     },
@@ -152,11 +152,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/workflow_runtime/runner.rs",
-          "version": "repo-file-v1:sha256:cd6a1e68e34f2e8360bef01a6c90eb1b626e01704f6bd51d1291f02696b04ed0"
+          "version": "repo-file-v1:sha256:cde868b7a883c58e39b9727d061a14de5717b8886ee35cdc571a20466472f1a7"
         },
         {
           "resource": "repo://crates/workflow/src/validation.rs",
-          "version": "repo-file-v1:sha256:62243145f106ac2b66d857113044aa7a0e50f3839ec931de6f9be2a6185b2620"
+          "version": "repo-file-v1:sha256:1f31842a614e89a07ad7f013765c1244bf4d245dc1a10234d6c65e5c56c611a2"
         },
         {
           "resource": "repo://docs/future/ai-workflow/spec-product.md",
@@ -243,6 +243,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-26T01:15:35.501Z"
+    "at": "2026-10-29T08:49:34.152Z"
   }
 }

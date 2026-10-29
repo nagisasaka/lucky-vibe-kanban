@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4586c36cf51ae55a23f93df06e0cdcf116780604eb39285a14906789fd9421e6",
+  "pageVersion": "sha256:280929809ffb431cb20b997765db8126588b9aa76bbf8b6c5fb036e13dc306fc",
   "claims": [
     {
       "id": "claim_fe336fda43dd4a7087db9ff239381b34",
@@ -215,14 +215,14 @@
       "statement": "RepoごとのGit commit identity案内は保存済みShared directories policyの有無と独立してlaunchへ追加される。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L838-L865",
-          "version": "repo-lines-v1:sha256:9911bd0e685e290615993eb9df71e5ba1c2c772ebd37dbb2f8ce47e81f9fbdaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MGJkMWQwODk4MjIxNjEzZjMwZmMxNWE1MWM0ODY2ZjVhYTliNmUwMWNhZjExMTIzYmJkODM5YTQ3YmZmNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjA1OTc4OTYyMWM0YjJhYTk2NTk3ZGJkNTQ0MWY1MjEwNmU0OWY1YmZiN2FiZjVlNzdjODlhNDQ0M2VjMDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5YTUyYTVkYTliNDZjNmFmZjNiMDhjZjUwYzFlNjExMmY5YTczODlhMTU0YzMwNGFlOGZjMWQ1OWEyNzVkZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0OWMxMzBjMGNjNzI0MTE2NmZkY2EzZWVhYmMwZGNhMmRjMzRlYWUyOTVmYmYxMDNlZmMxN2U1MDg4Y2Q0NTgifQ"
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L875-L883",
+          "version": "repo-lines-v1:sha256:c7cce1e1684e2d788a0dd39c8ccbb3c8f9969292e551f29582cbf08dee89f097:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzAwODFlYzczYTA1MjliYzNlNGE0MmMwODYxMTZiYzA2NTliMzY2ODlkMTdkYzJhYTI4NzNjODY1NDRkMTlhOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ3NzhkZDliMTRjMTVjZTFlNTQ1MDYwMGVjYmFhYjEzZjNhYzUwOTE5N2UzMmQ2MzlhYjhkMzEyZWY5MTM3NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTk3YWEyNzQ5M2RkNWE1NGRkZTBmMjFlZDE1NTYzNjg1OWU4NTY4YjU5OTY4YjAyOTBmYWNkYzM4ZDNmY2NlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzExNjQyY2Y5ZWViYmU1NDk4NGQ5ZTE3OGFhYjg1MTEzOWE1NTVkZGM1NDRlYTAyYTUyM2E5YjhmYzQ3MjRhYyJ9"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T07:04:01.883Z"
+    "at": "2026-10-29T08:49:34.152Z"
   }
 }

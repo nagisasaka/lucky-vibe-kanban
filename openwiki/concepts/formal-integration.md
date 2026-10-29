@@ -6,6 +6,8 @@ tags: [integration, git, validation, lifecycle, recovery]
 sources:
   - id: openwiki-source-60b1754d1fc954c43279f888
     resource: repo://.lvk/integration-validation.json
+  - id: openwiki-source-124913f65e422092e3ffbd4a
+    resource: repo://assets/skills/auto-merge/SKILL.md
   - id: openwiki-source-11bd8cfafd506215798951a6
     resource: repo://crates/db/migrations/20261025000000_issue_classification.sql
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
@@ -18,8 +20,6 @@ sources:
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-d40a52c39b8604505b97c3e9
     resource: repo://crates/git/src/publication.rs
-  - id: openwiki-source-33abd750e40bc0d544b210b5
-    resource: repo://crates/server/src/remote_mcp/integration_write_tests.rs
   - id: openwiki-source-83d25ea893da220229c11f8b
     resource: repo://crates/server/src/remote_mcp/launch_tests.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
@@ -30,122 +30,69 @@ sources:
     resource: repo://crates/server/src/routes/integration_validation.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
-  - id: openwiki-source-a1c709eaad59af16183269df
-    resource: repo://crates/server/src/routes/integrations/legacy_checkpoint.rs
-  - id: openwiki-source-864e2ae97802aa9a00527c40
-    resource: repo://crates/server/src/routes/integrations/mechanical.rs
+  - id: openwiki-source-ee464e7ed81ae180fcca4c26
+    resource: repo://crates/server/src/routes/integrations/conversation_tests.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
-  - id: openwiki-source-ec7bbc48470f4ddafbe92723
-    resource: repo://crates/server/src/routes/integrations/runtime_tests.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
-  - id: openwiki-source-693f5c01a606eaeac0692368
-    resource: repo://crates/server/src/routes/integrations/scenario_tests.rs
-  - id: openwiki-source-001b80ecf41631f84729dd2e
-    resource: repo://crates/server/src/routes/integrations/steps.rs
-  - id: openwiki-source-3254b00661fe378ce617d822
-    resource: repo://crates/server/src/routes/integrations/validation_settings_tests.rs
+  - id: openwiki-source-e000993e074f00ebc0d68cec
+    resource: repo://crates/server/src/routes/integrations/support.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
-  - id: openwiki-source-6043692809cbf72f253c5631
-    resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
-  - id: openwiki-source-9e44bb74d3697078482d577d
-    resource: repo://docs/development/auto-merge-naming.md
-  - id: openwiki-source-a6728d75b2bdf1a00440e8fa
-    resource: repo://docs/development/chatgpt-mcp.md
-  - id: openwiki-source-fc7b2dc1ea0b402e0e94b60b
-    resource: repo://docs/development/integration-mcp-decisions.md
-  - id: openwiki-source-db035046d01e3f24722812c8
-    resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
-  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
-    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
-  - id: openwiki-source-2b041ccdd1b3cb2c0a7e82a6
-    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx
+  - id: openwiki-source-ccf8ab737c324e8e2a967444
+    resource: repo://docs/development/conversation-auto-merge.md
+  - id: openwiki-source-dbaab3d3ce907e13656fcbed
+    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-  - id: openwiki-source-d6bd59c0727afcf22386a8f5
-    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-  - id: openwiki-source-0b2c1cfa8089016da3ce0c95
-    resource: repo://tests/integration-review/browser.mjs
-  - id: openwiki-source-9871b94e679a5398da344b52
-    resource: repo://tests/integration-review/README.md
-  - id: openwiki-source-b5ef058c3b0ea87dbc8234d6
-    resource: repo://tests/integration-validation-settings/browser.mjs
-  - id: openwiki-source-55dc8812ccee9a0d59fffb13
-    resource: repo://tests/integration-validation-settings/README.md
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # 自動マージの選択・検証・公開
 
-自動マージ は local Board で選択した Card の固定 commit を、一つの Repo の local target branch へ順番に統合する製品実行である。受付時に 自動マージ 用 Card・[Workspace](workspace.md#操作用途と実行所有者) とリンクを作り、専用 Session で作業する。通常 Workflow、手動 squash merge、[detached preview](../workflows/task-to-integration.md#並列変更を試してから正式統合する)とは別の lifecycle を持つ。[受付](../../crates/server/src/routes/integrations/admission.rs)、[原子的な作成](../../crates/db/src/models/integration.rs#L251-L317)。
+自動マージは一つのRepoのlocal targetに採用commitを反映する製品操作である。専用Issue・Workspace・Sessionを作り、同じCodex会話が候補作成、競合修復、検証判断、有効なWiki更新を担当する。hostは実行証拠の保存とwriter収束後の正確なGit公開を担当する。旧mechanical engine、競合だけの子job、解消承認gate、checkpoint adoptionは撤去済みである。[現行設計](../../docs/development/conversation-auto-merge.md)・[実行契約](../../assets/skills/auto-merge/SKILL.md)
 
 ## 選択するのは commit
 
-各 Card に一つの採用 Workspace と `expected_commit` を指定する。選択元が現在その Card / Project に関連し、対象 Repo の branch HEAD が expected commit と一致することを受付時に確認する。保存後の対象はその immutable commit であり、source branch が進んでも採用内容は変わらない。source の作業中差分、active Goal、他 Workspace・他 Repo の未統合変更を全体停止の条件にしない。後続検査は固定 Git object の利用可能性を確認する。[source 検査と再検査](../../crates/server/src/routes/integrations/admission.rs#L59-L160)。
+Cardごとに採用Workspaceとexpected commitを指定し、Projectとの関連とsource HEAD一致を受付時に確認する。採用するのは固定Git objectであり、source作業木全体のclean/idle、Manifest完成や他Workspaceの停止を要求しない。source eventが発見できれば帰属を保存する。同じrequest IDの再送は選択・設定が同じ場合だけ既存結果を返す。外部MCPはdomain受付前に元入力全体をreceipt照合するため、省略とnullの入替えも再送に使わない。[受付](../../crates/server/src/routes/integrations/admission.rs)・[外部受付](../../crates/server/src/remote_mcp/launch.rs)
 
-Card の情報、branch、OID と、帰属・祖先関係を確認できた Memory event IDs を記録する。記録が欠けていること自体は選択 commit を失格にしない。同じ request ID は同じ選択・設定にのみ再利用できる。採用 scope は commit の履歴であり、Card description は変更ファイルの完全な許可リストではない。[受付と冪等性](../../crates/server/src/routes/integrations/admission.rs)、[実行契約](../../crates/server/src/routes/integrations/runtime.rs#L349-L392)。
-
-source Card / Workspace 全体を予約する旧方式ではない。canonical Git common directory を基準に target 実行を直列化し、実行用 Workspace と、公開時の target writer を予約する。別 Repo ID や別 branch という別名でも同じ Git storage の順番を回避できない。予約と実際の writer 収束は dispatcher lease と別である。[target 順番](../../crates/server/src/routes/integrations/admission.rs)、[実行環境の予約](../../crates/server/src/routes/integrations/runtime.rs#L679-L778)、[公開時の予約](../../crates/server/src/routes/integrations/runtime.rs#L1329-L1381)。共有デバイス等の操作は別の [共有リソース調停](shared-resource-coordination.md)契約に従う。
+候補の準備にはrepository全体のFIFOを置かず、専用Workspaceを予約する。公開時だけcanonical Git storageの短い予約とtarget writerのidle検査を行う。デバイスやDBは別の [共有リソース調停](shared-resource-coordination.md)契約に従う。
 
 ## B から一件ずつ R を検証する
 
-B は受付時に観測した target commit と一致する preparation の base である。queue 待ちの間に target が進めば、新しい HEAD を黙って採用せず `TARGET_CHANGED` で停止する。[固定 target](../../crates/server/src/routes/integrations/admission.rs#L141-L157)・[準備の照合](../../crates/server/src/routes/integrations/runtime.rs#L679-L703)
-
-新規 run は `mechanical=true` の host-owned engine を使う。host が前 step の結果と現在の固定 source を `merge-tree` で評価し、競合しなければ AgentRun を作らず commit tree を生成する。commit の親は前結果と source で、source が既に祖先なら前結果をそのまま使う。R=B も許され、空 commit は不要である。host は clean R と前結果・source の祖先関係を再確認し、逐次履歴として B と採用済み source を保持する。[merge loop](../../crates/server/src/routes/integrations/runtime.rs#L467-L629)・[候補生成](../../crates/server/src/routes/integrations/mechanical.rs#L173-L208)
-
-候補 OID を DB に保存してから private branch へ適用する。適用済みの同じ clean HEAD は再適用せず、既知の conflict merge metadata だけを片付ける。未知の dirty tree、移動した HEAD、別の MERGE_HEAD を推測で reset しない。これは branch 更新と DB 保存の間の中断を識別する仕組みである。[private branch と install](../../crates/server/src/routes/integrations/mechanical.rs#L29-L40)・[適用](../../crates/server/src/routes/integrations/mechanical.rs#L210-L269)
-
-新しい候補 commit は [Repo の Git identity](workspace.md#git-commit-identity)に従い、固定の LVK 著者を使わない。候補生成時に現在の設定を再確認するため、queue 待ちや停止中に設定した identity を次の試行で使える。既存 source commit の著者と履歴は保持する。exact publication も更新前に有効な committer を解決し、ref/reflog の署名に使うが、新しい merge commit は作らない。[候補の guard](../../crates/server/src/routes/integrations/mechanical.rs#L152-L183)・[公開の署名](../../crates/git/src/publication.rs#L254-L317)
+受付targetと固定sourceは保持し、候補はprivate branchで作る。`integration_action`は現在runtimeへ束縛され、候補に受付baseと全sourceが祖先として残ること、expected SHAとcleanな作業木を確認する。新commitはrepositoryの有効なGit identityを使い、元sourceの著者を改変しない。[worker guard](../../crates/server/src/routes/integrations/conversation.rs#L170-L222)・[Git identity](workspace.md#git-commit-identity)
 
 ### 競合だけを有限の Agent job にする
 
-競合時だけ、同じ 自動マージ Workspace 内に新しい Session と AgentRun を作る。現在の step・base・source、受付時の公開 Memory、追加指示を含む完全な Create envelope を provider 起動前に保存し、再配送も同じ identity を使う。自動マージ 全体を一つの Orchestration node に重ねたり、古い AgentRun の Retry / Steer で次の source を渡したりしない。[保存から Create](../../crates/server/src/routes/integrations/runtime.rs#L500-L541)・[request](../../crates/server/src/routes/integrations/mechanical.rs#L271-L339)
-
-新しい競合 dispatch は `Initial` / `Launch` で、前 job の native conversation を resume しない。Session ごとに provider identity を所有するため、連続する source の競合や明示 Resume で別の native session ID を同じ Session へ上書きしない。`persist_conflict_dispatch` は作業先と executor を引き継ぐ新規 Session、自動マージ の現在 Session / AgentRun ID、完全な immutable dispatch を一つの `BEGIN IMMEDIATE` transaction に保存し、commit 後にだけ provider Create へ進む。保存失敗時は新 Session も rollback し、呼出側の run を置き換えない。[保存境界](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)・[同一 connection の保存](../../crates/db/src/models/integration.rs#L534-L545)
-
-再起動・再配送で保存済み dispatch があれば、新しい Session や ID を作らず同じ envelope を再利用する。明示 Resume は前 job の終端確認後、旧 error / stop / AgentRun / dispatch を history に残し、候補未生成の場合だけ現在 dispatch と AgentRun を退役させる。次の monitor が新 Session を作るが、同じ Workspace の edits / index は引き継ぐ。過去の run、provider identity、degraded projection を修復・削除して成功扱いにはしない。[Resume の履歴](../../crates/server/src/routes/integrations/runtime.rs#L140-L207)・[再送と完了検査](../../crates/server/src/routes/integrations/runtime.rs#L593-L622)。一般の [Session と native conversation](session-and-agent-run.md#識別と固定するもの)とはこの所有関係で接続する。
-
-agent の責務は既存 index の競合解消と stage、および `ready` / `blocked` と理由を含む JSON 応答である。commit・branch 操作・検証計画・テスト実行・公開は host が担当する。host は成功かつ Current の投影と実 writer の収束を待ち、HEAD / MERGE_HEAD、未解消 index、unstaged / untracked file、canonical OpenWiki の変更を検査してから commit を作る。応答の ready だけで候補を採用しない。[依頼契約](../../crates/server/src/routes/integrations/runtime.rs#L349-L392)・[結果検査](../../crates/server/src/routes/integrations/runtime.rs#L541-L565)・[index 検査](../../crates/server/src/routes/integrations/mechanical.rs#L134-L171)
-
-各 step の自動 merge tree と候補との差分を保存し、conflict または自動結果以外の変更がある場合は candidate/scope に結び付いた human review を要求する。承認後は新たな agent を起動せず merge loop を進める。候補が変われば承認を流用できない。**review は次の source に進む前、受入検証は全 source の最終候補で行う。** prefix step の空の validation は prefix をテスト済みとする証拠ではない。[review と step](../../crates/server/src/routes/integrations/steps.rs#L48-L164)・[承認後の状態](../../crates/db/src/models/integration.rs#L463-L481)
+この見出しは旧参照用に残す。現在は競合の有無によらず一つの専用会話で作業する。新sourceごとのSession作成や旧checkpoint adoptionを実行しない。追加指示・質問・明示再開は通常のSession機構を使う。[起動と再開](../../crates/server/src/routes/integrations/conversation.rs)
 
 ### 保存済み説明から候補をレビューする
 
-レビューの説明は `record_review` がその時点の `semantic_summary` を保存したもので、画面は保存本文を表示する。空白だけなら説明欠落を明示し、理由を生成して補わない。説明の十分性や解消の意味的妥当性は人が判断する。候補識別子と自動 merge tree からの解消差分は native `details` 内に置き、説明、古い未決候補の警告、現在候補に検証記録がない表示は折り畳まない。[説明の保存](../../crates/server/src/routes/integrations/steps.rs#L48-L97)・[表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L28-L79)
-
-承認ボタンは未決 review が現在の候補と一致し、run が `blocked` / `merge_review` で、取消要求も公開 intent もない場合だけ表示する。同じ mounted UI 内の再送では review ID ごとに同じ request ID を使い、成功・失敗のどちらでも integrations query を無効化して再取得する。これは backend の candidate/scope・取消・公開検査の代替ではない。古い画面から送った承認も DB 側で拒否できる。[UI の条件と再取得](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L10-L25)・[操作条件](../../packages/web-core/src/features/workspace-chat/ui/IntegrationResolutionReview.tsx#L70-L105)・[原子的判断](../../crates/db/src/models/integration.rs#L420-L482)
-
-`merge_review` 中は追加指示の入力欄を出さず、承認または 自動マージ 中止を案内する。固定済み候補への非空の指示は backend でも拒否されるため、説明が足りないときは承認せず確認する。一般の Agent approval とこの解消 review は別の判断である。表示元と Session の選び方は [実行専用 Workspace の確認](../operations/workspace-inspection.md#実行専用-workspace-の確認)を参照する。[介入 UI](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L169-L214)・[候補凍結の guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
+候補・検証・省略・公開状態はhost確認のfactsとして通常会話に表示する。modelの成功文だけで公開成功にしない。旧resolution review/validation exception UIと承認toolはなく、外部書込は取消を残す。[facts表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx)・[外部取消](../../crates/server/src/remote_mcp/integration_write.rs)
 
 ## 検証方針は受付時に固定する
 
-`skip_validation` は run 全体の選択である。新規受付は明示値を優先し、省略または `null` は保存済み server preference `integration_skip_validation` を引き継ぐ。初期値と旧記録は false。domain 受付の同じ request ID の再送では、値の省略または `null` は既存 run の選択を維持し、明示値が違えば競合になる。後から preference を変えても既存 run の方針は変わらない。[受付](../../crates/server/src/routes/integrations/admission.rs#L242-L265)・[再送](../../crates/server/src/routes/integrations/admission.rs#L325-L359)
+targetの `.lvk/integration-validation.json` は参考コマンドとして凍結される。host強制のrequired planではなく、担当AIが差分・リスク・既存SHAに結び付いた証拠から必要な検証を選ぶ。`skip_validation`や追加指示は判断の入力であり、過去のpassや新しい実行結果と混同しない。このRepoの参考一覧はlocked install、real frontend build、check、lint、backend:testである。[参考設定](../../.lvk/integration-validation.json)・[読取](../../crates/server/src/routes/integrations/support.rs#L42-L65)
 
-外部 MCP では、この domain 受付より前に元の入力全体を照合する。省略と `null` の入替えも同じ request ID の再送には使えない。起動時の指定と保存値の確認は [MCP から 自動マージ の検証方針を選ぶ](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
+`verify`はexpected clean SHAで管理ScriptRequestを開始し、request ID・process ID・command・前後SHA・終了結果を保存する。同じIDと同じ入力の再送は別プロセスを起動しない。自己申告はhost実行を代替せず、exit=0も意味的な網羅性の証明ではない。失敗は履歴に残し、修復した候補には新しい証拠が必要である。[管理検証](../../crates/server/src/routes/integrations/conversation.rs#L73-L170)・[実行と照合](../../crates/server/src/routes/integrations/conversation.rs#L255-L345)
 
-検証必須の場合は、受付 target の Git object から `.lvk/integration-validation.json` の `commands` を読み、全 plan を凍結する。作業木・source branch・agent の proposal から選ばない。設定の欠落・不正、空の一覧、32件超、空文字や `true` / `:` / `exit 0` は受付エラーである。全 command は Repo root を cwd とする required check で、前提不足も失敗となる。[固定 target の読取](../../crates/server/src/routes/integrations/mechanical.rs#L42-L70)・[共通 parser](../../crates/server/src/routes/integration_validation.rs#L23-L43)
-
-この repository の設定は、`pnpm install --frozen-lockfile` → 実 frontend build → `pnpm run check` → `pnpm run lint` → `pnpm run backend:test` の順である。依存の準備も固定 plan に含めるため、source が設定を書き換えても当該 run の plan は変わらない。[設定](../../.lvk/integration-validation.json)
-
-省略 run は設定自体を読まず、検証を実行せず、summary と Manifest tests に unverified / NotRun、step に `validation_skipped` を保存する。省略 run と検証実行証拠・gate の混在、必須 run と省略済み step の混在は拒否する。clean・祖先・source 順序・target 一致・review・取消と公開の排他は維持する。[省略の検査](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1283)・[Manifest](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)。これは failed check の候補限定例外とは別で、成功した 自動マージ でも受入検証済みとは限らない。UI は次回用 preference と未検証表示を持つ。[UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
-
-<!-- openwiki: broken internal link [../../docs/development/chatgpt-mcp.md#L176-L187] heading anchor "L176-L187" does not exist in "../../docs/development/chatgpt-mcp.md". Fix the href or restore the target, then delete this comment. -->
-`skip_validation` が表すのは、設定された追加の自動マージ検証を今回実行するかどうかであり、既存の検証証拠の有無ではない。既存証拠は tested SHA、候補との差分、競合解消、新たな未検証範囲に対応付けて評価する。省略 run の保存上の unverified / NotRun を過去の試験失敗や証拠不存在と同一視せず、逆に過去の成功を今回の追加検証成功にも読み替えない。[公開 MCP 契約](../../docs/development/chatgpt-mcp.md#L176-L187)・[実行時の省略記録](../../crates/server/src/routes/integrations/runtime.rs#L694-L709)。必要な検証を選ぶ AI の運用指針は [開発時の証拠評価](../operations/development.md#検証の対象を取り違えない)を参照する。
+`skip`はuser/agent、理由、残リスクを保存する。新候補で古いSHAの検証を再利用する場合も、差分と省略理由を記録し、旧passを新SHA実行と呼ばない。公開時はcode SHAの証拠を照合し、同commandの後続passまたは理由付きskipのない失敗は拒否する。[証拠検査](../../crates/server/src/routes/integrations/conversation.rs#L674-L763)
 
 ## 検証コマンドの編集と反映
 
-検証設定は Repo の `.lvk/integration-validation.json` が正本である。Repository settings のエディターは登録 checkout の path・branch・HEAD を表示し、その作業木を編集する。startup/cleanup の DB 設定とは保存先が異なる。DB へ別の command 設定を複製せず、既存の target Git object 読取を維持する判断が記録されている。保存は commit・stage・branch 切替・push・コマンド実行を行わない。目的の target branch に通常の Git 手順で反映してから、新規 自動マージ の受付で plan を固定する。既存 run の plan は変わらない。[設定画面への接続](../../packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L730-L738)・[保存処理](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[受付時の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)・[設計判断](../../tests/integration-validation-settings/README.md#正式integration検証設定の隔離試験)
+検証設定は Repo の `.lvk/integration-validation.json` が正本である。Repository settings のエディターは登録 checkout の path・branch・HEAD を表示し、その作業木を編集する。startup/cleanup の DB 設定とは保存先が異なる。DB へ別の command 設定を複製せず、既存の target Git object 読取を維持する判断が記録されている。保存は commit・stage・branch 切替・push・コマンド実行を行わない。目的の target branch に通常の Git 手順で反映してから、新規 自動マージ の受付で 参考コマンドを固定する。既存 run の参考設定は変わらない。[設定画面への接続](../../packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L730-L738)・[保存処理](../../crates/server/src/routes/integration_validation.rs#L133-L171)・[受付時の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)・[設計判断](../../tests/integration-validation-settings/README.md#正式integration検証設定の隔離試験)
 
 ### 編集内容と下書きの寿命
 
-JSON は `commands` だけを持つ object で、1〜32個の文字列を順序どおりに扱う。一つの要素は複数行でもよく、実行時は一つの Bash script になる。空白だけの文字列と、trim 後の `true`・`:`・`exit 0` は拒否するが、これはコマンドの有用性や成功を保証する検査ではない。保存 API と凍結 target reader は同じ Rust parser を使い、UI にも保存可否の検査がある。[parser](../../crates/server/src/routes/integration_validation.rs#L23-L43)・[UI の判定](../../packages/web-core/src/shared/lib/integrationValidationSettings.ts#L14-L40)・[実行器への引渡し](../../crates/server/src/routes/integrations/runtime.rs#L831-L862)
+JSON は `commands` だけを持つ object で、1〜32個の文字列を順序どおりに扱う。一つの要素は複数行でもよく、実行時は一つの Bash script になる。空白だけの文字列と、trim 後の `true`・`:`・`exit 0` は拒否するが、これはコマンドの有用性や成功を保証する検査ではない。保存 API と凍結 target reader は同じ Rust parser を使い、UI にも保存可否の検査がある。[parser](../../crates/server/src/routes/integration_validation.rs#L23-L43)・[UI の判定](../../packages/web-core/src/shared/lib/integrationValidationSettings.ts#L14-L40)・[実行器への引渡し](../../crates/server/src/routes/integrations/conversation.rs#L255-L282)
 
 UI は順序付きの複数行入力と追加・削除、raw JSON の修復欄を持つ。読取は JSON の妥当性を要求しないため、不正な既存内容も修復できる。欠落ファイルは `content: null` として表示し、有効な内容を保存して作成する。編集中は最初に読んだ revision を下書きの base に保持する。保存失敗・再読込失敗でも mounted component の下書きを残し、保存成功時はサーバーの読戻し結果を cache に入れる。明示的な「下書きを破棄して再読込」は取得成功時だけ下書きを捨てる。これは再起動をまたぐ永続 draft ではない。[状態と操作](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L29-L98)・[JSON と command 入力](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L108-L204)
 
@@ -157,92 +104,31 @@ revision は branch・HEAD・ファイルの存在と正確な内容の組から
 
 保存成功の表示は読戻しまでの成功であり、target への commit や検証成功ではない。また置換後の読戻しにも失敗経路があるので、エラー表示だけから「ファイルは変更されていない」と断定しない。下書きを控えて現在のファイルを確認し、競合時は再読込した版を基に編集し直す。[置換と読戻し](../../crates/server/src/routes/integration_validation.rs#L163-L171)・[UI の失敗処理](../../packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L64-L98)。一連の操作は [正式統合への手順](../workflows/task-to-integration.md#並列変更を試してから正式統合する)を参照する。
 
+
 ## 開発検証と human gate
 
-host は全 source の merge/review 後、最終候補 R 上で固定 commands を Bash の `IntegrationValidation` ExecutionProcess として逐次実行する。各 prefix では実行しない。cwd は symlink 解決後も Repo 内、前後の commit は同じ clean R、上限は一 command 一時間で、終了後の after-HEAD と process cleanup も待つ。ログの成功宣言ではなく、Session・reason・command / cwd・非 dropped・終了結果・before/after commit を再照合する。[実行](../../crates/server/src/routes/integrations/runtime.rs#L804-L943)・[証拠照合](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1327)。これは固定 plan の実行証明であり、意味的な要件網羅の機械的証明ではない。
-
-required check が通らない場合は blocked とし、失敗証拠とリスクを保存する。利用者は retry・その check と候補に限定した例外 continue・cancel を選べる。例外は合格への書換えではなく、対象候補の保証欠落を明示した判断である。actor、request ID、時刻と scope を保存し、古い判断や別候補への再利用を拒否する。自動 AI 修正ループは開始しない。[gate](../../crates/server/src/routes/integrations/runtime.rs#L945-L972)・[原子的判断](../../crates/db/src/models/integration.rs#L325-L407)
-
-外部 MCP の明示承認もこの UI 共通判断へ入り、取消も既存 handler を使う。新しい承認 engine や自動承認は作らない。MCP 固有の固定証拠・scope・再送と、取消受付から予約解放までの読み方は [MCP から承認・取消する](../integrations/remote-access.md#mcp-から-integration-を承認取消する)を参照する。[共通経路への委譲](../../crates/server/src/remote_mcp/launch.rs#L135-L154)
+通常の開発規則と変更リスクに応じた検証は有効である。現行の隔離試験は実Git/SQLite・管理commandでrepair、safe drift、unsafe drift、Wiki error、cancel、intent/receipt crashを扱う。通常ignoreされ、新規の専用LVK_INSTANCE_DIRを要求し、providerは予約だけで実モデルを起動しない。fixtureと実Auth0/ChatGPTのE2Eを区別する。[隔離会話試験](../../crates/server/src/routes/integrations/conversation_tests.rs)
 
 ## 公開・Done・Wiki は別の結果
 
-公開直前に target が B のままであること、固定 source の存在、選択した検証方針と review の完了、実行環境と target writer の idle を確認する。取消と `publication_intent` は DB writer transaction で一方だけが勝つ。この境界を越えた Cancel は Git undo にならない。Git は ref lock 下で B を比較し、追加 merge commit を作らず **固定した R そのもの**を公開する。target checkout は許可された managed path・clean 状態・一つの checkout を要求し、ignored file の衝突も保護する。Git の ref / index / files と DB は一 transaction ではない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L1329-L1407)、[Git publication](../../crates/git/src/publication.rs)。
+Wiki有効時はコード検証後、同じ候補branchでOpenWikiの正規ライフサイクルを完了しWikiだけを別commitにする。公開要求はcode_commit・wiki_commit・final candidateを別々に固定する。codeからfinalまでWiki以外が変わっていれば拒否する。Wikiだけの後続commitをコード試験済みと偽らない。別の後続Wiki Workspaceは作らない。[公開入力](../../crates/server/src/routes/integrations/conversation.rs#L346-L402)
 
-Board 一覧と Workspace の専用介入欄は、完全な IntegrationRun の `published` を優先し、true なら反映済み、false かつ `publication_intent` があれば「反映結果の照合中」、どちらもなければ未反映と表示する。status 名だけで未反映と推測しない。Git 更新後の receipt 保存が失敗し得るため、intent が残る `blocked` / `recovery_required` でも未反映と断定できない。これは再実行の指示ではなく、下記の Recover による証拠照合を必要とする状態である。[Board の表示](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx#L530-L540)・[Workspace の表示](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx#L82-L92)・[Git と DB の引渡し](../../crates/server/src/routes/integrations/runtime.rs#L1383-L1406)
+`publish`の受付はGit適用ではない。担当Runを終え、hostがRun・process registry・scriptsの収束とNative Audit上のWiki完了証拠を確認してから公開する。targetが進んでも候補作業は中断せず、公開時に実targetが完成候補の祖先なら候補を変更せずCASで反映する。祖先でなければ候補・証拠を保持して未公開In Reviewに止め、自動merge/rebase・追従連鎖を行わない。[公開](../../crates/server/src/routes/integrations/runtime.rs#L319-L415)
 
-Git publication 確認後、採用元の選択 Card は Done 優先の可視最終列へ進める。title・description・revision やリンク変更は現在の不適格条件ではなく、別 run の予約、Card / 移動先不在なら理由を保存する。更新と receipt は同じ transaction で、一度記録した結果は再適用しない。一方、新規の専用 自動マージ Card は `published=true` を読む [生成 Issue の状態投影](project-and-issue.md#生成-issue-の状態契約)が Done を所有し、可視 Done がなければ他の列へ代替しない。後処理の `card_done_result` は観測結果を保存し、手動 Cancelled や公開後の再オープンを上書きしない。旧専用 Card の互換経路にも Cancelled 保護がある。[採用元と専用 Card の分岐](../../crates/db/src/models/integration.rs#L545-L627)・[手動介入の回帰](../../crates/db/tests/generated_issue_status.rs#L360-L386)
+取消とpublication intentはDB transactionで排他する。Gitはref lockでbaseを比較し、新commitを作らず完成候補そのものを反映する。managed target checkoutのclean・path・一意性とignored file衝突も検査する。ref/index/filesとDBは一transactionではない。保存済みintentから実Gitを照合し、適用済みだけ後処理し、未適用や不明な部分適用を推測で再mergeしない。[exact publication](../../crates/git/src/publication.rs)・[回復](../../crates/server/src/routes/integrations/runtime.rs#L420-L480)
 
-専用 Card は queued を含む通常進行・再開で In Progress、blocked / failed / cancelled / recovery_required および未公開 succeeded では In Review となる。競合 Agent の待機・失敗は integrating 中だけ反映し、host の validating へ進んだ後は古い Agent 通知で戻さない。公開が確定すれば後続 Wiki 失敗でも Done を保持する。これは採用元 Card の一般 Agent 同期とは別の契約である。[状態の正本](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L55)・[再開と後着通知](../../crates/db/tests/generated_issue_status.rs#L179-L233)
+公開後は採用元CardのDone処理とreceiptを記録する。Cancelledや公開後の再オープン、他run予約は上書きしない。新しい実開始によるDoneからの再着手に、旧receiptを再適用しない。生成Issueは進行/再開でIn Progress、停止でIn Review、公開済みでDoneへ投影する。成功後の専用Issue/Workspaceは通常archive契約に従い、採用元Workspaceを削除対象にしない。[完了](../../crates/db/src/models/integration.rs)・[生成状態](../../crates/db/migrations/20261027090000_generated_issue_status.sql)・[archive guard](../../crates/server/src/routes/local_remote/issue_archive.rs)
 
-採用元の通常 Card では、Done は作業の再開を禁止する状態ではない。[新しい実開始による再着手](project-and-issue.md#kanban-と実行の同期契約)で In Progress に戻った後も、過去の 自動マージ の記録済み receipt は再適用されず、新しい作業を Done に戻さない。次の公開は別 自動マージ の receipt で完了を記録する。[両保存経路を通る回帰テスト](../../crates/db/src/models/agent_runtime_kanban_tests.rs#L578-L706)は Done → In Progress → In Review → 新しい 自動マージ の Done と、旧 receipt・旧終端 attempt の再送保護を扱う。これは DB fixture であり、実 provider 起動や Git 公開の検証を代替しない。
-
-Memory 有効時は凍結した event IDs と統合固有 Manifest を outbox へ結ぶ。Memory 無効なら記録を新設しない。semantic outbox や後続 Wiki の失敗は成功した Git / Done を取り消さず、自動マージ succeeded は Wiki 完了の証明ではない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L1465-L1582)。記録の寿命と acknowledgement は [Repository Memory](repository-memory.md)に説明する。
+Wiki有効時の公開済みevent receiptと鮮度は既存Memory storeへ保存する。Git適用後のreceipt失敗は `Wiki receipt pending` として回復し、既に適用したGitを取り消さず、Card完了やarchiveを巻き戻さない。[後処理](../../crates/server/src/routes/integrations/runtime.rs#L480-L520)・[Wiki receipt](../../crates/server/src/routes/integrations/conversation.rs#L765-L838)
 
 ## 中断・介入・回復
 
-公開前に blocked となった mechanical run は、保持した Workspace・固定 source・writer の停止・target B を確認して明示 Resume できる。候補が凍結済みなら非空の追加指示を拒否する。まだ候補がなければ前 conflict job の終端を確認し、index を保ち、新規 Session の Create で解消を続ける。server restart 後の検証 command は自動 replay せず、明示 Resume から未完了の検証を再開する。既存の passed / candidate-bound exception は同じ候補の証拠として扱う。[介入](../../crates/server/src/routes/integrations/runtime.rs#L106-L206)・[中断検出](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)・[検証再開](../../crates/server/src/routes/integrations/runtime.rs#L817-L830)
-
-技術的 hold は conflict job を勝手に再起動・取消しない。writer が収束していなければ予約を保持する。明示 Cancel は受理済み identity の停止と script/host の idle を確認してから解放する。検証失敗や review 待ちでは候補の予約を維持し、技術的失敗が既に idle なら解放する。[hold](../../crates/server/src/routes/integrations/runtime.rs#L1154-L1200)・[取消](../../crates/server/src/routes/integrations/runtime.rs#L994-L1152)
-
-公開 intent 後は Recover が Git 証拠を照合する。R が適用済みなら後処理へ、ref / index / files が B のままなら未適用として止まり、新しい選択を求める。途中状態や未知の ref を推測で reset しない。確定 receipt がある場合のみ、その後の正当な target 前進を許容できる。[回復](../../crates/server/src/routes/integrations/runtime.rs#L1409-L1463)、[Git 証拠](../../crates/git/src/publication.rs#L82-L132)。
-
-standalone と embedded の monitor 配線差は [起動順序](../architecture/system.md#起動時は内側の所有者から回復する)を参照。実行結果・ログ・owner 情報は保持されるが、終了と cleanup の条件を満たす Workspace は一時的な execution-only 予約を解除し通常操作へ戻せる。[用途解除](workspace.md#操作用途と実行所有者)。
-
-成功・公開済み run の Recover は Git / Card の確定結果を再適用せず memory 後処理を再試行する。旧 run の製品 node は親 orchestration 投影も再照合するが、mechanical run の製品完了は無操作であり、adoption された旧 terminal audit も保持する。[成功後回復](../../crates/server/src/routes/integrations/runtime.rs#L62-L93)・[製品完了](../../crates/server/src/routes/integrations/runtime.rs#L1202-L1221)
-
-### 旧 run の checkpoint adoption
-
-旧 payload は `mechanical=false` が既定である。通常 Resume は `LEGACY_INTEGRATION` で拒否し、過去の Create/Steer や degraded projection を自動 replay しない。Cancel と publication recovery は残る。これは [一般 AgentRun Retry の限定投影回復](../architecture/agent-runtime.md#明示-retry-に限る-startup-collision-の回復)とは別の互換境界である。[engine guard](../../crates/server/src/routes/integrations/mechanical.rs#L87-L94)・[monitor の分岐](../../crates/server/src/routes/integrations/runtime.rs#L432-L465)
-
-`POST /api/integrations/{id}/adopt-checkpoint` は汎用移行ではなく、run `c68ce019-9349-4679-976f-326120191c08` と候補 `8d0eda6b75cce0d0930a17c46d43c5d162f58e7b`、固定 payload digest だけを受け付ける。project、安定 request ID、candidate と必須 `dry_run` を指定する。3件の承認済み prefix、親/source ref、clean private checkout、scope と解決 diff、skip 方針、終了証拠、配送済み outbox と既知の失敗 command を照合する。dry-run は DB を変更しない。[受付と照合](../../crates/server/src/routes/integrations/legacy_checkpoint.rs#L19-L174)・[Git / review](../../crates/server/src/routes/integrations/legacy_checkpoint.rs#L223-L304)
-
-実行時は必要な旧 cancelling product の完了を既存 API で収束させ、元 payload・error・Agent identity を履歴へ残し、payload CAS で adoption する。同じ request は冪等に再送できる。状態は blocked のままで、別の明示 Resume が source 4 を再計算する。旧 parent Cancelled / node Succeeded の場合は特定の109/110 event と成功した元 child link を要求し、terminal audit を書き換えない。adoption は Git 公開・古い Agent の再実行・成功への格上げではない。[履歴保全と CAS](../../crates/server/src/routes/integrations/legacy_checkpoint.rs#L131-L220)
-
-## 検証の入口と記録の限界
-
-[機械的 merge の回帰テスト](../../crates/server/src/routes/integrations/runtime_tests.rs#L1340-L1643)は実 temporary Git を使い、重複適用、conflict cleanup 中断、承認の再送と失効、dirty/moved HEAD、固定 plan と skip、Create identity を扱う。[隔離 scenario](../../crates/server/src/routes/integrations/scenario_tests.rs)は production host entrypoint を使い、conflict→review→次 source→publication、startup reconciliation→adoption→Resume を検査する。通常は ignore され、独立した新規 `LVK_INSTANCE_DIR` を要求する。host scenario の実 Codex は追加 opt-in、adoption は private fixture を要する。browser scenario は別の ignored test として用意され、外部 MCP の E2E はこれらの試験範囲に含まれない。
-
-[調査・回復記録](../../docs/development/integration-dispatch-recovery.md)は設計判断と過去の検証結果を残す。旧 per-step handoff の撤去後も、一般 Workflow の配送受理と SQLite writer 予約、一般 Retry の回復は依存先がある。記録中の instance 固定 cutover 手順や live 未実行の記述を、現在の配置状態として扱わない。この Sync は統合 source を調査したもので、過去の binary、live adoption、公表済みテスト成功を再確認したものではない。
-
-[隔離ブラウザ試験](../../tests/integration-review/README.md)は build 済み frontend、実 router / local Access、一時 SQLite・Git、loopback の port 0、Chromium を使う。provider 起動・回答は固定イベントに置換し、server main 全体の monitor ではなく試験が実 `advance` を駆動する。承認から公開、取消後の target 不変、候補差替え後の古い承認拒否、保存説明欠落、reload と Enter/Space による詳細開閉、判断再送を検査する。空説明は保存記録を変える fixture であり、現行 parser が空 summary を受け付ける意味ではない。新規受付 UI、実 AI の解消品質、public Basic/Auth0、外部 MCP の検証ではない。[隔離起動](../../crates/server/src/routes/integrations/scenario_tests.rs#L30-L77)・[候補と公開の確認](../../crates/server/src/routes/integrations/scenario_tests.rs#L300-L438)・[browser 操作](../../tests/integration-review/browser.mjs)・[parser](../../crates/server/src/routes/integrations/mechanical.rs#L322-L341)
-
-公開 intent の有無と published の優先順位は [介入欄の component test](../../packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.test.tsx#L163-L216)、重複した公開表示をしないことは [inspection test](../../packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.test.tsx#L160-L188)が扱う。今回の Sync は凍結 source `8cf59511e3919425397fe1963d6d90be69fa48a2` の UI、保存・判断・公開処理、試験定義を静的に照合した。供給された自動マージ は検証省略であり、開発時の成功記録を統合後の検証成功へ読み替えない。この Sync では製品試験を再実行せず、無関係な既存契約の再検証も主張しない。
-
-MCP の [隔離 host scenario](../../crates/server/src/routes/integrations/scenario_tests.rs#L741-L768) は、実 Git / SQLite と共通 domain に adapter から入り、承認後の公開と、取消受付時の予約保持から解放までを検査する。[adapter の境界試験](../../crates/server/src/remote_mcp/integration_write_tests.rs#L26-L244)は権限不足、別 Project、固定証拠の各要素・live target の変更、同一要求の同時送信、receipt と現在状態の差も扱う。provider は固定イベントであり、新 tool の成功を HTTP transport 全体で確認する E2E や実 Auth0 / ChatGPT の確認とは異なる。[実装時の検証記録と限界](../../docs/development/integration-mcp-decisions.md)を今回の試験実行結果に読み替えない。
-
-### 検証設定エディターの試験境界
-
-[ファイル編集の Rust fixture](../../crates/server/src/routes/integration_validation/tests.rs)は JSON・複数行互換、保存時の HEAD/index 不変と非実行、同時保存の一勝者、branch/HEAD/内容の競合、symlink・サイズ制限を扱う。[凍結 plan の回帰](../../crates/server/src/routes/integrations/runtime_tests.rs#L1512-L1545)は、未コミット設定が受付に効かず、commit 後の target を読むこと、後続の作業木変更が plan を変えないこと、skip が設定を読まないことを検査する。
-
-[隔離 HTTP 試験](../../crates/server/src/routes/integrations/validation_settings_tests.rs#L21-L150)は一時 instance・Git・SQLite と loopback port 0、production Repo router と local Access/CSRF を使う。GET/PUT、403/400/409、非 root Unix の書込権限不足500、保存後の非実行と読戻しを確認し、commit した plan を既存 `ScriptRequest` の Bash 実行へつなぐ。自動マージ の admission→container 監督→publication 全体を駆動する E2E ではない。[ブラウザ fixture](../../tests/integration-validation-settings/browser.mjs#L1-L198)は製品 component と mock API を使うため、下書き・修復・保存表示の検査と実サーバー保存の検査を区別する。
-
-今回の設定編集 Sync は凍結 source `8079c5159e3c7b0d4817487177be6bf319de451e` の UI、transport、保存 handler、Git lock、受付・実行器、試験定義を静的に照合した。[開発時記録](../../tests/integration-validation-settings/README.md#rust--実http接続の追加検証)では初回の Rust 未実行を後続の限定試験成功が補っているが、public Basic/Auth0、自動マージ 全体、production frontend build の検証を意味しない。供給された自動マージ は検証省略であり、この Wiki 保守でも製品試験を再実行していない。独立レビュー待ちという入力は完了証拠ではなく、無関係な過去の Wiki 内容の再検証も主張しない。
-
-### 競合 Session 分離の検証境界
-
-[回帰試験](../../crates/server/src/routes/integrations/runtime_tests.rs#L1670-L1942)は連続する競合 step と明示 Resume の Session 分離、保存後・Create 前の再起動と同一 dispatch 再送、実 SessionObserved 投影、異なる native identity の拒否、degraded 履歴の保持、transaction 失敗時の Session と dispatch の rollback を検査する。`ready` 本文があっても `Succeeded && Current` を満たさなければ採用しない。試験は永続化・投影境界の fixture であり、実 Codex や browser からの Resume、既存 blocked run の復旧、配備は未検証である。今回の文書保守では試験を再実行していない。
-
-受付で生成する 自動マージ Card も保存済み Project key で採番し、同じ transaction で system を付ける。priority は共通の medium 既定に従う。分類は execution owner や承認の代替ではない。[識別と分類](project-and-issue.md#仕事の識別と分類)・[生成](../../crates/db/src/models/integration.rs#L279-L305)。
+明示指示で同じ会話を再開できる。保持したedits/indexをresetせず、以前の失敗や検証履歴を成功へ書き換えない。取消は実writer収束を待ち、公開intent後の取消はGit undoにならない。`get_integration`とoperation receiptは別の観測であり、取消受付を予約解放と同一視しない。[再開](../../crates/server/src/routes/integrations/conversation.rs#L624-L672)・[取消](../../crates/server/src/remote_mcp/integration_write.rs)
 
 ## 成功後の専用作業領域
 
-新規の自動マージ は専用 Card・Workspace の作成 transaction で生成元を記録する。公開成功を保存し予約を解放した後、既存 monitor が owner を解除できた回だけ、その専用 Workspace の自動 archive を試す。mechanical run は AgentRun がなくても対象であり、採用元の Workspace は対象にしない。専用 Issue が Cancelled、または生成状態 receipt / 現在列が Done でなければ自動 archive を拒否する。公開後に人が再オープンした Issue も保持する。詳細な一度限りの資格、介入検出、物理削除の失敗条件は [生成された専用 Workspace の自動 archive](workspace.md#生成された専用-workspace-の自動-archive)を参照する。[生成記録](../../crates/db/src/models/integration.rs#L326-L335)・[成功と予約解放](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1553)・[成功照合](../../crates/server/src/routes/local_remote/issue_archive.rs#L492-L515)
-
-semantic outbox が失敗しても 自動マージ の成功から分離し、後続 Wiki 完了を待たず後処理できる。成功後の Recover は登録 Repo と凍結 payload・Memory store から記録を再構成し、専用 worktree の存続に依存しない。archive の拒否・不明・削除失敗は Git 公開や Card 完了を巻き戻さない。[outbox と回復](../../crates/server/src/routes/integrations/runtime.rs#L1533-L1618)・[archive の警告](../../crates/server/src/routes/local_remote/issue_archive.rs#L429-L437)
+生成Issueの自動archiveはCancelledを拒否し、Done投影receiptと現在のDone列を照合して手動再オープンを保持する。公開成功、Wiki完了、後処理receipt、物理worktree削除はそれぞれ別の結果として読む。[共通archive](../../crates/server/src/routes/local_remote/issue_archive.rs)
 
 ## 名称と互換境界
 
-利用者向けの機能名は日本語「自動マージ」、英語「Auto-merge」である。Board の入口・履歴・検証設定、MCP の説明、今後生成する専用 Card / Workspace / Session の名前でこの名称を使う。通常 merge は host が機械的に進め、競合だけを AI に任せるため、名称は無条件の自律成功を意味しない。必要な review・検証例外・承認で停止する契約は上記のままである。[UI の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1349-L1392)・[受付時の命名](../../crates/server/src/routes/integrations/admission.rs#L227-L240)・[競合 Session](../../crates/server/src/routes/integrations/runtime.rs#L506-L550)
-
-互換性のため、`start_integration` / `get_integration` / `approve_integration` / `cancel_integration`、`/api/integrations`、`IntegrationRun`、DB・保存キー・状態、`.lvk/integration-validation.json` は維持する。名称のためのデータ移行は行わず、既存 Card・過去ログ・migration の原文も書き換えない。Wiki 内の旧節 anchor とこのページの path も参照先として残す。外部サービスの integration や Design Note の `integrate` は別の概念である。[互換方針の記録](../../docs/development/auto-merge-naming.md#残す表記と理由)・[変更しない MCP 契約](../../crates/server/src/remote_mcp/integration_write.rs#L15-L42)・[公開と Wiki の独立処理](../../crates/server/src/routes/integrations/runtime.rs#L1534-L1556)
-
-コードの公開成功、Card 完了、後続 Wiki の acknowledgement を個別に確認する。Wiki だけの失敗はマージ済みコードの取消ではない。API と保存値の `integration` を利用者向けの別機能名として提示せず、操作に必要な識別子だけを正確に伝える。[MCP の説明](../../crates/server/src/remote_mcp/launch.rs#L220-L226)
-
-### 名称変更の回帰と検証範囲
-
-[DB 回帰試験](../../crates/db/src/models/integration.rs#L1220-L1249)は、別 run に Card の予約を移した後、旧公開の完了処理が元の列を変えないことを検査する。期待する診断文は `another Auto-merge` に追随したが、状態の assert は維持される。migration 由来の旧診断文を扱う試験は別の互換契約として残る。[修正理由と過去の失敗記録](../../docs/development/auto-merge-naming.md#219のdb期待値修正2026-10-27)
-
-この Sync は凍結 source `e4a2dc3ca101233becb63b355f7020f5396da415` の名称差分、受付・実行・MCP・DB の処理と試験定義を静的に照合した。凍結入力には初回の期待値失敗、修正後の DB 試験成功、最終候補の install / frontend build / check / lint / backend:test 成功が記録される。これらは供給された実行履歴であり、この保守で製品 suite、実モデル、実 Auth0 / ChatGPT、稼働 DB や通知配送を再実行した結果ではない。無関係な過去の説明全体の再検証も主張しない。
-
-今回の生成 Issue 状態の更新は統合 source `7d3bd3e637580c18d5311ec7a5b7466d203683ef` の migration、Card 完了分岐、owner 解放、archive guard と独立した DB / host scenario 定義を静的照合した。凍結入力は最終候補の install・frontend build・check・lint・backend:test 成功を報告するが、この Wiki 保守で再実行した結果ではない。供給された fixture follow-up の qa-mode Clippy 失敗も、単体の通常 Clippy 成功と区別する。実 provider / browser / live 環境や無関係な既存契約全体の再検証は行っていない。
+利用者向け名称は自動マージ / Auto-merge。現行のstart/get/cancel_integrationとAPI/DB識別子は維持する一方、旧approve_integration・decision/intervene/adopt-checkpointの実行経路は撤去済みである。名称互換を理由に旧executorを再配送しない。[現行契約](../../docs/development/conversation-auto-merge.md)

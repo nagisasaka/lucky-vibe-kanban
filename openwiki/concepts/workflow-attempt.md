@@ -31,7 +31,7 @@ sources:
 generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:15:35.501Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Workflow Attempt とグラフの契約

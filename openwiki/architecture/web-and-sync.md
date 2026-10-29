@@ -80,10 +80,14 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx
   - id: openwiki-source-e0c2de9e01617a8949b78360
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
+  - id: openwiki-source-aba3fb5b0d329d04b4246f24
+    resource: repo://packages/web-core/src/features/kanban/ui/kanbanDropSync.ts
   - id: openwiki-source-0c16a411788f6c8651e3028e
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanGrid.tsx
   - id: openwiki-source-33701702cd7715b9892ea2f1
     resource: repo://packages/web-core/src/features/kanban/ui/kanbanOrder.ts
+  - id: openwiki-source-6a34c3fac399806f79211e80
+    resource: repo://packages/web-core/src/features/kanban/ui/KanbanServerMotion.tsx
   - id: openwiki-source-f6872c1e7e07221eda6db545
     resource: repo://packages/web-core/src/features/onboarding/ui/LandingPage.tsx
   - id: openwiki-source-71d9a385f4b03b8ca71765b0
@@ -166,6 +170,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/aggregateEntries.ts
   - id: openwiki-source-e665e0fe8e478ec542e0ace4
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
+  - id: openwiki-source-7ac3d3320cb9464c58c037f4
+    resource: repo://packages/web-core/src/shared/lib/electric/snapshotActivity.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
@@ -206,10 +212,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Web の実行環境と同期
@@ -324,7 +330,7 @@ mutation は REST 成功後に cache を破棄し、進行中の古い取得を�
 
 pointer collision はカードを優先し、空列も drop 対象にする。keyboard は sortable の座標を使い、drop 後に同じ Issue ID のカードへ focus を戻す。内側の button・link・summary 等から mouse/touch drag を開始せず、子要素の key 操作もカード側で横取りしない。カード自身の Enter は詳細を開き、drag 後の click は抑止する。複数選択中は sortable を無効にする。[sensor と focus](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L52-L87)・[操作の分離](../../packages/web-core/src/features/kanban/ui/KanbanGrid.tsx#L128-L190)・[複数選択の接続](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1192-L1200)
 
-保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。先に画面の配列を更新し、drag 対象1件の rank と移動先 status、drag 開始時の `expected_sort_order` を既存 bulk mutation へ渡す。兄弟カードを renumber しない。失敗時は console に記録し、この handler 自身には明示 rollback がない。完了後500msで同期抑止を解除するので、drag の見た目だけを保存成功と扱わず、上記の REST snapshot 収束と合わせて調べる。[既存 handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L684-L780)
+保存側は Manual 以外の同列並べ替えを拒否するが、列間移動は許可する。drag 対象1件の rank・status・開始時の期待rankを `KanbanDropSync` へ渡し、同じカードの連続保存を直列化する。保存成功だけで楽観状態を消さず、対応する新鮮なsnapshotの到着を待つ。保存失敗と同期失敗は別の通知となり、同期だけの再取得は書込を再送しない。固定500msで同期抑止を解除する方式ではない。[handler](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L775-L865)・[保存と同期](../../packages/web-core/src/features/kanban/ui/kanbanDropSync.ts)
 
 drag 中は snapshot による配列同期を保留し、drop 計算は開始時の rank と現在の rank を比較する。activity で先頭へ昇格した peer を挿入境界から除き、残る安定カードの前へ挿入するときも昇格 prefix の後へ置く。DB 側の期待 rank 照合は未受信の昇格を古い drop で上書きするのを防ぐ。順位更新のイベントと明示 sort の意味は [Issue の activity 順序](../concepts/project-and-issue.md#activity-による手動順序の更新)を参照する。[同期抑止](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L500-L560)・[rank 計算](../../packages/web-core/src/features/kanban/ui/kanbanOrder.ts#L1-L79)
 
@@ -483,3 +489,13 @@ Session 一覧の再取得では利用者が選んだ古いログや new-session
 単一操作は実見出しと結果プレビューを最初から表示し、一回の展開で保持詳細へ進む。複数操作の折り畳みでも個々の操作・結果を残す。出力なしの完了、待機、部分取得、取得不能を区別し、details の copy は保持原文を使う。[表示部品](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L94-L242)・[単一操作](../../packages/ui/src/components/ChatAggregatedToolEntries.tsx#L302-L369)。公開 reasoning summary、明示 plan と通常 commentary は別の内容として表示する。summary の native part ごとに空白だけの delta も保持し、完成時は同じ item の永続内容へ収束する。private reasoning を推定して補わない。[投影](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L775-L868)・[一時内容の収束](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L215-L232)。
 
 今回の表示更新の検証入口は canonical projection、tool lifecycle/output preview、pending message、layout/sync と execution-group の各 fixture、および `syntax-isolated-e2e.mjs` である。合成 event と制御した HTTP/WS を使う試験を実 provider 生成と扱わない。凍結入力は closed-client WebSocket の timing failure と、別途の実画面での受入報告を両方保持している。今回の保守は source と試験定義の静的照合で、実機 touch/IME・実 provider・外部認証の再試験ではない。
+
+## 確定配置の自動補間
+
+`KanbanServerMotion` は既存カードの確定配置変化だけを400msの `cubic-bezier(0.2, 0, 0, 1)` で補間する。外側wrapperのWAAPIと内側dnd-kitのtransformを分け、列間は inert / aria-hidden の一時複製を見出し下にclipする。rankやstatusを演出から書き換えない。連続更新は現在の表示位置から最新配置へ向かい、履歴queueを作らない。[表示の所有](../../packages/web-core/src/features/kanban/ui/KanbanServerMotion.tsx)
+
+初回・cache・表示条件の変更・非表示や通信回復の最初の成功snapshotは静かな基準とする。`SnapshotActivity` は取得開始時刻と成功世代を通知し、Readyや固定timerを成功の代用にしない。後続の新鮮な配置だけを演出する。[freshness gate](../../packages/web-core/src/shared/lib/electric/snapshotActivity.ts)・[取得側](../../packages/web-core/src/shared/lib/electric/collections.ts#L270-L360)
+
+drag開始前に自動演出を止め、手動drag中は同期配置を割り込ませない。scroll・resize・reduced motionでも停止する。移動の両端がviewport内にある場合だけ飛行し、filter出入りの始点を捏造しない。列をまたいだときは元のカード内にあったfocusだけを対応要素へ `preventScroll` で復元する。[寿命とfocus](../../packages/web-core/src/features/kanban/ui/KanbanServerMotion.tsx)
+
+再検証は [motion試験](../../tests/kanban/README.md#server-driven-placement-motion-local-259)を使う。今回の候補 `48b7685e645e6001473e44da6c2fcf4e4aefc79d` では局所23件、Chromiumの幅360/535/536/600px、候補backendとの実API motion・DnD・touch試験が成功した。中間フレーム、最終rank/status、件数・focus、同期失敗回復を検査した。visibility境界は合成eventで、実tab休止、実機Safari、実providerの実行は未検証である。

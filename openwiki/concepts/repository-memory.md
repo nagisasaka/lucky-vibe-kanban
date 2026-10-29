@@ -6,8 +6,10 @@ tags: [repository-memory, openwiki, manifest, reconciliation]
 sources:
   - id: openwiki-source-0545bff1ae2507a92137efaf
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
-  - id: openwiki-source-ecfa47de2e3842c785820c9b
-    resource: repo://crates/server/src/routes/integrations/mod.rs
+  - id: openwiki-source-66ad37ee88955047b3c38a58
+    resource: repo://crates/server/src/remote_mcp/verification_read.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -26,16 +28,20 @@ sources:
     resource: repo://crates/services/src/services/openwiki/sync_input.rs
   - id: openwiki-source-6067be8d6f85caa8ac03638f
     resource: repo://crates/services/src/services/repository_memory.rs
+  - id: openwiki-source-e51613cab91648b359e132f4
+    resource: repo://crates/services/src/services/repository_memory/verification.rs
   - id: openwiki-source-a171e1a170f941fa2a4ba003
     resource: repo://crates/utils/src/repository_memory.rs
+  - id: openwiki-source-d9f9dde71208b862845ec1a7
+    resource: repo://crates/utils/src/repository_memory/verification.rs
   - id: openwiki-source-42e4658efb0c9810a0f8245c
     resource: repo://docs/design/openwiki-implementation-checkpoints.md
   - id: openwiki-source-d19b7cc964a7f5f0837a46de
     resource: repo://docs/design/openwiki-repository-memory.md
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Repository Memory の三層と統合契約
@@ -89,13 +95,9 @@ flowchart LR
 
 既存の手動直接 merge は squash を使うため、元 commit の祖先関係だけではイベントの所属を再現できない。統合前に明示的な event ID 集合と before commit を保存し、統合結果を対応付ける。Wiki の処理対象は、対象ブランチへ統合済みと確認でき、成功 receipt がまだないイベントである。[統合準備](../../crates/services/src/services/repository_memory.rs)、[イベント選択](../../crates/services/src/services/repository_memory.rs)
 
-[自動マージ](formal-integration.md)は別の契約で、選択した source の履歴を保持した固定 commit を、受付時の検証方針に従って公開する。検証省略時の Manifest tests は NotRun であり、統合成功をテスト合格へ読み替えない。Memory が有効な場合だけ、受付時に固定した source event と、保存された統合 Manifest の event を明示的な統合記録に結び付ける。Git 公開やカードの Done が Wiki receipt の成功を意味するわけではない。[統合側の記録](../../crates/server/src/routes/integrations/runtime.rs)
+[自動マージ](formal-integration.md)は、同じ専用会話でコード候補と有効なWiki更新を作り、code SHA・Wiki SHA・完成候補を別々に固定してhostへ公開要求する。検証実行と省略はcode SHAへ記録し、失敗をpassへ変換しない。公開後に選択source eventへのreceiptを既存Memory storeへ保存し、後処理の失敗は適用済みGit/Doneを巻き戻さない。旧step summaryからの統合Manifest生成や後続Wiki agentを前提にしない。[現行契約](../../crates/server/src/routes/integrations/conversation.rs)・[後処理](../../crates/server/src/routes/integrations/runtime.rs)
 
-新規 自動マージ では host が各 step の summary をまとめ、最終候補の base / result と Git 差分から統合 Manifest を生成する。検証必須 run は最終候補上の実行結果を tests に反映し、例外による continue も失敗を合格に書き換えない。通常 merge に agent の semantic proposal は不要である。詳細な [最終候補の検証契約](formal-integration.md#開発検証と-human-gate)を参照する。[生成](../../crates/server/src/routes/integrations/runtime.rs#L630-L670)・[検証証拠の反映](../../crates/server/src/routes/integrations/runtime.rs#L924-L940)
-
-競合 job へ渡す Memory は受付時に凍結した公開 event IDs だけを解決し、不在は unavailable として渡す。他 Workspace の private memory や新しい event を追加しない。一方、有効な Memory の公開後処理では選択 event の不在・所属・祖先関係の不一致をエラーにし、Git/Done を戻さず semantic outbox pending として残す。prompt の参照不足と、公開する記録の整合性は別の条件である。[競合の文脈](../../crates/server/src/routes/integrations/runtime.rs#L318-L392)・[公開後の照合](../../crates/server/src/routes/integrations/runtime.rs#L1465-L1578)
-
-外部 PR の観測は LVK 所有の統合 transaction を持たない。保守的に source commit の祖先関係で証明できるイベントだけを対応付け、同じ Workspace・近い時刻という理由では未 push の変更を処理済みにしない。外部 squash/rebase の所属が証明できなければ未消費のまま残る。[外部統合の契約](../../crates/services/src/services/repository_memory.rs)
+専用会話へ渡すMemoryは、受付時にsource祖先関係を確認した固定event IDsの公開記録だけを解決する。Repo/Workspace所属を検査し、不在はunavailableとして伝える。他Workspaceのprivate memoryや後着eventを混ぜない。[公開Memory解決](../../crates/server/src/routes/integrations/runtime.rs#L73-L104)
 
 ## Sync の入力は統合済み source に結び付く凍結 snapshot
 
@@ -128,3 +130,13 @@ Wiki の成功 receipt・canonical branch と、生成された保守 Workspace 
 ## 変更を検討する際の一次資料
 
 [詳細設計](../../docs/design/openwiki-repository-memory.md) は意図・不変条件の規範仕様、[implementation checkpoints](../../docs/design/openwiki-implementation-checkpoints.md) は判断と過去の検証記録である。記録されたテスト成功を現在の環境の実行結果とは扱わない。とくに source commit と outbox の間、squash 統合と記録の間、Wiki 公開と receipt の間の再起動窓を変更する場合は、対応する回復テストと現行実装を一緒に確認する。
+
+## sourceを変更しない新Runの検証記録
+
+通常CODEの成功Runでsource変更がない場合でも、今回の検証を独立した不変記録として残せる。hostが起動時に固定したcleanなSHA/branchと終了時の同じclean SHA/branch、成功Run・Current投影・process exit・閉鎖済みNative Audit、child/writer/script収束を確認する。開始記録のない過去Runへ後付けせず、旧failed Runや成功Manifestを変更しない。[完了境界](../../crates/services/src/services/repository_memory/verification.rs)・[起動時観測](../../crates/services/src/services/repository_memory.rs#L58-L80)
+
+対応するCodex canonical Shellのroot cwd・command・整数exitCodeを保存し、draft test claimのcommandと一意に一致し結果も整合した場合だけそのclaimを保持する。文章の「成功」からexitを推定せず、不一致や曖昧なclaimはnot-runに限定する。非zeroと対応するfailed claimはfailedのまま残す。前後同SHAは、実行中ずっとsourceが不変だったことの完全証明ではない。[照合](../../crates/services/src/services/repository_memory/verification.rs)・[回帰](../../crates/services/src/services/repository_memory/verification_tests.rs)
+
+`verification-starts/`と`verifications/`はrepository shared persistent knowledge内の記録であり、source events・統合Manifest・Wiki入力にはならない。保存はcompletion lockと既存のatomic/no-clobber機構を使う。dirty/SHA変更・claimや実exit不足等は不変declineとなり、本当のI/O障害やidentity不整合はエラーとして残す。[保存形式](../../crates/utils/src/repository_memory/verification.rs)
+
+既存の `get_workspace_verification` / `get_workspace_verification_test` がread-onlyで読取る。通常Manifestを優先し、検証専用は `record_origin=no_change_verification`、agent claimとhost command exitを分けて示す。`evidence=agent_recorded_test_claims`と`current_worktree_verification=not_established`を独立検証へ昇格しない。所属・revision・pagingとhead再照合は維持する。[読取境界](../../crates/server/src/remote_mcp/verification_read.rs)・[利用手順と限界](../../docs/development/no-change-verification.md)

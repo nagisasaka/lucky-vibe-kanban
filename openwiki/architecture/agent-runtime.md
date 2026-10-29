@@ -5,7 +5,7 @@ description: AgentRun を独立プロセスで実行し、Native Audit から永
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -47,6 +47,8 @@ sources:
     resource: repo://crates/services/src/services/agent_runtime.rs
   - id: openwiki-source-024bbfcff36a8b1f88b9bcf3
     resource: repo://crates/services/src/services/approvals/executor_approvals.rs
+  - id: openwiki-source-2a2f483b690a2eb00cd79616
+    resource: repo://crates/services/src/services/workspace_lifecycle.rs
   - id: openwiki-source-7d788a7c8b1c5bf5122bab53
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
@@ -67,7 +69,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -129,7 +131,7 @@ Codex のメッセージ差分と完成メッセージは別の経路を通る�
 
 Codex の最新 context は `tokenUsage.last.totalTokens` と `modelContextWindow`、累積 usage は `total.inputTokens` / `total.outputTokens` から別々に得る。context の任意 field は既存 snapshot JSON に入り、host journal と DB の latest-value snapshot を通って replay される。context 用の専用 table や canonical token 履歴は増やさない。Workspace 累積トークンは別の thread 単位集計として保存する。[分類](../../crates/executors/src/executors/provider_adapter.rs#L1632-L1658)・[JSON 保存](../../crates/db/src/models/agent_runtime.rs#L1861-L1907)・[journal の選別](../../crates/local-deployment/src/process_host/journal.rs#L156-L175)。画面での未知値・新しい attempt の扱いは [Session の context 表示](../concepts/session-and-agent-run.md#context-使用量の意味)を参照する。
 
-現行 Codex mapper は v7 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
+現行 Codex mapper は v7 で、`AgentScope` が native thread の親子関係と観測を canonical AgentActivity へ投影する。root は開始・再開応答で確定し、子の通知や scope 不明の usage を親の会話・使用量にしない。v6 は明示 plan 導入前、v5 は実行表示 metadata 導入前、旧 v4 は collaboration 観測導入前の replay 用に残す。既存 canonical 履歴を新しい観測で推測補完する仕組みではない。[mapper 選択](../../crates/executors/src/executors/provider_adapter.rs#L280-L444)・[scope](../../crates/executors/src/executors/codex/agent_scope.rs#L24-L200)。子の終端証拠を要求する実行側 guard と表示 lifecycle は [native subagent](../concepts/session-and-agent-run.md#native-subagent-と旧実行モデル)に置く。
 
 ## Host の再送記録と有界配信
 
@@ -217,6 +219,7 @@ Kanban 同期は単一 event と host batch の両保存経路で、reducer が 
 
 欠けた input / Running の事実を冪等に追加し、canonical history 全体を reducer で再生する。再構築後は投影状態と更新時刻以外の意味状態が以前と一致しなければ拒否する。terminal run を Running に戻したり、隔離・監査記録を消したりしない。未知の失敗、改変、未完了 tail、生存不明の process はこの回復の対象外である。[追加と再構築](../../crates/local-deployment/src/agent_run_port.rs#L1710-L1758)・[原子的な照合](../../crates/db/src/models/agent_runtime.rs#L1254-L1340)
 
+<!-- openwiki: broken internal link [../concepts/formal-integration.md#旧-run-の-checkpoint-adoption] heading anchor "旧-run-の-checkpoint-adoption" does not exist in "../concepts/formal-integration.md". Fix the href or restore the target, then delete this comment. -->
 この一般 Retry の互換処理と、[正式 Integration の限定 checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)は別である。後者は歴史的 Agent を再実行せず、承認済み Git prefix を引き継ぐ。
 
 ## 取消と実プロセスの終了

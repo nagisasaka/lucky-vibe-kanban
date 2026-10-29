@@ -24,18 +24,14 @@ sources:
     resource: repo://crates/server/src/main.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
-  - id: openwiki-source-1083b3cf6ec502f1c6eb3811
-    resource: repo://crates/server/src/remote_mcp/integration_write.rs
   - id: openwiki-source-b5eef61c63c11d3fe10b3ccf
     resource: repo://crates/server/src/remote_mcp/launch.rs
   - id: openwiki-source-54244fc34a5fffa34c37581d
     resource: repo://crates/server/src/routes/integration_validation.rs
   - id: openwiki-source-595d5d0308d670e38ef27fbf
     resource: repo://crates/server/src/routes/integrations/admission.rs
-  - id: openwiki-source-a1c709eaad59af16183269df
-    resource: repo://crates/server/src/routes/integrations/legacy_checkpoint.rs
-  - id: openwiki-source-864e2ae97802aa9a00527c40
-    resource: repo://crates/server/src/routes/integrations/mechanical.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -76,10 +72,6 @@ sources:
     resource: repo://docs/workspaces/openwiki.mdx
   - id: openwiki-source-db035046d01e3f24722812c8
     resource: repo://packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx
-  - id: openwiki-source-a836651555f6dfa0a9ab8ce3
-    resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationInterventionPanel.tsx
-  - id: openwiki-source-06868af84d952b8087cf3ebb
-    resource: repo://packages/web-core/src/i18n/locales/ja/common.json
   - id: openwiki-source-bfe4f914c0604a66edc02213
     resource: repo://packages/web-core/src/i18n/locales/ja/settings.json
   - id: openwiki-source-2fab4d75b959f83ee7aaf538
@@ -88,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -146,23 +138,17 @@ API が作るのは base からの detached worktree と固定 peer 一覧であ
 
 検証コマンドを変更する場合は、先に Settings → Repositories の「自動マージの検証」を開き、表示された登録 checkout の path・branch・HEAD を確認する。順序付きの複数行コマンドを編集して保存し、読戻し成功を確認する。不正な既存 JSON は修復欄から直せる。保存は未コミットのファイル更新なので、差分を確認して `.lvk/integration-validation.json` を通常の Git 手順で目的の target branch に反映してから、新規 自動マージ を開始する。保存だけではコマンドを実行せず、既存 run にも反映しない。[UI の反映案内](../../packages/web-core/src/i18n/locales/ja/settings.json#L3-L19)・[受付の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)。競合時の下書き保持、再読込、外部編集との排他限界は [検証コマンドの編集と反映](../concepts/formal-integration.md#検証コマンドの編集と反映)を確認する。
 
-local Board の **自動マージ** では、Repo・local target と各 Card の採用 Workspace を選び、Code 実行として送信する。通信再試行は同じ request ID と入力を保持する。source と観測 target は受付時に固定する。queue 先頭で preparation を始めるときも同じ target であることを要求し、前進していれば停止する。実行用 Workspace の履歴で進行・検証・失敗を確認する。[Board の選択と送信](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)
+local Boardの **自動マージ** では、Repo・local target・各Cardの採用WorkspaceとCode設定を選び、同じrequest ID/入力で再送する。受付はsource SHA、base SHA、要件、検証方針を固定する。開始時のtarget変更は停止条件であり、後から受付baseを直接書き換えない。[受付](../../crates/server/src/routes/integrations/admission.rs)・[選択UI](../../packages/web-core/src/features/kanban/ui/IntegrationPanel.tsx)。
 
-この [自動マージ](../concepts/formal-integration.md)は、選択要件と固定 source を保存し、専用環境で受付時の検証方針に従って処理した結果 commit を local target へ公開する。Board の Skip validation は保存される選好であり、run の方針は受付時に固定する。省略時の NotRun はテスト成功ではない。[検証方針の契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を確認する。Git 公開、条件付き Card Done、後続 Wiki receipt は別の結果なので個別に確認する。取消できる phase と recovery_required の扱いも所有フローに従う。詳細な受付・検証・公開契約は同ページに集約し、以下では既存の手動 Git/PR 経路を説明する。
+担当は専用Issue / Workspace / Sessionの一つの会話で、候補作成→必要な検証または根拠付き省略→有効時のWiki更新→公開要求まで進める。質問、追加指示、失敗後の修復も同じ会話で続け、旧host merge / 競合だけの有限job / gate承認方式を使わない。既存コード検証を再利用する場合はtested SHAと新候補との差分・理由・残リスクを記録し、失敗や未実行をpassへ変更しない。[担当契約](../../crates/server/src/routes/integrations/runtime.rs)・[同じ会話の進行](../../crates/server/src/routes/integrations/conversation.rs)。
 
-外部会話からは `start_integration` の `skip_validation` で同じ検証方針を選び、受付 receipt と `get_integration` で保存済みの選択を確認できる。再接続時の入力一致と結果の読み分けは [MCP の検証方針・再送契約](../integrations/remote-access.md#mcp-から-integration-の検証方針を選ぶ)を参照する。
+Wiki有効時はコード検証後の同じ候補branchで正規OpenWiki lifecycleを完了し、Wikiだけを別commitにする。コード検証SHAとWiki/公開SHAを区別し、Wiki失敗なら公開しない。専用Wiki Issue/Workspaceへ分岐しない。[Wiki保守](../operations/openwiki-maintenance.md#自動マージ担当が更新する場合)。
 
-外部会話で判断を続ける場合は、`get_integration(section="pending_gates")` の保存説明・失敗証拠と対象候補を読み、明示承認時にだけ `approve_integration` を送る。中止は `cancel_integration` で要求し、受付 receipt と `summary.lifecycle.cancellation_complete` を分けて確認する。固定証拠の渡し方と古い候補の拒否、取消後の予約解放は [MCP の承認・取消契約](../integrations/remote-access.md#mcp-から-integration-を承認取消する)を参照する。[公開操作](../../crates/server/src/remote_mcp/integration_write.rs#L17-L79)
+外部MCPは `start_integration` の `skip_validation` で追加検証方針を渡し、receiptと `get_integration` の保存値を確認する。summaryのconversationとvalidation sectionから割当先・候補・コードSHAごとの証拠を読み、質問や指示はそのSessionへ送る。旧 `pending_gates` / `approve_integration` はない。中止は `cancel_integration` で要求し、受付と `summary.lifecycle.cancellation_complete` による予約解放を区別する。[外部MCP](../integrations/remote-access.md#mcp-から-integration-の会話と取消を扱う)。
 
-新規 run の通常 merge は host が進める。競合したときだけ有限の Agent job が index を解消し、利用者は保存された候補の解決差分を承認する。その後に次の source へ進み、全 source 完了後の最終候補で凍結 validation plan を実行する。失敗した required check は retry / 候補限定例外 / cancel の判断を待つ。[競合と承認](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)・[最終検証](../concepts/formal-integration.md#開発検証と-human-gate)
+公開要求後は担当Runを終了し、hostがwriter収束、clean候補、固定base/sourceと現在mainの祖先性、Wiki証拠を検査してCAS公開する。mainが進んだ場合も、その変更を含む安全な候補が必要で、祖先性や競合を無視して公開しない。公開要求の受理はmain反映ではなく、Agent正常終了だけでもDoneではない。停止中の候補と証拠は保持し、baseや状態のDB直書きでguardを回避しない。[公開条件・Done・archive](../concepts/formal-integration.md)。
 
-Board の案内は変更の検証、必要な AI 競合解消、対象 branch への反映と判断・承認時の停止を説明する。競合で止まったら実行 Workspace を開き、保存済みの解消説明と未検証・古い候補の表示を読み、必要に応じて詳細の差分を開く。説明が不十分なら承認せず確認する。固定候補のレビュー中に追加指示で修正する経路はなく、承認して続行するか 自動マージ を中止する。[説明・操作条件の正本](../concepts/formal-integration.md#保存済み説明から候補をレビューする)・[Board の案内](../../packages/web-core/src/i18n/locales/ja/common.json#L1349-L1352)・[再開 guard](../../crates/server/src/routes/integrations/runtime.rs#L125-L143)
-
-承認後も Git の反映、Card の Done、Wiki の結果を別々に確認する。「反映結果の照合中」は未反映の確定ではないので、古い画面や status だけから再統合しない。[公開状態と回復](../concepts/formal-integration.md#公開donewiki-は別の結果)を確認する。実行の識別子や保存済み Session は [inspection の詳細](../operations/workspace-inspection.md#実行専用-workspace-の確認)から調べられる。
-
-競合 job の失敗で止まった場合は、実行 Workspace の停止と保存履歴を確認して明示 Resume する。次の競合 dispatch は同じ Workspace の index / edits を使うが、会話は新規 Session で開始する。通信再送や server restart では既存 dispatch を再利用し、同じ job のために新 Session を作らない。過去の degraded projection を消して成功扱いにする復旧ではない。[Session 分離・原子的保存・履歴の契約](../concepts/formal-integration.md#競合だけを有限の-agent-job-にする)を参照する。[Resume と退役](../../crates/server/src/routes/integrations/runtime.rs#L140-L207)・[dispatch 保存](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
-
-旧 run の通常 Resume 拒否は新規 engine の安全境界であり、任意の payload 書換えで回避しない。特定履歴を対象とする [checkpoint adoption](../concepts/formal-integration.md#旧-run-の-checkpoint-adoption)も、検査・adoption・正式 Resume が別の操作である。
+旧方式runは現行会話へ暗黙変換せず停止理由を確認する。通常のGit/PR操作は以下の別経路であり、自動マージの公開要求に代用しない。
 
 ## 4. Rebase と direct merge
 

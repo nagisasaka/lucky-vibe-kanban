@@ -110,15 +110,15 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T19:37:05.139Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Agent provider・設定・MCP・Skill
 
-LVK は provider ごとの通信を adapter で解釈し、共通の [AgentRun](../concepts/session-and-agent-run.md) として実行する。現行の通常ビルドの CodingAgent は ClaudeCode、Gemini、Codex、OhMyPi の4種類である。provider を追加するときは enum と起動処理だけでなく、能力の解決、制御の符号化、native event の正規化を一緒に扱う。[対象 enum](../../crates/executors/src/executors/mod.rs#L130-L137)・[adapter 境界](../../crates/executors/src/executors/provider_adapter.rs)
+LVK は provider ごとの通信を adapter で解釈し、共通の [AgentRun](../concepts/session-and-agent-run.md) として実行する。現行の通常ビルドの CodingAgent は ClaudeCode と Codex の2種類である。provider を追加するときは enum と起動処理だけでなく、能力の解決、制御の符号化、native event の正規化を一緒に扱う。[対象 enum](../../crates/executors/src/executors/mod.rs#L130-L137)・[adapter 境界](../../crates/executors/src/executors/provider_adapter.rs)
 
 ## Profile と実行能力
 
@@ -126,14 +126,12 @@ Profile は保存した provider 設定の variant であり、個々の実行�
 
 Profile は既定値と user の profiles.json を合成して読み、保存時は既定値との差分を正規化・検証して書く。読み込みの parse 失敗はログを残して既定値へ戻るため、画面に選択肢があるだけでは保存した設定の適用を確認できない。[読み書き](../../crates/executors/src/profile.rs#L351-L410)
 
-次は adapter が実行用 snapshot に記録する状態であり、上流製品全体の機能一覧ではない。4種類とも SessionResume / Images / Review / MCP / TokenUsage は Native。差がある項目は以下の通り。
+次は adapter が実行用 snapshot に記録する状態であり、上流製品全体の機能一覧ではない。両方とも SessionResume / Images / Review / MCP / TokenUsage は Native。差がある項目は以下の通り。
 
 | Provider | Steering | Approval | Subagents | Goal |
 | --- | --- | --- | --- | --- |
-| Gemini | Unsupported | Native | Unknown | Unsupported |
 | Codex | Native | Native | Unknown | Native |
 | ClaudeCode | Native | Native | Native | Unsupported |
-| OhMyPi | Native | Unsupported | Native | Unsupported |
 
 Unknown は能力が解決されていない状態であり、「上流に機能がない」という証拠にはならない。能力を要求する経路は Native を許可し、Emulated は明示許可を要し、Unknown と Unsupported は拒否する。native 子 agent の観測と capability gating の整合性を変える際は両方を確認する。[snapshot](../../crates/executors/src/executors/provider_adapter.rs)・[能力の検証](../../crates/executors/src/executors/provider_adapter.rs)
 
@@ -303,3 +301,9 @@ Global stdio には [Project Todo](../concepts/project-todos.md)と[設計メモ
 Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の管理設定](../concepts/runtime-access.md#管理設定の保存適用取消)であり、上記のcoding agent向けnative MCP config editorとは別の入口である。直接アプリケーションを動かす権限・環境・停止の契約は同ページを参照する。[設定registry](../../packages/web-core/src/shared/dialogs/settings/settings/settingsRegistry.tsx#L95-L143)
 
 現行はCodex v7 / Claude v4のmapperを使い、旧v6・v5等のreplay入口を保持する。Codexの公開summaryはv6以降、明示 `turn/plan/updated` はv7で独立extensionへ投影する。private contentを推論して表示せず、旧mapper出力を新仕様に遡及変更しない。[mapper選択](../../crates/executors/src/executors/provider_adapter.rs#L532-L578)・[plan](../../crates/executors/src/executors/provider_adapter.rs#L2350-L2399)・[公開summary](../../crates/executors/src/executors/provider_adapter.rs#L2540-L2580)。表示の収束と操作プレビューは [Webの会話表示](../architecture/web-and-sync.md#操作のプレビューと-provider-の説明)に集約する。
+
+### 自動マージ担当の必須stdio bootstrap
+
+自動マージworkerはthread-local設定で `vibe_kanban` MCPをrequired/enabledにし、実際のMCP executableとAgentRun bindingを渡す。`integration_action`だけを明示承認する。通常threadでOpenWikiを無効にする際は、継承設定にserverが存在しなければdisable-only項目を削除し、transportのない架空serverを作らない。継承transportがある場合やmaintenance writerのrequired設定は保持する。[worker設定](../../crates/executors/src/executors/codex.rs#L1090-L1135)・[継承設定の照合](../../crates/executors/src/executors/codex.rs#L1275-L1310)・[回帰](../../crates/executors/src/executors/codex.rs#L1688-L1755)
+
+RepoのClaude指示入口はsymlinkではなく通常fileの `@AGENTS.md` importにして、指示の正本をAGENTSに保つ。同じ実体へ異なるsetup本文が重なる構成を避けるための復旧である。installed OpenWiki 0.5.1の独立fixtureで、このimportをsetupが保持し、AGENTSの正しい管理blockが反復で不変になることを確認した。これはlive Claude/model起動の検証ではない。[入口](../../CLAUDE.md)・[指示正本](../../AGENTS.md)

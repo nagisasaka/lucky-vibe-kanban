@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:f9eea0dc456900703ef36460e068ce8ad2afe7990a6492d01e3afdb423eb1d45",
+  "pageVersion": "sha256:82ee188c8a350b7089eb04d8759be107df3dc8b335759bc73ea9045a041448dd",
   "claims": [
     {
       "id": "claim_03c1cc7bf36a458cbd38b13499335f6b",
@@ -26,11 +26,11 @@
       "evidence": [
         {
           "resource": "repo://Cargo.toml",
-          "version": "repo-file-v1:sha256:37e25fb55d3e98ef0112f6e6e4db56584089076a1aef35ec44262d89813f4299"
+          "version": "repo-file-v1:sha256:31a791ffe11564d841e198070d8702cfa35bdc6bbe8ce2624564d2b1abe9c37d"
         },
         {
           "resource": "repo://crates/server/src/routes/local_remote.rs",
-          "version": "repo-file-v1:sha256:a30e40d0e1a4a62ad92d7178540971cefa0ce63dd114cf370ace5af7cd670135"
+          "version": "repo-file-v1:sha256:6c04725af8e549131552e86b0e4e9a648dab6fbc11c8cf388bbb2f7145371a2f"
         }
       ]
     },
@@ -64,7 +64,7 @@
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/mod.rs#L56-L91",
-          "version": "repo-lines-v1:sha256:0bbca9696158bfd887006c57fab37548050c0d4e9174249a2e44161c6bdce0be:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMzI2MzJiNGFlMTJmOTRiNTFjOWQyMGQ3ODE0MTY0NTViMGUwN2MxNTlhMDdjZWEwN2MyYWJjOTJlYmFkZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMDMzYzY1MDc3NGIyNDc2Zjc5MDA0YWMxMTJkOWIwY2Q4Mzg2YTdiNTk3MDM4M2E3MjYwODMwMjExNjlkY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjNmExYWM5ZDc4YmZhYTI3NTNjYWQwYzk0ODYxNGNmMTc2YjAxNTZkYmEzYjc2MjFkMTE0NjFkZGQwZmUwMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljN2EwMjg3MTkzZjllOGE1OGJmMTNhNWMxOWFkNjI3YzdjNTZkM2U3YWNjMmFkYTZlN2Q3Njg3Yzc5NDM4ZGIifQ"
+          "version": "repo-lines-v1:sha256:99b37d1bb5e6fcc71e81169cb072d42e92dbe8a0fd93c4417f93fb195279282e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMzI2MzJiNGFlMTJmOTRiNTFjOWQyMGQ3ODE0MTY0NTViMGUwN2MxNTlhMDdjZWEwN2MyYWJjOTJlYmFkZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjMDMzYzY1MDc3NGIyNDc2Zjc5MDA0YWMxMTJkOWIwY2Q4Mzg2YTdiNTk3MDM4M2E3MjYwODMwMjExNjlkY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjNmExYWM5ZDc4YmZhYTI3NTNjYWQwYzk0ODYxNGNmMTc2YjAxNTZkYmEzYjc2MjFkMTE0NjFkZGQwZmUwMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljN2EwMjg3MTkzZjllOGE1OGJmMTNhNWMxOWFkNjI3YzdjNTZkM2U3YWNjMmFkYTZlN2Q3Njg3Yzc5NDM4ZGIifQ"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_comments.rs#L156-L184",
@@ -176,7 +176,7 @@
         },
         {
           "resource": "repo://tests/server/fixtures/issue-comments-env.mjs#L1-L45",
-          "version": "repo-lines-v1:sha256:f91e399eb345bc50615a8ea201514787445ceafde57b8f008a8e881c61c80f9a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExYjE2N2ZlMjg0YjgzYWMxNzhkZWU1MGY0MThiMWUzYjBhYjc2NDU1OGIwNzZkZDYzNGQxNDRmZmI2M2RmMGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "version": "repo-lines-v1:sha256:0a7f2eaccb3600e86efce1cf83fa29d8d5232cef7e3c671b891dc6a844c8ee8a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YjM4ZTAzYzgwMzE1ZDRjODU1NjdhNmFmMWMwN2FhZGY5NDNjYWQ2ZDZkNTQ5NTc5ZTU2OWIwNWFmMTYzNjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://tests/server/run-issue-comments.mjs#L14-L202",
@@ -245,6 +245,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T11:11:50.589Z"
+    "at": "2026-10-29T08:49:34.152Z"
   }
 }

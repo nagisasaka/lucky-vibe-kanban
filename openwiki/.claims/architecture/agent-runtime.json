@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:261ec1d19607bedfd286d14deae9b09fac9a0291aada1e8043d53632b617b67e",
+  "pageVersion": "sha256:f4bceaa42e6f11781e0d960a987dad233c63b002c6c8b15126045fc1645328af",
   "claims": [
     {
       "id": "claim_73d8e11679c6457aaf2e2b1a68fb767e",
@@ -317,8 +317,8 @@
           "version": "repo-lines-v1:sha256:7e692fd5d599d66ff861c29c1b05a3ac3901d646d6eb42bb8b1997ca3602fb72:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmYzEwZDg3NWEyMTU1ODZiNTk4YzM1NDY2Njc1Mzc0NmNlOWMzNzZjNmYxYWM2NDc1ZGE2NDdkNjE2MDYyOWY5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5NTA3OTA0MWI0ODMxMzBjNDhjMzA4ZWFhZWM0YThjODcwZDRkMTYxZjNhNTIyMmEwN2YxMWQzYzY0NGM0Y2M1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3MDU2NTExZWU0MjkyZTg0OTI0Y2E1ZjllMzQ1YjI4NGI0YTllNGEzZThjMTI5MDZhN2VlMGY5YTRkZjU1OTZmIn0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L532-L578",
-          "version": "repo-lines-v1:sha256:d4c8cc5b7c7cbf7e005f172be28c07ac867083d6e1bd4b733a92cc1984dc066c:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ZTY2MDE2YjVlN2FiYjY0MmQ0NGU0Y2E1M2FlZjEwMDFlZmIxODg0MzMwYjgxODVjOGE0NjNhOTcxODg2YTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkZDFhZGI3YjJiOTZlZjNlOTVhYTk0NDY0ODBjYjFmNzY5YjkzZDUyY2RmN2I0NjljODNmNzVkNWJhNDRiOTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwZDg5MTRmODFkODQ1OGNmZjhlZDM3ZWVlN2UzY2M5NjVkNGY0YzA3ZDE0NTkyYjFiNjlkYzYxNGQ4MDg1MDMifQ"
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L280-L444",
+          "version": "repo-lines-v1:sha256:b0b837b1135f105b53a4148511f89f6c75af790082252232b7b079c1870740b1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1ODM5MDI3MjdjMWIwYmRkOGIyYjEwNDkyM2VlMjMzYWM5MzBhZmVjMTFkYzFkNGY1NzJmNDkzZjNjYTc4MzU0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiZGQxYWRiN2IyYjk2ZWYzZTk1YWE5NDQ2NDgwY2IxZjc2OWI5M2Q1MmNkZjdiNDY5YzgzZjc1ZDViYTQ0YjkyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmY2FjMTk4M2M5NTBjMjA2MzdlNDFjMDE4ZjRmYzVlMGFkODdmYjI5ZjY2ZTc1NWUwNzNlOTI1ZTA5ZGZlYjY2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1MGQ4OTE0ZjgxZDg0NThjZmY4ZWQzN2VlZTdlM2NjOTY1ZDRmNGMwN2QxNDU5MmIxYjY5ZGM2MTRkODA4NTAzIn0"
         }
       ]
     },
@@ -695,8 +695,12 @@
       "statement": "Workspace archiveは終端Runでもreserved/spawned/running/unreachableのregistryをbusyとし、not_startedになっても他の実行・所有・資源のidle条件は別途必要である。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/workspaces/archive.rs#L53-L124",
-          "version": "repo-lines-v1:sha256:e0c6eb662f15c74c93e181cb5fc0ce0f3884ceb5919c9a75139934f2a5e26508:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZThkNjhlZDQyYWRlNGI4NmQzYWU2NDAxYTE0MTg2YWQ3YzI0MGQzOTViYWZiYTNkNDhmY2FiZGI2YWM4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ZDc0Zjg5NDZlMzZhYzAwMGZiMjcyYTI2MWI5NDhkZTdkYWYxYmI0NTFmYTJiMmEzOGUyN2U5ODU5OTkxMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MjUxMTUxOWMyNTZhYmYzNmMzN2VlYzgxMTliNjdkZjBjZGFlMDAzZTBjMzE3MTBmYmM5NzM1N2M4YjhhZjkifQ"
+          "resource": "repo://crates/server/src/routes/workspaces/archive.rs#L53-L120",
+          "version": "repo-lines-v1:sha256:8bc1e08704240287c06695b3341ec126f41e86577de91207ed5fd5a4b12f5c1f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwZThkNjhlZDQyYWRlNGI4NmQzYWU2NDAxYTE0MTg2YWQ3YzI0MGQzOTViYWZiYTNkNDhmY2FiZGI2YWM4MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjRlZTBiZmYyYjEyODgxMjI1OThkZTNhYThlN2I0ODFiNjdjNTdkZDIxMjQwNDk0NzI3MzY3ZGVkZjY1MjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3ZDc0Zjg5NDZlMzZhYzAwMGZiMjcyYTI2MWI5NDhkZTdkYWYxYmI0NTFmYTJiMmEzOGUyN2U5ODU5OTkxMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4NjdiN2VhOTdiNTA2NTkwODZlNDY3MzY0NWY2YjkzYmJlZWM5NjY5MTJjM2NiNzQ0ODEzMDVhMDE0YWRlOTIifQ"
+        },
+        {
+          "resource": "repo://crates/services/src/services/workspace_lifecycle.rs",
+          "version": "repo-file-v1:sha256:82c204991b146079c140768f053319d8a548c7e51ec71c3c75537dc284a9ca16"
         }
       ]
     },
@@ -721,6 +725,6 @@
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-27T11:11:50.589Z"
+    "at": "2026-10-29T08:49:34.152Z"
   }
 }

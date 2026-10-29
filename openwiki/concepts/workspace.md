@@ -129,7 +129,7 @@ sources:
 generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Workspace と Repository

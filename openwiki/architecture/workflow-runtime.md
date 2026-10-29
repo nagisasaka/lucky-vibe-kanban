@@ -10,8 +10,8 @@ sources:
     resource: repo://crates/server/src/lib.rs
   - id: openwiki-source-a13fe4db1eee073d0a7e2c4d
     resource: repo://crates/server/src/main.rs
-  - id: openwiki-source-b393e75029374eaf9cba5f7d
-    resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-a517c0f8e44d2cf0c440fbfc
     resource: repo://crates/server/src/routes/workflows.rs
   - id: openwiki-source-ed8c84278dba8a1f45af40e9
@@ -38,10 +38,10 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-27T03:10:58.678Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:10:58.678Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Workflow の実行と耐久オーケストレーション
@@ -73,9 +73,9 @@ Issue が archive 済みなら新規の主 Workspace 作成を拒否する。既
 
 `OrchestrationService` は frozen plan を先に永続化し、node identity を準備する。[service](../../crates/services/src/services/orchestration.rs#L67-L105)。inbox の join 処理は製品 planner から独立しており、再送・再起動による二重の下流実行を防ぐ消費 identity を確立する。Workflow の辺の意味を `OrchestrationJoinPolicy::All` というフィールドだけから判断してはいけない。製品の Ready 判定は別に存在する。[境界を明示するコメント](../../crates/services/src/services/orchestration.rs#L417-L449)、[plan への変換](../../crates/server/src/workflow_runtime/runner.rs#L1137-L1178)
 
-watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1044-L1075)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
+watcher や lease が失われただけで実行を失敗・置換しない。startup は in-flight outbox、処理中 inbox、lease を照合し、子の状態を回復してから inbox を replay する。[再起動処理](../../crates/services/src/services/orchestration.rs#L1132-L1163)。実プロセスへの再接続は [Agent Runtime](agent-runtime.md)が所有する。
 
-製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。旧 自動マージ の製品 node 回復もこの経路を持つが、新規の [host-owned 自動マージ](../concepts/formal-integration.md) は専用 orchestration node を作らず、adoption 後も旧 terminal audit を書き換えない。
+製品所有 node の完了は子の終端を保存するだけでなく、親 orchestration の投影も更新する。子だけ保存された途中失敗の後に同じ終端を再通知した場合も親の投影を修復し、別の終端への書換えは拒否する。この再試行は agent を再起動せず、同じ完了を重複 event にしない。[製品完了](../../crates/services/src/services/orchestration.rs#L1185-L1240)、[親投影失敗からの回復テスト](../../crates/services/src/services/orchestration.rs#L1744-L1869)。新規の [自動マージ](../concepts/formal-integration.md) は専用会話の AgentRun を直接dispatchし、専用 orchestration node を作らない。orchestration startup も product_kind=integration を通常の回復対象から外す。[会話の起動](../../crates/server/src/routes/integrations/conversation.rs#L470-L530)・[回復対象](../../crates/services/src/services/orchestration.rs#L1148-L1163)
 
 ### Create の配送と受理を区別する
 

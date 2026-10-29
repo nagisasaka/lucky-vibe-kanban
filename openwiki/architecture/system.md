@@ -16,8 +16,6 @@ sources:
     resource: repo://crates/local-deployment/src/lib.rs
   - id: openwiki-source-104d584b7b5ffa5973f60cde
     resource: repo://crates/mcp/src/task_server/tools/design_notes.rs
-  - id: openwiki-source-7d94e7454f63f16057833046
-    resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-7b198a3d484dee341fe67f44
     resource: repo://crates/server/Cargo.toml
   - id: openwiki-source-5b20a61dbf36c0c143a466eb
@@ -30,8 +28,6 @@ sources:
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-076036ed7bdac82d628d39d1
     resource: repo://crates/server/src/remote_mcp/environment_process.rs
-  - id: openwiki-source-0801a7e5bbcc064c12effc80
-    resource: repo://crates/server/src/remote_mcp/environment.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
     resource: repo://crates/server/src/remote_mcp/mod.rs
   - id: openwiki-source-dbc5a93efbaa86561714413e
@@ -58,12 +54,10 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
-  - id: openwiki-source-a61fc40801a6dd7e0c1e7f36
-    resource: repo://scripts/dev-rustc-cache.mjs
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T03:39:07.736Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # システム境界と起動順序
@@ -109,7 +103,7 @@ Git の作業木、Native Audit、Repository Memory は SQLite と別の永続�
 
 新しい [単一サーバーコンテナー](../operations/server-container.md)は、この local application を Linux サーバーで動かす配布形態である。PostgreSQL / Electric / relay に依存しない。backend の認証と nginx の HTTPS ingress・preview origin、実行環境と永続 volume の境界は同ページに置く。[配布の適用範囲](../../docs/self-hosting/server-container.mdx#what-the-image-contains)
 
-standalone と embedded は共通の `Access` を組み立て、main router 全体と独立 preview listener に認証層を適用する。Origin guard だけを認証境界とは扱わない。配置・設定・失効の契約は [サーバー認証](../concepts/server-access.md)、preview の別 origin への委譲は [検査経路](../operations/workspace-inspection.md#preview-と開発サーバー)に置く。[main の配線](../../crates/server/src/main.rs#L215-L239)、[embedded](../../crates/server/src/startup.rs#L65-L72)
+standalone と embedded は共通の `Access` を組み立て、main router に適用する。独立した組込み preview listener は廃止され、開発アプリは外部ブラウザーで開く。認証の責任は [サーバー認証](../concepts/server-access.md)を参照する。[main の配線](../../crates/server/src/main.rs#L180-L210)・[embedded](../../crates/server/src/startup.rs#L50-L64)
 
 ## 起動時は内側の所有者から回復する
 
@@ -123,9 +117,9 @@ standalone の `main.rs` と、ライブラリーとして残る `startup.rs` �
 
 この順序は、複数の回復主体が同じ実行を進めることを避けるためにコードで明示されている。古い ExecutionProcess の孤児処理を新しい AgentRun へ流用すると、生きたプロセスを誤判定し得る。[standalone](../../crates/server/src/main.rs#L87-L137)、[embedded](../../crates/server/src/startup.rs#L170-L225)
 
-Deployment の構築中には、DB 初期化後に既存の製品実行記録から [Workspace の用途](../concepts/workspace.md#操作用途と実行所有者)を backfill する。[呼出し](../../crates/local-deployment/src/lib.rs#L155-L156)。standalone は bootstrap fence に続いて中断した Integration preparation も fence し、OpenWiki monitor の次に [正式 Integration](../concepts/formal-integration.md) の monitor を開始する。一方、現行 embedded の対応箇所にはこの二つの Integration 呼出しがない。両起動経路で正式統合の自動進行が同じと仮定せず、startup API を再利用する際に確認する。[standalone の追加処理](../../crates/server/src/main.rs#L87-L137)、[embedded の現行配線](../../crates/server/src/startup.rs#L170-L225)
+Deployment の構築中には DB 初期化後に Workspace usage を backfill する。standalone は OpenWiki monitor に続いて自動マージ monitor を開始する。embedded の対応箇所には自動マージ monitor がないため、両起動経路の自動進行を同一視しない。[Deployment](../../crates/local-deployment/src/lib.rs#L110-L160)・[standalone](../../crates/server/src/main.rs#L145-L160)・[embedded](../../crates/server/src/startup.rs#L230-L248)
 
-standalone は main と preview proxy に別 listener を作り、`BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使う。既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 接続の不一致を避ける理由が記録されている。[standalone listener](../../crates/server/src/main.rs#L168-L199)、[embedded listener](../../crates/server/src/startup.rs#L107-L142)
+standalone は `BACKEND_PORT`、次に `PORT`、未指定なら OS の空き port を使い、既定 host は `127.0.0.1`。embedded の `start()` は `localhost:0` を使い、hostname と IPv6 の不一致を避ける。[standalone listener](../../crates/server/src/main.rs#L165-L190)・[embedded listener](../../crates/server/src/startup.rs#L115-L139)
 
 Web Push の worker は共通 router の組立て時に起動し、SQLite outbox を配送する。認証済み browser 登録 API と外向き push-service 通信の境界を持ち、coding provider や外部 MCP の会話処理ではない。設定がなくても worker は維持処理を行うが配送はしない。[router と worker](../../crates/server/src/routes/web_push.rs#L95-L135)・[設定なしの維持処理](../../crates/server/src/routes/web_push.rs#L326-L342)。同意、保存、配送失敗と運用設定は [Web Push](../integrations/web-push.md)にまとめる。
 
@@ -133,12 +127,12 @@ Deployment は host 再照合後に [Starting receipt の回復](agent-runtime.m
 
 ## 境界を変更するとき
 
-backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。これは contributor 用のビルド入口であり、server や子 Project の runtime 環境へ compiler 設定を追加するものではない。共有中間物、watch の二段階 build/run、競合時の失敗は [開発用 Cargo の契約](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json#L31-L39)・[実行境界](../../scripts/dev-cargo.mjs#L19-L29)・[compiler 専用環境](../../scripts/dev-rustc-cache.mjs#L7-L10)
+backend の source 開発では pnpm の検証・watch・型生成が明示的な `dev-cargo.mjs` を使う。contributor 用の入口で、rustc を直接使い、compiler wrapper を注入しない。共有中間物は Cargo の build-dir、最終成果は checkout の target に置く。詳細は [開発用 Cargo](../operations/development.md#lvk-開発用-cargo-と共有キャッシュ)を参照する。[呼出元](../../package.json)・[入口](../../scripts/dev-cargo.mjs)
 
 API 型は Rust から TypeScript へ生成するため、Rust と Web の変更を一組として評価する。Board 型も server の生成器で扱う。Tauri crate は workspace から撤去され、現行の backend 検証は残る Rust workspace 全体を対象にする。[型生成の入口](../../crates/server/src/bin/generate_types.rs#L642-L663)、[開発・検証](../operations/development.md)
 
 外部からの接続は一種類ではない。[認証付き MCP](../integrations/remote-access.md)は既存 LVK 操作を公開し、[Execution Bridge](../concepts/shared-resource-coordination.md)は資源束を所有したまま明示登録 Runner で処理を実行する。両者は削除済み relay と独立している。内部 Astra は廃止され、Project は Board を直接表示し、同じ Project の [Todo メモ](../concepts/project-todos.md)と[設計メモ](../concepts/design-notes.md)へ切り替えられる。設計メモの本文・追記履歴は SQLite が正本で、UI REST と両 MCP は同じ保存状態へ異なる応答形式を提供する。外部 MCP は内部会話モデルを起動しない。[廃止と共有機能の移行境界](../concepts/project-chat.md)を確認する。
 
-外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment.rs#L398-L510)
+外部 HTTP MCP の [Runtime Access](../concepts/runtime-access.md) は、管理者が許可した Linux 領域で既存プログラムを直接動かす別の経路である。`remote_mcp` が共有する process registry は AgentRun を作らず、起動・停止は既存 operation receipt を使う。設定は SQLite、出力と寿命監視はプロセス内にあり、AgentRun の再接続・回復契約を流用できない。[結線](../../crates/server/src/remote_mcp/mod.rs#L55-L72)・[registry と監視](../../crates/server/src/remote_mcp/environment_process.rs#L1-L34)・[実行と receipt](../../crates/server/src/remote_mcp/environment_process.rs)
 
 `server runtime-payload` は通常の DB・認証・listener 初期化前に終了し、frontend・sounds・scripts の実埋込み bytes の hash を調べる専用 probe である。`developer-runtime` feature は debug でもそれらを埋め込む。これは通常起動の回復を実行するコマンドではなく、[開発bundle切替](../operations/development.md#開発用成果物切替と復旧)の停止前検査に使う。[早期分岐](../../crates/server/src/main.rs#L45-L52)・[payload検査](../../crates/server/src/runtime_payload.rs#L9-L34)・[feature](../../crates/server/Cargo.toml#L72-L76)

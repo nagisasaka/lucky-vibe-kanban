@@ -52,10 +52,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
-  - id: openwiki-source-864e2ae97802aa9a00527c40
-    resource: repo://crates/server/src/routes/integrations/mechanical.rs
-  - id: openwiki-source-b393e75029374eaf9cba5f7d
-    resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
     resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-8de115a31415ef9c911d6ac0
@@ -160,10 +158,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -186,7 +184,8 @@ Git commit の著者・committer は Session / provider の identity と別で�
 
 Attempt 検証は run/turn/Session/correlation の一致だけでなく、provider、profile、Workspace、設定と capability snapshot の整合性を要求する。Review に selected Skills を付けることや、FollowUp 以外への reset 指定も拒否する。[契約検証](../../crates/executors/src/runtime/contracts.rs#L294-L351)。これらを永続化してから起動する機構と監査の詳細は [Agent Runtime](../architecture/agent-runtime.md) に置く。
 
-自動マージ の新しい競合 job は、同じ Workspace 内でも専用の新規 Session を使う。通常の Follow-up による native conversation 継続とは異なり、完全な frozen instruction を渡す `Initial` / `Launch` である。再配送で Session を増やさず、明示 Resume では過去の identity / degraded 履歴を保持する。保存の原子性と再開の詳細は [競合 job の Session 所有](formal-integration.md#競合だけを有限の-agent-job-にする)に集約する。[生成と再利用](../../crates/server/src/routes/integrations/runtime.rs#L513-L552)
+自動マージは専用WorkspaceとSessionを一つの会話として継続する。初回のimmutable dispatchを再配送してもidentityを増やさず、sourceごとに競合jobや新Sessionを作らない。候補修復・検証・有効なWiki更新を同じ担当が行い、公開要求後にRunを終えてhostの収束確認へ渡す。[会話の所有](formal-integration.md)・[起動](../../crates/server/src/routes/integrations/conversation.rs)
+
 
 ## 実行設定の復元と DEFAULT identity
 
@@ -234,7 +233,7 @@ Session composer は executor に加え selected variant と Workspace / Session
 
 Retry は前回の設定・capability snapshot・Skill を引き継ぐ。設定を変えて別の仕事を始める操作と混同しない。制御リクエストも command ID、冪等キー、相関 ID を持って永続 command service を経由する。[retry 固定値](../../crates/local-deployment/src/agent_run_port.rs)、[制御 API](../../crates/server/src/routes/agent_runs.rs#L348-L373)
 
-Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[自動マージ](formal-integration.md#競合だけを有限の-agent-job-にする) の競合処理は source ごとの新規 Create を使い、一般 Retry で次の source を実行する仕組みではない。
+Starting の保存は provider 起動の前提であり、保存失敗時は provider を起動しない。[起動 identity と再配送](../architecture/agent-runtime.md#起動と所有者)を参照する。[自動マージ](formal-integration.md)はsourceごとの新規Createへ分割せず、同じ専用会話で作業する。
 
 ## Run の経過時間と Goal 会計
 

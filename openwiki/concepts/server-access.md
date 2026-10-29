@@ -28,10 +28,10 @@ sources:
     resource: repo://packages/local-web/src/app/auth/Auth0Setup.tsx
   - id: openwiki-source-b42d4696e9f82a515195aa22
     resource: repo://tests/auth0-setup/setup.spec.ts
-generated: { by: "codex", at: "2026-10-23T23:06:12.957Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-23T23:06:12.957Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # サーバー認証・設定・セッション
@@ -93,6 +93,7 @@ Web cookieはHttpOnly / SameSite=Lax、公開配置ではSecureで、Domainを�
 
 ## 失効は接続と受理済み作業で異なる
 
+<!-- openwiki: broken internal link [../operations/workspace-inspection.md#公開-preview-への認可委譲] heading anchor "公開-preview-への認可委譲" does not exist in "../operations/workspace-inspection.md". Fix the href or restore the target, then delete this comment. -->
 新規要求は設定revision・期限・active membershipを照合する。継続WebSocket/SSEはleaseで2秒ごとに再検証し、logout、member無効化、期限切れ、設定変更で終了する。socket taskには資格情報を保持しない。接続終了は既に受理されたagent作業やMCP mutationの取消を意味しない。[lease](../../crates/server-access/src/lib.rs#L161-L186)、[再検証](../../crates/server-access/src/lib.rs#L406-L435)、[SSE](../../crates/server-access/src/lib.rs#L665-L680)、[実WebSocket](../../crates/server/src/middleware/websocket.rs#L43-L61)。previewの委譲も親sessionへ依存するが、別cookieを使う。[preview handoff](../operations/workspace-inspection.md#公開-preview-への認可委譲)
 
 Auth0側のrefresh取消とLVKのmember無効化は異なる。署名済みJWTは期限まで有効な場合があり、LVKは接続単位の即時JWT失効を提供しない。一般的なprovider停止時もBasic/Localへ自動fallbackしない。[運用上の失効区分](../../docs/self-hosting/authentication.mdx#L165-L188)

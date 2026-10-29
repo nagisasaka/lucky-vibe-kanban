@@ -48,8 +48,8 @@ sources:
     resource: repo://crates/db/tests/generated_issue_status.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
-  - id: openwiki-source-b393e75029374eaf9cba5f7d
-    resource: repo://crates/server/src/routes/integrations/runtime.rs
+  - id: openwiki-source-5720d865d1c837f0e6b7dab7
+    resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/stores/useKanbanDisplayStore.ts
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
     resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
-generated: { by: "codex", at: "2026-10-27T11:19:07.381Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:19:07.381Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # Project・Issue と実施の関係
@@ -169,11 +169,11 @@ migration は名前 Todo、色 `210 80% 52%`、sort_order 100、hidden 0 がす�
 
 | 製品 | In Progress / In Review の根拠 | Done の根拠 |
 | --- | --- | --- |
-| 自動マージ | 通常進行・再開は In Progress。blocked / failed / cancelled / recovery_required と未公開 succeeded は In Review。integrating 中のみ現在の競合 Agent の待機・失敗も反映 | payload の `published=true`。後続 Wiki や後着 Agent の失敗とは分離 |
+| 自動マージ | 通常進行・再開は In Progress。blocked / failed / cancelled / recovery_required と未公開 succeeded は In Review。integrating 中のみ現在の担当 Agent の待機・失敗も反映 | payload の `published=true`。後続 Wiki や後着 Agent の失敗とは分離 |
 | Bootstrap | Workflow の awaiting_human / awaiting_arena / failed / canceled、または実行中 node の child Agent の入力・承認待ちは In Review。それ以外の進行は In Progress | host の publication End を通った Workflow succeeded |
 | Sync | 現在の Agent の入力・承認待ちや失敗・取消・crash・audit_failed、owner result の failed / cancelled は In Review。再開は In Progress | 対応 Agent が存在し、owner result が succeeded。公開検証済み no-op も含む |
 
-Agent Succeeded 単独では公開成功としない。自動マージの validating 以降は古い競合 Agent に引き戻されず、Done receipt は後着・重複の成功 / 失敗で再消費しない。DB の product 状態・owner・Agent / node 更新に伴う trigger で同じ transaction 内に列と完了日時を反映し、過去 AgentRun の監査・失敗記録は書き換えない。[状態と更新](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L183)・[製品別の回帰](../../crates/db/tests/generated_issue_status.rs#L144-L261)
+Agent Succeeded 単独では公開成功としない。公開済みの自動マージは後着 Agent の失敗で引き戻されず、Done receipt は後着・重複の成功 / 失敗で再消費しない。DB の product 状態・owner・Agent / node 更新に伴う trigger で同じ transaction 内に列と完了日時を反映し、過去 AgentRun の監査・失敗記録は書き換えない。[状態と更新](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L8-L183)・[製品別の回帰](../../crates/db/tests/generated_issue_status.rs#L144-L261)
 
 移動先は同じ Project の可視列を名前の小文字値で照合し、sort_order / ID 順で選ぶ。必要な列がない場合は無関係な末尾列へ代替しない。Issue 全体の Cancelled / Canceled は operator の判断として保ち、公開後の手動再オープンも Done receipt の再送で消さない。一方、公開前の通常の手動列変更を永久 freeze する契約ではない。archive 属性は独立し、手動 archive 中でも対象の product 状態は投影される。[適用条件と receipt](../../crates/db/migrations/20261027090000_generated_issue_status.sql#L52-L103)・[取消・再オープン・列欠落・archive の回帰](../../crates/db/tests/generated_issue_status.rs#L264-L419)
 
@@ -204,11 +204,11 @@ Team / Personal は同じ Project の Issue 集合を見る filter preset であ
 
 Kanban のカードは Issue を表し、内側の Workspace はその仕事の実施を表す。カードを小さくしても Issue と Workspace の 1:N 関係や [実行による列の同期](#kanban-と実行の同期契約)は変わらない。可視 Status ごとに列を描画し、その列の実幅が33.5rem以上なら内部のカードを二列、未満なら一列に置く。物理解像度や画面全体の幅で固定せず、三列や masonry にしない。標準 root 16px では閾値536 CSS pxで、二列時の16remカード二枚と gap・padding を確保する設計である。一列時のカード幅を常に16rem以上に制限する CSS ではない。[可視列](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L468-L476)・[幅と通常 grid](../../packages/web-core/src/features/kanban/ui/kanban-grid.css#L3-L21)。[開発時の判断記録](../../tests/kanban/VALIDATION.md#変更と判断)は、文字縮小や一次元 DnD の CSS だけの grid 化を避けた理由を記録している。
 
-Issue 番号・省略表示のタイトル・未 archive の関連 Workspace 数に加え、本文プレビューをタグ群の後へ最大2視覚行で表示する。native `details` は本文全文を開くために残す。`showWorkspaces` が有効なら通常 Workspace 一覧を折り畳みの外に表示し、無効なら一覧を隠す。WorkflowAttempt カードは従来どおり別に描画する。カードごとの 自動マージ 行は廃止し、自動マージ は Navbar の 自動マージ から開く。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L318-L329)・[全文](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L60)・[Workspace 一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1240-L1294)・[自動マージ 入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1015-L1032)
+Issue 番号・省略表示のタイトル・未 archive の関連 Workspace 数に加え、本文プレビューをタグ群の後へ最大2視覚行で表示する。native `details` は本文全文を開くために残す。`showWorkspaces` が有効なら通常 Workspace 一覧を折り畳みの外に表示し、無効なら一覧を隠す。WorkflowAttempt カードは従来どおり別に描画する。カードごとの 自動マージ 行は廃止し、自動マージ は Navbar の 自動マージ から開く。[本文](../../packages/ui/src/components/KanbanCardContent.tsx#L318-L329)・[全文](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx#L34-L60)・[Workspace 一覧](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1300-L1420)・[自動マージ 入口](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1015-L1032)
 
 タグは固定二件ではなく利用可能幅で可視数を決め、隠れた件数を `+N` で残す。長い先頭タグは省略して全文を title に保持し、既存のタグ編集操作を維持する。計測機構は [Web の描画責任](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
-件数は未 archive の関連 Workspace 全体で、通常一覧は Workflow 所属 Workspace を除くため、表示枚数と一致を保証しない。列見出しの括弧件数は別の値で、filter 後の描画用 Issue ID 数を0も含めて示す。[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1270)・[列見出し](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1107-L1135)
+件数は未 archive の関連 Workspace 全体で、通常一覧は Workflow 所属 Workspace を除くため、表示枚数と一致を保証しない。列見出しの括弧件数は別の値で、filter 後の描画用 Issue ID 数を0も含めて示す。[件数と重複除外](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1230-L1270)・[列見出し](../../packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1235-L1270)
 
 Issue 集約の承認・入力・実行・失敗・未確認・DevServer 文字行は、Workspace 表示 ON/OFF とも描画しない。Priority と担当者は LOCAL-ID 行に置き、Workspace ごとの注意状態、読取状態、DevServer をアイコンで示す。注意状態は承認、入力、実行、失敗の順に選び、既読/未読は準備中・実行中等には出さず、DevServer の Play は独立する。pending / starting は Preparing とし実行時計を抑止する。非表示は状態がない証明ではなく、過去の全失敗を網羅する表示でもない。[details の責任](../../packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx)・[Workspace 判定](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L125-L170)・[描画](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L250-L320)。操作と snapshot の収束、ghost、fixture の限界は [Web の操作と保存](../architecture/web-and-sync.md#コンパクト-kanban-の操作と保存の境界)を参照する。
 
@@ -252,7 +252,7 @@ WorkflowAttempt は Project と Issue の所属を検証し、通常のテンプ
 
 ### 正式統合と Card の完了
 
-local Board の [自動マージ](formal-integration.md)は採用 commit を固定し、一件ずつ merge と必要な review を行い、最終候補を受付時の検証方針に従って処理する。Git 公開後に採用元の選択 Card を完了列へ動かし、専用 自動マージ Card は [生成状態投影](#生成-issue-の状態契約)で Done を記録する。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
+local Board の [自動マージ](formal-integration.md)は採用 commit を固定し、同じ専用会話で候補作成・競合修復と必要な検証判断を行い、有効なWiki更新後にhostが公開する。Git 公開後に採用元の選択 Card を完了列へ動かし、専用 自動マージ Card は [生成状態投影](#生成-issue-の状態契約)で Done を記録する。要件 revision や link 変更の一致は現在の Done 条件ではない。Done はコード到達先や Wiki の新鮮さの証明にもならない。条件・例外・原子的 receipt は [公開・Done・Wiki の境界](formal-integration.md#公開donewiki-は別の結果)を参照する。
 
 通常の link / unlink は interactive 用途を要求し、既存 Workspace の unlink は 自動マージ guard も確認する。execution-only の間は通常作業への付け替えを拒否するが、終了・cleanup 後の用途解除は可能である。[link/unlink](../../crates/server/src/routes/workspaces/links.rs)、[用途と所有者](workspace.md#操作用途と実行所有者)。内部製品が自身の Card を付ける処理と、通常ユーザーの link API は区別する。
 

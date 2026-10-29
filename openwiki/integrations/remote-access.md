@@ -12,18 +12,12 @@ sources:
     resource: repo://crates/db/src/models/board_tag.rs
   - id: openwiki-source-27eb1d689068b93b5282d2b6
     resource: repo://crates/db/src/models/design_note_read.rs
-  - id: openwiki-source-c01fa644be961cb7ee12d2b5
-    resource: repo://crates/db/src/models/integration.rs
   - id: openwiki-source-d83dfc60bdfadf451d836df3
     resource: repo://crates/git/src/reference.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
   - id: openwiki-source-28437ab4b181623345af79bc
     resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
-  - id: openwiki-source-7d94e7454f63f16057833046
-    resource: repo://crates/server-access/src/lib.rs
-  - id: openwiki-source-d9fe6f50a365b8b34a14b1e4
-    resource: repo://crates/server-access/src/provider.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
     resource: repo://crates/server/src/middleware/origin.rs
   - id: openwiki-source-e1757d002aa325145a915b38
@@ -44,8 +38,6 @@ sources:
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-3ec71fa8cd8936e31e523736
     resource: repo://crates/server/src/remote_mcp/integration_read.rs
-  - id: openwiki-source-33abd750e40bc0d544b210b5
-    resource: repo://crates/server/src/remote_mcp/integration_write_tests.rs
   - id: openwiki-source-1083b3cf6ec502f1c6eb3811
     resource: repo://crates/server/src/remote_mcp/integration_write.rs
   - id: openwiki-source-baadfd16fa9d31d06a1e6eb1
@@ -90,14 +82,8 @@ sources:
     resource: repo://crates/server/src/resource_observation/disk.rs
   - id: openwiki-source-7cfd6d36fabe8e3d6102302d
     resource: repo://crates/server/src/resource_observation/linux.rs
-  - id: openwiki-source-595d5d0308d670e38ef27fbf
-    resource: repo://crates/server/src/routes/integrations/admission.rs
-  - id: openwiki-source-ecfa47de2e3842c785820c9b
-    resource: repo://crates/server/src/routes/integrations/mod.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
-  - id: openwiki-source-2274afe258c46dce0acaf5f1
-    resource: repo://crates/server/src/routes/integrations/tests.rs
   - id: openwiki-source-2100c29dd665b0f698970419
     resource: repo://crates/server/src/routes/local_remote/board_api/issue_filter.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
@@ -118,10 +104,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-27T07:29:50.767Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T07:29:50.767Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -140,7 +126,7 @@ local-web は `/api` を backend へ送り、WebSocket も同じ経路を使う�
 
 Streamable HTTP `/mcp` はAuth0でMCPを有効化した場合のみ利用できる。Local/Basicでは使えない。旧 `LVK_MCP_CONFIG` と外部introspection設定は起動時に拒否し、設定画面へ移行する。metadataは `/.well-known/oauth-protected-resource/mcp`。これは stdio MCP とは独立しており、内部会話モデルを起動しない。[旧 Astra の廃止](../concepts/project-chat.md)後も外部 MCP と Workspace 質問回答は残る。[HTTP入口](../../crates/server/src/remote_mcp/mod.rs)、[認証設定](../../docs/self-hosting/authentication.mdx)。
 
-共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、自動マージの開始・承認・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
+共通認証はAuth0 discovery/JWKS、JWT署名、issuer、resource audience、有効期限、承認済みメンバーを検証する。全操作に `lvk:read`、Issue/Todo・設計メモ・agent起動/制御・既存Wiki同期・Workspace archiveの準備/確定などの変更に `lvk:write`、自動マージの開始・取消に `lvk:merge` を要求する。Runtime Access の観測には追加で `lvk:runtime:read`、起動・停止にはさらに `lvk:runtime:execute` が必要で、一般のwrite scopeとは独立する。HTTP入口とtool処理の両方でscopeを確認する。承認済みメンバーは全プロジェクトを使い、旧owner単独・静的Project allowlist方式ではない。[JWT検証とissuerの制限](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)、[scope](../../crates/server/src/remote_mcp/mod.rs)、[実体の関係検証](../../crates/server/src/remote_mcp/launch.rs)。
 
 transportはstatelessなJSON応答で、`MCP-Session-Id`付き要求を拒否する。productionは共通認証のprincipalを受け、Project集合を現在のDBから作る。`remote_mcp/auth.rs`に残るintrospectionやowner設定はtest用で、現行の認証経路ではない。[入口](../../crates/server/src/remote_mcp/mod.rs#L75-L164)、[session ID拒否](../../crates/server-access/src/lib.rs#L473-L518)
 
@@ -162,7 +148,7 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 
 ## Managed DevServer を操作する
 
-`start_dev_server` / `stop_dev_server` / `get_dev_server_status` は明示 Project / Workspace を要求し、stdio の両 mode と外部 HTTP から同じ UI manager を使う。外部の観測には read + runtime:read、開始停止にはさらに runtime:execute が必要で、一般 write や [Runtime Access の region grant](../concepts/runtime-access.md)で代用しない。Orchestrator stdio は別 Workspace を拒否する。[外部 scope](../../crates/server/src/remote_mcp/dev_server.rs#L13-L108)・[stdio adapter](../../crates/mcp/src/task_server/tools/dev_server.rs#L11-L79)
+`start_dev_server` / `stop_dev_server` / `get_dev_server_status` は明示 Project / Workspace を要求し、stdio の両 mode と外部 HTTP から同じ UI manager を使う。外部の観測には read + runtime:read、開始停止にはさらに runtime:execute が必要で、一般 write や [Runtime Access の設定](../concepts/runtime-access.md)で代用しない。Orchestrator stdio は別 Workspace を拒否する。[外部 scope](../../crates/server/src/remote_mcp/dev_server.rs#L13-L108)・[stdio adapter](../../crates/mcp/src/task_server/tools/dev_server.rs#L11-L79)
 
 外部の開始停止は `request_id` を持つ耐久receiptを返す。同じID/入力で再送し、`get_operation` と現在statusを読み分ける。succeededはmanager受付の結果で、アプリreadinessの証明ではない。副作用後の観測失敗は uncertain となり、新IDで盲目的に再起動しない。重複startの再利用、停止後のsettlement、複数Repoの部分失敗と観測状態は [DevServer運用の正本](../operations/workspace-inspection.md#preview-と開発サーバー)に集約する。[receipt と失敗](../../crates/server/src/remote_mcp/dev_server.rs#L51-L108)
 
@@ -206,9 +192,9 @@ Auth0実テナント・Google/GitHub本人認証・ChatGPT OAuth/MCPの実接続
 
 ## アプリケーションの実行環境を扱う
 
-[Runtime Access](../concepts/runtime-access.md) は管理者が許可した Linux region で、未追跡ログの読取、プロセス観測、既存プログラムの起動・停止を提供する。既存コード参照の制限を緩める機能でも、共有資源の予約でもない。利用前の管理設定とscope、Workspace重複拒否、出力・停止・再起動の寿命は同ページを正本とする。[runtime dispatch](../../crates/server/src/remote_mcp/environment.rs#L329-L429)
+[Runtime Access](../concepts/runtime-access.md) は、管理されたrootのファイル一覧・読取・変更と、プロセス観測・起動停止を提供する。現在のfilesとexecute設定、Workspace境界、明示Project context、出力と停止の寿命は同ページを正本とする。旧region grantを前提にしない。[dispatch](../../crates/server/src/remote_mcp/environment.rs)。
 
-`run_process` / `stop_process` も上記の永続receiptを使う。`get_operation` でそれらの履歴を読むには `lvk:runtime:read` を追加要求する。receipt成功と実プロセスの終了・healthを分け、現在grantを失った後の履歴参照を停止権限の復活と扱わない。[receipt読取](../../crates/server/src/remote_mcp/issue_write.rs#L156-L180)・[実行契約](../concepts/runtime-access.md#起動観測停止の寿命)
+`run_process` / `stop_process` / `change_runtime_path` / `self_restart` の履歴を `get_operation` で読むには追加の `lvk:runtime:read` が必要である。現在の設定とscopeを確認し、receipt成功と実プロセスの終了・healthを分ける。[receipt読取](../../crates/server/src/remote_mcp/issue_write.rs)。
 
 ## Workspace のコード根拠を絞って読む
 
@@ -236,7 +222,7 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 ### 同じ本文を確認して周辺行を読む
 
-検索の hit または `get_workspace_file` が返すファイル revision を、`get_workspace_file_ranges` の各 `expected_revision` に渡す。1バッチは1–8範囲、各範囲は1始まり両端包含で最大200行。存在しない終端は黙って丸めず `range_out_of_bounds` となり、成功 item の `lines` は行終端を含まない。各 item 合計64 KiBの予算は残り item のメタデータを予約し、入らない本文は `output_byte_limit` とする。[入力検証](../../crates/server/src/remote_mcp/code_query.rs#L100-L120)・[範囲処理](../../crates/server/src/remote_mcp/code_query.rs#L348-L403)
+検索の hit または `get_workspace_file` が返すファイル revision を、`get_workspace_file_ranges` の各 `expected_revision` に渡す。初回読取では省略でき、指定した場合だけ本文の一致を要求する。1バッチは1–8範囲、各範囲は1始まり両端包含で最大200行。存在しない終端は黙って丸めず `range_out_of_bounds` となり、成功 item の `lines` は行終端を含まない。各 item 合計64 KiBの予算は残り item のメタデータを予約し、入らない本文は `output_byte_limit` とする。[入力検証](../../crates/server/src/remote_mcp/code_query.rs#L100-L120)・[範囲処理](../../crates/server/src/remote_mcp/code_query.rs#L348-L403)
 
 成功 `status:text` と、`revision_mismatch`・範囲外・読取失敗・出力上限は同じバッチに混在できる。失敗 item は本文を返さず `complete:false` になるので、全 item の status を確認する。一方、不正な path / 範囲指定 / 対象関係、メタデータだけで予算超過、処理中に検出した checkout の branch / HEAD 不一致は要求全体のエラーである。[要求境界](../../crates/server/src/remote_mcp/code_query.rs#L134-L170)・[HEAD再照合](../../crates/server/src/remote_mcp/code_query.rs#L252-L257)・[部分失敗](../../crates/server/src/remote_mcp/code_query.rs#L348-L403)
 
@@ -252,39 +238,31 @@ Project / Workspace / repository の関係を共通の evidence reader で検証
 
 画面と対話では「自動マージ / Auto-merge」を使う。以下の tool 名・JSON key は互換識別子として保持される。[名称と互換境界の正本](../concepts/formal-integration.md#名称と互換境界)を参照する。
 
-`start_integration` は既存の自動マージ 受付に、任意の `skip_validation` を渡す。`true` は設定済みの追加自動マージ検証を省略し、`false` はその検証を実行する選択、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。この flag は既存検証証拠の有無を示さない。証拠評価と保存上の NotRun の区別は [検証方針の正本](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L513-L543)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
+`start_integration` は既存の自動マージ 受付に、任意の `skip_validation` を渡す。`true` は設定済みの追加検証を省略する方針、`false` は追加検証を行う方針、未指定と `null` は受付時の server preference `integration_skip_validation` の継承である。この flag は既存検証証拠の有無を示さず、担当会話が実際の検証または根拠付き省略を記録する。証拠評価と保存上の NotRun の区別は [検証方針の正本](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。文字列 `"true"` や数値は boolean として解釈しない。MCP 固有の検証 engine や保存先は作らず、domain が `IntegrationPayload.skip_validation` を固定する。[入力と domain への転送](../../crates/server/src/remote_mcp/launch.rs#L61-L74)・[受付呼出し](../../crates/server/src/remote_mcp/launch.rs#L513-L543)・[方針の固定](../../crates/server/src/routes/integrations/admission.rs#L242-L262)
 
-受付成功 receipt の `result.skip_validation` と、`get_integration` の全 section（`summary` / `sources` / `validation` / `pending_gates`）の `skip_validation` は保存済みの解決済み boolean を返す。後から server preference が変わっても、再接続時に現在の設定から推測し直す必要はない。この値は検証件数と独立しており、ゼロ件を「省略」や「合格」と読み替えない。起動 receipt の `integration_accepted` は受付結果であり、自動マージ の完了、`published`、Wiki の確認結果は別に読む。[起動結果](../../crates/server/src/remote_mcp/launch.rs#L177-L189)・[保存値と検証件数の読取](../../crates/server/src/remote_mcp/integration_read.rs#L107-L175)
+受付成功 receipt の `result.skip_validation` と、`get_integration` の全 section（`summary` / `sources` / `validation`）の `skip_validation` は保存済みの解決済み boolean を返す。後から server preference が変わっても、再接続時に現在の設定から推測し直す必要はない。この値は検証件数と独立しており、ゼロ件を「省略」や「合格」と読み替えない。起動 receipt の `integration_accepted` は受付結果であり、自動マージ の完了、`published`、Wiki の確認結果は別に読む。[起動結果](../../crates/server/src/remote_mcp/launch.rs#L177-L189)・[保存値と検証件数の読取](../../crates/server/src/remote_mcp/integration_read.rs#L107-L175)
 
 再送は同じ `request_id` と元の JSON 入力を保持する。比較するのは解決後の boolean ではなく、key 順を正規化した**元の入力全体**の hash である。そのため、同じ既定値へ解決される場合でも、省略から `null` への変更、flag の追加・削除・値変更は既存 receipt の入力不一致となる。domain 受付単独の省略再送規則と、MCP receipt の規則を混同しない。[fingerprint](../../crates/server/src/remote_mcp/operations.rs#L31-L45)・[入力照合](../../crates/server/src/remote_mcp/operations.rs#L210-L228)・[省略/null の再送テスト](../../crates/server/src/remote_mcp/launch_tests.rs#L444-L514)
 
-この選択でも `lvk:read` と `lvk:merge`、Project / Repo / Issue / Workspace の関係、expected target / source commit の照合を通る。省略が変えるのは追加検証の方針であり、clean candidate、競合承認、writer の収束、target 一致、公開と取消の排他、Wiki receipt は引き続き別の条件である。全体の lifecycle と未検証結果の意味は [自動マージ の検証・公開契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を正本とする。[MCP の認可と関係検証](../../crates/server/src/remote_mcp/launch.rs#L423-L502)・[公開 guard](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1381)
+この選択でも `lvk:read` と `lvk:merge`、Project / Repo / Issue / Workspace の関係、expected target / source commit の照合を通る。省略が変えるのは追加検証の方針であり、clean candidate、固定baseとsourceの祖先性、writer の収束、公開先mainの祖先性とCAS、公開と取消の排他、Wiki receipt は引き続き別の条件である。全体の lifecycle と未検証結果の意味は [自動マージ の検証・公開契約](../concepts/formal-integration.md#検証方針は受付時に固定する)を正本とする。[MCP の認可と関係検証](../../crates/server/src/remote_mcp/launch.rs#L423-L502)・[公開 guard](../../crates/server/src/routes/integrations/runtime.rs#L1258-L1381)
 
 変更時には [schema の optional boolean/null](../../crates/server/src/remote_mcp/tests.rs#L299-L319)、[既定値二通り・四種の指定・再接続・全 section・不正型](../../crates/server/src/remote_mcp/launch_tests.rs#L444-L514)、[HTTP 経由の起動と read-only 取得](../../crates/server/src/remote_mcp/launch_tests.rs#L517-L588)、[domain の既定値解決](../../crates/server/src/routes/integrations/tests.rs#L357-L385)を確認する。HTTP discovery の試験は生成 schema の「追加検証」と既存証拠を区別する説明文も固定する。内部 stdio の [catalog fixture](../../crates/mcp/src/task_server/tools/stdio_tests.rs#L75-L83) は `start_integration` を公開しないことを確認するため、HTTP tool と stdio tool の可用性を同一視しない。これらは fixture による契約テストであり、実 ChatGPT/Auth0 接続の証拠ではない。この Sync では source とテスト内容を照合し、テストの再実行や live 接続確認は行っていない。
 
-## MCP から Integration を承認・取消する
+## MCP から Integration の会話と取消を扱う
 
-`approve_integration` と `cancel_integration` は、外部 HTTP MCP から既存の自動マージ に明示判断を送る入口である。どちらも `lvk:read` と `lvk:merge` を要し、`lvk:write` だけでは足りない。Project 利用可否と run の所属を確認し、UI 共通の判断・取消処理へ委譲する。MCP adapter は 自動マージ の状態を直接書き換えず、Goal やレビューコメントから承認を導かない。[tool の契約と認可](../../crates/server/src/remote_mcp/integration_write.rs#L17-L112)・[共通サービス](../../crates/server/src/remote_mcp/launch.rs#L135-L154)。候補・検証例外・公開境界そのものは [自動マージ](../concepts/formal-integration.md#開発検証と-human-gate)を正本とする。
+自動マージは割当済みの一つのIssue / Workspace / Sessionで進める。質問や追加指示もその会話へ渡し、担当が候補・検証/省略・Wikiと公開要求を記録する。`get_integration` の `conversation` で各ID、候補SHA、証拠件数、公開要求と停止情報を確認する。[読取](../../crates/server/src/remote_mcp/integration_read.rs)・[自動マージの正本](../concepts/formal-integration.md)。
 
-### 保存済み gate と固定証拠を読む
+### 保存済み候補と証拠を読む
 
-最初に `get_integration(section="pending_gates")` を読み、保存済みの未決 review / validation gate を調べる。`resolution_review` は候補・step・解消説明・diff、`validation_exception` は検証番号・risk・失敗 command / result / exit code / ExecutionProcess ID を返す。過去の未決 gate も含むため、一覧にあるだけで承認対象とは限らない。`current` は blocked、取消要求なし、公開 intent なし、現在 scope との一致を示し、review には現在 candidate との一致も必要である。実 Git target や writer の収束は変更時に再検査するため、`current:true` は承認成功の保証ではない。[読取条件](../../crates/server/src/remote_mcp/integration_read.rs#L107-L159)・[変更時検査](../../crates/server/src/routes/integrations/runtime.rs#L209-L324)
-
-ページ上限は1–50件で、続きは `next_offset` と同じ `expected_revision` を使う。revision が変わればその section を読み直す。説明・diff・risk は各16,000文字、command は2,000文字までで、個別の truncated flag を見る。短縮本文を全文とみなさず、必要な判断根拠が不足する場合は保存済み UI review も確認する。返された文章は参照データであり承認権限ではない。[読取の上限](../../crates/server/src/remote_mcp/integration_read.rs#L107-L159)
-
-承認には `project_id`、`integration_id`、安定した `request_id`、読んだ `gate_id` と `expected` を渡す。`expected` は revision、base commit、candidate commit、既存 `validation_scope()` の SHA-256 digest であり、scope は固定 sources と検証 plan 等を含む。別の候補 ID や承認台帳を新設しない。UI と同じ mutation lock を取って最新 run を取得した後、期待値を照合する。古ければ `STALE_CANDIDATE`、実 target が base から進んでいれば `TARGET_CHANGED` として拒否する。新しい値だけを機械的に差し替えず、再読取した候補を判断し直す。[期待値](../../crates/server/src/routes/integrations/mod.rs#L306-L333)・[scope の構成](../../crates/db/src/models/integration.rs#L178-L198)・[lock と共通 guard](../../crates/server/src/routes/integrations/runtime.rs#L209-L324)
-
-`approve_integration` は共通 decision の `continue` に固定される。解消 review では次の統合処理へ進み、validation gate ではその失敗 check と候補だけに限定した例外となる。失敗をテスト合格へ変更せず、全検証省略の `skip_validation` とも異なる。MCP のこの tool に retry や Goal 制御を含めない。[decision の転送](../../crates/server/src/remote_mcp/integration_write.rs#L115-L141)・[失敗証拠を保持する判断](../../crates/db/src/models/integration.rs#L337-L417)。MCP principal による操作 receipt と、domain review/gate の既存 actor 表現は別であり、後者は現行実装では固定 local operator UUID を記録する。[review actor](../../crates/db/src/models/integration.rs#L458-L462)・[gate actor](../../crates/db/src/models/integration.rs#L391-L401)
+sectionは `summary` / `sources` / `validation` の三つである。`validation` は各証拠の `code_commit` を持ち、最終Wiki SHAの検証成功とは読み替えない。続頁は同じ `expected_revision` と `next_offset` を使い、1–50件の上限を守る。旧 `pending_gates` と `approve_integration` は現行入口にない。[読取とページング](../../crates/server/src/remote_mcp/integration_read.rs)。
 
 ### 受付履歴と現在の取消完了を分ける
 
-取消は `project_id`、`integration_id`、`request_id` を受け、UI と同じ handler に要求を渡す。取消と公開 intent は既存 DB guard で排他になり、公開後の取消は Git undo ではない。遅い取消でも handler が現在 run を返して receipt が `succeeded` になる場合があるため、receipt status だけで取消受理を断定しない。`cancellation_requested`、`cancel_requested`、`published`、`publication_intent` と現在状態を読む。[取消の条件](../../crates/db/src/models/integration.rs#L504-L531)・[結果の構成](../../crates/server/src/remote_mcp/integration_write.rs#L115-L145)
+`cancel_integration` は `lvk:read` + `lvk:merge` とProject所属を確認し、永続receipt経由でUI共通取消へ委譲する。adapterがIntegration状態を直接更新したり、Goalやコメントから承認を導いたりしない。取消は公開後のGit undoではなく、遅い取消のreceiptが `succeeded` でも新しい取消の受理を意味しない。結果の `cancel_requested`、`published`、`publication_intent` と現在状態を読む。[取消入口](../../crates/server/src/remote_mcp/integration_write.rs)。
 
-`get_operation` は過去の受付結果、`get_integration(section="summary").lifecycle` は現在状態の確認に使う。lifecycle は run とその予約の有無を同じ SQLite read transaction で観測し、`status == "cancelled"` かつ予約なしの場合だけ `cancellation_complete:true` となる。engine は cancelled 保存の後に予約を削除するため、terminal status 単独では解放を証明しない。`terminal` は cancelled / succeeded / failed の三状態で、公開成功と取消完了も区別する。この一貫性は lifecycle 内の観測に限り、summary 全体や別要求との atomic snapshot を保証しない。[同一 snapshot](../../crates/server/src/remote_mcp/integration_write.rs#L53-L79)・[summary への接続](../../crates/server/src/remote_mcp/integration_read.rs#L160-L174)・[engine の停止と解放順序](../../crates/server/src/routes/integrations/runtime.rs#L1085-L1165)
+`get_operation` は過去の受付結果、`get_integration(section="summary").lifecycle` は現在状態の確認に使う。lifecycleはrunと予約を同じSQLite snapshotで読み、`cancelled` かつ予約なしだけを `cancellation_complete:true` とする。terminalは cancelled / succeeded / failedで、summary全体や別要求とのatomic snapshotを保証しない。[同一snapshot](../../crates/server/src/remote_mcp/integration_write.rs#L46-L77)。
 
-再送は [共通 receipt 契約](#参照結果と操作-receipt)に従い、同じ principal・request ID・元の入力全体を保つ。失敗 receipt も新しい証拠に使い回せない。副作用の後で DB エラーが発生し得るため、adapter は SQLx error や判断後の状態取得失敗を `uncertain` として返し、無条件の再実行を認めない。受付時の結果は後から terminal に更新される履歴ではなく、読戻し先を示す。現在の状態を照合した上で次の明示判断を行う。[操作と失敗分類](../../crates/server/src/remote_mcp/integration_write.rs#L112-L145)・[receipt の入力固定と再起動](../../crates/server/src/remote_mcp/operations.rs#L208-L245)
-
-[隔離 adapter/domain 試験と限界](../concepts/formal-integration.md#検証の入口と記録の限界)は、古い期待値と live target、権限・所属、同時再送、取消時の予約保持と終端後の読戻しを扱う。HTTP fixture は [catalog・scope 拒否](../../crates/server/src/remote_mcp/tests.rs#L315-L342)を確認するが、新 tool 成功の HTTP E2E、実 Auth0 / ChatGPT、実 AI の解消品質は別の未検証範囲である。[開発時記録](../../docs/development/integration-mcp-decisions.md#未検証範囲)。この Sync は固定 source と試験定義の照合であり、製品テストを再実行していない。
+再送は同じprincipal・request ID・元の入力全体を保つ。SQLx errorや取消後の状態取得失敗は `uncertain` として読み戻す。受付結果は後から現在のterminal状態へ更新される履歴ではない。[操作と失敗分類](../../crates/server/src/remote_mcp/integration_write.rs#L79-L135)・[receipt](../../crates/server/src/remote_mcp/operations.rs)。
 
 ## 既存 Goal を MCP から操作する
 
@@ -386,6 +364,7 @@ Windows Runnerはexecution slot等のcanonical Resourceをclaimし、immutable s
 
 [AI Mobile Design](../../docs/ai-mobile/design.md)はv0.1 draftである。web/PWA中心という意図は読めるが、記載されたremote-web / relay baselineやQR pairing案は現行実装の証拠にならない。現在のスマートフォンからの入口は直接local-webであり、UI確認には [built preview](../operations/development.md)を使う。外部IdP、HTTPS経路、Windows hardwareの実接続はこの静的source照合では試験していない。
 
+<!-- openwiki: broken internal link [../concepts/runtime-access.md#開発-instance-の専用自己再起動] heading anchor "開発-instance-の専用自己再起動" does not exist in "../concepts/runtime-access.md". Fix the href or restore the target, then delete this comment. -->
 自己再起動は通常 run_process と別の [専用 handoff と結果照会](../concepts/runtime-access.md#開発-instance-の専用自己再起動)を使う。一般 operation receipt の成功は切替成功を証明しない。
 
 ## Issueの分類・検索・archiveを操作する

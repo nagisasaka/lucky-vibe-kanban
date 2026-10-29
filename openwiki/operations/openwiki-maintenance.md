@@ -4,6 +4,10 @@ title: OpenWiki の初期生成・同期・回復
 description: Bootstrap の独立した Generate/Review/Refine と通常 Sync の違い、完了証拠、公開条件、失敗時に保持すべき所有権を説明する。
 tags: [openwiki, bootstrap, maintenance, recovery, validation]
 sources:
+  - id: openwiki-source-8037e2358a2c4f9b2c722a11
+    resource: repo://AGENTS.md
+  - id: openwiki-source-a2371d6362e5db4bc834ad03
+    resource: repo://CLAUDE.md
   - id: openwiki-source-3c57aab40b425fc8b5d0d5c5
     resource: repo://crates/db/migrations/20261027090000_generated_issue_status.sql
   - id: openwiki-source-4f59e07f8850eb04105d5cb8
@@ -22,6 +26,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/repository_wiki.rs
   - id: openwiki-source-ecfa47de2e3842c785820c9b
     resource: repo://crates/server/src/routes/integrations/mod.rs
+  - id: openwiki-source-b393e75029374eaf9cba5f7d
+    resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-1ffb01d1ba3953937e0771bf
     resource: repo://crates/server/src/routes/local_remote.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
@@ -74,10 +80,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx
   - id: openwiki-source-d6bd59c0727afcf22386a8f5
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-27T11:11:50.589Z
+    at: 2026-10-29T08:49:34.152Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -107,6 +113,12 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 明示 Sync の対象は現在の統合ソース全体、または指定 SHA からの範囲である。SHA は選択 branch の祖先である必要があり、初期生成に開始 SHA は指定できない。範囲外 event の扱いと未確認領域は [Repository memory](../concepts/repository-memory.md) の契約に従う。[scope 解決](../../crates/services/src/services/openwiki/sync_scope.rs)
 
 準備 future は Workspace lifecycle barrier 内で archive 状態を再確認して RAII 予約を取得する。installer 待機など AgentRun/Workflow がまだない期間も [手動 archive の busy 判定](../concepts/workspace.md#archive削除期限-cleanup)で保護し、future の完了・error・cancelで解放する。AgentRun終端後も repository state の active_run_id/bootstrap が残る host finalizing は archive 不可である。単に usage ラベルが execution_only という理由で永久に拒否する方式ではない。[準備の寿命](../../crates/server/src/routes/openwiki/preparation.rs#L1-L41)・[呼出位置](../../crates/server/src/routes/openwiki.rs#L384-L413)・[未完了所有の照合](../../crates/server/src/routes/workspaces/archive.rs#L45-L124)
+
+## 自動マージ担当が更新する場合
+
+通常SyncやBootstrapとは別に、自動マージではコード検証後の同じ候補branchでcanonical `openwiki/` を更新し、Wikiだけを別commitにする。コード検証SHAとWiki/公開SHAを分けて記録し、finish完了前やWiki失敗時は公開しない。専用Wiki Issueや別Workspaceへ分岐しない。[公開要求とSHAの契約](../concepts/formal-integration.md)・[担当promptと公開guard](../../crates/server/src/routes/integrations/runtime.rs)。
+
+このrepositoryのルート `CLAUDE.md` は通常ファイルの `@AGENTS.md` importで同じ開発指示を参照する。AGENTSとCLAUDEを同じ実体へ書くsymlinkへ戻さず、生成された管理blockはOpenWikiの正規setup/lifecycleに任せる。[指示の実体](../../CLAUDE.md)・[正本](../../AGENTS.md)。
 
 ## 開始元 Project と保守 Issue
 
