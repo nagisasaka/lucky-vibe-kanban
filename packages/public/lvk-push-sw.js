@@ -14,7 +14,7 @@ self.addEventListener('push', (event) => {
     if (await cache.match(key)) return;
     await self.registration.showNotification('LVK', {
       body: data.body, tag: data.tag, renotify: false,
-      data: { url: url.href }, icon: '/apple-touch-icon.png',
+      data: { url: url.href }, icon: '/apple-touch-icon.png?v=white-1',
     });
     await cache.put(key, new Response('seen'));
     const keys = await cache.keys();
