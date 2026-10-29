@@ -54,6 +54,7 @@ pub struct PhaseCompletionProof {
     completed_noops: usize,
     pending: HashMap<String, (String, [u8; 32])>,
     completed_calls: HashMap<String, [u8; 32]>,
+    resume_required: bool,
 }
 
 impl PhaseCompletionProof {
@@ -67,18 +68,36 @@ impl PhaseCompletionProof {
             completed_noops: 0,
             pending: HashMap::new(),
             completed_calls: HashMap::new(),
+            resume_required: false,
         }
     }
 
-    /// Attempts must be supplied in durable attempt_number order. A crashed
-    /// attempt cannot be forgotten, and cross-attempt operation recovery is not
-    /// implemented. An earlier closed, side-effect-free attempt is harmless.
+    /// Strict standalone phases require every attempt to close its operations.
     pub fn replay_attempt(
         &mut self,
         audit: &NativeAuditReader,
         root: &Path,
     ) -> anyhow::Result<bool> {
         self.ensure_closed()?;
+        let observed = self.replay_continuation(audit, root)?;
+        self.ensure_closed()?;
+        Ok(observed)
+    }
+
+    /// The caller must verify durable ownership, ordering and writer exit for
+    /// every attempt in the same operation. Only a fully audited begin may
+    /// survive a boundary; unresolved calls cannot be guessed or discarded.
+    /// A later writer must explicitly resume that exact active operation.
+    pub fn replay_continuation(
+        &mut self,
+        audit: &NativeAuditReader,
+        root: &Path,
+    ) -> anyhow::Result<bool> {
+        ensure!(
+            self.pending.is_empty(),
+            "Unresolved OpenWiki calls at writer boundary"
+        );
+        self.resume_required = self.active.is_some();
         self.completed_calls.clear(); // call IDs are scoped to a provider attempt
         let mut thread: Option<String> = None;
         for frame in audit.frames() {
@@ -114,7 +133,10 @@ impl PhaseCompletionProof {
             }
             self.observe_frame(&value, thread.as_deref(), root)?;
         }
-        self.ensure_closed()?;
+        ensure!(
+            self.pending.is_empty(),
+            "Unresolved OpenWiki calls at writer boundary"
+        );
         Ok(thread.is_some())
     }
 
@@ -236,6 +258,10 @@ impl PhaseCompletionProof {
             ensure!(!failed, "OpenWiki begin failed with unknown side effects");
             return self.begin(args, &item["result"], root);
         }
+        ensure!(
+            !self.resume_required,
+            "OpenWiki writer must resume the owned active run"
+        );
         let active = self
             .active
             .as_ref()
@@ -281,6 +307,10 @@ impl PhaseCompletionProof {
                 "OpenWiki repository root mismatch"
             );
         }
+        ensure!(
+            matches!(data.get("sourceChanged"), None | Some(Value::Bool(false))),
+            "Integrated source changed during OpenWiki begin"
+        );
         let mode = args["mode"]
             .as_str()
             .context("OpenWiki begin mode missing")?;
@@ -347,6 +377,7 @@ impl PhaseCompletionProof {
                 mode: mode.to_owned(),
             });
         }
+        self.resume_required = false;
         Ok(())
     }
 }
@@ -652,6 +683,74 @@ mod tests {
         let mut proof = PhaseCompletionProof::new(WriterPhase::Generate);
         assert!(proof.replay_attempt(&bad, tmp.path()).is_err());
         assert!(proof.replay_attempt(&second, tmp.path()).is_err());
+    }
+
+    #[test]
+    fn continuation_requires_exact_owned_resume_and_final_closure() {
+        let tmp = tempfile::tempdir().unwrap();
+        for mutation in [
+            "valid",
+            "new",
+            "unknown",
+            "root",
+            "mode",
+            "pending",
+            "finish_only",
+            "closed",
+            "noop",
+            "source",
+            "unfinished",
+        ] {
+            let id = Uuid::new_v4();
+            let mut first_frames = begin(tmp.path(), "update", id);
+            if mutation == "closed" {
+                first_frames.extend(finish(id));
+            }
+            if mutation == "pending" {
+                first_frames.pop();
+            }
+            let (_first_dir, first) = audited(tmp.path(), first_frames, 1);
+            let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+            let first_result = proof.replay_continuation(&first, tmp.path());
+            if mutation == "pending" {
+                assert!(first_result.is_err());
+                continue;
+            }
+            first_result.unwrap();
+            let mut next = begin(tmp.path(), "update", id);
+            for frame in &mut next {
+                let item = &mut frame["params"]["item"];
+                let data = &mut item["result"]["structuredContent"];
+                data["resumed"] = json!(true);
+                match mutation {
+                    "new" => data["resumed"] = json!(false),
+                    "unknown" => data["runId"] = json!(Uuid::new_v4()),
+                    "root" => data["root"] = json!("/unknown"),
+                    "mode" => {
+                        data["mode"] = json!("init");
+                        item["arguments"]["mode"] = json!("init");
+                    }
+                    "noop" => data["status"] = json!("noop"),
+                    "source" => data["sourceChanged"] = json!(true),
+                    _ => {}
+                }
+            }
+            if mutation == "finish_only" {
+                next.clear();
+            }
+            if mutation != "unfinished" {
+                next.extend(finish(id));
+            }
+            let (_second_dir, second) = audited(tmp.path(), next, 1);
+            let result = proof
+                .replay_continuation(&second, tmp.path())
+                .and_then(|_| proof.validate());
+            assert_eq!(
+                result.is_ok(),
+                mutation == "valid",
+                "{mutation}: {result:?}"
+            );
+        }
     }
 
     #[test]

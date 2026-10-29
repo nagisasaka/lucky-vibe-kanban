@@ -94,16 +94,111 @@ pub(crate) async fn writer_completion_proof(
     root: &Path,
     phase: WriterPhase,
 ) -> anyhow::Result<PhaseCompletionProof> {
+    let mut proof = PhaseCompletionProof::new(phase);
+    replay_writer_run(
+        pool,
+        run,
+        attempts,
+        workspace_id,
+        workspace_path,
+        root,
+        &mut proof,
+        false,
+    )
+    .await?;
+    proof.validate()?;
+    Ok(proof)
+}
+
+/// Auto-merge owns one conversation across multiple AgentRuns. Never search
+/// other sessions for a matching OpenWiki ID or accept a resumed ID on trust.
+pub(crate) async fn conversation_completion_proof(
+    pool: &SqlitePool,
+    latest: &AgentRunRecord,
+    owner: Uuid,
+    workspace_id: Uuid,
+    root: &Path,
+) -> anyhow::Result<()> {
     ensure!(
-        run.workspace_id == workspace_id && run.status == AgentRunStatus::Succeeded,
+        latest.status == AgentRunStatus::Succeeded && latest.workspace_id == workspace_id,
+        "Latest OpenWiki writer did not succeed in the assigned workspace"
+    );
+    let runs: Vec<AgentRunRecord> =
+        sqlx::query_as("SELECT * FROM agent_runs WHERE session_id = ? ORDER BY created_at, id")
+            .bind(latest.session_id)
+            .fetch_all(pool)
+            .await?;
+    ensure!(
+        runs.last().map(|run| run.id) == Some(latest.id),
+        "Stale OpenWiki conversation writer"
+    );
+    let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+    let mut previous_exit = None;
+    for run in &runs {
+        ensure!(
+            run.correlation_id == owner
+                && run.workspace_id == latest.workspace_id
+                && run.request_envelope.0.correlation_id == owner
+                && run.request_envelope.0.session_id == latest.session_id,
+            "OpenWiki conversation ownership mismatch"
+        );
+        let attempts = ensure_processes_exited(pool, run).await?;
+        if run.id == latest.id {
+            ensure!(
+                attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
+                "Latest OpenWiki attempt did not succeed"
+            );
+        }
+        if let Some(previous) = previous_exit {
+            let started = attempts[0]
+                .1
+                .process_started_at
+                .context("Writer start missing")?;
+            ensure!(
+                previous <= started,
+                "OpenWiki conversation writers overlapped"
+            );
+        }
+        replay_writer_run(
+            pool,
+            run,
+            &attempts,
+            latest.workspace_id,
+            Path::new(&latest.workspace_path),
+            root,
+            &mut proof,
+            true,
+        )
+        .await?;
+        previous_exit = attempts
+            .last()
+            .and_then(|(_, process)| process.observed_exited_at);
+    }
+    proof.validate()
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn replay_writer_run(
+    pool: &SqlitePool,
+    run: &AgentRunRecord,
+    attempts: &[(AgentRunAttemptRecord, AgentProcessRegistryRecord)],
+    workspace_id: Uuid,
+    workspace_path: &Path,
+    root: &Path,
+    proof: &mut PhaseCompletionProof,
+    continuation: bool,
+) -> anyhow::Result<()> {
+    ensure!(
+        run.workspace_id == workspace_id
+            && (continuation || run.status == AgentRunStatus::Succeeded),
         "OpenWiki AgentRun is not a successful delegated workspace run"
     );
     ensure!(!attempts.is_empty(), "OpenWiki has no RunAttempts");
     ensure!(
-        attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
+        continuation || attempts.last().unwrap().0.status == AgentRunStatus::Succeeded,
         "Latest OpenWiki attempt did not succeed"
     );
-    let mut proof = PhaseCompletionProof::new(phase);
+
     let mut previous_exit = None;
     for (index, (attempt, process)) in attempts.iter().enumerate() {
         let request = &attempt.request_envelope.0;
@@ -117,7 +212,9 @@ pub(crate) async fn writer_completion_proof(
                 && request.session_id == run.session_id
                 && request.turn_id == attempt.turn_id
                 && i64::from(request.attempt_number) == attempt.attempt_number
-                && request.workspace.workspace_id == workspace_id,
+                && request.workspace.workspace_id == workspace_id
+                && Path::new(&run.workspace_path).canonicalize()?
+                    == workspace_path.canonicalize()?,
             "OpenWiki attempt identity/sequence mismatch"
         );
         ensure!(
@@ -129,6 +226,12 @@ pub(crate) async fn writer_completion_proof(
             "OpenWiki attempt {} process exit is unconfirmed",
             attempt.id
         );
+        if continuation {
+            ensure!(
+                process.process_started_at.is_some(),
+                "OpenWiki writer start missing"
+            );
+        }
         if let (Some(previous), Some(started)) = (previous_exit, process.process_started_at) {
             ensure!(previous <= started, "OpenWiki attempts overlapped");
         }
@@ -164,16 +267,18 @@ pub(crate) async fn writer_completion_proof(
                     == workspace_path.canonicalize()?,
             "OpenWiki Native Audit identity does not match the delegated attempt"
         );
-        let root_observed = proof
-            .replay_attempt(&audit, root)
-            .with_context(|| format!("OpenWiki attempt {} operation proof failed", attempt.id))?;
+        let root_observed = if continuation {
+            proof.replay_continuation(&audit, root)
+        } else {
+            proof.replay_attempt(&audit, root)
+        }
+        .with_context(|| format!("OpenWiki attempt {} operation proof failed", attempt.id))?;
         ensure!(
             attempt.status != AgentRunStatus::Succeeded || root_observed,
             "Successful OpenWiki attempt has no audited root thread"
         );
     }
-    proof.validate()?;
-    Ok(proof)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -398,6 +503,185 @@ mod tests {
                 }
             }
             frames
+        }
+    }
+
+    #[tokio::test]
+    async fn conversation_accepts_fresh_update_and_public_noop() {
+        for noop in [false, true] {
+            let mut f = Fixture::new().await;
+            let frames = if noop {
+                let mut frames = f.operations(&["update"], false);
+                for frame in &mut frames {
+                    let item = &mut frame["params"]["item"];
+                    item["arguments"].as_object_mut().unwrap().remove("force");
+                    item["result"]["structuredContent"] =
+                        json!({"root":f.temp.path(),"mode":"update","status":"noop"});
+                }
+                frames
+            } else {
+                f.operations(&["update"], true)
+            };
+            f.attempt(Some(frames)).await;
+            let run = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            conversation_completion_proof(
+                &f.pool,
+                &run,
+                f.request.correlation_id,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+            )
+            .await
+            .unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn conversation_resumes_owned_run_and_rejects_invalid_history() {
+        for mutation in [
+            "valid",
+            "cancelled",
+            "failed",
+            "owner",
+            "session",
+            "workspace",
+            "foreign_workspace",
+            "missing",
+            "corrupt",
+            "closed",
+            "replaced",
+            "no_resume",
+            "unfinished",
+            "source",
+            "running",
+        ] {
+            let mut f = Fixture::new().await;
+            let owner = f.request.correlation_id;
+            let mut first = f.operations(&["update"], false);
+            let wiki_id =
+                first[1]["params"]["item"]["result"]["structuredContent"]["runId"].clone();
+            if mutation == "closed" {
+                let mut finish = f.operations(&["update"], true).split_off(2);
+                for frame in &mut finish {
+                    frame["params"]["item"]["arguments"]["runId"] = wiki_id.clone();
+                }
+                first.extend(finish);
+            }
+            f.attempt(Some(first)).await;
+            let first_attempt = f.attempts[0].run_attempt_id;
+            if matches!(mutation, "cancelled" | "failed") {
+                sqlx::query("UPDATE agent_runs SET status=? WHERE id=?")
+                    .bind(mutation)
+                    .bind(f.request.agent_run_id)
+                    .execute(&f.pool)
+                    .await
+                    .unwrap();
+                sqlx::query("UPDATE agent_run_attempts SET status=? WHERE id=?")
+                    .bind(mutation)
+                    .bind(first_attempt)
+                    .execute(&f.pool)
+                    .await
+                    .unwrap();
+            }
+
+            if mutation == "running" {
+                sqlx::query("UPDATE agent_process_registry SET registry_status='running', observed_exited_at=NULL")
+                    .execute(&f.pool).await.unwrap();
+            }
+            if mutation == "missing" {
+                sqlx::query("DELETE FROM native_audit_streams")
+                    .execute(&f.pool)
+                    .await
+                    .unwrap();
+            }
+            if mutation == "corrupt" {
+                let path: String = sqlx::query_scalar(
+                    "SELECT frames_relative_path FROM native_audit_streams WHERE run_attempt_id=?",
+                )
+                .bind(first_attempt)
+                .fetch_one(&f.pool)
+                .await
+                .unwrap();
+                std::fs::write(path, "corrupt").unwrap();
+            }
+            f.request.agent_run_id = Uuid::new_v4();
+            f.request.request_id = Uuid::new_v4();
+            f.request.idempotency_key = Uuid::new_v4().to_string();
+            f.request.turn_id = Uuid::new_v4();
+            f.request.created_at = chrono::Utc::now();
+            f.attempts.clear();
+            let mut second = f.operations(&["update"], true);
+            for frame in &mut second {
+                let item = &mut frame["params"]["item"];
+                if item["tool"] == "openwiki_begin" {
+                    item["result"]["structuredContent"]["runId"] = wiki_id.clone();
+                    item["result"]["structuredContent"]["resumed"] = json!(true);
+                    if mutation == "replaced" {
+                        item["result"]["structuredContent"]["runId"] = json!(Uuid::new_v4());
+                    }
+                    if mutation == "source" {
+                        item["result"]["structuredContent"]["sourceChanged"] = json!(true);
+                    }
+                } else {
+                    item["arguments"]["runId"] = wiki_id.clone();
+                }
+            }
+            if mutation == "no_resume" {
+                second.drain(..2);
+            }
+            if mutation == "unfinished" {
+                second.truncate(2);
+            }
+            f.attempt(Some(second)).await;
+            match mutation {
+                "owner" => {
+                    sqlx::query("UPDATE agent_runs SET correlation_id=? WHERE id != ?")
+                        .bind(Uuid::new_v4())
+                        .bind(f.request.agent_run_id)
+                        .execute(&f.pool)
+                        .await
+                        .unwrap();
+                }
+                "session" => {
+                    let path: String = sqlx::query_scalar("SELECT manifest_relative_path FROM native_audit_streams WHERE run_attempt_id=?")
+                        .bind(first_attempt).fetch_one(&f.pool).await.unwrap();
+                    let mut manifest: Value =
+                        serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+                    manifest["session_id"] = json!(Uuid::new_v4());
+                    std::fs::write(path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+                }
+                "workspace" => {
+                    sqlx::query("UPDATE agent_runs SET workspace_path='/unknown' WHERE id=?")
+                        .bind(f.request.agent_run_id)
+                        .execute(&f.pool)
+                        .await
+                        .unwrap();
+                }
+                _ => {}
+            }
+            let mut latest = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            if mutation == "foreign_workspace" {
+                latest.workspace_id = Uuid::new_v4();
+            }
+            let result = conversation_completion_proof(
+                &f.pool,
+                &latest,
+                owner,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+            )
+            .await;
+            assert_eq!(
+                result.is_ok(),
+                matches!(mutation, "valid" | "cancelled" | "failed"),
+                "{mutation}: {result:?}"
+            );
         }
     }
 
