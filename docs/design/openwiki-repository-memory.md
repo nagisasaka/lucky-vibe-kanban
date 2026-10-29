@@ -837,7 +837,7 @@ source integration自体を破棄する必要はない。
 
 該当eventsは未reconciledとして残す。
 
-次回manual/automatic syncでretry可能にする。
+明示的な手動Syncでretry可能にする。公開後イベントや回復処理から別のWiki Workspace/Agentを自動起動しない。
 
 ## OpenWiki no-op
 

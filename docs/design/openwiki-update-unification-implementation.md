@@ -3,6 +3,12 @@ title: "OpenWiki update unification implementation record"
 description: "Architecture decisions, checkpoints, regression evidence and real-browser acceptance for retiring the legacy Wiki path."
 ---
 
+The automatic standalone Sync runs recorded here are historical evidence from
+September 2026. Their event-triggered admission was retired on 29 October 2026;
+[current maintenance](../workspaces/openwiki.mdx) uses explicit standalone requests
+and Wiki updates within the auto-merge candidate. The original execution evidence
+below does not describe the current admission policy.
+
 ## Baseline and scope
 
 - Specification: [OpenWiki update unification](openwiki-update-unification.md).
