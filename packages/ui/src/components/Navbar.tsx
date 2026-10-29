@@ -278,7 +278,7 @@ export function Navbar({
               </p>
             </div>
           ) : (
-            <div className="flex items-center gap-0.5 overflow-x-auto">
+            <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto">
               {mobileShowBack && onNavigateBack ? (
                 <>
                   <button
@@ -317,7 +317,7 @@ export function Navbar({
                       aria-label={tab.label}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-1 px-1.5 py-1 text-xs whitespace-nowrap transition-colors",
+                        "flex shrink-0 items-center gap-1 px-1.5 py-1 text-xs whitespace-nowrap transition-colors",
                         isActive
                           ? "text-normal border-b-2 border-brand"
                           : "text-low hover:text-normal",
