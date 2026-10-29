@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use super::{Principal, Remote, environment::Grant, read::arguments};
+use super::{Principal, Remote, read::arguments};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -24,13 +24,9 @@ struct Status {
     request_id: Uuid,
 }
 
-fn configured(grant: &Grant) -> Result<(PathBuf, PathBuf)> {
+fn configured() -> Result<(PathBuf, PathBuf)> {
     let instance = utils::instance::instance_dir_read_only()?
         .ok_or_else(|| anyhow::anyhow!("Developer instance required"))?;
-    ensure!(
-        grant.root == instance,
-        "Self restart requires an explicit grant for this instance"
-    );
     let engine = instance.join("switch/start_binary.py");
     let config = instance.join("launch.json");
     ensure!(
@@ -70,8 +66,8 @@ fn snapshot(instance: &std::path::Path) -> Result<Value> {
     }))
 }
 
-async fn invoke(grant: &Grant, owner: &str, args: Vec<String>) -> Result<Value> {
-    let (engine, instance) = configured(grant)?;
+async fn invoke(owner: &str, args: Vec<String>) -> Result<Value> {
+    let (engine, instance) = configured()?;
     let handoff = if args.iter().any(|a| a == "--async") {
         Some(snapshot(&instance)?)
     } else {
@@ -132,23 +128,18 @@ async fn invoke(grant: &Grant, owner: &str, args: Vec<String>) -> Result<Value> 
 pub(super) async fn call(
     remote: &Remote,
     principal: &Principal,
-    grant: &Grant,
+    project: Uuid,
     name: &str,
     input: Value,
 ) -> Result<Value> {
     let principal_key = remote.principal_key(principal);
     let owner = format!(
         "{:x}",
-        Sha256::digest(
-            json!([principal_key, grant.id, grant.project_id])
-                .to_string()
-                .as_bytes()
-        )
+        Sha256::digest(json!([principal_key, project]).to_string().as_bytes())
     );
     if name == "get_self_restart_operation" {
         let a: Status = arguments(input)?;
         return invoke(
-            grant,
             &owner,
             vec![
                 "--status".into(),
@@ -162,11 +153,7 @@ pub(super) async fn call(
         principal.allows("lvk:runtime:execute"),
         "Runtime execute permission required"
     );
-    ensure!(
-        grant.allow_uncoordinated_execution,
-        "Instance execution disabled"
-    );
-    configured(grant)?;
+    configured()?;
     let a: Restart = arguments(input.clone())?;
     ensure!(
         a.no_new_work && !a.purpose.trim().is_empty() && a.purpose.len() <= 1000,
@@ -187,14 +174,13 @@ pub(super) async fn call(
             .into(),
     ]);
     let owned = remote.clone();
-    let grant = grant.clone();
-    let original = json!({"region":grant.id,"arguments":input});
-    let targets = json!({"region":grant.id,"purpose":a.purpose,"completion":"get_self_restart_operation with the same request_id; admission is not cutover success"});
-    let receipt = remote.operations().submit_and_wait(principal_key, a.request_id, grant.project_id, "self_restart".into(), original, targets, move |_| async move {
+    let original = json!({"project_id":project,"arguments":input});
+    let targets = json!({"project_id":project,"purpose":a.purpose,"completion":"get_self_restart_operation with the same request_id; admission is not cutover success"});
+    let receipt = remote.operations().submit_and_wait(principal_key, a.request_id, project, "self_restart".into(), original, targets, move |_| async move {
         let result = async {
-            let current = owned.environment.as_ref().ok_or_else(|| anyhow::anyhow!("Runtime access disabled"))?.grant(&grant.id).await?;
-            ensure!(serde_json::to_value(&current)? == serde_json::to_value(&grant)?, "Runtime grant changed");
-            invoke(&grant,&owner,args).await
+            let current = owned.environment.as_ref().ok_or_else(|| anyhow::anyhow!("Runtime access disabled"))?.current_settings().await?;
+            ensure!(current.execution_enabled, "Program execution disabled");
+            invoke(&owner,args).await
         }.await;
         match result {
             Ok(value) if value["status"] == "refused" => ("failed", value),

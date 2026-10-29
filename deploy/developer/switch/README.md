@@ -92,7 +92,7 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 
 ```json
 {
-  "region":"configured-development-instance",
+  "project_id":"11111111-2222-4333-8444-555555555555",
   "request_id":"8bf3990b-9ec8-4ec9-9027-fdf035bb58d2",
   "purpose":"外部互換性試験済みbundleへの開発版切替",
   "bundle":"/absolute/new-bundle",
@@ -104,7 +104,9 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
-対象instanceと完全一致する既存runtime grant、Project、scope、principal ownershipを維持します。
+プログラム実行設定のON、Project認可、runtime read/execute scope、principal ownershipを確認します。
+region/grant形式は廃止され、読書rootは自己再起動の許可条件には使いません。
+対象は実行中の開発instanceとその固定kit/configurationに限定します。
 汎用`run_process`の自己再起動禁止は変わりません。権限を本kitから作成・拡大しません。
 
 実切替の開始時に、対象serverが所有する内蔵PTYとそのcommandを一度だけ終了し、
@@ -135,10 +137,10 @@ PTYがある場合は従来のchild guardで非破壊に拒否します。
 
 受付processの終了はpidfdで待ち、新session・独立I/Oのworkerが切替lockを保持します。
 固定sleepや呼出元の生存には依存しません。新serverへlock FDは渡しません。
-復帰後は`get_self_restart_operation`へ同じregion/request_idを指定します。
+復帰後は`get_self_restart_operation`へ同じproject_id/request_idを指定します。
 `get_operation`は受付監査であり完了証明ではありません。
 同一ID・同一入力は既存結果、入力違いID再利用・別ID並行要求は拒否します。
-現在のgrant/Project/read scopeと元principal所有を結果取得時にも確認します。
+現在の実行設定/Project/read scopeと元principal所有を結果取得時にも確認します。
 CLIでMCP所有operationを見る場合だけ、保護されたrequestのownerを`--owner`で指定します。
 
 ### 旧契約からの移行
