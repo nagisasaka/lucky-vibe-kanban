@@ -3,6 +3,12 @@ title: "OpenWiki update unification and legacy Wiki retirement"
 description: "Implementation and real-browser acceptance contract for manifest-guided OpenWiki updates during parallel LVK development."
 ---
 
+The event-triggered standalone updates described in the original acceptance flow
+below were retired on 29 October 2026. Current admission is explicit manual
+maintenance or initial generation; enabled auto-merge updates Wiki in its own
+candidate workspace before publication. Pending events and recovery never create
+another maintenance workspace. See [current operation](../workspaces/openwiki.mdx).
+
 ## 1. Purpose and status
 
 Retire LVK's independent `.llm-wiki` execution path and complete one repository-memory lifecycle:
@@ -168,7 +174,7 @@ Retain setup isolation/restoration, user-authored `openwiki/INSTRUCTIONS.md`, so
 
 Keep the maintenance worktree at its frozen source HEAD until the existing final publication step. Do not add intermediate commits or node checkpoints. If the target advances, do not publish stale output against a different source. Retain events and diagnostics and make a fresh reconciliation against the new integrated source possible. Preserve durable publication recovery so restarting LVK cannot create duplicate commits or acknowledgements.
 
-Reuse the existing automatic trigger for eligible integrated events and manual Sync for recovery or source changes without a Manifest. Initialisation remains explicit. An existing `openwiki/` directory alone does not prove LVK has established a successful maintenance baseline; verify normal configuration and Sync behaviour, including imported Wiki snapshots, without fabricating state records.
+Use explicit manual Sync for standalone updates, retries or source changes without a Manifest. Auto-merge maintains Wiki in its own candidate workspace before publication. Initialisation remains explicit. An existing `openwiki/` directory alone does not prove LVK has established a successful maintenance baseline; verify normal configuration and Sync behaviour, including imported Wiki snapshots, without fabricating state records.
 
 Do not create an unbounded automatic paid retry loop. After an error, reuse the existing explicit retry policy unless a documented bounded recovery is already safe. Stop and failure handling must preserve audited cancellation, confirm process termination before releasing writer ownership and retain enough evidence for diagnosis.
 

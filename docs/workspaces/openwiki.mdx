@@ -4,8 +4,9 @@ description: "Maintain evidence-backed repository knowledge whilst preserving pa
 ---
 
 OpenWiki repository memory keeps canonical knowledge in Git-tracked `openwiki/`.
-You continue coding in independent LVK worktrees. Only a dedicated maintenance
-workspace updates the canonical Wiki, after your source changes are integrated.
+You continue coding in independent LVK worktrees. Auto-merge updates the Wiki in
+its own integration candidate before publication. Explicit manual updates and
+initial generation use dedicated maintenance workspaces.
 The former independent `.llm-wiki/` Pipeline is retired. Existing files and
 history are preserved, not migrated or deleted; see [legacy data handling](/workspaces/llm-wiki).
 
@@ -39,9 +40,11 @@ You do not need a patch or supplementary material. LVK freezes both commits and
 preserves unaffected Wiki content; it does not initialise over the imported Wiki.
 
 Enabling memory starts future change tracking, not a model run. Start the first
-initialisation or adoption explicitly. After successful adoption, integrated
-development changes can trigger automatic updates. A scoped adoption records
-that earlier content remains unverified; automatic updates retain that limit.
+initialisation or adoption explicitly. Source publication and pending events never
+start a separate Wiki workspace or agent, including after restart. Use an explicit
+manual update after committing directly to the target branch or merging outside
+auto-merge. A scoped adoption records that earlier content remains unverified;
+subsequent updates retain that limit.
 The overall Wiki status stays **Stale** whilst this coverage limit remains.
 Choose a full comparison to clear it after successful reconciliation. Changing
 the target branch requires a new explicit initialisation or adoption for that branch.
@@ -104,8 +107,8 @@ Project is rejected through the existing error display; check **Configure projec
 working location**, save the correct repository, and retry. MCP requests must also
 be authorised for that Project.
 
-Repository-only settings, automatic sync and older clients omit this Project
-context. They keep the existing behaviour: create a card only when one Board can
+Repository-only requests without a Project keep the existing behaviour:
+create a card only when one Board can
 be inferred from repository bindings or existing linked workspaces. With no Board
 or multiple candidates, maintenance still runs without a card. A Board without a
 visible status also retains this behaviour; add or unhide a status in Project
@@ -224,7 +227,7 @@ the Codex sandbox or a security boundary for all host file tools.
 
 If this repository already has an imported `openwiki/`, enable repository memory
 and perform **Sync Wiki** once. File existence alone is not a verified maintenance
-baseline; automatic updates start after a successful reconciliation.
+baseline. Further standalone updates require an explicit request.
 
 Each coding workspace reads its own checked-out Wiki snapshot. Coding agents
 receive persistent instructions that make `openwiki/` read-only and explain the
@@ -248,11 +251,14 @@ publication from the previous successful turn. A missing draft produces an error
 with its exact path; repair that draft before starting another coding task. Other
 workspaces remain independent.
 
-Your source merge is independent of Wiki success. After initialisation,
-integrated manifests trigger a dedicated reconciliation run; multiple pending
-cards can be included in one run. Source changes that arrive during reconciliation
-invalidate its publication checkpoint and require a retry. Wiki failures do not
-roll back source commits.
+With OpenWiki enabled, auto-merge assigns Wiki maintenance to its Codex in the
+same workspace and integration candidate, then checks the Wiki before publication.
+Publication never schedules a second maintenance workspace, even for an existing
+event backlog. Manual **Sync Wiki**, re-synchronisation and initial generation
+remain available. Recovery resumes already reserved operations and preserves
+their ownership, failure handling and publication checks. Source changes that
+arrive during standalone reconciliation invalidate its publication checkpoint
+and require an explicit retry.
 
 ### Manifest-guided updates
 

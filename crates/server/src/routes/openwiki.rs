@@ -64,30 +64,6 @@ fn api_error(error: impl std::fmt::Display) -> ApiError {
     ApiError::BadRequest(error.to_string())
 }
 
-fn sync_events(
-    store: &RepositoryMemoryStore,
-    root: &FsPath,
-    branch: &str,
-    scope: &RepositoryWikiSyncScope,
-    unverified_before: Option<&str>,
-) -> anyhow::Result<Vec<utils::repository_memory::ChangeManifest>> {
-    // Automatic updates must respect the user's adoption boundary, rather than
-    // immediately consuming the older events deliberately excluded at adoption.
-    let scope = match (scope, unverified_before) {
-        (RepositoryWikiSyncScope::PendingChanges, Some(base)) => {
-            RepositoryWikiSyncScope::SinceCommit {
-                base_commit: base.into(),
-            }
-        }
-        _ => scope.clone(),
-    };
-    services::services::openwiki::sync_scope::select_events(
-        root,
-        &scope,
-        pending_events(store, branch)?,
-    )
-}
-
 async fn repo(deployment: &DeploymentImpl, id: Uuid) -> Result<Repo, ApiError> {
     Repo::find_by_id(&deployment.db().pool, id)
         .await?
@@ -201,17 +177,10 @@ pub async fn sync(
     } else {
         serde_json::from_slice(&body).map_err(api_error)?
     };
-    start_reconciliation_request(&deployment, id, Some(request), None)
+    start_reconciliation_request(&deployment, id, request, None)
         .await
         .map_err(api_error)?;
     get_status(State(deployment), Path(id)).await
-}
-
-/// Reserve before activation so recovery always knows the exact process owner.
-pub async fn start_reconciliation(deployment: &DeploymentImpl, id: Uuid) -> anyhow::Result<()> {
-    start_reconciliation_request(deployment, id, None, None)
-        .await
-        .map(|_| ())
 }
 
 /// MCP pins the observed saved configuration and source, but shares every UI
@@ -226,7 +195,7 @@ pub(crate) async fn sync_checked(
     start_reconciliation_request(
         deployment,
         id,
-        Some(request),
+        request,
         Some((expected_branch, expected_source)),
     )
     .await
@@ -266,11 +235,11 @@ fn check_sync_target(
 async fn start_reconciliation_request(
     deployment: &DeploymentImpl,
     id: Uuid,
-    request: Option<SyncRepositoryMemory>,
+    request: SyncRepositoryMemory,
     expected: Option<(&str, &str)>,
 ) -> anyhow::Result<RepositoryMemoryState> {
     let repo = repo(deployment, id).await?;
-    let project_id = request.as_ref().and_then(|request| request.project_id);
+    let project_id = request.project_id;
     project_context::validate(&deployment.db().pool, id, project_id).await?;
     workspace_manager::shared_resources::ensure_repository_memory(&repo)?;
     let storage = deployment
@@ -299,21 +268,16 @@ async fn start_reconciliation_request(
     let source = deployment.git().get_branch_oid(&repo.path, branch)?;
     let initial = !services::services::openwiki::has_canonical_wiki(&repo.path, &source)?;
     check_sync_target(&state, &source, initial, expected)?;
-    let scope = match request {
-        Some(request) => {
-            if initial && request.from_commit.is_some() {
-                bail!(
-                    "No existing Wiki on the selected branch; use Initialize Wiki without a starting commit"
-                );
-            }
-            services::services::openwiki::sync_scope::resolve(
-                &repo.path,
-                &source,
-                request.from_commit.as_deref(),
-            )?
-        }
-        None => RepositoryWikiSyncScope::PendingChanges,
-    };
+    if initial && request.from_commit.is_some() {
+        bail!(
+            "No existing Wiki on the selected branch; use Initialize Wiki without a starting commit"
+        );
+    }
+    let scope = services::services::openwiki::sync_scope::resolve(
+        &repo.path,
+        &source,
+        request.from_commit.as_deref(),
+    )?;
     let result = prepare_run(
         deployment, &repo, &store, &mut state, &source, initial, scope, project_id,
     )
@@ -445,7 +409,11 @@ async fn prepare_run(
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
         Err(error) => return Err(error.into()),
     }
-    let events = sync_events(store, &repo.path, &branch, &scope, state.unverified_before.as_deref())?;
+    let events = services::services::openwiki::sync_scope::select_events(
+        &repo.path,
+        &scope,
+        pending_events(store, &branch)?,
+    )?;
     state.active_sync_scope = if initial { RepositoryWikiSyncScope::CurrentSource } else { scope };
 
     // First bootstrap is explicit init; subsequent sync preserves existing Wiki.
@@ -565,30 +533,8 @@ async fn recover_repository(deployment: &DeploymentImpl, repo: &Repo) -> anyhow:
         return crate::workflow_runtime::bootstrap::recover_locked(deployment, repo, &store).await;
     }
     let Some(run_id) = state.active_run_id else {
-        // Initialisation requires an explicit request. After that, merged
-        // source events trigger maintenance; errors require an explicit retry
-        // rather than an unbounded series of paid model runs.
-        let needs_sync = state.enabled
-            && state.last_success.is_some()
-            && state.status != RepositoryWikiStatus::Error
-            && state
-                .target_branch
-                .as_deref()
-                .map(|branch| {
-                    sync_events(
-                        &store,
-                        &repo.path,
-                        branch,
-                        &RepositoryWikiSyncScope::PendingChanges,
-                        state.unverified_before.as_deref(),
-                    )
-                })
-                .transpose()?
-                .is_some_and(|events| !events.is_empty());
-        drop(_lock);
-        if needs_sync {
-            start_reconciliation(deployment, repo.id).await?;
-        }
+        // Recovery only resumes an already reserved owner. Source publication,
+        // pending events and direct branch changes never admit new maintenance.
         return Ok(());
     };
     let run = AgentRunRecord::find(&deployment.db().pool, run_id)
@@ -941,7 +887,7 @@ mod adoption_tests {
     }
 
     #[test]
-    fn scoped_coverage_survives_automatic_sync_and_failed_full_review() {
+    fn scoped_coverage_survives_repeated_sync_and_failed_full_review() {
         let temp = tempfile::tempdir().unwrap();
         let store = RepositoryMemoryStore::at_persistent(temp.path()).unwrap();
         let mut state = RepositoryMemoryState {
@@ -974,3 +920,6 @@ mod adoption_tests {
         assert!(state.unverified_before.is_none());
     }
 }
+
+#[cfg(test)]
+mod recovery_tests;

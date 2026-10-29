@@ -98,7 +98,7 @@ export function RepositoryMemorySettings({
   return (
     <SettingsCard
       title="OpenWiki repository memory"
-      description="Canonical openwiki/ is maintained against the integrated branch in a dedicated workspace. Initial generation receives an independent read-only review and optional refinement before publication. Coding workspaces only read it and keep their own shared Workspace Memory."
+      description="Auto-merge updates openwiki/ in its integration candidate. Standalone updates and initial generation require an explicit request and use a dedicated workspace; publication and pending changes never start one automatically. Initial generation receives an independent read-only review and optional refinement before publication. Coding workspaces read the Wiki and keep their own Workspace Memory."
     >
       <p className="text-sm text-normal" role="status">
         Status: {state?.status ?? 'Loading…'}
