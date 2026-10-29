@@ -185,7 +185,10 @@ def snapshot():
     }
 
 
-def preflight(a, *, dry_run=False):
+BUSY_RECHECK_SECONDS = 30
+
+
+def preflight(a, *, dry_run=False, expected=None):
     if not dry_run:
         s.need(a.no_new_work, "Coordinate idle work externally and pass --no-new-work")
     s.need(not P("/run/lvk-maintenance/active").exists(), "Host maintenance active")
@@ -195,8 +198,8 @@ def preflight(a, *, dry_run=False):
     )
     selected = inspect(a)
     selected["snapshot"] = snapshot()
-    s.resources()
-    s.idle(selected["snapshot"]["identity"]["pid"])
+    if expected is not None:
+        s.need(selected["snapshot"] == expected, "Running instance changed after admission")
     s.need(
         not any(p.is_symlink() for p in (DEV / "data").rglob("*")),
         "Data symlinks refused",
@@ -213,7 +216,25 @@ def preflight(a, *, dry_run=False):
         shutil.disk_usage(DEV).free > selected["backup"]["required_free_bytes"],
         "Insufficient backup space",
     )
+    s.resources()
+    s.idle(selected["snapshot"]["identity"]["pid"])
     return selected
+
+
+def initial_preflight(a, op, expected, stage):
+    # Only read-only preflight is repeated. Never drain, stop or recover twice.
+    try:
+        return preflight(a, expected=expected)
+    except s.Busy as busy:
+        s.save(op / "busy-recheck.json", {
+            "reason": str(busy),
+            "wait_seconds": BUSY_RECHECK_SECONDS,
+            "observed_at": time.time(),
+        })
+        stage("busy-wait")
+        time.sleep(BUSY_RECHECK_SECONDS)
+    stage("preflight")
+    return preflight(a, expected=expected)
 
 
 def preserve(selected, op):
@@ -368,7 +389,7 @@ def execute(op, request, config_path):
         stage("terminal-drain")
         terminal_drain.terminate(expected["identity"], op)
         stage("preflight")
-        selected = preflight(a)
+        selected = initial_preflight(a, op, expected, stage)
         expected = request.get("snapshot")
         if expected:
             s.need(

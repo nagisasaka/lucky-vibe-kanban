@@ -50,6 +50,7 @@ mod remote_projects;
 mod repos;
 mod repository_read;
 mod resources;
+mod self_restart;
 mod sessions;
 mod task_attempts;
 mod todos;
@@ -63,6 +64,7 @@ impl McpServer {
             + Self::resource_tools_router()
             + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()
+            + Self::self_restart_tools_router()
             + Self::workspaces_tools_router()
             + Self::organizations_tools_router()
             + Self::repos_tools_router()
@@ -84,6 +86,7 @@ impl McpServer {
             + Self::resource_tools_router()
             + Self::repository_read_tools_router()
             + Self::dev_server_tools_router()
+            + Self::self_restart_tools_router()
             + Self::workspaces_tools_router()
             + Self::session_tools_router();
         router.remove_route("list_workspaces");
@@ -434,6 +437,8 @@ mod tests {
             "start_dev_server".to_string(),
             "stop_dev_server".to_string(),
             "get_dev_server_status".to_string(),
+            "self_restart".to_string(),
+            "get_self_restart_operation".to_string(),
             "list_sessions".to_string(),
             "list_shared_resources".to_string(),
             "query_repository".to_string(),

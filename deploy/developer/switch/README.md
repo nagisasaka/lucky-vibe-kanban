@@ -103,6 +103,9 @@ manifestの`format:1`、`files`（3実行ファイルのSHA256）、`assets`（f
 専用`self_restart`は稼働server自身のPID/start/boot/cwd、解決済instance/data、起動port、
 currentと起動設定hashを非公開pipeで渡します。operation snapshotは監査記録であり恒久設定ではありません。
 停止直前にworkerがlistener/identity/hashを独立に再検証します。
+terminal drainは1回だけ実施し、その後の初回preflightが子孫・instance利用者・共有resource占有でbusyの場合だけ、30秒待って1回再確認します。
+identity/hash/config/権限等の拒否、停止直前の新しいbusy、SIGTERM以降の失敗は再試行しません。待機と理由は永続receiptのstageとbusy-recheck.jsonへ記録します。
+stdioの`self_restart`も同じ認証付き専用MCP経路へ委任し、永続受付を返します。受付後は担当Codex Runを終了し、再接続後に同じproject_id/request_idの`get_self_restart_operation`で確認してください。受付は切替成功を意味しません。
 `LVK_SELF_RESTART_ENGINE/CONFIG`は不要です。engineは`INSTANCE/switch/start_binary.py`固定です。
 プログラム実行設定のON、Project認可、runtime read/execute scope、principal ownershipを確認します。
 region/grant形式は廃止され、読書rootは自己再起動の許可条件には使いません。
@@ -142,6 +145,30 @@ PTYがある場合は従来のchild guardで非破壊に拒否します。
 同一ID・同一入力は既存結果、入力違いID再利用・別ID並行要求は拒否します。
 現在の実行設定/Project/read scopeと元principal所有を結果取得時にも確認します。
 CLIでMCP所有operationを見る場合だけ、保護されたrequestのownerを`--owner`で指定します。
+
+### 初回導入とstdio委任
+
+bundleは3binaryとmanifestだけで、instanceの固定`switch/` kitを更新しません。
+旧kitに新bundleを渡しただけでは30秒のbusy再確認は有効になりません。
+通常のレビュー・main統合・新bundleのbuild/隔離検証後、別途承認されたoperator作業で、
+対象instanceと進行中operationがないことを確認し、現kitを復旧用に保持した上で、
+同じrevisionの`launcher.py`、`start_binary.py`、`start_support.py`、`terminal_drain.py`、`start.sh`を
+固定kitへ整合して導入してください。稼働中workerのkitを置き換えたり、source symlinkで代用したりしません。
+launch/current/dataや認証情報を新規作成・上書きする手順ではありません。
+
+30秒再確認はengine内の変更で、remote受付の引数・snapshot・owner・永続receipt契約は変更しません。
+同契約を持つ旧serverの既存remote受付から新kitを呼べます。一方、新stdioは新serverの
+internal認証専用`/api/self-restart/{action}` adapterへ委任するので、旧serverとは非互換です。
+固定kitだけ更新しても新stdio受付は導入されません。新stdio binaryを旧serverへ接続したり、
+OAuth専用`/mcp`へinternal tokenを送ったりしてこの依存を回避しません。
+新serverと新stdioが導入済みで、既存loopback internal認証・runtime execution設定・対象instanceの
+固定kit/launchが有効であることがstdio委任の前提です。adapterは再起動と結果読取だけを受け付け、
+同じremote処理関数のproject/scope/設定/instance/owner検査と永続engineを使います。
+stdio内部principalのreceiptはその所有者に紐付き、別のremote principalへ移譲されません。
+「初回も上位AIのMCPを使わずCodexの新stdioだけで試す」という条件がある場合、旧serverのままでは
+満たせません。初回server導入方法について相談し、既存認証の迂回や無断のkit/server置換は行いません。
+受付後は担当Runを終了して子孫/writerを収束させ、同じprincipal/project/request IDで結果を読みます。
+busyが30秒後も残れば未切替で停止し、operator判断なしの再送・再実行はしません。
 
 ### 旧契約からの移行
 
@@ -188,6 +215,7 @@ resource snapshotのholders/queueは停止前に拒否します。未使用resou
 ```bash
 python3 -m unittest discover -s deploy/developer/switch -p test_switch.py -v
 python3 -m unittest discover -s deploy/developer/switch -p test_terminal_drain.py -v
+python3 -m unittest discover -s deploy/developer/switch -p test_busy_recheck.py -v
 CARGO_BUILD_JOBS=2 cargo test -p server --features developer-runtime --lib remote_mcp::environment -- --test-threads=2
 ```
 

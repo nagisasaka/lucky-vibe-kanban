@@ -47,6 +47,11 @@ class SwitchTest(unittest.TestCase):
         shutil.copytree(
             HERE, self.instance / "switch", ignore=shutil.ignore_patterns("__pycache__")
         )
+        # Production remains 30 seconds. Scale only this copied fixture kit.
+        worker = self.instance / "switch/start_binary.py"
+        text = worker.read_text()
+        assert "BUSY_RECHECK_SECONDS = 30" in text
+        worker.write_text(text.replace("BUSY_RECHECK_SECONDS = 30", "BUSY_RECHECK_SECONDS = 0.01"))
         self.db = self.instance / "data/db.v2.sqlite"
         with contextlib.closing(sqlite3.connect(self.db)) as db, db:
             for table, column in [
@@ -174,15 +179,105 @@ class SwitchTest(unittest.TestCase):
             time.sleep(0.02)
         self.fail("fixture did not listen")
 
+    def test_busy_recheck_drains_once_and_does_not_retry_later_failure(self):
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        real_preflight = engine.preflight
+        calls = 0
+        def preflight(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise support.Busy("requesting worker settling")
+            return real_preflight(*args, **kwargs)
+        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(engine, "preserve", side_effect=support.Refuse("copy hash changed")) as preserve, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["reason"], "copy hash changed")
+        self.assertEqual(calls, 2)
+        sleep.assert_called_once_with(30)
+        self.assertEqual(drain.call_count, 1)
+        preserve.assert_called_once()
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
+    def test_busy_retry_stops_once_and_never_retries_backup(self):
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        real_preflight = engine.preflight
+        calls = 0
+        def preflight(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise support.Busy("worker settling")
+            return real_preflight(*args, **kwargs)
+        real_sleep = time.sleep
+        def sleep(seconds):
+            if seconds != 30: real_sleep(seconds)
+        with patch.object(engine, "preflight", side_effect=preflight), patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop, patch.object(support, "backup_data", side_effect=support.Refuse("backup failed")) as backup:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["stage"], "backup", result)
+        self.assertEqual(calls, 2)
+        self.assertEqual(drain.call_count, 1)
+        self.assertEqual(stop.call_count, 1)
+        backup.assert_called_once()
+        self.assertEqual(sum(c.args == (30,) for c in wait.call_args_list), 1)
+
+    def test_busy_settles_then_real_switch_succeeds(self):
+        self.old.terminate()
+        self.old.wait(timeout=5)
+        self.write_run(self.builds[0], {"FIXTURE_CHILD": "1"})
+        self.old = subprocess.Popen([sys.executable, str(self.instance / "switch/launcher.py"), str(self.instance)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.wait_port()
+        children = support.descendants(self.old.pid)
+        self.assertTrue(children)
+        handles = [(pid, os.pidfd_open(pid), support.identity(pid)) for pid in children]
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        real_sleep = time.sleep
+        def sleep(seconds):
+            if seconds == 30:
+                # Simulate the requesting Run settling during the production wait.
+                for pid, fd, identity in handles:
+                    self.assertEqual(support.identity(pid), identity)
+                    signal.pidfd_send_signal(fd, signal.SIGTERM)
+                    self.assertTrue(support.select.select([fd], [], [], 5)[0])
+            else:
+                real_sleep(seconds)
+        try:
+            with patch.object(engine.time, "sleep", side_effect=sleep) as wait, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop", wraps=support.stop) as stop:
+                result = engine.submit(a, self.config)
+        finally:
+            for _, fd, _ in handles: os.close(fd)
+        self.assertEqual(result["status"], "succeeded", result)
+        self.assertEqual(sum(c.args == (30,) for c in wait.call_args_list), 1)
+        self.assertEqual(drain.call_count, 1)
+        self.assertEqual(stop.call_count, 1)
+
+    def test_new_work_at_final_guard_is_not_retried_or_stopped(self):
+        a = self.args(request_id=str(uuid.uuid4()), owner="operator", asynchronous=False)
+        calls = 0
+        def idle(pid):
+            nonlocal calls
+            calls += 1
+            if calls in (1, 3): raise support.Busy("new child")
+        with patch.object(support, "idle", side_effect=idle), patch.object(engine.time, "sleep") as sleep, patch.object(terminal_drain, "terminate", wraps=terminal_drain.terminate) as drain, patch.object(support, "stop") as stop:
+            result = engine.submit(a, self.config)
+        self.assertEqual(result["status"], "failed", result)
+        self.assertEqual(result["stage"], "stopping", result)
+        self.assertEqual(calls, 3)
+        self.assertEqual(sum(c.args == (30,) for c in sleep.call_args_list), 1)
+        self.assertEqual(drain.call_count, 1)
+        stop.assert_not_called()
+        self.assertIsNone(self.old.poll())
+
     def args(self, revision=1, **extra):
-        values = dict(self.builds[revision], no_new_work=True)
+        values = dict(self.builds[revision], no_new_work=True, snapshot_stdin=False)
         values.update(extra)
         return argparse.Namespace(**values)
 
     def cli(self, revision=1, request=None, extra=()):
         command = [
             sys.executable,
-            str(HERE / "start_binary.py"),
+            str(self.instance / "switch/start_binary.py"),
             "--instance",
             str(self.instance),
             "--request-id",
