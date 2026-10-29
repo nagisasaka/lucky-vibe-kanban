@@ -32,10 +32,14 @@ sources:
     resource: repo://crates/local-deployment/src/agent_run_port.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
+  - id: openwiki-source-c6b92f5dd86f9cc046935fa4
+    resource: repo://crates/mcp/src/task_server/tools/sessions.rs
   - id: openwiki-source-d4130322a85c68ce2ddc220a
     resource: repo://crates/server/build_metadata.rs
   - id: openwiki-source-32657d5732db65a52d550bc6
     resource: repo://crates/server/src/bin/generate_types.rs
+  - id: openwiki-source-448d823f6734081b48eb5350
+    resource: repo://crates/server/src/remote_mcp/attachment_tests.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
   - id: openwiki-source-6c4d6d22a9d50e0def61c50d
@@ -48,6 +52,8 @@ sources:
     resource: repo://crates/utils/src/assets.rs
   - id: openwiki-source-06fe728b6644f76e4e63a8f4
     resource: repo://crates/utils/src/instance.rs
+  - id: openwiki-source-7272325fd3387a1cecfd5cbc
+    resource: repo://crates/utils/src/process/owned_group.rs
   - id: openwiki-source-a854af1812d166ff4c31b521
     resource: repo://deploy/developer/instance.mjs
   - id: openwiki-source-f771a8041ae618a5a49437b9
@@ -140,10 +146,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -491,3 +497,15 @@ busy_timeout=0 の port fixture では、独立した監視 SELECT の SQLITE_BU
 コメント本人編集はowner/revision/receiptとWAL競合、raw配信はUTF-8 filename・header injection・全binary bytes・認証とpath containmentを確認する。[コメント試験](../../crates/server/src/remote_mcp/issue_comments.rs#L370-L558)・[file試験](../../crates/server/src/routes/workspaces/files.rs)。詳細契約は [コメント編集](../concepts/issue-collaboration.md#自分の既存コメント本文を編集する)と [Workspace file viewer](workspace-inspection.md#repo-内ファイルを読む)に置く。
 
 凍結入力の候補合成記録は局所Rust・Clippy・型・モデル/部品試験の成功を報告するが、最終統合 `b9fd2194154bfff52fe362eb9253037521f91963` は明示的に正式検証を省略した。初期失敗と修復後の成功、実agentが承認待ちへ到達して取消された証拠、人の承認後のtool成功を区別する。実Auth0/ChatGPT、全本番DB移行、Windows、配布artifactの保証は残る未確認範囲である。[候補合成と限界](../../docs/development/seven-source-candidate.md)。今回の文書保守はソース・試験定義・差分・リンクとOpenWiki lifecycleの検証で、製品試験は再実行していない。
+
+## REVIEW・添付搬送・Wiki再開を変更するとき
+
+REVIEWは既存CODE経路を使うため、mode保存・復元、permission parity、通常会話の終了とsource finalisation抑制を一組で検証する。`tests/review-mode/selector.test.mjs` はChromiumの1440/390幅でREVIEW選択・再表示・送信とCODE/PLAN/GOALを確認する。`run_isolated.py` はUI/API/SQLite/hostを使いproviderだけをmockする。実モデルの指示遵守や外部承認改善は別の未検証事項である。[試験の範囲](../../tests/review-mode/README.md)
+
+添付は `isolated_attachment_remote_stdio_e2e` を新しい `attachment-fixture-*` instanceとその内側のXDG_CACHE_HOMEで実行する。実HTTP MCPとstdio codecから初回・続行まで通し、bytes・サイズ/hash・所属・再送・改変/部分失敗を確認する。native実行はmockで、実ChatGPT/Library fileParams・署名URL期限・host/proxy適合は公開後ゲートに残す。260の保存設定読取routeは267の隔離local routerにも必要であり、製品routeの追加時にfixtureのHTTP面も追従させる。[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)・[公開後の確認](../../docs/development/mcp-attachments.md#検証と公開後ゲート)
+
+Wiki継続proofのprotocol testsと `isolated_conversation_repair_publication_drift_and_idempotence` は、所有begin→中断→同じ会話の明示再開→finish→exact publication→archiveを確認する。実外部OpenWikiや実Codexを起動する試験ではない。[proof](../../crates/services/src/services/openwiki/completion.rs)・[server境界](../../crates/server/src/routes/openwiki/completion.rs)・[実Git/SQLite fixture](../../crates/server/src/routes/integrations/conversation_tests.rs)
+
+共有Cargo中間物にはコンパイル時のcheckout絶対パスが残り得る。utilsのプロセス回収テストはPython fixtureの場所を実行時 `CARGO_MANIFEST_DIR` から解決し、削除済みの過去worktreeを参照しない。これは製品のprocess cleanupや共有cacheの全入力に対する一般的な鮮度保証ではない。[fixture参照](../../crates/utils/src/process/owned_group.rs#L355-L435)
+
+今回の統合検証はコード `7a740a94` でfrontend build/check/lint/backend:test/types/SQLxの同一batchを成功させ、以後のtest-only差分を `b803a1ed` の隔離E2E・Chromium・Vitest15件・fmt・server all-targets Clippyで検証した。旧metadata15件削除の整合は正式prepare-db:checkが確認した。初期失敗は履歴に保持し、古いpassを最終SHAの全面再実行と呼ばない。Wikiのみの後続commitにコード試験を付け替えない。

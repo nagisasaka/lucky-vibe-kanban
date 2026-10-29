@@ -46,12 +46,18 @@ sources:
     resource: repo://crates/local-deployment/src/process_host.rs
   - id: openwiki-source-5a8e26da42457b4b47bca3ee
     resource: repo://crates/local-deployment/src/process_host/approvals.rs
+  - id: openwiki-source-c6b92f5dd86f9cc046935fa4
+    resource: repo://crates/mcp/src/task_server/tools/sessions.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
     resource: repo://crates/server/src/remote_mcp/goals.rs
   - id: openwiki-source-0a439773e44e2649541571be
     resource: repo://crates/server/src/remote_mcp/goals/tests.rs
   - id: openwiki-source-9d3b3180c15d3125ddbb2675
     resource: repo://crates/server/src/remote_mcp/questions.rs
+  - id: openwiki-source-3651b7ce4535b584634e8bc8
+    resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
+    resource: repo://crates/server/src/routes/attachment_transfer.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
     resource: repo://crates/server/src/routes/integrations/conversation.rs
   - id: openwiki-source-79cca50cc03fbe39bcd5a22c
@@ -158,10 +164,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -192,6 +198,12 @@ Attempt 検証は run/turn/Session/correlation の一致だけでなく、provid
 profile 比較では variant 省略と正確な `DEFAULT` だけを同一視する。保存済み ID の表記は変更せず、`PLAN`・小文字の `default`・異なる provider は混同しない。既存履歴を migration で書き換えるのではなく、binding と request の比較境界で共通規則を使う。[identity](../../crates/executors/src/profile/runtime_identity.rs#L1-L13)
 
 Session の設定復元は最新 RunAttempt の immutable launch request を読み、現在の可変 preset や script 実行から推測しない。起動前の native adoption では保存済み binding を使う。最新の保存値が壊れていたらエラーであり、古い run や別 Session の設定へ黙って戻さない。モデル・reasoning・mode・Goal budget 等の保存値と、provider が実行時に解決した既定値は区別する。[復元](../../crates/server/src/routes/sessions/executor_config.rs)、[順序・破損テスト](../../crates/server/src/routes/sessions/executor_config.rs)
+
+### REVIEW は通常会話で報告して止まる
+
+`execution_mode: "review"` はCODE基盤の調査・レビュー意図を保存する。UIのモード選択から既存executor設定へ入り、最新immutable attemptから復元される。stdioの新規開始もmodeを指定でき、通常・添付付き続行は保存済み設定を読む。外部HTTPの実行読取は指定したRunのattemptからmodeを返し、後の別Runの設定で上書きしない。[UI](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx)・[stdio続行](../../crates/mcp/src/task_server/tools/sessions.rs)・[添付付き続行](../../crates/server/src/routes/attachment_transfer.rs#L345-L375)・[Run単位の読取](../../crates/server/src/remote_mcp/runtime_read.rs)
+
+REVIEWは通常の会話turnを使い、所見・証拠・リスク・未検証を会話に返して停止する指示を追加する。必要なWorkspace内の再現・テスト書込は許すが、製品変更の採用・公開や共有環境変更の許可にはならない。CODEと同じsandbox/approval方針を維持し、commit reminderと自動source finalisationを抑制する。PLANの承認後実装やGoal継続へ自動移行しない。ここでいうExecutionModeは、上記契約のnative Review intentや `/review` RPCとは別である。[providerの実行境界](../integrations/agent-providers.md#review-の実行境界)を参照する。
 
 ### Composer の手動推論設定と復元
 

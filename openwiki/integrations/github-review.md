@@ -25,7 +25,7 @@ sources:
 generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # GitHub 認証・PR とレビューの境界

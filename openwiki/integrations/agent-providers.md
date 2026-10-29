@@ -110,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -307,3 +307,11 @@ Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の�
 自動マージworkerはthread-local設定で `vibe_kanban` MCPをrequired/enabledにし、実際のMCP executableとAgentRun bindingを渡す。`integration_action`だけを明示承認する。通常threadでOpenWikiを無効にする際は、継承設定にserverが存在しなければdisable-only項目を削除し、transportのない架空serverを作らない。継承transportがある場合やmaintenance writerのrequired設定は保持する。[worker設定](../../crates/executors/src/executors/codex.rs#L1090-L1135)・[継承設定の照合](../../crates/executors/src/executors/codex.rs#L1275-L1310)・[回帰](../../crates/executors/src/executors/codex.rs#L1688-L1755)
 
 RepoのClaude指示入口はsymlinkではなく通常fileの `@AGENTS.md` importにして、指示の正本をAGENTSに保つ。同じ実体へ異なるsetup本文が重なる構成を避けるための復旧である。installed OpenWiki 0.5.1の独立fixtureで、このimportをsetupが保持し、AGENTSの正しい管理blockが反復で不変になることを確認した。これはlive Claude/model起動の検証ではない。[入口](../../CLAUDE.md)・[指示正本](../../AGENTS.md)
+
+## REVIEW の実行境界
+
+Codexの `execution_mode: review` はCODEと同じ通常会話経路にレビュー・調査のdeveloper instructionsを追加する薄いmodeである。対象・範囲・報告内容に従って会話に所見と証拠、リスク、未検証事項を返し停止し、製品実装へ移るには別の明示指示を必要とする。PLANの承認から実装への遷移、Goal継続、native `/review` RPCや重いレビューworkflowを流用しない。明示REVIEWはlegacy Plan presetより優先される。[modeの解決](../../crates/executors/src/executors/codex.rs#L470-L480)・[指示](../../crates/executors/src/executors/codex.rs#L1-L9)・[通常collaboration](../../crates/executors/src/executors/codex/client.rs#L550-L605)
+
+REVIEWはCODEのsandbox/approval policyを維持する。調査に必要なWorkspace内の再現コード・fixture・テスト書込を許す一方、製品変更の採用・merge・公開、共有環境や実データ変更をmodeだけで許可しない。commit reminderと自動repository source finalisationを抑制し、調査用変更を自動採用しない。Issueコメント自動投稿や新しい必須成果物形式も追加しない。[thread指示](../../crates/executors/src/executors/codex.rs#L1208-L1230)・[reminder](../../crates/executors/src/executors/codex/client.rs#L165-L180)・[source完了境界](../../crates/executors/src/executors/provider_adapter.rs#L2510-L2540)
+
+UI選択・保存・再表示・通常続行は [SessionのREVIEW](../concepts/session-and-agent-run.md#review-は通常会話で報告して止まる)に従う。fixtureはpermission parity、通常turn、Goal RPCなし、source完了抑制を確認するが、実モデルの指示遵守や外部承認の改善は保証しない。実ChatGPT/Library・実Codexの適合確認は公開後の別ゲートである。[fixtureと限界](../../tests/review-mode/README.md)・[providerテスト](../../crates/executors/src/executors/provider_adapter.rs#L2654-L2685)

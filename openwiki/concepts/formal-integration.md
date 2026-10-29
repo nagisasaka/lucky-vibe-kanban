@@ -42,18 +42,22 @@ sources:
     resource: repo://crates/server/src/routes/integrations/support.rs
   - id: openwiki-source-24838d7108e2888a7fdc2714
     resource: repo://crates/server/src/routes/local_remote/issue_archive.rs
+  - id: openwiki-source-79cca50cc03fbe39bcd5a22c
+    resource: repo://crates/server/src/routes/openwiki/completion.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
+  - id: openwiki-source-fa966dc92e5b940e2e3155e3
+    resource: repo://crates/services/src/services/openwiki/completion.rs
   - id: openwiki-source-ccf8ab737c324e8e2a967444
     resource: repo://docs/development/conversation-auto-merge.md
   - id: openwiki-source-dbaab3d3ce907e13656fcbed
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -132,3 +136,9 @@ Wiki有効時の公開済みevent receiptと鮮度は既存Memory storeへ保存
 ## 名称と互換境界
 
 利用者向け名称は自動マージ / Auto-merge。現行のstart/get/cancel_integrationとAPI/DB識別子は維持する一方、旧approve_integration・decision/intervene/adopt-checkpointの実行経路は撤去済みである。名称互換を理由に旧executorを再配送しない。[現行契約](../../docs/development/conversation-auto-merge.md)
+
+## 同じ会話でWiki更新を再開する
+
+OpenWikiの永続runとCodexのAgentRunは別の寿命を持つ。自動マージの公開前検査は、同一Sessionの全AgentRunとattemptのNative Auditを順序どおりに再生し、同じcorrelation owner・割当Workspace・repo rootに属する、過去に監査されたactive ID/modeだけを後続Runで明示再開できる。過去Runが中断・取消されても、writerの終了が確認でき、所有証拠が連続していれば継続できる。`resumed:true`だけを信用せず、別会話から一致するIDを探さない。[会話proof](../../crates/server/src/routes/openwiki/completion.rs#L115-L186)・[継続状態](../../crates/services/src/services/openwiki/completion.rs)
+
+監査の欠損・改変、未解決tool call、writerの重複、active IDの置換や放棄、閉じたIDの再利用、最終未完了は公開を拒否する。最新Runとその最終attemptの成功も必要である。standalone保守のphase単位の閉鎖条件はこの会話継続へ置き換えない。[再生とidentity検査](../../crates/server/src/routes/openwiki/completion.rs#L188-L315)・[operation proof](../../crates/services/src/services/openwiki/completion.rs#L200-L385)。正規再開からexact publication・生成環境archiveまでの隔離fixtureは実Git/SQLiteを使うが、実外部OpenWikiや実Codexの接続確認を代替しない。[隔離回帰](../../crates/server/src/routes/integrations/conversation_tests.rs)

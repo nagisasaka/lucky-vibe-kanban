@@ -72,10 +72,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-29T09:38:09.075Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T09:38:09.075Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # クイックスタートと調査案内
@@ -182,6 +182,8 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 Settings の Tag は tag_name/content を持つ、再利用する prompt text の保存モデルである。[Creating Tags](../docs/settings/creating-task-tags.mdx) は @mention から snippet を挿入する操作を説明する。Issue の分類 Tag は project_id/name/color を持ち、IssueTag が issue_id と tag_id を関連づける。名前が同じでも保存対象と利用目的が異なる。[prompt Tag](../crates/db/src/models/tag.rs)・[分類 Tag](../crates/api-types/src/tag.rs)・[IssueTag](../crates/api-types/src/issue_tag.rs)
 
 ### Review の違い
+
+Codexの **REVIEW execution mode** はCODE基盤の通常会話で調査・レビュー意図を保存し、報告して停止する。Workspace内の再現・テストを許すが製品実装には別指示が必要で、PLAN・Goal・native `/review` やOpenWikiの独立Reviewerとは別である。[実行境界](integrations/agent-providers.md#review-の実行境界)・[設定保存と続行](concepts/session-and-agent-run.md#review-は通常会話で報告して止まる)
 
 Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)は、外部 AI が通常コメントへ意見を残す仕組みであり、要求変更・実装開始・承認を意味しない。[投稿境界](../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)
 
@@ -291,3 +293,15 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 凍結入力の manifest と全4チャンクの SHA-256、統合 source `e4a2dc3ca101233becb63b355f7020f5396da415` を照合した。UI/i18n、MCP の catalog・受付・読取・判断、host の merge/validation/publication、DB の予約・Done receipt と回帰試験、Wiki 開始 guard を独立した入口から確認した。名称と互換性の詳細は [自動マージの正本](concepts/formal-integration.md#名称と互換境界)、実際の順序は [並列成果を公開する手順](workflows/task-to-integration.md#並列変更を試してから正式統合する)に置く。
 
 変更は利用者向け名称と DB 試験期待値への追随で、既存の機械識別子・承認・保存形式を維持する。最終候補の検証成功は供給された Manifest の記録であり、この Wiki 保守はソース・試験定義・差分・リンクの静的照合を行った。製品 suite、実モデル・Auth0 / ChatGPT、稼働 DB・通知配送・配布を再実行しておらず、無関係な歴史的内容全体を再検証したとは扱わない。
+
+### REVIEW・MCP素材・Wiki継続の統合
+
+今回の候補は固定baseから採用3sourceを統合し、コード検証後の同じbranchでWikiを更新した。調査先は次の正本に分ける。
+
+- レビューmodeの保存・通常会話・権限と自動source採用抑制は [REVIEW](integrations/agent-providers.md#review-の実行境界)。
+- 素材の実bytes入力、Project保存、Workspace共有の検証済み配置、receipt回収は [MCP素材搬送](integrations/remote-access.md#mcpで素材ファイルを渡す)。Library IDやローカルパスを搬送成功と扱わない。
+- RunをまたぐOpenWikiの正規再開は [同じ会話の監査証明](concepts/formal-integration.md#同じ会話でwiki更新を再開する)。standaloneのphase閉鎖は維持する。
+
+コード `7a740a94` でfrontend build/check/lint/backend:test/types/SQLxの同一batchが成功し、その後のtest-only差分は `b803a1ed` の267/272隔離E2E・Chromium・Vitest15件・fmt・server all-targets Clippyで検証した。旧failedを成功へ書換えず、最終SHAで変更のないsuiteの再実行省略はagent判断として記録した。このWikiの後続commitにコード試験を付け替えない。
+
+実ChatGPT/Library fileParams・署名URL期限・host/proxy制限、実Codexと実外部OpenWikiのRun跨ぎ再開は公開後の適合ゲートであり、fixture成功で完成とは扱わない。保存quota/TTLは追加していない。検証の入口と限界は [開発・検証](operations/development.md#review添付搬送wiki再開を変更するとき)を参照する。

@@ -84,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T12:38:00.042Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -233,9 +233,15 @@ Bootstrap writer と通常 Sync は共通の `PhaseCompletionProof` を使う。
 
 最新 attempt の terminal 投影と process-exit 登録が競合する場合だけ、spawned/running の登録を最大10秒未満の pending として再観測する。古い未終了 attempt や unreachable host にはこの猶予を与えない。[終了待ち](../../crates/server/src/routes/openwiki/completion.rs)・[focused test](../../crates/server/src/routes/openwiki/completion.rs)
 
-保存済みownerが持つ旧 pending_changes Sync の完了検査は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。noop で先行の未完了 run を隠すことや、別 attempt に未閉鎖操作を持ち越すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
+保存済みownerが持つ旧 pending_changes Sync の完了検査は init を許さず、完了した update、または未完了操作のない非 force update に対する監査済み begin-noop を必要とする。この経路では force は必須ではない。一方、利用者が開始する current_source / since_commit は明示的な reconciliation であり、既存 checkpoint が一致しても update + force=true と finish=complete が必要となる。修正不要なら空の plan で lifecycle を完了し、begin-noop では代用しない。完了した update を複数回行うことはできる。standaloneのBootstrap/Syncでは、noopで先行の未完了runを隠すことや、別attemptに未閉鎖操作を持ち越すことはできない。sourceChanged は absent/false のみ受け入れる。[phase ごとの条件](../../crates/services/src/services/openwiki/completion.rs)、[begin と noop](../../crates/services/src/services/openwiki/completion.rs)、[Sync の回帰テスト](../../crates/services/src/services/openwiki/completion.rs)
 
 成功した Sync は共通の操作証明に続いて凍結入力の identity/digest を検証し、instructions を復元してから Wiki 公開へ進む。AgentRun の終端投影や Markdown が存在することだけでは成功しない。[終了処理の順序](../../crates/server/src/routes/openwiki.rs)
+
+### 自動マージ会話の正規な再開
+
+自動マージはstandaloneのphase境界と異なり、同一Sessionの複数AgentRunを一つの所有会話として証明する。過去の監査beginで開いたactive ID/modeを保存し、次writerの監査されたbeginで同じID/modeのresumed=trueを確認してから書込を許す。新規beginや同一attempt内resume、noopの既存経路は残す。別会話・別owner/Workspace/rootのID探索や、resumed=trueだけの無条件受理はしない。[会話proof](../../crates/server/src/routes/openwiki/completion.rs#L115-L186)・[継続replay](../../crates/services/src/services/openwiki/completion.rs#L87-L150)
+
+全Run/attemptの所有・時系列・実終了・audit checksum/identityを確認し、未解決MCP call、active置換/放棄、閉じたID再利用、欠損/捏造audit、最終未完了を拒否する。最新writerと最終attemptは成功が必要である。standalone writerは従来のreplay_attempt前後の閉鎖検査を維持する。[共通protocol](../../crates/services/src/services/openwiki/completion.rs#L75-L162)・[server側のidentity検査](../../crates/server/src/routes/openwiki/completion.rs#L188-L315)。公開・コード/Wiki SHA・sourceChanged・targetの安全性やDone/archiveの条件は [自動マージ](../concepts/formal-integration.md#同じ会話でwiki更新を再開する)に従う。
 
 ## 独立 Review と finding の解決
 

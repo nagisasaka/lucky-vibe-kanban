@@ -43,7 +43,7 @@ sources:
 generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T12:38:00.042Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # Repository Memory の三層と統合契約

@@ -8,12 +8,16 @@ sources:
     resource: repo://Cargo.toml
   - id: openwiki-source-1e7d6f37595b8480ddaf530e
     resource: repo://crates/api-types/src/issue_filter.rs
+  - id: openwiki-source-826684f900e82d99e3bfe4e1
+    resource: repo://crates/db/migrations/20261029160000_project_attachments.sql
   - id: openwiki-source-672c8da0d18c56b60df745a2
     resource: repo://crates/db/src/models/board_tag.rs
   - id: openwiki-source-27eb1d689068b93b5282d2b6
     resource: repo://crates/db/src/models/design_note_read.rs
   - id: openwiki-source-d83dfc60bdfadf451d836df3
     resource: repo://crates/git/src/reference.rs
+  - id: openwiki-source-237b255ffafe7ecea55eefc6
+    resource: repo://crates/mcp/src/task_server/tools/attachments.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
   - id: openwiki-source-28437ab4b181623345af79bc
@@ -22,6 +26,8 @@ sources:
     resource: repo://crates/server/src/middleware/origin.rs
   - id: openwiki-source-e1757d002aa325145a915b38
     resource: repo://crates/server/src/provider_usage.rs
+  - id: openwiki-source-b5d7c5a5b00efaa28b3e1777
+    resource: repo://crates/server/src/remote_mcp/attachments.rs
   - id: openwiki-source-53c04d549d6401053afe5fc4
     resource: repo://crates/server/src/remote_mcp/code_query.rs
   - id: openwiki-source-0009a6c83972b5e5975ba606
@@ -82,6 +88,8 @@ sources:
     resource: repo://crates/server/src/resource_observation/disk.rs
   - id: openwiki-source-7cfd6d36fabe8e3d6102302d
     resource: repo://crates/server/src/resource_observation/linux.rs
+  - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
+    resource: repo://crates/server/src/routes/attachment_transfer.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-2100c29dd665b0f698970419
@@ -94,6 +102,8 @@ sources:
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
     resource: repo://crates/server/src/routes/workspaces/usage.rs
+  - id: openwiki-source-4294e32943918c50b31813b6
+    resource: repo://crates/services/src/services/file.rs
   - id: openwiki-source-4055aa6b8c5089e24c2a9f7c
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-74a1893f4c1e77eb654658f7
@@ -104,10 +114,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -378,3 +388,23 @@ Windows Runnerはexecution slot等のcanonical Resourceをclaimし、immutable s
 Issue単位のarchiveは `prepare_issue_archive` でcheckboxと全対象を一度示し、人の確認後 `confirm_issue_archive` をstable request_idで送る。両段階にread+writeと所属確認が必要で、tokenはLocal/UI/stdioと交換できない。`unarchive_issue` はIssueだけを復帰させる。busy・ABA・削除結果・uncertainの詳細は [Issue archiveの正本](../concepts/project-and-issue.md#issue-のアーカイブ)に従い、結果不明時はget_operationと現在値を照合する。[adapter](../../crates/server/src/remote_mcp/issue_archive.rs#L41-L140)。
 
 変更時はshared filterとHTTP cursor matrix、stdio adapter/codec、Tag receipt/atomic create、archiveの署名JWT fixtureを別々に確認する。mock peerやisolated browserの成功は実Auth0/ChatGPT接続の成功とは別である。
+
+## MCPで素材ファイルを渡す
+
+Remote/stdioは既存Attachment/FileServiceを共用する。`upload_attachment` は認可済みProjectへbytesを保存し、`place_attachments` はProject/Workspace/Sessionの所属を検証してSession作業ディレクトリへ配置する。保存・配置だけではRunを作らない。添付はWorkspace共有で、Session専有の秘密領域ではない。[共有API](../../crates/server/src/routes/attachment_transfer.rs)・[stdio登録](../../crates/mcp/src/task_server/tools/attachments.rs)
+
+Remoteはホスト提供の `file` をfileParamsとして宣言し、download_url/file_idを必須、mime_type/file_nameを任意propertyにする。Library IDやクライアント内パスだけではbytesを受け取れない。inline base64は両transportでdecoded 2MiB、ホスト取得は20MiB、添付JSON本体は4MiBである。HTTPS/443・operatorの完全一致host allowlist・公開IPへのDNS固定・redirect禁止・取得timeoutを適用し、任意URL fetchにはしない。既定hostは `files.oaiusercontent.com` で、実ホスト適合は未検証である。[catalog](../../crates/server/src/remote_mcp/attachments.rs#L5-L29)・[入力と取得検証](../../crates/server/src/routes/attachment_transfer.rs#L23-L175)・[運用契約](../../docs/development/mcp-attachments.md)
+
+### 読めることを確認してから実行する
+
+新規startと既存続行のattachment_idsは、すべて利用可能なIDで、配置先のサイズ・SHA-256が一致することを実行受付前に確認する。欠落・改変・symlinkや部分失敗を無視せず、部分配置は各結果とall_verifiedを返し、一部失敗なら実行しない。改変された既存先を勝手に上書きしない。Remoteのcontinue/steerは既存の最新Run・状態・lock契約を保つ。stdio添付付きstartはrequest_id、続行はproject_id/request_idを必要とする。[Remote受付](../../crates/server/src/remote_mcp/runtime_write.rs#L432-L460)・[stdio](../../crates/mcp/src/task_server/tools/task_attempts.rs#L210-L230)・[配置の正本](../operations/workspace-inspection.md#session-の添付)
+
+保存receiptのidentityは取得したbytesのSHA-256とProject・名前から作り、期限付きURLを含めない。URL変更後も同じ内容なら再利用するが、成功済みrequestでも再送時は再取得して内容を比較する。取得不能ならRemoteのget_operation、stdioのget_attachment_operationで元request_idのreceiptを回収する。request_id/file_idだけからbytes同一性を推定しない。URL・base64・file_idをreceiptに残さない。[保存とreceipt](../../crates/server/src/routes/attachment_transfer.rs#L175-L270)
+
+Project参照がある未配置ファイルは既存孤立掃除から保護され、参照がある限り無期限保持となる。TTL・定期GC・総保存quotaは追加していない。per-file上限を総ディスク容量の保証と取り違えない。[保持と清掃](../../crates/services/src/services/file.rs)・[参照migration](../../crates/db/migrations/20261029160000_project_attachments.sql)
+
+隔離HTTP/stdio E2Eは実bytes・権限・所属・再送・部分失敗から初回/続行までを確認し、native実行境界をmockする。実ChatGPT/Library fileParams、署名URL期限・host/proxy制約、実Codexは公開後ゲートであり、この成功で完成と呼ばない。配備後にtools/listと配布Skillを更新して実搬送を確認する。[検証・公開後手順](../../docs/development/mcp-attachments.md#検証と公開後ゲート)・[隔離fixture](../../crates/server/src/remote_mcp/attachment_tests.rs)
+
+## MCPからREVIEWを指定・観測する
+
+Codexのstart_workspaceは `execution_mode: review` を受け取り、続行では保存済みmodeと権限を維持する。Remoteのget_executionは指定Runのattemptのmodeを返す。REVIEWは会話で調査結果を返して止まり、製品実装への別指示を必要とする。承認回避や外部承認改善を保証するmodeではない。[開始](../../crates/server/src/remote_mcp/launch.rs#L336-L348)・[読取](../../crates/server/src/remote_mcp/runtime_read.rs#L137-L183)・[実行境界](agent-providers.md#review-の実行境界)

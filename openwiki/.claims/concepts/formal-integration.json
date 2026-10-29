@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:714a848c85ab835ff5e4b6594923c58926a52492f8eb87f45f50c0cf4b1fb90b",
+  "pageVersion": "sha256:ef333c9712a1a23d07e3601a58d0f29e45cf9a0ff801ef01d2f0b541a2dc5f17",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         }
       ]
     },
@@ -52,7 +52,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -66,7 +66,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         }
       ]
     },
@@ -76,11 +76,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         },
         {
           "resource": "repo://docs/development/conversation-auto-merge.md",
-          "version": "repo-file-v1:sha256:252b22b0ff964490ed8855491172a822dfde8766a504ceab7b9aa9089901ac60"
+          "version": "repo-file-v1:sha256:a7ddef189f1eae00259a67f6f6ef2679a802263169a9e1a40b8dba05fff34373"
         }
       ]
     },
@@ -124,7 +124,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/runtime.rs",
@@ -240,7 +240,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/support.rs",
@@ -380,7 +380,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         }
       ]
     },
@@ -418,7 +418,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation.rs",
-          "version": "repo-file-v1:sha256:1e0bbe3382cc572af81a980f3ab75701e11d62eb706d0bd9e8af8f032c00f7a6"
+          "version": "repo-file-v1:sha256:7800dd437e2cba8bb5db17fe74877717b08e0b46d0014c5dcec697450282ccd1"
         }
       ]
     },
@@ -428,13 +428,27 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation_tests.rs",
-          "version": "repo-file-v1:sha256:27258e10bbf67cd13e623c309d2ca1f8b2d9bae9c96c0357d84de43058b7c564"
+          "version": "repo-file-v1:sha256:804f78e954f384626721cc27d6b08640c86eb7d31c0df6457c90bbd82606543c"
+        }
+      ]
+    },
+    {
+      "id": "claim_9e428bd85825490cac4966bd519b4808",
+      "statement": "自動マージのWiki完了証明は同一Session・correlation owner・割当Workspaceの全Run/attempt監査を連続再生し、過去の所有beginで開いたactive ID/modeの明示再開だけを許す。最新writer成功、監査整合と全writer終了、最終operation完了を必要とする。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/openwiki/completion.rs#L115-L285",
+          "version": "repo-lines-v1:sha256:3529f902918f422d8201a50fc62452aa64828de34563ec779c766cf181810638:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlOWIyMGNjNzFjOTUzMWE3YzI4NjFhNzQwNjkzZmM5MDU4ODFlNjA0MDc0MmFiY2EyMzFlMGEwYTM5YmI5ODRiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZTBhZjNmZDRhNGMzYTFkNDdjN2Y0NzBlZDBkODZkOTBkOWRlMjEwYTVlYjE0NTVmYmQ5NDQ4MmE0NzY1YjcyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjNDA2ZGU0MTQwYjIwN2Y1N2U5OTM1YzY3ODQ3M2JiMDMzMjJjMjBiMmVjOWU5NjZjNzAzNWVhOThlMDVkYzcwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMjk5MDRhOGQxNmI3NTNkMWNlNTMyNTQzZmNjNDlmNDc5NTBiZmEwNzkwODliYjY1NTRmYjJmNTk4MzQ1MjVkIn0"
+        },
+        {
+          "resource": "repo://crates/services/src/services/openwiki/completion.rs#L200-L385",
+          "version": "repo-lines-v1:sha256:36f4bf92f98377c5d77bd309ceb2e10f9643115d271971cc337cf9cc2a8b3df8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0NTBlNzc4OWY3Yjk0ZmI5ODAyNzc4NGMxYWQ0ZDQyZTlhZjlhNTI4ZjU3OTBhZmNhNDQxYTQ1ZTFkMmFhZTQxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhNTYwYzNhNzcxOWMzZGZkYzhiYmJjYzNlNmExN2ZkN2NiMjVlOWIwNDliN2M2YmNiZjAxODRhNGU2YmFkNjhkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiNTgwMWJhMDQ2NzdjZWIxZDIwM2VjYTM4YTVmYzQ4NmRjNWY4YWVhY2FkM2RlZDlmNzg2YzBhZmNhNzFlNWNjIn0"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "at": "2026-10-29T17:57:38.430Z"
   }
 }

@@ -82,10 +82,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-ffc55e6e31e6ce477ca57329
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
-generated: { by: "codex", at: "2026-10-29T12:38:00.042Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T12:38:00.042Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # Issue から実行・レビュー・統合まで
@@ -221,3 +221,11 @@ IssueのActive/Archived/Allで仕事を探し、Kanban/Listは独立して選ぶ
 Issueの表示番号は作成時に固定したProject keyを使い、priority/tagは仕事の分類として設定する。systemはLVK生成Cardの分類であり、採用・実行・公開を承認するものではない。[識別と分類](../concepts/project-and-issue.md#仕事の識別と分類)。
 
 通常作成と生成 Card は Project UUID ごとの永続高水位を共有し、commit 済み番号を削除後に再利用しない。移行前に消えた番号の履歴は自動復元せず、初期 floor の確認と rollback 可能な未公開予約の区別は [採番の寿命と移行の限界](../concepts/project-and-issue.md#採番の寿命と移行の限界)を参照する。[allocator](../../crates/db/src/models/issue_number.rs#L23-L46)・[導入契約](../../docs/development/issue-numbering.md)
+
+## 調査modeと素材、Wiki再開を引き継ぐ
+
+実装前の調査・レビューは、対応するCodexのREVIEWを選び、対象・範囲・期待する報告を指定して会話への報告後に停止させる。Workspace内の必要な再現・テストは許すが、所見から製品実装や採用へ自動移行しない。実装には別の明示指示を必要とする。[REVIEWの実行境界](../integrations/agent-providers.md#review-の実行境界)
+
+素材はMCPの保存と配置を分け、ID・サイズ・SHA-256を確認してから初回/続行にattachment_idsを渡す。保存受付は配置や実行受付の成功ではない。再送で取得元が失効した場合は元request_idのreceiptを読む。実ChatGPT/Libraryや実Codexの適合確認は隔離fixture成功と分ける。[MCP搬送](../integrations/remote-access.md#mcpで素材ファイルを渡す)
+
+自動マージのWikiがRun途中で止まった場合は、同じ会話を明示再開してOpenWikiの正規beginを使う。所有済みactive ID/modeの連続監査がある場合だけ後続writerのresumeを認め、別依頼や欠損証拠を引き継がない。standalone保守の閉鎖条件とは別であり、仕組みの詳細は [同じ会話でWiki更新を再開する](../concepts/formal-integration.md#同じ会話でwiki更新を再開する)を参照する。

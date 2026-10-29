@@ -56,6 +56,8 @@ sources:
     resource: repo://crates/services/src/services/diff_stats_tests.rs
   - id: openwiki-source-b04f793d57fd8b570d4984e3
     resource: repo://crates/services/src/services/diff_stream.rs
+  - id: openwiki-source-4294e32943918c50b31813b6
+    resource: repo://crates/services/src/services/file.rs
   - id: openwiki-source-ead147478bd848437cb020e7
     resource: repo://crates/services/src/services/wiki.rs
   - id: openwiki-source-3bef0d0bfd4066b26b945f6c
@@ -138,10 +140,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
+generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T11:40:14.219Z
+    at: 2026-10-29T17:57:38.430Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -253,6 +255,14 @@ Session の添付は local File を作業先へ渡す機能である。Board 上
 添付 upload は保存レコードを作成し、Session の作業先へ file ID でコピーする。raw 添付の取得は Session が Workspace に属するか確認し、その agent_working_dir または Workspace root 配下の .vibe-attachments を使う。最終 canonical path が添付ディレクトリから外れれば拒否する。Repo file viewer と添付の基準 root は同じとは限らない。[upload](../../crates/server/src/routes/workspaces/attachments.rs)・[添付のパス](../../crates/server/src/routes/workspaces/attachments.rs)・[Session scope](../../crates/server/src/routes/workspaces/attachments.rs)
 
 Workspace 作成は明示された attachment_ids を関連づけ、linked_issue があれば local の Issue にリンクする。Cloud 添付を取得する経路ではない。[作成処理](../../crates/server/src/routes/workspaces/create.rs)
+
+### 保存と検証済み配置を区別する
+
+MCPからはProjectへ保存した添付IDを、明示したWorkspace/Sessionへ配置できる。保存・配置だけではRunを開始しない。添付はWorkspace共有であり、Sessionを指定しても秘密領域にはならない。Remoteのhost fileParamsと両transportのinline入力、上限・URL・receiptの契約は [MCPで素材ファイルを渡す](../integrations/remote-access.md#mcpで素材ファイルを渡す)に集約する。
+
+FileServiceはUnicode名を保ち、hashだけで別名・別MIMEを誤って再利用せず、同じbytesでも名前が違えば別レコードを保持する。配置は全IDの実在を確認し、保存元と既存先のサイズ/SHA-256を検証する。欠損・改変・symlinkを無視せず、既存改変先を上書きしない。新規配置は一時ファイルからno-clobberで公開する。通常UIのコピー経路も同じサービスを使い、続行時は実Session作業先を検証してからRunを作る。[保存](../../crates/services/src/services/file.rs#L89-L175)・[コピー](../../crates/services/src/services/file.rs#L256-L380)・[実行前検証](../../crates/server/src/routes/sessions/mod.rs#L449-L465)
+
+複数配置は各要素のsaved/associated/verifiedと全体all_verifiedを分ける。一部失敗なら成功分は残るが実行は始めない。未知ID・Project/Workspace/Session不一致を副作用前に拒否する。Project参照のある未配置ファイルは孤立掃除から保護され、参照がある限り無期限保持となる。per-file上限は総容量制限ではなく、TTL・定期GC・総保存quotaはない。[配置](../../crates/server/src/routes/attachment_transfer.rs#L242-L310)・[保持](../../crates/db/migrations/20261029160000_project_attachments.sql)・[清掃の再確認](../../crates/services/src/services/file.rs)
 
 ## 差分は現在の比較基準から再構成する
 
