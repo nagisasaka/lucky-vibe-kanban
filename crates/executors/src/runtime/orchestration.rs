@@ -27,7 +27,6 @@ pub const ORCHESTRATION_REDUCER_VERSION: u16 = 1;
 pub enum OrchestrationProductKind {
     Workflow,
     Arena,
-    Integration,
     ResourceMediation,
 }
 
@@ -326,9 +325,6 @@ pub enum OrchestrationNodeStatus {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 pub enum OrchestrationEventPayload {
-    IntegrationResumed {
-        node_execution_id: Uuid,
-    },
     LifecycleChanged {
         status: OrchestrationRunStatus,
     },
@@ -389,7 +385,6 @@ impl OrchestrationEventPayload {
 }
 
 const KNOWN_ORCHESTRATION_EVENT_TYPES: &[&str] = &[
-    "integration_resumed",
     "lifecycle_changed",
     "node_status_changed",
     "agent_run_linked",

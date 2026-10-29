@@ -194,7 +194,7 @@ fn operation_scope(name: &str) -> Option<&'static str> {
         | "read_runtime_path"
         | "observe_process"
         | "get_self_restart_operation" => Some("lvk:runtime:read"),
-        "start_integration" | "approve_integration" | "cancel_integration" => Some("lvk:merge"),
+        "start_integration" | "cancel_integration" => Some("lvk:merge"),
         "change_runtime_path"
         | "edit_issue_comment"
         | "add_issue_comment"

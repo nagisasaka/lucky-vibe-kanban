@@ -11,18 +11,6 @@ use super::{
     auth::Principal,
     read::{arguments, definition},
 };
-use crate::routes::integrations::{DecisionExpectation, GateDecisionRequest};
-
-#[derive(Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-struct ApproveArgs {
-    project_id: Uuid,
-    integration_id: Uuid,
-    request_id: Uuid,
-    /// Exact pending review/validation gate ID from get_integration(section=pending_gates).
-    gate_id: Uuid,
-    expected: DecisionExpectation,
-}
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -34,7 +22,6 @@ struct CancelArgs {
 
 pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     [
-        definition::<ApproveArgs>("approve_integration", "Explicitly approve the exact current Auto-merge gate through the UI decision path. Read get_integration(section=pending_gates) first and copy gate_id and expected. A validation gate approval is an explicit candidate-bound exception to a failed check, NOT a test pass. Requires merge permission. Stale evidence/target is rejected. Preserve request_id and identical input on retry; read get_operation and get_integration afterwards. Never infer approval from a Goal or review comment."),
         definition::<CancelArgs>("cancel_integration", "Explicitly request cancellation of an Auto-merge through the UI cancellation path. Requires merge permission. Acceptance is NOT stopped execution or released reservations. No Git undo after publication intent. Preserve request_id and input on retry; read get_operation and get_integration until cancellation_complete. Does not control Goals."),
     ].into_iter().map(|tool| {
         let mut value = serde_json::to_value(tool).unwrap();
@@ -91,22 +78,9 @@ pub(super) async fn call(
         principal.allows("lvk:read") && principal.allows("lvk:merge"),
         "Read and merge permissions required"
     );
-    let (project, id, request_id, approval) = match name {
-        "approve_integration" => {
-            let args: ApproveArgs = arguments(input.clone())?;
-            (
-                args.project_id,
-                args.integration_id,
-                args.request_id,
-                Some((args.gate_id, args.expected)),
-            )
-        }
-        "cancel_integration" => {
-            let args: CancelArgs = arguments(input.clone())?;
-            (args.project_id, args.integration_id, args.request_id, None)
-        }
-        _ => anyhow::bail!("Unknown Auto-merge decision tool"),
-    };
+    ensure!(name == "cancel_integration", "Unknown Auto-merge operation");
+    let args: CancelArgs = arguments(input.clone())?;
+    let (project, id, request_id) = (args.project_id, args.integration_id, args.request_id);
     find(remote, project, id).await?;
     let actions = remote
         .launch
@@ -115,17 +89,11 @@ pub(super) async fn call(
     let owned = remote.clone();
     let receipt = remote.operations().submit_and_wait(
         remote.principal_key(principal), request_id, project, name.into(), input,
-        json!({"integration_id":id}), move |operation| async move {
+        json!({"integration_id":id}), move |_operation| async move {
             if let Err(error) = find(&owned, project, id).await {
                 return ("failed", json!({"message":super::errors::message(&error)}));
             }
-            let approving = approval.is_some();
-            let result = match approval {
-                Some((gate_id, expected)) => actions.decide_integration(id, GateDecisionRequest {
-                    project_id:project, gate_id, request_id:operation, decision:"continue".into(),
-                }, expected).await,
-                None => actions.cancel_integration(id).await,
-            };
+            let result = actions.cancel_integration(id).await;
             if let Err(error) = result {
                 // A database failure can occur after mutation; never authorise replay.
                 let status = if error.chain().any(|e| e.is::<sqlx::Error>()) { "uncertain" } else { "failed" };
@@ -133,8 +101,7 @@ pub(super) async fn call(
             }
             match observation(&owned, project, id).await {
                 Ok(mut value) => {
-                    value["decision_accepted"] = json!(approving);
-                    value["cancellation_requested"] = json!(!approving && value["cancel_requested"] == true);
+                    value["cancellation_requested"] = json!(value["cancel_requested"] == true);
                     value["read_back"] = json!("get_integration");
                     ("succeeded", value)
                 }

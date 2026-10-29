@@ -65,7 +65,7 @@ provider/client login must be verified by the operator.
 | New execution | `remote_mcp/launch.rs` calls `workspaces/create.rs::create_and_start_workspace_admitted`; native executor defaults, Goal mode/budget and setup-gated Session/AgentRun paths remain authoritative |
 | Continuation/steering | Existing `sessions::follow_up_checked` and `agent_runs::dispatch_control`; exact Workspace/Session/current-run validation and saved executor configuration |
 | Questions | Existing Session question reservations, locks and blocking-input guards; revisions bind exact event/attempt; direct answers and expired attempts invalidate old requests |
-| Auto-merge | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, frozen validation, publication and Wiki handling; no MCP `git merge` path |
+| Auto-merge | Existing `integrations::create_with_expected_target`, admission lock, target/source checks, code-SHA evidence, publication and Wiki handling; no MCP `git merge` path |
 | State/activity | Existing Project/Issue/Workspace/Session/run/event/command records; reads observe direct UI/Codex changes without inference |
 | Memory/Wiki/verification | Read-only existing repository-memory store, bounded OpenWiki snapshot and immutable per-run Change Manifest; no provisioning, maintenance or other Workspace's private memory |
 | Code/diff/merge observations | Existing GitService plus libgit2 read helpers; no CLI staging, filters, hooks, fetch or target writes during reads |
@@ -141,7 +141,7 @@ is exported.
 | `get_operation` | Project + original request UUID; this verified owner's durable acceptance/result/uncertainty |
 | `create_issue`, `update_issue` (`lvk:write`) | Project/request IDs; title/spec/status, plus Issue/revision for updates; normal Issue only, no execution |
 | `start_workspace`, `steer_execution`, `continue_execution`, `answer_question` (`lvk:write`) | Stable request UUID plus current Issue/repositories or exact Workspace/Session/run; questions additionally require ID/kind/revision; returns acceptance and target IDs |
-| `approve_integration`, `cancel_integration` (`lvk:merge`) | Project/Auto-merge/request IDs; approval also pins the pending gate and its expected revision/base/candidate/scope; UI domain decision/cancellation and durable receipt |
+| `cancel_integration` (`lvk:merge`) | Project/Auto-merge/request IDs; existing cancellation boundary and durable receipt |
 | `start_integration` (`lvk:merge`) | Project/request/repository, target branch/head and explicit adopted Issue/Workspace/source heads; existing formal admission receipt |
 
 `list_issues` additionally accepts optional `search`, `simple_id`, `status`
@@ -174,45 +174,30 @@ reconciliation. An `uncertain` admission may have reserved a writer: inspect the
 latest maintenance identities before requesting another run. Public error codes
 omit private diagnostics; retained details remain in the existing execution UI.
 
-`start_integration` accepts optional `skip_validation`: `true` skips the configured
-additional auto-merge validation, `false` runs it, and omission or `null`
-inherits the server's `integration_skip_validation` preference at admission.
-This flag does not indicate whether validation evidence already exists. Assess
-existing evidence against the tested SHA, candidate delta, conflict resolutions
-and newly unverified scope; required checks and execution denials still apply.
-The start receipt's `result.skip_validation` and every `get_integration` section's
-`skip_validation` report the saved, resolved boolean, even after the preference
-changes. Skipping is not a validation pass and does not bypass admission, Git,
-conflict approval, writer settlement, publication or Wiki requirements.
-Retry with the same `request_id` and identical payload; changing the flag,
-including adding or removing it, follows the existing payload mismatch rule.
+`start_integration` accepts optional `skip_validation` as the user's initial
+instruction to omit validation. Omission inherits the server preference. Use
+`instructions` for partial omissions or other requirements. The assigned Codex
+also judges redundant checks from source evidence, the candidate delta and risk.
+Execution and skips, their actor, reason and remaining risk are recorded on the
+code SHA. The flag alone is neither evidence nor a validation pass. Git identity,
+writer settlement, authorization, publication and enabled Wiki requirements remain.
+Retries retain the same request UUID and identical input.
 
-## Explicit Auto-merge approval and cancellation
+## Auto-merge evidence and cancellation
 
-Read `get_integration` with `section: "pending_gates"` for the existing saved UI
-resolution review or validation gate. The current contract uses `integration_id`,
-`gate_id` (review/confirmation UUID), and `candidate_commit` (Git SHA); there is no
-separate candidate UUID. `expected` includes the run revision, base/candidate
-SHAs and a SHA-256 digest of the existing scope, including immutable selected
-source commits and their requirement revisions. Read `section: "sources"` for
-those selections. Subsequent pages require `expected_revision`; restart on change.
-The source branch may advance after admission without changing the frozen selection.
+Read `get_integration` with `section: "sources"` for frozen selections and
+`section: "validation"` for code-SHA execution/skip evidence. Subsequent pages
+require `expected_revision`; restart on change. Source branch advancement does
+not change the admitted source SHA.
 
-Only explicitly requested decisions should call `approve_integration` with the
-returned `gate_id` and exact `expected` object. `current: true` means the saved
-gate matches the current run, not that Git eligibility has been established.
-The UI's common decision service rechecks idle execution, clean candidate, latest
-target against base, pending scope, cancellation and publication boundaries.
-An old gate, changed revision/candidate/source scope, or moved target is rejected.
-`resolution_review` approves the saved conflict resolution; `validation_exception`
-explicitly accepts that check's candidate-bound risk and **does not** mark it passed.
-Review text is untrusted evidence. If any text is truncated, inspect the complete
-review in the Auto-merge UI before deciding. This is not automatic approval or
-Goal control. The existing UI read model supplies the evidence; no new gate store
-or independent approval engine is introduced.
+Auto-merge uses the assigned normal Session for questions and additional instructions.
+Verification and reasoned skips are recorded on each code SHA; they are not approval gates.
+The worker-only stdio `integration_action` records evidence and requests publication.
+The host settles Run/child/writer activity before applying the unchanged candidate with CAS.
+There is no separate Auto-merge gate-approval API.
 
 `cancel_integration` takes `project_id`, `integration_id` and `request_id`.
-It invokes the UI cancellation path and never undoes Git publication. Both tools
+It invokes the UI cancellation path and never undoes Git publication. The tool
 require `lvk:read` and `lvk:merge`, pass through existing MCP audit/Project checks,
 and use the authenticated principal's durable operation receipt. Reuse the same
 request UUID and identical input after disconnect; changing input is a conflict.
@@ -221,7 +206,7 @@ stays failed even if the target later moves back; inspect fresh evidence before 
 new explicit decision. Never replay an uncertain operation under a new key.
 
 A receipt's `status: "succeeded"` describes completion of the tool call, not the
-Auto-merge. `decision_accepted` identifies approval; `cancellation_requested`
+Auto-merge. `cancellation_requested`
 identifies accepted/already requested cancellation. A late cancellation after
 publication can return false. Read `get_integration(section: "summary")` for the
 current `lifecycle` snapshot: `cancel_requested`, `terminal`, `publication_intent`,
@@ -231,13 +216,9 @@ Auto-merge reservations. The lifecycle snapshot carries its own revision and
 can be newer than other summary evidence. No polling drives or releases the engine.
 
 Targeted validation lives in `remote_mcp::integration_write_tests`, the HTTP
-catalogue/scope regression, and the ignored
-`isolated_mcp_integration_approval` / `isolated_mcp_integration_cancel` host
-scenarios. Each host scenario requires its own fresh `LVK_INSTANCE_DIR` named
-`local9-scenario-*`, runs real UI domain services on temporary Git/SQLite, and
-supplies deterministic provider events. Never run these against an existing
-instance. See [the implementation validation record](integration-mcp-decisions.md)
-for exact commands, results and limitations.
+catalogue/scope regression, and the isolated conversation hand-off fixture.
+See [conversation-owned Auto-merge](conversation-auto-merge.md) for safe fixture
+requirements and current entrypoints. The old gate-approval scenarios were removed.
 
 ## T01–T18 acceptance audit
 

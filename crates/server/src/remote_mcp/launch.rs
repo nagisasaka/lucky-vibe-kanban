@@ -68,10 +68,11 @@ struct MergeArgs {
     expected_target_commit: String,
     #[schemars(length(min = 1, max = 100))]
     selections: Vec<Selection>,
-    /// true skips the configured additional auto-merge validation; false runs it.
+    /// Optional user instruction to omit additional validation. The assigned agent records actual executions/skips and risk.
     /// This flag does not indicate whether validation evidence already exists.
     /// Omit or null to inherit the server integration_skip_validation preference.
     skip_validation: Option<bool>,
+    instructions: Option<String>,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -109,14 +110,6 @@ struct DefaultsArgs {
 
 #[async_trait]
 pub(super) trait LaunchActions: Send + Sync {
-    async fn decide_integration(
-        &self,
-        _id: Uuid,
-        _request: integrations::GateDecisionRequest,
-        _expected: integrations::DecisionExpectation,
-    ) -> anyhow::Result<()> {
-        anyhow::bail!("Auto-merge decision service unavailable")
-    }
     async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
         anyhow::bail!("Auto-merge cancellation service unavailable")
     }
@@ -142,14 +135,6 @@ pub(super) trait LaunchActions: Send + Sync {
 pub(super) struct ExistingLaunch(pub DeploymentImpl);
 #[async_trait]
 impl LaunchActions for ExistingLaunch {
-    async fn decide_integration(
-        &self,
-        id: Uuid,
-        request: integrations::GateDecisionRequest,
-        expected: integrations::DecisionExpectation,
-    ) -> anyhow::Result<()> {
-        integrations::decide_gate_checked(&self.0, id, request, Some(expected)).await
-    }
     async fn cancel_integration(&self, id: Uuid) -> anyhow::Result<()> {
         let _ = integrations::cancel(
             axum::extract::State(self.0.clone()),
@@ -198,7 +183,7 @@ impl LaunchActions for ExistingLaunch {
     }
 }
 pub(super) fn integration_result(run: &IntegrationRun) -> Value {
-    json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"wiki":"not_verified"})
+    json!({"integration_id":run.id,"status":run.status,"integration_accepted":true,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"wiki":"not_verified","issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id})
 }
 
 fn branch(value: &str) -> anyhow::Result<()> {
@@ -223,7 +208,7 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     start["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     start["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:write"]}]});
-    let mut merge=serde_json::to_value(definition::<MergeArgs>("start_integration","Start Auto-merge for an explicitly frozen selection and target HEAD. Call this feature 自動マージ in Japanese and Auto-merge in English in explanations, start confirmations, progress and result reports. Requires merge permission; preserves existing validation, writer settlement, publication and Wiki rules. Mechanical merges may not use AI; required decisions or approvals pause execution. Code merge and subsequent Wiki updates are separate outcomes. Does not directly merge branches or mark Issues Done.")).unwrap();
+    let mut merge=serde_json::to_value(definition::<MergeArgs>("start_integration","Start Auto-merge for an explicitly frozen selection and target HEAD. Call this feature 自動マージ in Japanese and Auto-merge in English in explanations, start confirmations, progress and result reports. Requires merge permission; preserves existing validation, writer settlement, publication and Wiki rules. The assigned Codex starts immediately and continues in one normal conversation; validation may be run or skipped with reasons and risk recorded. Code merge and subsequent Wiki updates are separate outcomes. Does not directly merge branches or mark Issues Done.")).unwrap();
     merge["annotations"] = json!({"readOnlyHint":false,"destructiveHint":true,"idempotentHint":true,"openWorldHint":true});
     merge["_meta"] =
         json!({"securitySchemes":[{"type":"oauth2","scopes":["lvk:read","lvk:merge"]}]});
@@ -535,7 +520,7 @@ pub(super) async fn call(
                     if !WorkspaceRepo::find_by_workspace_and_repo_id(&owned.pool,selection.workspace_id,args.repository_id).await.is_ok_and(|repo|repo.is_some()) {return ("failed",json!({"code":"workspace_repository_changed"}));}
                     match owned.require_workspace(args.project_id,selection.workspace_id).await {Ok(issue) if issue==selection.issue_id=>{},_=>return ("failed",json!({"code":"selection_scope_changed"}))}
                 }
-                let request=integrations::CreateIntegrationRequest {request_id:operation,project_id:args.project_id,repository_id:args.repository_id,target_branch:args.target_branch,selections:args.selections.into_iter().map(|s|IntegrationSelection {card_id:s.issue_id,workspace_id:s.workspace_id,expected_commit:s.expected_commit}).collect(),executor_config:None,skip_validation:args.skip_validation};
+                let request=integrations::CreateIntegrationRequest {request_id:operation,project_id:args.project_id,repository_id:args.repository_id,target_branch:args.target_branch,selections:args.selections.into_iter().map(|s|IntegrationSelection {card_id:s.issue_id,workspace_id:s.workspace_id,expected_commit:s.expected_commit}).collect(),instructions: args.instructions, executor_config:None,skip_validation:args.skip_validation};
                 let url=owned.config.project_url(args.project_id);
                 match launch.integration(request,args.expected_target_commit).await {
                     Ok(mut value)=>{value["url"]=json!(url);("succeeded",value)},

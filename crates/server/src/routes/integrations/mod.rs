@@ -1,11 +1,8 @@
-//! Local Board Integration: host-owned Git steps with bounded conflict jobs.
-//! The product owns source reservations, host validation and publication, not
-//! another Agent scheduler. Git, Card effects and Wiki receipts are separate.
+//! Conversation-owned Auto-merge admission, execution evidence and safe publication.
 mod admission;
-mod legacy_checkpoint;
-mod mechanical;
+pub(crate) mod conversation;
 mod runtime;
-mod steps;
+mod support;
 pub(crate) use admission::AdmissionFailure;
 use axum::{
     Json, Router,
@@ -15,14 +12,11 @@ use axum::{
 use db::models::integration::{IntegrationRun, IntegrationSelection};
 use deployment::Deployment;
 use executors::profile::ExecutorConfig;
+pub(crate) use runtime::reserve_action;
 pub use runtime::spawn_monitor;
-pub(crate) use runtime::{decide_gate_checked, reserve_intervention};
 use serde::Deserialize;
 use ts_rs::TS;
-use utils::{
-    repository_memory::{ReconciliationResult, RepositoryMemoryStore},
-    response::ApiResponse,
-};
+use utils::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::{DeploymentImpl, error::ApiError};
@@ -54,6 +48,9 @@ pub struct CreateIntegrationRequest {
     #[serde(default)]
     #[ts(optional)]
     pub skip_validation: Option<bool>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub instructions: Option<String>,
 }
 
 impl CreateIntegrationRequest {
@@ -106,15 +103,12 @@ async fn list(
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<ListQuery>,
 ) -> Result<Json<ApiResponse<Vec<IntegrationRun>>>, ApiError> {
-    let mut runs: Vec<IntegrationRun> = sqlx::query_as(
+    let runs: Vec<IntegrationRun> = sqlx::query_as(
         "SELECT * FROM integration_runs WHERE project_id=? ORDER BY created_at DESC LIMIT 100",
     )
     .bind(query.project_id)
     .fetch_all(&deployment.db().pool)
     .await?;
-    for run in &mut runs {
-        observe_wiki(&deployment, run).await;
-    }
     Ok(Json(ApiResponse::success(runs)))
 }
 
@@ -154,89 +148,8 @@ async fn status(
     State(deployment): State<DeploymentImpl>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
-    let mut run = IntegrationRun::find(&deployment.db().pool, id).await?;
-    observe_wiki(&deployment, &mut run).await;
+    let run = IntegrationRun::find(&deployment.db().pool, id).await?;
     Ok(Json(ApiResponse::success(run)))
-}
-
-/// Read-only projection of the existing outbox/receipt lifecycle. Do not keep
-/// displaying the admission-time word "pending" after a successful Wiki run,
-/// or equate a source Integration success with Wiki acknowledgement.
-pub(crate) async fn observe_wiki(deployment: &DeploymentImpl, run: &mut IntegrationRun) {
-    observe_wiki_from_pool(&deployment.db().pool, run).await;
-}
-
-/// Shared read-only observer; true means current repository receipts were found.
-pub(crate) async fn observe_wiki_from_pool(
-    pool: &sqlx::SqlitePool,
-    run: &mut IntegrationRun,
-) -> bool {
-    if !run.payload.published {
-        return false;
-    }
-    let result: anyhow::Result<Option<String>> = async {
-        let repo = db::models::repo::Repo::find_by_id(pool, run.repository_id)
-            .await?
-            .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
-        let Some(store) =
-            RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repo.id)?
-        else {
-            return Ok(None);
-        };
-        let Some(integration) = store
-            .integrations()?
-            .into_iter()
-            .find(|record| record.id == run.id)
-        else {
-            return Ok(None);
-        };
-        let state = store.state()?;
-        if state.target_branch.as_deref() != Some(integration.target_branch.as_str()) {
-            return Ok(Some("recorded; Wiki configured for another target".into()));
-        }
-        let mut remaining = 0;
-        for id in &integration.event_ids {
-            match store.receipt(*id)? {
-                Some(receipt) if receipt.result != ReconciliationResult::Failed => {}
-                _ => remaining += 1,
-            }
-        }
-        Ok(Some(if integration.event_ids.is_empty() {
-            "no semantic events; no Wiki update requested".into()
-        } else if remaining == 0 {
-            "all selected semantic events acknowledged by OpenWiki".into()
-        } else if !state.enabled {
-            format!("disabled; {remaining} semantic events retained")
-        } else if let Some(error) = state.error {
-            format!("{remaining} semantic events pending; Wiki error: {error}")
-        } else if state.last_success.is_none() {
-            format!("{remaining} semantic events pending; initialise Wiki first")
-        } else {
-            format!(
-                "{remaining} semantic events pending; Wiki status {:?}",
-                state.status
-            )
-        }))
-    }
-    .await;
-    match result {
-        Ok(Some(status)) => {
-            run.payload.wiki_result = Some(status);
-            true
-        }
-        Ok(None) => false,
-        Err(error) => {
-            if !run
-                .payload
-                .wiki_result
-                .as_deref()
-                .is_some_and(|status| status.starts_with("semantic outbox pending:"))
-            {
-                run.payload.wiki_result = Some(format!("Wiki status unavailable: {error:#}"));
-            }
-            false
-        }
-    }
 }
 
 pub(crate) async fn cancel(
@@ -262,7 +175,7 @@ async fn recover(
                 .payload
                 .wiki_result
                 .as_deref()
-                .is_some_and(|s| s.starts_with("semantic outbox pending:")));
+                .is_some_and(|s| s.starts_with("Wiki receipt pending:")));
     if !can_recover {
         return Err(error(
             "Only publication reconciliation may be retried on this run; create a new explicit selection for another integration",
@@ -274,88 +187,14 @@ async fn recover(
     status(State(deployment), Path(id)).await
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(super) struct InterventionRequest {
-    project_id: Uuid,
-    request_id: Uuid,
-    prompt: String,
-}
-
-async fn intervene(
-    State(deployment): State<DeploymentImpl>,
-    Path(id): Path<Uuid>,
-    Json(request): Json<InterventionRequest>,
-) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
-    runtime::intervene(&deployment, id, request)
-        .await
-        .map_err(error)?;
-    status(State(deployment), Path(id)).await
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct GateDecisionRequest {
-    pub project_id: Uuid,
-    pub gate_id: Uuid,
-    pub request_id: Uuid,
-    pub decision: String,
-}
-
-/// Frozen evidence read by an external reviewer. Checked under the same
-/// mutation lock as the UI decision, before any domain mutation.
-#[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct DecisionExpectation {
-    pub revision: String,
-    pub base_commit: String,
-    pub candidate_commit: String,
-    /// SHA-256 of the existing validation scope (including frozen sources).
-    pub scope_digest: String,
-}
-
-pub(crate) fn scope_digest(run: &IntegrationRun) -> String {
-    use sha2::{Digest, Sha256};
-    format!("{:x}", Sha256::digest(run.validation_scope().as_bytes()))
-}
-
-impl DecisionExpectation {
-    pub(crate) fn verify(&self, run: &IntegrationRun) -> anyhow::Result<()> {
-        anyhow::ensure!(
-            self.revision == run.updated_at
-                && Some(self.base_commit.as_str()) == run.payload.base_commit.as_deref()
-                && Some(self.candidate_commit.as_str()) == run.payload.result_commit.as_deref()
-                && self.scope_digest == scope_digest(run),
-            "STALE_CANDIDATE: read the current Auto-merge and pending gate again"
-        );
-        Ok(())
-    }
-}
-
-async fn decide_gate(
-    State(deployment): State<DeploymentImpl>,
-    Path(id): Path<Uuid>,
-    Json(request): Json<GateDecisionRequest>,
-) -> Result<Json<ApiResponse<IntegrationRun>>, ApiError> {
-    runtime::decide_gate(&deployment, id, request)
-        .await
-        .map_err(error)?;
-    status(State(deployment), Path(id)).await
-}
-
 pub fn router() -> Router<DeploymentImpl> {
     Router::new()
+        .route("/integrations/worker", post(conversation::worker))
         .route("/integrations", get(list).post(create))
         .route("/integrations/repositories", get(repositories))
         .route("/integrations/{id}", get(status))
         .route("/integrations/{id}/cancel", post(cancel))
         .route("/integrations/{id}/recover", post(recover))
-        .route("/integrations/{id}/decision", post(decide_gate))
-        .route("/integrations/{id}/intervene", post(intervene))
-        .route(
-            "/integrations/{id}/adopt-checkpoint",
-            post(legacy_checkpoint::adopt),
-        )
 }
 
 #[cfg(test)]

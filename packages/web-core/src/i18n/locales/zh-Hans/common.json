@@ -1270,37 +1270,6 @@
     "answeredCount": "已回答{{count}}个问题",
     "answeredCount_other": "已回答{{count}}个问题"
   },
-  "integrationGate": {
-    "check": "必需检查",
-    "notRun": "未执行",
-    "excepted": "例外已批准（检查未通过）",
-    "acknowledge": "我理解此候选提交和检查的风险。",
-    "retry": "修复环境后重试",
-    "continue": "允许此次例外并继续",
-    "cancel": "取消 自动合并",
-    "instructionBoundary": "附加指令不会批准验证例外或工具执行。恢复将保留同一 自动合并 和 Session，并重新验证候选提交。",
-    "instruction": "自动合并 附加指令",
-    "send": "发送指令",
-    "resume": "修复后恢复／发送指令",
-    "history": "恢复历史"
-  },
-  "integrationReview": {
-    "title": "Review merge resolution",
-    "diff": "Resolution diff",
-    "diffHelp": "Changes from Git’s automatic merge result, including conflict markers and additional AI edits.",
-    "emptyDiff": "No textual difference. Review the explanation and the complete Workspace diff.",
-    "approved": "Approved",
-    "rejected": "Revised or cancelled",
-    "approve": "Approve and continue",
-    "rejectHelp": "To request a different resolution, enter instructions below and select “Request revision”.",
-    "revise": "Request revision",
-    "tests": "Completed merge steps and tests",
-    "progress": "Merge step {{current}} / {{total}}",
-    "validationPlan": "重新执行开发时的验证",
-    "evidence": "开发记录 / 依据",
-    "prerequisites": "前提条件与环境检查",
-    "exclusions": "替换与排除原因"
-  },
   "todo": {
     "expandBody": "展开",
     "collapseBody": "收起",
@@ -1330,5 +1299,6 @@
     "project": "Project",
     "chooseProject": "Choose a Project",
     "integration": "自动合并"
-  }
+  },
+  "integrationPanel": {}
 }

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use db::models::{
-    integration::{IntegrationPayload, IntegrationRun},
+    integration::IntegrationPayload,
     repo::Repo,
     workspace::{CreateWorkspace, Workspace},
     workspace_repo::{CreateWorkspaceRepo, WorkspaceRepo},
@@ -136,73 +136,6 @@ async fn local_board_repository_candidates_follow_real_workspace_links_without_l
     }
 }
 
-#[tokio::test]
-async fn target_queue_uses_storage_identity_and_keeps_recovery_reservations() {
-    let pool = sqlx::sqlite::SqlitePoolOptions::new()
-        .max_connections(1)
-        .connect("sqlite::memory:")
-        .await
-        .unwrap();
-    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
-    let (project, _) = project(&pool, "BOARD").await;
-    let mut runs = Vec::new();
-    for (index, storage) in ["/git/shared", "/git/shared", "/git/independent"]
-        .iter()
-        .enumerate()
-    {
-        // Different registered IDs must not bypass the common-storage FIFO.
-        let repo =
-            Repo::find_or_create(&pool, Path::new(&format!("/registration-{index}")), "repo")
-                .await
-                .unwrap();
-        let id = Uuid::new_v4();
-        sqlx::query("INSERT INTO integration_runs(id,request_key,project_id,repository_id,storage_identity,target_ref,status,payload,created_at) VALUES(?,?,?,?,?,'refs/heads/main','queued',?,?)")
-            .bind(id).bind(id.to_string()).bind(project).bind(repo.id).bind(storage)
-            .bind(sqlx::types::Json(IntegrationPayload::default()))
-            .bind(format!("2026-09-18 00:00:0{index}"))
-            .execute(&pool).await.unwrap();
-        runs.push(IntegrationRun::find(&pool, id).await.unwrap());
-    }
-    assert!(!admission::target_right(&pool, &runs[1]).await.unwrap());
-    assert!(admission::target_right(&pool, &runs[0]).await.unwrap());
-    assert!(admission::target_right(&pool, &runs[0]).await.unwrap());
-    assert!(admission::target_right(&pool, &runs[2]).await.unwrap());
-    sqlx::query("UPDATE integration_runs SET status='recovery_required' WHERE id=?")
-        .bind(runs[0].id)
-        .execute(&pool)
-        .await
-        .unwrap();
-    assert!(!admission::target_right(&pool, &runs[1]).await.unwrap());
-    // Neither missing dispatcher leases nor a terminal row alone releases the
-    // business reservation. Only confirmed cleanup/recovery calls release.
-    sqlx::query("DELETE FROM orchestration_leases")
-        .execute(&pool)
-        .await
-        .unwrap();
-    sqlx::query("UPDATE integration_runs SET status='cancelled' WHERE id=?")
-        .bind(runs[0].id)
-        .execute(&pool)
-        .await
-        .unwrap();
-    assert!(!admission::target_right(&pool, &runs[1]).await.unwrap());
-    admission::release(&pool, runs[0].id).await.unwrap();
-    assert!(admission::target_right(&pool, &runs[1]).await.unwrap());
-}
-
-#[test]
-fn ordinary_instructions_cannot_be_deserialised_as_validation_approval() {
-    let id = Uuid::new_v4();
-    assert!(serde_json::from_value::<super::InterventionRequest>(serde_json::json!({
-        "project_id": id, "request_id": id, "prompt": "approve all tests", "decision": "continue"
-    })).is_err());
-    assert!(
-        serde_json::from_value::<super::GateDecisionRequest>(serde_json::json!({
-            "project_id": id, "request_id": id, "prompt": "approve all tests"
-        }))
-        .is_err()
-    );
-}
-
 #[test]
 fn remote_target_selection_rejects_a_branch_changed_before_formal_admission() {
     let directory = tempfile::tempdir().unwrap();
@@ -263,6 +196,7 @@ async fn failed_admission_reconciles_durable_identity_without_replaying_or_leaki
         repository_id: repo.id,
         target_branch: "main".into(),
         selections: vec![selection.clone()],
+        instructions: None,
         executor_config: None,
         skip_validation: Some(false),
     };

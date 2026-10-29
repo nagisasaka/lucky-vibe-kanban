@@ -408,23 +408,6 @@ async fn append_and_project_in_transaction(
         event.orchestration_run_id,
     ))?;
     let mut state = state_json.0;
-    if let OrchestrationEventPayload::IntegrationResumed { node_execution_id } = event.payload {
-        let permitted: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs i JOIN orchestration_node_executions n ON n.orchestration_run_id=i.id WHERE i.id=? AND n.id=? AND i.status='integrating' AND i.cancel_requested=0 AND json_extract(i.payload,'$.publication_intent')=0 AND json_extract(i.payload,'$.intervention.pending')=1)")
-            .bind(event.orchestration_run_id).bind(node_execution_id).fetch_one(&mut *connection).await?;
-        if !permitted {
-            return Err(OrchestrationPersistenceError::IdempotencyConflict {
-                entity: "Integration resume authorization",
-                key: event.orchestration_run_id.to_string(),
-            });
-        }
-        sqlx::query(
-            "UPDATE orchestration_node_executions SET status='running',updated_at=? WHERE id=?",
-        )
-        .bind(event.timestamp)
-        .bind(node_execution_id)
-        .execute(&mut *connection)
-        .await?;
-    }
     let applied = reduce_orchestration_event(&mut state, event)?;
     sqlx::query(
         r#"
@@ -628,7 +611,7 @@ impl OrchestrationOutboxRecord {
         let mut transaction = pool.begin().await?;
         let stale_before = now - redelivery_after;
         sqlx::query(
-            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ? AND (? IS NULL OR id = ?)",
+            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ? AND (? IS NULL OR id = ?) AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')",
         )
         .bind(now)
         .bind(stale_before)
@@ -641,6 +624,7 @@ impl OrchestrationOutboxRecord {
             SELECT id
             FROM orchestration_outbox
             WHERE delivery_status IN ('pending', 'failed')
+              AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')
               AND available_at <= ?
               AND (? IS NULL OR id = ?)
             ORDER BY available_at ASC, created_at ASC
@@ -689,7 +673,7 @@ impl OrchestrationOutboxRecord {
     ) -> Result<u64, OrchestrationPersistenceError> {
         let stale_before = now - redelivery_after;
         let result = sqlx::query(
-            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ?",
+            "UPDATE orchestration_outbox SET delivery_status = 'pending', updated_at = ? WHERE delivery_status = 'delivering' AND updated_at <= ? AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')",
         )
         .bind(now)
         .bind(stale_before)
@@ -700,7 +684,7 @@ impl OrchestrationOutboxRecord {
 
     pub async fn pending_count(pool: &SqlitePool) -> Result<u64, OrchestrationPersistenceError> {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM orchestration_outbox WHERE delivery_status IN ('pending', 'failed', 'delivering')",
+            "SELECT COUNT(*) FROM orchestration_outbox WHERE delivery_status IN ('pending', 'failed', 'delivering') AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')",
         )
         .fetch_one(pool)
         .await?;
@@ -972,14 +956,14 @@ impl OrchestrationInboxRecord {
     ) -> Result<u64, OrchestrationPersistenceError> {
         let result = if let Some(run_id) = orchestration_run_id {
             sqlx::query(
-                "UPDATE orchestration_inbox SET consumption_status = 'pending' WHERE orchestration_run_id = ? AND consumption_status = 'processing'",
+                "UPDATE orchestration_inbox SET consumption_status = 'pending' WHERE orchestration_run_id = ? AND consumption_status = 'processing' AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')",
             )
             .bind(run_id)
             .execute(pool)
             .await?
         } else {
             sqlx::query(
-                "UPDATE orchestration_inbox SET consumption_status = 'pending' WHERE consumption_status = 'processing'",
+                "UPDATE orchestration_inbox SET consumption_status = 'pending' WHERE consumption_status = 'processing' AND orchestration_run_id IN (SELECT id FROM orchestration_runs WHERE product_kind != 'integration')",
             )
             .execute(pool)
             .await?

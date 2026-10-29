@@ -201,23 +201,6 @@ pub async fn validate_agent_owner(
         "Execution owner repository membership mismatch"
     );
     match owner.kind.as_str() {
-        INTEGRATION => {
-            let run_id = owner.run_id.context("Auto-merge owner is unbound")?;
-            ensure!(
-                request.correlation_id == run_id,
-                "Auto-merge correlation does not match execution owner"
-            );
-            let owned: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM integration_runs WHERE id=? AND repository_id=? AND workspace_id=? AND session_id=?)")
-                .bind(run_id).bind(repo_id).bind(workspace.id).bind(request.session_id).fetch_one(pool).await?;
-            ensure!(owned, "Auto-merge execution identity mismatch");
-            db::models::integration::guard_agent_dispatch(
-                pool,
-                workspace.id,
-                request.session_id,
-                request.correlation_id,
-            )
-            .await?;
-        }
         OPENWIKI_BOOTSTRAP | OPENWIKI_SYNC => {
             let repo = Repo::find_by_id(pool, repo_id)
                 .await?
@@ -308,61 +291,15 @@ pub async fn validate_script_owner(
     action: &executors::actions::ExecutorAction,
     reason: &db::models::execution_process::ExecutionProcessRunReason,
 ) -> anyhow::Result<()> {
-    use db::models::{execution_process::ExecutionProcessRunReason, integration::IntegrationRun};
-    use executors::actions::{ExecutorActionType, script::ScriptContext};
-    if *reason == ExecutionProcessRunReason::ResourceCommand {
+    if *reason == db::models::execution_process::ExecutionProcessRunReason::ResourceCommand {
         super::resource_coordination::guard_script(pool, workspace_id, session_id, action).await?;
     }
     let ws = Workspace::find_by_id(pool, workspace_id)
         .await?
         .context("Workspace missing")?;
-    if !ws.is_execution_only() {
-        return Ok(());
-    }
-    let owner = ws.execution_owner.context("Execution owner missing")?;
     ensure!(
-        owner.kind == INTEGRATION && *reason == ExecutionProcessRunReason::IntegrationValidation,
+        !ws.is_execution_only(),
         "Execution-only workspace does not permit arbitrary scripts"
-    );
-    let run =
-        IntegrationRun::find(pool, owner.run_id.context("Execution owner is unbound")?).await?;
-    ensure!(
-        run.workspace_id == Some(workspace_id)
-            && run.session_id == Some(session_id)
-            && Some(run.repository_id) == owner.repository_id
-            && run.status == "validating"
-            && !run.cancel_requested
-            && db::models::integration::workspace_owner(pool, workspace_id).await? == Some(run.id),
-        "Auto-merge validation ownership mismatch"
-    );
-    let ExecutorActionType::ScriptRequest(script) = action.typ();
-    ensure!(
-        script.context == ScriptContext::IntegrationValidation && action.next_action.is_none(),
-        "Validation script context mismatch"
-    );
-    let repo = Repo::find_by_id(pool, run.repository_id)
-        .await?
-        .context("Repository missing")?;
-    ensure!(
-        WorkspaceRepo::find_by_workspace_and_repo_id(pool, workspace_id, repo.id)
-            .await?
-            .is_some(),
-        "Validation repository membership mismatch"
-    );
-    ensure!(
-        run.payload
-            .validation
-            .iter()
-            .any(|item| item.command == script.script
-                && script.working_dir.as_deref()
-                    == Some(
-                        Path::new(&repo.name)
-                            .join(&item.cwd)
-                            .to_string_lossy()
-                            .as_ref()
-                    )
-                && item.result.is_none()),
-        "Script does not match host-persisted validation plan"
     );
     Ok(())
 }
@@ -840,7 +777,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn owner_dispatch_requires_matching_live_run_session_and_reservation() {
+    async fn execution_only_integration_has_no_agent_dispatch_path() {
         let (pool, repo, project) = fixture().await;
         let id = Uuid::new_v4();
         let ws = workspace(
@@ -882,7 +819,7 @@ mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        validate_agent_owner(&pool, &ws, &req, true).await.unwrap();
+        assert!(validate_agent_owner(&pool, &ws, &req, true).await.is_err());
         let mut spoof = req.clone();
         spoof.session_id = Uuid::new_v4();
         assert!(
@@ -907,8 +844,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn owner_script_is_limited_to_saved_validation_plan_and_passive_inspection_never_creates_files()
-     {
+    async fn execution_only_scripts_are_rejected_and_passive_inspection_never_creates_files() {
         let (pool, repo, project) = fixture().await;
         let id = Uuid::new_v4();
         let mut ws = workspace(
@@ -963,36 +899,6 @@ mod tests {
             validate_script_owner(&pool, ws.id, session.id, &action, &reason)
                 .await
                 .is_err()
-        );
-        let mut run = db::models::integration::IntegrationRun::find(&pool, id)
-            .await
-            .unwrap();
-        run.payload
-            .validation
-            .push(db::models::integration::IntegrationValidation {
-                command: "test command".into(),
-                cwd: ".".into(),
-                required: true,
-                evidence: "test".into(),
-                environment_requirements: String::new(),
-                execution_process_id: None,
-                exit_code: None,
-                result: None,
-            });
-        run.save(&pool).await.unwrap();
-        validate_script_owner(&pool, ws.id, session.id, &action, &reason)
-            .await
-            .unwrap();
-        assert!(
-            validate_script_owner(
-                &pool,
-                ws.id,
-                session.id,
-                &action,
-                &db::models::execution_process::ExecutionProcessRunReason::DevServer
-            )
-            .await
-            .is_err()
         );
         let temp = tempfile::tempdir().unwrap();
         let missing = temp.path().join("missing");

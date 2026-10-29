@@ -2,8 +2,8 @@
   "settings": {
     "integrationValidation": {
       "title": "Auto-merge validation",
-      "description": "Define the required Bash commands to run in order from the repository root. Saving does not execute commands.",
-      "timing": "This edits the registered checkout only. Commit this file onto the intended Auto-merge target branch using your normal Git workflow. New Auto-merge runs freeze the file from that target commit; existing runs and the Skip all validation option are unchanged. No automatic commit or branch switch.",
+      "description": "Suggested Bash commands for the assigned Auto-merge Codex, run from the repository root. The agent chooses checks from the change and existing evidence and records executions or reasoned omissions. Saving does not execute commands.",
+      "timing": "This edits only the registered checkout. Commit the file onto the intended target branch using the normal Git workflow. New Auto-merge jobs read suggestions from their admitted target commit; existing jobs are unchanged. No automatic commit or branch switch.",
       "concurrency": "Saving checks the loaded file, branch and HEAD. A conflicting save is rejected; keep your draft elsewhere before reloading. External Git/editor operations do not share this lock: avoid editing or switching this checkout while saving.",
       "loading": "Loading validation settings…",
       "loadError": "Could not load validation settings. Reload to try again.",

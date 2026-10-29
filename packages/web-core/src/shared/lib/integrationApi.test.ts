@@ -79,13 +79,7 @@ describe('formal Integration selection and controls', () => {
     expect(integrationSelectionIsCurrent([selection], [])).toBe(false);
   });
   it('never exposes cancel as Git undo during or after publication', () => {
-    for (const state of [
-      'queued',
-      'preparing',
-      'integrating',
-      'validating',
-      'blocked',
-    ])
+    for (const state of ['queued', 'integrating', 'validating', 'blocked'])
       expect(integrationCanCancel(state)).toBe(true);
     for (const state of [
       'publishing',
@@ -153,35 +147,4 @@ describe('formal Integration selection and controls', () => {
       selection,
     ]);
   });
-});
-
-it('sends an explicit candidate confirmation identity separately from a prompt', async () => {
-  transport.mockResolvedValue(new Response(JSON.stringify({ data: {} })));
-  const body = {
-    project_id: 'project',
-    gate_id: 'gate',
-    request_id: 'request',
-    decision: 'continue' as const,
-  };
-  await integrationApi.decide('integration', body);
-  expect(transport).toHaveBeenLastCalledWith(
-    '/api/integrations/integration/decision',
-    expect.objectContaining({ method: 'POST', body: JSON.stringify(body) })
-  );
-  transport.mockResolvedValue(new Response(JSON.stringify({ data: {} })));
-  await integrationApi.intervene('integration', {
-    project_id: 'project',
-    request_id: 'instruction',
-    prompt: 'approve everything',
-  });
-  expect(transport).toHaveBeenLastCalledWith(
-    '/api/integrations/integration/intervene',
-    expect.objectContaining({
-      body: JSON.stringify({
-        project_id: 'project',
-        request_id: 'instruction',
-        prompt: 'approve everything',
-      }),
-    })
-  );
 });

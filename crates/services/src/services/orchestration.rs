@@ -1147,7 +1147,7 @@ where
             ..StartupReconciliationReport::default()
         };
         let runs: Vec<(Uuid, Uuid)> = sqlx::query_as(
-            "SELECT id, correlation_id FROM orchestration_runs WHERE status NOT IN ('succeeded', 'failed', 'cancelled') ORDER BY created_at",
+            "SELECT id, correlation_id FROM orchestration_runs WHERE product_kind != 'integration' AND status NOT IN ('succeeded', 'failed', 'cancelled') ORDER BY created_at",
         )
         .fetch_all(&self.pool)
         .await?;
@@ -1165,6 +1165,7 @@ where
                FROM orchestration_inbox inbox
                JOIN orchestration_runs runs ON runs.id = inbox.orchestration_run_id
                WHERE inbox.consumption_status = 'pending'
+                 AND runs.product_kind != 'integration'
                  AND runs.status IN ('succeeded', 'failed', 'cancelled')"#,
         )
         .fetch_all(&self.pool)
@@ -1502,24 +1503,6 @@ where
     ) -> Result<impl Stream<Item = executors::runtime::AgentEventEnvelope>, OrchestrationServiceError>
     {
         Ok(self.port.subscribe(agent_run_id).await?)
-    }
-
-    /// Explicit Integration intervention; persistence validates the product's
-    /// durable request. Ordinary lifecycle observations cannot reopen a run.
-    pub async fn resume_integration(
-        &self,
-        id: Uuid,
-        node: Uuid,
-    ) -> Result<(), OrchestrationServiceError> {
-        self.append_event(
-            id,
-            id,
-            OrchestrationEventPayload::IntegrationResumed {
-                node_execution_id: node,
-            },
-        )
-        .await?;
-        Ok(())
     }
 
     async fn append_event(

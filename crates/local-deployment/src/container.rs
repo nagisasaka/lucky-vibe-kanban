@@ -92,7 +92,7 @@ pub(crate) async fn should_disable_default_commit_for_workspace(
     use db::models::arena_group::{ArenaLifecycleStatus, ArenaMode};
 
     if sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM workspaces WHERE id=? AND usage='execution_only')",
+        "SELECT EXISTS(SELECT 1 FROM workspaces w LEFT JOIN integration_runs i ON i.workspace_id=w.id WHERE w.id=? AND (w.usage='execution_only' OR i.workspace_id IS NOT NULL))",
     )
     .bind(workspace_id)
     .fetch_one(pool)
@@ -2222,6 +2222,27 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn conversation_worker_never_gets_a_terminal_automatic_commit() {
+        let pool = setup_container_policy_pool().await;
+        let workspace = insert_workspace_in_arena(
+            &pool,
+            ArenaMode::Design,
+            ArenaLifecycleStatus::ImplementationStarted,
+        )
+        .await;
+        sqlx::query("INSERT INTO integration_runs(workspace_id) VALUES(?)")
+            .bind(workspace)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            should_disable_default_commit_for_workspace(&pool, workspace)
+                .await
+                .unwrap()
+        );
+    }
+
+    #[tokio::test]
     async fn execution_reservation_disables_commits_until_released() {
         let pool = setup_container_policy_pool().await;
         let workspace_id = insert_workspace_in_arena(
@@ -2235,18 +2256,13 @@ mod tests {
                 .await
                 .unwrap()
         );
-        sqlx::query("INSERT INTO integration_runs(workspace_id) VALUES(?)")
-            .bind(workspace_id)
-            .execute(&pool)
-            .await
-            .unwrap();
         sqlx::query("UPDATE workspaces SET usage='execution_only' WHERE id=?")
             .bind(workspace_id)
             .execute(&pool)
             .await
             .unwrap();
-        // Even after the Agent terminates, only Integration may choose R and
-        // validate it. The ordinary finalizer must not append an untested R'.
+        // The execution owner controls reserved work; the ordinary finalizer
+        // must not append a commit while that reservation is active.
         assert!(
             should_disable_default_commit_for_workspace(&pool, workspace_id)
                 .await
@@ -2257,7 +2273,7 @@ mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        // Historical Integration attribution does not disable later development.
+        // An ordinary workspace returns to its normal policy after owner release.
         assert!(
             !should_disable_default_commit_for_workspace(&pool, workspace_id)
                 .await

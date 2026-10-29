@@ -408,7 +408,7 @@ pub(crate) async fn dispatch_control_for_input(
             db::models::integration::workspace_owner(&deployment.db().pool, workspace.id).await?
         {
             Some(
-                super::integrations::reserve_intervention(owner)
+                super::integrations::reserve_action(owner)
                     .map_err(|e| ApiError::Conflict(e.to_string()))?,
             )
         } else {

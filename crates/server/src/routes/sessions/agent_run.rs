@@ -6,6 +6,7 @@ use db::models::{
     session::{Session, SessionError},
     workspace::{Workspace, WorkspaceKind},
 };
+use deployment::Deployment;
 use executors::{
     actions::SelectedSkill,
     executors::provider_adapter::DirectProvider,
@@ -403,7 +404,26 @@ pub(super) async fn create_agent_run(
     let agent_run_id = Uuid::new_v4();
     let turn_id = Uuid::new_v4();
     let run_attempt_id = Uuid::new_v4();
-    let correlation_id = Uuid::new_v4();
+    let product: Option<db::models::integration::IntegrationRun> =
+        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+            .bind(workspace.id)
+            .fetch_optional(&deployment.db().pool)
+            .await?;
+    let correlation_id = if let Some(mut product) = product {
+        db::models::integration::guard_agent_dispatch(
+            &deployment.db().pool,
+            workspace.id,
+            session.id,
+            product.id,
+        )
+        .await?;
+        super::super::integrations::conversation::resume(deployment, &mut product)
+            .await
+            .map_err(|e| ApiError::BadRequest(e.to_string()))?;
+        product.id
+    } else {
+        Uuid::new_v4()
+    };
     let created_at = Utc::now();
     let idempotency_key = format!("session:{}:request:{request_id}:create", session.id);
     let workspace = WorkspaceReference {

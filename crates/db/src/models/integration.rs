@@ -1,6 +1,6 @@
 //! Formal Integration product state. Durable reservations are independent of
 //! expiring Orchestration dispatcher leases. No conversation/semantic database.
-use anyhow::{Context, ensure};
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, SqliteConnection, SqlitePool};
 use ts_rs::TS;
@@ -30,16 +30,12 @@ pub struct IntegrationSource {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct IntegrationValidation {
+pub struct IntegrationValidationSuggestion {
     pub command: String,
     // Relative to the repository root, not the multi-repository container.
     pub cwd: String,
-    pub required: bool,
     pub evidence: String,
     pub environment_requirements: String,
-    pub execution_process_id: Option<Uuid>,
-    pub exit_code: Option<i64>,
-    pub result: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -49,92 +45,50 @@ pub struct IntegrationStop {
     pub next_action: String,
 }
 
+/// One immutable observation/decision on a code candidate. Results on earlier
+/// candidates remain history, never a pass on a later repaired candidate.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct IntegrationIntervention {
+pub struct IntegrationEvidence {
     pub request_id: Uuid,
-    pub prompt: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub pending: bool,
-    pub retry_command: Option<serde_json::Value>,
-    pub instruction_command: Option<serde_json::Value>,
-}
-
-/// A host-created, candidate-bound question. Old rows have no approvals.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct IntegrationGate {
-    pub id: Uuid,
-    pub validation_index: usize,
-    pub scope: String,
-    pub risk: String,
-    pub evidence: IntegrationValidation,
-    pub decision: Option<String>,
-    pub actor: Option<Uuid>,
-    pub decided_at: Option<String>,
-    pub request_id: Option<Uuid>,
+    pub agent_run_id: Uuid,
+    pub code_commit: String,
+    pub command: Option<String>,
+    pub process_id: Option<Uuid>,
+    pub result: String,
+    pub actor: String,
+    pub reason: String,
+    pub remaining_risk: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct IntegrationStep {
-    #[serde(default)]
-    pub validation_skipped: bool,
-    pub source_commit: String,
-    pub result_commit: String,
-    pub validation: Vec<IntegrationValidation>,
-    pub gates: Vec<IntegrationGate>,
-    pub summary: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct IntegrationReview {
-    pub id: Uuid,
-    pub scope: String,
-    pub step_index: usize,
-    pub candidate: String,
-    pub diff: String,
-    pub explanation: String,
-    pub decision: Option<String>,
-    pub request_id: Option<Uuid>,
-    pub actor: Option<Uuid>,
-    pub decided_at: Option<String>,
+pub struct IntegrationPublicationRequest {
+    pub request_id: Uuid,
+    pub agent_run_id: Uuid,
+    pub code_commit: String,
+    pub wiki_commit: Option<String>,
+    pub candidate_commit: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct IntegrationPayload {
-    /// Host-owned merge engine. Legacy executions remain inspectable, never auto-replayed.
     #[serde(default)]
-    pub mechanical: bool,
-    /// Immutable Create envelope for the current conflict job; no Retry/Steer hand-off.
+    pub wiki_enabled: bool,
     #[serde(default)]
-    pub conflict_dispatch: Option<serde_json::Value>,
-    /// Frozen at admission; omitted in old records means validation is required.
+    pub evidence: Vec<IntegrationEvidence>,
+    #[serde(default)]
+    pub publication_request: Option<IntegrationPublicationRequest>,
+    #[serde(default)]
+    pub instructions: String,
+    /// Immutable initial worker Create envelope for restart/redelivery.
+    #[serde(default)]
+    pub worker_dispatch: Option<serde_json::Value>,
+    /// Initial user instruction to omit validation; actual decisions are recorded in evidence.
     #[serde(default)]
     pub skip_validation: bool,
     #[serde(default)]
     pub card_id: Option<Uuid>,
     #[serde(default)]
     pub card_done_result: Option<String>,
-    #[serde(default)]
-    pub sequential: bool,
-    #[serde(default)]
-    pub step_index: usize,
-    #[serde(default)]
-    pub step_base: Option<String>,
-    #[serde(default)]
-    pub merge_tree: Option<String>,
-    #[serde(default)]
-    pub merge_conflicted: bool,
-    #[serde(default)]
-    pub next_step: bool,
-    #[serde(default)]
-    pub reviews: Vec<IntegrationReview>,
-    #[serde(default)]
-    pub steps: Vec<IntegrationStep>,
-    #[serde(default)]
-    pub gates: Vec<IntegrationGate>,
-    #[serde(default)]
-    pub resume_validation: bool,
-    #[serde(default)]
-    pub intervention: Option<IntegrationIntervention>,
     #[serde(default)]
     pub stop: Option<IntegrationStop>,
     #[serde(default)]
@@ -143,11 +97,9 @@ pub struct IntegrationPayload {
     pub observed_target: String,
     pub base_commit: Option<String>,
     pub result_commit: Option<String>,
-    pub validation: Vec<IntegrationValidation>,
-    pub exclusions: Vec<String>,
+    #[serde(default)]
+    pub validation_suggestions: Vec<IntegrationValidationSuggestion>,
     pub semantic_summary: Option<String>,
-    pub semantics: Option<utils::repository_memory::SemanticChanges>,
-    pub integration_manifest: Option<utils::repository_memory::ChangeManifest>,
     pub publication_intent: bool,
     pub published: bool,
     pub wiki_result: Option<String>,
@@ -174,42 +126,7 @@ pub struct IntegrationRun {
     pub updated_at: String,
 }
 
-impl IntegrationRun {
-    pub fn validation_scope(&self) -> String {
-        let mut scope = serde_json::json!({
-            "integration": self.id, "project": self.project_id,
-            "repository": self.repository_id, "target": self.target_ref,
-            "base": self.payload.base_commit, "candidate": self.payload.result_commit,
-            "exclusions": self.payload.exclusions,
-            "sources": self.payload.sources.iter().map(|s| serde_json::json!({
-                "selection": s.selection, "commit": s.commit, "branch": s.branch,
-                "title": s.title, "description": s.description, "revision": s.requirements_revision,
-                "status": s.status_id, "workspaces": s.related_workspaces, "events": s.event_ids
-            })).collect::<Vec<_>>(),
-            "plan": self.payload.validation.iter().map(|v| serde_json::json!({
-                "command": v.command, "cwd": v.cwd, "required": v.required,
-                "evidence": v.evidence, "environment": v.environment_requirements
-            })).collect::<Vec<_>>()
-        });
-        if self.payload.skip_validation {
-            scope["skip_validation"] = serde_json::json!(true);
-        }
-        scope.to_string()
-    }
-
-    pub fn validation_excepted(&self, index: usize) -> bool {
-        self.payload.gates.iter().any(|gate| {
-            gate.validation_index == index
-                && gate.decision.as_deref() == Some("continue")
-                && gate.actor.is_some()
-                && gate.decided_at.is_some()
-                && gate.request_id.is_some()
-                && gate.scope == self.validation_scope()
-                && serde_json::to_value(&gate.evidence).ok()
-                    == serde_json::to_value(&self.payload.validation[index]).ok()
-        })
-    }
-}
+impl IntegrationRun {}
 
 pub fn resource_key(id: Uuid) -> String {
     id.simple().to_string()
@@ -222,6 +139,13 @@ pub async fn workspace_owner(pool: &SqlitePool, id: Uuid) -> Result<Option<Uuid>
 
 pub async fn guard_workspace(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
     if let Some(run) = workspace_owner(pool, id).await? {
+        let product = IntegrationRun::find(pool, run).await?;
+        if !product.cancel_requested
+            && product.status == "integrating"
+            && product.payload.publication_request.is_none()
+        {
+            return Ok(());
+        }
         return Err(sqlx::Error::Protocol(format!(
             "Workspace reserved by Auto-merge {run}; inspect /api/integrations/{run}"
         )));
@@ -235,27 +159,38 @@ pub async fn guard_agent_dispatch(
     session: Uuid,
     correlation: Uuid,
 ) -> Result<(), sqlx::Error> {
-    let product: Option<(Uuid, Option<Uuid>, String, bool)> = sqlx::query_as(
-        "SELECT id,session_id,status,cancel_requested FROM integration_runs WHERE workspace_id=?",
-    )
-    .bind(workspace)
-    .fetch_optional(pool)
-    .await?;
-    let owner = workspace_owner(pool, workspace).await?;
-    if let Some((id, expected_session, status, cancelled)) = product {
-        if owner != Some(id)
-            || correlation != id
-            || expected_session != Some(session)
-            || cancelled
-            || !matches!(status.as_str(), "preparing" | "integrating")
-        {
-            return Err(sqlx::Error::Protocol(format!(
-                "Auto-merge {id} does not permit new Agent dispatch in phase {status}; use Board progress/Cancel or a new explicit Auto-merge"
-            )));
+    let conversation: Option<IntegrationRun> =
+        sqlx::query_as("SELECT * FROM integration_runs WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_optional(pool)
+            .await?;
+    if let Some(run) = conversation {
+        if correlation != run.id {
+            return Err(sqlx::Error::Protocol(
+                "Auto-merge correlation mismatch".into(),
+            ));
         }
-    } else if let Some(owner) = owner {
+        if run.session_id == Some(session)
+            && (run.payload.published
+                || (run.status == "cancelled" && !run.payload.publication_intent))
+        {
+            return Ok(()); // an explicit normal follow-up may reopen settled work
+        }
+        if run.session_id == Some(session)
+            && !run.cancel_requested
+            && !run.payload.publication_intent
+            && run.payload.publication_request.is_none()
+            && matches!(run.status.as_str(), "integrating" | "blocked")
+        {
+            return Ok(());
+        }
+        return Err(sqlx::Error::Protocol(
+            "Auto-merge owner is not accepting execution".into(),
+        ));
+    }
+    if let Some(owner) = workspace_owner(pool, workspace).await? {
         return Err(sqlx::Error::Protocol(format!(
-            "Source Workspace reserved by Auto-merge {owner}"
+            "Workspace reserved by Auto-merge {owner}"
         )));
     }
     Ok(())
@@ -307,8 +242,16 @@ impl IntegrationRun {
             self.repository_id,
             Some(self.id),
         );
-        sqlx::query("INSERT INTO workspaces(id,branch,name,usage,execution_owner) VALUES(?,?,?,'execution_only',?)")
-        .bind(workspace_id).bind(branch).bind(name).bind(serde_json::to_string(&owner)?).execute(&mut *tx).await?;
+        sqlx::query(
+            "INSERT INTO workspaces(id,branch,name,usage,execution_owner) VALUES(?,?,?,?,?)",
+        )
+        .bind(workspace_id)
+        .bind(branch)
+        .bind(name)
+        .bind("interactive")
+        .bind(serde_json::to_string(&owner)?)
+        .execute(&mut *tx)
+        .await?;
         sqlx::query(
             "INSERT INTO workspace_repos(id,workspace_id,repo_id,target_branch) VALUES(?,?,?,?)",
         )
@@ -335,154 +278,6 @@ impl IntegrationRun {
         Ok(())
     }
 
-    pub async fn decide_validation_gate(
-        pool: &SqlitePool,
-        id: Uuid,
-        project_id: Uuid,
-        gate_id: Uuid,
-        request_id: Uuid,
-        decision: &str,
-        expected_scope: &str,
-    ) -> anyhow::Result<()> {
-        ensure!(
-            matches!(decision, "continue" | "retry" | "cancel"),
-            "Invalid decision"
-        );
-        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
-        let mut current: IntegrationRun =
-            sqlx::query_as("SELECT * FROM integration_runs WHERE id=?")
-                .bind(id)
-                .fetch_one(&mut *tx)
-                .await?;
-        ensure!(current.project_id == project_id, "Project mismatch");
-        let index = current
-            .payload
-            .gates
-            .iter()
-            .position(|g| g.id == gate_id)
-            .context("Confirmation disappeared")?;
-        if current.payload.gates[index].request_id == Some(request_id) {
-            ensure!(
-                current.payload.gates[index].decision.as_deref() == Some(decision),
-                "Idempotency conflict"
-            );
-            return Ok(());
-        }
-        ensure!(
-            current.status == "blocked"
-                && !current.cancel_requested
-                && !current.payload.publication_intent,
-            "Auto-merge no longer awaits this decision"
-        );
-        ensure!(
-            current.payload.gates[index].decision.is_none()
-                && current.payload.gates[index].scope == expected_scope
-                && current.validation_scope() == expected_scope,
-            "Stale confirmation"
-        );
-        current.payload.stop = None;
-        let evidence_index = current.payload.gates[index].validation_index;
-        ensure!(
-            current
-                .payload
-                .validation
-                .get(evidence_index)
-                .is_some_and(|v| serde_json::to_value(v).ok()
-                    == serde_json::to_value(&current.payload.gates[index].evidence).ok()),
-            "Validation evidence changed"
-        );
-        let recorded = &mut current.payload.gates[index];
-        recorded.decision = Some(decision.to_owned());
-        // Local Board mutations use the existing local operator identity, under
-        // the same Origin/relay-signature boundary as other local owner actions.
-        recorded.actor = Some(Uuid::from_u128(1));
-        recorded.decided_at = Some(chrono::Utc::now().to_rfc3339());
-        recorded.request_id = Some(request_id);
-        if decision == "cancel" {
-            current.status = "cancelling".into();
-            current.cancel_requested = true;
-        } else {
-            if decision == "retry" {
-                let item = &mut current.payload.validation[evidence_index];
-                item.execution_process_id = None;
-                item.exit_code = None;
-                item.result = None;
-            }
-            current.status = "validating".into();
-            current.payload.resume_validation = true;
-        }
-        sqlx::query("UPDATE integration_runs SET status=?,payload=?,cancel_requested=?,error=NULL,updated_at=datetime('now','subsec') WHERE id=?")
-        .bind(&current.status).bind(&current.payload).bind(current.cancel_requested).bind(id).execute(&mut *tx).await?;
-        tx.commit().await?;
-        Ok(())
-    }
-
-    pub async fn decide_review(
-        pool: &SqlitePool,
-        id: Uuid,
-        project: Uuid,
-        review_id: Uuid,
-        request_id: Uuid,
-        decision: &str,
-        scope: &str,
-    ) -> anyhow::Result<()> {
-        ensure!(
-            matches!(decision, "continue" | "cancel"),
-            "Invalid review decision"
-        );
-        let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
-        let mut run: Self = sqlx::query_as("SELECT * FROM integration_runs WHERE id=?")
-            .bind(id)
-            .fetch_one(&mut *tx)
-            .await?;
-        ensure!(run.project_id == project, "Project mismatch");
-        let index = run
-            .payload
-            .reviews
-            .iter()
-            .position(|r| r.id == review_id)
-            .context("Unknown review")?;
-        let review = &run.payload.reviews[index];
-        if review.request_id == Some(request_id) {
-            ensure!(
-                review.decision.as_deref() == Some(decision),
-                "Idempotency conflict"
-            );
-            return Ok(());
-        }
-        ensure!(
-            run.status == "blocked" && !run.cancel_requested && !run.payload.publication_intent,
-            "Review is no longer pending"
-        );
-        ensure!(
-            review.decision.is_none() && review.scope == scope && run.validation_scope() == scope,
-            "Stale resolution review"
-        );
-        let review = &mut run.payload.reviews[index];
-        review.decision = Some(decision.into());
-        review.request_id = Some(request_id);
-        review.actor = Some(Uuid::from_u128(1));
-        review.decided_at = Some(chrono::Utc::now().to_rfc3339());
-        run.payload.stop = None;
-        run.error = None;
-        if decision == "cancel" {
-            run.cancel_requested = true;
-            run.status = "cancelling".into();
-        } else {
-            run.status = if run.payload.mechanical {
-                "integrating"
-            } else {
-                "validating"
-            }
-            .into();
-            run.payload.resume_validation = !run.payload.mechanical;
-        }
-        sqlx::query("UPDATE integration_runs SET status=?,payload=?,cancel_requested=?,error=NULL,updated_at=datetime('now','subsec') WHERE id=?")
-            .bind(&run.status).bind(&run.payload).bind(run.cancel_requested).bind(id).execute(&mut *tx).await?;
-        tx.commit().await?;
-        Ok(())
-    }
-
     pub async fn allows_instruction(
         pool: &SqlitePool,
         workspace: Uuid,
@@ -496,13 +291,8 @@ impl IntegrationRun {
     /// Execute before the generic Orchestration outbox is redelivered. A
     /// half-prepared product must never start a new child just because its
     /// dispatcher lease disappeared. Keep reservations until stop confirmation.
-    pub async fn fence_interrupted_preparations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE integration_runs SET status='cancelling',error='Preparation interrupted by service restart; confirm the accepted execution has stopped, inspect the retained Workspace, then resume this Auto-merge',updated_at=datetime('now','subsec') WHERE status='preparing'")
-            .execute(pool).await?;
-        Ok(())
-    }
     pub async fn request_cancel(pool: &SqlitePool, id: Uuid) -> Result<Self, sqlx::Error> {
-        sqlx::query("UPDATE integration_runs SET cancel_requested=1,status=CASE WHEN status='blocked' THEN 'cancelling' ELSE status END,updated_at=datetime('now','subsec') WHERE id=? AND json_extract(payload,'$.publication_intent')=0 AND status IN ('queued','preparing','integrating','validating','cancelling','blocked')")
+        sqlx::query("UPDATE integration_runs SET cancel_requested=1,status=CASE WHEN status='blocked' THEN 'cancelling' ELSE status END,updated_at=datetime('now','subsec') WHERE id=? AND json_extract(payload,'$.publication_intent')=0 AND status IN ('queued','integrating','validating','cancelling','blocked')")
             .bind(id).execute(pool).await?;
         Self::find(pool, id).await
     }
@@ -524,6 +314,12 @@ impl IntegrationRun {
             ));
         }
         Ok(())
+    }
+    /// Only the current admission schema is executable. Retired persisted jobs
+    /// are neither migrated into a new worker nor rewritten by the monitor.
+    pub async fn active(pool: &SqlitePool) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM integration_runs WHERE json_type(payload,'$.validation_suggestions')='array' AND status NOT IN ('succeeded','blocked','failed','cancelled','recovery_required') ORDER BY created_at,id")
+            .fetch_all(pool).await
     }
     pub async fn find(pool: &SqlitePool, id: Uuid) -> Result<Self, sqlx::Error> {
         sqlx::query_as("SELECT * FROM integration_runs WHERE id=?")
@@ -735,275 +531,6 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn only_durable_integration_intervention_can_reopen_orchestration() {
-        use executors::runtime::*;
-
-        use crate::models::orchestration::{
-            OrchestrationEventRecord, OrchestrationNodeExecutionRecord, OrchestrationRunRecord,
-        };
-        let (pool, mut run, _) = fixture().await;
-        let plan = OrchestrationPlanSnapshot {
-            schema_version: ORCHESTRATION_PLAN_SCHEMA_VERSION,
-            plan_id: run.id,
-            source_definition_id: run.id,
-            source_definition_version: "test".into(),
-            product_kind: OrchestrationProductKind::Integration,
-            workspace_mode: WorkspaceMode::IsolatedWorktree,
-            created_at: chrono::Utc::now(),
-            nodes: vec![OrchestrationPlanNode {
-                node_key: "integrate".into(),
-                requires_product_validation: true,
-                stable_order: 0,
-                dependencies: vec![],
-                join: OrchestrationJoinPolicy::All,
-                failure_policy: OrchestrationFailurePolicy::FailFast,
-                remaining_upstreams: RemainingUpstreamsPolicy::Continue,
-                each_downstream_execution: EachDownstreamExecution::Serial,
-                retry: OrchestrationRetryPolicy::default(),
-                runtime_profile_id: None,
-                provider_id: None,
-                provider_config: None,
-            }],
-        };
-        OrchestrationRunRecord::persist_before_dispatch(
-            &pool, run.id, run.id, "recovery", run.id, &plan,
-        )
-        .await
-        .unwrap();
-        let node = Uuid::new_v4();
-        OrchestrationNodeExecutionRecord::persist_identity_before_dispatch(
-            &pool,
-            node,
-            run.id,
-            "integrate",
-            0,
-            0,
-        )
-        .await
-        .unwrap();
-        let event = |sequence, payload| OrchestrationEventEnvelope {
-            schema_version: ORCHESTRATION_EVENT_SCHEMA_VERSION,
-            payload_version: ORCHESTRATION_EVENT_PAYLOAD_VERSION,
-            event_id: Uuid::new_v4(),
-            orchestration_run_id: run.id,
-            sequence,
-            correlation_id: run.id,
-            timestamp: chrono::Utc::now(),
-            payload,
-        };
-        OrchestrationEventRecord::append_and_project(
-            &pool,
-            &event(
-                1,
-                OrchestrationEventPayload::LifecycleChanged {
-                    status: OrchestrationRunStatus::Failed,
-                },
-            ),
-        )
-        .await
-        .unwrap();
-        let resume = event(
-            2,
-            OrchestrationEventPayload::IntegrationResumed {
-                node_execution_id: node,
-            },
-        );
-        assert!(
-            OrchestrationEventRecord::append_and_project(&pool, &resume)
-                .await
-                .is_err()
-        );
-        run.status = "integrating".into();
-        run.payload.intervention = Some(IntegrationIntervention {
-            request_id: Uuid::new_v4(),
-            prompt: "repair environment".into(),
-            created_at: chrono::Utc::now(),
-            pending: true,
-            retry_command: None,
-            instruction_command: None,
-        });
-        run.save(&pool).await.unwrap();
-        OrchestrationEventRecord::append_and_project(&pool, &resume)
-            .await
-            .unwrap();
-        OrchestrationEventRecord::append_and_project(&pool, &resume)
-            .await
-            .unwrap();
-        let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM orchestration_events WHERE orchestration_run_id=?",
-        )
-        .bind(run.id)
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-        assert_eq!(count, 2);
-        let status: String = sqlx::query_scalar("SELECT status FROM orchestration_runs WHERE id=?")
-            .bind(run.id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        assert_eq!(status, "running");
-        OrchestrationEventRecord::append_and_project(
-            &pool,
-            &event(
-                3,
-                OrchestrationEventPayload::LifecycleChanged {
-                    status: OrchestrationRunStatus::Failed,
-                },
-            ),
-        )
-        .await
-        .unwrap();
-        OrchestrationEventRecord::append_and_project(
-            &pool,
-            &event(
-                4,
-                OrchestrationEventPayload::LifecycleChanged {
-                    status: OrchestrationRunStatus::Running,
-                },
-            ),
-        )
-        .await
-        .unwrap();
-        let status: String = sqlx::query_scalar("SELECT status FROM orchestration_runs WHERE id=?")
-            .bind(run.id)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        assert_eq!(
-            status, "failed",
-            "ordinary observations must not reopen terminal runs"
-        );
-        IntegrationRun::request_cancel(&pool, run.id).await.unwrap();
-        assert!(
-            OrchestrationEventRecord::append_and_project(
-                &pool,
-                &event(
-                    5,
-                    OrchestrationEventPayload::IntegrationResumed {
-                        node_execution_id: node
-                    }
-                )
-            )
-            .await
-            .is_err()
-        );
-    }
-
-    #[tokio::test]
-    async fn explicit_gate_decisions_are_atomic_scoped_audited_and_replayable() {
-        let (pool, mut run, _) = fixture().await;
-        run.status = "blocked".into();
-        run.payload.result_commit = Some("candidate".into());
-        run.payload.validation.push(IntegrationValidation {
-            command: "npm test".into(),
-            cwd: ".".into(),
-            required: true,
-            evidence: "selected acceptance".into(),
-            environment_requirements: "node".into(),
-            execution_process_id: Some(Uuid::new_v4()),
-            exit_code: Some(1),
-            result: Some("failed".into()),
-        });
-        let scope = run.validation_scope();
-        let gate = Uuid::new_v4();
-        let evidence = run.payload.validation[0].clone();
-        run.payload.gates.push(IntegrationGate {
-            id: gate,
-            validation_index: 0,
-            scope: scope.clone(),
-            risk: "Regression risk".into(),
-            evidence,
-            decision: None,
-            actor: None,
-            decided_at: None,
-            request_id: None,
-        });
-        run.save(&pool).await.unwrap();
-        let request = Uuid::new_v4();
-        assert!(
-            IntegrationRun::decide_validation_gate(
-                &pool,
-                run.id,
-                Uuid::new_v4(),
-                gate,
-                request,
-                "continue",
-                &scope
-            )
-            .await
-            .is_err()
-        );
-        assert!(
-            IntegrationRun::decide_validation_gate(
-                &pool,
-                run.id,
-                run.project_id,
-                gate,
-                request,
-                "approve everything",
-                &scope
-            )
-            .await
-            .is_err()
-        );
-        assert!(
-            IntegrationRun::decide_validation_gate(
-                &pool,
-                run.id,
-                run.project_id,
-                gate,
-                request,
-                "continue",
-                "old scope"
-            )
-            .await
-            .is_err()
-        );
-        let (first, second) = tokio::join!(
-            IntegrationRun::decide_validation_gate(
-                &pool,
-                run.id,
-                run.project_id,
-                gate,
-                request,
-                "continue",
-                &scope
-            ),
-            IntegrationRun::decide_validation_gate(
-                &pool,
-                run.id,
-                run.project_id,
-                gate,
-                Uuid::new_v4(),
-                "cancel",
-                &scope
-            )
-        );
-        assert_ne!(first.is_ok(), second.is_ok(), "exactly one decision wins");
-        let observed = IntegrationRun::find(&pool, run.id).await.unwrap();
-        let decision = &observed.payload.gates[0];
-        assert!(decision.actor.is_some() && decision.decided_at.is_some());
-        assert_eq!(
-            observed.payload.validation[0].result.as_deref(),
-            Some("failed")
-        );
-        IntegrationRun::decide_validation_gate(
-            &pool,
-            run.id,
-            run.project_id,
-            gate,
-            decision.request_id.unwrap(),
-            decision.decision.as_deref().unwrap(),
-            &scope,
-        )
-        .await
-        .unwrap();
-        assert_eq!(observed.payload.gates.len(), 1);
-        assert!(!observed.payload.published);
-    }
-
-    #[tokio::test]
     async fn instruction_permission_is_limited_to_exact_owned_integration_execution() {
         let (pool, mut run, _) = fixture().await;
         let workspace = run.payload.sources[0].selection.workspace_id;
@@ -1103,6 +630,25 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    async fn monitor_does_not_reinterpret_or_rewrite_retired_job_payloads() {
+        let (pool, run, _) = fixture().await;
+        assert_eq!(IntegrationRun::active(&pool).await.unwrap().len(), 1);
+        sqlx::query("UPDATE integration_runs SET payload=json_remove(payload,'$.validation_suggestions') WHERE id=?").bind(run.id).execute(&pool).await.unwrap();
+        let before: String = sqlx::query_scalar("SELECT payload FROM integration_runs WHERE id=?")
+            .bind(run.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert!(IntegrationRun::active(&pool).await.unwrap().is_empty());
+        let after: String = sqlx::query_scalar("SELECT payload FROM integration_runs WHERE id=?")
+            .bind(run.id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(before, after);
+    }
+
+    #[tokio::test]
     async fn cancellation_fences_a_late_agent_insert_at_the_database_boundary() {
         let (pool, mut run, _) = fixture().await;
         run.workspace_id = Some(run.payload.sources[0].selection.workspace_id);
@@ -1111,7 +657,7 @@ pub(crate) mod tests {
             .fetch_optional(&pool)
             .await
             .unwrap();
-        run.status = "preparing".into();
+        run.status = "integrating".into();
         run.save(&pool).await.unwrap();
         guard_agent_dispatch(
             &pool,
@@ -1487,55 +1033,6 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn startup_fence_prevents_redelivery_and_retains_business_reservations() {
-        let (pool, mut run, _) = fixture().await;
-        let ws = run.payload.sources[0].selection.workspace_id;
-        let session: Uuid = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
-            .bind(ws)
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        assert!(
-            guard_agent_dispatch(&pool, ws, session, Uuid::new_v4())
-                .await
-                .is_err()
-        );
-        run.workspace_id = Some(ws);
-        run.session_id = Some(session);
-        run.status = "preparing".into();
-        run.save(&pool).await.unwrap();
-        guard_agent_dispatch(&pool, ws, session, run.id)
-            .await
-            .unwrap();
-        assert!(
-            guard_agent_dispatch(&pool, ws, Uuid::new_v4(), run.id)
-                .await
-                .is_err()
-        );
-        IntegrationRun::fence_interrupted_preparations(&pool)
-            .await
-            .unwrap();
-        assert!(
-            guard_agent_dispatch(&pool, ws, session, run.id)
-                .await
-                .is_err()
-        );
-        assert_eq!(workspace_owner(&pool, ws).await.unwrap(), Some(run.id));
-        let fenced = IntegrationRun::find(&pool, run.id).await.unwrap();
-        assert_eq!(fenced.status, "cancelling");
-        assert!(fenced.error.unwrap().contains("restart"));
-        sqlx::query("DELETE FROM integration_reservations WHERE run_id=?")
-            .bind(run.id)
-            .execute(&pool)
-            .await
-            .unwrap();
-        assert!(
-            guard_agent_dispatch(&pool, ws, session, run.id)
-                .await
-                .is_err()
-        );
-    }
-    #[tokio::test]
     async fn skipped_validation_survives_storage_and_is_visible_on_the_integration_card() {
         let (pool, mut run, _) = fixture().await;
         sqlx::query("DELETE FROM integration_reservations")
@@ -1552,7 +1049,7 @@ pub(crate) mod tests {
             .unwrap();
         let saved = IntegrationRun::find(&pool, run.id).await.unwrap();
         assert!(saved.payload.skip_validation);
-        assert!(saved.payload.validation.is_empty());
+        assert!(saved.payload.validation_suggestions.is_empty());
         let description: String =
             sqlx::query_scalar("SELECT description FROM local_issues WHERE id=?")
                 .bind(saved.payload.card_id)
@@ -1590,7 +1087,7 @@ pub(crate) mod tests {
         run.workspace_id = Some(Uuid::new_v4());
         run.session_id = None;
         run.payload.card_id = Some(Uuid::new_v4());
-        run.create_with_card(&pool, "legacy", "Legacy integration")
+        run.create_with_card(&pool, "integration", "Auto-merge")
             .await
             .unwrap();
         assert_eq!(
@@ -1621,7 +1118,6 @@ pub(crate) mod tests {
         run.workspace_id = Some(Uuid::new_v4());
         run.session_id = None;
         run.payload.card_id = Some(Uuid::new_v4());
-        run.payload.sequential = true;
         run.create_with_card(&pool, "integration", "Auto merge: selected → main")
             .await
             .unwrap();
@@ -1733,85 +1229,85 @@ pub(crate) mod tests {
         );
         tx.rollback().await.unwrap();
     }
+}
 
+#[cfg(test)]
+mod conversation_tests {
+    use super::*;
     #[tokio::test]
-    async fn resolution_approval_is_durable_idempotent_and_candidate_bound() {
-        let (pool, mut run, _) = fixture().await;
-        run.status = "blocked".into();
-        let review = Uuid::new_v4();
-        let scope = run.validation_scope();
-        run.payload.reviews.push(IntegrationReview {
-            id: review,
-            scope: scope.clone(),
-            step_index: 0,
-            candidate: "candidate".into(),
-            diff: "+ preserves both features".into(),
-            explanation: "resolution".into(),
-            decision: None,
-            request_id: None,
-            actor: None,
-            decided_at: None,
+    async fn conversation_owner_allows_same_session_repairs_and_fences_publication() {
+        let (pool, mut run, _) = super::tests::fixture().await;
+        let workspace = run.payload.sources[0].selection.workspace_id;
+        let session: Uuid = sqlx::query_scalar("SELECT id FROM sessions WHERE workspace_id=?")
+            .bind(workspace)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        run.workspace_id = Some(workspace);
+        run.session_id = Some(session);
+
+        run.status = "integrating".into();
+        run.save(&pool).await.unwrap();
+        guard_agent_dispatch(&pool, workspace, session, run.id)
+            .await
+            .unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, session, Uuid::new_v4())
+                .await
+                .is_err()
+        );
+        guard_workspace(&pool, workspace).await.unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, Uuid::new_v4(), run.id)
+                .await
+                .is_err()
+        );
+        run.payload.publication_request = Some(IntegrationPublicationRequest {
+            request_id: Uuid::new_v4(),
+            agent_run_id: Uuid::new_v4(),
+            code_commit: "a".repeat(40),
+            wiki_commit: None,
+            candidate_commit: "a".repeat(40),
         });
         run.save(&pool).await.unwrap();
-        let request = Uuid::new_v4();
-        let mut changed = run.clone();
-        changed.payload.result_commit = Some("different".into());
-        changed.save(&pool).await.unwrap();
         assert!(
-            IntegrationRun::decide_review(
-                &pool,
-                run.id,
-                run.project_id,
-                review,
-                request,
-                "continue",
-                &scope
-            )
-            .await
-            .is_err()
+            guard_agent_dispatch(&pool, workspace, session, run.id)
+                .await
+                .is_err()
         );
+        assert!(guard_workspace(&pool, workspace).await.is_err());
+        let event = serde_json::json!({"event":"publication_not_applied","request":run.payload.publication_request.clone()});
+        run.payload.history.push(event);
+        run.payload.publication_request = None;
+        run.status = "blocked".into();
         run.save(&pool).await.unwrap();
-        IntegrationRun::decide_review(
-            &pool,
-            run.id,
-            run.project_id,
-            review,
-            request,
-            "continue",
-            &scope,
-        )
-        .await
-        .unwrap();
-        IntegrationRun::decide_review(
-            &pool,
-            run.id,
-            run.project_id,
-            review,
-            request,
-            "continue",
-            &scope,
-        )
-        .await
-        .unwrap();
-        let accepted = IntegrationRun::find(&pool, run.id).await.unwrap();
-        assert_eq!(accepted.status, "validating");
-        assert!(accepted.payload.resume_validation);
-        assert_eq!(
-            accepted.payload.reviews[0].decision.as_deref(),
-            Some("continue")
-        );
-        assert!(
-            IntegrationRun::decide_review(
-                &pool,
-                run.id,
-                run.project_id,
-                review,
-                Uuid::new_v4(),
-                "continue",
-                &scope
-            )
+        sqlx::query("DELETE FROM integration_reservations WHERE run_id=?")
+            .bind(run.id)
+            .execute(&pool)
             .await
-            .is_err()
+            .unwrap();
+        guard_agent_dispatch(&pool, workspace, session, run.id)
+            .await
+            .unwrap();
+        assert_eq!(
+            IntegrationRun::find(&pool, run.id)
+                .await
+                .unwrap()
+                .payload
+                .history
+                .len(),
+            1
+        );
+        run.cancel_requested = true;
+        sqlx::query("UPDATE integration_runs SET cancel_requested=1 WHERE id=?")
+            .bind(run.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(
+            guard_agent_dispatch(&pool, workspace, session, run.id)
+                .await
+                .is_err()
         );
     }
 }

@@ -1,6 +1,4 @@
-import { useTranslation } from 'react-i18next';
-import { IntegrationInterventionPanel } from './IntegrationInterventionPanel';
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import type { Session, Workspace } from 'shared/types';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
@@ -21,8 +19,6 @@ export function ExecutionInspectionPanel({
   selectedSessionId?: string;
   onSelectSession: (id: string) => void;
 }) {
-  const { t } = useTranslation('common');
-  const integration = workspace.execution_owner?.kind === 'integration';
   const wiki = ['openwiki_sync', 'openwiki_bootstrap'].includes(
     workspace.execution_owner?.kind ?? ''
   );
@@ -71,25 +67,16 @@ export function ExecutionInspectionPanel({
     },
   });
   const run = execution.data;
-  const Metadata = integration ? 'details' : Fragment;
   const sessionSelector = (
     <label className="flex items-center gap-base text-normal">
-      {integration ? t('integrationReview.session') : 'Session'}
+      Session
       <select
-        aria-label={
-          integration ? t('integrationReview.session') : 'Execution session'
-        }
+        aria-label="Execution session"
         className="bg-primary border border-border rounded-sm p-half min-w-0 flex-1"
         value={selectedSessionId ?? ''}
         onChange={(event) => onSelectSession(event.target.value)}
       >
-        {!selectedSessionId && (
-          <option value="">
-            {integration
-              ? t('integrationReview.selectSession')
-              : 'Select saved session'}
-          </option>
-        )}
+        {!selectedSessionId && <option value="">Select saved session</option>}
         {sessions.map((session) => (
           <option key={session.id} value={session.id}>
             {session.name ?? session.id}
@@ -100,45 +87,26 @@ export function ExecutionInspectionPanel({
   );
   return (
     <section
-      className={`border-t border-border bg-secondary p-base flex flex-col gap-half text-sm${integration ? ' max-h-[65vh] overflow-y-auto' : ''}`}
-      aria-label={
-        integration ? t('integrationReview.title') : 'Execution inspection'
-      }
+      className="border-t border-border bg-secondary p-base flex flex-col gap-half text-sm"
+      aria-label="Execution inspection"
     >
       <div className="flex items-center justify-between gap-base">
-        <strong className="text-high">
-          {integration
-            ? t('integrationReview.title')
-            : wiki
-              ? 'OpenWiki'
-              : 'Execution'}
-        </strong>
+        <strong className="text-high">{wiki ? 'OpenWiki' : 'Execution'}</strong>
         <PrimaryButton
           variant="secondary"
           disabled={!run?.can_stop || execution.stop.isPending}
           onClick={() => execution.stop.mutate()}
         >
           {run?.stop_requested || execution.stop.isPending
-            ? integration
-              ? t('integrationPanel.stopping')
-              : 'Stopping…'
-            : integration
-              ? t('integrationReview.stopExecution')
-              : 'Stop execution'}
+            ? 'Stopping…'
+            : 'Stop execution'}
         </PrimaryButton>
       </div>
-      {!integration && (
-        <p className="text-low">
-          While this execution is active, use its controls below. Normal
-          development becomes available after execution and cleanup finish.
-        </p>
-      )}
-      <Metadata>
-        {integration && (
-          <summary className="cursor-pointer">
-            {t('integrationReview.executionDetails')}
-          </summary>
-        )}
+      <p className="text-low">
+        While this execution is active, use its controls below. Normal
+        development becomes available after execution and cleanup finish.
+      </p>
+      <>
         <p className="text-normal">
           {run?.status ?? 'Loading execution…'} ·{' '}
           {run?.owner?.kind ??
@@ -151,7 +119,7 @@ export function ExecutionInspectionPanel({
           </p>
         )}
         {/* Integration publication is shown below from the full run, including its intent. */}
-        {run && !integration && (
+        {run && (
           <p className="text-low">
             {run.owner?.result?.no_op && run.status === 'succeeded'
               ? 'No changes required (successful reconciliation)'
@@ -160,13 +128,11 @@ export function ExecutionInspectionPanel({
                 : 'Publication not confirmed; files may be unpublished'}
           </p>
         )}
-        {integration && sessionSelector}
-      </Metadata>
+      </>
       {run && !run.files_available && (
         <p className="text-warning">
-          {integration
-            ? t('integrationReview.filesMissing')
-            : 'Files are missing or unprepared. Inspection will not recreate the worktree. Saved logs remain available.'}
+          Files are missing or unprepared. Inspection will not recreate the
+          worktree. Saved logs remain available.
         </p>
       )}
       {[
@@ -182,10 +148,7 @@ export function ExecutionInspectionPanel({
             {error}
           </p>
         ))}
-      {!integration && sessionSelector}
-      {run?.owner?.kind === 'integration' && run.owner.run_id && (
-        <IntegrationInterventionPanel integrationId={run.owner.run_id} />
-      )}
+      {sessionSelector}
       {wiki && activeRun && run?.can_stop && !run.stop_requested && (
         <div className="flex flex-col gap-half">
           <textarea

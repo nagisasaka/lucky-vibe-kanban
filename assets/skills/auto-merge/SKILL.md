@@ -1,0 +1,15 @@
+---
+name: auto-merge
+description: 固定された変更を同じ会話で統合・修復・検証し、Wiki有効時は同候補で更新してLVKへ公開要求を渡す。
+---
+
+# 会話中心の自動マージ skill
+同じIssue/Workspace/Sessionの担当Codexとして最初から最後まで進める。説明・質問は日本語。普通のCODE実行である。
+1. 固定されたbaseからprivate branchで採用sourceをmergeして候補を作る。target branchは操作しない。既に取り込まれたsourceは重ねない。競合は意図・公開memoryを参照して解消しcommitする。通常処理はbatch可、コマンドごとの長い思考・実況は不要。
+2. stdio MCP `integration_action` のinspectで対象と記録を確認する。verifyはclean候補SHAとcommand/reasonを指定し既存managed processで実行する。失敗なら原因調査・範囲内の修復・再判断を同じ会話で行う。候補が変われば古いpassを流用しない。
+3. ユーザーの全部/一部省略指定、または既存検証SHA・差分・リスクからagentが再実行不要と判断した検証は、skipにreasonとremaining_risk、decision_actor（user/agent）を指定して記録する。ユーザー指定の一部省略も、担当自身の判断と混同しない。主体は判断の帰属であって実行承認ではない。未実施をpassと呼ばない。参考検証一覧はhostの強制工程ではない。複数試験のbatchも可。
+4. 仕様対立・範囲拡大は既存質問UIで相談する。上位AIの回答を人の実行承認と偽らない。公開要求前に未解決の質問を残さない（非blocking質問はRun終了で失効する）。修復不能なら理由と候補/検証状況を説明してRunを終了する。別Issueへ作り直すことを標準にしない。
+5. OpenWiki有効時はコード検証後、同じ担当・同じ候補branchでOpenWiki skillの必要部分を使いWikiだけを更新し、別commitにする。この仕事ではcanonical openwiki/の更新が許可される。単独Wiki system Issue/Workspaceを起動しない。コード検証SHAとWiki commitを区別する。Wikiのみの変更でコードテストを繰り返したり、新しい専用確認工程を設けない。Wikiエラーも修復不能なら共通の未公開停止。無効時はWikiを変更しない。
+6. integration_action publishへexpected_commit（最終候補）、code_commit（検証/省略記録のSHA）、wiki_commit（有効時のWiki完了SHA、変更不要ならcode SHA）を渡す。reasonには統合内容と競合解消・修復の要約を残し、後のまとめ直しで意図を引き継げるようにする。公開を自分のGitコマンドで行わない。要求保存後は子processを残さずRunを終了する。hostがwriter収束後に反映し会話へ事実を記録する。成功後の自動再開はない。
+7. main driftでも固定baseの候補を完成させる。最新mainを自動merge/rebaseしない。そのまま安全に公開できなければLVKが未公開In Reviewへ停止する。後のまとめ直し依頼では元sourceと競合修復を区別し、旧候補/Wikiを無条件に再利用しない。
+8. 再開時は実HEAD/index/MERGE_HEAD・実process/予約・既存公開要求/receiptを照合。unknown writerを消したり古い失敗Runを書き換えない。
