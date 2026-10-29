@@ -479,5 +479,34 @@
     "scopes": [
       "lvk:read"
     ]
+  },
+  {
+    "tool": "upload_attachment",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "request_id": "00000000-0000-0000-0000-000000000101",
+      "original_name": "material.svg",
+      "data_base64": "PHN2Zy8+"
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
+  },
+  {
+    "tool": "place_attachments",
+    "arguments": {
+      "project_id": "00000000-0000-0000-0000-000000000001",
+      "workspace_id": "00000000-0000-0000-0000-000000000002",
+      "session_id": "00000000-0000-0000-0000-000000000003",
+      "request_id": "00000000-0000-0000-0000-000000000102",
+      "attachment_ids": [
+        "00000000-0000-0000-0000-000000000004"
+      ]
+    },
+    "scopes": [
+      "lvk:read",
+      "lvk:write"
+    ]
   }
 ]

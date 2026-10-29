@@ -884,3 +884,7 @@ Issue `list_issues` on both transports defaults to unarchived records.
 selects both. This condition combines with all search filters before paging;
 UI hidden-status settings do not filter MCP reads. HTTP keeps UUID cursor
 semantics, while stdio keeps its sort/offset/count response.
+
+## MCP material attachments
+
+Remote/stdio attachment saving, verified placement, execution inputs and the separate real-host gate are described in [MCP attachments](mcp-attachments.md). The live tool catalogue must be refreshed after an authorised rollout; this source change does not deploy it.

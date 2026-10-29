@@ -24,6 +24,9 @@ struct McpWorkspaceRepoInput {
 struct StartWorkspaceRequest {
     #[schemars(description = "Name for the workspace")]
     name: String,
+    #[serde(default)]
+    attachment_ids: Vec<Uuid>,
+    request_id: Option<Uuid>,
     #[schemars(
         description = "Optional prompt for the first workspace session. If omitted/empty, the linked issue title/description is used."
     )]
@@ -99,6 +102,8 @@ impl McpServer {
             variant,
             repositories,
             issue_id,
+            attachment_ids,
+            request_id,
         }): Parameters<StartWorkspaceRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         if repositories.is_empty() {
@@ -195,9 +200,18 @@ impl McpServer {
             selected_skills: None,
             resume_session_id: None,
             resume_scope_path: None,
-            attachment_ids: None,
+            attachment_ids: (!attachment_ids.is_empty()).then_some(attachment_ids),
         };
 
+        if create_and_start_payload.attachment_ids.is_some() {
+            let Some(request_id) = request_id else {
+                return Self::err("Attachments require request_id", None::<&str>);
+            };
+            let url = self.url("/api/attachment-transfer/start");
+            return match self.send_json::<serde_json::Value>(self.client.post(url).json(&serde_json::json!({"request_id":request_id,"request":create_and_start_payload}))).await {
+                Ok(value)=>Self::success(&value),Err(error)=>Ok(Self::tool_error(error)),
+            };
+        }
         let create_and_start_url = self.url("/api/workspaces/start");
         let create_and_start_response: CreateAndStartWorkspaceResponse = match self
             .send_json(

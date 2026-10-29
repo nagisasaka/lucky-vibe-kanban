@@ -17,6 +17,7 @@ pub mod filesystem;
 mod provider_usage;
 mod repository_read;
 // pub mod github;
+pub(crate) mod attachment_transfer;
 pub mod attachments;
 pub mod design_notes;
 pub mod events;
@@ -83,6 +84,7 @@ pub fn router(
         .nest("/local", local_remote::router(&deployment))
         .nest("/board", local_remote::board_api::router())
         .nest("/attachments", attachments::routes())
+        .merge(attachment_transfer::router(&deployment))
         .with_state(deployment.clone());
 
     let api_routes = Router::new()

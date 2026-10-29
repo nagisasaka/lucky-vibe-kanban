@@ -65,10 +65,10 @@ pub async fn upload_file(
     Query(query): Query<SessionScopedQuery>,
     multipart: Multipart,
 ) -> Result<ResponseJson<ApiResponse<AttachmentResponse>>, ApiError> {
+    let base_path = resolve_session_base_path(&deployment, &workspace, query.session_id).await?;
     let attachment_response =
         process_file_upload(&deployment, multipart, Some(workspace.id)).await?;
 
-    let base_path = resolve_session_base_path(&deployment, &workspace, query.session_id).await?;
     deployment
         .file()
         .copy_files_by_ids_to_worktree(&base_path, &[attachment_response.id])
@@ -126,7 +126,7 @@ pub async fn get_attachment_metadata(
         .path
         .strip_prefix(&vibe_attachments_prefix)
         .unwrap_or("");
-    ensure_workspace_attachment_exists(&deployment, &base_path, file_path).await?;
+    ensure_workspace_attachment_exists(&deployment, workspace.id, &base_path, file_path).await?;
     let full_path = base_path.join(&query.path);
 
     let metadata = match tokio::fs::metadata(&full_path).await {
@@ -176,7 +176,7 @@ pub async fn serve_file(
         return Err(ApiError::File(FileError::NotFound));
     }
     let base_path = resolve_session_base_path(&deployment, &workspace, query.session_id).await?;
-    ensure_workspace_attachment_exists(&deployment, &base_path, &path).await?;
+    ensure_workspace_attachment_exists(&deployment, workspace.id, &base_path, &path).await?;
     let vibe_attachments_dir = base_path.join(utils::path::VIBE_ATTACHMENTS_DIR);
     let full_path = vibe_attachments_dir.join(&path);
 
@@ -228,6 +228,7 @@ pub async fn serve_file(
 
 async fn ensure_workspace_attachment_exists(
     deployment: &DeploymentImpl,
+    workspace_id: Uuid,
     base_path: &Path,
     file_path: &str,
 ) -> Result<(), ApiError> {
@@ -237,7 +238,11 @@ async fn ensure_workspace_attachment_exists(
         return Ok(());
     }
 
-    let Some(file) = File::find_by_file_path(&deployment.db().pool, file_path).await? else {
+    let Some(file) = File::find_by_workspace_id(&deployment.db().pool, workspace_id)
+        .await?
+        .into_iter()
+        .find(|f| f.file_path == file_path)
+    else {
         return Err(ApiError::File(FileError::NotFound));
     };
 
@@ -249,7 +254,7 @@ async fn ensure_workspace_attachment_exists(
     Ok(())
 }
 
-async fn resolve_session_base_path(
+pub(crate) async fn resolve_session_base_path(
     deployment: &DeploymentImpl,
     workspace: &Workspace,
     session_id: Uuid,
@@ -264,15 +269,31 @@ async fn resolve_session_base_path(
         ));
     }
 
-    let container_ref = deployment
-        .container()
-        .container_for_inspection(workspace)
-        .await?;
+    let container_ref = match workspace
+        .container_ref
+        .as_ref()
+        .filter(|p| std::path::Path::new(p).is_dir())
+    {
+        Some(path) => path.clone(),
+        None => {
+            deployment
+                .container()
+                .container_for_inspection(workspace)
+                .await?
+        }
+    };
     let workspace_path = std::path::PathBuf::from(container_ref);
     let base_path = match session.agent_working_dir.as_deref() {
         Some(dir) if !dir.is_empty() => workspace_path.join(dir),
-        _ => workspace_path,
+        _ => workspace_path.clone(),
     };
+    let canonical_root = tokio::fs::canonicalize(&workspace_path).await?;
+    let base_path = tokio::fs::canonicalize(&base_path).await?;
+    if !base_path.starts_with(&canonical_root) {
+        return Err(ApiError::BadRequest(
+            "Session directory escapes Workspace".into(),
+        ));
+    }
     Ok(base_path)
 }
 

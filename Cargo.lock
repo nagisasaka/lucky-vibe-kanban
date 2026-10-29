@@ -7176,6 +7176,7 @@ dependencies = [
  "jsonwebtoken",
  "libc",
  "local-deployment",
+ "mcp",
  "mime_guess",
  "os_info",
  "rand 0.8.5",
