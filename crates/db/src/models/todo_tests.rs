@@ -632,3 +632,96 @@ async fn number_migration_orders_ties_and_preserves_every_existing_attribute() {
     .unwrap();
     assert_eq!(a.number, 1);
 }
+
+#[tokio::test]
+async fn colliding_numbers_and_issue_links_preserve_todo_identity() {
+    let (pool, project, other) = fixture().await;
+    let first = Todo::create(&pool, project, note("first Project"))
+        .await
+        .unwrap();
+    let second = Todo::create(&pool, other, note("second Project"))
+        .await
+        .unwrap();
+    assert_ne!(first.id, second.id);
+    for todo in [&first, &second] {
+        assert_eq!(todo.number, 1);
+        assert_eq!(todo.display_id, "TODO-1");
+        let resolved = Todo::resolve(&pool, todo.project_id, "TODO-1")
+            .await
+            .unwrap();
+        assert_eq!(
+            serde_json::to_value(resolved).unwrap(),
+            serde_json::to_value(todo).unwrap()
+        );
+    }
+    let issue = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_issues VALUES(?,?)")
+        .bind(issue)
+        .bind(project)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut current = first.clone();
+    for link in [true, false] {
+        let input = if link {
+            json!({"expected_revision":current.revision,"issue_id":issue})
+        } else {
+            json!({"expected_revision":current.revision,"clear_issue":true})
+        };
+        let resolved = Todo::resolve(&pool, project, "TODO-1").await.unwrap();
+        let updated = Todo::update(&pool, project, resolved.id, changes(input))
+            .await
+            .unwrap();
+        assert_eq!(
+            (updated.id, updated.number, &updated.display_id),
+            (first.id, first.number, &first.display_id)
+        );
+        assert_eq!(updated.issue_id, link.then_some(issue));
+        assert_eq!(updated.revision, current.revision + 1);
+        assert_eq!(
+            serde_json::to_value(Todo::resolve(&pool, other, "TODO-1").await.unwrap()).unwrap(),
+            serde_json::to_value(&second).unwrap()
+        );
+        assert_eq!(
+            serde_json::to_value(Todo::get(&pool, project, first.id).await.unwrap()).unwrap(),
+            serde_json::to_value(&updated).unwrap()
+        );
+        current = updated;
+    }
+    // Updating the other Project's TODO-1 by UUID must leave the first unchanged.
+    let updated = Todo::update(
+        &pool,
+        other,
+        second.id,
+        changes(json!({"expected_revision":second.revision,"body":"only second"})),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        (updated.id, updated.number, &updated.display_id),
+        (second.id, second.number, &second.display_id)
+    );
+    assert_eq!(updated.body, "only second");
+    assert_eq!(
+        serde_json::to_value(Todo::resolve(&pool, project, "TODO-1").await.unwrap()).unwrap(),
+        serde_json::to_value(&current).unwrap()
+    );
+    assert!(matches!(
+        Todo::update(
+            &pool,
+            project,
+            first.id,
+            changes(json!({"expected_revision":first.revision,"body":"stale"}))
+        )
+        .await,
+        Err(TodoError::Conflict)
+    ));
+    assert_eq!(
+        serde_json::to_value(Todo::resolve(&pool, project, "TODO-1").await.unwrap()).unwrap(),
+        serde_json::to_value(&current).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(Todo::resolve(&pool, other, "TODO-1").await.unwrap()).unwrap(),
+        serde_json::to_value(updated).unwrap()
+    );
+}

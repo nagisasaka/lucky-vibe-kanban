@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { checkBodyExpansion } from "./body-expansion.mjs";
 import { checkCategoryLayout } from "./layout.mjs";
+import { checkStdioNumbering } from "./numbering.mjs";
 
 const root = process.cwd();
 const output = path.join(root, ".build/todo-validation");
@@ -436,6 +437,8 @@ c.commit()
   const list = await tool("list_todos", { project_id: project });
   assert.equal(list.items.find((t) => t.id === mcpId).creation_source, "mcp");
   assert.equal(list.items.length, samples.length + 1);
+
+  await checkStdioNumbering({ api, tool, rpc });
 
   webBase = base;
   if (process.env.LVK_TODO_VITE === "1") {

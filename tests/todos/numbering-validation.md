@@ -5,7 +5,7 @@
 対象はKanbanの状態ではなくProjectのTODOリスト項目。番号の契約は
 [README](README.md#project内の不変番号)を参照する。
 
-## 実行結果
+## 初回実装Runの実行結果（履歴）
 
 | コマンド | 結果・範囲 |
 | --- | --- |
@@ -54,3 +54,55 @@ live再起動、deployは行っていない。OpenWikiは読取のみ。独立�
 検証は今回の変更とその利用境界に絞った。新stdioの番号指定を旧serverで利用できるとは扱わない。
 LOCAL-281との後続統合では共有Rust/MCP/生成型の競合とmigration version重複を確認し、
 同じschema/APIに対応するclient/serverを使う必要がある。移行以前に削除されたTODOの番号履歴は復元しない。
+
+## 独立レビュー後の受入試験補強（2026-10-30、08:37 UTC開始）
+
+独立レビュー対象は `f0c84e1817869cd52387a1d7925b1888b3175f30`。
+以下はRun `a6f5136d-f9a1-47bc-a0a8-81ee221b803d` で新たに実行した検証であり、
+上記の初回実装Runの履歴を今回の成功結果へ付け替えていない。
+製品の実行時コード、migration、生成型は変更していない。不具合は判明していない。
+
+前回からの差分:
+
+- DBの `colliding_numbers_and_issue_links_preserve_todo_identity` を追加。
+  各Projectに `TODO-1` を作り、関連付け・解除ごとにUUID・number・display_idと実際のIssue参照を確認。
+  別Projectの全DTOが不変であること、UUID取得更新と古いrevisionの競合も確認する。
+- remote MCPの `todo_mcp_colliding_numbers_and_issue_links_preserve_identity` を追加。
+  両Projectを接続の許可対象に含め、同じ `TODO-1` がある状態で双方の番号指定取得・更新を成功させる。
+  各操作後に番号/UUIDで両項目を再取得し、更新対象の3識別子と非対象の全DTOを比較する。
+  Issue関連付け・解除、UUID指定更新、番号/UUIDでのstale revision拒否後にも同じ比較を行う。
+- `numbering.mjs` を既存の `isolated.mjs` へ接続。新規の2 Projectを試験専用に作り、
+  実stdio→REST→SQLiteで上記の取得・更新・関連付け・解除・UUID互換を確認する。
+  古いrevisionの更新は番号/UUIDの両指定で409になることと、両項目の全DTOが不変であることを確認する。
+
+以前の「numberだけの関連付け後確認」「空の別Projectへの拒否」に加え、
+3識別子の比較と同番号が共存する成功経路を明示した。既存試験の期待は弱めていない。
+
+| 今回実行したコマンド | 結果 |
+| --- | --- |
+| `node scripts/dev-cargo.mjs test -p db todo --lib` | 9/9成功（従来8件を再実行＋追加1件）。 |
+| `node tests/todos/isolated.mjs` | 成功。追加stdio回帰と既存Chromium/API/UI回帰を同じ隔離instanceで実行。 |
+| `node scripts/dev-cargo.mjs test -p server todo_mcp --lib` | 2/2成功（従来1件を再実行＋追加1件）。 |
+| `node scripts/dev-cargo.mjs build --bin server --bin agent-process-host --bin vibe-kanban-mcp` | 成功。このWorkspaceから隔離試験用binaryを構築。 |
+| `node scripts/dev-cargo.mjs clippy -p db -p server --all-targets -- -D warnings` | 成功。 |
+| `node --check tests/todos/numbering.mjs` / `node --check tests/todos/isolated.mjs` | 成功。 |
+
+今回の試験binaryのSHA-256:
+
+```text
+server:             5e3c910b606f249f62d8ce7e947fd79cb4e526ddc58e2c9437953318ae351535
+agent-process-host: 2f4780322bd945a9ca708da8fe1bcdaeb853c73f6a25936cb9874809a83184a3
+vibe-kanban-mcp:    6d748c42b36e3eba651ec15e05432de7d29cf310c0d0039d6d28947bf70c4d60
+```
+
+frontendは初回実装Runのbuilt assetsを読取で再利用した。
+`dist/index.html` のSHA-256は `add1712ce8eab7e830457da138569c074412fbc9560da6a5513553798cd03888`。
+初回記録と一致し、今回frontend・API DTO・schemaに差分がないことを照合した。
+frontend build・型生成/SQLx整合・全backend suite・実OAuth/ChatGPT等は今回再実行していない。
+今回の対象は試験追加のみであり、初回の未検証境界は変わらない。
+main merge・公開・deploy・他Workspace/live DB変更は行っていない。
+この追加差分への独立レビューは未実施であり、前回レビューがこの差分を含むとは扱わない。
+
+今回の主要時刻（UTC、分単位）: 08:37開始、08:39 DB 9件成功、08:41 remote MCP 2件成功、
+08:42 binary構築、08:43 追加stdioシナリオとClippy成功、08:44 E2E全体成功。
+隔離プロセスの終了を待ち、試験用instance・スクリーンショット・一時ログを削除した。
