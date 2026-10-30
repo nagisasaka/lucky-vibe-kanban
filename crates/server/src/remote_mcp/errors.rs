@@ -1,9 +1,12 @@
-//! Public diagnostics must be explicit static validation text, never a formatted
-//! domain/IO/SQL error or its context chain. Context may contain credentials/paths.
-pub(super) fn message(error: &anyhow::Error) -> &'static str {
+//! Public diagnostics must be static validation text or an explicitly safe typed
+//! hostname diagnostic, never a generic error or its context chain.
+pub(super) fn message(error: &anyhow::Error) -> String {
+    if let Some(message) = crate::routes::attachment_transfer::host_file_diagnostic(error) {
+        return message;
+    }
     error.downcast_ref::<&'static str>().copied().unwrap_or(
         "LVK operation unavailable; refresh state and inspect the existing request before retrying",
-    )
+    ).to_owned()
 }
 
 #[cfg(test)]

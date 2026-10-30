@@ -103,8 +103,36 @@ fn public_ip(ip: IpAddr) -> bool {
         }
     }
 }
+// This type can contain only a bounded, parsed hostname, never a URL or source error.
+#[derive(Debug, thiserror::Error)]
+#[error("Host file domain is not enabled (hostname: {hostname})")]
+struct DisabledHost {
+    hostname: String,
+}
+
+pub(crate) fn host_file_diagnostic(error: &anyhow::Error) -> Option<String> {
+    error
+        .downcast_ref::<DisabledHost>()
+        .map(ToString::to_string)
+}
+
+fn diagnostic_hostname(url: &url::Url) -> Option<&str> {
+    url.host_str().filter(|host| {
+        !host.is_empty()
+            && host.len() <= 253
+            && host
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'.'))
+            && host
+                .strip_suffix('.')
+                .unwrap_or(host)
+                .split('.')
+                .all(|label| !label.is_empty() && label.len() <= 63)
+    })
+}
+
 fn host_url(raw: &str) -> anyhow::Result<url::Url> {
-    let url = url::Url::parse(raw).context("Invalid host file URL")?;
+    let url = url::Url::parse(raw).map_err(|_| anyhow::anyhow!("Invalid host file URL"))?;
     ensure!(
         url.scheme() == "https"
             && url.port_or_known_default() == Some(443)
@@ -116,11 +144,18 @@ fn host_url(raw: &str) -> anyhow::Result<url::Url> {
     // Operator-owned, exact host allowlist; never accept caller-provided hosts.
     let allowed = std::env::var("LVK_ATTACHMENT_FILE_HOSTS")
         .unwrap_or_else(|_| "files.oaiusercontent.com".into());
-    ensure!(
-        url.host_str()
-            .is_some_and(|h| allowed.split(',').any(|a| a.trim() == h)),
-        "Host file domain is not enabled"
-    );
+    if !url
+        .host_str()
+        .is_some_and(|h| allowed.split(',').any(|a| a.trim() == h))
+    {
+        if let Some(hostname) = diagnostic_hostname(&url) {
+            return Err(DisabledHost {
+                hostname: hostname.to_owned(),
+            }
+            .into());
+        }
+        anyhow::bail!("Host file domain is not enabled");
+    }
     Ok(url)
 }
 async fn download(file: &HostFile) -> anyhow::Result<Vec<u8>> {
@@ -499,7 +534,11 @@ async fn upload_route(
     upload(d, args, actor(true)?)
         .await
         .map(|v| Json(utils::response::ApiResponse::success(v)))
-        .map_err(|_| ApiError::BadRequest("Attachment upload rejected".into()))
+        .map_err(|error| {
+            ApiError::BadRequest(
+                host_file_diagnostic(&error).unwrap_or_else(|| "Attachment upload rejected".into()),
+            )
+        })
 }
 async fn place_route(
     State(d): State<DeploymentImpl>,
@@ -529,6 +568,85 @@ pub(crate) fn router_with_execution(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Clone, Default)]
+    struct DiagnosticLogs(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+    impl std::io::Write for DiagnosticLogs {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn attachment_host_diagnostic_exposes_only_bounded_normalized_hostname() {
+        let logs = DiagnosticLogs::default();
+        let writer = logs.clone();
+        let subscriber = tracing_subscriber::fmt()
+            .without_time()
+            .with_ansi(false)
+            .with_max_level(tracing::Level::TRACE)
+            .with_writer(move || writer.clone())
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            for (raw, host) in [
+                (
+                    "https://REJECTED.Example.invalid/private-material?signature=synthetic-secret",
+                    "rejected.example.invalid",
+                ),
+                (
+                    "https://BÜCHER.invalid/private-material?signature=synthetic-secret",
+                    "xn--bcher-kva.invalid",
+                ),
+            ] {
+                let Err(error) = host_url(raw) else {
+                    panic!("fixture must be rejected");
+                };
+                let expected = format!("Host file domain is not enabled (hostname: {host})");
+                assert!(error.to_string() == expected);
+                assert!(host_file_diagnostic(&error).as_deref() == Some(expected.as_str()));
+                // Even generic Debug/alternate-chain rendering has no original input.
+                for rendered in [format!("{error:?}"), format!("{error:#}")] {
+                    assert!(!rendered.contains("private-material"));
+                    assert!(!rendered.contains("synthetic-secret"));
+                    assert!(!rendered.contains("https://"));
+                }
+                let wrapped = error.context("synthetic-private-context");
+                assert!(host_file_diagnostic(&wrapped).as_deref() == Some(expected.as_str()));
+            }
+        });
+        assert!(logs.0.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn attachment_host_diagnostic_omits_unsafe_authorities_and_parser_errors() {
+        let label = "a".repeat(64);
+        let huge = (0..5).map(|_| "b".repeat(63)).collect::<Vec<_>>().join(".");
+        for raw in [
+            "https://synthetic-user:synthetic-password@rejected.invalid/private-material?signature=synthetic-secret".to_owned(),
+            "https://rejected.invalid/private-material?signature=synthetic-secret#synthetic-fragment".to_owned(),
+            "http://rejected.invalid/private-material?signature=synthetic-secret".to_owned(),
+            "https://rejected.invalid:444/private-material?signature=synthetic-secret".to_owned(),
+            "https://bad%0d%0ahost.invalid/private-material?signature=synthetic-secret".to_owned(),
+            "https://bad%2fhost.invalid/private-material?signature=synthetic-secret".to_owned(),
+            "https://[malformed/private-material?signature=synthetic-secret".to_owned(),
+            format!("https://{label}.invalid/private-material?signature=synthetic-secret"),
+            format!("https://{huge}/private-material?signature=synthetic-secret"),
+        ] {
+            let Err(error) = host_url(&raw) else { panic!("unsafe fixture must be rejected"); };
+            assert!(host_file_diagnostic(&error).is_none());
+            for rendered in [format!("{error:?}"), format!("{error:#}"), error.to_string()] {
+                for forbidden in ["private-material", "synthetic-secret", "synthetic-user", "synthetic-password", "synthetic-fragment", "https://", "http://"] {
+                    assert!(!rendered.contains(forbidden));
+                }
+                assert!(rendered.len() < 200);
+            }
+        }
+    }
+
     #[test]
     fn attachment_inline_and_host_validation_boundaries() {
         use base64::{Engine, engine::general_purpose::STANDARD};
