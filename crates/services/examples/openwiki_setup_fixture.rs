@@ -7,7 +7,8 @@ use services::services::openwiki::{publication_paths, setup};
 use utils::repository_memory::RepositoryMemoryStore;
 use uuid::Uuid;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     ensure!(
         args.len() == 5,
@@ -40,6 +41,11 @@ fn main() -> anyhow::Result<()> {
         "Invalid source commit"
     );
     match args[0].as_str() {
+        "install" => {
+            services::services::openwiki::OpenWikiAdapter::default()
+                .prepare_codex(&root, true)
+                .await?
+        }
         "prepare" => setup::prepare(&store, workspace_id, &root, source)?,
         "restore" => {
             setup::validate_provenance(&store, workspace_id, &root, source)?;

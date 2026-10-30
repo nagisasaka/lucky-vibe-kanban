@@ -58,6 +58,10 @@ fn mcp_stdio_fixture() {
                         config["mcp_servers.openwiki.args"],
                         json!(["mcp", "--host", "codex"])
                     );
+                    assert_eq!(
+                        config["mcp_servers.openwiki.env_vars"],
+                        json!(["OPENWIKI_CONFIG_DIR"])
+                    );
                     assert!(config.get("mcp_optional_startup_grace_ms").is_none());
                 }
                 let approvals: Vec<_> = config
@@ -149,6 +153,7 @@ fn mcp_stdio_fixture() {
                     }
                     let tools: serde_json::Map<String, Value> = REQUIRED_TOOLS.iter()
                         .filter(|&&name| case != "missing_finish" || name != "openwiki_finish")
+                        .filter(|&&name| case != "missing_read" || name != "openwiki_read")
                         .filter(|_| case != "ready_without_tools")
                         .map(|name| ((*name).into(), json!({
                             "name": if case == "wrong_tool_name" { "different_tool" } else { name },
@@ -345,6 +350,7 @@ async fn unavailable_or_incomplete_mcp_never_activates_a_writer() {
         "absent",
         "ready_without_tools",
         "missing_finish",
+        "missing_read",
         "other_server",
         "wrong_tool_name",
         "cursor_loop",

@@ -448,11 +448,23 @@ async fn record_wiki_audit(
     )?;
     let mut frames =
         vec![json!({"id":3,"result":{"thread":{"id":"root"},"cwd":request.workspace.path}})];
-    let mut calls = vec![(
-        "openwiki_begin",
-        json!({"root":root,"mode":"update"}),
-        json!({"root":root,"mode":"update","runId":wiki_id,"status":"active","resumed":resumed}),
-    )];
+    let mut calls = vec![
+        (
+            "openwiki_list_workspaces",
+            json!({"root":root}),
+            json!({"workspaces":[]}),
+        ),
+        (
+            "openwiki_search",
+            json!({"root":root,"query":"contract"}),
+            json!({"results":[]}),
+        ),
+        (
+            "openwiki_begin",
+            json!({"root":root,"mode":"update"}),
+            json!({"root":root,"mode":"update","runId":wiki_id,"status":"active","resumed":resumed}),
+        ),
+    ];
     if resumed {
         calls.push((
             "openwiki_finish",
@@ -460,6 +472,16 @@ async fn record_wiki_audit(
             json!({"status":"complete"}),
         ));
     }
+    calls.push((
+        "openwiki_read",
+        json!({"root":root,"page":"openwiki/quickstart.md","sections":["contract"]}),
+        json!({"sections":[]}),
+    ));
+    calls.push((
+        "openwiki_list_wikis",
+        json!({"root":root,"workspace":"fixture"}),
+        json!({"wikis":[]}),
+    ));
     for (tool, args, result) in calls {
         let call_id = Uuid::new_v4();
         for method in ["item/started", "item/completed"] {

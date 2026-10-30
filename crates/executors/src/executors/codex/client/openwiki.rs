@@ -6,7 +6,11 @@ use std::{collections::HashSet, io, time::Duration};
 use super::AppServerClient;
 use crate::executors::ExecutorError;
 
-pub(crate) const REQUIRED_TOOLS: [&str; 6] = [
+pub(crate) const REQUIRED_TOOLS: [&str; 10] = [
+    "openwiki_search",
+    "openwiki_read",
+    "openwiki_list_workspaces",
+    "openwiki_list_wikis",
     "openwiki_begin",
     "openwiki_submit_plan",
     "openwiki_next_page",

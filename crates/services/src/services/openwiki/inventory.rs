@@ -271,7 +271,7 @@ impl DocumentInventory {
     /// Return no document contents, only the host-computed path and fixed guidance.
     pub fn prompt(&self, store: &RepositoryMemoryStore, reviewer: bool) -> String {
         match self {
-            Self::UnavailableIgnorePolicy { .. } => "\nDocument inventory unavailable: this snapshot has .openwikiignore and OpenWiki 0.5.1 exposes no compatible public path selector. Candidates were not enumerated; count is unknown, not zero. Continue the existing independent source/document exploration and respect ignore rules. No inventory read is required.\n".into(),
+            Self::UnavailableIgnorePolicy { .. } => "\nDocument inventory unavailable: this snapshot has .openwikiignore and the pinned OpenWiki exposes no compatible public path selector. Candidates were not enumerated; count is unknown, not zero. Continue the existing independent source/document exploration and respect ignore rules. No inventory read is required.\n".into(),
             Self::Available { identity, counts, .. } => {
                 let path = serde_json::to_string(&store.document_inventory_path(identity.run_id, None)).expect("inventory path");
                 let role = if reviewer {

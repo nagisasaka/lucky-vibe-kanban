@@ -1069,7 +1069,7 @@ impl Codex {
                 "mcp_servers.openwiki.startup_timeout_sec".into(),
                 Value::from(client::openwiki::STARTUP_TIMEOUT.as_secs()),
             );
-            // Starting maintenance authorizes its six lifecycle operations. Codex
+            // Starting maintenance authorizes six lifecycle and four retrieval tools. Codex
             // otherwise requests MCP approval even for this host-owned writer,
             // and our unsupported elicitation handler cancels that request.
             // Keep authorization per-tool and thread-local, not a global MCP
@@ -1087,6 +1087,13 @@ impl Codex {
             config.insert(
                 "mcp_servers.openwiki.args".into(),
                 serde_json::json!(["mcp", "--host", "codex"]),
+            );
+            // Honour the user's public OpenWiki registry location. Codex's MCP
+            // default environment filter otherwise drops this optional variable.
+            // This selects no new location and does not isolate production runs.
+            config.insert(
+                "mcp_servers.openwiki.env_vars".into(),
+                serde_json::json!(["OPENWIKI_CONFIG_DIR"]),
             );
             config.insert(
                 "mcp_servers.openwiki.env".into(),

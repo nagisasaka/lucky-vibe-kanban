@@ -1,7 +1,7 @@
 // Public CLI/MCP compatibility smoke. No models, API keys or upstream imports.
 // Run: OPENWIKI_BIN=/path/to/openwiki node scripts/test-openwiki-host.mjs
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   mkdtemp,
   mkdir,
@@ -16,7 +16,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createInterface } from "node:readline";
+import { openWikiMcp } from "./lib/openwiki-mcp.mjs";
 import { stripVTControlCharacters } from "node:util";
 
 const pin = (
@@ -24,6 +24,26 @@ const pin = (
 ).trim();
 const binary = process.env.OPENWIKI_BIN ?? "openwiki";
 const lvkSetup = process.argv.includes("--lvk-setup");
+const claudeKind = process.argv.includes("--claude-absent")
+  ? "absent"
+  : process.argv.includes("--claude-file")
+    ? "file"
+    : "symlink";
+const originalClaude = "# Original Claude instructions\nPreserve this file.\n";
+async function assertClaudeRestored() {
+  if (claudeKind === "symlink")
+    assert.equal(await readlink(path.join(root, "CLAUDE.md")), "AGENTS.md");
+  else if (claudeKind === "file")
+    assert.equal(
+      await readFile(path.join(root, "CLAUDE.md"), "utf8"),
+      originalClaude,
+    );
+  else
+    assert.equal(
+      await lstat(path.join(root, "CLAUDE.md")).catch(() => null),
+      null,
+    );
+}
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const env = {
   ...process.env,
@@ -58,8 +78,9 @@ let workspaceId = randomUUID();
 function lvk(operation, source) {
   if (!lvkSetup) return;
   const result = spawnSync(
-    "cargo",
+    "node",
     [
+      "scripts/dev-cargo.mjs",
       "run",
       "--quiet",
       "-p",
@@ -100,7 +121,10 @@ await writeFile(
 );
 if (lvkSetup) {
   await writeFile(path.join(root, "AGENTS.md"), originalAgents);
-  await symlink("AGENTS.md", path.join(root, "CLAUDE.md"));
+  if (claudeKind === "symlink")
+    await symlink("AGENTS.md", path.join(root, "CLAUDE.md"));
+  if (claudeKind === "file")
+    await writeFile(path.join(root, "CLAUDE.md"), originalClaude);
   await mkdir(path.join(root, "openwiki"));
   await writeFile(path.join(root, "openwiki/INSTRUCTIONS.md"), instructions);
 }
@@ -108,7 +132,7 @@ git("add", ".");
 git("commit", "-m", "fixture source");
 const head = git("rev-parse", "HEAD");
 lvk("prepare", head);
-if (lvkSetup) {
+if (lvkSetup && claudeKind !== "absent") {
   assert.equal(
     (await lstat(path.join(root, "CLAUDE.md"))).isSymbolicLink(),
     false,
@@ -127,70 +151,45 @@ assert.equal(install().status, 0, "Project-scoped public integration install");
 assert.equal(install().status, 0, "Repeated integration install is idempotent");
 await mkdir(path.join(root, "openwiki"), { recursive: true });
 await writeFile(path.join(root, "openwiki/INSTRUCTIONS.md"), instructions);
-const child = spawn(binary, ["mcp", "--host", "codex"], {
-  cwd: root,
-  env,
-  stdio: ["pipe", "pipe", "inherit"],
-});
-let sequence = 0;
-const pending = new Map();
-const lines = createInterface({ input: child.stdout });
-lines.on("line", (line) => {
-  let frame;
-  try {
-    frame = JSON.parse(line);
-  } catch {
-    return;
-  }
-  const waiter = pending.get(frame.id);
-  if (!waiter) return;
-  pending.delete(frame.id);
-  if (frame.error) waiter.reject(new Error(JSON.stringify(frame.error)));
-  else waiter.resolve(frame.result);
-});
-function call(method, params) {
-  const id = ++sequence;
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      pending.delete(id);
-      reject(new Error(`Timeout: ${method}`));
-    }, 30000);
-    pending.set(id, {
-      resolve: (value) => {
-        clearTimeout(timeout);
-        resolve(value);
-      },
-      reject: (error) => {
-        clearTimeout(timeout);
-        reject(error);
-      },
-    });
-    child.stdin.write(
-      `${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`,
-    );
-  });
-}
-function data(result) {
-  if (result.isError) throw new Error(JSON.stringify(result));
-  return (
-    result.structuredContent ??
-    JSON.parse(result.content.find((block) => block.type === "text").text)
-  );
-}
-const tool = async (name, args) =>
-  data(await call("tools/call", { name, arguments: args }));
+let client = await openWikiMcp(binary, root, env);
+const call = (...args) => client.call(...args);
+const tool = (...args) => client.tool(...args);
 let succeeded = false;
 try {
-  await call("initialize", {
-    protocolVersion: "2024-11-05",
-    capabilities: {},
-    clientInfo: { name: "lvk-openwiki-smoke", version: "1" },
-  });
-  child.stdin.write(
-    `${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`,
-  );
   const tools = await call("tools/list", {});
-  assert.ok(tools.tools.some((entry) => entry.name === "openwiki_finish"));
+  const schemas = {
+    openwiki_begin: ["root", "mode", "language", "force"],
+    openwiki_submit_plan: ["runId", "pages", "deletePages"],
+    openwiki_next_page: ["runId"],
+    openwiki_inspect_page_claims: ["runId", "jobId"],
+    openwiki_submit_page: [
+      "runId",
+      "jobId",
+      "confirmedClaimIds",
+      "claims",
+      "retractedClaimIds",
+    ],
+    openwiki_finish: ["runId"],
+    openwiki_search: ["root", "query", "paths", "limit", "workspace"],
+    openwiki_read: ["root", "page", "sections", "wiki"],
+    openwiki_list_workspaces: ["root", "wiki"],
+    openwiki_list_wikis: ["root", "workspace"],
+  };
+  assert.deepEqual(
+    tools.tools.map((t) => t.name).sort(),
+    Object.keys(schemas).sort(),
+  );
+  for (const entry of tools.tools) {
+    assert.deepEqual(
+      Object.keys(entry.inputSchema.properties).sort(),
+      schemas[entry.name].sort(),
+    );
+    assert.equal(entry.inputSchema.additionalProperties, false);
+  }
+  assert.equal(
+    (await tool("openwiki_list_workspaces", { root })).workspaces.length,
+    0,
+  );
   const begin = await tool("openwiki_begin", {
     root,
     mode: "init",
@@ -199,6 +198,24 @@ try {
   assert.equal(begin.status, "active");
   assert.equal(typeof begin.runId, "string");
   const runId = begin.runId;
+  await client.close();
+  client = await openWikiMcp(binary, root, env);
+  const resumed = await tool("openwiki_begin", {
+    root,
+    mode: "init",
+    language: "en",
+  });
+  assert.equal(resumed.runId, runId);
+  assert.equal(resumed.resumed, true);
+  assert.equal(
+    (
+      await call("tools/call", {
+        name: "openwiki_finish",
+        arguments: { runId: randomUUID() },
+      })
+    ).isError,
+    true,
+  );
   const premature = await call("tools/call", {
     name: "openwiki_finish",
     arguments: { runId },
@@ -221,6 +238,7 @@ try {
   });
   const job = await tool("openwiki_next_page", { runId });
   assert.equal(job.status, "pending");
+  await tool("openwiki_inspect_page_claims", { runId, jobId: job.job.id });
   await writeFile(
     path.join(root, "openwiki/quickstart.md"),
     "---\ntype: concept\ntitle: Quickstart\ndescription: The fixture add function.\ntags: [fixture]\n---\n\n# Quickstart\n\nThe add function returns the sum of a and b.\n",
@@ -242,10 +260,18 @@ try {
   const finished = await tool("openwiki_finish", { runId });
   assert.equal(finished.status, "complete");
   assert.notEqual(finished.sourceChanged, true);
+  const hits = await tool("openwiki_search", { root, query: "add function" });
+  assert.ok(hits.results.length > 0);
+  const [page, section] = hits.results[0].ref[0].split("#");
+  assert.ok(
+    (
+      await tool("openwiki_read", { root, page, sections: [section] })
+    ).sections[0].content.includes("add function"),
+  );
   lvk("restore", head);
   lvk("restore", head);
   if (lvkSetup) {
-    assert.equal(await readlink(path.join(root, "CLAUDE.md")), "AGENTS.md");
+    await assertClaudeRestored();
     assert.equal(
       await readFile(path.join(root, "AGENTS.md"), "utf8"),
       originalAgents,
@@ -287,7 +313,15 @@ try {
   }
   git(
     "add",
-    ...(lvkSetup ? ["openwiki"] : ["openwiki", "AGENTS.md", "CLAUDE.md"]),
+    ...(lvkSetup
+      ? ["openwiki"]
+      : [
+          "openwiki",
+          "AGENTS.md",
+          ...((await lstat(path.join(root, "CLAUDE.md")).catch(() => null))
+            ? ["CLAUDE.md"]
+            : []),
+        ]),
   );
   git("commit", "-m", "fixture wiki publication");
   if (lvkSetup) {
@@ -320,7 +354,7 @@ try {
   }
   lvk("restore", updateHead);
   if (lvkSetup) {
-    assert.equal(await readlink(path.join(root, "CLAUDE.md")), "AGENTS.md");
+    await assertClaudeRestored();
     assert.equal(
       await readFile(path.join(root, "AGENTS.md"), "utf8"),
       originalAgents,
@@ -333,14 +367,52 @@ try {
   console.log(
     `PASS: OpenWiki ${pin}; plain/coloured CLI version, install/reinstall, host MCP, init, rejected premature finish, plan/page/claims/finalisation, user instructions and source preservation.${lvkSetup ? " LVK production alias isolation, duplicate restoration and Wiki-only publication guards passed." : ""} Update begin status=${update.status}; supported no-change finalisation verified, not a guarantee of begin-noop. No model call.`,
   );
+  if (!lvkSetup) {
+    // Include setup by-products only in this disposable upstream fixture, so
+    // dirty installer files cannot turn the true-noop assertion into active.
+    git("add", ".");
+    git("commit", "--allow-empty", "-m", "fixture clean baseline");
+    const reconcile = await tool("openwiki_begin", {
+      root,
+      mode: "update",
+      language: "en",
+    });
+    if (reconcile.status === "active") {
+      await tool("openwiki_submit_plan", { runId: reconcile.runId, pages: [] });
+      await tool("openwiki_finish", { runId: reconcile.runId });
+    }
+    const noop = await tool("openwiki_begin", {
+      root,
+      mode: "update",
+      language: "en",
+    });
+    assert.equal(
+      noop.status,
+      "noop",
+      "A clean, unchanged source must prove true noop",
+    );
+    assert.equal(noop.runId, undefined);
+    const forced = await tool("openwiki_begin", {
+      root,
+      mode: "update",
+      language: "en",
+      force: true,
+    });
+    assert.equal(forced.status, "active");
+    await tool("openwiki_submit_plan", { runId: forced.runId, pages: [] });
+    await writeFile(
+      path.join(root, "index.js"),
+      "export function add(a,b) { return a-b; }\n",
+    );
+    const drift = await tool("openwiki_finish", { runId: forced.runId });
+    assert.equal(drift.sourceChanged, true);
+    console.log(
+      "PASS: process restart/resume, unknown run rejection, all 10 schemas, local search/read, true noop, forced active and source drift.",
+    );
+  }
   succeeded = true;
 } finally {
-  lines.close();
-  child.kill("SIGTERM");
-  await new Promise((resolve) => {
-    if (child.exitCode !== null) resolve();
-    else child.once("exit", resolve);
-  });
+  await client.close();
   if (succeeded) await rm(root, { recursive: true });
   else console.error(`Failed fixture preserved at ${root}`);
   if (succeeded && persistent) await rm(persistent, { recursive: true });
