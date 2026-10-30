@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde_json::json;
 
 use super::*;
@@ -17,6 +19,12 @@ async fn fixture() -> (SqlitePool, Uuid, Uuid) {
     .unwrap();
     sqlx::raw_sql(include_str!(
         "../../migrations/20261024000000_todo_creation_source.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261030000000_todo_numbers.sql"
     ))
     .execute(&pool)
     .await
@@ -60,6 +68,13 @@ async fn lifecycle_preserves_notes_and_rejects_stale_writes() {
     assert_eq!(a.category, "UI");
     assert_eq!(a.body, input.body);
     assert_eq!(Todo::create(&pool, p, input).await.unwrap().id, a.id);
+    let counter: i64 =
+        sqlx::query_scalar("SELECT last_number FROM project_todo_counters WHERE project_id=?")
+            .bind(p)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(counter, a.number);
     let (first, second) = tokio::join!(
         Todo::update(
             &pool,
@@ -315,6 +330,12 @@ async fn creation_source_migration_preserves_all_existing_columns_and_order() {
     .execute(&pool)
     .await
     .unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261030000000_todo_numbers.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
     let after: Vec<String> = sqlx::query_scalar(snapshot).fetch_all(&pool).await.unwrap();
     assert_eq!(before, after);
     let page = Todo::list(
@@ -392,4 +413,222 @@ async fn search_filters_full_notes_before_offset_and_completion() {
     let mut all = q(0, true, "");
     all.limit = 100;
     assert_eq!(Todo::list(&pool, p, all).await.unwrap().items.len(), 4);
+}
+
+#[tokio::test]
+async fn numbers_serialize_writers_persist_and_never_reuse() {
+    let dir = tempfile::tempdir().unwrap();
+    let url = format!(
+        "sqlite:{}?mode=rwc",
+        dir.path().join("todos.sqlite").display()
+    );
+    let options = sqlx::sqlite::SqliteConnectOptions::from_str(&url)
+        .unwrap()
+        .busy_timeout(std::time::Duration::from_secs(30))
+        .foreign_keys(true);
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(8)
+        .connect_with(options.clone())
+        .await
+        .unwrap();
+    sqlx::raw_sql("CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE local_issues(id BLOB PRIMARY KEY,project_id BLOB);").execute(&pool).await.unwrap();
+    for migration in [
+        include_str!("../../migrations/20261018000000_project_todos.sql"),
+        include_str!("../../migrations/20261024000000_todo_creation_source.sql"),
+        include_str!("../../migrations/20261030000000_todo_numbers.sql"),
+    ] {
+        sqlx::raw_sql(migration).execute(&pool).await.unwrap();
+    }
+    let p = Uuid::new_v4();
+    let other = Uuid::new_v4();
+    for id in [p, other] {
+        sqlx::query("INSERT INTO projects VALUES(?)")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let mut tasks = tokio::task::JoinSet::new();
+    for _ in 0..32 {
+        let pool = pool.clone();
+        tasks.spawn(async move { Todo::create(&pool, p, note("concurrent")).await.unwrap() });
+    }
+    let mut numbers = Vec::new();
+    while let Some(todo) = tasks.join_next().await {
+        numbers.push(todo.unwrap().number);
+    }
+    numbers.sort();
+    assert_eq!(numbers, (1..=32).collect::<Vec<_>>());
+    let last = Todo::resolve(&pool, p, "TODO-32").await.unwrap();
+    Todo::delete(&pool, p, last.id, 1).await.unwrap();
+    assert_eq!(
+        Todo::create(&pool, p, note("after tail"))
+            .await
+            .unwrap()
+            .number,
+        33
+    );
+    sqlx::query("DELETE FROM project_todos WHERE project_id=?")
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    pool.close().await;
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect_with(options)
+        .await
+        .unwrap();
+    let a = Todo::create(&pool, p, note("after reopen")).await.unwrap();
+    assert_eq!(a.number, 34);
+    assert_eq!(a.display_id, "TODO-34");
+    assert_eq!(
+        Todo::create(&pool, other, note("independent"))
+            .await
+            .unwrap()
+            .number,
+        1
+    );
+    assert_eq!(
+        Todo::resolve(&pool, p, &a.id.to_string()).await.unwrap().id,
+        a.id
+    );
+    assert_eq!(Todo::resolve(&pool, p, "TODO-34").await.unwrap().id, a.id);
+    for invalid in [
+        "TODO-0",
+        "TODO-01",
+        "TODO--1",
+        "todo-1",
+        "TODO-",
+        "TODO-1/..",
+        "TODO-9223372036854775808",
+    ] {
+        assert!(matches!(
+            Todo::resolve(&pool, p, invalid).await,
+            Err(TodoError::InvalidRequest)
+        ));
+    }
+    assert!(matches!(
+        Todo::resolve(&pool, other, "TODO-34").await,
+        Err(TodoError::NotFound)
+    ));
+    assert!(matches!(
+        Todo::resolve(&pool, other, &a.id.to_string()).await,
+        Err(TodoError::NotFound)
+    ));
+    assert!(matches!(
+        Todo::resolve(&pool, p, "TODO-999").await,
+        Err(TodoError::NotFound)
+    ));
+    let updated = Todo::update(
+        &pool,
+        p,
+        a.id,
+        changes(json!({"expected_revision":1,"body":"edited","category":"new","completed":true})),
+    )
+    .await
+    .unwrap();
+    assert_eq!(updated.display_id, a.display_id);
+    assert!(
+        sqlx::query("UPDATE project_todos SET number=100 WHERE id=?")
+            .bind(a.id)
+            .execute(&pool)
+            .await
+            .is_err()
+    );
+    assert!(
+        sqlx::query("UPDATE project_todo_counters SET last_number=1 WHERE project_id=?")
+            .bind(p)
+            .execute(&pool)
+            .await
+            .is_err()
+    );
+    pool.close().await;
+}
+
+#[tokio::test]
+async fn number_migration_orders_ties_and_preserves_every_existing_attribute() {
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::raw_sql("PRAGMA foreign_keys=ON; CREATE TABLE projects(id BLOB PRIMARY KEY); CREATE TABLE local_issues(id BLOB PRIMARY KEY,project_id BLOB);").execute(&pool).await.unwrap();
+    for migration in [
+        include_str!("../../migrations/20261018000000_project_todos.sql"),
+        include_str!("../../migrations/20261024000000_todo_creation_source.sql"),
+    ] {
+        sqlx::raw_sql(migration).execute(&pool).await.unwrap();
+    }
+    let p = Uuid::new_v4();
+    let other = Uuid::new_v4();
+    let issue = Uuid::new_v4();
+    for id in [p, other] {
+        sqlx::query("INSERT INTO projects VALUES(?)")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    sqlx::query("INSERT INTO local_issues VALUES(?,?)")
+        .bind(issue)
+        .bind(p)
+        .execute(&pool)
+        .await
+        .unwrap();
+    for (n, date, source) in [
+        (3, "2026-10-01", "ui"),
+        (2, "2026-10-02", "mcp"),
+        (1, "2026-10-02", "unknown"),
+    ] {
+        sqlx::query("INSERT INTO project_todos(id,project_id,body,category,completed,issue_id,revision,created_at,updated_at,creation_source) VALUES(?,?,'本文\n保持',' category ',1,?,9,?,'original',?)").bind(Uuid::from_u128(n)).bind(p).bind(issue).bind(date).bind(source).execute(&pool).await.unwrap();
+    }
+    let snapshot = "SELECT json_array(hex(id),hex(project_id),body,category,completed,hex(issue_id),revision,created_at,updated_at,creation_source) FROM project_todos ORDER BY id";
+    let before: Vec<String> = sqlx::query_scalar(snapshot).fetch_all(&pool).await.unwrap();
+    sqlx::raw_sql(include_str!(
+        "../../migrations/20261030000000_todo_numbers.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let after: Vec<String> = sqlx::query_scalar(snapshot).fetch_all(&pool).await.unwrap();
+    assert_eq!(before, after);
+    for (number, id) in [(1, 3), (2, 1), (3, 2)] {
+        assert_eq!(
+            Todo::resolve(&pool, p, &format!("TODO-{number}"))
+                .await
+                .unwrap()
+                .id,
+            Uuid::from_u128(id)
+        );
+    }
+    assert_eq!(
+        Todo::create(&pool, p, note("next")).await.unwrap().number,
+        4
+    );
+    assert_eq!(
+        Todo::create(&pool, other, note("first"))
+            .await
+            .unwrap()
+            .number,
+        1
+    );
+    let a = Todo::resolve(&pool, p, "TODO-1").await.unwrap();
+    let a = Todo::update(
+        &pool,
+        p,
+        a.id,
+        changes(json!({"expected_revision":9,"clear_issue":true})),
+    )
+    .await
+    .unwrap();
+    assert_eq!(a.number, 1);
+    let a = Todo::update(
+        &pool,
+        p,
+        a.id,
+        changes(json!({"expected_revision":10,"issue_id":issue})),
+    )
+    .await
+    .unwrap();
+    assert_eq!(a.number, 1);
 }

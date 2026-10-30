@@ -148,6 +148,14 @@ try {
       `
 import sqlite3,sys
 c=sqlite3.connect(sys.argv[1])
+c.execute("DROP TRIGGER project_todos_number_insert")
+c.execute("DROP TRIGGER project_todos_number_immutable")
+c.execute("DROP TRIGGER project_todo_counter_monotonic")
+c.execute("DROP INDEX project_todos_number")
+c.execute("ALTER TABLE project_todos DROP COLUMN display_id")
+c.execute("ALTER TABLE project_todos DROP COLUMN number")
+c.execute("DROP TABLE project_todo_counters")
+c.execute("DELETE FROM _sqlx_migrations WHERE version=20261030000000")
 c.execute("DROP TRIGGER project_todos_creation_source_immutable")
 c.execute("ALTER TABLE project_todos DROP COLUMN creation_source")
 c.execute("DELETE FROM _sqlx_migrations WHERE version=20261024000000")
@@ -363,6 +371,68 @@ c.commit()
       .creation_source,
     "mcp",
   );
+  const numbered = await tool("get_todo", {
+    project_id: project,
+    todo_id: mcpId,
+  });
+  assert.match(numbered.display_id, /^TODO-[1-9][0-9]*$/);
+  assert.equal(
+    (
+      await tool("get_todo", {
+        project_id: project,
+        todo_id: numbered.display_id,
+      })
+    ).id,
+    mcpId,
+  );
+
+  for (const ref of [
+    "TODO-0",
+    "TODO-01",
+    "todo-1",
+    "TODO-999999",
+    "TODO-1/../",
+  ]) {
+    const rejected = await rpc("tools/call", {
+      name: "get_todo",
+      arguments: { project_id: project, todo_id: ref },
+    });
+    assert.equal(rejected.isError, true, ref);
+  }
+  for (const ref of ["TODO-0", "TODO-999999"]) {
+    const rejected = await rpc("tools/call", {
+      name: "update_todo",
+      arguments: {
+        project_id: project,
+        todo_id: ref,
+        changes: { expected_revision: 1, completed: true },
+      },
+    });
+    assert.equal(rejected.isError, true, ref);
+  }
+  const foreignProject = (
+    await api("/api/local/v1/projects", "POST", {
+      key: "OTHER",
+      organization_id: "00000000-0000-0000-0000-000000000002",
+      name: "番号境界試験",
+      color: "#6366f1",
+    })
+  ).data.id;
+  for (const ref of [numbered.display_id, mcpId]) {
+    for (const name of ["get_todo", "update_todo"]) {
+      const rejected = await rpc("tools/call", {
+        name,
+        arguments: {
+          project_id: foreignProject,
+          todo_id: ref,
+          ...(name === "update_todo"
+            ? { changes: { expected_revision: 1, completed: true } }
+            : {}),
+        },
+      });
+      assert.equal(rejected.isError, true, `${name} ${ref}`);
+    }
+  }
   const list = await tool("list_todos", { project_id: project });
   assert.equal(list.items.find((t) => t.id === mcpId).creation_source, "mcp");
   assert.equal(list.items.length, samples.length + 1);
@@ -468,16 +538,6 @@ c.commit()
     grid.getByLabel("気付いたことやTODOを追加…", { exact: true }),
   ).toHaveValue("未送信の思い付き");
   await grid.getByLabel("気付いたことやTODOを追加…", { exact: true }).fill("");
-  await page
-    .getByRole("button", { name: "統合 / 自動マージ", exact: true })
-    .click();
-  const integrationTitle = page.getByRole("heading", {
-    name: "自動マージ",
-    exact: true,
-  });
-  await expect(integrationTitle).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(integrationTitle).toHaveCount(0);
   await page.screenshot({
     path: path.join(output, "screenshots/project-dark.png"),
     fullPage: true,
@@ -487,6 +547,9 @@ c.commit()
     .evaluate(
       (el) => getComputedStyle(el).gridTemplateColumns.split(" ").length,
     );
+  await expect(
+    page.locator(`[data-todo-number="${numbered.display_id}"]`),
+  ).toBeVisible();
   assert.ok(columns > 1, "desktop TODO grid must use multiple columns");
 
   await checkBodyExpansion({
@@ -595,7 +658,7 @@ c.commit()
   ).toBeVisible();
   await tool("update_todo", {
     project_id: project,
-    todo_id: mcpId,
+    todo_id: numbered.display_id,
     changes: {
       expected_revision: (await api(`${todoPath}/${mcpId}`)).data.revision,
       body: "MCPで更新 → UIにも反映",
@@ -627,7 +690,7 @@ c.commit()
   await expect(panel).toBeVisible();
   await tool("update_todo", {
     project_id: project,
-    todo_id: mcpId,
+    todo_id: numbered.display_id,
     changes: {
       expected_revision: (await api(`${todoPath}/${mcpId}`)).data.revision,
       issue_id: issue,
@@ -712,7 +775,7 @@ c.commit()
   });
   assert.deepEqual(errors, [], "browser runtime errors");
   console.log(
-    "PASS: real API + stdio MCP + Chromium CRUD, revisions, pane navigation, Integration dialog, responsive grid, dark/light, reload persistence. No agents executed.",
+    "PASS: real API + stdio MCP + Chromium CRUD, revisions, immutable TODO identifiers, pane navigation, responsive grid, dark/light, reload persistence. No agents executed.",
   );
 } catch (error) {
   if (page) {

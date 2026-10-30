@@ -37,10 +37,10 @@ async fn list(
 }
 async fn read(
     State(d): State<DeploymentImpl>,
-    Path((project, id)): Path<(Uuid, Uuid)>,
+    Path((project, id)): Path<(Uuid, String)>,
 ) -> Result<Json<ApiResponse<Todo>>, ApiError> {
     Ok(Json(ApiResponse::success(
-        Todo::get(&d.db().pool, project, id).await?,
+        Todo::resolve(&d.db().pool, project, &id).await?,
     )))
 }
 async fn create(
@@ -78,11 +78,17 @@ async fn create_mcp(
 
 async fn update(
     State(d): State<DeploymentImpl>,
-    Path((project, id)): Path<(Uuid, Uuid)>,
+    Path((project, id)): Path<(Uuid, String)>,
     Json(input): Json<UpdateTodo>,
 ) -> Result<Json<ApiResponse<Todo>>, ApiError> {
     Ok(Json(ApiResponse::success(
-        Todo::update(&d.db().pool, project, id, input).await?,
+        Todo::update(
+            &d.db().pool,
+            project,
+            Todo::resolve(&d.db().pool, project, &id).await?.id,
+            input,
+        )
+        .await?,
     )))
 }
 #[derive(Deserialize)]
@@ -91,10 +97,16 @@ struct DeleteQuery {
 }
 async fn delete(
     State(d): State<DeploymentImpl>,
-    Path((project, id)): Path<(Uuid, Uuid)>,
+    Path((project, id)): Path<(Uuid, String)>,
     Query(query): Query<DeleteQuery>,
 ) -> Result<Json<ApiResponse<()>>, ApiError> {
-    Todo::delete(&d.db().pool, project, id, query.expected_revision).await?;
+    Todo::delete(
+        &d.db().pool,
+        project,
+        Todo::resolve(&d.db().pool, project, &id).await?.id,
+        query.expected_revision,
+    )
+    .await?;
     Ok(Json(ApiResponse::success(())))
 }
 

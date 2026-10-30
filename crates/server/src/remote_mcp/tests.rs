@@ -1594,7 +1594,7 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         .execute(&pool)
         .await
         .unwrap();
-    let remote = Remote {
+    let mut remote = Remote {
         environment: None,
         launch: None,
         runtime: None,
@@ -1640,6 +1640,70 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
     let todo = result["result"]["todo"].clone();
     let id = todo["id"].clone();
     assert_eq!(todo["creation_source"], "mcp");
+    assert_eq!(todo["display_id"], "TODO-1");
+    assert_eq!(todo["number"], 1);
+    let numbered = todos::call(
+        &remote,
+        &reader,
+        "get_todo",
+        json!({"project_id":project,"todo_id":"TODO-1"}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(numbered, todo);
+    for reference in [
+        "TODO-0",
+        "TODO-01",
+        "todo-1",
+        "TODO-999",
+        "TODO-1/../",
+        "TODO-9223372036854775808",
+    ] {
+        assert!(
+            todos::call(
+                &remote,
+                &reader,
+                "get_todo",
+                json!({"project_id":project,"todo_id":reference})
+            )
+            .await
+            .is_err()
+        );
+    }
+    for reference in ["TODO-0", "TODO-01", "TODO-999", "TODO-1/../"] {
+        let request = Uuid::new_v4();
+        todos::call(&remote, &writer, "update_todo", json!({"project_id":project,"request_id":request,"todo_id":reference,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+        assert_eq!(
+            settled_operation(&remote, &writer, project, request).await["status"],
+            "failed"
+        );
+    }
+    let other = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'other','OTHER')")
+        .bind(other)
+        .execute(&pool)
+        .await
+        .unwrap();
+    Arc::make_mut(&mut remote.config).project_ids.insert(other);
+    for reference in [json!("TODO-1"), id.clone()] {
+        assert!(
+            todos::call(
+                &remote,
+                &reader,
+                "get_todo",
+                json!({"project_id":other,"todo_id":reference})
+            )
+            .await
+            .is_err()
+        );
+        let request = Uuid::new_v4();
+        todos::call(&remote, &writer, "update_todo", json!({"project_id":other,"request_id":request,"todo_id":reference,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+        assert_eq!(
+            settled_operation(&remote, &writer, other, request).await["status"],
+            "failed"
+        );
+    }
+
     let read = todos::call(
         &remote,
         &reader,
@@ -1674,12 +1738,25 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         assert_eq!(page["items"].as_array().unwrap().len(), count);
     }
     let update = Uuid::new_v4();
-    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":id,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":"TODO-1","changes":{"expected_revision":1,"completed":true}})).await.unwrap();
     let result = settled_operation(&remote, &writer, project, update).await;
     assert_eq!(result["status"], "succeeded", "{result}");
     assert_eq!(result["result"]["todo"]["body"], todo["body"]);
     assert_eq!(result["result"]["todo"]["revision"], 2);
     assert_eq!(result["result"]["todo"]["creation_source"], "mcp");
+    assert_eq!(result["result"]["todo"]["display_id"], "TODO-1");
+    let uuid_update = Uuid::new_v4();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":uuid_update,"todo_id":id,"changes":{"expected_revision":2,"completed":false}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, uuid_update).await["result"]["todo"]["display_id"],
+        "TODO-1"
+    );
+    let stale_number = Uuid::new_v4();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":stale_number,"todo_id":"TODO-1","changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, stale_number).await["status"],
+        "failed"
+    );
     let stale = Uuid::new_v4();
     todos::call(
         &remote,
@@ -1698,7 +1775,7 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         &remote,
         &writer,
         "delete_todo",
-        json!({"project_id":project,"request_id":delete,"todo_id":id,"expected_revision":2}),
+        json!({"project_id":project,"request_id":delete,"todo_id":id,"expected_revision":3}),
     )
     .await
     .unwrap();
