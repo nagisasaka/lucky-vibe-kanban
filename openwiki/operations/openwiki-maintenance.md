@@ -84,10 +84,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-10-30T04:46:05.998Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+    at: 2026-10-30T04:46:05.998Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -173,7 +173,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 
 受付 task が `wiki_sync` に入った後の error は、準備中に writer を予約済みかもしれないため `uncertain` とする。同じ request の再送で実行を繰り返さず、異なる入力で同じ key を使えば拒否する。現在の maintenance ID と既存実行を確認し、回復後に必要な再同期だけを新しい request として判断する。受付時の repository 再照合失敗は `repository_unavailable`、実行 ID 不在は `admission_not_confirmed`、owner / Run / store 証拠の読取失敗は `evidence_unavailable` であり、いずれも成功へ補完しない。[保守的な受付](../../crates/server/src/remote_mcp/repository_wiki.rs#L118-L174)・[入力固定と再起動](../../crates/server/src/remote_mcp/operations.rs#L208-L245)
 
-公開用診断は固定の error code と安全な message に制限し、private path、provider の生ログ、動的な内部エラー列を返さない。詳細は既存 maintenance execution の画面で確認する。読取 tool は結果を観測するだけで、publication や reconciliation を進めない。[診断境界](../../crates/server/src/remote_mcp/repository_wiki.rs#L234-L247)・[共通 message](../../crates/server/src/remote_mcp/errors.rs#L1-L8)
+公開用診断は固定の error code と安全な message に制限し、private path、provider の生ログ、動的な内部エラー列を返さない。詳細は既存 maintenance execution の画面で確認する。読取 tool は結果を観測するだけで、publication や reconciliation を進めない。[診断境界](../../crates/server/src/remote_mcp/repository_wiki.rs#L234-L247)・[共通 message](../../crates/server/src/remote_mcp/errors.rs#L1-L12)。共通境界には[添付拒否の安全なhostname専用型](../integrations/remote-access.md#許可されていない添付ホストを診断する)の例外があるが、一般の内部errorやcontextを公開する許可ではない
 
 変更時は [古い対象・Wiki 不在・active owner の拒否](../../crates/server/src/routes/openwiki.rs#L901-L927)、[権限・所属・同時再送・uncertainty保持・証拠欠落](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L745)、[Agent成功と公開 intent だけでは完了せず、再同期後も旧失敗を保持する fixture](../../crates/server/src/remote_mcp/repository_wiki.rs#L316-L415)、[HTTP write / merge scope の分離](../../crates/server/src/remote_mcp/tests.rs#L317-L342)を入口にする。Git 公開自体の回復・source drift・no-op は [既存サービスの試験](../../crates/services/src/services/openwiki.rs#L470-L564)で別に扱う。これらの fixture は実 Auth0 / ChatGPT や実モデルの Wiki 品質を証明しない。
 

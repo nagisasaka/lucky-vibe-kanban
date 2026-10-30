@@ -26,6 +26,8 @@ sources:
     resource: repo://crates/server/src/middleware/origin.rs
   - id: openwiki-source-e1757d002aa325145a915b38
     resource: repo://crates/server/src/provider_usage.rs
+  - id: openwiki-source-448d823f6734081b48eb5350
+    resource: repo://crates/server/src/remote_mcp/attachment_tests.rs
   - id: openwiki-source-b5d7c5a5b00efaa28b3e1777
     resource: repo://crates/server/src/remote_mcp/attachments.rs
   - id: openwiki-source-53c04d549d6401053afe5fc4
@@ -36,6 +38,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/design_notes.rs
   - id: openwiki-source-87ddf3d108f228e9ef8f8964
     resource: repo://crates/server/src/remote_mcp/dev_server.rs
+  - id: openwiki-source-8e100846c63b4921192f2eb4
+    resource: repo://crates/server/src/remote_mcp/errors.rs
   - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
@@ -114,10 +118,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-10-30T04:46:05.998Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+    at: 2026-10-30T04:46:05.998Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -394,6 +398,12 @@ Issue単位のarchiveは `prepare_issue_archive` でcheckboxと全対象を一�
 Remote/stdioは既存Attachment/FileServiceを共用する。`upload_attachment` は認可済みProjectへbytesを保存し、`place_attachments` はProject/Workspace/Sessionの所属を検証してSession作業ディレクトリへ配置する。保存・配置だけではRunを作らない。添付はWorkspace共有で、Session専有の秘密領域ではない。[共有API](../../crates/server/src/routes/attachment_transfer.rs)・[stdio登録](../../crates/mcp/src/task_server/tools/attachments.rs)
 
 Remoteはホスト提供の `file` をfileParamsとして宣言し、download_url/file_idを必須、mime_type/file_nameを任意propertyにする。Library IDやクライアント内パスだけではbytesを受け取れない。inline base64は両transportでdecoded 2MiB、ホスト取得は20MiB、添付JSON本体は4MiBである。HTTPS/443・operatorの完全一致host allowlist・公開IPへのDNS固定・redirect禁止・取得timeoutを適用し、任意URL fetchにはしない。既定hostは `files.oaiusercontent.com` で、実ホスト適合は未検証である。[catalog](../../crates/server/src/remote_mcp/attachments.rs#L5-L29)・[入力と取得検証](../../crates/server/src/routes/attachment_transfer.rs#L23-L175)・[運用契約](../../docs/development/mcp-attachments.md)
+
+### 許可されていない添付ホストを診断する
+
+host allowlistで拒否した場合、Remote MCPとupload APIは、安全に表現できる正規化済みhostnameだけを `Host file domain is not enabled (hostname: …)` として返す。専用の非公開error型が保持するのはhostnameのみで、ASCII英数字・ハイフン・ドット、全体253 bytes以内、各label 1〜63 bytesに限定する。URL parseの元errorは保持せず、不正なURL、userinfo・fragment・不許可scheme/port、表現できないhostnameには静的な拒否を返す。[hostnameの抽出と拒否](../../crates/server/src/routes/attachment_transfer.rs#L106-L161)・[upload API](../../crates/server/src/routes/attachment_transfer.rs#L534-L543)
+
+公開error境界が動的に表示するのはこの専用型だけで、一般のdomain/IO/SQL errorやcontext chainは引き続き隠す。許可リストや取得時のセキュリティ条件を変更する機能ではない。隔離fixtureはhostname以外のURL・path・query・file_idが応答や監査に現れず、拒否で添付・operation receiptが作られないことを検査する。実ChatGPTのhostnameや実搬送の成功は未確認であり、配備後の再試行で確認する。[公開境界](../../crates/server/src/remote_mcp/errors.rs#L1-L12)・[回帰fixture](../../crates/server/src/remote_mcp/attachment_tests.rs#L322-L341)・[安全でない入力の回帰](../../crates/server/src/routes/attachment_transfer.rs#L596-L650)
 
 ### 読めることを確認してから実行する
 
