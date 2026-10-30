@@ -322,8 +322,20 @@ async fn isolated_attachment_remote_stdio_e2e() -> anyhow::Result<()> {
         let args=json!({"project_id":target.project_id,"request_id":request,"original_name":"素材.svg","data_base64":STANDARD.encode(svg)});
         let (code,_)=http.rpc("read-only","tools/call",json!({"name":"upload_attachment","arguments":args})).await;ensure!(code==403);
         let secret="signed-url-must-not-escape";
-        let refused=http.call("runtime","upload_attachment",json!({"project_id":target.project_id,"request_id":Uuid::new_v4(),"original_name":"x.png","file":{"download_url":format!("https://evil.invalid/file?secret={secret}"),"file_id":"opaque"}})).await;
-        ensure!(refused["isError"]==true && !refused.to_string().contains(secret));
+        let refused_request=Uuid::new_v4();
+        let receipts_before:i64=sqlx::query_scalar("SELECT COUNT(*) FROM remote_mcp_operations").fetch_one(&remote.pool).await?;
+        let attachments_before:i64=sqlx::query_scalar("SELECT COUNT(*) FROM attachments").fetch_one(&remote.pool).await?;
+        let refused=http.call("runtime","upload_attachment",json!({"project_id":target.project_id,"request_id":refused_request,"original_name":"x.png","file":{"download_url":format!("https://REJECTED.Example.invalid/private-material?secret={secret}"),"file_id":"synthetic-private-file-id"}})).await;
+        ensure!(refused["isError"]==true);
+        ensure!(refused["content"][0]["text"]=="Host file domain is not enabled (hostname: rejected.example.invalid)");
+        let recovery=http.call("runtime","get_operation",json!({"project_id":target.project_id,"request_id":refused_request})).await;
+        ensure!(recovery["isError"]==true);
+        let audit=sqlx::query_as::<_,(i64,Option<String>,String,String,Option<String>,String)>("SELECT at,actor,channel,action,target,outcome FROM access_audit").fetch_all(&remote.pool).await?;
+        for visible in [refused.to_string(),recovery.to_string(),format!("{audit:?}")] {
+            for forbidden in [secret,"private-material","synthetic-private-file-id","https://"] { ensure!(!visible.contains(forbidden)); }
+        }
+        ensure!(sqlx::query_scalar::<_,i64>("SELECT COUNT(*) FROM remote_mcp_operations").fetch_one(&remote.pool).await?==receipts_before);
+        ensure!(sqlx::query_scalar::<_,i64>("SELECT COUNT(*) FROM attachments").fetch_one(&remote.pool).await?==attachments_before);
         let saved=http.value("upload_attachment",args.clone()).await;
         ensure!(saved["status"]=="succeeded","{saved}");
         ensure!(saved["result"]["attachment"]["size_bytes"]==svg.len());ensure!(saved["result"]["attachment"]["hash"]==format!("{:x}",Sha256::digest(svg)));
