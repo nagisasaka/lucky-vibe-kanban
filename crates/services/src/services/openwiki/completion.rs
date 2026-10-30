@@ -29,6 +29,13 @@ fn fingerprint(value: &Value) -> [u8; 32] {
     Sha256::digest(serde_json::to_vec(&canonical(value)).expect("JSON value serialises")).into()
 }
 
+fn is_retrieval(tool: &str) -> bool {
+    matches!(
+        tool,
+        "openwiki_search" | "openwiki_read" | "openwiki_list_workspaces" | "openwiki_list_wikis"
+    )
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WriterPhase {
     Generate,
@@ -201,17 +208,32 @@ impl PhaseCompletionProof {
             .context("OpenWiki tool name missing")?;
         let args = &item["arguments"];
         ensure!(
-            matches!(
-                tool,
-                "openwiki_begin"
-                    | "openwiki_submit_plan"
-                    | "openwiki_next_page"
-                    | "openwiki_inspect_page_claims"
-                    | "openwiki_submit_page"
-                    | "openwiki_finish"
-            ),
+            is_retrieval(tool)
+                || matches!(
+                    tool,
+                    "openwiki_begin"
+                        | "openwiki_submit_plan"
+                        | "openwiki_next_page"
+                        | "openwiki_inspect_page_claims"
+                        | "openwiki_submit_page"
+                        | "openwiki_finish"
+                ),
             "Unsupported OpenWiki tool {tool}"
         );
+        let retrieval = is_retrieval(tool);
+        if retrieval {
+            // The addressed root remains this maintenance checkout. Linked wiki
+            // IDs are resolved by upstream, without an LVK repository allowlist.
+            let addressed = Path::new(
+                args["root"]
+                    .as_str()
+                    .context("OpenWiki retrieval root missing")?,
+            );
+            ensure!(
+                addressed.is_absolute() && addressed.canonicalize()? == root.canonicalize()?,
+                "OpenWiki retrieval root mismatch"
+            );
+        }
         if method == "item/started" {
             ensure!(
                 !self.completed_calls.contains_key(id),
@@ -225,8 +247,8 @@ impl PhaseCompletionProof {
                 return Ok(());
             }
             ensure!(
-                self.pending.is_empty(),
-                "Overlapping OpenWiki calls are not supported"
+                retrieval || self.pending.values().all(|(tool, _)| is_retrieval(tool)),
+                "Overlapping OpenWiki lifecycle calls are not supported"
             );
             self.pending
                 .insert(id.to_owned(), (tool.to_owned(), fingerprint(args)));
@@ -249,6 +271,11 @@ impl PhaseCompletionProof {
         );
         self.completed_calls
             .insert(id.to_owned(), fingerprint(item));
+        // Retrieval retains call identity, duplicate and root-thread auditing,
+        // but neither its success nor failure changes writer operation proof.
+        if retrieval {
+            return Ok(());
+        }
         let failed = item["status"] != "completed"
             || !item["error"].is_null()
             || item["result"]["isError"] == true;
@@ -337,7 +364,7 @@ impl PhaseCompletionProof {
                 "Bootstrap cannot reinitialise Wiki"
             );
         }
-        // 0.5.1's public no-op response has no runId or resumed flag. It is
+        // The public no-op response has no runId or resumed flag. It is
         // successful only for an ordinary unforced update with no open run.
         if data["status"] == "noop" {
             ensure!(
@@ -829,5 +856,142 @@ mod tests {
         let (_tmp, audit) = audited(tmp.path(), vec![], 1);
         proof.replay_attempt(&audit, tmp.path()).unwrap();
         assert!(proof.validate().is_err()); // prose/custom stdio bridge is not MCP evidence
+    }
+    fn read(root: &Path, tool: &str, failed: bool) -> Vec<Value> {
+        frames(
+            tool,
+            json!({"root":root,"query":"contract","wiki":"linked-id"}),
+            if failed {
+                json!({"isError":true})
+            } else {
+                json!({"structuredContent":{"results":[]}})
+            },
+        )
+    }
+
+    #[test]
+    fn retrieval_audit_can_overlap_without_closing_or_serialising_writer_operations() {
+        let tmp = tempfile::tempdir().unwrap();
+        let id = Uuid::new_v4();
+        let a = read(tmp.path(), "openwiki_search", false);
+        let b = read(tmp.path(), "openwiki_read", true);
+        let start = begin(tmp.path(), "update", id);
+        let end = finish(id);
+        let sequence = vec![
+            a[0].clone(),
+            b[0].clone(),
+            start[0].clone(),
+            a[1].clone(),
+            a[1].clone(),
+            start[1].clone(),
+            b[1].clone(),
+        ];
+        let (_dir, audit) = audited(tmp.path(), sequence, 1);
+        let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+        proof.replay_continuation(&audit, tmp.path()).unwrap();
+        assert!(proof.validate().is_err()); // neither read success nor failure closes begin
+        let mut resumed = begin(tmp.path(), "update", id);
+        for frame in &mut resumed {
+            frame["params"]["item"]["result"]["structuredContent"]["resumed"] = json!(true);
+        }
+        let sequence = read(tmp.path(), "openwiki_list_workspaces", false)
+            .into_iter()
+            .chain(resumed)
+            .chain(end)
+            .chain(read(tmp.path(), "openwiki_list_wikis", false))
+            .collect();
+        let (_dir, audit) = audited(tmp.path(), sequence, 2);
+        proof.replay_continuation(&audit, tmp.path()).unwrap();
+        proof.validate().unwrap();
+    }
+
+    #[test]
+    fn retrieval_identity_unknown_tools_and_unresolved_calls_fail_closed() {
+        let tmp = tempfile::tempdir().unwrap();
+        let other = tempfile::tempdir().unwrap();
+        for mutation in [
+            "thread",
+            "root",
+            "arguments",
+            "tool",
+            "id",
+            "missing_start",
+            "duplicate_result",
+            "duplicate_start",
+            "unknown",
+            "pending",
+        ] {
+            let mut input = read(tmp.path(), "openwiki_search", false);
+            match mutation {
+                "thread" => input[0]["params"]["threadId"] = json!("child"),
+                "root" => {
+                    for frame in &mut input {
+                        frame["params"]["item"]["arguments"]["root"] = json!(other.path());
+                    }
+                }
+                "arguments" => input[1]["params"]["item"]["arguments"]["query"] = json!("changed"),
+                "tool" => input[1]["params"]["item"]["tool"] = json!("openwiki_read"),
+                "id" => input[1]["params"]["item"]["id"] = json!(Uuid::new_v4()),
+                "missing_start" => {
+                    input.remove(0);
+                }
+                "duplicate_result" => {
+                    let mut frame = input[1].clone();
+                    frame["params"]["item"]["result"] = json!({});
+                    input.push(frame);
+                }
+                "duplicate_start" => {
+                    let mut frame = input[0].clone();
+                    frame["params"]["item"]["arguments"]["query"] = json!("changed");
+                    input.insert(1, frame);
+                }
+                "unknown" => {
+                    for frame in &mut input {
+                        frame["params"]["item"]["tool"] = json!("openwiki_future");
+                    }
+                }
+                "pending" => {
+                    input.pop();
+                }
+                _ => unreachable!(),
+            }
+            let (_dir, audit) = audited(tmp.path(), input, 1);
+            let mut proof = PhaseCompletionProof::new(WriterPhase::Refine);
+            assert!(
+                proof.replay_attempt(&audit, tmp.path()).is_err(),
+                "{mutation}"
+            );
+        }
+    }
+
+    #[test]
+    fn retrieval_does_not_mask_lifecycle_overlap_drift_or_unclosed_calls() {
+        let tmp = tempfile::tempdir().unwrap();
+        for mutation in ["overlap", "drift", "pending"] {
+            let id = Uuid::new_v4();
+            let start = begin(tmp.path(), "update", id);
+            let mut sequence = read(tmp.path(), "openwiki_search", false);
+            if mutation == "overlap" {
+                sequence.push(start[0].clone());
+                sequence.push(finish(id)[0].clone());
+            } else {
+                sequence.extend(start);
+                if mutation == "drift" {
+                    let mut end = finish(id);
+                    end[1]["params"]["item"]["result"]["structuredContent"]["sourceChanged"] =
+                        json!(true);
+                    sequence.extend(end);
+                } else {
+                    sequence.push(finish(id)[0].clone());
+                }
+            }
+            sequence.extend(read(tmp.path(), "openwiki_read", true));
+            let (_dir, audit) = audited(tmp.path(), sequence, 1);
+            let mut proof = PhaseCompletionProof::new(WriterPhase::Sync);
+            assert!(
+                proof.replay_continuation(&audit, tmp.path()).is_err(),
+                "{mutation}"
+            );
+        }
     }
 }

@@ -117,7 +117,7 @@ use the server image for production deployment.
 
 ## Auto-merge
 
-Auto-merge validates changes, uses AI to resolve conflicts when needed, and applies them to the target branch. It can merge mechanically without AI and pauses for required decisions or approvals. Code merge and subsequent OpenWiki updates are separate outcomes; a Wiki-only failure does not undo merged code.
+Auto-merge validates changes, uses AI to resolve conflicts when needed, and applies them to the target branch. It can merge mechanically without AI and pauses for required decisions or approvals. When OpenWiki is enabled, code validation and Wiki maintenance finish in the same integration candidate before publication, with Wiki changes committed separately. Receipt bookkeeping after publication is independently recoverable.
 
 ## Workspaces and repository memory
 

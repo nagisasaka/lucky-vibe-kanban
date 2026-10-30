@@ -167,7 +167,7 @@ do not match the snapshot also remain visible with their limitations. Agent
 instruction files are marked separately, not offered as Wiki evidence.
 
 If the source has `.openwikiignore`, the inventory is explicitly unavailable in
-v1: OpenWiki 0.5.1 has no compatible public path-selection API. Normal independent
+v1: OpenWiki 0.7.2 has no compatible public path-selection API. Normal independent
 exploration continues; this is not a zero-document result. Do not remove ignore
 rules just to enable the inventory.
 
@@ -397,18 +397,39 @@ configuration. Repairing a file does not itself mark failed maintenance as
 successful; the next maintenance run must establish its own completion.
 
 Maintenance writers require OpenWiki's registered Codex MCP tools before starting
-their first turn. LVK uses a ten-second MCP startup timeout and a fifteen-second
+their first turn. LVK uses a sixty-second MCP startup timeout and a fifteen-second
 tool-discovery deadline. An **OpenWiki MCP preflight** error means the writer did
 not start: check the pinned installation, executable availability, and MCP tool
 allow/deny settings, then start a new Bootstrap after cleanup (or retry normal
-Sync). A server's `ready` status alone is insufficient when lifecycle tools are
+Sync). A server's `ready` status alone is insufficient when lifecycle or retrieval tools are
 missing. Do not ask the agent to bypass the error with its own MCP process or
 stdio bridge: LVK cannot accept those calls as its audited completion proof.
+Maintenance writers have all six lifecycle tools and four read-only tools:
+`openwiki_search`, `openwiki_read`, `openwiki_list_workspaces` and
+`openwiki_list_wikis`. Retrieval may overlap lifecycle calls or run before begin
+and after finish; it never closes or validates a writer operation. LVK audits
+root-thread ownership, call identity and consistent duplicates for both classes,
+while lifecycle calls remain sequential under one owner. Unknown tools fail closed.
+
+Linked Wikis are reference material selected through OpenWiki's public workspace
+registry and reachability rules. LVK does not add a repository blocklist or force
+a separate registry. It forwards an existing `OPENWIKI_CONFIG_DIR` setting to the
+registered MCP process; otherwise OpenWiki uses its normal home directory. Registration uses canonical checkout roots: linking the
+original repository does not automatically register a new maintenance worktree.
+Use the public `openwiki link` mechanism for that worktree when linked context is
+needed; an unregistered worktree searches its local Wiki only. Distinguish linked
+context from evidence about the current source. All authoring and publication
+remain restricted to the current maintenance or integration candidate's
+`openwiki/`; linked Wiki references do not authorise updates to other Wikis.
+Normal coding agents and the remote MCP gain no new search tools through this
+maintenance-only change. Existing `query_repository` source SHA/revision checks
+and Wiki page reads remain available.
+
 The independent Reviewer still has no OpenWiki writer tools; a valid no-change
 Refine still requires no update. Existing failed runs are not automatically
 published by this fix.
 
-OpenWiki 0.5.1 also emits setup artifacts for other operating modes. LVK does not
+OpenWiki 0.7.2 also emits setup artifacts for other operating modes. LVK does not
 publish its generated GitHub Actions/native-provider updater or its additions to
 `AGENTS.md` and `CLAUDE.md`. Before launching Codex, LVK records your original
 instructions and materialises repository-internal instruction symlinks as
@@ -450,7 +471,7 @@ no-op optimisation remain separate work.
 
 Change the single version pin only after testing the upstream public host
 protocol. Do not vendor or patch OpenWiki. The adapter checks the executable's
-public help banner because OpenWiki 0.5.1 does not implement `--version`.
+public help banner because OpenWiki 0.7.2 does not implement `--version`.
 LVK disables forced colour for CLI commands and strips terminal styling before
 checking the exact version. You do not need to change your shell's colour settings.
 A CLI version-check error occurs before Wiki generation, not during finalisation.
@@ -470,6 +491,8 @@ run the following on a system that supports creating symlinks:
 
 ```bash
 node scripts/test-openwiki-host.mjs --lvk-setup
+node scripts/test-openwiki-host.mjs --lvk-setup --claude-file
+node scripts/test-openwiki-host.mjs --lvk-setup --claude-absent
 ```
 
 This variant builds a fixture-only Rust driver. It checks exact instruction and
@@ -482,7 +505,7 @@ production Rust adapter against your installed CLI with the development runner's
 colour environment, run:
 
 ```bash
-FORCE_COLOR=1 cargo test -p services installed_openwiki_cli_version_probe -- --ignored
+FORCE_COLOR=1 node scripts/dev-cargo.mjs test -p services installed_openwiki_cli_version_probe -- --ignored
 ```
 
 This opt-in test only checks the CLI version and makes no model calls.
@@ -505,3 +528,25 @@ source. Stop one maintenance run to exercise Error/retry without discarding sour
 Actual Docker-image verification requires a Docker daemon. No release, registry
 publication, GitHub Actions invocation, push, or PR creation is part of the local
 automated checks.
+
+For package-upgrade and installer regression checks, keep both public packages
+outside the checkout and set `OPENWIKI_BIN` to 0.7.2 and
+`OPENWIKI_PREVIOUS_BIN` to 0.5.1. Put the 0.7.2 executable on the child process
+`PATH` so the production adapter uses that same package, then run
+`node scripts/test-openwiki-install.mjs`. This exercises upgrade/reinstall,
+shared skill ownership, custom configuration conflicts and the marker repair.
+
+The opt-in `services` example `openwiki_live_fixture` runs two real Codex turns
+against a disposable repository: retrieval and begin, then owned resume and
+finalisation. It uses the production Codex launch/preflight and OpenWiki setup,
+records raw wire output through `scripts/lib/codex-audit-proxy.py`, and replays
+it using the Native Audit completion checker. The tee does not implement MCP or
+alter Codex frames. Supply a temporary source repository containing `index.js`
+with the fixture add function, and link it to a fixture Wiki containing
+`UniqueLinkedToken` through the public `openwiki link` UI first. Use a separate
+evidence directory, isolated Codex credentials/configuration and test registry;
+these are test isolation, not production defaults. The root and evidence paths
+must be below the process's temporary directory. This example makes real model
+calls and is never part of the model-free smoke. It checks protocol closure and
+Wiki-only publication paths, without merging or approving publication. DB-backed
+ownership, receipts and auto-merge gates require their own regression checks.

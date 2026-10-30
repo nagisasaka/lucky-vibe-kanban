@@ -857,4 +857,39 @@ mod tests {
                 .is_some()
         );
     }
+    #[tokio::test]
+    async fn conversation_retrieval_overlap_never_hides_an_unfinished_writer() {
+        for finished in [false, true] {
+            let mut f = Fixture::new().await;
+            let calls = f.operations(&["update"], finished);
+            let id = Uuid::new_v4();
+            let read = |method| {
+                json!({"method":method,"params":{"threadId":"root","item":{
+                    "id":id,"type":"mcpToolCall","server":"openwiki","tool":"openwiki_search",
+                    "arguments":{"root":f.temp.path(),"query":"contract"},
+                    "result":{"structuredContent":{"results":[]}},"error":null,"status":"completed"
+                }}})
+            };
+            let mut frames = vec![
+                read("item/started"),
+                calls[0].clone(),
+                read("item/completed"),
+            ];
+            frames.extend_from_slice(&calls[1..]);
+            f.attempt(Some(frames)).await;
+            let run = AgentRunRecord::find(&f.pool, f.request.agent_run_id)
+                .await
+                .unwrap()
+                .unwrap();
+            let result = conversation_completion_proof(
+                &f.pool,
+                &run,
+                f.request.correlation_id,
+                f.request.workspace.workspace_id,
+                f.temp.path(),
+            )
+            .await;
+            assert_eq!(result.is_ok(), finished, "{result:?}");
+        }
+    }
 }
