@@ -21,7 +21,8 @@ struct ListArgs {
 #[derive(Deserialize, schemars::JsonSchema)]
 struct GetArgs {
     project_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
 }
 #[derive(Deserialize, schemars::JsonSchema)]
 struct CreateArgs {
@@ -31,13 +32,15 @@ struct CreateArgs {
 #[derive(Deserialize, schemars::JsonSchema)]
 struct UpdateArgs {
     project_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
     changes: UpdateTodo,
 }
 #[derive(Deserialize, schemars::JsonSchema)]
 struct DeleteArgs {
     project_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
     expected_revision: i32,
 }
 
@@ -66,11 +69,18 @@ impl McpServer {
             Err(e) => Ok(Self::tool_error(e)),
         }
     }
-    #[tool(description = "Read a TODO and its current revision before editing or deleting.")]
+    #[tool(
+        description = "Read a TODO by UUID or Project-local TODO-N, including its immutable display_id and current revision before editing or deleting."
+    )]
     async fn get_todo(
         &self,
         Parameters(a): Parameters<GetArgs>,
     ) -> Result<CallToolResult, ErrorData> {
+        if !valid_reference(&a.todo_id) {
+            return Ok(Self::tool_error(super::ToolError::message(
+                "Invalid TODO reference",
+            )));
+        }
         let url = self.url(&format!(
             "/api/projects/{}/todos/{}",
             a.project_id, a.todo_id
@@ -103,6 +113,11 @@ impl McpServer {
         &self,
         Parameters(a): Parameters<UpdateArgs>,
     ) -> Result<CallToolResult, ErrorData> {
+        if !valid_reference(&a.todo_id) {
+            return Ok(Self::tool_error(super::ToolError::message(
+                "Invalid TODO reference",
+            )));
+        }
         let url = self.url(&format!(
             "/api/projects/{}/todos/{}",
             a.project_id, a.todo_id
@@ -122,6 +137,11 @@ impl McpServer {
         &self,
         Parameters(a): Parameters<DeleteArgs>,
     ) -> Result<CallToolResult, ErrorData> {
+        if !valid_reference(&a.todo_id) {
+            return Ok(Self::tool_error(super::ToolError::message(
+                "Invalid TODO reference",
+            )));
+        }
         let url = self.url(&format!(
             "/api/projects/{}/todos/{}",
             a.project_id, a.todo_id
@@ -138,4 +158,14 @@ impl McpServer {
             Err(e) => Ok(Self::tool_error(e)),
         }
     }
+}
+
+fn valid_reference(value: &str) -> bool {
+    Uuid::parse_str(value).is_ok()
+        || value.strip_prefix("TODO-").is_some_and(|n| {
+            !n.starts_with('0')
+                && !n.is_empty()
+                && n.bytes().all(|b| b.is_ascii_digit())
+                && n.parse::<i64>().is_ok()
+        })
 }

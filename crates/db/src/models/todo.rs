@@ -22,6 +22,9 @@ pub enum TodoCreationSource {
 pub struct Todo {
     pub id: Uuid,
     pub project_id: Uuid,
+    #[ts(type = "number")]
+    pub number: i64,
+    pub display_id: String,
     pub body: String,
     pub category: String,
     pub completed: bool,
@@ -140,6 +143,32 @@ impl Todo {
             .await?
             .ok_or(TodoError::NotFound)
     }
+    /// Resolve a UUID or canonical TODO-N strictly within the supplied Project.
+    pub async fn resolve(
+        pool: &SqlitePool,
+        project: Uuid,
+        reference: &str,
+    ) -> Result<Self, TodoError> {
+        if let Ok(id) = Uuid::parse_str(reference) {
+            return Self::get(pool, project, id).await;
+        }
+        let digits = reference
+            .strip_prefix("TODO-")
+            .ok_or(TodoError::InvalidRequest)?;
+        if digits.is_empty()
+            || digits.starts_with('0')
+            || !digits.bytes().all(|b| b.is_ascii_digit())
+        {
+            return Err(TodoError::InvalidRequest);
+        }
+        let number: i64 = digits.parse().map_err(|_| TodoError::InvalidRequest)?;
+        sqlx::query_as("SELECT * FROM project_todos WHERE project_id=? AND number=?")
+            .bind(project)
+            .bind(number)
+            .fetch_optional(pool)
+            .await?
+            .ok_or(TodoError::NotFound)
+    }
     pub async fn list(
         pool: &SqlitePool,
         project: Uuid,
@@ -195,14 +224,29 @@ impl Todo {
         validate(&input.body, &input.category)?;
         Self::require_project(pool, project).await?;
         Self::require_issue(pool, project, input.issue_id).await?;
-        sqlx::query("INSERT INTO project_todos(id,project_id,body,category,issue_id,creation_source) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING")
-            .bind(input.id).bind(project).bind(&input.body).bind(&input.category).bind(input.issue_id).bind(source).execute(pool).await?;
-        let todo = Self::get(pool, project, input.id).await?;
+        // Acquire the SQLite writer before reading/retrying, so concurrent additions serialize.
+        let mut tx = pool.begin().await?;
+        let number: i64 = sqlx::query_scalar("INSERT INTO project_todo_counters(project_id,last_number) VALUES(?,1) ON CONFLICT(project_id) DO UPDATE SET last_number=last_number+1 RETURNING last_number")
+            .bind(project).fetch_one(&mut *tx).await?;
+        let inserted = sqlx::query("INSERT INTO project_todos(id,project_id,body,category,issue_id,creation_source,number) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING")
+            .bind(input.id).bind(project).bind(&input.body).bind(&input.category).bind(input.issue_id).bind(source).bind(number).execute(&mut *tx).await?;
+        let todo: Self = sqlx::query_as("SELECT * FROM project_todos WHERE project_id=? AND id=?")
+            .bind(project)
+            .bind(input.id)
+            .fetch_optional(&mut *tx)
+            .await?
+            .ok_or(TodoError::NotFound)?;
         if todo.body != input.body
             || todo.category != input.category
             || todo.issue_id != input.issue_id
         {
             return Err(TodoError::Conflict);
+        }
+        if inserted.rows_affected() == 0 {
+            // A replay returns the original identity without consuming another number.
+            tx.rollback().await?;
+        } else {
+            tx.commit().await?;
         }
         Ok(todo)
     }

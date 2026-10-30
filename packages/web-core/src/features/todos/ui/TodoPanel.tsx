@@ -411,6 +411,12 @@ function TodoRow({ todo, categories }: { todo: Todo; categories: string[] }) {
               onEdit={edit}
             />
             <span
+              className="text-xs text-low font-ibm-plex-mono"
+              data-todo-number={todo.display_id}
+            >
+              {todo.display_id}
+            </span>
+            <span
               className="mt-half block text-xs text-low"
               title={t('todo.creationSourceHint')}
               data-creation-source={todo.creation_source}

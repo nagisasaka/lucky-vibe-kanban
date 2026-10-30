@@ -27,7 +27,8 @@ struct ListArgs {
 #[serde(deny_unknown_fields)]
 struct GetArgs {
     project_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
 }
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -44,7 +45,8 @@ struct CreateArgs {
 struct UpdateArgs {
     project_id: Uuid,
     request_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
     changes: UpdateTodo,
 }
 #[derive(Deserialize, JsonSchema)]
@@ -52,7 +54,8 @@ struct UpdateArgs {
 struct DeleteArgs {
     project_id: Uuid,
     request_id: Uuid,
-    todo_id: Uuid,
+    /// UUID or canonical Project-local TODO-N (for example TODO-1).
+    todo_id: String,
     expected_revision: i32,
 }
 
@@ -64,7 +67,7 @@ pub(super) fn tools() -> Vec<Tool> {
         ),
         definition::<GetArgs>(
             "get_todo",
-            "Read a TODO and its current revision before editing or deleting it.",
+            "Read a TODO by UUID or Project-local TODO-N, including its immutable display_id and current revision before editing or deleting it.",
         ),
     ];
     let mut writes = vec![
@@ -107,7 +110,7 @@ fn failure(error: TodoError) -> (&'static str, Value) {
 fn read_failure(error: TodoError) -> anyhow::Error {
     match error {
         TodoError::NotFound => anyhow::anyhow!("TODO or Project not found"),
-        TodoError::InvalidRequest => anyhow::anyhow!("Invalid TODO pagination"),
+        TodoError::InvalidRequest => anyhow::anyhow!("Invalid TODO reference or pagination"),
         _ => anyhow::anyhow!("TODO unavailable; refresh before retrying"),
     }
 }
@@ -140,7 +143,7 @@ pub(super) async fn call(
         let a: GetArgs = arguments(input)?;
         remote.require_project(a.project_id).await?;
         return Ok(serde_json::to_value(
-            Todo::get(&remote.pool, a.project_id, a.todo_id)
+            Todo::resolve(&remote.pool, a.project_id, &a.todo_id)
                 .await
                 .map_err(read_failure)?,
         )?);
@@ -198,7 +201,12 @@ pub(super) async fn call(
                     input,
                     json!({"project_id":a.project_id,"todo_id":a.todo_id}),
                     move |_| async move {
-                        match Todo::update(&owned.pool, a.project_id, a.todo_id, a.changes).await {
+                        match async {
+                            let todo = Todo::resolve(&owned.pool, a.project_id, &a.todo_id).await?;
+                            Todo::update(&owned.pool, a.project_id, todo.id, a.changes).await
+                        }
+                        .await
+                        {
                             Ok(todo) => ("succeeded", json!({"todo":todo})),
                             Err(e) => failure(e),
                         }
@@ -219,12 +227,11 @@ pub(super) async fn call(
                     input,
                     json!({"project_id":a.project_id,"todo_id":a.todo_id}),
                     move |_| async move {
-                        match Todo::delete(
-                            &owned.pool,
-                            a.project_id,
-                            a.todo_id,
-                            a.expected_revision,
-                        )
+                        match async {
+                            let todo = Todo::resolve(&owned.pool, a.project_id, &a.todo_id).await?;
+                            Todo::delete(&owned.pool, a.project_id, todo.id, a.expected_revision)
+                                .await
+                        }
                         .await
                         {
                             Ok(()) => ("succeeded", json!({"todo_id":a.todo_id,"deleted":true})),

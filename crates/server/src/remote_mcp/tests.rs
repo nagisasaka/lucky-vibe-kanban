@@ -1594,7 +1594,7 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         .execute(&pool)
         .await
         .unwrap();
-    let remote = Remote {
+    let mut remote = Remote {
         environment: None,
         launch: None,
         runtime: None,
@@ -1640,6 +1640,70 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
     let todo = result["result"]["todo"].clone();
     let id = todo["id"].clone();
     assert_eq!(todo["creation_source"], "mcp");
+    assert_eq!(todo["display_id"], "TODO-1");
+    assert_eq!(todo["number"], 1);
+    let numbered = todos::call(
+        &remote,
+        &reader,
+        "get_todo",
+        json!({"project_id":project,"todo_id":"TODO-1"}),
+    )
+    .await
+    .unwrap();
+    assert_eq!(numbered, todo);
+    for reference in [
+        "TODO-0",
+        "TODO-01",
+        "todo-1",
+        "TODO-999",
+        "TODO-1/../",
+        "TODO-9223372036854775808",
+    ] {
+        assert!(
+            todos::call(
+                &remote,
+                &reader,
+                "get_todo",
+                json!({"project_id":project,"todo_id":reference})
+            )
+            .await
+            .is_err()
+        );
+    }
+    for reference in ["TODO-0", "TODO-01", "TODO-999", "TODO-1/../"] {
+        let request = Uuid::new_v4();
+        todos::call(&remote, &writer, "update_todo", json!({"project_id":project,"request_id":request,"todo_id":reference,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+        assert_eq!(
+            settled_operation(&remote, &writer, project, request).await["status"],
+            "failed"
+        );
+    }
+    let other = Uuid::new_v4();
+    sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'other','OTHER')")
+        .bind(other)
+        .execute(&pool)
+        .await
+        .unwrap();
+    Arc::make_mut(&mut remote.config).project_ids.insert(other);
+    for reference in [json!("TODO-1"), id.clone()] {
+        assert!(
+            todos::call(
+                &remote,
+                &reader,
+                "get_todo",
+                json!({"project_id":other,"todo_id":reference})
+            )
+            .await
+            .is_err()
+        );
+        let request = Uuid::new_v4();
+        todos::call(&remote, &writer, "update_todo", json!({"project_id":other,"request_id":request,"todo_id":reference,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+        assert_eq!(
+            settled_operation(&remote, &writer, other, request).await["status"],
+            "failed"
+        );
+    }
+
     let read = todos::call(
         &remote,
         &reader,
@@ -1674,12 +1738,25 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         assert_eq!(page["items"].as_array().unwrap().len(), count);
     }
     let update = Uuid::new_v4();
-    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":id,"changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":update,"todo_id":"TODO-1","changes":{"expected_revision":1,"completed":true}})).await.unwrap();
     let result = settled_operation(&remote, &writer, project, update).await;
     assert_eq!(result["status"], "succeeded", "{result}");
     assert_eq!(result["result"]["todo"]["body"], todo["body"]);
     assert_eq!(result["result"]["todo"]["revision"], 2);
     assert_eq!(result["result"]["todo"]["creation_source"], "mcp");
+    assert_eq!(result["result"]["todo"]["display_id"], "TODO-1");
+    let uuid_update = Uuid::new_v4();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":uuid_update,"todo_id":id,"changes":{"expected_revision":2,"completed":false}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, uuid_update).await["result"]["todo"]["display_id"],
+        "TODO-1"
+    );
+    let stale_number = Uuid::new_v4();
+    todos::call(&remote,&writer,"update_todo",json!({"project_id":project,"request_id":stale_number,"todo_id":"TODO-1","changes":{"expected_revision":1,"completed":true}})).await.unwrap();
+    assert_eq!(
+        settled_operation(&remote, &writer, project, stale_number).await["status"],
+        "failed"
+    );
     let stale = Uuid::new_v4();
     todos::call(
         &remote,
@@ -1698,7 +1775,7 @@ async fn todo_mcp_roundtrip_enforces_scope_receipts_and_revisions() {
         &remote,
         &writer,
         "delete_todo",
-        json!({"project_id":project,"request_id":delete,"todo_id":id,"expected_revision":2}),
+        json!({"project_id":project,"request_id":delete,"todo_id":id,"expected_revision":3}),
     )
     .await
     .unwrap();
@@ -2229,4 +2306,176 @@ fn merged_runtime_file_write_and_conversation_integration_scopes() {
     assert_eq!(operation_scope("start_integration"), Some("lvk:merge"));
     assert_eq!(operation_scope("cancel_integration"), Some("lvk:merge"));
     assert_eq!(operation_scope("approve_integration"), None);
+}
+
+#[tokio::test]
+async fn todo_mcp_colliding_numbers_and_issue_links_preserve_identity() {
+    async fn read(
+        remote: &Remote,
+        writer: &auth::Principal,
+        project: Uuid,
+        reference: Value,
+    ) -> Value {
+        todos::call(
+            remote,
+            writer,
+            "get_todo",
+            json!({"project_id":project,"todo_id":reference}),
+        )
+        .await
+        .unwrap()
+    }
+    async fn check_state(
+        remote: &Remote,
+        writer: &auth::Principal,
+        projects: &[Uuid; 2],
+        originals: &[Value],
+        state: &[Value],
+    ) {
+        for i in 0..2 {
+            assert_eq!(
+                read(remote, writer, projects[i], json!("TODO-1")).await,
+                state[i]
+            );
+            assert_eq!(
+                read(remote, writer, projects[i], originals[i]["id"].clone()).await,
+                state[i]
+            );
+            for field in ["id", "number", "display_id"] {
+                assert_eq!(state[i][field], originals[i][field]);
+            }
+        }
+    }
+    async fn update(
+        remote: &Remote,
+        writer: &auth::Principal,
+        project: Uuid,
+        reference: Value,
+        changes: Value,
+        status: &str,
+    ) -> Value {
+        let request = Uuid::new_v4();
+        todos::call(remote, writer, "update_todo", json!({"project_id":project,"request_id":request,"todo_id":reference,"changes":changes})).await.unwrap();
+        let receipt = settled_operation(remote, writer, project, request).await;
+        assert_eq!(receipt["status"], status, "{receipt}");
+        receipt["result"]["todo"].clone()
+    }
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+    let projects = [Uuid::from_u128(1), Uuid::from_u128(2)];
+    for (i, project) in projects.iter().enumerate() {
+        sqlx::query("INSERT INTO projects(id,name,key) VALUES(?,'Number isolation',?)")
+            .bind(project)
+            .bind(format!("NUM{i}"))
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    let mut settings = config();
+    settings.project_ids.extend(projects);
+    let remote = Remote {
+        environment: None,
+        launch: None,
+        runtime: None,
+        pool: pool.clone(),
+        config: Arc::new(settings),
+        process_instance: Uuid::new_v4(),
+    };
+    let writer = auth::Principal {
+        subject: "owner-subject".into(),
+        scopes: BTreeSet::from(["lvk:read".into(), "lvk:write".into()]),
+    };
+    let mut originals = Vec::new();
+    for (i, project) in projects.iter().enumerate() {
+        let request = Uuid::new_v4();
+        todos::call(
+            &remote,
+            &writer,
+            "create_todo",
+            json!({"project_id":project,"request_id":request,"body":format!("Project {i}")}),
+        )
+        .await
+        .unwrap();
+        let receipt = settled_operation(&remote, &writer, *project, request).await;
+        assert_eq!(receipt["status"], "succeeded", "{receipt}");
+        let todo = receipt["result"]["todo"].clone();
+        assert_eq!(todo["number"], 1);
+        assert_eq!(todo["display_id"], "TODO-1");
+        originals.push(todo);
+    }
+    assert_ne!(originals[0]["id"], originals[1]["id"]);
+    let mut state = originals.clone();
+    check_state(&remote, &writer, &projects, &originals, &state).await;
+    for i in 0..2 {
+        let body = format!("only Project {i}");
+        state[i] = update(
+            &remote,
+            &writer,
+            projects[i],
+            json!("TODO-1"),
+            json!({"expected_revision":state[i]["revision"],"body":body}),
+            "succeeded",
+        )
+        .await;
+        assert_eq!(state[i]["body"], body);
+        assert_eq!(state[i]["revision"], 2);
+        check_state(&remote, &writer, &projects, &originals, &state).await;
+    }
+    let status = Uuid::new_v4();
+    let issue = Uuid::new_v4();
+    sqlx::query("INSERT INTO local_project_statuses(id,project_id,name,color,sort_order) VALUES(?,?,'Todo','blue',1)").bind(status).bind(projects[0]).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO local_issues(id,project_id,issue_number,simple_id,status_id,title,sort_order) VALUES(?,?,1,'NUM0-1',?,'Link identity',0)").bind(issue).bind(projects[0]).bind(status).execute(&pool).await.unwrap();
+    for linked in [true, false] {
+        let revision = state[0]["revision"].as_i64().unwrap();
+        let changes = if linked {
+            json!({"expected_revision":revision,"issue_id":issue})
+        } else {
+            json!({"expected_revision":revision,"clear_issue":true})
+        };
+        state[0] = update(
+            &remote,
+            &writer,
+            projects[0],
+            json!("TODO-1"),
+            changes,
+            "succeeded",
+        )
+        .await;
+        assert_eq!(
+            state[0]["issue_id"],
+            if linked { json!(issue) } else { Value::Null }
+        );
+        assert_eq!(state[0]["revision"], revision + 1);
+        check_state(&remote, &writer, &projects, &originals, &state).await;
+    }
+    state[1] = update(
+        &remote,
+        &writer,
+        projects[1],
+        originals[1]["id"].clone(),
+        json!({"expected_revision":state[1]["revision"],"completed":true}),
+        "succeeded",
+    )
+    .await;
+    assert_eq!(state[1]["completed"], true);
+    assert_eq!(state[1]["revision"], 3);
+    check_state(&remote, &writer, &projects, &originals, &state).await;
+    for i in 0..2 {
+        for reference in [json!("TODO-1"), originals[i]["id"].clone()] {
+            update(
+                &remote,
+                &writer,
+                projects[i],
+                reference,
+                json!({"expected_revision":1,"body":"stale"}),
+                "failed",
+            )
+            .await;
+            check_state(&remote, &writer, &projects, &originals, &state).await;
+        }
+    }
 }
