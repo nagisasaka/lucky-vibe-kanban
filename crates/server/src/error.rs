@@ -408,7 +408,6 @@ impl IntoResponse for ApiError {
             tracing::error!(
                 error_type = info.error_type,
                 status = %info.status,
-                error = ?self,
                 "API request failed"
             );
         }

@@ -36,7 +36,7 @@ async fn find(remote: &Remote, project: Uuid, id: Uuid) -> anyhow::Result<Integr
     remote.require_project(project).await?;
     let run = IntegrationRun::find(&remote.pool, id)
         .await
-        .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        .map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
     ensure!(
         run.project_id == project,
         super::errors::rejection_with_message(

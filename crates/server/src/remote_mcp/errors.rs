@@ -49,10 +49,23 @@ pub(super) fn diagnostic(error: &anyhow::Error, mutation: bool) -> utils::mcp_er
                 Category::Validation
             }
             crate::error::ApiError::TooManyRequests(_) => Category::Busy,
+            crate::error::ApiError::Database(error) => super::errors::database_category(error),
+            crate::error::ApiError::Workspace(
+                db::models::workspace::WorkspaceError::WorkspaceNotFound
+                | db::models::workspace::WorkspaceError::BranchNotFound(_),
+            )
+            | crate::error::ApiError::Session(
+                db::models::session::SessionError::NotFound
+                | db::models::session::SessionError::WorkspaceNotFound,
+            )
+            | crate::error::ApiError::Repo(db::models::repo::RepoError::NotFound)
+            | crate::error::ApiError::ExecutionProcess(
+                db::models::execution_process::ExecutionProcessError::ExecutionProcessNotFound,
+            ) => Category::NotFound,
             _ => Category::Internal,
         }
     } else if let Some(error) = error.downcast_ref::<sqlx::Error>() {
-        super::todos::database_category(error)
+        super::errors::database_category(error)
     } else {
         Category::Internal
     };
@@ -75,6 +88,20 @@ pub(super) fn receipt_diagnostic(
     use utils::mcp_error::{Category, Diagnostic, Outcome};
     if status == "uncertain" {
         return Diagnostic::new(Category::OutcomeUnknown, Outcome::Unknown);
+    }
+    if let Some(category) = result
+        .and_then(|v| v.get("error"))
+        .and_then(|v| v.get("category"))
+        .and_then(|v| serde_json::from_value::<Category>(v.clone()).ok())
+    {
+        return Diagnostic::new(
+            if category == Category::OutcomeUnknown {
+                Category::Internal
+            } else {
+                category
+            },
+            Outcome::Failed,
+        );
     }
     let category = match result.and_then(|v| v["code"].as_str()) {
         Some(
@@ -99,6 +126,31 @@ pub(super) fn receipt_diagnostic(
         _ => Category::Internal,
     };
     Diagnostic::new(category, Outcome::Failed)
+}
+
+pub(crate) fn database_category(error: &sqlx::Error) -> utils::mcp_error::Category {
+    match error {
+        sqlx::Error::RowNotFound => utils::mcp_error::Category::NotFound,
+        sqlx::Error::Database(error)
+            if error
+                .code()
+                .and_then(|code| code.parse::<i32>().ok())
+                .is_some_and(|code| matches!(code & 0xff, 5 | 6)) =>
+        {
+            utils::mcp_error::Category::Busy
+        }
+        sqlx::Error::Database(error)
+            if error.is_unique_violation()
+                || error.is_foreign_key_violation()
+                || error.is_check_violation() =>
+        {
+            utils::mcp_error::Category::Conflict
+        }
+        sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed => {
+            utils::mcp_error::Category::Unavailable
+        }
+        _ => utils::mcp_error::Category::Internal,
+    }
 }
 
 #[cfg(test)]

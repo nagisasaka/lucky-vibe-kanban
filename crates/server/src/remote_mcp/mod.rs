@@ -20,6 +20,7 @@ pub mod environment_settings;
 #[cfg(target_os = "linux")]
 mod environment_switch;
 mod errors;
+pub(crate) use errors::database_category;
 mod evidence_read;
 mod goals;
 mod integration_read;

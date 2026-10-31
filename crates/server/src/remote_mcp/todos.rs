@@ -108,7 +108,7 @@ fn failure(error: TodoError) -> (&'static str, Value) {
         TodoError::Database(ref error) => (
             "failed",
             "todo_unavailable",
-            database_category(error),
+            super::errors::database_category(error),
             Outcome::Failed,
         ),
         TodoError::NotFound => (
@@ -145,7 +145,7 @@ fn read_failure(error: TodoError) -> anyhow::Error {
             Category::Validation
         }
         TodoError::Database(ref error) | TodoError::CommitUnknown(ref error) => {
-            database_category(error)
+            super::errors::database_category(error)
         }
     };
     Diagnostic::new(category, Outcome::Failed).into()
@@ -289,30 +289,6 @@ pub(super) async fn call(
         _ => return Err(super::errors::rejection(Category::Validation)),
     };
     Ok(remote.receipt_value(receipt))
-}
-
-pub(super) fn database_category(error: &sqlx::Error) -> utils::mcp_error::Category {
-    match error {
-        sqlx::Error::Database(error)
-            if error
-                .code()
-                .and_then(|code| code.parse::<i32>().ok())
-                .is_some_and(|code| matches!(code & 0xff, 5 | 6)) =>
-        {
-            utils::mcp_error::Category::Busy
-        }
-        sqlx::Error::Database(error)
-            if error.is_unique_violation()
-                || error.is_foreign_key_violation()
-                || error.is_check_violation() =>
-        {
-            utils::mcp_error::Category::Conflict
-        }
-        sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed => {
-            utils::mcp_error::Category::Unavailable
-        }
-        _ => utils::mcp_error::Category::Internal,
-    }
 }
 
 #[cfg(test)]

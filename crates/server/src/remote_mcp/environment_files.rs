@@ -523,8 +523,8 @@ mod tests {
         let root = std::path::PathBuf::from(format!("/proc/{}", std::process::id()));
         let error = read(&root, json!({"path":"environ"})).unwrap_err();
         assert_eq!(
-            error.downcast_ref::<&'static str>(),
-            Some(&"runtime_kernel_filesystem_denied")
+            super::super::errors::message(&error),
+            "runtime_kernel_filesystem_denied"
         );
         assert!(
             read(
@@ -574,13 +574,13 @@ mod tests {
         assert!(list(dir.path(), json!([])).is_err());
         let missing = read(dir.path(), json!({"path":"missing"})).unwrap_err();
         assert_eq!(
-            missing.downcast_ref::<&'static str>(),
-            Some(&"runtime_file_not_found")
+            super::super::errors::message(&missing),
+            "runtime_file_not_found"
         );
         let denied = io_error(std::io::Error::from(std::io::ErrorKind::PermissionDenied));
         assert_eq!(
-            denied.downcast_ref::<&'static str>(),
-            Some(&"runtime_file_permission_denied")
+            super::super::errors::message(&denied),
+            "runtime_file_permission_denied"
         );
     }
 

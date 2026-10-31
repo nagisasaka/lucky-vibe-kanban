@@ -114,11 +114,11 @@ pub(super) async fn call(
                 if owned.require_workspace(args.project_id, args.workspace_id).await.is_err() {
                     return ("failed", json!({"code":"target_unavailable"}));
                 }
-                match archive::archive_scoped(&owned.pool, args.workspace_id, args.confirmation_token, scope,
+                match archive::archive_scoped_observed(&owned.pool, args.workspace_id, args.confirmation_token, scope,
                     || async { runtime.archive_scripts_settled(args.workspace_id).await }).await {
                     Ok(result) => ("succeeded", json!({"workspace_id":args.workspace_id,"archived":result.workspace.archived,
                         "worktree_deleted":result.workspace.worktree_deleted,"deletion_error":result.deletion_error})),
-                    Err(error) => ("failed", json!({"code":"archive_refused","message":super::errors::message(&error.into())})),
+                    Err(error) => (if error.diagnostic.outcome == utils::mcp_error::Outcome::Unknown { "uncertain" } else { "failed" }, json!({"code":"archive_refused","message":error.diagnostic.message,"error":error.diagnostic.value(),"workspace_id":args.workspace_id,"physical_deletion_may_have_occurred":error.physical_deletion_may_have_occurred,"archive_commit_confirmed":error.archive_commit_confirmed})),
                 }
             },
         ).await?;

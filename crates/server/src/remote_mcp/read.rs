@@ -112,15 +112,16 @@ pub(super) fn page(items: Vec<Value>, limit: u32) -> Value {
 impl Remote {
     pub(super) async fn require_project(&self, project: Uuid) -> anyhow::Result<()> {
         if !self.config.project_ids.contains(&project) {
-            return Err(super::errors::rejection(
+            return Err(super::errors::rejection_with_message(
                 utils::mcp_error::Category::Permission,
+                "Project is not available to this connection",
             ));
         }
         let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM projects WHERE id=?)")
             .bind(project)
             .fetch_one(&self.pool)
             .await
-            .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+            .map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
         if !exists {
             return Err(super::errors::rejection(
                 utils::mcp_error::Category::NotFound,
@@ -138,7 +139,7 @@ impl Remote {
         .bind(project)
         .fetch_one(&self.pool)
         .await
-        .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        .map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
         if !exists {
             return Err(super::errors::rejection(
                 utils::mcp_error::Category::NotFound,
@@ -154,7 +155,7 @@ impl Remote {
     ) -> anyhow::Result<Uuid> {
         self.require_project(project).await?;
         let issue = sqlx::query_scalar("SELECT l.issue_id FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id JOIN workspaces w ON w.id=l.workspace_id WHERE l.workspace_id=? AND l.project_id=? AND i.project_id=?")
-            .bind(workspace).bind(project).bind(project).fetch_optional(&self.pool).await.map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+            .bind(workspace).bind(project).bind(project).fetch_optional(&self.pool).await.map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
         issue.ok_or_else(|| super::errors::rejection(utils::mcp_error::Category::NotFound))
     }
 

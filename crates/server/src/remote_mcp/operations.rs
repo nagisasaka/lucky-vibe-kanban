@@ -53,6 +53,28 @@ fn fingerprint(value: &Value) -> String {
     format!("{:x}", Sha256::digest(canonical(value).to_string()))
 }
 
+fn project_archive_diagnostics(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, value) in object {
+                if key == "deletion_error" && !value.is_null() {
+                    *value = serde_json::json!(
+                        "Worktree cleanup failed; inspect the existing target and receipt before recovery"
+                    );
+                } else {
+                    project_archive_diagnostics(value);
+                }
+            }
+        }
+        Value::Array(values) => {
+            for value in values {
+                project_archive_diagnostics(value);
+            }
+        }
+        _ => {}
+    }
+}
+
 impl Operations {
     /// The owned task starts before the first database await. Dropping the MCP
     /// request (even during admission) cannot cancel an admitted operation.
@@ -249,6 +271,28 @@ impl Operations {
         {
             receipt.status = "uncertain".into();
         }
+        // Archive receipts predate the shared diagnostic contract and may contain
+        // raw filesystem/SQL errors. Project at read time without rewriting the
+        // stored evidence, including local stdio receipt responses.
+        if matches!(
+            receipt.operation.as_str(),
+            "confirm_issue_archive" | "unarchive_issue" | "confirm_workspace_archive"
+        ) && let Some(raw) = receipt.result.as_deref()
+            && let Ok(mut value) = serde_json::from_str::<Value>(raw)
+            && value.is_object()
+        {
+            project_archive_diagnostics(&mut value);
+            if matches!(receipt.status.as_str(), "failed" | "uncertain") {
+                let diagnostic = super::errors::receipt_diagnostic(&receipt.status, Some(&value));
+                if value.get("message").is_some() {
+                    value["message"] = serde_json::json!(diagnostic.message);
+                }
+                if value.get("error").is_some() {
+                    value["error"] = diagnostic.value();
+                }
+            }
+            receipt.result = Some(value.to_string());
+        }
         Ok(receipt)
     }
 
@@ -369,6 +413,65 @@ mod tests {
             "uncertain"
         );
         store.pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn historical_archive_receipt_diagnostics_are_projected_without_rewriting_evidence() {
+        let (store, project) = isolated_store().await;
+        let request = Uuid::new_v4();
+        let saved = json!({"message":"SQL SELECT /private/SECRET","workspaces":[{"workspace_id":Uuid::new_v4(),"archived":true,"deletion_error":"/private/SECRET"}]});
+        let (receipt, _) = store
+            .admit(
+                "owner",
+                request,
+                project,
+                "confirm_issue_archive",
+                &json!({}),
+                &json!({}),
+            )
+            .await
+            .unwrap();
+        store.start(receipt.id).await.unwrap();
+        store.finish(receipt.id, "uncertain", &saved).await.unwrap();
+        let public = store.by_request("owner", request).await.unwrap();
+        let projected: Value = serde_json::from_str(public.result.as_deref().unwrap()).unwrap();
+        assert!(projected["workspaces"][0]["archived"] == true);
+        assert!(!projected.to_string().contains("SECRET"));
+        assert!(!projected.to_string().contains("/private"));
+        let raw: String = sqlx::query_scalar("SELECT result FROM remote_mcp_operations WHERE id=?")
+            .bind(receipt.id)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap();
+        assert_eq!(serde_json::from_str::<Value>(&raw).unwrap(), saved);
+        let request = Uuid::new_v4();
+        let (receipt, _) = store
+            .admit(
+                "owner",
+                request,
+                project,
+                "confirm_workspace_archive",
+                &json!({}),
+                &json!({}),
+            )
+            .await
+            .unwrap();
+        store.start(receipt.id).await.unwrap();
+        let diagnostic = utils::mcp_error::Diagnostic::new(
+            utils::mcp_error::Category::Conflict,
+            utils::mcp_error::Outcome::Failed,
+        );
+        store
+            .finish(
+                receipt.id,
+                "failed",
+                &json!({"code":"archive_refused","error":diagnostic}),
+            )
+            .await
+            .unwrap();
+        let public = store.by_request("owner", request).await.unwrap();
+        let value: Value = serde_json::from_str(public.result.as_deref().unwrap()).unwrap();
+        assert_eq!(value["error"]["category"], "conflict");
     }
 
     #[tokio::test]

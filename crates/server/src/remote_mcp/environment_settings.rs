@@ -30,8 +30,8 @@ type Error = (StatusCode, String);
 fn bad(e: impl std::fmt::Display) -> Error {
     (StatusCode::BAD_REQUEST, e.to_string())
 }
-fn unavailable(e: impl std::fmt::Display) -> Error {
-    tracing::error!(%e, "Runtime settings storage failed");
+fn unavailable(_e: impl std::fmt::Display) -> Error {
+    tracing::error!("Runtime settings storage failed");
     (
         StatusCode::SERVICE_UNAVAILABLE,
         "Runtime settings unavailable".into(),

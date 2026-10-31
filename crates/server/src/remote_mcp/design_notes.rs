@@ -104,7 +104,7 @@ fn failure(error: db::models::design_note::DesignNoteError) -> (&'static str, Va
         }
         DesignNoteError::Database(ref error) => (
             "failed",
-            super::todos::database_category(error),
+            super::errors::database_category(error),
             Outcome::Failed,
         ),
         DesignNoteError::Json(_) => ("failed", Category::Internal, Outcome::Failed),
@@ -152,7 +152,7 @@ fn read_failure(error: db::models::design_note::DesignNoteError) -> anyhow::Erro
         DesignNoteError::Conflict => Category::Conflict,
         DesignNoteError::Invalid | DesignNoteError::InvalidRead => Category::Validation,
         DesignNoteError::Database(ref error) | DesignNoteError::CommitUnknown(ref error) => {
-            super::todos::database_category(error)
+            super::errors::database_category(error)
         }
         DesignNoteError::Json(_) => Category::Internal,
     };

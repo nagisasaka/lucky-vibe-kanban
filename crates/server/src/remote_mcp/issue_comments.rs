@@ -203,7 +203,7 @@ pub(super) async fn call(
                 match result {
                     Ok(result) if result.rows_affected() == 1 => ("succeeded", json!({"comment_id":id,"issue_id":args.issue_id,"target_revision":target_revision,"implementation_started":false})),
                     Ok(_) => comment_failure("target_validation_failed", None, false, utils::mcp_error::Category::Validation),
-                    Err(ref error) => comment_failure("comment_outcome_unavailable", Some(id), commit_started && !db::models::todo::commit_definitely_rejected(error), super::todos::database_category(error)),
+                    Err(ref error) => comment_failure("comment_outcome_unavailable", Some(id), commit_started && !db::models::todo::commit_definitely_rejected(error), super::errors::database_category(error)),
                 }
             }).await?;
             Ok(remote.receipt_value(receipt))
@@ -262,7 +262,7 @@ async fn edit(remote: &Remote, principal: &Principal, input: Value) -> anyhow::R
             },
             Ok(value) => ("succeeded", value),
             Err(ref error) => comment_failure("comment_outcome_unavailable", Some(args.comment_id), commit_started && !error.downcast_ref::<sqlx::Error>().is_some_and(db::models::todo::commit_definitely_rejected),
-                error.downcast_ref::<utils::mcp_error::Diagnostic>().map(|diagnostic| diagnostic.category).or_else(|| error.downcast_ref::<sqlx::Error>().map(super::todos::database_category)).unwrap_or(utils::mcp_error::Category::Internal)),
+                error.downcast_ref::<utils::mcp_error::Diagnostic>().map(|diagnostic| diagnostic.category).or_else(|| error.downcast_ref::<sqlx::Error>().map(super::errors::database_category)).unwrap_or(utils::mcp_error::Category::Internal)),
         }
     }).await?;
     Ok(remote.receipt_value(receipt))
@@ -399,8 +399,9 @@ async fn read_comment(
         );
         byte_offset += chunk.len() as i64;
         digest.update(&chunk);
-        page.push(&chunk)
-            .map_err(|_| super::errors::rejection(Category::Internal))?;
+        page.push(&chunk).map_err(|message| {
+            super::errors::rejection_with_message(Category::Internal, message)
+        })?;
     }
     let revision = format!("{:x}", digest.finalize());
     ensure!(
@@ -412,9 +413,16 @@ async fn read_comment(
             "Comment revision mismatch; restart reading from offset zero"
         )
     );
-    let (message_page, total) = page
-        .finish()
-        .map_err(|_| super::errors::rejection(Category::Internal))?;
+    let (message_page, total) = page.finish().map_err(|message| {
+        super::errors::rejection_with_message(
+            if message == "Comment offset is outside the body" {
+                Category::Validation
+            } else {
+                Category::Internal
+            },
+            message,
+        )
+    })?;
     let next = (u64::from(args.offset) + u64::from(args.limit)).min(total);
     Ok(
         json!({"id":args.comment_id,"issue_id":args.issue_id,"project_id":args.project_id,

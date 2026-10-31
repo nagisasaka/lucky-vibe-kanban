@@ -100,7 +100,7 @@ impl Remote {
         .bind(status)
         .fetch_one(&self.pool)
         .await
-        .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        .map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
         ensure!(
             exists,
             super::errors::rejection_with_message(

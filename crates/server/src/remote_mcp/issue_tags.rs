@@ -131,10 +131,10 @@ pub(super) async fn call(
                 Err(error) => {
                     use utils::mcp_error::{Category, Diagnostic, Outcome};
                     let (unknown, category) = match error {
-                        MutationError::Commit(ref error) if db::models::todo::commit_definitely_rejected(error) => (false, super::todos::database_category(error)),
+                        MutationError::Commit(ref error) if db::models::todo::commit_definitely_rejected(error) => (false, super::errors::database_category(error)),
                         MutationError::Commit(_) => (true, Category::OutcomeUnknown),
                         MutationError::Domain(db::models::board_tag::TagError::Validation(_)) => (false, Category::Validation),
-                        MutationError::Domain(db::models::board_tag::TagError::Database(ref error)) => (false, super::todos::database_category(error)),
+                        MutationError::Domain(db::models::board_tag::TagError::Database(ref error)) => (false, super::errors::database_category(error)),
                     };
                     let diagnostic = Diagnostic::new(category, if unknown { Outcome::Unknown } else { Outcome::Failed });
                     (if unknown { "uncertain" } else { "failed" }, json!({"code":"tag_update_rejected","message":diagnostic.message,"error":diagnostic.value()}))

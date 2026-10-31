@@ -211,6 +211,73 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<bool, ApiError>>,
 {
+    archive_scoped_observed(pool, id, token, scope, settled)
+        .await
+        .map_err(|failure| failure.source)
+}
+
+#[derive(Debug)]
+pub(crate) struct ArchiveFailure {
+    source: ApiError,
+    pub(crate) diagnostic: utils::mcp_error::Diagnostic,
+    pub(crate) physical_deletion_may_have_occurred: bool,
+    pub(crate) archive_commit_confirmed: bool,
+}
+impl From<ApiError> for ArchiveFailure {
+    fn from(source: ApiError) -> Self {
+        Self {
+            diagnostic: archive_rejection(&source),
+            source,
+            physical_deletion_may_have_occurred: false,
+            archive_commit_confirmed: false,
+        }
+    }
+}
+impl From<sqlx::Error> for ArchiveFailure {
+    fn from(error: sqlx::Error) -> Self {
+        ApiError::from(error).into()
+    }
+}
+impl ArchiveFailure {
+    fn unknown(
+        source: ApiError,
+        physical_deletion_may_have_occurred: bool,
+        archive_commit_confirmed: bool,
+    ) -> Self {
+        Self {
+            source,
+            physical_deletion_may_have_occurred,
+            archive_commit_confirmed,
+            diagnostic: utils::mcp_error::Diagnostic::new(
+                utils::mcp_error::Category::OutcomeUnknown,
+                utils::mcp_error::Outcome::Unknown,
+            ),
+        }
+    }
+}
+pub(crate) fn archive_rejection(error: &ApiError) -> utils::mcp_error::Diagnostic {
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let category = match error {
+        ApiError::Conflict(_) => Category::Conflict,
+        ApiError::BadRequest(_) => Category::Validation,
+        ApiError::Unauthorized | ApiError::Forbidden(_) => Category::Permission,
+        ApiError::Database(error) => crate::remote_mcp::database_category(error),
+        _ => Category::Internal,
+    };
+    Diagnostic::new(category, Outcome::Failed)
+}
+
+pub(crate) async fn archive_scoped_observed<F, Fut>(
+    pool: &SqlitePool,
+    id: Uuid,
+    token: Uuid,
+    scope: ConfirmationScope,
+    settled: F,
+) -> Result<ArchiveResult, ArchiveFailure>
+where
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<bool, ApiError>>,
+{
     // Initial creation holds the linked Issue guard through first-run admission.
     // Join it before the Workspace guard, so archive cannot race that admission.
     let issue_id: Option<Uuid> =
@@ -231,7 +298,8 @@ where
         }) {
             return Err(ApiError::Conflict(
                 "Archive confirmation expired, used or belongs to another caller/target".into(),
-            ));
+            )
+            .into());
         }
         confirmations
             .remove(&token)
@@ -244,26 +312,47 @@ where
         || workspace.container_ref != confirmation.container_ref
         || workspace.branch != confirmation.branch
     {
-        return Err(ApiError::Conflict(
-            "Workspace changed; confirm again".into(),
-        ));
+        return Err(ApiError::Conflict("Workspace changed; confirm again".into()).into());
     }
     if !settled().await? {
-        return Err(ApiError::Conflict(
-            "使用中のWorkspaceはarchiveできません。".into(),
-        ));
+        return Err(ApiError::Conflict("使用中のWorkspaceはarchiveできません。".into()).into());
     }
     let repos = WorkspaceRepo::find_repos_for_workspace(pool, id).await?;
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     check_project(&mut tx, id, &scope).await?;
     check_idle(&mut tx, id).await?;
     super::archive_processes::check(workspace.container_ref.as_deref()).await?;
-    let deletion_error = archive_checked(&mut tx, &workspace, &repos).await?;
-    tx.commit().await?;
+    let mut physical_effects_possible = false;
+    let deletion_error =
+        archive_checked_observed(&mut tx, &workspace, &repos, &mut physical_effects_possible)
+            .await
+            .map_err(|error| {
+                if physical_effects_possible {
+                    ArchiveFailure::unknown(error, true, false)
+                } else {
+                    error.into()
+                }
+            })?;
+    tx.commit().await.map_err(|error| {
+        if !physical_effects_possible && db::models::todo::commit_definitely_rejected(&error) {
+            ArchiveFailure::from(ApiError::from(error))
+        } else {
+            ArchiveFailure::unknown(ApiError::from(error), physical_effects_possible, false)
+        }
+    })?;
     Ok(ArchiveResult {
         workspace: Workspace::find_by_id(pool, id)
-            .await?
-            .ok_or_else(|| ApiError::BadRequest("Workspace missing".into()))?,
+            .await
+            .map_err(|error| {
+                ArchiveFailure::unknown(error.into(), physical_effects_possible, true)
+            })?
+            .ok_or_else(|| {
+                ArchiveFailure::unknown(
+                    ApiError::BadRequest("Workspace missing".into()),
+                    physical_effects_possible,
+                    true,
+                )
+            })?,
         deletion_error,
     })
 }
@@ -275,6 +364,15 @@ pub(crate) async fn archive_checked(
     workspace: &Workspace,
     repos: &[db::models::repo::Repo],
 ) -> Result<Option<String>, ApiError> {
+    archive_checked_observed(conn, workspace, repos, &mut false).await
+}
+
+pub(crate) async fn archive_checked_observed(
+    conn: &mut SqliteConnection,
+    workspace: &Workspace,
+    repos: &[db::models::repo::Repo],
+    physical_effects_possible: &mut bool,
+) -> Result<Option<String>, ApiError> {
     let id = workspace.id;
     sqlx::query("UPDATE workspaces SET archived=1, updated_at=datetime('now','subsec') WHERE id=?")
         .bind(id)
@@ -282,6 +380,7 @@ pub(crate) async fn archive_checked(
         .await?;
     let deletion = if workspace.can_delete_container_path() {
         if let Some(path) = workspace.container_ref.as_deref() {
+            *physical_effects_possible = true;
             WorkspaceManager::cleanup_workspace_strict(std::path::Path::new(path), repos).await
         } else {
             Ok(())
@@ -289,8 +388,9 @@ pub(crate) async fn archive_checked(
     } else {
         Ok(())
     };
-    let deletion_error = deletion.err().map(|error| {
-        format!("ワークツリーの物理削除に失敗しました（{error}）。手動で削除してください。")
+    let deletion_error = deletion.err().map(|_| {
+        "ワークツリーの物理削除に失敗しました。対象の状態を確認して手動で削除してください。"
+            .to_owned()
     });
     if workspace.can_delete_container_path() {
         sqlx::query("UPDATE workspaces SET worktree_deleted=? WHERE id=?")
@@ -822,9 +922,11 @@ pub(crate) mod tests {
         assert!(result.workspace.archived);
         assert!(!result.workspace.worktree_deleted);
         let message = result.deletion_error.unwrap();
-        assert!(message.starts_with("ワークツリーの物理削除に失敗しました（"));
-        assert!(message.ends_with("）。手動で削除してください。"));
-        assert!(message.contains("directory"), "{message}");
+        assert_eq!(
+            message,
+            "ワークツリーの物理削除に失敗しました。対象の状態を確認して手動で削除してください。"
+        );
+        assert!(!message.contains(invalid.to_string_lossy().as_ref()));
         assert!(invalid.exists());
     }
 
@@ -1006,5 +1108,58 @@ pub(crate) mod tests {
             .await
             .unwrap();
         assert!(prepare_for_pool(&pool, &ws).await.is_ok());
+    }
+    #[tokio::test]
+    async fn archive_phase_keeps_preflight_failed_and_post_cleanup_unknown() {
+        let (_root, pool, ws, _repo, _session) = fixture().await;
+        let rejection = match archive_scoped_observed(
+            &pool,
+            ws.id,
+            Uuid::new_v4(),
+            ConfirmationScope::Local,
+            || async { Ok(true) },
+        )
+        .await
+        {
+            Err(error) => error,
+            Ok(_) => panic!("invalid confirmation accepted"),
+        };
+        assert_eq!(
+            rejection.diagnostic.outcome,
+            utils::mcp_error::Outcome::Failed
+        );
+        assert!(Path::new(ws.container_ref.as_ref().unwrap()).exists());
+        let prepared = prepare_for_pool(&pool, &ws).await.unwrap();
+        sqlx::query("CREATE TRIGGER injected_archive_failure BEFORE UPDATE OF worktree_deleted ON workspaces BEGIN SELECT RAISE(ABORT, 'secret /private/database SELECT token'); END").execute(&pool).await.unwrap();
+        let failure = match archive_scoped_observed(
+            &pool,
+            ws.id,
+            prepared.confirmation_token,
+            ConfirmationScope::Local,
+            || async { Ok(true) },
+        )
+        .await
+        {
+            Err(error) => error,
+            Ok(_) => panic!("injected database failure ignored"),
+        };
+        assert_eq!(
+            failure.diagnostic.outcome,
+            utils::mcp_error::Outcome::Unknown
+        );
+        assert!(failure.physical_deletion_may_have_occurred);
+        assert!(!failure.archive_commit_confirmed);
+        assert!(!Path::new(ws.container_ref.as_ref().unwrap()).exists());
+        assert!(
+            !Workspace::find_by_id(&pool, ws.id)
+                .await
+                .unwrap()
+                .unwrap()
+                .archived
+        );
+        let public = failure.diagnostic.value().to_string();
+        assert!(!public.contains("secret"));
+        assert!(!public.contains("/private"));
+        assert!(!public.contains("SELECT"));
     }
 }
