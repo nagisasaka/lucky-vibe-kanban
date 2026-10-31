@@ -69,6 +69,7 @@ impl McpServer {
             .await
         {
             Ok(mut value) if value["accepted"] == false => {
+                utils::mcp_error::redact_failure_context(&mut value);
                 if value.get("error").is_none() {
                     // An untyped domain rejection cannot establish that a partial
                     // start/stop did not occur. Current servers supply the phase.

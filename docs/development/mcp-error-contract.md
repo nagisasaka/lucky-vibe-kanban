@@ -96,3 +96,5 @@ operation_id/request_id と安全な相関IDを内部診断への手掛かりに
 追加fixtureは、HTTP statusの分類・不正envelope・応答切断・読取POST・stdio実codecの不正引数遮蔽、transaction前のABORT/rollback・commit拒否/通信断、receipt永続化失敗・panic・process再起動・同request再送の副作用不増、破損diagnosticの安全な再構成を対象とする。実行結果と対象SHAは最終報告とこのRunのsemantic draftに記録する。共有稼働環境は試験に使用しない。
 
 archive は filesystem とSQLiteを同一transactionでrollbackできない。物理操作開始を記録してcommit前・後の失敗を区別し、`physical_deletion_may_have_occurred` と `archive_commit_confirmed` が得られる場合は保持する。削除失敗の事実は `deletion_error` として残すが、内部エラー本文は公開しない。古いarchive receiptは読取時にも同じ安全な投影を適用し、元のDB証拠を更新しない。共通APIのserver-errorログとruntime設定のstorageログもraw error chainを含めない。
+
+失敗/不明receiptのtargetや部分結果に含まれるpath/cwd/executable/purpose、指示本文、実行設定等は `"[withheld]"` に投影する。元入力の再掲による漏出を防ぎ、UUID・状態・revision・部分作用の真偽は残す。成功時の要求されたファイル内容・pathの応答は変更しない。

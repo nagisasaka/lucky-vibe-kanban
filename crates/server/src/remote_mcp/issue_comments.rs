@@ -208,7 +208,7 @@ pub(super) async fn call(
             }).await?;
             Ok(remote.receipt_value(receipt))
         }
-        _ => return Err(super::errors::rejection(Category::Validation)),
+        _ => Err(super::errors::rejection(Category::Validation)),
     }
 }
 
@@ -430,6 +430,32 @@ async fn read_comment(
         "offset":args.offset,"total_characters":total,"next_offset":if next < total {Some(next)} else {None},
         "has_more":next < total,"content_trust":"untrusted"}),
     )
+}
+
+fn comment_failure(
+    code: &str,
+    comment_id: Option<Uuid>,
+    unknown: bool,
+    category: utils::mcp_error::Category,
+) -> (&'static str, Value) {
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let diagnostic = Diagnostic::new(
+        if unknown {
+            Category::OutcomeUnknown
+        } else {
+            category
+        },
+        if unknown {
+            Outcome::Unknown
+        } else {
+            Outcome::Failed
+        },
+    );
+    let mut value = json!({"code":code,"error":diagnostic.value()});
+    if let Some(id) = comment_id {
+        value["comment_id"] = json!(id);
+    }
+    (if unknown { "uncertain" } else { "failed" }, value)
 }
 
 #[cfg(test)]
@@ -1110,30 +1136,4 @@ mod tests {
         );
         assert_eq!(revision(&remote, issue).await, before);
     }
-}
-
-fn comment_failure(
-    code: &str,
-    comment_id: Option<Uuid>,
-    unknown: bool,
-    category: utils::mcp_error::Category,
-) -> (&'static str, Value) {
-    use utils::mcp_error::{Category, Diagnostic, Outcome};
-    let diagnostic = Diagnostic::new(
-        if unknown {
-            Category::OutcomeUnknown
-        } else {
-            category
-        },
-        if unknown {
-            Outcome::Unknown
-        } else {
-            Outcome::Failed
-        },
-    );
-    let mut value = json!({"code":code,"error":diagnostic.value()});
-    if let Some(id) = comment_id {
-        value["comment_id"] = json!(id);
-    }
-    (if unknown { "uncertain" } else { "failed" }, value)
 }

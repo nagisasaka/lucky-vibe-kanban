@@ -102,3 +102,43 @@ impl std::fmt::Display for Diagnostic {
     }
 }
 impl std::error::Error for Diagnostic {}
+
+/// Failure context is diagnostic data, not a second delivery of request text or
+/// execution configuration. Keep IDs, state, revisions and partial-effect facts;
+/// withhold raw paths and user-authored content. Success payloads are untouched.
+pub fn redact_failure_context(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, value) in object {
+                if matches!(
+                    key.as_str(),
+                    "path"
+                        | "cwd"
+                        | "executable"
+                        | "purpose"
+                        | "prompt"
+                        | "instruction"
+                        | "content"
+                        | "body"
+                        | "title"
+                        | "description"
+                        | "command"
+                        | "args"
+                        | "environment"
+                        | "executor_action"
+                ) && !value.is_null()
+                {
+                    *value = Value::String("[withheld]".into());
+                } else {
+                    redact_failure_context(value);
+                }
+            }
+        }
+        Value::Array(values) => {
+            for value in values {
+                redact_failure_context(value);
+            }
+        }
+        _ => {}
+    }
+}

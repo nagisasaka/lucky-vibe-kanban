@@ -119,6 +119,21 @@ fn failure(error: db::models::design_note::DesignNoteError) -> (&'static str, Va
     )
 }
 
+fn read_failure(error: db::models::design_note::DesignNoteError) -> anyhow::Error {
+    use db::models::design_note::DesignNoteError;
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let category = match error {
+        DesignNoteError::NotFound => Category::NotFound,
+        DesignNoteError::Conflict => Category::Conflict,
+        DesignNoteError::Invalid | DesignNoteError::InvalidRead => Category::Validation,
+        DesignNoteError::Database(ref error) | DesignNoteError::CommitUnknown(ref error) => {
+            super::errors::database_category(error)
+        }
+        DesignNoteError::Json(_) => Category::Internal,
+    };
+    Diagnostic::new(category, Outcome::Failed).into()
+}
+
 #[cfg(test)]
 mod error_contract_tests {
     use super::*;
@@ -142,19 +157,4 @@ mod error_contract_tests {
         let (_, value) = failure(db::models::design_note::DesignNoteError::NotFound);
         assert_eq!(value["error"]["category"], "not_found");
     }
-}
-
-fn read_failure(error: db::models::design_note::DesignNoteError) -> anyhow::Error {
-    use db::models::design_note::DesignNoteError;
-    use utils::mcp_error::{Category, Diagnostic, Outcome};
-    let category = match error {
-        DesignNoteError::NotFound => Category::NotFound,
-        DesignNoteError::Conflict => Category::Conflict,
-        DesignNoteError::Invalid | DesignNoteError::InvalidRead => Category::Validation,
-        DesignNoteError::Database(ref error) | DesignNoteError::CommitUnknown(ref error) => {
-            super::errors::database_category(error)
-        }
-        DesignNoteError::Json(_) => Category::Internal,
-    };
-    Diagnostic::new(category, Outcome::Failed).into()
 }

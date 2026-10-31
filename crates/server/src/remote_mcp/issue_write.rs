@@ -174,6 +174,7 @@ impl Remote {
         let mut value = json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":targets,"status":status,"result":result,"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)});
         if let Some(diagnostic) = diagnostic {
             value["error"] = diagnostic;
+            utils::mcp_error::redact_failure_context(&mut value);
         }
         value
     }
@@ -552,6 +553,24 @@ mod tests {
             assert_eq!(value["operation_id"], operation.to_string());
             assert!(!value.to_string().contains("private-token"));
         }
+        sqlx::query("UPDATE remote_mcp_operations SET targets=?,result=?,status='failed' WHERE id=?")
+            .bind(json!({"workspace_id":target.workspace_id,"purpose":"SECRET user text","target":{"path":"/private/SECRET"}}).to_string())
+            .bind(json!({"code":"resource_busy","path":"/private/SECRET","partial_possible":true}).to_string()).bind(operation)
+            .execute(&remote.pool).await.unwrap();
+        let safe = remote.receipt_value(
+            remote
+                .operations()
+                .by_request(&remote.principal_key(&principal), request)
+                .await
+                .unwrap(),
+        );
+        assert_eq!(
+            safe["targets"]["workspace_id"],
+            target.workspace_id.to_string()
+        );
+        assert_eq!(safe["result"]["partial_possible"], true);
+        assert!(!safe.to_string().contains("SECRET"));
+        assert!(!safe.to_string().contains("/private"));
         // Stored diagnostic fields are untrusted, even in a valid JSON object.
         for damaged in [
             json!("SELECT credential FROM /private/SECRET"),

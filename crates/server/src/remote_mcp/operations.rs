@@ -283,7 +283,9 @@ impl Operations {
         {
             project_archive_diagnostics(&mut value);
             if matches!(receipt.status.as_str(), "failed" | "uncertain") {
-                let diagnostic = super::errors::receipt_diagnostic(&receipt.status, Some(&value));
+                let mut diagnostic =
+                    super::errors::receipt_diagnostic(&receipt.status, Some(&value));
+                diagnostic.correlation_id = receipt.id;
                 if value.get("message").is_some() {
                     value["message"] = serde_json::json!(diagnostic.message);
                 }
@@ -291,6 +293,13 @@ impl Operations {
                     value["error"] = diagnostic.value();
                 }
             }
+            receipt.result = Some(value.to_string());
+        }
+        if matches!(receipt.status.as_str(), "failed" | "uncertain")
+            && let Some(raw) = receipt.result.as_deref()
+            && let Ok(mut value) = serde_json::from_str::<Value>(raw)
+        {
+            utils::mcp_error::redact_failure_context(&mut value);
             receipt.result = Some(value.to_string());
         }
         Ok(receipt)

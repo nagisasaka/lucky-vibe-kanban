@@ -106,6 +106,7 @@ async fn successful_and_pending_payloads_are_preserved() {
     for data in [
         serde_json::json!({"status":"running","request_id":Uuid::new_v4()}),
         serde_json::json!({"id":"unchanged","status":"succeeded"}),
+        serde_json::json!({"path":"/intentionally/returned","content":"requested reference data"}),
     ] {
         let body = serde_json::json!({"success":true,"data":data}).to_string();
         let (server, worker) = backend(200, &body).await;
