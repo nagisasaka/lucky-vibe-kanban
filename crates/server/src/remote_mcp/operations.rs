@@ -244,12 +244,18 @@ impl Operations {
         let inserted = sqlx::query("INSERT INTO remote_mcp_operations(id,principal,request_id,project_id,operation,input_hash,targets,process_instance) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(principal,request_id) DO NOTHING")
             .bind(Uuid::new_v4()).bind(principal).bind(request_id).bind(project_id).bind(operation).bind(&hash).bind(safe_targets.to_string()).bind(self.process_instance).execute(&self.pool).await?.rows_affected() == 1;
         let receipt = self.by_request(principal, request_id).await?;
-        anyhow::ensure!(
-            receipt.project_id == project_id
-                && receipt.operation == operation
-                && receipt.input_hash == hash,
-            "Operation key already used with different input; inspect the existing receipt"
-        );
+        if receipt.project_id != project_id
+            || receipt.operation != operation
+            || receipt.input_hash != hash
+        {
+            let mut diagnostic = utils::mcp_error::Diagnostic::new(
+                utils::mcp_error::Category::Conflict,
+                utils::mcp_error::Outcome::Unknown,
+            );
+            diagnostic.message =
+                "Operation key already used with different input; inspect the existing receipt";
+            return Err(diagnostic.into());
+        }
         Ok((receipt, inserted))
     }
 
@@ -261,7 +267,12 @@ impl Operations {
         .bind(request_id)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| anyhow::anyhow!("Operation not found"))?;
+        .ok_or_else(|| {
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Operation not found",
+            )
+        })?;
         if (receipt.process_instance != self.process_instance
             || SETTLEMENT_UNCERTAIN
                 .lock()
@@ -680,6 +691,22 @@ mod tests {
                 .is_err()
         );
         assert!(store.by_request("another-owner", key).await.is_err());
+        let conflict = store
+            .admit(
+                "owner",
+                key,
+                project,
+                "create_issue",
+                &json!({"title":"different"}),
+                &targets,
+            )
+            .await
+            .err()
+            .unwrap();
+        let diagnostic = super::super::errors::diagnostic(&conflict, true);
+        assert_eq!(diagnostic.category, utils::mcp_error::Category::Conflict);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Unknown);
+        assert_eq!(diagnostic.recovery, "inspect_receipt_and_state");
         assert!(store.start(first.id).await.unwrap());
         assert!(!store.start(first.id).await.unwrap());
         // Simulate a lost response and a new process opening the same durable DB.
