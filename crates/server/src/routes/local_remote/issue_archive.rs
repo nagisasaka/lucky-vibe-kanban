@@ -544,6 +544,17 @@ where
     }.await;
     let detail = match &result {
         Ok(value) => value.to_string(),
+        // These two domain facts are static operator decisions, not arbitrary
+        // ApiError prose. Keep them visible without forwarding error chains.
+        Err(ApiError::Conflict(message))
+            if matches!(
+                message.as_str(),
+                "Issue was cancelled by operator; automatic archive refused"
+                    | "Generated Issue has not reached Done; automatic archive refused"
+            ) =>
+        {
+            message.clone()
+        }
         Err(_) => "archive refused or uncertain; inspect target state".to_owned(),
     };
     match &result {
