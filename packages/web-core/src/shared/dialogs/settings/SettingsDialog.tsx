@@ -81,7 +81,7 @@ function SettingsDialogNavigation({
                   }
                   onClick={() => onSectionSelect(section.id)}
                   className={cn(
-                    'w-full flex items-center gap-3 text-left px-3 py-3 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand',
+                    'w-full flex items-center gap-3 text-left px-3 py-3 md:py-2 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand',
                     activeSection === section.id
                       ? 'bg-brand/10 text-brand font-medium'
                       : 'text-normal hover:bg-primary/10'
@@ -300,7 +300,7 @@ function SettingsDialogContent({
           tabIndex={-1}
           className={cn(
             'h-full w-full flex overflow-hidden',
-            'bg-panel/95 backdrop-blur-sm shadow-lg',
+            'bg-primary shadow-lg',
             'animate-in fade-in-0 slide-in-from-bottom-4 duration-200',
             // Mobile: full screen, no rounded corners
             'rounded-none border-0',
@@ -311,7 +311,7 @@ function SettingsDialogContent({
           {/* Sidebar - hidden on mobile when showing content */}
           <div
             className={cn(
-              'bg-secondary/80 border-r border-border flex flex-col',
+              'bg-secondary border-r border-border flex flex-col',
               // Mobile: full width, hidden when showing content
               'w-full',
               mobileShowContent && 'hidden',
@@ -374,7 +374,7 @@ function SettingsDialogContent({
               tabIndex={-1}
               className="min-h-0 flex-1 overflow-y-auto focus:outline-none"
             >
-              <div className="px-4 py-3 border-b border-border bg-secondary/40 text-xs text-low space-y-1">
+              <div className="px-4 py-3 border-b border-border bg-secondary text-xs text-low space-y-1">
                 <p>{t(`settings.scope.${activeSection}`)}</p>
                 {isDirty && (
                   <p role="status" className="text-brand">

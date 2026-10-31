@@ -24,7 +24,7 @@ export function SettingsSection({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border bg-panel/95 backdrop-blur-sm hidden md:flex items-center justify-between">
+      <div className="p-4 border-b border-border bg-primary hidden md:flex items-center justify-between">
         <h2 className="text-lg font-semibold text-high">
           {t(`settings.layout.nav.${type}`)}
         </h2>

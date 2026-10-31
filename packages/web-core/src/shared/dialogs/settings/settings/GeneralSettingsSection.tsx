@@ -152,6 +152,7 @@ export function GeneralSettingsSection({
 
   const updateDraft = useCallback(
     (patch: Partial<typeof config>) => {
+      setSuccess(false);
       setDraft((prev: typeof config) => {
         if (!prev) return prev;
         const next = merge({}, prev, patch);
@@ -210,6 +211,7 @@ export function GeneralSettingsSection({
     if (!config) return;
     setDraft(cloneDeep(config));
     setDirty(false);
+    setSuccess(false);
   };
 
   const resetOnboarding = async () => {
@@ -260,7 +262,7 @@ export function GeneralSettingsSection({
         </div>
       )}
 
-      {success && (
+      {success && !hasUnsavedChanges && (
         <div className="bg-success/10 border border-success/50 rounded-sm p-4 text-success font-medium">
           {t('settings.general.save.success')}
         </div>

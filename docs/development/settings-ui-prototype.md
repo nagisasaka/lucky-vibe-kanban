@@ -201,3 +201,37 @@ proxyがLVK login/sessionを検証して守る仕組みはこの経路にない�
 担当者が利用できる承認済み共有経路がなければ、受渡しは未完了として扱い、認証を弱めて回避しない。
 
 この局所launcherとサンプル資格はWorkspace固有のため、main統合や他Workspaceへの複製対象ではない。
+
+
+## 視覚品質の再確認（Run 8430c518、2026-10-31）
+
+旧画像の灰色被りは、撮影タイミングと本実装の面色・透過の複合だった。
+同じ初期表示手順を隔離fixtureで再現すると、フォームがvisibleになった直後もentry animationがrunningで、opacityは約0.41。
+アニメーション終了後はopacity=1になるが、面はなおrgba(227,227,227,0.95)、backdrop-filter=blur(4px)だった。
+fixtureだけのCSS不具合として隠さず、設定shell・header・save barを不透明なbg-primaryに変更した。
+sidebarと保存scope説明は不透明なbg-secondary。暗色テーマも既存トークンに追従する。
+埋込認証では冗長な灰色カードだけを除き、独立login/setup画面のカードは維持する。
+PCナビを少し詰め、全カテゴリが一覧で見えるようにした。mobileの行高は維持する。
+
+保存成功後の再編集・破棄でsuccess表示が残る処理も修正した。dirty時は成功表示を出さない。
+項目・既定値・保存先・認証guardは変更していない。
+
+撮影はdocument.fonts.ready、有限アニメーションのfinished、2回のrequestAnimationFrameを待ち、
+初期値、opacity=1、ぼかしなし、成功・未保存表示なしを確認して行う。
+PCは外側のfixture説明を除いた実dialog要素そのものを撮影し、画像加工や撮影用の色上書きはしていない。
+最終PNG4枚は実際に開いて目視確認した。文字の透け、フォームの灰色被り、横はみ出し、操作部品の重なりは見られない。
+
+| キャプチャ（Git管理外） | PNG寸法 | 確認した内容 |
+| --- | --- | --- |
+| `.build/settings-visual-review/pc-categories-notifications.png` | 1120×820 | PCの全カテゴリ、通知の初期値、保存範囲 |
+| `.build/settings-visual-review/pc-authentication.png` | 1120×820 | 認証フォームと空password欄、背景文字の透けなし |
+| `.build/settings-visual-review/mobile-categories.png` | 390×844 | 全カテゴリ、最後の運用項目への到達 |
+| `.build/settings-visual-review/mobile-permissions.png` | 390×844 | 権限の初期値、説明文、未保存barなし |
+
+E2Eは今回の最終sourceで25件成功（従来19件＋視覚/状態回帰6件）。型検査、local-webと変更shared設定のlint、12カード保持検査、diff checkも成功。
+追加視覚testの最初の失敗は、成功文言selectorから既存の✓が抜けていたためで、selector修正後の全suite成功と区別する。
+Playwright passを目視合格の代わりにせず、computed style・撮影状態・PNGの目視を併せて確認した。
+再現のbefore/after数値と最終確認は `.build/settings-visual-review/review.json`、旧比較画像は同directoryのbefore/に保持する。
+
+認証再利用の調査・sample資格・共有設定は触っていない。局所launcherのexit78を維持し、外部previewも起動していない。
+このRunは隔離loopback E2Eのみを使用し、終了後にそのlistenerが残っていないことを確認した。

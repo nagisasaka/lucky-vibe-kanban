@@ -273,7 +273,13 @@ export function ServerAccessGate({
           : 'new-design min-h-screen overflow-auto bg-primary p-double text-base text-normal'
       }
     >
-      <div className="mx-auto max-w-2xl space-y-double rounded border bg-panel p-double">
+      <div
+        className={
+          embedded
+            ? 'mx-auto max-w-2xl space-y-double p-double'
+            : 'mx-auto max-w-2xl space-y-double rounded border bg-panel p-double'
+        }
+      >
         <h1 className="text-xl text-high">
           LVK {settings ? '認証とメンバー管理' : 'ログイン・初期設定'}
         </h1>
