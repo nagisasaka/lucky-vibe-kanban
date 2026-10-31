@@ -160,3 +160,21 @@ async fn accepted_request_with_disconnected_response_is_unknown_without_automati
     assert_eq!(error.diagnostic.recovery, "inspect_receipt_and_state");
     worker.await.unwrap();
 }
+
+#[test]
+fn response_encoding_failure_is_not_reported_as_success_or_replay_permission() {
+    struct Unencodable;
+    impl Serialize for Unencodable {
+        fn serialize<S: serde::Serializer>(&self, _serializer: S) -> Result<S::Ok, S::Error> {
+            Err(serde::ser::Error::custom(
+                "SECRET /private/user-input SELECT token",
+            ))
+        }
+    }
+    let result = McpServer::success(&Unencodable).unwrap();
+    assert_eq!(result.is_error, Some(true));
+    let value = result.structured_content.unwrap();
+    assert_eq!(value["diagnostic"]["category"], "internal");
+    assert_eq!(value["diagnostic"]["outcome"], "unknown");
+    assert!(!value.to_string().contains("SECRET"));
+}

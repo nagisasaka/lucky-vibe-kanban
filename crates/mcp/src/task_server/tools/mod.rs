@@ -121,10 +121,14 @@ impl McpServer {
     }
 
     fn success<T: Serialize>(data: &T) -> ToolCallResult {
-        Ok(CallToolResult::success(vec![Content::text(
-            serde_json::to_string_pretty(data)
-                .unwrap_or_else(|_| "Failed to serialize response".to_string()),
-        )]))
+        match serde_json::to_string_pretty(data) {
+            Ok(text) => Ok(CallToolResult::success(vec![Content::text(text)])),
+            // A mutation may already have completed before response encoding.
+            Err(_) => Ok(Self::tool_error(ToolError::classified(
+                Category::Internal,
+                Outcome::Unknown,
+            ))),
+        }
     }
 
     fn err(msg: &'static str, details: Option<&str>) -> ToolCallResult {
