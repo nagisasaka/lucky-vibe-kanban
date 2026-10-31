@@ -10,6 +10,7 @@ use rmcp::{
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
+use utils::mcp_error::{Category, Diagnostic, Outcome};
 use uuid::Uuid;
 
 use super::{ApiResponseEnvelope, McpMode, McpServer};
@@ -19,20 +20,28 @@ type ToolCallResult = Result<CallToolResult, ErrorData>;
 #[derive(Debug, Error)]
 #[error("{message}")]
 struct ToolError {
-    message: String,
-    details: Option<String>,
+    message: &'static str,
+    diagnostic: Diagnostic,
 }
 
 impl ToolError {
-    fn new(message: impl Into<String>, details: Option<impl Into<String>>) -> Self {
+    fn new(message: &'static str, _details: Option<impl Into<String>>) -> Self {
         Self {
-            message: message.into(),
-            details: details.map(Into::into),
+            message,
+            diagnostic: Diagnostic::new(Category::Validation, Outcome::Failed),
         }
     }
 
-    fn message(message: impl Into<String>) -> Self {
+    fn message(message: &'static str) -> Self {
         Self::new(message, None::<String>)
+    }
+
+    fn classified(category: Category, outcome: Outcome) -> Self {
+        let diagnostic = Diagnostic::new(category, outcome);
+        Self {
+            message: diagnostic.message,
+            diagnostic,
+        }
     }
 }
 
@@ -40,6 +49,8 @@ mod attachments;
 mod context;
 mod design_notes;
 mod dev_server;
+#[cfg(test)]
+mod error_contract_tests;
 mod integration;
 mod issue_assignees;
 mod issue_relationships;
@@ -116,86 +127,125 @@ impl McpServer {
         )]))
     }
 
-    fn err<S: Into<String>>(msg: S, details: Option<S>) -> ToolCallResult {
+    fn err(msg: &'static str, details: Option<&str>) -> ToolCallResult {
         Ok(Self::tool_error(ToolError::new(msg, details)))
     }
 
     fn tool_error(error: ToolError) -> CallToolResult {
-        let mut value = serde_json::json!({
+        // Neither backend response bodies nor reqwest/serde diagnostics are
+        // public data. They may include credentials, SQL, paths or input text.
+        tracing::warn!(correlation_id=%error.diagnostic.correlation_id,
+            category=?error.diagnostic.category, outcome=?error.diagnostic.outcome,
+            "MCP tool failed");
+        let value = serde_json::json!({
             "success": false,
             "error": error.message,
+            "diagnostic": error.diagnostic,
         });
-        if let Some(details) = error.details {
-            value["details"] = serde_json::json!(details);
-        }
+        let mut result = CallToolResult::error(vec![Content::text(value.to_string())]);
+        result.structured_content = Some(value);
+        result
+    }
 
-        CallToolResult::error(vec![Content::text(
-            serde_json::to_string_pretty(&value)
-                .unwrap_or_else(|_| "Failed to serialize error".to_string()),
-        )])
+    async fn send_response(
+        &self,
+        rb: reqwest::RequestBuilder,
+        read_only: bool,
+    ) -> Result<(reqwest::Response, bool), ToolError> {
+        let request = rb
+            .build()
+            .map_err(|_| ToolError::classified(Category::Validation, Outcome::Failed))?;
+        let read = read_only
+            || matches!(
+                *request.method(),
+                reqwest::Method::GET | reqwest::Method::HEAD
+            );
+        let response = self.client.execute(request).await.map_err(|error| {
+            let outcome = if read || error.is_connect() {
+                Outcome::Failed
+            } else {
+                Outcome::Unknown
+            };
+            ToolError::classified(Category::Unavailable, outcome)
+        })?;
+        let status = response.status();
+        if !status.is_success() {
+            let outcome = if read || matches!(status.as_u16(), 401 | 403) {
+                Outcome::Failed
+            } else {
+                Outcome::Unknown
+            };
+            return Err(ToolError::classified(
+                utils::mcp_error::http_category(status.as_u16()),
+                outcome,
+            ));
+        }
+        Ok((response, read))
     }
 
     async fn send_json<T: DeserializeOwned>(
         &self,
         rb: reqwest::RequestBuilder,
     ) -> Result<T, ToolError> {
-        let resp = rb.send().await.map_err(|error| {
-            ToolError::new("Failed to connect to VK API", Some(error.to_string()))
-        })?;
+        self.send_json_with_effects(rb, false).await
+    }
 
-        if !resp.status().is_success() {
-            let status = resp.status();
-            return Err(ToolError::message(format!(
-                "VK API returned error status: {}",
-                status
-            )));
-        }
+    async fn send_read_json<T: DeserializeOwned>(
+        &self,
+        rb: reqwest::RequestBuilder,
+    ) -> Result<T, ToolError> {
+        self.send_json_with_effects(rb, true).await
+    }
 
-        let api_response = resp
+    async fn send_json_with_effects<T: DeserializeOwned>(
+        &self,
+        rb: reqwest::RequestBuilder,
+        read_only: bool,
+    ) -> Result<T, ToolError> {
+        let (response, read) = self.send_response(rb, read_only).await?;
+        let unavailable = || {
+            ToolError::classified(
+                Category::Internal,
+                if read {
+                    Outcome::Failed
+                } else {
+                    Outcome::Unknown
+                },
+            )
+        };
+        let api_response = response
             .json::<ApiResponseEnvelope<T>>()
             .await
-            .map_err(|error| {
-                ToolError::new("Failed to parse VK API response", Some(error.to_string()))
-            })?;
-
+            .map_err(|_| unavailable())?;
         if !api_response.success {
-            let msg = api_response.message.as_deref().unwrap_or("Unknown error");
-            return Err(ToolError::new("VK API returned error", Some(msg)));
+            return Err(unavailable());
         }
-
-        api_response
-            .data
-            .ok_or_else(|| ToolError::message("VK API response missing data field"))
+        api_response.data.ok_or_else(unavailable)
     }
 
     async fn send_empty_json(&self, rb: reqwest::RequestBuilder) -> Result<(), ToolError> {
-        let resp = rb.send().await.map_err(|error| {
-            ToolError::new("Failed to connect to VK API", Some(error.to_string()))
-        })?;
-
-        if !resp.status().is_success() {
-            let status = resp.status();
-            return Err(ToolError::message(format!(
-                "VK API returned error status: {}",
-                status
-            )));
-        }
-
+        let (response, read) = self.send_response(rb, false).await?;
+        let unavailable = || {
+            ToolError::classified(
+                Category::Internal,
+                if read {
+                    Outcome::Failed
+                } else {
+                    Outcome::Unknown
+                },
+            )
+        };
         #[derive(Deserialize)]
         struct EmptyApiResponse {
             success: bool,
-            message: Option<String>,
         }
-
-        let api_response = resp.json::<EmptyApiResponse>().await.map_err(|error| {
-            ToolError::new("Failed to parse VK API response", Some(error.to_string()))
-        })?;
-
-        if !api_response.success {
-            let msg = api_response.message.as_deref().unwrap_or("Unknown error");
-            return Err(ToolError::new("VK API returned error", Some(msg)));
+        let value = response
+            .json::<EmptyApiResponse>()
+            .await
+            .map_err(|_| unavailable())?;
+        if !value.success {
+            return Err(unavailable());
         }
-
         Ok(())
     }
 
@@ -216,13 +266,7 @@ impl McpServer {
             && let Some(scoped_workspace_id) = self.scoped_workspace_id()
             && scoped_workspace_id != workspace_id
         {
-            return Err(ToolError::new(
-                "Operation is outside the configured workspace scope",
-                Some(format!(
-                    "requested workspace_id={}, configured workspace_id={}",
-                    workspace_id, scoped_workspace_id
-                )),
-            ));
+            return Err(ToolError::classified(Category::Permission, Outcome::Failed));
         }
 
         Ok(())
@@ -328,11 +372,7 @@ impl McpServer {
             .find(|s| s.name.eq_ignore_ascii_case(status_name))
             .map(|s| s.id)
             .ok_or_else(|| {
-                let available: Vec<&str> = statuses.iter().map(|s| s.name.as_str()).collect();
-                ToolError::message(format!(
-                    "Unknown status '{}'. Available statuses: {:?}",
-                    status_name, available
-                ))
+                ToolError::message("Unknown status; read the available Project statuses")
             })
     }
 
@@ -379,8 +419,7 @@ impl McpServer {
 
     fn parse_executor_agent(executor: &str) -> Result<BaseCodingAgent, ToolError> {
         let normalized = executor.replace('-', "_").to_ascii_uppercase();
-        BaseCodingAgent::from_str(&normalized)
-            .map_err(|_| ToolError::message(format!("Unknown executor '{executor}'.")))
+        BaseCodingAgent::from_str(&normalized).map_err(|_| ToolError::message("Unknown executor"))
     }
 
     fn normalize_executor_name(executor: Option<&str>) -> Result<String, ToolError> {
@@ -390,12 +429,7 @@ impl McpServer {
 
         Self::parse_executor_agent(executor)
             .map(|agent| agent.to_string())
-            .map_err(|_| {
-                ToolError::message(format!(
-                    "Unknown executor '{}' configured for session",
-                    executor
-                ))
-            })
+            .map_err(|_| ToolError::message("Unknown executor configured for session"))
     }
 }
 

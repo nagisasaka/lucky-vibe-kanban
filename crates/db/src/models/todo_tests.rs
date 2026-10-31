@@ -725,3 +725,34 @@ async fn colliding_numbers_and_issue_links_preserve_todo_identity() {
         serde_json::to_value(updated).unwrap()
     );
 }
+
+#[tokio::test]
+async fn rejected_write_rolls_back_todo_number_and_row() {
+    let (pool, project, _) = fixture().await;
+    sqlx::raw_sql("CREATE TRIGGER reject_todo BEFORE INSERT ON project_todos BEGIN SELECT RAISE(ABORT, 'fixture secret /private/db'); END;").execute(&pool).await.unwrap();
+    let input = note("isolated");
+    let error = Todo::create(
+        &pool,
+        project,
+        CreateTodo {
+            id: input.id,
+            body: input.body.clone(),
+            category: input.category.clone(),
+            issue_id: input.issue_id,
+        },
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(error, TodoError::Database(_)));
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM project_todos")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 0);
+    sqlx::raw_sql("DROP TRIGGER reject_todo")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let todo = Todo::create(&pool, project, input).await.unwrap();
+    assert_eq!(todo.number, 1);
+}

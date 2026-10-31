@@ -68,10 +68,19 @@ impl McpServer {
             .send_json::<serde_json::Value>(request.query(&[("project_id", t.project_id)]))
             .await
         {
-            Ok(value) if value["accepted"] == false => {
-                Ok(CallToolResult::error(vec![Content::text(
-                    value.to_string(),
-                )]))
+            Ok(mut value) if value["accepted"] == false => {
+                if value.get("error").is_none() {
+                    // An untyped domain rejection cannot establish that a partial
+                    // start/stop did not occur. Current servers supply the phase.
+                    value["error"] = utils::mcp_error::Diagnostic::new(
+                        super::Category::OutcomeUnknown,
+                        super::Outcome::Unknown,
+                    )
+                    .value();
+                }
+                let mut result = CallToolResult::error(vec![Content::text(value.to_string())]);
+                result.structured_content = Some(value);
+                Ok(result)
             }
             Ok(value) => Self::success(&value),
             Err(error) => Ok(Self::tool_error(error)),

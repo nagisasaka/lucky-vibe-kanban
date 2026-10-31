@@ -2,6 +2,7 @@ use anyhow::ensure;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -57,7 +58,10 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:runtime:read"),
-        "Read and runtime read permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and runtime read permissions required"
+        )
     );
     if name == "get_dev_server_status" {
         let t: Target = arguments(input)?;
@@ -67,14 +71,17 @@ pub(super) async fn call(
         let runtime = remote
             .runtime
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("DevServer runtime unavailable"))?;
+            .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
         return Ok(runtime
             .dev_server_status(t.project_id, t.workspace_id)
             .await?);
     }
     ensure!(
         principal.allows("lvk:runtime:execute"),
-        "Runtime execute permission required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Runtime execute permission required"
+        )
     );
     let t: Change = arguments(input.clone())?;
     remote
@@ -83,23 +90,23 @@ pub(super) async fn call(
     let runtime = remote
         .runtime
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("DevServer runtime unavailable"))?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     let owned = remote.clone();
     let start = match name {
         "start_dev_server" => true,
         "stop_dev_server" => false,
-        _ => anyhow::bail!("Unknown DevServer operation"),
+        _ => return Err(super::errors::rejection(Category::Validation)),
     };
     let receipt = remote.operations().submit(remote.principal_key(principal),t.request_id,t.project_id,name.into(),input,json!({"workspace_id":t.workspace_id}),move |_| async move {
         if owned.require_workspace(t.project_id,t.workspace_id).await.is_err() {
             return ("failed",json!({"code":"workspace_scope_changed"}));
         }
         match runtime.dev_server(t.project_id,t.workspace_id,start).await {
-            Ok(value) => (if value["accepted"] == false {"failed"} else {"succeeded"},value),
-            Err(crate::error::ApiError::Conflict(message)) =>
-                ("failed",json!({"code":"workspace_state_conflict","message":message})),
-            Err(error) => {
-                tracing::warn!(%error,"Managed DevServer outcome unconfirmed");
+            Ok(value) => (if value["error"]["outcome"] == "unknown" {"uncertain"} else if value["accepted"] == false {"failed"} else {"succeeded"},value),
+            Err(crate::error::ApiError::Conflict(_)) =>
+                ("failed",json!({"code":"workspace_state_conflict","message":"Workspace state prevents this operation; read current state"})),
+            Err(_) => {
+                tracing::warn!("Managed DevServer outcome unconfirmed");
                 ("uncertain",json!({"code":"dev_server_outcome_unconfirmed","message":"Managed execution may have changed before observation failed; inspect this receipt and current status before a new request"}))
             }
         }

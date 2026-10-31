@@ -65,7 +65,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         if let Some(cursor) = args.cursor {
             let exists: bool = sqlx::query_scalar(
@@ -75,7 +78,13 @@ impl Remote {
             .bind(args.project_id)
             .fetch_one(&self.pool)
             .await?;
-            ensure!(exists, "Stale or foreign status cursor; restart listing");
+            ensure!(
+                exists,
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Conflict,
+                    "Stale or foreign status cursor; restart listing"
+                )
+            );
         }
         let rows = sqlx::query("SELECT s.id,substr(s.name,1,100) AS name,length(s.name)>100 AS name_truncated,s.hidden,count(i.id) AS issue_count FROM local_project_statuses s LEFT JOIN local_issues i ON i.status_id=s.id AND i.project_id=s.project_id WHERE s.project_id=? AND (? IS NULL OR s.id>?) GROUP BY s.id ORDER BY s.id LIMIT ?")
             .bind(args.project_id).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&self.pool).await?;
@@ -107,7 +116,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         if let Some(cursor) = args.cursor {
             let sql =
@@ -118,7 +130,13 @@ impl Remote {
                 .bind(args.active_only)
                 .fetch_one(&self.pool)
                 .await?;
-            ensure!(exists, "Stale or foreign Session cursor; restart listing");
+            ensure!(
+                exists,
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Conflict,
+                    "Stale or foreign Session cursor; restart listing"
+                )
+            );
         }
         let sql = format!(
             "SELECT * FROM ({SESSIONS}) WHERE (?=0 OR active) AND (? IS NULL OR id>?) ORDER BY id LIMIT ?"

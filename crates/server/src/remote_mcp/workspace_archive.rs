@@ -1,10 +1,11 @@
 //! Remote confirmation is bound to the authenticated connection and never
 //! exposes a token accepted by the local UI/stdio routes. Deletion stays shared.
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use db::models::workspace::Workspace;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -51,12 +52,15 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let runtime = remote
         .runtime
         .clone()
-        .context("Archive runtime unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     if name == "prepare_workspace_archive" {
         let args: PrepareArgs = arguments(input)?;
         remote
@@ -65,11 +69,14 @@ pub(super) async fn call(
         let _lifecycle = services::services::workspace_lifecycle::lock(args.workspace_id).await;
         ensure!(
             runtime.archive_scripts_settled(args.workspace_id).await?,
-            "使用中のWorkspaceはarchiveできません。"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Busy,
+                "使用中のWorkspaceはarchiveできません。"
+            )
         );
         let workspace = Workspace::find_by_id(&remote.pool, args.workspace_id)
             .await?
-            .context("Workspace missing")?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         let prepared = archive::prepare_scoped(
             &remote.pool,
             &workspace,
@@ -86,7 +93,10 @@ pub(super) async fn call(
     } else {
         ensure!(
             name == "confirm_workspace_archive",
-            "Unknown archive operation"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Unknown archive operation"
+            )
         );
         let args: ConfirmArgs = arguments(input.clone())?;
         remote

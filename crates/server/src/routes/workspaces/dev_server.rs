@@ -34,6 +34,14 @@ pub(crate) async fn start_managed(
     deployment: &DeploymentImpl,
     workspace: &Workspace,
 ) -> Result<utils::response::ApiResponse<Vec<ExecutionProcessView>>, ApiError> {
+    start_managed_observed(deployment, workspace, &mut false).await
+}
+
+async fn start_managed_observed(
+    deployment: &DeploymentImpl,
+    workspace: &Workspace,
+    effects_possible: &mut bool,
+) -> Result<utils::response::ApiResponse<Vec<ExecutionProcessView>>, ApiError> {
     let pool = &deployment.db().pool;
 
     let _guard = lock(workspace.id).await;
@@ -77,6 +85,7 @@ pub(crate) async fn start_managed(
     let session = match Session::find_latest_by_workspace_id(pool, workspace.id).await? {
         Some(s) => s,
         None => {
+            *effects_possible = true;
             Session::create(
                 pool,
                 &CreateSession {
@@ -102,6 +111,7 @@ pub(crate) async fn start_managed(
             None,
         );
 
+        *effects_possible = true;
         let execution_process = deployment
             .container()
             .start_execution(
@@ -252,51 +262,88 @@ async fn change_admitted(
     require_target(&deployment.db().pool, project, workspace).await?;
     let current = validate(deployment, workspace).await?;
     let mut failure = None;
-    if start {
-        match start_managed(deployment, &current).await {
-            Ok(response) => {
-                if !response.is_success() {
-                    failure = response.message().map(str::to_owned);
+    let mut effects_possible = false;
+    let action: Result<(), ApiError> = async {
+        if start {
+            let response = start_managed_observed(deployment, &current, &mut effects_possible).await?;
+            if !response.is_success() {
+                failure = response.message().map(str::to_owned);
+            }
+        } else {
+            let _guard = lock(workspace).await;
+            validate(deployment, workspace).await?;
+            let ids: Vec<Uuid> = sqlx::query_scalar("SELECT p.id FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=? AND p.run_reason='devserver'").bind(workspace).fetch_all(&deployment.db().pool).await?;
+            for id in ids {
+                let Some(process) = ExecutionProcess::find_by_id(&deployment.db().pool, id).await? else { continue; };
+                if process.status != ExecutionProcessStatus::Running && deployment.container().script_settled(id).await? { continue; }
+                effects_possible = true;
+                if deployment.container().stop_execution(&process, ExecutionProcessStatus::Killed).await.is_err() {
+                    failure = Some("Managed DevServer stop failed; inspect current process state".to_owned());
                 }
             }
-            Err(error) => {
-                tracing::error!(%error, "Managed DevServer start failed");
-                failure =
-                    Some("Managed DevServer start failed; inspect current process state".into());
-            }
         }
-    } else {
-        let _guard = lock(workspace).await;
-        validate(deployment, workspace).await?;
-        let ids: Vec<Uuid> = sqlx::query_scalar("SELECT p.id FROM execution_processes p JOIN sessions s ON s.id=p.session_id WHERE s.workspace_id=? AND p.run_reason='devserver'").bind(workspace).fetch_all(&deployment.db().pool).await?;
-        for id in ids {
-            let Some(process) = ExecutionProcess::find_by_id(&deployment.db().pool, id).await?
-            else {
-                continue;
-            };
-            if process.status != ExecutionProcessStatus::Running
-                && deployment.container().script_settled(id).await?
-            {
-                continue;
-            }
-            if let Err(error) = deployment
-                .container()
-                .stop_execution(&process, ExecutionProcessStatus::Killed)
-                .await
-            {
-                tracing::error!(process_id=%process.id, %error, "Managed DevServer stop failed");
-                failure =
-                    Some("Managed DevServer stop failed; inspect current process state".to_owned());
-            }
+        Ok(())
+    }.await;
+    if let Err(error) = action {
+        if !effects_possible {
+            return Err(error);
         }
+        tracing::error!("Managed DevServer action outcome unconfirmed");
+        failure = Some(
+            "Managed DevServer action outcome unconfirmed; inspect current process state"
+                .to_owned(),
+        );
     }
-    let mut observed = status(deployment, project, workspace).await?;
+    let mut observed = match status(deployment, project, workspace).await {
+        Ok(observed) => observed,
+        Err(error) if !effects_possible => return Err(error),
+        Err(_) => {
+            failure = Some(
+                "Managed DevServer observation unavailable; inspect current process state"
+                    .to_owned(),
+            );
+            json!({"project_id":project,"workspace_id":workspace,"state":"observation_unavailable","target_state_observed":false})
+        }
+    };
     observed["requested_action"] = json!(if start { "start" } else { "stop" });
     observed["target_state_observed"] =
         json!(observed["state"] == if start { "running" } else { "stopped" });
     observed["accepted"] = json!(failure.is_none());
     observed["failure_reason"] = json!(failure);
+    if failure.is_some() {
+        observed["error"] = change_failure_diagnostic(effects_possible).value();
+    }
     Ok(observed)
+}
+
+fn change_failure_diagnostic(effects_possible: bool) -> utils::mcp_error::Diagnostic {
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    Diagnostic::new(
+        if effects_possible {
+            Category::OutcomeUnknown
+        } else {
+            Category::Validation
+        },
+        if effects_possible {
+            Outcome::Unknown
+        } else {
+            Outcome::Failed
+        },
+    )
+}
+
+#[cfg(test)]
+mod error_contract_tests {
+    use super::*;
+    #[test]
+    fn mutation_phase_controls_failure_outcome() {
+        let preflight = change_failure_diagnostic(false).value();
+        assert_eq!(preflight["category"], "validation");
+        assert_eq!(preflight["outcome"], "failed");
+        let partial = change_failure_diagnostic(true).value();
+        assert_eq!(partial["outcome"], "unknown");
+        assert_eq!(partial["recovery"], "inspect_receipt_and_state");
+    }
 }
 
 #[derive(Deserialize)]

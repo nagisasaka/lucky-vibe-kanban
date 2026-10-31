@@ -1,8 +1,9 @@
 //! Authenticated adapter; confirmation and execution are shared with UI/stdio.
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -50,7 +51,10 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let scope = |project_id| ConfirmationScope::Remote {
         principal: remote.principal_key(principal),
@@ -62,7 +66,7 @@ pub(super) async fn call(
         let runtime = remote
             .runtime
             .clone()
-            .context("Archive runtime unavailable")?;
+            .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
         return Ok(issue_archive::prepare_scoped(
             &remote.pool,
             args.issue_id,
@@ -87,7 +91,13 @@ pub(super) async fn call(
             Some(a.confirmation_token),
         )
     } else {
-        ensure!(name == "unarchive_issue", "Unknown Issue archive operation");
+        ensure!(
+            name == "unarchive_issue",
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Unknown Issue archive operation"
+            )
+        );
         let a: UnarchiveArgs = arguments(input.clone())?;
         (a.project_id, a.issue_id, a.request_id, None)
     };

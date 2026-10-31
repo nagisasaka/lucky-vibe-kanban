@@ -95,7 +95,10 @@ impl Remote {
             .await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let before: Option<(String, i64)> = match args.cursor {
             Some(cursor) => Some(
@@ -124,11 +127,17 @@ impl Remote {
             .await?;
         ensure!(
             (1..=16000).contains(&args.limit),
-            "limit must be between 1 and 16000 characters"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 16000 characters"
+            )
         );
         ensure!(
             args.offset == 0 || args.expected_revision.is_some(),
-            "Supply expected_revision for subsequent execution pages"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Supply expected_revision for subsequent execution pages"
+            )
         );
         let expression = match args.section {
             ExecutionSection::FinalResponse => {
@@ -163,12 +172,18 @@ impl Remote {
             args.expected_revision
                 .as_ref()
                 .is_none_or(|expected| expected == &revision),
-            "Run changed; restart reading this section"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Run changed; restart reading this section"
+            )
         );
         let total: i64 = row.try_get("total")?;
         ensure!(
             i64::from(args.offset) <= total,
-            "Page offset is outside this section"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Page offset is outside this section"
+            )
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(

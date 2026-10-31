@@ -52,7 +52,10 @@ pub(super) async fn call(remote: &Remote, args: Value) -> anyhow::Result<Value> 
     remote.require_project(args.project_id).await?;
     ensure!(
         (1..=50).contains(&args.limit),
-        "limit must be between 1 and 50"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "limit must be between 1 and 50"
+        )
     );
     // Join the Session as well as the Run: matching UUIDs supplied by callers
     // are not proof of ancestry. Scope, cursor and page share a read snapshot.
@@ -65,11 +68,17 @@ pub(super) async fn call(remote: &Remote, args: Value) -> anyhow::Result<Value> 
     let issue: Uuid = run.try_get("issue_id")?;
     ensure!(
         args.issue_id.is_none_or(|id| id == issue),
-        "Issue does not match this Workspace"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Issue does not match this Workspace"
+        )
     );
     ensure!(
         run.try_get::<String, _>("provider_id")? == "codex",
-        "Only saved Codex events are supported"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Only saved Codex events are supported"
+        )
     );
     let before: (i64, i64) = if let Some(cursor) = args.cursor {
         sqlx::query_as("SELECT run_attempt_number,sequence FROM agent_events WHERE event_id=? AND agent_run_id=? AND session_id=?")

@@ -53,23 +53,48 @@ impl McpServer {
         name: &str,
         input: Value,
     ) -> Result<CallToolResult, ErrorData> {
-        let result = self.invoke_restart(name, input).await;
-        match result {
+        let request_id = input
+            .get("request_id")
+            .and_then(Value::as_str)
+            .and_then(|s| Uuid::parse_str(s).ok());
+        match self.invoke_restart(name, input).await {
             Ok(value)
                 if matches!(
                     value["status"].as_str(),
                     Some("refused" | "failed" | "interrupted")
                 ) =>
             {
-                Ok(CallToolResult::error(vec![rmcp::model::Content::text(
-                    value.to_string(),
-                )]))
+                // Failed cutover may have partial effects. Preserve the terminal
+                // engine fact separately from uncertainty of external state.
+                let unknown = value["status"] != "refused";
+                let diagnostic = utils::mcp_error::Diagnostic::new(
+                    if unknown {
+                        super::Category::OutcomeUnknown
+                    } else {
+                        super::Category::Conflict
+                    },
+                    if unknown {
+                        super::Outcome::Unknown
+                    } else {
+                        super::Outcome::Failed
+                    },
+                );
+                let safe =
+                    json!({"status":value["status"],"request_id":request_id,"error":diagnostic});
+                let mut response =
+                    CallToolResult::error(vec![rmcp::model::Content::text(safe.to_string())]);
+                response.structured_content = Some(safe);
+                Ok(response)
             }
             Ok(value) => Self::success(&value),
-            Err(_) => Self::err(
-                "Self restart unavailable; inspect the same request_id before retrying",
-                None,
-            ),
+            Err(_) => Ok(Self::tool_error(super::ToolError::classified(
+                super::Category::Unavailable,
+                if name == "self_restart" {
+                    super::Outcome::Unknown
+                } else {
+                    super::Outcome::Failed
+                },
+            ))),
         }
     }
 

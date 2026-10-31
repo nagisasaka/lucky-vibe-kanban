@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::Row;
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -76,11 +77,23 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "list_tags" {
         let args: ListArgs = arguments(input)?;
         remote.require_project(args.project_id).await?;
-        ensure!((1..=50).contains(&args.limit), "Invalid tag page limit");
+        ensure!(
+            (1..=50).contains(&args.limit),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Invalid tag page limit"
+            )
+        );
         let rows = sqlx::query("SELECT id,substr(name,1,500) AS name,length(name)>500 AS name_truncated,substr(color,1,100) AS color FROM local_tags WHERE project_id=? AND (? IS NULL OR id>?) ORDER BY id LIMIT ?")
             .bind(args.project_id).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&remote.pool).await?;
         let items = rows.iter().map(|r| Ok(json!({"id":r.try_get::<Uuid,_>("id")?,"name":r.try_get::<String,_>("name")?,"name_truncated":r.try_get::<bool,_>("name_truncated")?,"color":r.try_get::<String,_>("color")?,"system":db::models::board_tag::is_system(&r.try_get::<String,_>("name")?)}))).collect::<anyhow::Result<Vec<_>>>()?;
@@ -89,7 +102,13 @@ pub(super) async fn call(
     if name == "list_issue_tags" {
         let args: IssueListArgs = arguments(input)?;
         remote.require_issue(args.project_id, args.issue_id).await?;
-        ensure!((1..=50).contains(&args.limit), "Invalid tag page limit");
+        ensure!(
+            (1..=50).contains(&args.limit),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Invalid tag page limit"
+            )
+        );
         let rows = sqlx::query("SELECT it.id,it.tag_id,substr(t.name,1,500) AS name FROM local_issue_tags it JOIN local_tags t ON t.id=it.tag_id AND t.project_id=? WHERE it.issue_id=? AND (? IS NULL OR it.id>?) ORDER BY it.id LIMIT ?")
             .bind(args.project_id).bind(args.issue_id).bind(args.cursor).bind(args.cursor).bind(args.limit+1).fetch_all(&remote.pool).await?;
         let items = rows.iter().map(|r| Ok(json!({"id":r.try_get::<Uuid,_>("id")?,"tag_id":r.try_get::<Uuid,_>("tag_id")?,"name":r.try_get::<String,_>("name")?}))).collect::<anyhow::Result<Vec<_>>>()?;
@@ -97,7 +116,10 @@ pub(super) async fn call(
     }
     ensure!(
         principal.allows("lvk:write"),
-        "Write permission required (lvk:write)"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Write permission required (lvk:write)"
+        )
     );
     let args: MutationArgs = arguments(input.clone())?;
     remote.require_issue(args.project_id, args.issue_id).await?;
@@ -108,18 +130,37 @@ pub(super) async fn call(
             match mutate(&owned, &args, add).await {
                 Ok(relation) => ("succeeded", json!({"issue_id":args.issue_id,"tag_id":args.tag_id,"issue_tag_id":relation,"present":add,"implementation_started":false})),
                 Err(error) => {
-                    tracing::debug!(%error, "Tag mutation rejected");
-                    (if matches!(error, db::models::board_tag::TagError::Validation(_)) { "failed" } else { "uncertain" }, json!({"code":"tag_update_rejected","message":"Tag must exist in this Project and be editable. Read the current Issue tags and operation before retrying."}))
+                    use utils::mcp_error::{Category, Diagnostic, Outcome};
+                    let (unknown, category) = match error {
+                        MutationError::Commit(ref error) if db::models::todo::commit_definitely_rejected(error) => (false, super::todos::database_category(error)),
+                        MutationError::Commit(_) => (true, Category::OutcomeUnknown),
+                        MutationError::Domain(db::models::board_tag::TagError::Validation(_)) => (false, Category::Validation),
+                        MutationError::Domain(db::models::board_tag::TagError::Database(ref error)) => (false, super::todos::database_category(error)),
+                    };
+                    let diagnostic = Diagnostic::new(category, if unknown { Outcome::Unknown } else { Outcome::Failed });
+                    (if unknown { "uncertain" } else { "failed" }, json!({"code":"tag_update_rejected","message":diagnostic.message,"error":diagnostic.value()}))
                 }
             }
         }).await?;
     Ok(remote.receipt_value(receipt))
 }
+#[derive(Debug, thiserror::Error)]
+enum MutationError {
+    #[error(transparent)]
+    Domain(#[from] db::models::board_tag::TagError),
+    #[error("Commit outcome unavailable")]
+    Commit(sqlx::Error),
+}
+impl From<sqlx::Error> for MutationError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::Domain(error.into())
+    }
+}
 async fn mutate(
     remote: &Remote,
     args: &MutationArgs,
     add: bool,
-) -> Result<Option<Uuid>, db::models::board_tag::TagError> {
+) -> Result<Option<Uuid>, MutationError> {
     let mut tx = remote.pool.begin_with("BEGIN IMMEDIATE").await?;
     let name: Option<String> = sqlx::query_scalar("SELECT t.name FROM local_tags t JOIN local_issues i ON i.project_id=t.project_id WHERE t.id=? AND t.project_id=? AND i.id=?")
         .bind(args.tag_id).bind(args.project_id).bind(args.issue_id).fetch_optional(&mut *tx).await?;
@@ -127,9 +168,9 @@ async fn mutate(
         "Tag not in Issue Project",
     ))?;
     if db::models::board_tag::is_system(&name) {
-        return Err(db::models::board_tag::TagError::Validation(
-            "System tags are managed by LVK",
-        ));
+        return Err(
+            db::models::board_tag::TagError::Validation("System tags are managed by LVK").into(),
+        );
     }
     let relation = if add {
         Some(db::models::board_tag::add(&mut tx, args.issue_id, args.tag_id, None).await?)
@@ -145,7 +186,7 @@ async fn mutate(
         }
         id
     };
-    tx.commit().await?;
+    tx.commit().await.map_err(MutationError::Commit)?;
     Ok(relation)
 }
 

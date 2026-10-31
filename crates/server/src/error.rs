@@ -214,9 +214,10 @@ impl IntoResponse for ApiError {
                 }
                 _ => ErrorInfo::internal("DesignNoteError"),
             },
-            ApiError::Todo(db::models::todo::TodoError::Database(_)) => {
-                ErrorInfo::internal("TodoError")
-            }
+            ApiError::Todo(
+                db::models::todo::TodoError::Database(_)
+                | db::models::todo::TodoError::CommitUnknown(_),
+            ) => ErrorInfo::internal("TodoError"),
             ApiError::Todo(db::models::todo::TodoError::NotFound) => {
                 ErrorInfo::not_found("TodoError", "TODO or Project not found")
             }

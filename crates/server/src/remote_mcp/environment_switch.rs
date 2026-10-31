@@ -6,9 +6,10 @@ use anyhow::{Result, ensure};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
-use super::{Principal, Remote, read::arguments};
+use super::{Principal, Remote, environment::preflight, read::arguments};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -29,7 +30,8 @@ fn configured() -> Result<(PathBuf, PathBuf)> {
         .ok_or_else(|| anyhow::anyhow!("Developer instance required"))?;
     let engine = instance.join("switch/start_binary.py");
     let config = instance.join("launch.json");
-    ensure!(
+    preflight!(
+        Category::Permission,
         engine.canonicalize()? == engine && config.canonicalize()? == config,
         "Self restart configuration cannot be aliased"
     );
@@ -50,7 +52,8 @@ fn snapshot(instance: &std::path::Path) -> Result<Value> {
     let listener = super::LOCAL_LISTENER
         .get()
         .ok_or_else(|| anyhow::anyhow!("Local listener identity unavailable"))?;
-    ensure!(
+    preflight!(
+        Category::Permission,
         listener.ip() == std::net::Ipv4Addr::LOCALHOST,
         "Self restart requires loopback listener"
     );
@@ -67,9 +70,9 @@ fn snapshot(instance: &std::path::Path) -> Result<Value> {
 }
 
 async fn invoke(owner: &str, args: Vec<String>) -> Result<Value> {
-    let (engine, instance) = configured()?;
+    let (engine, instance) = configured().map_err(super::environment::preflight_error)?;
     let handoff = if args.iter().any(|a| a == "--async") {
-        Some(snapshot(&instance)?)
+        Some(snapshot(&instance).map_err(super::environment::preflight_error)?)
     } else {
         None
     };
@@ -97,7 +100,9 @@ async fn invoke(owner: &str, args: Vec<String>) -> Result<Value> {
     if handoff.is_some() {
         command.arg("--snapshot-stdin");
     }
-    let mut child = command.spawn()?;
+    let mut child = command
+        .spawn()
+        .map_err(|error| super::environment::preflight_error(error.into()))?;
     if let Some(handoff) = handoff {
         use tokio::io::AsyncWriteExt;
         let mut stdin = child
@@ -149,13 +154,15 @@ pub(super) async fn call(
         )
         .await;
     }
-    ensure!(
+    preflight!(
+        Category::Permission,
         principal.allows("lvk:runtime:execute"),
         "Runtime execute permission required"
     );
-    configured()?;
+    configured().map_err(super::environment::preflight_error)?;
     let a: Restart = arguments(input.clone())?;
-    ensure!(
+    preflight!(
+        Category::Validation,
         a.no_new_work && !a.purpose.trim().is_empty() && a.purpose.len() <= 1000,
         "Coordinate idle work and provide purpose before self restart"
     );
@@ -166,12 +173,18 @@ pub(super) async fn call(
         "--no-new-work".into(),
         "--require-execution-enabled".into(),
     ];
-    ensure!(a.bundle.is_absolute(), "Bundle path must be absolute");
+    preflight!(
+        Category::Validation,
+        a.bundle.is_absolute(),
+        "Bundle path must be absolute"
+    );
     args.extend([
         "--bundle".into(),
         a.bundle
             .to_str()
-            .ok_or_else(|| anyhow::anyhow!("Non-UTF8 bundle path"))?
+            .ok_or_else(|| {
+                super::errors::rejection_with_message(Category::Validation, "Non-UTF8 bundle path")
+            })?
             .into(),
     ]);
     let owned = remote.clone();
@@ -179,14 +192,17 @@ pub(super) async fn call(
     let targets = json!({"project_id":project,"purpose":a.purpose,"completion":"get_self_restart_operation with the same request_id; admission is not cutover success"});
     let receipt = remote.operations().submit_and_wait(principal_key, a.request_id, project, "self_restart".into(), original, targets, move |_| async move {
         let result = async {
-            let current = owned.environment.as_ref().ok_or_else(|| anyhow::anyhow!("Runtime access disabled"))?.current_settings().await?;
-            ensure!(current.execution_enabled, "Program execution disabled");
+            let current = owned.environment.as_ref().ok_or_else(|| super::errors::rejection_with_message(Category::Permission, "Runtime access disabled"))?.current_settings().await.map_err(super::environment::preflight_error)?;
+            preflight!(Category::Permission, current.execution_enabled, "Program execution disabled");
             invoke(&owner,args).await
         }.await;
         match result {
             Ok(value) if value["status"] == "refused" => ("failed", value),
             Ok(value) => ("succeeded",json!({"admission":value,"cutover_success":false})),
-            Err(_) => ("uncertain",json!({"message":"Self restart admission unavailable; query the same request_id before retrying"})),
+            Err(error) => {
+                let diagnostic = super::errors::diagnostic(&error, true);
+                (if diagnostic.outcome == utils::mcp_error::Outcome::Failed { "failed" } else { "uncertain" },json!({"message":super::errors::message(&error),"error":diagnostic.value()}))
+            },
         }
     }).await?;
     Ok(remote.receipt_value(receipt))

@@ -279,11 +279,8 @@ impl McpServer {
         }
         if self.orchestrator_session_id() == Some(session_id) {
             return Self::err(
-                "Cannot run coding agent in the orchestrator session".to_string(),
-                Some(
-                    "Create or re-use a different session and run the coding agent there."
-                        .to_string(),
-                ),
+                "Cannot run coding agent in the orchestrator session",
+                Some("Create or re-use a different session and run the coding agent there."),
             );
         }
 
@@ -384,34 +381,21 @@ impl McpServer {
         // A successful new Session returns data:null. The generic send_json
         // helper treats null as a missing payload, so decode this nullable API
         // explicitly and reject missing/malformed data rather than losing REVIEW.
-        let response = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .and_then(reqwest::Response::error_for_status)
-            .map_err(|error| {
-                super::ToolError::message(format!(
-                    "Failed to read Session executor config: {error}"
-                ))
-            })?
-            .json::<serde_json::Value>()
-            .await
-            .map_err(|error| {
-                super::ToolError::message(format!(
-                    "Invalid Session executor config response: {error}"
-                ))
-            })?;
+        let (response, _) = self.send_response(self.client.get(&url), true).await?;
+        let response = response.json::<serde_json::Value>().await.map_err(|_| {
+            super::ToolError::classified(super::Category::Internal, super::Outcome::Failed)
+        })?;
         if response["success"] != true {
-            return Err(super::ToolError::message(
-                "Failed to read Session executor config",
+            return Err(super::ToolError::classified(
+                super::Category::Internal,
+                super::Outcome::Failed,
             ));
         }
         let data = response.get("data").ok_or_else(|| {
-            super::ToolError::message("Session executor config response missing data")
+            super::ToolError::classified(super::Category::Internal, super::Outcome::Failed)
         })?;
-        serde_json::from_value(data.clone()).map_err(|error| {
-            super::ToolError::message(format!("Invalid Session executor config: {error}"))
+        serde_json::from_value(data.clone()).map_err(|_| {
+            super::ToolError::classified(super::Category::Internal, super::Outcome::Failed)
         })
     }
 

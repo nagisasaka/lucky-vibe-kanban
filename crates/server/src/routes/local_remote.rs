@@ -817,11 +817,56 @@ pub(crate) fn board_tag_error(error: db::models::board_tag::TagError) -> ApiErro
     }
 }
 
+/// Evidence about the write boundary, kept separate from the HTTP error contract.
+#[derive(Debug)]
+pub(crate) enum IssueMutationError {
+    Failed(ApiError),
+    OutcomeUnknown(ApiError),
+}
+impl From<ApiError> for IssueMutationError {
+    fn from(error: ApiError) -> Self {
+        Self::Failed(error)
+    }
+}
+impl From<sqlx::Error> for IssueMutationError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::Failed(error.into())
+    }
+}
+impl IssueMutationError {
+    fn into_api_error(self) -> ApiError {
+        match self {
+            Self::Failed(error) | Self::OutcomeUnknown(error) => error,
+        }
+    }
+}
+
+fn issue_commit_failure(error: sqlx::Error) -> IssueMutationError {
+    // SQLite constraint or lock rejection proves COMMIT did not apply. SQLx retains
+    // the open transaction and rolls it back on drop. I/O/connection failures
+    // do not supply that evidence and must remain unknown.
+    if db::models::todo::commit_definitely_rejected(&error) {
+        IssueMutationError::Failed(error.into())
+    } else {
+        IssueMutationError::OutcomeUnknown(error.into())
+    }
+}
+
 pub(crate) async fn create_local_issue_with_tags(
     pool: &SqlitePool,
     request: CreateIssueRequest,
     tag_ids: &[Uuid],
 ) -> Result<Issue, ApiError> {
+    create_local_issue_with_tags_outcome(pool, request, tag_ids)
+        .await
+        .map_err(IssueMutationError::into_api_error)
+}
+
+pub(crate) async fn create_local_issue_with_tags_outcome(
+    pool: &SqlitePool,
+    request: CreateIssueRequest,
+    tag_ids: &[Uuid],
+) -> Result<Issue, IssueMutationError> {
     let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let id = request.id.unwrap_or_else(Uuid::new_v4);
     let (issue_number, simple_id) =
@@ -887,8 +932,10 @@ pub(crate) async fn create_local_issue_with_tags(
             .await
             .map_err(board_tag_error)?;
     }
-    tx.commit().await?;
-    get_local_issue(pool, id).await
+    tx.commit().await.map_err(issue_commit_failure)?;
+    get_local_issue(pool, id)
+        .await
+        .map_err(IssueMutationError::OutcomeUnknown)
 }
 
 pub(crate) async fn update_local_issue(
@@ -908,13 +955,41 @@ pub(crate) async fn update_local_issue_checked(
     update_local_issue_with_order_guard(pool, issue_id, changes, expected_updated_at, None).await
 }
 
+pub(crate) async fn update_local_issue_checked_outcome(
+    pool: &SqlitePool,
+    issue_id: Uuid,
+    changes: UpdateIssueRequest,
+    expected_updated_at: Option<DateTime<Utc>>,
+) -> Result<Issue, IssueMutationError> {
+    update_local_issue_with_order_guard_outcome(pool, issue_id, changes, expected_updated_at, None)
+        .await
+}
+
 async fn update_local_issue_with_order_guard(
+    pool: &SqlitePool,
+    issue_id: Uuid,
+    changes: UpdateIssueRequest,
+    expected_updated_at: Option<DateTime<Utc>>,
+    expected_sort_order: Option<f64>,
+) -> Result<Issue, ApiError> {
+    update_local_issue_with_order_guard_outcome(
+        pool,
+        issue_id,
+        changes,
+        expected_updated_at,
+        expected_sort_order,
+    )
+    .await
+    .map_err(IssueMutationError::into_api_error)
+}
+
+async fn update_local_issue_with_order_guard_outcome(
     pool: &SqlitePool,
     issue_id: Uuid,
     mut changes: UpdateIssueRequest,
     expected_updated_at: Option<DateTime<Utc>>,
     expected_sort_order: Option<f64>,
-) -> Result<Issue, ApiError> {
+) -> Result<Issue, IssueMutationError> {
     let body_saved = changes.description.is_some();
     // Reserve the writer before reading: a DEFERRED read transaction can fail
     // its write upgrade immediately despite busy_timeout when another writer
@@ -987,13 +1062,16 @@ async fn update_local_issue_with_order_guard(
     if updated.rows_affected() == 0 {
         return Err(ApiError::Conflict(
             "Issue changed while the update was being submitted".into(),
-        ));
+        )
+        .into());
     }
     if body_saved || carry_activity {
         db::models::issue_order::promote(&mut tx, issue_id).await?;
     }
-    tx.commit().await?;
-    get_local_issue(pool, issue_id).await
+    tx.commit().await.map_err(issue_commit_failure)?;
+    get_local_issue(pool, issue_id)
+        .await
+        .map_err(IssueMutationError::OutcomeUnknown)
 }
 
 fn tag_from_row(row: &SqliteRow) -> Result<Tag, sqlx::Error> {
@@ -4294,6 +4372,76 @@ mod tests {
         super::create_local_project(&pool, project_request("ROLL"))
             .await
             .unwrap();
+    }
+
+    #[test]
+    fn issue_commit_connection_loss_remains_unknown() {
+        assert!(matches!(
+            super::issue_commit_failure(sqlx::Error::Io(std::io::Error::other("connection lost"))),
+            super::IssueMutationError::OutcomeUnknown(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn issue_mutation_boundary_distinguishes_rollback_from_commit_failure() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+        let project = super::create_local_project(&pool, project_request("EVIDENCE"))
+            .await
+            .unwrap();
+        let status = super::list_project_statuses(&pool, project.id)
+            .await
+            .unwrap()[0]
+            .id;
+        sqlx::query("CREATE TRIGGER fail_issue BEFORE INSERT ON local_issues BEGIN SELECT RAISE(ABORT, 'private-token'); END")
+            .execute(&pool).await.unwrap();
+        let error = super::create_local_issue_with_tags_outcome(
+            &pool,
+            issue_request(project.id, status),
+            &[],
+        )
+        .await
+        .unwrap_err();
+        assert!(matches!(error, super::IssueMutationError::Failed(_)));
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        sqlx::query("DROP TRIGGER fail_issue")
+            .execute(&pool)
+            .await
+            .unwrap();
+        // A deferred constraint fails at COMMIT, exercising a genuinely different
+        // observation boundary from an INSERT failure, with proven non-commit.
+        sqlx::query("CREATE TABLE commit_parent(id INTEGER PRIMARY KEY)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE commit_child(id INTEGER REFERENCES commit_parent(id) DEFERRABLE INITIALLY DEFERRED)").execute(&pool).await.unwrap();
+        sqlx::query("CREATE TRIGGER fail_commit AFTER INSERT ON local_issues BEGIN INSERT INTO commit_child VALUES(1); END").execute(&pool).await.unwrap();
+        let error = super::create_local_issue_with_tags_outcome(
+            &pool,
+            issue_request(project.id, status),
+            &[],
+        )
+        .await
+        .unwrap_err();
+        assert!(matches!(error, super::IssueMutationError::Failed(_)));
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM local_issues")
+                .fetch_one(&pool)
+                .await
+                .unwrap(),
+            0
+        );
+        pool.close().await;
     }
 
     #[tokio::test]

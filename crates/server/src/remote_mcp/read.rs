@@ -1,12 +1,13 @@
 //! Bounded read projections over the existing local Board records. Reads do not
 //! initialise metadata, reconcile jobs, or invoke a model.
-use anyhow::{bail, ensure};
+use anyhow::ensure;
 use futures_util::TryStreamExt;
 use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::Row;
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::Remote;
@@ -84,7 +85,7 @@ pub(super) fn tools() -> Vec<Tool> {
 
 pub(super) fn arguments<T: serde::de::DeserializeOwned>(args: Value) -> anyhow::Result<T> {
     serde_json::from_value(args)
-        .map_err(|_| anyhow::anyhow!("Invalid tool parameters; check the tool schema"))
+        .map_err(|_| super::errors::rejection(utils::mcp_error::Category::Validation))
 }
 
 pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Result<Value> {
@@ -93,7 +94,7 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
         "list_issues" => remote.issues(arguments(args)?).await,
         "get_issue" => remote.issue(arguments(args)?).await,
         "list_issue_workspaces" => remote.issue_workspaces(arguments(args)?).await,
-        _ => bail!("Unknown read tool"),
+        _ => Err(super::errors::rejection(Category::Validation)),
     }
 }
 
@@ -110,15 +111,21 @@ pub(super) fn page(items: Vec<Value>, limit: u32) -> Value {
 
 impl Remote {
     pub(super) async fn require_project(&self, project: Uuid) -> anyhow::Result<()> {
-        ensure!(
-            self.config.project_ids.contains(&project),
-            "Project is not available to this connection"
-        );
+        if !self.config.project_ids.contains(&project) {
+            return Err(super::errors::rejection(
+                utils::mcp_error::Category::Permission,
+            ));
+        }
         let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM projects WHERE id=?)")
             .bind(project)
             .fetch_one(&self.pool)
-            .await?;
-        ensure!(exists, "Project no longer exists");
+            .await
+            .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        if !exists {
+            return Err(super::errors::rejection(
+                utils::mcp_error::Category::NotFound,
+            ));
+        }
         Ok(())
     }
 
@@ -130,8 +137,13 @@ impl Remote {
         .bind(issue)
         .bind(project)
         .fetch_one(&self.pool)
-        .await?;
-        ensure!(exists, "Issue does not exist in this Project");
+        .await
+        .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        if !exists {
+            return Err(super::errors::rejection(
+                utils::mcp_error::Category::NotFound,
+            ));
+        }
         Ok(())
     }
 
@@ -142,8 +154,8 @@ impl Remote {
     ) -> anyhow::Result<Uuid> {
         self.require_project(project).await?;
         let issue = sqlx::query_scalar("SELECT l.issue_id FROM local_workspace_links l JOIN local_issues i ON i.id=l.issue_id JOIN workspaces w ON w.id=l.workspace_id WHERE l.workspace_id=? AND l.project_id=? AND i.project_id=?")
-            .bind(workspace).bind(project).bind(project).fetch_optional(&self.pool).await?;
-        issue.ok_or_else(|| anyhow::anyhow!("Workspace does not exist in this Project"))
+            .bind(workspace).bind(project).bind(project).fetch_optional(&self.pool).await.map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
+        issue.ok_or_else(|| super::errors::rejection(utils::mcp_error::Category::NotFound))
     }
 
     async fn project(&self, args: ProjectArgs) -> anyhow::Result<Value> {
@@ -171,12 +183,13 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         if let Some(cursor) = args.cursor {
-            self.require_issue(args.project_id, cursor)
-                .await
-                .map_err(|_| anyhow::anyhow!("Stale or foreign cursor; restart Issue listing"))?;
+            self.require_issue(args.project_id, cursor).await?;
         }
         // Archive-only requests retain the bounded SQL path. Its predicate uses
         // the same shared archive selection as matches(); other filters run there
@@ -229,11 +242,17 @@ impl Remote {
         self.require_issue(args.project_id, args.issue_id).await?;
         ensure!(
             (1..=16000).contains(&args.limit),
-            "limit must be between 1 and 16000 characters"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 16000 characters"
+            )
         );
         ensure!(
             args.offset == 0 || args.expected_revision.is_some(),
-            "Supply expected_revision when reading another requirements page"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Supply expected_revision when reading another requirements page"
+            )
         );
         let row = sqlx::query("SELECT substr(title,1,500) AS title,length(title)>500 AS title_truncated,simple_id,status_id,archived,coalesce(priority,'medium') AS priority,updated_at,substr(coalesce(description,''),?,?) AS content,length(coalesce(description,'')) AS total FROM local_issues WHERE id=? AND project_id=?")
             .bind(i64::from(args.offset)+1).bind(args.limit).bind(args.issue_id).bind(args.project_id).fetch_one(&self.pool).await?;
@@ -242,12 +261,18 @@ impl Remote {
             args.expected_revision
                 .as_ref()
                 .is_none_or(|expected| expected == &revision),
-            "Issue changed; restart reading requirements before acting"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Issue changed; restart reading requirements before acting"
+            )
         );
         let total: i64 = row.try_get("total")?;
         ensure!(
             i64::from(args.offset) <= total,
-            "Page offset is outside the requirements; restart reading"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Page offset is outside the requirements; restart reading"
+            )
         );
         let next = i64::from(args.offset) + i64::from(args.limit);
         Ok(
@@ -259,12 +284,18 @@ impl Remote {
         self.require_issue(args.project_id, args.issue_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         if let Some(cursor) = args.cursor {
             ensure!(
                 self.require_workspace(args.project_id, cursor).await? == args.issue_id,
-                "Cursor belongs to another Issue; restart listing"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "Cursor belongs to another Issue; restart listing"
+                )
             );
         }
         let rows = sqlx::query("SELECT w.id,substr(w.name,1,500) AS name,w.archived,w.pinned,w.updated_at FROM workspaces w JOIN local_workspace_links l ON l.workspace_id=w.id WHERE l.project_id=? AND l.issue_id=? AND (? IS NULL OR w.id>?) ORDER BY w.id LIMIT ?")

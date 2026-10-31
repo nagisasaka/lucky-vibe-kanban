@@ -119,7 +119,13 @@ impl Remote {
         .bind(workspace)
         .fetch_one(&self.pool)
         .await?;
-        ensure!(member, "Session does not exist in this Workspace");
+        ensure!(
+            member,
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Session does not exist in this Workspace"
+            )
+        );
         let mut questions = Vec::new();
         // Preserve the existing answer reconciliation and attempt-expiry rules.
         // This service only reconciles existing receipts; it never launches work.
@@ -160,7 +166,10 @@ impl Remote {
     async fn questions(&self, args: ListArgs) -> anyhow::Result<Value> {
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let (issue, questions) = self
             .pending_questions(args.project_id, args.workspace_id, args.session_id)
@@ -193,11 +202,17 @@ impl Remote {
     async fn question(&self, args: DetailArgs) -> anyhow::Result<Value> {
         ensure!(
             (1..=16000).contains(&args.limit),
-            "limit must be between 1 and 16000 characters"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 16000 characters"
+            )
         );
         ensure!(
             args.offset == 0 || args.expected_revision.is_some(),
-            "Supply expected_revision for subsequent question pages"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Supply expected_revision for subsequent question pages"
+            )
         );
         let (issue, questions) = self
             .pending_questions(args.project_id, args.workspace_id, args.session_id)
@@ -208,13 +223,19 @@ impl Remote {
             args.expected_revision
                 .as_ref()
                 .is_none_or(|expected| expected == &revision),
-            "Question state changed; refresh before answering"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Question state changed; refresh before answering"
+            )
         );
         let text = serde_json::to_string(&question.content)?;
         let total = text.chars().count();
         ensure!(
             args.offset as usize <= total,
-            "Question page offset is outside the content"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Question page offset is outside the content"
+            )
         );
         let end = (args.offset as usize + args.limit as usize).min(total);
         Ok(

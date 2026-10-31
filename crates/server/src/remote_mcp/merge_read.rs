@@ -180,7 +180,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         if let Some(cursor) = args.cursor {
             let sql = format!("SELECT EXISTS(SELECT 1 FROM ({MEMBERS}) WHERE id=?)");
@@ -189,7 +192,13 @@ impl Remote {
                 .bind(cursor)
                 .fetch_one(&self.pool)
                 .await?;
-            ensure!(exists, "Stale or foreign merge cursor; restart listing");
+            ensure!(
+                exists,
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Conflict,
+                    "Stale or foreign merge cursor; restart listing"
+                )
+            );
         }
         let sql =
             format!("SELECT * FROM ({MEMBERS}) WHERE (? IS NULL OR id>?) ORDER BY id LIMIT ?");

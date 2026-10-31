@@ -1,7 +1,21 @@
 //! Trusted runtime access. Direct paths have an operational boundary, not an OS sandbox.
 use std::path::{Component, Path, PathBuf};
 
-use anyhow::ensure;
+use utils::mcp_error::Category;
+
+macro_rules! preflight {
+    ($category:expr, $condition:expr, $message:expr $(,)?) => {
+        if !$condition {
+            return Err(super::errors::rejection_with_message($category, $message));
+        }
+    };
+}
+pub(super) use preflight;
+
+/// Only call before a runtime side effect has been attempted.
+pub(super) fn preflight_error(error: anyhow::Error) -> anyhow::Error {
+    super::errors::diagnostic(&error, false).into()
+}
 use rmcp::model::Tool;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -28,11 +42,13 @@ impl Default for RuntimeAccessSettings {
 }
 impl RuntimeAccessSettings {
     pub fn validate_paths(&self) -> anyhow::Result<()> {
-        ensure!(
+        preflight!(
+            Category::Validation,
             !self.file_roots.is_empty() && self.file_roots.len() <= 64,
             "Configure 1 to 64 file roots"
         );
-        ensure!(
+        preflight!(
+            Category::Validation,
             self.file_roots
                 .iter()
                 .all(|root| root.is_absolute()
@@ -45,7 +61,11 @@ impl RuntimeAccessSettings {
         self.validate_paths()?;
         for root in &mut self.file_roots {
             *root = root.canonicalize()?;
-            ensure!(root.is_dir(), "File root must be a directory");
+            preflight!(
+                Category::Validation,
+                root.is_dir(),
+                "File root must be a directory"
+            );
         }
         self.file_roots.sort();
         self.file_roots.dedup();
@@ -205,7 +225,8 @@ pub(super) fn protect_workspace(
     workspaces: &[PathBuf],
     ancestors: bool,
 ) -> anyhow::Result<()> {
-    ensure!(
+    preflight!(
+        Category::Permission,
         !workspaces
             .iter()
             .any(|w| target.starts_with(w) || (ancestors && w.starts_with(target))),
@@ -261,7 +282,8 @@ async fn stop_identity(
     let Some(row) = row else {
         return Ok(identity.to_owned());
     };
-    ensure!(
+    preflight!(
+        Category::Permission,
         row.try_get::<&str, _>("principal")? == owner
             && row.try_get::<Uuid, _>("project_id")? == project,
         "Managed process belongs to another Project or owner"
@@ -279,18 +301,28 @@ pub(super) async fn call(
     name: &str,
     mut input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(
+    preflight!(
+        Category::Permission,
         principal.allows("lvk:read") && principal.allows("lvk:runtime:read"),
         "Runtime read permission required"
     );
     let environment = remote
         .environment
         .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Runtime access unavailable"))?
+        .ok_or_else(|| {
+            super::errors::rejection_with_message(
+                Category::Unavailable,
+                "Runtime access unavailable",
+            )
+        })?
         .clone();
-    let settings = environment.current_settings().await?;
+    let settings = environment
+        .current_settings()
+        .await
+        .map_err(preflight_error)?;
     if name == "get_runtime_access" {
-        ensure!(
+        preflight!(
+            Category::Validation,
             input.as_object().is_some_and(|v| v.is_empty()),
             "Invalid capability arguments"
         );
@@ -302,11 +334,14 @@ pub(super) async fn call(
         input
             .as_object_mut()
             .and_then(|v| v.remove("project_id"))
-            .ok_or_else(|| anyhow::anyhow!("Project required"))?,
+            .ok_or_else(|| {
+                super::errors::rejection_with_message(Category::Validation, "Project required")
+            })?,
     )?;
     remote.require_project(project).await?;
     let files = matches!(name, "read_runtime_path" | "change_runtime_path");
-    ensure!(
+    preflight!(
+        Category::Permission,
         if files {
             settings.files_enabled
         } else {
@@ -320,7 +355,8 @@ pub(super) async fn call(
     );
     let mutation = matches!(name, "change_runtime_path" | "run_process" | "stop_process");
     if mutation || name == "self_restart" {
-        ensure!(
+        preflight!(
+            Category::Permission,
             principal.allows(if files {
                 "lvk:write"
             } else {
@@ -344,10 +380,18 @@ pub(super) async fn call(
                 .as_object_mut()
                 .and_then(|v| v.remove("action"))
                 .and_then(|v| v.as_str().map(str::to_owned))
-                .ok_or_else(|| anyhow::anyhow!("File action required"))?;
-            let path = input["path"]
-                .as_str()
-                .ok_or_else(|| anyhow::anyhow!("Absolute path required"))?;
+                .ok_or_else(|| {
+                    super::errors::rejection_with_message(
+                        Category::Validation,
+                        "File action required",
+                    )
+                })?;
+            let path = input["path"].as_str().ok_or_else(|| {
+                super::errors::rejection_with_message(
+                    Category::Validation,
+                    "Absolute path required",
+                )
+            })?;
             let (root, relative) = fs::resolve(&settings.file_roots, Path::new(path))?;
             input["path"] = json!(relative);
             let absolute = root.join(&relative);
@@ -367,7 +411,12 @@ pub(super) async fn call(
                 .as_object_mut()
                 .and_then(|v| v.remove("action"))
                 .and_then(|v| v.as_str().map(str::to_owned))
-                .ok_or_else(|| anyhow::anyhow!("Process action required"))?;
+                .ok_or_else(|| {
+                    super::errors::rejection_with_message(
+                        Category::Validation,
+                        "Process action required",
+                    )
+                })?;
             #[derive(Deserialize)]
             #[serde(deny_unknown_fields)]
             struct List {
@@ -400,7 +449,8 @@ pub(super) async fn call(
             return match action.as_str() {
                 "list" => {
                     let a: List = arguments(input)?;
-                    ensure!(
+                    preflight!(
+                        Category::Validation,
                         (1..=100).contains(&a.limit),
                         "Process list limit must be 1 to 100"
                     );
@@ -412,7 +462,8 @@ pub(super) async fn call(
                 }
                 "output" => {
                     let a: Output = arguments(input)?;
-                    ensure!(
+                    preflight!(
+                        Category::Validation,
                         (1..=65536).contains(&a.limit),
                         "Output page limit must be 1 to 65536"
                     );
@@ -427,27 +478,32 @@ pub(super) async fn call(
                 _ => anyhow::bail!("Unknown process observation action"),
             };
         }
-        ensure!(mutation, "Unknown runtime operation");
+        preflight!(Category::Validation, mutation, "Unknown runtime operation");
         let (request, purpose, target) = match name {
             "change_runtime_path" => {
                 let a: Change = arguments(input.clone())?;
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     matches!(a.action.as_str(), "write" | "delete"),
                     "Unknown file change action"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.action != "write" || a.content.is_some(),
                     "Write content required"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.action != "delete" || a.content.is_none(),
                     "Delete cannot include content"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.action != "write" || !a.recursive,
                     "Write cannot be recursive"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.content.as_ref().is_none_or(|s| s.len() <= 524288),
                     "Write exceeds 512 KiB"
                 );
@@ -460,19 +516,27 @@ pub(super) async fn call(
             }
             "run_process" => {
                 let a: Run = arguments(input.clone())?;
-                ensure!(
-                    a.executable.is_absolute() && a.executable.canonicalize()?.is_file(),
+                preflight!(
+                    Category::Validation,
+                    a.executable.is_absolute()
+                        && a.executable
+                            .canonicalize()
+                            .map_err(|error| preflight_error(error.into()))?
+                            .is_file(),
                     "Executable must be an absolute existing file"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.cwd.is_absolute() && !a.cwd.components().any(|c| c == Component::ParentDir),
                     "cwd must be absolute without traversal"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     a.args.len() <= 128 && a.args.iter().map(String::len).sum::<usize>() <= 32768,
                     "Runtime arguments exceed limit"
                 );
-                ensure!(
+                preflight!(
+                    Category::Validation,
                     (1..=if a.service { 86400 } else { 3600 }).contains(&a.lifetime_seconds),
                     "Runtime lifetime exceeds limit"
                 );
@@ -491,7 +555,8 @@ pub(super) async fn call(
                 )
             }
         };
-        ensure!(
+        preflight!(
+            Category::Validation,
             !purpose.trim().is_empty() && purpose.len() <= 1000,
             "Purpose required (at most 1000 bytes)"
         );
@@ -503,24 +568,24 @@ pub(super) async fn call(
             json!({"purpose":purpose,"target":target,"arguments":"omitted; input hash retained"}),
             move |operation_id| async move {
                 let result = async {
-                    let current = environment.current_settings().await?;
-                    ensure!(if operation == "change_runtime_path" {
+                    let current = environment.current_settings().await.map_err(preflight_error)?;
+                    preflight!(Category::Permission, if operation == "change_runtime_path" {
                         current.files_enabled && current.file_roots == settings.file_roots
                     } else { current.execution_enabled }, "Runtime permission changed; submit a new deliberate request");
                     match operation.as_str() {
                         "change_runtime_path" => {
                             let a: Change = arguments(input)?;
-                            let paths = workspace_paths(&owned).await?;
+                            let paths = workspace_paths(&owned).await.map_err(preflight_error)?;
                             tokio::task::spawn_blocking(move || fs::change(
                                 &settings.file_roots, &paths, &a.action, &a.path,
                                 a.content.as_deref(), a.expected.as_ref(), a.recursive,
-                            )).await?
+                            )).await?.map_err(|error| anyhow::Error::from(super::errors::diagnostic(&error, false)))
                         }
                         "run_process" => {
                             let a: Run = arguments(input)?;
-                            let executable = a.executable.canonicalize()?;
-                            let cwd = a.cwd.canonicalize()?;
-                            let workspaces = workspace_paths(&owned).await?;
+                            let executable = a.executable.canonicalize().map_err(|error| preflight_error(error.into()))?;
+                            let cwd = a.cwd.canonicalize().map_err(|error| preflight_error(error.into()))?;
+                            let workspaces = workspace_paths(&owned).await.map_err(preflight_error)?;
                             protect_workspace(&cwd, &workspaces, false)?;
                             environment.processes.run_audited(
                                 &process_owner, &executable, &a.args, &cwd,
@@ -530,7 +595,7 @@ pub(super) async fn call(
                         }
                         _ => {
                             let a: Stop = arguments(input)?;
-                            let identity = stop_identity(&owned, &owner, project, &a.identity).await?;
+                            let identity = stop_identity(&owned, &owner, project, &a.identity).await.map_err(preflight_error)?;
                             environment.processes.stop(&process_owner, &identity, a.force)
                         }
                     }
@@ -539,10 +604,58 @@ pub(super) async fn call(
                     Ok(value) if value["status"] == "failed" => ("failed", value),
                     Ok(value) if value["status"] == "uncertain" => ("uncertain", value),
                     Ok(value) => ("succeeded", value),
-                    Err(error) => ("failed", json!({"message":super::errors::message(&error)})),
+                    Err(error) => {
+                        let diagnostic = super::errors::diagnostic(&error, true);
+                        (if diagnostic.outcome == utils::mcp_error::Outcome::Failed { "failed" } else { "uncertain" },
+                            json!({"message":super::errors::message(&error),"error":diagnostic.value()}))
+                    },
                 }
             },
         ).await?;
         Ok(remote.receipt_value(receipt))
+    }
+}
+
+#[cfg(test)]
+mod error_contract_tests {
+    use super::*;
+
+    #[test]
+    fn preflight_rejections_preserve_category_and_safe_explanation() {
+        let error = RuntimeAccessSettings {
+            file_roots: vec![],
+            ..Default::default()
+        }
+        .validate_paths()
+        .unwrap_err();
+        let diagnostic = super::super::errors::diagnostic(&error, true);
+        assert_eq!(diagnostic.category, Category::Validation);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Failed);
+        assert_eq!(
+            super::super::errors::message(&error),
+            "Configure 1 to 64 file roots"
+        );
+
+        let error = protect_workspace(
+            Path::new("/managed/file"),
+            &[PathBuf::from("/managed")],
+            false,
+        )
+        .unwrap_err();
+        let diagnostic = super::super::errors::diagnostic(&error, true);
+        assert_eq!(diagnostic.category, Category::Permission);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Failed);
+    }
+
+    #[test]
+    fn preflight_io_classification_does_not_expose_private_diagnostics() {
+        let error = preflight_error(std::io::Error::other("private-token /host/path").into());
+        let diagnostic = super::super::errors::diagnostic(&error, true);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Failed);
+        assert!(!diagnostic.value().to_string().contains("private-token"));
+        // The same generic error after a possible side effect must stay unknown.
+        let diagnostic =
+            super::super::errors::diagnostic(&anyhow::anyhow!("process_pid_unavailable"), true);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Unknown);
     }
 }

@@ -1,6 +1,6 @@
 //! Repository Wiki is an adapter over UI admission and retained publication
 //! evidence. An MCP receipt settles admission, never the agent or publication.
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use db::models::{
     agent_runtime::AgentRunRecord,
     repo::Repo,
@@ -10,7 +10,10 @@ use db::models::{
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use utils::repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus};
+use utils::{
+    mcp_error::Category,
+    repository_memory::{RepositoryMemoryStore, RepositoryWikiStatus},
+};
 use uuid::Uuid;
 
 use super::{
@@ -80,7 +83,10 @@ async fn require_repository(
         local_remote::project_creation_repository_ids(&remote.pool, project)
             .await?
             .contains(&repository),
-        "Repository does not belong to this Project"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Repository does not belong to this Project"
+        )
     );
     Ok(())
 }
@@ -91,9 +97,21 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "sync_repository_wiki" {
-        ensure!(principal.allows("lvk:write"), "Write permission required");
+        ensure!(
+            principal.allows("lvk:write"),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Write permission required"
+            )
+        );
         let args: SyncArgs = arguments(input.clone())?;
         require_repository(remote, args.project_id, args.repository_id).await?;
         ensure!(
@@ -102,20 +120,32 @@ pub(super) async fn call(
                     .expected_source_commit
                     .bytes()
                     .all(|b| b.is_ascii_hexdigit()),
-            "Read the exact current source commit before synchronizing"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Read the exact current source commit before synchronizing"
+            )
         );
         ensure!(
             !args.expected_target_branch.is_empty() && args.expected_target_branch.len() <= 1024,
-            "Read the saved target branch before synchronizing"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Read the saved target branch before synchronizing"
+            )
         );
         ensure!(
             args.from_commit
                 .as_ref()
                 .is_none_or(|value| (4..=40).contains(&value.len())
                     && value.bytes().all(|b| b.is_ascii_hexdigit())),
-            "Use a commit SHA for from_commit"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Use a commit SHA for from_commit"
+            )
         );
-        let launch = remote.launch.clone().context("Wiki service unavailable")?;
+        let launch = remote
+            .launch
+            .clone()
+            .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
         let owned = remote.clone();
         let receipt = remote.operations().submit(
             remote.principal_key(principal), args.request_id, args.project_id, name.into(), input,
@@ -141,12 +171,18 @@ pub(super) async fn call(
             .await?;
         ensure!(
             receipt.project_id == args.project_id && receipt.operation == "sync_repository_wiki",
-            "Wiki request not found in this Project"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Wiki request not found in this Project"
+            )
         );
         let targets: Value = serde_json::from_str(&receipt.targets)?;
         ensure!(
             targets["repository_id"] == json!(args.repository_id),
-            "Wiki request does not target this repository"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Wiki request does not target this repository"
+            )
         );
         let admission = remote.receipt_value(receipt);
         let result = &admission["result"];
@@ -176,7 +212,7 @@ pub(super) async fn call(
         let current = match remote
             .launch
             .as_ref()
-            .context("Wiki service unavailable")?
+            .ok_or_else(|| super::errors::rejection(Category::Unavailable))?
             .wiki_status(args.repository_id)
             .await
         {
@@ -185,13 +221,19 @@ pub(super) async fn call(
         };
         return Ok(json!({"admission":admission,"execution":execution,"repository":current}));
     }
-    ensure!(name == "get_repository_wiki", "Unknown Wiki tool");
+    ensure!(
+        name == "get_repository_wiki",
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Unknown Wiki tool"
+        )
+    );
     let args: ReadArgs = arguments(input)?;
     require_repository(remote, args.project_id, args.repository_id).await?;
     remote
         .launch
         .as_ref()
-        .context("Wiki service unavailable")?
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?
         .wiki_status(args.repository_id)
         .await
 }
@@ -256,29 +298,35 @@ async fn execution_result(
 ) -> anyhow::Result<Value> {
     let ws = Workspace::find_by_id(&remote.pool, workspace)
         .await?
-        .context("Wiki execution workspace unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
     let owner = ws
         .execution_owner
         .as_ref()
-        .context("Wiki owner unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
     ensure!(
         owner.kind == OPENWIKI_SYNC
             && owner.repository_id == Some(repository)
             && owner.run_id == Some(run_id),
-        "Wiki execution identity mismatch"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Wiki execution identity mismatch"
+        )
     );
     let run = AgentRunRecord::find(&remote.pool, run_id)
         .await?
-        .context("Wiki AgentRun unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
     ensure!(
         run.workspace_id == workspace,
-        "Wiki AgentRun workspace mismatch"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Wiki AgentRun workspace mismatch"
+        )
     );
     let repo = Repo::find_by_id(&remote.pool, repository)
         .await?
-        .context("Repository unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
     let store = RepositoryMemoryStore::read_only_configured_for_repository(&repo.name, repository)?
-        .context("Wiki evidence unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     let mut value = execution_evidence(&store, run_id, run.status, owner.result.as_ref())?;
     value["workspace_id"] = json!(workspace);
     Ok(value)

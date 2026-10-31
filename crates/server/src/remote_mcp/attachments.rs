@@ -1,5 +1,6 @@
 use anyhow::ensure;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 
 use super::{Remote, auth::Principal, read::definition};
 use crate::routes::attachment_transfer::{HostFile, Place, Upload};
@@ -31,12 +32,15 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let project = if name == "upload_attachment" {
-        serde_json::from_value::<Upload>(input.clone())?.project_id
+        super::read::arguments::<Upload>(input.clone())?.project_id
     } else {
-        let args: Place = serde_json::from_value(input.clone())?;
+        let args: Place = super::read::arguments(input.clone())?;
         remote
             .require_workspace(args.project_id, args.workspace_id)
             .await?;
@@ -46,7 +50,7 @@ pub(super) async fn call(
     remote
         .launch
         .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Attachment service unavailable"))?
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?
         .attachment_transfer(name, input, remote.principal_key(principal))
         .await
 }

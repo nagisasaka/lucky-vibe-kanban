@@ -18,6 +18,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -118,23 +119,23 @@ pub(super) trait LaunchActions: Send + Sync {
         _input: Value,
         _actor: String,
     ) -> anyhow::Result<Value> {
-        anyhow::bail!("Attachment service unavailable")
+        return Err(super::errors::rejection(Category::Unavailable));
     }
     async fn place_for_execution(
         &self,
         _args: crate::routes::attachment_transfer::Place,
     ) -> anyhow::Result<Value> {
-        anyhow::bail!("Attachment service unavailable")
+        return Err(super::errors::rejection(Category::Unavailable));
     }
     async fn cancel_integration(&self, _id: Uuid) -> anyhow::Result<()> {
-        anyhow::bail!("Auto-merge cancellation service unavailable")
+        return Err(super::errors::rejection(Category::Unavailable));
     }
 
     async fn wiki_status(&self, _repository: Uuid) -> anyhow::Result<Value> {
-        anyhow::bail!("Wiki service unavailable")
+        return Err(super::errors::rejection(Category::Unavailable));
     }
     async fn wiki_sync(&self, _request: super::repository_wiki::SyncArgs) -> anyhow::Result<Value> {
-        anyhow::bail!("Wiki service unavailable")
+        return Err(super::errors::rejection(Category::Unavailable));
     }
     async fn defaults(&self) -> ExecutorConfig;
     async fn start(
@@ -174,7 +175,7 @@ impl LaunchActions for ExistingLaunch {
                 )
                 .await
             }
-            _ => anyhow::bail!("Unknown attachment operation"),
+            _ => return Err(super::errors::rejection(Category::Validation)),
         }
     }
     async fn place_for_execution(
@@ -239,14 +240,20 @@ fn branch(value: &str) -> anyhow::Result<()> {
         value.len() <= 1024
             && !value.starts_with("refs/")
             && git::GitService::new().is_branch_name_valid(value),
-        "Select a valid local branch name"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Select a valid local branch name"
+        )
     );
     Ok(())
 }
 fn commit(value: &str) -> anyhow::Result<()> {
     ensure!(
         value.len() == 40 && value.bytes().all(|b| b.is_ascii_hexdigit()),
-        "Expected a full commit ID from the current candidate"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Expected a full commit ID from the current candidate"
+        )
     );
     Ok(())
 }
@@ -290,14 +297,20 @@ async fn prepare_start(
 ) -> anyhow::Result<CreateAndStartWorkspaceRequest> {
     ensure!(
         !args.repositories.is_empty() && args.repositories.len() <= 10,
-        "Select 1–10 repositories"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Select 1–10 repositories"
+        )
     );
     let issue = local_remote::get_local_issue(pool, args.issue_id)
         .await
-        .map_err(|_| anyhow::anyhow!("Issue unavailable"))?;
+        .map_err(|_| super::errors::rejection(Category::Unavailable))?;
     ensure!(
         issue.project_id == args.project_id,
-        "Issue is outside this Project"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Issue is outside this Project"
+        )
     );
     let revision: String = sqlx::query_scalar("SELECT updated_at FROM local_issues WHERE id=?")
         .bind(args.issue_id)
@@ -305,39 +318,54 @@ async fn prepare_start(
         .await?;
     ensure!(
         revision == args.expected_revision,
-        "Issue changed; read current requirements before starting"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Issue changed; read current requirements before starting"
+        )
     );
     let description = issue.description.as_deref().unwrap_or("");
     ensure!(
         !description.trim().is_empty(),
-        "Issue needs self-contained agreed requirements before starting"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Issue needs self-contained agreed requirements before starting"
+        )
     );
     ensure!(
         description.len() <= 256000 && issue.title.len() <= 2000,
-        "Issue text exceeds execution admission limit"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Issue text exceeds execution admission limit"
+        )
     );
     let permitted = local_remote::project_creation_repository_ids(pool, args.project_id).await?;
     let mut seen = HashSet::new();
     for selection in &args.repositories {
         ensure!(
             seen.insert(selection.repository_id) && permitted.contains(&selection.repository_id),
-            "Repository duplicated or outside this Project's configured repositories"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Repository duplicated or outside this Project's configured repositories"
+            )
         );
         branch(&selection.target_branch)?;
         let repo = Repo::find_by_id(pool, selection.repository_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Repository no longer exists"))?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         let target = selection.target_branch.clone();
         tokio::task::spawn_blocking(move || {
             git::GitService::new().get_branch_oid(&repo.path, &target)
         })
         .await?
-        .map_err(|_| anyhow::anyhow!("Target branch unavailable in selected repository"))?;
+        .map_err(|_| super::errors::rejection(Category::Unavailable))?;
     }
     if args.execution_mode == Some(ExecutionMode::Review) {
         ensure!(
             executor.executor == executors::executors::BaseCodingAgent::Codex,
-            "REVIEW execution mode requires CODEX"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "REVIEW execution mode requires CODEX"
+            )
         );
     }
     if let Some(mode) = args.execution_mode {
@@ -350,7 +378,10 @@ async fn prepare_start(
                     executor.execution_mode,
                     Some(ExecutionMode::Goal | ExecutionMode::PlanWithGoal)
                 ),
-            "A positive token budget requires Goal or PlanWithGoal mode"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "A positive token budget requires Goal or PlanWithGoal mode"
+            )
         );
         executor.goal_token_budget = Some(budget);
     }
@@ -361,7 +392,7 @@ async fn prepare_start(
     for id in &args.attachment_ids {
         let file = db::models::file::File::find_by_id(pool, *id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Attachment not found"))?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         prompt.push_str(&format!(
             "\n\nAttachment: `.vibe-attachments/{}`",
             file.file_path
@@ -397,7 +428,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let mut ids =
             local_remote::project_creation_repository_ids(&self.pool, args.project_id).await?;
@@ -405,7 +439,10 @@ impl Remote {
         if let Some(cursor) = args.cursor {
             ensure!(
                 ids.contains(&cursor),
-                "Stale or foreign repository cursor; restart listing"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Conflict,
+                    "Stale or foreign repository cursor; restart listing"
+                )
             );
         }
         let integration_ids =
@@ -426,17 +463,23 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         ensure!(
             local_remote::project_creation_repository_ids(&self.pool, args.project_id)
                 .await?
                 .contains(&args.repository_id),
-            "Repository is not in this Project"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Repository is not in this Project"
+            )
         );
         let repo = Repo::find_by_id(&self.pool, args.repository_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         let prefix = format!("{}:", args.repository_id);
         let after = args
             .cursor
@@ -445,16 +488,16 @@ impl Remote {
                 cursor
                     .strip_prefix(&prefix)
                     .map(str::to_owned)
-                    .ok_or_else(|| anyhow::anyhow!("Foreign branch cursor; restart listing"))
+                    .ok_or_else(|| super::errors::rejection(Category::Validation))
             })
             .transpose()?;
         let items = tokio::task::spawn_blocking(move || -> anyhow::Result<Vec<Value>> {
             let git = git::GitService::new();
-            let mut branches = git.get_all_branches(&repo.path).map_err(|_|anyhow::anyhow!("Repository branches unavailable"))?;
+            let mut branches = git.get_all_branches(&repo.path).map_err(|_|super::errors::rejection(Category::Unavailable))?;
             branches.retain(|b| !b.is_remote); branches.sort_by(|a,b|a.name.cmp(&b.name));
-            ensure!(after.as_ref().is_none_or(|name|branches.iter().any(|b| &b.name == name)), "Stale branch cursor; restart listing");
+            ensure!(after.as_ref().is_none_or(|name|branches.iter().any(|b| &b.name == name)), super::errors::rejection_with_message(utils::mcp_error::Category::Conflict, "Stale branch cursor; restart listing"));
             branches.into_iter().filter(|b|after.as_ref().is_none_or(|after|b.name > *after)).take(args.limit as usize+1).map(|b| {
-                let head=git.get_branch_oid(&repo.path,&b.name).map_err(|_|anyhow::anyhow!("Branch changed while reading; restart listing"))?;
+                let head=git.get_branch_oid(&repo.path,&b.name).map_err(|_|super::errors::rejection(Category::Conflict))?;
                 Ok(json!({"id":format!("{prefix}{}",b.name),"name":b.name,"commit":head,"is_current":b.is_current}))
             }).collect()
         }).await??;
@@ -468,7 +511,7 @@ impl Remote {
         branch(&args.target_branch)?;
         let workspace = Workspace::find_by_id(&self.pool, args.workspace_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Workspace missing"))?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         ensure!(
             WorkspaceRepo::find_by_workspace_and_repo_id(
                 &self.pool,
@@ -477,11 +520,14 @@ impl Remote {
             )
             .await?
             .is_some(),
-            "Repository is not in this Workspace"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Repository is not in this Workspace"
+            )
         );
         let repo = Repo::find_by_id(&self.pool, args.repository_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Repository missing"))?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         let target = args.target_branch.clone();
         let (head, target_head) = tokio::task::spawn_blocking(move || {
             let git = git::GitService::new();
@@ -491,9 +537,7 @@ impl Remote {
             ))
         })
         .await?
-        .map_err(|_| {
-            anyhow::anyhow!("Candidate commits unavailable; inspect the Workspace in LVK")
-        })?;
+        .map_err(|_| super::errors::rejection(Category::Unavailable))?;
         Ok(
             json!({"project_id":args.project_id,"issue_id":issue,"workspace_id":args.workspace_id,"repository_id":args.repository_id,"source_commit":head,"target_branch":args.target_branch,"target_commit":target_head,"eligibility":"not_validated","formal_validation_on_start":true,"url":self.config.workspace_url(args.project_id,issue,args.workspace_id)}),
         )
@@ -503,7 +547,7 @@ fn validation_error(error: anyhow::Error) -> (&'static str, Value) {
     let message = super::errors::message(&error);
     (
         "failed",
-        json!({"code":"admission_validation_failed","message":message}),
+        json!({"code":"admission_validation_failed","message":message,"error":super::errors::diagnostic(&error, false).value()}),
     )
 }
 pub(super) async fn call(
@@ -512,7 +556,13 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     match name {
         "list_project_repositories" => return remote.repositories(arguments(input)?).await,
         "get_integration_candidate" => return remote.candidate(arguments(input)?).await,
@@ -523,7 +573,7 @@ pub(super) async fn call(
             let launch = remote
                 .launch
                 .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("Launch service unavailable"))?;
+                .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
             let config = launch.defaults().await;
             return Ok(
                 json!({"executor":config.executor,"variant":config.variant,"execution_mode":config.execution_mode.unwrap_or_default(),"model":"configured_profile","url":remote.config.project_url(args.project_id)}),
@@ -538,12 +588,15 @@ pub(super) async fn call(
     };
     ensure!(
         principal.allows(required),
-        "Required operation scope is missing"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Required operation scope is missing"
+        )
     );
     let launch = remote
         .launch
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Launch service unavailable"))?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     let owned = remote.clone();
     let actor = remote.principal_key(principal);
     let receipt = match name {
@@ -572,7 +625,10 @@ pub(super) async fn call(
             commit(&args.expected_target_commit)?;
             ensure!(
                 !args.selections.is_empty() && args.selections.len() <= 100,
-                "Select 1–100 Issue/Workspace pairs"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "Select 1–100 Issue/Workspace pairs"
+                )
             );
             let mut issues = HashSet::new();
             let mut workspaces = HashSet::new();
@@ -580,7 +636,10 @@ pub(super) async fn call(
                 commit(&selection.expected_commit)?;
                 ensure!(
                     issues.insert(selection.issue_id) && workspaces.insert(selection.workspace_id),
-                    "Select exactly one adopted Workspace per Issue"
+                    super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Validation,
+                        "Select exactly one adopted Workspace per Issue"
+                    )
                 );
             }
             remote.operations().submit_and_wait(actor,args.request_id,args.project_id,name.into(),input,json!({"repository_id":args.repository_id,"workspace_ids":args.selections.iter().map(|s|s.workspace_id).collect::<Vec<_>>()}),move|operation|async move {
@@ -599,7 +658,7 @@ pub(super) async fn call(
                 }
             }).await?
         }
-        _ => anyhow::bail!("Unknown launch tool"),
+        _ => return Err(super::errors::rejection(Category::Validation)),
     };
     Ok(remote.receipt_value(receipt))
 }

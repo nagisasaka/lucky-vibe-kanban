@@ -162,9 +162,7 @@ impl Operations {
             match store.start(id).await {
                 Ok(true) => {}
                 _ => {
-                    let _ = sender.send(Err(anyhow::anyhow!(
-                        "Operation admission is uncertain; inspect this request ID before retrying"
-                    )));
+                    let _ = sender.send(Err(super::errors::unknown()));
                     return;
                 }
             }
@@ -188,9 +186,7 @@ impl Operations {
             if store.finish(id, status, &result).await.is_err() {
                 tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");
                 if let Some(sender) = sender {
-                    let _ = sender.send(Err(anyhow::anyhow!(
-                        "Domain acceptance receipt is uncertain; inspect the original request ID"
-                    )));
+                    let _ = sender.send(Err(super::errors::unknown()));
                 }
                 return;
             }
@@ -198,11 +194,7 @@ impl Operations {
                 let _ = sender.send(store.by_request(&principal, request_id).await);
             }
         });
-        receiver.await.map_err(|_| {
-            anyhow::anyhow!(
-                "Operation admission unavailable; inspect the request ID before retrying"
-            )
-        })?
+        receiver.await.map_err(|_| super::errors::unknown())?
     }
 
     pub async fn admit(
@@ -254,6 +246,9 @@ impl Operations {
             matches!(status, "succeeded" | "failed" | "uncertain"),
             "Invalid final receipt status"
         );
+        if status != "succeeded" {
+            tracing::warn!(operation_id=%id, status, "MCP operation settled without success");
+        }
         let updated = sqlx::query("UPDATE remote_mcp_operations SET status=?,result=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND process_instance=? AND status='running'")
             .bind(status).bind(safe_result.to_string()).bind(id).bind(self.process_instance).execute(&self.pool).await?.rows_affected();
         anyhow::ensure!(
@@ -269,6 +264,161 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+
+    async fn isolated_store() -> (Operations, Uuid) {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE projects(id BLOB PRIMARY KEY)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261013000000_remote_mcp_operations.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let project = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects VALUES(?)")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        (
+            Operations {
+                pool,
+                process_instance: Uuid::new_v4(),
+            },
+            project,
+        )
+    }
+
+    #[tokio::test]
+    async fn settlement_failure_does_not_repeat_a_committed_side_effect() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        };
+        let (store, project) = isolated_store().await;
+        sqlx::query("CREATE TRIGGER reject_settlement BEFORE UPDATE ON remote_mcp_operations WHEN NEW.status IN ('succeeded','failed','uncertain') BEGIN SELECT RAISE(ABORT, 'SELECT secret FROM /private/host/user-input-token'); END")
+            .execute(&store.pool).await.unwrap();
+        let count = Arc::new(AtomicUsize::new(0));
+        let write_count = count.clone();
+        let key = Uuid::new_v4();
+        let error = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                move |_| async move {
+                    write_count.fetch_add(1, Ordering::SeqCst);
+                    ("succeeded", json!({"done":true}))
+                },
+            )
+            .await
+            .err()
+            .expect("receipt settlement must fail");
+        let public = super::super::errors::message(&error);
+        for secret in ["SELECT", "secret", "/private/host", "user-input-token"] {
+            assert!(!public.contains(secret));
+        }
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+        let retry = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("must not repeat") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(retry.status, "running");
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+        // A fresh process cannot recover a final outcome from the failed write.
+        let restarted = Operations {
+            pool: store.pool.clone(),
+            process_instance: Uuid::new_v4(),
+        };
+        assert_eq!(
+            restarted.by_request("owner", key).await.unwrap().status,
+            "uncertain"
+        );
+        store.pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn panicked_domain_is_unknown_and_same_request_never_reexecutes() {
+        let (store, project) = isolated_store().await;
+        let key = Uuid::new_v4();
+        let receipt = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("SELECT secret /private/host user-input-token") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(receipt.status, "uncertain");
+        let result = receipt.result.as_deref().unwrap();
+        for secret in ["SELECT", "secret", "/private/host", "user-input-token"] {
+            assert!(!result.contains(secret));
+        }
+        let retry = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("must not repeat") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(receipt.id, retry.id);
+        assert_eq!(retry.status, "uncertain");
+        store.pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn receipt_states_distinguish_admission_execution_and_terminal_results() {
+        let (store, project) = isolated_store().await;
+        for final_status in ["succeeded", "failed"] {
+            let key = Uuid::new_v4();
+            let (accepted, owned) = store
+                .admit("owner", key, project, "fixture", &json!({}), &json!({}))
+                .await
+                .unwrap();
+            assert!(owned);
+            assert_eq!(accepted.status, "accepted");
+            assert!(accepted.result.is_none());
+            assert!(store.start(accepted.id).await.unwrap());
+            let running = store.by_request("owner", key).await.unwrap();
+            assert_eq!(running.status, "running");
+            assert!(running.result.is_none());
+            store
+                .finish(accepted.id, final_status, &json!({"done":true}))
+                .await
+                .unwrap();
+            let finished = store.by_request("owner", key).await.unwrap();
+            assert_eq!(finished.status, final_status);
+            assert!(finished.result.is_some());
+        }
+        store.pool.close().await;
+    }
 
     #[tokio::test]
     async fn disconnected_request_during_admission_still_finishes_once() {

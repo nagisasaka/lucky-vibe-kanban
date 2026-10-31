@@ -13,6 +13,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::{Row, SqlitePool};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -271,7 +272,13 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "get_goal" {
         let args: ReadArgs = arguments(input)?;
         remote
@@ -281,7 +288,10 @@ pub(super) async fn call(
     }
     ensure!(
         principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let args: WriteArgs = arguments(input.clone())?;
     let action = match name {
@@ -289,7 +299,7 @@ pub(super) async fn call(
         "resume_goal" => Action::Resume,
         "cancel_goal" => Action::Cancel,
         "clear_goal" => Action::Clear,
-        _ => anyhow::bail!("Unknown Goal operation"),
+        _ => return Err(super::errors::rejection(Category::Validation)),
     };
     remote
         .require_workspace(args.target.project_id, args.target.workspace_id)
@@ -297,7 +307,7 @@ pub(super) async fn call(
     let runtime = remote
         .runtime
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Runtime dispatch unavailable"))?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     let owned = remote.clone();
     let receipt = remote.operations().submit(remote.principal_key(principal),args.request_id,args.target.project_id,name.into(),input,json!({"workspace_id":args.target.workspace_id,"session_id":args.target.session_id,"agent_run_id":args.target.agent_run_id}),move |operation| async move {
         if validate(&owned.pool,&args.target,action,&args.expected_revision).await.is_err() {

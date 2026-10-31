@@ -4,6 +4,7 @@ use db::models::integration::IntegrationRun;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -33,10 +34,15 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
 
 async fn find(remote: &Remote, project: Uuid, id: Uuid) -> anyhow::Result<IntegrationRun> {
     remote.require_project(project).await?;
-    let run = IntegrationRun::find(&remote.pool, id).await?;
+    let run = IntegrationRun::find(&remote.pool, id)
+        .await
+        .map_err(|error| super::errors::rejection(super::todos::database_category(&error)))?;
     ensure!(
         run.project_id == project,
-        "Auto-merge does not exist in this Project"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::NotFound,
+            "Auto-merge does not exist in this Project"
+        )
     );
     Ok(run)
 }
@@ -76,28 +82,39 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:merge"),
-        "Read and merge permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and merge permissions required"
+        )
     );
-    ensure!(name == "cancel_integration", "Unknown Auto-merge operation");
+    ensure!(
+        name == "cancel_integration",
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Unknown Auto-merge operation"
+        )
+    );
     let args: CancelArgs = arguments(input.clone())?;
     let (project, id, request_id) = (args.project_id, args.integration_id, args.request_id);
     find(remote, project, id).await?;
     let actions = remote
         .launch
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Auto-merge service unavailable"))?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     let owned = remote.clone();
     let receipt = remote.operations().submit_and_wait(
         remote.principal_key(principal), request_id, project, name.into(), input,
         json!({"integration_id":id}), move |_operation| async move {
             if let Err(error) = find(&owned, project, id).await {
-                return ("failed", json!({"message":super::errors::message(&error)}));
+                return ("failed", json!({"message":super::errors::message(&error),"error":super::errors::diagnostic(&error,false).value()}));
             }
             let result = actions.cancel_integration(id).await;
             if let Err(error) = result {
-                // A database failure can occur after mutation; never authorise replay.
-                let status = if error.chain().any(|e| e.is::<sqlx::Error>()) { "uncertain" } else { "failed" };
-                return (status, json!({"integration_id":id,"message":super::errors::message(&error),"read_back":"get_integration"}));
+                // Arbitrary domain errors can follow external effects. Only explicit
+                // typed rejection evidence proves no effect; absence of a DB error does not.
+                let diagnostic = super::errors::diagnostic(&error, true);
+                let status = if diagnostic.outcome == utils::mcp_error::Outcome::Failed { "failed" } else { "uncertain" };
+                return (status, json!({"integration_id":id,"message":super::errors::message(&error),"error":diagnostic.value(),"read_back":"get_integration"}));
             }
             match observation(&owned, project, id).await {
                 Ok(mut value) => {
