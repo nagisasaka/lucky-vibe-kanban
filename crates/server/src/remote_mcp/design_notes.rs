@@ -7,7 +7,6 @@ use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{

@@ -68,7 +68,7 @@ Operations は principal と request_id と input fingerprint で所有者を固
 | receipt accepted/running | 同requestの receipt を参照し待つ。新requestを開始しない |
 | 終端 failed、rollback/未commit 確認済み | 原因を修正。CAS競合は対象を再読し新しいrevisionで意図を確認 |
 | 応答喪失・commit不明・panic・他processの未完了receipt | 元requestを同入力で回収、receiptと対象状態を読戻す。新requestで盲目的に再実行しない |
-| domain成功後にreceipt永続化失敗 | 成功の可能性を保持。元requestとtargetで診断し、保存失敗をdomain失敗へ書換えない |
+| domain成功後にreceipt永続化失敗 | process内にもIDだけの不確実性証拠を保持し、同processでのreceipt再照会もuncertainにする。再起動後は既存の旧process pending回復規則が引き継ぐ。成功の可能性を保持。元requestとtargetで診断し、保存失敗をdomain失敗へ書換えない |
 | receipt証拠の破損/読取不能 | 不明を維持し元識別子から診断。証拠を捏造しない |
 
 operation_id/request_id と安全な相関IDを内部診断への手掛かりにする。correlation logにもユーザー入力や秘密のerror chainを含めない。単純な retryable=true で結果不明の再実行を促さない。

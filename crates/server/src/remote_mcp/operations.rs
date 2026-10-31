@@ -6,6 +6,14 @@ use sha2::{Digest, Sha256};
 use sqlx::{FromRow, SqlitePool};
 use uuid::Uuid;
 
+// If domain completion cannot be persisted, keep that uncertainty visible in
+// this process as well. Restart recovery already treats all older pending rows
+// as uncertain. Entries contain identities only and live until process exit;
+// they never grant ownership or authorise re-execution.
+static SETTLEMENT_UNCERTAIN: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashSet<(Uuid, Uuid)>>,
+> = std::sync::LazyLock::new(Default::default);
+
 #[derive(Clone)]
 pub(crate) struct Operations {
     pub pool: SqlitePool,
@@ -184,6 +192,10 @@ impl Operations {
             .await;
             let (status, result) = result.unwrap_or_else(|_| ("uncertain", serde_json::json!({"message":"Operation outcome unavailable; inspect its targets before any new request"})));
             if store.finish(id, status, &result).await.is_err() {
+                SETTLEMENT_UNCERTAIN
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .insert((store.process_instance, id));
                 tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");
                 if let Some(sender) = sender {
                     let _ = sender.send(Err(super::errors::unknown()));
@@ -228,7 +240,11 @@ impl Operations {
         .fetch_optional(&self.pool)
         .await?
         .ok_or_else(|| anyhow::anyhow!("Operation not found"))?;
-        if receipt.process_instance != self.process_instance
+        if (receipt.process_instance != self.process_instance
+            || SETTLEMENT_UNCERTAIN
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(&(self.process_instance, receipt.id)))
             && matches!(receipt.status.as_str(), "accepted" | "running")
         {
             receipt.status = "uncertain".into();
@@ -341,7 +357,7 @@ mod tests {
             )
             .await
             .unwrap();
-        assert_eq!(retry.status, "running");
+        assert_eq!(retry.status, "uncertain");
         assert_eq!(count.load(Ordering::SeqCst), 1);
         // A fresh process cannot recover a final outcome from the failed write.
         let restarted = Operations {

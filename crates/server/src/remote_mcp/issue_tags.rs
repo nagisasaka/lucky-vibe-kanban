@@ -5,7 +5,6 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::Row;
-use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
