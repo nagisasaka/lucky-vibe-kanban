@@ -72,10 +72,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+    at: 2026-10-31T11:36:54.240Z
 ---
 
 # クイックスタートと調査案内
@@ -305,3 +305,9 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 コード `7a740a94` でfrontend build/check/lint/backend:test/types/SQLxの同一batchが成功し、その後のtest-only差分は `b803a1ed` の267/272隔離E2E・Chromium・Vitest15件・fmt・server all-targets Clippyで検証した。旧failedを成功へ書換えず、最終SHAで変更のないsuiteの再実行省略はagent判断として記録した。このWikiの後続commitにコード試験を付け替えない。
 
 実ChatGPT/Library fileParams・署名URL期限・host/proxy制限、実Codexと実外部OpenWikiのRun跨ぎ再開は公開後の適合ゲートであり、fixture成功で完成とは扱わない。保存quota/TTLは追加していない。検証の入口と限界は [開発・検証](operations/development.md#review添付搬送wiki再開を変更するとき)を参照する。
+
+### TODO番号とOpenWiki 0.7.2の統合
+
+LOCAL-281/282の固定sourceを同じ候補へ競合なく統合した。TODOの不変番号・非再利用counter・両MCPのProject内参照は [Project Todo](concepts/project-todos.md#project-ごとの不変番号)、maintenance writerの読取4tool・linked参照・operation監査分離は [OpenWiki保守](operations/openwiki-maintenance.md#072-の読取横断参照と検証)を読む。通常agentへの新たな検索公開や並列writerは導入していない。
+
+コード候補 `75e7cb71b5e82df998bfb440180fe35d022913c1` でlocked install、frontend build、check、lint、backend:test、生成型/SQLx整合が管理commandとして成功した。Wiki更新はその後の別commitであり、後続Wiki SHAへコード試験を付け替えない。281のChange Manifest欠落と取得できなかった完了run本文は成功証拠に数えず、282の最終deltaは試験/検証記録だけだったことを照合した。fixtureと実Auth0/ChatGPT、稼働DB移行、配布image、共有runtime切替は区別する。今回のWiki lifecycle自体はこの環境の登録済みMCPを利用し、共有OpenWikiインストールの更新は行っていない。

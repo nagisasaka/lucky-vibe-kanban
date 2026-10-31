@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ea643b52d3a837259d3ea8de8130cfb7d7f5183057c176d889acd8a5dc839f5a",
+  "pageVersion": "sha256:4c78589b19f4d26ac92d3cb316f276ac0ed44477c1326a36e8d64d7e964b4eac",
   "claims": [
     {
       "id": "claim_8c3b7b704cee45f0ad83d4207da34794",
@@ -206,15 +206,15 @@
     },
     {
       "id": "claim_1c99330477664959897b8efbd7a70bac",
-      "statement": "OpenWiki writerはthread-local required MCP startup60秒、thread start/resume RPC75秒、catalog preflight15秒で六toolを確認し各toolだけapprove設定。欠落は起動失敗でpreflightはrunを開始しない。",
+      "statement": "OpenWiki writerはthread-local required MCP startup60秒、thread start/resume RPC75秒、catalog preflight15秒でlifecycle6toolと読取4toolを確認し各toolをapprove設定。欠落は起動失敗でpreflightはrunを開始しない。",
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:9767881a45c535beec5f954f86d51936637eb23bc32942b520260faac37794f6"
+          "version": "repo-file-v1:sha256:0341f3f43fc9b64b67ba3fe07b65703a220dfba66556c7997086483c8ab88369"
         },
         {
           "resource": "repo://crates/executors/src/executors/codex/client/openwiki.rs",
-          "version": "repo-file-v1:sha256:fb619ab65d7fdd33bbd64bbf311860f1cb8402ffc16e983841696374b09af720"
+          "version": "repo-file-v1:sha256:22eaa78242ae050d5ea0de88e50724c997bf7268e3cde58ed08bee75ea5ba4bb"
         }
       ]
     },
@@ -224,7 +224,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:9767881a45c535beec5f954f86d51936637eb23bc32942b520260faac37794f6"
+          "version": "repo-file-v1:sha256:0341f3f43fc9b64b67ba3fe07b65703a220dfba66556c7997086483c8ab88369"
         }
       ]
     },
@@ -234,7 +234,7 @@
       "evidence": [
         {
           "resource": "repo://crates/executors/src/executors/codex.rs",
-          "version": "repo-file-v1:sha256:9767881a45c535beec5f954f86d51936637eb23bc32942b520260faac37794f6"
+          "version": "repo-file-v1:sha256:0341f3f43fc9b64b67ba3fe07b65703a220dfba66556c7997086483c8ab88369"
         },
         {
           "resource": "repo://crates/executors/src/legacy_wiki.rs",
@@ -859,10 +859,20 @@
           "version": "repo-lines-v1:sha256:59ba1c29c5d7f9d9334e917a2df54c28eb018945b06e92d0bd12c28d940561b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhMmVkNjM3NzkzOWFiZGY4MGRjNjVhMTk3ZjViYmY0MjY3NzdkNWRhMDA2NjIwODcyOTYzZjU1NWM1YWIzNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0ODZiOWRiN2M0NTQ1NTFjZWFkMzczZTBkOTgwMTk0MjYyMDNkZWQ3NDkyNGUxZWQyOWIwMGU4MmVmZWIwYzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExYzI2NDMzODBkOGMxNTg1ZTNmNzkyNTE2ZjgxMmIwMzAxZWU2ZjRhMGE0YjE5NDI4YzdjZmZmZmU2ZmQxNDEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_1998d244a96848269a5eb20f25979ad5",
+      "statement": "maintenance threadは利用者のOPENWIKI_CONFIG_DIRをMCPへ引き継ぎ、公開registryの場所を尊重する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/executors/src/executors/codex.rs#L1087-L1103",
+          "version": "repo-lines-v1:sha256:1050f4af03d9da13c7e5a7039f2936c8b8b780faa7501bdea5e8b15db0f53a0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YWZmY2E1ZThkZWVlYjM5MDVkOWQ5ZjNkMzMyY2QzMzVkYzkwMGRmM2EzNjQyMmEyMzc5ZDBkYzIzOGJlNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2OGM4NjJjZGNmZDAyYjllYTZkOGVkZjM5NjY0YjBiNjQ1MWViZGY4ZDhjYTVhZTFiNDJkYWM2MTY3NTNjMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkMDRmZWFiM2RlMDM2ZWE5OWUxYWU1MTA1NmY5NjkxMDcxZjVhYjQ4NGIyMWVkZDUxZDE2N2JmODAwYTVmMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwNWQ1OWQ3Yzc3ZjMzMzQxYzRjY2MyMWIxM2Q5MmRiZWM4OTU0NTM5YTExMDU0OTVjMTQxY2ExZjEwNjUxNjAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T17:57:38.430Z"
+    "at": "2026-10-31T11:36:54.240Z"
   }
 }

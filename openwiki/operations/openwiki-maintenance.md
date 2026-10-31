@@ -70,6 +70,8 @@ sources:
     resource: repo://crates/services/src/services/workspace_usage/lifecycle.rs
   - id: openwiki-source-2e2c90b28d3bcaf7a890d88a
     resource: repo://crates/workflow/src/templates.rs
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
   - id: openwiki-source-36cac436618e11757c666971
     resource: repo://docs/design/openwiki-bootstrap-implementation.md
   - id: openwiki-source-a3944588bb3b08c863d66298
@@ -84,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-10-30T04:46:05.998Z" }
+generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-30T04:46:05.998Z
+    at: 2026-10-31T11:36:54.240Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -106,9 +108,9 @@ Repository settings で有効化し、統合先の **local branch** と出力言
 
 開始時の存在判定と公開時の完成条件は異なる。公開候補には finalised `openwiki/index.md` が必要であり、部分importを既存Wikiとして受け入れることは、そのまま公開可能という意味ではない。[公開条件](../../crates/services/src/services/openwiki.rs#L333-L346)
 
-利用手順と依存条件は [OpenWiki repository memory](../../docs/workspaces/openwiki.mdx) を参照する。文書は pinned OpenWiki と Node.js 22 以上、既存 Codex 認証を用いる構成を定める。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[利用条件](../../docs/workspaces/openwiki.mdx)・[version 検査](../../crates/services/src/services/openwiki.rs)
+利用手順と依存条件は [OpenWiki repository memory](../../docs/workspaces/openwiki.mdx) を参照する。文書は pinned OpenWiki と Node.js 22.22.0 以上、既存 Codex 認証を用いる構成を定める。LVK の version 検査は CLI の help banner を読み、固定版との完全一致を要求する。--version が exit 0 になるだけでは互換性の確認にならない。[利用条件](../../docs/workspaces/openwiki.mdx)・[version 検査](../../crates/services/src/services/openwiki.rs)
 
-LVK の準備処理は public Codex integration を --force なしで準備する。変更された user 設定を上書きせず conflict とする方針が code comment に記録されている。maintenance thread は public MCP の `openwiki mcp --host codex` を必須として設定し、turn / Goal 開始前に実際の lifecycle tool catalog を確認する。[準備境界](../../crates/services/src/services/openwiki.rs)・[thread 設定](../../crates/executors/src/executors/codex.rs)・[起動前確認](../integrations/agent-providers.md#coding-agent--外部-mcp-server)
+LVK の準備処理は public Codex integration を --force なしで準備する。変更された user 設定を上書きせず conflict とする方針が code comment に記録されている。maintenance thread は public MCP の `openwiki mcp --host codex` を必須として設定し、turn / Goal 開始前に実際の lifecycle 6tool と読取4tool の catalog を確認する。[準備境界](../../crates/services/src/services/openwiki.rs)・[thread 設定](../../crates/executors/src/executors/codex.rs)・[起動前確認](../integrations/agent-providers.md#coding-agent--外部-mcp-server)
 
 Codex の TOML editor が project trust table を追加すると、OpenWiki の閉じ marker だけがファイル末尾へ移る場合がある。LVK の準備処理は installer の前にこの限定されたずれを修復する。単一 marker pair、既定の MCP command/args、同じ解析済み TOML 値を確認し、利用者の設定値は変更しない。custom MCP 値・曖昧な marker は修復せず installer の conflict として残す。[原因と修復条件](../../crates/services/src/services/openwiki/codex_config.rs#L1-L48)
 
@@ -216,7 +218,7 @@ Markdown と静的 MDX は `markdown-rs` の MDAST を使う。原文 snapshot �
 
 ## Writer の操作と完了証拠
 
-writer は同じ root host で begin → plan → next_page → ページ執筆 → submit_page を順に進め、全 page 完了後に finish する。LVK は公開 MCP の呼び出し開始・完了を Native Audit から照合する。同時 call、開始記録のない完了、別 root thread の writer、食い違う重複結果は拒否する。[認められる tool と直列性](../../crates/services/src/services/openwiki/completion.rs)
+writer は同じ root host で begin → plan → next_page → ページ執筆 → submit_page を順に進め、全 page 完了後に finish する。LVK は公開 MCP の呼び出し開始・完了を Native Audit から照合する。lifecycle 同士の同時 call、開始記録のない完了、別 root thread の writer、食い違う重複結果は拒否する。[認められる tool と直列性](../../crates/services/src/services/openwiki/completion.rs)
 
 登録済み MCP が利用不能なとき、自作の shell / stdio / SDK bridge で別プロセスを起動して代用しない。正しく Markdown を生成できても、その経路では LVK が必要とする native MCP call event を証明できないためである。host prompt は迂回せず連携エラーを報告するよう要求し、起動前の tool discovery で早期に確認する。[host の契約](../../crates/services/src/services/openwiki.rs)、[事前確認の実装](../../crates/executors/src/executors/codex/client/openwiki.rs)
 
@@ -294,3 +296,13 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 ## イベントからの新規受付禁止を検証する
 
 `node --test tests/openwiki/admission.test.mjs` は起動元と明示request必須を静的検査する。`bash tests/openwiki/recovery.sh` は一時instanceの実Git/SQLiteで公開済みイベント＋無関係backlog、新規pending、古いbacklog、main直接変更の4状態を各3回回復させる。新規Workspace・Session・AgentRun・Workflowがゼロ、保存状態と未ackイベントが不変であることを検証し、CLI trapで誤ったモデル起動を防ぐ。試験用instanceはforeground試験終了後に削除する。実サーバー再起動・実モデル・認証のE2Eは対象外である。[試験入口と残る起動元](../../tests/openwiki/README.md)・[隔離fixture](../../crates/server/src/routes/openwiki/recovery_tests.rs#L65-L160)
+
+## 0.7.2 の読取・横断参照と検証
+
+配布pinは `openwiki` 0.7.2。Docker runtime は Node.js 22.22.0 以上を最低版検査する。CLI は色付き help banner を正規化して版を検証し、未対応の `--version` に頼らない。TOML marker 限定修復は共同owner対応とは別の互換処理として保持する。[配布](../../Dockerfile#L108-L116)・[adapter](../../crates/services/src/services/openwiki.rs)・[設定修復](../../crates/services/src/services/openwiki/codex_config.rs)
+
+writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`openwiki_list_workspaces`、`openwiki_list_wikis` を公開し、preflight と thread-local 承認も同じ10toolを使う。利用者が公開registryでリンクした workspace の Wiki は upstream の scope/到達可能性検査に従って参考にできる。`OPENWIKI_CONFIG_DIR` は指定済みの公開場所を引き継ぐ。maintenance worktree の canonical root が登録rootと違う場合の登録・接続は公開機構を使い、private registryを書き換えない。参照先は対象sourceの証拠を代替せず、更新対象は現在候補の canonical `openwiki/` のみである。[writer設定](../../crates/executors/src/executors/codex.rs#L1061-L1105)・[host指示](../../crates/services/src/services/openwiki.rs)
+
+読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L1005)
+
+検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。[試験方法と限界](../../docs/workspaces/openwiki.mdx#verify-or-upgrade)

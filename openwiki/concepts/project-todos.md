@@ -8,6 +8,8 @@ sources:
     resource: repo://crates/db/migrations/20261018000000_project_todos.sql
   - id: openwiki-source-a570f6d36a4a89663688c94b
     resource: repo://crates/db/migrations/20261024000000_todo_creation_source.sql
+  - id: openwiki-source-2b0465dd16b2a61b84ac34ab
+    resource: repo://crates/db/migrations/20261030000000_todo_numbers.sql
   - id: openwiki-source-830e28055c4ae6f5464df312
     resource: repo://crates/db/src/models/design_note.rs
   - id: openwiki-source-5cc18853b4052cffae9ca81e
@@ -52,10 +54,10 @@ sources:
     resource: repo://tests/todos/layout.mjs
   - id: openwiki-source-39e16c61b69c47aba760577d
     resource: repo://tests/todos/README.md
-generated: { by: "codex", at: "2026-10-26T01:15:35.501Z" }
+generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-26T01:28:30.262Z
+    at: 2026-10-31T11:36:54.240Z
 ---
 
 # Project Todo の共有メモ
@@ -67,6 +69,16 @@ Todo は Project 内で共有する本文・任意カテゴリー・明示的な
 全読み書きは Project と Todo の identity を組み合わせる。同一 Project の Card を任意に参照できるが、Card への変換ではない。別 Project の Card はモデルと DB trigger の双方が拒否する。Project 削除はメモを削除し、関連 Card 削除は参照だけを null にする。[所属と制約](../../crates/db/src/models/todo.rs#L84-L113)、[migration](../../crates/db/migrations/20261018000000_project_todos.sql)
 
 本文は空白のみを拒否し最大16,000文字、カテゴリーは前後空白を除去し最大100文字、空文字は未分類とする。本文の改行や文字列は保持する。完了は削除と別で、未完了へ戻せる。[保存時検査](../../crates/db/src/models/todo.rs#L95-L99)、[作成と更新](../../crates/db/src/models/todo.rs#L164-L211)
+
+## Project ごとの不変番号
+
+UUID と併存する `number` / `display_id` を持ち、Project ごとに `TODO-1` から採番する。UI は本文の下に番号を表示する。別 Project の `TODO-1` は別のメモであり、Issue 番号とは独立している。本文・カテゴリー・完了・Issue 関連付け/解除でも UUID・番号は変わらない。[DTO と参照解決](../../crates/db/src/models/todo.rs#L21-L37)・[UI](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L413-L419)
+
+新規作成は SQLite transaction 内で Project の永続 counter を進め、同じ transaction でメモを保存する。末尾や全件を削除しても counter を残すので番号を再利用せず、同一 UUID の作成再送は counter 更新を rollback して元の番号を返す。Project 内 unique index、番号/Project の immutable trigger、counter の単調増加 trigger が補強する。既存メモは `created_at` 昇順、同時刻は UUID BLOB 昇順で採番し、既存属性を保持する。[原子的採番](../../crates/db/src/models/todo.rs#L216-L253)・[移行](../../crates/db/migrations/20261030000000_todo_numbers.sql)
+
+REST と stdio/HTTP MCP の `todo_id` は UUID または canonical `TODO-N` を受ける。必ず指定 Project 内で解決し、小文字、先頭ゼロ、ゼロ、空桁、整数範囲外を拒否する。番号指定でも認可・receipt・revision の契約は同じである。表示の正本は `display_id` 文字列で、番号を別 Project の UUID として推測しない。[resolver](../../crates/db/src/models/todo.rs#L143-L174)・[stdio](../../crates/mcp/src/task_server/tools/todos.rs)・[HTTP MCP](../../crates/server/src/remote_mcp/todos.rs)
+
+[DB 回帰](../../crates/db/src/models/todo_tests.rs#L432-L718)は同時作成、再接続、非再利用、移行の属性保持、Issue link の不変性を扱う。[HTTP MCP](../../crates/server/src/remote_mcp/tests.rs#L2312-L2480)と[stdio helper](../../tests/todos/numbering.mjs)は両 Project に TODO-1 が共存する取得/更新と、非対象 DTO の不変、UUID 互換、stale revision を確認する。実 OAuth/ChatGPT・混在版・稼働 DB 移行とは別の fixture である。
 
 ## 作成経路と信頼境界
 

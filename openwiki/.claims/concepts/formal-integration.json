@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ef333c9712a1a23d07e3601a58d0f29e45cf9a0ff801ef01d2f0b541a2dc5f17",
+  "pageVersion": "sha256:a047360dbae7d91036dc4417f4a498025a3bc03e961feccf0e108a8289293f75",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -428,7 +428,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/integrations/conversation_tests.rs",
-          "version": "repo-file-v1:sha256:804f78e954f384626721cc27d6b08640c86eb7d31c0df6457c90bbd82606543c"
+          "version": "repo-file-v1:sha256:afa67729d797bb58c4ca1fff7526e9cf186d20104ac4a4a5bd79144b6140d704"
         }
       ]
     },
@@ -442,13 +442,23 @@
         },
         {
           "resource": "repo://crates/services/src/services/openwiki/completion.rs#L200-L385",
-          "version": "repo-lines-v1:sha256:36f4bf92f98377c5d77bd309ceb2e10f9643115d271971cc337cf9cc2a8b3df8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTg2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0NTBlNzc4OWY3Yjk0ZmI5ODAyNzc4NGMxYWQ0ZDQyZTlhZjlhNTI4ZjU3OTBhZmNhNDQxYTQ1ZTFkMmFhZTQxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhNTYwYzNhNzcxOWMzZGZkYzhiYmJjYzNlNmExN2ZkN2NiMjVlOWIwNDliN2M2YmNiZjAxODRhNGU2YmFkNjhkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiNTgwMWJhMDQ2NzdjZWIxZDIwM2VjYTM4YTVmYzQ4NmRjNWY4YWVhY2FkM2RlZDlmNzg2YzBhZmNhNzFlNWNjIn0"
+          "version": "repo-lines-v1:sha256:dd6544353811c444c28fabcf234656f503cdc157a9be548fc0da113a937760b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0NTBlNzc4OWY3Yjk0ZmI5ODAyNzc4NGMxYWQ0ZDQyZTlhZjlhNTI4ZjU3OTBhZmNhNDQxYTQ1ZTFkMmFhZTQxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyNWNmNWZjMjNmMmE2ZDIzYzNlYTUxZTcyZjVlODk2Yzc1NTVmYmFhMDVjZDViMWVhMTgyYmY5NjE4YThlODFiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhNTYwYzNhNzcxOWMzZGZkYzhiYmJjYzNlNmExN2ZkN2NiMjVlOWIwNDliN2M2YmNiZjAxODRhNGU2YmFkNjhkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiNTgwMWJhMDQ2NzdjZWIxZDIwM2VjYTM4YTVmYzQ4NmRjNWY4YWVhY2FkM2RlZDlmNzg2YzBhZmNhNzFlNWNjIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_4f254e8f5e1f4694a64b45f4ab5d8dd5",
+      "statement": "maintenanceの読取4toolはlifecycle前後と重なりを許すがoperation完了を証明せず、root/thread・call ID・引数・duplicate監査、未知tool拒否とlifecycle相互の逐次性を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://crates/services/src/services/openwiki/completion.rs#L196-L323",
+          "version": "repo-lines-v1:sha256:20a1fdd66ed34f6ca2499abb9e710870e522545cf6379458a3e961ca3483db1a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMzM2NjE0MDdhZmMxYjk5ODFlNDVhMDRmN2I0MGJiYWYwNmRmZTVjZDk1NjI5ZTkyNjM0MDg5NTgzZTM2MTdiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNmIwNDQ5MTQ2OTcyMmU4MzYzYTk0ZTQwNDQ1MzhlMDEzYTJhMjE3ZTM2YjFlNTY4YmE2MGFjYjdiNGM4ZjJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2MDI5Mzk1ZTgxZmQ0ZDNkOTcxMGI1ZmNjM2I0ZDk0NmNiMmI5ODBhNGZlOTM0ODhjNjA2MzkxODI4NDU1NTRkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2In0"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.1",
-    "at": "2026-10-29T17:57:38.430Z"
+    "at": "2026-10-31T11:36:54.240Z"
   }
 }

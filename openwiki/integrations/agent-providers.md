@@ -110,10 +110,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+    at: 2026-10-31T11:36:54.240Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -274,9 +274,9 @@ LVK の設定操作は agent の native config を更新する。Codex は TOML 
 
 接続例と通常の設定手順は [Connecting MCP Servers](../../docs/integrations/mcp-server-configuration.mdx) を参照する。そこに示す JSON 例を Codex の保存形式そのものと解釈しない。
 
-OpenWiki maintenance writer は例外的に、登録 MCP が実行の前提である。LVK は該当 thread だけに `openwiki mcp --host codex` を設定し、`enabled=true` / `required=true` と60秒の startup timeout を指定する。thread/start・resume の RPC 待機は required OpenWiki writer の場合75秒に延長し、通常は30秒である。thread 登録後、通常 turn / Goal activation の前に、その thread の MCP catalog で六つの lifecycle tool が揃うことを確認する。server 名や ready 状態だけでは十分としない。欠落・不正な pagination・15 秒の preflight timeout は writer 起動失敗として返し、この確認自体では Wiki run を開始しない。[thread 設定](../../crates/executors/src/executors/codex.rs)、[起動順](../../crates/executors/src/executors/codex.rs)、[tool 検査](../../crates/executors/src/executors/codex/client/openwiki.rs)
+OpenWiki maintenance writer は例外的に、登録 MCP が実行の前提である。LVK は該当 thread だけに `openwiki mcp --host codex` を設定し、`enabled=true` / `required=true` と60秒の startup timeout を指定する。thread/start・resume の RPC 待機は required OpenWiki writer の場合75秒に延長し、通常は30秒である。thread 登録後、通常 turn / Goal activation の前に、その thread の MCP catalog で六つの lifecycle tool と検索・読取・workspace/Wiki一覧の四toolが揃うことを確認する。server 名や ready 状態だけでは十分としない。欠落・不正な pagination・15 秒の preflight timeout は writer 起動失敗として返し、この確認自体では Wiki run を開始しない。[thread 設定](../../crates/executors/src/executors/codex.rs)、[起動順](../../crates/executors/src/executors/codex.rs)、[tool 検査](../../crates/executors/src/executors/codex/client/openwiki.rs)
 
-writer の六つの lifecycle tool だけを thread-local `approval_mode=approve` にする。global approval policy を緩めず、Reviewer や通常 coding へ適用しない。
+writer の六つの lifecycle tool と四つの読取 tool を thread-local `approval_mode=approve` にする。global approval policy を緩めず、Reviewer や通常 coding へ適用しない。
 
 通常 coding の thread は OpenWiki MCP を無効にし、旧 `.llm-wiki` の生成停止と canonical OpenWiki の読取専用契約を developer instructions に追加する。保守 writer に設定する required MCP とは異なる所有境界である。[通常 thread の設定](../../crates/executors/src/executors/codex.rs)
 
@@ -315,3 +315,5 @@ Codexの `execution_mode: review` はCODEと同じ通常会話経路にレビュ
 REVIEWはCODEのsandbox/approval policyを維持する。調査に必要なWorkspace内の再現コード・fixture・テスト書込を許す一方、製品変更の採用・merge・公開、共有環境や実データ変更をmodeだけで許可しない。commit reminderと自動repository source finalisationを抑制し、調査用変更を自動採用しない。Issueコメント自動投稿や新しい必須成果物形式も追加しない。[thread指示](../../crates/executors/src/executors/codex.rs#L1208-L1230)・[reminder](../../crates/executors/src/executors/codex/client.rs#L165-L180)・[source完了境界](../../crates/executors/src/executors/provider_adapter.rs#L2510-L2540)
 
 UI選択・保存・再表示・通常続行は [SessionのREVIEW](../concepts/session-and-agent-run.md#review-は通常会話で報告して止まる)に従う。fixtureはpermission parity、通常turn、Goal RPCなし、source完了抑制を確認するが、実モデルの指示遵守や外部承認の改善は保証しない。実ChatGPT/Library・実Codexの適合確認は公開後の別ゲートである。[fixtureと限界](../../tests/review-mode/README.md)・[providerテスト](../../crates/executors/src/executors/provider_adapter.rs#L2654-L2685)
+
+maintenance thread は利用者が指定した `OPENWIKI_CONFIG_DIR` を MCP へ渡し、公開registryを利用する。独自のregistry隔離や通常agentへの検索拡張は行わない。[設定](../../crates/executors/src/executors/codex.rs#L1087-L1103)・[横断参照と監査](../operations/openwiki-maintenance.md)

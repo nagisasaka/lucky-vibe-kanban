@@ -54,10 +54,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx
   - id: openwiki-source-344aff2e68b53276f6be4e40
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
   - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+    at: 2026-10-31T11:36:54.240Z
 ---
 
 # 自動マージの選択・検証・公開
@@ -142,3 +142,7 @@ Wiki有効時の公開済みevent receiptと鮮度は既存Memory storeへ保存
 OpenWikiの永続runとCodexのAgentRunは別の寿命を持つ。自動マージの公開前検査は、同一Sessionの全AgentRunとattemptのNative Auditを順序どおりに再生し、同じcorrelation owner・割当Workspace・repo rootに属する、過去に監査されたactive ID/modeだけを後続Runで明示再開できる。過去Runが中断・取消されても、writerの終了が確認でき、所有証拠が連続していれば継続できる。`resumed:true`だけを信用せず、別会話から一致するIDを探さない。[会話proof](../../crates/server/src/routes/openwiki/completion.rs#L115-L186)・[継続状態](../../crates/services/src/services/openwiki/completion.rs)
 
 監査の欠損・改変、未解決tool call、writerの重複、active IDの置換や放棄、閉じたIDの再利用、最終未完了は公開を拒否する。最新Runとその最終attemptの成功も必要である。standalone保守のphase単位の閉鎖条件はこの会話継続へ置き換えない。[再生とidentity検査](../../crates/server/src/routes/openwiki/completion.rs#L188-L315)・[operation proof](../../crates/services/src/services/openwiki/completion.rs#L200-L385)。正規再開からexact publication・生成環境archiveまでの隔離fixtureは実Git/SQLiteを使うが、実外部OpenWikiや実Codexの接続確認を代替しない。[隔離回帰](../../crates/server/src/routes/integrations/conversation_tests.rs)
+
+### 検索・読取と operation の閉鎖
+
+maintenance writer は OpenWiki 0.7.2 の検索・読取・workspace/Wiki一覧を利用できる。読取は lifecycle の前後・重なりを許すが、成功も失敗も active run を閉じず、未完了 writer を隠さない。root/thread・call ID・引数・duplicate の監査は維持され、lifecycle 同士の重なりと未知 tool は拒否する。横断参照先の情報は参考資料であり、書込み先はこの候補の canonical Wiki に限る。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[保守の正本](../operations/openwiki-maintenance.md)
