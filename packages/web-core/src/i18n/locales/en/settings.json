@@ -31,22 +31,25 @@
     "layout": {
       "nav": {
         "title": "Settings",
-        "general": "General",
+        "general": "Appearance, input and privacy",
         "generalDesc": "Theme, notifications, and preferences",
         "projects": "Projects",
         "projectsDesc": "Project repositories and configuration",
         "repos": "Repositories",
         "reposDesc": "Repository scripts and configuration",
-        "agents": "Agents",
+        "agents": "AI agents",
         "agentsDesc": "Coding agent configurations",
-        "mcp": "MCP Servers",
+        "mcp": "Agent → MCP JSON",
         "mcpDesc": "Model Context Protocol servers",
-        "agent-tools": "Agent Tools",
+        "agent-tools": "MCP and Skills items",
         "agent-toolsDesc": "Native MCP servers and Skills",
         "remote-projects": "Projects",
         "remote-projectsDesc": "Manage projects",
-        "resources": "Shared resources",
-        "mcp-integration": "MCP integration"
+        "resources": "Shared resources and recovery",
+        "mcp-integration": "External AI → LVK",
+        "notifications": "Notifications",
+        "execution": "Work defaults",
+        "access": "Authentication and members"
       }
     },
     "hostPicker": {
@@ -593,6 +596,33 @@
         "description": "Sign in to manage your remote projects.",
         "action": "Sign in"
       }
+    },
+    "groups": {
+      "experience": "Experience",
+      "ai": "AI and work defaults",
+      "projects": "Projects and code",
+      "connections": "Connections and access",
+      "operations": "Operations"
+    },
+    "scope": {
+      "general": "Most settings apply to this LVK instance. Device-only storage and immediate actions are marked below.",
+      "execution": "Defaults for new work in this LVK instance. Existing Run inputs are unaffected.",
+      "notifications": "Sound and OS notifications apply to the instance. Web Push manages the selected Project and this device subscription.",
+      "agents": "LVK Configurations define launch defaults. Native settings edit the agent’s User / Project files; Profiles are named agent settings. Files shows source text; Effective Config shows resolved values.",
+      "agent-tools": "Manage MCP servers and Skills individually in agent native User / Project storage. Whole MCP JSON and tools links inside native settings share these targets; check the latest values after changing them.",
+      "remote-projects": "Saved to the selected Project: name, colour, default Workspace and Kanban columns.",
+      "repos": "Applies to the selected Repository. Credentials, OpenWiki, validation and scripts each retain their own save and confirmation actions.",
+      "mcp-integration": "File and execution permissions for external AI connecting to LVK. Manage connection authentication in Authentication and members.",
+      "mcp": "Edit agent connections to external MCP servers as whole JSON. MCP and Skills items manages the same native settings one item at a time. Check the target and storage scope.",
+      "access": "Administrators · Authentication and members for this LVK server. Actions apply individually and may require confirmation or reauthentication.",
+      "resources": "Resource registration settings, live status, coordination and recovery actions. Review each confirmation before recovery or deletion.",
+      "instance": "Storage: shared LVK instance (config.json) · Apply with Save below",
+      "appearance": "Appearance and language: LVK instance · Mobile text size: saved immediately on this device",
+      "push": "Scope: user × selected Project × this device’s Push subscription · Applied by controls in this panel",
+      "immediate": "Information and individual actions in this panel apply separately from Save below.",
+      "templates": "Task templates are stored in the instance database. Add, edit and delete apply individually here.",
+      "readOnly": "Input instructions only. There is no value to save here.",
+      "onboarding": "Show onboarding again saves immediately to the instance config.json."
     }
   },
   "integrations": {

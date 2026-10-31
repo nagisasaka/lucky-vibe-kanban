@@ -1,3 +1,7 @@
+import { SettingsAccessContext } from '@/shared/dialogs/settings/settings/SettingsAccessContext';
+import { useSettingsDirty } from '@/shared/dialogs/settings/settings/SettingsDirtyContext';
+import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
+import { useTranslation } from 'react-i18next';
 import { rememberPushReturn, takePushReturn } from './pushReturn';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Auth0Setup } from './Auth0Setup';
@@ -57,8 +61,33 @@ function CopyValue({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function ServerAccessGate({ children }: { children: ReactNode }) {
+function EmbeddedAccessSettings() {
+  const { setDirty } = useSettingsDirty();
+  const onDirtyChange = useCallback(
+    (dirty: boolean) => setDirty('access', dirty),
+    [setDirty]
+  );
+  useEffect(() => () => setDirty('access', false), [setDirty]);
+  return (
+    <ServerAccessGate embedded onDirtyChange={onDirtyChange}>
+      {null}
+    </ServerAccessGate>
+  );
+}
+
+export function ServerAccessGate({
+  children,
+  embedded = false,
+  onDirtyChange,
+}: {
+  children: ReactNode;
+  embedded?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
+  const { t } = useTranslation('settings');
   const [status, setStatus] = useState<AccessStatus>();
+  const [setupDirty, setSetupDirty] = useState(false);
+  const [credentialsDirty, setCredentialsDirty] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [provisioningBusy, setProvisioningBusy] = useState(false);
@@ -84,7 +113,8 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
     }>
   >([]);
   const view = new URLSearchParams(window.location.search).get('access');
-  const settings = status?.limited || view === 'settings' || view === 'confirm';
+  const settings =
+    embedded || status?.limited || view === 'settings' || view === 'confirm';
   const recovery = view === 'recovery';
   const refresh = useCallback(async () => {
     try {
@@ -136,6 +166,46 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
         .catch((e: Error) => setError(e.message));
     }
   }, [settings, status]);
+  useEffect(() => {
+    const current = configuration?.current;
+    const initialMode =
+      status?.forced_mode ?? (current?.mode === 'basic' ? 'basic' : 'auth0');
+    onDirtyChange?.(
+      Boolean(
+        key ||
+          password ||
+          clientSecret ||
+          setupDirty ||
+          credentialsDirty ||
+          (current &&
+            (username !== (current.username ?? '') ||
+              issuer !== (current.issuer ?? '') ||
+              clientId !== (current.client_id ?? '') ||
+              mcp !== (current.mcp_enabled ?? false) ||
+              mode !== initialMode))
+      )
+    );
+  }, [
+    configuration,
+    status?.forced_mode,
+    key,
+    password,
+    clientSecret,
+    setupDirty,
+    credentialsDirty,
+    username,
+    issuer,
+    clientId,
+    mcp,
+    mode,
+    onDirtyChange,
+  ]);
+  function navigateAfterSuccess(target: string) {
+    // Authentication transitions have already persisted or staged their input.
+    // Clear this screen's leave guard before the intentional full-page handoff.
+    onDirtyChange?.(false);
+    window.location.assign(target);
+  }
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setError('');
@@ -158,23 +228,33 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
         /* A blocked storage getter must not prevent login. */
       }
       const result = await accessRequest<{ authorize_url: string }>('login');
-      window.location.assign(result.authorize_url);
+      navigateAfterSuccess(result.authorize_url);
     });
   }
   if (status?.authenticated && !settings && !recovery) {
     return (
       <>
-        {children}
+        <SettingsAccessContext.Provider
+          value={status.user?.admin ? <EmbeddedAccessSettings /> : null}
+        >
+          {children}
+        </SettingsAccessContext.Provider>
         {status.mode !== 'local' && (
           <div className="new-design fixed bottom-base right-base z-50 flex gap-base rounded border bg-panel p-half text-normal">
             {status.user?.admin && (
-              <a href="/?access=settings">認証・メンバー</a>
+              <button
+                onClick={() =>
+                  void SettingsDialog.show({ initialSection: 'access' })
+                }
+              >
+                {t('settings.layout.nav.title')}
+              </button>
             )}
             <button
               onClick={() =>
                 void run(async () => {
                   await accessRequest('logout', {});
-                  window.location.assign('/');
+                  navigateAfterSuccess('/');
                 })
               }
             >
@@ -186,7 +266,13 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
     );
   }
   return (
-    <main className="new-design min-h-screen overflow-auto bg-primary p-double text-base text-normal">
+    <main
+      className={
+        embedded
+          ? 'new-design min-w-0 bg-primary p-base text-base text-normal'
+          : 'new-design min-h-screen overflow-auto bg-primary p-double text-base text-normal'
+      }
+    >
       <div className="mx-auto max-w-2xl space-y-double rounded border bg-panel p-double">
         <h1 className="text-xl text-high">
           LVK {settings ? '認証とメンバー管理' : 'ログイン・初期設定'}
@@ -224,7 +310,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   { 'x-lvk-csrf': 'setup' }
                 );
                 setKey('');
-                window.location.assign('/?access=settings');
+                navigateAfterSuccess('/?access=settings');
               });
             }}
           >
@@ -359,7 +445,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                 onClick={() =>
                   void run(async () => {
                     await accessRequest('local', {});
-                    window.location.assign('/');
+                    navigateAfterSuccess('/');
                   })
                 }
               >
@@ -374,7 +460,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   void run(async () => {
                     await accessRequest('basic', { username, password });
                     setPassword('');
-                    window.location.assign('/');
+                    navigateAfterSuccess('/');
                   });
                 }}
               >
@@ -416,6 +502,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                   アプリは自動セットアップで作成するか、手動で設定した情報を入力してください。
                 </p>
                 <Auth0Setup
+                  onDirtyChange={setSetupDirty}
                   issuer={issuer}
                   currentClientId={clientId}
                   disabled={busy || provisioningBusy}
@@ -452,7 +539,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                         mcp_enabled: mcp,
                       });
                       setClientSecret('');
-                      window.location.assign(result.authorize_url);
+                      navigateAfterSuccess(result.authorize_url);
                     });
                   }}
                 >
@@ -526,7 +613,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                       onClick={() =>
                         void run(async () => {
                           await accessRequest('activate', {});
-                          window.location.assign('/');
+                          navigateAfterSuccess('/');
                         })
                       }
                     >
@@ -536,6 +623,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
                 )}
                 <h2 className="text-lg text-high">ChatGPTへのMCP接続</h2>
                 <ChatGptCredentials
+                  onDirtyChange={setCredentialsDirty}
                   key={`${issuer}:${clientId}:${credentialsVersion}`}
                   issuer={issuer}
                   webClientId={clientId}
@@ -665,7 +753,7 @@ export function ServerAccessGate({ children }: { children: ReactNode }) {
             <p className="text-low">
               Webセッションは最長12時間、認証済みHTTPリクエストが30分ないと失効します。LVKログアウトはChatGPTの委任を取り消しません。
             </p>
-            {status.authenticated && (
+            {status.authenticated && !embedded && (
               <a className="block underline" href="/">
                 Kanbanへ戻る
               </a>

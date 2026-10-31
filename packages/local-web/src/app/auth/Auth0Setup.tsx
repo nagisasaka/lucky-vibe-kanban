@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { accessRequest } from './serverAccess';
 
 interface Client {
@@ -46,7 +46,9 @@ export function Auth0Setup({
   onIssuerChange,
   onBusyChange,
   onConfigured,
+  onDirtyChange,
 }: {
+  onDirtyChange?: (dirty: boolean) => void;
   issuer: string;
   currentClientId: string;
   disabled: boolean;
@@ -83,6 +85,25 @@ export function Auth0Setup({
   const inputKey = JSON.stringify(options);
   const validPreview = preview?.input === inputKey ? preview : undefined;
   const ready = inventory && inventoryIssuer === issuer;
+  useEffect(() => {
+    onDirtyChange?.(
+      Boolean(
+        !result &&
+          (token || connection || web || chat || callback || mcp || !refresh)
+      )
+    );
+    return () => onDirtyChange?.(false);
+  }, [
+    token,
+    connection,
+    web,
+    chat,
+    callback,
+    mcp,
+    refresh,
+    result,
+    onDirtyChange,
+  ]);
   async function run(step: 'inspect' | 'preview' | 'apply') {
     setBusy(true);
     onBusyChange(true);

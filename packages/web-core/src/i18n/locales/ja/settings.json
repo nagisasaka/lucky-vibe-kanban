@@ -31,22 +31,25 @@
     "layout": {
       "nav": {
         "title": "設定",
-        "general": "一般",
+        "general": "表示・操作とプライバシー",
         "generalDesc": "テーマ、通知、および設定",
         "projects": "プロジェクト",
         "projectsDesc": "プロジェクトリポジトリと設定",
         "repos": "リポジトリ",
         "reposDesc": "リポジトリスクリプトと設定",
-        "agents": "エージェント",
+        "agents": "AIエージェント",
         "agentsDesc": "コーディングエージェントの設定",
-        "mcp": "MCPサーバー",
+        "mcp": "エージェント → MCP全体JSON",
         "mcpDesc": "モデルコンテキストプロトコルサーバー",
-        "agent-tools": "エージェントツール",
+        "agent-tools": "MCP・Skillsの項目管理",
         "agent-toolsDesc": "ネイティブ MCP サーバーとスキル",
         "remote-projects": "プロジェクト",
         "remote-projectsDesc": "プロジェクトを管理",
-        "resources": "共有リソース",
-        "mcp-integration": "MCP連携"
+        "resources": "共有リソース・復旧",
+        "mcp-integration": "外部AI → LVK",
+        "notifications": "通知",
+        "execution": "作業の既定値",
+        "access": "認証・メンバー"
       }
     },
     "general": {
@@ -583,6 +586,33 @@
       "noHostAvailable": "No host is available for host-specific settings yet.",
       "pairMachineHint": "Pair a machine to open machine settings.",
       "selectMachineHint": "Select a machine to open machine settings."
+    },
+    "groups": {
+      "experience": "使い心地",
+      "ai": "AIと作業の既定値",
+      "projects": "プロジェクトとコード",
+      "connections": "接続とアクセス",
+      "operations": "運用"
+    },
+    "scope": {
+      "general": "主にLVKインスタンス共通の設定です。端末だけに保存する項目と、即時反映される操作は各欄に示します。",
+      "execution": "このLVKインスタンスで新しく始める作業の既定値です。既存のRunの入力は変更しません。",
+      "notifications": "通知音・OS通知はインスタンス共通。Web Pushは選択中のProjectと、この端末の購読を管理します。",
+      "agents": "LVK実行設定（Configuration）は起動時の既定値です。下部のnative設定はAgent自身のUser / Projectファイル、ProfileはAgent側の名前付き設定です。Filesは原文、Effective Configは解決結果の確認です。",
+      "agent-tools": "Agent native User / Projectに保存するMCP接続先とSkillsを項目単位で管理します。MCP全体JSONやnative設定内のツール入口と保存対象を共有するため、変更後は各画面で最新値を確認してください。",
+      "remote-projects": "選択したProjectに保存します。名前・色、既定WorkspaceとKanban列を管理します。",
+      "repos": "選択したRepositoryが対象です。GitHub資格情報、OpenWiki、検証・scriptsは各欄の保存と確認操作に従います。",
+      "mcp-integration": "外部AIからLVKへ接続するときのファイル参照・実行権限です。接続認証は「認証・メンバー」で管理します。",
+      "mcp": "LVK内のエージェントから外部MCPへの接続を全体JSONで編集します。「MCP・Skillsの項目管理」は同じnative設定を項目単位で管理する入口です。対象と保存先を確認してください。",
+      "access": "管理者用 · このLVKサーバー全体の認証・メンバー管理。各操作は個別に反映され、再認証や確認が必要な場合があります。",
+      "resources": "共有設備の登録設定と、稼働状態の確認・調停・復旧操作です。復旧や削除は各操作の確認内容を読んで実行してください。",
+      "instance": "保存先：LVKインスタンス共通（config.json） · 下の保存ボタンで反映",
+      "appearance": "外観・言語：LVKインスタンス共通 · モバイル文字サイズ：この端末に即時保存",
+      "push": "保存範囲：ユーザー × 選択中のProject × この端末のPush購読 · この欄の操作で反映",
+      "immediate": "この欄は表示・個別操作です。下の一括保存とは別に反映されます。",
+      "templates": "タスクテンプレートはインスタンスのDBに保存します。この欄の追加・編集・削除で個別に反映します。",
+      "readOnly": "操作方法の案内です。保存する値はありません。",
+      "onboarding": "オンボーディング再表示はインスタンス共通のconfig.jsonに即時保存します。"
     }
   },
   "integrations": {

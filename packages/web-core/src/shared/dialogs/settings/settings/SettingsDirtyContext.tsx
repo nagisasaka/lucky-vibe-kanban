@@ -1,9 +1,10 @@
-import { useContext, useState, useCallback } from 'react';
+import { useContext, useState, useCallback, useRef } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 import type { ReactNode } from 'react';
 
 interface SettingsDirtyContextValue {
   isDirty: boolean;
+  getIsDirty: () => boolean;
   setDirty: (sectionId: string, dirty: boolean) => void;
   clearAll: () => void;
 }
@@ -16,26 +17,26 @@ const SettingsDirtyContext = createHmrContext<SettingsDirtyContextValue | null>(
 export function SettingsDirtyProvider({ children }: { children: ReactNode }) {
   const [dirtySections, setDirtySections] = useState<Set<string>>(new Set());
 
+  const currentSections = useRef(dirtySections);
   const setDirty = useCallback((sectionId: string, dirty: boolean) => {
-    setDirtySections((prev) => {
-      const next = new Set(prev);
-      if (dirty) {
-        next.add(sectionId);
-      } else {
-        next.delete(sectionId);
-      }
-      return next;
-    });
+    const next = new Set(currentSections.current);
+    if (dirty) next.add(sectionId);
+    else next.delete(sectionId);
+    currentSections.current = next;
+    setDirtySections(next);
   }, []);
-
+  const getIsDirty = useCallback(() => currentSections.current.size > 0, []);
   const clearAll = useCallback(() => {
-    setDirtySections(new Set());
+    currentSections.current = new Set();
+    setDirtySections(currentSections.current);
   }, []);
 
   const isDirty = dirtySections.size > 0;
 
   return (
-    <SettingsDirtyContext.Provider value={{ isDirty, setDirty, clearAll }}>
+    <SettingsDirtyContext.Provider
+      value={{ isDirty, getIsDirty, setDirty, clearAll }}
+    >
       {children}
     </SettingsDirtyContext.Provider>
   );

@@ -25,6 +25,7 @@ import {
   useSettingsHost,
 } from './settings/SettingsHostContext';
 import { SettingsMachineUserSystemProvider } from './settings/SettingsMachineUserSystemProvider';
+import { useSettingsAccess } from './settings/SettingsAccessContext';
 import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 
 export interface SettingsDialogProps {
@@ -47,31 +48,52 @@ function SettingsDialogNavigation({
   onSectionSelect: (sectionId: SettingsSectionType) => void;
 }) {
   const { t } = useTranslation('settings');
+  const access = useSettingsAccess();
+  const groups = {
+    experience: ['general', 'notifications'],
+    ai: ['execution', 'agents', 'agent-tools'],
+    projects: ['remote-projects', 'repos'],
+    connections: ['mcp-integration', 'mcp', ...(access ? ['access'] : [])],
+    operations: ['resources'],
+  };
   return (
     <nav className="flex-1 p-2 flex flex-col gap-1 overflow-y-auto">
-      {SETTINGS_SECTION_DEFINITIONS.filter(
-        (section) => section.showInNavigation !== false
-      ).map((section) => {
-        const Icon = section.icon;
-        return (
-          <button
-            key={section.id}
-            type="button"
-            onClick={() => onSectionSelect(section.id)}
-            className={cn(
-              'flex items-center gap-3 text-left px-3 py-2 rounded-sm text-sm transition-colors',
-              activeSection === section.id
-                ? 'bg-brand/10 text-brand font-medium'
-                : 'text-normal hover:bg-primary/10'
-            )}
-          >
-            <Icon className="size-icon-sm shrink-0" weight="bold" />
-            <span className="truncate">
-              {t(`settings.layout.nav.${section.id}`)}
-            </span>
-          </button>
-        );
-      })}
+      {Object.entries(groups).map(([group, ids]) => (
+        <div key={group} className="space-y-1 mb-3">
+          <h3 className="px-3 pt-2 text-xs font-medium text-low">
+            {t(`settings.groups.${group}`)}
+          </h3>
+          {ids
+            .map(
+              (id) =>
+                SETTINGS_SECTION_DEFINITIONS.find(
+                  (section) => section.id === id
+                )!
+            )
+            .map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  aria-current={
+                    activeSection === section.id ? 'page' : undefined
+                  }
+                  onClick={() => onSectionSelect(section.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 text-left px-3 py-3 rounded-sm text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand',
+                    activeSection === section.id
+                      ? 'bg-brand/10 text-brand font-medium'
+                      : 'text-normal hover:bg-primary/10'
+                  )}
+                >
+                  <Icon className="size-icon-sm shrink-0" weight="bold" />
+                  <span>{t(`settings.layout.nav.${section.id}`)}</span>
+                </button>
+              );
+            })}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -82,7 +104,10 @@ function SettingsDialogContent({
   onClose,
 }: SettingsDialogContentProps) {
   const { t } = useTranslation('settings');
-  const { isDirty } = useSettingsDirty();
+  const { isDirty, getIsDirty } = useSettingsDirty();
+  const access = useSettingsAccess();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const {
     availableHosts,
     hostsResolved,
@@ -94,6 +119,7 @@ function SettingsDialogContent({
   const resolvedInitialSection = useMemo<SettingsSectionType>(() => {
     if (
       initialSection &&
+      (initialSection !== 'access' || access) &&
       SETTINGS_SECTION_DEFINITIONS.some(
         (section) => section.id === initialSection
       )
@@ -106,7 +132,13 @@ function SettingsDialogContent({
     }
 
     return 'general';
-  }, [availableHosts.length, hostsResolved, initialSection, selectedHostId]);
+  }, [
+    access,
+    availableHosts.length,
+    hostsResolved,
+    initialSection,
+    selectedHostId,
+  ]);
 
   const [activeSection, setActiveSection] = useState<SettingsSectionType>(
     resolvedInitialSection
@@ -120,7 +152,7 @@ function SettingsDialogContent({
   const handleCloseWithConfirmation = useCallback(async () => {
     if (isConfirmingRef.current) return;
 
-    if (isDirty) {
+    if (getIsDirty()) {
       isConfirmingRef.current = true;
       try {
         const result = await ConfirmDialog.show({
@@ -139,12 +171,56 @@ function SettingsDialogContent({
     } else {
       onClose();
     }
-  }, [isDirty, onClose, t]);
+  }, [getIsDirty, onClose, t]);
 
-  const handleSectionSelect = (sectionId: SettingsSectionType) => {
+  const handleSectionSelect = async (sectionId: SettingsSectionType) => {
+    if (sectionId !== activeSection && getIsDirty()) {
+      if (isConfirmingRef.current) return;
+      isConfirmingRef.current = true;
+      try {
+        const result = await ConfirmDialog.show({
+          title: t('settings.unsavedChanges.title'),
+          message: t('settings.unsavedChanges.message'),
+          confirmText: t('settings.unsavedChanges.discard'),
+          cancelText: t('settings.unsavedChanges.cancel'),
+          variant: 'destructive',
+        });
+        if (result !== 'confirmed') return;
+      } finally {
+        isConfirmingRef.current = false;
+      }
+    }
     setActiveSection(sectionId);
     setMobileShowContent(true);
   };
+
+  useEffect(() => {
+    contentRef.current?.scrollTo(0, 0);
+    if (mobileShowContent) contentRef.current?.focus();
+  }, [activeSection, mobileShowContent]);
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const appRoot = document.getElementById('root');
+    const wasInert = appRoot?.inert ?? false;
+    if (appRoot) appRoot.inert = true;
+    dialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      if (appRoot) appRoot.inert = wasInert;
+      previous?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    const protect = (event: BeforeUnloadEvent) => {
+      if (getIsDirty()) event.preventDefault();
+    };
+    window.addEventListener('beforeunload', protect);
+    return () => window.removeEventListener('beforeunload', protect);
+  }, [getIsDirty]);
 
   useEffect(() => {
     if (
@@ -164,12 +240,38 @@ function SettingsDialogContent({
   // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleCloseWithConfirmation();
+      if (e.key === 'Tab' && !isConfirmingRef.current) {
+        const elements = Array.from(
+          dialogRef.current?.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]'
+          ) ?? []
+        ).filter((el) => el.getClientRects().length > 0);
+        const first = elements[0],
+          last = elements.at(-1);
+        if (
+          e.shiftKey &&
+          (document.activeElement === first ||
+            document.activeElement === dialogRef.current)
+        ) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+      if (
+        e.key === 'Escape' &&
+        !isConfirmingRef.current &&
+        dialogRef.current?.contains(document.activeElement)
+      ) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        void handleCloseWithConfirmation();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [handleCloseWithConfirmation]);
 
   return (
@@ -191,6 +293,11 @@ function SettingsDialogContent({
       >
         {/* Dialog content - handles animation */}
         <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('settings.layout.nav.title')}
+          tabIndex={-1}
           className={cn(
             'h-full w-full flex overflow-hidden',
             'bg-panel/95 backdrop-blur-sm shadow-lg',
@@ -198,7 +305,7 @@ function SettingsDialogContent({
             // Mobile: full screen, no rounded corners
             'rounded-none border-0',
             // Desktop: fixed size with rounded corners
-            'md:w-[900px] md:h-[700px] md:rounded-sm md:border md:border-border/50'
+            'md:w-[min(1120px,94vw)] md:h-[min(820px,92dvh)] md:rounded-sm md:border md:border-border/50'
           )}
         >
           {/* Sidebar - hidden on mobile when showing content */}
@@ -209,7 +316,7 @@ function SettingsDialogContent({
               'w-full',
               mobileShowContent && 'hidden',
               // Desktop: fixed width sidebar, always visible
-              'md:w-56 md:block'
+              'md:w-64 md:flex shrink-0 min-h-0'
             )}
           >
             {/* Header */}
@@ -220,7 +327,8 @@ function SettingsDialogContent({
               {/* Close button - mobile only */}
               <button
                 onClick={handleCloseWithConfirmation}
-                className="p-1 rounded-sm hover:bg-secondary text-low hover:text-normal md:hidden"
+                aria-label={t('buttons.close', { ns: 'common' })}
+                className="p-2 rounded-sm hover:bg-secondary text-low hover:text-normal md:hidden"
               >
                 <XIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -233,7 +341,7 @@ function SettingsDialogContent({
           {/* Content - hidden on mobile when showing nav */}
           <div
             className={cn(
-              'flex-1 flex flex-col relative overflow-hidden',
+              'min-w-0 flex-1 flex flex-col relative overflow-hidden',
               // Mobile: full width, hidden when showing nav
               !mobileShowContent && 'hidden',
               // Desktop: always visible
@@ -244,7 +352,8 @@ function SettingsDialogContent({
             <div className="flex items-center gap-2 p-3 border-b border-border md:hidden">
               <button
                 onClick={handleMobileBack}
-                className="p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
+                aria-label={t('settings.layout.nav.title')}
+                className="p-2 rounded-sm hover:bg-secondary text-low hover:text-normal"
               >
                 <CaretLeftIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -253,14 +362,43 @@ function SettingsDialogContent({
               </span>
               <button
                 onClick={handleCloseWithConfirmation}
-                className="ml-auto p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
+                aria-label={t('buttons.close', { ns: 'common' })}
+                className="ml-auto p-2 rounded-sm hover:bg-secondary text-low hover:text-normal"
               >
                 <XIcon className="size-icon-sm" weight="bold" />
               </button>
             </div>
             {/* Section content */}
-            <div className="flex-1 overflow-y-auto">
-              {isHostSpecificSettingsSection(activeSection) ? (
+            <div
+              ref={contentRef}
+              tabIndex={-1}
+              className="min-h-0 flex-1 overflow-y-auto focus:outline-none"
+            >
+              <div className="px-4 py-3 border-b border-border bg-secondary/40 text-xs text-low space-y-1">
+                <p>{t(`settings.scope.${activeSection}`)}</p>
+                {isDirty && (
+                  <p role="status" className="text-brand">
+                    {t('settings.common.unsavedChanges')}
+                  </p>
+                )}
+              </div>
+              {activeSection === 'access' ? (
+                <>
+                  <div className="hidden md:flex items-center justify-between p-4 border-b border-border">
+                    <h2 className="text-lg text-high font-semibold">
+                      {t('settings.layout.nav.access')}
+                    </h2>
+                    <button
+                      onClick={handleCloseWithConfirmation}
+                      aria-label={t('buttons.close', { ns: 'common' })}
+                      className="p-2 focus-visible:ring-2 focus-visible:ring-brand"
+                    >
+                      <XIcon className="size-icon-sm" />
+                    </button>
+                  </div>
+                  {access}
+                </>
+              ) : isHostSpecificSettingsSection(activeSection) ? (
                 selectedHost ? (
                   <SettingsMachineUserSystemProvider key={selectedHostId}>
                     {!canEdit && (
@@ -271,7 +409,11 @@ function SettingsDialogContent({
                     <SettingsSection
                       type={activeSection}
                       onClose={handleCloseWithConfirmation}
-                      initialState={initialState}
+                      initialState={
+                        activeSection === resolvedInitialSection
+                          ? initialState
+                          : undefined
+                      }
                     />
                   </SettingsMachineUserSystemProvider>
                 ) : !hostsResolved ? (
@@ -297,7 +439,11 @@ function SettingsDialogContent({
                 <SettingsSection
                   type={activeSection}
                   onClose={handleCloseWithConfirmation}
-                  initialState={initialState}
+                  initialState={
+                    activeSection === resolvedInitialSection
+                      ? initialState
+                      : undefined
+                  }
                 />
               )}
             </div>

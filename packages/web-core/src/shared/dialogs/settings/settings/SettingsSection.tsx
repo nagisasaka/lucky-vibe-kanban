@@ -24,7 +24,7 @@ export function SettingsSection({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border bg-panel/95 backdrop-blur-sm hidden sm:flex items-center justify-between">
+      <div className="p-4 border-b border-border bg-panel/95 backdrop-blur-sm hidden md:flex items-center justify-between">
         <h2 className="text-lg font-semibold text-high">
           {t(`settings.layout.nav.${type}`)}
         </h2>
@@ -41,7 +41,7 @@ export function SettingsSection({
         )}
       </div>
 
-      <div className="space-y-6 px-6 pt-4 overflow-y-auto">
+      <div className="space-y-6 px-4 md:px-6 pt-4 pb-6 min-w-0">
         <Suspense
           key={type}
           fallback={<div role="status">{t('settings.general.loading')}</div>}

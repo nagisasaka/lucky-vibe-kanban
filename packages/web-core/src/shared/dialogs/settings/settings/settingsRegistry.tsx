@@ -54,6 +54,9 @@ const RuntimeAccessSettingsSection = lazy(() =>
 
 export type SettingsSectionType =
   | 'general'
+  | 'execution'
+  | 'notifications'
+  | 'access'
   | 'repos'
   | 'remote-projects'
   | 'agents'
@@ -66,6 +69,9 @@ export type SettingsSectionGroup = 'host' | 'universal';
 
 export type SettingsSectionInitialState = {
   general: undefined;
+  execution: undefined;
+  notifications: undefined;
+  access: undefined;
   repos: { repoId?: string } | undefined;
   'remote-projects':
     | { organizationId?: string; projectId?: string }
@@ -86,21 +92,22 @@ export interface SettingsSectionDefinition {
 
 export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
   { id: 'general', icon: GearIcon, group: 'host' },
+  { id: 'notifications', icon: GearIcon, group: 'host' },
+  { id: 'execution', icon: CpuIcon, group: 'host' },
   {
     id: 'repos',
     icon: GitBranchIcon,
     group: 'host',
-    showInNavigation: false,
   },
   { id: 'agents', icon: CpuIcon, group: 'host' },
   {
     id: 'mcp',
     icon: PlugIcon,
     group: 'host',
-    showInNavigation: false,
   },
   { id: 'mcp-integration', icon: PlugIcon, group: 'host' },
   { id: 'agent-tools', icon: WrenchIcon, group: 'host' },
+  { id: 'access', icon: GearIcon, group: 'universal' },
   { id: 'resources', icon: BuildingsIcon, group: 'host' },
   { id: 'remote-projects', icon: KanbanIcon, group: 'universal' },
 ];
@@ -119,6 +126,9 @@ export function renderSettingsSection(
   initialState?: SettingsSectionInitialState[SettingsSectionType]
 ) {
   switch (type) {
+    case 'execution':
+    case 'notifications':
+      return <GeneralSettingsSection key={type} category={type} />;
     case 'general':
       return <GeneralSettingsSection />;
     case 'repos':
