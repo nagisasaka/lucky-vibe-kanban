@@ -192,8 +192,8 @@
           "fileHelper": "Choose the sound to play when tasks complete. Click the volume button to preview."
         },
         "push": {
-          "label": "Push Notifications",
-          "helper": "Show system notifications when workspaces finish running."
+          "label": "OS notifications (master switch)",
+          "helper": "Show selected events on the device running the LVK server. Web Push registrations are separate."
         }
       },
       "messageInput": {

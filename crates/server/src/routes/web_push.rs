@@ -131,6 +131,7 @@ fn subscription_router(service: PushService) -> Router<SqlitePool> {
     Router::new()
         .route("/web-push", get(status).post(subscribe))
         .route("/web-push/{id}", post(unsubscribe))
+        .route("/web-push/{id}/events", post(update_events))
         .layer(Extension(service))
 }
 
@@ -139,6 +140,7 @@ struct Registration {
     id: Uuid,
     project_id: Uuid,
     endpoint_hash: String,
+    event_mask: i64,
 }
 async fn status(
     State(pool): State<SqlitePool>,
@@ -146,7 +148,7 @@ async fn status(
 ) -> ApiResult<Value> {
     let owner = actor()?;
     let registrations = sqlx::query_as::<_, Registration>(
-        "SELECT id,project_id,endpoint_hash FROM web_push_subscriptions WHERE owner=?",
+        "SELECT id,project_id,endpoint_hash,event_mask FROM web_push_subscriptions WHERE owner=?",
     )
     .bind(owner)
     .fetch_all(&pool)
@@ -225,7 +227,7 @@ async fn subscribe(
     if count >= 64 && !existing {
         return Err(StatusCode::TOO_MANY_REQUESTS);
     }
-    let id: Uuid = sqlx::query_scalar("INSERT INTO web_push_subscriptions(id,owner,project_id,endpoint_hash,sealed) VALUES(?,?,?,?,?) ON CONFLICT(endpoint_hash,project_id) DO UPDATE SET sealed=excluded.sealed,created_at=unixepoch() RETURNING id")
+    let (id, event_mask): (Uuid, i64) = sqlx::query_as("INSERT INTO web_push_subscriptions(id,owner,project_id,endpoint_hash,sealed) VALUES(?,?,?,?,?) ON CONFLICT(endpoint_hash,project_id) DO UPDATE SET sealed=excluded.sealed,created_at=unixepoch() RETURNING id,event_mask")
         .bind(Uuid::new_v4()).bind(owner).bind(r.project_id).bind(&hash).bind(sealed)
         .fetch_one(&mut *tx).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     tx.commit()
@@ -235,8 +237,62 @@ async fn subscribe(
         id,
         project_id: r.project_id,
         endpoint_hash: hash,
+        event_mask,
     }))
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EventPreferences {
+    event_mask: i64,
+}
+async fn update_events(
+    State(pool): State<SqlitePool>,
+    Extension(s): Extension<PushService>,
+    Path(id): Path<Uuid>,
+    Json(preferences): Json<EventPreferences>,
+) -> Result<StatusCode, StatusCode> {
+    let owner = actor()?;
+    if !(0..=31).contains(&preferences.event_mask) {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    // Same gate as delivery and unsubscribe: completed saves govern the next send.
+    let _guard = s.delivery_gate.lock().await;
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let changed =
+        sqlx::query("UPDATE web_push_subscriptions SET event_mask=? WHERE id=? AND owner=?")
+            .bind(preferences.event_mask)
+            .bind(id)
+            .bind(owner)
+            .execute(&mut *tx)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .rows_affected();
+    if changed == 0 {
+        return Err(StatusCode::NOT_FOUND);
+    }
+    // Consume already queued disabled events, so enabling later never replays them.
+    sqlx::query("UPDATE web_push_deliveries SET finished=1 WHERE subscription_id=? AND finished=0 AND (? & CASE kind WHEN 'input_requested' THEN 1 WHEN 'approval_requested' THEN 2 WHEN 'succeeded' THEN 4 WHEN 'cancelled' THEN 16 ELSE 8 END)=0")
+        .bind(id).bind(preferences.event_mask).execute(&mut *tx).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    tx.commit()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+fn event_bit(kind: &str) -> i64 {
+    match kind {
+        "input_requested" => 1,
+        "approval_requested" => 2,
+        "succeeded" => 4,
+        "failed" | "crashed" | "audit_failed" => 8,
+        "cancelled" => 16,
+        _ => 0,
+    }
+}
+
 async fn unsubscribe(
     State(pool): State<SqlitePool>,
     Extension(s): Extension<PushService>,
@@ -323,6 +379,19 @@ async fn send(
     }
     Ok(request.send().await?.status().as_u16())
 }
+async fn delivery_enabled(pool: &SqlitePool, item: &Delivery) -> anyhow::Result<bool> {
+    let current: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM web_push_subscriptions s JOIN web_push_deliveries d ON d.subscription_id=s.id WHERE s.id=? AND s.sealed=? AND d.id=? AND d.finished=0 AND (s.event_mask & ?)!=0)",
+        )
+    .bind(item.subscription_id)
+    .bind(&item.sealed)
+    .bind(item.id)
+    .bind(event_bit(&item.kind))
+    .fetch_one(pool)
+    .await?;
+    Ok(current)
+}
+
 async fn dispatch(
     pool: &SqlitePool,
     service: &PushService,
@@ -346,13 +415,7 @@ async fn dispatch(
         // Serialise OFF/renewal with each bounded send, not with the whole batch.
         // Once OFF returns there is no in-flight sender for that subscription.
         let _guard = service.delivery_gate.lock().await;
-        let current: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM web_push_subscriptions WHERE id=? AND sealed=?)",
-        )
-        .bind(item.subscription_id)
-        .bind(&item.sealed)
-        .fetch_one(pool)
-        .await?;
+        let current = delivery_enabled(pool, &item).await?;
         if !current {
             continue;
         }
@@ -450,7 +513,10 @@ mod tests {
 mod lifecycle_tests {
     use super::*;
     async fn fixture() -> (SqlitePool, Uuid, Uuid, Uuid) {
-        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        fixture_at("sqlite::memory:").await
+    }
+    async fn fixture_at(url: &str) -> (SqlitePool, Uuid, Uuid, Uuid) {
+        let pool = SqlitePool::connect(url).await.unwrap();
         sqlx::raw_sql("PRAGMA foreign_keys=ON;
             CREATE TABLE projects(id BLOB PRIMARY KEY);
             CREATE TABLE agent_runs(id BLOB PRIMARY KEY,workspace_id BLOB,session_id BLOB,status TEXT,provider_id TEXT);
@@ -503,6 +569,12 @@ mod lifecycle_tests {
             sqlx::query("INSERT INTO web_push_subscriptions(id,owner,project_id,endpoint_hash,sealed) VALUES(?,?,?,?,X'00')")
             .bind(Uuid::new_v4()).bind(Uuid::new_v4()).bind(project).bind(i.to_string()).execute(&pool).await.unwrap();
         }
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261031180000_web_push_event_preferences.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
         (pool, project, run, attempt)
     }
     async fn event(pool: &SqlitePool, run: Uuid, attempt: Uuid, sequence: i64, kind: &str) {
@@ -527,6 +599,113 @@ mod lifecycle_tests {
         sqlx::query_as("SELECT d.*,s.owner,s.sealed,r.workspace_id,r.session_id,l.project_id,l.issue_id FROM web_push_deliveries d JOIN web_push_subscriptions s ON s.id=d.subscription_id JOIN agent_runs r ON r.id=d.agent_run_id JOIN local_workspace_links l ON l.workspace_id=r.workspace_id ORDER BY d.id LIMIT 1")
             .fetch_one(pool).await.unwrap()
     }
+    #[tokio::test]
+    async fn persisted_preferences_survive_database_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let url = format!(
+            "sqlite://{}?mode=rwc",
+            dir.path().join("push.sqlite").display()
+        );
+        let (pool, _, run, attempt) = fixture_at(&url).await;
+        let id: Uuid = sqlx::query_scalar("SELECT id FROM web_push_subscriptions LIMIT 1")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE web_push_subscriptions SET event_mask=0 WHERE id=?")
+            .bind(id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        pool.close().await;
+        let reopened = SqlitePool::connect(&url).await.unwrap();
+        let mask: i64 =
+            sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions WHERE id=?")
+                .bind(id)
+                .fetch_one(&reopened)
+                .await
+                .unwrap();
+        assert_eq!(mask, 0);
+        event(&reopened, run, attempt, 1, "input_requested").await;
+        assert_eq!(count(&reopened).await, 1);
+        reopened.close().await;
+    }
+
+    #[tokio::test]
+    async fn delivery_checks_latest_preferences_and_consumed_receipts() {
+        let (pool, _, _, _) = fixture().await;
+        sqlx::query("UPDATE agent_runs SET status='succeeded'")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let item = job(&pool).await;
+        assert!(delivery_enabled(&pool, &item).await.unwrap());
+        sqlx::query("UPDATE web_push_subscriptions SET event_mask=0 WHERE id=?")
+            .bind(item.subscription_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(!delivery_enabled(&pool, &item).await.unwrap());
+        sqlx::query("UPDATE web_push_subscriptions SET event_mask=31 WHERE id=?")
+            .bind(item.subscription_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE web_push_deliveries SET finished=1 WHERE id=?")
+            .bind(item.id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(!delivery_enabled(&pool, &item).await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn preferences_migrate_filter_each_kind_and_do_not_replay() {
+        for (kind, bit) in [
+            ("input_requested", 1),
+            ("approval_requested", 2),
+            ("succeeded", 4),
+            ("failed", 8),
+            ("crashed", 8),
+            ("audit_failed", 8),
+            ("cancelled", 16),
+        ] {
+            let (pool, _, run, attempt) = fixture().await;
+            // Both old subscriptions migrated with the historical default.
+            let masks: Vec<i64> =
+                sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions")
+                    .fetch_all(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(masks, vec![31, 31]);
+            let id: Uuid = sqlx::query_scalar("SELECT id FROM web_push_subscriptions LIMIT 1")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            sqlx::query("UPDATE web_push_subscriptions SET event_mask=? WHERE id=?")
+                .bind(31 ^ bit)
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            if bit <= 2 {
+                event(&pool, run, attempt, 1, kind).await;
+            } else {
+                sqlx::query("UPDATE agent_runs SET status=?")
+                    .bind(kind)
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+            }
+            assert_eq!(count(&pool).await, 1, "{kind}");
+            sqlx::query("UPDATE web_push_subscriptions SET event_mask=31 WHERE id=?")
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            assert_eq!(count(&pool).await, 1, "enabling must not replay {kind}");
+        }
+    }
+
     #[tokio::test]
     async fn canonical_sources_scope_fanout_terminal_and_unsubscribe() {
         let (pool, project, run, attempt) = fixture().await;
@@ -726,6 +905,12 @@ mod api_tests {
         )
         .unwrap();
         let csrf = status["csrf"].as_str().unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261031180000_web_push_event_preferences.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
         let project = Uuid::new_v4();
         sqlx::query("INSERT INTO projects VALUES(?,'Test')")
             .bind(project)
@@ -798,6 +983,83 @@ mod api_tests {
                 .unwrap(),
         )
         .unwrap();
+        assert_eq!(saved["event_mask"], 31);
+        let events_path = format!("/api/web-push/{}/events", saved["id"].as_str().unwrap());
+        let other_registration = Uuid::new_v4();
+        sqlx::query("INSERT INTO web_push_subscriptions(id,owner,project_id,endpoint_hash,sealed) VALUES(?,?,?,'another-device',X'00')")
+            .bind(other_registration).bind(Uuid::new_v4()).bind(project).execute(&pool).await.unwrap();
+        // A pending retry must be consumed by OFF and remain consumed after ON.
+        let run = Uuid::new_v4();
+        sqlx::query("INSERT INTO agent_runs(id,status,provider_id,workspace_id) VALUES(?,'succeeded','codex',?)")
+            .bind(run).bind(run).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO web_push_deliveries(subscription_id,event_key,agent_run_id,kind) VALUES(?,'queued',?,'succeeded')")
+            .bind(Uuid::parse_str(saved["id"].as_str().unwrap()).unwrap()).bind(run)
+            .execute(&pool).await.unwrap();
+        for mask in [0, 1, 2, 4, 8, 16, 31, 0] {
+            assert_eq!(
+                app.clone()
+                    .oneshot(request(
+                        "POST",
+                        &events_path,
+                        &json!({"event_mask":mask}),
+                        true
+                    ))
+                    .await
+                    .unwrap()
+                    .status(),
+                StatusCode::NO_CONTENT
+            );
+            let stored: i64 =
+                sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions WHERE id=?")
+                    .bind(Uuid::parse_str(saved["id"].as_str().unwrap()).unwrap())
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(stored, mask);
+        }
+        let other_mask: i64 =
+            sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions WHERE id=?")
+                .bind(other_registration)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(other_mask, 31, "other owner/device remains unchanged");
+        sqlx::query("DELETE FROM web_push_subscriptions WHERE id=?")
+            .bind(other_registration)
+            .execute(&pool)
+            .await
+            .unwrap();
+        let finished: i64 = sqlx::query_scalar("SELECT finished FROM web_push_deliveries")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(finished, 1);
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &events_path,
+                    &json!({"event_mask":32}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &events_path,
+                    &json!({"event_mask":31}),
+                    false
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
         let response = app
             .clone()
             .oneshot(request("POST", "/api/web-push", &payload, true))
@@ -809,6 +1071,11 @@ mod api_tests {
             .await
             .unwrap();
         assert_eq!(count, 1);
+        let renewed: i64 = sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(renewed, 0, "renewal preserves selection");
         // Tamper ownership to represent another member's registration; endpoint
         // transfer, list disclosure and deletion must all be refused/scoped.
         sqlx::query("UPDATE web_push_subscriptions SET owner=?")
@@ -824,6 +1091,24 @@ mod api_tests {
                 .status(),
             StatusCode::CONFLICT
         );
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &events_path,
+                    &json!({"event_mask":31}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::NOT_FOUND
+        );
+        let unchanged: i64 = sqlx::query_scalar("SELECT event_mask FROM web_push_subscriptions")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(unchanged, 0);
         let response = app
             .clone()
             .oneshot(request("GET", "/api/web-push", &json!({}), true))

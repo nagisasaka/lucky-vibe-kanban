@@ -6,6 +6,34 @@ sound/desktop notification settings are separate. Registration requires a secure
 context, Push API, a Service Worker and notification permission. Denying permission
 does not disable any LVK functionality.
 
+## Event choices
+
+Each Web Push registration has its own event selection: blocking questions,
+execution approvals, Run success, Run failure/abnormal termination, and Run
+cancellation. Changes save immediately and affect only that owner's Project/browser
+registration. Existing and new registrations default to all historical events ON.
+Re-registering the same endpoint/Project preserves its choices; deleting consent
+and creating a new registration restores the default.
+
+All events OFF retains consent but stops event delivery. **OFF / 購読解除** deletes
+the registration. Neither setting removes questions or approvals from LVK.
+Disabling an event consumes its queued deliveries under the existing send gate;
+disabled events are not admitted to the outbox. Re-enabling does not replay history.
+An already accepted push-service/OS notification cannot be recalled.
+
+The separate OS notification controls keep their existing server-wide scope and
+master ON/OFF switch. They select existing executor questions, approvals, successful
+Workspace execution and failed execution, and use the settings page's Save action.
+OS execution success is distinct from canonical Codex Run success, test success
+and auto-merge publication. Intentional process termination still does not notify.
+Sound settings keep their existing behaviour independently of OS event choices.
+
+For isolated regression checks (no real Push service or user registrations):
+`node --test tests/web-push/*.test.mjs`. The settings fixture uses mocked APIs and
+the real React components/styles at 390px light and 1280px dark. Set
+`LVK_CHROMIUM_PATH` when Chromium is supplied outside Playwright's default cache.
+This does not verify real OS/browser delivery.
+
 ## Server configuration
 
 Configure the following on the LVK server process/container, then restart it through

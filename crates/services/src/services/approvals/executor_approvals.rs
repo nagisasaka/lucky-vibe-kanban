@@ -111,7 +111,16 @@ impl ExecutorApprovalBridge {
         };
 
         notification_service
-            .notify(&title, &message, workspace_id)
+            .notify(
+                if question_count.is_some() {
+                    crate::services::notification::NotificationEvent::Question
+                } else {
+                    crate::services::notification::NotificationEvent::Approval
+                },
+                &title,
+                &message,
+                workspace_id,
+            )
             .await;
 
         Ok(approval_id)

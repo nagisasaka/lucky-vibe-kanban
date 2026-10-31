@@ -132,7 +132,13 @@ impl From<v1::GitHubConfig> for GitHubConfig {
 pub struct NotificationConfig {
     pub sound_enabled: bool,
     pub push_enabled: bool,
+    #[serde(default = "default_push_event_mask")]
+    pub push_event_mask: u8,
     pub sound_file: SoundFile,
+}
+
+fn default_push_event_mask() -> u8 {
+    15
 }
 
 impl From<v1::Config> for NotificationConfig {
@@ -140,6 +146,7 @@ impl From<v1::Config> for NotificationConfig {
         Self {
             sound_enabled: old.sound_alerts,
             push_enabled: old.push_notifications,
+            push_event_mask: default_push_event_mask(),
             sound_file: SoundFile::from(old.sound_file), // Now SCREAMING_SNAKE_CASE
         }
     }
@@ -150,6 +157,7 @@ impl Default for NotificationConfig {
         Self {
             sound_enabled: true,
             push_enabled: true,
+            push_event_mask: default_push_event_mask(),
             sound_file: SoundFile::CowMooing,
         }
     }
