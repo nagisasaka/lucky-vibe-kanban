@@ -16,6 +16,7 @@ import { cn } from '@/shared/lib/utils';
 import { matchesListSearch } from '@/shared/lib/listSearch';
 import { TodoBody } from './TodoBody';
 import { todoApi } from '../model/todoApi';
+import { getTodoCategorySuggestions } from '../model/todoCategories';
 import { useTodoViewStore } from '../model/todoViewStore';
 
 const field =
@@ -90,9 +91,7 @@ export function TodoPanel({
     }
     return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [query.data, showCompleted, search]);
-  const categories = [
-    ...new Set((query.data ?? []).map((item) => item.category).filter(Boolean)),
-  ].sort();
+  const categories = getTodoCategorySuggestions(query.data ?? []);
   return (
     <section
       aria-label={t('todo.title')}
