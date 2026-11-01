@@ -1,6 +1,5 @@
 import { SettingsAccessContext } from '@/shared/dialogs/settings/settings/SettingsAccessContext';
 import { useSettingsDirty } from '@/shared/dialogs/settings/settings/SettingsDirtyContext';
-import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import { useTranslation } from 'react-i18next';
 import { rememberPushReturn, takePushReturn } from './pushReturn';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -233,38 +232,75 @@ export function ServerAccessGate({
   }
   if (status?.authenticated && !settings && !recovery) {
     return (
-      <>
-        <SettingsAccessContext.Provider
-          value={status.user?.admin ? <EmbeddedAccessSettings /> : null}
-        >
-          {children}
-        </SettingsAccessContext.Provider>
-        {status.mode !== 'local' && (
-          <div className="new-design fixed bottom-base right-base z-50 flex gap-base rounded border bg-panel p-half text-normal">
-            {status.user?.admin && (
-              <button
-                onClick={() =>
-                  void SettingsDialog.show({ initialSection: 'access' })
-                }
-              >
-                {t('settings.layout.nav.title')}
-              </button>
-            )}
-            <button
-              onClick={() =>
-                void run(async () => {
-                  await accessRequest('logout', {});
-                  navigateAfterSuccess('/');
-                })
-              }
+      <SettingsAccessContext.Provider
+        value={{
+          management: status.user?.admin ? <EmbeddedAccessSettings /> : null,
+          account: (
+            <section
+              className="space-y-double p-double"
+              aria-label={t('settings.account.session')}
             >
-              ログアウト
-            </button>
-          </div>
-        )}
-      </>
+              <h3 className="text-base font-medium text-high">
+                {t('settings.account.session')}
+              </h3>
+              <dl className="space-y-base">
+                <div>
+                  <dt className="text-low">{t('settings.account.status')}</dt>
+                  <dd>
+                    {t(
+                      status.mode === 'local'
+                        ? 'settings.account.localStatus'
+                        : 'settings.account.signedIn'
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-low">{t('settings.account.method')}</dt>
+                  <dd>
+                    {status.mode === 'auth0'
+                      ? 'Auth0'
+                      : status.mode === 'basic'
+                        ? 'Basic'
+                        : 'Local'}
+                  </dd>
+                </div>
+              </dl>
+              <p className="text-low text-sm">
+                {t(
+                  status.mode === 'local'
+                    ? 'settings.account.localHint'
+                    : 'settings.account.logoutHint'
+                )}
+              </p>
+              {error && (
+                <p role="alert" className="text-error">
+                  {error}
+                </p>
+              )}
+              {status.mode !== 'local' && (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      await accessRequest('logout', {});
+                      navigateAfterSuccess('/');
+                    })
+                  }
+                >
+                  {t('settings.account.logout')}
+                </button>
+              )}
+            </section>
+          ),
+        }}
+      >
+        {children}
+      </SettingsAccessContext.Provider>
     );
   }
+
   return (
     <main
       className={

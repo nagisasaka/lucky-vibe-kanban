@@ -53,8 +53,13 @@ function SettingsDialogNavigation({
     experience: ['general', 'notifications'],
     ai: ['execution', 'agents', 'agent-tools'],
     projects: ['remote-projects', 'repos'],
-    connections: ['mcp-integration', 'mcp', ...(access ? ['access'] : [])],
+    connections: [
+      'mcp-integration',
+      'mcp',
+      ...(access?.management ? ['access'] : []),
+    ],
     operations: ['resources'],
+    ...(access?.account ? { account: ['account'] } : {}),
   };
   return (
     <nav className="flex-1 p-2 flex flex-col gap-1 overflow-y-auto">
@@ -119,7 +124,8 @@ function SettingsDialogContent({
   const resolvedInitialSection = useMemo<SettingsSectionType>(() => {
     if (
       initialSection &&
-      (initialSection !== 'access' || access) &&
+      (initialSection !== 'access' || access?.management) &&
+      (initialSection !== 'account' || access?.account) &&
       SETTINGS_SECTION_DEFINITIONS.some(
         (section) => section.id === initialSection
       )
@@ -382,11 +388,11 @@ function SettingsDialogContent({
                   </p>
                 )}
               </div>
-              {activeSection === 'access' ? (
+              {activeSection === 'access' || activeSection === 'account' ? (
                 <>
                   <div className="hidden md:flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg text-high font-semibold">
-                      {t('settings.layout.nav.access')}
+                      {t(`settings.layout.nav.${activeSection}`)}
                     </h2>
                     <button
                       onClick={handleCloseWithConfirmation}
@@ -396,7 +402,9 @@ function SettingsDialogContent({
                       <XIcon className="size-icon-sm" />
                     </button>
                   </div>
-                  {access}
+                  {activeSection === 'access'
+                    ? access?.management
+                    : access?.account}
                 </>
               ) : isHostSpecificSettingsSection(activeSection) ? (
                 selectedHost ? (

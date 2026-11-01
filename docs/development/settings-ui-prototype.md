@@ -235,3 +235,27 @@ Playwright passを目視合格の代わりにせず、computed style・撮影状
 
 認証再利用の調査・sample資格・共有設定は触っていない。局所launcherのexit78を維持し、外部previewも起動していない。
 このRunは隔離loopback E2Eのみを使用し、終了後にそのlistenerが残っていないことを確認した。
+
+## アカウント導線とp2 HMR準備（2026-11-01）
+
+画面下の独立した設定・ログアウトを撤去し、既存の歯車から開く設定の左メニューへ「アカウント」を追加した。
+ログイン状態・認証方式と既存logout APIを配置し、Basic/Auth0はログアウト可能、Localは接続状態の表示だけとする。
+アカウント画面は全利用者へ供給し、認証・メンバー画面は従前の権限条件を保持する。新しい役割概念・アイコン・保存先は追加しない。
+旧access/settings・初期設定・復旧の入口、設定の未保存保護も維持する。
+
+隔離ブラウザ34件、型・lint成功。既存歯車コンポーネントをfixtureに接続後、アカウント9件を再確認した。
+PC/360px、Local/Basic/Auth0、権限別表示、logout成功/失敗、日本語/英語、旧入口を検証。logoutはfixture内のみで実ユーザーに対して実行していない。
+画像は`.build/settings-account-review/account-basic-{1440,360}.png`等。PC/スマホの配置・折返しを目視確認済み。
+
+稼働p2は18444のbackendから静的frontendを配信している（rootに/@vite/clientなし）。このRunでは既存processを停止・再起動していない。
+局所`.lvk-preview/start.sh`を`.build/settings-preview/hmr-run.py`へ接続し、親による次回正規startでVite18444/backend18446をforeground親子として管理する準備をした。
+backend実行物・専用instance・public/basic・公開URLは同じ。DB/key/credentialの変更・新たな秘密の読取/コピー、共有Repo script・nginx・network・Auth0の変更はない。
+片側終了または停止signal時は両子をterminate/waitし、8秒で終了しない子だけkill/waitする。
+静的配信への局所rollback入口は`.build/settings-preview/start-static.sh`。操作は正規管理のstop/startに限る。
+
+隔離loopback4197では、本番用React/Vite plugins・実設定モジュールでHMR update frame、ページtimeOrigin保持、開いたアカウント画面のDOM更新を確認した。
+canary私有pathと不許可Hostは403、fixture APIは401、browser pageerrorなし。
+初回harnessのcwdによるBabel解決、次のharnessのHTML preamble不足はharnessを修正して解消。fixtureのbuild差替えをHMR成功とは扱わない。
+証拠は`.build/settings-account-review/hmr-proof.json`と`hmr-account-pc.png`。
+**公開p2へのHMR反映はまだ未完了**。親が当Workspaceの正規DevServerをstopしsettlement/port解放を確認後startし、外部WSSと実画面を確認する必要がある。
+詳細引継ぎは`.build/settings-account-review/handoff.json`、最新局所構成は`.build/settings-preview/managed-start.json`。

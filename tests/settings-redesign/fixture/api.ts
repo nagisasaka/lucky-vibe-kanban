@@ -63,7 +63,9 @@ export function installFixtureApi() {
       return json({
         mode,
         deployment: mode === "local" ? "local" : "public",
-        authenticated: mode !== "locked",
+        authenticated:
+          mode !== "locked" &&
+          !sessionStorage.getItem("settings-fixture-logged-out"),
         management: role === "admin" && mode !== "locked" && mode !== "local",
         limited: false,
         csrf: "fixture-csrf",
@@ -75,6 +77,12 @@ export function installFixtureApi() {
             ? null
             : { id: "fixture-user", admin: role === "admin" },
       });
+    if (path === "/api/access/logout" && params.get("allowLogout") === "true") {
+      if (params.get("logoutFailure") === "true")
+        return json({ error: "Fixture logout failed" }, 503);
+      sessionStorage.setItem("settings-fixture-logged-out", "true");
+      return json({});
+    }
     if (path.startsWith("/api/access/")) {
       if (role !== "admin")
         return json({ error: "Fixture: administrator required" }, 403);

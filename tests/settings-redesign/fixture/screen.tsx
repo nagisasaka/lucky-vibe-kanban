@@ -6,6 +6,7 @@ import { Provider } from "@ebay/nice-modal-react";
 import i18n from "@/i18n/config";
 import { AppRuntimeProvider } from "@/shared/hooks/useAppRuntime";
 import { AuthContext } from "@/shared/hooks/auth/useAuth";
+import { AppBarUserPopoverContainer } from "@/shared/components/ui-new/containers/AppBarUserPopoverContainer";
 import { SettingsDialog } from "@/shared/dialogs/settings/SettingsDialog";
 import type { SettingsSectionType } from "@/shared/dialogs/settings/settings/settingsRegistry";
 import { ServerAccessGate } from "../../../packages/local-web/src/app/auth/ServerAccessGate";
@@ -36,9 +37,13 @@ function Screen() {
         Only sample data. Saves last until reload. Authentication changes and
         recovery are disabled.
       </p>
-      <button className="rounded border p-base mt-double" onClick={open}>
-        {opened ? "設定を開き直す" : "設定を開く"}
-      </button>
+      {params.get("gear") === "true" ? (
+        <AppBarUserPopoverContainer />
+      ) : (
+        <button className="rounded border p-base mt-double" onClick={open}>
+          {opened ? "設定を開き直す" : "設定を開く"}
+        </button>
+      )}
     </div>
   );
 }

@@ -49,6 +49,7 @@
         "mcp-integration": "外部AI → LVK",
         "notifications": "通知",
         "execution": "作業の既定値",
+        "account": "アカウント",
         "access": "認証・メンバー"
       }
     },
@@ -587,14 +588,26 @@
       "pairMachineHint": "Pair a machine to open machine settings.",
       "selectMachineHint": "Select a machine to open machine settings."
     },
+    "account": {
+      "session": "ログイン状態",
+      "status": "状態",
+      "signedIn": "ログイン済み",
+      "localStatus": "Local接続",
+      "method": "認証方式",
+      "localHint": "Local接続ではログイン・ログアウトは不要です。",
+      "logoutHint": "このブラウザのLVKセッションからログアウトします。",
+      "logout": "ログアウト"
+    },
     "groups": {
       "experience": "使い心地",
       "ai": "AIと作業の既定値",
       "projects": "プロジェクトとコード",
       "connections": "接続とアクセス",
+      "account": "アカウント",
       "operations": "運用"
     },
     "scope": {
+      "account": "このブラウザの接続状態とログアウト。設定値は変更しません。",
       "general": "主にLVKインスタンス共通の設定です。端末だけに保存する項目と、即時反映される操作は各欄に示します。",
       "execution": "このLVKインスタンスで新しく始める作業の既定値です。既存のRunの入力は変更しません。",
       "notifications": "通知音・OS通知はインスタンス共通。Web Pushは選択中のProjectと、この端末の購読を管理します。",
@@ -604,7 +617,7 @@
       "repos": "選択したRepositoryが対象です。GitHub資格情報、OpenWiki、検証・scriptsは各欄の保存と確認操作に従います。",
       "mcp-integration": "外部AIからLVKへ接続するときのファイル参照・実行権限です。接続認証は「認証・メンバー」で管理します。",
       "mcp": "LVK内のエージェントから外部MCPへの接続を全体JSONで編集します。「MCP・Skillsの項目管理」は同じnative設定を項目単位で管理する入口です。対象と保存先を確認してください。",
-      "access": "管理者用 · このLVKサーバー全体の認証・メンバー管理。各操作は個別に反映され、再認証や確認が必要な場合があります。",
+      "access": "このLVKサーバー全体の認証・メンバー管理。各操作は個別に反映され、再認証や確認が必要な場合があります。",
       "resources": "共有設備の登録設定と、稼働状態の確認・調停・復旧操作です。復旧や削除は各操作の確認内容を読んで実行してください。",
       "instance": "保存先：LVKインスタンス共通（config.json） · 下の保存ボタンで反映",
       "appearance": "外観・言語：LVKインスタンス共通 · モバイル文字サイズ：この端末に即時保存",

@@ -57,6 +57,7 @@ export type SettingsSectionType =
   | 'execution'
   | 'notifications'
   | 'access'
+  | 'account'
   | 'repos'
   | 'remote-projects'
   | 'agents'
@@ -72,6 +73,7 @@ export type SettingsSectionInitialState = {
   execution: undefined;
   notifications: undefined;
   access: undefined;
+  account: undefined;
   repos: { repoId?: string } | undefined;
   'remote-projects':
     | { organizationId?: string; projectId?: string }
@@ -108,6 +110,7 @@ export const SETTINGS_SECTION_DEFINITIONS: SettingsSectionDefinition[] = [
   { id: 'mcp-integration', icon: PlugIcon, group: 'host' },
   { id: 'agent-tools', icon: WrenchIcon, group: 'host' },
   { id: 'access', icon: GearIcon, group: 'universal' },
+  { id: 'account', icon: GearIcon, group: 'universal' },
   { id: 'resources', icon: BuildingsIcon, group: 'host' },
   { id: 'remote-projects', icon: KanbanIcon, group: 'universal' },
 ];

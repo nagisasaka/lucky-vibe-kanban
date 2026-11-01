@@ -49,6 +49,7 @@
         "mcp-integration": "External AI → LVK",
         "notifications": "Notifications",
         "execution": "Work defaults",
+        "account": "Account",
         "access": "Authentication and members"
       }
     },
@@ -597,14 +598,26 @@
         "action": "Sign in"
       }
     },
+    "account": {
+      "session": "Sign-in status",
+      "status": "Status",
+      "signedIn": "Signed in",
+      "localStatus": "Local connection",
+      "method": "Authentication method",
+      "localHint": "Local connections do not require sign-in or sign-out.",
+      "logoutHint": "Sign out of the LVK session in this browser.",
+      "logout": "Log out"
+    },
     "groups": {
       "experience": "Experience",
       "ai": "AI and work defaults",
       "projects": "Projects and code",
       "connections": "Connections and access",
+      "account": "Account",
       "operations": "Operations"
     },
     "scope": {
+      "account": "Connection status and sign-out for this browser. No configuration values are changed.",
       "general": "Most settings apply to this LVK instance. Device-only storage and immediate actions are marked below.",
       "execution": "Defaults for new work in this LVK instance. Existing Run inputs are unaffected.",
       "notifications": "Sound and OS notifications apply to the instance. Web Push manages the selected Project and this device subscription.",
@@ -614,7 +627,7 @@
       "repos": "Applies to the selected Repository. Credentials, OpenWiki, validation and scripts each retain their own save and confirmation actions.",
       "mcp-integration": "File and execution permissions for external AI connecting to LVK. Manage connection authentication in Authentication and members.",
       "mcp": "Edit agent connections to external MCP servers as whole JSON. MCP and Skills items manages the same native settings one item at a time. Check the target and storage scope.",
-      "access": "Administrators · Authentication and members for this LVK server. Actions apply individually and may require confirmation or reauthentication.",
+      "access": "Authentication and members for this LVK server. Actions apply individually and may require confirmation or reauthentication.",
       "resources": "Resource registration settings, live status, coordination and recovery actions. Review each confirmation before recovery or deletion.",
       "instance": "Storage: shared LVK instance (config.json) · Apply with Save below",
       "appearance": "Appearance and language: LVK instance · Mobile text size: saved immediately on this device",
