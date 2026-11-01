@@ -94,8 +94,37 @@ pub enum TodoError {
     Conflict,
     #[error("Invalid TODO request")]
     InvalidRequest,
+    #[error("Commit outcome unavailable")]
+    CommitUnknown(sqlx::Error),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+}
+
+/// A SQLite COMMIT rejected for a constraint or writer lock did not commit.
+/// SQLx drops the still-open transaction and schedules rollback in this case.
+/// Other errors (I/O, transport, worker loss) do not establish the commit outcome.
+pub fn commit_definitely_rejected(error: &sqlx::Error) -> bool {
+    match error {
+        sqlx::Error::Database(error) => {
+            error.is_unique_violation()
+                || error.is_foreign_key_violation()
+                || error.is_check_violation()
+                || error
+                    .code()
+                    .and_then(|code| code.parse::<i32>().ok())
+                    .is_some_and(|code| matches!(code & 0xff, 5 | 6 | 19))
+        }
+        _ => false,
+    }
+}
+impl TodoError {
+    fn commit(error: sqlx::Error) -> Self {
+        if commit_definitely_rejected(&error) {
+            Self::Database(error)
+        } else {
+            Self::CommitUnknown(error)
+        }
+    }
 }
 
 fn validate(body: &str, category: &str) -> Result<(), TodoError> {
@@ -246,7 +275,7 @@ impl Todo {
             // A replay returns the original identity without consuming another number.
             tx.rollback().await?;
         } else {
-            tx.commit().await?;
+            tx.commit().await.map_err(TodoError::commit)?;
         }
         Ok(todo)
     }
@@ -272,11 +301,14 @@ impl Todo {
             input.issue_id.or(old.issue_id)
         };
         Self::require_issue(pool, project, issue).await?;
+        let mut tx = pool.begin().await?;
         let updated = sqlx::query_as("UPDATE project_todos SET body=?,category=?,completed=?,issue_id=?,revision=revision+1,updated_at=? WHERE id=? AND project_id=? AND revision=? RETURNING *")
             .bind(body).bind(category).bind(input.completed.unwrap_or(old.completed)).bind(issue)
             .bind(Utc::now().to_rfc3339()).bind(id).bind(project).bind(input.expected_revision)
-            .fetch_optional(pool).await?;
-        updated.ok_or(TodoError::Conflict)
+            .fetch_optional(&mut *tx).await?;
+        let updated = updated.ok_or(TodoError::Conflict)?;
+        tx.commit().await.map_err(TodoError::commit)?;
+        Ok(updated)
     }
     pub async fn delete(
         pool: &SqlitePool,
@@ -284,17 +316,21 @@ impl Todo {
         id: Uuid,
         revision: i32,
     ) -> Result<(), TodoError> {
+        let mut tx = pool.begin().await?;
         let result =
             sqlx::query("DELETE FROM project_todos WHERE project_id=? AND id=? AND revision=?")
                 .bind(project)
                 .bind(id)
                 .bind(revision)
-                .execute(pool)
+                .execute(&mut *tx)
                 .await?;
         if result.rows_affected() == 0 {
+            // Release the writer before checking whether the target still exists.
+            tx.rollback().await?;
             Self::get(pool, project, id).await?;
             return Err(TodoError::Conflict);
         }
+        tx.commit().await.map_err(TodoError::commit)?;
         Ok(())
     }
 }

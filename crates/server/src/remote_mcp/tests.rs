@@ -1497,6 +1497,14 @@ async fn auth0_jwt_access_layer_reaches_real_mcp_tools() {
     assert_eq!(events.status(), StatusCode::OK);
     let events: Value = events.json().await.unwrap();
     assert_eq!(events["result"]["isError"], true);
+    assert_eq!(
+        events["result"]["structuredContent"]["error"]["category"],
+        "validation"
+    );
+    assert_eq!(
+        events["result"]["structuredContent"]["error"]["outcome"],
+        "failed"
+    );
     assert!(
         events["result"]["content"][0]["text"]
             .as_str()

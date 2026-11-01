@@ -47,11 +47,13 @@ impl McpServer {
             None => return Self::err("Current AgentRun binding required", None),
         };
         let body = serde_json::json!({"workspace_id":context.workspace_id,"agent_run_id":agent,"request_id":input.request_id,"action":input.action,"expected_commit":input.expected_commit,"code_commit":input.code_commit,"wiki_commit":input.wiki_commit,"command":input.command,"decision_actor":input.decision_actor,"reason":input.reason,"remaining_risk":input.remaining_risk});
+        let read_only = input.action == "inspect";
         match self
-            .send_json::<serde_json::Value>(
+            .send_json_with_effects::<serde_json::Value>(
                 self.client
                     .post(self.url("/api/integrations/worker"))
                     .json(&body),
+                read_only,
             )
             .await
         {

@@ -139,7 +139,10 @@ impl Source {
     pub(super) fn root(&self) -> anyhow::Result<PathBuf> {
         ensure!(
             !self.workspace.worktree_deleted,
-            "Workspace checkout was deleted; repository evidence unavailable"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Workspace checkout was deleted; repository evidence unavailable"
+            )
         );
         let root = if self.workspace.is_direct_folder() {
             self.repo.path.clone()
@@ -156,7 +159,13 @@ impl Source {
         let root = root
             .canonicalize()
             .map_err(|_| anyhow::anyhow!("Workspace checkout is not available"))?;
-        ensure!(root.is_dir(), "Workspace checkout is not a directory");
+        ensure!(
+            root.is_dir(),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Workspace checkout is not a directory"
+            )
+        );
         Ok(root)
     }
 }
@@ -200,7 +209,10 @@ impl Remote {
             )
             .await?
             .is_some(),
-            "Repository no longer belongs to this Workspace"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Repository no longer belongs to this Workspace"
+            )
         );
         result["project_id"] = json!(target.project_id);
         result["workspace_id"] = json!(target.workspace_id);
@@ -235,19 +247,31 @@ pub(super) fn check_page(
 ) -> anyhow::Result<()> {
     ensure!(
         (1..=max).contains(&limit),
-        "Page limit is outside the allowed range"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Page limit is outside the allowed range"
+        )
     );
     ensure!(
         offset == 0 || expected.is_some(),
-        "expected_revision is required after the first page"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "expected_revision is required after the first page"
+        )
     );
     ensure!(
         expected.is_none_or(|value| value == current),
-        "Stale or foreign revision; restart this read"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Stale or foreign revision; restart this read"
+        )
     );
     ensure!(
         offset as usize <= total,
-        "Page offset is outside the current content"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Page offset is outside the current content"
+        )
     );
     Ok(())
 }
@@ -316,7 +340,13 @@ fn wiki_list(root: &std::path::Path, args: &ListArgs) -> anyhow::Result<Value> {
     )
 }
 fn wiki_page(root: &std::path::Path, args: &WikiArgs) -> anyhow::Result<Value> {
-    ensure!(args.path.len() <= 4096, "Wiki path is too long");
+    ensure!(
+        args.path.len() <= 4096,
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Wiki path is too long"
+        )
+    );
     let (_, pages) = wiki_pages(root)?;
     let page = pages
         .into_iter()

@@ -70,8 +70,9 @@ impl McpServer {
             .scoped_workspace_id()
             .is_some_and(|current| current != id)
         {
-            return Err(super::ToolError::message(
-                "A resource operation must belong to your current workspace",
+            return Err(super::ToolError::classified(
+                super::Category::Permission,
+                super::Outcome::Failed,
             ));
         }
         self.scope_allows_workspace(id)

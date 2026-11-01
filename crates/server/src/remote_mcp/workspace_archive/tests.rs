@@ -553,12 +553,12 @@ async fn remote_archive_http_confirmation_authorization_races_and_results() {
     assert_eq!(result["archived"], true, "{failure}");
     assert_eq!(result["worktree_deleted"], false);
     let error = result["deletion_error"].as_str().unwrap();
-    assert!(error.starts_with("ワークツリーの物理削除に失敗しました（"));
-    assert!(error.ends_with("）。手動で削除してください。"));
-    assert!(
-        error.contains("Not a directory") || error.contains("os error"),
-        "{error}"
+    assert_eq!(
+        error,
+        "Worktree cleanup failed; inspect the existing target and receipt before recovery"
     );
+    assert!(!error.contains(invalid.to_string_lossy().as_ref()));
+    assert!(!error.contains("os error"));
     let saved = Workspace::find_by_id(&pool, other.id)
         .await
         .unwrap()

@@ -66,7 +66,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let before: Option<String> = match args.cursor {
             Some(cursor) => Some(
@@ -93,7 +96,10 @@ impl Remote {
         self.require_project(args.project_id).await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let run: IntegrationRun =
             sqlx::query_as("SELECT * FROM integration_runs WHERE id=? AND project_id=?")
@@ -104,18 +110,30 @@ impl Remote {
                 .ok_or_else(|| anyhow::anyhow!("Auto-merge does not exist in this Project"))?;
         ensure!(
             args.offset == 0 || args.expected_revision.is_some(),
-            "Supply expected_revision for subsequent Auto-merge pages"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Supply expected_revision for subsequent Auto-merge pages"
+            )
         );
         ensure!(
             args.expected_revision
                 .as_ref()
                 .is_none_or(|expected| expected == &run.updated_at),
-            "Auto-merge changed; restart reading this section"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Auto-merge changed; restart reading this section"
+            )
         );
         let mut result = json!({"integration_id":run.id,"project_id":run.project_id,"revision":run.updated_at,"status":run.status,"published":run.payload.published,"skip_validation":run.payload.skip_validation,"url":self.config.project_url(run.project_id)});
         result["conversation"] = json!({"issue_id":run.payload.card_id,"workspace_id":run.workspace_id,"session_id":run.session_id,"agent_run_id":run.agent_run_id,"candidate_commit":run.payload.result_commit,"evidence_count":run.payload.evidence.len(),"publication_request":run.payload.publication_request,"wiki_enabled":run.payload.wiki_enabled,"stop":run.payload.stop});
         if matches!(args.section, Section::Summary) {
-            ensure!(args.offset == 0, "Summary has no further pages");
+            ensure!(
+                args.offset == 0,
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "Summary has no further pages"
+                )
+            );
             result["lifecycle"] =
                 super::integration_write::observation(self, run.project_id, run.id).await?;
             result["source_count"] = json!(run.payload.sources.len());
@@ -131,7 +149,10 @@ impl Remote {
             let start = args.offset as usize;
             ensure!(
                 start <= run.payload.evidence.len(),
-                "Evidence offset out of range"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "Evidence offset out of range"
+                )
             );
             let end = (start + args.limit as usize).min(run.payload.evidence.len());
             result["items"] = json!(&run.payload.evidence[start..end]);
@@ -151,7 +172,10 @@ impl Remote {
         };
         ensure!(
             args.offset as usize <= total,
-            "Page offset is outside this Auto-merge section"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Page offset is outside this Auto-merge section"
+            )
         );
         let end = (args.offset as usize + args.limit as usize).min(total);
         let items=(args.offset as usize..end).map(|index|match args.section {

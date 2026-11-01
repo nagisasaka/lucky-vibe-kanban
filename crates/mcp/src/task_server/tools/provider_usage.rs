@@ -26,7 +26,7 @@ impl McpServer {
         }
         let url = self.url("/api/provider-usage/read");
         match self
-            .send_json::<serde_json::Value>(self.client.post(url).json(&request))
+            .send_read_json::<serde_json::Value>(self.client.post(url).json(&request))
             .await
         {
             Ok(value) => Self::success(&value),

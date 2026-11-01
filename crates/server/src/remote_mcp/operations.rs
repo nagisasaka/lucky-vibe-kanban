@@ -6,6 +6,14 @@ use sha2::{Digest, Sha256};
 use sqlx::{FromRow, SqlitePool};
 use uuid::Uuid;
 
+// If domain completion cannot be persisted, keep that uncertainty visible in
+// this process as well. Restart recovery already treats all older pending rows
+// as uncertain. Entries contain identities only and live until process exit;
+// they never grant ownership or authorise re-execution.
+static SETTLEMENT_UNCERTAIN: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashSet<(Uuid, Uuid)>>,
+> = std::sync::LazyLock::new(Default::default);
+
 #[derive(Clone)]
 pub(crate) struct Operations {
     pub pool: SqlitePool,
@@ -43,6 +51,28 @@ fn fingerprint(value: &Value) -> String {
         }
     }
     format!("{:x}", Sha256::digest(canonical(value).to_string()))
+}
+
+fn project_archive_diagnostics(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, value) in object {
+                if key == "deletion_error" && !value.is_null() {
+                    *value = serde_json::json!(
+                        "Worktree cleanup failed; inspect the existing target and receipt before recovery"
+                    );
+                } else {
+                    project_archive_diagnostics(value);
+                }
+            }
+        }
+        Value::Array(values) => {
+            for value in values {
+                project_archive_diagnostics(value);
+            }
+        }
+        _ => {}
+    }
 }
 
 impl Operations {
@@ -162,9 +192,7 @@ impl Operations {
             match store.start(id).await {
                 Ok(true) => {}
                 _ => {
-                    let _ = sender.send(Err(anyhow::anyhow!(
-                        "Operation admission is uncertain; inspect this request ID before retrying"
-                    )));
+                    let _ = sender.send(Err(super::errors::unknown()));
                     return;
                 }
             }
@@ -186,11 +214,13 @@ impl Operations {
             .await;
             let (status, result) = result.unwrap_or_else(|_| ("uncertain", serde_json::json!({"message":"Operation outcome unavailable; inspect its targets before any new request"})));
             if store.finish(id, status, &result).await.is_err() {
+                SETTLEMENT_UNCERTAIN
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .insert((store.process_instance, id));
                 tracing::error!(operation_id=%id, "MCP operation receipt could not be settled");
                 if let Some(sender) = sender {
-                    let _ = sender.send(Err(anyhow::anyhow!(
-                        "Domain acceptance receipt is uncertain; inspect the original request ID"
-                    )));
+                    let _ = sender.send(Err(super::errors::unknown()));
                 }
                 return;
             }
@@ -198,11 +228,7 @@ impl Operations {
                 let _ = sender.send(store.by_request(&principal, request_id).await);
             }
         });
-        receiver.await.map_err(|_| {
-            anyhow::anyhow!(
-                "Operation admission unavailable; inspect the request ID before retrying"
-            )
-        })?
+        receiver.await.map_err(|_| super::errors::unknown())?
     }
 
     pub async fn admit(
@@ -218,12 +244,18 @@ impl Operations {
         let inserted = sqlx::query("INSERT INTO remote_mcp_operations(id,principal,request_id,project_id,operation,input_hash,targets,process_instance) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(principal,request_id) DO NOTHING")
             .bind(Uuid::new_v4()).bind(principal).bind(request_id).bind(project_id).bind(operation).bind(&hash).bind(safe_targets.to_string()).bind(self.process_instance).execute(&self.pool).await?.rows_affected() == 1;
         let receipt = self.by_request(principal, request_id).await?;
-        anyhow::ensure!(
-            receipt.project_id == project_id
-                && receipt.operation == operation
-                && receipt.input_hash == hash,
-            "Operation key already used with different input; inspect the existing receipt"
-        );
+        if receipt.project_id != project_id
+            || receipt.operation != operation
+            || receipt.input_hash != hash
+        {
+            let mut diagnostic = utils::mcp_error::Diagnostic::new(
+                utils::mcp_error::Category::Conflict,
+                utils::mcp_error::Outcome::Unknown,
+            );
+            diagnostic.message =
+                "Operation key already used with different input; inspect the existing receipt";
+            return Err(diagnostic.into());
+        }
         Ok((receipt, inserted))
     }
 
@@ -235,11 +267,51 @@ impl Operations {
         .bind(request_id)
         .fetch_optional(&self.pool)
         .await?
-        .ok_or_else(|| anyhow::anyhow!("Operation not found"))?;
-        if receipt.process_instance != self.process_instance
+        .ok_or_else(|| {
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Operation not found",
+            )
+        })?;
+        if (receipt.process_instance != self.process_instance
+            || SETTLEMENT_UNCERTAIN
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(&(self.process_instance, receipt.id)))
             && matches!(receipt.status.as_str(), "accepted" | "running")
         {
             receipt.status = "uncertain".into();
+        }
+        // Archive receipts predate the shared diagnostic contract and may contain
+        // raw filesystem/SQL errors. Project at read time without rewriting the
+        // stored evidence, including local stdio receipt responses.
+        if matches!(
+            receipt.operation.as_str(),
+            "confirm_issue_archive" | "unarchive_issue" | "confirm_workspace_archive"
+        ) && let Some(raw) = receipt.result.as_deref()
+            && let Ok(mut value) = serde_json::from_str::<Value>(raw)
+            && value.is_object()
+        {
+            project_archive_diagnostics(&mut value);
+            if matches!(receipt.status.as_str(), "failed" | "uncertain") {
+                let mut diagnostic =
+                    super::errors::receipt_diagnostic(&receipt.status, Some(&value));
+                diagnostic.correlation_id = receipt.id;
+                if value.get("message").is_some() {
+                    value["message"] = serde_json::json!(diagnostic.message);
+                }
+                if value.get("error").is_some() {
+                    value["error"] = diagnostic.value();
+                }
+            }
+            receipt.result = Some(value.to_string());
+        }
+        if matches!(receipt.status.as_str(), "failed" | "uncertain")
+            && let Some(raw) = receipt.result.as_deref()
+            && let Ok(mut value) = serde_json::from_str::<Value>(raw)
+        {
+            utils::mcp_error::redact_failure_context(&mut value);
+            receipt.result = Some(value.to_string());
         }
         Ok(receipt)
     }
@@ -254,6 +326,9 @@ impl Operations {
             matches!(status, "succeeded" | "failed" | "uncertain"),
             "Invalid final receipt status"
         );
+        if status != "succeeded" {
+            tracing::warn!(operation_id=%id, status, "MCP operation settled without success");
+        }
         let updated = sqlx::query("UPDATE remote_mcp_operations SET status=?,result=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND process_instance=? AND status='running'")
             .bind(status).bind(safe_result.to_string()).bind(id).bind(self.process_instance).execute(&self.pool).await?.rows_affected();
         anyhow::ensure!(
@@ -269,6 +344,220 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+
+    async fn isolated_store() -> (Operations, Uuid) {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE projects(id BLOB PRIMARY KEY)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../db/migrations/20261013000000_remote_mcp_operations.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let project = Uuid::new_v4();
+        sqlx::query("INSERT INTO projects VALUES(?)")
+            .bind(project)
+            .execute(&pool)
+            .await
+            .unwrap();
+        (
+            Operations {
+                pool,
+                process_instance: Uuid::new_v4(),
+            },
+            project,
+        )
+    }
+
+    #[tokio::test]
+    async fn settlement_failure_does_not_repeat_a_committed_side_effect() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        };
+        let (store, project) = isolated_store().await;
+        sqlx::query("CREATE TRIGGER reject_settlement BEFORE UPDATE ON remote_mcp_operations WHEN NEW.status IN ('succeeded','failed','uncertain') BEGIN SELECT RAISE(ABORT, 'SELECT secret FROM /private/host/user-input-token'); END")
+            .execute(&store.pool).await.unwrap();
+        let count = Arc::new(AtomicUsize::new(0));
+        let write_count = count.clone();
+        let key = Uuid::new_v4();
+        let error = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                move |_| async move {
+                    write_count.fetch_add(1, Ordering::SeqCst);
+                    ("succeeded", json!({"done":true}))
+                },
+            )
+            .await
+            .err()
+            .expect("receipt settlement must fail");
+        let public = super::super::errors::message(&error);
+        for secret in ["SELECT", "secret", "/private/host", "user-input-token"] {
+            assert!(!public.contains(secret));
+        }
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+        let retry = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("must not repeat") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(retry.status, "uncertain");
+        assert_eq!(count.load(Ordering::SeqCst), 1);
+        // A fresh process cannot recover a final outcome from the failed write.
+        let restarted = Operations {
+            pool: store.pool.clone(),
+            process_instance: Uuid::new_v4(),
+        };
+        assert_eq!(
+            restarted.by_request("owner", key).await.unwrap().status,
+            "uncertain"
+        );
+        store.pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn historical_archive_receipt_diagnostics_are_projected_without_rewriting_evidence() {
+        let (store, project) = isolated_store().await;
+        let request = Uuid::new_v4();
+        let saved = json!({"message":"SQL SELECT /private/SECRET","workspaces":[{"workspace_id":Uuid::new_v4(),"archived":true,"deletion_error":"/private/SECRET"}]});
+        let (receipt, _) = store
+            .admit(
+                "owner",
+                request,
+                project,
+                "confirm_issue_archive",
+                &json!({}),
+                &json!({}),
+            )
+            .await
+            .unwrap();
+        store.start(receipt.id).await.unwrap();
+        store.finish(receipt.id, "uncertain", &saved).await.unwrap();
+        let public = store.by_request("owner", request).await.unwrap();
+        let projected: Value = serde_json::from_str(public.result.as_deref().unwrap()).unwrap();
+        assert!(projected["workspaces"][0]["archived"] == true);
+        assert!(!projected.to_string().contains("SECRET"));
+        assert!(!projected.to_string().contains("/private"));
+        let raw: String = sqlx::query_scalar("SELECT result FROM remote_mcp_operations WHERE id=?")
+            .bind(receipt.id)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap();
+        assert_eq!(serde_json::from_str::<Value>(&raw).unwrap(), saved);
+        let request = Uuid::new_v4();
+        let (receipt, _) = store
+            .admit(
+                "owner",
+                request,
+                project,
+                "confirm_workspace_archive",
+                &json!({}),
+                &json!({}),
+            )
+            .await
+            .unwrap();
+        store.start(receipt.id).await.unwrap();
+        let diagnostic = utils::mcp_error::Diagnostic::new(
+            utils::mcp_error::Category::Conflict,
+            utils::mcp_error::Outcome::Failed,
+        );
+        store
+            .finish(
+                receipt.id,
+                "failed",
+                &json!({"code":"archive_refused","error":diagnostic}),
+            )
+            .await
+            .unwrap();
+        let public = store.by_request("owner", request).await.unwrap();
+        let value: Value = serde_json::from_str(public.result.as_deref().unwrap()).unwrap();
+        assert_eq!(value["error"]["category"], "conflict");
+    }
+
+    #[tokio::test]
+    async fn panicked_domain_is_unknown_and_same_request_never_reexecutes() {
+        let (store, project) = isolated_store().await;
+        let key = Uuid::new_v4();
+        let receipt = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("SELECT secret /private/host user-input-token") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(receipt.status, "uncertain");
+        let result = receipt.result.as_deref().unwrap();
+        for secret in ["SELECT", "secret", "/private/host", "user-input-token"] {
+            assert!(!result.contains(secret));
+        }
+        let retry = store
+            .submit_and_wait(
+                "owner".into(),
+                key,
+                project,
+                "fixture".into(),
+                json!({}),
+                json!({}),
+                |_| async { panic!("must not repeat") },
+            )
+            .await
+            .unwrap();
+        assert_eq!(receipt.id, retry.id);
+        assert_eq!(retry.status, "uncertain");
+        store.pool.close().await;
+    }
+
+    #[tokio::test]
+    async fn receipt_states_distinguish_admission_execution_and_terminal_results() {
+        let (store, project) = isolated_store().await;
+        for final_status in ["succeeded", "failed"] {
+            let key = Uuid::new_v4();
+            let (accepted, owned) = store
+                .admit("owner", key, project, "fixture", &json!({}), &json!({}))
+                .await
+                .unwrap();
+            assert!(owned);
+            assert_eq!(accepted.status, "accepted");
+            assert!(accepted.result.is_none());
+            assert!(store.start(accepted.id).await.unwrap());
+            let running = store.by_request("owner", key).await.unwrap();
+            assert_eq!(running.status, "running");
+            assert!(running.result.is_none());
+            store
+                .finish(accepted.id, final_status, &json!({"done":true}))
+                .await
+                .unwrap();
+            let finished = store.by_request("owner", key).await.unwrap();
+            assert_eq!(finished.status, final_status);
+            assert!(finished.result.is_some());
+        }
+        store.pool.close().await;
+    }
 
     #[tokio::test]
     async fn disconnected_request_during_admission_still_finishes_once() {
@@ -402,6 +691,22 @@ mod tests {
                 .is_err()
         );
         assert!(store.by_request("another-owner", key).await.is_err());
+        let conflict = store
+            .admit(
+                "owner",
+                key,
+                project,
+                "create_issue",
+                &json!({"title":"different"}),
+                &targets,
+            )
+            .await
+            .err()
+            .unwrap();
+        let diagnostic = super::super::errors::diagnostic(&conflict, true);
+        assert_eq!(diagnostic.category, utils::mcp_error::Category::Conflict);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Unknown);
+        assert_eq!(diagnostic.recovery, "inspect_receipt_and_state");
         assert!(store.start(first.id).await.unwrap());
         assert!(!store.start(first.id).await.unwrap());
         // Simulate a lost response and a new process opening the same durable DB.

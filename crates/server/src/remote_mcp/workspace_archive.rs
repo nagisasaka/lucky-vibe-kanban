@@ -1,10 +1,11 @@
 //! Remote confirmation is bound to the authenticated connection and never
 //! exposes a token accepted by the local UI/stdio routes. Deletion stays shared.
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use db::models::workspace::Workspace;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -51,12 +52,15 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let runtime = remote
         .runtime
         .clone()
-        .context("Archive runtime unavailable")?;
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))?;
     if name == "prepare_workspace_archive" {
         let args: PrepareArgs = arguments(input)?;
         remote
@@ -65,11 +69,14 @@ pub(super) async fn call(
         let _lifecycle = services::services::workspace_lifecycle::lock(args.workspace_id).await;
         ensure!(
             runtime.archive_scripts_settled(args.workspace_id).await?,
-            "使用中のWorkspaceはarchiveできません。"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Busy,
+                "使用中のWorkspaceはarchiveできません。"
+            )
         );
         let workspace = Workspace::find_by_id(&remote.pool, args.workspace_id)
             .await?
-            .context("Workspace missing")?;
+            .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
         let prepared = archive::prepare_scoped(
             &remote.pool,
             &workspace,
@@ -86,7 +93,10 @@ pub(super) async fn call(
     } else {
         ensure!(
             name == "confirm_workspace_archive",
-            "Unknown archive operation"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Unknown archive operation"
+            )
         );
         let args: ConfirmArgs = arguments(input.clone())?;
         remote
@@ -104,11 +114,11 @@ pub(super) async fn call(
                 if owned.require_workspace(args.project_id, args.workspace_id).await.is_err() {
                     return ("failed", json!({"code":"target_unavailable"}));
                 }
-                match archive::archive_scoped(&owned.pool, args.workspace_id, args.confirmation_token, scope,
+                match archive::archive_scoped_observed(&owned.pool, args.workspace_id, args.confirmation_token, scope,
                     || async { runtime.archive_scripts_settled(args.workspace_id).await }).await {
                     Ok(result) => ("succeeded", json!({"workspace_id":args.workspace_id,"archived":result.workspace.archived,
                         "worktree_deleted":result.workspace.worktree_deleted,"deletion_error":result.deletion_error})),
-                    Err(error) => ("failed", json!({"code":"archive_refused","message":super::errors::message(&error.into())})),
+                    Err(error) => (if error.diagnostic.outcome == utils::mcp_error::Outcome::Unknown { "uncertain" } else { "failed" }, json!({"code":"archive_refused","message":error.diagnostic.message,"error":error.diagnostic.value(),"workspace_id":args.workspace_id,"physical_deletion_may_have_occurred":error.physical_deletion_may_have_occurred,"archive_commit_confirmed":error.archive_commit_confirmed})),
                 }
             },
         ).await?;

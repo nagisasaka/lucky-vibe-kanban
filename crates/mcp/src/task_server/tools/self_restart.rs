@@ -53,31 +53,89 @@ impl McpServer {
         name: &str,
         input: Value,
     ) -> Result<CallToolResult, ErrorData> {
-        let result = self.invoke_restart(name, input).await;
-        match result {
+        let request_id = input
+            .get("request_id")
+            .and_then(Value::as_str)
+            .and_then(|s| Uuid::parse_str(s).ok());
+        let mut effects_possible = false;
+        match self
+            .invoke_restart(name, input, &mut effects_possible)
+            .await
+        {
             Ok(value)
                 if matches!(
                     value["status"].as_str(),
                     Some("refused" | "failed" | "interrupted")
                 ) =>
             {
-                Ok(CallToolResult::error(vec![rmcp::model::Content::text(
-                    value.to_string(),
-                )]))
+                // Failed cutover may have partial effects. Preserve the terminal
+                // engine fact separately from uncertainty of external state.
+                let unknown = value["status"] != "refused";
+                let diagnostic = utils::mcp_error::Diagnostic::new(
+                    if unknown {
+                        super::Category::OutcomeUnknown
+                    } else {
+                        super::Category::Conflict
+                    },
+                    if unknown {
+                        super::Outcome::Unknown
+                    } else {
+                        super::Outcome::Failed
+                    },
+                );
+                let safe =
+                    json!({"status":value["status"],"request_id":request_id,"error":diagnostic});
+                let mut response =
+                    CallToolResult::error(vec![rmcp::model::Content::text(safe.to_string())]);
+                response.structured_content = Some(safe);
+                Ok(response)
             }
             Ok(value) => Self::success(&value),
-            Err(_) => Self::err(
-                "Self restart unavailable; inspect the same request_id before retrying",
-                None,
-            ),
+            Err(error) => {
+                let error = if let Some(diagnostic) =
+                    error.downcast_ref::<utils::mcp_error::Diagnostic>()
+                {
+                    super::ToolError {
+                        message: diagnostic.message,
+                        diagnostic: diagnostic.clone(),
+                    }
+                } else {
+                    super::ToolError::classified(
+                        super::Category::Unavailable,
+                        if effects_possible {
+                            super::Outcome::Unknown
+                        } else {
+                            super::Outcome::Failed
+                        },
+                    )
+                };
+                Ok(Self::tool_error(error))
+            }
         }
     }
 
-    async fn invoke_restart(&self, name: &str, input: Value) -> anyhow::Result<Value> {
+    async fn invoke_restart(
+        &self,
+        name: &str,
+        input: Value,
+        effects_possible: &mut bool,
+    ) -> anyhow::Result<Value> {
         use anyhow::{Context, ensure};
+        let reject = |category, message: &'static str| {
+            let mut diagnostic =
+                utils::mcp_error::Diagnostic::new(category, super::Outcome::Failed);
+            diagnostic.message = message;
+            anyhow::Error::from(diagnostic)
+        };
         let project: Uuid = serde_json::from_value(input["project_id"].clone())?;
         if let Some(bound) = self.context.as_ref().and_then(|c| c.project_id) {
-            ensure!(project == bound, "Project is outside stdio context");
+            ensure!(
+                project == bound,
+                reject(
+                    super::Category::Permission,
+                    "Project is outside stdio context"
+                )
+            );
         }
         let backend = reqwest::Url::parse(&self.base_url)?;
         ensure!(
@@ -90,14 +148,17 @@ impl McpServer {
                     backend.host_str(),
                     Some("127.0.0.1" | "localhost" | "[::1]")
                 ),
-            "Local stdio instance required"
+            reject(super::Category::Permission, "Local stdio instance required")
         );
         let instance =
             utils::instance::instance_dir_read_only()?.context("Developer instance required")?;
         let engine = instance.join("switch/start_binary.py");
         ensure!(
             engine.canonicalize()? == engine,
-            "Fixed engine cannot be aliased"
+            reject(
+                super::Category::Permission,
+                "Fixed engine cannot be aliased"
+            )
         );
         let request: Uuid = serde_json::from_value(input["request_id"].clone())?;
         let mut command = tokio::process::Command::new("/usr/bin/python3");
@@ -129,7 +190,10 @@ impl McpServer {
                         && !a.purpose.trim().is_empty()
                         && a.purpose.len() <= 1000
                         && std::path::Path::new(&a.bundle).is_absolute(),
-                    "Explicit purpose, bundle and coordination required"
+                    reject(
+                        super::Category::Validation,
+                        "Explicit purpose, bundle and coordination required"
+                    )
                 );
                 command.args([
                     "--async",
@@ -156,8 +220,11 @@ impl McpServer {
             .kill_on_drop(true);
         // Only admission/status is awaited. The existing detached worker owns the
         // durable lock and waits for this caller's writers to settle independently.
+        let child = command.spawn()?;
+        *effects_possible = name == "self_restart";
         let output =
-            tokio::time::timeout(std::time::Duration::from_secs(15), command.output()).await??;
+            tokio::time::timeout(std::time::Duration::from_secs(15), child.wait_with_output())
+                .await??;
         ensure!(output.stdout.len() <= 65536, "Engine response too large");
         let value: Value = serde_json::from_slice(&output.stdout)?;
         ensure!(
@@ -176,6 +243,15 @@ impl McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn engine_preflight_refusal_is_known_and_preserves_permission_category() {
+        let server = McpServer::new_global("https://outside.invalid");
+        let result = server.restart_via_engine("self_restart",json!({"project_id":Uuid::new_v4(),"request_id":Uuid::new_v4(),"purpose":"fixture","bundle":"/fixture","no_new_work":true})).await.unwrap();
+        let value = result.structured_content.unwrap();
+        assert_eq!(value["diagnostic"]["category"], "permission");
+        assert_eq!(value["diagnostic"]["outcome"], "failed");
+    }
+
     #[test]
     fn stdio_cannot_override_local_authority_or_owner() {
         let request = json!({"project_id":Uuid::new_v4(),"request_id":Uuid::new_v4(),"purpose":"fixture","bundle":"/bundle","no_new_work":true});

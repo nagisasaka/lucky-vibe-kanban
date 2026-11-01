@@ -4,6 +4,7 @@ use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -96,23 +97,58 @@ pub(super) fn tools() -> Vec<Tool> {
 }
 
 fn failure(error: TodoError) -> (&'static str, Value) {
-    match error {
-        TodoError::Database(_) => (
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let (status, code, category, outcome) = match error {
+        TodoError::CommitUnknown(_) => (
             "uncertain",
-            json!({"code":"todo_unavailable","message":"Inspect the TODO and this operation receipt before retrying"}),
+            "todo_unavailable",
+            Category::OutcomeUnknown,
+            Outcome::Unknown,
         ),
-        error => (
+        TodoError::Database(ref error) => (
             "failed",
-            json!({"code":"todo_rejected","message":error.to_string()}),
+            "todo_unavailable",
+            super::errors::database_category(error),
+            Outcome::Failed,
         ),
-    }
+        TodoError::NotFound => (
+            "failed",
+            "todo_rejected",
+            Category::NotFound,
+            Outcome::Failed,
+        ),
+        TodoError::Conflict => (
+            "failed",
+            "todo_rejected",
+            Category::Conflict,
+            Outcome::Failed,
+        ),
+        _ => (
+            "failed",
+            "todo_rejected",
+            Category::Validation,
+            Outcome::Failed,
+        ),
+    };
+    let diagnostic = Diagnostic::new(category, outcome);
+    (
+        status,
+        json!({"code":code,"message":diagnostic.message,"error":diagnostic.value()}),
+    )
 }
 fn read_failure(error: TodoError) -> anyhow::Error {
-    match error {
-        TodoError::NotFound => anyhow::anyhow!("TODO or Project not found"),
-        TodoError::InvalidRequest => anyhow::anyhow!("Invalid TODO reference or pagination"),
-        _ => anyhow::anyhow!("TODO unavailable; refresh before retrying"),
-    }
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let category = match error {
+        TodoError::NotFound => Category::NotFound,
+        TodoError::Conflict => Category::Conflict,
+        TodoError::InvalidRequest | TodoError::InvalidText | TodoError::InvalidIssue => {
+            Category::Validation
+        }
+        TodoError::Database(ref error) | TodoError::CommitUnknown(ref error) => {
+            super::errors::database_category(error)
+        }
+    };
+    Diagnostic::new(category, Outcome::Failed).into()
 }
 pub(super) async fn call(
     remote: &Remote,
@@ -120,7 +156,13 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "list_todos" {
         let a: ListArgs = arguments(input)?;
         remote.require_project(a.project_id).await?;
@@ -150,7 +192,10 @@ pub(super) async fn call(
     }
     ensure!(
         principal.allows("lvk:write"),
-        "Write permission required (lvk:write)"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Write permission required (lvk:write)"
+        )
     );
     let owned = remote.clone();
     let key = remote.principal_key(principal);
@@ -241,7 +286,30 @@ pub(super) async fn call(
                 )
                 .await?
         }
-        _ => anyhow::bail!("Unknown TODO tool"),
+        _ => return Err(super::errors::rejection(Category::Validation)),
     };
     Ok(remote.receipt_value(receipt))
+}
+
+#[cfg(test)]
+mod error_contract_tests {
+    use super::*;
+    #[test]
+    fn failure_phase_and_safe_diagnostics() {
+        let (status, value) = failure(TodoError::Database(sqlx::Error::Protocol(
+            "SELECT secret FROM /private/db".into(),
+        )));
+        assert_eq!(status, "failed");
+        assert_eq!(value["error"]["outcome"], "failed");
+        assert!(!value.to_string().contains("secret"));
+        assert!(!value.to_string().contains("/private"));
+        let (status, value) = failure(TodoError::CommitUnknown(sqlx::Error::PoolClosed));
+        assert_eq!(status, "uncertain");
+        assert_eq!(value["error"]["outcome"], "unknown");
+        assert_eq!(value["error"]["recovery"], "inspect_receipt_and_state");
+        let (_, value) = failure(TodoError::Conflict);
+        assert_eq!(value["error"]["category"], "conflict");
+        let (_, value) = failure(TodoError::NotFound);
+        assert_eq!(value["error"]["category"], "not_found");
+    }
 }

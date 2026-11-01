@@ -132,10 +132,7 @@ impl McpServer {
         let base_executor = match Self::parse_executor_agent(executor_trimmed) {
             Ok(exec) => exec,
             Err(_) => {
-                return Self::err(
-                    format!("Unknown executor '{executor_trimmed}'."),
-                    None::<String>,
-                );
+                return Self::err("Unknown executor", None::<&str>);
             }
         };
 

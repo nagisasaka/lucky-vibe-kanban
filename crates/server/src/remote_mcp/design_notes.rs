@@ -52,11 +52,20 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "write_design_note" {
         ensure!(
             principal.allows("lvk:write"),
-            "Write permission required (lvk:write)"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Write permission required (lvk:write)"
+            )
         );
         let a: WriteArgs = arguments(input.clone())?;
         remote.require_project(a.project_id).await?;
@@ -74,14 +83,7 @@ pub(super) async fn call(
                 move |_| async move {
                     match DesignNote::write(&owned.pool, a.project_id, &actor, a.input).await {
                         Ok(result) => ("succeeded", json!(result.mcp_receipt())),
-                        Err(
-                            db::models::design_note::DesignNoteError::Database(_)
-                            | db::models::design_note::DesignNoteError::Json(_),
-                        ) => (
-                            "uncertain",
-                            json!({"message":"Inspect operation and note before retrying"}),
-                        ),
-                        Err(e) => ("failed", json!({"message":e.to_string()})),
+                        Err(error) => failure(error),
                     }
                 },
             )
@@ -90,5 +92,69 @@ pub(super) async fn call(
     }
     let a: ReadArgs = arguments(input)?;
     remote.require_project(a.project_id).await?;
-    Ok(read(&remote.pool, name, a).await?)
+    read(&remote.pool, name, a).await.map_err(read_failure)
+}
+
+fn failure(error: db::models::design_note::DesignNoteError) -> (&'static str, Value) {
+    use db::models::design_note::DesignNoteError;
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let (status, category, outcome) = match error {
+        DesignNoteError::CommitUnknown(_) => {
+            ("uncertain", Category::OutcomeUnknown, Outcome::Unknown)
+        }
+        DesignNoteError::Database(ref error) => (
+            "failed",
+            super::errors::database_category(error),
+            Outcome::Failed,
+        ),
+        DesignNoteError::Json(_) => ("failed", Category::Internal, Outcome::Failed),
+        DesignNoteError::NotFound => ("failed", Category::NotFound, Outcome::Failed),
+        DesignNoteError::Conflict => ("failed", Category::Conflict, Outcome::Failed),
+        _ => ("failed", Category::Validation, Outcome::Failed),
+    };
+    let diagnostic = Diagnostic::new(category, outcome);
+    (
+        status,
+        json!({"message":diagnostic.message,"error":diagnostic.value()}),
+    )
+}
+
+fn read_failure(error: db::models::design_note::DesignNoteError) -> anyhow::Error {
+    use db::models::design_note::DesignNoteError;
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let category = match error {
+        DesignNoteError::NotFound => Category::NotFound,
+        DesignNoteError::Conflict => Category::Conflict,
+        DesignNoteError::Invalid | DesignNoteError::InvalidRead => Category::Validation,
+        DesignNoteError::Database(ref error) | DesignNoteError::CommitUnknown(ref error) => {
+            super::errors::database_category(error)
+        }
+        DesignNoteError::Json(_) => Category::Internal,
+    };
+    Diagnostic::new(category, Outcome::Failed).into()
+}
+
+#[cfg(test)]
+mod error_contract_tests {
+    use super::*;
+    #[test]
+    fn failure_phase_and_safe_diagnostics() {
+        let (status, value) = failure(db::models::design_note::DesignNoteError::Database(
+            sqlx::Error::Protocol("SELECT secret FROM /private/db".into()),
+        ));
+        assert_eq!(status, "failed");
+        assert_eq!(value["error"]["outcome"], "failed");
+        assert!(!value.to_string().contains("secret"));
+        assert!(!value.to_string().contains("/private"));
+        let (status, value) = failure(db::models::design_note::DesignNoteError::CommitUnknown(
+            sqlx::Error::PoolClosed,
+        ));
+        assert_eq!(status, "uncertain");
+        assert_eq!(value["error"]["outcome"], "unknown");
+        assert_eq!(value["error"]["recovery"], "inspect_receipt_and_state");
+        let (_, value) = failure(db::models::design_note::DesignNoteError::Conflict);
+        assert_eq!(value["error"]["category"], "conflict");
+        let (_, value) = failure(db::models::design_note::DesignNoteError::NotFound);
+        assert_eq!(value["error"]["category"], "not_found");
+    }
 }

@@ -648,10 +648,9 @@ impl McpServer {
             "created_at" => Ok(IssueSortField::CreatedAt),
             "updated_at" => Ok(IssueSortField::UpdatedAt),
             "title" => Ok(IssueSortField::Title),
-            other => Err(ToolError::message(format!(
-                "Unknown sort_field '{}'. Allowed values: ['sort_order', 'priority', 'created_at', 'updated_at', 'title']",
-                other
-            ))),
+            _ => Err(ToolError::message(
+                "Unknown sort_field. Allowed values: sort_order, priority, created_at, updated_at, title",
+            )),
         }
     }
 
@@ -664,10 +663,9 @@ impl McpServer {
         {
             "asc" => Ok(SortDirection::Asc),
             "desc" => Ok(SortDirection::Desc),
-            other => Err(ToolError::message(format!(
-                "Unknown sort_direction '{}'. Allowed values: ['asc', 'desc']",
-                other
-            ))),
+            _ => Err(ToolError::message(
+                "Unknown sort_direction. Allowed values: asc, desc",
+            )),
         }
     }
 
@@ -909,10 +907,9 @@ impl McpServer {
             "high" => Ok(IssuePriority::High),
             "medium" => Ok(IssuePriority::Medium),
             "low" => Ok(IssuePriority::Low),
-            _ => Err(ToolError::message(format!(
-                "Unknown priority '{}'. Allowed values: ['urgent', 'high', 'medium', 'low']",
-                priority
-            ))),
+            _ => Err(ToolError::message(
+                "Unknown priority. Allowed values: urgent, high, medium, low",
+            )),
         }
     }
 

@@ -28,10 +28,13 @@ impl McpServer {
             && let Some(project) = self.context.as_ref().and_then(|c| c.project_id)
             && project != request.project_id
         {
-            return Self::err("Project is outside this MCP context", None);
+            return Ok(Self::tool_error(super::ToolError::classified(
+                super::Category::Permission,
+                super::Outcome::Failed,
+            )));
         }
         match self
-            .send_json::<serde_json::Value>(
+            .send_read_json::<serde_json::Value>(
                 self.client
                     .post(self.url("/api/repository/read"))
                     .json(&request),
@@ -161,12 +164,9 @@ mod transport_tests {
             .await
             .unwrap();
         assert_eq!(failed.is_error, Some(true));
-        assert!(
-            serde_json::to_value(failed)
-                .unwrap()
-                .to_string()
-                .contains("restart from first page")
-        );
+        let diagnostic = failed.structured_content.unwrap();
+        assert_eq!(diagnostic["diagnostic"]["outcome"], "failed");
+        assert_eq!(diagnostic["diagnostic"]["recovery"], "inspect_state");
         let received = tokio::time::timeout(std::time::Duration::from_secs(5), server)
             .await
             .unwrap()

@@ -23,7 +23,10 @@ pub(super) async fn call(remote: &Remote, args: Value) -> anyhow::Result<Value> 
         .unwrap_or(false);
     anyhow::ensure!(
         admin,
-        "Administrator required for the server-managed account context"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Administrator required for the server-managed account context"
+        )
     );
     if let Some(project) = request.project_id {
         remote.require_project(project).await?;

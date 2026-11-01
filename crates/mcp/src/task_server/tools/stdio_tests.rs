@@ -91,6 +91,12 @@ async fn stdio_codec_initialises_lists_existing_tools_and_calls_the_existing_api
                 _ => unreachable!(),
             }
         }
+        // Protocol validation keeps its standard code but never echoes input.
+        write.write_all(format!("{}\n",json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_projects","arguments":{"organization_id":"/private/credential-SECRET"}}})).as_bytes()).await.unwrap();
+        let reply: Value = serde_json::from_str(&lines.next_line().await.unwrap().unwrap()).unwrap();
+        assert_eq!(reply["result"]["isError"], true);
+        assert_eq!(reply["result"]["structuredContent"]["error"]["category"], "validation");
+        assert!(!reply.to_string().contains("SECRET"));
         drop(write);
         drop(lines);
         serving.await.unwrap();

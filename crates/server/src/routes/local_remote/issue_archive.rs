@@ -282,27 +282,39 @@ where
     sqlx::query("UPDATE local_issues SET archived=1,updated_at=datetime('now','subsec') WHERE id=? AND project_id=?")
         .bind(issue).bind(request.project_id).execute(&mut *tx).await?;
     let mut outcomes = Vec::new();
+    let mut physical_effects_possible = false;
     for (ws, repos) in &workspaces {
         // After physical mutation starts, a database error can no longer prove
         // rollback of filesystem effects. Persist that distinction in receipt.
-        match archive::archive_checked(&mut tx,ws,repos).await {
+        match archive::archive_checked_observed(&mut tx,ws,repos,&mut physical_effects_possible).await {
             Ok(error) => outcomes.push(json!({"workspace_id":ws.id,"archived":true,"worktree_deleted":ws.can_delete_container_path() && error.is_none(),"deletion_error":error})),
-            Err(error) => return Ok(uncertain(error, outcomes)),
+            Err(error) if physical_effects_possible => {
+                outcomes.push(json!({"workspace_id":ws.id,"physical_deletion_may_have_occurred":ws.can_delete_container_path()}));
+                return Ok(uncertain(error, outcomes));
+            }
+            Err(error) => return Err(error),
         }
     }
     if let Err(error) = tx.commit().await {
+        if !physical_effects_possible && db::models::todo::commit_definitely_rejected(&error) {
+            return Err(error.into());
+        }
         return Ok(uncertain(error, outcomes));
     }
     Ok(json!({"issue_id":issue,"archived":true,"workspaces":outcomes}))
 }
 
-fn uncertain(error: impl std::fmt::Display, mut physical_results: Vec<Value>) -> Value {
+fn uncertain(_error: impl std::fmt::Display, mut physical_results: Vec<Value>) -> Value {
     for result in &mut physical_results {
         if let Some(object) = result.as_object_mut() {
             object.remove("archived");
         }
     }
-    json!({"outcome":"uncertain","message":format!("結果不明。一部の物理削除が完了した可能性があります。論理アーカイブの確定も不明です。自動再実行せず対象とreceiptを確認してください: {error}"),"physical_results":physical_results})
+    let diagnostic = utils::mcp_error::Diagnostic::new(
+        utils::mcp_error::Category::OutcomeUnknown,
+        utils::mcp_error::Outcome::Unknown,
+    );
+    json!({"outcome":"uncertain","message":"結果不明。対象の変更が完了した可能性があります。自動再実行せず対象の状態とreceiptを確認してください。","error":diagnostic.value(),"physical_results":physical_results})
 }
 
 pub(crate) async fn unarchive(
@@ -310,10 +322,17 @@ pub(crate) async fn unarchive(
     project: Uuid,
     issue: Uuid,
 ) -> Result<Value, ApiError> {
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let result = sqlx::query("UPDATE local_issues SET archived=0,updated_at=datetime('now','subsec') WHERE id=? AND project_id=?")
-        .bind(issue).bind(project).execute(pool).await?;
+        .bind(issue).bind(project).execute(&mut *tx).await?;
     if result.rows_affected() != 1 {
         return Err(failure("Issue not found in Project"));
+    }
+    if let Err(error) = tx.commit().await {
+        if db::models::todo::commit_definitely_rejected(&error) {
+            return Err(error.into());
+        }
+        return Ok(uncertain(error, vec![]));
     }
     Ok(json!({"issue_id":issue,"archived":false}))
 }
@@ -323,7 +342,13 @@ pub(crate) fn outcome(result: Result<Value, ApiError>) -> (&'static str, Value) 
             ("uncertain", value)
         }
         Ok(value) => ("succeeded", value),
-        Err(error) => ("failed", json!({"message":error.to_string()})),
+        Err(error) => {
+            let diagnostic = archive::archive_rejection(&error);
+            (
+                "failed",
+                json!({"message":diagnostic.message,"error":diagnostic.value()}),
+            )
+        }
     }
 }
 
@@ -519,7 +544,18 @@ where
     }.await;
     let detail = match &result {
         Ok(value) => value.to_string(),
-        Err(error) => format!("archive refused or uncertain: {error}"),
+        // These two domain facts are static operator decisions, not arbitrary
+        // ApiError prose. Keep them visible without forwarding error chains.
+        Err(ApiError::Conflict(message))
+            if matches!(
+                message.as_str(),
+                "Issue was cancelled by operator; automatic archive refused"
+                    | "Generated Issue has not reached Done; automatic archive refused"
+            ) =>
+        {
+            message.clone()
+        }
+        Err(_) => "archive refused or uncertain; inspect target state".to_owned(),
     };
     match &result {
         Ok(value) if value["deletion_error"].is_null() => {
@@ -1289,5 +1325,21 @@ mod tests {
                 .await
                 .unwrap();
         assert_eq!(row.get::<i64, _>("n"), 1);
+    }
+    #[test]
+    fn archive_public_errors_keep_physical_facts_without_source_text() {
+        let marker = "SELECT secret FROM /private/database";
+        let value = uncertain(
+            marker,
+            vec![json!({"workspace_id":Uuid::new_v4(),"archived":true,"worktree_deleted":true})],
+        );
+        assert_eq!(value["error"]["outcome"], "unknown");
+        assert_eq!(value["physical_results"][0]["worktree_deleted"], true);
+        assert!(value["physical_results"][0].get("archived").is_none());
+        assert!(!value.to_string().contains(marker));
+        let (status, value) = outcome(Err(ApiError::Conflict(marker.into())));
+        assert_eq!(status, "failed");
+        assert_eq!(value["error"]["category"], "conflict");
+        assert!(!value.to_string().contains(marker));
     }
 }

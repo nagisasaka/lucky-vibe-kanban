@@ -72,7 +72,13 @@ impl Remote {
         .bind(workspace)
         .fetch_one(&self.pool)
         .await?;
-        ensure!(exists, "Run does not exist in this Workspace");
+        ensure!(
+            exists,
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Run does not exist in this Workspace"
+            )
+        );
         Ok(issue)
     }
 
@@ -82,7 +88,10 @@ impl Remote {
             .await?;
         ensure!(
             (1..=50).contains(&args.limit),
-            "limit must be between 1 and 50"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 50"
+            )
         );
         let before:Option<String>=match args.cursor {
             Some(cursor)=>Some(sqlx::query_scalar("SELECT created_at FROM agent_run_commands WHERE command_id=? AND agent_run_id=?").bind(cursor).bind(args.agent_run_id).fetch_optional(&self.pool).await?.ok_or_else(||anyhow::anyhow!("Stale or foreign command cursor; refresh activity"))?),
@@ -103,7 +112,10 @@ impl Remote {
             .await?;
         ensure!(
             (1..=16000).contains(&args.limit),
-            "limit must be between 1 and 16000 characters"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "limit must be between 1 and 16000 characters"
+            )
         );
         let row=sqlx::query("SELECT delivery_status,json_extract(command_envelope,'$.command.type') AS kind,CASE json_extract(command_envelope,'$.command.type') WHEN 'steer' THEN json_extract(command_envelope,'$.command.data.content') WHEN 'submit_input' THEN json_extract(command_envelope,'$.command.data.content') WHEN 'goal_update' THEN json_extract(command_envelope,'$.command.data.objective') WHEN 'update_plan_goal_draft' THEN json_extract(command_envelope,'$.command.data.objective') ELSE NULL END AS content FROM agent_run_commands WHERE command_id=? AND agent_run_id=?")
             .bind(args.command_id).bind(args.agent_run_id).fetch_optional(&self.pool).await?.ok_or_else(||anyhow::anyhow!("Command does not exist in this run"))?;
@@ -113,7 +125,10 @@ impl Remote {
         let total = text.chars().count();
         ensure!(
             args.offset as usize <= total,
-            "Instruction offset is outside the content"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Instruction offset is outside the content"
+            )
         );
         let end = (args.offset as usize + args.limit as usize).min(total);
         Ok(

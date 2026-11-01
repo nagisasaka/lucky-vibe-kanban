@@ -6,6 +6,7 @@ use rmcp::model::Tool;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -98,8 +99,15 @@ impl Remote {
         .bind(project)
         .bind(status)
         .fetch_one(&self.pool)
-        .await?;
-        ensure!(exists, "Status is not in this Project");
+        .await
+        .map_err(|error| super::errors::rejection(super::errors::database_category(&error)))?;
+        ensure!(
+            exists,
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Status is not in this Project"
+            )
+        );
         Ok(())
     }
     pub(super) fn receipt_value(&self, receipt: Receipt) -> Value {
@@ -137,37 +145,130 @@ impl Remote {
         } else {
             result
         };
-        json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":targets,"status":status,"result":result,"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)})
+        let mut result = result;
+        let diagnostic = if matches!(status, "failed" | "uncertain") {
+            use utils::mcp_error::{Category, Diagnostic, Outcome};
+            let category = result
+                .as_ref()
+                .and_then(|v| v.get("error"))
+                .and_then(|v| v.get("category"))
+                .and_then(|v| serde_json::from_value::<Category>(v.clone()).ok());
+            let mut diagnostic = if status == "uncertain" {
+                Diagnostic::new(Category::OutcomeUnknown, Outcome::Unknown)
+            } else if let Some(category) = category {
+                Diagnostic::new(category, Outcome::Failed)
+            } else {
+                super::errors::receipt_diagnostic(status, result.as_ref())
+            };
+            diagnostic.correlation_id = receipt.id;
+            let diagnostic = diagnostic.value();
+            if let Some(result) = result.as_mut().and_then(Value::as_object_mut)
+                && result.contains_key("error")
+            {
+                result.insert("error".into(), diagnostic.clone());
+            }
+            Some(diagnostic)
+        } else {
+            None
+        };
+        let mut value = json!({"operation_id":receipt.id,"request_id":receipt.request_id,"project_id":receipt.project_id,"operation":receipt.operation,"targets":targets,"status":status,"result":result,"created_at":receipt.created_at,"updated_at":receipt.updated_at,"url":self.config.project_url(receipt.project_id)});
+        if let Some(diagnostic) = diagnostic {
+            value["error"] = diagnostic;
+            utils::mcp_error::redact_failure_context(&mut value);
+        }
+        value
     }
 }
 
 fn validate_text(text: &str, max: usize, required: bool) -> anyhow::Result<()> {
     ensure!(
         text.chars().count() <= max && (!required || !text.trim().is_empty()),
-        "Issue text is empty or exceeds the tool limit"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Issue text is empty or exceeds the tool limit"
+        )
     );
     Ok(())
 }
 
 // Only our explicit validation errors leave the boundary. Domain errors may
 // include SQL, filesystem paths or user-supplied data and are never forwarded.
-fn domain_failure(error: ApiError) -> (&'static str, Value) {
-    match error {
-        ApiError::Conflict(_) => (
-            "failed",
-            json!({"code":"revision_conflict","message":"Issue changed; read its current requirements before submitting a new update"}),
-        ),
-        _ => (
+fn domain_failure(error: local_remote::IssueMutationError) -> (&'static str, Value) {
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let (status, category, outcome, code, message) = match error {
+        local_remote::IssueMutationError::OutcomeUnknown(_) => (
             "uncertain",
-            json!({"code":"domain_outcome_unavailable","message":"Inspect the Issue and this receipt before any new request"}),
+            Category::OutcomeUnknown,
+            Outcome::Unknown,
+            "domain_outcome_unavailable",
+            "Inspect this receipt and the Issue using the original request ID before any new request.",
         ),
-    }
+        local_remote::IssueMutationError::Failed(error) => {
+            let (category, code, message) = match error {
+                ApiError::Conflict(_) => (
+                    Category::Conflict,
+                    "revision_conflict",
+                    "Issue changed; read its current requirements before submitting a new update.",
+                ),
+                ApiError::BadRequest(ref message) if message == "Issue not found" => {
+                    (Category::NotFound, "not_found", "Issue was not found.")
+                }
+                ApiError::BadRequest(_) | ApiError::PayloadTooLarge => (
+                    Category::Validation,
+                    "validation_failed",
+                    "Issue changes failed validation.",
+                ),
+                ApiError::Unauthorized | ApiError::Forbidden(_) => (
+                    Category::Permission,
+                    "permission_denied",
+                    "Permission is required for this operation.",
+                ),
+                ApiError::Database(sqlx::Error::RowNotFound) => (
+                    Category::NotFound,
+                    "not_found",
+                    "The requested target was not found.",
+                ),
+                ApiError::Database(sqlx::Error::Database(ref error))
+                    if error
+                        .code()
+                        .and_then(|code| code.parse::<i32>().ok())
+                        .is_some_and(|code| matches!(code & 0xff, 5 | 6)) =>
+                {
+                    (
+                        Category::Busy,
+                        "resource_busy",
+                        "The database is busy; this Issue write was not committed.",
+                    )
+                }
+                ApiError::Database(sqlx::Error::PoolTimedOut | sqlx::Error::PoolClosed) => (
+                    Category::Unavailable,
+                    "unavailable",
+                    "The database is unavailable; this Issue write was not committed.",
+                ),
+                _ => (
+                    Category::Internal,
+                    "internal_error",
+                    "The Issue write failed before commit.",
+                ),
+            };
+            ("failed", category, Outcome::Failed, code, message)
+        }
+    };
+    (
+        status,
+        json!({"code":code,"message":message,"error":Diagnostic::new(category, outcome).value()}),
+    )
 }
 fn validation_failure(error: anyhow::Error) -> (&'static str, Value) {
+    let error = match error.downcast::<sqlx::Error>() {
+        Ok(error) => return domain_failure(local_remote::IssueMutationError::Failed(error.into())),
+        Err(error) => error,
+    };
     let message = super::errors::message(&error);
+    let diagnostic = super::errors::diagnostic(&error, false);
     (
         "failed",
-        json!({"code":"target_validation_failed","message":message}),
+        json!({"code":"target_validation_failed","message":message,"error":diagnostic.value()}),
     )
 }
 
@@ -177,7 +278,13 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     if name == "get_operation" {
         let args: OperationArgs = arguments(input)?;
         remote.require_project(args.project_id).await?;
@@ -187,7 +294,10 @@ pub(super) async fn call(
             .await?;
         ensure!(
             receipt.project_id == args.project_id,
-            "Operation not found in this Project"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Operation not found in this Project"
+            )
         );
         if matches!(
             receipt.operation.as_str(),
@@ -195,14 +305,20 @@ pub(super) async fn call(
         ) {
             ensure!(
                 principal.allows("lvk:runtime:read"),
-                "Runtime read permission required"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Permission,
+                    "Runtime read permission required"
+                )
             );
         }
         return Ok(remote.receipt_value(receipt));
     }
     ensure!(
         principal.allows("lvk:write"),
-        "Write permission required (lvk:write)"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Write permission required (lvk:write)"
+        )
     );
     let owned = remote.clone();
     let key = remote.principal_key(principal);
@@ -211,7 +327,10 @@ pub(super) async fn call(
             let args: CreateArgs = arguments(input.clone())?;
             ensure!(
                 args.tag_ids.len() <= 50,
-                "At most 50 tags per Issue creation"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "At most 50 tags per Issue creation"
+                )
             );
             validate_text(&args.title, 500, true)?;
             validate_text(&args.description, 64000, true)?;
@@ -220,7 +339,7 @@ pub(super) async fn call(
                 if let Err(error) = owned.require_status(args.project_id, args.status_id).await { return validation_failure(error); }
                 // The receipt ID is also the domain's client-generated Issue ID.
                 let request: CreateIssueRequest = serde_json::from_value(json!({"id":id,"project_id":args.project_id,"status_id":args.status_id,"title":args.title,"description":args.description,"priority":args.priority,"sort_order":0.0,"extension_metadata":null})).expect("Issue request fields");
-                match local_remote::create_local_issue_with_tags(&owned.pool, request, &args.tag_ids).await {
+                match local_remote::create_local_issue_with_tags_outcome(&owned.pool, request, &args.tag_ids).await {
                     Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),
                     Err(error) => domain_failure(error),
                 }
@@ -239,7 +358,10 @@ pub(super) async fn call(
                     || args.description.is_some()
                     || args.status_id.is_some()
                     || args.priority.is_some(),
-                "No Issue changes supplied"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "No Issue changes supplied"
+                )
             );
             let revision = args
                 .expected_revision
@@ -251,7 +373,7 @@ pub(super) async fn call(
                     )
                     .map(|value| value.and_utc())
                 })
-                .map_err(|_| anyhow::anyhow!("Invalid Issue revision; read get_issue again"))?;
+                .map_err(|_| super::errors::rejection(Category::Validation))?;
             remote.require_project(args.project_id).await?;
             remote.operations().submit(key, args.request_id, args.project_id, name.into(), input, json!({"project_id":args.project_id,"issue_id":args.issue_id}), move |_| async move {
                 if let Err(error) = owned.require_issue(args.project_id, args.issue_id).await { return validation_failure(error); }
@@ -263,13 +385,13 @@ pub(super) async fn call(
                 if let Some(status) = args.status_id { changes["status_id"] = json!(status); }
                 if let Some(priority) = args.priority { changes["priority"] = json!(priority); }
                 let request: UpdateIssueRequest = serde_json::from_value(changes).expect("Issue update fields");
-                match local_remote::update_local_issue_checked(&owned.pool, args.issue_id, request, Some(revision)).await {
+                match local_remote::update_local_issue_checked_outcome(&owned.pool, args.issue_id, request, Some(revision)).await {
                     Ok(issue) => ("succeeded", json!({"issue_id":issue.id,"url":owned.config.issue_url(issue.project_id, issue.id),"implementation_started":false})),
                     Err(error) => domain_failure(error),
                 }
             }).await?
         }
-        _ => anyhow::bail!("Unknown Issue operation"),
+        _ => return Err(super::errors::rejection(Category::Validation)),
     };
     Ok(remote.receipt_value(receipt))
 }
@@ -277,6 +399,106 @@ pub(super) async fn call(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalid_issue_text_is_a_proven_preflight_rejection() {
+        let error = validate_text(" ", 500, true).unwrap_err();
+        let diagnostic = super::super::errors::diagnostic(&error, true);
+        assert_eq!(diagnostic.category, Category::Validation);
+        assert_eq!(diagnostic.outcome, utils::mcp_error::Outcome::Failed);
+        let (_, value) = validation_failure(super::super::errors::rejection(Category::NotFound));
+        assert_eq!(value["error"]["category"], "not_found");
+        assert_eq!(value["error"]["outcome"], "failed");
+    }
+
+    #[test]
+    fn domain_failures_preserve_terminal_evidence_without_exposing_details() {
+        use local_remote::IssueMutationError::{Failed, OutcomeUnknown};
+        for (error, expected_status, expected_code) in [
+            (
+                Failed(ApiError::BadRequest(
+                    "private-token /host/path SELECT secret".into(),
+                )),
+                "failed",
+                "validation_failed",
+            ),
+            (
+                Failed(ApiError::Conflict("private-token".into())),
+                "failed",
+                "revision_conflict",
+            ),
+            (
+                Failed(ApiError::BadRequest("Issue not found".into())),
+                "failed",
+                "not_found",
+            ),
+            (
+                Failed(ApiError::Forbidden("private-token".into())),
+                "failed",
+                "permission_denied",
+            ),
+            (
+                Failed(ApiError::Database(sqlx::Error::PoolClosed)),
+                "failed",
+                "unavailable",
+            ),
+            (
+                Failed(ApiError::Io(std::io::Error::other("private-token"))),
+                "failed",
+                "internal_error",
+            ),
+            (
+                OutcomeUnknown(ApiError::BadRequest("private-token".into())),
+                "uncertain",
+                "domain_outcome_unavailable",
+            ),
+        ] {
+            let (status, value) = domain_failure(error);
+            assert_eq!(status, expected_status);
+            assert_eq!(value["code"], expected_code);
+            assert!(!value.to_string().contains("private-token"));
+            assert!(!value.to_string().contains("/host/path"));
+            assert!(!value.to_string().contains("SELECT"));
+        }
+    }
+
+    #[tokio::test]
+    async fn writer_contention_is_a_definite_failure_without_sql_details() {
+        let dir = tempfile::tempdir().unwrap();
+        let options = sqlx::sqlite::SqliteConnectOptions::new()
+            .filename(dir.path().join("private.sqlite"))
+            .create_if_missing(true)
+            .busy_timeout(std::time::Duration::from_millis(25));
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(2)
+            .connect_with(options)
+            .await
+            .unwrap();
+        sqlx::query("CREATE TABLE private_input(value TEXT)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let held = pool.begin_with("BEGIN IMMEDIATE").await.unwrap();
+        let error = sqlx::query("INSERT INTO private_input VALUES('SECRET')")
+            .execute(&pool)
+            .await
+            .unwrap_err();
+        let (status, value) =
+            domain_failure(local_remote::IssueMutationError::Failed(error.into()));
+        assert_eq!(status, "failed");
+        assert_eq!(value["error"]["category"], "busy");
+        assert_eq!(value["error"]["outcome"], "failed");
+        for marker in ["INSERT", "private_input", "SECRET", "private.sqlite"] {
+            assert!(!value.to_string().contains(marker));
+        }
+        held.rollback().await.unwrap();
+        let count: i64 = sqlx::query_scalar("SELECT count(*) FROM private_input")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 0);
+        pool.close().await;
+    }
 
     #[tokio::test]
     async fn unreadable_receipts_never_report_success_or_leak_the_damaged_payload() {
@@ -330,6 +552,51 @@ mod tests {
             assert_eq!(value["result"]["code"], "receipt_unreadable");
             assert_eq!(value["operation_id"], operation.to_string());
             assert!(!value.to_string().contains("private-token"));
+        }
+        sqlx::query("UPDATE remote_mcp_operations SET targets=?,result=?,status='failed' WHERE id=?")
+            .bind(json!({"workspace_id":target.workspace_id,"purpose":"SECRET user text","target":{"path":"/private/SECRET"}}).to_string())
+            .bind(json!({"code":"resource_busy","path":"/private/SECRET","partial_possible":true}).to_string()).bind(operation)
+            .execute(&remote.pool).await.unwrap();
+        let safe = remote.receipt_value(
+            remote
+                .operations()
+                .by_request(&remote.principal_key(&principal), request)
+                .await
+                .unwrap(),
+        );
+        assert_eq!(
+            safe["targets"]["workspace_id"],
+            target.workspace_id.to_string()
+        );
+        assert_eq!(safe["result"]["partial_possible"], true);
+        assert!(!safe.to_string().contains("SECRET"));
+        assert!(!safe.to_string().contains("/private"));
+        // Stored diagnostic fields are untrusted, even in a valid JSON object.
+        for damaged in [
+            json!("SELECT credential FROM /private/SECRET"),
+            json!(["SECRET"]),
+            json!({"category":"conflict","outcome":"failed","message":"SECRET","extra":"/private"}),
+        ] {
+            sqlx::query(
+                "UPDATE remote_mcp_operations SET targets=?,result=?,status='uncertain' WHERE id=?",
+            )
+            .bind(targets.to_string())
+            .bind(json!({"error":damaged}).to_string())
+            .bind(operation)
+            .execute(&remote.pool)
+            .await
+            .unwrap();
+            let value = remote.receipt_value(
+                remote
+                    .operations()
+                    .by_request(&remote.principal_key(&principal), request)
+                    .await
+                    .unwrap(),
+            );
+            assert_eq!(value["error"]["outcome"], "unknown");
+            assert_eq!(value["result"]["error"]["outcome"], "unknown");
+            assert!(!value.to_string().contains("SECRET"));
+            assert!(!value.to_string().contains("/private"));
         }
         // A pending receipt has no final result yet; that absence is normal.
         sqlx::query(

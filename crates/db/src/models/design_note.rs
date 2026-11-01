@@ -153,11 +153,23 @@ pub enum DesignNoteError {
         "Invalid design note read: page_size 1–20, limit 1–4000 Unicode characters; use cursor/after_revision for metadata and a saved revision with next_offset for text pages"
     )]
     InvalidRead,
+    #[error("Commit outcome unavailable")]
+    CommitUnknown(sqlx::Error),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
 }
+impl DesignNoteError {
+    fn commit(error: sqlx::Error) -> Self {
+        if super::todo::commit_definitely_rejected(&error) {
+            Self::Database(error)
+        } else {
+            Self::CommitUnknown(error)
+        }
+    }
+}
+
 fn text(value: &str, max: usize, required: bool) -> Result<(), DesignNoteError> {
     if value.chars().count() > max || (required && value.trim().is_empty()) {
         return Err(DesignNoteError::Invalid);
@@ -428,7 +440,7 @@ impl DesignNote {
             }
         };
         sqlx::query("UPDATE design_note_requests SET result=? WHERE project_id=? AND actor=? AND request_id=?").bind(serde_json::to_string(&result)?).bind(project).bind(actor).bind(input.request_id).execute(&mut *tx).await?;
-        tx.commit().await?;
+        tx.commit().await.map_err(DesignNoteError::commit)?;
         Ok(result)
     }
 }

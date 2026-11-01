@@ -11,6 +11,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::{Row, SqlitePool};
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -350,16 +351,18 @@ pub(super) fn tools() -> Vec<rmcp::model::Tool> {
     tools
 }
 fn failure(error: ApiError) -> (&'static str, Value) {
-    match error {
-        ApiError::Conflict(_) | ApiError::Forbidden(_) => (
-            "failed",
-            json!({"code":"state_conflict","message":"The selected run or question changed, or the domain service rejected this action; refresh its state in LVK"}),
-        ),
-        _ => (
-            "uncertain",
-            json!({"code":"dispatch_outcome_unavailable","message":"Inspect this operation, Session and command delivery before any new request"}),
-        ),
-    }
+    // validate_run has not dispatched a command. Its failure is terminal even
+    // when the cause is a database outage rather than a state conflict.
+    let diagnostic = super::errors::diagnostic(&error.into(), false);
+    let code = match diagnostic.category {
+        utils::mcp_error::Category::Conflict => "state_conflict",
+        utils::mcp_error::Category::Permission => "permission_denied",
+        _ => "target_validation_failed",
+    };
+    (
+        "failed",
+        json!({"code":code,"message":diagnostic.message,"error":diagnostic.value()}),
+    )
 }
 fn dispatch_failure() -> (&'static str, Value) {
     // The domain may have accepted a command before a later state read failed.
@@ -372,7 +375,10 @@ fn dispatch_failure() -> (&'static str, Value) {
 fn text(value: &str) -> anyhow::Result<()> {
     ensure!(
         !value.trim().is_empty() && value.len() <= 32000,
-        "Instruction or answer must contain 1–32000 bytes"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Instruction or answer must contain 1–32000 bytes"
+        )
     );
     Ok(())
 }
@@ -380,7 +386,7 @@ fn runtime(remote: &Remote) -> anyhow::Result<Arc<dyn RuntimeActions>> {
     remote
         .runtime
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Runtime dispatch unavailable"))
+        .ok_or_else(|| super::errors::rejection(Category::Unavailable))
 }
 
 pub(super) async fn call(
@@ -391,7 +397,10 @@ pub(super) async fn call(
 ) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:read") && principal.allows("lvk:write"),
-        "Read and write permissions required"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read and write permissions required"
+        )
     );
     let dispatch = runtime(remote)?;
     let owned = remote.clone();
@@ -401,11 +410,17 @@ pub(super) async fn call(
         text(&args.answer)?;
         ensure!(
             args.kind != Kind::Approval,
-            "Execution approvals must be handled in LVK"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Execution approvals must be handled in LVK"
+            )
         );
         ensure!(
             !args.question_id.is_empty() && args.question_id.len() <= 1000,
-            "Invalid question ID"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Invalid question ID"
+            )
         );
         remote
             .require_workspace(args.target.project_id, args.target.workspace_id)
@@ -434,7 +449,7 @@ pub(super) async fn call(
         let kind = match name {
             "steer_execution" => Change::Steer,
             "continue_execution" => Change::Continue,
-            _ => anyhow::bail!("Unknown runtime operation"),
+            _ => return Err(super::errors::rejection(Category::Validation)),
         };
         let issue = remote
             .require_workspace(args.target.project_id, args.target.workspace_id)

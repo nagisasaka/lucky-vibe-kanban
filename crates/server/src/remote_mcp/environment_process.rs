@@ -274,7 +274,10 @@ impl ProcessRegistry {
             || args.len() > 256
             || args.iter().map(String::len).sum::<usize>() > 65536
         {
-            bail!("invalid_process_parameters");
+            return Err(super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "invalid_process_parameters",
+            ));
         }
         // Reserve capacity across spawn: this brief synchronous section has no await.
         let mut records = self.records.lock().unwrap();
@@ -291,23 +294,37 @@ impl ProcessRegistry {
             {
                 records.remove(&id);
             } else {
-                bail!("runtime_process_capacity");
+                return Err(super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Busy,
+                    "runtime_process_capacity",
+                ));
             }
         }
         use std::os::fd::AsRawFd;
-        let relative = cwd
-            .strip_prefix("/")
-            .map_err(|_| anyhow!("process_cwd_must_be_absolute"))?;
+        let relative = cwd.strip_prefix("/").map_err(|_| {
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "process_cwd_must_be_absolute",
+            )
+        })?;
         let directory = super::environment_files::open_directory(
             Path::new("/"),
-            relative
-                .to_str()
-                .ok_or_else(|| anyhow!("process_cwd_not_utf8"))?,
-        )?;
+            relative.to_str().ok_or_else(|| {
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "process_cwd_not_utf8",
+                )
+            })?,
+        )
+        .map_err(super::environment::preflight_error)?;
         // Check the fd we actually use, not only the pre-open pathname.
-        let pinned_cwd = std::fs::read_link(format!("/proc/self/fd/{}", directory.as_raw_fd()))?;
+        let pinned_cwd = std::fs::read_link(format!("/proc/self/fd/{}", directory.as_raw_fd()))
+            .map_err(|error| super::environment::preflight_error(error.into()))?;
         if pinned_cwd != cwd {
-            bail!("process_cwd_changed; reobserve before launching");
+            return Err(super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "process_cwd_changed; reobserve before launching",
+            ));
         }
         super::environment::protect_workspace(&pinned_cwd, workspaces, false)?;
         let mut command = Command::new(executable);
@@ -320,7 +337,14 @@ impl ProcessRegistry {
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
-        let mut child = command.spawn().map_err(process_io_error)?;
+        let mut child = command.spawn().map_err(|error| {
+            let category = match error.kind() {
+                std::io::ErrorKind::PermissionDenied => utils::mcp_error::Category::Permission,
+                std::io::ErrorKind::NotFound => utils::mcp_error::Category::NotFound,
+                _ => utils::mcp_error::Category::Internal,
+            };
+            super::errors::rejection_with_message(category, "Process could not be started")
+        })?;
         let pid = child
             .id()
             .ok_or_else(|| anyhow!("process_pid_unavailable"))?;
@@ -462,7 +486,10 @@ impl ProcessRegistry {
             if r.identity == identity || id == identity {
                 selected_identity = r.identity.clone();
                 if r.owner != owner {
-                    bail!("process_owner_denied");
+                    return Err(super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Permission,
+                        "process_owner_denied",
+                    ));
                 }
                 if r.state == "unknown" && id == identity {
                     bail!(
@@ -477,9 +504,13 @@ impl ProcessRegistry {
             }
         }
         let identity = selected_identity.as_str();
-        let o = safe_observation(pid_from(identity)?)?;
+        let o = safe_observation(pid_from(identity).map_err(super::environment::preflight_error)?)
+            .map_err(super::environment::preflight_error)?;
         if o.identity != identity {
-            bail!("process_identity_changed");
+            return Err(super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "process_identity_changed",
+            ));
         }
         signal_identity(identity, if force { libc::SIGKILL } else { libc::SIGTERM })?;
         Ok(

@@ -684,3 +684,33 @@ async fn search_metadata_filters_full_current_body_before_cursor_without_additio
         assert_eq!(page["items"].as_array().unwrap().len(), 3);
     }
 }
+
+#[tokio::test]
+async fn rejected_revision_rolls_back_note_and_idempotency_record() {
+    let (pool, project, _) = fixture().await;
+    sqlx::raw_sql("CREATE TRIGGER reject_revision BEFORE INSERT ON design_note_revisions BEGIN SELECT RAISE(ABORT, 'fixture secret /private/db'); END;").execute(&pool).await.unwrap();
+    let request = write(json!({"action":"create","title":"isolated","body":"fixture"}));
+    let error = DesignNote::write(&pool, project, "human", request.clone())
+        .await
+        .unwrap_err();
+    assert!(matches!(error, DesignNoteError::Database(_)));
+    for table in ["design_notes", "design_note_requests"] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT count(*) FROM {table}"))
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+    sqlx::raw_sql("DROP TRIGGER reject_revision")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let first = DesignNote::write(&pool, project, "human", request.clone())
+        .await
+        .unwrap();
+    let replay = DesignNote::write(&pool, project, "human", request)
+        .await
+        .unwrap();
+    assert_eq!(first.note.id, replay.note.id);
+    assert_eq!(first.note.revision, replay.note.revision);
+}

@@ -80,7 +80,13 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
             .bind(run.workspace_id)
             .fetch_one(&remote.pool)
             .await?;
-    ensure!(belongs, "Run does not exist in this Workspace");
+    ensure!(
+        belongs,
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::NotFound,
+            "Run does not exist in this Workspace"
+        )
+    );
     let target = run.target();
     let mut result = tokio::task::spawn_blocking(move || {
         let store =
@@ -102,7 +108,10 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
         attach_record_metadata(&mut result, &loaded, selected_index);
         ensure!(
             current_head(&source) == head,
-            "Workspace head changed; refresh verification evidence"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Workspace head changed; refresh verification evidence"
+            )
         );
         Ok::<_, anyhow::Error>(result)
     })
@@ -135,7 +144,10 @@ fn load_record(
         ensure!(
             record.manifest.repository_id == run.repository_id
                 && record.manifest.workspace_id == run.workspace_id,
-            "Verification record does not belong to this Workspace/repository"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Verification record does not belong to this Workspace/repository"
+            )
         );
     }
     Ok(LoadedRecord {
@@ -196,7 +208,10 @@ fn load(
             manifest.repository_id == run.repository_id
                 && manifest.workspace_id == run.workspace_id
                 && manifest.event_id == run.agent_run_id,
-            "Verification record does not belong to this run, Workspace and repository"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Permission,
+                "Verification record does not belong to this run, Workspace and repository"
+            )
         );
     }
     Ok(manifest)

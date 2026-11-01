@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
+use utils::mcp_error::Category;
 use uuid::Uuid;
 
 use super::{
@@ -108,7 +109,13 @@ pub(super) async fn call(
     name: &str,
     input: Value,
 ) -> anyhow::Result<Value> {
-    ensure!(principal.allows("lvk:read"), "Read permission required");
+    ensure!(
+        principal.allows("lvk:read"),
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Read permission required"
+        )
+    );
     match name {
         "list_issue_comments" => list(remote, arguments(input)?).await,
         "get_issue_comment" => get(remote, arguments(input)?).await,
@@ -116,27 +123,42 @@ pub(super) async fn call(
         "add_issue_comment" => {
             ensure!(
                 principal.allows("lvk:write"),
-                "Write permission required (lvk:write)"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Permission,
+                    "Write permission required (lvk:write)"
+                )
             );
             let args: AddArgs = arguments(input.clone())?;
             ensure!(
                 !args.message.trim().is_empty() && args.message.chars().count() <= 16000,
-                "Comment must contain between 1 and 16000 characters"
+                super::errors::rejection_with_message(
+                    utils::mcp_error::Category::Validation,
+                    "Comment must contain between 1 and 16000 characters"
+                )
             );
             if let Some(label) = &args.reviewer_label {
                 ensure!(
                     !label.trim().is_empty() && label.chars().count() <= 120,
-                    "Reviewer label must contain between 1 and 120 characters"
+                    super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Validation,
+                        "Reviewer label must contain between 1 and 120 characters"
+                    )
                 );
                 ensure!(
                     args.review_target.is_some(),
-                    "Review target required for a review"
+                    super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Validation,
+                        "Review target required for a review"
+                    )
                 );
             }
             if let Some(target) = &args.review_target {
                 ensure!(
                     target.issue_id == args.issue_id,
-                    "Review target belongs to another Issue"
+                    super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Validation,
+                        "Review target belongs to another Issue"
+                    )
                 );
                 // Validate shape, but never replace the supplied version with the current one.
                 ensure!(
@@ -150,7 +172,10 @@ pub(super) async fn call(
                                 .revision
                                 .parse::<chrono::DateTime<chrono::Utc>>()
                                 .is_ok()),
-                    "Use the review_target returned by get_issue"
+                    super::errors::rejection_with_message(
+                        utils::mcp_error::Category::Validation,
+                        "Use the review_target returned by get_issue"
+                    )
                 );
             }
             remote.require_issue(args.project_id, args.issue_id).await?;
@@ -161,6 +186,7 @@ pub(super) async fn call(
                 let target_revision = args.review_target.map(|target| target.revision);
                 // Single INSERT ... SELECT rechecks membership at the write boundary.
                 // Receipt ID is also the comment ID; concurrent requests append distinct rows.
+                let mut commit_started = false;
                 let result: Result<_, sqlx::Error> = async {
                 let mut tx = owned.pool.begin().await?;
                 let result = sqlx::query("INSERT INTO local_issue_comments(id,issue_id,author_id,message,reviewer_label,target_revision,recorded_principal) SELECT ?,id,?,?,?,?,? FROM local_issues WHERE id=? AND project_id=?")
@@ -170,36 +196,44 @@ pub(super) async fn call(
                 if result.rows_affected() == 1 {
                     db::models::issue_order::promote(&mut tx, args.issue_id).await?;
                 }
+                commit_started = true;
                 tx.commit().await?;
                 Ok(result)
                 }.await;
                 match result {
                     Ok(result) if result.rows_affected() == 1 => ("succeeded", json!({"comment_id":id,"issue_id":args.issue_id,"target_revision":target_revision,"implementation_started":false})),
-                    Ok(_) => ("failed", json!({"code":"target_validation_failed"})),
-                    Err(_) => ("uncertain", json!({"code":"comment_outcome_unavailable","comment_id":id})),
+                    Ok(_) => comment_failure("target_validation_failed", None, false, utils::mcp_error::Category::Validation),
+                    Err(ref error) => comment_failure("comment_outcome_unavailable", Some(id), commit_started && !db::models::todo::commit_definitely_rejected(error), super::errors::database_category(error)),
                 }
             }).await?;
             Ok(remote.receipt_value(receipt))
         }
-        _ => anyhow::bail!("Unknown comment operation"),
+        _ => Err(super::errors::rejection(Category::Validation)),
     }
 }
 
 async fn edit(remote: &Remote, principal: &Principal, input: Value) -> anyhow::Result<Value> {
     ensure!(
         principal.allows("lvk:write"),
-        "Write permission required (lvk:write)"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Write permission required (lvk:write)"
+        )
     );
     let args: EditArgs = arguments(input.clone())?;
     ensure!(
         !args.message.trim().is_empty() && args.message.chars().count() <= 16000,
-        "Comment must contain between 1 and 16000 characters"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Comment must contain between 1 and 16000 characters"
+        )
     );
     remote.require_issue(args.project_id, args.issue_id).await?;
     let owned = remote.clone();
     let owner = remote.principal_key(principal);
     let receipt = remote.operations().submit_and_wait(owner.clone(), args.request_id, args.project_id,
         "edit_issue_comment".into(), input, json!({"issue_id":args.issue_id,"comment_id":args.comment_id}), move |_| async move {
+        let mut commit_started = false;
         let result: anyhow::Result<Value> = async {
             let mut tx = owned.pool.begin_with("BEGIN IMMEDIATE").await?;
             let authorized: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM local_issue_comments c JOIN local_issues i ON i.id=c.issue_id WHERE c.id=? AND c.issue_id=? AND i.project_id=? AND c.recorded_principal=?)")
@@ -215,14 +249,20 @@ async fn edit(remote: &Remote, principal: &Principal, input: Value) -> anyhow::R
             let count = sqlx::query("UPDATE local_issue_comments SET message=?, updated_at=datetime('now','subsec') WHERE id=? AND issue_id=? AND recorded_principal=? AND EXISTS(SELECT 1 FROM local_issues WHERE id=? AND project_id=?)")
                 .bind(args.message).bind(args.comment_id).bind(args.issue_id).bind(owner).bind(args.issue_id).bind(args.project_id)
                 .execute(&mut *tx).await?.rows_affected();
-            ensure!(count == 1, "Comment changed during edit");
+            ensure!(count == 1, super::errors::rejection_with_message(utils::mcp_error::Category::Conflict, "Comment changed during edit"));
+            commit_started = true;
             tx.commit().await?;
             Ok(json!({"comment_id":args.comment_id,"issue_id":args.issue_id,"implementation_started":false}))
         }.await;
         match result {
-            Ok(value) if value.get("code").is_some() => ("failed", value),
+            Ok(value) if value.get("code").is_some() => {
+                let code = value["code"].as_str().unwrap_or("comment_outcome_unavailable");
+                let category = if code == "comment_owner_required" { utils::mcp_error::Category::Permission } else { utils::mcp_error::Category::Conflict };
+                comment_failure(code, Some(args.comment_id), false, category)
+            },
             Ok(value) => ("succeeded", value),
-            Err(_) => ("uncertain", json!({"code":"comment_outcome_unavailable","comment_id":args.comment_id})),
+            Err(ref error) => comment_failure("comment_outcome_unavailable", Some(args.comment_id), commit_started && !error.downcast_ref::<sqlx::Error>().is_some_and(db::models::todo::commit_definitely_rejected),
+                error.downcast_ref::<utils::mcp_error::Diagnostic>().map(|diagnostic| diagnostic.category).or_else(|| error.downcast_ref::<sqlx::Error>().map(super::errors::database_category)).unwrap_or(utils::mcp_error::Category::Internal)),
         }
     }).await?;
     Ok(remote.receipt_value(receipt))
@@ -231,7 +271,10 @@ async fn edit(remote: &Remote, principal: &Principal, input: Value) -> anyhow::R
 async fn list(remote: &Remote, args: ListArgs) -> anyhow::Result<Value> {
     ensure!(
         (1..=50).contains(&args.limit),
-        "limit must be between 1 and 50"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "limit must be between 1 and 50"
+        )
     );
     remote.require_issue(args.project_id, args.issue_id).await?;
     let mut tx = remote.pool.begin().await?;
@@ -251,7 +294,10 @@ async fn list(remote: &Remote, args: ListArgs) -> anyhow::Result<Value> {
         .await?;
         ensure!(
             timestamp.is_some(),
-            "Comment cursor not found in this Issue; restart listing"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::NotFound,
+                "Comment cursor not found in this Issue; restart listing"
+            )
         );
         timestamp
     } else {
@@ -270,7 +316,8 @@ async fn list(remote: &Remote, args: ListArgs) -> anyhow::Result<Value> {
     for row in rows.iter().take(args.limit as usize) {
         let target: Option<String> = row.try_get("target_revision")?;
         let bytes: Vec<u8> = row.try_get("preview_bytes")?;
-        let preview = super::issue_comment_text::preview(&bytes).map_err(anyhow::Error::msg)?;
+        let preview = super::issue_comment_text::preview(&bytes)
+            .map_err(|_| super::errors::rejection(Category::Internal))?;
         items.push(json!({
             "id":row.try_get::<Uuid,_>("id")?, "issue_id":args.issue_id,
             "author_id":row.try_get::<Option<Uuid>,_>("author_id")?,
@@ -295,11 +342,17 @@ async fn list(remote: &Remote, args: ListArgs) -> anyhow::Result<Value> {
 async fn get(remote: &Remote, args: GetArgs) -> anyhow::Result<Value> {
     ensure!(
         (1..=16000).contains(&args.limit),
-        "limit must be between 1 and 16000 characters"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "limit must be between 1 and 16000 characters"
+        )
     );
     ensure!(
         args.offset == 0 || args.expected_comment_revision.is_some(),
-        "Supply expected_comment_revision for another comment page"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Validation,
+            "Supply expected_comment_revision for another comment page"
+        )
     );
     remote.require_issue(args.project_id, args.issue_id).await?;
     // All chunks share one read transaction. Do not materialise an unbounded
@@ -317,7 +370,7 @@ async fn read_comment(
     let row = sqlx::query("SELECT c.updated_at,length(CAST(c.message AS BLOB)) AS total_bytes FROM local_issue_comments c JOIN local_issues i ON i.id=c.issue_id WHERE c.id=? AND c.issue_id=? AND i.project_id=?")
         .bind(args.comment_id).bind(args.issue_id).bind(args.project_id)
         .fetch_optional(&mut **tx).await?
-        .ok_or_else(|| anyhow::anyhow!("Comment not found in this Issue"))?;
+        .ok_or_else(|| super::errors::rejection(Category::NotFound))?;
     let total_bytes: i64 = row.try_get("total_bytes")?;
     let mut digest = Sha256::new();
     digest.update(b"lvk:issue-comment:v1");
@@ -337,19 +390,39 @@ async fn read_comment(
             .bind(args.project_id)
             .fetch_one(&mut **tx)
             .await?;
-        ensure!(!chunk.is_empty(), "Comment body unavailable");
+        ensure!(
+            !chunk.is_empty(),
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Internal,
+                "Comment body unavailable"
+            )
+        );
         byte_offset += chunk.len() as i64;
         digest.update(&chunk);
-        page.push(&chunk).map_err(anyhow::Error::msg)?;
+        page.push(&chunk).map_err(|message| {
+            super::errors::rejection_with_message(Category::Internal, message)
+        })?;
     }
     let revision = format!("{:x}", digest.finalize());
     ensure!(
         args.expected_comment_revision
             .as_ref()
             .is_none_or(|expected| expected == &revision),
-        "Comment revision mismatch; restart reading from offset zero"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Comment revision mismatch; restart reading from offset zero"
+        )
     );
-    let (message_page, total) = page.finish().map_err(anyhow::Error::msg)?;
+    let (message_page, total) = page.finish().map_err(|message| {
+        super::errors::rejection_with_message(
+            if message == "Comment offset is outside the body" {
+                Category::Validation
+            } else {
+                Category::Internal
+            },
+            message,
+        )
+    })?;
     let next = (u64::from(args.offset) + u64::from(args.limit)).min(total);
     Ok(
         json!({"id":args.comment_id,"issue_id":args.issue_id,"project_id":args.project_id,
@@ -357,6 +430,32 @@ async fn read_comment(
         "offset":args.offset,"total_characters":total,"next_offset":if next < total {Some(next)} else {None},
         "has_more":next < total,"content_trust":"untrusted"}),
     )
+}
+
+fn comment_failure(
+    code: &str,
+    comment_id: Option<Uuid>,
+    unknown: bool,
+    category: utils::mcp_error::Category,
+) -> (&'static str, Value) {
+    use utils::mcp_error::{Category, Diagnostic, Outcome};
+    let diagnostic = Diagnostic::new(
+        if unknown {
+            Category::OutcomeUnknown
+        } else {
+            category
+        },
+        if unknown {
+            Outcome::Unknown
+        } else {
+            Outcome::Failed
+        },
+    );
+    let mut value = json!({"code":code,"error":diagnostic.value()});
+    if let Some(id) = comment_id {
+        value["comment_id"] = json!(id);
+    }
+    (if unknown { "uncertain" } else { "failed" }, value)
 }
 
 #[cfg(test)]

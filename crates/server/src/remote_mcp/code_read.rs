@@ -77,7 +77,10 @@ pub(super) async fn call(remote: &Remote, name: &str, args: Value) -> anyhow::Re
     } else {
         ensure!(
             matches!(name, "get_workspace_file" | "get_workspace_diff"),
-            "Unknown code read tool"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Validation,
+                "Unknown code read tool"
+            )
         );
         let args: FileArgs = arguments(args)?;
         target = args.target.clone();
@@ -106,7 +109,10 @@ fn heads(source: &Source, root: &std::path::Path) -> anyhow::Result<(GitService,
     let head = git.get_head_info(root).map_err(unavailable)?;
     ensure!(
         head.branch == source.workspace.branch,
-        "Workspace checkout branch changed; inspect the Workspace before reading evidence"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Workspace checkout branch changed; inspect the Workspace before reading evidence"
+        )
     );
     Ok((git, head.oid))
 }
@@ -187,7 +193,10 @@ fn text(content: &Content) -> Option<&str> {
 fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value> {
     ensure!(
         allowed_path(&args.path),
-        "Private or invalid reference path"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Permission,
+            "Private or invalid reference path"
+        )
     );
     let root = source.root()?;
     let (git, head) = heads(source, &root)?;
@@ -204,7 +213,10 @@ fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value>
             .map_err(unavailable)?;
         ensure!(
             paths.contains(&args.path),
-            "Path is no longer changed; refresh list_workspace_diff"
+            super::errors::rejection_with_message(
+                utils::mcp_error::Category::Conflict,
+                "Path is no longer changed; refresh list_workspace_diff"
+            )
         );
         let (old, new) = git
             .reference_diff(&root, &base, &args.path)
@@ -247,7 +259,10 @@ fn detail(source: &Source, args: &FileArgs, diff: bool) -> anyhow::Result<Value>
     // by each body's revision on continuation.
     ensure!(
         git.get_head_info(&root).map_err(unavailable)?.oid == head,
-        "Checkout changed during read; retry from the first page"
+        super::errors::rejection_with_message(
+            utils::mcp_error::Category::Conflict,
+            "Checkout changed during read; retry from the first page"
+        )
     );
     result["path"] = json!(args.path);
     result["source_head"] = json!(head);

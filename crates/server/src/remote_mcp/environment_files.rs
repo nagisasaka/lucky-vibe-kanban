@@ -7,10 +7,13 @@ use std::{
     path::{Component, Path},
 };
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use utils::mcp_error::Category;
+
+use super::environment::preflight;
 
 fn io_error(error: std::io::Error) -> anyhow::Error {
     use std::io::ErrorKind;
@@ -22,19 +25,30 @@ fn io_error(error: std::io::Error) -> anyhow::Error {
         _ => {
             #[cfg(target_os = "linux")]
             if error.raw_os_error() == Some(libc::ELOOP) {
-                return anyhow::anyhow!("runtime_symlink_rejected");
+                return super::errors::rejection_with_message(
+                    Category::Permission,
+                    "runtime_symlink_rejected",
+                );
             }
             "runtime_file_io_unavailable"
         }
     };
-    anyhow::anyhow!(message)
+    let category = match error.kind() {
+        ErrorKind::NotFound => Category::NotFound,
+        ErrorKind::PermissionDenied => Category::Permission,
+        ErrorKind::UnexpectedEof => Category::Conflict,
+        ErrorKind::NotADirectory => Category::Validation,
+        _ => Category::Internal,
+    };
+    super::errors::rejection_with_message(category, message)
 }
 
 fn validate(args: &Value, keys: &[&str]) -> Result<()> {
     let object = args
         .as_object()
         .context("runtime file arguments must be an object")?;
-    ensure!(
+    preflight!(
+        Category::Validation,
         object.keys().all(|key| keys.contains(&key.as_str())),
         "unknown runtime file argument"
     );
@@ -50,7 +64,8 @@ fn open(root: &Path, path: &str, directory: bool) -> Result<File> {
             unix::{ffi::OsStrExt, fs::OpenOptionsExt},
         },
     };
-    ensure!(
+    preflight!(
+        Category::Validation,
         !Path::new(path).is_absolute(),
         "path must be relative to the allowed root"
     );
@@ -58,16 +73,22 @@ fn open(root: &Path, path: &str, directory: bool) -> Result<File> {
         .components()
         .filter(|p| *p != Component::CurDir)
         .collect();
-    ensure!(
+    preflight!(
+        Category::Permission,
         parts.iter().all(|p| matches!(p, Component::Normal(_))),
         "path traversal is forbidden"
     );
-    ensure!(root.is_absolute(), "runtime root must be absolute");
+    preflight!(
+        Category::Validation,
+        root.is_absolute(),
+        "runtime root must be absolute"
+    );
     let root_parts: Vec<_> = root
         .components()
         .filter(|part| *part != Component::RootDir)
         .collect();
-    ensure!(
+    preflight!(
+        Category::Validation,
         root_parts
             .iter()
             .all(|part| matches!(part, Component::Normal(_))),
@@ -107,15 +128,18 @@ fn open(root: &Path, path: &str, directory: bool) -> Result<File> {
         return Err(io_error(std::io::Error::last_os_error()));
     }
     let filesystem = unsafe { filesystem.assume_init() };
-    ensure!(
+    preflight!(
+        Category::Validation,
         filesystem.f_type != libc::PROC_SUPER_MAGIC && filesystem.f_type != libc::SYSFS_MAGIC,
         "runtime_kernel_filesystem_denied"
     );
-    ensure!(
+    preflight!(
+        Category::Permission,
         !metadata.file_type().is_symlink(),
         "runtime_symlink_rejected"
     );
-    ensure!(
+    preflight!(
+        Category::Validation,
         if directory {
             metadata.is_dir()
         } else {
@@ -158,7 +182,11 @@ fn number(args: &Value, key: &str, default: u64, max: u64) -> Result<u64> {
             .context("runtime numeric argument must be an unsigned integer")?,
         None => default,
     };
-    ensure!(value <= max, "runtime numeric argument exceeds maximum");
+    preflight!(
+        Category::Validation,
+        value <= max,
+        "runtime numeric argument exceeds maximum"
+    );
     Ok(value)
 }
 fn path(args: &Value) -> Result<&str> {
@@ -172,10 +200,14 @@ pub(super) fn list(root: &Path, args: Value) -> Result<Value> {
     let directory = open(root, path, true)?;
     let before = stamp(&directory.metadata().map_err(io_error)?);
     let limit = number(&args, "limit", 100, 500)? as usize;
-    ensure!(limit > 0, "limit must be positive");
+    preflight!(Category::Validation, limit > 0, "limit must be positive");
     let offset = number(&args, "offset", 0, 100_000)? as usize;
     if let Some(expected) = args.get("snapshot") {
-        ensure!(expected == &before, "directory_changed: restart pagination");
+        preflight!(
+            Category::Conflict,
+            expected == &before,
+            "directory_changed: restart pagination"
+        );
     }
     #[cfg(target_os = "linux")]
     let directory_path = {
@@ -188,7 +220,11 @@ pub(super) fn list(root: &Path, args: Value) -> Result<Value> {
     // instead of allocating unbounded memory or silently hiding entries.
     let mut entries = Vec::new();
     for (index, entry) in fs::read_dir(directory_path).map_err(io_error)?.enumerate() {
-        ensure!(index < 100_000, "directory exceeds 100000 entry scan limit");
+        preflight!(
+            Category::Validation,
+            index < 100_000,
+            "directory exceeds 100000 entry scan limit"
+        );
         let entry = entry.map_err(io_error)?;
         let name = entry
             .file_name()
@@ -209,7 +245,8 @@ pub(super) fn list(root: &Path, args: Value) -> Result<Value> {
         ));
     }
     entries.sort_unstable_by(|a, b| a.0.cmp(&b.0));
-    ensure!(
+    preflight!(
+        Category::Conflict,
         before == stamp(&directory.metadata().map_err(io_error)?),
         "directory_changed: retry listing"
     );
@@ -241,22 +278,32 @@ pub(super) fn read(root: &Path, args: Value) -> Result<Value> {
 
 fn read_observed(root: &Path, args: Value, after_read: impl FnOnce()) -> Result<Value> {
     validate(&args, &["path", "max_bytes", "tail", "offset", "cursor"])?;
-    ensure!(args.get("path").is_some(), "runtime file path required");
+    preflight!(
+        Category::Validation,
+        args.get("path").is_some(),
+        "runtime file path required"
+    );
     let path = path(&args)?;
     let mut file = open(root, path, false)?;
     let before = stamp(&file.metadata().map_err(io_error)?);
     let size = before["size"].as_u64().unwrap();
     let max_bytes = number(&args, "max_bytes", 16_384, 524_288)?;
-    ensure!(max_bytes > 0, "max_bytes must be positive");
+    preflight!(
+        Category::Validation,
+        max_bytes > 0,
+        "max_bytes must be positive"
+    );
     let tail = match args.get("tail") {
         Some(v) => v.as_bool().context("tail must be a boolean")?,
         None => false,
     };
-    ensure!(
+    preflight!(
+        Category::Validation,
         !(tail && args.get("cursor").is_some()),
         "tail and cursor cannot be combined"
     );
-    ensure!(
+    preflight!(
+        Category::Validation,
         !(args.get("offset").is_some() && (tail || args.get("cursor").is_some())),
         "offset cannot be combined with tail or cursor"
     );
@@ -266,11 +313,13 @@ fn read_observed(root: &Path, args: Value, after_read: impl FnOnce()) -> Result<
         number(&args, "offset", 0, u64::MAX)?
     };
     if let Some(cursor) = args.get("cursor") {
-        ensure!(
+        preflight!(
+            Category::Validation,
             cursor["path"].as_str() == Some(path),
             "cursor path mismatch"
         );
-        ensure!(
+        preflight!(
+            Category::Validation,
             cursor["snapshot"]["device"] == before["device"]
                 && cursor["snapshot"]["inode"] == before["inode"],
             "file_rotated: restart reading"
@@ -279,20 +328,27 @@ fn read_observed(root: &Path, args: Value, after_read: impl FnOnce()) -> Result<
         let old_size = cursor["snapshot"]["size"]
             .as_u64()
             .context("invalid cursor snapshot")?;
-        ensure!(
+        preflight!(
+            Category::Conflict,
             size >= old_size && size >= offset,
             "file_truncated: restart reading"
         );
-        ensure!(
+        preflight!(
+            Category::Conflict,
             cursor["anchor"].as_str() == Some(anchor(&mut file, offset)?.as_str()),
             "file_changed: cursor anchor differs; restart reading"
         );
-        ensure!(
+        preflight!(
+            Category::Conflict,
             size != old_size || cursor["snapshot"] == before,
             "file_changed: same-size rewrite; restart reading"
         );
     }
-    ensure!(offset <= size, "offset exceeds current file size");
+    preflight!(
+        Category::Validation,
+        offset <= size,
+        "offset exceeds current file size"
+    );
     file.seek(SeekFrom::Start(offset)).map_err(io_error)?;
     let mut bytes = Vec::with_capacity(max_bytes as usize);
     (&mut file)
@@ -319,7 +375,8 @@ pub(super) fn resolve(
     roots: &[std::path::PathBuf],
     path: &Path,
 ) -> Result<(std::path::PathBuf, String)> {
-    ensure!(
+    preflight!(
+        Category::Validation,
         path.is_absolute() && !path.components().any(|c| c == Component::ParentDir),
         "path must be absolute without traversal"
     );
@@ -327,7 +384,9 @@ pub(super) fn resolve(
         .iter()
         .filter(|root| path.starts_with(root))
         .max_by_key(|root| root.components().count())
-        .ok_or_else(|| anyhow::anyhow!("path outside file roots"))?;
+        .ok_or_else(|| {
+            super::errors::rejection_with_message(Category::Permission, "path outside file roots")
+        })?;
     Ok((
         root.clone(),
         path.strip_prefix(root)?
@@ -351,7 +410,8 @@ pub(super) fn change(
 ) -> Result<Value> {
     use std::{io::Write, os::fd::AsRawFd};
     resolve(roots, target)?;
-    ensure!(
+    preflight!(
+        Category::Validation,
         matches!(action, "write" | "delete"),
         "Unknown file change action"
     );
@@ -371,7 +431,8 @@ pub(super) fn change(
     let pinned_parent =
         std::path::PathBuf::from(format!("/proc/self/fd/{}", directory.as_raw_fd()));
     let actual = fs::read_link(&pinned_parent).map_err(io_error)?.join(name);
-    ensure!(
+    preflight!(
+        Category::Conflict,
         actual == target,
         "path changed during resolution; reobserve"
     );
@@ -380,7 +441,8 @@ pub(super) fn change(
     let entry = pinned_parent.join(name);
     let before = match fs::symlink_metadata(&entry) {
         Ok(meta) => {
-            ensure!(
+            preflight!(
+                Category::Validation,
                 meta.is_file() || meta.is_dir(),
                 "only regular files/directories are supported"
             );
@@ -390,18 +452,24 @@ pub(super) fn change(
         Err(e) => return Err(io_error(e)),
     };
     if let Some(expected) = expected {
-        ensure!(
+        preflight!(
+            Category::Conflict,
             before.as_ref().is_some_and(|m| stamp(m) == *expected),
             "target_conflict: identity changed; reobserve"
         );
     }
     if action == "write" {
-        ensure!(
+        preflight!(
+            Category::Validation,
             before.as_ref().is_none_or(|m| m.is_file()),
             "write target must be a regular file"
         );
         let content = content.context("Write content required")?;
-        ensure!(content.len() <= 524288, "Write exceeds 512 KiB");
+        preflight!(
+            Category::Validation,
+            content.len() <= 524288,
+            "Write exceeds 512 KiB"
+        );
         let mut temp = tempfile::NamedTempFile::new_in(&pinned_parent)?;
         if let Some(meta) = &before {
             temp.as_file().set_permissions(meta.permissions())?;
@@ -410,7 +478,8 @@ pub(super) fn change(
         temp.as_file().sync_all()?;
         // Catch normal concurrent replacement; this is not a compare-and-swap syscall.
         let current = fs::symlink_metadata(&entry).ok();
-        ensure!(
+        preflight!(
+            Category::Conflict,
             current.as_ref().map(stamp) == before.as_ref().map(stamp),
             "target_conflict: changed before replacement"
         );
@@ -454,8 +523,8 @@ mod tests {
         let root = std::path::PathBuf::from(format!("/proc/{}", std::process::id()));
         let error = read(&root, json!({"path":"environ"})).unwrap_err();
         assert_eq!(
-            error.downcast_ref::<&'static str>(),
-            Some(&"runtime_kernel_filesystem_denied")
+            super::super::errors::message(&error),
+            "runtime_kernel_filesystem_denied"
         );
         assert!(
             read(
@@ -505,13 +574,13 @@ mod tests {
         assert!(list(dir.path(), json!([])).is_err());
         let missing = read(dir.path(), json!({"path":"missing"})).unwrap_err();
         assert_eq!(
-            missing.downcast_ref::<&'static str>(),
-            Some(&"runtime_file_not_found")
+            super::super::errors::message(&missing),
+            "runtime_file_not_found"
         );
         let denied = io_error(std::io::Error::from(std::io::ErrorKind::PermissionDenied));
         assert_eq!(
-            denied.downcast_ref::<&'static str>(),
-            Some(&"runtime_file_permission_denied")
+            super::super::errors::message(&denied),
+            "runtime_file_permission_denied"
         );
     }
 
