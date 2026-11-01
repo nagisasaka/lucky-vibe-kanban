@@ -53,6 +53,14 @@ impl PushNotifier for DefaultPushNotifier {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum NotificationEvent {
+    Question = 1,
+    Approval = 2,
+    Success = 4,
+    Failure = 8,
+}
+
 /// Service for handling cross-platform notifications including sound alerts and push notifications
 #[derive(Clone)]
 pub struct NotificationService {
@@ -79,14 +87,26 @@ impl NotificationService {
     /// Send both sound and push notifications if enabled.
     /// `workspace_id` is forwarded to the push notifier so Tauri can emit a
     /// navigation event when the notification is clicked.
-    pub async fn notify(&self, title: &str, message: &str, workspace_id: Option<Uuid>) {
+    pub async fn notify(
+        &self,
+        event: NotificationEvent,
+        title: &str,
+        message: &str,
+        workspace_id: Option<Uuid>,
+    ) {
         let config = self.config.read().await.notifications.clone();
 
         if config.sound_enabled {
             Self::play_sound_notification(&config.sound_file).await;
         }
 
-        if config.push_enabled {
+        // Sound preparation may await filesystem/platform work. Use the latest
+        // choices at push admission and keep the read guard until the notifier
+        // accepts the send, so a completed config save governs subsequent sends.
+        let latest = self.config.read().await;
+        if latest.notifications.push_enabled
+            && latest.notifications.push_event_mask & event as u8 != 0
+        {
             self.push_notifier.send(title, message, workspace_id).await;
         }
     }
@@ -293,5 +313,124 @@ async fn wsl_to_windows_path(wsl_path: &std::path::Path) -> Option<String> {
             path_str
         );
         None
+    }
+}
+
+#[cfg(test)]
+mod event_tests {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use super::*;
+
+    struct Recorder(AtomicUsize);
+    #[async_trait]
+    impl PushNotifier for Recorder {
+        async fn send(&self, _: &str, _: &str, _: Option<Uuid>) {
+            self.0.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    #[tokio::test]
+    async fn os_event_selection_and_master_switch_apply_immediately() {
+        let recorder = Arc::new(Recorder(AtomicUsize::new(0)));
+        let config = Arc::new(RwLock::new(Config::default()));
+        config.write().await.notifications.sound_enabled = false;
+        let service = NotificationService {
+            config: config.clone(),
+            push_notifier: recorder.clone(),
+        };
+        for event in [
+            NotificationEvent::Question,
+            NotificationEvent::Approval,
+            NotificationEvent::Success,
+            NotificationEvent::Failure,
+        ] {
+            config.write().await.notifications.push_event_mask = 15 ^ event as u8;
+            let before = recorder.0.load(Ordering::SeqCst);
+            service.notify(event, "fixture", "fixture", None).await;
+            assert_eq!(recorder.0.load(Ordering::SeqCst), before);
+            config.write().await.notifications.push_event_mask = event as u8;
+            service.notify(event, "fixture", "fixture", None).await;
+            assert_eq!(recorder.0.load(Ordering::SeqCst), before + 1);
+        }
+        config.write().await.notifications.push_enabled = false;
+        service
+            .notify(NotificationEvent::Failure, "fixture", "fixture", None)
+            .await;
+        assert_eq!(recorder.0.load(Ordering::SeqCst), 4);
+        config.write().await.notifications.push_enabled = true;
+        config.write().await.notifications.push_event_mask = 0;
+        service
+            .notify(NotificationEvent::Failure, "fixture", "fixture", None)
+            .await;
+        assert_eq!(recorder.0.load(Ordering::SeqCst), 4);
+    }
+
+    struct PausedNotifier {
+        entered: tokio::sync::Notify,
+        release: tokio::sync::Notify,
+    }
+    #[async_trait]
+    impl PushNotifier for PausedNotifier {
+        async fn send(&self, _: &str, _: &str, _: Option<Uuid>) {
+            self.entered.notify_one();
+            self.release.notified().await;
+        }
+    }
+
+    #[tokio::test]
+    async fn os_config_save_waits_for_notifier_admission_to_settle() {
+        let notifier = Arc::new(PausedNotifier {
+            entered: tokio::sync::Notify::new(),
+            release: tokio::sync::Notify::new(),
+        });
+        let config = Arc::new(RwLock::new(Config::default()));
+        config.write().await.notifications.sound_enabled = false;
+        let service = NotificationService {
+            config: config.clone(),
+            push_notifier: notifier.clone(),
+        };
+        let sending = tokio::spawn(async move {
+            service
+                .notify(NotificationEvent::Success, "fixture", "fixture", None)
+                .await;
+        });
+        notifier.entered.notified().await;
+        assert!(config.try_write().is_err());
+        notifier.release.notify_one();
+        sending.await.unwrap();
+        config.write().await.notifications.push_event_mask = 0;
+        assert_eq!(config.read().await.notifications.push_event_mask, 0);
+    }
+
+    #[tokio::test]
+    async fn os_choices_survive_config_file_reload() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut config = Config::default();
+        config.notifications.push_event_mask = 0;
+        crate::services::config::save_config_to_file(&config, &path)
+            .await
+            .unwrap();
+        let restored = crate::services::config::load_config_from_file(&path).await;
+        assert_eq!(restored.notifications.push_event_mask, 0);
+        assert!(restored.notifications.push_enabled);
+    }
+
+    #[test]
+    fn old_os_config_defaults_and_selected_events_round_trip() {
+        let mut value = serde_json::to_value(Config::default()).unwrap();
+        value["notifications"]
+            .as_object_mut()
+            .unwrap()
+            .remove("push_event_mask");
+        let mut config: Config = serde_json::from_value(value).unwrap();
+        assert_eq!(config.notifications.push_event_mask, 15);
+        for mask in [0, 1, 2, 4, 8, 15] {
+            config.notifications.push_event_mask = mask;
+            let restored: Config =
+                serde_json::from_slice(&serde_json::to_vec(&config).unwrap()).unwrap();
+            assert_eq!(restored.notifications.push_event_mask, mask);
+        }
     }
 }

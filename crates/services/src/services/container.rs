@@ -318,7 +318,19 @@ pub trait ContainerService {
             }
         };
         self.notification_service()
-            .notify(&title, &message, Some(ctx.workspace.id))
+            .notify(
+                if matches!(
+                    ctx.execution_process.status,
+                    ExecutionProcessStatus::Completed
+                ) {
+                    crate::services::notification::NotificationEvent::Success
+                } else {
+                    crate::services::notification::NotificationEvent::Failure
+                },
+                &title,
+                &message,
+                Some(ctx.workspace.id),
+            )
             .await;
     }
 

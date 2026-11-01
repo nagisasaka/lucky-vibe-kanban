@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { currentLocalUserId } from '@/shared/lib/localIdentity';
 
-type Registration = { id: string; project_id: string; endpoint_hash: string };
+type Registration = {
+  id: string;
+  project_id: string;
+  endpoint_hash: string;
+  event_mask: number;
+};
 type Status = {
   public_key: string | null;
   registrations: Registration[];
@@ -32,6 +37,35 @@ async function endpointHash(endpoint: string) {
     .map((n) => n.toString(16).padStart(2, '0'))
     .join('');
 }
+
+const pushEvents = [
+  {
+    bit: 1,
+    label: '仕様質問待ち',
+    description: 'Codexが回答を必要とする質問を出したとき。',
+  },
+  {
+    bit: 2,
+    label: '実行承認待ち',
+    description: 'Codexの操作が承認待ちになったとき。',
+  },
+  {
+    bit: 4,
+    label: 'Run成功',
+    description:
+      'CodexのRunが成功で終了したとき。テスト合格・自動マージ・公開の完了とは別です。',
+  },
+  {
+    bit: 8,
+    label: 'Run失敗・異常終了',
+    description: 'Runが失敗、クラッシュ、監査失敗で終了したとき。',
+  },
+  {
+    bit: 16,
+    label: 'Runキャンセル',
+    description: 'Runがキャンセルで終了したとき。',
+  },
+];
 
 export function WebPushSettings() {
   const supported =
@@ -128,11 +162,23 @@ export function WebPushSettings() {
       setBusy(false);
     }
   };
+  const saveEvents = async (item: Registration, event_mask: number) => {
+    setBusy(true);
+    setError('');
+    try {
+      await request(`/${item.id}/events`, { event_mask });
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="space-y-base">
       <p className="text-high">ブラウザのWeb Push通知</p>
       <p className="text-sm text-low">
-        Projectごとに、この端末へCodexの質問・承認待ち・Run終了を通知します。Issue名や質問本文は通知に表示しません。通知を拒否してもLVKは使えます。
+        ユーザー・Project・登録端末ごとに、Codexの質問・承認待ち・Run終了を通知します。イベントの変更はすぐに保存され、その登録だけに適用されます。Issue名や質問本文は通知に表示しません。通知を拒否してもLVKは使えます。
       </p>
       {!supported ? (
         <p>
@@ -165,10 +211,7 @@ export function WebPushSettings() {
         </div>
       )}
       {status?.registrations.map((r) => (
-        <div
-          key={r.id}
-          className="flex flex-wrap items-center gap-base text-sm"
-        >
+        <div key={r.id} className="space-y-base rounded border p-base text-sm">
           <span>
             {status.projects.find((p) => p.id === r.project_id)?.name ??
               r.project_id}{' '}
@@ -183,8 +226,35 @@ export function WebPushSettings() {
             onClick={() => void disable(r)}
             className="rounded border bg-secondary text-high px-base py-half"
           >
-            OFF
+            OFF / 購読解除
           </button>
+          <fieldset className="space-y-base" disabled={busy}>
+            <legend className="text-high">通知するイベント</legend>
+            {pushEvents.map((event) => (
+              <label key={event.bit} className="flex items-start gap-base">
+                <input
+                  type="checkbox"
+                  className="mt-half shrink-0"
+                  checked={(r.event_mask & event.bit) !== 0}
+                  onChange={(e) =>
+                    void saveEvents(
+                      r,
+                      e.target.checked
+                        ? r.event_mask | event.bit
+                        : r.event_mask & ~event.bit
+                    )
+                  }
+                />
+                <span className="min-w-0">
+                  <span className="block text-high">{event.label}</span>
+                  <span className="block text-low">{event.description}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          <p className="text-low">
+            全イベントOFFは登録を残して通知だけを停止します。購読解除はこの登録を削除します。質問・承認の操作はLVK内に残ります。再登録は選択を維持し、解除後の新規登録は全イベントONです。過去の通知は再送しません。
+          </p>
         </div>
       ))}
       <p className="text-sm text-low">

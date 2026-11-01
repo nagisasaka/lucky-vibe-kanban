@@ -898,7 +898,7 @@ export type Config = { config_version: string, theme: ThemeMode, executor_profil
  */
 integration_skip_validation: boolean, };
 
-export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean, sound_file: SoundFile, };
+export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean, push_event_mask: number, sound_file: SoundFile, };
 
 export enum ThemeMode { LIGHT = "LIGHT", DARK = "DARK", SYSTEM = "SYSTEM" }
 

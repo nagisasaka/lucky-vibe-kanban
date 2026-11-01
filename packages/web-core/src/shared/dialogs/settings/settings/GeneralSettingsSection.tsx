@@ -1,3 +1,4 @@
+import { OsNotificationEvents } from './OsNotificationEvents';
 import { ExternalEditorSettings } from '@/shared/components/ExternalEditorSettings';
 import { WebPushSettings } from '@/shared/components/web-push/WebPushSettings';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -656,6 +657,14 @@ export function GeneralSettingsSection() {
                 ...draft!.notifications,
                 push_enabled: checked,
               },
+            })
+          }
+        />
+        <OsNotificationEvents
+          mask={draft?.notifications.push_event_mask ?? 15}
+          onChange={(push_event_mask) =>
+            updateDraft({
+              notifications: { ...draft!.notifications, push_event_mask },
             })
           }
         />
