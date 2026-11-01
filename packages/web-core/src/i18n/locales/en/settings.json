@@ -599,9 +599,12 @@
       }
     },
     "account": {
-      "session": "Sign-in status",
+      "connection": "Connection",
+      "username": "Username",
+      "identity": "Account identity",
+      "unavailable": "Account information unavailable",
+      "session": "Connection details",
       "status": "Status",
-      "signedIn": "Signed in",
       "localStatus": "Local connection",
       "method": "Authentication method",
       "localHint": "Local connections do not require sign-in or sign-out.",

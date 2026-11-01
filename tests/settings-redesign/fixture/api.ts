@@ -75,7 +75,18 @@ export function installFixtureApi() {
         user:
           mode === "locked"
             ? null
-            : { id: "fixture-user", admin: role === "admin" },
+            : {
+                id: "fixture-user",
+                admin: role === "admin",
+                display_name:
+                  params.get("identity") === "missing"
+                    ? null
+                    : params.get("identity") === "blank"
+                      ? "   "
+                      : mode === "basic"
+                        ? "sample-basic-user"
+                        : "Sample Auth0 Person",
+              },
       });
     if (path === "/api/access/logout" && params.get("allowLogout") === "true") {
       if (params.get("logoutFailure") === "true")

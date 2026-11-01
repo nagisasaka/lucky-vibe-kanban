@@ -18,12 +18,19 @@ for (const width of [360, 1440]) {
         .getByRole("button", { name: "アカウント", exact: true })
         .click();
       await expect(
-        dialog.getByRole("heading", { name: "ログイン状態", exact: true }),
+        dialog.getByRole("heading", { name: "接続情報", exact: true }),
       ).toBeVisible();
       await expect(
-        dialog.getByText(auth === "local" ? "Local接続" : "ログイン済み", {
-          exact: true,
-        }),
+        dialog.getByText(
+          auth === "local"
+            ? "Local接続"
+            : auth === "basic"
+              ? "sample-basic-user"
+              : "Sample Auth0 Person",
+          {
+            exact: true,
+          },
+        ),
       ).toBeVisible();
       await expect(
         dialog.getByText(
@@ -86,7 +93,7 @@ for (const auth of ["basic", "auth0"]) {
     );
     await page.getByRole("button", { name: "設定を開く", exact: true }).click();
     await expect(
-      page.getByRole("heading", { name: "ログイン状態", exact: true }),
+      page.getByRole("heading", { name: "接続情報", exact: true }),
     ).toBeVisible();
     await expect(
       page
@@ -125,8 +132,38 @@ test("logout failure stays in account with error; English account labels", async
   ).toBeVisible();
   await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveText("Fixture logout failed");
-  await expect(page.getByText("Signed in", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("sample-basic-user", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Log out", exact: true }),
   ).toBeEnabled();
 });
+
+for (const auth of ["basic", "auth0"]) {
+  for (const identity of ["missing", "blank"]) {
+    test(`account ${auth} ${identity}: do not invent identity`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`/?auth=${auth}&identity=${identity}&gear=true`);
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
+      await page
+        .getByRole("navigation")
+        .getByRole("button", { name: "アカウント", exact: true })
+        .click();
+      await expect(
+        page.getByText("本人情報を取得できません", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText("ログイン済み", { exact: true })).toHaveCount(
+        0,
+      );
+      await expect(page.getByText("fixture-user", { exact: true })).toHaveCount(
+        0,
+      );
+      await expect(
+        page.getByRole("button", { name: "ログアウト", exact: true }),
+      ).toBeVisible();
+    });
+  }
+}

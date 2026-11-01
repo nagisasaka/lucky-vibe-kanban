@@ -244,14 +244,21 @@ export function ServerAccessGate({
                 {t('settings.account.session')}
               </h3>
               <dl className="space-y-base">
-                <div>
-                  <dt className="text-low">{t('settings.account.status')}</dt>
-                  <dd>
+                <div className="min-w-0">
+                  <dt className="text-low">
                     {t(
                       status.mode === 'local'
-                        ? 'settings.account.localStatus'
-                        : 'settings.account.signedIn'
+                        ? 'settings.account.connection'
+                        : status.mode === 'basic'
+                          ? 'settings.account.username'
+                          : 'settings.account.identity'
                     )}
+                  </dt>
+                  <dd className="break-words [overflow-wrap:anywhere]">
+                    {status.mode === 'local'
+                      ? t('settings.account.localStatus')
+                      : status.user?.display_name?.trim() ||
+                        t('settings.account.unavailable')}
                   </dd>
                 </div>
                 <div>

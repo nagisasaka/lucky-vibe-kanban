@@ -589,9 +589,12 @@
       "selectMachineHint": "Select a machine to open machine settings."
     },
     "account": {
-      "session": "ログイン状態",
+      "connection": "接続",
+      "username": "ユーザー名",
+      "identity": "アカウント情報",
+      "unavailable": "本人情報を取得できません",
+      "session": "接続情報",
       "status": "状態",
-      "signedIn": "ログイン済み",
       "localStatus": "Local接続",
       "method": "認証方式",
       "localHint": "Local接続ではログイン・ログアウトは不要です。",

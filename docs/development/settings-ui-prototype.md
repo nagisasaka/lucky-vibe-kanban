@@ -259,3 +259,26 @@ canary私有pathと不許可Hostは403、fixture APIは401、browser pageerror�
 証拠は`.build/settings-account-review/hmr-proof.json`と`hmr-account-pc.png`。
 **公開p2へのHMR反映はまだ未完了**。親が当Workspaceの正規DevServerをstopしsettlement/port解放を確認後startし、外部WSSと実画面を確認する必要がある。
 詳細引継ぎは`.build/settings-account-review/handoff.json`、最新局所構成は`.build/settings-preview/managed-start.json`。
+
+## 本人情報の表示（2026-11-01追加）
+
+アカウントの無情報な「ログイン済み」を除き、接続情報へ現在のセッションの本人名を表示する。
+Basicはその認証済みユーザー名、Auth0は検証済みOIDCログインから既存memberに保存された表示名を使う。
+既存providerはOIDC nameがない場合に検証済みsubjectを保存しているため、その場合は同じ本人識別名となる。
+メールや新しいプロフィール情報の取得、Auth0 scope/設定変更はしない。LocalはLocal接続だけを表示し、ユーザーログインとして扱わない。
+欠落・空白・旧backendでは取得不可と表示し、UUIDや仮名で代用しない。
+
+status APIへ任意のuser.display_nameを追加し、既存の有効なweb principalと一致するid/issuer/subjectのactive memberだけを取得する。
+未認証・失効・無効化された利用者にはuser=null、Localには本人名なし。管理用member一覧APIは使わず、秘密・token・hashの新しい応答項目は追加しない。
+認証fixture22試験、アカウント隔離E2E13件、local-web型/lint、backend buildで検証した。
+新規Rust試験の初回はfixtureの無効状態をblockedと誤記して失敗し、schemaのdisabledへ訂正して全22件成功。
+PC/360px、既存歯車、Basic/Auth0/Local、権限別表示、欠落・空白、logout成否を隔離検証。実ユーザー操作は行っていない。
+
+公開p2の新規未認証ブラウザで、変更後frontendソースの配信、WSSのHMR update、timeOrigin保持を確認した。
+証拠は`.build/settings-account-identity/live-hmr.json`。この確認は本人名の実データを取得していない。
+**新backendはビルド・配置準備済みだが、このRunでは稼働backendを切り替えていない。**
+親が同じWorkspaceの正規DevServerをstop→settlement確認→startし、ブラウザ再読込で拡張statusを取得する。
+新しいmigration・DB/key/認証設定変更は不要。現在のHMR構成と専用instanceをそのまま使う。
+切替前backendを`.build/settings-preview/rollback-server-before-identity`（約505MiB、実行物のみ）へ保持し、旧artifact manifestも保存した。
+rollbackは正規停止後に実行物と対応manifestを一体で戻す。DB/keyを戻したりコピーする操作はない。
+引継ぎは`.build/settings-account-identity/handoff.json`。実本人画面・実IdPログインは切替後の確認事項。
