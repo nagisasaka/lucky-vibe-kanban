@@ -370,3 +370,54 @@ test("a successful authentication handoff does not warn about an already committ
   await expect(page).toHaveURL("http://127.0.0.1:4196/");
   expect(dialogs).toEqual([]);
 });
+
+for (const failSave of [false, true]) {
+  test(`merged OS event controls preserve save scope and drafts (failure=${failSave})`, async ({
+    page,
+  }) => {
+    await open(page, `?section=notifications&failSave=${failSave}`);
+    const event = page.locator("#os-push-event-1");
+    await expect(event).toBeChecked();
+    await expect(page.locator('[id^="os-push-event-"]')).toHaveCount(4);
+    const persisted = () =>
+      page.evaluate(async () => {
+        const response = await fetch("/api/info");
+        return (await response.json()).data.config;
+      });
+    const before = await persisted();
+    await event.click();
+    await expect(event).not.toBeChecked();
+    expect(await persisted()).toEqual(before);
+    await page.getByRole("button", { name: "破棄", exact: true }).click();
+    await expect(event).toBeChecked();
+    await event.click();
+    await page.getByRole("button", { name: "保存", exact: true }).click();
+    if (failSave) {
+      await expect(
+        page.getByText("Fixture save rejected", { exact: true }),
+      ).toBeVisible();
+      await expect(event).not.toBeChecked();
+      expect(await persisted()).toEqual(before);
+      await page.getByRole("button", { name: "破棄", exact: true }).click();
+      await expect(event).toBeChecked();
+    } else {
+      await expect(
+        page.getByRole("button", { name: "保存", exact: true }),
+      ).toHaveCount(0);
+      expect(await persisted()).toEqual({
+        ...before,
+        notifications: { ...before.notifications, push_event_mask: 14 },
+      });
+      await page
+        .getByRole("navigation")
+        .getByRole("button", { name: "表示・操作とプライバシー", exact: true })
+        .click();
+      await expect(event).toHaveCount(0);
+      await page
+        .getByRole("navigation")
+        .getByRole("button", { name: "通知", exact: true })
+        .click();
+      await expect(event).not.toBeChecked();
+    }
+  });
+}

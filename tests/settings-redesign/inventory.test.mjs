@@ -3,13 +3,13 @@ import { readFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-// One-off prototype inventory against the agreed, immutable starting point.
+// Preserve the pre-regrouping cards including LOCAL-285 notification events.
 // Compare whole card bodies, including handlers/defaults, rather than just labels.
 const file =
   "packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx";
 const baseline = execFileSync(
   "git",
-  ["show", `89c1a09517f293f9409d8ba6f0d4279868cd36e9:${file}`],
+  ["show", `6823bcc29ab0e2113de0b9cac85fc355b366ba87:${file}`],
   { encoding: "utf8" },
 );
 const current = readFileSync(file, "utf8");
