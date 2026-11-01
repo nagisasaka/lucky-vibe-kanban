@@ -55,7 +55,11 @@ import {
 } from './SettingsComponents';
 import { useSettingsDirty } from './SettingsDirtyContext';
 
-export function GeneralSettingsSection() {
+export function GeneralSettingsSection({
+  category = 'general',
+}: {
+  category?: 'general' | 'execution' | 'notifications';
+}) {
   const { t } = useTranslation(['settings', 'common']);
   const { setDirty: setContextDirty } = useSettingsDirty();
 
@@ -149,6 +153,7 @@ export function GeneralSettingsSection() {
 
   const updateDraft = useCallback(
     (patch: Partial<typeof config>) => {
+      setSuccess(false);
       setDraft((prev: typeof config) => {
         if (!prev) return prev;
         const next = merge({}, prev, patch);
@@ -207,6 +212,7 @@ export function GeneralSettingsSection() {
     if (!config) return;
     setDraft(cloneDeep(config));
     setDirty(false);
+    setSuccess(false);
   };
 
   const resetOnboarding = async () => {
@@ -257,473 +263,520 @@ export function GeneralSettingsSection() {
         </div>
       )}
 
-      {success && (
+      {success && !hasUnsavedChanges && (
         <div className="bg-success/10 border border-success/50 rounded-sm p-4 text-success font-medium">
           {t('settings.general.save.success')}
         </div>
       )}
 
       {/* Appearance */}
-      <SettingsCard
-        title={t('settings.general.appearance.title')}
-        description={t('settings.general.appearance.description')}
-      >
-        <SettingsField
-          label={t('settings.general.appearance.theme.label')}
-          description={t('settings.general.appearance.theme.helper')}
+      {category === 'general' && (
+        <SettingsCard
+          title={t('settings.general.appearance.title')}
+          description={t('settings.general.appearance.description')}
         >
-          <SettingsSelect
-            value={draft?.theme}
-            options={themeOptions}
-            onChange={(value) => updateDraft({ theme: value })}
-            placeholder={t('settings.general.appearance.theme.placeholder')}
-          />
-        </SettingsField>
-
-        <SettingsField
-          label={t('settings.general.appearance.language.label')}
-          description={t('settings.general.appearance.language.helper')}
-        >
-          <SettingsSelect
-            value={draft?.language}
-            options={languageOptions}
-            onChange={(value: UiLanguage) => updateDraft({ language: value })}
-            placeholder={t('settings.general.appearance.language.placeholder')}
-          />
-        </SettingsField>
-
-        {isMobile && (
+          <p className="text-xs text-low">{t('settings.scope.appearance')}</p>
           <SettingsField
-            label="Mobile Font Size"
-            description="Scale text size on mobile for better readability"
+            label={t('settings.general.appearance.theme.label')}
+            description={t('settings.general.appearance.theme.helper')}
           >
             <SettingsSelect
-              value={mobileFontScale}
-              options={[
-                {
-                  value: 'default' as MobileFontScale,
-                  label: 'Default (100%)',
-                },
-                { value: 'small' as MobileFontScale, label: 'Small (95%)' },
-                { value: 'smaller' as MobileFontScale, label: 'Smaller (90%)' },
-              ]}
-              onChange={(value: MobileFontScale) => setMobileFontScale(value)}
+              value={draft?.theme}
+              options={themeOptions}
+              onChange={(value) => updateDraft({ theme: value })}
+              placeholder={t('settings.general.appearance.theme.placeholder')}
             />
           </SettingsField>
-        )}
-      </SettingsCard>
 
-      <SettingsCard title={t('externalEditors.title')}>
-        {draft && (
-          <ExternalEditorSettings
-            value={draft.editor}
-            onChange={(editor) => updateDraft({ editor })}
-          />
-        )}
-      </SettingsCard>
+          <SettingsField
+            label={t('settings.general.appearance.language.label')}
+            description={t('settings.general.appearance.language.helper')}
+          >
+            <SettingsSelect
+              value={draft?.language}
+              options={languageOptions}
+              onChange={(value: UiLanguage) => updateDraft({ language: value })}
+              placeholder={t(
+                'settings.general.appearance.language.placeholder'
+              )}
+            />
+          </SettingsField>
+
+          {isMobile && (
+            <SettingsField
+              label="Mobile Font Size"
+              description="Scale text size on mobile for better readability"
+            >
+              <SettingsSelect
+                value={mobileFontScale}
+                options={[
+                  {
+                    value: 'default' as MobileFontScale,
+                    label: 'Default (100%)',
+                  },
+                  { value: 'small' as MobileFontScale, label: 'Small (95%)' },
+                  {
+                    value: 'smaller' as MobileFontScale,
+                    label: 'Smaller (90%)',
+                  },
+                ]}
+                onChange={(value: MobileFontScale) => setMobileFontScale(value)}
+              />
+            </SettingsField>
+          )}
+        </SettingsCard>
+      )}
+
+      {category === 'general' && (
+        <SettingsCard title={t('externalEditors.title')}>
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          {draft && (
+            <ExternalEditorSettings
+              value={draft.editor}
+              onChange={(editor) => updateDraft({ editor })}
+            />
+          )}
+        </SettingsCard>
+      )}
 
       {/* Default Coding Agent */}
-      <SettingsCard
-        title={t('settings.general.taskExecution.title')}
-        description={t('settings.general.taskExecution.description')}
-      >
-        <SettingsField
-          label={t('settings.general.taskExecution.executor.label')}
-          description={t('settings.general.taskExecution.executor.helper')}
+      {category === 'execution' && (
+        <SettingsCard
+          title={t('settings.general.taskExecution.title')}
+          description={t('settings.general.taskExecution.description')}
         >
-          <div className="grid grid-cols-2 gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <DropdownMenuTriggerButton
-                  label={
-                    draft?.executor_profile?.executor
-                      ? toPrettyCase(draft.executor_profile.executor)
-                      : t('settings.agents.selectAgent')
-                  }
-                  className="w-full justify-between"
-                  disabled={!profiles}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                {executorOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => {
-                      const variants = profiles?.[option.value];
-                      const variantKeys = variants
-                        ? getExecutorVariantKeys(variants)
-                        : [];
-                      const keepCurrentVariant =
-                        variantKeys.length > 0 &&
-                        draft?.executor_profile?.variant &&
-                        variantKeys.includes(draft.executor_profile.variant);
-
-                      const newProfile: ExecutorProfileId = {
-                        executor: option.value as BaseCodingAgent,
-                        variant: keepCurrentVariant
-                          ? draft!.executor_profile!.variant
-                          : null,
-                      };
-                      updateDraft({ executor_profile: newProfile });
-                    }}
-                  >
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {hasVariants ? (
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsField
+            label={t('settings.general.taskExecution.executor.label')}
+            description={t('settings.general.taskExecution.executor.helper')}
+          >
+            <div className="grid grid-cols-2 gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <DropdownMenuTriggerButton
                     label={
-                      draft?.executor_profile?.variant
-                        ? toPrettyCase(draft.executor_profile.variant)
-                        : t('settings.general.taskExecution.defaultLabel')
+                      draft?.executor_profile?.executor
+                        ? toPrettyCase(draft.executor_profile.executor)
+                        : t('settings.agents.selectAgent')
                     }
                     className="w-full justify-between"
+                    disabled={!profiles}
                   />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                  {variantOptions.map((variantLabel) => (
+                  {executorOptions.map((option) => (
                     <DropdownMenuItem
-                      key={variantLabel}
+                      key={option.value}
                       onClick={() => {
+                        const variants = profiles?.[option.value];
+                        const variantKeys = variants
+                          ? getExecutorVariantKeys(variants)
+                          : [];
+                        const keepCurrentVariant =
+                          variantKeys.length > 0 &&
+                          draft?.executor_profile?.variant &&
+                          variantKeys.includes(draft.executor_profile.variant);
+
                         const newProfile: ExecutorProfileId = {
-                          executor: draft!.executor_profile!.executor,
-                          variant: variantLabel,
+                          executor: option.value as BaseCodingAgent,
+                          variant: keepCurrentVariant
+                            ? draft!.executor_profile!.variant
+                            : null,
                         };
                         updateDraft({ executor_profile: newProfile });
                       }}
                     >
-                      {toPrettyCase(variantLabel)}
+                      {option.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : selectedAgentProfile ? (
-              <button
-                disabled
-                className={cn(
-                  'flex items-center justify-between w-full px-base py-half rounded-sm border border-border bg-secondary',
-                  'text-base text-low opacity-50 cursor-not-allowed'
-                )}
-              >
-                <span className="truncate">
-                  {t('settings.general.taskExecution.defaultLabel')}
-                </span>
-              </button>
-            ) : null}
-          </div>
-        </SettingsField>
-      </SettingsCard>
+
+              {hasVariants ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <DropdownMenuTriggerButton
+                      label={
+                        draft?.executor_profile?.variant
+                          ? toPrettyCase(draft.executor_profile.variant)
+                          : t('settings.general.taskExecution.defaultLabel')
+                      }
+                      className="w-full justify-between"
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                    {variantOptions.map((variantLabel) => (
+                      <DropdownMenuItem
+                        key={variantLabel}
+                        onClick={() => {
+                          const newProfile: ExecutorProfileId = {
+                            executor: draft!.executor_profile!.executor,
+                            variant: variantLabel,
+                          };
+                          updateDraft({ executor_profile: newProfile });
+                        }}
+                      >
+                        {toPrettyCase(variantLabel)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : selectedAgentProfile ? (
+                <button
+                  disabled
+                  className={cn(
+                    'flex items-center justify-between w-full px-base py-half rounded-sm border border-border bg-secondary',
+                    'text-base text-low opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  <span className="truncate">
+                    {t('settings.general.taskExecution.defaultLabel')}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+          </SettingsField>
+        </SettingsCard>
+      )}
 
       {/* Git */}
-      <SettingsCard
-        title={t('settings.general.git.title')}
-        description={t('settings.general.git.description')}
-      >
-        <SettingsField
-          label={t('settings.general.git.branchPrefix.label')}
-          error={branchPrefixError}
-          description={
-            <>
-              {t('settings.general.git.branchPrefix.helper')}{' '}
-              {draft?.git_branch_prefix ? (
-                <>
-                  {t('settings.general.git.branchPrefix.preview')}{' '}
-                  <code className="text-xs bg-secondary px-1 py-0.5 rounded">
-                    {t('settings.general.git.branchPrefix.previewWithPrefix', {
-                      prefix: draft.git_branch_prefix,
-                    })}
-                  </code>
-                </>
-              ) : (
-                <>
-                  {t('settings.general.git.branchPrefix.preview')}{' '}
-                  <code className="text-xs bg-secondary px-1 py-0.5 rounded">
-                    {t('settings.general.git.branchPrefix.previewNoPrefix')}
-                  </code>
-                </>
-              )}
-            </>
-          }
+      {category === 'execution' && (
+        <SettingsCard
+          title={t('settings.general.git.title')}
+          description={t('settings.general.git.description')}
         >
-          <SettingsInput
-            value={draft?.git_branch_prefix ?? ''}
-            onChange={(value) => {
-              const trimmed = value.trim();
-              updateDraft({ git_branch_prefix: trimmed });
-              setBranchPrefixError(validateBranchPrefix(trimmed));
-            }}
-            placeholder={t('settings.general.git.branchPrefix.placeholder')}
-            error={!!branchPrefixError}
-          />
-        </SettingsField>
-
-        <SettingsField
-          label={t('settings.general.git.workspaceDir.label')}
-          description={t('settings.general.git.workspaceDir.helper')}
-        >
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <SettingsInput
-                value={draft?.workspace_dir ?? ''}
-                onChange={(value) =>
-                  updateDraft({ workspace_dir: value || null })
-                }
-                placeholder={t('settings.general.git.workspaceDir.placeholder')}
-              />
-            </div>
-            <PrimaryButton
-              variant="tertiary"
-              onClick={handleBrowseWorkspaceDir}
-            >
-              <FolderSimpleIcon className="size-icon-sm" weight="bold" />
-              {t('settings.general.git.workspaceDir.browse')}
-            </PrimaryButton>
-          </div>
-        </SettingsField>
-      </SettingsCard>
-
-      {/* Pull Requests */}
-      <SettingsCard
-        title={t('settings.general.pullRequests.title')}
-        description={t('settings.general.pullRequests.description')}
-      >
-        <SettingsCheckbox
-          id="pr-auto-description"
-          label={t('settings.general.pullRequests.autoDescription.label')}
-          description={t(
-            'settings.general.pullRequests.autoDescription.helper'
-          )}
-          checked={draft?.pr_auto_description_enabled ?? false}
-          onChange={(checked) =>
-            updateDraft({ pr_auto_description_enabled: checked })
-          }
-        />
-
-        <SettingsCheckbox
-          id="use-custom-prompt"
-          label={t('settings.general.pullRequests.customPrompt.useCustom')}
-          checked={draft?.pr_auto_description_prompt != null}
-          onChange={(checked) => {
-            if (checked) {
-              updateDraft({
-                pr_auto_description_prompt: DEFAULT_PR_DESCRIPTION_PROMPT,
-              });
-            } else {
-              updateDraft({ pr_auto_description_prompt: null });
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsField
+            label={t('settings.general.git.branchPrefix.label')}
+            error={branchPrefixError}
+            description={
+              <>
+                {t('settings.general.git.branchPrefix.helper')}{' '}
+                {draft?.git_branch_prefix ? (
+                  <>
+                    {t('settings.general.git.branchPrefix.preview')}{' '}
+                    <code className="text-xs bg-secondary px-1 py-0.5 rounded">
+                      {t(
+                        'settings.general.git.branchPrefix.previewWithPrefix',
+                        {
+                          prefix: draft.git_branch_prefix,
+                        }
+                      )}
+                    </code>
+                  </>
+                ) : (
+                  <>
+                    {t('settings.general.git.branchPrefix.preview')}{' '}
+                    <code className="text-xs bg-secondary px-1 py-0.5 rounded">
+                      {t('settings.general.git.branchPrefix.previewNoPrefix')}
+                    </code>
+                  </>
+                )}
+              </>
             }
-          }}
-        />
-
-        <SettingsField
-          label=""
-          description={t('settings.general.pullRequests.customPrompt.helper')}
-        >
-          <SettingsTextarea
-            value={
-              draft?.pr_auto_description_prompt ?? DEFAULT_PR_DESCRIPTION_PROMPT
-            }
-            onChange={(value) =>
-              updateDraft({ pr_auto_description_prompt: value })
-            }
-            disabled={draft?.pr_auto_description_prompt == null}
-          />
-        </SettingsField>
-      </SettingsCard>
-
-      {/* Commits */}
-      <SettingsCard
-        title={t('settings.general.commits.title')}
-        description={t('settings.general.commits.description')}
-      >
-        <SettingsCheckbox
-          id="commit-reminder"
-          label={t('settings.general.commits.reminder.label')}
-          description={t('settings.general.commits.reminder.helper')}
-          checked={draft?.commit_reminder_enabled ?? false}
-          onChange={(checked) =>
-            updateDraft({ commit_reminder_enabled: checked })
-          }
-        />
-
-        {draft?.commit_reminder_enabled && (
-          <>
-            <SettingsCheckbox
-              id="use-custom-commit-prompt"
-              label={t('settings.general.commits.customPrompt.useCustom')}
-              checked={draft?.commit_reminder_prompt != null}
-              onChange={(checked) => {
-                if (checked) {
-                  updateDraft({
-                    commit_reminder_prompt: DEFAULT_COMMIT_REMINDER_PROMPT,
-                  });
-                } else {
-                  updateDraft({ commit_reminder_prompt: null });
-                }
+          >
+            <SettingsInput
+              value={draft?.git_branch_prefix ?? ''}
+              onChange={(value) => {
+                const trimmed = value.trim();
+                updateDraft({ git_branch_prefix: trimmed });
+                setBranchPrefixError(validateBranchPrefix(trimmed));
               }}
+              placeholder={t('settings.general.git.branchPrefix.placeholder')}
+              error={!!branchPrefixError}
             />
+          </SettingsField>
 
-            <SettingsField
-              label=""
-              description={t('settings.general.commits.customPrompt.helper')}
-            >
-              <SettingsTextarea
-                value={
-                  draft?.commit_reminder_prompt ??
-                  DEFAULT_COMMIT_REMINDER_PROMPT
-                }
-                onChange={(value) =>
-                  updateDraft({ commit_reminder_prompt: value })
-                }
-                disabled={draft?.commit_reminder_prompt == null}
-              />
-            </SettingsField>
-          </>
-        )}
-      </SettingsCard>
-
-      <SettingsCard title="Web Push">
-        <WebPushSettings />
-      </SettingsCard>
-
-      {/* Notifications */}
-      <SettingsCard
-        title={t('settings.general.notifications.title')}
-        description={t('settings.general.notifications.description')}
-      >
-        <SettingsCheckbox
-          id="sound-enabled"
-          label={t('settings.general.notifications.sound.label')}
-          description={t('settings.general.notifications.sound.helper')}
-          checked={draft?.notifications.sound_enabled ?? false}
-          onChange={(checked) =>
-            updateDraft({
-              notifications: {
-                ...draft!.notifications,
-                sound_enabled: checked,
-              },
-            })
-          }
-        />
-
-        {draft?.notifications.sound_enabled && (
-          <div className="ml-7 space-y-2">
-            <label className="text-sm font-medium text-normal">
-              {t('settings.general.notifications.sound.fileLabel')}
-            </label>
+          <SettingsField
+            label={t('settings.general.git.workspaceDir.label')}
+            description={t('settings.general.git.workspaceDir.helper')}
+          >
             <div className="flex gap-2">
               <div className="flex-1">
-                <SettingsSelect
-                  value={draft.notifications.sound_file}
-                  options={soundOptions}
-                  onChange={(value: SoundFile) =>
-                    updateDraft({
-                      notifications: {
-                        ...draft.notifications,
-                        sound_file: value,
-                      },
-                    })
+                <SettingsInput
+                  value={draft?.workspace_dir ?? ''}
+                  onChange={(value) =>
+                    updateDraft({ workspace_dir: value || null })
                   }
                   placeholder={t(
-                    'settings.general.notifications.sound.filePlaceholder'
+                    'settings.general.git.workspaceDir.placeholder'
                   )}
                 />
               </div>
-              <IconButton
-                icon={SpeakerHighIcon}
-                onClick={() => previewSound(draft.notifications.sound_file)}
-                aria-label="Preview sound"
-                title="Preview sound"
-              />
+              <PrimaryButton
+                variant="tertiary"
+                onClick={handleBrowseWorkspaceDir}
+              >
+                <FolderSimpleIcon className="size-icon-sm" weight="bold" />
+                {t('settings.general.git.workspaceDir.browse')}
+              </PrimaryButton>
             </div>
-            <p className="text-sm text-low">
-              {t('settings.general.notifications.sound.fileHelper')}
-            </p>
-          </div>
-        )}
+          </SettingsField>
+        </SettingsCard>
+      )}
 
-        <SettingsCheckbox
-          id="push-notifications"
-          label={t('settings.general.notifications.push.label')}
-          description={t('settings.general.notifications.push.helper')}
-          checked={draft?.notifications.push_enabled ?? false}
-          onChange={(checked) =>
-            updateDraft({
-              notifications: {
-                ...draft!.notifications,
-                push_enabled: checked,
-              },
-            })
-          }
-        />
-        <OsNotificationEvents
-          mask={draft?.notifications.push_event_mask ?? 15}
-          onChange={(push_event_mask) =>
-            updateDraft({
-              notifications: { ...draft!.notifications, push_event_mask },
-            })
-          }
-        />
-      </SettingsCard>
+      {/* Pull Requests */}
+      {category === 'execution' && (
+        <SettingsCard
+          title={t('settings.general.pullRequests.title')}
+          description={t('settings.general.pullRequests.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsCheckbox
+            id="pr-auto-description"
+            label={t('settings.general.pullRequests.autoDescription.label')}
+            description={t(
+              'settings.general.pullRequests.autoDescription.helper'
+            )}
+            checked={draft?.pr_auto_description_enabled ?? false}
+            onChange={(checked) =>
+              updateDraft({ pr_auto_description_enabled: checked })
+            }
+          />
+
+          <SettingsCheckbox
+            id="use-custom-prompt"
+            label={t('settings.general.pullRequests.customPrompt.useCustom')}
+            checked={draft?.pr_auto_description_prompt != null}
+            onChange={(checked) => {
+              if (checked) {
+                updateDraft({
+                  pr_auto_description_prompt: DEFAULT_PR_DESCRIPTION_PROMPT,
+                });
+              } else {
+                updateDraft({ pr_auto_description_prompt: null });
+              }
+            }}
+          />
+
+          <SettingsField
+            label=""
+            description={t('settings.general.pullRequests.customPrompt.helper')}
+          >
+            <SettingsTextarea
+              value={
+                draft?.pr_auto_description_prompt ??
+                DEFAULT_PR_DESCRIPTION_PROMPT
+              }
+              onChange={(value) =>
+                updateDraft({ pr_auto_description_prompt: value })
+              }
+              disabled={draft?.pr_auto_description_prompt == null}
+            />
+          </SettingsField>
+        </SettingsCard>
+      )}
+
+      {/* Commits */}
+      {category === 'execution' && (
+        <SettingsCard
+          title={t('settings.general.commits.title')}
+          description={t('settings.general.commits.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsCheckbox
+            id="commit-reminder"
+            label={t('settings.general.commits.reminder.label')}
+            description={t('settings.general.commits.reminder.helper')}
+            checked={draft?.commit_reminder_enabled ?? false}
+            onChange={(checked) =>
+              updateDraft({ commit_reminder_enabled: checked })
+            }
+          />
+
+          {draft?.commit_reminder_enabled && (
+            <>
+              <SettingsCheckbox
+                id="use-custom-commit-prompt"
+                label={t('settings.general.commits.customPrompt.useCustom')}
+                checked={draft?.commit_reminder_prompt != null}
+                onChange={(checked) => {
+                  if (checked) {
+                    updateDraft({
+                      commit_reminder_prompt: DEFAULT_COMMIT_REMINDER_PROMPT,
+                    });
+                  } else {
+                    updateDraft({ commit_reminder_prompt: null });
+                  }
+                }}
+              />
+
+              <SettingsField
+                label=""
+                description={t('settings.general.commits.customPrompt.helper')}
+              >
+                <SettingsTextarea
+                  value={
+                    draft?.commit_reminder_prompt ??
+                    DEFAULT_COMMIT_REMINDER_PROMPT
+                  }
+                  onChange={(value) =>
+                    updateDraft({ commit_reminder_prompt: value })
+                  }
+                  disabled={draft?.commit_reminder_prompt == null}
+                />
+              </SettingsField>
+            </>
+          )}
+        </SettingsCard>
+      )}
+
+      {category === 'notifications' && (
+        <SettingsCard title="Web Push">
+          <p className="text-xs text-low">{t('settings.scope.push')}</p>
+          <WebPushSettings />
+        </SettingsCard>
+      )}
+
+      {/* Notifications */}
+      {category === 'notifications' && (
+        <SettingsCard
+          title={t('settings.general.notifications.title')}
+          description={t('settings.general.notifications.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsCheckbox
+            id="sound-enabled"
+            label={t('settings.general.notifications.sound.label')}
+            description={t('settings.general.notifications.sound.helper')}
+            checked={draft?.notifications.sound_enabled ?? false}
+            onChange={(checked) =>
+              updateDraft({
+                notifications: {
+                  ...draft!.notifications,
+                  sound_enabled: checked,
+                },
+              })
+            }
+          />
+
+          {draft?.notifications.sound_enabled && (
+            <div className="ml-7 space-y-2">
+              <label className="text-sm font-medium text-normal">
+                {t('settings.general.notifications.sound.fileLabel')}
+              </label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <SettingsSelect
+                    value={draft.notifications.sound_file}
+                    options={soundOptions}
+                    onChange={(value: SoundFile) =>
+                      updateDraft({
+                        notifications: {
+                          ...draft.notifications,
+                          sound_file: value,
+                        },
+                      })
+                    }
+                    placeholder={t(
+                      'settings.general.notifications.sound.filePlaceholder'
+                    )}
+                  />
+                </div>
+                <IconButton
+                  icon={SpeakerHighIcon}
+                  onClick={() => previewSound(draft.notifications.sound_file)}
+                  aria-label="Preview sound"
+                  title="Preview sound"
+                />
+              </div>
+              <p className="text-sm text-low">
+                {t('settings.general.notifications.sound.fileHelper')}
+              </p>
+            </div>
+          )}
+
+          <SettingsCheckbox
+            id="push-notifications"
+            label={t('settings.general.notifications.push.label')}
+            description={t('settings.general.notifications.push.helper')}
+            checked={draft?.notifications.push_enabled ?? false}
+            onChange={(checked) =>
+              updateDraft({
+                notifications: {
+                  ...draft!.notifications,
+                  push_enabled: checked,
+                },
+              })
+            }
+          />
+          <OsNotificationEvents
+            mask={draft?.notifications.push_event_mask ?? 15}
+            onChange={(push_event_mask) =>
+              updateDraft({
+                notifications: { ...draft!.notifications, push_event_mask },
+              })
+            }
+          />
+        </SettingsCard>
+      )}
 
       {/* Message Input */}
-      <SettingsCard title={t('settings.general.messageInput.title')}>
-        <SettingsField
-          label={t('settings.general.messageInput.shortcut.label')}
-        >
-          <p className="text-sm text-normal">
-            {t('todo.inputHint', { ns: 'common' })}
-          </p>
-        </SettingsField>
-      </SettingsCard>
+      {category === 'general' && (
+        <SettingsCard title={t('settings.general.messageInput.title')}>
+          <p className="text-xs text-low">{t('settings.scope.readOnly')}</p>
+          <SettingsField
+            label={t('settings.general.messageInput.shortcut.label')}
+          >
+            <p className="text-sm text-normal">
+              {t('todo.inputHint', { ns: 'common' })}
+            </p>
+          </SettingsField>
+        </SettingsCard>
+      )}
 
       {/* Privacy */}
-      <SettingsCard
-        title={t('settings.general.privacy.title')}
-        description={t('settings.general.privacy.description')}
-      >
-        <SettingsCheckbox
-          id="analytics-enabled"
-          label={t('settings.general.privacy.telemetry.label')}
-          description={t('settings.general.privacy.telemetry.helper')}
-          checked={draft?.analytics_enabled ?? false}
-          onChange={(checked) => updateDraft({ analytics_enabled: checked })}
-        />
-      </SettingsCard>
+      {category === 'general' && (
+        <SettingsCard
+          title={t('settings.general.privacy.title')}
+          description={t('settings.general.privacy.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.instance')}</p>
+          <SettingsCheckbox
+            id="analytics-enabled"
+            label={t('settings.general.privacy.telemetry.label')}
+            description={t('settings.general.privacy.telemetry.helper')}
+            checked={draft?.analytics_enabled ?? false}
+            onChange={(checked) => updateDraft({ analytics_enabled: checked })}
+          />
+        </SettingsCard>
+      )}
 
       {/* Task Templates */}
-      <SettingsCard
-        title={t('settings.general.taskTemplates.title')}
-        description={t('settings.general.taskTemplates.description')}
-      >
-        <TagManager />
-      </SettingsCard>
+      {category === 'execution' && (
+        <SettingsCard
+          title={t('settings.general.taskTemplates.title')}
+          description={t('settings.general.taskTemplates.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.templates')}</p>
+          <TagManager />
+        </SettingsCard>
+      )}
 
       {/* Safety */}
-      <SettingsCard
-        title={t('settings.general.safety.title')}
-        description={t('settings.general.safety.description')}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-normal">
-              {t('settings.general.safety.onboarding.title')}
-            </p>
-            <p className="text-sm text-low">
-              {t('settings.general.safety.onboarding.description')}
-            </p>
+      {category === 'general' && (
+        <SettingsCard
+          title={t('settings.general.safety.title')}
+          description={t('settings.general.safety.description')}
+        >
+          <p className="text-xs text-low">{t('settings.scope.onboarding')}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-normal">
+                {t('settings.general.safety.onboarding.title')}
+              </p>
+              <p className="text-sm text-low">
+                {t('settings.general.safety.onboarding.description')}
+              </p>
+            </div>
+            <PrimaryButton
+              variant="tertiary"
+              value={t('settings.general.safety.onboarding.button')}
+              onClick={resetOnboarding}
+            />
           </div>
-          <PrimaryButton
-            variant="tertiary"
-            value={t('settings.general.safety.onboarding.button')}
-            onClick={resetOnboarding}
-          />
-        </div>
-      </SettingsCard>
+        </SettingsCard>
+      )}
 
       <SettingsSaveBar
         show={hasUnsavedChanges}

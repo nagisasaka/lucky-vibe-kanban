@@ -63,8 +63,24 @@ async fn status(State(access): State<Access>, headers: HeaderMap) -> Json<Value>
         .as_ref()
         .map(|s| s.csrf.clone())
         .or_else(|| principal.as_ref().map(|p| p.channel.to_string()));
+    // Only the current authenticated browser identity may expose its display
+    // name. Never read the management member list or expose Local's synthetic user.
+    let display_name = if let Some(p) = principal.as_ref().filter(|p| p.channel == "web") {
+        sqlx::query_scalar::<_, String>(
+            "SELECT display_name FROM access_members WHERE id=? AND issuer=? AND subject=? AND state='active'",
+        )
+        .bind(p.user_id.to_string())
+        .bind(&p.issuer)
+        .bind(&p.subject)
+        .fetch_optional(access.pool())
+        .await
+        .ok()
+        .flatten()
+    } else {
+        None
+    };
     Json(
-        json!({"mode":mode,"deployment":if access.0.public{"public"}else{"local"},"public_url":access.public_url(),"authenticated":principal.is_some(),"management":management,"limited":session.as_ref().is_some_and(|s|s.kind!="web"),"csrf":csrf,"user":principal.map(|p|json!({"id":p.user_id,"admin":p.admin})),"forced_mode":access.0.forced_mode,"configuration_error":state.is_err(),"web_absolute_seconds":WEB_LIFETIME,"web_idle_seconds":WEB_IDLE}),
+        json!({"mode":mode,"deployment":if access.0.public{"public"}else{"local"},"public_url":access.public_url(),"authenticated":principal.is_some(),"management":management,"limited":session.as_ref().is_some_and(|s|s.kind!="web"),"csrf":csrf,"user":principal.map(|p|json!({"id":p.user_id,"admin":p.admin,"display_name":display_name})),"forced_mode":access.0.forced_mode,"configuration_error":state.is_err(),"web_absolute_seconds":WEB_LIFETIME,"web_idle_seconds":WEB_IDLE}),
     )
 }
 #[derive(Deserialize)]

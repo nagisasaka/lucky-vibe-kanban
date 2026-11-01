@@ -14,7 +14,9 @@ export function ChatGptCredentials({
   issuer,
   webClientId,
   disabled,
+  onDirtyChange,
 }: {
+  onDirtyChange?: (dirty: boolean) => void;
   issuer: string;
   webClientId: string;
   disabled: boolean;
@@ -24,9 +26,14 @@ export function ChatGptCredentials({
   const [visible, setVisible] = useState(false);
   const [clientId, setClientId] = useState('');
   const [inputSecret, setInputSecret] = useState('');
+  const [savedClientIdDraft, setSavedClientIdDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  useEffect(() => {
+    onDirtyChange?.(Boolean(clientId !== savedClientIdDraft || inputSecret));
+    return () => onDirtyChange?.(false);
+  }, [savedClientIdDraft, clientId, inputSecret, onDirtyChange]);
   const ready = Boolean(issuer && webClientId);
   useEffect(() => {
     if (!ready) return;
@@ -61,6 +68,7 @@ export function ChatGptCredentials({
       });
       setSaved({ available: result.available, client_id: result.client_id });
       if (action === 'save') {
+        setSavedClientIdDraft(clientId);
         setInputSecret('');
         setSecret('');
         setVisible(false);

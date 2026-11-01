@@ -9,7 +9,7 @@ export interface AccessStatus {
   public_url: string | null;
   forced_mode: string | null;
   configuration_error: boolean;
-  user: { id: string; admin: boolean } | null;
+  user: { id: string; admin: boolean; display_name?: string | null } | null;
 }
 let status: AccessStatus | undefined;
 const rawFetch = window.fetch.bind(window);

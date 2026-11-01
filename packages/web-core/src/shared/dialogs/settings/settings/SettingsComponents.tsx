@@ -381,10 +381,10 @@ export function SettingsSaveBar({
   }
 
   return (
-    <div className="sticky bottom-0 z-10 bg-panel/80 backdrop-blur-sm border-t border-border/50 py-4 -mx-6 px-6 -mb-6">
+    <div className="sticky bottom-0 z-10 bg-primary border-t border-border/50 py-4 -mx-6 px-6 -mb-6">
       <div
         className={cn(
-          'flex items-center',
+          'flex flex-wrap gap-2 items-center',
           onDiscard ? 'justify-between' : 'justify-end'
         )}
       >

@@ -1691,3 +1691,107 @@ async fn push_consent_is_encrypted_owner_bound_and_survives_idle_but_not_revocat
             .is_err()
     );
 }
+
+#[tokio::test]
+async fn status_displays_only_authenticated_current_browser_identity() {
+    let f = Fixture::new(true).await;
+    let (cookie, csrf) = f.basic().await;
+    let current = body(
+        f.call(
+            "GET",
+            "/api/access/status",
+            &[("cookie", &cookie)],
+            Value::Null,
+        )
+        .await,
+    )
+    .await;
+    assert_eq!(current["user"]["display_name"], "owner");
+    assert!(current["user"].get("subject").is_none());
+    assert!(current["user"].get("password_hash").is_none());
+    let anonymous = body(f.call("GET", "/api/access/status", &[], Value::Null).await).await;
+    assert!(anonymous["user"].is_null());
+    // Auth0's verified profile name is stored on the session's own member.
+    let idp = Idp::new().await;
+    let (web, _) = activate(&f, &idp, &cookie, &csrf).await;
+    let other = f
+        .access
+        .identity(&idp.state.issuer, "other-subject", Some("Other Person"))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE access_members SET state='active' WHERE id=?")
+        .bind(&other.id)
+        .execute(f.access.pool())
+        .await
+        .unwrap();
+    let current = body(
+        f.call(
+            "GET",
+            "/api/access/status",
+            &[("cookie", &web)],
+            Value::Null,
+        )
+        .await,
+    )
+    .await;
+    assert_eq!(current["user"]["display_name"], "Test Person");
+    assert!(!current.to_string().contains("Other Person"));
+    assert!(
+        body(
+            f.call(
+                "GET",
+                "/api/access/status",
+                &[("cookie", &cookie)],
+                Value::Null
+            )
+            .await
+        )
+        .await["user"]
+            .is_null()
+    );
+    let other_cookie = f
+        .access
+        .create_session(Some(&other.id), "web", 2)
+        .await
+        .unwrap()
+        .0;
+    let member_status = body(
+        f.call(
+            "GET",
+            "/api/access/status",
+            &[("cookie", &format!("lvk_session={other_cookie}"))],
+            Value::Null,
+        )
+        .await,
+    )
+    .await;
+    assert_eq!(member_status["user"]["display_name"], "Other Person");
+    sqlx::query("UPDATE access_members SET state='disabled' WHERE id=?")
+        .bind(&other.id)
+        .execute(f.access.pool())
+        .await
+        .unwrap();
+    assert!(
+        body(
+            f.call(
+                "GET",
+                "/api/access/status",
+                &[("cookie", &format!("lvk_session={other_cookie}"))],
+                Value::Null
+            )
+            .await
+        )
+        .await["user"]
+            .is_null()
+    );
+    let local = Fixture::new(false).await;
+    assert!(
+        body(
+            local
+                .call("GET", "/api/access/status", &[], Value::Null)
+                .await
+        )
+        .await["user"]["display_name"]
+            .is_null()
+    );
+}
