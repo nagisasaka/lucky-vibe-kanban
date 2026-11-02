@@ -2222,5 +2222,37 @@
   },
   "table": {
     "empty": "データはありません"
+  },
+  "environment": {
+    "title": "LVK実行環境",
+    "unknown": "不明",
+    "unavailable": "取得不可・未確認",
+    "online": "応答正常",
+    "container": "Dockerコンテナ内 · ホストVPSではありません",
+    "scopeUnknown": "LVK実行環境 · コンテナ／ホストの境界は未確認",
+    "lastCheck": "最終正常確認",
+    "secondsAgo": "{{count}}秒前",
+    "uptime": "コンテナuptime（起動時刻は未確認）",
+    "sessions": "稼働中AI Session · 全Workspace",
+    "metricsScope": "CPU／RAM／SWAP：Linuxから見えるシステム値。ホスト共有の場合があり、コンテナ割当量ではありません。DISK：worktree配置先のファイルシステム。SWAP使用量だけでは現在のメモリ逼迫を判断できません。",
+    "accountScope": "アカウント利用枠 · サーバーDEFAULT CLI認証の対象。Sessionコンテキストの残トークンとは別です",
+    "quotaWindow": "{{period}}：残り{{value}} · リセット {{reset}}",
+    "five_hour": "5時間枠",
+    "seven_day": "週間枠",
+    "seven_day_oauth_apps": "週間枠 · OAuthアプリ",
+    "seven_day_opus": "週間枠 · Opus",
+    "seven_day_sonnet": "週間枠 · Sonnet",
+    "mainScope": "mainレポジトリのチェックアウト · {{path}}",
+    "mainTerminal": "LVK実行環境のターミナル · mainレポジトリ（Dockerではコンテナ内）",
+    "files": "ファイル · mainレポジトリ",
+    "close": "ユーティリティを閉じる",
+    "wiki": "Wiki",
+    "mainWikiScope": "mainレポジトリのOpenWiki · 読取専用",
+    "cpu": "CPU",
+    "ram": "RAM",
+    "disk": "DISK",
+    "swap": "SWAP",
+    "codex": "Codex",
+    "claude": "Claude"
   }
 }

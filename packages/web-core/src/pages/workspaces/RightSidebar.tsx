@@ -1,3 +1,5 @@
+import { UtilitySidebar } from '@/shared/components/UtilitySidebar';
+import { useWorkspaceWiki } from '@/features/wiki/ui/WorkspaceWikiProvider';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileTreeContainer } from './FileTreeContainer';
@@ -40,15 +42,18 @@ export interface RightSidebarProps {
   rightMainPanelMode: RightMainPanelMode | null;
   selectedWorkspace: Workspace | undefined;
   repos: RepoWithTargetBranch[];
+  onWikiPageSelected?: () => void;
 }
 
 export const RightSidebar = memo(function RightSidebar({
   rightMainPanelMode,
   selectedWorkspace,
   repos,
+  onWikiPageSelected,
 }: RightSidebarProps) {
   const { t } = useTranslation(['tasks', 'common']);
   const diffs = useDiffs();
+  const wiki = useWorkspaceWiki();
   const isTerminalVisible = useUiPreferencesStore((s) => s.isTerminalVisible);
   const setRightMainPanelMode = useUiPreferencesStore(
     (s) => s.setRightMainPanelMode
@@ -154,31 +159,6 @@ export const RightSidebar = memo(function RightSidebar({
         }
         break;
       case RIGHT_MAIN_PANEL_MODES.FILES:
-        if (selectedWorkspace) {
-          result.unshift({
-            title: t('common:fileTree.title'),
-            persistKey: PERSIST_KEYS.rightPanelFiles,
-            visible: hasUpperContent,
-            expanded: upperExpanded,
-            content: (
-              <WorkspaceFileBrowserPanel
-                key={selectedWorkspace.id}
-                workspaceId={selectedWorkspace.id}
-                selectedTarget={selectedFileTarget}
-                source="file-tree"
-                className="border-r-0"
-                onSelectFile={(target) => {
-                  openFileTarget(target);
-                  setRightMainPanelMode(
-                    RIGHT_MAIN_PANEL_MODES.FILES,
-                    selectedWorkspace.id
-                  );
-                }}
-              />
-            ),
-            actions: [],
-          });
-        }
         break;
       case RIGHT_MAIN_PANEL_MODES.LOGS:
         result.unshift({
@@ -196,6 +176,32 @@ export const RightSidebar = memo(function RightSidebar({
         break;
     }
 
+    if (selectedWorkspace) {
+      result.unshift({
+        title: t('common:fileTree.title'),
+        persistKey: PERSIST_KEYS.rightPanelFiles,
+        visible: true,
+        expanded: filesExpanded,
+        content: (
+          <WorkspaceFileBrowserPanel
+            key={selectedWorkspace.id}
+            workspaceId={selectedWorkspace.id}
+            selectedTarget={selectedFileTarget}
+            source="file-tree"
+            className="border-r-0"
+            onSelectFile={(target) => {
+              openFileTarget(target);
+              setRightMainPanelMode(
+                RIGHT_MAIN_PANEL_MODES.FILES,
+                selectedWorkspace.id
+              );
+            }}
+          />
+        ),
+        actions: [],
+      });
+    }
+
     return result;
   }, [
     rightMainPanelMode,
@@ -203,6 +209,7 @@ export const RightSidebar = memo(function RightSidebar({
     repos,
     diffs,
     gitExpanded,
+    filesExpanded,
     terminalExpanded,
     notesExpanded,
     isTerminalVisible,
@@ -216,30 +223,26 @@ export const RightSidebar = memo(function RightSidebar({
     t,
   ]);
 
-  if (rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI) {
-    return (
-      <aside
-        aria-label={t('common:workspaceWiki.navigation')}
-        className="h-full min-h-0 border-l bg-secondary flex flex-col"
-      >
-        <div className="p-base border-b text-high shrink-0">
-          {t('common:workspaceWiki.pages')}
-        </div>
-        <WorkspaceWikiNavigation />
-      </aside>
-    );
-  }
-
   return (
-    <div className="h-full border-l bg-secondary overflow-y-auto">
-      {selectedWorkspace && (
-        <button
-          type="button"
-          className="w-full p-base text-left text-normal hover:bg-panel border-b"
-          onClick={() => setRightMainPanelMode('wiki', selectedWorkspace.id)}
+    <UtilitySidebar>
+      {wiki.repositoryOptions.length > 0 && (
+        <CollapsibleSectionHeader
+          className="!h-auto"
+          title={t('common:environment.wiki')}
+          persistKey="workspace-wiki"
+          defaultExpanded={false}
+          forceExpanded={rightMainPanelMode === RIGHT_MAIN_PANEL_MODES.WIKI}
         >
-          {t('common:workspaceWiki.open')}
-        </button>
+          <div className="h-80 min-h-0">
+            <WorkspaceWikiNavigation
+              onSelectPage={() => {
+                if (selectedWorkspace)
+                  setRightMainPanelMode('wiki', selectedWorkspace.id);
+                onWikiPageSelected?.();
+              }}
+            />
+          </div>
+        </CollapsibleSectionHeader>
       )}
       <div className="divide-y border-b">
         {sections
@@ -262,6 +265,6 @@ export const RightSidebar = memo(function RightSidebar({
             </div>
           ))}
       </div>
-    </div>
+    </UtilitySidebar>
   );
 });

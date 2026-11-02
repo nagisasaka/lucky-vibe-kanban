@@ -37,10 +37,7 @@ import {
 } from './WorkspacesMainContainer';
 import { RightSidebar } from './RightSidebar';
 import { PreservedChatPanel } from './PreservedChatPanel';
-import {
-  WorkspaceWikiNavigation,
-  WorkspaceWikiArticle,
-} from '@/features/wiki/ui/WorkspaceWikiPanel';
+import { WorkspaceWikiArticle } from '@/features/wiki/ui/WorkspaceWikiPanel';
 import { WorkspaceWikiProvider } from '@/features/wiki/ui/WorkspaceWikiProvider';
 import { ChangesPanelContainer } from './ChangesPanelContainer';
 import { CreateChatBoxContainer } from '@/shared/components/CreateChatBoxContainer';
@@ -377,12 +374,11 @@ export function WorkspacesLayout() {
                       !wikiMobileNavigation && 'hidden'
                     )}
                   >
-                    <div className="p-base border-b text-high">
-                      {t('workspaceWiki.pages')}
-                    </div>
-                    <WorkspaceWikiNavigation
-                      showReload
-                      onSelectPage={() => setWikiMobileNavigation(false)}
+                    <RightSidebar
+                      rightMainPanelMode={rightMainPanelMode}
+                      selectedWorkspace={selectedWorkspace}
+                      repos={repos}
+                      onWikiPageSelected={() => setWikiMobileNavigation(false)}
                     />
                   </div>
                   <div
@@ -431,6 +427,7 @@ export function WorkspacesLayout() {
                       }
                       selectedWorkspace={selectedWorkspace}
                       repos={repos}
+                      onWikiPageSelected={() => setWikiMobileNavigation(false)}
                     />
                   )}
                 </div>
@@ -445,7 +442,7 @@ export function WorkspacesLayout() {
       <WorkspaceWikiProvider
         workspace={selectedWorkspace}
         repos={repos}
-        enabled={!isCreateMode && mobileTab === 'wiki'}
+        enabled={!isCreateMode}
       >
         <div className="flex flex-1 min-h-0 h-full">
           <div className="flex-1 min-w-0 h-full">
@@ -577,7 +574,7 @@ export function WorkspacesLayout() {
     <WorkspaceWikiProvider
       workspace={selectedWorkspace}
       repos={repos}
-      enabled={!isCreateMode && wikiActive}
+      enabled={!isCreateMode}
     >
       <div className="flex flex-1 min-h-0 h-full">
         {isLeftSidebarVisible && (

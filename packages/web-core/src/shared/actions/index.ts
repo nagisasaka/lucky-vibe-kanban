@@ -1,3 +1,4 @@
+import { isProjectDestination } from '@/shared/lib/routes/appNavigation';
 import { errorDiagnostic } from '@/shared/lib/errorDiagnostic';
 import {
   IssueArchiveActionError,
@@ -627,10 +628,51 @@ export const Actions = {
         : t('tasks:actionLabels.show_right_sidebar'),
     icon: RightSidebarIcon,
     requiresTarget: ActionTargetType.NONE,
-    isVisible: (ctx) => ctx.layoutMode === 'workspaces',
-    isActive: (ctx) => ctx.isRightSidebarVisible,
-    execute: () => {
-      useUiPreferencesStore.getState().toggleRightSidebar();
+    isVisible: (ctx) =>
+      ctx.layoutMode === 'workspaces' || ctx.layoutMode === 'kanban',
+    isActive: (ctx) =>
+      window.matchMedia('(max-width: 767px)').matches &&
+      ctx.layoutMode === 'workspaces'
+        ? useUiPreferencesStore.getState().mobileActiveTab === 'git'
+        : ctx.isRightSidebarVisible,
+    getLabel: (ctx, t = i18n.getFixedT(null, 'tasks')) => {
+      const visible =
+        window.matchMedia('(max-width: 767px)').matches &&
+        ctx.layoutMode === 'workspaces'
+          ? useUiPreferencesStore.getState().mobileActiveTab === 'git'
+          : ctx.isRightSidebarVisible;
+      return t(
+        visible
+          ? 'tasks:actionLabels.hide_right_sidebar'
+          : 'tasks:actionLabels.show_right_sidebar'
+      );
+    },
+    getTooltip: (ctx, t = i18n.getFixedT(null, 'tasks')) => {
+      const visible =
+        window.matchMedia('(max-width: 767px)').matches &&
+        ctx.layoutMode === 'workspaces'
+          ? useUiPreferencesStore.getState().mobileActiveTab === 'git'
+          : ctx.isRightSidebarVisible;
+      return t(
+        visible
+          ? 'tasks:actionLabels.hide_right_sidebar'
+          : 'tasks:actionLabels.show_right_sidebar'
+      );
+    },
+    execute: (ctx) => {
+      const state = useUiPreferencesStore.getState();
+      if (
+        window.matchMedia('(max-width: 767px)').matches &&
+        !isProjectDestination(
+          ctx.appNavigation.resolveFromPath(window.location.pathname)
+        )
+      ) {
+        const opening = state.mobileActiveTab !== 'git';
+        useUiPreferencesStore.setState({
+          isRightSidebarVisible: opening,
+          mobileActiveTab: opening ? 'git' : 'chat',
+        });
+      } else state.toggleRightSidebar();
     },
   },
 
@@ -744,6 +786,7 @@ export const Actions = {
         ? t('tasks:actionLabels.close_wiki_reader')
         : t('tasks:actionLabels.open_wiki_reader'),
     execute: (ctx) => {
+      useUiPreferencesStore.setState({ isRightSidebarVisible: true });
       useUiPreferencesStore
         .getState()
         .toggleRightMainPanelMode(

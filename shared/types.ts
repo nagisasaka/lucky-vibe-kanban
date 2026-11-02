@@ -756,7 +756,7 @@ export type WorkspaceWikiSnapshot = { workspace_id: string, repo_id: string, rep
 
 export type WikiSourceLink = { source: string, project_id: string, issue_id: string, };
 
-export type WikiSnapshotSource = "current_workspace";
+export type WikiSnapshotSource = "current_workspace" | "main_repository";
 
 export type WorkspaceRepoInput = { repo_id: string, target_branch: string, };
 

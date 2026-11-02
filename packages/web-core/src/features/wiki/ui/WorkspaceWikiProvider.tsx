@@ -1,3 +1,6 @@
+import { useWikiAvailability } from '@/shared/hooks/useWikiAvailability';
+import type { MainRepo } from '@/shared/lib/projectUtilitiesApi';
+import { readUtility } from '@/shared/lib/projectUtilitiesApi';
 import { useTranslation } from 'react-i18next';
 import {
   useContext,
@@ -21,6 +24,7 @@ import {
 
 interface WikiContext {
   workspace: Workspace | undefined;
+  projectId?: string;
   repositoryOptions: WikiRepositoryOption[];
   controller: WikiViewerController;
 }
@@ -34,13 +38,15 @@ export interface WorkspaceWikiProviderProps {
   workspace: Workspace | undefined;
   repos: RepoWithTargetBranch[];
   enabled?: boolean;
+  projectId?: string;
+  mainRepos?: MainRepo[];
   children: ReactNode;
 }
 
 export function WorkspaceWikiProvider(props: WorkspaceWikiProviderProps) {
   return (
     <WorkspaceWikiScope
-      key={props.workspace?.id ?? 'no-workspace'}
+      key={props.projectId ?? props.workspace?.id ?? 'no-workspace'}
       {...props}
     />
   );
@@ -51,25 +57,45 @@ function WorkspaceWikiScope({
   repos,
   enabled = true,
   children,
+  projectId,
+  mainRepos,
 }: WorkspaceWikiProviderProps) {
   const { t } = useTranslation('common');
+  const enabledIds = useWikiAvailability(
+    projectId ? [] : repos.map((repo) => repo.id)
+  );
   const repositoryOptions = useMemo(
     () =>
-      workspace
-        ? wikiRepositoryOptions(
-            workspace,
-            repos,
-            t('workspaceWiki.directFolder')
-          )
-        : [],
-    [workspace, repos, t]
+      projectId
+        ? (mainRepos ?? [])
+            .filter((repo) => repo.wiki_enabled === true)
+            .map((repo) => ({ id: repo.id, name: repo.name }))
+        : workspace && repos.length > 0
+          ? wikiRepositoryOptions(
+              workspace,
+              repos.filter((repo) => enabledIds.includes(repo.id)),
+              t('workspaceWiki.directFolder')
+            )
+          : [],
+    [projectId, mainRepos, workspace, repos, enabledIds, t]
   );
-  const workspaceId = workspace?.id ?? '';
+  const workspaceId = projectId ?? workspace?.id ?? '';
   const initialRepoId = repositoryOptions[0]?.id ?? '';
   // Keyed by workspace, not repository ordering. A changed source cannot flash
   // old content, while a refreshed repository list preserves valid selection.
   const [controller] = useState(() =>
-    createWikiViewerController(workspaceId, initialRepoId, workspacesApi.wiki)
+    createWikiViewerController(
+      workspaceId,
+      initialRepoId,
+      projectId
+        ? {
+            snapshot: (_, repoId) =>
+              readUtility(
+                `/api/projects/${projectId}/utilities/wiki?repo_id=${encodeURIComponent(repoId)}`
+              ),
+          }
+        : workspacesApi.wiki
+    )
   );
 
   useEffect(() => {
@@ -83,8 +109,8 @@ function WorkspaceWikiScope({
     return () => controller.setEnabled(false);
   }, [controller, enabled, workspaceId]);
   const value = useMemo(
-    () => ({ workspace, repositoryOptions, controller }),
-    [workspace, repositoryOptions, controller]
+    () => ({ workspace, projectId, repositoryOptions, controller }),
+    [workspace, projectId, repositoryOptions, controller]
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

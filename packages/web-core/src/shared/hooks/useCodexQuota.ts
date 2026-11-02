@@ -2,15 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { CODEX_POLL_MS } from '@vibe/ui/lib/codexQuota';
 import { makeLocalApiRequest } from '@/shared/lib/localApiTransport';
 
-export function useCodexQuota(visible: boolean) {
+export function useCodexQuota(
+  visible: boolean,
+  provider: 'codex' | 'claude_code' = 'codex'
+) {
   const query = useQuery({
-    queryKey: ['codex-account-quota'],
+    queryKey: ['provider-account-quota', provider],
     queryFn: async () => {
       const response = await makeLocalApiRequest('/api/provider-usage/read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider: 'codex',
+          provider,
           account_context: 'server_default',
           include_usage: false,
         }),

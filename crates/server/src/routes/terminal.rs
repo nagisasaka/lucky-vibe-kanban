@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use axum::{
     Router,
     extract::{Query, State, ws::Message},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::get,
 };
 use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
@@ -20,7 +20,9 @@ use crate::{
 
 #[derive(Debug, Deserialize)]
 struct TerminalQuery {
-    pub workspace_id: Uuid,
+    pub workspace_id: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub repo_id: Option<Uuid>,
     #[serde(default = "default_cols")]
     pub cols: u16,
     #[serde(default = "default_rows")]
@@ -53,8 +55,27 @@ async fn terminal_ws(
     ws: LocalWsUpgrade,
     State(deployment): State<DeploymentImpl>,
     Query(query): Query<TerminalQuery>,
-) -> Result<impl IntoResponse, ApiError> {
-    let attempt = Workspace::find_by_id(&deployment.db().pool, query.workspace_id)
+) -> Result<Response, ApiError> {
+    if let (None, Some(project_id), Some(repo_id)) =
+        (query.workspace_id, query.project_id, query.repo_id)
+    {
+        let repo = super::project_utilities::project_repo(&deployment, project_id, repo_id).await?;
+        let working_dir = tokio::fs::canonicalize(repo.path).await?;
+        return Ok(ws
+            .on_upgrade(move |socket| {
+                handle_terminal_ws(socket, deployment, working_dir, query.cols, query.rows)
+            })
+            .into_response());
+    }
+    if query.project_id.is_some() || query.repo_id.is_some() {
+        return Err(ApiError::BadRequest(
+            "Choose exactly one terminal context".into(),
+        ));
+    }
+    let workspace_id = query
+        .workspace_id
+        .ok_or_else(|| ApiError::BadRequest("Terminal context required".into()))?;
+    let attempt = Workspace::find_by_id(&deployment.db().pool, workspace_id)
         .await?
         .ok_or_else(|| ApiError::BadRequest("Attempt not found".to_string()))?;
     attempt.require_interactive()?;
@@ -71,7 +92,7 @@ async fn terminal_ws(
     }
 
     let mut working_dir = base_dir.clone();
-    match WorkspaceRepo::find_repos_for_workspace(&deployment.db().pool, query.workspace_id).await {
+    match WorkspaceRepo::find_repos_for_workspace(&deployment.db().pool, workspace_id).await {
         Ok(repos) if repos.len() == 1 => {
             let repo_dir = base_dir.join(&repos[0].name);
             if repo_dir.exists() {
@@ -88,9 +109,11 @@ async fn terminal_ws(
         }
     }
 
-    Ok(ws.on_upgrade(move |socket| {
-        handle_terminal_ws(socket, deployment, working_dir, query.cols, query.rows)
-    }))
+    Ok(ws
+        .on_upgrade(move |socket| {
+            handle_terminal_ws(socket, deployment, working_dir, query.cols, query.rows)
+        })
+        .into_response())
 }
 
 async fn handle_terminal_ws(

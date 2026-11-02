@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { workspacesApi } from '@/shared/lib/api';
+import { useFileApi } from './FileApiProvider';
 import { useHostId } from '@/shared/providers/HostIdProvider';
 import type { WorkspaceFilePreviewTarget } from './types';
 import { workspaceFileKeys } from './workspaceFileKeys';
@@ -8,6 +8,7 @@ export function useWorkspaceFileContent(
   target: WorkspaceFilePreviewTarget | null | undefined
 ) {
   const hostId = useHostId();
+  const filesApi = useFileApi();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -18,7 +19,7 @@ export function useWorkspaceFileContent(
       hostId
     ),
     queryFn: () =>
-      workspacesApi.files.content(target!.workspaceId, {
+      filesApi.content(target!.workspaceId, {
         repoId: target!.repoId,
         path: target!.path,
       }),

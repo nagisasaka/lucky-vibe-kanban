@@ -1,5 +1,20 @@
+import { useQuery } from '@tanstack/react-query';
+import { FileApiProvider } from '@/features/workspace-files/model/FileApiProvider';
+import {
+  WorkspaceFilePreviewPanel,
+  type WorkspaceFilePreviewTarget,
+} from '@/features/workspace-files';
+import { WorkspaceWikiProvider } from '@/features/wiki/ui/WorkspaceWikiProvider';
+import { WorkspaceWikiArticle } from '@/features/wiki/ui/WorkspaceWikiPanel';
+import {
+  projectUtilitiesApi,
+  readUtility,
+  type MainRepo,
+} from '@/shared/lib/projectUtilitiesApi';
+import { ProjectUtilities } from './ProjectUtilities';
+import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Group, type Layout, Panel, Separator } from 'react-resizable-panels';
 import { KanbanContainer } from '@/features/kanban/ui/KanbanContainer';
@@ -30,7 +45,7 @@ import { ProjectRightSidebarContainer } from './ProjectRightSidebarContainer';
 const KANBAN_DEFAULT_LEFT_PANEL_SIZE = 75;
 const KANBAN_BOARD_MIN_PERCENT = 35;
 const KANBAN_BOARD_MIN_SIZE = `${KANBAN_BOARD_MIN_PERCENT}%`;
-const KANBAN_RIGHT_PANEL_MIN_SIZE = '400px';
+const KANBAN_RIGHT_PANEL_MIN_SIZE = '25%';
 
 function getClampedKanbanLeftPanelSize(size: number | string) {
   if (typeof size !== 'number' || !Number.isFinite(size)) {
@@ -117,6 +132,89 @@ function ProjectKanbanBoard() {
 }
 
 function ProjectKanbanLayout({ projectName }: { projectName: string }) {
+  const { projectId } = useProjectContext();
+  const { issueId } = useCurrentKanbanRouteState();
+  const [detail, setDetail] = useState<'file' | 'wiki' | null>(null);
+  useEffect(() => setDetail(null), [issueId]);
+  const [file, setFile] = useState<WorkspaceFilePreviewTarget | null>(null);
+  const visible = useUiPreferencesStore((s) => s.isRightSidebarVisible);
+  const toggle = useUiPreferencesStore((s) => s.toggleRightSidebar);
+  const info = useQuery({
+    queryKey: ['project-main-utilities', projectId],
+    queryFn: () =>
+      readUtility<{ repos: MainRepo[] }>(
+        `/api/projects/${projectId}/utilities/info`
+      ),
+    staleTime: 30000,
+  });
+  const api = useMemo(() => projectUtilitiesApi(projectId), [projectId]);
+  const { t } = useTranslation('common');
+  const close = () => setDetail(null);
+  const body = detail ? (
+    <div className="h-full flex flex-col">
+      <button
+        type="button"
+        className="p-half border-b text-normal hover:bg-panel"
+        onClick={close}
+      >
+        {t('buttons.close')}
+      </button>
+      <div className="flex-1 min-h-0">
+        {detail === 'wiki' ? (
+          <WorkspaceWikiArticle />
+        ) : (
+          <WorkspaceFilePreviewPanel target={file} onClearTarget={close} />
+        )}
+      </div>
+    </div>
+  ) : null;
+  return (
+    <FileApiProvider api={api}>
+      <WorkspaceWikiProvider
+        workspace={undefined}
+        repos={[]}
+        projectId={projectId}
+        mainRepos={info.isError ? [] : info.data?.repos}
+      >
+        <div className="relative flex h-full min-w-0">
+          <div className="flex-1 min-w-0 h-full">
+            <ProjectKanbanPanes projectName={projectName} utilityBody={body} />
+          </div>
+          {visible && (
+            <div className="absolute right-0 inset-y-0 z-30 w-[min(320px,100%)] xl:relative xl:w-80 shrink-0 shadow-lg xl:shadow-none">
+              <ProjectUtilities
+                projectId={projectId}
+                repos={info.isError ? [] : (info.data?.repos ?? [])}
+                error={info.isError}
+                selectedFile={file}
+                onClose={toggle}
+                onFile={(target) => {
+                  setFile(target);
+                  setDetail('file');
+                  if (window.matchMedia('(max-width: 1279px)').matches)
+                    toggle();
+                }}
+                onWiki={() => {
+                  setDetail('wiki');
+                  if (window.matchMedia('(max-width: 1279px)').matches)
+                    toggle();
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </WorkspaceWikiProvider>
+    </FileApiProvider>
+  );
+}
+
+function ProjectKanbanPanes({
+  projectName,
+  utilityBody,
+}: {
+  projectName: string;
+  utilityBody: ReactNode;
+}) {
   const { issueId, isPanelOpen } = useCurrentKanbanRouteState();
   const isMobile = useIsMobile();
   const { getIssue, projectId } = useProjectContext();
@@ -130,8 +228,19 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
     KANBAN_DEFAULT_LEFT_PANEL_SIZE
   );
 
-  const isRightPanelOpen = isPanelOpen && !todoVisible;
+  const isRightPanelOpen =
+    Boolean(utilityBody) || (isPanelOpen && !todoVisible);
 
+  if (isMobile && utilityBody) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="min-h-0 flex-1">
+          <ProjectKanbanBoard />
+        </div>
+        <div className="min-h-0 flex-1 border-t">{utilityBody}</div>
+      </div>
+    );
+  }
   if (isMobile) {
     return isRightPanelOpen ? (
       <div className="h-full w-full overflow-hidden bg-secondary">
@@ -190,7 +299,7 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
           minSize={KANBAN_RIGHT_PANEL_MIN_SIZE}
           className="min-w-0 h-full overflow-hidden bg-secondary"
         >
-          <ProjectRightSidebarContainer />
+          {utilityBody ?? <ProjectRightSidebarContainer />}
         </Panel>
       )}
     </Group>
@@ -222,7 +331,7 @@ function ProjectKanbanInner({ projectId }: { projectId: string }) {
   return (
     <ProjectProvider projectId={projectId}>
       <ProjectMutationsRegistration>
-        <ProjectKanbanLayout projectName={project.name} />
+        <ProjectKanbanLayout key={project.id} projectName={project.name} />
       </ProjectMutationsRegistration>
     </ProjectProvider>
   );

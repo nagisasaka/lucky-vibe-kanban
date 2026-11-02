@@ -160,3 +160,28 @@ test("localized disk capacity keeps decimal rounding and unknown values", () => 
   assert.equal(formatDiskCapacity(900500000000, "ja"), "901GB");
   assert.equal(formatDiskCapacity(null, "ja"), "—");
 });
+
+test('RAM bytes and SWAP distinguish no swap, unknown, invalid and stale observations', () => {
+  const data = fixture();
+  data.system_visible.swap_total_bytes = known(0);
+  data.system_visible.swap_used_bytes = known(0);
+  let view = resourceView(data, false, now);
+  assert.deepEqual(view.memory, { used: 700, total: 1000 });
+  assert.deepEqual(view.swap, { used: 0, total: 0, percent: 0 });
+  data.system_visible.swap_total_bytes = known(100);
+  data.system_visible.swap_used_bytes = known(25);
+  assert.deepEqual(resourceView(data, false, now).swap, {
+    used: 25,
+    total: 100,
+    percent: 25,
+  });
+  assert.deepEqual(resourceView(data, true, now).swap, {
+    used: null,
+    total: null,
+    percent: null,
+  });
+  data.system_visible.swap_used_bytes = known(101);
+  assert.equal(resourceView(data, false, now).swap.percent, null);
+  delete data.system_visible.swap_total_bytes;
+  assert.equal(resourceView(data, false, now).swap.used, null);
+});

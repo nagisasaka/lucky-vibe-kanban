@@ -11,6 +11,8 @@ import { useTerminal } from '@/shared/hooks/useTerminal';
 interface XTermInstanceProps {
   tabId: string;
   workspaceId: string;
+  projectId?: string;
+  repoId?: string;
   isActive: boolean;
   onClose?: () => void;
 }
@@ -18,6 +20,8 @@ interface XTermInstanceProps {
 export function XTermInstance({
   tabId,
   workspaceId,
+  projectId,
+  repoId,
   isActive,
   onClose,
 }: XTermInstanceProps) {
@@ -37,8 +41,16 @@ export function XTermInstance({
   const endpoint = useMemo(() => {
     const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
     const host = window.location.host;
-    return `${protocol}//${host}/api/terminal/ws?workspace_id=${workspaceId}&cols=${initialSizeRef.current.cols}&rows=${initialSizeRef.current.rows}`;
-  }, [workspaceId]);
+    const query = new URLSearchParams({
+      cols: String(initialSizeRef.current.cols),
+      rows: String(initialSizeRef.current.rows),
+    });
+    if (projectId && repoId) {
+      query.set('project_id', projectId);
+      query.set('repo_id', repoId);
+    } else query.set('workspace_id', workspaceId);
+    return `${protocol}//${host}/api/terminal/ws?${query}`;
+  }, [workspaceId, projectId, repoId]);
 
   const fitTerminal = useCallback(() => {
     fitAddonRef.current?.fit();

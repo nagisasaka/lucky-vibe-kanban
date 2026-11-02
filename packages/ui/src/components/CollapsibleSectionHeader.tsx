@@ -36,6 +36,9 @@ interface CollapsibleSectionHeaderProps {
   title: string;
   defaultExpanded?: boolean;
   collapsible?: boolean;
+  forceExpanded?: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   actions?: SectionAction[];
   headerExtra?: ReactNode;
   children?: ReactNode;
@@ -47,6 +50,9 @@ export function CollapsibleSectionHeader({
   title,
   defaultExpanded = true,
   collapsible = true,
+  forceExpanded = false,
+  expanded: controlledExpanded,
+  onExpandedChange,
   actions = [],
   headerExtra,
   children,
@@ -72,6 +78,10 @@ export function CollapsibleSectionHeader({
     }
   }, [persistKey, expanded]);
 
+  useEffect(() => {
+    if (forceExpanded) setExpanded(true);
+  }, [forceExpanded]);
+
   const handleActionClick = (
     e: MouseEvent<HTMLSpanElement>,
     onClick: () => void
@@ -90,7 +100,7 @@ export function CollapsibleSectionHeader({
     onClick();
   };
 
-  const isExpanded = collapsible ? expanded : true;
+  const isExpanded = collapsible ? (controlledExpanded ?? expanded) : true;
 
   const headerContent = (
     <>
@@ -130,7 +140,7 @@ export function CollapsibleSectionHeader({
             weight="fill"
             className={cn(
               'size-icon-xs text-low transition-transform',
-              !expanded && '-rotate-90'
+              !isExpanded && '-rotate-90'
             )}
           />
         )}
@@ -144,7 +154,12 @@ export function CollapsibleSectionHeader({
         {collapsible ? (
           <button
             type="button"
-            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={isExpanded}
+            onClick={() => {
+              const next = !isExpanded;
+              setExpanded(next);
+              onExpandedChange?.(next);
+            }}
             className={cn(
               'flex items-center justify-between w-full px-base py-half cursor-pointer'
             )}
