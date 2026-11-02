@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "Lucky Vibe Kanban (dev)",
+    "longDescription": "Happy Go Lucky Agent Orchestrator",
+    "shortDescription": "Happy Go Lucky Agent Orchestrator"
+  },
+  "apps": "./.app.json",
+  "name": "dev-6ad4b7896d3c819193e998d31d059e3d",
+  "version": "1.0.40",
+  "description": "Happy Go Lucky Agent Orchestrator",
+  "author": {
+    "name": "App developer"
+  },
+  "keywords": [],
+  "skills": "./skills"
+}
