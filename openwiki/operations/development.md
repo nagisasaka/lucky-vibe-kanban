@@ -92,6 +92,8 @@ sources:
     resource: repo://docs/development/cargo-cache.md
   - id: openwiki-source-d95a345bb2e865055223b40f
     resource: repo://docs/development/dev-switch-bundle-validation.md
+  - id: openwiki-source-08306757a777c9f7f95abe2d
+    resource: repo://docs/development/orchestration-skill-distribution.md
   - id: openwiki-source-e654c61365add1d192b8b7b8
     resource: repo://docs/development/seven-source-candidate.md
   - id: openwiki-source-2e1d91f21691cd271afffb6f
@@ -112,10 +114,18 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-934f1cc67f10f765aeed70ed
     resource: repo://scripts/dev-cargo.test.mjs
+  - id: openwiki-source-75a99f8fc3a29ed0c6adb3ab
+    resource: repo://scripts/package-orchestration.py
   - id: openwiki-source-d90097af5777425ac57c25b3
     resource: repo://scripts/prepare-db.js
   - id: openwiki-source-fae34e38f06cb798a007a45b
     resource: repo://scripts/start-web-preview.sh
+  - id: openwiki-source-b05e5a1a5a499bbc87e50965
+    resource: repo://skills/lvk-orchestration/references/auto-merge.md
+  - id: openwiki-source-8dce97867754548fb32565eb
+    resource: repo://skills/lvk-orchestration/references/execution.md
+  - id: openwiki-source-90505d6ad74573a5fb6c6b3b
+    resource: repo://skills/lvk-orchestration/references/investigation.md
   - id: openwiki-source-6d88df283621a548f8021464
     resource: repo://skills/lvk-orchestration/SKILL.md
   - id: openwiki-source-29176c627ccc31a24d3d6ab2
@@ -158,10 +168,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-02T14:37:55.273Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-02T14:37:55.273Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -238,15 +248,15 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 
 ## 検証の対象を取り違えない
 
-repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [自動マージ の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-auto-merge-validation)
+repository の orchestration Skill は、検証済みSHA、候補差分、競合解消、新たな未検証範囲から必要な検証を選ぶ。担当Codexが候補作成・修復・検証と理由付き省略を記録し、hostが公開条件と証拠を検査する。設定されたcommand一覧は参考入力であり、hostの固定必須試験セットではない。実行と省略は判断主体・理由・残余リスク・対象SHAを分け、未実施をpassと呼ばない。[検証責務と証拠評価](../../skills/lvk-orchestration/references/auto-merge.md#risk-based-test-planning-and-auto-merge-validation)。
 
-既存証拠を十分と判断する際は、tested SHA、完了済み checks、候補との差分、競合解消、新たに未検証となる範囲を確認する。AI は必要な限定試験を計画し、LVK は repository に設定された追加検証セットを実行または省略する。「全セット」は設定された一覧であり、あらゆる試験や任意の部分選択を意味しない。省略判断は公開前の必須試験や実際の実行拒否を免除せず、成果物作成の build と重複試験も区別する。[証拠評価と責務](../../skills/lvk-orchestration/SKILL.md#L134-L139)。
+既存証拠が十分なら重複検証を省略できるが、公開前に必要な試験や実際の実行拒否は免除されない。buildによる成果物作成と試験の再実行も区別する。これはAIへの運用指針であり、製品の公開guardを変更する実装ではない。製品側の契約は [自動マージ](../concepts/formal-integration.md)を参照する。
 
 ### 同梱 Skill の責務と調査範囲
 
 `skills/lvk-orchestration/SKILL.md` は対話・設計・調査・実行調整の指針である。LOCAL-224 の記録は dev plugin v1.0.33 への全文同期を示し、以前の「名称差分のみ」「指定5段落のみ」は当時の限定範囲として残す。`plugins/lvk/skills/lvk-work/SKILL.md` は接続済み LVK の作業操作を担う別 Skill で、orchestration の配布コピーではない。[同期範囲の記録](../../docs/development/auto-merge-naming.md#L25-L46)・[作業操作の責務](../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29)。この区別を保ち、一方の同期を理由に他方を全文置換しない。
 
-orchestration の記録では、明示された調査には必要な独立 Workspace と、その中の再現コード・script・fixture・test が含まれる。一方、製品変更の採用、merge、公開、配備、共有環境・live data の変更はその調査許可に含まれない。最新の明示指示が過去の一時制約を更新したかを引継ぎ時に区別するが、実際の実行拒否は回避しない。独立 worktree は DB・資格情報・background process・外部 service の隔離を保証しない。[意図と許可の区別](../../skills/lvk-orchestration/SKILL.md#L22-L26)・[副作用の境界](../../skills/lvk-orchestration/SKILL.md#L119-L124)。これらは AI の運用指針であり、新しい API 権限や実行 engine ではない。
+orchestration の記録では、明示された調査には必要な独立 Workspace と、その中の再現コード・script・fixture・test が含まれる。一方、製品変更の採用、merge、公開、配備、共有環境・live data の変更はその調査許可に含まれない。最新の明示指示が過去の一時制約を更新したかを引継ぎ時に区別するが、実際の実行拒否は回避しない。独立 worktree は DB・資格情報・background process・外部 service の隔離を保証しない。[意図と許可の区別](../../skills/lvk-orchestration/references/execution.md)・[副作用の境界](../../skills/lvk-orchestration/references/investigation.md#investigation-boundaries-and-artifacts)。これらは AI の運用指針であり、新しい API 権限や実行 engine ではない。
 
 | 検証 | 実際の対象・限界 |
 | --- | --- |
@@ -525,3 +535,13 @@ unused検査は文字列・dynamic prefixを使う保守的なinventoryで、コ
 settings-redesignの恒久i18n browserは、言語保存とBrowser通知hint、JA→ENでのcanonical model/override保持、生成schema表示・validationという4ケースを3specに残す。既存製品40ケースと合わせて44件であり、移行用に増やした一般承認・対象payload・再送・各画面表示の網羅は常設化しない。削減した範囲は同等の自動検知が残るとは言えず、checkerは画面配線や一般製品状態を保証しない。[suite設定](../../tests/settings-redesign/playwright.config.ts)・[言語保存](../../tests/settings-redesign/general-i18n.spec.ts)・[model値保持](../../tests/settings-redesign/model-selector-i18n.spec.ts)・[schema](../../tests/settings-redesign/schema-i18n.spec.ts)
 
 診断の確認は既存Wiki/File・認証errorの少数unitで、翻訳した説明と原文をReactテキストとして併記する契約を確認する。fixture成功と実Auth0/ChatGPT/Push/OS配送の受入は別である。検証記録は実行したコードSHAに結び付け、後続Wiki-only commitへ付け替えない。
+
+## 共通orchestration Skillの正本と配布
+
+共通正本は `skills/lvk-orchestration/`。薄いルートが思想・共通原則と読み込み条件を持ち、実行、調査、自動マージと移管・片付け、記録、プレビュー、LVK開発、利用指針の7資料を必要な場面だけ読む。既存の操作用 `lvk-work` と担当実行用auto-merge Skillは別責務として保つ。[ルート](../../skills/lvk-orchestration/SKILL.md)・[配置と変更理由](../../docs/development/orchestration-skill-distribution.md)。
+
+`scripts/package-orchestration.py` は指定Git commitからOpenAI/Claudeの共通Skillと全参照資料を生成し、配布元SHA・一覧・ZIPハッシュをreceiptへ保存する。作業木の未commit内容を配布元にしない。Claudeの `--claude-without-connection` はmanifest・共通Skill・配布元記録のallowlistだけを含め、既存コネクターを上書きしない。接続付き方式は明示HTTPS URLで `.mcp.json` を追加する。[生成入口](../../scripts/package-orchestration.py)。
+
+移管後にAI判断で旧IssueをCancelledへ変えた場合は、Issueと全Workspaceのarchive・物理削除を個別に確認する。同対象・削除範囲の既承認は再確認せず、未承認やbusy拒否は迂回しない。部分移管や人間の単なるRun取消から自動archiveを導かず、Cancelledだけを片付け完了としない。[片付けの完了条件](../../skills/lvk-orchestration/references/auto-merge.md#cleanup-completion-gate)。
+
+LOCAL-242統合ではコード候補 `a1f87c7c93e8818aa84d4213788c1429b723ecd7` の関連内容が検証済みsource `c14c22f` と同一であることを確認した。候補から両配布経路を生成し、参照・ZIP/CRC・正本byte一致・接続なしの正確な集合を管理commandで再確認した。参考アプリ検証は既存証拠と差分からagent判断で省略し、今回の成功へ付け替えていない。Wikiはその後の別commitである。プラグイン登録、Claudeアカウント導入/認証、サーバー再起動・デプロイは実施していない。配布生成成功、登録保存、実読、mainへのGit公開は独立した結果として扱う。
