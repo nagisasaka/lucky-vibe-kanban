@@ -164,10 +164,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -207,7 +207,7 @@ REVIEWは通常の会話turnを使い、所見・証拠・リスク・未検証�
 
 ### Composer の手動推論設定と復元
 
-composer の `reasoning_id` は利用者の明示 override であり、provider が実行時に解決した effort そのものではない。`null` は画面の **Follow CLI config**（設定追従）を表す。[Provider の解決済み effort](../integrations/agent-providers.md#codex-の-override-と解決済み-effort-を分ける)と分けて診断する。Session composer は最新 launch 設定と Scratch を `useExecutorConfig` に渡し、変更を既存の Scratch 保存へ戻す。新しい preference store や実行 scheduler は使わない。[接続](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L580-L601)
+composer の `reasoning_id` は利用者の明示 override であり、provider が実行時に解決した effort そのものではない。`null` は画面の **Follow CLI config**（設定追従）を表す。[Provider の解決済み effort](../integrations/agent-providers.md#codex-の-override-と解決済み-effort-を分ける)と分けて診断する。Session composer は最新 launch 設定と Scratch を `useExecutorConfig` に渡し、変更を既存の Scratch 保存へ戻す。新しい preference store や実行 scheduler は使わない。[接続](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L583-L604)
 
 各 override は明示的な画面選択 → 適合する Scratch → 適合する最新 launch → preset の順で解決する。ただし launch が存在する場合、そのフィールドの欠落も snapshot の値として扱い、現在の preset へ再 fallback しない。Scratch と launch は executor/variant を照合し、reasoning は解決した model とも照合する。古い部分ドラフトで model キー自体がなければ、継承した model に対する reasoning として扱う。model を先に解決する順序もこの判定の一部である。[解決順と照合](../../packages/web-core/src/shared/hooks/useExecutorConfig.ts#L25-L33)・[復元](../../packages/web-core/src/shared/hooks/useExecutorConfig.ts#L142-L207)・[snapshot の優先規則](../../packages/web-core/src/shared/lib/executorOverrides.ts#L9-L30)
 
@@ -230,9 +230,9 @@ Rust の `ExecutorConfig` は `Option::None` を JSON から省略するため�
 
 ### 選択した Claude profile の readiness
 
-Session composer は executor に加え selected variant と Workspace / Session scope を readiness 確認へ渡し、Claude の診断をモデル選択欄に表示する。確認失敗を provider 全体の Ready で代用せず、hook は Unknown・空の capability を返す。これは起動許可の確約ではなく、[サブスクリプション専用 profile の実行前確認](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)が実際の実行環境で再度適用される。[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L602-L606)・[診断表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1378-L1389)・[失敗時の扱い](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L38-L82)
+Session composer は executor に加え selected variant と Workspace / Session scope を readiness 確認へ渡し、Claude の診断をモデル選択欄に表示する。確認失敗を provider 全体の Ready で代用せず、hook は Unknown・空の capability を返す。これは起動許可の確約ではなく、[サブスクリプション専用 profile の実行前確認](../integrations/agent-providers.md#claude-のサブスクリプション専用-profile)が実際の実行環境で再度適用される。[composer](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L605-L609)・[診断表示](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1381-L1392)・[失敗時の扱い](../../packages/web-core/src/shared/hooks/useAgentProviderPolicy.ts#L40-L83)
 
-新規 Workspace と Session の editor は選択 variant を tooling discovery へ渡す。Claude の新規 Session では Session ID がまだなくても model discovery の Workspace cwd を保持する。したがって preset の切替を実行 payload だけへ反映し、補完やモデル探索を別 profile のままにしてはいけない。認証・cache 分離の詳細は [Provider discovery の契約](../integrations/agent-providers.md#選択-profile-と-discovery-の一貫性)に置く。[editor の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L341-L349)・[Workspace 作成](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L580-L597)・[Session editor](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1326-L1348)・[model scope](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121)
+新規 Workspace と Session の editor は選択 variant を tooling discovery へ渡す。Claude の新規 Session では Session ID がまだなくても model discovery の Workspace cwd を保持する。したがって preset の切替を実行 payload だけへ反映し、補完やモデル探索を別 profile のままにしてはいけない。認証・cache 分離の詳細は [Provider discovery の契約](../integrations/agent-providers.md#選択-profile-と-discovery-の一貫性)に置く。[editor の接続](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L343-L360)・[Workspace 作成](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L569-L586)・[Session editor](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1329-L1351)・[model scope](../../packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121)
 
 ## Follow-up と retry
 
@@ -261,11 +261,11 @@ Run / attempt の終端と、実プロセスの終了証拠は別である。起
 
 チャットの時計は summary と stream の state を attempt 番号、event sequence、更新時刻の順で比較する。古い running snapshot で完了時計を再始動せず、新しい retry attempt なら前 attempt の `completed_at` を使わない。終端では一致する attempt の summary 終了時刻を優先し、なければその attempt の terminal lifecycle event の timestamp を使う。どちらもなければ終了は不明のままとする。この比較は時間表示のためであり、新しい実行状態や再送 scheduler を作らない。[新旧比較](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentTimeline.ts#L390-L406)・[attempt の照合](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L920-L973)・[再接続と retry のテスト](../../packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.test.ts#L856-L904)
 
-共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。有効な非負の実測 `durationMs` があれば端点より優先し、それがなければ端点差を使う。0〜999msの根拠があれば `<1s` と表示する。両方に根拠がない場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L35-L73)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
+共通 `ChatElapsedTime` は有効な終了時刻を active flag より優先し、終了後は interval を作らない。有効な非負の実測 `durationMs` があれば端点より優先し、それがなければ端点差を使う。0〜999msの根拠があれば選択localeの「1秒未満」相当を表示する。両方に根拠がない場合は未知であり、`unknownLabel` がなければ描画しない。Workspace カードは `unknownLabel="—"` を指定し、不明を更新日時由来の相対時間で補わない。ブラウザーの mount 時刻を終了根拠にせず、再マウントでも timestamp 差から再計算する。活動中だけ現在時刻を使って毎秒更新するため、精密な provider 稼働時間の測定ではない。[共通部品](../../packages/ui/src/components/ChatElapsedTime.tsx#L47-L86)・[Workspace の呼出し](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L259-L275)
 
 ### Goal の時間は別の値
 
-Goal の `time_used_seconds` は provider 報告値であり、Run footer の壁時計時間へ置き換えない。Goal card は Goal と Run がともに active のときだけ報告値へ経過秒を補間し、非活動 Run では `Recorded time` として保存された報告値を表示する。Goal のない Run にも footer があり、二つの値が異なること自体は異常ではない。[Goal 表示](../../packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx#L54-L98)・[補間条件](../../packages/web-core/src/features/workspace-chat/model/goalElapsed.ts#L1-L15)
+Goal の `time_used_seconds` は provider 報告値であり、Run footer の壁時計時間へ置き換えない。Goal card は Goal と Run がともに active のときだけ報告値へ経過秒を補間し、非活動 Run では 選択localeの記録時間ラベルで保存された報告値を表示する。Goal のない Run にも footer があり、二つの値が異なること自体は異常ではない。[Goal 表示](../../packages/web-core/src/features/workspace-chat/ui/GoalProgressCard.tsx#L57-L118)・[補間条件](../../packages/web-core/src/features/workspace-chat/model/goalElapsed.ts#L1-L15)
 
 ### 検証の入口と限界
 
@@ -313,7 +313,7 @@ Codex host は `ProcessHostApprovals` を注入し、command/file 要求は既�
 
 UI の `approvalId` は host waiter の識別子であり、native JSON-RPC request ID ではない。Approve は waiter を解決し、元 request handler が元の数値または文字列 ID で応答する。未知・重複・完了後の回答はエラーとなり、別の native 応答を生成しない。待機中の操作内容は [承認カードの詳細保持](../architecture/web-and-sync.md#承認カードの操作内容を保持する)、所有者と canonical 件数の投影は [runtime の承認経路](../architecture/agent-runtime.md#codex-の承認待機を所有する場所)を参照する。[制御](../../crates/executors/src/executors/codex/client.rs#L441-L465)・[元 ID の応答](../../crates/executors/src/executors/codex/client.rs#L971-L994)・[回答照合](../../crates/services/src/services/approvals.rs#L142-L178)
 
-command/file の明示承認は native `accept`、理由なし拒否と timeout は `decline`、非空の拒否理由は `cancel` と feedback queue への追加になる。全許可では `acceptForSession` を返す。service 不在・異常・取消を Approved に変換しない。取消済み token と準備済み回答が競合すると bridge は取消を優先する。[応答への変換](../../crates/executors/src/executors/codex/client.rs#L1282-L1342)・[待機と取消](../../crates/services/src/services/approvals/executor_approvals.rs#L123-L148)・[protocol 試験](../../crates/executors/src/executors/codex/client.rs#L3522-L3677)
+command/file の明示承認は native `accept`、理由なし拒否と timeout は `decline`、非空の拒否理由は `cancel` と feedback queue への追加になる。全許可では `acceptForSession` を返す。service 不在・異常・取消を Approved に変換しない。取消済み token と準備済み回答が競合すると bridge は取消を優先する。[応答への変換](../../crates/executors/src/executors/codex/client.rs#L1282-L1342)・[待機と取消](../../crates/services/src/services/approvals/executor_approvals.rs#L106-L131)・[protocol 試験](../../crates/executors/src/executors/codex/client.rs#L3522-L3677)
 
 ### Codex の一回限り MCP tool 承認
 
@@ -331,7 +331,7 @@ Plan と一般質問はこの command/file 修正の対象外である。wrapper
 
 ### 承認の検証範囲
 
-変更時は client の command/file protocol fixture（accept/reject/feedback/cancel、missing/broken service、full access、旧 Noop）、host wrapper の未知・重複・遅延回答、bridge の early answer/timeout/取消競合を別々に確認する。[client 試験](../../crates/executors/src/executors/codex/client.rs#L3459-L3707)・[host 試験](../../crates/local-deployment/src/process_host/approvals.rs#L84-L176)・[bridge 試験](../../crates/services/src/services/approvals/executor_approvals.rs#L235-L277)
+変更時は client の command/file protocol fixture（accept/reject/feedback/cancel、missing/broken service、full access、旧 Noop）、host wrapper の未知・重複・遅延回答、bridge の early answer/timeout/取消競合を別々に確認する。[client 試験](../../crates/executors/src/executors/codex/client.rs#L3459-L3707)・[host 試験](../../crates/local-deployment/src/process_host/approvals.rs#L84-L176)・[bridge 試験](../../crates/services/src/services/approvals/executor_approvals.rs#L218-L260)
 
 [隔離 browser 試験](../../tests/supervised/approval.spec.ts)は実 backend/host/API/WebSocket/UI と Python protocol peer をつなぎ、待機中 reload、並行2要求の残件、操作詳細、元 native ID、監査参照/checksum を検査する。runner はこの checkout の server と agent-process-host を明示固定し、継承した host override による別 binary の混入を避ける。[実行手順と限界](../../tests/supervised/README.md)・[隔離 runner](../../tests/supervised/run_isolated.py)
 
@@ -357,7 +357,7 @@ Plan と一般質問はこの command/file 修正の対象外である。wrapper
 | local runtime | SQLite Scratch と JSON Patch WebSocket |
 | 未 ACK の pending backup | runtime・host・scratch ID 別の sessionStorage。別タブ・別Sessionの原本ではない |
 
-保存 mutation は対象 identity ごとに直列化する。画面切替時は編集時に捕捉した旧対象へ flush し、次の Session の callback へ送らない。新規 Session 作成の遅い応答や送信 ACK が別 host / Workspace / Session の現在入力を奪わないよう、scope と編集 revision も照合する。[mutation queue](../../packages/web-core/src/shared/lib/scratchMutationQueue.ts)、[送信 ACK](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L717-L762)
+保存 mutation は対象 identity ごとに直列化する。画面切替時は編集時に捕捉した旧対象へ flush し、次の Session の callback へ送らない。新規 Session 作成の遅い応答や送信 ACK が別 host / Workspace / Session の現在入力を奪わないよう、scope と編集 revision も照合する。[mutation queue](../../packages/web-core/src/shared/lib/scratchMutationQueue.ts)、[送信 ACK](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L720-L765)
 
 送信成功後は送信時の本文・設定 snapshot を条件として Scratch を削除する。新しい draft や既に削除済みの場合は安全な no-op。backend の follow-up 起動や queue 消費から無条件に削除しない。現行 useScratch は server 経路のみである。[DELETE 契約](../../crates/server/src/routes/scratch.rs)、[queue 終端](../../crates/local-deployment/src/container.rs)
 
@@ -367,7 +367,7 @@ queue 済みでも Scratch は別の編集状態として作成・更新でき�
 
 ### 送信中の編集と Markdown 正規化
 
-通常の送信待ち `sending` では送信操作の制約を保ちつつ、本文 editor は編集可能にする。成功 ACK が消費できるのは送信時と同じ scope・revision・content の composer だけである。content は本文だけでなく設定・Skill・添付・review・resume 選択を含む snapshot なので、trim した本文の一致だけへ弱めてはいけない。送信失敗や、待機中に新しく編集した draft は消さない。[送信中の editor](../../packages/ui/src/components/SessionChatBox.tsx#L915-L930)・[snapshot と ACK](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L688-L762)・[一致判定のテスト](../../packages/web-core/src/features/workspace-chat/model/sessionDraft.test.ts)
+通常の送信待ち `sending` では送信操作の制約を保ちつつ、本文 editor は編集可能にする。成功 ACK が消費できるのは送信時と同じ scope・revision・content の composer だけである。content は本文だけでなく設定・Skill・添付・review・resume 選択を含む snapshot なので、trim した本文の一致だけへ弱めてはいけない。送信失敗や、待機中に新しく編集した draft は消さない。[送信中の editor](../../packages/ui/src/components/SessionChatBox.tsx#L902-L917)・[snapshot と ACK](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L691-L765)・[一致判定のテスト](../../packages/web-core/src/features/workspace-chat/model/sessionDraft.test.ts)
 
 Markdown editor への外部値読み込みは、末尾改行などを正規化しても新規ユーザー編集ではない。`MarkdownSyncPlugin` はその更新に `markdown-sync` tag を付け、serialization の追跡は更新するが親の `onChange` へ返さない。外部値と直近 serialization を別々に追跡し、transformer の変更時には両方をリセットして再解析する。editor hook も同一本文の通知では revision を増やさない。この二つの区別が、送信中の正規化通知だけで ACK の一致条件が崩れることを防ぐ。[外部値と編集通知](../../packages/ui/src/components/MarkdownSyncPlugin.tsx#L30-L97)・[同値通知](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L73-L86)
 
@@ -375,21 +375,21 @@ Markdown editor への外部値読み込みは、末尾改行などを正規化�
 
 変更時の editor fixture は、末尾改行付き外部値の読み込みと送信成功、同値のキー flush、失敗時入力、送信中の追加入力、focus と IME を確認する。built-app 試験でも実 Scratch と制御した follow-up 応答を使うため、実 provider の通常 follow-up 成功を証明するものではない。[editor 試験](../../tests/chat/editor-display.test.mjs#L75-L141)・[built-app 入力試験](../../tests/chat/isolated.spec.ts#L295-L372)。今回の静的照合と開発時の実行記録の区別は [チャット検証境界](../architecture/web-and-sync.md#チャット表示の検証境界)を参照する。
 
-チャット本文は既存 Lexical の plain-text mode で入力する。Markdown shortcutやHTML paste変換を使わず、貼付けはtext/plainを優先し、書式をresetする。IME・shortcut・file/image添付は既存経路に残し、保存済みattachment codecだけを専用transformerで復元する。通常Markdownを添付と推測して変換しない。保存済みメッセージの表示は読み取り専用Markdownのままである。[入力部品](../../packages/ui/src/components/PlainTextPastePlugin.tsx)・[literal直列化と添付復元](../../packages/ui/src/lib/plainTextEditor.ts)・[composer指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1335-L1355)。
+チャット本文は既存 Lexical の plain-text mode で入力する。Markdown shortcutやHTML paste変換を使わず、貼付けはtext/plainを優先し、書式をresetする。IME・shortcut・file/image添付は既存経路に残し、保存済みattachment codecだけを専用transformerで復元する。通常Markdownを添付と推測して変換しない。保存済みメッセージの表示は読み取り専用Markdownのままである。[入力部品](../../packages/ui/src/components/PlainTextPastePlugin.tsx)・[literal直列化と添付復元](../../packages/ui/src/lib/plainTextEditor.ts)・[composer指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1338-L1358)。
 
 ### 送信直後の表示と正規履歴
 
-送信開始でhost/Workspace/Session（新規はnew）に属するメモリ内pending行を作り、通常のuser message描画で即時表示する。sending、accepted、failed、unconfirmedは送信の観測であり、provider実行成功ではない。4xxの拒否（408を除く）はfailed、通信/5xx/408は未受理を断定できないunconfirmedとする。[送信](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L113-L205)・[失敗分類](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L14-L31)。
+送信開始でhost/Workspace/Session（新規はnew）に属するメモリ内pending行を作り、通常のuser message描画で即時表示する。sending、accepted、failed、unconfirmedは送信の観測であり、provider実行成功ではない。4xxの拒否（408を除く）はfailed、通信/5xx/408は未受理を断定できないunconfirmedとする。[送信](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L125-L217)・[失敗分類](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L14-L31)。
 
-正規user messageとの照合は送信前baselineにないkey、同じ本文、判明したrun IDを使い、一つの正規行を複数pendingへ使わない。照合とbaseline更新を一回のstore更新にし、再renderで同じeventを再消費しない。正規行へdisplayIdentityを引き継ぎ、React行を保つが編集・forkはcanonical keyを使う。ACK前eventも処理し、遅いACKで新しい手動閲覧を末尾へ戻さない。これは耐久queueやサーバー側idempotencyではなく、reloadでの復元保証はない。[照合](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L38-L190)・[編集key](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L1018-L1044)・[ACK後](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L750-L759)。追従とanchorの実装は [Webの位置保持](../architecture/web-and-sync.md#履歴の閲覧位置と末尾追従)を参照する。
+正規user messageとの照合は送信前baselineにないkey、同じ本文、判明したrun IDを使い、一つの正規行を複数pendingへ使わない。照合とbaseline更新を一回のstore更新にし、再renderで同じeventを再消費しない。正規行へdisplayIdentityを引き継ぎ、React行を保つが編集・forkはcanonical keyを使う。ACK前eventも処理し、遅いACKで新しい手動閲覧を末尾へ戻さない。これは耐久queueやサーバー側idempotencyではなく、reloadでの復元保証はない。[照合](../../packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts#L38-L190)・[編集key](../../packages/web-core/src/features/workspace-chat/ui/DisplayConversationEntry.tsx#L1018-L1044)・[ACK後](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L753-L762)。追従とanchorの実装は [Webの位置保持](../architecture/web-and-sync.md#履歴の閲覧位置と末尾追従)を参照する。
 
 ### Enter 操作と重複送信の境界
 
-既存・新規 Session の composer と新規 Workspace の入力は `sendShortcut="Enter"` を明示するため、保存済み `send_message_shortcut` が `ModifierEnter` でも Enter 送信になる。General Settings は選択 UI を持たず、Enter で送信・Ctrl+Enter で改行という案内を表示する。共通 keyboard plugin 自体は `ModifierEnter` を引き続き扱うので、アプリの指定と共通部品の既定値を混同しない。[Session の指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1310-L1344)・[Workspace 作成の指定](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L575-L596)・[設定表示](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L664-L677)・[共通部品の既定値](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42)
+既存・新規 Session の composer と新規 Workspace の入力は `sendShortcut="Enter"` を明示するため、保存済み `send_message_shortcut` が `ModifierEnter` でも Enter 送信になる。General Settings は選択 UI を持たず、Enter で送信・Ctrl+Enter で改行という案内を表示する。共通 keyboard plugin 自体は `ModifierEnter` を引き続き扱うので、アプリの指定と共通部品の既定値を混同しない。[Session の指定](../../packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1313-L1347)・[Workspace 作成の指定](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L564-L585)・[設定表示](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L668-L681)・[共通部品の既定値](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L22-L42)
 
-Enter mode は Ctrl+Enter を明示的な line break に変換する。IME composition・keyCode 229・typeahead 表示中は送信処理を譲り、修飾キーなしの Enter の repeat は消費するだけで送信しない。Ctrl のない Shift / Meta / Alt 付き Enter はこの送信処理の対象外である。flush 後の callback は現在の画面状態に従い、通常送信だけでなく実行中の queue や質問回答などへ分岐するため、Enter が常に新しい AgentRun を作るわけではない。[キーの分岐](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236)・[状態別操作](../../packages/ui/src/components/SessionChatBox.tsx#L495-L520)。[Todo 追加](project-todos.md#追加-ui-の入力契約)も Enter / Ctrl+Enter を使うが、カテゴリ検査や pending 中の編集禁止は Todo 側の責任である。
+Enter mode は Ctrl+Enter を明示的な line break に変換する。IME composition・keyCode 229・typeahead 表示中は送信処理を譲り、修飾キーなしの Enter の repeat は消費するだけで送信しない。Ctrl のない Shift / Meta / Alt 付き Enter はこの送信処理の対象外である。flush 後の callback は現在の画面状態に従い、通常送信だけでなく実行中の queue や質問回答などへ分岐するため、Enter が常に新しい AgentRun を作るわけではない。[キーの分岐](../../packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236)・[状態別操作](../../packages/ui/src/components/SessionChatBox.tsx#L482-L507)。[Todo 追加](project-todos.md#追加-ui-の入力契約)も Enter / Ctrl+Enter を使うが、カテゴリ検査や pending 中の編集禁止は Todo 側の責任である。
 
-`useSessionSend` は host・Workspace・Session・新規 Session mode の組を scope とし、await 前に in-flight set へ登録して同じ scope の重複送信を拒否する。新規 Session 作成と既存 Session follow-up の双方に適用し、finally で解除する。新規 Workspace 作成には別の同期 ref guard があり、作成処理と draft cleanup を囲んで finally で解除する。いずれも hook / component 内の抑止であり、別タブ・別 client を含む永続的な冪等性や backend の実行受付を保証するものではない。[Session の guard](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L58-L159)・[Workspace 作成の guard](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L395-L474)。解除後の再送可否と、成功 ACK で消してよい入力の判定は別であり、後者は上記の scope・revision・content 照合に従う。
+`useSessionSend` は host・Workspace・Session・新規 Session mode の組を scope とし、await 前に in-flight set へ登録して同じ scope の重複送信を拒否する。新規 Session 作成と既存 Session follow-up の双方に適用し、finally で解除する。新規 Workspace 作成には別の同期 ref guard があり、作成処理と draft cleanup を囲んで finally で解除する。いずれも hook / component 内の抑止であり、別タブ・別 client を含む永続的な冪等性や backend の実行受付を保証するものではない。[Session の guard](../../packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts#L60-L170)・[Workspace 作成の guard](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L395-L474)。解除後の再送可否と、成功 ACK で消してよい入力の判定は別であり、後者は上記の scope・revision・content 照合に従う。
 
 ### 入力操作の検証範囲と未解決点
 
@@ -437,7 +437,7 @@ Codex の spawn 観測だけが直接の親子関係を確定し、send/wait 等
 
 親が成功しようとすると client は観測済み全子の終端証拠を要求する。running / pending / unknown が残れば Failure にし、無期限待機や独自継続 scheduler は作らない。子の failed / interrupted / shutdown も終端証拠にはなるため、親が対処済みの子失敗だけで親を失敗にしない。Goal / Plan の成功出口にも同じ guard が掛かる。[成功 guard](../../crates/executors/src/executors/codex/client.rs#L1542-L1662)・[Plan 出口](../../crates/executors/src/executors/codex/client.rs#L1819-L1840)。通知されなかった子は検出できず、terminal 通知のない provider では有用な成果があっても安全側に失敗し得る。[記録された設計と限界](../../docs/development/codex-execution-observations.md#completion-and-integration)。これは [自動マージ](formal-integration.md)の成功条件や明示 commit 採用を代替しない。
 
-旧 ExecutionProcess は script 実行などに残るが、coding-agent action は明示的に拒否される。現行 coding agent の活動判定・停止・履歴の正本は AgentRun を追う。[旧入口の拒否](../../crates/local-deployment/src/container.rs)、[活動判定のテスト](../../crates/server/src/routes/sessions/agent_run.rs#L873-L910)
+旧 ExecutionProcess は script 実行などに残るが、coding-agent action は明示的に拒否される。現行 coding agent の活動判定・停止・履歴の正本は AgentRun を追う。[旧入口の拒否](../../crates/local-deployment/src/container.rs)、[活動判定のテスト](../../crates/server/src/routes/sessions/agent_run.rs#L873-L905)
 
 ## Context 使用量の意味
 
@@ -445,7 +445,7 @@ context gauge は親 thread の最後の測定 `last.totalTokens / modelContextW
 
 blocking 待機や終端の通知と対象 Run への復帰は [Web Push](../integrations/web-push.md)、保存済み commentary の外部読取は [list_run_events](../integrations/remote-access.md#保存済み-codex-進捗の読取)を使う。通知や抜粋から実行成功・承認済み・統合済みを推定しない。
 
-チャット末尾の [Workspace 累積トークン](workspace.md#workspace-累積トークン)は、選択 Session や現在の Run の gauge とは集計範囲が異なる。同じ Workspace の保存済み thread 報告を読み、Session を切り替えてもその範囲を変えない。各 run の経過時間とも別の表示である。[Workspace 指定の取得](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L18)・[集計単位](../../crates/db/src/models/workspace_tokens.rs#L42-L70)・[配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037)
+チャット末尾の [Workspace 累積トークン](workspace.md#workspace-累積トークン)は、選択 Session や現在の Run の gauge とは集計範囲が異なる。同じ Workspace の保存済み thread 報告を読み、Session を切り替えてもその範囲を変えない。各 run の経過時間とも別の表示である。[Workspace 指定の取得](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L5-L18)・[集計単位](../../crates/db/src/models/workspace_tokens.rs#L42-L70)・[配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1027-L1031)
 
 ## 会話表示と入力
 

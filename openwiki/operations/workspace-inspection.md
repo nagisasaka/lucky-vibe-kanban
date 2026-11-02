@@ -140,10 +140,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -170,9 +170,9 @@ Stop は 自動マージ の cancel、Bootstrap の所有フロー、Sync の監
 
 ## 累積トークンを確認する
 
-チャット末尾の「Workspace累積トークン」を開くと、入力・出力、入力の内数であるキャッシュ、出力の内数である推論、内訳取得 thread 数、最終更新を読める。対象は選択 Session だけでなく Workspace 全体であり、各 run の既存時間表示は別に残る。[末尾への配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037)・[表示](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L25-L63)
+チャット末尾の「Workspace累積トークン」を開くと、入力・出力、入力の内数であるキャッシュ、出力の内数である推論、内訳取得 thread 数、最終更新を読める。対象は選択 Session だけでなく Workspace 全体であり、各 run の既存時間表示は別に残る。[末尾への配置](../../packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1027-L1031)・[表示](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L25-L63)
 
-React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を5秒間隔で再取得する。未取得は「不明」、取得済みでも `partial` は「一部のみ」と表示する。取得エラー時は「取得失敗」を出し、保持済み data があっても詳細内訳を表示しない。0 は不明に置換しない。[取得と分岐](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L12-L60)・[日本語](../../packages/web-core/src/i18n/locales/ja/common.json#L1362-L1374)
+React Query は Workspace ID を key に `/api/workspaces/{id}/tokens` を5秒間隔で再取得する。未取得は「不明」、取得済みでも `partial` は「一部のみ」と表示する。取得エラー時は「取得失敗」を出し、保持済み data があっても詳細内訳を表示しない。0 は不明に置換しない。[取得と分岐](../../packages/web-core/src/features/workspace-chat/ui/WorkspaceTokenSummary.tsx#L12-L60)・[日本語](../../packages/web-core/src/i18n/locales/ja/common.json#L1714-L1726)
 
 `/tokens` は保存済み集計の読取で、同じファイルに実装される `/usage` の実行所有者 inspection / Stop とは別機能である。欠損を補うために AgentRun を起動せず、UI・stdio MCP・外部 MCP は共通集計を使う。[読取 handler](../../crates/server/src/routes/workspaces/usage.rs#L319-L328)。取得範囲と最大値の寿命、未報告の子 thread や料金推定の限界は [Workspace 累積トークン](../concepts/workspace.md#workspace-累積トークン)、操作入口は [stdio](../integrations/agent-providers.md#外部-mcp-client--lvk)と [外部 MCP](../integrations/remote-access.md#workspace-の報告済みトークンを読む)で確認する。
 
@@ -202,7 +202,7 @@ raw URL は local のものをそのまま使い、退役した remote host ID �
 
 ### モバイルのツリーとpreviewの往復
 
-Files surface は選択targetのオブジェクト同一性で戻る操作を管理する。Filesへ戻ると現在のtargetだけを dismissed として保持し、別のopen要求で新しいtargetが来ればpreviewを再表示する。このため同じファイルへの会話リンクを再度開いても表示でき、無関係な再renderだけでツリーからpreviewへ戻らない。desktopの左右並列表示は同じ選択を使う。[surface](../../packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx#L23-L95)・[実アプリ回帰](../../tests/chat/mobile-navigation.native.mjs)
+Files surface は選択targetのオブジェクト同一性で戻る操作を管理する。Filesへ戻ると現在のtargetだけを dismissed として保持し、別のopen要求で新しいtargetが来ればpreviewを再表示する。このため同じファイルへの会話リンクを再度開いても表示でき、無関係な再renderだけでツリーからpreviewへ戻らない。desktopの左右並列表示は同じ選択を使う。[surface](../../packages/web-core/src/pages/workspaces/WorkspaceFilesSurfaceContainer.tsx#L24-L97)・[実アプリ回帰](../../tests/chat/mobile-navigation.native.mjs)
 
 ### 読み取り専用コードの色分け
 
@@ -216,13 +216,13 @@ Files surface は選択targetのオブジェクト同一性で戻る操作を管
 
 相対パスは Repo 基準で、`./` と Repo 名 prefix を扱う。Repo が一つなら省略できるが、複数 Repo で所属を一意に解決できなければリンクを無効のままにし、推測して開かない。絶対形式は現在の `container_ref/repo.name/` 配下だけを repo-relative target に変換する。Windows 形式も slash を正規化して同じ条件を使う。元の host checkout の `Repo.path` へ fallback しない。[チャットの変換](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L36-L77)、[共通の Repo 解決](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts#L77-L157)
 
-行指定は `:line[:column]`、`#Lline`、`#Lline-Lend` 等を受け付けるが、保存する位置は正の安全な整数の**開始行だけ**であり、column や範囲の選択を約束しない。行 suffix を外してから URL decode を一度だけ行うため、encoded `#` / `:` はファイル名として残る。空白は percent encoding または `[label](<path with spaces:2>)` を使える。後者の transformer は local resolver がある read-only editor で有効になる。[位置と decode 順序](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L35)、[angle destination](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L536-L555)
+行指定は `:line[:column]`、`#Lline`、`#Lline-Lend` 等を受け付けるが、保存する位置は正の安全な整数の**開始行だけ**であり、column や範囲の選択を約束しない。行 suffix を外してから URL decode を一度だけ行うため、encoded `#` / `:` はファイル名として残る。空白は percent encoding または `[label](<path with spaces:2>)` を使える。後者の transformer は local resolver がある read-only editor で有効になる。[位置と decode 順序](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L35)、[angle destination](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L547-L566)
 
-text/code viewer は選択行に `aria-current=location` を付けて中央へスクロールする。Markdown は行指定がある場合にソース表示へ切り替え、指定なしでは従来の Markdown 表示を使う。描画済み本文の位置をソース行と扱わないための選択である。存在しない行や backend が切り詰めた範囲外には選択行 DOM がなく、追加読込や最終行への補正はしない。[viewer の分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L90-L108)、[行の選択](../../packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L17-L48)
+text/code viewer は選択行に `aria-current=location` を付けて中央へスクロールする。Markdown は行指定がある場合にソース表示へ切り替え、指定なしでは従来の Markdown 表示を使う。描画済み本文の位置をソース行と扱わないための選択である。存在しない行や backend が切り詰めた範囲外には選択行 DOM がなく、追加読込や最終行への補正はしない。[viewer の分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L101-L121)、[行の選択](../../packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L17-L48)
 
 空の値、通常の `#section`、network path、親参照、control character、不正な percent encoding、未処理の query / fragment、現在の root 外の絶対パスや任意 URI scheme は local resolver が拒否する。HTTPS は plugin が外部リンクとして扱い、HTTP や `file://` は有効化しない。local action がなければ `href` を除き `aria-disabled=true` とする。[入力の検査](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L55)、[リンクの有効状態](../../packages/ui/src/components/ReadOnlyLinkPlugin.tsx#L20-L58)
 
-フロントエンドで解決できたことは、ファイルの存在や読取許可の証明ではない。target の Workspace / Repo / path を既存 content API に渡し、欠落・symlink 逸脱等の取得失敗は既存 preview error と Retry を表示する。最終的な membership と canonical-root 検査は [Repo 内ファイルの読取境界](#repo-内ファイルを読む)のままである。[取得](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFileContent.ts#L13-L26)、[失敗表示](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L65-L91)
+フロントエンドで解決できたことは、ファイルの存在や読取許可の証明ではない。target の Workspace / Repo / path を既存 content API に渡し、欠落・symlink 逸脱等の取得失敗は既存 preview error と Retry を表示する。最終的な membership と canonical-root 検査は [Repo 内ファイルの読取境界](#repo-内ファイルを読む)のままである。[取得](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFileContent.ts#L13-L26)、[失敗表示](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L76-L102)
 
 ### ファイルリンクの検証範囲
 
@@ -238,9 +238,9 @@ Wiki は `openwiki/` の読取専用表示に統一され、repository 選択・
 
 ツリーは公開された Wiki snapshot のページだけから組み立て、index を入口にする。検索は本文、タイトル、summary、tags 等へ空白区切りの全 term を適用する。OpenWiki の階層内相対リンクや `/openwiki/...`、`[[wikilink]]` は既知ページへ解決するが、Wiki root 外の source path を任意ファイル読取へ変換しない。ページ切替はパス単位であり、リンクの fragment を保持した節スクロールまでこの resolver が保証するわけではない。[ツリーと検索](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts)、[リンク解決](../../packages/web-core/src/features/wiki/model/wikiNavigation.ts)
 
-本文は既存の `MarkdownPreview` を再利用する。desktop では Wiki アイコンまたは右サイドバーの `Open Wiki` で右メインペーンに開き、既定では左に会話を残す。同じアイコンで閉じると右ペーンは未選択になり、以前の Changes / Logs へ戻す専用の復帰操作はない。他のペーンへ直接切り替えることもできる。表示切替で [Session / AgentRun](../concepts/session-and-agent-run.md) を作り直すものではない。[renderer](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L332-L345)・[共通ペーン操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607)
+本文は既存の `MarkdownPreview` を再利用する。desktop では Wiki アイコンまたは右サイドバーの `Open Wiki` で右メインペーンに開き、既定では左に会話を残す。同じアイコンで閉じると右ペーンは未選択になり、以前の Changes / Logs へ戻す専用の復帰操作はない。他のペーンへ直接切り替えることもできる。表示切替で [Session / AgentRun](../concepts/session-and-agent-run.md) を作り直すものではない。[renderer](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiPanel.tsx#L339-L352)・[共通ペーン操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607)
 
-保存済み設定で会話が非表示なら、Wiki を開くだけでは表示に戻らない。共通チャット表示操作、または右ペーンを閉じる操作で戻す。右サイドバーを隠していた場合も Wiki が強制的に開き直すことはない。モバイルでは Wiki タブからツリーと本文を開き、会話には Chat タブで戻る。これは desktop の右ペーン選択を解除する操作とは異なる。保存値の由来を識別できない制約、共通 layout の補正、下書き保持と試験範囲は [通常ペーン操作と保存済み設定](../architecture/web-and-sync.md#通常ペーン操作と保存済み設定)、共有 reader の責任は [Wiki の状態管理](../architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす)にまとめる。[チャット表示操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L534-L552)・[閉じた後の layout](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)・[モバイル入口](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L173-L183)
+保存済み設定で会話が非表示なら、Wiki を開くだけでは表示に戻らない。共通チャット表示操作、または右ペーンを閉じる操作で戻す。右サイドバーを隠していた場合も Wiki が強制的に開き直すことはない。モバイルでは Wiki タブからツリーと本文を開き、会話には Chat タブで戻る。これは desktop の右ペーン選択を解除する操作とは異なる。保存値の由来を識別できない制約、共通 layout の補正、下書き保持と試験範囲は [通常ペーン操作と保存済み設定](../architecture/web-and-sync.md#通常ペーン操作と保存済み設定)、共有 reader の責任は [Wiki の状態管理](../architecture/web-and-sync.md#wiki-のナビゲーションと本文を一つの状態で動かす)にまとめる。[チャット表示操作](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L534-L552)・[閉じた後の layout](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)・[モバイル入口](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L175-L185)
 
 adapter は `openwiki/` 以下の階層 Markdown を読み、dot-prefixed entry と `INSTRUCTIONS.md` をページから除く。root・子 entry の symlink を拒否し、index を含め最大2,000ページ、1ページ512 KiB、合計16 MiBを超えれば snapshot 全体をエラーにする。切り詰めた Wiki を正常応答にはしない。frontmatter は optional だが、ある場合は正しい YAML mapping を要求する。Claims 解釈・設定書込・初期化・修復はしない。[adapter](../../crates/services/src/services/wiki/openwiki.rs)、[安全な読取](../../crates/services/src/services/wiki.rs)、[旧ファイル保持と容量の test](../../crates/services/src/services/wiki/openwiki.rs)
 
@@ -283,7 +283,7 @@ Board の Workspace 差分は履歴レコードの既定値ではなく、既存
 
 [集計](../../crates/services/src/services/diff_stream.rs#L35-L115)は確認済みbinaryを変更ファイル数へ含め、text行数には加算しない。text読取欠損やサイズ省略の未知は各方向の合計へ伝播する。Git の片側本文が欠けた場合、それを空の本文と見なせるのは実際の Added / Deleted だけである。Modified の読取欠損や text ↔ binary を全行追加・削除と誤認しない。[Git の判定](../../crates/git/src/lib.rs#L709-L726)
 
-API の `files_changed` / `lines_added` / `lines_removed` は独立した optional field で、内部集計の未知を保持する。互換用に残る旧公開 `DiffStats` 型の非 optional field から、この API の意味を推測しない。[API 型と内部集計の分離](../../crates/server/src/routes/workspaces/workspace_summary.rs#L27-L72)・[伝播](../../crates/server/src/routes/workspaces/workspace_summary.rs#L178-L190)。`useWorkspaces` は未知を undefined へ保ち、Kanban はその summary 値を Workspace カードへ渡す。カードは既知0も表示し、未知 file 数と行数を `—` で示す。[hook](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L83)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L279-L291)。時計の未知は別の [Run 時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
+API の `files_changed` / `lines_added` / `lines_removed` は独立した optional field で、内部集計の未知を保持する。互換用に残る旧公開 `DiffStats` 型の非 optional field から、この API の意味を推測しない。[API 型と内部集計の分離](../../crates/server/src/routes/workspaces/workspace_summary.rs#L27-L72)・[伝播](../../crates/server/src/routes/workspaces/workspace_summary.rs#L178-L190)。`useWorkspaces` は未知を undefined へ保ち、Kanban はその summary 値を Workspace カードへ渡す。カードは既知0も表示し、未知 file 数と行数を `—` で示す。[hook](../../packages/web-core/src/shared/hooks/useWorkspaces.ts#L58-L83)・[カード](../../packages/ui/src/components/IssueWorkspaceCard.tsx#L279-L293)。時計の未知は別の [Run 時刻契約](../concepts/session-and-agent-run.md#終了の証拠と再接続)に従う。
 
 [Git fixture](../../crates/git/tests/diff_stats.rs)は commit 済み・untracked・削除・text/binary 相互変換、[読取失敗 fixture](../../crates/git/src/lib.rs#L1878-L1903)は Modified の片側欠損、[service fixture](../../crates/services/src/services/diff_stats_tests.rs)は正常0・binary・複数 Repo の部分/全失敗を検査する。[実 API browser fixture](../../tests/kanban/isolated.mjs#L130-L170)は隔離 Git の `3 files / +3 / -1` と clean0を確認する。実 provider の状態や大量 untracked の性能を保証する試験ではなく、この文書保守では再実行していない。
 
@@ -325,9 +325,9 @@ Terminal は interactive 用途を要求してから Workspace directory を検�
 
 `entries: null` または欠落だけが未初期化で、`[]` は意図的な空一覧である。通常の user-system 読込時に browser の `window.location.hostname` を埋めた `vscode://vscode-remote/ssh-remote+HOST<lvk_workspace_dir>` の VS Code 行を作り、通常の Config 保存で固定する。保存済みの一覧は別 hostname からアクセスしても再生成しない。初期行も編集・削除できる通常データであり、専用初期化 API や初期化競合を排他する仕組みはない。[初期値](../../packages/web-core/src/shared/lib/externalEditors.ts#L1-L17)・[読込と保存](../../packages/web-core/src/shared/hooks/useUserSystemController.ts#L33-L49)
 
-設定と onboarding は共通 `ExternalEditorSettings` で追加・編集・削除・順序変更を扱う。General Settings の deep merge は通常配列を index 単位で扱うため、editor は merge 後に全置換する。これを通常の merge だけに戻すと、削除した行や空一覧が保存 draft に残り得る。[一覧編集](../../packages/web-core/src/shared/components/ExternalEditorSettings.tsx)・[置換と理由](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L149-L163)・[onboarding](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L380-L385)
+設定と onboarding は共通 `ExternalEditorSettings` で追加・編集・削除・順序変更を扱う。General Settings の deep merge は通常配列を index 単位で扱うため、editor は merge 後に全置換する。これを通常の merge だけに戻すと、削除した行や空一覧が保存 draft に残り得る。[一覧編集](../../packages/web-core/src/shared/components/ExternalEditorSettings.tsx)・[置換と理由](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx#L147-L161)・[onboarding](../../packages/web-core/src/features/onboarding/ui/LandingPage.tsx#L378-L383)
 
-server は保存前に表示名の空白のみ・80文字超・trim 後の完全一致重複とテンプレート構文を検査し、エラー理由を返す。保存に成功してから in-memory Config を置換する。onboarding analytics は URI ではなく登録件数を記録する。[検証](../../crates/services/src/services/config/editor/mod.rs#L40-L51)・[保存と event](../../crates/server/src/routes/config.rs#L182-L233)
+server は保存前に表示名の空白のみ・80文字超・trim 後の完全一致重複とテンプレート構文を検査し、エラー理由を返す。保存に成功してから in-memory Config を置換する。onboarding analytics は URI ではなく登録件数を記録する。[検証](../../crates/services/src/services/config/editor/mod.rs#L40-L51)・[保存と event](../../crates/server/src/routes/config.rs#L183-L240)
 
 ### 対象と worktree の寿命
 
@@ -340,7 +340,7 @@ server は保存前に表示名の空白のみ・80文字超・trim 後の完全
 
 Workspace API は `inspection_root` を使い、削除済み・未準備・不在の実体を拒否する。`container_for_inspection` は通常 interactive Workspace を復元し得るため、このリンク解決には使わないという理由がコードに記録されている。既存の絶対ディレクトリを canonicalize するだけで、archive 状態にかかわらず欠落 worktree を作成・復元しない。[対象解決と理由](../../crates/server/src/routes/workspaces/integration.rs#L101-L156)・[実体の条件](../../crates/services/src/services/workspace_usage.rs#L272-L288)・[元 Repo](../../crates/server/src/routes/repo.rs#L161-L185)
 
-ファイル指定は Repo が一つでも `repo_id` を必須とし、file viewer の相対パス正規化・canonical-root 検査を再利用する。絶対パス、drive、親参照、NUL、欠落、Repo 外へ解決される symlink を拒否し、最終 target が通常ファイルでなければ失敗する。[ファイルの検査](../../crates/server/src/routes/workspaces/integration.rs#L131-L143)・[共通境界](../../crates/server/src/routes/workspaces/files.rs#L324-L394)。diff のパスは Repo 名 prefix を持つため UI で最初の prefix を外して送る。preview は元から Repo 相対であり、同じ除去を二度適用してはいけない。[diff の変換](../../packages/web-core/src/shared/lib/externalEditors.ts#L19-L23)・[呼出元](../../packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx#L437-L442)・[preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx#L64-L66)
+ファイル指定は Repo が一つでも `repo_id` を必須とし、file viewer の相対パス正規化・canonical-root 検査を再利用する。絶対パス、drive、親参照、NUL、欠落、Repo 外へ解決される symlink を拒否し、最終 target が通常ファイルでなければ失敗する。[ファイルの検査](../../crates/server/src/routes/workspaces/integration.rs#L131-L143)・[共通境界](../../crates/server/src/routes/workspaces/files.rs#L324-L394)。diff のパスは Repo 名 prefix を持つため UI で最初の prefix を外して送る。preview は元から Repo 相対であり、同じ除去を二度適用してはいけない。[diff の変換](../../packages/web-core/src/shared/lib/externalEditors.ts#L19-L23)・[呼出元](../../packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx#L437-L442)・[preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx#L73-L75)
 
 現在の Workspace 入口は `POST /editor/open` である。リンク生成のみでも、execution_only や 自動マージ 予約中の Workspace では共通 mutation guard が拒否する。旧 editor path GET や SSH tunnel を開設する権限の説明を現行 API に持ち込まない。旧 remote host の SSH tunnel / editor relay は現行 router に存在しない。[route](../../crates/server/src/routes/workspaces/integration.rs#L40-L46)・[予約 guard](../../crates/server/src/middleware/model_loaders.rs#L65-L103)
 

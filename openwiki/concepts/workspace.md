@@ -126,10 +126,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # Workspace と Repository
@@ -240,17 +240,17 @@ Project / PR filter を先に適用し、Active / Archived の区分を保った
 
 通常の Workspace 入口は既存一覧を表示する。新しい作業を始めるときは「＋」から作成先 chooser を開く。create 画面で再び「＋」を押しても chooser を開き直せ、取消で本文 draft や確定済みの作成先を捨てない。route と再選択要求の伝達は [Web の一覧遷移と作成要求](../architecture/web-and-sync.md#workspace-の一覧遷移と作成要求)にまとめる。[一覧入口](../../packages/web-core/src/pages/workspaces/WorkspacesLanding.tsx#L1-L5)・[選択の適用](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L210-L250)
 
-chooser では directory を読み込み、作業方式を選び、Worktree なら Repo と target branch を確認してから確定する。パスを編集すると inspection・方式・branch を破棄し、読み込み失敗や処理中には確定できない。branch 一覧にない以前の選択値を復元しない。確認済みかつ有効な target が揃って初めて composer が表示される。これは実際の [作成・Setup・起動](../workflows/task-to-integration.md#1-作業先を作り起動を予約する)に先立つ UI の契約であり、サーバー側の作成検証を代替しない。[derived state の無効化と branch](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L107-L151)・[inspection と失敗](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L156-L238)・[確定条件](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L340-L374)・[composer の表示条件](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L104-L117)
+chooser では directory を読み込み、作業方式を選び、Worktree なら Repo と target branch を確認してから確定する。パスを編集すると inspection・方式・branch を破棄し、読み込み失敗や処理中には確定できない。branch 一覧にない以前の選択値を復元しない。確認済みかつ有効な target が揃って初めて composer が表示される。これは実際の [作成・Setup・起動](../workflows/task-to-integration.md#1-作業先を作り起動を予約する)に先立つ UI の契約であり、サーバー側の作成検証を代替しない。[derived state の無効化と branch](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L108-L148)・[inspection と失敗](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L153-L228)・[確定条件](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L324-L358)・[composer の表示条件](../../packages/web-core/src/shared/components/CreateChatBoxContainer.tsx#L104-L117)
 
 ### サーバーのパスと端末のファイルを区別する
 
-「サーバーを参照」は `ServerFolderPickerDialog` から既存の `/api/filesystem/directory` を読む。ブラウザー端末の file/directory input でも、サーバー OS の native dialog でもない。パス未指定なら server の home を一覧化し、API が返す entries のうち directory だけを表示する。API はドットで始まる子項目を除外するため、一覧に出ないことをパス不存在の証明にしない。パス直接入力も利用できる。[一覧 API の接続](../../packages/web-core/src/shared/lib/api.ts#L958-L969)・[picker](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L23-L133)・[一覧生成](../../crates/services/src/services/filesystem.rs#L316-L364)
+「サーバーを参照」は `ServerFolderPickerDialog` から既存の `/api/filesystem/directory` を読む。ブラウザー端末の file/directory input でも、サーバー OS の native dialog でもない。パス未指定なら server の home を一覧化し、API が返す entries のうち directory だけを表示する。API はドットで始まる子項目を除外するため、一覧に出ないことをパス不存在の証明にしない。パス直接入力も利用できる。[一覧 API の接続](../../packages/web-core/src/shared/lib/api.ts#L959-L970)・[picker](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L23-L122)・[一覧生成](../../crates/services/src/services/filesystem.rs#L316-L364)
 
-入力したパスは「パスを読み込む」または Enter で明示的に読み込む。chooser の blur は inspection を起動しないので、参照ボタンへの focus 移動と読込処理を結び付けない。picker は新しい要求時に古い一覧を消し、失敗を表示する。読み込み中、一覧なし、入力値と取得済み `current_path` が不一致の場合は選択不可である。取消は `null` を返し、選択時だけ親 chooser がそのパスを inspect する。picker は effect cleanup の active flag、親は request ID により古い応答の反映を防ぐ。[明示読込](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L428-L472)・[一覧の応答と選択](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L133)・[親への結果](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L274-L307)
+入力したパスは「パスを読み込む」または Enter で明示的に読み込む。chooser の blur は inspection を起動しないので、参照ボタンへの focus 移動と読込処理を結び付けない。picker は新しい要求時に古い一覧を消し、失敗を表示する。読み込み中、一覧なし、入力値と取得済み `current_path` が不一致の場合は選択不可である。取消は `null` を返し、選択時だけ親 chooser がそのパスを inspect する。picker は effect cleanup の active flag、親は request ID により古い応答の反映を防ぐ。[明示読込](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L397-L437)・[一覧の応答と選択](../../packages/web-core/src/shared/dialogs/shared/ServerFolderPickerDialog.tsx#L31-L122)・[親への結果](../../packages/web-core/src/shared/dialogs/shared/WorkspaceTargetDialog.tsx#L264-L291)
 
 directory 一覧と inspection は異なる処理である。inspection はパスを正規化し、存在・directory・可読性を検査する。選択先に `.git` があり Repo を開ける場合は **Repo を登録**して返すので、まだ Workspace を作成していない段階でも登録の副作用がある。chooser を後で取り消すことを、この Repo 登録の rollback と解釈しない。[検証](../../crates/server/src/routes/filesystem.rs#L42-L81)・[登録を伴う inspection](../../crates/server/src/routes/filesystem.rs#L117-L142)
 
-同じ chooser は Project 設定の既定作業先にも使う。そこでは `purpose: project_default` で開き、確定結果を Git の Repo/branch または DirectFolder の path として保存用の値に変換する。参照・読込を変更すると新規 Workspace とこの設定の両方へ影響する。[Project の呼出側](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L558-L605)。`fileSystemApi.list` は host scope を明示的に受け渡すが、remote host 接続を復活させたわけではなく、[local transport の拒否契約](../architecture/web-and-sync.md#同じ-api-呼び出しでも対象ホストが変わる)に従う。旧 native picker API も別用途の実装として残るため、全 folder picker が置き換わったとは扱わない。[scope の伝達](../../packages/web-core/src/shared/lib/api.ts#L149-L164)・[remote 拒否](../../packages/web-core/src/shared/lib/localApiTransport.ts#L35-L61)・[native picker](../../crates/server/src/routes/filesystem.rs#L83-L115)
+同じ chooser は Project 設定の既定作業先にも使う。そこでは `purpose: project_default` で開き、確定結果を Git の Repo/branch または DirectFolder の path として保存用の値に変換する。参照・読込を変更すると新規 Workspace とこの設定の両方へ影響する。[Project の呼出側](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L559-L610)。`fileSystemApi.list` は host scope を明示的に受け渡すが、remote host 接続を復活させたわけではなく、[local transport の拒否契約](../architecture/web-and-sync.md#同じ-api-呼び出しでも対象ホストが変わる)に従う。旧 native picker API も別用途の実装として残るため、全 folder picker が置き換わったとは扱わない。[scope の伝達](../../packages/web-core/src/shared/lib/api.ts#L150-L165)・[remote 拒否](../../packages/web-core/src/shared/lib/localApiTransport.ts#L35-L61)・[native picker](../../crates/server/src/routes/filesystem.rs#L83-L115)
 
 変更時の検証入口と、Agent 起動・実 worktree 作成を含まない試験の限界は [Workspace 導線の検証範囲](../architecture/web-and-sync.md#workspace-導線の検証範囲)を参照する。
 
@@ -329,7 +329,7 @@ confirm は stable `request_id` と入力を永続 operation に結びつける�
 
 ### 履歴と再開
 
-閲覧は archive 済みや execution-only の worktree を再生成しない。削除済みなら diff は残った Git branch の commit を使い、消えた未commit内容は復元しない。unarchive または明示的な実行準備で環境を再生成する。直接の AgentRun 予約は archive/worktree削除済みを拒否する。[受動読取と明示再開](../../crates/services/src/services/container.rs#L705-L744)・[起動の検査](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)・[差分閲覧](../operations/workspace-inspection.md#差分の未取得エラー空を区別する)
+閲覧は archive 済みや execution-only の worktree を再生成しない。削除済みなら diff は残った Git branch の commit を使い、消えた未commit内容は復元しない。unarchive または明示的な実行準備で環境を再生成する。直接の AgentRun 予約は archive/worktree削除済みを拒否する。[受動読取と明示再開](../../crates/services/src/services/container.rs#L694-L733)・[起動の検査](../../crates/local-deployment/src/agent_run_port.rs#L734-L753)・[差分閲覧](../operations/workspace-inspection.md#差分の未取得エラー空を区別する)
 
 旧30分周期・1/72時間閾値と起動時 orphan 回収は撤去された。通常 merge・PR merge 観測・Arena 選択も自動 archive しない。経過時間、pinned、候補敗退を worktree 解放の証拠にしない。[手動操作の利用契約](../../docs/workspaces/managing-workspaces.mdx)・[merge](../../crates/server/src/routes/workspaces/git.rs#L275-L312)・[PR monitor](../../crates/services/src/services/pr_monitor.rs#L125-L159)・[Arena](arena.md)
 

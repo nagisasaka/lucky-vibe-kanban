@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:1c8fcd46cf334b509e65846e34b150420c7cb98cbabdf146c23b55c2f8511087",
+  "pageVersion": "sha256:75da4f6b4dde723d1fe0d12affefacd8c97614c6e9cb28a0a510797de8235d3e",
   "claims": [
     {
       "id": "claim_7239e619508e4a2785f62b8f23fd0a74",
@@ -565,16 +565,16 @@
           "version": "repo-lines-v1:sha256:bc7b96d1b4b102bba2e446006f2727fa43a128e150387147dba62b06dc52d991:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4NjhmNzBhYjU1MjcyY2U3Y2FhNjg3M2E4MDAzNDRhZDIwY2Y2ODUyMGIzZGNkMmM4MzgwMDAzYjEwMjM5OWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkMTNkMWE2MGQ1MmZhODgyMTIxNjk1MjBlYjMyZWY2YTg0OTM2YjRhYmNiNzJmZDg1N2QyNzE1ZmMwN2YxNGIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1471-L1482",
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1479-L1490",
           "version": "repo-lines-v1:sha256:d9849a39ce7399a8b0269ecdeff9b61f880553062964719a15819eff32906619:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MTJhODkzZTEwODMxNWM0ODY2MDcwODI3ZDUyZTAyNTdiMTBhNzEyYTdlZDQzODI0YWU1MTQ2ZjA1ZWU0MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YWMwNzBjNzliNzNlNGRiMmQ4MWNkZGFlNjVkY2UxMGUxMzViNDkwYzE0Yzk0ZmVjMmIwMjhmODIwZDJmY2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjMTU0NzI1MzE2NmY5Zjg4YzkwMjJiMjcxM2ZiY2RkN2JjOGJkZDYzYjllMzI1ZDA3MjkzMjU0YWFmMDg5MmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlODRhOWI4MWNmMGY1NzAzODM5ZGJiMDZkODdiMDhhNGFjYjFiMWE2MDIxYWQ1YTE5YjI3NmRkOGFmYTg1YjUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L558-L566",
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx#L566-L574",
           "version": "repo-lines-v1:sha256:f97b46ab924cd912539d2e2c3960c73f560c0c8b1a1ba1c085c41a4fb719840f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTQyNDY3ZWZiOTIyZjc5M2NmMWU0NDRiZWIyZDZhMjU0ZGNlNzU4N2Y5OTU2NWViODUzZjVjZjhmMDY1ZjY3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWMyZWY4Y2Y4ODdmNzcwNDkyMGRkMmM2YTc5ZTNhMzZmYjQ4OWM4YzUyOTI2YjA3N2EyZTM1MTIxMDljNzVkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjg5NmY3YmIxM2U0YWZmOGJmNGQwMDI3NmQxNWI5MTkwMTg4ZWVmOTgwOWFmNmQzM2MyZDg2MDJlNGQ2MGVjYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGJhNGM0ZjlhMzIwY2ExOWY5YWQxOWY3OTBiM2MxYTE3NDRhZTBjOTI2NzgxOGI1OTZiZDI2ZjA3NjA1NGJlZiJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L73-L95",
-          "version": "repo-lines-v1:sha256:cc17b0561122a9b0e50d4e68573e4d04ea7904adc29c3b7aa7f6fb46bfd183da:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NGIyYmRjNmY2NGVhZjVkZmRjMDVjMDBiYzkxZjBhMjAzYzZmMDdiNTM0M2ExZmJkMmRjY2M5NTA3YTEwNDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMjIxZTQ5ODY1NzA0NDNlYjFjODdhNmViNzRjZjc0YmM4Y2ExZjY3NzkyYzIzOTg1N2U4ODc0OTY3OGMwNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyY2JlMWUyNmJjOTMxNmJjYWY2YTQzOTVjNDhiYTYyYWZiMDI5M2Y1YzY3YzE2M2U0ZDIxNmVhZDE3YjY1OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlNDFkODI5ZDFiZGFlNTEzZjAxNGY3NWExZjhkNTQ5YWVmMDkyOTc0NWNjODYwMTA1Yzk5MGYwMjc5MzE1ZDYifQ"
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L105-L127",
+          "version": "repo-lines-v1:sha256:4e918d3bfe4f615df13acde5649dda71ee6dd8115e8f1157c4d99dee4583e840:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NGIyYmRjNmY2NGVhZjVkZmRjMDVjMDBiYzkxZjBhMjAzYzZmMDdiNTM0M2ExZmJkMmRjY2M5NTA3YTEwNDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMjIxZTQ5ODY1NzA0NDNlYjFjODdhNmViNzRjZjc0YmM4Y2ExZjY3NzkyYzIzOTg1N2U4ODc0OTY3OGMwNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyY2JlMWUyNmJjOTMxNmJjYWY2YTQzOTVjNDhiYTYyYWZiMDI5M2Y1YzY3YzE2M2U0ZDIxNmVhZDE3YjY1OTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlNDFkODI5ZDFiZGFlNTEzZjAxNGY3NWExZjhkNTQ5YWVmMDkyOTc0NWNjODYwMTA1Yzk5MGYwMjc5MzE1ZDYifQ"
         }
       ]
     },
@@ -821,6 +821,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T01:08:30.935Z"
+    "at": "2026-11-02T14:26:25.232Z"
   }
 }

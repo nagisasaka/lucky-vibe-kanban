@@ -54,10 +54,10 @@ sources:
     resource: repo://docs/self-hosting/server-container.mdx
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # 単一サーバーコンテナーの運用境界
@@ -157,7 +157,7 @@ Compose は host の `443` だけを nginx の `8443` へ公開する。Rust bac
 
 route と Certbot 引数は process 起動時に固定するため、`.env` 変更後は対象 Compose service の再作成が必要である。restart や nginx reload だけでは変更した Compose 環境を取り込まない。ACME では先に `certificates` を再作成し、新しい全名を満たす証明書を待ってから `lvk` を再作成する。外部管理なら証明書を先に用意する。この再作成では稼働アプリ・agent の停止を見込む。[運用順序](../../docs/self-hosting/server-container.mdx#independent-application-routes)・[起動時設定](../../deploy/server/server.mjs#L457-L508)・[Certbot 引数の固定](../../deploy/server/acme.py#L159-L176)
 
-証明書だけの更新は既存 route 設定を保ち、30秒周期で検出して nginx を reload する。名前不足・key 不一致・nginx 検査失敗なら新 fingerprint を採用せず、失敗を記録して次周期に再試行する。backend/agent の再起動は行わない。[検査と採用順序](../../deploy/server/server.mjs#L352-L374)・[reload と再試行](../../deploy/server/server.mjs#L508-L523)
+証明書だけの更新は既存 route 設定を保ち、30秒周期で検出して nginx を reload する。名前不足・key 不一致・nginx 検査失敗なら新 fingerprint を採用せず、失敗を記録して次周期に再試行する。backend/agent の再起動は行わない。[検査と採用順序](../../deploy/server/server.mjs#L352-L374)・[reload と再試行](../../deploy/server/server.mjs#L508-L518)
 
 JS/Python に parser を置く構造は、新しい配布 runtime 依存や mount を増やさず既存入口を使うという凍結 Change Manifest の判断と一致する。両者の差異は [共有 fixture と native nginx の検証](development.md#独立アプリの-csv-ルートを変更するとき)で監視する。長い有効 DNS 名が nginx の既定 hash bucket では失敗した記録に対応し、template は512を指定する。[設定](../../deploy/server/nginx.conf.template#L6-L11)・[再現と修正の記録](../../docs/development/preview-routes-validation.md#独立レビューと判断)。実 ACME 発行・DNS・配布 image の成功はこの source 照合では確定しない。
 

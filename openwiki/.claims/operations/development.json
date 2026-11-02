@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:5b2d8db63896a9932d7f2b032ec5a459c3b78bdbdedf619cc9bca495468a513a",
+  "pageVersion": "sha256:8ebb9a1b6af4b25b600507a9b552e90a8088fcd16bb7acbb64f413ac4ada24c9",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         },
         {
           "resource": "repo://rust-toolchain.toml",
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         },
         {
           "resource": "repo://scripts/dev-cargo.mjs#L15-L25",
@@ -40,7 +40,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
       ]
     },
@@ -50,7 +50,7 @@
       "evidence": [
         {
           "resource": "repo://tests/workflow/playwright.config.ts",
-          "version": "repo-file-v1:sha256:61e46ab4255b0741d6c1507e2ac96753e7947baefe15cafa8ccf66ce90c9eb1c"
+          "version": "repo-file-v1:sha256:8f5f3946e88a137c5ac0bf3b7183f88233ee829393762c18419d5f43bd9967df"
         },
         {
           "resource": "repo://tests/workflow/specs/card-context.spec.ts",
@@ -74,7 +74,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/bin/generate_types.rs",
-          "version": "repo-file-v1:sha256:a6c69007fc8514d8dca42862d3b73bd7d7b9a02619db4d394dfe75f43a6a432f"
+          "version": "repo-file-v1:sha256:56c028b786d73c8f3380bd666e4340b61578fff076b6e6869e82e2d1a8c9bce6"
         }
       ]
     },
@@ -122,7 +122,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
       ]
     },
@@ -394,7 +394,7 @@
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
       ]
     },
@@ -609,11 +609,11 @@
           "version": "repo-lines-v1:sha256:e6ad3c0105635dbae1b4b96de58a228c984140a935cfa2732cd881ed443d5ac7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYTE2YmJlNDhiN2YzMGY3ZTZlNzJjYTQ4YjllMGJmNzc0YmQ3NGU3N2ZmNTI1NDhkOTRiN2FhMzM2MDllZjMzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNzY3MThkNDNlYmM3Zjk4ZDY1NDJiNGM1MmZhMDMyZmE1OTcwNzYwNWQwN2IxNzkyOWRiNzJmOTYwMjI3NzYwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
-          "resource": "repo://tests/chat/external-editors.test.mjs#L120-L285",
-          "version": "repo-lines-v1:sha256:c693b9f4dec0a0c3ba2e4eb477c4266ca3c7ddaf0854b18023424a22a53102ca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNjkyMjA2MmMwNjU3NmJmYWZjZDRhNGEzZTFmZDczZDEzZWQ0ZjAyYWY0MjBlNzdjMGViYThlNzUzZjIxMjZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4NmY4ZTA1NmU5MTgyMmI5MmE3MGNlYzgyY2ZmZDlhMDI4ZGJhYjY4Nzg1ZGU2ODU1Y2U2YTA4N2Y1MGZhYzBiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNzQwZDFhODE0ZWJhMDIwYmI1MDJkYTc3OTg5NzJlOGM4M2JkNWJiNGUxNDY4MzNmOWYwYzg2MTUwZGNjODM1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0YjZiNmI3Yzk1OGE5ZjVmZmM3ZGZmY2NhYzc1Njg1ZGQ2NzYwZGI1YTI1YTFhOTAwOGY1ZWQ5YTI3YWNlYTVmIn0"
+          "resource": "repo://tests/chat/external-editors.test.mjs#L119-L301",
+          "version": "repo-lines-v1:sha256:1dc2237a59c24251dfaaaff4290bf1221d89bd7b65a95ae17cee67305f1140d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNjkyMjA2MmMwNjU3NmJmYWZjZDRhNGEzZTFmZDczZDEzZWQ0ZjAyYWY0MjBlNzdjMGViYThlNzUzZjIxMjZkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlNTc1YjNlN2Q4NGRjZDIyZTVmZWY0MzQyZWY2OWIzMzc5YjE4ZWM5NWQ1ODU5MzYwZjRkYjlkZDcwMmYwMTBkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiNzQwZDFhODE0ZWJhMDIwYmI1MDJkYTc3OTg5NzJlOGM4M2JkNWJiNGUxNDY4MzNmOWYwYzg2MTUwZGNjODM1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwN2NiMGVjZDAyZDNiODUzYmZlMjdiMjAzZTQ4YzI0MmQzYWNlYzU1MjQwMzk1NjAzNDU4YmIxYzQwNzk1N2Y4In0"
         },
         {
-          "resource": "repo://tests/chat/external-editors.test.mjs#L16-L66",
+          "resource": "repo://tests/chat/external-editors.test.mjs#L15-L65",
           "version": "repo-lines-v1:sha256:2f3dc8412f5e6bff720c049181b21628ff8586d9c977c7459a402a47420af491:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjN2VmYjU0MzE2Mzg0MTVhZWJiYWYwYTYyZWYwZTNiYmY3ZTdlMGZkZjNlYmM2OGE0MWQ5OGFiNjg1MzVlZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiOTEwMGVlZDAxNjJlM2ZkNDk5MTQwNWE3MTQ5YjcwNjE2YzlhYzM4YjViNTJkN2I3YzUyOGQ4MDY4M2ExZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMjdlYzhkN2QxYjQ1YTgzZGY4ZGVkMmI5Y2YyZDdkOGZjYWY3YjQxZDg0ZWI0ZThkZGUwY2ExMDVkMDhhMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMwYmU1Y2UwOGRiYjE2MTdmNzIzZDIxZGNmYmNhMDM0MGMyMGM5NGEwOGIzNDQ5Y2E3Nzc5Mzk4OTA0MGRkMDQifQ"
         }
       ]
@@ -627,8 +627,8 @@
           "version": "repo-lines-v1:sha256:55126313475c91224b9734e43db287437c7afb69040ea9d425346e89e435b935:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkZmE0MGI1NDZiZDE2N2ZlMTYwZmYyN2M4ZmRkNjJhOTE4OGIyNjEyMzg4Nzk3ZjRlYjFlNGNhMTg0ZDAzZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2OWEwMzRmNGEyOTljZDM1YzAzYjdmMTM0M2YwNTBmZGYxNDBlNDU2MTExMmQzNjZhZDI0NTliMWQwOTU4ZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwODM5ZDllMDVlZmY0OTkzODhhNjU2ZWYxNWU2ZDg4ZTRkM2FjZWU4ODkzODNkZjY3MWFkZmI1MTU2MDIwNmIifQ"
         },
         {
-          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L154-L189",
-          "version": "repo-lines-v1:sha256:95f2bf238b5cb457fd7ba874f81a38e85f7c2f665531a2c4de528af3ebe11bd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDZiYTc0MDgyYjhhNTVhZTY1ZjQ3MDEzMGJkNmY4NDZkYTQ1ZWFmMzI4OTQ4YTZhZTBiOWJiNGZjNTE4NWEifQ"
+          "resource": "repo://crates/services/src/services/config/versions/v9.rs#L180-L254",
+          "version": "repo-lines-v1:sha256:c474bcc64eb1dcf256038d1b9a5c9e4fb91c8b1b1ca03764e879f25fd054e843:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZDZiYTc0MDgyYjhhNTVhZTY1ZjQ3MDEzMGJkNmY4NDZkYTQ1ZWFmMzI4OTQ4YTZhZTBiOWJiNGZjNTE4NWEifQ"
         }
       ]
     },
@@ -987,10 +987,46 @@
           "version": "repo-lines-v1:sha256:5bd9809978dcdc910d7a12f6c56f78f736351bca37380200e5089a762714c825:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiOTFmNDQ2NzRkMTNhYTFkOTc2MWQ5ZTVlYzljMzg0YjAyYTNlMTU0ZmMxMjZjMTU4ZDQ3Y2Q5N2FkNzJhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNmQwMDU4NTEzODQ2YzNkMzc5MzFlOWQyYjhkNjI1NTg3YjNjY2E5NWEyMDlmYmM4NDBkNTU5ZTljZDcxZWYifQ"
         }
       ]
+    },
+    {
+      "id": "claim_95921960115044fb8b44959fbac4c32a",
+      "statement": "常設i18n検査は英日辞書・補間・plural・JSON重複・参照存在・生成schema同期と直接JSX本文を対象にし、same-en-ja強制と複雑なhardcode解析を行わない。unused検査は保守的inventoryである。",
+      "evidence": [
+        {
+          "resource": "repo://scripts/check-i18n.mjs",
+          "version": "repo-file-v1:sha256:429bfd9e08af78c03700dce9374b2c25a621e4fe85004ae1ec8f53fc4e2a3379"
+        },
+        {
+          "resource": "repo://scripts/check-unused-i18n-keys.mjs",
+          "version": "repo-file-v1:sha256:cb41c0be274dbdb4b7b9008a211ab6825bda35e17b1c44630e7698d37221fa92"
+        }
+      ]
+    },
+    {
+      "id": "claim_beecc984e63c4d0492da15d963b9bb2f",
+      "statement": "settings-redesignは3つのi18n specで4つのlocale固有ケースを残し、移行用一般挙動fixtureを常設化しない。既存製品ケースは別に保持する。",
+      "evidence": [
+        {
+          "resource": "repo://tests/settings-redesign/fixture/screen.tsx",
+          "version": "repo-file-v1:sha256:a74ea6a0dfd0034ccda9f0451c6014768aab724ba48c391eda01b9e11d0badf7"
+        },
+        {
+          "resource": "repo://tests/settings-redesign/general-i18n.spec.ts",
+          "version": "repo-file-v1:sha256:f5b1899cd44879b65f86aebb2e7be22d9868d506ce3eb67f69e4d9c53d7d3b8d"
+        },
+        {
+          "resource": "repo://tests/settings-redesign/model-selector-i18n.spec.ts",
+          "version": "repo-file-v1:sha256:9860a8180aeec854bcf21d3ac581b1908a3cbdf2fe9dc694b400ee043f691afc"
+        },
+        {
+          "resource": "repo://tests/settings-redesign/schema-i18n.spec.ts",
+          "version": "repo-file-v1:sha256:bd47348bd1bf7d4392bb21106b5a57cfa05816402d5006bf839ae864c382f7d5"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T01:08:30.935Z"
+    "at": "2026-11-02T14:26:25.232Z"
   }
 }

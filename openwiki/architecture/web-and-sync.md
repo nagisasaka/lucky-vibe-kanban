@@ -100,6 +100,8 @@ sources:
     resource: repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts
   - id: openwiki-source-202a77c218ffbc8ac2871a04
     resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx
+  - id: openwiki-source-5ff018fe0b1ec29d9745aca4
+    resource: repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiSurfaces.test.tsx
   - id: openwiki-source-b58899ddf6c6173903fabe61
     resource: repo://packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx
   - id: openwiki-source-952ab4470659b6dc518fab38
@@ -114,6 +116,12 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/ExecutionInspectionPanel.tsx
   - id: openwiki-source-b20f21ce6e1fdbde2fcde6ed
     resource: repo://packages/web-core/src/features/workspace-files/model/useChatFileLink.ts
+  - id: openwiki-source-4244260c062f6502d542a077
+    resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFileInspection.test.tsx
+  - id: openwiki-source-52567e2f1ee9b96713013cd4
+    resource: repo://packages/web-core/src/i18n/config.ts
+  - id: openwiki-source-b15ed7e04d56f51df1b6a6ea
+    resource: repo://packages/web-core/src/i18n/languages.ts
   - id: openwiki-source-89a716f39968e2030cf296c0
     resource: repo://packages/web-core/src/pages/root/RootRedirectPage.tsx
   - id: openwiki-source-2fb74c0fc81d817149606557
@@ -180,6 +188,8 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-7ac3d3320cb9464c58c037f4
     resource: repo://packages/web-core/src/shared/lib/electric/snapshotActivity.ts
+  - id: openwiki-source-a7f483f1fe81f9e0d59a44be
+    resource: repo://packages/web-core/src/shared/lib/errorDiagnostic.ts
   - id: openwiki-source-9ca1dca04d93c4fed8664d25
     resource: repo://packages/web-core/src/shared/lib/localApiTransport.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
@@ -226,10 +236,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-10-29T16:21:09.593Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # Web の実行環境と同期
@@ -531,3 +541,9 @@ Session 一覧の再取得では利用者が選んだ古いログや new-session
 drag開始前に自動演出を止め、手動drag中は同期配置を割り込ませない。scroll・resize・reduced motionでも停止する。移動の両端がviewport内にある場合だけ飛行し、filter出入りの始点を捏造しない。列をまたいだときは元のカード内にあったfocusだけを対応要素へ `preventScroll` で復元する。[寿命とfocus](../../packages/web-core/src/features/kanban/ui/KanbanServerMotion.tsx)
 
 再検証は [motion試験](../../tests/kanban/README.md#server-driven-placement-motion-local-259)を使う。今回の候補 `48b7685e645e6001473e44da6c2fcf4e4aefc79d` では局所23件、Chromiumの幅360/535/536/600px、候補backendとの実API motion・DnD・touch試験が成功した。中間フレーム、最終rank/status、件数・focus、同期失敗回復を検査した。visibility境界は合成eventで、実tab休止、実機Safari、実providerの実行は未検証である。
+
+## 言語解決と診断表示
+
+共有i18nextはEN/JAと既存5言語の辞書を読み、欠落・空値は英語へfallbackする。ブラウザー検出はnavigator→HTML langで、キャッシュは作らず既存configのBROWSER/明示言語に従う。regional localeは共通resolverで正規化し、表示言語変更時にHTML langも更新する。日時・数値は表示localeを使い、識別子やprovider原文は翻訳しない。[設定とfallback](../../packages/web-core/src/i18n/config.ts)・[locale正規化](../../packages/web-core/src/i18n/languages.ts)
+
+通常のエラー表示は翻訳した文脈と元の診断詳細を併記する。`errorDiagnostic`は外側messageを保持し、既知の構造化診断fieldを加えて重複を除く。診断はReactのテキストとして描画し、翻訳keyやHTMLにしない。表示言語変更は結果不明の状態を失敗へ変えたり再送を起こす理由にはならない。[診断抽出](../../packages/web-core/src/shared/lib/errorDiagnostic.ts)・[Wikiの両surface](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiSurfaces.test.tsx)・[File preview](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFileInspection.test.tsx)

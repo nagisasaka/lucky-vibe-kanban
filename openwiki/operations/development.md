@@ -104,6 +104,10 @@ sources:
     resource: repo://plugins/lvk/skills/lvk-work/SKILL.md
   - id: openwiki-source-b7793decf9d7c9ba48e57e0f
     resource: repo://rust-toolchain.toml
+  - id: openwiki-source-6b8120d95640edd862b2bff6
+    resource: repo://scripts/check-i18n.mjs
+  - id: openwiki-source-4460e7b365a8c7784f4bcfd6
+    resource: repo://scripts/check-unused-i18n-keys.mjs
   - id: openwiki-source-8ea6c46d63953a7104f5dd97
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-934f1cc67f10f765aeed70ed
@@ -132,6 +136,14 @@ sources:
     resource: repo://tests/server/run-workspace-tokens.mjs
   - id: openwiki-source-f7bef772fe7a00d12c00a997
     resource: repo://tests/server/specs/workspace-tokens.spec.ts
+  - id: openwiki-source-40491b61cd2a69361d0984ad
+    resource: repo://tests/settings-redesign/fixture/screen.tsx
+  - id: openwiki-source-990930bbf26fab345536198a
+    resource: repo://tests/settings-redesign/general-i18n.spec.ts
+  - id: openwiki-source-3ab332950b513e74b8a08d6c
+    resource: repo://tests/settings-redesign/model-selector-i18n.spec.ts
+  - id: openwiki-source-c20751bcb54a268469b435af
+    resource: repo://tests/settings-redesign/schema-i18n.spec.ts
   - id: openwiki-source-67c9f08f4593b3acbf1fe7b8
     resource: repo://tests/terminal-latency/codex-fixture.mjs
   - id: openwiki-source-a8dd8312a18cc58d1cb88211
@@ -146,10 +158,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -399,7 +411,7 @@ npm から別バージョンを取得しない。
 
 ### 独立アプリの CSV ルートを変更するとき
 
-[独立アプリ経路の契約](server-container.md#独立アプリの-csv-ルート)は nginx supervisor の JavaScript と ACME companion の Python に同じ入力規則を要求する。共有 `preview-routes.cases.json` を両側で読み、受理・拒否だけでなく host/port 配列の期待値を比較する。JavaScript 側は101経路の受理、同一 upstream の別名、Compose 両サービスへの同じ環境変数の受渡しを検査し、Python 側は25識別子境界と名前の追加・置換・削除、IP と DNS の混在注文を検査する。[JS の回帰](../../deploy/server/server.test.mjs#L457-L529)・[Python の回帰](../../deploy/server/acme.test.py#L32-L57)
+[独立アプリ経路の契約](server-container.md#独立アプリの-csv-ルート)は nginx supervisor の JavaScript と ACME companion の Python に同じ入力規則を要求する。共有 `preview-routes.cases.json` を両側で読み、受理・拒否だけでなく host/port 配列の期待値を比較する。JavaScript 側は101経路の受理、同一 upstream の別名、Compose 両サービスへの同じ環境変数の受渡しを検査し、Python 側は25識別子境界と名前の追加・置換・削除、IP と DNS の混在注文を検査する。[JS の回帰](../../deploy/server/server.test.mjs#L457-L494)・[Python の回帰](../../deploy/server/acme.test.py#L32-L57)
 
 native nginx fixture は自己署名証明書と loopback の模擬 upstream を使い、LVK の Basic 保護と独立経路への匿名到達の併存、Authorization/Cookie/Host/forwarded 情報、独自認証ヘッダー、Set-Cookie、WebSocket upgrade/subprotocol、各 route の証明書名不足を検査する。253文字の DNS 名も含む。parser が受理するだけでは nginx の設定読込成功を保証しないため、長い名前の回帰はこの層で扱う。[fixture と長い名前](../../deploy/server/nginx.test.mjs#L23-L66)・[到達と認証の検査](../../deploy/server/nginx.test.mjs#L314-L377)
 
@@ -447,11 +459,11 @@ adapter は SQLx の公開 `MigrationSource`・`Migrator::new`・`Migration::new
 
 ## 外部エディター URI 連携の検証
 
-[外部エディターの契約](workspace-inspection.md#外部エディターの-uri-連携)を変更するときは三層を分ける。services の editor unit test は URI の path/query encoding・不正構文・file context・旧 schema 読込を検査し、v9 config test は v6〜v9 の全体読込と他設定・空一覧の保持を検査する。[URI tests](../../crates/services/src/services/config/editor/mod.rs#L181-L330)・[Config migration test](../../crates/services/src/services/config/versions/v9.rs#L154-L189)
+[外部エディターの契約](workspace-inspection.md#外部エディターの-uri-連携)を変更するときは三層を分ける。services の editor unit test は URI の path/query encoding・不正構文・file context・旧 schema 読込を検査し、v9 config test は v6〜v9 の全体読込と他設定・空一覧の保持を検査する。[URI tests](../../crates/services/src/services/config/editor/mod.rs#L181-L330)・[Config migration test](../../crates/services/src/services/config/versions/v9.rs#L180-L254)
 
-server の `routes::workspaces::integration::editor_tests` は一時ディレクトリで Workspace / Repo / file の解決と欠落時の非復元、traversal・symlink 逸脱を確認する。実 DB や外部 IDE 起動を試すものではない。[path tests](../../crates/server/src/routes/workspaces/integration.rs#L210-L331)
+server の `routes::workspaces::integration::editor_tests` は一時ディレクトリで Workspace / Repo / file の解決と欠落時の非復元、traversal・symlink 逸脱を確認する。実 DB や外部 IDE 起動を試すものではない。[path tests](../../crates/server/src/routes/workspaces/integration.rs#L210-L326)
 
-`node --test tests/chat/external-editors.test.mjs` は実設定 UI・Config controller・選択 dialog を Chromium に載せ、API を fixture に置換する。初期値保存、並べ替え、全削除保存、空一覧保持、対象別 request、古い候補の非表示、リンクの明示クリックと opener 分離を検査する。[fixture 境界](../../tests/chat/external-editors.test.mjs#L16-L66)・[操作検査](../../tests/chat/external-editors.test.mjs#L120-L285)。小さな helper の回帰は [初期値と diff path の Vitest](../../packages/web-core/src/shared/lib/externalEditors.test.ts)にある。
+`node --test tests/chat/external-editors.test.mjs` は実設定 UI・Config controller・選択 dialog を Chromium に載せ、API を fixture に置換する。初期値保存、並べ替え、全削除保存、空一覧保持、対象別 request、古い候補の非表示、リンクの明示クリックと opener 分離を検査する。[fixture 境界](../../tests/chat/external-editors.test.mjs#L15-L65)・[操作検査](../../tests/chat/external-editors.test.mjs#L119-L301)。小さな helper の回帰は [初期値と diff path の Vitest](../../packages/web-core/src/shared/lib/externalEditors.test.ts)にある。
 
 この Sync は凍結 source `887b8049b71093beca6a80ec7e522da2a1c2fab1` の外部エディター変更を、設定・API・パス検査・UI 呼出元・試験定義から静的照合した。製品テストは再実行していない。[開発時の検証記録](../../docs/development/external-editor-uri-validation.md)と、凍結入力に記録された自動マージ の明示的検証省略は別である。実 Windows IDE、WSL / SSH 認証、Docker Attach と Dev Containers のネスト URI は未検証であり、fixture の成功で補えない。無関係な既存節の再検証も主張しない。
 
@@ -503,3 +515,13 @@ Wiki継続proofのprotocol testsと `isolated_conversation_repair_publication_dr
 共有Cargo中間物にはコンパイル時のcheckout絶対パスが残り得る。utilsのプロセス回収テストはPython fixtureの場所を実行時 `CARGO_MANIFEST_DIR` から解決し、削除済みの過去worktreeを参照しない。これは製品のprocess cleanupや共有cacheの全入力に対する一般的な鮮度保証ではない。[fixture参照](../../crates/utils/src/process/owned_group.rs#L355-L435)
 
 今回の統合検証はコード `7a740a94` でfrontend build/check/lint/backend:test/types/SQLxの同一batchを成功させ、以後のtest-only差分を `b803a1ed` の隔離E2E・Chromium・Vitest15件・fmt・server all-targets Clippyで検証した。旧metadata15件削除の整合は正式prepare-db:checkが確認した。初期失敗は履歴に保持し、古いpassを最終SHAの全面再実行と呼ばない。Wikiのみの後続commitにコード試験を付け替えない。
+
+## i18nの常設検査と移行検証
+
+`pnpm run i18n:test`は検査器selftest、`pnpm run i18n:check`は英日キー・空値・補間・正当plural差・JSON重複、literal／有限dynamic参照の存在と生成schema翻訳の同期を調べる。hardcode検出は直接JSX本文に限定する。same-en-ja一致の強制やlocal const／属性／toast等の複雑な独自解析は行わず、英日文面の自然さや全構文の解決を保証しない。[検査器](../../scripts/check-i18n.mjs)・[selftest](../../scripts/check-i18n.test.mjs)
+
+unused検査は文字列・dynamic prefixを使う保守的なinventoryで、コメントや広いprefixが未使用keyを残すことがある。削除判断では呼出元とschemaを確認する。辞書同士の一致やunusedだけをソース参照存在の代用にしない。生成型・schemaの正規確認は `pnpm run generate-types:check` を使う。[unused](../../scripts/check-unused-i18n-keys.mjs)・[生成元](../../crates/server/src/bin/generate_types.rs)
+
+settings-redesignの恒久i18n browserは、言語保存とBrowser通知hint、JA→ENでのcanonical model/override保持、生成schema表示・validationという4ケースを3specに残す。既存製品40ケースと合わせて44件であり、移行用に増やした一般承認・対象payload・再送・各画面表示の網羅は常設化しない。削減した範囲は同等の自動検知が残るとは言えず、checkerは画面配線や一般製品状態を保証しない。[suite設定](../../tests/settings-redesign/playwright.config.ts)・[言語保存](../../tests/settings-redesign/general-i18n.spec.ts)・[model値保持](../../tests/settings-redesign/model-selector-i18n.spec.ts)・[schema](../../tests/settings-redesign/schema-i18n.spec.ts)
+
+診断の確認は既存Wiki/File・認証errorの少数unitで、翻訳した説明と原文をReactテキストとして併記する契約を確認する。fixture成功と実Auth0/ChatGPT/Push/OS配送の受入は別である。検証記録は実行したコードSHAに結び付け、後続Wiki-only commitへ付け替えない。

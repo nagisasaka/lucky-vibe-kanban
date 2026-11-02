@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b8525e21cd7bf9a4ec0606152299a64cacb3f594faaad1e2a8322cd083b758bd",
+  "pageVersion": "sha256:ef35a3ef915730898c3b418cf0e6f14c12a05a91cfcee1c8f615c9d67a6fcb43",
   "claims": [
     {
       "id": "claim_33c0ff606c234c65b0a089749cc323a5",
@@ -154,11 +154,11 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:e0121c081387deaacddaae1d49c0f5ae87bbbd17139943ee77b1cba60392626c"
+          "version": "repo-file-v1:sha256:82676d6afd6a626162b5be08abc7e1358d08c2ed5d88f34714ea63fb20019ddc"
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx",
-          "version": "repo-file-v1:sha256:77a59ea7ee9c5cfb3a81bab965f15afd4252636c557c1aef3f551c52e2a34898"
+          "version": "repo-file-v1:sha256:fff31b9f6247a8e98519f9313e299ba7c7b6a3445b74b4443278822a3f362bdc"
         }
       ]
     },
@@ -171,7 +171,7 @@
           "version": "repo-lines-v1:sha256:0820465d642f6158409e65a7267c261328cb15490bda65738a8a51aa5a93e159:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YzI3YWM3Y2FhMzY4ZGVjZTllYTM3MGYzY2U3MDE5YWRmMjczNzBmYmEwNjE3YjM5MDI0MmQ5ZGNiMDM0YTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4MjMyNWI0ZjA4NWNmNGNiMzczYzU5ZmEyN2IzYWM1YmU1NmNkN2E2YTM4NWU3NmRmNjAzNGQ1Zjg2ZDE5NTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3OGM5NDg1NjhjYTNiZGExYjc4ZDFlNDY2N2E4YWRiNzdmOGNiOWQ3MmMyNTkyMWY0NWVlNGI3MmIwNmI1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3NTQ5NWMwZWY5MzU0ZjIxZmU1MWU5OTI3N2U0ZGFjMDUwMTkyZGRkZjZkZjViMTk1YzZhY2EwNTlhYjE2ZWIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L326-L340",
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L328-L342",
           "version": "repo-lines-v1:sha256:48bc511e7ef5e0d0c1b0b0966ab616dad308c9e61faf6279e1cde9411729251c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5ZWVjYjg4NjM1MTNlODNjNjRhYWExMjgzM2U3ZDk4ZDY0ZGEzNjliMjQyMmQ3NGZmOWExYzc3ZjRiMmNjOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMTI1MzBlNGViNmVhOWY5Y2UyYzJiNzQ3ZGI4MDliZTA3ZTc3MjViNDVlMjc0NDc0Yzk3NTM5ZmFkMzUxYzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI4ZmNlNjU0ODI3NDZiMWFiMDAwZjVlZTVkZjk4M2RjNGYwNGU5ODBlODA1Mzk1MTc4MTJkY2NjZDg4ZjI3YWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NGJjYzIzYWMyM2RlZDBmZjZhYzgzYWE3MzNhOWNiNzJlZTk5Yjc2ZmEzZGUzNzQ2MWQ5MTAyZDM4MmU4YjkifQ"
         }
       ]
@@ -319,7 +319,7 @@
       "statement": "Kanbanは可視Statusごとの列内で実幅33.5rem以上なら二列、未満なら一列の通常gridを使う。二列閾値は16remカード二枚とgap/paddingを確保する設計で、一列時に16remの最小幅を強制するものではない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L515-L523",
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L517-L525",
           "version": "repo-lines-v1:sha256:337c32ef23e06fe9d35b0b181da62ff2e98b934ee446745efee5f3a12bd605b3:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg4MGI0YjExOWE4ZTRhOTI0NjQ5Y2Q2NzM3NTU4YmRlOGMyNmIyZWUyODVkNmFmZmE1NGFjMjgwMjljMDUwMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDAzMWIxNmQ3YmE1NTljYTkzNDJiMDU5YzAyNjE5ZjI4NTRkMDI5ZWZhN2ZhZjk1NDRmNTk1MWEwYjJmYWE5NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjIwZTI5NjA5NWQwY2RkZDU2NThkZTYzOTgwZjY5MmU3ZjA2YTU1MGQ0OTY1Y2IyYmYyNjkzZjg4NmFmZjk2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODljOWMyNjZmYzBjMWZmZjM3N2QyNjYwNzZmYzQwNTJjMzcyZjZhZjZiNWU2MjJkYzA4OGUwZWU2MjNiOTQ0YiJ9"
         },
         {
@@ -334,7 +334,7 @@
       "evidence": [
         {
           "resource": "repo://packages/ui/src/components/KanbanCardContent.tsx",
-          "version": "repo-file-v1:sha256:add9d4402fb1edcf40c7c400d221a3c2f8e6863980f72b6d1c52b54f91bf18a4"
+          "version": "repo-file-v1:sha256:990f24e550d5de9991249848aece0465806fc35a74da4435ee3ed50e445830e3"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanCardDetails.tsx",
@@ -342,7 +342,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:e0121c081387deaacddaae1d49c0f5ae87bbbd17139943ee77b1cba60392626c"
+          "version": "repo-file-v1:sha256:82676d6afd6a626162b5be08abc7e1358d08c2ed5d88f34714ea63fb20019ddc"
         }
       ]
     },
@@ -445,7 +445,7 @@
       "statement": "UIのarchive対象とKanban/Listは独立し同じ可視集合を使う。非永続storeでIssue遷移を越え保持しProject切替でActive/Kanbanへ戻る。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L342-L371",
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L344-L373",
           "version": "repo-lines-v1:sha256:02f1db79d4fc031e08f74f19dd8535825607f2b655bc0e5be1fe7bd5207b0af4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYTdkM2QxYmU4YTNmMDVjMzNhYmE4MTU5MzNiOWZjZjI1NjBjMDZlZTk0ODliYjlhYTdlNGMxMWJlODU1ODQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNlODYyMWZjZDhiYjFhNTg3MzVjYTZmYzM4NTU5MmQ2NGViNjk3ZjVlZDgxYzFkNzcxMDcxNjY2YjVlODhkYzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIwZmQzZWY2YmQ2ZTA2MTFjZDZhYmNjNmRlMGVhOGI5NTIyNmQzYmYxZTMwMzkxMTA3ZDFhOWNhZmI4NzZhY2QifQ"
         },
         {
@@ -474,7 +474,7 @@
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
-          "version": "repo-file-v1:sha256:e0121c081387deaacddaae1d49c0f5ae87bbbd17139943ee77b1cba60392626c"
+          "version": "repo-file-v1:sha256:82676d6afd6a626162b5be08abc7e1358d08c2ed5d88f34714ea63fb20019ddc"
         }
       ]
     },
@@ -487,8 +487,8 @@
           "version": "repo-lines-v1:sha256:70764858dc0668757cdf5fc4a887c248755b2bd604c6e83d7e75512befadb7e1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NDM2M2ZlZjFlNjM3YjAxNmIwNTljNTA5NTE2ZjA3NTdmNmI4NjExZTEwY2JiYmM0NjFjMDFjZDQzNTBhOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNDFlZTA5MGY0Zjc1YTAzZWYyMTllYTkwOTRmYzE5NDI1NjBmNDFiNmUwNzdhM2MyMTNkMjRiNGI0Mjk5YTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjYmJkNzA3NGM2MWVhY2U5NDEyOTA2NTg2MjcxMDViZDM4MjZjOTM2MTVhODk3NmM3YmE3YWMwMTRiZGNjMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzYjA1ZThlNWYwNmQ5ODA0NDA3MjEyNmVhZmU3YjY0OTNkYjMwZDU5ZmMzYmY3N2FlMDc3ZGE5YmNiYmQyYTMifQ"
         },
         {
-          "resource": "repo://packages/ui/src/components/IssueWorkspaceCard.tsx#L250-L320",
-          "version": "repo-lines-v1:sha256:4c98439da06f1aabb6495aa5b5348b8e9334622993591864bbf0498c3447049a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MWEyNDRiM2RkNjAwNGU1NzBmMDY5N2JmM2I3YzA4YWZhN2IzYmMyYTI1ZjAxNWViYzMwODQ2YWMwMTQ0ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTc4OGE4Yjk1MDI4OWRkZGI3M2FmMGFmMDdiMTgyN2UwZjQxMmY1YmZjNDg2ZmYyMGIzNWMyMzgyNjg4OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwYjVlOGM5MDgxN2UwOWQ2NjAzYTViYjUwMjk1ZWVjMmY2NzZjN2UyM2U4NDM3ZmM4MDVhODVkM2YxZGU2MDgifQ"
+          "resource": "repo://packages/ui/src/components/IssueWorkspaceCard.tsx#L250-L322",
+          "version": "repo-lines-v1:sha256:2e0c1980fd6279348faed8a42f57417bb2dd36535cb59ffc21bd1c70a1ea2bb3:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MWEyNDRiM2RkNjAwNGU1NzBmMDY5N2JmM2I3YzA4YWZhN2IzYmMyYTI1ZjAxNWViYzMwODQ2YWMwMTQ0ZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3YTc4OGE4Yjk1MDI4OWRkZGI3M2FmMGFmMDdiMTgyN2UwZjQxMmY1YmZjNDg2ZmYyMGIzNWMyMzgyNjg4OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkwYjVlOGM5MDgxN2UwOWQ2NjAzYTViYjUwMjk1ZWVjMmY2NzZjN2UyM2U4NDM3ZmM4MDVhODVkM2YxZGU2MDgifQ"
         },
         {
           "resource": "repo://packages/ui/src/components/KanbanCardContent.tsx#L185-L255",
@@ -665,6 +665,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T01:08:30.935Z"
+    "at": "2026-11-02T14:26:25.232Z"
   }
 }

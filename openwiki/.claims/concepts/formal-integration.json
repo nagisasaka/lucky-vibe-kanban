@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:56cab7e4a3b51abf09acd00db5a43260a28436dfd1c7d8d09a9e13c5079f80bd",
+  "pageVersion": "sha256:42c141123b952718ce487dbf5083ba1f29734fcad8af7b1bf10251e0f7a39a62",
   "claims": [
     {
       "id": "claim_12101e4e85524a9280291b25d4812f5f",
@@ -212,7 +212,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/features/workspace-chat/ui/IntegrationFacts.tsx",
-          "version": "repo-file-v1:sha256:b23ce1f28189e97a62c131429473ece96f593dd7f210d6fcc82020eebe143c3d"
+          "version": "repo-file-v1:sha256:8301013cfae92c169570a24b6d7cc6c94d0520a69f6eb283465b5514348b7eb1"
         }
       ]
     },
@@ -257,8 +257,8 @@
           "version": "repo-lines-v1:sha256:ec734e6dc21f5cf04386fe6f958c3403b0bb6dc13fa18183e014a0896330f359:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGRlZTYzMGU4OTIyYTU1OWUzM2IxODVlYzZhNjBiYmNkMGY4NDllMjFkMDNmYjkxN2IxYzI1NjQ3NDU5ZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkOTcxMTkwYzVmYzI2NTE1NjZjMDBmMDI2YmZkY2JjMTM3NDNlYmEyMTUxZTNjMjFkYmI2NzlkYTk5YTIwMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU4MzI3MDAyYzIyNjliMWMyNmY0Y2U5NWJhNWY3ZWMxMDBkOGI3NWQ2NDM4NGU4OWEzMmYyZmYxYjNiMDA4MWEifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L29-L142",
-          "version": "repo-lines-v1:sha256:d5160bd28a1ea94f6da6cff0ae401dc6d4ff0d41bada3f9b731745ada55f51b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNzUxNDY4MWI0MGQxMzUyMDI0ZDRiNzY1MThhMWM3MTAwNjAyZDJlMDM5ZDJkYzIzMTkyNjY4YTljYmI1ZmI3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MGExMmI0MGRkOThhOGYyYTAwMGU3NzBiNWFkNTdiNWNlMmViNDkzYTU2YjQyNDMxMTU0YmEzNThiMDk4NDgwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NzU2NGI0ODMzOWI4MDA5Y2ViMDdlZTk2ZGUzN2IxNTRkMjdiNzA4YjE2NDA3MWY5NDZiNjdjMzA2NTk0NTI1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4NDY4NTkwMGM0NTg3NmJiZmUyZjk5ZDAwNDcwZjgyNDk3MzdjOWU1MDVlN2I2MmU5ODI3Y2UwMzJjZTAwNTMyIn0"
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx#L29-L148",
+          "version": "repo-lines-v1:sha256:55febc364551973a32067087e11b10a3532fb1fd87e3e6327bbf220d6f376a4a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNzUxNDY4MWI0MGQxMzUyMDI0ZDRiNzY1MThhMWM3MTAwNjAyZDJlMDM5ZDJkYzIzMTkyNjY4YTljYmI1ZmI3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MGExMmI0MGRkOThhOGYyYTAwMGU3NzBiNWFkNTdiNWNlMmViNDkzYTU2YjQyNDMxMTU0YmEzNThiMDk4NDgwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NzU2NGI0ODMzOWI4MDA5Y2ViMDdlZTk2ZGUzN2IxNTRkMjdiNzA4YjE2NDA3MWY5NDZiNjdjMzA2NTk0NTI1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4NDY4NTkwMGM0NTg3NmJiZmUyZjk5ZDAwNDcwZjgyNDk3MzdjOWU1MDVlN2I2MmU5ODI3Y2UwMzJjZTAwNTMyIn0"
         }
       ]
     },
@@ -304,7 +304,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/IntegrationValidationSettings.tsx",
-          "version": "repo-file-v1:sha256:ca638fc00454e79ae2fa22c73fa919461e57c01b909a9e3a6713e154e687b5d9"
+          "version": "repo-file-v1:sha256:16b25b2f4867ef2bc8afcc0b96b0d1a398751a66a41027905f52703bb41dae2c"
         }
       ]
     },
@@ -459,6 +459,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T01:08:30.935Z"
+    "at": "2026-11-02T14:26:25.232Z"
   }
 }

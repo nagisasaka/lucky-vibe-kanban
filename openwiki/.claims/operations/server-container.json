@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fcca71616c14684dd9faed540e9b8edabbb0494acca77d9b8fbb5f67e35291c6",
+  "pageVersion": "sha256:effef04d22e9dc9c4735f32e14e7be8d9caba8725a0055c4a99ef09e741c25a3",
   "claims": [
     {
       "id": "claim_58a31267fd284cf6b691efe1ca720bfe",
@@ -61,15 +61,15 @@
       "statement": "supervisor は一方の service 終了/起動失敗で sibling process group を停止し、SIGTERM 後既定120秒で SIGKILL、Compose 猶予は150秒である。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/compose.yaml#L21-L21",
+          "resource": "repo://deploy/server/compose.yaml#L28-L28",
           "version": "repo-lines-v1:sha256:ffb9105a68b9adfc17b854640d835f80b618cd6e56e236934d2fffa958fcfd81:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmZiOTEwNWE2OGI5YWRmYzE3Yjg1NDY0MGQ4MzVmODBiNjE4Y2Q2ZTU2ZTIzNjkzNGQyZmZmYTk1OGZjZmQ4MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmZiOTEwNWE2OGI5YWRmYzE3Yjg1NDY0MGQ4MzVmODBiNjE4Y2Q2ZTU2ZTIzNjkzNGQyZmZmYTk1OGZjZmQ4MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYThjMzYyNTI4MmFhMzgwZjUzZDc1NTdiN2JlY2QxNThhZTQ5ZGNhYjE0ZDI4ODY2OGRkMjg0ZjI3OTA1ZGJiZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzE0ZjYyZGIzZTJhNjViNzVlM2E0Nzk4ZjhhNjJhZjJkZTdiZjk2MDZhM2FhMTdiNjY5N2RmYzYwNjBlN2Y4YiJ9"
         },
         {
-          "resource": "repo://deploy/server/server.mjs#L101-L179",
+          "resource": "repo://deploy/server/server.mjs#L353-L431",
           "version": "repo-lines-v1:sha256:2896f97db1c85f9c20874525625b09e8fe45ee75170ccc9a81dcbe4389912de2:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyNDkxZWNkYWU0ZDc4NjlkZDk5MzZhNTFiNjhhZjc0YjcxOGI0MWE2NjFjYzIzYmU2ZTM3YTYxZTNkOTBiMDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU4MzY3NjdhY2EzMGI4MmU5ZDYxYTA2NzQ3OTM2MDY5Y2EwZDI4NzUzZGRiMTQ0ZGFhODk2ZTg2NTYyNDRlNmIifQ"
         },
         {
-          "resource": "repo://deploy/server/server.test.mjs#L197-L224",
+          "resource": "repo://deploy/server/server.test.mjs#L280-L307",
           "version": "repo-lines-v1:sha256:40692ab9cdd5a71975e79917519b35494f1b6ad7eb7794b7b13ff5bf2f763994:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NzViM2Q1N2YxZGVlYWVlZTA3MDQ2OGYwYjcyN2M0ZmI3ZWYwNGUzMDgwYmMxNzlkZjRmNjM4OGVmMTE0YzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4MGQyZGQ0ZjI4OWQyNmRjNzU3YzJiNjVhMDZjMzkyMjdhNjcxN2M0YjQ4YjVhMzk3OTJjOWYxMWU0MWFlYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiNDdjMzk4MmQ1OTlmMDRkZmNlYjc3ZTc4YjBhZDRiZTMxOTliNmQ3MjgxMjc5NWMxNDYwMGY3YzM3NDliMDgifQ"
         }
       ]
@@ -125,7 +125,7 @@
       "statement": "server-toolsはsccache0.18.0をlocked・no-default-featuresで/usr/local/binへ同梱するが、global Cargo wrapper/cache/incremental設定は変更せずrepository側に利用設定を委ねる。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L173-L180",
+          "resource": "repo://Dockerfile#L195-L202",
           "version": "repo-lines-v1:sha256:6339b1ac553b5f7a22494b2803f27d67487bcc59fd98b200eac806dcdfd46f3a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTVjY2FlMGFkMGMxN2Y2YjI4YTI2ZDk2MTE5ZTQ2ZGUwZjNkMDdlNjdkYmI5NzMwOGUyYzUwYjEyMjY2NWM1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTU1NGM2MjhkOGE2NzM2OTVkYTM1YjA5ODQ1OWMzNWVjZjNiZTIyMTEzYjQ3ZjEwYTg4MzFkMWNhMDA1ODlhOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzA1MzYyNDIzOTAwNzJkOWQwMmFjNDViMWI0ZmZmNjNhYTMyYWVmOTljYjA2ZmRmOTRjY2M3ZDNjYmI5ODcwNiJ9"
         }
       ]
@@ -167,11 +167,11 @@
       "statement": "less は server-tools の apt package として導入され、server-browser を経て server image に継承されるが、runtime-base から分岐する小型 runtime はこの追加を継承しない。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L136-L156",
+          "resource": "repo://Dockerfile#L146-L166",
           "version": "repo-lines-v1:sha256:810d9dec5aac41937c32d6019a91ee858aa3ffedca0591105f36e235acc9e9aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZmM4OWI3MmU2MDNkYWU4NmJmMzRmYzAwYWY1ZjgwMmU0MzZiODY3OTE1YzFmZTZjMmIzYjkxN2E1NTJmOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OTkzNDU0NjEwNjRlM2JiMWRhNjEwYmU1MTVlMzA1NTEwOTc4NDFkMmZmYmVhZjgwMzczNWVkOTk3MjNmZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Y2MwYTU0NWUwYzFlY2MxNjc0NDA0ZGZjOWEzYTYyMzExNmU3NjIwN2U3YjExZWU1YWFjNjVkOTgzMjI5MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2MGQ2NjY3MDkyZWIxMGY1ZTE3ZmQwNDAyM2UxYWNhOWMzNjg2ZGQ3YTU3MDk0MDI5YjU0YjVjZGM5M2RkZjEifQ"
         },
         {
-          "resource": "repo://Dockerfile#L182-L201",
+          "resource": "repo://Dockerfile#L204-L223",
           "version": "repo-lines-v1:sha256:c1b6caa8f9cdbf91d234b0232d6d561e95e350b0a69974f397480f49bcf4c8fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYTdjOTI5OGE2ODlhZmMwMzFjNzE3OGJmZjYxOGUwNWMzMmFhYjJhZDBjYzQ3Y2NlMTRkNDk5NGVkN2UyY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYjMzN2VlNWJlMjI0ZGM0ZmI4N2ZiZmE0YTNlY2Q1NTBlOTU5MDMzMmNkY2YyMDE2OTIzMzRlZDRmOWJiZjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRjOTI0YzgyMzRjZmIzYjIwMzJhY2MxOTE2OTA0YzllZmY2ZmZiY2NiM2JlYjk4Mzk2ZDU0YTFlYTA3NDgzOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhYjhmY2ZkNGJhZWNlZjJjYTRlMTkyMjYxZTg4YzgwYTljZGMzZDlhYjJiMmZhNjM1ZWY5MTAwYThmYmJhZWYifQ"
         }
       ]
@@ -201,11 +201,11 @@
       "statement": "server build identityはbuild.rsのrustc-envで固定され、APIはenv!から読むためruntimeのcheckoutやLVK_BUILD_*に依存しない。versionはCARGO_PKG_VERSIONを維持し、revision不明では任意build_infoを省略する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/build.rs#L18-L36",
+          "resource": "repo://crates/server/build.rs#L22-L40",
           "version": "repo-lines-v1:sha256:6a855a4847e7f423e9736d1d00951f772ec366dd79c8929bcf18988a2d5d0a05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjZTNjNzg4MmRiMGNmN2M5YTg2YTM0N2EwZGZjMTliNmQxYTBiODJkNjFiMzAzNmI2MzBmMTY4ZmM5ZDRjNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NjhlNjZhMzFkMTUyNDNjOTMwMjU2NzkwZTA5N2UxOTA3ZGMwYWI5MjU2ZDAxNjdmZWQ0Yjk0ZmMzODMxZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NzUwODc3OTI4YjU1NWYyODE3MDI2MjFjMTA5MzM4NzA1NzY0NDI1YjVjMjI5M2ZjYjg4YTRkYmY4NzhiNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNTc4NGE3OGJlZGRlMzkxNzE1ZTMxNzk0ZTQxZGYxMDI1OTc4YTM4NmU2MzA4YjI3ZTcxYzNiNTE5ZWI3NDAifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/config.rs#L93-L156",
+          "resource": "repo://crates/server/src/routes/config.rs#L87-L146",
           "version": "repo-lines-v1:sha256:91f3da60c89707a74376e3cbf7384e37f536fadb6bee884655da27f24e27a12a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmMWIzYzM4ZjA3MWYxOGNjNGQwOWIxYmRjMzllYTk4YTRhYWQ2ZmM1OGY0NDRkOWI5MmFjNmIxMzdhMzYyOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzYWU4N2M3ZjYwZWIyYWQ0ZDA4ZmRhMjFkODIxMWQ1MTJmMTk1ZjczNjNkNDNjZmEwMjYyZWQ3OTI1ZjkzYmMifQ"
         }
       ]
@@ -249,7 +249,7 @@
           "version": "repo-lines-v1:sha256:100c70011557a555787551f60a737ed8d14c7773086c9fd0b679b36fd2061a07:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxYTI3ZTQ1NGM5YWJlYjM5MzdkZTcyYzg3NzkwMDA3MWI1ODZiZGFmZGIyYmIwZGJmYTU0ZTA2YzI2ODFjOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlZTM0Zjg4ZGUxMGZhODY3MmRjYzM1Y2Y3NDk2ZmY3YTZlZWNiZWE5MjZiYmRkYTcwYzVhZTViZmM2YjcyZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MmVlOTZhM2U4YmMyNTNlNmZiYmU0MjJkMTIxNTZjMjViOTBjNjY3NzJhMjBmYzhhOTM0ZmQzMzNkYzJkOTIifQ"
         },
         {
-          "resource": "repo://deploy/developer/STAGING.md#L44-L59",
+          "resource": "repo://deploy/developer/STAGING.md#L45-L60",
           "version": "repo-lines-v1:sha256:08a755ad3a1bb3ba217a0aded0707048c9877cc6fd568002661571e2883bb584:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwODQ4OGVmYTQ2YzhmZGFiNWY2OWYwZTk3YzllNmQyYmI2OTA3NTc4NDEwOGNiZmExMjY1MzNkMTU5ZjVlMGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5NDUwNzEyNWNiMjlmNmRiN2FhOGRiODQyOWE3ODMxNGQyOGRmNTcyNTg3NjRjY2QzMjE4NDRhMDI5ZjI3M2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxNWNmYjBiZjc2MDNhZTQ3Y2ZmYjQ5YjQ0MDkzMWE0NmVmYzdhYjFlZDQ3Y2RmNzQ0OTdiNDhhOTkyN2RkZDAifQ"
         },
         {
@@ -263,12 +263,12 @@
       "statement": "旧 LVK npx launcher と Tauri shell/build コマンドは撤去され、server/desktop は Docker または source Web をブラウザーで利用し、MCP は直接 binary または認証付き外部 HTTP を使う。既存 desktop data/application は自動削除・移行しない。",
       "evidence": [
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L377-L398",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L378-L399",
           "version": "repo-lines-v1:sha256:1e1e9e4947c4603a40c8cfc339e0bd604408aa1fa795421d5e581af9b890989d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmOWViMjNlN2IyMGM2N2ZlODdmZjg3MmNkNTlkM2Q1NDIwZjQ1NDg4ZjI0MDk4NmZmNmNlZmY4Nzc2MzZlZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MzExNWEwNjMyYTczODg3ZmY2ZjEwNGU0YWQ0YzAwNWQ1OTgwOThkYmI1YTA4YmUzMTM0MzMwMTMwYjY0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmZjdhN2EzMGNhYTJkYmIzNGE3MDMyZGZhMjVkYWQ4ZmE1YTJlODQxYzA0YTQzMDRiM2ZjZWMxNWEyNWQ4N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMDg2MTAxMTc0MGE1N2RiMjU4MmNlOTNhODllMDY3ZmRmMzRjNDhhNjEzYTllYmM3NjVlZGZlNWJjNDA0MTEifQ"
         },
         {
           "resource": "repo://package.json",
-          "version": "repo-file-v1:sha256:3d7a71be1c3d7066a7c4a63a631590d9941f54d0a8922cf9698da29446ac46b3"
+          "version": "repo-file-v1:sha256:cc3070549e81e8662a4aada790054129f502ebabf009f5993e9482113cf48240"
         }
       ]
     },
@@ -277,11 +277,11 @@
       "statement": "直接stdio MCPは既存HTTP backendを利用し、mode省略時global、orchestratorは明示指定する。ランチャーのようにbackendを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L49",
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L23-L56",
           "version": "repo-lines-v1:sha256:23c3fbb358be85e0a376477a139995aacc5314444eeead42de87aef77fc85f0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlY2U4ZGIxYmFjZmMzNzY4OGM0MjdhYzI1NmRmYmIxNjhkYjIzOGE5YjI3YWNmM2Q5MDk4ZTA4NTY3Njk3Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MTZlZmY3NDM3NzJlODE4NjhlNmRjNjllMjM5NDcxMDMxOTdmYWRjZTY5OGU4OTI1NjllNTI5MTI4MmE1ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1YmRhNGQ0ZDJkMjJiYWIxZmUyOTdlNDhjYzEzYzRmMmU3ZTI1MzEyMGZmZGNhYzMwZTJkZjFmNTRjMzFlZWEifQ"
         },
         {
-          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L56-L133",
+          "resource": "repo://crates/mcp/src/bin/vibe_kanban_mcp.rs#L63-L140",
           "version": "repo-lines-v1:sha256:67bb780c7cf950fe58807bef6bd9d267a17d482487e7b309d5b7ba0305f00547:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMTk1OGU1OGQ1NjAxYzQzMzY3Y2M1ZDExMjc4MGQ1YmM0MjU5YTA2OTU5NWRkZTQ0YTViMWE5ODJkZTI2YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhODc0NzAzZWViOWJlMzM1MDk5ZDkzY2JkMDQ1MTQ2OTcyNWE0ZDIwYzI0NGMxYTNmMjAxN2UxNjM1NzM0YTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxYzNkMGQ3MDYzMmQyMTUxODI3NWI2N2M0NGIzMjVhNTc3NTRhZDNlMTRmMjUyNDM4NWE4ZDA1MzUwZDNlZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3ZGFhOTA5YWY3NTZmMGI2ZDYxMmZiZDk4MjNkNGYzNDE0NzRkOWYyMTE5YmU1NDAwMWM1ZjhlZDlhODJiYzMifQ"
         }
       ]
@@ -295,7 +295,7 @@
           "version": "repo-lines-v1:sha256:5d244a71284b217c55ef264b520832ad81465be673b358a42e93dcbd72fc15c5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZmIwOGZkYTFhY2I5NTdiNjExNmJkMzc4MTFhMWZlNDFhMDE2MTFjMDYzMWVkYmY3ODZkNjg4OWEyN2E1NWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlMmI0ODUzMjVjZTVkNWM1MTQ2MzFjYWNmYzgwMjA1YzI0NzA3YTM5ZDcwMjA5NTFmMGIxNjVjZTJhM2UwYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ZGVjNjNkNmNjYmJmYTViNzM1ZTg4YTU2MTVjM2NiNzA4NWJiZWRlNDFjMTZhNDJkOThkNjJiMGFkMjBkYWYifQ"
         },
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L330-L330",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L399-L399",
           "version": "repo-lines-v1:sha256:893115a0632a73887ff6f104e4ad4c005d598098dbb5a08be3134330130b6408:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODkzMTE1YTA2MzJhNzM4ODdmZjZmMTA0ZTRhZDRjMDA1ZDU5ODA5OGRiYjVhMDhiZTMxMzQzMzAxMzBiNjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjEwOTQwYTcyZjU0YmEyMDgzOGNlMTBlMjc3NGEyNWEyOTljNDEwYWY0ODNlMWEwMWMyNTQ0YjUwZDgzZTRlNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2YwODYxMDExNzQwYTU3ZGIyNTgyY2U5M2E4OWUwNjdmZGYzNGM0OGE2MTNhOWViYzc2NWVkZmU1YmM0MDQxMSJ9"
         }
       ]
@@ -315,11 +315,11 @@
       "statement": "CSV routeはコンテナー内loopback HTTPアプリへ直接転送する静的設定であり、preview UI・DB・動的管理を追加しない。アプリ起動・DNS・認証は運用者の責任である。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/server.mjs#L248-L276",
+          "resource": "repo://deploy/server/server.mjs#L229-L256",
           "version": "repo-lines-v1:sha256:ee6774f6c975cc759eeecc9f6ffe7e8ea0251e709ad146a39262684bc5d633de:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiYmQwZjVkNGVlYWIwMDA0OTFjM2Q4MTM3NGZjNWMxNDlkNzE0YmYxOWI1MzRlNDA2ODc5YTcxYmNmNDhhNDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1NTg5NjFiY2IzOWRlYzdlMTVhMDUxMTI0MzQ1Y2UxZWZhZDcxZDVmNzZiMTg5NzZiZGU2MDA3MGExNWYyNDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhM2ZjZjA2NDU4MmIyZjYzOTVmYTVmOGJjMDk5MDFlNTA3NTRhZDk0MGI5NTQ5OGM1YzQ5YjYwYTE5ZGQxMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1ZDUxZDg4ZjE3MzQxOTM5Njg2YjllZGM4MTliY2I1ODA2NzEwM2M0YmUzYTMwOGE2ODY0OWI5MDQxZmEyZjcifQ"
         },
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L151-L183",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L163-L194",
           "version": "repo-lines-v1:sha256:24196e8be25c5eb03dae100f8fd0aeb3065e12626804515880247f00c0f487a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYzFmNTcwMTBjMTI3ZDViMzg3NGZmYWZmYzdmZGI2ZTgyZDE1Y2VjYjVlYTQ1OWM3ZWZhM2FjZTYxZWE3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNTFhNzgyYjEzMTFhYWQ4MDZkM2NiYzgwMDUxMTNkN2VjYWI3YjQ5YzI3ODBhNDFhYzRkN2M0MGNhMTI2MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkNTI2ZGU0ZjczMTAxNmZmYThlZjI4MzQ2MjYwMzVjNDgxOTI1Y2JiYjM2MWYwYmRjODg0NmZmYjBiM2Y0ZjAifQ"
         }
       ]
@@ -339,11 +339,11 @@
       "statement": "ACME companionはLVK_HOSTとCSVの全DNS名を単一lvk lineageのshortlived注文へ含め、25識別子超をCertbot呼出し前に拒否する。wildcardは拒否し、外部証明書にはこのroute数制限を課さない。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/acme.py#L58-L96",
+          "resource": "repo://deploy/server/acme.py#L56-L91",
           "version": "repo-lines-v1:sha256:cbcdb30e78b788eb7fb52debe7427094eb612458351e2482d68424d897a1f9a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYTVjNjZlMTdiMTQ1Mzk3ODM0YjhjODU0ZGM0MTkzZTIxMjUxODBhODk5NmExNGMzMTg4MzMyNmIyZWZiY2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2NjM3N2JkOTRhOTI4ZGFiNDJmYWU4NDI2NGY2MzQ5YjYyNzdkZjA4NjRmMGMyYTdkOTdkZjhmNmJhMzI5MWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwYjQ1Y2M2OTZjMWFhZDIxMGUyYjg0MTViOGRmMmNiYmYwNDMzZjFiNDRiMWM1ZWQ4MGE3MTQyMDliYjA4MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMDgyZDEyNzRlODM0M2JhNGNlYTNhMTQwNDMwMTI3MTNkNjRjMDNiMmU1ODljZDgxOGEwMmU3YTM2NDVlM2QifQ"
         },
         {
-          "resource": "repo://deploy/server/server.test.mjs#L483-L491",
+          "resource": "repo://deploy/server/server.test.mjs#L448-L456",
           "version": "repo-lines-v1:sha256:a7fd5a2751591bee23ef3d6a8c0ab77b489b1fa37a0b0b9f18c6babed213e46b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGRiOTFlM2VhODJjNTA2ZjJmMjE2NTk1MzcyM2Q1YmNhYjMzYTM5MjA3MjhiZmMxODFhMGM1ZWQ2ZmM3NWQ5YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzExZjgyMmEyMWEzOWZjNTBmMzlmM2IyZGNkYzVlN2U1MWViZDVmMzRhNDA1MmJiOWJjMDcwZTJhODZjY2Q3NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmNjOGI0ZTA5ZDJhOWEwMzRiYzk3ZTA1NWM1Y2IzMTFjZDM2ODVkMzIyODUzODI0OTZlN2FkMTEzYzA5ZDdiMyJ9"
         }
       ]
@@ -353,15 +353,15 @@
       "statement": "route設定とCertbot引数は起動時に固定され、Compose環境変更は対象service再作成が必要。ACMEではcertificatesの新証明書を待ってlvkを再作成する運用順序を持つ。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/acme.py#L159-L176",
+          "resource": "repo://deploy/server/acme.py#L154-L171",
           "version": "repo-lines-v1:sha256:96186e15bc126972e5495c28fef13d28e778bc2eef3d252d563f18a379165014:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NzhlYzM3NjcwMGU1ZDQzMmZhMzQyNzkxODlmNmFmNmFmYmYyNTI1ZjY3MTViOGJkYmFiN2I3Yjc5MDVmYTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlN2JjYmY1NGY0YzkxNGQyNWNiNmFlNzcxZmM3ZGJjOGE3NjkwZjVhM2MwMDBkNzI2YjMyMGUzNzg3ZDZiODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjMjFmNzAwNWU0ZDljZTNhNmQ0MmY5ZDgzZjI4ZTJiNmQ0ZTFkOWIwYmVkMmNkNGFlOWEyNTJlNzc0MjJhMGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiYTE1MThmN2Y5NjJkZThiYTNiYjA3YTUwOGNjYjQyNjQwY2FkMWEwNmYxN2ViNzViYjM2Njc4YjllYWZlNTcifQ"
         },
         {
-          "resource": "repo://deploy/server/server.mjs#L457-L508",
+          "resource": "repo://deploy/server/server.mjs#L434-L485",
           "version": "repo-lines-v1:sha256:305ccf781821c2f47163a9b622959b0271bf3eec61339c7bc7c2c69e0287a337:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlODIwMGViZDE3MDliNmE2NzViZWNiM2JlOWYzOWU1M2JiYWMwMmNjOTI3MjM0NjJjMDU0NjhlYjBkYTZhMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OGUyMGIxMzQ5MWQ3ZjBhYjI3ZmFhZDMzMmRiNmE5NzFkMjEyZWU4ZjAyZDBiNmUyNWJkMDc0OTQyYTUwZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkMGYyZDNhM2FhZGEyNzU4NjQ1NzhkMGE0MzkxNTYzOGQ1NDNmZWNhMmM5NDg1OGRiOTQxMjExZTg2Y2VmMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5ZDRkYTM5ZTY5OTU1Zjk4OTYyYmE5YjkwMzg3YjZlYjE5MDE3MWFlYjIyNWIxZmY5ZThlZTY0ZjVkNDczYWYifQ"
         },
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L196-L204",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L207-L215",
           "version": "repo-lines-v1:sha256:f4fcb618e94aa977808d696e9e5d2e993312016fe213b4b9a058e9c9f2041857:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjZjZjY3YThhNDE0MDdmNjljYTAyMDdjOGRjMGEyZGE1Nzk4N2I1NmNhYmUyMWNlNjllZGYxMzBjZmY4NzgzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNiZjNiOTRmZGMwYTJjY2QxMjlhZGMyMjE4ZDQ0MDZiNDM3NWUwM2IwNjE3OGY0MzI4YjVkNGUwZWYwMWQ4OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmM1ODc2OGVmNTVmOWQ2MGJlMDU2MjNmZTA0MzljN2FmZjRmYjkyODFjOWI1ODU3OTBiNDE2YTM0MGRhYTJjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGNmMTIxMjFlNmE5N2Q3Yjk4MzEwOWMzNzdlZmEzNTYyODM0NTJlZWMwMjllM2E5MTk5ZGQ3MGMyMzk0NTkyMCJ9"
         }
       ]
@@ -371,15 +371,15 @@
       "statement": "証明書だけの更新は30秒周期で全route identityとkeyを検証しnginxをreloadする。失敗時はfingerprintを採用せずログと再試行を行いbackend/agentを再起動しない。",
       "evidence": [
         {
-          "resource": "repo://deploy/server/server.mjs#L296-L319",
+          "resource": "repo://deploy/server/server.mjs#L276-L298",
           "version": "repo-lines-v1:sha256:9d128e6bde70f9008f3bf00fe00e5aaa149556bc092c120320d1c7fb5446c558:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZGQ3YmZhMDZkYjc4MmI5YmVjYmRmNDcyMWJlNDQ4NDkwNGVmMTA5OGUxYjkzZWVhOGIxNjBiNzAxMTQ3MWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhZjQ1MDA4NmU2OTAwYThmYzhhZGI3NTk3NTQwODZmYjk1OTYxZGU2MmJmYjU5NWQyYTIxZDMxMmM5OTE5OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1OTM3Njc5MWU2OTQ3NmY3YTA3MTg5NmRjMjViOTEzN2VmODQyM2UzZTk2MzQwY2NmYWMzMzIzZDQyY2E1MWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1NDIyM2E3ZTQ5NzhkMWU5ODk1NmNlNTJhOTM1NTA0ZWQwYWUxNTI1ODllMDQ0YmNkMDZlODE0YTY3NWEzYTMifQ"
         },
         {
-          "resource": "repo://deploy/server/server.mjs#L352-L374",
+          "resource": "repo://deploy/server/server.mjs#L329-L351",
           "version": "repo-lines-v1:sha256:1c5d1134bea673de09773ed716cbde530f27be1af178f0a6f873523deddd8532:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMzkwODVlM2YyOTJhZTQ1YzExOTllNWFlNGMzMmY1NTJiOWU0YTlmOTkzZDRiNjIzZDkxOTI2NmU4ZTVkODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliYWU1YmEzMjIxMGY4YWVjNzBmN2MzZDg1OWYzYmJkZmIzMWM0Nzg0MmU4MzQ5ZjM5YTQwOGI3OWQ4ZTU3MTUifQ"
         },
         {
-          "resource": "repo://deploy/server/server.mjs#L508-L523",
+          "resource": "repo://deploy/server/server.mjs#L485-L500",
           "version": "repo-lines-v1:sha256:d3e2bb0c91ed4f60cc5ee27beca9af7dbc1dfee4c9c8738dbbb2d2487e9ffa1d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4OGUyMGIxMzQ5MWQ3ZjBhYjI3ZmFhZDMzMmRiNmE5NzFkMjEyZWU4ZjAyZDBiNmUyNWJkMDc0OTQyYTUwZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NTk1ZjRlZTVmZjYzZDUwOTUwNDE5ZGMzNDQxNDUxMzg1MWRjOTczNmZkMTdhNGY3YmZhOTMwYjI2MWI2ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMzMTczYWQ1MjY5Zjc0NjExODc3YzM2YTMxNDQyNjk2ZDJlMmQzNmY1NjkzN2U2ZDRhOWFiMDNhNzc2ZmEyNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2Y2I0Mjg2ZjEyMDUzMmM5ZmNkZjYyNTE2NjEzZTZiYjE2ZDhkYmEwZGU3YzMzZGJkZjYyYmIxOGM0MDIwNDcifQ"
         }
       ]
@@ -403,11 +403,11 @@
       "statement": "server-toolsはamd64向けnative Claude Codeを版とSHA-256で固定して検証後に/usr/local/bin/claudeへ導入し、home mountから分離する。CLI同梱はアカウント認証を含まず、利用者が別途loginし認証情報を永続homeに保持する。",
       "evidence": [
         {
-          "resource": "repo://Dockerfile#L162-L173",
+          "resource": "repo://Dockerfile#L168-L179",
           "version": "repo-lines-v1:sha256:0d573749f72e582f6b0343264478df60920e39dc133870972468211c6771df74:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMWQ1YTYwNzFlOTE2YjM3ZGY5NmUwMzk3ZDFlN2QzMzhmZDk0NjBiNTIwMDA4MTM0ZjYyYjczOTcxYjIyNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyNWMxZWM2YTM0M2I4YTQ3NjdjNzM2ZjAzOTc1YTEyYjkzMzZmMTQxZGUxNjIxM2FhZWFhY2UyMTljMDNmNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlY2Y5ZGY3Zjc4ODYzMzU5NmQxYjcxOWRkNGU2ODVhOGQxNDE1YTc5ZjEyNWJlYTRhY2Q3Yjk5MTY2ZjhhNTcifQ"
         },
         {
-          "resource": "repo://docs/self-hosting/server-container.mdx#L124-L138",
+          "resource": "repo://docs/self-hosting/server-container.mdx#L123-L137",
           "version": "repo-lines-v1:sha256:d2439f4df3de58d1751320e3815063155043ee680402dffb51877de903677d79:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MTY0ODA0NGFiMzdiZWU4NzQxM2FlNDJkYzQ4OGRhMGVhZmFjY2FjMWYwMDNhOGM1OGY0ZmE1NmVlN2M2OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4NjU1ZjhlNjY2ZDI4MTZjNWE0NjgwZmQ2MjllMWNhMmU1OTU3YzBkNTk3MjhkZmUxZjc4NDExYzMzYmU5NTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMjk5MDM5MjUyYjcwNmY0MGJhMDYxM2Q1MTczMTJkZWUxNGZlNjhlYWQxZmU5NjQ1N2IzZTY1Njk1NmMzZjAifQ"
         }
       ]
@@ -435,7 +435,7 @@
           "version": "repo-lines-v1:sha256:60177fa20ee6d1d03e2331c41dc01d5e594ecaf1c0d59880f205b9eedcfcd842:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNWVkODg0OWE4NjM1NjhhNTQ0YzcxMjRjYThlOWY1YWFmNWFlNDQ3OTY5MGIwNjFhYjdkMDVjM2M5NDczZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ZDU5NzQwZWJhOGRiYTM2MWQxN2QxYjY0ZTE5NmIxMmFiNWE5Njk2MGVhOWE5YmI2NjZkMTRmYTA3N2ViOWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MmVlOTZhM2U4YmMyNTNlNmZiYmU0MjJkMTIxNTZjMjViOTBjNjY3NzJhMjBmYzhhOTM0ZmQzMzNkYzJkOTIifQ"
         },
         {
-          "resource": "repo://deploy/developer/STAGING.md#L18-L26",
+          "resource": "repo://deploy/developer/STAGING.md#L18-L27",
           "version": "repo-lines-v1:sha256:7aa27eec1c33ab5fb6a7790386d64fd111c1ed24dce1255620a99f9fedef6448:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0YjkxZDU3NzZhMzRkMjczN2YxMDMxYWNlZjEwMGQ5ZjM3MWQ1MTA4YzljZjNiODY0YmQ2ZTYzNGM3YTc0NWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZDVhOGViMTY0MTU4MjNmZGMxZTkxNTBhMmYzMTU0NGZiNGM2MWZkNGIyYzUyYzM4MjBkMTQ3ODdhNTY3ZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE0NjQ4OWM4MjVlMDA4MTIzNmY3MmQ5ZGJhZDNkMWIwMTcwMGIxMWQxZTVlZmZmOTk5NDQ5OTRmZWQ0ZTVlNjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5YjgyZGJlOTQyMTUyNGVkZWQ2N2IxZThmMjE2ZWQ4YTNiN2QyY2FmMzY0ZWYxOWE2NThhMjdiMDY2N2Q4ZjkifQ"
         },
         {
@@ -456,7 +456,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-02T14:26:25.232Z"
   }
 }

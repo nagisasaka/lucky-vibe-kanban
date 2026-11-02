@@ -32,10 +32,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx
   - id: openwiki-source-b42d4696e9f82a515195aa22
     resource: repo://tests/auth0-setup/setup.spec.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # サーバー認証・設定・セッション
@@ -73,11 +73,11 @@ MCP resource の必要 scope は `lvk:read` / `lvk:write` / `lvk:merge` に `lvk
 
 ### 更新トークンの選択と適用済み案内
 
-作成支援の「更新トークンを設定する」は初期 ON で、ChatGPT 向け MCP 設定自体は初期 OFF である。同じフォーム内で明示 OFF にすると、接続・アプリの再取得や MCP 欄の非表示／再表示でも選択を保持する。これは React フォームの初期値であり、API の `refresh_tokens` 省略時は引き続き false となる。フォームを開くだけで既存 tenant / client を更新する仕組みではなく、上記の Preview / Apply を経て変更する。[UI の状態と送信](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L57-L124)・[API の省略値](../../crates/server-access/src/provisioning.rs#L83-L103)・[適用の境界](../../crates/server-access/src/provisioning.rs#L605-L648)
+作成支援の「更新トークンを設定する」は初期 ON で、ChatGPT 向け MCP 設定自体は初期 OFF である。同じフォーム内で明示 OFF にすると、接続・アプリの再取得や MCP 欄の非表示／再表示でも選択を保持する。これは React フォームの初期値であり、API の `refresh_tokens` 省略時は引き続き false となる。フォームを開くだけで既存 tenant / client を更新する仕組みではなく、上記の Preview / Apply を経て変更する。[UI の状態と送信](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L63-L134)・[API の省略値](../../crates/server-access/src/provisioning.rs#L83-L103)・[適用の境界](../../crates/server-access/src/provisioning.rs#L605-L648)
 
 MCP を設定する場合、ON は ChatGPT application に `refresh_token` grant と rotating / expiring の設定（最大30日・未使用7日）を付け、MCP API の `allow_offline_access` を true にする。OFF は ChatGPT の grant を `authorization_code` のみにし、rotation 設定を送らない。新規 API なら Offline Access を false にするが、既存 API ではその field を変更対象から除く。他 client が利用する更新能力を無効化しないため、という理由がコードに記録されている。Web application は選択によらず `authorization_code` のみである。[client plan](../../crates/server-access/src/provisioning.rs#L386-L448)・[既存 API の保持](../../crates/server-access/src/provisioning.rs#L464-L500)
 
-選択値は Preview の入力照合に含まれ、現在の入力が確認時と異なる間は Apply を表示しない。Apply 成功時にはその要求で使った選択を結果に保持し、ChatGPT の完了案内はこの値が ON の場合に `offline_access` の指定を案内する。後からフォームの選択を編集しても、表示中の適用済み案内は変わらない。[入力の照合と結果保持](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L74-L123)・[完了案内](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L358-L375)。この更新設定は [外部 MCP 接続](../integrations/remote-access.md#認証付き外部-mcp)に関係し、LVK の Web session（絶対12時間・idle30分）を延長する設定ではない。[独立した Web 期限](../../crates/server-access/src/lib.rs#L40-L41)
+選択値は Preview の入力照合に含まれ、現在の入力が確認時と異なる間は Apply を表示しない。Apply 成功時にはその要求で使った選択を結果に保持し、ChatGPT の完了案内はこの値が ON の場合に `offline_access` の指定を案内する。後からフォームの選択を編集しても、表示中の適用済み案内は変わらない。[入力の照合と結果保持](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L81-L133)・[完了案内](../../packages/local-web/src/app/auth/Auth0Setup.tsx#L353-L370)。この更新設定は [外部 MCP 接続](../integrations/remote-access.md#認証付き外部-mcp)に関係し、LVK の Web session（絶対12時間・idle30分）を延長する設定ではない。[独立した Web 期限](../../crates/server-access/src/lib.rs#L40-L41)
 
 回帰確認の入口は、desktop light / mobile dark と ON / OFF の4通りで初期値・選択保持・Preview の入力不一致・送信値・適用後案内を検査する [browser spec](../../tests/auth0-setup/setup.spec.ts#L3-L105)と、ON / OFF の生成 plan、既存 API の保持、Preview 中の外部書込ゼロを検査する [server fixture](../../crates/server-access/src/tests/provisioning.rs#L693-L743)である。browser spec は API を fixture で置換しており、実 Auth0 / ChatGPT の接続成功を証明しない。今回の Sync では統合済み source とこれらのテスト定義を静的照合した。凍結入力にある開発テストの成功報告と、正式 Integration の検証省略は別の記録であり、今回のテスト再実行結果ではない。
 

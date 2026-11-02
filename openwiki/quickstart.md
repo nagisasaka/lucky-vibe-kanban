@@ -72,10 +72,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # クイックスタートと調査案内
@@ -208,14 +208,14 @@ Issue の [共有レビュー](concepts/issue-collaboration.md#共有レビュ�
 
 過去の Sync は凍結された pending changes と統合済み source `066b2b4bd93d06d046865d66ae16bf1537e8b184` に沿い、Workspace 累積トークンを照合した。native adapter と親 thread scope、migration と snapshot/host cursor の保存、UI の query と HTTP router、stdio/外部 MCP、独立した Rust fixture と Chromium spec を入口として確認した。集計は取得済み Codex 親 thread の報告値であり、未取得は unknown、報告ありも partial で全量を保証しない。[集計契約](concepts/workspace.md#workspace-累積トークン)・[根拠となる応答](../crates/db/src/models/workspace_tokens.rs#L42-L70)・[検証の分担](operations/development.md#workspace-トークン集計の検証)。無関係な過去の説明全体を再検証したという意味ではない。
 
-前回の通常 Sync は凍結された pending changes と統合済み source `e378eb281dde23cd9283c96e6db3cfae3379518b` を対象とし、[Runtime Access](concepts/runtime-access.md) の grant 簡素化を照合した。外部HTTPのscope入口、dispatchとProject照合、設定のDB/legacy読取とrevision付き保存、Linux process registryと再起動receipt、設定UI・生成型・日本語ヘルプ、HTTP/設定/exec/restartの各fixtureを独立した入口として確認した。subject／実行ファイル許可リストの撤去と、残る所有者・cwd・Workspace境界を正本ページへ反映した。関連する外部MCP・システム構成の説明も照合し、無関係な過去の内容全体を再検証したとは扱わない。[現行grantとdispatch](../crates/server/src/remote_mcp/environment.rs#L309-L403)・[exec遷移の回帰](../crates/server/src/remote_mcp/environment_process.rs#L640-L700)・[設定互換性の回帰](../crates/server/src/remote_mcp/environment_settings_tests.rs#L496-L507)
+前回の通常 Sync は凍結された pending changes と統合済み source `e378eb281dde23cd9283c96e6db3cfae3379518b` を対象とし、[Runtime Access](concepts/runtime-access.md) の grant 簡素化を照合した。外部HTTPのscope入口、dispatchとProject照合、設定のDB/legacy読取とrevision付き保存、Linux process registryと再起動receipt、設定UI・生成型・日本語ヘルプ、HTTP/設定/exec/restartの各fixtureを独立した入口として確認した。subject／実行ファイル許可リストの撤去と、残る所有者・cwd・Workspace境界を正本ページへ反映した。関連する外部MCP・システム構成の説明も照合し、無関係な過去の内容全体を再検証したとは扱わない。[現行grantとdispatch](../crates/server/src/remote_mcp/environment.rs#L309-L403)・[exec遷移の回帰](../crates/server/src/remote_mcp/environment_process.rs#L640-L700)・[設定互換性の回帰](../crates/server/src/remote_mcp/environment_settings_tests.rs#L275-L275)
 
 前回の Runtime Access の凍結入力は、開発時のテスト成功報告と自動マージ の検証省略を区別していた。これはその対象範囲の履歴であり、後続 自動マージ の検証結果を示すものではない。
 
 
 ### 共有レビュー Sync の照合範囲
 
-統合済み source `be97e258698174883272eadcd325ae743d30b7d8` と凍結された pending changes を対象に、[Issue の共有レビュー](concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を照合した。独立した入口として外部 HTTP の認証・catalog・dispatch、投稿 receipt と actor 継承、migration と通常 Web 編集、Rust API 型・生成型・Web 表示、Unicode decoder・SQL・handler 回帰、隔離 JWT bridge と Chromium spec を確認した。対象 Issue revision と本文 revision、追記と要求変更、来歴と監査証明を分けて正本へ反映した。[投稿・読取の根拠](../crates/server/src/remote_mcp/issue_comments.rs#L85-L279)・[UI の根拠](../packages/ui/src/components/IssueCommentsSection.tsx#L327-L373)・[検証入口](concepts/issue-collaboration.md#変更時の検証入口)
+統合済み source `be97e258698174883272eadcd325ae743d30b7d8` と凍結された pending changes を対象に、[Issue の共有レビュー](concepts/issue-collaboration.md#共有レビューは通常コメントとして残す)を照合した。独立した入口として外部 HTTP の認証・catalog・dispatch、投稿 receipt と actor 継承、migration と通常 Web 編集、Rust API 型・生成型・Web 表示、Unicode decoder・SQL・handler 回帰、隔離 JWT bridge と Chromium spec を確認した。対象 Issue revision と本文 revision、追記と要求変更、来歴と監査証明を分けて正本へ反映した。[投稿・読取の根拠](../crates/server/src/remote_mcp/issue_comments.rs#L85-L279)・[UI の根拠](../packages/ui/src/components/IssueCommentsSection.tsx#L319-L365)・[検証入口](concepts/issue-collaboration.md#変更時の検証入口)
 
 同じ範囲で、[自動マージ検証設定の歴史的更新](concepts/formal-integration.md#検証方針は受付時に固定する)に依存準備 `pnpm install --frozen-lockfile` が先頭追加されたことを確認した。[設定](../.lvk/integration-validation.json)
 
@@ -320,3 +320,9 @@ LOCAL-281/282の固定sourceを同じ候補へ競合なく統合した。TODOの
 - MCP失敗時は [共通診断と安全な復旧](integrations/remote-access.md#全mcp共通の失敗結果不明復旧契約)を読む。分類だけから副作用を否定せず、元request/receiptと対象状態を確認する。
 
 コード候補は `e1a08b8e167bc7f4180662c072228ba71af3070b`。固定baseから検証済み候補をそのまま採用し、追加競合・コード修正はない。既存の型/lint・生成型・browser・MCP・認証・通知・DB回帰の成功記録を参照し、ユーザー指定で重複検証を省略した。全backend suite・実Auth0/Push・live環境は未検証であり、このWiki保守での製品試験成功とは呼ばない。Wikiのみの後続commitとコードSHAを区別する。LOCAL-213の未commit文言を入力にせず、後のi18n統合時には追加Wiki commitとの差分を再確認する。
+
+### LOCAL-213のi18n統合
+
+英日UIと他5言語の既存辞書・英語fallback、ブラウザー言語と保存configの関係は [言語解決と診断表示](architecture/web-and-sync.md#言語解決と診断表示)を読む。通知は [登録別Pushと共有OS通知の言語保存](integrations/web-push.md#通知言語の二つの保存範囲)を区別する。診断詳細は翻訳説明と原文の併記であり、結果不明を失敗に変えたり再送する仕様ではない。
+
+常設checkerと少数locale固有browser、および終了した移行QAの保証範囲は [i18nの常設検査と移行検証](operations/development.md#i18nの常設検査と移行検証)に置く。コード候補 `1957d8edfa98ebe512ea4a960a38a59e936507fc` は固定main base `5686d655` へsource `73c4504c` を競合なく統合したもの。管理commandでinstall/build・frontend型/lint・i18n検査・残存browser44件の一括成功、通知/Push対象Rust・生成型同期・unit94件を確認した。全Rust workspace/qa-mode Clippy再実行はagent判断で省略し、実Auth0/ChatGPT/Push/OS配送は未確認である。Wikiはコード検証後の別commitで、mainへの実Git適用は公開要求後のhost receiptで確認する。

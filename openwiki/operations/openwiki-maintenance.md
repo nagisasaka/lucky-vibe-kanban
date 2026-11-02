@@ -86,10 +86,10 @@ sources:
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/ReposSettingsSection.tsx
   - id: openwiki-source-7fd9452d5e666180c50f8cb7
     resource: repo://tests/openwiki/recovery.sh
-generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
+generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T14:26:25.232Z
 ---
 
 # OpenWiki の初期生成・同期・回復
@@ -132,7 +132,7 @@ Codex の TOML editor が project trust table を追加すると、OpenWiki の�
 
 ## 開始元 Project と保守 Issue
 
-保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1471-L1482)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L73-L95)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)
+保守の所有単位は Repo のままだが、Project 設定からの Initialize / Sync は選択中の `project_id` を任意フィールドとして共通受付へ渡す。外部 MCP Sync も認可済みの Project を渡す。これにより、複数 Board が同じ Repo を使う場合でも開始元を失わず、その Project の通常 Issue と保守 Workspace を関連付けられる。[UI の引継ぎ](../../packages/web-core/src/shared/dialogs/settings/settings/RemoteProjectsSettingsSection.tsx#L1479-L1490)・[共通フォーム](../../packages/web-core/src/shared/dialogs/settings/settings/RepositoryMemorySettings.tsx#L105-L127)・[MCP adapter](../../crates/server/src/remote_mcp/repository_wiki.rs#L214-L233)
 
 明示 Project は実在し、`project_creation_repository_ids` に対象 Repo が含まれる必要がある。この集合は明示 Repo binding・既存 Issue/Workspace の関連に、Git 方式の保存済み `ProjectRepoDefaults` を加える。したがって開発 Card がまだない Project でも Git 作業先の既定値で関連を証明できる。directory 方式の defaults に残った Repo 値や、削除済み Project の Scratch だけでは認めない。受付時に加え、repository lock や version 検査の待機中に設定が変わり得るため紐付け直前にも検証する。[存在と再検証](../../crates/server/src/routes/openwiki/project_context.rs#L6-L43)・[関連集合](../../crates/server/src/routes/local_remote.rs#L3390-L3413)・[既存関連](../../crates/server/src/routes/integrations/mod.rs#L130-L150)
 
@@ -177,7 +177,7 @@ Issue 採番と link 作成は `BEGIN IMMEDIATE` transaction 内で行い、そ�
 
 公開用診断は固定の error code と安全な message に制限し、private path、provider の生ログ、動的な内部エラー列を返さない。詳細は既存 maintenance execution の画面で確認する。読取 tool は結果を観測するだけで、publication や reconciliation を進めない。[診断境界](../../crates/server/src/remote_mcp/repository_wiki.rs#L234-L247)・[共通 message](../../crates/server/src/remote_mcp/errors.rs#L1-L12)。共通境界には[添付拒否の安全なhostname専用型](../integrations/remote-access.md#許可されていない添付ホストを診断する)の例外があるが、一般の内部errorやcontextを公開する許可ではない
 
-変更時は [古い対象・Wiki 不在・active owner の拒否](../../crates/server/src/routes/openwiki.rs#L901-L927)、[権限・所属・同時再送・uncertainty保持・証拠欠落](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L745)、[Agent成功と公開 intent だけでは完了せず、再同期後も旧失敗を保持する fixture](../../crates/server/src/remote_mcp/repository_wiki.rs#L316-L415)、[HTTP write / merge scope の分離](../../crates/server/src/remote_mcp/tests.rs#L317-L342)を入口にする。Git 公開自体の回復・source drift・no-op は [既存サービスの試験](../../crates/services/src/services/openwiki.rs#L470-L564)で別に扱う。これらの fixture は実 Auth0 / ChatGPT や実モデルの Wiki 品質を証明しない。
+変更時は [古い対象・Wiki 不在・active owner の拒否](../../crates/server/src/routes/openwiki.rs#L901-L925)、[権限・所属・同時再送・uncertainty保持・証拠欠落](../../crates/server/src/remote_mcp/launch_tests.rs#L595-L745)、[Agent成功と公開 intent だけでは完了せず、再同期後も旧失敗を保持する fixture](../../crates/server/src/remote_mcp/repository_wiki.rs#L316-L415)、[HTTP write / merge scope の分離](../../crates/server/src/remote_mcp/tests.rs#L317-L342)を入口にする。Git 公開自体の回復・source drift・no-op は [既存サービスの試験](../../crates/services/src/services/openwiki.rs#L470-L564)で別に扱う。これらの fixture は実 Auth0 / ChatGPT や実モデルの Wiki 品質を証明しない。
 
 ## Bootstrap の phase と所有権
 
@@ -303,6 +303,6 @@ Bootstrap は同じ repository Workflow の成功、Sync は同じ AgentRun の�
 
 writer には lifecycle 6tool に加え `openwiki_search`、`openwiki_read`、`openwiki_list_workspaces`、`openwiki_list_wikis` を公開し、preflight と thread-local 承認も同じ10toolを使う。利用者が公開registryでリンクした workspace の Wiki は upstream の scope/到達可能性検査に従って参考にできる。`OPENWIKI_CONFIG_DIR` は指定済みの公開場所を引き継ぐ。maintenance worktree の canonical root が登録rootと違う場合の登録・接続は公開機構を使い、private registryを書き換えない。参照先は対象sourceの証拠を代替せず、更新対象は現在候補の canonical `openwiki/` のみである。[writer設定](../../crates/executors/src/executors/codex.rs#L1061-L1105)・[host指示](../../crates/services/src/services/openwiki.rs)
 
-読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L1005)
+読取は active run の前後や lifecycle と重なってよい。成功・失敗とも writer の begin/finish、未完了operation、source drift を帳消しにしない。root/thread・call ID・引数・不整合duplicate の検査は維持し、未知toolとlifecycle相互の重なりは拒否する。未解決の読取callもwriter境界で拒否する。[監査分類](../../crates/services/src/services/openwiki/completion.rs#L196-L323)・[読取の回帰](../../crates/services/src/services/openwiki/completion.rs#L860-L997)
 
 検証は種類を分ける。`scripts/test-openwiki-host.mjs` と `--lvk-setup`（symlink / `--claude-file` / `--claude-absent`）はモデル不要で公開protocol、setup復元、source/config/INSTRUCTIONS保護、Wiki-only候補を扱う。`scripts/test-openwiki-install.mjs` は公開0.5.1/0.7.2を用意してupgrade/reinstall、共同owner、custom conflict、marker修復を確認する。`openwiki_live_fixture` は隔離した実Codexの2 turnでlinked検索・読取、owned begin再開、finishとNative Auditを確認する有料のopt-inで、DB所有・receipt・正式公開guardとは別である。[試験方法と限界](../../docs/workspaces/openwiki.mdx#verify-or-upgrade)
