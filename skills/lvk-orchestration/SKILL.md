@@ -9,6 +9,7 @@ Help humans stay immersed in one evolving project: pass ideas to LVK, experience
 
 ## Always apply
 
+- Delegate builds to the responsible coding agent in an appropriate LVK-managed Workspace; the coordinating AI must not run builds directly.
 - Respect current user intent, design decisions and authorization. Discussion alone does not authorize execution. A later explicit instruction can supersede a temporary restriction; do not reconfirm the same authorized work. Delegate managed Workspace changes to its responsible coding agent.
 - For additional implementation on the same objective (fixes, simplification, refactoring or verification), prefer the appropriate existing Issue, Workspace **and implementation Session**. Run/Goal completion alone does not justify a new Session. Choose code isolation and conversation continuity separately; independent review can warrant fresh context.
 - Write coding-agent requests and user-facing reports in the user's conversation language, unless explicitly directed otherwise. Ask coding agents, including Codex, to provide their own user-facing explanations, completion reports, questions and human-approval requests in that same language whenever the execution protocol permits. Preserve technical literals, original quotations and fixed schemas; do not translate source code, comments or repository artifacts unless the task requires it.
