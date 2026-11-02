@@ -46,8 +46,6 @@ sources:
     resource: repo://packages/ui/src/components/ChatRunFooter.tsx
   - id: openwiki-source-d89c4480040eee7fa41a6000
     resource: repo://packages/ui/src/components/CodeHighlightPlugin.tsx
-  - id: openwiki-source-b7a60463de39ca04d32fcf32
-    resource: repo://packages/ui/src/components/CodexQuota.tsx
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-9ac09945bdd807003978190a
@@ -64,8 +62,6 @@ sources:
     resource: repo://packages/ui/src/components/PromptContext.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
     resource: repo://packages/ui/src/components/ReadOnlyLinkPlugin.tsx
-  - id: openwiki-source-78a41cdef116a246f388e17c
-    resource: repo://packages/ui/src/components/ResourceSummary.tsx
   - id: openwiki-source-1383d6dc4e3d9d2ea475e735
     resource: repo://packages/ui/src/lib/chat-code-highlighting.ts
   - id: openwiki-source-2c0d6b926239bcee46352b0f
@@ -140,8 +136,12 @@ sources:
     resource: repo://packages/web-core/src/shared/command-bar/actions/pages.ts
   - id: openwiki-source-649882ab70d5bba1d79459a5
     resource: repo://packages/web-core/src/shared/components/CreateChatBoxContainer.tsx
+  - id: openwiki-source-235a3eb75f22fdecdbd66a8f
+    resource: repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx
   - id: openwiki-source-a7cac6e6f3abafbcf9390ddf
     resource: repo://packages/web-core/src/shared/components/RouteLoadState.tsx
+  - id: openwiki-source-867b74d482ff6cc365176503
+    resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-986a5914454c708e7540f1e6
     resource: repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx
   - id: openwiki-source-4f5acbe99dd0d72515b7e82b
@@ -184,6 +184,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/workspaceSessionSelection.ts
   - id: openwiki-source-e2edafaa4d21c8bc7ea6ee6f
     resource: repo://packages/web-core/src/shared/lib/aggregateEntries.ts
+  - id: openwiki-source-2b7aa45c584402b062848c47
+    resource: repo://packages/web-core/src/shared/lib/claudeQuotaView.ts
   - id: openwiki-source-e665e0fe8e478ec542e0ace4
     resource: repo://packages/web-core/src/shared/lib/electric/collections.ts
   - id: openwiki-source-7ac3d3320cb9464c58c037f4
@@ -198,16 +200,14 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/utils.ts
   - id: openwiki-source-f19e845a46caccf16c347093
     resource: repo://packages/web-core/src/shared/providers/remote/UserProvider.tsx
+  - id: openwiki-source-09147e83e2e70cb032ece9e7
+    resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
-  - id: openwiki-source-5ef837b2bc54d286b3dedd8f
-    resource: repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts
   - id: openwiki-source-3744cbc03f96140414e0b945
     resource: repo://tests/chat/conversation-layout.test.mjs
   - id: openwiki-source-adbcc4477d532869e93682ad
     resource: repo://tests/chat/isolated.spec.ts
-  - id: openwiki-source-d70e2f551bdb141bf2cd79a6
-    resource: repo://tests/chat/mobile-navigation.native.mjs
   - id: openwiki-source-6bda7be6a5c83fa82bbb1e39
     resource: repo://tests/chat/paste-markdown.test.mjs
   - id: openwiki-source-0a43f232c5a84b7f94378d02
@@ -236,10 +236,10 @@ sources:
     resource: repo://tests/workspace-navigation/run-isolated.py
   - id: openwiki-source-b87e3253bd1458a0091f8587
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # Web の実行環境と同期
@@ -284,19 +284,17 @@ stars はブラウザーから GitHub API を直接 `cache: 'no-store'` で読�
 
 旧 `Give Feedback` survey action は navbar と command bar の General に存在せず、AppBar と LandingPage の Discord リンクもない。共有 shell は Discord 人数 hook を呼ばない。これは外部サービスへの UI 導線の整理であり、Agent approval の feedback を除去する契約ではない。[navbar actions](../../packages/web-core/src/shared/actions/index.ts#L1555-L1569)・[command bar](../../packages/web-core/src/shared/command-bar/actions/pages.ts#L35-L44)・[AppBar の外部領域](../../packages/ui/src/components/AppBar.tsx#L321-L337)・[shell の取得](../../packages/web-core/src/shared/components/ui-new/containers/SharedAppLayout.tsx#L60-L69)・[approval feedback](../../packages/web-core/src/features/workspace-chat/model/contexts/ApprovalFeedbackContext.tsx#L41-L101)
 
-### CPU・RAM・DISK の共通観測を表示する
+### 両ビューの共通右サイドバーと環境情報
 
-NavbarContainer は `useResourceObservation` の値を UI の ResourceSummary に渡す。認証付き `GET /api/resource-observation` は [MCP と共通の collector](../integrations/remote-access.md#オンデマンド資源観測)を使い、別の CPU sampler や監視 daemon を作らない。HTTP は `no-store`、collector の失敗は503になる。[HTTP](../../crates/server/src/routes/resource_observation.rs#L9-L25)・[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L297-L302)
+Kanban と Workspace は `UtilitySidebar` の最上部に折りたたまない `EnvironmentPanel` を置く。ヘッダーから CPU/RAM/DISK とアカウント利用枠を移し、サイドバーを閉じてもヘッダーへ戻さない。クローバー領域は将来の Pet 用プレイスホルダーである。[共通 panel](../../packages/web-core/src/shared/components/EnvironmentPanel.tsx)・[sidebar](../../packages/web-core/src/shared/components/UtilitySidebar.tsx)
 
-query key を共有し、document が visible の間だけ15秒周期で取得する。要求は5秒 timeout、retryなしで、非表示・失敗・45秒以上古い値は灰色の未知表示になる。取得失敗を0%へ変換しない。CPU は server の標本、RAM は `(total − available) / total`。DISK は worktree filesystem 一つを `DISK 90% (900GB / 1000GB)` の形で示す。容量は10進 GB（1 GB = 1,000,000,000 bytes）を `Math.round(bytes / 1e9)` で整数 GB に丸める。内部 bytes・percent・閾値計算は変えない。tooltip は対象・使用量/物理総容量という意味・単位・観測時刻を説明する。[観測対象と分母の契約](../integrations/remote-access.md#disk-の対象と読み取り専用の解決)を正本とする。70%以上を橙、80%以上を赤にし、使用率の表示は切捨てて色帯との不一致を避ける。[hook](../../packages/web-core/src/shared/hooks/useResourceObservation.ts#L1-L45)・[値の検査](../../packages/ui/src/lib/resourceObservation.ts#L1-L77)・[表示](../../packages/ui/src/components/ResourceSummary.tsx#L1-L68)
+認証付き HTTP の資源観測は MCP と同じ collector を使い、visible 時15秒周期で取得する。失敗・非表示・45秒以上古い値は未知にし、RAM は available 基準、CPU/RAM/SWAP は Linux 可視共有値、DISK は worktree 配置先 filesystem と明示する。DISK は一件の known worktree_base の正の total、0以上total以下の used、有効 percent と比率の整合性を検査し、不整合なら三値を未知にする。他の正常項目は保持する。現 panel の容量表示は GiB/MiB、色は70/80%が境界である。[値の検査](../../packages/ui/src/lib/resourceObservation.ts)・[collector 接続](../../crates/server/src/routes/resource_observation.rs)
 
-表示モデルは `worktree_base` がちょうど一件で known、total が正、used が0以上total以下、percent が0〜100、かつ `used / total * 100` との差が `0.000001` 未満の場合だけ DISK の三つの値を採用する。欠落・重複・不正・古い値ではまとめて灰色の `DISK — (— / —)` にし、正常な CPU/RAM は保持する。schema番号自体による分岐ではなく表示する数値を検査するため、旧分母の値も不整合なら未知になる。[整合性検査](../../packages/ui/src/lib/resourceObservation.ts#L43-L77)・[欠落・重複・旧分母・0/100の回帰](../../tests/resource-observation/model.test.mjs#L80-L119)
+環境情報は hostname、状態、最終確認からの経過、稼働中 Session 数を返す。Session は current/running の Run と現在 attempt の running process registry で distinct 集計し、待機やカード数を代用しない。コンテナ開始を証明できない uptime は不明とし、ホスト OS 更新・再起動の判断はしない。[環境 API](../../crates/server/src/routes/resource_observation.rs)
 
-モバイルは資源表示と icon/user group を折り返して狭幅に収める。観測対象と unknown の意味は collector の正本で確認し、LOAD・SWAP をこのヘッダーへ読み替えない。回帰入口は `tests/resource-observation/model.test.mjs`、component fixture、実 NavbarContainer と認証 router を通す `full-app.mjs`。実 Auth0、別 mount、OS による tab backgrounding は別の検証である。[配置](../../packages/ui/src/components/Navbar.tsx#L350-L390)・[試験](../../tests/resource-observation/README.md)
+### Codex / Claude のアカウント利用枠
 
-### Codex の利用枠を資源表示の隣に置く
-
-`NavbarContainer` は PC・モバイル共通の resource slot に `CodexQuota` を併置し、狭幅では折り返す。表示するのは絶対的な残トークン数ではなくアカウントの通常利用枠の残率で、Workspace 消費量や context 残量とは別である。タップ・キーボードで開ける popover に観測時刻、各 window の期間・残率・reset、bucket の区別を示す。[接続](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx)・[表示](../../packages/ui/src/components/CodexQuota.tsx)
+共通 panel は Codex/Claude の取得できた短時間・週間枠、reset を表示し、取得不能を0%や無制限へ補完しない。アカウント枠は Workspace 消費量や Session context 残量とは別である。Claude は既存 provider-usage の機械可読値を解釈し、新しい認証や scraper を導入しない。[Claude モデル](../../packages/web-core/src/shared/lib/claudeQuotaView.ts)
 
 `useCodexQuota` は既存の認可付き `POST /api/provider-usage/read` を `provider: codex`、`account_context: server_default`、`include_usage: false` で受動参照する。QueryClient 内の共通 key で共有し、visible の間だけ5分周期、20秒 timeout・retryなし。手動更新は取得中と最終成功/失敗から30秒以内を抑制する。資源の秒単位の表示時計を再利用して古さを評価するが、秒ごとに Codex を取得しない。[hook](../../packages/web-core/src/shared/hooks/useCodexQuota.ts)・[可視性と時計](../../packages/web-core/src/shared/hooks/useResourceObservation.ts)・[既存認可](../../crates/server/src/routes/provider_usage.rs)
 
@@ -486,7 +484,7 @@ JSON Patch stream は接続成立と初回 snapshot の Ready を分ける。再
 
 ## Wiki のナビゲーションと本文を一つの状態で動かす
 
-Workspace の Wiki は本文を右メインペーン、ナビゲーションを右サイドバーへ分けて表示する。既定では左のチャットと並ぶが、二つの独立した reader ではない。`WorkspaceWikiProvider` が Workspace ID ごとに一つの controller を所有し、repository、選択ページ、検索、読取結果を両 surface で共有する。モバイルでは本文とナビゲーションを切り替える。[共有 controller](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx#L39-L91)、[画面への配置](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L488-L625)
+両ビューはファイル・端末と並ぶ Wiki の開閉項目を持ち、他のユーティリティを消さない。Wiki 入口は repo ごとの OpenWiki 有効時だけ出す。Workspace は既存の右本文、Kanban はボードを残す分割詳細ペインで読む。`WorkspaceWikiProvider` は Workspace または Project ごとの controller を共有し、Kanban は登録 main repo の API へ差し替える。[provider](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx)・[Kanban](../../packages/web-core/src/pages/kanban/ProjectKanban.tsx)
 
 表示対象は canonical OpenWiki 一種類であり、legacy 形式の切替状態は持たない。repository を切り替えると snapshot・選択・検索・scroll 状態をリセットし、再取得する。controller はリクエスト sequence と応答の Workspace / repository identity を検査し、遅れて返った別対象の結果で現在の画面を上書きしない。[scope と応答の扱い](../../packages/web-core/src/features/wiki/model/wikiViewerController.ts#L11-L119)。実際に読む checkout と reader の範囲は [Wiki inspection](../operations/workspace-inspection.md#wiki-の本文ツリーと表示元を確認する)を参照する。
 
@@ -494,7 +492,7 @@ Wiki を開くことはチャットや AgentRun の終了ではない。`Preserv
 
 ### 通常ペーン操作と保存済み設定
 
-Wiki アイコンは共通 `toggleRightMainPanelMode`、右サイドバーの入口は `setRightMainPanelMode` を呼ぶ。Wiki を開くと既存の右メインペーンを置き換え、同じアイコンで閉じると mode は `null` になる。以前の Changes / Logs 等へ戻す履歴や Wiki 専用 Focus / Return 操作はない。操作は Workspace ごとの mode を変更し、左チャットの表示設定と右サイドバーの表示設定を上書きしない。右ペーンを開く際の左サイドバー非表示は幅2,048px以下の共通規則であり、チャット非表示とは別である。[共通 state](../../packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L561-L607)・[アイコン](../../packages/web-core/src/shared/actions/index.ts#L678-L698)・[sidebar の入口](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx#L244-L265)
+Workspace の Wiki アイコンは有効な Wiki 項目を展開して右サイドバーを開く。本文 mode と項目の開閉は分け、サイドバー全体を Wiki 専用表示に置き換えない。Kanban の同じ入口も共通の項目を展開する。通常の右本文 mode の set/toggle は引き続き以前の pane を復元する履歴を持たない。[操作](../../packages/web-core/src/shared/actions/index.ts)・[sidebar](../../packages/web-core/src/pages/workspaces/RightSidebar.tsx)
 
 `UI_PREFERENCES` Scratch は Workspace ごとの `right_main_panel_mode` と `is_left_main_panel_visible` を保存・復元する。保存済みの `wiki + false` は読み込み時にも false のままで、Wiki の再選択や他の右ペーンへの切替では会話を再表示しない。右ペーンが `null` になると layout の共通 effect が左チャットと左サイドバーを表示する。この二段階を store 単体の動作と混同しない。[保存と復元](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L57-L76)・[false の保持](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L121-L132)・[hydrate](../../packages/web-core/src/shared/hooks/useUiPreferencesScratch.ts#L263-L287)・[layout の補正](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L199-L210)
 
@@ -502,11 +500,13 @@ Wiki アイコンは共通 `toggleRightMainPanelMode`、右サイドバーの入
 
 モバイルでは Wiki / Todo タブが共通右ペーン mode を設定し、Chat タブは `mobileActiveTab` だけを切り替える。Chat へ戻っても右ペーン mode を閉じる操作ではないため、desktop に戻した際の選択とモバイルの表示タブを同一状態と見なさない。Wiki のページツリーと本文は `Wiki pages` で往復し、タブ切替中も chat と Wiki の surface を mount したままにする。[タブ操作](../../packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L173-L183)・[mobile surface](../../packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L310-L391)。通常の pane 選択は URL を変更せず、永続 message draft は [Session の Scratch](../concepts/session-and-agent-run.md#未送信ドラフトと-scratch)が扱う。
 
-### Wiki ペーン変更の検証境界
+### 単一端末の表示と寿命
 
-[store の回帰テスト](../../packages/web-core/src/shared/stores/useUiPreferencesStore.test.ts#L27-L117)は、共通 set / toggle、他ペーンへの切替、明示的な非表示、Workspace 間の分離、390 / 1,000 / 1,440 / 2,560px の規則を検査する。[実アプリ試験](../../tests/server-access/workspace-wiki.mjs#L1-L58)は build 済み frontend / server と一時 instance・実 API・二ページの Wiki fixture を使い、agent を実行しない。[browser 操作](../../tests/server-access/workspace-wiki.mjs#L185-L276)は左右配置、専用ボタンの不在、ページ選択保持、他ペーン切替、Scratch 保存・reload、URL と browser back、1,000px と390pxでの下書き保持を検査する。終了処理は browser、server process group、残存子 process、port と一時データの cleanup を確認する。[cleanup](../../tests/server-access/workspace-wiki.mjs#L290-L333)
+`TerminalSection` の明示的な展開だけが scope ごとに一つの shell を開始する。項目自体の折畳みは所有端末を停止し、確認・警告・説明 tooltip は出さない。sidebar 全体の非表示、狭幅でのファイル/Wiki 選択、surface の unmount は終了意思ではなく、provider が接続と端末を保持する。exit / 検出した通信断では無言で折畳み、自動で接続や shell を作り直さない。明示的に再展開したときだけ新規開始する。[共通項目](../../packages/web-core/src/shared/components/TerminalSection.tsx)・[所有 provider](../../packages/web-core/src/shared/providers/TerminalProvider.tsx)
 
-この Wiki ペーン Sync は凍結 source `5c4ebd1f2838b7aecdda592bc64b70e847faf25b` を、操作入口・store・layout・Scratch・reader controller・backend 読取境界・試験定義から静的に照合した。供給された Change Manifest の開発時成功報告と、正式 Integration の明示的な検証省略は別の記録である。この Sync では製品テストを再実行しておらず、実 provider・外部認証の成功や、無関係な既存節全体の再検証は主張しない。凍結 Workspace Memory の後続レビューにある追加試験結果も、統合済み試験定義や移行実装の代わりにはしない。
+### Wiki・端末の検証境界
+
+`workspace-wiki.mjs` は build 済み frontend/server と専用一時 instance の実 file/Wiki/PTY API を使い、両ビュー・狭幅・下書き保持、終了時の実 PID、他ブラウザー/同 cwd 別実行の非干渉、archive guard を検査する。account quota は stub、資源失敗は注入で、実 AI/provider・Auth0・物理回線の保証ではない。source SHA の開発時成功と統合候補上の試験は別に扱う。[検証手順と限界](../../docs/development/project-utilities-validation.md)・[試験](../../tests/server-access/workspace-wiki.mjs)
 
 ## 統一一覧と実行予約
 

@@ -4,8 +4,8 @@ title: Agent Runtime の監査・投影・回復
 description: AgentRun を独立プロセスで実行し、Native Audit から永続状態と画面表示へ変換する境界。再接続、DB 競合、投影劣化時の契約を説明する。
 tags: [agent-runtime, audit, persistence, recovery]
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T23:50:54.203Z
 sources:
   - id: openwiki-source-b85c3dc0eaacdffedf4e68ee
     resource: repo://crates/db/migrations/20261026180000_agent_starting_recovery.sql
@@ -41,6 +41,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-5d78398344c565f028fc5984
     resource: repo://crates/local-deployment/src/process_host/journal.rs
+  - id: openwiki-source-8a1832c7fd24c1e7222a8d0a
+    resource: repo://crates/local-deployment/src/pty.rs
   - id: openwiki-source-15fe6957ffd50a6292794c19
     resource: repo://crates/server/src/routes/workspaces/archive.rs
   - id: openwiki-source-7151ac14cb4570c5c04781dd
@@ -69,7 +71,7 @@ sources:
     resource: repo://docs/future/agent-runtime/README.md
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 ---
 
 # Agent Runtime の監査・投影・回復
@@ -247,3 +249,9 @@ host は Linux の自然終了でも group cleanup を省略しない。cleanup 
 [隔離回帰の説明](../../tests/codex-process-cleanup/README.md)は Python による wrapper-only 死亡の機構再現、Linux primitive の確認、実 Rust の owner/RPC/host 経路を区別する。utils の [direct-drop 再現と owned orphan cleanup](../../crates/utils/src/process/owned_group.rs#L358-L470)、host の [自然終了・取消 fixture](../../crates/local-deployment/src/process_host.rs#L1433-L1601)、既存の drain・native interrupt 試験が変更時の入口となる。実 WebSocket router 切断、実 provider/model、非 Linux、runtime 全体の破棄はこの fixture 群の検証結果に含めない。過去に消えた PID の発生源も確定していない。
 
 今回の Sync は凍結入力全4チャンクの hash と統合 source `90a48e66f19509f44aab65900ccbc0462efdef04` を照合した。discovery の WebSocket・scope 解決、model/skill probe、RPC reader、共通 host の自然終了・取消・drain、utils の identity・子孫 snapshot、独立 fixture 定義から対象を確認した。凍結 Change Manifest と上記検証記録は開発時の focused Rust 成功（utils 5、discovery 1試験内4ケース、host 10）を報告するが、最終 Integration は明示的に検証省略されている。この文書保守は静的照合であり、製品テストの再実行や無関係な Wiki 全体の再検証ではない。
+
+### UI 端末の所有 session を終了する
+
+UI の PTY は provider host とは別の寿命を持つ。Linux の `OwnedProcessSession` は未回収の shell leader を anchor にして、同じ POSIX session の前景・背景 job を pidfd で捕捉し、終了を確認する。別 session へ移った捕捉可能な子孫も既存の descendant cleanup を使う。cwd 一致や数値 PID だけで他実行を停止しない。[所有 session](../../crates/utils/src/process/owned_group.rs)・[PTY](../../crates/local-deployment/src/pty.rs)
+
+PTY service は所有対象の停止、shell の wait、reader thread の join が成功してから管理 map を解放する。自然 exit 後も背景 job を後片付けし、失敗を map 除去だけで成功にしない。捕捉前に再親化した daemon、停止不能 kernel 状態、server 強制終了を越える完全回収や非 Linux の同等保証はない。表示の折畳み・通信断と起動抑止は [端末の操作契約](../operations/workspace-inspection.md)を参照する。[実プロセス回帰](../../crates/local-deployment/src/pty.rs#L362-L490)

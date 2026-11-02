@@ -112,10 +112,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -306,7 +306,7 @@ Settings の「MCP連携」は LVK が外部へ公開する [Runtime Access の�
 
 ### 自動マージ担当の必須stdio bootstrap
 
-自動マージworkerはthread-local設定で `vibe_kanban` MCPをrequired/enabledにし、実際のMCP executableとAgentRun bindingを渡す。`integration_action`だけを明示承認する。通常threadでOpenWikiを無効にする際は、継承設定にserverが存在しなければdisable-only項目を削除し、transportのない架空serverを作らない。継承transportがある場合やmaintenance writerのrequired設定は保持する。[worker設定](../../crates/executors/src/executors/codex.rs#L1090-L1135)・[継承設定の照合](../../crates/executors/src/executors/codex.rs#L1275-L1310)・[回帰](../../crates/executors/src/executors/codex.rs#L1688-L1755)
+自動マージworkerはthread-local設定で `vibe_kanban` MCPをrequired/enabledにし、実際のMCP executableとAgentRun bindingを渡す。`integration_action` と `list_shared_resources` のみ明示許可する。通常threadでOpenWikiを無効にする際は、継承設定にserverが存在しなければdisable-only項目を削除し、transportのない架空serverを作らない。継承transportがある場合やmaintenance writerのrequired設定は保持する。[worker設定](../../crates/executors/src/executors/codex.rs#L1090-L1135)・[継承設定の照合](../../crates/executors/src/executors/codex.rs#L1275-L1310)・[回帰](../../crates/executors/src/executors/codex.rs#L1688-L1755)
 
 RepoのClaude指示入口はsymlinkではなく通常fileの `@AGENTS.md` importにして、指示の正本をAGENTSに保つ。同じ実体へ異なるsetup本文が重なる構成を避けるための復旧である。installed OpenWiki 0.5.1の独立fixtureで、このimportをsetupが保持し、AGENTSの正しい管理blockが反復で不変になることを確認した。これはlive Claude/model起動の検証ではない。[入口](../../CLAUDE.md)・[指示正本](../../AGENTS.md)
 
@@ -319,3 +319,9 @@ REVIEWはCODEのsandbox/approval policyを維持する。調査に必要なWorks
 UI選択・保存・再表示・通常続行は [SessionのREVIEW](../concepts/session-and-agent-run.md#review-は通常会話で報告して止まる)に従う。fixtureはpermission parity、通常turn、Goal RPCなし、source完了抑制を確認するが、実モデルの指示遵守や外部承認の改善は保証しない。実ChatGPT/Library・実Codexの適合確認は公開後の別ゲートである。[fixtureと限界](../../tests/review-mode/README.md)・[providerテスト](../../crates/executors/src/executors/provider_adapter.rs#L2654-L2685)
 
 maintenance thread は利用者が指定した `OPENWIKI_CONFIG_DIR` を MCP へ渡し、公開registryを利用する。独自のregistry隔離や通常agentへの検索拡張は行わない。[設定](../../crates/executors/src/executors/codex.rs#L1087-L1103)・[横断参照と監査](../operations/openwiki-maintenance.md)
+
+### 自動マージ担当の限定 stdio 設定
+
+host に束縛された自動マージ worker は、既存の `integration_action` と資源 snapshot 読取の `list_shared_resources` の2 tool にだけ `approval_mode=approve` を明示する。実 executable と AgentRun の thread-local 設定は start/resume に伝播し、通常 Workspace の MCP 権限や全 tool の既定値へ広げない。OpenWiki writer 用 allowlist や第三者 tool の一回限り承認を流用しない。[生成と限定設定](../../crates/executors/src/executors/codex.rs#L1110-L1170)・[正確な許可集合の回帰](../../crates/executors/src/executors/codex.rs#L2605-L2681)
+
+設定回帰は profile 保持、通常 Workspace との分離、resume 用設定を検査する。過去に承認待ちになった稼働 Run の最終 native 設定や live model/stdio の再現を証明するものではない。明示承認 adapter の単発束縛・拒否/取消/timeout は別の protocol 回帰に従う。[単発承認](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)

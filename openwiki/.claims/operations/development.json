@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e292ed9062312fd28a9d96be37536ad4a73f2ff52fb3baa256fceb3756407115",
+  "pageVersion": "sha256:791797f88a6f1f2358ea5e84facb0c1a44fa4ecca64b23cdfb6d40617299e841",
   "claims": [
     {
       "id": "claim_1640e4eaeac94676a84eb3b9d9970d30",
@@ -832,7 +832,7 @@
         },
         {
           "resource": "repo://tests/chat/mcp-approval.mjs",
-          "version": "repo-file-v1:sha256:48b025dffe2c8a44eaeefd47ecb9d7d1ae1ecac22791fc025b9a536ce816ad37"
+          "version": "repo-file-v1:sha256:404ee87871a706586ee5142aa0b229585e7d8f787446bb5f53da30bfd0f0e4d9"
         },
         {
           "resource": "repo://tests/server/run-managed-dev-server.mjs",
@@ -898,7 +898,7 @@
         },
         {
           "resource": "repo://plugins/lvk/skills/lvk-work/SKILL.md#L1-L43",
-          "version": "repo-lines-v1:sha256:410be4b8de19e1f5bb53d6ef830565b42b3e2e37a633e12ea71e3ac3e2d2820f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjYmZkNjVjMTE3YTNjY2NhYmM3Y2YzNmFjOTdiN2M1NzBmM2JhMTc1Y2Q0ZDY2NDc2ODdkZDg1NWRkMTUzMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1ZjgyYzYzNDU0NjZhOWUyZDlhNWEzM2UxNDFlYmM3MWE5MTkwOTBmNjc2NTA4Y2RkNDc2NjMyMTA0Y2RkYjgifQ"
+          "version": "repo-lines-v1:sha256:62f94584831de6fe66c54e5197858b182a51c21e90f5e11f714a249e4d1bd4d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MmQ3MTExMDNkNTBhNDM3ODMwYzZmYmNkMDRmYjRiYWI0OWEwZjgyZjZkMjZkMWM3OTFjNmU4NDg4ZGQwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJjYmZkNjVjMTE3YTNjY2NhYmM3Y2YzNmFjOTdiN2M1NzBmM2JhMTc1Y2Q0ZDY2NDc2ODdkZDg1NWRkMTUzMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1ZjgyYzYzNDU0NjZhOWUyZDlhNWEzM2UxNDFlYmM3MWE5MTkwOTBmNjc2NTA4Y2RkNDc2NjMyMTA0Y2RkYjgifQ"
         }
       ]
     },
@@ -983,7 +983,7 @@
       "statement": "utilsのprocess cleanupテストはPython fixtureを実行時CARGO_MANIFEST_DIRから解決し、共有キャッシュに埋め込まれた過去checkoutの場所に依存しない。",
       "evidence": [
         {
-          "resource": "repo://crates/utils/src/process/owned_group.rs#L355-L435",
+          "resource": "repo://crates/utils/src/process/owned_group.rs#L446-L526",
           "version": "repo-lines-v1:sha256:5bd9809978dcdc910d7a12f6c56f78f736351bca37380200e5089a762714c825:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZiOTFmNDQ2NzRkMTNhYTFkOTc2MWQ5ZTVlYzljMzg0YjAyYTNlMTU0ZmMxMjZjMTU4ZDQ3Y2Q5N2FkNzJhOGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0YTM2NWE5MGVjMTFlOTA0MzI3NTJjZjkzNzZlYzVlZDM2YjgwYmE1ZThlNjg1NGZjZjk4OTcwZDMwNDQ0NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkNmQwMDU4NTEzODQ2YzNkMzc5MzFlOWQyYjhkNjI1NTg3YjNjY2E5NWEyMDlmYmM4NDBkNTU5ZTljZDcxZWYifQ"
         }
       ]
@@ -1071,6 +1071,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T15:35:02.470Z"
+    "at": "2026-11-02T23:50:54.203Z"
   }
 }

@@ -44,6 +44,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/errors.rs
   - id: openwiki-source-0c4d7a1c881e7f1618f3bb2f
     resource: repo://crates/server/src/remote_mcp/evidence_read.rs
+  - id: openwiki-source-235c61e44e26d792cb34ab1d
+    resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
     resource: repo://crates/server/src/remote_mcp/goals.rs
   - id: openwiki-source-0a439773e44e2649541571be
@@ -94,6 +96,8 @@ sources:
     resource: repo://crates/server/src/resource_observation/disk.rs
   - id: openwiki-source-7cfd6d36fabe8e3d6102302d
     resource: repo://crates/server/src/resource_observation/linux.rs
+  - id: openwiki-source-162bcfe1ee47c1047ccf7d52
+    resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
     resource: repo://crates/server/src/routes/attachment_transfer.rs
   - id: openwiki-source-b393e75029374eaf9cba5f7d
@@ -108,6 +112,8 @@ sources:
     resource: repo://crates/server/src/routes/sessions/questions.rs
   - id: openwiki-source-af328071d51bff75b5246d3b
     resource: repo://crates/server/src/routes/workspaces/usage.rs
+  - id: openwiki-source-7d8384e54754a811ab7ab92e
+    resource: repo://crates/services/src/services/approvals.rs
   - id: openwiki-source-4294e32943918c50b31813b6
     resource: repo://crates/services/src/services/file.rs
   - id: openwiki-source-605a3efdc11efae80ada92b1
@@ -122,10 +128,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T01:08:30.935Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -171,6 +177,16 @@ ChatGPT 接続用 application は Web login 用と分離する。Auth0 作成支
 外部の開始停止は `request_id` を持つ耐久receiptを返す。同じID/入力で再送し、`get_operation` と現在statusを読み分ける。succeededはmanager受付の結果で、アプリreadinessの証明ではない。副作用後の観測失敗は uncertain となり、新IDで盲目的に再起動しない。重複startの再利用、停止後のsettlement、複数Repoの部分失敗と観測状態は [DevServer運用の正本](../operations/workspace-inspection.md#preview-と開発サーバー)に集約する。[receipt と失敗](../../crates/server/src/remote_mcp/dev_server.rs#L51-L108)
 
 Codexが第三者toolの一回限り権限を求める場合は [Session の正式承認](../concepts/session-and-agent-run.md#codex-の一回限り-mcp-tool-承認)へ進む。tool認可を緩めたりOpenWikiのallowlistを転用したりしない。
+
+## 実行承認を読み、単発の判断を送る
+
+`get_question(kind=approval)` は保留中承認の ID、対象 Project/Workspace/Session/Run、operation、実引数、single_request scope、状態、正規 UI URL を返す。同じ attempt/tool_call_id の承認前 tool-start だけを引数の根拠にする。空 `{}`、取得不能、credential field の伏字を区別し、任意 provider extension や tool 結果をそのまま公開しない。[詳細の相関と伏字](../../crates/server/src/remote_mcp/execution_approvals.rs#L171-L232)
+
+`decide_execution_approval` は明示 boolean と最新 revision、全対象 ID、request_id を受ける。既存の外部認証済み member（channel=mcp）と read/write scope を要求し、read-only や内部 Agent の自己承認は拒否する。UI 共通 Session lock・ResolveApproval へ渡し、元イベント、最新 Run/attempt、所属、予約状態と元 waiter の期限・対象を保つ。実行専用 Workspace でも正規 owner を検証し、session/恒久許可へ広げない。`answer_question` は承認を受け付けない。[専用判断](../../crates/server/src/remote_mcp/execution_approvals.rs#L100-L168)・[UI 共通 dispatcher](../../crates/server/src/routes/agent_runs.rs#L490-L565)
+
+引数が相関できない許可は理由付き UI fallback、拒否は専用経路で可能である。変更/取消/期限切れ/解決済み/対象不一致は競合や失敗として扱い、同じ request_id と同じ入力は既存 operation を返す。`get_execution_approval` は保留後も読め、decision_reserved と provider の resolved を区別する。受付成功はツール完了ではなく、未観測なら tool_execution_complete=null / not_observed で返す。配送不明は uncertain とし、receipt と command/event を照合してから判断する。[読戻し](../../crates/server/src/remote_mcp/execution_approvals.rs#L48-L98)・[元 waiter の検証](../../crates/services/src/services/approvals.rs#L134-L190)
+
+この実行承認は仕様回答や [自動マージの公開](../concepts/formal-integration.md)と別の権限である。署名 JWT/mock JWKS、専用handlerとservice/provider protocolの局所試験は実Auth0/ChatGPTや実ツール完了の検証ではない。[代表試験](../../crates/server/src/remote_mcp/execution_approvals.rs)・[認可回帰](../../crates/server/src/remote_mcp/tests.rs)
 
 ## Provider account の利用枠を参照する
 
@@ -343,6 +359,7 @@ Project / Workspace / Session / AgentRun は必須で、任意の Issue ID は�
 
 ## オンデマンド資源観測
 
+<!-- openwiki: broken internal link [../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する] heading anchor "cpuramdisk-の共通観測を表示する" does not exist in "../architecture/web-and-sync.md". Fix the href or restore the target, then delete this comment. -->
 `get_resource_observation` は外部クライアントが負荷判断の材料を得るための server 全体の読取であり、入力は `{}`、必要な scope は既存の `lvk:read` である。Project ID、任意 path、command は受け付けない。通常の認証・MCP audit を通り、collector は固定 Linux 統計を読む。collector は `server::resource_observation` にあり、認証付き Web API と [資源ヘッダー](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)も同じ観測経路を使う。内部モデル・監視 daemon・履歴 DB・自動 admission / stop policy は持たない。観測は [共有資源の所有権と実行受付](../concepts/shared-resource-coordination.md)を代替しない。[tool と入力](../../crates/server/src/remote_mcp/resource_observation.rs#L9-L20)・[認可と dispatch](../../crates/server/src/remote_mcp/mod.rs#L393-L449)
 
 ### 可視範囲と値の意味
@@ -364,6 +381,7 @@ cgroup は別枠で、process membership が `0::/`、mountinfo が `/sys/fs/cgr
 
 `disks` は `worktree_base` 一件だけを返す。設定された worktree base（override を含む）の directory handle に `fstatvfs` を行うため、これは worktree 配下のファイルサイズ合計ではなく、その保存先 filesystem 全体の使用量である。data directory は観測しない。schema v2 は対象数と使用率の意味の変更を表すため、consumer は旧配列位置ではなく target で選択する。[単一対象](../../crates/server/src/resource_observation/disk.rs#L8-L30)・[v2 の移行契約](../../docs/development/chatgpt-mcp.md#observe-server-resources-on-demand)
 
+<!-- openwiki: broken internal link [../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する] heading anchor "cpuramdisk-の共通観測を表示する" does not exist in "../architecture/web-and-sync.md". Fix the href or restore the target, then delete this comment. -->
 既知の観測は `total_bytes`、`used_bytes`、`available_bytes`、`used_percent`、`percent_basis: "used / total"`、文字列の device ID `filesystem_id` を持つ。total は `f_blocks * f_frsize`、free は `f_bfree * f_frsize`、used は total − free、percent は `used / total * 100` であり、量と率が同じ物理 filesystem 総容量を基準にする。一般ユーザーが使える `available_bytes` は `f_bavail * f_frsize` の生 API 値として保持するが、分母には使わない。例えば total=1000、free=300、available=200 なら used=700、70% となる。「物理容量」はこの filesystem の分母の意味であり、上記の physical-host visibility が既知になるわけではない。[算式・counter 読取](../../crates/server/src/resource_observation/disk.rs#L32-L73)・[予約領域が異なる例と0/100%](../../crates/server/src/resource_observation/disk.rs#L83-L97)。表示単位と不整合値の扱いは [Web の表示契約](../architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)へ進む。
 
 保存先は directory を作らない resolver で求め、不在を親directoryの値で代用しない。DirectFolder や配下の別 mount を網羅する測定でもない。欠落・非directory・読取失敗・counter overflow、total=0、free>total、available>free は DISK を unknown にする。他の成功した観測値は保持する。[読み取り専用のパス解決](../../crates/utils/src/path.rs#L117-L125)・[worktree base](../../crates/worktree-manager/src/worktree_manager.rs#L618-L624)・[失敗条件](../../crates/server/src/resource_observation/disk.rs#L32-L79)・[単一対象と非作成の試験](../../crates/server/src/resource_observation/disk.rs#L99-L137)

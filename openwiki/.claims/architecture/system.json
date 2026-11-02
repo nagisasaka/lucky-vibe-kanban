@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a7dc5f331e24457b0de0b7021f7e62b0f01113725a0930f09c177d3f9d01b1d1",
+  "pageVersion": "sha256:bf4dd8961ece0aeb1a79bb5926e13a0cf47f894cd9667598af148e31fcf4fe49",
   "claims": [
     {
       "id": "claim_040b4779a7b24b2da362496e3236ffd7",
@@ -111,7 +111,7 @@
       "statement": "local Boardへの入口はWeb向け/api/localとstdio MCP向け/api/boardを同じローカルrouterに構成する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/mod.rs#L82-L88",
+          "resource": "repo://crates/server/src/routes/mod.rs#L85-L91",
           "version": "repo-lines-v1:sha256:45c3e76fc3220c45450c5ececa1b4bda7381f302633338ef14c8e51ded055ca2:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDAwOTc4ZmM2NDAwNzczMzU5NDFmNzYwNmQ4OTZjOTRkOWNjODBkNzU5YjJlNGEyYTgwNDA1MTcwMjE3ZjZlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzllZWM4ZTVmZDcyNDFiZmM3OTdmNzQ4NWM0MjVkMzhiNTkzNjA4MjJlZDFmYjk5NTc0MmZkMzg0NTk3YWI5OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGZlNTcyMTBlOThmM2U0MGEzNTg3NTU5YWUwODMyNGU0ZjQ5OWFiMDQyY2Y3NjZjOTIzMjA5YjU2NjA3YTljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjIwYTU5ZTlhYzBhNTljYzhiMzdjNjY1YzljZTE0YTE0OWM3Nzc2Yjk5Y2FiMzk3OGJlZDA3Yzk2ZmY2YjcxNCJ9"
         }
       ]
@@ -135,8 +135,8 @@
       "statement": "内部Astraは廃止され、ProjectはBoard・Todo・設計メモを切り替え、外部MCP transportは内部会話モデルを起動しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L35",
-          "version": "repo-lines-v1:sha256:cea0f8a4643f3e6dd809562e0b2ceb959edb97e3909ecf5954d629474ba1cc8b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
+          "resource": "repo://crates/server/src/remote_mcp/mod.rs#L1-L36",
+          "version": "repo-lines-v1:sha256:b0c68fcaf63aaeec156ec5ec1ec1d90155f0d491c6652ca8d218bbccea89b091:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MjVhYmY2ZWM1YWIyYjU3YjAwMGJjNDRjZjNhMTVjNDY2ZTQ1ZDU3OTIxYzI4ZTQ0ZDczZDgxMGFkN2FjYTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlYTRkNzIzNTYxNWUxMzIzNTFmNTkxMTRjNjMxMWEwYzEwMTExNjc5YTYxNmVkZGFhNTRhNzY0Y2ZkZTg5NDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkYTE5ZGQ0YTgxNDc1MjJmZDEyNTg4NThmNjllNjdhNjhmMTcyYTY4NDUyMzM5MzE2Yzc5MmY2YWE5NmJmNTkifQ"
         },
         {
           "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1068-L1089",
@@ -283,6 +283,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-02T23:50:54.203Z"
   }
 }

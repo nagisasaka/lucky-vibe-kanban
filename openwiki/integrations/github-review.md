@@ -24,8 +24,8 @@ sources:
     resource: repo://docs/integrations/github-integration.mdx
 generated: { by: "codex", at: "2026-10-23T22:40:49.979Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # GitHub 認証・PR とレビューの境界

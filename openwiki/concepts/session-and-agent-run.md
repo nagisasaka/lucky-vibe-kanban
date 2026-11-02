@@ -48,6 +48,8 @@ sources:
     resource: repo://crates/local-deployment/src/process_host/approvals.rs
   - id: openwiki-source-c6b92f5dd86f9cc046935fa4
     resource: repo://crates/mcp/src/task_server/tools/sessions.rs
+  - id: openwiki-source-235c61e44e26d792cb34ab1d
+    resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
   - id: openwiki-source-c2b406887bcde85e48eb07b0
     resource: repo://crates/server/src/remote_mcp/goals.rs
   - id: openwiki-source-0a439773e44e2649541571be
@@ -56,6 +58,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/questions.rs
   - id: openwiki-source-3651b7ce4535b584634e8bc8
     resource: repo://crates/server/src/remote_mcp/runtime_read.rs
+  - id: openwiki-source-162bcfe1ee47c1047ccf7d52
+    resource: repo://crates/server/src/routes/agent_runs.rs
   - id: openwiki-source-a98b89b4828bd8f76e2ca9bf
     resource: repo://crates/server/src/routes/attachment_transfer.rs
   - id: openwiki-source-5720d865d1c837f0e6b7dab7
@@ -84,6 +88,8 @@ sources:
     resource: repo://packages/ui/src/components/ChatElapsedTime.tsx
   - id: openwiki-source-a38f11830547e0c1d7e425e5
     resource: repo://packages/ui/src/components/ContextUsageGauge.tsx
+  - id: openwiki-source-32f2fab37a89ee366d4f150a
+    resource: repo://packages/ui/src/components/ExecutionApprovalDetails.tsx
   - id: openwiki-source-5ac2756548e33cbcc86886e2
     resource: repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx
   - id: openwiki-source-84123960815ca9b2c23d8a0b
@@ -106,6 +112,8 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts
   - id: openwiki-source-08c30c5f079994cddbe25a3b
     resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionSend.ts
+  - id: openwiki-source-713e0401e69764a879935acf
+    resource: repo://packages/web-core/src/features/workspace-chat/model/hooks/useWorkspacePendingApproval.ts
   - id: openwiki-source-dc254983076aa5adc98bb6b6
     resource: repo://packages/web-core/src/features/workspace-chat/model/pendingChatMessages.ts
   - id: openwiki-source-6b4d677fd9667cbdb6924409
@@ -164,10 +172,10 @@ sources:
     resource: repo://tests/supervised/README.md
   - id: openwiki-source-5184ef612e83b7ab35d62e7b
     resource: repo://tests/supervised/run_isolated.py
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # Session・AgentRun・RunAttempt
@@ -323,6 +331,12 @@ service が発行した approval ID を待ち、元 native request ID へ一度�
 
 approval requested/resolved に加え pending 件数を通知し、canonical AwaitingApproval と既存 UI 操作を成立させる。これは [managed DevServer](../operations/workspace-inspection.md#preview-と開発サーバー)を含む MCP 呼出しの一回の判断で、tool の scope・対象認可や実行成功を置き換えない。[protocol fixture](../../crates/executors/src/executors/codex/client/mcp_approval/tests.rs)・[offline UI fixture](../../tests/chat/mcp-approval.mjs)。開発時には実 Codex が承認待ちへ到達して取消された記録があるが、人の承認後の実 tool 成功と live Auth0 / ChatGPT は未検証である。[検証の境界](../../docs/development/managed-dev-server-mcp.md)
 
+### 操作その場の詳細と判断の確定
+
+承認 UI は composer の操作位置で Project/Workspace/Session/Run、operation、実引数、単発 scope と制限を表示する。空の `{}` は引数なしと明示し、credential field は理由付きで伏せる。元の一回限り thread/turn/tool/server/args 束縛は変えない。[詳細表示](../../packages/ui/src/components/ExecutionApprovalDetails.tsx)・[同一call相関](../../packages/web-core/src/features/workspace-chat/model/hooks/useWorkspacePendingApproval.ts)
+
+UI と MCP は同じ domain の ResolveApproval を使い、Session lock 下で元イベント・予約状態を検査する。service は元 execution target と実期限を回答時に再検査し、取消・期限切れ・重複を別の許可へ流用しない。専用 status は受付/判断確定/ツール完了を分け、完了を観測していなければ null / not_observed とする。配送が不明なら receipt と command/event を読み、新しい ID で盲目的に再送しない。[共通配送](../../crates/server/src/routes/agent_runs.rs)・[service](../../crates/services/src/services/approvals.rs)・[status](../../crates/server/src/remote_mcp/execution_approvals.rs)
+
 ### Plan・一般質問との境界
 
 Plan と一般質問はこの command/file 修正の対象外である。wrapper は Plan の tool approval を Noop に委譲し即 Approved、質問の待機は ServiceUnavailable のままにする。client は質問待機エラーを TimedOut として記録し、Plan 承認後は Default の実装 turn を始める。汎用 DirectControl の Input は引き続き Unsupported だが、Approve は host waiter に接続済みである。[wrapper](../../crates/local-deployment/src/process_host/approvals.rs#L26-L82)・[質問と Plan](../../crates/executors/src/executors/codex/client.rs#L1104-L1243)・[Input の制限](../../crates/executors/src/executors/codex/client.rs#L441-L465)
@@ -343,7 +357,7 @@ Plan と一般質問はこの command/file 修正の対象外である。wrapper
 
 同じ質問の異なる回答は競合となり、配送が不確実なら Session の確認を要求する。command/run の証拠がない予約だけを再試行可能にし、配送後かもしれないエラーでは予約を維持する。新規本文は `LVK question answer: <request_id>` を使い、既存履歴の `Astra operation: <request_id>` も照合・予約解放判定・receipt 回復で認識する。[旧 Astra の廃止](project-chat.md)に伴って旧 marker の認識を削ると二重配送を招く。[互換処理](../../crates/server/src/routes/sessions/questions.rs#L253-L324)・[新旧 marker のテスト](../../crates/server/src/routes/sessions/questions.rs#L486-L592)
 
-外部 MCP の質問参照は Project / Workspace / Session と revision を検証し、実行承認は LVK での判断へ案内する。仕様回答の経路があることは tool approval の代理権限ではない。[MCP の質問分類](../../crates/server/src/remote_mcp/questions.rs#L94-L171)
+外部 MCP の質問参照は Project / Workspace / Session と revision を検証する。`get_question(kind=approval)` は同じ attempt の同じ tool_call_id に相関する承認前の tool-start から操作・引数を返す。仕様回答は実行許可へ転用せず、判断は専用 `decide_execution_approval` を用いる。外部認証済み member の read/write scope を要求し、内部 Agent に自己承認の入口を加えない。引数が安全に特定できない許可は理由付きで LVK へ案内し、拒否は専用経路で行える。[承認専用経路](../../crates/server/src/remote_mcp/execution_approvals.rs)・[質問分類](../../crates/server/src/remote_mcp/questions.rs)
 
 ## 未送信ドラフトと Scratch
 

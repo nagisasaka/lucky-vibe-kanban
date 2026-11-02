@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8ecbaac14aa81f5692354dd341ebad467acdfcc8b7c64e3e102e70b9f33c27bf",
+  "pageVersion": "sha256:b8f4ff9ef30f445d24b6d7b19d5ac2106c6172897a35bc21e941af1ce80d3e20",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -246,7 +246,7 @@
         },
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
-          "version": "repo-file-v1:sha256:58cec97aa5640844a4913bd6b094dbe383f492186c7744c6a422262fa93e81bb"
+          "version": "repo-file-v1:sha256:43dae30499a8471a301a269ef074c34e05c0e433c1d6ba295eba06c1cfcce8ff"
         }
       ]
     },
@@ -314,7 +314,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/tests.rs",
-          "version": "repo-file-v1:sha256:7eb3e40ae43aaeba65230d3febc41e3d2b0256a98e24d42e277c68bc2bc4a326"
+          "version": "repo-file-v1:sha256:ceb53f6932c4b468b56c82c5c34f726b92f52ff66fabc90943e07373f481a9d2"
         },
         {
           "resource": "repo://tests/todos/isolated.mjs",
@@ -489,6 +489,6 @@
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-02T23:50:54.203Z"
   }
 }

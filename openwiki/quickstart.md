@@ -26,6 +26,8 @@ sources:
     resource: repo://crates/server/src/remote_mcp/environment_process.rs
   - id: openwiki-source-0801a7e5bbcc064c12effc80
     resource: repo://crates/server/src/remote_mcp/environment.rs
+  - id: openwiki-source-235c61e44e26d792cb34ab1d
+    resource: repo://crates/server/src/remote_mcp/execution_approvals.rs
   - id: openwiki-source-a43253b5be9686da077b8067
     resource: repo://crates/server/src/remote_mcp/issue_comments.rs
   - id: openwiki-source-71f837a8aa36443ad9688945
@@ -64,18 +66,24 @@ sources:
     resource: repo://packages/local-web/src/app/entry/Bootstrap.tsx
   - id: openwiki-source-ddf0f7c06298de76526a4f7c
     resource: repo://packages/web-core/src/features/pipeline/model/cardContext.ts
+  - id: openwiki-source-5b956d3d9d7f17c236d42ebb
+    resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
+  - id: openwiki-source-867b74d482ff6cc365176503
+    resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-7e0da77c31130e66a4b635a5
     resource: repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx
   - id: openwiki-source-ab4a5800fcfc16d8494e494a
     resource: repo://packages/web-core/src/shared/lib/localIdentity.ts
   - id: openwiki-source-d4726fdd33da0f7c2f1ae1ee
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
+  - id: openwiki-source-09147e83e2e70cb032ece9e7
+    resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # クイックスタートと調査案内
@@ -146,6 +154,7 @@ lucky-vibe-kanban（LVK）は、Issue で仕事を整理し、Workspace 内で c
 | 既存 Goal を外部会話から一時停止・再開・取消・解除する | [Goal の寿命と保存再開](concepts/session-and-agent-run.md#goal-の寿命) → [MCP の対象固定と結果確認](integrations/remote-access.md#既存-goal-を-mcp-から操作する)。達成・解除・Run 終了の違いと、revision・receipt・不確実な配送を確認する |
 | Plan が戻る、旧 Plan with Goal、context や子の表示が違う | [Session の Plan 遷移・context・子 lifecycle](concepts/session-and-agent-run.md#plan-の遷移) → [CLI / wire 型と mapper 互換](integrations/agent-providers.md#cli-検出と-provider-互換性) |
 | GitHub の認証、push 先、PR 結果や merge 観測が合わない | [GitHub 認証と PR](integrations/github-review.md)。リポジトリ別 PAT、agent shell との適用差、push/base と部分成功 |
+<!-- openwiki: broken internal link [architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する] heading anchor "cpuramdisk-の共通観測を表示する" does not exist in "architecture/web-and-sync.md". Fix the href or restore the target, then delete this comment. -->
 | サーバーの CPU・RAM・DISK と制限を読む | [画面の共通観測](architecture/web-and-sync.md#cpuramdisk-の共通観測を表示する)と [外部 MCP](integrations/remote-access.md#オンデマンド資源観測)は同じ collector を使う。system-visible と cgroup、保存先の filesystem、unknown・部分失敗を区別する。資源予約の代わりにはならない |
 | 開発 instance の成果物を切り替える、失敗後に復旧する | [切替 engine の運用](operations/development.md#開発用成果物切替と復旧)。専用 MCP の [自己再起動](concepts/runtime-access.md#開発専用-self_restart)からの受付、排他、backup、停止証拠、durable 結果を区別する |
 | 終了した Workspace のディスクを解放する | [手動 archive](concepts/workspace.md#archive削除期限-cleanup)。busy 検査、一度の確認、削除失敗と履歴保持。外部会話からは [MCP の準備・確認と結果読戻し](integrations/remote-access.md#workspace-を外部-mcp-から-archive-する)へ進む。通常の merge・PR・Arena の終了だけでは自動 archive しない |
@@ -326,3 +335,9 @@ LOCAL-281/282の固定sourceを同じ候補へ競合なく統合した。TODOの
 英日UIと他5言語の既存辞書・英語fallback、ブラウザー言語と保存configの関係は [言語解決と診断表示](architecture/web-and-sync.md#言語解決と診断表示)を読む。通知は [登録別Pushと共有OS通知の言語保存](integrations/web-push.md#通知言語の二つの保存範囲)を区別する。診断詳細は翻訳説明と原文の併記であり、結果不明を失敗に変えたり再送する仕様ではない。
 
 常設checkerと少数locale固有browser、および終了した移行QAの保証範囲は [i18nの常設検査と移行検証](operations/development.md#i18nの常設検査と移行検証)に置く。コード候補 `1957d8edfa98ebe512ea4a960a38a59e936507fc` は固定main base `5686d655` へsource `73c4504c` を競合なく統合したもの。管理commandでinstall/build・frontend型/lint・i18n検査・残存browser44件の一括成功、通知/Push対象Rust・生成型同期・unit94件を確認した。全Rust workspace/qa-mode Clippy再実行はagent判断で省略し、実Auth0/ChatGPT/Push/OS配送は未確認である。Wikiはコード検証後の別commitで、mainへの実Git適用は公開要求後のhost receiptで確認する。
+
+## 共通ユーティリティと実行承認を調べる
+
+Kanban / Workspace の右サイドバーは共通環境 panel とファイル・単一端末・条件付き Wiki を持つ。Kanban は登録 main repo、Workspace は作業 worktree を対象にし、本文を既存分割ペインで読む。端末項目の明示折畳みは所有 process を終了するが、sidebar 非表示は停止意思ではない。exit/検出した通信断では無言で折畳み、自動再生成しない。[対象・寿命・検出限界](operations/workspace-inspection.md#kanban-の-main-と-workspace-の対象を区別する)
+
+実行承認の対象・引数・一回限り scope は承認 UI 内で確認する。外部 MCP の読取は `get_question(kind=approval)`、明示判断は read/write の外部認証済み member に限定した `decide_execution_approval`、読戻しは `get_execution_approval` を使う。内部 Agent の自己承認、仕様回答、恒久許可、自動マージ公開へ転用しない。[認可・receipt・判断確定の境界](integrations/remote-access.md#実行承認を読み単発の判断を送る)

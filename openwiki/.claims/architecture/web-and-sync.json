@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:efd15c20e88ba5e43696c20d8cdb81b028191fad1a50ae88d9fbd7c7d66d0160",
+  "pageVersion": "sha256:ef8a656a1ebf679596b974b0c7f6ab9bfe4f884e28f2895a08313117b777a2d4",
   "claims": [
     {
       "id": "claim_cd547b65737e432fb2cf718c4992aa97",
@@ -57,7 +57,7 @@
       "statement": "AgentRun WebSocketはLive購読後に永続履歴をreplayし、Liveは永続cursorに影響せず最新usage snapshotも再送する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L549-L621",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L607-L679",
           "version": "repo-lines-v1:sha256:222adf548f63a92e0d624da597ca05a7c21ed3694b406d9a99cd1f2df8e48a7e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhMTMzMjYzNGE0ZjNkMWM0YWE3NWRhYWVkNTUxOWIyOTczM2RjOTc0MDFlODY4Njc5YjhmOGRkMzQwMjFkMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2OGNjOGMxZjliNzkwY2E0ZTYyMTJlY2EzYmJhZmRmMjk4NjIzZDFmNGVmZTdiMWQ3OTdlYWQ4NzA2ZTM3MjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3MDliOGY1ZDg0NzJmMmZlNjU5ZmRkZTkxOWUxZTA2ZjNmZmZjNDVjNTA3Y2E5ZWEyNzdiZWFmMDdmODNiNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxMDE1MjE0ODNjZjlmMDIzMDBlMGZiZTY4ZjQ3N2Y2ODg3ZGIwNGNmNjI3NDhhYThiNDJmMWJlMWE3ZmVjM2QifQ"
         }
       ]
@@ -94,15 +94,15 @@
     },
     {
       "id": "claim_86bce2b57d004c89b2d4f6d4a928eadb",
-      "statement": "Wiki の本文とナビゲーションは Workspace ごとの単一 controller で OpenWiki を読み、repository 変更時のリセットと sequence / 応答 identity 検査で古い結果の混入を防ぐ。",
+      "statement": "Wiki本文とナビゲーションはWorkspaceまたはProjectごとの単一controllerを共有し、repo変更とsequence/応答identity検査で古い結果を防ぎ、Projectではmain repo APIへ差し替える。",
       "evidence": [
         {
           "resource": "repo://packages/web-core/src/features/wiki/model/wikiViewerController.ts#L11-L119",
           "version": "repo-lines-v1:sha256:add4cb48f0cc3863ac5d477cb1998b0f559da0a8bd5a539ea9bd31b6bef927ed:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0MTZhYTcxMWNmMDYzYmI1MGU1Y2RlMDc5MDA2NmM4MTFjNDlkYzg2ZmEzMGEyZTFmYzYwMDZlOTFmYjA0YWNhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0YWQ4YjFlMzI3NzJhZTIyMjI2NWUwYjRmNjA4OThhMWZjZTE5ZTc1NmUzMDNjOGZlZjY2YTBhNjdiNmE5MDViIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiMmMwNDIxNjVkYmM3NDRjNDIyZDk1ZmRiYmFhYmZkZmFjMTVlM2QyMTMyZmEzMzcwNjBiMmI2ZDI2Nzk4OTM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5ZGMwMDdkY2Q1ZDhmOTI4ODk0Y2I5ODI5MzliNTZhODVkMDVhN2Q0MWFjMWRiYjZiZThmODQzNjdhNGU1OWIyIn0"
         },
         {
-          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx#L40-L100",
-          "version": "repo-lines-v1:sha256:adc1e1c6cb4d4a56943666177d755bf7159c6b2b2a7297e1736011cb2588de9f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0ZjExMWNiZjY0YTMzMjYwYTE1ZGMzMWNiYTZiOTZjYjRhMzBlMzI2ZjZkNWY5NDFmOWFiNzY4Y2YwODUyZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZjMwZjNlZDE4N2Y4NzIyZTc5ZjdhYTFmN2MwYWRkMzM5YWViMzdmM2QxZjIwMGIwMzk3YjRmMTA0MmRmZGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwZTM4NWRjZjNiMjQwOWIwNTNiMzBlNDhhM2MzY2MwMDIwNDA0ODE1MThjNTU4MWE1MWY4NjZkYzM2MjA3MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx",
+          "version": "repo-file-v1:sha256:8aa8bcff041475f283e4734eb01a941eacf8b8f9aff62ab0f190ce83e42b973a"
         }
       ]
     },
@@ -115,7 +115,7 @@
           "version": "repo-lines-v1:sha256:04ea73354ac843eb34573f5cb7b96113a2e5fdeb6c48b93457258214708b6520:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4Mzg4YTFlMmIwMzFjMTU3NmQ3Y2YyZGU1ODhmODFmZDI2ZDRlODMxNjMyZjVlMTcyNGZjYTYyOWE4MDEwZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmYjY2NWVjZWYzMWJkOTczOWFkZjQxNmZhOGE4YmUxMjVmNjFhMmNlMjQ5ZDNiYjNmZDExZmNlZTYwNmQ4ODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5M2JkNWY5MGI1YTdjOTE0OTFiMzlmZjg5ODM1NTM2MGQwOTdiZWYwMmRlYjRkODcwNWU1YTJhMWEwODFlNzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiOGI2MDBhNWI0NDhiMWU0ZDAyZGYwOTc0NmVkM2NhMzE3MmY3NWM0YWFiYjAxZGRlMDgwZTM2Y2FiMDc0YjQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L484-L556",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L489-L561",
           "version": "repo-lines-v1:sha256:2c0a84cd7456a74ddad45720d27ea2b592039cc8ecccdb43788e5cf142e5e7e2:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiNDY2NjdjNTgyZmJkZDJiOTIxMThmMTRhNDM1ZmQ3YzNiNmUzM2RlMWNhZTQ3ODgwYjdkOTEyNzE3MGUzMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5YzFhNjg0ZGQ1NzM3ZGRhOTc5ZmY3ZmVkMzQ4ZWM5Mzg3NTMxZTc3ZjBlMDU5YmNhNGVjZjE4NmJhNjEwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4YjE2NjBkZTlhMjE3Mjg5NzhkZTEyMGY4OWZmODFjMDBiNTU2ZTFhNmE2OTNiNmJhOGQ4ODhlMjM3YTk4YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0ZDJiZWMxZjFhNjQwYjNhMWFmYWNlNzRmMzRiMzYzMjljMTg0MzJhMWRhMWQwNjJiNmYyNWVlODAzZjBhZGQifQ"
         }
       ]
@@ -175,7 +175,7 @@
       "statement": "AgentRun WebSocket は event が空でも変更された State を修復し、未配信履歴がある間は terminal State を先行送信しない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/agent_runs.rs#L658-L707",
+          "resource": "repo://crates/server/src/routes/agent_runs.rs#L716-L765",
           "version": "repo-lines-v1:sha256:ad8f4e68745010786511315867339141e53be751135f2fe46f5abad8e113d517:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxMGVmMTQzZTYyMTFhYTM1Zjc1MzczZjFmNTRjMGZiZTA5YWJhNzk1MjlmYjE3YzgyMTEzZGYyNGE2OTU3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1ODc2OWU2ZmZjMDI1NTU1ZTZiNjUxMzA4ODA1MWRkZDA5ZmVkZjU0ODFmZmVjNDdiMzU5MzkwYTIzZWM1NGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdlODk5NTdkNTRjZDgyM2E1Mjg3NmUxYjk2OGU0NTVmZDJlZWYzMTExNGZmMDY4MjZkNGZjYjI5YWE4OTgzN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YWM5ODE0MDkzZmEwODExMWVmZmE2NGI0ZDJiNGNkMzgxZjZmYTUzYTdlNTEyZmEzNDA0YjljM2MyZjE4ZmUifQ"
         }
       ]
@@ -461,7 +461,7 @@
       "statement": "通常 WorkspacesLayout の file preview bridge は target を openTarget に渡して right main panel を FILES へ切り替え、チャットから既存 file viewer を開く。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L608-L635",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L613-L640",
           "version": "repo-lines-v1:sha256:5327c671828469919978176fb24fe5bb9d9fa23872e8b183f8b33182c4a93ef6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0YTRmMDg1MmNhZTMxYjM4OTU5YmRhNDYyMWU3Mzk2YTc1Y2U5ZGM5MmNjZWQyNDgxNGJiYzgwOGZhNjQxMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -557,7 +557,7 @@
           "version": "repo-lines-v1:sha256:b31eaac8d31a7328001110370bd0306ea6118509912c4a358e9df865ca0f2a48:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5YzAzZjYzNmU3ZTcyZDI2YWNlZDc3MjMyNzFjZTRjOTA1ZmE3MWQ0NGQ4MmRlZTdkMjI5ZmYzZWMyZmUzMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0NjE1NmNiMmY4ZGQ1NDE4ZGU1NjMwNWJhMWZiODAyZDAyNjkwNWMxMTAyZTI1ODYyMmJmMzZkNjIwYzY4Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNWI2MWNjZmY2MDkyNjgyOTJmMDc4Nzg5MGIzYzk0YjJmZTI2NTJhYWZhNTAzZTk0NmViZTY5N2NhOTllMDQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L229-L246",
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L258-L275",
           "version": "repo-lines-v1:sha256:0dd051d4b3c5be0eb91ce6d105beec29f19fb5b8eefbce6b572b7359bb008b19:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4ZmVlODVmNGZmODNiYzQwYzYzYjEwYWNhNjk3ZDU3Y2VjN2Q5YjQ2MzNmM2ZmNjg5MjBmYzBmNGJhZGFiMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyYjEyZmMzNmY1YWFjMzJlNTQwMzg3MzlhMzMxNmVjZWIwNWVkNjQyYmE1NGYxOGJhMzFjOTMwNzA1YWUzZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5NTFmYWNkNWQxMzVkYjhjMjAwZjQwOWVjNGQyMmUyYjEyZDU3NWVjNDViMmFjNTUzNDc0Njk2OWU4ZTcyMzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI2MDQ5MWM5NGM2M2NkOGYyZDIxMmU5NmExOTczZmFkZWRiZDUwNmJmNjk1YzQ5ODZiNTZkYWVjZGI4NWJhNDkifQ"
         },
         {
@@ -627,7 +627,7 @@
           "version": "repo-lines-v1:sha256:0e06408d8a223425899432d3444a5171a617215f4c4e537de9a028bbc4488fd0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmNjMyZGQyNzJmNjRhMDM1MjBkMTk4NDJhOWFmZmMwZjUzOTMxMzY2MTViMTVmY2RlNjJlZTc1NjE0M2UxOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2Y2M1MGUxMDNkNDFiNDBhNTE4ZWYxMjYwYWU3MTMzNzQ3M2NjMGRkYzVhZmUzZTljMDUwOWYwZGQxNjkwYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljYWIzYmNiNGYxZmE3NjYwMzVkNzMxZTdmYmYyMDczNmM2OTMyYTVkZWYwYmFhODdmMmM5YjZkM2E3ZmZjZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiOGI2MDBhNWI0NDhiMWU0ZDAyZGYwOTc0NmVkM2NhMzE3MmY3NWM0YWFiYjAxZGRlMDgwZTM2Y2FiMDc0YjQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L1666-L1679",
+          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L1709-L1722",
           "version": "repo-lines-v1:sha256:5b98f0f07ae5f63fb4e4ff043680d11cacbc06073cbd751ee229f3ecb85c3c2e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYmVkYzcyZWRmNjgxOWNkZTgxM2EyMWZhZDJmOTIyNDgwNzUwNzA2ODNmNGMwN2U4ZmQ5NWVmMGMzMDliY2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2Mzg3ZjZkNWYzYmJlNTc0N2VlYzQ1NzJiNmE2MTQxODEyYzVjNGY3YWQ4MDRiNjNlMTgxZmNiNzE5ZTU1MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwMGU5YzFjYzkxMTZjZDM5OGY1ZWM4ZWY0MGMwNGMzZDIxNzZkMGJhZTAwYjZjZTdlNTQ5NzQ3ZGRmOGUzNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0MWRlNjJmYjcxMWY2YWViMDRlZGJjODRhODg0YmMyNDM4ODhlZjk1ZDgzN2Q2ZGRmMWM0OTViODU3ZDJlMjcifQ"
         },
         {
@@ -699,11 +699,11 @@
       "statement": "明示作成操作は provider の workspaceTargetRequest を増加させ、desktop/mobile の composer は draft と既定値の準備後に新しい要求で chooser を再表示する。dialog-open ref で重複表示を抑える。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L313-L325",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L310-L322",
           "version": "repo-lines-v1:sha256:e8904aacddc731434b23e7f2ba258208658efbb257b47e9d7c2472b43c64dabf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjE3YjZkN2UzZDNmOWY0MWE2YjhiMDVhMGQ0OTg5YjZlOGMxNzRhZmY0ZjQ3OTYzNDZhMTlmNTA0NDNhYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0MmFlMGY4NzljMDE0YmMyNGViNzIzNTc2ZTgyZGQwZjhiY2I4MDYzMmFjMjAyYjhmZWJlY2Q5OWI3YjIzZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwZTlhYTQ3YzkzMjI1NjUzOTMxN2FkMGUwZTNiMmI3YzVkMTNlNjExMDlmODNhMzkzZTgzYWIwY2YyMzIyYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3YjI5ZmYyYWY2NDZlMjI5MWJlNGFlMTI1NWYxYjBhMGVmYTliYmMzNjNhNDU3MmNkOWM1YTQwM2RmMWNjNjAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L484-L493",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L489-L498",
           "version": "repo-lines-v1:sha256:439af4b11f955e0a01f127d105e8521a4fb872d8382e5ed68b83e5259eeb1d12:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiNDY2NjdjNTgyZmJkZDJiOTIxMThmMTRhNDM1ZmQ3YzNiNmUzM2RlMWNhZTQ3ODgwYjdkOTEyNzE3MGUzMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxYWI2MWYwNGJhOWYwNzk1YjQxNjllNWM3MTg3M2MzMDE4MmM5YzVlODhiZWY3OGU2ZDlmZjE0ZjVhZjAyOGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4YjE2NjBkZTlhMjE3Mjg5NzhkZTEyMGY4OWZmODFjMDBiNTU2ZTFhNmE2OTNiNmJhOGQ4ODhlMjM3YTk4YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1MWNkOGZjZjU0NjMwZTEyMDgyMmE5YmNiYzcxYjllNDU2YWI3YzZiMmEwMDYzMjhjOTljZGE2YzY0ZDRkMTEifQ"
         },
         {
@@ -756,23 +756,15 @@
     },
     {
       "id": "claim_d4b31ecff95f4bc79aedb5b30e3ab6ce",
-      "statement": "Wiki は共通右ペーン set/toggle で選択し、閉じると null となり以前のペーンを復元しない。左チャットと右サイドバーの表示設定を保持し、右ペーンを開く際は幅2048px以下で左サイドバーを隠す。",
+      "statement": "Wikiアイコンは有効repoのWiki項目を展開して右sidebarを開き、他utilitiesを消さない。本文modeと項目の開閉は分離する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx#L220-L243",
-          "version": "repo-lines-v1:sha256:e97ea809a8fad07ae6b34361aecff1433fc2e1b31598962c70464392c5468331:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNzZiY2ZlN2M4ZDdlZWM4NTVlMDE5NzJjOTUwYzIyZWJmMDg4Yjc0MzE4ZDQ1MTQwYzEwZWRjOGY0MzBjZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljMGE0ZTgyNzliYzllZGNiYWViYjQ2ZTk1MWM4NmIwYzM0OWU4ZTM0ZjJjMGNlNjgyMDQ4MGMyMTU1NDliZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0MzdmOWNlMDhlYzIxNDQyMTUwYWUzMTBjZTY4ZTIwODYyNjAzMWNiNTMxMGExYjYwZTc2Zjc1ZGNhNjM4N2UifQ"
+          "resource": "repo://packages/web-core/src/pages/workspaces/RightSidebar.tsx",
+          "version": "repo-file-v1:sha256:ef69a0588a7175253c444c9cd932614c7d31e86dffc9e2aaab875ac5c0785896"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L733-L754",
-          "version": "repo-lines-v1:sha256:f389da48bf0e50190e375beed9d9791b29314161ff7853e38d08426b119c69e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmN2FmOGFmMzc3YWNlMzIyM2ZiMzAzYTM0ZDg2OTM0ODgxMmRiNzRkYWRmN2ExNjczZGM5ZmMyZjBjY2M5NGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0ZjgxYTFjMWE1N2EzNjdmZDcwMzBkZGE3ZGIzNzMxYTMwMGE1ZjkwMDJlNmZkZTQ5MjJjNDg1NzllMTY4ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUyMTM0OGM2OTE1Yzg5NzFkYzBkYTAxNTVjNjdkODhhOTQ4MzJhNTg4ZTBiNzQxMTNlYTU3NjdiOGQ3NWQ4NWMifQ"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L286-L286",
-          "version": "repo-lines-v1:sha256:8f088da95f04b382779775a8b24545744164e44509f32ea320ec5ebeaebfb129:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGYwODhkYTk1ZjA0YjM4Mjc3OTc3NWE4YjI0NTQ1NzQ0MTY0ZTQ0NTA5ZjMyZWEzMjBlYzVlYmVhZWJmYjEyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGYwODhkYTk1ZjA0YjM4Mjc3OTc3NWE4YjI0NTQ1NzQ0MTY0ZTQ0NTA5ZjMyZWEzMjBlYzVlYmVhZWJmYjEyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDMwMjc1OTEwMDViODlkMTY0ZjkwYmU2NDQyNzY3NmEzZGUxNzU3MzE1MjliYWI3ODhiYjVjYzMzZTQ2NzA5NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzM0ZDQxMzQ4ODk4OTQ2OGM2OTQ0N2FhNzRkYWUzZTI4ZDcxMjM3OTJjYWQ2Mjg0ZTYyNmZjZWM5ZDM5ZTQ5NSJ9"
-        },
-        {
-          "resource": "repo://packages/web-core/src/shared/stores/useUiPreferencesStore.ts#L563-L609",
-          "version": "repo-lines-v1:sha256:e56cf6bfb7233c71b4802ed396d68918fdc91a93b654dd63536a2992a9119d70:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYTg5ZWU5NGMyMGM2ZWM3MmM1ZTBmYmIyYzFkNDdhNzdiNmIzN2RhMDQyNWUwODhkNWM1MTkxNjMxYWI0OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNWNkMmZiNGYzZGY4ODQ1MTUyNTViMzk1MjNmMmY4YjU0NzJiZWVhOWY1NjZmZmNhMjA0ZGI4MDI1NjEwNDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5MGE3MzhhZTAxZTYyY2Q5NDc2NzViNmRjMmZjODEzMGJlNzczMTE3ODdiYzlhZDJmZDNmYzNiNmNmYjY4MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhmZWYxOTJkMWIzNzNmOGVkNjA0ODdiM2I3NDI2MWVhYTdmOWE0ODIyMTdkZDllYzFlNjNlZTgwZDIxZWI5YTUifQ"
+          "resource": "repo://packages/web-core/src/shared/actions/index.ts#L732-L790",
+          "version": "repo-lines-v1:sha256:7bbe7e6d414cf14984c894b319b0e0bd1042aa92bf93226dc44ca26ba85ed62d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwMTM0ZDU5MTRjNDcyZWRhOTQ4Y2U5YWRlMjY5ZGMwNGIwMDU0ZTgwYmYzMDMzYjZhZTlmYTFkMGNhYmE4YTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlMTMzMTQ2YmEwZWM2YzAyYTU3NjZkODM0MmY1ZmNiOGU1ZDJmMDVlNzgzODE0MjZkNjYxYWYxNDA3MzdjYzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiYzNlNGZjOTk4OGMxMTNmNzM4MTU5ZGMwMmUwYmNlMzBiNTllYjE5MmEwMjAzMDg5MjQzM2EwNWZlYThmMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNThjZWRmYmQxNjhjNmU4ZmI0MzViZjU4MjljOTBhN2U1Mjg5OWUxNzllOWQ1MDgwNTU0OTYyOGRmYTY2ZmYifQ"
         }
       ]
     },
@@ -781,7 +773,7 @@
       "statement": "Workspace panelのScratchはmodeと左チャット表示boolを復元しwiki + falseを自動補正しない。由来情報を持たず、右ペーンがnullになる際のチャット再表示はeffectが担当する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L195-L211",
+          "resource": "repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx#L192-L208",
           "version": "repo-lines-v1:sha256:b4af743d9f5f05b55c89a90325a6434508a864a4842e3b5274d8a83f559ccbaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MDE3OGU1NDFmNmJkNmRkYjQ4MWFhYjRhMDNhNTA3ZTg1ZTdhNDEzNTI0MWUxMTMxMTk1MzFmMmExOTk2YzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4NzBlODY2NzEyOTNlMDExNjg4Mzc4ZTI0M2EwMDU4NmU1NWIxYjJmZGZhZDNjZGZiZjE1ZjI1ODI0NWVkZWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2ZDhmYzgxZGQ2ZjI5ZTNmNjVmNTM2ZGUwM2Y0ZmIwZDRkMTQ4ZDZhODk4MmQwMmRiOWNlYmIwYTRjNDAyMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjZmU0NDIyMjJmMzQ1YzU2NjVmNDlkN2UyYjBjOTBhZjhlODMwYzg2NDUzOWJkZmM5YzFmZThmZWM0MGJlOTgifQ"
         },
         {
@@ -795,26 +787,18 @@
       "statement": "モバイルの Wiki / Todo は右ペーン mode を選択するが Chat は mobileActiveTab だけを変更し、Wiki の右ペーン選択を閉じない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L162-L172",
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L190-L200",
           "version": "repo-lines-v1:sha256:c8baef1c3e23610705b55894e7a219153c341b8064c285f66da61994ca77da68:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwNjk5OTNkMmRlMDIyNGEzNzA1YTY5NTVhNDdlMzgwNDQ1MjYyNmFlNTRhYjZlZjgyNjEzNzIzMTZkNGM3N2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlM2M3MDE0NWQyMDQxZGE1MGNjZDEyNjE1ODZjZTJkYjBjMWJkNTJlNTc2MDdiYjkwNzUzYzZjODFmOGQ5NjMifQ"
         }
       ]
     },
     {
       "id": "claim_3f1607c7f8c141da803d5c045a3727aa",
-      "statement": "workspace-wiki の実アプリ試験は一時 instance の実 API と Wiki fixture でペーン配置・切替・URL/back・reload・desktop/mobile の下書き保持と cleanup を検査し、agent 実行を行わない。",
+      "statement": "workspace-wiki実アプリ試験は専用instanceの実file/Wiki/PTY APIで両ビューのpane・下書き保持とPID終了/非干渉/archive guardを確認し、quota stubと障害注入を使いAIを実行しない。",
       "evidence": [
         {
-          "resource": "repo://tests/server-access/workspace-wiki.mjs#L1-L58",
-          "version": "repo-lines-v1:sha256:79033658e39e2f4be944ab15211c8148a77b030b6a80e071c1f11446d05ccfe0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2YmFhYjg0Njk5NjBlZjg5NDY3NzdiNzFhYThjOTJjZTdjYjI3OWZlMjFlMmFlZDM5MzQ2OWEwZjcwMDJkM2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2OGZjODczMTQwYWZjMjM1ZGU4MWRkYjkxMTgwYjkxYTY5ZWQ5NzQ0MDlhZjE0ZDEwOTI1MWVmM2JmOTU1YzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlYjc3MDg1YWQ1OTVmY2UzZGI4YTE0MzVkZTZlODVkZjEzYjY3ZTNmMDk5YWEwNmY0ZjE2MGJmMjhkNTYxYTIifQ"
-        },
-        {
-          "resource": "repo://tests/server-access/workspace-wiki.mjs#L185-L276",
-          "version": "repo-lines-v1:sha256:6fd3b161444d804527c7cadb9a205bee6cdf3782460c0f08ffcd9a5962939dbb:eyJzZWxlY3RlZExpbmVDb3VudCI6OTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNmUxMWIwZjIxNWQyZjAyZDMwZDQ5ZjQ0MmJjOTI4ZGYwOTU5NDk0OWM2ZmRjMjgwNmNjNjJkNjcxNDk3MjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwZDlhOTY1Yzg0MWJhNzg4YWYxMzQyZTZiNDU5MjRiYjNjNzc1ZWYwZmYzOWFhMmZlYzExZDRlZDYyN2QxYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmNDQxOTIxMDU2MjJlOWRlM2FlMmE4ZTJiY2MyODQyZGEzMTEyNTIzNDczODcxM2UzMmJiMmVlZmJjNWYwNzIifQ"
-        },
-        {
-          "resource": "repo://tests/server-access/workspace-wiki.mjs#L290-L333",
-          "version": "repo-lines-v1:sha256:586d1f003f538148d230f51c72e3eec464a26d72b2ec7d3b1757bd6cda7a96e7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMGQ0NGQxNDY0MmFlMzQ4MjM1ZmQ5ZWFmZGEzMDBlZTEyNjU3MTZhMzBhNWJjMWQzYmEzZmEwYWZhODU0NjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEyZmVlMGJmZWMwZTc4Mjk3MzNkODA4MzI1YWM1NWQzYWIzMGQ5MjNhZDgzYjM4NmRkZmYwOTg5NTkxZjRmMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://tests/server-access/workspace-wiki.mjs",
+          "version": "repo-file-v1:sha256:901c84fec75484814aee561143645f5a5ac2ea875e3d86cda72666aeac97d740"
         }
       ]
     },
@@ -996,19 +980,15 @@
     },
     {
       "id": "claim_aebb50f355e04ce98754e37e90c57598",
-      "statement": "資源ヘッダーは認証付きHTTPからMCPと共通のcollectorをvisible時15秒周期で読み、失敗・非表示・45秒以上古い値を未知表示にする。RAMはavailable基準、DISKはworktree filesystem一つの使用率と使用量/総容量を10進GBで示し、70/80%で色を変える。",
+      "statement": "資源表示はヘッダーから両ビュー共通EnvironmentPanelへ移り、同じ認証付きcollectorをvisible時15秒周期で読み、失敗/非表示/45秒以上古い値は未知にする。RAMはavailable基準、DISKはworktree filesystemで、容量はGiB/MiB表示となる。",
       "evidence": [
         {
           "resource": "repo://crates/server/src/routes/resource_observation.rs",
-          "version": "repo-file-v1:sha256:2f390e769f575a3a8d28b9b1d0c0e296b15968ca11f49e689f8c5104daf8517c"
+          "version": "repo-file-v1:sha256:a87bf654093fba12d01268ba8868a79c62a36e929be7c866466484a5ce1cc4fb"
         },
         {
-          "resource": "repo://packages/ui/src/components/ResourceSummary.tsx",
-          "version": "repo-file-v1:sha256:f513b3a7cfb97ba723a1a5082e4a923b3276d46b82e102ba29a7a889d3b88e9d"
-        },
-        {
-          "resource": "repo://packages/ui/src/lib/resourceObservation.ts",
-          "version": "repo-file-v1:sha256:2171cab31cc3bbcebad6ecd27ba76d9e293ccdd74090265c98a23284fc09cb4a"
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
+          "version": "repo-file-v1:sha256:1e72b11838b6019f255ecdeeb0d2927cc44a7ec2f32aaa089a80e6fd6d65267d"
         },
         {
           "resource": "repo://packages/web-core/src/shared/hooks/useResourceObservation.ts",
@@ -1093,8 +1073,8 @@
       "statement": "DISK表示は一件のknown worktree_baseについて正のtotal、0以上total以下のused、0〜100のpercentとused/total*100との差0.000001未満を要求する。欠落・重複・不整合・staleなら三値を未知にするが正常なCPU/RAMは保持し、schema番号では分岐しない。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L28-L77",
-          "version": "repo-lines-v1:sha256:d3bab827ff86ad0fae2e1d3ffba6b476845f2f1c3d9a61a0082bfeb8600094ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOWExMGVhZDE0NDA2MDE3NDhiMThmYzNjZjY0MGZjMDg0OWQzMzc4YTgxZGYyZjY3YmI2ZGE0MGJhYjhmZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZTU1NmNjY2E4YzYzZGExY2QwODFhZTllOGMxZWU1ZTdkNjhiZWRiN2MwYmRhNTBlYmM3MDE3ZTcwZGYyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L28-L104",
+          "version": "repo-lines-v1:sha256:7965fef5dcacfd0bf1a08d64775a4853ef18148fcf61453e8ac74ee7ff344c69:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOWExMGVhZDE0NDA2MDE3NDhiMThmYzNjZjY0MGZjMDg0OWQzMzc4YTgxZGYyZjY3YmI2ZGE0MGJhYjhmZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxZTU1NmNjY2E4YzYzZGExY2QwODFhZTllOGMxZWU1ZTdkNjhiZWRiN2MwYmRhNTBlYmM3MDE3ZTcwZGYyZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://tests/resource-observation/model.test.mjs#L81-L120",
@@ -1123,16 +1103,6 @@
         {
           "resource": "repo://packages/web-core/src/shared/dialogs/command-bar/EditorSelectionDialog.tsx#L26-L88",
           "version": "repo-lines-v1:sha256:04dd25486825abfca34411ae04e67d7542e325fe37d1328cd04e385eb35dbd45:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4NTM1ZDU5MDhiOGMxODBjYTgzNzFmN2UwZjkyMjM3MGEwN2Q3OGUyZTllZjk2NzY5YzU0MzMwMjA5NzJmYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3Zjg3Nzk0NWE5YWFiNDlkZWY3Y2Y3NDY2ZmM3ZjkxMmZmOTViZjJmMjljMzNjY2JmYjQ5OTcyN2ZmMTI5NDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxMzZlZWZhZWM5YzBlOWM2ZDY2MmE3MjcxM2JhMzk1NTA0NTA3ZTA0NjI2MzdmOTAzOWNkMjczMzExMzY4NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyOTNhMTliNDc4ZmU2MmI2M2I0YWY4MWNiMWUxNmZhZWU3MzExYzc1ZWJhY2FkOTM3NzgzZTVjYzE4OGM2YTgifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_1994cf33166a4e7088d38850cbfbdc41",
-      "statement": "DISK容量は表示だけMath.round(bytes / 1e9)による整数GBへ丸め、内部bytesとpercent・閾値計算を維持する。",
-      "evidence": [
-        {
-          "resource": "repo://packages/ui/src/lib/resourceObservation.ts#L79-L84",
-          "version": "repo-lines-v1:sha256:4d98640d36ff9ad1477ffe05d5aa8c1853b6c25c7217af212fbaf94e9578267c:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2FkMDQxZTY3OTBjMGNjNjgwYzc1ODk1YzgyYTRiMWJlZWMwYjc4MjUyMjUzNmNjN2UwNGNkNWIyNWQxMDI3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTIwNDBlMDk1YTk0ZTJhZGE3NGU0MjFmMzcxODc1MWE5MWE4MTBiZmQ2NmY0OGY0ZTkzOWM3Yjc0ODBlYjY3MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         }
       ]
     },
@@ -1252,15 +1222,11 @@
     },
     {
       "id": "claim_391b8ba6338542e6b1c4b5af0277eadd",
-      "statement": "モバイルのWorkspaceタブは作成中/未選択のデータ制約だけで絞り込み、既存Workspaceの全現行タブを公開し、選択をChatへ強制リセットしない。",
+      "statement": "モバイルWorkspaceタブは作成中/未選択とWiki有効repoの有無で絞り込み、選択をChatへ強制リセットしない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L149-L172",
-          "version": "repo-lines-v1:sha256:715899f7ee1237e3301c5681d19e74c4b0465ceb7c8157e300f204072285a1a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2Nzg4OWU0MjY1ZWE2ZjU5YWUyMjc0MTc3YmNlZmU5YmQ0ZWU5MDc0ZjMwNTQ1Y2JjMWQ1MzFkZTIwNjZlYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkYjE4MTYwYzJmNzE1OGMzNTRmNzM1MDU0MmExZTNiNDJiOWVjM2U4MjU1OWVkNjU1M2Y1MjA2MTNiM2U3MGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZlM2M3MDE0NWQyMDQxZGE1MGNjZDEyNjE1ODZjZTJkYjBjMWJkNTJlNTc2MDdiYjkwNzUzYzZjODFmOGQ5NjMifQ"
-        },
-        {
-          "resource": "repo://tests/chat/mobile-navigation.native.mjs",
-          "version": "repo-file-v1:sha256:aac564e27829fe6702d9d70ba80c5ad11fb09fd95f64387f846ab5d195fa5be7"
+          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L174-L203",
+          "version": "repo-lines-v1:sha256:655895b8cd38a9779f422ee75e8bda5baa859116e11db7434aaa19e97d5ef48c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyOGEyMjJiZDIxYTBlYTQ5YjA4YTQzYzIzY2RmOGRjMzU0NjVkOTEzZjdhN2JjYWNlMWFmZjIwYWRlZTdmNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzZGIxMzYyMWI4ZGQ0M2UyOGQ4Y2E1YTcwODFmMmE0MzkzMGIzMWJmZTgyYzdmN2JlODZiMTk2MGRiOGYzOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5OTFhNmM2MWY5M2ZhMTk3ZWMzMjMyY2QyZjc1Yjg3ZmY2ODNlZGJkMTcwZTM4M2I0MWI1NjVkODc5MjI0YWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhZDZhYzNhYTc3NTkyN2JlNGEzMzlhMDRmZmM2NTI1ODJmZjNmYWFmM2VjNGY3NTkxNmNiYmNhOTM4MmJmYzUifQ"
         }
       ]
     },
@@ -1290,15 +1256,15 @@
     },
     {
       "id": "claim_a86236b1762b4154b6dc2b0f54707b3c",
-      "statement": "PC・モバイルの資源表示の隣でCodex通常利用枠の残率をpopover詳細とともに表示し、Workspace消費量/context残量とは区別する。",
+      "statement": "共通EnvironmentPanelはCodex/Claudeの取得可能なaccount枠とresetを表示し、Workspace消費/context残量や取得不能を正常値0と混同しない。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/CodexQuota.tsx",
-          "version": "repo-file-v1:sha256:83107b29c4ba10454daf7858c46e6257a69bc1a9564d4fd55a16d78558e0e56c"
+          "resource": "repo://packages/web-core/src/shared/components/EnvironmentPanel.tsx",
+          "version": "repo-file-v1:sha256:1e72b11838b6019f255ecdeeb0d2927cc44a7ec2f32aaa089a80e6fd6d65267d"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/ui-new/containers/NavbarContainer.tsx#L304-L319",
-          "version": "repo-lines-v1:sha256:c383d88fcdfc4647512eacb0d4e1c225b5e3df7a1c4e9df98c0300f3dd4dc2b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzMmY4OGRmMTdlMjFmYTIzODQ5ZjNkMDNkOWFmZGUyMTM5ZWIyMmVkY2FkYjZmYzNlZTA0Yzk2NzgzMWVjZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwYWIwNWQ5OGYwMTQ1MTIxMzg1ZWI5NWMxZDRlYmI5ZmE2OTMyNGU0N2UzMmYzZTYwYWUxMTkzNzM1ZWU4ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmNzZiZWQxYWVkYzkyN2JmMzc5ZjU1NmQwMzRlZWVmYTQ1YTM2ZGU0MjNhMGY5MmVhNzE5NGNkZmU2YzRlMjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkODA4NjE4Y2YyNDcwZDIyYTU1OGNhMDBlOTczYTljODNjZjNhZDE4ZGY2NzFkYjg2Mzc0NTE1NTk1Mjk1NzIifQ"
+          "resource": "repo://packages/web-core/src/shared/lib/claudeQuotaView.ts",
+          "version": "repo-file-v1:sha256:c16368cc697310cbbbbaa300bb7e19bb41d99ec9202a024066de58072ac278e3"
         }
       ]
     },
@@ -1307,8 +1273,8 @@
       "statement": "Codex quotaは既存provider-usage受動APIを共通query keyでvisible時5分周期・20秒timeout・retryなしで参照し、手動更新を取得中と最終成功/失敗から30秒以内に抑制する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts#L5-L44",
-          "version": "repo-lines-v1:sha256:2cb0460140e8d9c75c309f31f69aa9d96d3303f91730ee62b63fdd5b00ca7314:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YmMzN2UyZjUwOTY0MDAzZWM4YzgxOTFkMDg4MDJmY2I1ZmIzZjhhY2E5YWEyMGFiMzljNjc0OTgyZmM0YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3ZDNjMDczZGMwODY1NTg5MzE1YTM3MTJhYjMzYzIwMTcyY2NlNTBiNzBiMjQ4MzVhYjNhNDk3NjQ5ZDVjNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://packages/web-core/src/shared/hooks/useCodexQuota.ts#L5-L47",
+          "version": "repo-lines-v1:sha256:50b0a45e7c823f21aa67233355f8ac1dc0d46073a1be933ad34e5974a37ae631:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1YWViZmYzMWI2NjhkMTM4MmFiMmFjNjA2YmJmMzdjMDA4ZjMwM2YwNzIyMmJjYjY5NGVhM2FiMDgyMGY3MjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3ZDNjMDczZGMwODY1NTg5MzE1YTM3MTJhYjMzYzIwMTcyY2NlNTBiNzBiMjQ4MzVhYjNhNDk3NjQ5ZDVjNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         }
       ]
     },
@@ -1367,10 +1333,34 @@
           "version": "repo-file-v1:sha256:dd0adeb69282a489e0eabaf4ca5268194fcf407311a95faf73f067dd13e28c24"
         }
       ]
+    },
+    {
+      "id": "claim_3bebe494f1dc4852b9dde6c048147440",
+      "statement": "両ビューの単一端末は明示展開で起動し、項目の明示折畳みで停止する。sidebar非表示やsurface unmountでは接続を保持し、exit/検出した通信断でサイレント折畳みし自動再生成しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/shared/components/TerminalSection.tsx",
+          "version": "repo-file-v1:sha256:cafaf2e483857248a36010a65046ac82376a1115fa0540a4671e54a25dd57f9b"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/TerminalProvider.tsx",
+          "version": "repo-file-v1:sha256:e0e67a77ea456701274606176752bc3c81e4b4048a40d3df97795b896eaffc1a"
+        }
+      ]
+    },
+    {
+      "id": "claim_234a7e56eab44a52930f390ad029ecac",
+      "statement": "環境APIのSession数はcurrent/running Runと現在attemptのrunning process registryからdistinct集計し、uptimeは根拠がないためnullを返す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/routes/resource_observation.rs#L86-L120",
+          "version": "repo-lines-v1:sha256:803c9f456a207a5951cb91511b1645205100e92077433291ad750bb9d73a2fd3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwMzc0Y2FmZDc4YmI2NDQxZTY0OWIwNDk4OWYyZThkNDg5ZjI0NjYxNjEzMmNmYjIyYmI3MWJmM2IyZGViMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5NjE1ZTE1YzNiZjAwNWRkYTZjOTU4NTBmM2I0ODUzNmYyMWE0MWVlOGY1ZWZmNTFjNzkzMDlkOTQ2MmU1NGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0YjIxMTljZGQ0ZGMwMDAwOWEzZWU2Mjk0MmYxOTVjMzgyNGI5NGJkOWNmMDI4NTRkYzA0ZTlkNDU1YTgxYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViYjExOGUzNmE3ZGVjMTcwY2I2YWE5M2RjZThiMTcxMjgxYjVjZWY3MTFjNGRmNzFiZTVlZmY4ZjZkYTFlMTAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-02T23:50:54.203Z"
   }
 }

@@ -12,6 +12,8 @@ sources:
     resource: repo://crates/local-deployment/src/agent_process_registry.rs
   - id: openwiki-source-343f68138e6e2d3312d2774c
     resource: repo://crates/local-deployment/src/container.rs
+  - id: openwiki-source-8a1832c7fd24c1e7222a8d0a
+    resource: repo://crates/local-deployment/src/pty.rs
   - id: openwiki-source-7464a2d1db8e85c09420cf28
     resource: repo://crates/server/src/middleware/model_loaders.rs
   - id: openwiki-source-87ddf3d108f228e9ef8f8964
@@ -22,6 +24,8 @@ sources:
     resource: repo://crates/server/src/routes/integrations/runtime.rs
   - id: openwiki-source-65c0f36670a161dc05040e69
     resource: repo://crates/server/src/routes/mod.rs
+  - id: openwiki-source-f178fbdd0db19291b533ad6c
+    resource: repo://crates/server/src/routes/project_utilities.rs
   - id: openwiki-source-c1a5c9bda8d34af222d811c1
     resource: repo://crates/server/src/routes/repo.rs
   - id: openwiki-source-7c1b10f112cb99ba82426b5a
@@ -70,6 +74,8 @@ sources:
     resource: repo://docs/browser-testing.mdx
   - id: openwiki-source-8c7998811f24db89c5190835
     resource: repo://docs/development/external-editor-uri-validation.md
+  - id: openwiki-source-3af1f69ccb22cf9c9e5261fc
+    resource: repo://docs/development/project-utilities-validation.md
   - id: openwiki-source-5e4c1802d2c1ee81cad7ac45
     resource: repo://packages/ui/src/components/IssueWorkspaceCard.tsx
   - id: openwiki-source-bb23b715172e6051c10e1afc
@@ -104,6 +110,10 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewHeader.tsx
   - id: openwiki-source-ece894e6e087af564c07e38d
     resource: repo://packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx
+  - id: openwiki-source-4da1fcbefae4945006795406
+    resource: repo://packages/web-core/src/pages/kanban/ProjectKanban.tsx
+  - id: openwiki-source-5b956d3d9d7f17c236d42ebb
+    resource: repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx
   - id: openwiki-source-9b9697ea8eafb71c1ca35e40
     resource: repo://packages/web-core/src/pages/workspaces/ChangesPanelContainer.tsx
   - id: openwiki-source-39d390b46b89f38f831e363e
@@ -112,6 +122,8 @@ sources:
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesLayout.tsx
   - id: openwiki-source-9231a80ee56432d71077b70c
     resource: repo://packages/web-core/src/pages/workspaces/WorkspacesSidebarContainer.tsx
+  - id: openwiki-source-867b74d482ff6cc365176503
+    resource: repo://packages/web-core/src/shared/components/TerminalSection.tsx
   - id: openwiki-source-10caf2340da819f813f5ea62
     resource: repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx
   - id: openwiki-source-6d0dfae3c1582e1af83405d4
@@ -122,6 +134,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkspaces.ts
   - id: openwiki-source-ea8e692dfd4142379f167b66
     resource: repo://packages/web-core/src/shared/lib/externalEditors.ts
+  - id: openwiki-source-09147e83e2e70cb032ece9e7
+    resource: repo://packages/web-core/src/shared/providers/TerminalProvider.tsx
   - id: openwiki-source-3b6f5885b9d50925c82267dd
     resource: repo://packages/web-core/src/shared/providers/WorkspaceProvider.tsx
   - id: openwiki-source-5ef837b2bc54d286b3dedd8f
@@ -140,10 +154,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-11-02T14:26:25.232Z" }
+generated: { by: "codex", at: "2026-11-02T23:50:54.203Z" }
 verified:
   - by: openwiki/0.7.2
-    at: 2026-11-02T14:26:25.232Z
+    at: 2026-11-02T23:50:54.203Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -313,9 +327,21 @@ Dev server の稼働だけではチャット送信をブロックしない。専
 
 ビルド済みVite previewを起動する[静的配信fixture](../../tests/server-access/preview-static.mjs)は、`/@fs` と `/@vite/client` で非公開ファイルや開発endpointが露出しないことをHTTP fetchで検査する。これは撤去済みhandoffや実Auth0接続の成功を意味しない。
 
+## Kanban の main と Workspace の対象を区別する
+
+両ビューの右サイドバーは共通の常時展開環境 panel と開閉 utilities を持つ。Kanban のファイル/Wiki は Project に登録された main repository を読み、本文をボードを残す分割詳細へ表示する。Workspace はその worktree を読む。main の API は Project に属する repo を解決し、既存 canonical root/path/raw 配信 helper を再利用する。任意の Workspace path を main として受け付けない。[main 読取](../../crates/server/src/routes/project_utilities.rs)・[API の差替え](../../packages/web-core/src/features/workspace-files/model/FileApiProvider.tsx)
+
+Wiki は対象 repo の OpenWiki が有効な場合だけ入口を表示し、展開しても Git/端末等を消さない。main snapshot の source は main_repository、Workspace は既存の未公開変更を含む snapshot である。再読込は生成/Sync の開始ではない。[Wiki provider](../../packages/web-core/src/features/wiki/ui/WorkspaceWikiProvider.tsx)・[main snapshot](../../crates/server/src/routes/project_utilities.rs)
+
 ## Terminal と editor
 
-Terminal は interactive 用途を要求してから Workspace directory を検証し、Repo が一つならその下、複数なら Workspace root を初期 cwd とする。WebSocket 接続ごとに PTY session を作り、input/output は base64、resize は別 command として扱い、接続終了時に PTY を閉じる。会話の Session を resume する経路ではない。[cwd と起動](../../crates/server/src/routes/terminal.rs)・[通信と終了](../../crates/server/src/routes/terminal.rs)
+端末は両ビューで単一。Workspace は interactive 用途・非archive・非削除を要求し、Repo が一つならその worktree、複数なら Workspace root を初期 cwd とする。Kanban は登録 main repo を起動前に選び、稼働中は対象を固定する。input/output は base64、resize は別 command で、会話 Session の resume ではない。[route](../../crates/server/src/routes/terminal.rs)・[main 選択](../../packages/web-core/src/pages/kanban/ProjectUtilities.tsx)
+
+項目の明示展開だけで新規接続を作り、項目そのものの折畳みで所有 shell/job/child を停止する。確認・警告・tooltip・別終了ボタン・複数タブはない。sidebar 全体の開閉、狭幅でのファイル/Wiki 選択や component unmount は停止意思ではない。exit と検出した通信断は無言で折畳み、自動再接続/再生成せず、次の明示展開だけが一つの新規端末を作る。[表示と所有](../../packages/web-core/src/shared/components/TerminalSection.tsx)・[provider](../../packages/web-core/src/shared/providers/TerminalProvider.tsx)
+
+Linux は未回収 shell の pidfd identity を anchor に POSIX session と捕捉可能な子孫を停止し、wait と reader join 成功後だけ map を解放する。他端末・同 cwd の別実行を推測で kill しない。archive guard は所有端末解放後にも他プロセスを検査する。[PTY cleanup と実プロセス試験](../../crates/local-deployment/src/pty.rs)・[owned session](../../crates/utils/src/process/owned_group.rs)
+
+通信断検出は両端45秒監視と tick 待ちが目安で即時保証ではない。client の close は到達不能serverの停止証明ではなく、通常の明示終了はserverのcleanup後に exit を返す。停止不能kernel、server強制終了、捕捉前に再親化したdaemonの完全回収、非Linuxの同等session cleanupは保証しない。[検証と限界](../../docs/development/project-utilities-validation.md)・[heartbeat](../../crates/server/src/routes/terminal.rs#L138-L233)
 
 ## 外部エディターの URI 連携
 

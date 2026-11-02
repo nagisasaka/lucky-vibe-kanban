@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c4b23b6100b1e922b6b024b78541c7dc4868fc49f70fddcdbf7686238c0cb74b",
+  "pageVersion": "sha256:bacd7a6be24087883cfacea3066321b45394a2cf2fd53325df6422cb7c222143",
   "claims": [
     {
       "id": "claim_edf1b78d3c7a4d978a6d8debcee4edd2",
@@ -100,7 +100,7 @@
         },
         {
           "resource": "repo://crates/server/src/routes/workspaces/wiki.rs",
-          "version": "repo-file-v1:sha256:e81f29b8f8a60d411009cc2492108f738f26f6813b5d7508b6253a047c6b84cf"
+          "version": "repo-file-v1:sha256:7f4eae3752698d55f2600b799cb361f5289eb291e6208bd82a12cb56a80d98bf"
         },
         {
           "resource": "repo://packages/web-core/src/features/pipeline/model/cardContext.ts",
@@ -132,11 +132,11 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/mod.rs",
-          "version": "repo-file-v1:sha256:d5e2487914e7006dd6673a627e68edc802800c8f8d8d0c250c85d5862b40ab25"
+          "version": "repo-file-v1:sha256:130e1a6c6990766a97fa1899d81c91a259f759ea41efadcb5a4b902874fa7c9d"
         },
         {
           "resource": "repo://crates/server/src/routes/sessions/questions.rs",
-          "version": "repo-file-v1:sha256:0b4ea25dce982a969e5fb6268d31ae27bb7dedb0aa4f2dddf9c02fc062625757"
+          "version": "repo-file-v1:sha256:6d6b24c2f2f9e68366bebe771231074b5738561f298fcc78e241ab5ee9d99b6c"
         }
       ]
     },
@@ -261,10 +261,38 @@
           "version": "repo-lines-v1:sha256:eb50afa53496c04c1b3de4e937849287e3d4c5d23c07dcd5a25fc8e4931b3c0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4ZGE0NWM0NzhjN2FjOWUwNDM2N2VjMWM3Njc5MjYzNTJiNGUxN2IyY2M3OGJjMzk1Y2E4ODI4YzYyOTc5Y2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3Zjg3Nzk0NWE5YWFiNDlkZWY3Y2Y3NDY2ZmM3ZjkxMmZmOTViZjJmMjljMzNjY2JmYjQ5OTcyN2ZmMTI5NDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE4ZGM3MmViZWZhNTg5Njc3ZTQxYjUxOTM2MThhZjMzZTczYmJmZTdlNGQ0MWVhNDJjMmVmOWQ1MWExMDk4M2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyOTNhMTliNDc4ZmU2MmI2M2I0YWY4MWNiMWUxNmZhZWU3MzExYzc1ZWJhY2FkOTM3NzgzZTVjYzE4OGM2YTgifQ"
         }
       ]
+    },
+    {
+      "id": "claim_0fbcd919945b47feb7c259239f3066bb",
+      "statement": "Kanban/Workspaceは共通sidebarを持ち、mainとworktreeの対象を区別する。単一端末は明示折畳みで終了しsidebar非表示では維持し、exit/通信断で折畳み自動再生成しない。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/pages/kanban/ProjectUtilities.tsx",
+          "version": "repo-file-v1:sha256:5ee4e729725b88c6aa5ebcc39da9a5628f879bf4291465bc0fbfde1eb4fe596c"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/components/TerminalSection.tsx",
+          "version": "repo-file-v1:sha256:cafaf2e483857248a36010a65046ac82376a1115fa0540a4671e54a25dd57f9b"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/providers/TerminalProvider.tsx",
+          "version": "repo-file-v1:sha256:e0e67a77ea456701274606176752bc3c81e4b4048a40d3df97795b896eaffc1a"
+        }
+      ]
+    },
+    {
+      "id": "claim_efde84b3429149aeb6c86275b0cdd4a2",
+      "statement": "実行承認の外部MCPは詳細読取/明示判断/状態読戻しを分離し、判断はread/writeの外部認証済みmemberだけへ限定して内部Agent自己承認や恒久許可へ転用しない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/execution_approvals.rs#L1-L168",
+          "version": "repo-lines-v1:sha256:4454bde15c7f429d97b8d51c7c38305ed2c7e238f13593a01ad4d642d8cbe8dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5MWYzNTk1NTkwOGRkMmExMjQ4ODJiNWFiMTRkZWY5YWQzM2M1NTZhMDY3Y2YxYTAzMzhlYmJlYjM3ODVkNGM3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNzVkYmVjMmU3NjdjYzMyMTg1NTY5ZjVlNWZkMzE2MWExMGNmZjE1ZWQyYmUxYTVmOGYwYzc1ZDRjY2U5NTM1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwMDFhYzkwZGI0MjNiN2FkNTRmMGRjNzZlODEyYzRkOGU4MTNhNmRiOTY1ODNhYzM5ZDEyMjU5MWI5MWFhNzM4In0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.2",
-    "at": "2026-11-02T14:26:25.232Z"
+    "at": "2026-11-02T23:50:54.203Z"
   }
 }
