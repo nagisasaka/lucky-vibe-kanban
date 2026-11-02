@@ -1,18 +1,13 @@
 import { SessionChatFixture } from "./session-chat";
-import { RepoCardFixture } from "./repo-card";
+import { RepositoryDialogsFixture } from "./repository-dialogs";
 import { ApprovalFixture } from "./approval";
 import { IssueArchiveFixture } from "./issue-archive";
 import { NotificationsFixture } from "./notifications";
-import { ContextMenuFixture } from "./context-menu";
 import { ModelSelectorFixture } from "./model-selector";
-import { FileViewerFixture } from "./file-viewer";
-import { WikiViewerFixture } from "./wiki-viewer";
 import { LandingPage } from "@/features/onboarding/ui/LandingPage";
 import { NavbarFixture } from "./navbar";
 import { ElectricTestPage } from "@/pages/workspaces/ElectricTestPage";
-import { EditorPresentationFixture } from "./editor-presentation";
 import { ActionLabelsFixture } from "./action-labels";
-import { KeyboardShortcutsDialog } from "@/shared/dialogs/shared/KeyboardShortcutsDialog";
 import { GoalControlsFixture } from "./goal-controls";
 import { SchemaFormFixture } from "./schema-form";
 import { AgentConfigurationSettingsPanel } from "@/shared/dialogs/settings/settings/AgentConfigurationSettingsPanel";
@@ -21,7 +16,6 @@ import { BaseCodingAgent } from "../../../shared/types";
 import { AgentToolsSettingsSection } from "@/shared/dialogs/settings/settings/AgentToolsSettingsSection";
 import { RepositoryFormsFixture } from "./repository-forms";
 import { ReleaseNotesDialog } from "@/shared/dialogs/global/ReleaseNotesDialog";
-import { PrCommentCard } from "../../../packages/ui/src/components/pr-comment-card";
 import { DesignNotePanel } from "@/features/design-notes/ui/DesignNotePanel";
 import { Fragment, useState } from "react";
 import { SettingsMachineUserSystemProvider } from "@/shared/dialogs/settings/settings/SettingsMachineUserSystemProvider";
@@ -49,10 +43,6 @@ function Screen() {
   const [opened, setOpened] = useState(false);
   const open = () => {
     setOpened(true);
-    if (params.get("view") === "keyboard-shortcuts") {
-      void KeyboardShortcutsDialog.show();
-      return;
-    }
     if (params.get("view") === "release-notes") {
       void ReleaseNotesDialog.show();
       return;
@@ -63,28 +53,16 @@ function Screen() {
     });
   };
   if (params.get("view") === "session-chat") return <SessionChatFixture />;
-  if (params.get("view") === "repo-card") return <RepoCardFixture />;
+  if (params.get("view") === "repository-dialogs")
+    return <RepositoryDialogsFixture />;
   if (params.get("view") === "approval") return <ApprovalFixture />;
   if (params.get("view") === "issue-archive") return <IssueArchiveFixture />;
   if (params.get("view") === "notifications") return <NotificationsFixture />;
-  if (params.get("view") === "context-menu") return <ContextMenuFixture />;
-  if (params.get("view") === "context-menu-frame")
-    return (
-      <iframe
-        title="Editor fixture"
-        src={`/?view=context-menu&lang=${params.get("lang") ?? "ja"}`}
-        className="w-full h-screen border-0"
-      />
-    );
   if (params.get("view") === "model-selector") return <ModelSelectorFixture />;
-  if (params.get("view") === "file-viewer") return <FileViewerFixture />;
-  if (params.get("view") === "wiki-viewer") return <WikiViewerFixture />;
   if (params.get("view") === "onboarding") return <LandingPage />;
   if (params.get("view") === "navbar") return <NavbarFixture />;
   if (params.get("view") === "electric-diagnostics")
     return <ElectricTestPage />;
-  if (params.get("view") === "editor-presentation")
-    return <EditorPresentationFixture />;
   if (params.get("view") === "action-labels") return <ActionLabelsFixture />;
   if (params.get("view") === "goal-controls") return <GoalControlsFixture />;
   if (params.get("view") === "schema-form") return <SchemaFormFixture />;
@@ -113,15 +91,6 @@ function Screen() {
     );
   if (params.get("view") === "repository-forms")
     return <RepositoryFormsFixture />;
-  if (params.get("view") === "formatting")
-    return (
-      <PrCommentCard
-        author="Raw Author 原文"
-        body="Raw comment 原文"
-        createdAt="2026-01-02T15:04:05Z"
-        variant="full"
-      />
-    );
   return (
     <div className="p-double text-normal bg-primary min-h-screen">
       <h1 className="text-lg text-high">

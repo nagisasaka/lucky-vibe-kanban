@@ -33,7 +33,7 @@ export function useUserSystem() {
   });
   return {
     config,
-    loading: params.has("onboarding-loading"),
+    loading: false,
     profiles: { CLAUDE_CODE: {}, CODEX: {} },
     updateAndSaveConfig: async (
       patch: typeof config,

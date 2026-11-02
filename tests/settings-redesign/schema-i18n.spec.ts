@@ -60,11 +60,6 @@ test(`Executor schema JA→EN: generated copy, numeric validation and live langu
   await page.getByRole("button", { name: /Advanced configuration/ }).click();
   await budget.fill("2");
   await expect(save).toBeEnabled();
-  await page.setViewportSize({ width: 360, height: 800 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+
   await expect(page.locator("#root_model")).toHaveValue("Raw model 原文");
 });

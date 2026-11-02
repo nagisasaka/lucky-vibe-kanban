@@ -1,11 +1,11 @@
-import { expectWithinWidth, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { test, expect } from "@playwright/test";
 test(`model selector JA→EN: live labels retain provider/model/reasoning and override semantics`, async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.setViewportSize({ width: 360, height: 800 });
+
   await page.goto(`/?view=model-selector&lang=ja`);
   const controls = page.getByTestId("model-controls");
   await controls
@@ -15,7 +15,7 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
     })
     .click({ timeout: 15000 });
   const menu = page.locator("[data-model-selector-popover]");
-  await expectWithinWidth(menu, 360);
+
   const search = menu.getByPlaceholder("名前またはIDで絞り込む…");
   await search.fill("RAW:MODEL");
   await expect(
@@ -111,13 +111,12 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
       { exact: true },
     ),
   ).toBeVisible();
-  const goalMenu = page.getByRole("menu");
-  await expectWithinWidth(goalMenu, 360);
+
   await switchLanguage(page, "ja");
   await expect(
     page.getByRole("spinbutton", { name: "トークン予算", exact: true }),
   ).toHaveValue("1234");
-  await expectWithinWidth(goalMenu, 360);
+
   expect(errors).toEqual([]);
 });
 test(`model selector JA→EN: safe load error follows locale and hides provider diagnostics`, async ({

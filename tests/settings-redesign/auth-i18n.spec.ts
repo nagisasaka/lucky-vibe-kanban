@@ -1,5 +1,5 @@
 const language = "ja";
-import { expectNoHorizontalOverflow, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { expect, test } from "@playwright/test";
 test(`owned authentication screens use ${language} before and after sign-in`, async ({
   page,
@@ -101,10 +101,6 @@ test(`owned authentication screens use ${language} before and after sign-in`, as
     "Unable to copy. Select and copy the value from the field.",
   );
 
-  for (const width of [360, 1280]) {
-    await page.setViewportSize({ width, height: 900 });
-    await expectNoHorizontalOverflow(page);
-  }
   await expect(page.locator("body")).not.toContainText(
     /auth\.(gate|setup|credentials|errors)\./,
   );

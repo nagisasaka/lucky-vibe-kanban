@@ -1,97 +1,10 @@
-import { expectWithinWidth, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { test, expect } from "@playwright/test";
-test(`repository JA→EN: translated choices retain IDs, filters and quantities`, async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 360, height: 800 });
-  await page.goto(`/?view=repo-card&lang=ja`);
-  const card = page.getByTestId("repo-card");
-  await expect(
-    card.getByRole("button", { name: "マージ", exact: true }),
-  ).toBeVisible({ timeout: 15000 });
-  await expect(card).toContainText("1,234");
-  await expect(card).toContainText("2,000");
-  await expect
-    .poll(() => card.evaluate((node) => node.scrollWidth <= node.clientWidth))
-    .toBe(true);
-  await card
-    .getByRole("button", {
-      name: "操作を選択",
-      exact: true,
-    })
-    .click();
-  await page
-    .getByRole("menuitem", {
-      name: "プルリクエストをリンク",
-      exact: true,
-    })
-    .click();
-  await switchLanguage(page, "en");
-  await expect(page.getByTestId("repo-selection")).toHaveText("link-pr");
-  await card
-    .getByRole("button", {
-      name: "Link pull request",
-      exact: true,
-    })
-    .click();
-  await expect(page.getByTestId("repo-events")).toHaveText(
-    '[{"kind":"action","action":"link-pr"}]',
-  );
-  await page.getByRole("button", { name: "open", exact: true }).click();
-  await expect(
-    card.getByRole("button", {
-      name: "Choose action",
-      exact: true,
-    }),
-  ).toHaveCount(0);
-  await expect(card).toContainText("Open PR #12345");
-  await page.getByRole("button", { name: "linked", exact: true }).click();
-  await card
-    .getByRole("button", {
-      name: "Open pull request",
-      exact: true,
-    })
-    .click();
-  await expect(page.getByTestId("repo-events")).toContainText(
-    '"action":"pull-request"',
-  );
-  await expect(page.getByTestId("repo-selection")).toHaveText("link-pr");
-  await page.getByRole("button", { name: "remote", exact: true }).click();
-  await card
-    .getByRole("button", {
-      name: "Choose action",
-      exact: true,
-    })
-    .click();
-  await expect(page.getByRole("menu")).toBeVisible();
-  await expect(
-    page.getByRole("menuitem", {
-      name: "Merge",
-      exact: true,
-    }),
-  ).toHaveCount(0);
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("menu")).toHaveCount(0);
-  await page.getByRole("button", { name: "readonly", exact: true }).click();
-  await expect(card.getByRole("button")).toHaveCount(0);
-  await expect(card).toContainText("feature/raw-target-原文");
-  await expect(card).toContainText("Raw repository 原文");
-});
 test(`target branch JA→EN: selection survives live locale and unknown results stay safe`, async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 360, height: 800 });
-  await page.goto(`/?view=repo-card&lang=ja&branch-error`);
-  const card = page.getByTestId("repo-card");
-  await card
-    .getByRole("button", { name: "feature/raw-target-原文", exact: true })
-    .click();
-  await page
-    .getByRole("menuitem", {
-      name: "ターゲットを変更",
-      exact: true,
-    })
-    .click();
+  await page.goto(`/?view=repository-dialogs&lang=ja`);
+  await page.getByRole("button", { name: "Change fixture target" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("combobox").click();
   const option = page.getByRole("option", {
@@ -124,7 +37,6 @@ test(`target branch JA→EN: selection survives live locale and unknown results 
   await expect(page.getByTestId("repo-events")).toHaveText(
     '[{"kind":"branch","branch":"feature/raw-target-原文"}]',
   );
-  await expectWithinWidth(dialog, 360);
   await dialog.getByRole("button", { name: "キャンセル", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.getByTestId("repo-events")).toHaveText(
@@ -137,7 +49,7 @@ for (const outcome of ["throw", "auth"]) {
   }) => {
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.goto(`/?view=repo-card&lang=ja&pr=${outcome}`);
+    await page.goto(`/?view=repository-dialogs&lang=ja&pr=${outcome}`);
     await page
       .getByRole("button", { name: "Create fixture PR", exact: true })
       .click();

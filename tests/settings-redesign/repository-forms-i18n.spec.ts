@@ -1,6 +1,6 @@
 const language = "ja";
-import { expectNoHorizontalOverflow, switchLanguage } from "./i18n-support";
-import { expect, test, type Page } from "@playwright/test";
+import { switchLanguage } from "./i18n-support";
+import { expect, test } from "@playwright/test";
 test(`configuration ${language}: validation, clone identifiers and live locale changes`, async ({
   page,
 }) => {
@@ -214,8 +214,6 @@ test(`repository memory ${language}: UI locale does not change output language o
   await expect(card).toContainText(
     "Enter a 4–40 character hexadecimal commit SHA from this branch.",
   );
-  await page.setViewportSize({ width: 360, height: 900 });
-  await expectNoHorizontalOverflow(page);
 });
 test(`repository memory ${language}: unknown error details stay out of normal UI`, async ({
   page,

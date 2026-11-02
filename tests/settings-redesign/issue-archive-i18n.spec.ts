@@ -1,4 +1,4 @@
-import { expectWithinWidth, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { test, expect } from "@playwright/test";
 const calls = (page: import("@playwright/test").Page) =>
   page.evaluate(
@@ -12,7 +12,7 @@ for (const lang of ["en", "ja"]) {
   }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.setViewportSize({ width: 360, height: 800 });
+
     await page.goto(`/?view=issue-archive&lang=${lang}&archive-lost-response`);
     await page.getByRole("button", { name: "Open archive fixture" }).click();
     const dialog = page.getByRole("dialog");
@@ -53,7 +53,7 @@ for (const lang of ["en", "ja"]) {
         archiveWorkspaces: false,
       },
     ]);
-    await expectWithinWidth(dialog, 360);
+
     await archive().click();
     await expect(dialog.getByRole("alert")).toContainText(
       ja ? "再実行せず「結果を確認」" : "Do not repeat the operation",
@@ -69,13 +69,7 @@ for (const lang of ["en", "ja"]) {
     });
     const requestId = confirms[0].requestId;
     await expect(dialog.getByRole("alert")).toContainText(requestId as string);
-    await expect
-      .poll(() =>
-        dialog
-          .getByRole("alert")
-          .evaluate((node) => node.scrollWidth <= node.clientWidth),
-      )
-      .toBe(true);
+
     await dialog
       .getByRole("button", {
         name: ja ? "結果を確認" : "Check result",

@@ -98,6 +98,15 @@ afterEach(() => {
 });
 
 describe('split Wiki navigation and article surfaces', () => {
+  it('withholds private Wiki load failure details', async () => {
+    const { controller, api } = await fixture();
+    api.snapshot.mockRejectedValue(new Error('Raw internal Wiki secret'));
+    await controller.reload();
+    const article = renderToStaticMarkup(createElement(WorkspaceWikiArticle));
+    expect(article).toContain('Wiki files could not be loaded.');
+    expect(article).not.toContain('Raw internal Wiki secret');
+  });
+
   it('renders a directory tree in the sidebar and keeps the body only in the main surface', async () => {
     const { controller } = await fixture();
     controller.selectPage('concepts/job.md');

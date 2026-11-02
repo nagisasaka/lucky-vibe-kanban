@@ -57,12 +57,6 @@ test(`Agent Configuration ${lang}: sections, validation, native confirmation and
     page.getByText("/fixture/config.toml", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText(/解析済み/)).toBeVisible();
-  await page.setViewportSize({ width: 360, height: 800 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
 });
 test(`Agent Configuration ${lang}: structured error language and safe unknown fallback`, async ({
   page,

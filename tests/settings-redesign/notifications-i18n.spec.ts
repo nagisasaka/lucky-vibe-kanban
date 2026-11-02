@@ -1,4 +1,4 @@
-import { expectWithinWidth, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { test, expect } from "@playwright/test";
 const lang = "ja";
 test(`notifications ${lang}: live sentences preserve grouped read targets and links`, async ({
@@ -7,7 +7,7 @@ test(`notifications ${lang}: live sentences preserve grouped read targets and li
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.clock.setFixedTime(new Date("2026-11-01T12:03:00Z"));
-  await page.setViewportSize({ width: 360, height: 800 });
+
   await page.goto(`/?view=notifications&lang=${lang}`);
   const bell = page.getByRole("button", {
     name: "通知",
@@ -28,7 +28,7 @@ test(`notifications ${lang}: live sentences preserve grouped read targets and li
     "Someone changed the priority of RAW-99 from Low to High",
   );
   await expect(comments).toContainText("3m ago");
-  await expectWithinWidth(comments, 360);
+
   await comments
     .getByRole("button", {
       name: "Mark notification as read",

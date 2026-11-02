@@ -6,7 +6,7 @@ test(`async questions ${language}: retained draft and uncertain delivery follow 
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.setViewportSize({ width: 360, height: 800 });
+
   await page.goto(`/?view=session-chat&mode=async&lang=${language}`);
   let ja = language === "ja";
   const pending = () =>

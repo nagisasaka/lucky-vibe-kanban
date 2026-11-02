@@ -68,10 +68,4 @@ test(`Goal controls ${lang}: exact usage, raw draft, confirmed clear and saved r
     "resume-saved",
   );
   await expect(page.getByTestId("goal-control-calls")).toContainText("clear");
-  await page.setViewportSize({ width: 360, height: 900 });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
 });

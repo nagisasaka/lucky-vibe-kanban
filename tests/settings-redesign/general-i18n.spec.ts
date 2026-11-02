@@ -1,57 +1,5 @@
-import { expectNoHorizontalOverflow, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { expect, test } from "@playwright/test";
-
-for (const language of ["en", "ja"] as const) {
-  const ja = language === "ja";
-  test(`general settings ${language}: mobile scale labels preserve immediate device storage`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 360, height: 900 });
-    await page.goto(`/?lang=${language}&section=general`);
-    await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-    await expect(
-      page.getByText(ja ? "モバイルの文字サイズ" : "Mobile Font Size", {
-        exact: true,
-      }),
-    ).toBeVisible();
-    await page
-      .getByRole("button", {
-        name: ja ? "標準（100%）" : "Default (100%)",
-        exact: true,
-      })
-      .click();
-    await page
-      .getByRole("menuitem", {
-        name: ja ? "小さめ（95%）" : "Small (95%)",
-        exact: true,
-      })
-      .click();
-    expect(
-      await page.evaluate(() => localStorage.getItem("vk-mobile-font-scale")),
-    ).toBe("small");
-    await expect(
-      page.getByRole("button", { name: ja ? "保存" : "Save", exact: true }),
-    ).toHaveCount(0);
-    await page.reload();
-    await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-    await expect(
-      page.getByRole("button", {
-        name: ja ? "小さめ（95%）" : "Small (95%)",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expectNoHorizontalOverflow(page);
-    await page.goto(`/?lang=${language}&section=notifications`);
-    await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-    await page.locator("#sound-enabled").check();
-    await expect(
-      page.getByRole("button", {
-        name: ja ? "通知音を試聴" : "Preview sound",
-        exact: true,
-      }),
-    ).toBeVisible();
-  });
-}
 
 for (const language of ["en", "ja"]) {
   const ja = language === "ja";

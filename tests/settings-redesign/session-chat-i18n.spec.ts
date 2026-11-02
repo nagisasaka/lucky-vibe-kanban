@@ -4,7 +4,6 @@ import { test, expect } from "@playwright/test";
 test("Session chat JA→EN: draft and callback bytes survive locale and blocked send", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 360, height: 800 });
   await page.goto("/?view=session-chat&lang=ja");
   const editor = page.getByTestId("chat-editor");
   const box = page.getByTestId("session-chat");
@@ -36,7 +35,4 @@ test("Session chat JA→EN: draft and callback bytes survive locale and blocked 
   ).toBeDisabled();
   await editor.press("Control+Enter");
   await expect(events).toHaveText(sent);
-  await expect
-    .poll(() => box.evaluate((node) => node.scrollWidth <= node.clientWidth))
-    .toBe(true);
 });

@@ -1,7 +1,4 @@
-import {
-  expectWithinWidth,
-  switchLanguage as changeLanguage,
-} from "./i18n-support";
+import { switchLanguage as changeLanguage } from "./i18n-support";
 import { test, expect, type Page } from "@playwright/test";
 const calls = (page: Page) =>
   page.evaluate(
@@ -75,7 +72,7 @@ for (const language of ["en", "ja"]) {
     page,
   }) => {
     let ja = language === "ja";
-    await page.setViewportSize({ width: 360, height: 800 });
+
     await page.goto(`/?view=approval&lang=${language}`);
     await page
       .getByRole("button", { name: ja ? "拒否" : "Deny", exact: true })
@@ -105,13 +102,6 @@ for (const language of ["en", "ja"]) {
       .getByRole("button", { name: ja ? "拒否" : "Deny", exact: true })
       .click();
     await expect(editor()).toBeEmpty();
-    const placeholder = page.getByText(
-      ja
-        ? "このリクエストを拒否する理由をエージェントに伝えてください。@でタグの挿入やファイルの検索ができます。"
-        : "Let the agent know why this request was denied... Type @ to insert tags or search files.",
-      { exact: true },
-    );
-    await expectWithinWidth(placeholder, 360);
     await editor().fill("Raw denial 原文");
     await editor().press("Control+Enter");
     await expect

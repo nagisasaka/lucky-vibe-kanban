@@ -144,128 +144,6 @@ export function installFixtureApi() {
       });
     }
 
-    if (
-      path === "/api/workspaces/raw-wiki-workspace/wiki" &&
-      method === "GET"
-    ) {
-      if (params.get("wiki-mode") === "error")
-        return json(
-          { success: false, message: "Raw internal secret / private-path" },
-          503,
-        );
-      const repoId = url.searchParams.get("repo_id");
-      return success({
-        workspace_id: "raw-wiki-workspace",
-        repo_id: repoId,
-        repo_name: "Raw repository",
-        repo_display_name: "Raw repository 原文",
-        source: "current_workspace",
-        source_links: [
-          { source: "LVK-7", project_id: "raw-project", issue_id: "raw-issue" },
-        ],
-        wiki: {
-          exists: true,
-          config: null,
-          index: {
-            path: "index.md",
-            metadata: null,
-            content: "# Raw home 原文\n[Raw link](concepts/raw.md)",
-          },
-          pages: [
-            {
-              path: "concepts/raw.md",
-              content: "# Raw article 原文\nRaw model documentation {{value}}",
-              metadata: {
-                schema_version: 1,
-                title: "Raw title 原文",
-                summary: "Raw summary 原文",
-                language: "ja",
-                tags: ["RawTag 原文"],
-                sources: ["LVK-7"],
-                repos: ["raw-repo-one"],
-                created: "2026-01-01",
-                updated: "2026-01-02",
-              },
-            },
-          ],
-        },
-      });
-    }
-    if (path === "/api/workspaces/raw-file-workspace" && method === "GET")
-      return success({
-        id: "raw-file-workspace",
-        usage: params.get("file-usage") ?? "interactive",
-      });
-    if (
-      path.startsWith("/api/workspaces/raw-file-workspace/files/") &&
-      method === "GET"
-    ) {
-      const mode = params.get("files-mode");
-      const entry = (name: string, kind = "file", value = name) => ({
-        workspace_id: "raw-file-workspace",
-        repo_id: "raw-repo",
-        repo_name: "Raw repo 原文",
-        name,
-        path: value,
-        kind,
-        size_bytes: 1536,
-        modified_at: null,
-        mime_type: kind === "directory" ? null : "text/plain",
-        is_binary: false,
-      });
-      if (path.endsWith("/tree")) {
-        return success({
-          repos: [
-            {
-              workspace_id: "raw-file-workspace",
-              repo_id: "raw-repo",
-              repo_name: "Raw repo 原文",
-              repo_display_name: "Raw repo 原文",
-              truncated: true,
-              entries: [entry("src", "directory"), entry("Raw 原文.txt")],
-            },
-          ],
-        });
-      }
-      if (path.endsWith("/directory")) {
-        return success({
-          workspace_id: "raw-file-workspace",
-          repo_id: "raw-repo",
-          repo_name: "Raw repo 原文",
-          path: "src",
-          entries: [entry("child 原文.txt", "file", "src/child 原文.txt")],
-          truncated: true,
-        });
-      }
-      if (path.endsWith("/content")) {
-        if (mode === "preview-error")
-          return json(
-            { success: false, message: "Raw internal preview secret" },
-            503,
-          );
-        const value = url.searchParams.get("path") ?? "Raw 原文.txt";
-        return success({
-          workspace_id: "raw-file-workspace",
-          repo_id: "raw-repo",
-          repo_name: "Raw repo 原文",
-          path: value,
-          name: value.split("/").at(-1),
-          kind: "text",
-          mime_type: "text/plain",
-          language: null,
-          content: "Raw file {{user}} 原文\nline 2",
-          raw_url:
-            "/api/workspaces/raw-file-workspace/files/raw?repo_id=raw-repo&path=" +
-            encodeURIComponent(value),
-          size_bytes: 1536,
-          truncated: true,
-        });
-      }
-      return json(
-        { success: false, message: "Raw route not executed by fixture" },
-        403,
-      );
-    }
     if (path === "/api/access/status")
       return json({
         mode,
@@ -361,21 +239,8 @@ export function installFixtureApi() {
         403,
       );
     }
-    if (path === "/api/releases") {
-      if (params.get("releasesState") === "error")
-        return json({ message: "fixture private release detail" }, 503);
-      if (params.get("releasesState") === "loading")
-        return new Promise<Response>(() => {});
-      return success({
-        releases: [
-          {
-            tag_name: "v1.2.3",
-            body: "Raw **release content** 原文",
-            published_at: "2026-01-02T15:04:05Z",
-          },
-        ],
-      });
-    }
+    if (path === "/api/releases")
+      return json({ message: "fixture private release detail" }, 503);
     if (path === "/api/info")
       return success({
         config,

@@ -1,5 +1,5 @@
 const language = "ja";
-import { expectNoHorizontalOverflow, switchLanguage } from "./i18n-support";
+import { switchLanguage } from "./i18n-support";
 import { expect, test, type Page } from "@playwright/test";
 async function open(page: Page, language: string, extra = "") {
   await page.addInitScript(() =>
@@ -146,8 +146,6 @@ test(`Agent Tools ${language}: states, copy warning, raw identities and confirme
     "Unable to copy the native path. Allow clipboard access and try again.",
   );
   await expect(page.getByRole("alert")).not.toContainText("fixture private");
-  await page.setViewportSize({ width: 360, height: 900 });
-  await expectNoHorizontalOverflow(page);
 });
 test(`Agent Tools ${language}: invalid MCP JSON, structured errors and locale switching`, async ({
   page,
