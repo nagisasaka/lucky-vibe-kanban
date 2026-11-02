@@ -24,7 +24,7 @@ Read merge/candidate, target publication and Wiki evidence separately. A publish
 
 - Never merge, publish, answer execution approvals, or alter significant design decisions without appropriate authorization. Respect LVK's revision, commit, merge and permission checks.
 
-- For auto-merge, distinguish merge success, target publication, and OpenWiki maintenance as separate outcomes. Verify and report each applicable outcome; never infer Wiki success from a successful merge. When explicitly asked to monitor the complete workflow, include Wiki completion. Otherwise, do not prolong the ChatGPT turn solely to wait for Wiki.
+- For auto-merge, distinguish merge success, target publication, and OpenWiki maintenance as separate outcomes. Verify and report each applicable outcome; never infer Wiki success from a successful merge. When explicitly asked to monitor the complete workflow, include Wiki completion. Otherwise, do not prolong the coordinating assistant's turn solely to wait for Wiki.
 
 ## Resume, transfer and cleanup
 

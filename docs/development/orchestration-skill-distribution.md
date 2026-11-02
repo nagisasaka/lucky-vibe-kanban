@@ -6,7 +6,7 @@
 
 取得日時 `2026-11-02T10:10:33Z`、version `1.0.40`、release_id `pluginrel_6ae855d3ee948191aad1136167077267`。plugin_id `plugin_asdk_app_6ad4b7896d3c819193e998d31d059e3d`、USER / PRIVATE。引き継ぎ添付全体は47,829 bytes、SHA-256 `7837ce00cbe889e9031881c879018ae0c14962ed7d178d8d7bbba9f35c78b4c3`。全4ファイル、欠落・サイズ制限なし、Skill全文45,198 UTF-8 bytesを確認した。生スナップショットはGit対象外の添付に保持し、配布には含めない。
 
-`plugins/lvk-orchestration/openai/` の3設定ファイルは、更新用の両manifestのversionを `1.0.41` に変更した点を除き、この登録版とJSON値が一致（末尾の余分な空行のみ整理）。Claude側manifestも同じ候補版 `1.0.41` に揃える。これは配布候補の版であり、新版登録済みという意味ではない。App ID・表示・接続・認証の変更を伴わずに本文と参照資料を更新する。Claudeは `.claude-plugin/plugin.json` と `.mcp.json` のパッケージ形式を用い、接続先は作成時に明示する。実際の認証・インストールは対象クライアントで別途確認する。
+`plugins/lvk-orchestration/openai/` の3設定ファイルは、更新用の両manifestのversionを `1.0.42` に変更した点を除き、この登録版とJSON値が一致（末尾の余分な空行のみ整理）。Claude側manifestも同じ候補版 `1.0.42` に揃える。これは配布候補の版であり、新版登録済みという意味ではない。App ID・表示・接続・認証の変更を伴わずに本文と参照資料を更新する。Claudeは `.claude-plugin/plugin.json` と共通Skillを含むプラグインzipを用いる。接続設定なしモードでは接続を宣言せず、ユーザーの既存LVKコネクターを使う。従来の接続付きモードだけ `.mcp.json` と明示した接続先を含む。実際の認証・インストールは対象クライアントで別途確認する。
 
 ## 旧配置と新配置
 
@@ -37,10 +37,10 @@
 レビュー後、配布元コミットを確定し、リポジトリルートから次を実行する。出力先は自動commit対象外のタスク専用ディレクトリとする。既存の出力ファイルは上書きしない。
 
 ```bash
-python3 scripts/package-orchestration.py --commit <full-commit-id> --output <artifact-directory> --claude-mcp-url https://<lvk-host>/mcp
+python3 scripts/package-orchestration.py --commit <full-commit-id> --output <artifact-directory> --claude-without-connection
 ```
 
-scriptは作業木ではなく指定commitのSkill・設定を読み、同じ本文と全参照資料を両zipへ入れる。OpenAIは登録済み3設定、Claudeは専用manifestと明示したHTTP MCP設定を使う。`distribution-source.json` と外部の `distribution-receipt.json` に配布元SHA、同梱一覧、zipハッシュを記録する。zipはクライアントへ渡す候補パッケージであり、登録APIの入力形式への適合やアカウントでの有効化を保証しない。
+scriptは作業木ではなく指定commitのSkill・設定を読み、同じ本文と全参照資料を両zipへ入れる。OpenAIは登録済み3設定、Claudeの接続設定なし版は専用manifestと共通Skill・全参照資料・配布元記録だけを含む。MCP設定、App依存、認証、URLを追加しない。生成時にファイル集合をallowlistで制限し、zip読戻しで正本とのbyte一致・参照リンク・同梱一覧・CRCを確認する。接続付きの既存経路は `--claude-without-connection` の代わりに `--claude-mcp-url https://<lvk-host>/mcp` を明示する方式として保持し、今回の接続設定なし版とファイル名も区別する。`distribution-source.json` と外部の `distribution-receipt.json` に配布元SHA、同梱一覧、zipハッシュを記録する。zipはクライアントへ渡す候補パッケージであり、登録APIの入力形式への適合やアカウントでの有効化を保証しない。
 
 ChatGPTはレビュー修正を同じ実装Sessionへ戻し、登録側の後発変更と基準版を比較し、必要な変更をGit正本へ取り込んでから配布元を確定する。登録後version / release_idと配布元SHAの対応を保存し、本体と必要な参照資料を実際に取得して確認する。保存成功と会話中の実読は別結果とする。main前の配布なら「候補コミットから配布中・main未反映」と報告する。
 
@@ -52,8 +52,48 @@ ChatGPTはレビュー修正を同じ実装Sessionへ戻し、登録側の後発
 
 LOCAL-236→238への手順適用では、相互リンクとCancelledの後にも旧IssueとWorkspaceのarchive・物理削除の確認が残る。未承認なら旧片付けを確認待ちとし、238の独立作業を止めない。既承認の同対象・範囲なら再確認しない。部分移管は旧Issueを閉じず、人間の単純なキャンセルから自動archiveを導かない。これは文書上のwalkthroughであり、236/238を再操作した結果ではない。
 
-ChatGPT登録・参照資料の実読、Claudeアカウントへのインストール/有効化/実利用、実MCP認証・App接続は未確認。版を分けた大型評価・fixtureや新たな配信MCPは追加しない。実利用で改善し、このIssue全体の完了はChatGPT側の登録・実読確認まで引き継ぐ。
+初回候補作成時点ではChatGPT登録・参照資料の実読、Claudeアカウントへのインストール/有効化/実利用、実MCP認証・App接続は未確認だった。現在の登録状況は以下に区別して記載する。版を分けた大型評価・fixtureや新たな配信MCPは追加しない。実利用で改善し、このIssue全体の完了はChatGPT側の登録・実読確認まで引き継ぐ。
 
 初回候補作成Runでは、標準 `quick_validate.py` はPyYAML未導入で実行不能だった（合格扱いしない）。代わりにPython標準ライブラリでfrontmatterの必須値、全相対リンク、7参照資料、登録設定のJSON値一致（整形前にはbyte一致も確認）、配布scriptの構文を確認した。依存追加は行っていない。配布script自体も両zipを生成し、リンク・同梱内容・CRCを検査する。
 
 配布前レビュー補正では、通常のIssue／Workspace archiveにも適用する一般安全規則を `references/auto-merge.md` に独立させ、移管後の片付け責任から参照する形にした。ルートの利用意図はmergeや移管なしのarchiveも対象とする。言語の共通原則にはCodex自身の説明・完了報告・質問・人間承認要求も明示し、固定schema・技術リテラル・原文引用を翻訳しない境界を保持した。元の添付全文と照合した意味の保持であり、archive実行や権限の拡張ではない。
+
+
+## 登録済み版と今回の追加候補
+
+親側の今回の引き継ぎによると、配布元 `8313a88f758c187830d3b01611bfbdc689c67e6e` からChatGPT版 **1.0.41 / release `pluginrel_6ae869c4fa94819193b2e4d78b5020b0`** が登録済み。過去の未登録報告は当時の事実として残し、今回の未登録候補1.0.42とは区別する。このRunではアカウントmetadataや実読を独立に再確認していない。
+
+今回の差分は共通資料の汎用ChatGPT表現の中立化、接続設定なしのClaude生成オプション、候補版番号、配布説明のみ。思想・権限・既存Session継続・通常archive規則・利用言語・受付/完了の区別・参照の読み込み条件は変更しない。ChatGPTのScheduled Tasks / Condition Watchは利用可能な場合の製品固有例として残し、他クライアントに同機能があると仮定しない。本文が登録済み1.0.41から変わるため、全manifestを未登録候補1.0.42へ更新した。App ID・表示・認証その他のmetadataは維持する。
+
+Claudeのユーザー環境は今回そのままでよく、再インストール・有効化・接続変更は不要という指示である。削除済みlvk-workを同梱・再導入しない。リポジトリの別責務のlvk-workファイルは今回変更しない。今回の成果物作成はアカウントへの導入指示でも、既存コネクターの上書き・二重登録の指示でもない。ChatGPT更新、main merge/push、サーバー再起動も実施しない。
+
+接続設定なし成果物は `lvk-orchestration-claude-without-connection-<commit先頭12桁>.zip`。上記の生成コマンドは検証も行う。独立した読戻し検証は次で再実行できる（標準ライブラリのみ）。
+
+```bash
+python3 - <full-commit-id> <claude-without-connection.zip> <<'PYCODE'
+import json, posixpath, re, subprocess, sys, zipfile
+commit, archive = sys.argv[1:]
+def git(*args):
+    return subprocess.check_output(['git', *args])
+commit = git('rev-parse', '--verify', commit + '^{commit}').decode().strip()
+prefix = 'skills/lvk-orchestration/'
+names = git('ls-tree', '-r', '--name-only', commit).decode().splitlines()
+common = {p: git('show', f'{commit}:{p}') for p in names if p.startswith(prefix)}
+assert prefix + 'SKILL.md' in common
+with zipfile.ZipFile(archive) as z:
+    assert z.testzip() is None
+    assert len(z.namelist()) == len(common) + 2
+    assert set(z.namelist()) == set(common) | {'.claude-plugin/plugin.json', 'distribution-source.json'}
+    assert z.read('.claude-plugin/plugin.json') == git('show', f'{commit}:plugins/lvk-orchestration/claude/.claude-plugin/plugin.json')
+    assert set(json.loads(z.read('.claude-plugin/plugin.json'))) == {'name', 'version', 'description'}
+    assert json.loads(z.read('distribution-source.json')) == {'source_commit': commit, 'client': 'claude'}
+    for name, body in common.items():
+        assert z.read(name) == body
+        if name.endswith('.md'):
+            for link in re.findall(r'\]\(([^)]+)\)', body.decode()):
+                assert posixpath.normpath(posixpath.join(posixpath.dirname(name), link)) in common
+print('PASS: source bytes, bundled references/links, CRC, exact file set without connection settings')
+PYCODE
+```
+
+この確認はzipの内容と参照解決の確認であり、Claudeアカウントでのインストール・有効化・既存コネクター経由の実利用を検証したものではない。ユーザーの指示により今回それらは実施しない。
