@@ -367,23 +367,26 @@ export function Navbar({
             {resourceSlot}
             <div className="flex items-center gap-1 shrink-0">
               <SyncErrorIndicator errors={syncErrors} />
-              {isOnProjectPage &&
-                rightItems
-                  .filter((item): item is NavbarActionItem => !isDivider(item))
-                  .map((item) => (
-                    <NavbarIconButton
-                      key={item.id}
-                      icon={item.icon}
-                      isActive={item.isActive}
-                      onClick={item.onClick}
-                      aria-label={item.tooltip}
-                      tooltip={item.tooltip}
-                      disabled={!!item.disabled}
-                      className={
-                        item.disabled ? 'opacity-40 cursor-not-allowed' : ''
-                      }
-                    />
-                  ))}
+              {rightItems
+                .filter(
+                  (item): item is NavbarActionItem =>
+                    !isDivider(item) &&
+                    (isOnProjectPage || item.id === 'toggle-right-sidebar')
+                )
+                .map((item) => (
+                  <NavbarIconButton
+                    key={item.id}
+                    icon={item.icon}
+                    isActive={item.isActive}
+                    onClick={item.onClick}
+                    aria-label={item.tooltip}
+                    tooltip={item.tooltip}
+                    disabled={!!item.disabled}
+                    className={
+                      item.disabled ? 'opacity-40 cursor-not-allowed' : ''
+                    }
+                  />
+                ))}
               {onReload && (
                 <button
                   type="button"

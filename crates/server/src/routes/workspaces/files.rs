@@ -113,9 +113,9 @@ pub struct WorkspaceFileQuery {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct NormalizedWorkspacePath {
+pub(crate) struct NormalizedWorkspacePath {
     fs_path: PathBuf,
-    display_path: String,
+    pub(crate) display_path: String,
 }
 
 pub(super) struct ResolvedWorkspaceRepo {
@@ -150,7 +150,7 @@ pub async fn get_workspace_file_tree(
             .await
             .map_err(|_| ApiError::File(FileError::NotFound))?;
         let (entries, truncated) = list_directory_entries(
-            &workspace,
+            workspace.id,
             &repo,
             &canonical_repo_root,
             &canonical_repo_root,
@@ -190,7 +190,7 @@ pub async fn get_workspace_file_directory(
     }
 
     let (entries, truncated) = list_directory_entries(
-        &workspace,
+        workspace.id,
         &resolved.repo,
         &resolved.canonical_repo_root,
         &directory_path,
@@ -272,7 +272,7 @@ pub async fn serve_workspace_file_raw(
     workspace_file_raw_response(file, &target.display_path, &metadata)
 }
 
-fn workspace_file_raw_response(
+pub(crate) fn workspace_file_raw_response(
     file: tokio::fs::File,
     display_path: &str,
     metadata: &std::fs::Metadata,
@@ -328,7 +328,7 @@ pub(super) async fn resolve_workspace_repo_root(
     })
 }
 
-pub(super) fn normalize_relative_path(
+pub(crate) fn normalize_relative_path(
     path: Option<&str>,
 ) -> Result<NormalizedWorkspacePath, ApiError> {
     let raw = path.unwrap_or("");
@@ -372,7 +372,7 @@ fn has_windows_drive_prefix(value: &str) -> bool {
     bytes.len() >= 2 && bytes[1] == b':' && bytes[0].is_ascii_alphabetic()
 }
 
-pub(super) async fn canonical_target_under_root(
+pub(crate) async fn canonical_target_under_root(
     canonical_repo_root: &Path,
     target: &NormalizedWorkspacePath,
 ) -> Result<PathBuf, ApiError> {
@@ -392,8 +392,8 @@ pub(super) async fn canonical_target_under_root(
     Ok(canonical_target)
 }
 
-async fn list_directory_entries(
-    workspace: &Workspace,
+pub(crate) async fn list_directory_entries(
+    workspace_id: Uuid,
     repo: &Repo,
     canonical_repo_root: &Path,
     directory_path: &Path,
@@ -433,7 +433,7 @@ async fn list_directory_entries(
         };
 
         entries.push(workspace_file_entry(
-            workspace.id,
+            workspace_id,
             repo,
             &display_path,
             &name,
@@ -483,7 +483,7 @@ fn workspace_file_entry(
     }
 }
 
-async fn workspace_file_content_from_path(
+pub(crate) async fn workspace_file_content_from_path(
     workspace_id: Uuid,
     repo_id: Uuid,
     repo_name: &str,

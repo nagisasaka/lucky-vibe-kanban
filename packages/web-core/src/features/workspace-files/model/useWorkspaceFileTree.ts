@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
-import { workspacesApi } from '@/shared/lib/api';
+import { useFileApi } from './FileApiProvider';
 import { useHostId } from '@/shared/providers/HostIdProvider';
 import type { WorkspaceFileEntry } from 'shared/types';
 import { workspaceFileKeys } from './workspaceFileKeys';
@@ -11,6 +11,7 @@ import {
 
 export function useWorkspaceFileTree(workspaceId?: string) {
   const hostId = useHostId();
+  const filesApi = useFileApi();
   const queryClient = useQueryClient();
   const [directoryEntries, setDirectoryEntries] = useState<
     Map<string, WorkspaceFileEntry[]>
@@ -27,7 +28,7 @@ export function useWorkspaceFileTree(workspaceId?: string) {
 
   const treeQuery = useQuery({
     queryKey: workspaceFileKeys.tree(workspaceId, hostId),
-    queryFn: () => workspacesApi.files.tree(workspaceId!),
+    queryFn: () => filesApi.tree(workspaceId!),
     enabled: !!workspaceId,
   });
 
@@ -63,8 +64,7 @@ export function useWorkspaceFileTree(workspaceId?: string) {
             path,
             hostId
           ),
-          queryFn: () =>
-            workspacesApi.files.directory(workspaceId, { repoId, path }),
+          queryFn: () => filesApi.directory(workspaceId, { repoId, path }),
         });
 
         setDirectoryEntries((prev) => {
@@ -95,7 +95,14 @@ export function useWorkspaceFileTree(workspaceId?: string) {
         });
       }
     },
-    [directoryEntries, hostId, loadingDirectoryKeys, queryClient, workspaceId]
+    [
+      directoryEntries,
+      hostId,
+      loadingDirectoryKeys,
+      queryClient,
+      workspaceId,
+      filesApi,
+    ]
   );
 
   const refreshTree = useCallback(async () => {

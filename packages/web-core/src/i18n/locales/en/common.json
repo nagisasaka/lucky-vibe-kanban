@@ -2231,5 +2231,37 @@
   },
   "table": {
     "empty": "No data"
+  },
+  "environment": {
+    "title": "LVK execution environment",
+    "unknown": "Unknown",
+    "unavailable": "Unavailable / unconfirmed",
+    "online": "Responding",
+    "container": "Docker container · not the host VPS",
+    "scopeUnknown": "LVK runtime · container / host boundary unconfirmed",
+    "lastCheck": "Last successful check",
+    "secondsAgo": "{{count}}s ago",
+    "uptime": "Container uptime (start time unconfirmed)",
+    "sessions": "Running AI Sessions · all Workspaces",
+    "metricsScope": "CPU / RAM / SWAP: Linux system-visible values, potentially shared with the host; not container allocations. DISK: filesystem containing the worktree base. Swap usage alone does not indicate current memory pressure.",
+    "accountScope": "Account quota · server DEFAULT CLI credentials, separate from Session context tokens",
+    "quotaWindow": "{{period}}: {{value}} remaining · reset {{reset}}",
+    "five_hour": "5 hours",
+    "seven_day": "7 days",
+    "seven_day_oauth_apps": "7 days · OAuth apps",
+    "seven_day_opus": "7 days · Opus",
+    "seven_day_sonnet": "7 days · Sonnet",
+    "mainScope": "Main repository checkout · {{path}}",
+    "mainTerminal": "LVK runtime terminal · main repository (Docker: inside container)",
+    "files": "Files · main repository",
+    "close": "Close utilities",
+    "wiki": "Wiki",
+    "mainWikiScope": "Main repository OpenWiki · read-only",
+    "cpu": "CPU",
+    "ram": "RAM",
+    "disk": "DISK",
+    "swap": "SWAP",
+    "codex": "Codex",
+    "claude": "Claude"
   }
 }

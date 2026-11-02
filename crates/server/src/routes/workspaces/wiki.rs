@@ -50,6 +50,7 @@ pub struct WikiSourceLink {
 #[ts(rename_all = "snake_case")]
 pub enum WikiSnapshotSource {
     CurrentWorkspace,
+    MainRepository,
 }
 
 pub fn router() -> Router<DeploymentImpl> {

@@ -1,8 +1,7 @@
-import { CodexQuota } from '@vibe/ui/components/CodexQuota';
-import { useCodexQuota } from '@/shared/hooks/useCodexQuota';
-import { ResourceSummary } from '@vibe/ui/components/ResourceSummary';
-import { useResourceObservation } from '@/shared/hooks/useResourceObservation';
-import { GitMergeIcon } from '@phosphor-icons/react';
+import { useWikiAvailability } from '@/shared/hooks/useWikiAvailability';
+import { useQuery } from '@tanstack/react-query';
+import { readUtility, type MainRepo } from '@/shared/lib/projectUtilitiesApi';
+import { BookOpenIcon, GitMergeIcon } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { useTodoViewStore } from '@/features/todos/model/todoViewStore';
 import { useMemo, useCallback } from 'react';
@@ -144,20 +143,49 @@ export function NavbarContainer({
   );
   const isOnProjectPage = projectDestination !== null;
   const projectId = projectDestination?.projectId ?? null;
+  const mainInfo = useQuery({
+    queryKey: ['project-main-utilities', projectId],
+    queryFn: () =>
+      readUtility<{ repos: MainRepo[] }>(
+        `/api/projects/${projectId}/utilities/info`
+      ),
+    enabled: Boolean(projectId),
+    staleTime: 30000,
+  });
+  const mainWikiItem =
+    projectId &&
+    !mainInfo.isError &&
+    mainInfo.data?.repos.some((repo) => repo.wiki_enabled === true)
+      ? [
+          {
+            id: 'project-wiki',
+            icon: BookOpenIcon,
+            tooltip: t('workspaceWiki.open'),
+            onClick: () => {
+              useUiPreferencesStore
+                .getState()
+                .setExpanded(`kanban-wiki:${projectId}`, true);
+              useUiPreferencesStore.setState({ isRightSidebarVisible: true });
+            },
+          },
+        ]
+      : [];
   const isOnProjectSubRoute =
     projectDestination !== null && projectDestination.kind !== 'project';
   const [mobileActiveTab, setMobileActiveTab] = useMobileActiveTab();
 
+  const enabledWikiRepos = useWikiAvailability(repos.map((repo) => repo.id));
   // Only data availability restricts tabs; mobile has the same workspace tools.
   const mobileWorkspaceTabs = useMemo(
     () =>
       MOBILE_TABS.filter(
         (tab) =>
-          tab.id === 'workspaces' ||
-          tab.id === 'chat' ||
-          (!isCreateMode && Boolean(selectedWorkspace))
+          (tab.id !== 'wiki' || enabledWikiRepos.length > 0) &&
+          (tab.id === 'workspaces' ||
+            tab.id === 'chat' ||
+            (!isCreateMode && Boolean(selectedWorkspace)))
       ),
-    [isCreateMode, selectedWorkspace]
+    [isCreateMode, selectedWorkspace, enabledWikiRepos.length]
   );
 
   const handleMobileTabChange = useCallback(
@@ -197,15 +225,16 @@ export function NavbarContainer({
     [actionCtx, handleExecuteAction, t]
   );
 
-  const rightItems = useMemo(
-    () =>
-      toNavbarSectionItems(
-        filterNavbarItems(NavbarActionGroups.right, actionCtx),
-        actionCtx,
-        handleExecuteAction,
-        t
-      ),
-    [actionCtx, handleExecuteAction, t]
+  const rightItems = toNavbarSectionItems(
+    filterNavbarItems(NavbarActionGroups.right, actionCtx).filter(
+      (item) =>
+        !('id' in item) ||
+        item.id !== 'toggle-wiki-mode' ||
+        enabledWikiRepos.length > 0
+    ),
+    actionCtx,
+    handleExecuteAction,
+    t
   );
 
   const workspaceParts = useMemo(() => {
@@ -283,17 +312,8 @@ export function NavbarContainer({
     return errors;
   }, [syncErrorContext?.errors]);
 
-  const resources = useResourceObservation();
-  const quota = useCodexQuota(resources.visible);
-
   return (
     <Navbar
-      resourceSlot={
-        <div className="flex min-w-0 flex-wrap xl:max-w-none xl:shrink-0 xl:flex-nowrap items-center gap-base">
-          <ResourceSummary {...resources} />
-          <CodexQuota {...quota} now={resources.now} />
-        </div>
-      }
       workspaceTitle={navbarTitle}
       breadcrumbs={workspaceContext}
       leftItems={leftItems}
@@ -306,9 +326,10 @@ export function NavbarContainer({
                 tooltip: t('todo.integration'),
                 onClick: () => openIntegration(projectId),
               },
+              ...mainWikiItem,
               ...rightItems,
             ]
-          : rightItems
+          : [...mainWikiItem, ...rightItems]
       }
       syncErrors={syncErrors}
       mobileMode={mobileMode}

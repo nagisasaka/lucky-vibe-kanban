@@ -82,7 +82,9 @@ export function WorkspaceWikiNavigation({
       <div className="shrink-0 space-y-half border-b p-base">
         <div className="flex items-center justify-between gap-half">
           <p className="text-sm text-low">
-            {t('workspaceWiki.current', { path: 'openwiki/' })}
+            {wiki.projectId
+              ? t('environment.mainWikiScope')
+              : t('workspaceWiki.current', { path: 'openwiki/' })}
           </p>
           {showReload && (
             <button
@@ -109,7 +111,11 @@ export function WorkspaceWikiNavigation({
             </option>
           ))}
         </select>
-        <p className="text-sm text-low">{t('workspaceWiki.scope')}</p>
+        <p className="text-sm text-low">
+          {t(
+            wiki.projectId ? 'environment.mainWikiScope' : 'workspaceWiki.scope'
+          )}
+        </p>
         {snapshot?.wiki.exists && (
           <>
             <input
@@ -227,6 +233,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
   const { theme } = useTheme();
   const {
     workspace,
+    projectId,
     repositoryOptions,
     repoId,
     snapshot,
@@ -264,19 +271,20 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
       (path) => controller.selectPage(path)
     );
   };
-  const missing = !workspace
-    ? t('workspaceWiki.selectWorkspace')
-    : error
-      ? t('workspaceWiki.unavailable')
-      : !repoId
-        ? t('workspaceWiki.noRepositories')
-        : loading && !snapshot
-          ? t('workspaceWiki.loading')
-          : snapshot && !snapshot.wiki.exists
-            ? t('workspaceWiki.notInitialized')
-            : !selectedPage
-              ? t('workspaceWiki.selectPage')
-              : null;
+  const missing =
+    !workspace && !projectId
+      ? t('workspaceWiki.selectWorkspace')
+      : error
+        ? t('workspaceWiki.unavailable')
+        : !repoId
+          ? t('workspaceWiki.noRepositories')
+          : loading && !snapshot
+            ? t('workspaceWiki.loading')
+            : snapshot && !snapshot.wiki.exists
+              ? t('workspaceWiki.notInitialized')
+              : !selectedPage
+                ? t('workspaceWiki.selectPage')
+                : null;
   return (
     <section
       aria-label={t('workspaceWiki.article')}
@@ -285,7 +293,9 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-base border-b bg-secondary p-base">
         <div className="min-w-0 flex-1 basis-[180px]">
           <p className="text-sm text-low">
-            {t('workspaceWiki.currentReadOnly', { path: 'openwiki/' })}
+            {projectId
+              ? t('environment.mainWikiScope')
+              : t('workspaceWiki.currentReadOnly', { path: 'openwiki/' })}
           </p>
           <p className="break-words text-base text-high">
             {snapshot?.repo_display_name ??

@@ -75,3 +75,100 @@ mod tests {
         assert!(status == StatusCode::FORBIDDEN || status == StatusCode::METHOD_NOT_ALLOWED);
     }
 }
+
+pub(super) fn environment_router(d: &crate::DeploymentImpl) -> Router<crate::DeploymentImpl> {
+    use deployment::Deployment;
+    Router::new()
+        .route("/environment-info", get(environment))
+        .with_state(d.db().pool.clone())
+}
+
+async fn running_sessions(pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+    sqlx::query_scalar("SELECT COUNT(DISTINCT r.session_id) FROM agent_runs r JOIN agent_run_state s ON s.agent_run_id=r.id JOIN agent_process_registry p ON p.run_attempt_id=s.last_run_attempt_id WHERE s.status='running' AND s.projection_status='current' AND p.registry_status='running'")
+        .fetch_one(pool).await
+}
+
+async fn environment(
+    axum::extract::State(pool): axum::extract::State<sqlx::SqlitePool>,
+) -> impl IntoResponse {
+    let sessions = running_sessions(&pool).await.ok();
+    let hostname = tokio::fs::read_to_string("/proc/sys/kernel/hostname")
+        .await
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    // Neither /proc/uptime nor PID 1 start time proves container creation time.
+    let container = tokio::fs::try_exists("/.dockerenv").await.unwrap_or(false);
+    (
+        [(header::CACHE_CONTROL, "no-store")],
+        Json(ApiResponse::<serde_json::Value>::success(
+            serde_json::json!({
+                "hostname":hostname,"container":container,"uptime_seconds":null,
+                "running_sessions":sessions,"observed_at":chrono::Utc::now()
+            }),
+        )),
+    )
+}
+
+#[cfg(test)]
+mod environment_tests {
+    use super::*;
+    #[tokio::test]
+    async fn counts_only_running_confirmed_sessions_across_workspaces() {
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        for ddl in [
+            "CREATE TABLE agent_runs(id INTEGER, session_id INTEGER, workspace_id INTEGER)",
+            "CREATE TABLE agent_run_state(agent_run_id INTEGER, status TEXT, projection_status TEXT, last_run_attempt_id INTEGER)",
+            "CREATE TABLE agent_process_registry(run_attempt_id INTEGER, registry_status TEXT)",
+        ] {
+            sqlx::query(ddl).execute(&pool).await.unwrap();
+        }
+        let cases = [
+            (1, 1, "running", "current", "running"),
+            (2, 2, "running", "current", "running"),
+            (3, 1, "running", "current", "running"), // same Session counted once
+            (4, 4, "pending", "current", "reserved"),
+            (5, 5, "starting", "current", "running"),
+            (6, 6, "awaiting_input", "current", "running"),
+            (7, 7, "awaiting_approval", "current", "running"),
+            (8, 8, "succeeded", "current", "running"),
+            (9, 9, "running", "projection_degraded", "running"),
+            (10, 10, "running", "current", "exited"),
+            (11, 11, "cancelled", "current", "running"),
+        ];
+        for (id, session, status, projection, process) in cases {
+            sqlx::query("INSERT INTO agent_runs VALUES(?,?,?)")
+                .bind(id)
+                .bind(session)
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO agent_run_state VALUES(?,?,?,?)")
+                .bind(id)
+                .bind(status)
+                .bind(projection)
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+            sqlx::query("INSERT INTO agent_process_registry VALUES(?,?)")
+                .bind(id)
+                .bind(process)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        assert_eq!(running_sessions(&pool).await.unwrap(), 2);
+        sqlx::query("UPDATE agent_run_state SET last_run_attempt_id=999 WHERE agent_run_id=2")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(running_sessions(&pool).await.unwrap(), 1);
+        sqlx::query("DROP TABLE agent_run_state")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(running_sessions(&pool).await.is_err()); // failure never becomes zero
+    }
+}

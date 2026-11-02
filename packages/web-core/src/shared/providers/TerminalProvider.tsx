@@ -1,4 +1,11 @@
-import { useReducer, useMemo, useCallback, useRef, ReactNode } from 'react';
+import {
+  useReducer,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  ReactNode,
+} from 'react';
 import type { Terminal } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
 import {
@@ -20,7 +27,7 @@ interface TerminalState {
 }
 
 type TerminalAction =
-  | { type: 'CREATE_TAB'; workspaceId: string; cwd: string }
+  | { type: 'CREATE_TAB'; workspaceId: string; cwd: string; tab: TerminalTab }
   | { type: 'CLOSE_TAB'; workspaceId: string; tabId: string }
   | { type: 'SET_ACTIVE_TAB'; workspaceId: string; tabId: string }
   | {
@@ -53,19 +60,12 @@ function terminalReducer(
 ): TerminalState {
   switch (action.type) {
     case 'CREATE_TAB': {
-      const { workspaceId, cwd } = action;
-      const existingTabs = state.tabsByWorkspace[workspaceId] || [];
-      const newTab: TerminalTab = {
-        id: generateTabId(),
-        title: `Terminal ${existingTabs.length + 1}`,
-        workspaceId,
-        cwd,
-      };
+      const { workspaceId, tab: newTab } = action;
       return {
         ...state,
         tabsByWorkspace: {
           ...state.tabsByWorkspace,
-          [workspaceId]: [...existingTabs, newTab],
+          [workspaceId]: [newTab],
         },
         activeTabByWorkspace: {
           ...state.activeTabByWorkspace,
@@ -173,18 +173,23 @@ export function TerminalProvider({ children }: TerminalProviderProps) {
     Map<string, { onData: (data: string) => void; onExit?: () => void }>
   >(new Map());
 
-  // Store reconnection state for each connection
-  const reconnectStateRef = useRef<
-    Map<
-      string,
-      {
-        endpoint: string;
-        retryCount: number;
-        retryTimer: ReturnType<typeof setTimeout> | null;
-        intentionallyClosed: boolean;
-      }
-    >
-  >(new Map());
+  // Scope ownership is synchronous: repeated opens (including StrictMode) are idempotent.
+  const ownedTabsRef = useRef(new Map<string, TerminalTab>());
+  const openingConnectionsRef = useRef(new Map<string, object>());
+
+  const closingScopesRef = useRef(new Map<string, Promise<void>>());
+  useEffect(
+    () => () => {
+      openingConnectionsRef.current.clear();
+      for (const conn of terminalConnectionsRef.current.values())
+        conn.ws.close();
+      terminalConnectionsRef.current.clear();
+      for (const instance of terminalInstancesRef.current.values())
+        instance.terminal.dispose();
+      terminalInstancesRef.current.clear();
+    },
+    []
+  );
 
   const getTabsForWorkspace = useCallback(
     (workspaceId: string): TerminalTab[] => {
@@ -204,30 +209,41 @@ export function TerminalProvider({ children }: TerminalProviderProps) {
   );
 
   const createTab = useCallback((workspaceId: string, cwd: string) => {
-    dispatch({ type: 'CREATE_TAB', workspaceId, cwd });
+    if (ownedTabsRef.current.has(workspaceId)) return;
+    const tab = { id: generateTabId(), title: 'Terminal', workspaceId, cwd };
+    ownedTabsRef.current.set(workspaceId, tab);
+    dispatch({ type: 'CREATE_TAB', workspaceId, cwd, tab });
   }, []);
 
   const closeTerminalConnection = useCallback((tabId: string) => {
-    // Mark as intentionally closed to prevent reconnection
-    const reconnectState = reconnectStateRef.current.get(tabId);
-    if (reconnectState) {
-      reconnectState.intentionallyClosed = true;
-      if (reconnectState.retryTimer) {
-        clearTimeout(reconnectState.retryTimer);
-      }
-      reconnectStateRef.current.delete(tabId);
-    }
-
+    openingConnectionsRef.current.delete(tabId);
     const conn = terminalConnectionsRef.current.get(tabId);
-    if (conn) {
-      conn.ws.close();
-      terminalConnectionsRef.current.delete(tabId);
-    }
+    terminalConnectionsRef.current.delete(tabId);
     connectionCallbacksRef.current.delete(tabId);
+    if (conn?.ws.readyState === WebSocket.OPEN)
+      conn.ws.send(JSON.stringify({ type: 'close' }));
+    else conn?.ws.close();
   }, []);
 
   const closeTab = useCallback(
     (workspaceId: string, tabId: string) => {
+      if (ownedTabsRef.current.get(workspaceId)?.id !== tabId) return;
+      ownedTabsRef.current.delete(workspaceId);
+      const connection = terminalConnectionsRef.current.get(tabId);
+      if (connection && connection.ws.readyState !== WebSocket.CLOSED) {
+        const settled = new Promise<void>((resolve) => {
+          const previous = connection.ws.onclose;
+          connection.ws.onclose = (event) => {
+            previous?.call(connection.ws, event);
+            resolve();
+          };
+        });
+        closingScopesRef.current.set(workspaceId, settled);
+        void settled.then(() => {
+          if (closingScopesRef.current.get(workspaceId) === settled)
+            closingScopesRef.current.delete(workspaceId);
+        });
+      }
       // Dispose the terminal instance when closing the tab
       const instance = terminalInstancesRef.current.get(tabId);
       if (instance) {
@@ -254,20 +270,10 @@ export function TerminalProvider({ children }: TerminalProviderProps) {
 
   const clearWorkspaceTabs = useCallback(
     (workspaceId: string) => {
-      // Dispose all terminal instances for this workspace
-      const tabs = state.tabsByWorkspace[workspaceId] || [];
-      tabs.forEach((tab) => {
-        const instance = terminalInstancesRef.current.get(tab.id);
-        if (instance) {
-          instance.terminal.dispose();
-          terminalInstancesRef.current.delete(tab.id);
-        }
-        // Close WebSocket connections
-        closeTerminalConnection(tab.id);
-      });
-      dispatch({ type: 'CLEAR_WORKSPACE_TABS', workspaceId });
+      const tab = ownedTabsRef.current.get(workspaceId);
+      if (tab) closeTab(workspaceId, tab.id);
     },
-    [state.tabsByWorkspace, closeTerminalConnection]
+    [closeTab]
   );
 
   const registerTerminalInstance = useCallback(
@@ -295,124 +301,92 @@ export function TerminalProvider({ children }: TerminalProviderProps) {
       onData: (data: string) => void,
       onExit?: () => void
     ) => {
-      // Close existing connection if any
-      const existing = terminalConnectionsRef.current.get(tabId);
-      if (existing) {
-        existing.ws.close();
+      // A lost socket is terminal. It must never create a replacement shell.
+      if (
+        openingConnectionsRef.current.has(tabId) ||
+        terminalConnectionsRef.current.has(tabId)
+      ) {
+        return {
+          send: (data: string) =>
+            terminalConnectionsRef.current.get(tabId)?.send(data),
+          resize: (cols: number, rows: number) =>
+            terminalConnectionsRef.current.get(tabId)?.resize(cols, rows),
+        };
       }
-
-      // Store callbacks in ref so they can be updated without recreating connection
+      const token = {};
+      openingConnectionsRef.current.set(tabId, token);
       connectionCallbacksRef.current.set(tabId, { onData, onExit });
-
-      // Initialize or reset reconnection state
-      const existingReconnectState = reconnectStateRef.current.get(tabId);
-      if (existingReconnectState?.retryTimer) {
-        clearTimeout(existingReconnectState.retryTimer);
-      }
-      reconnectStateRef.current.set(tabId, {
-        endpoint,
-        retryCount: 0,
-        retryTimer: null,
-        intentionallyClosed: false,
-      });
-
-      const scheduleReconnect = () => {
-        const state = reconnectStateRef.current.get(tabId);
-        if (!state || state.intentionallyClosed) {
-          return;
-        }
-
-        const maxRetries = 6;
-        if (state.retryCount >= maxRetries) {
-          return;
-        }
-
-        const delay = Math.min(8000, 500 * Math.pow(2, state.retryCount));
-        state.retryCount += 1;
-        state.retryTimer = setTimeout(() => {
-          state.retryTimer = null;
-          connectWebSocket();
-        }, delay);
+      const finish = () => {
+        if (openingConnectionsRef.current.get(tabId) !== token) return;
+        openingConnectionsRef.current.delete(tabId);
+        const callback = connectionCallbacksRef.current.get(tabId)?.onExit;
+        // Let closeTab observe the closing socket before removing it. A user
+        // reopening immediately must wait for this transport to settle too.
+        callback?.();
+        terminalConnectionsRef.current.delete(tabId);
+        connectionCallbacksRef.current.delete(tabId);
       };
-
-      const connectWebSocket = () => {
-        const reconnectState = reconnectStateRef.current.get(tabId);
-        if (!reconnectState || reconnectState.intentionallyClosed) {
-          return;
-        }
-
-        void (async () => {
-          try {
-            const ws = await openLocalApiWebSocket(endpoint);
-            const state = reconnectStateRef.current.get(tabId);
-            if (!state || state.intentionallyClosed) {
+      void (async () => {
+        try {
+          const scope = [...ownedTabsRef.current].find(
+            ([, tab]) => tab.id === tabId
+          )?.[0];
+          if (scope) await closingScopesRef.current.get(scope);
+          if (openingConnectionsRef.current.get(tabId) !== token) return;
+          const ws = await openLocalApiWebSocket(endpoint);
+          if (openingConnectionsRef.current.get(tabId) !== token) {
+            ws.close();
+            return;
+          }
+          let lastMessage = Date.now();
+          const watchdog = window.setInterval(() => {
+            if (Date.now() - lastMessage >= 45_000) {
               ws.close();
-              return;
+              finish();
             }
-
-            ws.onopen = () => {
-              // Reset retry count on successful connection
-              const latestState = reconnectStateRef.current.get(tabId);
-              if (latestState) {
-                latestState.retryCount = 0;
+          }, 5000);
+          ws.onmessage = (event) => {
+            lastMessage = Date.now();
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.type === 'output' && msg.data)
+                connectionCallbacksRef.current
+                  .get(tabId)
+                  ?.onData(decodeBase64(msg.data));
+              else if (msg.type === 'exit' || msg.type === 'error') {
+                ws.close();
+                finish();
               }
-            };
-
-            ws.onmessage = (event) => {
-              try {
-                const msg = JSON.parse(event.data);
-                const callbacks = connectionCallbacksRef.current.get(tabId);
-                if (msg.type === 'output' && msg.data && callbacks) {
-                  callbacks.onData(decodeBase64(msg.data));
-                } else if (msg.type === 'exit' && callbacks) {
-                  callbacks.onExit?.();
-                }
-              } catch {
-                // Ignore parse errors
-              }
-            };
-
-            ws.onerror = () => {
-              // Error will be followed by onclose, so we handle reconnection there
-            };
-
-            ws.onclose = (event) => {
-              const latestState = reconnectStateRef.current.get(tabId);
-              if (!latestState || latestState.intentionallyClosed) {
-                return;
-              }
-
-              // Don't reconnect on clean close (code 1000) or if shell exited
-              if (event.code === 1000 && event.wasClean) {
-                return;
-              }
-
-              scheduleReconnect();
-            };
-
-            const send = (data: string) => {
-              if (ws.readyState === WebSocket.OPEN) {
+            } catch {
+              /* Ignore malformed frames. */
+            }
+          };
+          ws.onclose = () => {
+            window.clearInterval(watchdog);
+            finish();
+          };
+          ws.onerror = () => {
+            window.clearInterval(watchdog);
+            ws.close();
+            finish();
+          };
+          terminalConnectionsRef.current.set(tabId, {
+            ws,
+            send: (data) => {
+              if (ws.readyState === WebSocket.OPEN)
                 ws.send(
                   JSON.stringify({ type: 'input', data: encodeBase64(data) })
                 );
-              }
-            };
-
-            const resize = (cols: number, rows: number) => {
-              if (ws.readyState === WebSocket.OPEN) {
+            },
+            resize: (cols, rows) => {
+              if (ws.readyState === WebSocket.OPEN)
                 ws.send(JSON.stringify({ type: 'resize', cols, rows }));
-              }
-            };
-
-            const connection: TerminalConnection = { ws, send, resize };
-            terminalConnectionsRef.current.set(tabId, connection);
-          } catch {
-            scheduleReconnect();
-          }
-        })();
-      };
-
-      connectWebSocket();
+            },
+          });
+        } catch {
+          finish();
+        }
+      })();
 
       // Return functions that use the current connection
       const send = (data: string) => {

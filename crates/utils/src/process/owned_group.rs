@@ -161,6 +161,89 @@ impl OwnedProcessGroup {
     }
 }
 
+/// A PTY shell owns a POSIX session, including foreground/background job groups.
+/// Keep its leader unreaped until every observed member has exited.
+#[cfg(target_os = "linux")]
+pub struct OwnedProcessSession {
+    root: linux::Process,
+    settled: bool,
+}
+
+#[cfg(target_os = "linux")]
+impl OwnedProcessSession {
+    pub fn capture(pid: u32) -> io::Result<Self> {
+        let root = linux::Process::leader(pid)?;
+        if root.identity.session != pid {
+            return Err(io::Error::other("PTY child is not our session leader"));
+        }
+        Ok(Self {
+            root,
+            settled: false,
+        })
+    }
+
+    pub async fn wait(&self) -> io::Result<ExitStatus> {
+        self.root.wait_without_reaping().await
+    }
+
+    pub async fn terminate(&mut self) -> io::Result<()> {
+        self.root.verify_anchor()?;
+        // Reuse pidfd descendant capture for jobs that escaped into a new session
+        // but are still children at cancellation. This is not a daemon sandbox.
+        let descendants = super::CancelledDescendants::capture(Some(self.root.pid))?;
+        let cleanup = async {
+            tokio::time::timeout(Duration::from_secs(5), async {
+                loop {
+                    let members = self.root.session_members()?;
+                    // Signal job groups before the shell, including background jobs.
+                    for member in members.iter().filter(|m| m.pid != self.root.pid) {
+                        member.signal(nix::libc::SIGKILL)?;
+                    }
+                    self.root.signal(nix::libc::SIGKILL)?;
+                    let mut exited = true;
+                    for member in &members {
+                        exited &= member.exited()?;
+                    }
+                    if exited
+                        && self
+                            .root
+                            .session_members()?
+                            .iter()
+                            .all(|m| m.exited().unwrap_or(false))
+                    {
+                        return Ok::<_, io::Error>(());
+                    }
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "PTY session did not exit"))?
+        };
+        let (session, descendants) = tokio::join!(cleanup, descendants.terminate());
+        let result = session.and(descendants);
+        self.settled = result.is_ok();
+        result
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for OwnedProcessSession {
+    fn drop(&mut self) {
+        if !self.settled {
+            // Last-resort cancellation safety. No numeric PID/PGID signalling.
+            if let Ok(members) = self.root.session_members() {
+                for member in members {
+                    let _ = member.signal(nix::libc::SIGKILL);
+                }
+            }
+            tracing::error!(
+                pid = self.root.pid,
+                "PTY owner dropped without confirmed wait/cleanup"
+            );
+        }
+    }
+}
+
 impl Drop for OwnedProcessGroup {
     fn drop(&mut self) {
         #[cfg(target_os = "linux")]
@@ -191,7 +274,7 @@ mod linux {
     pub(super) struct Identity {
         parent: u32,
         pub group: u32,
-        session: u32,
+        pub(super) session: u32,
         pub start: u64,
     }
 
@@ -261,6 +344,14 @@ mod linux {
         }
 
         pub fn members(&self) -> io::Result<Vec<Self>> {
+            self.find_members(true)
+        }
+
+        pub fn session_members(&self) -> io::Result<Vec<Self>> {
+            self.find_members(false)
+        }
+
+        fn find_members(&self, same_group: bool) -> io::Result<Vec<Self>> {
             self.verify_anchor()?;
             let mut members = Vec::new();
             for entry in std::fs::read_dir("/proc")? {
@@ -273,7 +364,7 @@ mod linux {
                     Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
                     Err(error) => return Err(error),
                 };
-                if observed.group != self.identity.group
+                if (same_group && observed.group != self.identity.group)
                     || observed.session != self.identity.session
                 {
                     continue;

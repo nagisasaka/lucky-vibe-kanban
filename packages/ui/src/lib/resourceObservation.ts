@@ -41,6 +41,10 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
     total !== null && total > 0 && available !== null && available <= total
       ? ((total - available) / total) * 100
       : null;
+  const swapTotal = known(system.swap_total_bytes);
+  const swapUsed = known(system.swap_used_bytes);
+  const validSwap =
+    !stale && swapTotal !== null && swapUsed !== null && swapUsed <= swapTotal;
   const disks = Array.isArray(root.disks) ? root.disks : [];
   const matches = disks.filter((d) => record(d).target === 'worktree_base');
   const observation = record(
@@ -68,6 +72,22 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
     cpu: stale ? null : percent(known(record(system.cpu_usage).percent)),
     duration: number(record(system.cpu_usage).sampling_duration_ms),
     ram: stale ? null : ram,
+    memory: {
+      used:
+        stale || ram === null || total === null || available === null
+          ? null
+          : total - available,
+      total: stale ? null : total,
+    },
+    swap: {
+      used: validSwap ? swapUsed : null,
+      total: validSwap ? swapTotal : null,
+      percent: validSwap
+        ? swapTotal === 0
+          ? 0
+          : (swapUsed / swapTotal) * 100
+        : null,
+    },
     disk: {
       percent: validDisk ? diskPercent : null,
       used: validDisk ? diskUsed : null,
