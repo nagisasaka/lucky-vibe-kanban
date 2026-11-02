@@ -501,8 +501,10 @@ function AgentConfigurationSettingsContent({
       setDiff(null);
       setPending(null);
     } catch (nextError) {
-      if (mounted.current) setErrorDetail(errorDiagnostic(nextError));
-      setError(agentSettingsErrorCode(nextError));
+      if (mounted.current) {
+        setErrorDetail(errorDiagnostic(nextError));
+        setError(agentSettingsErrorCode(nextError));
+      }
     } finally {
       if (mounted.current) setBusy(false);
     }
