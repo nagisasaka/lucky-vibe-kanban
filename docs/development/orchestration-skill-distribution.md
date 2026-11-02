@@ -6,7 +6,7 @@
 
 取得日時 `2026-11-02T10:10:33Z`、version `1.0.40`、release_id `pluginrel_6ae855d3ee948191aad1136167077267`。plugin_id `plugin_asdk_app_6ad4b7896d3c819193e998d31d059e3d`、USER / PRIVATE。引き継ぎ添付全体は47,829 bytes、SHA-256 `7837ce00cbe889e9031881c879018ae0c14962ed7d178d8d7bbba9f35c78b4c3`。全4ファイル、欠落・サイズ制限なし、Skill全文45,198 UTF-8 bytesを確認した。生スナップショットはGit対象外の添付に保持し、配布には含めない。
 
-`plugins/lvk-orchestration/openai/` の3設定ファイルはこの登録版とJSON値が一致（末尾の余分な空行のみ整理）。versionは登録前の基準値であり、新版登録済みという意味ではない。App ID・表示・接続・認証の変更を伴わずに本文と参照資料を更新する。Claudeは `.claude-plugin/plugin.json` と `.mcp.json` のパッケージ形式を用い、接続先は作成時に明示する。実際の認証・インストールは対象クライアントで別途確認する。
+`plugins/lvk-orchestration/openai/` の3設定ファイルは、更新用の両manifestのversionを `1.0.41` に変更した点を除き、この登録版とJSON値が一致（末尾の余分な空行のみ整理）。Claude側manifestも同じ候補版 `1.0.41` に揃える。これは配布候補の版であり、新版登録済みという意味ではない。App ID・表示・接続・認証の変更を伴わずに本文と参照資料を更新する。Claudeは `.claude-plugin/plugin.json` と `.mcp.json` のパッケージ形式を用い、接続先は作成時に明示する。実際の認証・インストールは対象クライアントで別途確認する。
 
 ## 旧配置と新配置
 
@@ -48,10 +48,12 @@ ChatGPTはレビュー修正を同じ実装Sessionへ戻し、登録側の後発
 
 ## 確認の境界
 
-基本確認はfrontmatter、相対リンク、全参照資料の同梱、両zipの内容一致、登録版設定の保持、差分検査。アプリbuildや製品E2Eはこの文書・配布変更の確認には含めない。
+基本確認はfrontmatter、相対リンク、全参照資料の同梱、両zipの内容一致、登録版設定の保持（version差分のみ）、差分検査。アプリbuildや製品E2Eはこの文書・配布変更の確認には含めない。
 
 LOCAL-236→238への手順適用では、相互リンクとCancelledの後にも旧IssueとWorkspaceのarchive・物理削除の確認が残る。未承認なら旧片付けを確認待ちとし、238の独立作業を止めない。既承認の同対象・範囲なら再確認しない。部分移管は旧Issueを閉じず、人間の単純なキャンセルから自動archiveを導かない。これは文書上のwalkthroughであり、236/238を再操作した結果ではない。
 
 ChatGPT登録・参照資料の実読、Claudeアカウントへのインストール/有効化/実利用、実MCP認証・App接続は未確認。版を分けた大型評価・fixtureや新たな配信MCPは追加しない。実利用で改善し、このIssue全体の完了はChatGPT側の登録・実読確認まで引き継ぐ。
 
-今回の実行では、標準 `quick_validate.py` はPyYAML未導入で実行不能だった（合格扱いしない）。代わりにPython標準ライブラリでfrontmatterの必須値、全相対リンク、7参照資料、登録設定のJSON値一致（整形前にはbyte一致も確認）、配布scriptの構文を確認した。依存追加は行っていない。配布script自体も両zipを生成し、リンク・同梱内容・CRCを検査する。
+初回候補作成Runでは、標準 `quick_validate.py` はPyYAML未導入で実行不能だった（合格扱いしない）。代わりにPython標準ライブラリでfrontmatterの必須値、全相対リンク、7参照資料、登録設定のJSON値一致（整形前にはbyte一致も確認）、配布scriptの構文を確認した。依存追加は行っていない。配布script自体も両zipを生成し、リンク・同梱内容・CRCを検査する。
+
+配布前レビュー補正では、通常のIssue／Workspace archiveにも適用する一般安全規則を `references/auto-merge.md` に独立させ、移管後の片付け責任から参照する形にした。ルートの利用意図はmergeや移管なしのarchiveも対象とする。言語の共通原則にはCodex自身の説明・完了報告・質問・人間承認要求も明示し、固定schema・技術リテラル・原文引用を翻訳しない境界を保持した。元の添付全文と照合した意味の保持であり、archive実行や権限の拡張ではない。

@@ -11,7 +11,7 @@ Help humans stay immersed in one evolving project: pass ideas to LVK, experience
 
 - Respect current user intent, design decisions and authorization. Discussion alone does not authorize execution. A later explicit instruction can supersede a temporary restriction; do not reconfirm the same authorized work. Delegate managed Workspace changes to its responsible coding agent.
 - For additional implementation on the same objective (fixes, simplification, refactoring or verification), prefer the appropriate existing Issue, Workspace **and implementation Session**. Run/Goal completion alone does not justify a new Session. Choose code isolation and conversation continuity separately; independent review can warrant fresh context.
-- Write coding-agent requests and user-facing reports in the user's language, unless explicitly directed otherwise. Preserve technical literals and fixed schemas; do not translate source code, comments or repository artifacts unless the task requires it.
+- Write coding-agent requests and user-facing reports in the user's conversation language, unless explicitly directed otherwise. Ask coding agents, including Codex, to provide their own user-facing explanations, completion reports, questions and human-approval requests in that same language whenever the execution protocol permits. Preserve technical literals, original quotations and fixed schemas; do not translate source code, comments or repository artifacts unless the task requires it.
 - Distinguish accepted execution from completion. Normally return to the conversation after confirmed delegation; wait when the user explicitly asks for completed results. Never claim unattended monitoring without a real mechanism.
 - Verify applicable merge, publication, Wiki, archive and physical deletion results separately. Unknown or failed outcomes are not success. Respect execution denials, permissions and supported recovery; retain stable request IDs after uncertain writes.
 
@@ -24,7 +24,7 @@ Read only the references relevant to the user's intent and planned operation; ea
 | Discuss philosophy, UX or design; choose how much to delegate; report findings | [Using LVK](references/using-lvk.md) |
 | Create/reuse Issue, Workspace or Session; start/continue execution; check status or wait | [Execution](references/execution.md) |
 | Investigate source, request REVIEW, review specifications or share review evidence | [Investigation](references/investigation.md) |
-| Start/check Auto-merge, validation, publication or Wiki; resume failed work; replace/transfer an Issue, close old work, archive or clean up folders (even without a merge) | [Auto-merge, transfer and cleanup](references/auto-merge.md) |
+| Start/check Auto-merge, validation, publication or Wiki; resume failed work; replace/transfer an Issue, close old work; archive an Issue/Workspace or clean up folders (even without a merge or transfer) | [Auto-merge, transfer and cleanup](references/auto-merge.md) |
 | Record Todos, Design Notes, priority or tags | [Records](references/records.md) |
 | Try unmerged changes, prepare or check a preview | [Previews](references/previews.md) |
 | Develop LVK itself; switch/restart its development server | [LVK development](references/lvk-development.md) |

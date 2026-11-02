@@ -34,9 +34,13 @@ For the same objective, first assess the existing Issue, Workspace and Session u
 - After a full handoff, use `Cancelled` if the old Issue will not continue, or `Done` if its own objective was achieved. Do not close the old Issue for a partial migration. Preserve each past run's actual outcome; later success must not rewrite earlier failure or cancellation.
 - When the AI marks the old Issue `Cancelled` as part of a migration, complete the cleanup gate below.
 
+## General Issue and Workspace archiving
+
+Apply these rules to every Issue or Workspace archive, including ordinary archive requests unrelated to a transfer. First verify the deployed implementation's behaviour; do not assume archiving physically deletes a worktree. If it does, even an explicit MCP archive request requires one confirmation identifying the target and worktree deletion scope, unless the user has already approved that same target and scope. Do not execute while the target is busy or bypass a busy rejection. Verify and report actual archive and physical-deletion outcomes separately, including deletion failures. This confirmation does not replace other deletion safeguards.
+
 ## Cleanup completion gate
 
-For an AI-directed complete transfer that leaves the old Issue Cancelled, record cleanup explicitly for the old Issue and every child Workspace. Confirm idle state and that required results, evidence and uncommitted work do not survive only in the old folders. Read deployed archive behaviour and current confirmation scope before action. Even an explicit archive request requires one confirmation identifying worktree deletion when it is destructive, unless that same target and scope are already approved; this does not replace other deletion safeguards. Busy refusal stops that archive attempt; do not bypass it.
+For an AI-directed complete transfer that leaves the old Issue Cancelled, record cleanup explicitly for the old Issue and every child Workspace. Confirm idle state and that required results, evidence and uncommitted work do not survive only in the old folders. Apply the general Issue and Workspace archiving rules above; this gate adds responsibility for cleanup after a transfer.
 
 Read back Issue archive, each Workspace archive and physical deletion independently, including deletion errors or uncertain outcomes. Report cleanup as **unprocessed**, **awaiting confirmation**, **complete**, or **failed (with details)**. Cancelled alone is never cleanup complete. Awaiting confirmation holds only old cleanup; independent successor work can proceed. A human's simple Run cancellation or Cancelled status change grants no automatic archive permission.
 
