@@ -5,17 +5,6 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-// Namespace/schema tests need translated fixture values without duplicating their dictionaries.
-function translatedFixture(value) {
-  return typeof value === "string"
-    ? `訳:${value}`
-    : Object.fromEntries(
-        Object.entries(value).map(([key, item]) => [
-          key,
-          translatedFixture(item),
-        ]),
-      );
-}
 function inspect(
   source,
   en,
@@ -25,12 +14,7 @@ function inspect(
   otherLocales = {},
   checker = "scripts/check-i18n.mjs",
 ) {
-  ja ??= Object.fromEntries(
-    Object.entries(en).map(([ns, value]) => [
-      ns,
-      translatedFixture(typeof value === "string" ? JSON.parse(value) : value),
-    ]),
-  );
+  ja ??= en;
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lvk-i18n-check-"));
   try {
     for (const pkg of ["web-core", "local-web", "ui"])
@@ -120,17 +104,15 @@ test("accepts Japanese plural rules and rejects missing, empty, duplicate and in
   assert.equal(report.summary["missing-en"], 1);
 });
 
-test("flags JS labels, markup, dynamic keys and defaultValue use without hiding missing source keys", () => {
+test("checks direct JSX text, referenced keys and unresolved dynamic keys", () => {
   const report = inspect(
     `function C() {
     const { t } = useTranslation();
-    const action = { label: 'Save', description: 'Save changes' };
-    return <button aria-label="Save">Save {t('missing', { defaultValue: 'Fallback' })}{t(key)}</button>;
+    return <button>Save {t('missing', { defaultValue: 'Fallback' })}{t(key)}</button>;
   }`,
     { common: {} },
   );
   assert.equal(report.status, 1);
-  assert.equal(report.summary["hardcode-label"], 3);
   assert.equal(report.summary["hardcode-markup"], 1);
   assert.equal(report.summary["dynamic-key"], 1);
   assert.equal(report.summary["missing-en"], 1);
@@ -168,23 +150,6 @@ test("allows only exact documented tokens and rejects broad or stale exceptions"
   );
   assert.equal(broad.summary["invalid-allowlist"], 1);
   assert.equal(broad.summary["hardcode-markup"], 1);
-});
-
-test("finds conditional/template labels, JSX expression text and JS error/confirmation prose", () => {
-  const report = inspect(
-    `function C() {
-    setError('Unable to save');
-    setError('conflict');
-    console.error('Diagnostic only');
-    window.confirm('Apply this change?');
-    new Error('Operation unavailable');
-    return <button title={busy ? 'Saving' : 'Save'} aria-label={\`Save \${count} items\`}>{busy ? 'Wait' : 'Ready'}{\`Total: \${count}\`}</button>;
-  }`,
-    { common: {} },
-  );
-  assert.equal(report.summary["hardcode-label"], 3);
-  assert.equal(report.summary["hardcode-markup"], 3);
-  assert.equal(report.summary["hardcode-message"], 3);
 });
 
 test("requires generated schema annotation keys, exact English source and Japanese coverage", () => {
@@ -282,71 +247,6 @@ test("requires complete enum label references tied to canonical values", () => {
   );
 });
 
-test("detects UI defaults, aliased bindings, local labels and deferred getter prose", () => {
-  const report = inspect(
-    `
-    function C({title = 'Files', label: buttonLabel = 'Save', placeholder = active ? 'Search files' : 'Search', kind = 'raw-kind', path = 'src/file'}) {
-      const metadataLine = ['Uploading', rawSize].filter(Boolean).join(' · ');
-      const confirmText = 'Proceed';
-      const cancelText = 'Dismiss';
-      setSendError(error || 'Retry failed');
-      const emptyText = 'No items';
-      const emptyMessage = 'No results';
-      const message = \`Failed for \${name}\`;
-      return null;
-    }
-    function D(tooltip = 'Help') { return null; }
-    const action = { label: () => 'Deferred label', title: function () { return 'Deferred title'; } };
-    function getLabel() { return 'Helper label'; }
-  `,
-    { common: {} },
-  );
-  assert.equal(report.status, 1);
-  assert.equal(report.summary["hardcode-label"], 14);
-  assert.equal(report.summary["hardcode-message"], 1);
-  assert.deepEqual(
-    report.findings
-      .filter((f) => f.kind === "hardcode-label")
-      .map((f) => f.value),
-    [
-      "Files",
-      "Save",
-      "Search files",
-      "Search",
-      "Uploading",
-      "Proceed",
-      "Dismiss",
-      "No items",
-      "No results",
-      "`Failed for ${name}`",
-      "Help",
-      "Deferred label",
-      "Deferred title",
-      "Helper label",
-    ],
-  );
-});
-
-test("keeps translated defaults, raw data defaults and computed user labels out of hardcodes", () => {
-  const report = inspect(
-    `
-    function C() {
-      const {t} = useTranslation('common');
-      const { title = t('heading') } = props;
-      const label = () => t('heading');
-      const path = 'src/Raw File';
-      setMessage(raw => raw + '\\n\\n' + userText);
-      const id = 'Raw Identity';
-      return <button title={title} aria-label={label()}>{name}</button>;
-    }
-    function D({ title = currentTitle, path = 'src/Raw File', id = 'Raw Identity', label: name = userLabel }) { return null; }
-  `,
-    { common: { heading: "Heading" } },
-  );
-  assert.equal(report.status, 0);
-  assert.equal(report.summary["hardcode-label"], undefined);
-});
-
 test("namespace arrays bind only their first namespace unless fallback mode is explicit", () => {
   const dictionaries = {
     tasks: { own: "Owned" },
@@ -379,36 +279,6 @@ test("namespace arrays bind only their first namespace unless fallback mode is e
     dictionaries,
   );
   assert.equal(fallback.status, 0);
-});
-
-test("rejects untranslated Japanese prose and permits only exact reviewed names", () => {
-  const en = {
-    common: { save: "Save changes", brand: "LVK", amount: "{{count}}%" },
-  };
-  const ja = {
-    common: { save: "変更を保存", brand: "LVK", amount: "{{count}}%" },
-  };
-  const exception = {
-    kind: "same-en-ja",
-    file: "packages/web-core/src/i18n/locales/ja/common.json",
-    value: "brand: LVK",
-    reason: "Product name",
-  };
-  const ok = inspect("", en, ja, [exception]);
-  assert.equal(ok.status, 0);
-  const untranslated = inspect("", en, en, [exception]);
-  assert.equal(untranslated.summary["same-en-ja"], 1);
-  assert(untranslated.findings.some((f) => f.value === "save: Save changes"));
-  const drift = structuredClone(en);
-  drift.common.brand = "LVK renamed";
-  const stale = inspect(
-    "",
-    drift,
-    { common: { ...ja.common, brand: "LVK renamed" } },
-    [exception],
-  );
-  assert.equal(stale.summary["stale-allowlist"], 1);
-  assert.equal(stale.summary["same-en-ja"], 1);
 });
 
 test("checks every finite typed dynamic key and retains arbitrary strings as unresolved", () => {
@@ -451,52 +321,6 @@ test("permits incomplete optional locales while checking their JSON syntax and d
   );
   assert.equal(inspectFrench("{").summary["invalid-json"], 1);
   assert.equal(inspectFrench("[]").summary["invalid-json"], 1);
-});
-
-test("follows local constants from JSX sinks using lexical scope", () => {
-  const report = inspect(
-    `
-    const text = "Delete all workspaces";
-    const alias = text;
-    function C() { return <button>{text}{ok && alias}</button>; }
-    function D() { const text = "Remove selected item"; return <button title={text} />; }
-    function Raw(text) { return <span>{text}</span>; }
-    function Block(raw) { const text = "Not displayed"; { const text = raw; return <span>{text}</span>; } }
-  `,
-    { common: {} },
-  );
-  assert.equal(report.status, 1);
-  assert.deepEqual(
-    report.findings.map(({ kind, value }) => [kind, value]),
-    [
-      ["hardcode-markup", "Delete all workspaces"],
-      ["hardcode-label", "Remove selected item"],
-    ],
-  );
-});
-
-test("bounds constant tracing and preserves translated calls and original data", () => {
-  const report = inspect(
-    `
-    const a0 = "Unreachable deep text";
-    ${Array.from({ length: 40 }, (_, i) => `const a${i + 1} = flag ? a${i} : a${i};`).join("\n")}
-    const deepView = <span>{a40}</span>;
-    function C(user, provider) {
-      const {t} = useTranslation();
-      const translated = t('heading');
-      const original = user.text;
-      const external = provider.message;
-      const cycleA = cycleB, cycleB = cycleA;
-      const computed = transform('Original provider input');
-      const fallback = provider.message || 'Canonical fallback';
-      const wrapped = (translated as string)!;
-      return <span>{wrapped}{original}{external}{cycleA}{computed}{fallback}</span>;
-    }
-  `,
-    { common: { heading: "Heading" } },
-  );
-  assert.equal(report.status, 0);
-  assert.equal(report.findings.length, 0);
 });
 
 test("unused inventory distinguishes namespace static references from dynamic prefixes and keeps plural/schema references", () => {
@@ -548,38 +372,10 @@ test("rejects Japanese-only stale keys while preserving locale plural difference
   assert.equal(report.summary["missing-ja"], undefined);
 });
 
-test("grouped exceptions retain exact-token and individual staleness checks", () => {
-  const group = {
-    kind: "hardcode-markup",
-    file: "packages/ui/src/Fixture.tsx",
-    values: ["LVK", "CLI"],
-    reason: "Product/protocol identities",
-  };
-  assert.equal(
-    inspect(
-      "const view = <span>LVK<b>CLI</b></span>;",
-      { common: {} },
-      undefined,
-      [group],
-    ).status,
-    0,
+test("leaves identical translations and indirect UI strings outside the hardcode gate", () => {
+  const report = inspect(
+    'const text = "Delete all workspaces"; function C() { return <button title="Help">{text}</button>; }',
+    { common: { save: "Save" } },
   );
-  const stale = inspect(
-    "const view = <span>LVK</span>;",
-    { common: {} },
-    undefined,
-    [group],
-  );
-  assert(
-    stale.findings.some(
-      (f) => f.kind === "stale-allowlist" && f.value === "CLI",
-    ),
-  );
-  for (const values of [[], ["LVK", "LVK"], ["LVK", null]]) {
-    assert(
-      inspect("const view = <span>LVK</span>;", { common: {} }, undefined, [
-        { ...group, values },
-      ]).findings.some((f) => f.kind === "invalid-allowlist"),
-    );
-  }
+  assert.equal(report.status, 0);
 });

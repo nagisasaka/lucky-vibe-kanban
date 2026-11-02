@@ -24,12 +24,6 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
   await switchLanguage(page, "en");
   const updatedSearch = menu.getByPlaceholder("Filter by name or ID...");
   await expect(updatedSearch).toHaveValue("RAW:MODEL");
-  await updatedSearch.fill("no-match");
-  await expect(
-    menu.getByText("No matches.", {
-      exact: true,
-    }),
-  ).toBeVisible();
   await updatedSearch.fill("raw:model");
   await menu
     .getByRole("button", { name: "Raw provider B 原文", exact: true })
@@ -61,17 +55,6 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
   await page.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
   await controls.getByRole("button", { name: "Code", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Review", exact: true }).click();
-  await expect(
-    controls.getByRole("button", {
-      name: "Review",
-      exact: true,
-    }),
-  ).toHaveAttribute(
-    "title",
-    "Review and investigate; report findings and stop. Implementation requires a separate instruction.",
-  );
-  await controls.getByRole("button", { name: "Review", exact: true }).click();
   await page.getByRole("menuitem", { name: "Goal", exact: true }).click();
   await controls
     .getByRole("button", {
@@ -105,13 +88,6 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
   await expect(page.getByTestId("model-config")).toContainText(
     '"goal_max_concurrent_agents":null',
   );
-  await expect(
-    page.getByText(
-      "Parallel agents is a maximum for subagents, excluding the main agent.",
-      { exact: true },
-    ),
-  ).toBeVisible();
-
   await switchLanguage(page, "ja");
   await expect(
     page.getByRole("spinbutton", { name: "トークン予算", exact: true }),

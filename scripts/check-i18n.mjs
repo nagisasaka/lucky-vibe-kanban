@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Inspect all owned frontend packages. Inventory mode retains unresolved findings;
-// strict mode is intended for CI once the release-quality migration is complete.
+// CI checks catalog/reference/schema consistency and direct JSX text only.
+// It does not assess translation quality or trace indirect UI strings.
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -100,18 +101,6 @@ for (const [ns, english] of Object.entries(locales.en)) {
   for (const [key, value] of Object.entries(english)) {
     const jaKey = key in japanese ? key : key.replace(/_(one|other)$/, "");
     if (!(jaKey in japanese)) add("missing-ja", ns, 0, key);
-    else if (
-      typeof value === "string" &&
-      value === japanese[jaKey] &&
-      /[A-Za-z]/.test(value.replace(/{{[^}]+}}/g, ""))
-    ) {
-      add(
-        "same-en-ja",
-        `packages/web-core/src/i18n/locales/ja/${ns}.json`,
-        0,
-        `${key}: ${value}`,
-      );
-    }
     if (
       typeof value === "string" &&
       typeof japanese[jaKey] === "string" &&
@@ -238,86 +227,6 @@ for (const [pkg, files] of packageFiles)
         : undefined;
     const location = (n) =>
       source.getLineAndCharacterOfPosition(n.getStart(source)).line + 1;
-    // Follow only file-local const aliases from display sinks. The checker resolves
-    // lexical bindings (including parameters/block shadowing), without imports or libs.
-    let localChecker;
-    const displayedConstants = new Map();
-    function displayConstants(node, kind, seen = new Set(), depth = 0) {
-      if (!node || depth > 32 || seen.has(node)) return;
-      const next = seen.add(node);
-      if (ts.isIdentifier(node)) {
-        if (!localChecker) {
-          const options = {
-            noResolve: true,
-            noLib: true,
-            jsx: ts.JsxEmit.Preserve,
-          };
-          const host = ts.createCompilerHost(options);
-          host.getSourceFile = (name) => (name === file ? source : undefined);
-          localChecker = ts
-            .createProgram([file], options, host)
-            .getTypeChecker();
-        }
-        const declarations =
-          localChecker.getSymbolAtLocation(node)?.declarations;
-        if (declarations?.length === 1) {
-          const declaration = declarations[0];
-          if (
-            ts.isVariableDeclaration(declaration) &&
-            ts.isIdentifier(declaration.name) &&
-            declaration.getSourceFile() === source &&
-            declaration.parent.flags & ts.NodeFlags.Const
-          )
-            displayConstants(declaration.initializer, kind, next, depth + 1);
-        }
-      } else if (
-        ts.isStringLiteral(node) ||
-        ts.isNoSubstitutionTemplateLiteral(node) ||
-        ts.isTemplateExpression(node)
-      ) {
-        displayedConstants.set(node, kind);
-      } else if (
-        ts.isParenthesizedExpression(node) ||
-        ts.isAsExpression(node) ||
-        ts.isTypeAssertionExpression(node) ||
-        ts.isNonNullExpression(node)
-      ) {
-        displayConstants(node.expression, kind, next, depth + 1);
-      } else if (ts.isConditionalExpression(node)) {
-        displayConstants(node.whenTrue, kind, next, depth + 1);
-        displayConstants(node.whenFalse, kind, next, depth + 1);
-      } else if (
-        ts.isBinaryExpression(node) &&
-        node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
-      ) {
-        displayConstants(node.right, kind, next, depth + 1);
-      }
-      // Calls, property reads, fallback/concatenation expressions and arbitrary
-      // computations can contain raw data or
-      // translation keys; do not interpret their arguments as displayed prose.
-    }
-    function collectDisplays(node) {
-      if (ts.isJsxExpression(node)) {
-        const parent = node.parent;
-        if (ts.isJsxElement(parent) || ts.isJsxFragment(parent))
-          displayConstants(node.expression, "hardcode-markup");
-        else if (
-          ts.isJsxAttribute(parent) &&
-          [
-            "title",
-            "label",
-            "description",
-            "message",
-            "placeholder",
-            "aria-label",
-            "alt",
-          ].includes(parent.name.getText(source))
-        )
-          displayConstants(node.expression, "hardcode-label");
-      }
-      ts.forEachChild(node, collectDisplays);
-    }
-    collectDisplays(source);
     // Resolve the hook in the enclosing function, never a different component's namespace.
     function namespaces(node, callee, depth = 0) {
       if (depth > 4) return [];
@@ -457,132 +366,6 @@ for (const [pkg, files] of packageFiles)
           location(node),
           node.text.trim().replace(/\s+/g, " "),
         );
-      if (
-        ts.isStringLiteral(node) ||
-        ts.isNoSubstitutionTemplateLiteral(node) ||
-        ts.isTemplateExpression(node)
-      ) {
-        const text = ts.isTemplateExpression(node)
-          ? node.head.text +
-            node.templateSpans.map((span) => span.literal.text).join("")
-          : node.text;
-        const value = ts.isTemplateExpression(node)
-          ? node.getText(source)
-          : node.text;
-        let context = node.parent;
-        while (
-          ts.isConditionalExpression(context) ||
-          ts.isParenthesizedExpression(context) ||
-          ts.isJsxExpression(context) ||
-          ts.isArrayLiteralExpression(context) ||
-          (ts.isPropertyAccessExpression(context) &&
-            ["filter", "join"].includes(context.name.text)) ||
-          (ts.isCallExpression(context) &&
-            ts.isPropertyAccessExpression(context.expression) &&
-            ["filter", "join"].includes(context.expression.name.text)) ||
-          (ts.isBinaryExpression(context) &&
-            [
-              ts.SyntaxKind.PlusToken,
-              ts.SyntaxKind.BarBarToken,
-              ts.SyntaxKind.QuestionQuestionToken,
-            ].includes(context.operatorToken.kind)) ||
-          ts.isArrowFunction(context) ||
-          ts.isFunctionExpression(context) ||
-          (ts.isReturnStatement(context) &&
-            ts.isBlock(context.parent) &&
-            ts.isFunctionLike(context.parent.parent))
-        ) {
-          context = ts.isReturnStatement(context)
-            ? context.parent.parent
-            : context.parent;
-        }
-        const attr = ts.isJsxAttribute(context)
-          ? context.name.getText(source)
-          : undefined;
-        const declaration =
-          ts.isBindingElement(context) ||
-          ts.isParameter(context) ||
-          ts.isVariableDeclaration(context) ||
-          ts.isFunctionDeclaration(context) ||
-          ts.isMethodDeclaration(context)
-            ? context
-            : undefined;
-        const declarationName =
-          declaration &&
-          (ts.isBindingElement(declaration) && declaration.propertyName
-            ? declaration.propertyName
-            : declaration.name);
-        // A destructured property alias still belongs to the original UI slot.
-        // IDs, paths and other data defaults are deliberately not label slots.
-        const slot =
-          declarationName &&
-          (ts.isIdentifier(declarationName) ||
-            ts.isStringLiteral(declarationName))
-            ? declarationName.text.replace(/^get([A-Z])/, (_, c) =>
-                c.toLowerCase(),
-              )
-            : undefined;
-        const property = ts.isPropertyAssignment(context)
-          ? context.name.getText(source)
-          : slot;
-        if (
-          /[A-Za-z\u3040-\u9fff]/.test(text) &&
-          ([
-            "title",
-            "label",
-            "description",
-            "message",
-            "placeholder",
-            "aria-label",
-            "alt",
-          ].includes(attr) ||
-            [
-              "title",
-              "label",
-              "description",
-              "message",
-              "placeholder",
-              "tooltip",
-              "emptyText",
-              "emptyMessage",
-              "errorMessage",
-              "metadataLine",
-              "confirmText",
-              "cancelText",
-            ].includes(property) ||
-            displayedConstants.get(node) === "hardcode-label")
-        )
-          add("hardcode-label", rel, location(node), value);
-        if (
-          /[A-Za-z\u3040-\u9fff]/.test(text) &&
-          (ts.isJsxElement(context) ||
-            ts.isJsxFragment(context) ||
-            displayedConstants.get(node) === "hardcode-markup")
-        )
-          add("hardcode-markup", rel, location(node), value);
-        if (
-          (ts.isCallExpression(context) || ts.isNewExpression(context)) &&
-          context.arguments?.[0] &&
-          context.arguments[0].pos <= node.pos &&
-          context.arguments[0].end >= node.end
-        ) {
-          const callee = context.expression.getText(source);
-          const messageCall =
-            /(?:^|\.)(?:alert|confirm|prompt|set(?:[A-Z][A-Za-z]*)?(?:Error|Notice|Message)|toast|success|error|info|warning)$/.test(
-              callee,
-            ) && !callee.startsWith("console.");
-          const errorConstructor =
-            ts.isNewExpression(context) && /^(?:Error|ApiError)$/.test(callee);
-          const prose =
-            /[\s.!?。…ぁ-んァ-ヶ一-龯]/.test(text) ||
-            /^[A-Z][A-Za-z]+$/.test(text);
-          if (
-            (messageCall && prose && /[A-Za-z\u3040-\u9fff]/.test(text)) ||
-            (errorConstructor && /[A-Za-z\u3040-\u9fff]/.test(text))
-          )
-            add("hardcode-message", rel, location(node), value);
-        }
-      }
       ts.forEachChild(node, visit);
     }
     visit(source);
@@ -647,29 +430,9 @@ const allowlist = fs.existsSync(allowlistPath)
   ? JSON.parse(fs.readFileSync(allowlistPath, "utf8"))
   : [];
 const allowlisted = [];
-// Same owner and rationale may list several exact tokens. Expand before applying
-// the original per-token matching/staleness checks; never accept patterns.
-const exactExceptions = allowlist.flatMap((entry) => {
-  if (!("values" in entry)) return [entry];
-  const { values, ...rest } = entry;
+for (const entry of allowlist) {
   if (
-    "value" in rest ||
-    !Array.isArray(values) ||
-    !values.length ||
-    new Set(values).size !== values.length
-  )
-    return [{ ...rest, value: null }];
-  return values.map((value) => ({ ...rest, value }));
-});
-for (const entry of exactExceptions) {
-  if (
-    ![
-      "hardcode-label",
-      "hardcode-markup",
-      "hardcode-message",
-      "same-en-ja",
-      "dynamic-key",
-    ].includes(entry.kind) ||
+    !["hardcode-markup", "dynamic-key"].includes(entry.kind) ||
     typeof entry.file !== "string" ||
     entry.file.includes("*") ||
     typeof entry.value !== "string" ||

@@ -105,6 +105,11 @@ describe('split Wiki navigation and article surfaces', () => {
     const article = renderToStaticMarkup(createElement(WorkspaceWikiArticle));
     expect(article).toContain('Wiki files could not be loaded.');
     expect(article).not.toContain('Raw internal Wiki secret');
+    const navigation = renderToStaticMarkup(
+      createElement(WorkspaceWikiNavigation)
+    );
+    expect(navigation).toContain('Wiki files could not be loaded.');
+    expect(navigation).not.toContain('Raw internal Wiki secret');
   });
 
   it('renders a directory tree in the sidebar and keeps the body only in the main surface', async () => {

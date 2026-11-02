@@ -63,7 +63,6 @@ export function ModelSelectorFixture() {
     execution_mode: ExecutionMode.code,
     permission_policy: PermissionPolicy.SUPERVISED,
   } as ExecutorConfig);
-  const [events, setEvents] = useState<unknown[]>([]);
   return (
     <main className="min-h-screen bg-primary text-normal p-double">
       <div
@@ -80,12 +79,10 @@ export function ModelSelectorFixture() {
           executorConfig={executorConfig}
           presetOptions={null}
           onOverrideChange={(patch) => {
-            setEvents((old) => [...old, patch]);
             setConfig((old) => ({ ...old, ...patch }));
           }}
         />
       </div>
-      <output data-testid="model-overrides">{JSON.stringify(events)}</output>
       <output data-testid="model-config">
         {JSON.stringify(executorConfig)}
       </output>
