@@ -1144,10 +1144,15 @@ impl Codex {
                 "mcp_servers.vibe_kanban.env.VK_AGENT_RUN_ID".into(),
                 Value::String(agent.clone()),
             );
-            config.insert(
-                "mcp_servers.vibe_kanban.tools.integration_action.approval_mode".into(),
-                Value::String("approve".into()),
-            );
+            // Auto-merge must inspect resource ownership before any managed
+            // operation. Authorize only this snapshot read alongside the existing
+            // integration action, on the host-bound worker connection only.
+            for tool in ["integration_action", "list_shared_resources"] {
+                config.insert(
+                    format!("mcp_servers.vibe_kanban.tools.{tool}.approval_mode"),
+                    Value::String("approve".into()),
+                );
+            }
         }
         if let Some(memory) = env
             .get("LVK_REPOSITORY_MEMORY_INSTRUCTIONS")
@@ -2601,7 +2606,10 @@ mod integration_worker_tests {
     use super::*;
     #[test]
     fn worker_stdio_binding_is_thread_scoped_and_retained_on_resume() {
-        let codex: Codex = serde_json::from_value(serde_json::json!({})).unwrap();
+        let codex: Codex = serde_json::from_value(serde_json::json!({
+            "profile": "worker-profile"
+        }))
+        .unwrap();
         let mut env = ExecutionEnv::new(RepoContext::default(), false, String::new());
         env.insert("VK_AGENT_RUN_ID", "worker");
         let normal = codex.build_thread_start_params_with_resources(Path::new("/workspace"), &env);
@@ -2644,6 +2652,27 @@ mod integration_worker_tests {
         assert_eq!(config["mcp_servers.vibe_kanban.env.MCP_PORT"], "4020");
         assert!(!config.contains_key("mcp_servers.vibe_kanban.env_vars"));
         assert!(!config.contains_key("mcp_servers.other.command"));
+        assert_eq!(config["profile"], "worker-profile");
+        let mut approval_keys: Vec<_> = config
+            .keys()
+            .filter(|key| key.ends_with("approval_mode"))
+            .map(String::as_str)
+            .collect();
+        approval_keys.sort_unstable();
+        assert_eq!(
+            approval_keys,
+            [
+                "mcp_servers.vibe_kanban.tools.integration_action.approval_mode",
+                "mcp_servers.vibe_kanban.tools.list_shared_resources.approval_mode",
+            ]
+        );
+        for key in &approval_keys {
+            assert_eq!(config[*key], "approve");
+            assert!(!normal.config.as_ref().unwrap().contains_key(*key));
+        }
+        assert_eq!(worker.approval_policy, normal.approval_policy);
+        assert_eq!(worker.sandbox, normal.sandbox);
+
         assert_eq!(
             resume_params_from("same-native-session".into(), worker.clone()).config,
             worker.config
