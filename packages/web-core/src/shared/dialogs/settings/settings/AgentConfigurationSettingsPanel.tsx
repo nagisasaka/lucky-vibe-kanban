@@ -1158,7 +1158,7 @@ function AgentConfigurationSettingsContent({
           <div className="flex justify-end gap-2">
             <PrimaryButton
               variant="tertiary"
-              value={t('agentConfiguration.ui.cancel')}
+              value={t('common:buttons.cancel')}
               onClick={() => setCopyPreview(null)}
               disabled={busy}
             />
@@ -1502,7 +1502,7 @@ function DiffConfirmation({
       <div className="flex justify-end gap-2">
         <PrimaryButton
           variant="tertiary"
-          value={t('agentConfiguration.ui.cancel')}
+          value={t('common:buttons.cancel')}
           onClick={onCancel}
           disabled={busy}
         />

@@ -347,7 +347,6 @@ export function ExecutorConfigForm({
           show={isDirty}
           saving={saving}
           saveDisabled={hasValidationErrors}
-          unsavedMessage={t('settings.agents.save.unsavedChanges')}
           onSave={handleSave}
           onDiscard={onDiscard}
         />

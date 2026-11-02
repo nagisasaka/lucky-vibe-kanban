@@ -95,8 +95,6 @@ export function createAgentToolsFixture(params: URLSearchParams) {
   ): Response | Promise<Response> | undefined => {
     if (!url.pathname.startsWith("/api/agent-tools")) return;
     if (method === "GET") {
-      if (params.get("toolsState") === "loading")
-        return new Promise<Response>(() => {});
       if (params.get("toolsState") === "error")
         return error(failure ?? "invalid_configuration");
       return json(inventory);

@@ -677,7 +677,6 @@ export function AgentsSettingsSection() {
         show={isDirty}
         saving={profilesSaving}
         saveDisabled={!!profilesError}
-        unsavedMessage={t('settings.agents.save.unsavedChanges')}
         onSave={handleSave}
         onDiscard={handleDiscard}
       />

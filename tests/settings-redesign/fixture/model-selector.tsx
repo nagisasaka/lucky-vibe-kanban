@@ -25,25 +25,11 @@ const models = [
   },
 ];
 const config = {
-  models: params.has("empty-models")
-    ? []
-    : params.has("single-provider")
-      ? [
-          models[0],
-          ...Array.from({ length: 8 }, (_, index) => ({
-            id: `raw-extra:${index}`,
-            name: `Raw extra ${index}`,
-            provider_id: "alpha",
-            reasoning_options: [],
-          })),
-        ]
-      : models,
-  providers: params.has("single-provider")
-    ? [{ id: "alpha", name: "Raw provider A 原文" }]
-    : [
-        { id: "alpha", name: "Raw provider A 原文" },
-        { id: "beta", name: "Raw provider B 原文" },
-      ],
+  models,
+  providers: [
+    { id: "alpha", name: "Raw provider A 原文" },
+    { id: "beta", name: "Raw provider B 原文" },
+  ],
   default_model: "alpha/raw:model",
   agents: [{ id: "raw-agent", label: "Raw agent 原文", is_default: true }],
   permissions: [
@@ -63,8 +49,8 @@ export function useUserSystem() {
 }
 export function useModelSelectorConfig() {
   return {
-    config: params.has("no-model-config") ? null : config,
-    loadingModels: params.has("model-loading"),
+    config,
+    loadingModels: false,
     error: params.has("model-error")
       ? "Raw provider secret /internal/path"
       : null,

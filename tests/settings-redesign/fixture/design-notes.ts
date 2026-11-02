@@ -56,9 +56,8 @@ export function createDesignNoteFixture(params: URLSearchParams) {
     if (!url.pathname.startsWith(root)) return;
     const state = params.get("notesState");
     if (method === "GET") {
-      if (state === "loading") return new Promise<Response>(() => {});
       if (state === "error") return json(null, 503);
-      if (url.pathname === root) return json(state === "empty" ? [] : [note]);
+      if (url.pathname === root) return json([note]);
       if (url.pathname.endsWith("/additions/addition-fixture/history"))
         return json([addition]);
       if (url.pathname.endsWith("/history")) return json(history);

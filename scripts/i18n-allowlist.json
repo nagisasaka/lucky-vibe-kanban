@@ -38,25 +38,13 @@
   {
     "kind": "hardcode-markup",
     "file": "packages/web-core/src/features/onboarding/ui/LandingPage.tsx",
-    "value": "--dangerously-skip-permissions",
-    "reason": "Literal executor command-line flag inside a code element; translation would change executable syntax."
-  },
-  {
-    "kind": "hardcode-markup",
-    "file": "packages/web-core/src/features/onboarding/ui/LandingPage.tsx",
-    "value": "--yolo",
+    "values": ["--dangerously-skip-permissions", "--yolo"],
     "reason": "Literal executor command-line flag inside a code element; translation would change executable syntax."
   },
   {
     "kind": "hardcode-label",
     "file": "packages/ui/src/components/ModelProviderIcon.tsx",
-    "value": "Anthropic",
-    "reason": "Provider brand name in icon alternative text; preserve the external company identity."
-  },
-  {
-    "kind": "hardcode-label",
-    "file": "packages/ui/src/components/ModelProviderIcon.tsx",
-    "value": "OpenAI",
+    "values": ["Anthropic", "OpenAI"],
     "reason": "Provider brand name in icon alternative text; preserve the external company identity."
   },
   {
@@ -68,19 +56,21 @@
   {
     "kind": "same-en-ja",
     "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "arena.title: Arena",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "workflow.nodes.arena.label: Arena",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "workflow.dashboard.issueId: Issue ID",
+    "values": [
+      "arena.title: Arena",
+      "workflow.nodes.arena.label: Arena",
+      "workflow.dashboard.issueId: Issue ID",
+      "typeahead.commandGroups.product.badge: VK",
+      "kanban.workspaceSidebar.prFilterLabel: PR",
+      "electricDiagnostics.id: ID",
+      "electricDiagnostics.issue_id: Issue ID",
+      "electricDiagnostics.issue: Issue",
+      "navbar.tabs.wiki: Wiki",
+      "navbar.tabs.todos: TODO",
+      "navbar.tabs.git: Git",
+      "onboarding.github: GitHub",
+      "workspaceFiles.mime: MIME"
+    ],
     "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
@@ -92,74 +82,14 @@
   {
     "kind": "same-en-ja",
     "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "typeahead.commandGroups.product.badge: VK",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "kanban.workspaceSidebar.prFilterLabel: PR",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
     "value": "createMode.workspaceDialog.pathPlaceholder: C:\\path\\to\\project",
     "reason": "Literal Windows path example; preserve filesystem syntax."
   },
   {
     "kind": "same-en-ja",
     "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "electricDiagnostics.id: ID",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "electricDiagnostics.issue_id: Issue ID",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "electricDiagnostics.issue: Issue",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "navbar.tabs.wiki: Wiki",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "navbar.tabs.todos: TODO",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "navbar.tabs.git: Git",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "onboarding.github: GitHub",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
     "value": "notificationSounds.FAHHHHH: Fahhhhh",
     "reason": "Registered sound asset name."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/common.json",
-    "value": "workspaceFiles.mime: MIME",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
     "kind": "same-en-ja",
@@ -176,25 +106,21 @@
   {
     "kind": "same-en-ja",
     "file": "packages/web-core/src/i18n/locales/ja/tasks.json",
-    "value": "workspaceGoal.goal: Goal",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/tasks.json",
-    "value": "executionInspection.wiki: OpenWiki",
+    "values": [
+      "workspaceGoal.goal: Goal",
+      "executionInspection.wiki: OpenWiki"
+    ],
     "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
     "kind": "same-en-ja",
     "file": "packages/web-core/src/i18n/locales/ja/settings.json",
-    "value": "settings.general.github.cliSetup.help.homebrew.brewSh: brew.sh",
-    "reason": "Homebrew website name."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/settings.json",
-    "value": "settings.general.git.title: Git",
+    "values": [
+      "settings.general.git.title: Git",
+      "settings.general.notifications.webPush: Web Push",
+      "executorSchemas.codex.execution_mode.options.goal: Goal",
+      "executorSchemas.claude_code.claude_code_router.title: Claude Code Router"
+    ],
     "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
@@ -202,12 +128,6 @@
     "file": "packages/web-core/src/i18n/locales/ja/settings.json",
     "value": "settings.general.git.branchPrefix.placeholder: vk",
     "reason": "Existing branch-prefix example; preserve identifier syntax."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/settings.json",
-    "value": "settings.general.notifications.webPush: Web Push",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
     "kind": "same-en-ja",
@@ -220,18 +140,6 @@
     "file": "packages/web-core/src/i18n/locales/ja/settings.json",
     "value": "auth.setup.mcpUrl: MCP URL: {{url}}",
     "reason": "Protocol/acronym URL label with original URL interpolation."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/settings.json",
-    "value": "executorSchemas.codex.execution_mode.options.goal: Goal",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
-  },
-  {
-    "kind": "same-en-ja",
-    "file": "packages/web-core/src/i18n/locales/ja/settings.json",
-    "value": "executorSchemas.claude_code.claude_code_router.title: Claude Code Router",
-    "reason": "Established product/feature name or technical identifier label used unchanged in Japanese UI."
   },
   {
     "kind": "dynamic-key",
@@ -260,13 +168,7 @@
   {
     "kind": "hardcode-markup",
     "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
-    "value": "recovery-token",
-    "reason": "Literal server CLI subcommand, kept executable."
-  },
-  {
-    "kind": "hardcode-markup",
-    "file": "packages/local-web/src/app/auth/ServerAccessGate.tsx",
-    "value": "setup-token",
+    "values": ["recovery-token", "setup-token"],
     "reason": "Literal server CLI subcommand, kept executable."
   },
   {
@@ -302,25 +204,13 @@
   {
     "kind": "hardcode-markup",
     "file": "packages/ui/src/components/ChatThinkingMessage.tsx",
-    "value": "Codex",
-    "reason": "Provider product name."
-  },
-  {
-    "kind": "hardcode-markup",
-    "file": "packages/ui/src/components/ChatThinkingMessage.tsx",
-    "value": "Claude Code",
+    "values": ["Codex", "Claude Code"],
     "reason": "Provider product name."
   },
   {
     "kind": "hardcode-markup",
     "file": "packages/ui/src/components/ResourceSummary.tsx",
-    "value": "CPU",
-    "reason": "Standard hardware identifier."
-  },
-  {
-    "kind": "hardcode-markup",
-    "file": "packages/ui/src/components/ResourceSummary.tsx",
-    "value": "RAM",
+    "values": ["CPU", "RAM"],
     "reason": "Standard hardware identifier."
   },
   {
@@ -572,49 +462,23 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/lib/mcpStrategies.ts",
-    "value": "`Expected object at path: ${mcp_config.servers_path.join('.')}`",
-    "reason": "Internal full-JSON validator diagnostic including raw canonical configuration path/server identity. Its sole UI consumer McpSettingsSection stores semantic validationError/addServerFailed/saveFailed codes and translates safe guidance; raw exceptions are not normal UI text."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/mcpStrategies.ts",
-    "value": "`Missing required field at path: ${mcp_config.servers_path.join('.')}`",
-    "reason": "Internal full-JSON validator diagnostic including raw canonical configuration path/server identity. Its sole UI consumer McpSettingsSection stores semantic validationError/addServerFailed/saveFailed codes and translates safe guidance; raw exceptions are not normal UI text."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/mcpStrategies.ts",
-    "value": "Servers configuration must be an object",
-    "reason": "Internal full-JSON validator diagnostic including raw canonical configuration path/server identity. Its sole UI consumer McpSettingsSection stores semantic validationError/addServerFailed/saveFailed codes and translates safe guidance; raw exceptions are not normal UI text."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/mcpStrategies.ts",
-    "value": "`Unknown preconfigured server '${serverKey}'`",
+    "values": [
+      "`Expected object at path: ${mcp_config.servers_path.join('.')}`",
+      "`Missing required field at path: ${mcp_config.servers_path.join('.')}`",
+      "Servers configuration must be an object",
+      "`Unknown preconfigured server '${serverKey}'`"
+    ],
     "reason": "Internal full-JSON validator diagnostic including raw canonical configuration path/server identity. Its sole UI consumer McpSettingsSection stores semantic validationError/addServerFailed/saveFailed codes and translates safe guidance; raw exceptions are not normal UI text."
   },
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/actions/index.ts",
-    "value": "Failed to push changes",
-    "reason": "Internal unknown-result sentinel from the action executor. ActionsProvider renders actionErrorMessage, whose unknown-error branch always translates tasks:actionErrors.unconfirmed; this diagnostic never becomes normal dialog copy. Specific force-push/no-script/running conditions keep their typed guidance."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/actions/index.ts",
-    "value": "Failed to run setup script",
-    "reason": "Internal unknown-result sentinel from the action executor. ActionsProvider renders actionErrorMessage, whose unknown-error branch always translates tasks:actionErrors.unconfirmed; this diagnostic never becomes normal dialog copy. Specific force-push/no-script/running conditions keep their typed guidance."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/actions/index.ts",
-    "value": "Failed to run cleanup script",
-    "reason": "Internal unknown-result sentinel from the action executor. ActionsProvider renders actionErrorMessage, whose unknown-error branch always translates tasks:actionErrors.unconfirmed; this diagnostic never becomes normal dialog copy. Specific force-push/no-script/running conditions keep their typed guidance."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/actions/index.ts",
-    "value": "Failed to run archive script",
+    "values": [
+      "Failed to push changes",
+      "Failed to run setup script",
+      "Failed to run cleanup script",
+      "Failed to run archive script"
+    ],
     "reason": "Internal unknown-result sentinel from the action executor. ActionsProvider renders actionErrorMessage, whose unknown-error branch always translates tasks:actionErrors.unconfirmed; this diagnostic never becomes normal dialog copy. Specific force-push/no-script/running conditions keep their typed guidance."
   },
   {
@@ -698,13 +562,10 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/hooks/useProfiles.ts",
-    "value": "Read launch profiles explicitly before editing.",
-    "reason": "Internal explicit-sensitive-read/client precondition before profile persistence. The sole UI consumer of useMachineProfiles, AgentsSettingsSection, translates semantic load/delete/save notices without raw bodies; legacy useProfiles has no current callers. Native scope/revision/consent guard is unchanged."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/hooks/useProfiles.ts",
-    "value": "Machine client is required",
+    "values": [
+      "Read launch profiles explicitly before editing.",
+      "Machine client is required"
+    ],
     "reason": "Internal explicit-sensitive-read/client precondition before profile persistence. The sole UI consumer of useMachineProfiles, AgentsSettingsSection, translates semantic load/delete/save notices without raw bodies; legacy useProfiles has no current callers. Native scope/revision/consent guard is unchanged."
   },
   {
@@ -722,25 +583,13 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/features/workflow/model/workflowEditorDraft.ts",
-    "value": "Invalid workflow graph",
-    "reason": "Internal graph/draft parse invariant. useWorkflowEditorDraft stores a parse-error flag and WorkflowTemplateEditorPage renders workflow.errors.parseGraphFailed; malformed persisted draft decode returns null instead of exposing this body. Preserve original graph bytes/repair behavior."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/features/workflow/model/workflowEditorDraft.ts",
-    "value": "Invalid draft",
+    "values": ["Invalid workflow graph", "Invalid draft"],
     "reason": "Internal graph/draft parse invariant. useWorkflowEditorDraft stores a parse-error flag and WorkflowTemplateEditorPage renders workflow.errors.parseGraphFailed; malformed persisted draft decode returns null instead of exposing this body. Preserve original graph bytes/repair behavior."
   },
   {
     "kind": "hardcode-label",
     "file": "packages/web-core/src/features/workflow/model/workflowGraph.ts",
-    "value": "Note",
-    "reason": "Canonical graph title default/legacy repair value, not a presentation label. The only live UI create handlers explicitly supply localized Note/Stage titles; canvas placeholders are translated. Translating model normalization would mutate existing graph/draft data and confuse user-authored names equal to these values."
-  },
-  {
-    "kind": "hardcode-label",
-    "file": "packages/web-core/src/features/workflow/model/workflowGraph.ts",
-    "value": "Stage",
+    "values": ["Note", "Stage"],
     "reason": "Canonical graph title default/legacy repair value, not a presentation label. The only live UI create handlers explicitly supply localized Note/Stage titles; canvas placeholders are translated. Translating model normalization would mutate existing graph/draft data and confuse user-authored names equal to these values."
   },
   {
@@ -776,13 +625,10 @@
   {
     "kind": "hardcode-message",
     "file": "packages/local-web/src/app/navigation/AppNavigation.ts",
-    "value": "Remote Access hosts are no longer supported",
-    "reason": "Internal rejection of retired Remote Access/Cloud-export destinations. No live UI calls goToExport and current navigation is local-only; preserve this routing guard instead of reviving unsupported features or treating an invalid developer destination as normal UI copy."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/local-web/src/app/navigation/AppNavigation.ts",
-    "value": "Cloud export is no longer available",
+    "values": [
+      "Remote Access hosts are no longer supported",
+      "Cloud export is no longer available"
+    ],
     "reason": "Internal rejection of retired Remote Access/Cloud-export destinations. No live UI calls goToExport and current navigation is local-only; preserve this routing guard instead of reviving unsupported features or treating an invalid developer destination as normal UI copy."
   },
   {
@@ -794,13 +640,10 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx",
-    "value": "Remote hosts are no longer supported",
-    "reason": "Internal rejected nonlocal settings target. Current host context exposes only the canonical local target; this guard prevents a retired remote-host path rather than adding public settings copy or permitting another host."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/dialogs/settings/settings/SettingsHostContext.tsx",
-    "value": "Remote Access hosts are no longer supported",
+    "values": [
+      "Remote hosts are no longer supported",
+      "Remote Access hosts are no longer supported"
+    ],
     "reason": "Internal rejected nonlocal settings target. Current host context exposes only the canonical local target; this guard prevents a retired remote-host path rather than adding public settings copy or permitting another host."
   },
   {
@@ -854,19 +697,11 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/lib/remoteApi.ts",
-    "value": "Failed to bulk update projects",
-    "reason": "Internal bulk-transport diagnostic. Projects helper has no current caller; issue consumers use semantic action/drop notices or console-only reorder logging. Project-status persistence is caught by RemoteProjectsSettingsSection and renders current-locale save uncertainty, without the transport body."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/remoteApi.ts",
-    "value": "Failed to bulk update issues",
-    "reason": "Internal bulk-transport diagnostic. Projects helper has no current caller; issue consumers use semantic action/drop notices or console-only reorder logging. Project-status persistence is caught by RemoteProjectsSettingsSection and renders current-locale save uncertainty, without the transport body."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/remoteApi.ts",
-    "value": "Failed to bulk update project statuses",
+    "values": [
+      "Failed to bulk update projects",
+      "Failed to bulk update issues",
+      "Failed to bulk update project statuses"
+    ],
     "reason": "Internal bulk-transport diagnostic. Projects helper has no current caller; issue consumers use semantic action/drop notices or console-only reorder logging. Project-status persistence is caught by RemoteProjectsSettingsSection and renders current-locale save uncertainty, without the transport body."
   },
   {
@@ -884,29 +719,23 @@
   {
     "kind": "hardcode-message",
     "file": "packages/ui/src/components/image-node.tsx",
-    "value": "Failed to download attachment",
-    "reason": "Internal URL/download diagnostic. The URL query exposes resolved URL data only; downloadBlobUrl rejection is caught by its sole click handler and logged. No error body is rendered over the user image or alt text."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/ui/src/components/image-node.tsx",
-    "value": "Cloud attachment is unavailable",
+    "values": [
+      "Failed to download attachment",
+      "Cloud attachment is unavailable"
+    ],
     "reason": "Internal URL/download diagnostic. The URL query exposes resolved URL data only; downloadBlobUrl rejection is caught by its sole click handler and logged. No error body is rendered over the user image or alt text."
   },
   {
     "kind": "hardcode-label",
     "file": "packages/web-core/src/shared/lib/api.ts",
-    "value": "`Request failed with status ${response.status}`",
+    "values": [
+      "`Request failed with status ${response.status}`",
+      "API request failed"
+    ],
     "reason": "Internal shared HTTP/Result diagnostic, not owned presentation copy. Preserve status, typed error_data and original backend diagnostics for classification/recovery; owned UI consumers render semantic notices or explicitly labelled original details. QueryClient logging is diagnostic-only. Do not translate arbitrary transport bodies here."
   },
   {
     "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/api.ts",
-    "value": "API request failed",
-    "reason": "Internal shared HTTP/Result diagnostic, not owned presentation copy. Preserve status, typed error_data and original backend diagnostics for classification/recovery; owned UI consumers render semantic notices or explicitly labelled original details. QueryClient logging is diagnostic-only. Do not translate arbitrary transport bodies here."
-  },
-  {
-    "kind": "hardcode-label",
     "file": "packages/web-core/src/shared/lib/api.ts",
     "value": "API request failed",
     "reason": "Internal shared HTTP/Result diagnostic, not owned presentation copy. Preserve status, typed error_data and original backend diagnostics for classification/recovery; owned UI consumers render semantic notices or explicitly labelled original details. QueryClient logging is diagnostic-only. Do not translate arbitrary transport bodies here."
@@ -932,13 +761,10 @@
   {
     "kind": "hardcode-message",
     "file": "packages/web-core/src/shared/lib/electric/collections.ts",
-    "value": "`Fallback response for \"${table}\" is not an object`",
-    "reason": "Internal fallback snapshot validation/fetch diagnostic. Preserve table identifiers and raw response diagnostics; SyncErrorIndicator renders localized uncertainty/status and ElectricTestPage places originals under labelled collapsed details. Retry/readiness behavior is unchanged."
-  },
-  {
-    "kind": "hardcode-message",
-    "file": "packages/web-core/src/shared/lib/electric/collections.ts",
-    "value": "`Fallback response missing \"${table}\" array`",
+    "values": [
+      "`Fallback response for \"${table}\" is not an object`",
+      "`Fallback response missing \"${table}\" array`"
+    ],
     "reason": "Internal fallback snapshot validation/fetch diagnostic. Preserve table identifiers and raw response diagnostics; SyncErrorIndicator renders localized uncertainty/status and ElectricTestPage places originals under labelled collapsed details. Retry/readiness behavior is unchanged."
   },
   {

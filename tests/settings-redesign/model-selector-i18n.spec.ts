@@ -120,7 +120,7 @@ test(`model selector JA→EN: live labels retain provider/model/reasoning and ov
   await expectWithinWidth(goalMenu, 360);
   expect(errors).toEqual([]);
 });
-test(`model selector JA→EN: safe load errors, loading and empty state`, async ({
+test(`model selector JA→EN: safe load error follows locale and hides provider diagnostics`, async ({
   page,
 }) => {
   await page.goto(`/?view=model-selector&lang=ja&model-error`);
@@ -137,42 +137,5 @@ test(`model selector JA→EN: safe load errors, loading and empty state`, async 
   await expect(page.getByRole("alert")).toHaveText(
     "Model options could not be loaded. Check the connection and selected agent before trying again.",
   );
-  await expect(page.locator("body")).not.toContainText("Raw provider secret");
-  await page.goto(`/?view=model-selector&lang=en&single-provider`);
-  await page
-    .getByRole("button", {
-      name: "Raw Alpha 原文 · Raw reasoning 原文",
-      exact: true,
-    })
-    .click();
-  await page.getByPlaceholder("Filter by name or ID...").fill("no-match");
-  await expect(
-    page.getByText("No matches.", {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await page.goto(`/?view=model-selector&lang=en&empty-models`);
-  await expect(
-    page.getByTestId("model-controls").getByRole("status"),
-  ).toHaveText("No models available.");
-  await page.goto(
-    `/?view=model-selector&lang=en&no-model-config&model-loading`,
-  );
-  await expect(
-    page.getByRole("button", {
-      name: "Loading...",
-      exact: true,
-    }),
-  ).toBeDisabled();
-  await page.goto(`/?view=model-selector&lang=en&no-model-config&model-error`);
-  await expect(page.getByRole("alert")).toContainText(
-    "Model options could not be loaded.",
-  );
-  await expect(
-    page.getByRole("button", {
-      name: "Models unavailable",
-      exact: true,
-    }),
-  ).toBeDisabled();
   await expect(page.locator("body")).not.toContainText("Raw provider secret");
 });

@@ -192,7 +192,7 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={saving}>
-            {t('settings.general.tags.dialog.buttons.cancel')}
+            {t('common:buttons.cancel')}
           </Button>
           <Button
             onClick={handleSave}

@@ -304,14 +304,9 @@
       "pushFailed": "Failed",
       "forcePush": "Force Push",
       "forcePushing": "Force Pushing...",
-      "creating": "Creating...",
       "createPr": "Create PR"
     },
     "errors": {
-      "changeTargetBranch": "Failed to change target branch",
-      "pushChanges": "Failed to push changes",
-      "mergeChanges": "Failed to merge changes",
-      "rebaseBranch": "Failed to rebase branch",
       "branchStatusUnavailable": "Unable to fetch branch status. You can still change the target branch."
     },
     "pr": {
@@ -322,16 +317,7 @@
     "actions": {
       "title": "Git Actions",
       "changeTarget": "Change target",
-      "prMerged": "PR #{{number}} is already merged",
-      "loginRequired": {
-        "title": "Sign in to manage git actions",
-        "description": "Sign in to Lucky Vibe Kanban so you can push branches, merge changes, or open pull requests for this task.",
-        "action": "Sign in"
-      }
-    },
-    "mergeDialog": {
-      "title": "Merge Changes",
-      "description": "This will merge your changes into the target branch. Are you sure you want to continue?"
+      "prMerged": "PR #{{number}} is already merged"
     },
     "createRepo": {
       "dialog": {
@@ -451,32 +437,7 @@
     }
   },
   "taskFormDialog": {
-    "createTitle": "Create New Task",
-    "editTitle": "Edit Task",
-    "titlePlaceholder": "Task title...",
-    "descriptionPlaceholder": "Add more details (optional). Type @ to search files.",
-    "statusLabel": "Status",
-    "statusOptions": {
-      "todo": "To Do",
-      "inprogress": "In Progress",
-      "inreview": "In Review",
-      "done": "Done",
-      "cancelled": "Cancelled"
-    },
-    "startLabel": "Start",
-    "attachFile": "Attach file",
-    "dropImagesHere": "Drop images here",
-    "updating": "Updating...",
-    "updateTask": "Update Task",
-    "starting": "Starting...",
-    "creating": "Creating...",
-    "create": "Create",
-    "discardDialog": {
-      "title": "Discard unsaved changes?",
-      "description": "You have unsaved changes. Are you sure you want to discard them?",
-      "continueEditing": "Continue Editing",
-      "discardChanges": "Discard Changes"
-    }
+    "attachFile": "Attach file"
   },
   "restoreLogsDialog": {
     "title": "Confirm Retry",

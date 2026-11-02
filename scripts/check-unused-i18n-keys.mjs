@@ -13,14 +13,20 @@
  */
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..");
+const rootIndex = process.argv.indexOf("--root");
+const ROOT =
+  rootIndex < 0
+    ? path.resolve(__dirname, "..")
+    : path.resolve(process.argv[rootIndex + 1]);
 
 const localesDir = path.join(ROOT, "packages/web-core/src/i18n/locales/en");
-const namespaces = ["common", "settings", "projects", "tasks", "organization"];
+const namespaces = fs
+  .readdirSync(localesDir)
+  .filter((name) => name.endsWith(".json"))
+  .map((name) => name.slice(0, -5));
 const srcDirs = [
   "packages/web-core/src",
   "packages/local-web/src",
@@ -47,25 +53,21 @@ function flattenKeys(obj, prefix = "") {
 }
 
 /** Collect the concatenated contents of every .ts/.tsx file under `dirs`. */
+// This conservative inventory is not a reachability proof: comments/raw strings
+// and broad dynamic prefixes can keep unused keys alive. Review candidates before deletion.
 function loadSourceContent(dirs) {
-  let content = "";
-  for (const dir of dirs) {
-    try {
-      const files = execSync(
-        `find "${dir}" \\( -name "*.tsx" -o -name "*.ts" \\) ! -name "*.d.ts"`,
-        { encoding: "utf8" },
-      )
-        .trim()
-        .split("\n")
-        .filter(Boolean);
-      for (const file of files) {
-        content += fs.readFileSync(file, "utf8") + "\n";
-      }
-    } catch {
-      // directory might not exist
-    }
-  }
-  return content;
+  return dirs
+    .flatMap((dir) =>
+      fs.readdirSync(dir, { withFileTypes: true }).map((entry) => {
+        const file = path.join(dir, entry.name);
+        return entry.isDirectory()
+          ? loadSourceContent([file])
+          : /\.tsx?$/.test(file) && !/\.d\.ts$/.test(file)
+            ? fs.readFileSync(file, "utf8")
+            : "";
+      }),
+    )
+    .join("\n");
 }
 
 function isStaticKeyUsed(key, ns, src) {
@@ -92,7 +94,9 @@ function isDynamicallyUsed(key, ns, src) {
       `"${prefix}." +`,
       `'${prefix}.' + `,
       `"${prefix}." + `,
-      `${ns}:${prefix}.`,
+      `\`${ns}:${prefix}.`,
+      `'${ns}:${prefix}.' +`,
+      `"${ns}:${prefix}." +`,
     ];
     if (patterns.some((p) => src.includes(p))) return true;
   }
@@ -102,14 +106,7 @@ function isDynamicallyUsed(key, ns, src) {
   for (const suffix of pluralSuffixes) {
     if (key.endsWith(suffix)) {
       const baseKey = key.slice(0, -suffix.length);
-      if (
-        src.includes(`'${baseKey}'`) ||
-        src.includes(`"${baseKey}"`) ||
-        src.includes(`\`${baseKey}\``) ||
-        src.includes(`'${baseKey}',`) ||
-        src.includes(`"${baseKey}",`)
-      )
-        return true;
+      if (isStaticKeyUsed(baseKey, ns, src)) return true;
     }
   }
 
@@ -165,6 +162,11 @@ for (const ns of namespaces) {
     unusedByNs[ns] = unused;
     totalUnused += unused.length;
   }
+}
+
+if (process.argv.includes("--json")) {
+  console.log(JSON.stringify({ totalUnused, unusedByNs }));
+  process.exit(listOnly || totalUnused === 0 ? 0 : 1);
 }
 
 if (totalUnused === 0) {

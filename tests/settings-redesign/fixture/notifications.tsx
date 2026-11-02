@@ -52,12 +52,7 @@ const rows: Notification[] = [
 ];
 type Patch = { id: string; changes: { seen: boolean } };
 let snapshot = {
-  data:
-    params.has("notifications-empty") ||
-    params.has("notifications-loading") ||
-    params.has("notifications-error")
-      ? []
-      : rows,
+  data: params.has("notifications-error") ? [] : rows,
   writes: [] as Patch[][],
   navigations: [] as unknown[],
   retries: 0,
@@ -77,7 +72,7 @@ export function useNotifications() {
     groupedNotifications,
     unseenCount: groupedNotifications.filter((g) => !g.seen).length,
     enabled: !params.has("notifications-disabled"),
-    isLoading: params.has("notifications-loading"),
+    isLoading: false,
     error: params.has("notifications-error")
       ? { message: "Raw internal secret" }
       : null,

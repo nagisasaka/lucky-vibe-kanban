@@ -153,10 +153,6 @@
       "error": "強制Pushの結果を確認できませんでした。再試行する前にリモートブランチを確認してください。"
     },
     "errors": {
-      "changeTargetBranch": "ターゲットブランチの変更に失敗しました",
-      "mergeChanges": "変更のマージに失敗しました",
-      "pushChanges": "変更のプッシュに失敗しました",
-      "rebaseBranch": "ブランチのリベースに失敗しました",
       "branchStatusUnavailable": "ブランチのステータスを取得できません。ターゲットブランチの変更は引き続き可能です。"
     },
     "labels": {
@@ -170,16 +166,7 @@
     "actions": {
       "title": "Gitアクション",
       "changeTarget": "ターゲットを変更",
-      "prMerged": "PR #{{number}} は既にマージされています",
-      "loginRequired": {
-        "title": "Git アクションを管理するにはサインインしてください",
-        "description": "このタスクでブランチのプッシュ、変更のマージ、プルリクエストの作成を行うには Lucky Vibe Kanban にサインインしてください。",
-        "action": "サインイン"
-      }
-    },
-    "mergeDialog": {
-      "title": "変更をマージ",
-      "description": "変更をターゲットブランチにマージします。続行してもよろしいですか？"
+      "prMerged": "PR #{{number}} は既にマージされています"
     },
     "createRepo": {
       "dialog": {
@@ -209,7 +196,6 @@
     },
     "states": {
       "createPr": "PRを作成",
-      "creating": "作成中...",
       "merge": "マージ",
       "merged": "マージ完了！",
       "merging": "マージ中...",
@@ -304,32 +290,7 @@
     }
   },
   "taskFormDialog": {
-    "createTitle": "新規タスクを作成",
-    "editTitle": "タスクを編集",
-    "titlePlaceholder": "タスクのタイトル",
-    "descriptionPlaceholder": "詳細を追加（オプション）。@でファイルを検索できます。",
-    "statusLabel": "ステータス",
-    "statusOptions": {
-      "todo": "未着手",
-      "inprogress": "進行中",
-      "inreview": "レビュー中",
-      "done": "完了",
-      "cancelled": "キャンセル"
-    },
-    "startLabel": "開始",
-    "attachFile": "ファイルを添付",
-    "dropImagesHere": "画像をここにドロップ",
-    "updating": "更新中...",
-    "updateTask": "タスクを更新",
-    "starting": "開始中...",
-    "creating": "作成中...",
-    "create": "作成",
-    "discardDialog": {
-      "title": "未保存の変更を破棄しますか？",
-      "description": "未保存の変更があります。本当に破棄してもよろしいですか？",
-      "continueEditing": "編集を続ける",
-      "discardChanges": "変更を破棄"
-    }
+    "attachFile": "ファイルを添付"
   },
   "restoreLogsDialog": {
     "title": "リトライを確認",
@@ -384,7 +345,7 @@
       "copyFailed": "コピーできませんでした。全文を展開してコピーしてください。"
     },
     "you": "あなた",
-    "thinking": "考え中",
+    "thinking": "思考中",
     "todo": "タスク",
     "todos": "タスク",
     "completed": "完了",

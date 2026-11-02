@@ -378,7 +378,6 @@ export function SettingsSaveBar({
   show: boolean;
   saving: boolean;
   saveDisabled?: boolean;
-  unsavedMessage?: string;
   onSave: () => void;
   onDiscard?: () => void;
 }) {

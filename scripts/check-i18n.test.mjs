@@ -23,6 +23,7 @@ function inspect(
   allowlist = [],
   schemas = {},
   otherLocales = {},
+  checker = "scripts/check-i18n.mjs",
 ) {
   ja ??= Object.fromEntries(
     Object.entries(en).map(([ns, value]) => [
@@ -67,7 +68,7 @@ function inspect(
       );
     const result = spawnSync(
       process.execPath,
-      ["scripts/check-i18n.mjs", "--root", root, "--json"],
+      [checker, "--root", root, "--json"],
       { encoding: "utf8" },
     );
     assert.equal(result.signal, null);
@@ -496,4 +497,89 @@ test("bounds constant tracing and preserves translated calls and original data",
   );
   assert.equal(report.status, 0);
   assert.equal(report.findings.length, 0);
+});
+
+test("unused inventory distinguishes namespace static references from dynamic prefixes and keeps plural/schema references", () => {
+  const report = inspect(
+    `
+    i18n.t('tasks:active.heading');
+    i18n.t('tasks:items', {count: 2});
+    i18n.t(\`tasks:states.\${state}\`);
+  `,
+    {
+      tasks: {
+        active: { heading: "Heading", obsolete: "Old" },
+        items_one: "One",
+        items_other: "Many",
+        states: { ready: "Ready" },
+        schemaTitle: "Model",
+      },
+    },
+    undefined,
+    [],
+    {
+      codex: {
+        properties: { model: { "x-lvk-i18n-title": "tasks:schemaTitle" } },
+      },
+    },
+    {},
+    "scripts/check-unused-i18n-keys.mjs",
+  );
+  assert.equal(report.status, 1);
+  assert.deepEqual(report.unusedByNs, { tasks: ["active.obsolete"] });
+});
+
+test("rejects Japanese-only stale keys while preserving locale plural differences", () => {
+  const report = inspect(
+    "",
+    { common: { items_one: "One item", items_other: "Many items" } },
+    {
+      common: { items: "項目", stale: "古い項目" },
+      removed: { old: "旧項目" },
+    },
+  );
+  assert.equal(report.status, 1);
+  assert.deepEqual(
+    report.findings
+      .filter((f) => f.kind === "extra-ja")
+      .map((f) => `${f.file}:${f.value}`),
+    ["common:stale", "removed:old"],
+  );
+  assert.equal(report.summary["missing-ja"], undefined);
+});
+
+test("grouped exceptions retain exact-token and individual staleness checks", () => {
+  const group = {
+    kind: "hardcode-markup",
+    file: "packages/ui/src/Fixture.tsx",
+    values: ["LVK", "CLI"],
+    reason: "Product/protocol identities",
+  };
+  assert.equal(
+    inspect(
+      "const view = <span>LVK<b>CLI</b></span>;",
+      { common: {} },
+      undefined,
+      [group],
+    ).status,
+    0,
+  );
+  const stale = inspect(
+    "const view = <span>LVK</span>;",
+    { common: {} },
+    undefined,
+    [group],
+  );
+  assert(
+    stale.findings.some(
+      (f) => f.kind === "stale-allowlist" && f.value === "CLI",
+    ),
+  );
+  for (const values of [[], ["LVK", "LVK"], ["LVK", null]]) {
+    assert(
+      inspect("const view = <span>LVK</span>;", { common: {} }, undefined, [
+        { ...group, values },
+      ]).findings.some((f) => f.kind === "invalid-allowlist"),
+    );
+  }
 });

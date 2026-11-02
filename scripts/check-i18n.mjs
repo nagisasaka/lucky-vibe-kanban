@@ -125,6 +125,16 @@ for (const [ns, english] of Object.entries(locales.en)) {
         add("empty-or-invalid", `${language}/${ns}`, 0, key);
     }
 }
+// Locale plural categories may differ, but a Japanese-only base key is stale.
+const pluralBase = (key) => key.replace(/_(zero|one|two|few|many|other)$/, "");
+for (const [ns, japanese] of Object.entries(locales.ja)) {
+  const englishBases = new Set(
+    Object.keys(locales.en[ns] || {}).map(pluralBase),
+  );
+  for (const key of Object.keys(japanese))
+    if (!englishBases.has(pluralBase(key))) add("extra-ja", ns, 0, key);
+}
+
 function walkFiles(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const file = path.join(dir, entry.name);
@@ -637,7 +647,21 @@ const allowlist = fs.existsSync(allowlistPath)
   ? JSON.parse(fs.readFileSync(allowlistPath, "utf8"))
   : [];
 const allowlisted = [];
-for (const entry of allowlist) {
+// Same owner and rationale may list several exact tokens. Expand before applying
+// the original per-token matching/staleness checks; never accept patterns.
+const exactExceptions = allowlist.flatMap((entry) => {
+  if (!("values" in entry)) return [entry];
+  const { values, ...rest } = entry;
+  if (
+    "value" in rest ||
+    !Array.isArray(values) ||
+    !values.length ||
+    new Set(values).size !== values.length
+  )
+    return [{ ...rest, value: null }];
+  return values.map((value) => ({ ...rest, value }));
+});
+for (const entry of exactExceptions) {
   if (
     ![
       "hardcode-label",
