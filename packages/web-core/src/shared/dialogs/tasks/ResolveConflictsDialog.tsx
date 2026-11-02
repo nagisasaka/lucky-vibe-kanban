@@ -120,7 +120,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
     const [userSelectedProfile, setUserSelectedProfile] =
       useState<ExecutorProfileId | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<'session' | 'unconfirmed' | null>(null);
 
     const effectiveProfile = userSelectedProfile ?? resolvedDefaultProfile;
     const canSubmit = Boolean(effectiveProfile && !isSubmitting);
@@ -159,7 +159,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
         }
 
         if (!targetSessionId) {
-          setError('Failed to create session');
+          setError('session');
           setIsSubmitting(false);
           return;
         }
@@ -199,7 +199,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
         modal.hide();
       } catch (err) {
         console.error('Failed to resolve conflicts:', err);
-        setError('Failed to start conflict resolution. Please try again.');
+        setError('unconfirmed');
       } finally {
         setIsSubmitting(false);
       }
@@ -213,6 +213,7 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
       queryClient,
       selectSession,
       modal,
+      t,
     ]);
 
     const handleCancel = useCallback(() => {
@@ -275,7 +276,13 @@ const ResolveConflictsDialogImpl = create<ResolveConflictsDialogProps>(
               )}
             </div>
 
-            {error && <div className="text-sm text-destructive">{error}</div>}
+            {error && (
+              <div className="text-sm text-destructive">
+                {error === 'session'
+                  ? t('gitNotice.sessionUnconfirmed')
+                  : t('gitNotice.conflictUnconfirmed')}
+              </div>
+            )}
 
             {/* Agent/profile selector - only show when creating new session */}
             {profiles && createNewSession && (

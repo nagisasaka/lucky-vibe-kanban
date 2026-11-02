@@ -19,9 +19,9 @@ export interface PrCommentCardProps {
   className?: string;
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   try {
-    return new Date(dateStr).toLocaleString();
+    return new Date(dateStr).toLocaleString(locale);
   } catch {
     return dateStr;
   }
@@ -114,7 +114,7 @@ function FullCard({
   variant,
   className,
 }: PrCommentCardProps) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
   const isReview = commentType === 'review';
   const Icon = isReview ? Code : MessageSquare;
 
@@ -141,7 +141,9 @@ function FullCard({
           )}
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
-          <span>{formatDate(createdAt)}</span>
+          <span>
+            {formatDate(createdAt, i18n.resolvedLanguage || i18n.language)}
+          </span>
           {url && (
             <button
               type="button"
@@ -150,7 +152,7 @@ function FullCard({
                 window.open(url, '_blank', 'noopener,noreferrer');
               }}
               className="hover:text-foreground transition-colors"
-              aria-label="Open in browser"
+              aria-label={t('common:buttons.openInBrowser')}
             >
               <ExternalLink className="w-3 h-3" />
             </button>

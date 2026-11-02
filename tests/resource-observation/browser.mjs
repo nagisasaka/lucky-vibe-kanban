@@ -42,6 +42,7 @@ try {
     bundle: true,
     write: false,
     format: "iife",
+    define: { "import.meta.env.DEV": "false" },
     jsx: "automatic",
     alias: { "@": path.join(root, "packages/web-core/src") },
     nodePaths: [path.join(root, "packages/web-core/node_modules")],
@@ -75,7 +76,10 @@ try {
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.LVK_E2E_CHROMIUM,
+  });
   const page = await browser.newPage({
     viewport: { width: 1024, height: 360 },
   });
@@ -118,10 +122,11 @@ try {
     assert.equal(requests, 1, "two subscribers must share a single fetch");
     const summary = page.getByTestId("resource-summary");
     assert.doesNotMatch(await summary.innerText(), /load|swap/i);
-    await page.screenshot({
-      path: path.join(output, `${name}-header.png`),
-      animations: "disabled",
-    });
+    if (process.env.RESOURCE_SCREENSHOTS === "1")
+      await page.screenshot({
+        path: path.join(output, `${name}-header.png`),
+        animations: "disabled",
+      });
     const navItems = await page.locator("nav button").evaluateAll((items) =>
       items
         .filter((el) => el.getClientRects().length)
@@ -145,7 +150,7 @@ try {
       );
       const disk = values.disks[0].observation.value;
       await expect(page.getByTestId("resource-disk")).toHaveText(
-        `DISK ${Math.floor(disk.used_percent)}% (${Math.round(disk.used_bytes / 1e9)}GB / 1000GB)`,
+        `DISK ${Math.floor(disk.used_percent)}% (${Math.round(disk.used_bytes / 1e9).toLocaleString("en-US")}GB / 1,000GB)`,
       );
     } else {
       await expect(page.getByTestId("resource-disk")).toHaveText(
@@ -153,10 +158,11 @@ try {
       );
       await expect(page.getByTestId("resource-disk")).toHaveClass(/text-low/);
     }
-    await page.screenshot({
-      path: path.join(output, `${name}.png`),
-      animations: "disabled",
-    });
+    if (process.env.RESOURCE_SCREENSHOTS === "1")
+      await page.screenshot({
+        path: path.join(output, `${name}.png`),
+        animations: "disabled",
+      });
     const layout = await summary.evaluate((el) => ({
       right: el.getBoundingClientRect().right,
       width: innerWidth,
@@ -174,6 +180,27 @@ try {
     project: true,
   });
   await check("normal", fixture(), "text-success");
+  // One live-locale smoke; thresholds, unknowns and polling remain covered below/model tests.
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  await page.getByTestId("resource-cpu").focus();
+  const localeTooltip = page.getByRole("tooltip", { name: /^CPU/ });
+  await expect(localeTooltip).toContainText("physical host unknown");
+  const observedTime = data.timestamp.slice(11, 19);
+  await page.evaluate(() => window.__setUiLanguage("ja"));
+  await expect(page.getByTestId("resource-summary")).toHaveAttribute(
+    "aria-label",
+    "サーバーのリソース",
+  );
+  await expect(localeTooltip).toContainText("物理ホストは不明");
+  await expect(localeTooltip).toContainText(observedTime);
+  await expect(localeTooltip).toContainText("UTC");
+  await expect(page.getByTestId("resource-cpu")).toHaveText("CPU 42%");
+  await page.evaluate(() => window.__setUiLanguage("en"));
+  await expect(localeTooltip).toContainText("physical host unknown");
+  assert.equal(requests, 1, "locale changes do not refetch resources");
+  results.cases.push({ name: "live-locale-tooltip-values-and-UTC", requests });
+  await page.keyboard.press("Escape");
   await check("warning-70", fixture(70, 70, 70), "text-orange-500");
   await check("high-80-dark", fixture(80, 80, 80), "text-error", {
     dark: true,

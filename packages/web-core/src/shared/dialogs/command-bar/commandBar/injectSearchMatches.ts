@@ -1,8 +1,10 @@
+import i18n from '@/i18n/config';
 import type { Workspace } from 'shared/types';
 import { Pages, getPageActions } from '@/shared/command-bar/actions/pages';
 import type { StaticPageId, ResolvedGroup } from '@/shared/types/commandBar';
 import {
-  resolveLabel,
+  getActionLabel,
+  type ActionTranslator,
   isActionVisible,
   type ActionVisibilityContext,
 } from '@/shared/types/actions';
@@ -15,7 +17,8 @@ const INJECTABLE_PAGE_IDS = (Object.keys(Pages) as StaticPageId[]).filter(
 export function injectSearchMatches(
   searchQuery: string,
   ctx: ActionVisibilityContext,
-  workspace: Workspace | undefined
+  workspace: Workspace | undefined,
+  t: ActionTranslator = i18n.getFixedT(null, 'tasks')
 ): ResolvedGroup[] {
   const searchLower = searchQuery.toLowerCase();
 
@@ -28,7 +31,7 @@ export function injectSearchMatches(
     const items = getPageActions(id)
       .filter((a) => isActionVisible(a, ctx))
       .filter((a) => {
-        const label = resolveLabel(a, workspace);
+        const label = getActionLabel(a, ctx, workspace, t);
         return (
           label.toLowerCase().includes(searchLower) ||
           a.id.toLowerCase().includes(searchLower) ||
@@ -38,7 +41,7 @@ export function injectSearchMatches(
       })
       .map((action) => ({ type: 'action' as const, action }));
 
-    if (items.length) groups.push({ label: page.title || id, items });
+    if (items.length) groups.push({ label: page.title?.(t) || id, items });
     return groups;
   }, []);
 }

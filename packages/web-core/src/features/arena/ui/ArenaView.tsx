@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@vibe/ui/components/Button';
 import { useArenaGroup } from '@/shared/hooks/useArenaGroup';
 import { useArenaActions } from '@/shared/hooks/useArenaActions';
-import { ConfirmDialog } from '@/shared/dialogs/shared/ConfirmDialog';
+import { ConfirmDialog } from '@vibe/ui/components/ConfirmDialog';
 import {
   isActiveArenaAgentRunStatus,
   type ArenaEvent,
@@ -39,7 +39,7 @@ function ArenaHeader({
   group: ArenaGroupResponse;
   onDissolved?: () => void;
 }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const attemptTotal = group.workspaces.filter(
     (ws) => ws.purpose === 'attempt'
   ).length;
@@ -57,7 +57,9 @@ function ArenaHeader({
   ).length;
 
   const { dissolve, close } = useArenaActions(group.id, group.issue_id);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<
+    'closeFailed' | 'dissolveFailed' | null
+  >(null);
 
   const groupAlreadyPromoted = group.promoted_workspace_id != null;
   const canCloseDesign =
@@ -71,19 +73,18 @@ function ArenaHeader({
       await close.mutateAsync();
       onDissolved?.();
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.closeFailed')
-      );
+      setErrorMessage('closeFailed');
     }
   };
 
   const handleDissolve = async () => {
     setErrorMessage(null);
     const result = await ConfirmDialog.show({
-      title: t('arena.confirm.dissolveTitle'),
-      message: t('arena.confirm.dissolveMessage', { count: attemptTotal }),
-      confirmText: t('arena.actions.dissolve'),
-      cancelText: t('buttons.cancel'),
+      title: () => i18n.t('common:arena.confirm.dissolveTitle'),
+      message: () =>
+        t('arena.confirm.dissolveMessage', { count: attemptTotal }),
+      confirmText: () => i18n.t('common:arena.actions.dissolve'),
+      cancelText: () => i18n.t('common:buttons.cancel'),
       variant: 'destructive',
     });
     if (result !== 'confirmed') return;
@@ -92,9 +93,7 @@ function ArenaHeader({
       await dissolve.mutateAsync();
       onDissolved?.();
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.dissolveFailed')
-      );
+      setErrorMessage('dissolveFailed');
     }
   };
 
@@ -156,7 +155,7 @@ function ArenaHeader({
       </div>
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {errorMessage}
+          {t(`arena.errors.${errorMessage}`)}
         </p>
       ) : null}
     </div>
@@ -265,7 +264,7 @@ export function ArenaView({
   if (error) {
     return (
       <div className="p-base text-sm text-error">
-        {t('arena.errors.loadFailed', { message: (error as Error).message })}
+        {t('arena.errors.loadUnconfirmed')}
       </div>
     );
   }

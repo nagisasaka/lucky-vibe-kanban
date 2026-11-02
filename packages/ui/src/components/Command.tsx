@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import * as React from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react';
@@ -30,6 +31,7 @@ function CommandDialog({
   onOpenAutoFocus,
   ...props
 }: CommandDialogProps) {
+  const { t } = useTranslation('common');
   return (
     <Dialog {...props}>
       <DialogContent
@@ -39,7 +41,7 @@ function CommandDialog({
         onOpenAutoFocus={onOpenAutoFocus}
         aria-describedby={undefined}
       >
-        <DialogTitle className="sr-only">Command Bar</DialogTitle>
+        <DialogTitle className="sr-only">{t('commandBar.title')}</DialogTitle>
         {children}
       </DialogContent>
     </Dialog>

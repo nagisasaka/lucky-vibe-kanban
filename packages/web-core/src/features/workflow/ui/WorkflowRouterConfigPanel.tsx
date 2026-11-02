@@ -128,15 +128,10 @@ export function WorkflowRouterConfigPanel({
       <div className="flex shrink-0 items-start justify-between gap-base border-b border-secondary p-base">
         <div className="min-w-0">
           <h2 className="truncate text-sm font-semibold text-high">
-            {t('workflow.router.title', {
-              defaultValue: 'Router agent',
-            })}
+            {t('workflow.router.title')}
           </h2>
           <p className="mt-1 text-xs text-low">
-            {t('workflow.router.description', {
-              defaultValue:
-                'Select the agent that evaluates Condition branches for this workflow.',
-            })}
+            {t('workflow.router.description')}
           </p>
         </div>
         <Button
@@ -145,9 +140,7 @@ export function WorkflowRouterConfigPanel({
           size="icon"
           className="h-8 w-8 shrink-0"
           onClick={onClose}
-          aria-label={t('workflow.router.close', {
-            defaultValue: 'Close router settings',
-          })}
+          aria-label={t('workflow.router.close')}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -156,9 +149,7 @@ export function WorkflowRouterConfigPanel({
       <div className="flex min-h-0 flex-1 flex-col gap-base overflow-y-auto p-base">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold text-high">
-            {t('workflow.router.executor', {
-              defaultValue: 'Agent',
-            })}
+            {t('workflow.router.executor')}
           </span>
           <div className="rounded border border-secondary bg-primary p-2">
             <div
@@ -176,16 +167,12 @@ export function WorkflowRouterConfigPanel({
                 label={
                   selectedRouterExecutor
                     ? toPrettyCase(selectedRouterExecutor)
-                    : t('workflow.router.selectExecutor', {
-                        defaultValue: 'Select agent',
-                      })
+                    : t('workflow.router.selectExecutor')
                 }
                 disabled={isConfigDisabled}
               >
                 <DropdownMenuLabel>
-                  {t('workflow.router.agent', {
-                    defaultValue: 'Agent',
-                  })}
+                  {t('workflow.router.agent')}
                 </DropdownMenuLabel>
                 {policyExecutorOptions.map((option) => (
                   <DropdownMenuItem
@@ -245,9 +232,7 @@ export function WorkflowRouterConfigPanel({
           }
         >
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t('workflow.router.save', {
-            defaultValue: 'Save router',
-          })}
+          {t('workflow.router.save')}
         </Button>
       </div>
     </aside>

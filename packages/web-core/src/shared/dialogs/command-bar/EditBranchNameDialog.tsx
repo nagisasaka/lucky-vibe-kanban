@@ -11,7 +11,7 @@ import {
 import { Button } from '@vibe/ui/components/Button';
 import { Input } from '@vibe/ui/components/Input';
 import { create, useModal } from '@ebay/nice-modal-react';
-import { defineModal, getErrorMessage } from '@/shared/lib/modals';
+import { defineModal } from '@/shared/lib/modals';
 import { useRenameBranch } from '@/shared/hooks/useRenameBranch';
 
 export interface EditBranchNameDialogProps {
@@ -29,7 +29,9 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
     const modal = useModal();
     const { t } = useTranslation(['tasks', 'common']);
     const [branchName, setBranchName] = useState<string>(currentBranchName);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      'empty' | 'spaces' | 'unconfirmed' | null
+    >(null);
 
     useEffect(() => {
       setBranchName(currentBranchName);
@@ -45,16 +47,14 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
         } as EditBranchNameDialogResult);
         modal.hide();
       },
-      (err: unknown) => {
-        setError(getErrorMessage(err) || 'Failed to rename branch');
-      }
+      () => setError('unconfirmed')
     );
 
     const handleConfirm = () => {
       const trimmedName = branchName.trim();
 
       if (!trimmedName) {
-        setError('Branch name cannot be empty');
+        setError('empty');
         return;
       }
 
@@ -65,7 +65,7 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
       }
 
       if (trimmedName.includes(' ')) {
-        setError('Branch name cannot contain spaces');
+        setError('spaces');
         return;
       }
 
@@ -116,7 +116,15 @@ const EditBranchNameDialogImpl = create<EditBranchNameDialogProps>(
                 disabled={renameMutation.isPending}
                 autoFocus
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <p className="text-sm text-destructive">
+                  {error === 'empty'
+                    ? t('gitNotice.branchEmpty')
+                    : error === 'spaces'
+                      ? t('gitNotice.branchSpaces')
+                      : t('gitNotice.renameUnconfirmed')}
+                </p>
+              )}
             </div>
           </div>
 

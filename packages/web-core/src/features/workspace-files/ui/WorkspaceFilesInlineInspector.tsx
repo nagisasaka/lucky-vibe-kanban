@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo, useState } from 'react';
 import { ArrowLeft, Files } from 'lucide-react';
 import { Button } from '@vibe/ui/components/Button';
@@ -33,11 +34,13 @@ export function WorkspaceFilesInlineInspector({
   sessionId,
   className,
   compact = false,
-  title = 'Files',
+  title,
   onSelectFile,
   onClose,
   onClearTarget,
 }: WorkspaceFilesInlineInspectorProps) {
+  const { t } = useTranslation('common');
+  const panelTitle = title ?? t('workspaceFiles.files');
   const [compactView, setCompactView] = useState<'browser' | 'preview'>(
     target ? 'preview' : 'browser'
   );
@@ -105,12 +108,12 @@ export function WorkspaceFilesInlineInspector({
             onClick={() => setCompactView('browser')}
           >
             <ArrowLeft className="mr-half size-3" />
-            {title}
+            {panelTitle}
           </Button>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-half text-sm font-medium text-high">
             <Files className="size-4 shrink-0 text-low" />
-            <span className="truncate">{title}</span>
+            <span className="truncate">{panelTitle}</span>
           </div>
         )}
         {compact && compactView === 'preview' && selectedTarget ? (
@@ -120,7 +123,7 @@ export function WorkspaceFilesInlineInspector({
         ) : null}
         {onClose ? (
           <Button type="button" size="xs" variant="outline" onClick={onClose}>
-            Conversation
+            {t('workspaceFiles.conversation')}
           </Button>
         ) : null}
       </div>

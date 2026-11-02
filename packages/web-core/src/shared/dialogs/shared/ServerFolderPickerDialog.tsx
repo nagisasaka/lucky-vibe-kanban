@@ -23,7 +23,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
     const [path, setPath] = useState(value);
     const [requestedPath, setRequestedPath] = useState({ path: value });
     const [listing, setListing] = useState<DirectoryListResponse | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,7 +31,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
       let active = true;
       setLoading(true);
       setListing(null);
-      setError(null);
+      setError(false);
       void fileSystemApi
         .list(requestedPath.path.trim() || undefined, hostId)
         .then((result) => {
@@ -39,9 +39,8 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
           setListing(result);
           setPath(result.current_path);
         })
-        .catch((cause: unknown) => {
-          if (active)
-            setError(cause instanceof Error ? cause.message : String(cause));
+        .catch(() => {
+          if (active) setError(true);
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -66,16 +65,9 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t('serverFolderPicker.title', {
-                defaultValue: 'Choose server directory',
-              })}
-            </DialogTitle>
+            <DialogTitle>{t('serverFolderPicker.title')}</DialogTitle>
             <DialogDescription>
-              {t('serverFolderPicker.description', {
-                defaultValue:
-                  'Directories on the LVK server, not on this browser’s device.',
-              })}
+              {t('serverFolderPicker.description')}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -87,19 +79,17 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
           >
             <Input
               disabled={loading}
-              aria-label={t('serverFolderPicker.path', {
-                defaultValue: 'Server directory path',
-              })}
+              aria-label={t('serverFolderPicker.path')}
               value={path}
               onChange={(event) => setPath(event.target.value)}
             />
             <Button type="submit" variant="outline" disabled={loading}>
-              {t('serverFolderPicker.load', { defaultValue: 'Load path' })}
+              {t('serverFolderPicker.load')}
             </Button>
           </form>
           {error && (
             <p role="alert" className="text-error">
-              {error}
+              {t('serverFolderPicker.loadError')}
             </p>
           )}
           <div
@@ -127,9 +117,7 @@ const ServerFolderPickerDialogImpl = create<FolderPickerDialogProps>(
               disabled={loading || !listing || path !== listing.current_path}
               onClick={() => finish(listing?.current_path ?? null)}
             >
-              {t('serverFolderPicker.select', {
-                defaultValue: 'Select this directory',
-              })}
+              {t('serverFolderPicker.select')}
             </Button>
           </DialogFooter>
         </DialogContent>

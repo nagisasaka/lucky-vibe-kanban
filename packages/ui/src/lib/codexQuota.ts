@@ -60,10 +60,10 @@ export function quotaView(data: unknown, unavailable: boolean, now: number) {
       const period =
         typeof mins === 'number' && Number.isFinite(mins) && mins > 0
           ? mins % 1440 === 0
-            ? { unit: 'days', count: mins / 1440 }
+            ? { unit: 'days' as const, count: mins / 1440 }
             : mins % 60 === 0
-              ? { unit: 'hours', count: mins / 60 }
-              : { unit: 'minutes', count: mins }
+              ? { unit: 'hours' as const, count: mins / 60 }
+              : { unit: 'minutes' as const, count: mins }
           : null;
       return { key, period, remaining, reset };
     });
@@ -115,5 +115,5 @@ export function quotaView(data: unknown, unavailable: boolean, now: number) {
     rows,
     status,
     observed: Number.isFinite(observed) ? observed : null,
-  };
+  } as const;
 }

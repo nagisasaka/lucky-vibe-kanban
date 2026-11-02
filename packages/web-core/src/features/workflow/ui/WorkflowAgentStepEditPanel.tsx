@@ -224,15 +224,10 @@ export function WorkflowAgentStepEditPanel({
             />
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="font-medium text-high">
-                {t('workflow.agentEdit.includeWorkflowContext', {
-                  defaultValue: 'Carry workflow context',
-                })}
+                {t('workflow.agentEdit.includeWorkflowContext')}
               </span>
               <span className="leading-relaxed text-low">
-                {t('workflow.agentEdit.includeWorkflowContextHelp', {
-                  defaultValue:
-                    'Send workflow input, direct upstream results, and downstream handoff guidance with this prompt.',
-                })}
+                {t('workflow.agentEdit.includeWorkflowContextHelp')}
               </span>
             </span>
           </label>

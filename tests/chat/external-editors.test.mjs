@@ -4,8 +4,7 @@ import { build } from "esbuild";
 import { chromium, expect } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-import { readFile, mkdtemp, mkdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -88,11 +87,11 @@ test("named editor settings persist and prepared links require a user click", as
     ).replace(/^@(import|config).*$/gm, ""),
     { from: undefined },
   );
-  const temp = await mkdtemp(join(tmpdir(), "local-161-ui-"));
-  const screenshots = process.env.LVK_EDITOR_SCREENSHOT_DIR ?? temp;
-  await mkdir(screenshots, { recursive: true });
+  const screenshots = process.env.LVK_EDITOR_SCREENSHOT_DIR;
+  if (screenshots) await mkdir(screenshots, { recursive: true });
   const browser = await chromium.launch({
     headless: true,
+    executablePath: process.env.LVK_E2E_CHROMIUM,
     args: ["--no-sandbox"],
   });
   try {
@@ -198,8 +197,24 @@ test("named editor settings persist and prepared links require a user click", as
       await page.keyboard.press("Escape");
     }
     await page.getByText("Missing menu", { exact: true }).click();
-    await page.getByRole("alert").waitFor();
+    await expect(page.getByRole("alert")).toHaveText(
+      "エディターのリンクを読み込めませんでした。再試行する前に連携設定とアクセス権を確認してください。",
+    );
+    await expect(page.locator("body")).not.toContainText(
+      "Editor directory is unavailable",
+    );
     assert.equal(await page.getByRole("link").count(), 0);
+    // Locale changes must not refetch or expose the failed target's diagnostic.
+    const beforeLocale = await page.evaluate(() => window.requests.length);
+    await page.evaluate(() => window.__setUiLanguage("en"));
+    await expect(page.getByRole("alert")).toHaveText(
+      "Editor links could not be loaded. Check the integration settings and access before trying again.",
+    );
+    assert.equal(
+      await page.evaluate(() => window.requests.length),
+      beforeLocale,
+    );
+    await page.evaluate(() => window.__setUiLanguage("ja"));
     await page.keyboard.press("Escape");
     // A now-unavailable target must not expose a previous cached URI.
     await page.evaluate(() => {
@@ -225,10 +240,11 @@ test("named editor settings persist and prepared links require a user click", as
             () => document.documentElement.scrollWidth <= window.innerWidth,
           ),
         );
-        await page.screenshot({
-          path: join(screenshots, `${width}-${dark}.png`),
-          fullPage: true,
-        });
+        if (screenshots)
+          await page.screenshot({
+            path: join(screenshots, `${width}-${dark}.png`),
+            fullPage: true,
+          });
       }
     }
     for (let i = 0; i < 3; i++)
@@ -282,7 +298,10 @@ test("named editor settings persist and prepared links require a user click", as
     });
     await page.getByRole("button", { name: "保存", exact: true }).click();
     await page
-      .getByText("Invalid URI template (fixture)", { exact: true })
+      .getByText(
+        "設定の保存結果を確認できませんでした。再試行する前に現在の設定を確認してください。",
+        { exact: true },
+      )
       .waitFor();
     assert.equal(
       await page.evaluate(() => window.saved.editor.entries.length),
@@ -291,6 +310,5 @@ test("named editor settings persist and prepared links require a user click", as
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
-    await rm(temp, { recursive: true, force: true });
   }
 });

@@ -2,10 +2,16 @@ import { ExecutionMode, type ExecutorConfig } from 'shared/types';
 
 export const GOAL_OBJECTIVE_MAX_CHARS = 4000;
 
+export interface GoalPromptError {
+  code: 'goal_objective_too_long';
+  count: number;
+  maximum: number;
+}
+
 export function goalPromptError(
   prompt: string,
   config: ExecutorConfig
-): string | null {
+): GoalPromptError | null {
   if (
     config.executor !== 'CODEX' ||
     config.execution_mode !== ExecutionMode.goal ||
@@ -23,7 +29,11 @@ export function goalPromptError(
         : `\n\nExecution constraint: when work can be divided safely, use at most ${limit} concurrent spawned subagents (excluding the primary agent). Avoid concurrent writes to the same files.`;
   const count = Array.from(prompt + suffix).length;
   if (count > GOAL_OBJECTIVE_MAX_CHARS) {
-    return `Codex Goal objective is ${count} characters; maximum is ${GOAL_OBJECTIVE_MAX_CHARS}. Shorten the instructions before sending.`;
+    return {
+      code: 'goal_objective_too_long',
+      count,
+      maximum: GOAL_OBJECTIVE_MAX_CHARS,
+    };
   }
   return null;
 }

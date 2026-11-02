@@ -25,7 +25,7 @@ export function useGitOperations(
           data?.type === 'merge_conflicts' ||
           data?.type === 'rebase_in_progress';
         if (!isConflict) {
-          setError(err.message || 'Failed to rebase');
+          setError('rebase');
         }
       }
     }
@@ -34,31 +34,19 @@ export function useGitOperations(
   const merge = useMerge(
     workspaceId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to merge';
-      setError(message);
-    }
+    () => setError('merge')
   );
 
   const forcePush = useForcePush(
     workspaceId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to force push';
-      setError(message);
-    }
+    () => setError('forcePush')
   );
 
   const push = usePush(
     workspaceId,
     () => setError(null),
-    async (err: unknown, errorData, params?: PushWorkspaceRequest) => {
+    async (_err: unknown, errorData, params?: PushWorkspaceRequest) => {
       // Handle typed push errors
       if (errorData?.type === 'force_push_required') {
         // Show confirmation dialog - dialog handles the force push internally
@@ -68,11 +56,7 @@ export function useGitOperations(
         return;
       }
 
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to push';
-      setError(message);
+      setError('push');
     }
   );
 
@@ -80,13 +64,7 @@ export function useGitOperations(
     workspaceId,
     repoId,
     () => setError(null),
-    (err: unknown) => {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to change target branch';
-      setError(message);
-    }
+    () => setError('targetBranch')
   );
 
   const isAnyLoading =

@@ -25,11 +25,15 @@ export function SyncErrorIndicator({
   errors,
   onRefreshPage,
 }: SyncErrorIndicatorProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
 
   if (!errors || errors.length === 0) {
     return null;
   }
+
+  const formattedCount = new Intl.NumberFormat(
+    i18n.resolvedLanguage || i18n.language
+  ).format(errors.length);
 
   return (
     <Popover>
@@ -37,7 +41,10 @@ export function SyncErrorIndicator({
         <button
           type="button"
           className="flex items-center justify-center rounded-sm text-error hover:text-error/80"
-          aria-label={`${errors.length} sync error${errors.length > 1 ? 's' : ''}`}
+          aria-label={t('syncError.count', {
+            count: errors.length,
+            formattedCount,
+          })}
         >
           <WarningIcon className="size-icon-base" weight="fill" />
         </button>
@@ -49,7 +56,10 @@ export function SyncErrorIndicator({
               {t('syncError.networkErrors')}
             </h4>
             <span className="text-xs text-low">
-              {t('syncError.streamsAffected', { count: errors.length })}
+              {t('syncError.streamsAffected', {
+                count: errors.length,
+                formattedCount,
+              })}
             </span>
           </div>
 
@@ -63,7 +73,7 @@ export function SyncErrorIndicator({
                   {streamError.tableName}
                 </div>
                 <div className="text-low mt-quarter truncate">
-                  {streamError.error.message}
+                  {t('syncError.unconfirmed')}
                   {streamError.error.status && (
                     <span className="ml-1 text-error/70">
                       {t('syncError.status', {

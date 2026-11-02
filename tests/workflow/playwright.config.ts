@@ -25,12 +25,13 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     screenshot: "only-on-failure",
+    launchOptions: { executablePath: process.env.LVK_E2E_CHROMIUM },
     trace: "on-first-retry",
   },
   webServer: {
     cwd: repoRoot,
     command: `pnpm exec vite --host 127.0.0.1 --port ${port} --strictPort --config tests/workflow/vite.config.ts`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     url: `http://127.0.0.1:${port}`,
   },

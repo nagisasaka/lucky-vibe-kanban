@@ -155,14 +155,15 @@ function EntryStatus({ entry }: { entry: AggregatedEntry }) {
     >
       {t(`execution.status.${status}`)}
       {entry.exitCode != null && entry.exitCode !== 0
-        ? ` · exit ${entry.exitCode}`
+        ? ` · ${t('conversation.script.exitCode', { code: entry.exitCode })}`
         : ''}
     </span>
   );
 }
 
 function ToolEntryDetails({ entry }: { entry: AggregatedEntry }) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
+  const locale = i18n.resolvedLanguage || i18n.language;
   const details = getEntryDetails(entry);
   if (!details) return null;
 
@@ -185,7 +186,7 @@ function ToolEntryDetails({ entry }: { entry: AggregatedEntry }) {
       </div>
       {entry.cwd && (
         <div className="break-words px-base py-half font-ibm-plex-mono text-xs text-low">
-          cwd: {entry.cwd}
+          {t('execution.workingDirectory', { path: entry.cwd })}
         </div>
       )}
       {entry.input && (
@@ -226,18 +227,24 @@ function ToolEntryDetails({ entry }: { entry: AggregatedEntry }) {
         </div>
       )}
       <div className="flex flex-wrap gap-base px-base py-half text-xs text-low">
-        {entry.exitCode != null && <span>exit {entry.exitCode}</span>}
+        {entry.exitCode != null && (
+          <span>
+            {t('conversation.script.exitCode', { code: entry.exitCode })}
+          </span>
+        )}
         {entry.endedAt && (
           <time dateTime={entry.endedAt}>
             {t('execution.completedAt', {
-              time: new Date(entry.endedAt).toLocaleString(),
+              time: new Date(entry.endedAt).toLocaleString(locale),
             })}
           </time>
         )}
         {entry.durationMs != null && (
           <span>
             {t('execution.providerDuration', {
-              seconds: entry.durationMs / 1000,
+              seconds: new Intl.NumberFormat(locale, {
+                maximumFractionDigits: 20,
+              }).format(entry.durationMs / 1000),
             })}
           </span>
         )}
@@ -247,18 +254,18 @@ function ToolEntryDetails({ entry }: { entry: AggregatedEntry }) {
 }
 
 function getFallbackSummary({
-  entries,
   label,
   unit,
   fallbackSummary,
+  formattedCount,
 }: {
-  entries: AggregatedEntry[];
   label?: string;
   unit?: string;
   fallbackSummary: string;
+  formattedCount: string;
 }) {
   if (!label || !unit) return fallbackSummary;
-  return `${label} ${entries.length} ${unit}`;
+  return `${label} ${formattedCount} ${unit}`;
 }
 
 export function ChatAggregatedToolEntries({
@@ -276,7 +283,8 @@ export function ChatAggregatedToolEntries({
   startedAt,
   endedAt,
 }: ChatAggregatedToolEntriesProps) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage || i18n.language);
   const [expandedEntryKey, setExpandedEntryKey] = useState<string | null>(null);
 
   if (entries.length === 0) return null;
@@ -288,11 +296,12 @@ export function ChatAggregatedToolEntries({
       ? entries[0].summary
       : (summary ??
         getFallbackSummary({
-          entries,
+          formattedCount: number.format(entries.length),
           label,
           unit,
           fallbackSummary: t('conversation.aggregated.operationCount', {
             count: entries.length,
+            formattedCount: number.format(entries.length),
           }),
         }));
 
@@ -395,9 +404,14 @@ export function ChatAggregatedToolEntries({
         </ActivityText>
         <span className="max-w-[50%] shrink whitespace-normal text-right text-xs text-low">
           {Array.from(new Set(entries.map(toolDisplayStatus)))
-            .map(
-              (status) =>
-                `${t(`execution.status.${status}`)} ${entries.filter((entry) => toolDisplayStatus(entry) === status).length}`
+            .map((status) =>
+              t('execution.statusCount', {
+                status: t(`execution.status.${status}`),
+                formattedCount: number.format(
+                  entries.filter((entry) => toolDisplayStatus(entry) === status)
+                    .length
+                ),
+              })
             )
             .join(' · ')}
         </span>

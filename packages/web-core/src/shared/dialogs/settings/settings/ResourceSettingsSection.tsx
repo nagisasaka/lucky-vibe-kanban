@@ -1,9 +1,13 @@
+import { formatUtcDateTime } from '@/shared/lib/date';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { RegisterResource, ResourceOperation } from 'shared/types';
 import { PrimaryButton } from '@vibe/ui/components/PrimaryButton';
-import { resourceOperationCanCancel } from '@/shared/lib/resourceCoordinationApi';
+import {
+  resourceStatusLabel,
+  resourceOperationCanCancel,
+} from '@/shared/lib/resourceCoordinationApi';
 import { SettingsCard, SettingsInput } from './SettingsComponents';
 import {
   useSettingsHost,
@@ -39,12 +43,12 @@ export function ResourceSettingsSection() {
 }
 
 function ResourceSettingsContent() {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation('settings');
   const client = useSettingsMachineClient();
   const host = useSettingsHost();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(emptyResource);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState<ResourceOperation | null>(null);
   const [evidence, setEvidence] = useState('');
@@ -70,12 +74,12 @@ function ResourceSettingsContent() {
   });
   async function act(action: () => Promise<unknown>) {
     setBusy(true);
-    setError(null);
+    setError(false);
     try {
       await action();
       await queryClient.invalidateQueries({ queryKey });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch {
+      setError(true);
     } finally {
       setBusy(false);
     }
@@ -91,7 +95,9 @@ function ResourceSettingsContent() {
         <p className="text-sm text-low">{t('resources.scope')}</p>
         {(error || query.error) && (
           <p role="alert" className="text-sm text-error">
-            {error ?? String(query.error)}
+            {error
+              ? t('resources.actionUnconfirmed')
+              : t('resources.loadUnconfirmed')}
           </p>
         )}
         {query.isLoading && <p role="status">{t('resources.loading')}</p>}
@@ -107,8 +113,12 @@ function ResourceSettingsContent() {
               >
                 <div className="flex justify-between gap-2">
                   <strong>{resource.name}</strong>
-                  <span>
-                    {t(`resources.health.${resource.health}`)}
+                  <span
+                    title={t('resources.originalState', {
+                      state: resource.health,
+                    })}
+                  >
+                    {resourceStatusLabel('health', resource.health, t)}
                     {holder ? ` · ${t('resources.occupied')}` : ''}
                   </span>
                 </div>
@@ -186,7 +196,11 @@ function ResourceSettingsContent() {
             >
               <div className="flex justify-between gap-2">
                 <strong className="break-words">{op.spec.purpose}</strong>
-                <span>{t(`resources.status.${op.status}`)}</span>
+                <span
+                  title={t('resources.originalState', { state: op.status })}
+                >
+                  {resourceStatusLabel('operation', op.status, t)}
+                </span>
               </div>
               <p className="text-xs text-low break-all">
                 {t('resources.workspace')}: {op.workspace_id} · {op.id}
@@ -202,7 +216,12 @@ function ResourceSettingsContent() {
                   .join(', ')}
               </p>
               {op.message && (
-                <p className="text-sm whitespace-pre-wrap">{op.message}</p>
+                <details>
+                  <summary className="text-sm">
+                    {t('resources.operationDetailsOriginal')}
+                  </summary>
+                  <p className="text-sm whitespace-pre-wrap">{op.message}</p>
+                </details>
               )}
               <details>
                 <summary className="cursor-pointer text-sm">
@@ -353,13 +372,29 @@ function ResourceSettingsContent() {
         {data?.mediations.map((m) => (
           <div key={m.id} className="border-b border-border py-3">
             <p className="text-sm">
-              {t(`resources.mediationStatus.${m.status}`)} · {m.created_at}
+              <span title={t('resources.originalState', { state: m.status })}>
+                {resourceStatusLabel('mediation', m.status, t)}
+              </span>{' '}
+              ·{' '}
+              <span title={m.created_at}>
+                {formatUtcDateTime(
+                  m.created_at,
+                  i18n.resolvedLanguage || i18n.language
+                )}
+              </span>
             </p>
-            <p className="text-sm whitespace-pre-wrap break-words">
-              {m.result
-                ? mediationExplanation(m.result)
-                : t('resources.assessing')}
-            </p>
+            {m.result ? (
+              <details>
+                <summary className="text-sm">
+                  {t('resources.assessmentDetailsOriginal')}
+                </summary>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {mediationExplanation(m.result)}
+                </p>
+              </details>
+            ) : (
+              <p className="text-sm">{t('resources.assessing')}</p>
+            )}
             {['pending', 'preparing', 'running'].includes(m.status) && (
               <PrimaryButton
                 variant="tertiary"

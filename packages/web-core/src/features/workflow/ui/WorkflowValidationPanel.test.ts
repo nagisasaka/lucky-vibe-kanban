@@ -13,7 +13,7 @@ describe('workflow graph validation panel helpers', () => {
       validateWorkflowGraph(createDefaultWorkflowGraph())
     ).not.toContainEqual({
       type: 'error',
-      message: 'Unsupported graph version',
+      code: 'unsupportedVersion',
     });
   });
 
@@ -33,7 +33,8 @@ describe('workflow graph validation panel helpers', () => {
     expect(validateWorkflowGraph(graph)).toContainEqual({
       type: 'error',
       nodeId: 'agent',
-      message: 'Unreachable node: agent',
+      code: 'unreachable',
+      values: { node: 'agent' },
     });
   });
 
@@ -65,7 +66,8 @@ describe('workflow graph validation panel helpers', () => {
     expect(validateWorkflowGraph(graph)).toContainEqual({
       type: 'error',
       nodeId: 'start',
-      message: 'Workflow contains a cycle at start',
+      code: 'cycle',
+      values: { node: 'start' },
     });
   });
 
@@ -89,7 +91,8 @@ describe('workflow graph validation panel helpers', () => {
     expect(validateWorkflowGraph(graph)).toContainEqual({
       type: 'error',
       nodeId: 'start',
-      message: 'Self-edge found on node start',
+      code: 'selfEdge',
+      values: { node: 'start' },
     });
   });
 
@@ -164,7 +167,7 @@ describe('workflow graph validation panel helpers', () => {
 
     expect(validateWorkflowGraph(graph)).toContainEqual({
       type: 'error',
-      message: 'Workflow with Condition nodes requires a router agent',
+      code: 'routerRequired',
     });
 
     expect(
@@ -174,7 +177,7 @@ describe('workflow graph validation panel helpers', () => {
       })
     ).toContainEqual({
       type: 'error',
-      message: 'Workflow with Condition nodes requires a router agent',
+      code: 'routerRequired',
     });
 
     expect(
@@ -184,7 +187,7 @@ describe('workflow graph validation panel helpers', () => {
       })
     ).toContainEqual({
       type: 'error',
-      message: 'Workflow with Condition nodes requires a router agent',
+      code: 'routerRequired',
     });
 
     expect(
@@ -194,7 +197,7 @@ describe('workflow graph validation panel helpers', () => {
       })
     ).not.toContainEqual({
       type: 'error',
-      message: 'Workflow with Condition nodes requires a router agent',
+      code: 'routerRequired',
     });
 
     expect(
@@ -247,7 +250,8 @@ describe('workflow graph validation panel helpers', () => {
     expect(validateWorkflowGraph(makeGraph([]))).toContainEqual({
       type: 'error',
       nodeId: 'condition',
-      message: 'Condition node condition is missing branch config for end',
+      code: 'missingBranch',
+      values: { node: 'condition', target: 'end' },
     });
     expect(
       validateWorkflowGraph(
@@ -256,7 +260,8 @@ describe('workflow graph validation panel helpers', () => {
     ).toContainEqual({
       type: 'error',
       nodeId: 'condition',
-      message: 'Condition node condition has stale branch target: missing',
+      code: 'staleBranch',
+      values: { node: 'condition', target: 'missing' },
     });
     expect(
       validateWorkflowGraph(
@@ -268,7 +273,8 @@ describe('workflow graph validation panel helpers', () => {
     ).toContainEqual({
       type: 'error',
       nodeId: 'condition',
-      message: 'Condition node condition has duplicate branch target: end',
+      code: 'duplicateBranch',
+      values: { node: 'condition', target: 'end' },
     });
     expect(
       validateWorkflowGraph(
@@ -277,7 +283,8 @@ describe('workflow graph validation panel helpers', () => {
     ).toContainEqual({
       type: 'error',
       nodeId: 'condition',
-      message: 'Condition node condition has empty branch condition for end',
+      code: 'emptyCondition',
+      values: { node: 'condition', target: 'end' },
     });
   });
 
@@ -319,7 +326,8 @@ describe('workflow graph validation panel helpers', () => {
     ).toContainEqual({
       type: 'error',
       nodeId: 'condition',
-      message: 'Condition node condition has duplicate outgoing target: end',
+      code: 'duplicateOutgoing',
+      values: { node: 'condition', target: 'end' },
     });
   });
 });

@@ -40,7 +40,13 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
   const issueArchived =
     issues.find((issue) => issue.id === group.issue_id)?.archived ?? false;
   const [messageText, setMessageText] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<
+    | 'askAllFailed'
+    | 'challengeFailed'
+    | 'synthesizeFailed'
+    | 'startImplementationFailed'
+    | null
+  >(null);
   const { message, startImplementation } = useArenaActions(
     group.id,
     group.issue_id
@@ -81,9 +87,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
       });
       setMessageText('');
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.askAllFailed')
-      );
+      setErrorMessage('askAllFailed');
     }
   };
 
@@ -105,9 +109,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         });
       }
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.challengeFailed')
-      );
+      setErrorMessage('challengeFailed');
     }
   };
 
@@ -128,9 +130,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         executor_config: executorConfigForWorkspace(attemptWorkspaces[0]),
       });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : t('arena.errors.synthesizeFailed')
-      );
+      setErrorMessage('synthesizeFailed');
     }
   };
 
@@ -147,11 +147,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
         executor_config: null,
       });
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : t('arena.errors.startImplementationFailed')
-      );
+      setErrorMessage('startImplementationFailed');
     }
   };
 
@@ -187,9 +183,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
             disabled={
               actionsDisabled || issueArchived || group.workspaces.length < 2
             }
-            title={
-              issueArchived ? 'アーカイブ解除すると利用できます' : undefined
-            }
+            title={issueArchived ? t('kanban.restoreToUse') : undefined}
             onClick={() => void handleSynthesize()}
           >
             {t('arena.actions.synthesize')}
@@ -235,7 +229,7 @@ export function ArenaPageActions({ group }: ArenaPageActionsProps) {
       ) : null}
       {errorMessage ? (
         <p className="mt-half text-xs text-error" role="alert">
-          {errorMessage}
+          {t(`arena.errors.${errorMessage}`)}
         </p>
       ) : null}
     </div>

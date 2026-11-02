@@ -153,7 +153,8 @@ function RunNode({ data }: { data: RunNodeData }) {
   });
   const stateLabel = getWorkflowCanvasNodeStateLabel(nodeState, t);
   const isRunning = status === 'running';
-  const agentDisplay = type === 'agent' ? getWorkflowAgentDisplay(data) : null;
+  const agentDisplay =
+    type === 'agent' ? getWorkflowAgentDisplay(data, t) : null;
   const handles = runPortHandles.map((handle) => (
     <Handle
       key={handle.id}
@@ -411,7 +412,15 @@ export function WorkflowRunCanvasTab({
     isRejecting,
     isSelectingConditionBranch,
   } = useWorkflowRunMutations();
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<
+    'unavailable' | 'unconfirmed' | null
+  >(null);
+  const actionError =
+    actionNotice === 'unavailable'
+      ? t('workflow.runCanvas.actionUnavailable')
+      : actionNotice
+        ? t('workflow.errors.operationUnconfirmed')
+        : null;
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<
     ReactFlowNode<RunNodeData, WorkflowNodeKind>
@@ -421,12 +430,12 @@ export function WorkflowRunCanvasTab({
   const runtimeView = useMemo(() => getWorkflowRuntimeView(run), [run]);
 
   const selectNodeById = useCallback((nodeId: string | null) => {
-    setActionError(null);
+    setActionNotice(null);
     setSelectedNodeId(nodeId);
   }, []);
 
   const openNodeConversationById = useCallback((nodeId: string) => {
-    setActionError(null);
+    setActionNotice(null);
     setSelectedNodeId(nodeId);
   }, []);
 
@@ -437,7 +446,7 @@ export function WorkflowRunCanvasTab({
     const queuedFocus = consumeWorkflowRunNodeFocus(run.id);
     if (!queuedFocus) return;
 
-    setActionError(null);
+    setActionNotice(null);
     setSelectedNodeId(queuedFocus.nodeId);
   }, [run.id]);
 
@@ -539,7 +548,7 @@ export function WorkflowRunCanvasTab({
 
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: ReactFlowNode[] }) => {
-      setActionError(null);
+      setActionNotice(null);
       setSelectedNodeId(selectedNodes.length > 0 ? selectedNodes[0].id : null);
     },
     []
@@ -583,27 +592,18 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canApprove
     ) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionNotice('unavailable');
       return;
     }
-    setActionError(null);
+    setActionNotice(null);
     try {
       await approveNode({
         runId: run.id,
         nodeId: selectedExecution.node_id,
         payload: {},
       });
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.dashboard.approveFailed')
-      );
+    } catch {
+      setActionNotice('unconfirmed');
     }
   };
 
@@ -612,27 +612,18 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canReject
     ) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionNotice('unavailable');
       return;
     }
-    setActionError(null);
+    setActionNotice(null);
     try {
       await rejectNode({
         runId: run.id,
         nodeId: selectedExecution.node_id,
         payload: {},
       });
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.dashboard.rejectFailed')
-      );
+    } catch {
+      setActionNotice('unconfirmed');
     }
   };
 
@@ -641,15 +632,10 @@ export function WorkflowRunCanvasTab({
       !selectedExecution ||
       !getWorkflowNodeActionGate(selectedWork).canSelectConditionBranch
     ) {
-      setActionError(
-        t('workflow.runCanvas.actionUnavailable', {
-          defaultValue:
-            'Action unavailable while runtime projection is unavailable.',
-        })
-      );
+      setActionNotice('unavailable');
       return;
     }
-    setActionError(null);
+    setActionNotice(null);
     try {
       await selectConditionBranch({
         runId: run.id,
@@ -658,12 +644,8 @@ export function WorkflowRunCanvasTab({
           selected_target_node_ids: targetNodeIds,
         },
       });
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.runCanvas.conditionBranchFailed')
-      );
+    } catch {
+      setActionNotice('unconfirmed');
     }
   };
 
@@ -823,7 +805,7 @@ function NodeDetailPanel({
       : (selectedGraphNode?.data ?? null);
   const agentDisplay =
     isConversationalNode && conversationNodeData
-      ? getWorkflowAgentDisplay(conversationNodeData)
+      ? getWorkflowAgentDisplay(conversationNodeData, t)
       : null;
   const title =
     selectedGraphNode?.data.display_name ||

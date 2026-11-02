@@ -36,7 +36,7 @@ export function IntegrationValidationSettings({
     content: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(false);
   const [saved, setSaved] = useState(false);
   const snapshot = draft?.base ?? query.data;
   const content = draft?.content ?? snapshot?.content ?? emptyPlan;
@@ -53,12 +53,12 @@ export function IntegrationValidationSettings({
   const edit = (value: string) => {
     if (snapshot) setDraft({ base: snapshot, content: value });
     setSaved(false);
-    setError('');
+    setError(false);
   };
   const save = async () => {
     if (!snapshot || !valid || busy) return;
     setBusy(true);
-    setError('');
+    setError(false);
     setSaved(false);
     try {
       const result = await client.saveIntegrationValidation(repoId, {
@@ -68,36 +68,40 @@ export function IntegrationValidationSettings({
       queryClient.setQueryData(queryKey, result);
       setDraft(null);
       setSaved(true);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : t('settings.integrationValidation.saveError')
-      );
+    } catch {
+      setError(true);
     } finally {
       setBusy(false);
     }
   };
   const reload = async () => {
     setBusy(true);
-    setError('');
+    setError(false);
     setSaved(false);
     const result = await query.refetch();
     if (result.isSuccess) setDraft(null);
     setBusy(false);
   };
-  const label = (name: string) => t(`settings.integrationValidation.${name}`);
   return (
-    <SettingsCard title={label('title')} description={label('description')}>
-      <p className="text-sm text-low">{label('timing')}</p>
-      <p className="text-sm text-low">{label('concurrency')}</p>
+    <SettingsCard
+      title={t('settings.integrationValidation.title')}
+      description={t('settings.integrationValidation.description')}
+    >
+      <p className="text-sm text-low">
+        {t('settings.integrationValidation.timing')}
+      </p>
+      <p className="text-sm text-low">
+        {t('settings.integrationValidation.concurrency')}
+      </p>
       <p className="break-all text-sm text-normal">
         {repoPath}/.lvk/integration-validation.json
       </p>
-      {query.isLoading && <p role="status">{label('loading')}</p>}
+      {query.isLoading && (
+        <p role="status">{t('settings.integrationValidation.loading')}</p>
+      )}
       {query.isError && (
         <p role="alert" className="text-error">
-          {label('loadError')}
+          {t('settings.integrationValidation.loadError')}
         </p>
       )}
       {snapshot && (
@@ -105,13 +109,15 @@ export function IntegrationValidationSettings({
           <p className="break-all text-sm text-normal">
             {snapshot.branch} · {snapshot.head}
           </p>
-          {snapshot.content === null && <p role="status">{label('missing')}</p>}
+          {snapshot.content === null && (
+            <p role="status">{t('settings.integrationValidation.missing')}</p>
+          )}
           <details open={commands === null ? true : undefined}>
             <summary className="cursor-pointer text-sm text-normal">
-              {label('json')}
+              {t('settings.integrationValidation.json')}
             </summary>
             <label className="block text-sm text-normal">
-              {label('json')}
+              {t('settings.integrationValidation.json')}
               <SettingsTextarea
                 value={content}
                 onChange={edit}
@@ -123,13 +129,13 @@ export function IntegrationValidationSettings({
           </details>
           {!valid && (
             <p role="alert" className="text-error">
-              {label('invalid')}
+              {t('settings.integrationValidation.invalid')}
             </p>
           )}
           {commands?.map((command, index) => (
             <div key={index}>
               <label className="block text-sm text-normal">
-                {label('command')} {index + 1}
+                {t('settings.integrationValidation.command')} {index + 1}
                 <SettingsTextarea
                   value={command}
                   disabled={busy}
@@ -155,7 +161,7 @@ export function IntegrationValidationSettings({
                   )
                 }
               >
-                {label('remove')}
+                {t('settings.integrationValidation.remove')}
               </PrimaryButton>
             </div>
           ))}
@@ -171,24 +177,26 @@ export function IntegrationValidationSettings({
                 )
               }
             >
-              {label('add')}
+              {t('settings.integrationValidation.add')}
             </PrimaryButton>
           )}
         </>
       )}
       {error && (
         <p role="alert" className="text-error">
-          {error}
+          {t('settings.integrationValidation.saveError')}
         </p>
       )}
-      {saved && <p role="status">{label('saved')}</p>}
+      {saved && (
+        <p role="status">{t('settings.integrationValidation.saved')}</p>
+      )}
       <div className="flex flex-wrap gap-base">
         <PrimaryButton
           className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:text-low"
           disabled={busy || !snapshot || !valid || !dirty || query.isError}
           onClick={() => void save()}
         >
-          {label('save')}
+          {t('settings.integrationValidation.save')}
         </PrimaryButton>
         <PrimaryButton
           className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:text-low"
@@ -196,7 +204,7 @@ export function IntegrationValidationSettings({
           disabled={busy || query.isLoading}
           onClick={() => void reload()}
         >
-          {label('reload')}
+          {t('settings.integrationValidation.reload')}
         </PrimaryButton>
       </div>
     </SettingsCard>

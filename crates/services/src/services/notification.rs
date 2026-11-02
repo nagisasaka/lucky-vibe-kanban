@@ -1,3 +1,5 @@
+pub mod text;
+
 use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
@@ -94,6 +96,29 @@ impl NotificationService {
         message: &str,
         workspace_id: Option<Uuid>,
     ) {
+        self.notify_rendered(event, workspace_id, |_| {
+            (title.to_string(), message.to_string())
+        })
+        .await;
+    }
+
+    pub async fn notify_owned(
+        &self,
+        content: text::OwnedNotification<'_>,
+        workspace_id: Option<Uuid>,
+    ) {
+        self.notify_rendered(content.event(), workspace_id, |language| {
+            content.render(language)
+        })
+        .await;
+    }
+
+    async fn notify_rendered(
+        &self,
+        event: NotificationEvent,
+        workspace_id: Option<Uuid>,
+        render: impl FnOnce(crate::services::config::UiLanguage) -> (String, String),
+    ) {
         let config = self.config.read().await.notifications.clone();
 
         if config.sound_enabled {
@@ -107,7 +132,10 @@ impl NotificationService {
         if latest.notifications.push_enabled
             && latest.notifications.push_event_mask & event as u8 != 0
         {
-            self.push_notifier.send(title, message, workspace_id).await;
+            let (title, message) = render(latest.notification_language());
+            self.push_notifier
+                .send(&title, &message, workspace_id)
+                .await;
         }
     }
 
@@ -364,6 +392,76 @@ mod event_tests {
             .notify(NotificationEvent::Failure, "fixture", "fixture", None)
             .await;
         assert_eq!(recorder.0.load(Ordering::SeqCst), 4);
+    }
+
+    #[derive(Default)]
+    struct TextRecorder(tokio::sync::Mutex<Vec<(String, String, Option<Uuid>)>>);
+    #[async_trait]
+    impl PushNotifier for TextRecorder {
+        async fn send(&self, title: &str, message: &str, workspace: Option<Uuid>) {
+            self.0
+                .lock()
+                .await
+                .push((title.into(), message.into(), workspace));
+        }
+    }
+
+    #[tokio::test]
+    async fn owned_os_notifications_use_latest_saved_language_and_existing_event_gate() {
+        use crate::services::config::UiLanguage;
+        let recorder = Arc::new(TextRecorder::default());
+        let config = Arc::new(RwLock::new(Config::default()));
+        config.write().await.notifications.sound_enabled = false;
+        config.write().await.notifications.push_enabled = true;
+        config.write().await.notifications.push_event_mask = NotificationEvent::Approval as u8;
+        let service = NotificationService {
+            config: config.clone(),
+            push_notifier: recorder.clone(),
+        };
+        let workspace = Uuid::new_v4();
+        config.write().await.notification_browser_language = Some("ja".into());
+        for language in [UiLanguage::En, UiLanguage::Ja, UiLanguage::Browser] {
+            config.write().await.language = language;
+            service
+                .notify_owned(
+                    text::OwnedNotification::Approval {
+                        workspace: Some("Raw workspace 原文"),
+                        tool: "RAW_TOOL",
+                    },
+                    Some(workspace),
+                )
+                .await;
+        }
+        let sent = recorder.0.lock().await;
+        assert_eq!(
+            sent[0],
+            (
+                "Approval Needed: Raw workspace 原文".into(),
+                "Tool 'RAW_TOOL' requires approval".into(),
+                Some(workspace)
+            )
+        );
+        assert_eq!(
+            sent[1],
+            (
+                "承認が必要です: Raw workspace 原文".into(),
+                "ツール「RAW_TOOL」の承認が必要です".into(),
+                Some(workspace)
+            )
+        );
+        assert_eq!(sent[2], sent[1]);
+        drop(sent);
+        config.write().await.notifications.push_event_mask = 0;
+        service
+            .notify_owned(
+                text::OwnedNotification::Approval {
+                    workspace: None,
+                    tool: "RAW_TOOL",
+                },
+                None,
+            )
+            .await;
+        assert_eq!(recorder.0.lock().await.len(), 3);
     }
 
     struct PausedNotifier {

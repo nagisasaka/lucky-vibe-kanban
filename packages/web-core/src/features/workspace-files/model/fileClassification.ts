@@ -114,13 +114,21 @@ export function getWorkspaceFileLanguage(
   return CODE_LANGUAGE_BY_EXTENSION[extension] ?? null;
 }
 
+export interface WorkspaceFileTypeLabels {
+  svgSource: string;
+  image: string;
+  text: string;
+  unsupported: string;
+}
+
 export function classifyWorkspaceFile(
   file:
     | Pick<
         WorkspaceFileContent,
         'kind' | 'path' | 'name' | 'mime_type' | 'language'
       >
-    | Pick<WorkspaceFileEntry, 'kind' | 'path' | 'name' | 'mime_type'>
+    | Pick<WorkspaceFileEntry, 'kind' | 'path' | 'name' | 'mime_type'>,
+  labels: WorkspaceFileTypeLabels
 ): WorkspaceFileDisplayInfo {
   const path = file.path || file.name;
   const extension = getWorkspaceFileExtension(path);
@@ -130,13 +138,13 @@ export function classifyWorkspaceFile(
 
   if (file.kind === 'image' || mimeType?.startsWith(IMAGE_MIME_PREFIX)) {
     if (extension === 'svg') {
-      return display('code', language ?? 'xml', 'SVG source', true);
+      return display('code', language ?? 'xml', labels.svgSource, true);
     }
-    return display('image', null, 'Image', true);
+    return display('image', null, labels.image, true);
   }
 
   if (file.kind === 'binary' || file.kind === 'unsupported') {
-    return display('unsupported', null, 'Unsupported', false);
+    return display('unsupported', null, labels.unsupported, false);
   }
 
   if (MARKDOWN_EXTENSIONS.has(extension) || mimeType === 'text/markdown') {
@@ -152,10 +160,10 @@ export function classifyWorkspaceFile(
     mimeType?.startsWith('text/') ||
     TEXT_EXTENSIONS.has(extension)
   ) {
-    return display('text', null, 'Text', true);
+    return display('text', null, labels.text, true);
   }
 
-  return display('unsupported', null, 'Unsupported', false);
+  return display('unsupported', null, labels.unsupported, false);
 }
 
 export function isWorkspaceFilePreviewable(

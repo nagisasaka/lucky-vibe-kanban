@@ -20,12 +20,12 @@ export interface ExecutionProcessRuntimeDisplay {
 
 const RUNTIME_DISPLAY: Record<
   ExecutionProcessRuntimeStatus,
-  Pick<ExecutionProcessRuntimeDisplay, 'label' | 'tone'>
+  Pick<ExecutionProcessRuntimeDisplay, 'tone'>
 > = {
-  running: { label: 'running', tone: 'active' },
-  completed: { label: 'completed', tone: 'success' },
-  failed: { label: 'failed', tone: 'danger' },
-  killed: { label: 'killed', tone: 'neutral' },
+  running: { tone: 'active' },
+  completed: { tone: 'success' },
+  failed: { tone: 'danger' },
+  killed: { tone: 'neutral' },
 };
 
 export function getExecutionProcessLifecycle(
@@ -81,7 +81,7 @@ export function getExecutionProcessRuntimeDisplay(
 
   return {
     status,
-    label: display.label,
+    label: status,
     tone: display.tone,
     source: 'process_status',
     error: null,

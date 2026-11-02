@@ -1,6 +1,10 @@
 import type { Icon } from '@phosphor-icons/react';
 import type { Issue } from 'shared/remote-types';
-import type { ActionDefinition, ActionVisibilityContext } from './actions';
+import type {
+  ActionDefinition,
+  ActionVisibilityContext,
+  ActionTranslator,
+} from './actions';
 import type {
   RepoItem,
   StatusItem,
@@ -26,7 +30,7 @@ export type CommandBarGroupItem =
 // Group container with label and nested items
 export interface CommandBarGroup {
   type: 'group';
-  label: string;
+  label: (t: ActionTranslator) => string;
   items: CommandBarGroupItem[];
 }
 
@@ -51,7 +55,7 @@ export interface ResolvedGroup {
 
 export interface CommandBarPage {
   id: string;
-  title?: string; // Optional heading shown in command bar
+  title?: (t: ActionTranslator) => string; // Optional heading shown in command bar
   items: CommandBarItem[];
   // Optional: parent page for back button navigation
   parent?: PageId;

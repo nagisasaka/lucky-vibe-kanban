@@ -39,7 +39,7 @@ export function WorkflowArenaWinnerPanel({
   const { selectArenaWinner, isSelectingArenaWinner } =
     useWorkflowRunMutations();
   const { invalidateGroup } = useArenaInvalidators();
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState(false);
   const [selectingWorkspaceId, setSelectingWorkspaceId] = useState<
     string | null
   >(null);
@@ -61,7 +61,7 @@ export function WorkflowArenaWinnerPanel({
     : null;
 
   const handleSelect = async (workspaceId: string) => {
-    setActionError(null);
+    setActionError(false);
     setSelectingWorkspaceId(workspaceId);
     try {
       await selectArenaWinner({
@@ -72,12 +72,8 @@ export function WorkflowArenaWinnerPanel({
       if (arenaGroupId) {
         invalidateGroup(arenaGroupId);
       }
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : t('workflow.arenaWinner.selectFailed')
-      );
+    } catch {
+      setActionError(true);
     } finally {
       setSelectingWorkspaceId(null);
     }
@@ -106,7 +102,7 @@ export function WorkflowArenaWinnerPanel({
             href={arenaHref}
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            Arena
+            {t('workflow.arenaWinner.openArena')}
           </a>
         ) : null}
       </div>
@@ -123,10 +119,7 @@ export function WorkflowArenaWinnerPanel({
       ) : arenaError ? (
         <p className="text-xs text-error" role="alert">
           {t('workflow.arenaWinner.loadFailed', {
-            message:
-              arenaError instanceof Error
-                ? arenaError.message
-                : t('workflow.arenaWinner.unknownError'),
+            message: t('workflow.errors.loadGuidance'),
           })}
         </p>
       ) : options.length === 0 ? (
@@ -221,7 +214,7 @@ export function WorkflowArenaWinnerPanel({
 
       {actionError ? (
         <p className="text-xs text-error" role="alert">
-          {actionError}
+          {t('workflow.arenaWinner.selectFailed')}
         </p>
       ) : null}
     </div>

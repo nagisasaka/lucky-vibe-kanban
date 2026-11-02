@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { WorkflowAttemptResponse } from 'shared/types';
 import type { WorkspaceWithStats } from '@vibe/ui/components/IssueWorkspaceCard';
 
@@ -36,18 +37,22 @@ export interface BuildTaskAttemptsInput {
   workflowAttempts: WorkflowAttemptResponse[];
 }
 
-export function buildTaskAttempts({
-  workspaceAttempts,
-  workflowAttempts,
-}: BuildTaskAttemptsInput): TaskAttemptView[] {
+export function buildTaskAttempts(
+  { workspaceAttempts, workflowAttempts }: BuildTaskAttemptsInput,
+  t: TFunction<'common'>
+): TaskAttemptView[] {
   const workflowWorkspaceIds = getWorkflowAttemptWorkspaceIds(workflowAttempts);
   const singleAgentAttempts = workspaceAttempts.filter(
     (workspace) => !workflowWorkspaceIds.has(workspace.id)
   );
 
   return [
-    ...workflowAttempts.map(workflowAttemptToTaskAttempt),
-    ...singleAgentAttempts.map(workspaceToTaskAttempt),
+    ...workflowAttempts.map((attempt) =>
+      workflowAttemptToTaskAttempt(attempt, t)
+    ),
+    ...singleAgentAttempts.map((workspace) =>
+      workspaceToTaskAttempt(workspace, t)
+    ),
   ].sort(
     (left, right) =>
       new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
@@ -65,19 +70,20 @@ export function getWorkflowAttemptWorkspaceIds(
 }
 
 export function workflowAttemptToTaskAttempt(
-  attempt: WorkflowAttemptResponse
+  attempt: WorkflowAttemptResponse,
+  t: TFunction<'common'>
 ): TaskAttemptView {
   return {
     id: attempt.id,
     kind: 'workflow',
-    title: attempt.name || 'Workflow attempt',
+    title: attempt.name || t('attempts.workflowFallbackTitle'),
     subtitle: attempt.latest_run_id
-      ? `Run ${attempt.latest_run_id.slice(0, 8)}`
-      : 'Draft workflow attempt',
-    statusLabel: workflowAttemptStatusLabel(attempt.status),
+      ? t('attempts.workflowRun', { id: attempt.latest_run_id.slice(0, 8) })
+      : t('attempts.draftWorkflow'),
+    statusLabel: workflowAttemptStatusLabel(attempt.status, t),
     statusTone: workflowAttemptStatusTone(attempt.status),
     updatedAt: attempt.updated_at,
-    primaryActionLabel: 'Open workflow',
+    primaryActionLabel: t('attempts.openCanvas'),
     workflowId: attempt.workflow_id,
     workflowAttemptId: attempt.id,
     latestRunId: attempt.latest_run_id,
@@ -86,19 +92,20 @@ export function workflowAttemptToTaskAttempt(
 }
 
 function workspaceToTaskAttempt(
-  workspace: WorkspaceWithStats
+  workspace: WorkspaceWithStats,
+  t: TFunction<'common'>
 ): TaskAttemptView {
   return {
     id: workspace.id,
     kind: 'single_agent',
-    title: workspace.name || 'Single agent attempt',
+    title: workspace.name || t('attempts.singleAgentFallbackTitle'),
     subtitle: workspace.localWorkspaceId
-      ? `Workspace ${workspace.localWorkspaceId.slice(0, 8)}`
-      : 'Remote workspace',
-    statusLabel: workspaceStatusLabel(workspace),
+      ? t('attempts.workspace', { id: workspace.localWorkspaceId.slice(0, 8) })
+      : t('attempts.remoteWorkspace'),
+    statusLabel: workspaceStatusLabel(workspace, t),
     statusTone: workspaceStatusTone(workspace),
     updatedAt: workspace.latestProcessCompletedAt ?? workspace.updatedAt,
-    primaryActionLabel: 'Open session',
+    primaryActionLabel: t('attempts.openSession'),
     localWorkspaceId: workspace.localWorkspaceId,
     filesChanged: workspace.filesChanged,
     linesAdded: workspace.linesAdded,
@@ -108,27 +115,28 @@ function workspaceToTaskAttempt(
 }
 
 export function workflowAttemptStatusLabel(
-  status: WorkflowAttemptResponse['status']
+  status: WorkflowAttemptResponse['status'],
+  t: TFunction<'common'>
 ): string {
   switch (status) {
     case 'draft':
-      return 'Draft';
+      return t('attempts.status.draft');
     case 'ready':
-      return 'Ready';
+      return t('attempts.status.ready');
     case 'running':
-      return 'Running';
+      return t('attempts.status.running');
     case 'awaiting_human':
-      return 'Waiting for human';
+      return t('attempts.status.awaitingHuman');
     case 'awaiting_arena':
-      return 'Waiting for arena';
+      return t('attempts.status.awaitingArena');
     case 'cancelling':
-      return 'Cancelling';
+      return t('attempts.status.cancelling');
     case 'succeeded':
-      return 'Succeeded';
+      return t('attempts.status.succeeded');
     case 'failed':
-      return 'Failed';
+      return t('attempts.status.failed');
     case 'canceled':
-      return 'Canceled';
+      return t('attempts.status.canceled');
   }
 }
 
@@ -155,30 +163,33 @@ export function workflowAttemptStatusTone(
   }
 }
 
-function workspaceStatusLabel(workspace: WorkspaceWithStats): string {
-  if (workspace.archived) return 'Archived';
+function workspaceStatusLabel(
+  workspace: WorkspaceWithStats,
+  t: TFunction<'common'>
+): string {
+  if (workspace.archived) return t('attempts.status.archived');
   switch (workspace.latestProcessStatus) {
     case 'pending':
     case 'starting':
-      return 'Preparing';
+      return t('attempts.status.preparing');
     case 'running':
-      return 'Running';
+      return t('attempts.status.running');
     case 'awaiting_input':
-      return 'Waiting for input';
+      return t('attempts.status.awaitingInput');
     case 'awaiting_approval':
-      return 'Waiting for approval';
+      return t('attempts.status.awaitingApproval');
     case 'cancelling':
-      return 'Cancelling';
+      return t('attempts.status.cancelling');
     case 'succeeded':
-      return 'Completed';
+      return t('attempts.status.completed');
     case 'failed':
     case 'crashed':
     case 'audit_failed':
-      return 'Failed';
+      return t('attempts.status.failed');
     case 'cancelled':
-      return 'Canceled';
+      return t('attempts.status.canceled');
     default:
-      return 'Active';
+      return t('attempts.status.active');
   }
 }
 

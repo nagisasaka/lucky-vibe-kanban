@@ -363,7 +363,7 @@ export function RemoteProjectsSettingsSection({
   const [formState, setFormState] = useState<FormState | null>(null);
 
   // UI state
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'name' | 'save' | 'delete' | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -584,7 +584,11 @@ export function RemoteProjectsSettingsSection({
         description: t(
           'settings:settings.remoteProjects.form.defaultRepos.pickerDescription',
           {
-            host: selectedHost?.label ?? t('settings:hostPicker.thisMachine'),
+            host:
+              selectedHost?.kind === 'local'
+                ? t('settings:settings.hostPicker.lvkServer')
+                : (selectedHost?.label ??
+                  t('settings:settings.hostPicker.thisMachine')),
           }
         ),
       });
@@ -643,6 +647,7 @@ export function RemoteProjectsSettingsSection({
     repoConfigDirty,
     repoDefaultsHostId,
     selectedHost?.label,
+    selectedHost?.kind,
     selectedProjectId,
   ]);
 
@@ -778,7 +783,7 @@ export function RemoteProjectsSettingsSection({
       ...prev,
       {
         id: newId,
-        name: t('kanban.newStatus', 'New Status'),
+        name: t('common:kanban.newStatus'),
         color: getRandomPresetColor(),
         hidden: false,
         sort_order: maxSortOrder + 1000,
@@ -968,8 +973,8 @@ export function RemoteProjectsSettingsSection({
         );
         setTimeout(() => setSuccess(null), 3000);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch {
+      setError('delete');
     }
   };
 
@@ -978,9 +983,7 @@ export function RemoteProjectsSettingsSection({
 
     const trimmedName = formState.name.trim();
     if (!trimmedName) {
-      setError(
-        t('settings.remoteProjects.nameRequired', 'Project name is required')
-      );
+      setError('name');
       return;
     }
 
@@ -1032,12 +1035,8 @@ export function RemoteProjectsSettingsSection({
         t('settings.remoteProjects.saveSuccess', 'Project updated successfully')
       );
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('settings.remoteProjects.saveError', 'Failed to update project')
-      );
+    } catch {
+      setError('save');
     } finally {
       setIsSaving(false);
     }
@@ -1089,12 +1088,7 @@ export function RemoteProjectsSettingsSection({
     return (
       <div className="py-8">
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {orgsError instanceof Error
-            ? orgsError.message
-            : t(
-                'settings.remoteProjects.loadError',
-                'Failed to load organizations'
-              )}
+          {t('settings.remoteProjects.loadError')}
         </div>
       </div>
     );
@@ -1105,7 +1099,11 @@ export function RemoteProjectsSettingsSection({
       {/* Status messages */}
       {error && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error mb-4">
-          {error}
+          {error === 'name'
+            ? t('settings.remoteProjects.nameRequired')
+            : error === 'delete'
+              ? t('settings.remoteProjects.deleteUnconfirmed')
+              : t('settings.remoteProjects.saveError')}
         </div>
       )}
 
@@ -1269,8 +1267,10 @@ export function RemoteProjectsSettingsSection({
                   'settings:settings.remoteProjects.form.defaultRepos.description',
                   {
                     host:
-                      selectedHost?.label ??
-                      t('settings:hostPicker.thisMachine'),
+                      selectedHost?.kind === 'local'
+                        ? t('settings:settings.hostPicker.lvkServer')
+                        : (selectedHost?.label ??
+                          t('settings:settings.hostPicker.thisMachine')),
                   }
                 )}
               </p>
@@ -1529,10 +1529,10 @@ export function RemoteProjectsSettingsSection({
 
             <div className="flex items-center justify-between text-normal">
               <span className="text-sm font-semibold">
-                {t('kanban.visibleColumns', 'Visible Columns')}
+                {t('common:kanban.visibleColumns')}
               </span>
               <span className="text-xs text-low">
-                {t('kanban.dragToRearrange', 'Drag to re-arrange')}
+                {t('common:kanban.dragToRearrange')}
               </span>
             </div>
 
@@ -1585,7 +1585,7 @@ export function RemoteProjectsSettingsSection({
                         <PlusIcon className="size-icon-xs" weight="bold" />
                       </div>
                       <span className="text-xs font-light">
-                        {t('kanban.addColumn', 'Add column')}
+                        {t('common:kanban.addColumn')}
                       </span>
                     </button>
                   </div>

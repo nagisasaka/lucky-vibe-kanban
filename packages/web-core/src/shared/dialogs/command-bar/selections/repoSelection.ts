@@ -11,10 +11,10 @@ export function buildRepoSelectionPages(
   return {
     selectRepo: {
       id: 'selectRepo',
-      title: 'Select Repository',
-      buildGroups: () => [
+      title: (t) => t('tasks:selections.selectRepo'),
+      buildGroups: (t) => [
         {
-          label: 'Repositories',
+          label: t('tasks:selections.repos'),
           items: repos.map((r) => ({ type: 'repo' as const, repo: r })),
         },
       ],

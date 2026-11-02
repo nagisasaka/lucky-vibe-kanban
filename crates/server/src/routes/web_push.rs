@@ -132,6 +132,7 @@ fn subscription_router(service: PushService) -> Router<SqlitePool> {
         .route("/web-push", get(status).post(subscribe))
         .route("/web-push/{id}", post(unsubscribe))
         .route("/web-push/{id}/events", post(update_events))
+        .route("/web-push/{id}/locale", post(update_locale))
         .layer(Extension(service))
 }
 
@@ -169,6 +170,8 @@ async fn status(
 struct Subscribe {
     project_id: Uuid,
     subscription: SubscriptionInfo,
+    #[serde(default)]
+    locale: Option<String>,
 }
 async fn subscribe(
     State(pool): State<SqlitePool>,
@@ -193,11 +196,12 @@ async fn subscribe(
         return Err(StatusCode::NOT_FOUND);
     }
     let hash = format!("{:x}", Sha256::digest(r.subscription.endpoint.as_bytes()));
+    let mut registration =
+        serde_json::to_value(r.subscription).map_err(|_| StatusCode::BAD_REQUEST)?;
+    registration["lvk_locale"] = json!(push_locale(r.locale.as_deref()));
     let sealed = s
         .access
-        .seal_push_registration(
-            serde_json::to_value(r.subscription).map_err(|_| StatusCode::BAD_REQUEST)?,
-        )
+        .seal_push_registration(registration)
         .map_err(|_| StatusCode::FORBIDDEN)?;
     let mut tx = pool
         .begin_with("BEGIN IMMEDIATE")
@@ -282,6 +286,52 @@ async fn update_events(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LocalePreference {
+    locale: String,
+}
+
+async fn update_locale(
+    State(pool): State<SqlitePool>,
+    Extension(service): Extension<PushService>,
+    Path(id): Path<Uuid>,
+    Json(preference): Json<LocalePreference>,
+) -> Result<StatusCode, StatusCode> {
+    let owner = actor()?;
+    let _guard = service.delivery_gate.lock().await;
+    let sealed: Vec<u8> =
+        sqlx::query_scalar("SELECT sealed FROM web_push_subscriptions WHERE id=? AND owner=?")
+            .bind(id)
+            .bind(owner)
+            .fetch_optional(&pool)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .ok_or(StatusCode::NOT_FOUND)?;
+    let mut registration = service
+        .access
+        .open_push_registration(&sealed, owner)
+        .await
+        .ok_or(StatusCode::CONFLICT)?;
+    let locale = push_locale(Some(&preference.locale));
+    if registration.get("lvk_locale").and_then(Value::as_str) == Some(locale) {
+        return Ok(StatusCode::NO_CONTENT);
+    }
+    registration["lvk_locale"] = json!(locale);
+    let updated = service
+        .access
+        .seal_push_registration(registration)
+        .map_err(|_| StatusCode::FORBIDDEN)?;
+    sqlx::query("UPDATE web_push_subscriptions SET sealed=? WHERE id=? AND owner=?")
+        .bind(updated)
+        .bind(id)
+        .bind(owner)
+        .execute(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn event_bit(kind: &str) -> i64 {
     match kind {
         "input_requested" => 1,
@@ -345,7 +395,25 @@ async fn actionable(pool: &SqlitePool, item: &Delivery) -> anyhow::Result<bool> 
             .bind(item.agent_run_id).bind(&item.kind).bind(item.attempt_id).fetch_one(pool).await?)
     }
 }
-fn body(kind: &str) -> &'static str {
+fn push_locale(locale: Option<&str>) -> &'static str {
+    match locale.and_then(|locale| locale.split(['-', '_']).next()) {
+        Some(language) if language.eq_ignore_ascii_case("ja") => "ja",
+        _ => "en",
+    }
+}
+
+fn body(kind: &str, locale: Option<&str>) -> &'static str {
+    if push_locale(locale) == "ja" {
+        return match kind {
+            "input_requested" => "Codexへの回答が必要です。LVKを開いて回答してください。",
+            "approval_requested" => "Codexが承認を待っています。LVKで内容を確認してください。",
+            "succeeded" => {
+                "Codexの実行が正常に終了しました。テスト・自動マージ・公開は別途確認が必要です。"
+            }
+            "cancelled" => "Codexの実行がキャンセルされました。詳細はLVKで確認してください。",
+            _ => "Codexの実行が失敗または異常終了しました。詳細はLVKで確認してください。",
+        };
+    }
     match kind {
         "input_requested" => "Codex needs an answer. Open LVK to respond.",
         "approval_requested" => "Codex is waiting for approval. Review in LVK.",
@@ -443,13 +511,14 @@ async fn dispatch(
         if claimed == 0 {
             continue;
         }
+        let message = body(&item.kind, value.get("lvk_locale").and_then(Value::as_str));
         let sub: SubscriptionInfo = serde_json::from_value(value)?;
         let url = format!(
             "/projects/{}/issues/{}/workspaces/{}?session_id={}&agent_run_id={}",
             item.project_id, item.issue_id, item.workspace_id, item.session_id, item.agent_run_id
         );
         let payload = serde_json::to_vec(
-            &json!({"title":"LVK", "body":body(&item.kind), "tag":format!("lvk:{}",item.id), "url":url}),
+            &json!({"title":"LVK", "body":message, "tag":format!("lvk:{}",item.id), "url":url}),
         )?;
         let result = send(client, config, &sub, &payload).await;
         match result {
@@ -502,10 +571,51 @@ mod tests {
         }
     }
     #[test]
+    fn notification_locales_normalize_and_fall_back_without_exposing_content() {
+        for locale in ["ja", "ja-JP", "JA_jp"] {
+            assert_eq!(push_locale(Some(locale)), "ja");
+            assert_eq!(
+                body("input_requested", Some(locale)),
+                "Codexへの回答が必要です。LVKを開いて回答してください。"
+            );
+        }
+        for locale in [
+            None,
+            Some("en-US"),
+            Some("fr"),
+            Some("zh-TW"),
+            Some("unsupported"),
+        ] {
+            assert_eq!(push_locale(locale), "en");
+            assert_eq!(
+                body("approval_requested", locale),
+                body("approval_requested", Some("en"))
+            );
+        }
+        assert!(body("succeeded", Some("ja")).contains("自動マージ・公開は別途"));
+        assert!(body("cancelled", Some("ja")).contains("キャンセルされました"));
+        assert!(!body("PRIVATE_RUN_CONTENT", Some("ja")).contains("PRIVATE"));
+        assert!(body("crashed", Some("ja")).contains("失敗または異常終了"));
+    }
+
+    #[test]
+    fn sealed_locale_metadata_keeps_legacy_subscription_shape_compatible() {
+        let legacy = json!({"endpoint":"https://fcm.googleapis.com/fcm/send/fixture","keys":{"p256dh":"fixture","auth":"fixture"}});
+        let mut localized = legacy.clone();
+        localized["lvk_locale"] = json!("ja");
+        let old: SubscriptionInfo = serde_json::from_value(legacy).unwrap();
+        let new: SubscriptionInfo = serde_json::from_value(localized).unwrap();
+        assert_eq!(
+            serde_json::to_value(old).unwrap(),
+            serde_json::to_value(new).unwrap()
+        );
+    }
+
+    #[test]
     fn lock_screen_contains_no_project_or_question_content() {
-        assert!(body("succeeded").contains("separate"));
-        assert!(body("approval_requested").contains("Review in LVK"));
-        assert!(body("crashed").contains("abnormally"));
+        assert!(body("succeeded", None).contains("separate"));
+        assert!(body("approval_requested", None).contains("Review in LVK"));
+        assert!(body("crashed", None).contains("abnormally"));
     }
 }
 
@@ -919,7 +1029,7 @@ mod api_tests {
             .unwrap();
         let mut key = vec![0; 65];
         key[0] = 4;
-        let payload = json!({"project_id":project,"subscription":{"endpoint":"https://fcm.googleapis.com/fcm/send/test","keys":{"p256dh":URL_SAFE_NO_PAD.encode(key),"auth":URL_SAFE_NO_PAD.encode([0;16])}}});
+        let mut payload = json!({"project_id":project,"subscription":{"endpoint":"https://fcm.googleapis.com/fcm/send/test","keys":{"p256dh":URL_SAFE_NO_PAD.encode(key),"auth":URL_SAFE_NO_PAD.encode([0;16])}}});
         let request = |method: &str, path: &str, value: &Value, authorized: bool| {
             let mut request = axum::http::Request::builder()
                 .method(method)
@@ -984,6 +1094,65 @@ mod api_tests {
         )
         .unwrap();
         assert_eq!(saved["event_mask"], 31);
+        let (owner, sealed): (Uuid, Vec<u8>) =
+            sqlx::query_as("SELECT owner,sealed FROM web_push_subscriptions")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(
+            access.open_push_registration(&sealed, owner).await.unwrap()["lvk_locale"],
+            "en"
+        );
+
+        let locale_path = format!("/api/web-push/{}/locale", saved["id"].as_str().unwrap());
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &locale_path,
+                    &json!({"locale":"ja-JP"}),
+                    false
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &format!("/api/web-push/{}/locale", Uuid::new_v4()),
+                    &json!({"locale":"ja"}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &locale_path,
+                    &json!({"locale":"ja-JP"}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::NO_CONTENT
+        );
+        let (owner, sealed, mask): (Uuid, Vec<u8>, i64) =
+            sqlx::query_as("SELECT owner,sealed,event_mask FROM web_push_subscriptions")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        let localized = access.open_push_registration(&sealed, owner).await.unwrap();
+        assert_eq!(localized["lvk_locale"], "ja");
+        assert_eq!(localized["endpoint"], payload["subscription"]["endpoint"]);
+        assert_eq!(mask, 31);
         let events_path = format!("/api/web-push/{}/events", saved["id"].as_str().unwrap());
         let other_registration = Uuid::new_v4();
         sqlx::query("INSERT INTO web_push_subscriptions(id,owner,project_id,endpoint_hash,sealed) VALUES(?,?,?,'another-device',X'00')")
@@ -995,6 +1164,25 @@ mod api_tests {
         sqlx::query("INSERT INTO web_push_deliveries(subscription_id,event_key,agent_run_id,kind) VALUES(?,'queued',?,'succeeded')")
             .bind(Uuid::parse_str(saved["id"].as_str().unwrap()).unwrap()).bind(run)
             .execute(&pool).await.unwrap();
+        assert_eq!(
+            app.clone()
+                .oneshot(request(
+                    "POST",
+                    &locale_path,
+                    &json!({"locale":"en-US"}),
+                    true
+                ))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::NO_CONTENT
+        );
+        let pending: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM web_push_deliveries WHERE finished=0")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(pending, 1, "locale updates never consume pending events");
         for mask in [0, 1, 2, 4, 8, 16, 31, 0] {
             assert_eq!(
                 app.clone()
@@ -1060,6 +1248,7 @@ mod api_tests {
                 .status(),
             StatusCode::UNAUTHORIZED
         );
+        payload["locale"] = json!("ja-JP");
         let response = app
             .clone()
             .oneshot(request("POST", "/api/web-push", &payload, true))
@@ -1076,6 +1265,16 @@ mod api_tests {
             .await
             .unwrap();
         assert_eq!(renewed, 0, "renewal preserves selection");
+        let (owner, sealed): (Uuid, Vec<u8>) =
+            sqlx::query_as("SELECT owner,sealed FROM web_push_subscriptions")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(
+            access.open_push_registration(&sealed, owner).await.unwrap()["lvk_locale"],
+            "ja"
+        );
+
         // Tamper ownership to represent another member's registration; endpoint
         // transfer, list disclosure and deletion must all be refused/scoped.
         sqlx::query("UPDATE web_push_subscriptions SET owner=?")
@@ -1083,6 +1282,14 @@ mod api_tests {
             .execute(&pool)
             .await
             .unwrap();
+        assert_eq!(
+            app.clone()
+                .oneshot(request("POST", &locale_path, &json!({"locale":"ja"}), true))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::NOT_FOUND
+        );
         assert_eq!(
             app.clone()
                 .oneshot(request("POST", "/api/web-push", &payload, true))

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   useCallback,
   useContext,
@@ -29,6 +30,7 @@ import {
 import { useApprovalForm } from '@/shared/hooks/ApprovalForm';
 import { useApprovals } from '@/shared/hooks/useApprovals';
 
+// Agent-facing fallback payload; keep its existing bytes, like supplied reasons.
 const DEFAULT_DENIAL_REASON = 'User denied this tool use request.';
 
 // ---------- Types ----------
@@ -87,6 +89,7 @@ function ActionButtons({
   onApprove: () => void;
   onStartDeny: () => void;
 }) {
+  const { t } = useTranslation('tasks');
   return (
     <div className="flex items-center gap-1.5 pr-4">
       <Tooltip>
@@ -96,14 +99,22 @@ function ActionButtons({
             variant="ghost"
             className="h-8 w-8 rounded-full p-0"
             disabled={disabled}
-            aria-label={isResponding ? 'Submitting approval' : 'Approve'}
+            aria-label={
+              isResponding
+                ? t('approval.submittingApproval')
+                : t('approval.approve')
+            }
             aria-busy={isResponding}
           >
             <Check className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{isResponding ? 'Submitting…' : 'Approve request'}</p>
+          <p>
+            {isResponding
+              ? t('approval.submitting')
+              : t('approval.approveRequest')}
+          </p>
         </TooltipContent>
       </Tooltip>
 
@@ -114,14 +125,20 @@ function ActionButtons({
             variant="ghost"
             className="h-8 w-8 rounded-full p-0"
             disabled={disabled}
-            aria-label={isResponding ? 'Submitting denial' : 'Deny'}
+            aria-label={
+              isResponding ? t('approval.submittingDenial') : t('approval.deny')
+            }
             aria-busy={isResponding}
           >
             <X className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{isResponding ? 'Submitting…' : 'Provide denial reason'}</p>
+          <p>
+            {isResponding
+              ? t('approval.submitting')
+              : t('approval.provideReason')}
+          </p>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -141,12 +158,13 @@ function DenyReasonForm({
   onCancel: () => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation('tasks');
   return (
     <div className="flex flex-col gap-2 p-4">
       <WYSIWYGEditor
         value={value}
         onChange={onChange}
-        placeholder="Let the agent know why this request was denied... Type @ to insert tags or search files."
+        placeholder={t('approval.reasonPlaceholder')}
         disabled={isResponding}
         className="min-h-[80px]"
         onCmdEnter={onSubmit}
@@ -158,10 +176,10 @@ function DenyReasonForm({
           onClick={onCancel}
           disabled={isResponding}
         >
-          Cancel
+          {t('approval.cancel')}
         </Button>
         <Button size="sm" onClick={onSubmit} disabled={isResponding}>
-          Deny
+          {t('approval.deny')}
         </Button>
       </div>
     </div>
@@ -174,9 +192,12 @@ const PendingApprovalEntry = ({
   executionProcessId,
   children,
 }: PendingApprovalEntryProps) => {
+  const { t } = useTranslation('tasks');
   const [isResponding, setIsResponding] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    'missingExecution' | 'responseUnconfirmed' | null
+  >(null);
 
   const {
     isEnteringReason,
@@ -246,7 +267,7 @@ const PendingApprovalEntry = ({
     async (approved: boolean, reason?: string) => {
       if (disabled) return;
       if (!executionProcessId) {
-        setError('Missing executionProcessId');
+        setError('missingExecution');
         return;
       }
 
@@ -266,9 +287,7 @@ const PendingApprovalEntry = ({
         clear();
       } catch (e: unknown) {
         console.error('Approval respond failed:', e);
-        const errorMessage =
-          e instanceof Error ? e.message : 'Failed to send response';
-        setError(errorMessage);
+        setError('responseUnconfirmed');
       } finally {
         setIsResponding(false);
       }
@@ -326,7 +345,7 @@ const PendingApprovalEntry = ({
               <div className="flex items-center gap-1.5">
                 {!isEnteringReason && (
                   <span className="text-muted-foreground">
-                    Would you like to approve this?
+                    {t('approval.prompt')}
                   </span>
                 )}
               </div>
@@ -346,7 +365,9 @@ const PendingApprovalEntry = ({
                 role="alert"
                 aria-live="polite"
               >
-                {error}
+                {error === 'missingExecution'
+                  ? t('approval.missingExecution')
+                  : t('approval.responseUnconfirmed')}
               </div>
             )}
 

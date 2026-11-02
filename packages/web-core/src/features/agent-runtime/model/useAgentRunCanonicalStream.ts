@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import type { AgentEventEnvelope, AgentRunStreamMessage } from 'shared/types';
 import { openLocalApiWebSocket } from '@/shared/lib/localApiTransport';
@@ -24,10 +25,13 @@ export function useAgentRunCanonicalStream(
   agentRunId: string | undefined,
   enabled = true
 ): UseAgentRunCanonicalStreamResult {
+  const { t } = useTranslation('common');
   const [timeline, setTimeline] = useState<CanonicalAgentTimeline | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    'executionUpdate' | 'executionFormat' | 'executionConnection' | null
+  >(null);
   const timelineRef = useRef<CanonicalAgentTimeline | null>(null);
   const retryTimerRef = useRef<number | null>(null);
   const retryAttemptRef = useRef(0);
@@ -149,7 +153,7 @@ export function useAgentRunCanonicalStream(
                 );
                 break;
               case 'error':
-                setError(parsed.data.message);
+                setError('executionUpdate');
                 return;
             }
             timelineRef.current = next;
@@ -161,16 +165,12 @@ export function useAgentRunCanonicalStream(
               schedulePublish();
             }
           } catch (parseError) {
-            setError(
-              parseError instanceof Error
-                ? parseError.message
-                : 'Invalid AgentRun event'
-            );
+            setError('executionFormat');
           }
         };
         socket.onerror = () => {
           if (cancelled) return;
-          setError('AgentRun stream connection failed');
+          setError('executionConnection');
         };
         socket.onclose = () => {
           if (cancelled) return;
@@ -185,11 +185,7 @@ export function useAgentRunCanonicalStream(
       } catch (connectError) {
         if (cancelled) return;
         setIsConnected(false);
-        setError(
-          connectError instanceof Error
-            ? connectError.message
-            : 'AgentRun stream unavailable'
-        );
+        setError('executionConnection');
         scheduleReconnect();
       }
     };
@@ -208,5 +204,10 @@ export function useAgentRunCanonicalStream(
     };
   }, [agentRunId, enabled]);
 
-  return { timeline, isConnected, isInitialized, error };
+  return {
+    timeline,
+    isConnected,
+    isInitialized,
+    error: error ? t(`streams.${error}`) : null,
+  };
 }

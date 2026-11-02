@@ -70,7 +70,11 @@ export function MemberListItem({
             member.role === MemberRoleEnum.ADMIN ? 'default' : 'secondary'
           }
         >
-          {t('roles.' + member.role.toLowerCase())}
+          {member.role === MemberRoleEnum.ADMIN
+            ? t('roles.admin')
+            : member.role === MemberRoleEnum.MEMBER
+              ? t('roles.member')
+              : t('roles.unknown')}
         </Badge>
       </div>
       <div className="flex items-center gap-2">

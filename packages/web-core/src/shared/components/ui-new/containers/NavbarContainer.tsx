@@ -23,6 +23,7 @@ import { NavbarActionGroups } from '@/shared/actions';
 import {
   NavbarDivider,
   type ActionDefinition,
+  type ActionTranslator,
   type NavbarItem as ActionNavbarItem,
   type ActionVisibilityContext,
   isSpecialIcon,
@@ -90,7 +91,8 @@ function filterNavbarItems(
 function toNavbarSectionItems(
   items: readonly ActionNavbarItem[],
   ctx: ActionVisibilityContext,
-  onExecuteAction: (action: ActionDefinition) => void
+  onExecuteAction: (action: ActionDefinition) => void,
+  t: ActionTranslator
 ): NavbarSectionItem[] {
   return items.reduce<NavbarSectionItem[]>((result, item) => {
     if (isDivider(item)) {
@@ -108,7 +110,7 @@ function toNavbarSectionItems(
       id: item.id,
       icon,
       isActive: isActionActive(item, ctx),
-      tooltip: getActionTooltip(item, ctx),
+      tooltip: getActionTooltip(item, ctx, t),
       shortcut: item.shortcut,
       disabled: !isActionEnabled(item, ctx),
       onClick: () => onExecuteAction(item),
@@ -189,9 +191,10 @@ export function NavbarContainer({
       toNavbarSectionItems(
         filterNavbarItems(NavbarActionGroups.left, actionCtx),
         actionCtx,
-        handleExecuteAction
+        handleExecuteAction,
+        t
       ),
-    [actionCtx, handleExecuteAction]
+    [actionCtx, handleExecuteAction, t]
   );
 
   const rightItems = useMemo(
@@ -199,9 +202,10 @@ export function NavbarContainer({
       toNavbarSectionItems(
         filterNavbarItems(NavbarActionGroups.right, actionCtx),
         actionCtx,
-        handleExecuteAction
+        handleExecuteAction,
+        t
       ),
-    [actionCtx, handleExecuteAction]
+    [actionCtx, handleExecuteAction, t]
   );
 
   const workspaceParts = useMemo(() => {

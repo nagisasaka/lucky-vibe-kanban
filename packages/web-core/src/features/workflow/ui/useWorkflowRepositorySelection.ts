@@ -53,13 +53,8 @@ export function useWorkflowRepositorySelection({
       initialBranch: preferredRepo?.target_branch,
       hostId: routeState.hostId,
       allowedModes: ['worktree'],
-      title: t('workflow.workspaceDialog.title', {
-        defaultValue: 'Choose workflow workspace',
-      }),
-      description: t('workflow.workspaceDialog.description', {
-        defaultValue:
-          'Choose one Git repository and a base branch. The workflow will run in an isolated worktree.',
-      }),
+      title: t('workflow.workspaceDialog.title'),
+      description: t('workflow.workspaceDialog.description'),
     });
 
     if (result.kind === 'canceled' || result.selection.mode !== 'worktree') {

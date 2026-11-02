@@ -2,29 +2,30 @@
   "createDialog": {},
   "inviteDialog": {},
   "roles": {
-    "member": "Member",
-    "admin": "Admin"
+    "member": "メンバー",
+    "admin": "管理者",
+    "unknown": "不明なロール"
   },
   "memberList": {
-    "you": "You"
+    "you": "自分"
   },
   "invitationList": {},
   "settings": {
-    "title": "Organization Settings",
-    "description": "Manage organization members and permissions",
-    "selectLabel": "Select Organization",
-    "selectPlaceholder": "Select an organization",
-    "selectHelper": "Choose an organization to view and manage its members",
-    "noOrganizations": "No organizations available",
-    "loadingOrganizations": "Loading organizations...",
-    "loadError": "Failed to load organizations",
-    "dangerZone": "Danger Zone",
-    "dangerZoneDescription": "Irreversible and destructive actions",
-    "deleteOrganization": "Delete Organization",
-    "deleteOrganizationDescription": "Permanently delete this organization and all its data",
-    "confirmDelete": "Are you sure you want to delete {{orgName}}? This action cannot be undone.",
-    "deleteSuccess": "Organization deleted successfully",
-    "deleteError": "Failed to delete organization"
+    "title": "組織の設定",
+    "description": "組織のメンバーと権限を管理します",
+    "selectLabel": "組織を選択",
+    "selectPlaceholder": "組織を選択してください",
+    "selectHelper": "メンバーを表示・管理する組織を選択してください",
+    "noOrganizations": "利用できる組織はありません",
+    "loadingOrganizations": "組織を読み込み中…",
+    "loadError": "組織を読み込めませんでした",
+    "dangerZone": "取り消せない操作",
+    "dangerZoneDescription": "データの削除など、取り消せない操作です",
+    "deleteOrganization": "組織を削除",
+    "deleteOrganizationDescription": "この組織とすべてのデータを完全に削除します",
+    "confirmDelete": "{{orgName}}を削除しますか？この操作は取り消せません。",
+    "deleteSuccess": "組織を削除しました",
+    "deleteError": "組織を削除できませんでした"
   },
   "loginRequired": {},
   "billing": {},

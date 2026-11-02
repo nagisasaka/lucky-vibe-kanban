@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import {
   WORKFLOW_GRAPH_VERSION,
   type WorkflowConditionBranch,
@@ -10,7 +11,71 @@ import { BaseCodingAgent } from 'shared/types';
 export interface ValidationIssue {
   type: 'error' | 'warning';
   nodeId?: string;
-  message: string;
+  code:
+    | 'unsupportedVersion'
+    | 'startCount'
+    | 'endRequired'
+    | 'duplicateId'
+    | 'selfEdge'
+    | 'missingSource'
+    | 'missingTarget'
+    | 'cycle'
+    | 'unreachable'
+    | 'duplicateOutgoing'
+    | 'routerRequired'
+    | 'missingBranch'
+    | 'branchTargetRequired'
+    | 'duplicateBranch'
+    | 'staleBranch'
+    | 'emptyCondition';
+  values?: { node?: string; target?: string; count?: number };
+}
+
+export function workflowValidationMessage(
+  issue: ValidationIssue,
+  t: TFunction<'common'>,
+  locale: string
+): string {
+  const values = {
+    ...issue.values,
+    formattedCount: new Intl.NumberFormat(locale).format(
+      issue.values?.count ?? 0
+    ),
+  };
+  switch (issue.code) {
+    case 'unsupportedVersion':
+      return t('workflow.validationMessages.unsupportedVersion', values);
+    case 'startCount':
+      return t('workflow.validationMessages.startCount', values);
+    case 'endRequired':
+      return t('workflow.validationMessages.endRequired', values);
+    case 'duplicateId':
+      return t('workflow.validationMessages.duplicateId', values);
+    case 'selfEdge':
+      return t('workflow.validationMessages.selfEdge', values);
+    case 'missingSource':
+      return t('workflow.validationMessages.missingSource', values);
+    case 'missingTarget':
+      return t('workflow.validationMessages.missingTarget', values);
+    case 'cycle':
+      return t('workflow.validationMessages.cycle', values);
+    case 'unreachable':
+      return t('workflow.validationMessages.unreachable', values);
+    case 'duplicateOutgoing':
+      return t('workflow.validationMessages.duplicateOutgoing', values);
+    case 'routerRequired':
+      return t('workflow.validationMessages.routerRequired', values);
+    case 'missingBranch':
+      return t('workflow.validationMessages.missingBranch', values);
+    case 'branchTargetRequired':
+      return t('workflow.validationMessages.branchTargetRequired', values);
+    case 'duplicateBranch':
+      return t('workflow.validationMessages.duplicateBranch', values);
+    case 'staleBranch':
+      return t('workflow.validationMessages.staleBranch', values);
+    case 'emptyCondition':
+      return t('workflow.validationMessages.emptyCondition', values);
+  }
 }
 
 export interface WorkflowValidationPanelProps {
@@ -30,7 +95,7 @@ export function validateWorkflowGraph(
   const includeRunReadiness = options.includeRunReadiness ?? true;
 
   if (graph.version < 1 || graph.version > WORKFLOW_GRAPH_VERSION) {
-    issues.push({ type: 'error', message: 'Unsupported graph version' });
+    issues.push({ type: 'error', code: 'unsupportedVersion' });
   }
 
   const nodes = graph.nodes;
@@ -40,7 +105,8 @@ export function validateWorkflowGraph(
   if (startNodes.length !== 1) {
     issues.push({
       type: 'error',
-      message: `Expected exactly 1 Start node, found ${startNodes.length}`,
+      code: 'startCount',
+      values: { count: startNodes.length },
     });
   }
 
@@ -48,7 +114,7 @@ export function validateWorkflowGraph(
   if (endNodes.length === 0) {
     issues.push({
       type: 'error',
-      message: 'Workflow must have at least one End node',
+      code: 'endRequired',
     });
   }
 
@@ -57,7 +123,8 @@ export function validateWorkflowGraph(
     if (nodeIds.has(node.id)) {
       issues.push({
         type: 'error',
-        message: `Duplicate node ID found: ${node.id}`,
+        code: 'duplicateId',
+        values: { node: node.id },
       });
     }
     nodeIds.add(node.id);
@@ -68,21 +135,24 @@ export function validateWorkflowGraph(
       issues.push({
         type: 'error',
         nodeId: edge.source,
-        message: `Self-edge found on node ${edge.source}`,
+        code: 'selfEdge',
+        values: { node: edge.source },
       });
     }
     if (!nodeIds.has(edge.source)) {
       issues.push({
         type: 'error',
         nodeId: edge.source,
-        message: `Edge source node missing: ${edge.source}`,
+        code: 'missingSource',
+        values: { node: edge.source },
       });
     }
     if (!nodeIds.has(edge.target)) {
       issues.push({
         type: 'error',
         nodeId: edge.target,
-        message: `Edge target node missing: ${edge.target}`,
+        code: 'missingTarget',
+        values: { node: edge.target },
       });
     }
   }
@@ -95,7 +165,8 @@ export function validateWorkflowGraph(
     issues.push({
       type: 'error',
       nodeId: cycleNodeId,
-      message: `Workflow contains a cycle at ${cycleNodeId}`,
+      code: 'cycle',
+      values: { node: cycleNodeId },
     });
   }
 
@@ -106,7 +177,8 @@ export function validateWorkflowGraph(
         issues.push({
           type: 'error',
           nodeId: node.id,
-          message: `Unreachable node: ${node.id}`,
+          code: 'unreachable',
+          values: { node: node.id },
         });
       }
     }
@@ -141,7 +213,8 @@ function validateConditionStructure(
         issues.push({
           type: 'error',
           nodeId: node.id,
-          message: `Condition node ${node.id} has duplicate outgoing target: ${target}`,
+          code: 'duplicateOutgoing',
+          values: { node: node.id, target },
         });
       }
       seenTargets.add(target);
@@ -162,7 +235,7 @@ function validateConditionRunReadiness(
   if (!hasRouterConfig) {
     issues.push({
       type: 'error',
-      message: 'Workflow with Condition nodes requires a router agent',
+      code: 'routerRequired',
     });
   }
 
@@ -188,7 +261,8 @@ function validateConditionRunReadiness(
         issues.push({
           type: 'error',
           nodeId: node.id,
-          message: `Condition node ${node.id} is missing branch config for ${target}`,
+          code: 'missingBranch',
+          values: { node: node.id, target },
         });
       }
     }
@@ -215,7 +289,8 @@ function validateConditionBranch(
     issues.push({
       type: 'error',
       nodeId,
-      message: `Condition node ${nodeId} has a branch without target`,
+      code: 'branchTargetRequired',
+      values: { node: nodeId },
     });
     return;
   }
@@ -224,7 +299,8 @@ function validateConditionBranch(
     issues.push({
       type: 'error',
       nodeId,
-      message: `Condition node ${nodeId} has duplicate branch target: ${targetNodeId}`,
+      code: 'duplicateBranch',
+      values: { node: nodeId, target: targetNodeId },
     });
   }
   branchTargets.add(targetNodeId);
@@ -233,7 +309,8 @@ function validateConditionBranch(
     issues.push({
       type: 'error',
       nodeId,
-      message: `Condition node ${nodeId} has stale branch target: ${targetNodeId}`,
+      code: 'staleBranch',
+      values: { node: nodeId, target: targetNodeId },
     });
   }
 
@@ -241,7 +318,8 @@ function validateConditionBranch(
     issues.push({
       type: 'error',
       nodeId,
-      message: `Condition node ${nodeId} has empty branch condition for ${targetNodeId}`,
+      code: 'emptyCondition',
+      values: { node: nodeId, target: targetNodeId },
     });
   }
 }
@@ -308,7 +386,7 @@ function findReachableNodes(
 export function WorkflowValidationPanel({
   graph,
 }: WorkflowValidationPanelProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const issues = validateWorkflowGraph(graph);
 
   return (
@@ -331,7 +409,13 @@ export function WorkflowValidationPanel({
               }`}
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{issue.message}</span>
+              <span>
+                {workflowValidationMessage(
+                  issue,
+                  t,
+                  i18n.resolvedLanguage || i18n.language
+                )}
+              </span>
             </li>
           ))}
         </ul>

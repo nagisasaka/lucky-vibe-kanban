@@ -243,6 +243,14 @@ function ProviderAccordion({
             );
           })}
         </Accordion>
+        {normalizedSearch &&
+          !config.models.some((model) =>
+            matchesSearch(model, normalizedSearch)
+          ) && (
+            <div className="px-base py-half text-sm text-low">
+              {t('modelSelector.noMatches')}
+            </div>
+          )}
         {showDefaultOption && (
           <div
             className={cn(
@@ -377,7 +385,9 @@ export function ModelSelectorPopover({
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
           {error && (
             <div className="px-base py-half bg-red-500/10 border-b border-red-500/20">
-              <span className="text-sm text-red-600">{error}</span>
+              <span role="alert" className="text-sm text-red-600">
+                {t('modelSelector.loadError')}
+              </span>
             </div>
           )}
           <DropdownMenuLabel>{t('modelSelector.model')}</DropdownMenuLabel>
@@ -386,7 +396,7 @@ export function ModelSelectorPopover({
             {showSearch && (
               <div className="border-t border-border">
                 <DropdownMenuSearchInput
-                  placeholder="Filter by name or ID..."
+                  placeholder={t('modelSelector.filterPlaceholder')}
                   value={searchQuery}
                   onValueChange={onSearchChange}
                 />

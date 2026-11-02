@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { BaseCodingAgent, ExecutorConfig } from 'shared/types';
 import { toPrettyCase } from '@/shared/lib/string';
 import type { WorkflowNodeData } from './workflowGraph';
@@ -18,12 +19,13 @@ function formatOptionalLabel(value: string | null | undefined): string | null {
 }
 
 export function getWorkflowAgentDisplay(
-  data: Pick<WorkflowNodeData, 'executor_config'>
+  data: Pick<WorkflowNodeData, 'executor_config'>,
+  t: TFunction<'common'>
 ): WorkflowAgentDisplay {
   const executorConfig = coerceWorkflowNodeExecutorConfig(data.executor_config);
   const agentLabel = executorConfig
     ? toPrettyCase(executorConfig.executor)
-    : 'Default agent';
+    : t('workflow.agentDisplay.defaultAgent');
   const configuredModel =
     formatOptionalLabel(executorConfig?.model_id) ??
     formatOptionalLabel(executorConfig?.agent_id);
@@ -32,7 +34,7 @@ export function getWorkflowAgentDisplay(
     configuredModel ??
     (configuredVariant && configuredVariant !== 'DEFAULT'
       ? configuredVariant
-      : 'Default model');
+      : t('workflow.agentDisplay.defaultModel'));
   const reasoningLabel = formatOptionalLabel(executorConfig?.reasoning_id);
 
   return {

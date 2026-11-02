@@ -17,7 +17,7 @@ import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useWorkflowAttemptMutations } from '@/shared/hooks/useWorkflowAttempts';
 import {
   buildWorkflowRunInput,
-  getWorkflowRunErrorMessage,
+  getWorkflowRunErrorCode,
 } from '../model/issueWorkflow';
 import { useWorkflowRepositorySelection } from './useWorkflowRepositorySelection';
 import type { DraftWorkspaceRepo } from 'shared/types';
@@ -73,7 +73,17 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
         description: issueDescription,
       })
     );
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<
+      'runInputRequired' | 'repository' | 'unconfirmed' | null
+    >(null);
+    const errorLabel =
+      error === 'runInputRequired'
+        ? t('workflow.errors.runInputRequired')
+        : error === 'repository'
+          ? t('workflow.errors.repositoryRequired')
+          : error
+            ? t('workflow.errors.startFailed')
+            : null;
     const [isPreparingRun, setIsPreparingRun] = useState(false);
 
     const selectedWorkspace = useMemo(
@@ -98,7 +108,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
 
       const trimmedInput = inputText.trim();
       if (!trimmedInput) {
-        setError(t('workflow.errors.runInputRequired'));
+        setError('runInputRequired');
         return;
       }
 
@@ -135,12 +145,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
         modal.hide();
         navigation.goToProjectWorkflowRun(projectId, run.id);
       } catch (err) {
-        setError(
-          getWorkflowRunErrorMessage(err, {
-            repositoryMessage: t('workflow.errors.repositoryRequired'),
-            fallbackMessage: t('workflow.errors.startFailed'),
-          })
-        );
+        setError(getWorkflowRunErrorCode(err));
       } finally {
         setIsPreparingRun(false);
       }
@@ -222,7 +227,7 @@ const RunWorkflowDialogImpl = create<RunWorkflowDialogProps>(
 
             {error ? (
               <p className="text-xs text-error" role="alert">
-                {error}
+                {errorLabel}
               </p>
             ) : null}
 

@@ -1,3 +1,7 @@
+import {
+  WorkspaceFromPrFailure,
+  workspaceFromPrNotice,
+} from '@/shared/lib/githubCliNotice';
 import { useState, useEffect, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -104,30 +108,12 @@ const CreateWorkspaceFromPrDialogImpl =
       [openPrs, selectedPrNumber]
     );
 
-    let prsErrorMessage: string | null = null;
-    if (prsResult?.success === false) {
-      switch (prsResult.error?.type) {
-        case 'cli_not_installed':
-          prsErrorMessage = t('createWorkspaceFromPr.errors.cliNotInstalled', {
-            provider: prsResult.error.provider,
-          });
-          break;
-        case 'auth_failed':
-          prsErrorMessage = prsResult.error.message;
-          break;
-        case 'unsupported_provider':
-          prsErrorMessage = t(
-            'createWorkspaceFromPr.errors.unsupportedProvider'
-          );
-          break;
-        default:
-          prsErrorMessage =
-            prsResult.message ||
-            t('createWorkspaceFromPr.errors.failedToLoadPrs');
-      }
-    } else if (prsError) {
-      prsErrorMessage = t('createWorkspaceFromPr.errors.failedToLoadPrs');
-    }
+    const prsErrorMessage =
+      prsResult?.success === false
+        ? workspaceFromPrNotice(prsResult.error, 'load', t)
+        : prsError
+          ? workspaceFromPrNotice(undefined, 'load', t)
+          : null;
 
     const createMutation = useMutation({
       mutationFn: async () => {
@@ -137,7 +123,7 @@ const CreateWorkspaceFromPrDialogImpl =
           !selectedRemote ||
           !selectedPr
         ) {
-          throw new Error('Missing required fields');
+          throw new WorkspaceFromPrFailure({ type: 'missing_fields' });
         }
         const result = await workspacesApi.createFromPr({
           repo_id: selectedRepoId,
@@ -150,29 +136,8 @@ const CreateWorkspaceFromPrDialogImpl =
           remote_name: selectedRemote,
         });
         if (!result.success) {
-          switch (result.error?.type) {
-            case 'branch_fetch_failed':
-              throw new Error(result.error.message);
-            case 'auth_failed':
-              throw new Error(result.error.message);
-            case 'cli_not_installed':
-              throw new Error(
-                t('createWorkspaceFromPr.errors.cliNotInstalled', {
-                  provider: result.error.provider,
-                })
-              );
-            case 'pr_not_found':
-              throw new Error(t('createWorkspaceFromPr.errors.prNotFound'));
-            case 'unsupported_provider':
-              throw new Error(
-                t('createWorkspaceFromPr.errors.unsupportedProvider')
-              );
-            default:
-              throw new Error(
-                result.message ||
-                  t('createWorkspaceFromPr.errors.failedToCreateWorkspace')
-              );
-          }
+          if (result.error) throw new WorkspaceFromPrFailure(result.error);
+          throw new Error('create-from-pr-unconfirmed');
         }
         return result.data;
       },
@@ -368,7 +333,13 @@ const CreateWorkspaceFromPrDialogImpl =
 
             {createMutation.error && (
               <div className="text-sm text-destructive">
-                {createMutation.error.message}
+                {workspaceFromPrNotice(
+                  createMutation.error instanceof WorkspaceFromPrFailure
+                    ? createMutation.error.reason
+                    : undefined,
+                  'create',
+                  t
+                )}
               </div>
             )}
           </div>

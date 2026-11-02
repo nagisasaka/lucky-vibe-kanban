@@ -1,12 +1,9 @@
+import i18n from '@/i18n/config';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session, Workspace, WorkspaceExecutionView } from 'shared/types';
 import { ExecutionInspectionPanel } from './ExecutionInspectionPanel';
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
 
 const fixture = vi.hoisted(() => ({
   data: undefined as WorkspaceExecutionView | undefined,
@@ -62,7 +59,8 @@ function render() {
 }
 
 describe('active execution controls', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en');
     fixture.data = undefined;
     fixture.pending = null;
     vi.clearAllMocks();
@@ -179,3 +177,19 @@ it.each(['publishing', 'recovery_required'])(
     }
   }
 );
+
+it('renders Japanese publication and stop controls while preserving raw session identity', async () => {
+  await i18n.changeLanguage('ja');
+  fixture.data = {
+    status: 'publishing',
+    can_stop: false,
+    published: false,
+    error: 'PRIVATE_SERVER_BODY',
+  } as WorkspaceExecutionView;
+  const html = render();
+  expect(html).toContain('公開処理中');
+  expect(html).toContain('実行を停止');
+  expect(html).toContain('公開を確認できません');
+  expect(html).toContain('Saved log');
+  expect(html).not.toContain('PRIVATE_SERVER_BODY');
+});

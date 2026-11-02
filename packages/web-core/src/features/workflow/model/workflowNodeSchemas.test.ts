@@ -16,7 +16,7 @@ describe('workflow node schemas', () => {
       expect.objectContaining({
         key: 'prompt_template',
         type: 'textarea',
-        label: 'Prompt Template',
+        label: expect.any(Function),
       })
     );
   });

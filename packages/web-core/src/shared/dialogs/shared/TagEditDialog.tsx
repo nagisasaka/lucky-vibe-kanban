@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react';
 import { tagsApi } from '@/shared/lib/api';
 import type { Tag, CreateTag, UpdateTag } from 'shared/types';
 import { create, useModal } from '@ebay/nice-modal-react';
-import { defineModal, getErrorMessage } from '@/shared/lib/modals';
+import { defineModal } from '@/shared/lib/modals';
 
 export interface TagEditDialogProps {
   tag?: Tag | null; // null for create mode
@@ -32,8 +32,10 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
     content: '',
   });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [tagNameError, setTagNameError] = useState<string | null>(null);
+  const [error, setError] = useState<'nameRequired' | 'saveFailed' | null>(
+    null
+  );
+  const [tagNameError, setTagNameError] = useState(false);
 
   const isEditMode = Boolean(tag);
 
@@ -50,12 +52,12 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
       });
     }
     setError(null);
-    setTagNameError(null);
+    setTagNameError(false);
   }, [tag]);
 
   const handleSave = async () => {
     if (!formData.tag_name.trim()) {
-      setError(t('settings.general.tags.dialog.errors.nameRequired'));
+      setError('nameRequired');
       return;
     }
 
@@ -79,11 +81,8 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
 
       modal.resolve('saved' as TagEditResult);
       modal.hide();
-    } catch (err: unknown) {
-      setError(
-        getErrorMessage(err) ||
-          t('settings.general.tags.dialog.errors.saveFailed')
-      );
+    } catch {
+      setError('saveFailed');
     } finally {
       setSaving(false);
     }
@@ -138,11 +137,9 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
 
                 // Validate in real-time for spaces
                 if (value.includes(' ')) {
-                  setTagNameError(
-                    t('settings.general.tags.dialog.tagName.error')
-                  );
+                  setTagNameError(true);
                 } else {
-                  setTagNameError(null);
+                  setTagNameError(false);
                 }
               }}
               placeholder={t(
@@ -154,7 +151,9 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
               className={tagNameError ? 'border-destructive' : undefined}
             />
             {tagNameError && (
-              <p className="text-sm text-destructive">{tagNameError}</p>
+              <p className="text-sm text-destructive">
+                {t('settings.general.tags.dialog.tagName.error')}
+              </p>
             )}
           </div>
           <div>
@@ -183,7 +182,13 @@ const TagEditDialogImpl = create<TagEditDialogProps>(({ tag }) => {
               disabled={saving}
             />
           </div>
-          {error && <Alert variant="destructive">{error}</Alert>}
+          {error && (
+            <Alert variant="destructive">
+              {error === 'nameRequired'
+                ? t('settings.general.tags.dialog.errors.nameRequired')
+                : t('settings.general.tags.dialog.errors.saveFailed')}
+            </Alert>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={saving}>

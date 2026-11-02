@@ -73,30 +73,19 @@ function buildIssueWorkflowDraftGraph({
   return createDefaultWorkflowGraph(defaultGraphLabels);
 }
 
-export const WORKFLOW_RUN_REPOSITORY_ERROR_MESSAGE =
-  'This workflow needs a workspace with at least one repository. Choose an existing workspace with repositories, or add a repository to the project before starting the run.';
-
-export function getWorkflowRunErrorMessage(
-  error: unknown,
-  options: {
-    repositoryMessage?: string;
-    fallbackMessage?: string;
-  } = {}
-): string {
+/** Keep the repository recovery category; unknown provider bodies are never UI copy. */
+export function getWorkflowRunErrorCode(
+  error: unknown
+): 'repository' | 'unconfirmed' {
   const message =
     error instanceof Error
       ? error.message
       : typeof error === 'string'
         ? error
-        : (options.fallbackMessage ?? 'Failed to start workflow run.');
-
-  if (
-    /workspace has no repositories configured/i.test(message) ||
+        : '';
+  return /workspace has no repositories configured/i.test(message) ||
     /project has no repositories configured/i.test(message) ||
     /no repositories provided/i.test(message)
-  ) {
-    return options.repositoryMessage ?? WORKFLOW_RUN_REPOSITORY_ERROR_MESSAGE;
-  }
-
-  return message;
+    ? 'repository'
+    : 'unconfirmed';
 }

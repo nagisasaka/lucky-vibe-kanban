@@ -36,7 +36,7 @@ export function ContextUsageGauge({
   tokenUsageInfo,
   className,
 }: ContextUsageGaugeProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { percentage, formattedUsed, formattedTotal, status } = useMemo(() => {
     const validPercentage = contextUsagePercentage(tokenUsageInfo);
     if (!tokenUsageInfo || validPercentage === null) {
@@ -90,7 +90,7 @@ export function ContextUsageGauge({
       : Number(tokenUsageInfo.cumulative_tokens);
   const tooltip =
     cumulative !== null && Number.isSafeInteger(cumulative) && cumulative >= 0
-      ? `${contextTooltip} · ${t('contextUsage.cumulative', { tokens: cumulative.toLocaleString() })}`
+      ? `${contextTooltip} · ${t('contextUsage.cumulative', { tokens: cumulative.toLocaleString(i18n.resolvedLanguage || i18n.language) })}`
       : contextTooltip;
 
   const progressColor =

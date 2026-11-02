@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { getFirstProjectDestination } from '@/shared/lib/firstProjectDestination';
@@ -6,6 +7,7 @@ import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 
 export function RootRedirectPage() {
+  const { t } = useTranslation('common');
   const { config, loading, loginStatus } = useUserSystem();
   const setSelectedOrgId = useOrganizationStore((s) => s.setSelectedOrgId);
   const appNavigation = useAppNavigation();
@@ -56,7 +58,7 @@ export function RootRedirectPage() {
 
   return (
     <div className="h-screen bg-primary flex items-center justify-center">
-      <p className="text-low">Loading...</p>
+      <p className="text-low">{t('states.loading')}</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/cn';
 import { Tooltip } from './Tooltip';
 
@@ -41,14 +42,14 @@ const buildInitials = (user: UserAvatarUser): string => {
   return handle ?? '?';
 };
 
-const buildLabel = (user: UserAvatarUser): string => {
+const buildLabel = (user: UserAvatarUser, fallback: string): string => {
   const name = [user.first_name, user.last_name]
     .filter((value): value is string => Boolean(value && value.trim()))
     .join(' ');
 
   if (name) return name;
   if (user.username?.trim()) return user.username;
-  return 'User';
+  return fallback;
 };
 
 // Helper to handle image error by hiding img and showing fallback via DOM
@@ -62,8 +63,9 @@ const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
 };
 
 export const UserAvatar = ({ user, className }: UserAvatarProps) => {
+  const { t } = useTranslation('common');
   const initials = buildInitials(user);
-  const label = buildLabel(user);
+  const label = buildLabel(user, t('userAvatar.unknown'));
   const imageUrl = user.avatar_url
     ? buildOptimizedImageUrl(user.avatar_url)
     : null;

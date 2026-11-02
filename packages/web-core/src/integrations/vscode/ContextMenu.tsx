@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useRef, useState } from 'react';
 import { readClipboardViaBridge } from '@/integrations/vscode/bridge';
 import { writeClipboardViaBridge } from '@/shared/lib/clipboard';
@@ -66,6 +67,7 @@ function pasteIntoInput(
 }
 
 export const WebviewContextMenu: React.FC = () => {
+  const { t, i18n } = useTranslation('common');
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState<Point>({ x: 0, y: 0 });
   const [adjustedPos, setAdjustedPos] = useState<Point | null>(null);
@@ -135,7 +137,7 @@ export const WebviewContextMenu: React.FC = () => {
       setAdjustedPos({ x, y });
     });
     return () => cancelAnimationFrame(id);
-  }, [visible, pos]);
+  }, [visible, pos, i18n.resolvedLanguage]);
 
   const close = () => setVisible(false);
 
@@ -245,14 +247,21 @@ export const WebviewContextMenu: React.FC = () => {
       className="min-w-[160px] rounded-md border border-gray-300 bg-white text-gray-900 shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <MenuItem label="Copy" onClick={onCopy} />
-      {canCut && <MenuItem label="Cut" onClick={onCut} />}
-      {canPaste && <MenuItem label="Paste" onClick={onPaste} />}
+      <MenuItem label={t('webviewContextMenu.copy')} onClick={onCopy} />
+      {canCut && (
+        <MenuItem label={t('webviewContextMenu.cut')} onClick={onCut} />
+      )}
+      {canPaste && (
+        <MenuItem label={t('webviewContextMenu.paste')} onClick={onPaste} />
+      )}
       <Divider />
-      <MenuItem label="Undo" onClick={onUndo} />
-      <MenuItem label="Redo" onClick={onRedo} />
+      <MenuItem label={t('webviewContextMenu.undo')} onClick={onUndo} />
+      <MenuItem label={t('webviewContextMenu.redo')} onClick={onRedo} />
       <Divider />
-      <MenuItem label="Select All" onClick={onSelectAll} />
+      <MenuItem
+        label={t('webviewContextMenu.selectAll')}
+        onClick={onSelectAll}
+      />
     </div>
   );
 };

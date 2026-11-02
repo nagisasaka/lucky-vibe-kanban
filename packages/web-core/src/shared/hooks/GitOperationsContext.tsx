@@ -1,9 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import React, { useContext, useEffect, useState } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 
+type GitOperationNotice =
+  | 'rebase'
+  | 'merge'
+  | 'forcePush'
+  | 'push'
+  | 'targetBranch';
+
 type GitOperationsContextType = {
   error: string | null;
-  setError: (error: string | null) => void;
+  setError: (error: GitOperationNotice | null) => void;
 };
 
 const GitOperationsContext = createHmrContext<GitOperationsContextType | null>(
@@ -15,7 +23,16 @@ export const GitOperationsProvider: React.FC<{
   workspaceId: string | undefined;
   children: React.ReactNode;
 }> = ({ workspaceId, children }) => {
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation('tasks');
+  const [notice, setError] = useState<GitOperationNotice | null>(null);
+  const messages: Record<GitOperationNotice, string> = {
+    rebase: t('gitNotice.rebaseUnconfirmed'),
+    merge: t('gitNotice.mergeUnconfirmed'),
+    forcePush: t('gitNotice.forcePushUnconfirmed'),
+    push: t('gitNotice.pushUnconfirmed'),
+    targetBranch: t('gitNotice.targetUnconfirmed'),
+  };
+  const error = notice ? messages[notice] : null;
 
   useEffect(() => {
     setError(null);

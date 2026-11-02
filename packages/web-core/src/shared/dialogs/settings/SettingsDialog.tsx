@@ -66,7 +66,7 @@ function SettingsDialogNavigation({
       {Object.entries(groups).map(([group, ids]) => (
         <div key={group} className="space-y-1 mb-3">
           <h3 className="px-3 pt-2 text-xs font-medium text-low">
-            {t(`settings.groups.${group}`)}
+            {t(`settings.groups.${group as keyof typeof groups}`)}
           </h3>
           {ids
             .map(

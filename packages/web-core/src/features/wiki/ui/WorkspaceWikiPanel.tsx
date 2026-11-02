@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   useEffect,
   useLayoutEffect,
@@ -67,6 +68,7 @@ export function WorkspaceWikiNavigation({
   onSelectPage?: () => void;
   showReload?: boolean;
 }) {
+  const { t } = useTranslation('common');
   const wiki = useWorkspaceWiki();
   const { repositoryOptions, repoId, snapshot, query, error, controller } =
     wiki;
@@ -79,12 +81,14 @@ export function WorkspaceWikiNavigation({
     <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-secondary text-base">
       <div className="shrink-0 space-y-half border-b p-base">
         <div className="flex items-center justify-between gap-half">
-          <p className="text-sm text-low">Current workspace · openwiki/</p>
+          <p className="text-sm text-low">
+            {t('workspaceWiki.current', { path: 'openwiki/' })}
+          </p>
           {showReload && (
             <button
               type="button"
-              aria-label="Reload Wiki files"
-              title="Reload Wiki files"
+              aria-label={t('workspaceWiki.reload')}
+              title={t('workspaceWiki.reload')}
               disabled={wiki.loading || !repoId}
               onClick={() => void controller.reload()}
               className="shrink-0 rounded p-half text-low hover:bg-panel hover:text-high disabled:opacity-50"
@@ -94,7 +98,7 @@ export function WorkspaceWikiNavigation({
           )}
         </div>
         <select
-          aria-label="Wiki repository"
+          aria-label={t('workspaceWiki.repository')}
           value={repoId}
           onChange={(event) => controller.selectRepository(event.target.value)}
           className="w-full rounded border bg-primary px-half py-half text-high"
@@ -105,42 +109,43 @@ export function WorkspaceWikiNavigation({
             </option>
           ))}
         </select>
-        <p className="text-sm text-low">
-          This shows the current worktree, including unpublished changes.
-          Initialisation and Sync use repository memory settings.
-        </p>
+        <p className="text-sm text-low">{t('workspaceWiki.scope')}</p>
         {snapshot?.wiki.exists && (
           <>
             <input
               type="search"
-              aria-label="Search Wiki"
+              aria-label={t('workspaceWiki.search')}
               value={query}
               onChange={(event) => controller.setQuery(event.target.value)}
-              placeholder="Search Wiki"
+              placeholder={t('workspaceWiki.search')}
               className="w-full rounded border bg-primary px-half py-half text-high"
             />
           </>
         )}
         {error && (
           <p role="status" className="text-sm text-error">
-            {error}
+            {t('workspaceWiki.loadUnconfirmed')}
           </p>
         )}
       </div>
       <nav
         className="min-h-0 flex-1 overflow-y-auto p-half"
-        aria-label="Wiki pages"
+        aria-label={t('workspaceWiki.pages')}
       >
         <WikiPageTree nodes={tree} onSelectPage={onSelectPage} />
         {snapshot?.wiki.exists && pages.length === 0 && (
-          <p className="p-half text-sm text-low">No matching pages.</p>
+          <p className="p-half text-sm text-low">
+            {t('workspaceWiki.noMatches')}
+          </p>
         )}
         {!snapshot && wiki.loading && (
-          <p className="p-half text-sm text-low">Loading Wiki…</p>
+          <p className="p-half text-sm text-low">
+            {t('workspaceWiki.loading')}
+          </p>
         )}
         {snapshot && !snapshot.wiki.exists && (
           <p className="p-half text-sm text-low">
-            No Wiki pages in this repository.
+            {t('workspaceWiki.noPages')}
           </p>
         )}
       </nav>
@@ -155,6 +160,7 @@ function WikiPageTree({
   nodes: WikiTreeNode[];
   onSelectPage?: () => void;
 }) {
+  const { t } = useTranslation('common');
   const { selectedPath, collapsedDirectories, query, controller } =
     useWorkspaceWiki();
   return (
@@ -186,7 +192,7 @@ function WikiPageTree({
             <button
               type="button"
               title={node.path}
-              aria-label={`Directory ${node.path}`}
+              aria-label={t('workspaceWiki.directory', { path: node.path })}
               aria-expanded={expanded}
               disabled={Boolean(query.trim())}
               onClick={() => controller.toggleDirectory(node.path)}
@@ -217,6 +223,7 @@ function WikiPageTree({
 
 /** Full-height read-only body; layout/focus actions are supplied by the parent. */
 export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
+  const { t } = useTranslation('common');
   const { theme } = useTheme();
   const {
     workspace,
@@ -258,27 +265,27 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
     );
   };
   const missing = !workspace
-    ? 'Select a workspace to read its Wiki.'
+    ? t('workspaceWiki.selectWorkspace')
     : error
-      ? 'OpenWiki files are invalid or unavailable. Inspect the reported error; this viewer does not repair or initialise files.'
+      ? t('workspaceWiki.unavailable')
       : !repoId
-        ? 'This workspace has no repositories.'
+        ? t('workspaceWiki.noRepositories')
         : loading && !snapshot
-          ? 'Loading Wiki…'
+          ? t('workspaceWiki.loading')
           : snapshot && !snapshot.wiki.exists
-            ? 'No openwiki/ exists in this repository. Use Initialize Wiki in repository memory settings.'
+            ? t('workspaceWiki.notInitialized')
             : !selectedPage
-              ? 'Select a Wiki page.'
+              ? t('workspaceWiki.selectPage')
               : null;
   return (
     <section
-      aria-label="Wiki article"
+      aria-label={t('workspaceWiki.article')}
       className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-primary"
     >
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-base border-b bg-secondary p-base">
         <div className="min-w-0 flex-1 basis-[180px]">
           <p className="text-sm text-low">
-            Current workspace · openwiki/ · Read-only
+            {t('workspaceWiki.currentReadOnly', { path: 'openwiki/' })}
           </p>
           <p className="break-words text-base text-high">
             {snapshot?.repo_display_name ??
@@ -288,7 +295,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
           </p>
           {workspace?.branch && (
             <p className="break-all text-sm text-low">
-              Workspace branch: {workspace.branch}
+              {t('workspaceWiki.branch', { branch: workspace.branch })}
             </p>
           )}
           {selectedPage && (
@@ -298,8 +305,8 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
         <div className="flex max-w-full shrink-0 flex-wrap items-center gap-half">
           <button
             type="button"
-            title="Reload Wiki files"
-            aria-label="Reload Wiki files"
+            title={t('workspaceWiki.reload')}
+            aria-label={t('workspaceWiki.reload')}
             disabled={loading || !repoId}
             onClick={() => void controller.reload()}
             className="rounded p-half text-low hover:bg-panel hover:text-high disabled:opacity-50"
@@ -311,7 +318,7 @@ export function WorkspaceWikiArticle({ actions }: { actions?: ReactNode }) {
       </header>
       {error && (
         <p role="status" className="border-b p-base text-base text-error">
-          {error}
+          {t('workspaceWiki.loadUnconfirmed')}
         </p>
       )}
       <div
@@ -364,6 +371,7 @@ function PageMetadata({
   page: WikiPage;
   sourceLinks: WorkspaceWikiSnapshot['source_links'];
 }) {
+  const { t } = useTranslation('common');
   const metadata = page.metadata;
   if (!metadata) return null;
   const links = new Map(sourceLinks.map((link) => [link.source, link]));
@@ -371,11 +379,15 @@ function PageMetadata({
     <div className="mb-double space-y-half rounded border bg-panel/50 p-base text-base text-low">
       <p className="font-medium text-high">{metadata.title}</p>
       <p>{metadata.summary}</p>
-      {metadata.language && <p>Language: {metadata.language}</p>}
-      {metadata.tags.length > 0 && <p>Tags: {metadata.tags.join(', ')}</p>}
+      {metadata.language && (
+        <p>{t('workspaceWiki.language', { value: metadata.language })}</p>
+      )}
+      {metadata.tags.length > 0 && (
+        <p>{t('workspaceWiki.tags', { value: metadata.tags.join(', ') })}</p>
+      )}
       {metadata.sources.length > 0 && (
         <p>
-          Sources:{' '}
+          {t('workspaceWiki.sources')}{' '}
           {metadata.sources.map((source, index) => {
             const link = links.get(source);
             return (
@@ -396,7 +408,9 @@ function PageMetadata({
           })}
         </p>
       )}
-      {metadata.updated && <p>Updated: {metadata.updated}</p>}
+      {metadata.updated && (
+        <p>{t('workspaceWiki.updated', { value: metadata.updated })}</p>
+      )}
     </div>
   );
 }

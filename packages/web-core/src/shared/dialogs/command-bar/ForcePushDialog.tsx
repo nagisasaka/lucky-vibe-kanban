@@ -24,7 +24,7 @@ export interface ForcePushDialogProps {
 const ForcePushDialogImpl = create<ForcePushDialogProps>((props) => {
   const modal = useModal();
   const { workspaceId, repoId, branchName } = props;
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const { t } = useTranslation(['tasks', 'common']);
   const branchLabel = branchName ? ` "${branchName}"` : '';
 
@@ -35,18 +35,14 @@ const ForcePushDialogImpl = create<ForcePushDialogProps>((props) => {
       modal.resolve('success');
       modal.hide();
     },
-    (err: unknown) => {
-      // Error - show in dialog and keep open
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : t('tasks:git.forcePushDialog.error');
-      setError(message);
+    () => {
+      // Keep the dialog open for an unconfirmed operation.
+      setError(true);
     }
   );
 
   const handleConfirm = async () => {
-    setError(null);
+    setError(false);
     try {
       await forcePush.mutateAsync({ repo_id: repoId });
     } catch {
@@ -81,7 +77,9 @@ const ForcePushDialogImpl = create<ForcePushDialogProps>((props) => {
         </DialogHeader>
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {t('tasks:git.forcePushDialog.error')}
+            </AlertDescription>
           </Alert>
         )}
         <DialogFooter className="gap-2">

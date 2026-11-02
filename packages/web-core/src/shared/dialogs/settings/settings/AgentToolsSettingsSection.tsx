@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowClockwiseIcon,
@@ -19,6 +21,8 @@ import type {
   AgentToolKind,
   AgentToolLocator,
   AgentToolOperationError,
+  AgentToolErrorCode,
+  AgentToolState,
   AgentToolProvider,
   AgentToolScope,
   McpServerWriteDefinition,
@@ -67,16 +71,45 @@ function locatorFor(item: AgentTool, projectPath: string): AgentToolLocator {
   };
 }
 
-function operationMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    const apiError = error as ApiError<AgentToolOperationError>;
-    const detail = apiError.error_data;
-    return detail ? `${detail.message} (${detail.code})` : apiError.message;
+type ToolError =
+  | AgentToolErrorCode
+  | 'unconfirmed'
+  | 'noProviders'
+  | 'noCopyTarget'
+  | 'projectPathRequired'
+  | 'invalidMcp'
+  | 'invalidSkill'
+  | 'unexpectedKind'
+  | 'clipboard';
+class ToolUiError extends Error {
+  constructor(readonly code: ToolError) {
+    super(code);
   }
-  return error instanceof Error ? error.message : 'Agent Tool operation failed';
+}
+function operationError(error: unknown): ToolError {
+  if (error instanceof ToolUiError) return error.code;
+  if (error instanceof ApiError) {
+    const code = (error as ApiError<AgentToolOperationError>).error_data?.code;
+    switch (code) {
+      case undefined:
+        return 'unconfirmed';
+      case 'invalid_request':
+      case 'invalid_configuration':
+      case 'not_found':
+      case 'collision':
+      case 'stale_revision':
+      case 'unsupported':
+      case 'unsafe_path':
+      case 'io':
+      case 'verification_failed':
+        return code;
+    }
+  }
+  return 'unconfirmed';
 }
 
 function promptMcpDefinition(
+  t: TFunction<'settings'>,
   transport?: McpTransport
 ): McpServerWriteDefinition | null {
   const action = transport ? ('preserve' as const) : ('clear' as const);
@@ -92,7 +125,7 @@ function promptMcpDefinition(
     headers: { type: action },
   };
   const value = window.prompt(
-    'MCP JSON: preserve keeps the current native value; clear removes it; replace uses {"type":"replace","data":{"value":...}}. Existing values are not loaded here. Unknown native fields are preserved by the server.',
+    t('agentTools.mcpPrompt'),
     JSON.stringify(initial, null, 2)
   );
   if (value === null) return null;
@@ -100,6 +133,7 @@ function promptMcpDefinition(
 }
 
 function promptSkillDefinition(
+  t: TFunction<'settings'>,
   current?: SkillDefinition
 ): SkillDefinition | null {
   const currentContract = current?.files.find(
@@ -108,7 +142,7 @@ function promptSkillDefinition(
   const initial = currentContract
     ? decodeUtf8(currentContract.content_base64)
     : '---\nname: my-skill\ndescription: Describe this Skill\n---\n\n# Instructions\n';
-  const value = window.prompt('Edit SKILL.md.', initial);
+  const value = window.prompt(t('agentTools.skillPrompt'), initial);
   if (value === null) return null;
   const files = current?.files.filter((file) => file.path !== 'SKILL.md') ?? [];
   return {
@@ -134,6 +168,33 @@ function AgentToolsSettingsContent({
 }: {
   provider?: AgentToolProvider;
 } = {}) {
+  const { t } = useTranslation('settings');
+  const errorMessages: Record<ToolError, string> = {
+    invalid_request: t('agentTools.errors.invalidRequest'),
+    invalid_configuration: t('agentTools.errors.invalidConfiguration'),
+    not_found: t('agentTools.errors.notFound'),
+    collision: t('agentTools.errors.collision'),
+    stale_revision: t('agentTools.errors.staleRevision'),
+    unsupported: t('agentTools.errors.unsupported'),
+    unsafe_path: t('agentTools.errors.unsafePath'),
+    io: t('agentTools.errors.io'),
+    verification_failed: t('agentTools.errors.verificationFailed'),
+    unconfirmed: t('agentTools.errors.unconfirmed'),
+    noProviders: t('agentTools.errors.noProviders'),
+    noCopyTarget: t('agentTools.errors.noCopyTarget'),
+    projectPathRequired: t('agentTools.errors.projectPathRequired'),
+    invalidMcp: t('agentTools.errors.invalidMcp'),
+    invalidSkill: t('agentTools.errors.invalidSkill'),
+    unexpectedKind: t('agentTools.errors.unexpectedKind'),
+    clipboard: t('agentTools.errors.clipboard'),
+  };
+  const toolStates: Record<AgentToolState, string> = {
+    not_installed: t('agentTools.state.notInstalled'),
+    enabled: t('agentTools.state.enabled'),
+    disabled: t('agentTools.state.disabled'),
+    error: t('agentTools.state.error'),
+    unsupported: t('agentTools.state.unsupported'),
+  };
   const machineClient = useSettingsMachineClient();
   const { canEdit } = useSettingsHost();
   const [inventory, setInventory] = useState<AgentToolInventory | null>(null);
@@ -145,8 +206,12 @@ function AgentToolsSettingsContent({
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<ToolError | null>(null);
+  const [notice, setNotice] = useState<
+    | { kind: 'path'; path: string }
+    | { kind: 'copyExtensions' | 'copyWarning' }
+    | null
+  >(null);
   const [viewedDefinition, setViewedDefinition] = useState<{
     name: string;
     revision: string;
@@ -155,10 +220,11 @@ function AgentToolsSettingsContent({
   const refreshSequence = useRef(0);
   const mounted = useRef(true);
   useEffect(() => {
+    const refreshCounter = refreshSequence;
     mounted.current = true;
     return () => {
       mounted.current = false;
-      ++refreshSequence.current;
+      ++refreshCounter.current;
     };
   }, []);
   const writeBlocked =
@@ -187,7 +253,7 @@ function AgentToolsSettingsContent({
         }
       } catch (nextError) {
         if (sequence === refreshSequence.current) {
-          setError(operationMessage(nextError));
+          setError(operationError(nextError));
           setLoadFailed(true);
         }
       } finally {
@@ -243,7 +309,7 @@ function AgentToolsSettingsContent({
       if (!mounted.current) return;
       await refresh();
     } catch (nextError) {
-      setError(operationMessage(nextError));
+      setError(operationError(nextError));
     } finally {
       setBusyKey(null);
     }
@@ -252,38 +318,40 @@ function AgentToolsSettingsContent({
   const handleAdd = async () => {
     if (!machineClient) return;
     if (installedProviders.length === 0) {
-      setError('No supported Agent provider is installed.');
+      setError('noProviders');
       return;
     }
     const selectedProvider =
       provider ??
       (window.prompt(
-        `Provider (${installedProviders.join(', ')})`,
+        t('agentTools.chooseProvider', {
+          providers: installedProviders.join(', '),
+        }),
         installedProviders[0]
       ) as AgentToolProvider | null);
     if (!selectedProvider || !installedProviders.includes(selectedProvider))
       return;
     const scope = window.prompt(
-      'Scope (user or project)',
+      t('agentTools.scopePrompt'),
       'user'
     ) as AgentToolScope | null;
     if (!scope || !['user', 'project'].includes(scope)) return;
     if (scope === 'project' && !projectPath.trim()) {
-      setError('Enter an absolute project path before adding a project tool.');
+      setError('projectPathRequired');
       return;
     }
-    const name = window.prompt('Installation name');
+    const name = window.prompt(t('agentTools.namePrompt'));
     if (!name) return;
     let definition: AgentToolWriteDefinition | null;
     try {
       definition =
         kind === 'mcp_server'
           ? (() => {
-              const data = promptMcpDefinition();
+              const data = promptMcpDefinition(t);
               return data ? { type: 'mcp_server', data } : null;
             })()
           : (() => {
-              const data = promptSkillDefinition();
+              const data = promptSkillDefinition(t);
               return data
                 ? {
                     type: 'skill',
@@ -294,7 +362,11 @@ function AgentToolsSettingsContent({
     } catch (nextError) {
       setNotice(null);
       setError(
-        `${kind === 'mcp_server' ? 'Invalid MCP JSON' : 'Invalid Skill definition'}: ${operationMessage(nextError)}`
+        nextError instanceof ApiError
+          ? operationError(nextError)
+          : kind === 'mcp_server'
+            ? 'invalidMcp'
+            : 'invalidSkill'
       );
       return;
     }
@@ -322,17 +394,15 @@ function AgentToolsSettingsContent({
       definition =
         item.definition.type === 'mcp_server'
           ? (() => {
-              const data = promptMcpDefinition(item.definition.data.transport);
+              const data = promptMcpDefinition(
+                t,
+                item.definition.data.transport
+              );
               return data ? { type: 'mcp_server', data } : null;
             })()
           : null;
       if (item.definition.type === 'skill') {
-        if (
-          !window.confirm(
-            'Read this native Skill for editing? Its contents may contain private information. Assets not edited here will be preserved.'
-          )
-        )
-          return;
+        if (!window.confirm(t('agentTools.editSensitiveConfirm'))) return;
         setBusyKey(`read:${item.provider}:${item.name}`);
         const current = await machineClient.readAgentToolDefinition({
           target: locatorFor(item, projectPath.trim()),
@@ -340,8 +410,12 @@ function AgentToolsSettingsContent({
           confirmed_sensitive_read: true,
         });
         if (!mounted.current) return;
-        if (current.type !== 'skill') throw new Error('Unexpected tool kind');
-        const data = promptSkillDefinition(current.data);
+        if (current.type !== 'skill') {
+          setError('unexpectedKind');
+          setBusyKey(null);
+          return;
+        }
+        const data = promptSkillDefinition(t, current.data);
         const contract = data?.files.find((file) => file.path === 'SKILL.md');
         definition = contract
           ? {
@@ -357,7 +431,11 @@ function AgentToolsSettingsContent({
     } catch (nextError) {
       setNotice(null);
       setError(
-        `${item.kind === 'mcp_server' ? 'Invalid MCP JSON' : 'Invalid Skill definition'}: ${operationMessage(nextError)}`
+        nextError instanceof ApiError
+          ? operationError(nextError)
+          : item.kind === 'mcp_server'
+            ? 'invalidMcp'
+            : 'invalidSkill'
       );
       setBusyKey(null);
       return;
@@ -378,11 +456,11 @@ function AgentToolsSettingsContent({
       (provider) => provider !== item.provider
     );
     if (targets.length === 0) {
-      setError('No other supported Agent provider is installed.');
+      setError('noCopyTarget');
       return;
     }
     const target = window.prompt(
-      `Copy to provider (${targets.join(', ')})`,
+      t('agentTools.chooseCopyProvider', { providers: targets.join(', ') }),
       targets[0]
     ) as AgentToolProvider | null;
     if (!target || !targets.includes(target)) return;
@@ -397,7 +475,10 @@ function AgentToolsSettingsContent({
     if (
       targetItem &&
       !window.confirm(
-        `${PROVIDER_LABELS[target]} already has ${item.name}. Replace that installation?`
+        t('agentTools.replaceConfirm', {
+          provider: PROVIDER_LABELS[target],
+          name: item.name,
+        })
       )
     ) {
       return;
@@ -413,7 +494,16 @@ function AgentToolsSettingsContent({
         replace: Boolean(targetItem),
         target_expected_revision: targetItem?.revision,
       });
-      if (result.warnings.length) setNotice(result.warnings.join(' '));
+      if (result.warnings.length)
+        setNotice({
+          kind: result.warnings.every(
+            (warning) =>
+              warning ===
+              'Provider-specific fields remain at the source and were not written to the target provider.'
+          )
+            ? 'copyExtensions'
+            : 'copyWarning',
+        });
     });
   };
 
@@ -424,18 +514,17 @@ function AgentToolsSettingsContent({
         locatorFor(item, projectPath.trim())
       );
       if (!mounted.current) return;
-      await navigator.clipboard.writeText(result.native_path);
-      setNotice(`Native path copied: ${result.native_path}`);
+      try {
+        await navigator.clipboard.writeText(result.native_path);
+      } catch {
+        throw new ToolUiError('clipboard');
+      }
+      setNotice({ kind: 'path', path: result.native_path });
     });
   };
 
   const readDefinition = async (item: AgentTool) => {
-    if (
-      !machineClient ||
-      !window.confirm(
-        'Read the full native definition? Credentials and private Skill contents will become visible in this browser.'
-      )
-    )
+    if (!machineClient || !window.confirm(t('agentTools.readSensitiveConfirm')))
       return;
     await run(`read:${item.provider}:${item.name}`, async () => {
       const definition = await machineClient.readAgentToolDefinition({
@@ -454,19 +543,19 @@ function AgentToolsSettingsContent({
 
   return (
     <SettingsCard
-      title="Agent Tools"
-      description="Manage native MCP servers and Skills. Provider files remain the source of truth."
+      title={t('agentTools.title')}
+      description={t('agentTools.description')}
       headerAction={
         <div className="flex gap-half">
           <PrimaryButton
             variant="tertiary"
-            value="Refresh"
+            value={t('agentTools.refresh')}
             onClick={() => void refresh()}
             disabled={loading || busyKey !== null || !machineClient}
             actionIcon={loading ? 'spinner' : undefined}
           />
           <PrimaryButton
-            value="Add"
+            value={t('agentTools.add')}
             onClick={() => void handleAdd()}
             disabled={
               !machineClient ||
@@ -482,7 +571,7 @@ function AgentToolsSettingsContent({
           htmlFor="agent-tools-project-path"
           className="text-sm font-medium text-normal"
         >
-          Project path (optional)
+          {t('agentTools.projectPath')}
         </label>
         <div className="flex gap-2">
           <SettingsInput
@@ -493,15 +582,15 @@ function AgentToolsSettingsContent({
               setViewedDefinition(null);
             }}
             disabled={loading || busyKey !== null}
-            placeholder="Absolute path for project-scoped tools"
+            placeholder={t('agentTools.pathPlaceholder')}
           />
           <button
             type="button"
             onClick={() => void refresh()}
             disabled={loading || busyKey !== null || !machineClient}
             className="rounded-sm border border-border px-3 text-low hover:text-normal disabled:cursor-not-allowed disabled:opacity-40"
-            title="Discover project tools"
-            aria-label="Discover project tools"
+            title={t('agentTools.discover')}
+            aria-label={t('agentTools.discover')}
           >
             <ArrowClockwiseIcon className="size-icon-xs" aria-hidden="true" />
           </button>
@@ -510,22 +599,23 @@ function AgentToolsSettingsContent({
 
       {inventory && writeBlocked && (
         <p role="status" className="text-sm text-warning">
-          Verify the selected Host and refresh this project before changing
-          tools. Cached entries are read-only.
+          {t('agentTools.blocked')}
         </p>
       )}
       {viewedDefinition && (
         <section className="space-y-2 rounded-sm border border-warning p-3">
           <p className="text-sm text-warning">
-            Sensitive native contents: {viewedDefinition.name} (
-            {viewedDefinition.revision.slice(0, 12)})
+            {t('agentTools.sensitiveContents', {
+              name: viewedDefinition.name,
+              revision: viewedDefinition.revision.slice(0, 12),
+            })}
           </p>
           <button
             type="button"
             className="underline text-sm"
             onClick={() => setViewedDefinition(null)}
           >
-            Hide contents
+            {t('agentTools.hideContents')}
           </button>
           <pre
             tabIndex={0}
@@ -552,7 +642,9 @@ function AgentToolsSettingsContent({
                 : 'border-transparent text-low hover:text-normal'
             )}
           >
-            {tab === 'mcp_server' ? 'MCP servers' : 'Skills'}
+            {tab === 'mcp_server'
+              ? t('agentTools.mcp')
+              : t('agentTools.skills')}
           </button>
         ))}
       </div>
@@ -562,7 +654,7 @@ function AgentToolsSettingsContent({
           className="rounded-sm border border-error/50 bg-error/10 p-3 text-sm text-error"
           role="alert"
         >
-          {error}
+          {errorMessages[error]}
         </div>
       )}
       {notice && (
@@ -571,7 +663,11 @@ function AgentToolsSettingsContent({
           role="status"
           aria-live="polite"
         >
-          {notice}
+          {notice.kind === 'path'
+            ? t('agentTools.nativePathCopied', { path: notice.path })
+            : notice.kind === 'copyExtensions'
+              ? t('agentTools.copyExtensions')
+              : t('agentTools.copyWarning')}
         </div>
       )}
 
@@ -586,9 +682,7 @@ function AgentToolsSettingsContent({
               aria-hidden="true"
             />
           )}
-          {loading
-            ? 'Loading Agent Tool inventory...'
-            : 'Inventory unavailable.'}
+          {loading ? t('agentTools.loading') : t('agentTools.unavailable')}
         </div>
       ) : (
         <div
@@ -614,20 +708,22 @@ function AgentToolsSettingsContent({
                     </span>
                     <span className="ml-2 text-xs text-low">
                       {providerInventory.installed
-                        ? 'Installed'
-                        : 'Not detected'}
+                        ? t('agentTools.installed')
+                        : t('agentTools.notDetected')}
                     </span>
                   </div>
-                  <span className="text-xs text-low">{items.length} items</span>
+                  <span className="text-xs text-low">
+                    {t('agentTools.itemCount', { count: items.length })}
+                  </span>
                 </div>
 
-                {providerInventory.errors.map((providerError) => (
+                {providerInventory.errors.map((providerError, index) => (
                   <div
-                    key={providerError}
+                    key={`${index}:${providerError}`}
                     className="border-b border-error/30 bg-error/5 px-3 py-2 text-xs text-error"
                     role="alert"
                   >
-                    {providerError}
+                    {t('agentTools.nativeUnreadable')}
                   </div>
                 ))}
 
@@ -636,13 +732,17 @@ function AgentToolsSettingsContent({
                     key={limitation}
                     className="border-b border-border/60 px-3 py-2 text-xs text-low"
                   >
-                    {limitation}
+                    {t('agentTools.providerNoteOriginal', {
+                      message: limitation,
+                    })}
                   </div>
                 ))}
 
                 {items.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-low">
-                    No {kind === 'mcp_server' ? 'MCP servers' : 'Skills'} found.
+                    {kind === 'mcp_server'
+                      ? t('agentTools.noMcp')
+                      : t('agentTools.noSkills')}
                   </div>
                 ) : (
                   items.map((item) => {
@@ -674,10 +774,12 @@ function AgentToolsSettingsContent({
                                       : 'bg-secondary text-low'
                                 )}
                               >
-                                {item.state}
+                                {toolStates[item.state]}
                               </span>
                               <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-low">
-                                {item.scope}
+                                {item.scope === 'user'
+                                  ? t('agentTools.scopeUser')
+                                  : t('agentTools.scopeProject')}
                               </span>
                             </div>
                             <p className="mt-1 truncate font-mono text-xs text-low">
@@ -685,14 +787,16 @@ function AgentToolsSettingsContent({
                             </p>
                             {item.error && (
                               <p className="mt-1 text-xs text-error">
-                                {item.error}
+                                {t('agentTools.nativeInvalid')}
                               </p>
                             )}
                           </div>
                           {busy ? (
                             <span
                               role="status"
-                              aria-label={`Updating ${item.name}`}
+                              aria-label={t('agentTools.updating', {
+                                name: item.name,
+                              })}
                             >
                               <SpinnerIcon
                                 className="size-icon-xs animate-spin text-low"
@@ -705,7 +809,9 @@ function AgentToolsSettingsContent({
                               <Switch
                                 checked={item.state === 'enabled'}
                                 disabled={providerBlocked}
-                                aria-label={`Toggle ${item.name}`}
+                                aria-label={t('agentTools.toggle', {
+                                  name: item.name,
+                                })}
                                 onCheckedChange={(enabled) =>
                                   void run(
                                     `toggle:${item.provider}:${item.name}`,
@@ -726,13 +832,13 @@ function AgentToolsSettingsContent({
                         </div>
                         <div className="flex flex-wrap gap-1">
                           <ToolButton
-                            label="Read definition"
+                            label={t('agentTools.read')}
                             icon={CodeIcon}
                             disabled={providerBlocked}
                             onClick={() => void readDefinition(item)}
                           />
                           <ToolButton
-                            label="Edit"
+                            label={t('agentTools.edit')}
                             icon={PencilSimpleIcon}
                             disabled={
                               !item.capabilities.editable ||
@@ -742,7 +848,7 @@ function AgentToolsSettingsContent({
                             onClick={() => void handleEdit(item)}
                           />
                           <ToolButton
-                            label="Copy"
+                            label={t('agentTools.copy')}
                             icon={CopyIcon}
                             disabled={
                               !item.capabilities.exportable ||
@@ -753,13 +859,13 @@ function AgentToolsSettingsContent({
                             onClick={() => void handleCopy(item)}
                           />
                           <ToolButton
-                            label="Reveal"
+                            label={t('agentTools.reveal')}
                             icon={FolderOpenIcon}
                             disabled={providerBlocked}
                             onClick={() => void handleReveal(item)}
                           />
                           <ToolButton
-                            label="Remove"
+                            label={t('agentTools.remove')}
                             icon={TrashIcon}
                             danger
                             disabled={
@@ -769,7 +875,9 @@ function AgentToolsSettingsContent({
                               if (
                                 machineClient &&
                                 window.confirm(
-                                  `Remove ${item.name}? This is distinct from disabling it.`
+                                  t('agentTools.removeConfirm', {
+                                    name: item.name,
+                                  })
                                 )
                               ) {
                                 void run(

@@ -1,9 +1,11 @@
-/**
- * Format a date string as "Jan 5, 10:30 AM".
- */
+import i18n from '@/i18n/config';
+import { formatRelativeTime as formatAge } from '@vibe/ui/lib/dateFormatting';
+
+/** Short calendar date/time in the selected UI locale; keep the local timezone. */
 export function formatDateShortWithTime(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, {
+  if (!Number.isFinite(date.getTime())) return '—';
+  return date.toLocaleDateString(i18n.resolvedLanguage || i18n.language, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -11,20 +13,28 @@ export function formatDateShortWithTime(dateString: string): string {
   });
 }
 
-/**
- * Format a date string as a relative time (e.g., "just now", "5m ago", "2h ago", "3d ago").
- */
 export function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
+  return formatAge(dateString, i18n.resolvedLanguage || i18n.language);
+}
 
-  if (diffSecs < 60) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
+/** SQLite datetime('now','subsec') values are UTC even without a zone suffix. */
+export function formatUtcDateTime(value: string, locale: string): string {
+  const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(
+    value
+  )
+    ? `${value.replace(' ', 'T')}Z`
+    : value;
+  const date = new Date(normalized);
+  if (!Number.isFinite(date.getTime())) return '—';
+  return date.toLocaleString(locale, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  });
 }

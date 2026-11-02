@@ -128,7 +128,7 @@ export function IssueArenaSectionContainer({
       <button
         type="button"
         disabled={issueArchived}
-        title={issueArchived ? 'アーカイブ解除すると利用できます' : undefined}
+        title={issueArchived ? t('kanban.restoreToUse') : undefined}
         onClick={() => void handleStart()}
         className="disabled:opacity-50 disabled:cursor-not-allowed group flex w-full items-center gap-base rounded-sm border border-brand/25 bg-secondary/60 px-base py-half text-left text-sm transition-colors hover:border-brand/40 hover:bg-brand/5"
         aria-label={t('arena.aria.startArena')}

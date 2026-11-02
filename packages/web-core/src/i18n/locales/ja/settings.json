@@ -7,7 +7,7 @@
       "concurrency": "保存時に読込時のファイル・branch・HEADを照合し、競合を拒否します。再読込前に必要な下書きを別途控えてください。外部Gitやエディタとは排他されないため、保存中は同じ作業木の編集・branch切替を避けてください。",
       "loading": "検証設定を読み込み中…",
       "loadError": "検証設定を読み込めませんでした。再読込してください。",
-      "saveError": "検証設定を保存できませんでした。下書きは保持しています。",
+      "saveError": "検証計画の保存結果を確認できません。下書きを保持し、現在のファイルとリビジョンを確認してから再操作してください。",
       "missing": "この作業木には設定ファイルがまだありません。",
       "json": "設定JSON（詳細・修復）",
       "invalid": "commands配列のみを指定し、空でない文字列を1〜32件入力してください。true、:、exit 0だけのコマンドは使用できません。",
@@ -20,7 +20,7 @@
     },
     "common": {
       "unsavedChanges": "• 未保存の変更があります",
-      "discardChangesConfirm": "Discard unsaved changes?"
+      "discardChangesConfirm": "未保存の変更を破棄しますか？"
     },
     "unsavedChanges": {
       "title": "未保存の変更",
@@ -59,7 +59,7 @@
       "save": {
         "button": "設定を保存",
         "success": "✓ 設定が正常に保存されました！",
-        "error": "設定の保存に失敗しました",
+        "error": "設定の保存結果を確認できませんでした。再試行する前に現在の設定を確認してください。",
         "unsavedChanges": "• 未保存の変更があります",
         "discard": "破棄"
       },
@@ -75,6 +75,13 @@
           "label": "言語",
           "placeholder": "言語を選択",
           "helper": "お好みの言語を選択してください。ブラウザ設定では、システム言語に従います。"
+        },
+        "mobileFont": {
+          "label": "モバイルの文字サイズ",
+          "helper": "モバイル画面で読みやすい文字サイズに調整します",
+          "default": "標準（100%）",
+          "small": "小さめ（95%）",
+          "smaller": "さらに小さく（90%）"
         }
       },
       "taskExecution": {
@@ -182,12 +189,14 @@
           "helper": "タスク試行の実行が完了したときに音を再生します。",
           "fileLabel": "音声",
           "filePlaceholder": "音声を選択",
-          "fileHelper": "タスク完了時に再生する音声を選択してください。音量ボタンをクリックしてプレビューできます。"
+          "fileHelper": "タスク完了時に再生する音声を選択してください。音量ボタンをクリックしてプレビューできます。",
+          "preview": "通知音を試聴"
         },
         "push": {
           "label": "OS通知（全体ON/OFF）",
           "helper": "サーバーが動く端末に、選択したイベントのOS通知を表示します。Web Push登録とは独立しています。"
-        }
+        },
+        "webPush": "Web Push"
       },
       "messageInput": {
         "title": "メッセージ入力",
@@ -244,7 +253,7 @@
           },
           "errors": {
             "nameRequired": "タグ名は必須です",
-            "saveFailed": "タグの保存に失敗しました"
+            "saveFailed": "タグの保存結果を確認できません。現在のタグを確認してから再操作してください。"
           },
           "buttons": {
             "cancel": "キャンセル",
@@ -324,13 +333,17 @@
         "jsonLabel": "エージェント設定（JSON）",
         "jsonPlaceholder": "プロファイルを読み込み中...",
         "jsonLoading": "読み込み中...",
-        "pathLabel": "設定ファイルの場所："
+        "pathLabel": "設定ファイルの場所：",
+        "isHidden": "非表示",
+        "showInPickers": "選択候補に表示",
+        "hideFromPickers": "選択候補から非表示"
       },
       "errors": {
         "deleteFailed": "設定の削除に失敗しました。もう一度お試しください。",
         "saveFailed": "エージェント設定の保存に失敗しました。もう一度お試しください。",
         "saveConfigFailed": "設定の保存に失敗しました。もう一度お試しください。",
-        "schemaNotFound": "実行タイプ {{executor}} のスキーマが見つかりません"
+        "schemaNotFound": "実行タイプ {{executor}} のスキーマが見つかりません",
+        "visibilitySaveFailed": "エージェントの表示設定を更新できませんでした。もう一度お試しください。"
       },
       "tree": {
         "search": "設定を検索...",
@@ -343,7 +356,8 @@
       "deleteConfigDialog": {
         "title": "設定を削除しますか？",
         "description": "「{{configName}}」を{{executorType}}エグゼキューターから完全に削除します。この操作は元に戻せません。"
-      }
+      },
+      "profilesLoadFailed": "起動プロファイルを読み込めませんでした。選択したサーバー、接続、権限を確認してください。ネイティブ設定は別に管理されます。"
     },
     "mcp": {
       "sensitive": {
@@ -363,7 +377,8 @@
         "serverConfig": "サーバー設定（JSON）",
         "popularServers": "人気サーバー",
         "serverHelper": "カードをクリックして、そのMCPサーバーを上記のJSONに挿入します。",
-        "saveLocation": "変更は次の場所に保存されます："
+        "saveLocation": "変更は次の場所に保存されます：",
+        "noDescription": "説明はありません"
       },
       "loadingStates": {
         "jsonEditor": "読み込み中...",
@@ -372,10 +387,10 @@
       "errors": {
         "loadFailed": "設定の読み込みに失敗しました。",
         "invalidJson": "無効なJSON形式です",
-        "validationError": "検証エラー",
-        "saveFailed": "MCPサーバーの保存に失敗しました",
-        "applyFailed": "MCPサーバー設定の適用に失敗しました",
-        "addServerFailed": "事前設定サーバーの追加に失敗しました",
+        "validationError": "サーバー設定が必要なJSON構造と一致しません。サーバーの格納先と各項目の型を確認してください。",
+        "saveFailed": "MCP設定の保存結果を確認できませんでした。編集内容は保持しています。再実行する前に現在のネイティブ設定を確認してください。",
+        "applyFailed": "MCP設定の更新結果を確認できませんでした。再実行する前に現在のネイティブ設定を確認してください。",
+        "addServerFailed": "サーバーを挿入できませんでした。JSON構造を確認してください。書き込みリクエストは送信していません。",
         "mcpError": "MCP設定エラー：{{error}}",
         "notSupported": "MCPはサポートされていません",
         "supportMessage": "MCPサーバーを使用するには、MCPをサポートする実行器（Claude CodeまたはCodex）を上記で選択してください。"
@@ -420,7 +435,7 @@
         "unsavedChanges": "• 未保存の変更があります",
         "discard": "破棄",
         "confirmSwitch": "未保存の変更があります。本当にプロジェクトを切り替えますか？変更は失われます。",
-        "saving": "Saving..."
+        "saving": "保存中…"
       },
       "repositories": {
         "title": "リポジトリ",
@@ -522,71 +537,85 @@
         "unsavedChanges": "未保存の変更があります",
         "discard": "破棄",
         "confirmSwitch": "未保存の変更があります。本当にリポジトリを切り替えますか？変更は失われます。"
+      },
+      "projectWorkspace": {
+        "title": "エージェントの作業ディレクトリ",
+        "description": "上のコードディレクトリに移動した後、エージェントが実行されるサブディレクトリを設定します。プロジェクトのベースブランチはワークスペースで選択してください。",
+        "unavailable": "このワークスペースが参照するローカルリポジトリを利用できません。作業フォルダを選び直してください。"
+      },
+      "notices": {
+        "removeBlocked": "リポジトリを削除できません。再実行する前に現在の参照状況と権限を確認してください。",
+        "removeUnconfirmed": "リポジトリの削除結果を確認できませんでした。再実行する前に現在のリポジトリ一覧を確認してください。",
+        "addUnconfirmed": "リポジトリの登録結果を確認できませんでした。再実行する前に現在のリポジトリ一覧を確認してください。",
+        "saveUnconfirmed": "リポジトリ設定の保存結果を確認できませんでした。編集内容は保持しています。再実行する前に現在の設定を確認してください。"
       }
     },
     "remoteProjects": {
       "title": "プロジェクト",
       "description": "Manage cloud-synced projects across organizations.",
-      "loading": "Loading remote projects...",
-      "loadError": "Failed to load organizations",
-      "noProjects": "No projects yet. Create one to get started.",
-      "selectOrg": "Select an organization",
-      "createSuccess": "Project created successfully",
-      "deleteSuccess": "Project deleted successfully",
-      "nameRequired": "Project name is required",
-      "saveSuccess": "Project updated successfully",
-      "saveError": "Failed to update project",
+      "loading": "リモートプロジェクトを読み込み中…",
+      "loadError": "組織を読み込めませんでした",
+      "noProjects": "プロジェクトはまだありません。最初のプロジェクトを作成してください。",
+      "selectOrg": "組織を選択してください",
+      "createSuccess": "プロジェクトを作成しました",
+      "deleteSuccess": "プロジェクトを削除しました",
+      "nameRequired": "プロジェクト名を入力してください",
+      "saveSuccess": "プロジェクトを更新しました",
+      "saveError": "プロジェクトの更新結果を確認できませんでした。再試行する前に現在の状態を確認してください。",
       "columns": {
-        "organizations": "Organizations",
-        "projects": "Projects"
+        "organizations": "組織",
+        "projects": "プロジェクト"
       },
       "actions": {
-        "addProject": "Add Project"
+        "addProject": "プロジェクトを追加"
       },
       "form": {
         "name": {
-          "label": "Project Name",
-          "placeholder": "Enter project name"
+          "label": "プロジェクト名",
+          "placeholder": "プロジェクト名を入力"
         },
         "color": {
-          "label": "Project Color"
+          "label": "プロジェクトの色"
         },
         "statuses": {
-          "label": "Project Statuses",
-          "description": "Manage kanban columns for this project."
+          "label": "プロジェクトのステータス",
+          "description": "このプロジェクトのKanbanの列を管理します。"
         },
         "defaultRepos": {
-          "label": "Workspace on this device",
+          "label": "この端末のワークスペース",
           "description": "The local code directory and base branch this project uses on {{host}}. New executions are prefilled with these values and still require confirmation.",
-          "empty": "No workspace configured on this device",
-          "addButton": "Choose or change",
-          "addNew": "Choose project workspace",
-          "branchLabel": "Branch",
-          "remove": "Remove the current working folder",
-          "executionSettings": "Local execution configuration",
-          "executionSettingsDescription": "Working subdirectory, dev server, setup, cleanup, and Worktree files.",
-          "noBranches": "No branches found for this repository",
-          "fetchError": "Could not load repositories",
-          "saveError": "Failed to save the default working location",
-          "current": "current"
+          "empty": "この端末のワークスペースは設定されていません",
+          "addButton": "選択・変更",
+          "addNew": "プロジェクトのワークスペースを選択",
+          "branchLabel": "ブランチ",
+          "remove": "現在の作業フォルダーを削除",
+          "executionSettings": "ローカル実行設定",
+          "executionSettingsDescription": "作業サブディレクトリ、開発サーバー、セットアップ、クリーンアップ、Worktreeのファイルを設定します。",
+          "noBranches": "このリポジトリのブランチはありません",
+          "fetchError": "リポジトリを読み込めませんでした",
+          "saveError": "既定の作業場所を保存できませんでした",
+          "current": "現在",
+          "pickerDescription": "{{host}} 上でこのプロジェクトのローカルディレクトリを選択してください。Gitリポジトリにはベースブランチが必要です。通常のディレクトリは、そのまま作業フォルダとして保存されます。"
         }
       },
       "loginRequired": {
-        "title": "Sign in required",
-        "description": "Sign in to manage your remote projects.",
-        "action": "Sign in"
-      }
+        "title": "ログインが必要です",
+        "description": "リモートプロジェクトを管理するにはログインしてください。",
+        "action": "ログイン"
+      },
+      "deleteUnconfirmed": "プロジェクトの削除結果を確認できませんでした。再試行する前に一覧を確認してください。"
     },
     "hostPicker": {
       "unavailableHint": "Host {{host}} は利用できません。選択は保持され、別のマシンの設定は変更されません。",
       "discoveryFailed": "Host {{host}} を確認できませんでした。再確認できるまでリモート設定の変更は無効です。",
       "readOnlyHint": "取得済みの設定は閲覧できます。Host が利用できない間は変更できません。",
-      "thisMachine": "This machine",
-      "localHost": "Local host",
-      "remoteHost": "Remote host",
-      "noHostAvailable": "No host is available for host-specific settings yet.",
-      "pairMachineHint": "Pair a machine to open machine settings.",
-      "selectMachineHint": "Select a machine to open machine settings."
+      "thisMachine": "この端末",
+      "localHost": "ローカルホスト",
+      "remoteHost": "リモートホスト",
+      "noHostAvailable": "このホストの設定に利用できるホストはまだありません。",
+      "pairMachineHint": "端末をペアリングして端末設定を開いてください。",
+      "selectMachineHint": "端末を選択して端末設定を開いてください。",
+      "lvkServer": "LVKサーバー"
     },
     "account": {
       "connection": "接続",
@@ -599,7 +628,8 @@
       "method": "認証方式",
       "localHint": "Local接続ではログイン・ログアウトは不要です。",
       "logoutHint": "このブラウザのLVKセッションからログアウトします。",
-      "logout": "ログアウト"
+      "logout": "ログアウト",
+      "localMethod": "ローカル"
     },
     "groups": {
       "experience": "使い心地",
@@ -720,7 +750,13 @@
       "stale": "状態変化のため未反映",
       "failed": "判断を取得できませんでした"
     },
-    "stopMediation": "調停を停止"
+    "stopMediation": "調停を停止",
+    "unknownState": "不明な状態",
+    "originalState": "元の状態: {{state}}",
+    "actionUnconfirmed": "リソース操作の結果を確認できません。現在の状態・所有者・操作記録を確認してから再操作してください。",
+    "loadUnconfirmed": "リソース情報を読み込めませんでした。接続と選択したホストを確認してください。",
+    "operationDetailsOriginal": "操作の詳細（原文）",
+    "assessmentDetailsOriginal": "評価の説明（原文）"
   },
   "runtimeAccess": {
     "title": "実行環境へのアクセス",
@@ -749,6 +785,877 @@
     "open": "外部エディターで開く",
     "delegate": "リンクを選ぶとブラウザとOSへ委譲します。LVKはエディターの起動や接続の成功を確認できません。",
     "loading": "リンクを解決中…",
-    "empty": "外部エディターが未登録です。設定から連携を追加してください。"
+    "empty": "外部エディターが未登録です。設定から連携を追加してください。",
+    "loadError": "エディターのリンクを読み込めませんでした。再試行する前に連携設定とアクセス権を確認してください。"
+  },
+  "notifications": {
+    "os": {
+      "scope": "OS通知はサーバーが動く端末に表示され、設定はこのLVKサーバーの全利用者・全Projectで共通です。上のWeb Push登録とは独立しています。変更は画面の保存操作で反映されます。全イベントOFFでも質問・承認の操作は残ります。通知音は従来の設定に従います。",
+      "question": {
+        "label": "仕様質問待ち",
+        "description": "実行中のエージェントが回答を求めたとき。"
+      },
+      "approval": {
+        "label": "実行承認待ち",
+        "description": "実行中のエージェントの操作が承認待ちになったとき。"
+      },
+      "success": {
+        "label": "実行成功",
+        "description": "Workspaceの実行処理が正常に終了したとき。Run成功・テスト合格・自動マージ公開を保証する通知ではありません。"
+      },
+      "failure": {
+        "label": "実行失敗",
+        "description": "Workspaceの実行処理が失敗したとき。ユーザーによる停止は通知しません。"
+      },
+      "languageHint": "「ブラウザ設定」を選んだ場合、OS通知にはこのサーバーで最後に設定を保存したブラウザの言語を使います。まだ保存されていない場合は英語になります。"
+    },
+    "web": {
+      "question": {
+        "label": "仕様質問待ち",
+        "description": "Codexが回答を必要とする質問を出したとき。"
+      },
+      "approval": {
+        "label": "実行承認待ち",
+        "description": "Codexの操作が承認待ちになったとき。"
+      },
+      "success": {
+        "label": "Run成功",
+        "description": "CodexのRunが成功で終了したとき。テスト合格・自動マージ・公開の完了とは別です。"
+      },
+      "failure": {
+        "label": "Run失敗・異常終了",
+        "description": "Runが失敗、クラッシュ、監査失敗で終了したとき。"
+      },
+      "canceled": {
+        "label": "Runキャンセル",
+        "description": "Runがキャンセルで終了したとき。"
+      },
+      "title": "ブラウザのWeb Push通知",
+      "scope": "ユーザー・Project・登録端末ごとに、Codexの質問・承認待ち・Run終了を通知します。イベントの変更はすぐに保存され、その登録だけに適用されます。Issue名や質問本文は通知に表示しません。通知を拒否してもLVKは使えます。",
+      "unsupported": "この環境では利用できません。HTTPSの対応ブラウザを使用してください。",
+      "serverRequired": "サーバーのWeb Push設定が必要です。",
+      "enable": "この端末でON / 再登録",
+      "disable": "OFF / 購読解除",
+      "events": "通知するイベント",
+      "allOffHint": "全イベントOFFは登録を残して通知だけを停止します。購読解除はこの登録を削除します。質問・承認の操作はLVK内に残ります。再登録は選択を維持し、解除後の新規登録は全イベントONです。過去の通知は再送しません。",
+      "deviceHint": "iPhone/iPadはホーム画面に追加したWebアプリが必要です。省電力・集中モード・ブラウザ終了などで通知が遅延/不達になる場合があります。ログアウト後も通知登録は続きます。停止はOFF、詳細を見るにはログインが必要です。登録は90日で期限切れになります。",
+      "project": "通知するプロジェクト",
+      "permissionDenied": "通知が許可されていません。ブラウザのサイト設定から変更できます。",
+      "thisDevice": "この端末",
+      "registeredDevice": "登録端末 {{id}}",
+      "loadFailed": "Web Pushの登録を読み込めませんでした。再実行する前に接続と権限を確認してください。",
+      "actionUnconfirmed": "Web Pushの変更結果を確認できませんでした。再実行する前に現在の登録とブラウザーの通知設定を確認してください。"
+    }
+  },
+  "auth": {
+    "gate": {
+      "copy": "コピー",
+      "statusFailed": "認証状態を取得できません",
+      "actionFailed": "処理に失敗しました",
+      "managementTitle": "認証とメンバー管理",
+      "loginTitle": "ログイン・初期設定",
+      "checking": "認証状態を確認しています…",
+      "configurationError": "認証設定を読み込めないため保護を維持しています。管理者は復旧キーで設定し直してください。",
+      "locked": "初期設定が完了していません。サーバー管理者が発行したキーで設定を開始してください。",
+      "keyCommand": "サーバーで実行するコマンド（キーは15分間有効・一度限り）：",
+      "recoveryKey": "復旧キー",
+      "setupKey": "セットアップキー",
+      "startSetup": "設定を開始",
+      "setupSession": "このブラウザだけに、認証設定用の期限付きセッションを発行します。",
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "signIn": "ログイン",
+      "pending": "ログインは確認できました。LVK管理者のメンバー承認が必要です。無効化されている場合も管理者へ連絡してください。",
+      "signInAuth0": "Auth0でログイン",
+      "providerHint": "Auth0の画面でGoogle／GitHub等の設定済みログイン方法を選びます。",
+      "publicUrl": "LVK公開URL（配置設定）",
+      "method": "認証方式",
+      "localOption": "Local（ローカル無認証）",
+      "basicOption": "Basic（単一所有者）",
+      "auth0Option": "Auth0（承認されたメンバー）",
+      "forcedMode": "認証方式はLVK_AUTH_MODEで固定されています。",
+      "enableLocal": "Localを有効化",
+      "basicHint": "HTTPS上で単一所有者として利用します。リモートHTTP MCPとMFAは提供しません。",
+      "newPassword": "新しいパスワード（12文字以上）",
+      "enableBasic": "Basicを設定して再ログイン",
+      "auth0Hint": "ご自身のAuth0テナントとGitHub／Google接続を用意します。 アプリは自動セットアップで作成するか、手動で設定した情報を入力してください。",
+      "callbackUrl": "WebアプリのAllowed Callback URL",
+      "issuer": "Auth0 issuer（末尾 / を含む）",
+      "webClientId": "Web用Client ID",
+      "webClientSecret": "Web用Client Secret",
+      "keepSecret": "未入力なら現在のSecretを保持",
+      "enableMcp": "OAuthで保護したリモートHTTP MCPを有効化",
+      "testHint": "Discovery／JWKSとPKCE S256の公開設定を確認してからAuth0へ移動します。現行の認証方式は、ログイン試験後に有効化するまで維持されます。",
+      "testLogin": "設定をチェックしてログイン試験",
+      "testSucceeded": "Webログイン試験に成功",
+      "confirmIdentity": "次の本人識別情報をLVK管理者として確定します。",
+      "activateAuth0": "この管理者でAuth0を有効化",
+      "chatgptTitle": "ChatGPTへのMCP接続",
+      "manualHint": "自動セットアップ済みなら、Auth0での作成・設定を繰り返す必要はありません。 ChatGPTへMCP URLと専用Client ID・Secretを登録し、接続を確認してください。 以下は手動で設定する場合の手順です。",
+      "permissions": "API Permissions（必要な操作だけ許可）",
+      "manualApi": "Auth0で上記IdentifierのAPIをRS256で作成し、表示されたスコープを登録します。Resource Parameter Compatibility ProfileとInclude Issuer in Authorization Responsesを有効にします。",
+      "manualApp": "ChatGPT用のRegular Web ApplicationをWeb用とは別に事前登録し、Authorization Code＋PKCE S256を設定します。Web用Client Secretは流用しません。",
+      "manualCallback": "現在のChatGPT接続画面に表示されるコールバックURLを、そのアプリへ正確に登録します。MCP URLとChatGPT用のClient ID等をChatGPTに入力します。",
+      "manualVerify": "接続して、本人のメンバー承認、読み取り、安全なテストデータへの書き込みを確認します。更新・接続解除の確認は導入手順に従ってください。",
+      "chatgptUnverified": "ChatGPT実接続：未検証。上のWebログイン試験とは別の検証です。",
+      "membersTitle": "メンバー承認・無効化",
+      "membersHint": "有効なメンバーは全プロジェクトを利用できます。GoogleとGitHubの本人情報は自動統合しません。",
+      "approveMember": "承認・有効化",
+      "disableMember": "無効化",
+      "makeMember": "一般メンバーに変更",
+      "makeOperator": "管理者に変更",
+      "audit": "最近の認証・操作監査",
+      "sessionHint": "Webセッションは最長12時間、認証済みHTTPリクエストが30分ないと失効します。LVKログアウトはChatGPTの委任を取り消しません。",
+      "back": "Kanbanへ戻る",
+      "recover": "管理者向けの認証設定復旧",
+      "anonymousActor": "サーバー運用者 / 匿名",
+      "active": "有効",
+      "disabled": "無効",
+      "pendingState": "承認待ち",
+      "operatorRole": "認証管理",
+      "memberRole": "メンバー",
+      "copied": "コピーしました",
+      "copyFailed": "コピーできませんでした。入力欄の値を選択してコピーしてください。",
+      "logoutUrl": "WebアプリのAllowed Logout URL"
+    },
+    "setup": {
+      "failed": "Auth0の設定に失敗しました",
+      "title": "Auth0を自動セットアップ",
+      "description": "既存のGitHub／Google接続を使って、LVK用アプリを作成または設定します。GitHub／Google側のOAuthアプリは先にAuth0へ登録してください。",
+      "tokenHelp": "管理トークンの準備と必要な権限",
+      "tokenDescription": "Auth0でManagement APIを許可した管理用Machine to Machineアプリを用意し、短い有効期限のアクセストークンを取得してください。ログイン用Client Secretとは別の値です。",
+      "tokenGuide": "Auth0公式のトークン取得手順",
+      "permissions": "必要な権限：read:clients、read:client_keys、create:clients、update:clients、read:connections、update:connections、read:tenant_settings、update:tenant_settings。MCPも設定する場合：read:resource_servers、create:resource_servers、update:resource_servers。",
+      "tokenLifetime": "トークンはサーバーに保存せず、適用の成否にかかわらず入力欄から消去します。有効期限まではAuth0側で有効です。",
+      "issuer": "設定先のAuth0 issuer（末尾 / を含む）",
+      "token": "Management APIアクセストークン",
+      "inspect": "接続とアプリを取得",
+      "noConnections": "GitHubまたはGoogle接続がありません。Auth0でソーシャル接続を作成してから再取得してください。",
+      "connection": "ログインに使う接続",
+      "webApp": "LVK Web用アプリ",
+      "automaticWeb": "自動作成（このLVK用に作成済みなら再利用）",
+      "enableMcp": "ChatGPT向けMCPも設定する",
+      "chatgptApp": "ChatGPT用アプリ（Web用とは別）",
+      "automaticChatgpt": "自動作成（作成済みなら再利用）",
+      "callback": "ChatGPTに表示された正確なCallback URL",
+      "refreshTokens": "更新トークンを設定する（ローテーション有効・最大30日・未使用7日）",
+      "preview": "変更内容を確認",
+      "previewTitle": "Auth0への適用内容（5分間有効）",
+      "webPlan": "Web用アプリ：",
+      "createNew": "新規作成",
+      "chatgptPlan": "ChatGPT用アプリ：",
+      "mcpPlan": "。MCP APIと権限も設定します。",
+      "appPlan": "対象アプリは選択したソーシャル接続だけを有効にし、Authorization Code・RS256・Client Secret Basicに設定します。既存Callback URLは保持します。",
+      "tenantPlan": "テナント共通のResource Parameter Compatibility Profile／Include Issuer設定を有効にします。他のアプリにも適用されます。",
+      "details": "設定値の詳細",
+      "activateHint": "LVKの認証方式はまだ切り替わりません。適用後、下のフォームでログイン試験を行ってください。",
+      "apply": "この内容をAuth0へ適用",
+      "busy": "Auth0を確認・設定しています…",
+      "success": "Auth0の設定が完了しました。Web用の情報を下のログイン試験フォームへ入力しました。",
+      "chatgptSaved": "ChatGPT用の接続情報を保存しました。先にログイン試験とAuth0の有効化を完了し、ログイン後に認証設定の「ChatGPTへのMCP接続」からコピーしてください。",
+      "scopes": "要求スコープは必要なものだけ選んでください：lvk:read / lvk:write / lvk:merge",
+      "offlineAccess": "。更新する場合は offline_access も指定します。",
+      "clear": "結果の表示を消去",
+      "applyUncertain": "{{message}} Auth0側に一部の変更が適用されている可能性があります。トークンを再入力して変更内容を確認し直してください。",
+      "updateExisting": "既存 {{id}} を更新",
+      "mcpUrl": "MCP URL: {{url}}"
+    },
+    "credentials": {
+      "saved": "接続情報を保存しました。ログイン後もここからコピーできます。",
+      "secretUnavailable": "保存されたSecretを取得できませんでした",
+      "secretCopied": "ChatGPT用Secretをコピーしました",
+      "failed": "接続情報を取得できませんでした",
+      "title": "保存したChatGPT接続情報",
+      "description": "ChatGPT用の接続情報はサーバーに暗号化して保存します。Auth0ログインの有効化後も、管理者はこの画面からコピーできます。",
+      "clientId": "ChatGPT用Client ID",
+      "clientIdCopied": "Client IDをコピーしました",
+      "copyFailed": "コピーできませんでした。Client ID欄からコピーしてください。",
+      "copyClientId": "ChatGPT用Client IDをコピー",
+      "clientSecret": "ChatGPT用Client Secret",
+      "stored": "保存済み",
+      "copySecret": "ChatGPT用Secretをコピー",
+      "hideSecret": "Secretを隠す",
+      "showSecret": "Secretを表示",
+      "empty": "保存された接続情報はありません。自動セットアップするか、既存のChatGPT用アプリの情報を保存してください。",
+      "update": "既存の接続情報を保存・更新",
+      "updateHint": "Auth0で取得したChatGPT専用アプリの情報を入力します。Auth0側の設定は変更しません。SecretをAuth0で変更した場合もここで更新してください。",
+      "newClientId": "保存するChatGPT Client ID",
+      "newClientSecret": "保存するChatGPT Client Secret",
+      "save": "ChatGPT接続情報を保存",
+      "copySecretFailed": "ChatGPT用Secretをコピーできませんでした。クリップボードへのアクセスを許可してから操作してください。"
+    },
+    "errors": {
+      "notActive": "このアカウントは有効ではありません。",
+      "operatorRequired": "この操作には認証管理の権限が必要です。",
+      "setupBusy": "別のAuth0セットアップを実行中です。完了してから操作してください。",
+      "otherApplication": "このアプリは別のLVK URLまたは用途で使われています。別のアプリを選択してください。",
+      "tokenTooLong": "Auth0 Management APIアクセストークンが65,536バイトの上限を超えています。",
+      "secretPermission": "Auth0からClient Secretを取得できませんでした。read:client_keys権限を確認してください。",
+      "pkceRequired": "Auth0のDiscoveryでPKCE S256が確認できません。テナント設定を確認してください。",
+      "clientSecretBasicRequired": "Auth0のDiscoveryで、設定するクライアント向けのclient_secret_basicを有効にする必要があります。",
+      "auth0Disabled": "Auth0ログインは無効です。",
+      "auth0Required": "Auth0の設定が必要です。",
+      "setupTimeout": "Auth0セットアップが120秒の制限時間を超えました。再試行する前に変更内容を確認し直してください。",
+      "tooManyEntries": "Auth0テナントの登録件数が多すぎるため、自動セットアップを利用できません。",
+      "authenticationBusy": "認証処理が混み合っています。しばらくしてから操作してください。",
+      "authenticationRequired": "ログインが必要です。",
+      "authenticationUnavailable": "認証を利用できません。サーバー運用者による復旧が必要な場合があります。",
+      "basicDisabled": "Basicログインは無効です。",
+      "csrfFailed": "セッションの確認に失敗しました。画面を再読み込みしてから操作してください。",
+      "lastOperator": "認証管理の権限を持つ最後の有効なメンバーを、無効化したり権限を変更したりすることはできません。",
+      "configurationChanged": "設定が変更されました。セットアップをやり直してください。",
+      "publicUrlRequired": "Auth0のセットアップ前に公開HTTPS URLを設定してください。",
+      "credentialsPublicUrl": "ChatGPT接続情報を保存する前に公開HTTPS URLを設定してください。",
+      "dedicatedCredentials": "Webアプリとは別のChatGPT専用Client IDとClient Secretを入力してください。",
+      "tokenRequired": "Auth0 Management APIアクセストークンを入力してください。",
+      "callbackRequired": "ChatGPTに表示された正確なHTTPSコールバックURLを入力してください。",
+      "apiAlgorithm": "既存のMCP APIがRS256ではありません。続行する前にAuth0で設定を確認してください。",
+      "incompleteResponse": "Auth0の応答に必要な情報がありません。",
+      "invalidIssuer": "Auth0 issuerが正しくありません。",
+      "invalidObject": "Auth0オブジェクトIDが正しくありません。",
+      "invalidUsername": "Basicのユーザー名が正しくありません。",
+      "invalidHost": "ホストが正しくありません。",
+      "invalidMember": "メンバーの状態または権限が正しくありません。",
+      "invalidOrigin": "アクセス元が許可されていません。",
+      "loopbackOnly": "ローカル配置ではループバックホストからのみアクセスできます。",
+      "inactiveProvider": "このメンバーの認証プロバイダーは現在有効ではありません。",
+      "approvalRequired": "メンバー承認が必要か、アカウントが無効になっています。",
+      "credentialsMismatch": "このAuth0 issuerとWebアプリに対応するChatGPT接続情報が保存されていません。",
+      "regularWebApp": "再利用できるのはRegular Web Applicationのみです。",
+      "passwordLength": "パスワードは12〜1,024バイトで入力してください。",
+      "previewRequired": "適用する前にAuth0の変更内容を確認してください。",
+      "webCredentialsRequired": "公開HTTPS URL、Web用Client ID、Web用Client Secretが必要です。",
+      "mcpDisabled": "リモートMCPは無効です。",
+      "publicPreset": "先に公開HTTPS配置プリセットでサーバーを再起動してください。",
+      "connectionRequired": "既存のGitHubまたはGoogleソーシャル接続を選択してください。",
+      "applicationRequired": "既存のアプリを1つ選択するか、新しいアプリを作成してください。",
+      "setupIncomplete": "サーバーの初期設定が完了していません。",
+      "previewExpired": "設定が変更されたか、確認内容の有効期限が切れました。Auth0の変更内容を確認し直してください。",
+      "alreadyConfigured": "初期設定は完了しています。",
+      "statelessMcp": "このMCP接続はステートレスです。MCP Session IDを送信しないでください。",
+      "modeDisabled": "この認証方式は配置設定で無効になっています。",
+      "rateLimit": "認証の試行回数が多すぎます。1分後に操作してください。",
+      "unexpectedResponse": "Auth0から想定外の一覧応答を受信しました。",
+      "unknownMember": "指定されたメンバーが見つかりません。",
+      "issuerFormat": "Auth0テナントの正確なissuerを指定してください: https://TENANT.REGION.auth0.com/（末尾の / を含む）。",
+      "separateApps": "Web用とChatGPT用には別々のアプリを指定してください。",
+      "insufficientScope": "この操作に必要なスコープがありません。",
+      "forbidden": "この操作を行う権限がありません。",
+      "requestFailed": "認証リクエストを完了できませんでした。サーバーの稼働状態と現在の認証設定を確認してください。",
+      "statusFailed": "認証状態を取得できません。サーバーの配置設定を確認してください。",
+      "signInRequired": "続行するにはLVKへのログインが必要です。",
+      "networkFailed": "認証サービスに接続できません。ネットワーク接続とサーバーの稼働状態を確認してください。"
+    }
+  },
+  "configuration": {
+    "createTitle": "新しい設定を作成",
+    "createDescription": "{{executor}} の実行設定を追加します。",
+    "name": "設定名",
+    "namePlaceholder": "例: PRODUCTION, DEVELOPMENT",
+    "cloneFrom": "コピー元（任意）",
+    "clonePlaceholder": "空の設定または既存の設定から作成",
+    "blank": "空の設定から作成",
+    "cloneOption": "{{name}} からコピー",
+    "cancel": "キャンセル",
+    "create": "設定を作成",
+    "errors": {
+      "empty": "設定名を入力してください。",
+      "tooLong": "設定名は40文字以内で入力してください。",
+      "invalid": "設定名には半角英数字、アンダースコア、ハイフンのみ使用できます。",
+      "exists": "同じ名前の設定がすでに存在します。",
+      "delete": "設定を削除できませんでした。もう一度お試しください。"
+    }
+  },
+  "githubCredentials": {
+    "saved": "トークンを保存しました。「接続を確認」でリポジトリとPRの読み取り権限を確認してください。",
+    "checked": "リポジトリとPRの読み取り権限を確認しました。PushとPRの書き込み権限は未検証です。",
+    "removed": "LVKからトークンを削除しました。不要になったトークンはGitHub側でも失効させてください。",
+    "operationFailed": "GitHub認証情報の操作結果を確認できませんでした。別の変更を行う前に、現在の登録状態を確認してください。",
+    "title": "GitHub認証",
+    "description": "LVKのGit操作とプルリクエスト用に、fine-grained個人アクセストークンを登録します。認証情報の変更・接続確認には認証管理の権限が必要です。",
+    "permissions": "トークン作成時は必要なリポジトリだけを選択し、ContentsとPull requestsの読み取り・書き込み権限を付与してください。Issueを操作する場合はIssues、ワークフローの変更をPushする場合はWorkflowsも追加します。有効期限の有無はどちらも利用できますが、組織のポリシーに従ってください。",
+    "createToken": "GitHubでfine-grainedトークンを作成",
+    "loading": "認証設定を読み込み中…",
+    "loadFailed": "認証設定を読み込めませんでした。",
+    "empty": "トークンを設定するには、このリポジトリにGitHub.comのリモートを追加してください。",
+    "repository": "GitHubリポジトリ",
+    "registered": "トークン登録済み（内容は表示しません）。",
+    "notRegistered": "LVKのトークンは未登録です。既存のシステム認証を使用します。",
+    "replacement": "置き換えるトークン",
+    "token": "fine-grained個人アクセストークン",
+    "replace": "トークンを置き換え",
+    "save": "トークンを保存",
+    "check": "接続を確認",
+    "removeConfirm": "このトークンをLVKから削除しますか？このGitHubリポジトリを使用するすべてのワークスペースがシステム認証に戻ります。GitHub側のトークンは失効しません。",
+    "remove": "トークンを削除",
+    "scope": "認証情報はLVKサーバーに保存され、このGitHubリポジトリを使用するワークスペース間で共有されます。登録済みトークンはシステム認証より優先され、失敗時に別のアカウントへ切り替わることはありません。エージェントのターミナルコマンドは、それぞれの認証を使用します。",
+    "working": "処理中…",
+    "forbidden": "GitHub認証情報の変更・接続確認には認証管理の権限が必要です。"
+  },
+  "repositoryMemory": {
+    "title": "OpenWikiのリポジトリメモリ",
+    "description": "自動マージは統合候補内のopenwiki/を更新します。単独の更新と初期生成には明示的な依頼が必要で、専用ワークスペースを使用します。公開や未反映の変更だけで自動的に開始されることはありません。初期生成では、公開前に独立した読み取り専用レビューと、必要に応じた改善を行います。コーディング用ワークスペースはWikiを参照し、それぞれのワークスペースメモリを保持します。",
+    "enabled": "リポジトリメモリを有効化",
+    "targetBranch": "統合先のローカルブランチ",
+    "outputLanguage": "出力言語（BCP 47）",
+    "scope": "同期の対象範囲",
+    "sinceCommit": "指定コミットより後の変更",
+    "startingCommit": "開始コミット",
+    "startingCommitHint": "このブランチ上のコミットSHAを入力してください。そのコミットより後から現在のブランチHEADまでの変更を確認します。それ以前の内容は未検証のままです。",
+    "commitPlaceholder": "コミットSHA",
+    "save": "設定を保存",
+    "sync": "Wikiを同期",
+    "adopt": "既存のWikiを取り込む",
+    "initialize": "Wikiを初期生成",
+    "startHint": "メモリを有効にすると、以降の開発変更を記録します。Wiki保守は「Wikiを初期生成」または「既存のWikiを取り込む」を選択したときに開始します。",
+    "unsaved": "Wiki生成を開始する前に設定を保存してください。保存済みのブランチと言語で実行されます。",
+    "errorHint": "ソース変更は保持されています。エラーを解消してからWikiを同期してください。失敗した開発変更の記録は未反映のまま保持されます。",
+    "state": "状態: {{status}}",
+    "stateWithPhase": "状態: {{status}} · {{phase}}",
+    "loading": "読み込み中…",
+    "existingWiki": "{{branch}} に既存のopenwiki/が見つかりました。Wikiを再生成せず、既存の内容を取り込んで更新します。",
+    "compareCurrent": "現在の {{branch}} と比較",
+    "branch": "ブランチ",
+    "lastSuccess": "前回の同期成功: {{date}}",
+    "none": "なし",
+    "unverifiedBefore": "{{commit}} より後の変更のみ同期済みです。それ以前のWiki内容は未検証です。確認するには、現在のブランチとの比較を選択してください。",
+    "integratedSource": "統合済みソース: {{commit}}",
+    "workspace": "保守ワークスペース: {{id}}",
+    "operationUnconfirmed": "操作結果を確認できませんでした。保存済みのソース変更は保持されています。別の変更を行う前に、現在の状態とワークスペースの記録を確認してください。",
+    "loadFailed": "リポジトリメモリ設定を読み込めませんでした。",
+    "maintenanceError": "Wiki保守に対応が必要です。ソース変更は保持されています。保守ワークスペースの記録を確認してください。",
+    "checkpoint": "開発変更の記録に対応が必要です。ソースファイルは保持されています。ワークスペースの記録を確認し、下書きや意図しないWiki変更を解消してからマージ・Pushしてください。",
+    "checkpointIdentified": "ワークスペース {{workspace}} / 実行 {{run}} の開発変更の記録に対応が必要です。ソースファイルは保持されています。マージ・Pushの前に、そのワークスペースの記録を確認してください。",
+    "status": {
+      "disabled": "無効",
+      "uninitialized": "未初期化",
+      "initializing": "初期化中",
+      "current": "最新",
+      "stale": "更新が必要",
+      "reconciling": "同期中",
+      "error": "要対応"
+    },
+    "phase": {
+      "generating": "生成中",
+      "reviewing": "レビュー中",
+      "refining": "改善中",
+      "publishing": "公開中",
+      "cleaningUp": "後処理中"
+    },
+    "invalidCommit": "このブランチ上のコミットSHAを、4〜40桁の16進数で入力してください。"
+  },
+  "schemaForm": {
+    "environment": {
+      "key": "環境変数名",
+      "value": "値",
+      "keyPlaceholder": "変数名",
+      "newKey": "追加する環境変数名",
+      "newValue": "追加する環境変数の値",
+      "add": "環境変数を追加",
+      "valueFor": "{{key}}の値",
+      "remove": "{{key}}を削除"
+    },
+    "removeItem": "項目を削除"
+  },
+  "agentTools": {
+    "mcpPrompt": "MCPのJSONを入力します。preserveは現在のネイティブ値を保持し、clearは削除します。replaceは{\"type\":\"replace\",\"data\":{\"value\":...}}で指定します。既存の値はここには読み込みません。未知のネイティブ項目はサーバー側で保持されます。",
+    "skillPrompt": "SKILL.mdを編集してください。",
+    "scopePrompt": "適用範囲（user: ユーザー、project: プロジェクト）",
+    "namePrompt": "登録名",
+    "editSensitiveConfirm": "編集のために、このネイティブSkillを読み込みますか？内容に非公開情報が含まれる場合があります。ここで編集しないアセットは保持されます。",
+    "readSensitiveConfirm": "ネイティブ定義の全文を読み込みますか？認証情報や非公開のSkill内容が、このブラウザに表示されます。",
+    "title": "エージェントツール",
+    "description": "ネイティブのMCPサーバーとSkillsを管理します。プロバイダーのファイルを正本として扱います。",
+    "refresh": "再読み込み",
+    "add": "追加",
+    "projectPath": "プロジェクトのパス（任意）",
+    "pathPlaceholder": "プロジェクト単位のツールに使う絶対パス",
+    "discover": "プロジェクトのツールを検出",
+    "blocked": "ツールを変更する前に、選択したホストを確認し、このプロジェクトの情報を再読み込みしてください。キャッシュされた項目は読み取り専用です。",
+    "hideContents": "内容を隠す",
+    "mcp": "MCPサーバー",
+    "skills": "スキル",
+    "loading": "エージェントツールの一覧を読み込み中…",
+    "unavailable": "一覧を取得できません。",
+    "installed": "インストール済み",
+    "notDetected": "未検出",
+    "read": "定義を読み込む",
+    "edit": "編集",
+    "copy": "コピー",
+    "reveal": "保存場所をコピー",
+    "remove": "削除",
+    "chooseProvider": "プロバイダー（{{providers}}）",
+    "chooseCopyProvider": "コピー先のプロバイダー（{{providers}}）",
+    "replaceConfirm": "{{provider}} には {{name}} がすでに存在します。この登録を置き換えますか？",
+    "sensitiveContents": "非公開情報を含むネイティブ内容: {{name}}（{{revision}}）",
+    "noMcp": "MCPサーバーは見つかりませんでした。",
+    "noSkills": "Skillsは見つかりませんでした。",
+    "updating": "{{name}} を更新中",
+    "toggle": "{{name}} の有効・無効を切り替え",
+    "removeConfirm": "{{name}} を削除しますか？無効化とは異なる操作です。",
+    "scopeUser": "ユーザー",
+    "scopeProject": "プロジェクト",
+    "nativePathCopied": "ネイティブの保存場所をコピーしました: {{path}}",
+    "copyExtensions": "プロバイダー固有の項目はコピー元に保持され、コピー先には書き込まれませんでした。",
+    "copyWarning": "コピー時に注意事項が返されました。使用前にコピー元とコピー先のネイティブ設定を確認してください。",
+    "nativeUnreadable": "ネイティブのツール設定を読み込めませんでした。解析エラーの詳細は表示しません。",
+    "nativeInvalid": "ネイティブのツール設定が正しくありません。ネイティブファイルを確認してください。",
+    "providerNoteOriginal": "プロバイダーの注意事項（原文）: {{message}}",
+    "errors": {
+      "invalidRequest": "ツールの変更内容が正しくないか、明示的な確認が不足しています。",
+      "invalidConfiguration": "ネイティブ設定が正しくありません。続行する前にネイティブファイルを確認してください。",
+      "notFound": "登録されたツールが見つかりません。",
+      "collision": "同じ登録がすでに存在します。再読み込みし、現在の版を確認してから置き換えてください。",
+      "staleRevision": "ネイティブの内容が変更されました。編集する前に再読み込みしてください。",
+      "unsupported": "選択した登録では、この操作を利用できません。",
+      "unsafePath": "安全でないツールのパスが拒否されました。",
+      "io": "ネイティブ設定の読み取り・書き込みに失敗しました。ファイルとアクセス権限を確認してください。",
+      "verificationFailed": "ネイティブ設定への書き込み結果を検証できませんでした。別の変更を行う前に、現在の状態を確認してください。",
+      "unconfirmed": "操作結果を確認できませんでした。別の変更を行う前に、再読み込みしてネイティブの状態を確認してください。",
+      "noProviders": "対応するエージェントプロバイダーがインストールされていません。",
+      "noCopyTarget": "コピー先として利用できる別のエージェントプロバイダーがインストールされていません。",
+      "projectPathRequired": "プロジェクト単位のツールを追加する前に、プロジェクトの絶対パスを入力してください。",
+      "invalidMcp": "MCPのJSONが正しくありません。入力を確認してください。書き込みリクエストは送信していません。",
+      "invalidSkill": "Skillの定義が正しくありません。入力を確認してください。書き込みリクエストは送信していません。",
+      "unexpectedKind": "想定と異なる種類のツールが返されました。編集する前に再読み込みしてください。",
+      "clipboard": "ネイティブの保存場所をコピーできませんでした。クリップボードへのアクセスを許可してから操作してください。"
+    },
+    "state": {
+      "notInstalled": "未インストール",
+      "enabled": "有効",
+      "disabled": "無効",
+      "error": "エラー",
+      "unsupported": "非対応"
+    },
+    "itemCount": "{{count, number}}件"
+  },
+  "agentConfiguration": {
+    "sections": {
+      "overview": "概要",
+      "general": "一般",
+      "permissions": "権限とサンドボックス",
+      "instructions": "指示",
+      "environment": "環境",
+      "provider": "プロバイダー設定",
+      "tools": "ツール",
+      "profiles": "プロファイル",
+      "nativeFiles": "設定ファイル",
+      "effectiveConfig": "適用中の設定",
+      "settings": "設定"
+    },
+    "validation": {
+      "maxLength": "{{limit, number}}文字以内で入力してください。",
+      "minimum": "{{limit, number}}以上の値を入力してください。",
+      "maximum": "{{limit, number}}以下の値を入力してください。",
+      "format": "指定された形式で入力してください。",
+      "number": "数値を入力してください。",
+      "object": "JSONオブジェクトを入力してください。",
+      "json": "有効なJSONを入力してください。",
+      "option": "一覧から選択してください。"
+    },
+    "ui": {
+      "inherited": "継承／未設定",
+      "modified": "変更済み",
+      "inherit": "継承",
+      "default": "既定",
+      "invalidValues": "無効な設定値を修正してから差分を確認してください。",
+      "noChanges": "適用する設定変更はありません。",
+      "applied": "エージェント設定を適用しました。新しいセッションが必要な変更は、次回の起動時に反映されます。",
+      "readConfirm": "設定ファイルを読み込みますか？認証情報や非公開の設定を含む可能性があります。直接編集するため、内容全体を表示します。",
+      "profileName": "プロファイル名",
+      "newProfileName": "新しいプロファイル名",
+      "profileSaved": "プロファイルをローカルに保存しました。明示的に適用するまでは有効になりません。",
+      "duplicated": "プロファイルを複製しました。",
+      "renamed": "プロファイル名を変更しました。",
+      "deleted": "プロファイルを削除しました。",
+      "targetProvider": "コピー先のプロバイダー（codex、claude_code）",
+      "copiedName": "コピー先のプロファイル名",
+      "copied": "コピーしたプロファイルを保存しました。プロバイダー固有の項目は転送していません。",
+      "nativeAuthority": "プロバイダーの設定ファイルが正本です。差分を確認して適用を確定するまでは、検出による書き込みは行いません。",
+      "refresh": "再読み込み",
+      "installed": "インストール状態",
+      "yes": "はい",
+      "notDetected": "未検出",
+      "version": "バージョン",
+      "unknown": "不明",
+      "executable": "実行ファイル",
+      "notFound": "見つかりません",
+      "projectPath": "プロジェクトのパス（任意）",
+      "projectHelp": "プロジェクトの設定を検出するには、プロジェクトの絶対パスを入力してください。",
+      "discoverProject": "プロジェクトの設定を検出",
+      "scope": "適用範囲",
+      "scopeHelp": "フォームでの変更とプロファイルの適用は、この設定範囲を対象にします。",
+      "userConfig": "ユーザー設定",
+      "projectConfig": "プロジェクト設定",
+      "capabilities": "利用できる設定操作",
+      "available": "利用可",
+      "unsupported": "非対応",
+      "fieldsHelp": "インストール済みプロバイダーのアダプターに基づく項目です。非対応の項目は表示しません。",
+      "restore": "継承に戻す",
+      "withheldHelp": "値は非表示です。変更しなければ保持されます。置き換えるには値を入力し、消去するには明示的に継承に戻してください。内容を読むには「設定ファイル」で確認付きの読み込みを行ってください。",
+      "enabled": "有効",
+      "disabled": "無効",
+      "followNative": "設定ファイルに従う",
+      "nativeFiles": "設定ファイル",
+      "nativeHelp": "直接編集ではファイル形式を検証し、リビジョンで保護された差分の確認が必要です。",
+      "closeEditor": "編集を閉じる",
+      "discard": "破棄",
+      "previewDiff": "差分を確認",
+      "effectiveConfig": "適用中の設定",
+      "effectiveHelp": "アダプターが優先順位を解決し、確認できた設定元を報告します。画面側で優先順位を再計算することはありません。",
+      "setting": "設定項目",
+      "effective": "適用値",
+      "source": "設定元",
+      "observedSources": "確認された設定元",
+      "withheld": "非表示（明示的に変更するまで保持）",
+      "noneObserved": "確認できませんでした",
+      "profiles": "設定プロファイル",
+      "profilesHelp": "プロファイルは版管理されたローカルの定義です。適用には明示的な操作が必要で、先に設定ファイルの差分を確認します。",
+      "saveCurrent": "現在の設定を保存",
+      "none": "なし",
+      "cancel": "キャンセル",
+      "saveCopied": "コピーしたプロファイルを保存",
+      "loadingProfiles": "プロファイルを読み込み中…",
+      "noProfiles": "このプロバイダーの保存済みプロファイルはありません。",
+      "apply": "適用",
+      "copy": "コピー",
+      "duplicate": "複製",
+      "rename": "名前を変更",
+      "delete": "削除",
+      "selectMachine": "エージェント設定を検出するマシンを選択してください。",
+      "panelTitle": "インストール済みエージェントの設定",
+      "discoverFirst": "変更を適用する前に、選択したプロジェクトを検出してください。表示中の設定は前回読み込んだ範囲のものです。",
+      "cached": "キャッシュ済みの設定を表示しています。ホストと範囲を確認できるまで、変更は無効です。",
+      "noSnapshot": "設定の読み込み結果がありません。",
+      "retry": "再検出",
+      "sectionsLabel": "エージェント設定のセクション",
+      "editing": "編集中",
+      "editRaw": "直接編集",
+      "missing": "未作成",
+      "missingBytes": "（未作成）",
+      "diffConfirm": "設定差分の確認",
+      "reviewChanges": "適用する変更を確認",
+      "noBytes": "ファイル内容に変更はありません。",
+      "confirmProfile": "プロファイルの適用を確定",
+      "confirmApply": "適用を確定",
+      "providerTitle": "{{provider}}の設定",
+      "duplicateName": "{{name}} のコピー",
+      "deleteConfirm": "プロファイル「{{name}}」を削除しますか？",
+      "notInstalled": "選択したマシンにこのプロバイダーはインストールされていません。アダプターが検出できる設定のみ表示します。",
+      "unsupportedScope": "この設定は「{{scope}}」の範囲では利用できません。",
+      "revision": "リビジョン: {{revision}}",
+      "copyPreview": "{{provider}}へのコピーを確認",
+      "compatible": "互換項目:",
+      "skipped": "対象外:",
+      "discovering": "{{provider}}の設定を検出中…",
+      "unknownNodes": "未対応の設定項目（{{count, number}}件）",
+      "profileUpdated": "管理対象の設定 {{count, number}}件 · 更新 {{date}}"
+    },
+    "errors": {
+      "invalidRequest": "設定の要求が無効です。選択した範囲と値を確認してください。",
+      "invalidConfiguration": "設定ファイルを読み取れませんでした。ファイルを確認してから再試行してください。",
+      "notFound": "設定項目・ファイル・プロファイルが見つかりません。設定を再読み込みしてから再試行してください。",
+      "staleRevision": "読み込み後に設定が変更されています。再読み込みし、差分を確認してから再試行してください。",
+      "unsupported": "選択したプロバイダーはこの操作に対応していません。",
+      "unsafePath": "設定ファイルのパスを安全に使用できません。選択したプロジェクトと保存場所を確認してください。",
+      "validationFailed": "設定の検証に失敗しました。値を確認してから再試行してください。",
+      "io": "設定を読み書きできませんでした。ファイルへのアクセス権を確認し、再読み込みしてから再試行してください。",
+      "rollbackFailed": "操作に失敗し、以前の設定を完全には復元できませんでした。次の変更を行う前に、設定ファイルを確認してください。",
+      "verificationFailed": "操作後の設定を確認できませんでした。設定を確認・再読み込みしてから再試行してください。",
+      "unconfirmed": "操作結果を確認できませんでした。設定を再読み込みして状態を確認してから再試行してください。",
+      "discovery": "一部の設定を検出できませんでした。プロバイダーと設定ファイルを確認してから再読み込みしてください。",
+      "nativeInvalid": "設定ファイルにエラーがあります。変更する前に、確認付きの読み込みでファイルを確認してください。"
+    },
+    "state": {
+      "readable": "設定の読み取り",
+      "nativeWritable": "設定ファイルへの書き込み",
+      "profileStorage": "プロファイルの保存",
+      "perRunOverrides": "実行ごとの上書き",
+      "rawEditable": "設定ファイルの編集",
+      "immediate": "即時反映",
+      "nextSession": "次のセッションで反映",
+      "explicitRestart": "明示的な再起動が必要",
+      "missing": "未作成",
+      "parsed": "解析済み",
+      "invalid": "無効"
+    },
+    "descriptors": {
+      "codex_common_model": {
+        "label": "モデル",
+        "description": "新しいCodexセッションで使う既定のモデル。"
+      },
+      "codex_common_reasoning": {
+        "label": "推論の強度",
+        "description": "モデルの既定の推論の強度。"
+      },
+      "codex_common_approval_policy": {
+        "label": "承認ポリシー",
+        "description": "Codexがコマンド実行前に承認を求める条件。"
+      },
+      "codex_common_sandbox_mode": {
+        "label": "サンドボックスモード",
+        "description": "新しいセッションで使うファイルシステムとプロセスの分離方式。"
+      },
+      "codex_codex_web_search": {
+        "label": "Web検索",
+        "description": "Codexの公開仕様にあるWeb検索機能を有効にします。"
+      },
+      "codex_common_environment": {
+        "label": "環境変数",
+        "description": "Codexのシェル環境ポリシーで設定する環境変数の値。"
+      },
+      "claude_code_common_model": {
+        "label": "モデル",
+        "description": "新しいClaude Codeセッションで使う既定のモデル。"
+      },
+      "claude_code_common_reasoning": {
+        "label": "推論の強度",
+        "description": "インストール済みのバージョンが対応している場合に使う、Claude Codeの推論の強度。"
+      },
+      "claude_code_common_permission_mode": {
+        "label": "権限モード",
+        "description": "Claude Codeの既定の権限モード。"
+      },
+      "claude_code_claude_code_permission_allow": {
+        "label": "許可するツール",
+        "description": "Claude Codeの設定ファイルの許可ルール。"
+      },
+      "claude_code_claude_code_permission_deny": {
+        "label": "拒否するツール",
+        "description": "Claude Codeの設定ファイルの拒否ルール。"
+      },
+      "claude_code_common_environment": {
+        "label": "環境変数",
+        "description": "Claude Codeセッションに設定する環境変数の値。"
+      },
+      "claude_code_claude_code_output_style": {
+        "label": "出力スタイル",
+        "description": "Claude Codeの出力スタイル名。"
+      },
+      "claude_code_claude_code_enabled_plugins": {
+        "label": "有効なプラグイン",
+        "description": "設定ファイルのプラグイン有効化マップ。"
+      },
+      "claude_code_claude_code_hooks": {
+        "label": "フック",
+        "description": "Claude Codeのフック定義です。詳細JSONではプロバイダー固有の構造を保持します。"
+      },
+      "claude_code_claude_code_status_line": {
+        "label": "ステータス行",
+        "description": "Claude Codeのステータス行の設定。"
+      }
+    },
+    "options": {
+      "codex_reasoning_minimal": "最小",
+      "codex_reasoning_low": "低",
+      "codex_reasoning_medium": "中",
+      "codex_reasoning_high": "高",
+      "codex_reasoning_xhigh": "さらに高い",
+      "codex_reasoning_max": "最大",
+      "codex_reasoning_ultra": "最高",
+      "codex_approval_policy_untrusted": "信頼されていないコマンドで確認",
+      "codex_approval_policy_on_request": "必要に応じて確認",
+      "codex_approval_policy_never": "確認しない",
+      "codex_sandbox_mode_read_only": "読み取り専用",
+      "codex_sandbox_mode_workspace_write": "ワークスペースへの書き込み",
+      "codex_sandbox_mode_danger_full_access": "フルアクセス",
+      "claude_code_reasoning_low": "低",
+      "claude_code_reasoning_medium": "中",
+      "claude_code_reasoning_high": "高",
+      "claude_code_permission_mode_default": "既定",
+      "claude_code_permission_mode_acceptEdits": "編集を許可",
+      "claude_code_permission_mode_plan": "計画",
+      "claude_code_permission_mode_dontAsk": "確認しない",
+      "claude_code_permission_mode_bypassPermissions": "権限確認を省略"
+    },
+    "explanations": {
+      "codexLimit": "インストール済みバージョンのschemaを確認できるまでは、ネイティブのプロファイルやプロジェクトごとの信頼設定はTOMLを直接編集してください。",
+      "claudeLimit": "管理対象は ~/.claude/settings.json とプロジェクトの .claude/settings.json です。~/.claude.json の認証情報とMCPの状態は、ここでは編集しません。",
+      "copySkipped": "プロバイダー固有または非対応の設定は対象外です。ネイティブの拡張項目はコピーしていません。",
+      "newSessions": "保存した変更は新しいプロバイダーセッションに反映されます。実行中のセッションは再起動しません。",
+      "rawEditing": "直接編集では、Vibe Kanbanが解釈しないプロバイダー固有の項目も変更できます。",
+      "original": "プロバイダーの注意事項（原文）: {{message}}",
+      "observedRevision": "確認済みの設定リビジョン（値は非表示）",
+      "requestedChanges": "指定した設定を適用します。変更対象外の設定値は保持します。",
+      "noChange": "変更はありません。"
+    }
+  },
+  "executorSchemaValidation": {
+    "required": "必須項目です。",
+    "type": "指定された型の値を入力してください。",
+    "option": "一覧から選択してください。",
+    "minimum": "{{limit, number}}以上の値を入力してください。",
+    "maximum": "{{limit, number}}以下の値を入力してください。",
+    "minLength": "{{limit, number}}文字以上で入力してください。",
+    "maxLength": "{{limit, number}}文字以内で入力してください。",
+    "minItems": "{{limit, number}}件以上追加してください。",
+    "maxItems": "{{limit, number}}件以下にしてください。",
+    "format": "指定された形式で入力してください。",
+    "additionalProperties": "この項目には対応していません。",
+    "uniqueItems": "重複する項目を削除してください。",
+    "invalid": "値を確認してください。"
+  },
+  "executorSchemas": {
+    "codex": {
+      "append_prompt": {
+        "title": "追加のプロンプト",
+        "description": "プロンプトの末尾に追加するテキスト"
+      },
+      "sandbox": {
+        "description": "Codexのサンドボックスポリシー",
+        "title": "サンドボックス",
+        "options": {
+          "auto": "自動",
+          "read-only": "読み取り専用",
+          "workspace-write": "ワークスペースへの書き込み",
+          "danger-full-access": "フルアクセス（危険）",
+          "null": "設定ファイルに従う"
+        }
+      },
+      "ask_for_approval": {
+        "description": "Codexの操作で利用者に承認を求める条件を指定します。\n\n- unless-trusted: 読み取り専用コマンドは自動承認し、それ以外は承認を求めます。\n- on-request: モデルが承認を求めるタイミングを判断します。\n- never: 承認を求めません。制限付きサンドボックスで失敗したコマンドは再試行しません。",
+        "title": "承認を求める条件",
+        "options": {
+          "unless-trusted": "信頼されていないコマンドで確認",
+          "on-request": "必要に応じて確認",
+          "never": "確認しない",
+          "null": "設定ファイルに従う"
+        }
+      },
+      "oss": {
+        "title": "OSSモデル"
+      },
+      "model": {
+        "title": "モデル"
+      },
+      "model_reasoning_effort": {
+        "description": "Codexのモデル検出結果または利用者が指定した、空でない推論の強度の値。",
+        "title": "推論の強度"
+      },
+      "model_reasoning_summary": {
+        "description": "モデルの推論を要約するスタイル",
+        "title": "推論の要約",
+        "options": {
+          "auto": "自動",
+          "concise": "簡潔",
+          "detailed": "詳細",
+          "none": "なし",
+          "null": "設定ファイルに従う"
+        }
+      },
+      "model_reasoning_summary_format": {
+        "description": "モデルの推論の要約に使う形式",
+        "title": "推論の要約形式",
+        "options": {
+          "none": "なし",
+          "experimental": "試験的",
+          "null": "設定ファイルに従う"
+        }
+      },
+      "profile": {
+        "title": "プロファイル"
+      },
+      "base_instructions": {
+        "title": "基本の指示"
+      },
+      "include_apply_patch_tool": {
+        "title": "apply_patchツールを含める"
+      },
+      "model_provider": {
+        "title": "モデルのプロバイダー"
+      },
+      "compact_prompt": {
+        "title": "コンテキスト圧縮用プロンプト"
+      },
+      "developer_instructions": {
+        "title": "開発者の指示"
+      },
+      "plan": {
+        "title": "計画モード"
+      },
+      "execution_mode": {
+        "description": "対話的なコーディング要求の実行方法です。\n\n権限ポリシーとは独立しています。計画と長時間のGoal実行は作業の進め方を定め、権限ポリシーは確認なしで許可する操作を定めます。",
+        "title": "実行モード",
+        "options": {
+          "code": "コード",
+          "review": "レビュー",
+          "plan": "計画",
+          "goal": "Goal",
+          "plan_with_goal": "計画とGoal"
+        }
+      },
+      "goal_token_budget": {
+        "title": "Goalのトークン予算"
+      },
+      "goal_max_concurrent_agents": {
+        "title": "Goalの最大同時エージェント数"
+      },
+      "base_command_override": {
+        "title": "基本コマンドの上書き",
+        "description": "基本コマンドを独自のコマンドに置き換えます"
+      },
+      "additional_params": {
+        "title": "追加パラメーター",
+        "description": "基本コマンドに追加するパラメーター"
+      },
+      "env": {
+        "title": "環境変数",
+        "description": "エージェントの実行時に設定する環境変数"
+      }
+    },
+    "claude_code": {
+      "append_prompt": {
+        "title": "追加のプロンプト",
+        "description": "プロンプトの末尾に追加するテキスト"
+      },
+      "claude_code_router": {
+        "title": "Claude Code Router"
+      },
+      "plan": {
+        "title": "計画モード"
+      },
+      "approvals": {
+        "title": "承認"
+      },
+      "model": {
+        "title": "モデル"
+      },
+      "effort": {
+        "title": "推論の強度",
+        "options": {
+          "low": "低",
+          "medium": "中",
+          "high": "高",
+          "xhigh": "さらに高い",
+          "max": "最大",
+          "null": "設定ファイルに従う"
+        }
+      },
+      "agent": {
+        "title": "エージェント"
+      },
+      "dangerously_skip_permissions": {
+        "title": "権限確認を省略"
+      },
+      "disable_api_key": {
+        "title": "APIキーを無効化"
+      },
+      "require_subscription_login": {
+        "title": "サブスクリプションでのログインを必須にする",
+        "description": "実行のたびに公式Claude CLIのログインを確認します。別の課金方法に切り替えるのではなく、API・プロバイダーの認証情報や独自コマンドによる上書きを拒否します。"
+      },
+      "base_command_override": {
+        "title": "基本コマンドの上書き",
+        "description": "基本コマンドを独自のコマンドに置き換えます"
+      },
+      "additional_params": {
+        "title": "追加パラメーター",
+        "description": "基本コマンドに追加するパラメーター"
+      },
+      "env": {
+        "title": "環境変数",
+        "description": "エージェントの実行時に設定する環境変数"
+      }
+    }
   }
 }

@@ -25,7 +25,7 @@ function content(
 describe('workspace file classification', () => {
   it('routes markdown files to the markdown viewer', () => {
     expect(
-      classifyWorkspaceFile(
+      classify(
         content({
           path: 'README.md',
           name: 'README.md',
@@ -42,7 +42,7 @@ describe('workspace file classification', () => {
 
   it('routes known source files to code with a language label', () => {
     expect(
-      classifyWorkspaceFile(
+      classify(
         content({
           path: 'src/App.tsx',
           name: 'App.tsx',
@@ -59,7 +59,7 @@ describe('workspace file classification', () => {
 
   it('treats HTML as source instead of executable preview content', () => {
     expect(
-      classifyWorkspaceFile(
+      classify(
         content({
           path: 'public/index.html',
           name: 'index.html',
@@ -75,7 +75,7 @@ describe('workspace file classification', () => {
 
   it('routes safe image content to the image viewer', () => {
     expect(
-      classifyWorkspaceFile(
+      classify(
         content({
           path: 'assets/logo.png',
           name: 'logo.png',
@@ -93,7 +93,7 @@ describe('workspace file classification', () => {
 
   it('keeps binary files in the unsupported fallback', () => {
     expect(
-      classifyWorkspaceFile(
+      classify(
         content({
           path: 'build/archive.zip',
           name: 'archive.zip',
@@ -108,3 +108,12 @@ describe('workspace file classification', () => {
     });
   });
 });
+
+function classify(file: Parameters<typeof classifyWorkspaceFile>[0]) {
+  return classifyWorkspaceFile(file, {
+    svgSource: 'SVG source',
+    image: 'Image',
+    text: 'Text',
+    unsupported: 'Unsupported',
+  });
+}

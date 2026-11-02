@@ -74,3 +74,21 @@ export function getLanguageOptions(browserDefaultLabel: string) {
         : getEndonym(UI_TO_I18N[ui as keyof typeof UI_TO_I18N]),
   }));
 }
+
+/** Resolve browser regional tags to the dictionaries shipped by LVK. */
+export function normalizeDetectedLocale(language: string): string {
+  const normalized = language.replace(/_/g, '-').toLowerCase();
+  if (normalized === 'zh' || normalized.startsWith('zh-')) {
+    return /(?:^|-)(hant|tw|hk|mo)(?:-|$)/.test(normalized)
+      ? 'zh-Hant'
+      : 'zh-Hans';
+  }
+  const base = normalized.split('-')[0];
+  return SUPPORTED_I18N_CODES.find((code) => code === base) || language;
+}
+
+/** Locale used for LVK UI formatting, with English as the final fallback. */
+export function resolveUiLocale(language: string): string {
+  const normalized = normalizeDetectedLocale(language);
+  return SUPPORTED_I18N_CODES.find((code) => code === normalized) || 'en';
+}

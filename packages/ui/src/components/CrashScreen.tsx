@@ -56,7 +56,8 @@ export function CrashScreen({
             {showDetails && (
               <pre className="mt-half max-h-48 w-full overflow-auto rounded-sm bg-secondary p-base text-left text-xs text-low">
                 {errorMessage}
-                {componentStack && `\n\nComponent stack:${componentStack}`}
+                {componentStack &&
+                  `\n\n${t('crashScreen.componentStack')}:\n${componentStack}`}
               </pre>
             )}
           </div>

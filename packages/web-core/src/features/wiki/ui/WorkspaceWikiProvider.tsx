@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   useContext,
   useEffect,
@@ -51,9 +52,17 @@ function WorkspaceWikiScope({
   enabled = true,
   children,
 }: WorkspaceWikiProviderProps) {
+  const { t } = useTranslation('common');
   const repositoryOptions = useMemo(
-    () => (workspace ? wikiRepositoryOptions(workspace, repos) : []),
-    [workspace, repos]
+    () =>
+      workspace
+        ? wikiRepositoryOptions(
+            workspace,
+            repos,
+            t('workspaceWiki.directFolder')
+          )
+        : [],
+    [workspace, repos, t]
   );
   const workspaceId = workspace?.id ?? '';
   const initialRepoId = repositoryOptions[0]?.id ?? '';

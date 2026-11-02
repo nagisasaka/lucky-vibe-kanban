@@ -36,6 +36,7 @@ import { getWorkflowAgentDisplay } from '../model/workflowAgentDisplay';
 import { coerceWorkflowNodeExecutorConfig } from '../model/workflowAgentNodeDraft';
 import {
   formatWorkflowDuration,
+  formatWorkflowElapsedMs,
   getNodeStatusTone,
   type StatusTone,
 } from '../model/workflowRunView';
@@ -210,7 +211,6 @@ export function WorkflowNodeSessionPanel({
               source="workflow"
               sessionId={nodeSessionId}
               compact
-              title="Files"
               onSelectFile={openTarget}
               onClearTarget={clearTarget}
               onClose={() => setShowFilesInspector(false)}
@@ -246,7 +246,7 @@ export function WorkflowNodeSessionHeader({
   inspectFilesDisabled,
 }: WorkflowNodeSessionHeaderProps) {
   const { t } = useTranslation('common');
-  const agentDisplay = getWorkflowAgentDisplay(nodeData ?? {});
+  const agentDisplay = getWorkflowAgentDisplay(nodeData ?? {}, t);
   const title =
     nodeTitle?.trim() ||
     (execution.node_type === 'agent'
@@ -382,22 +382,14 @@ function CockpitChip({
   );
 }
 
-function formatWorkflowTimestamp(value: string | null): string | null {
+function formatWorkflowTimestamp(
+  value: string | null,
+  locale: string
+): string | null {
   if (!value) return null;
   const time = new Date(value);
   if (Number.isNaN(time.getTime())) return value;
-  return time.toLocaleString();
-}
-
-function formatElapsedMs(value: number): string {
-  const diffSecs = Math.floor(Math.max(0, value) / 1000);
-  const minutes = Math.floor(diffSecs / 60);
-  const seconds = diffSecs % 60;
-
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  }
-  return `${seconds}s`;
+  return time.toLocaleString(locale);
 }
 
 function WorkflowNodeRunSummary({
@@ -407,19 +399,22 @@ function WorkflowNodeRunSummary({
   execution: WorkflowNodeExecutionResponse;
   runtimeWork?: CanonicalWorkflowNodeWorkView | null;
 }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const locale = i18n.resolvedLanguage || i18n.language;
   const statusTone = runtimeWork?.active_slow
     ? 'warning'
     : getNodeStatusTone(execution.status);
-  const startedLabel = formatWorkflowTimestamp(execution.started_at);
-  const finishedLabel = formatWorkflowTimestamp(execution.finished_at);
+  const startedLabel = formatWorkflowTimestamp(execution.started_at, locale);
+  const finishedLabel = formatWorkflowTimestamp(execution.finished_at, locale);
   const durationLabel = formatWorkflowDuration(
     execution.started_at,
-    execution.finished_at
+    execution.finished_at,
+    t,
+    locale
   );
   const runtimeDurationLabel =
     runtimeWork?.active_elapsed_ms != null
-      ? formatElapsedMs(runtimeWork.active_elapsed_ms)
+      ? formatWorkflowElapsedMs(runtimeWork.active_elapsed_ms, t, locale)
       : durationLabel;
   const hasError = execution.status === 'failed' || !!execution.error_text;
   const routerOutput = parseConditionRouterOutput(execution.output_text);
@@ -580,10 +575,7 @@ function WorkflowNodeCanonicalSession({
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-primary p-base">
       {!projectionAvailable ? (
         <div className="mb-base rounded border border-warning/40 bg-warning/10 p-half text-xs text-warning">
-          {t('workflow.nodeSession.projectionUnavailable', {
-            defaultValue:
-              'Canonical AgentRun projection is unavailable; actions are disabled.',
-          })}
+          {t('workflow.nodeSession.projectionUnavailable')}
         </div>
       ) : null}
       <div className="mb-base grid gap-half text-xs text-low sm:grid-cols-2">
@@ -599,10 +591,8 @@ function WorkflowNodeCanonicalSession({
         </TechnicalDetailRow>
         <TechnicalDetailRow label={t('workflow.nodeSession.runtimeConnection')}>
           {canonicalStream.isConnected
-            ? t('workflow.nodeSession.connected', { defaultValue: 'Connected' })
-            : t('workflow.nodeSession.disconnected', {
-                defaultValue: 'Disconnected',
-              })}
+            ? t('workflow.nodeSession.connected')
+            : t('workflow.nodeSession.disconnected')}
         </TechnicalDetailRow>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto space-y-half">
@@ -623,12 +613,8 @@ function WorkflowNodeCanonicalSession({
       </div>
       <div className="mt-base rounded border border-secondary bg-panel/60 p-half text-[10px] text-low">
         {preferredExecutorConfig
-          ? t('workflow.nodeSession.nativeConfigLoaded', {
-              defaultValue: 'Native executor configuration loaded.',
-            })
-          : t('workflow.nodeSession.nativeConfigUnavailable', {
-              defaultValue: 'Native executor configuration is unavailable.',
-            })}
+          ? t('workflow.nodeSession.nativeConfigLoaded')
+          : t('workflow.nodeSession.nativeConfigUnavailable')}
       </div>
     </div>
   );
@@ -639,7 +625,8 @@ function CanonicalTimelineItemView({
 }: {
   item: CanonicalAgentTimelineItem;
 }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const locale = i18n.resolvedLanguage || i18n.language;
   const label =
     item.kind === 'status' && item.status
       ? `${item.kind}: ${item.status}`
@@ -648,16 +635,16 @@ function CanonicalTimelineItemView({
     <div className="rounded border border-secondary bg-panel/60 p-half text-xs">
       <div className="flex items-center justify-between gap-half text-[10px] uppercase text-low">
         <span>{label}</span>
-        <time>{formatWorkflowTimestamp(item.timestamp) ?? item.timestamp}</time>
+        <time>
+          {formatWorkflowTimestamp(item.timestamp, locale) ?? item.timestamp}
+        </time>
       </div>
       {item.content ? (
         <p className="mt-1 whitespace-pre-wrap text-high">{item.content}</p>
       ) : null}
       {!item.content ? (
         <p className="mt-1 text-low">
-          {t('workflow.nodeSession.eventRecorded', {
-            defaultValue: 'Canonical event recorded.',
-          })}
+          {t('workflow.nodeSession.eventRecorded')}
         </p>
       ) : null}
     </div>
@@ -719,10 +706,7 @@ function WorkflowNodeSessionFallback({
       <div className="flex flex-1 flex-col gap-base overflow-y-auto p-base">
         {agentRunId ? (
           <div className="rounded border border-warning/40 bg-warning/10 p-half text-xs text-warning">
-            {t('workflow.nodeSession.projectionUnavailable', {
-              defaultValue:
-                'Canonical AgentRun projection is unavailable; actions are disabled.',
-            })}
+            {t('workflow.nodeSession.projectionUnavailable')}
           </div>
         ) : null}
         <WorkflowNodeOutputFallback

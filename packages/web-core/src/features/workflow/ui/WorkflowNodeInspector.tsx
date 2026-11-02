@@ -6,10 +6,10 @@ import type {
   WorkflowNodeKind,
 } from '../model/workflowGraph';
 import { getConditionBranchTargets } from '../model/workflowGraph';
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import {
   getWorkflowNodeSchema,
+  resolveWorkflowNodeField,
   type WorkflowNodeFieldSchema,
 } from '../model/workflowNodeSchemas';
 import { getWorkflowAgentDisplay } from '../model/workflowAgentDisplay';
@@ -55,22 +55,6 @@ function shouldRenderSimpleField(
   return true;
 }
 
-function getLocalizedField(
-  field: WorkflowNodeFieldSchema,
-  t: TFunction<'common'>
-): WorkflowNodeFieldSchema {
-  const label = t(`workflow.fields.${String(field.key)}`, {
-    defaultValue: field.label,
-  });
-  const options = field.options?.map((option) => ({
-    ...option,
-    label: t(`workflow.fieldOptions.${String(field.key)}.${option.value}`, {
-      defaultValue: option.label,
-    }),
-  }));
-  return { ...field, label, ...(options ? { options } : {}) };
-}
-
 export function WorkflowNodeInspector({
   node,
   graph,
@@ -100,7 +84,7 @@ export function WorkflowNodeInspector({
   const simpleFields = schemaFields
     .filter(isSimpleField)
     .filter((field) => shouldRenderSimpleField(type, data, field))
-    .map((field) => getLocalizedField(field, t));
+    .map((field) => resolveWorkflowNodeField(field, t));
   const hasConditionBranches = schemaFields.some(
     (field) => field.type === 'condition_branches'
   );
@@ -113,9 +97,12 @@ export function WorkflowNodeInspector({
       ? getConditionBranchTargets(graph, node.id)
       : [];
   const attempts = data.attempts ?? [];
-  const routerDisplay = getWorkflowAgentDisplay({
-    executor_config: routerExecutorConfig,
-  });
+  const routerDisplay = getWorkflowAgentDisplay(
+    {
+      executor_config: routerExecutorConfig,
+    },
+    t
+  );
   const hasRouterExecutorConfig = routerDisplay.executorConfig !== null;
 
   const inputClass =
@@ -157,14 +144,10 @@ export function WorkflowNodeInspector({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <label className="text-xs font-semibold text-high">
-                {t('workflow.inspector.routerAgent', {
-                  defaultValue: 'Router agent',
-                })}
+                {t('workflow.inspector.routerAgent')}
               </label>
               <p className="mt-1 text-xs text-low">
-                {t('workflow.inspector.routerSharedNote', {
-                  defaultValue: 'Used by all Condition nodes in this workflow.',
-                })}
+                {t('workflow.inspector.routerSharedNote')}
               </p>
             </div>
             <button
@@ -174,9 +157,7 @@ export function WorkflowNodeInspector({
               onClick={onConfigureRouter}
             >
               <Settings2 className="h-3.5 w-3.5" />
-              {t('workflow.inspector.configureRouter', {
-                defaultValue: 'Configure',
-              })}
+              {t('workflow.inspector.configureRouter')}
             </button>
           </div>
 
@@ -197,9 +178,7 @@ export function WorkflowNodeInspector({
             </div>
           ) : (
             <div className="rounded-md border border-warning/40 bg-warning/10 px-2.5 py-2 text-xs text-warning">
-              {t('workflow.inspector.routerMissing', {
-                defaultValue: 'Router agent is not configured.',
-              })}
+              {t('workflow.inspector.routerMissing')}
             </div>
           )}
         </div>
@@ -211,17 +190,11 @@ export function WorkflowNodeInspector({
             {t('workflow.inspector.branches')}
           </label>
           <p className="text-xs leading-relaxed text-low">
-            {t('workflow.inspector.conditionBranchHelp', {
-              defaultValue:
-                'Each outgoing line becomes a branch. Describe when the router should choose each target.',
-            })}
+            {t('workflow.inspector.conditionBranchHelp')}
           </p>
           {branches.length === 0 ? (
             <div className="rounded-md border border-secondary/60 bg-primary/50 p-3 text-xs text-low shadow-sm">
-              {t('workflow.inspector.noConditionBranches', {
-                defaultValue:
-                  'No outgoing targets. Connect this Condition to downstream nodes to create branch rows.',
-              })}
+              {t('workflow.inspector.noConditionBranches')}
             </div>
           ) : null}
           {branches.map((branch, index) => {
@@ -258,9 +231,7 @@ export function WorkflowNodeInspector({
               >
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-high">
-                    {t('workflow.inspector.branchTarget', {
-                      defaultValue: 'Target',
-                    })}
+                    {t('workflow.inspector.branchTarget')}
                   </label>
                   <select
                     className={inputClass}
@@ -272,9 +243,7 @@ export function WorkflowNodeInspector({
                   >
                     {!branch.target_node_id ? (
                       <option value="">
-                        {t('workflow.inspector.selectTarget', {
-                          defaultValue: 'Select target',
-                        })}
+                        {t('workflow.inspector.selectTarget')}
                       </option>
                     ) : null}
                     {conditionBranchTargets.map((target) => (
@@ -290,20 +259,14 @@ export function WorkflowNodeInspector({
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-high">
-                    {t('workflow.inspector.branchCondition', {
-                      defaultValue: 'Route when',
-                    })}
+                    {t('workflow.inspector.branchCondition')}
                   </label>
                   <textarea
                     className={inputClass}
                     rows={3}
                     value={branch.condition ?? ''}
                     placeholder={t(
-                      'workflow.inspector.branchConditionPlaceholder',
-                      {
-                        defaultValue:
-                          'Example: upstream output mentions UI, layout, style, or interaction changes',
-                      }
+                      'workflow.inspector.branchConditionPlaceholder'
                     )}
                     onChange={(event) =>
                       updateBranch({ condition: event.target.value })

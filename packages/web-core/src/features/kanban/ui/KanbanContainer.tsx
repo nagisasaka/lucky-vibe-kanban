@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { dropRankAfterActivity } from './kanbanOrder';
 import { projectKanbanItems, type KanbanItems } from './kanbanProjection';
 import { KanbanServerMotion } from './KanbanServerMotion';
@@ -137,15 +138,16 @@ const areKanbanFiltersEqual = (
 };
 
 function workflowAttemptToKanbanCard(
-  attempt: WorkflowAttemptResponse
+  attempt: WorkflowAttemptResponse,
+  t: TFunction<'common'>
 ): IssueWorkflowAttemptCardData {
   return {
     id: attempt.id,
-    title: attempt.name || 'Workflow attempt',
+    title: attempt.name || t('attempts.workflowFallbackTitle'),
     subtitle: attempt.latest_run_id
-      ? `Latest run ${attempt.latest_run_id.slice(0, 8)}`
-      : 'Workflow draft ready',
-    statusLabel: workflowAttemptStatusLabel(attempt.status),
+      ? t('attempts.latestRun', { id: attempt.latest_run_id.slice(0, 8) })
+      : t('attempts.workflowDraftReady'),
+    statusLabel: workflowAttemptStatusLabel(attempt.status, t),
     statusTone: workflowAttemptStatusTone(attempt.status),
   };
 }
@@ -1061,7 +1063,7 @@ export function KanbanContainer() {
               isMobile && 'col-span-2'
             )}
             role="group"
-            aria-label="プロジェクト表示"
+            aria-label={t('kanban.projectDisplay')}
           >
             {(['kanban', 'todos', 'design-notes'] as const).map((view) => (
               <button
@@ -1077,7 +1079,7 @@ export function KanbanContainer() {
                 )}
               >
                 {view === 'design-notes'
-                  ? '設計メモ'
+                  ? t('designNotes.title')
                   : t(view === 'kanban' ? 'todo.board' : 'todo.title')}
               </button>
             ))}
@@ -1098,7 +1100,7 @@ export function KanbanContainer() {
                   'p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors',
                   isMobile && 'col-start-2 row-start-1'
                 )}
-                aria-label="Project menu"
+                aria-label={t('kanban.projectMenu')}
               >
                 <DotsThreeIcon className="size-icon-sm" weight="bold" />
               </button>
@@ -1176,11 +1178,13 @@ export function KanbanContainer() {
       {dropNotice && (
         <div role="alert" className="px-double text-error">
           {t(
-            {
-              save: 'kanban.drop.save',
-              sync: 'kanban.drop.sync',
-              conflict: 'kanban.drop.conflict',
-            }[dropNotice]
+            (
+              {
+                save: 'kanban.drop.save',
+                sync: 'kanban.drop.sync',
+                conflict: 'kanban.drop.conflict',
+              } as const
+            )[dropNotice]
           )}{' '}
           <button
             className="underline"
@@ -1272,7 +1276,7 @@ export function KanbanContainer() {
                             type="button"
                             onClick={() => handleAddTask(status.id)}
                             className="shrink-0 p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
-                            aria-label="Add task"
+                            aria-label={t('kanban.createNewIssue')}
                           >
                             <PlusIcon className="size-icon-xs" weight="bold" />
                           </button>
@@ -1369,7 +1373,10 @@ export function KanbanContainer() {
                               {issueWorkflowAttempts.map((attempt) => (
                                 <IssueWorkflowAttemptCard
                                   key={attempt.id}
-                                  attempt={workflowAttemptToKanbanCard(attempt)}
+                                  attempt={workflowAttemptToKanbanCard(
+                                    attempt,
+                                    t
+                                  )}
                                   onClick={() =>
                                     openIssueWorkflowAttempt(
                                       attempt.workflow_id

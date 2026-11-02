@@ -27,7 +27,7 @@ export function WorkflowQuickAdd({
     () =>
       QUICK_ADD_SECTIONS.map((section) => ({
         id: section.id,
-        label: t(section.labelKey, { defaultValue: section.label }),
+        label: section.label(t),
         items: section.entries.map((entry) => ({
           type: entry.type,
           label: getWorkflowNodeKindLabel(entry.type, t),
@@ -68,9 +68,7 @@ export function WorkflowQuickAdd({
   return (
     <div
       role="dialog"
-      aria-label={t('workflow.editor.addWorkflowStep', {
-        defaultValue: 'Add workflow step',
-      })}
+      aria-label={t('workflow.editor.addWorkflowStep')}
       className="workflow-popover-surface w-[320px] rounded-xl border p-3 transition-opacity"
       style={{
         position: 'fixed',
@@ -88,9 +86,7 @@ export function WorkflowQuickAdd({
         onKeyDown={(event) => {
           if (event.key === 'Escape') onClose();
         }}
-        placeholder={t('workflow.editor.searchSteps', {
-          defaultValue: 'Search steps...',
-        })}
+        placeholder={t('workflow.editor.searchSteps')}
       />
       <div role="listbox" className="mt-3 max-h-72 space-y-3 overflow-auto">
         {filteredGroups.map((group) => (
@@ -124,9 +120,7 @@ export function WorkflowQuickAdd({
         ))}
         {filteredGroups.length === 0 ? (
           <div className="py-4 text-center text-xs text-low">
-            {t('workflow.editor.noStepTypesFound', {
-              defaultValue: 'No step types found',
-            })}
+            {t('workflow.editor.noStepTypesFound')}
           </div>
         ) : null}
       </div>

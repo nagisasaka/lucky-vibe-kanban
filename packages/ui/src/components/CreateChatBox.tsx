@@ -228,7 +228,9 @@ export function CreateChatBox<TExecutor extends string = string>({
                   onClick={linkedIssue.onRemove}
                   disabled={isDisabled}
                   className="inline-flex items-center text-low hover:text-error transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label={`Remove link to ${linkedIssue.simpleId}`}
+                  aria-label={t('common:kanban.removeLinkedIssue', {
+                    issueId: linkedIssue.simpleId,
+                  })}
                 >
                   <XIcon className="size-icon-xs" weight="bold" />
                 </button>

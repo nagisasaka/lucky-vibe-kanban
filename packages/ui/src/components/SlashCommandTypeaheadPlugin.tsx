@@ -85,56 +85,56 @@ const SLASH_COMMAND_GROUP_ORDER: SlashCommandGroupKey[] = [
 
 const SLASH_COMMAND_GROUP_META: Record<
   SlashCommandGroupKey,
-  SlashCommandGroupMeta
+  (t: (key: string) => string) => SlashCommandGroupMeta
 > = {
-  product: {
-    label: '常用命令',
-    badge: 'VK',
-    title: 'vibe-kanban 认可的产品入口',
+  product: (t) => ({
+    label: t('typeahead.commandGroups.product.label'),
+    badge: t('typeahead.commandGroups.product.badge'),
+    title: t('typeahead.commandGroups.product.description'),
     Icon: CheckCircleIcon,
-  },
-  skill: {
-    label: '技能',
-    badge: 'Skill',
-    title: '来自智能体技能',
+  }),
+  skill: (t) => ({
+    label: t('typeahead.commandGroups.skill.label'),
+    badge: t('typeahead.commandGroups.skill.badge'),
+    title: t('typeahead.commandGroups.skill.description'),
     Icon: SparkleIcon,
-  },
-  native: {
-    label: '原生命令',
-    badge: '原生',
-    title: '当前智能体后端的原生命令',
+  }),
+  native: (t) => ({
+    label: t('typeahead.commandGroups.native.label'),
+    badge: t('typeahead.commandGroups.native.badge'),
+    title: t('typeahead.commandGroups.native.description'),
     Icon: TerminalIcon,
-  },
-  custom: {
-    label: '自定义命令',
-    badge: 'Custom',
-    title: '来自自定义命令或 plugin',
+  }),
+  custom: (t) => ({
+    label: t('typeahead.commandGroups.custom.label'),
+    badge: t('typeahead.commandGroups.custom.badge'),
+    title: t('typeahead.commandGroups.custom.description'),
     Icon: WrenchIcon,
-  },
-  diagnostic: {
-    label: '诊断',
-    badge: 'Diag',
-    title: '诊断或调试命令',
+  }),
+  diagnostic: (t) => ({
+    label: t('typeahead.commandGroups.diagnostic.label'),
+    badge: t('typeahead.commandGroups.diagnostic.badge'),
+    title: t('typeahead.commandGroups.diagnostic.description'),
     Icon: WarningCircleIcon,
-  },
-  fallback: {
-    label: '备用命令',
-    badge: 'Fallback',
-    title: '来自 fallback 列表，可信度低于实时发现',
+  }),
+  fallback: (t) => ({
+    label: t('typeahead.commandGroups.fallback.label'),
+    badge: t('typeahead.commandGroups.fallback.badge'),
+    title: t('typeahead.commandGroups.fallback.description'),
     Icon: InfoIcon,
-  },
-  unsupported: {
-    label: '未适配',
-    badge: '未适配',
-    title: '未作为常规产品能力适配',
+  }),
+  unsupported: (t) => ({
+    label: t('typeahead.commandGroups.unsupported.label'),
+    badge: t('typeahead.commandGroups.unsupported.badge'),
+    title: t('typeahead.commandGroups.unsupported.description'),
     Icon: WarningCircleIcon,
-  },
-  other: {
-    label: '命令',
-    badge: 'Agent',
-    title: '当前智能体后端提供的命令',
+  }),
+  other: (t) => ({
+    label: t('typeahead.commandGroups.other.label'),
+    badge: t('typeahead.commandGroups.other.badge'),
+    title: t('typeahead.commandGroups.other.description'),
     Icon: TerminalIcon,
-  },
+  }),
 };
 
 function filterSlashCommands(
@@ -184,8 +184,11 @@ function getSlashCommandGroupKey(
   }
 }
 
-function getSlashCommandGroupMeta(command: SlashCommandDescriptionLike) {
-  return SLASH_COMMAND_GROUP_META[getSlashCommandGroupKey(command)];
+function getSlashCommandGroupMeta(
+  command: SlashCommandDescriptionLike,
+  t: (key: string) => string
+) {
+  return SLASH_COMMAND_GROUP_META[getSlashCommandGroupKey(command)](t);
 }
 
 function getSlashCommandGroupPriority(command: SlashCommandDescriptionLike) {
@@ -204,10 +207,13 @@ function orderSlashCommandsForDisplay(
   });
 }
 
-function groupSlashCommandOptions(options: SlashCommandOption[]) {
+function groupSlashCommandOptions(
+  options: SlashCommandOption[],
+  t: (key: string) => string
+) {
   return SLASH_COMMAND_GROUP_ORDER.map((key) => ({
     key,
-    meta: SLASH_COMMAND_GROUP_META[key],
+    meta: SLASH_COMMAND_GROUP_META[key](t),
     items: options
       .map((option, index) => ({ option, index }))
       .filter(({ option }) => getSlashCommandGroupKey(option.command) === key),
@@ -308,8 +314,10 @@ export function SlashCommandTypeaheadPlugin({
 
         const isEmpty = !isLoading && !isDiscovering && commands.length === 0;
         const showLoadingRow = isLoading || isDiscovering;
-        const loadingText = isLoading ? '正在加载命令...' : '正在发现命令...';
-        const optionGroups = groupSlashCommandOptions(options);
+        const loadingText = isLoading
+          ? t('typeahead.loadingCommands')
+          : t('typeahead.discoveringCommands');
+        const optionGroups = groupSlashCommandOptions(options, t);
 
         return createPortal(
           <TypeaheadMenu
@@ -342,7 +350,10 @@ export function SlashCommandTypeaheadPlugin({
                       </TypeaheadMenu.SectionHeader>
                       {group.items.map(({ option, index }) => {
                         const details = option.command.description ?? null;
-                        const meta = getSlashCommandGroupMeta(option.command);
+                        const meta = getSlashCommandGroupMeta(
+                          option.command,
+                          t
+                        );
                         const CommandIcon = meta.Icon;
 
                         return (

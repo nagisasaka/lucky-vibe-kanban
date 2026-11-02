@@ -60,7 +60,7 @@ export interface WorkspaceTargetDialogProps {
 type PendingAction = 'browse' | 'inspect' | 'branches' | null;
 type DialogError = {
   scope: 'path' | 'branch';
-  message: string;
+  code: 'loadBranches' | 'pathRequired' | 'inspect' | 'browse';
 };
 
 const modeCardClassName =
@@ -131,18 +131,13 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
               ? preferredBranch
               : null
           );
-        } catch (nextError) {
+        } catch {
           if (requestId !== requestIdRef.current) return;
           setBranches([]);
           setTargetBranch(null);
           setError({
             scope: 'branch',
-            message:
-              nextError instanceof Error
-                ? nextError.message
-                : t('createMode.workspaceDialog.errors.loadBranches', {
-                    defaultValue: 'Failed to load repository branches.',
-                  }),
+            code: 'loadBranches',
           });
         } finally {
           if (requestId === requestIdRef.current) {
@@ -150,7 +145,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
           }
         }
       },
-      [hostId, t]
+      [hostId]
     );
 
     const inspectPath = useCallback(
@@ -164,9 +159,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
           resetDerivedState();
           setError({
             scope: 'path',
-            message: t('createMode.workspaceDialog.errors.pathRequired', {
-              defaultValue: 'Choose or enter a directory path.',
-            }),
+            code: 'pathRequired',
           });
           return;
         }
@@ -210,16 +203,11 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
           if (nextMode === 'worktree') {
             await loadBranches(nextInspection.repo, preferredBranch);
           }
-        } catch (nextError) {
+        } catch {
           if (requestId !== requestIdRef.current) return;
           setError({
             scope: 'path',
-            message:
-              nextError instanceof Error
-                ? nextError.message
-                : t('createMode.workspaceDialog.errors.inspect', {
-                    defaultValue: 'Unable to inspect this directory.',
-                  }),
+            code: 'inspect',
           });
         } finally {
           if (requestId === requestIdRef.current) {
@@ -234,7 +222,6 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
         loadBranches,
         onlyAllowedMode,
         resetDerivedState,
-        t,
       ]
     );
 
@@ -279,9 +266,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
       try {
         const selectedPath = await ServerFolderPickerDialog.show({
           value: path,
-          title: t('createMode.workspaceDialog.nativePickerTitle', {
-            defaultValue: 'Choose working directory',
-          }),
+          title: t('createMode.workspaceDialog.nativePickerTitle'),
           hostId,
         });
         if (requestId !== requestIdRef.current) return;
@@ -289,16 +274,11 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
 
         setPath(selectedPath);
         await inspectPath(selectedPath);
-      } catch (nextError) {
+      } catch {
         if (requestId !== requestIdRef.current) return;
         setError({
           scope: 'path',
-          message:
-            nextError instanceof Error
-              ? nextError.message
-              : t('createMode.workspaceDialog.errors.browse', {
-                  defaultValue: 'Unable to open the folder picker.',
-                }),
+          code: 'browse',
         });
       } finally {
         if (requestId === requestIdRef.current) {
@@ -376,16 +356,10 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
     const confirmLabel = useMemo(
       () =>
         isProjectDefault
-          ? t('createMode.workspaceDialog.useProjectLocation', {
-              defaultValue: 'Use this location',
-            })
+          ? t('createMode.workspaceDialog.useProjectLocation')
           : mode === 'direct_folder'
-            ? t('createMode.workspaceDialog.useDirectory', {
-                defaultValue: 'Use this directory',
-              })
-            : t('createMode.workspaceDialog.useWorkspace', {
-                defaultValue: 'Use this workspace',
-              }),
+            ? t('createMode.workspaceDialog.useDirectory')
+            : t('createMode.workspaceDialog.useWorkspace'),
       [isProjectDefault, mode, t]
     );
 
@@ -402,17 +376,10 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
         >
           <DialogHeader>
             <DialogTitle>
-              {title ??
-                t('createMode.workspaceDialog.title', {
-                  defaultValue: 'Choose workspace',
-                })}
+              {title ?? t('createMode.workspaceDialog.title')}
             </DialogTitle>
             <DialogDescription>
-              {description ??
-                t('createMode.workspaceDialog.description', {
-                  defaultValue:
-                    'Choose one directory and decide how the agent should work in it.',
-                })}
+              {description ?? t('createMode.workspaceDialog.description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -422,9 +389,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                 htmlFor="workspace-directory-path"
                 className="text-sm font-medium text-normal"
               >
-                {t('createMode.workspaceDialog.pathLabel', {
-                  defaultValue: 'Working directory',
-                })}
+                {t('createMode.workspaceDialog.pathLabel')}
               </label>
               <div className="flex min-w-0 gap-half">
                 <Input
@@ -437,9 +402,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                       if (!isBusy) void inspectPath(path);
                     }
                   }}
-                  placeholder={t('createMode.workspaceDialog.pathPlaceholder', {
-                    defaultValue: 'C:\\path\\to\\project',
-                  })}
+                  placeholder={t('createMode.workspaceDialog.pathPlaceholder')}
                   className="min-w-0 flex-1"
                   aria-invalid={error?.scope === 'path'}
                 />
@@ -449,7 +412,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                   onClick={() => void inspectPath(path)}
                   disabled={isBusy}
                 >
-                  {t('serverFolderPicker.load', { defaultValue: 'Load path' })}
+                  {t('serverFolderPicker.load')}
                 </Button>
                 <Button
                   type="button"
@@ -463,24 +426,18 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                   ) : (
                     <FolderOpen className="size-icon-xs" />
                   )}
-                  {t('serverFolderPicker.browse', {
-                    defaultValue: 'Browse server',
-                  })}
+                  {t('serverFolderPicker.browse')}
                 </Button>
               </div>
               {pendingAction === 'inspect' ? (
                 <div className="flex items-center gap-half text-xs text-low">
                   <Loader2 className="size-icon-xs animate-spin" />
-                  <span>
-                    {t('createMode.workspaceDialog.inspecting', {
-                      defaultValue: 'Checking directory…',
-                    })}
-                  </span>
+                  <span>{t('createMode.workspaceDialog.inspecting')}</span>
                 </div>
               ) : null}
               {error?.scope === 'path' ? (
                 <p className="text-xs text-error" role="alert">
-                  {error.message}
+                  {t(`createMode.workspaceDialog.errors.${error.code}`)}
                 </p>
               ) : null}
             </div>
@@ -503,12 +460,8 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-high">
                       {inspection.is_git_repo
-                        ? t('createMode.workspaceDialog.gitRepository', {
-                            defaultValue: 'Git repository',
-                          })
-                        : t('createMode.workspaceDialog.regularDirectory', {
-                            defaultValue: 'Directory',
-                          })}
+                        ? t('createMode.workspaceDialog.gitRepository')
+                        : t('createMode.workspaceDialog.regularDirectory')}
                       {inspection.repo
                         ? ` · ${inspection.repo.display_name || inspection.repo.name}`
                         : ''}
@@ -521,17 +474,12 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                     </p>
                     {inspection.current_branch ? (
                       <p className="mt-half text-xs text-normal">
-                        {t('createMode.workspaceDialog.currentBranch', {
-                          defaultValue: 'Current branch',
-                        })}
-                        : {inspection.current_branch}
+                        {t('createMode.workspaceDialog.currentBranch')}:{' '}
+                        {inspection.current_branch}
                       </p>
                     ) : (
                       <p className="mt-half text-xs text-low">
-                        {t('createMode.workspaceDialog.nonGitHint', {
-                          defaultValue:
-                            'This directory is not a Git repository, so worktree isolation is unavailable.',
-                        })}
+                        {t('createMode.workspaceDialog.nonGitHint')}
                       </p>
                     )}
                   </div>
@@ -542,9 +490,7 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
             {inspection && !isProjectDefault ? (
               <fieldset className="flex flex-col gap-half">
                 <legend className="mb-half text-sm font-medium text-normal">
-                  {t('createMode.workspaceDialog.modeLabel', {
-                    defaultValue: 'Working mode',
-                  })}
+                  {t('createMode.workspaceDialog.modeLabel')}
                 </legend>
                 {allowedModeSet.has('worktree') ? (
                   <button
@@ -566,26 +512,12 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-high">
-                        {t('createMode.workspaceDialog.worktreeTitle', {
-                          defaultValue: 'Isolated worktree',
-                        })}
+                        {t('createMode.workspaceDialog.worktreeTitle')}
                       </span>
                       <span className="mt-half block text-xs text-low">
                         {inspection.is_git_repo
-                          ? t(
-                              'createMode.workspaceDialog.worktreeDescription',
-                              {
-                                defaultValue:
-                                  'Create an isolated checkout and leave the source directory unchanged.',
-                              }
-                            )
-                          : t(
-                              'createMode.workspaceDialog.worktreeUnavailable',
-                              {
-                                defaultValue:
-                                  'Requires the selected directory to be a Git repository.',
-                              }
-                            )}
+                          ? t('createMode.workspaceDialog.worktreeDescription')
+                          : t('createMode.workspaceDialog.worktreeUnavailable')}
                       </span>
                     </span>
                   </button>
@@ -610,15 +542,10 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-high">
-                        {t('createMode.workspaceDialog.directTitle', {
-                          defaultValue: 'Work directly in this directory',
-                        })}
+                        {t('createMode.workspaceDialog.directTitle')}
                       </span>
                       <span className="mt-half block text-xs text-low">
-                        {t('createMode.workspaceDialog.directDescription', {
-                          defaultValue:
-                            'The agent edits the selected directory itself. No worktree is created.',
-                        })}
+                        {t('createMode.workspaceDialog.directDescription')}
                       </span>
                     </span>
                   </button>
@@ -629,17 +556,13 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
             {inspection?.repo && mode === 'worktree' ? (
               <div className="flex flex-col gap-half">
                 <label className="text-sm font-medium text-normal">
-                  {t('createMode.workspaceDialog.branchLabel', {
-                    defaultValue: 'Base branch',
-                  })}
+                  {t('createMode.workspaceDialog.branchLabel')}
                 </label>
                 {pendingAction === 'branches' ? (
                   <div className="flex h-9 items-center gap-half rounded-sm border border-border px-base text-xs text-low">
                     <Loader2 className="size-icon-xs animate-spin" />
                     <span>
-                      {t('createMode.workspaceDialog.loadingBranches', {
-                        defaultValue: 'Loading branches…',
-                      })}
+                      {t('createMode.workspaceDialog.loadingBranches')}
                     </span>
                   </div>
                 ) : (
@@ -648,14 +571,13 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                     selectedBranch={targetBranch}
                     onBranchSelect={setTargetBranch}
                     placeholder={t(
-                      'createMode.workspaceDialog.branchPlaceholder',
-                      { defaultValue: 'Choose a branch' }
+                      'createMode.workspaceDialog.branchPlaceholder'
                     )}
                   />
                 )}
                 {error?.scope === 'branch' ? (
                   <p className="text-xs text-error" role="alert">
-                    {error.message}
+                    {t(`createMode.workspaceDialog.errors.${error.code}`)}
                   </p>
                 ) : null}
               </div>
@@ -666,8 +588,6 @@ const WorkspaceTargetDialogImpl = create<WorkspaceTargetDialogProps>(
                 <AlertTriangle className="mt-[1px] size-icon-sm shrink-0 text-warning" />
                 <span>
                   {t('createMode.workspaceDialog.directWarning', {
-                    defaultValue:
-                      'The agent will modify this directory directly: {{path}}',
                     path: inspection.path,
                   })}
                 </span>

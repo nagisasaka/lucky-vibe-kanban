@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useActions } from '@/shared/hooks/useActions';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
@@ -24,6 +25,7 @@ export function GitPanelContainer({
   selectedWorkspace,
   repos,
 }: GitPanelContainerProps) {
+  const { i18n } = useTranslation('tasks');
   const { executeAction } = useActions();
   const { activeWorkspaces, archivedWorkspaces } = useWorkspaceContext();
   const repoActions = useUiPreferencesStore((s) => s.repoActions);
@@ -136,7 +138,7 @@ export function GitPanelContainer({
       }, 2000);
     },
     // onError
-    async (err, errorData) => {
+    async (_err, errorData) => {
       const repoId = currentPushRepoRef.current;
       if (!repoId) return;
 
@@ -152,12 +154,10 @@ export function GitPanelContainer({
 
       // Show error state and dialog for other errors
       setPushStates((prev) => ({ ...prev, [repoId]: 'error' }));
-      const message =
-        err instanceof Error ? err.message : 'Failed to push changes';
       ConfirmDialog.show({
-        title: 'Error',
-        message,
-        confirmText: 'OK',
+        title: () => i18n.t('common:error'),
+        message: () => i18n.t('tasks:gitNotice.pushUnconfirmed'),
+        confirmText: () => i18n.t('common:ok'),
         showCancelButton: false,
         variant: 'destructive',
       });

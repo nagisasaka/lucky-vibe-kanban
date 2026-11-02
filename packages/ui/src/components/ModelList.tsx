@@ -196,7 +196,9 @@ export function ModelList({
     >
       {showEmptyState ? (
         <div className="flex h-full items-center justify-center px-base text-sm text-low">
-          {normalizedSearch ? 'No matches.' : 'No models available.'}
+          {normalizedSearch
+            ? t('modelSelector.noMatches')
+            : t('modelSelector.noModels')}
         </div>
       ) : (
         <div
@@ -265,7 +267,7 @@ export function ModelList({
                         'size-5 rounded-sm bg-border/80 text-normal',
                         'dark:bg-secondary/70'
                       )}
-                      title="Reasoning supported"
+                      title={t('modelSelector.reasoningSupported')}
                     >
                       <BrainIcon className="size-icon-xs" weight="fill" />
                     </span>

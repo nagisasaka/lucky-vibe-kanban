@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FileSearch, Loader2 } from 'lucide-react';
 import { Button } from '@vibe/ui/components/Button';
 import { cn } from '@/shared/lib/utils';
@@ -24,10 +25,18 @@ export function WorkspaceFilePreviewPanel({
   className,
   onClearTarget,
 }: WorkspaceFilePreviewPanelProps) {
+  const { t } = useTranslation('common');
   const hostId = useHostId();
   const { data, isLoading, isFetching, error, refresh, refetch } =
     useWorkspaceFileContent(target);
-  const displayInfo = data ? classifyWorkspaceFile(data) : null;
+  const displayInfo = data
+    ? classifyWorkspaceFile(data, {
+        svgSource: t('workspaceFiles.kindSvg'),
+        image: t('workspaceFiles.kindImage'),
+        text: t('workspaceFiles.kindText'),
+        unsupported: t('workspaceFiles.kindUnsupported'),
+      })
+    : null;
   const scopedRawUrl = scopeWorkspaceFileRawUrl(data?.raw_url, hostId);
 
   if (!target) {
@@ -35,8 +44,10 @@ export function WorkspaceFilePreviewPanel({
       <div className={cn('flex h-full min-h-0 flex-col bg-primary', className)}>
         <WorkspaceFileEmptyState
           icon={<FileSearch className="size-5" />}
-          title="Select a file"
-          description="Open a workspace file to inspect it here."
+          title={t('workspaceFiles.select_a_file')}
+          description={t(
+            'workspaceFiles.open_a_workspace_file_to_inspect_it_here'
+          )}
         />
       </div>
     );
@@ -58,22 +69,22 @@ export function WorkspaceFilePreviewPanel({
       />
       {data?.truncated && (
         <div className="shrink-0 border-b border-border bg-secondary px-base py-half text-sm text-low">
-          Large file preview truncated by the backend.
+          {t('workspaceFiles.large_file_preview_truncated_by_the_backend')}
         </div>
       )}
       <div className="min-h-0 flex-1">
         {isLoading ? (
           <WorkspaceFileEmptyState
             icon={<Loader2 className="size-5 animate-spin" />}
-            title="Loading preview"
-            description="Reading file content from the workspace."
+            title={t('workspaceFiles.loading_preview')}
+            description={t(
+              'workspaceFiles.reading_file_content_from_the_workspace'
+            )}
           />
         ) : error ? (
           <WorkspaceFileEmptyState
-            title="Could not load preview"
-            description={
-              error instanceof Error ? error.message : 'The preview failed.'
-            }
+            title={t('workspaceFiles.could_not_load_preview')}
+            description={t('workspaceFiles.previewUnconfirmed')}
             action={
               <Button
                 type="button"
@@ -81,14 +92,16 @@ export function WorkspaceFilePreviewPanel({
                 variant="secondary"
                 onClick={() => void refetch()}
               >
-                Retry
+                {t('workspaceFiles.retry')}
               </Button>
             }
           />
         ) : !data ? (
           <WorkspaceFileEmptyState
-            title="File missing"
-            description="The file was not returned by the workspace API."
+            title={t('workspaceFiles.file_missing')}
+            description={t(
+              'workspaceFiles.the_file_was_not_returned_by_the_workspace_api'
+            )}
           />
         ) : displayInfo?.viewKind === 'markdown' && !target.line ? (
           <MarkdownFileViewer content={data.content ?? ''} />

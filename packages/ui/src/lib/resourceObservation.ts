@@ -77,6 +77,8 @@ export function resourceView(data: unknown, unavailable: boolean, now: number) {
 }
 
 // Presentation only: preserve raw bytes and percentage/threshold calculations.
-export function formatDiskCapacity(value: number | null) {
-  return value === null ? '—' : `${Math.round(value / 1e9)}GB`;
+export function formatDiskCapacity(value: number | null, locale?: string) {
+  if (value === null) return '—';
+  const rounded = Math.round(value / 1e9);
+  return `${locale ? new Intl.NumberFormat(locale).format(rounded) : rounded}GB`;
 }

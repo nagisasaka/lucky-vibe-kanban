@@ -10,7 +10,7 @@ export function ChatRunFooter({
   endedAt: string | null;
   active: boolean;
 }) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
   const completed =
     endedAt && Number.isFinite(Date.parse(endedAt)) ? endedAt : null;
   return (
@@ -23,7 +23,9 @@ export function ChatRunFooter({
       {completed && (
         <time dateTime={completed}>
           {t('execution.completedAt', {
-            time: new Date(completed).toLocaleString(),
+            time: new Date(completed).toLocaleString(
+              i18n.resolvedLanguage || i18n.language
+            ),
           })}
         </time>
       )}

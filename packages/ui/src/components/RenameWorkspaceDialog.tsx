@@ -28,12 +28,12 @@ const RenameWorkspaceDialogImpl = NiceModal.create<RenameWorkspaceDialogProps>(
     const modal = useModal();
     const { t } = useTranslation(['common']);
     const [name, setName] = useState<string>(currentName);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
       setName(currentName);
-      setError(null);
+      setError(false);
     }, [currentName]);
 
     const handleConfirm = async () => {
@@ -46,7 +46,7 @@ const RenameWorkspaceDialogImpl = NiceModal.create<RenameWorkspaceDialogProps>(
       }
 
       setIsSubmitting(true);
-      setError(null);
+      setError(false);
       try {
         await onRename(trimmedName);
         modal.resolve({
@@ -55,9 +55,7 @@ const RenameWorkspaceDialogImpl = NiceModal.create<RenameWorkspaceDialogProps>(
         } as RenameWorkspaceDialogResult);
         modal.hide();
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to rename workspace'
-        );
+        setError(true);
       } finally {
         setIsSubmitting(false);
       }
@@ -95,7 +93,7 @@ const RenameWorkspaceDialogImpl = NiceModal.create<RenameWorkspaceDialogProps>(
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  setError(null);
+                  setError(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isSubmitting) {
@@ -106,7 +104,11 @@ const RenameWorkspaceDialogImpl = NiceModal.create<RenameWorkspaceDialogProps>(
                 disabled={isSubmitting}
                 autoFocus
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <p className="text-sm text-destructive">
+                  {t('workspaces.rename.unconfirmed')}
+                </p>
+              )}
             </div>
           </div>
 

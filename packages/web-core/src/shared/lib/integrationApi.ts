@@ -75,13 +75,58 @@ export function integrationCanCancel(
 export function integrationDoneLabel(
   status: string,
   published: boolean,
-  doneResult: string | null
+  doneResult: string | null,
+  t: (key: string) => string
 ): string {
+  if (doneResult === 'done') return t('common:integrationPanel.doneApplied');
+  if (doneResult === 'not changed: Card reserved by another Auto-merge')
+    return t('common:integrationPanel.doneReserved');
+  if (doneResult === 'not changed: Card or destination column is unavailable')
+    return t('common:integrationPanel.doneUnavailable');
   if (doneResult) return doneResult;
   if (!published && ['cancelled', 'blocked', 'failed'].includes(status))
-    return 'Done not applied';
-  if (status === 'recovery_required') return 'Done awaiting reconciliation';
-  return 'Done pending';
+    return t('common:integrationPanel.doneNotApplied');
+  if (status === 'recovery_required')
+    return t('common:integrationPanel.doneReconciling');
+  return t('common:integrationPanel.donePending');
+}
+
+export function integrationStatusLabel(
+  status: string,
+  t: (key: string) => string
+): string {
+  const labels: Record<string, string> = {
+    queued: t('common:integrationPanel.status.queued'),
+    integrating: t('common:integrationPanel.status.integrating'),
+    blocked: t('common:integrationPanel.status.blocked'),
+    validating: t('common:integrationPanel.status.validating'),
+    publishing: t('common:integrationPanel.status.publishing'),
+    post_processing: t('common:integrationPanel.status.post_processing'),
+    succeeded: t('common:integrationPanel.status.succeeded'),
+    cancelled: t('common:integrationPanel.status.cancelled'),
+    cancelling: t('common:integrationPanel.status.cancelling'),
+    failed: t('common:integrationPanel.status.failed'),
+    recovery_required: t('common:integrationPanel.status.recovery_required'),
+  };
+  return Object.hasOwn(labels, status)
+    ? labels[status]
+    : t('common:integrationPanel.unknownStatus');
+}
+
+export function integrationWikiLabel(
+  result: string | null,
+  t: (key: string) => string
+): string {
+  if (!result) return t('common:integrationPanel.notScheduled');
+  if (result === 'disabled') return t('common:integrationPanel.wikiDisabled');
+  if (result === 'Wiki included in published candidate')
+    return t('common:integrationPanel.wikiIncluded');
+  if (
+    result.startsWith('Wiki receipt pending:') ||
+    result.startsWith('semantic outbox pending:')
+  )
+    return t('common:integrationPanel.wikiPending');
+  return t('common:integrationPanel.wikiResultRecorded');
 }
 
 export function integrationSelectionIsCurrent(

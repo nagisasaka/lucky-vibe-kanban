@@ -1,3 +1,4 @@
+import type { NodeExecutionStatus } from 'shared/types';
 import type { TFunction } from 'i18next';
 import type {
   WorkflowGraphDefaultLabels,
@@ -56,7 +57,7 @@ export function getWorkflowDefaultNodeData(
   }
 }
 
-export function workflowNodeStatusKey(status: string): string {
+export function workflowNodeStatusKey(status: NodeExecutionStatus) {
   switch (status) {
     case 'awaiting_human':
       return 'awaitingHuman';

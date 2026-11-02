@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { SettingsCheckbox } from './SettingsComponents';
 
 export function OsNotificationEvents({
@@ -7,34 +8,31 @@ export function OsNotificationEvents({
   mask: number;
   onChange: (mask: number) => void;
 }) {
+  const { t } = useTranslation('settings');
   return (
     <div className="space-y-base">
-      <p className="text-sm text-low">
-        OS通知はサーバーが動く端末に表示され、設定はこのLVKサーバーの全利用者・全Projectで共通です。上のWeb
-        Push登録とは独立しています。変更は画面の保存操作で反映されます。全イベントOFFでも質問・承認の操作は残ります。通知音は従来の設定に従います。
-      </p>
+      <p className="text-sm text-low">{t('notifications.os.scope')}</p>
+      <p className="text-sm text-low">{t('notifications.os.languageHint')}</p>
       {[
         {
           bit: 1,
-          label: '仕様質問待ち',
-          description: '実行中のエージェントが回答を求めたとき。',
+          label: t('notifications.os.question.label'),
+          description: t('notifications.os.question.description'),
         },
         {
           bit: 2,
-          label: '実行承認待ち',
-          description: '実行中のエージェントの操作が承認待ちになったとき。',
+          label: t('notifications.os.approval.label'),
+          description: t('notifications.os.approval.description'),
         },
         {
           bit: 4,
-          label: '実行成功',
-          description:
-            'Workspaceの実行処理が正常に終了したとき。Run成功・テスト合格・自動マージ公開を保証する通知ではありません。',
+          label: t('notifications.os.success.label'),
+          description: t('notifications.os.success.description'),
         },
         {
           bit: 8,
-          label: '実行失敗',
-          description:
-            'Workspaceの実行処理が失敗したとき。ユーザーによる停止は通知しません。',
+          label: t('notifications.os.failure.label'),
+          description: t('notifications.os.failure.description'),
         },
       ].map((event) => (
         <SettingsCheckbox

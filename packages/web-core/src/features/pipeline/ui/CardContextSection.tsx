@@ -15,7 +15,7 @@ import {
 interface CardContextSectionProps {
   description: string;
   pipelines: Pipeline[];
-  error?: string;
+  error?: boolean;
   onRetry: () => void;
   disabled?: boolean;
   onDescriptionChange: (description: string) => void;
@@ -60,7 +60,7 @@ export function CardContextSection({
         <p className="text-xs text-low">{t('cardContext.description')}</p>
         {error && (
           <p role="alert" className="text-xs text-error">
-            {error}
+            {t('cardContext.loadFailed')}
           </p>
         )}
         {error && (

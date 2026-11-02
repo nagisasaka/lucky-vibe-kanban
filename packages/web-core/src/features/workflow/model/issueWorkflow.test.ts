@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildIssueWorkflowDraft,
   buildWorkflowRunInput,
-  getWorkflowRunErrorMessage,
+  getWorkflowRunErrorCode,
 } from './issueWorkflow';
 
 describe('issue workflow helpers', () => {
@@ -24,14 +24,17 @@ describe('issue workflow helpers', () => {
     ).toBe('Fix flaky CI');
   });
 
-  it('turns missing repository failures into actionable workflow copy', () => {
+  it('classifies missing repositories without returning provider bodies', () => {
     expect(
-      getWorkflowRunErrorMessage(
+      getWorkflowRunErrorCode(
         new Error('Workspace has no repositories configured (400 Bad Request)')
       )
-    ).toBe(
-      'This workflow needs a workspace with at least one repository. Choose an existing workspace with repositories, or add a repository to the project before starting the run.'
-    );
+    ).toBe('repository');
+    expect(
+      getWorkflowRunErrorCode(new Error('Raw provider secret /internal/path'))
+    ).toBe('unconfirmed');
+    expect(getWorkflowRunErrorCode('Raw provider secret')).toBe('unconfirmed');
+    expect(getWorkflowRunErrorCode(null)).toBe('unconfirmed');
   });
 
   it('builds an editable workflow draft from issue context', () => {

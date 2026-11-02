@@ -28,13 +28,13 @@ const RenameSessionDialogImpl = NiceModal.create<RenameSessionDialogProps>(
     const modal = useModal();
     const { t } = useTranslation(['tasks']);
     const [name, setName] = useState<string>(currentName);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
       if (modal.visible) {
         setName(currentName);
-        setError(null);
+        setError(false);
         setIsSubmitting(false);
       }
     }, [modal.visible, currentName]);
@@ -49,7 +49,7 @@ const RenameSessionDialogImpl = NiceModal.create<RenameSessionDialogProps>(
       }
 
       setIsSubmitting(true);
-      setError(null);
+      setError(false);
       try {
         await onRename(trimmedName);
         modal.resolve({
@@ -58,9 +58,7 @@ const RenameSessionDialogImpl = NiceModal.create<RenameSessionDialogProps>(
         } as RenameSessionDialogResult);
         modal.hide();
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to rename session'
-        );
+        setError(true);
       } finally {
         setIsSubmitting(false);
       }
@@ -95,7 +93,7 @@ const RenameSessionDialogImpl = NiceModal.create<RenameSessionDialogProps>(
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  setError(null);
+                  setError(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !isSubmitting) {
@@ -106,7 +104,11 @@ const RenameSessionDialogImpl = NiceModal.create<RenameSessionDialogProps>(
                 disabled={isSubmitting}
                 autoFocus
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <p className="text-sm text-destructive">
+                  {t('conversation.sessions.renameUnconfirmed')}
+                </p>
+              )}
             </div>
           </div>
 

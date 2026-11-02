@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { createHmrContext } from '@/shared/lib/hmrContext';
 import { useApprovalMutation } from '../hooks/useApprovalMutation';
@@ -43,6 +44,7 @@ export function ApprovalFeedbackProvider({
 }: {
   children: ReactNode;
 }) {
+  const { t } = useTranslation('tasks');
   const [activeApproval, setActiveApproval] = useState<ActiveApproval | null>(
     null
   );
@@ -82,7 +84,7 @@ export function ApprovalFeedbackProvider({
       exitFeedbackMode,
       submitFeedback,
       isSubmitting: isDenying,
-      error: denyError?.message ?? null,
+      error: denyError ? t('approval.responseUnconfirmed') : null,
       isTimedOut: false,
     }),
     [
@@ -91,7 +93,8 @@ export function ApprovalFeedbackProvider({
       exitFeedbackMode,
       submitFeedback,
       isDenying,
-      denyError?.message,
+      denyError,
+      t,
     ]
   );
 

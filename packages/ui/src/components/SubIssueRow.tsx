@@ -1,5 +1,7 @@
 'use client';
 
+import { formatRelativeTime } from '../lib/dateFormatting';
+
 import { Draggable } from '@hello-pangea/dnd';
 import {
   CircleDashedIcon,
@@ -19,29 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './DropdownMenu';
-
-/**
- * Formats a date as a relative time string (e.g., "1d", "2h", "3m")
- */
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 0) {
-    return `${diffDays}d`;
-  }
-  if (diffHours > 0) {
-    return `${diffHours}h`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m`;
-  }
-  return 'now';
-}
 
 export interface SubIssueRowProps {
   id: string;
@@ -76,7 +55,7 @@ export function SubIssueRow({
   onDeleteClick,
   className,
 }: SubIssueRowProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
 
   return (
     <Draggable draggableId={id} index={index}>
@@ -152,7 +131,10 @@ export function SubIssueRow({
               <KanbanAssignee assignees={assignees} />
             )}
             <span className="text-sm text-low">
-              {formatRelativeTime(createdAt)}
+              {formatRelativeTime(
+                createdAt,
+                i18n.resolvedLanguage || i18n.language
+              )}
             </span>
             {(onMarkIndependentClick || onDeleteClick) && (
               <DropdownMenu>
@@ -161,8 +143,8 @@ export function SubIssueRow({
                     type="button"
                     onClick={(e) => e.stopPropagation()}
                     className="p-half rounded-sm text-low hover:text-normal hover:bg-secondary transition-colors"
-                    aria-label="Sub-issue actions"
-                    title="Sub-issue actions"
+                    aria-label={t('kanban.subIssueActions')}
+                    title={t('kanban.subIssueActions')}
                   >
                     <DotsThreeIcon className="size-icon-xs" weight="bold" />
                   </button>

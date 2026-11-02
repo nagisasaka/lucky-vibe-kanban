@@ -14,7 +14,8 @@ export interface WikiRepositoryOption {
 
 export function wikiRepositoryOptions(
   workspace: Workspace,
-  repos: readonly RepoWithTargetBranch[]
+  repos: readonly RepoWithTargetBranch[],
+  directFolderLabel?: string
 ): WikiRepositoryOption[] {
   if (repos.length > 0) {
     return repos.map((repo) => ({ id: repo.id, name: repo.display_name }));
@@ -23,7 +24,7 @@ export function wikiRepositoryOptions(
     return [
       {
         id: workspace.id,
-        name: workspace.name ?? 'Direct folder',
+        name: workspace.name ?? directFolderLabel ?? workspace.id,
       },
     ];
   }

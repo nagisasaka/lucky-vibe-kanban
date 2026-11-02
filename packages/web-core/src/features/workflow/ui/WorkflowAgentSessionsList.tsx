@@ -28,6 +28,8 @@ function formatNodeStatusLabel(label: string, t: TFunction<'common'>): string {
     case 'succeeded':
     case 'failed':
     case 'skipped':
+    case 'cancelled':
+    case 'cancelling':
       return t(`workflow.nodeStatus.${label}`);
     default:
       return label;

@@ -21,15 +21,18 @@ export type AgentSettingsSectionId =
 
 export interface AgentSettingsSection {
   id: AgentSettingsSectionId;
-  label: string;
   descriptors: SettingDescriptor[];
 }
+
+export type AgentSettingValidationError =
+  | { code: 'maxLength' | 'minimum' | 'maximum'; limit: number }
+  | { code: 'format' | 'number' | 'object' | 'json' | 'option' };
 
 export type AgentSettingsDraftEntry = {
   action: 'unchanged' | 'set' | 'unset';
   value?: JsonValue;
   raw: string;
-  error?: string;
+  error?: AgentSettingValidationError;
 };
 
 export type AgentSettingsDraft = Record<string, AgentSettingsDraftEntry>;
@@ -42,19 +45,6 @@ export const PROVIDER_LABELS: Record<AgentSettingsProvider, string> = {
 export const PROVIDER_BY_EXECUTOR: Record<string, AgentSettingsProvider> = {
   CODEX: AgentSettingsProvider.codex,
   CLAUDE_CODE: AgentSettingsProvider.claude_code,
-};
-
-const SECTION_LABELS: Record<AgentSettingsSectionId, string> = {
-  overview: 'Overview',
-  [SettingSection.general]: 'General',
-  [SettingSection.permissions_sandbox]: 'Permissions & Sandbox',
-  [SettingSection.instructions]: 'Instructions',
-  [SettingSection.environment]: 'Environment',
-  [SettingSection.provider_settings]: 'Provider Settings',
-  tools: 'Tools',
-  profiles: 'Profiles',
-  native_files: 'Native Files',
-  effective_config: 'Effective Config',
 };
 
 const SETTING_SECTION_ORDER: SettingSection[] = [
@@ -76,7 +66,7 @@ export function buildAgentSettingsSections(
 ): AgentSettingsSection[] {
   if (!snapshot) return [];
   const sections: AgentSettingsSection[] = [
-    { id: 'overview', label: SECTION_LABELS.overview, descriptors: [] },
+    { id: 'overview', descriptors: [] },
   ];
   for (const section of SETTING_SECTION_ORDER) {
     const descriptors = snapshot.descriptors.filter(
@@ -85,23 +75,20 @@ export function buildAgentSettingsSections(
     if (descriptors.length > 0) {
       sections.push({
         id: section,
-        label: SECTION_LABELS[section],
         descriptors,
       });
     }
   }
-  sections.push({ id: 'tools', label: SECTION_LABELS.tools, descriptors: [] });
+  sections.push({ id: 'tools', descriptors: [] });
   if (snapshot.capabilities.profile_storage) {
     sections.push({
       id: 'profiles',
-      label: SECTION_LABELS.profiles,
       descriptors: [],
     });
   }
   if (snapshot.native_files.length > 0) {
     sections.push({
       id: 'native_files',
-      label: SECTION_LABELS.native_files,
       descriptors: [],
     });
   }
@@ -111,7 +98,6 @@ export function buildAgentSettingsSections(
   ) {
     sections.push({
       id: 'effective_config',
-      label: SECTION_LABELS.effective_config,
       descriptors: [],
     });
   }
@@ -130,19 +116,19 @@ export function valueToInput(value: JsonValue | undefined): string {
 function validateText(
   descriptor: SettingDescriptor,
   value: string
-): string | undefined {
+): AgentSettingValidationError | undefined {
   const validation = descriptor.validation;
   if (
     validation.max_length !== null &&
     validation.max_length !== undefined &&
     value.length > validation.max_length
   ) {
-    return `Maximum length is ${validation.max_length}.`;
+    return { code: 'maxLength', limit: validation.max_length };
   }
   if (validation.pattern) {
     try {
       if (!new RegExp(validation.pattern).test(value))
-        return 'Value does not match the required format.';
+        return { code: 'format' };
     } catch {
       // The Adapter owns validation if a pattern cannot be compiled locally.
     }
@@ -153,7 +139,7 @@ function validateText(
 export function parseSettingInput(
   descriptor: SettingDescriptor,
   raw: string
-): { value?: JsonValue; error?: string } {
+): { value?: JsonValue; error?: AgentSettingValidationError } {
   switch (descriptor.control) {
     case 'text':
     case 'textarea': {
@@ -163,19 +149,23 @@ export function parseSettingInput(
     case 'number': {
       const value = Number(raw);
       if (!raw.trim() || !Number.isFinite(value))
-        return { error: 'Enter a number.' };
+        return { error: { code: 'number' } };
       if (
         descriptor.validation.minimum !== null &&
         descriptor.validation.minimum !== undefined &&
         value < descriptor.validation.minimum
       )
-        return { error: `Minimum value is ${descriptor.validation.minimum}.` };
+        return {
+          error: { code: 'minimum', limit: descriptor.validation.minimum },
+        };
       if (
         descriptor.validation.maximum !== null &&
         descriptor.validation.maximum !== undefined &&
         value > descriptor.validation.maximum
       )
-        return { error: `Maximum value is ${descriptor.validation.maximum}.` };
+        return {
+          error: { code: 'maximum', limit: descriptor.validation.maximum },
+        };
       return { value };
     }
     case 'string_list':
@@ -195,10 +185,10 @@ export function parseSettingInput(
           descriptor.value_type === 'string_map' &&
           (value === null || Array.isArray(value) || typeof value !== 'object')
         )
-          return { error: 'Enter a JSON object.' };
+          return { error: { code: 'object' } };
         return { value };
       } catch {
-        return { error: 'Enter valid JSON.' };
+        return { error: { code: 'json' } };
       }
     }
     case 'toggle':
@@ -207,9 +197,7 @@ export function parseSettingInput(
       const option = descriptor.options.find(
         (candidate) => JSON.stringify(candidate.value) === raw
       );
-      return option
-        ? { value: option.value }
-        : { error: 'Choose a listed option.' };
+      return option ? { value: option.value } : { error: { code: 'option' } };
     }
     default:
       return { value: raw };

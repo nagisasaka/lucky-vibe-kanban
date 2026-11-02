@@ -1,3 +1,4 @@
+import { getSessionRunStatusLabel } from '@vibe/ui/lib/sessionRuntimeLabels';
 import { FollowUpQueue } from './FollowUpQueue';
 import { useTranslation } from 'react-i18next';
 import { AsyncAgentQuestions } from '@/features/agent-runtime/ui/AsyncAgentQuestions';
@@ -79,6 +80,7 @@ import { Actions } from '@/shared/actions';
 import {
   isSpecialIcon,
   getActionTooltip,
+  resolveLabel,
   isActionEnabled,
   isActionVisible,
   type ActionDefinition,
@@ -215,6 +217,7 @@ export function SessionChatBoxContainer(props: SessionChatBoxContainerProps) {
 
 function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
   const { t } = useTranslation('common');
+  const { t: tasksT } = useTranslation('tasks');
   const {
     mode,
     sessions,
@@ -1058,20 +1061,20 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           return [];
         }
 
-        const label = action.label;
+        const label = resolveLabel(action, undefined, t);
 
         return [
           {
             id: action.id,
             icon: action.icon,
             label,
-            tooltip: getActionTooltip(action, actionCtx),
+            tooltip: getActionTooltip(action, actionCtx, t),
             disabled: !isActionEnabled(action, actionCtx),
             onClick: () => handleToolbarAction(action),
           },
         ];
       }),
-    [toolbarActionsList, actionCtx, handleToolbarAction]
+    [toolbarActionsList, actionCtx, handleToolbarAction, t]
   );
 
   // Handle approve action
@@ -1542,20 +1545,24 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
       />
       {steerMutation.error && (
         <p role="alert" className="text-error">
-          {steerMutation.error.message}
+          {t('tasks:sessionRuntime.steerUnconfirmed')}
         </p>
       )}
       {notifiedRunId && canonicalTimeline && !notifiedRun && (
         <p className="text-sm text-low">
-          通知対象Runはこのセッションに見つかりません。通知のSession
-          IDと履歴を確認してください。
+          {t('tasks:sessionRuntime.notifiedRunMissing')}
         </p>
       )}
       {notifiedRun && (
         <p className="text-sm text-low">
-          通知対象Run: {notifiedRun.summary.agent_run_id} —{' '}
-          {(notifiedRun.timeline?.state ?? notifiedRun.summary.state)?.status}
-          。テスト・自動マージ・公開の結果は別途確認してください。
+          {t('tasks:sessionRuntime.notifiedRun', {
+            runId: notifiedRun.summary.agent_run_id,
+            status: getSessionRunStatusLabel(
+              (notifiedRun.timeline?.state ?? notifiedRun.summary.state)
+                ?.status,
+              tasksT
+            ),
+          })}
         </p>
       )}
       {goalProgressNode}
@@ -1652,7 +1659,11 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
           conflictedFilesCount,
           onResolveConflicts: handleResolveConflicts,
         }}
-        error={sessionConfig.error?.message ?? sendError}
+        error={
+          sessionConfig.error
+            ? t('tasks:sessionRuntime.configUnavailable')
+            : sendError
+        }
         agent={effectiveExecutor}
         todos={todos}
         inProgressTodo={inProgressTodo}
@@ -1687,7 +1698,9 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
                 onDeny: handleDeny,
                 isSubmitting: isApproving || isDenying,
                 isTimedOut: isApprovalTimedOut,
-                error: denyError?.message ?? null,
+                error: denyError
+                  ? t('tasks:approval.responseUnconfirmed')
+                  : null,
               }
             : undefined
         }
@@ -1699,7 +1712,9 @@ function InteractiveSessionChatBox(props: SessionChatBoxContainerProps) {
                 onSubmitAnswers: handleAnswerQuestion,
                 isSubmitting: isAnswering,
                 isTimedOut: isApprovalTimedOut,
-                error: answerError?.message ?? null,
+                error: answerError
+                  ? t('tasks:approval.responseUnconfirmed')
+                  : null,
               }
             : undefined
         }

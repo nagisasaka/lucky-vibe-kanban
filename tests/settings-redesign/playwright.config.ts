@@ -7,6 +7,7 @@ export default defineConfig({
   outputDir: "../../test-results/settings-redesign",
   use: {
     actionTimeout: 10000,
+    screenshot: "only-on-failure",
     baseURL: "http://127.0.0.1:4196",
     launchOptions: {
       executablePath: process.env.LVK_E2E_CHROMIUM,

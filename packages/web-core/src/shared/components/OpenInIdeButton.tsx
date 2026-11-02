@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@vibe/ui/components/Button';
 import { IdeIcon } from '@/shared/components/IdeIcon';
 
@@ -12,7 +13,8 @@ export function OpenInIdeButton({
   disabled = false,
   className,
 }: OpenInIdeButtonProps) {
-  const label = 'Open in external editor';
+  const { t } = useTranslation('common');
+  const label = t('workspaces.openExternalEditor');
 
   return (
     <Button

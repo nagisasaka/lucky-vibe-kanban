@@ -1,3 +1,4 @@
+import i18n from '@/i18n/config';
 import { isLocalRemoteApiEnabled } from '@/shared/lib/remoteApi';
 import { useMemo, useCallback } from 'react';
 import { useParams } from '@tanstack/react-router';
@@ -230,13 +231,10 @@ export function IssueWorkspacesSectionContainer({
       if (result === 'confirmed') {
         try {
           await workspacesApi.unlinkFromIssue(localWorkspaceId);
-        } catch (error) {
+        } catch {
           ConfirmDialog.show({
             title: t('common:error'),
-            message:
-              error instanceof Error
-                ? error.message
-                : t('workspaces.unlinkError'),
+            message: () => i18n.t('workspaces.unlinkError', { ns: 'common' }),
             confirmText: t('common:ok'),
             showCancelButton: false,
           });
@@ -283,13 +281,10 @@ export function IssueWorkspacesSectionContainer({
         if (result.unlinkFromIssue) {
           await workspacesApi.unlinkFromIssue(localWorkspaceId);
         }
-      } catch (error) {
+      } catch {
         ConfirmDialog.show({
           title: t('common:error'),
-          message:
-            error instanceof Error
-              ? error.message
-              : t('workspaces.deleteError'),
+          message: () => i18n.t('workspaces.deleteError', { ns: 'common' }),
           confirmText: t('common:ok'),
           showCancelButton: false,
         });

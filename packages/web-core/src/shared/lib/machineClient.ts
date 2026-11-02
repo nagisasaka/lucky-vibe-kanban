@@ -1,3 +1,4 @@
+import { detectBrowserNotificationLanguage } from '@/i18n/config';
 import type {
   IntegrationValidationSettings,
   SaveIntegrationValidationSettings,
@@ -167,30 +168,6 @@ export interface MachineClient {
   ) => Promise<SettingsSnapshot>;
 }
 
-export function formatAgentSettingOperationError(error: unknown): string {
-  const detail =
-    error && typeof error === 'object' && 'error_data' in error
-      ? (error as { error_data?: AgentSettingOperationError }).error_data
-      : undefined;
-  if (detail) {
-    const context = [
-      detail.setting_key ? `Setting ${detail.setting_key}` : null,
-      detail.file_id ? `File ${detail.file_id}` : null,
-    ].filter(Boolean);
-    return [
-      `${detail.message} (${detail.code})`,
-      context.length ? context.join(', ') : null,
-      detail.recovery,
-    ]
-      .filter(Boolean)
-      .join(' — ');
-  }
-
-  return error instanceof Error
-    ? error.message
-    : 'Agent settings operation failed';
-}
-
 function getMachineRequestOptions(
   runtime: AppRuntime,
   target: MachineTarget
@@ -260,6 +237,9 @@ export function createMachineClient(
       handleApiResponse<Config>(
         await makeMachineRequest(runtime, target, '/api/config', {
           method: 'PUT',
+          headers: {
+            'X-LVK-Browser-Language': detectBrowserNotificationLanguage(),
+          },
           body: JSON.stringify(config),
         })
       ),

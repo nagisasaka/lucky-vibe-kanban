@@ -10,7 +10,11 @@
     "keyLabel": "Project key",
     "keyHint": "2–10 letters or digits, starting with a letter. Cannot be changed later.",
     "keyInvalid": "Use 2–10 ASCII letters or digits, starting with a letter.",
-    "keyDuplicate": "This project key is already in use."
+    "keyDuplicate": "This project key is already in use.",
+    "nameRequired": "Project name is required",
+    "nameShort": "Project name must be at least 2 characters",
+    "nameLong": "Project name must be 100 characters or less",
+    "unconfirmed": "Could not confirm project creation. Check the project list before trying again."
   },
   "deleteProjectDialog": {
     "title": "Delete Project?",

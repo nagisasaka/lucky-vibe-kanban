@@ -279,7 +279,9 @@ export function IssueWorkspaceCard({
                 </span>
               </Tooltip>
             )}
-            {isPreparing && <span className="text-low">Preparing…</span>}
+            {isPreparing && (
+              <span className="text-low">{t('workspaces.preparing')}</span>
+            )}
             {showReadState && (
               <Tooltip
                 content={t(

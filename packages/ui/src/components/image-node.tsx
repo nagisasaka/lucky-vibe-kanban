@@ -1,3 +1,4 @@
+import { formatFileSize } from '../lib/formatFileSize';
 import { $getNodeByKey } from 'lexical';
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -77,14 +78,6 @@ function truncatePath(path: string, maxLength = 24): string {
   const filename = path.split('/').pop() || path;
   if (filename.length <= maxLength) return filename;
   return filename.slice(0, maxLength - 3) + '...';
-}
-
-function formatFileSize(bytes: bigint | number | null | undefined): string {
-  if (!bytes) return '';
-  const num = Number(bytes);
-  if (num < 1024) return `${num} B`;
-  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
-  return `${(num / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 async function downloadBlobUrl(url: string, filename: string): Promise<void> {
@@ -199,7 +192,7 @@ export function createImageNode(options: CreateImageNodeOptions) {
     nodeKey: NodeKey;
     onDoubleClickEdit: (event: React.MouseEvent) => void;
   }): JSX.Element {
-    const { t } = useTranslation('common');
+    const { t, i18n } = useTranslation('common');
     const { src, altText } = data;
     const workspaceId = useWorkspaceId();
     const sessionId = useSessionId();
@@ -379,8 +372,11 @@ export function createImageNode(options: CreateImageNodeOptions) {
         altText || t('kanban.imageAttachmentNameFallback')
       );
       if (localAttachment?.is_pending) {
-        const parts = ['Uploading'];
-        const sizeText = formatFileSize(localAttachment.size_bytes);
+        const parts = [t('kanban.attachmentUploading')];
+        const sizeText = formatFileSize(
+          localAttachment.size_bytes,
+          i18n.resolvedLanguage ?? i18n.language
+        );
         if (sizeText) {
           parts.push(sizeText);
         }
@@ -402,7 +398,10 @@ export function createImageNode(options: CreateImageNodeOptions) {
         if (metadata?.format) {
           parts.push(metadata.format.toUpperCase());
         }
-        const sizeText = formatFileSize(metadata?.size_bytes);
+        const sizeText = formatFileSize(
+          metadata?.size_bytes,
+          i18n.resolvedLanguage ?? i18n.language
+        );
         if (sizeText) {
           parts.push(sizeText);
         }
@@ -429,7 +428,10 @@ export function createImageNode(options: CreateImageNodeOptions) {
         if (metadata.format) {
           parts.push(metadata.format.toUpperCase());
         }
-        const sizeText = formatFileSize(metadata.size_bytes);
+        const sizeText = formatFileSize(
+          metadata.size_bytes,
+          i18n.resolvedLanguage ?? i18n.language
+        );
         if (sizeText) {
           parts.push(sizeText);
         }

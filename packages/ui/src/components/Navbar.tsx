@@ -1,5 +1,6 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import type { Icon } from "@phosphor-icons/react";
+import { useTranslation } from 'react-i18next';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { Icon } from '@phosphor-icons/react';
 import {
   Layout as LayoutIcon,
   ChatsTeardrop as ChatsTeardropIcon,
@@ -15,19 +16,19 @@ import {
   CaretLeft as CaretLeftIcon,
   ArrowClockwise as ArrowClockwiseIcon,
   SidebarSimple as SidebarSimpleIcon,
-} from "@phosphor-icons/react";
-import { cn } from "../lib/cn";
-import { Tooltip } from "./Tooltip";
+} from '@phosphor-icons/react';
+import { cn } from '../lib/cn';
+import { Tooltip } from './Tooltip';
 import {
   SyncErrorIndicator,
   type SyncErrorIndicatorError,
-} from "./SyncErrorIndicator";
+} from './SyncErrorIndicator';
 
 /**
  * Action item rendered in the navbar.
  */
 export interface NavbarActionItem {
-  type?: "action";
+  type?: 'action';
   id: string;
   icon: Icon;
   isActive?: boolean;
@@ -41,13 +42,13 @@ export interface NavbarActionItem {
  * Divider item rendered in the navbar.
  */
 export interface NavbarDividerItem {
-  type: "divider";
+  type: 'divider';
 }
 
 export type NavbarSectionItem = NavbarActionItem | NavbarDividerItem;
 
 function isDivider(item: NavbarSectionItem): item is NavbarDividerItem {
-  return item.type === "divider";
+  return item.type === 'divider';
 }
 
 // NavbarIconButton - inlined from primitives
@@ -71,16 +72,16 @@ function NavbarIconButton({
     <button
       type="button"
       className={cn(
-        "flex items-center justify-center rounded-sm",
-        "text-low hover:text-normal",
-        isActive && "text-normal",
-        className,
+        'flex items-center justify-center rounded-sm',
+        'text-low hover:text-normal',
+        isActive && 'text-normal',
+        className
       )}
       {...props}
     >
       <IconComponent
         className="size-icon-base"
-        weight={isActive ? "fill" : "regular"}
+        weight={isActive ? 'fill' : 'regular'}
       />
     </button>
   );
@@ -95,24 +96,34 @@ function NavbarIconButton({
 }
 
 export type MobileTabId =
-  | "workspaces"
-  | "chat"
-  | "files"
-  | "changes"
-  | "logs"
-  | "wiki"
-  | "todos"
-  | "git";
+  | 'workspaces'
+  | 'chat'
+  | 'files'
+  | 'changes'
+  | 'logs'
+  | 'wiki'
+  | 'todos'
+  | 'git';
 
-export const MOBILE_TABS: { id: MobileTabId; icon: Icon; label: string }[] = [
-  { id: "workspaces", icon: LayoutIcon, label: "Wksps" },
-  { id: "chat", icon: ChatsTeardropIcon, label: "Chat" },
-  { id: "files", icon: FilesIcon, label: "Files" },
-  { id: "wiki", icon: BookOpenIcon, label: "Wiki" },
-  { id: "todos", icon: ListChecksIcon, label: "TODO" },
-  { id: "changes", icon: GitDiffIcon, label: "Diff" },
-  { id: "logs", icon: TerminalIcon, label: "Logs" },
-  { id: "git", icon: GitForkIcon, label: "Git" },
+export interface MobileTabDefinition {
+  id: MobileTabId;
+  icon: Icon;
+  label: string | ((t: (key: string) => string) => string);
+}
+
+export const MOBILE_TABS: MobileTabDefinition[] = [
+  {
+    id: 'workspaces',
+    icon: LayoutIcon,
+    label: (t) => t('navbar.tabs.workspaces'),
+  },
+  { id: 'chat', icon: ChatsTeardropIcon, label: (t) => t('navbar.tabs.chat') },
+  { id: 'files', icon: FilesIcon, label: (t) => t('navbar.tabs.files') },
+  { id: 'wiki', icon: BookOpenIcon, label: (t) => t('navbar.tabs.wiki') },
+  { id: 'todos', icon: ListChecksIcon, label: (t) => t('navbar.tabs.todos') },
+  { id: 'changes', icon: GitDiffIcon, label: (t) => t('navbar.tabs.changes') },
+  { id: 'logs', icon: TerminalIcon, label: (t) => t('navbar.tabs.logs') },
+  { id: 'git', icon: GitForkIcon, label: (t) => t('navbar.tabs.git') },
 ];
 
 export interface NavbarBreadcrumbItem {
@@ -130,7 +141,7 @@ function NavbarBreadcrumbs({
   textClassName,
 }: NavbarBreadcrumbsProps) {
   return (
-    <div className={cn("flex items-center gap-1 min-w-0", textClassName)}>
+    <div className={cn('flex items-center gap-1 min-w-0', textClassName)}>
       {breadcrumbs.map((crumb, index) => {
         const isLast = index === breadcrumbs.length - 1;
         return (
@@ -147,7 +158,7 @@ function NavbarBreadcrumbs({
               </button>
             ) : (
               <span
-                className={cn("truncate", isLast ? "text-normal" : "text-low")}
+                className={cn('truncate', isLast ? 'text-normal' : 'text-low')}
                 title={crumb.label}
               >
                 {crumb.label}
@@ -186,7 +197,7 @@ export interface NavbarProps {
   isOnProjectSubRoute?: boolean;
   mobileActiveTab?: MobileTabId;
   onMobileTabChange?: (tab: MobileTabId) => void;
-  mobileTabs?: { id: MobileTabId; icon: Icon; label: string }[];
+  mobileTabs?: MobileTabDefinition[];
   showMobileTabs?: boolean;
   mobileShowBack?: boolean;
 }
@@ -210,12 +221,13 @@ export function Navbar({
   onReload,
   onOpenDrawer,
   isOnProjectSubRoute = false,
-  mobileActiveTab = "chat",
+  mobileActiveTab = 'chat',
   onMobileTabChange,
   mobileTabs,
   showMobileTabs,
   mobileShowBack,
 }: NavbarProps) {
+  const { t } = useTranslation('common');
   const renderItem = (item: NavbarSectionItem, key: string) => {
     // Render divider
     if (isDivider(item)) {
@@ -234,7 +246,7 @@ export function Navbar({
         tooltip={item.tooltip}
         shortcut={item.shortcut}
         disabled={isDisabled}
-        className={isDisabled ? "opacity-40 cursor-not-allowed" : ""}
+        className={isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
       />
     );
   };
@@ -244,8 +256,8 @@ export function Navbar({
     return (
       <nav
         className={cn(
-          "flex flex-col bg-secondary border-b shrink-0",
-          className,
+          'flex flex-col bg-secondary border-b shrink-0',
+          className
         )}
       >
         {/* Row 1: Tab bar (workspace pages) or minimal header (project pages) */}
@@ -258,7 +270,7 @@ export function Navbar({
                       type="button"
                       className="flex items-center justify-center text-low hover:text-normal"
                       onClick={onNavigateBack}
-                      aria-label="Back"
+                      aria-label={t('navbar.back')}
                     >
                       <CaretLeftIcon className="size-icon-base" />
                     </button>
@@ -268,7 +280,7 @@ export function Navbar({
                       type="button"
                       className="flex items-center justify-center text-low hover:text-normal"
                       onClick={onOpenDrawer}
-                      aria-label="Open menu"
+                      aria-label={t('navbar.menu')}
                     >
                       <SidebarSimpleIcon className="size-icon-base" />
                     </button>
@@ -285,7 +297,7 @@ export function Navbar({
                     type="button"
                     className="flex items-center justify-center px-1.5 py-1 text-low hover:text-normal"
                     onClick={onNavigateBack}
-                    aria-label="Back"
+                    aria-label={t('navbar.back')}
                   >
                     <CaretLeftIcon className="size-icon-sm" />
                   </button>
@@ -298,7 +310,7 @@ export function Navbar({
                       type="button"
                       className="flex items-center justify-center px-1.5 py-1 text-low hover:text-normal"
                       onClick={onOpenDrawer}
-                      aria-label="Projects"
+                      aria-label={t('navbar.projects')}
                     >
                       <KanbanIcon className="size-icon-sm" />
                     </button>
@@ -309,28 +321,28 @@ export function Navbar({
               {showMobileTabs !== false &&
                 (mobileTabs ?? MOBILE_TABS).map((tab) => {
                   const TabIcon = tab.icon;
+                  const label =
+                    typeof tab.label === 'function' ? tab.label(t) : tab.label;
                   const isActive = mobileActiveTab === tab.id;
                   return (
                     <button
                       key={tab.id}
                       type="button"
-                      aria-label={tab.label}
-                      aria-current={isActive ? "page" : undefined}
+                      aria-label={label}
+                      aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        "flex shrink-0 items-center gap-1 px-1.5 py-1 text-xs whitespace-nowrap transition-colors",
+                        'flex shrink-0 items-center gap-1 px-1.5 py-1 text-xs whitespace-nowrap transition-colors',
                         isActive
-                          ? "text-normal border-b-2 border-brand"
-                          : "text-low hover:text-normal",
+                          ? 'text-normal border-b-2 border-brand'
+                          : 'text-low hover:text-normal'
                       )}
                       onClick={() => onMobileTabChange?.(tab.id)}
                     >
                       <TabIcon
                         className="size-icon-sm"
-                        weight={isActive ? "fill" : "regular"}
+                        weight={isActive ? 'fill' : 'regular'}
                       />
-                      <span className="hidden min-[480px]:inline">
-                        {tab.label}
-                      </span>
+                      <span className="hidden min-[480px]:inline">{label}</span>
                     </button>
                   );
                 })}
@@ -339,9 +351,12 @@ export function Navbar({
                   type="button"
                   className="flex items-center gap-1 px-1.5 py-1 text-xs text-low hover:text-normal whitespace-nowrap"
                   onClick={onNavigateToBoard}
+                  aria-label={t('navbar.board')}
                 >
                   <KanbanIcon className="size-icon-sm" />
-                  <span className="hidden min-[480px]:inline">Board</span>
+                  <span className="hidden min-[480px]:inline">
+                    {t('navbar.board')}
+                  </span>
                 </button>
               )}
             </div>
@@ -365,7 +380,7 @@ export function Navbar({
                       tooltip={item.tooltip}
                       disabled={!!item.disabled}
                       className={
-                        item.disabled ? "opacity-40 cursor-not-allowed" : ""
+                        item.disabled ? 'opacity-40 cursor-not-allowed' : ''
                       }
                     />
                   ))}
@@ -374,7 +389,7 @@ export function Navbar({
                   type="button"
                   className="flex items-center justify-center text-low hover:text-normal"
                   onClick={onReload}
-                  aria-label="Reload"
+                  aria-label={t('navbar.reload')}
                 >
                   <ArrowClockwiseIcon className="size-icon-sm" />
                 </button>
@@ -384,7 +399,7 @@ export function Navbar({
                   type="button"
                   className="flex items-center justify-center text-low hover:text-normal"
                   onClick={onOpenSettings}
-                  aria-label="Settings"
+                  aria-label={t('navbar.settings')}
                 >
                   <GearIcon className="size-icon-sm" />
                 </button>
@@ -394,7 +409,7 @@ export function Navbar({
                   type="button"
                   className="flex items-center justify-center text-low hover:text-normal"
                   onClick={onOpenCommandBar}
-                  aria-label="Command bar"
+                  aria-label={t('navbar.commandMenu')}
                 >
                   <ListIcon className="size-icon-sm" />
                 </button>
@@ -433,8 +448,8 @@ export function Navbar({
   return (
     <nav
       className={cn(
-        "flex min-w-0 items-center justify-between px-base py-half bg-secondary border-b shrink-0",
-        className,
+        'flex min-w-0 items-center justify-between px-base py-half bg-secondary border-b shrink-0',
+        className
       )}
     >
       {/* Left - Archive & Old UI Link + optional slot */}
@@ -442,8 +457,8 @@ export function Navbar({
         {leftItems.map((item, index) =>
           renderItem(
             item,
-            `left-${isDivider(item) ? "divider" : item.id}-${index}`,
-          ),
+            `left-${isDivider(item) ? 'divider' : item.id}-${index}`
+          )
         )}
         {leftSlot}
       </div>
@@ -457,7 +472,7 @@ export function Navbar({
           />
         ) : (
           <p className="text-base text-low truncate cursor-default select-none">
-            {workspaceTitle ?? ""}
+            {workspaceTitle ?? ''}
           </p>
         )}
       </div>
@@ -469,8 +484,8 @@ export function Navbar({
         {rightItems.map((item, index) =>
           renderItem(
             item,
-            `right-${isDivider(item) ? "divider" : item.id}-${index}`,
-          ),
+            `right-${isDivider(item) ? 'divider' : item.id}-${index}`
+          )
         )}
       </div>
     </nav>

@@ -25,16 +25,14 @@ export function ChatProviderPlan({
             {steps.map((step, index) => (
               <li key={index} className="flex gap-base">
                 <span className="shrink-0 text-xs text-low">
-                  {[
-                    'pending',
-                    'inProgress',
-                    'in_progress',
-                    'completed',
-                  ].includes(step.status)
-                    ? t(
-                        `conversation.planStep.${step.status === 'in_progress' ? 'inProgress' : step.status}`
-                      )
-                    : step.status}
+                  {step.status === 'pending'
+                    ? t('conversation.planStep.pending')
+                    : step.status === 'inProgress' ||
+                        step.status === 'in_progress'
+                      ? t('conversation.planStep.inProgress')
+                      : step.status === 'completed'
+                        ? t('conversation.planStep.completed')
+                        : step.status}
                 </span>
                 <span className="whitespace-pre-wrap">{step.step}</span>
               </li>

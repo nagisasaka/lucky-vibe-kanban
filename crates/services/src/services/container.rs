@@ -299,16 +299,9 @@ pub trait ContainerService {
             .name
             .as_deref()
             .unwrap_or(&ctx.workspace.branch);
-        let title = format!("Workspace Complete: {}", workspace_name);
-        let message = match ctx.execution_process.status {
-            ExecutionProcessStatus::Completed => format!(
-                "✅ '{}' completed successfully\nBranch: {:?}\nExecutor: {:?}",
-                workspace_name, ctx.workspace.branch, ctx.session.executor
-            ),
-            ExecutionProcessStatus::Failed => format!(
-                "❌ '{}' execution failed\nBranch: {:?}\nExecutor: {:?}",
-                workspace_name, ctx.workspace.branch, ctx.session.executor
-            ),
+        let success = match ctx.execution_process.status {
+            ExecutionProcessStatus::Completed => true,
+            ExecutionProcessStatus::Failed => false,
             _ => {
                 tracing::warn!(
                     "Tried to notify workspace completion for {} but process is still running!",
@@ -318,17 +311,13 @@ pub trait ContainerService {
             }
         };
         self.notification_service()
-            .notify(
-                if matches!(
-                    ctx.execution_process.status,
-                    ExecutionProcessStatus::Completed
-                ) {
-                    crate::services::notification::NotificationEvent::Success
-                } else {
-                    crate::services::notification::NotificationEvent::Failure
+            .notify_owned(
+                crate::services::notification::text::OwnedNotification::WorkspaceFinished {
+                    workspace: workspace_name,
+                    branch: &ctx.workspace.branch,
+                    executor: ctx.session.executor.as_deref(),
+                    success,
                 },
-                &title,
-                &message,
                 Some(ctx.workspace.id),
             )
             .await;

@@ -199,7 +199,13 @@ export function ReposSettingsSection({
   // Form state
   const [draft, setDraft] = useState<RepoScriptsFormState | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    | 'removeBlocked'
+    | 'removeUnconfirmed'
+    | 'addUnconfirmed'
+    | 'saveUnconfirmed'
+    | null
+  >(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -325,11 +331,11 @@ export function ReposSettingsSection({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      }
+      setError(
+        err instanceof ApiError && err.status === 409
+          ? 'removeBlocked'
+          : 'removeUnconfirmed'
+      );
     } finally {
       setRemoving(false);
     }
@@ -352,9 +358,7 @@ export function ReposSettingsSection({
       await queryClient.invalidateQueries({ queryKey: reposQueryKey });
       setSelectedRepoId(repo.id);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('settings.repos.addRepo.error')
-      );
+      setError('addUnconfirmed');
     }
   }, [machineClient, queryClient, reposQueryKey, t]);
 
@@ -416,9 +420,7 @@ export function ReposSettingsSection({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('settings.repos.save.error')
-      );
+      setError('saveUnconfirmed');
     } finally {
       setSaving(false);
     }
@@ -452,9 +454,7 @@ export function ReposSettingsSection({
     return (
       <div className="py-8">
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {reposError instanceof Error
-            ? reposError.message
-            : t('settings.repos.loadError')}
+          {t('settings.repos.loadError')}
         </div>
       </div>
     );
@@ -468,7 +468,7 @@ export function ReposSettingsSection({
       {/* Status messages */}
       {error && (
         <div className="bg-error/10 border border-error/50 rounded-sm p-4 text-error">
-          {error}
+          {t(`settings.repos.notices.${error}`)}
         </div>
       )}
 

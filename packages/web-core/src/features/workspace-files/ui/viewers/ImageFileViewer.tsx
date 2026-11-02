@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { WorkspaceFileEmptyState } from '../WorkspaceFileEmptyState';
@@ -8,14 +9,17 @@ interface ImageFileViewerProps {
 }
 
 export function ImageFileViewer({ src, alt }: ImageFileViewerProps) {
+  const { t } = useTranslation('common');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   if (!src) {
     return (
       <WorkspaceFileEmptyState
-        title="Image unavailable"
-        description="The backend did not provide a raw image URL."
+        title={t('workspaceFiles.image_unavailable')}
+        description={t(
+          'workspaceFiles.the_backend_did_not_provide_a_raw_image_url'
+        )}
       />
     );
   }
@@ -37,8 +41,10 @@ export function ImageFileViewer({ src, alt }: ImageFileViewerProps) {
       )}
       {hasError ? (
         <WorkspaceFileEmptyState
-          title="Image failed to load"
-          description="Open the raw file if you need to inspect it directly."
+          title={t('workspaceFiles.image_failed_to_load')}
+          description={t(
+            'workspaceFiles.open_the_raw_file_if_you_need_to_inspect_it_directly'
+          )}
         />
       ) : (
         <img

@@ -12,9 +12,9 @@ import { Button } from './Button';
 import { defineModal } from '../lib/modals';
 
 export interface ErrorDialogProps {
-  title: string;
-  message: string;
-  buttonText?: string;
+  title: string | (() => string);
+  message: string | (() => string);
+  buttonText?: string | (() => string);
 }
 
 const ErrorDialogImpl = NiceModal.create<ErrorDialogProps>((props) => {
@@ -39,15 +39,19 @@ const ErrorDialogImpl = NiceModal.create<ErrorDialogProps>((props) => {
         <DialogHeader>
           <div className="flex items-center gap-3">
             <WarningIcon className="h-6 w-6 text-destructive" />
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle>
+              {typeof title === 'function' ? title() : title}
+            </DialogTitle>
           </div>
           <DialogDescription className="text-left pt-2">
-            {message}
+            {typeof message === 'function' ? message() : message}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex w-full justify-end">
-          <Button onClick={handleDismiss}>{buttonText}</Button>
+          <Button onClick={handleDismiss}>
+            {typeof buttonText === 'function' ? buttonText() : buttonText}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

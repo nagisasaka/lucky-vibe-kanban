@@ -166,7 +166,8 @@ async fn get_user_system_info(
 
 async fn update_config(
     State(deployment): State<DeploymentImpl>,
-    Json(new_config): Json<Config>,
+    headers: axum::http::HeaderMap,
+    Json(mut new_config): Json<Config>,
 ) -> ResponseJson<ApiResponse<Config>> {
     let config_path = config_path();
 
@@ -183,6 +184,12 @@ async fn update_config(
 
     // Get old config state before updating
     let old_config = deployment.config().read().await.clone();
+    new_config.capture_browser_notification_language(
+        headers
+            .get("x-lvk-browser-language")
+            .and_then(|value| value.to_str().ok()),
+        &old_config,
+    );
 
     match save_config_to_file(&new_config, &config_path).await {
         Ok(_) => {

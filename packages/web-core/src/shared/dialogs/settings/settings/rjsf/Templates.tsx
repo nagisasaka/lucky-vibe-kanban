@@ -30,10 +30,10 @@ export const FieldTemplate = (props: FieldTemplateProps) => {
       {/* Left column: Label and description */}
       <div className="space-y-1">
         {label && (
-          <div className="text-sm font-medium text-normal">
-            {toPrettyCase(label)}
+          <label htmlFor={props.id} className="text-sm font-medium text-normal">
+            {schema.title ?? toPrettyCase(label)}
             {required && <span className="text-error ml-1">*</span>}
-          </div>
+          </label>
         )}
 
         {rawDescription && (
@@ -111,6 +111,7 @@ export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
 
 // ArrayFieldItemTemplate - Individual array item with remove button
 export const ArrayFieldItemTemplate = (props: ArrayFieldItemTemplateProps) => {
+  const { t } = useTranslation('settings');
   const { children, buttonsProps, disabled, readonly } = props;
 
   return (
@@ -128,7 +129,8 @@ export const ArrayFieldItemTemplate = (props: ArrayFieldItemTemplateProps) => {
             'focus:outline-none focus:ring-1 focus:ring-brand',
             'disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
           )}
-          title="Remove item"
+          title={t('schemaForm.removeItem')}
+          aria-label={t('schemaForm.removeItem')}
         >
           <XIcon className="size-icon-xs" weight="bold" />
         </button>

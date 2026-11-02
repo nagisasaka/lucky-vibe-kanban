@@ -1,9 +1,15 @@
+import i18n from "../../packages/web-core/src/i18n/config";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GearIcon } from "@phosphor-icons/react";
 import { Navbar } from "../../packages/ui/src/components/Navbar";
 import { ResourceSummary } from "../../packages/ui/src/components/ResourceSummary";
 import { useResourceObservation } from "../../packages/web-core/src/shared/hooks/useResourceObservation";
+
+void i18n.changeLanguage("en");
+Object.assign(window, {
+  __setUiLanguage: (locale: string) => i18n.changeLanguage(locale),
+});
 
 function DuplicateSubscriber() {
   useResourceObservation();

@@ -1,20 +1,24 @@
 {
   "createProjectDialog": {
-    "title": "Create Project",
-    "description": "Create a new project in this organization.",
-    "nameLabel": "Project name",
-    "namePlaceholder": "Enter project name",
-    "selectColor": "Select project color",
-    "creating": "Creating...",
-    "createButton": "Create Project",
+    "title": "プロジェクトを作成",
+    "description": "この組織に新しいプロジェクトを作成します。",
+    "nameLabel": "プロジェクト名",
+    "namePlaceholder": "プロジェクト名を入力",
+    "selectColor": "プロジェクトの色を選択",
+    "creating": "作成中…",
+    "createButton": "プロジェクトを作成",
     "keyLabel": "Projectキー",
     "keyHint": "先頭は英字、英数字2〜10文字。後から変更できません。",
     "keyInvalid": "先頭を英字にし、半角英数字2〜10文字で入力してください。",
-    "keyDuplicate": "このProjectキーは既に使用されています。"
+    "keyDuplicate": "このProjectキーは既に使用されています。",
+    "nameRequired": "プロジェクト名を入力してください",
+    "nameShort": "プロジェクト名は2文字以上で入力してください",
+    "nameLong": "プロジェクト名は100文字以内で入力してください",
+    "unconfirmed": "プロジェクトの作成結果を確認できませんでした。再実行する前にプロジェクト一覧を確認してください。"
   },
   "deleteProjectDialog": {
-    "title": "Delete Project?",
-    "description": "This will permanently delete \"{{name}}\" and all its issues. This action cannot be undone.",
-    "error": "Failed to delete project. Please try again."
+    "title": "プロジェクトを削除しますか？",
+    "description": "「{{name}}」と、そのすべてのIssueを完全に削除します。この操作は取り消せません。",
+    "error": "プロジェクトを削除できませんでした。再試行してください。"
   }
 }

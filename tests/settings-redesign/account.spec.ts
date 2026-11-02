@@ -11,7 +11,7 @@ for (const width of [360, 1440]) {
       await expect(
         page.getByRole("button", { name: "ログアウト", exact: true }),
       ).toHaveCount(0);
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
+      await page.getByRole("button", { name: "設定", exact: true }).click();
       const dialog = page.getByRole("dialog", { name: "設定", exact: true });
       await dialog
         .getByRole("navigation")
@@ -34,7 +34,7 @@ for (const width of [360, 1440]) {
       ).toBeVisible();
       await expect(
         dialog.getByText(
-          auth === "auth0" ? "Auth0" : auth === "basic" ? "Basic" : "Local",
+          auth === "auth0" ? "Auth0" : auth === "basic" ? "Basic" : "ローカル",
           { exact: true },
         ),
       ).toBeVisible();
@@ -48,21 +48,6 @@ for (const width of [360, 1440]) {
           dialog.getByRole("button", { name: "ログアウト", exact: true }),
         ).toHaveCount(0);
       } else {
-        await page.evaluate(async () => {
-          await document.fonts.ready;
-          await Promise.all(
-            document
-              .getAnimations()
-              .filter(
-                (a) => a.effect?.getComputedTiming().iterations !== Infinity,
-              )
-              .map((a) => a.finished.catch(() => undefined)),
-          );
-        });
-        await dialog.screenshot({
-          path: `.build/settings-account-review/account-${auth}-${width}.png`,
-          animations: "disabled",
-        });
         await Promise.all([
           page.waitForURL((url) => url.search === ""),
           dialog
@@ -118,27 +103,45 @@ for (const auth of ["basic", "auth0"]) {
     ).toBeVisible();
   });
 }
-test("logout failure stays in account with error; English account labels", async ({
-  page,
-}) => {
-  await page.goto(
-    "/?section=account&lang=en&allowLogout=true&logoutFailure=true",
-  );
-  await page.getByRole("button", { name: "設定を開く", exact: true }).click();
-  await expect(
-    page
-      .getByRole("navigation")
-      .getByRole("button", { name: "Account", exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Log out", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText("Fixture logout failed");
-  await expect(
-    page.getByText("sample-basic-user", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Log out", exact: true }),
-  ).toBeEnabled();
-});
+for (const language of ["en", "ja"]) {
+  test(`logout failure stays in account with a safe ${language} error`, async ({
+    page,
+  }) => {
+    await page.goto(
+      `/?section=account&lang=${language}&allowLogout=true&logoutFailure=true`,
+    );
+    await page.getByRole("button", { name: "設定を開く", exact: true }).click();
+    await expect(
+      page.getByRole("navigation").getByRole("button", {
+        name: language === "ja" ? "アカウント" : "Account",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: language === "ja" ? "ログアウト" : "Log out",
+        exact: true,
+      })
+      .click();
+    await expect(page.getByRole("alert")).toHaveText(
+      language === "ja"
+        ? "認証リクエストを完了できませんでした。サーバーの稼働状態と現在の認証設定を確認してください。"
+        : "The authentication request could not be completed. Check the server status and current authentication settings.",
+    );
+    await expect(page.getByRole("alert")).not.toContainText(
+      "Fixture logout failed",
+    );
+    await expect(
+      page.getByText("sample-basic-user", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: language === "ja" ? "ログアウト" : "Log out",
+        exact: true,
+      }),
+    ).toBeEnabled();
+  });
+}
 
 for (const auth of ["basic", "auth0"]) {
   for (const identity of ["missing", "blank"]) {
@@ -147,7 +150,7 @@ for (const auth of ["basic", "auth0"]) {
     }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`/?auth=${auth}&identity=${identity}&gear=true`);
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
+      await page.getByRole("button", { name: "設定", exact: true }).click();
       await page
         .getByRole("navigation")
         .getByRole("button", { name: "アカウント", exact: true })

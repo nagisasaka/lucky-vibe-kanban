@@ -37,6 +37,9 @@ jobs:
               - 'packages/ui/**'
               - 'shared/**'
               - 'scripts/check-i18n.sh'
+              - 'scripts/check-i18n.mjs'
+              - 'scripts/check-i18n.test.mjs'
+              - 'scripts/i18n-allowlist.json'
               - 'scripts/check-unused-i18n-keys.mjs'
               - 'scripts/check-legacy-frontend-paths.sh'
               - 'scripts/legacy-frontend-paths-allowlist.txt'
@@ -89,13 +92,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Check owned UI translations (EN and JA)
+        run: |
+          pnpm run i18n:test
+          pnpm run i18n:check
+
       - name: Run frontend checks
         env:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           npx concurrently \
             --kill-others-on-fail \
-            --names "local:lint,local:fmt,local:build,ui:check,ui:lint,ui:fmt,core:check,core:fmt,i18n,i18n:unused,legacy" \
+            --names "local:lint,local:fmt,local:build,ui:check,ui:lint,ui:fmt,core:check,core:fmt,i18n:unused,legacy" \
             --timings \
             "cd packages/local-web && npm run lint" \
             "cd packages/local-web && npm run format:check" \
@@ -105,7 +113,6 @@ jobs:
             "cd packages/ui && npm run format:check" \
             "cd packages/web-core && npm run check" \
             "cd packages/web-core && npm run format:check" \
-            "GITHUB_BASE_REF=${{ github.base_ref || 'main' }} ./scripts/check-i18n.sh" \
             "node scripts/check-unused-i18n-keys.mjs" \
             "./scripts/check-legacy-frontend-paths.sh"
 

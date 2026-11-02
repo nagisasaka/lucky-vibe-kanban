@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
@@ -12,12 +13,16 @@ import type {
   ResolvedGroupItem,
 } from '@/shared/types/commandBar';
 import type { StatusItem } from '@/shared/types/selectionItems';
-import { resolveLabel, type ActionDefinition } from '@/shared/types/actions';
+import {
+  resolveLabel,
+  type ActionDefinition,
+  type ActionTranslator,
+} from '@/shared/types/actions';
 
 export interface SelectionPage<TResult = unknown> {
   id: string;
-  title: string;
-  buildGroups: () => ResolvedGroup[];
+  title: (t: ActionTranslator) => string;
+  buildGroups: (t: ActionTranslator) => ResolvedGroup[];
   onSelect: (
     item: ResolvedGroupItem
   ) =>
@@ -33,6 +38,7 @@ export interface SelectionDialogProps {
 
 const SelectionDialogImpl = create<SelectionDialogProps>(
   ({ initialPageId, pages, statuses = [] }) => {
+    const { t } = useTranslation('tasks');
     const modal = useModal();
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const [search, setSearch] = useState('');
@@ -87,8 +93,8 @@ const SelectionDialogImpl = create<SelectionDialogProps>(
 
     const resolvedPage = {
       id: currentPage.id,
-      title: currentPage.title,
-      groups: currentPage.buildGroups(),
+      title: currentPage.title(t),
+      groups: currentPage.buildGroups(t),
     };
 
     const handleSelect = useCallback(
@@ -141,7 +147,7 @@ const SelectionDialogImpl = create<SelectionDialogProps>(
           canGoBack={pageStack.length > 0}
           onGoBack={handleGoBack}
           onSelect={handleSelect}
-          getLabel={(action) => resolveLabel(action)}
+          getLabel={(action) => resolveLabel(action, undefined, t)}
           search={search}
           onSearchChange={setSearch}
           statuses={statuses}

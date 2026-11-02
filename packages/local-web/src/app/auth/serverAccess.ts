@@ -1,3 +1,7 @@
+import {
+  AccessRequestError,
+  accessRequestFailure,
+} from '@/shared/lib/accessErrorMessage';
 import { setLocalServerUserId } from '@/shared/lib/localIdentity';
 export interface AccessStatus {
   mode: 'locked' | 'local' | 'basic' | 'auth0';
@@ -18,18 +22,19 @@ export async function loadAccessStatus(): Promise<AccessStatus> {
   const response = await rawFetch('/api/access/status', {
     credentials: 'same-origin',
     cache: 'no-store',
+  }).catch(() => {
+    throw new AccessRequestError('auth.errors.networkFailed');
   });
-  if (!response.ok)
-    throw new Error(
-      '認証状態を取得できません。サーバーの配置設定を確認してください。'
-    );
-  status = (await response.json()) as AccessStatus;
+  if (!response.ok) throw new AccessRequestError('auth.errors.statusFailed');
+  status = (await response.json().catch(() => {
+    throw new AccessRequestError('auth.errors.statusFailed');
+  })) as AccessStatus;
   if (status.user) setLocalServerUserId(status.user.id);
   return status;
 }
 export async function currentServerUser() {
   const current = status ?? (await loadAccessStatus());
-  if (!current.user) throw new Error('LVKへのログインが必要です');
+  if (!current.user) throw new AccessRequestError('auth.errors.signInRequired');
   return { user_id: current.user.id };
 }
 
@@ -84,12 +89,18 @@ export async function accessRequest<T>(
     credentials: 'same-origin',
     headers: requestHeaders,
     ...(value === undefined ? {} : { body: JSON.stringify(value) }),
+  }).catch(() => {
+    throw new AccessRequestError('auth.errors.networkFailed');
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(
-      typeof error.error === 'string' ? error.error : `HTTP ${response.status}`
-    );
+    throw accessRequestFailure(error?.error, response.status);
   }
-  return (response.status === 204 ? undefined : await response.json()) as T;
+  return (
+    response.status === 204
+      ? undefined
+      : await response.json().catch(() => {
+          throw accessRequestFailure(undefined, response.status);
+        })
+  ) as T;
 }

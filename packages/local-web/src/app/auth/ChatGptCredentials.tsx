@@ -1,3 +1,9 @@
+import {
+  AccessRequestError,
+  accessErrorNotice,
+  toAccessRequestError,
+} from '@/shared/lib/accessErrorMessage';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { accessRequest } from './serverAccess';
 
@@ -21,6 +27,7 @@ export function ChatGptCredentials({
   webClientId: string;
   disabled: boolean;
 }) {
+  const { t } = useTranslation('settings');
   const [saved, setSaved] = useState<Saved>();
   const [secret, setSecret] = useState('');
   const [visible, setVisible] = useState(false);
@@ -28,8 +35,10 @@ export function ChatGptCredentials({
   const [inputSecret, setInputSecret] = useState('');
   const [savedClientIdDraft, setSavedClientIdDraft] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [error, setError] = useState<AccessRequestError | null>(null);
+  const [notice, setNotice] = useState<
+    'saved' | 'secretCopied' | 'clientIdCopied' | null
+  >(null);
   useEffect(() => {
     onDirtyChange?.(Boolean(clientId !== savedClientIdDraft || inputSecret));
     return () => onDirtyChange?.(false);
@@ -47,7 +56,8 @@ export function ChatGptCredentials({
         if (active) setSaved(value);
       })
       .catch((e: Error) => {
-        if (active) setError(e.message);
+        if (active)
+          setError(toAccessRequestError(e, 'auth.credentials.failed'));
       });
     return () => {
       active = false;
@@ -55,8 +65,8 @@ export function ChatGptCredentials({
   }, [ready, issuer, webClientId]);
   async function run(action: 'save' | 'copy' | 'show') {
     setBusy(true);
-    setError('');
-    setNotice('');
+    setError(null);
+    setNotice(null);
     try {
       const result = await accessRequest<Saved>('auth0/chatgpt-credentials', {
         action: action === 'save' ? 'save' : 'reveal',
@@ -72,24 +82,23 @@ export function ChatGptCredentials({
         setInputSecret('');
         setSecret('');
         setVisible(false);
-        setNotice(
-          '接続情報を保存しました。ログイン後もここからコピーできます。'
-        );
+        setNotice('saved');
       } else {
         const value = result.client_secret ?? '';
-        if (!value) throw new Error('保存されたSecretを取得できませんでした');
+        if (!value)
+          throw new AccessRequestError('auth.credentials.secretUnavailable');
         setSecret(value);
         if (action === 'copy') {
-          await navigator.clipboard.writeText(value);
-          setNotice('ChatGPT用Secretをコピーしました');
+          await navigator.clipboard.writeText(value).catch(() => {
+            throw new AccessRequestError('auth.credentials.copySecretFailed');
+          });
+          setNotice('secretCopied');
         } else {
           setVisible(true);
         }
       }
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : '接続情報を取得できませんでした'
-      );
+      setError(toAccessRequestError(e, 'auth.credentials.failed'));
     } finally {
       setBusy(false);
     }
@@ -97,17 +106,15 @@ export function ChatGptCredentials({
   return (
     <section
       className="min-w-0 space-y-base rounded border p-base"
-      aria-label="保存したChatGPT接続情報"
+      aria-label={t('auth.credentials.title')}
     >
-      <p>
-        ChatGPT用の接続情報はサーバーに暗号化して保存します。Auth0ログインの有効化後も、管理者はこの画面からコピーできます。
-      </p>
+      <p>{t('auth.credentials.description')}</p>
       {error && (
         <p role="alert" className="text-error">
-          {error}
+          {accessErrorNotice(error)}
         </p>
       )}
-      {notice && <p role="status">{notice}</p>}
+      {notice && <p role="status">{t(`auth.credentials.${notice}`)}</p>}
       <fieldset
         disabled={busy || disabled || !ready}
         className="min-w-0 space-y-base"
@@ -115,7 +122,7 @@ export function ChatGptCredentials({
         {saved?.available ? (
           <>
             <label className="block">
-              ChatGPT用Client ID
+              {t('auth.credentials.clientId')}
               <input className={field} readOnly value={saved.client_id ?? ''} />
             </label>
             <button
@@ -124,25 +131,25 @@ export function ChatGptCredentials({
               onClick={() =>
                 void navigator.clipboard
                   .writeText(saved.client_id ?? '')
-                  .then(() => setNotice('Client IDをコピーしました'))
+                  .then(() => setNotice('clientIdCopied'))
                   .catch(() =>
                     setError(
-                      'コピーできませんでした。Client ID欄からコピーしてください。'
+                      new AccessRequestError('auth.credentials.copyFailed')
                     )
                   )
               }
             >
-              ChatGPT用Client IDをコピー
+              {t('auth.credentials.copyClientId')}
             </button>
             <label className="block">
-              ChatGPT用Client Secret
+              {t('auth.credentials.clientSecret')}
               <input
                 className={field}
                 readOnly
                 type={visible ? 'text' : 'password'}
                 autoComplete="off"
                 value={secret}
-                placeholder="保存済み"
+                placeholder={t('auth.credentials.stored')}
               />
             </label>
             <div className="flex flex-wrap gap-base">
@@ -151,7 +158,7 @@ export function ChatGptCredentials({
                 type="button"
                 onClick={() => void run('copy')}
               >
-                ChatGPT用Secretをコピー
+                {t('auth.credentials.copySecret')}
               </button>
               <button
                 className={button}
@@ -165,25 +172,23 @@ export function ChatGptCredentials({
                   }
                 }}
               >
-                {visible ? 'Secretを隠す' : 'Secretを表示'}
+                {visible
+                  ? t('auth.credentials.hideSecret')
+                  : t('auth.credentials.showSecret')}
               </button>
             </div>
           </>
         ) : (
-          <p>
-            保存された接続情報はありません。自動セットアップするか、既存のChatGPT用アプリの情報を保存してください。
-          </p>
+          <p>{t('auth.credentials.empty')}</p>
         )}
         <details>
           <summary className="cursor-pointer">
-            既存の接続情報を保存・更新
+            {t('auth.credentials.update')}
           </summary>
           <div className="space-y-base pt-base">
-            <p>
-              Auth0で取得したChatGPT専用アプリの情報を入力します。Auth0側の設定は変更しません。SecretをAuth0で変更した場合もここで更新してください。
-            </p>
+            <p>{t('auth.credentials.updateHint')}</p>
             <label className="block">
-              保存するChatGPT Client ID
+              {t('auth.credentials.newClientId')}
               <input
                 className={field}
                 value={clientId}
@@ -192,7 +197,7 @@ export function ChatGptCredentials({
               />
             </label>
             <label className="block">
-              保存するChatGPT Client Secret
+              {t('auth.credentials.newClientSecret')}
               <input
                 className={field}
                 type="password"
@@ -207,7 +212,7 @@ export function ChatGptCredentials({
               disabled={!clientId || !inputSecret}
               onClick={() => void run('save')}
             >
-              ChatGPT接続情報を保存
+              {t('auth.credentials.save')}
             </button>
           </div>
         </details>

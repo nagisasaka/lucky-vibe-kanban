@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState, useRef } from 'react';
 import type { PatchType } from 'shared/types';
 import { openLocalApiWebSocket } from '@/shared/lib/localApiTransport';
@@ -10,8 +11,9 @@ interface UseLogStreamResult {
 }
 
 export const useLogStream = (processId: string): UseLogStreamResult => {
+  const { t } = useTranslation('common');
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef<number>(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -33,7 +35,7 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
 
     // Clear logs when process changes
     setLogs([]);
-    setError(null);
+    setError(false);
     finishedRef.current = false;
 
     const open = () => {
@@ -73,7 +75,7 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
               ws.close();
               return;
             }
-            setError(null);
+            setError(false);
             retryCountRef.current = 0;
             // Don't clear logs here — on reconnect the server replays
             // history, and clearing eagerly causes a flash if the
@@ -152,7 +154,7 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
                 const delay = Math.min(1500, 250 * 2 ** (next - 1));
                 retryTimerRef.current = setTimeout(() => open(), delay);
               } else {
-                setError('Connection failed');
+                setError(true);
               }
             }
           };
@@ -166,7 +168,7 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
             const delay = Math.min(1500, 250 * 2 ** (next - 1));
             retryTimerRef.current = setTimeout(() => open(), delay);
           } else {
-            setError('Connection failed');
+            setError(true);
           }
         }
       })();
@@ -188,5 +190,5 @@ export const useLogStream = (processId: string): UseLogStreamResult => {
     };
   }, [processId]);
 
-  return { logs, error };
+  return { logs, error: error ? t('streams.logsUnavailable') : null };
 };

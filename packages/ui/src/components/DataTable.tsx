@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import * as React from 'react';
 import {
   Table,
@@ -37,6 +38,7 @@ export function DataTable<T>({
   emptyState,
   headerContent,
 }: DataTableProps<T>) {
+  const { t } = useTranslation('common');
   const colSpan = columns.length;
 
   return (
@@ -61,7 +63,9 @@ export function DataTable<T>({
         {isLoading ? (
           <TableLoading colSpan={colSpan} />
         ) : data.length === 0 ? (
-          <TableEmpty colSpan={colSpan}>{emptyState || 'No data'}</TableEmpty>
+          <TableEmpty colSpan={colSpan}>
+            {emptyState || t('table.empty')}
+          </TableEmpty>
         ) : (
           data.map((row) => {
             const key = keyExtractor(row);

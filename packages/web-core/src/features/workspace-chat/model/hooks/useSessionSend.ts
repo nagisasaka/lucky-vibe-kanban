@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { ExecutorConfig, SelectedSkill } from 'shared/types';
 import { sessionsApi } from '@/shared/lib/api';
 import { useCreateSession } from './useCreateSession';
-import { goalPromptError } from '../goalValidation';
+import { goalPromptError, type GoalPromptError } from '../goalValidation';
+import { useTranslation } from 'react-i18next';
 import { useEntries } from '../contexts/EntriesContext';
 import {
   chatMessageScope,
@@ -59,6 +60,7 @@ export function useSessionSend({
   isNewSessionMode,
   executorConfig,
 }: UseSessionSendOptions): UseSessionSendResult {
+  const { t, i18n } = useTranslation('tasks');
   const hostId = useHostId();
   const { entries } = useEntries();
   const entriesRef = useRef(entries);
@@ -76,7 +78,13 @@ export function useSessionSend({
   const { mutateAsync: createSession, isPending: isCreatingSession } =
     useCreateSession();
   const [isSendingFollowUp, setIsSendingFollowUp] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    | GoalPromptError
+    | 'no_executor'
+    | 'no_workspace'
+    | 'submission_unconfirmed'
+    | null
+  >(null);
   useEffect(() => {
     setError(null);
   }, [scope]);
@@ -95,7 +103,7 @@ export function useSessionSend({
       const effectiveConfig = options.executorConfig ?? executorConfig;
       if (!trimmed) return null;
       if (!effectiveConfig) {
-        setError('No executor selected');
+        setError('no_executor');
         return null;
       }
 
@@ -126,7 +134,7 @@ export function useSessionSend({
               state: 'failed',
               error: 'No workspace selected',
             });
-            setError('No workspace selected');
+            setError('no_workspace');
             return null;
           }
           try {
@@ -146,12 +154,9 @@ export function useSessionSend({
             });
             return { createdSessionId: session.id };
           } catch (e: unknown) {
-            const err = e as { message?: string };
             pending.update(pendingId, deliveryFailure(e));
             if (currentScope.current === scope)
-              setError(
-                `Session submission error: ${err.message ?? 'Unknown error'}`
-              );
+              setError('submission_unconfirmed');
             return null;
           }
         } else {
@@ -182,10 +187,9 @@ export function useSessionSend({
             });
             return {};
           } catch (e: unknown) {
-            const err = e as { message?: string };
             pending.update(pendingId, deliveryFailure(e));
             if (currentScope.current === scope)
-              setError(`Submission error: ${err.message ?? 'Unknown error'}`);
+              setError('submission_unconfirmed');
             return null;
           } finally {
             setIsSendingFollowUp(false);
@@ -212,7 +216,23 @@ export function useSessionSend({
   return {
     send,
     isSending: isSendingFollowUp || isCreatingSession,
-    error,
+    error:
+      error === null
+        ? null
+        : typeof error === 'object'
+          ? t('sessionRuntime.goalObjectiveTooLong', {
+              formattedCount: new Intl.NumberFormat(
+                i18n.resolvedLanguage || i18n.language
+              ).format(error.count),
+              maximum: new Intl.NumberFormat(
+                i18n.resolvedLanguage || i18n.language
+              ).format(error.maximum),
+            })
+          : error === 'no_executor'
+            ? t('sessionRuntime.noExecutor')
+            : error === 'no_workspace'
+              ? t('sessionRuntime.noWorkspace')
+              : t('sessionRuntime.submissionUnconfirmed'),
     clearError,
   };
 }

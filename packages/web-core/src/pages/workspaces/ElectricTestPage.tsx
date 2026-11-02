@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   isValidProjectKey,
   normalizeProjectKey,
@@ -94,6 +95,8 @@ function ErrorState({
   title: string;
   onRetry?: () => void;
 }) {
+  const { t } = useTranslation('common');
+
   if (!syncError) return null;
   return (
     <div className="p-base bg-error/10 border border-error rounded-sm text-error">
@@ -101,13 +104,17 @@ function ErrorState({
         {title}
         {syncError.status ? ` (${syncError.status})` : ''}:
       </p>
-      <pre className="mt-base text-sm overflow-auto">{syncError.message}</pre>
+      <p>{t('electricDiagnostics.syncGuidance')}</p>
+      <details>
+        <summary>{t('electricDiagnostics.originalDetails')}</summary>
+        <pre className="mt-base text-sm overflow-auto">{syncError.message}</pre>
+      </details>
       {onRetry && (
         <button
           onClick={onRetry}
           className="mt-base px-base py-half bg-error text-on-brand rounded-sm"
         >
-          Retry
+          {t('electricDiagnostics.retry')}{' '}
         </button>
       )}
     </div>
@@ -131,10 +138,12 @@ function DataTable<T extends Record<string, unknown>>({
   selectedId?: string;
   getRowId: (item: T) => string;
 }) {
+  const { t } = useTranslation('common');
+
   if (data.length === 0) {
     return (
       <div className="p-base bg-secondary border rounded-sm text-low">
-        No data found.
+        {t('electricDiagnostics.no_data_found')}{' '}
       </div>
     );
   }
@@ -197,10 +206,12 @@ function MutationPanel({
   disabled?: boolean;
   children?: React.ReactNode;
 }) {
+  const { t } = useTranslation('common');
+
   return (
     <div className="mt-base p-base bg-secondary rounded-sm space-y-base">
       <h4 className="text-sm font-medium text-normal">
-        Mutations (Optimistic)
+        {t('electricDiagnostics.mutations_optimistic')}{' '}
       </h4>
       {children}
       <div className="flex gap-base flex-wrap">
@@ -210,7 +221,7 @@ function MutationPanel({
             disabled={disabled}
             className="px-base py-half text-sm bg-success text-white rounded-sm hover:bg-success/80 disabled:bg-panel disabled:text-low disabled:cursor-not-allowed"
           >
-            Create
+            {t('electricDiagnostics.create')}{' '}
           </button>
         )}
         {onUpdate && (
@@ -219,7 +230,7 @@ function MutationPanel({
             disabled={disabled || !selectedId}
             className="px-base py-half text-sm bg-brand text-on-brand rounded-sm hover:bg-brand-hover disabled:bg-panel disabled:text-low disabled:cursor-not-allowed"
           >
-            Update Selected
+            {t('electricDiagnostics.update_selected')}{' '}
           </button>
         )}
         {onDelete && (
@@ -228,12 +239,14 @@ function MutationPanel({
             disabled={disabled || !selectedId}
             className="px-base py-half text-sm bg-error text-white rounded-sm hover:bg-error/80 disabled:bg-panel disabled:text-low disabled:cursor-not-allowed"
           >
-            Delete Selected
+            {t('electricDiagnostics.delete_selected')}{' '}
           </button>
         )}
       </div>
       {selectedId && (
-        <p className="text-xs text-low">Selected: {truncateId(selectedId)}</p>
+        <p className="text-xs text-low">
+          {t('electricDiagnostics.selected_prefix')} {truncateId(selectedId)}
+        </p>
       )}
     </div>
   );
@@ -252,6 +265,8 @@ function ProjectsList({
   onSelectProject: (project: Project | null) => void;
   selectedProjectId: string | null;
 }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry, insert, update, remove } = useShape(
     PROJECTS_SHAPE,
     { organization_id: organizationId },
@@ -307,12 +322,25 @@ function ProjectsList({
   };
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading projects..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return <LoadingState message={t('electricDiagnostics.loading_projects')} />;
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(p) => p.id}
@@ -321,7 +349,7 @@ function ProjectsList({
         columns={[
           {
             key: 'name',
-            label: 'Name',
+            label: t('electricDiagnostics.name'),
             render: (p) => (
               <div className="flex items-center gap-2">
                 <span
@@ -332,11 +360,16 @@ function ProjectsList({
               </div>
             ),
           },
-          { key: 'id', label: 'ID', render: (p) => truncateId(p.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (p) => truncateId(p.id),
+          },
           {
             key: 'updated_at',
-            label: 'Updated',
-            render: (p) => formatDate(p.updated_at),
+            label: t('electricDiagnostics.updated'),
+            render: (p) =>
+              formatDate(p.updated_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -350,12 +383,18 @@ function ProjectsList({
       >
         <div className="flex gap-base items-end flex-wrap">
           <div>
-            <label className="block text-xs text-low mb-half">Name</label>
+            <label
+              htmlFor="electric-project-name"
+              className="block text-xs text-low mb-half"
+            >
+              {t('electricDiagnostics.name')}
+            </label>
             <input
               type="text"
+              id="electric-project-name"
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
-              placeholder="Project name"
+              placeholder={t('electricDiagnostics.project_name')}
               className="px-base py-half text-sm border rounded-sm bg-primary text-normal focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
@@ -364,7 +403,7 @@ function ProjectsList({
               htmlFor="test-project-key"
               className="block text-xs text-low mb-half"
             >
-              Project key
+              {t('electricDiagnostics.project_key')}{' '}
             </label>
             <input
               id="test-project-key"
@@ -375,14 +414,21 @@ function ProjectsList({
               className="px-base py-half text-sm border rounded-sm bg-primary text-normal"
             />
             <p className="text-xs text-low">
-              2–10 letters or digits, starting with a letter. Cannot be changed
-              later.
+              {t(
+                'electricDiagnostics.2_10_letters_or_digits_starting_with_a_letter_cannot_be_changed_later'
+              )}{' '}
             </p>
           </div>
           <div>
-            <label className="block text-xs text-low mb-half">Color</label>
+            <label
+              htmlFor="electric-project-color"
+              className="block text-xs text-low mb-half"
+            >
+              {t('electricDiagnostics.color')}
+            </label>
             <input
               type="color"
+              id="electric-project-color"
               value={newProjectColor}
               onChange={(e) => setNewProjectColor(e.target.value)}
               className="w-10 h-8 border rounded-sm cursor-pointer"
@@ -395,32 +441,57 @@ function ProjectsList({
 }
 
 function NotificationsList({ userId }: { userId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(NOTIFICATIONS_SHAPE, {
     user_id: userId,
   });
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading notifications..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_notifications')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(n) => n.id}
         columns={[
-          { key: 'notification_type', label: 'Type' },
+          { key: 'notification_type', label: t('electricDiagnostics.type') },
           {
             key: 'seen',
-            label: 'Seen',
-            render: (n) => (n.seen ? 'Yes' : 'No'),
+            label: t('electricDiagnostics.seen'),
+            render: (n) =>
+              n.seen
+                ? t('electricDiagnostics.yes')
+                : t('electricDiagnostics.no'),
           },
-          { key: 'id', label: 'ID', render: (n) => truncateId(n.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (n) => truncateId(n.id),
+          },
           {
             key: 'created_at',
-            label: 'Created',
-            render: (n) => formatDate(n.created_at),
+            label: t('electricDiagnostics.created'),
+            render: (n) =>
+              formatDate(n.created_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -437,30 +508,50 @@ function IssuesList({
   onSelectIssue: (issue: Issue) => void;
   selectedIssueId: string | null;
 }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(PROJECT_ISSUES_SHAPE, {
     project_id: projectId,
   });
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading issues..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return <LoadingState message={t('electricDiagnostics.loading_issues')} />;
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(i) => i.id}
         selectedId={selectedIssueId ?? undefined}
         onRowClick={onSelectIssue}
         columns={[
-          { key: 'title', label: 'Title' },
-          { key: 'priority', label: 'Priority' },
-          { key: 'id', label: 'ID', render: (i) => truncateId(i.id) },
+          { key: 'title', label: t('electricDiagnostics.title') },
+          { key: 'priority', label: t('electricDiagnostics.priority') },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (i) => truncateId(i.id),
+          },
           {
             key: 'updated_at',
-            label: 'Updated',
-            render: (i) => formatDate(i.updated_at),
+            label: t('electricDiagnostics.updated'),
+            render: (i) =>
+              formatDate(i.updated_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -469,32 +560,60 @@ function IssuesList({
 }
 
 function WorkspacesList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(PROJECT_WORKSPACES_SHAPE, {
     project_id: projectId,
   });
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading workspaces..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_workspaces')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(w) => w.id}
         columns={[
-          { key: 'id', label: 'ID', render: (w) => truncateId(w.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (w) => truncateId(w.id),
+          },
           {
             key: 'archived',
-            label: 'Archived',
-            render: (w) => (w.archived ? 'Yes' : 'No'),
+            label: t('electricDiagnostics.archived'),
+            render: (w) =>
+              w.archived
+                ? t('electricDiagnostics.yes')
+                : t('electricDiagnostics.no'),
           },
-          { key: 'files_changed', label: 'Files Changed' },
+          {
+            key: 'files_changed',
+            label: t('electricDiagnostics.files_changed'),
+          },
           {
             key: 'created_at',
-            label: 'Created',
-            render: (w) => formatDate(w.created_at),
+            label: t('electricDiagnostics.created'),
+            render: (w) =>
+              formatDate(w.created_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -503,25 +622,40 @@ function WorkspacesList({ projectId }: { projectId: string }) {
 }
 
 function StatusesList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(
     PROJECT_PROJECT_STATUSES_SHAPE,
     { project_id: projectId }
   );
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading statuses..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return <LoadingState message={t('electricDiagnostics.loading_statuses')} />;
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(s) => s.id}
         columns={[
           {
             key: 'name',
-            label: 'Name',
+            label: t('electricDiagnostics.name'),
             render: (s) => (
               <div className="flex items-center gap-2">
                 <span
@@ -532,8 +666,12 @@ function StatusesList({ projectId }: { projectId: string }) {
               </div>
             ),
           },
-          { key: 'sort_order', label: 'Order' },
-          { key: 'id', label: 'ID', render: (s) => truncateId(s.id) },
+          { key: 'sort_order', label: t('electricDiagnostics.order') },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (s) => truncateId(s.id),
+          },
         ]}
       />
     </div>
@@ -541,6 +679,8 @@ function StatusesList({ projectId }: { projectId: string }) {
 }
 
 function TagsList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry, insert, update, remove } = useShape(
     PROJECT_TAGS_SHAPE,
     { project_id: projectId },
@@ -579,12 +719,25 @@ function TagsList({ projectId }: { projectId: string }) {
   };
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading tags..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return <LoadingState message={t('electricDiagnostics.loading_tags')} />;
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(t) => t.id}
@@ -593,7 +746,7 @@ function TagsList({ projectId }: { projectId: string }) {
         columns={[
           {
             key: 'name',
-            label: 'Name',
+            label: t('electricDiagnostics.name'),
             render: (t) => (
               <div className="flex items-center gap-2">
                 <span
@@ -604,7 +757,11 @@ function TagsList({ projectId }: { projectId: string }) {
               </div>
             ),
           },
-          { key: 'id', label: 'ID', render: (t) => truncateId(t.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (t) => truncateId(t.id),
+          },
         ]}
       />
 
@@ -617,19 +774,31 @@ function TagsList({ projectId }: { projectId: string }) {
       >
         <div className="flex gap-base items-end flex-wrap">
           <div>
-            <label className="block text-xs text-low mb-half">Name</label>
+            <label
+              htmlFor="electric-tag-name"
+              className="block text-xs text-low mb-half"
+            >
+              {t('electricDiagnostics.name')}
+            </label>
             <input
               type="text"
+              id="electric-tag-name"
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
-              placeholder="Tag name"
+              placeholder={t('electricDiagnostics.tag_name')}
               className="px-base py-half text-sm border rounded-sm bg-primary text-normal focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
           <div>
-            <label className="block text-xs text-low mb-half">Color</label>
+            <label
+              htmlFor="electric-tag-color"
+              className="block text-xs text-low mb-half"
+            >
+              {t('electricDiagnostics.color')}
+            </label>
             <input
               type="color"
+              id="electric-tag-color"
               value={newTagColor}
               onChange={(e) => setNewTagColor(e.target.value)}
               className="w-10 h-8 border rounded-sm cursor-pointer"
@@ -642,36 +811,54 @@ function TagsList({ projectId }: { projectId: string }) {
 }
 
 function AssigneesList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(
     PROJECT_ISSUE_ASSIGNEES_SHAPE,
     { project_id: projectId }
   );
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading assignees..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_assignees')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(a) => `${a.issue_id}-${a.user_id}`}
         columns={[
           {
             key: 'issue_id',
-            label: 'Issue ID',
+            label: t('electricDiagnostics.issue_id'),
             render: (a) => truncateId(a.issue_id),
           },
           {
             key: 'user_id',
-            label: 'User ID',
+            label: t('electricDiagnostics.user_id'),
             render: (a) => truncateId(a.user_id),
           },
           {
             key: 'assigned_at',
-            label: 'Assigned',
-            render: (a) => formatDate(a.assigned_at),
+            label: t('electricDiagnostics.assigned'),
+            render: (a) =>
+              formatDate(a.assigned_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -680,30 +867,47 @@ function AssigneesList({ projectId }: { projectId: string }) {
 }
 
 function FollowersList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(
     PROJECT_ISSUE_FOLLOWERS_SHAPE,
     { project_id: projectId }
   );
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading followers..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_followers')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(f) => `${f.issue_id}-${f.user_id}`}
         columns={[
           {
             key: 'issue_id',
-            label: 'Issue ID',
+            label: t('electricDiagnostics.issue_id'),
             render: (f) => truncateId(f.issue_id),
           },
           {
             key: 'user_id',
-            label: 'User ID',
+            label: t('electricDiagnostics.user_id'),
             render: (f) => truncateId(f.user_id),
           },
         ]}
@@ -713,29 +917,46 @@ function FollowersList({ projectId }: { projectId: string }) {
 }
 
 function IssueTagsList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(PROJECT_ISSUE_TAGS_SHAPE, {
     project_id: projectId,
   });
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading issue tags..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_issue_tags')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(t) => `${t.issue_id}-${t.tag_id}`}
         columns={[
           {
             key: 'issue_id',
-            label: 'Issue ID',
+            label: t('electricDiagnostics.issue_id'),
             render: (t) => truncateId(t.issue_id),
           },
           {
             key: 'tag_id',
-            label: 'Tag ID',
+            label: t('electricDiagnostics.tag_id'),
             render: (t) => truncateId(t.tag_id),
           },
         ]}
@@ -745,36 +966,54 @@ function IssueTagsList({ projectId }: { projectId: string }) {
 }
 
 function DependenciesList({ projectId }: { projectId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(
     PROJECT_ISSUE_RELATIONSHIPS_SHAPE,
     { project_id: projectId }
   );
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading dependencies..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_dependencies')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(d) => `${d.issue_id}-${d.related_issue_id}`}
         columns={[
           {
             key: 'issue_id',
-            label: 'Issue',
+            label: t('electricDiagnostics.issue'),
             render: (d) => truncateId(d.issue_id),
           },
           {
             key: 'related_issue_id',
-            label: 'Related Issue',
+            label: t('electricDiagnostics.related_issue'),
             render: (d) => truncateId(d.related_issue_id),
           },
           {
             key: 'created_at',
-            label: 'Created',
-            render: (d) => formatDate(d.created_at),
+            label: t('electricDiagnostics.created'),
+            render: (d) =>
+              formatDate(d.created_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -783,6 +1022,8 @@ function DependenciesList({ projectId }: { projectId: string }) {
 }
 
 function CommentsList({ issueId }: { issueId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry, insert, update, remove } = useShape(
     ISSUE_COMMENTS_SHAPE,
     { issue_id: issueId },
@@ -818,12 +1059,25 @@ function CommentsList({ issueId }: { issueId: string }) {
   };
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading comments..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return <LoadingState message={t('electricDiagnostics.loading_comments')} />;
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(c) => c.id}
@@ -832,7 +1086,7 @@ function CommentsList({ issueId }: { issueId: string }) {
         columns={[
           {
             key: 'message',
-            label: 'Message',
+            label: t('electricDiagnostics.message'),
             render: (c) =>
               c.message.length > 50
                 ? c.message.slice(0, 50) + '...'
@@ -840,14 +1094,19 @@ function CommentsList({ issueId }: { issueId: string }) {
           },
           {
             key: 'author_id',
-            label: 'Author',
+            label: t('electricDiagnostics.author'),
             render: (c) => (c.author_id ? truncateId(c.author_id) : '-'),
           },
-          { key: 'id', label: 'ID', render: (c) => truncateId(c.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (c) => truncateId(c.id),
+          },
           {
             key: 'created_at',
-            label: 'Created',
-            render: (c) => formatDate(c.created_at),
+            label: t('electricDiagnostics.created'),
+            render: (c) =>
+              formatDate(c.created_at, i18n.resolvedLanguage || i18n.language),
           },
         ]}
       />
@@ -860,11 +1119,17 @@ function CommentsList({ issueId }: { issueId: string }) {
         disabled={isLoading}
       >
         <div>
-          <label className="block text-xs text-low mb-half">Message</label>
+          <label
+            htmlFor="electric-comment-message"
+            className="block text-xs text-low mb-half"
+          >
+            {t('electricDiagnostics.message')}
+          </label>
           <textarea
+            id="electric-comment-message"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Enter comment message..."
+            placeholder={t('electricDiagnostics.enter_comment_message')}
             rows={2}
             className="w-full px-base py-half text-sm border rounded-sm bg-primary text-normal focus:outline-none focus:ring-1 focus:ring-brand resize-none"
           />
@@ -875,33 +1140,54 @@ function CommentsList({ issueId }: { issueId: string }) {
 }
 
 function ReactionsList({ issueId }: { issueId: string }) {
+  const { t, i18n } = useTranslation('common');
+
   const { data, isLoading, error, retry } = useShape(ISSUE_REACTIONS_SHAPE, {
     issue_id: issueId,
   });
 
   if (error)
-    return <ErrorState syncError={error} title="Sync Error" onRetry={retry} />;
-  if (isLoading) return <LoadingState message="Loading reactions..." />;
+    return (
+      <ErrorState
+        syncError={error}
+        title={t('electricDiagnostics.sync_error')}
+        onRetry={retry}
+      />
+    );
+  if (isLoading)
+    return (
+      <LoadingState message={t('electricDiagnostics.loading_reactions')} />
+    );
 
   return (
     <div>
-      <p className="text-sm text-low mb-base">{data.length} synced</p>
+      <p className="text-sm text-low mb-base">
+        {t('electricDiagnostics.synced', {
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(data.length),
+        })}
+      </p>
       <DataTable
         data={data}
         getRowId={(r) => r.id}
         columns={[
-          { key: 'emoji', label: 'Emoji' },
+          { key: 'emoji', label: t('electricDiagnostics.emoji') },
           {
             key: 'comment_id',
-            label: 'Comment',
+            label: t('electricDiagnostics.comment'),
             render: (r) => truncateId(r.comment_id),
           },
           {
             key: 'user_id',
-            label: 'User',
+            label: t('electricDiagnostics.user'),
             render: (r) => truncateId(r.user_id),
           },
-          { key: 'id', label: 'ID', render: (r) => truncateId(r.id) },
+          {
+            key: 'id',
+            label: t('electricDiagnostics.id'),
+            render: (r) => truncateId(r.id),
+          },
         ]}
       />
     </div>
@@ -916,8 +1202,8 @@ function truncateId(id: string): string {
   return id.length > 8 ? id.slice(0, 8) + '...' : id;
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleString();
+function formatDate(dateStr: string, locale: string): string {
+  return new Date(dateStr).toLocaleString(locale);
 }
 
 // ============================================================================
@@ -925,6 +1211,8 @@ function formatDate(dateStr: string): string {
 // ============================================================================
 
 export function ElectricTestPage() {
+  const { t } = useTranslation('common');
+
   const { isSignedIn, isLoaded } = useAuth();
   const { data: orgsData } = useUserOrganizations();
   const { data: currentUser } = useCurrentUser();
@@ -971,7 +1259,7 @@ export function ElectricTestPage() {
   if (!isLoaded) {
     return (
       <div className="p-double">
-        <p className="text-low">Loading...</p>
+        <p className="text-low">{t('electricDiagnostics.loading')}</p>
       </div>
     );
   }
@@ -980,27 +1268,37 @@ export function ElectricTestPage() {
     return (
       <div className="p-double">
         <h2 className="text-xl font-medium text-high mb-base">
-          Electric SDK Test
+          {t('electricDiagnostics.electric_sdk_test')}{' '}
         </h2>
-        <p className="text-low">Please sign in to test Electric sync.</p>
+        <p className="text-low">
+          {t('electricDiagnostics.please_sign_in_to_test_electric_sync')}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen overflow-auto p-double space-y-double max-w-6xl bg-background">
-      <h2 className="text-xl font-medium text-high">Electric SDK Test</h2>
+      <h2 className="text-xl font-medium text-high">
+        {t('electricDiagnostics.electric_sdk_test')}
+      </h2>
 
       {/* Configuration */}
       <div className="bg-primary border rounded-sm p-base space-y-base">
-        <h3 className="text-lg font-medium text-normal">Configuration</h3>
+        <h3 className="text-lg font-medium text-normal">
+          {t('electricDiagnostics.configuration')}
+        </h3>
 
-        <div className="grid grid-cols-2 gap-base">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-base">
           <div>
-            <label className="block text-sm font-medium text-normal mb-half">
-              Organization
+            <label
+              htmlFor="electric-organization"
+              className="block text-sm font-medium text-normal mb-half"
+            >
+              {t('electricDiagnostics.organization')}{' '}
             </label>
             <select
+              id="electric-organization"
               value={selectedOrgId}
               onChange={(e) => {
                 setSelectedOrgId(e.target.value);
@@ -1012,7 +1310,9 @@ export function ElectricTestPage() {
               disabled={isConnected}
               className="w-full px-base py-half border rounded-sm bg-primary text-normal focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand disabled:bg-secondary disabled:text-low"
             >
-              <option value="">Select an organization...</option>
+              <option value="">
+                {t('electricDiagnostics.select_an_organization')}
+              </option>
               {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
                   {org.name}
@@ -1021,35 +1321,41 @@ export function ElectricTestPage() {
             </select>
           </div>
 
-          <div className="flex items-end gap-base">
+          <div className="flex flex-wrap items-end gap-base">
             {!isConnected ? (
               <button
                 onClick={() => setIsConnected(true)}
                 disabled={!selectedOrgId}
                 className="px-base py-half bg-brand text-on-brand rounded-sm hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:bg-panel disabled:text-low disabled:cursor-not-allowed"
               >
-                Connect
+                {t('electricDiagnostics.connect')}{' '}
               </button>
             ) : (
               <button
                 onClick={handleDisconnect}
                 className="px-base py-half bg-error text-on-brand rounded-sm focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2"
               >
-                Disconnect
+                {t('electricDiagnostics.disconnect')}{' '}
               </button>
             )}
             <span
               className={`text-sm ${isConnected ? 'text-success' : 'text-low'}`}
             >
-              {isConnected ? 'Connected' : 'Not connected'}
+              {isConnected
+                ? t('electricDiagnostics.connected')
+                : t('electricDiagnostics.not_connected')}
             </span>
           </div>
         </div>
 
         {selectedOrgId && (
-          <div className="text-xs text-low font-ibm-plex-mono">
-            Organization ID: {selectedOrgId}
-            {userId && <span className="ml-base">User ID: {userId}</span>}
+          <div className="text-xs text-low font-ibm-plex-mono break-all">
+            {t('electricDiagnostics.organization_id_prefix')} {selectedOrgId}
+            {userId && (
+              <span className="ml-base">
+                {t('electricDiagnostics.user_id_prefix')} {userId}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -1058,15 +1364,18 @@ export function ElectricTestPage() {
       {isConnected && selectedOrgId && (
         <div className="bg-primary border rounded-sm p-base">
           <h3 className="text-lg font-medium text-normal mb-base">
-            Organization Collections
+            {t('electricDiagnostics.organization_collections')}{' '}
           </h3>
 
           <CollectionTabs
             value={activeOrgCollection}
             onChange={setActiveOrgCollection}
             options={[
-              { value: 'projects', label: 'Projects' },
-              { value: 'notifications', label: 'Notifications' },
+              { value: 'projects', label: t('electricDiagnostics.projects') },
+              {
+                value: 'notifications',
+                label: t('electricDiagnostics.notifications'),
+              },
             ]}
           />
 
@@ -1081,13 +1390,16 @@ export function ElectricTestPage() {
             <NotificationsList userId={userId} />
           )}
           {activeOrgCollection === 'notifications' && !userId && (
-            <LoadingState message="Loading user info..." />
+            <LoadingState
+              message={t('electricDiagnostics.loading_user_info')}
+            />
           )}
 
           {selectedProject && (
             <p className="mt-base text-sm text-brand">
-              Selected project: <strong>{selectedProject.name}</strong> (click a
-              row to select)
+              {t('electricDiagnostics.selected_project_prefix')}{' '}
+              <strong>{selectedProject.name}</strong>{' '}
+              {t('electricDiagnostics.click_a_row_to_select')}{' '}
             </p>
           )}
         </div>
@@ -1097,7 +1409,7 @@ export function ElectricTestPage() {
       {isConnected && selectedProjectId && (
         <div className="bg-primary border rounded-sm p-base">
           <h3 className="text-lg font-medium text-normal mb-base">
-            Project Collections
+            {t('electricDiagnostics.project_collections')}{' '}
             <span className="text-sm font-normal text-low ml-base">
               ({selectedProject?.name})
             </span>
@@ -1107,14 +1419,23 @@ export function ElectricTestPage() {
             value={activeProjectCollection}
             onChange={setActiveProjectCollection}
             options={[
-              { value: 'issues', label: 'Issues' },
-              { value: 'workspaces', label: 'Workspaces' },
-              { value: 'statuses', label: 'Statuses' },
-              { value: 'tags', label: 'Tags' },
-              { value: 'assignees', label: 'Assignees' },
-              { value: 'followers', label: 'Followers' },
-              { value: 'issueTags', label: 'Issue Tags' },
-              { value: 'dependencies', label: 'Dependencies' },
+              { value: 'issues', label: t('electricDiagnostics.issues') },
+              {
+                value: 'workspaces',
+                label: t('electricDiagnostics.workspaces'),
+              },
+              { value: 'statuses', label: t('electricDiagnostics.statuses') },
+              { value: 'tags', label: t('electricDiagnostics.tags') },
+              { value: 'assignees', label: t('electricDiagnostics.assignees') },
+              { value: 'followers', label: t('electricDiagnostics.followers') },
+              {
+                value: 'issueTags',
+                label: t('electricDiagnostics.issue_tags'),
+              },
+              {
+                value: 'dependencies',
+                label: t('electricDiagnostics.dependencies'),
+              },
             ]}
           />
 
@@ -1149,7 +1470,8 @@ export function ElectricTestPage() {
 
           {selectedIssue && (
             <p className="mt-base text-sm text-brand">
-              Selected issue: <strong>{selectedIssue.title}</strong>
+              {t('electricDiagnostics.selected_issue_prefix')}{' '}
+              <strong>{selectedIssue.title}</strong>
             </p>
           )}
         </div>
@@ -1159,7 +1481,7 @@ export function ElectricTestPage() {
       {isConnected && selectedIssueId && (
         <div className="bg-primary border rounded-sm p-base">
           <h3 className="text-lg font-medium text-normal mb-base">
-            Issue Collections
+            {t('electricDiagnostics.issue_collections')}{' '}
             <span className="text-sm font-normal text-low ml-base">
               ({selectedIssue?.title})
             </span>
@@ -1169,8 +1491,8 @@ export function ElectricTestPage() {
             value={activeIssueCollection}
             onChange={setActiveIssueCollection}
             options={[
-              { value: 'comments', label: 'Comments' },
-              { value: 'reactions', label: 'Reactions' },
+              { value: 'comments', label: t('electricDiagnostics.comments') },
+              { value: 'reactions', label: t('electricDiagnostics.reactions') },
             ]}
           />
 

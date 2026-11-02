@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useKanbanDisplayStore } from '@/shared/stores/useKanbanDisplayStore';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
@@ -47,6 +48,7 @@ import { WorkspacesSidebarContainer } from '@/pages/workspaces/WorkspacesSidebar
 import { WorkspacesSidebarReopenTag } from '@vibe/ui/components/WorkspacesSidebar';
 
 export function SharedAppLayout() {
+  const { t } = useTranslation('common');
   const appNavigation = useAppNavigation();
   const currentDestination = useCurrentAppDestination();
   const boardProjectId =
@@ -366,7 +368,7 @@ export function SharedAppLayout() {
               className="flex items-center gap-2 px-4 py-3 text-sm text-normal hover:bg-secondary cursor-pointer"
             >
               <LayoutIcon className="h-4 w-4" />
-              Workspaces
+              {t('workspaces.title')}
             </button>
 
             {/* Divider */}
@@ -417,7 +419,7 @@ export function SharedAppLayout() {
                   className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md text-sm text-low hover:text-normal hover:bg-secondary cursor-pointer"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  Create Project
+                  {t('appBar.createProject')}
                 </button>
               </div>
             )}

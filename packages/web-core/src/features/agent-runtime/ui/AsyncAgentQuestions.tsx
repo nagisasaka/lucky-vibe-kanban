@@ -45,14 +45,14 @@ export function AsyncAgentQuestions({
   disabled: boolean;
   onAnswer: (question: AsyncAgentQuestion, answer: string) => Promise<void>;
 }) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const storageKey = `lvk:async-questions:${scope}`;
   const [saved, setSaved] = useState(() => readAnswers(storageKey));
   const savedRef = useRef(saved);
   const [expanded, setExpanded] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
   const submissionLock = useRef(false);
-  const [error, setError] = useState<string | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const pending = questions.filter(
     (question) => !saved.answered.includes(question.id)
   );
@@ -71,7 +71,7 @@ export function AsyncAgentQuestions({
     if (!answer || disabled || submissionLock.current) return;
     submissionLock.current = true;
     setSubmitting(question.id);
-    setError(null);
+    setUnconfirmed(false);
     try {
       await onAnswer(question, answer);
       // Only an accepted delivery consumes a question. Failed sends retain the draft.
@@ -82,10 +82,8 @@ export function AsyncAgentQuestions({
       };
       delete next.drafts[question.id];
       save(next);
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : t('asyncQuestions.sendFailed')
-      );
+    } catch {
+      setUnconfirmed(true);
     } finally {
       submissionLock.current = false;
       setSubmitting(null);
@@ -104,7 +102,12 @@ export function AsyncAgentQuestions({
         aria-expanded={expanded}
         onClick={() => setExpanded(!expanded)}
       >
-        {t('asyncQuestions.pending', { count: pending.length })}
+        {t('asyncQuestions.pending', {
+          count: pending.length,
+          formattedCount: new Intl.NumberFormat(
+            i18n.resolvedLanguage || i18n.language
+          ).format(pending.length),
+        })}
       </button>
       {expanded && (
         <div className="max-h-72 space-y-base overflow-y-auto p-base">
@@ -115,10 +118,7 @@ export function AsyncAgentQuestions({
                 {question.title}
               </label>
               {question.delivery_status && (
-                <p role="status">
-                  Answer delivery unconfirmed. Inspect the Session before
-                  retrying.
-                </p>
+                <p role="status">{t('asyncQuestions.deliveryUnconfirmed')}</p>
               )}
               <div className="flex flex-wrap gap-half">
                 {question.options.map((option, index) => (
@@ -179,9 +179,9 @@ export function AsyncAgentQuestions({
               </button>
             </div>
           ))}
-          {error && (
+          {unconfirmed && (
             <p role="alert" className="text-error">
-              {error}
+              {t('asyncQuestions.deliveryUnconfirmed')}
             </p>
           )}
         </div>

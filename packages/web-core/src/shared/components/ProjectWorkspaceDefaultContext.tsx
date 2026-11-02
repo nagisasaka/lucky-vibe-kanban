@@ -94,9 +94,7 @@ export function ProjectWorkspaceDefaultContext({
             : 'px-base py-half',
         className
       )}
-      aria-label={t('projectWorkspaceDefault.label', {
-        defaultValue: 'Project default working location',
-      })}
+      aria-label={t('projectWorkspaceDefault.label')}
     >
       <Folder
         className={cn(
@@ -110,23 +108,17 @@ export function ProjectWorkspaceDefaultContext({
         <div className="flex min-w-0 items-center gap-half">
           {!isInline ? (
             <span className="shrink-0 text-xs font-medium text-normal">
-              {t('projectWorkspaceDefault.label', {
-                defaultValue: 'Project default working location',
-              })}
+              {t('projectWorkspaceDefault.label')}
             </span>
           ) : null}
           {defaultContextQuery.isLoading ? (
             <span
               className="h-3 w-48 animate-pulse rounded-sm bg-secondary"
-              aria-label={t('projectWorkspaceDefault.loading', {
-                defaultValue: 'Loading project working location',
-              })}
+              aria-label={t('projectWorkspaceDefault.loading')}
             />
           ) : defaultContextQuery.isError ? (
             <span className="truncate text-xs text-error" role="status">
-              {t('projectWorkspaceDefault.loadFailed', {
-                defaultValue: 'Unable to load',
-              })}
+              {t('projectWorkspaceDefault.loadFailed')}
             </span>
           ) : isConfigured ? (
             <Tooltip
@@ -161,9 +153,7 @@ export function ProjectWorkspaceDefaultContext({
             </Tooltip>
           ) : (
             <span className="truncate text-xs text-low">
-              {t('projectWorkspaceDefault.empty', {
-                defaultValue: 'Not configured',
-              })}
+              {t('projectWorkspaceDefault.empty')}
             </span>
           )}
         </div>
@@ -171,10 +161,7 @@ export function ProjectWorkspaceDefaultContext({
         {isPanel ? (
           <p className="mt-half text-xs leading-relaxed text-low">
             {defaultContextQuery.isError
-              ? t('projectWorkspaceDefault.loadFailedDescription', {
-                  defaultValue:
-                    'The saved working location could not be resolved. Open project settings to review it.',
-                })
+              ? t('projectWorkspaceDefault.loadFailedDescription')
               : isConfigured
                 ? t('projectWorkspaceDefault.description', {
                     defaultValue:
@@ -197,16 +184,10 @@ export function ProjectWorkspaceDefaultContext({
           'text-normal transition-colors hover:bg-secondary hover:text-high',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
         )}
-        aria-label={t('projectWorkspaceDefault.configure', {
-          defaultValue: 'Configure project working location',
-        })}
+        aria-label={t('projectWorkspaceDefault.configure')}
       >
         <Settings2 className="size-icon-xs" aria-hidden="true" />
-        {!isInline
-          ? t('projectWorkspaceDefault.configureShort', {
-              defaultValue: 'Configure',
-            })
-          : null}
+        {!isInline ? t('projectWorkspaceDefault.configureShort') : null}
       </button>
     </section>
   );

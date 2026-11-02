@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import type { WorkspaceFilePreviewTarget } from '@/features/workspace-files';
 import { ArrowLeft, GitCompare } from 'lucide-react';
@@ -21,6 +22,7 @@ export function WorkspaceFilesSurfaceContainer({
   className,
   mobile = false,
 }: WorkspaceFilesSurfaceContainerProps) {
+  const { t } = useTranslation('common');
   const { target, openTarget, clearTarget } =
     useWorkspaceFilesSelection(workspaceId);
   const { findMatchingDiffPath, viewFileInChanges } = useChangesViewActions();
@@ -54,7 +56,7 @@ export function WorkspaceFilesSurfaceContainer({
                 onClick={() => setDismissedTarget(target)}
               >
                 <ArrowLeft className="mr-half size-3" />
-                Files
+                {t('fileTree.title')}
               </Button>
               <div className="min-w-0 flex-1 truncate text-sm text-low">
                 {target.path}
@@ -67,7 +69,7 @@ export function WorkspaceFilesSurfaceContainer({
                   onClick={handleViewChanges}
                 >
                   <GitCompare className="mr-half size-3" />
-                  Changes
+                  {t('sections.changes')}
                 </Button>
               )}
             </div>
@@ -106,7 +108,7 @@ export function WorkspaceFilesSurfaceContainer({
             onClick={handleViewChanges}
           >
             <GitCompare className="mr-half size-3" />
-            View changes
+            {t('sections.viewChanges')}
           </Button>
         </div>
       )}

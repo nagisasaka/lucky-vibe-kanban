@@ -26,18 +26,18 @@ const DeleteConfigurationDialogImpl = create<DeleteConfigurationDialogProps>(
     const { t } = useTranslation(['settings', 'common']);
     const modal = useModal();
     const [isDeleting, setIsDeleting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
 
     const handleDelete = async () => {
       setIsDeleting(true);
-      setError(null);
+      setError(false);
 
       try {
         // Resolve with 'deleted' to let parent handle the deletion
         modal.resolve('deleted' as DeleteConfigurationResult);
         modal.hide();
       } catch {
-        setError('Failed to delete configuration. Please try again.');
+        setError(true);
       } finally {
         setIsDeleting(false);
       }
@@ -55,7 +55,13 @@ const DeleteConfigurationDialogImpl = create<DeleteConfigurationDialogProps>(
     };
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
+      <Dialog
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('settings.agents.deleteConfigDialog.title')}
+        open={modal.visible}
+        onOpenChange={handleOpenChange}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -71,7 +77,9 @@ const DeleteConfigurationDialogImpl = create<DeleteConfigurationDialogProps>(
 
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {t('configuration.errors.delete')}
+              </AlertDescription>
             </Alert>
           )}
 

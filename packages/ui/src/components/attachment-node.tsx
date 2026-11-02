@@ -1,3 +1,4 @@
+import { formatFileSize } from '../lib/formatFileSize';
 import { $getNodeByKey } from 'lexical';
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -56,14 +57,6 @@ function truncatePath(path: string, maxLength = 24): string {
   const filename = path.split('/').pop() || path;
   if (filename.length <= maxLength) return filename;
   return filename.slice(0, maxLength - 3) + '...';
-}
-
-function formatFileSize(bytes: bigint | number | null | undefined): string {
-  if (!bytes) return '';
-  const num = Number(bytes);
-  if (num < 1024) return `${num} B`;
-  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
-  return `${(num / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function inferFormat(
@@ -166,7 +159,7 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
     nodeKey: NodeKey;
     onDoubleClickEdit: (event: React.MouseEvent) => void;
   }): JSX.Element {
-    const { t } = useTranslation('common');
+    const { t, i18n } = useTranslation('common');
     const { src, label } = data;
     const workspaceId = useWorkspaceId();
     const sessionId = useSessionId();
@@ -202,12 +195,15 @@ export function createAttachmentNode(options: CreateAttachmentNodeOptions) {
       label || metadata?.file_name || src,
       metadata?.format
     );
-    const sizeText = formatFileSize(metadata?.size_bytes);
+    const sizeText = formatFileSize(
+      metadata?.size_bytes,
+      i18n.resolvedLanguage ?? i18n.language
+    );
     const localAttachment = localAttachments.find(
       (attachment) => attachment.path === src
     );
     const metadataLine = localAttachment?.is_pending
-      ? ['Uploading', sizeText].filter(Boolean).join(' · ')
+      ? [t('kanban.attachmentUploading'), sizeText].filter(Boolean).join(' · ')
       : metadata?.exists
         ? format && sizeText
           ? `${format} · ${sizeText}`

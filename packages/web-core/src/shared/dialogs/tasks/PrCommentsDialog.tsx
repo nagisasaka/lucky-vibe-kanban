@@ -88,7 +88,7 @@ const PrCommentsDialogImpl = create<PrCommentsDialogProps>(
     };
 
     // Check for specific error types from the API
-    const errorMessage = isError ? getErrorMessage(error) : null;
+    const errorMessage = isError ? getErrorMessage(error, t) : null;
 
     return (
       <Dialog
@@ -212,21 +212,21 @@ const PrCommentsDialogImpl = create<PrCommentsDialogProps>(
   }
 );
 
-function getErrorMessage(error: unknown): string {
+function getErrorMessage(error: unknown, t: (key: string) => string): string {
   // Check if it's an API error with error_data
   if (error && typeof error === 'object' && 'error_data' in error) {
     const errorData = (error as { error_data?: { type?: string } }).error_data;
     if (errorData?.type === 'no_pr_attached') {
-      return 'No PR is attached to this workspace. Create a PR first to see comments.';
+      return t('tasks:prCommentNotice.noPr');
     }
     if (errorData?.type === 'cli_not_installed') {
-      return 'CLI is not installed. Please install it to fetch PR comments.';
+      return t('tasks:prCommentNotice.cliMissing');
     }
     if (errorData?.type === 'cli_not_logged_in') {
-      return 'CLI is not logged in. Please authenticate to fetch PR comments.';
+      return t('tasks:prCommentNotice.cliLogin');
     }
   }
-  return 'Failed to load PR comments. Please try again.';
+  return t('tasks:prCommentNotice.unavailable');
 }
 
 export const PrCommentsDialog = defineModal<

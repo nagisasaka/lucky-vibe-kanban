@@ -1,5 +1,7 @@
 import { GeneralSettingsSection } from "../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection";
 import { SettingsDirtyProvider } from "../../packages/web-core/src/shared/dialogs/settings/settings/SettingsDirtyContext";
+import enCommon from "../../packages/web-core/src/i18n/locales/en/common.json";
+import enSettings from "../../packages/web-core/src/i18n/locales/en/settings.json";
 import common from "../../packages/web-core/src/i18n/locales/ja/common.json";
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -57,9 +59,13 @@ api.resolve = async (kind: string, id: string, request: any) => {
 };
 void i18n.use(initReactI18next).init({
   lng: "ja",
-  resources: { ja: { settings, common } },
+  resources: {
+    ja: { settings, common },
+    en: { settings: enSettings, common: enCommon },
+  },
   initImmediate: false,
 });
+api.__setUiLanguage = (locale: string) => i18n.changeLanguage(locale);
 const load = async () =>
   ({ config: structuredClone(api.saved) }) as UserSystemInfo;
 const save = async (config: Config) => {

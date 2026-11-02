@@ -1,10 +1,10 @@
 import { useId } from 'react';
 import type { WorkflowNodeData } from '../model/workflowGraph';
-import type { WorkflowNodeFieldSchema } from '../model/workflowNodeSchemas';
+import type { ResolvedWorkflowNodeFieldSchema } from '../model/workflowNodeSchemas';
 
 interface WorkflowNodeFieldRendererProps {
   data: WorkflowNodeData;
-  field: WorkflowNodeFieldSchema;
+  field: ResolvedWorkflowNodeFieldSchema;
   inputClassName: string;
   readOnly?: boolean;
   onChange: (key: keyof WorkflowNodeData, value: unknown) => void;

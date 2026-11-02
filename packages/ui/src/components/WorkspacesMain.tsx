@@ -74,8 +74,8 @@ export function WorkspacesMain({
               type="button"
               onClick={() => onScrollToBottom?.('auto')}
               className="absolute bottom-2 right-4 z-10 pointer-events-auto flex items-center justify-center size-8 rounded-full bg-secondary/80 backdrop-blur-sm border border-secondary text-low hover:text-normal hover:bg-secondary shadow-md transition-all"
-              aria-label="Scroll to bottom"
-              title="Scroll to bottom"
+              aria-label={t('common:workspaces.scrollToBottom')}
+              title={t('common:workspaces.scrollToBottom')}
             >
               <ArrowDownIcon className="size-icon-base" weight="bold" />
             </button>

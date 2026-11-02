@@ -171,11 +171,13 @@ export function SettingsCard({
 // SettingsField - A labeled field wrapper
 export function SettingsField({
   label,
+  htmlFor,
   description,
   error,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   description?: React.ReactNode;
   error?: string | null;
   children: React.ReactNode;
@@ -183,7 +185,9 @@ export function SettingsField({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="text-sm font-medium text-normal">{label}</label>
+        <label htmlFor={htmlFor} className="text-sm font-medium text-normal">
+          {label}
+        </label>
       )}
       {children}
       {error && <p className="text-sm text-error">{error}</p>}
@@ -241,6 +245,7 @@ export function SettingsCheckbox({
 
 // SettingsSelect - A dropdown select component
 export function SettingsSelect<T extends string>({
+  id,
   value,
   options,
   actions,
@@ -249,6 +254,7 @@ export function SettingsSelect<T extends string>({
   disabled,
   className,
 }: {
+  id?: string;
   value: T | undefined;
   options: { value: T; label: string }[];
   actions?: { label: string; icon?: Icon; onClick: () => void }[];
@@ -263,6 +269,7 @@ export function SettingsSelect<T extends string>({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <DropdownMenuTriggerButton
+          id={id}
           label={selectedOption?.label || placeholder}
           className={cn('w-full justify-between', className)}
           disabled={disabled || !hasMenuItems}
@@ -315,6 +322,7 @@ export function SettingsInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
+      aria-invalid={error || undefined}
       className={cn(
         'w-full bg-secondary border rounded-sm px-base py-half text-sm text-high',
         'placeholder:text-low placeholder:opacity-80 focus:outline-none focus:ring-1 focus:ring-brand',

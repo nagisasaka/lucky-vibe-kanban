@@ -50,7 +50,7 @@ function RebaseDialogContent({
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [selectedUpstream, setSelectedUpstream] = useState<string>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [hasInitializedBranches, setHasInitializedBranches] = useState(false);
 
   const git = useGitOperations(workspaceId, repoId);
@@ -171,7 +171,7 @@ function RebaseDialogContent({
   const handleConfirm = async () => {
     if (!selectedBranch) return;
 
-    setError(null);
+    setError(false);
     try {
       await git.actions.rebase({
         repoId,
@@ -213,22 +213,8 @@ function RebaseDialogContent({
         return;
       }
 
-      // Handle other errors
-      let message = 'Failed to rebase';
-      if (err && typeof err === 'object') {
-        // Handle Result<void, GitOperationError> structure
-        if (
-          'error' in err &&
-          err.error &&
-          typeof err.error === 'object' &&
-          'message' in err.error
-        ) {
-          message = String(err.error.message);
-        } else if ('message' in err && err.message) {
-          message = String(err.message);
-        }
-      }
-      setError(message);
+      // Typed conflict/in-progress paths above retain their dedicated handling.
+      setError(true);
     }
   };
 
@@ -306,7 +292,11 @@ function RebaseDialogContent({
                 </div>
               )}
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p className="text-sm text-destructive">
+                {t('gitNotice.rebaseUnconfirmed')}
+              </p>
+            )}
           </div>
         )}
 

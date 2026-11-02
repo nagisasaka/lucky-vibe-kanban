@@ -30,8 +30,14 @@ export function IntegrationFacts({ workspace }: { workspace: Workspace }) {
       )}
       {run.payload.evidence.map((e) => (
         <p key={e.request_id}>
-          {t(`integrationFacts.${e.result}`, { defaultValue: e.result })}:{' '}
-          <code>{e.code_commit}</code>
+          {e.result === 'passed'
+            ? t('integrationFacts.passed')
+            : e.result === 'failed'
+              ? t('integrationFacts.failed')
+              : e.result === 'skipped'
+                ? t('integrationFacts.skipped')
+                : e.result}
+          : <code>{e.code_commit}</code>
           {' · '}
           {e.command ?? t('integrationFacts.validation')}
           {' · '}

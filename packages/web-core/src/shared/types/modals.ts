@@ -1,4 +1,4 @@
-import type { ConfirmDialogProps } from '@/shared/dialogs/shared/ConfirmDialog';
+import type { ConfirmDialogProps } from '@vibe/ui/components/ConfirmDialog';
 import type { EditorSelectionDialogProps } from '@/shared/dialogs/command-bar/EditorSelectionDialog';
 
 // Type definitions for nice-modal-react modal arguments

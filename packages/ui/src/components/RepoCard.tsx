@@ -31,16 +31,6 @@ export type RepoAction =
   | 'rebase'
   | 'push';
 
-const repoActionOptions: SplitButtonOption<RepoAction>[] = [
-  {
-    value: 'pull-request',
-    label: 'Open pull request',
-    icon: GitPullRequestIcon,
-  },
-  { value: 'link-pr', label: 'Link pull request', icon: LinkIcon },
-  { value: 'merge', label: 'Merge', icon: GitMergeIcon },
-];
-
 interface RepoCardProps {
   readOnly?: boolean;
   repoId: string;
@@ -89,7 +79,8 @@ export function RepoCard({
   onPushClick,
   onMoreClick,
 }: RepoCardProps) {
-  const { t } = useTranslation('tasks');
+  const { t, i18n } = useTranslation('tasks');
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage ?? 'en');
   const { t: tCommon } = useTranslation('common');
 
   // Hide "Open pull request" and "Link pull request" when PR is already open
@@ -97,17 +88,27 @@ export function RepoCard({
   // Hide "merge" option when PR is already open or target branch is remote
   const hasPrOpen = prStatus === 'open';
   const hasPrLinked = !!prNumber;
-  const availableActionOptions = useMemo(
-    () =>
-      repoActionOptions.filter((opt) => {
-        if (opt.value === 'pull-request' && hasPrOpen) return false;
-        if (opt.value === 'link-pr' && hasPrLinked) return false;
-        if (opt.value === 'merge' && (hasPrOpen || isTargetRemote))
-          return false;
-        return true;
-      }),
-    [hasPrOpen, hasPrLinked, isTargetRemote]
-  );
+  const availableActionOptions = useMemo(() => {
+    const options: SplitButtonOption<RepoAction>[] = [
+      {
+        value: 'pull-request',
+        label: t('repoCard.openPullRequest'),
+        icon: GitPullRequestIcon,
+      },
+      {
+        value: 'link-pr',
+        label: t('repoCard.linkPullRequest'),
+        icon: LinkIcon,
+      },
+      { value: 'merge', label: t('repoCard.merge'), icon: GitMergeIcon },
+    ];
+    return options.filter((opt) => {
+      if (opt.value === 'pull-request' && hasPrOpen) return false;
+      if (opt.value === 'link-pr' && hasPrLinked) return false;
+      if (opt.value === 'merge' && (hasPrOpen || isTargetRemote)) return false;
+      return true;
+    });
+  }, [hasPrOpen, hasPrLinked, isTargetRemote, t]);
 
   // If current selection is unavailable, fall back to the first available option.
   const effectiveSelectedAction = useMemo(() => {
@@ -162,13 +163,13 @@ export function RepoCard({
         {commitsAhead > 0 && (
           <span className="inline-flex items-center gap-0.5 text-xs text-success shrink-0">
             <ArrowUpIcon className="size-icon-xs" weight="bold" />
-            <span className="font-medium">{commitsAhead}</span>
+            <span className="font-medium">{number.format(commitsAhead)}</span>
           </span>
         )}
         {commitsBehind > 0 && (
           <span className="inline-flex items-center gap-0.5 text-xs text-error shrink-0">
             <ArrowDownIcon className="size-icon-xs" weight="bold" />
-            <span className="font-medium">{commitsBehind}</span>
+            <span className="font-medium">{number.format(commitsBehind)}</span>
           </span>
         )}
 

@@ -34,7 +34,7 @@ export function RetryEditorInline({
   const { profiles } = useUserSystem();
 
   const [message, setMessage] = useState(initialContent);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState(false);
 
   // Get sessionId from attempt's session
   const sessionId = attempt.session?.id;
@@ -56,7 +56,7 @@ export function RetryEditorInline({
   const retryMutation = useRetryProcess(
     sessionId ?? '',
     () => onCancelled?.(),
-    (err) => setSendError((err as Error)?.message || 'Failed to send retry')
+    () => setSendError(true)
   );
 
   const isSending = retryMutation.isPending;
@@ -69,7 +69,7 @@ export function RetryEditorInline({
 
   const onSend = useCallback(() => {
     if (!canSend || !processProfile) return;
-    setSendError(null);
+    setSendError(false);
     retryMutation.mutate({
       message,
       executor: processProfile.executor,
@@ -145,7 +145,7 @@ export function RetryEditorInline({
     <div className="space-y-2">
       <div className="relative">
         <WYSIWYGEditor
-          placeholder="Edit and resend your message..."
+          placeholder={t('conversation.editResendPlaceholder')}
           value={message}
           onChange={setMessage}
           disabled={isSending}
@@ -180,8 +180,8 @@ export function RetryEditorInline({
             variant="outline"
             onClick={handleAttachClick}
             disabled={isSending}
-            title="Attach file"
-            aria-label="Attach file"
+            title={t('kanban.attachFile')}
+            aria-label={t('kanban.attachFile')}
           >
             <Paperclip className="h-3 w-3" />
           </Button>
@@ -191,7 +191,7 @@ export function RetryEditorInline({
           </Button>
           <Button onClick={onSend} disabled={!canSend || isSending}>
             <Send className="h-3 w-3 mr-1" />{' '}
-            {t('buttons.send', { ns: 'common', defaultValue: 'Send' })}
+            {t('buttons.send', { ns: 'common' })}
           </Button>
         </div>
       </div>
@@ -199,7 +199,9 @@ export function RetryEditorInline({
       {sendError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{sendError}</AlertDescription>
+          <AlertDescription>
+            {t('conversation.retryUnconfirmed')}
+          </AlertDescription>
         </Alert>
       )}
     </div>

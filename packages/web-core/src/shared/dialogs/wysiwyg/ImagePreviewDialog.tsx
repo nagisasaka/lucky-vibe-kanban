@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import {
   Dialog,
@@ -9,7 +10,7 @@ import {
 import { create, useModal } from '@ebay/nice-modal-react';
 import { Loader2 } from 'lucide-react';
 import { defineModal } from '@/shared/lib/modals';
-import { formatFileSize } from '@/shared/lib/utils';
+import { formatFileSize } from '@vibe/ui/lib/formatFileSize';
 
 export interface ImagePreviewDialogProps {
   imageUrl: string;
@@ -21,6 +22,7 @@ export interface ImagePreviewDialogProps {
 
 const ImagePreviewDialogImpl = create<ImagePreviewDialogProps>((props) => {
   const modal = useModal();
+  const { i18n } = useTranslation('common');
   const { imageUrl, altText, fileName, format, sizeBytes } = props;
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -33,7 +35,10 @@ const ImagePreviewDialogImpl = create<ImagePreviewDialogProps>((props) => {
   if (format) {
     metadataParts.push(format.toUpperCase());
   }
-  const sizeStr = formatFileSize(sizeBytes);
+  const sizeStr = formatFileSize(
+    sizeBytes,
+    i18n.resolvedLanguage ?? i18n.language
+  );
   if (sizeStr) {
     metadataParts.push(sizeStr);
   }

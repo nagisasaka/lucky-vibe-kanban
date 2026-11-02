@@ -9,11 +9,13 @@ test("token registration, rotation, permission error and removal never reveal sa
   ];
   const saves: Array<{ repository: string; token: string }> = [];
   let denyCheck = false;
+  let reads = 0;
   await page.route(
     "**/api/repos/test-repo/github-credentials{,/check}",
     async (route) => {
       const request = route.request();
       const body = request.method() === "GET" ? null : request.postDataJSON();
+      if (request.method() === "GET") reads++;
       if (request.method() === "PUT") {
         saves.push(body);
         entries.find((e) => e.repository === body.repository)!.configured =
@@ -24,10 +26,10 @@ test("token registration, rotation, permission error and removal never reveal sa
           false;
       if (request.method() === "POST" && denyCheck) {
         await route.fulfill({
-          status: 400,
+          status: 403,
           json: {
             success: false,
-            message: "GitHub returned HTTP 403. Check token permissions.",
+            message: "private provider detail /internal/token",
           },
         });
         return;
@@ -53,13 +55,31 @@ test("token registration, rotation, permission error and removal never reveal sa
     repository: "owner/first",
     token: "github_pat_test_initial",
   });
+  const readsBeforeLocale = reads;
+  await page.evaluate(() => (window as any).__setUiLanguage("ja"));
+  await expect(
+    page.getByText("トークン登録済み（内容は表示しません）。", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("combobox")).toHaveValue("owner/first");
+  await page.evaluate(() => (window as any).__setUiLanguage("en"));
+  expect(reads).toBe(readsBeforeLocale);
   await page.getByRole("button", { name: "Check connection" }).click();
   await expect(
     page.getByText(/write permissions have not been tested/),
   ).toBeVisible();
   denyCheck = true;
   await page.getByRole("button", { name: "Check connection" }).click();
-  await expect(page.getByRole("alert")).toContainText("403");
+  await expect(page.getByRole("alert")).toHaveText(
+    "Authentication management access is required to change or check GitHub credentials.",
+  );
+  await expect(page.locator("body")).not.toContainText(
+    "private provider detail",
+  );
+  await page.evaluate(() => (window as any).__setUiLanguage("ja"));
+  await expect(page.getByRole("alert")).toHaveText(
+    "GitHub認証情報の変更・接続確認には認証管理の権限が必要です。",
+  );
+  await page.evaluate(() => (window as any).__setUiLanguage("en"));
   await input.fill("github_pat_test_replacement");
   await page.getByRole("button", { name: "Replace token" }).click();
   await expect(input).toHaveValue("");
@@ -71,7 +91,12 @@ test("token registration, rotation, permission error and removal never reveal sa
     page.getByRole("button", { name: "Check connection" }),
   ).toBeDisabled();
   await page.getByRole("combobox").selectOption("owner/first");
-  page.once("dialog", (dialog) => dialog.accept());
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain(
+      "This does not revoke the token on GitHub.",
+    );
+    await dialog.accept();
+  });
   await page.getByRole("button", { name: "Remove token" }).click();
   await expect(page.getByText(/No LVK token registered/)).toBeVisible();
   await expect(page.locator("body")).not.toContainText(

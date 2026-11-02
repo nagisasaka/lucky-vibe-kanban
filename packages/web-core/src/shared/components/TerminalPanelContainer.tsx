@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
 import { useWorkspaceContext } from '@/shared/hooks/useWorkspaceContext';
 import { useTerminal } from '@/shared/hooks/useTerminal';
@@ -5,6 +6,7 @@ import { TerminalPanel } from '@vibe/ui/components/TerminalPanel';
 import { XTermInstance } from './XTermInstance';
 
 export function TerminalPanelContainer() {
+  const { t } = useTranslation('common');
   const { workspace } = useWorkspaceContext();
   const {
     getTabsForWorkspace,
@@ -53,9 +55,7 @@ export function TerminalPanelContainer() {
 
   if (!interactive)
     return (
-      <p className="p-base text-low">
-        Interactive terminals are unavailable in execution-only workspaces.
-      </p>
+      <p className="p-base text-low">{t('workspaces.terminalUnavailable')}</p>
     );
 
   return (

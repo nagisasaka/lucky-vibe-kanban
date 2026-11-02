@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { currentLocalUserId } from '@/shared/lib/localIdentity';
 
@@ -38,36 +39,36 @@ async function endpointHash(endpoint: string) {
     .join('');
 }
 
-const pushEvents = [
-  {
-    bit: 1,
-    label: '仕様質問待ち',
-    description: 'Codexが回答を必要とする質問を出したとき。',
-  },
-  {
-    bit: 2,
-    label: '実行承認待ち',
-    description: 'Codexの操作が承認待ちになったとき。',
-  },
-  {
-    bit: 4,
-    label: 'Run成功',
-    description:
-      'CodexのRunが成功で終了したとき。テスト合格・自動マージ・公開の完了とは別です。',
-  },
-  {
-    bit: 8,
-    label: 'Run失敗・異常終了',
-    description: 'Runが失敗、クラッシュ、監査失敗で終了したとき。',
-  },
-  {
-    bit: 16,
-    label: 'Runキャンセル',
-    description: 'Runがキャンセルで終了したとき。',
-  },
-];
-
 export function WebPushSettings() {
+  const { t, i18n } = useTranslation('settings');
+  const pushEvents = [
+    {
+      bit: 1,
+      label: t('notifications.web.question.label'),
+      description: t('notifications.web.question.description'),
+    },
+    {
+      bit: 2,
+      label: t('notifications.web.approval.label'),
+      description: t('notifications.web.approval.description'),
+    },
+    {
+      bit: 4,
+      label: t('notifications.web.success.label'),
+      description: t('notifications.web.success.description'),
+    },
+    {
+      bit: 8,
+      label: t('notifications.web.failure.label'),
+      description: t('notifications.web.failure.description'),
+    },
+    {
+      bit: 16,
+      label: t('notifications.web.canceled.label'),
+      description: t('notifications.web.canceled.description'),
+    },
+  ];
+
   const supported =
     window.isSecureContext &&
     'serviceWorker' in navigator &&
@@ -77,7 +78,9 @@ export function WebPushSettings() {
   const [project, setProject] = useState('');
   const [hash, setHash] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<
+    'loadFailed' | 'actionUnconfirmed' | 'permissionDenied' | null
+  >(null);
   const refresh = useCallback(async () => {
     const next = await request<Status>();
     setStatus(next);
@@ -89,18 +92,18 @@ export function WebPushSettings() {
     }
   }, [supported]);
   useEffect(() => {
-    void refresh().catch((e: Error) => setError(e.message));
+    void refresh().catch(() => setError('loadFailed'));
   }, [refresh]);
   const enable = async () => {
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       // Must precede awaits that lose the user gesture on Safari.
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted')
-        throw new Error(
-          '通知が許可されていません。ブラウザのサイト設定から変更できます。'
-        );
+      if (permission !== 'granted') {
+        setError('permissionDenied');
+        return;
+      }
       await navigator.serviceWorker.register('/lvk-push-sw.js', {
         scope: '/',
         updateViaCache: 'none',
@@ -129,19 +132,20 @@ export function WebPushSettings() {
       });
       await request('', {
         project_id: project,
+        locale: i18n.resolvedLanguage ?? i18n.language,
         subscription: subscription.toJSON(),
       });
       localStorage.setItem(ownerKey, owner);
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError('actionUnconfirmed');
     } finally {
       setBusy(false);
     }
   };
   const disable = async (item: Registration) => {
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       // Server removal first; a failed API call must not pretend delivery stopped.
       await request(`/${item.id}`, {});
@@ -157,39 +161,35 @@ export function WebPushSettings() {
       }
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError('actionUnconfirmed');
     } finally {
       setBusy(false);
     }
   };
   const saveEvents = async (item: Registration, event_mask: number) => {
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       await request(`/${item.id}/events`, { event_mask });
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError('actionUnconfirmed');
     } finally {
       setBusy(false);
     }
   };
   return (
     <div className="space-y-base">
-      <p className="text-high">ブラウザのWeb Push通知</p>
-      <p className="text-sm text-low">
-        ユーザー・Project・登録端末ごとに、Codexの質問・承認待ち・Run終了を通知します。イベントの変更はすぐに保存され、その登録だけに適用されます。Issue名や質問本文は通知に表示しません。通知を拒否してもLVKは使えます。
-      </p>
+      <p className="text-high">{t('notifications.web.title')}</p>
+      <p className="text-sm text-low">{t('notifications.web.scope')}</p>
       {!supported ? (
-        <p>
-          この環境では利用できません。HTTPSの対応ブラウザを使用してください。
-        </p>
+        <p>{t('notifications.web.unsupported')}</p>
       ) : !status?.public_key ? (
-        <p>サーバーのWeb Push設定が必要です。</p>
+        <p>{t('notifications.web.serverRequired')}</p>
       ) : (
         <div className="flex flex-wrap items-center gap-base">
           <select
-            aria-label="通知するProject"
+            aria-label={t('notifications.web.project')}
             value={project}
             onChange={(e) => setProject(e.target.value)}
             className="rounded border bg-primary p-half"
@@ -206,7 +206,7 @@ export function WebPushSettings() {
             onClick={() => void enable()}
             className="rounded border bg-secondary text-high px-base py-half disabled:opacity-50"
           >
-            この端末でON / 再登録
+            {t('notifications.web.enable')}
           </button>
         </div>
       )}
@@ -217,8 +217,10 @@ export function WebPushSettings() {
               r.project_id}{' '}
             —{' '}
             {r.endpoint_hash === hash
-              ? 'この端末'
-              : `登録端末 ${r.id.slice(0, 8)}`}
+              ? t('notifications.web.thisDevice')
+              : t('notifications.web.registeredDevice', {
+                  id: r.id.slice(0, 8),
+                })}
           </span>
           <button
             type="button"
@@ -226,10 +228,12 @@ export function WebPushSettings() {
             onClick={() => void disable(r)}
             className="rounded border bg-secondary text-high px-base py-half"
           >
-            OFF / 購読解除
+            {t('notifications.web.disable')}
           </button>
           <fieldset className="space-y-base" disabled={busy}>
-            <legend className="text-high">通知するイベント</legend>
+            <legend className="text-high">
+              {t('notifications.web.events')}
+            </legend>
             {pushEvents.map((event) => (
               <label key={event.bit} className="flex items-start gap-base">
                 <input
@@ -252,17 +256,13 @@ export function WebPushSettings() {
               </label>
             ))}
           </fieldset>
-          <p className="text-low">
-            全イベントOFFは登録を残して通知だけを停止します。購読解除はこの登録を削除します。質問・承認の操作はLVK内に残ります。再登録は選択を維持し、解除後の新規登録は全イベントONです。過去の通知は再送しません。
-          </p>
+          <p className="text-low">{t('notifications.web.allOffHint')}</p>
         </div>
       ))}
-      <p className="text-sm text-low">
-        iPhone/iPadはホーム画面に追加したWebアプリが必要です。省電力・集中モード・ブラウザ終了などで通知が遅延/不達になる場合があります。ログアウト後も通知登録は続きます。停止はOFF、詳細を見るにはログインが必要です。登録は90日で期限切れになります。
-      </p>
+      <p className="text-sm text-low">{t('notifications.web.deviceHint')}</p>
       {error && (
         <p role="alert" className="text-error">
-          {error}
+          {t(`notifications.web.${error}`)}
         </p>
       )}
     </div>

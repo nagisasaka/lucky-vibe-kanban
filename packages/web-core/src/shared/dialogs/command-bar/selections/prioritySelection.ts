@@ -1,17 +1,9 @@
 import type { IssuePriority } from 'shared/remote-types';
-import type { PriorityItem } from '@/shared/types/selectionItems';
 import type { SelectionPage } from '../SelectionDialog';
 
 export interface PrioritySelectionResult {
   priority: IssuePriority | null;
 }
-
-const PRIORITY_ITEMS: PriorityItem[] = [
-  { id: 'urgent', name: 'Urgent' },
-  { id: 'high', name: 'High' },
-  { id: 'medium', name: 'Medium' },
-  { id: 'low', name: 'Low' },
-];
 
 export function buildPrioritySelectionPages(): Record<
   string,
@@ -20,11 +12,16 @@ export function buildPrioritySelectionPages(): Record<
   return {
     selectPriority: {
       id: 'selectPriority',
-      title: 'Select Priority',
-      buildGroups: () => [
+      title: (t) => t('tasks:selections.selectPriority'),
+      buildGroups: (t) => [
         {
-          label: 'Priority',
-          items: PRIORITY_ITEMS.map((p) => ({
+          label: t('tasks:selections.priority'),
+          items: [
+            { id: 'urgent' as const, name: t('tasks:selections.urgent') },
+            { id: 'high' as const, name: t('tasks:selections.high') },
+            { id: 'medium' as const, name: t('tasks:selections.medium') },
+            { id: 'low' as const, name: t('tasks:selections.low') },
+          ].map((p) => ({
             type: 'priority' as const,
             priority: p,
           })),

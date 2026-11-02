@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -32,15 +32,17 @@ export interface ChangeTargetDialogProps {
 const ChangeTargetDialogImpl = NiceModal.create<ChangeTargetDialogProps>(
   ({ branches, onChangeTargetBranch }) => {
     const modal = useModal();
+    const titleId = useId();
+    const descriptionId = useId();
     const { t } = useTranslation(['tasks', 'common']);
     const [selectedBranch, setSelectedBranch] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [unconfirmed, setUnconfirmed] = useState(false);
 
     useEffect(() => {
       if (!modal.visible) return;
       setSelectedBranch(branches[0]?.name ?? '');
-      setError(null);
+      setUnconfirmed(false);
       setIsSubmitting(false);
     }, [branches, modal.visible]);
 
@@ -48,16 +50,12 @@ const ChangeTargetDialogImpl = NiceModal.create<ChangeTargetDialogProps>(
       if (!selectedBranch) return;
 
       setIsSubmitting(true);
-      setError(null);
+      setUnconfirmed(false);
       try {
         await onChangeTargetBranch(selectedBranch);
         modal.hide();
-      } catch (err) {
-        const message =
-          err && typeof err === 'object' && 'message' in err
-            ? String(err.message)
-            : 'Failed to change target branch';
-        setError(message);
+      } catch {
+        setUnconfirmed(true);
       } finally {
         setIsSubmitting(false);
       }
@@ -74,11 +72,20 @@ const ChangeTargetDialogImpl = NiceModal.create<ChangeTargetDialogProps>(
     };
 
     return (
-      <Dialog open={modal.visible} onOpenChange={handleOpenChange}>
+      <Dialog
+        open={modal.visible}
+        onOpenChange={handleOpenChange}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('branches.changeTarget.dialog.title')}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle id={titleId}>
+              {t('branches.changeTarget.dialog.title')}
+            </DialogTitle>
+            <DialogDescription id={descriptionId}>
               {t('branches.changeTarget.dialog.description')}
             </DialogDescription>
           </DialogHeader>
@@ -99,14 +106,18 @@ const ChangeTargetDialogImpl = NiceModal.create<ChangeTargetDialogProps>(
                     <SelectItem key={branch.name} value={branch.name}>
                       {branch.name}
                       {branch.isCurrent
-                        ? ` (${t('branchSelector.badges.current')})`
+                        ? ` (${t('common:branchSelector.badges.current')})`
                         : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {unconfirmed && (
+              <p role="alert" className="text-sm text-error">
+                {t('branches.changeTarget.dialog.unconfirmed')}
+              </p>
+            )}
           </div>
 
           <DialogFooter>

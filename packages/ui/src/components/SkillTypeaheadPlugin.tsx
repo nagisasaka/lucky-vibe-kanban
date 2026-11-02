@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
@@ -69,6 +70,7 @@ export function SkillTypeaheadPlugin({
   onSelectSkill: (skill: SelectedSkillLike) => void;
 }) {
   const [editor] = useLexicalComposerContext();
+  const { t } = useTranslation('common');
   const { setIsOpen } = useTypeaheadOpen();
   const [options, setOptions] = useState<SkillOption[]>([]);
   const [activeQuery, setActiveQuery] = useState<string | null>(null);
@@ -160,16 +162,18 @@ export function SkillTypeaheadPlugin({
           >
             <TypeaheadMenu.Header>
               <SparkleIcon className="size-icon-xs" weight="bold" />
-              技能
+              {t('skillPicker.title')}
             </TypeaheadMenu.Header>
 
             {isEmpty ? (
-              <TypeaheadMenu.Empty>暂无可用技能</TypeaheadMenu.Empty>
+              <TypeaheadMenu.Empty>
+                {t('skillPicker.empty')}
+              </TypeaheadMenu.Empty>
             ) : options.length === 0 && !showLoadingRow ? null : (
               <TypeaheadMenu.ScrollArea>
                 {showLoadingRow && (
                   <div className="px-base py-half text-sm text-low select-none">
-                    正在加载技能...
+                    {t('skillPicker.loading')}
                   </div>
                 )}
                 {options.map((option, index) => {

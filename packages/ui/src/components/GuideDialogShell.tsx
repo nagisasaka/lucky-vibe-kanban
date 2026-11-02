@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, type ReactNode } from 'react';
 import { CaretLeftIcon, XIcon } from '@phosphor-icons/react';
 import { cn } from '../lib/cn';
@@ -23,6 +24,7 @@ export function GuideDialogShell({
   onClose,
   className,
 }: GuideDialogShellProps) {
+  const { t } = useTranslation('common');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mobileShowContent, setMobileShowContent] = useState(false);
 
@@ -73,9 +75,12 @@ export function GuideDialogShell({
           >
             {/* Header with mobile close button */}
             <div className="p-3 flex items-center justify-between md:hidden">
-              <span className="text-sm font-medium text-high">Topics</span>
+              <span className="text-sm font-medium text-high">
+                {t('guide.topics')}
+              </span>
               <button
                 onClick={onClose}
+                aria-label={closeLabel}
                 className="p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
               >
                 <XIcon className="h-4 w-4" weight="bold" />
@@ -115,13 +120,17 @@ export function GuideDialogShell({
             <div className="flex items-center gap-2 p-3 border-b border-border/50 md:hidden">
               <button
                 onClick={() => setMobileShowContent(false)}
+                aria-label={t('guide.back')}
                 className="p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
               >
                 <CaretLeftIcon className="h-4 w-4" weight="bold" />
               </button>
-              <span className="text-sm font-medium text-high">Back</span>
+              <span className="text-sm font-medium text-high">
+                {t('guide.back')}
+              </span>
               <button
                 onClick={onClose}
+                aria-label={closeLabel}
                 className="ml-auto p-1 rounded-sm hover:bg-secondary text-low hover:text-normal"
               >
                 <XIcon className="h-4 w-4" weight="bold" />
@@ -130,6 +139,7 @@ export function GuideDialogShell({
             {/* Desktop close button */}
             <button
               onClick={onClose}
+              aria-label={closeLabel}
               className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-panel transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 hidden md:block"
             >
               <XIcon className="h-4 w-4 text-normal" />

@@ -7,7 +7,7 @@ import {
   hasChangedFiles,
   isAgentSettingsDraftDirty,
 } from './agentSettingsModel';
-import { formatAgentSettingOperationError } from './machineClient';
+import { agentSettingsErrorCode } from './agentSettingsTranslations';
 
 function snapshot(overrides: Partial<SettingsSnapshot> = {}): SettingsSnapshot {
   return {
@@ -167,7 +167,7 @@ describe('agent settings model', () => {
       missing: 'missing',
     });
     expect(
-      formatAgentSettingOperationError({
+      agentSettingsErrorCode({
         error_data: {
           code: 'stale_revision',
           message: 'The file changed.',
@@ -175,7 +175,7 @@ describe('agent settings model', () => {
           recovery: 'Refresh and retry.',
         },
       })
-    ).toContain('stale_revision');
+    ).toBe('stale_revision');
   });
 
   it('recognizes an empty diff as safe to skip confirmation', () => {
