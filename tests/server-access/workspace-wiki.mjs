@@ -4,10 +4,18 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdir, mkdtemp, rm, writeFile, open } from 'node:fs/promises';
+import {
+  mkdir,
+  mkdtemp,
+  rm,
+  readFile,
+  writeFile,
+  open,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { createServer } from 'node:net';
+import { request } from 'node:http';
 import { chromium, expect } from '@playwright/test';
 
 const evidence = resolve(process.argv[2] || 'test-results/project-utilities');
@@ -46,6 +54,7 @@ const exited = once(server, 'exit');
 let csrf;
 let browser;
 let page;
+const unrelatedJobs = [];
 const results = {
   base,
   fixture:
@@ -276,6 +285,18 @@ try {
     if (socket.url().includes('/api/terminal/ws')) terminalSockets++;
   });
   page.on('pageerror', (error) => errors.push(error.message));
+  await context.addInitScript(() => {
+    const Original = window.WebSocket;
+    window.__terminalSockets = [];
+    window.WebSocket = class extends Original {
+      constructor(...args) {
+        super(...args);
+        if (String(args[0]).includes('/api/terminal/ws'))
+          window.__terminalSockets.push(this);
+      }
+    };
+  });
+
   // Only account quota is stubbed: never contact real provider accounts in E2E.
   await page.route('**/api/provider-usage/read', (route) =>
     route.fulfill({
@@ -290,18 +311,20 @@ try {
     page.locator('header [data-testid="resource-summary"]')
   ).toHaveCount(0);
   await page.getByRole('button', { name: /Hide Right Sidebar/ }).click();
-  await expect(panel).toHaveCount(0);
+  await expect(panel).toBeHidden();
   await page.getByRole('button', { name: /Show Right Sidebar/ }).click();
   await expect(panel).toBeVisible();
   await page.getByRole('button', { name: 'Open Wiki', exact: true }).click();
   const nav = page.getByRole('navigation', { name: 'Wiki pages' });
   await expect(nav).toBeVisible();
   await expect(
-    page.getByRole('combobox', { name: 'Repository' }).locator('option')
+    page
+      .getByRole('combobox', { name: 'Wiki repository', exact: true })
+      .locator('option')
   ).toHaveCount(1);
-  await expect(page.getByRole('combobox', { name: 'Repository' })).toHaveValue(
-    repo.id
-  );
+  await expect(
+    page.getByRole('combobox', { name: 'Wiki repository', exact: true })
+  ).toHaveValue(repo.id);
   await nav.getByRole('button', { name: 'index', exact: true }).click();
   const article = page.getByRole('region', { name: 'Wiki article' });
   await expect(article).toContainText('Wiki E2E Home');
@@ -338,49 +361,387 @@ try {
     page.getByText('Not Started', { exact: true }).first()
   ).toBeVisible();
   check('Main file reuses preview while keeping board');
-  const sidebar = panel.locator('..');
-  const beforeTerminal = terminalSockets;
-  await sidebar.getByRole('button', { name: 'Terminal', exact: true }).click();
-  await expect(sidebar.locator('.xterm')).toBeVisible();
-  const output = await page.evaluate(
-    async ({ project, repo }) => {
-      const access = await (await fetch('/api/access/status')).json();
-      return new Promise((resolve, reject) => {
-        const socket = new WebSocket(
-          `ws://${location.host}/api/terminal/ws?project_id=${project}&repo_id=${repo}&cols=80&rows=24&csrf=${encodeURIComponent(access.csrf)}`
+  async function terminalLifecycle(view) {
+    const sockets = () => page.evaluate(() => window.__terminalSockets.length);
+    const send = (data) =>
+      page.evaluate((data) => {
+        const socket = window.__terminalSockets.at(-1);
+        if (!socket || socket.readyState !== WebSocket.OPEN)
+          throw new Error('Owned terminal is not open');
+        socket.send(JSON.stringify({ type: 'input', data: btoa(data) }));
+      }, data);
+    const header = () =>
+      page
+        .getByRole('button', { name: 'Terminal', exact: true })
+        .filter({ visible: true });
+    const open = async () => {
+      const before = await sockets();
+      await expect(header()).toHaveAttribute('aria-expanded', 'false');
+      await header().click();
+      await expect
+        .poll(() =>
+          page.evaluate(() => window.__terminalSockets.at(-1)?.readyState)
+        )
+        .toBe(1);
+      assert.equal(await sockets(), before + 1);
+      return before + 1;
+    };
+    const isRunning = async (pid) => {
+      try {
+        const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
+        return !['Z', 'X'].includes(
+          stat.slice(stat.lastIndexOf(')') + 2).split(' ')[0]
         );
-        let text = '';
-        const timer = setTimeout(() => {
-          socket.close();
-          reject(new Error('PTY timeout: ' + text));
-        }, 10000);
-        socket.onopen = () =>
-          socket.send(JSON.stringify({ type: 'input', data: btoa('pwd\n') }));
-        socket.onmessage = (event) => {
-          const message = JSON.parse(event.data);
-          if (message.type === 'output') text += atob(message.data);
-          if (text.includes('fixture-repo')) {
-            clearTimeout(timer);
-            socket.close();
-            resolve(text);
-          }
-        };
-        socket.onerror = () => {
-          clearTimeout(timer);
-          reject(new Error('PTY connection failed'));
-        };
+      } catch (error) {
+        if (error.code === 'ENOENT') return false;
+        throw error;
+      }
+    };
+    const readPids = async (path) => {
+      await expect
+        .poll(
+          async () =>
+            (await readFile(path, 'utf8').catch(() => '')).trim().split(/\s+/)
+              .length
+        )
+        .toBe(3);
+      return (await readFile(path, 'utf8')).trim().split(/\s+/).map(Number);
+    };
+    const assertStopped = async (ids) => {
+      await expect
+        .poll(async () => Promise.all(ids.map(isRunning)), { timeout: 15000 })
+        .toEqual(ids.map(() => false));
+      await expect
+        .poll(
+          () =>
+            readFile(`/proc/${ids[0]}/stat`, 'utf8')
+              .then(() => true)
+              .catch(() => false),
+          { timeout: 15000, message: 'Shell must be reaped' }
+        )
+        .toBe(false);
+    };
+    const foreignContext = await browser.newContext();
+    const foreignPage = await foreignContext.newPage();
+    await foreignPage.goto(`${base}/api/health`);
+    const foreignRecord = join(root, `${view}-foreign`);
+    const endpoint =
+      view === 'main'
+        ? `project_id=${project.id}&repo_id=${repo.id}`
+        : `workspace_id=${workspace.id}`;
+    await foreignPage.evaluate(
+      ({ endpoint, record }) =>
+        new Promise((resolve, reject) => {
+          const socket = new WebSocket(
+            `ws://${location.host}/api/terminal/ws?${endpoint}`
+          );
+          window.foreignTerminal = socket;
+          socket.onopen = () => {
+            socket.send(
+              JSON.stringify({
+                type: 'input',
+                data: btoa(`echo $$ > '${record}'\n`),
+              })
+            );
+            resolve();
+          };
+          socket.onerror = reject;
+        }),
+      { endpoint, record: foreignRecord }
+    );
+    await expect
+      .poll(() => readFile(foreignRecord, 'utf8').catch(() => ''))
+      .toMatch(/\d+/);
+    const foreignPid = Number((await readFile(foreignRecord, 'utf8')).trim());
+    const unrelated = spawn('sleep', ['300'], {
+      cwd:
+        view === 'main'
+          ? repoPath
+          : (await api(`/workspaces/${workspace.id}`)).container_ref,
+      stdio: 'ignore',
+    });
+    unrelatedJobs.push(unrelated);
+    const archiveStatus = () =>
+      fetch(`${base}/api/workspaces/${workspace.id}/archive/prepare`, {
+        method: 'POST',
+        headers: { Origin: base, 'x-lvk-csrf': csrf },
+      }).then((r) => r.status);
+    try {
+      if (view === 'main') {
+        const selector = page.getByTestId('main-terminal-repository');
+        const before = await sockets();
+        await expect(selector).toBeEnabled();
+        await selector.selectOption(disabledRepo.id);
+        await selector.selectOption(repo.id);
+        assert.equal(
+          await sockets(),
+          before,
+          'Choosing a repository must not start a shell'
+        );
+      }
+      let opened = await open();
+      if (view === 'main')
+        await expect(
+          page.getByTestId('main-terminal-repository')
+        ).toBeDisabled();
+      // Empty shell termination is independent from a running foreground job.
+      const emptyFile = join(root, `${view}-empty`);
+      await send(`echo $$ > '${emptyFile}'\n`);
+      await expect
+        .poll(() => readFile(emptyFile, 'utf8').catch(() => ''))
+        .toMatch(/\d+/);
+      const emptyPid = Number((await readFile(emptyFile, 'utf8')).trim());
+      await header().click();
+      await assertStopped([emptyPid]);
+      assert.equal(await sockets(), opened);
+      opened = await open();
+      const record = join(root, `${view}-jobs`);
+      await send(
+        `echo $$ > '${record}'; python3 -c "import os,subprocess,time; p=subprocess.Popen(['sleep','300']); f=open('${record}','a'); f.write(str(os.getpid())+'\\n'+str(p.pid)+'\\n'); f.close(); time.sleep(300)"\n`
+      );
+      const ids = await readPids(record);
+      if (view === 'workspace') assert.equal(await archiveStatus(), 409);
+      assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+        true,
+        true,
+        true,
+      ]);
+      await page
+        .getByRole('button', { name: 'Hide Right Sidebar', exact: true })
+        .click();
+      assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+        true,
+        true,
+        true,
+      ]);
+      await page
+        .getByRole('button', { name: 'Show Right Sidebar', exact: true })
+        .click();
+      assert.equal(
+        await sockets(),
+        opened,
+        'Sidebar reopening must reuse the existing shell'
+      );
+      await page.setViewportSize({ width: 390, height: 844 });
+      if (view === 'main') {
+        await page.locator('[data-workspace-file-path="hello.md"]').click();
+        assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+          true,
+          true,
+          true,
+        ]);
+        await page
+          .getByRole('button', { name: 'Open Wiki', exact: true })
+          .click();
+        await page
+          .getByRole('navigation', { name: 'Wiki pages' })
+          .getByRole('button', { name: 'index', exact: true })
+          .click();
+        assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+          true,
+          true,
+          true,
+        ]);
+        await page
+          .getByRole('button', { name: 'Show Right Sidebar', exact: true })
+          .click();
+      } else {
+        await page.getByRole('button', { name: 'Files', exact: true }).click();
+        await page
+          .locator('[data-workspace-file-path="openwiki"]')
+          .filter({ visible: true })
+          .click();
+        await page
+          .locator('[data-workspace-file-path="openwiki/index.md"]')
+          .filter({ visible: true })
+          .click();
+        assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+          true,
+          true,
+          true,
+        ]);
+        await page.getByLabel('Wiki', { exact: true }).click();
+        await page
+          .getByRole('button', { name: 'index', exact: true })
+          .filter({ visible: true })
+          .click();
+        assert.deepEqual(await Promise.all(ids.map(isRunning)), [
+          true,
+          true,
+          true,
+        ]);
+        await page
+          .getByRole('button', { name: 'Show Right Sidebar', exact: true })
+          .click();
+      }
+      assert.equal(
+        await sockets(),
+        opened,
+        'Temporary file/Wiki layout must not create another shell'
+      );
+      await header().click();
+      await assertStopped(ids);
+      await page.setViewportSize({ width: 1600, height: 1000 });
+      // Shell exit must close the item, even while its surface is unmounted.
+      opened = await open();
+      await page
+        .getByRole('button', { name: 'Hide Right Sidebar', exact: true })
+        .click();
+      await send('exit\n');
+      await expect
+        .poll(() =>
+          page.evaluate(() => window.__terminalSockets.at(-1).readyState)
+        )
+        .toBe(3);
+      await page
+        .getByRole('button', { name: 'Show Right Sidebar', exact: true })
+        .click();
+      await expect(header()).toHaveAttribute('aria-expanded', 'false');
+      assert.equal(await sockets(), opened);
+      opened = await open();
+      const disconnected = join(root, `${view}-disconnected`);
+      await send(`echo $$ > '${disconnected}'\n`);
+      await expect
+        .poll(() => readFile(disconnected, 'utf8').catch(() => ''))
+        .toMatch(/\d+/);
+      const disconnectedPid = Number(
+        (await readFile(disconnected, 'utf8')).trim()
+      );
+      await page.evaluate(() => window.__terminalSockets.at(-1).close());
+      await expect(header()).toHaveAttribute('aria-expanded', 'false');
+      await assertStopped([disconnectedPid]);
+      await page.waitForTimeout(1100); // Exceeds the old first auto-reconnect delay.
+      assert.equal(
+        await sockets(),
+        opened,
+        'Disconnect must not reconnect or create a shell'
+      );
+      // Lost application frames while the transport still exists: advance only
+      // Date.now so the real watchdog runs without waiting 45 seconds per view.
+      opened = await open();
+      const silentRecord = join(root, `${view}-silent`);
+      await send(`echo $$ > '${silentRecord}'\n`);
+      await expect
+        .poll(() => readFile(silentRecord, 'utf8').catch(() => ''))
+        .toMatch(/\d+/);
+      const silentPid = Number((await readFile(silentRecord, 'utf8')).trim());
+      await page.evaluate(() => {
+        window.__terminalSockets.at(-1).onmessage = null;
+        window.__terminalRealNow = Date.now;
+        Date.now = () => window.__terminalRealNow() + 60000;
       });
-    },
-    { project: project.id, repo: repo.id }
-  );
-  assert.ok(output.includes(repoPath));
-  await page.waitForTimeout(800);
-  assert.equal(
-    terminalSockets - beforeTerminal,
-    2,
-    'One UI PTY plus one direct PTY; no tab/connection loop'
-  );
-  check('Real existing PTY starts in registered main repository');
+      try {
+        await expect(header()).toHaveAttribute('aria-expanded', 'false', {
+          timeout: 10000,
+        });
+      } finally {
+        await page.evaluate(() => {
+          Date.now = window.__terminalRealNow;
+        });
+      }
+      await assertStopped([silentPid]);
+      assert.equal(await sockets(), opened, 'Watchdog must not reconnect');
+      await open();
+      await header().click();
+      // A raw client deliberately never answers native Ping. This exercises the
+      // real server timeout, independently of browser timers and close frames.
+      if (view === 'main') {
+        const record = join(root, 'no-pong');
+        const socket = await new Promise((resolve, reject) => {
+          const req = request(`${base}/api/terminal/ws?${endpoint}`, {
+            headers: {
+              Origin: base,
+              Connection: 'Upgrade',
+              Upgrade: 'websocket',
+              'Sec-WebSocket-Version': '13',
+              'Sec-WebSocket-Key': 'MDEyMzQ1Njc4OWFiY2RlZg==',
+            },
+          });
+          req.on('upgrade', (_response, socket) => resolve(socket));
+          req.on('response', (response) => {
+            response.resume();
+            reject(new Error(`Upgrade rejected: ${response.statusCode}`));
+          });
+          req.on('error', reject);
+          req.end();
+        });
+        socket.on('error', () => {});
+        socket.on('data', () => {}); // Consume frames but send no Pong.
+        try {
+          const data = Buffer.from(
+            JSON.stringify({
+              type: 'input',
+              data: Buffer.from(`echo $$ > '${record}'\n`).toString('base64'),
+            })
+          );
+          const header = Buffer.alloc(8);
+          header[0] = 0x81;
+          header[1] = 0xfe;
+          header.writeUInt16BE(data.length, 2);
+          header.fill(0x5a, 4);
+          socket.write(
+            Buffer.concat([
+              header,
+              Buffer.from(data.map((byte) => byte ^ 0x5a)),
+            ])
+          );
+          await expect
+            .poll(() => readFile(record, 'utf8').catch(() => ''))
+            .toMatch(/\d+/);
+          const pid = Number((await readFile(record, 'utf8')).trim());
+          const started = Date.now();
+          await expect
+            .poll(
+              () =>
+                readFile(`/proc/${pid}/stat`, 'utf8')
+                  .then(() => true)
+                  .catch(() => false),
+              { timeout: 65000 }
+            )
+            .toBe(false);
+          const elapsed = Date.now() - started;
+          assert.ok(
+            elapsed >= 40000 && elapsed < 65000,
+            `Unexpected timeout: ${elapsed}ms`
+          );
+          check(
+            `Server no-Pong timeout kills and reaps owned shell after ${elapsed}ms without a client close`
+          );
+        } finally {
+          socket.destroy();
+        }
+      }
+      check(
+        `${view}: explicit collapse kills/reaps empty shell and foreground/child; hidden/sidebar/file/Wiki preserve it; exit/disconnect/watchdog fold without respawn; explicit reopen starts one`
+      );
+      assert.equal(
+        await isRunning(foreignPid),
+        true,
+        'Other browser terminal must survive'
+      );
+      assert.equal(
+        unrelated.exitCode,
+        null,
+        'Unrelated execution with the same cwd must survive'
+      );
+      if (view === 'workspace')
+        assert.equal(
+          await archiveStatus(),
+          409,
+          'Other owners must still block archive'
+        );
+    } finally {
+      await foreignContext.close();
+      unrelated.kill('SIGTERM');
+      if (unrelated.exitCode === null && unrelated.signalCode === null)
+        await once(unrelated, 'exit');
+    }
+    await expect
+      .poll(() => isRunning(foreignPid), { timeout: 15000 })
+      .toBe(false);
+    if (view === 'workspace') await expect.poll(archiveStatus).toBe(200);
+  }
+  await terminalLifecycle('main');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: /Hide Right Sidebar/ }).click();
   await page.getByRole('button', { name: /Show Right Sidebar/ }).click();
@@ -402,6 +763,15 @@ try {
 
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(`${base}/workspaces/${workspace.id}`);
+  const ensureWorkspaceSidebar = page.getByRole('button', {
+    name: 'Show Right Sidebar',
+    exact: true,
+  });
+  if (await ensureWorkspaceSidebar.count())
+    await ensureWorkspaceSidebar.click();
+  await terminalLifecycle('workspace');
+  if (await article.isVisible())
+    await page.getByRole('button', { name: /Toggle Wiki Reader/ }).click();
   const editor = page.locator('[contenteditable="true"]').first();
   await expect(editor).toBeVisible({ timeout: 60000 });
   const draft = 'Utilities 未送信の会話下書き';
@@ -434,7 +804,7 @@ try {
   await expect(editor).toBeVisible();
   await page.screenshot({ path: join(evidence, 'workspace-narrow.png') });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Wiki', exact: true }).click();
+  await page.getByLabel('Wiki', { exact: true }).click();
   await page
     .getByRole('button', { name: 'index', exact: true })
     .filter({ visible: true })
@@ -488,15 +858,26 @@ try {
   await expect(
     page.getByRole('button', { name: /Toggle Wiki Reader/ })
   ).toHaveCount(0);
-  await expect(
-    page.getByRole('button', { name: 'Wiki', exact: true })
-  ).toHaveCount(0);
+  await expect(page.getByLabel('Wiki', { exact: true })).toHaveCount(0);
   await page.goto(`${base}/projects/${project.id}`);
   await expect(panel).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Open Wiki', exact: true })
   ).toHaveCount(0);
   check('Disabled OpenWiki removes entries in both views');
+  const prepared = await api(
+    `/workspaces/${workspace.id}/archive/prepare`,
+    'POST'
+  );
+  const archived = await api(
+    `/workspaces/${workspace.id}/archive/confirm`,
+    'POST',
+    { confirmation_token: prepared.confirmation_token }
+  );
+  assert.equal(archived.workspace.archived, true);
+  check(
+    'Archive guard rejects live owners and normal prepare/confirm succeeds after terminal cleanup'
+  );
   assert.deepEqual(errors, []);
   check('No browser page errors');
   await context.tracing.stop({ path: join(evidence, 'trace.zip') });
@@ -513,7 +894,15 @@ try {
   throw error;
 } finally {
   const childPids = descendants();
+  for (const job of unrelatedJobs) {
+    if (job.exitCode === null && job.signalCode === null) {
+      job.kill('SIGTERM');
+      await once(job, 'exit');
+    }
+  }
   await browser?.close();
+  // Leave the isolated server alive long enough to settle socket-owner cleanup.
+  await new Promise((resolve) => setTimeout(resolve, 500));
   if (server.exitCode === null) {
     process.kill(-server.pid, 'SIGTERM');
     const timer = setTimeout(() => {

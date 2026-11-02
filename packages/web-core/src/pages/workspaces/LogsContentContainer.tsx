@@ -125,7 +125,7 @@ function ProcessLogsContent({ className }: LogsContentContainerProps) {
             type="button"
             onClick={collapseTerminal}
             className="text-low hover:text-normal transition-colors"
-            title={t('actions.collapse')}
+            aria-label={t('actions.collapse')}
           >
             <ArrowsInSimpleIcon className="size-icon-sm" weight="bold" />
           </button>

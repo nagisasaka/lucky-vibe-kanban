@@ -180,8 +180,11 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
           <div className="flex-1 min-w-0 h-full">
             <ProjectKanbanPanes projectName={projectName} utilityBody={body} />
           </div>
-          {visible && (
-            <div className="absolute right-0 inset-y-0 z-30 w-[min(320px,100%)] xl:relative xl:w-80 shrink-0 shadow-lg xl:shadow-none">
+          {
+            <div
+              hidden={!visible}
+              className={`${!visible ? 'hidden' : ''} absolute right-0 inset-y-0 z-30 w-[min(320px,100%)] xl:relative xl:w-80 shrink-0 shadow-lg xl:shadow-none`}
+            >
               <ProjectUtilities
                 projectId={projectId}
                 repos={info.isError ? [] : (info.data?.repos ?? [])}
@@ -201,7 +204,7 @@ function ProjectKanbanLayout({ projectName }: { projectName: string }) {
                 }}
               />
             </div>
-          )}
+          }
         </div>
       </WorkspaceWikiProvider>
     </FileApiProvider>

@@ -42,12 +42,15 @@ fn default_rows() -> u16 {
 enum TerminalCommand {
     Input { data: String },
     Resize { cols: u16, rows: u16 },
+    Close,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum TerminalMessage {
     Output { data: String },
+    Heartbeat,
+    Exit,
     Error { message: String },
 }
 
@@ -79,6 +82,11 @@ async fn terminal_ws(
         .await?
         .ok_or_else(|| ApiError::BadRequest("Attempt not found".to_string()))?;
     attempt.require_interactive()?;
+    if attempt.archived || attempt.worktree_deleted {
+        return Err(ApiError::Conflict(
+            "Archived or deleted Workspace cannot start a terminal".into(),
+        ));
+    }
 
     let container_ref = attempt
         .container_ref
@@ -116,6 +124,23 @@ async fn terminal_ws(
         .into_response())
 }
 
+struct CloseOnDrop(local_deployment::pty::PtyService, Uuid);
+impl Drop for CloseOnDrop {
+    fn drop(&mut self) {
+        self.0.request_close(self.1);
+    }
+}
+
+const HEARTBEAT_INTERVAL: std::time::Duration = std::time::Duration::from_secs(10);
+const HEARTBEAT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(45);
+
+async fn send_terminal(socket: &mut LocalWebSocket, message: Message) -> bool {
+    matches!(
+        tokio::time::timeout(std::time::Duration::from_secs(5), socket.send(message)).await,
+        Ok(Ok(()))
+    )
+}
+
 async fn handle_terminal_ws(
     mut socket: LocalWebSocket,
     deployment: DeploymentImpl,
@@ -137,6 +162,12 @@ async fn handle_terminal_ws(
     };
 
     let pty_service = deployment.pty().clone();
+    // Access lease cancellation also drops this guard; cleanup is not tied to
+    // the successful completion of the WebSocket handler's future.
+    let _owner = CloseOnDrop(pty_service.clone(), session_id);
+    let mut heartbeat = tokio::time::interval(HEARTBEAT_INTERVAL);
+    heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+    let mut last_response = tokio::time::Instant::now();
     let session_id_for_input = session_id;
 
     loop {
@@ -154,13 +185,20 @@ async fn handle_terminal_ws(
                     Err(_) => continue,
                 };
 
-                if socket.send(Message::Text(json.into())).await.is_err() {
+                if !send_terminal(&mut socket, Message::Text(json.into())).await {
                     break;
                 }
+            }
+            _ = heartbeat.tick() => {
+                if last_response.elapsed() >= HEARTBEAT_TIMEOUT { break; }
+                let json = serde_json::to_string(&TerminalMessage::Heartbeat).unwrap();
+                if !send_terminal(&mut socket, Message::Ping(Vec::new().into())).await
+                    || !send_terminal(&mut socket, Message::Text(json.into())).await { break; }
             }
             inbound = socket.recv() => {
                 match inbound {
                     Ok(Some(Message::Text(text))) => {
+                        last_response = tokio::time::Instant::now();
                         if let Ok(cmd) = serde_json::from_str::<TerminalCommand>(text.as_str()) {
                             match cmd {
                                 TerminalCommand::Input { data } => {
@@ -168,6 +206,7 @@ async fn handle_terminal_ws(
                                         let _ = pty_service.write(session_id_for_input, &bytes).await;
                                     }
                                 }
+                                TerminalCommand::Close => break,
                                 TerminalCommand::Resize { cols, rows } => {
                                     let _ = pty_service.resize(session_id_for_input, cols, rows).await;
                                 }
@@ -175,6 +214,7 @@ async fn handle_terminal_ws(
                         }
                     }
                     Ok(Some(Message::Close(_))) => break,
+                    Ok(Some(Message::Pong(_))) | Ok(Some(Message::Ping(_))) => { last_response = tokio::time::Instant::now(); }
                     Ok(Some(_)) => {}
                     Ok(None) => break,
                     Err(error) => {
@@ -186,7 +226,16 @@ async fn handle_terminal_ws(
         }
     }
 
-    let _ = deployment.pty().close_session(session_id).await;
+    match deployment.pty().close_session(session_id).await {
+        Ok(()) => {
+            let json = serde_json::to_string(&TerminalMessage::Exit).unwrap();
+            let _ = send_terminal(&mut socket, Message::Text(json.into())).await;
+        }
+        Err(error) => {
+            tracing::error!(%session_id, %error, "Terminal stopped without confirmed cleanup")
+        }
+    }
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(5), socket.close()).await;
 }
 
 async fn send_error(socket: &mut LocalWebSocket, message: &str) -> anyhow::Result<()> {

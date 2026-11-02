@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FileTreeContainer } from './FileTreeContainer';
 import { ProcessListContainer } from './ProcessListContainer';
 import { GitPanelContainer } from './GitPanelContainer';
-import { TerminalPanelContainer } from '@/shared/components/TerminalPanelContainer';
+import { TerminalSection } from '@/shared/components/TerminalSection';
 import { WorkspaceNotesContainer } from './WorkspaceNotesContainer';
 import { WorkspaceWikiNavigation } from '@/features/wiki/ui/WorkspaceWikiPanel';
 import { useDiffs } from '@/shared/stores/useWorkspaceDiffStore';
@@ -78,10 +78,6 @@ export const RightSidebar = memo(function RightSidebar({
     PERSIST_KEYS.gitPanelRepositories,
     true
   );
-  const [terminalExpanded] = usePersistedExpanded(
-    PERSIST_KEYS.terminalSection,
-    false
-  );
   const [notesExpanded] = usePersistedExpanded(
     PERSIST_KEYS.notesSection,
     false
@@ -116,17 +112,6 @@ export const RightSidebar = memo(function RightSidebar({
           />
         ),
         actions: [],
-      },
-      {
-        title: t('common:sections.terminal'),
-        persistKey: PERSIST_KEYS.terminalSection,
-        visible:
-          selectedWorkspace?.usage === 'interactive' &&
-          isTerminalVisible &&
-          !isTerminalExpanded,
-        expanded: terminalExpanded,
-        content: <TerminalPanelContainer />,
-        actions: [{ icon: ArrowsOutSimpleIcon, onClick: expandTerminal }],
       },
       {
         title: t('common:sections.notes'),
@@ -210,13 +195,9 @@ export const RightSidebar = memo(function RightSidebar({
     diffs,
     gitExpanded,
     filesExpanded,
-    terminalExpanded,
     notesExpanded,
-    isTerminalVisible,
-    isTerminalExpanded,
     hasUpperContent,
     upperExpanded,
-    expandTerminal,
     selectedFileTarget,
     openFileTarget,
     setRightMainPanelMode,
@@ -244,6 +225,17 @@ export const RightSidebar = memo(function RightSidebar({
           </div>
         </CollapsibleSectionHeader>
       )}
+      {selectedWorkspace?.usage === 'interactive' &&
+        selectedWorkspace.container_ref &&
+        isTerminalVisible &&
+        !isTerminalExpanded && (
+          <TerminalSection
+            scope={selectedWorkspace.id}
+            workspaceId={selectedWorkspace.id}
+            cwd={selectedWorkspace.container_ref}
+            actions={[{ icon: ArrowsOutSimpleIcon, onClick: expandTerminal }]}
+          />
+        )}
       <div className="divide-y border-b">
         {sections
           .filter((section) => section.visible)

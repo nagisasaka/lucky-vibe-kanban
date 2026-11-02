@@ -374,12 +374,16 @@ export function WorkspacesLayout() {
                       !wikiMobileNavigation && 'hidden'
                     )}
                   >
-                    <RightSidebar
-                      rightMainPanelMode={rightMainPanelMode}
-                      selectedWorkspace={selectedWorkspace}
-                      repos={repos}
-                      onWikiPageSelected={() => setWikiMobileNavigation(false)}
-                    />
+                    {mobileTab === 'wiki' && wikiMobileNavigation && (
+                      <RightSidebar
+                        rightMainPanelMode={rightMainPanelMode}
+                        selectedWorkspace={selectedWorkspace}
+                        repos={repos}
+                        onWikiPageSelected={() =>
+                          setWikiMobileNavigation(false)
+                        }
+                      />
+                    )}
                   </div>
                   <div
                     className={cn('h-full', wikiMobileNavigation && 'hidden')}
@@ -420,16 +424,20 @@ export function WorkspacesLayout() {
                     mobileTab !== 'git' && 'hidden'
                   )}
                 >
-                  {selectedWorkspace && !isCreateMode && (
-                    <RightSidebar
-                      rightMainPanelMode={
-                        wikiActive ? null : rightMainPanelMode
-                      }
-                      selectedWorkspace={selectedWorkspace}
-                      repos={repos}
-                      onWikiPageSelected={() => setWikiMobileNavigation(false)}
-                    />
-                  )}
+                  {mobileTab === 'git' &&
+                    selectedWorkspace &&
+                    !isCreateMode && (
+                      <RightSidebar
+                        rightMainPanelMode={
+                          wikiActive ? null : rightMainPanelMode
+                        }
+                        selectedWorkspace={selectedWorkspace}
+                        repos={repos}
+                        onWikiPageSelected={() =>
+                          setWikiMobileNavigation(false)
+                        }
+                      />
+                    )}
                 </div>
               </div>
             </MainWorkspaceFilePreviewActionsBridge>
