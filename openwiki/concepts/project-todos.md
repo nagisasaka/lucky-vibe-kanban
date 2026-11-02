@@ -32,6 +32,10 @@ sources:
     resource: repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx
   - id: openwiki-source-3ab59f96f5b3a57177b098b6
     resource: repo://packages/web-core/src/features/todos/model/todoApi.ts
+  - id: openwiki-source-9a215a026041653b9c6b024f
+    resource: repo://packages/web-core/src/features/todos/model/todoCategories.test.ts
+  - id: openwiki-source-a5c58a467e62666769524b8e
+    resource: repo://packages/web-core/src/features/todos/model/todoCategories.ts
   - id: openwiki-source-cc2b48361dc9ee47e4a6cc4c
     resource: repo://packages/web-core/src/features/todos/model/todoViewStore.ts
   - id: openwiki-source-d5ef8f6e8bb11a12faded949
@@ -54,10 +58,10 @@ sources:
     resource: repo://tests/todos/layout.mjs
   - id: openwiki-source-39e16c61b69c47aba760577d
     resource: repo://tests/todos/README.md
-generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-31T11:36:54.240Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Project Todo の共有メモ
@@ -109,7 +113,7 @@ REST は不在を404、競合を409、不正入力を400、DB故障を内部エ�
 | 内部 stdio MCP | REST を呼び、作成は安定した `input.id`、更新・削除は revision を渡す |
 | 外部 HTTP MCP | read に `lvk:read`、変更にさらに `lvk:write`。変更は `request_id` に束縛した durable operation receipt を返す |
 
-[REST](../../crates/server/src/routes/todos.rs#L14-L71)、[stdio](../../crates/mcp/src/task_server/tools/todos.rs#L41-L135)、[外部 MCP](../../crates/server/src/remote_mcp/todos.rs#L112-L237)。外部 MCP は DB エラーを uncertain、モデル拒否を failed として保存する。応答不明時は同じ request ID の receipt と Todo を読む。接続断・再起動時の一般的な意味は [外部操作 receipt](../integrations/remote-access.md#参照結果と操作-receipt)に従う。
+[REST](../../crates/server/src/routes/todos.rs#L14-L71)、[stdio](../../crates/mcp/src/task_server/tools/todos.rs#L41-L135)、[外部 MCP](../../crates/server/src/remote_mcp/todos.rs#L112-L237)。外部 MCP はcommit前失敗・確定したcommit拒否とモデル拒否を failed、commit結果不明を uncertain として保存する。応答不明時は同じ request ID の receipt と Todo を読む。接続断・再起動時の一般的な意味は [外部操作 receipt](../integrations/remote-access.md#参照結果と操作-receipt)に従う。
 
 ## 通常操作と画面状態
 
@@ -178,3 +182,7 @@ Project の Todos 表示は複数列を許す `grid` を指定し、Workspace �
 Project と Workspace のTodo検索は、取得済み本文/カテゴリーを trim・小文字化した部分一致で絞り、完了表示とANDで適用する。追加draftを検索条件で消さず、カテゴリーの並びと各項目の取得順を保つ。両MCPの `list_todos.search` も本文/カテゴリーを検索するが空白はliteralで、`%`や`_`をwildcardにしない。検索は完了条件に合う全候補へ適用してからmatching-result offsetを数えるため、取得した一ページだけを検索する処理ではない。検索なしの有界SQL経路を保ち、検索ありでは行を順に読み合致ページ分だけを保持する。[画面](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx#L40-L100)・[DB](../../crates/db/src/models/todo.rs#L140-L177)・[共有検索](../../crates/db/src/models/text_search.rs#L1-L10)。
 
 ブラウザーとMCPでtrimの意味が異なる点と、検索後paginationは `tests/search/isolated.mjs`、DBの検索回帰、`listSearch.test.ts` が変更時の入口となる。このSyncでは試験定義を照合し、製品試験を再実行していない。
+
+## 未完了項目からのカテゴリー候補
+
+入力候補は検索・完了表示フィルターとは独立して、取得済みProject snapshotの未完了項目から空でないカテゴリーを重複除去・ソートして作る。最後の未完了項目の完了・削除・カテゴリー変更で候補から消え、再開で戻る。保存済み値は変更せず自由入力も維持する。[導出](../../packages/web-core/src/features/todos/model/todoCategories.ts)・[接続](../../packages/web-core/src/features/todos/ui/TodoPanel.tsx)・[回帰](../../packages/web-core/src/features/todos/model/todoCategories.test.ts)

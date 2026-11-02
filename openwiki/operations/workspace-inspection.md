@@ -140,10 +140,10 @@ sources:
     resource: repo://tests/server/specs/workspace-search.spec.ts
   - id: openwiki-source-dcac74ef871fd02e6315fa93
     resource: repo://tests/workflow/specs/diff-tree.spec.ts
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # ファイル・差分・プレビュー・端末の境界
@@ -212,12 +212,10 @@ Files surface は選択targetのオブジェクト同一性で戻る操作を管
 
 [model/component単体](../../packages/web-core/src/features/workspace-files/model/codeHighlightLines.test.ts)と[Chromium回帰](../../tests/file-viewer/syntax.test.mjs)は複数行grammar、安全なHTML風文字列、plain fallback、390/1440pxのlight/dark、行120へのjumpと縦横scrollを確認する。Chromium fixtureは実componentに合成本文を渡す試験であり、認証済みWorkspaceからの実API取得試験とは区別する。
 
-<!-- openwiki: broken internal link [src/example.ts:120] file "src/example.ts:120" does not exist. Fix the href or restore the target, then delete this comment. -->
 チャットの Markdown file link は、現在の Workspace / Repo に属するファイルを既存 preview で読むための参照である。`[source](src/example.ts:120)` を開くと file panel が選択される。リンクを別の Workspace の会話に移したときも、解決基準は表示先の Workspace である。本文 renderer から panel までの責務は [Web の接続構造](../architecture/web-and-sync.md#チャットのファイルリンクを既存-panel-へ渡す)にまとめる。[resolver の入力](../../packages/web-core/src/features/workspace-files/model/useChatFileLink.ts#L7-L23)
 
 相対パスは Repo 基準で、`./` と Repo 名 prefix を扱う。Repo が一つなら省略できるが、複数 Repo で所属を一意に解決できなければリンクを無効のままにし、推測して開かない。絶対形式は現在の `container_ref/repo.name/` 配下だけを repo-relative target に変換する。Windows 形式も slash を正規化して同じ条件を使う。元の host checkout の `Repo.path` へ fallback しない。[チャットの変換](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L36-L77)、[共通の Repo 解決](../../packages/web-core/src/features/workspace-files/model/useWorkspaceFilePreviewResolver.ts#L77-L157)
 
-<!-- openwiki: broken internal link [<path with spaces:2>] file "<path with spaces:2>" does not exist. Fix the href or restore the target, then delete this comment. -->
 行指定は `:line[:column]`、`#Lline`、`#Lline-Lend` 等を受け付けるが、保存する位置は正の安全な整数の**開始行だけ**であり、column や範囲の選択を約束しない。行 suffix を外してから URL decode を一度だけ行うため、encoded `#` / `:` はファイル名として残る。空白は percent encoding または `[label](<path with spaces:2>)` を使える。後者の transformer は local resolver がある read-only editor で有効になる。[位置と decode 順序](../../packages/web-core/src/features/workspace-files/model/chatFileLink.ts#L21-L35)、[angle destination](../../packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L536-L555)
 
 text/code viewer は選択行に `aria-current=location` を付けて中央へスクロールする。Markdown は行指定がある場合にソース表示へ切り替え、指定なしでは従来の Markdown 表示を使う。描画済み本文の位置をソース行と扱わないための選択である。存在しない行や backend が切り詰めた範囲外には選択行 DOM がなく、追加読込や最終行への補正はしない。[viewer の分岐](../../packages/web-core/src/features/workspace-files/ui/WorkspaceFilePreviewPanel.tsx#L90-L108)、[行の選択](../../packages/web-core/src/features/workspace-files/ui/viewers/CodeTextViewer.tsx#L17-L48)

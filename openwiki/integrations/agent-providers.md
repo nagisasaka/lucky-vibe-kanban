@@ -80,6 +80,8 @@ sources:
     resource: repo://crates/server/src/routes/provider_usage.rs
   - id: openwiki-source-379c8cd3e1e9932f9adda9ee
     resource: repo://crates/services/src/services/container.rs
+  - id: openwiki-source-605a3efdc11efae80ada92b1
+    resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-dd14ba47f6d5e604d8574f1d
     resource: repo://crates/utils/src/shell.rs
   - id: openwiki-source-c5de8230bc8ac4c0c0000287
@@ -110,10 +112,10 @@ sources:
     resource: repo://tests/claude-subscription/subscription.spec.ts
   - id: openwiki-source-141584dac09cf0f93be6bff5
     resource: repo://tests/codex-process-cleanup/README.md
-generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-31T11:36:54.240Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Agent provider・設定・MCP・Skill
@@ -292,7 +294,7 @@ backend の解決は VIBE_BACKEND_URL が優先され、続いて host/port の�
 
 loopback HTTPを選んだ場合だけ、stdio clientは同じdata directoryの`access-internal.token`を内部ヘッダーへ読み込む。外部backendへは送らず、HTTP redirectは追わない。任意backendを指定できることは、内部認証を外部へ委譲することではない。[client](../../crates/mcp/src/task_server/mod.rs#L247-L274)、[共通認証](../concepts/server-access.md#webmcp内部agentを同じ資格情報にしない)
 
-失敗は MCP の error result と success:false / error / details で返す。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
+失敗は MCP の error result と `success:false` / `error` / `diagnostic` で返す。診断は分類・確定性・復旧方法・相関IDを持ち、backend自由文や入力値を転送しない。HTTP 2xx でも backend envelope の success と data を確認してから成功扱いにする。自動操作を追加するときは transport の成功だけで Issue や Session の操作完了を判定しない。[エラー境界](../../crates/mcp/src/task_server/tools/mod.rs#L94-L143)
 
 認証付き Streamable HTTP `/mcp` は別の外部入口であり、旧 Cloud / relay ではない。Auth0の承認済みmember・scopeと公開 tool の制約は [外部 MCP](remote-access.md#認証付き外部-mcp)を参照する。内部 Astra の推論・認証経路は廃止された。[廃止後に残る共有機能](../concepts/project-chat.md)と coding provider の起動を区別する。
 

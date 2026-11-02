@@ -20,6 +20,8 @@ sources:
     resource: repo://crates/mcp/src/task_server/tools/attachments.rs
   - id: openwiki-source-c1a99ab3d402970b84e3cc23
     resource: repo://crates/mcp/src/task_server/tools/dev_server.rs
+  - id: openwiki-source-4c00e6ad62d940e70c2ebbb3
+    resource: repo://crates/mcp/src/task_server/tools/mod.rs
   - id: openwiki-source-28437ab4b181623345af79bc
     resource: repo://crates/mcp/src/task_server/tools/stdio_tests.rs
   - id: openwiki-source-c2eaddb5c69f49c5ee934a63
@@ -108,6 +110,8 @@ sources:
     resource: repo://crates/server/src/routes/workspaces/usage.rs
   - id: openwiki-source-4294e32943918c50b31813b6
     resource: repo://crates/services/src/services/file.rs
+  - id: openwiki-source-605a3efdc11efae80ada92b1
+    resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-4055aa6b8c5089e24c2a9f7c
     resource: repo://crates/utils/src/reference_file.rs
   - id: openwiki-source-74a1893f4c1e77eb654658f7
@@ -118,10 +122,10 @@ sources:
     resource: repo://docs/development/chatgpt-mcp.md
   - id: openwiki-source-3ecddc0be7b037ea6ab24381
     resource: repo://packages/local-web/vite.config.ts
-generated: { by: "codex", at: "2026-10-30T04:46:05.998Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-30T04:46:05.998Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # 外部アクセス・MCP・Runner の境界
@@ -276,7 +280,7 @@ sectionは `summary` / `sources` / `validation` の三つである。`validation
 
 `get_operation` は過去の受付結果、`get_integration(section="summary").lifecycle` は現在状態の確認に使う。lifecycleはrunと予約を同じSQLite snapshotで読み、`cancelled` かつ予約なしだけを `cancellation_complete:true` とする。terminalは cancelled / succeeded / failedで、summary全体や別要求とのatomic snapshotを保証しない。[同一snapshot](../../crates/server/src/remote_mcp/integration_write.rs#L46-L77)。
 
-再送は同じprincipal・request ID・元の入力全体を保つ。SQLx errorや取消後の状態取得失敗は `uncertain` として読み戻す。受付結果は後から現在のterminal状態へ更新される履歴ではない。[操作と失敗分類](../../crates/server/src/remote_mcp/integration_write.rs#L79-L135)・[receipt](../../crates/server/src/remote_mcp/operations.rs)。
+再送は同じprincipal・request ID・元の入力全体を保つ。取消の副作用を否定する型付き証拠がないエラーや、取消後の状態取得失敗は `uncertain` として読み戻す。受付結果は後から現在のterminal状態へ更新される履歴ではない。[操作と失敗分類](../../crates/server/src/remote_mcp/integration_write.rs#L79-L135)・[receipt](../../crates/server/src/remote_mcp/operations.rs)。
 
 ## 既存 Goal を MCP から操作する
 
@@ -418,3 +422,13 @@ Project参照がある未配置ファイルは既存孤立掃除から保護さ�
 ## MCPからREVIEWを指定・観測する
 
 Codexのstart_workspaceは `execution_mode: review` を受け取り、続行では保存済みmodeと権限を維持する。Remoteのget_executionは指定Runのattemptのmodeを返す。REVIEWは会話で調査結果を返して止まり、製品実装への別指示を必要とする。承認回避や外部承認改善を保証するmodeではない。[開始](../../crates/server/src/remote_mcp/launch.rs#L336-L348)・[読取](../../crates/server/src/remote_mcp/runtime_read.rs#L137-L183)・[実行境界](agent-providers.md#review-の実行境界)
+
+## 全MCP共通の失敗・結果不明・復旧契約
+
+HTTP MCPとstdio MCPは共通の `Diagnostic` でcategory、outcome、recovery、message、correlation_idを返す。validation/conflict/permission/not_found/busy/unavailable/internal等の分類は、副作用の有無とは独立する。HTTPの即時tool失敗は既存isErrorを保ち `structuredContent.error` を加え、stdioは `success:false` / `error` / `diagnostic` をcontentとstructuredContentに返す。認証の標準JSON-RPC/OAuth challenge、未知toolとschema validationの標準契約は維持する。[共通型](../../crates/utils/src/mcp_error.rs)・[HTTP dispatch](../../crates/server/src/remote_mcp/mod.rs)・[stdio helper](../../crates/mcp/src/task_server/tools/mod.rs)
+
+副作用前の拒否やtransaction rollbackの証拠があればfailed、commit・delivery・実行結果を確定できなければunknown/uncertainとなる。汎用HTTPのmutation失敗は401/403以外のstatusだけで未commitと推定しない。POST読取のrepository query/provider usageとintegration inspectは読取として扱う。結果不明では元requestと同じ入力でreceiptを回収し、対象状態を読戻してから判断する。新requestによる自動リトライは追加しない。[stdio確定性](../../crates/mcp/src/task_server/tools/mod.rs)・[transaction分類](../../crates/server/src/remote_mcp/todos.rs)・[元requestの保持](../../crates/server/src/remote_mcp/operations.rs)
+
+receipt保存失敗やpanic後もdomain成功の可能性を維持し、同process内の不確実性と再起動後の旧pending回復を分ける。破損diagnosticは許可した型から安全に再構成し、uncertainならunknownを優先する。SQL・stack・credential・入力値・内部pathの生文は出さず、失敗のtarget/部分結果に含まれるpath/cwd/command/本文等を秘匿する。ID・状態・revision・部分作用は残し、成功時に要求された内容の応答は変えない。[耐久受付](../../crates/server/src/remote_mcp/operations.rs)・[receipt投影](../../crates/server/src/remote_mcp/issue_write.rs)・[秘匿](../../crates/utils/src/mcp_error.rs)
+
+横断回帰はHTTPの `remote_mcp`、stdioの `error_contract_tests` / `stdio_tests`、DBのTODO/設計メモtransaction fixtureを入口とする。実行済み検証のSHA・結果と、fixture定義の存在は区別する。[契約の対応表](../../docs/development/mcp-error-contract.md)

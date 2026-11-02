@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:c3b7e026911c2f8ae8099e37162dd73c0d6374f60b1f1bd60bbfa88200a04b5e",
+  "pageVersion": "sha256:0bb202ca04f29c575251f5d088d3d780763e31883ef7347cd416c563d9e0c3cd",
   "claims": [
     {
       "id": "claim_82c340b0bbd240889908ea6c2c5be423",
@@ -21,7 +21,7 @@
       "statement": "RunAttempt は run identity、provider/profile、Workspace、capability/config の一致を検証し、ReviewのSkillsとFollowUp外のresetを拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/runtime/contracts.rs#L294-L351",
+          "resource": "repo://crates/executors/src/runtime/contracts.rs#L293-L350",
           "version": "repo-lines-v1:sha256:3544cbc32b6dd9735c55387a7591aa6b37390113f577e68734eba1cf1b1f8775:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ODQxNDU5Y2YxYzllYWIzNTk0OWY1Y2Y5MzBiNDliNzQwZjg4ZGVhNWQ4NzRmYTliYWY5ZWNjMGNlMTk0NjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlZGI5NGMyOTk4OGRhYmNhMGEzNDliOTZmYTU4N2E3YTVmYTU1YmE2YzczOTAxZWEwNWU4NjcyZDMwYTE1NDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzNzEwMzAyN2NmZmI1OWZkYmUxZjk4OTQwYjE2ZWNjZWExMDY1NThhYjU1Y2NkYWM1MTg1N2JiMDQ2Y2Q0OWQifQ"
         }
       ]
@@ -35,7 +35,7 @@
           "version": "repo-lines-v1:sha256:0d5bdcf71f768ab23fd237ec9c2b35c49cf00484886f7386eeb2649d94c51972:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4YzAxYjExZWE5YjEzZmM4MmRhYzgwYjkzYzUwMjM4OWZkY2EwNmEzNDJlZmM2YTdlMjRhZWU5YjM1MWQxMzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5YjVlNTZhODRmZTUzNzYxMWEwYjI3NmU5YWQ0ZjA2NWY4ZjdiYmM0NjVmMDJjMWNkMjIxZDExYzRiNzc1ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2ODljZWU4NDVlZmY5NWFmNGUyYWRiMzliOWM2MTM1ZWVhZmQ5NDRjZDcxZjg5NWM0ZjQ2NzhiODdiMGU3MTIifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L427-L490",
+          "resource": "repo://crates/server/src/routes/sessions/mod.rs#L427-L499",
           "version": "repo-lines-v1:sha256:80d32b268208e2cdc0fab494b7480a2389697b0cf87430a8f478834dd3e67e81:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMTE3YzNiYTg2MmFmNzY4NGNiMmIwZGM2MmI5Mjk0MDdkY2NiMTM0NTI3YTcyYWUxYzBiNTlkZGEwNTQzYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjI0MmE5ZDY5M2VhMTVkZmJiY2RkN2I3NmYxYmNhYzNjNGVlMGVlMWY4MWU5YWM2YmExODE5YTQ2ZDQxOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4YmRlZThhZDk3OGI5MmIzZmViNjQzYjNmMTViMTg5YzA3ZmViYWQwMjdhOTJhNGVlODcwNjMxNmEzMzk5NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI5NTU0ZDdmMmRmNWQ1M2M0Mjg0Y2M1NGU2MzQ3NzNhODgxOTI4NDEyYmNhOWVhZTM1NDBiZGEyYjNiYWMxMjAifQ"
         }
       ]
@@ -55,11 +55,11 @@
       "statement": "Session の executor/provider/profile/native identity は binding 後の切替を拒否し、native採用はscopeとprofile fingerprintおよび他Sessionの所有を検証する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/routes/sessions/agent_run.rs#L153-L170",
+          "resource": "repo://crates/server/src/routes/sessions/agent_run.rs#L154-L171",
           "version": "repo-lines-v1:sha256:a138180ae64478d1e0cf942b43e69215d13ffebba2a2ed7d9b0af145d6bc7556:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0YmEyZTgxNzdmOWVjNGUyOGViMTQ1YTRjMGE1YmRiMTkzYjk3Yjk4OGYwODYyMjE0ZGFhMGZhNjk2NjU2OTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwZjc4ZGIwYTNlZWY5ZjljMzkyMGNmODU3ZDkzZmZlZjgxMWViMGQyMGVlYmIyNmJkNzI4ZDlkN2U1MmNmNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkNmI1NWM2ODQyOGJkOWU4ZDZiNGU0Y2YwYmJmYmI4Mjc4MWEzMjU4NjEwYWU5ZTAxMjI3NzA0NjM1MGQwN2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkZTNjNjU3YjEwMDJmY2ZhZDQ4YTkyYjhiNmYxYzAxYWQwMTlhOThkM2NmNTYxNzRiOTkyYzNjOGU3NjkyYTAifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/sessions/agent_run.rs#L260-L370",
+          "resource": "repo://crates/server/src/routes/sessions/agent_run.rs#L252-L362",
           "version": "repo-lines-v1:sha256:00e4f386a7bac4215a169f138c7025f0c27ef0fd3f67722e517e42ca6aff9379:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxYzBkNGM3MzUxY2UwZjZlMThkNzIwMzAxODExZGYyNDhkNTMyYTFiODZmNWY4YmExMzc0NDIyNWZkM2MxYTM2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmOWIxOTgyZThkZDc0ODExODE0NmIzOWEyZDAwNjJmNDA4MWUzNDc3OWI4Njc1YzIzNGM0ZmIxMjRkYzM5MzkwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlYzM0OGJiYjc2NTU3ODVhMzg3NTkwMjBhNTAzNDI0ZGI3MzVhNzc4NzMxNjUwMGJiZWY3ODU0YTViZGNmNzU4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiOWRlZWZiY2Q0MjE1NzMxYWNmNDJlNjMwMDIwYWIxZjFjMzgwYWEwYzc3OTIxZjU2YmIyODhkYTBkOTk3OTEzIn0"
         }
       ]
@@ -69,7 +69,7 @@
       "statement": "AgentRun の入力・承認待ちは非終端で、実行状態と ProjectionStatus は別に保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/runtime/contracts.rs#L634-L689",
+          "resource": "repo://crates/executors/src/runtime/contracts.rs#L660-L715",
           "version": "repo-lines-v1:sha256:9a0dff05f3dd9d978403e642071d29203f5bbed68e2f0cc76741c4f6a3728a05:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyYTkyNDVjZWM3YjVhZjcxYzczNmZhNzdkZGE4ZGQ0YTQ5M2M1ZWEzODQzNzY1ZjA5Zjk3MGI0NzA1YzZiYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5OTM2YzUyMjc2Y2JiZTBiZTExYjNjZmU2YTIwYTFhZGNmNmMxYjk0YWJmN2RjZDllNDlmYjZkZGFmMGU2YTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0MDlmODdhM2MzZjg3NmRmOGI1MzU1MmQ2MmRjOTgzZGIyZjU5NzQ1ZTRlMmNhZDYyYzI5NzczMDg2NjM1ZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YjI1NDBkZTBmNzQ2MjkxYmZhYzcwZjZlNDliZjIwNzQwODk5N2NhYmMxNTY3NGMzMGVlMDQ2MTc4YjFjZjkifQ"
         }
       ]
@@ -79,11 +79,11 @@
       "statement": "Cancelは終端runで無操作、活動中はCancellingを保存する。projection degradedでは通常制御を拒否し、Cancelと既知startup collisionの証拠検証付き明示Retryを回復経路として残す。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1519-L1555",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L1585-L1621",
           "version": "repo-lines-v1:sha256:0988a8e0b30521f5b2de085a6bab25621c781fb3c1ef2f2330eef2a45d84950f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNDAxMGM2NzRlNjgyZmM3OTE1YzZhMTNjNzJkMjBiMTIwOGYyOWFkMGFhYWI2MDc2YmFmMWNiODczYzYwMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZmIzZGIzZTA1YjRlMTQ4NWQ4OWQzYWQxMjFkNzM4Nzk2ODMwOGMzYWE3ZWI3NzNlNDExNzgzYTRjNWY5ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMjZkZmEyZjY0OWQ2OTQ3ZDhhYzE3ODJlOWM5OTEyM2Q2MjllNzFiZThjZDkyM2M1M2JiNmE5NzdmYjA2OGYifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3221-L3240",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L3493-L3512",
           "version": "repo-lines-v1:sha256:9f5aba64c4698530bd2c111dfc8aa04e2e773b813819b3f10f533cfc8136f88b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1M2ViNjY4ZDNmMTk3OGNhMTJlNDNlODNhZTg4Nzk2YWE5ZjAxOGFkNGEyYzcxMWVlZGQzNDk4MTlkYTBjYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyOWVmN2YyOTMxMTI0YTEwYTIwZDdlYTA5ZWViN2RiNTE1Nzg0ZjcxZjI0ZjMxNTZjNTBiODIxMzE3NDM5NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMzFmZjZkMTk3MWJkNGE5OTZlODY3MDRiMjIwNGM5MTI0NjM4YzMyYjA5ZGYxM2UwZjE1YjZiNTFiYzU3MzUifQ"
         }
       ]
@@ -107,11 +107,11 @@
       "statement": "ExecutionMode はPermissionPolicyと別で、Codex Goal objectiveは4,000文字を上限とする。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1-L23",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L12-L34",
           "version": "repo-lines-v1:sha256:0ab2f4535e0db706c43480799e3554be23df2f36cd92c5ceee764390466bfed8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkYjJjYmFkNWM4MzE0ZGVjNGEzNDE3OWRlZDY5YzQwZjg1YWZjODIzMTcxZjQxNzk2ODJhYzAzN2RjNzc1NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzMmNkMmU3OWQxY2E2NDkxZjcyZWU2N2NjY2FjMGViM2VkYTVmYWYxNWIyYzAwM2MzYTRmN2U3MTFkYTVjZGQifQ"
         },
         {
-          "resource": "repo://crates/executors/src/profile.rs#L18-L34",
+          "resource": "repo://crates/executors/src/profile.rs#L18-L39",
           "version": "repo-lines-v1:sha256:d5b4f2cb9f57dae9b5d2784121269c2288e751aa8f44a6a6ef16f8e2a22e36f5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5OTBlN2Y5NjE5OGQxYWFjODFhZjZkODUzYmEwM2M1M2E2YTY0ODUzNDE5NjgwNzRiYWZmYWIwZGQzOTI0NjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4MGQwNzhjYzc0ZTljMzY3ZDYzYWViN2ZlMDRkODI4ZDk1ZThjMWJkMjg0ZWI2MWI1YzVhYjA2OTllZWVhMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNTU4MjhhM2RkNDUzMTdmNzA1ZTc4NGY4MzkyMmRmZjQ3ZTlkODY5YWU3ZmFiM2RiZDk4MGQwZWNjMzI4MWQifQ"
         }
       ]
@@ -131,11 +131,11 @@
       "statement": "Goalのsubagent上限は0で無効化、未指定でCodex既定となる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L1625-L1644",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L2135-L2154",
           "version": "repo-lines-v1:sha256:1d1f66bc0a94f686110e92e25bc67a3492adae0c9dd2dfd19e6552b2c523d9ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyZDgyOGEwMzdhYzFjODE1MzViMWQ1NTAwODMyMzIzYmZiYjg2NmEzYTNmODdlN2E2OGMxM2EyYmFlNTZmZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwMGRiMDQwZjI5MDliZjk3OGZmMGE5NTZhNTVlODNjNjUzNDE4ZGU2YmI2OGY4MDQxZGE5NzZmOGQzZDIyNzAifQ"
         },
         {
-          "resource": "repo://crates/executors/src/profile.rs#L166-L172",
+          "resource": "repo://crates/executors/src/profile.rs#L171-L177",
           "version": "repo-lines-v1:sha256:15d956774bc01b8571e520eb4c022d312848c5a3994e0960c9d752dc8ed19276:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzJlMTdjMjBmYWY5NzY5OGNjYjc0OGNhZWRmNDM3YTQ0MzdlZTI1OTZkMmQzMDZkMGIwOGE1NzdkYWZhYjRiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2IyZGY1YTY3OTJjMzkyYWJmMWNmOWVhMjdiODc1MmNmYWY5NGU5OWE1NzgxZjU0NTg1NDRmNjUwYzk3ZDAyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGY4NzMzNTIyZjg4NzZlYWNjMWFhY2IwOTk0OTc3ZWVlNTRmYzZkNThlZGExYzI1MDY0ZWUwOWZhYTcwMjk5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmY3YTk0OTE4MGEwMzBhMjA5YmIxM2IyOWRmMWEzMjNjZDM1N2IyMTUzZmE2OTU0Mjc3NGJjZWExMjg5MjM2ZSJ9"
         }
       ]
@@ -155,7 +155,7 @@
       "statement": "現行coding agentはExecutionProcess actionから起動できず、AgentRun APIが要求される。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L1541-L1547",
+          "resource": "repo://crates/local-deployment/src/container.rs#L1534-L1540",
           "version": "repo-lines-v1:sha256:c6cd57497580d0e451fc62c7b718bf4b36f870f2bf7b29a02f3db48bae394f02:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTFlZGIxZDA2Y2YwNGU4NTY4YjdkZWJmNzc5MWJmOTYzYjU4N2I5YzU3N2VhODIzMzc4NzdiNGZhOGIwZDQyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWVmYmY0ZjhiOTczN2YxN2Q0ODI3ODFhZjY3MGQyMTVhOTQ5OGRmNTZiNGZkOTk5M2E5ZDYwNDNkYjU1MDMxNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTRlOTRhMWUyMGI5ZWIyNzczYjFkZDJmODRmYmIwODg4YzRkMWI1YWU1YTNiMTNiOThhOTk3Y2FiOWQyZDgyNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2RhOTRlYmVhNTkxYjY0MzQ1MTlhZDM5ODU4NTE4Y2NhZmMyMGYyN2ViZGYyOGFiODNmYzU5MzgwNDdkOTM5NiJ9"
         }
       ]
@@ -165,7 +165,7 @@
       "statement": "承認・質問UIはRunと待機IDを区別するが、PlanWithGoalのobjective編集・専用承認UIは退役し、旧draft controlはretirement errorになる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L378-L383",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L460-L465",
           "version": "repo-lines-v1:sha256:b63808f73136681b5b7f21b394f2c5bc783b0c79af0f277ea86c6a5aa1add371:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTBmZDY3ZTllNGU3ZDQ5MWY1OTI2MDU2MzBjMDA0NWU3M2M2MDllNTUwY2QxODVhOTU0Mjk4MDczZGZmZjU0YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGZiNWIwZmUwNjg2YmFiZjY4YWZkNzgzYjVjOWFhNzNkMTg3OGExNjk4MThhOTEzMjA3NDE1Y2FhZDNmYjhlZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjkyOTMyMGU2OWQ1NjE5NjAyMWY4MzdhOTA0ZDg2ODUyYzMwMGU3NjliNmIzYmU3MTc2OTdjZWQ5NzhjNDAwNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTA2OTAzYmViNjAyNmZiODhjZDI1NzEzZGJlMzY2NjU5M2IzYzZhMGIyY2NhMWE0M2YzOTdiMDdlNWUxMjcwNyJ9"
         },
         {
@@ -193,7 +193,7 @@
       "statement": "editor の保存失敗は console に残り未 ACK backup を保持するが、ブラウザー storage 自体の失敗時に hard reload 後の復元は保証されない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L85-L102",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L89-L106",
           "version": "repo-lines-v1:sha256:41b1f29cc64c8756c55ce571f2f19ea55f65ab6be819b0f0dd14a0d92ec7dcaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNTc5MTg1NzRmOGZjMWY3YzljNmNmMDUzYmUzZDRkNjkzYzI0YjE3NjIwYjU5MmM2MTM2MGQ5MGE5MmFjNjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNWI3OTY4ZjNiMDY3MjE0YTFkNWJhYzEwOWQxYTlmNTRmNWIzZTU3ZTg0NTBlNTI5Y2FjMzg2N2Q0NjY0NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjNTNkMDg5NDdhZDllMGY1ODI3MDc1MjhlNGVhNmFhMzY5NTMzOTJmY2M5ZDc4MWEyOGZjYzQ1MWFmMjc5MDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyODJmNjk5MjJkYjhmODMyYzk4ZDU0YjY5NDIyNTg2NDRmNDBiOGUwY2Q2ZmIzN2IyMjVjMDE3YjMyNmQyZDQifQ"
         },
         {
@@ -235,11 +235,11 @@
       "statement": "Codex client は thread/start と thread/resume の応答から解決済み model と reasoning effort を採用するため、依頼の effort override が未指定でも provider が継承した設定を後続 turn に維持できる。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L183-L190",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L195-L202",
           "version": "repo-lines-v1:sha256:957ca9cfb050c12d0f2c5c2d895a3fe87cf6948680046090b12c534597e062e3:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWRjYmZkNmVjYzMyMTVhY2JjZTM5NjI0NWMxNmE3MDc5NjUyMTE2Nzk4YmMxNmExNmRiMDFmMDNkNTk4OTBkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGM1ZmM2YTBjZDIwZGNhNDUwYjZlZTUwMGQ4OTJiMDg1YmFkOGU0ZjBjNzdjN2YwNGMxZDcyODVhY2I4NGIzMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGYxMTcyZDhkNjQ5YmVlYjBmZmU4MmQ1YmUxZTlkNTY3ZDllODdjODcwYTcxY2ZjM2M1NmUxODcwMmMzZTM2YyJ9"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L257-L322",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L277-L403",
           "version": "repo-lines-v1:sha256:57fae788a75784d7f9658205b4133b7dab30e2dbe5780cea8c7a6a393416a096:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNjY2ZWZmN2Y2ZDI0YzljZWVmMmU3YjcxODk2OWIwYjgyYWFkYjRjN2VjZjY0NjNlZmU1YmZjZjgyOTllYWU5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwNjNkZmE5MzEzMjA4MWZiMTU4N2EzNThjZDMwMGMzOWQ1MjM5Mzc0YzBjODY0ODIxODc2ZTRmZDYwNDg3NDM4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwZDI4YzBiNGQ3ZDkwMjVlNTgzMGI4M2UxYWZlZTM1OTg4NTQwMWRjOWYwNmNjMDk3M2JmMzJjOGE1ZmZhNTczIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4ZjI4ZTU2NWFjMjQyOTg2ZjgzN2NjODAxY2U4YTVlNDg3ZTQxODFmN2ZkOGUzYTk1ZjRhZTVjMzBmYzJmZDlmIn0"
         }
       ]
@@ -259,7 +259,7 @@
       "statement": "execution_only Workspace の terminal 通知は通常の repository memory 完了と follow-up queue 消費から除外される。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/container.rs#L375-L395",
+          "resource": "repo://crates/local-deployment/src/container.rs#L366-L386",
           "version": "repo-lines-v1:sha256:936b9bc5a5a70087017a1c85c9ce6c561f450196b244aa6f692f52e886585776:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEwODhhOWQxZjg3YjIwYjAzYjQxMGU0Mjk4Zjg5M2I4NjRjZmU5ZWJiYjM1YzZiNThkZThlN2RjYjNiMDg1MjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEyY2MwZDQ0ZGRlMzkxMDE4YTQ1OWMwNmIwOTBlZWVjOGRmNTA0MTg4Mjk3MzIwMmQwYTc2NWZjOTM1NjRjYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5MDQzY2RhZDFiY2Q3NDIzZTk4ZjI4OTZiZTAxM2M0ZmJiZjhiMzliN2Y4NmEzYzMxYjk2MTNjMWMzNzM1NjEifQ"
         }
       ]
@@ -289,7 +289,7 @@
       "statement": "composer は host・Session scope 別 pending backup を入力時に保存し、一致する ACK だけで消す。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L164-L179",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/model/hooks/useSessionMessageEditor.ts#L168-L183",
           "version": "repo-lines-v1:sha256:33b40a193b20c0b9c33750afd514282c5df11462ec7098e612f7cbb608c6d717:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzMGRlMDZlN2QyYjhjYTAwZDJlYzdlMTBiMGEwMjUxZWIwY2I2Y2Q5NjZkNDQ3ZjhkOWI0MTllMmY1MmY4YmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYTYxNDI1N2M1NWRkNGU1NjZhY2Y4NjgxNzJlM2NkMzE2ZGQ1NTQyM2I4MzM4MGJhMzRkOTAzYTllNGZjMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiYTIxYjM4YmRkZTBmMmQ5YmI0ZTQyYTk2NTgwNjBhNjcxMzJkNjNlM2FiNjdlN2FiZTI1MTliMDQ5ZTgwZWIifQ"
         },
         {
@@ -327,12 +327,12 @@
       "statement": "外部MCPの質問読取はSession所属とrevisionを検査し、実行承認はLVKで判断するよう案内する。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L193-L224",
-          "version": "repo-lines-v1:sha256:0a9a797a34d525267ccbe1bd51d8e4623f3b2cc9a396a4f493ef02076194077f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyYWQ4ZDcwZjRjYTcxMDg0YmZkZGJlYTBlOTc3ODhlYzgxMWZkYjZmMGExNmQ2ZjFkZTZjMzI4Y2NlNzA2MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMGQ3NTk1MGRmMGZmOWEzZWU5NjYzOWRjYzhmZjVlYWVkYjQwZDY4MmJlYTkyNjIyYjUyMGRkODg3ZDkzZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L202-L245",
+          "version": "repo-lines-v1:sha256:eaee12d122c3e0a88b72ce7dfb2061a878ec725bdb9eae997cd576ff6a60e1b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyYWQ4ZDcwZjRjYTcxMDg0YmZkZGJlYTBlOTc3ODhlYzgxMWZkYjZmMGExNmQ2ZjFkZTZjMzI4Y2NlNzA2MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMGQ3NTk1MGRmMGZmOWEzZWU5NjYzOWRjYzhmZjVlYWVkYjQwZDY4MmJlYTkyNjIyYjUyMGRkODg3ZDkzZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L94-L171",
-          "version": "repo-lines-v1:sha256:473d322264e97270a1e1fe37554317840d22e855b50af376c105af89b1fbd0c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYWNmNzFhNzI3MmMwMDYwY2Q5ZTJkMWI5ZTNmM2ZlMzJhMzFhMTljNGFhMTBhZmE5NmNhOTdlNWI1ZDVlZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjJjNTc4MmRiNTM0Mzc2ODZmYzBkNmE2ODA4ZGYyYzQ1N2I1ZTEyMGE5ODA3Mzg1ZWIzMjhjYmU2NzdkNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxM2E4MzY0YzEwYWE1M2UzNjgyN2FlYmM3OTEyNGIwMzJhNzRiYTc5NWIwNjIxNTkzMzY3ODhkNTg2ODg3ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNmM5NGRmYzg3YTcwMDcyOWQ0OGFkOThhNzVlMDA2ZGJiZmRlNjhhMjlkNmNmMTQ0ZTk5MWU1YjY4ZDRmZmIifQ"
+          "resource": "repo://crates/server/src/remote_mcp/questions.rs#L94-L180",
+          "version": "repo-lines-v1:sha256:1610dd20b2f94f11dd628e0d9de2b33a0bcb11ede0515d67ad9e3e2d618cd25c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYWNmNzFhNzI3MmMwMDYwY2Q5ZTJkMWI5ZTNmM2ZlMzJhMzFhMTljNGFhMTBhZmE5NmNhOTdlNWI1ZDVlZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NjJjNTc4MmRiNTM0Mzc2ODZmYzBkNmE2ODA4ZGYyYzQ1N2I1ZTEyMGE5ODA3Mzg1ZWIzMjhjYmU2NzdkNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxM2E4MzY0YzEwYWE1M2UzNjgyN2FlYmM3OTEyNGIwMzJhNzRiYTc5NWIwNjIxNTkzMzY3ODhkNTg2ODg3ZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNmM5NGRmYzg3YTcwMDcyOWQ0OGFkOThhNzVlMDA2ZGJiZmRlNjhhMjlkNmNmMTQ0ZTk5MWU1YjY4ZDRmZmIifQ"
         }
       ]
     },
@@ -359,15 +359,15 @@
       "statement": "新規PlanWithGoal launchはPlanへ正規化してGoalを自動作成せず、composer復元も旧Goal optionsを消す。既存enum/API値は互換用に残る。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L585-L665",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L598-L678",
           "version": "repo-lines-v1:sha256:a70a8369f950a078df53c190d2750aa81769ab6614d8650b71142fbd0ebfcb6d:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmYTMyMjk5Y2Y3NjlkZTcyZWE5MjIyNzg2MGMzYWYyOTk0ZTExODY4Y2M0NmU3ZDM5ODIyOWQ5NzZiY2I4MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZjMwNDBlNjM5ZTA2OGNmYjY5YzQxMDQ4ZDViOGI4YWRlZWQzMDUyMmRkZWY3Y2I5YjMxZGVkNWFiMTZjY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5NzQ3ZDhlZmY4MzQwNjgzMTU1YTUzYzg0MjRiMGM2ZjY5ZmFjYWUzMDBjNTUyYjRmNjAzZjVmNDY1ZDk0ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNhNjgyZjRjNDhjZDg0YTk4NjgwOGQ3OWY5YmE3MWYxNDkyN2QyYWI0MGQxNGI4ZmIzYzM1NGIyYjE1MWMyNzMifQ"
         },
         {
-          "resource": "repo://crates/executors/src/profile.rs#L18-L37",
+          "resource": "repo://crates/executors/src/profile.rs#L18-L39",
           "version": "repo-lines-v1:sha256:d5b4f2cb9f57dae9b5d2784121269c2288e751aa8f44a6a6ef16f8e2a22e36f5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5OTBlN2Y5NjE5OGQxYWFjODFhZjZkODUzYmEwM2M1M2E2YTY0ODUzNDE5NjgwNzRiYWZmYWIwZGQzOTI0NjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4MGQwNzhjYzc0ZTljMzY3ZDYzYWViN2ZlMDRkODI4ZDk1ZThjMWJkMjg0ZWI2MWI1YzVhYjA2OTllZWVhMGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhNTU4MjhhM2RkNDUzMTdmNzA1ZTc4NGY4MzkyMmRmZjQ3ZTlkODY5YWU3ZmFiM2RiZDk4MGQwZWNjMzI4MWQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L20-L29",
+          "resource": "repo://packages/web-core/src/shared/lib/executorOverrides.ts#L33-L42",
           "version": "repo-lines-v1:sha256:c2fe57025376f6e0c50c660211cf1c0eade7ac3cd7d0032b76223a9ae33e9832:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjN2ZmN2MwNWU0M2MyMzBmMGIxOTIyNWNkYzRhODFhOTViNzAwNDAwNmU1ZDQ3ZmI5NWNkMTM3NGI0NjI2OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4MmM4ZjkwM2FiMjZlZTZhZGYwZjA4OTZmMDVjMGViOTMxOGUzYjZlNzdkNDZhNjZkYjk0MzMzYTEyYTViMzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -377,19 +377,19 @@
       "statement": "Planはnative collaborationModeを使い、legacy plan presetをpermission変更前に解決し明示modeを優先する。承認でPlan flagを解除し、後のreasoning更新でもDefaultを維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L626-L669",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L639-L682",
           "version": "repo-lines-v1:sha256:50adfa11d7bc42aa12f7f54fe5d4f8949dcbcaa781b52bc37bfbb8a25fb88230:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZGY4NDQ2MzUxZDcyMjhhOTdlZDdlYjhmNjI1MjI1NGIzZDg1MmY5ZDFjYjI5YTIyODVjNjRhNWUzZjM2NWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNzRmMTViYTllMDAyOWMyMGU3NzA1YjdmMTkxOTBhMmRiMTllMjA1MzE2ZjY4YTE4ZDBlYTE5N2Q1NjYxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0Y2ZhZTYwZTlkMTFlODI4Y2MzNGViYTE2ZGI3Y2E3NzRiYjhiNzAxNTVlYTYyOTUxZjI3NGI0M2I5OTAwMGQifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1116-L1145",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1302-L1331",
           "version": "repo-lines-v1:sha256:5baca50bda53e6ec1ed61d1b988f206b812945859b97905536663cc66424e7f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkZDRiYTJlNzQ5MDhmN2UxMzY1ODFkMDlkNDE4MzUzOWRjZjk5OGU4N2RhZWE2NjE1YjVkNWM3ZDQ2YTRjOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1M2RhOGM0NTZiOTAyYTE1M2QwY2M2MDAzYzEyOWFlYTAwNjAwZmVlNGUyNjQyYzMwNjhiMmY5Yjc2YTkwN2MifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L453-L482",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L551-L580",
           "version": "repo-lines-v1:sha256:ac6c1286318b27ab44be8fd65423f845ba0a5d61ea70132c8f184bacc5db41e7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjYzAwODJjODBkMTkyZWExNzg1ODNiZTRjZTZiNDc3MDRkOTVhODliYjYyMTM2MDRlY2M1ZTJmOWMyMzUxNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlM2MzYmRjMDU5MjgwZDJjZGY0ODNjZTVkNzViNWZhNGVjNTZiOTViOTczYWRjMDlmM2Q0MDYyMGQwYTlmOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljM2ZmZjlkNTIwMGYzYTA0ZDY1YzNkMTJjODc4ZjA0NDNiZTlkZDc3NDMxZjExZTAxMjliZjg2YmY1Y2NhY2QifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L714-L742",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L812-L840",
           "version": "repo-lines-v1:sha256:e5b0520d804e99835a3e4306751d8dfb4406b2b4612a79fce87b644e0d2dadc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwZjMwYmM4YWU2YmM1ZGQ3YjkxMTRjMjAwZTFhMjQ1ZTcwYTViODZkNjMwNzAxYzgwZjQwMzVjZDQ0N2QyNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwOTNkY2UwMmZhM2U1YzBiOGMxYzg2YWM2N2U4NzYzZTNhMjQ5YWFhZDAxZjlhOGVkZTJkNjcyNzE1MGJkNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwNjI5YzQwMzEzODhmNDUyMWZmNmFjMWYwMTk0ZjM0MWIwMTQyOGJmYmYzZDBlMGViNDcxZmY1NGUxM2FiYWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkY2ZkN2ZlNmQ0ODhlYjAyNDMyN2E0M2Q2MWEyOWZjZDgwZTU1ZWU3ZDM2OGQ5NDAxODkzZTdkOTZlNDBjNTgifQ"
         }
       ]
@@ -403,7 +403,7 @@
           "version": "repo-lines-v1:sha256:89a47990106239e5eb1c50f23546e56c1762a742c28c8e00841f1b8b2ef86026:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5OGI5NjhkZTdjMGQwYTYyN2E0MzM0OTY2Mjc5NTA4NTViYzA0M2NhNjk1ODEzNzljNWIyZDYzNTgyOWQ2MGViIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNjg0NTYwNGNkMTE1NzFkMjAxZTJjZTI3M2MzMGI4ZjZlMzVmYjMxMzgzYzJmZjMzOTIzZjhjZDkwNjk4OTQ2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4ZjE3NDUzZDI0Y2E3YjI1OWQyYmVhNjM2OGI4NjI0NWMyMTgyZTI2NWExOGM4OWYxYWJjZjA0NzhmYzRmNDlmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiZDM0Yzk0NTVjZGE0ZDZkOTQ1NmU0ZTMyOGYwZjIyNmZmZTE4MzljYTc3NGQ5NDg2MGY4ZDI5NTYxNTlmZmY3In0"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L240-L310",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L336-L406",
           "version": "repo-lines-v1:sha256:b6413e58ca396c1429a9e1fed24ae1304eae4a9a831dd0ad42f47724a8c3bf6c:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYTVjNzA3OWEwOGRjZjQwY2FlZDVhNTMzMTBmNTJiOTQ4Y2ZmY2EwNTY5NWQyNWVlYmYyMmNiZWM4OWE4YjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlZGI3YTU2ODA2ZDE3ZDNmM2M2MThlNjdhNDg5ZDc3MWRjNzcxN2M0OTUzZGI4YWY1OTYyYTIyNGRkMWMzZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYzODAzYTg4ZWI3NzIxN2FmMDQwY2QwYmNmODY1NWQ1NTJmYjYxYzhlYmNhZTZiMGNlNmMwOTM3MTA4ZDMwNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyM2UyMmZhMmU4ZjhmZDZiYjVkZDQzMWUwZWE1NDdhYTk1ZDU4MGQxNDYyMmI1MWM1NzA1ZGQxNTQ1ODEyNDcifQ"
         }
       ]
@@ -423,7 +423,7 @@
       "statement": "context gaugeは最新親contextとcapacityを累積input+outputとは区別し、不正・欠損測定をunknownとする。新Run/attemptで古いgaugeを継承しない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1619-L1645",
+          "resource": "repo://crates/executors/src/executors/provider_adapter.rs#L1537-L1563",
           "version": "repo-lines-v1:sha256:1f35db553a841c30dbd8d3f6fe7e3d42020b439c3edddaa69c4fe54f981aa1bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0OGRiMDMxZmI2ZDRlNjM3YTI0ODdjMWFiODlhYjZmY2ExODU2MWVmOGYzNWQ0ODBhYzFhOWIxOTlhOTI5ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmNjRkMzQzZmM3MTVkOTFkMDE0Njg3OTVjOWRmZDhmNzVjODgzYmQyM2NiZTBiZTk3N2M3ZjYwMTUzNDk0YjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVjYzhkYjMyMzAwYjIwODA1ZWYzOTA1Y2U2M2YzNzkyMDIzN2RiZmU3ZDE0N2ZmM2Y3NmFiOTg0MDMzZjAxODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YTI3MjBkYmRkZmRhYWE3YzQ5ZGIzYWZmNTA1NTdmZDg4MGZiNDIwMjBmNmEzMTU3NmVlNGU3N2E1NjBlZjAifQ"
         },
         {
@@ -431,11 +431,11 @@
           "version": "repo-lines-v1:sha256:6fe8e87e01cb22106e2d183c96ae91ab5e329132fd56057a480b43802b7c90ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjNTBjOTU1OTQ2OWUwZjMyYzIwYTlmODM2NGFlZWE4OTRjYjAxZGJiZjI1NmUxY2U0NjBmNmI1ODcxMWE2NGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyNmRjZjBmZjllZjJkYmVkZTg3YjUwMDMxYjk3NTkwZjM2ZWM5ZDYzMDlhODliZGFiZTNlMzkyNjFlZTg1MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkMTU2Zjk4NGI5YjQwNzFjOTYxZjlkNzdhNzNiNjJkNjdjMzc5Mjg3ZDY2MGY4YjlkNTk2MGY4ODUzYmQ3OTcifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L543-L563",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L706-L726",
           "version": "repo-lines-v1:sha256:ced35832fe1a84ad02f981b9535c49933e00bda9ecd06b96ad5fcbc5a783395a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZmI1ZTA4Mjk4OGZiNTIyODA2N2YwMmNhZTRiMzk3N2UwOGM2NWY2OGZiOTc4ODJhYzRmNjE2Y2ZkZTljN2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmMmFjZWU0ZjJjYWU4YTFjZDM1YzFkZDMzYmQ2MDhmZTY2MGRkODgxYzJhYTIzODI3MzZjY2YxOWQ4NjIxYWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5OWE3MmQ5ZTgxYmU2ZjE4ZTA2NmJiODNhMTE5ZWY1NDU4YjVhMjZmZTcwYjJlMTg2YTdkYWRjNzlhNWMyZGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyMzBhZDY4Nzc3NDBkNDJhMzZlMzAwMTE3NWQ0MTQzYTVjMWY3NzkyOWVhMWY3N2NhNTI1NzRiNjgxNGE2NjkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L664-L678",
+          "resource": "repo://packages/web-core/src/features/agent-runtime/model/canonicalAgentConversation.ts#L987-L1001",
           "version": "repo-lines-v1:sha256:ddf6ad2c92ef8bb5e3b58a1dc2576afbbee2dbecd0e9d54d19abac095d4c2ab5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4OWFiZmYxNTRkNjIzNThhNDM0Zjk1M2Q2NTBjOTA2MTEwZjRmMmIyNWFkZmYyOGRlMzBmZjEzOTY4MGFmZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWVmZGQ1MTEzZDk5MDU2ZjFlMTlkZTFiN2Q1YmVkZTZlMGEzMDFmOWU4ZjdiZTRlYWQzZjhmOGRhODY2YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1MTc3YzdmMmJmZTcyYmQ4YzE2ZmU3ZGVmZDljNjVmOTVlMGQ3ZWQwYTE2ZWY1Y2EyNWExZTEwNGE1YTJiMzQifQ"
         }
       ]
@@ -459,11 +459,11 @@
       "statement": "OS exit 0だけではAgentRun成功にせず、provider成功根拠のない正常終了はCrashedにする。",
       "evidence": [
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1192-L1268",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1229-L1305",
           "version": "repo-lines-v1:sha256:aaac8f8a0515c2cc498ef146c12c651ac2e75b35047ba1e8de05edbe8a95a417:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3N2RkNDE3NDljMTAxM2U3M2IwYzgwODNjOTI3MzAyYTM4NTQ3MTkyZWJhMWIyNzcyNDRkNTY1OTQ3YjdlMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3ZjljOGQwYzQ0YzliZjc4MjNjNDU4OWJlZjlmZjNiYzA5NTk4ZWI3NjJjM2Y0ZDA1NzBjM2NiMTcwMTAxOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5ZTc2MzU1Y2YxMTk5NDgwYzNmOTk4MzZiMTQ4NmM4NDFkODkxZmFhZDkwNGM2MDhlMDkzMDIyZDM3NTdhZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkOWM5NmZlMmJlZDI0Njk0YTM1NGI5MDhhOGVmMjdiMWVjMGQ4ODU5MThiOTg3YzEyMWU4NzRhYjFlNjhlOTIifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/process_host.rs#L1535-L1562",
+          "resource": "repo://crates/local-deployment/src/process_host.rs#L1883-L1910",
           "version": "repo-lines-v1:sha256:00b54c2774c6e2d3204cbb32ab7829a08f804a094cde6c02cdcd86491b0a7d76:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkY2EwZTgxMGQ2OGFlYThkNzZjMWY1YzgxNmMxMGM0NThlYjg5YzVlNzQxN2FjNWIyNmRhOGM0ZDMxYzk1NmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NjBlOTljYTdjNTRiYzQyYjIxZTM2ZjRkYThjNWJlYjIzYjkwZjBjYjU2MjkyNWM2MDY1OTdiNzE0NTg3NGMifQ"
         }
       ]
@@ -487,15 +487,15 @@
       "statement": "attempt.finished_atは未設定時の終端で一度だけ保存され、後続イベントによるprojection.updated_atの更新では変更されない。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1775-L1794",
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L1820-L1839",
           "version": "repo-lines-v1:sha256:610759fb1c789499b29cdcc71e10a0fc8b5e4b5b7b62387262df83fd3a346da7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwNDFlMjk3ODQwNjE2MDdjMDQ1NjkzZGNiNjVjM2E1MWQxZDIxY2E3MWE5N2FiOTI2MDgyMmI1NjhjZDBkZGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhY2FkMTA1MjE0ODgyZjI3NDJlMTZjNGQ2ZDY3NjExZmY0ZGYxZGE4OThjMTc3Yjk2ZDE0NGUxYmU4NjI1NjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1Y2EyODlkNjc4NzY1Yzk4MTMwMTM2MzhlMDI2Njg5MzY4ZTg5MzljMWNkMGFkYzgyNzVjMmU3OWZhMmM0MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5YmRhMjc1YTI0NzUzYTg0OWNiYzA5M2M0N2Y2NTdjNTYwYWI5YWQwY2YyOWIzNjJjMWE2OTRhMmRiZGFkZjMifQ"
         },
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L2099-L2119",
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L2189-L2209",
           "version": "repo-lines-v1:sha256:fc1a851068d6f9fbaee067404ef57642dd71858ffcb67f1862e54ef895bf3630:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmYjljNzQ4MjA3MGI0YmQzMTYxZjMwOTU5NDFkNDgyMWVlOGJjMTYzNmEwMzZiYmU3YTIwM2UzODY1MWY5N2EiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2N2RmOTU0NTI2MDdmYWI4NGFhZDM2YmJjMDlkYjU4MDA4YWQxNTZjZjQxOTM1Zjk3NGIzN2U0YTAzNzk1NTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkZDI2NmYxMzNiMjFhY2IwYjZlMGU5ZTE3MjdlZGRkNTMzMDJjNTk1MjQ1ZTU3OGJhYjczYzUzYzIwNzk1YjIifQ"
         },
         {
-          "resource": "repo://crates/db/src/models/agent_runtime.rs#L3210-L3267",
+          "resource": "repo://crates/db/src/models/agent_runtime.rs#L3671-L3728",
           "version": "repo-lines-v1:sha256:743a5de8e16ffab7041ed1da9c4d994ee87096223e32da679e6dd698d19931b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlZmRkNzEyODUzNTUyYmU4OTQ0OTliNWZkNzZiOGE1MjYwMDc1YmQ4MjllNzM4N2NhMWNkNzQ4MTAyZTdkN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwMmI5M2MyYjFiM2FiMDJiMjYyODU3ZTJkMTYyMGYwZmE4OTRjZTBlYzhiMzRiMzI1ZjhjMzc0YzRjMGY4MGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMGFlMzczMjJiMjEzNjA3NTlhN2FhYjBmZmMzMTVlZTJjNzkzOTZiOWIwMWYzNTY3MmRiMzMxYjEzMzA5YzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NWZkMTFjNzk1NzRlNzY3N2I3ZWY4M2U3ZjQ5ODA5OGIwYTkyZDlkYzNhOTcwNjQ2ODA0MmM1ZDc4NjQ3YjQifQ"
         }
       ]
@@ -569,7 +569,7 @@
           "version": "repo-file-v1:sha256:28e91038f54a5ae2f9a9218734c7f52ae61f8f7cec5f196e5a11295416a38c85"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L688-L762",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L675-L746",
           "version": "repo-lines-v1:sha256:8ede6154a1febaa113a2b2668669dda444806ad6676e80c028098b89f8606d55:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwNWNjMjUyNWNmMGM3Y2ExNDE4YjQ5NTVlNGY1YWFkMTQ2ZTc3ZGJhYWNlYzEzZjAzYTNhMzY1MGUwYjIzMjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxMmYzMzM5YzQ1M2EwYzA5OGM4YTc4YjYzNTgwNzA2YTUwZmE4YTc3NDQyZTRkNzlmNTkyN2JiZmViY2VhOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyY2JmNTUzZjM3Yzg1Mjc4YjlkN2RiMDVmMDZhOGYyNTQyMGY5OGYxNDE3YTE1ZjlmMzQxN2QxNjU0ZjI3NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4YWI5OTVjYTJhYTllZDczMjMwZmZlY2ZlZGZjODQxMmM1YTc5NDdiMzhlMGEwMDM3ODczY2JiYmEwNDhiOGIifQ"
         }
       ]
@@ -579,7 +579,7 @@
       "statement": "MarkdownSyncPluginは外部値の解析をmarkdown-sync tagで識別し正規化serializationを親のonChangeへ返さない。外部値とserializationを別に追跡しtransformer変更時にリセットする。editor hookも同値本文でrevisionを増やさない。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/MarkdownSyncPlugin.tsx#L30-L97",
+          "resource": "repo://packages/ui/src/components/MarkdownSyncPlugin.tsx#L38-L110",
           "version": "repo-lines-v1:sha256:1263fb76a4ecb0135fd7a619cb34a373cc2dae4d49398220f1420c19747014bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2M2IwNDVhZjU4MGI4NDBiODgzZWMxM2Q0YjFjMmM1YjRiYjIwNTczOGM0MjI2M2FlYzI0NzNkYjBkYjI5ZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxZGJlOTM4NWVkMDdkNzZhOWI2OWY4MzJiOTI1MDk0MDIwOWIzMDgwYzk4ODIyMDg5ODVmZDczYWM5MTcxN2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MDM5M2U2OGMxZDQzNGZiZDNlODBlNTBkNDdiZWIyZTY5OTE0ZDc2YTVhY2ViNjdhYjRlYTMyNjcwOWE2ZGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkOTFlNWQwODkzNTAxZjVmZGY2NmNjOTc3NGZiNDZjNmFiMjQ0Njg2ZWExNTE5ZWM4ZDYwZGE2OTE3NmE0YjUifQ"
         },
         {
@@ -603,11 +603,11 @@
       "statement": "editor fixtureは改行正規化と送信成功・失敗・追加入力・focus・IMEを検査し、built-app入力試験は実Scratchと合成follow-up応答を使う。",
       "evidence": [
         {
-          "resource": "repo://tests/chat/editor-display.test.mjs#L75-L141",
+          "resource": "repo://tests/chat/editor-display.test.mjs#L75-L150",
           "version": "repo-lines-v1:sha256:22d9cf9d5fafab6edec03a2d23cd6a3dd47a599ee6c4525c150f691d53db9259:eyJzZWxlY3RlZExpbmVDb3VudCI6NzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNTQ3OTBlYWZlYjhjZDg5M2RhMTc4NDI1Mzk5ODE2OWM4YTBkMWMxMzc5MWUzMzdmZjBjNDY2OGE5OTg0YWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNDRhNWFlNzdmOGY3ODBhYzhlNzc0NThkNDljOWI5ODgzMzBkNWQ3MmI1YTBjZjYxMzQyZGY1YzY3OTkyNzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyNTFlZDQyODEzMTgwMGZkNTJhOWE4YzhiNzUzZjg1NzQ5ZjZjOWVjZWNhZGYyYjgzYmRiOTBhMWQwNDEwNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2N2FjYTBmNDVjNmVmM2QzYzk1NjQ5MjliNDhlOTM4MWFjYTVmY2ZmMTA4MzhlNWE2NWRkOTIyYjA3MGJjZTEifQ"
         },
         {
-          "resource": "repo://tests/chat/isolated.spec.ts#L295-L372",
+          "resource": "repo://tests/chat/isolated.spec.ts#L295-L380",
           "version": "repo-lines-v1:sha256:baabc4f70fad2b8e67bed68256f598c96fe1734863bc5d0b3bdd832886b2e463:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMWFmYzA5NmQ1NjBjY2I1N2FmNzI0MTZkYzkxMmM2NjAyYzhhYTc2Mzk1YWQ4NzIzNmYyMTExMDFhZWMzNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2ZjViNDBiMTU4NDU3ZDE3ODY0ZjIxNzkwNzg2ZGQ1YTJlY2RiNjRiNjZhNjUxZjc4OGQ0ZTI1Y2QzMzAzZDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhNmE1YTc1ZDUyMWFkZGIyMTA1MzJiMTQ0NzZkOWRjMWE4YTQyMGZmNjEwZTFhZDI5OTk5ZTQwYmY5NmU5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwOGU4OTgxODcyYjIyMzUzNTk3YzFiODUwOTdiZDIyOWZlMGQwZDQwNTRlM2JlMzZjYzkyMzE2OGNjYjc0OGUifQ"
         }
       ]
@@ -621,7 +621,7 @@
           "version": "repo-lines-v1:sha256:33739423270fdf4080309ca1fa0fd254dada8955f4c68ec777f3eca15ea1eaca:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5NTk4YTUwZDU3MzE4MTRjYTFiMWFhNDg5YTc3MjNmOGZhZmU5YWE5YWFmYmJiZDZhYjc5MTA2MTk2ZWNlMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5OTVlMjM1ZWYwZjM3NWMyYWJhMTkxYzc4ZmU1NTAxNmZhMDkzZWE1ODM3MWM0ODM0ZWRjYWYzMzcyMGZiZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjODNlYmUzZTUzMjc5OGMzMjA5ODJhYmZlMDdjNzljMDI4ZWJiZTUxODIyOWU3NDI1ODIwYjc4ZTcwOTk3ZjMifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1335-L1355",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1315-L1335",
           "version": "repo-lines-v1:sha256:c7f2783727ae77138586fcee423b2f7036952247682f6b83024fccefcfc4702a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3NGMxZDUxYWIyZjc0NjI4MzU2MmZhODkyMTIwMmYwNTVmMzY5ZDNmMTBlNWVkNjE3MmFlMjc4NzBiODRhMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4NzM1MTY4Njk1ZWI4YTJhZmRlZWNmNGE5NDc3N2RkNjY1MDk1ZDJkZDE5ZTUyNWM4NTc2MTQxMjQwMmI5MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwOTQxY2FiZTczOGNkODQzOTljY2Q2NjAyYjM3OTdiMDYwOTE1ZDVmZGYzMTc4ZmIwMzQ1YzJjMzhmMGU2YjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1ZmU3NjZkOTA1ODQzYjVkNGMzMzNmODc4Nzk2OGUxZDczMDk5OGY5NWU2YjQwMjgyNDJmNmM0NWQxNjk1MTQifQ"
         },
         {
@@ -635,7 +635,7 @@
       "statement": "Enter modeではCtrl+Enterは改行、修飾キーなしEnterはrepeat時に送信せず、IME・keyCode229・typeaheadには送信を譲る。送信callbackは状態に応じ通常送信・queue・質問回答等へ分岐する。",
       "evidence": [
         {
-          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L164-L236",
+          "resource": "repo://packages/ui/src/components/KeyboardCommandsPlugin.tsx#L172-L244",
           "version": "repo-lines-v1:sha256:12a4f5f525c2cc812b4506bd3915718b068906871d9223243007f9b8d46843b1:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjNmYwNzY0ZGIwYTE4YTE5ZGY1ZTU3YmRlNTkyODBkZTA3YTk1YjBlMTEzZGQ5NTllMWU5NmFhMjJiMzNlMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzYmMyODQ5YjQwNjM1NTBmYzYxOTNkODljYjlhOGY4MWVmMTk2MTRjY2U3YmU3YjRmNzMxMzkwN2M1NjlkYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiMGVjM2YxNDRlYmNiNzNhNTg4NjcwNTcyZjIzNjExMDkyODEyYTJlNmQ3NjVmNjc2Y2RmN2JhY2FmYjdiMTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiZGZiZTliYWRjNmFmYWZiMjM4ZGRhNzgzZWRiNTA3NGIxMjNjZjVkYmIxYmExNmEyOGE2ODliNGE3ZWIyYmMifQ"
         },
         {
@@ -663,7 +663,7 @@
       "statement": "入力操作E2Eは実画面からのfollow-upのSession IDとpromptを検査し、400失敗応答をmockして再送を確認するため、実provider成功を検証しない。IME確認は合成イベントである。",
       "evidence": [
         {
-          "resource": "repo://tests/chat/input-operations.isolated.mjs#L267-L339",
+          "resource": "repo://tests/chat/input-operations.isolated.mjs#L268-L341",
           "version": "repo-lines-v1:sha256:eb2150dc445d31c397b30189d3ba03874e5d4eeda99f95da4c1e39d32834c5e6:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkNjMzYzNiYTU3Zjk2ODJkMTEwOWUxMTliZTZlNmQ0ODM1YTU4MDZhZTYxZTZkZmVmNDkxYjliYzdkZjhhNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMDJjM2RlZWU4OGFiOGQ3ZGYwNTc2Y2FjYzU5ZjUzNmVhMjYwNzY4ZGI1OWVlZTAzMWRhZGYyNzQ0NWZjZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNDJiODc0NjY3YThlNTRhNzk5NTJkM2VmNjA1ZjJkZWNhNThiYzFmNDZhYzhiMDQxYjYwNTI0ODExNmVkNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGI1ODA3M2NhZTI2MDNmMzJkMzQyMTc4NGQyYjI4MzUwZjcwMjI5ZTQ0YWIzMTE0Y2I3YWI3OWI2NTkxNDAifQ"
         }
       ]
@@ -673,7 +673,7 @@
       "statement": "Session composer は最新 launch と Scratch を useExecutorConfig に渡し、選択変更を既存 Scratch 保存へ戻す。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L580-L601",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L563-L584",
           "version": "repo-lines-v1:sha256:997c8b1edd9cd3b3bfab6adfc1a7b590ac73d181edded33256c53808d3d43a17:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0OTBmMjYxYjQ1ZWU0MWY0NGM0MTNlMGQzMzdlYTIzYzgyYWQwNGUwNGM3NWIyOGI1MDNkMTQzOGFjNGE0MjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxZmRjYWMzNzIzODJjMTNhNDQ0Zjc4Njk0MGJlMDk2NzI1MGFmMWJmZjQzODc4ZjVhZDZlMjQwMDA1ZTA4N2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIxNzdhY2EzMmJiMWY2YTUzYmU3YmUzM2M4ZmRiNjU2ZWZiMGVlMzI3MDEyYjNhMThjZWNkNzhmODRkZjcyYjAifQ"
         }
       ]
@@ -701,7 +701,7 @@
       "statement": "executor/variant のみの Scratch は preset 選択として fallback を許すが、override キーを含む Scratch は省略された reasoning を null に復元して以前の effort を遮断する。Rust は None を省略するため、過去の identity-only データから元のクリア意図は識別できない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/profile.rs#L148-L175",
+          "resource": "repo://crates/executors/src/profile.rs#L150-L177",
           "version": "repo-lines-v1:sha256:b7a624c2b42d823fcc9aa25f7b5ce10106c16a83f9dcb9e2aff81bd62041d3bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNzFmNjAzNDEyY2E2MjlhOTc3ODAwMTZjZTk0OTZiZmUxM2M2MjBlNzE4YzRjNWYxMWMxZjZlNWJkNDkxYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiMmRmNWE2NzkyYzM5MmFiZjFjZjllYTI3Yjg3NTJjZmFmOTRlOTlhNTc4MWY1NDU4NTQ0ZjY1MGM5N2QwMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5MGEwODU4NTJmMzcxNmFmNjVmYWE1MWY3MWNlNTdhNWE3NDRkMjRjMGE4YjhmNmMyMGNmYTg0MDMwNmRjODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmN2E5NDkxODBhMDMwYTIwOWJiMTNiMjlkZjFhMzIzY2QzNTdiMjE1M2ZhNjk1NDI3NzRiY2VhMTI4OTIzNmUifQ"
         },
         {
@@ -747,7 +747,7 @@
       "statement": "Codex の command/file approval は host の ProcessHostApprovals で明示回答を待つ。Supervised は未指定/Never の policy を UnlessTrusted にし他の明示 policy を保持する。DangerFullAccess と未指定/Never の組合せは全許可を維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex.rs#L626-L683",
+          "resource": "repo://crates/executors/src/executors/codex.rs#L639-L696",
           "version": "repo-lines-v1:sha256:4489b10d230b5bdb5a78b7fa88789db6ada152030a67bcffc0de5500bbbe732b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MGU4ZDFlMGRjZmI2NWY3NDliOGViZjllZGI0MzJkNmUzNDFkNDk1NzVmNDMzM2I1OGVkNGU0Nzc1YTZhZDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNzRmMTViYTllMDAyOWMyMGU3NzA1YjdmMTkxOTBhMmRiMTllMjA1MzE2ZjY4YTE4ZDBlYTE5N2Q1NjYxYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5ZjcwZjVhYTg0MmM3NDVkZjAzOThjYTBmZGFlNTNjYmY0YWZiYTY3NGNjZmQ1ODRhMWQxOWNjYWY2MWYwYWYifQ"
         },
         {
@@ -765,11 +765,11 @@
       "statement": "Approve の approvalId は host waiter を解決し、元 request handler が元 native ID に応答する。未知・重複・完了後の回答は新たな native 応答を作らない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L441-L465",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L521-L545",
           "version": "repo-lines-v1:sha256:a6a8f2143d4765fafb5aec709c7fe910f03b7b1beaa76d7584514262a22cff3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViNDE4NDlkMmE2OTBhYmY5YjllM2ZiNDgwOGQxZWFhODQ4MDY3Y2ZhMmEyYjNiNjgxZmE1NTg5MDBiNGY2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MjkzMjBlNjlkNTYxOTYwMjFmODM3YTkwNGQ4Njg1MmMzMDBlNzY5YjZiM2JlNzE3Njk3Y2VkOTc4YzQwMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5ZDYxY2Y5ZDYwYWFmNWE4OTgzODlmNDcxZDVkODA5MmE3NjYxZDRiZDhjNDJmMWMyMDM0ZTE3NGMxNGVlMmQifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L971-L994",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1067-L1090",
           "version": "repo-lines-v1:sha256:b58a793065f672b43dd0a60d4cc30da7e2c99d89e01205f65508875877f9e833:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxMmU4MWQwZDgyNTY0ZWJmNDlhMjFjYzE1ZDFkNGRjMGMzYmFkMDQ0MjE2YWM2M2VjOTQwZWJhMGZhYTZlMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkZjU5ODUzNGQzOWVjMzdkOTE1NTM3Mjc4MGZjMWE1M2ZmZmVlYjg1MTZmYWUwMjljOTA1NDRhMDFhYjQ0M2QifQ"
         },
         {
@@ -787,15 +787,15 @@
       "statement": "command/file は承認を accept、理由なし拒否/timeout を decline、非空拒否理由を cancel と feedback に変換する。service 不在・異常・取消は承認とせず、bridge は取消済み token を準備済み回答より優先する。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1282-L1342",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1378-L1438",
           "version": "repo-lines-v1:sha256:2c7d705085b2bf2233deff2d790c9a2e30fe6fd3004a1ec52d34450c3887d9c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3N2JlM2U2YzY5OWY3NjY4ODE2MWM3NzM0ZDk5ZTRhYTBlY2RhZGIyMjdmMDhmNjQzNjg0Y2Y1ZmFjOGM0NDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljMDU0ZmRiNzY4MDMxY2EyNGI2ZmQ3ODYwYWZkZWRmNTM2OTgwNDBmZmNhOGY3ZmNkMmJhYzJhYWNmOWQ5NjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5MThkNDZmOTQ1N2VlYTkwYjZhMTU3YjE0OGVlNDI0OWI0NjQ0ZGU5NGZiYWI1MWVlNjRiNmU1Y2ZmNDVlMDIifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L3522-L3677",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L3816-L3971",
           "version": "repo-lines-v1:sha256:255522a604a464ff248c95c5b68248419e7de8e9feab59ce56260f790679fc59:eyJzZWxlY3RlZExpbmVDb3VudCI6MTU2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1NDA2MWFlZTQ2NWRhODZiMzEyZjEyOWMzYTUxMGEwMDE2Zjk2NTYxNjVlOTY1NmFjMjAwMThhYjI3NTllMWMzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNzhmMTdhZWFmMTY3ZjI0ZjQ2YzUxMDE5MDVkYTMzNGVlNDdjYWQ5MjM0NGQ4NWE0Y2YyNzY5ZTYxYTNlNWJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlYjY4YmVjYzFjNzY2NGYzZDA2NGE2ZDQ2ZDFmOWZjNTNhMjE4NjBjYjgxNzIxOTg3ZTVjZGNhZmQwNjgwMzllIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ZjdjODMwMWY4Y2E0NGY1MTViYmJmNzgwN2QxODk3MTgwYTU2ZDdmM2NkYzJkMmFiY2U3NjRlNjA4NTEwOTczIn0"
         },
         {
-          "resource": "repo://crates/services/src/services/approvals/executor_approvals.rs#L123-L148",
+          "resource": "repo://crates/services/src/services/approvals/executor_approvals.rs#L132-L157",
           "version": "repo-lines-v1:sha256:2acb5c06b6ac91f9d402cb89d2a63a358cfc833c97073966f6db5f1824a32401:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiOTNlMzQ0NWM1MTBhMTkyZmEwNzMxMmVlZjRkYjdiZjIyOTk1MTlkNzVkNTYyMWJhYTE0NmZiNTE0ZWY3N2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2NmYyOTMwNDI4YzJiYjYzMDIyY2I0NWMyYjhmM2E5ZjdmOTYxYjkzMDZjYjVlMjI4Y2EwMDBhYmYyOTY3YTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0MzMwZDNjNTNhOTY5ZTRmNjM5M2U2N2UwNTA0MzhiYjIzNmI3NDc3ZmM0MzViN2YwZWUzODc4ZmJlMzNhMGEifQ"
         }
       ]
@@ -805,11 +805,11 @@
       "statement": "Plan 承認と一般質問は Noop 契約を維持し、Plan は即 Approved 後 Default turn、質問待機は ServiceUnavailable を TimedOut と記録する。DirectControl Input は未対応のままである。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1104-L1243",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L1200-L1339",
           "version": "repo-lines-v1:sha256:e84b798c1b2dd2a356b86d9b8b966543a22bc7b8d421c3e94fbafe3fa2a12536:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwOTg1OTgzNzljMjBmZWJhNmExMDRlZmEwNzI5NWYwODEzN2M0ZDdiNzZkYWJlYThiMWMwMjE2MjhjZTA3ODk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzZjU5MDdmMGYzNGFhYmQzNzFlOGE2YmU3Y2IxNDA3ZjQwMjZhYWQxMTkwODQ1YmNkMDdhZTM5OTY1Njc5Njg3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4NzA0YTRlYzNlMmI4ZDc4MjMzMDRjMDdiYzhlYjc3ZDMwNzM0ODRjMGZmNDViNDJjZGIwMGI1Mzc4YmJmNDA3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNjJlZTU3ZTQxYThjMjBhZTAxNjRkZjI2MTQzOWRjYzQ5OWQzNTIwODM0MTUxNTE2ZDA0N2U4ZGVhZThhNDY2In0"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L441-L465",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L521-L545",
           "version": "repo-lines-v1:sha256:a6a8f2143d4765fafb5aec709c7fe910f03b7b1beaa76d7584514262a22cff3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViNDE4NDlkMmE2OTBhYmY5YjllM2ZiNDgwOGQxZWFhODQ4MDY3Y2ZhMmEyYjNiNjgxZmE1NTg5MDBiNGY2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5MjkzMjBlNjlkNTYxOTYwMjFmODM3YTkwNGQ4Njg1MmMzMDBlNzY5YjZiM2JlNzE3Njk3Y2VkOTc4YzQwMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA5ZDYxY2Y5ZDYwYWFmNWE4OTgzODlmNDcxZDVkODA5MmE3NjYxZDRiZDhjNDJmMWMyMDM0ZTE3NGMxNGVlMmQifQ"
         },
         {
@@ -841,7 +841,7 @@
       "statement": "入力試験の旧期待は修正され、保留中の編集可能と連続Enterによる重複送信抑止を同時に検査する。built-app試験は保存済みModifierEnterでもCtrl+Enterが改行のみで、続くEnterが正確な複数行promptを送ることを検査する。",
       "evidence": [
         {
-          "resource": "repo://tests/chat/input-operations.isolated.mjs#L310-L340",
+          "resource": "repo://tests/chat/input-operations.isolated.mjs#L311-L341",
           "version": "repo-lines-v1:sha256:2fa1eab92ebafe4ff39630f2ade835247f766b5839184b3366e7625be091e865:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhZTM4OTI4M2I2YmE2MmZkOTA4MmExMDhkMzFmZmQ5NDA1YjQ3MTc2MmY5YzA3MTE0M2MwOTM5NDk2NmIxNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMDJjM2RlZWU4OGFiOGQ3ZGYwNTc2Y2FjYzU5ZjUzNmVhMjYwNzY4ZGI1OWVlZTAzMWRhZGYyNzQ0NWZjZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3YThhYzlkZWU5ODQzZWY1ZmExMGIwN2IzZmUyNzk3YWM4YWUzNzE2NjA0NmM2NmI2MDIwNDg5MDczMTljODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyOGI1ODA3M2NhZTI2MDNmMzJkMzQyMTc4NGQyYjI4MzUwZjcwMjI5ZTQ0YWIzMTE0Y2I3YWI3OWI2NTkxNDAifQ"
         },
         {
@@ -859,7 +859,7 @@
           "version": "repo-lines-v1:sha256:96d82cfdd563449d8a0b0582e68cf8256feb4ef80f9e518a23ec4885a0081b68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmYjY5ZDY5NDM5ODU5NDUzNTc0NDdiZmE3Zjg4ZWE2NWM2NWFmZGNmOWVhMWMxZTIyYzcyMjMzOGI0N2IxNzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5YjE5ODJlOGRkNzQ4MTE4MTQ2YjM5YTJkMDA2MmY0MDgxZTM0Nzc5Yjg2NzVjMjM0YzRmYjEyNGRjMzkzOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNDZjOWY2MjE2ZDk3ZmZmYTFjODE3ZTExZjUwNGMwNWVmMmJiYzA3MzNmNWUzOTU3YTc0ZDc0ZjU2OTZjM2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTRkMDJhODEyMTk0NGQxNzZkMjY1ZTliYjljYzU5ZjZhYjg5MGJjYWRmOGFlZmRlYmRiYmI0ZjJlYTg0NDQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1030-L1037",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/ConversationListContainer.tsx#L1090-L1097",
           "version": "repo-lines-v1:sha256:9103ddd56eff85b9690a69367527f00bf5f3582cb8b73be6f7447ce9a56318af:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU0NmY2N2NkNjAwZGQwMDI3YTE4NGRhZjk4NDNjYTMzYWZkMGJlNzM2YjI3MzA3ZWYwZTc1OTMxZGNmNTliNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkyOWE1NmY5MDk3MzYyNzAzZmIzNTZhMTc2ZWZmMzM4NTE4ZjZmMDBhYzVhMDdiODcwMTY0OGNkZTI2NTIyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWU4MWM0MGNkYjk2Y2U1MjM3NjUxNDc3ZWM4MzA5MTEzZTlmMGJhMjI2M2M0Zjc5ZTE4YjJmNzM0NjRhMmU1NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDk2YWZmOGExZGRlNDAyZmNlNDdhMzVjYjFmOTM2MTYzMDhiNmQxYzFlNWJhYzA2YTlmZGFlN2ZhMGU4MDUwYSJ9"
         },
         {
@@ -873,11 +873,11 @@
       "statement": "Session composer の Claude readiness は選択 variant と Workspace/Session scope を使い診断を表示する。hook の確認失敗時は provider 全体の Ready を代用せず Unknown・空 capability を返す。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1378-L1389",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1376-L1387",
           "version": "repo-lines-v1:sha256:b4e151f2106d08b053503d9c54f8eab6bb387d6d95e9435b3151f6594b1a6ac8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmNTU4YjczMDkzMjA4MTlkMGFiOTg5ZDZmZDE3NDllOTBjMmRjNWZjM2U5Yjg5OTNiMmNjNGRlN2MxMTM0YjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwNjI3MjNlOWQ4MWYwMjVlOTJlMjcyMDM2YTdkYmY4MDRmOWNhNjBmY2M4NjM4OTMwYzAyMGUxY2E3YTFiY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNjNmI3M2M5ODI3MTVmMmI4MjcyMjk3NmI5YzZmZjE5MGJhODIxNDlhZjhlODZiODc5NmRmNjNiOTU3YTI3OGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4ZjQyZGIyYmFmMzEzYWI1NmQxNzViY2MwYWExY2E2NjY4ZTRmNzBhMjA1ODllNTE5ZjM1NGQ2MTUyNGNiMDgifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L602-L606",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L585-L589",
           "version": "repo-lines-v1:sha256:55f18a6e92677d1aae32f4c13b52b973536a2da17724a63ca4f9857efcf1934a:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzI5YzFiY2E5NDA5NTI2YmEwMDFlYWVkOTRhMjdkOGRmMTBlMDc3MjQyZjI3ZmNjODVhNTNhYjAyMzYxZTk1NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTVlZjAxYmMwOGRiYzNiNjNlNGU3NWVhM2QyNmE1Yjk0MTg5MTg3N2UyN2FkODkxMzI5Yzg0MTFkN2Q4ZGM0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODk0ZGQ5YTliYWZiN2U0MDA5NzNmOGQ1ZTYwMDRjYzIyMWY3NmZhYzM2OWQ4MTNmOWNmNGE0ZmU4MmMzNDE5ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2Q5ZGQyMmYwOTMzZjA5YWUyYWExNWM4Mjk2ZjcxNzMyNGU1ZTMyYjFjMWY0M2NmZGU1MDUwOWUzN2RlZDdmNiJ9"
         },
         {
@@ -891,7 +891,7 @@
       "statement": "Workspace作成とSessionのeditorは選択variantをtooling discoveryへ渡し、Claudeのmodel selectorはSession未作成でもWorkspace scopeを保持する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1326-L1348",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1323-L1346",
           "version": "repo-lines-v1:sha256:9fadfb73bfbf7cf0b99f20a8c90fc1d4b201912fb767b09579ca7a4a74c6f487:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjMmViNjZlYjg4MWNmZTQxZTllOGIxYWExYTZlNGZjNzRkZDBiNzA5MmE3Y2VlZGMxMTJkZGUyZTJlYjQ4YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjMmJhODZhYzM4YTI1NDg5ZDBiZGRlMDBlZDkwNDZkNzY4Yzg3NzMzZDczNWQ1ZjZkMDg0YWFiYzNjM2M0YzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjZWMxYTM3MzljOTM1N2Y4MDAyYjA4OGFhOTM4OTk2MzA1NmM0NzdiNWY1MTI2MjhhMzE5OTQ1ODQ3NDY1M2UifQ"
         },
         {
@@ -899,11 +899,11 @@
           "version": "repo-lines-v1:sha256:e371cae44183489a616d6d3dc6fca211745c23c1665a2afb020af593b0de4989:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5NzNkMWViOGJmZTA5OTliMmZlMGNmMzU0ZmY1NzFjODRkYWZkOGMwNTllNTYwOGE1ZTMzMWU3MmFmMGVmZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzNTJmZjk4MzYxNjk0NWUwOWFiNTJjNmRjNWJjMzg1NmZiMmE2OTdiZTViYzAyOGViNzFmMmIzZTJlZmMzODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk4NjQ3NWI1MDg1NWNmM2IxMzMzNTA2OGU5NWJhMjA2Y2FmNzZjZDNlNTA5ZjA1MGU4ZjAwMTFhMjMzMmUxMWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNzczYzZhMWE2MjMxNmJjM2MwYjAyMzQwNmIyNWFkMzg1NzdlOWNjNWEyYTA2MjI3NTI4YTUwOWQ4N2U1NWMifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L116-L121",
+          "resource": "repo://packages/web-core/src/shared/components/ModelSelectorContainer.tsx#L117-L122",
           "version": "repo-lines-v1:sha256:e29dd0e174316caf9e7bb0aa455f06ca1a468cb31a4d33042321de6535660e79:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTg2NmE1NWQwOGNhYjRmYjU0ODgwZGMzZTkzNjY5MGZmMzQ1NDkyOGExMDZhOGExODIxOTI2NTE5OTk4YjgyMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzJlNDg3Y2VlNjdlNzJjMWY2MGUyMjkxZGUwMmJhNDBkNTFlYzRmNTAwZTlhZDRkMDUwYmVlY2VmZmU1M2E4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5NWM4MWNjNjA1YzJhODZiY2RkYTBlYmVjZDllMGViM2FjOTE3NGY2MWM2ODE3NGVmYzU3YTFlNTJmN2YwZCJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L341-L349",
+          "resource": "repo://packages/web-core/src/shared/components/WYSIWYGEditor.tsx#L354-L362",
           "version": "repo-lines-v1:sha256:d77f0cd6a1d8a6a605ad860bcd88ef53433d356a228b948af8bc0cda80761011:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2IxMmYxNjJjNGViZTRiZTE2NWQ0NzAwMDFjOGJiYWI0YjFjMzgyYzJkMTNkOTVmMzg0OTk3ZGI0NTZiZGY2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDY0YTFlYzExNDk3Y2EyMTYyZDRmYjFiZmVjYzZmNzdkMTUzMGI5ZTI2Yzc2MjJjNzIyMTAzYWUzYWI0YzM4NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjMzMDA5NmViNjcxY2M5ZjYzNmRlNDhiMTEwYTU2NGZkNWIxZWI0MTY5NjE2ODAxMWM1MWRlODMwYTk4YjA5OCJ9"
         }
       ]
@@ -913,7 +913,7 @@
       "statement": "Goalのpause/resumeはobjective・budgetを置換しない状態更新、cancelはAgentRun取消、clearはGoal管理解除であり達成宣言ではない。外部MCPにfinish_goalや自動承認は設けない。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L47-L111",
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L48-L112",
           "version": "repo-lines-v1:sha256:4b274a1a9ad8113c6052bf745199cefb83533c013329bc36d9fb312b1dd09846:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyMzIwOTA4N2MyNmI2ZWYwZDFjMDA4YWJiOTQ5YmMzMTFkM2VkNTI0NTE4ZjRmM2ZiYmU1ODYwODAzYmI2OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk0Mzg2NTQyODM4ZGZiZTdjMGVkM2FiMjFmZThiZmM4NDhmMjUxMDU1Y2ViOGU0M2E5NGJiOWVlMDBhNjM1OTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNTNkN2Y0OWQzYWFiMTM3YTRhNWQ5NGY3OTJhZmRkNTM2ZWU2ZTA1YjExN2Q5NGY1MWZlNjZhZDhiN2UyNWEifQ"
         },
         {
@@ -927,15 +927,15 @@
       "statement": "保存Goal再開はUIとMCPで /goal resume とGoal modeを使用しPLANのみSUPERVISEDへ変更する。MCPは保存executor設定で同じSessionにfollow-upし、providerは既存Goalを再読取して欠落・completeを拒否しobjective/budgetを置換しない。",
       "evidence": [
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L2977-L3006",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L3221-L3250",
           "version": "repo-lines-v1:sha256:05f5197409a01c8c773473ebf6089d7f4f25bada681ff44959157fb7e280e2d7:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyYjVlZGY1OTQ5Y2ZlYTY3ODIyY2Y2OTExMzIzNjNkNjhkNmYxZTE2OWY1ZTBkNGY3YzE0ZTVmYTFlNmQ0ZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNzlhYTNlMjRhODlmMDdkYTkyZWJiOTQ2MjU2N2MyNDA5Y2E3M2MwZmQzMGFmODJkZTYyYmY3NDI1NDQ5OTUifQ"
         },
         {
-          "resource": "repo://crates/executors/src/executors/codex/client.rs#L667-L675",
+          "resource": "repo://crates/executors/src/executors/codex/client.rs#L747-L755",
           "version": "repo-lines-v1:sha256:12a4a3e8c3c9b3258a488ded31e4d17fef5d96ff00288d1f526877d9f48312f6:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2M2YTMwN2FhMmQ1ZGI1MmQyODVmOGU0MzAyZDI1MTAyN2Q5MDE4ZDgxOGJjNzZlMjhjMGU1ZjI1NDQyNzhhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjA2MzE1ZTk2ZGU1OGQ4OGIzMWI1NmZhOTY1MjVlMDZhMGE4ZTBmN2EzOTFjYjU0ODY0MmYxZjA1NjcxNjVlMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmIxM2RkOTdjZTQ0ZjRiNzMzMGM2ZjZjNzZlMDUxOWU5M2NlMDNmMDk5ZTRmYmEwZTFlYTJiMTJlYTVlNWI5YSJ9"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L193-L258",
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L194-L259",
           "version": "repo-lines-v1:sha256:f89ee031eb3a1104d708074cc74df7f7f2a2c7c23c408d61f5db6b3e60eb8e2c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMzcwYzA1OWI4MjNiYzAxZDMwOWE2NjhkMWU5ZjRlZThjMGUzYjUwZGU0NGRlNDQ1MDIwOGM2Y2I4OWMxNjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODc1ODY1NjY5NDQyOTA5YTdjNDVkMDczZTljN2U5ODU1YmJjOWY5MWZhY2NkZjZkOTk3Y2Q3NjcwMDkxNWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExNjY5MmQ4MjgyYThhNTFiNTc3Nzk5NDdmYTc3N2UwNTMxMzZmYzJkYjkxMTEwNTQ1ZDViYjA2ZmRkZTUyZDQifQ"
         },
         {
@@ -949,7 +949,7 @@
       "statement": "MCPの終端RunからのGoal再開は検証用Session lockを解放後、follow_up_checkedが同じlockでqueue・Project所属・最新終端Runを再確認し、活動中Run guardと合わせ二重起動を防ぐ。",
       "evidence": [
         {
-          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L215-L249",
+          "resource": "repo://crates/server/src/remote_mcp/goals.rs#L216-L250",
           "version": "repo-lines-v1:sha256:eb1379ba4e656dab2746ee80dddbdc3dc84347c88c1c961e8fcab32c93dee5e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkODdlMjJlMTRlMzI4MmMwYmFiM2IyOWFhZWFjMDNhNjdlYWRiYTc2YWNlZmNlMWEzMGY1M2M4ZTQwOGRiNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwODg5NzI0YzI0MTEyZTM0Zjg1ODJjMDI2NTQ4OTY1MGUyM2QwZWJmMmQ1ODlkNGJhZDhiYjA5ZWU2ZWE1ZmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0NzlkYWRlZjNhYTY2OGZmM2EwMzFkOTk1NTlkMjI5NjJjYzg2NDFlY2IxNjViODIxNWI4N2NiNTJlM2E4NDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1MjRmMGZlZmVmMjZiYjg3ZDgzNmIzMTk3YjIwY2FiNjhmZjNhYTRhZmJlNTBhMTU3OTg3YjRjMzU5YzYxZTEifQ"
         },
         {
@@ -999,7 +999,7 @@
           "version": "repo-file-v1:sha256:e44b929dac97625fe327de4303391ac6df5f05c45e11059e1552fc8197b08f6e"
         },
         {
-          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1335-L1355",
+          "resource": "repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx#L1315-L1335",
           "version": "repo-lines-v1:sha256:c7f2783727ae77138586fcee423b2f7036952247682f6b83024fccefcfc4702a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE3NGMxZDUxYWIyZjc0NjI4MzU2MmZhODkyMTIwMmYwNTVmMzY5ZDNmMTBlNWVkNjE3MmFlMjc4NzBiODRhMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4NzM1MTY4Njk1ZWI4YTJhZmRlZWNmNGE5NDc3N2RkNjY1MDk1ZDJkZDE5ZTUyNWM4NTc2MTQxMjQwMmI5MGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwOTQxY2FiZTczOGNkODQzOTljY2Q2NjAyYjM3OTdiMDYwOTE1ZDVmZGYzMTc4ZmIwMzQ1YzJjMzhmMGU2YjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1ZmU3NjZkOTA1ODQzYjVkNGMzMzNmODc4Nzk2OGUxZDczMDk5OGY5NWU2YjQwMjgyNDJmNmM0NWQxNjk1MTQifQ"
         }
       ]
@@ -1061,7 +1061,7 @@
           "version": "repo-lines-v1:sha256:fc967c37005a5190690f07fcbcf944616345ad3e1c13b71522745d8fcb70917e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjYzYyNzBlN2M5YmUyNWFhZGEwZGE5MWJmMzYzYTJkYzRhMTQxZGU0Mjc4YWU2NzMzODk3YTA2YjRlYTc2MmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmZGY1MjFmMjgzNWFiZTdiZjk1NmE1YmQ4MDhiYTRmN2M5YzA4ZmVkNzBlOGQwNDcxODY2NmYxZGNmZjAwMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjYWEzNDIwNGQ1NTQ2ZGRiNDdkYWI0YmU1YzI2NGMxY2EzYzlmZDA3YmQ4YTVhMjBlZGRhZTQ2MDI0OWFjOWUifQ"
         },
         {
-          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L859-L865",
+          "resource": "repo://crates/local-deployment/src/agent_run_port.rs#L872-L878",
           "version": "repo-lines-v1:sha256:6b7872c419243160d1c4955ff60b451a031d633a9928a9b543f0bc99e0138c73:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDZjMTIxNjYxN2U0ZjcxYzdiNDIzODU1ZGMxZDRlNmZhN2U3NWUyYjllNjc3ZTNhYTdkOWFkMmU3ZWE3MTQxMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTNiMDU5Nzg5NjIxYzRiMmFhOTY1OTdkYmQ1NDQxZjUyMTA2ZTQ5ZjViZmI3YWJmNWU3N2M4OWE0NDQzZWMwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTdkN2ZlYjQ5NTYxNzg1MTBkOTNkMWIxZWQ3ZWZhY2VlNTM4NTBmNDU4ZmIyYjIwZjA0MGE2NmRlMjZhYWU3OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjQ5YzEzMGMwY2M3MjQxMTY2ZmRjYTNlZWFiYzBkY2EyZGMzNGVhZTI5NWZiZjEwM2VmYzE3ZTUwODhjZDQ1OCJ9"
         }
       ]
@@ -1085,22 +1085,22 @@
       "statement": "REVIEW execution_modeは通常会話の調査・報告意図を既存executor設定に保存し、stdio続行と添付付き続行はSessionの保存済み設定を復元する。Remoteの実行読取は指定Runのattemptからmodeを返す。",
       "evidence": [
         {
-          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs#L270-L327",
-          "version": "repo-lines-v1:sha256:20c14b70133e5a1925517b249488c9a6304e50a4dd11157461daa7369a019b23:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwOTI1MTUzNjFmZjNkMDQyOTgyMDY5MThlNWMxY2Y3ZGQxMjdhZjg4YTliNWVmZDVlOTZhMzk5MjYxYjM4M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4YWIwNDQ1YzQ0NzU0YmJkNzI4MmUwYjVmNjRkMjJmNGY0YmUyMzdjY2JiOTFmZWJkOGMzNTc1ZWVkMGUxZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1OGEwMDJkZGFlOWJiM2Y4ZTg3NjA3YTBlODk3MTZjOTZjOGEzYzAwMmJjMmRiNmQ4MGRiYTc5NTQwMmZjOTcifQ"
+          "resource": "repo://crates/mcp/src/task_server/tools/sessions.rs#L270-L324",
+          "version": "repo-lines-v1:sha256:b8356667b9cde972dbfa9ce5c0223cc65e1d69f6e2c84c34ec68d7d0832a036b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwOTI1MTUzNjFmZjNkMDQyOTgyMDY5MThlNWMxY2Y3ZGQxMjdhZjg4YTliNWVmZDVlOTZhMzk5MjYxYjM4M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4YWIwNDQ1YzQ0NzU0YmJkNzI4MmUwYjVmNjRkMjJmNGY0YmUyMzdjY2JiOTFmZWJkOGMzNTc1ZWVkMGUxZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1OGEwMDJkZGFlOWJiM2Y4ZTg3NjA3YTBlODk3MTZjOTZjOGEzYzAwMmJjMmRiNmQ4MGRiYTc5NTQwMmZjOTcifQ"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L137-L183",
-          "version": "repo-lines-v1:sha256:f098ebb4cb64ef71f3676787dd3cd49eca4a80b97914f08f8293c78a21cbb8e1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNDBiZWQ5ZjUyMTIwYWQyODRlNjk4ZDBkNGEwNWQ1NjI5ZWY3OTE4MTQ3YzhmZTc2ZTg2ZmUzYjQwYzVhMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjNWUyOTEwOWE5YmJiZjBiODZkZjU3ZTNhOTViYTkxMjlkNmRjYTE4ODY0NmY1OTdlYmUxZjRjMmQ2MzE5ODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjNzQyMWI0ODAwYTcwMTMzMjk0MjI0YjU3YTk2Y2U5N2NjYjljZWJiODQyNGM4MTg0YTQyZTk0YTA2MzhiNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0Yjk0NThhYTVlZTU1MjNmMjVkYWY5MzBmZDZmZjMxYTI5MWQ0NjllMGFhNTkwYTI5NjRlZjUzYzQ5YTgyMDUifQ"
+          "resource": "repo://crates/server/src/remote_mcp/runtime_read.rs#L146-L198",
+          "version": "repo-lines-v1:sha256:3f84ed1322e91184cf5f6df2408494e45d2b4026d7a0ff611cd8be341fdf7d91:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNDBiZWQ5ZjUyMTIwYWQyODRlNjk4ZDBkNGEwNWQ1NjI5ZWY3OTE4MTQ3YzhmZTc2ZTg2ZmUzYjQwYzVhMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjNWUyOTEwOWE5YmJiZjBiODZkZjU3ZTNhOTViYTkxMjlkNmRjYTE4ODY0NmY1OTdlYmUxZjRjMmQ2MzE5ODAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJjNzQyMWI0ODAwYTcwMTMzMjk0MjI0YjU3YTk2Y2U5N2NjYjljZWJiODQyNGM4MTg0YTQyZTk0YTA2MzhiNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0Yjk0NThhYTVlZTU1MjNmMjVkYWY5MzBmZDZmZjMxYTI5MWQ0NjllMGFhNTkwYTI5NjRlZjUzYzQ5YTgyMDUifQ"
         },
         {
-          "resource": "repo://crates/server/src/routes/attachment_transfer.rs#L345-L375",
+          "resource": "repo://crates/server/src/routes/attachment_transfer.rs#L380-L410",
           "version": "repo-lines-v1:sha256:5402d5d18a7470fec6f4ca76e15f8608b2fc29fe75b079c0fd5d66a2673f6b4e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4ZTg4MTMyZWNmNmY3NzY4OTRjOWY0ZjI3NDExYWRkNGI5N2VkNzExYzM4YzIzMDM0ODc3OGQ4OTk4ZWMwYzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5YTI0ZjgxZGU3ZmNjYTFjODI1YTNmODc0OTE0MzBkMDlkZWEzYmNmNzM0MzQ4ZTc0MjZlMzUxNDJlMGQ3ZGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTZhMTg5NmE5MGE5YmZlZjZhNGE5ODNjZmQ2N2Y5NDM5YWM2MmQ0YTYwOTlmMzkzZGQzZGI4MmZkNDQwOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ0Yzc4YzBkYjUyNzg3ZDkxMDZmYzI2YzBhYTY3NGYxODE2MTIyNDJkMmZiM2Q4NDMzYjRjMDI4NzZkZDQzOGEifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-29T17:57:38.430Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-02T01:08:30.935Z"
   }
 }

@@ -56,8 +56,8 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
 generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # システム境界と起動順序

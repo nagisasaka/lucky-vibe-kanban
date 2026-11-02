@@ -20,16 +20,18 @@ sources:
     resource: repo://crates/server/src/remote_mcp/issue_write.rs
   - id: openwiki-source-6adda10f98b079272f82a4cc
     resource: repo://crates/server/src/remote_mcp/operations.rs
+  - id: openwiki-source-605a3efdc11efae80ada92b1
+    resource: repo://crates/utils/src/mcp_error.rs
   - id: openwiki-source-417b2b5ecb26c89c1b06df88
     resource: repo://deploy/developer/switch/README.md
   - id: openwiki-source-9e0cfce0846bb98d2dc47de0
     resource: repo://deploy/developer/switch/start_binary.py
   - id: openwiki-source-688a3a970a72f7fa2b5dbc1c
     resource: repo://packages/web-core/src/shared/dialogs/settings/settings/RuntimeAccessSettingsSection.tsx
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # 実行環境へのアクセス
@@ -79,3 +81,7 @@ server再起動後はoutputと寿命monitorを復元しない。耐久launch rec
 ## 検証範囲
 
 runtime HTTP fixturesは隔離SQLite/filesystemとmock IdPでscope/Project、設定、Workspace/path、receiptと応答上限を検査する。Chromium設定fixtureは製品componentとAPI clientを使うがisolated HTTP応答で、live設定DBではない。実Auth0/ChatGPT・稼働devのrestartや共有DB検証に読み替えない。[fixture](../../crates/server/src/remote_mcp/environment_tests.rs)・[設定試験](../../crates/server/src/remote_mcp/environment_settings_tests.rs)
+
+## 失敗診断と部分作用
+
+副作用前の入力・権限・設定拒否は確定した失敗として分類し、起動・停止・ファイル変更後に結果を確定できない場合は `uncertain` / `outcome: unknown` を維持する。失敗receiptのpath・cwd・command・入力本文などは秘匿投影され、ID・revision・部分作用の事実を残す。診断自由文から未実行を推定せず、元requestと対象状態を確認する。[実行境界](../../crates/server/src/remote_mcp/environment.rs)・[投影](../../crates/utils/src/mcp_error.rs)

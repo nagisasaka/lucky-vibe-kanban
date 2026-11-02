@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:e3e471b3c83df05eb10513371731f708d1c85bb50181d7da9f952ccf2a5672b6",
+  "pageVersion": "sha256:510d14c0b126acb08fe1d26017ad95e49c9220109c38c9a3f9b0f0311ba1ef24",
   "claims": [
     {
       "id": "claim_ffe4663e40c94017ac81d224a196ad07",
@@ -12,7 +12,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/todos.rs",
-          "version": "repo-file-v1:sha256:62e4f18e8cd202bf2fcf17ed7104b78f38fb3856175a457a455cc561e82188f1"
+          "version": "repo-file-v1:sha256:21fbd7fabe1b550d502990adeffe73923a55ee14028304e8ad0baddff9215c6e"
         }
       ]
     },
@@ -22,13 +22,13 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/todo.rs",
-          "version": "repo-file-v1:sha256:fa67d55ea6b7e30e24423f1094077cb7d25406cb722d7382da084b5efaf66642"
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         }
       ]
     },
     {
       "id": "claim_811fb5da33a24092bc8afb0f1772cece",
-      "statement": "TodoはRESTとstdio MCPで同じDBモデルを使い、外部MCP変更にはread/write scopeとrequest_idのdurable receiptを要求する。DB失敗はuncertainとして保存する。",
+      "statement": "TodoはRESTとstdio MCPで同じDBモデルを使い、外部MCP変更にはread/write scopeとrequest_idのdurable receiptを要求する。commit前失敗・確定したcommit拒否はfailed、commit結果不明はuncertainとして保存する。",
       "evidence": [
         {
           "resource": "repo://crates/mcp/src/task_server/tools/todos.rs",
@@ -36,7 +36,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/todos.rs",
-          "version": "repo-file-v1:sha256:62e4f18e8cd202bf2fcf17ed7104b78f38fb3856175a457a455cc561e82188f1"
+          "version": "repo-file-v1:sha256:21fbd7fabe1b550d502990adeffe73923a55ee14028304e8ad0baddff9215c6e"
         },
         {
           "resource": "repo://crates/server/src/routes/todos.rs",
@@ -49,7 +49,7 @@
       "statement": "Todo一覧は作成時刻降順・ID順のoffset paginationで、Webは完了を含め全ページを読み5秒ごとに更新する。WorkspaceはlinkのProjectを優先し未関連なら選択を使う。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L127-L142",
+          "resource": "repo://crates/db/src/models/todo.rs#L201-L237",
           "version": "repo-lines-v1:sha256:1319cfae23d40bc902a1b0cca81bfd20827d3010dba4658c4950985bc38359c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwODZkNWY0NjAzYTk4Yjk4M2E1OTI4YjdlMmMzNTUwNTllNDZiNzFlODkwYzU5NWYyZmMzMDMxMDcxYzE0OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4YmRhYzY0ODg3NDRjN2RhOTMyNTYwOTI3ZGU0YTRjMzAwMmVhODA0YTFhMjkzZjUwMGRkNjM3MjJiOTE0YmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyMGQyZTc5OWViZDY1ZDBiNjIwZGMzZGE5OTRmMWRiZDQxNzBhYzUyOTVmNzQ3ODg1NzhhMDJjYmI2OGQxNTgifQ"
         },
         {
@@ -57,7 +57,7 @@
           "version": "repo-lines-v1:sha256:75948b5362a720437f98aaa0cd14523c41cfd6a28d8d29f6b08bbedf8bcda222:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MjQ2NzEzNDE0NTljMTJhNWQ3ZWYwODA2Y2U0Mzc3NGViZjNjYmVlOTc3M2Q0ZGE1Y2JmZGM1N2Q1ZTM1N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4NTU5ZTIxNTQ1NWU0M2YwOTJiMTE0OThkYzcyMmVjYjc5ZDljNjM2MjEwYTViZWE2MjlkYzllMmU5NzEwZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZDEyYzEwMDE2MzU5NmRjZjg4NTllMzcyYTdmMjVlYmViMGYyM2EwZjg3Y2MwODIzNWFkNDI1YWM1ZTU0MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkZTYwNGIyMzI1NTE1YmQyMGM3MWY2M2RlMWZhNWNhNWQ3ZTc4OGI2ZjUwNzE1MmViNDY5MzZlNmM3NmNkY2MifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L33-L88",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L36-L93",
           "version": "repo-lines-v1:sha256:fb6db37a3df110c062d405d528eb1196ca7ee8810acda12096de68172c9b7426:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNThmNTc5N2RkYWZmMzQ3YWIzNzQxOGRjYjI0Mzg0ODExZmUyN2VlZWNiYzkwYzM3NjQzZDVlZGY4MGM3NmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZWYzYTBlMjNmNjdjZWRhMDY1OWM4NGQzMTQwZDBmYTU0NDkwNGRlYjAyMTQ5M2UxYjY3MGYwYjI0Y2EwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmNDhlMDUyMTBiOWJkMWJhYzM2N2E4MWE3OGRjOGE2YTEzZGIwMDc1YjI3ZWRhNGE5Yjg5ZDQ4ODE5YWUzMTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlMjQ2ZTc5NDYwMGY1MWZjNGFmZDBkYjExYjVmZTljY2IyY2IyMDM4MWM3NmY0NjBhOWU0YjZkNmYwZTU2Y2UifQ"
         },
         {
@@ -75,7 +75,7 @@
           "version": "repo-file-v1:sha256:f4defa4cbc365465a35cbac58f52f7e0f4f529e9f0d75024e11e6191fecbae45"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L276-L329",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L287-L340",
           "version": "repo-lines-v1:sha256:90519e753f349fb759e0815a7cb4b44fa9574d7fc2df36a67f8905e1244f4094:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0MTdlMjc3NDdmNjFiMGM1ODQ3NDQyZmY5NmZlZWFjMTdlMDFhMjJiOGJkNTZhMDRmNzk5YjM3YWYyMzZmOGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzZDc0MzliOTI0ZGRkYmQ5MmNkZDI3NTM0MjQ1NmRmYWFiNjM5ZTNlMjY3ODM1Y2E1ODRkNjcwYzViNTNiYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI0MDA2MmE0YWYxNjAyOWVmNmJhM2M1MzE1MjhmNDU5N2I0YmM0YTJlYWM5ODI3N2NhMWRiYTgzZTBjNTQ0OGIifQ"
         }
       ]
@@ -85,23 +85,23 @@
       "statement": "Todo追加UIはEnterとボタンを同じsubmit検査に通し、空本文と空白のみのカテゴリを拒否するが、保存モデルとREST/MCPは空カテゴリを許し、既存未分類項目の表示・編集も維持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L35-L57",
+          "resource": "repo://crates/db/src/models/todo.rs#L39-L61",
           "version": "repo-lines-v1:sha256:53ec879a63fb35bdaf22a20b1c0fb042898918686a2b600e9f5ece7ddbcddf4d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjOTIyNWU2ZmViMTNhM2U1NTRlM2ExYjI4Nzc3MWU1NTQyYzBhOTgwYmM4NTU4YTJhYjhjNjc3Nzk4NGQ3YzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMGIyZjQzMzMyNmNkMGU4OWU4ODQ3OTZkYjJiMGQ2Yjk0YTU4ZDVmZGE3NjMwNTk4MGZlMTllNmYzNzgyYmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjNmU3NGEzMjczYjA4MTc0OTJiMzAxMTYyMzEyY2QzMTkwNDQyNjMyMjA1Nzc1YmQ1ZjU1NDEwMzg3OGVhZGEifQ"
         },
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L95-L99",
+          "resource": "repo://crates/db/src/models/todo.rs#L130-L134",
           "version": "repo-lines-v1:sha256:fb0fd29632392fcd466a03d9c95062a83fa94638cb791fdf95ff2fccca8d3cec:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTQwMDA5MzMyMDFhNzc4MTEwNTYzMGE0NzEyNDc0ZWM5NDAyY2NkNWViM2QyMTE1YWNkYWY2MTAyOWM2ODdhOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDg5NzcxZmUxYjY2Mjg4NzVhYTIzZTdkYmU0YWE3MTQ2MWQwMGNkZmI2NmRkZjExYjlkODIwYWM1ODk3ZmRmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjdiYTUwMjVlYmEwNDg4OTBjYTBkMDAyZGNiMWFiMmM4NDgxODdkODQzODNhYjJkM2NhMjExNTI0ZDk1YWY5MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDAyZGE0YTBkN2FmNzZjOTM5NDkyZmE5YmEyZWFmNjRhM2YyZWM5OTdjMzFhOTUwNzRhMjZiMjk5MDNmNGYxNiJ9"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/todos.rs#L152-L179",
+          "resource": "repo://crates/server/src/remote_mcp/todos.rs#L203-L230",
           "version": "repo-lines-v1:sha256:2c156722d483b353c1fddf3ae3104a04f47591c4a2a2e033ceeff148e165d4ec:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyYmYwZjBkMzg0N2ZiNGI1NWI0ZTExZTQ5MDlkYTY1ZDE1ZGM1ZmNkYzE1MDQ1MGM0ODdmODZkOWIzNDljMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzMzY2NzU0MWU5Y2YyYzlhMzY2NDBlYjhmZTg3ZGM2YmU5ZjVhNGM0YzQ0ZTM2Y2E4N2E3NTNkNTQyOGM1NzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNTc5Njk0NzkwYzk1MDc0NzAxNWIwODhkZDcxMGY1ODQ4Mjk1Yzc3NmNkMzM3ODMwOTgyOWJiOWQ0MDJkNmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwOWIyOTVjNDNhYTg0OWEzNGQ3NTM2NzU3YTM4ZTI4NzMyMzhjZjM5YTdhNzc5MzEwZWRlMjdlMDFhNWQ0ZTQifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L319-L349",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L330-L360",
           "version": "repo-lines-v1:sha256:4e100e880bbd4052240fd14df63b2c8fcd479d159f3be0209f31d9431280b232:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMGMyNWU2NjZiMTJhNmQzMzAxZjMxZWU0NWUzOTE0MjM0YjE5YWQ5Y2NlZDdlNTFhNTY1MmIxMzlhNmMzYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTkyZTA3YjRjZjUzYTgzODZjNTY4MGNmYjdmM2U0ZTc1NDI5NjljODcyNmFjNWVkMzI3NTNmOGNhOTU5NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMWM5MzU3YjdlMzlmYWQ5NDlhOWU5MzVlNmE4ZGU4NjU2OWIxMzU3ZWVhODcwZTlhMjZkMzY0MmEwNzdjNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ZGRmN2YzMWRhNDMwZTlmM2ZhYmQ5OWNhYzkzOTJjNjNmNDg2Y2RhNDkwYmIwMjE3OTBkNmQzMGE0ZThmYmUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L49-L88",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L53-L93",
           "version": "repo-lines-v1:sha256:83b45466b4820b1c02622f21534291b907828f9e820cfa2e1c0ec356935d0e13:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyZDExY2FmNDNlOTdlZjM2OWU2YmVlZDFhMjY4YmQwNTgzOGYyOWI5ZGQyNTRiZjY5YmE2NDg4NDE0NzIzNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZWYzYTBlMjNmNjdjZWRhMDY1OWM4NGQzMTQwZDBmYTU0NDkwNGRlYjAyMTQ5M2UxYjY3MGYwYjI0Y2EwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwY2I3MTk5NDBiYzI1M2Q4ZTg2Y2M1ZGQ4YzFjZmQwOWYzY2IxODAxYzA4YmUyZWM0ODVlMmNjZjUyNjk1NzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlMjQ2ZTc5NDYwMGY1MWZjNGFmZDBkYjExYjVmZTljY2IyY2IyMDM4MWM3NmY0NjBhOWU0YjZkNmYwZTU2Y2UifQ"
         }
       ]
@@ -111,11 +111,11 @@
       "statement": "Todo追加欄はEnterで追加し、Ctrl+Enterは上限内で選択範囲を改行に置換する。IME composition・keyCode229・repeatでは追加せず、このハンドラーは既存項目編集には適用されない。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L319-L349",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L330-L360",
           "version": "repo-lines-v1:sha256:4e100e880bbd4052240fd14df63b2c8fcd479d159f3be0209f31d9431280b232:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMGMyNWU2NjZiMTJhNmQzMzAxZjMxZWU0NWUzOTE0MjM0YjE5YWQ5Y2NlZDdlNTFhNTY1MmIxMzlhNmMzYzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTkyZTA3YjRjZjUzYTgzODZjNTY4MGNmYjdmM2U0ZTc1NDI5NjljODcyNmFjNWVkMzI3NTNmOGNhOTU5NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMWM5MzU3YjdlMzlmYWQ5NDlhOWU5MzVlNmE4ZGU4NjU2OWIxMzU3ZWVhODcwZTlhMjZkMzY0MmEwNzdjNDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1ZGRmN2YzMWRhNDMwZTlmM2ZhYmQ5OWNhYzkzOTJjNjNmNDg2Y2RhNDkwYmIwMjE3OTBkNmQzMGE0ZThmYmUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L98-L139",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L101-L142",
           "version": "repo-lines-v1:sha256:e87c1add65a78116478bff82316a5d2f7ae88b89318b99f7f67b8ec53319bb8e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjOWYwN2RiNmE2ZjRmNGNmZmY5YjEzZjE4MWMzMmVhYTJmYTdhYzE1YTFmNTUxY2M4NDZhMzBmYTkyNjA0NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZGYwMzA5ZWE0MGVhZWM4ZTRlY2E1NDU3Y2EwODBlZThjODE5NzJlYzM2YmU2Nzg4MmQ3NjAyZDJlYTE3NzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlY2E5YmZlZWQ4ZGRiODkwNDczNjkxNDE5YzNhYTZkZTE0YjQ5MmRjNDE3ODk2NWM0MmRlMjg1NWY4MmQ0MzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhZWYwYWM3ZWRhMjlkZTM2MWE3YTU0NmU0OTg1MWQ0YmNlODEzNDAyOWUyM2JkNzIyMzhlNTExMGJhM2FlMGMifQ"
         }
       ]
@@ -125,11 +125,11 @@
       "statement": "Todo追加は同期refとpendingで重複を抑止し、処理中は入力を無効化、成功時だけdraftを消し、失敗ではIDと本文を保持してsettledでguardを解除する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L105-L165",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L109-L169",
           "version": "repo-lines-v1:sha256:85a2eaf73dea07a404a0ea5d381932167f3ccbc7927ccea522a4243c36cb486c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2ODliNTBmYWE5MjE1OGQ1NzBhY2NlNjBhZGYxN2M4NTU3MGI3NWI4MTFiYjk4MmQwNzE2MDBjZjAwMzljOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYzJjNTNmNTM2MjA3Y2FjNDAxMWIxM2YzYzY5YTI0NDgyN2EwYmM1NmE1NTA0ODA4MWU3NzdhODIyYTQ3MTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlNTA4MmMyYWNlZGViY2ZkYjBjZGM0NWRhNTQ0MGJmZmQzZmJjYjBiMTAzMTdhMzg1Y2RiOGU0OWY5MjRhNDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0OGI0Mzg1NzQxNGJmZDFkNjQ5ZGM3ZjdlMDRiYWIzZTg5MTlmYzAwNWI5ZTU4MDk2ZjMyZmExMWVmZDZhNmIifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L42-L77",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L47-L82",
           "version": "repo-lines-v1:sha256:b91ed812a6fb08eafc724066d81283b5a196d89204095b6a4cdf4cbfe934c363:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5MWI2NWEyNmQ1ZDRiN2ZhYWQ2OWY1NDE3MjI5YmFlNzI4ZGI0MTA1MDk2Zjg2ODA1MDY3MDI4YWRhMzZmZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFkNTYyODJkYTg4NmU0ZDczM2U0MzU5NTk3NWI3MjdmNGRkNGJhYWVjN2YyYzliNDA5NTY4MTk4N2Y5ODgyMzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlmM2U3YTVmNmY5OTQ4MTIyY2NkNDI0NDFiOGQzMDI2M2E4NWU1MGMzYWZiMWEyMzRkMTJmZDgwYjRkYTE2YzIifQ"
         }
       ]
@@ -139,7 +139,7 @@
       "statement": "入力操作隔離E2EのTodo経路はPOSTを遅延後に実backendへ通し、空本文・カテゴリ・合成IME・改行・repeat・重複送信と保存本文・件数を検査する。",
       "evidence": [
         {
-          "resource": "repo://tests/chat/input-operations.isolated.mjs#L183-L264",
+          "resource": "repo://tests/chat/input-operations.isolated.mjs#L184-L265",
           "version": "repo-lines-v1:sha256:3758a0d609e3c050b8663b114aa6596041a90a22f35bdfda763803748846d310:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4MDEwNmQ1ZDU4Mzg4NDE3MzgxNWY4Y2MwN2Q0YmYyYjA2NDMxZmUwM2QwYzRmMWU0OGVjZWViZGQxODc1OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0ZWViMGZiZDdlNjhiOTQ5YmZiOGQ0YmNmMjc5OGQzZjUwZjcwZWM2ZWUzZDRmZjMxODI3MWI5YTczYmEyOGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxZTlmOTllNzRjOTg3NmU2NWRiODlhNGRmNDdhNDlkMGU2YmUyZTAxMTA3OWFlNjY2N2I2YmU2ZDhlZTA5MTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNDdmYjM4MmExNDJmYjc4ZGI2YzJkOTBkMzZiMTYwMDk1YmM0NmU4ZjdkNDYyNmUyODM2YzA5NDJmYTllMmEifQ"
         }
       ]
@@ -149,19 +149,19 @@
       "statement": "Todoカテゴリー配置はProjectでauto-fitの複数列を許し狭幅では単列となる一方、Workspaceはgridを指定せず単列を使う。カテゴリーはlocaleCompare順、各カテゴリー内はAPI取得順を保持する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1139-L1147",
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1202-L1210",
           "version": "repo-lines-v1:sha256:cf7886b03634bc60bbccdab0b4a80365bcdb2ed157cfe4be0c9af95c94439736:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzY4YTRhZjkwOTA2MTQzMzVlODYwMDVjOGQ1NzVhMmRiYWMxMDUyMWM1ZGMzZGE3NzQ3YzA5NWMwNjk0MTllMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzNiMWQ4YmQ5OWQxN2ZhMmNhM2JiOWRlM2MyNzljMGYzMzJkNjRiY2RlZGM1MDY4Y2U5MGMxY2YyMTQ5NWJiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjBkZjRmZmY2NzI2NDBmYjEyNjNiNWY3ODM4MGZlY2U1MmFlYTg5MGIyMGI5MTIzODBjZGU5YjYxODgyZGM4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGJhMTlhNGFhMzExNjBhYTdkYzhmM2JlNGFmNDM2MmQ4MjJhMmNlMTI2NWUxOTI3YzFkMTkyNzRiZDE4ZDc2ZiJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L22-L27",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L25-L30",
           "version": "repo-lines-v1:sha256:501bf9b103a2aa964cb363620ca5639ea6e4a0e95f3a0203f335a559b5b08fcb:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzFjZGQ2NzBlYzgxMzVkNGNkNDNjMzAyYTJhOTI1YjY2MzQzNjkyMjdlNTI4MmYxOWQ2YzdmODVmMTFmYmUyNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODA2Zjc4MTg2NmY2NmFkY2Y2YjdkYWFkNTk3MWM4MDU2MjAzZjMyZDA0ZjRmYjgwNTE1NmNhNDgyOGZkNGJkOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjMyYWRhNzJlYjE0ODZlOWI4MzA0ODMyNmYxZWUzNjAyYmNmMWZhOGY5NjBkYzA5MDgyMjdhNDNiODVkOTU5YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGFlOGYzMzJkMWQ5YjQ3YTE3ZThjNmJmZTc3MjE1M2M3NzBmNTEyZTg1NjFjNjYxNGE4Nzg3MWIyMzI0MWI3OSJ9"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L260-L274",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L271-L285",
           "version": "repo-lines-v1:sha256:9499be7225e291c751103d6ace745166fa51e78d94adc8d8d14c328f79edf8d5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjE2ZThlOWMwYTFhNjhkMDZjMmZiYWE1ZmQyMTM5NDgyYjhlZmQwYTE5MzE1YjkxNWU2Y2NlODQ5ZDg5ZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0OGIyN2UwODIyNzM3NzM0OTI1OWM1MjAzYzRkNDdmZTVkZDQ3YmE3NjIyMDM0ZWUzZmFlMTA4YWMzYWNkMDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjZWU0YzgyNzM0NmZmMzAwZWE1NDJiZmYyYTk3ZDBjNDc2NzA5Yjc0YmI0ZTFiZjVkNWM5MTA0YTJmZmI1MTkifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L79-L88",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L83-L93",
           "version": "repo-lines-v1:sha256:e925104ae4f181d46d98938e015a00d08532dd352327a9010c799a23b1f48768:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3Y2I4ZmRjZjljYjk5OWMwNDUxYjM5MWI3Y2I3ZjJjOWFjYTgyODg0ZWM4NmZiYTYxMTY3YTc5ZmNlZTRjZmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3ZWYzYTBlMjNmNjdjZWRhMDY1OWM4NGQzMTQwZDBmYTU0NDkwNGRlYjAyMTQ5M2UxYjY3MGYwYjI0Y2EwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzMGYyYWVmYWNlZjA1ZjYxMmQ0NTczYWVhMTZiYmE2Zjc1NWRmYzZlMDU1YTZhMDRjNmUwNmE3YzAxNTViYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlMjQ2ZTc5NDYwMGY1MWZjNGFmZDBkYjExYjVmZTljY2IyY2IyMDM4MWM3NmY0NjBhOWU0YjZkNmYwZTU2Y2UifQ"
         },
         {
@@ -175,7 +175,7 @@
       "statement": "Todoの高さ混在カテゴリーはsparse CSS Gridの1px行と実測spanで配置し、DOM・Tab・上端順を保持する。dense backfillとCSS columnsは読み順維持のため不採用と記録されている。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L192-L274",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L203-L285",
           "version": "repo-lines-v1:sha256:4db448c2d2833258c974c4cc0d2271eda43d76d4599f97f35db411c96c3286f1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0MDFlNTNjMDFmN2RkNjIwNzk1YjY5Y2JiNzRhMTZiY2E3Yzc1ZTcwM2E5MDY4MGY1NTY1N2Y3NTU2Yzc4ZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0MDFjM2Y0OTAxYjdjZTg5ODBjNDBjMTljNGVhNmQyMWNhNzQ3YTJiNWRiM2UxOTZhMTMyMzgxZDE4MGRlN2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjZWU0YzgyNzM0NmZmMzAwZWE1NDJiZmYyYTk3ZDBjNDc2NzA5Yjc0YmI0ZTFiZjVkNWM5MTA0YTJmZmI1MTkifQ"
         },
         {
@@ -189,7 +189,7 @@
       "statement": "Todoのgrid計測は下余白を含む内側wrapperの自然高を切り上げた最小1行のspanを設定し、ResizeObserverで内容高変化を追跡する。effectの再実行・unmount時はobserverとinline spanを解除する。",
       "evidence": [
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L192-L258",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L203-L269",
           "version": "repo-lines-v1:sha256:b92007761c5df2b01552f174d63199f30a4968b55a22cbfb3b9dfe2d7b724337:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0MDFlNTNjMDFmN2RkNjIwNzk1YjY5Y2JiNzRhMTZiY2E3Yzc1ZTcwM2E5MDY4MGY1NTY1N2Y3NTU2Yzc4ZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4NDJhNWVkNjFkOGQzZTY0NDQ5YmQ2NjZlNjZmN2JkNTg2YzllOGI1OTNmYmU1ZWY2MTUxNDI3NTlkMzEwNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0MDFjM2Y0OTAxYjdjZTg5ODBjNDBjMTljNGVhNmQyMWNhNzQ3YTJiNWRiM2UxOTZhMTMyMzgxZDE4MGRlN2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2MGVlOWViYmZlNTUyMGIwZTAyZmEwYWM0YmYwZjNhOWIyN2VhYTZiNjg4YmU0NjI0MmUxNDg3NzMzMzI2NGQifQ"
         }
       ]
@@ -199,7 +199,7 @@
       "statement": "Todo配置E2Eは隔離実backendから24カテゴリーを作成し、長文fixtureを展開して高低差を保ち、圧縮配置、矩形の重なり・overflow、カテゴリーと項目順、Tab、幅変更、編集・完了表示・削除による再配置を検査する。",
       "evidence": [
         {
-          "resource": "repo://tests/todos/isolated.mjs#L491-L501",
+          "resource": "repo://tests/todos/isolated.mjs#L558-L568",
           "version": "repo-lines-v1:sha256:acdb0882bbc94e77f28417d42d1a6034ec3e142efbc826693d5d183ff46a13e6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjY2U0YmMwNjM5Y2E2YjJiNTBmMTgzNTkxMjUxNGI3NDg1NzI4MzZjMGJkZjcwNzllZDY4MjZhMDNkYTNhNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0OGNmNTdkNGIwOTFhMTgzMmFlZGJmMTM4NmRjM2UzZGY5N2JiZjkwNjBjMjRlN2RmYjkxNDE5NDdiMmQzMjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmMTQ2ZDYxNTI5ZmQyNjgwZTU4MDA4NDMyZWYxN2ViMGU3MmJhOWU0ZDk5Yzg2YTUzYTlkODYyYWM4NGJkZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3YjljOTZiN2ViNmFlZWQ5N2RlMjA4YTNlZGI1NTQzY2E3MWM3NWRhMzc3N2VkYmM5NjlhYzgxNzY3MWNmMzYifQ"
         },
         {
@@ -223,12 +223,12 @@
       "statement": "Projectの表示切替から設計メモを選べ、本文版履歴と独立追記を保持する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/design_note.rs#L313-L432",
-          "version": "repo-lines-v1:sha256:5d584cba6269f1c38f5cb33777baf7fb2377a41e6e2d04b01cc31e791b3b736a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkOTUyNDJkMTQwMTZiYjMyYzg2MmM5MDJjMzc2NTQ2YzJlN2I5MWQwM2IyYjg4MGIwNDY4ZDZiMDJmMmI1MWNmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3ZTRkMjNlZTFjY2MyMzI0OTY5N2Y2NDIxNGRkMWQzMTI0MjRjZDI4MGEzMTMzMjZkMWFlNzExNTM5OTY5M2FjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhZTdlMWFiZDZlYjI2OGIyNzExNTFjM2RlZDFmZWM2OTFjNTE4YTA3NjZjNTllZTA3M2I3NDk0ZDJlNDkwYWI5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiYjliMmQzZTMxYTEyOTE1MjIyY2Q4NTljNGQzZmE3ZjVmN2U4YTE5ODY0ZDdiZGVhYTk4ZGVjZWY4YTM5ZjRiIn0"
+          "resource": "repo://crates/db/src/models/design_note.rs",
+          "version": "repo-file-v1:sha256:a7fc18c43563e718163662d9c540a7fbd6374fbfee6be9bb6690098dd5a2b415"
         },
         {
-          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx#L1028-L1046",
-          "version": "repo-lines-v1:sha256:8d23f3cb1f129ef73d6811b6ce8b55ff4ddaba4c7feeb77532d58eded5b09e66:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNDM1Y2M3NGY0ZmEyZTlhOTZiNDg2NTFlMDE0ODg0MDk0ZWIxZWI3NTY4ODdmNmM0ZDU5NmI2ZTkyZDczMTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMDA2Mzk5NzZmYTc2MzFhNWRiZDI3ZTNlNGNjMjI3YmI0YzM3MWM3NTVlNjVlNzlkNDlkZDMwMGVkOGY0M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwYmIzMDBjMGUyODMxNDc0ZjI4MDAxYTU3MTRjZTQ1ZmI3YzM2NWU0ZDk2NGFlOGNjMWY0MGY0M2FmMmE4M2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NmY5Nzc3NTAxYjc0MTFhN2JmYTJhNzBiYzFlNDI2MDE0NzhhYzgxNDA3ZThkMDgyZWYzZDFjZmE5ZTAyNjMifQ"
+          "resource": "repo://packages/web-core/src/features/kanban/ui/KanbanContainer.tsx",
+          "version": "repo-file-v1:sha256:e0121c081387deaacddaae1d49c0f5ae87bbbd17139943ee77b1cba60392626c"
         }
       ]
     },
@@ -238,11 +238,11 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/todo.rs",
-          "version": "repo-file-v1:sha256:fa67d55ea6b7e30e24423f1094077cb7d25406cb722d7382da084b5efaf66642"
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         },
         {
           "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
-          "version": "repo-file-v1:sha256:537b77fea8c7165c3b42f2fa2f692610ce11c041512a092322cd0bfbdba74a1e"
+          "version": "repo-file-v1:sha256:5f37b5b86a25628f0d9cc5ebfa7ee458a835c59cf9080324da963e6971bb1990"
         },
         {
           "resource": "repo://packages/web-core/src/i18n/locales/ja/common.json",
@@ -264,7 +264,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/todos.rs",
-          "version": "repo-file-v1:sha256:62e4f18e8cd202bf2fcf17ed7104b78f38fb3856175a457a455cc561e82188f1"
+          "version": "repo-file-v1:sha256:21fbd7fabe1b550d502990adeffe73923a55ee14028304e8ad0baddff9215c6e"
         },
         {
           "resource": "repo://crates/server/src/routes/todos.rs",
@@ -278,7 +278,7 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/todo.rs",
-          "version": "repo-file-v1:sha256:fa67d55ea6b7e30e24423f1094077cb7d25406cb722d7382da084b5efaf66642"
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         },
         {
           "resource": "repo://crates/server/src/routes/todos.rs",
@@ -300,7 +300,7 @@
         },
         {
           "resource": "repo://crates/db/src/models/todo.rs",
-          "version": "repo-file-v1:sha256:fa67d55ea6b7e30e24423f1094077cb7d25406cb722d7382da084b5efaf66642"
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         }
       ]
     },
@@ -310,11 +310,11 @@
       "evidence": [
         {
           "resource": "repo://crates/db/src/models/todo_tests.rs",
-          "version": "repo-file-v1:sha256:56d5d4cf605a6187101de3391c1f17f96789145b8c1379994ded0914e5f3f018"
+          "version": "repo-file-v1:sha256:f2b84d195f8c0192b8d04d36c5b4239102d7a6029dfefeda4fd91142e6da0c76"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/tests.rs",
-          "version": "repo-file-v1:sha256:85469379eaf1b4a1677d5b5784c602477e947acc373367f89b454403e0c97048"
+          "version": "repo-file-v1:sha256:7eb3e40ae43aaeba65230d3febc41e3d2b0256a98e24d42e277c68bc2bc4a326"
         },
         {
           "resource": "repo://tests/todos/isolated.mjs",
@@ -341,7 +341,7 @@
           "version": "repo-lines-v1:sha256:6ded2d7e1ffcf63efd58cd36973ddb74b219aa3fcb61d52944d2f9a661bbe332:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNWE2OTczNWZlZjI3ZDBmM2VlNDcyMWNiZjRlYWU5OGIyM2NhYmQ4MGJmNWFiOTBmYjBlYWY4ZGY1ODkxYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNjRlYzE0ODM4OWQyZDUyNmJiNDVlNTc4N2UwOTM5MTI2NWYxMjMxY2EyNWNiOWJkMzQ0N2QyNDczODY0NjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwNWMzZTFmMWU3MTJlZjQ5YjRkZTM3YTE3M2I1MDlhYTViNWY5Mzk0OGFmMGYxNTA3NWFkNGNmNGMwMjBhMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTgwNTA5YmQ2YmMwOWMxODZmMGYyZGU1NzFjMThiZjFmMWU5YjcyZjNiZDk1MjM4NTdkNjdiMDUyMjk0MTAifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L311-L400",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L321-L410",
           "version": "repo-lines-v1:sha256:66cf5374a968a03f7e3b28b7c3f9a35b1f7ed07f31529dd821ca20abe4a252f6:eyJzZWxlY3RlZExpbmVDb3VudCI6OTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYTdhMTA5YWNiOGI2YWM5ZjNiMTU1NzIwYTgwZjVkNWU2Yjc4NmRkNmIzMmY5ZjllMWZmMjE3ZWViZjc3NDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNjY2ZmUzNjI2ZTQ4NTAwZmEzOGM4YjJjNDhhOWFmYzRhZWI4MGRlNDdiNGU5MDJlN2VkNTQ5NDg0YmQxZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiZDU4NWE0NDc1MjM4Y2QyYjE3ZTZiN2Y4N2Q2Mzg1YTY4MWE4MTExNDY1MzkzMzFjYmI3YWUyZTZkNWIyYjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcwMDZlYTM5Njc2NDVkYjg0NzlkMGIzMWRlOTM3YmYzYWQ2NTVkZjY5YzRkZmQ5Njg4YTU1MDg2YWJhNjdkZmMifQ"
         }
       ]
@@ -359,7 +359,7 @@
           "version": "repo-lines-v1:sha256:e28c422a873fe74d0527b54093c880d8e2430a8bfc92e8000e52f440b51d7f76:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmMWI0MzY3ZTYyYzNiYThjYWY2OTc0ZjNmNTBiZDUxMmMzNDE0MmE2ZmNkZjhlZGQ3YTM0OTVlNGZlZjgwMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMzAwNDg0N2UwNGQ4ODQxMmY5NGVhYjZiMDU2NDlkNjJiMDQyM2QwNDliYjRiMzI3YTgxNjMxNmQ2NDQzY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOWRmMmQ3MjI3MDRjODM5NWZiNzEzZjU0NzhhMjIwZjQ4ZjliYThlYzRhZjM1YTlmNjk3YTE5N2NiYTBjOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgwODY3YTYzODc0ZDM0YTJhMDAyNGMzYWRjYzdjNzExMmM2NjUyMzNiNzZhODQ1YTYxNmNmYjNmZmQzNDQ1OTUifQ"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L296-L401",
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L306-L411",
           "version": "repo-lines-v1:sha256:350cb0513085136f9fcc3f0cd3a57662b9640104fdb1936208273699200a2cd4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3MDI2NDI2NmRlZjI3Njg0OTUwNDdkM2EyMzQ0Y2UxNmNlNTVlMjc4OGRlYWM1YTk4MzZmMzFjNjQ0YjRjNDM0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyYTQxNDM2NzY2YjJmOGM0ZmQ3MDc2ZTlhN2JlMmZiM2MyNDU3MjgyMjhiY2I5ZGMzYTc2ZjUxYTVhNDBjMWQ4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyMTNlYTQ1NzI4NTk1NzQ3NTIwM2ExZjIzNWNhMTYyMWI5NjdlNjU1YWJlNTc2ZDhhNmM3ODU1NjM0NDY5NmI1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2ODg4ZTVjYWI0ZDc3NmIxMDUyMjZkMzg2YzVlNWFkNzk2YzgxOTAzMTg1ZmI1NzYxMzg2NmQyMDNmOWZhNWY0In0"
         },
         {
@@ -397,15 +397,15 @@
           "version": "repo-lines-v1:sha256:24535f7ba44aa3267bc16a89ef700d11c2b0289a96fb0591311d10fbd8546303:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1ZGE5ZDRjZWZjZjZkYzFhMzFiZjA2NmQ4OTNkYTIzZmUxMThhMWQ1MDI5Mjc1ZmIwODliOWI5NjZhYjZlZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMyY2IxODQwODQzMjQyMTZlZDJkMTJkNzI3YjgxYjIzMmMxNTg4YmVkMjdkMzQ5ODgwOGU1Yzc0N2Y5OWVkY2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://tests/todos/isolated.mjs#L15-L66",
+          "resource": "repo://tests/todos/isolated.mjs#L16-L67",
           "version": "repo-lines-v1:sha256:d95111b8c48cc9eabd1e096182d5c7d52b90ed5cf1434bbed57db951f7aff7a7:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZGM0ZmUzNTk3OTc3YjEwNTI3MDgwOGNlNmE1MWNlNDUzYzgzMWRlM2E4MmJlOTc2YzZkOTUxZTExOTM0ODMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMmViMDhjMmVkMTFlOGI2NDg0MjI5OGEyY2ZjZDJiZGJhNWE3MDQ5YTljNGQxNDdiYThiNjhlNDZlMTkzNGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5ZWY3MTk0OTdhNWMxYmI5MGY3MWY3ZWY3MmRkZmUwZDdhMjZiZmY3ZmZmN2RlNGUwMjJmODc1NWE0ODZlMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlNjZhNmU1ZmY4MTJiMjQ3ZmUyOTcwNDYwMGI4MjAwMjM2ZjEyMzZjYjk2ODQ0ZjE1MzJhY2IwNzcxZTQwYzkifQ"
         },
         {
-          "resource": "repo://tests/todos/isolated.mjs#L369-L383",
+          "resource": "repo://tests/todos/isolated.mjs#L443-L457",
           "version": "repo-lines-v1:sha256:d976041a3a0d0ffd38a13c201964c13b53ae06e32023cf81f06f319837bb787e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjY2MyMTUwYjdiNjFhMjFiMzU5OGNiMjliMDdjNzFjMmY0YWJjOWU0NmUyNDZjZTIyNWIyN2M1NWFkYTFmYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmOTliYzc3Mjk1MmFhMmY4NDcxZjkxNjJhNmVmZjkxNGQwYjNmMmJiYjkyZTU4ZjUzODkwODU2ZGI5ZGM3NzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQyZDU0YmI4OThmMDc0MThlODg2NzcwMDU5OWNmZDhkNDJlMjBhMjM1Yzc5ZmFiZjk2MDIwYTg2YTMwZGExMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNWI1OTk2NDAyZThmZmI3NGQ1M2ZmZGZlZGFiZDI4NWUxYjQ1NWQ0MDA1M2IyOWZhZjVkOWQ1NWFiNjViMTEifQ"
         },
         {
-          "resource": "repo://tests/todos/isolated.mjs#L734-L740",
+          "resource": "repo://tests/todos/isolated.mjs#L801-L807",
           "version": "repo-lines-v1:sha256:4a8c8a3752998e7368847a9c42446ef4057cffa849d203dfab2011cd179930e9:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFjYmU2ZTllNDY2MWIzMDQxYjM3MWRmYzY2YmRjNzE2Njg3NmUxNmY4ZTNmYzk0NGY3MWMxMGE5NWU2YWMxMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTE4MTU4MDhmYzhlZDQ0MWFhMjM1ZWJiYWY3OTJlZWMwMzliMzA3MWEwM2ZhNzlkY2FmNTY0MWFkYmE2ZDRmNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         }
       ]
@@ -415,16 +415,16 @@
       "statement": "Todo検索はブラウザーで取得済みbody/categoryをtrimして絞り、両MCPはliteral空白のまま全対象を検索してからmatching-result offsetでページ化する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/text_search.rs#L1-L10",
-          "version": "repo-lines-v1:sha256:b13056d1b5dfd18f3ff03b97be3cf50b41358f7b87c89687376b5bdee7d19a44:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlYjhlZmM2ZjhmMjZhZDhlY2E5ZDI0ZWZkN2E1NGY4ZjJkNTE0Y2Q1OGU3ZmExYzE0MGQ1Zjk5YTM1NDY0OWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3MDRiNTg1NzAzZjA5YmJiNWY3YjU1N2ExNTgxMTAyMWM5OTI5NTAzOGVhMjQzMmQwMDYwMjIyNzczZDM5ZDAifQ"
+          "resource": "repo://crates/db/src/models/text_search.rs",
+          "version": "repo-file-v1:sha256:3f12ee183dfe3434739f572c5aeb8b6b6e2bafd7d769772996422915f9f1b5ec"
         },
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L140-L177",
-          "version": "repo-lines-v1:sha256:a28c4e6ce56a3686c27130dd64c9f98a6314f42797b5d46619fa431d825a7e96:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjBkYTI1YWYwZjUxYjc1MDk1YTI3Y2YwNDg5NWUzYjAwZjNjMGEzNDQyOWExNjRmYzYxMzlkOGE0ZTkzZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjYTNmMTU2NTk4N2IzZGUyODVkZWI1MThiNDgzODkwNjljZmU3NTMwZGExMDY0YjU5Y2M0ZWM1MTlkNmZkYTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5MjM1NzgxMjliNjE4YzNlNWEyZWU5OWI2MDgxMDY4ODUxZmRkMGVhM2FmN2E2Y2Q4MmVkMmRhYjRjODMxODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkODRlZDc4ODhmYzVlMWZkNzI4ODAwNDQ5ZTk0OTNlYzA0OTU0OTMyMTQ4OWUzNGIxNDIyNGMyZGQzMjg3NjAifQ"
+          "resource": "repo://crates/db/src/models/todo.rs",
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L40-L100",
-          "version": "repo-lines-v1:sha256:f46371ccd30c96efffece493e9bc70b88e0d83fba52e227a1a622b8b2b526009:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyNmU0MWVlZDZjN2M4MzczMDFlNWYzZjlhZmFhODU1MzA0MmYxNGRkZmY5MjRmYmYwZDM4YzE0N2Y2M2U5ZWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViY2ZlMTQ1MTIxMWM0ZjM0OWQ1OGQ1Mzg3NDllMDc0ZmM3NTQ4NTI3OThjZGEzOWMyZDg2ZGNjYjY1MDBjYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEwZTM3Njg2NzI3ZDFjZDZiZjI1ZDVhMmVmOTkzMWVkY2MyNjkwMDg2MDBjMzNlZDhhODgxZDA5ODE3N2U3YWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YTA4ODJjYWQ0YmQ2ZmQ1MDNjOWI3NmM1NGJmOWJjZmY0MjU0MGM4ZDk4ZTUzNWNjN2I4YTk4MzAxYzk0MmUifQ"
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
+          "version": "repo-file-v1:sha256:5f37b5b86a25628f0d9cc5ebfa7ee458a835c59cf9080324da963e6971bb1990"
         }
       ]
     },
@@ -437,8 +437,8 @@
           "version": "repo-file-v1:sha256:d03e1be430a312ba694ea2ba0d306684fac7dc1b52eef6240dd67408cde11c50"
         },
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L216-L253",
-          "version": "repo-lines-v1:sha256:361370436eac9c7d7ad3157ffc2294234cf07ff7086d364468faf552c826bb85:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ1ODk4MDViMTAzMWIwM2YzZmU0YjBhNDNmMzQ4OTRlOGU5OTZjMmNhZWZlNzM2OTVmYzkwOTQ3YjNlYWRmNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4NTc4NTliNTY4NDQ3NThlMjM5NzM5MDc3NTFmMjI3MmY3ZWFkZGRjM2EzOWQ3NjZkYzRiY2I4MTRhNTU2Y2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkNTllYmM1M2E5YTY3ODc3Yjc3ZGE0YjYyOWRiODQ3ZDhlZGI5ZjVlZDZlMGIyM2YwNDYzMzQ0OGU5MzE1ODAifQ"
+          "resource": "repo://crates/db/src/models/todo.rs",
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         }
       ]
     },
@@ -447,8 +447,8 @@
       "statement": "REST・stdio/HTTP MCPは指定Project内でUUIDまたはcanonical TODO-Nを解決し、UIはdisplay_idを表示する。",
       "evidence": [
         {
-          "resource": "repo://crates/db/src/models/todo.rs#L143-L174",
-          "version": "repo-lines-v1:sha256:ad465642990685f82f43b07d85f07c34dcffae4cdc9647d4444aaf1afcb46c43:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3NjBkYTI1YWYwZjUxYjc1MDk1YTI3Y2YwNDg5NWUzYjAwZjNjMGEzNDQyOWExNjRmYzYxMzlkOGE0ZTkzZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZmY2ZDAyOWRlYTBhZjRhZGQ5ZTM2ZmQ1NmNiMjRkZTFlNzFkMDhiMDJjNzAwMzBjNDI3ZDA4MTFlNjZkMDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5MjM1NzgxMjliNjE4YzNlNWEyZWU5OWI2MDgxMDY4ODUxZmRkMGVhM2FmN2E2Y2Q4MmVkMmRhYjRjODMxODMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxMzEwYmJlYTVkMDJkM2EzOWUzYWE4MmQwOWE3YTNiNTgxYTY1YWZhODc5MmZjN2Q0MzU3MmIzYTQyY2M0ZGYifQ"
+          "resource": "repo://crates/db/src/models/todo.rs",
+          "version": "repo-file-v1:sha256:236db16e2a4ce924f081107c42212f53bc1d598ed3c0856b20db3f3549a39db9"
         },
         {
           "resource": "repo://crates/mcp/src/task_server/tools/todos.rs",
@@ -456,21 +456,39 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/todos.rs",
-          "version": "repo-file-v1:sha256:62e4f18e8cd202bf2fcf17ed7104b78f38fb3856175a457a455cc561e82188f1"
+          "version": "repo-file-v1:sha256:21fbd7fabe1b550d502990adeffe73923a55ee14028304e8ad0baddff9215c6e"
         },
         {
           "resource": "repo://crates/server/src/routes/todos.rs",
           "version": "repo-file-v1:sha256:8462c4b79599ef866732b280c391431ae94ec19824aad221372c13b3f7007275"
         },
         {
-          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L413-L419",
-          "version": "repo-lines-v1:sha256:fc57a1fa08e3c94a9880772c621b4965bd584731d7ff334256fb2a02c7a921b3:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgwYzcxZjk0OGIwNzIyYTNlMzQ0ZjkyOGZkMTNiOTdjZjYzYmRlYjg2MDNkZTcxZmU5ZTg4YTgyZTFlMDJmNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzgwYzcxZjk0OGIwNzIyYTNlMzQ0ZjkyOGZkMTNiOTdjZjYzYmRlYjg2MDNkZTcxZmU5ZTg4YTgyZTFlMDJmNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmRjMjI1YTQyNmU5Yzc3M2Y2NDc1ZGI2ZjI4NDVjMzUyZDg3Yjc1Nzc1ODZkMTdjMzU5YmM5MjAzOWU4ZjFjZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZGYwOGUzZGEyOTY0YWE4ZDU3N2YwYmUwMzU0MWQyNmQ4ZWE2NTU4MDc0YmYzNTgyODRkZDFjMzhjZWI1ZDg5YyJ9"
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx",
+          "version": "repo-file-v1:sha256:5f37b5b86a25628f0d9cc5ebfa7ee458a835c59cf9080324da963e6971bb1990"
+        }
+      ]
+    },
+    {
+      "id": "claim_83d4dd5ec423440b9a2626811dde74c9",
+      "statement": "Todoカテゴリー候補は検索・完了表示とは独立したProject snapshotの未完了項目だけから重複除去・ソートして導出し、保存値と自由入力を維持する。",
+      "evidence": [
+        {
+          "resource": "repo://packages/web-core/src/features/todos/model/todoCategories.test.ts",
+          "version": "repo-file-v1:sha256:c0bb94ff0c3993cf5c8b4b396beeb58ce7cd624ae50744cdeebe768e9866c772"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/model/todoCategories.ts",
+          "version": "repo-file-v1:sha256:5c8e6e06372cbf813fe3aa60c0a771d9eac8fac1720837c44f09daba6f9b7c5b"
+        },
+        {
+          "resource": "repo://packages/web-core/src/features/todos/ui/TodoPanel.tsx#L92-L96",
+          "version": "repo-lines-v1:sha256:713ebad6fca7532babe24b25d3394b91598cd48f8a04c034a1f538623ae68aef:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTkzZjVjYjU5MmE3OTkxODNjOTBkNzU2MTg1ZGU4MWMzYzc0ZTE3MzA5NTY4NTA1NmI4NGM0YmU5ZmI5NTA3MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTRjOGRkZjdmNTFhYWU5OTY4OTVmNTQ4N2YxZWZmZWU2NThhN2NlOTE0ZTBlN2FlZTFiNWUwOWQ1MmFjYzA0ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjdiNGYxYWU1MDg3YzNhMDE2MDIzNTAxNTMyN2Q1MThiYTNkNmI2NGVmZTI2NThkZDFiMzgzOGE3N2Y0NTZmOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGUyOTMwMDkyNTljMzk5ZDI4ODVkNGY5NTI0MTBjYzRlMzQ5NTRiY2ZmNjE0NTZkZTI0ZjQzMTcyODBjMjFjYyJ9"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-31T11:36:54.240Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-02T01:08:30.935Z"
   }
 }

@@ -34,10 +34,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/listSearch.ts
   - id: openwiki-source-4917ca78c6137f6aa2fe5c81
     resource: repo://tests/design-notes/markdown-editing.mjs
-generated: { by: "codex", at: "2026-10-26T01:28:30.262Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # 設計メモ・本文履歴と独立追記
@@ -92,7 +92,7 @@ UI は `/api/projects/{project}/design-notes` の REST を使い、一覧・履�
 
 一覧は live metadata であり、全件が同時点の snapshot ではない。本文ページは不変の保存版を読む。offset>0 に revision を省略すると拒否される。offset はUTF-8 bytesではなく Unicode文字で、JSON escape をまたぐページを個別に parse しない。検索なしではSQLの件数制限で metadata のみを読む。検索ありでは保存済み title/body を順に読み、合致したページ分だけを保持する。本文 snapshot は SQL substring で分割する。[共通projection](../../crates/db/src/models/design_note_read.rs#L33-L177)
 
-MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` に限定し、全文は上の読取で取得する。stdio は REST 結果を投影し、外部 HTTP は小さい成功結果を operation に保存する。古い全文入り operation も get_operation / 再送の返却時に投影し、保存済み証拠や元の確定版を書き換えない。DB/JSON失敗は HTTP operation で `uncertain`、domain 拒否は `failed`。保存済み receipt を解釈できない場合も `receipt_unreadable` の uncertain となるため、新しい request ID で盲目的に重複実行しない。[stdio成功](../../crates/mcp/src/task_server/tools/design_notes.rs#L72-L89)・[HTTP結果](../../crates/server/src/remote_mcp/design_notes.rs#L67-L94)・[旧receipt投影](../../crates/server/src/remote_mcp/issue_write.rs#L97-L139)
+MCP の書込成功結果は `{note:{id,revision},addition:null|{id,revision}}` に限定し、全文は上の読取で取得する。stdio は REST 結果を投影し、外部 HTTP は小さい成功結果を operation に保存する。古い全文入り operation も get_operation / 再送の返却時に投影し、保存済み証拠や元の確定版を書き換えない。commit前のDB/JSON失敗と確定したcommit拒否は `failed`、commit成立を否定できない失敗は `uncertain` として区別し、安全な診断を返す。保存済み receipt を解釈できない場合も `receipt_unreadable` の uncertain となるため、新しい request ID で盲目的に重複実行しない。[stdio成功](../../crates/mcp/src/task_server/tools/design_notes.rs#L72-L89)・[HTTP結果](../../crates/server/src/remote_mcp/design_notes.rs#L67-L94)・[旧receipt投影](../../crates/server/src/remote_mcp/issue_write.rs#L97-L139)
 
 ## Project を削除した後の保持
 

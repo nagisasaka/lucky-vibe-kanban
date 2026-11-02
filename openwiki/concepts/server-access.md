@@ -26,12 +26,16 @@ sources:
     resource: repo://crates/server/src/remote_mcp/environment_settings.rs
   - id: openwiki-source-d236349bbead901a9455b33c
     resource: repo://packages/local-web/src/app/auth/Auth0Setup.tsx
+  - id: openwiki-source-5d3aad6c180293a86853f6ec
+    resource: repo://packages/local-web/src/app/auth/ServerAccessGate.tsx
+  - id: openwiki-source-0d0dadc1962a96804bdd02da
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx
   - id: openwiki-source-b42d4696e9f82a515195aa22
     resource: repo://tests/auth0-setup/setup.spec.ts
-generated: { by: "codex", at: "2026-10-29T08:49:34.152Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # サーバー認証・設定・セッション
@@ -113,3 +117,9 @@ OIDC callback の失敗診断は固定 reason code と許可した field / categ
 ## 検証と残る確認
 
 sourceには設定消失時の閉鎖、SSE失効、並行admin無効化、実socket停止、previewのbrowser/origin束縛・再利用拒否のテストがある。[失効と並行操作](../../crates/server-access/src/tests.rs#L1179-L1320)、[preview](../../crates/server-access/src/tests.rs#L1554-L1737)。これらのfixtureは実Auth0 tenant・Google/GitHub本人確認・ChatGPT OAuth/MCP接続の証明ではない。実サービスの確認項目は [受入範囲](../../docs/self-hosting/authentication.mdx#L201-L224)に残っている。
+
+## 設定内のアカウントと本人情報
+
+設定のアカウント画面は接続情報・方式と既存logoutをまとめる。本人名はstatusの任意 `user.display_name` を使い、Basicは認証済みユーザー名、Auth0は既存memberの表示名となる。statusは現在のweb principalとid/issuer/subjectが一致するactive memberのみを参照し、管理用member一覧を使わない。Localは本人名を返さずLocal接続として表示する。欠落・空白・旧backendでは取得不可を示し、UUIDや仮名で代用しない。[status](../../crates/server-access/src/handlers.rs)・[表示とlogout](../../packages/local-web/src/app/auth/ServerAccessGate.tsx)・[認証回帰](../../crates/server-access/src/tests.rs)
+
+認証設定は既存管理権限で供給する別画面であり、共有設定側が権限を推定しない。組込み認証・作成支援・ChatGPT資格情報のdirty状態を設定shellへ伝え、保存済み情報の存在だけで未保存扱いにしない。認証成功の遷移は明示的にleave guardを解除して行う。[context境界](../../packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx)・[組込み画面](../../packages/local-web/src/app/auth/ServerAccessGate.tsx)・[作成支援](../../packages/local-web/src/app/auth/Auth0Setup.tsx)

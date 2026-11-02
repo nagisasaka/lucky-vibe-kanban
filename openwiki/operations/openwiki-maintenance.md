@@ -88,8 +88,8 @@ sources:
     resource: repo://tests/openwiki/recovery.sh
 generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-31T11:36:54.240Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # OpenWiki の初期生成・同期・回復

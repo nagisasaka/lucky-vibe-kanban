@@ -126,10 +126,10 @@ sources:
     resource: repo://scripts/dev-cargo.mjs
   - id: openwiki-source-c6d955097c4a7a9e7b1873ee
     resource: repo://tests/server/specs/workspace-search.spec.ts
-generated: { by: "codex", at: "2026-10-27T11:11:50.589Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T08:49:34.152Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Workspace と Repository
@@ -287,7 +287,7 @@ AgentRun が終端でも registry が `reserved` / `spawned` / `running` / `unre
 
 実行予約・再生成・archive は Workspace lifecycle lock を共有し、順序は integration MUTATIONS → lifecycle → DB transaction。削除直前の再検査は `BEGIN IMMEDIATE` 内で行う。Linux では未登録 process の exe/cwd/fd/maps/パス引数と LVK 自身の通常 debug frontend 参照も観測する。`developer-runtime` featureで埋込み済みの場合はこの自己frontend参照の保護を省くが、exe/cwd/fd等の実参照検査は維持する。[bundleの独立性](../operations/development.md#開発用成果物切替と復旧)は既存worktreeの無条件削除許可ではない。ただし別 PID namespace、権限で不可視の参照、最終観測後の外部起動は防げない。観測不能な無関係 process だけでは拒否せず、OS 観測全体の失敗も警告して継続する。これは任意の外部 process に対する排他機構ではない。[lock](../../crates/services/src/services/workspace_lifecycle.rs#L1-L33)・[削除](../../crates/server/src/routes/workspaces/archive.rs#L215-L284)・[観測限界](../../crates/server/src/routes/workspaces/archive_processes.rs#L1-L54)
 
-削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。UI は実エラーを表示する。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L265-L290)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
+削除は Managed ownership だけを対象にし、External path は保持する。strict cleanup が失敗しても archive を確定し、`worktree_deleted=false` と `deletion_error` を返す。削除エラーは安全な固定説明として返し、内部エラー本文は公開しない。成功した archive は DB 履歴や branch の削除ではなく、既存 archive や orphan の一括移行削除もしない。接続が切れても受付済み confirm は継続する。[結果](../../crates/server/src/routes/workspaces/archive.rs#L265-L290)・[strict cleanup](../../crates/workspace-manager/src/workspace_manager.rs#L694-L713)
 
 ### 生成された専用 Workspace の自動 archive
 
@@ -348,3 +348,7 @@ DB 削除後、ファイル・runtime ファイル・指定時の branch cleanup
 ### Issue単位の一括archiveとの関係
 
 [Issue archive](project-and-issue.md#issue-のアーカイブ)は別属性で、ONの一回確認だけが全リンク集合の未archive Workspaceへこのprimitiveを適用する。全対象のbusy確認を済ませてから `archive_checked` を呼び、物理変更後のDB失敗をuncertainとする。Issueのみのarchiveと解除はWorkspaceを変更しない。新規作成/linkの拒否と、既存Workspace継続は別境界である。[共通primitive](../../crates/server/src/routes/workspaces/archive.rs#L279-L313)・[全対象の順序](../../crates/server/src/routes/local_remote/issue_archive.rs#L244-L318)。
+
+### 物理削除とcommitの不確実性
+
+archive失敗には `physical_deletion_may_have_occurred` と `archive_commit_confirmed` が付く場合がある。物理操作開始後のDB失敗、commit結果不明、確定後の読戻し失敗は単なる未実行へ戻さず、元receiptと実状態を確認する。filesystemとSQLiteは同じtransactionでrollbackできない。失敗診断の自由文を隠しても、この部分作用の事実は残す。[観測付きarchive](../../crates/server/src/routes/workspaces/archive.rs)・[外部receipt](../../crates/server/src/remote_mcp/workspace_archive.rs)

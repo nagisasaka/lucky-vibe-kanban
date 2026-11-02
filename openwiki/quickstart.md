@@ -72,10 +72,10 @@ sources:
     resource: repo://packages/web-core/src/shared/lib/remoteApi.ts
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
-generated: { by: "codex", at: "2026-10-31T11:36:54.240Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-31T11:36:54.240Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # クイックスタートと調査案内
@@ -311,3 +311,12 @@ CSV 経路は LVK コンテナー内の HTTP アプリへ HTTPS を転送し、L
 LOCAL-281/282の固定sourceを同じ候補へ競合なく統合した。TODOの不変番号・非再利用counter・両MCPのProject内参照は [Project Todo](concepts/project-todos.md#project-ごとの不変番号)、maintenance writerの読取4tool・linked参照・operation監査分離は [OpenWiki保守](operations/openwiki-maintenance.md#072-の読取横断参照と検証)を読む。通常agentへの新たな検索公開や並列writerは導入していない。
 
 コード候補 `75e7cb71b5e82df998bfb440180fe35d022913c1` でlocked install、frontend build、check、lint、backend:test、生成型/SQLx整合が管理commandとして成功した。Wiki更新はその後の別commitであり、後続Wiki SHAへコード試験を付け替えない。281のChange Manifest欠落と取得できなかった完了run本文は成功証拠に数えず、282の最終deltaは試験/検証記録だけだったことを照合した。fixtureと実Auth0/ChatGPT、稼働DB移行、配布image、共有runtime切替は区別する。今回のWiki lifecycle自体はこの環境の登録済みMCPを利用し、共有OpenWikiインストールの更新は行っていない。
+
+### 284/285/286/288統合の調査導線
+
+- TODO入力の候補は [未完了項目からのカテゴリー候補](concepts/project-todos.md#未完了項目からのカテゴリー候補)を読む。完了表示・検索と候補導出を混ぜず、保存値と自由入力を維持する。
+- 通知設定は [イベント選択と二つの保存範囲](integrations/web-push.md#イベント選択と二つの保存範囲)を読む。Web Pushの登録別即時保存とOS通知のインスタンス共通config保存を区別する。
+- 設定のアカウント画面は [本人情報の取得境界](concepts/server-access.md#設定内のアカウントと本人情報)を確認する。新たな役割や本人情報取得scopeを追加した変更ではない。
+- MCP失敗時は [共通診断と安全な復旧](integrations/remote-access.md#全mcp共通の失敗結果不明復旧契約)を読む。分類だけから副作用を否定せず、元request/receiptと対象状態を確認する。
+
+コード候補は `e1a08b8e167bc7f4180662c072228ba71af3070b`。固定baseから検証済み候補をそのまま採用し、追加競合・コード修正はない。既存の型/lint・生成型・browser・MCP・認証・通知・DB回帰の成功記録を参照し、ユーザー指定で重複検証を省略した。全backend suite・実Auth0/Push・live環境は未検証であり、このWiki保守での製品試験成功とは呼ばない。Wikiのみの後続commitとコードSHAを区別する。LOCAL-213の未commit文言を入力にせず、後のi18n統合時には追加Wiki commitとの差分を再確認する。

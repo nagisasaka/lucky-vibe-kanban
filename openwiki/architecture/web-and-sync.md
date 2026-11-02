@@ -228,8 +228,8 @@ sources:
     resource: repo://tests/workspace-navigation/workspace-navigation.spec.ts
 generated: { by: "codex", at: "2026-10-29T16:21:09.593Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T16:21:09.593Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Web の実行環境と同期

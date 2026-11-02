@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b60966236321bd4309c6a30544162002f9ddddef679b5e275eb1eae68e6fd705",
+  "pageVersion": "sha256:5843a9b11ff23bfe0011899d1b2001dce6637b5d52dcff9b7be2120c27262633",
   "claims": [
     {
       "id": "claim_5f8fb54c2f6c4bad86021e17d9b3fbec",
@@ -8,11 +8,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         }
       ]
     },
@@ -32,7 +32,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:75aafcda4f81dd2631416d1c8f997e450c402e0ec8c625b85f91a2fd71209241"
+          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
         }
       ]
     },
@@ -42,11 +42,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:75aafcda4f81dd2631416d1c8f997e450c402e0ec8c625b85f91a2fd71209241"
+          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
         }
       ]
     },
@@ -56,11 +56,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:75aafcda4f81dd2631416d1c8f997e450c402e0ec8c625b85f91a2fd71209241"
+          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
         }
       ]
     },
@@ -70,11 +70,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -84,7 +84,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_files.rs",
-          "version": "repo-file-v1:sha256:4178b72ac922bee1266f3d29ada1e8197e6cd96a9eaff7000ac4e0a6297c1c15"
+          "version": "repo-file-v1:sha256:56ef00259f803af34a29a5657a4bdd662b50bcdd09643aef2618e2141fa39b49"
         }
       ]
     },
@@ -94,7 +94,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_files.rs",
-          "version": "repo-file-v1:sha256:4178b72ac922bee1266f3d29ada1e8197e6cd96a9eaff7000ac4e0a6297c1c15"
+          "version": "repo-file-v1:sha256:56ef00259f803af34a29a5657a4bdd662b50bcdd09643aef2618e2141fa39b49"
         }
       ]
     },
@@ -104,11 +104,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -118,11 +118,11 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -132,7 +132,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -142,7 +142,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         }
       ]
     },
@@ -152,15 +152,15 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment.rs",
-          "version": "repo-file-v1:sha256:0c8df9da3c9dfd6c9fc11f39e62bbe57c6818e0f651f6af289b117acf77dcdb8"
+          "version": "repo-file-v1:sha256:1b7db57f72f9b9578ed430201ce2909c4e1bc3d8944d0e4a9f822ba250cdeed4"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_process.rs",
-          "version": "repo-file-v1:sha256:0136181193f75d30d6c80088a6b64e8354afb9f29f23e4cdd4828d56819a27c5"
+          "version": "repo-file-v1:sha256:971b64229afee508f944f6e2a93ee83177dad7445e29b227d35411ae4df21110"
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/operations.rs",
-          "version": "repo-file-v1:sha256:461911d1ad280e4e46d2e9627e67f0f212dc74686d58f0f44b4698633e08378f"
+          "version": "repo-file-v1:sha256:cb9879bf081892b4874d0c9c95a6abdfe10cd875c437a00b5b74fc692c9d7c17"
         }
       ]
     },
@@ -170,7 +170,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/issue_write.rs",
-          "version": "repo-file-v1:sha256:fe2ef9e1d41e04607b7f7a63cc2d3f14e5211d23c2e08699ccdb48b47ee37626"
+          "version": "repo-file-v1:sha256:c247d007972840532d7324754ace83f07a9d695599cf338745d6035b76164ae2"
         }
       ]
     },
@@ -184,7 +184,7 @@
         },
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs",
-          "version": "repo-file-v1:sha256:75aafcda4f81dd2631416d1c8f997e450c402e0ec8c625b85f91a2fd71209241"
+          "version": "repo-file-v1:sha256:44f3b425dfe61d21d8507df9443a2bd3aaa4e6c19c0692a9761cb2482e3eec4f"
         }
       ]
     },
@@ -204,7 +204,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs",
-          "version": "repo-file-v1:sha256:c10ff37883d3a4a4f69921cc2aa2f752a79ed540fe3d4688f6d0fa5e0fd6c821"
+          "version": "repo-file-v1:sha256:ea45f124181e03fb3d9d3c9fe90b51a0ee9b551c8bd23ec784d927d97ac4030c"
         }
       ]
     },
@@ -214,7 +214,7 @@
       "evidence": [
         {
           "resource": "repo://crates/server/src/remote_mcp/environment_switch.rs",
-          "version": "repo-file-v1:sha256:c10ff37883d3a4a4f69921cc2aa2f752a79ed540fe3d4688f6d0fa5e0fd6c821"
+          "version": "repo-file-v1:sha256:ea45f124181e03fb3d9d3c9fe90b51a0ee9b551c8bd23ec784d927d97ac4030c"
         },
         {
           "resource": "repo://deploy/developer/switch/start_binary.py",
@@ -235,10 +235,28 @@
           "version": "repo-file-v1:sha256:b169fb878d8d93ce91373a3aff001c42f048d5c02794a44c55102b04b2bceb55"
         }
       ]
+    },
+    {
+      "id": "claim_eddb6e2c864347af80bfc39bb7563d49",
+      "statement": "Runtime操作は副作用前の拒否と実行後の結果不明を分離し、失敗receiptのpath/cwd/commandや入力本文を秘匿投影してID・revision・部分作用の事実を残す。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server/src/remote_mcp/environment.rs#L565-L613",
+          "version": "repo-lines-v1:sha256:2c7223827ae4ea6d29e7d938a15973affe0adb3a059ae546d91ef1210ab0e3b6:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmODRjYzJiZDlmZWIxNDg5ODkyZWYyYWUzMzJjMzAyMGU5ZTllOWQxMGYxMTBiY2MyODUwODYwOWQ1NDI0MGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwOTNkY2UwMmZhM2U1YzBiOGMxYzg2YWM2N2U4NzYzZTNhMjQ5YWFhZDAxZjlhOGVkZTJkNjcyNzE1MGJkNzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxZmYyZDE0MGZjZTZjMGJhMzQ3ZDEzNjgyYmIxODk2ZjYxMDQ1ZjFhNzljMjhjYzNhZGFkOTU2ZjY1ZmMzMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI5NWJkYjBjYjA5MDQwM2EzYjkwODdmZjEyOTQyMDhkNmRiMzNhNDA4ZWM0YjM1ODE3NTI4ZDI2NGNiZGYzZmIifQ"
+        },
+        {
+          "resource": "repo://crates/server/src/remote_mcp/issue_write.rs",
+          "version": "repo-file-v1:sha256:c247d007972840532d7324754ace83f07a9d695599cf338745d6035b76164ae2"
+        },
+        {
+          "resource": "repo://crates/utils/src/mcp_error.rs",
+          "version": "repo-file-v1:sha256:1c72db95ace535eb4a4f96e2aec3582fe5795cd5fdeb3e22314d68477bddee39"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-02T01:08:30.935Z"
   }
 }

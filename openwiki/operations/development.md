@@ -146,10 +146,10 @@ sources:
     resource: repo://tests/workflow/playwright.config.ts
   - id: openwiki-source-1d08facbf90704cd4c4c54d8
     resource: repo://tests/workflow/specs/card-context.spec.ts
-generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # 開発・検証・運用文書の使い分け
@@ -228,17 +228,12 @@ SQLx prepare は raw Cargo の専用手順を維持する。一方、instance bu
 
 repository の orchestration Skill は、既存の検証証拠が十分なら検証を省略し、完了後に理由と残るリスクを報告する方針を記録する。同じ節の必須の公開前試験や候補との対応確認は残る。これは AI への運用指針であり、製品の保存済み `skip_validation` や公開 guard を変更する実装ではない。製品側の意味は [自動マージ の検証方針](../concepts/formal-integration.md#検証方針は受付時に固定する)を参照する。[現在の Skill 方針](../../skills/lvk-orchestration/SKILL.md#risk-based-test-planning-and-auto-merge-validation)
 
-<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L134-L139] heading anchor "L134-L139" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
 既存証拠を十分と判断する際は、tested SHA、完了済み checks、候補との差分、競合解消、新たに未検証となる範囲を確認する。AI は必要な限定試験を計画し、LVK は repository に設定された追加検証セットを実行または省略する。「全セット」は設定された一覧であり、あらゆる試験や任意の部分選択を意味しない。省略判断は公開前の必須試験や実際の実行拒否を免除せず、成果物作成の build と重複試験も区別する。[証拠評価と責務](../../skills/lvk-orchestration/SKILL.md#L134-L139)。
 
 ### 同梱 Skill の責務と調査範囲
 
-<!-- openwiki: broken internal link [../../docs/development/auto-merge-naming.md#L25-L46] heading anchor "L25-L46" does not exist in "../../docs/development/auto-merge-naming.md". Fix the href or restore the target, then delete this comment. -->
-<!-- openwiki: broken internal link [../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29] heading anchor "L1-L29" does not exist in "../../plugins/lvk/skills/lvk-work/SKILL.md". Fix the href or restore the target, then delete this comment. -->
 `skills/lvk-orchestration/SKILL.md` は対話・設計・調査・実行調整の指針である。LOCAL-224 の記録は dev plugin v1.0.33 への全文同期を示し、以前の「名称差分のみ」「指定5段落のみ」は当時の限定範囲として残す。`plugins/lvk/skills/lvk-work/SKILL.md` は接続済み LVK の作業操作を担う別 Skill で、orchestration の配布コピーではない。[同期範囲の記録](../../docs/development/auto-merge-naming.md#L25-L46)・[作業操作の責務](../../plugins/lvk/skills/lvk-work/SKILL.md#L1-L29)。この区別を保ち、一方の同期を理由に他方を全文置換しない。
 
-<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L22-L26] heading anchor "L22-L26" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
-<!-- openwiki: broken internal link [../../skills/lvk-orchestration/SKILL.md#L119-L124] heading anchor "L119-L124" does not exist in "../../skills/lvk-orchestration/SKILL.md". Fix the href or restore the target, then delete this comment. -->
 orchestration の記録では、明示された調査には必要な独立 Workspace と、その中の再現コード・script・fixture・test が含まれる。一方、製品変更の採用、merge、公開、配備、共有環境・live data の変更はその調査許可に含まれない。最新の明示指示が過去の一時制約を更新したかを引継ぎ時に区別するが、実際の実行拒否は回避しない。独立 worktree は DB・資格情報・background process・外部 service の隔離を保証しない。[意図と許可の区別](../../skills/lvk-orchestration/SKILL.md#L22-L26)・[副作用の境界](../../skills/lvk-orchestration/SKILL.md#L119-L124)。これらは AI の運用指針であり、新しい API 権限や実行 engine ではない。
 
 | 検証 | 実際の対象・限界 |
@@ -335,7 +330,6 @@ currentを原子的に切り替えて固定launcherを起動し、health、liste
 
 signal前に `terminal-drain.json` へserverと対象processの所属・start情報を保存する。子孫commandへ深い順にTERMを送り、pidfdで終了確認後にshellへHUPを送る。既定10秒の共通期限でTERM/logoutを確認できなければKILLせず失敗し、診断資料を保持する。旧serverがshellをwaitせずzombieを残しても、pidfdによるexitと非稼働を確認し、既存guardのzombie除外規則に従う。全子孫のwait回収を追加保証するものではない。[signalと終了](../../deploy/developer/switch/terminal_drain.py#L109-L135)・[既存guard](../../deploy/developer/switch/start_support.py#L73-L89)
 
-<!-- openwiki: broken internal link [../../deploy/developer/switch/README.md#L110-L134] heading anchor "L110-L134" does not exist in "../../deploy/developer/switch/README.md". Fix the href or restore the target, then delete this comment. -->
 このdrainの初回導入は、新binaryを先に起動する必要がない。既存固定kit契約を持つ旧serverには、外部調整・対象同定後に `terminal_drain.py` を含む完全な新kitを配置し、外部CLIまたは旧serverの既存 `self_restart` で呼び出せる。過去の失敗fenceは下記の復旧手順で保全・解消してから新IDを使う。稼働binary SHAと配置script SHAを別々に記録する。Rustの新受付lock/protocolを必要としない開発専用経路で、安定版image更新や、次節の旧起動形式からの移行を置き換えない。[初回導入の契約](../../deploy/developer/switch/README.md#L110-L134)・[kit検査](../../deploy/developer/switch/start_binary.py#L53-L62)
 
 ### 失敗と旧契約からの移行

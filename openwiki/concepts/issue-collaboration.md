@@ -42,10 +42,10 @@ sources:
     resource: repo://tests/server/run-issue-comments.mjs
   - id: openwiki-source-24d832f3cec15712d984861e
     resource: repo://tests/server/specs/issue-comment-reviews.spec.ts
-generated: { by: "codex", at: "2026-10-26T19:37:05.139Z" }
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T17:57:38.430Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Issue のコメント・レビュー・添付・通知
@@ -81,7 +81,7 @@ Comment は Issue・現在の認証actor・任意の parent・message を保存�
 
 `add_issue_comment` は `lvk:read` と `lvk:write`、Project と Issue の関係を要求する。空白だけの本文は拒否し、本文は最大16,000 Unicode scalar、label は最大120 scalar。独立した request は別の row を追加し、書込直前にも `INSERT ... SELECT` で Issue の Project 所属を照合する。[handler](../../crates/server/src/remote_mcp/issue_comments.rs#L85-L153)
 
-同じ principal と `request_id` は同じ入力だけで再送し、応答喪失時は既存 `get_operation` と comment を確認する。receipt ID が comment ID になり、SQL の失敗で結果を断定できなければ `uncertain`、書込対象が消えれば `failed` を返す。receipt の非同期 task は検証済み actor を引き継ぐため、HTTP request 終了で投稿者を失わない。受付成功と書込成功を分ける一般契約は [操作 receipt](../integrations/remote-access.md#参照結果と操作-receipt)を参照する。[投稿結果](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[actor 継承](../../crates/server/src/remote_mcp/operations.rs#L134-L206)・[再送照合](../../crates/server/src/remote_mcp/operations.rs#L210-L246)
+同じ principal と `request_id` は同じ入力だけで再送し、応答喪失時は既存 `get_operation` と comment を確認する。receipt ID が comment ID になり、対象欠落とcommit前失敗・確定したcommit拒否は `failed`、commit結果を断定できなければ `uncertain` を返す。receipt の非同期 task は検証済み actor を引き継ぐため、HTTP request 終了で投稿者を失わない。受付成功と書込成功を分ける一般契約は [操作 receipt](../integrations/remote-access.md#参照結果と操作-receipt)を参照する。[投稿結果](../../crates/server/src/remote_mcp/issue_comments.rs#L135-L153)・[actor 継承](../../crates/server/src/remote_mcp/operations.rs#L134-L206)・[再送照合](../../crates/server/src/remote_mcp/operations.rs#L210-L246)
 
 ### 自分の既存コメント本文を編集する
 

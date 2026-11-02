@@ -84,8 +84,8 @@ sources:
     resource: repo://packages/web-core/src/shared/hooks/useWorkflowRun.ts
 generated: { by: "codex", at: "2026-10-29T17:57:38.430Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-31T11:36:54.240Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Issue から実行・レビュー・統合まで

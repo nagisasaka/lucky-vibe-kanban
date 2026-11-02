@@ -6,12 +6,18 @@ tags: [web-push, notifications, consent, codex, lifecycle, authentication]
 sources:
   - id: openwiki-source-2f63ca1582805a46da98d522
     resource: repo://crates/db/migrations/20261018180000_web_push.sql
+  - id: openwiki-source-9de028d42d2209932d7ebb5e
+    resource: repo://crates/db/migrations/20261031180000_web_push_event_preferences.sql
   - id: openwiki-source-b50585f67dac89cd8eecc75d
     resource: repo://crates/executors/default_mcp.json
   - id: openwiki-source-7d94e7454f63f16057833046
     resource: repo://crates/server-access/src/lib.rs
   - id: openwiki-source-fb97b52f99c4e6667bfbcfa7
     resource: repo://crates/server/src/routes/web_push.rs
+  - id: openwiki-source-659c686d78b9705bbdb7f445
+    resource: repo://crates/services/src/services/config/versions/v2.rs
+  - id: openwiki-source-4251300987fd63068dbcfd5d
+    resource: repo://crates/services/src/services/notification.rs
   - id: openwiki-source-67674da85aa6dbcd2c2a493d
     resource: repo://docs/development/web-push.md
   - id: openwiki-source-64f4b24262714ff553327284
@@ -24,16 +30,24 @@ sources:
     resource: repo://packages/web-core/src/features/workspace-chat/ui/SessionChatBoxContainer.tsx
   - id: openwiki-source-9cea28cc3d20cd3fcde94697
     resource: repo://packages/web-core/src/shared/components/web-push/WebPushSettings.tsx
+  - id: openwiki-source-6d0dfae3c1582e1af83405d4
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx
+  - id: openwiki-source-20c5019f95e5ef3c551c3907
+    resource: repo://packages/web-core/src/shared/dialogs/settings/settings/OsNotificationEvents.tsx
+  - id: openwiki-source-0dfad90f6ff4a4588fc43dde
+    resource: repo://packages/web-core/src/shared/dialogs/settings/SettingsDialog.tsx
   - id: openwiki-source-7d81cfa1ca176b1860c23b29
     resource: repo://scripts/generate-clover-icons.mjs
   - id: openwiki-source-8e4d600376d97a1b981b2d12
     resource: repo://tests/consultation-removal/browser.mjs
   - id: openwiki-source-f4d5c774a441b4c38cace035
     resource: repo://tests/consultation-removal/README.md
-generated: { by: "codex", at: "2026-10-29T11:40:14.219Z" }
+  - id: openwiki-source-e47452003bca7e3daaa27a36
+    resource: repo://tests/settings-redesign/settings.spec.ts
+generated: { by: "codex", at: "2026-11-02T01:08:30.935Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-10-29T11:40:14.219Z
+  - by: openwiki/0.7.2
+    at: 2026-11-02T01:08:30.935Z
 ---
 
 # Web Push・通知同意・会話への復帰
@@ -42,7 +56,7 @@ Web Push は、認証された利用者が Project ごとに browser を登録�
 
 ## 通知同意と所有権
 
-Settings → General の Web Push は secure context、Service Worker / Push / Notification API と利用者の許可を要求する。ON は Project と endpoint を登録する。owner は入力値ではなく local/basic/web の認証 actor から取り、内部 agent / MCP channel は拒否する。既存 local Board の active member は全 Project を利用し、通知だけに private Project ACL を設けない。[browser 登録](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L36-L104)・[actor](../../crates/server/src/routes/web_push.rs#L83-L93)
+Settings → 通知 の Web Push は secure context、Service Worker / Push / Notification API と利用者の許可を要求する。ON は Project と endpoint を登録する。owner は入力値ではなく local/basic/web の認証 actor から取り、内部 agent / MCP channel は拒否する。既存 local Board の active member は全 Project を利用し、通知だけに private Project ACL を設けない。[browser 登録](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx#L36-L104)・[actor](../../crates/server/src/routes/web_push.rs#L83-L93)
 
 endpoint と暗号鍵は既存 server-access 鍵で封印し、DB には検索用 endpoint hash を別に置く。登録は owner・Project・browser に属し、同じ endpoint を別 owner へ黙って移せない。owner 当たり64登録が上限で、同じ登録の更新は可能。DB と access key は整合した組で保全する。[登録 transaction](../../crates/server/src/routes/web_push.rs#L171-L238)・[保存 schema](../../crates/db/migrations/20261018180000_web_push.sql#L1-L25)
 
@@ -110,3 +124,11 @@ server は `LVK_WEB_PUSH_PRIVATE_KEY_FILE` の PEM と `LVK_WEB_PUSH_SUBJECT`（
 この fixture は backend revision `aa59ab58` を明示照合するため、変更 frontend と旧 backend の組合せを検査する。専用 API の削除後の実動作や変更後 Rust のコンパイルを証明しない。[revision 検査](../../tests/consultation-removal/browser.mjs#L140-L146)。[開発時の記録](../../tests/consultation-removal/VALIDATION.md)に型検査・lint・既存33試験・ブラウザ13項目の成功があるが、実 MCP 回答、provider への回答・承認送信、実 OS 通知は未検証である。
 
 今回の Sync は統合済み source `926a03acc100a4f13675b99d1eced595e9a29349` と凍結入力４チャンクを対象に、router / worker、DB trigger、composer、MCP 質問入口、回帰 fixture を静的に照合した。製品テストは再実行していない。凍結入力の自動マージ は検証省略であり、開発時の成功記録を統合候補の合格と扱わない。無関係な既存 Wiki 全体を再検証したという意味でもない。
+
+## イベント選択と二つの保存範囲
+
+Web Pushは登録ごとに `event_mask` を保存する。質問待ち=1、承認待ち=2、成功=4、失敗/crashed/audit_failed=8、取消=16で、既存・新規登録の既定31は全種類を維持する。owner限定の `POST /api/web-push/{id}/events` は0〜31だけを受け付け、その登録だけへ即時保存する。更新とsendは同じgateを使い、OFFになった配送待ちを同じtransactionで消費する。triggerとsend直前の双方で最新maskを照合し、後でONに戻しても過去の無効イベントを再生しない。再登録は選択を保持する。登録自体を削除するOFFと、mask=0の全イベントOFFを区別する。[APIと配送](../../crates/server/src/routes/web_push.rs)・[前方migration](../../crates/db/migrations/20261031180000_web_push_event_preferences.sql)・[即時保存UI](../../packages/web-core/src/shared/components/web-push/WebPushSettings.tsx)
+
+同じ通知カテゴリのOS通知は、サーバーが動く端末向けのインスタンス共通configであり、全利用者・全Projectに適用される。質問/承認/成功/失敗の4bit、既定15で、画面の保存・破棄に従う。音の有効設定は別で、push maskにより音まで消す変更ではない。送信直前に最新configを読み、完了した保存以降の通知へ反映する。OSの実行終了通知をcanonical Run成功・テスト合格・自動マージ公開の保証と読まない。[OSイベントUI](../../packages/web-core/src/shared/dialogs/settings/settings/OsNotificationEvents.tsx)・[送信](../../crates/services/src/services/notification.rs)・[config既定](../../crates/services/src/services/config/versions/v2.rs)
+
+設定の分類と保存先は別の概念である。一般/実行/通知に一般設定の既存項目を分けても、Web Pushの個別即時保存とOS通知の共通config保存を混ぜない。カテゴリ移動・閉じる・Escape等の未保存保護は共通shellが管理する。統合回帰はOSイベントの保存・破棄・失敗後の保持とカテゴリ移動、Web Pushの独立性を検査する。[設定shell](../../packages/web-core/src/shared/dialogs/settings/SettingsDialog.tsx)・[保存と分類](../../packages/web-core/src/shared/dialogs/settings/settings/GeneralSettingsSection.tsx)・[統合fixture](../../tests/settings-redesign/settings.spec.ts)

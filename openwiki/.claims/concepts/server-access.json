@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:7f5a71d0714addd233011de9cacd712fe806a4caa51d0a5b620af217b9e198ce",
+  "pageVersion": "sha256:750866159ff50d6bbae044b6da35b882be9505c666ae9fcd3379d619ffd7a9e0",
   "claims": [
     {
       "id": "claim_c81a205c03bd40d890dd823991c3f6bc",
       "statement": "配置local/publicと認証方式を分離しpublicではHTTPS originを要求しLocalを拒否する。旧LVK_MCP_CONFIGは起動拒否となる。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L240-L405",
+          "resource": "repo://crates/server-access/src/lib.rs#L247-L454",
           "version": "repo-lines-v1:sha256:c0287320a0bf969889ba33c41ada032fd5eedbdf9750f27650256e1946d77084:eyJzZWxlY3RlZExpbmVDb3VudCI6MjA4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhNTIzN2IyNGYyZGY2MmIzZWE5NmUwNjIxYTA5MjMxYjQzYzkxNmM3M2I0MzQ1NWNkNDY3MmNhOGVkYTIwMjZlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZjk1ZjAyYmJiODYyYzU2MmYxZTlhNDU3OGZiMmY5ODM5YTJkYjViODliOGQ3NmZlNjcyYTYyOWExNTQ5Y2FhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxNDI2OWVmNzZjNDNmZDU3MjEwYTQ2MTQ1OWEwOTk2YjQ1NjM0MmRjYTUyYmQ4YmIyZjc3YTJiMmYyODAyMzg3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4OTU0YjZlN2E2Mzg1MDMzYTZlOTI3YzNjOTRiZDA2MDY5MWE0OWQ0ZTU0MGJiZWNkYWE3Zjk5MjE3OTdkYTI1In0"
         }
       ]
@@ -17,11 +17,11 @@
       "statement": "setup/recoveryキー交換は15分の限定sessionを作る。Auth0はbrowser-boundの実ログイン確認を経てactivateし、設定切替はrevision照合と旧session等の削除を原子的に行う。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/handlers.rs#L267-L529",
+          "resource": "repo://crates/server-access/src/handlers.rs#L287-L549",
           "version": "repo-lines-v1:sha256:c54a045a22888e69775b1fa69f02665e2bb36743ba963a87e132003749f278a3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2NDk4N2U2MTBlOGUzMGJjYTY0NmEyYzI2ODdjYWQ3ZGViZWYxODk2MjJiNDU0ZGQ3NmIyMjU5N2MwMzQ4N2UzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwN2E4NGU1MjAwOTc1ODY3MWZhMWNkYmI2ZWIwMTI0ZDE3YzU1ODVjOWYwMDBhMzI0OWU3NTEyMDc0ZDMyOTcxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2ODRmZDcxYTY0MjhjMzFhNjNlYmEzNDk0ZjU0OGVmYWI0ZWY5YzQwYjM3YWIwZDcxNDM0ZWFlNzRkY2RkY2ZiIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwY2ExMzg3N2M5OWUwM2ZlYzE0NDg1ZjU1YTI0YjFmZTIwOTQ1NjE4ZWQxYzRmMzkxMzEyMThjZTVkZTAwMmJmIn0"
         },
         {
-          "resource": "repo://crates/server-access/src/handlers.rs#L71-L121",
+          "resource": "repo://crates/server-access/src/handlers.rs#L91-L141",
           "version": "repo-lines-v1:sha256:048a6abe03c09aaa07194759ec5e7a8010ed47bce82045a0fac874096dc04812:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZDc0YjkyYWRmMjE1MDcxOTI1MGUyMTg4MjkxZjY4ZmQzYjE3YWUyMmFmNTg5MjYzNWE4N2YyYzYxMDI3YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2NGUzMTVjZTUwZjQ1NDcxMDdkYTBkMThjMzdlODA5ZjBiM2RhZDE1YTRkNTQ2Nzc5NDZjZmQ3OWNlNTY0YTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjYjQ5MzU2M2UwYThhOGU4NjZjN2RlYzQ4OTZkOGM4ZTQ4Y2NlZjc2NDQyYTZlODUwZjE2MTc5NzZmNzM2NGQifQ"
         },
         {
@@ -35,11 +35,11 @@
       "statement": "Web sessionは絶対12時間とidle30分でhash保存し、公開cookieはSecure/HttpOnly/SameSite=LaxでDomainを付けず、変更要求にCSRFを要求する。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L33-L36",
+          "resource": "repo://crates/server-access/src/lib.rs#L40-L43",
           "version": "repo-lines-v1:sha256:1f64eeca0930d0cf2f7f37e0e03756024cfedaeeed5e9b08a19acae4e6531adf:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzgxMjNlYWU4NWY5OWQyZmU4ZjBiZTBjMTgzMzM3YTMzNzc1MDZkZjQ1YzZhYjc2ZDIxYzc2Mzg2M2ZkOTRlMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTQ3NzIyNTcwZWJhNzg1MDcxYmIxYmQzOGJkYTU4MTYyNWM5ZGM5MjExMzNhNmU0MTlkOTM2OWYyYzFkNzlkYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODdiN2NiYWI3OThiMThlOTdiMjU2MTM1ZGFlNGNlYjM5YmQ2ZDhlZGZiNmQ3MDI5MzgwNzg1MDg4ZDViOGJiNSJ9"
         },
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L488-L518",
+          "resource": "repo://crates/server-access/src/lib.rs#L537-L567",
           "version": "repo-lines-v1:sha256:4defc60b7b6bfe5f516853ff0799bc7e71f060a7f4b88d1cccc8ee0f7d9ff7c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4OTc3MWZlMWI2NjI4ODc1YWEyM2U3ZGJlNGFhNzE0NjFkMDBjZGZiNjZkZGYxMWI5ZDgyMGFjNTg5N2ZkZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNDVhOTE1M2YzNWE5NjJjNzRkOGUwOGZjMmYzNThkNmUyYzMzMTRiMWZkMTVhMGY1OGFhMDc4MGFlNDc0YmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5YjkyMmRhNDcwMGVjMDkwZTM2YjU3YWFiODc4MzYwODM5NDQ1MmZjYTdhZjRmNWM4YzQ1NGQyZjM0ODE5MTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNiYmIzZDdmMzlhZTkxYzE5NDI1ZmY5ZDUzMDVkOTg4MTQ5ZDlhYTlmY2E2YjMwZWQ3ZThjYjlhZWExOWI0ZjEifQ"
         },
         {
@@ -53,11 +53,11 @@
       "statement": "内部capabilityはloopback HostかつOriginなしの一致tokenを要求し、設定済み業務APIのnon-admin principalとなる。認証設定管理は別session検証を要求する。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L319-L336",
+          "resource": "repo://crates/server-access/src/lib.rs#L324-L341",
           "version": "repo-lines-v1:sha256:03d39b8ee657038fe50d0a0b6113d9ca9a52abd49bb520d1acde2deaf1698610:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3MTI4NDNmNmJhYmI2YWVhOWQ3MTY4NWExZWY0NTAxODJhMDBiYzA4OGJkOWYxNGExZTU0N2FmNDEyOWQzN2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZDI4YzIyMWIzYjVmMjVkYmE0NzRlNzRmMzQ2ZDI0NDRlM2JhN2VlZjMyYjA0YjljMzVkZGFkNTIzN2RhMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxNjdkYjdiZjcwNmM2ZDY5ODdlMjJlNzI1ZDlmOGMwZWQ0ODVkNzMyOGRjODk0M2U2MjQ1MDI0YzQ1ZjJhNDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFiZDY2ZGNmMjkzYjc5OTRkOTUwMjIzN2UyNTJmMTQxNTU0Y2NiNjI5ZWJjYjE4YjExYzg5OGM0OTU4OWY0NDAifQ"
         },
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L553-L607",
+          "resource": "repo://crates/server-access/src/lib.rs#L602-L656",
           "version": "repo-lines-v1:sha256:38a745210b29076f3a8ed1a9c38d25d67a542356f6a5cd4810eca253974f7b6d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwZDI3NThhMDExYWQ0Y2VmZjFhNTc1MDgyYjUyOGEwYTZjMmQyYzllYjBiZjdkMDdiYjk1MGViOGNlNmRjZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MjJjNDJjZDE5YzZkMDNkODA4YzQ1MjcyMDU1MjgyNWI3ZWExYzViNDkxYjIxODUxMWNhYzc0MTVjZjlkOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyNThiOWMwNmMxZGZlNDVhMjczY2JhN2QwYzA2NmFkMWVjOTUxMzJlMzU3ZjM0Y2YwZDk5YzdjYmFiYWQ4YzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMyNzA0ZTA4ZTc4MWIxZmI4NmIyMzU4Yzc4MDY0NjEyYjg0Y2I0NDRlNzJiMmVmYTE0NmE0NDRiNjZmYmI0YzcifQ"
         },
         {
@@ -71,15 +71,15 @@
       "statement": "WebSocket/SSEはleaseが2秒ごとに期限・設定revision・membership・session失効を再検証する。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L161-L186",
+          "resource": "repo://crates/server-access/src/lib.rs#L168-L193",
           "version": "repo-lines-v1:sha256:05d3fa8ab1bc4447d8bd4508fec5ad2fe68065b10abac4184eecfea60f2cefb8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjOGU5ZjViMTIyMDI0MjAyZTdiOTAxNjhlOTA2OWVjYzY0MDdmMDdlYWExZmIzYjdlYWJmNGM3MjY5MjA5MDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwZjY4NGYzNTY4ZTkxN2M2NzNkOWJhZGRhNmE1NWNlYTBmZmY5ZThhMTY3MDZmMmUxYWE1ZjZhNjY2YWMyMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlZGFjODFjOWI4N2U4NGI4MTU3ZDFmOTU5OGM2MWRmYTQzZmExZmYzZGVlNWNhOWRlYjhmMjk0YTlhMTlhMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3OWQ4OGJmNDcxZjhlZDAyMWQ5OWI2MWQ5NmNlZTM2NjE1MjM4N2IwNjMyMjM2NWFiMDBmOGVjNDNlZTdmYzkifQ"
         },
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L406-L435",
+          "resource": "repo://crates/server-access/src/lib.rs#L455-L484",
           "version": "repo-lines-v1:sha256:76ecd11ca654ddf5c420103590b483fd90090e7a11372b3e7b73d651c5ab6660:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkxMzNlMTAwNDE0MDVhMTQ0NzM5MTI0MjI0M2Q1NWZjYzY3YmE5MTJkZWUyY2EzNDg5MzMzMWIzY2QwZTEzNjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3NTI2NjNhMzVmYzg3OGI4YTA5MjBiZmI5ZjYwZmZkZWQ0ZDYxYjc1ZTIxNDNhNjY0YWY4ZDhiOTRkYzBmZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwNGE1OWIzNWJlMThlNmIzMGNmNjM4Y2I1MGRiMGJmMGYzMjZlZGE1ZWU1ODA5OTFjNjgwYjhmNWU0OGI1OTQifQ"
         },
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L665-L680",
+          "resource": "repo://crates/server-access/src/lib.rs#L714-L729",
           "version": "repo-lines-v1:sha256:e93e479690a29710ff517c21f18d231439eda725e857d540a47aba359d53bb39:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5ZmI2MTM2ZDgwNmM4YTRhNDdiNzRjNjMzN2I2ZGJiYTJkNDEyN2Q0MmNmODA0NTIyZGI1ZWMzMGEwYzU1MzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3YWUzNzQ0NWRkNjE2Nzc5MzgzYWNhZmVhZjNhZTQ3YTEzOGQwMWQ3NmUxNGYzYzRkN2IzZWE4YjFiYTc0MTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhM2RjMGM5MjEwMGFjZDQ4MTU3NTBmNDE0NWRhYWUzODM1OTM4MjE0M2YzZGIwOTc4M2FkZjg4ZTkzYzY2MTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyOGZlMzcwMzNkMGZiMDBlMWJlNDcwNGZkY2EyNmNlZWIyNzNlY2E1ZmFhNjJjZTBhNzBjNzZhNzI5ZmIzMzgifQ"
         }
       ]
@@ -107,7 +107,7 @@
           "version": "repo-lines-v1:sha256:f3666c0cbcf40530536b3c36938fd560e4ab8acef8b600ecea9455e28db98188:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4YTFlZGZkMDQ4YjAyYzNkNmIxMGY0NzAxYzM5ZWRhYzExNDkxY2RjZmY4ZGY3ODc1NTkxYzJmZDgzZDJiMWM2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlYmZjYjJmNjE1YTE2NDk2MDY0ZjA5YTVhY2I5MWZiOWU5MjFhMWRkMmJlN2MxMTQ2MzcwNjU0YjhkZjM0N2JmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YjMzYzZhYTYzMzZmZDRlNjY0NTY0MGE1YjRmNzYxMDdiODE4YWJiNGU2MzJlYjQ1YzM4Y2JlZmQ1Mzc5YzhkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIyNDA4NDBlMmI4NGEyYjI1MzUxODBmNmFkODJkMTM3MDIyYWIzNzRhZjU5N2NkOWM1YzEwOWIzYjVkY2VmZjJmIn0"
         },
         {
-          "resource": "repo://crates/server-access/src/provider.rs#L328-L374",
+          "resource": "repo://crates/server-access/src/provider.rs#L344-L390",
           "version": "repo-lines-v1:sha256:d18e0c812aab3e20874c4a7474033c5bcd3d7afa8082683a7ec2f324f35662cd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiOWYxYjJmY2JjMDQ2MzQwODZmZTI0YjQwYzZjZTM3ZGJhNzBhOTNmZjc4YmQyYTg4YjA5MzkyM2M2OWE2NDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiOTI0OWI0ZGQ0YjI1Y2QzOGFmMTczMDM0MTRiZGFiYzA3YTgzMDlmZTI4NDQ4ZmJkNjMwNjRmODZkM2M5NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4MGZmZjQzOTdlNmZmMjU2MDI0ZjE4ZGU5ZjZmYzMwNGJkYzdmYTcxN2U2Y2U0NGQ5MWYzMjBiZjlhNGMxOTEifQ"
         }
       ]
@@ -165,11 +165,11 @@
       "statement": "Push同意はlocal/basic/web actorのowner・認証revision・用途を暗号化し、配送時に再検証する。browser sessionの期限/logoutとは独立しAPI権限を与えずinternal/MCP登録を拒否する。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L394-L470",
+          "resource": "repo://crates/server-access/src/lib.rs#L395-L471",
           "version": "repo-lines-v1:sha256:fa0108800dc58315c63c36b337996ddb3d870e2bc9ac6c4f3d1ec719cbd506d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ1NzNhOTU4MDM2MGNmZWM4NGFmNTU4MjNhN2RjNTM0M2ZkNTI5MjQ4MjBjYTZkNTgzYjE4YjRmNjcxOWQwMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4YzM3Y2EwMzg1MTUzNzczZDU3YTc2OTdhYmU2MmVlNDFmNjlmNDIzZmMwYzY0ZDhiOWEwMDkzMTBiZDZiOTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVlODM3MGFmYTU0MTMyMTUwZWZiMDVhYzI1ZDljMDczM2JhM2YwZDNhMGZkNmJmMjdkMDQ3OWM4NDQ4ODU5NjQifQ"
         },
         {
-          "resource": "repo://crates/server-access/src/tests.rs#L1803-L1886",
+          "resource": "repo://crates/server-access/src/tests.rs#L1610-L1693",
           "version": "repo-lines-v1:sha256:600a817893c99ddf96e19cdfca1fe43f1bf3b7dab7c4aa5bc3f044288ac6d6e0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMzY3NjJkNzViNDA0MDM0ZTQwYzUyMDJmMTYzOTVmZTVlNGYxOWVhODZkZTQyZGUzZDM2NDljMTBkYmI3N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5ZDU2ZDBhZjc3NTU3MDdhYjhiNzllZmM1NDFlYjY1YTIwY2FjMTIyZjNjZDkwM2VmZmFiYjVkZDE2YzMyZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
@@ -179,7 +179,7 @@
       "statement": "MCP scopeにはruntime read/executeを含む5種類があり、scope定義とruntime grant有効化は別で、runtime設定APIはbrowser管理者だけに公開する。",
       "evidence": [
         {
-          "resource": "repo://crates/server-access/src/lib.rs#L33-L39",
+          "resource": "repo://crates/server-access/src/lib.rs#L32-L38",
           "version": "repo-lines-v1:sha256:75b8af54f923bc6218e4ed016dce63da2c7e7614ad27392d0850eff76e0cd435:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODhlMjhjNGUxN2JmYzRjM2Y1ZmFiODgyZThmYmQ3ZmNiMzU4ZDUxOGQ4MmE5NWVlMDBkMTE0OGYwYmJmY2Q2ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjAyZDJjMGQ2ZGM1ZTc0ZDkyZmExNGI5MWRiZWEyNjQwOTBiZWIzNWZkYjkxODhkOWIzNDExODFkY2U5ZjRjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWFjN2EyYWRlZGZmZWIwZjNmMDJjZDc5MzI5ODA0MjgwZDkyY2ZiMDBiMWI2YWY3YTFjMzM4ZjlmMjQwZTAwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjdjY2QwN2M2ZmNjYmM3OGZlYThjMjZlMTU1ODkyZWFlYTQ1NTQyZjVlZDAwZTg3MDAwM2EyMjE5OWExYzEwMSJ9"
         },
         {
@@ -187,7 +187,7 @@
           "version": "repo-lines-v1:sha256:e234ba9353a90df1952192c037852fd6130cfe57fb57cd0f84a881a287156e55:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQxYzlhNDgzY2EwYjY4OTVjMmE2MTU0MGYyZTNlYTk1MGRlNzljNzQwNWMwMWEzMTBiMzExYWIyMWIxYjgzOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmVlODViMTIwYjJhZGNlZjc0OTZiZTllZTQ5MzA5ZDhiM2I2MzIzMTM3ODg3NzdhYWRiNWM4ZjVlYmQ4YWFiMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODBkYjNmOGVlMzJjNjFhMmIwMWJhYjJmZDFmOTVlNWZiNjllNmQ0MjA2OTgyMWE3ZTExMTA1NDI4Yjg1ZjQyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjhjZmM3MmY2Mzg1NDQxY2FjNjZmMjFhOTNjMzMyMmNiYTdmNDIwNWNmOTY1MzNlMjljNjNmYjEwOWEyNzFkNiJ9"
         },
         {
-          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs#L62-L81",
+          "resource": "repo://crates/server/src/remote_mcp/environment_settings.rs#L37-L56",
           "version": "repo-lines-v1:sha256:a6c62cc32cc80c6926f88698005d0d714768c6e588f2a42566289eeeb2f47bba:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4YjJiNjQ4ODZiYTk1YjQ5YmViYjk2ZGMwYzI0NDg4ZGQ1OWI0YzhjZmZkMjc5YTUwMDRhOGVhZTY3NTgwYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjOTQ2MzM5Mzg1OTI0MWMwYTM2ZWFmNzM3MjAxODY0ZGQ3MDBmYWUwNDgxYmEzZTE3ODMwYjE2NmQyYTcyZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1ZThhOGIwNGJhNTMyNDJmZDA3OTUyMzIwODJkYjdkMjM1ZGIxMmEzNmRjYmU3ODdiMDFlM2NlMmI5YTA2YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxNGMzYmQwNWU3OTY5ZWM1Y2Q3YzE4OTk5NzY2NzBiZjliOGMyYmU4MTJmODhmYTM4M2Q0YzY4NTQ3MGNkMmUifQ"
         }
       ]
@@ -201,8 +201,8 @@
           "version": "repo-lines-v1:sha256:1ae8221363dd5c151e195e753fc9ea9f3d196c4dd6807be72ec930b167fd6810:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5NjAyMWJjNDgwOTk3YjUxZmViODlkYjA4YThiMzc2YWE4NjBlMWU2OWFjNGM5Y2Q1OTZkMDc3Yjg5MzM0ZDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NmY4Y2IwODNmYTgwMGE0ZGNkMjk2OTcyMmQ3YjkyNjg2YWRkOWViZTM2NTU0OTJmYTY3MmIxYTdjZWQyNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzZjM1ODA5N2Q4NTljNTM2NWE0MTZlZThkNTYyODMzYjE3YWFiNzk0NGI3YWYyNzkwNmVhMTE3ZmU3OGJhMTYifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L57-L124",
-          "version": "repo-lines-v1:sha256:8f4c5711b80eb45355667d416785cb08a70cfa01359c6457044c1e743dde4c54:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhY2U4MzM0YWUyYWNiZGQ2YThkZWRhZmMyYjIyYTdlZGYwNjIxN2UyZjg1NDkzNDY5NzM2YzNkOTVmNGYyMGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzNWRmMmUxYzU5OWMwNzYwOTc3MTY2ZmYzMmMyNzM0NGUzZjg0MzdkZDVhMGU5MTUxOWEwMzY1MTYyZWYyNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllOTg3YjNmYTAyMmNiNDVjOWZmZGM1MGM0OWE1YzhjNWMwYzBhZTQ4ZmMxNzY0NThiMzlkNTY1ZWRlMWZiZDUifQ"
+          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L59-L145",
+          "version": "repo-lines-v1:sha256:5956fe8cf22b284d2a287a90133f2de103a4beb421f776adf487728990790898:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhY2U4MzM0YWUyYWNiZGQ2YThkZWRhZmMyYjIyYTdlZGYwNjIxN2UyZjg1NDkzNDY5NzM2YzNkOTVmNGYyMGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliNjJmNjBkODU5MGE1NzljZjQ2ZjhkNjczNzhjNGM1NzJiOTYyY2VjY2RiOTBjN2E1ZjdiNDJiOTYwNzgyYTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzNWRmMmUxYzU5OWMwNzYwOTc3MTY2ZmYzMmMyNzM0NGUzZjg0MzdkZDVhMGU5MTUxOWEwMzY1MTYyZWYyNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllOTg3YjNmYTAyMmNiNDVjOWZmZGM1MGM0OWE1YzhjNWMwYzBhZTQ4ZmMxNzY0NThiMzlkNTY1ZWRlMWZiZDUifQ"
         },
         {
           "resource": "repo://tests/auth0-setup/setup.spec.ts#L69-L77",
@@ -239,12 +239,12 @@
       "statement": "更新トークン選択はPreview入力照合に含まれ、Apply成功時の値を結果に保持するため、offline_accessの完了案内は後続のフォーム編集で変化しない。",
       "evidence": [
         {
-          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L358-L375",
+          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L379-L396",
           "version": "repo-lines-v1:sha256:c02723508735a3ba3c7ba97dcf69ffc5111eccb220e59ae89f161f950f1357c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3MDM1ODA0ZmJhMzI2OTVkNWY5NGI5YzRjOTc2YWUxNWE0ZGI2ZjFmMTA5NWU1NmQ1YmQwNTdhYjk1YTU2NTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNmIwM2ZmMzZlN2VhOTJiZDM5NzhhMWY3NDhkZTQ5NDNlYTJmNjcyMTVlZTU3NDRmMDJmMzI0NDNmYjZmNTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmOTY3MWFmOTM3ZTM5YTBiMGRjYTFhY2NiMzgwNjQ2OWNkYTJkYWMwYzg0NmJiNWY0OWM3YWRmMjU3NjkzMGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxMzAxOGI0MmNmMjBjZTFiZjY2OWJjOGJlYTJmYjIzMmVlYjk4OGM3N2FmYjkyNmFiZTM0MWExZWI4ZGQwZTkifQ"
         },
         {
-          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L74-L123",
-          "version": "repo-lines-v1:sha256:2a6d93fe7bb536366b1aae54e00577eb520de95a2cf776ca7def3a92a9a80124:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NGQxNWJhMjFlNTE2M2E3MTJmNTQ0MTYzN2RlNzcyNjIwM2Y4YmQyODgyM2YzNmM5MGZmMDhhM2NkZjczNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNjhhNGQxYmM2NzRjN2QzYmU3ZmJlNzY4YTQ2OGQ2ZjAxZTQ4YmExOWEwYWU0ZGJmOTZiMzI1NzM2ZjJmYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MmJiNmI2OThjNzllYmZhOGFhMjk2NDUwYTE5OGU1NGI1Y2ZhMjlhMDZkYzYwZGQyNDM1NGQ1YTdlYWNlNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2NzM1Zjk5OGRlNzIxN2E0NDczOTUyOGE2ZmViYjM3N2U5Y2Q0ZTRmNDg1NGIyNjI0Y2MxNTI2YjBlODI4OWIifQ"
+          "resource": "repo://packages/local-web/src/app/auth/Auth0Setup.tsx#L76-L144",
+          "version": "repo-lines-v1:sha256:a22029dce4fe39b1a62cda826865763f21bf5b98e4df6c9aa60c3a39e07285db:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NGQxNWJhMjFlNTE2M2E3MTJmNTQ0MTYzN2RlNzcyNjIwM2Y4YmQyODgyM2YzNmM5MGZmMDhhM2NkZjczNGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlNjhhNGQxYmM2NzRjN2QzYmU3ZmJlNzY4YTQ2OGQ2ZjAxZTQ4YmExOWEwYWU0ZGJmOTZiMzI1NzM2ZjJmYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MmJiNmI2OThjNzllYmZhOGFhMjk2NDUwYTE5OGU1NGI1Y2ZhMjlhMDZkYzYwZGQyNDM1NGQ1YTdlYWNlNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2NzM1Zjk5OGRlNzIxN2E0NDczOTUyOGE2ZmViYjM3N2U5Y2Q0ZTRmNDg1NGIyNjI0Y2MxNTI2YjBlODI4OWIifQ"
         },
         {
           "resource": "repo://tests/auth0-setup/setup.spec.ts#L79-L105",
@@ -269,10 +269,38 @@
           "version": "repo-lines-v1:sha256:7b0895b4da4186304dec2f9aecc835d06907e08abab007ef7c6357dc0ac897ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2N2YxOTM5NTFmYmJhN2Q0NTJhNWMwOGUwMGNmZGE3YWNlNzI5YzIwZmMxYTBhOGE1NGIzYTg2MmY3YmNlNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJmMDA4OWRkYTZhYmEzYzUyZGNmMmM0OGQ0YjcyYTA5NThiMzg0NzIxZGQzZmJkNzNhOTUyMDlmMmIzZjZlYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMWY0ZDFjOTk3ZWJiZDQ2OGIwNDRiODc0YjEwYmJmNmYzYTg5OGZhYWE4YzA3NDE4ZTdiMjE3MDBkODY5NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjNTRlNTcyOTIzMTA1NDUwYWIxOWIxNDMyNDRkYjUwN2Y1ZGRlNWIwZWIyOThlMjIzMTA4MDE5MzVhODg5NmMifQ"
         }
       ]
+    },
+    {
+      "id": "claim_7a797abaf1a84325a679eef50617228f",
+      "statement": "statusの本人名は現在のweb principalとid/issuer/subjectが一致するactive memberからのみ読み、Localには返さない。アカウント画面は欠落・空白時に取得不可を示しUUIDや仮名を使わない。",
+      "evidence": [
+        {
+          "resource": "repo://crates/server-access/src/handlers.rs#L66-L84",
+          "version": "repo-lines-v1:sha256:434f6ac9705bdae84b03dc0a6a39e1cdb9ea6d98745ab44a35be60ca1f77917b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyOWM1ZTQ4ZDBkNjRjOTYwYTY1YmQwZDE4ZmMyYzk2MzNhMzY2OWY3NGIyZWFkNmQ2MzZmNWUyMzdmM2IxNDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlMmViODM5MDgwYTI0ZmIzOTZkMTRmNTNkMzIwYjQ4OWE1OWM2M2IxNTBkNmIxOTllMTg4ZjJiMzBkMzhkYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNmEwMjM4ODA0MTU0NzE3MTcwNDdjMGZmMDRiNmJmMDM5NmRmNTUyNDRiYzYwOWQxYzNiOGZmNDhhYzEzZmUifQ"
+        },
+        {
+          "resource": "repo://packages/local-web/src/app/auth/ServerAccessGate.tsx#L247-L271",
+          "version": "repo-lines-v1:sha256:609089b4f57ea8149981c5c3044d7dcdfb071f9f8d65ce7160cd3141ad4ca3a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZDM1YTY5NzFmYmFhMTQ4MDMwMDQxNDI1YTk5MmM5ODM4ODdmMWFiZmI4ZTNkMjU0ZTEyMjljZjJkNjkyZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyOTE5ZTVhZjFjOWNiMTM5NjQ1OWY4YmFjZGRhOTFmNTQ0ZmRmYjFlNTM2MDkwZmZkNzBjODIwMGQ3N2I0ZmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE2NGU3MTQzMWJlYWMwODRmZjVjMTc0MDhkY2JkYWNjY2Q5M2U1YzZlZDYxOGJmOTU0OTk1ODI5Y2ExNDJmN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc2MzE5NTQyNGE2NDYzOTNhN2E1MTM2NjM4ODkwNTE0YWNiY2RlNzE3OGZlM2I0N2E4OGNlMTM3MmM4Zjc3MGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6fc6be7fef2f43179aae9f721f7ddcc1",
+      "statement": "共有設定はローカルアプリが供給するaccount/management contextを使い権限を推定せず、組込み認証のdirty状態は設定shellへ伝える。",
+      "evidence": [
+        {
+          "resource": "repo://packages/local-web/src/app/auth/ServerAccessGate.tsx#L63-L74",
+          "version": "repo-lines-v1:sha256:397ca165ed6d70cb869f2a0aea5e4c7f7219f315da09a81fe7f8d1651cfa286f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2YWM1ODdlY2IyZWE3NWU4NDcxNjMwODc2ZWZmZWZmYmEzZmZlOWUwZWNhYjg1MTEwZDI4ODAxZjFhM2I4NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZWYwMWJjMDhkYmMzYjYzZTRlNzVlYTNkMjZhNWI5NDE4OTE4NzdlMjdhZDg5MTMyOWM4NDExZDdkOGRjNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0NTJmOGExYWM5NDNmZGNhMWFiNmYyNDk5MmExZjUxOGM4MzY0ZDg5MDlmNDM5N2EwYTM1YjFjOWY1ZTA3MDAifQ"
+        },
+        {
+          "resource": "repo://packages/web-core/src/shared/dialogs/settings/settings/SettingsAccessContext.tsx",
+          "version": "repo-file-v1:sha256:0af3be0239f1baf770ba00e4284d1c778d858f7d9523f0df172ee2da77b19697"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-10-29T08:49:34.152Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-11-02T01:08:30.935Z"
   }
 }
