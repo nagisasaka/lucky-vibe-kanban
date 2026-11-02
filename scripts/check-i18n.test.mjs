@@ -451,3 +451,49 @@ test("permits incomplete optional locales while checking their JSON syntax and d
   assert.equal(inspectFrench("{").summary["invalid-json"], 1);
   assert.equal(inspectFrench("[]").summary["invalid-json"], 1);
 });
+
+test("follows local constants from JSX sinks using lexical scope", () => {
+  const report = inspect(
+    `
+    const text = "Delete all workspaces";
+    const alias = text;
+    function C() { return <button>{text}{ok && alias}</button>; }
+    function D() { const text = "Remove selected item"; return <button title={text} />; }
+    function Raw(text) { return <span>{text}</span>; }
+    function Block(raw) { const text = "Not displayed"; { const text = raw; return <span>{text}</span>; } }
+  `,
+    { common: {} },
+  );
+  assert.equal(report.status, 1);
+  assert.deepEqual(
+    report.findings.map(({ kind, value }) => [kind, value]),
+    [
+      ["hardcode-markup", "Delete all workspaces"],
+      ["hardcode-label", "Remove selected item"],
+    ],
+  );
+});
+
+test("bounds constant tracing and preserves translated calls and original data", () => {
+  const report = inspect(
+    `
+    const a0 = "Unreachable deep text";
+    ${Array.from({ length: 40 }, (_, i) => `const a${i + 1} = flag ? a${i} : a${i};`).join("\n")}
+    const deepView = <span>{a40}</span>;
+    function C(user, provider) {
+      const {t} = useTranslation();
+      const translated = t('heading');
+      const original = user.text;
+      const external = provider.message;
+      const cycleA = cycleB, cycleB = cycleA;
+      const computed = transform('Original provider input');
+      const fallback = provider.message || 'Canonical fallback';
+      const wrapped = (translated as string)!;
+      return <span>{wrapped}{original}{external}{cycleA}{computed}{fallback}</span>;
+    }
+  `,
+    { common: { heading: "Heading" } },
+  );
+  assert.equal(report.status, 0);
+  assert.equal(report.findings.length, 0);
+});

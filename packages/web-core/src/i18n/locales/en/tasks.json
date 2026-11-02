@@ -519,7 +519,8 @@
     "buttons": {
       "retry": "Retry",
       "reset": "Reset"
-    }
+    },
+    "repositoryCount": " ({{count}} repos)"
   },
   "scriptFixer": {
     "setupScriptTitle": "Fix Setup Script",
@@ -613,7 +614,8 @@
     "openBrowser": "Open in browser",
     "addressHint": "This address belongs to the server. On a remote host or WSL, use a reachable application URL or forward its port with an SSH tunnel. Running does not prove application readiness.",
     "failed": "Failed",
-    "operationUnconfirmed": "The dev server operation could not be confirmed. Check its process and logs before trying again."
+    "operationUnconfirmed": "The dev server operation could not be confirmed. Check its process and logs before trying again.",
+    "exitCode": " (exit {{code}})"
   },
   "createAttemptDialog": {
     "loadingBranches": "Loading branches…",

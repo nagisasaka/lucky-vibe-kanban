@@ -372,7 +372,8 @@
     "buttons": {
       "retry": "リトライ",
       "reset": "リセット"
-    }
+    },
+    "repositoryCount": "（{{count}} リポジトリ）"
   },
   "conversation": {
     "promptContext": {
@@ -612,7 +613,8 @@
     "openBrowser": "ブラウザで開く",
     "addressHint": "サーバー側のアドレスです。リモート環境やWSLでは到達可能なアプリURLまたはSSHトンネル等のポート転送を使ってください。実行中はアプリの準備完了を意味しません。",
     "failed": "失敗",
-    "operationUnconfirmed": "開発サーバー操作の結果を確認できませんでした。再試行する前にプロセスとログを確認してください。"
+    "operationUnconfirmed": "開発サーバー操作の結果を確認できませんでした。再試行する前にプロセスとログを確認してください。",
+    "exitCode": "（終了コード {{code}}）"
   },
   "createAttemptDialog": {
     "loadingBranches": "ブランチを読み込み中…",

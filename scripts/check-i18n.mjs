@@ -228,6 +228,86 @@ for (const [pkg, files] of packageFiles)
         : undefined;
     const location = (n) =>
       source.getLineAndCharacterOfPosition(n.getStart(source)).line + 1;
+    // Follow only file-local const aliases from display sinks. The checker resolves
+    // lexical bindings (including parameters/block shadowing), without imports or libs.
+    let localChecker;
+    const displayedConstants = new Map();
+    function displayConstants(node, kind, seen = new Set(), depth = 0) {
+      if (!node || depth > 32 || seen.has(node)) return;
+      const next = seen.add(node);
+      if (ts.isIdentifier(node)) {
+        if (!localChecker) {
+          const options = {
+            noResolve: true,
+            noLib: true,
+            jsx: ts.JsxEmit.Preserve,
+          };
+          const host = ts.createCompilerHost(options);
+          host.getSourceFile = (name) => (name === file ? source : undefined);
+          localChecker = ts
+            .createProgram([file], options, host)
+            .getTypeChecker();
+        }
+        const declarations =
+          localChecker.getSymbolAtLocation(node)?.declarations;
+        if (declarations?.length === 1) {
+          const declaration = declarations[0];
+          if (
+            ts.isVariableDeclaration(declaration) &&
+            ts.isIdentifier(declaration.name) &&
+            declaration.getSourceFile() === source &&
+            declaration.parent.flags & ts.NodeFlags.Const
+          )
+            displayConstants(declaration.initializer, kind, next, depth + 1);
+        }
+      } else if (
+        ts.isStringLiteral(node) ||
+        ts.isNoSubstitutionTemplateLiteral(node) ||
+        ts.isTemplateExpression(node)
+      ) {
+        displayedConstants.set(node, kind);
+      } else if (
+        ts.isParenthesizedExpression(node) ||
+        ts.isAsExpression(node) ||
+        ts.isTypeAssertionExpression(node) ||
+        ts.isNonNullExpression(node)
+      ) {
+        displayConstants(node.expression, kind, next, depth + 1);
+      } else if (ts.isConditionalExpression(node)) {
+        displayConstants(node.whenTrue, kind, next, depth + 1);
+        displayConstants(node.whenFalse, kind, next, depth + 1);
+      } else if (
+        ts.isBinaryExpression(node) &&
+        node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+      ) {
+        displayConstants(node.right, kind, next, depth + 1);
+      }
+      // Calls, property reads, fallback/concatenation expressions and arbitrary
+      // computations can contain raw data or
+      // translation keys; do not interpret their arguments as displayed prose.
+    }
+    function collectDisplays(node) {
+      if (ts.isJsxExpression(node)) {
+        const parent = node.parent;
+        if (ts.isJsxElement(parent) || ts.isJsxFragment(parent))
+          displayConstants(node.expression, "hardcode-markup");
+        else if (
+          ts.isJsxAttribute(parent) &&
+          [
+            "title",
+            "label",
+            "description",
+            "message",
+            "placeholder",
+            "aria-label",
+            "alt",
+          ].includes(parent.name.getText(source))
+        )
+          displayConstants(node.expression, "hardcode-label");
+      }
+      ts.forEachChild(node, collectDisplays);
+    }
+    collectDisplays(source);
     // Resolve the hook in the enclosing function, never a different component's namespace.
     function namespaces(node, callee, depth = 0) {
       if (depth > 4) return [];
@@ -459,12 +539,15 @@ for (const [pkg, files] of packageFiles)
               "metadataLine",
               "confirmText",
               "cancelText",
-            ].includes(property))
+            ].includes(property) ||
+            displayedConstants.get(node) === "hardcode-label")
         )
           add("hardcode-label", rel, location(node), value);
         if (
           /[A-Za-z\u3040-\u9fff]/.test(text) &&
-          (ts.isJsxElement(context) || ts.isJsxFragment(context))
+          (ts.isJsxElement(context) ||
+            ts.isJsxFragment(context) ||
+            displayedConstants.get(node) === "hardcode-markup")
         )
           add("hardcode-markup", rel, location(node), value);
         if (
